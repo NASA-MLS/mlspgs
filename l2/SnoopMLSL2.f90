@@ -20,7 +20,8 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use init_tables_module, only: F_Comment
   use Intrinsic, only: LIT_INDICES
   use LEXER_CORE, only: PRINT_SOURCE
-  use MatrixModule_1, ONLY: Matrix_T
+  use MatrixModule_0, ONLY: MatrixElement_T
+  use MatrixModule_1, ONLY: Matrix_T, RC_Info
   use MLSCommon, only: FINDFIRST, R4, R8, I4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
@@ -32,7 +33,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use QuantityPVM, only: PVMSENDQUANTITY
   use QuantityTemplates, only: QuantityTemplate_T
   use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: GET_STRING
+  use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_IDENTIFIER
   use TREE, only:  DUMP_TREE_NODE, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
@@ -129,6 +130,9 @@ contains ! ========  Public Procedures =========================================
         ! stage.
       end do
 
+      call PVMFSend ( snooper%tid, SnoopTag, info )
+      if (info /= 0) call PVMErrorMessage ( info, "sending matrix information" )
+      
     else
       call PVMIDLSend ( "No Matrices", snooper%tid, info, msgTag=SnoopTag )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Sending 'No Matrices'" )
@@ -411,6 +415,7 @@ contains ! ========  Public Procedures =========================================
           & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
         snooper = FindFirst ( snoopers%tid == snooperTid )
         call PVMIDLUnpack ( line, info )
+        print*,'I got: ', trim(line)
         select case ( trim(line) )
 
         case ( 'Continue' )
@@ -524,11 +529,18 @@ contains ! ========  Public Procedures =========================================
     ! Dummy arguments
     type (SnooperInfo_T), intent(in) :: SNOOPER ! This snooper
     character (len=*), intent(in) :: LINE ! Name of matrix to send
-    type (Matrix_T), dimension(:), intent(in) :: MATRIXDATABASE
+    type (Matrix_T), dimension(:), target, intent(in) :: MATRIXDATABASE
+    type (Matrix_T), pointer :: M
+    type (RC_Info), pointer :: RC
 
     ! Local variables
+    integer :: BUFFERID                 ! For PVM
     integer :: MATRIXNAME               ! String index of matrix name
     integer :: MATRIX                   ! Index of matrix in database
+    integer :: I                        ! Loop counter
+    integer :: INFO                     ! Flag for PVM
+    integer :: Q                        ! Loop counter
+    character(len=132) :: NAME          ! Text
 
     ! Executable code
 
@@ -540,7 +552,43 @@ contains ! ========  Public Procedures =========================================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to find requested matrix:'//trim(line) )
 
-    !call PVMSendMatrix ( matrixDatabase(matrix), snooper%tid )
+    ! OK, setup to send the result
+    m => matrixDatabase(matrix)
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPack ( 'MatrixMap', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "MatrixMap"' )
+    call PVMIDLPack ( trim(line), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "'&
+      & // trim(line) // '"' )
+
+    ! Send information on rows and columns
+    do i = 1, 2
+      if ( i == 1 ) then
+        rc => m%row
+      else
+        rc => m%col
+      endif
+    
+      ! Pack the instance first flag
+      call PVMIDLPack ( rc%instFirst, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing rc%instFirst' )
+      ! Pack the number of quantities
+      call PVMIDLPack ( size(rc%vec%quantities), info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing rc%instFirst' )
+      ! Pack the quantity templates, that conveys all the other information
+      do q = 1, size(rc%vec%quantities)
+        call Get_string ( rc%vec%quantities(q)%template%name, name )
+        call PVMIDLPack ( trim(name), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, &
+          & 'packing rc%vec%quantities(?)%template%name' )
+        call PVMSendQuantity ( rc%vec%quantities(q), justPack=.true., noMask=.true., &
+          & noValues=.true. )
+      end do
+    end do
+    
+    ! Now send it all off
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'sending MatrixMap' )
 
   end subroutine SnooperRequestedMatrixMap
   
@@ -556,8 +604,12 @@ contains ! ========  Public Procedures =========================================
     type (Matrix_T), dimension(:), intent(in) :: MATRIXDATABASE
 
     ! Local variables
+    integer :: BUFFERID                 ! For PVM
     integer :: MATRIXNAME               ! String index of matrix name
     integer :: MATRIX                   ! Index of matrix in database
+    integer,dimension(2) :: RC          ! Index of row/column requested
+    integer :: INFO                     ! Flag from PVM
+    type (MatrixElement_T), pointer :: BLOCK ! The block of interest
 
     ! Executable code
 
@@ -569,8 +621,37 @@ contains ! ========  Public Procedures =========================================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to find requested matrix:'//trim(line) )
 
-    !call PVMSendMatrix ( matrixDatabase(matrix), snooper%tid )
+    call PVMIDLUnpack ( rc, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking row/col index' )
     
+    ! Now send the block
+    block => matrixDatabase(matrix)%block(rc(1),rc(2))
+    
+    call PVMFInitSend ( PVMDataDefault, bufferID )
+    call PVMIDLPack ( 'MatrixBlock', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing "MatrixBlock"' )
+    call PVMIDLPack ( trim(line), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing matrix name' )
+    call PVMIDLPack ( rc, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing row/col index' )
+    call PVMIDLPack ( (/ block%kind, block%nRows, block%nCols /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing kind, noRows, noCols' )
+
+    if ( associated ( block%values ) ) then
+      call PVMIDLPack ( block%values, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing block values' )
+    endif
+
+    if (associated(block%r1) .and. associated(block%r2)) then
+      call PVMIDLPack ( block%r1, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing r1' )
+      call PVMIDLPack ( block%r2, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'packing r2' )
+    end if
+
+    call PVMFSend ( snooper%tid, SnoopTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending block' )
+
   end subroutine SnooperRequestedMatrixBlock
 
   ! ----------------------------------- Snooper requested quantity -----
@@ -630,6 +711,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.26  2001/10/24 00:25:50  livesey
+! Got l2 side of matrix snooping working.
+!
 ! Revision 2.25  2001/10/22 22:40:39  livesey
 ! On the way to getting matrices working
 !
