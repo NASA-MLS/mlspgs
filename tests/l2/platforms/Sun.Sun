@@ -1,7 +1,9 @@
-#Makefile.mac -- a file full of macros to be included by a Makefile
+#a file full of macros to be included by a Makefile
 #to compile a Fortran 9x program or library
 
 # "$Id$"
+
+SHELL = /bin/sh
 
 # Path to source files:
 S = ..
@@ -24,28 +26,45 @@ srclib = ../../../srclib
 
 # This is the directory name from which we will get init_tables_module
 # (either l1, l2, or l3)
-init_m_dir = l1
+init_m_dir = l2
 
 itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
 dir2 = $(itmdir)/
 
+# Use the fwdmdl directory, fwdmdldir, for more .mod files
+# dir3 is the path prepended to its .o files in dependency lists
+fwdmdldir = ../../../fwdmdl/$(MLSCONFG)
+
+dir3 = $(fwdmdldir)/
+
+# Use the cloud directory, clouddir, for more .mod files
+# dir4 is the path prepended to its .o files in dependency lists
+clouddir = ../../../cloudfwdm/$(MLSCONFG)
+
+dir4 = $(clouddir)/
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ ../../../lib/machines/$(MLSCONFG)
-vpath %.f9h ../
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
 FC = f95
 
-DUSTY = $(FOPTS)
+DUSTY = $(FOPTS) -dusty
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I" . Don't put spaces between "-I" and the path
 # Same goes for "-M" for module paths.
-INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -I$(PGSINC) -I$S
+INC_PATHS = $(EXTRA_PATHS) \
+ -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I$(itmdir) -I$(fwdmdldir) \
+ -I$(clouddir)\
+ -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) -M$(itmdir) -M$(fwdmdldir) \
+ -M$(clouddir)
+	 
 
 # Define some suffix rules
 
@@ -64,12 +83,6 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -I$(PGSINC) -I$S
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
-l_specials =  -lnsl
+l_specials = -lnsl -lsocket
 
 # $Log$
-# Revision 1.2  2001/09/10 13:01:43  archie
-# Removed spaces in INC_PATHS
-#
-# Revision 1.1  2001/09/05 20:52:18  pwagner
-# First commit
-#

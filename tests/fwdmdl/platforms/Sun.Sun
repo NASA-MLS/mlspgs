@@ -1,7 +1,9 @@
-#Makefile.mac -- a file full of macros to be included by a Makefile
+#a file full of macros to be included by a Makefile
 #to compile a Fortran 9x program or library
 
 # "$Id$"
+
+SHELL = /bin/sh
 
 # Path to source files:
 S = ..
@@ -28,24 +30,31 @@ init_m_dir = l1
 
 itmdir=../../../$(init_m_dir)/$(MLSCONFG)
 
+# This is our own directory name; repeated up in mlspgs
+our_dir = fwdmdl
+
+ourdir=../../../$(our_dir)/$(MLSCONFG)
+
 dir2 = $(itmdir)/
 
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ ../../../lib/machines/$(MLSCONFG)
-vpath %.f9h ../
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../ $(srclib)
 vpath %.f ../
 vpath %.c ../
 
 FC = f95
 
-DUSTY = $(FOPTS)
+DUSTY = $(FOPTS) -dusty
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I" . Don't put spaces between "-I" and the path
 # Same goes for "-M" for module paths.
-INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -I$(PGSINC) -I$S
+INC_PATHS = $(EXTRA_PATHS) \
+ -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I$(itmdir) \
+ -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) -M$(itmdir)
 
 # Define some suffix rules
 
@@ -64,12 +73,6 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -I$(PGSINC) -I$S
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 #Special load libraries
-l_specials =  -lnsl
+l_specials = -lnsl
 
 # $Log$
-# Revision 1.2  2001/09/10 13:01:43  archie
-# Removed spaces in INC_PATHS
-#
-# Revision 1.1  2001/09/05 20:52:18  pwagner
-# First commit
-#
