@@ -1,0 +1,4 @@
+; --------------------------------------------- ChunkDivide ----
+begin ChunkDivide
+  ChunkDivide, method=fixed, maxLength=5 MAFs, overlap=0 MAFs, noChunks=1
+end ChunkDivide
