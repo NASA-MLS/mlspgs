@@ -70,7 +70,9 @@ module INTRINSIC
   integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
   integer, parameter :: L_DIMLESS       = l_dimensionless + 1
   integer, parameter :: L_DL            = l_dimless + 1
-  integer, parameter :: L_EXTINCTION    = l_dl + 1
+  integer, parameter :: L_EARTHREFL     = l_dl + 1
+  integer, parameter :: L_ELEVOFFSET    = l_earthRefl + 1
+  integer, parameter :: L_EXTINCTION    = l_elevOffset + 1
   integer, parameter :: L_FALSE         = l_extinction + 1
   integer, parameter :: L_FREQUENCY     = l_false + 1
   integer, parameter :: L_GEODALTITUDE  = l_frequency + 1
@@ -115,10 +117,12 @@ module INTRINSIC
   integer, parameter :: L_S             = l_refgph + 1
   integer, parameter :: L_SCANRESIDUAL  = l_s + 1
   integer, parameter :: L_SCECI         = l_scanresidual + 1
-  integer, parameter :: L_SCVEL         = l_scECI + 1
+  integer, parameter :: L_SCGEOCALT     = l_scECI + 1
+  integer, parameter :: L_SCVEL         = l_scGeocAlt + 1
   integer, parameter :: L_SECONDS       = l_scvel + 1
   integer, parameter :: L_SIDEBANDRATIO = l_seconds + 1
-  integer, parameter :: L_TEMPERATURE   = l_sidebandratio + 1
+  integer, parameter :: L_SPACERADIANCE = l_sidebandratio + 1
+  integer, parameter :: L_TEMPERATURE   = l_spaceRadiance + 1
   integer, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
   integer, parameter :: L_THETA         = l_temperature_prec + 1
   integer, parameter :: L_THZ           = l_theta + 1
@@ -213,6 +217,8 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
     lit_indices(l_dimless) =               add_ident ( 'dimless' )
     lit_indices(l_dl) =                    add_ident ( 'dl' )
+    lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
+    lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
     lit_indices(l_extinction) =            add_ident ( 'extinction' )
     lit_indices(l_false) =                 add_ident ( 'false' )
     lit_indices(l_frequency) =             add_ident ( 'frequency' )
@@ -258,9 +264,11 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_s) =                     add_ident ( 's' )
     lit_indices(l_scanresidual) =          add_ident ( 'scanResidual' )
     lit_indices(l_scECI) =                 add_ident ( 'scECI' )
+    lit_indices(l_scGeocAlt) =             add_ident ( 'scGeocAlt' )
     lit_indices(l_scvel) =                 add_ident ( 'scVel' )
     lit_indices(l_seconds) =               add_ident ( 'seconds' )
     lit_indices(l_sidebandratio) =         add_ident ( 'sidebandRatio' )
+    lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
     lit_indices(l_temperature) =           add_ident ( 'temperature' )
     lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
     lit_indices(l_theta) =                 add_ident ( 'theta' )
@@ -350,6 +358,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.26  2001/05/29 22:45:45  livesey
+! Moved some state vector component literals in from l2/init_tables_module.f90
+!
 ! Revision 2.25  2001/05/10 23:26:45  livesey
 ! Added isotope ratio vector quantity type.
 !
