@@ -939,7 +939,7 @@ contains ! ============= Public procedures ===================================
     use Init_Tables_Module, only:  L_ADOPTED, L_BASELINE, L_BOUNDARYPRESSURE, &
       L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
-      L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDRADSENSITIVITY, &
+      L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDMINMAX, L_CLOUDRADSENSITIVITY, &
       L_CLOUDWATER, L_COLUMNABUNDANCE, &
       L_DNWT_AJN, L_DNWT_AXMAX, L_DNWT_CAIT, &
       L_DNWT_CHISQMINNORM, L_DNWT_CHISQNORM, &
@@ -1001,6 +1001,7 @@ contains ! ============= Public procedures ===================================
       l_cloudExtinction, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_cloudIce, phyq_IceDensity, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_cloudInducedRadiance, phyq_temperature, p_minorFrame, p_signal, next, &
+      l_cloudMinMax, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
       l_cloudRadSensitivity, phyq_temperature, p_minorFrame, p_signal, next, &
       l_cloudWater, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_columnAbundance, phyq_dobsonunits, p_hGrid, p_molecule, next, &
@@ -1187,6 +1188,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.108  2004/03/17 17:16:25  livesey
+! New cloudMinMax type.
+!
 ! Revision 2.107  2004/02/10 21:17:24  livesey
 ! Added status and quality as valid quantity types
 !
