@@ -197,11 +197,11 @@ contains ! =====     Public Procedures     =============================
     use Init_Tables_Module, only: L_NAMEFRAGMENT, L_VMR, L_TEMPERATURE, &
       & L_LATITUDE, L_SZA
     use Init_Tables_Module, only: F_COST, F_HEIGHT, F_MOLECULE, F_TYPE, &
-      & F_NAMEFRAGMENT
+      & F_NAMEFRAGMENT, F_EXACT
     use Intrinsic, only: T_NUMERIC_RANGE
     use L2PC_m, only: BINSELECTOR_T, BINSELECTORS, CREATEDEFAULTBINSELECTORS
     use MLSCommon, only: R8
-    use MoreTree, only: Get_Field_ID
+    use MoreTree, only: Get_Field_ID, GET_BOOLEAN
     use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
     use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS, &
       & PHYQ_ANGLE, PHYQ_VMR, PHYQ_INVALID
@@ -230,6 +230,7 @@ contains ! =====     Public Procedures     =============================
     binSelector%nameFragment = 0
     binSelector%heightRange = 0.0
     binSelector%cost = 0.0
+    binSelector%exact = .false.
 
     do i = 2, nsons(root)               ! Skip binSelector command
       son = subtree ( i, root )
@@ -243,6 +244,8 @@ contains ! =====     Public Procedures     =============================
         binSelector%molecule = decoration(gson)
       case ( f_nameFragment )
         binSelector%nameFragment = sub_rosa(gson)
+      case ( f_exact )
+        binSelector%exact = get_boolean(gson)
       case ( f_height )
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyHeights, son, &
           & f_height )
@@ -839,6 +842,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.78  2003/08/14 20:25:06  livesey
+! Added the exact bin selector stuff
+!
 ! Revision 2.77  2003/08/13 00:49:40  livesey
 ! Added the polarLinear model and now ensures that a default bin selector
 ! is provided to the linear model if the user doesn't supply one.
