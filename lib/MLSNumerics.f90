@@ -240,15 +240,11 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: missingRegions ! Allow missing regions
     TYPE (MatrixElement_T), INTENT(OUT), OPTIONAL :: dNewByDOld ! Derivatives
 
-    ! Local parameters
-    CHARACTER (LEN=*), PARAMETER :: MLSMSG_Allocate="Allocation failed for "
-
     ! Local variables
     INTEGER :: noOld,noNew,width ! Dimensions
     LOGICAL :: spline           ! Flag
     LOGICAL :: useMissingRegions ! Copy of missing regions
     INTEGER :: ind,newInd       ! Loop counters
-    INTEGER :: status           ! From Allocate
     LOGICAL :: computeDNewByDOld   ! Set if dNewByDOld is present
 
     INTEGER, DIMENSION(:), POINTER :: lowerInds,upperInds
@@ -494,12 +490,6 @@ CONTAINS
     REAL(R8), DIMENSION(:), OPTIONAL, INTENT(OUT) :: dyByDx
     LOGICAL, OPTIONAL, INTENT(IN) :: missingRegions ! Allow missing regions
 
-    ! Local parameters
-    CHARACTER (LEN=*), PARAMETER :: MLSMSG_Allocate="Allocation failed for "
-
-    ! Local variables
-    INTEGER :: status
-
     REAL(R8), DIMENSION(:,:), POINTER :: tempResult
     REAL(R8), DIMENSION(:,:), POINTER :: tempDerivative
 
@@ -530,6 +520,9 @@ END MODULE MLSNumerics
 
 !
 ! $Log$
+! Revision 2.2  2001/02/22 01:59:52  vsnyder
+! Remove declarations for unused variables and parameters
+!
 ! Revision 2.1  2001/02/09 00:38:55  livesey
 ! Various changes
 !
