@@ -51,6 +51,8 @@ unfortunate consequence of this decision is that to use it to build the
 software, the "make" command must always be accompanied by the "-f MakeFC"
 arguments. E.g., the usual way to invoke it is
          "make -f MakeFC".
+This will automatically build lib and mls[1-3]. To build other parts see
+the section BUILDING ONLY PARTS OF THE SOFTWARE below.
 
 WHAT YOU NEED
 You may begin when you checkout a fresh copy of the mlspgs archive or obtain
@@ -119,8 +121,9 @@ BUILDING ONLY PARTS OF THE SOFTWARE
 If you wish to build only lib, for example, you may specify that target,
 i.e.
         make -f MakeFC lib
-and similarly for l1, l2, or l3. Alternatively, if you are in lib, perhaps
-changing some of its modules, then while there you may use the simple
+and similarly for l1, l2, l3, l2pc, or fwdmdl. Alternatively, if you are in
+lib, perhaps changing some of its modules, then while there you may use the
+simple
         make -f MakeFC
 and only libmls.a will be rebuilt. Again the same is true while in the other
 levels when only the software in that level will be built.
@@ -142,6 +145,7 @@ configure  change configuration: compiler, (less often) platform/OS,
            paths
 tar        bind up the current directory (or the whole if at top) for
            distribution
+all        if entered from the top, builds lib, l1, l2, l3, l2pc, and fwdmdl
 
 HOW IT WORKS
 Chronology:
@@ -253,13 +257,14 @@ pgs-dev-env.csh or pgs-env.csh as part of their login, then this could
 be better hidden.
 
 ACTUAL BUGS
-Unless the latest, "beta" copy of the NAG f95 is used, Matrix_Module.f90
-in lib and l2 won't compile. The solution is to upgrade to the latest
-NAG f95. Changing the Makefile alone won't help.
+Unless either the Lahey compiler or the latest, "beta" copy of the NAG f95 is
+used, Matrix_Module.f90 in lib and l2 won't compile. The compiler-dependent
+Makefile created will refer to the routine only if you use Lahey.
 
-The current NAG Linux HDFEOS, HDF, PGSTK, etc. libraries can not be made to
-link properly. Sun and SGI versions seem correct. The solution is to obtain
-correct ones. This will be moot when newer versions are made available.
+The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
+link properly. Sun and SGI versions seem correct. The solution is to build
+correct ones. See Hugh's page  http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt
+for instructions.
 
 IMPERFECTIONS AND COMPLICATIONS
 The only combinations of compiler.platform/OS provided for so far are
@@ -326,10 +331,13 @@ If this ever seems to work well enough, similar MakeFC and platforms
 could be devised for the remaining parts of mls. By design it remains an
 optional way to build, coexisting in parallel with other ways.
 
--pw                           2000-Oct-24 to Nov-20
+-pw                           2000-Oct-24 to 2001-Jan-05
 EOF
 exit
 # $Log$
+# Revision 1.5  2000/11/21 23:54:46  pwagner
+# Mentions levels 1-3; offer to fix perl path
+#
 # Revision 1.4  2000/11/06 18:05:42  pwagner
 # SHared source library
 #
