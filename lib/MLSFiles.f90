@@ -3,7 +3,7 @@
 
 !===============================================================================
 module MLSFiles               ! Utility file routines
-  !===============================================================================
+  !=============================================================================
   use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_READ, DFACC_RDWR, &
     & sfstart, sfend
   use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
@@ -14,8 +14,8 @@ module MLSFiles               ! Utility file routines
   use MLSCommon, only: i4, BareFNLen, FileNameLen, MLSFile_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MLSStrings, only: Capitalize, LowerCase, ReplaceSubString, &
-    & Reverse, SortArray
+  use MLSStrings, only: Capitalize, ExtractSubString, LowerCase, &
+    & ReplaceSubString, Reverse, SortArray
   use output_m, only: blanks, output
   use SDPToolkit, only: &
     & HDF5_ACC_CREATE, HDF5_ACC_RDONLY, HDF5_ACC_RDWR,  &
@@ -41,7 +41,7 @@ module MLSFiles               ! Utility file routines
   & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend, &
   & mls_openFile, mls_closeFile, MLSFile_T, Deallocate_filedatabase, &
   & open_MLSFile, close_MLSFile, Dump, mls_exists, &
-  & maskName, unMaskName
+  & maskName, unMaskName, unSplitName
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -96,6 +96,7 @@ module MLSFiles               ! Utility file routines
 ! RmFileFromDataBase Removes a FileName, id, etc. from the database
 ! split_path_name    splits the input path/name into path and name
 ! unmaskname         Recover file name from maskzed form
+! unsplitname        Split FIle name -> catenated: '..DGG13..' -> 'DGG'
 ! === (end of toc) ===
 
 ! (The following 2 are currently private, but could be made public if needed)
@@ -421,7 +422,7 @@ contains
 
 ! ---------------------------------------------- maskName ------
 
-! This function returns a free logical unit number
+! This function returns the name plus a masking portion
 
   function maskName(inName) result(outName)
   character(len=*), intent(in)     :: inName        ! Name to be masked
@@ -1923,11 +1924,11 @@ contains
 
 ! ---------------------------------------------- unMaskName ------
 
-! This function returns a free logical unit number
+! This function returns the name minus its masking portion
 
   function unMaskName(inName) result(outName)
-  character(len=*), intent(in)     :: inName        ! Name to be masked
-  character(len=len(inName)) :: outName       ! masked name
+  character(len=*), intent(in)     :: inName        ! Name to be unmasked
+  character(len=len(inName)) :: outName             ! unmasked name
   ! Executable
   if ( len_trim(inName)  < 1 ) then
     outName = ''
@@ -1937,6 +1938,39 @@ contains
     call ReplaceSubString(trim(inName), outName, MASKINGTAPE, '')
   endif
   end function unMaskName
+
+! ---------------------------------------------- unSplitName ------
+
+! This function returns the name minus its splitting number
+! It assumes the split name takes one of the following forms
+! (dgg)   ...L2GP-DGGnn_...
+! (l2aux) ...L2AUX-DGMnn_...
+
+  function unSplitName(inName) result(outName)
+  character(len=*), intent(in)     :: inName        ! Name to be unsplit
+  character(len=len(inName)) :: outName             ! unsplit name
+  ! Local variables
+  character(len=len(inName)) :: tempName
+  character(len=*), parameter :: dgg_type = 'l2gp-dgg'
+  character(len=*), parameter :: l2aux_type = 'l2aux-dgm'
+  character(len=*), parameter :: sub2 = '_'
+  character(len=16)           :: sub1
+  character(len=8)            :: nn
+  ! Executable
+  outName = ''
+  if ( len_trim(inName)  < 1 ) return
+  tempName = lowerCase(inName)
+  if (index(tempName, dgg_type) > 0) then
+    sub1 = dgg_type
+  elseif (index(tempName, l2aux_type) > 0) then
+    sub1 = l2aux_type
+  else
+    return
+  endif
+  call ExtractSubString (tempName, nn, trim(sub1), sub2)
+  if ( len_trim(nn) < 1 ) return
+  call ReplaceSubString(trim(inName), outName, trim(nn), '')
+  end function unSplitName
 
 !-----------------------------------------------
 !       Private routines
@@ -1951,6 +1985,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.56  2004/01/23 01:13:11  pwagner
+! Added unSplitName
+!
 ! Revision 2.55  2004/01/22 00:44:02  pwagner
 ! Added (un)maskName
 !
