@@ -279,7 +279,7 @@ contains
 
     delta = Nu - v0s
     da = x1 * ( delta * dx1_dT - dv0s_dT ) ! remember, dx1_dT = 1/x1 dx1 / dT
-    call D_Real_Simple_Voigt ( x1*delta, y, da, dy_dT, u, du )
+    call D_Real_Simple_Voigt ( x1*delta, y, da, y*dy_dT, u, du )
 
 !{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
 !  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, and
@@ -449,11 +449,10 @@ contains
       y = slabs%y(l)
       dv0s_dT = slabs%dv0s_dT(l)
       dx1_dT = slabs%dx1_dT(l)
-      dy_dT = slabs%dy_dT(l)
+      dy_dT =slabs%dy_dT(l)
       delta = Nu - v0s
       da = x1 * ( delta * dx1_dT - dv0s_dT )
-      call D_Real_Simple_Voigt ( x1*delta, y, da, dy_dT, u, du )
-
+      call D_Real_Simple_Voigt ( x1*delta, y, da, y*dy_dT, u, du )
       sigma = nu + v0s
       sigmaX1 = sigma * x1
       y2 = y * y
@@ -464,6 +463,7 @@ contains
       beta = beta + sa + sb
 
       c = slabs%dSlabs1_dT(l) + dtanh_dT
+
       dBeta_dT = dBeta_dT + sa * ( c + du / u ) &
         &                 + sb * ( c + dy_dT - 2.0_rp * d * &            
         &                          ( sigmaX1 * ( x1 * dv0s_dT + &        
@@ -551,7 +551,7 @@ contains
     delta = nu - v0s
     a = x1 * delta
     da = x1 * ( delta * dx1_dT - dv0s_dT ) ! remember, dx1_dT = 1/x1 dx1 / dT
-    call D_Real_Simple_Voigt ( a, y, da, dy_dT, u, du )
+    call D_Real_Simple_Voigt ( a, y, da, y*dy_dT, u, du )
 
 !  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
@@ -786,7 +786,7 @@ contains
       delta = nu - v0s
       a = x1 * delta
       da = x1 * ( delta * dx1_dT - dv0s_dT )
-      call D_Real_Simple_Voigt ( a, y, da, dy_dT, u, du )
+      call D_Real_Simple_Voigt ( a, y, da, y*dy_dT, u, du )
 
       sigma = nu + v0s
       sigmaX1 = sigma * x1
@@ -805,11 +805,13 @@ contains
       c = slabs%dSlabs1_dT(l) + dtanh_dT
       dd1 = -2.0_rp * d1 * ( sigmaX1 * ( x1 * dv0s_dT + sigmaX1 * dx1_dT ) + y2 * dy_dT )
       dd2 = -2.0_rp * d2 * ( a * da + y2 * dy_dT )
+
       dBeta_dT = dBeta_dT &
         &      + sa * ( c + du / u ) &
         &      + sb * ( c + dd1 + dy_dT ) &
         &      - sc * ( c + dd1 + dyi_dT + dx1_dT + dv0s_dT / sigma ) &
         &      + sd * ( c + dd2 + dyi_dT + da / a )
+
     end do
 
   end subroutine Slabswint_Lines_dT
@@ -1499,7 +1501,7 @@ contains
     n = 1 + min(j, 25)
     dx = x - hn(n)
     f = 0.0_rp
-    if ( x.gt.0.05*h) &
+    if ( x > 0.05*h) &
        f = (((((fder6(n)*dx + fder5(n))*dx + fder4(n))*dx  + &
              &  fder3(n))*dx + fder2(n))*dx + fder1(n))*dx + dawson(n)
     if ( y <= 1.0e-12_rp ) then
@@ -1539,17 +1541,17 @@ contains
   ! the real part of the derivative (which isn't just the derivative
   ! of Voigt).
 
-!{ The Fadeeva function $w(z)$, where $z = a + i y$, can be written as
-!  $V(a,y) + i L(a,y)$, where $V(a,y)$ is the Voigt function and
-!  $L(a,y)$ is the Lorentz function. 
+!{ The Fadeeva function $w(z)$, where $z = x + i y$, can be written as
+!  $V(x,y) + i L(x,y)$, where $V(x,y)$ is the Voigt function and
+!  $L(x,y)$ is the Lorentz function. 
 !
 !  From 7.1.20 in {\bf Handbook of Mathematical Functions} by Abramowitz
 !  and Stegun (National Bureau of Standards Applied Math Series 55) we have
 !  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
-!  $\Re \, \frac{\partial w(z(t))}{\partial t} =
-!   2 \left[ \left( -a V(a,y) + y L(a,y) \right) \frac{\partial a}{\partial t} +
-!            \left( a L(a,y) + y V(a,y) -\frac1{\sqrt{\pi}} \right)
-!             \frac{\partial y}{\partial t} \right]$.
+!  $\Re \, \frac{\partial w(z(t))}{\partial T} =
+!   2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial T} +
+!            \left( x L(x,y) + y V(x,y) +\frac1{\sqrt{\pi}} \right)
+!             \frac{\partial y}{\partial T} \right]$.
 
     real(rp), intent(in) :: x, y, dx, dy
     real(rp), intent(out) :: u, du
@@ -1557,7 +1559,7 @@ contains
     real(rp) :: v ! Lorentz function
 
     call simple_voigt ( x, y, u, v )
-    du = 2.0_rp * ( (-x * u + y * v) * dx + (x * v + y * u) * dy )
+    du = 2.0_rp * ( (-x * u + y * v) * dx + (x * v + y * u - oneOvSpi) * dy )
 
   end subroutine D_Real_Simple_Voigt
 
@@ -1565,23 +1567,23 @@ contains
   subroutine D_Simple_Voigt ( x, y, dx, dy, u, v, du, dv )
   ! Compute Fadeeva = Voigt and Lorentz its derivative
 
-!{ The Fadeeva function $w(z)$, where $z = a + i y$, can be written as
-!  $V(a,y) + i L(a,y)$, where $V(a,y)$ is the Voigt function and
-!  $L(a,y)$ is the Lorentz function. 
+!{ The Fadeeva function $w(z)$, where $z = x + i y$, can be written as
+!  $V(x,y) + i L(x,y)$, where $V(x,y)$ is the Voigt function and
+!  $L(x,y)$ is the Lorentz function. 
 !
 !  From 7.1.20 in {\bf Handbook of Mathematical Functions} by Abramowitz
 !  and Stegun (National Bureau of Standards Applied Math Series 55) we have
 !  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
 !  \begin{equation*}\begin{split}
-!  \frac{\partial w(z(t))}{\partial t}
-!   =& 2 \left[ \left( -a V(a,y) + y L(a,y) \right) \frac{\partial a}{\partial t} +
-!            \left( a L(a,y) + y V(a,y) -\frac1{\sqrt{\pi}} \right)
-!             \frac{\partial y}{\partial t} \right]\\
-!   +& 2 i \left [ - \left( a L(a,y) + y V(a,y) -\frac1{\sqrt{\pi}} \right)
-!             \frac{\partial a}{\partial t} +
-!            \left( - a V(a,y) + y L(a,y) \right) \frac{\partial y}{\partial t} \right]\\
-!   =& u \frac{\partial a}{\partial t} + v \frac{\partial y}{\partial t}
-!    + i \left( -v \frac{\partial a}{\partial t} + u \frac{\partial y}{\partial t} \right).
+!  \frac{\partial w(z(t))}{\partial T}
+!   =& 2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial T} +
+!            \left( x L(x,y) + y V(x,y) +\frac1{\sqrt{\pi}} \right)
+!             \frac{\partial y}{\partial T} \right]\\
+!   +& 2 i \left [ - \left( x L(x,y) + y V(x,y) +\frac1{\sqrt{\pi}} \right)
+!             \frac{\partial x}{\partial T} +
+!            \left( - x V(x,y) + y L(x,y) \right) \frac{\partial y}{\partial T} \right]\\
+!   =& a \frac{\partial x}{\partial T} + b \frac{\partial y}{\partial T}
+!    + i \left( -b \frac{\partial x}{\partial T} + a \frac{\partial y}{\partial T} \right).
 !  \end{split}\end{equation*}
 
     real(rp), intent(in) :: x, y, dx, dy
@@ -1591,7 +1593,7 @@ contains
 
     call simple_voigt ( x, y, u, v )
     a = -x * u + y * v
-    b = x * v + y * u
+    b = x * v + y * u - oneOvSpi
     du = 2.0_rp * ( a * dx + b * dy )
     dv = 2.0_rp * ( -b * dx + a * dy )
 
@@ -2075,6 +2077,10 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.30  2004/04/06 23:40:21  vsnyder
+! Do slabs_prep where derivatives not requested in get_gl_slabs_arrays
+! instead of doing nothing.
+!
 ! Revision 2.29  2004/04/02 00:59:24  vsnyder
 ! Get catalog from slabs structure
 !

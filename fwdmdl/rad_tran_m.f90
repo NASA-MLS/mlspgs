@@ -23,7 +23,7 @@ contains
 ! This is the radiative transfer model, radiances only !
 
   subroutine Rad_tran ( gl_inds, more_inds, e_rflty, del_zeta, &
-                     &  alpha_path_c, ref_cor, do_gl, incoptdepth, &
+                     &  alpha_path_c, ref_cor, incoptdepth, &
                      &  alpha_path_gl, ds_dz_gw, t_script, &
                      &  tau, rad, i_stop )
 
@@ -44,8 +44,6 @@ contains
   !                                            grid.
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
   !                                            length ratios.
-    logical, intent(in) :: do_gl(:)          ! path flag indicating where to do
-  !                                            gl integrations.
     real(rp), intent(inout) :: incoptdepth(:) ! incremental path opacities
   !                            from one-sided layer calculation on output.
   !                            it is the full integrated layer opacity.
@@ -107,7 +105,7 @@ contains
 !--------------------------------------------------  Rad_Tran_Pol  -----
 
   subroutine Rad_tran_Pol ( gl_inds, more_inds, e_rflty, del_zeta, alpha_path_c, &
-                     &  ref_cor, do_gl, incoptdepth_pol, deltau_pol, alpha_path_gl, &
+                     &  ref_cor, incoptdepth_pol, deltau_pol, alpha_path_gl, &
                      &  ds_dz_gw, ct, stcp, stsp, t_script, &
                      &  prod_pol, tau_pol, rad_pol, p_stop )
 
@@ -135,8 +133,6 @@ contains
       !              transmissivity on the coarse path. Called E in some notes.
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
       !              length ratios.
-    logical, intent(in) :: do_gl(:)          ! path flag indicating where to do
-      !              gl integrations.
     complex(rp), intent(inout) :: incoptdepth_pol(:,:,:) ! incremental path
       !              opacities from one-sided layer calculation on output. it
       !              is the full integrated layer opacity. 2x2xPath
@@ -591,11 +587,15 @@ contains
 !--------------------------------------------------  drad_tran_dt  -----
 ! This is the radiative transfer derivative wrt temperature model
 
-  subroutine DRad_tran_dt ( del_zeta, h_path_c, t_path_c, dh_dt_path_c, &
-                         &  alpha_path_c, alphaxn_path_c, eta_zxp_c, do_calc_t_c, &
+  subroutine DRad_tran_dt ( del_zeta, h_path_c, dh_dt_path_c, &
+                         &  alpha_path_c, &
+                         &  dAlpha_dT_path_c, &
+                         &  eta_zxp_c, do_calc_t_c, &
                          &  do_calc_hyd_c, del_s, ref_cor, h_tan, dh_dt_tan, &
                          &  do_gl, gl_inds, h_path_f, t_path_f, dh_dt_path_f, &
-                         &  alpha_path_f, alphaxn_path_f, eta_zxp_f, do_calc_t_f, &
+                         &  alpha_path_f, &
+                         &  dAlpha_dT_path_f, &
+                         &  eta_zxp_f, do_calc_t_f, &
                          &  ds_dh, dh_dz_gw, ds_dz_gw, t_script, dt_scr_dt, &
                          &  tau, i_stop, deriv_flags, drad_dt )
 
@@ -610,13 +610,11 @@ contains
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     real(rp), intent(in) :: h_path_c(:)     ! path heights + req on main grid km.
-    real(rp), intent(in) :: t_path_c(:)     ! path temperature(K) on main grid.
     real(rp), intent(in) :: dh_dt_path_c(:,:) ! derivative of path height wrt
 !                                               temperature(km/K) on main grid.
     real(rp), intent(in) :: alpha_path_c(:) ! path absorption(km^-1)
 !                                             on main grid.
-    real(rp), intent(in) :: alphaxn_path_c(:) ! path absorption * temperature
-!                                             exponent (km^-1) on main grid.
+    real(rp), intent(in) :: dAlpha_dT_path_c(:) ! path dAlpha/dT on main grid
     real(rp), intent(in) :: eta_zxp_c(:,:)  ! representation basis function
 !                                              main grid.
     logical, intent(in) :: do_calc_t_c(:,:) ! Indicates where the
@@ -637,8 +635,7 @@ contains
     real(rp), intent(in) :: dh_dt_path_f(:,:) ! derivative of path height wrt
 !                                               temperature(km/K) on gl grid.
     real(rp), intent(in) :: alpha_path_f(:) ! path absorption(km^-1) on gl grid.
-    real(rp), intent(in) :: alphaxn_path_f(:) ! path absorption * temperature
-!                                             exponent (km^-1) on gl grid.
+    real(rp), intent(in) :: dAlpha_dT_path_f(:) ! path dAlpha/dT on gl grid
     real(rp), intent(in) :: eta_zxp_f(:,:)  ! representation basis function
 !                                             gl grid.
     logical, intent(in) :: do_calc_t_f(:,:) ! Indicates where the
@@ -720,9 +717,10 @@ contains
 
         do i = 1, n_inds ! Don't trust the compiler to fuse loops
           j = inds(i)
-          singularity(j) = alphaxn_path_c(j) * eta_zxp_c(j,sv_i) / t_path_c(j)
+          singularity(j) = dAlpha_dT_path_c(j) * eta_zxp_c(j,sv_i)
           d_delta_dt(j,sv_i) = singularity(j) * del_s(j)
         end do ! i
+
 ! see if anything needs to be gl-d
 
         no_to_gl = count(do_gl(inds))
@@ -756,14 +754,11 @@ contains
             j = more_inds(i)
             d_delta_dt(j,sv_i) = d_delta_dt(j,sv_i) + &
               & del_zeta(j) * &
-              & sum( (alphaxn_path_f(aa:bb) * &
-                   &  eta_zxp_f(aa:bb,sv_i) / &
-                   &  t_path_f(aa:bb) - &
+              & sum( (dAlpha_dT_path_f(aa:bb) * eta_zxp_f(aa:bb,sv_i) - &
                    &  singularity(j)) * &
                    & ds_dz_gw(gl_inds(aa:bb)) )
             a = a + ng
           end do
-
         end if
 
       end if
@@ -992,6 +987,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.37  2004/03/20 01:15:39  jonathan
+!  remove rad_tran_cld
+!
 ! Revision 2.36  2004/03/08 22:58:03  vsnyder
 ! Remove D_Delta_DT, which was schlepped from drad_tran_dt to
 ! Get_D_Delta_Pol_DT, but is no longer needed in the latter place.

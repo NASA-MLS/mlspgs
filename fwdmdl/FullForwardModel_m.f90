@@ -109,7 +109,6 @@ contains
     !--------------------------------------------
 
     ! Define local parameters
-    real(rp), parameter :: DEL_TEMP = 10.0_rp ! Temp. step size for derivatives
     integer, parameter :: Ngp1 = Ng+1         ! NG + 1
 
     ! Now define local variables, group by type and then
@@ -257,6 +256,8 @@ contains
     real(rp), dimension(:), pointer :: BETA_PATH_cloud_C ! Beta on path coarse
     real(rp), dimension(:), pointer :: CT           ! Cos(Theta), where theta
       ! is the angle between the line of sight and magnetic field vectors.
+    real(rp), dimension(:), pointer :: DALPHA_DT_PATH_C ! dAlpha/dT on coarse grid
+    real(rp), dimension(:), pointer :: DALPHA_DT_PATH_F ! dAlpha/dT on fine grid
     real(rp), dimension(:), pointer :: DEL_S        ! Integration lengths along path
     real(rp), dimension(:), pointer :: DEL_ZETA     ! Integration lengths in Zeta coords
     real(rp), dimension(:), pointer :: DHDZ_PATH    ! dH/dZ on path
@@ -266,8 +267,8 @@ contains
     real(rp), dimension(:), pointer :: DRAD_DV      ! dI/dV
     real(rp), dimension(:), pointer :: DRAD_DW      ! dI/dW
     real(rp), dimension(:), pointer :: DSDZ_GW_PATH ! ds/dH * dH/dZ * GW on path
-    real(rp), dimension(:), pointer :: DTanh_DT_C   ! d/dT tanh1_c
-    real(rp), dimension(:), pointer :: DTanh_DT_F   ! d/dT tanh1_f
+    real(rp), dimension(:), pointer :: DTanh_DT_C   ! 1/tanh1_c d/dT tanh1_c
+    real(rp), dimension(:), pointer :: DTanh_DT_F   ! 1/tanh1_f d/dT tanh1_f
     real(r8), dimension(:), pointer :: FREQUENCIES  ! Frequencies to compute for
     real(rp), dimension(:), pointer :: H            ! Magnetic field on path, in
                                                     ! IFOVPP
@@ -285,8 +286,6 @@ contains
     real(rp), dimension(:), pointer :: RADV         ! Radiances for 1 pointing on
                                                     ! Freq_Grid
     real(rp), dimension(:), pointer :: REF_CORR     ! Refraction correction
-    real(rp), dimension(:), pointer :: SPS_BETA_DBETA_C ! SUM(sps*beta*dbeta)
-    real(rp), dimension(:), pointer :: SPS_BETA_DBETA_F ! SUM(sps*beta*dbeta)
     real(rp), dimension(:), pointer :: STCP         ! Sin(Theta) Cos(Phi) where
       ! theta is as for CT and phi (for this purpose only) is the angle
       ! between the plane defined by the line of sight and the magnetic
@@ -300,18 +299,12 @@ contains
     real(rp), dimension(:), pointer :: T_PATH       ! Temperatures on path
     real(rp), dimension(:), pointer :: T_PATH_C     ! T_PATH on coarse grid
     real(rp), dimension(:), pointer :: T_PATH_F     ! T_PATH on fine grid
-    real(rp), dimension(:), pointer :: T_PATH_M     ! T_PATH - del_temp
-    real(rp), dimension(:), pointer :: T_PATH_P     ! T_PATH + del_temp
     real(rp), dimension(:), pointer :: T_SCRIPT     ! Delta_B in some notes
     real(rp), dimension(:), pointer :: TT_PATH_C    ! tscat on path coarse
     real(rp), dimension(:), pointer :: W0_PATH_C    ! w0 on path coarse
     real(rp), dimension(:), pointer :: Z_GLGRID     ! Zeta on glGrid surfs
     real(rp), dimension(:), pointer :: Z_PATH       ! Zeta on path
 
-    real(rp), dimension(:,:), pointer :: BETA_N_PATH_C   ! n in beta = beta_0 (T/T_0)**n
-                                           ! to compute dBeta_dt on coarse grid
-    real(rp), dimension(:,:), pointer :: BETA_N_PATH_F ! n in beta = beta_0 (T/T_0)**n
-                                           ! to compute dBeta_dt on fine grid
     real(rp), dimension(:,:), pointer :: BETA_PATH_C  ! Beta on path coarse
     real(rp), dimension(:,:), pointer :: BETA_PATH_F  ! Beta on path fine
     real(rp), dimension(:,:), pointer :: Cext_PATH    ! Cloud extinction on path
@@ -385,9 +378,13 @@ contains
 
     complex(rp), dimension(:,:), pointer :: ALPHA_PATH_POLARIZED
     complex(rp), dimension(:,:), pointer :: ALPHA_PATH_POLARIZED_F
+    complex(rp), dimension(:,:), pointer :: dALPHA_dT_POLARIZED_PATH_C
+    complex(rp), dimension(:,:), pointer :: dALPHA_dT_POLARIZED_PATH_F
       ! (-1,:,:) are Sigma_-, (0,:,:) are Pi, (+1,:,:) are Sigma_+
     complex(rp), dimension(:,:,:), pointer :: BETA_PATH_POLARIZED
     complex(rp), dimension(:,:,:), pointer :: BETA_PATH_POLARIZED_F
+    complex(rp), dimension(:,:,:), pointer :: dBETA_dT_POLARIZED_PATH_C
+    complex(rp), dimension(:,:,:), pointer :: dBETA_dT_POLARIZED_PATH_F
     complex(rp), dimension(:,:,:,:), pointer :: DE_DF    ! DE/Df in Michael's notes
     complex(rp), dimension(:,:,:,:), pointer :: DE_DT    ! DE/DT in Michael's notes
     complex(rp), dimension(:,:,:), pointer :: DELTAU_POL ! E in Michael's notes
@@ -448,9 +445,7 @@ contains
 
     type (Signal_T), pointer :: FIRSTSIGNAL        ! The first signal we're dealing with
 
-    type (slabs_struct), dimension(:,:), pointer :: GL_SLABS ! ***
-    type (slabs_struct), dimension(:,:), pointer :: GL_SLABS_M ! ***
-    type (slabs_struct), dimension(:,:), pointer :: GL_SLABS_P ! ***
+    type (slabs_struct), dimension(:,:), pointer :: GL_SLABS ! Freq. indep. stuff
 
     type (catalog_T), dimension(:,:), pointer :: MY_CATALOG ! ***
 
@@ -526,12 +521,16 @@ contains
     ! Nullify all our pointers that are allocated!
 
     nullify ( alpha_path_c, alpha_path_f, alpha_path_polarized, &
-      & alpha_path_polarized_f, beta_n_path_c, beta_n_path_f, beta_path_c, &
-      & beta_path_cloud_c, beta_path_f, beta_path_polarized, cext_path, &
+      & alpha_path_polarized_f, beta_path_c, &
+      & beta_path_cloud_c, beta_path_f, beta_path_polarized, &
+      & beta_path_polarized_f, cext_path, &
       & cg_inds, c_inds, cld_ext%values, closestInstances, d2x_dxdt, &
       & d2xdxdt_surface, d2xdxdt_tan, DACsStaging, DACsStaging2, &
+      & dalpha_dT_path_c, dalpha_dT_path_f, &
+      & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dT_path_c, dbeta_dT_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
+      & dBeta_dT_polarized_path_c, dBeta_dT_polarized_path_f, &
       & d_delta_df, ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, del_zeta, &
       & dh_dt_glgrid, dh_dt_path, dh_dt_path_c, dh_dt_path_f, dhdz_glgrid, &
       & dhdz_gw_path, dhdz_out, dhdz_path, dincoptdepth_pol_dt, &
@@ -555,10 +554,10 @@ contains
       & k_spect_dw_frq, k_temp, k_temp_frq, mag_path, mol_cat_index, n_path, &
       & path_dsdh, phi_path, p_path, p_path_c, prod_pol, ptg_angles, &
       & radiances, RadV, ref_corr, req_out, salb_path, scat_alb%values, &
-      & scat_ang, scat_src%values, sps_beta_dbeta_c, sps_beta_dbeta_f, &
+      & scat_ang, scat_src%values, &
       & sps_path, tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
       & tan_phi, tan_temp, tau, tau_pol, t_der_path_flags, t_glgrid, &
-      & t_path, t_path_c, t_path_f, t_path_m, t_path_p, true_path_flags, &
+      & t_path, t_path_c, t_path_f, true_path_flags, &
       & tscat_path, t_script, tt_path, tt_path_c, &
       & usedDacsSignals, vmr, vmrarray, w0_path_c, wc, z_path )
 
@@ -958,8 +957,6 @@ contains
     call allocate_test ( p_path_c,            npc, 'p_path_c',         moduleName )
     call allocate_test ( p_path,          max_ele, 'p_path',           moduleName )
     call allocate_test ( ref_corr,            npc, 'ref_corr',         moduleName )
-    call allocate_test ( sps_beta_dbeta_c,    npc, 'sps_beta_dbeta_c', moduleName )
-    call allocate_test ( sps_beta_dbeta_f, max_ele, 'sps_beta_dbeta_f', moduleName )
     call allocate_test ( tanh1_c,             npc, 'tanh1_c',          moduleName )
     call allocate_test ( tanh1_f,         max_ele, 'tanh1_f',          moduleName )
     call allocate_test ( tau,                 npc, 'tau',              moduleName )
@@ -979,7 +976,7 @@ contains
     call allocate_test ( true_path_flags, max_ele, 'true_path_flags',moduleName)
     true_path_flags = .true.
 
-   if ( fwdModelConf%Incl_Cld ) then
+    if ( fwdModelConf%Incl_Cld ) then
 !    if ( do_cld ) then !JJ
       call allocate_test ( do_calc_iwc,    max_ele, size(grids_iwc%values),  'do_calc_iwc',  moduleName )
       call allocate_test ( eta_iwc,        max_ele, size(grids_iwc%values),  'eta_iwc',      moduleName )
@@ -998,18 +995,21 @@ contains
 
     if ( temp_der ) then
 
+      call allocate_test ( dAlpha_dT_path_c,     npc, 'dAlpha_dT_path_c', moduleName )
+      call allocate_test ( dAlpha_dT_path_f, max_ele, 'dAlpha_dT_path_f', moduleName )
+
 ! Allocation for metrics routine when Temp. derivative is needed:
 
 !      call allocate_test ( k_temp, noUsedChannels, no_tan_hts, n_t_zeta, &
 !                         & no_sv_p_t, 'k_temp',moduleName )
       allocate ( k_temp(noUsedChannels, no_tan_hts, n_t_zeta, no_sv_p_t) )
 
-      call allocate_test ( beta_n_path_c,      npc, no_mol,   'beta_n_path_c', &
-                                                              & moduleName )
-      call allocate_test ( beta_n_path_f,  max_ele, no_mol,   'beta_n_path_f', &
-                                                              & moduleName )
       call allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', moduleName )
       call allocate_test ( d_t_scr_dt,         npc, sv_t_len, 'd_t_scr_dt', &
+                                                              & moduleName )
+      call allocate_test ( dBeta_dT_path_c,    npc, no_mol,   'dBeta_dT_path_c', &
+                                                              & moduleName )
+      call allocate_test ( dBeta_dT_path_f, max_ele, no_mol,   'dBeta_dT_path_f', &
                                                               & moduleName )
       call allocate_test ( dh_dt_path,      max_ele, sv_t_len, 'dh_dt_path', &
                                                               & moduleName )
@@ -1039,8 +1039,6 @@ contains
       call allocate_test ( tan_d2h_dhdt, 1, sv_t_len, 'tan_d2h_dhdt', moduleName )
       call allocate_test ( t_der_path_flags, max_ele,          't_der_path_flags', &
                                                               & moduleName )
-      call allocate_test ( t_path_m,        max_ele, 't_path_m',         moduleName )
-      call allocate_test ( t_path_p,        max_ele, 't_path_p',         moduleName )
 
     end if ! temp_der
 
@@ -1182,6 +1180,18 @@ contains
         allocate ( d_rad_pol_dt(2,2,sv_t_len), stat=ier )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
           & MLSMSG_Allocate//'d_rad_pol_dt' )
+        allocate ( dAlpha_dT_polarized_path_c(-1:1,npc), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'dAlpha_dT_polarized_path_c' )
+        allocate ( dAlpha_dT_polarized_path_f(-1:1,max_ele), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'dAlpha_dT_polarized_path_f' )
+        allocate ( dBeta_dT_polarized_path_c(-1:1,npc,no_mol), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'dBeta_dT_polarized_path_c' )
+        allocate ( dBeta_dT_polarized_path_f(-1:1,max_ele,no_mol), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'dBeta_dT_polarized_path_f' )
         allocate ( de_dt(2,2,npc,sv_t_len), stat=ier )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
           & MLSMSG_Allocate//'de_dt' )
@@ -1211,12 +1221,6 @@ contains
       ! Now, allocate gl_slabs arrays
       call allocateSlabs ( gl_slabs, max_ele, my_catalog(thisSideband,:), &
         & moduleName, temp_der )
-      if ( temp_der ) then
-        call allocateSlabs ( gl_slabs_p, max_ele, my_catalog(thisSideband,:), &
-          & moduleName, temp_der )
-        call allocateSlabs ( gl_slabs_m, max_ele, my_catalog(thisSideband,:), &
-          & moduleName, temp_der )
-      end if
 
       ! Work out which pointing frequency grid we're going to need if ----------
       ! frequency averaging
@@ -1440,10 +1444,6 @@ contains
         end do
         h_path(1:no_ele) = req + h_path(1:no_ele)
         h_path_c(1:npc) = h_path(c_inds(1:npc))
-        if ( temp_der ) then
-          t_path_m = t_path - del_temp ! for computing temperature derivatives
-          t_path_p = t_path + del_temp ! for computing temperature derivatives
-        end if
         t_path_c(1:npc) = t_path(c_inds(1:npc))
         ! Fill the diagnostic arrays for Nathaniel and Bill
 !       tan_temps ( ptg_i ) = one_tan_temp ( 1 )
@@ -1590,12 +1590,6 @@ contains
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
             &  losVel%values(1,maf), gl_slabs, fwdModelConf%Do_1D, &
             &  t_der_path_flags(1:no_ele) )
-          call get_gl_slabs_arrays ( p_path(1:no_ele), t_path_p(1:no_ele), &
-            &  losVel%values(1,maf), gl_slabs_p, fwdModelConf%Do_1D, &
-            &  t_der_path_flags(1:no_ele) )
-          call get_gl_slabs_arrays ( p_path(1:no_ele), t_path_m(1:no_ele), &
-            &  losVel%values(1,maf), gl_slabs_m, fwdModelConf%Do_1D, &
-            &  t_der_path_flags(1:no_ele) )
         else
           call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
             &  losVel%values(1,maf), gl_slabs, fwdModelConf%Do_1D )
@@ -1661,11 +1655,8 @@ contains
             &  p_path(1:no_ele), t_path_c(1:npc), tanh1_c(1:npc), &
             &  beta_group, FwdModelConf%polarized,                &
             &  gl_slabs, c_inds(1:npc), beta_path_c(1:npc,:),     &
-            &  gl_slabs_m, t_path_m,                              &
-            &  gl_slabs_p, t_path_p,                              &
             &  t_der_path_flags, dTanh_dT_c, dbeta_dT_path_c,     &
-            &  beta_n_path_c, dbeta_dw_path_c,                    &
-            &  dbeta_dn_path_c, dbeta_dv_path_c )
+            &  dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
 
          do_gl = .false.
 
@@ -1784,24 +1775,24 @@ contains
 
             end if
             
-              call deallocate_test ( do_calc_tscat,    'do_calc_tscat',    moduleName )
-              call deallocate_test ( do_calc_tscat_zp, 'do_calc_tscat_zp', moduleName )
-              call deallocate_test ( eta_tscat,        'eta_tscat',        moduleName )
-              call deallocate_test ( eta_tscat_zp,     'eta_tscat_zp',     moduleName )           
-              call deallocate_test ( tscat_path,       'tscat_path',       moduleName )
-              call deallocate_test ( tt_path,          'tt_path',          moduleName )
+            call deallocate_test ( do_calc_tscat,    'do_calc_tscat',    moduleName )
+            call deallocate_test ( do_calc_tscat_zp, 'do_calc_tscat_zp', moduleName )
+            call deallocate_test ( eta_tscat,        'eta_tscat',        moduleName )
+            call deallocate_test ( eta_tscat_zp,     'eta_tscat_zp',     moduleName )           
+            call deallocate_test ( tscat_path,       'tscat_path',       moduleName )
+            call deallocate_test ( tt_path,          'tt_path',          moduleName )
 
-              call deallocate_test ( do_calc_salb,     'do_calc_salb',     moduleName )
-              call deallocate_test ( do_calc_salb_zp,  'do_calc_salb_zp',  moduleName )
-              call deallocate_test ( eta_salb,         'eta_salb',         moduleName )
-              call deallocate_test ( eta_salb_zp,      'eta_salb_zp',      moduleName )
-              call deallocate_test ( salb_path,        'salb_path',        moduleName )
+            call deallocate_test ( do_calc_salb,     'do_calc_salb',     moduleName )
+            call deallocate_test ( do_calc_salb_zp,  'do_calc_salb_zp',  moduleName )
+            call deallocate_test ( eta_salb,         'eta_salb',         moduleName )
+            call deallocate_test ( eta_salb_zp,      'eta_salb_zp',      moduleName )
+            call deallocate_test ( salb_path,        'salb_path',        moduleName )
 
-              call deallocate_test ( do_calc_cext,     'do_calc_salb',     moduleName )
-              call deallocate_test ( do_calc_cext_zp,  'do_calc_salb_zp',  moduleName )
-              call deallocate_test ( eta_cext,         'eta_cext',         moduleName )
-              call deallocate_test ( eta_cext_zp,      'eta_cext_zp',      moduleName )
-              call deallocate_test ( cext_path,        'cext_path',        moduleName )
+            call deallocate_test ( do_calc_cext,     'do_calc_salb',     moduleName )
+            call deallocate_test ( do_calc_cext_zp,  'do_calc_salb_zp',  moduleName )
+            call deallocate_test ( eta_cext,         'eta_cext',         moduleName )
+            call deallocate_test ( eta_cext_zp,      'eta_cext_zp',      moduleName )
+            call deallocate_test ( cext_path,        'cext_path',        moduleName )
 
             do j = 1, npc
               alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
@@ -1815,13 +1806,13 @@ contains
 
             do j = 1, npc ! Don't trust compilers to fuse loops
               alpha_path_c(j) = dot_product( sps_path(c_inds(j),:), &
-                                    & beta_path_c(j,:) )
+                                           & beta_path_c(j,:) )
               incoptdepth(j) = alpha_path_c(j) * del_s(j)
               tt_path_c(j) =0.0
               w0_path_c(j) =0.0
             end do
 
-         endif ! end of check cld 
+         end if ! end of check cld 
 
             if ( .not. FwdModelConf%polarized ) then
               ! Determine where to use Gauss-Legendre for scalar instead of a trapezoid.
@@ -1832,34 +1823,21 @@ contains
             else ! extra stuff for polarized case
 
               call get_beta_path_polarized ( frq, h, beta_group, &
-                & gl_slabs, c_inds(1:npc), beta_path_polarized )
+                & gl_slabs, c_inds(1:npc), beta_path_polarized,  &
+                & dBeta_dT_polarized_path_c )
 
               ! We put an explicit extent of -1:1 for the first dimension in
               ! the hope a clever compiler will do better optimization with
               ! a constant extent.
-              if ( any_der ) then
-                ! Will need beta_path_polarized * tanh1_c
-                ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
-                ! to alpha here
-                do j = 1, npc
-                  beta_path_polarized(-1:1,j,:) = beta_path_polarized(-1:1,j,:) * tanh1_c(j)
-                  alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
-                    & sps_path(c_inds(j),:) ) + 0.25 * alpha_path_c(j)
-                  alpha_path_polarized(0,j) = alpha_path_polarized(0,j) + &
-                    & 0.25 * alpha_path_c(j)
-                end do
-              else
-                ! Won't need beta_path_polarized * tanh1_c
-                ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
-                ! to alpha here
-                do j = 1, npc
-                  alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
-                    & sps_path(c_inds(j),:) ) * tanh1_c(j) + &
-                    & 0.25 * alpha_path_c(j)
-                  alpha_path_polarized(0,j) = alpha_path_polarized(0,j) + &
-                    & 0.25 * alpha_path_c(j)
-                end do
-              end if
+              ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
+              ! to alpha here
+              do j = 1, npc
+                alpha_path_polarized(-1:1,j) = matmul( beta_path_polarized(-1:1,j,:), &
+                  & sps_path(c_inds(j),:) ) * tanh1_c(j) + &
+                  & 0.25 * alpha_path_c(j)
+                alpha_path_polarized(0,j) = alpha_path_polarized(0,j) + &
+                  & 0.25 * alpha_path_c(j)
+              end do
 
               ! Turn sigma-, pi, sigma+ into 2X2 matrix incoptdepth_pol
               call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
@@ -1916,11 +1894,8 @@ contains
             & p_path(1:no_ele), t_path_f(:ngl), tanh1_f(1:ngl),       &
             & beta_group, FwdModelConf%polarized,                     &
             & gl_slabs, gl_inds(:ngl), beta_path_f(:ngl,:),           &
-            & gl_slabs_m, t_path_m,                                   &
-            & gl_slabs_p, t_path_p,                                   &
             & t_der_path_flags, dTanh_dT_f, dbeta_dT_path_f,          &
-            & beta_n_path_f, dbeta_dw_path_f,                         &
-            & dbeta_dn_path_f, dbeta_dv_path_f )
+            & dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
 
           do j = 1, ngl ! loop around dot_product instead of doing sum(a*b,2)
                         ! to avoid path-length array temps
@@ -1942,46 +1917,37 @@ contains
 
               call rad_tran ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty,     &
                 & del_zeta(1:npc), alpha_path_c(1:npc), ref_corr(1:npc),   &
-                & do_gl(1:npc), incoptdepth(1:npc), alpha_path_f(1:ngl),   &
-                & dsdz_gw_path, t_script(1:npc),  &
-                & tau(1:npc), RadV(frq_i), i_stop )
+                & incoptdepth(1:npc), alpha_path_f(1:ngl), dsdz_gw_path,   &
+                & t_script(1:npc), tau(1:npc), RadV(frq_i), i_stop )
 
           else ! Polarized model
 
             i_stop = npc ! needed by drad_tran_df
 
-            ! get the corrections to integrals for layers that need gl for
-            ! the polarized species
+            ! Get the corrections to integrals for layers that need GL for
+            ! the polarized species.
             call get_beta_path_polarized ( frq, h, beta_group, &
-              & gl_slabs, gl_inds(:ngl), beta_path_polarized_f )
+              & gl_slabs, gl_inds(:ngl), beta_path_polarized_f,  &
+              & dBeta_dT_polarized_path_f )
 
-            ! The explicit -1:1 is written in the hope that a clever compiler
-            ! can exploit it to optimize.
-            if ( any_der ) then
-              ! Will need beta_path_polarized_f * tanh1_f
-              do j = 1, ngl
-                beta_path_polarized_f(-1:1,j,:) = beta_path_polarized_f(-1:1,j,:) * tanh1_f(j)
-                alpha_path_polarized_f(-1:1,j) = matmul( beta_path_polarized_f(-1:1,j,:), &
-                  & sps_path(gl_inds(j),:) ) + 0.25 * alpha_path_f(j)
-                alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) + &
-                  & 0.25 * alpha_path_f(j)
-              end do
-            else
-              ! Won't need beta_path_polarized_f * tanh1_f
-              do j = 1, ngl
-                alpha_path_polarized_f(-1:1,j) = matmul( beta_path_polarized_f(-1:1,j,:), &
-                  & sps_path(gl_inds(j),:) ) * tanh1_f(j) + 0.25 * alpha_path_f(j)
-                alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) + &
-                  & 0.25 * alpha_path_f(j)
-              end do
-            end if
+            ! We put an explicit extent of -1:1 for the first dimension in
+            ! the hope a clever compiler will do better optimization with
+            ! a constant extent.
+            ! Add contributions from nonpolarized molecules 1/4 1/2 1/4
+            ! to alpha here.
+            do j = 1, ngl
+              alpha_path_polarized_f(-1:1,j) = matmul( beta_path_polarized_f(-1:1,j,:), &
+                & sps_path(gl_inds(j),:) ) * tanh1_f(j) + 0.25 * alpha_path_f(j)
+              alpha_path_polarized_f(0,j) = alpha_path_polarized_f(0,j) + &
+                & 0.25 * alpha_path_f(j)
+            end do
 
-            call rad_tran_pol ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty,         &
-              & del_zeta(1:npc), alpha_path_polarized(:,1:npc), ref_corr(1:npc), &
-              & do_gl(1:npc), incoptdepth_pol(:,:,1:npc), deltau_pol(:,:,1:npc), &
-              & alpha_path_polarized_f(:,1:ngl), dsdz_gw_path,                   &
-              & ct, stcp, stsp, t_script(1:npc),  prod_pol(:,:,1:npc),           &
-              & tau_pol(:,:,1:npc), rad_pol, p_stop )
+            call rad_tran_pol ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty,   &
+              & del_zeta(1:npc), alpha_path_polarized(:,1:npc),            &
+              & ref_corr(1:npc), incoptdepth_pol(:,:,1:npc),               &
+              & deltau_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl),    &
+              & dsdz_gw_path, ct, stcp, stsp, t_script(1:npc),             &
+              & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), rad_pol, p_stop )
 
             if ( p_stop < 0 ) then ! exp(incoptdepth_pol(:,:,-p_stop)) failed
               call output ( 'Exp(incoptdepth_pol(:,:,' )
@@ -2052,24 +2018,22 @@ contains
             do_calc_t_f(:ngl,:) = do_calc_t(gl_inds(:ngl),:)
             eta_zxp_t_f(:ngl,:) = eta_zxp_t(gl_inds(:ngl),:)
             h_path_f(:ngl) = h_path(gl_inds(:ngl))
-            sps_beta_dbeta_c(:npc) = SUM(sps_path(c_inds(1:npc),:) * &
-              &                          beta_path_c(1:npc,:) * &
-              &                          beta_n_path_c(1:npc,:),DIM=2)
-            sps_beta_dbeta_f(:ngl) = SUM(sps_path(gl_inds(1:ngl),:) * &
-              &                          beta_path_f(1:ngl,:) * &
-              &                          beta_n_path_f(1:ngl,:),DIM=2)
+            dAlpha_dT_path_c(:npc) = sum( sps_path(c_inds(1:npc),:) * &
+                                          dBeta_dT_path_c(1:npc,:),dim=2 )
+            dAlpha_dT_path_f(:ngl) = sum( sps_path(gl_inds(1:ngl),:) * &
+                                          dBeta_dT_path_f(1:ngl,:),dim=2 )
 
             if ( .not. FwdModelConf%polarized ) then
 
               call drad_tran_dt ( del_zeta(1:npc ), h_path_c(1:npc),          &
-                & t_path_c(1:npc), dh_dt_path_c(1:npc,:),                     &
-                & alpha_path_c(1:npc), sps_beta_dbeta_c(:npc),                &
+                & dh_dt_path_c(1:npc,:),alpha_path_c(1:npc),                  &
+                & dAlpha_dT_path_c(:npc), &
                 & eta_zxp_t_c(1:npc,:), do_calc_t_c(1:npc,:),                 &
                 & do_calc_hyd_c(1:npc,:), del_s(1:npc), ref_corr(1:npc),      &
                 & Req + one_tan_ht(1), dh_dt_path(brkpt,:), do_gl(1:npc),     &
                 & gl_inds(1:ngl), h_path_f(:ngl), t_path_f(:ngl),             &
                 & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                  &
-                & sps_beta_dbeta_f(:ngl), eta_zxp_t_f(:ngl,:),                &
+                & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                &
                 & do_calc_t_f(:ngl,:), path_dsdh, dhdz_gw_path, dsdz_gw_path, &
                 & t_script(1:npc), d_t_scr_dt(1:npc,:), tau(1:npc), i_stop,   &
                 & grids_tmp%deriv_flags, drad_dt )
@@ -2081,16 +2045,37 @@ contains
               ! Compute DE / DT from D Incoptdepth_Pol / DT and put
               ! into DE_DT.
 
-              call get_d_deltau_pol_dT ( frq, h, ct, stcp, stsp,              &
-                & beta_group, gl_slabs_m, gl_slabs_p,                         &
-                & t_path_c(1:p_stop), t_path_m(1:no_ele), t_path_p(1:no_ele), &
-                & t_path_f(:ngl), beta_path_polarized(:,1:p_stop,:),          &
-                & beta_path_polarized_f(:,1:ngl,:), sps_path,                 &
+              dAlpha_dT_polarized_path_c(:,1:npc) = 0.0
+              dAlpha_dT_polarized_path_f(:,1:ngl) = 0.0
+              do j = 1, no_mol
+                do l = -1, 1
+                  dAlpha_dT_polarized_path_c(l,1:npc) = &
+                & dAlpha_dT_polarized_path_c(l,1:npc) + &
+                    & sps_path(c_inds(1:npc),j) * &
+                    & dBeta_dT_polarized_path_c(l,1:npc,j)
+                  dAlpha_dT_polarized_path_f(l,1:ngl) = &
+                & dAlpha_dT_polarized_path_f(l,1:ngl) + &
+                    & sps_path(gl_inds(1:ngl),j) * &
+                    & dBeta_dT_polarized_path_f(l,1:ngl,j)
+                end do ! l
+              end do ! j
+              do l = -1, 1
+                dAlpha_dT_polarized_path_c(l,1:npc) = &
+                  & dAlpha_dT_polarized_path_c(l,1:npc) * tanh1_c(:npc) + &
+                  & alpha_path_polarized(l,:npc) * dTanh_dT_c(:npc)
+                dAlpha_dT_polarized_path_f(l,1:ngl) = &
+                  & dAlpha_dT_polarized_path_f(l,1:ngl) * tanh1_f(:ngl) + &
+                  & alpha_path_polarized_f(l,:ngl) * dTanh_dT_f(:ngl)
+              end do
+
+              call get_d_deltau_pol_dT ( ct, stcp, stsp,              &
+                & t_path_f(:ngl),                 &
                 & alpha_path_polarized(:,1:p_stop), &
                 & alpha_path_polarized_f(:,1:ngl), &
-                & sps_beta_dbeta_c(:npc), sps_beta_dbeta_f(:ngl), &
+                & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl), &
+                & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f, &
                 & eta_zxp_t_c(1:p_stop,:), eta_zxp_t_f(:ngl,:), del_s(1:npc), &
-                & c_inds(1:p_stop), gl_inds(:ngl), del_zeta(1:npc),           &
+                & gl_inds(:ngl), del_zeta(1:npc),           &
                 & do_calc_t_c(1:p_stop,:), do_calc_t_f(:ngl,:), do_gl(1:p_stop), &
                 & path_dsdh, dhdz_gw_path, dsdz_gw_path,                      &
                 & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),          &
@@ -2535,8 +2520,6 @@ contains
 
       call DestroyCompleteSlabs ( gl_slabs )
       if ( temp_der ) then
-        call DestroyCompleteSlabs ( gl_slabs_p )
-        call DestroyCompleteSlabs ( gl_slabs_m )
         call deallocate_test ( k_temp_frq,     'k_temp_frq',     moduleName )
       end if
 
@@ -2684,8 +2667,6 @@ contains
     call deallocate_test ( incoptdepth,      'incoptdept',       moduleName )
     call deallocate_test ( n_path,           'n_path',           moduleName )
     call deallocate_test ( ref_corr,         'ref_corr',         moduleName )
-    call deallocate_test ( sps_beta_dbeta_c, 'sps_beta_dbeta_c', moduleName )
-    call deallocate_test ( sps_beta_dbeta_f, 'sps_beta_dbeta_f', moduleName )
     call deallocate_test ( tau,              'tau',              moduleName )
     call deallocate_test ( tanh1_c,          'tanh1_c',          moduleName )
     call deallocate_test ( tanh1_f,          'tanh1_f',          moduleName )
@@ -2726,28 +2707,30 @@ contains
 
     if ( temp_der ) then
       deallocate ( k_temp, STAT=i )
-      call deallocate_test ( beta_n_path_c,   'beta_n_path_c',   moduleName )
-      call deallocate_test ( beta_n_path_f,   'beta_n_path_f',   moduleName )
-      call deallocate_test ( d_t_scr_dt,      'd_t_scr_dt',      moduleName )
-      call deallocate_test ( dRad_dt,         'dRad_dt',         moduleName )
-      call deallocate_test ( dh_dt_path,      'dh_dt_path',      moduleName )
+      call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
+      call deallocate_test ( dAlpha_dT_path_c,'dAlpha_dT_path_c',moduleName )
+      call deallocate_test ( dAlpha_dT_path_f,'dAlpha_dT_path_f',moduleName )
+      call deallocate_test ( dBeta_dT_Path_c, 'dBeta_dT_Path_c', moduleName )
+      call deallocate_test ( dBeta_dT_Path_f, 'dBeta_dT_Path_f', moduleName )
       call deallocate_test ( dh_dt_path_c,    'dh_dt_path_c',    moduleName )
+      call deallocate_test ( dh_dt_path,      'dh_dt_path',      moduleName )
       call deallocate_test ( dh_dt_path_f,    'dh_dt_path_f',    moduleName )
-      call deallocate_test ( do_calc_hyd,     'do_calc_hyd',     moduleName )
       call deallocate_test ( do_calc_hyd_c,   'do_calc_hyd_c',   moduleName )
-      call deallocate_test ( do_calc_t,       'do_calc_t',       moduleName )
+      call deallocate_test ( do_calc_hyd,     'do_calc_hyd',     moduleName )
       call deallocate_test ( do_calc_t_c,     'do_calc_t_c',     moduleName )
+      call deallocate_test ( do_calc_t,       'do_calc_t',       moduleName )
       call deallocate_test ( do_calc_t_f,     'do_calc_t_f',     moduleName )
+      call deallocate_test ( dRad_dt,         'dRad_dt',         moduleName )
       call deallocate_test ( dTanh_dT_c,      'dTanh_dT_c',      moduleName )
       call deallocate_test ( dTanh_dT_f,      'dTanh_dT_f',      moduleName )
-      call deallocate_test ( eta_zxp_t,       'eta_zxp_t',       moduleName )
-      call deallocate_test ( eta_zxp_t_c,     'eta_zxp_t_c',     moduleName )
-      call deallocate_test ( eta_zxp_t_f,     'eta_zxp_t_f',     moduleName )
-      call deallocate_test ( tan_dh_dt,       'tan_dh_dt',       moduleName )
-      call deallocate_test ( tan_d2h_dhdt,    'tan_d2h_dhdt',    moduleName )
-      call deallocate_test ( dxdt_tan,        'dxdt_tan',        moduleName )
-      call deallocate_test ( d2xdxdt_tan,     'd2xdxdt_tan',     moduleName )
+      call deallocate_test ( d_t_scr_dt,      'd_t_scr_dt',      moduleName )
       call deallocate_test ( dxdt_surface,    'dxdt_surface',    moduleName )
+      call deallocate_test ( dxdt_tan,        'dxdt_tan',        moduleName )
+      call deallocate_test ( eta_zxp_t_c,     'eta_zxp_t_c',     moduleName )
+      call deallocate_test ( eta_zxp_t,       'eta_zxp_t',       moduleName )
+      call deallocate_test ( eta_zxp_t_f,     'eta_zxp_t_f',     moduleName )
+      call deallocate_test ( tan_d2h_dhdt,    'tan_d2h_dhdt',    moduleName )
+      call deallocate_test ( tan_dh_dt,       'tan_dh_dt',       moduleName )
       call deallocate_test ( t_der_path_flags,'t_der_path_flags',moduleName )
       call deallocate_test ( true_path_flags, 'true_path_flags', moduleName )
     end if
@@ -2836,6 +2819,12 @@ contains
         deallocate ( d_rad_pol_dt, stat=ier )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_DeAllocate//'d_rad_pol_dt' )
+        deallocate ( dBeta_dT_polarized_path_c, stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate//'dBeta_dT_polarized_path_c' )
+        deallocate ( dBeta_dT_polarized_path_f, stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate//'dBeta_dT_polarized_path_f' )
         deallocate ( de_dt, stat=ier )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_DeAllocate//'de_dt' )
@@ -2858,9 +2847,6 @@ contains
     call deallocate_test ( radiances,        'radiances',      moduleName )
     call deallocate_test ( dx_dt,            'dx_dt',          moduleName )
     call deallocate_test ( d2x_dxdt,         'd2x_dxdt',       moduleName )
-
-    call deallocate_test ( sps_beta_dbeta_c, 'sps_beta_dbeta', moduleName )
-    call deallocate_test ( sps_beta_dbeta_f, 'sps_beta_dbeta', moduleName )
 
     deallocate ( qtys, stat = ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -3069,6 +3055,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.205  2004/04/05 21:08:42  jonathan
+! delet temp_prof
+!
 ! Revision 2.204  2004/04/02 00:59:24  vsnyder
 ! Get catalog from slabs structure
 !

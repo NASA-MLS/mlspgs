@@ -26,9 +26,9 @@ contains
 ! ---------------------------------------  Get_Beta_Path_Scalar  -----
   subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
         & beta_group, NoPolarized, gl_slabs, path_inds,               &
-        & beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,    &
+        & beta_path,    &
         & t_der_path_flags, dTanh_dT, dBeta_dt_path,                &
-        & beta_n_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
+        & dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
 
     use Get_Species_Data_m, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -52,12 +52,6 @@ contains
 ! allocate them if DBETA_D*_PATH aren't allocated.  They would be
 ! INTENT(IN) if we could say so.
 
-    type(slabs_struct), pointer :: gl_slabs_m(:,:) ! reduced strength data
-!                               for t_path_m
-    real(rp), pointer :: t_path_m(:) ! path temperatures for gl_slabs_m
-    type(slabs_struct), pointer :: gl_slabs_p(:,:) ! reduced
-!                               strength data for t_path_p
-    real(rp), pointer :: t_path_p(:) ! path temperatures for gl_slabs_p
     logical, pointer :: t_der_path_flags(:)     ! indicies where temperature
 !                               derivatives are needed. Only useful for
 !                               subsetting.
@@ -90,7 +84,6 @@ contains
 !  actually assembled in {\tt dRad\_tran\_dT}.
 
     real(rp), pointer :: dBeta_dT_path(:,:) ! Temperature
-    real(rp), pointer :: beta_n_path(:,:)   ! n in beta = beta_0 (T/T_0)^n
     real(rp), pointer :: dBeta_dw_path(:,:) ! line width
     real(rp), pointer :: dBeta_dn_path(:,:) ! line width t dep.
     real(rp), pointer :: dBeta_dv_path(:,:) ! line position
@@ -101,8 +94,6 @@ contains
     integer(ip) :: I, J, K, N, IB, No_mol, N_path
     real(rp) :: BB, BP, BM
     real(rp) :: T
-    real(rp), dimension(size(path_inds)) :: betam, betap
-    real(rp), dimension(size(path_inds)) :: tanh1_p, tanh1_m, TM, TP
 
 ! begin the code
 
@@ -124,82 +115,32 @@ contains
         dBdw => dBeta_dw_path(:,i)
         dBdw = 0.0_rp
       end if
+
       beta_path(:,i) = 0.0_rp
+      dBdT => null()
+      if ( associated(dBeta_dt_path) ) then
+        dBdT => dBeta_dt_path(:,i)
+        dBdT = 0.0_rp
+      end if
+
       do n = 1, beta_group(i)%n_elements
         ib = beta_group(i)%cat_index(n)
-
-        dBdT => null()
-        if ( associated(dBeta_dt_path) ) dBdT => dBeta_dt_path(:,i)
         call create_beta_path ( path_inds, p_path, t_path, frq,             &
           & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
           & beta_path(:,i), dTanh_dT, dBdT, dBdw, dBdn, dBdv )
       end do
     end do
 
-    if ( associated(beta_n_path) ) then
-
-      beta_n_path(1:n_path,:) = 0.0
-      tm = t_path_m(path_inds)
-      tp = t_path_p(path_inds)
-      ! compute path hyperbolic tangents
-      tanh1_p = tanh(0.5_rp * h_over_k * frq / tp)
-      tanh1_m = tanh(0.5_rp * h_over_k * frq / tm)
-
-      do i = 1, no_mol
-        betam = 0.0
-        betap = 0.0
-        do n = 1, beta_group(i)%n_elements
-          ib = beta_group(i)%cat_index(n)
-          call create_beta_path ( path_inds, p_path, tm, frq,                 &
-            & beta_group(i)%ratio(n), gl_slabs_m(:,ib), tanh1_m, noPolarized, &
-            & betam, dTanh_dT=null(), dBeta_dT=null(),                        &
-            & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() ,             &
-            & path_flags=t_der_path_flags )
-          call create_beta_path ( path_inds, p_path, tp, frq,                 &
-            & beta_group(i)%ratio(n), gl_slabs_p(:,ib), tanh1_p, noPolarized, &
-            & betap, dTanh_dT=null(), dBeta_dT=null(),                        &
-            & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null(),              &
-            & path_flags=t_der_path_flags )
-        end do ! n
-        do j = 1 , n_path
-          k = path_inds(j)
-          t  = t_path(j)
-          bm = betam(j)
-          bp = betap(j)
-          bb = beta_path(j,i)
-          n = 0
-          if ( bm > 0.0 ) n = 1
-          if ( bb > 0.0 ) n = n + 2
-          if ( bp > 0.0 ) n = n + 4
-          select case ( n )
-          case ( 7 ) ! bp > 0.0 .and. bb > 0.0 .and. bm > 0.0
-            beta_n_path(j,i) =  0.25 * ( &           ! Weighted average of
-              &       Log(bp/bb)/Log(tp(j)/t) + &    ! Estimate over [temp+10,temp]
-              & 2.0 * Log(bp/bm)/Log(tp(j)/tm(j))+ & ! Estimate over [temp+10,temp-10]
-              &       Log(bb/bm)/Log(t/tm(j)) )      ! Estimate over [temp,temp-10]
-          case ( 6 ) ! bp > 0.0 .and. bb > 0.0
-            beta_n_path(j,i) = Log(bp/bb)/Log(tp(j)/t) ! Estimate over [temp+10,temp]
-          case ( 5 ) ! bm > 0.0 .and. bp > 0.0
-            beta_n_path(j,i) = Log(bp/bm)/Log(tp(j)/tm(j)) ! Estimate over [temp+10,temp-10]
-          case ( 3 ) ! bm > 0.0 .and. bb > 0.0
-            beta_n_path(j,i) = Log(bb/bm)/Log(t/tm(j)) ! Estimate over [temp,temp-10]
-          case default
-            beta_n_path(j,i) = 0.0
-          end select
-        end do ! j
-      end do ! i
-    end if
-
   end subroutine Get_Beta_Path_Scalar
 
   ! ------------------------------------  Get_Beta_Path_Polarized  -----
   subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
-                                     & Path_inds, Beta_path )
+                                     & Path_inds, Beta_path, dBeta_path_dT )
 
     use Get_Species_Data_m, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
-    use O2_Abs_CS_m, only: O2_Abs_CS
+    use O2_Abs_CS_m, only: O2_Abs_CS, D_O2_Abs_CS_dT
 
 ! Inputs:
 
@@ -221,17 +162,21 @@ contains
     ! beta_path(-1,:,:) is Sigma_m, beta_path(0,:,:) is Pi,
     ! beta_path(+1,:,:) is Sigma_p
 
+    complex(rp), pointer :: dBeta_path_dT(:,:,:)
+
 ! Local variables..
 
     integer(ip) :: I, IB, J, K, M, N, N_PATH
     real(rp) :: RATIO ! Isotope ratio, not mixing ratio
     complex(rp) :: Sigma_m, Pi, Sigma_p
+    complex(rp) :: dSigma_m_dT, dPi_dT, dSigma_p_dT
 
 ! begin the code
 
     n_path = size(path_inds)
 
     beta_path = 0.0
+    if ( associated(dBeta_path_dT) ) dBeta_path_dT = 0.0
 
     do i = 1, size(beta_group)
       do n = 1, beta_group(i)%n_elements
@@ -241,8 +186,17 @@ contains
         do j = 1, n_path
           k = path_inds(j)
 
-          call o2_abs_cs ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%catalog%lines) ) /),   &
-            & h(k), gl_slabs(k,ib), sigma_p, pi, sigma_m )
+          if ( .not. associated(dBeta_path_dT) ) then
+            call o2_abs_cs ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%catalog%lines) ) /),   &
+              & h(k), gl_slabs(k,ib), sigma_p, pi, sigma_m )
+          else
+            call d_o2_abs_cs_dT ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%catalog%lines) ) /),   &
+              & h(k), gl_slabs(k,ib), sigma_p, pi, sigma_m, &
+              & dSigma_p_dT, dPi_dT, dSigma_m_dT )
+            dBeta_path_dT(-1,j,i) = dBeta_path_dT(-1,j,i) + ratio * dSigma_m_dT
+            dBeta_path_dT( 0,j,i) = dBeta_path_dT( 0,j,i) + ratio * dPi_dT
+            dBeta_path_dT(+1,j,i) = dBeta_path_dT(+1,j,i) + ratio * dSigma_p_dT
+          end if
           beta_path(-1,j,i) = beta_path(-1,j,i) + ratio * sigma_m
           beta_path( 0,j,i) = beta_path( 0,j,i) + ratio * pi
           beta_path(+1,j,i) = beta_path(+1,j,i) + ratio * sigma_p
@@ -564,10 +518,10 @@ contains
     nl = size(slabs_0(1)%catalog%lines) ! All of the slabs have the same catalog
     spect_der = associated(dBeta_dw) .or. associated(dBeta_dn) .or. &
               & associated(dBeta_dv)
+    temp_der = associated(dBeta_dT)
 
     do j = 1, size(path_inds)
       k = path_inds(j)
-      temp_der = associated(dBeta_dT)
       if ( temp_der .and. present(path_flags) ) temp_der = path_flags(k)
 
       cont => slabs_0(k)%catalog%continuum
@@ -846,7 +800,7 @@ contains
 !  is $\beta = c_1 p^2 \nu^2 \theta^{c_2} D$. Noticing that
 !  $\frac{\partial \theta}{\partial T} = -\frac{\theta}T$, we have
 !  $\frac{\partial \beta}{\partial T} = \frac{\beta}T
-!   ( 2 c_4 f D - c_2)$.
+!   ( c_4 f D - c_2)$.
 
     onedt = 1.0 / temperature
     theta = log( 300.0_rp * onedt )
@@ -855,7 +809,7 @@ contains
     d = 1.0 / (fsqr + f)
     beta = cont(1) * pressure * pressure * fsqr * exp(cont(2)*theta) * d
 
-    dBeta_dT = beta * onedt * ( 2.0 * cont(4) * f * d - cont(2) )
+    dBeta_dT = beta * onedt * ( cont(4) * f * d - cont(2) )
 
   end subroutine Abs_CS_O2_Cont_dT
 
@@ -867,6 +821,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.56  2004/04/02 00:59:24  vsnyder
+! Get catalog from slabs structure
+!
 ! Revision 2.55  2004/03/27 03:35:27  vsnyder
 ! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
 ! line centers and line widths around.  Write slabs_lines and slabswint_lines
