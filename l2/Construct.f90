@@ -83,16 +83,17 @@ contains ! =====     Public Procedures     =============================
     use HGridsDatabase, only: ADDHGRIDTODATABASE, HGRID_T
     use HGrid, only: CREATEHGRIDFROMMLSCFINFO
     use INIT_TABLES_MODULE, only: S_FORGE, S_FORWARDMODEL, S_HGRID, S_QUANTITY, S_TIME, &
-      & S_VECTORTEMPLATE
+      & S_VECTORTEMPLATE, S_PHASE
     use Intrinsic, ONLY: L_None
     use L2GPData, only: L2GPDATA_T
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use MoreTree, only: Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
     use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
       & QuantityTemplate_T
+    use String_Table, only: get_string
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, LEVELS, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -123,6 +124,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I                ! Loop counter
     integer :: KEY              ! S_... from Init_Tables_Module.
     integer :: NAME             ! Sub-rosa index of name
+    character(len=80) :: PHASESTRING    ! E.g., 'Core'
     integer :: SON              ! Son or grandson of Root
     integer :: STATUS           ! Flag
     REAL :: T1, T2              ! for timing
@@ -163,6 +165,9 @@ contains ! =====     Public Procedures     =============================
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
           & processingRange, chunk ) ) )
+      case ( s_phase )
+        call get_string(name, phaseString)
+        call add_to_phase_timing(trim(phaseString))
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplatesBase, CreateQtyTemplateFromMLSCfInfo ( name, key, &
@@ -241,6 +246,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.42  2003/10/22 21:17:06  pwagner
+! aPhaseName: Phase added to Fill, Construct sections to time phases
+!
 ! Revision 2.41  2003/07/15 18:18:16  livesey
 ! Change to forward model config call
 !
