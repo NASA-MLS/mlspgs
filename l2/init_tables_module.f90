@@ -633,7 +633,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
              begin, f+f_signal, t+t_string, nr+n_field_type, &
              begin, f+f_temperatures, s+s_tGrid, nr+n_field_spec, &
-             begin, f+f_velLin, t+t_numeric, nr+n_field_type, &
+             begin, f+f_velLin, t+t_numeric, n+n_field_type, &
              begin, f+f_vGrid, s+s_vGrid, nr+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -1272,6 +1272,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.375  2004/06/16 01:23:28  vsnyder
+! Make VelLin field of PFAData optional
+!
 ! Revision 2.374  2004/06/12 00:40:48  vsnyder
 ! Allow formula field in tGrid, don't require step and number
 !
