@@ -25,8 +25,10 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use MLSCommon, only: R4, R8, I4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
-  use PVM, only: PVMFbcast, PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize
+  use PVM, only: PVMFbcast, PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
+    & PVMErrorMessage
   use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend, PVMIDLUnpack
+  use QuantityPVM, only: PVMSENDQUANTITY
   use TREE, only:  DUMP_TREE_NODE, SUB_ROSA, SUBTREE, SOURCE_REF
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
@@ -91,19 +93,6 @@ contains ! ========  Public Procedures =========================================
     case default
     end select
   end subroutine GetSnooperModeString
-
-  ! --------------------------------------------  PVMERRORMESSAGE  -----
-  subroutine PVMErrorMessage ( INFO, PLACE )
-    ! This routine is called to log a PVM error
-    integer, intent(IN) :: INFO
-    character (LEN=*) :: PLACE
-
-    character (LEN=132) :: LINE
-
-    write (line, * ) info
-    call MLSMessage(MLSMSG_Error,ModuleName,'PVM error '//trim(place)//&
-      ' Info='//trim(adjustl(line)))
-  end subroutine PVMErrorMessage
 
   ! --------------------------------------------  LOOKFORSNOOPERS  -----
   subroutine LookForSnoopers ( MYTID, SNOOPERS )
@@ -492,132 +481,9 @@ contains ! ========  Public Procedures =========================================
       & 'Unable to find requested vector quantity: '//line )
 
     q => vectorDatabase(vector)%quantities(quantity)
-    qt => q%template
 
-    ! Now we simply pack the quantity up and send it down the pvm spigot
-    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMSendQuantity( q, snooper%tid )
 
-    call PVMIDLPack ( (/ qt%noInstances, qt%noSurfs, qt%noChans /), &
-      & info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantity dimensions." )
-
-    call PVMIDLPack ( (/ qt%coherent, qt%stacked, qt%regular, qt%minorFrame, &
-      & qt%logBasis /), info ) 
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantity flags" )
-
-    call PVMIDLPack ( (/ qt%noInstancesLowerOverlap, &
-      & qt%noInstancesUpperOverlap, qt%sideband /), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing misc quantity stuff" )
-
-    ! Now pack some strings
-
-    call Get_String( lit_indices(qt%quantityType), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantityType" )
-
-    call Get_String( lit_indices(qt%verticalCoordinate), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing verticalCoordinate" )
-
-    call Get_String( lit_indices(qt%unit), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing unit" )
-
-    call Get_String( lit_indices(qt%frequencyCoordinate), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
-
-    call GetSignalName( lit_indices(qt%signal), word, sideband=qt%sideband )
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing signal" )
-
-    call Get_String( lit_indices(qt%instrumentModule), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing instrumentModule" )
-
-    call Get_String( lit_indices(qt%radiometer), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing radiometer" )
-
-    call Get_String( lit_indices(qt%molecule), word, noError=.true. )
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing molecule" )
-
-    ! Now pack the arrays
-
-    call PVMIDLPack ( qt%surfs, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfs" )
-
-    call PVMIDLPack ( qt%phi, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing phi" )
-
-    call PVMIDLPack ( qt%geodLat, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing geodLat" )
-
-    call PVMIDLPack ( qt%lon, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing lon" )
-
-    call PVMIDLPack ( qt%time, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing time" )
-
-    call PVMIDLPack ( qt%solarTime, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarTime" )
-
-    call PVMIDLPack ( qt%solarZenith, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarZenith" )
-
-    call PVMIDLPack ( qt%losAngle, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing losAngle" )
-
-    if ( associated ( qt%mafIndex ) ) then
-      call PVMIDLPack ( qt%mafIndex, info )
-    else
-      call PVMIDLPack ( (/ 0 /), info )
-    end if
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafIndex" )
-
-    if ( associated ( qt%mafCounter ) ) then
-      call PVMIDLPack ( qt%mafCounter, info )
-    else
-      call PVMIDLPack ( (/ 0 /), info )
-    end if
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafCounter" )
-
-    if ( associated ( qt%frequencies ) ) then
-      call PVMIDLPack ( qt%frequencies, info )
-    else
-      call PVMIDLPack ( (/ 0.0_r8 /), info )
-    end if
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencies" )
-
-    ! Finally the two arrays for irregular quantities
-
-    if ( .not. qt%regular ) then
-      call PVMIDLPack ( qt%surfIndex, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfIndex" )
-
-      call PVMIDLPack ( qt%chanIndex, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "packing chanIndex" )
-    end if
-
-    ! Now we're going to send this to the snooper.
-
-    call PVMFSend ( snooper%tid, IDLMSGTag, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector template" )
-
-    ! Now we're going to send the values in a separate message
-    call PVMFInitSend ( PVMDataDefault, bufferID)
-
-    ! Pack the values
-    call PVMIDLPack ( q%values, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "sending values" )
-
-    ! Skip the mask for the moment.
-
-    ! Send this buffer
-    call PVMFSend ( snooper%tid, IDLMSGTag, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
-      
   end subroutine SnooperRequestedQuantity
   
 end module SnoopMLSL2
