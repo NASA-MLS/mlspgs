@@ -6,7 +6,9 @@ MODULE MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
 !=============================================================================
 
   USE MLSCommon
-  USE MLSStrings
+  USE MLSStrings, only: Capitalize, LinearSearchStringArray, &
+    & ReadCompleteLineWithoutComments, splitWords
+  USE MLSStringLists, only: GetUniqueStrings
   USE MLSMessageModule
   USE Intrinsic, ONLY: L_None
 
@@ -1770,6 +1772,9 @@ end module MLSSignalNomenclature
 
 !
 ! $Log$
+! Revision 2.5  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.4  2002/10/08 00:09:12  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
