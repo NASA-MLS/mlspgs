@@ -44,9 +44,9 @@ module Init_Spectroscopy_m
   integer, parameter :: F_str        = f_qlog + 1
   integer, parameter :: F_v0         = f_str + 1
   integer, parameter :: F_w          = f_v0 + 1
-  integer, parameter :: F_emlsBands  = f_w + 1
-  integer, parameter :: F_umlsBands  = f_emlsBands + 1
-  integer, parameter :: Last_Spectroscopy_Field = f_umlsBands
+  integer, parameter :: F_emlsSignals  = f_w + 1
+  integer, parameter :: F_umlsSignals  = f_emlsSignals + 1
+  integer, parameter :: Last_Spectroscopy_Field = f_umlsSignals
 
   ! Spectroscopy specifications:
   integer, parameter :: S_Line     = last_signal_spec + 1
@@ -91,8 +91,8 @@ contains
     field_indices(f_str)        = add_ident ( 'str' )
     field_indices(f_v0)         = add_ident ( 'v0' )
     field_indices(f_w)          = add_ident ( 'w' )
-    field_indices(f_emlsBands)  = add_ident ( 'emlsBands' )
-    field_indices(f_umlsBands)  = add_ident ( 'umlsBands' )
+    field_indices(f_emlsSignals)  = add_ident ( 'emlsSignals' )
+    field_indices(f_umlsSignals)  = add_ident ( 'umlsSignals' )
 
     ! Put spec names into the symbol table
     spec_indices(s_line)    = add_ident ( 'line' )
@@ -146,8 +146,8 @@ contains
              begin, f+f_str, t+t_numeric, nr+n_field_type, &
              begin, f+f_v0, t+t_numeric, nr+n_field_type, &
              begin, f+f_w, t+t_numeric, nr+n_field_type, &
-             begin, f+f_emlsBands, t+t_string, n+n_field_type, &
-             begin, f+f_umlsBands, t+t_string, n+n_field_type, &
+             begin, f+f_emlsSignals, t+t_string, n+n_field_type, &
+             begin, f+f_umlsSignals, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_spectra, & ! Must be AFTER S_Line
              begin, f+f_lines, s+s_line, n+n_field_spec, &
@@ -163,6 +163,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.1  2001/09/18 00:08:17  livesey
+! Added the bands information stuff
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !

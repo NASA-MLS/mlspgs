@@ -79,7 +79,7 @@ contains ! =====  Public Procedures  ===================================
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Delta, F_El, F_Gamma, F_Lines, &
       & F_Molecule, F_N, F_N1, F_N2, F_Ps, F_Qlog, F_Str, F_V0, F_W, &
-      & F_EMLSBANDS, F_UMLSBANDS
+      & F_EMLSSIGNALS, F_UMLSSIGNALS
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
       & S_Time, L_EMLS, L_UMLS
     use Molecules, only: Spec_Tags
@@ -153,9 +153,9 @@ contains ! =====  Public Procedures  ===================================
             call expr_check ( subtree(2,son), oneLine%v0, phyq_frequency )
           case ( f_w )
             call expr_check ( subtree(2,son), oneLine%w, phyq_dimless )
-          case ( f_emlsBands )
+          case ( f_emlsSignals )
             if ( instrument == l_emls ) bandsNode = son
-          case ( f_umlsBands )
+          case ( f_umlsSignals )
             if ( instrument == l_umls ) bandsNode = son
           case default
             ! Can't get here if the type checker worked
@@ -432,6 +432,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.2  2001/09/18 01:23:34  livesey
+! Changed bands to signals
+!
 ! Revision 2.1  2001/09/18 00:08:25  livesey
 ! Added the bands information stuff
 !
