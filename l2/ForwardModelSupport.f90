@@ -10,7 +10,7 @@ module ForwardModelSupport
   private
   public :: ConstructForwardModelConfig, ForwardModelGlobalSetup, &
     & CreateBinSelectorFromMLSCFInfo, printForwardModelTiming, &
-    & resetForwardModelTiming
+    & resetForwardModelTiming, ShowFwdModelNames, FillFwdModelTimings
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -743,6 +743,86 @@ contains ! =====     Public Procedures     =============================
 
   end function ConstructForwardModelConfig
 
+  ! ------------------------------FillFwdModelTimings  -----
+  subroutine FillFwdModelTimings ( timings, FWModelConfig, which )
+  !  Fill and return an array of time, mean, std_dev for timing FullforwardModel
+    
+    use Allocate_Deallocate, only: Allocate_Test
+    use ForwardModelConfig, only: ForwardModelConfig_T
+                                                                                
+    ! Dummy argument
+    !real, pointer :: timings(:)
+    double precision, dimension(:) :: timings
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
+    character(len=*), intent(in) :: which    ! 'fwdTiming', 'mean, or 'stdDev' 
+
+    ! Local variables
+    real :: mean_sqDelta, meanTimes, tmp_mean
+    integer :: i, timingSize
+
+    timingSize = size(FWModelconfig)
+ 
+    if (which == 'fwdTiming') then
+        do i =1, size(FWModelConfig)
+           timings(i) = FWModelConfig(i)%sum_DeltaTime
+        enddo
+    endif
+
+    if (which == 'mean') then
+       	do i =1, size(FWModelConfig)
+          if (FWModelConfig(i)%sum_DeltaTime == 0.0 ) then
+	    timings(i) = 0.0
+          else
+       	    timings(i) = FWModelConfig(i)%sum_DeltaTime/FWModelConfig(i)%Ntimes
+          endif
+        enddo
+     endif
+
+    if (which == 'stdDev') then
+       	do i =1, size(FWModelConfig)
+       	    tmp_mean = FWModelConfig(i)%sum_DeltaTime/FWModelConfig(i)%Ntimes
+            mean_sqDelta =  FWModelConfig(i)%sum_squareDeltaTime / &
+                & FWModelConfig(i)%Ntimes
+            if (FWModelConfig(i)%Ntimes <= 1) then
+                meanTimes = 1.0
+            else
+                meanTimes = FWModelConfig(i)%Ntimes / (FWModelConfig(i)%Ntimes - 1)
+            end if
+            if (FWModelConfig(i)%sum_DeltaTime == 0.0 .AND. & 
+                  & FWModelConfig(i)%sum_squareDeltaTime == 0.0 ) then 
+		timings(i) = 0.0
+            else 
+            	timings(i) = sqrt(abs(meanTimes * (mean_sqDelta - (tmp_mean * tmp_mean))))
+	    endif
+        enddo
+     endif
+
+  end subroutine FillFwdModelTimings
+
+  ! ------------------------------ShowFwdModelNames  -----
+  function ShowFwdModelNames ( FWModelConfig ) result (fwdNames)
+     
+  !  Fill and return an array of forward Model Names  
+                                                                                
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use MLSStrings, only: catLists
+    use String_Table, only: GET_STRING
+
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
+    character(len=2000) :: fwdNames
+
+    character(len=30) :: thisNames
+    integer :: i
+
+    fwdNames = ' '
+    do i =1, size(FWModelConfig)
+       call get_string ( FWModelConfig(i)%name, thisNames )
+       fwdNames = catLists(trim(fwdNames), trim(thisNames), ' ')
+       ! print *,' fwdNames: ', trim(fwdNames)
+    enddo
+
+  end function ShowFwdModelNames
+
   ! ------------------------------------  PrintForwardModelTiming  -----
   subroutine PrintForwardModelTiming ( FWModelConfig )
   !  Print mean, std_dev for timing FullforwardModel
@@ -897,6 +977,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.96  2004/07/22 20:40:10  cvuu
+! Add 2 subroutines FillFwdModelTimings and ShowFwdModelnames
+!
 ! Revision 2.95  2004/07/17 02:27:24  vsnyder
 ! Better error message for PFA and non-PFA conflict
 !
