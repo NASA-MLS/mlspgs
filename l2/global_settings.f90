@@ -65,7 +65,7 @@ contains
     use L2GPData, only: L2GPDATA_T
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
     use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
-    use MLSFiles, only: mls_hdf_version
+    use MLSFiles, only: FILENOTFOUND, mls_hdf_version
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -302,9 +302,14 @@ contains
     end do
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
-    if ( hdfversion <= 0 ) &                                            
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+    if ( hdfversion == FILENOTFOUND ) then                                          
+      call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      & 'File not found; make sure the name and path are correct' &
+      & // trim(l1bInfo%L1BOAFileName) )
+    elseif ( hdfversion <= 0 ) then                                          
+      call MLSMessage ( MLSMSG_Error, ModuleName, &                      
       & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
+    endif
     ! add maf offsets to start, end times
     ! or convert them to tai93
     ! This is optional way to define processingRange if using PCF
@@ -702,6 +707,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.64  2003/02/27 21:55:14  pwagner
+! Calls FillTAI93Attribute
+!
 ! Revision 2.63  2003/02/01 00:50:14  pwagner
 ! Picks up GlobalAttributes from settings
 !

@@ -11,7 +11,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      !& SWDETACH
   use Intrinsic ! "units" type literals, beginning with L_
   use MLSCommon, only: R4, R8
-  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+  use MLSFiles, only: FILENOTFOUND, HDFVERSION_4, HDFVERSION_5, &
+    & WILDCARDHDFVERSION, &
     & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
@@ -507,7 +508,11 @@ contains ! =====     Public Procedures     =============================
     integer :: the_hdfVersion
     
     ! Executable code
-    the_hdfVersion = MLS_HDF_VERSION(FileName, hdfVersion)
+    the_hdfVersion = mls_hdf_version(FileName, hdfVersion)
+    if ( the_hdfVersion == FILENOTFOUND ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File not found; make sure the name and path are correct' &
+        & // trim(fileName) )
     L2FileHandle = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, DFACC_READ, FileName=FileName, &
        & hdfVersion=hdfVersion, debugOption=.false. )
@@ -3011,6 +3016,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.58  2003/03/07 00:40:23  pwagner
+! Call HE5_SWsetfill; removed some spaces from attribute names
+!
 ! Revision 2.57  2003/02/26 17:36:11  pwagner
 ! Repaired ReadL2GPData to close swath when given WILDCARDHDFVERSION
 !
