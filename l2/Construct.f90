@@ -31,6 +31,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use Intrinsic, ONLY: L_None
   use String_Table, ONLY: GET_STRING
   use Init_tables_module, ONLY: LIT_INDICES
+  use L2GPData, only: L2GPDATA_T
 
   implicit none
 
@@ -52,7 +53,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, l1bInfo, chunk, &
-       & quantityTemplates, vectorTemplates, VGrids, mifGeolocation )
+       & quantityTemplates, vectorTemplates, VGrids, l2gpDatabase, mifGeolocation )
 
   ! This is the `main' subroutine for this module
 
@@ -63,6 +64,7 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (VGrid_T), dimension(:), pointer :: vGrids
+    type (L2GPData_T), dimension(:), intent(in) :: L2GPDatabase
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     ! Local variables
@@ -125,7 +127,7 @@ contains ! =====     Public Procedures     =============================
         call ForgeMinorFrames ( key, mifGeolocation )
       case( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
-          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, chunk ) ) )
+          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, chunk ) ) )
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
@@ -186,6 +188,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.17  2001/04/21 01:25:23  livesey
+! New version, can construct h/v grids from l2gp
+!
 ! Revision 2.16  2001/04/20 23:11:26  livesey
 ! Added `Forge' stuff
 !
