@@ -17,7 +17,7 @@ SUMMARY
 To build the mls software, on many different combinations of compiler/
 platform/OS, minimizing the changes most users will need to make. Therefore
 it is mostly self-configuring. First, you will need:
- (1) f95 compiler (either NAG or Lahey)
+ (1) f95 compiler (either NAG, Lahey, or Sun)
  (2) Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
  (3) mls software (probably where you're reading this)
  (4) perl (not needed if you plan only to build and run the software,
@@ -108,9 +108,9 @@ README.MakeFC  f90makedep.pl      platforms/*          files)
 BUILDING THE SOFTWARE
 Then to make the mls software, both the lib and all mlslevels, from the top
 level of the mlspgs directory, enter the command "make -f MakeFC". This should
-launch util/mlsconfigure. It will first query you for your compiler (only two
-choices available: NAG or Lahey) and for your platform/OS (only three choices
-available: Sun, SGI, or Linux).
+launch util/mlsconfigure. It will first query you for your compiler (only three
+choices available: NAG, Lahey, or Sun) and for your platform/OS (only three
+choices available: Sun, SGI, or Linux).
 
 Next it will prompt you to enter the paths to the SDP Toolkit includes
 directories and to the PGSTK, HDFEOS, HDF, and Gctp libraries. These may
@@ -389,7 +389,8 @@ The only combinations of compiler.platform/OS provided for so far are
   LF95.(pc)Linux
   NAG.Sun
   NAG.SGI
-The last assumes abi=32. To compile for a 64 bit kernel, we could
+  Sun.Sun
+NAG.SGI assumes abi=32. To compile for a 64 bit kernel, we could
 (1) add platforms/NAG.SGI64 with altered flags
 (2) allow adding extra compiler settings (see below)
 To use these, 64 bit versions of the libraries HDFEOS, etc. would have
@@ -414,6 +415,23 @@ from the top mlspgs level.  It is also possible for MakeFC itself to get messed
 up in this way -- the above cures will not work  in this case. You may be able
 to fix the problem by deleting MakeFC and doing a CVS update to fetch a new
 copy.
+
+Compiling one changed module may have the effect of triggering recompilation of
+many other unchanged modules due to dependencies. This is the "cascade effect".
+Sometimes it may be obvious that some or all of the cascade is unnecessary. A
+deeper and more searching scrutiny, perhaps checking that the new .mod file
+created by a recompile (in the case of a compiler like NAG) is actually
+identical with the existing one, could pare the cascade down, but at the cost
+of requiring a more complex system of Makefiles than the this one.
+
+There may be cases where make can be observed "hunting", where it enters a
+prerequisite-containing directory repeatedly, as if to rebuild the
+prerequisite, but not doing so. This happens because make believes wrongly the
+prerequisite is itself the target of a newer prerequisite. While this hunting
+behavior seems wrong, it will not cause make to fail, and in fact minimizes
+rebuilding the prerequisites. At the cost of some added rebuilding of
+prerequisites, make can be made to give up hunting by putting the SIMPLIFYMAKE
+setting to "yes" or in fact anything other than its blank default.
 
 PVMWrappers.c in lib is a c source requiring a c compiler. The default value
 for CC is cc. If you get an error along the lines of "cc: Command not found",
@@ -480,6 +498,7 @@ PGSTK              Also mentioned below in connection with .configure,
                    but if set to blank on the line invoking make, it will
                    cause make to build a toolkit-free version of lib and l2;
                    E.g., "make PGSTK="
+SIMPLIFYMAKE       Stop make from hunting if non-blank (see above)
 TAR                Overrides name of tar command; e.g. path to GNU tar 
                    in case your tar won't gzip for targets *targ
 
@@ -553,10 +572,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2001-Aug-16
+-pw                           2000-Oct-24 to 2001-Sep-25
 EOF
 exit
 # $Log$
+# Revision 1.21  2001/08/16 17:16:32  pwagner
+# Mentions EXTRA_PATHS, shell script versions of mlsln; snipped less important stuff
+#
 # Revision 1.20  2001/07/26 23:26:29  pwagner
 # Mentions INSTALLDIR, MLSINSTALLDIR
 #
