@@ -1,6 +1,6 @@
 #!/bin/sh
 #    README.tests        Instructions about building the mls software
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -11,7 +11,8 @@
 #  BEFORE.mls        a self-reading guide to prerequisites to the software
 
         more << EOF
-tests--A set of subdirectories for testing the mls software
+tests--A set of subdirectories for testing the different levels of the mls
+software during development.
 
 SUMMARY
 To test the mls software first make sure that you have properly built each of
@@ -24,14 +25,14 @@ of the mls software.
 
 INTRODUCTION
 During development it may be necessary to test portions of the mls software
-apart from its driver, PCF files, or other complicating circumstances that
-may prevent a clear picture of where a problem is occurring. For example,
-a simple case might be to test reading a L2GP vector from a template file
-using the modules in lib. Another example might be to test coordination among
-the parts of the retrieval algorithm with the modules in fwdmdl.
+apart from its driver, PCF files, or other complicating circumstances that may
+prevent a clear picture of where a problem is occurring. For example, a simple
+case might be to test reading a L2GP vector from a template file using the
+modules in lib. Another example might be to test coordination among the parts
+of the retrieval algorithm with the modules in fwdmdl.
 
-In attempting to make this easy, most of the steps have been automated, so you
-are required to do only the following:
+To make this easy, most of the steps have been automated, so you are required
+to do only the following:
 
 METHOD
 (1) Choose which of the levels {l1 l2 l3 fwdmdl lib} contains what needs to be
@@ -40,12 +41,13 @@ tested; call this _level_
 (2) Write a test program that USE's the modules of _level_ to be tested
 
 (3) Copy that test program to tests/_level_ 
+    (if there were already sources there, hide or remove them)
 
 (4) cd tests/_level_
 
-(5) make -f MakeFC depends
+(5) make depends ghostbuster
 
-(6) make -f MakeFC
+(6) make
 
 and run the resulting test program with suitable data.
 
@@ -77,14 +79,18 @@ at the following lines: (line 27)
   init_m_dir = l2
 
 and change the assignment to l1 or l3. Then 
-	make -f MakeFC clean to remake
-the file tests/lib/\$(MLSCONFG)/Makefile in accord with this change, and
-	make -f MakeFC.
+	make mostlyclean 
+to remake the file tests/lib/\$(MLSCONFG)/Makefile in accord with this change,
+and then
+	make
 	
--pw                           2001-Feb-01 to 2001-Feb-01
+-pw                           2001-Feb-01 to 2001-May-18
 EOF
 exit
 # $Log$
+# Revision 1.2  2001/03/06 18:17:57  pwagner
+# clean more amitious--rms * from MLSCONFGl[13]/MakeFC
+#
 # Revision 1.1  2001/02/01 23:09:33  pwagner
 # First commit
 #
