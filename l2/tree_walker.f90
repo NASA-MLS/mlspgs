@@ -16,7 +16,8 @@ module TREE_WALKER
   use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase
   use HGrid, only: HGrid_T
   use Init_Tables_Module, only: L_CHISQCHAN, &
-    & L_CHISQMMAF, L_CHISQMMIF, Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
+    & L_CHISQMMAF, L_CHISQMMIF, L_REFGPH, L_PTAN, &
+    & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
     & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
     & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
   use JOIN, only: MLSL2Join
@@ -187,9 +188,16 @@ subtrees:   do while ( j <= howmany )
               j = j + 1
             end do subtrees
             if ( .not. (toggle(gen) .and. levels(gen) > 0 ) .and. &
-              & index(switches,'chi') /= 0 ) &
-              & call dump_vectors( vectors, details=1, &
+              & index(switches,'chi') /= 0 ) then
+              call output('Here is a minor frame example', advance='yes')
+              call dump_vectors( vectors, details=1, &
+              & quantityTypes = (/l_Ptan/) )
+              call output('Here is one that is not minor frame', advance='yes')
+              call dump_vectors( vectors, details=1, &
+              & quantityTypes = (/l_refgph/) )
+              call dump_vectors( vectors, details=1, &
               & quantityTypes = (/l_chisqchan, l_chisqmmaf, l_chisqmmif/) )
+            endif
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
             if ( size(chunks) > 1) then
@@ -258,6 +266,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.63  2001/10/02 16:49:56  livesey
+! Removed fmStat%finished and change loop ordering in forward models
+!
 ! Revision 2.62  2001/09/29 00:01:00  pwagner
 ! Fixed various timing problems
 !

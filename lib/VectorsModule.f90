@@ -67,7 +67,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MLSSignals_m, only: MODULES
+  use MLSSignals_m, only: MODULES, SIGNALS
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
@@ -778,7 +778,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------  Dump_Vector  -----
   subroutine Dump_Vector ( VECTOR, DETAILS, NAME, &
-    & QUANTITYTYPES, INSTRUMENTMODULES, &
+    & QUANTITYTYPES, INSTRUMENTMODULES, SIGNAL_IDS, &
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME )
     type(Vector_T), intent(in) :: VECTOR
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
@@ -788,6 +788,7 @@ contains ! =====     Public Procedures     =============================
     ! if the following are present, dump only quantities matching them
     integer, intent(in), optional, dimension(:)  :: QUANTITYTYPES
     integer, intent(in), optional, dimension(:)  :: INSTRUMENTMODULES
+    integer, intent(in), optional, dimension(:)  :: SIGNAL_IDS
     logical, intent(in), optional                :: COHERENT
     logical, intent(in), optional                :: STACKED
     logical, intent(in), optional                :: REGULAR
@@ -819,6 +820,8 @@ contains ! =====     Public Procedures     =============================
         & any(vector%quantities(j)%template%quantitytype == quantitytypes)
       if ( present (instrumentmodules) ) dumpThisQty = &
         & any(vector%quantities(j)%template%instrumentmodule == instrumentmodules)
+      if ( present (signal_ids) ) dumpThisQty = &
+        & any(vector%quantities(j)%template%signal == signal_ids)
       if ( present (coherent) ) dumpThisQty = dumpThisQty .and. &
         & (vector%quantities(j)%template%coherent .eqv. coherent)
       if ( present (stacked) ) dumpThisQty = dumpThisQty .and. &
@@ -836,20 +839,28 @@ contains ! =====     Public Procedures     =============================
           call output ( ' Qty_Template_Name = ' )
           call display_string ( vector%quantities(j)%template%name )
         end if
-        call output ( ' noInstances = ' )
-        call output ( vector%quantities(j)%template%noInstances, advance='no' )
-        call output ( ' noSurfs = ' )
-        call output ( vector%quantities(j)%template%noSurfs, advance='no' )
         call output ( ' noChans = ' )
         call output ( vector%quantities(j)%template%noChans, advance='no' )
+        call output ( ' noSurfs = ' )
+        call output ( vector%quantities(j)%template%noSurfs, advance='no' )
         call output ( ' noInstances = ' )
         call output ( vector%quantities(j)%template%noInstances, advance='no' )
         call output ( ' instanceLen = ' )
         call output ( vector%quantities(j)%template%instanceLen, advance='yes' )
         call output ( ' Qty_Template_ID = ' )
         call output ( vector%quantities(j)%template%id, advance='yes' )
+        call output ( '    signal: ')
+        if ( vector%quantities(j)%template%signal < 1 ) then
+          call output ( '    (none for this quantity) ', advance='yes')
+        else
+          call display_string ( signals(vector%quantities(j)%template%signal)%name, advance='yes' )
+        endif
         call output ( '    instrumentmodule: ')
-        call display_string ( modules(vector%quantities(j)%template%instrumentModule)%name, advance='yes' )
+        if ( vector%quantities(j)%template%instrumentModule < 1 ) then
+          call output ( '    (none for this quantity) ', advance='yes')
+        else
+          call display_string ( modules(vector%quantities(j)%template%instrumentModule)%name, advance='yes' )
+        endif
         call output ( '    (its index): ')
         call output ( vector%quantities(j)%template%instrumentmodule, advance='no')
         call output ( ' ', advance='yes')
@@ -883,7 +894,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Dump_Vectors  -----
   subroutine Dump_Vectors ( VECTORS, DETAILS, NAME, &
-    & QUANTITYTYPES, INSTRUMENTMODULES, &
+    & QUANTITYTYPES, INSTRUMENTMODULES, SIGNAL_IDS, &
     & COHERENT, STACKED, REGULAR, MINORFRAME, MAJORFRAME )
     type(Vector_T), intent(in) :: VECTORS(:)
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
@@ -893,6 +904,7 @@ contains ! =====     Public Procedures     =============================
     ! if the following are present, dump only quantities matching them
     integer, intent(in), optional, dimension(:)  :: QUANTITYTYPES
     integer, intent(in), optional, dimension(:)  :: INSTRUMENTMODULES
+    integer, intent(in), optional, dimension(:)  :: SIGNAL_IDS
     logical, intent(in), optional                :: COHERENT
     logical, intent(in), optional                :: STACKED
     logical, intent(in), optional                :: REGULAR
@@ -922,6 +934,8 @@ contains ! =====     Public Procedures     =============================
           & any(vectors(i)%quantities(j)%template%quantitytype == quantitytypes)
         if ( present (instrumentmodules) ) dumpThisQty = &
           & any(vectors(i)%quantities(j)%template%instrumentmodule == instrumentmodules)
+        if ( present (signal_ids) ) dumpThisQty = &
+          & any(vectors(i)%quantities(j)%template%signal == signal_ids)
         if ( present (coherent) ) dumpThisQty = dumpThisQty .and. &
           & (vectors(i)%quantities(j)%template%coherent .eqv. coherent)
         if ( present (stacked) ) dumpThisQty = dumpThisQty .and. &
@@ -938,7 +952,7 @@ contains ! =====     Public Procedures     =============================
         call output ( i, 4 )
         call output ( ': ' )
         call dump_vector ( vectors(i), details, name, &
-        & quantitytypes, instrumentmodules, &
+        & quantitytypes, instrumentmodules, signal_ids, &
         & coherent, stacked, regular, minorframe, majorframe )
       endif
     end do ! i
@@ -1571,6 +1585,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.66  2001/10/08 23:40:49  pwagner
+! Improved dump routines
+!
 ! Revision 2.65  2001/10/05 17:33:55  vsnyder
 ! Don't set more bits in the mask than there are elements of VALUES
 !
