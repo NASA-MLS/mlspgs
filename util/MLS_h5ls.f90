@@ -61,8 +61,10 @@
 !
 ! List the datasets.
 !
-        write(*,101) count, filename
- 101    format(1x,"There are ",1i5," dataset entries in the HDF5 file, ",1a64)
+!        write(*,101) count, filename
+! 101    format(1x,"There are ",1i5," dataset entries in the HDF5 file, ",1a64)
+        write(*,*) ' There are ', count, &
+          & ' dataset entries in the HDF5 file, ', trim(filename)
 
      do i = 1, count
         write(*,102) dataset_info%name(i) 
@@ -144,6 +146,9 @@
 END PROGRAM MLS_h5ls
 
 ! $Log$
+! Revision 1.2  2002/08/29 17:53:55  pwagner
+! Now takes filenames on command line; Lahey has another internal error while compiling
+!
 ! Revision 1.1  2002/08/28 22:49:21  pwagner
 ! First commit
 !
