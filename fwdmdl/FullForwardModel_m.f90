@@ -96,6 +96,7 @@ contains ! ================================ FullForwardModel routine ======
     integer :: F_LEN                    ! Total number of f's
     integer :: P_LEN                    ! Partial number of f's (No freq.)
     integer :: H2O_IND                  ! Index of h2o inside f array
+    integer :: EXT_IND                  ! Index of extinction inside f array
     integer :: I                        ! Loop index and other uses .
     integer :: IER                      ! Status flag from allocates
     integer :: I_STOP                   ! Upper index for radiance comp.
@@ -155,7 +156,7 @@ contains ! ================================ FullForwardModel routine ======
     integer, dimension(:), pointer :: USEDCHANNELS ! Which channel is this
     integer, dimension(:), pointer :: USEDSIGNALS ! Which signal is this channel from
     integer, dimension(:), pointer :: SUPERSET ! Used for matching signals
-    integer, dimension(:), pointer :: EXT_IND_C ! Indecies on coarse grid
+    integer, dimension(:), pointer :: INDECIES_C ! Indecies on coarse grid
     integer, dimension(:), pointer :: TAN_INDS ! Index of tangent grid into gl grid
     integer, dimension(:), pointer :: GL_INDS ! Index of GL indecies
 
@@ -231,6 +232,10 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:,:), pointer :: BETA_PATH ! Beta on path
     real(rp), dimension(:,:), pointer :: BETA_PATH_C ! Beta on path coarse
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
+
+    real(rp), dimension(:), pointer :: BN2_PATH_C ! Beta for N2 on path coarse
+    real(rp), dimension(:), pointer :: BN2_PATH_F ! Beta for N2 on path fine
+
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_C ! dBeta_dn on coarse grid
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_F ! dBeta_dn on fine grid
     real(rp), dimension(:,:), pointer :: DBETA_DT_PATH_C ! dBeta_dt on coarse grid
@@ -311,7 +316,7 @@ contains ! ================================ FullForwardModel routine ======
 
     ! Nullify all our pointers!
 
-    nullify ( grids, usedchannels, usedsignals, superset, ext_ind_c, &
+    nullify ( grids, usedchannels, usedsignals, superset, indecies_c, &
       & tan_inds, gl_inds )
     nullify ( gl_ndx, gl_indgen )
     nullify ( do_gl, lin_log )
@@ -334,6 +339,8 @@ contains ! ================================ FullForwardModel routine ======
       & k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, eta_fzp, &
       & k_temp_frq, ptg_angles, radiances, sps_path, tan_dh_dt, tan_temp, &
       & t_glgrid, dh_dt_glgrid, skip_eta_frq )
+
+    nullify ( bn2_path_c, bn2_path_f)
 
     nullify ( lineFlag )
 
@@ -481,7 +488,8 @@ contains ! ================================ FullForwardModel routine ======
       thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
       if ( associated ( thisCatalogEntry%lines ) ) then
         ! Now subset the lines according to the signal we're using
-        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', ModuleName )
+        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', &
+                         &   ModuleName )
         lineFlag = .false.
         do k = 1, size ( thisCatalogEntry%lines )
           thisLine => lines(thisCatalogEntry%lines(k))
@@ -548,7 +556,7 @@ contains ! ================================ FullForwardModel routine ======
 
     ! Setup our temporary `state vector' like arrays -------------------------
     call load_sps_data ( fwdModelIn, fwdModelExtra, fwdModelConf%molecules, &
-     & firstSignal%radiometer, p_len, f_len, h2o_ind, lin_log, &
+     & firstSignal%radiometer, p_len, f_len, h2o_ind, ext_ind, lin_log, &
      & sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv)
 
     ! Compute Gauss Legendre (GL) grid ---------------------------------------
@@ -678,7 +686,7 @@ contains ! ================================ FullForwardModel routine ======
     call Allocate_Test ( tau,          npc, 'tau',          ModuleName )
     call Allocate_test ( del_s,        npc, 'del_s',        ModuleName )
     call Allocate_test ( do_gl,        npc, 'do_gl',        ModuleName )
-    call Allocate_test ( ext_ind_c,    npc, 'ext_ind_c',    ModuleName )
+    call Allocate_test ( indecies_c,   npc, 'indecies_c',    ModuleName )
     call Allocate_test ( n_path,       npc, 'n_path',       ModuleName )
     call Allocate_test ( ref_corr,     npc, 'ref_corr',     ModuleName )
 
@@ -688,6 +696,8 @@ contains ! ================================ FullForwardModel routine ======
     call Allocate_test ( eta_zp, no_ele, p_len, 'eta_zp', ModuleName )
     call Allocate_test ( eta_fzp, no_ele, f_len, 'eta_zp', ModuleName )
     call Allocate_test ( sps_path, no_ele, noSpecies, 'sps_path', ModuleName )
+
+    call Allocate_test ( bn2_path_c, npc, 'bn2_path_c', ModuleName )
 
     call Allocate_test ( skip_eta_frq, noSpecies, 'skip_eta_frq', ModuleName )
 
@@ -734,7 +744,6 @@ contains ! ================================ FullForwardModel routine ======
                         &  ModuleName )
       call Allocate_test ( do_calc_dv, no_ele, sv_dv_len, 'do_calc_dv', &
                         &  ModuleName )
-
 
       call Allocate_test ( eta_zxp_dw, no_ele, sv_dw_len, 'eta_zxp_dw', &
                         &  ModuleName )
@@ -867,8 +876,8 @@ contains ! ================================ FullForwardModel routine ======
         ! This is not pretty but we need some coarse grid extraction indicies
         k = Ngp1
         j = (npc+1)/2
-        ext_ind_c(:) = 0
-        ext_ind_c(1:npc) = (/(i*k-Ng,i=1,j),((i-1)*k-Ng+1,i=j+1,npc)/)
+        indecies_c(:) = 0
+        indecies_c(1:npc) = (/(i*k-Ng,i=1,j),((i-1)*k-Ng+1,i=j+1,npc)/)
 
         ! Compute z_path & p_path
         z_path(1:no_ele) = (/(z_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
@@ -977,12 +986,12 @@ contains ! ================================ FullForwardModel routine ======
       &  do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
 
         if (h2o_ind > 0) then
-          call refractive_index(p_path(ext_ind_c(1:npc)), &
-            &  t_path(ext_ind_c(1:npc)),n_path(1:npc),    &
-            &  h2o_path=sps_path((ext_ind_c(1:npc)),h2o_ind))
+          call refractive_index(p_path(indecies_c(1:npc)), &
+            &  t_path(indecies_c(1:npc)),n_path(1:npc),    &
+            &  h2o_path=sps_path((indecies_c(1:npc)),h2o_ind))
         else
-          call refractive_index(p_path(ext_ind_c(1:npc)), &
-            &   t_path(ext_ind_c(1:npc)),n_path(1:npc))
+          call refractive_index(p_path(indecies_c(1:npc)), &
+            &   t_path(indecies_c(1:npc)),n_path(1:npc))
         endif
 
         if(FwdModelConf%temp_der) then
@@ -997,7 +1006,7 @@ contains ! ================================ FullForwardModel routine ======
           &    one_tan_ht(1),phi_tan,Req,elev_offset,ptg_angles(ptg_i,maf))
         endif
 
-        call comp_refcor(Req+h_path(ext_ind_c(1:npc)), &
+        call comp_refcor(Req+h_path(indecies_c(1:npc)), &
           &   1.0_rp+n_path(1:npc),Req+one_tan_ht(1), &
           &   del_s(1:npc),ref_corr(1:npc))
 
@@ -1059,44 +1068,50 @@ contains ! ================================ FullForwardModel routine ======
 
           if(FwdModelConf%temp_der  .and. FwdModelConf%spect_der) then
 
-            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),     &
-              & my_Catalog,gl_slabs,ext_ind_c(1:npc),beta_path_c(1:npc,:), &
-              & GL_SLABS_M=gl_slabs_m, T_PATH_M=t_path(1:no_ele)-del_temp, &
-              & GL_SLABS_P=gl_slabs_p, T_PATH_P=t_path(1:no_ele)+del_temp, &
-              & DBETA_DT_PATH=dbeta_dt_path_c(1:npc,:),                    &
-              & DBETA_DW_PATH=dbeta_dw_path_c(1:npc,:),                    &
-              & DBETA_DN_PATH=dbeta_dn_path_c(1:npc,:),                    &
-              & DBETA_DV_PATH=dbeta_dv_path_c(1:npc,:) )
+            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
+              &  my_Catalog,gl_slabs,indecies_c(1:npc),beta_path_c(1:npc,:),&
+              &  GL_SLABS_M=gl_slabs_m, T_PATH_M=t_path(1:no_ele)-del_temp,&
+              &  GL_SLABS_P=gl_slabs_p, T_PATH_P=t_path(1:no_ele)+del_temp,&
+              &  DBETA_DT_PATH=dbeta_dt_path_c(1:npc,:),                   &
+              &  DBETA_DW_PATH=dbeta_dw_path_c(1:npc,:),                   &
+              &  DBETA_DN_PATH=dbeta_dn_path_c(1:npc,:),                   &
+              &  DBETA_DV_PATH=dbeta_dv_path_c(1:npc,:) )
 
           else if(FwdModelConf%temp_der) then
 
-            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),     &
-              & my_Catalog,gl_slabs,ext_ind_c(1:npc),beta_path_c(1:npc,:), &
-              & GL_SLABS_M=gl_slabs_m, T_PATH_M=t_path(1:no_ele)-del_temp, &
-              & GL_SLABS_P=gl_slabs_p, T_PATH_P=t_path(1:no_ele)+del_temp, &
-              & DBETA_DT_PATH=dbeta_dt_path_c(1:npc,:))
+            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
+              &  my_Catalog,gl_slabs,indecies_c(1:npc),beta_path_c(1:npc,:),&
+              &  GL_SLABS_M=gl_slabs_m, T_PATH_M=t_path(1:no_ele)-del_temp,&
+              &  GL_SLABS_P=gl_slabs_p, T_PATH_P=t_path(1:no_ele)+del_temp,&
+              &  DBETA_DT_PATH=dbeta_dt_path_c(1:npc,:))
 
           else if(FwdModelConf%spect_der) then
 
-            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),    &
-              & my_Catalog,gl_slabs,ext_ind_c(1:npc),beta_path_c(1:npc,:),&
-              & DBETA_DW_PATH=dbeta_dw_path_c(1:npc,:),                   &
-              & DBETA_DN_PATH=dbeta_dn_path_c(1:npc,:),                   &
-              & DBETA_DV_PATH=dbeta_dv_path_c(1:npc,:) )
+            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),       &
+              &  my_Catalog,gl_slabs,indecies_c(1:npc),beta_path_c(1:npc,:),&
+              &  DBETA_DW_PATH=dbeta_dw_path_c(1:npc,:),                    &
+              &  DBETA_DN_PATH=dbeta_dn_path_c(1:npc,:),                    &
+              &  DBETA_DV_PATH=dbeta_dv_path_c(1:npc,:) )
 
           else
 
-            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele), &
-              &   my_Catalog,gl_slabs,ext_ind_c(1:npc),  &
-              &   beta_path_c(1:npc,:))
+            if(ext_ind > 0) then
+              call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
+              &  my_Catalog,gl_slabs,indecies_c(1:npc),beta_path_c(1:npc,:), &
+              &  ext_ind=ext_ind,bn2_path=bn2_path_c(1:npc))
+              sps_path(indecies_c(1:npc),ext_ind) = 0.8061*bn2_path_c(1:npc)
+            else
+              call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
+              &  my_Catalog,gl_slabs,indecies_c(1:npc),beta_path_c(1:npc,:))
+            endif
 
           endif
 
-          alpha_path_c(1:npc) = SUM(sps_path(ext_ind_c(1:npc),:) &
-            &    * beta_path_c(1:npc,:),DIM=2)
+          alpha_path_c(1:npc) = SUM(sps_path(indecies_c(1:npc),:) *  &
+                                &   beta_path_c(1:npc,:),DIM=2)
+
           call path_contrib(alpha_path_c(1:npc),del_s(1:npc),e_rflty, &
-            &  fwdModelConf%tolerance,tau(1:npc),        &
-            &  incoptdepth(1:npc),do_gl(1:npc))
+          &  fwdModelConf%tolerance,tau(1:npc),incoptdepth(1:npc),do_gl(1:npc))
 
           ! ALLOCATE gl grid beta
 
@@ -1104,13 +1119,17 @@ contains ! ================================ FullForwardModel routine ======
           j = Ng * no_gl_ndx
 
           call Allocate_test ( gl_inds, j, 'gl_inds', ModuleName )
-          call Allocate_test ( beta_path_f, j, noSpecies, 'beta_path_f', ModuleName )
-          call Allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', ModuleName )
+          call Allocate_test ( beta_path_f, j, noSpecies, 'beta_path_f', &
+                           &   ModuleName )
+          call Allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', &
+                           &   ModuleName )
           call Allocate_test ( gl_ndx, no_gl_ndx, 2, 'gl_ndx', ModuleName )
+
+          call Allocate_test ( bn2_path_f, j, 'bn2_path_f', ModuleName )
 
           gl_ndx(:,1) = pack((/(i,i=1,npc)/),do_gl(1:npc))
 
-          ! Make (/(j-Ng-1,j=1,Ng)/), (/(j,j=1,Ng)/) parameter variables later on
+  ! Make (/(j-Ng-1,j=1,Ng)/), (/(j,j=1,Ng)/) parameter variables later on
 
           do i = 1 , no_gl_ndx
             if(gl_ndx(i,1) > npc/2) then
@@ -1171,15 +1190,22 @@ contains ! ================================ FullForwardModel routine ======
 
           else
 
-            call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele), &
+            if(ext_ind > 0) then
+              call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele), &
+              &  my_Catalog,gl_slabs,gl_inds,beta_path_f,               &
+              &  ext_ind=ext_ind,bn2_path=bn2_path_f)
+              sps_path(gl_inds,ext_ind) = 0.8061*bn2_path_f
+            else
+              call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele), &
               &    my_Catalog,gl_slabs,gl_inds,beta_path_f)
+            endif
 
           endif
 
           ! Compute radiative transfer ---------------------------------------
 
-          call rad_tran(Frq,spaceRadiance%values(1,1),e_rflty,             &
-            & z_path(ext_ind_c(1:npc)),t_path(ext_ind_c(1:npc)),            &
+          call rad_tran(Frq,spaceRadiance%values(1,1),e_rflty,              &
+            & z_path(indecies_c(1:npc)),t_path(indecies_c(1:npc)),          &
             & alpha_path_c(1:npc),ref_corr(1:npc),do_gl(1:npc),             &
             & incoptdepth(1:npc),SUM(sps_path(gl_inds,:)*beta_path_f,DIM=2),&
             & path_dsdh(gl_inds),dhdz_path(gl_inds),t_script(1:npc),        &
@@ -1191,13 +1217,13 @@ contains ! ================================ FullForwardModel routine ======
 
           if(FwdModelConf%atmos_der) then
 
-            call drad_tran_df(z_path(ext_ind_c(1:npc)),Grids_f%no_z,       &
-              &  Grids_f%no_p,lin_log,sps_values,beta_path_c(1:npc,:),     &
-              &  eta_fzp(ext_ind_c(1:npc),:),sps_path(ext_ind_c(1:npc),:), &
-              &  do_calc_fzp(ext_ind_c(1:npc),:),beta_path_f,              &
-              &  eta_fzp(gl_inds,:),sps_path(gl_inds,:),                   &
-              &  do_calc_fzp(gl_inds,:),do_gl(1:npc),del_s(1:npc),         &
-              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds),    &
+            call drad_tran_df(z_path(indecies_c(1:npc)),Grids_f%no_z,       &
+              &  Grids_f%no_p,lin_log,sps_values,beta_path_c(1:npc,:),      &
+              &  eta_fzp(indecies_c(1:npc),:),sps_path(indecies_c(1:npc),:),&
+              &  do_calc_fzp(indecies_c(1:npc),:),beta_path_f,              &
+              &  eta_fzp(gl_inds,:),sps_path(gl_inds,:),                    &
+              &  do_calc_fzp(gl_inds,:),do_gl(1:npc),del_s(1:npc),          &
+              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds),     &
               &  t_script(1:npc),tau(1:npc),i_stop,drad_df,ptg_i,frq_i)
 
             k_atmos_frq(frq_i,:) = drad_df
@@ -1206,19 +1232,19 @@ contains ! ================================ FullForwardModel routine ======
 
           if(FwdModelConf%temp_der) then
 
-            call drad_tran_dt(z_path(ext_ind_c(1:npc)),                      &
-              & Req+h_path(ext_ind_c(1:npc)),                                &
-              & t_path(ext_ind_c(1:npc)),dh_dt_path(ext_ind_c(1:npc),:),     &
-              & alpha_path_c(1:npc),SUM(sps_path(ext_ind_c(1:npc),:)         &
-              & * dbeta_dt_path_c(1:npc,:) * beta_path_c(1:npc,:),DIM=2),    &
-              & eta_zxp_t(ext_ind_c(1:npc),:),do_calc_t(ext_ind_c(1:npc),:), &
-              & do_calc_hyd(ext_ind_c(1:npc),:),del_s(1:npc),ref_corr(1:npc),&
-              & Req + one_tan_ht(1),dh_dt_path(brkpt,:),frq,do_gl(1:npc),    &
-              & req + h_path(gl_inds),t_path(gl_inds),dh_dt_path(gl_inds,:), &
-              & SUM(sps_path(gl_inds,:)*beta_path_f,DIM=2),                  &
-              & SUM(sps_path(gl_inds,:)*beta_path_f*dbeta_dt_path_f,DIM=2),  &
-              & eta_zxp_t(gl_inds,:),do_calc_t(gl_inds,:),path_dsdh(gl_inds),&
-              & dhdz_path(gl_inds),t_script(1:npc),tau(1:npc),i_stop,drad_dt,&
+            call drad_tran_dt(z_path(indecies_c(1:npc)),                      &
+              & Req+h_path(indecies_c(1:npc)),                                &
+              & t_path(indecies_c(1:npc)),dh_dt_path(indecies_c(1:npc),:),    &
+              & alpha_path_c(1:npc),SUM(sps_path(indecies_c(1:npc),:)         &
+              & * dbeta_dt_path_c(1:npc,:) * beta_path_c(1:npc,:),DIM=2),     &
+              & eta_zxp_t(indecies_c(1:npc),:),do_calc_t(indecies_c(1:npc),:),&
+              & do_calc_hyd(indecies_c(1:npc),:),del_s(1:npc),ref_corr(1:npc),&
+              & Req + one_tan_ht(1),dh_dt_path(brkpt,:),frq,do_gl(1:npc),     &
+              & req + h_path(gl_inds),t_path(gl_inds),dh_dt_path(gl_inds,:),  &
+              & SUM(sps_path(gl_inds,:)*beta_path_f,DIM=2),                   &
+              & SUM(sps_path(gl_inds,:)*beta_path_f*dbeta_dt_path_f,DIM=2),   &
+              & eta_zxp_t(gl_inds,:),do_calc_t(gl_inds,:),path_dsdh(gl_inds), &
+              & dhdz_path(gl_inds),t_script(1:npc),tau(1:npc),i_stop,drad_dt, &
               & ptg_i,frq_i)
 
             k_temp_frq(frq_i,:) = drad_dt
@@ -1229,10 +1255,10 @@ contains ! ================================ FullForwardModel routine ======
 
             ! Spectroscopic derivative  wrt: W
 
-            call drad_tran_dx(z_path(ext_ind_c(1:npc)),Grids_dw%no_z, &
+            call drad_tran_dx(z_path(indecies_c(1:npc)),Grids_dw%no_z, &
               &  Grids_dw%no_p,dbeta_dw_path_c(1:npc,:),              &
-              &  eta_zxp_dw(ext_ind_c(1:npc),:),sps_path(ext_ind_c(1:npc),:), &
-              &  do_calc_dw(ext_ind_c(1:npc),:),dbeta_dw_path_f,      &
+              &  eta_zxp_dw(indecies_c(1:npc),:),sps_path(indecies_c(1:npc),:), &
+              &  do_calc_dw(indecies_c(1:npc),:),dbeta_dw_path_f,      &
               &  eta_zxp_dw(gl_inds,:),sps_path(gl_inds,:),           &
               &  do_calc_dw(gl_inds,:),do_gl(1:npc),del_s(1:npc),     &
               &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds), &
@@ -1242,10 +1268,10 @@ contains ! ================================ FullForwardModel routine ======
 
             ! Spectroscopic derivative  wrt: N
 
-            call drad_tran_dx(z_path(ext_ind_c(1:npc)),Grids_dn%no_z,   &
+            call drad_tran_dx(z_path(indecies_c(1:npc)),Grids_dn%no_z,   &
               &  Grids_dn%no_p,dbeta_dn_path_c(1:npc,:),                &
-              &  eta_zxp_dn(ext_ind_c(1:npc),:),sps_path(ext_ind_c(1:npc),:), &
-              &  do_calc_dn(ext_ind_c(1:npc),:),dbeta_dn_path_f,        &
+              &  eta_zxp_dn(indecies_c(1:npc),:),sps_path(indecies_c(1:npc),:), &
+              &  do_calc_dn(indecies_c(1:npc),:),dbeta_dn_path_f,        &
               &  eta_zxp_dn(gl_inds,:),sps_path(gl_inds,:),             &
               &  do_calc_dn(gl_inds,:),do_gl(1:npc),del_s(1:npc),       &
               &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds), &
@@ -1255,10 +1281,10 @@ contains ! ================================ FullForwardModel routine ======
 
             ! Spectroscopic derivative  wrt: Nu0
 
-            call drad_tran_dx(z_path(ext_ind_c(1:npc)),Grids_dv%no_z,   &
+            call drad_tran_dx(z_path(indecies_c(1:npc)),Grids_dv%no_z,   &
               &  Grids_dv%no_p,dbeta_dv_path_c(1:npc,:),                &
-              &  eta_zxp_dv(ext_ind_c(1:npc),:),sps_path(ext_ind_c(1:npc),:), &
-              &  do_calc_dv(ext_ind_c(1:npc),:),dbeta_dv_path_f,        &
+              &  eta_zxp_dv(indecies_c(1:npc),:),sps_path(indecies_c(1:npc),:), &
+              &  do_calc_dv(indecies_c(1:npc),:),dbeta_dv_path_f,        &
               &  eta_zxp_dv(gl_inds,:),sps_path(gl_inds,:),             &
               &  do_calc_dv(gl_inds,:),do_gl(1:npc),del_s(1:npc),       &
               &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds), &
@@ -1272,6 +1298,8 @@ contains ! ================================ FullForwardModel routine ======
           call Deallocate_test ( beta_path_f, 'beta_path_f', ModuleName )
           call Deallocate_test ( gl_ndx, 'gl_ndx', ModuleName )
           call Deallocate_Test ( gl_indgen, 'gl_indgen', ModuleName )
+
+          call Deallocate_test ( bn2_path_f, 'bn2_path_f', ModuleName )
 
           if ( FwdModelConf%temp_der ) &
             & call Deallocate_test (dbeta_dt_path_f, 'dbeta_dt_path_f', &
@@ -1703,8 +1731,8 @@ contains ! ================================ FullForwardModel routine ======
 905     format ( 4(2x, 1pg15.8) )
       end do
 
+932   format (A,i2.2,A1,i4.4)
 933   format ( 5(2x, 1pg13.6) )
-934   format (A,i2.2,A1,i5.5)
 
     end if
 
@@ -1773,7 +1801,7 @@ contains ! ================================ FullForwardModel routine ======
     call Deallocate_test ( tau,          'tau',          ModuleName )
     call Deallocate_test ( del_s,        'del_s',        ModuleName )
     call Deallocate_test ( do_gl,        'do_gl',        ModuleName )
-    call Deallocate_test ( ext_ind_c,    'ext_ind_c',    ModuleName )
+    call Deallocate_test ( indecies_c,   'indecies_c',   ModuleName )
     call Deallocate_test ( n_path,       'n_path',       ModuleName )
     call Deallocate_test ( ref_corr,     'ref_corr',     ModuleName )
 
@@ -1783,6 +1811,8 @@ contains ! ================================ FullForwardModel routine ======
     call Deallocate_test ( eta_zp, 'eta_zp', ModuleName )
     call Deallocate_test ( eta_fzp, 'eta_fzp', ModuleName )
     call Deallocate_test ( sps_path, 'sps_path', ModuleName )
+
+    call Deallocate_test ( bn2_path_c, 'bn2_path_c', ModuleName )
 
     call Deallocate_test ( skip_eta_frq,   'skip_eta_frq',   ModuleName )
 
@@ -1836,6 +1866,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.14  2001/11/08 21:52:23  jonathan
+! add spec_tags to Molecules
+!
 ! Revision 2.13  2001/11/08 09:56:59  zvi
 ! Fixing a bug..
 !

@@ -20,8 +20,8 @@ contains
 !
   Subroutine Create_beta (Spectag, cont, pressure, Temp, Fgr, nl, pfaw,  &
          &   v0s, x1,y, yi, slabs1, beta_value, dslabs1_dv0, v0sp, x1p,  &
-         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m,              &
-         &   t_power, dbeta_dw, dbeta_dn, dbeta_dv)
+         &   yp, yip, slabs1p, v0sm, x1m, ym, yim, slabs1m, t_power,     &
+         &   dbeta_dw, dbeta_dn, dbeta_dv, bv_n2)
 !
 !  For a given frequency and height, compute beta_value function.
 !  This routine should be called for primary and image seperately.
@@ -60,6 +60,7 @@ contains
   REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DW ! line width derivative
   REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DN ! temperature dependence deriv
   REAL(rp), OPTIONAL, INTENT(OUT) :: DBETA_DV ! line position derivative
+  REAL(rp), OPTIONAL, INTENT(OUT) :: BV_N2    ! Beta values for N2 molecule
 !
 ! -----     Local variables     ----------------------------------------
 !
@@ -104,6 +105,7 @@ contains
 !
       beta_value = 1.0_rp
       IF (PRESENT(t_power)) t_power = 0.0_rp
+      IF (PRESENT(bv_n2)) bv_n2 = abs_cs_n2_cont(cont,Temp,Pressure,Fgr)
       Return 
 !
     else if (spectag == 32001) then
@@ -229,6 +231,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 2.5  2001/10/18 16:01:37  zvi
+! Fix a small bug
+!
 ! Revision 2.4  2001/10/18 15:59:26  zvi
 ! Modification for speed
 !

@@ -35,9 +35,9 @@ module LOAD_SPS_DATA_M
 contains
 !-------------------------------------------------------------------
 
-  subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, p_len, &
-        &    f_len, h2o_ind, lin_log, sps_values, Grids_f, Grids_dw,    &
-        &    Grids_dn, Grids_dv)
+  subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, &
+        &    p_len, f_len, h2o_ind, ext_ind, lin_log, sps_values, Grids_f,   &
+        &    Grids_dw, Grids_dn, Grids_dv)
 
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     integer, intent(in)  :: MOLECULES(:)
@@ -45,6 +45,7 @@ contains
     integer, intent(out) :: F_LEN
     integer, intent(out) :: P_LEN
     integer, intent(out) :: H2O_IND
+    integer, intent(out) :: EXT_IND
 
     type (Grids_T) :: Grids_f   ! All the coordinates
     type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
@@ -89,10 +90,12 @@ contains
     f_len = 0
     p_len = 0
     h2o_ind = 0
+    ext_ind = 0
     do i = 1 , n_sps
       if ( molecules(i) == l_extinction ) then
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_extinction, radiometer=radiometer )
+        ext_ind = i
       else
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molecule=molecules(i) )
@@ -402,6 +405,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.3  2001/11/08 09:56:59  zvi
+! Fixing a bug..
+!
 ! Revision 2.2  2001/11/08 00:10:13  livesey
 ! Interim version for extinction
 !
