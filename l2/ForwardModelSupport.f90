@@ -15,7 +15,10 @@ module ForwardModelSupport
     & F_CLOUD_DER, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, F_FRQGAP,&
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE,&
-    & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE
+    & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
+    & S_CLOUDFORWARDMODEL, S_FORWARDMODEL, &
+    & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS,&
+    & F_NSCATTERINGANGLES, F_NSIZEBINS
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSCommon, only: R8
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
@@ -23,7 +26,7 @@ module ForwardModelSupport
      & MLSMSG_Error
   use MLSPCF2, only: mlspcf_antpats_start, mlspcf_filtshps_start, &
      &          mlspcf_ptggrids_start
-  use MoreTree, only: Get_Boolean, Get_Field_ID
+  use MoreTree, only: Get_Boolean, Get_Field_ID, GET_SPEC_ID
   use Output_M, only: Output
   use Parse_Signal_m, only: PARSE_SIGNAL
   use String_Table, only: Display_String, Get_String
@@ -184,8 +187,10 @@ contains ! =====     Public Procedures     =============================
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
+    logical :: Cloudy                   ! If flavor is CloudForwardModel
     integer :: COMMONSIZE               ! Dimension
     integer :: Field                    ! Field index -- f_something
+    integer :: fwdmdlFlvr               ! Which flavor of forward model are we
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
     integer :: J                        ! Subscript and loop inductor.
@@ -213,6 +218,8 @@ contains ! =====     Public Procedures     =============================
     nullify ( channels, signalInds )
 
     error = 0
+    fwdmdlFlvr = get_spec_id(ROOT)
+    Cloudy = (fwdmdlFlvr == s_cloudforwardModel)
     if ( toggle(gen) ) call trace_begin ( "ConstructForwardModelConfig", root )
     if ( node_id(root) == n_named ) then
       name = subtree(1, root)
@@ -335,6 +342,24 @@ contains ! =====     Public Procedures     =============================
         info%integrationGrid => vGrids(decoration(decoration(subtree(2,son))))
       case ( f_tangentGrid )
         info%tangentGrid => vGrids(decoration(decoration(subtree(2,son))))
+      case ( f_ncloudspecies )
+        call expr ( subtree(2,son), units, value, type )
+        info%no_cloud_species = nint( value(1) )
+      case ( f_nmodelsurfs )
+        call expr ( subtree(2,son), units, value, type )
+        info%no_model_surfs = nint( value(1) )
+      case ( f_nscatteringangles )
+        call expr ( subtree(2,son), units, value, type )
+        info%NUM_SCATTERING_ANGLES = nint( value(1) )
+      case ( f_nazimuthangles )
+        call expr ( subtree(2,son), units, value, type )
+        info%NUM_AZIMUTH_ANGLES = nint( value(1) )
+      case ( f_nabterms )
+        call expr ( subtree(2,son), units, value, type )
+        info%NUM_AB_TERMS = nint( value(1) )
+      case ( f_nsizebins )
+        call expr ( subtree(2,son), units, value, type )
+        info%NUM_SIZE_BINS = nint( value(1) )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -430,6 +455,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.8  2001/07/09 22:51:37  pwagner
+! Picks up cloud-related config components
+!
 ! Revision 2.7  2001/06/21 20:06:42  vsnyder
 ! Make the tolerance field of the ForwardModel spec optional
 !
