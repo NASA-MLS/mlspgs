@@ -10,15 +10,19 @@ program MLSL2
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
-  & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, &
-  & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS
+    & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, &
+    & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
+    & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
-  use OUTPUT_M, only: OUTPUT, PRUNIT
+  use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
+  use PVM, only: ClearPVMArgs, NextPVMArg, FreePVMArgs
   use SDPToolkit, only: UseSDPToolkit
+  use SnoopMLSL2, only: SNOOPINGACTIVE
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DO_LISTING, INUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
@@ -27,13 +31,53 @@ program MLSL2
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
-  use PVM, only: ClearPVMArgs, NextPVMArg, FreePVMArgs
-  use SnoopMLSL2, only: SNOOPINGACTIVE
+
+  ! Main program for level 2 processing
+  ! (It is assumed that mlsl1 has already been run successfully)
+  ! Usage:
+  ! mlsl2 [options] [<] [l2cf]
+  ! where l2cf is an ascii file which comes from one of
+  ! (i)   a file named by a line in the pcf 
+  !        (if and only if pcf_for_input is TRUE)
+  ! (ii)  a file named on the command line w/o the '<' redirection
+  ! (iii) stdin or a file redirected as stdin using '<'
+  ! and where we expand 'mlsl2 [options]' below
+  ! mlsl2 -slo1 -slo2 .. --mlo1 --mlo2 ..
+  !    where slon are single-letter options and mlon are multiletter options
+  !    E.g., mlsl2 -m -p --nmeta -S"glo jac"
+  !    For a list of available options enter 'mlsl2 --help'
+  !    For a list of available switches enter 'mlsl2 -S"?"'
+
+  ! Overview
+  ! Level 2 must accomplish some operational tasks (opening and reading files),
+  ! prior to any scientific tasks (processing data)
+  ! The operational tasks are under the control of any and all of
+  ! (a) hard-wired options (see MLSL2Options module)
+  ! (b) command-line options (see /mlspgs/notes/options and 
+  !         /mlspgs/notes/switches)
+  ! (b) the l2cf 
+  ! (d) the pcf (unless the variable 'pcf' is FALSE) 
+  ! Tasks
+  ! (1) Accept hard-wired options 
+  ! (2) Initialize parser structures
+  ! (3) Read command-line options
+  ! (4) Open the l2cf (if not stdin)
+  ! (5) Parse the l2cf
+  ! (6) Close the l2cf (if not stdin)
+  ! (7) call walk_tree_to_do_MLS_L2 to do the (mostly) scientific tasks
+  ! (8) Close down some remaining things and exit with an appropriate status
+
+  ! Parallel processing
+  ! In parallel with this, there is a possible cooperation where
+  ! a single master process starts up, then tries to pass messages
+  ! to slave processes which may be running. Master and slaves, all,
+  ! will be running mlsl2
 
   implicit NONE
 
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
 
+  logical :: COPYARG               ! Copy this argument to parallel command line
   logical :: DO_DUMP = .false.     ! Dump declaration table
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from check_tree
@@ -45,9 +89,8 @@ program MLSL2
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
-  logical :: Timing = .false.      ! -T option is set
-  logical :: COPYARG               ! Copy this argument to parallel command line
   real :: T1, T2                   ! For timing
+  logical :: Timing = .false.      ! -T option is set
   character(len=255) :: WORD       ! Some text
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -57,6 +100,7 @@ program MLSL2
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
+  !---------------- Task (1) ------------------
 
 ! Where to send output, how severe an error to quit
    prunit = OUTPUT_PRINT_UNIT
@@ -66,6 +110,7 @@ program MLSL2
 ! to slave tasks
    call ClearPVMArgs
    
+  !---------------- Task (2) ------------------
 ! Initialize the lexer, symbol table, and tree checker's tables:
   call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=2017 )
   call allocate_decl ( ndecls=1000 )
@@ -74,6 +119,8 @@ program MLSL2
 
   ! We set up a mirror command line for launching slaves
   i = 1+hp
+
+  !---------------- Task (3) ------------------
   do ! Process the command line options to set toggles
     copyArg = .true.
     call getarg ( i, line )
@@ -145,7 +192,7 @@ program MLSL2
         j = j + 1
         select case ( line(j:j) )
         case ( ' ' )
-      exit
+          exit
         case ( 'A' ); dump_tree = .true.
         case ( 'a' ); toggle(syn) = .true.
         case ( 'c' ); toggle(con) = .true.
@@ -178,8 +225,19 @@ program MLSL2
         case ( 'p' ); toggle(par) = .true.
         case ( 'S' )
           switches = trim(switches) // line(j+1:)
-      exit ! Took the rest of the string, so there can't be more options
-        case ( 'T' ); timing = .true.
+          exit ! Took the rest of the string, so there can't be more options
+        case ( 'T' )
+          timing = .true.
+          if ( j < len(line) ) then
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              if( line(j+1:j+1) /= '0' ) &
+                & switches = trim(switches) // 'time'
+              section_times = &
+                & ( index(switches, 'time') /= 0 .and. (line(j+1:j+1) /= '1') )
+              total_times = section_times .and. (line(j+1:j+1) /= '2')
+              j = j + 1
+            end if
+          end if
         case ( 't' ); toggle(tab) = .true.
         case ( 'v' ); do_listing = .true.
         case default
@@ -222,6 +280,8 @@ program MLSL2
    end if
 
 ! Parse the L2CF, producing an abstract syntax tree
+
+  !---------------- Task (4) ------------------
   status = 0
   if ( line /= ' ' ) then
     open ( l2cf_unit, file=line, status='old', &
@@ -244,12 +304,16 @@ program MLSL2
   end if
   error = status
   call cpu_time ( t1 )
+
+  !---------------- Task (5) ------------------
   if (error == 0) then
     call configuration ( root )
   else
     root = -1
   endif
   if ( timing ) call sayTime ( 'Parsing the L2CF' )
+
+  !---------------- Task (6) ------------------
   if ( PCF_FOR_INPUT .and. error==0) then
     call close_MLSCF ( inunit, error )
   else
@@ -288,6 +352,8 @@ program MLSL2
       call print_subtree ( root, 0 )
       call output ( 'End type-checked abstract syntax tree', advance='yes' )
     end if
+
+  !---------------- Task (7) ------------------
     if ( error == 0 .and. first_section /= 0 ) then
       ! Now do the L2 processing.
       call cpu_time ( t1 )
@@ -295,6 +361,8 @@ program MLSL2
       if ( timing ) call sayTime ( 'Processing' )
     end if
   end if
+
+  !---------------- Task (8) ------------------
   call destroy_char_table
   call destroy_hash_table
   call destroy_string_table
@@ -302,6 +370,8 @@ program MLSL2
   call deallocate_decl
   call deallocate_tree
   call FreePVMArgs
+  if ( timing ) call sayTime ( 'Closing and deallocating' )
+  if ( index(switches, 'time') /= 0 ) call dump_section_timings
   if(error /= 0) then
      call MLSMessageExit(1)
   elseif(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
@@ -314,6 +384,11 @@ contains
   subroutine SayTime ( What )
     character(len=*), intent(in) :: What
     call cpu_time ( t2 )
+    if ( total_times ) then
+      call output ( "Total time = " )
+      call output ( dble(t2), advance = 'no' )
+      call blanks ( 4, advance = 'no' )
+    endif
     call output ( "Timing for " // what // " = " )
     call output ( dble(t2 - t1), advance = 'yes' )
   end subroutine SayTime
@@ -321,6 +396,9 @@ contains
   subroutine switch_usage
     print *, 'Switch usage: -S"sw1 sw2 .. swn" or -Ssw1 -Ssw2 ..'
     print *, ' where each of the swk may be one of the following'
+   ! (This incorporates automatic source code replacement by
+   !  a custom build command in the Makefile --
+   !  Please don't edit/remove the following 3 lines)
    ! === (start of automatic usage lines) ===
     print *, '  A => AntennaPatterns'
    ! === (end of automatic usage lines) ===
@@ -331,6 +409,9 @@ contains
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
     print *, ' Options:'
+   ! (This incorporates automatic source code replacement by
+   !  a custom build command in the Makefile --
+   !  Please don't edit/remove the following 3 lines)
    ! === (start of automatic option lines) ===
     print *, '  -A: Dump the un-decorated abstract syntax tree.'
    ! === (end of automatic option lines) ===
@@ -339,6 +420,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.54  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
 ! Revision 2.53  2001/09/19 23:43:49  livesey
 ! Added --snoop option
 !
