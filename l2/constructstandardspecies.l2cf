@@ -6,7 +6,7 @@ begin Construct
   
   temp: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
   refGPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=refGPH
-  GPH: Quantity, vGrid=vGridRefGPH, hGrid=hGridStandard, type=GPH
+  GPH: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=GPH
   
   ;; ----------------------------------------- Volume mixing ratios
 
@@ -27,9 +27,9 @@ begin Construct
   co:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
     molecule=co
   h2o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
-    molecule=h2o
+    molecule=h2o, /logBasis
   h2o_18:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
-    molecule=h2o_18
+    molecule=h2o_18, /logBasis
   hcl:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
     molecule=hcl
   hcl_35:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
@@ -197,6 +197,58 @@ begin Construct
   band34: Quantity, type=radiance, signal='R1B:118.B34W:PT'
 
   !define(AllBands, {!forloop({i}, 1, 33, {band!i, })band34})
+
+  ;; ----------------------------------------- OpticalDepths
+
+  ;; First the 25 channel filterbanks
+  depthBand1:  Quantity, type=opticalDepth, signal='R1A:118.B1F:PT'
+
+  depthBand2:  Quantity, type=opticalDepth, signal='R2:190.B2F:H2O'
+  depthBand3:  Quantity, type=opticalDepth, signal='R2:190.B3F:N2O'
+  depthBand4:  Quantity, type=opticalDepth, signal='R2:190.B4F:HNO3'
+  depthBand5:  Quantity, type=opticalDepth, signal='R2:190.B5F:ClO'
+  depthBand6:  Quantity, type=opticalDepth, signal='R2:190.B6F:O3'
+
+  depthBand7:  Quantity, type=opticalDepth, signal='R3:240.B7F:O3'
+  depthBand8:  Quantity, type=opticalDepth, signal='R3:240.B8F:PT'
+  depthBand9:  Quantity, type=opticalDepth, signal='R3:240.B9F:CO'
+
+  depthBand10: Quantity, type=opticalDepth, signal='R4:640.B10F:ClO'
+  depthBand11: Quantity, type=opticalDepth, signal='R4:640.B11F:BrO'
+  depthBand12: Quantity, type=opticalDepth, signal='R4:640.B12F:N2O'
+  depthBand13: Quantity, type=opticalDepth, signal='R4:640.B13F:HCl'
+  depthBand14: Quantity, type=opticalDepth, signal='R4:640.B14F:O3'
+
+  depthBand15: Quantity, type=opticalDepth, signal='R5H:2T5.B15F:OH'
+  depthBand16: Quantity, type=opticalDepth, signal='R5H:2T5.B16F:OH'
+  depthBand17: Quantity, type=opticalDepth, signal='R5H:2T5.B17F:PT'
+
+  depthBand18: Quantity, type=opticalDepth, signal='R5V:2T5.B18F:OH'
+  depthBand19: Quantity, type=opticalDepth, signal='R5V:2T5.B19F:OH'
+  depthBand20: Quantity, type=opticalDepth, signal='R5V:2T5.B20F:PT'
+
+  depthBand21: Quantity, type=opticalDepth, signal='R1B:118.B21F:PT'
+
+  ;; Now the DACs
+  depthBand22: Quantity, type=opticalDepth, signal='R1A:118.B22D:PT'
+  depthBand23: Quantity, type=opticalDepth, signal='R2:190.B23D:H2O'
+  depthBand24: Quantity, type=opticalDepth, signal='R3:240.B24D:O3'
+  depthBand25: Quantity, type=opticalDepth, signal='R3:240.B25D:CO'
+  depthBand26: Quantity, type=opticalDepth, signal='R1B:118.B26D:PT'
+
+  ;; Now the 11 channel filter banks
+  depthBand27: Quantity, type=opticalDepth, signal='R2:190.B27M:HCN'
+  depthBand28: Quantity, type=opticalDepth, signal='R4:640.B28M:HO2'
+  depthBand29: Quantity, type=opticalDepth, signal='R4:640.B29M:HOCl'
+  depthBand30: Quantity, type=opticalDepth, signal='R4:640.B30M:HO2'
+  depthBand31: Quantity, type=opticalDepth, signal='R4:640.B31M:BrO'
+
+  ;; Finally the wide filters
+  depthBand32: Quantity, type=opticalDepth, signal='R1A:118.B32W:PT'
+  depthBand33: Quantity, type=opticalDepth, signal='R3:240.B33W:O3'
+  depthBand34: Quantity, type=opticalDepth, signal='R1B:118.B34W:PT'
+
+  !define(AllOpticalDepths, {!forloop({i}, 1, 33, {depthBand!i, })depthBand34})
 
   ;; ----------------------------------------- Scan residuals
 
