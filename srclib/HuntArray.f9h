@@ -1,0 +1,175 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+!  subroutine HuntArray_r* ( list, values, indices, start, allowTopValue, allowBelowValue, &
+!    & nearest )
+    integer :: listLen, valuesLen       ! Array sizes
+    integer :: valueIndex               ! Loop counters
+    integer :: index                    ! Temporary result
+    integer :: alternativeIndex         ! Used in 'nearest' case
+    integer :: originalIndex            ! Used in 'nearest' case
+
+    logical :: useAllowTopValue, useAllowBelowValue, useNearest
+    integer :: useStart
+    integer :: upperLimit       ! Highest value that can be returned
+    integer :: stride           ! Value to step by
+    logical :: expanding        ! Whether we're expanding or reducing our search
+    logical :: lowerBelow       ! Flag
+    logical :: upperAbove       ! Another flag
+
+    integer :: listDirection    ! +1 if list ascends, -1 descends
+    integer :: searchDirection  ! (in index space) 
+    integer :: oldSearchDirection ! Previous value of above
+
+
+    ! Executable code
+
+    if ( present(allowTopValue) ) then
+      useAllowTopValue = allowTopValue
+    else
+      useAllowTopValue = .false.
+    end if
+
+    if ( present(allowBelowValue) ) then
+      useAllowBelowValue = allowBelowValue
+    else
+      useAllowBelowValue = .false.
+    end if
+
+    if ( present(nearest) ) then
+      useNearest = nearest
+    else
+      useNearest = .false.
+    end if
+
+    if ( present(start) ) then
+      useStart = start
+    else
+      useStart = 1
+    end if
+
+    if ( useNearest .and. useAllowBelowValue ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
+
+    listLen = size(list)
+    valuesLen = size(values)
+    if ( size(indices) < valuesLen ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Result array is too small" )
+
+    ! Try to work out the direction, also skip if there's only one value
+
+    if ( size(list) == 1 ) then
+      indices = 1
+      if ( useAllowBelowValue ) then
+        where ( values < list(1) )
+          indices = 0
+        end where
+      end if
+      return
+    else
+      if ( list(size(list)) >= list(1) ) then
+        listDirection = 1
+      else
+        listDirection = -1
+      end if
+    end if
+
+    ! Some last bits of setup before we get going.
+
+    if ( useAllowTopValue ) then
+      upperLimit = listLen
+    else
+      upperLimit = listLen-1
+    end if
+
+    ! Now we're ready to hit the road, loop over all the values to hunt for
+
+    index = max(1,min(useStart,upperLimit))
+    do valueIndex = 1, valuesLen
+      thisValue = values(valueIndex)
+      expanding = .true.
+      searchDirection = 0
+      stride = 1
+      HuntLoop: do
+        lowerBelow= (thisValue-list(index))*listDirection >= 0.0
+        if ( index<listLen ) then 
+          upperAbove = (list(index+1)-thisValue)*listDirection > 0.0
+        else ! We're off the end of the list
+          upperAbove = .true.   
+        end if
+
+        ! Now we know what the state of play is, what does it mean?
+
+        ! First see if we've found the place
+        if ( lowerBelow.and.upperAbove ) exit HuntLoop
+
+        ! The other cases are a little more complex
+        oldSearchDirection = searchDirection
+
+        if ( lowerBelow.and. (.not. upperAbove) ) then
+          ! If we're at the end, get out
+          if ( index == upperLimit ) exit HuntLoop
+          ! We're too low, keep looking upwards
+          index = index+stride
+          searchDirection = 1
+        end if
+
+        if ( (.not. lowerBelow).and.upperAbove ) then
+          ! If we're at the begning, get out
+          if ( index == 1 ) exit HuntLoop
+
+          ! We're too high but not at begining, look back downwards
+          index = index-stride
+          searchDirection = -1
+        end if
+
+        ! Now the very first change of direction is the end of hte
+        ! `expanding' phase
+
+        if ( (searchDirection /= oldSearchDirection) .and. &
+          & (oldSearchDirection /= 0) .and. (expanding) ) &
+          & expanding = .false.
+
+        if ( expanding ) then
+          stride = min(stride*2,listLen/2)
+        else
+          stride = max(stride/2,1)
+        end if
+
+        ! Make sure we don't fall off an end
+
+        index = min(max(index,1),upperLimit)
+      end do HuntLoop
+
+      ! If user asked for nearest then check to see if one above is closer
+      originalIndex = index
+      if ( useNearest ) then
+        alternativeIndex = index
+        ! Look for the next higher value
+        nearestLoop: do
+          if ( alternativeIndex >= upperLimit ) exit nearestLoop
+          alternativeIndex = alternativeIndex + 1
+          if ( list(alternativeIndex) > list(index) ) exit nearestLoop
+        end do nearestLoop
+        ! If this is higher, use it
+        if ( abs ( list(alternativeIndex) - thisValue ) < &
+          &  abs ( list(index) - thisValue ) ) then
+          index = alternativeIndex
+        end if
+      end if
+
+      ! Final check for off the bottom of the list
+
+      if ( useAllowBelowValue ) then
+        if ( (thisValue-list(index))*listDirection<0.0D0) index = 0
+      end if
+
+      indices(valueIndex) = index
+
+      ! In the 'nearest' case it might make sense to check from the
+      ! originalIndex
+      index = originalIndex
+    end do
+! end subroutine HuntArray_r*
+
+! $Log$
