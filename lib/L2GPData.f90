@@ -1912,8 +1912,8 @@ contains ! =====     Public Procedures     =============================
         & "No profiles in this chunk" )
 
     else
-      actual_ntimes = l2gp%nTimes
-      l2gp%nTimes = max(myLastProfile - offset + 1, 1)
+      ! actual_ntimes = l2gp%nTimes
+      ! l2gp%nTimes = max(myLastProfile - offset + 1, 1)
       call OutputL2GP_writeGeo_hdf (l2gp, l2FileHandle, myHDFVersion, &
         & myswathName, offset)
       call OutputL2GP_writeData_hdf (l2gp, l2FileHandle, myHDFVersion, &
@@ -1929,7 +1929,7 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Unrecognized hdfVersion passed to AppendL2GPData" )
       end select
-      l2gp%nTimes = actual_ntimes
+      ! l2gp%nTimes = actual_ntimes
     end if
 
   end subroutine AppendL2GPData_fileID
@@ -2347,6 +2347,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.91  2004/02/11 17:23:25  pwagner
+! l2gp status an integer, not a char
+!
 ! Revision 2.90  2004/02/10 18:45:43  pwagner
 ! lastProfile among optional args to AppendL2GPData
 !
