@@ -1161,7 +1161,7 @@ oc:     do
 
   ! --------------------------------------------  GetNameOfSignal  -----
   subroutine GetNameOfSignal ( Signal, String_text, NoRadiometer, NoBand, &
-    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, sideband )
+    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, sideband, channel )
     ! Given a signal object, this routine constructs a full signal name.
     type(signal_T), intent(in) :: SIGNAL
     character(len=*), intent(inout) :: STRING_TEXT
@@ -1172,6 +1172,7 @@ oc:     do
     logical, intent(in), optional :: NOCHANNELS
     logical, intent(in), optional :: NOSUFFIX
     integer, intent(in), optional :: SIDEBAND
+    integer, intent(in), optional :: CHANNEL ! Only this channel, noChannels overrides it
 
     ! Local variables
     logical :: First     ! First channel in signal text
@@ -1227,39 +1228,46 @@ oc:     do
         & signal%spectrometer, string_text(LEN_TRIM(string_text)+1:) )
     end if
 
-    if ( .not. my_noChannels .and. associated(signal%channels) ) then
-      if ( .not. all(signal%channels) .or. &
-        & lbound(signal%channels,1) /= lbound(signal%frequencies,1) .or. &
-        & ubound(signal%channels,1) /= ubound(signal%frequencies,1) ) then
+    if ( .not. my_noChannels ) then
+      if ( present(channel) ) then
         l = len_trim(string_text)
         call addToSignalString ( '.C' )
-        i = lbound(signal%channels, 1)
-        first = .true.
-        oc: do
-          do
-            if ( i > ubound(signal%channels, 1) ) exit oc
-            if ( signal%channels(i) ) exit
-            i = i + 1
-          end do
-          if ( .not. first ) call addToSignalString ( '+' )
-          first = .false.
-          j = i
-          do while ( j < ubound(signal%channels, 1) )
-            if ( .not. signal%channels(j+1) ) exit
-            j = j + 1
-          end do
-          if ( j > i ) then
-            write ( word, * ) i
-            call addToSignalString ( word )
-            call addToSignalString ( ':' )
-            write ( word, * ) j
-            call addToSignalString ( word )
-          else
-            write ( word, * ) i
-            call addToSignalString ( word )
-          end if
-          i = j + 1
-        end do oc
+        write ( word, * ) channel
+        call addToSignalString ( word )
+      else if ( associated(signal%channels) ) then
+        if ( .not. all(signal%channels) .or. &
+          & lbound(signal%channels,1) /= lbound(signal%frequencies,1) .or. &
+          & ubound(signal%channels,1) /= ubound(signal%frequencies,1) ) then
+          l = len_trim(string_text)
+          call addToSignalString ( '.C' )
+          i = lbound(signal%channels, 1)
+          first = .true.
+          oc: do
+            do
+              if ( i > ubound(signal%channels, 1) ) exit oc
+              if ( signal%channels(i) ) exit
+              i = i + 1
+            end do
+            if ( .not. first ) call addToSignalString ( '+' )
+            first = .false.
+            j = i
+            do while ( j < ubound(signal%channels, 1) )
+              if ( .not. signal%channels(j+1) ) exit
+              j = j + 1
+            end do
+            if ( j > i ) then
+              write ( word, * ) i
+              call addToSignalString ( word )
+              call addToSignalString ( ':' )
+              write ( word, * ) j
+              call addToSignalString ( word )
+            else
+              write ( word, * ) i
+              call addToSignalString ( word )
+            end if
+            i = j + 1
+          end do oc
+        end if
       end if
     end if
 
@@ -1389,7 +1397,7 @@ oc:     do
 
   ! ----------------------------------------------  GetSignalName  -----
   subroutine GetSignalName ( Signal, String_text, NoRadiometer, NoBand, &
-    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, SIDEBAND )
+    & NoSwitch, NoSpectrometer, NoChannels, NoSuffix, Sideband, Channel )
     ! Given an index in the signals database, this routine constructs a
     ! full signal name.
     integer, intent(in) :: SIGNAL                 ! Database index
@@ -1401,9 +1409,10 @@ oc:     do
     logical, intent(in), optional :: NOCHANNELS
     logical, intent(in), optional :: NOSUFFIX
     integer, intent(in), optional :: SIDEBAND
+    integer, intent(in), optional :: CHANNEL ! Only this channel, noChannels overrides this
 
     call getNameOfSignal ( signals(signal), string_text, noRadiometer, noBand, &
-      & noSwitch, noSpectrometer, noChannels, noSuffix, sideband )
+      & noSwitch, noSpectrometer, noChannels, noSuffix, sideband, channel )
   end subroutine GetSignalName 
 
   ! ----------------------------------------  GetSpectrometerName  -----
@@ -1752,6 +1761,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.77  2005/01/12 03:07:37  vsnyder
+! Added CHANNEL argument to GetNameOfSignal and GetSignalName
+!
 ! Revision 2.76  2004/10/30 00:24:34  vsnyder
 ! Add GetSidebandStartStop
 !
