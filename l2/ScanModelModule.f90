@@ -345,7 +345,6 @@ contains ! =============== Subroutines and functions ==========================
         & dgph_drefGPH(surf,:) * refGPHPrec%values(1,:) * &
         & refGPHPrec%values(1,:) * dgph_drefGPH(surf,:)
     end do
-    print*, sum(GPHPrec2-GPHPrec2a), maxval(GPHPrec2), maxval(GPHPrec2a)
     GPHPrec = sqrt ( GPHPrec2 )
      
     ! That's it  
@@ -2018,6 +2017,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.55  2003/01/31 22:30:56  livesey
+! Got rid of a print statement
+!
 ! Revision 2.54  2003/01/26 04:43:15  livesey
 ! Changed to handle units for phiWindow
 !
