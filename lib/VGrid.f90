@@ -9,6 +9,7 @@ MODULE vGrid                    ! Definitions for vGrids in vector quantities
   USE Temporary_Types           ! L2CF info etc.
   USE VerticalCoordinate        ! The various vertical coorindate systems.
   USE MLSStrings                ! String handling routines
+  USE MLSMessageModule          ! Message logging
 
   IMPLICIT NONE
   PUBLIC
@@ -136,7 +137,7 @@ CONTAINS
 
     DEALLOCATE(vGrid%surfs)
 
-  END SUBROUTINE DestroyVGridInformation
+  END SUBROUTINE DestroyVGridContents
 
   !--------------------------------------------------------------------------
 
@@ -195,6 +196,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.4  1999/12/16 00:04:51  livesey
+! Renamed routine DestroyVGridInformation to DestroyVGridContents
+!
 ! Revision 1.3  1999/12/15 22:57:45  livesey
 ! First version that seems to compile
 !
