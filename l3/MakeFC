@@ -61,7 +61,7 @@ PROG=mlsl3
 #----------------------- Build instructions
 
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
-	case "$(FFTW_ROOT)" in \
+	@case "$(FFTW_ROOT)" in \
 	"") \
 		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
 		echo "Try make -f MakeFC configure_pvm" ; \
@@ -138,6 +138,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.8  2001/02/28 23:33:20  pwagner
+# Build only if FFTW_ROOT defined
+#
 # Revision 1.7  2001/02/22 18:08:11  pwagner
 # Includes L3DZData.f90
 #
