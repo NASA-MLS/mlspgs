@@ -195,12 +195,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8) :: dphi                      ! phi interval of state quantity
     
     logical, dimension(:), pointer :: doChannel ! Do this channel?
-    logical :: DoHighZt                    ! Flag
+    logical :: DoHighZt                   ! Flag
     logical :: DoLowZt                    ! Flag
     logical :: Got(2) = .false.  
     logical :: QGot(8) = .false.  
     logical :: dee_bug = .true.  
-    logical :: FOUNDINFIRST                     ! Flag to indicate derivatives
+    logical :: FOUNDINFIRST               ! Flag to indicate derivatives
 
     nullify( CLOUDICE, CLOUDWATER, CLOUDEXTINCTION, CLOUDINDUCEDRADIANCE,    &
              CLOUDRADSENSITIVITY, EFFECTIVEOPTICALDEPTH, GPH,                &
@@ -215,9 +215,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     nullify ( doChannel )
     
     ! Check the model configuration 
-!j    if ( size ( forwardModelConfig%signals ) /= 1 )                          &
-!j      & call MLSMessage ( MLSMSG_Error, ModuleName,                          &
-!j      & 'Cannot call the full cloud forward model with multiple signals' )
+    if ( size ( forwardModelConfig%signals ) /= 1 )                          &
+      & call MLSMessage ( MLSMSG_Error, ModuleName,                          &
+      & 'Cannot call the full cloud forward model with multiple signals' )
 
     signal = forwardModelConfig%signals(1)
 
@@ -225,25 +225,25 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     maf = fmStat%maf
     !print*, maf
 
-!j    ! For the moment make it only single sideband
-!j    if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
-!j     & 'Only single sidebands allowed in FullForwardCloudModel for now' )
+    ! For the moment make it only single sideband
+    if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
+     & 'Only single sidebands allowed in FullForwardCloudModel for now' )
 
-    if ( signal%sideband == 0 ) then
-      if (.not. associated (sidebandRatio) ) &
-        & call MLSMessage(MLSMSG_Error,ModuleName, &
-        & "No sideband ratio supplied")
-      sidebandStart = -1
-      sidebandStop = 1
-      sidebandStep = 2
-    else
-      sidebandStart = signal%sideband
-      sidebandStop = sideBandStart
-      sidebandStep = 1
-    endif
+!j    if ( signal%sideband == 0 ) then
+!j      if (.not. associated (sidebandRatio) ) &
+!j        & call MLSMessage(MLSMSG_Error,ModuleName, &
+!j        & "No sideband ratio supplied")
+!j      sidebandStart = -1
+!j      sidebandStop = 1
+!j      sidebandStep = 2
+!j    else
+!j      sidebandStart = signal%sideband
+!j      sidebandStop = sideBandStart
+!j      sidebandStep = 1
+!j    endif
 
-    sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_sidebandRatio, signal= signal%index, noError=.true. )
+!j    sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+!j      & quantityType=l_sidebandRatio, signal= signal%index, noError=.true. )
 
     noFreqs = size (signal%frequencies)
     call Allocate_test ( frequencies, noFreqs,             &
@@ -257,28 +257,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     doChannel = .true.
 
     if ( associated ( signal%channels ) ) doChannel = signal%channels
-
-    call allocate_test ( superset, size(antennaPatterns), &
-         & 'superset', ModuleName )
-
-    do j = 1, size(antennaPatterns)
-       superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
-           & ForwardModelConfig%signals, sideband=signal%sideband , channel=chan )
-    end do
-
-    if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & "No matching antenna patterns." )
-
-    maxSuperset = maxval ( superset )
-    where ( superset < 0 )
-          superset = maxSuperset + 1
-    end where
-    whichPatternAsArray = minloc ( superset )
-    whichPattern = whichPatternAsArray(1)
-    if ( toggle(emit) .and. levels(emit) > 2 ) then
-       call output ( 'Using antenna pattern: ' )
-       call output ( whichPattern, advance='yes' )
-    end if
 
     ! Get the quantities we need from the vectors
 
@@ -565,6 +543,28 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     WC (2,:) = CloudWater%values(:,instance)
 
      phi_tan = Deg2Rad * temp%template%phi(1,instance)
+
+    call allocate_test ( superset, size(antennaPatterns), &
+         & 'superset', ModuleName )
+
+    do j = 1, size(antennaPatterns)
+       superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
+           & ForwardModelConfig%signals, sideband=signal%sideband , channel=chan )
+    end do
+
+    if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & "No matching antenna patterns." )
+
+    maxSuperset = maxval ( superset )
+    where ( superset < 0 )
+          superset = maxSuperset + 1
+    end where
+    whichPatternAsArray = minloc ( superset )
+    whichPattern = whichPatternAsArray(1)
+    if ( toggle(emit) .and. levels(emit) > 2 ) then
+       call output ( 'Using antenna pattern: ' )
+       call output ( whichPattern, advance='yes' )
+    end if
 
 !    print*, ' '
 !    print*,'No. of Frequencies:', noFreqs 
@@ -890,9 +890,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call Deallocate_test ( doChannel, 'doChannel', ModuleName )
     print*, ' '
     print*, 'Time Instance: ', instance
-!    print*, 'Successful done with full cloud forward wapper !'
-!    stop
 
+!    if ( maf == radiance%template%noInstances ) fmStat%finished = .true.
     print*, 'Successful done with full cloud forward wapper !'
 
   end subroutine FullCloudForwardModelWrapper
@@ -929,12 +928,14 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 
       CALL INTERPOLATEVALUES(Zlevel,TransOnZ,x_out,TransOnS(:,mif),method='Linear')
 
-
      enddo
 
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.35  2001/10/02 16:27:36  livesey
+! Removed reference to fmStat%finished
+!
 ! Revision 1.34  2001/10/01 23:40:26  jonathan
 ! construct codes for double sideband
 !
