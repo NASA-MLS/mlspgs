@@ -173,7 +173,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_setattr_i, &
-      &  PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
+      &  PGS_MET_write, PGS_MET_remove
 
     ! Executable code
 
@@ -287,7 +287,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-      &  PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
+      &  PGS_MET_write, PGS_MET_remove
 
     !Executable code
 
@@ -447,7 +447,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
          PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-         PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
+         PGS_MET_write, PGS_MET_remove
 
     !Executable code
 
@@ -711,7 +711,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-      &  PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
+      &  PGS_MET_write, PGS_MET_remove
 
     !Executable code
 
@@ -835,7 +835,7 @@ contains
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
       &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-      &  PGS_MET_write, PGS_MET_remove, PGS_MET_SDstartF
+      &  PGS_MET_write, PGS_MET_remove
 
     !Executable code
 
@@ -1462,6 +1462,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.21  2002/01/22 17:45:26  pwagner
+! Removed bogus declaration of pgs_met_startf
+!
 ! Revision 2.20  2002/01/18 23:11:09  pwagner
 ! Uses mls_sfstart; writePCF2Hdr controlled by ANNOTATEWITHPCF; dumps core (hooray)
 !
