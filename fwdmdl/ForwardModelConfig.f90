@@ -12,7 +12,6 @@ module ForwardModelConfig
   use MLSCommon, only: R8
   use MLSSignals_M, only: Signal_T
   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
-  use VectorsModule, only: VECTOR_T
 
   implicit NONE
   private
@@ -503,17 +502,10 @@ contains
   ! ------------------------------------  Dump_FowardModelConfigs  -----
   subroutine Dump_ForwardModelConfigDatabase ( Database )
 
-    use Dump_0, only: DUMP
-    use Intrinsic, only: Lit_indices
-    use MLSSignals_M, only: GetSignalName, MaxSigLen
-    use Output_M, only: Output
-    use String_Table, only: Display_String
-
     type (ForwardModelConfig_T), pointer, dimension(:) :: Database
 
     ! Local variables
     integer :: I                         ! Loop counters
-!   character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
     if ( associated(database) ) then
@@ -528,7 +520,7 @@ contains
 
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_indices
-    use MLSSignals_M, only: GetSignalName, MaxSigLen
+!   use MLSSignals_M, only: GetSignalName, MaxSigLen
     use Output_M, only: Output
     use String_Table, only: Display_String
 
@@ -578,7 +570,7 @@ contains
           ! call output ( signalName//' channelIncluded:', advance='yes')
           call dump ( Config%signals(j)%channels )
         end do
-   end subroutine Dump_ForwardModelConfig
+  end subroutine Dump_ForwardModelConfig
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -587,6 +579,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.42  2003/09/11 23:10:04  livesey
+! Added xStar and yStar
+!
 ! Revision 2.41  2003/07/22 22:43:39  michael
 ! Added a Dump_ForwardModelConfig subroutine for a single configuration and made
 ! Dump_ForwardModelConfigDatabase call Dump_ForwardModelConfig to dump an array
