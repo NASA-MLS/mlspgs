@@ -39,6 +39,10 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   integer, parameter :: MLSMSG_Warning=3
   integer, parameter :: MLSMSG_Error=4
 
+! MLSMSG_Severity_to_quit can be reset in a main program to cause us
+! to become more lenient (set it higher) or strict (set it lower)
+  integer            :: MLSMSG_Severity_to_quit=MLSMSG_Error
+
   private :: SeverityNames
   character (len=*), dimension(4), parameter :: SeverityNames = &
      & (/"Debug  ","Info   ","Warning","Error  "/)
@@ -143,7 +147,7 @@ contains
     ! Now if it's an error, and the message is complete, then try to close
     ! log file if any and quit
 
-    if ( my_adv .and. severity == MLSMSG_Error ) then
+    if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
       if ( MLSMessageConfig%logFileUnit /= -1 ) &
         & close ( MLSMessageConfig%logFileUnit )
       stop
@@ -194,6 +198,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.6  2001/04/20 20:43:15  pwagner
+! Check severity against MLSMSG_Severity_to_quit
+!
 ! Revision 2.5  2001/03/16 19:44:18  vsnyder
 ! Don't stop until advance='yes' -- i.e. not before the message is complete
 !
