@@ -63,7 +63,7 @@ contains
     real(rp), pointer :: sps_values(:)
 
     type (VectorValue_T), pointer :: temp
-    type (CATALOG_T), dimension(:), pointer :: MyCatalog
+    type (CATALOG_T), dimension(:), intent(in) :: MyCatalog
 
     character(LEN=3), parameter :: WNV='+++'
 
@@ -118,7 +118,7 @@ contains
       kz = f%template%noSurfs
       kp = f%template%noInstances
       if ( f%template%frequencyCoordinate == l_none ) then
-        mf = 0
+        mf = 1
         kf = 1
       else
         mf = 1
@@ -454,6 +454,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.6  2001/12/14 23:43:24  zvi
+! Modification for Grouping concept
+!
 ! Revision 2.5  2001/11/15 01:21:59  zvi
 ! Extiction debug fix
 !
