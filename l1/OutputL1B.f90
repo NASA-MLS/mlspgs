@@ -42,7 +42,7 @@ module OutputL1B
   character(len=*), public, parameter :: SDS9_NAME = 'scGeodLat'
   character(len=*), public, parameter :: SDS10_NAME = 'scLon'
   character(len=*), public, parameter :: SDS11_NAME = 'scGeodAngle'
-  character(len=*), public, parameter :: SDS12_NAME = 'scVel'
+  character(len=*), public, parameter :: SDS12_NAME = 'scVelECI'
   character(len=*), public, parameter :: SDS13_NAME = 'ypr'
   character(len=*), public, parameter :: SDS14_NAME = 'yprRate'
 
@@ -87,6 +87,8 @@ module OutputL1B
   character(len=*), public, parameter :: SDS50_NAME = 'THz.tpLosAngle'
 
   character(len=*), public, parameter :: SDS51_NAME = 'counterMAF'
+  character(len=*), public, parameter :: SDS62_NAME = 'scVelECR'
+  character(len=*), public, parameter :: SDS63_NAME = 'scOrbIncl'
 
   character(len=*), public, parameter :: DIM1_NAME = 'MAF'
   character(len=*), public, parameter :: DIM2_NAME = 'MIF'
@@ -128,6 +130,7 @@ module OutputL1B
     real, dimension(:), pointer :: scGeodLat		! s/c geod lat
     real, dimension(:), pointer :: scLon		! s/c longitude
     real, dimension(:), pointer :: scGeodAngle	! s/c master coordinate
+    real, dimension(:), pointer :: scOrbIncl     ! instant. orb incl ECR (deg)
 
     ! dimensioned (xyz,MIF)
     real(r8), dimension(:,:), pointer :: scVelECI	! s/c ECI velocity
@@ -178,8 +181,7 @@ contains
     integer :: sfcreate, sfdimid, sfsdmname, sfendacc, sfsfill
 
     ! Variables
-    character (LEN=480) :: msr
-    integer :: alloc_err, dim_id, i, rank, returnStatus, status
+    integer :: dim_id, rank, status
     integer :: sds1_id, sds2_id, sds3_id, sds4_id, sds5_id, sds6_id, sds7_id
     integer :: sds8_id, sds9_id, sds10_id, sds11_id, sds12_id, sds13_id
     integer :: sds14_id, sds15_id, sds16_id, sds17_id, sds18_id, sds19_id
@@ -189,6 +191,7 @@ contains
     integer :: sds38_id, sds39_id, sds40_id, sds41_id, sds42_id, sds43_id
     integer :: sds44_id, sds45_id, sds46_id, sds47_id, sds48_id, sds49_id
     integer :: sds50_id, sds51_id, sds52_id, sds53_id
+    integer :: sds62_id, sds63_id
     integer :: dimSize(3)
 
     ! Create the counterMAF SD in rad file F; name the dimension; terminate access
@@ -246,6 +249,9 @@ contains
     sds11_id = sfcreate( sdId%OAId, SDS11_NAME, DFNT_FLOAT32, rank, &
       dimSize(1:2) )
     status = sfsfill(sds11_id, FILL_REAL)
+    sds63_id = sfcreate( sdId%OAId, SDS63_NAME, DFNT_FLOAT32, rank, &
+      dimSize(1:2) )
+    status = sfsfill(sds63_id, FILL_REAL)
 
     sds15_id = sfcreate( sdId%OAId, SDS15_NAME, DFNT_FLOAT64, rank, &
       dimSize(1:2) )
@@ -368,6 +374,8 @@ contains
     status = sfsfill(sds5_id, FILL_DP)
     sds12_id = sfcreate(sdId%OAId, SDS12_NAME, DFNT_FLOAT64, rank, dimSize)
     status = sfsfill(sds12_id, FILL_DP)
+    sds62_id = sfcreate(sdId%OAId, SDS62_NAME, DFNT_FLOAT64, rank, dimSize)
+    status = sfsfill(sds62_id, FILL_DP)
     sds13_id = sfcreate(sdId%OAId, SDS13_NAME, DFNT_FLOAT64, rank, dimSize)
     status = sfsfill(sds13_id, FILL_DP)
     sds14_id = sfcreate(sdId%OAId, SDS14_NAME, DFNT_FLOAT64, rank, dimSize)
@@ -441,6 +449,11 @@ contains
     dim_id = sfdimid(sds10_id, 1)
     status = sfsdmname(dim_id, DIM1_NAME)
 
+    dim_id = sfdimid(sds63_id, 0)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds63_id, 1)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
     dim_id = sfdimid(sds11_id, 0)
     status = sfsdmname(dim_id, DIM2_NAME)
     dim_id = sfdimid(sds11_id, 1)
@@ -451,6 +464,13 @@ contains
     dim_id = sfdimid(sds12_id, 1)
     status = sfsdmname(dim_id, DIM2_NAME)
     dim_id = sfdimid(sds12_id, 2)
+    status = sfsdmname(dim_id, DIM1_NAME)
+
+    dim_id = sfdimid(sds62_id, 0)
+    status = sfsdmname(dim_id, DIM5_NAME)
+    dim_id = sfdimid(sds62_id, 1)
+    status = sfsdmname(dim_id, DIM2_NAME)
+    dim_id = sfdimid(sds62_id, 2)
     status = sfsdmname(dim_id, DIM1_NAME)
 
     dim_id = sfdimid(sds13_id, 0)
@@ -673,7 +693,9 @@ contains
     status = sfendacc(sds9_id)
     status = sfendacc(sds10_id)
     status = sfendacc(sds11_id)
+    status = sfendacc(sds63_id)
     status = sfendacc(sds12_id)
+    status = sfendacc(sds62_id)
     status = sfendacc(sds13_id)
     status = sfendacc(sds14_id)
     status = sfendacc(sds15_id)
@@ -785,6 +807,7 @@ contains
     integer :: sds_index, status
     integer :: sds4_id, sds5_id, sds6_id, sds7_id, sds8_id, sds9_id
     integer :: sds10_id, sds11_id, sds12_id, sds13_id, sds14_id
+    integer :: sds62_id, sds63_id
     integer :: edge(3), start(3), stride(3)
 
     ! Find data sets by name
@@ -812,8 +835,14 @@ contains
     sds_index = sfn2index(sd_id, SDS11_NAME)
     sds11_id = sfselect(sd_id, sds_index)
 
+    sds_index = sfn2index(sd_id, SDS63_NAME)
+    sds63_id = sfselect(sd_id, sds_index)
+
     sds_index = sfn2index(sd_id, SDS12_NAME)
     sds12_id = sfselect(sd_id, sds_index)
+
+    sds_index = sfn2index(sd_id, SDS62_NAME)
+    sds62_id = sfselect(sd_id, sds_index)
 
     sds_index = sfn2index(sd_id, SDS13_NAME)
     sds13_id = sfselect(sd_id, sds_index)
@@ -835,6 +864,7 @@ contains
     status = sfwdata(sds4_id, start, stride, edge, sc%scECI)
     status = sfwdata(sds5_id, start, stride, edge, sc%scECR)
     status = sfwdata(sds12_id, start, stride, edge, sc%scVelECI)
+    status = sfwdata(sds62_id, start, stride, edge, sc%scVelECR)
     status = sfwdata(sds13_id, start, stride, edge, sc%ypr)
     status = sfwdata(sds14_id, start, stride, edge, sc%yprRate)
 
@@ -854,6 +884,8 @@ contains
     status = sfwdata(sds10_id, start(1:2), stride(1:2), edge(1:2), sc%scLon)
     status = sfwdata(sds11_id, start(1:2), stride(1:2), edge(1:2), &
       sc%scGeodAngle)
+    status = sfwdata(sds63_id, start(1:2), stride(1:2), edge(1:2), &
+      sc%scOrbIncl)
 
     ! Terminate access to the data sets
     status = sfendacc(sds4_id)
@@ -864,7 +896,9 @@ contains
     status = sfendacc(sds9_id)
     status = sfendacc(sds10_id)
     status = sfendacc(sds11_id)
+    status = sfendacc(sds63_id)
     status = sfendacc(sds12_id)
+    status = sfendacc(sds62_id)
     status = sfendacc(sds13_id)
     status = sfendacc(sds14_id)
 
@@ -1318,6 +1352,9 @@ contains
 end module OutputL1B
 
 ! $Log$
+! Revision 2.4  2001/12/06 01:03:46  pwagner
+! Now writes orbit incline angle in ECR
+!
 ! Revision 2.3  2001/12/04 00:29:16  pwagner
 ! Made public things needed by sids
 !
