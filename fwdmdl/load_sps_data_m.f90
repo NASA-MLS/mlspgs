@@ -144,7 +144,7 @@ contains
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'Grids_f%deriv_flags' )
 
-    Grids_f%deriv_flags = .true.   ! ** Initialize all values to TRUE
+    Grids_f%deriv_flags(1:f_len) = .TRUE.   ! ** Initialize all values to TRUE
 !
     n_f_zet = SUM(Grids_f%no_z)
     n_f_phi = SUM(Grids_f%no_p)
@@ -259,11 +259,7 @@ contains
       kz = Grids_f%no_z(ii)
       kf = Grids_f%no_f(ii)
       Call load_deriv_flag(Spectag,kp,kz,kf,deriv_flag,ErrMsg,j)
-      if(j < 0) then
-        Print *,ErrMsg(1:Len_Trim(ErrMsg))
-        Print *,'** Setting all Grids_f%deriv_flags = .TRUE.'
-        EXIT
-      endif
+      if(j < 0) EXIT
       Grids_f%deriv_flags(m+1:m+j) = deriv_flag(1:j)
       m = m + j
     end do
@@ -509,7 +505,7 @@ contains
 !
     ier = 0
     ErrMsg(1:) = ' '
-    deriv_flag = .false.
+    deriv_flag = .TRUE.     ! Initialized to .TRUE.
 
     Close(31,iostat=j)
     Open(31,file='der_flags.dat',status='OLD',action='READ',iostat=j)
@@ -655,6 +651,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.10  2002/01/30 01:11:20  zvi
+! Fix bug in user selectable coeff. code
+!
 ! Revision 2.9  2002/01/27 08:37:49  zvi
 ! Adding Users selected coefficients for derivatives
 !
