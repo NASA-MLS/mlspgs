@@ -632,7 +632,8 @@ contains ! =====     Public Procedures     =============================
           madeFile = .true.
           call cpL2GPData(trim(DirectDatabase(DB_index)%fileName), &
             & trim(l2gpPhysicalFilename), create2=(DB_index==1), &
-            & hdfVersion=HDFVERSION_5, notUnlimited=avoidUnlimitedDims)
+            & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
+            & notUnlimited=avoidUnlimitedDims)
         enddo
         if ( TOOLKIT .and. madeFile ) then
           call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
@@ -964,6 +965,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.95  2004/03/12 00:39:37  pwagner
+! Interface to cpL2GPData changed to match
+!
 ! Revision 2.94  2004/03/03 19:23:48  pwagner
 ! Master task never knows actual sdList to catenate; let cpL2AUXData figure it out
 !
