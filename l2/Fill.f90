@@ -1379,7 +1379,7 @@ contains ! =====     Public Procedures     =============================
               & 'Unable to finish phases timings' )
           else
             call FillTimings ( quantity%values(:,1), 'phases', 'all', .true. )
-            call dump( quantity%values(:,1), 'phases' )
+            ! call dump( quantity%values(:,1), 'phases' )
           endif
 
         case ( l_sectionTiming ) ! ---------  Fill timings for sections  -----
@@ -1388,7 +1388,7 @@ contains ! =====     Public Procedures     =============================
             call MLSMessage ( MLSMSG_Warning, ModuleName, 'Unable to finish sections timings' )
           else
             call FillTimings ( quantity%values(:,1), 'sections', 'all', .true. )
-            call dump( quantity%values(:,1), 'sections' )
+            ! call dump( quantity%values(:,1), 'sections' )
           end if
 
         case ( l_profile ) ! ------------------------ Profile fill -------
@@ -6893,6 +6893,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.279  2004/08/23 21:59:42  pwagner
+! Disabled debugging dumps of section, phase timings
+!
 ! Revision 2.278  2004/08/03 18:01:14  pwagner
 ! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
 !
