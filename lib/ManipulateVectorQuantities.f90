@@ -155,17 +155,16 @@ contains
   end subroutine FindInstanceWindow
 
   ! -------------------------------------- FillWithCombinedChannels ----------
-  subroutine FillWithCombinedChannels ( key, quantity, sourceQuantity, message, mapping )
-    use MatrixModule_0, only: MatrixElement_T, M_Full, CreateBlock
+  subroutine FillWithCombinedChannels ( quantity, sourceQuantity, message, mapping )
+    use MatrixModule_0, only: MatrixElement_T, M_Full, CreateBlock, Sparsify
     use MLSSignals_m, only: SIGNAL_T, GETSIGNAL
     use Allocate_Deallocate, only: Allocate_test, Deallocate_test
     ! This routine takes a (typically radiance) quantity on one set of channels
     ! and combines the channels together appropriately to make them representative
     ! of the data in another (presumably at a finer resolution.
-    integer, intent(in) :: KEY        ! Tree node
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
     type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantitiy on finer(?) channel grid
-    character (len=80), intent(out) :: MESSAGE ! Possible error message
+    character (len=*), intent(out) :: MESSAGE ! Possible error message
     type (MatrixElement_T), intent(inout), optional :: MAPPING ! A matrix_0 mapping
     ! Local variables
     type (Signal_T) :: signal, sourceSignal
@@ -219,7 +218,7 @@ contains
     do cOut = 1, quantity%template%noChans
       ! Work out where this output channel is
       center = signal%centerFrequency + signal%direction * signal%frequencies ( cOut )
-      halfWidth = signal%frequencies ( cOut )
+      halfWidth = signal%widths ( cOut ) / 2.0
       ! Now map this back into sourceSignal%frequencies
       center = ( center - sourceSignal%centerFrequency ) * sourceSignal%direction
       noInside(cOut) = count ( &
@@ -235,7 +234,7 @@ contains
     do cOut = 1, quantity%template%noChans
       ! Work out where this output channel is
       center = signal%centerFrequency + signal%direction * signal%frequencies ( cOut )
-      halfWidth = signal%frequencies ( cOut )
+      halfWidth = signal%widths ( cOut ) / 2.0
       ! Now map this back into sourceSignal%frequencies
       center = ( center - sourceSignal%centerFrequency ) * sourceSignal%direction
       ! Use nested loops to make the code easier to read, rather than complicated indexing
@@ -255,6 +254,7 @@ contains
         end if
       end do
     end do
+    call Sparsify ( mapping )
 
     call Deallocate_test ( noInside, 'noInside', ModuleName )
   end subroutine FillWithCombinedChannels
@@ -435,6 +435,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.28  2004/09/25 00:15:48  livesey
+! Bug fixes etc. in FillWithCombinedChannels
+!
 ! Revision 2.27  2004/09/24 17:55:41  livesey
 ! Gained ManipulateVectorQuantities from fill
 !
