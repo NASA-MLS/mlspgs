@@ -77,7 +77,7 @@
 # data set files to the location specified by the new setting.
 !  ~/runtime
 #
-900|PCF.v0-7|/user2/nakamura/mlspgs/l3||||1
+900|PCF.daily|/user2/nakamura/mlspgs/l3||||1
 901|l3_v0-7.cf|/user2/nakamura/mlspgs/l3||||1
 22000|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
 22001|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
