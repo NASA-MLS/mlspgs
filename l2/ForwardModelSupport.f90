@@ -589,7 +589,7 @@ contains ! =====     Public Procedures     =============================
         i = i + 1
         info%molecules(i) = decoration( subtree( j, pfaTree ) )
         if ( any(abs(info%molecules(:nelts)) == info%molecules(i)) ) &
-          & call announceError ( PFAAndNotPFA, subtree(j+1,pfaTree) )
+          & call announceError ( PFAAndNotPFA, subtree(j,pfaTree) )
       end do
     end if
 
@@ -814,9 +814,11 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------------  AnnounceError  -----
   subroutine AnnounceError ( Code, where, extraMessage )
 
+    use Intrinsic, only: Lit_Indices
     use Lexer_Core, only: PRINT_SOURCE
     use Output_M, only: Output
-    use Tree, only: Source_Ref
+    use String_Table, only: Display_String
+    use Tree, only: Decoration, Source_Ref
 
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: where      ! Where in the tree did the error occur?
@@ -861,7 +863,9 @@ contains ! =====     Public Procedures     =============================
       call output ( 'A bin selector of type vmr must have a molecule',&
         & advance='yes' )
     case ( PFAAndNotPFA )
-      call output ( 'Molecule listed for both PFA and non-PFA', advance='yes' )
+      call output ( 'Molecule ' )
+      call display_string ( lit_indices(decoration(where)) )
+      call output ( ' listed for both PFA and non-PFA', advance='yes' )
     case ( PolarizedAndAllLines )
       call output ( 'cannot specify both polarized and allLinesInCatalog', &
         & advance='yes' )
@@ -893,6 +897,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.95  2004/07/17 02:27:24  vsnyder
+! Better error message for PFA and non-PFA conflict
+!
 ! Revision 2.94  2004/07/08 02:35:46  vsnyder
 ! Put all line-by-line molecules before PFA ones
 !
