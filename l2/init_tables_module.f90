@@ -59,7 +59,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_ATMOS_DER           = f_aprioriScale + 1
   integer, parameter :: F_AUTOFILL            = f_atmos_der + 1
-  integer, parameter :: F_CLOUD_DER           = f_autofill + 1
+  integer, parameter :: F_BOUNDARYPRESSURE    = f_autofill + 1
+  integer, parameter :: F_CLOUD_DER           = f_boundarypressure + 1
   integer, parameter :: F_CLOUD_WIDTH         = f_cloud_der + 1
   integer, parameter :: F_COLCHANNELS         = f_cloud_width + 1
   integer, parameter :: F_COLINSTANCES        = f_colChannels + 1
@@ -196,49 +197,52 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_VALUES              = f_unit + 1
   integer, parameter :: F_VERSIONRANGE        = f_values + 1
   integer, parameter :: F_VGRID               = f_versionrange + 1
-  integer, parameter :: FIELD_LAST = f_vGrid
+  integer, parameter :: F_VMRQUANTITY         = f_vgrid + 1
+  integer, parameter :: FIELD_LAST            = f_vmrquantity
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
-  integer, parameter :: L_ANGLE         = last_Spectroscopy_Lit + 1
-  integer, parameter :: L_APRIORI       = l_angle + 1
-  integer, parameter :: L_BOTH 	        = l_apriori + 1
-  integer, parameter :: L_CHOLESKY      = l_both + 1
-  integer, parameter :: L_CLIMATOLOGY   = l_cholesky+1
-  integer, parameter :: L_CLOUDFULL     = l_climatology + 1
-  integer, parameter :: L_COVARIANCE    = l_cloudFull + 1
-  integer, parameter :: L_DAO 	        = l_covariance + 1
-  integer, parameter :: L_DIRECT        = l_dao + 1
-  integer, parameter :: L_EITHER        = l_direct + 1
-  integer, parameter :: L_ESTIMATEDNOISE= l_either + 1
-  integer, parameter :: L_EXPLICIT      = l_estimatedNoise + 1
-  integer, parameter :: L_FIXED         = l_explicit + 1
-  integer, parameter :: L_FRACTIONAL    = l_fixed + 1
-  integer, parameter :: L_FULL          = l_fractional + 1
-  integer, parameter :: L_GRIDDED       = l_full + 1
-  integer, parameter :: L_HEIGHT        = l_gridded + 1
-  integer, parameter :: L_HYDROSTATIC   = l_height + 1
-  integer, parameter :: L_ISOTOPE       = l_hydrostatic + 1
-  integer, parameter :: L_KRONECKER     = l_isotope + 1
-  integer, parameter :: L_L1B           = l_kronecker + 1
-  integer, parameter :: L_L2AUX         = l_l1b + 1
-  integer, parameter :: L_L2DGG         = l_l2aux + 1
-  integer, parameter :: L_L2GP 	        = l_l2dgg + 1
-  integer, parameter :: L_L2PC          = l_l2gp + 1
-  integer, parameter :: L_LINEAR        = l_l2pc + 1
-  integer, parameter :: L_LOGARITHMIC   = l_linear + 1
-  integer, parameter :: L_NCEP 	        = l_logarithmic + 1
-  integer, parameter :: L_NEITHER       = l_ncep + 1
-  integer, parameter :: L_NEWTONIAN     = l_neither + 1
-  integer, parameter :: L_NORM          = l_newtonian + 1
-  integer, parameter :: L_PLAIN         = l_norm + 1
-  integer, parameter :: L_PRESSURE      = l_plain + 1
-  integer, parameter :: L_RECTANGLEFROMLOS      = l_pressure + 1
-  integer, parameter :: L_SCAN          = l_rectanglefromlos + 1
-  integer, parameter :: L_SPD           = l_scan + 1
-  integer, parameter :: L_SPECIAL       = l_spd + 1
-  integer, parameter :: L_VECTOR        = l_special + 1
-  integer, parameter :: L_VGRID         = l_vector + 1
-  integer, parameter :: L_WEIGHTED      = l_vGrid + 1
-  integer, parameter :: LAST_LIT        = l_weighted
+  integer, parameter :: L_ANGLE                = last_Spectroscopy_Lit + 1
+  integer, parameter :: L_APRIORI              = l_angle + 1
+  integer, parameter :: L_BOTH 	              = l_apriori + 1
+  integer, parameter :: L_BOUNDARYPRESSURE     = l_both + 1
+  integer, parameter :: L_CHOLESKY             = l_boundarypressure + 1
+  integer, parameter :: L_CLIMATOLOGY          = l_cholesky+1
+  integer, parameter :: L_CLOUDFULL            = l_climatology + 1
+  integer, parameter :: L_COLUMNABUNDANCE      = l_cloudFull + 1
+  integer, parameter :: L_COVARIANCE           = l_columnabundance + 1
+  integer, parameter :: L_DAO 	              = l_covariance + 1
+  integer, parameter :: L_DIRECT               = l_dao + 1
+  integer, parameter :: L_EITHER               = l_direct + 1
+  integer, parameter :: L_ESTIMATEDNOISE       = l_either + 1
+  integer, parameter :: L_EXPLICIT             = l_estimatedNoise + 1
+  integer, parameter :: L_FIXED                = l_explicit + 1
+  integer, parameter :: L_FRACTIONAL           = l_fixed + 1
+  integer, parameter :: L_FULL                 = l_fractional + 1
+  integer, parameter :: L_GRIDDED              = l_full + 1
+  integer, parameter :: L_HEIGHT               = l_gridded + 1
+  integer, parameter :: L_HYDROSTATIC          = l_height + 1
+  integer, parameter :: L_ISOTOPE              = l_hydrostatic + 1
+  integer, parameter :: L_KRONECKER            = l_isotope + 1
+  integer, parameter :: L_L1B                  = l_kronecker + 1
+  integer, parameter :: L_L2AUX                = l_l1b + 1
+  integer, parameter :: L_L2DGG                = l_l2aux + 1
+  integer, parameter :: L_L2GP 	              = l_l2dgg + 1
+  integer, parameter :: L_L2PC                 = l_l2gp + 1
+  integer, parameter :: L_LINEAR               = l_l2pc + 1
+  integer, parameter :: L_LOGARITHMIC          = l_linear + 1
+  integer, parameter :: L_NCEP 	              = l_logarithmic + 1
+  integer, parameter :: L_NEITHER              = l_ncep + 1
+  integer, parameter :: L_NEWTONIAN            = l_neither + 1
+  integer, parameter :: L_NORM                 = l_newtonian + 1
+  integer, parameter :: L_PLAIN                = l_norm + 1
+  integer, parameter :: L_PRESSURE             = l_plain + 1
+  integer, parameter :: L_RECTANGLEFROMLOS     = l_pressure + 1
+  integer, parameter :: L_SCAN                 = l_rectanglefromlos + 1
+  integer, parameter :: L_SPD                  = l_scan + 1
+  integer, parameter :: L_SPECIAL              = l_spd + 1
+  integer, parameter :: L_VECTOR               = l_special + 1
+  integer, parameter :: L_VGRID                = l_vector + 1
+  integer, parameter :: L_WEIGHTED             = l_vGrid + 1
+  integer, parameter :: LAST_LIT               = l_weighted
 ! Section identities.  Indices are in the order the sections are allowed to
 ! appear.  They're also used to index SECTION_ORDERING, so BE CAREFUL if
 ! you change them!
@@ -371,11 +375,13 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_angle) =                 add_ident ( 'angle' )
     lit_indices(l_apriori) =               add_ident ( 'apriori' )
     lit_indices(l_both) =                  add_ident ( 'both' )
+    lit_indices(l_boundarypressure) =      add_ident ( 'boundarypressure' )
     lit_indices(l_cholesky) =              add_ident ( 'cholesky' )
     lit_indices(l_climatology) =           add_ident ( 'climatology' )
     lit_indices(l_cloudFull) =             add_ident ( 'cloudFull' )
+    lit_indices(l_columnabundance) =       add_ident ( 'columnabundance' )
     lit_indices(l_covariance) =            add_ident ( 'covariance' )
-    lit_indices(l_dao) =                   add_ident ( 'DAO' )
+    lit_indices(l_dao) =                   add_ident ( 'dao' )
     lit_indices(l_direct) =                add_ident ( 'direct' )
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_either) =                add_ident ( 'either' )
@@ -396,7 +402,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_l2pc) =                  add_ident ( 'l2pc' )
     lit_indices(l_linear) =                add_ident ( 'linear' )
     lit_indices(l_logarithmic) =           add_ident ( 'logarithmic' )
-    lit_indices(l_ncep) =                  add_ident ( 'NCEP' )
+    lit_indices(l_ncep) =                  add_ident ( 'ncep' )
     lit_indices(l_neither) =               add_ident ( 'neither' )
     lit_indices(l_newtonian) =             add_ident ( 'newtonian' )
     lit_indices(l_norm) =                  add_ident ( 'norm' )
@@ -417,6 +423,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
+    field_indices(f_boundarypressure) =    add_ident ( 'boundarypressure' )
     field_indices(f_cloud_der) =           add_ident ( 'cloud_der' )
     field_indices(f_cloud_width) =         add_ident ( 'cloud_width' )
     field_indices(f_colChannels) =         add_ident ( 'colChannels' )
@@ -554,6 +561,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_versionRange) =        add_ident ( 'versionRange' )
     field_indices(f_vGrid) =               add_ident ( 'vgrid' )
+    field_indices(f_vmrquantity) =         add_ident ( 'vmrquantity' )
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -659,9 +667,10 @@ contains ! =====     Public procedures     =============================
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_baseline, &
+      begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, &
              l+l_cloudIce, l+l_cloudInducedRadiance, &
              l+l_cloudExtinction, l+l_cloudRadSensitivity, l+l_cloudWater, &
+             l+l_columnabundance, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_losTransFunc,l+l_losVel, &
@@ -837,7 +846,9 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot &
+              /) )
+    call make_tree ( (/ &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec, &
@@ -849,6 +860,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_noFineGrid, t+t_numeric, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              begin, f+f_integrationTime, t+t_numeric, n+n_field_type, &
+             begin, f+f_boundaryPressure, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
@@ -1030,6 +1045,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.149  2001/07/30 23:28:38  pwagner
+! Added columnAbundances scaffolding--needs fleshing out
+!
 ! Revision 2.148  2001/07/26 20:33:17  vsnyder
 ! Eliminate the 'extra' field of the 'matrix' spec
 !
