@@ -132,8 +132,9 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) \
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
       UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
-        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
-        $$return_status = "0" ]; then \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            MARK_ALL_AS_UPTODATE= ;\
          fi
@@ -142,8 +143,9 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
       UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
-        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
-        $$return_status = "0" ]; then \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            MARK_ALL_AS_UPTODATE= ;\
          fi
@@ -231,6 +233,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.10  2002/07/11 22:12:10  pwagner
+# Changes to support hdf5/hdfeos5
+#
 # Revision 2.9  2002/07/02 00:14:00  pwagner
 # Skips marking uptodate after an error
 #

@@ -168,8 +168,9 @@ $(PROG): $(PROG_prereqs)
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
         return_status=`expr $$?` ; \
-        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
-        $$return_status = "0" ]; then \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi ; \
@@ -186,8 +187,9 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	*) \
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
         return_status=`expr $$?` ; \
-        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
-        $$return_status = "0" ]; then \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi ; \
@@ -285,6 +287,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.15  2002/07/02 00:14:01  pwagner
+# Skips marking uptodate after an error
+#
 # Revision 1.14  2002/06/21 23:24:09  pwagner
 # More steps enroute to ending cascades of recompiles
 #
