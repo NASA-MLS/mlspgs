@@ -719,15 +719,18 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & reshape ( transpose(a_clearSkyRadiance),                             &
       & (/radiance%template%instanceLen/) )
 
-    cloudInducedRadiance%values ( :, maf ) =                                 &
+    if(associated(cloudInducedRadiance)) &
+      & cloudInducedRadiance%values ( :, maf ) =                                 &
       & reshape ( transpose(a_cloudInducedRadiance),                         &
       & (/cloudInducedRadiance%template%instanceLen/) )
 
-    effectiveOpticalDepth%values ( :, maf ) =                                &
+    if(associated(effectiveOpticalDepth)) &
+      & effectiveOpticalDepth%values ( :, maf ) =                            &
       & reshape ( transpose(a_effectiveOpticalDepth),                        &
       & (/effectiveOpticalDepth%template%instanceLen/) )
 
-    cloudRADSensitivity%values ( :, maf ) =                                  &
+    if(associated(cloudRADSensitivity)) &
+      & cloudRADSensitivity%values ( :, maf ) =                                  &
       & reshape ( transpose(a_cloudRADSensitivity),                          &
       & (/cloudRADSensitivity%template%instanceLen/) )
 
@@ -735,15 +738,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
 ! -----------------------------------------------------------------------------
 
-    cloudExtinction%values(:,instance) =       0.0_r8
-    massMeanDiameterIce%values(:,instance) =   0.0_r8
-    massMeanDiameterWater%values(:,instance) = 0.0_r8
-    totalExtinction%values(:,instance) =       0.0_r8
-
-    cloudExtinction%values ( :, instance )    = a_cloudExtinction(:,1)
-    massMeanDiameterIce%values (:,instance)   = a_massMeanDiameter(1,:)
-    massMeanDiameterWater%values(:, instance) =  a_massMeanDiameter(2,:)
-    totalExtinction%values ( :, instance )    = a_totalExtinction (:,1)
+    if(associated(cloudExtinction)) &
+      & cloudExtinction%values ( :, instance )    = a_cloudExtinction(:,1)
+    if(associated(massMeanDiameterIce)) &
+      & massMeanDiameterIce%values (:,instance)   = a_massMeanDiameter(1,:)
+    if(associated(massMeanDiameterWater)) &
+      & massMeanDiameterWater%values(:, instance) =  a_massMeanDiameter(2,:)
+    if(associated(totalExtinction)) &
+      & totalExtinction%values ( :, instance )    = a_totalExtinction (:,1)
 
 ! ------------------
 ! output Jacobian
@@ -1044,6 +1046,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.39  2001/10/04 23:34:19  dwu
+! *** empty log message ***
+!
 ! Revision 1.38  2001/10/04 16:27:12  jonathan
 ! added framework for double sideband calculation, unfinished
 !
