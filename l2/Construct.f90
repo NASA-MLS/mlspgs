@@ -55,7 +55,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  MLSL2Construct  -----
-  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
+  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunks, chunkNo, &
        & quantityTemplates, vectorTemplates, FGrids, VGrids, HGrids, &
        & l2gpDatabase, mifGeolocation )
 
@@ -65,7 +65,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
     type (L1BInfo_T), intent(in) :: l1bInfo
     type (TAI93_Range_T), intent(in) :: processingRange
-    type (MLSChunk_T), intent(in) :: chunk
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
+    integer, intent(in) :: chunkNo
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (FGrid_T), dimension(:), pointer :: fGrids
@@ -107,7 +108,7 @@ contains ! =====     Public Procedures     =============================
       ! Now try to fill it if we have any L1BFiles
       if (l1bInfo%l1boaID /= 0 ) then
         do instrumentModuleIndex = 1, size(modules)
-          call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+          call ConstructMinorFrameQuantity ( l1bInfo, chunks(chunkNo), &
             & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
         end do
       else
@@ -133,15 +134,15 @@ contains ! =====     Public Procedures     =============================
       
       select case( get_spec_id(key) )
       case ( s_forge )
-        call ForgeMinorFrames ( key, chunk, mifGeolocation )
+        call ForgeMinorFrames ( key, chunks(chunkNo), mifGeolocation )
       case( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
-          & processingRange, chunk ) ) )
+          & processingRange, chunks, chunkNo ) ) )
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
-            & fGrids, vGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
+            & fGrids, vGrids, hGrids, l1bInfo, chunks(chunkNo), mifGeolocation ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplates ) ) )
@@ -208,6 +209,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.32  2001/12/16 00:57:00  livesey
+! Now takes all chunks as argument as HGrid needs them
+!
 ! Revision 2.31  2001/12/14 01:42:47  livesey
 ! Passes processingRange to HGrid construction
 !
