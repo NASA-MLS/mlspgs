@@ -1,3 +1,23 @@
+
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+ 
+module PrtMsg
+
+      IMPLICIT NONE
+      private
+      public :: HEADER
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+
+contains 
+
       SUBROUTINE HEADER (H)
 
 !=====================================================================
@@ -28,7 +48,8 @@
          PRINT*,'COMPLETE !'
       ENDIF
 
-      RETURN
-      END
+      END SUBROUTINE HEADER
 
-! $Log: header.f,v      
+end module PrtMsg
+
+! $Log: PrtMsg.f,v      

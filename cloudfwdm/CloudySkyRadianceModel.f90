@@ -18,6 +18,7 @@ module CloudySkyRadianceModel
       use ModelOutput, only: SENSITIVITY
       use MLSCommon, only: r8
       use MLSNumerics, only: INTERPOLATEVALUES
+      use PrtMsg, only: HEADER
       use RadiativeTransferModule, only: RADXFER
       use ScatteringAngle, only: ANGLE
 
