@@ -94,8 +94,8 @@ module L2_TEST_STRUCTURES_M
     Real(r8), DIMENSION(:,:), POINTER :: F_grid_filter => NULL()
     Real(r8), DIMENSION(:,:), POINTER :: Aaap => NULL()         ! (maxfft,3)
     Real(r8), DIMENSION(:,:), POINTER :: D1Aaap => NULL()       ! (maxfft,3)
-    Character(LEN=8), DIMENSION(:), POINTER :: Species => NULL()
     Real(r8), DIMENSION(:,:), POINTER :: D2Aaap => NULL()       ! (maxfft,3)
+    Character(LEN=8), DIMENSION(:), POINTER :: Species => NULL()
     Type(PATH_VECTOR), DIMENSION(:), POINTER :: Ptg_frq_grid
     Type(PFA_SLAB), DIMENSION(:), POINTER :: Pfa_spectrum => NULL()
     Type(SPECTRO_PARAM), DIMENSION(:), POINTER :: Spectroscopic => NULL()
@@ -103,6 +103,9 @@ module L2_TEST_STRUCTURES_M
 !
 end module L2_TEST_STRUCTURES_M
 ! $Log$
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.7  2001/03/20 23:22:40  zvi
 ! Change to new geoc_geod routine..
 !

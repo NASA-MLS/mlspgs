@@ -3,7 +3,7 @@ module CREATE_BETA_M
   use ABS_CS_AIR_CONT_M, only: ABS_CS_AIR_CONT
   use ABS_CS_H2O_213G_CONT_M, only: ABS_CS_H2O_213G_CONT
   use ABS_CS_LIQ_H2O_M, only: ABS_CS_LIQ_H2O
-  use L2PC_PFA_STRUCTURES, only: PFA_SLAB
+  use SpectroscopyCatalog_m, only: Catalog_T, Lines
   use SLABS_SW_M, only: SLABSWINT, DVOIGT_SPECTRAL
   implicit NONE
   private
@@ -18,7 +18,7 @@ contains
 ! *****     Public Subroutine     **************************************
 ! --------------------------------------     Create_beta     -----
 !
-  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, pfa_spectrum,&
+  Subroutine Create_beta (Spectag, pressure, Temp, Fgr, nl, Catalog,     &
          &   v0s, x1,y, yi, slabs1, dx1_dv0, dy_dv0, dslabs1_dv0, v0sp,  &
          &   x1p, yp, yip, slabs1p, v0sm, x1m, ym,yim,slabs1m,beta_value,&
          &   t_power, dbeta_dw, dbeta_dn, dbeta_dnu0, Ier)
@@ -35,7 +35,7 @@ contains
    &          v0s(:),yp(:),yip(:),slabs1p(:),v0sm(:),x1m(:),ym(:), &
    &          yim(:)
 !
-    Type (pfa_slab), INTENT(IN) :: PFA_SPECTRUM
+    Type(Catalog_T), INTENT(IN) :: Catalog
 
     Integer(i4), intent(out) :: Ier
     Real(r8), intent(out) :: BETA_VALUE, T_POWER, DBETA_DW
@@ -48,7 +48,7 @@ contains
 !
 ! -----     Local variables     ----------------------------------------
 !
-    Integer(i4) :: LN_I
+    Integer(i4) :: LN_I, j
 
     Real(r8) :: w,s,wd,ra,dNu,tp,bp,tm,bm,bb,dw,dn,ds
 !
@@ -119,7 +119,8 @@ contains
 !
     do ln_i = 1, nl
 !
-      w = pfa_spectrum%W(ln_i)
+      j = Catalog%lines(ln_i)
+      w = Lines(j)%W
 !
 ! Prepare the temperature weighted coefficients:
 !
@@ -159,6 +160,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.7  2001/04/03 07:32:45  zvi
+! Modify the spectral structure - eliminating sps_ from the names
+!
 ! Revision 1.6  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

@@ -1,11 +1,11 @@
 module GET_BETA_PATH_M
   use MLSCommon, only: I4, R8
-  use L2PC_PFA_STRUCTURES, only: PFA_SLAB
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
   use SLABS_SW_M, only: SLABS_PREP_WDER, SLABS_PREP
   use CREATE_BETA_M, only: CREATE_BETA
   use output_m,only:output
   use Dump_0,only:dump
+  use SpectroscopyCatalog_m, only: Catalog_T, Lines
   Implicit NONE
   private
   public :: get_beta_path
@@ -19,8 +19,8 @@ module GET_BETA_PATH_M
 contains
 !----------------------------------------------------------------------
 
- SUBROUTINE get_beta_path(frequencies,pfs,no_ele, &
-                       &  z_path,t_path,beta_path,vel_z,ier)
+ SUBROUTINE get_beta_path(frequencies,Catalog,no_ele,z_path,t_path, &
+                      &   beta_path,vel_z,ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_beta_path
@@ -28,7 +28,8 @@ contains
 !  ---------------------------
 !  Calling sequence variables:
 !  ---------------------------
-real(r8), dimension(:), intent(in) :: frequencies
+
+Real(r8), DIMENSION(:), INTENT(IN) :: frequencies
 Integer(i4), INTENT(IN) :: no_ele
 Real(r8),    INTENT(IN) :: vel_z
 
@@ -36,7 +37,7 @@ Integer(i4), INTENT(OUT) :: ier
 
 Type(path_vector), INTENT(IN) :: z_path, t_path
 
-Type (pfa_slab), INTENT(IN) :: pfs(:)
+Type(Catalog_T), DIMENSION(:), INTENT(IN) :: Catalog
 
 Type(path_beta), POINTER :: beta_path(:,:)  ! (sps_i,frq_i)
 
@@ -51,31 +52,18 @@ Integer(i4) :: nl, i, no_sps, mnf, spectag, h_i, frq_i
 Real(r8) :: Qlog(3), mass, z, p, t, Frq, Vel_z_correction
 Real(r8) :: values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
 !
-Real(r8) :: y(size(pfs(1)%V0)), ym(size(pfs(1)%V0)), &
-            yp(size(pfs(1)%V0))
-!
-Real(r8) :: x1(size(pfs(1)%V0)), x1m(size(pfs(1)%V0)), &
-            x1p(size(pfs(1)%V0))
-!
-Real(r8) :: y1(size(pfs(1)%V0)), y1m(size(pfs(1)%V0)), &
-            y1p(size(pfs(1)%V0))
-!
-Real(r8) :: yi(size(pfs(1)%V0)), yim(size(pfs(1)%V0)),&
-            yip(size(pfs(1)%V0))
-!
-Real(r8) :: v0s(size(pfs(1)%V0)), v0sm(size(pfs(1)%V0)), &
-            v0sp(size(pfs(1)%V0))
-!
-Real(r8) :: slabs1(size(pfs(1)%V0)), slabs1m(size(pfs(1)%V0)), &
-            slabs1p(size(pfs(1)%V0))
-!
-Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
-            dslabs1_dv0(size(pfs(1)%V0))
+Real(r8) :: y(50), ym(50), yp(50)
+Real(r8) :: yi(50), yim(50), yip(50)
+Real(r8) :: x1(50), x1m(50), x1p(50)
+Real(r8) :: y1(50), y1m(50), y1p(50)
+Real(r8) :: v0s(50), v0sm(50), v0sp(50)
+Real(r8) :: slabs1(50), slabs1m(50), slabs1p(50)
+Real(r8) :: dy_dv0(50), dx1_dv0(50), dslabs1_dv0(50)
 !
 ! Begin code:
-
+!
   ier = 0
-  no_sps = pfs(1)%no_sps
+  no_sps = Size(Catalog)
   mnf =  size(frequencies)
 
 ! call output('In get_beta_path_m',advance='yes')
@@ -88,7 +76,7 @@ Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
   if ( associated(beta_path) ) then
     do i = 1, size(beta_path,1)
       do frq_i = 1, size(beta_path,2)
-        deallocate ( beta_path(i,frq_i)%values, beta_path(i,frq_i)%t_power, &
+        DEALLOCATE ( beta_path(i,frq_i)%values, beta_path(i,frq_i)%t_power, &
           & beta_path(i,frq_i)%dbeta_dw, beta_path(i,frq_i)%dbeta_dn, &
           & beta_path(i,frq_i)%dbeta_dnu, STAT=h_i )
       end do
@@ -116,11 +104,11 @@ Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
 !
   DO i = 1, no_sps
 !
-    Spectag = pfs(i)%spectag
+    Spectag = Catalog(i)%spec_tag
     mass = Real(Spectag) / 1000.0
 !
-    nl = pfs(i)%NO_LINES
-    Qlog(1:3) = pfs(i)%QLOG(1:3)
+    nl = Size(Catalog(i)%lines)
+    Qlog(1:3) = Catalog(i)%QLOG(1:3)
 
     do h_i = 1, no_ele
 !
@@ -142,9 +130,9 @@ Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
 !
         Frq = frequencies(frq_i)
 !
-        Call Create_beta (Spectag,p,t,Frq,nl,pfs(i),v0s,x1,y,yi,&
-       &     slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,x1p,yp,yip, &
-       &     slabs1p,v0sm,x1m,ym,yim,slabs1m,values,t_power,    &
+        Call Create_beta (Spectag,p,t,Frq,nl,Catalog(i),v0s,x1, &
+       &     y,yi,slabs1,dx1_dv0,dy_dv0,dslabs1_dv0,v0sp,x1p,yp,&
+       &     yip,slabs1p,v0sm,x1m,ym,yim,slabs1m,values,t_power,&
        &     dbeta_dw,dbeta_dn,dbeta_dnu,Ier)
         if(Ier /= 0) goto 99
 !
@@ -171,8 +159,9 @@ Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
         &           beta_path(i,frq_i)%dbeta_dnu, STAT=h_i)
        end do
      end do
+
      DEALLOCATE(beta_path, STAT=h_i)
-     stop
+
   Return
 
 ! *****     Internal procedures     **********************************
@@ -181,7 +170,7 @@ Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
 ! --------------------------------  slabs_prep_arrays   -----
   Subroutine Slabs_Prep_Arrays
 !
-  Integer(i4) :: j
+  Integer(i4) :: j,k
   Real(r8) :: dslabs1,tp,tm
 
   if(Spectag==18999 .or. Spectag==28964 .or. Spectag==28965) Return
@@ -192,24 +181,22 @@ Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
 !
 ! Prepare the temperature weighted coefficients:
 !
-    Call Slabs_prep_wder(t,mass,pfs(i)%V0(j),pfs(i)%EL(j),&
-   &     pfs(i)%W(j),pfs(i)%PS(j),p,pfs(i)%N(j),      &
-   &     pfs(i)%STR(j),Qlog,pfs(i)%DELTA(j),pfs(i)%GAMMA(j),&
-   &     pfs(i)%N1(j),pfs(i)%N2(j),v0s(j),x1(j),y(j),yi(j),&
-   &     slabs1(j),dx1_dv0(j),dy_dv0(j),dslabs1_dv0(j))
+    k = Catalog(i)%Lines(j)
+    Call Slabs_prep_wder(t,mass,Lines(k)%V0,Lines(k)%EL,Lines(k)%W,   &
+   &     Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
+   &     Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0s(j),x1(j),y(j),    &
+   &     yi(j),slabs1(j),dx1_dv0(j),dy_dv0(j),dslabs1_dv0(j))
 !
     tp = t + 10.0
-    Call slabs_prep(tp,mass,pfs(i)%V0(j),pfs(i)%EL(j), &
-   &     pfs(i)%W(j),pfs(i)%PS(j),p,pfs(i)%N(j),   &
-   &     pfs(i)%STR(j),Qlog,pfs(i)%DELTA(j),pfs(i)%GAMMA(j),&
-   &     pfs(i)%N1(j),pfs(i)%N2(j),v0sp(j),x1p(j),yp(j),&
+    Call slabs_prep(tp,mass,Lines(k)%V0,Lines(k)%EL,Lines(k)%W,       &
+   &     Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
+   &     Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0sp(j),x1p(j),yp(j), &
    &     yip(j),slabs1p(j),dslabs1)
 !
     tm = t - 10.0
-    Call slabs_prep(tm,mass,pfs(i)%V0(j),pfs(i)%EL(j), &
-   &     pfs(i)%W(j),pfs(i)%PS(j),p,pfs(i)%N(j),   &
-   &     pfs(i)%STR(j),Qlog,pfs(i)%DELTA(j),pfs(i)%GAMMA(j),&
-   &     pfs(i)%N1(j),pfs(i)%N2(j),v0sm(j),x1m(j),ym(j),&
+    Call slabs_prep(tm,mass,Lines(k)%V0, Lines(k)%EL,Lines(k)%W,      &
+   &     Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
+   &     Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0sm(j),x1m(j),ym(j), &
    &     yim(j),slabs1m(j),dslabs1)
 !
   end do
@@ -219,6 +206,9 @@ Real(r8) :: dy_dv0(size(pfs(1)%V0)), dx1_dv0(size(pfs(1)%V0)), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.15  2001/04/03 07:32:45  zvi
+! Modify the spectral structure - eliminating sps_ from the names
+!
 ! Revision 1.14  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !
