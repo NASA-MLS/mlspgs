@@ -77,15 +77,13 @@ contains
     integer :: I_Stop                        ! Length of coarse path
     integer :: Inds(size(indices_c))         ! Where on the path to calc
     integer :: N_Inds                        ! Effective size of Inds
-    integer :: N_Sps                         ! Number of species
     integer :: P_I                           ! Path index
     integer :: SPS_I                         ! Species index
     integer :: SV_I                          ! State vector index
 
-    n_sps = ubound(Grids_f%l_z,1)
     i_stop = size(indices_c)
 
-    do sps_i = 1, n_sps
+    do sps_i = 1, grids_f%lastNonPFA
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
@@ -299,7 +297,7 @@ contains
     integer :: I_stop                ! Stop point, which may be before N_Path
     integer :: L
     integer :: Mid                   ! tangent index along the path = N_Path/2
-    integer :: N_Path                ! Total coarse path length.    integer :: N_Sps                 ! Number of species
+    integer :: N_Path                ! Total coarse path length.
     logical :: NeedFA                ! Need FA in hydrostatic calculation
     integer :: P_i                   ! Index on the path
     real(rp) :: S_Del_S              ! Sum of Del_S
@@ -499,6 +497,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.27  2004/07/29 02:31:17  vsnyder
+! Simplify by avoiding PFA-related data structures
+!
 ! Revision 2.26  2004/04/19 21:00:53  vsnyder
 ! Remove unreferenced USE names
 !
