@@ -597,6 +597,7 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_noiseBandwidth, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_offsetAmount, t+t_numeric, n+n_field_type, &
              begin, f+f_orbitInclination, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_precision, s+s_vector, f+f_template, &
@@ -896,6 +897,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.258  2002/10/25 23:55:50  livesey
+! Added offsetAmount
+!
 ! Revision 2.257  2002/10/25 22:25:14  livesey
 ! Added the dnwt chisquared vector types
 !
