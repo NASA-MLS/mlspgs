@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 MODULE INIT_TABLES_MODULE
@@ -82,9 +82,11 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: P_CALWINDOW = p_produce_l1boa + 1
   INTEGER, PUBLIC, PARAMETER :: P_USEDEFAULTGAINS = p_calwindow + 1
   INTEGER, PUBLIC, PARAMETER :: P_CALIBDACS = p_usedefaultgains + 1
-  INTEGER, PUBLIC, PARAMETER :: P_SPACETEMP = p_calibdacs + 1
-  INTEGER, PUBLIC, PARAMETER :: P_TARGETTEMP = p_spacetemp + 1
-  INTEGER, PUBLIC, PARAMETER :: P_MIF_DURATION = p_targettemp + 1
+  INTEGER, PUBLIC, PARAMETER :: P_GHZSPACETEMP = p_calibdacs + 1
+  INTEGER, PUBLIC, PARAMETER :: P_GHZTARGETTEMP = p_GHzSpaceTemp + 1
+  INTEGER, PUBLIC, PARAMETER :: P_THZSPACETEMP = p_GHzTargetTemp + 1
+  INTEGER, PUBLIC, PARAMETER :: P_THZTARGETTEMP = p_THzSpaceTemp + 1
+  INTEGER, PUBLIC, PARAMETER :: P_MIF_DURATION = p_THzTargetTemp + 1
   INTEGER, PUBLIC, PARAMETER :: P_MIF_DEAD_TIME = p_mif_duration + 1
   INTEGER, PUBLIC, PARAMETER :: P_MIFsPerMAF = p_mif_dead_time + 1
 
@@ -149,8 +151,10 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_calwindow)=              add_ident ( 'CalWindow' )
     parm_indices(p_usedefaultgains)=        add_ident ( 'UseDefaultGains' )
     parm_indices(p_calibDACS)=              add_ident ( 'CalibDACS' )
-    parm_indices(p_spacetemp)=              add_ident ( 'SpaceTemp' )
-    parm_indices(p_targettemp)=             add_ident ( 'TargetTemp' )
+    parm_indices(p_GHzSpaceTemp)=           add_ident ( 'GHzSpaceTemp' )
+    parm_indices(p_GHzTargetTemp)=          add_ident ( 'GHzTargetTemp' )
+    parm_indices(p_THzSpaceTemp)=           add_ident ( 'THzSpaceTemp' )
+    parm_indices(p_THzTargetTemp)=          add_ident ( 'THzTargetTemp' )
     parm_indices(p_mif_duration)=           add_ident ( 'MIF_Duration' )
     parm_indices(p_mif_dead_time)=          add_ident ( 'MIF_DeadTime' )
     parm_indices(p_mifspermaf)=             add_ident ( 'MIFsPerMAF' )
@@ -271,8 +275,10 @@ CONTAINS ! =====     Public procedures     =============================
              n+n_section, &
       begin, z+z_calibration, &
              begin, p+p_calwindow, t+t_numeric, n+n_name_def, &
-             begin, p+p_spacetemp, t+t_numeric, n+n_name_def, &
-             begin, p+p_targettemp, t+t_numeric, n+n_name_def, &
+             begin, p+p_GHzSpaceTemp, t+t_numeric, n+n_name_def, &
+             begin, p+p_GHzTargetTemp, t+t_numeric, n+n_name_def, &
+             begin, p+p_THzSpaceTemp, t+t_numeric, n+n_name_def, &
+             begin, p+p_THzTargetTemp, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_duration, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_dead_time, t+t_numeric, n+n_name_def, &
              begin, p+p_mifspermaf, t+t_numeric, n+n_name_def, &
@@ -292,6 +298,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.13  2002/11/14 16:49:57  perun
+! Split space & target temps between GHz & THz
+!
 ! Revision 2.12  2002/11/07 21:34:42  jdone
 ! Added HDF4/HDF5 switch.
 !
@@ -302,6 +311,9 @@ END MODULE INIT_TABLES_MODULE
 ! For the latest parser version.
 !
 ! $Log$
+! Revision 2.13  2002/11/14 16:49:57  perun
+! Split space & target temps between GHz & THz
+!
 ! Revision 2.12  2002/11/07 21:34:42  jdone
 ! Added HDF4/HDF5 switch.
 !
