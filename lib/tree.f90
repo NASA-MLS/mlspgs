@@ -144,13 +144,16 @@ contains
     call init_tree
   end subroutine ALLOCATE_TREE
 
-  subroutine BUILD_TREE ( NEW_NODE, NSONS )
+  subroutine BUILD_TREE ( NEW_NODE, NSONS, DECORATION )
   ! Pop NSONS nodes from the orchard stack to the tree.  Build a new tree
   ! node of type NEW_NODE over them.  Leave the new node on the stack at
   ! TREE_SP+1.
     integer, intent(in) :: NEW_NODE
     integer, intent(in) :: NSONS
-    integer :: LEFT_SON, SOURCE_REF
+    integer, intent(in), optional :: DECORATION
+    integer :: LEFT_SON, MY_DECOR, SOURCE_REF
+    my_decor = null_tree
+    if ( present(decoration) ) my_decor = decoration
     if ( tree_sp + nsons > ubound(the_tree,1) ) then
       call tree_error ( underflow, null_tree )
     end if
@@ -162,8 +165,8 @@ contains
     if ( tree_sp <= tree_point ) then
       call tree_error ( no_tree_space, null_tree )
     end if
-                                   ! node      decor      nsons  source
-    the_tree(tree_sp) = tree_node( new_node, null_tree, nsons, source_ref, &
+                                   ! node      decor   nsons  source
+    the_tree(tree_sp) = tree_node( new_node, my_decor, nsons, source_ref, &
                                  !    kind   left_son
                                    internal, left_son )
     tree_sp = tree_sp - 1     ! Stack push
@@ -567,6 +570,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.2  2001/02/07 18:40:22  vsnyder
+! Add a "decor" argument to "build_tree".
+!
 ! Revision 2.1  2000/10/11 18:33:25  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
