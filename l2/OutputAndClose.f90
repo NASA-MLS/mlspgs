@@ -15,8 +15,9 @@ module OutputAndClose ! outputs all data from the Join module to the
     & L_L2AUX, L_L2GP, L_L2PC, LIT_INDICES, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
-  use L2PC_m, only: L2PC_T, WRITEONEL2PC, L2PCDATABASE
+  use L2PC_m, only: WRITEONEL2PC, L2PCDATABASE
   use LEXER_CORE, only: PRINT_SOURCE
+  use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
   use MLSCommon, only: I4
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA
@@ -60,7 +61,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
-  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, &
+  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, matrices, &
     & l2pcf, canWriteL2PC )
 
     ! Hard-wired assumptions:
@@ -77,8 +78,9 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
-    type (L2GPData_T), dimension(:), pointer :: l2gpDatabase ! L2GP products
-    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase ! L2AUX products
+    type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE ! L2GP products
+    type (L2AUXData_T), dimension(:), pointer :: L2AUXDATABASE ! L2AUX products
+    type (Matrix_Database_T), dimension(:), pointer :: MATRICES ! Matrix database (for l2pcs)
     logical, intent(in) :: canWriteL2PC ! Flag
     type(PCFData_T), intent(in) :: l2pcf
 
@@ -114,6 +116,8 @@ contains ! =====     Public Procedures     =============================
     real :: T1, T2     ! for timing
     logical :: TIMING
     logical, parameter :: DEBUG = .FALSE.
+
+    type (Matrix_T), pointer :: TMPMATRIX ! A pointer to a matrix to write into l2pc
 
     ! Executable code
     timing = .false.
@@ -378,7 +382,9 @@ contains ! =====     Public Procedures     =============================
             case ( f_quantities )
               do in_field_no = 2, nsons(gson)
                 db_index = decoration(decoration(subtree(in_field_no ,gson)))
-                call writeOneL2PC ( l2pcDatabase(db_index), l2pcUnit )
+                nullify (tmpMatrix)
+                call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
+                call writeOneL2PC ( tmpMatrix, l2pcUnit )
               end do ! in_field_no = 2, nsons(gson)
             case ( f_overlaps )
               ! ??? More work needed here
@@ -466,6 +472,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.30  2001/04/28 01:30:52  livesey
+! Stuff formerly outputting L2PCs is now outputting matrices.
+!
 ! Revision 2.29  2001/04/26 20:02:09  livesey
 ! Made l2pc database a saved array in L2PC_m
 !
