@@ -399,7 +399,7 @@ contains ! ================================ Procedures ======================
           if ( info /= 0 ) &
             & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
           machine = FindFirst ( slaveTids == slaveTid )
-          if ( machine == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( machine == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Got a message from an unknown slave")
           ! Unpack the first integer in the buffer
           call PVMF90Unpack ( signal, info )
@@ -829,6 +829,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.23  2001/11/14 18:03:45  livesey
+! Changed for new FindFirst behavior
+!
 ! Revision 2.22  2001/11/05 23:21:31  livesey
 ! Can now specify subset of slaves using <filename>:a:b.
 !
