@@ -746,7 +746,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & earthradius%values(1,1),                                             &
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
-      & forwardModelConfig%cloud_width,                                      &
+      & forwardModelConfig%i_saturation,                                     &
       & forwardModelConfig%cloud_fov,                                        &
       & forwardModelConfig%default_spectroscopy,                             &
       & scGeocAlt%values(1,1),                                               &
@@ -1063,6 +1063,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.102  2003/01/09 21:08:09  dwu
+! drop orbI
+!
 ! Revision 1.101  2002/12/18 16:09:24  jonathan
 ! add phi_tan
 !
