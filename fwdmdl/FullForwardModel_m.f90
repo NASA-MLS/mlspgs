@@ -147,7 +147,8 @@ contains
                                         ! surface
     integer :: SV_I                     ! Loop index and other uses .
     integer :: SV_T_LEN                 ! Number of t_phi*t_zeta in the window
-    integer :: THISSIDEBAND             ! Loop counter for sidebands
+    integer :: SX                       ! 1 = LSB, 2 = USB
+    integer :: THISSIDEBAND             ! Loop counter for sidebands, -1 = LSB, +1 = USB
     integer :: WHICHPOINTINGGRID        ! Index into the pointing grids
     integer :: WINDOWFINISH             ! End of temperature `window'
     integer :: WINDOWSTART              ! Start of temperature `window'
@@ -1142,6 +1143,8 @@ contains
     do thisSideband = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
       if ( toggle(emit) .and. levels(emit) > 1 ) &
         & call Trace_Begin ( 'ForwardModel.Sideband ', index=thisSideband )
+
+      sx = ( thisSideband + 3 ) / 2 ! [-1,+1] => [1,2]
 
       ! Now, allocate gl_slabs arrays
       call allocateSlabs ( gl_slabs, max_ele, fwdModelConf%catalog(thisSideband,:), &
@@ -2389,9 +2392,9 @@ contains
           ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
           if ( temp_der ) dTanh_dT_c(:npc) = &
               & frqhk / t_path_c**2 * ( tanh1_c - 1.0_rp / tanh1_c )
-          call get_beta_path ( Frq, p_path, t_path_c, tanh1_c, beta_group,  &
-            &  fwdModelConf%polarized, gl_slabs, c_inds, beta_path_c,       &
-            &  t_der_path_flags, dTanh_dT_c, &
+          call get_beta_path ( Frq, p_path, t_path_c, tanh1_c,                &
+            &  beta_group%lbl(sx), fwdModelConf%polarized, gl_slabs, c_inds,  &
+            &  beta_path_c, t_der_path_flags, dTanh_dT_c,                     &
             &  dbeta_dT_path_c, dbeta_dw_path_c, dbeta_dn_path_c, dbeta_dv_path_c )
         end if
 
@@ -2560,7 +2563,7 @@ contains
 
         else ! extra stuff for polarized case
 
-          call get_beta_path_polarized ( frq, h, beta_group, gl_slabs, &
+          call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
             & c_inds, beta_path_polarized, dBeta_dT_polarized_path_c )
 
           ! We put an explicit extent of -1:1 for the first dimension in
@@ -2629,8 +2632,8 @@ contains
           ! different set of optional arguments.
 
           call get_beta_path ( Frq, p_path, t_path_f(:ngl), tanh1_f(1:ngl),    &
-            & beta_group, fwdModelConf%polarized, gl_slabs, gl_inds(:ngl),     &
-            & beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,  &
+            & beta_group%lbl(sx), fwdModelConf%polarized, gl_slabs,            &
+            & gl_inds(:ngl), beta_path_f(:ngl,:), t_der_path_flags, dTanh_dT_f,&
             & dbeta_dT_path_f, dbeta_dw_path_f, dbeta_dn_path_f, dbeta_dv_path_f )
 
           do j = 1, ngl ! loop around dot_product instead of doing sum(a*b,2)
@@ -2667,7 +2670,7 @@ contains
 
           ! Get the corrections to integrals for layers that need GL for
           ! the polarized species.
-          call get_beta_path_polarized ( frq, h, beta_group, gl_slabs, &
+          call get_beta_path_polarized ( frq, h, beta_group%lbl(sx), gl_slabs, &
             & gl_inds(:ngl), beta_path_polarized_f, dBeta_dT_polarized_path_f )
 
           ! We put an explicit extent of -1:1 for the first dimension in
@@ -3181,6 +3184,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.230  2004/12/28 00:28:02  vsnyder
+! Remove unreferenced use name
+!
 ! Revision 2.229  2004/12/13 20:37:23  vsnyder
 ! Moved stuff from get_species_data to ForwardModelConfig, some cannonball polishing
 !

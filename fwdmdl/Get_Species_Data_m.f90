@@ -38,6 +38,7 @@ contains
     integer, save :: DumpFWM = -1
     type (VectorValue_T), pointer :: F  ! An arbitrary species
     integer :: M         ! Index for molecules in beta groups, or size thereof
+    integer :: S         ! Sideband index, 1 = LSB, 2 = USB
 
     if ( dumpFWM < 0 ) then ! done only once
       if ( index(switches,'fwmg') > 0 ) dumpFWM = 1 ! Dump but don't stop
@@ -48,25 +49,27 @@ contains
     do b = 1, size(fwdModelConf%beta_group)
       if ( fwdModelConf%beta_group(b)%group ) then ! A molecule group
         ! First LBL molecules' ratios
-        do m = 1, size(fwdModelConf%beta_group(b)%lbl_molecules)
-          f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-            & quantityType=l_isotopeRatio, &
-            & molecule=fwdModelConf%beta_group(b)%lbl_molecules(m), &
-            & noError=.TRUE., config=fwdModelConf )
-          fwdModelConf%beta_group(b)%lbl_ratio(m)     = 1.0
-          if ( associated ( f ) ) & ! Have an isotope ratio
-            & fwdModelConf%beta_group(b)%lbl_ratio(m) = f%values(1,1)
-        end do ! m
-        ! Now PFA molecules' ratios
-        do m = 1, size(fwdModelConf%beta_group(b)%pfa_molecules)
-          f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-            & quantityType=l_isotopeRatio, &
-            & molecule=fwdModelConf%beta_group(b)%pfa_molecules(m), &
-            & noError=.TRUE., config=fwdModelConf )
-          fwdModelConf%beta_group(b)%pfa_ratio(m)     = 1.0
-          if ( associated ( f ) ) & ! Have an isotope ratio
-            & fwdModelConf%beta_group(b)%pfa_ratio(m) = f%values(1,1)
-        end do ! m
+        do s = 1, 2
+          do m = 1, size(fwdModelConf%beta_group(b)%lbl(s)%molecules)
+            f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_isotopeRatio,                             &
+              & molecule=fwdModelConf%beta_group(b)%lbl(s)%molecules(m), &
+              & noError=.TRUE., config=fwdModelConf )
+            fwdModelConf%beta_group(b)%lbl(s)%ratio(m)     = 1.0
+            if ( associated ( f ) ) & ! Have an isotope ratio
+              & fwdModelConf%beta_group(b)%lbl(s)%ratio(m) = f%values(1,1)
+          end do ! m
+          ! Now PFA molecules' ratios
+          do m = 1, size(fwdModelConf%beta_group(b)%pfa(s)%molecules)
+            f => getQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_isotopeRatio,                             &
+              & molecule=fwdModelConf%beta_group(b)%pfa(s)%molecules(m), &
+              & noError=.TRUE., config=fwdModelConf )
+            fwdModelConf%beta_group(b)%pfa(s)%ratio(m)     = 1.0
+            if ( associated ( f ) ) & ! Have an isotope ratio
+              & fwdModelConf%beta_group(b)%pfa(s)%ratio(m) = f%values(1,1)
+          end do ! m
+        end do ! s
 !     else ! Not a molecule group, but this is handled in ForwardModelSupport
 !       fwdModelConf%beta_group(b)%lbl_ratio(1)     = 1.0
 !       fwdModelConf%beta_group(b)%pfa_ratio(1)     = 1.0
@@ -96,6 +99,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.22  2004/12/28 00:28:43  vsnyder
+! Remove unused procedure and unreferenced use names
+!
 ! Revision 2.21  2004/12/13 20:38:24  vsnyder
 ! Moved stuff that doesn't depend on state vector to ForwardModelConfig
 !

@@ -29,7 +29,7 @@ contains
         & beta_path, t_der_path_flags, dTanh_dT, dBeta_dt_path,     &
         & dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
 
-    use ForwardModelConfig, only: Beta_Group_T
+    use ForwardModelConfig, only: LBL_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
 
@@ -42,7 +42,7 @@ contains
     type (slabs_struct), dimension(:,:) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indices for reading p_path and gl_slabs
 
-    type (beta_group_T), intent(in), dimension(:) :: beta_group
+    type (LBL_T), intent(in), dimension(:) :: beta_group
 
     logical, intent(in) :: NoPolarized   ! "Don't work on Zeeman-split lines"
 
@@ -102,7 +102,7 @@ contains
       do n = 1, size(beta_group(i)%cat_index)
         ib = beta_group(i)%cat_index(n)
         call create_beta_path ( path_inds, p_path, t_path, frq,             &
-          & beta_group(i)%lbl_ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
+          & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
           & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
       end do
     end do
@@ -184,7 +184,7 @@ contains
   subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
                                      & Path_inds, Beta_path, dBeta_path_dT )
 
-    use ForwardModelConfig, only: Beta_Group_T
+    use ForwardModelConfig, only: LBL_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
     use O2_Abs_CS_m, only: O2_Abs_CS, D_O2_Abs_CS_dT
@@ -196,7 +196,7 @@ contains
                                       ! polarization on the path
     type (slabs_struct), dimension(:,:), intent(in) :: GL_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
-    type (beta_group_T), dimension(:), intent(in) :: Beta_group
+    type (LBL_T), dimension(:), intent(in) :: Beta_group
 
 ! Outputs
 
@@ -227,7 +227,7 @@ contains
 
     do i = 1, size(beta_group)
       do n = 1, size(beta_group(i)%cat_index)
-        ratio = beta_group(i)%lbl_ratio(n)
+        ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
 
         do j = 1, n_path
@@ -1075,6 +1075,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.69  2004/12/13 20:47:52  vsnyder
+! Use Slabs_0%UseYi field instead of MaxVal(Abs(...%yi))
+!
 ! Revision 2.68  2004/11/04 03:42:09  vsnyder
 ! Provide for both LBL_Ratio and PFA_Ratio in beta_group
 !

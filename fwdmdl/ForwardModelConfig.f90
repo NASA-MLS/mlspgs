@@ -43,37 +43,43 @@ module ForwardModelConfig
   ! Beta group type declaration.  Each entry in the Molecules list of the form
   ! "m" has one of these with n_elements == 1, referring to "m".  Each entry
   ! of the form "[m,m1,...,mn]" has one of these with n_elements == n, referring
-  ! to m1,...mn (but not m).  The Cat_Index, Qty and Ratio components are
+  ! to m1,...mn (but not m).  The Cat_Index, Qty and *_Ratio components are
   ! filled in Get_Species_Data.
+  type, public :: LBL_T ! For LBL molecules in the group:
+    integer, pointer  :: Cat_Index(:) => NULL() ! 1:size(LBL_Molecules).  Indices
+                                      ! for config%catalog and gl_slabs.
+                                      ! Allocated in ConstructForwardModelConfig.
+                                      ! Filled in DeriveFromForwardModelConfig.
+    integer, pointer :: Molecules(:) => NULL() ! LBL molecules in the group
+                                      ! if a group, i.e., "m1...mn", else "m" if
+                                      ! "m" is LBL, else zero size.
+    real(rp), pointer :: Ratio(:) => NULL() ! 1:size(LBL_Molecules).  Isotope
+                                      ! ratio.  Allocated in ForwardModelSupport
+                                      ! with value 1.0, but could be filled in
+                                      ! Get_Species_Data.
+  end type LBL_T
+
+  type, public :: PFA_T ! For PFA molecules in the group:
+    integer, pointer :: Indices(:,:) => NULL() ! Channels x 1:size(PFA_Molecules). 
+                                      ! Indices in PFADataBase%PFAData.  Allocated
+                                      ! and filled in DeriveFromForwardModelConfig.
+    integer, pointer :: Molecules(:) => NULL() ! PFA molecules in the group if a
+                                      ! group, i.e., "m1...mn", else "m" if "m"
+                                      ! is PFA, else zero size.
+    real(rp), pointer :: Ratio(:) => NULL() ! 1:size(PFA_Molecules).  Isotope
+                                      ! ratio.  Allocated in ForwardModelSupport
+                                      ! with value 1.0, but could be filled in
+                                      ! Get_Species_Data.
+  end type PFA_T
+
   type, public :: Beta_Group_T
     ! For the group as a whole:
     logical :: Derivatives = .false.  ! "Compute derivatives w.r.t. mixing ratio"
     logical :: Group = .false.        ! "Molecule group", i.e., [m,m1,...,mn]
     integer :: Molecule               ! Group name, i.e., "m".
     type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst
-    ! For LBL molecules in the group:
-    integer, pointer  :: Cat_Index(:) => NULL() ! 1:size(LBL_Molecules).  Indices
-                                      ! for config%catalog and gl_slabs.
-                                      ! Allocated and filled in Get_Species_Data.
-    integer, pointer :: LBL_Molecules(:) => NULL() ! LBL molecules in the group
-                                      ! if a group, i.e., "m1...mn", else "m" if
-                                      ! "m" is LBL, else zero size.
-    real(rp), pointer :: LBL_Ratio(:) => NULL() ! 1:size(LBL_Molecules).  Isotope
-                                      ! ratio.  Allocated in ForwardModelSupport
-                                      ! with value 1.0, but could be filled in
-                                      ! Get_Species_Data.
-    ! For PFA molecules in the group:
-    integer, pointer :: PFA_Indices(:,:,:) => NULL() ! Sidebands x Channels
-                                      ! x 1:size(PFA_Molecules).  Indices in
-                                      ! PFADataBase%PFAData.  Allocated and
-                                      ! filled in Get_Species_Data.
-    integer, pointer :: PFA_Molecules(:) => NULL() ! PFA molecules in the group
-                                      ! if a group, i.e., "m1...mn", else "m" if
-                                      ! "m" is PFA, else zero size.
-    real(rp), pointer :: PFA_Ratio(:) => NULL() ! 1:size(PFA_Molecules).  Isotope
-                                      ! ratio.  Allocated in ForwardModelSupport
-                                      ! with value 1.0, but could be filled in
-                                      ! Get_Species_Data.
+    type(lbl_t) :: LBL(2)             ! LSB, USB for Line-By-Line stuff
+    type(pfa_t) :: PFA(2)             ! LSB, USB for Pre-Frequency-Averaged stuff
   end type Beta_Group_T
 
   ! Channel information from the signals database
@@ -375,36 +381,36 @@ contains
 !     integer, pointer :: WhichPFA(:)        ! Which PFA data records are for the
 !                                            ! molecules in fwdModelConf%Molecules?
 
-      if ( associated(pfaData) ) then
-        do b = 1, size(fwdModelConf%beta_group)
-          call allocate_test ( fwdModelConf%beta_group(b)%pfa_indices, &
-            & fwdModelConf%sidebandStop, &
-            & size(fwdModelConf%channels), &
-            & size(fwdModelConf%beta_group(b)%pfa_molecules), &
-            & 'Beta_group(b)%PFA_indices', moduleName, &
-            & lowBound_1=fwdModelConf%sidebandStart )
-          fwdModelConf%beta_group(b)%pfa_indices = 0 ! OK if some missing, but no junk
-          do p = 1, size(fwdModelConf%beta_group(b)%PFA_Molecules)
-            do i = PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p)-1)+1, &
-              &    PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p))
-              do sb = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
-                do channel = 1, size(fwdModelConf%channels)
-                  if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
-                    &  fwdModelConf%signals(fwdModelConf%channels(channel)%signal), sideband=sb, &
-                    &  channel=fwdModelConf%channels(channel)%used ) > 0 ) &
-                      & fwdModelConf%beta_group(b)%pfa_indices(sb,channel,p) = &
-                        & sortPFAdata(i)
-                end do ! channel
-              end do ! sb
-            end do ! i (molecules)
-          end do ! p
-        end do ! b
-      else
-        do b = 1, size(fwdModelConf%beta_group)
-          nullify ( fwdModelConf%beta_group(b)%pfa_indices ) ! Why is this needed?
-        end do
-      end if ! associated(pfaData)
-
+!       if ( associated(pfaData) ) then
+!         do b = 1, size(fwdModelConf%beta_group)
+!           call allocate_test ( fwdModelConf%beta_group(b)%pfa_indices, &
+!             & fwdModelConf%sidebandStop, &
+!             & size(fwdModelConf%channels), &
+!             & size(fwdModelConf%beta_group(b)%pfa_molecules), &
+!             & 'Beta_group(b)%PFA_indices', moduleName, &
+!             & lowBound_1=fwdModelConf%sidebandStart )
+!           fwdModelConf%beta_group(b)%pfa_indices = 0 ! OK if some missing, but no junk
+!           do p = 1, size(fwdModelConf%beta_group(b)%PFA_Molecules)
+!             do i = PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p)-1)+1, &
+!               &    PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p))
+!               do sb = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+!                 do channel = 1, size(fwdModelConf%channels)
+!                   if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
+!                     &  fwdModelConf%signals(fwdModelConf%channels(channel)%signal), sideband=sb, &
+!                     &  channel=fwdModelConf%channels(channel)%used ) > 0 ) &
+!                       & fwdModelConf%beta_group(b)%pfa_indices(sb,channel,p) = &
+!                         & sortPFAdata(i)
+!                 end do ! channel
+!               end do ! sb
+!             end do ! i (molecules)
+!           end do ! p
+!         end do ! b
+!       else
+!         do b = 1, size(fwdModelConf%beta_group)
+!           nullify ( fwdModelConf%beta_group(b)%pfa_indices ) ! Why is this needed?
+!         end do
+!       end if ! associated(pfaData)
+! 
 !      if ( associated(pfaData) ) then
 !
 !        call allocate_test ( PFAWork, s2, size(fwdModelConf%molecules), &
@@ -555,8 +561,8 @@ contains
       integer, target :: MaxLineFlag(mostLines)
       integer :: Polarized ! -1 => One of the selected lines is Zeeman split
                            ! +1 => None of the selected lines is Zeeman split
-      integer :: S         ! Index for sidebands                
-      integer :: STAT      ! Status from allocate or deallocate 
+      integer :: S, SX     ! Indices for sidebands
+      integer :: STAT      ! Status from allocate or deallocate
       type (line_T), pointer :: ThisLine
       integer :: Z         ! Index for fwdModelConf%Signals
 
@@ -564,12 +570,15 @@ contains
 
       ! Allocate the spectroscopy catalog extract
       c = 0
-      do b = 1, size(fwdModelConf%beta_group) ! Get total catalog size
-        c = c + size(fwdModelConf%beta_group(b)%lbl_molecules)
-      end do
+      do sx = 1, 2
+        m = 0
+        do b = 1, size(fwdModelConf%beta_group) ! Get total catalog size
+          m = m + size(fwdModelConf%beta_group(b)%lbl(sx)%molecules)
+        end do ! b
+        c = max(c,m)
+      end do ! sx
 
-      allocate ( fwdModelConf%catalog(fwdModelConf%sidebandStart:fwdModelConf%sidebandStop,c), &
-        & stat=stat )
+      allocate ( fwdModelConf%catalog(s1:s2,c), stat=stat )
       if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
           & MLSMSG_Allocate//'fwdModelConf%catalog' )
 
@@ -577,12 +586,13 @@ contains
       fwdModelConf%catalog = empty_cat
 
       do s = s1, s2, 2
+        sx = (s + 3) / 2 ! 1 or 2, instead of -1 or 1.
         c = 0
         do b = 1, size(fwdModelConf%beta_group)
-          do m = 1, size(fwdModelConf%beta_group(b)%lbl_molecules)
+          do m = 1, size(fwdModelConf%beta_group(b)%lbl(sx)%molecules)
             c = c + 1
-            fwdModelConf%beta_group(b)%cat_index(m) = c
-            n = fwdModelConf%beta_group(b)%lbl_molecules(m)
+            fwdModelConf%beta_group(b)%lbl(sx)%cat_index(m) = c
+            n = fwdModelConf%beta_group(b)%lbl(sx)%molecules(m)
             if ( catalog(n)%molecule == l_none ) then
               call get_string ( lit_indices(n), molName )
               call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -742,10 +752,12 @@ contains
   !   It was already deallocated at the end of FullForwardModel
     end if
 
-    do b = 1, size(fwdModelConf%beta_group)
-      call deallocate_test ( fwdModelConf%beta_group(b)%PFA_indices, &
-        'Beta_group(b)%PFA_indices', moduleName )
-    end do ! b
+    do s = 1, 2
+      do b = 1, size(fwdModelConf%beta_group)
+        call deallocate_test ( fwdModelConf%beta_group(b)%PFA(s)%indices, &
+          'Beta_group(b)%PFA(s)%indices', moduleName )
+      end do ! b
+    end do ! s
 
     call deallocate_test ( fwdModelConf%DACSStaging, &
       & 'fwdModelConf%DACSStaging', moduleName )
@@ -1063,6 +1075,7 @@ contains
 
     ! Local variables
     integer :: B                        ! Subscript for Beta_Group
+    integer :: S                        ! 1 = LSB, 2 = USB
     integer :: STATUS                   ! Flag from allocate etc.
     logical :: MYDEEP                   ! Copy of deep
 
@@ -1072,12 +1085,15 @@ contains
     call destroyForwardModelDerived ( config )
     ! Destroy the beta groups
     do b = 1, size(config%beta_group)
-      call deallocate_test ( config%beta_group(b)%cat_index, 'Cat_Index', moduleName )
-      call deallocate_test ( config%beta_group(b)%lbl_molecules, 'LBL_Molecules', moduleName )
-      call deallocate_test ( config%beta_group(b)%lbl_ratio, 'LBL_Ratio', moduleName )
-      call deallocate_test ( config%beta_group(b)%pfa_molecules, 'PFA_Molecules', moduleName )
-      call deallocate_test ( config%beta_group(b)%pfa_ratio, 'PFA_Ratio', moduleName )
+      do s = 1, 2
+        call deallocate_test ( config%beta_group(b)%lbl(s)%cat_index, 'Cat_Index', moduleName )
+        call deallocate_test ( config%beta_group(b)%lbl(s)%molecules, 'LBL Molecules', moduleName )
+        call deallocate_test ( config%beta_group(b)%lbl(s)%ratio, 'LBL Ratio', moduleName )
       ! PFA_Indices are created and destroyed on each call to FullForwardModel.
+      ! call deallocate_test ( config%beta_group(b)%pfa(s)%indices, 'PFA Indices', moduleName )
+        call deallocate_test ( config%beta_group(b)%pfa(s)%molecules, 'PFA Molecules', moduleName )
+        call deallocate_test ( config%beta_group(b)%pfa(s)%ratio, 'PFA Ratio', moduleName )
+      end do ! s
     end do
     deallocate ( config%beta_group, stat=b )
     if ( b /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -1118,7 +1134,8 @@ contains
     type(beta_group_t), intent(in) :: Beta_Group(:)
     character(len=*), intent(in), optional :: Name
 
-    integer :: I, J
+    integer :: I, S
+    character(3), parameter :: SB(2) = (/ 'Low', 'Upp' /)
 
     call output ( '  Beta groups' )
     if ( present(name) ) call output ( ' ' // trim(name) )
@@ -1127,25 +1144,23 @@ contains
       call output ( i, before='  Beta group ', after=': ' )
       call display_string ( lit_indices(beta_group(i)%molecule) )
       if ( beta_group(i)%derivatives ) call output ( ' with derivative' )
-      if ( size(beta_group(i)%lbl_molecules) > 0 ) call display_string ( &
-          & lit_indices(beta_group(i)%lbl_molecules), before=', LBL:' )
-      if ( size(beta_group(i)%pfa_molecules) > 0 ) call display_string ( &
-          & lit_indices(beta_group(i)%pfa_molecules), before=', PFA:' )
-      call newLine
-      if ( size(beta_group(i)%lbl_molecules) > 0 ) then
-        call dump ( beta_group(i)%lbl_ratio, name='   LBL Ratio' )
-        call dump ( beta_group(i)%cat_index, name='   Cat_Index' )
-      end if
-      if ( size(beta_group(i)%pfa_molecules) > 0 ) then
-        call dump ( beta_group(i)%pfa_ratio, name='   PFA Ratio' )
-        if ( associated(beta_group(i)%PFA_indices) ) then
-          do j = lbound(beta_group(i)%PFA_indices,1), &
-                 ubound(beta_group(i)%PFA_indices,1), 2
-            call output ( j, before='   PFA Indices for sideband ', advance='yes' )
-            call dump ( beta_group(i)%PFA_indices(j,:,:) )
-          end do
+      do s = 1, 2
+        call output ( sb(s) // 'er sideband:', advance='yes' )
+        if ( size(beta_group(i)%lbl(s)%molecules) > 0 ) call display_string ( &
+            & lit_indices(beta_group(i)%lbl(s)%molecules), before=', LBL:' )
+        if ( size(beta_group(i)%pfa(s)%molecules) > 0 ) call display_string ( &
+            & lit_indices(beta_group(i)%pfa(s)%molecules), before=', PFA:' )
+        call newLine
+        if ( size(beta_group(i)%lbl(s)%molecules) > 0 ) then
+          call dump ( beta_group(i)%lbl(s)%ratio, name='   LBL Ratio' )
+          call dump ( beta_group(i)%lbl(s)%cat_index, name='   Cat_Index' )
         end if
-      end if
+        if ( size(beta_group(i)%pfa(s)%molecules) > 0 ) then
+          call dump ( beta_group(i)%pfa(s)%ratio, name='   PFA Ratio' )
+          if ( associated(beta_group(i)%pfa(s)%indices) ) &
+            & call dump ( beta_group(i)%pfa(s)%indices(:,:), name='   PFA Indices ' )
+        end if
+      end do ! s
       if ( associated ( beta_group(i)%qty%qty ) ) call dump ( beta_group(i)%qty )
     end do
   end subroutine Dump_Beta_Group
@@ -1295,6 +1310,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.65  2004/12/28 00:27:29  vsnyder
+! Remove unreferenced use names
+!
 ! Revision 2.64  2004/12/13 20:35:22  vsnyder
 ! Moved a bunch of stuff that doesn't depend on the state vector here from
 ! get_species data.  Some support for PFA, too.
