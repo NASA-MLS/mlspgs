@@ -31,9 +31,10 @@ contains ! =====     Public Procedures     =============================
     ! information for the GHz and THz modules.  The software can then
     ! point to these for geolocation information for all minor frame
     ! quantities saving file IO and memory.
+    use Chunks_m, only: MLSCHUNK_T
     use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity
     use QuantityTemplates, only: QUANTITYTEMPLATE_T
-    use MLSCommon, only: L1BINFO_T, MLSCHUNK_T
+    use MLSCommon, only: L1BINFO_T
     use MLSSignals_m, only: MODULES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
 
@@ -72,6 +73,7 @@ contains ! =====     Public Procedures     =============================
 
   ! This is the `main' subroutine for this module
 
+    use Chunks_m, only: MLSChunk_T
     use ConstructQuantityTemplates, only: &
       & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
     use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
@@ -86,7 +88,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: S_DUMP, S_FORGE, S_FORWARDMODEL, S_HGRID, &
       & S_PHASE, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
     use L2GPData, only: L2GPDATA_T
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
+    use MLSCommon, only: L1BInfo_T, TAI93_Range_T
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
     use MoreTree, only: Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -249,6 +251,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.47  2004/05/19 19:16:09  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.46  2004/05/18 01:24:31  vsnyder
 ! Add HGrids argument to DumpCommand
 !
