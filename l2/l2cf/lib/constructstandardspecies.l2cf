@@ -145,7 +145,7 @@ begin Construct
 
   ;; ----------------------------------------- Extinctions
 
-  !define(constructExtinction,{extinction$1: Quantity, type=extinction, $
+  !define(constructExtinction,{extinction$1: Quantity, type=vmr, molecule=extinction, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
     fGrid=fGridExtinction$1!nl})
   !forall(constructExtinction, !allRadiometers )
