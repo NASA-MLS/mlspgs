@@ -38,7 +38,7 @@ contains
       & Dump_DACS_Filter_Database
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use HGridsDatabase, only: Dump, HGRID_T
-    use Init_Tables_Module, only: F_AllForwardModels, F_AllHGrids, &
+    use Init_Tables_Module, only: F_AllForwardModels, F_AllHGrids, F_AllPFA, &
       & F_AllQuantityTemplates, F_AllVectors, F_AllVectorTemplates, &
       & F_AllVGrids, F_AntennaPatterns, F_Details, F_DACSFilterShapes, &
       & F_FilterShapes, F_ForwardModel, F_HGrid, F_PfaData, &
@@ -47,7 +47,7 @@ contains
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
-    use PFADataBase_m, only: Dump, PFAData
+    use PFADataBase_m, only: Dump, Dump_PFADataBase, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use Tree, only: Decoration, Node_Id, Nsons, Subtree
@@ -94,7 +94,7 @@ contains
       fieldIndex = get_field_id(son)
       if (nsons(son) > 1) gson = subtree(2,son) ! Now value of said argument
       select case ( fieldIndex )
-      case ( f_allForwardModels, f_allHGrids, f_allQuantityTemplates, &
+      case ( f_allForwardModels, f_allHGrids, f_allPFA, f_allQuantityTemplates, &
         & f_allVectors, f_allVectorTemplates, f_allVGrids, f_antennaPatterns, &
         & f_DACSfilterShapes, f_filterShapes, f_pointingGrids )
         if ( get_boolean(son) ) then
@@ -111,6 +111,8 @@ contains
             else
               call announceError ( son, noHGrid )
             end if
+          case ( f_allPFA )
+            call Dump_PFADataBase ( details )
           case ( f_allQuantityTemplates )
             if ( present(quantityTemplatesDB) ) then
               call dump ( quantityTemplatesDB )
@@ -273,6 +275,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.10  2004/07/17 02:28:19  vsnyder
+! Add dump for entire PFA database
+!
 ! Revision 2.9  2004/06/12 00:41:30  vsnyder
 ! Allow all fields except details to be arrays
 !
