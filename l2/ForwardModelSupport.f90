@@ -234,7 +234,13 @@ contains ! =====     Public Procedures     =============================
     info%atmos_der = .false.
     info%spect_der = .false.
     info%skipOverlaps = .false.
-    info%cloud_der = .false.
+    info%cloud_der = 0
+    info%no_cloud_species=2
+    info%no_model_surfs =640
+    info%NUM_SCATTERING_ANGLES=16
+    info%NUM_AZIMUTH_ANGLES=8
+    info%NUM_AB_TERMS=50
+    info%NUM_SIZE_BINS=40
     info%phiwindow = 5
     info%frqGap = 0.0                   ! Default to everything
 
@@ -255,7 +261,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_atmos_der )
         info%atmos_der = get_boolean(son)
       case ( f_cloud_der )
-        info%cloud_der = get_boolean(son)
+!        info%cloud_der = get_boolean(son)
+      call expr ( subtree(2,son), units, value, type )
+        info%cloud_der = nint( value(1) )
       case ( f_do_conv )
         info%do_conv = get_boolean(son)
       case ( f_do_freq_avg )
@@ -453,6 +461,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.10  2001/07/16 22:07:21  jonathan
+! change cloud_der to integer-type, jonathan
+!
 ! Revision 2.9  2001/07/12 23:27:48  livesey
 ! Got rid of the s_cloudForwardModel stuff
 !
