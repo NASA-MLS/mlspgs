@@ -18,7 +18,8 @@ MODULE OutputL1B_HDF5
   PRIVATE
 
   PUBLIC :: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, OUTPUTL1B_SC_HDF5, &
-       OUTPUTL1B_GHZ_HDF5, OUTPUTL1B_THZ_HDF5, OUTPUTL1B_RAD_HDF5
+       OUTPUTL1B_GHZ_HDF5, OUTPUTL1B_THZ_HDF5, OUTPUTL1B_RAD_HDF5, &
+       OutputL1B_LatBinData
   !------------------- RCS Ident Info -----------------------------------------
   CHARACTER(LEN=130) :: Id = &                                                 
     "$Id$"
@@ -27,7 +28,7 @@ MODULE OutputL1B_HDF5
 !---------------------------------------------------------Names of Dimensions:
 CONTAINS
 
-  !----------------------------------------------------------- OutputL1B_Create
+!------------------------------------------------------------- OutputL1B_Create
   SUBROUTINE OutputL1B_create_HDF5 (sdId)
     ! This routine assigns the groups and subgroups in the orbit and attitude 
     ! file handle, sdId%OAId
@@ -506,9 +507,78 @@ CONTAINS
 
   END SUBROUTINE OutputL1B_rad_HDF5
 
+!=============================================================================
+  SUBROUTINE OutputL1B_LatBinData (noMAF, sd_id, AscDescIndx, LatBinIndx, &
+       LatBinChanAvg, BaselineAlt, LatBin)
+!=============================================================================
+
+    USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
+
+    INTEGER, INTENT(IN) :: noMAF
+    INTEGER(HID_T), INTENT(IN) :: sd_id
+    INTEGER, DIMENSION(:), OPTIONAL :: AscDescIndx
+    INTEGER, DIMENSION(:), OPTIONAL :: LatBinIndx
+    REAL, DIMENSION(:,:,:,:), OPTIONAL :: LatBinChanAvg
+    REAL, DIMENSION(:,:,:), OPTIONAL :: LatBin
+    REAL, DIMENSION(:,:), OPTIONAL :: BaselineAlt
+
+    TYPE( DataProducts_T ) :: dataset
+    CHARACTER(LEN=16) :: DimName(4)
+    INTEGER :: dims(3), status
+
+    CALL Deallocate_DataProducts (dataset)
+
+    IF (PRESENT (AscDescIndx) .AND. PRESENT (LatBinIndx)) THEN
+
+       ALLOCATE (dataset%Dimensions(2), stat=status)
+       dataset%name = 'AscDescIndx   '
+       dataset%data_type = 'integer           '
+       dataset%Dimensions(1) = 'GHz.MIF             '
+       dims = 1
+       dims(1) = SIZE (AscDescIndx)
+       CALL Build_MLSAuxData (sd_id, dataset, AscDescIndx, lastIndex=noMAF, &
+            dims=dims)
+       dataset%name = 'LatBinIndx    '
+       CALL Build_MLSAuxData (sd_id, dataset, LatBinIndx, lastIndex=noMAF, &
+            dims=dims)
+
+    ENDIF
+
+    IF (PRESENT (LatBinChanAvg)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'LatBinChanAvg', LatBinChanAvg)
+       DimName(1) = 'FBChan'
+       DimName(2) = 'GHzBand'
+       DimName(3) = 'LatBin'
+       DimName(4) = 'AscDesc'
+       CALL MakeHDF5Attribute (sd_id, 'LatBinChanAvg', 'Dimensions', DimName)
+    ENDIF
+
+    IF (PRESENT (LatBin)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'BaselineLatBin', LatBin)
+       DimName(1) = 'Min/Max lat'
+       DimName(2) = 'LatBin'
+       DimName(3) = 'AscDesc'
+       CALL MakeHDF5Attribute (sd_id, 'BaselineLatBin', 'Dimensions', &
+            DimName(1:3))
+    ENDIF
+
+    IF (PRESENT (BaselineAlt)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'BaselineAlt', BaselineAlt)
+       DimName(1) = 'FBchan'
+       DimName(2) = 'GHzBand'
+       CALL MakeHDF5Attribute (sd_id, 'BaselineAlt', 'Dimensions', DimName(1:2))
+    ENDIF
+
+    CALL Deallocate_DataProducts (dataset)
+
+ END SUBROUTINE OutputL1B_LatBinData
+
 END MODULE OutputL1B_HDF5
 
 ! $Log$
+! Revision 2.8  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.7  2003/09/29 18:27:19  pwagner
 ! Moved hdf5 stuff to work around IFC internal compiler error
 !

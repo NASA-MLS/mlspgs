@@ -116,7 +116,7 @@ MODULE EngTbls   ! Level 1 engineering tables
        cal_const_t ("TM01", &
         4.9992, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0), &
        cal_const_t ("TM02", &
-        4.9998, 4525.0, 996.0, 620.368, 480.388, 620.0, 480.0), &
+        4.9998, 4525.0, 996.0, 620.368, 480.388, 620.368, 480.388), &
        cal_const_t ("TM03", &
         4.9960, 4525.0, 996.0, 620.0, 480.0, 620.0, 480.0) /)
 
@@ -160,6 +160,7 @@ MODULE EngTbls   ! Level 1 engineering tables
      INTEGER :: GHzAmb(20)
      INTEGER :: GHzCntl(20)
      INTEGER :: THzAmb(14)
+     INTEGER :: THzLimb(2)
   END TYPE CalTgtIndx_T
 
   TYPE (CalTgtIndx_T) :: CalTgtIndx
@@ -261,6 +262,7 @@ CONTAINS
     INTEGER :: GHzAmbIndx = 0
     INTEGER :: GHzCntlIndx = 0
     INTEGER :: THzAmbIndx = 0
+    INTEGER :: THzLimbIndx = 0
     INTEGER :: PriReflecIndx = 0
     INTEGER :: SecReflecIndx = 0
     INTEGER :: TerReflecIndx = 0
@@ -327,6 +329,9 @@ CONTAINS
           ELSE IF (INDEX (mnem, "THzAmbCalTgt") /= 0) THEN
              THzAmbIndx = THzAmbIndx + 1
              CalTgtIndx%THzAmb(THzAmbIndx) = i
+          ELSE IF (INDEX (mnem, "THzLimbCalTgt") /= 0) THEN
+             THzLimbIndx = THzLimbIndx + 1
+             CalTgtIndx%THzLimb(THzLimbIndx) = i
           ENDIF
 
           !! Save Reflector indexes:
@@ -357,6 +362,9 @@ CONTAINS
 END MODULE EngTbls
 
 ! $Log$
+! Revision 2.8  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.7  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
