@@ -14,19 +14,15 @@ module INIT_TABLES_MODULE
     ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
     ! here, but everything is included so that it can be gotten by
     ! USE INIT_TABLES_MODULE.
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_IDENTIFIER
-  use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
   use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                         N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
-  private :: ADD_IDENT, BUILD_TREE, ENTER_TERMINAL, INIT_INTRINSIC
-  private :: MAKE_TREE, N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE
-  private :: N_NAME_DEF, N_SECTION, N_SPEC_DEF, PUSH_PSEUDO_TERMINAL
-  private :: T_IDENTIFIER
+  private :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
+  private :: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE
+  private :: N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -833,85 +829,24 @@ contains ! =====     Public procedures     =============================
   end subroutine INIT_TABLES
 
 ! =====     Private procedures     =====================================
-  ! --------------------------------------------------  MAKE_TREE  -----
-  subroutine MAKE_TREE ( IDS )
-  ! Build a tree specified by the "ids" array.  "begin" marks the
-  ! beginning of a tree.  A tree-node marks the end of the corresponding
-  ! tree.  Pseudo-terminals are decorated with their indices.
-    integer, intent(in) :: IDS(:)
-
-    integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
-    integer :: DECOR, I, ID, M, N_IDS, STACK(0:30), STRING, WHICH
-
-    callno = callno + 1
-    n_ids = size(ids)
-    m = 0
-    stack(0) = 0 ! just so it's defined, in case it gets incremented
-                 ! after build_tree
-    if ( ids(1) >= 0 ) then
-      m = 1
-      stack(1) = 0
-    end if
-    do i = 1, n_ids
-      if ( ids(i) == begin ) then
-        m = m + 1
-        if ( m > ubound(stack,1) ) then
-          print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Stack overflow!'
-          print *, 'Your tree is taller than ', ubound(stack,1), &
-            &      '.  Detected while'
-          print *, 'processing element ', i, ' of the list for call ', callno
-          stop
-        end if
-        stack(m) = 0
-      else
-        id = mod(ids(i), 1000)
-        which = mod(ids(i) / 1000, 1000)
-        decor = ids(i) / 1000000
-        select case ( which )
-        case ( f/1000 ) ! Fields
-          string = field_indices(id)
-        case ( l/1000 ) ! Enumeration literals
-          string = lit_indices(id)
-        case ( p/1000 ) ! Parameter names
-          string = parm_indices(id)
-        case ( s/1000 ) ! Specs
-          string = spec_indices(id)
-        case ( t/1000 ) ! Intrinsic data types
-          string = data_type_indices(id)
-        case ( z/1000 ) ! Sections
-          string = section_indices(id)
-        case ( n/1000 ) ! Tree nodes
-          call build_tree ( id, stack(m), decor )
-          m = m - 1
-          if ( m < lbound(stack,1) ) then
-            print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Stack underflow!'
-            print *, 'You probably forgot a "begin" somewhere.  Detected while'
-            print *, 'processing element ', i, ' of the list for call ', callno
-            stop
-          end if
-          stack(m) = stack(m) + 1
-    cycle
-        end select
-        if ( string == 0 ) then
-          print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- The string for element ', &
-            & i, ' of a list'
-          print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
-          stop
-        end if
-        call push_pseudo_terminal ( string, 0, decor = id )
-        stack(m) = stack(m) + 1
-      end if
-    end do
-  end subroutine MAKE_TREE
-
+  ! --------------------------------------------------  ADD_IDENT  -----
   integer function ADD_IDENT ( TEXT )
+    use SYMBOL_TABLE, only: ENTER_TERMINAL
+    use SYMBOL_TYPES, only: T_IDENTIFIER
     character(len=*), intent(in) :: TEXT
     add_ident = enter_terminal ( text, t_identifier )
   end function ADD_IDENT
 
+  ! --------------------------------------------------  MAKE_TREE  -----
+  include "make_tree.f9h"
+
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.33  2001/03/02 20:45:59  vsnyder
+! Move make_tree to ~/mlspgs/srclib/make_tree.f9h.  This should improve
+! maintainability of several versions of init_tables_module.
+!
 ! Revision 2.32  2001/03/02 03:28:39  vsnyder
 ! Added more error checking (stack over/under-flow).  Added temporary l2load.
 !
