@@ -52,11 +52,11 @@ contains ! =====     Public Procedures     =============================
     ! the value of        MCFFORL2GPOPTION
     ! (see write_metadata module for fuller explanation)
 
-    use Allocate_Deallocate, only: Deallocate_Test
+    use Allocate_Deallocate, only: Deallocate_Test, Allocate_test
     use Expr_M, only: Expr
     use INIT_TABLES_MODULE, only: F_ASCII, F_FILE, F_HDFVERSION, &
       & F_METANAME, F_METADATAONLY, F_OVERLAPS, F_PACKED, F_QUANTITIES, &
-      & F_TYPE, F_WRITECOUNTERMAF, &
+      & F_TYPE, F_WRITECOUNTERMAF, F_DONTPACK, &
       & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
     use Intrinsic, only: l_swath, l_grid, l_hdf, &
       & PHYQ_Dimensionless
@@ -97,6 +97,7 @@ contains ! =====     Public Procedures     =============================
 
     logical :: ASCII                    ! Is this l2pc ascii?
     integer :: DB_index
+    integer, dimension(:), pointer :: DONTPACK ! Quantities not to pack
     logical, parameter :: DEBUG = .FALSE.
     integer :: FIELD_INDEX              ! F_... field code
     integer :: FIELD_NO                 ! Index of assign vertex sons of Key
@@ -118,6 +119,7 @@ contains ! =====     Public Procedures     =============================
     character (len=32) :: Mnemonic
     character (len=256) :: Msg
     integer :: NAME                     ! string index of label on output
+    integer :: NODE
     integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     logical :: PACKED                   ! Do we pack this l2pc?
@@ -143,6 +145,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     timing = section_times
     if ( timing ) call time_now ( t1 )
+    nullify ( dontPack )
 
     if ( toggle(gen) ) call trace_begin ( "Output_Close", root)
 
@@ -502,6 +505,11 @@ contains ! =====     Public Procedures     =============================
               ! ??? More work needed here
             case ( f_packed )
               packed = get_boolean ( gson )
+            case ( f_dontPack )
+              call Allocate_Test ( dontPack, nsons(gson)-1, 'dontPack', ModuleName )
+              do node = 2, nsons(gson)
+                dontPack(node-1) = decoration(decoration(subtree(node,gson)))
+              end do
             case ( f_ascii )
               ascii = get_boolean ( gson )
             end select
@@ -531,7 +539,8 @@ contains ! =====     Public Procedures     =============================
             end if
           else
             ! For the moment call a routine
-            call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed )
+            call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed, &
+              & dontPack )
             ! Later on when HDF5 is 'blessed' I want to move all this code
             ! here instead
             !            call H5FCreate_F ( trim(file_base), H5F_ACC_TRUNC, l2pcUnit, &
@@ -548,6 +557,7 @@ contains ! =====     Public Procedures     =============================
             !              & 'Unable to close hdf5 l2pc file.' )
 
           end if
+          call Deallocate_test ( dontPack, 'dontPack', ModuleName )
 
         case ( l_l2dgg ) ! --------------------- Writing l2dgg files -----
 
@@ -1076,6 +1086,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.81  2003/08/08 23:06:39  livesey
+! Added the dontPack option on outputing l2pc files.
+!
 ! Revision 2.80  2003/08/01 20:07:44  pwagner
 ! Fixed Toolkit bug; metadata distinguishes l2dgg from l2gp
 !
