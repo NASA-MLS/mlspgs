@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -27,7 +27,7 @@ CONTAINS
     USE Orbit, ONLY: altG, altT, ascTAI, dscTAI, numOrb, orbIncline, &
          orbitNumber, scanRate, scanRateT
     USE TkL1B, ONLY: L1BOA_MAF
-    USE L0_sci_tbls, ONLY: APE2_dflt, TSE2_dflt
+    USE L0_sci_tbls, ONLY: APE_theta_dflt, TSSM_theta_dflt
     USE MLSL1Config, ONLY: L1Config
 
     LOGICAL, INTENT(OUT) :: more_data
@@ -42,9 +42,9 @@ CONTAINS
     counterMAF = counterMAF + 1   ! fake the counter MAF
 
     DO i = 0, (MaxMIFs - 1)
-       scAngleG(i) = APE2_dflt(i)
+       scAngleG(i) = APE_theta_dflt(i)
        scAngleG(i) = MOD ((scAngleG(i) + APE_eps), 360.0)
-       scAngleT(i) = TSE2_dflt(i)
+       scAngleT(i) = TSSM_theta_dflt(i)
        scAngleT(i) = MOD ((scAngleT(i) + TSE_eps), 360.0)
        IF (i > 0) THEN  ! use previous until further notice
           IF (scAngleG(i) < 0.0) scAngleG(i) = scAngleG(i-1)
@@ -83,6 +83,9 @@ CONTAINS
 END MODULE L1BOAutils
 
 ! $Log$
+! Revision 2.3  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
 ! Revision 2.2  2004/01/09 20:02:57  perun
 ! Update BOA to HDF 5
 !

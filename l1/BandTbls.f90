@@ -11,7 +11,7 @@ MODULE BandTbls   ! Tables for all bands
 
   PRIVATE
 
-  PUBLIC :: Load_Band_Tbls, LoadSidebandFracs, LoadSpilloverLoss
+  PUBLIC :: Load_Band_Tbls, LoadSidebandFracs, LoadSpilloverLoss, LoadDefltChi2
   PUBLIC :: BandLowerUpper_T, SideBandFrac, SpilloverLoss_T, SpilloverLoss, &
        RadiometerLoss_T, RadiometerLoss, BandFreq
 
@@ -269,9 +269,74 @@ CONTAINS
 
   END SUBROUTINE BandFreqs
 
+!=============================================================================
+  SUBROUTINE LoadDefltChi2 (unit, stat)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: deflt_chi2, WFnum
+
+    INTEGER :: unit, stat
+
+    CHARACTER(LEN=80) :: line
+    CHARACTER(LEN=2) :: chan_type
+    INTEGER :: i, ios
+    REAL, POINTER, DIMENSION(:,:) :: chan_dat
+
+    stat = 0
+
+! Read comments until start of data
+
+    DO
+       READ (unit, '(A)') line
+       IF (line(1:6) == "#DATA") EXIT
+    ENDDO
+
+! read data
+
+    i = 1
+    chan_type = "FB"
+    chan_dat => deflt_chi2%fb
+    DO
+
+       DO
+          READ (unit, '(A)', IOSTAT=ios) line
+          IF (line(1:1) == "#" .OR. ios /= 0) EXIT
+       ENDDO
+
+       IF (ios /= 0) EXIT
+
+       READ (unit, *) chan_dat(:,i)
+       chan_dat(:,i) = SQRT (chan_dat(:,i))   ! square root here for later use
+       i = i + 1
+
+       SELECT CASE (chan_type)
+
+       CASE ("FB")
+          IF (I > SIZE (deflt_chi2%fb(1,:))) THEN
+             i = 1
+             chan_dat => deflt_chi2%mb
+             chan_type = "MB"
+          ENDIF
+       CASE ("MB")
+          IF (I > SIZE (deflt_chi2%mb(1,:))) THEN
+             i = 1
+             chan_dat => deflt_chi2%wf
+             chan_type = "WF"
+          ENDIF
+       END SELECT
+
+    ENDDO
+
+    IF (chan_type /= "WF" .AND. i <= WFNum) stat = -1  ! Error!!!
+
+  END SUBROUTINE LoadDefltChi2
+
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.3  2004/08/12 13:51:49  perun
+! Version 1.44 commit
+!
 ! Revision 2.2  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
