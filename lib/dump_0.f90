@@ -14,6 +14,8 @@ module DUMP_0
   interface DUMP
     module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_1D_LOGICAL
     module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_3D_DOUBLE
+    module procedure DUMP_3D_INTEGER
+    module procedure DUMP_1D_CHAR, DUMP_2D_CHAR, DUMP_3D_CHAR
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -27,6 +29,245 @@ module DUMP_0
   character, parameter :: AfterSub = '#'
 
 contains
+
+  ! --------------------------------------------  DUMP_1D_CHAR  -----
+  subroutine DUMP_1D_CHAR ( ARRAY, NAME, CLEAN )
+    character(len=*), intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    integer :: J, K
+    logical :: MyClean
+    integer :: NumZeroRows
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1), advance='yes' )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do j = 1, size(array), 10
+        if (.not. myClean) then
+          if ( any(array(j:min(j+9, size(array))) /= ' ') ) then
+            if ( numZeroRows /= 0 ) then
+              call output ( j-1, places=max(4,ilog10(size(array))+1) )
+              call output ( afterSub )
+              call output ( ' ' )
+              call output ( numZeroRows )
+              call output ( ' rows of blanks not printed.', advance='yes' )
+              numZeroRows = 0
+            end if
+            call output ( j, places=max(4,ilog10(size(array))+1) )
+            call output ( afterSub )
+          else
+            numZeroRows = numZeroRows + 1
+          end if
+        end if
+        if ( myClean .or. any(array(j:min(j+9, size(array))) /= ' ') ) then
+          do k = j, min(j+9, size(array))
+              call output ( array(k) // ' ' )
+          end do
+          call output ( '', advance='yes' )
+        end if
+      end do ! j
+      if ( numZeroRows /= 0 ) then
+        call output ( j-1, places=max(4,ilog10(size(array))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of blanks not printed.', advance='yes' )
+        numZeroRows = 0
+      end if
+    end if
+  end subroutine DUMP_1D_CHAR
+
+  ! --------------------------------------------  DUMP_2D_CHAR  -----
+  subroutine DUMP_2D_CHAR ( ARRAY, NAME, CLEAN )
+    character(len=*), intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    integer :: I, J, K
+    logical :: MyClean
+    integer :: NumZeroRows
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1,1), advance='yes' )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1), name, clean=clean )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do i = 1, size(array,1)
+        do j = 1, size(array,2), 10
+          if (.not. myClean) then
+            if ( any(array(i,j:min(j+9, size(array,2))) /= ' ') ) then
+              if ( numZeroRows /= 0 ) then
+                call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                call output ( j-1, places=max(4,ilog10(size(array))+1) )
+                call output ( afterSub )
+                call output ( ' ' )
+                call output ( numZeroRows )
+                call output ( ' rows of blanks not printed.', advance='yes' )
+                numZeroRows = 0
+              end if
+              call output ( i, places=max(4,ilog10(size(array,1))+1) )
+              call output ( j, places=max(4,ilog10(size(array,2))+1) )
+              call output ( afterSub )
+            else
+              numZeroRows = numZeroRows + 1
+            end if
+          end if
+          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= ' ') ) then
+            do k = j, min(j+9, size(array,2))
+                call output ( array(i,k) // ' ' )
+            end do
+            call output ( '', advance='yes' )
+          end if
+        end do ! j
+      end do ! i
+      if ( numZeroRows /= 0 ) then
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+        call output ( j-1, places=max(4,ilog10(size(array))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of blanks not printed.', advance='yes' )
+        numZeroRows = 0
+      end if
+    end if
+  end subroutine DUMP_2D_CHAR
+
+  ! ---------------------------------------------  DUMP_3D_CHAR  -----
+  subroutine DUMP_3D_CHAR ( ARRAY, NAME, CLEAN )
+    character(len=*), intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
+    integer :: I, J, K, L
+    integer :: NumZeroRows
+    integer, dimension(3) :: which, re_mainder
+    integer :: how_many
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
+      & 1, which, how_many, re_mainder)
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1,1,1), advance='yes' )
+    else if ( how_many == 2 ) then
+      call dump ( reshape(array, (/ re_mainder(1) /)), name, clean=clean )
+    else if ( how_many == 1 ) then
+      call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
+        & name, clean=clean )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do i = 1, size(array,1)
+        do j = 1, size(array,2)
+          do k = 1, size(array,3), 10
+            if (.not. myClean) then
+              if ( any(array(i,j,k:min(k+9, size(array,3))) /= ' ') ) then
+                if ( numZeroRows /= 0 ) then
+                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
+                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+                  call output ( afterSub )
+                  call output ( ' ' )
+                  call output ( numZeroRows )
+                  call output ( ' rows of blanks not printed.', advance='yes' )
+                  numZeroRows = 0
+                end if
+                call output ( i, max(4,ilog10(size(array,1))+1) )
+                call output ( j, max(4,ilog10(size(array,2))+1) )
+                call output ( k, max(4,ilog10(size(array,3))+1) )
+                call output ( afterSub )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= ' ') ) then
+              do l = k, min(k+9, size(array,3))
+                  call output ( array(i,j,l) // ' ' )
+              end do
+              call output ( '', advance='yes' )
+            end if
+          end do
+        end do
+      end do
+      if ( numZeroRows /= 0 ) then
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
+        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of blanks not printed.', advance='yes' )
+        numZeroRows = 0
+      end if
+    end if
+  end subroutine DUMP_3D_CHAR
 
   ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
   subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, CLEAN )
@@ -406,14 +647,156 @@ contains
     end if
   end subroutine DUMP_3D_DOUBLE
 
+  ! ---------------------------------------------  DUMP_3D_INTEGER  -----
+  subroutine DUMP_3D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT )
+    integer, intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
+
+    logical :: myClean
+    integer :: I, J, K, L
+    integer :: NumZeroRows
+    integer, dimension(3) :: which, re_mainder
+    integer :: how_many
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
+      & 1, which, how_many, re_mainder)
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1,1,1), advance='yes' )
+    else if ( how_many == 2 ) then
+      call dump ( reshape(array, (/ re_mainder(1) /)), name, clean=clean )
+    else if ( how_many == 1 ) then
+      call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
+        & name, clean=clean )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do i = 1, size(array,1)
+        do j = 1, size(array,2)
+          do k = 1, size(array,3), 10
+            if (.not. myClean) then
+              if ( any(array(i,j,k:min(k+9, size(array,k))) /= 0) ) then
+                if ( numZeroRows /= 0 ) then
+                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
+                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+                  call output ( afterSub )
+                  call output ( ' ' )
+                  call output ( numZeroRows )
+                  call output ( ' rows of zeros not printed.', advance='yes' )
+                  numZeroRows = 0
+                end if
+                call output ( i, max(4,ilog10(size(array,1))+1) )
+                call output ( j, max(4,ilog10(size(array,2))+1) )
+                call output ( k, max(4,ilog10(size(array,3))+1) )
+                call output ( afterSub )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= 0) ) then
+              do l = k, min(k+9, size(array,3))
+                if ( present(format) ) then
+                  call output ( array(i,j,l), format=format )
+                else
+                  call output ( array(i,j,l), places=6 )
+                endif
+              end do
+              call output ( '', advance='yes' )
+            end if
+          end do
+        end do
+      end do
+      if ( numZeroRows /= 0 ) then
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
+        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of zeros not printed.', advance='yes' )
+        numZeroRows = 0
+      end if
+    end if
+  end subroutine DUMP_3D_INTEGER
+
   integer function ilog10(int)
     integer, intent(in) :: int
     ilog10=nint(log10(real(int)))
   end function ilog10
 
+  ! Along with a (yet unwritten) fraternal subr. 'which_strings_are_it'
+  ! this is possibly better aligned with MLSNumerics or MLSStrings
+  ! themes; however, for now we leave it here
+  ! -------------------------  which_ints_are_it  -----
+  subroutine which_ints_are_it(ints, it, which, how_many, re_mainder)
+    ! Return which of ints = it
+    ! optionally, return also how many of them do
+    ! and the re_mainder of the ints != it
+    ! e.g. given ints = /(4, 3, 1, 2, 1, 3 )/ and it = 1
+    ! produces which = /(3, 5)/, how_many = 2, re_mainder = /(4, 3, 2, 3)/
+    
+    ! This may be useful in reshaping an array to suppress any dims 
+    ! that are identically 1
+
+    ! Formal arguments
+    integer, intent(in), dimension(:)  ::           ints
+    integer, intent(in)                ::           it
+    integer, intent(out), dimension(:) ::           which
+    integer, intent(out), optional ::               how_many
+    integer, intent(out), dimension(:), optional :: re_mainder
+
+    ! local variables
+    integer :: i, i_which, i_re_mainder
+    
+    if ( size(ints) < 1 .or. size(which) < 1 ) then
+      if ( present(how_many) ) how_many = 0
+      return
+    endif
+    i_which = 0
+    i_re_mainder = 0
+    do i=1, size(ints)
+      if ( ints(i) == it ) then
+        i_which = i_which+1
+        which(min(size(which), i_which)) = i
+      else
+        i_re_mainder = i_re_mainder+1
+        if ( present(re_mainder) ) &
+          & re_mainder(min(size(re_mainder), i_re_mainder)) = i
+      endif
+    enddo
+    if ( present(how_many) ) how_many = i_which
+
+  end subroutine which_ints_are_it
+
 end module DUMP_0
 
 ! $Log$
+! Revision 2.11  2001/10/23 22:40:37  pwagner
+! Now dumps 1d,2d,3d char arrays and 3d ints
+!
 ! Revision 2.10  2001/09/28 22:43:20  vsnyder
 ! Don't print rows of zeroes
 !
