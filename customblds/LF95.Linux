@@ -161,6 +161,8 @@ machine.o: machine.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T machine.o machine.mod 
 
+ieee_arithmetic.o: infnan.o
+
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
@@ -318,6 +320,8 @@ machine.o: $(MACH_DIR)/machine.f90
 	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
 	rm -f machine.f90
 
+ieee_arithmetic.o: infnan.o
+
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
 endif
@@ -347,6 +351,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.15  2003/10/08 21:13:15  pwagner
+# Changed options to sort to tolerate duplicate entries
+#
 # Revision 1.14  2003/05/21 17:46:02  pwagner
 # Commands to build mol_...f9h now formatted correctly
 #
