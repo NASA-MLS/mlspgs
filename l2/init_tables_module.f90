@@ -637,7 +637,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, &
              l+l_cloudIce, l+l_cloudInducedRadiance, l+l_cloudExtinction, &
-             l+l_cloudSensitivity, l+l_cloudExtinction, l+l_cloudWater, &
+             l+l_cloudExtinction, l+l_cloudWater, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_losVel, &
@@ -998,6 +998,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.125  2001/07/07 03:55:19  livesey
+! Removed l_cloudSensitivity as jonathan removed it from intrinsic.
+!
 ! Revision 2.124  2001/06/26 20:11:08  livesey
 ! Couple of changes to subset
 !
