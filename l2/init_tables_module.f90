@@ -115,7 +115,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_APRIORI              = l_angle + 1
   integer, parameter :: L_BOTH 	              = l_apriori + 1
   integer, parameter :: L_BOUNDARYPRESSURE     = l_both + 1
-  integer, parameter :: L_CHOLESKY             = l_boundarypressure + 1
+  integer, parameter :: L_CHISQCHAN            = l_boundarypressure + 1
+  integer, parameter :: L_CHISQMMAF            = l_chisqchan + 1
+  integer, parameter :: L_CHISQMMIF            = l_chisqmmaf + 1
+  integer, parameter :: L_CHOLESKY             = l_chisqmmif + 1
   integer, parameter :: L_CLIMATOLOGY          = l_cholesky+1
   integer, parameter :: L_CLOUDFULL            = l_climatology + 1
   integer, parameter :: L_COLUMNABUNDANCE      = l_cloudFull + 1
@@ -290,6 +293,9 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_apriori) =               add_ident ( 'apriori' )
     lit_indices(l_both) =                  add_ident ( 'both' )
     lit_indices(l_boundarypressure) =      add_ident ( 'boundarypressure' )
+    lit_indices(l_chisqchan) =             add_ident ( 'chisqchan' )
+    lit_indices(l_chisqmmaf) =             add_ident ( 'chisqmmaf' )
+    lit_indices(l_chisqmmif) =             add_ident ( 'chisqmmif' )
     lit_indices(l_cholesky) =              add_ident ( 'cholesky' )
     lit_indices(l_climatology) =           add_ident ( 'climatology' )
     lit_indices(l_cloudFull) =             add_ident ( 'cloudFull' )
@@ -441,9 +447,9 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_boundarypressure, &
-             l+l_cloudIce, l+l_cloudInducedRadiance, &
-             l+l_cloudExtinction, l+l_cloudRadSensitivity, l+l_cloudWater, &
-             l+l_columnabundance, &
+             l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
+             l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
+             l+l_cloudWater, l+l_columnabundance, &
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_losTransFunc,l+l_losVel, &
@@ -842,6 +848,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.158  2001/09/13 19:57:26  pwagner
+! l_chisq... added
+!
 ! Revision 2.157  2001/09/08 00:20:40  pwagner
 ! Works for new columnAbundance join
 !
