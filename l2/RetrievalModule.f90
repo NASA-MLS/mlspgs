@@ -3632,23 +3632,10 @@ contains
                 & 'Inappropriate units for height in flag cloud' )
             end if
 
-            do height = 1, qty%template%noSurfs
-               doThisHeight = .true.
-               if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
-                 doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
-               else
-                 doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
-               end if
-               if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
-                 doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
-               else
-                 doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
-               end if
-
-               ! determine cloud flag
-               isCloud = .false.
-               if( got(f_cloudheight) ) then 
-                  ! use the given height range to find cloud flag
+            isCloud = .false.
+            
+            ! use the given height range to find cloud flag
+            if( got(f_cloudheight) ) then 
                   do height1 = 1,cloudRadiance%template%noSurfs
                      doThisCloudHeight = .true.
                      if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
@@ -3666,7 +3653,24 @@ contains
                      & cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
                      & isCloud = .true.
                   enddo
+            endif
+               
+            do height = 1, qty%template%noSurfs
+               doThisHeight = .true.
+               if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
+                 doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
                else
+                 doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
+               end if
+               if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
+                 doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
+               else
+                 doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
+               end if
+
+               ! determine cloud flag
+               ! if cloud flag is not from a height range then do comparison at each minor frame
+               if( .not. got(f_cloudheight) ) then 
                   ! use the same mif radiance to find cloud flag
                   ind1 = useThisChannel + cloudRadiance%template%noChans*(height-1)
                   if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
@@ -3703,6 +3707,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.229  2003/02/05 20:59:16  dwu
+! an improvement in flagcloud
+!
 ! Revision 2.228  2003/02/05 04:07:05  dwu
 ! add cloudheight option for flagcloud
 !
