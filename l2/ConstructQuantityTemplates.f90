@@ -401,6 +401,7 @@ contains ! =====     Public Procedures     =============================
     ! ourselves.
 
     if ( present(mifGeolocation) ) then
+      ! -------------------------------------- Got mifGeolocation ------------
 
       ! We have geolocation information, setup the quantity as a clone of that.
       call SetupNewQuantityTemplate ( qty, &
@@ -427,7 +428,9 @@ contains ! =====     Public Procedures     =============================
         & MIFGeolocation(instrumentModule)%noInstancesLowerOverlap
       qty%noInstancesUpperOverlap = &
         & MIFGeolocation(instrumentModule)%noInstancesUpperOverlap
+
     else
+      ! -------------------------------------- Not Got mifGeolocation ------------
       ! We have no geolocation information, we have to read it ourselves
       ! from the L1BOA file.
 
@@ -697,6 +700,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.32  2001/05/26 00:20:20  livesey
+! Cosmetic changes
+!
 ! Revision 2.31  2001/05/10 01:08:53  livesey
 ! Changed hGrids and vGrids to pointers, rather than intent(in)
 ! to allow them to be empty.
