@@ -73,9 +73,11 @@ contains ! =====     Public Procedures     =============================
   subroutine DestroyL1BInfo ( L1BInfo )
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     integer :: STATUS ! from deallocate
-    deallocate( l1bInfo%L1BRADIDs, stat=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_DeAllocate // "l1bInfo" )
+    if (associated(l1bInfo%L1BRADIDs)) then
+       deallocate( l1bInfo%L1BRADIDs, stat=status )
+       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_DeAllocate // "l1bInfo" )
+    endif
   end subroutine DestroyL1BInfo
 
 
@@ -143,8 +145,8 @@ contains ! =====     Public Procedures     =============================
       end if
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
 
-    if (ifl1 == 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Could not find any L1BRAD files" )
+    !if (ifl1 == 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !  & "Could not find any L1BRAD files" )
 
     ! Open L1OA File
 
@@ -377,6 +379,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.21  2001/03/10 07:07:58  livesey
+! Made it not mind if no L1B radiance files.
+!
 ! Revision 2.20  2001/03/07 22:49:17  vsnyder
 ! Commented-out more USEd entities that NAG says actually aren't used.
 !
