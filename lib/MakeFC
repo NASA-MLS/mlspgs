@@ -51,28 +51,16 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 tar: clean
 
 configure:
-	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" ; \
-	if [ -e machine.f90 ] ; then \
-        chmod u+w machine.f90 ; \
-        fi ; \
-	cp "$(PLATFORMS)/platforms/$(MLSCONFG).machine" machine.f90
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" 
 
 $(CONFDIR)/.configure:
-	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" ; \
-	if [ -e machine.f90 ] ; then \
-        chmod u+w machine.f90 ; \
-        fi ; \
-	cp "$(PLATFORMS)/platforms/$(MLSCONFG).machine" machine.f90
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" 
 
 $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
-	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc ; \
-	if [ -e machine.f90 ] ; then \
-        chmod u+w machine.f90 ; \
-        fi ; \
-	cp "$(PLATFORMS)/platforms/$(MLSCONFG).machine" machine.f90
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc 
 
 depends:
 	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 -d test_sparsify.f90
@@ -114,6 +102,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.7  2000/11/21 00:40:05  pwagner
+# machine.f90 out of lib/*.f90
+#
 # Revision 2.6  2000/11/17 22:09:30  pwagner
 # conditional machine.f90 chmod
 #
