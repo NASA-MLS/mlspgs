@@ -36,9 +36,6 @@ MODULE HGrid                    ! Horizontal grid information
      ! Now the various coordinates in the HGrid, all dimensioned (noProfs)
      REAL(r8), DIMENSION(:), POINTER :: phi, geodLat, lon, time, &
           & solarTime,solarZenith,losAngle
-   
-     ! This is an array of profiles numbers to go into l2gp etc. data
-     INTEGER, DIMENSION(:), POINTER :: profileIndices ! Dimensioned (noProfs)
   END TYPE HGrid_T
 
   CONTAINS
@@ -62,7 +59,7 @@ MODULE HGrid                    ! Horizontal grid information
     ALLOCATE(hGrid%phi(noProfs), hGrid%geodLat(noProfs), hGrid%lon(noProfs), &
          & hGrid%time(noProfs), hGrid%solarTime(noProfs), &
          & hGrid%solarZenith(noProfs), hGrid%losAngle(noProfs), &
-         & hGrid%profileIndices(noProfs),STAT=status)
+         & STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,"hGrid information")
 
     hGrid%noProfsLowerOverlap=0
@@ -118,7 +115,6 @@ MODULE HGrid                    ! Horizontal grid information
 
     INTEGER :: noMAFs           ! Number of MAFs of L1B data read
     INTEGER :: noProfs          ! Number of profiles in output hGrid
-    INTEGER :: profileOffset    ! Number of first profile in this chunk
     INTEGER :: maf,l1bItem,prof ! Loop counters
     INTEGER, DIMENSION(:), ALLOCATABLE :: defaultMIFs
     REAL(r8), DIMENSION(:), ALLOCATABLE :: defaultField,interpolatedField
@@ -312,16 +308,9 @@ MODULE HGrid                    ! Horizontal grid information
     DEALLOCATE (defaultMIFs)
     DEALLOCATE (defaultField,interpolatedField)
 
-    ! Now we need to work out the profile indices for this hGrid. This
-    ! calculation may need attention! ***
+    ! This calculation may need attention! ***
     hGrid%noProfsLowerOverlap=NINT(chunk%noMAFsLowerOverlap*interpolationFactor)
     hGrid%noProfsUpperOverlap=NINT(chunk%noMAFsUpperOverlap*interpolationFactor)
-    profileOffset=NINT(chunk%accumulatedMAFs*interpolationFactor)-&
-         & hGrid%noProfsLowerOverlap
-    ! Note that profiles are numbered from 0:n-1 in HDF-EOS, hence the -1
-    DO prof=1,noProfs
-       hGrid%profileIndices(prof)=prof+profileOffset-1
-    END DO
     
   END SUBROUTINE CreateHGridFromMLSCFInfo
 
@@ -337,8 +326,7 @@ MODULE HGrid                    ! Horizontal grid information
     ! Executable code
 
     DEALLOCATE(hGrid%phi, hGrid%geodLat, hGrid%lon, hGrid%time, &
-         & hGrid%solarTime, hGrid%solarZenith, hGrid%losAngle, &
-         & hGrid%profileIndices)
+         & hGrid%solarTime, hGrid%solarZenith, hGrid%losAngle)
 
     hGrid%noProfs=0
     hGrid%name=""
@@ -404,6 +392,9 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.5  2000/01/11 22:51:34  livesey
+! Dealt with ramifications of change from read_parse_l2cf to MLSCF
+!
 ! Revision 1.4  2000/01/07 23:53:34  livesey
 ! Nearly integrated, just a few tweaks.
 !
