@@ -209,7 +209,7 @@ hdfeos5.f9h: $(HDFEOS5)/../../include/hdfeos5.inc
 	mv temp hdfeos5.f9h
 
 .PHONY: configure depends clean alltests tar tarz targ mostlyclean \
-	all libmls.a ghostbuster
+	all libmls.a ghostbuster update
 
 tar:
 
@@ -246,6 +246,9 @@ ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
            $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) ./machines/$(MLSCONFG)
            
+update:
+	@cd .. ; \
+   $(MAKE) update SUBDIRS="blas lib" tests_sub_dirs=
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -297,6 +300,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.48  2003/04/30 23:04:55  pwagner
+# Now lets you make update in each subdirectory
+#
 # Revision 2.47  2003/02/24 21:16:01  pwagner
 # Fixed bug where changes to .f9h were not triggering recompiles
 #
