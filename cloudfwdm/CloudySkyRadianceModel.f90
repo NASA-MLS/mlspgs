@@ -251,7 +251,7 @@ contains
       REAL(r8) :: UI(NU,NU,NUA)                ! COSINE OF INCIDENT TB ANGLES
       REAL(r8) :: THETAI(NU,NU,NUA)            ! ANGLES FOR INCIDENT TB
       REAL(r8) :: PHH(N,NU,NZmodel-1)          ! PHASE FUNCTION 
-      REAL(r8) :: tau_wet(NZmodel-1)            ! TOTAL OPTICAL DEPTH for 100%RH
+      REAL(r8) :: tau_wetAll(NZmodel-1)            ! TOTAL OPTICAL DEPTH for 100%RH
       REAL(r8) :: tau_dry(NZmodel-1)            ! TOTAL OPTICAL DEPTH for 0%RH
       REAL(r8) :: W0(N,NZmodel-1)              ! SINGLE SCATTERING ALBEDO
       
@@ -394,7 +394,7 @@ contains
       Tb0 = 0._r8
       TAU0 = 0.0_r8
       TAU=0.0_r8
-      tau_wet=0.0_r8
+      tau_wetAll=0.0_r8
       DTcir = 0._r8
       trans = 0._r8
       Betac = 0._r8
@@ -519,7 +519,7 @@ contains
                
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
-              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wet, &
+              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll, &
               &         tau_dry,Catalog, Bill_data, LosVel, ICON ) 
 
 !         CALL HEADER(3)
@@ -533,7 +533,7 @@ contains
          DO IL=1, NZmodel-1
             IF(CHK_CLD(IL) .NE. 0.)THEN
                ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
-               tau_fewCld(IL)=tau_wet(IL)     ! 100% SATURATION INSIDE CLOUD 
+               tau_fewCld(IL)=tau_wetAll(IL)     ! 100% SATURATION INSIDE CLOUD 
             ENDIF
             IF(YP(IL) .GE. 100._r8) THEN      ! IF BELOW 100MB
                I100_TOP=IL                    ! FIND INDEX FOR 100MB
@@ -541,7 +541,7 @@ contains
          ENDDO
 
          DO IL=1,MAX(ICLD_TOP,I100_TOP)        
-              tau_wetCld(IL)=tau_wet(IL)    ! 110%rhi BELOW cloud top or 100mb
+              tau_wetCld(IL)=tau_wetAll(IL)    ! 110%rhi BELOW cloud top or 100mb
          ENDDO                              
          ! tau_wetCld will be used for transmission function calculation
 
@@ -769,6 +769,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.49  2003/01/31 23:07:16  dwu
+! mask 100%rhi only below 100mb
+!
 ! Revision 1.48  2003/01/30 23:48:17  dwu
 ! add icon=-4 for min Tb and some clearups
 !
