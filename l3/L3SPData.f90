@@ -188,9 +188,9 @@ CONTAINS
    END SUBROUTINE AllocateL3SP
 !-----------------------------
 
-!------------------------------------
-   SUBROUTINE OutputL3SP (cfProd, sp)
-!------------------------------------
+!--------------------------------------------
+   SUBROUTINE OutputL3SP (cfProd, anText, sp)
+!--------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the swaths in an l3sp file.
@@ -200,6 +200,8 @@ CONTAINS
       TYPE( L3CFProd_T ), INTENT(IN) :: cfProd
 
       TYPE( L3SPData_T ), INTENT(IN) :: sp(:)
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
 
 ! Parameters
 
@@ -451,6 +453,10 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+! Annotate the file with the PCF
+
+      CALL WritePCF2Hdr(spFile, anText)
+
 !---------------------------
    END SUBROUTINE OutputL3SP
 !---------------------------
@@ -593,6 +599,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.2  2000/12/29 20:51:11  nakamura
+! Added subroutine OutputL3SP.
+!
 ! Revision 1.1  2000/11/29 21:44:16  nakamura
 ! Module for the L3SP data type.
 !
