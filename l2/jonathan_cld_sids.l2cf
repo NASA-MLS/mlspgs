@@ -1,0 +1,271 @@
+; =====================================================================
+; This l2cf is a test version for doing cloud forward model sids runs
+; -July 16, 2001, Jonathan Jiang and Paul Wagner's working version
+; =====================================================================
+
+define(_outpath,/nas/bigdata/jonathan/emls/)
+define(_ver,v0-5-test1)
+define(_day,1996-051)
+define(_year,1996)
+
+define(_signal,_sigBand$1)
+define(_molecules,_mol$1)
+define(_systemp, _systemp$1)
+
+;-----------------------------------
+; Standard Include files
+;-----------------------------------
+; m4 directives.
+include(m4defs.l2cf)
+
+; Now include the valid signals database
+l2cfinc(validsignals-emls.l2cf)
+
+; spectroscopy database
+l2cfinc(spectroscopy.l2cf)
+
+; read the l2gp files for each specie
+l2cfinc(readl2gpfiles.l2cf)
+
+; read the gridded data for each specie
+l2cfinc(readclimatology.l2cf)
+
+;-----------------------------------------------------------------
+; Read in cloud ice water content and particle size distributions 
+;-----------------------------------------------------------------
+BEGIN ReadApriori
+    CloudIceInput: L2gp, $
+      file='/nas/user1/jonathan/mlspgs/cloudfwdm/MLS-Aura_L2GP_IWC_truth_1996-051.dat'
+    SizeDisInput:  L2gp, $
+      file='/nas/user1/jonathan/mlspgs/cloudfwdm/MLS-Aura_L2GP_PSD_truth_1996-051.dat'
+END ReadApriori
+
+; --------------------------------- Global Settings ----------------------------------
+; Forward Model Global Setup
+;-------------------------------------------------------------------------------------
+
+BEGIN GlobalSettings
+
+    l1Boa, file='/nas/data/emls/l1boa/truth/{}_year{}/MLS-Aura_L1BOA_Full_s4-t_{}_day{}.dat'
+
+    startTime = "00:00:00"
+    endTime   = "01:30:00"
+
+    vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+                     start=1000mb, formula=[72:12]
+
+;;                   start=1000mb, formula=[25:12, 24:6]
+;;    vGridLowRes:   vGrid, coordinate=Zeta, type=Logarithmic, $
+;;                   start=1000mb, formula=[36:6]
+
+    vGridRefGPH:   vGrid, coordinate=Zeta, type=Explicit, values= 100mb
+
+    forwardModelGlobal, $
+      l2pc='/nas/bigdata/livesey/misc/l2pc_band6U_v1.0.dat'
+
+;-----------------------------------------------------------------------------------
+; This is the call to Full Cloud Forward Model
+;-----------------------------------------------------------------------------------
+    sidsFwm: ForwardModel, type= CloudFull,  $
+      signals          = 'R2:190.B2LF:H2O',   $
+      molecules        = [ h2o, o3 ],        $
+      ncloudspecies    = 2,                  $
+      nmodelsurfs      = 640,                $
+      NSCATTERINGANGLES= 16,                 $
+      NAZIMUTHANGLES   = 8,                  $
+      NABTERMS         = 50,                 $
+      NSIZEBINS        = 40,                 $
+      cloud_der        = 0,                  $
+      cloud_width      = 2        
+END GlobalSettings
+
+; --------------------------------- Chunk divide -----------------------------------
+
+BEGIN ChunkDivide
+    IdealLength =             0.125 orbits
+    overlap =                 0 MAFs
+    HomeGeodAngle =           0 degrees
+    HomeModule =              GHz
+    ScanLowerLimit =          -10 km : 20 km
+    ScanUpperLimit =          40 km : 100 km
+    CriticalScanningModules = Both
+    MaxGap =                  3 minutes
+END ChunkDivide
+
+; ------------------------------ Construct sections --------------------------------
+
+BEGIN Construct
+
+    hGridStandard: hGrid, type=height, height=15km, module=GHz
+
+END Construct
+
+l2cfinc(constructstandardspecies.l2cf)
+l2cfinc(constructunfoldedradiances.l2cf)
+
+BEGIN Construct
+;-----------------------------------------------------
+; Construct quantities for cloud forward model inputs
+;-----------------------------------------------------
+ptan:            Quantity, type = ptan, module=GHz
+gph:             Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = gph
+CloudIce:        Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudIce
+sizeDistribution:Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = sizeDistribution
+
+cloudWater:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudWater
+earthradius:     Quantity, hGrid=hGridStandard, type = earthradius 
+surfaceType:     Quantity, hGrid=hGridStandard, type = surfaceType
+
+;------------------------------------------------------
+; Construct quantities for cloud forward model outputs
+;------------------------------------------------------  
+
+radiance:              Quantity, type = radiance, signal = 'R2:190.B2LF:H2O'
+cloudInducedRadiance:  Quantity, type = cloudInducedRadiance,  signal = 'R2:190.B2LF:H2O'
+cloudRADSensitivity:   Quantity, type = cloudRADSensitivity,   signal = 'R2:190.B2LF:H2O'
+effectiveOpticalDepth: Quantity, type = effectiveOpticalDepth, signal = 'R2:190.B2LF:H2O'
+
+cloudExtinction:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+                                 type = cloudExtinction
+
+totalExtinction:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+                                 type = totalExtinction
+
+massMeanDiameterIce:   Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+                                 type = massMeanDiameterIce
+
+massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+                                 type = massMeanDiameterWater
+
+END Construct
+
+BEGIN Construct
+ ;----------------------------
+ ; Cloud forward model inputs    
+ ;----------------------------
+    InputstateTemplate: VectorTemplate, quantities=           $
+    [ ptan, temp, gph, CloudIce, cloudWater, surfaceType,  $
+      sizeDistribution, earthradius, h2o, o3 ]
+ ;-----------------------------
+ ; Cloud forward model outputs 
+ ;-----------------------------
+    OutputTemplate: VectorTemplate, quantities=            $
+   [ radiance, cloudInducedRadiance, cloudExtinction,      $
+     cloudRADSensitivity, totalExtinction,                 $
+     effectiveOpticalDepth,                                $
+     massMeanDiameterIce, massMeanDiameterWater ]
+
+    extraStateTemplate: VectorTemplate, quantities =  $
+      [ refGPH, tngtGeocAltGHz ]
+
+    extraStateTemplate1: VectorTemplate, quantities =  $
+      [ h2o ]
+
+;    measTemplate: VectorTemplate, quantities= $
+;      [ band6U ]
+
+END Construct
+
+; ------------------------------------------- Fill -------------------------
+
+BEGIN Fill
+
+    ;; Define the vectors
+
+    x:      Vector, template=InputstateTemplate      ; State
+    y:      Vector, template=OutputTemplate          ; Radiances
+    yNoise: Vector, template=OutputTemplate          ; Radiance noise
+
+    b:      Vector, template=extraStateTemplate      ; Extra state
+    b1:      Vector, template=extraStateTemplate1      ; Extra state
+;    f:      Vector, template=measTemplate            ; Forward model radiances
+
+    ;; Define the matrix
+    K: Matrix, rows=y, columns=x
+
+    ;; Fill a and x with a apriori
+
+    Fill, quantity=x.cloudice,         method=l2gp, sourceL2GP=CloudIceInput, /interpolate
+    Fill, quantity=x.sizeDistribution, method=l2gp, sourceL2GP=SizeDisInput, /interpolate
+    
+    ;; Fill surfacetype with "0" and cloud water with "0"
+
+    Fill, quantity=x.surfacetype, explicitValues = 0, method = explicit, /spread
+    Fill, quantity=x.cloudWater,  explicitValues = 0, method = explicit, /spread
+    Fill, quantity=y.cloudExtinction,  explicitValues = 0, method = explicit, /spread
+    Fill, quantity=y.totalExtinction,  explicitValues = 0, method = explicit, /spread
+    Fill, quantity=y.massMeanDiameterIce,  explicitValues = 0, method = explicit, /spread
+    Fill, quantity=y.massMeanDiameterWater,  explicitValues = 0, method = explicit, /spread
+;    FILL, quantity=y.cloudInducedRadiance, explicitValues = 0, method = explicit, /spread
+
+    ;; Fill the remaining state quantities
+    Fill, quantity=x.temp, method=l2gp,    sourceL2GP=l2gpTempInput,/interpolate
+    Fill, quantity=x.gph,  method=l2gp,    sourceL2GP=l2gpGPHInput, /interpolate
+    Fill, quantity=x.earthradius, explicitValues = 6370. km, method = explicit, /spread
+  
+    Fill, quantity=b.refGPH, method=l2gp, sourceL2GP=l2gpGPHInput, /interpolate
+    Fill, quantity=x.h2o,    method=gridded, sourceGrid=gridH2O, /interpolate
+    Fill, quantity=x.o3,    method=gridded, sourceGrid=gridO3, /interpolate
+    Fill, quantity=b1.h2o,    method=gridded, sourceGrid=gridH2O, /interpolate
+
+    Fill, quantity=b.tngtGeocAltGHz, method=l1b
+
+    ;; Now the two tangent presssures
+    Fill, quantity=x.ptan, method=hydrostatic, $
+      h2oQuantity=x.h2o, $
+      temperatureQuantity=x.temp, $
+      refGPHQuantity=b.refGPH, $
+      geocAltitudeQuantity=b.tngtGeocAltGHz, $
+      maxIterations=10
+
+    ;; Define matrices
+    ;; myJacobian: matrix, rows=radiance, columns=state
+    ;; myCovariance: matrix, columns=x, type=spd, /extra
+    ;; Fill, quantity=sdIn.o3, method=explicit, explicitValues= 5 ppmv, /spread
+    ;; fillCovariance, matrix=myCovariance, diagonal=sdIn, /invert
+
+END Fill
+
+; -----------------------------------Sids ------------------------------------
+
+BEGIN Retrieve
+   time
+   sids, fwdModelIn=x, fwdModelExtra=b1, fwdModelOut=y,  $
+         forwardModel=[sidsFwm]
+END Retrieve
+
+; ---------------------------------- Join --------------------------------
+
+BEGIN Join
+
+    measRad:  l2aux, source=y.radiance, /prefixSignal, sdName='TB0' 
+    measCLD:  l2aux, source=y.cloudInducedRadiance, /prefixSignal, sdName='DTcir'
+    measSS:   l2aux, source=y.cloudRadSensitivity, /prefixSignal, sdName='SS'
+    measOD:   l2aux, source=y.effectiveOpticalDepth, /prefixSignal, sdName='OD'
+
+    ptanGHzL2AUX:            l2aux, source=x.ptan, sdName='ptanGHz'
+
+    l2gpcloudExtinction:     l2gp, source=y.cloudExtinction, swath = 'BETAc'
+    l2gptotalExtinction:     l2gp, source=y.totalExtinction, swath = 'BETA'
+    l2gpmassMeanDiameterIce: l2gp, source=y.massMeanDiameterIce, swath = 'Dm'
+
+END Join
+
+; ---------------------------------- Output  -----------------------------------
+BEGIN Output
+
+
+    output, file='{}_outpath{}BETAc.l2gp',quantities=l2gpcloudExtinction,           $
+                                                               type=l2gp
+    output, file='{}_outpath{}BETA.l2gp', quantities=l2gptotalExtinction,           $
+                                                               type=l2gp
+    output, file='{}_outpath{}Dm.l2gp',   quantities=l2gpmassMeanDiameterIce,       $
+                                                               type=l2gp
+
+
+    output, file='{}_outpath{}data.l2aux',quantities=              $
+      [ measRad, measCLD, measSS, measOD, ptanGHzL2AUX ], type=l2aux
+
+END Output
+
+
