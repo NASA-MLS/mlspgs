@@ -115,7 +115,7 @@ contains
       thisShape%signal%sideband = sideband
       call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
 
-      ! Read the lhs, rhs and num_in_filters
+      ! Read the lhs, rhs and num_in_shape
       read ( lun, filter, iostat=status )
       if ( status /= 0 ) go to 99
 
@@ -214,6 +214,12 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.1  2002/05/10 00:21:39  vsnyder
+! Revise to cope with new filter shape file.  filterShapes%filterGrid
+! and filterShapes%filterShape are now one-dimensional.
+! filterShapes%signal%channel has exactly one .true. element that
+! indicates the channel to which the shape applies.
+!
 ! Revision 2.0  2001/09/17 20:26:25  livesey
 ! New forward model
 !
