@@ -17,6 +17,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! This module simply contains initial settings and accumulated values.
@@ -266,11 +267,18 @@ contains ! =====     Public Procedures     =============================
   end subroutine dump_section_timings
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 END MODULE MLSL2Timings
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.12  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.11  2002/09/24 18:15:12  pwagner
 ! Prepared to allow unknown names; add_to_section_timing now like retrieval
 !
