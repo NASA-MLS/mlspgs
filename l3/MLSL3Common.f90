@@ -2,11 +2,11 @@
 ! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
+!==============================================================================
 MODULE MLSL3Common
-!===============================================================================
+!==============================================================================
 
-   USE MLSCommon
+   USE MLSCommon, ONLY: FileNameLen
    IMPLICIT NONE
    PUBLIC
 
@@ -60,15 +60,16 @@ MODULE MLSL3Common
 
    CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
    CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
-   CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation field '
+   CHARACTER (LEN=*), PARAMETER :: GEO_ERR = & 
+        & 'Failed to define geolocation field '
    CHARACTER (LEN=*), PARAMETER :: GD_ERR = 'Failed to detach from grid '
    CHARACTER (LEN=*), PARAMETER :: SW_ERR = 'Failed to detach from swath '
-   CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = 'Error writing metadata &
-                                                &attribute '
-   CHARACTER (LEN=*), PARAMETER :: NOOUT_ERR = ' data expected but not found &
-                                                &for output.'
-   CHARACTER (LEN=*), PARAMETER :: TAI2A_ERR = 'Error converting time from &
-                                               &TAI to UTC.'
+   CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = & 
+        & 'Error writing metadata attribute '
+   CHARACTER (LEN=*), PARAMETER :: NOOUT_ERR = & 
+        & ' data expected but not found for output.'
+   CHARACTER (LEN=*), PARAMETER :: TAI2A_ERR = & 
+        & 'Error converting time from TAI to UTC.'
    CHARACTER (LEN=*), PARAMETER :: WR_ERR = 'Failed to write field '
    CHARACTER (LEN=*), PARAMETER :: SZ_ERR = 'Failed to get size of dimension '
 
@@ -84,16 +85,17 @@ MODULE MLSL3Common
    INTEGER, PARAMETER :: maxWindow = 31
    INTEGER, PARAMETER :: MIN_MAX = 2
 
-! This data type is used to store the names/dates of output files actually created.
+! This data type is used to store the names/dates of output files 
+! actually created.
 
    TYPE OutputFiles_T
-
-     INTEGER :: nFiles		! number of distinct output files created
 
      CHARACTER (LEN=FileNameLen) :: name(maxwindow)
 	! array of names of the created files
 
      CHARACTER (LEN=8) :: date(maxWindow)       ! CCSDS B format dates of files
+
+     INTEGER :: nFiles		! number of distinct output files created
 
    END TYPE OutputFiles_T
 
@@ -102,6 +104,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.13  2001/12/13 20:49:21  nakamura
+!# Added field name for MaxDiffTime.
+!#
 !# Revision 1.12  2001/12/10 18:33:42  nakamura
 !# Moved DM dg fields here.
 !#
