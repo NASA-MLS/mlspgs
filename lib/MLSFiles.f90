@@ -13,8 +13,9 @@ module MLSFiles               ! Utility file routines
     & he5_gdopen, he5_gdclose, &
     & HE5F_ACC_TRUNC, HE5F_ACC_RDONLY, HE5F_ACC_RDWR
   use machine, only: io_error
-  use MLSCommon, only: i4, BareFNLen
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSCommon, only: i4, BareFNLen, FileNameLen
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
+    & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MLSStrings, only: Capitalize, LowerCase, Reverse, SortArray
   use output_m, only: blanks, output
   use SDPToolkit, only: &
@@ -36,10 +37,10 @@ module MLSFiles               ! Utility file routines
 
   private 
 
-  public :: GetPCFromRef, get_free_lun, mls_io_gen_openF, &
-  & mls_io_gen_closeF, split_path_name, &
+  public :: AddFileToDataBase, GetPCFromRef, get_free_lun, mls_io_gen_openF, &
+  & mls_io_gen_closeF, split_path_name, RmFileFromDataBase, &
   & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend, &
-  & mls_openFile, mls_closeFile
+  & mls_openFile, mls_closeFile, MLSFile_T
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -74,6 +75,7 @@ module MLSFiles               ! Utility file routines
 ! WRONGHDFVERSION    Supplied hdf version differs from actual file version
 
 !     (subroutines and functions)
+! AddFileToDataBase  Enters a FileName, id, etc. into the database
 ! GetPCFromRef       Turns a FileName into the corresponding PC
 ! get_free_lun       Gets a free logical unit number
 ! mls_closeFile      Closes a file opened by mls_openFile
@@ -84,6 +86,7 @@ module MLSFiles               ! Utility file routines
 ! mls_openFile       Opens an hdf5 file
 ! mls_sfend          Closes a file opened by mls_sfstart
 ! mls_sfstart        Opens an hdf file for writing metadata
+! RmFileFromDataBase Removes a FileName, id, etc. from the database
 ! split_path_name    splits the input path/name into path and name
 ! === (end of toc) ===
 
@@ -175,7 +178,36 @@ module MLSFiles               ! Utility file routines
   integer, parameter :: bottom_unit_num=1
   integer, parameter :: top_unit_num=99
 
+  ! Information describing the files used by the mls software
+  ! Stop passing file handles back & forth bewteen routines
+  ! -- pass one of these instead
+  TYPE MLSFile_T
+    INTEGER :: File_Id=0     ! The HDF ID (handle) for the file
+    INTEGER :: PCF_Id=0      ! The PCF ID (ref) for the file
+    INTEGER :: HDFVersion=0  ! Which hdf version is the file
+    CHARACTER (LEN=8) :: Type=""  ! e.g., 'ascii', 'hdf', hdf-eos', 'binary'
+    CHARACTER (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
+    LOGICAL :: StillOpen=.false.
+  END TYPE MLSFile_T
 contains
+
+  !-----------------------------------------  AddFileToDatabase  -----
+  integer function AddFileToDatabase ( DATABASE, ITEM )
+
+  ! This routine adds a vector to a database of such vectors, 
+  ! creating the database if necessary.
+
+    ! Dummy arguments
+    type (MLSFile_T), dimension(:), pointer :: DATABASE
+    type (MLSFile_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (MLSFile_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddFileToDatabase = newSize
+  end function AddFileToDatabase
 
   ! ---------------------------------------------  GetPCFromRef  -----
 
@@ -902,6 +934,28 @@ contains
 
   end function mls_io_gen_closeF
 
+  !-----------------------------------------  RmFileFromDatabase  -----
+  integer function RmFileFromDatabase ( DATABASE, ITEM )
+
+  ! This routine removes a vector from a database of such vectors, 
+  ! deallocating the database if necessary.
+  ! Alas, doesn't work--we need to know how to undecorate character tree
+  ! first before we will be able to make it work; sorry (P. Wagner)
+
+    ! Dummy arguments
+    type (MLSFile_T), dimension(:), pointer :: DATABASE
+    type (MLSFile_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (MLSFile_T), dimension(:), pointer :: tempDatabase
+    logical, parameter                     :: okToDeallocEmptyDB = .FALSE.
+    include "rmItemFromDatabase.f9h"
+    call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Cannot yet (ever?) rm File from database" ) 
+
+    RmFileFromDatabase = newSize
+  end function RmFileFromDatabase
+
   ! ---------------------------------------------  split_path_name  -----
 
   ! This routine splits the input full_file_name
@@ -1364,6 +1418,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.42  2002/12/02 23:37:27  pwagner
+! First halting steps toward reorg of how mls treats files--will be done via MLSFile_T
+!
 ! Revision 2.41  2002/11/07 21:22:40  jdone
 ! HDF4/HDF5 capabilities integrated
 !
