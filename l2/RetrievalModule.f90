@@ -24,10 +24,10 @@ module RetrievalModule
     & f_forwardModel, f_fwdModelIn, f_fwdModelExtra, f_fwdModelOut, f_jacobian, &
     & f_maxIterations, f_measurements, f_method, f_outputCovariance, &
     & f_quantity, f_state, f_test, f_toleranceA, f_toleranceF, &
-    & f_toleranceR, f_weight, field_first, field_indices,field_last, &
+    & f_toleranceR, f_weight, field_first, field_last, &
     & l_apriori, l_covariance, l_newtonian, l_none, l_norm, &
-    & s_forwardModel, s_sids, s_matrix, s_subset, s_retrieve, s_time, &
-    & spec_indices
+    & s_forwardModel, s_sids, s_matrix, s_subset, s_retrieve, s_time
+  use Intrinsic, only: Field_indices, Spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
     & ClearMatrix, ColumnScale, CopyMatrixValue, CreateEmptyMatrix, &
@@ -63,12 +63,13 @@ module RetrievalModule
   double precision, parameter, private :: DefaultToleranceF = 1.0d-6 ! for NWT
   double precision, parameter, private :: DefaultToleranceR = 1.0d-6 ! for NWT
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=130), private :: Id = &
-    & "$Id$"
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
 contains
 
@@ -732,6 +733,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.20  2001/04/26 02:53:37  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.19  2001/04/26 01:04:21  vsnyder
 ! Copy model's final radiance to fwdModelOut
 !
