@@ -1,0 +1,128 @@
+BEGIN GlobalSettings
+    VersionCommen,VersionComment="L2CF Version 0-1-0 for version 0.1 of the MLS software"
+    InputVersionString,InputVersionString="v0-1-0-test"
+    OutputVersionString,OutputVersionString="v0-1-0-test"
+    AllowClimatologyOverload, AllowClimatologyOverloads=".FALSE."
+END GlobalSettings
+BEGIN ReadApriori
+    aprioriTemp,source="temp",length=200 km, $
+       versionRange="1999-01-01T .. 2000-01-01"
+    aprioriGPH,source="GPH",length=200 km,versionRange="1999-01-01..2000-01-01"
+    aprioriH2O,source="H2O",length=200 km,versionRange="1999-01-01..2000-01-01"
+    aprioriHNO3,source="HNO3",length=200 km,versionRange="1999-01-01..2000-01-01"
+    aprioriO3,source="O3",length=200 km,versionRange="1999-01-01..2000-01-01"
+    aprioriHCl,source="HCL",length=200 km,versionRange="1999-01-01..2000-01-01"
+    aprioriClO,source="ClO",length=200 km,versionRange="1999-01-01..2000-01-01"
+    aprioriN2O,source="N2O",length=200 km,versionRange="1999-01-01..2000-01-01"
+    aprioriCO,source="CO",length=200 km,versionRange="1999-01-01..2000-01-01"
+END ReadApriori
+BEGIN MergeApriori
+    aprioriTemp,source="NCEP",species="temperature",range=1000.0 .. 1 mb, $
+       method="weighted",scale=5 km
+    aprioriTemp_precision,source="NCEP",species="temperature_precision", $
+      range=1000.0..1 mb,method="weighted",scale=5 km
+    aprioriGPH,source="NCEP",species="GPH",height=100.0 mb,method="weighted"
+    aprioriGPH_precision,source="NCEP",species="GPH_precision",height=100.0 mb, $
+      method="weighted"
+END MergeApriori
+BEGIN ChunkDivide
+    IdealLength, IdealLength=0.25 orbits
+    Overlap, Overlap=5 MAFs
+    HomeGeodAngle, HomeGeodAngle=0 degrees
+    ScanLowerLimit, ScanLowerLimit= -10 .. 20 km
+    ScanUpperLimit, ScanUpperLimit=  40 .. 100 km
+    CriticalBands, CriticalBands="(R1A:118.B1:PT or R1B:118.B21:PT) and (all R2:190.B*)"
+    CriticalScanningModules, CriticalScanningModules="Both"
+    MaxGap, MaxGap=3 minutes
+END ChunkDivide
+BEGIN Construct
+    vGrid,name="vGridHiRes",coordinate="Pressure", values="Log 1000mb 60 12"
+    hGrid,name="hGridStandard", type="fractional", fraction=0.5, module="GHz"
+    quantity,name="temp", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="temperature", unit="K"
+    quantity,name="BrO", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="ClO", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="CO", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="GPH", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="H2O", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="HCl", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="HCN", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="HNO3", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="HO2", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="HOCl", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="ICE", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="N2O", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="O3", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="OH", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="RHI", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="SO2", vGrid="vGridHiRes", hGrid="hGridStandard", $
+       type="VMR", unit="vmr"
+    quantity,name="ptan118", type="ptan", unit="LogP"
+    quantity,name="ptan2t5h", type="ptan", unit="LogP"
+    vectorTemplate, name="stateTemplate", species="temp",$
+    species="ptan118",species="ptan2t5h", species="BrO", $
+    species="ClO", species="CO", species="GPH",  species="H2O",species="HNO3",$
+    species="HCl", species="HCN", species="HOCl", species="ICE", $
+    species="N2O",species="O3", species="OH", species="RHI",$
+    species="SO2", species="HO2"
+END Construct
+BEGIN Fill
+    CREATE,name="state",template="stateTemplate"
+END Fill
+BEGIN Join
+    quantity,name="temp",source="state.temp"
+    quantity,name="BrO",source="state.BrO"
+    quantity,name="ClO", source="state.ClO"
+    quantity,name="CO", source="state.CO"
+    quantity,name="GPH",source="state.GPH"
+    quantity,name="H2O",source="state.H2O"
+    quantity,name="HCl",source="state.HCl" 
+    quantity,name="HCN", source="state.HCN"
+    quantity,name="HNO3", source="state.HNO3"
+    quantity,name="HO2", source="state.HO2"
+    quantity,name="HOCl",source="state.HOCl"
+    quantity,name="ICE", source="state.ICE"
+    quantity,name="N2O",source="state.N2O"
+    quantity,name="O3", source="state.O3"
+    quantity,name="OH", source="state.OH"
+    quantity,name="RHI", source="state.RHI"
+    quantity,name="SO2", source="state.SO2"
+    quantity, name="ptan118",source="state.ptan118"
+    quantity, name="ptan2t5h",source="state.ptan2t5h"
+
+END Join
+BEGIN Output
+    l2gp, name="temp", species="temp"
+    l2gp,name="BrO",species="BrO"
+    l2gp,name="ClO",species="ClO"
+    l2gp,name="CO",species="CO"
+    l2gp,name="GPH",species="GPH"
+    l2gp,name="H2O",species="H2O"
+    l2gp,name="HCl",species="HCl" 
+    l2gp,name="HCN",species="HCN"
+    l2gp,name="HNO3",species="HNO3"
+    l2gp,name="HO2",species="HO2"
+    l2gp,name="HOCl",species="HOCl"
+    l2gp,name="ICE",species="ICE"
+    l2gp,name="N2O",species="N2O"
+    l2gp,name="O3",species="O3"
+    l2gp,name="OH",species="OH"
+    l2gp,name="RHI",species="RHI"
+    l2gp,name="SO2",species="SO2"
+    l2aux_full, name = "mls_l2aux_v01",species="ptan118", species="ptan2t5h"
+END Output
