@@ -2014,10 +2014,11 @@ alpha_path_f = 0.0
           & signal=fwdModelConf%signals(sigInd)%index, &
           & sideband=fwdModelConf%signals(sigInd)%sideband )
         ! Get the sideband fraction if we need to
-        if ( fwdModelConf%sidebandStart /= fwdModelConf%sidebandStop ) then   ! We're folding
+        if ( fwdModelConf%sidebandStart /= fwdModelConf%sidebandStop &
+          & .or. fwdModelConf%forceSidebandFraction ) then   ! We're folding
           ! Here it is Van - NJL !????
           ! Change to this if statement at some later stage
-          ! if ( firstSignal%sideband == 0 ) then
+          ! if ( firstSignal%sideband == 0 .or. fwdModelConf%forceSidebandFraction ) then
           sidebandFraction => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_limbSidebandFraction, &
             & signal=fwdModelConf%signals(sigInd)%index, &
@@ -2599,6 +2600,10 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.161  2003/07/15 18:16:48  livesey
+! Catalog now split by sideband, also changed no_ele to max_ele in
+! allocates
+!
 ! Revision 2.160  2003/07/09 23:40:13  vsnyder
 ! Use new AllocateSlabs routine
 !
