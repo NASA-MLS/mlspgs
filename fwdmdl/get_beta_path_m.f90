@@ -310,9 +310,9 @@ contains
   end subroutine Get_Beta_Path_Polarized
 
   ! ----------------------------------------  Get_Beta_Path_Cloud  -----
-  subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path,                 &
+  subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path,  tt_path,       &
         & beta_group, path_inds, beta_path_cloud,                       &
-        & w0_path,                                                 & 
+        & w0_path, tt_path_c,                                           & 
         & IPSD, WC, fwdModelConf  )
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Cloud_extinction, only: get_beta_cloud
@@ -325,7 +325,8 @@ contains
     real(r8), intent(in) :: Frq ! frequency in MHz
     real(rp), intent(in) :: T_path(:)   ! path temperatures
     real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
-    
+    real(rp), intent(in) :: tt_path(:,:)   ! scating source func on gl grids
+
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
 
     type (beta_group_T), dimension(:) :: beta_group
@@ -339,7 +340,8 @@ contains
 ! outputs
 
     real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction
-    real(rp), intent(out) :: w0_path(:)    ! single scattering albedo
+    real(rp), intent(out) :: w0_path(:)         ! single scattering albedo
+    real(rp), intent(out) :: tt_path_c(:)       ! scattering source func coarse grids
 
 ! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
@@ -363,8 +365,9 @@ contains
 
     n_path = size(path_inds)
 
-    beta_path_cloud = 0.0
-    w0_path    = 0.0
+    beta_path_cloud = 0.0_rp
+    w0_path         = 0.0_rp
+    tt_path_c       = 0.0_rp
 
         do j = 1, n_path
           k = path_inds(j)
@@ -374,7 +377,8 @@ contains
                           &  cld_ext, W0, PHH                )      
 
             beta_path_cloud(j) = beta_path_cloud(j) + cld_ext 
-            w0_path(j) = w0_path(j) + W0 
+            w0_path(j)         = w0_path(j) + W0 
+            tt_path_c(j)       = tt_path_c(j)       + tt_path(k,1)            
 
          end do
 
@@ -983,6 +987,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.52  2004/03/19 04:07:31  vsnyder
+! Fix some blunders re dNu for spectral derivatives
+!
 ! Revision 2.51  2004/03/19 00:47:02  vsnyder
 ! Use line center instead of pressure-shifted line center in a few places
 !

@@ -163,13 +163,14 @@ contains
 
     type(vectorValue_t) :: QtyStuff
     logical :: MyFlag
+    logical :: AbFlag
     integer :: ii, no_ang, max_ele
-
-    
+ 
     myFlag = .false.
     if ( present(SetTscatFlag) ) myFlag = SetTscatFlag
-    
+
     if ( myFlag ) then
+  
        max_ele = size (Qty%values,1)
        no_ang=FwdModelConf%num_scattering_angles
 
@@ -192,7 +193,7 @@ contains
        enddo
 
     else
-
+       
        call create_grids_1 ( grids_x, 1 )
        call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf )
        call create_grids_2 ( grids_x )
@@ -520,6 +521,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.56  2004/03/01 19:21:46  jonathan
+! modify load_one_item for scat source function
+!
 ! Revision 2.55  2004/02/03 02:46:39  vsnyder
 ! Make ScatFlag argument optional
 !
