@@ -17,7 +17,7 @@ module DO_DELTA_M
 contains
 !--------------------------------------------------  PATH_OPACITY  -----
 
-  subroutine PATH_OPACITY ( DEL_ZETA, SINGULARITY, FUNCT, DS_DH_GL, DH_DZ_GL, &
+  subroutine PATH_OPACITY ( DEL_ZETA, SINGULARITY, FUNCT, DS_DZ_GW, &
                      &      INTEGRAL, C_Inds, F_Inds )
 
 ! Assume FUNCT, DS_DH_GL and DH_DZ_GL have been evaluated at NG Gauss
@@ -25,7 +25,7 @@ contains
 ! estimate the integral of (FUNCT-SINGULARITY) * DS_DH_GL * DH_DZ_GL
 ! using the NG-point Gauss quadrature.
 
-    use GLNP, only: NG, GW
+    use GLNP, only: NG
     use MLSCommon, only: IP, RP
 
 ! Inputs
@@ -35,9 +35,8 @@ contains
     real(rp), intent(in) :: Singularity(:) ! value of function at lower boundary
     real(rp), intent(in) :: Funct(:)    ! function evaluated on gl integration
                                         ! grid
-    real(rp), intent(in) :: Ds_dh_gl(:) ! path length derivative wrt height on
-                                        ! gl grid
-    real(rp), intent(in) :: Dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+    real(rp), intent(in) :: Ds_dz_gw(:) ! path length  derivative wrt zeta * gw
+                                        ! on entire grid
 
 ! Output
 
@@ -72,9 +71,9 @@ contains
     a = 1
     do i = 1, size(c_inds)
       aa = f_inds(a)
-      integral(i) = 0.5_rp * del_zeta(i) * &
+      integral(i) = del_zeta(i) *                                  &
                &  sum((funct(a:a+ng-1) - singularity(c_inds(i))) * &
-               &     ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw)
+               &     ds_dz_gw(aa:aa+ng-1) )
       a = a + ng
     end do
 
@@ -83,9 +82,9 @@ contains
 ! ---------------------------------------  POLARIZED_PATH_OPACITY  -----
 
   subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, SINGULARITY, &
-                     &      FUNCT, DS_DH_GL, DH_DZ_GL, &
+                     &      FUNCT, DS_DZ_GW, &
                      &      INTEGRAL, C_Inds, F_Inds )
-    use GLNP, only: NG, GW
+    use GLNP, only: NG
     use MLSCommon, only: IP, RP
 
 ! Inputs
@@ -96,9 +95,8 @@ contains
     complex(rp), intent(in) :: singularity(-1:,:) ! value of function at lower
     complex(rp), intent(in) :: funct(-1:,:)    ! function evaluated on gl integration
                                         ! grid
-    real(rp), intent(in) :: ds_dh_gl(:) ! path length derivative wrt height on
-                                        ! gl grid
-    real(rp), intent(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+    real(rp), intent(in) :: ds_dz_gw(:) ! path length derivative wrt zeta * gw
+                                        ! on entire grid
 
 ! Output
 
@@ -108,13 +106,11 @@ contains
 
     integer(ip), intent(in) :: C_inds(:) ! Coarse path inds, for
                                          ! Singularity
-    integer(ip), intent(in) :: F_Inds(:) ! Subset of ds_dh_gl, dh_dz_gl
+    integer(ip), intent(in) :: F_Inds(:) ! Subset of ds_dh, dh_dz
 
 ! Internals
 
     integer(ip) a, aa, i, j
-    complex(rp) :: ds_dh_dh_dz_gw(ng) ! ds_dh_gl * dh_dz_gl * gw is the same
-      !                                 for all j = -1..1
 
 ! Start calculation
 
@@ -137,9 +133,9 @@ contains
     do i = 1, size(c_inds)
       aa = f_inds(a)
       do j = -1, 1
-        integral(j,i) = 0.5_rp * del_zeta(c_inds(i)) * &
-               &  sum((funct(j,a:a+ng-1) - singularity(j,c_inds(i))) * &
-               &  ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw)
+        integral(j,i) = del_zeta(c_inds(i)) *                           &
+               &  sum( (funct(j,a:a+ng-1) - singularity(j,c_inds(i))) * &
+               &       ds_dz_gw(aa:aa+ng-1) )
       end do 
       a = a + ng
     end do
@@ -151,8 +147,8 @@ contains
 
   subroutine HYD_OPACITY ( DEL_ZETA, SINGULARITY, ALPHA_PATH, H_PATH,     &
                      &     DH_DT_PATH, T_PATH, H_TAN, DH_DT_TAN, ETA_ZXP, &
-                     &     DS_DH_GL, DH_DZ_GL, C_inds, F_inds, INTEGRAL )
-    use GLNP, only: NG, GW
+                     &     DS_DH, DH_DZ_GW, GL_inds, C_inds, F_inds, INTEGRAL )
+    use GLNP, only: NG
     use MLSCommon, only: IP, RP
 
 ! Inputs
@@ -171,9 +167,11 @@ contains
                                         ! coefficient at the tangent.
     real(rp), intent(in) :: eta_zxp(:)  ! basis function for temperature
                                         ! coefficient on gl grid.
-    real(rp), intent(in) :: ds_dh_gl(:) ! path length derivative wrt height on
-                                        ! gl grid on gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid.
+    real(rp), intent(in) :: ds_dh(:)    ! path length derivative wrt height on
+                                        ! entire grid.
+    real(rp), intent(in) :: dh_dz_gw(:) ! height derivative wrt zeta * gw on
+                                        ! entire grid.
+    integer(ip), intent(in) :: GL_inds(:) ! GL indices, for ds_dh and dh_dz_gw
     integer(ip), intent(in) :: C_inds(:) ! Coarse path inds, for Singularity
     integer(ip), intent(in) :: F_inds(:) ! The first GL path ind for the
                                         ! corresponding C_inds element, for
@@ -192,13 +190,13 @@ contains
     do i = 1 , size(c_inds)
       a = f_inds(i)
       b = a + ng - 1
-      integral(i) = 0.5_rp * del_zeta(c_inds(i)) *                             &
+      integral(i) = del_zeta(c_inds(i)) *                              &
         & sum( ( alpha_path(a:b) - singularity(c_inds(i)) )            &
         &      * (((2.0_rp*h_path(a:b)**2 - 3.0_rp*h_tan**2)           &
         &         * dh_dt_path(a:b) + h_path(a:b) * h_tan * dh_dt_tan) &
         &         / (sqrt(h_path(a:b)**2 - h_tan**2))**3               &
-        &         + eta_zxp(a:b)*ds_dh_gl(a:b)/t_path(a:b)) *          &
-        &         dh_dz_gl(a:b) * gw )
+        &         + eta_zxp(a:b)*ds_dh(gl_inds(a:b)) / t_path(a:b)) *  &
+        &         dh_dz_gw(gl_inds(a:b)) )
     end do
 
   end subroutine HYD_OPACITY
@@ -210,6 +208,9 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.10  2003/10/30 20:34:42  vsnyder
+! Use c_inds for del_zeta
+!
 ! Revision 2.9  2003/09/26 01:25:56  vsnyder
 ! Restore a deleted CVS log comment
 !
