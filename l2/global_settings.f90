@@ -57,10 +57,11 @@ contains
       & ForwardModelConfig_T
     use ForwardModelSupport, only: ConstructForwardModelConfig, &
       & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
-    use INIT_TABLES_MODULE, only: F_FILE, L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
+    use INIT_TABLES_MODULE, only: F_FILE, L_TRUE, &
+      & P_ALLOW_CLIMATOLOGY_OVERLOADS, &
       & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
-      & P_VERSION_COMMENT, P_MAXFAILURESPERMACHINE, P_MAXFAILURESPERCHUNK, &
+      & P_VERSION_COMMENT, &
       & S_BINSELECTOR, S_EMPIRICALGEOMETRY, S_FGRID, &
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
       & S_L2PARSF, S_TIME, S_VGRID
@@ -227,12 +228,12 @@ contains
             & '*** Leap Second File supplied global settings despite pcf ***', &
             & just_a_warning = .true.)
           end if
-        case ( p_maxfailurespermachine )
-          call expr ( subtree(2,son), units, value )
-          parallel%maxfailurespermachine = value(1)
-        case ( p_maxfailuresperchunk )
-          call expr ( subtree(2,son), units, value )
-          parallel%maxfailuresperchunk = value(1)
+        ! case ( p_maxfailurespermachine )
+        !  call expr ( subtree(2,son), units, value )
+        !  parallel%maxfailurespermachine = value(1)
+        ! case ( p_maxfailuresperchunk )
+        !  call expr ( subtree(2,son), units, value )
+        !  parallel%maxfailuresperchunk = value(1)
         case default
           call announce_error(son, 'unrecognized global settings parameter')
         end select
@@ -736,6 +737,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.75  2003/09/26 21:55:54  pwagner
+! Less likely to complain about missing attributes from hdf4 l1boa files
+!
 ! Revision 2.74  2003/09/12 16:28:49  cvuu
 ! Read OrbitNumber and OrbitPeriod attributes from L1BOA
 !
