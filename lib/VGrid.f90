@@ -83,7 +83,7 @@ CONTAINS
 
     ! Now check that this is a sensible vGrid, first the obvious stuff
 
-    IF (LEN_TRIM(vGrid%name)=="") CALL MLSMessage(MLSMSG_Error,ModuleName,&
+    IF (LEN_TRIM(vGrid%name)==0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
          & "Invalid or absent vGrid name")
     IF (vGrid%verticalCoordinate==VC_Invalid) CALL MLSMessage(MLSMSG_Error,&
          & ModuleName,"Invalid vertical coordinate for vGrid "//&
@@ -200,6 +200,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.9  2000/01/11 22:51:35  livesey
+! Dealt with ramifications of change from read_parse_l2cf to MLSCF
+!
 ! Revision 1.8  2000/01/07 23:53:35  livesey
 ! Nearly integrated, just a few tweaks.
 !
