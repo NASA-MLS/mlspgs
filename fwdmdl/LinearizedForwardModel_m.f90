@@ -230,7 +230,8 @@ contains ! =====     Public Procedures     =============================
         & quantityType = l_limbSidebandFraction, signal=signal%index, &
         & sideband=1, noError=.true. )
       if (.not. associated (sidebandFraction) .and. .not. &
-        & ( associated ( lowerSidebandFraction) .and. associated ( upperSidebandFraction ) ) ) &
+        & ( associated ( lowerSidebandFraction) .and. &
+        &   associated ( upperSidebandFraction ) ) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & "No sideband fraction supplied")
     end if
@@ -254,6 +255,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Setup a sideband fraction array
       if ( sidebandStart /= sidebandStop ) then   ! We're folding
+        ! Change to this if statement later
+        ! if ( signal%sideband == 0 .and. .not. fmConf%forceSidebandFraction ) then !????
         if ( associated ( sidebandFraction ) ) then
           thisFraction = sidebandFraction%values(:,1)
           if ( sideband == 1 ) thisFraction = 1.0 - thisFraction
@@ -569,11 +572,13 @@ contains ! =====     Public Procedures     =============================
         end select
         
         if ( sidebandStart == sidebandStop ) then
+          ! Change to this if statement later !????
+          ! if ( signal%sideband == 0 ) then
           do chan = 1, noChans
             if ( doChannel ( chan ) ) then
               do mif = 1, noMIFs
                 jBlock%values( chan + (mif-1)*noChans, 1 ) = &
-                  & dyByDx ( mif, chan )
+                  & thisFraction(chan) * dyByDx ( mif, chan )
               end do                  ! Minor frames
             end if                     ! Doing this channel
           end do                       ! Channels
@@ -596,8 +601,8 @@ contains ! =====     Public Procedures     =============================
                     & jBlock%values ( chan + (mif-1)*noChans, : ) + &
                     &   thisFraction(chan) * dyByDx ( mif, chan )
                 end do                  ! Minor frames
-              end if                     ! Doing this channel
-            end do                       ! Channel
+              end if                    ! Doing this channel
+            end do                      ! Channel
           end if                        ! First/second sideband
         end if                          ! Folding
       end if                            ! Want ptan derivatives
@@ -805,7 +810,7 @@ contains ! =====     Public Procedures     =============================
       ! Code will only get to here if the bins are unlocked, or will be locked
       ! once we've decided on them.
 
-      ! Setup the arrays we need possible is a flag to indicate (for
+      ! Setup the arrays we need, possible is a flag to indicate (for
       ! each sideband) whether a bin is even worth considering, cost is
       ! the associated cost.
       nullify ( possible, cost )
@@ -835,12 +840,7 @@ contains ! =====     Public Procedures     =============================
 
       ! OK, now we have to loop over the bin selectors for each bin and
       ! apply the rules they give.
-
-      ! We have a bit of a hack here to ensure that in the absence of any
-      ! other information, it will choose the closest latitude one (the
-      ! previous behavior)
       noSelectors = size ( fmConf%binSelectors )
-
       do bin = 1, noBins
         binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
         do selector = 1, noSelectors
@@ -874,7 +874,7 @@ contains ! =====     Public Procedures     =============================
               cost(bin) = cost(bin) + thisCost
             end if
           case ( l_temperature, l_vmr, l_fieldStrength, l_fieldElevation, l_fieldAzimuth )
-            ! This one involves matching elements of xStart with x.
+            ! This one involves matching elements of xStar with x.
             if ( sel%selectorType == l_vmr ) then
               l2pcQ => GetVectorQuantityByType ( &
                 & l2pcDatabase(bin)%col%vec, quantityType=l_vmr, &
@@ -909,6 +909,8 @@ contains ! =====     Public Procedures     =============================
                   & ( stateQ%values ( s1(1):s2(1), stateInstance ) - &
                   &   l2pcQ%values  ( s1(1):s2(1), l2pcInstance  ) ) **2 )
               end do
+              ! If we require an exact match set the possible flag,
+              ! otherwise just report our cost.
               if ( sel%exact ) then
                 possible ( :, bin ) = EssentiallyEqual ( thisCost, 0.0_r8 )
               else
@@ -993,6 +995,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.44  2003/08/14 20:24:08  livesey
+! Added the exact bin criterion
+!
 ! Revision 2.43  2003/08/13 00:48:23  livesey
 ! Removed the faking of binSelectors, forwardModelSupport now ensures
 ! there's always one to hand.
