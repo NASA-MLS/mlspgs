@@ -1,0 +1,176 @@
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
+! ------------------------------------------------------------------------------
+! Part of l3ascii, used for r4 and r8 versions of routine of this name
+    nullify ( tmpalt, tmpdate )
+
+    ! --- Set default values for all optional parameters
+    if ( present(lat) ) then
+      inlat = lat
+    else
+      inlat = 30.0
+    end if
+
+    if ( present(pressure) ) then
+      inpressure = pressure
+    else
+      inpressure = 10.0
+    end if
+
+    if ( present(lon) ) then
+      inlon = lon
+    else
+      inlon = 0.0
+    end if
+
+    if ( present(sza) ) then
+      insza = sza
+    else
+      insza = 30.0
+    end if
+
+    if ( present(lst) ) then
+      inlst = lst
+    else
+      inlst = 12.0
+    end if
+
+    if ( present(date) ) then
+      indate = date
+    else
+      indate = 15768000.0 ! This should be June (ish)
+    end if
+
+    ! OK, that's the optional arguments sorted. 
+    ! Now, we have to find which two indices the chosen value lies between
+    ! for each of the six values.
+    call ilocate ( real(field%lats, r8), inlat, ilat1, ilat2 )
+    call ilocate ( real(field%lons, r8), inlon, ilon1, ilon2 )
+    call ilocate ( real(field%szas, r8), insza, isza1, isza2 )
+    call ilocate ( real(field%lsts, r8), inlst, ilst1, ilst2 )
+    ! We can't interpolate dates and prssures as they are. We construct
+    ! a mean date and a log pressure
+    call allocate_test ( tmpdate, field%noDates, 'tmpdate', moduleName )
+    call allocate_test ( tmpalt, field%noHeights, 'tmpalt', moduleName )
+    tmpdate = (field%dateStarts+field%dateEnds)/2.0
+    
+    ! Now think about cases when the gridded date is descriptive of no
+    ! particular year.
+    if ( field%noYear ) then
+      ! Subtract the year information from indate.
+      ! Note this (temporarily!?) brushes over issues to do with leap years.
+      inDate = modulo ( inDate, 60.0_r8*60.0*24.0*365.25 )
+    end if
+    tmpalt = -log10(field%heights)
+    inalt = -log10(inpressure)
+    call ilocate ( tmpdate, indate, idate1, idate2 )
+    call ilocate ( tmpalt, inalt, ialt1, ialt2 )
+    ! We now know that the desired point is inside the 6-D hypercuboid 
+    ! bin of the array field%field(ialt1:ialt2, ilat1:ilat2, .......)
+    ! Time to do the actual interpolation. Yuck. 
+    ! There are up to 2^6=64 values
+    ! to be taken into account. 
+
+    ! Lets try allocating a cube of the right shape.
+    if ( ialt1 == ialt2 ) then !test whether the altitude is between two of the 
+      hcshape(1) = 1       ! grid values (so we interpolate) or if there
+    else                   ! is only one value (so we just return that value)
+      hcshape(1) = 2
+    end if
+    if ( ilat1 == ilat2 ) then
+      hcshape(2) = 1
+    else
+      hcshape(2) = 2
+    end if
+    if ( ilon1 == ilon2 ) then
+      hcshape(3) = 1
+    else
+      hcshape(3) = 2
+    end if
+    if ( ilst1 == ilst2 ) then
+      hcshape(4) = 1
+    else
+      hcshape(4) = 2
+    end if
+    if ( isza1 == isza2 ) then
+      hcshape(5) = 1
+    else
+      hcshape(5) = 2
+    end if
+    if ( idate1 == idate2 ) then
+      hcshape(6) = 1
+    else
+      hcshape(6) = 2
+    end if
+
+
+    ! Allocate a 6-D hypercube that our point lies in. Some of the 
+    ! dimensions may be "collapsed" 
+    allocate ( hcube(1:hcshape(1),1:hcshape(2),1:hcshape(3), &
+      & 1:hcshape(4),1:hcshape(5),1:hcshape(6)) )
+    ! Copy data into hypercube
+    hcube = field%field(ialt1:ialt2, ilat1:ilat2, ilon1:ilon2, &
+      & ilst1:ilst2,isza1:isza2, idate1:idate2)
+
+    ! Now we interpolate along each of the axes where this is needed
+    ! Reduce 6-d to 5-d
+    if ( hcshape(6) == 2 ) then !Interpolate in date 
+       hcube(:,:,:,:,:,1) = hcube(:,:,:,:,:,1) + &
+            &  (hcube(:,:,:,:,:,2) - hcube(:,:,:,:,:,1)) * &
+            &  (indate-tmpdate(idate1)) / (tmpdate(idate2)-tmpdate(idate1))
+    endif
+    ! Reduce  5-d to 4d
+    if ( hcshape(5) == 2 ) then !Interpolate in local Solar zenith ang  SZA
+      hcube(:,:,:,:,1,1) = hcube(:,:,:,:,1,1) + &
+           &  (hcube(:,:,:,:,2,1) - &
+           &  hcube(:,:,:,:,1,1)) * &
+           &  (insza-field%szas(isza1)) / &
+           &  (field%szas(isza2)-field%szas(isza1))
+    end if
+
+    ! Reduce  4-d to 3d
+    if ( hcshape(4) == 2 ) then !Interpolate in local solar time
+       hcube(:,:,:,1,1,1) = hcube(:,:,:,1,1,1) + &
+            &  (hcube(:,:,:,2,1,1) - &
+            &  hcube(:,:,:,1,1,1)) * &
+            &  (inlst-field%lsts(ilst1)) / &
+            &  (field%lsts(ilst2)-field%lsts(ilst1))
+    end if
+
+    ! Reduce  3-d to 2d
+    if ( hcshape(3) == 2 ) then !Interpolate in longitude
+          hcube(:,:,1,1,1,1) = hcube(:,:,1,1,1,1) + &
+            &  (hcube(:,:,2,1,1,1) - &
+            &  hcube(:,:,1,1,1,1)) * &
+            &  (inlon-field%lons(ilon1)) / &
+            &  (field%lons(ilon2)-field%lons(ilon1))
+    end if
+    ! Reduce  2-d to 1d
+    if ( hcshape(2) == 2 ) then !Interpolate in latitude
+       
+       hcube(:,1,1,1,1,1) = hcube(:,1,1,1,1,1) + &
+            &  (hcube(:,2,1,1,1,1) - &
+            &  hcube(:,1,1,1,1,1)) * &
+            &  (inlat-field%lats(ilat1)) / &
+            &  (field%lats(ilat2)-field%lats(ilat1))
+    end if
+
+    ! Reduce  1-d to 0d
+    if ( hcshape(1) == 2 ) then !interpolate in altitude
+      hcube(1,1,1,1,1,1) = hcube(1,1,1,1,1,1) + &
+        &  (hcube(2,1,1,1,1,1) - &
+        &  hcube(1,1,1,1,1,1)) * &
+        &  (inalt-tmpalt(ialt1)) / &
+        &  (tmpalt(ialt2)-tmpalt(ialt1))
+    end if
+    outval = hcube(1,1,1,1,1,1)
+    call deallocate_test ( tmpdate, 'tmpdate', moduleName )
+    call deallocate_test ( tmpalt, 'tmpalt', moduleName )
+    deallocate ( hcube )
+! $Log$
+! Revision 2.1  2003/02/19 19:09:42  pwagner
+! First commit
+!
