@@ -8,11 +8,11 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   ! This module has various functionality for constructing quantity templates.
 
   use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, &
+  use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_INSTRUMENTMODULE, &
     F_MOLECULE, F_RADIOMETER, F_TYPE, F_UNIT, F_VGRID, FIRST_LIT, LAST_LIT, &
     L_BASELINE, L_EXTINCTION, L_GEODALTITUDE, L_GPH, L_PTAN, L_RADIANCE, &
     L_TEMPERATURE, L_TRUE, L_VMR, PHYQ_LENGTH, PHYQ_TEMPERATURE, PHYQ_VMR, &
-    PHYQ_ZETA, F_INSTRUMENTMODULE
+    PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
@@ -142,9 +142,9 @@ contains ! =====     Public Procedures     =============================
         type_field = son
       case ( f_unit );              scaleFactor = value
       case ( f_molecule );          molecule = value
-      case ( f_radiometer );        radiometer = sub_rosa(subtree(2,son))
-      case ( f_instrumentmodule);   instrumentModule = sub_rosa(subtree(2,son))
-      case ( f_band );              band = sub_rosa(subtree(2,son))
+      case ( f_radiometer );        radiometer = decoration(subtree(2,son))
+      case ( f_instrumentmodule);   instrumentModule = decoration(subtree(2,son))
+      case ( f_band );              band = decoration(subtree(2,son))
       end select
     end do
 
@@ -530,6 +530,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.6  2001/02/28 01:17:04  livesey
+! Interim version, on the way to using proper signals stuff
+!
 ! Revision 2.5  2001/02/22 23:37:24  livesey
 ! Really removed all references to firstIndexChannel
 !
