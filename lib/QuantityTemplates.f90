@@ -59,6 +59,12 @@ module QuantityTemplates         ! Quantities within vectors
 
     logical :: minorFrame      ! Is this a minor frame quantity.
 
+   ! At least in the beginning
+   ! there will only be a few major frame quantities
+   ! (These are vector quantities with no vert. coord. that share
+   !  their other geoloc., e.g. lat and lon, with minor frame quants.)
+    logical :: majorFrame      ! Is this a major frame quantity.
+
     ! This one indicates whether log or linear interpolation should be used
     logical :: logBasis                 ! If set use log
 
@@ -199,7 +205,7 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( qty%losAngle, "qty%losAngle", ModuleName )
     call deallocate_test ( qty%frequencies, "qty%frequencies", ModuleName )
 
-    if (qty%minorFrame) then
+    if (qty%minorFrame .or. qty%majorFrame) then
       call deallocate_test ( qty%MAFIndex, "qty%MAFIndex", ModuleName )
       call deallocate_test ( qty%MAFCounter, "qty%MAFCounter", ModuleName )
     end if
@@ -212,25 +218,35 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyQuantityTemplateContents
 
   ! ----------------------------  DestroyQuantityTemplateDatabase  -----
-  subroutine DestroyQuantityTemplateDatabase ( database, ignoreMinorFrame )
+  subroutine DestroyQuantityTemplateDatabase ( database, &
+    & ignoreMinorFrame, ignoreMajorFrame )
 
   ! Destroy a quantity template database
 
     ! Dummy argument
     type (QuantityTemplate_T), dimension(:), pointer :: DATABASE
     logical, intent(in), optional :: ignoreMinorFrame
+    logical, intent(in), optional :: ignoreMajorFrame
 
     ! Local variables
     integer :: qtyIndex, status
     logical :: myIgnoreMinorFrame
+    logical :: myIgnoreMajorFrame
     
     myIgnoreMinorFrame = .false.
     if ( present ( ignoreMinorFrame ) ) myIgnoreMinorFrame = ignoreMinorFrame
+    myIgnoreMajorFrame = .false.
+    if ( present ( ignoreMajorFrame ) ) myIgnoreMajorFrame = ignoreMajorFrame
 
     if ( associated(database) ) then
       do qtyIndex = 1, SIZE(database)
-        if (.not. (database(qtyIndex)%minorFrame .and. myIgnoreMinorFrame) ) &
-          &   call DestroyQuantityTemplateContents ( database(qtyIndex) )
+        if ( &
+          & .not. ( &
+            & (database(qtyIndex)%minorFrame .and. myIgnoreMinorFrame) &
+            & .or. &
+            & (database(qtyIndex)%majorFrame .and. myIgnoreMajorFrame) &
+            & ) &
+          & ) call DestroyQuantityTemplateContents ( database(qtyIndex) )
       end do
       deallocate ( database, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -240,7 +256,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------  SetupNewQuantityTemplate  -----
   subroutine SetupNewQuantityTemplate ( qty, source, noInstances, noSurfs, &
-    & noChans, coherent, stacked, regular, instanceLen, minorFrame )
+    & noChans, coherent, stacked, regular, instanceLen, minorFrame, majorFrame )
 
   ! Set up a new quantity template according to the user input.  This may
   ! be based on a previously supplied template (with possible
@@ -258,6 +274,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: regular
     integer, intent(in), optional :: instanceLen
     logical, intent(in), optional :: minorFrame
+    logical, intent(in), optional :: majorFrame
 
     ! Local variables
     integer :: noSurfsToAllocate        ! For allocations
@@ -274,6 +291,7 @@ contains ! =====     Public Procedures     =============================
       qty%stacked = source%stacked
       qty%regular = source%regular
       qty%minorFrame = source%minorFrame
+      qty%majorFrame = source%majorFrame
       qty%logBasis = source%logBasis
       qty%instanceLen =  source%instanceLen
       qty%verticalCoordinate = source%verticalCoordinate
@@ -287,6 +305,7 @@ contains ! =====     Public Procedures     =============================
       qty%regular = .TRUE.
       qty%logBasis = .FALSE.
       qty%minorFrame = .FALSE.
+      qty%majorFrame = .FALSE.
       qty%instanceLen = 1
       qty%verticalCoordinate=l_none
       qty%frequencyCoordinate=l_none
@@ -298,6 +317,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(noChans) ) qty%noChans = noChans
     if ( present(regular) ) qty%regular = regular
     if ( present(minorFrame) ) qty%minorFrame = minorFrame
+    if ( present(majorFrame) ) qty%majorFrame = majorFrame
     if ( qty%minorFrame ) then
       if ( present(coherent) ) then
         if ( coherent ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -397,6 +417,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.17  2001/07/31 23:39:12  dwu
+! allocate and deallocate qty%frequencies
+!
 ! Revision 2.16  2001/07/11 21:41:16  livesey
 ! Made quantityTemplateCounter public
 !
