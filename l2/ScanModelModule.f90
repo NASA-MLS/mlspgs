@@ -108,7 +108,6 @@ contains ! =============== Subroutines and functions ==========================
     
     integer :: INSTANCE                 ! Loop counter
     integer :: SURF                     ! Loop counter
-    integer :: STATUS                   ! Flag
     
     real (r8) :: BASISCUTOFF            ! Threshold level for gas constant
     real (r8) :: REFLOGP                ! Log p of pressure reference surface
@@ -642,7 +641,6 @@ contains ! =============== Subroutines and functions ==========================
     ! Local variables
 
     integer :: COL                      ! Block col in jacobian
-    integer :: H2OINST                  ! H2O Instance for this MAF
     integer :: I                        ! Loop index
     integer :: J                        ! Loop index
     integer :: LOWER                    ! Index into T profile
@@ -651,8 +649,6 @@ contains ! =============== Subroutines and functions ==========================
     integer :: NOMIFS                   ! Dimension
     integer :: NOTEMPS                  ! Dimension
     integer :: ROW                      ! Block row in jacobian
-    integer :: TEMPINST                 ! Temperature instance for this MAF
-    integer :: UPPER                    ! Index into T profile
 
     integer, dimension(:), pointer :: POINTTEMPLAYER ! Pointing layer
     integer, dimension(:), pointer :: POINTH2OLAYER ! Pointing layer
@@ -662,7 +658,6 @@ contains ! =============== Subroutines and functions ==========================
     real (r8), target :: ZERO=0.0_r8    ! Need this if no heightOffset
     real (r8), pointer :: HTOFF         ! HeightOffset%values or zero
     real (r8) :: USEPTAN                ! A tangent pressure
-    real (r8) :: UPPERWEIGHT            ! A weight
     real (r8) :: BASIS                    ! Index
     real (r8) :: BASISMINUS               ! Index
     real (r8) :: BASISPLUS                ! Index
@@ -897,8 +892,6 @@ contains ! =============== Subroutines and functions ==========================
     call FindClosestInstances ( h2o, ptan, closestH2OProfiles )
 
     ! Make some pointers to save time
-    tempInst = closestTempProfiles ( maf )
-    h2oInst = closestH2OProfiles ( maf )
     tempVals => temp%values (:,closestTempProfiles(maf) )
     h2oVals => h2o%values(:,closestH2OProfiles(maf) )
 
@@ -1094,11 +1087,9 @@ contains ! =============== Subroutines and functions ==========================
       if ( i == noMIFs+1 ) then
         usePtan = refGPH%template%surfs(1,1)
         lower = ifm%belowRef
-        upper = ifm%belowRef + 1
       else
         usePtan = ptanVals(i)
         lower = pointTempLayer(i)
-        upper = lower+1
       end if
 
       ! Now do the main bulk of the temperature bases
@@ -1112,11 +1103,6 @@ contains ! =============== Subroutines and functions ==========================
           basis = tempBasis(j)
           basisPlus =  tempBasis( min(j+1,noTemps))
           basisMinus = tempBasis( max(j-1,1) )
-          if ( j /= noTemps ) then
-            upperWeight = (usePtan - basis) / (basisPlus - basis)
-          else
-            upperWeight = 1.0
-          end if
           
           ! Consider the extremes (j==1, j==noTemps) cases first
           
@@ -1369,7 +1355,6 @@ contains ! =============== Subroutines and functions ==========================
   logical :: REFGPHINSTATE         ! Set if refGPH in state not extra
   logical :: H2OINSTATE            ! Set if H2O in state, not extra
   logical :: PTANINSTATE           ! Set if ptan in state, not extra
-  logical :: HEIGHTOFFSETINSTATE   ! Set if heightOffset in state, not extra
 !
   INTEGER :: windowstart_t         ! first instance for temperature
   INTEGER :: windowfinish_t        ! last instance for temperature
@@ -1874,6 +1859,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.47  2002/09/27 00:01:16  vsnyder
+! Remove unused variables and dead calculations
+!
 ! Revision 2.46  2002/09/26 23:48:21  vsnyder
 ! Avoid computing sine and cosine of the same angle
 !
