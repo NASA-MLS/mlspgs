@@ -118,6 +118,7 @@ orMasks
 orbital
 
 PE
+phaseTiming
 plain
 profile
 
@@ -133,6 +134,7 @@ rotateField
 scaleOverlaps
 scan
 scan2d
+sectionTiming
 # spaceRadiance -- in lib/lit_names
 spare
 spd
@@ -151,6 +153,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.49  2004/06/29 00:08:41  pwagner
+# Now can fill timings
+#
 # Revision 2.48  2004/04/16 00:46:41  livesey
 # Added extractChannel
 #
