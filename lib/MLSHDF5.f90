@@ -98,7 +98,8 @@ module MLSHDF5
   interface SaveAsHDF5DS
     module procedure SaveAsHDF5DS_intarr1, &
       SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, &
-      SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2
+      SaveAsHDF5DS_snglarr1, SaveAsHDF5DS_snglarr2, &
+      SaveAsHDF5DS_charsclr
   end interface
 
   interface LoadFromHDF5DS
@@ -524,6 +525,49 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for DS '//trim(name) )
   end function IsHDF5DSPresent
+
+  ! --------------------------------------------- SaveAsHDF5DS_charsclr
+  subroutine SaveAsHDF5DS_charsclr ( locID, name, value )
+    ! This routine does the initial work of creating a dataset
+    integer, intent(in) :: LOCID        ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    character (len=*), intent(in) :: VALUE     ! The scalar char string
+
+    ! Local variables
+    integer :: spaceID                  ! ID for dataspace
+    integer (HID_T) :: setID            ! ID for dataset
+    integer :: status                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    integer(hid_t) :: s_type_id
+    integer(hid_t) :: type_id
+
+    ! Executable code
+    ! Create the dataspace
+    shp = 1
+    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 1D integer array '//trim(name) )
+    type_id = H5T_NATIVE_CHARACTER
+    call h5tcopy_f(type_id, s_type_id, status)
+    call h5tset_size_f(s_type_id, len(value), status)
+    ! Create the dataset
+    call h5dCreate_f ( locID, trim(name), s_type_id, spaceID, setID, &
+      & status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataset for 1D integer array '//trim(name) )
+    ! Write the data
+    call h5dWrite_f ( setID, s_type_id, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write to dataset for 1D integer array '//trim(name) )
+    ! Close things
+    call h5dClose_F ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset for 1D integer array '//trim(name) )
+    call h5sClose_F ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for 1D integer array '//trim(name) )
+  end subroutine SaveAsHDF5DS_charsclr
 
   ! --------------------------------------------- SaveAsHDF5DS_intarr1
   subroutine SaveAsHDF5DS_intarr1 ( locID, name, value )
@@ -1261,6 +1305,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.13  2002/10/29 01:01:05  pwagner
+! Can save a char scalar as a DS
+!
 ! Revision 2.12  2002/10/11 23:42:04  pwagner
 ! Remembered to close hyperslab memspaceID if created one
 !
