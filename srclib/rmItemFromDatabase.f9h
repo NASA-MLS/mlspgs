@@ -6,6 +6,23 @@
       & "$Id$"
     character(len=len(idParm)) :: Id = idParm
   !---------------------------------------------------------------------------
+
+  ! Similar (in fact based on) addItemToDatabase.f9h
+  ! but for the opposite purpose
+  !
+  ! The subprogram that includes this file must declare:
+  ! database(:)         the existing database that will be shrunk by one
+  ! tempDatabase(:)     workspace, the same user-defined type as database
+  ! Item                the item to be removed, also the same user type
+  ! okToDeallocEmptyDB  a logical param: set to FALSE if you prefer
+  !                      to deallocate the database yourself resulting
+  !                      if Item should be the only one in database
+  
+  ! Assumption: the user-defined type must have a component 'name'
+  ! that is a scalar and unique for each item in the database
+  ! e.g. an integer id
+  !   (This assumption could be relaxed by 
+  !   forcing the subprogram to find rmItemNumber itself prior)
     integer :: newSize, status
     integer ::                                rmItemNumber, i
 
@@ -17,22 +34,23 @@
       if( Item%name == database(i)%name ) rmItemNumber=i
     enddo
 
-    if ( .not. associated(database) ) then ! tree_checker prevents duplicate names
-      newSize=0
-    elseif ( size(database) == 1) then
-      newSize=0
-      deallocate ( database, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "database" )
+    newSize=0
+    if ( .not. associated(database) ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Attempt to remove item from an empty database")
     elseif ( size(database) < rmItemNumber .or. rmItemNumber < 1) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Attempt to remove illegal item number from database")
+        & "Attempt to remove an item not found database")
+    elseif ( size(database) == 1) then
+      if ( okToDeallocEmptyDB ) then
+        deallocate ( database, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate // "database" )
+      endif
     else
-      newSize = SIZE(database)-1
-      allocate(tempDatabase(newSize),STAT=status)
+      allocate(tempDatabase(SIZE(database)-1), STAT=status)
       if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate // "tempDatabase")
-      newSize = 0
       do i=1, SIZE(database)
         if (i /= rmItemNumber) then
           newSize = newSize+1
@@ -46,3 +64,6 @@
     end if
 
 ! $Log$
+! Revision 1.1  2001/09/19 23:39:16  pwagner
+! First commit
+!
