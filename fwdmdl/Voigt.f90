@@ -862,7 +862,6 @@ contains
   !  terms up to second order in each of the even and odd series, so this
   !  approximation gets seven digits only for $x, y \leq 0.06$.
 
-    use MLSCommon, only: RP
     use Units, only: SqrtPi
     real(rp), intent(in) :: X, Y
     real(rp) :: U, V
@@ -945,6 +944,9 @@ contains
 end module Voigt_M
 
 ! $Log$
+! Revision 2.3  2004/06/12 00:07:10  pwagner
+! Removed redundant USE statement (because NAF4.2 complained)
+!
 ! Revision 2.2  2004/04/26 22:07:12  vsnyder
 ! Reinstate 1-term asymptotic expansion in non-derivative case in Simple_Voigt
 !
