@@ -57,6 +57,7 @@ module ForwardModelConfig
     logical :: incl_cld ! Include cloud extinction calculation in Bill's forward model
     logical :: lockBins              ! Use same l2pc bin for whole chunk
     logical :: polarized      ! Use polarized model for Zeeman-split lines
+    logical :: switchingMirror          ! Model radiance at the switching mirror
     logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
     logical :: spect_Der      ! Do spectroscopy derivatives
     logical :: temp_Der       ! Do temperature derivatives
@@ -547,6 +548,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.35  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.34  2003/05/05 23:00:24  livesey
 ! Merged in feb03 newfwm branch
 !
