@@ -40,6 +40,7 @@ module MLSHDF5
     & H5TCLOSE_F, H5TCOPY_F, H5TEQUAL_F, H5TGET_SIZE_F, H5TSET_SIZE_F
   use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_WARNING
+  use MLSStrings, only: catLists
 
   implicit NONE
   private
@@ -201,9 +202,9 @@ contains ! ======================= Public Procedures =========================
     elseif ( dataset_info%number_of_entries == 1 ) then
       DSNames = dataset_info%name(1)
     elseif ( dataset_info%number_of_entries > 1 ) then
-      DSNames = dataset_info%name(1)
-      do i=2, dataset_info%number_of_entries
-        DSNames = trim(DSNames) // ',' // dataset_info%name(i)
+      ! DSNames = dataset_info%name(1)
+      do i=1, dataset_info%number_of_entries
+        DSNames = catLists(trim(DSNames), dataset_info%name(i))
       enddo
     endif
     call h5eSet_auto_f ( 1, status )
@@ -3351,6 +3352,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.41  2004/06/29 00:07:00  pwagner
+! Exploit catlist function
+!
 ! Revision 2.40  2004/06/08 18:59:59  pwagner
 ! Another break with old toolkit; this time may be correct
 !
