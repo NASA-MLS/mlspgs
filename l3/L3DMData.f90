@@ -1133,7 +1133,8 @@ CONTAINS
       CHARACTER (LEN=GridNameLen) :: dgName
       
       INTEGER :: start(2), stride(2), edge(2)
-      INTEGER :: swfID, swId, status
+      INTEGER (HID_T) :: swfID, swId, status
+      INTEGER :: status
       
       ! Functions
 
@@ -1254,7 +1255,25 @@ CONTAINS
               & ' after definition.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-      
+
+      status = he5_swclose(swfID)
+      IF (status /= 0) THEN
+         msr = 'Failed to close file ' // TRIM(physicalFilename) // &
+              & ' after writing.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      CALL MLSMessage(MLSMSG_Info, ModuleName, 'pass swclose')
+                                                                                
+      swfID = he5_swopen(trim(physicalFilename), HE5F_ACC_RDWR)
+      msr = msr1 //'swopen'
+      CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
+                                                                                
+      IF (swfID == -1) THEN
+         msr = MLSMSG_Fileopen // trim(physicalFilename) //' for writing swath'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      CALL MLSMessage(MLSMSG_Info, ModuleName, 'pass open here')
+ 
       ! Re-attach to the swath for writing
       
       swId = he5_swattach(swfID, dgName)
@@ -2173,6 +2192,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.29  2003/08/11 23:29:09  cvuu
+!# brought closer to James Johnson want to
+!#
 !# Revision 1.28  2003/07/08 00:18:09  pwagner
 !# fileType now a lit_name instead of a char string
 !#
