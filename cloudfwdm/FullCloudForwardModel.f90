@@ -51,7 +51,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     use ManipulateVectorQuantities, only: FindClosestInstances
     use MLSNumerics,                only: InterpolateValues
     use Molecules,                  only: L_H2O, L_O3, L_N2O, L_HNO3, L_N2, &
-                                        & L_O2, spec_tags, FIRST_MOLECULE, &
+                                        & L_O2, FIRST_MOLECULE, &
                                         & L_H2O_18, L_O_18_O, &
                                         & LAST_MOLECULE
     use Output_m,                   only: OUTPUT
@@ -174,7 +174,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: SIDEBANDSTOP                        ! For sideband loop
     integer :: THISSIDEBAND                        ! Loop counter for sidebands
     integer :: SIGIND                              ! Signal index, loop counter
-    integer :: SPECTAG                             ! A single spectag
     integer :: nspec                               ! no of species in cloud fw model
     integer :: ispec                               ! species index in cloud fw model
 
@@ -442,8 +441,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         end if
       end if
 
-      Spectag = spec_tags( abs(forwardModelConfig%molecules(j)) )
-      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
+      thisCatalogEntry => Catalog ( FindFirst ( catalog%molecule == &
+        & forwardModelConfig%molecules(j) ) )
 
       if ( associated ( thisCatalogEntry%lines ) ) then
         ! Now subset the lines according to the signal we're using
@@ -1056,6 +1055,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.117  2003/05/15 22:48:28  dwu
+! changes
+!
 ! Revision 1.116  2003/05/07 22:49:03  jonathan
 ! some clean-up and cosmetic changes
 !
