@@ -8,12 +8,13 @@ program MLSL2
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
-  use MLSL2Options, only: PCF, OUTPUT_PRINT_UNIT, QUIT_ERROR_THRESHOLD
+  use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
+  & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, &
+  & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Debug, &
   & MLSMSG_Severity_to_quit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
-! use Open_Init, only: Close_MLSCF, Open_MLSCF !!! Enormous compile time !!!
   use OUTPUT_M, only: OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
@@ -36,7 +37,6 @@ program MLSL2
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
   character(len=255) :: LINE       ! Into which is read the command args
-!  logical :: PCF = .false.         ! Open L2CF using PCF
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
   logical :: Timing = .false.      ! -T option is set
@@ -68,7 +68,7 @@ program MLSL2
     end if
     if ( line(1:2) == '--' ) then       ! "word" options
       if ( line(3:6) == 'pcf ' ) then
-        pcf = .true.
+        PCF_FOR_INPUT = .true.
       else if ( line(3:9) == 'master ' ) then
         parallel%master = .true.
       else if ( line(3:7) == 'slave' ) then
@@ -85,7 +85,15 @@ program MLSL2
           stop
         end if
       else if ( line(3:7) == 'npcf ' ) then
-        pcf = .false.
+        PCF_FOR_INPUT = .false.
+      else if ( line(3:5) == 'tk ' ) then
+        TOOLKIT = .true.
+      else if ( line(3:6) == 'ntk ' ) then
+        TOOLKIT = .false.
+      else if ( line(3:7) == 'meta ' ) then
+        CREATEMETADATA = .true.
+      else if ( line(3:8) == 'nmeta ' ) then
+        CREATEMETADATA = .false.
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
@@ -153,6 +161,9 @@ program MLSL2
           print *, '    task and is not recommneded for manual invocations.'
           print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
             &        'and the PCF.'
+          print *, '  --[n]meta: [Do not]Create metadata files.'
+          print *, '  --[n]tk: [Do not]Use the panoply of the PGS_ toolkit.  ', &
+            &        '(ntk automatically sets npcf and nmeta)'
           if ( pcf ) then
             print *, '    --npcf assumed if L2CF-name is present.  ', &
               &      'Default: --pcf'
@@ -190,6 +201,18 @@ program MLSL2
     i = i + 1
   end do
 
+! Done with command-line parameters; enforce cascading negative options
+! (waited til here in case any were (re)set on command line)
+   if ( .not. TOOLKIT) then
+      PCF = .false.
+   endif
+
+   if ( .not. PCF) then
+      PCF_FOR_INPUT = .false.
+      PUNISH_FOR_INVALID_PCF = .false.
+      CREATEMETADATA = .false.
+      PENALTY_FOR_NO_METADATA = 0
+   endif
 ! Parse the L2CF, producing an abstract syntax tree
   if ( line /= ' ' ) then
     open ( l2cf_unit, file=line, status='old', &
@@ -200,7 +223,7 @@ program MLSL2
         & "Unable to open L2CF file " // trim(line) )
     end if
     inunit = l2cf_unit
-  else if ( pcf ) then
+  else if ( PCF_FOR_INPUT ) then
     call open_MLSCF ( MLSPCF_L2CF_Start, inunit, status )
     if(status /= 0) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -210,7 +233,7 @@ program MLSL2
   call cpu_time ( t1 )
   call configuration ( root )
   if ( timing ) call sayTime ( 'Parsing the L2CF' )
-  if ( pcf ) then
+  if ( PCF_FOR_INPUT ) then
     call close_MLSCF ( inunit )
   else
     if ( inunit >= 0 ) close ( inunit )  ! Don't worry about the status
@@ -263,6 +286,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.31  2001/05/04 22:55:36  pwagner
+! Added cascading negatives; new command line options
+!
 ! Revision 2.30  2001/05/03 01:58:52  vsnyder
 ! Add error checking for --slave option
 !
@@ -297,7 +323,7 @@ end program MLSL2
 ! Sets prunit according to OUTPUT_PRINT_UNIT
 !
 ! Revision 2.19  2001/04/16 23:46:58  pwagner
-! Gets PCF flag from MLSL2Options
+! Gets PCF_FOR_INPUT flag from MLSL2Options
 !
 ! Revision 2.18  2001/04/06 20:11:53  vsnyder
 ! Add -e option
