@@ -527,7 +527,6 @@ contains
         end if
         if ( got(f_fwdModelOut) ) then
           call copyVector ( fwdModelOut, v(f) )
-          call addToVector ( fwdModelOut, measurements )
           call copyVectorMask ( fwdModelOut, measurements )
         end if
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
@@ -897,8 +896,8 @@ contains
           ! ForwardModel itself calls add_to_retrieval_timing
           ! call add_to_retrieval_timing( 'forward_model', t1 )
           call time_now ( t1 )
-          call subtractFromVector ( v(f), measurements )
           call copyVector ( v(f_rowScaled), v(f) ) ! f_rowScaled := f
+          call subtractFromVector ( v(f_rowScaled), measurements )
           if ( got(f_measurementSD) ) call multiply ( v(f_rowScaled), v(weight) )
           aj%fnorm = sqrt ( aprioriNorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) ) )
             if ( index(switches,'fvec') /= 0 ) &
@@ -1121,12 +1120,12 @@ contains
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                  ! Store what we've just got in v(f) ie fwdModelOut
-                call subtractFromVector ( v(f_rowScaled), measurements, &
-                  & quant=jacobian%row%quant(rowBlock), &
-                  & inst=jacobian%row%inst(rowBlock) ) ! f - y
                 call copyVector ( v(f), v(f_rowScaled), &
                   & quant=jacobian%row%quant(rowBlock), &
                   & inst=jacobian%row%inst(rowBlock), noMask=.true. )
+                call subtractFromVector ( v(f_rowScaled), measurements, &
+                  & quant=jacobian%row%quant(rowBlock), &
+                  & inst=jacobian%row%inst(rowBlock) ) ! f - y
                 !{Let $\bf W$ be the Cholesky factor of the inverse of the
                 ! measurement covariance ${\bf S}_m$ (which in our case is
                 ! diagonal), i.e. ${\bf W}^T {\bf W} = {\bf S}_m^{-1}$. Row
@@ -3026,6 +3025,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.173  2002/09/11 17:40:59  livesey
+! Changed meaning of v(f)
+!
 ! Revision 2.172  2002/09/11 14:06:42  livesey
 ! Bug fix, misunderstood meaning of v(f)
 !
