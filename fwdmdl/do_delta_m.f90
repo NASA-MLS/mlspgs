@@ -210,6 +210,12 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.8  2003/09/25 20:04:48  vsnyder
+! Insert TeXnicalities
+!
+! Revision 2.7  2003/09/24 22:19:55  vsnyder
+! Get rid of some array temps
+!
 ! Revision 2.6  2003/06/09 20:52:37  vsnyder
 ! More work on polarized derivatives
 !
