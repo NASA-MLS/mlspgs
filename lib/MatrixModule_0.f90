@@ -18,6 +18,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use OUTPUT_M, only: OUTPUT
+  use VectorsModule, only: M_LinAlg
 
   implicit NONE
   private
@@ -159,7 +160,6 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
-  integer, parameter, private :: B = bit_size(0) ! can't use "bit_size(b)"
   real, parameter, private :: COL_SPARSITY = 0.0!0.5  ! If more than this
     ! fraction of the elements between the first and last nonzero in a
     ! column are nonzero, use M_Banded, otherwise use M_Column_Sparse.
@@ -484,38 +484,32 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------  ClearRows_0  -----
   subroutine ClearRows_0 ( X, MASK )
-  ! Clear the rows of X for which MASK has nonzero bits.
+  ! Clear the rows of X for which MASK has a nonzero M_LinAlg bit.
     type(MatrixElement_T), intent(inout) :: X
-    integer, dimension(1:), intent(in) :: MASK
+    character, dimension(1:), intent(in) :: MASK
     integer :: I, J                ! Subscripts and row indices
-    integer :: NB, NW              ! Indices of bit and word in MASK
     select case ( x%kind )
     case ( M_Absent )
     case ( M_Banded )              ! ??? Adjust the sparsity representation ???
       do j = 1, x%ncols
         do i = x%r1(j), x%r1(j) + x%r2(j) - x%r2(j-1) - 1 ! row numbers
-          if ( btest( mask((i-1)/b+1), mod((i-1),b) ) ) &
+          if ( iand( ichar(mask(i)), m_LinAlg ) /= 0 ) &
             & x%values(x%r2(j-1) + i - x%r1(j) + 1, 1) = 0.0_r8
         end do ! i
       end do ! j = 1, x%ncols
     case ( M_Column_Sparse )       ! ??? Adjust the sparsity representation ???
       do j = 1, x%ncols
         do i = x%r1(j-1)+1, x%r1(j)
-          if ( btest( mask((x%r2(i)-1)/b+1), mod(x%r2(i)-1,b) ) ) &
+          if ( iand( ichar(mask(x%r2(i))), m_LinAlg ) /= 0 ) &
             & x%values(j,1) = 0.0_r8
         end do ! i
       end do ! j = 1, x%ncols
     case ( M_Full )
-      i = 0
-      do nw = lbound(mask,1), ubound(mask,1)
-        do nb = 0, b-1
-          i = i + 1
-          if ( i > x%nrows ) return
-          if ( btest( mask(nw), nb ) ) then
-              x%values(i,:) = 0.0_r8
-          end if
-        end do ! nb = 0, b-1
-      end do ! nw = lbound(mask,1), ubound(mask,1)
+      do i = lbound(mask,1), ubound(mask,1)
+        if ( i > x%nrows ) return
+        if ( iand( ichar(mask(i)), m_LinAlg ) /= 0 ) &
+          & x%values(i,:) = 0.0_r8
+      end do ! i = lbound(mask,1), ubound(mask,1)
     end select
   end subroutine ClearRows_0
 
@@ -886,48 +880,44 @@ contains ! =====     Public Procedures     =============================
     end if
   end function MaxAbsVal_0
 
-!---------------------------------------------Matrix Inversion for Array --
-  subroutine MatrixInversion(A,upper)
-  
+!-----------------------------------------------  MatrixInversion  -----
+  subroutine MatrixInversion ( A, Upper )
+
   real (r8), dimension(:,:),intent(inout) :: A
   logical, intent(in), optional :: upper
 
-  real (r8), dimension(:,:), allocatable :: U
-  logical :: TRANSPOSE1
-  real (r8), dimension(:), allocatable :: b
-  real (r8), dimension(:), allocatable :: x
+  real (r8), dimension(:,:), pointer :: U
+  real (r8), dimension(:), pointer :: b
+  real (r8), dimension(:), pointer :: x
   logical :: myUpper  
   integer :: i, j, n
-  
+
   myUpper = .false.
   if ( present ( upper) ) myUpper = upper
   n = size(A,2)
-    
-  allocate(x(n))
-  allocate(b(n))
-  allocate(u(n,n))
+
+  call allocate_Test ( x, n, "X", moduleName//"%MatrixInversion" )
+  call allocate_Test ( b, n, "B", moduleName//"%MatrixInversion" )
+  call allocate_Test ( u, n, n, "U", moduleName//"%MatrixInversion" )
 
   call DenseCholesky (U, A)
-  
+
   if ( .not. myUpper ) j = n
-  do i=1,n
+  do i = 1, n
     b = 0.0_r8
     b(i) = 1.0_r8
-    TRANSPOSE1 = .true.  
-    call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
+    call SolveCholeskyA_0 ( U, x, b, transpose=.true. )
     b = x
-    TRANSPOSE1 = .false.  
-    call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
+    call SolveCholeskyA_0 ( U, x, b, transpose=.false. )
     if ( myUpper ) j = i
     A(1:j,i) = x(1:j)
   end do
-  
-  deallocate(x)
-  deallocate(b)
-  deallocate(u)  
-  
+
+  call deallocate_Test ( x, "X", moduleName//"%MatrixInversion" )
+  call deallocate_Test ( b, "B", moduleName//"%MatrixInversion" )
+  call deallocate_Test ( u, "U", moduleName//"%MatrixInversion" )
+
   end subroutine MatrixInversion
-   
 
   ! --------------------------------------------------  MinDiag_0  -----
   real(r8) function MinDiag_0 ( B )
@@ -974,13 +964,14 @@ contains ! =====     Public Procedures     =============================
   ! ZB = ZB - XB^T YB if UPDATE is present and true and  SUBTRACT is present
   !      and true;
   ! If XMASK (resp. YMASK) is present and associated, ignore columns of XB
-  ! (resp. YB) that correspond to nonzero bits of XMASK (resp. YMASK).
+  ! (resp. YB) that correspond to elements with a nonzero M_LinAlg bit of
+  ! XMASK (resp. YMASK).
   ! If UPPER is present and true, compute only the upper triangle of ZB.
     type(MatrixElement_T), intent(in) :: XB, YB
     type(MatrixElement_T), intent(inout) :: ZB
     logical, intent(in), optional :: UPDATE
     logical, intent(in), optional :: SUBTRACT
-    integer, optional, pointer, dimension(:) :: XMASK, YMASK ! intent(in)
+    character, optional, pointer, dimension(:) :: XMASK, YMASK ! intent(in)
     logical, intent(in), optional :: UPPER
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
@@ -994,7 +985,7 @@ contains ! =====     Public Procedures     =============================
     logical :: MY_SUB, MY_UPD, MY_UPPER
     real(r8) :: S                            ! Sign, subtract => -1 else +1
     integer :: XD, YD
-    integer, pointer, dimension(:) :: XM, YM
+    character, pointer, dimension(:) :: XM, YM
     real(r8) :: XY                           ! Product of columns of X and Y
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
 
@@ -1068,7 +1059,7 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z = columns of YB
           if ( associated(ym) ) then
-            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
+            if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
           end if
           yi_1 = yb%r2(j-1)+1   ! index of 1st /=0 el. in this col of yb
           yi_n = yb%r2(j)       ! index of last /=0 el. in this col of yb
@@ -1080,7 +1071,7 @@ contains ! =====     Public Procedures     =============================
           do i = 1, mz       ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             if ( associated(xm) ) then
-              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
+              if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             xi_1 = xb%r2(i-1)+1  ! index of 1st /=0 el. in this col of xb
             xi_n = xb%r2(i)      ! index of last /=0 el. in this col of xb
@@ -1119,14 +1110,14 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
+            if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
 !$OMP PARALLEL DO private ( k, l, m, n )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
+              if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             k = xb%r1(i)      ! Row subscript of first nonzero in XB's column I
             l = xb%r2(i-1)+1  ! Position in XB%VALUES of it
@@ -1166,7 +1157,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. my_upd ) zb%values = 0.0_r8
         do i = 1, xb%ncols    ! Rows of ZB
           if ( associated(xm) ) then
-            if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
+            if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
           end if
           m = xb%r1(i)        ! Index of first row of XB with nonzero value
           k = xb%r2(i-1) + 1
@@ -1177,7 +1168,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP PARALLEL DO private ( xy )
           do j = mz, yb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
+              if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
             end if
             if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
@@ -1202,14 +1193,14 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
+            if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
 !$OMP PARALLEL DO private ( k, l, m, n )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
+              if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
@@ -1250,14 +1241,14 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
+            if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
 !$OMP PARALLEL DO private ( k, l, m, n )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
+              if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             if ( l > ubound(xb%r2,1) ) cycle
@@ -1302,14 +1293,14 @@ contains ! =====     Public Procedures     =============================
         if ( .not. my_upd ) zb%values = 0.0_r8
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
+            if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
 !$OMP PARALLEL DO private ( k, l, xy )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
+              if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             k = xb%r1(i-1)+1
             l = xb%r1(i)
@@ -1335,7 +1326,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Banded )       ! XB full, YB banded
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
+            if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
           end if
           m = yb%r1(j)        ! Index of first row of YB with nonzero value
           k = yb%r2(j-1)+1    ! K and L are indices of YB
@@ -1345,7 +1336,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP PARALLEL DO private ( xy )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
+              if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
@@ -1358,7 +1349,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Column_sparse ) ! XB full, YB column-sparse
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) cycle
+            if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) cycle
           end if
           k = yb%r1(j-1)+1    ! K and L are indices of YB
           l = yb%r1(j)
@@ -1367,7 +1358,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP PARALLEL DO private ( xy )
           do i = 1, mz  ! Rows of Z = columns of XB
             if ( associated(xm) ) then
-              if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) cycle
+              if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             ! Can't productively use DOT because there's a vector subscript
@@ -1380,7 +1371,7 @@ contains ! =====     Public Procedures     =============================
         if ( associated(xm) .or. associated(ym) ) then
           do j = 1, zb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym((j-1)/b+1),mod(j-1,b)) ) then
+              if ( iand(ichar(ym(j)),m_LinAlg) /= 0 ) then
           cycle
               end if
             end if
@@ -1389,7 +1380,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP PARALLEL DO private ( xy )
             do i = 1, mz      ! Rows of Z = columns of XB
               if ( associated(xm) ) then
-                if ( btest(xm((i-1)/b+1),mod(i-1,b)) ) then
+                if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) then
             cycle
                 end if
               end if
@@ -1436,13 +1427,13 @@ contains ! =====     Public Procedures     =============================
       if ( associated(xm) ) then
         line = trim(line) // ' xMasked'
         do i = 1, xb%nCols
-          if ( btest(xm((i-1)/b+1),mod(i-1,b))) xDns(:,i)=0.0
+          if ( iand(ichar(xm(i)),m_LinAlg) /= 0 ) xDns(:,i)=0.0
         end do
       end if
       if ( associated(ym) ) then
         line = trim(line) // ' yMasked'
         do i = 1, yb%nCols
-          if ( btest(ym((i-1)/b+1),mod(i-1,b))) yDns(:,i)=0.0
+          if ( iand(ichar(ym(i)),m_LinAlg) /= 0 ) yDns(:,i)=0.0
         end do
       end if
       if ( my_sub ) then
@@ -1482,17 +1473,18 @@ contains ! =====     Public Procedures     =============================
   ! P = A^T V if UPDATE is absent or false.
   ! P = P + A^T V if UPDATE is present and true and SUBTRACT is absent or false.
   ! P = P - A^T V if UPDATE is present and true and SUBTRACT is present and true.
-  ! If MASK is present and associated, use it to suppress multiplying columns of A.
+  ! If MASK is present and associated, columns of A that correspond to elements
+  ! of MASK that have a nonzero M_LinAlg bit are not multiplied.
     type(MatrixElement_T), intent(in) :: A
     real(r8), dimension(:), intent(in) :: V
     real(r8), dimension(:), intent(inout) :: P
     logical, optional, intent(in) :: UPDATE
     logical, optional, intent(in) :: SUBTRACT
-    integer, optional, pointer, dimension(:) :: MASK ! intent(in)
+    character, optional, pointer, dimension(:) :: MASK ! intent(in)
 
     real(r8) :: AV                 ! Product of a column of A and the vector V
     integer :: I, M, N             ! Subscripts and loop inductors
-    integer, pointer, dimension(:) :: MY_MASK
+    character, pointer, dimension(:) :: MY_MASK
     logical :: My_Sub, My_update
     real(r8) :: S                  ! SUBTRACT => -1 else +1
     integer :: V1                  ! Subscripts and loop inductors
@@ -1516,7 +1508,7 @@ contains ! =====     Public Procedures     =============================
 !$OMP PARALLEL DO private ( v1, n, m, av )
       do i = 1, size(p)
         if ( associated(my_mask) ) then
-          if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
       cycle
         end if
         v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
@@ -1531,7 +1523,7 @@ contains ! =====     Public Procedures     =============================
      case ( M_Column_Sparse )
       do i = 1, size(p)
         if ( associated(my_mask) ) then
-          if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
       cycle
         end if
         av = 0.0_r8
@@ -1544,7 +1536,7 @@ contains ! =====     Public Procedures     =============================
       if ( associated(my_mask) ) then
 !$OMP PARALLEL DO
         do i = 1, size(p)
-          if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
         cycle
           p(i) = p(i) + s * dot(size(v), a%values(1,i), 1, v(1), 1)
 !         p(i) = p(i) + s * dot_product( a%values(:,i), v)
@@ -2423,6 +2415,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.61  2002/02/05 02:39:59  vsnyder
+! Change mask from 1-bit per to 8-bits per (using character)
+!
 ! Revision 2.60  2001/12/01 01:02:52  livesey
 ! Tidied up erroneous handling of status in DenseCholesky/CholeskyFactor_0
 !
