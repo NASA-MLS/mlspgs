@@ -13,12 +13,12 @@
 
 ; The next lot are arguments to fowardModelGlobal, so quoted.
 !ifdef(flagUsingPCF,{
-  !define(antennaFile,{AAAP})
-  !define(climatologyFile,{Climatologies})
-  !define(dacsFilterFile,{DACSFilters})
-  !define(filterFile,{-Filters})        ; Include - to avoid getting the DACSFilters file
-  !define(pfgFile,{PFG_})               ; Include _ to avoid getting the PFG-rtvl file
-  !define(pfgRtvlFile,{PFG-rtvl})
+  !define(antennaFile,'AAAP')
+  !define(climatologyFile,'Climatologies')
+  !define(dacsFilterFile,'DACSFilters')
+  !define(filterFile,'-Filters')        ; Include - to avoid getting the DACSFilters file
+  !define(pfgFile,'PFG_')               ; Include _ to avoid getting the PFG-rtvl file
+  !define(pfgRtvlFile,'PFG-rtvl')
 },{
   !define(antennaFile,'!calpath/MLS-Aura_L2Cal-AAAP_v1-4-1_0000d000.txt')
   !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-4-2_0000d000.txt')
