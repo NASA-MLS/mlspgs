@@ -6,20 +6,23 @@ pro CreateSpectroscopyL2CF, $
   crossRefName=crosRefName, $
   instrument=instrument, $
   retrieval=retrieval, $
-  maxExtinctions=maxExtinctions
+  maxExtinctions=maxExtinctions, $
+  fastRead=fastRead, $
+  outName=outName
 
 if n_elements(maxExtinctions) eq 0 then maxExtinctions = 1
 if n_elements(instrument) eq 0 then instrument='emls'
 
-; instrumentPrefixes=['emlsSignals=[ ', 'umlsSignals=[ ', 'xptl1Signals=[ ']
-instrumentPrefixes = [ 'emlsSignals=[ ', 'umlsSignals=[ ' ]
+instrumentPrefixes=['emlsSignals=[ ', 'umlsSignals=[ ', 'xptl1Signals=[ ']
 noInstruments = n_elements(instrumentPrefixes)
 
-if keyword_set(retrieval) then begin
-  outName = 'spectroscopy-rtvl.l2cf'
-endif else begin
-  outName = 'spectroscopy.l2cf'
-endelse
+if n_elements(outName) eq 0 then begin
+  if keyword_set(retrieval) then begin
+    outName = 'spectroscopy-rtvl.l2cf'
+  endif else begin
+    outName = 'spectroscopy.l2cf'
+  endelse
+endif
 
 if n_elements(molName) eq 0 then $
   molName = getenv('HOME') + '/mlspgs/tables/mol_data_table.tex'
@@ -28,9 +31,17 @@ if n_elements(lineName) eq 0 then $
 if n_elements(crossRefName) eq 0 then $
   crossRefName = getenv('HOME') + '/mlspgs/tables/sps_cross_ref_table.txt'
 
-; Call Bills code to read the files
-Read_Spect_Dbase, molName, lineName, '', data,  $
-  molID=molID, lineID=lineID, readID=readID
+if keyword_set ( fastRead ) then begin
+  restore, lineName
+  data = sps_data
+  lineID = 'Restored from saveset'
+  readID = lineID
+  molID = lineID
+endif else begin
+  ;; Call Bills code to read the files
+  Read_Spect_Dbase, molName, lineName, '', data,  $
+    molID=molID, lineID=lineID, readID=readID
+endelse
 
 if keyword_set(retrieval) then TrimSpectroscopyForRetrieval, data
 
@@ -101,6 +112,7 @@ printf, unit, 'begin spectroscopy'
 
 noEMLSBands = 34
 noUMLSBands = 6
+noXPTL1Bands = 1                        ; XPTL1 doesn't list any.
 noSidebands = 3
 
 noMols = n_elements(data)
@@ -108,6 +120,7 @@ niceNames = strarr(noMols)
 parentNames = niceNames
 emlsMolecules = intarr ( noSidebands, noEMLSBands, noMols )
 umlsMolecules = intarr ( noSidebands, noUMLSBands, noMols )
+xptl1Molecules = intarr ( noSidebands, noXPTL1Bands, noMols )
 
 for mol = 0, noMols - 1 do begin
 
@@ -193,10 +206,10 @@ for mol = 0, noMols - 1 do begin
           prefix = 'umlsSignals=[ '
           bands = data(mol).uars_bands(line)
         end
-;         2 : begin
-;           prefix = 'xptl1Signals=[ '
-;           bands = data(mol).xptl1_bands(line)
-;         end
+        2 : begin
+          prefix = 'xptl1Signals=[ '
+          bands = '' ; data(mol).xptl1_bands(line)
+        end
       endcase
       bands = strtrim(strsplit(bands,',',/extract),2)
       if bands(0) ne '' then begin
@@ -225,7 +238,7 @@ for mol = 0, noMols - 1 do begin
           case i of
             0 : emlsMolecules ( sideband+1, bandNo-1, mol ) = 1
             1 : umlsMolecules ( sideband+1, bandNo-1, mol ) = 1
-;           2 : xptl1Molecues ( sideband+1, bandNo-1, mol ) = 1
+            2 : xptl1Molecules ( sideband+1, bandNo-1, mol ) = 1
           endcase
         endfor
       endif                             ; Any bands
@@ -298,9 +311,9 @@ printf, unit, ''
 
 ;; Now write out the molecules per band stuff
 case strlowcase ( instrument ) of 
-  'umls' : array=umlsMolecules
-  'emls' : array=emlsMolecules
-; 'xptl1' : array=xptl1Molecules
+  'umls'  : array=umlsMolecules
+  'emls'  : array=emlsMolecules
+  'xptl1' : array=xptl1Molecules
   else : MyMessage,/error,'Unknown instrument'
 endcase
 
@@ -323,14 +336,19 @@ for radiometer = 0, database.noRadiometers-1 do begin
     where(niceNames eq 'H2O_'+database.radiometers(radiometer).prefix ) ) = 1
 endfor
 
-;; Now, add some extra virtual bands which are the radiometers
-newArray = intarr ( noSidebands, noBands+database.noRadiometers, noMols )
+;; Now, add some extra virtual bands which are the radiometers and one
+;; at the end which is the whole instrument (folded only)
+newArray = intarr ( noSidebands, noBands+database.noRadiometers+1, noMols )
 newArray(*,0:noBands-1,*) = array
 for radiometer = 0, database.noRadiometers-1 do begin
   relevantBands = where ( database.bands.radiometerIndex eq radiometer )
   collapsed = total ( array (*,relevantBands,*), 2 )
   newArray(*,noBands+radiometer,*) = collapsed gt 0
 endfor
+;; Do the whole instrument
+newArray(1,noBands+database.noRadiometers,*) = niceNames ne ''
+
+;; Use this new array
 array=newArray
 
 if maxExtinctions ne 1 and maxExtinctions ne 2 then begin
@@ -340,65 +358,70 @@ endif
 
 for noExtinctions = 1, maxExtinctions do begin
   if noExtinctions eq 1 then extraName='' else extraName='2X'
-  for band = 0, noBands + database.noRadiometers - 1 do begin
+  for band = 0, noBands + database.noRadiometers do begin
     for sideband = 0, 2 do begin
       ;; Which molecules does it use
       usedMols = where ( reform ( array(sideband, band, *) ) )
       ;; What parents do they have, get a unique list
-      usedParents = parentNames ( usedMols )
-      usedParents = usedParents ( sort ( usedParents ) )
-      usedParents = usedParents ( uniq ( usedParents ) )
-      if band lt noBands then $
-        outName = string ( band+1, format='(i0)' ) $
-      else outName = database.radiometers(band-noBands).prefix
+      if usedMols(0) ne -1 then begin
+        usedParents = parentNames ( usedMols )
+        usedParents = usedParents ( sort ( usedParents ) )
+        usedParents = usedParents ( uniq ( usedParents ) )
+        case 1 of
+          band lt noBands : outName = string ( band+1, format='(i0)' )
+          band ge noBands and band lt noBands + database.noRadiometers : $
+            outName = database.radiometers(band-noBands).prefix
+          else : outName = 'Instrument'
+        endcase
+        
+        ;; First do the comprehensive lists for full forward models.
+        line = '!define(molecules' + extraName + 'For' + outName + $
+          sidebandStrings(sideband)+',{[ '
+        for p = 0, n_elements(usedParents)-1 do begin
+          if p ne 0 then line = line +', '
+          thisParent = usedParents(p)
+          if thisParent ne 'EXTINCTION' then begin
+            children = where ( parentNames eq thisParent and $
+              reform ( array(sideband, band, *) ) )
+            AddWordToLine, line, unit, 2, '[ '+thisParent
+            ;; Format is [ parent, <children> ]
+            ;; Note, having the only child be the same as the parent is fine
+            ;; (e.g. [ H2O, H2O ])
+            for c = 0, n_elements(children) - 1 do begin
+              line = line + ', '
+              AddWordToLine, line, unit, 4, niceNames(children(c))
+            endfor
+            line = line + ' ]'
+          endif else begin
+            ;; For extinction just use extinction alone, no isotope
+            if noExtinctions eq 1 then begin
+              AddWordToLine, line, unit, 2, thisParent
+            endif else begin
+              AddWordToLine, line, unit, 2, thisParent + ', ' + thisParent
+            endelse
+          endelse
+        endfor
+        line = line + ' ]})'
+        printf, unit, line
 
-      ;; First do the comprehensive lists for full forward models.
-      line = '!define(molecules' + extraName + 'For' + outName + $
-        sidebandStrings(sideband)+',{[ '
-      for p = 0, n_elements(usedParents)-1 do begin
-        if p ne 0 then line = line +', '
-        thisParent = usedParents(p)
-        if thisParent ne 'EXTINCTION' then begin
+        ;; Now do just the parents for l2pc line forward models
+        ;; First do the comprehensive lists for full forward models.
+        line = '!define(moleculeFamilies' + extraName + 'For' + outName + $
+          sidebandStrings(sideband)+',{[ '
+        for p = 0, n_elements(usedParents)-1 do begin
+          if p ne 0 then line = line + ', '
+          thisParent = usedParents(p)
           children = where ( parentNames eq thisParent and $
             reform ( array(sideband, band, *) ) )
-          AddWordToLine, line, unit, 2, '[ '+thisParent
-          ;; Format is [ parent, <children> ]
-          ;; Note, having the only child be the same as the parent is fine
-          ;; (e.g. [ H2O, H2O ])
-          for c = 0, n_elements(children) - 1 do begin
-            line = line + ', '
-            AddWordToLine, line, unit, 4, niceNames(children(c))
-          endfor
-          line = line + ' ]'
-        endif else begin
-          ;; For extinction just use extinction alone, no isotope
-          if noExtinctions eq 1 then begin
+          if thisParent ne 'EXTINCTION' or noExtinctions eq 1 then begin
             AddWordToLine, line, unit, 2, thisParent
           endif else begin
             AddWordToLine, line, unit, 2, thisParent + ', ' + thisParent
           endelse
-        endelse
-      endfor
-      line = line + ' ]})'
-      printf, unit, line
-
-      ;; Now do just the parents for l2pc line forward models
-      ;; First do the comprehensive lists for full forward models.
-      line = '!define(moleculeFamilies' + extraName + 'For' + outName + $
-        sidebandStrings(sideband)+',{[ '
-      for p = 0, n_elements(usedParents)-1 do begin
-        if p ne 0 then line = line + ', '
-        thisParent = usedParents(p)
-        children = where ( parentNames eq thisParent and $
-          reform ( array(sideband, band, *) ) )
-        if thisParent ne 'EXTINCTION' or noExtinctions eq 1 then begin
-          AddWordToLine, line, unit, 2, thisParent
-        endif else begin
-          AddWordToLine, line, unit, 2, thisParent + ', ' + thisParent
-        endelse
-      endfor
-      line = line +' ]})'
-      printf, unit, line
+        endfor
+        line = line +' ]})'
+        printf, unit, line
+      endif
 
     endfor                              ; Loop over sidebands
     printf, unit, ''
