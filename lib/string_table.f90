@@ -19,9 +19,14 @@ module STRING_TABLE
   public :: ADD_CHAR, ALLOCATE_CHAR_TABLE, ALLOCATE_HASH_TABLE
   public :: ALLOCATE_STRING_TABLE, CLEAR_STRING, COMPARE_STRINGS, CREATE_STRING
   public :: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, DESTROY_STRING_TABLE
-  public :: DISPLAY_STRING, ENTER_STRING, FLOAT_VALUE, GET_CHAR, GET_STRING
-  public :: HOW_MANY_STRINGS, LOOKUP_AND_INSERT, NEW_LINE, NUMERICAL_VALUE
-  public :: OPEN_INPUT, STRING_LENGTH, STRING_TABLE_SIZE, UNGET_CHAR
+  public :: DISPLAY_STRING, DISPLAY_STRING_LIST, ENTER_STRING, FLOAT_VALUE
+  public :: GET_CHAR, GET_STRING, HOW_MANY_STRINGS, LOOKUP_AND_INSERT
+  public :: NEW_LINE, NUMERICAL_VALUE, OPEN_INPUT, STRING_LENGTH
+  public :: STRING_TABLE_SIZE, UNGET_CHAR
+
+  interface DISPLAY_STRING
+    module procedure DISPLAY_STRING, DISPLAY_STRING_LIST
+  end interface
 
   ! Public parameters
   character, public, parameter :: EOF = ACHAR(4)  ! ^D
@@ -262,17 +267,20 @@ contains
     end if
   end subroutine DESTROY_STRING_TABLE
   ! =======================================     DISPLAY_STRING     =====
-  subroutine DISPLAY_STRING ( STRING, ADVANCE, STRIP, IERR )
-  ! Write the string indexed by STRING.
+  subroutine DISPLAY_STRING ( STRING, ADVANCE, STRIP, IERR, BEFORE )
+  ! Write BEFORE (if present), followed by the string indexed by STRING.
   ! If IERR is present return 0 if all went well, 1 otherwise
     integer, intent(in) :: STRING
     character(len=*), intent(in), optional :: ADVANCE
     logical, intent(in), optional :: STRIP
     integer, intent(out), optional :: IERR
+    character(len=*), intent(in), optional :: BEFORE
 
     integer :: offset
     logical :: myStrip
     character (len=1) :: firstChar, lastChar
+
+    if ( present(before) ) call output ( before )
 
     call test_string ( string, 'Display_String', ierr )
     if ( present(ierr) ) then
@@ -297,6 +305,26 @@ contains
                         advance=advance )
     return
   end subroutine DISPLAY_STRING
+  ! ==================================     DISPLAY_STRING_LIST     =====
+  subroutine DISPLAY_STRING_LIST ( STRING, ADVANCE, STRIP, IERR, BEFORE )
+  ! Write BEFORE (if present), followed every string indexed by STRING, each
+  ! preceded by a blank. ADVANCE applies only to the last one.  See
+  ! DISPLAY_STRING for other arguments.
+    integer, intent(in) :: STRING(:)
+    character(len=*), intent(in), optional :: ADVANCE
+    logical, intent(in), optional :: STRIP
+    integer, intent(out), optional :: IERR
+    character(len=*), intent(in), optional :: BEFORE
+    integer :: I, JERR
+    jerr = 0
+    if ( present(before) ) call output ( before )
+    do i = 1, size(string)-1
+      call display_string ( string(i), strip=strip, ierr=ierr, before=' ' )
+      if ( present(ierr) ) jerr = max(jerr,ierr)
+    end do
+    call display_string ( string(size(string)), advance, strip, ierr, before=' ')
+    if ( present(ierr) )  ierr = max(jerr,ierr)
+  end subroutine DISPLAY_STRING_LIST
   ! ====================================     DUMP_STRING_TABLE     =====
   subroutine DUMP_STRING_TABLE
   ! Dump the entire string table
@@ -823,6 +851,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.19  2004/10/21 00:37:25  vsnyder
+! Add Display_String_List and 'before' argument to Display_String
+!
 ! Revision 2.18  2004/08/19 00:14:03  pwagner
 ! crash_burn instead of stop
 !
