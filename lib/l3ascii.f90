@@ -101,6 +101,7 @@ contains
     integer :: tmpaxis_len, idate, word_count
     integer,parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
+    logical :: noYearStart, noYearEnd
 
     !---- Executable statements ----! 
 
@@ -301,10 +302,21 @@ contains
       ! 1 Jan 1993) we need to stick on a dummy year
       if ( sdstring(1:1) == "-" ) then
         sdstring=dummyyear//sdstring
+        noYearStart = .true.
       end if
       if ( edstring(1:1) == "-" ) then
         edstring=dummyyear//edstring
+        noYearEnd = .true.
       end if
+      if ( noYearStart .neqv. noYearEnd ) call announce_error ( 0, &
+        & "Start and end times irreconcilable, one is positive the other negative" )
+      if ( idate == 1 ) then
+        field%noYear = noYearStart
+      else
+        if ( noYearStart .neqv. field%noYear ) call announce_error ( 0, &
+          & "Field has mixed year and no year dates" )
+      end if
+
       ! ccsds2tai returns days since 1 Jan 1993. 86400==no of secs per day
       dateStarts(idate)=86400*ccsds2tai(sdstring)
       dateEnds(idate)  =86400*ccsds2tai(edstring)
@@ -438,6 +450,14 @@ contains
     call allocate_test ( tmpdate, field%noDates, 'tmpdate', moduleName )
     call allocate_test ( tmpalt, field%noHeights, 'tmpalt', moduleName )
     tmpdate = (field%dateStarts+field%dateEnds)/2.0
+    
+    ! Now think about cases when the gridded date is descriptive of no
+    ! particular year.
+    if ( field%noYear ) then
+      ! Subtract the year information from indate.
+      ! Note this (temporarily!?) brushes over issues to do with leap years.
+      inDate = modulo ( inDate, 60.0*60.0*24.0*365.25 )
+    end if
     tmpalt = -log10(field%heights)
     inalt = -log10(inpressure)
     call ilocate ( tmpdate, indate, idate1, idate2 )
@@ -944,6 +964,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.15  2002/07/01 23:56:37  livesey
+! Added code to deal better with 'noYear' quantities
+!
 ! Revision 2.14  2002/07/01 23:52:19  vsnyder
 ! Plug some memory leaks, cosmetic changes
 !
