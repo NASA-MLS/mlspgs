@@ -122,12 +122,16 @@ contains
            rn0=iwc0*alpha0**5/3.14/raoi/4    &
      &        *diam*exp(-alpha0*diam)                         ! diam <=100
 
-!           if(diam .gt. 100 .and. iwc1 .gt. 0) &
-
+           if(diam .gt. 0. .and. iwc1 .gt. 0.) then
+    
            rn0=rn0+6*iwc1/raoi/sqrt(3.14**3*2)  &
      &	      /exp(3*mu1+9./2*rao1*rao1)/diam/rao1/diam0**3    &
      &	      *exp(-0.5*((log(diam/diam0)-mu1)/rao1)**2)      ! diam >100
 
+           else if (iwc1 .eq. 0.) then
+             rn0=rn0
+           endif
+ 
         ELSE IF(IPSD .EQ. 2000) THEN   ! GAMMA DISTRIBUTION 
 
            dme = 150.
@@ -271,6 +275,9 @@ contains
 end module SizeDistribution
 
 ! $Log$
+! Revision 1.7  2001/11/19 19:27:17  jonathan
+! fix error in MH distribution
+!
 ! Revision 1.6  2001/10/24 21:53:41  jonathan
 ! changes in Dm formula
 !
