@@ -53,9 +53,10 @@ Real(r8), PARAMETER :: phas = 51.6814 * deg2rad
 
 Real(r8) :: Eta(no_tan_hts,no_t)
 Real(r8) :: r,t,dh,tanx,cse,ht,Rs_eq,ngrid,schi
-!
+
 ! Begin code:
-!
+
+  ier = 0
   Rs_eq = h_obs + ampl * Sin(2.0*(phi_tan-phas))    ! ** Experimental
 
 ! Get 'No_tan_hts' convolution angles
@@ -109,6 +110,9 @@ Real(r8) :: r,t,dh,tanx,cse,ht,Rs_eq,ngrid,schi
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 1.8  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.7  2001/03/21 22:47:28  livesey
 ! Bugs found with range checking fixed.
 !
