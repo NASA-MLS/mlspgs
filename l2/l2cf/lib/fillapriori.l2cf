@@ -58,6 +58,10 @@ begin Fill
     temperatureQuantity=apriori.temperature, refract=false
 
   !ifdef(skipHydrostatic,{},{
+  ;; Get full GPH profile
+  Fill, quantity=apriori.gph, method=hydrostatic, $
+    temperatureQuantity=apriori.temperature, $
+    refGPHquantity=apriori.refGPH
   ;; Now compute the tangent presssures for apriori
   Fill, quantity=apriori.ptanGHz, method=hydrostatic, $
     h2oQuantity=apriori.h2o, $

@@ -49,11 +49,13 @@ begin Fill
     temperatureQuantity=truth.temperature, $
     refract=false
 
+  !ifdef(skipHydrostatic,{},{
+  ;; Get full gph profile
+  Fill, quantity=truth.gph, method=hydrostatic, $
+    temperatureQuantity=truth.temperature, $
+    refGPHquantity=truth.refGPH
   ;; Now deduce a corresponding ptan for this using hydrostatic
   ;; balance.
-
-
-  !ifdef(skipHydrostatic,{},{
   Fill, quantity=truth.ptanGHz, method=hydrostatic, $
     h2oQuantity=truth.h2o, $
     temperatureQuantity=truth.temperature, $

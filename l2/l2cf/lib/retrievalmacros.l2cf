@@ -42,10 +42,15 @@ end Fill})
 ;; results back.
 !define(completePhase,{!dnl
 begin Fill
+  ;; Put state etc. back
   Transfer, source=x$1, destination=state
   Transfer, source=sdOut$1, destination=outputPrecision
   Transfer, source=f$1, destination=fwm
+  ;; Clean up
   Destroy, matrix=myCovariance$1
+  ;; Compute new full GPH profile
+  Fill, quantity=state.gph, method=hydrostatic, $
+    refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
 end Fill})
 
 ;; These macros are used to accumulate quantities destined for the DGM
@@ -97,6 +102,10 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
   outputSD=sdOut$1, fwdModelOut=f$1})
 
 ; $Log$
+; Revision 1.8  2002/07/06 21:18:48  livesey
+; Made sure the direct writes for forward model radiances are only done if
+; l2version is defined.
+;
 ; Revision 1.7  2002/07/05 21:46:36  livesey
 ; Put in the configInfo information
 ;
