@@ -110,7 +110,7 @@ end Fill
 
 !ifdef(flagPrecisionEstimates,{},{
   begin Join
-    !forall(joinOneDiagDGG,!allRetrievalDiagnostics)
+    !forall(joinOneDiagDGG,!outputRetrievalDiagnostics)
   end Join})
 })
 
@@ -221,7 +221,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; This macro uses the joinDGG (for the moment, will use DGM when we
 ;; got to hdf5) to join the diagnostics stuff
 !define(joinOneDiagDGG,{!storeDGG(joinedDGG_$1_!phase)!dnl
-  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, $
+  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
     swath='!translit($1,{_},{-})-!phase'!nl})
 
 ;; This macro puts all the boring stuff in the Retrieve command line
@@ -243,6 +243,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ; $Log$
+; Revision 1.52  2003/05/11 22:39:07  livesey
+; Added ignore zero / negative flags.
+;
 ; Revision 1.51  2003/05/11 22:35:54  livesey
 ; Restored the binned quantities, worked out what was wrong with them.
 ;
