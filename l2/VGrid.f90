@@ -49,20 +49,17 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   integer, private :: ERROR
 
 ! Error codes for "announce_error"
-  integer, private, parameter :: DuplicateField = 1
-  integer, private, parameter :: ExtraIf = 2
-  integer, private, parameter :: InconsistentSizes = 3
-  integer, private, parameter :: InconsistentUnits = 4
-  integer, private, parameter :: NoCoordField = 5
-  integer, private, parameter :: NotPositive = 6
-  integer, private, parameter :: NoTypeField = 7
-  integer, private, parameter :: RequiredIf = 8
-  integer, private, parameter :: RequireExplicit = 9
-  integer, private, parameter :: StartStopUnits = 10
-  integer, private, parameter :: TooFew = 11
-  integer, private, parameter :: Unitless = 12
-  integer, private, parameter :: UnitsPressure = 13
-  integer, private, parameter :: WrongUnits = 14
+  integer, private, parameter :: ExtraIf = 1
+  integer, private, parameter :: InconsistentSizes = ExtraIf + 1
+  integer, private, parameter :: InconsistentUnits = InconsistentSizes + 1
+  integer, private, parameter :: NotPositive = InconsistentUnits + 1
+  integer, private, parameter :: RequiredIf = NotPositive + 1
+  integer, private, parameter :: RequireExplicit = RequiredIf + 1
+  integer, private, parameter :: StartStopUnits = RequireExplicit + 1
+  integer, private, parameter :: TooFew = StartStopUnits + 1
+  integer, private, parameter :: Unitless = TooFew + 1
+  integer, private, parameter :: UnitsPressure = Unitless + 1
+  integer, private, parameter :: WrongUnits = UnitsPressure + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -118,8 +115,6 @@ contains ! =====     Public Procedures     =============================
       field = subtree(1,son)
       value = subtree(2,son)
       field_index = decoration(field)
-      if ( got_field(field_index) ) &
-        & call announce_error ( field, duplicateField )
       got_field(field_index) = .true.
       select case ( field_index )
       case ( f_coordinate )
@@ -141,10 +136,6 @@ contains ! =====     Public Procedures     =============================
     end do
 
     ! Now check that this is a sensible vGrid; first the obvious stuff.
-
-    if ( .not. got_field(f_coordinate) ) &
-      & call announce_error ( root, noCoordField )
-    if ( .not. got_field(f_type) ) call announce_error ( root, noTypeField )
 
     select case ( coordType )
     case ( l_explicit )
@@ -348,10 +339,6 @@ contains ! =====     Public Procedures     =============================
     call print_source ( source_ref(where) )
     call output ( ': ' )
     select case ( code )
-    case ( duplicateField )
-      call output ( "The " )
-      call dump_tree_node ( where, 0 )
-      call output ( " field appears more than once.", advance='yes' )
     case ( extraIf )
       call output ( "If the type is '" )
       call display_string ( lit_indices(lit_index) )
@@ -367,15 +354,10 @@ contains ! =====     Public Procedures     =============================
       call output ( "Elements of the '" )
       call display_string ( field_indices(field_index) )
       call output ( "' field have inconsistent units", advance='yes' )
-    case ( noCoordField )
-      call output ( "The required field 'coordinate' is not present.", &
-        & advance='yes' )
     case ( notPositive )
       call output ( "The value of the '" )
       call dump_tree_node ( where, 0 )
       call output ( "' field is required to be positive.", advance='yes' )
-    case ( noTypeField )
-      call output ( "The required field 'type' is not present.", advance='yes' )
     case ( requiredIf )
       call output ( "The '" )
       call display_string ( field_indices(field_index) )
@@ -464,6 +446,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.2  2001/02/09 19:30:16  vsnyder
+! Move checking for required and duplicate fields to init_tables_module
+!
 ! Revision 2.1  2000/12/04 23:34:38  vsnyder
 ! Move more of addItemToDatabase into the include.
 !
