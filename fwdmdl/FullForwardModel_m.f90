@@ -219,6 +219,7 @@ contains
     real(rp) :: REQ           ! Equivalent Earth Radius
     real(rp) :: ROT(3,3)      ! ECR-to-FOV rotation matrix
     real(rp) :: THISRATIO     ! A sideband ratio
+    real(rp) :: THISELEV      ! An elevation offset
     real(rp) :: Vel_Cor       ! Velocity correction due to Vel_z
 
     real(rp), dimension(1) :: ONE_TAN_HT ! ***
@@ -565,9 +566,6 @@ contains
     phitan => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_phitan, instrumentModule=firstSignal%instrumentModule, &
       & config=fwdModelConf )
-    elevOffset => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_elevOffset, radiometer=firstSignal%radiometer, &
-      & config=fwdModelConf )
     orbIncline => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_orbitInclination, config=fwdModelConf )
     spaceRadiance => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
@@ -617,10 +615,6 @@ contains
     if ( .not. ValidateVectorQuantity(phitan, minorFrame=.TRUE., &
       & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'phitan' )
-    if ( .not. ValidateVectorQuantity(elevOffset, verticalCoordinate=(/l_none/), &
-      & frequencyCoordinate=(/l_none/), noInstances=(/1/)) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & InvalidQuantity//'elevOffset' )
     ! There will be more to come here.
 
     MAF = fmStat%maf
@@ -759,7 +753,7 @@ contains
        & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp, &
        & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
        & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
-       & orbIncline%values(1,maf)*Deg2Rad, elevoffset%values(1,1)*Deg2Rad, &
+       & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp, &
        & req_out, grids_f, h2o_ind, tan_chi_out, dhdz_out, dx_dh_out, &
        & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan )
 
@@ -825,7 +819,7 @@ contains
        & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
        & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
        & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
-       & orbIncline%values(1,maf)*Deg2Rad, elevoffset%values(1,1)*Deg2Rad, &
+       & orbIncline%values(1,maf)*Deg2Rad, 0.0_rp, &
        & (/req_out(1)/), grids_f, h2o_ind, surf_angle, one_dhdz, one_dxdh,  &
        & dxdt_tan=dxdt_surface, d2xdxdt_tan=d2xdxdt_surface )
 
@@ -2031,14 +2025,15 @@ alpha_path_f = 0.5 * alpha_path_f
         & 'superset', moduleName )
 
       do i = 1, noUsedChannels
-
         channel = usedChannels(i)
         chanInd = channel + 1 - channelOrigins(i)
         sigInd = usedSignals(i)
+        ! Get the radiance
         thisRadiance =>  &
           GetQuantityForForwardModel (fwdModelOut, quantityType=l_radiance, &
           & signal=fwdModelConf%signals(sigInd)%index, &
           & sideband=fwdModelConf%signals(sigInd)%sideband )
+        ! Get the sideband fraction if we need to
         if ( sidebandStart /= sidebandStop ) then   ! We're folding
           sidebandRatio => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_sidebandRatio, signal=fwdModelConf%signals(sigInd)%index, &
@@ -2047,6 +2042,11 @@ alpha_path_f = 0.5 * alpha_path_f
         else                  ! Otherwise, want just unfolded signal
           thisRatio = 1.0
         end if
+        ! Get the elevation offset
+        elevOffset => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_elevOffset, signal=fwdModelConf%signals(sigInd)%index, &
+          & sideband=thisSideband, config=fwdModelConf )
+        thisElev = elevOffset%values(chanInd,1) * deg2Rad
 
         ! Here comes the Convolution codes
         update = ( thisSideband /= sidebandStart )
@@ -2074,7 +2074,8 @@ alpha_path_f = 0.5 * alpha_path_f
           if ( .not. temp_der .AND. .not. atmos_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
                & chanInd, windowStart, windowFinish, qtys, temp,ptan, &
-               & thisRadiance, update, ptg_angles, Radiances(:,i), tan_chi_out,&
+               & thisRadiance, update, ptg_angles, Radiances(:,i), &
+               & tan_chi_out-thisElev, &
                & dhdz_out, dx_dh_out, thisRatio,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2082,7 +2083,8 @@ alpha_path_f = 0.5 * alpha_path_f
           else if ( temp_der .AND. .not. atmos_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
                & chanInd, windowStart, windowFinish, qtys, temp, ptan,&
-               & thisRadiance, update, ptg_angles, Radiances(:,i), tan_chi_out,&
+               & thisRadiance, update, ptg_angles, Radiances(:,i), &
+               & tan_chi_out-thisElev, &
                & dhdz_out, dx_dh_out, thisRatio,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2092,7 +2094,8 @@ alpha_path_f = 0.5 * alpha_path_f
           else if ( atmos_der .AND. .not. temp_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
                & chanInd, windowStart, windowFinish, qtys, temp, ptan,&
-               & thisRadiance, update, ptg_angles, Radiances(:,i), tan_chi_out,&
+               & thisRadiance, update, ptg_angles, Radiances(:,i), &
+               & tan_chi_out-thisElev, &
                & dhdz_out, dx_dh_out, thisRatio,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2101,7 +2104,8 @@ alpha_path_f = 0.5 * alpha_path_f
           else
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
                & chanInd, windowStart, windowFinish, qtys, temp, ptan,&
-               & thisRadiance, update, ptg_angles, Radiances(:,i), tan_chi_out,&
+               & thisRadiance, update, ptg_angles, Radiances(:,i), &
+               & tan_chi_out-thisElev, &
                & dhdz_out, dx_dh_out, thisRatio,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2119,14 +2123,14 @@ alpha_path_f = 0.5 * alpha_path_f
           if ( .not. temp_der .AND. .not. atmos_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
-              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
+              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev, &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, qtys, fmStat%rows, Jacobian,  &
               &  PTAN_DER=ptan_der)
           else if ( temp_der .AND. .not. atmos_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
-              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
+              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev, &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, qtys, fmStat%rows, Jacobian,  &
               &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),   &
@@ -2134,7 +2138,7 @@ alpha_path_f = 0.5 * alpha_path_f
           else if ( atmos_der .AND. .not. temp_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
-              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
+              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev, &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, qtys, fmStat%rows, Jacobian,  &
               &  DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
@@ -2142,7 +2146,7 @@ alpha_path_f = 0.5 * alpha_path_f
           else
             call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
-              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
+              &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out-thisElev, &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, qtys, fmStat%rows, Jacobian,  &
               &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),   &
@@ -2604,6 +2608,9 @@ alpha_path_f = 0.5 * alpha_path_f
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.137  2003/05/20 00:05:39  vsnyder
+! Move some stuff to subroutines
+!
 ! Revision 2.136  2003/05/15 03:29:44  vsnyder
 ! Implement polarized model's temperature derivatives
 !
