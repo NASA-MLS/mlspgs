@@ -38,8 +38,12 @@ changesyntax({@!})
 ; A macro that removes the last character from another.  This is
 ; mainly to deal with the output of esyscmd
 !define(TrimNL, {!substr($1,0,!eval(!len($1)-1))})
-; This is the reverse in many senses, it's just a newline.
-; Used to simplify forall
+; This one is similar and deletes the first and last characters
+; typically quotes.
+!define(TrimQ, {!substr($1,1,!eval(!len($1)-3))})
+; I'm really not sure why the last argument there is -3 not -2, but -2
+; is the one that works!
+; This is just a newline designed to simplify foralls
 !define(nl,{
 })
 ; The users home directory, should we need it.
