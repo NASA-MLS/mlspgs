@@ -36,7 +36,7 @@ module RetrievalModule
   use Intrinsic, only: PHYQ_Dimensionless
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
-    & Matrix_SPD_T, MultiplyMatrixVectorNoT
+    & Matrix_SPD_T, MultiplyMatrixVectorNoT, Dump
   use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8, MLSCHUNK_T
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
@@ -914,6 +914,8 @@ contains
 
           fmStat%maf = 0
           fmStat%newScanHydros = .true.
+
+          if ( index(switches,'vir') / =0 ) call dump ( normalEquations%m, details=2 )
 
           ! Loop over MAFs
           call clearVector ( v(f_rowScaled) )
@@ -2563,6 +2565,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.126  2001/12/01 01:01:56  livesey
+! Added vir switch
+!
 ! Revision 2.125  2001/11/28 23:16:39  livesey
 ! Added use of MLSMSG_Warning, whoops!
 !
