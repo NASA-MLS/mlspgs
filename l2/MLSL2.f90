@@ -146,7 +146,7 @@ program MLSL2
 !  ( Under some circumstances, you may need to increase these )
   call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=50207 )
   call allocate_decl ( ndecls=8000 )
-  call allocate_tree ( n_tree=120000 )
+  call allocate_tree ( n_tree=360000 )
   call init_tables
 
   !---------------- Task (2) ------------------
@@ -710,6 +710,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.91  2002/12/19 11:54:45  livesey
+! Upped tree size
+!
 ! Revision 2.90  2002/12/10 00:39:06  pwagner
 ! Announces success a la read_apriori
 !
