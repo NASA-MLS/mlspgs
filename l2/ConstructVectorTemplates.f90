@@ -15,7 +15,8 @@ module ConstructVectorTemplates ! Construct a template for a vector
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
     & SUBTREE
-  use VectorsModule, only: ConstructVectorTemplate, VectorTemplate_T
+  use VectorsModule, only: ConstructVectorTemplate, VectorTemplate_T, &
+    & NullifyVectorTemplate
 
   implicit none
   public
@@ -55,6 +56,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) .and. levels(gen) > 0 ) call &
       & trace_begin ( "ConstructVectorTemplateFromMLSCfInfo", root )
 
+    call nullifyVectorTemplate ( vectorTemplate ) ! for Sun's still useless compiler
     nullify ( selected )
 
     ! Compute the number of selections
@@ -120,6 +122,10 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.8  2002/11/22 12:16:44  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.7  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
