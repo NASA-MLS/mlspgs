@@ -361,8 +361,8 @@ contains
         ! call add_to_retrieval_timing( 'newton_solver', t1 )
             call newtonianSolver
           case ( l_lowcloud )
-            call add_to_retrieval_timing( 'low_cloud', t1 )
-            call cpu_time ( t1 )
+        !    call add_to_retrieval_timing( 'low_cloud', t1 )
+        !    call cpu_time ( t1 )
             call LowCloudRetrieval
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
@@ -642,6 +642,8 @@ contains
             ! right-hand side of the normal equations is $\mathbf{F^T F
             ! ( a - x_n ) = C ( a - x_n )}$.
             if ( diagonal ) then
+              call cloneVector ( covarianceDiag, state, &
+               &  vectorNameText='_covarianceDiag' )
               call getDiagonal ( covariance%m, covarianceDiag )
               ! covarianceXApriori := covarianceDiag # apriori:
               call multiply ( covarianceDiag, aprioriMinusX, &
@@ -1286,7 +1288,10 @@ contains
                                                       ! last dimension is for mif
                                                       ! first two are (chan, s)
 
-          
+print*,'begin cloud retrieval'
+      ! create covarianceDiag vector by cloning x
+        call cloneVector ( covarianceDiag, state, vectorNameText='_covarianceDiag' )
+               
       ! get the inverted diagnonal elements of covariance of apriori
         call getDiagonal ( covariance%m, covarianceDiag )
         
@@ -1455,6 +1460,7 @@ contains
          ! check if Jacobian rows are consistent with Signal rows
             if(ich /= nChans) print*,'inconsistent channels between Jacobian and Signal'
 
+print*,'start inversion'
          ! start inversion
             do mif=1,nMifs
             if (ptan%values(mif,fmStat%maf) < p_lowcut) then
@@ -1488,6 +1494,7 @@ contains
 
    ! clean up
       call destroyVectorInfo ( FwdModelOut )
+      call destroyVectorInfo ( CovarianceDiag)
       
     end subroutine LowCloudRetrieval
 
@@ -1713,6 +1720,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.82  2001/10/03 23:56:30  dwu
+! some minor fixes for Low Cloud
+!
 ! Revision 2.81  2001/10/03 22:05:12  dwu
 ! some quick remedies for LowcloudRetrieval
 !
