@@ -174,7 +174,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_KRONECKER     = l_hydrostatic + 1
   integer, parameter :: L_L1B           = l_kronecker + 1
   integer, parameter :: L_L2AUX         = l_l1b + 1
-  integer, parameter :: L_L2GP 	        = l_l2aux + 1
+  integer, parameter :: L_L2DGG 	        = l_l2aux + 1
+  integer, parameter :: L_L2GP 	        = l_l2dgg + 1
   integer, parameter :: L_L2PC          = l_l2gp + 1
   integer, parameter :: L_LINEAR        = l_l2pc + 1
   integer, parameter :: L_LOGARITHMIC   = l_linear + 1
@@ -336,6 +337,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_kronecker) =             add_ident ( 'kronecker' )
     lit_indices(l_l1b) =                   add_ident ( 'l1b' )
     lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
+    lit_indices(l_l2dgg) =                 add_ident ( 'l2dgg' )
     lit_indices(l_l2gp) =                  add_ident ( 'l2gp' )
     lit_indices(l_l2pc) =                  add_ident ( 'l2pc' )
     lit_indices(l_linear) =                add_ident ( 'linear' )
@@ -549,7 +551,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
       begin, t+t_mergeSource, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
-      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2pc, n+n_dt_def /) )
+      begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_losVel, l+l_orbitIncline, l+l_ptan,&
@@ -844,6 +846,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.87  2001/05/01 23:27:27  pwagner
+! Added l_l2dgg literal type as possible output field type
+!
 ! Revision 2.86  2001/04/27 21:53:43  livesey
 ! Removed the l2pc stuff
 !
