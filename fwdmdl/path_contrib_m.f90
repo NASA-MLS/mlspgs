@@ -45,6 +45,7 @@ contains
                                            ! transmission function
     integer(ip) :: i, i_tan, n_path
 
+    real(rk) :: MyTol
     real(rk), parameter :: temp = 250.0_rk
     real(rk), parameter :: TolScale = 2.0_rk / temp ! 2.0 comes from centered
                                            ! difference used to compute dtaudn
@@ -53,6 +54,7 @@ contains
 
     n_path = size(incoptdepth)
     i_tan = n_path / 2
+    myTol = - tolScale * tol ! Negative because we're summing -incoptdepth
 
   ! Compute the indefinite sum of (-incoptdepth).
 
@@ -77,7 +79,7 @@ contains
   ! find where the tau derivative is large.  Remember, we've
   ! been subtracting, so "large" means "large and negative."
 
-    where ( dtaudn < -tol * tolscale ) do_gl = .true.
+    where ( dtaudn < myTol ) do_gl = .true.
 
   end subroutine Path_Contrib_Scalar
 
@@ -107,11 +109,11 @@ contains
 
   ! Internal stuff
 
-    complex(rk) :: dtaudn(2,2,size(deltau,3))    ! path derivative of the
+    complex(rk) :: dtaudn(2,2)             ! path derivative of the
                                            ! transmission function
     complex(rk), parameter :: Ident(2,2) = reshape( (/ 1.0, 0.0, &
       &                                                0.0, 1.0 /), (/ 2,2 /) )
-
+    real(rk) :: MyTol
     complex(rk) :: P(2,2,size(deltau,3)), Tau(2,2,size(deltau,3))
 
     integer(ip) :: i, i_tan, n_path
@@ -124,6 +126,7 @@ contains
 
     n_path = size(deltau,3)
     i_tan = n_path / 2
+    myTol = tolScale * tol
 
   ! Compute exp(incoptdepth) for all but the last level
   !(now done outside)
@@ -136,6 +139,9 @@ contains
     Tau(:,:,1) = ident
 
   ! Multiply the exp(incoptdepth) matrices together.
+
+  !{ $\mathbf{P}_i = \prod_{j=1}^{i-1} \mathbf{E}_i$;
+  !  $\mathbf{\tau}_i = \mathbf{P}_i \mathbf{P}_i^\dagger$.
 
     do i = 2, i_tan
       P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
@@ -152,12 +158,10 @@ contains
 
   ! Where is the derivative of that product large?
 
-    dtaudn = 0.5_rk * ( eoshift(Tau(:,:,1:n_path),+1,dim=3) - &
-                      & eoshift(Tau(:,:,1:n_path),-1,dim=3) )
-
     do i = 2, n_path-1
-      if ( any(abs(real(dtaudn(:,:,i)))  >= tolScale*tol ) .or. &
-           any(abs(aimag(dtaudn(:,:,i))) >= tolScale*tol ) ) do_gl(i) = .true.
+      dtaudn = tau(:,:,n_path+1) - tau(:,:,n_path-1)
+      if ( any(abs(real(dtaudn))  >= myTol ) .or. &
+           any(abs(aimag(dtaudn)) >= myTol ) ) do_gl(i) = .true.
     end do
 
   end subroutine Path_Contrib_Polarized
@@ -209,6 +213,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.10  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.9  2003/05/15 23:57:21  michael
 ! Fixed Path_Contrib_Polarized to properly calculate Tau
 ! and renamed variables to agree with polarized ATBD
