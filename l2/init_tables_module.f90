@@ -127,7 +127,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_NAZIMUTHANGLES      = f_nabterms + 1
   integer, parameter :: F_NCLOUDSPECIES       = f_nazimuthangles  + 1
   integer, parameter :: F_NMODELSURFS         = f_ncloudspecies + 1
-  integer, parameter :: F_NOMIFS              = f_nmodelsurfs + 1
+  integer, parameter :: F_NOFINEGRID          = f_nmodelsurfs + 1
+  integer, parameter :: F_NOMIFS              = f_nofinegrid + 1
   integer, parameter :: F_NSCATTERINGANGLES   = f_nomifs  + 1
   integer, parameter :: F_NSIZEBINS           = f_nscatteringangles + 1
   integer, parameter :: F_NUMBER              = f_nsizebins + 1
@@ -487,6 +488,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_nazimuthangles) =      add_ident ( 'nazimuthangles' )
     field_indices(f_ncloudspecies) =       add_ident ( 'ncloudspecies' )
     field_indices(f_nmodelsurfs) =         add_ident ( 'nmodelsurfs' )
+    field_indices(f_noFineGrid) =          add_ident ( 'noFineGrid' )
     field_indices(f_noMIFs) =              add_ident ( 'noMIFs' )
     field_indices(f_number) =              add_ident ( 'number' )
     field_indices(f_nscatteringangles) =   add_ident ( 'nscatteringangles' )
@@ -828,12 +830,9 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_radianceQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
-             begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
-             begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, &
-                    n+n_dot, &
+             begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_losQty, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
              begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
@@ -852,6 +851,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_systemTemperature, t+t_numeric, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
+             begin, f+f_noFineGrid, t+t_numeric, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
              begin, f+f_integrationTime, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
@@ -1035,6 +1035,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.146  2001/07/20 19:24:18  dwu
+! add f_noFineGrid
+!
 ! Revision 2.145  2001/07/20 17:06:45  dwu
 ! add f_extinction field for Fill cloud extinction calculation
 !
