@@ -58,7 +58,12 @@ module Molecules
   integer, parameter :: L_HCN_15 =       l_hcn + 1
   integer, parameter :: L_HDO =          l_hcn_15 + 1
   integer, parameter :: L_HNO3 =         l_hdo + 1
-  integer, parameter :: L_HO2 =          l_hno3 + 1
+  integer, parameter :: L_HNO3_v5 =      l_hno3 + 1
+  integer, parameter :: L_HNO3_v6 =      l_hno3_v5 + 1
+  integer, parameter :: L_HNO3_v7 =      l_hno3_v6 + 1
+  integer, parameter :: L_HNO3_v8 =      l_hno3_v7 + 1
+  integer, parameter :: L_HNO3_v9 =      l_hno3_v8 + 1
+  integer, parameter :: L_HO2 =          l_hno3_v9 + 1
   integer, parameter :: L_HOCL =         l_ho2 + 1
   integer, parameter :: L_HOCL_35 =      l_hocl + 1
   integer, parameter :: L_HOCL_37 =      l_hocl_35 + 1
@@ -123,6 +128,11 @@ module Molecules
   data spec_tags(l_hcn_15)       / 00028003 /
   data spec_tags(l_hdo)          / 00019002 /
   data spec_tags(l_hno3)         / 00063001 /
+  data spec_tags(l_hno3_v5)      / 00063006 /
+  data spec_tags(l_hno3_v6)      / 00063004 /
+  data spec_tags(l_hno3_v7)      / 00063002 /
+  data spec_tags(l_hno3_v8)      / 00063005 /
+  data spec_tags(l_hno3_v9)      / 00063003 /
   data spec_tags(l_ho2)          / 00033001 /
   data spec_tags(l_hocl)         / 00052006 /
   data spec_tags(l_hocl_35)      / 00052006 /
@@ -216,6 +226,11 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_hcn_15) =       add_ident ( 'hcn_15' )
     lit_indices(l_hdo) =          add_ident ( 'hdo' )
     lit_indices(l_hno3) =         add_ident ( 'hno3' )
+    lit_indices(l_hno3_v5) =      add_ident ( 'hno3_v5' )
+    lit_indices(l_hno3_v6) =      add_ident ( 'hno3_v6' )
+    lit_indices(l_hno3_v7) =      add_ident ( 'hno3_v7' )
+    lit_indices(l_hno3_v8) =      add_ident ( 'hno3_v8' )
+    lit_indices(l_hno3_v9) =      add_ident ( 'hno3_v9' )
     lit_indices(l_ho2) =          add_ident ( 'ho2' )
     lit_indices(l_hocl) =         add_ident ( 'hocl' )
     lit_indices(l_hocl_35) =      add_ident ( 'hocl_35' )
@@ -262,6 +277,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.12  2001/11/02 18:54:06  livesey
+! Added hno3 excited states
+!
 ! Revision 2.11  2001/10/09 22:39:52  livesey
 ! Added S_32_O2
 !
