@@ -73,6 +73,7 @@ contains
   ! ---------------------------------------- FindOneClosestInstance -----
   integer function FindOneClosestInstance ( referenceQuantity, &
     soughtQuantity, instance, useValue )
+    use HGridsDatabase, only: FINDCLOSESTMATCH
     ! This returns the instance index into a stacked quantity for the
     ! instance 'closest' to the given instance in an unstacked one
     type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
@@ -81,12 +82,6 @@ contains
     logical, intent(in), optional :: USEVALUE ! For phiTan as sought quantity
 
     ! Local variables
-    integer :: FIRSTGUESS               ! The result of hunt
-    integer :: LOWGUESS                 ! A profile below firstGuess
-    integer :: HIGHGUESS                ! A profile above firstGuess
-    integer :: BESTGUESS                ! The result
-    real (r8) :: COST                   ! A cost function
-    real (r8) :: BESTCOST               ! The best cost function
     logical :: MYUSEVALUE
     real (r8), dimension(:,:), pointer :: SEEK ! The thing to look for
 
@@ -108,25 +103,9 @@ contains
     else
       seek => soughtQuantity%template%phi
     end if
-
-    call Hunt ( referenceQuantity%template%phi(1,:), seek(1,instance), firstGuess, &
-      & start=max(min(instance,referenceQuantity%template%noInstances),1), &
-      & allowTopValue=.true., nearest=.true. )
-
-    ! Now check the ones either side
-    lowGuess = max ( firstGuess-1, 1 )
-    highGuess = min ( firstGuess+1, referenceQuantity%template%noInstances )
-    bestCost = 0.0
-    do firstGuess = lowGuess, highGuess
-      cost = sum ( abs ( &
-        & referenceQuantity%template%phi(1,firstGuess) - &
-        & seek(:,instance) ) )
-      if ( ( firstGuess == lowGuess ) .or. ( cost < bestCost ) ) then
-        bestGuess = firstGuess
-        bestCost = cost
-      end if
-    end do
-    FindOneClosestInstance = bestGuess
+    ! Call FindClosestMatch to do the work
+    FindOneClosestInstance = FindClosestMatch ( referenceQuantity%template%phi(1,:), &
+      & seek, instance )
   end function FindOneClosestInstance
 
   ! --------------------------------------- FindInstanceWindow ---------
@@ -309,6 +288,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.23  2003/07/07 20:21:34  livesey
+! Now uses the FindClosestMatch function
+!
 ! Revision 2.22  2003/01/26 04:42:20  livesey
 ! Added handling of profiles/angle units for phiWindow
 !
