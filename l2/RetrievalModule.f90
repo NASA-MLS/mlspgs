@@ -36,19 +36,16 @@ contains
     use BitStuff, only: CountBits
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
-    use Init_Tables_Module, only: F_additional, F_apriori, F_aprioriScale, F_Average, &
-      & F_channels, F_cloudChannels, F_cloudHeight, F_cloudRadiance, &
-      & F_cloudRadianceCutOff, &
+    use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
       & F_columnScale, F_Comment, F_covariance, F_covSansReg, &
       & F_diagnostics, F_diagonal, F_extendedAverage, &
       & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
-      & F_height, f_highBound, f_hRegOrders, f_hRegQuants, f_hRegWeights, &
-      & f_hRegWeightVec, F_ignore, F_jacobian, F_lambda, F_Level, f_lowBound, &
-      & F_mask, F_maxJ, F_maxValue, F_measurements, &
-      & F_measurementSD, F_method, F_minValue, F_muMin, &
-      & F_opticalDepth, F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
-      & F_phaseName, F_ptanQuantity, F_quantity, &
-      & F_regAfter, F_regApriori, F_reset, F_serial, F_SparseQuantities, &
+      & F_highBound, F_hRegOrders, F_hRegQuants, F_hRegWeights, &
+      & F_hRegWeightVec, F_jacobian, F_lambda, F_Level, F_lowBound, &
+      & F_maxJ, F_measurements, F_measurementSD, F_method, F_muMin, &
+      & F_outputCovariance, F_outputSD, &
+      & F_phaseName, &
+      & F_regAfter, F_regApriori, F_serial, F_SparseQuantities, &
       & F_state, F_toleranceA, F_toleranceF, &
       & F_toleranceR, f_vRegOrders, f_vRegQuants, &
       & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
@@ -57,20 +54,20 @@ contains
       & L_dnwt_diag,  L_dnwt_dxdx, &
       & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
       & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, L_dnwt_gradn,  L_dnwt_sq, &
-      & L_dnwt_sq,  L_dnwt_sqt, L_Fill, L_full_derivatives, &
+      & L_dnwt_sq,  L_dnwt_sqt, &
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
-      & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, &
-      & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
+      & L_lowcloud, L_newtonian, L_none, L_norm, &
+      & L_numJ, &
       & S_dumpBlocks, S_flagCloud, S_matrix, S_retrieve, S_sids, S_snoop, &
       & S_subset, S_time, S_RESTRICTRANGE, S_UPDATEMASK
-    use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Invalid
+    use Intrinsic, only: PHYQ_Dimensionless
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, &
       & Sparsify, MultiplyMatrix_XTY
     use MatrixTools, only: DumpBlock
-    use MLSCommon, only: MLSCHUNK_T, R8, RM, RV
+    use MLSCommon, only: MLSCHUNK_T, R8, RV
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
@@ -84,13 +81,11 @@ contains
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
       & Subtree
-    use Tree_Types, only: N_colon_less, N_less_colon, &
-      & N_less_colon_less, N_named
+    use Tree_Types, only: N_named
     use VectorsModule, only: ClearMask, ClearUnderMask, &
       & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
-      & DestroyVectorInfo, DumpMask, GetVectorQuantityByType, &
-      & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, &
-      & M_Tikhonov, Vector_T, VectorValue_T
+      & DestroyVectorInfo, GetVectorQuantityByType, M_LinAlg, &
+      & Vector_T, VectorValue_T
     use CloudRetrievalModule, only: CloudRetrieval
 
     ! Dummy arguments:
@@ -2243,6 +2238,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.249  2003/07/09 23:49:13  vsnyder
+! Remove numerous unreferenced USE names
+!
 ! Revision 2.248  2003/06/20 19:38:26  pwagner
 ! Allows direct writing of output products
 !
