@@ -631,18 +631,21 @@ contains
       call output(' Status on normal exit:                          ', advance='no')
       call blanks(5, advance='no')
       call output(normal_exit_status, advance='yes')
-      call output(' Default hdf version on reads:                   ', advance='no')
+      call output(' Default hdf version for l1b files:              ', advance='no')
+      call blanks(5, advance='no')
+      call output(level1_hdfversion, advance='yes')
+      call output(' Default hdfeos version on reads:                ', advance='no')
       call blanks(5, advance='no')
       call output(default_hdfversion_read, advance='yes')
-      call output(' Default hdf version on writes:                  ', advance='no')
+      call output(' Default hdfeos version on writes:               ', advance='no')
       call blanks(5, advance='no')
       call output(default_hdfversion_write, advance='yes')
-      call output(' Manually collect garbage after each chunk:      ', advance='no')
-      call blanks(4, advance='no')
-      call output(garbage_collection_by_chunk, advance='yes')
-      call output(' Manually collect garbage after each deallocate: ', advance='no')
-      call blanks(4, advance='no')
-      call output(garbage_collection_by_dt, advance='yes')
+!     call output(' Manually collect garbage after each chunk:      ', advance='no') 
+!     call blanks(4, advance='no')                                                   
+!     call output(garbage_collection_by_chunk, advance='yes')                        
+!     call output(' Manually collect garbage after each deallocate: ', advance='no') 
+!     call blanks(4, advance='no')                                                   
+!     call output(garbage_collection_by_dt, advance='yes')                           
       call output(' Is this the master task in pvm?:                ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%master, advance='yes')
@@ -666,6 +669,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.86  2002/11/13 01:08:40  pwagner
+! Prints more info when called asked to print opts
+!
 ! Revision 2.85  2002/10/30 00:56:51  livesey
 ! Increased size of hash table
 !
