@@ -17,7 +17,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   ! Also note that multiple IDL snoopers can talk to one or many f90 procedures,
   ! the little extra book keeping this involves is worth it.
 
-  use init_tables_module, only: F_Comment
+  use init_tables_module, only: F_Comment, F_PhaseName
   use Intrinsic, only: LIT_INDICES
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_0, ONLY: MatrixElement_T
@@ -285,11 +285,12 @@ contains ! ========  Public Procedures =========================================
 
   ! ------------------------------------------ SendStatusToSnooper -----
   subroutine SendStatusToSnooper ( SNOOPER, STATUS, LOCATION, COMMENT, &
-    & CONTROLED )
+    & PHASENAME, CONTROLED )
     type (SnooperInfo_T), intent(INOUT) :: SNOOPER
     character (len=*), intent(in) :: STATUS
     character (len=*), intent(in) :: LOCATION
     character (len=*), intent(in) :: COMMENT
+    character (len=*), intent(in) :: PHASENAME
     logical, intent(in) :: CONTROLED
 
     ! Local variables
@@ -304,6 +305,8 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing location" )
     call PVMIDLPack ( comment, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing comment" )
+    call PVMIDLPack ( phaseName, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing phaseName" )
     call PVMIDLPack ( controled, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing controled" )
     call PVMFSend ( snooper%tid, SnoopTag, info )
@@ -317,15 +320,16 @@ contains ! ========  Public Procedures =========================================
   ! to pass to and from the IDL end of the snooper.
 
   subroutine Snoop ( KEY, VectorDatabase, AnotherVectorDatabase, &
-    & AnotherComment, matrixDatabase )
+    & AnotherComment, AnotherPhaseName, matrixDatabase )
 
     ! Arguments
     integer, intent(in), optional :: KEY ! Tree node where snoop called
     type (Vector_T), dimension(:), optional, pointer :: VectorDatabase
     type (Vector_T), dimension(:), optional :: AnotherVectorDatabase
-    character(len=*), intent(in), optional :: AnotherComment ! Replaces
+    character(len=*), intent(in), optional :: AnotherComment
+    !    Replaces comment field of "snoop" command if present.
+    character(len=*), intent(in), optional :: AnotherPhaseName 
     type (Matrix_T), dimension(:), optional :: MatrixDatabase
-    ! comment field of "snoop" command if present.
     
     ! Local parameters
     integer, parameter :: DELAY=50*1000  ! For Usleep, no. microsecs
@@ -351,6 +355,7 @@ contains ! ========  Public Procedures =========================================
     character (len=132) :: NEXTLINE     ! Line of text received
     integer :: MSGTAG                   ! Incomming Message tag
     character (len=132) :: LOCATION     ! Line of text to send off
+    character (len=132) :: PHASENAME    ! Line of text to send off
     integer :: SNOOPER                  ! Loop counter
     integer :: SNOOPERTID               ! Task ID for snooper
     integer :: SON                      ! of Key
@@ -363,16 +368,22 @@ contains ! ========  Public Procedures =========================================
 
     location = '????'
     comment = 'Unknown'
+    phaseName = ''
     if ( present(key) ) then
       write ( location, * ) source_ref(key)/256
       location = adjustl(trim(location))
       do i = 2, nsons(key)
         son = subtree(i,key)
-        if ( get_field_id(son) == f_comment ) &
-          & call get_string ( sub_rosa(subtree(2,son)), comment, strip=.true. )
+        select case ( get_field_id(son) )
+        case ( f_comment )
+          call get_string ( sub_rosa(subtree(2,son)), comment, strip=.true. )
+        case ( f_phaseName )
+          call get_string ( sub_rosa(subtree(2,son)), phaseName, strip=.true. )
+        end select
       end do
     end if
     if ( present(anotherComment) ) comment = anotherComment
+    if ( present(anotherPhaseName) ) phaseName = anotherPhaseName
 
     ! If this is the very first call enroll in PVM for the first time, allocate
     ! 0 snoopers to start with.
@@ -393,7 +404,7 @@ contains ! ========  Public Procedures =========================================
     ! Tell all the snoopers we're ready to talk to them
     do snooper = 1, size(snoopers)
       call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
-        & any ( snoopers%mode == SnooperControling ) )
+        & phaseName, any ( snoopers%mode == SnooperControling ) )
       call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
         & anotherVectorDatabase )
       call SendMatrixListToSnooper ( snoopers(snooper), matrixDatabase ) 
@@ -456,7 +467,7 @@ contains ! ========  Public Procedures =========================================
           snooper = FindFirst ( snoopers%tid == snooperTid )
           ! Tell it where we are
           call SendStatusToSnooper ( snoopers(snooper), 'Ready', location, comment, &
-            & any(snoopers%mode == SnooperControling ) )
+            & phaseName, any(snoopers%mode == SnooperControling ) )
           ! Send it vectors
           call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase, &
             & anotherVectorDatabase )
@@ -514,7 +525,7 @@ contains ! ========  Public Procedures =========================================
     ! Tell all the snoopers we're off and running again
     do snooper = 1, size(snoopers)
       call SendStatusToSnooper ( snoopers(snooper), 'Running', location, comment, &
-        & any ( snoopers%mode == SnooperControling ) )
+        & phaseName, any ( snoopers%mode == SnooperControling ) )
     end do
     
   end subroutine Snoop
@@ -709,6 +720,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.28  2001/10/31 22:00:05  livesey
+! Added phase name stuff
+!
 ! Revision 2.27  2001/10/27 00:14:48  livesey
 ! Removed a print statement
 !
