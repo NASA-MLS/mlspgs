@@ -119,6 +119,11 @@ SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 EVERYTHING = CVS $(SUBDIRS) util blas srclib pcf idllib sids tables\
    $(MakeFName) README.$(MakeFName) PCF.v0-01
      
+# This is in case tar doesn't summon GNU tar, you may still use it via
+# something like
+#    make -f MakeFC tar_sips TAR=/usr/local/gnu/bin/tar
+TAR=tar
+
 # These are all the configurations that will be removed by clean_all
 EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
 
@@ -258,12 +263,12 @@ clean_all:
 tar:
 	@echo "tar-ing mlspgs"; \
         rm -f ../mlspgs.tgz; \
-	tar hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/.configure
+	$(TAR) hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/.configure
 
 tar_sips:
 	@echo "tar-ing mlspgs for sips"; \
         rm -f ../mlspgs_sips.tgz; \
-	tar hcvzf ../mlspgs_sips.tgz $(EVERYTHING)
+	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING)
 
 tar_subs:
 	@echo "tar-ing $(SUBDIRS)"; \
@@ -272,13 +277,13 @@ tar_subs:
 	done; \
 	echo "tar-ing srclib"; \
         rm -f srclib.tgz; \
-	tar hcvzf srclib.tgz srclib; \
+	$(TAR) hcvzf srclib.tgz srclib; \
 	echo "tar-ing util"; \
         rm -f util.tgz; \
-	tar hcvzf util.tgz util; \
+	$(TAR) hcvzf util.tgz util; \
 	echo "tar-ing *.tgz"; \
 	rm -f mlspgs_subs.tar; \
-	tar -cvf mlspgs_subs.tar *.tgz
+	$(TAR) -cvf mlspgs_subs.tar *.tgz
 
 #----------------------- Bare target dependenciess
 
@@ -312,6 +317,9 @@ update: depends
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.20  2001/03/08 00:53:21  pwagner
+# l2_NEEDS_fwdmdl now set by default
+#
 # Revision 1.19  2001/03/05 21:53:26  pwagner
 # fwdmdl prerequisite to l2 if l2_NEEDS_fwdmdl
 #
