@@ -650,6 +650,7 @@ contains
       real :: T1
       type(matrix_T) :: Temp            ! Because we can't do X := X * Y
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
+      integer :: TikhonovRows           ! How many rows of Tiknonov regularization?
 
       call time_now ( t1 )
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
@@ -979,7 +980,8 @@ contains
 
             ! We need a matrix with the same column space as the "jacobian".
             ! The "jacobian" matrix is handily unused, so we used it here.
-            call regularize ( jacobian, regOrders, regQuants, regWeights )
+            call regularize ( jacobian, regOrders, regQuants, regWeights, &
+              & tikhonovRows )
             call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
             call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
               if ( index(switches,'reg') /= 0 ) &
@@ -993,6 +995,8 @@ contains
             ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
             ! Don't destroy reg_X_x unless we move the 'clone' for it
             ! inside the loop.  Also, if we destroy it, we can't snoop it.
+          else
+            tikhonovRows = 0
           end if
 
           !{ Add some early stabilization.  This consists of adding equations
@@ -1452,7 +1456,7 @@ contains
           if ( got(f_apriori) ) &
             & jacobian_rows = jacobian_rows + jacobian_cols
           if ( got(f_regOrders) ) &
-            & jacobian_rows = jacobian_rows + jacobian_cols
+            & jacobian_rows = jacobian_rows + tikhonovRows
           call fillDiagVec ( l_jacobian_cols, real(jacobian_cols,r8) )
           call fillDiagVec ( l_jacobian_cols, real(jacobian_rows,r8) )
         end if
@@ -2794,12 +2798,16 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.143  2002/05/22 19:16:51  vsnyder
+! Put the correct number of rows used for Tikhonov regularization into the
+! diagnostics vector.
+!
 ! Revision 2.142  2002/05/22 19:00:38  vsnyder
 ! Correct covariance calculation -- it ought to be U^{-1} U^{-T}, not U^{-1}.
 ! Mark Filipiak noticed this bug.
 !
 ! Revision 2.141  2002/05/07 01:02:24  vsnyder
-! Change regWeight to regWeights -- which is now a tree note instead of
+! Change regWeight to regWeights -- which is now a tree node instead of
 ! a real scalar.  Add dump for regularization matrix.
 !
 ! Revision 2.140  2002/04/22 23:00:58  vsnyder
