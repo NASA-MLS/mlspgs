@@ -227,30 +227,35 @@ contains ! =================================== Public Procedures==============
     real(r8), parameter :: HOMEACCURACY = 3.0 ! Try to hit homeGeodAngle within this
 
     ! Local variables
-    type (L1BData_T) :: TPGEODANGLE     ! From L1BOA
     type (L1BData_T) :: TAITIME         ! From L1BOA
+    type (L1BData_T) :: TPGEODANGLE     ! From L1BOA
+
     character(len=10) :: MODNAMESTR     ! Home module name as string
+
+    integer :: CHUNK                    ! Loop counter
+    integer :: FLAG                     ! From ReadL1B
     integer :: HOMEMAF                  ! first MAF after homeGeodAngle
-    real(r8) :: TESTANGLE               ! Angle to check for
-    real(r8) :: ANGLEINCREMENT          ! Increment in hunt for homeMAF
-    integer :: noChunks                 ! Number of chunks
-    integer :: ORBIT                    ! Used to locate homeMAF
+    integer :: M1, M2                   ! MafRange + 1
+    integer :: NOCOMPLETECHUNKSBELOWHOME ! Used for placing chunks
     integer :: NOMAFS                   ! Number of MAFs to consider
     integer :: NOMAFSREAD               ! From ReadL1B
-    integer :: FLAG                     ! From ReadL1B
-    integer :: CHUNK                    ! Loop counter
-    real(r8) :: MINANGLE                 ! Of range in data
-    real(r8) :: MAXANGLE                 ! Of range in data
-    real(r8) :: MAXTIME                 ! Time range in data
-    real(r8) :: MINTIME                 ! Time range in data
-    real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
-    real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
-    integer :: NOCOMPLETECHUNKSBELOWHOME ! Used for placing chunks
+    integer :: ORBIT                    ! Used to locate homeMAF
     integer :: STATUS                   ! From allocate etc.
-    real(r8) :: MINV                  ! Either minTime or minAngle
+    integer :: noChunks                 ! Number of chunks
+
     integer, dimension(:), pointer :: NEWFIRSTMAFS ! For thinking about overlaps
     integer, dimension(:), pointer :: NEWLASTMAFS ! For thinking about overlaps
-    integer :: M1, M2                   ! MafRange + 1
+
+    real(r8) :: ANGLEINCREMENT          ! Increment in hunt for homeMAF
+    real(r8) :: MAXANGLE                ! Of range in data
+    real(r8) :: MAXTIME                 ! Time range in data
+    real(r8) :: MINANGLE                ! Of range in data
+    real(r8) :: MINTIME                 ! Time range in data
+    real(r8) :: MINV                    ! Either minTime or minAngle
+    real(r8) :: TESTANGLE               ! Angle to check for
+
+    real(r8), dimension(:), pointer :: BOUNDARIES ! Used in placing chunks
+    real(r8), dimension(:), pointer :: FIELD ! Used in placing chunks
 
     ! Exectuable code
     
@@ -445,15 +450,15 @@ contains ! =================================== Public Procedures==============
     ! Local variables
     integer :: ERROR                    ! Error level
     integer :: FIELDINDEX               ! Tree type
-    logical :: GOT(field_first:field_last) = .false.
+    integer :: GSON                     ! A son of son the ChunkDivide section node
     integer :: I                        ! Loop inductor
     integer :: ROOT                     ! Root of ChunkDivide command
     integer :: SON                      ! A son of the ChunkDivide section node
-    integer :: GSON                     ! A son of son the ChunkDivide section node
     integer :: UNITS(2)                 ! Units of expression
-    real(rp) :: VALUE(2)                ! Value of expression
     integer, dimension(:), pointer :: NEEDED ! Which fields are needed
     integer, dimension(:), pointer :: NOTWANTED ! Which fields are not wanted
+    logical :: GOT(field_first:field_last) = .false.
+    real(rp) :: VALUE(2)                ! Value of expression
 
     ! Executable code
 
@@ -776,17 +781,21 @@ contains ! =================================== Public Procedures==============
     type (L1BData_T) :: TAITIME         ! Read from L1BOA file
     type (L1BData_T) :: TPGEODALT       ! Read from L1BOA file
     type (Obstruction_T) :: NEWOBSTRUCTION ! A single obstruction
-    logical, dimension(:), pointer :: VALID ! Flag for each MAF
-    logical :: THISONEVALID             ! To go into valid
-    logical :: LASTONEVALID             ! To run through valid
-    real(r8) :: SCANMAX ! Range of scan each maf
-    real(r8) :: SCANMIN ! Range of scan each mif
-    integer :: MOD                      ! Loop inductor
-    integer :: MAF                      ! Loop inductor
-    integer :: NOMAFS                   ! Number of MAFs in processing range
+
     character(len=10) :: MODNAMESTR     ! Module name
+
     integer :: FLAG                     ! From L1B
+    integer :: MAF                      ! Loop inductor
+    integer :: MOD                      ! Loop inductor
+    integer :: NOMAFS                   ! Number of MAFs in processing range
     integer :: NOMAFSREAD               ! From L1B
+
+    logical :: LASTONEVALID             ! To run through valid
+    logical :: THISONEVALID             ! To go into valid
+    logical, dimension(:), pointer :: VALID ! Flag for each MAF
+
+    real(r8) :: SCANMAX                 ! Range of scan each maf
+    real(r8) :: SCANMIN                 ! Range of scan each mif
 
     ! Executable code
     
@@ -862,6 +871,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.6  2001/11/10 01:01:03  livesey
+! Just tidied up
+!
 ! Revision 2.5  2001/11/10 00:56:24  livesey
 ! OK, this is getting close to being ready for testing.
 !
