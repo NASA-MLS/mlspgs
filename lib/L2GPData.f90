@@ -19,12 +19,20 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   USE STRING_TABLE, only: DISPLAY_STRING
   
   IMPLICIT NONE
+
+  private
+  public :: L2GPData_T
+  public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
+    & Dump, Dump_L2GP,  ExpandL2GPDataInPlace,  OutputL2GP_createFile, &
+    & OutputL2GP_writeData,  OutputL2GP_writeGeo,  ReadL2GPData, &
+    & SetupNewL2GPRecord,  WriteL2GPData
 !  INTEGER :: SWRDFLD
 !  EXTERNAL SWRDFLD !Should USE SWAPI
   !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER(len=256), PRIVATE :: Id = &
-       & "$Id$"
-  CHARACTER(len=*), PARAMETER, PRIVATE :: ModuleName = &
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
   !---------------------------------------------------------------------------
 
@@ -1211,6 +1219,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.25  2001/03/20 01:44:25  livesey
+! Fixed bug, was outputting chunkNumber as real!
+!
 ! Revision 2.24  2001/03/12 20:25:04  vsnyder
 ! Improve dump_l2gp.  Nullify components of l2gp before calling
 ! SetupNewL2GPRecord from ExpandL2GPDataInPlace, so as not to clobber the
