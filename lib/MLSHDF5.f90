@@ -14,6 +14,8 @@ module MLSHDF5
 
   use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
   use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
+  ! To switch to/from hdfeos5.1.6(+) uncomment next line
+  ! use H5LIB, ONLY: h5open_f, h5close_f
   ! Lets break down our use, parameters first
   use HDF5, only: H5F_ACC_RDONLY_F, &
     & H5P_DATASET_CREATE_F, &
@@ -46,6 +48,7 @@ module MLSHDF5
     & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS, &
     & IsHDF5DSInFile, IsHDF5AttributeInFile, &
     & GetAllHDF5DSNames, GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
+    & mls_h5open, mls_h5close, &
     & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, &
     & WriteLitIndexAsHDF5Attribute, WriteStringIndexAsHDF5Attribute
 
@@ -71,6 +74,8 @@ module MLSHDF5
 ! IsHDF5...InFile      Is the (attribute, DS) in the named file?
 ! LoadFromHDF5DS       Retrieves a dataset
 ! MakeHDF5Attribute    Turns an arg into an attribute
+! mls_h5close          Closes interface to hdf5; call once at end of run
+! mls_h5open           Opens interface to hdf5; call once at start of run
 ! SaveAsHDF5DS         Turns an array into a dataset
 ! === (end of toc) ===
 
@@ -148,6 +153,21 @@ module MLSHDF5
 
 contains ! ======================= Public Procedures =========================
 
+  ! ------------------------------------- mls_h5close
+  subroutine mls_h5close ( error )
+    ! Arguments
+    integer, intent(out) :: error          ! Trouble if /= 0
+    error = 0
+    call h5close_f (error)
+  end subroutine mls_h5close
+
+  ! ------------------------------------- mls_h5open
+  subroutine mls_h5open ( error )
+    ! Arguments
+    integer, intent(out) :: error          ! Trouble if /= 0
+    error = 0
+    call h5open_f (error)
+  end subroutine mls_h5open
 
   ! ------------------------------------- GetAllHDF5DSNames_fileID
   subroutine GetAllHDF5DSNames_fileID ( FileID, gname, DSNames )
@@ -3254,6 +3274,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.36  2004/03/24 23:50:27  pwagner
+! Added mls_h5open/close
+!
 ! Revision 2.35  2004/02/26 21:59:09  pwagner
 ! Added GetAllHDF5DSNames
 !
