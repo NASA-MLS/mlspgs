@@ -45,7 +45,7 @@ begin MLSSignals
 
   ;; Digital autocorrelators:
   DACS: spectrometerType, first= 0, $
-    start= 0.0 kHz, step= 200 kHz, width= 200 kHz, last= 128
+    start= -6250.0 kHz, step= 97.65625 kHz, width= 97.65625 kHz, last= 128
 
   ;; Mid-band:
   MB11: spectrometerType, first= 1, $
@@ -65,76 +65,76 @@ begin MLSSignals
 
   ;; FB25s
   B1F:  band, suffix= "PT",   radiometer=R1A, spectrometerType= FB25,  $
-    centerfrequency= 8.047 GHz
+    centerfrequency= 8.04667 GHz
   
   B2F:  band, suffix= "H2O",  radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 8.5858 GHz
+    centerfrequency= 8.58571 GHz
   B3F:  band, suffix= "N2O",  radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 9.0798 GHz
+    centerfrequency= 9.0800 GHz
   B4F:  band, suffix= "HNO3", radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 10.3013 GHz
+    centerfrequency= 10.30167 GHz
   B5F:  band, suffix= "CLO",  radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 12.4566 GHz
+    centerfrequency= 12.45667 GHz
   B6F:  band, suffix= "O3",   radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 14.2367 GHz
+    centerfrequency= 14.23667 GHz
 
   B7F:  band, suffix= "O3",   radiometer=R3 , spectrometerType= FB25,  $
-    centerfrequency= 3.9449 GHz
+    centerfrequency= 3.94500 GHz
   B8F:  band, suffix= "PT",   radiometer=R3 , spectrometerType= FB25,  $
-    centerfrequency= 5.7085 GHz
+    centerfrequency= 5.70857 GHz
   B9F:  band, suffix= "CO",   radiometer=R3 , spectrometerType= FB25,  $
-    centerfrequency= 9.1168 GHz
+    centerfrequency= 9.11667 GHz
 
   B10F: band, suffix= "CLO",  radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 6.5959 GHz
+    centerfrequency= 6.59625 GHz
   B11F: band, suffix= "BRO",  radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 7.3237 GHz
+    centerfrequency= 7.32400 GHz
   B12F: band, suffix= "N2O",  radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 9.9785 GHz
+    centerfrequency= 9.97857 GHz
   B13F: band, suffix= "HCL",  radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 16.9373 GHz
+    centerfrequency= 16.93692 GHz
   B14F: band, suffix= "O3",   radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 17.4844 GHz
+    centerfrequency= 17.48400 GHz
 
   B15F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
-    centerfrequency= 8.4081 GHz
+    centerfrequency= 8.40800 GHz
   B16F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
-    centerfrequency= 12.7759 GHz
+    centerfrequency= 12.77571 GHz
   B17F: band, suffix= "PT",   radiometer=R5H, spectrometerType= FB25,  $
-    centerfrequency= 20.4012 GHz
+    centerfrequency= 20.40154 GHz
   B18F: band, suffix= "OH",   radiometer=R5V, spectrometerType= FB25,  $
-    centerfrequency= 8.4081 GHz
+    centerfrequency= 8.40800 GHz
   B19F: band, suffix= "OH",   radiometer=R5V, spectrometerType= FB25,  $
-    centerfrequency= 12.7749 GHz
+    centerfrequency= 12.77571 GHz
   B20F: band, suffix= "PT",   radiometer=R5V, spectrometerType= FB25,  $
-    centerfrequency= 20.4012 GHz
+    centerfrequency= 20.40154 GHz
 
   B21F: band, suffix= "PT",   radiometer=R1B, spectrometerType= FB25,  $
-    centerfrequency= 8.047 GHz
+    centerfrequency= 8.04667 GHz
 
   ;; DACs
   B22D: band, suffix= "PT",   radiometer=R1A, spectrometerType= DACS,  $
-    centerfrequency= 8.047 GHz
+    centerfrequency= 8.047917 GHz
   B23D: band, suffix= "H2O",  radiometer=R2 , spectrometerType= DACS,  $
-    centerfrequency= 8.5858 GHz
+    centerfrequency= 8.5844642 GHz
   B24D: band, suffix= "O3",   radiometer=R3 , spectrometerType= DACS,  $
-    centerfrequency= 3.9449 GHz
+    centerfrequency= 3.94625 GHz
   B25D: band, suffix= "CO",   radiometer=R3 , spectrometerType= DACS,  $
-    centerfrequency= 9.1168 GHz
+    centerfrequency= 9.11791667 GHz
   B26D: band, suffix= "PT",   radiometer=R1B, spectrometerType= DACS,  $
-    centerfrequency= 8.047 GHz
+    centerfrequency= 8.047917 GHz
 
   ;; MB11s
   B27M: band, suffix= "HCN",  radiometer=R2 , spectrometerType= MB11,  $
-    centerfrequency= 14.6348 GHz
+    centerfrequency= 14.63500 GHz
   B28M: band, suffix= "HO2",  radiometer=R4 , spectrometerType= MB11,  $
-    centerfrequency= 6.8462 GHz
+    centerfrequency= 6.84650 GHz
   B29M: band, suffix= "HOCL", radiometer=R4 , spectrometerType= MB11,  $
-    centerfrequency= 6.9856 GHz
+    centerfrequency= 6.98595 GHz
   B30M: band, suffix= "HO2",  radiometer=R4 , spectrometerType= MB11,  $
-    centerfrequency= 17.6306 GHz
+    centerfrequency= 17.63050 GHz
   B31M: band, suffix= "BRO",  radiometer=R4 , spectrometerType= MB11,  $
-    centerfrequency= 18.0879 GHz
+    centerfrequency= 18.0880 GHz
 
   ;; Wide filters
   B32W: band, suffix= "PT", radiometer= R1A, spectrometerType=WF4
@@ -184,11 +184,11 @@ begin MLSSignals
   signal, band=B32W, switch=0, spectrometer=1, $
     channels= [ $
     4.8 GHz:  0.5 GHz,  6.3 GHz:  0.5 GHz, $
-    9.8 GHz:  0.5 GHz, 11.5 GHz:  0.5 GHz], direction=1 ;  PT
+    9.8 GHz:  0.5 GHz, 11.5 GHz:  0.4 GHz], direction=1 ;  PT
   signal, band=B33W, switch=0, spectrometer=2, $
     channels= [ $
-    3.0 GHz:  0.5 GHz,  4.8 GHz:  0.5 GHz, $
-    7.2 GHz:  0.5 GHz,  7.8 GHz:  0.5 GHz], direction=1 ; O3
+    3.0 GHz:  0.45 GHz,  4.8 GHz:  0.5 GHz, $
+    7.2 GHz:  0.5 GHz,  7.8 GHz:  0.45 GHz], direction=1 ; O3
     
   ;; Now the paths that are not nominally active
   ;; 25 spectrometer filterbanks, by radiometer
@@ -224,11 +224,14 @@ begin MLSSignals
   signal, band=B34W, switch=0,  spectrometer=3, direction=1, $
     channels= [ $
     4.8 GHz:  0.5 GHz,  6.3 GHz:  0.5 GHz, $
-    9.8 GHz:  0.5 GHz, 11.5 GHz:  0.5 GHz] ;  PT
+    9.8 GHz:  0.5 GHz, 11.5 GHz:  0.4 GHz] ;  PT
     
 end MLSSignals
 !divert(-1)
 ; $Log$
+; Revision 1.3  2002/05/03 01:04:31  livesey
+; Tidied up
+;
 ; Revision 1.2  2002/05/01 22:34:37  livesey
 ; Added direction stuff
 ;
