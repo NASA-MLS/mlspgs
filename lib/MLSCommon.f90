@@ -27,6 +27,11 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   INTEGER, PARAMETER:: r4=SELECTED_REAL_KIND(5)
   INTEGER, PARAMETER:: r8=SELECTED_REAL_KIND(13)
 
+  ! Now choose the precision we want by preference (may automate this through
+  ! make later on, with perl or m4 or something).
+  INTEGER, PARAMETER:: rp=r8
+  INTEGER, PARAMETER:: ip=i4
+
   ! Now we have the lengths for various strings
 
   INTEGER, PARAMETER :: NameLen=32
@@ -68,12 +73,45 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   END TYPE TAI93_Range_T
   ! --------------------------------------------------------------------------
 
+  contains
+
+  ! -------------------------------------------- FindFirst --------------
+  integer function FindFirst ( condition )
+    ! Find the first logical in the array that is true
+    logical, dimension(:), intent(in) :: CONDITION
+
+    ! Local variables
+    integer :: I                        ! Loop counter
+
+    ! Executable code
+    FindFirst = -1
+    do i = 1, size(condition)
+      if ( condition(i) ) then
+        FindFirst = i
+        return
+      end if
+    end do
+  end function FindFirst
+
+
 !=============================================================================
 END MODULE MLSCommon
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.7  2001/09/09 02:47:58  livesey
+! Moved FindFirst into MLSCommon
+!
+! Revision 2.6.2.3  2001/09/09 01:53:27  livesey
+! Bug fix
+!
+! Revision 2.6.2.2  2001/09/09 01:35:46  livesey
+! Moved FindFirst in from MLSL2Common
+!
+! Revision 2.6.2.1  2001/09/08 22:32:24  livesey
+! Added RP and IP
+!
 ! Revision 2.6  2001/04/20 23:10:53  livesey
 ! Initialised parameters in L1BINFO
 !
