@@ -119,7 +119,7 @@ contains
   ! values.
 
   subroutine HuntArray_r4 ( list, values, indices, start, allowTopValue, &
-    & allowBelowValue, nearest )
+    & allowBelowValue, nearest, logSpace )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -130,6 +130,7 @@ contains
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value not one below
+    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
 
     include "HuntArray.f9h"
   end subroutine HuntArray_r4
@@ -137,7 +138,7 @@ contains
 ! -------------------------------------------------  HuntArray_r8  -----
 
   subroutine HuntArray_r8 ( list, values, indices, start, allowTopValue, allowBelowValue, &
-    & nearest )
+    & nearest, logSpace )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -148,6 +149,7 @@ contains
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value not one below
+    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
 
     include "HuntArray.f9h"
   end subroutine HuntArray_r8
@@ -157,7 +159,7 @@ contains
   ! This routine is a scalar wrapper for the above one
 
   subroutine HuntScalar_r4 (list, value, index, start, allowTopValue, &
-    & allowBelowValue, nearest )
+    & allowBelowValue, nearest, logSpace )
     integer, parameter :: RK = R4
 
     ! Dummy arguments
@@ -168,6 +170,7 @@ contains
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value instead
+    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
 
     ! Local variables
 
@@ -181,7 +184,7 @@ contains
 ! ------------------------------------------------  HuntScalar_r8  -----
 
   subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
-    & allowBelowValue, nearest )
+    & allowBelowValue, nearest, logSpace )
     integer, parameter :: RK = R8
 
     ! Dummy arguments
@@ -192,6 +195,7 @@ contains
     logical, optional, intent(in) :: allowTopValue ! Can return N
     logical, optional, intent(in) :: allowBelowValue ! Can return 0
     logical, optional, intent(in) :: nearest ! Choose nearest value instead
+    logical, optional, intent(in) :: logSpace ! Choose nearest based on log space
 
     ! Local variables
 
@@ -487,6 +491,10 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.30  2004/09/10 23:52:29  livesey
+! Added the logSpace options for Hunt (not actually needed but never
+! mind).
+!
 ! Revision 2.29  2003/09/11 23:09:18  livesey
 ! Added skipNewY argument
 !
