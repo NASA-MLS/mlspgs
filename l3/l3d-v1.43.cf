@@ -134,8 +134,7 @@ BEGIN Standard
     ;;              combined mode
     ;; ascPresLvl -- ascending pressure levels
     ;; desPresLvl -- descending pressure levels
-    ;; rangFrequency -- starting:max values of Range of frequencies to be used
-    ;; rangWavenumber -- range of wavenumbers to be used (min:max of range)
+    ;; nWave -- number of waves
     ;;
     std,l3prodName="ClO",timeD="12:00:00",mode=ado,label="CLOL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
