@@ -5,6 +5,7 @@
 MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 !=============================================================================
 
+  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5
   USE MLSMessageModule, only: MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
@@ -83,8 +84,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   integer, parameter :: MAXNUML1BRADIDS=&
   & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
 
-  ! Whether to explicitly collect garbage at end of each chunk
-  logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.         
+  ! What units to use in summarizing timings at end of run
+  integer            :: SECTIONTIMINGUNITS = L_SECONDS
+  logical            :: patch = .false.       ! Set if run must not create file, swath  
   ! Whether to skip doing the retrieval--a pre-flight checkout of paths, etc.
   logical            :: SKIPRETRIEVAL = .false.         
   ! Whether to do only a pre-flight checkout of paths
@@ -104,6 +106,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.25  2003/12/05 00:39:35  pwagner
+! Added patch option, section timing units
+!
 ! Revision 2.24  2003/11/07 00:46:51  pwagner
 ! New quicker preflight option: --checkPaths
 !
