@@ -1057,7 +1057,7 @@ contains ! =====     Public Procedures     =============================
     ! Expand l2gp (initially all zero-size arrays) to take the new information
     call ExpandL2GPDataInPlace ( thisL2GP, &
       &thisL2GP%nTimes+noOutputInstances )
-
+    thisL2GP%nTimesTotal = quantity%template%grandTotalInstances
     ! Now copy the information from the quantity to the l2gpData
 
     ! name is an integer, but L2GP%name is Character data
@@ -1402,6 +1402,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.98  2003/12/03 17:50:54  pwagner
+! L2GP tracks both nTimes (for this slave) and nTimesTotal (done by all)
+!
 ! Revision 2.97  2003/11/14 23:38:45  pwagner
 ! Uses DirectWrite databse in preference to repeated calls to toolkit
 !
