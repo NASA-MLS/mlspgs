@@ -281,10 +281,13 @@ do
   then
     sed -f temp.sed "$the_file"
   else
-    $resed -f temp.sed "$the_file" > temp1.sed
+    sed -f temp.sed "$the_file" > temp1.sed
     mv temp1.sed "$the_file"
   fi
 done
 rm temp.sed
 exit 0
 # $Log$
+# Revision 1.1  2003/05/22 20:52:19  pwagner
+# First commit
+#
