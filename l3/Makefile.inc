@@ -26,8 +26,11 @@ OBJLIB = $M/declaration_table.o $M/error_handler.o     $M/expr_m.o \
          $M/parser.o            $M/string_table.o      $M/symbol_table.o \
          $M/symbol_types.o      $M/table_dumper.o      $M/table_generator.o \
          $M/toggles_core.o      $M/trace_m.o           $M/tree.o \
-         $M/tree_types.o        $M/units.o             $M/MLSStrings.o \
-         $M/MLSPCF.o            $M/dates_module.o      $M/L2GPData.o
+         $M/tree_types.o        $M/units.o \
+         $M/Allocate_Deallocate.o  $M/HDF-EOS.o  $M/Hdf.o  $M/L2GPData.o \
+         $M/MLSCommon.o  $M/MLSPCF.o  $M/MLSStrings.o   $M/dates_module.o \
+         $M/swapi.o  $M/swapi_character_array.o  $M/swapi_character_scalar.o \
+         $M/swapi_double.o  $M/swapi_integer.o $M/swapi_real.o
 
 # These are used to make tar, which is from the parent of $(MLS):
 SRCLIB = lib/declaration_table.f90 lib/error_handler.f90     lib/expr_m.f90 \
@@ -53,10 +56,7 @@ SRC_L3 = l3/init_tables_module.f90 l3/L2Interface.f90 l3/L3CF.f90 \
 # Files that must be compiled here from sources in lib, because
 # they depend on init_tables_module:
 
-OBJ_SRC_LIB = 
-# Path to MLS library sources:
-MLS = $S/../lib
-_m.o tree_checker.o
+OBJ_SRC_LIB = getCF_m.o tree_checker.o
 
 # These are used to make tar, which is from the parent of $(MLS):
 SRC_LIB = srclib/getCF_m.f90 srclib/tree_checker.f90
@@ -96,7 +96,7 @@ OpenInit.o : $A/OpenInit.f90 $M/MLSPCF.o $M/MLSMessageModule.o L3DMData.o \
 	$(F90) -c $(FOPTS) $I$M $I$A $A/OpenInit.f90
 
 L2Interface.o : $M/Hdf.o $M/L2GPData.o $M/MLSCommon.o $M/MLSMessageModule.o \
-                $M/MLSStrings.o $M/SDPToolkit.o L3DMData.o MLSPCF.o OpenInit.o
+                $M/MLSPCF.o $M/MLSStrings.o L3DMData.o OpenInit.o
 	$(F90) -c $(FOPTS) $(DUSTY) $I$M $A/L2Interface.f90
 
 OutputClose.o : $M/MLSCommon.o $M/MLSMessageModule.o L3DMData.o L3CF.o \
@@ -134,6 +134,9 @@ tar:
           $(SRC_LIB) lib/test_cf_parser/*
 
 # $Log$
+# Revision 1.3  2000/11/16 17:43:22  nakamura
+# Added L2GPData, L2Interface modules.
+#
 # Revision 1.2  2000/11/15 01:04:15  vsnyder
 # Add MLSS symbol, use it to correct pathname for tree_checker.f90 and getCF.f90
 #
