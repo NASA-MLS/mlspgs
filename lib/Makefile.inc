@@ -68,7 +68,7 @@ clean:
 
 #.f90.o:
 %.o: %.f90
-	$(F90) $(FOPTS) -c $<
+	$(F90) $(FOPTS) -c $I$S $<
 
 # The following files have special build requirements.  If you regenerate
 # the dependencies using an automatic tool, make sure you re-create these
@@ -105,6 +105,7 @@ MLSSignalNomenclature.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 MLSStrings.o: MLSMessageModule.o
 MatrixModule_0.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
 	dump_0.o output_m.o
+MatrixModule_1.o: MLSMessageModule.o MatrixModule_0.o VectorsModule.o
 QuantityTemplates.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
         MLSSignalNomenclature.o addItemToDatabase.f9h
 Units.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
@@ -142,6 +143,7 @@ table_dumper.o: MLSCF.o declaration_table.o intrinsic.o output_m.o \
 table_generator.o: MLSCF.o declaration_table.o expr_m.o intrinsic.o \
 	lexer_core.o output_m.o string_table.o toggles_core.o trace_m.o \
 	tree.o tree_types.o
+test_cholesky.o: MatrixModule_0.o MLSCommon.o machine.o
 test_multiply.o: MatrixModule_0.o MLSCommon.o machine.o
 test_sparsify.o: MatrixModule_0.o MLSCommon.o
 trace_m.o: lexer_core.o output_m.o tree.o
@@ -155,6 +157,10 @@ units.o: declaration_table.o intrinsic.o tree.o
 # ========================================================================
 # Test harnesses
 
+test_cholesky: test_cholesky.o libmls.a
+	$(F90) $(LDOPTS) -o test_cholesky test_cholesky.o -L. -lmls \
+                 -L$(PGSTK) -lPGSTK \
+
 test_multiply: test_multiply.o libmls.a
 	$(F90) $(LDOPTS) -o test_multiply test_multiply.o -L. -lmls \
                  -L$(PGSTK) -lPGSTK \
@@ -166,6 +172,9 @@ test_sparsify: test_sparsify.o libmls.a
 # ========================================================================
 
 # $Log$
+# Revision 2.17  2000/10/12 23:59:47  vsnyder
+# Account for moving QuantityTemplates.f90 and VectorTemplates.f90 to mlspgs/lib
+#
 # Revision 2.16  2000/10/12 22:34:41  vsnyder
 # Correct dependencies for test_multiply.o (again)
 #
