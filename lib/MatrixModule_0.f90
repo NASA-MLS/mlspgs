@@ -499,18 +499,18 @@ contains ! =====     Public Procedures     =============================
     call destroyBlock ( z )
     if ( x%kind == M_absent ) then
       z = emptyBlock
-      return
+    else
+      z%kind = x%kind
+      call allocate_test ( z%r1, ubound(x%r1,1), "z%r1", ModuleName, &
+        & lowBound=lbound(x%r1,1) )
+      z%r1 = x%r1
+      call allocate_test ( z%r2, ubound(x%r2,1), "z%r2", ModuleName, &
+        lowBound=lbound(x%r2,1) )
+      z%r2 = x%r2
+      call allocate_test ( z%values, size(x%values,1), size(x%values,2), &
+        & "z%values", ModuleName )
     end if
-    z%kind = x%kind
     z%nRows = x%nRows; z%nCols = x%nCols
-    call allocate_test ( z%r1, ubound(x%r1,1), "z%r1", ModuleName, &
-      & lowBound=lbound(x%r1,1) )
-    z%r1 = x%r1
-    call allocate_test ( z%r2, ubound(x%r2,1), "z%r2", ModuleName, &
-      lowBound=lbound(x%r2,1) )
-    z%r2 = x%r2
-    call allocate_test ( z%values, size(x%values,1), size(x%values,2), &
-      & "z%values", ModuleName )
   end subroutine CloneBlock
 
   ! -------------------------------------------------  ColumnScale_0  -----
@@ -747,7 +747,11 @@ contains ! =====     Public Procedures     =============================
   real(r8) function MaxAbsVal_0 ( B )
   ! Return the magnitude of the element in B that has the largest magnitude.
     type(MatrixElement_T), intent(in) :: B
-    maxAbsVal_0 = maxval(abs(b%values))
+    if ( b%kind == m_absent ) then
+      maxAbsVal_0 = 0.0
+    else
+      maxAbsVal_0 = maxval(abs(b%values))
+    end if
   end function MaxAbsVal_0
 
   ! --------------------------------------------------  MinDiag_0  -----
@@ -1173,7 +1177,11 @@ contains ! =====     Public Procedures     =============================
             end do ! i = 1, xb%ncols
           end do ! j = 1, yb%ncols
         else
-          zb%values = zb%values + matmul(transpose(xb%values),yb%values)
+          if ( .not. my_sub ) then
+            zb%values = zb%values + matmul(transpose(xb%values),yb%values)
+          else
+            zb%values = zb%values - matmul(transpose(xb%values),yb%values)
+          end if
         end if
       end select
     end select
@@ -1884,6 +1892,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.25  2001/05/10 02:14:11  vsnyder
+! Repair CloneBlock, MaxAbsVal, MultiplyMatrixBlocks
+!
 ! Revision 2.24  2001/05/09 19:45:37  vsnyder
 ! More work correcting blunders in sparse matrix code.  Add BandHeight
 ! argument to CreateBlock.  Correct loss of lower bounds in CloneBlock.
