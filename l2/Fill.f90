@@ -18,7 +18,8 @@ module Fill                     ! Create vectors and fill them.
     & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
     & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_PRECISION,  F_PTANQUANTITY, &
     & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
-    & F_RESETSEED, F_Rows, F_SCECI, F_SCVEL, F_SEED, F_SOURCE, F_SOURCEGRID, &
+    & F_RESETSEED, F_Rows, F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
+    & F_SOURCE, F_SOURCEGRID, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
     & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, &
@@ -30,7 +31,7 @@ module Fill                     ! Create vectors and fill them.
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, &
-    & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
+    & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
@@ -554,6 +555,12 @@ contains ! =====     Public Procedures     =============================
           case ( f_scVel )                ! For special fill of losVel
             scVelVectorIndex = decoration(decoration(subtree(1,gson)))
             scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_scVelECI )                ! For special fill of losVel
+            scVelVectorIndex = decoration(decoration(subtree(1,gson)))
+            scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_scVelECR )                ! For special fill of losVel
+            scVelVectorIndex = decoration(decoration(subtree(1,gson)))
+            scVelQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_seed ) ! For explicitly setting mls_random_seed
             seedNode=subtree(j,key)
           case ( f_sourceL2AUX )          ! Which L2AUXDatabase entry to use
@@ -738,7 +745,8 @@ contains ! =====     Public Procedures     =============================
 
           select case ( quantity%template%quantityType )
           case ( l_losVel )
-            if ( .not. any(got( (/f_tngtECI, f_scECI, f_scVel/) )) ) then
+            if ( .not. any(got( &
+            & (/f_tngtECI, f_scECI, f_scVel, f_scVelECI, f_scVelECR/) )) ) then
               call Announce_error ( key, badlosVelFill )
             else
               tngtECIQuantity => GetVectorQtyByTemplateIndex( &
@@ -1457,7 +1465,9 @@ contains ! =====     Public Procedures     =============================
     if ( (qty%template%quantityType /= l_losVel) .or. &
       &  (tngtECI%template%quantityType /= l_tngtECI) .or. &
       &  (scECI%template%quantityType /= l_scECI) .or. &
-      &  (scVel%template%quantityType /= l_scVel) ) then
+      & .not. any( &
+      &  (scVel%template%quantityType /= &
+      & (/ l_scVel, l_scVelECI, l_scVelECR /))) ) then
       call Announce_Error ( key, badLOSVelFill )
       return
     end if
@@ -2539,6 +2549,10 @@ contains ! =====     Public Procedures     =============================
       nameString='scECI'
     case ( l_scVel )
       nameString='scVel'
+    case ( l_scVelECI )
+      nameString='scVelECI'
+    case ( l_scVelECR )
+      nameString='scVelECR'
     case ( l_scGeocAlt )
       nameString='scGeocAlt'
     case default
@@ -2926,6 +2940,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.111  2002/03/14 01:01:17  pwagner
+! Can fill scVelECI and scVelECR from l1b
+!
 ! Revision 2.110  2002/03/13 22:01:41  livesey
 ! Added masking of fill from vector quantity, also changed
 ! from m_explicitfill to m_fill
