@@ -17,14 +17,17 @@ module Dot_M
   interface DOT
     real function SDOT ( N, X, INCX, Y, INCY )
       integer, intent(in) :: N, INCX, INCY
-      real, intent(in) :: X(*), Y(*)
+      real, intent(in) :: X, Y
     end function SDOT
     double precision function DDOT ( N, X, INCX, Y, INCY )
       integer, intent(in) :: N, INCX, INCY
-      double precision, intent(in) :: X(*), Y(*)
+      double precision, intent(in) :: X, Y
     end function DDOT
   end interface
 
 end module Dot_M
 
 ! $Log$
+! Revision 1.2  2001/11/03 00:56:36  pwagner
+! Added Copyright statement
+!
