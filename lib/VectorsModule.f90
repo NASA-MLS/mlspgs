@@ -41,6 +41,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! DestroyVectorTemplateInfo    Destroys a vector template
 ! DestroyVectorValue           Destroy the "values" field in all of the quantities in a vector
 ! DotVectors                   z = x . y
+! DotVectorsMasked             z = x . y, but only where mask is "off"
 ! DumpMask                     Display only the mask information for a vector
 ! dump                         Interface for next three
 ! dump_vector                  Display how a single vector is made up
@@ -80,7 +81,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   private
   ! Generics
   public :: Assignment (=), DUMP, Multiply, operator (+), operator (-)
-  public :: operator (*), operator ( .DOT. )
+  public :: operator (*), operator ( .DOT. ), operator ( .MDOT. )
   ! Specifics
   public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
   public :: AddVectorToDatabase, AssignVector, AXPY, ClearMask
@@ -89,6 +90,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
   public :: DestroyVectorTemplateInfo, DestroyVectorValue, DotVectors
+  public :: DotVectorsMasked
   public :: DumpMask, DumpQuantityMask, DumpVectorMask, Dump_Vector
   public :: Dump_Vectors, Dump_Vector_Templates
   public :: GetVectorQuantity, GetVectorQuantityByType
@@ -133,6 +135,10 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   interface operator ( .DOT. )
     module procedure DotVectors
+  end interface
+
+  interface operator ( .MDOT. )
+    module procedure DotVectorsMasked
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -771,6 +777,53 @@ contains ! =====     Public Procedures     =============================
     end do
   end function DotVectors
 
+  !--------------------------------------------  DotVectorsMasked  -----
+  real(r8) function DotVectorsMasked ( X, Y ) result (Z)
+  ! Compute the inner product of two vectors.  Ignore elements masked
+  ! by m_linAlg in either X or Y.
+
+    ! Dummy arguments:
+    type(Vector_T), intent(in) :: X, Y
+    ! Local variables:
+    integer :: I, J, K        ! Subscripts and loop inductors
+    ! Executable statements:
+    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Cannot .DOT. vectors having different templates" )
+    z = 0.0_r8
+    do i = 1, size(x%quantities)
+      if ( associated(x%quantities(i)%mask) ) then
+        if ( associated(y%quantities(i)%mask) ) then
+          do j = 1, size(x%quantities(i)%values,1)
+            do k = 1, size(x%quantities(i)%values,2)
+              if ( iand(ior(ichar(x%quantities(i)%mask(j,k)), &
+                &           ichar(y%quantities(i)%mask(j,k))), m_linAlg) == 0 ) &
+                & z = z + x%quantities(i)%values(j,k) * &
+                  &       y%quantities(i)%values(j,k)
+            end do ! k
+          end do ! j
+        else
+          do j = 1, size(x%quantities(i)%values,1)
+            do k = 1, size(x%quantities(i)%values,2)
+              if ( iand(ichar(x%quantities(i)%mask(j,k)), m_linAlg) == 0 ) &
+                & z = z + x%quantities(i)%values(j,k) * &
+                  &       y%quantities(i)%values(j,k)
+            end do ! k
+          end do ! j
+        end if
+      else if ( associated(y%quantities(i)%mask) ) then
+          do j = 1, size(x%quantities(i)%values,1)
+            do k = 1, size(x%quantities(i)%values,2)
+              if ( iand(ichar(y%quantities(i)%mask(j,k)), m_linAlg) == 0 ) &
+                & z = z + x%quantities(i)%values(j,k) * &
+                  &       y%quantities(i)%values(j,k)
+            end do ! k
+          end do ! j
+      else
+        z = z + sum( x%quantities(i)%values * y%quantities(i)%values )
+      end if
+    end do
+  end function DotVectorsMasked
+
   ! -----------------------------------------  DumpQuantityMask  -----
   subroutine DumpQuantityMask ( VectorQuantity )
     type (VectorValue_T), intent(in) :: VectorQuantity
@@ -808,10 +861,10 @@ contains ! =====     Public Procedures     =============================
               call output ( '      ' )
               w = 6
             end if
-            call output ( ichar(vectorQuantity%mask(j,i)), &
-              & format='(z3.2)' )
             w = w + 3
             j = j + 1
+            call output ( ichar(vectorQuantity%mask(j,i)), &
+              & format='(z3.2)' )
           end do
           call output ( '', advance='yes' )
         end do                        ! Surface loop
@@ -959,7 +1012,9 @@ contains ! =====     Public Procedures     =============================
         if ( myDetails > 0 ) then
           call dump ( vector%quantities(j)%values, '  Elements = ' )
           if ( associated(vector%quantities(j)%mask) ) then
-            call dump ( ichar(vector%quantities(j)%mask), format='(z2.2)' )
+            call dump ( ichar(vector%quantities(j)%mask), name='Mask=', &
+              & format='(z3.2)', width = 20 )
+!           call dumpQuantityMask ( vector%quantities(j) )
           else
             call output ( '      Without mask', advance='yes' )
           end if
@@ -1719,6 +1774,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.77  2002/02/08 22:58:14  livesey
+! Made CopyVectorMask public
+!
 ! Revision 2.76  2002/02/08 22:51:40  livesey
 ! Added CopyVectorMask
 !
