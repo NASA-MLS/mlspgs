@@ -63,7 +63,9 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
       scf default is 10; sips default is 1; 1 means allow no failures
   --maxFailuresPerMachine[ ]<amount> mark bad any machine after <amount> failures
       scf default is 1; sips default is 2; 1 means allow no failures
-  --[n]patch: Do [not] let run create file, swath on first directWrite
+  --[n]patch: Don't [do] let run create file, swath on first directWrite
+    by default, the 1st directwrite obliterates an existing file
+    turning this option on will let you merely patch it instead
   --pge <commandname>: What to put on commandline instead of mlsl2
     when giving slaves their tasks (useful when using toolkit)
   --recl[ ]<number>: set the max record length size for l2cf to <number>
@@ -113,6 +115,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.31  2003/12/11 22:57:29  pwagner
+ idents option lets slave verify whether its version same as master
+
  Revision 1.30  2003/12/05 00:56:38  pwagner
  Note T[digit][letter] elaboration; also --patch
 
