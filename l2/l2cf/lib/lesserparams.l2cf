@@ -9,7 +9,7 @@
 !define(elevR5H,{0.000 degrees})
 !define(elevR5V,{0.000 degrees})
 
-!define(o2vmr,{0.0295 vmr})
+!define(o2vmr,{0.2095 vmr})
 !define(n2vmr,{0.805 vmr})
 
 !define(spaceRadiance,{2.735 K})
