@@ -799,6 +799,9 @@ contains ! ================================ Procedures ======================
             
             ! Save dead chunk number, increment casualty figure
             parallel%failedChunks = catLists(parallel%failedChunks, deadChunk)
+            if ( .not. usingSubmit ) &
+            & parallel%failedMachs = &
+            & catLists(parallel%failedMachs, trim(machineNames(deadMachine)))
             parallel%numFailedChunks = parallel%numFailedChunks + 1
           else
             ! Otherwise we'd already forgotten about this slave, it told
@@ -1335,6 +1338,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.68  2004/09/16 23:57:31  pwagner
+! Now tracks machine names of failed chunks
+!
 ! Revision 2.67  2004/09/16 00:18:03  pwagner
 ! Keeps record of completed, failed chunks
 !
