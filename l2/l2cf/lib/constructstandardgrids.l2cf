@@ -1,0 +1,25 @@
+; $Id$
+
+; This is a new l2cf fragement that defines all the (mainly vertical)
+; grids.
+
+vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:6,9:3]
+vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[21:12,14:6,9:3]
+vGridExtinction: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[25:6,9:3]
+vGridTangent: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[3:6,10:12]
+vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+vGridBaseline: vGrid, type=Explicit, coordinate=Zeta, values=100mb
+vGridTropH2O: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start= 464.158872744048438mb, formula=[6:6]
+vGridDiag: vGrid, type=Logarithmic, coordinate=Zeta, $
+  start=1000mb, formula=[10:1]
+sGridStandard:  vGrid, type=Explicit,   $
+  values=[50,100,150,200,250,300,350,400,450,500,550] ;km
+vGridIWC: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start= 464.158872744048438mb, formula=[7:6]
+
+; $Log$
