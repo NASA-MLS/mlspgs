@@ -48,6 +48,8 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
     (--npcf sets --nmeta and --ncfpcf.)
   --recl <number>: set the max record length size for l2cf to <number>
       (In case the default value, 10000, is too small for some l2cfs)
+  --subblock <number>: Set the number of reals to consider when subblocking the
+    matrix multiply
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit
     (--ntk sets --npcf, --ncfpcf and --nmeta)
   --version: Print current version number
@@ -89,6 +91,9 @@ by the equal-signs--stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.14  2002/06/12 17:57:51  livesey
+ Added --submit information
+
  Revision 1.13  2002/05/24 17:35:31  pwagner
  Added --recl option
 
