@@ -9,13 +9,11 @@ module Open_Init
 
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T, R8, i4
   use MLSL2Options, only: LEVEL1_HDFVERSION
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning, &
-    &                         MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSStringLists, only: catLists, NumStringElements, GetStringElement, &
     & utc_to_yyyymmdd
-  use Output_m, only: BLANKS, Output
-  use PCFHdr, only: GlobalAttributes, &
-    & CreatePCFAnnotation, FillTAI93Attribute
+  use Output_m, only: Blanks, Output
+  use PCFHdr, only: GlobalAttributes, CreatePCFAnnotation, FillTAI93Attribute
   use SDPToolkit, only: max_orbits
   use Toggles, only: Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
@@ -783,6 +781,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.81  2004/12/28 00:23:03  vsnyder
+! Remove unreferenced use names
+!
 ! Revision 2.80  2004/12/15 23:35:59  pwagner
 ! Should not warn about missing switches setting in PCF
 !
