@@ -367,8 +367,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     WC (1,:) = CloudIce%values(:,instance)
     WC (2,:) = CloudWater%values(:,instance)
 
-!    print*, noFreqs, noSurf, radiance%template%noSurfs, size( ForwardModelConfig%molecules)
+!    print*, noFreqs, noSurf, radiance%template%noSurfs, 
+!    print*, size( ForwardModelConfig%molecules)
 !    print*, 10.0**(-temp%template%surfs)
+!    print*,int(sizeDistribution%values(1,instance))
+!     print*,ForwardModelConfig%no_model_surfs
+!    print*, real(10.0**(-ptan%values(:,maf)))
+!    print*,real(gph%values(:, instance))
+!    stop
 
     call CloudForwardModel (                                                 &
       & noFreqs,                                                             &
@@ -383,23 +389,25 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & real(temp%values(:,instance)),                                       &
       & real(vmrArray),                                                      &
       & real(WC),                                                            &
-      & sizeDistribution%values(1,instance),                                 &
+      & int(sizeDistribution%values(1,instance)),                            &
       & real(10.0**(-ptan%values(:,maf))),                                   &
       & earthradius%values(1,1),                                             &
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
-      & a_clearSkyRadiance,                                                  &
-      & a_cloudInducedRadiance,                                              &
-      & a_totalExtinction,                                                   &
-      & a_cloudExtinction,                                                   &
-      & a_massMeanDiameter,                                                  &
-      & a_effectiveOpticalDepth,                                             &
-      & cloudRADSensitivity,                                                 &
+      & real(a_clearSkyRadiance),                                            &
+      & real(a_cloudInducedRadiance),                                        &
+      & real(a_totalExtinction),                                             &
+      & real(a_cloudExtinction),                                             &
+      & real(a_massMeanDiameter),                                            &
+      & real(a_effectiveOpticalDepth),                                       &
+      & real(a_cloudRADSensitivity),                                         &
       & forwardModelConfig%NUM_SCATTERING_ANGLES,                            &  
       & forwardModelConfig%NUM_AZIMUTH_ANGLES,                               &
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS )
+
+    stop
 
     deallocate (WC, stat=status)
 
@@ -428,10 +436,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     
     cloudExtinction%values ( 1:noLayers, instance ) =                        &
       & reshape ( transpose(a_cloudExtinction), (/noLayers*noFreqs/) )
-    massMeanDiameterIce%values (1:noLayers,instance)=a_massMeanDiameter(1,:)
-    massMeanDiameterWater%values(1:noLayers,instance)=a_massMeanDiameter(2,:)
+    massMeanDiameterIce%values (1:noLayers,instance)=                        &
+      &                                  a_massMeanDiameter(1,:)
+    massMeanDiameterWater%values(1:noLayers,instance)=                       &
+      &                                  a_massMeanDiameter(2,:)
     totalExtinction%values ( 1:noLayers, instance ) =                        &
-      & reshape ( transpose(a_totalExtinction), (/noLayers*noFreqs/) )
+      & reshape ( transpose(a_totalExtinction),                              &
+      &         (/noLayers*noFreqs/) )
+
+! stop
 
     ! Remove temporary quantities
     call Deallocate_test ( a_massMeanDiameter,                               &
@@ -456,4 +469,5 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
   end subroutine FullCloudForwardModelWrapper
 
 end module FullCloudForwardModel
+
 
