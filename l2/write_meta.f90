@@ -667,7 +667,8 @@ contains
     end if
 
 !    hdf_sdid = sfstart (physical_fileName, DFACC_RDWR) 
-    hdf_sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion) 
+    hdf_sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
+      & hdfVersion=hdfVersion, addingMetaData=.true.) 
 
     if ( hdf_sdid == -1 ) then
       call announce_error ( 0, &
@@ -788,7 +789,8 @@ contains
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
     if ( SFINBETWEENSTARTEND ) then
-      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion)
+      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
+        & hdfVersion=hdfVersion, addingMetaData=.true.)
     else
       sdid = hdf_sdid
     endif 
@@ -930,7 +932,8 @@ contains
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
     if ( SFINBETWEENSTARTEND ) then
-      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion)
+      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, &
+        & hdfVersion=hdfVersion, addingMetaData=.true.)
     else
       sdid = hdf_sdid
     endif 
@@ -1507,6 +1510,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.32  2002/12/06 23:37:22  pwagner
+! addingMetaData now optional arg to mls_sfstart
+!
 ! Revision 2.31  2002/11/22 12:31:16  mjf
 ! Added nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
