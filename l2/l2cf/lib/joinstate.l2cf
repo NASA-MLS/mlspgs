@@ -25,7 +25,7 @@ begin Join
 },{
 
   ;; Join the tropopause pressure
-  !directWriteDGGNoPrecision(state.tpPressure,'tpPressure wmo')
+  !directWriteDGGNoPrecisionNotState(state.tpPressure,'tpPressure wmo')
 
   ;; First the species with columns
   !define(writeStandardProductWithColumn,{

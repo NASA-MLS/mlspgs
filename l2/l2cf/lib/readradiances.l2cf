@@ -15,7 +15,10 @@ begin Fill
   !forall( {readRadiances}, !relevantBands)
 
   ;; Setup the radianceDiagnostics vector
-  radianceDiagnostics: Vector, template=radianceDiagnosticsTemplate
+  minorFrameDiagnostics: Vector, template=minorFrameDiagnosticsTemplate
+  mappedChisqMax: Vector, template=mappedChisqTemplate
+  mappedChisqMean: Vector, template=mappedChisqTemplate
+  otherDiagnostics: Vector, template=otherDiagnosticsTemplate
 
   ;; Now set the scan model precision, and possibly add noise to the values.
   Fill, quantity=measurementNoise.scanResidualGHz, method=explicit, $
@@ -33,6 +36,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.4  2003/05/10 00:57:18  livesey
+; Renamed radianceChisq to radianceDiagnostics
+;
 ; Revision 1.3  2002/11/26 23:39:17  livesey
 ; Added construction of radianceChisq vector
 ;

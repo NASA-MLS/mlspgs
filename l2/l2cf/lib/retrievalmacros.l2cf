@@ -193,9 +193,14 @@ end Fill})
 !define(directWriteDGG,{!dnl
 Label, quantity=state.$1, label='$2'!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectDGG({source=state.$1,precision=outputPrecision.$1})})
+;; This macro is similar to the above except for the case where
+;; the vector name should be included in $1
+!define(directWriteDGGNotState,{!dnl
+Label, quantity=$1, label=$3!ifelse($#,3,{},{,!shift(!shift(!shift($*)))})!dnl
+!noteDirectDGG({source=$1,precision=$2})})
 ;; This macro is similar to the above except for the case where there
-;; is no precision quantity, and the vector name should be included in $1
-!define(directWriteDGGNoPrecision,{!dnl
+;; is no precision quantity
+!define(directWriteDGGNoPrecisionNotState,{!dnl
 Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectDGG({source=$1})})
 
@@ -276,55 +281,66 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 })
 
 ;; This macro is used to fill radiance chi squares
-!define(fillRadianceDiagnostics,{!dnl
-   Fill, quantity=radianceDiagnostics.chisqMMAF$1, method=special, $
+!define(fillMinorFrameDiagnostics,{!dnl
+   Fill, quantity=minorFrameDiagnostics.chisqMMAF$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=radianceDiagnostics.chisqMMIF$1, method=special, $
+   Fill, quantity=minorFrameDiagnostics.chisqMMIF$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=radianceDiagnostics.chisqChan$1, method=special, $
+   Fill, quantity=minorFrameDiagnostics.chisqChan$1, method=special, $
      measurements=y!phase.band$1, model=f!phase.band$1, $
      noise=yNoise!phase.band$1, /ignoreZero, /ignoreNegative
-   Fill, quantity=radianceDiagnostics.noRadsPerMIF$1, method=special, $
-     measurements=y!phase.band$1
-   Fill, quantity=radianceDiagnostics.chisqBinned$1, method=binmax, $
-     sourceQuantity=radianceDiagnostics.chisqMMIF$1, $
+   Fill, quantity=minorFrameDiagnostics.noRadsPerMIF$1, method=special, $
+     measurements=y!phase.band$1!nl})
+
+!define(fillMappedDiagnostics,{!dnl
+   Fill, quantity=mappedChisqMean.chisqBinned$1, method=binmean, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
      ptanQuantity=state.ptan!moduleForBand($1)
-   Fill, quantity=radianceDiagnostics.noRadsBinned$1, method=binTotal, $
-     sourceQuantity=radianceDiagnostics.noRadsPerMIF$1, $
+   Fill, quantity=mappedChisqMax.chisqBinned$1, method=binmax, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=otherDiagnostics.noRadsBinned$1, method=binTotal, $
+     sourceQuantity=minorFrameDiagnostics.noRadsPerMIF$1, $
      ptanQuantity=state.ptan!moduleForBand($1)!nl})
 
 ;; This macro direct writes the above filled quantities
 !define(directWriteRadianceDiagnostics,{!dnl
- !directWriteDGMNotState(radianceDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
- !directWriteDGMNotState(radianceDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
- !directWriteDGMNotState(radianceDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
- !directWriteDGMNotState(radianceDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase',/prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
+ !directWriteDGMNotState(minorFrameDiagnostics.noRadsPerMIF$1,' noRadsPerMIF !phase',/prefixSignal)
 
- !directWriteDGGNoPrecision(radianceDiagnostics.chisqBinned$1,!dnl
-   ' chisqBinned !phase', /prefixSignal)
- !directWriteDGGNoPrecision( radianceDiagnostics.noRadsBinned$1,!dnl
-   ' noRadsBinned !phase', /prefixSignal)!nl})
+ !directWriteDGGNotState(mappedChisqMean.chisqBinned$1,mappedChisqMax.chisqBinned$1,!dnl
+   ' chisqBinned !phase',/prefixSignal)
+ !directWriteDGGNoPrecisionNotState(otherDiagnostics.noRadsBinned$1,!dnl
+   ' noRadsBinned !phase',/prefixSignal)!nl})
 
 ;; This macro joins the above filled quantities
 !define(joinRadianceDiagnostics,{!dnl
-   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMAF$1, $
+   joinedDGM_chisqMMAF$1_!phase: l2aux, source=minorFrameDiagnostics.chisqMMAF$1, $
      /prefixSignal, sdName=' chisqMMAF !phase'
-   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMIF$1, $
+   joinedDGM_chisqMMIF$1_!phase: l2aux, source=minorFrameDiagnostics.chisqMMIF$1, $
      /prefixSignal, sdName=' chisqMMIF !phase'
-   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceDiagnostics.chisqChan$1, $
+   joinedDGM_chisqChan$1_!phase: l2aux, source=minorFrameDiagnostics.chisqChan$1, $
      /prefixSignal, sdName=' chisqChan !phase'
-   joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=radianceDiagnostics.noRadsPerMIF$1, $
+   joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=minorFrameDiagnostics.noRadsPerMIF$1, $
      /prefixSignal, sdName=' noRadsPerMIF !phase'
-   joinedDGG_chisqBinned$1_!phase: l2gp, source=radianceDiagnostics.chisqBinned$1, $
+
+   joinedDGG_chisqBinned$1_!phase: l2gp, $
+     source=mappedChiSqMean.chisqBinned$1, $
+     precision=mappedChisqMax.chisqBinned$1, $
      /prefixSignal, swath=' chisqBinned !phase'
-   joinedDGG_noRadsBinned$1_!phase: l2gp, source=radianceDiagnostics.noRadsBinned$1, $
+   joinedDGG_noRadsBinned$1_!phase: l2gp, $
+     source=minorFrameDiagnostics.noRadsBinned$1, $
      /prefixSignal, swath=' noRadsBinned !phase'
+
    !storeJoinedDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
    !storeJoinedDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
    !storeJoinedDGM(joinedDGM_chisqChan$1_!phase)!dnl
    !storeJoinedDGM(joinedDGM_noRadsPerMIF$1_!phase)!dnl
+
    !storeJoinedDGG(joinedDGG_chisqBinned$1_!phase)
    !storeJoinedDGG(joinedDGG_noRadsBinned$1_!phase)
 })
@@ -332,7 +348,8 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; This macro is the composite of the two above
 !define(doRadianceDiagnostics,{!dnl
    begin Fill
-     !forall(fillRadianceDiagnostics,$*)
+     !forall(fillMinorFrameDiagnostics,$*)
+     !forall(fillMappedDiagnostics,$*)
    end Fill
    begin Join
      !ifdef(flagAvoidDirectWrite,
@@ -358,7 +375,7 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    end Fill})
 
 ;; This macro writes the misc. diagnostics
-!define(directWriteOneDiagDGG,{!directWriteDGGNoPrecision(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
+!define(directWriteOneDiagDGG,{!directWriteDGGNoPrecisionNotState(diag!phase.$1,'!translit($1,{_},{-})-!phase')!nl})
 
 ;; This macro puts all the boring stuff in the Retrieve command line
 ;; that we're used to seeing
@@ -388,6 +405,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.77  2004/01/24 03:23:19  livesey
+; Now uses truth for edge of averaging kernels if available.
+;
 ; Revision 1.76  2004/01/16 15:55:36  mjf
 ; Some updates for precision estimates and 1D cases.
 ;

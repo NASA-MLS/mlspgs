@@ -445,9 +445,11 @@ begin Construct
 
   retrievalDiagnosticsTemplate: VectorTemplate, quantities = [ !allRetrievalDiagnostics ]
 
-  radianceDiagnosticsTemplate: VectorTemplate, quantities = [ $
-    !allChisqMMAFs, !allChisqMMIFs, !allChisqChans, !allChisqBinned, $
-    !allNoRadsPerMIF, !allNoRadsBinned ]
+  minorFrameDiagnosticsTemplate: VectorTemplate, quantities = [ $
+    !allChisqMMAFs, !allChisqMMIFs, !allChisqChans, $
+    !allNoRadsPerMIF ]
+  mappedChisqTemplate: VectorTemplate, quantities = [ !allChisqBinned ]
+  otherDiagnosticsTemplate: VectorTemplate, quantities = [ !allNoRadsBinned ]
 
   cloudOutputTemplate: VectorTemplate, quantities = [ $
     !allFoldedRadiances, !allDTs, !allCloudMinMax ]
