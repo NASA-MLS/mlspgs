@@ -4,17 +4,20 @@
 !===============================================================================
 module MLSFiles               ! Utility file routines
   !===============================================================================
-  use Hdf, only: DFACC_CREATE, DFACC_READ, sfstart, sfend
+  use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_READ, DFACC_RDWR, &
+    & sfstart, sfend
   use Hdf5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f
   use Hdf5_params, only: H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC
   use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
     & he5_gdopen, he5_gdclose
   use machine, only: io_error
-  use MLSCommon, only: i4, NameLen, BareFNLen
+  use MLSCommon, only: i4, BareFNLen
   use MLSStrings, only: Capitalize, LowerCase, Reverse, SortArray
   use output_m, only: blanks, output
-  use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, &
+  use SDPToolkit, only: &
+    & HDF5_ACC_CREATE, HDF5_ACC_RDONLY, HDF5_ACC_RDWR,  &
+    & Pgs_pc_getReference, PGS_S_SUCCESS, &
     & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
     & PGSd_IO_Gen_RDirFrm, PGSd_IO_Gen_RDirUnf, & 
     & PGSd_IO_Gen_WSeqFrm, PGSd_IO_Gen_WSeqUnf, & 
@@ -93,6 +96,23 @@ module MLSFiles               ! Utility file routines
   ! Whether to use PGS_MET commands in mls_sf(start)(end)
   ! (The alternative is to use hdf5 calls directly)
   logical, parameter :: PGS_MET4MLS_SF = .true.
+  ! Whether to pass hdf5_acc types to PGS_MET 
+  ! (The alternative is to pass h5f_acc directly)
+  ! Contradicting what the documents say,
+  ! currently (TK 5.2.7.4) the toolkit routine
+  ! PGS_MET_HDFSDStart.c assumes the File Access is of
+  ! one of the following types:
+  ! (1) hdf4_acc: DFACC_RDWR, DFACC_RDONLY, or DFACC_CREATE
+  !      (equiv. to HDF4_ACC_RDWR, etc.)
+  ! (2) hdf5_acc: HDF5_ACC_RDWR, HDF5_ACC_RDONLY, or HDF5_ACC_CREATE
+  !          * * *    w a r n i n g   * * *
+  ! According to mls/hirdls telecom of 03-12-2002 this will change
+  ! in a future release of the toolkit
+  ! That means some programmer (paw?) will have to revisit
+  ! this and see what the toolkit code actually does,
+  ! not just what the docs say
+  logical, parameter :: HDF5_ACC_TYPES_TO_MET = .true.
+  integer, parameter :: HDF5_ACC_DEFAULT = HDF5_ACC_RDWR
   
   ! The only legal unit numbers that files may be assigned
   ! for use by Fortran opens, closes, reads and writes
@@ -910,24 +930,44 @@ contains
   ! ---------------------------------------------  mls_sfstart  -----
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
+  ! Right now, it works for hdf4 files in general, but only for adding
+  ! metadata to hdf5 files
+  
+  ! Therefore, when the grand unified hdf4/hdf5 interfaces are
+  ! implemented this will probably need to take an added arg:
+  ! the logical addingMetadata
 
+! function mls_sfstart(FileName, FileAccess, addingMetadata, hdfVersion)
   function mls_sfstart(FileName, FileAccess, hdfVersion)
 
     ! Arguments
 
-      character (len=*), intent(in) :: FILENAME
-    integer(i4), intent(IN)       :: FileAccess
+    character (len=*), intent(in) :: FILENAME
+    integer(i4), intent(IN)       :: FileAccess ! (one of the hdf4 types)
+!   logical, intent(IN)           :: addingMetadata
     integer, optional, intent(in) :: hdfVersion
     integer                       :: mls_sfstart
     integer                       :: returnStatus
-    integer                       :: nameLength
     integer                       :: access_prp_default
     integer                       :: myhdfVersion
+    integer                       :: myAccess
     
     integer, parameter :: h5p_default_f = 0
     integer, external :: PGS_MET_SFstart
+    logical, parameter :: DEBUG = .true.
 
     ! begin
+   if ( DEBUG ) then
+     call output ('Entering mls_sfstart with args ', advance='no')
+     call output ('File name: ', advance='no')
+     call output (trim(Filename), advance='no')
+     call blanks (2)
+     call output ('FileAccess: ', advance='no')
+     call output (FileAccess, advance='no')
+     call blanks (2)
+     call output ('hdfVersion: ', advance='no')
+     call output (hdfVersion, advance='yes')
+   endif
    if ( present(hdfVersion) ) then
      myhdfVersion = hdfVersion
    else
@@ -936,45 +976,70 @@ contains
    if ( myhdfVersion == HDFVERSION_4) then
      mls_sfstart = sfstart (FileName, FileAccess)
      return
+   elseif ( myhdfVersion /= HDFVERSION_5) then
+     mls_sfstart = WRONGHDFVERSION
+     return
    endif
-!    mls_sfstart = PGS_MET_SFstart(FileName, hdf2hdf5_fileaccess(FileAccess))
    if ( PGS_MET4MLS_SF ) then
-     returnStatus = PGS_MET_SFstart(trim(FileName), &
-      & hdf2hdf5_fileaccess(FileAccess), mls_sfstart)
+     if ( .not. HDF5_ACC_TYPES_TO_MET ) then
+       myAccess = hdf2hdf5_fileaccess(FileAccess)
+     elseif ( FileAccess == DFACC_RDWR ) then
+       myAccess = HDF5_ACC_RDWR
+     elseif ( FileAccess == DFACC_CREATE ) then
+       myAccess = HDF5_ACC_CREATE
+     elseif ( FileAccess == DFACC_RDONLY ) then
+       myAccess = HDF5_ACC_RDONLY
+     else
+       myAccess = HDF5_ACC_DEFAULT
+     endif
+     returnStatus = PGS_MET_SFstart(trim(FileName), myAccess, mls_sfstart)
    else
      access_prp_default = h5p_default_f
      call h5fopen_f(trim(FileName), hdf2hdf5_fileaccess(FileAccess), &
       & mls_sfstart, returnStatus, access_prp_default)
    endif
-!     nameLength = LEN(FileName)
-!     returnStatus = h5fopen_c(FileName, nameLength, &
-!      & hdf2hdf5_fileaccess(FileAccess), access_prp_default, &
-!      & mls_sfstart)
-!     mls_sfstart he5_swopen(trim(
      if (returnStatus /= 0 ) then
        call output ('Try again--PGS_MET_SFstart still unhappy; returns ')
        call output (returnStatus, advance='yes')
        mls_sfstart = -1
       endif
+   if ( DEBUG ) then
+     call output ('Returning from mls_sfstart an sdid: ', advance='no')
+     call output (mls_sfstart, advance='yes')
+   endif
 
   end function mls_sfstart
 
   ! ---------------------------------------------  mls_sfend  -----
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
+  ! Right now, it works for hdf4 files in general, but only for adding
+  ! metadata to hdf5 files
+  
+  ! Therefore, when the grand unified hdf4/hdf5 interfaces are
+  ! implemented this will probably need to take an added arg:
+  ! the logical addingMetadata
 
   function mls_sfend(sdid, hdfVersion)
+! function mls_sfend(sdid, addingMetadata, hdfVersion)
 
     ! Arguments
 
     integer, intent(IN)       :: sdid  
     integer :: mls_sfend            
+!   logical, intent(IN)           :: addingMetadata
     integer, optional, intent(in) :: hdfVersion
 
     integer                       :: myhdfVersion
     integer, external :: PGS_MET_SFend
+    logical, parameter :: DEBUG = .true.
 
     ! begin
+   if ( DEBUG ) then
+     call output ('Entering mls_sfend with args ', advance='no')
+     call output ('sdid: ', advance='no')
+     call output (sdid, advance='yes')
+   endif
    if ( present(hdfVersion) ) then
      myhdfVersion = hdfVersion
    else
@@ -982,6 +1047,9 @@ contains
    endif
    if ( myhdfVersion == HDFVERSION_4) then
      mls_sfend = sfend (sdid)
+     return
+   elseif ( myhdfVersion /= HDFVERSION_5) then
+     mls_sfend = WRONGHDFVERSION
      return
    endif
 !    mls_sfend = h5fclose_c(sdid)
@@ -991,6 +1059,10 @@ contains
      call h5fclose_f(sdid, mls_sfend)
    endif
 !    mls_sfend = 0
+   if ( DEBUG ) then
+     call output ('Returning from mls_sfend a status: ', advance='no')
+     call output (mls_sfend, advance='yes')
+   endif
 
   end function mls_sfend
 
@@ -1000,23 +1072,23 @@ contains
   ! hdf version         returned value   integer
   !    hdf4                 hdf4           4
   !    hdf5                 hdf5           5
-  !  unknown                ????      NOSUCHHDFVERSION
+  !  unknown                ????      ERRORINH5FFUNCTION
 
   function mls_hdf_version(FileName, preferred_version, AccessType) &
    & result (hdf_version)
 
-    ! Arguments
+   ! Arguments
 
-      character (len=*), intent(in)  :: FILENAME
-   !   character (len=4)             :: hdf_version
-      integer(i4), optional, intent(in)  :: PREFERRED_VERSION
-      integer(i4), optional, intent(in)  :: ACCESSTYPE
-      integer(i4)                        :: HDF_VERSION
+    character (len=*), intent(in)  :: FILENAME                                  
+   ! character (len=4)             :: hdf_version                               
+    integer(i4), optional, intent(in)  :: PREFERRED_VERSION                     
+    integer(i4), optional, intent(in)  :: ACCESSTYPE   ! one of the hdf4 types  
+    integer(i4)                        :: HDF_VERSION                           
 
-      integer :: returnStatus
-      integer :: myPreferred_Version
-      integer :: myAccessType
-      logical :: is_hdf5
+    integer :: returnStatus                                                     
+    integer :: myPreferred_Version                                              
+    integer :: myAccessType                                                     
+    logical :: is_hdf5                                                          
 
     ! begin
 
@@ -1043,17 +1115,17 @@ contains
     endif
     
     returnStatus = 0
-    is_hdf5 = (DEFAULT_HDFVERSION == 5)
+    is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) ! was ... == 5
     call h5fis_hdf5_f(trim(FileName), is_hdf5, returnStatus)
     if ( returnStatus /= 0 ) then
 !      hdf_version = '????'
       hdf_version = ERRORINH5FFUNCTION
     elseif ( is_hdf5 ) then
 !      hdf_version = 'hdf5'
-      hdf_version = 5
+      hdf_version = HDFVERSION_5       ! 5
     else
 !      hdf_version = 'hdf4'
-      hdf_version = 4
+      hdf_version = HDFVERSION_4       ! 4
     endif
 
    ! hdf_version ==  myPreferred_Version ?
@@ -1070,6 +1142,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.9  2002/02/19 23:39:29  pwagner
+! Eliminated unwanted match between o3 and hno3
+!
 ! Revision 1.8  2002/01/31 00:36:41  pwagner
 ! Repaired comment statements
 !
