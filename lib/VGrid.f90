@@ -51,7 +51,7 @@ CONTAINS
          & "Inappropriate units for vertical coordinates"
 
     ! Local variables
-    INTEGER :: keyNo            ! Entry in the l2cf line
+    INTEGER :: keyNo, i            ! Entry in the l2cf line
     INTEGER :: family           ! Physical quantity family
     TYPE (MLSCFCell_T) :: cell  ! Part of the l2cf information
 
@@ -81,6 +81,7 @@ CONTAINS
        END SELECT
     END DO
 
+    vGrid%noSurfs = SIZE(vGrid%surfs)
     ! Now check that this is a sensible vGrid, first the obvious stuff
 
 
@@ -128,14 +129,17 @@ CONTAINS
     ! Dummy arguments
 
     TYPE (vGrid_T), INTENT(INOUT) :: vGrid
-
+    ! Local variables
+    INTEGER :: status
     ! Executable code
 
     vGrid%name=''
     vGrid%noSurfs=0
     vGrid%verticalCoordinate=VC_Invalid
 
-    DEALLOCATE(vGrid%surfs)
+    DEALLOCATE(vGrid%surfs, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"vGrid%surfs")
 
   END SUBROUTINE DestroyVGridContents
 
@@ -171,7 +175,9 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=vgrid
-    IF (ASSOCIATED(database))DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
     database=>tempDatabase
   END SUBROUTINE AddVGridToDatabase
 
@@ -185,13 +191,15 @@ CONTAINS
     TYPE (VGrid_T), DIMENSION(:), POINTER :: database
 
     ! Local variables
-    INTEGER :: vgridIndex
+    INTEGER :: vgridIndex, status
 
     IF (ASSOCIATED(database)) THEN
        DO vgridIndex=1,SIZE(database)
           CALL DestroyVGridContents(database(vgridIndex))
        ENDDO
-       DEALLOCATE(database)
+       DEALLOCATE(database, STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"database")
     ENDIF
   END SUBROUTINE DestroyVGridDatabase  
 
@@ -199,6 +207,11 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.11  2000/05/18 00:02:10  lungu
+! Commented out "IF (ASSOCIATED(vGrid%surfs))" so it works for the2nd, 3rd, etc calls.
+! Capitalized TRIM(cell%keyword).
+! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)".
+!
 ! Revision 1.10  2000/04/13 23:48:26  vsnyder
 ! Changed "LEN_TRIM()=="" to LEN_TRIM()==0 in CreateVGridFromMLSCFInfo
 !
