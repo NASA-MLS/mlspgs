@@ -8,11 +8,14 @@ module ConstructVectorTemplates ! Construct a template for a vector
   use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
   use INIT_TABLES_MODULE, only: F_QUANTITIES, F_SIGNALS
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use Output_M, only: Output
   use QuantityTemplates, only: QuantityTemplate_T
-  use VectorsModule, only: ConstructVectorTemplate, VectorTemplate_T
+  use String_Table, only: Display_String
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUBTREE
+  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
+    & SUBTREE
+  use VectorsModule, only: ConstructVectorTemplate, VectorTemplate_T
 
   implicit none
   public
@@ -40,10 +43,11 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:) :: quantityTemplates
 
     ! Local variables
-    integer :: I, J           ! Loop inductors
+    integer :: I, J, K        ! Loop inductors
     integer :: nSelections    ! How many selections?
     integer, dimension(:), pointer :: SELECTED
     integer :: SON            ! Son of Root
+    integer :: SOURCE         ! 256*line + column of erroneous input
 
     ! Executable code
 
@@ -71,7 +75,22 @@ contains ! =====     Public Procedures     =============================
           nSelections = nSelections + 1
           ! Get the quantity index that was put into the AST by Construct:
           selected(nSelections) = decoration(decoration(subtree(j,son)))
-        end do
+          ! Check for duplicate quantities
+          do k = 1, nSelections - 1
+            if ( selected(k) == selected(nSelections) ) then
+              source = source_ref( subtree(j,son) )
+              call output ( 'At line '  )
+              call output ( mod(source,256) )
+              call output ( ', column ' )
+              call output ( source/256 )
+              call output ( ', the quantity ' )
+              call display_string( sub_rosa(subtree(j,son)) )
+              call output ( ' duplicates a previous one.', advance='yes' )
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                "Duplicate quantity specified in vector template" )
+            end if
+          end do ! k = 1, nSelections - 1
+        end do ! j = 2, nsons(son)
       case ( f_signals ) ! ??? Needs work here ???
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           "This version can't handle the SIGNALS field of a vector template" )
@@ -96,6 +115,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.2  2000/12/19 20:14:57  vsnyder
+! Add test for duplicate quantities.
+!
 ! Revision 2.1  2000/11/16 02:01:03  vsnyder
 ! Remove unused variable STATUS.
 !
