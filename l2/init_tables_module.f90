@@ -83,7 +83,8 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_HDFNAME             = f_GPH + 1
   integer, public, parameter :: F_HEIGHT              = f_hdfname + 1
   integer, public, parameter :: F_HGRID               = f_height + 1
-  integer, public, parameter :: F_INTERPOLATIONFACTOR = f_hGrid + 1
+  integer, public, parameter :: F_INSTRUMENTMODULE    = f_hgrid +1
+  integer, public, parameter :: F_INTERPOLATIONFACTOR = f_instrumentmodule + 1
   integer, public, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
   integer, public, parameter :: F_LAST                = f_jacobian + 1
   integer, public, parameter :: F_LENGTH              = f_last + 1
@@ -353,6 +354,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_hdfname) =             add_ident ( 'hdfName' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
+    field_indices(f_instrumentmodule) =    add_ident ( 'instrumentModule' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_last) =                add_ident ( 'last' )
@@ -803,6 +805,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.17  2001/02/09 18:03:15  livesey
+! Added f_instrumentmodule
+!
 ! Revision 2.16  2001/02/08 21:54:25  livesey
 ! Remove L_None, now in intrinsic
 !
