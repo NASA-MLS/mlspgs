@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module ChunkDivide_m
@@ -13,6 +13,18 @@ module ChunkDivide_m
   implicit none
   private
 
+! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+! ChunkDivide              Divide MAFs in processing range among chunks  
+! DestroyChunkDatabase     Deallocate memory taken by chunk database     
+! === (end of toc) ===                                                   
+! === (start of api) ===
+! ChunkDivide (int root, TAI93_Range_T processingRange,
+!    L1BInfo_T l1bInfo, *mlSChunk_T Chunks(:) )      
+! DestroyChunkDatabase (*mlSChunk_T Chunks(:) )      
+! === (end of api) ===
   public :: DestroyChunkDatabase, ChunkDivide
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -67,6 +79,10 @@ module ChunkDivide_m
   interface dump
     module procedure DUMP_OBSTRUCTIONS
   end interface
+  
+  logical, parameter :: CHECKFORSHAREDMAFS = .true.
+  logical, parameter :: CHECKFORMAFSINRANGE = .true.
+  logical, parameter :: CHECKFORNONNEGOVLPS = .true.
 
 contains ! ===================================== Public Procedures =====
 
@@ -139,7 +155,7 @@ contains ! ===================================== Public Procedures =====
 
     ! Executable code
 
-    if ( toggle(gen) ) call trace_begin ( "ScanDivide", root )
+    if ( toggle(gen) ) call trace_begin ( "ChunkDivide", root )
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -150,9 +166,21 @@ contains ! ===================================== Public Procedures =====
     ! For methods other than fixed, we want to survey the L1 data and note the
     ! location of obstructions
     nullify ( obstructions )
-    if ( config%method /= l_fixed ) &
-      & call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
+    if ( config%method /= l_fixed ) then
+      call SurveyL1BData ( processingRange, l1bInfo, config, mafRange,&
       & obstructions )
+      if ( index(switches, 'chu') /= 0 ) then
+        call output ( ' processingRange ' )          
+        call output ( processingRange%startTime )              
+        call output ( ' ', advance='no' )    
+        call output ( processingRange%endTime )              
+        call output ( ' ', advance='yes' )    
+        call output ( ' mafRange ' )          
+        call output ( mafRange )              
+        call output ( ' ', advance='yes' )    
+      endif
+    endif
+
 
     ! Now go place the chunks.
     select case ( config%method )
@@ -174,12 +202,18 @@ contains ! ===================================== Public Procedures =====
 
     ! Tidy up
     if ( associated(obstructions) ) then
+      if ( index(switches, 'chu') /= 0 ) call Dump_Obstructions ( obstructions )
       deallocate ( obstructions, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'obstructions' )
     end if
+    ! Check that no 2 chunks share non-overlapped MAFs
+    ! That mafrange(1) <= all_mafs <= mafrange(2)
+    ! And that all overlaps are >= 0
+    if ( config%method /= l_fixed ) &
+      & call share_non_ovmf ( chunks, mafRange )
 
-    if ( toggle(gen) ) call trace_end ( "ScanDivide" )
+    if ( toggle(gen) ) call trace_end ( "ChunkDivide" )
 
     if ( index(switches, 'chu') /= 0 ) call dump ( chunks )
 
@@ -427,7 +461,7 @@ contains ! ===================================== Public Procedures =====
 
       ! Local parameters
       real(r8), parameter :: HOMEACCURACY = 3.0 ! Try to hit homeGeodAngle within this
-
+                                                ! (see homeHuntLoop warning below)
       ! Local variables
       type (L1BData_T) :: TAITIME         ! From L1BOA
       type (L1BData_T) :: TPGEODANGLE     ! From L1BOA
@@ -446,6 +480,7 @@ contains ! ===================================== Public Procedures =====
       integer :: ORBIT                    ! Used to locate homeMAF
       integer :: STATUS                   ! From allocate etc.
       integer :: NOCHUNKS                 ! Number of chunks
+      integer :: Nonovlp_1st_MAF          ! Non-overlapped 1st MAF
       integer :: OVERLAPS                 ! Overlaps as integer (MAFs)
       integer :: MAXLENGTH                ! Max length as integer (MAFs)
 
@@ -493,6 +528,27 @@ contains ! ===================================== Public Procedures =====
         angleIncrement = 360.0
       end if
 
+      if ( index(switches, 'chu') /= 0 ) then    
+        call output ( ' orbit  ', advance='no' )   
+        call output ( orbit , advance='no' )      
+        call output ( '    testAngle  ', advance='no' )   
+        call output ( testAngle , advance='no' )      
+        call output ( '    angleIncrement  ', advance='no' )   
+        call output ( angleIncrement , advance='yes' )      
+      end if
+      ! In my opinion (paw) here's what the following loop should do:
+      ! Find the 1st MAF within HOMEACCURACY of home_angle
+      ! where home_angle has been corrected for the starting orbit number
+      ! Afterwards, the preceding MAFs must be divided among one or more
+      ! chunks, and the same done with subsequent MAFs
+      !
+      ! Instead what it actually does is
+      ! Find the 1st MAF within HOMEACCURACY of (home_angle + n*angleIncrement)
+      ! where home_angle has been corrected for the starting orbit number
+      ! In effect the home_angle is set only within an unknown number
+      ! of angleIncrements
+      ! While there may be few cases in which they don't do about as well
+      ! let this be a warning
       homeHuntLoop: do
         if ( testAngle < minAngle ) then
           testAngle = testAngle + angleIncrement
@@ -514,6 +570,19 @@ contains ! ===================================== Public Procedures =====
         testAngle = testAngle + angleIncrement
       end do homeHuntLoop
       homeMAF = home + m1 - 1
+      if ( index(switches, 'chu') /= 0 ) then    
+        call output ( '    testAngle  ', advance='no' )   
+        call output ( testAngle , advance='yes' )      
+        call output ( '    Angle(home)  ', advance='no' )   
+        call output ( tpGeodAngle%dpField(1,1,home) , advance='yes' )      
+        call output ( ' home  ', advance='no' )   
+        call output ( home , advance='no' )      
+        call output ( ' homeMAF  ', advance='no' )   
+        call output ( homeMAF , advance='yes' )      
+        call output ( ' diff  ', advance='no' )   
+        call output (  abs ( tpGeodAngle%dpField(1,1,home) - &
+          & testAngle ) , advance='yes' )      
+      end if
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! OK, now we have a home MAF, get a first cut for the chunks
@@ -587,16 +656,37 @@ contains ! ===================================== Public Procedures =====
         boundaries = max ( boundaries, minV )
         call Hunt ( field, boundaries, chunks%lastMAFIndex, &
           & allowTopValue=.true., nearest=.true. )
+        if ( index(switches, 'chu') /= 0 ) then
+          call output ( ' minV  ', advance='no' ) 
+          call output ( minV , advance='no' ) 
+          call output ( ' maxV  ', advance='no' ) 
+          call output ( maxV , advance='no' ) 
+          call output ( ' homeV  ', advance='no' ) 
+          call output ( homeV , advance='yes' ) 
+          call output ( ' NoChunks  ', advance='no' ) 
+          call output ( NoChunks , advance='yes' ) 
+          call output ( ' noChunksBelowHome  ', advance='no' ) 
+          call output ( noChunksBelowHome , advance='yes' ) 
+          call output ( ' boundaries  ', advance='yes' ) 
+          call dump ( boundaries , 'boundaries' ) 
+          call dump ( chunks%lastMAFIndex , 'chunks%lastMAFIndex' )
+        end if
         call Deallocate_test ( boundaries, 'boundaries', ModuleName )
       end if
 
       ! Now deduce the chunk starts from the ends of their predecessors
       chunks(2:noChunks)%firstMAFIndex = chunks(1:noChunks-1)%lastMAFIndex + 1
-      chunks(1)%firstMAFIndex = 1
+      ! chunks(1)%firstMAFIndex = 1
+      chunks(1)%firstMAFIndex = mafRange(1)
+      if ( index(switches, 'chu') /= 0 ) then                      
+        call dump ( chunks%firstMAFIndex , 'chunks%firstMAFIndex' )  
+      end if                                                       
 
       ! Now offset these to the index in the file not the array
-      chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
-      chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1 
+      ! chunks%firstMAFIndex = chunks%firstMAFIndex + mafRange(1) - 1
+      ! chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1 
+      chunks%firstMAFIndex = chunks%firstMAFIndex - 1
+      chunks%lastMAFIndex = chunks%lastMAFIndex - 1 
 
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! Think about overlaps
@@ -604,8 +694,18 @@ contains ! ===================================== Public Procedures =====
       call Allocate_test ( newFirstMAFs, noChunks, 'newFirstMAFs', ModuleName )
       call Allocate_test ( newLastMAFs, noChunks, 'newLastMAFs', ModuleName )
       if ( config%overlapFamily == PHYQ_MAFs ) then
-        newFirstMAFs = max(chunks%firstMAFIndex - nint(config%overlap), mafRange(1) )
-        newLastMAFs = min(chunks%lastMAFIndex + nint(config%overlap), mafRange(2) )
+        newFirstMAFs = max(chunks%firstMAFIndex - nint(config%overlap), &
+          & mafRange(1) )
+        newLastMAFs = min(chunks%lastMAFIndex + nint(config%overlap), &
+          & mafRange(2) )
+        if ( index(switches, 'chu') /= 0 ) then
+            call output ( 'config%overlap  ' )
+            call output ( config%overlap , advance='yes')
+            call output ( 'new 1st MAF  ' )
+            call output ( chunks(1:2)%firstMAFIndex - nint(config%overlap) )
+            call output ( '   new last MAF  ' )
+            call output ( chunks(1:2)%lastMAFIndex + nint(config%overlap) , advance='yes')
+        endif
       else
         ! For angle and time, they are similar enough we'll just do some stuff
         ! with pointers to allow us to use common code to sort them out
@@ -625,7 +725,15 @@ contains ! ===================================== Public Procedures =====
           & config%overlap, newFirstMAFs, allowTopValue=.true. )
         call Hunt ( field, field(chunks%firstMAFIndex-1) - &
           & config%overlap, newLastMAFs, allowTopValue=.true. )
-        ! Correct this to be real MAF indicies (starting from zero)
+        if ( index(switches, 'chu') /= 0 ) then
+          call dump ( field(chunks%firstMAFIndex-1) - &
+          & config%overlap , 'fields-overlap' )
+          call dump ( field(newFirstMAFs) , 'hunted values' )
+          call dump ( field(chunks%firstMAFIndex-1) + &
+          & config%overlap , 'fields+overlap' )
+          call dump ( field(newLastMAFs) , 'hunted values' )
+        end if
+        ! Correct this to be real MAF indices (starting from zero)
         newFirstMAFs = newFirstMAFs - 1
         newLastMAFs = newLastMAFs - 1
       end if
@@ -633,23 +741,74 @@ contains ! ===================================== Public Procedures =====
       chunks%noMAFsUpperOverlap = newLastMAFs - chunks%lastMAFIndex
       chunks%firstMAFIndex = newFirstMAFs
       chunks%lastMAFIndex = newLastMAFs
+      if ( index(switches, 'chu') /= 0 ) then
+          call dump ( newFirstMAFs , 'newFirstMAFs' ) 
+          call dump ( newLastMAFs , 'newLastMAFs' ) 
+          call dump ( chunks%noMAFsLowerOverlap , 'chunks%noMAFsLowerOverlap' ) 
+          call dump ( chunks%noMAFsUpperOverlap , 'chunks%noMAFsUpperOverlap' ) 
+      endif
       call Deallocate_test ( newFirstMAFs, 'newFirstMAFs', ModuleName )
       call Deallocate_test ( newLastMAFs, 'newLastMAFs', ModuleName )
 
       ! Now delete any chunks that are nothing but overlap
-      allOverlapChunks: do
-        chunk = FindFirst ( &
-          & ( chunks%noMAFsLowerOverlap + chunks%noMAFsUpperOverlap ) >= &
-          & ( chunks%lastMAFIndex - chunks%firstMAFIndex + 1 ) )
-        if ( chunk == 0 ) exit allOverlapChunks
-        call DeleteChunk ( chunks, chunk )
-      end do allOverlapChunks
-
+      ! or have negative overlaps
+       allOverlapChunks: do
+         chunk = FindFirst ( &
+           & ( chunks%noMAFsLowerOverlap + chunks%noMAFsUpperOverlap ) >= &
+           & ( chunks%lastMAFIndex - chunks%firstMAFIndex + 1 ) &
+           & .or. (chunks%noMAFsUpperOverlap < 0) )
+         if ( chunk == 0 ) exit allOverlapChunks
+         call DeleteChunk ( chunks, chunk )
+       end do allOverlapChunks
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! Now think about the obstructions
 
       call DealWithObstructions ( chunks, obstructions )
+      chunks%accumulatedMAFs = chunks%firstMAFIndex
+       ! Forcibly zero out number of lower (upper) overlaps on 1st (last) chunks
+       chunks(1)%noMAFsLowerOverlap = 0
+       chunks(size(chunks))%noMAFsUpperOverlap = 0
 
+      if ( index(switches, 'chu') /= 0 ) then
+        call output ( ' Is maxLength PHYQ_MAFs?  ', advance='no' ) 
+        call output ( config%maxLengthFamily == PHYQ_MAFs, advance='yes' ) 
+        call output ( ' Is maxLength PHYQ_Angle?  ', advance='no' ) 
+        call output ( config%maxLengthFamily == PHYQ_Angle, advance='yes' ) 
+        call output ( ' Is maxLength PHYQ_Time?  ', advance='no' ) 
+        call output ( config%maxLengthFamily == PHYQ_Time, advance='yes' ) 
+        call output ( ' Is overlapFamily PHYQ_MAFs?  ', advance='no' ) 
+        call output ( config%overlapFamily == PHYQ_MAFs, advance='yes' ) 
+        call output ( ' Geod tpAngles of chunk 1st MAF ' ) 
+        call output ( '   (its non-overlapped 1st MAF) ' ) 
+        call output ( '   of its last MAF ' ) 
+        call output ( '   (its non-overlapped last MAF) ', advance='yes' ) 
+        do chunk=1, min(noChunks, 200)
+          if ( chunks(chunk)%firstMAFIndex < 0 ) then
+            call output ( 'chunks(' )
+            call output ( chunk )
+            call output ( ') is ' )
+            call output ( chunks(chunk)%firstMAFIndex )
+          else
+            call output ( tpGeodAngle%DpField(1,1,chunks(chunk)%firstMAFIndex+1) &
+              & - orbit*360.0 )
+            call output ( ' (', advance='no' )
+            Nonovlp_1st_MAF = &
+              & chunks(chunk)%noMAFsLowerOverlap+chunks(chunk)%firstMAFIndex+1
+            call output ( tpGeodAngle%DpField(1,1,Nonovlp_1st_MAF) &
+              & - orbit*360.0)
+            call output ( ' )   ' )
+            call output ( tpGeodAngle%DpField(1,1,chunks(chunk)%lastMAFIndex+1) &
+              & - orbit*360.0 )
+            call output ( ' (', advance='no' )
+            Nonovlp_1st_MAF = &
+              & -chunks(chunk)%noMAFsUpperOverlap+chunks(chunk)%lastMAFIndex+1
+            call output ( tpGeodAngle%DpField(1,1,Nonovlp_1st_MAF) &
+              & - orbit*360.0)
+            call output ( ' )', advance='yes' )
+          endif
+         enddo
+        call output ( ' ', advance='yes' )    
+      endif
       ! Tidy up
       call DeallocateL1BData ( tpGeodAngle )
       call DeallocateL1BData ( taiTime )
@@ -1056,7 +1215,22 @@ contains ! ===================================== Public Procedures =====
 
     end subroutine DeleteObstruction
 
-    ! ----------------------------------------- Prune Obstructions -----
+    ! ----------------------------------------- notel1brad_changes -----
+    subroutine notel1brad_changes ( obstructions )
+      ! This routine merges overlapping range obstructions and deletes
+      ! wall obstructions inside ranges.  The job is made easier
+      ! by sorting the obstructions into order
+      type(Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+
+      ! Local variables
+      ! Here we will loop over the signals database
+      ! Searching for 
+      ! (1) mafs where there is no good data for any of the signals
+      ! (2) mafs where the good data is switched from one signal to another
+      ! (See Construct QuantityTemplates below line 253)
+    end subroutine notel1brad_changes
+
+    ! ----------------------------------------- PruneObstructions -----
     subroutine PruneObstructions ( obstructions )
       ! This routine merges overlapping range obstructions and deletes
       ! wall obstructions inside ranges.  The job is made easier
@@ -1145,10 +1319,56 @@ contains ! ===================================== Public Procedures =====
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
       endif
-      call output ( 'Timing for ScanDivide = ' )
+      call output ( 'Timing for ChunkDivide = ' )
       call output ( dble(t2-t1), advance='yes' )
       timing = .false.
     end subroutine SayTime
+
+    ! ---------------------------------------------------- share_non_ovmf -----
+    subroutine share_non_ovmf ( chunks, mafRange )
+      ! Sort the chunks into order of increasing firstMAFIndex
+      type (MLSChunk_T), dimension(:), intent(inout) :: CHUNKS
+      integer, dimension(2), intent(in) :: MAFRANGE   ! Processing range in MAFs
+
+      ! Local variables
+      integer :: i
+      logical :: sharing, outrange, negovlps
+      
+      ! Executable statements
+      sharing = .false.
+      outrange = .false.
+      negovlps = .false.
+      if ( CHECKFORSHAREDMAFS ) then
+        do i = 1, size(chunks) - 1
+          sharing = (chunks(i)%lastMAFIndex - chunks(i)%noMAFsUpperOverlap) >= &
+            & chunks(i+1)%firstMAFIndex + chunks(i+1)%noMAFsLowerOverlap
+        enddo
+      endif
+      outrange = any(chunks%firstMAFIndex < mafrange(1)) .or. &
+        &        any(chunks%lastMAFIndex > mafrange(2))
+      negovlps = any(chunks%noMAFsLowerOverlap < 0) .or. &
+        &        any(chunks%noMAFsUpperOverlap < 0)
+      if ( sharing ) then
+        call output ( "Shared non-overlaps MAFs detected ", advance='yes' )
+        call output ( "(Either tweak ChunkDivide section or get someone " )
+        call output ( " to fix the code) ", advance='yes' )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Shared non-overlapped MAFs' )
+      elseif ( outrange ) then
+        call output ( " MAFs detected outside range: " )
+        call output ( mafRange, advance='yes' )
+        call output ( "(Either tweak ChunkDivide section or get someone " )
+        call output ( " to fix the code) ", advance='yes' )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'MAFs outside range' )
+      elseif ( negovlps ) then
+        call output ( "Negative overlaps detected ", advance='yes' )
+        call output ( "(Either tweak ChunkDivide section or get someone " )
+        call output ( " to fix the code) ", advance='yes' )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Negative overlaps' )
+      endif
+    end subroutine share_non_ovmf
 
     ! ------------------------------------------------- SortChunks -----
     subroutine SortChunks ( chunks )
@@ -1287,6 +1507,7 @@ contains ! ===================================== Public Procedures =====
 
       ! Here we'll eventually look at radiances and switch changes.  For the
       ! moment I'm deferring this one too. NJL.
+      call notel1brad_changes ( obstructions ) 
 
       ! Sort the obstructions into order and prune them of repeats, overlaps etc.
       call PruneObstructions ( obstructions ) 
@@ -1340,6 +1561,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.25  2002/11/06 00:21:16  pwagner
+! Fixed non-zero starttime prob; some extra checks, printing
+!
 ! Revision 2.24  2002/10/07 23:49:49  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
