@@ -25,7 +25,8 @@ program MLSL2
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
-  use MLSStrings, only: GetUniqueList, lowerCase, RemoveElemFromList, unquote
+  use MLSStrings, only: catLists, GetUniqueList, lowerCase, &
+    & RemoveElemFromList, unquote
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
@@ -474,7 +475,7 @@ program MLSL2
         case ( 'm' ); prunit = -1
         case ( 'p' ); toggle(par) = .true.
         case ( 'S' )
-          switches = trim(switches) // ',' // line(j+1:)
+          switches = catLists(trim(switches), line(j+1:))
           exit ! Took the rest of the string, so there can't be more options
         case ( 'T' )
           timing = .true.
@@ -482,7 +483,7 @@ program MLSL2
             if ( j >= len(line) ) exit
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
               if( line(j+1:j+1) /= '0' ) &
-                & switches = trim(switches) // ',' // 'time'
+                & switches = catLists(trim(switches), 'time')
               section_times = &
                 & ( index(switches, 'time') /= 0 .and. (line(j+1:j+1) /= '1') )
               total_times = section_times .and. (line(j+1:j+1) /= '2')
@@ -911,6 +912,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.120  2004/06/29 00:10:17  pwagner
+! Exploit catlist function
+!
 ! Revision 2.119  2004/04/27 23:50:24  pwagner
 ! Added SKIPDIRECTWRITES option
 !
