@@ -1,0 +1,70 @@
+Command line options:
+   mlsl2 -slo1 -slo2 .. --mlo1 --mlo2 ..
+where slon are single-letter options and mlon are multiletter options
+E.g., mlsl2 -m -p --nmeta -S"glo jac"
+========================= mlsl2 =========================
+  -A: Dump the un-decorated abstract syntax tree.
+  -a: Dump the decorated type-checked abstract syntax tree.
+  -c: Trace expression evaluation and tree decoration.
+  -d: Dump the declaration table after type checking
+  -f[digit]: Trace Forward model.  Bigger digit means 
+                    more output.
+  -g[digit]: Trace "generation".  Bigger digit means 
+                    more output.
+  -h or -H or -?: This output.
+  -l: Trace lexical analysis.
+  -K: Capitalize identifiers.
+  -k: Don't capitalize identifiers.
+  -M: Send output through MLSMessage.
+  -m: Don't send output through MLSMessage.
+  -p: Trace parsing.
+  -Sstring: Set "switches" = "string".  Characters in
+            "string" may control individual outputs.  If -S is
+            specified several times, the strings are concatenated.
+     (For specific strings and their effects, use -S"?")
+  -T: Time parsing, type checking and processing separately.
+  -t: Trace declaration table construction.
+  -v: List the configuration file.
+  The above options can be concatenated after one hyphen,
+  except that -S takes the rest of the option as its 
+         "string".
+  --[n]cfpcf: Open the L2CF [without] using the Toolkit 
+        and the PCF.
+      --ncfpcf assumed if L2CF-name is present.  
+        Default: --cfpcf (SIPS) --ncfpcf (JPL)
+  --[n]kit: Output error messages [not] using the SDP Toolkit
+  --[n]meta: [Do not] Create metadata files.
+  --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.
+    (--npcf sets --nmeta and --ncfpcf.)
+  --[n]tk: [Do not] Use the panoply of the PGS_toolkit
+    (--ntk sets --npcf, --ncfpcf and --nmeta).
+  --master <filename>: This is the master task in a PVM setup
+    filename contains simply ascii list of slave host names
+    can list a machine more than once (e.g. for SMP slaves)
+  --slave[ ]<master-tid>: This is a slave; <master-tid>
+    is the id of the master.  This option is set by a master
+    task and is not recommneded for manual invocations.
+    
+  Options a, c, f0, g0, l, p and t can be toggled in the 
+        configuration file
+  by @A, @C, @E, @G, @L, @P and @S respectively.  @L and 
+        @P are processed
+  synchronously with the input.  The others are 
+         examined later.
+  @T in the configuration file dumps the string table 
+         at that instant.
+========================= end mlsl2 =========================
+
+The general pattern is to use one dash for single-letter options,
+and double dashes for strings.
+
+(Add any more that are relevant to mlsl2,
+or separate sections for mlsl1 or mlsl3)
+
+(The equal signs in the section dividers above are to help
+sed dynamically update mlsl2 to show changes in the option
+usage automatically. Thus you only need to edit this file,
+not MLSL2.f90)
+
+ $Log$
+
