@@ -7,7 +7,7 @@ module REFRACTION_M
   use D_SOLVE_QUAD_M, only: SOLVE_QUAD
   use TWO_D_POLATE_M, only: TWO_D_POLATE
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR
-  use GL6P, only: NG, GX, GW
+  use GLNP, only: NG, GX, GW
   Implicit None
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -399,8 +399,7 @@ END SUBROUTINE create_ref_corr
 SUBROUTINE solve_hn(hn,h1,an1,eps,rneg,rpos,vh,vn)
 
 REAL(r8), INTENT(IN) :: hn, h1, an1, eps, rneg, rpos
-REAL(r8), INTENT(IN OUT)  :: vh
-REAL(r8), INTENT(OUT)     :: vn
+REAL(r8), INTENT(IN OUT)  :: vh, vn
 
 INTEGER(i4) :: i
 REAL(r8) :: hneg, hpos, hmid, a, b, c, r1, r2, vh0, f0, f, af, df, vn0
@@ -467,6 +466,9 @@ END SUBROUTINE solve_hn
 
 end module REFRACTION_M
 ! $Log$
+! Revision 1.6  2001/06/07 23:39:31  pwagner
+! Added Copyright statement
+!
 ! Revision 1.5  2001/03/31 23:40:56  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !
