@@ -16,6 +16,9 @@ module COMP_PATH_ENTITIES_M
   use output_m, only: output
   use dump_0, only: dump
   implicit NONE
+
+  real (r8), parameter :: DegToRad=1.74532925e-2
+
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
   "$Id$"
@@ -153,6 +156,7 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
     call dump(mr_f)
     call output('f%values is:')
     call dump(f%values)
+    call output('difference is:')
     jp = f%template%noInstances
     kk = f%template%noSurfs
     DO l = 1, no_mmaf
@@ -171,11 +175,11 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
           if (f%template%logBasis) then
             Call TWO_D_POLATE(f%template%surfs(:,1), &
               & log(f%values), &
-           &           kk, f%template%phi(1,:), jp, zeta, phi, r)
+           &           kk, DegToRad*f%template%phi(1,:), jp, zeta, phi, r)
             q = exp(r)
           else
             Call TWO_D_POLATE(f%template%surfs(:,1), &
-              & f%values, kk, f%template%phi(1,:), jp, zeta, phi, q)
+              & f%values, kk, DegToRad*f%template%phi(1,:), jp, zeta, phi, q)
           endif
           spsfunc_path(j,k,l)%values(i) = q
         end do
@@ -214,6 +218,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.7  2001/03/21 06:30:10  livesey
+! Minor change, still wrong
+!
 ! Revision 1.6  2001/03/21 02:12:54  livesey
 ! Interim version, got mr_f in but not working yet.
 !
