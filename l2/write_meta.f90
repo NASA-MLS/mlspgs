@@ -8,6 +8,7 @@ module WriteMetadata ! Populate metadata and write it out
   use Hdf, only: DFACC_RDWR   ! , Sfend, Sfstart
   use HDFEOS5, only: HE5_SWATTACH, HE5_SWDETACH, &
     & HE5_SWCLOSE
+  use INTRINSIC, only: L_GRID, L_HDF, L_HDFEOS, L_SWATH
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
   use MLSFiles, only: GetPCFromRef, mls_sfstart, mls_sfend, Split_path_name, &
@@ -140,12 +141,13 @@ module WriteMetadata ! Populate metadata and write it out
   logical, public, parameter :: SFINBETWEENSTARTEND = .FALSE.
   integer, public, parameter :: MCFFORL2GPOPTION = 3     ! 1, public, 2 or 3
   integer, private :: Module_error
+  type(PCFData_T), public, save :: L2PCF
 
 contains
 
   ! ---------------------------------------------  First_grouping  -----
 
-  subroutine First_grouping ( HDF_FILE, MCF_FILE, L2pcf, Groups )
+  subroutine First_grouping ( HDF_FILE, MCF_FILE, Groups )
 
     ! This writes the metadata for the following attributes:
     ! (attributes marked automatic are not explicitly written, however)
@@ -164,7 +166,7 @@ contains
     !Arguments
 
     integer :: HDF_FILE, MCF_FILE
-    type(PCFData_T) :: l2pcf
+    ! type(PCFData_T) :: l2pcf
 
     ! the group have to be defined as 49 characters long. The C interface is 50.
     ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
@@ -401,7 +403,7 @@ contains
 
   ! ---------------------------------------------  Third_grouping  -----
 
-  subroutine Third_grouping ( HDF_FILE, hdf_sdid, L2pcf, Groups, &
+  subroutine Third_grouping ( HDF_FILE, hdf_sdid, Groups, &
     & hdfVersion, filetype )
 
     ! This writes the following metadata attributes:
@@ -436,7 +438,7 @@ contains
 
     integer :: HDF_FILE
     integer :: hdf_sdid
-    type(PCFData_T) :: l2pcf
+    ! type(PCFData_T) :: l2pcf
 
     ! the group have to be defined as 49 characters long. The C interface is 50.
     ! The cfortran.h mallocs an extra 1 byte for the null character '\0/1, 
@@ -445,7 +447,8 @@ contains
 
     character (len = PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
     integer, optional, intent(in) :: hdfVersion
-    character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
+    ! character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
+    integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
 
     !Local Variables
 
@@ -459,7 +462,8 @@ contains
     character (len=132) :: attrname
     integer :: version, indx, i
     CHARACTER (LEN=INPUTPTR_STRING_LENGTH) :: inpt(31)
-    CHARACTER (LEN=6) :: inptptr_filetype
+    ! CHARACTER (LEN=6) :: inptptr_filetype
+    integer :: inptptr_filetype
     character (len=*), parameter :: METAWR_ERR = &
       & 'Error writing metadata attribute '
 
@@ -471,7 +475,7 @@ contains
          PGS_MET_write, PGS_MET_remove
     !Executable code
 
-    inptptr_filetype = 'sw'
+    inptptr_filetype = l_swath
     if ( present(filetype) ) inptptr_filetype = filetype
     version = 1
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
@@ -709,7 +713,7 @@ contains
   ! --------------------------------------  Populate_metadata_std  -----
 
   subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
-    & L2pcf, Field_name, hdfVersion, Metadata_error, &
+    & Field_name, hdfVersion, Metadata_error, &
     & filetype )
     ! & isHDFEOS )
 
@@ -727,11 +731,12 @@ contains
     !Arguments
 
     integer                        :: HDF_FILE, MCF_FILE
-    type(PCFData_T)                :: L2pcf
+    ! type(PCFData_T)                :: L2pcf
     character (len=*)              :: Field_name
     integer, optional, intent(in)  :: hdfVersion
     integer, optional, intent(out) :: Metadata_error
-    character(len=*), optional, intent(in)  :: filetype
+    ! character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
+    integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
     ! logical, optional, intent(in)  :: isHDFEOS
 
     !Local Variables
@@ -790,9 +795,9 @@ contains
       return
     end if
 		
-    call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
+    call first_grouping(HDF_FILE, MCF_FILE, groups)
     call measured_parameter (HDF_FILE, field_name, groups, 1)
-    call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, &
+    call third_grouping (HDF_FILE, hdf_sdid, groups, &
       & hdfVersion, filetype)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
@@ -839,7 +844,7 @@ contains
 
   ! --------------------------------------  Populate_metadata_oth  -----
 
-  subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, L2pcf, &
+  subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, &
     & NumQuantitiesPerFile, QuantityNames, hdfVersion, Metadata_error, &
     & filetype )
 
@@ -852,11 +857,12 @@ contains
     !Arguments
 
     integer :: HDF_FILE, MCF_FILE, NumQuantitiesPerFile
-    type(PCFData_T) :: L2pcf
+    ! type(PCFData_T) :: L2pcf
     character (len=*), dimension(:) :: QuantityNames
     integer, optional, intent(out) :: Metadata_error
     integer, optional, intent(in) :: hdfVersion
-    character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
+    ! character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
+    integer, optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
 
     !Local Variables
 
@@ -913,7 +919,7 @@ contains
       return
     end if
 
-    call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
+    call first_grouping(HDF_FILE, MCF_FILE, groups)
 
     do indx=1, numquantitiesperfile
 
@@ -922,7 +928,7 @@ contains
 
     end do
 
-    call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, &
+    call third_grouping (HDF_FILE, hdf_sdid, groups, &
       & hdfVersion, filetype)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
@@ -988,7 +994,7 @@ contains
 
   ! -----------------------------------------------  Get_l2gp_mcf  -----
 
-  subroutine Get_l2gp_mcf ( File_base, meta_name, Mcf, L2pcf, Version )
+  subroutine Get_l2gp_mcf ( File_base, meta_name, Mcf, Version )
 
   ! metadata configuration file (mcf) PCF number corresponding to l2gp number
   ! sdid
@@ -997,7 +1003,7 @@ contains
     character(len=*), intent(in) ::  meta_name
     integer, intent(in), optional :: Version
     integer, intent(inout) ::        Mcf
-    type(PCFData_T) :: l2pcf
+    ! type(PCFData_T) :: l2pcf
 
 ! Local
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sd_full
@@ -1161,14 +1167,14 @@ contains
 ! Lori's routines
 
   ! -----------------------------------------------  WriteMetaLog  -----
-  subroutine WriteMetaLog ( Pcf, Metadata_error )
+  subroutine WriteMetaLog ( Metadata_error )
 
     ! Brief description of subroutine
     ! This subroutine writes metadata for the log file to a separate ASCII file.
 
     ! Arguments
 
-    type( PCFData_T ), intent(in) :: Pcf
+    ! type( PCFData_T ), intent(in) :: Pcf
     integer, optional, intent(out) :: Metadata_error
 
     ! Parameters
@@ -1248,27 +1254,27 @@ contains
 ! Set PGE values
 
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
-                               pcf%logGranID)
+                               l2pcf%logGranID)
 
-    call expandFileTemplate('$cycle', sval, cycle=pcf%cycle)
+    call expandFileTemplate('$cycle', sval, cycle=l2pcf%cycle)
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
                                sval)
 
-    indx = INDEX (PCF%startUTC, "T")
+    indx = INDEX (l2pcf%startUTC, "T")
 
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                               "RangeBeginningDate", PCF%startUTC(1:indx-1))
+                               "RangeBeginningDate", l2pcf%startUTC(1:indx-1))
 !    sval= '00:00:00.000000'
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                               "RangeBeginningTime", PCF%startUTC(indx+1:))
+                               "RangeBeginningTime", l2pcf%startUTC(indx+1:))
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                               "RangeEndingDate", PCF%endUTC(1:indx-1))
+                               "RangeEndingDate", l2pcf%endUTC(1:indx-1))
 !    sval= '23:59:59.999999'
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                               "RangeEndingTime", PCF%endUTC(indx+1:))
+                               "RangeEndingTime", l2pcf%endUTC(indx+1:))
 
     result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "PGEVersion", &
-                               pcf%PGEVersion)
+                               l2pcf%PGEVersion)
 
     if ( result /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
@@ -1515,6 +1521,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.45  2003/07/07 23:48:18  pwagner
+! Changed in interfaces to make filetype a lit_name; l2pcf a saved variable
+!
 ! Revision 2.44  2003/06/09 22:49:35  pwagner
 ! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
 !
