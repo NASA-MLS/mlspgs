@@ -1928,6 +1928,7 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
 
+       status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML1,&
        HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
 
@@ -2472,6 +2473,11 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.19  2002/06/10 12:00:43  hcp
+! Removed use hdf5_params as hdf-eos5 now has an include file with the
+! parameters you need ready-defined. References to various types changed
+! to be consistent with that.
+!
 ! Revision 1.18  2002/05/01 13:05:53  hcp
 ! Changed a warning to a debug so I didn't have to see it
 !
