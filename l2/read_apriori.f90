@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -9,20 +9,19 @@ module ReadAPriori
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: SWOPEN, SWCLOSE, SWINQSWATH
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
-    & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, S_L2AUX, &
-    & S_L2GP
+    & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
+    & S_L2AUX, S_L2GP
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, Dump
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
-  use MLSFiles, only: SPLIT_PATH_NAME
   use MLSL2Options, only: PCF
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
   use MoreTree, only: Get_Spec_ID
-  use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, source_file_already_read
+  use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
@@ -107,6 +106,7 @@ contains ! =====     Public Procedures     =============================
     if ( timing ) call cpu_time ( t1 )
     error = 0
 
+    ! Will we be dumping info? To what level of detail?
     if ( index(switches, 'apr3') /= 0 ) then
       Details = 1
     elseif ( index(switches, 'apr2') /= 0 ) then
@@ -116,6 +116,8 @@ contains ! =====     Public Procedures     =============================
     else
       Details = -2
     endif
+    if( index(switches, 'apr') /= 0 ) &     
+    & call output ( '============ Read APriori ============', advance='yes' )    
     version = 1
     allswathnames = ' '
     lastClimPCF = mlspcf_l2clim_start - 1
@@ -156,9 +158,6 @@ contains ! =====     Public Procedures     =============================
         end select
       end do
 
-!      if ( fileName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-!        & 'File name not specified in read a priori')
-      
       if ( got(f_file) ) then
         call get_string ( FileName, fileNameString, strip=.true. )
       else
@@ -169,7 +168,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_l2gp )
         if ( .not. got(f_file) ) &
           & call announce_error ( son, &
-            & 'Filename name not specified in read a priori' )
+            & 'Filename name must be specified in read a priori' )
         swathNameString=''
         if ( got(f_swath) ) &
           & call get_string ( swathName, swathNameString, strip=.true. )
@@ -191,7 +190,7 @@ contains ! =====     Public Procedures     =============================
         fileHandle = swopen(FileNameString, DFACC_READ)
         if ( fileHandle == -1 ) then
           call announce_error ( son, &
-            & 'Failed to open swath file ' // FileNameString )
+            & 'Failed to open swath file ' // trim(FileNameString) )
         end if
 
         ! Read the swath
@@ -204,7 +203,7 @@ contains ! =====     Public Procedures     =============================
         fileHandle = swclose(fileHandle)
         if ( fileHandle == -1 ) then
           call announce_error ( son, &
-            & 'Failed to close swath file ' // FileNameString )
+            & 'Failed to close swath file ' // trim(FileNameString) )
         end if
 
         ! Add this l2gp to the database, decorate this key with index
@@ -215,17 +214,16 @@ contains ! =====     Public Procedures     =============================
 
         if ( .not. all(got((/f_sdName, f_file/)))) &
           & call announce_error ( son, &
-            & 'file/sd name not specified in read a priori' )
+            & 'file/sd name must both be specified in read a priori' )
         
         call get_string ( sdName, sdNameString )
         sdNameString = sdNameString(2:LEN_TRIM(sdNameString)-1)
         ! create SD interface identifier for l2aux
         sd_id = sfstart(FilenameString, DFACC_READ)
         if (sd_id == -1 ) then
-          call announce_error ( son, 'Failed to open l2aux ' // sdNameString )
+          call announce_error ( son, 'Failed to open l2aux ' // &
+          &  trim(FilenameString) )
         end if
-        ! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
-        !       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
         ! Create the l2aux, and add it to the database.
         ! This doesn't match the interface in module L2AUXData
@@ -234,16 +232,8 @@ contains ! =====     Public Procedures     =============================
 
         l2aux%name = l2Name
 
-        !        call decorate ( key, AddL2AUXToDatabase( L2AUXDatabase, l2aux ) )
-
-        ! That's the end of the create operation
-
-        ! ??? Should "vectorIndex" be "decoration(key)" ???
-        ! ??? If so, do something like
         l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
         call decorate ( key, l2Index )
-        !   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
-        ! Need to add this routine to L2AUXData.f90 before uncommenting this line
         call ReadL2AUXData ( sd_id, sdNameString, L2AUXDatabase(l2Index) )
 
         if( index(switches, 'apr') /= 0 ) &
@@ -285,7 +275,8 @@ contains ! =====     Public Procedures     =============================
             
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call announce_error ( son, &
-                & 'PCF number not found to supply missing Climatology file name' )
+                & 'PCF number not found to supply' // &
+                & ' missing Climatology file name' )
             end if
           end if
           
@@ -360,8 +351,6 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: Use_toolkit
     integer, intent(in), optional    :: Error_number
     ! Local
-!    character (len=80) :: msg, mnemonic
-!    integer :: status
     logical :: Just_print_it
     logical, parameter :: Default_output_by_toolkit = .true.
  
@@ -417,6 +406,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.25  2001/10/30 00:35:27  pwagner
+! Tidied up small things
+!
 ! Revision 2.24  2001/10/26 23:20:10  pwagner
 ! Optionally dumps apriori quantities as it reads them
 !
