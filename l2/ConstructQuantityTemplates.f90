@@ -1079,6 +1079,7 @@ contains ! ============= Public procedures ===================================
       l_orbitInclination, phyq_angle, p_minorFrame, p_scModule, next, &
       l_phiTan, phyq_angle, p_minorFrame, p_module, next, & 
       l_ptan, phyq_zeta, p_minorFrame, p_module, next /) )
+
     call DefineQtyTypes ( (/ &
       l_radiance, phyq_temperature, p_minorFrame, p_signal, next, & 
       l_refGPH, phyq_length, p_hGrid, p_vGrid, next, &
