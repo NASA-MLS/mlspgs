@@ -31,7 +31,7 @@ contains
   ! ----------------------------------------------  Get_Beta_Path  -----
   subroutine Get_Beta_Path ( frq, p_path, t_path, z_path, Catalog, beta_group, gl_slabs, &
         & path_inds, beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p, &
-        & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, ICON )
+        & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, ICON, Incl_Cld )
 
     use MLSCommon, only: R8, RP, IP
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -50,6 +50,9 @@ contains
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
 
     type (beta_group_T), dimension(:) :: beta_group
+
+    integer  :: ICON
+    Logical :: Incl_Cld
 
 ! Optional inputs.  GL_SLABS_* are pointers because the caller need not
 ! allocate them if DBETA_D*_PATH aren't allocated.  They would be
@@ -79,11 +82,10 @@ contains
 
     integer(ip) :: i, j, k, n, ib, Spectag, no_of_lines, &
               &    no_mol, n_path
-    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm
+    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm, cld_ext
     real(rp), allocatable, dimension(:) :: LineWidth
     real(rp), dimension(size(path_inds)) :: betam, betap
 
-    integer  :: ICON
     real(rp) :: P, Vapor_P
 
 ! begin the code
@@ -112,9 +114,9 @@ contains
           ENDIF                                 
 
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
-            &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,     &
+            &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,  Incl_Cld, cld_ext, &
             &  DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
-          beta_path(j,i) = beta_path(j,i) + ratio * bb
+          beta_path(j,i) = beta_path(j,i) + ratio * bb + cld_ext   ! cld_ext = 0. for now 1/31
           if ( associated(dbeta_dw_path)) &
             &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
           if ( associated(dbeta_dn_path)) &
@@ -145,11 +147,11 @@ contains
             k = path_inds(j)
             tm = t_path_m(k)
             call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tm, Frq, &
-            &    LineWidth, gl_slabs_m(k,ib), vm )
+            &    LineWidth, gl_slabs_m(k,ib), vm, Incl_Cld, cld_ext )
             betam(j) = betam(j) + ratio * vm
             tp = t_path_p(k)
             call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), tp, Frq, &
-            &    LineWidth, gl_slabs_p(k,ib), vp )
+            &    LineWidth, gl_slabs_p(k,ib), vp, Incl_Cld, cld_ext )
             betap(j) = betap(j) + ratio * vp
           end do
           DeAllocate ( LineWidth )
@@ -198,6 +200,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.14  2003/01/30 17:43:04  jonathan
+! remove RHtoEV
+!
 ! Revision 2.13  2003/01/30 00:17:42  jonathan
 ! add z_path to get_beta_path & use Paul's RHIFromH2O to compute VMR from RHi
 !

@@ -17,7 +17,7 @@ contains
 ! ----------------------------------------------  Create_beta  ---------
 
   subroutine Create_beta ( Spectag, cont, pressure, Temp, Fgr, pfaw, &
-         &   slabs_0, beta_value, slabs_p, slabs_m, t_power,     &
+         &   slabs_0, beta_value, Incl_Cld, cld_beta, slabs_p, slabs_m, t_power,     &
          &   dbeta_dw, dbeta_dn, dbeta_dv )
 
 !  For a given frequency and height, compute beta_value function.
@@ -36,6 +36,9 @@ contains
     real(rp), intent(in) :: fgr ! frequency in MHz
     real(rp), intent(in) :: pfaw(:) ! line widths
     type(slabs_struct), intent(in) :: slabs_0 ! contains, among others:
+    Logical :: Incl_Cld
+
+
 !    v0s(:)         ! pressure shifted line centers
 !    x1(:)          ! Doppler width
 !    y(:)           ! ratio Pressure to Doppler widths
@@ -45,7 +48,7 @@ contains
 ! optional inputs for temperature derivatives
     type(slabs_struct), intent(in), optional :: slabs_p, slabs_m
 ! outputs
-    real(rp), intent(out) :: beta_value
+    real(rp), intent(out) :: beta_value, cld_beta
 ! optional outputs
     real(rp), optional, intent(out) :: T_POWER ! for temperature derivative
     real(rp), optional, intent(out) :: DBETA_DW ! line width derivative
@@ -58,6 +61,8 @@ contains
     integer(ip) :: NL ! no of lines
 
     real(rp) :: ra, dNu, tp, bp, tm, bm, bv, dw, dn, ds, dbdw, dbdn, dbdv
+
+    cld_beta =0._rp   
 
     nl = size(pfaw)
 
@@ -289,6 +294,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.16  2002/12/13 02:06:50  vsnyder
+! Use a SLABS structure for the slabs quantities
+!
 ! Revision 2.15  2002/10/08 17:08:02  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
