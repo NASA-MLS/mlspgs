@@ -96,7 +96,7 @@ contains
 !----------------------------------------------------  CS_GetEvSD  -----
   pure subroutine CS_GetEvSD ( A, Ev, dA, dEv )
 !  Compute the sum and difference of the eigenvalues of a complex 2x2 matrix
-!  A.  Optionallly compute their derivatives.
+!  A.  Optionally compute their derivatives.
 
     use CS_ZeroFix_M, only: CS_ZeroFix
     use MLSCOmmon, only: RK => Rp
@@ -112,10 +112,10 @@ contains
 !  input matrix.  1/2 the sum of the eigenvalues is 1/2 the trace of the matrix.
 
 !   s = Tr(a) =
-    s = 0.5_rk * ( A(2,2) + A(1,1) )
+    s = 0.5_rk * ( A(1,1) + A(2,2) )
 
-!  The quadratic equation is:  z*z - 2 s*z + Det(a)
-!  The square of the 1/2 difference of the eigenvalues is w**2 - Det(a) =
+!  The quadratic equation is:  z*z - 2 s*z + Det(A)
+!  The square of 1/2 (difference of the eigenvalues) is s**2 - Det(A) =
 
     q = s * s - ( A(2,2) * A(1,1) - A(1,2) * A(2,1) )
 
@@ -231,6 +231,9 @@ contains
 end module CS_GetEv_M
 
 ! $Log$
+! Revision 2.4  2003/12/18 00:38:47  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.3  2003/02/06 18:58:58  vsnyder
 ! Put an explicit kind on CMPLX references, otherwise NAG gets an overflow
 !
