@@ -36,6 +36,7 @@ clear_lowest_0_110RH
 cloudExtinction
 cloudIce
 cloudInducedRadiance
+cloudMinMax
 cloudRadSensitivity
 cloudWater
 cloudy_110RH_below_top
@@ -199,6 +200,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.33  2004/03/17 17:14:48  livesey
+# Added cloudMinMax
+#
 # Revision 2.32  2004/02/10 21:16:46  livesey
 # Added status and quality
 #
