@@ -213,7 +213,19 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
 
 !! Rule #4: Check for "Z"ero data
 
-       !! Set the appropriate channels to "Z"ero
+       !! Set the appropriate bands to "Z"ero (as a "wall")
+
+       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%FB)
+          CurMAFdata%BankWall%FB = .TRUE.
+       ENDWHERE
+
+       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%MB)
+          CurMAFdata%BankWall%MB = .TRUE.
+       ENDWHERE
+
+       WHERE (CurMAFdata%SciPkt(MIF)%MaxAtten%WF)
+          CurMAFdata%BankWall%WF = .TRUE.
+       ENDWHERE
 
 !! Rule #5: Set Switching Mirror position
 
@@ -534,6 +546,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.8  2003/09/15 17:15:54  perun
 ! Version 1.3 commit
 !

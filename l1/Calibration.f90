@@ -7,7 +7,7 @@ MODULE Calibration ! Calibration data and routines
 
   USE MLSL1Common, ONLY: Chan_R_T, Chan_R8_T, FBchans, FBnum, MBchans, MBnum, &
        WFchans, WFnum, DACSchans, DACSnum, MaxMIFs, Bandwidth, deflt_zero, R8, &
-       tau
+       BankLogical_T, BankInt_T, tau
   USE L0_sci_tbls, ONLY: Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
   USE Interpolation, ONLY : QuadInterpW
@@ -16,9 +16,10 @@ MODULE Calibration ! Calibration data and routines
 
   PRIVATE
 
-  PUBLIC :: CalWin, CalWin_T, MAFdata_T, BankInt_T, BankLogical_T, &
-       Chan_type_T, WeightsFlags_T, Cal_R8_T, BrightObjects_T
-  PUBLIC :: limb_cnts, space_interp, target_interp, space_err, target_err, Chi2
+  PUBLIC :: CalWin, CalWin_T, MAFdata_T, WeightsFlags_T, Cal_R8_T, &
+       Chan_type_T, BrightObjects_T
+  PUBLIC :: limb_cnts, space_interp, target_interp, space_err, target_err, &
+       Chi2, Tsys, Cgain
 
   PUBLIC :: Calibrate, InitCalibWindow, UpdateCalVectors
 
@@ -36,24 +37,6 @@ MODULE Calibration ! Calibration data and routines
      CHARACTER(len=1) :: WF(WFchans,WFnum)          ! wide filters
      CHARACTER(len=1) :: DACS(DACSchans,DACSnum)    ! DACS filters
   END TYPE Chan_type_T
-
-  !! Bank Logical type
-
-  TYPE BankLogical_T
-     LOGICAL :: FB(FBnum)          ! standard filter banks
-     LOGICAL :: MB(MBnum)          ! mid-band filter banks
-     LOGICAL :: WF(WFnum)          ! wide filters
-     LOGICAL :: DACS(DACSnum)      ! DACS filters
-  END TYPE BankLogical_T
-
-  !! Bank Integer type
-
-  TYPE BankInt_T
-     INTEGER :: FB(FBnum)          ! standard filter banks
-     INTEGER :: MB(MBnum)          ! mid-band filter banks
-     INTEGER :: WF(WFnum)          ! wide filters
-     INTEGER :: DACS(DACSnum)      ! DACS filters
-  END TYPE BankInt_T
 
   !! Weights Flags type
 
@@ -129,9 +112,9 @@ MODULE Calibration ! Calibration data and routines
   END TYPE Cal_Int_T
   TYPE (Cal_Int_T) :: space_qual, target_qual, dum_qual
 
-  !! Chi square:
+  !! Chi square, Tsys, Cgain:
 
-  TYPE (Chan_R_T) :: Chi2
+  TYPE (Chan_R_T) :: Chi2, Tsys, Cgain
 
   !! Important calibration private variables:
 
@@ -725,6 +708,9 @@ END MODULE Calibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.8  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !
