@@ -184,6 +184,7 @@ lsbFraction
 lsbPFAMolecules
 
 manipulation
+mark # CPU time mark for dump command
 mask
 matrix
 maxGap
@@ -341,6 +342,7 @@ template
 tempPrecisionQuantity
 terms
 test
+text # literal text to dump in Dump command
 tGrid
 tngtECI
 tolerance
@@ -376,6 +378,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.139  2005/04/01 20:48:28  vsnyder
+# Add mark and text fields to dump command
+#
 # Revision 2.138  2005/01/27 21:07:53  vsnyder
 # Add [LU]SBPFAMolecules, delete PFAMolecules
 #
