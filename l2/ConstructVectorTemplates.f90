@@ -11,7 +11,7 @@ module ConstructVectorTemplates ! Construct a template for a vector
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Output_M, only: Output
   use QuantityTemplates, only: QuantityTemplate_T
-  use String_Table, only: Display_String
+  use String_Table, only: Display_String, Get_String
   use TOGGLES, only: GEN, TOGGLE, LEVELS
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
@@ -55,6 +55,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ADOPTBIN                 ! Name of l2pc bin to adopt
     integer :: SOURCE                   ! l_rows or l_columns
     logical, dimension(field_first:field_last) :: GOT ! Fields
+    character(len=80) :: MESSAGE        ! Possible error message
         
     ! Executable code
 
@@ -93,13 +94,18 @@ contains ! =====     Public Procedures     =============================
 
     if ( got ( f_adopt ) .or. got ( f_source) ) then
       ! Adoption requested
-      if ( got ( f_quantities ) ) call Announce_Error ( key, &
-        & 'Cannot supply both quantities and adopt/source' )
       if ( .not. got ( f_source ) ) call Announce_Error ( key, &
         & 'Must supply source=rows/columns for adoption' )
-      vectorTemplate = AdoptVectorTemplate ( adoptBin, quantityTemplates, source=source )
-      if ( .not. associated ( vectorTemplate%quantities ) ) call Announce_Error ( key, &
-        & 'No such l2pc bin to adopt' )
+      vectorTemplate = AdoptVectorTemplate ( adoptBin, name, quantityTemplates, source, message )
+      if ( len_trim(message) > 0 ) call Announce_Error ( key, message )
+      if ( got ( f_quantities ) ) then
+        do j = 1, noQuantities
+          if ( all ( quantities(j) /= vectorTemplate%quantities ) ) then
+            call get_string ( quantityTemplates(quantities(j))%name, message, strip=.true. )
+            call Announce_Error ( key, 'Quantity ' // trim(message) // ' is not in this adopted template' )
+          end if
+        end do
+      end if
     else if ( got ( f_quantities ) ) then
       ! Not an adoption, just a regular template construction
       call ConstructVectorTemplate ( name, quantityTemplates, quantities, &
@@ -153,6 +159,9 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 2.11  2004/01/24 01:04:21  livesey
+! Added stuff to allow one to adopt quantities
+!
 ! Revision 2.10  2004/01/23 19:08:44  livesey
 ! Changes / improvements to the adoption.
 !
