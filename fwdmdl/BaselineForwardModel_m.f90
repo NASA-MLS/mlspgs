@@ -15,6 +15,7 @@ module BaselineForwardModel_m
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains ! ======================================== BaselineForwardModel ======
@@ -398,9 +399,16 @@ contains ! ======================================== BaselineForwardModel ======
 
   end subroutine BaselineForwardModel
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.12  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.11  2002/09/13 22:02:30  vsnyder
 ! Move USEs from module scope to procedure scope
 !

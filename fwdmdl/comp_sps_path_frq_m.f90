@@ -14,6 +14,7 @@ module Comp_Sps_Path_Frq_m
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
 !-----------------------------------------------------------------
  contains
 !-----------------------------------------------------------------
@@ -139,9 +140,16 @@ module Comp_Sps_Path_Frq_m
 
   end subroutine Comp_Sps_Path_Frq
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Comp_Sps_Path_Frq_m
 !
 ! $Log$
+! Revision 2.12  2002/10/08 17:08:01  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.11  2002/09/27 20:43:06  livesey
 ! Bug fix for 'backwards' bases in get_eta_sparse for eta_f
 !
