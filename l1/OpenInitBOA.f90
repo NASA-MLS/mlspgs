@@ -37,7 +37,7 @@ CONTAINS
     USE MLSL1Common, ONLY: L1BFileInfo, MAFinfo
     USE Orbit, ONLY: Orbit_init, altG, altT, ascTAI, dscTAI, numOrb, &
          orbIncline, orbitNumber, scanRate, scanRateT
-    USE OutputL1B, ONLY: OutputL1B_create
+    USE OutputL1B, ONLY: OutputL1BOA_create
     USE FOV, ONLY: InitFOVconsts
 
     CHARACTER (LEN=132) :: PhysicalFilename
@@ -106,9 +106,9 @@ CONTAINS
 
     CALL InitFOVconsts
 
-!! Define the SD structures in the output files
+!! Define the SD structures in the output BOA file
 
-    CALL OutputL1B_create (L1BFileInfo, .FALSE.)
+    CALL OutputL1BOA_create (L1BFileInfo, .FALSE.)
 
   END SUBROUTINE OpenAndInitBOA
 
@@ -117,23 +117,20 @@ CONTAINS
 !=============================================================================
 
     USE MLSPCF1, ONLY: mlspcf_l1b_oa_start
-    USE MLSL1Common, ONLY: L1BFileInfo
-    USE MLSFiles, ONLY: MLS_openFile, HDFVERSION_5
+    USE MLSL1Common, ONLY: L1BFileInfo, HDFversion
+    USE MLSFiles, ONLY: MLS_openFile
     USE MLSL1Config, ONLY: L1Config
+    USE H5LIB
 
     CHARACTER (LEN=132) :: PhysicalFilename
-    INTEGER :: error, returnStatus, sd_id, version, hdfVersion
+    INTEGER :: error, returnStatus, sd_id, version
 
-    hdfVersion = L1Config%Output%HDFversion
+!! Open the HDF 5 Fortran Interface
 
-!! Open the HDF 5 Fortran Interface based on CF file
-
-    IF (hdfVersion == HDFVERSION_5) THEN
-       error = 0
-       CALL h5open_f (error)
-       IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            "Fortran HDF 5 API error on opening.")
-    ENDIF
+    error = 0
+    CALL h5open_f (error)
+    IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         "Fortran HDF 5 API error on opening.")
 
     ! Initialize IDs
 
@@ -174,7 +171,7 @@ END MODULE OpenInitBOA
 !=============================================================================
 
 ! $Log$
-! Revision 2.1  2003/10/24 19:38:36  perun
-! Version 1.3 commit
+! Revision 2.2  2004/01/09 18:10:23  perun
+! Version 1.4 commit
 !
 !
