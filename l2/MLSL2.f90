@@ -123,6 +123,7 @@ program MLSL2
   real :: T0, T1, T2               ! For timing
   logical :: Timing = .false.      ! -T option is set
   character(len=FILENAMELEN) :: L2CF_file       ! Some text
+  character(len=len(switches)) :: tempSwitches
   character(len=2048) :: WORD      ! Some text
   character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
   character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
@@ -430,8 +431,9 @@ program MLSL2
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
    call switch_usage
   end if
-  call GetUniqueList(switches, switches, numSwitches, countEmpty=.true., &
+  call GetUniqueList(switches, tempSwitches, numSwitches, countEmpty=.true., &
         & ignoreLeadingSpaces=.true.)
+  switches = tempSwitches
   call Set_garbage_collection(garbage_collection_by_dt)
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
@@ -777,6 +779,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.102  2003/10/14 18:17:02  pwagner
+! Fixed problem with reducing switches to unique list
+!
 ! Revision 2.101  2003/10/09 23:57:35  pwagner
 ! A few more SIPS-related tweaks
 !
