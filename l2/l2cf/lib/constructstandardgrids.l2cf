@@ -44,8 +44,10 @@ vGridHighCloudR4:  vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], 
 vGridLowCloudR5:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
 vGridHighCloudR5: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
 
-vGridIterations: vGrid, type=Explicit, coordinate=Integer, values=[1,20]
-vGridPhases: vGrid, type=Explicit, coordinate=Integer, values=[1,20]
+vGridIterations: vGrid, type=Explicit, coordinate=Integer, $
+    values=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+vGridPhases: vGrid, type=Explicit, coordinate=Integer, $
+    values=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
 
 sGridStandard:  vGrid, type=Explicit,   $
        values=[20,40,60,80,100,120,140,160,180,200,$
@@ -58,6 +60,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.21  2004/06/22 18:35:04  pwagner
+; defaults to writing retrieval diagnostics to l2aux instead of dgg
+;
 ; Revision 1.20  2004/05/04 01:05:29  livesey
 ; Changed the R1 grids (never used) and low cloud grids for R2.
 ;
