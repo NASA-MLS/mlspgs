@@ -83,9 +83,9 @@ contains
       case ( f_jacobian )
         ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
       case ( f_forwardModel )
-        call Allocate_Test(configs, nsons(son)-1, 'configs', ModuleName)
-        do config = 1, nsons(son)-1
-          configs(config) = decoration(decoration(subtree(config+1,son)))
+        call Allocate_Test ( configs, nsons(son)-1, 'configs', ModuleName )
+        do config = 2, nsons(son)
+          configs(config-1) = decoration(decoration(subtree(config,son)))
         end do
       end select
     end do ! i = 2, nsons(root)
@@ -101,32 +101,31 @@ contains
         call announceError ( needJacobian )
       endif
     end if
-    
-    fmStat%newHydros = .true.
-    fmStat%maf = 1
+
+    !                             newHydros maf finished
+    fmStat = ForwardModelStatus_T(.true.,   0,  .false. )
 
     ! Loop over mafs
-    do
+    do while (.not. fmStat%finished )
+      ! What if one config set finished but others still had more to do?
+      ! Ermmm, think of this next time.
+      fmStat%maf = fmStat%maf + 1
       do config = 1, size(configs)
         if ( ixJacobian > 0 ) then
           call forwardModel ( configDatabase(configs(config)), &
             & FwdModelIn, FwdModelExtra, &
-            & FwdModelOut, ifm, fmStat, Jacobian)
+            & FwdModelOut, ifm, fmStat, Jacobian )
         else
           call forwardModel ( configDatabase(configs(config)), &
             & FwdModelIn, FwdModelExtra, &
-            & FwdModelOut, ifm, fmStat)
+            & FwdModelOut, ifm, fmStat )
         end if
       end do
-      ! What if one config set finished but others still had more to do?
-      ! Ermmm, think of this next time.
-      if (fmStat%finished) exit
-      fmStat%maf = fmStat%maf + 1
     end do
 
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
-    call deallocate_test( configs, 'configs', ModuleName)
+    call deallocate_test ( configs, 'configs', ModuleName )
 
   contains
     ! --------------------------------------------  AnnounceError  -----
@@ -152,6 +151,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.17  2001/04/12 18:13:28  vsnyder
+! OOPS! Hadn't saved it from the editor!
+!
 ! Revision 2.16  2001/04/12 17:48:11  livesey
 ! Moved maf increment in from ForwardModel to here.
 !
