@@ -581,7 +581,7 @@ contains ! =====     Public Procedures     =============================
       maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
     end do
 
-    allocate ( My_Catalog(noSpecies), stat=ier )
+    allocate ( My_Catalog(noSpecies), stat=ier ) !??? deallocated ???
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'my_catalog' )
 
@@ -663,48 +663,48 @@ contains ! =====     Public Procedures     =============================
 
       print*,'(re)computing hydrostatic stuff.'
       ! Now we're going to create the many temporary arrays we need
-      allocate (ifm%ndx_path(No_tan_hts,noMAFs), stat=status )
+      allocate (ifm%ndx_path(No_tan_hts,noMAFs), stat=status ) !??? Deallocated ???
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'ndx_path' )
-      allocate (ifm%dhdz_path(No_tan_hts,noMAFs), stat=status )
+      allocate (ifm%dhdz_path(No_tan_hts,noMAFs), stat=status )!??? Deallocated ???
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'dhdz_path' )
-      allocate (ifm%h_path(No_tan_hts,noMAFs), stat=status )
+      allocate (ifm%h_path(No_tan_hts,noMAFs), stat=status )   !??? Deallocated ???
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'h_path' )
-      allocate (ifm%phi_path(No_tan_hts,noMAFs), stat=status )
+      allocate (ifm%phi_path(No_tan_hts,noMAFs), stat=status ) !??? Deallocated ???
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'phi_path' )
-      allocate (ifm%t_path(No_tan_hts,noMAFs), stat=status )
+      allocate (ifm%t_path(No_tan_hts,noMAFs), stat=status )   !??? Deallocated ???
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'t_path' )
-      allocate (ifm%z_path(No_tan_hts,noMAFs), stat=status )
+      allocate (ifm%z_path(No_tan_hts,noMAFs), stat=status )   !??? Deallocated ???
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'z_path' )
 
-      allocate (ifm%eta_phi(No_tan_hts,noMAFs), stat=status )
+      allocate (ifm%eta_phi(No_tan_hts,noMAFs), stat=status )  !??? Deallocated ???
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'eta_phi' )
 
-      allocate ( ifm%elvar(noMAFs), stat=status )
+      allocate ( ifm%elvar(noMAFs), stat=status )              !??? Deallocated ???
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'elvar' )
 
-      call allocate_test ( ifm%geoc_lat, noMAFs, 'geoc_lat', moduleName )
-      call allocate_test ( ifm%e_rad, noMAFs, 'e_rad', moduleName )
+      call allocate_test ( ifm%geoc_lat, noMAFs, 'geoc_lat', moduleName )!??? Deallocated ???
+      call allocate_test ( ifm%e_rad, noMAFs, 'e_rad', moduleName )!??? Deallocated ???
 
-      call allocate_test ( ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', moduleName )
-      call allocate_test ( ifm%t_glgrid, maxPath, noMAFs, 'h_glgrid', moduleName )
-      call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', moduleName )
-      call allocate_test ( ifm%dh_dt_glgrid, maxPath, noMAFs, &
+      call allocate_test ( ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', moduleName )!??? Deallocated ???
+      call allocate_test ( ifm%t_glgrid, maxPath, noMAFs, 'h_glgrid', moduleName )!??? Deallocated ???
+      call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', moduleName )!??? Deallocated ???
+      call allocate_test ( ifm%dh_dt_glgrid, maxPath, noMAFs, &!??? Deallocated ???
         & temp%template%noSurfs,'dh_dt_glgrid', moduleName )
-      call allocate_test ( ifm%dhdz_glgrid, maxPath, noMAFs, 'dhdz_glgrid', moduleName )
-      call allocate_test ( ifm%tan_hts, &
+      call allocate_test ( ifm%dhdz_glgrid, maxPath, noMAFs, 'dhdz_glgrid', moduleName )!??? Deallocated ???
+      call allocate_test ( ifm%tan_hts, &                      !??? Deallocated ???
         & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', moduleName )
-      call allocate_test ( ifm%tan_temp, &
+      call allocate_test ( ifm%tan_temp, &                     !??? Deallocated ???
         & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', moduleName )
-      call allocate_test ( ifm%tan_dh_dt, nlvl, noMAFs, temp%template%noSurfs,&
-        & 'tan_dh_dt', moduleName )
+      call allocate_test ( ifm%tan_dh_dt, nlvl, noMAFs, &      !??? Deallocated ???
+        & temp%template%noSurfs, 'tan_dh_dt', moduleName )
 
       ! Setup for hydrostatic calculation
       ! Assert radiance%template%noInstances=temp%template%noInstances
@@ -1383,6 +1383,9 @@ signal%sideband=-1
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.91  2001/04/17 01:01:34  vsnyder
+! Add ??? Deallocated ??? comments
+!
 ! Revision 2.90  2001/04/13 23:29:36  livesey
 ! Sorted out selection of appropriate pointing frequency grid.
 !
