@@ -44,9 +44,11 @@ module FullCloudForwardModel
                      & L_MASSMEANDIAMETERWATER,                            &
                      & L_SURFACETYPE,                                      &
                      & L_SIZEDISTRIBUTION,                                 &
+                     & L_TNGTGEOCALT,                                      &
                      & L_RADIUSOFEARTH,                                    &
                      & L_CLOUDICE,                                         &
                      & L_CLOUDWATER 
+  
 
   implicit none
   private
@@ -181,9 +183,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & quantityType=l_surfaceType )
     sizeDistribution => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_sizeDistribution )
+!    radiusofearth => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+!      & quantityType=l_radiusofearth )
     radiusofearth => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_radiusofearth )
-    
+      & quantityType=l_tngtgeocalt ) 
+   
     ! Do the vmr's one by one later on.
 
     ! Make sure the quantities we have are OK
