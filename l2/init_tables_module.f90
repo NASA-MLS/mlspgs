@@ -519,7 +519,7 @@ contains ! =====     Public procedures     =============================
     !  > or
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
-      begin, z+z_globalsettings, s+s_time, &
+      begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
@@ -528,7 +528,7 @@ contains ! =====     Public procedures     =============================
              n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_climatology, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
-      begin, z+z_chunkdivide, s+s_time, &
+      begin, z+z_chunkdivide, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
              begin, p+p_critical_scanning_modules, t+t_criticalModule, &
                     n+n_name_def, &
@@ -611,6 +611,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.4  2000/11/16 01:53:57  vsnyder
+! Take timing out of sections that are only parameter settings.
+!
 ! Revision 2.3  2000/11/16 01:46:16  vsnyder
 ! Revise section numbers so they don't overlap parameter numbers.
 !
