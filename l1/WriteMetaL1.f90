@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 ! -------------------------------------------------------
@@ -417,14 +417,15 @@ CONTAINS
             "Calling mls_sfend failed for file "//physical_fileName ) 
     ENDIF          
 
-    returnStatus = pgs_met_remove() 
-    IF (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+    returnStatus = pgs_met_remove()
+    ! Don't check for this--it's left unset by toolkit
+    ! IF (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
       ! CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
       !      "Calling pgs_met_remove() failed." )
-      write(errmsg, *) returnStatus
-      CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-            "Calling pgs_met_remove() failed with value " // trim(errmsg) )
-    ENDIF          
+    !  write(errmsg, *) returnStatus
+    !  CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+    !        "Calling pgs_met_remove() failed with value " // trim(errmsg) )
+    !ENDIF          
 
     ! Write global attributes
 
@@ -458,6 +459,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.14  2004/01/30 00:30:42  pwagner
+! Stops useless warnings about pgs_met_remove return value
+!
 ! Revision 2.13  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !
