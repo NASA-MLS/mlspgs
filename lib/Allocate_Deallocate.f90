@@ -20,7 +20,6 @@ module Allocate_Deallocate
 ! **************************************************
 
   use MACHINE, only: MLS_GC_NOW
-  use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
 
@@ -156,7 +155,7 @@ contains
   ! ------------------------------------  Allocate_Test_RealR8_1d  -----
   subroutine Allocate_Test_RealR8_1d ( To_Allocate, Dim1, Its_Name, &
     & ModuleName, LowBound )
-    real (r8), pointer, dimension(:) :: To_Allocate
+    double precision, pointer, dimension(:) :: To_Allocate
     integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
@@ -167,13 +166,13 @@ contains
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name // trim(bounds(my_low,dim1)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r8
+    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0d0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1 )
   end subroutine Allocate_Test_RealR8_1d
   ! ------------------------------------  Allocate_Test_RealR8_2d  -----
   subroutine Allocate_Test_RealR8_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
     & ModuleName, Low1, Low2 )
-    real (r8), pointer, dimension(:,:) :: To_Allocate
+    double precision, pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
@@ -187,13 +186,13 @@ contains
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r8
+    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0d0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1*dim2 )
   end subroutine Allocate_Test_RealR8_2d
   ! ------------------------------------  Allocate_Test_RealR8_3d  -----
   subroutine Allocate_Test_RealR8_3d ( To_Allocate, Dim1, Dim2, Dim3, &
     & Its_Name, ModuleName, Low1, Low2, Low3 )
-    real (r8), pointer, dimension(:,:,:) :: To_Allocate
+    double precision, pointer, dimension(:,:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
@@ -209,7 +208,7 @@ contains
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r8
+    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0d0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, 2*dim1*dim2*dim3 )
   end subroutine Allocate_Test_RealR8_3d
   ! -----------------------------------  Allocate_Test_Integer_1d  -----
@@ -308,7 +307,7 @@ contains
   ! --------------------------------------  Allocate_Test_RealR4_1d  -----
   subroutine Allocate_Test_RealR4_1d ( To_Allocate, Dim1, Its_Name, ModuleName, &
     & LowBound )
-    real (r4), pointer, dimension(:) :: To_Allocate
+    real, pointer, dimension(:) :: To_Allocate
     integer, intent(in) :: Dim1    ! Upper bound of first dim. of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
     integer, intent(in), optional :: LowBound     ! Lower bound, default 1
@@ -319,13 +318,13 @@ contains
     allocate ( To_Allocate(my_low:dim1), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name // trim(bounds(lowBound,dim1)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r4
+    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1 )
   end subroutine Allocate_Test_RealR4_1d
   ! --------------------------------------  Allocate_Test_RealR4_2d  -----
   subroutine Allocate_Test_RealR4_2d ( To_Allocate, Dim1, Dim2, Its_Name, &
     & ModuleName, Low1, Low2 )
-    real (r4), pointer, dimension(:,:) :: To_Allocate
+    real, pointer, dimension(:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
@@ -339,13 +338,13 @@ contains
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r4
+    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2 )
   end subroutine Allocate_Test_RealR4_2d
   ! ------------------------------------  Allocate_Test_RealR4_3d  -----
   subroutine Allocate_Test_RealR4_3d ( To_Allocate, Dim1, Dim2, Dim3, &
     & Its_Name, ModuleName, Low1, Low2, Low3 )
-    real (r4), pointer, dimension(:,:,:) :: To_Allocate
+    real, pointer, dimension(:,:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
@@ -361,7 +360,7 @@ contains
     allocate ( To_Allocate(myLow1:dim1,myLow2:dim2,myLow3:dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // Its_Name // trim(bounds(myLow1,dim1,myLow2,dim2,myLow3,dim3)) )
-    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0_r4
+    if ( status == 0 .and. clearOnAllocate ) to_allocate = 0.0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2*dim3 )
   end subroutine Allocate_Test_RealR4_3d
   ! -------------------------------  Deallocate_Test_Character_1d  -----
@@ -435,7 +434,7 @@ contains
   end subroutine Deallocate_Test_Character_3d
   ! ----------------------------------  Deallocate_Test_RealR8_1d  -----
   subroutine Deallocate_Test_RealR8_1d ( To_Deallocate, Its_Name, ModuleName )
-    real (r8), pointer, dimension(:) :: To_Deallocate
+    double precision, pointer, dimension(:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1
@@ -457,7 +456,7 @@ contains
   end subroutine Deallocate_Test_RealR8_1d
   ! ----------------------------------  Deallocate_Test_RealR8_2d  -----
   subroutine Deallocate_Test_RealR8_2d ( To_Deallocate, Its_Name, ModuleName )
-    real (r8), pointer, dimension(:,:) :: To_Deallocate
+    double precision, pointer, dimension(:,:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2
@@ -480,7 +479,7 @@ contains
   end subroutine Deallocate_Test_RealR8_2d
   ! ----------------------------------  Deallocate_Test_RealR8_3d  -----
   subroutine Deallocate_Test_RealR8_3d ( To_Deallocate, Its_Name, ModuleName )
-    real (r8), pointer, dimension(:,:,:) :: To_Deallocate
+    double precision, pointer, dimension(:,:,:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2, DIM3
@@ -618,7 +617,7 @@ contains
   end subroutine Deallocate_Test_Logical_2d
   ! ------------------------------------  Deallocate_Test_RealR4_1d  -----
   subroutine Deallocate_Test_RealR4_1d ( To_Deallocate, Its_Name, ModuleName )
-    real (r4), pointer, dimension(:) :: To_Deallocate
+    real, pointer, dimension(:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1
@@ -640,7 +639,7 @@ contains
   end subroutine Deallocate_Test_RealR4_1d
   ! ------------------------------------  Deallocate_Test_RealR4_2d  -----
   subroutine Deallocate_Test_RealR4_2d ( To_Deallocate, Its_Name, ModuleName )
-    real (r4), pointer, dimension(:,:) :: To_Deallocate
+    real, pointer, dimension(:,:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2
@@ -663,7 +662,7 @@ contains
   end subroutine Deallocate_Test_RealR4_2d
   ! ----------------------------------  Deallocate_Test_RealR4_3d  -----
   subroutine Deallocate_Test_RealR4_3d ( To_Deallocate, Its_Name, ModuleName )
-    real (r4), pointer, dimension(:,:,:) :: To_Deallocate
+    real, pointer, dimension(:,:,:) :: To_Deallocate
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2, DIM3
@@ -718,6 +717,10 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.19  2004/12/28 00:24:39  vsnyder
+! Use default REAL and DOUBLE PRECISION because R4 and R8 are not guaranteed
+! to be different.
+!
 ! Revision 2.18  2004/10/30 00:23:21  vsnyder
 ! Add low_bound1 to Allocate_Test_Integer_3d
 !
