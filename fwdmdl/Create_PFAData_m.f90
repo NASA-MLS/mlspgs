@@ -28,6 +28,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use DSIMPSON_MODULE, only: SIMPS
+    use Dump_0, only: Dump
     use FilterShapes_m, only: FilterShapes
     use Intrinsic, only: LIT_INDICES, L_NONE
     use L2PC_PFA_STRUCTURES, only: AllocateOneSlabs, DeAllocateOneSlabs, &
@@ -60,6 +61,8 @@ contains ! =====     Public Procedures     =============================
     integer :: C, Chan  ! Indices for channels
     integer, pointer :: Channel(:)  ! Index of channel for signal/channel pair
     real(r8) :: DF      ! Spacing in filter bank's frequency grid
+    integer :: DumpIt   ! Dump Beta, dBetaD... if nonzero.  Stop after first
+                        !   one if > 1.
     integer :: I        ! Index for signals associated with a line, or lines in catalog
     integer :: L        ! Index for lines in catalog
     logical, pointer :: LINEFLAG(:) ! Use this line
@@ -94,6 +97,9 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(emit) ) & ! set by -f command-line switch
       & call trace_begin ( 'Create_PFAData' )
     progress = index(switches,'pfag') /= 0
+    dumpIt = 0
+    if ( index(switches,'pfab') /= 0 ) dumpIt = 1
+    if ( index(switches,'pfaB') /= 0 ) dumpIt = 2
 
     ! Opposite sign convention here from ATBD
     velRel = losVel / speedOfLight ! losVel & speedOfLight both M/s
@@ -131,6 +137,7 @@ contains ! =====     Public Procedures     =============================
         & sideband=signal%sideband, channel=channel(c) )
       pfaDatum%filterFile = filterShapes(shapeInd)%file
       pfaDatum%spectroscopyFile = spectroscopyFile
+      pfaDatum%whichLines = whichLines
       nfp = size(filterShapes(shapeInd)%filterGrid)
       df = filterShapes(shapeInd)%filterGrid(2) - filterShapes(shapeInd)%filterGrid(1)
       ! Compute integral of filter shape, for normalization.  Should be 1.0,
@@ -190,7 +197,7 @@ contains ! =====     Public Procedures     =============================
         ! Put it away
         create_PFAData = AddPFADatumToDatabase ( pfaData, pfaDatum )
 
-        if ( progress ) then
+        if ( progress .or. dumpIt > 0 ) then
           call output ( 'Created PFA for ' )
           call display_string ( lit_indices(n) )
           call output ( ' / ' )
@@ -199,6 +206,14 @@ contains ! =====     Public Procedures     =============================
           call output ( t2-t1, before=' using ', after=' seconds', &
             & format='(f0.2)', advance='yes' )
           t1 = t2
+        end if
+
+        if ( dumpIt > 0 ) then
+          call dump ( pfaDatum%Absorption, name='Absorption' )
+          call dump ( pfaDatum%dAbsDwc, name='DAbsDwc' )
+          call dump ( pfaDatum%dAbsDnc, name='DAbsDnc' )
+          call dump ( pfaDatum%dAbsDnu, name='DAbsDnu' )
+          if ( dumpIt > 1 ) stop
         end if
       end do ! m
     end do ! c
@@ -337,6 +352,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.7  2005/03/28 20:22:59  vsnyder
+! Add more progress dumps
+!
 ! Revision 2.6  2005/03/17 01:32:26  vsnyder
 ! Put spectroscopy file's string index in PFAData structure
 !
