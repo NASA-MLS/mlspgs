@@ -61,7 +61,7 @@ contains ! ============= Public procedures ===================================
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use EXPR_M, only: EXPR
     use FGrid, only: fGrid_T
-    use HGrid, only: hGrid_T
+    use HGridsDatabase, only: hGrid_T
     use INIT_TABLES_MODULE, only:  F_FGRID, F_GEODANGLE, F_HGRID, F_IRREGULAR, &
       & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_RADIOMETER, F_SGRID, &
       & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
@@ -127,7 +127,6 @@ contains ! ============= Public procedures ===================================
     integer, dimension(:), pointer :: SignalInds ! From parse signal
 
     real(rk) :: MINVALUE                ! Minimum value allowed for quantity in fwm
-    real(rk) :: SCALEFACTOR             ! Probably not used
     real(rk), dimension(2) :: EXPR_VALUE
     type (signal_T) :: SIGNALINFO       ! Details of the appropriate signal
 
@@ -138,7 +137,7 @@ contains ! ============= Public procedures ===================================
     end if
 
     ! Set appropriate defaults
-    call nullifyQuantityTemplate ( qty ) ! for Sun's rubbish compiler
+    call NullifyQuantityTemplate ( qty ) ! for Sun's rubbish compiler
     nullify ( signalInds )
     fGridIndex = 0
     hGridIndex = 0
@@ -152,7 +151,6 @@ contains ! ============= Public procedures ===================================
     reflector = 0
     regular = .true.
     sGridIndex = 0
-    scaleFactor = 1.0
     sideband = 0
     signal = 0
     vGridIndex = 0
@@ -287,6 +285,7 @@ contains ! ============= Public procedures ===================================
     ! Now establish the frequency coordinate system
     if ( got(f_fGrid) ) then
       frequencyCoordinate = fGrids(fGridIndex)%frequencyCoordinate
+      qty%frequencies => fGrids(fGridIndex)%values
       noChans = fGrids(fGridIndex)%noChans
     else if ( properties(p_xyz) ) then
       ! XYZ quantity (e.g. ECI/ECR stuff)
@@ -325,49 +324,57 @@ contains ! ============= Public procedures ===================================
       ! Setup a non major/minor frame quantity
       noInstances = 1
       if ( properties ( p_hGrid ) ) noInstances = hGrids(hGridIndex)%noProfs
-      noSurfs =1
+      noSurfs = 1
       if ( properties ( p_vGrid ) ) noSurfs = vGrids(vGridIndex)%noSurfs
 
       ! Setup the quantity template
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
         & noSurfs=noSurfs, coherent=.true., stacked=.true., regular=.true.,&
-        & noChans=noChans )
+        & noChans=noChans, &
+        & sharedVGrid=.true., sharedHGrid=.true., sharedFGrid=.true. )
 
-      ! Setup the horizontal coordinates or zero if irrelevant
+      ! Setup the horizontal coordinates
       if ( properties(p_hGrid) ) then
-        call CopyHGridInfoIntoQuantity ( hGrids(hGridIndex), qty )
-      else                      ! Set `empty' values
-        qty%phi = 0.0
-        qty%geodLat = 0.0
-        qty%lon = 0.0
-        qty%time = 0.0
-        qty%solarTime = 0.0
-        qty%solarZenith = 0.0
-        qty%losAngle = 0.0
+        qty%hGridIndex = hGridIndex
+        call PointQuantityToHGrid ( hGrids(hGridIndex), qty )
+      else
+        call SetupEmptyHGridForQuantity ( qty )
+      end if
+      ! Work out the instance offset
+      if ( associated ( chunk%hGridOffsets ) ) then
+        if ( properties ( p_hGrid )  ) then
+          qty%instanceOffset = chunk%hGridOffsets(hGridIndex)
+        else
+          ! Must have a single instance per chunk
+          qty%instanceOffset = chunk%chunkNumber - 1
+          ! -1 because it's an offset remember, not an origin.
+        end if
       end if
 
-      ! Setup the vertical coordiantes or zero if irrelvant
-      if ( properties(p_vGrid) ) then 
-        call CopyVGridInfoIntoQuantity ( vGrids(vGridIndex), qty )
+      ! Setup the vertical coordiantes
+      if ( properties(p_vGrid) ) then
+        qty%vGridIndex = vGridIndex
+        qty%verticalCoordinate = vGrids(vGridIndex)%verticalCoordinate
+        qty%surfs => vGrids(vGridIndex)%surfs
       else
-        qty%surfs = 0.0
-        qty%verticalCoordinate = l_none
+        call SetupEmptyVGridForQuantity ( qty )
       end if
     end if
 
     ! Fill the frequency information if appropriate
     if ( got ( f_fGrid ) ) then
-      call Allocate_test ( qty%frequencies, qty%noChans, 'qty%frequencies', &
-        & ModuleName )
-      qty%frequencies = fGrids(fGridIndex)%values
+      qty%fGridIndex = fGridIndex
+      qty%frequencies => fGrids(fGridIndex)%values
     end if
     if ( properties ( p_sGrid ) ) then
-      call Allocate_test ( qty%frequencies, noChans, 'qty%frequencies', ModuleName )
-      qty%frequencies = VGrids(sGridIndex)%surfs
+      qty%sharedFGrid = .false.
+      call Allocate_test ( qty%frequencies, qty%noChans, 'qty%frequencies', &
+        & ModuleName )
+      qty%fGridIndex = -sGridIndex        ! Use -ve value to denote sGrid
+      qty%frequencies = vGrids(sGridIndex)%surfs(:,1)
     end if
 
     ! Set up the remaining stuff
-    qty%badValue = -999.99
     qty%frequencyCoordinate = frequencyCoordinate
     qty%instrumentmodule = instrumentmodule
     qty%logBasis = logBasis
@@ -377,7 +384,6 @@ contains ! ============= Public procedures ===================================
     qty%quantityType = quantityType
     qty%radiometer = radiometer
     qty%reflector = reflector
-    qty%scaleFactor = scaleFactor
     qty%sideband = sideband
     qty%signal = signal
     qty%unit = unitsTable ( quantityType )
@@ -386,7 +392,7 @@ contains ! ============= Public procedures ===================================
       call output( 'Template name: ', advance='no' )
       call display_string ( qty%name, advance='no' )
       call output( '   quantityType: ', advance='no' )
-      call display_string( lit_indices(qty%quantityType), advance='yes<' )
+      call display_string( lit_indices(qty%quantityType), advance='yes' )
       call output( '   major frame? ', advance='no' )
       call output( qty%majorFrame, advance='no' )
       call output( '   minor frame? ', advance='no' )
@@ -433,9 +439,9 @@ contains ! ============= Public procedures ===================================
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSSignals_m, only:  IsModuleSpacecraft, GetModuleName
-    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate, &
-      & QuantityTemplateCounter
+    use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
 
+    use Output_m, only: OUTPUT
     ! This routine constructs a minor frame based quantity.
 
     ! Dummy arguments
@@ -490,6 +496,8 @@ contains ! ============= Public procedures ===================================
           & 'You must supply NoChans to reuse geolocation information' )
       ! We have geolocation information, setup the quantity as a clone of that.
       qty = mifGeolocation(instrumentModule)
+      qty%sharedHGrid = .true.
+      qty%sharedVGrid = .true.
       if ( present ( regular ) ) qty%regular = regular
       qty%noChans = noChans
       if ( qty%regular ) then
@@ -497,9 +505,6 @@ contains ! ============= Public procedures ===================================
       else
         qty%instanceLen = 0
       end if
-      ! Increment the id counter and set the id field
-      quantityTemplateCounter = quantityTemplateCounter + 1
-      qty%id = quantityTemplateCounter
 
     else
       ! -------------------------------------- Not Got mifGeolocation ------------
@@ -539,21 +544,13 @@ contains ! ============= Public procedures ===================================
         if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
         
-        call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
-          & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
-          & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
-          & minorFrame=.TRUE. )
-        
-        qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
-        qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
-        
         ! Now we're going to deal with a VGrid for this quantity
         qty%verticalCoordinate = l_geodAltitude
         qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
-        qty%mafCounter = l1bField%counterMAF
-        do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
-          qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
-        end do
+        qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
+        call output ( "Instance offset for minor frame quantity is:" )
+        call output ( qty%instanceOffset, advance='yes' )
+
         call DeallocateL1BData(l1bfield)
 
         ! Now we're going to fill in the hGrid information
@@ -620,10 +617,6 @@ contains ! ============= Public procedures ===================================
         qty%solarTime = 0.0
         qty%solarZenith = 0.0
         qty%losAngle = 0.0
-        qty%mafCounter = l1bField%counterMAF
-        do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
-          qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
-        end do
         call DeallocateL1BData(l1bfield)
       end if
     end if
@@ -720,6 +713,7 @@ contains ! ============= Public procedures ===================================
     end if
 
     ! Setup the minor frame quantity template
+    ! Note this will destroy the old ones contents bit by bit.
     call SetupNewQuantityTemplate ( mifGeolocation(instrumentModule), &
       & noInstances=noMAFs, noSurfs=noMIFs, noChans=1,&
       & coherent=.false., stacked=.false., regular=.true.,&
@@ -737,8 +731,6 @@ contains ! ============= Public procedures ===================================
     mifGeolocation(instrumentModule)%solarZenith = 0.0
     mifGeolocation(instrumentModule)%lon = 0.0
     mifGeolocation(instrumentModule)%losAngle = 0.0
-    mifGeolocation(instrumentModule)%mafIndex = 0.0
-    mifGeolocation(instrumentModule)%mafCounter = 0.0
     mifGeolocation(instrumentModule)%surfs = 0.0
 
     ! Loop over the parameters we might have
@@ -859,65 +851,36 @@ contains ! ============= Public procedures ===================================
     end if
   end function AnyGoodSignalData
 
-  ! ----------------------------------  CopyHGridInfoIntoQuantity  -----
-  subroutine CopyHGridInfoIntoQuantity ( My_hGrid, qty )
+  ! ----------------------------------  PointQuantityToHGrid  -----
+  subroutine PointQuantityToHGrid ( hGrid, qty )
 
   ! This routine copies HGrid information into an already defined quantity
 
-    use HGrid, only: hGrid_T
+    use HGridsDatabase, only: hGrid_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QuantityTemplates, only: QuantityTemplate_T
 
     ! Dummy arguments
-    type (hGrid_T), intent(in) :: My_hGrid
+    type (hGrid_T), intent(in) :: HGRID
     type (QuantityTemplate_T), intent(inout) :: QTY
 
     ! Executable code
-
-    if ( qty%noInstances/=my_hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
+    if ( qty%noInstances/=hGrid%noProfs ) call MLSMessage ( MLSMSG_Error,&
       & ModuleName, "Size of HGrid not compatible with size of quantity" )
-
-    if ( .NOT. qty%stacked ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( .not. qty%stacked ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Cannot copy hGrids into unstacked quantities")
 
-    qty%phi(1,:) = my_hGrid%phi
-    qty%geodLat(1,:) = my_hGrid%geodLat
-    qty%lon(1,:) = my_hGrid%lon
-    qty%time(1,:) = my_hGrid%time
-    qty%solarTime(1,:) = my_hGrid%solarTime
-    qty%solarZenith(1,:) = my_hGrid%solarZenith
-    qty%losAngle(1,:) = my_hGrid%losAngle
-    qty%noInstancesLowerOverlap = my_hGrid%noProfsLowerOverlap
-    qty%noInstancesUpperOverlap = my_hGrid%noProfsUpperOverlap
+    qty%phi => hGrid%phi
+    qty%geodLat => hGrid%geodLat
+    qty%lon => hGrid%lon
+    qty%time => hGrid%time
+    qty%solarTime => hGrid%solarTime
+    qty%solarZenith => hGrid%solarZenith
+    qty%losAngle => hGrid%losAngle
+    qty%noInstancesLowerOverlap = hGrid%noProfsLowerOverlap
+    qty%noInstancesUpperOverlap = hGrid%noProfsUpperOverlap
 
-  end subroutine CopyHGridInfoIntoQuantity
-
-  ! ----------------------------------  CopyVGridInfoIntoQuantity  -----
-  subroutine CopyVGridInfoIntoQuantity ( vGrid, qty )
-
-  ! This similar routine copies VGrid information into an already 
-  ! defined quantity
-
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use QuantityTemplates, only: QuantityTemplate_T
-    use VGridsDatabase, only: VGrid_T
-
-    ! Dummy arguments
-    type (VGrid_T), intent(in) :: vGrid
-    type (QuantityTemplate_T), intent(inout) :: qty
-
-    ! Executable code
-
-    if ( vGrid%noSurfs /= qty%noSurfs ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Size of vGrid not compatible with size of quantity" )
-
-    if ( .NOT. qty%coherent ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Cannot copy vGrid information into incoherent quantities")
-
-    qty%verticalCoordinate = vGrid%verticalCoordinate
-    qty%surfs(:,1) = vGrid%surfs
-
-  end subroutine CopyVGridInfoIntoQuantity
+  end subroutine PointQuantityToHGrid
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -943,7 +906,9 @@ contains ! ============= Public procedures ===================================
     source => mifGeolocation(instrumentModule)
     call SetupNewQuantityTemplate ( qty, noInstances=source%noInstances, &
       & noSurfs=1, coherent=.true., stacked=.true., regular=.true., &
-      & noChans=noChans )
+      & noChans=noChans, sharedHGrid=.true., sharedVGrid=.true. )
+    call SetupEmptyVGridForQuantity ( qty )
+
     qty%phi => source%phi(1:1,:)
     qty%geodLat => source%geodLat(1:1,:)
     qty%lon => source%lon(1:1,:)
@@ -951,13 +916,11 @@ contains ! ============= Public procedures ===================================
     qty%solarTime => source%solarTime(1:1,:)
     qty%solarZenith => source%solarZenith(1:1,:)
     qty%losAngle => source%losAngle(1:1,:)
-    qty%mafIndex => source%mafIndex
-    qty%mafCounter => source%mafCounter
 
-    qty%verticalCoordinate = l_none
     qty%majorFrame = .true.
     qty%minorFrame = .false.
-
+    qty%instanceOffset = source%instanceOffset
+    qty%instrumentModule = source%instrumentModule
     qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
     qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
   end subroutine ConstructMajorFrameQuantity
@@ -1166,5 +1129,44 @@ contains ! ============= Public procedures ===================================
     end subroutine DefineQtyTypes
     
   end subroutine InitQuantityTemplates
+
+  ! ---------------------------------- SetupEmptyHGridForQuantity
+  subroutine SetupEmptyHGridForQuantity ( qty ) 
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use QuantityTemplates, only: QuantityTemplate_T
+    ! Dummy arguments
+    type ( QuantityTemplate_T ), intent(inout) :: QTY
+    ! Executable code
+    qty%sharedHGrid = .false.
+    qty%hGridIndex = 0
+    call Allocate_test ( qty%phi, 1, 1, 'qty%phi(1,1)', ModuleName )
+    call Allocate_test ( qty%geodLat, 1, 1, 'qty%geodLat(1,1)', ModuleName )
+    call Allocate_test ( qty%lon, 1, 1, 'qty%lon(1,1)', ModuleName )
+    call Allocate_test ( qty%time, 1, 1, 'qty%time(1,1)', ModuleName )
+    call Allocate_test ( qty%solarTime, 1, 1, 'qty%solarTime(1,1)', ModuleName )
+    call Allocate_test ( qty%solarZenith, 1, 1, 'qty%solarZenith(1,1)', ModuleName )
+    call Allocate_test ( qty%losAngle, 1, 1, 'qty%losAngle(1,1)', ModuleName )
+    qty%phi = 0.0
+    qty%geodLat = 0.0
+    qty%lon = 0.0
+    qty%time = 0.0
+    qty%solarTime = 0.0
+    qty%solarZenith = 0.0
+    qty%losAngle = 0.0
+  end subroutine SetupEmptyHGridForQuantity
+
+  ! ---------------------------------- SetupEmptyVGridForQuantity
+  subroutine SetupEmptyVGridForQuantity ( qty ) 
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use Intrinsic, only: L_NONE
+    use QuantityTemplates, only: QuantityTemplate_T
+    ! Dummy arguments
+    type ( QuantityTemplate_T ), intent(inout) :: QTY
+    ! Executable code
+    qty%sharedVGrid = .false.
+    qty%vGridIndex = 0
+    qty%verticalCoordinate = l_none
+    call Allocate_test ( qty%surfs, 1, 1, 'qty%surfs(1,1)', ModuleName )
+  end subroutine SetupEmptyVGridForQuantity
 
 end module ConstructQuantityTemplates
