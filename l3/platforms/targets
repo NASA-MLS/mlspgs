@@ -123,14 +123,17 @@ tar:
 #	special options for compiling some modules--override .f90 rules
 
 L2Interface.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L2Interface.f90 $(FAFTER)
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
 L3DMData.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DMData.f90 $(FAFTER)
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
 #L3DZData.o:
-#	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DZData.f90 $(FAFTER)
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.13  2001/07/19 22:48:52  pwagner
+# Builds libmlsl3.a; renamed prog to mlsl3d
+#
 # Revision 1.12  2001/07/16 18:00:21  pwagner
 # Builds correctly with hdf5 on new and older Linux
 #
