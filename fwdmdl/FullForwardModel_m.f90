@@ -479,36 +479,43 @@ contains ! ================================ FullForwardModel routine ======
     do j = 1, noSpecies
       Spectag = spec_tags(fwdModelConf%molecules(j))
       thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
-      ! Now subset the lines according to the signal we're using
-      call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', ModuleName )
-      lineFlag = .false.
-      do k = 1, size ( thisCatalogEntry%lines )
-        thisLine => lines(thisCatalogEntry%lines(k))
-        do sigInd = 1, size(fwdModelConf%signals)
-          if ( associated(thisLine%signals) ) then
-            doThis = any ( thisLine%signals == fwdModelConf%signals(sigInd)%index )
-            ! If we're only doing one sideband, maybe we can remove some more lines
-            if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
-              & any( ( thisLine%sidebands == sidebandStart ) .or. &
-              & ( thisLine%sidebands == 0 ) )
-          else
-            doThis = .true.
-          end if
-          lineFlag(k) = lineFlag(k) .or. doThis
-        end do ! End loop over signals requested in fwm
-      end do ! End loop over lines
-      My_Catalog(j) = thisCatalogEntry
-      nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
-      ! Check we have at least one line for this
-      if ( count(lineFlag) == 0 ) then
-        call get_string ( lit_indices(fwdModelConf%molecules(j)), molName )
-        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'No relevant lines for '//trim(molName) )
-      endif
-      call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
-        & 'my_catalog(?)%lines', ModuleName )
-      my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
-      call Deallocate_test ( lineFlag, 'lineFlag', ModuleName )
+      if ( associated ( thisCatalogEntry%lines ) ) then
+        ! Now subset the lines according to the signal we're using
+        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', ModuleName )
+        lineFlag = .false.
+        do k = 1, size ( thisCatalogEntry%lines )
+          thisLine => lines(thisCatalogEntry%lines(k))
+          do sigInd = 1, size(fwdModelConf%signals)
+            if ( associated(thisLine%signals) ) then
+              doThis = any ( thisLine%signals == fwdModelConf%signals(sigInd)%index )
+              ! If we're only doing one sideband, maybe we can remove some more lines
+              if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
+                & any( ( thisLine%sidebands == sidebandStart ) .or. &
+                & ( thisLine%sidebands == 0 ) )
+            else
+              doThis = .true.
+            end if
+            lineFlag(k) = lineFlag(k) .or. doThis
+          end do ! End loop over signals requested in fwm
+        end do ! End loop over lines
+        My_Catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+        ! Check we have at least one line for this
+        if ( count(lineFlag) == 0 ) then
+          call get_string ( lit_indices(fwdModelConf%molecules(j)), molName )
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No relevant lines for '//trim(molName) )
+        endif
+        call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
+          & 'my_catalog(?)%lines', ModuleName )
+        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
+        call Deallocate_test ( lineFlag, 'lineFlag', ModuleName )
+      else
+        ! No lines for this species
+        my_catalog(j) = thisCatalogEntry
+        call Allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
+          & ModuleName )
+      end if
     end do ! Loop over species
 
     ! Work out which frequencies we're going to need in non frequency --------
@@ -1800,6 +1807,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.4  2001/10/02 16:51:41  livesey
+! Removed fmStat%finished and reordered loops in forward models
+!
 ! Revision 2.3  2001/09/19 04:38:48  livesey
 ! Lines per band stuff works now
 !
