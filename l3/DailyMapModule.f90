@@ -1,5 +1,5 @@
 
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !==============================================================================
@@ -13,7 +13,9 @@ Module DailyMapModule
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, & 
        & MLSMSG_DEALLOCATE, MLSMSG_ALLOCATE
   Implicit None
-  PUBLIC
+  private
+  PUBLIC :: Init, ClearMemory, CordTransform, FindAD, &
+    & FFSM_Opt, FFSM, FFSMA, FFSMD, Reconstruct, Diagnostics, DataGenerate
   
   PRIVATE :: ID, ModuleName
 
@@ -1343,13 +1345,16 @@ Contains
             Ascend(nt+1-i) = aField(i) 
          End Do
 
-       End Subroutine DataGenerate
+  End Subroutine DataGenerate
        
-     !===================
-     End Module DailyMapModule
-     !===================
+!===================
+End Module DailyMapModule
+!===================
 
 ! $Log$
+! Revision 1.10  2003/03/22 03:42:55  jdone
+! zero denominator check, individual allocate/deallocate, use only and indentation added
+!
 ! Revision 1.9  2002/02/20 21:18:13  ybj
 ! *** empty log message ***
 !
