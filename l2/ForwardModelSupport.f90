@@ -317,7 +317,7 @@ contains ! =====     Public Procedures     =============================
       & F_FORCESIDEBANDFRACTION, F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, &
       & F_MOLECULEDERIVATIVES, F_NABTERMS, &
       & F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
-      & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
+      & F_NSIZEBINS, F_PFAMOLECULES, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
       & F_TOLERANCE, F_TYPE, F_LINEARSIDEBAND, F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
@@ -510,6 +510,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_nsizebins )
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SIZE_BINS = nint( value(1) )
+      case ( f_pfaMolecules )
+        call allocate_test ( info%pfaMolecules, nsons(son)-1, "info%pfaMolecules", &
+          & moduleName )
       case ( f_phiWindow )
         call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
@@ -880,6 +883,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.91  2004/05/01 04:05:50  vsnyder
+! Added pfaMolecules -- but more work needed
+!
 ! Revision 2.90  2004/03/22 18:24:40  livesey
 ! Added handling of AllLinesInCatalog flag.
 !
