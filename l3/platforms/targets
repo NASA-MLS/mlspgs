@@ -97,13 +97,18 @@ tar:
 
 #	special options for compiling some modules--override .f90 rules
 
-L3DMData.o:
-	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DMData.f90
 L2Interface.o:
 	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L2Interface.f90
+L3DMData.o:
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DMData.f90
+L3DZData.o:
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DZData.f90
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2001/02/08 23:22:14  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
 # Revision 1.5  2001/02/05 19:37:37  pwagner
 # LDOPTS added to load statements
 #
