@@ -106,6 +106,7 @@ contains ! =====     Public Procedures     =============================
     integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
     integer :: XSTARINSTANCE            ! Loop counter
 
+    logical :: ANYBLOCKS                ! Flag for checking derivatives
     logical :: DODERIVATIVES            ! Flag
     logical :: FOUNDINFIRST             ! Flag for state quantities
     logical :: PTANINFIRST              ! PTan was found in the first vector
@@ -308,8 +309,8 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! -------- Main loop over xStar quantities -------------------------------
-      do qtyInd = 1, size ( l2pc%col%vec%quantities )
-
+      quantityLoop: do qtyInd = 1, size ( l2pc%col%vec%quantities )
+        
         ! Identify this quantity in xStar
         l2pcQ => l2pc%col%vec%quantities(qtyInd)
 
@@ -327,22 +328,23 @@ contains ! =====     Public Procedures     =============================
         call FindMatchForL2PCQ ( l2pcQ, fwdModelIn, fwdModelExtra, &
           & stateQ, foundInFirst )
 
-        ! If it's not in the state vector, perhaps make a fuss
+        ! If it's not in the state vector, and the l2pc does contain
+        ! derivative information for this then make a fuss.
         if ( .not. associated(stateQ) ) then
-          ! I'm commenting out the 'make a fuss' code, as it can't
-          ! distinguish between tropH2O and H2O.
-          ! One could be clever and see if the l2pc actually has some derivatives
-          ! for this quantity, but I'll postpone that level of complexity for the moment.
-          
-!           if ( any(l2pcQ%template%quantityType == &
-!             & (/ l_temperature, l_vmr /)) .and. &
-!             & l2pcQ%template%molecule /= l_extinction ) then
-!             call get_string ( l2pcQ%template%name, word, strip=.true. )
-!             call MLSMessage ( MLSMSG_Warning, ModuleName, &
-!               &  "No quantity in state vectors found to match "//trim(word) )
-!           end if
-
-          cycle                         ! Go to next l2pc quantity
+          anyBlocks = .false.
+          do xStarInstance = 1, l2pcQ%template%noInstances
+            colLBlock = FindBlock ( l2pc%col, l2pcQ%index, xStarInstance )
+            if ( l2pc%block(rowLBlock,colLBlock)%kind /= M_Absent ) then
+              anyBlocks = .true.
+              exit
+            end if
+          end do
+          if ( anyBlocks ) then
+            call get_string ( l2pcQ%template%name, word, strip=.true. )
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              &  "No quantity in state vectors found to match "//trim(word) )
+          end if
+          cycle quantityLoop            ! Go to next l2pc quantity
         end if
 
         if ( toggle(emit) .and. levels(emit) > 1 ) then
@@ -471,7 +473,7 @@ contains ! =====     Public Procedures     =============================
           & xP%quantities(qtyInd)%values - &
           & l2pc%col%vec%quantities(qtyInd)%values
 
-      end do                              ! End loop over quantities
+      end do quantityLoop               ! End loop over quantities
 
       ! Now compute yP
       if ( toggle(emit) .and. levels(emit) > 8 ) then
@@ -883,6 +885,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.30  2002/11/14 17:46:08  livesey
+! Bypassed a warning message that was starting to irritate me.
+!
 ! Revision 2.29  2002/10/08 17:08:05  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
