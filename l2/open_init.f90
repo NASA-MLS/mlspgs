@@ -158,7 +158,8 @@ contains ! =====     Public Procedures     =============================
    if( .not. PCF ) then
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'O') /= 0 ) &
-        & call dump_L1B_database ( ifl1, l1binfo, l2pcf, &
+        & call dump_L1B_database &
+        & ( mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1, l1binfo, l2pcf, &
           & CCSDSEndTime, CCSDSStartTime )
       call trace_end ( "OpenAndInit" )
     end if
@@ -374,31 +375,40 @@ contains ! =====     Public Procedures     =============================
 
     call output ( 'L1B database:', advance='yes' )
   
+   if(associated(l1bInfo%L1BRADIDs)) then
     if ( num_l1b_files > 0 ) then
       do i = 1, num_l1b_files
 !        returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
 !        & physicalFilename)
-  	call output ( 'fileid:   ' )
-	call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
-  	call output ( 'name:   ' )
-  	call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
+      if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
+  	    call output ( 'fileid:   ' )
+	    call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
+      	call output ( 'name:   ' )
+    	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
+      endif
       end do
+
     else
       call output ( '(empty database)', advance='yes' )
     end if
+
+   else
+    call output ( '(null database)', advance='yes' )
+
+   endif
 
     call output ( 'L1OA file:', advance='yes' )
   
 !    returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
 !      & physicalFilename)
-    if ( returnStatus == PGS_S_SUCCESS ) then
+!    if ( returnStatus == PGS_S_SUCCESS ) then
       call output ( 'fileid:   ' )
       call output ( l1bInfo%L1BOAID, advance='yes' )
       call output ( 'name:   ' )
       call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
-    else
-      call output ( '(file unknown)', advance='yes' )
-    end if
+!    else
+!      call output ( '(file unknown)', advance='yes' )
+!    end if
 
     call output ( 'Start Time:   ' )
     call output ( CCSDSStartTime, advance='yes' )
@@ -489,6 +499,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.46  2001/05/07 23:28:19  pwagner
+! Fixed dump..
+!
 ! Revision 2.45  2001/05/06 20:55:25  pwagner
 ! [De]Allocates l1binfo%filenames along with ids
 !
