@@ -531,6 +531,8 @@ CONTAINS
 	DeAllocate(nc, nca, ncd)
 	DeAllocate(startTime, endTime)
 
+!	DeAllocate( anlats, dnlats, alats, dlats, alons, dlons, atimes, dtimes, afields, dfields, delTad )
+
 !-----------------------------------
    END SUBROUTINE DailyCoreProcessing
 !-----------------------------------
@@ -808,7 +810,7 @@ CONTAINS
 
 !*** Deallocate intermidiate arrays 
 
-        DEALLOCATE(l2Lons_new, l2Lons_Rev, l2Times_Rev, l2Lats_Rev, l2Values_Rev)
+        DEALLOCATE(l2Lons_Rev, l2Times_Rev, l2Lats_Rev, l2Values_Rev)
 
 
 !-----------------------------------
@@ -823,6 +825,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.10  2001/03/08 00:37:17  ybj
+! *** empty log message ***
+!
 ! Revision 1.9  2001/03/07 23:12:15  ybj
 ! *** empty log message ***
 !
