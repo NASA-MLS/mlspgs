@@ -22,26 +22,25 @@ module ForwardModelSupport
 
   ! Error codes
 
-  integer, parameter :: AllocateError        = 1
-  integer, parameter :: BadBinSelectors      = AllocateError + 1
-  integer, parameter :: BadMolecule          = BadBinSelectors + 1
-  integer, parameter :: DefineSignalsFirst   = BadMolecule + 1
-  integer, parameter :: DefineMoleculesFirst = DefineSignalsFirst + 1
-  integer, parameter :: IncompleteBinSelectors    = DefineMoleculesFirst + 1
-  integer, parameter :: IncompleteFullFwm    = IncompleteBinSelectors + 1
-  integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
+  integer, parameter :: AllocateError          = 1                    
+  integer, parameter :: BadBinSelectors        = AllocateError + 1    
+  integer, parameter :: BadHeightUnit          = BadBinSelectors + 1  
+  integer, parameter :: BadQuantityType        = BadHeightUnit + 1    
+  integer, parameter :: DerivSansMolecules     = BadQuantityType  + 1 
+  integer, parameter :: IncompleteBinSelectors = DerivSansMolecules + 1
+  integer, parameter :: IncompleteFullFwm      = IncompleteBinSelectors + 1  
+  integer, parameter :: IncompleteLinearFwm    = IncompleteFullFwm + 1       
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
-  integer, parameter :: TangentNotSubset     = LinearSidebandHasUnits + 1
-  integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
-  integer, parameter :: TooManyHeights       = ToleranceNotK + 1
-  integer, parameter :: TooManyCosts         = TooManyHeights + 1
-  integer, parameter :: BadHeightUnit        = TooManyCosts + 1
-  integer, parameter :: NoMolecule           = BadHeightUnit + 1
-  integer, parameter :: BadQuantityType      = NoMolecule + 1
-  integer, parameter :: WrongUnitsForWindow  = BadQuantityType + 1
-  integer, parameter :: NeedBothXYStar       = WrongUnitsForWindow + 1
-  integer, parameter :: PolarizedAndAllLines = NeedBothXYStar + 1
+  integer, parameter :: NeedBothXYStar         = LinearSidebandHasUnits + 1
+  integer, parameter :: NoMolecule             = NeedBothXYStar + 1
+  integer, parameter :: PFAAndNotPFA           = NoMolecule + 1
+  integer, parameter :: PolarizedAndAllLines   = PFAAndNotPFA + 1
+  integer, parameter :: TangentNotSubset       = PolarizedAndAllLines + 1
+  integer, parameter :: ToleranceNotK          = TangentNotSubset + 1
+  integer, parameter :: TooManyCosts           = ToleranceNotK + 1
+  integer, parameter :: TooManyHeights         = TooManyCosts + 1
+  integer, parameter :: WrongUnitsForWindow    = TooManyHeights + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -255,21 +254,19 @@ contains ! =====     Public Procedures     =============================
       case ( f_exact )
         binSelector%exact = get_boolean(gson)
       case ( f_height )
-        if ( nsons(son) > 2 ) call AnnounceError ( TooManyHeights, son, &
-          & f_height )
+        if ( nsons(son) > 2 ) call AnnounceError ( TooManyHeights, son )
         call expr ( gson, expr_units, value, type )
-        if ( type /= t_numeric_range ) call AnnounceError ( 0, son, f_height, &
-          & 'Height range expected' )
+        if ( type /= t_numeric_range ) call AnnounceError ( 0, son, &
+          & extraMessage='Height range expected' )
         if ( any ( expr_units /= phyq_pressure .and. expr_units /= phyq_dimensionless ) .or. &
           & all ( expr_units /= phyq_pressure ) ) &
-          & call AnnounceError ( BadHeightUnit, son, f_height )
+          & call AnnounceError ( BadHeightUnit, son )
         binSelector%heightRange = value
       case ( f_cost )
-        if ( nsons(son) > 2 ) call AnnounceError ( TooManyCosts, son, &
-          & f_cost )
+        if ( nsons(son) > 2 ) call AnnounceError ( TooManyCosts, son )
         call expr ( gson, expr_units, value, type )
         if ( type == t_numeric_range ) call AnnounceError ( 0, son, &
-          & f_cost, 'Cost must not be a range' ) 
+          & extraMessage='Cost must not be a range' ) 
         ! Some units checking should probably go here in the long run !???? NJL
         binSelector%cost = value(1)
         costUnit = expr_units(1)
@@ -301,8 +298,8 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
     & ( name, root, vgrids, global ) result ( info )
-    ! Process the forwardModel specification to produce ForwardModelConfig to add
-    ! to the database
+    ! Process the forwardModel specification to produce ForwardModelConfig to
+    ! add to the database
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
@@ -333,7 +330,7 @@ contains ! =====     Public Procedures     =============================
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_ID, Nsons, Sub_Rosa, Subtree
-    use Tree_Types, only: N_Array, N_named
+    use Tree_Types, only: N_Array
     use VGridsDatabase, only: VGrid_T
 
     integer, intent(in) :: NAME         ! The name of the config
@@ -344,14 +341,15 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
+    integer :: DerivTree                ! Tree index of f_MoleculeDerivatives
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
     integer :: J                        ! Subscript and loop inductor.
-    integer :: Key                      ! Indexes the spec_args vertex.
     integer :: MoleculeSign             ! in the info%molecules array.
-    integer :: Mol                      ! Tree indices of f_molecules, ...Pol
+    integer :: MoleculeTree             ! Tree index of f_molecules
     integer :: NELTS                    ! Number of elements of an array tree
+    integer :: PFATree                  ! Tree index of f_PFAMolecules
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
     character (len=80) :: SIGNALSTRING  ! E.g. R1A....
@@ -412,9 +410,6 @@ contains ! =====     Public Procedures     =============================
     info%windowUnits = phyq_profiles
     info%xStar = 0
     info%yStar = 0
-    ! Make sure PFAMolecules is associated, because its size is used in
-    ! a specification expression.
-    call allocate_test ( info%PFAMolecules, 0, 'info%PFAMolecules', moduleName )
 
     got = .false.
     info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
@@ -466,35 +461,10 @@ contains ! =====     Public Procedures     =============================
         info%lockBins = get_boolean(son)
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
-      case ( f_molecules )
-        mol = son
-        nelts = 0
-        do j = 2, nsons(son)
-          call countElements ( subtree(j,son), nelts )
-        end do
-        call allocate_test ( info%molecules, nelts, "info%molecules", &
-          & ModuleName )
-        call allocate_test ( info%moleculeDerivatives, nelts, &
-          & "info%moleculeDerivatives", ModuleName )
-        info%moleculeDerivatives = .false.
-        nelts = 0
-        do j = 2, nsons(son)
-          moleculeSign = +1 ! Indicate "root of a tree of molecules"
-          call fillElements ( subtree(j,son), nelts, 0, info%molecules )
-        end do
       case ( f_moleculeDerivatives )
-        if ( .not. associated(info%molecules) ) then
-          call announceError( DefineMoleculesFirst, root)
-        else
-          do j = 2, nsons(son)
-            thisMolecule = decoration( subtree( j, son ) )
-            if ( .not. any(info%molecules == thisMolecule ) ) &
-              & call announceError( BadMolecule, root )
-            where ( info%molecules == thisMolecule )
-              info%moleculeDerivatives = .true.
-            end where
-          end do                          ! End loop over listed species
-        end if
+        derivTree = son
+      case ( f_molecules )
+        moleculeTree = son
       case ( f_nabterms )
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_AB_TERMS = nint( value(1) )
@@ -514,11 +484,7 @@ contains ! =====     Public Procedures     =============================
         call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SIZE_BINS = nint( value(1) )
       case ( f_pfaMolecules )
-        call allocate_test ( info%pfaMolecules, nsons(son)-1, "info%pfaMolecules", &
-          & moduleName )
-        do j = 2, nsons(son)
-          info%pfaMolecules(j-1) = decoration( subtree( j, son ) )
-        end do
+        pfaTree = son
       case ( f_phiWindow )
         call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
@@ -563,7 +529,7 @@ contains ! =====     Public Procedures     =============================
         end do                          ! End loop over listed signals
       case ( f_skipOverlaps )
         info%skipOverlaps = get_boolean(son)
-      case  ( f_specificQuantities )
+      case ( f_specificQuantities )
         call Allocate_test ( info%specificQuantities, nsons(son)-1, &
           & 'info%specificQuantities', ModuleName )
         do j = 1, nsons(son) - 1
@@ -594,8 +560,52 @@ contains ! =====     Public Procedures     =============================
 
     end do ! i = 2, nsons(root)
 
+    ! Now the molecule lists.
+    nelts = 0
+    if ( got(f_molecules) ) then
+      do j = 2, nsons(moleculeTree)
+        call countElements ( subtree(j,moleculeTree), nelts )
+      end do
+    end if
+    info%firstPFA = nelts + 1
+    if ( got(f_pfaMolecules) ) nelts = nelts + nsons(pfaTree) - 1
+    if ( nelts > 0 ) then
+      call allocate_test ( info%molecules, nelts, "info%molecules", &
+        & ModuleName )
+      call allocate_test ( info%moleculeDerivatives, nelts, &
+        & "info%moleculeDerivatives", ModuleName )
+      info%moleculeDerivatives = .false.
+    end if
+    nelts = 0
+    if ( got(f_molecules) ) then
+      do j = 2, nsons(moleculeTree)
+        moleculeSign = +1 ! Indicate "root of a tree of molecules"
+        call fillElements ( subtree(j,moleculeTree), nelts, 0, info%molecules )
+      end do
+    end if
+    if ( got(f_pfaMolecules) ) then
+      i = nelts
+      do j = 2, nsons(pfaTree)
+        i = i + 1
+        info%molecules(i) = decoration( subtree( j, pfaTree ) )
+        if ( any(abs(info%molecules(:nelts)) == info%molecules(i)) ) &
+          & call announceError ( PFAAndNotPFA, subtree(j+1,pfaTree) )
+      end do
+    end if
 
     ! Now some more error checking
+    if ( got(f_moleculeDerivatives) ) then
+      if ( .not. associated(info%molecules) ) &
+        & call announceError ( derivSansMolecules, derivTree )
+      do j = 2, nsons(derivTree)
+        thisMolecule = decoration( subtree( j, derivTree ) )
+        if ( .not. any(info%molecules == thisMolecule) ) &
+          & call announceError ( derivSansMolecules, subtree(j,derivTree) )
+        if ( got(f_molecules) ) where ( info%molecules == thisMolecule ) &
+          & info%moleculeDerivatives = .true.
+      end do                          ! End loop over listed species
+    end if
+
     if ( ( info%xStar == 0 ) .neqv. ( info%yStar == 0 ) ) &
       & call AnnounceError ( NeedBothXYStar, root )
 
@@ -739,7 +749,7 @@ contains ! =====     Public Procedures     =============================
                                                                                 
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Output_m, only: BLANKS, Output
-    use String_Table, only: DISPLAY_STRING, GET_STRING
+    use String_Table, only: GET_STRING
                                                                                 
     ! Dummy argument
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
@@ -802,17 +812,14 @@ contains ! =====     Public Procedures     =============================
 
   ! =====     Private Procedures     ===================================
   ! ----------------------------------------------  AnnounceError  -----
-  subroutine AnnounceError ( Code, where, FieldIndex, extraMessage )
+  subroutine AnnounceError ( Code, where, extraMessage )
 
-    use Intrinsic, only: Lit_Indices
     use Lexer_Core, only: PRINT_SOURCE
     use Output_M, only: Output
-    use String_Table, only: Display_String
     use Tree, only: Source_Ref
 
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: where      ! Where in the tree did the error occur?
-    integer, intent(in), optional :: FieldIndex ! f_...
     character (LEN=*), optional :: extraMessage
 
     error = max(error,1)
@@ -822,17 +829,18 @@ contains ! =====     Public Procedures     =============================
     select case ( code )
     case ( AllocateError )
       call output ( 'allocation error.', advance='yes' )
-    case ( BadMolecule )
-      call output ( 'asked for derivatives for an unlisted molecule.', &
-        & advance='yes' )
     case ( BadBinSelectors )
       call output ('cannot have a fieldAzimuth binSelector for polarlinear model', &
         & advance='yes' )
-    case ( DefineMoleculesFirst )
-      call output ( 'molecule must be defined before moleules derivatives.', &
+    case ( BadHeightUnit )
+      call output ( 'Inappropriate units for height in binSelector',&
+        & advance='yes' )
+    case ( BadQuantityType )
+      call output ( 'Bin Selectors cannot apply to this quantity type',&
+        & advance='yes' )
+    case ( DerivSansMolecules )
+      call output ( 'Derivative(s) requested for molecule(s) not specified.', &
         & advance='yes')
-    case ( DefineSignalsFirst )
-      call output ( 'signals must be defined before channels.',advance='yes')
     case ( IncompleteBinSelectors )
       call output ('must have some binSelectors for the polarlinear model',advance='yes' )
     case ( IncompleteFullFwm )
@@ -846,6 +854,17 @@ contains ! =====     Public Procedures     =============================
     case ( LinearSidebandHasUnits )
       call output ( 'irrelevant units for this linear sideband', &
         & advance='yes' )
+    case ( NeedBothXYStar )
+      call output ( 'x/yStar must either be both present or both absent', &
+        & advance='yes' )
+    case ( NoMolecule )
+      call output ( 'A bin selector of type vmr must have a molecule',&
+        & advance='yes' )
+    case ( PFAAndNotPFA )
+      call output ( 'Molecule listed for both PFA and non-PFA', advance='yes' )
+    case ( PolarizedAndAllLines )
+      call output ( 'cannot specify both polarized and allLinesInCatalog', &
+        & advance='yes' )
     case ( TangentNotSubset )
       call output ('non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
@@ -855,26 +874,11 @@ contains ! =====     Public Procedures     =============================
     case ( TooManyHeights )
       call output ( 'Bin Selectors can only refer to one height range',&
         & advance='yes' )
-    case ( BadHeightUnit )
-      call output ( 'Inappropriate units for height in binSelector',&
-        & advance='yes' )
     case ( TooManyCosts )
       call output ( 'Bin Selectors can only have one cost',&
         & advance='yes' )
-    case ( BadQuantityType )
-      call output ( 'Bin Selectors cannot apply to this quantity type',&
-        & advance='yes' )
-    case ( NoMolecule )
-      call output ( 'A bin selector of type vmr must have a molecule',&
-        & advance='yes' )
     case ( WrongUnitsForWindow )
       call output ( 'phiWindow must be in degrees or profiles', &
-        & advance='yes' )
-    case ( NeedBothXYStar )
-      call output ( 'x/yStar must either be both present or both absent', &
-        & advance='yes' )
-    case ( PolarizedAndAllLines )
-      call output ( 'cannot specify both polarized and allLinesInCatalog', &
         & advance='yes' )
     case default
       call output ( '(no specific description of this error)', advance='yes' )
@@ -889,6 +893,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.94  2004/07/08 02:35:46  vsnyder
+! Put all line-by-line molecules before PFA ones
+!
 ! Revision 2.93  2004/06/12 00:42:35  vsnyder
 ! Make sure PFAMolecules is associated -- at least with zero size
 !
