@@ -43,6 +43,7 @@ module ForwardModelConfig
     integer :: instrumentModule         ! Module for scan model
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
+    logical :: skipOverlaps   ! Don't calculate for MAFs in overlap regions
     type(vGrid_T), pointer :: integrationGrid=>NULL() ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
@@ -138,6 +139,8 @@ contains
         call output ( database(i)%spect_der, advance='yes' )
         call output ( '  Temp_der:' )
         call output ( database(i)%temp_der, advance='yes' )
+        call output ( '  SkipOverlaps:' )
+        call output ( database(i)%skipOverlaps, advance='yes' )
         call output ( '  Molecules: ', advance='yes' )
         do j = 1, size(database(i)%molecules)
           call output ( '    ' )
@@ -163,6 +166,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.8  2001/05/14 23:17:35  livesey
+! Added frqGap parameter
+!
 ! Revision 1.7  2001/05/03 23:07:02  livesey
 ! Added scan model stuff
 !
