@@ -7,7 +7,7 @@ module TestCholesky_M
   use MatrixModule_0, only: DenseCholesky, Densify
   use MatrixModule_1, only: GetMatrixElement, Matrix_T, Matrix_Cholesky_T, &
     & Matrix_SPD_T
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, RM
 
 contains
 
@@ -17,7 +17,7 @@ contains
     type(matrix_Cholesky_T), intent(in), optional :: SparseCholesky
 
     double precision, external :: DDOT
-    real(r8), pointer, save :: BigCholesky(:,:), BigNeq(:,:)
+    real(rm), pointer, save :: BigCholesky(:,:), BigNeq(:,:)
     real(r8) :: U
 
     integer :: I, J           ! Subscripts, loop inductors
@@ -41,9 +41,9 @@ contains
     end if
     do j = 1, n
       do i = 1, j
-        if ( abs(getMatrixElement(sparseCholesky%m,i,j)-bigCholesky(i,j)) > 0.0_r8 ) then
+        if ( abs(getMatrixElement(sparseCholesky%m,i,j)-bigCholesky(i,j)) > 0.0_rm ) then
           if ( abs( (getMatrixElement(sparseCholesky%m,i,j)-bigCholesky(i,j)) / &
-                    (getMatrixElement(sparseCholesky%m,i,j)+bigCholesky(i,j)) ) > 1.0e-6_r8 ) then
+                    (getMatrixElement(sparseCholesky%m,i,j)+bigCholesky(i,j)) ) > 1.0e-6_rm ) then
             print *, 'Sparse and Dense differ at (', i, ',', j, ')'
             ierr = ierr + 1
           end if
