@@ -42,8 +42,8 @@ contains
       & F_AllQuantityTemplates, F_AllVectors, F_AllVectorTemplates, &
       & F_AllVGrids, F_AntennaPatterns, F_Details, F_DACSFilterShapes, &
       & F_FilterShapes, F_ForwardModel, F_HGrid, F_PfaData, &
-      & F_PointingGrids, F_Quantity, F_Template, F_Vector, F_VGrid, &
-      & S_Quantity, S_VectorTemplate
+      & F_PointingGrids, F_Quantity, F_Template, F_TGrid, F_Vector, &
+      & F_VGrid, S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
@@ -81,7 +81,8 @@ contains
     integer, parameter :: NoFWM = dimless + 1
     integer, parameter :: NoHGrid = NoFWM + 1
     integer, parameter :: NoQT = noHGrid + 1
-    integer, parameter :: NoVectors = noQT + 1
+    integer, parameter :: NoTG = noQT + 1
+    integer, parameter :: NoVectors = noTG + 1
     integer, parameter :: NoVG = noVectors + 1
     integer, parameter :: NoVT = noVG + 1
     integer, parameter :: Numeric = noVT + 1
@@ -192,6 +193,13 @@ contains
             call announceError ( gson, noVT )
           end if
         end select
+      case ( f_tGrid )
+        if ( present(vGrids) ) then
+          call output ( ' TGrid ' )
+          call dump ( vGRids(decoration(decoration(gson))), details=details )
+        else
+          call announceError ( gson, noTG )
+        end if
       case ( f_vector ) ! Dump an entire vector
         if ( present(vectors) ) then
           call output ( ' Vector ' )
@@ -227,6 +235,8 @@ contains
         call output ( "Can't dump HGrids here." )
       case ( noQT )
         call output ( "Can't dump Quantity Templates here." )
+      case ( noTG )
+        call output ( "Can't dump TGrids here." )
       case ( noVectors )
         call output ( "Can't dump Vectors here." )
       case ( noVG )
@@ -245,6 +255,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.7  2004/06/08 20:20:18  vsnyder
+! Add tGrid
+!
 ! Revision 2.6  2004/05/29 02:50:49  vsnyder
 ! Added more dumps
 !
