@@ -148,6 +148,16 @@ contains
     call Allocate_test ( slabs%dx1_dv0, myl,     'dx1_dv0',     ModuleName )
     call Allocate_test ( slabs%dy_dv0, myl,      'dy_dv0',      ModuleName )
     call Allocate_test ( slabs%dslabs1_dv0, myl, 'dslabs1_dv0', ModuleName )
+    if ( nl == 0 ) then
+      slabs%v0s = 0.0_r8
+      slabs%x1 = 0.0_r8
+      slabs%y = 0.0_r8
+      slabs%yi = 0.0_r8
+      slabs%slabs1 = 0.0_r8
+      slabs%dx1_dv0 = 0.0_r8
+      slabs%dy_dv0 = 0.0_r8
+      slabs%dslabs1_dv0 = 0.0_r8
+    end if
   end subroutine AllocateOneSlabs
   
   ! ------------------------------------------ DeallocateOneSlabs ---------
@@ -188,6 +198,9 @@ contains
   
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.1  2002/05/23 22:03:35  zvi
+! Prevention of zero allocation size
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
