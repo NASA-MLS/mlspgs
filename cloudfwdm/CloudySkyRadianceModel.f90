@@ -73,12 +73,12 @@ contains
 !                        -------------------------------------------------   C
 !               NOTE:    The internal model grid resuires NZmodel=640,       C
 !                        where pressure levels are defined as following:     C
-!                            NZmodel=640                                     C
-!                            Ptop = 80./16.-3.                               C
-!                            Pbottom=-ALOG10(PRESSURE(lowest_level))         C
-!                            dP=(Ptop-Pbottom)/NZmodel                       C
-!                            ZH(I)=Pbottom+(I-1)*dP,      I=1,NZmodel        C
-!                            P(I) = 10**(-ZH(I)) ,        I=1,NZmodel        C
+!                            NZmodel = 640                                   C
+!                            Ptop    = 80./16.-3.                            C
+!                            Pbottom =-ALOG10(PRESSURE(lowest_level))        C
+!                            dP      =(Ptop-Pbottom)/NZmodel                 C
+!                            ZH(I)   =Pbottom+(I-1)*dP,   I=1,NZmodel        C
+!                            P(I)    = 10**(-ZH(I)) ,        I=1,NZmodel     C
 !                        -------------------------------------------------   C
 !     NT:             -> Number of Tangent Pressures.                        C
 !     NS:             -> Number of Chemical Species.                         C
@@ -203,9 +203,6 @@ contains
                                                ! N=1: ICE; N=2: LIQUID
       REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
       REAL(r8) :: RE                           ! EARTH RADIUS
-      REAL(r8) :: RT
-
-      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr,freq
 
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
@@ -362,10 +359,17 @@ contains
                                                ! COEFFS
       REAL(r8) :: DZ(NZ-1)
 
+      REAL(r8) :: RT
+
+      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr,freq
+
       REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
 
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
+
+!-------------------------------------------------------------------------
+
 
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
@@ -603,7 +607,9 @@ contains
 
          ENDIF
 
+
          IF (IFOV .EQ. 1) THEN       ! **** BEGIN FOV AVERAGING ****
+
 ! ==========================================================================
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
 ! ==========================================================================
@@ -640,7 +646,7 @@ contains
 	 Rs_eq = h_obs
 
   	 DO I = 1, Multi
-
+            
             If (ZZT1(I) .LT. 0._r8) then
                RT= MIN( (ZZT1(I)+RE), RE)
                schi = (1+znt1(I)) * ( RT/RE ) * (ZZT1(I) + RE) / Rs_eq    
@@ -654,6 +660,7 @@ contains
                STOP
             END IF
     	    ptg_angle(i) = Asin(schi) + elev_offset
+!            print*, real(ptg_angle(i)), real(TT0(i,NZmodel))
   	 END DO
 
 	 center_angle = ptg_angle(1)
@@ -745,6 +752,7 @@ contains
          Call Cspline_der ( fft_press, -log10(ZT), RAD0, TB0(:,IFR), dTB0_dZT(:,IFR), Ktr, NT )
          Call Cspline_der ( fft_press, -log10(ZT), RAD-RAD0, DTcir(:,IFR), dDTcir_dZT(:,IFR), Ktr, NT )
 
+! -----------------------------------------------------------------------------
          END IF     ! **** END OF FOV AVERAGING ****
 
 !====================================
@@ -798,6 +806,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.12  2001/09/26 17:04:37  jonathan
+! added Air Refraction Correction, Jonathan
+!
 ! Revision 1.11  2001/09/24 23:51:35  jonathan
 ! minor changes
 !
