@@ -1,41 +1,43 @@
 begin Output
 
+;; At some point we might want to optimize this for 'toolkit'
+;; orientated runs.
+
 !ifdef(l2version,{
 
-;  This is good for the l2cf run with the toolkit panoply
-;  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
-;    file='$2'})
-  !define(stdprod, {Output, $
- quantities=!ifelse($3,{}, {joined_$1}, !dnl
- {[joined_$1, $3_column]}), type=l2gp, $
- file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
+!define(standardProduct, {Output, $
+  quantities=!ifelse($3,{}, {joined_$1}, !dnl
+  {[joined_$1, $3_column]}), type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-$2_!l2version_!day.he4'})
 
-;  This is good for the l2cf run w/o the toolkit panoply
-;  !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
-;    file='!outpath/MLS-Aura_L2GP_$2_!outputVersion_!day.dat'})
+!standardProduct(temperature,Temperature,)
+!standardProduct(gph,GPH,)
+!standardProduct(bro,BrO,)
+!standardProduct(clo,ClO,)
+!standardProduct(co,CO,)
+!standardProduct(h2o,H2O,)
+!standardProduct(hcl,HCl,)
+!standardProduct(hcn,HCN,)
+!standardProduct(hno3,HNO3,)
+!standardProduct(ho2,HO2,)
+!standardProduct(hocl,HOCl,)
+!standardProduct(n2o,N2O,)
+!standardProduct(o3,O3,)
+!standardProduct(oh,OH,)
+!standardProduct(so2,SO2,)
+;; We need to define RHI first before I can fill this properly.
+;!standardProduct(rhi,RHI,)
 
-!stdprod(temperature,Temperature,)
-!stdprod(gph,GPH,)
-!stdprod(bro,BrO,)
-!stdprod(clo,ClO,)
-!stdprod(co,CO,)
-!stdprod(h2o,H2O,)
-!stdprod(hcl,HCl,)
-!stdprod(hcn,HCN,)
-!stdprod(hno3,HNO3,)
-!stdprod(ho2,HO2,)
-!stdprod(hocl,HOCl,)
-!stdprod(n2o,N2O,)
-!stdprod(o3,O3,)
-!stdprod(oh,OH,)
-!stdprod(so2,SO2,)
-;!stdprod(rhi,RHI,)
+;; Now output the DGG file
+!ifdef(DGGQuantities,{
+Output, quantities=[!DGGQuantities], type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
 
-Output, quantities=[ $
-  joined_ptanGHz, joined_ptanTHz, $
-  joined_ptanGHz_precision, joined_ptanTHz_precision, $
-  joined_phitanGHz, joined_phitanTHz ], $
-  type=l2aux, file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'
+;; Now outpt the DGM file
+!ifdef(DGMQuantities,{
+Output, quantities=[!DGMQuantities], type=l2aux, $
+  file='!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
 
+;; The forward model radiances have been output using direct writes
 })
 end Output

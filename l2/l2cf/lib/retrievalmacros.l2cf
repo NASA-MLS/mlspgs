@@ -1,4 +1,3 @@
-!divert(-1)
 ; $Id$
 
 ; This l2cf fragment defines macros we're going to use a lot
@@ -10,55 +9,80 @@
 !define(allBandLSBs,{!makelist({},{L},!allBands)})
 !define(allBandUSBs,{!makelist({},{U},!allBands)})
 
+;; This macro is called at the start of each phase to setup its
+;; vectors and matrices.
 !define(setupPhase,{!dnl
 begin Fill
+  ;; Define state related vectors
   x$1: Vector, template=x$1Template
   a$1: Vector, template=x$1Template
   t$1: Vector, template=x$1Template
   l$1: Vector, template=x$1Template
   sdIn$1: Vector, template=x$1Template
   sdOut$1: Vector, template=x$1Template
-  
-  yClean$1: Vector, template=y$1Template
-  yNoise$1: Vector, template=y$1Template
+  ;; Define measurement related vectors
   y$1: Vector, template=y$1Template
+  yNoise$1: Vector, template=y$1Template
   f$1: Vector, template=y$1Template
   od$1: Vector, template=od$1Template
-
+  ;; Fill state related vectors
   Transfer, source=state, destination=x$1
   Transfer, source=apriori, destination=a$1
   Transfer, source=aprioriPrecision, destination=sdIn$1
   Transfer, source=length, destination=l$1
-
+  ;; Construct and fill state covariance
   myCovariance$1: matrix, columns=a$1, type=spd
   FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert, lengthScale=l$1
+  ;; Fill radiance related vectors
+  Transfer, source=measurement, destination=y$1
+  Transfer, source=measurementNoise, destination=yNoise$1
 end Fill})
 
+;; This macro is called at the end of a retrieval phase to store the
+;; results back.
 !define(completePhase,{!dnl
 begin Fill
-   Transfer, source=x$1, destination=state
-   Transfer, source=sdOut$1, destination=outputPrecision
-   Destroy, matrix=myCovariance$1
+  Transfer, source=x$1, destination=state
+  Transfer, source=sdOut$1, destination=outputPrecision
+  Transfer, source=f$1, destination=fwm
+  Destroy, matrix=myCovariance$1
 end Fill})
 
-!define(readRadiances,{!dnl
-  Fill, quantity=yNoise$1.band$2, method=l1b, /isPrecision
-  Fill, quantity=y$1.band$2, method=l1b, precision=yNoise$1.band$2})
+;; These macros are used to accumulate quantities destined for the DGM
+;; or DGG file.  $1 is the quantity within state, $2 is the name to
+;; give the internal l2gp item (to avoid confusion with the 'main'
+;; one), and $3 is the swath name.
+!define(joinDGG,{
+joinedDGG_$2: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$3'
+!ifdef(DGGQuantities,
+  !define(DGGQuantities,{!DGGQuantities,joinedDGG_$2}),
+  !define(DGGQuantities,{joinedDGG_$2}))
+})
+!define(joinDGM,{
+joinedDGM_$2: l2aux, source=state.$1, sdName='$3'
+joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
+!ifdef(DGMQuantities,
+  !define(DGMQuantities,{!DGMQuantities, joinedDGM_$2, joinedDGM_$2_precision}),
+  !define(DGMQuantities,{joinedDGM_$2, joinedDGM_$2_precision}))
+})
 
-!define(readCleanRadiances,{!dnl
-  Fill, quantity=yNoise$1.band$2, method=l1b, /isPrecision
-  Fill, quantity=yClean$1.band$2, method=l1b, precision=yNoise$1.band$2})
+;; This macro is used to invoke direct writes to store forward model
+;; radiances.  The band is $1, and a suffix for the sd name is given
+;; in $2
+!define(directWriteFwmRad,{directWrite, source=fwm.band$1, /prefixSignal, $
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})
 
-!define(addNoise,{!dnl
-  Fill, quantity=y$1.band$2, method=addNoise, sourceQuantity=yClean$1.band$2, $
-    noise=yNoise$1.band$2, seed=$3})
+;; This macro puts all the boring stuff in the Retrieve command line
+;; that we're used to seeing
+!define(retrievalArguments,{state=x$1, fwdModelExtra=state, $
+  measurements=y$1, measurementSD=yNoise$1, $
+  apriori=a$1, covariance=myCovariance$1, $
+  outputSD=sdOut$1, fwdModelOut=f$1})
 
-!define(doNoise,{!dnl
-Fill, quantity=yNoise$1.band$2, radianceQuantity=yClean$1.band$2, $
-  systemTemperature=state.systemTemperature!band, integrationTime=0.16 s, $
-  method=estimatedNoise
-!addNoise($1,$2,$3)})
 ; $Log$
+; Revision 1.4  2002/06/24 17:24:47  livesey
+; Bug in doNoise macro.
+;
 ; Revision 1.3  2002/05/29 00:08:23  livesey
 ; Typo fix
 ;
@@ -68,4 +92,3 @@ Fill, quantity=yNoise$1.band$2, radianceQuantity=yClean$1.band$2, $
 ; Revision 1.1  2002/04/29 21:54:59  pwagner
 ; First commit
 ;
-!divert!dnl
