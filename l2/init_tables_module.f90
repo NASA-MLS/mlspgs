@@ -163,7 +163,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_DIRECT        = l_dao + 1
   integer, parameter :: L_EARTHREFL     = l_direct + 1
   integer, parameter :: L_EITHER        = l_earthRefl + 1
-  integer, parameter :: L_EXPLICIT      = l_either + 1
+  integer, parameter :: L_ELEVOFFSET    = l_either + 1
+  integer, parameter :: L_EXPLICIT      = l_elevOffset + 1
   integer, parameter :: L_FIXED         = l_explicit + 1
   integer, parameter :: L_FRACTIONAL    = l_fixed + 1
   integer, parameter :: L_HEIGHT        = l_fractional + 1
@@ -338,6 +339,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_direct) =                add_ident ( 'direct' )
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_either) =                add_ident ( 'either' )
+    lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
     lit_indices(l_explicit) =              add_ident ( 'explicit' )
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
     lit_indices(l_fractional) =            add_ident ( 'fractional' )
@@ -568,7 +570,7 @@ contains ! =====     Public procedures     =============================
              n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, n+n_dt_def /) )
     call make_tree ( (/ &
-      begin, t+t_quantityType, l+l_baseline, l+l_earthRefl,&
+      begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_orbitIncline, l+l_ptan,&
              l+l_radiance, l+l_refGPH, l+l_scVel, l+l_scGeocAlt, l+l_spaceRadiance,&
              l+l_temperature, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
@@ -877,6 +879,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.44  2001/03/08 21:40:03  livesey
+! Added elevOffset
+!
 ! Revision 2.43  2001/03/08 00:19:29  livesey
 ! Too many continuation lines before
 !
