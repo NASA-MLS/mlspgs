@@ -2,14 +2,147 @@
 
 BEGIN Fill
 
-    Fill, quantity = _bVector.band1Ratio, method=explicit,  $
+    Fill, quantity = _b.band1Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = _bVector.band2Ratio, method=explicit,  $
+    Fill, quantity = _b.band2Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band3Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band4Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band5Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band6Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band7Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band8Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band9Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band10Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band11Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band12Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band13Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band14Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band15Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band16Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band17Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band18Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band19Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band20Ratio, method=explicit,  $
+      explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5, $
+                         0.5, 0.5, 0.5, 0.5, 0.5] 
+
+    Fill, quantity = _b.band21Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $

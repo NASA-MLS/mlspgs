@@ -9,14 +9,24 @@ BEGIN Construct
 
     ;; ----------------------------------------- Volume mixing ratios
 
-;    br_18_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
-;      molecule=br_18_o
+    bro:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=bro
+    br_79_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=br_79_o
+    br_81_o:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=br_81_o
+    cl_35_o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=cl_35_o
+    cl_37_o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=cl_37_o
     clo:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
       molecule=clo
     co:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
       molecule=co
     h2o:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
       molecule=h2o
+    h2o_18:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=h2o_18
     hcl:          Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
       molecule=hcl
     hcl_35:       Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
@@ -31,6 +41,8 @@ BEGIN Construct
       molecule=ho2
     hocl:         Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
       molecule=hocl
+    hocl_35:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
+      molecule=hocl_35
     hocl_37:      Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
       molecule=hocl_37
     n2:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
@@ -55,6 +67,36 @@ BEGIN Construct
       molecule=o_18_o
     oh:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
       molecule=oh
+
+    define(_AllMolecules, {bro, br_79_o,br_81_o, clo, cl_35_o, cl_37_o, co,  $
+                           h2o, h2o_18, hcl, hcl_35,  $
+                           hcl_37, hcn, hno3, ho2, hocl, hocl_35, hocl_37, n2,  $
+                           n2o, o2, o2_v1, o3, o3_asym_o_18, o3_sym_o_18, $
+                           o3_v1_3, o3_v2, o_18_o, oh } )
+
+    ;; ----------------------------------------- Isotope ratios
+
+    br_79_o_ratio:      Quantity, type=isotopeRatio, molecule=br_79_o
+    br_81_o_ratio:      Quantity, type=isotopeRatio, molecule=br_81_o
+    cl_35_o_ratio:      Quantity, type=isotopeRatio, molecule=cl_35_o
+    cl_37_o_ratio:      Quantity, type=isotopeRatio, molecule=cl_37_o
+    h2o_18_ratio:       Quantity, type=isotopeRatio, molecule=h2o_18
+    hocl_35_ratio:      Quantity, type=isotopeRatio, molecule=hocl_35
+    hocl_37_ratio:      Quantity, type=isotopeRatio, molecule=hocl_37
+    o2_v1_ratio:        Quantity, type=isotopeRatio, molecule=o2_v1
+    o3_asym_o_18_ratio: Quantity, type=isotopeRatio, molecule=o3_asym_o_18
+    o3_sym_o_18_ratio:  Quantity, type=isotopeRatio, molecule=o3_sym_o_18
+    o3_v1_3_ratio:      Quantity, type=isotopeRatio, molecule=o3_v1_3
+    o3_v2_ratio:        Quantity, type=isotopeRatio, molecule=o3_v2
+    o_18_o_ratio:       Quantity, type=isotopeRatio, molecule=o_18_o
+    hcl_35_ratio:       Quantity, type=isotopeRatio, molecule=hcl_35
+    hcl_37_ratio:       Quantity, type=isotopeRatio, molecule=hcl_37
+
+    define(_AllISORatios,
+    { br_79_o_ratio, br_81_o_ratio, cl_35_o_ratio, cl_37_o_ratio, $
+      h2o_18_ratio, hocl_35_ratio,hocl_37_ratio, o2_v1_ratio, o3_asym_o_18_ratio, $
+      o3_sym_o_18_ratio, o3_v1_3_ratio, o3_v2_ratio, o_18_o_ratio, hcl_35_ratio, $
+      hcl_37_ratio } )
 
     ;; ----------------------------------------- Tangent pressures
 
@@ -113,7 +155,7 @@ BEGIN Construct
 
     define(_AllBands, {forloop({i}, 1, 33, {{band}i, })band34})
 
-    ;; ----------------------------------------- Scan residuals
+  ;; ----------------------------------------- Scan residuals
 
     scanResidualGHz: Quantity, type=scanResidual, module=GHz
     scanResidualTHz: Quantity, type=scanResidual, module=THz
@@ -180,7 +222,7 @@ BEGIN Construct
     band33ratio: Quantity, type=sidebandRatio, signal='R3:240.B33W:O3'
     band34ratio: Quantity, type=sidebandRatio, signal='R1B:118.B34W:PT'
 
-    define(_AllRatios, {forloop({i}, 1, 33, {{band}i{ratio}, })band34ratio})
+    define(_AllSBRatios, {forloop({i}, 1, 33, {{band}i{ratio}, })band34ratio})
 
     ;; ----------------------------------------- Other minor stuff
 
@@ -190,7 +232,7 @@ BEGIN Construct
 
     scGeocAlt: Quantity, type = scGeocAlt, module= SC
     tngtGeocAltGHz: Quantity, type=tngtGeocAlt, module=GHz
-    tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=GHz
+    tngtGeocAltTHz: Quantity, type=tngtGeocAlt, module=THz
 
     scECI: quantity, type=scECI, module=SC
     tngtECIGHz: quantity, type=tngtECI, module=GHz

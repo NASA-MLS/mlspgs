@@ -241,8 +241,10 @@ BEGIN Spectroscopy
 
     n2o_1: line, v0= 200975.26 MHz, el= 23.4641, str= -4.0066, w= 2.43, $
       ps= 0, n= 0.87, delta= 0, n1= 0, gamma= 0, n2= 0
+    n2o_2: line, v0=652833.7897 MHz, el=272.2826, str= -3.0051, w=2.300, $
+      ps= 0, n=0.75, delta= 0, n1= 0, gamma= 0, n2= 0
 
-    spectra, molecule=n2o, Qlog=[2.6972, 2.5724, 2.3965], lines=n2o_1
+    spectra, molecule=n2o, Qlog=[2.6972, 2.5724, 2.3965], lines=[n2o_1,n2o_2]
 
 ;----------------------------------------------------------- H2O_18 ---
 
