@@ -736,6 +736,8 @@ contains
               what = w_nothing
             end select
           end if
+        case default
+          call Announce_Error ( son1, notSupported )
         end select
       case default
         son1 = subtree(1,root)
@@ -1390,6 +1392,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.14  2004/05/28 00:58:35  vsnyder
+! Catch use of unsupported function
+!
 ! Revision 2.13  2004/05/19 19:16:09  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
