@@ -18,7 +18,7 @@ contains
 !---------------------------------------------------------------
 
 SUBROUTINE hydrostatic_model(si,n_lvls,no_t,no_mmaf,t_indx,   &
-           no_tan_hts, geoc_lat, Href, Zref, z_grid, thbs, t_z_basis,  &
+           no_tan_hts, geoc_lat, Href, Zref, z_grid, t_z_basis,  &
            t_coeff, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,         &
            dh_dt_glgrid, tan_press, tan_hts, tan_temp, tan_dh_dt,      &
            gl_count, Ier)
@@ -37,7 +37,7 @@ Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
 Integer(i4), INTENT(OUT) :: Ier, gl_count
 
-Real(r8), INTENT(IN) :: geoc_lat, Zref, Href(*), z_grid(*), thbs(*)
+Real(r8), INTENT(IN) :: geoc_lat, Zref, Href(:), z_grid(:)
 
 Real(r8), INTENT(IN) :: t_z_basis(:)
 
@@ -122,7 +122,6 @@ Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
   jj = min(Nlvl,n_lvls+1)
   cnt = (gl_count + Ng) / Ngp1
   do l = 1, no_mmaf
-    tan_hts(1:si-1,l) = thbs(1:si-1)
     tan_temp(1:si-1,l) = t_glgrid(1,l)
     h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,l)
     h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
@@ -137,7 +136,7 @@ Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
 !
   no_tan_hts = no_tan_hts + si - 1
 
-! Interpolate the hydrostatic grid for conv. grid pressures (tan_press)
+! Interpolate the hydrostatic grid for conv. grid heights 
 ! for the values BELOW Earth surface only:
 
   k = no_mmaf / 2
@@ -147,8 +146,8 @@ Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
   t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,k)
   h_grid(cnt+1:jj) = h_glgrid(gl_count,k)
   t_grid(cnt+1:jj) = t_glgrid(gl_count,k)
-  CALL get_pressures('h',h_grid,t_grid,z_grid,n_lvls,thbs,tan_press, &
- &                    si-1,ier)
+  CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press,tan_hts, &
+ &                  si-1,ier)
   IF(ier /= 0) RETURN
 
 ! Interpolate the dh_dt into the tan_press grid:
@@ -360,5 +359,8 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.5  2001/03/05 21:37:20  zvi
+! New filter format
+!
 ! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90
