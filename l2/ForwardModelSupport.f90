@@ -390,7 +390,7 @@ contains ! =====     Public Procedures     =============================
     ! parser users' guide" for pictures of the trees being analyzed.
 
     got = .false.
-    info%tolerance = 0.2 ! Kelvins, in case the tolerance field is absent
+    info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
     do i = 2, nsons(key)
       son = subtree(i,key)
       field = get_field_id(son)
@@ -692,6 +692,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.49  2003/02/04 19:03:06  livesey
+! Default tolerance now -1.0
+!
 ! Revision 2.48  2003/01/30 17:28:21  jonathan
 ! add logical incl_cld
 !
