@@ -60,6 +60,7 @@ module MLSSignals_M
 ! GetNameOfSignal                 Given a signal object, this routine constructs a full signal name
 ! GetRadiometerFromSignal         Returns radiometer field from given signal given as database index
 ! GetRadiometerName               Given an index in the Radiometers database, place radiometer name
+! GetSidebandStartStop            Given a signal, compute SidebandStart and SidebandStop
 ! GetSignal                       Given the database index, this routine returns the signal data structure
 ! GetSignalIndex                  Returns the index in the signals database, given signal name in mixed case
 ! GetSignalName                   Given an index in the signals database, constructs full signal name.
@@ -81,7 +82,7 @@ module MLSSignals_M
   public :: Dump, Dump_Bands, Dump_Radiometers, Dump_Signal, Dump_Signals
   public :: Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetFirstChannel, GetModuleFromRadiometer
-  public :: GetModuleIndex, GetSidebandLoop, GetSignalIndex
+  public :: GetModuleIndex, GetSidebandLoop, GetSidebandStartStop, GetSignalIndex
   public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
   public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal
@@ -1307,10 +1308,11 @@ oc:     do
 
   end subroutine GetRadiometerName
 
-  ! --------------------------------------------------- GetSidebandLoop --
+  ! --------------------------------------------  GetSidebandLoop  -----
   subroutine GetSidebandLoop ( signal, sideband, split, &
     & sidebandStart, sidebandStop, sidebandStep )
-    ! This routine gets the loop limits for a loop over sidebands
+    ! This routine gets the loop limits for a loop over sidebands from
+    ! a signal in the database.
     integer, intent(in) :: SIGNAL       ! Index into signals
     integer, intent(in) :: SIDEBAND     ! -1,0,1
     logical, intent(in) :: SPLIT        ! If set do a split sideband loop for folded
@@ -1342,7 +1344,42 @@ oc:     do
     end if
   end subroutine GetSidebandLoop
 
-  ! --------------------------------------------------- GetSignal ------
+  ! ---------------------------------------  GetSidebandStartStop  -----
+  subroutine GetSidebandStartStop ( Signal, SidebandStart, SidebandStop )
+    ! This routine also gets the sideband start and stop, but from any
+    ! signal, including one parsed from a config.  We don't bother to
+    ! compute the step, because if SidebandStart == SidebandStop it doesn't
+    ! matter what the step is, and otherwise the step should be 2. So users
+    ! should always just use 2.
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    type(signal_t), intent(in) :: Signal
+    integer, intent(out) :: SidebandStart, SidebandStop
+    if ( ( signal%sideband == 0 ) .and. &
+      &  ( signal%singleSideband == 0 ) ) then
+      ! Do a folded measurement
+      sidebandStart = -1
+      sidebandStop = 1
+    else
+      ! It's either a single sideband radiometer, or the user requested a
+      ! specific sideband.
+      ! Check sanity, if they are both non zero they should be the same.
+      if ( ( signal%singleSideband /= 0 ) .and. &
+        &  ( signal%sideband /= 0 ) .and. &
+        &  ( signal%singleSideband /= &
+        &    signal%sideband ) ) call MLSMessage ( &
+        &      MLSMSG_Error, ModuleName, &
+        &      "User requested a sideband that doesn't exist" )
+      ! OK, use whichever one is given
+      if ( signal%singleSideband /= 0 ) then
+        sidebandStart = signal%singleSideband
+      else
+        sidebandStart = signal%sideband
+      end if
+      sidebandStop = sidebandStart
+    end if
+  end subroutine GetSidebandStartStop
+
+  ! --------------------------------------------------  GetSignal  -----
   type (Signal_T) function GetSignal(signal)
     ! Given the database index, this routine returns the signal data structure
     integer, intent(in) :: SIGNAL       ! Requested signal
@@ -1715,6 +1752,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.76  2004/10/30 00:24:34  vsnyder
+! Add GetSidebandStartStop
+!
 ! Revision 2.75  2004/10/06 21:16:26  vsnyder
 ! Add MatchSignalPair, use it for MatchSignals
 !
