@@ -52,8 +52,7 @@ contains
       REAL(r8) :: IWC0                       ! IWC OF SIZE < 100 microns
       REAL(r8) :: IWC1                       ! IWC OF SIZE > 100 microns
  
-      REAL(r8) :: RAOI                       ! ICE DENSITY (g/m3)
-      PARAMETER (RAOI=0.91_r8)
+      REAL(r8), parameter :: RAOI = 0.91_r8  ! ICE DENSITY (g/m3)
 
       REAL(r8) :: IWC00                      ! NORMALIZATION IWC (g/m3)
       REAL(r8) :: DIAM0                      ! NORMALIZATION DIAMETER (microns)
@@ -70,7 +69,7 @@ contains
 
       IWC00=1.
       DIAM0=1.
-      TEMPC=t-273.15
+      TEMPC=t-273.15_r8
 
 	if(ISPI .eq. 1) then    
             goto 1000
@@ -84,8 +83,8 @@ contains
 !     ICE PARTICLES
 !========================
 
-	dr0	= 1.
-	sum	= 0.
+	dr0	= 1._r8
+	sum	= 0._r8
 	do 1300 i=1,nr
 
 	j1=1
@@ -182,7 +181,7 @@ contains
 
 !... normalized by iwc
         do i=1,nr
-        rn(i)=rn(i)*CWC/sum
+        rn(i)=rn(i)*CWC/max(1.e-29_r8, sum)
         enddo
 
 !... COMPUTE MASS-MEAN-DIAMETER
@@ -192,7 +191,7 @@ contains
            SUM1=SUM1+rn(i)*r(I)**4*2
            SUM2=SUM2+rn(i)*r(I)**3
         enddo
-        Dm=sum1/sum2
+        Dm=sum1/max(1.e-29_r8,sum2)
 
 !	write(*,*)iwc1,iwc0,cwc,sum
 !	write(*,*)(rn(i),i=1,nr)
@@ -238,7 +237,7 @@ contains
         
         do j=j1,j2
            diam=2.*j*dr0
-           rn0=a*diam**c1*exp(-b*diam**c2)
+           rn0=A*diam**c1*exp(-b*diam**c2)
 	   rn(i)=rn(i)+rn0
 	enddo
 
@@ -248,7 +247,7 @@ contains
 
 !... normalized by LWC
         do i=1,nr
-           rn(i)=rn(i)*CWC/max(1.e-59_r8, sum)
+           rn(i)=rn(i)*CWC/max(1.e-29_r8, sum)
         enddo
 
 !... COMPUTE MASS-MEAN-DIAMETER
@@ -258,13 +257,19 @@ contains
            SUM1=SUM1+rn(i)*r(I)**4*2
            SUM2=SUM2+rn(i)*r(I)**3
         enddo
-        Dm=sum1/max(1.e-59_r8,sum2)
+        Dm=sum1/max(1.e-29_r8,sum2)
+
+      RETURN
 
       END SUBROUTINE DRP_SIZE
 
 end module SizeDistribution
 
 ! $Log$
+! Revision 1.3  2001/10/18 17:01:07  jonathan
+! pretect divided by zero
+!
 ! Revision 1.2  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
+
