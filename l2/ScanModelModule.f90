@@ -38,12 +38,13 @@ module ScanModelModule          ! Scan model and associated calculations
   use Trace_M, only: TRACE_BEGIN, TRACE_END
   use VectorsModule, only : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORVALUE_T
+  use Units, only: OMEGA
 
   implicit none
 
   private
 
-  public :: GetBasisGPH, GetHydrostaticTangentPressure, Omega, ScanForwardModel
+  public :: GetBasisGPH, GetHydrostaticTangentPressure, ScanForwardModel
 
   !---------------------------- RCS Ident Info -------------------------------
   character (LEN=130), private :: Id = &
@@ -56,7 +57,6 @@ module ScanModelModule          ! Scan model and associated calculations
 
   ! First some constants to do with the earths dimensions and rotation
 
-  real (r8), parameter :: OMEGA = 7.292115D-5 ! Earth's angular velocity (s-1)
   real (r8), parameter :: EARTHSURFACEGPH = 6387182.265D0 ! GPH at earth's surface m
 
   ! Now some other constants to do with geopotentials and GPHs
@@ -1164,6 +1164,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.27  2001/12/06 23:44:57  livesey
+! Moved Omega into units so L1BOASim can use it.
+!
 ! Revision 2.26  2001/11/03 01:33:47  livesey
 ! Changed the togle from gen to emit
 !
