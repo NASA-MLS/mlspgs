@@ -2,9 +2,11 @@
 MODULE MLSNumerics              ! Some low level numerical stuff
 !=============================================================================
 
-  UsE MLSCommon
-  USE MLSMessageModule
-  USE MLSStrings
+  UsE MLSCommon, ONLY : R8
+  USE MLSMessageModule, ONLY: MLSMessage,MLSMSG_Error
+  USE MLSStrings, ONLY: Capitalize
+  USE MatrixModule_0, ONLY: MatrixElement_T,CreateBlock_0,M_Column_Sparse, Sparsify
+  USE Allocate_Deallocate, ONLY : Allocate_test, Deallocate_test
 
   IMPLICIT NONE
   
@@ -223,7 +225,7 @@ CONTAINS
   !   missingRegions will probably slow the code down, as will extrapolate=B
 
   SUBROUTINE InterpolateArray(oldX,oldY,newX,newY,method,extrapolate, &
-       & badValue,missingRegions,dyByDx)
+       & badValue,missingRegions,dyByDx,dNewByDOld)
 
     ! Dummy arguments
     REAL(R8), DIMENSION(:), INTENT(IN) :: oldX
@@ -236,6 +238,7 @@ CONTAINS
     REAL(R8), OPTIONAL, INTENT(IN) :: badValue
     REAL(R8), DIMENSION(:,:), OPTIONAL, INTENT(OUT) :: dyByDx
     LOGICAL, OPTIONAL, INTENT(IN) :: missingRegions ! Allow missing regions
+    TYPE (MatrixElement_T), INTENT(OUT), OPTIONAL :: dNewByDOld ! Derivatives
 
     ! Local parameters
     CHARACTER (LEN=*), PARAMETER :: MLSMSG_Allocate="Allocation failed for "
@@ -244,21 +247,23 @@ CONTAINS
     INTEGER :: noOld,noNew,width ! Dimensions
     LOGICAL :: spline           ! Flag
     LOGICAL :: useMissingRegions ! Copy of missing regions
-    INTEGER :: ind           ! Loop counter
+    INTEGER :: ind,newInd       ! Loop counters
     INTEGER :: status           ! From Allocate
+    LOGICAL :: computeDNewByDOld   ! Set if dNewByDOld is present
 
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lowerInds,upperInds
-    REAL(R8), DIMENSION(:),   ALLOCATABLE :: maskVector
-    REAL(R8), DIMENSION(:),   ALLOCATABLE :: gap,gap2
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: spreadGap
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: oldSecond
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: oldYupper,oldYlower
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: oldSecondLower
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: oldSecondUpper
-    REAL(R8), DIMENSION(:),   ALLOCATABLE :: A,B,C,D ! Coefficients
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: AA,BB,CC,DD ! Spread coefs.
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: temp ! For 2nd der. guess
-    REAL(R8), DIMENSION(:),   ALLOCATABLE :: p ! For 2nd der. guess
+    INTEGER, DIMENSION(:), POINTER :: lowerInds,upperInds
+    REAL(R8), DIMENSION(:),   POINTER :: maskVector
+    REAL(R8), DIMENSION(:),   POINTER :: gap,gap2
+    REAL(R8), DIMENSION(:,:), POINTER :: spreadGap
+    REAL(R8), DIMENSION(:,:), POINTER :: oldSecond
+    REAL(R8), DIMENSION(:,:), POINTER :: oldYupper,oldYlower
+    REAL(R8), DIMENSION(:,:), POINTER :: oldSecondLower
+    REAL(R8), DIMENSION(:,:), POINTER :: oldSecondUpper
+    REAL(R8), DIMENSION(:),   POINTER :: A,B,C,D ! Coefficients
+    REAL(R8), DIMENSION(:,:), POINTER :: AA,BB,CC,DD ! Spread coefs.
+    REAL(R8), DIMENSION(:,:), POINTER :: temp ! For 2nd der. guess
+    REAL(R8), DIMENSION(:),   POINTER :: p ! For 2nd der. guess
+    REAL(R8), DIMENSION(:,:), POINTER :: tempDNewByDOld ! Dense version.
     REAL(R8) :: sig       ! For second derivative guesser
     
     CHARACTER :: extrapolateMethod ! Tidy copy of extrapolate parameter
@@ -273,76 +278,55 @@ CONTAINS
 
     spline=(Capitalize(method(1:1))=="S")
 
-    IF (PRESENT(extrapolate)) THEN
-       extrapolateMethod=Capitalize(extrapolate(1:1))
-    ELSE
-       extrapolateMethod="A"
-    ENDIF
+    extrapolateMethod="A"
+    IF (PRESENT(extrapolate)) extrapolateMethod=Capitalize(extrapolate(1:1))
 
-    IF (PRESENT(missingRegions)) THEN
-       useMissingRegions=missingRegions
-    ELSE
        useMissingRegions=.FALSE.
-    ENDIF
+    IF (PRESENT(missingRegions)) useMissingRegions=missingRegions
+
+    computeDNewByDOld=PRESENT(dNewByDOld)
 
     IF (useMissingRegions.AND.spline) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "Cannot use missing regions with spline")
 
-    ALLOCATE(lowerInds(noNew),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"lowerInds")
-    ALLOCATE(upperInds(noNew),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"upperInds")
-    ALLOCATE(gap(noNew),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"gap")
+    IF (computeDNewByDOld .AND. spline) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         "Cannont get dNewBydOld from spline")
 
-    ALLOCATE(A(noNew),B(noNew),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"A or B")
-    ALLOCATE(AA(noNew,width),BB(noNew,width),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"AA or BB")
-    ALLOCATE(oldYlower(noNew,width),oldYupper(noNew,width),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"oldYupper or oldYlower")
+    CALL Allocate_Test(lowerInds,noNew,"lowerInds",ModuleName)
+    CALL Allocate_Test(upperInds,noNew,"upperInds",ModuleName)
+    CALL Allocate_Test(gap,noNew,"gap",ModuleName)
+    CALL Allocate_Test(A,noNew,"A",ModuleName)
+    CALL Allocate_Test(B,noNew,"B",ModuleName)
+    CALL Allocate_Test(AA,noNew,width,"AA",ModuleName)
+    CALL Allocate_Test(BB,noNew,width,"BB",ModuleName)
+    CALL Allocate_Test(oldYlower,noNew,width,"oldYlower",ModuleName)
+    CALL Allocate_Test(oldYupper,noNew,width,"oldYupper",ModuleName)
 
     ! Setup arrays needed if dyByDx is requested
 
-    IF (PRESENT(dyByDx)) THEN
-       ALLOCATE(spreadGap(noNew,width),STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            MLSMSG_Allocate//"spreadGap")
+    IF (PRESENT(dyByDx)) CALL Allocate_Test(spreadGap,noNew,width,&
+         "spreadGap",ModuleName)
+
+    ! Setup Matrix block needed if DNewByDOld is needed.
+    IF (computeDNewByDOld) THEN
+       CALL CreateBlock_0(dNewByDOld,noNew*width,noOld*width,M_Column_Sparse,&
+            NumberNonZero=2*noNew*width)
     ENDIF
 
     ! Do special stuff for the case of spline, allocate arrays, find 2nd
     ! derivatives etc.
 
     IF (spline) THEN
-       ALLOCATE(oldSecond(noOld,width),STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            MLSMSG_Allocate//"oldSecond")
-       ALLOCATE(C(noNew),D(noNew),STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            & MLSMSG_Allocate//"C or D")
-       ALLOCATE(CC(noNew,width),DD(noNew,width),STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            & MLSMSG_Allocate//"CC or DD")
-       ALLOCATE(oldSecondLower(noNew,width),&
-            & oldSecondUpper(noNew,width),STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            & MLSMSG_Allocate//"oldSecondLower or oldSecondUpper")
-       ALLOCATE(gap2(noNew),STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            & MLSMSG_Allocate//"gap2")
-
-       ALLOCATE(temp(noOld,width),STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            & MLSMSG_Allocate//"temp")
-       ALLOCATE(p(width),STAT=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            & MLSMSG_Allocate//"p")
+       CALL Allocate_Test(oldSecond,noOld,width,"oldSecond",ModuleName)
+       CALL Allocate_Test(C,noNew,"C",ModuleName)
+       CALL Allocate_Test(D,noNew,"D",ModuleName)
+       CALL Allocate_Test(CC,noNew,width,"CC",ModuleName)
+       CALL Allocate_Test(DD,noNew,width,"DD",ModuleName)
+       CALL Allocate_Test(oldSecondlower,noNew,width,"oldSecondlower",ModuleName)
+       CALL Allocate_Test(oldSecondupper,noNew,width,"oldSecondupper",ModuleName)
+       CALL Allocate_Test(gap2,noNew,"gap2",ModuleName)
+       CALL Allocate_Test(temp,noOld,width,"temp",ModuleName)
+       CALL Allocate_Test(p,width,"p",ModuleName)
 
        ! Here we have to solve the a tridiagonal equation
        ! This is a straight copy of my idl code
@@ -364,9 +348,8 @@ CONTAINS
           oldSecond(ind,:)=oldSecond(ind,:)*oldSecond(ind+1,:)+temp(ind,:)
        ENDDO
 
-       DEALLOCATE(temp,p, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"temp p")
+       CALL Deallocate_test(temp,"Temp",ModuleName) 
+       CALL Deallocate_test(p,"p",ModuleName)
     ENDIF
 
     ! Now we're ready to begin the real work.
@@ -391,9 +374,7 @@ CONTAINS
 
     ! If extrapolate mode is "B"ad, deal with that
     IF (extrapolateMethod=="B") THEN
-       ALLOCATE(maskVector(noNew),STAT=status)
-       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            & MLSMSG_Allocate//"maskVector")
+       CALL Allocate_Test(maskVector,noNew,"maskVector",ModuleName)
        maskVector=0.0D0
        WHERE ((A<0.0D0).OR.(A>1.0D0))
           maskVector=badValue
@@ -402,9 +383,7 @@ CONTAINS
        END WHERE
        newY=SPREAD(maskVector,2,width)
        IF (PRESENT(dyByDx)) dyByDx=newY
-       DEALLOCATE(maskVector, stat=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"maskVector")
+       CALL Deallocate_Test(maskVector,"maskVector",ModuleName)
     ENDIF
 
     ! Now spread out the coefficients
@@ -434,6 +413,24 @@ CONTAINS
     newY=newY+AA*oldYlower+BB*oldYupper
     IF (PRESENT(dyByDx)) dyByDx=(oldYupper-oldYlower)/spreadGap
 
+    ! Write the output derivative matrix if needed
+    IF (computeDNewByDOld) THEN
+       ! While the matrix is ideally suited to row sparse, our storage method
+       ! is column sparse, so to be lazy we'll create it full and then sparsify
+       ! it.
+       !
+       CALL Allocate_Test(tempDNewByDOld,noNew*width,noOld*width,&
+            "tempDNewByDOld",ModuleName)
+       DO newInd=1,noNew
+          DO ind=1,width
+             tempDNewByDOld(newInd+ind*noNew,lowerInds(newInd)+ind*noOld)=A(newInd)
+             tempDNewByDOld(newInd+ind*noNew,upperInds(newInd)+ind*noOld)=B(newInd)
+          ENDDO
+       ENDDO
+       CALL Sparsify(tempDNewByDOld,dNewbyDOld)
+       CALL Deallocate_test(tempDNewByDOld,"tempDNewByDOld",ModuleName)
+    ENDIF
+
     ! Now do the spline calculation
     IF (spline) THEN
        gap2=gap**2
@@ -452,16 +449,29 @@ CONTAINS
             & (3.0D0*AA**2-1.0D0)*oldSecondLower)
     ENDIF
 
-    DEALLOCATE (lowerInds,upperInds,gap,A,B,AA,BB,oldYlower,oldYupper, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"lowerInds")
-    IF (spline) DEALLOCATE(gap2,oldSecond,C,D,CC,DD, &
-         & oldSecondLower,oldSecondUpper, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"gap2")
-    IF (PRESENT(dyByDx)) DEALLOCATE(spreadGap, stat=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"spreadGap")
+    CALL Deallocate_Test(lowerInds,"lowerInds",ModuleName)
+    CALL Deallocate_Test(upperInds,"upperInds",ModuleName)
+    CALL Deallocate_Test(gap,"gap",ModuleName)
+    CALL Deallocate_Test(A,"A",ModuleName)
+    CALL Deallocate_Test(B,"B",ModuleName)
+    CALL Deallocate_Test(AA,"AA",ModuleName)
+    CALL Deallocate_Test(BB,"BB",ModuleName)
+    CALL Deallocate_Test(oldYlower,"oldYlower",ModuleName)
+    CALL Deallocate_Test(oldYupper,"oldYupper",ModuleName)
+
+    IF (spline) THEN
+       CALL Deallocate_Test(oldSecond,"oldSecond",ModuleName)
+       CALL Deallocate_Test(C,"C",ModuleName)
+       CALL Deallocate_Test(D,"D",ModuleName)
+       CALL Deallocate_Test(CC,"CC",ModuleName)
+       CALL Deallocate_Test(DD,"DD",ModuleName)
+       CALL Deallocate_Test(oldSecondlower,"oldSecondlower",ModuleName)
+       CALL Deallocate_Test(oldSecondupper,"oldSecondupper",ModuleName)
+       CALL Deallocate_Test(gap2,"gap2",ModuleName)
+       CALL Deallocate_Test(temp,"temp",ModuleName)
+       CALL Deallocate_Test(p,"p",ModuleName)
+    ENDIF
+    IF (PRESENT(dyByDx)) CALL Deallocate_Test(spreadGap,"spreadGap",ModuleName)
 
   END SUBROUTINE InterpolateArray
 
@@ -490,36 +500,28 @@ CONTAINS
     ! Local variables
     INTEGER :: status
 
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: tempResult
-    REAL(R8), DIMENSION(:,:), ALLOCATABLE :: tempDerivative
+    REAL(R8), DIMENSION(:,:), POINTER :: tempResult
+    REAL(R8), DIMENSION(:,:), POINTER :: tempDerivative
 
     ! Executable code
 
-    ALLOCATE(tempResult(SIZE(newX),1),STAT=status)
-    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         MLSMSG_Allocate//"tempResult")
-
+    CALL Allocate_Test(tempResult,SIZE(newX),1,"tempResult",ModuleName)
     IF (PRESENT(dyByDx)) THEN
-       ALLOCATE(tempDerivative(SIZE(newX),1),STAT=status)
-       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-            MLSMSG_Allocate//"tempDerivative")
+       CALL Allocate_Test(tempDerivative,SIZE(newX),1,"tempDerivative",ModuleName)
 
        CALL InterpolateArray(oldX,SPREAD(oldY,2,1),newX,tempResult,method, &
             & extrapolate=extrapolate, badValue=badValue, &
             & missingRegions=missingRegions, dyByDx=tempDerivative)
        dyByDx=RESHAPE(tempDerivative,SHAPE(newX))
-       DEALLOCATE(tempDerivative, stat=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"tempDerivative")
+
+       CALL Deallocate_Test(tempDerivative,"tempDerivative",ModuleName)
     ELSE
        CALL InterpolateArray(oldX,SPREAD(oldY,2,1),newX,tempResult,method, &
             & extrapolate=extrapolate, badValue=badValue, &
             & missingRegions=missingRegions)
     ENDIF
     newY=RESHAPE(tempResult,SHAPE(newX))
-    DEALLOCATE(tempResult, stat=status)
-       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_DeAllocate//"tempResult")
+    CALL Deallocate_test(tempResult,"tempResult",ModuleName)
   END SUBROUTINE InterpolateScalar
     
 !=============================================================================
@@ -528,6 +530,9 @@ END MODULE MLSNumerics
 
 !
 ! $Log$
+! Revision 2.1  2001/02/09 00:38:55  livesey
+! Various changes
+!
 ! Revision 2.0  2000/09/05 17:41:06  dcuddy
 ! Change revision to 2.0
 !

@@ -12,23 +12,23 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     F_MOLECULE, F_RADIOMETER, F_TYPE, F_UNIT, F_VGRID, FIRST_LIT, LAST_LIT, &
     L_BASELINE, L_EXTINCTION, L_GEODALTITUDE, L_GPH, L_PTAN, L_RADIANCE, &
     L_TEMPERATURE, L_TRUE, L_VMR, PHYQ_LENGTH, PHYQ_TEMPERATURE, PHYQ_VMR, &
-    PHYQ_ZETA
+    PHYQ_ZETA, F_INSTRUMENTMODULE
   use L1BData, only: L1BData_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: L1BInfo_T, MLSChunk_T, MLSInstrumentModuleNames, &
-    NameLen, R8
+  use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
   use MLSSignalNomenclature, only: DestroyMLSSignalsInfo, MLSSignal_T, &
     & ParseMLSSignalRequest
   use OUTPUT_M, only: OUTPUT
-  use QuantityTemplates, only: FG_NONE, QuantityTemplate_T, &
-    & SetupNewQuantityTemplate
+  use QuantityTemplates, only: QuantityTemplate_T,SetupNewQuantityTemplate
   use STRING_TABLE, only: GET_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
   use VGrid, only: VGrid_T
+  USE Intrinsic, ONLY: L_NONE, L_THz, L_GHz
+  use init_tables_module, ONLY: LIT_INDICES
   implicit none
   private
   public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
@@ -117,6 +117,7 @@ contains ! =====     Public Procedures     =============================
     noChans = 1
     quantitytype = 0
     radiometer = 0
+    instrumentModule= 0
     scaleFactor = 1.0
 
     ! First we'll loop over the MLSCF keys.
@@ -142,6 +143,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_unit );              scaleFactor = value
       case ( f_molecule );          molecule = value
       case ( f_radiometer );        radiometer = sub_rosa(subtree(2,son))
+      case ( f_instrumentmodule);   instrumentModule = sub_rosa(subtree(2,son))
       case ( f_band );              band = sub_rosa(subtree(2,son))
       case ( f_firstindexchannel ); firstIndexChannel = value == l_true
       end select
@@ -199,7 +201,7 @@ contains ! =====     Public Procedures     =============================
         & coherent=.TRUE., stacked=.TRUE., regular=.TRUE. )
       ! ??? Note in later versions we'll need to think about channels here
 
-      qty%frequencyCoordinate = FG_None
+      qty%frequencyCoordinate = L_None
       call CopyHGridInfoIntoQuantity ( hGrids(hGridIndex), qty )
       call CopyVGridInfoIntoQuantity ( vGrids(vGridIndex), qty )
 
@@ -246,7 +248,8 @@ contains ! =====     Public Procedures     =============================
     qty%molecule = molecule
     qty%name = name
     qty%quantityType = quantityType
-    qty%radiometerIndex = radiometer
+    qty%instrumentmodule= instrumentmodule
+    qty%radiometer = radiometer
     qty%scaleFactor = scaleFactor
 
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
@@ -288,7 +291,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     type (L1BInfo_T), intent(in) :: l1bInfo ! File handles for l1bdata
     type (MLSChunk_T), intent(in) :: chunk ! The chunk under consideration
-    integer, intent(in) :: instrumentModule ! THz or GHz?
+    integer, intent(in) :: instrumentModule ! L_THz or L_GHz?
     type (QuantityTemplate_T), intent(out) :: qty ! Resulting quantity
     integer, intent(in), optional :: noChans
     logical, intent(in), optional :: regular
@@ -320,7 +323,8 @@ contains ! =====     Public Procedures     =============================
     type (L1BData_T) :: l1bField
     character (len=NameLen) :: l1bItemName
 
-    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex
+    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex, instrumentModuleIndex
+    integer, DIMENSION(1) :: instrumentModuleIndexArray
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
@@ -330,40 +334,44 @@ contains ! =====     Public Procedures     =============================
     if ( present(mifGeolocation) ) then
 
       ! We have geolocation information, setup the quantity as a clone of that.
+       instrumentModuleIndexArray=PACK( (/1,2/), &
+            instrumentModule==mifGeolocation%instrumentModule)
+       instrumentModuleIndex=instrumentModuleIndexArray(1)
 
       call SetupNewQuantityTemplate ( qty, &
-        & source=mifGeolocation(instrumentModule), &
+        & source=mifGeolocation(instrumentModuleIndex), &
         & noChans=noChans,  regular=regular, instanceLen=instanceLen, &
         & firstIndexChannel=firstIndexChannel )
 
       ! Now we're going to deal with a VGrid for this quantity
 
       qty%verticalCoordinate = l_geodAltitude
-      qty%surfs=>mifGeolocation(instrumentModule)%surfs
+      qty%surfs=>mifGeolocation(instrumentModuleIndex)%surfs
 
       ! Now we're going to fill in the hGrid information
 
-      qty%time =>        MIFGeolocation(instrumentModule)%time
-      qty%geodLat =>     MIFGeolocation(instrumentModule)%geodLat
-      qty%lon =>         MIFGeolocation(instrumentModule)%lon
-      qty%phi =>         MIFGeolocation(instrumentModule)%phi
-      qty%solarZenith => MIFGeolocation(instrumentModule)%solarZenith
-      qty%solarTime =>   MIFGeolocation(instrumentModule)%solarTime
-      qty%losAngle =>    MIFGeolocation(instrumentModule)%losAngle
-      qty%MAFCounter =>  MIFGeolocation(instrumentModule)%mafCounter
-      qty%mafIndex =>    MIFGeolocation(instrumentModule)%mafIndex
+      qty%time =>        MIFGeolocation(instrumentModuleIndex)%time
+      qty%geodLat =>     MIFGeolocation(instrumentModuleIndex)%geodLat
+      qty%lon =>         MIFGeolocation(instrumentModuleIndex)%lon
+      qty%phi =>         MIFGeolocation(instrumentModuleIndex)%phi
+      qty%solarZenith => MIFGeolocation(instrumentModuleIndex)%solarZenith
+      qty%solarTime =>   MIFGeolocation(instrumentModuleIndex)%solarTime
+      qty%losAngle =>    MIFGeolocation(instrumentModuleIndex)%losAngle
+      qty%MAFCounter =>  MIFGeolocation(instrumentModuleIndex)%mafCounter
+      qty%mafIndex =>    MIFGeolocation(instrumentModuleIndex)%mafIndex
       qty%noInstancesLowerOverlap = &
-        & MIFGeolocation(instrumentModule)%noInstancesLowerOverlap
+        & MIFGeolocation(instrumentModuleIndex)%noInstancesLowerOverlap
       qty%noInstancesUpperOverlap = &
-        & MIFGeolocation(instrumentModule)%noInstancesUpperOverlap
+        & MIFGeolocation(instrumentModuleIndex)%noInstancesUpperOverlap
     else
       ! We have no geolocation information, we have to read it ourselves
       ! from the L1BOA file.
 
       ! First we read tpGeodalt to get the size of the quantity.
 
-      l1bItemName = TRIM(MLSInstrumentModuleNames(instrumentModule)) // &
-                         "." // "tpGeodAlt"
+      CALL Get_String(lit_indices(instrumentModule),l1bItemName)
+      l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
+      
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -393,8 +401,12 @@ contains ! =====     Public Procedures     =============================
       do l1bItem = 1, NoL1BItemsToRead
         ! Get the name of the item to read
         l1bItemName=l1bItemsToRead(l1bItem)
-        if ( l1bItem>=TransitionToModularItems ) l1bItemName = &
-          & MLSInstrumentModuleNames(instrumentModule)//'.'//l1bItemName
+        if ( l1bItem>=TransitionToModularItems ) THEN
+           CALL Get_String(lit_indices(instrumentModule),l1bItemName)
+           l1bItemName = TRIM(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
+        ELSE
+           l1bItemName=l1bItemsToRead(l1bItem)
+        ENDIF
 
         ! Read it from the l1boa file
         call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
@@ -438,8 +450,7 @@ contains ! =====     Public Procedures     =============================
       end do                      ! Loop over l1b quantities
     endif
 
-    qty%frequencyCoordinate = FG_None
-!   qty%name=MLSInstrumentModuleNames(InstrumentModule)
+    qty%frequencyCoordinate = L_None
 
     ! In later versions we'll probably need to think about FILL_VALUEs and
     ! setting things to the badData flag.
@@ -505,6 +516,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.1  2001/02/09 00:38:22  livesey
+! Various updates
+!
 ! Revision 2.0  2000/09/05 18:57:02  ahanzel
 ! Changing file revision to 2.0.
 !

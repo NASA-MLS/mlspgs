@@ -8,6 +8,7 @@ MODULE MLSSignalNomenclature    ! Dealing with MLS rad.band etc. specifiers
   USE MLSCommon
   USE MLSStrings
   USE MLSMessageModule
+  USE Intrinsic, ONLY: L_None
 
   IMPLICIT NONE
   PRIVATE
@@ -1095,6 +1096,7 @@ CONTAINS
     ! The first section in the signals file describes the various types
     ! of spectrometer there can be.  First, we read a line and expect it to be
     ! `spectrometers'
+    INTEGER, PARAMETER :: MLSInstrumentNoModules=2
     CHARACTER (LEN=3),  DIMENSION(MLSInstrumentNoModules) :: &
        & MLSInstrumentModuleNames= (/ &
        & "GHz", &
@@ -1364,7 +1366,7 @@ CONTAINS
             & caseInsensitive=.TRUE.)
 
        IF (database%radiometerInfo(radiometer)%instrumentModule==&
-            & MLSInstrumentModule_Invalid) CALL MLSMessage(MLSMSG_Error,&
+            & L_None) CALL MLSMessage(MLSMSG_Error,&
             & ModuleName,"Unrecognised instrument module: "//last)
     END DO RadiometerFrequencyLoop
 
@@ -1762,6 +1764,9 @@ END MODULE MLSSignalNomenclature
 
 !
 ! $Log$
+! Revision 2.1  2001/02/09 00:38:56  livesey
+! Various changes
+!
 ! Revision 2.0  2000/09/05 17:41:06  dcuddy
 ! Change revision to 2.0
 !
