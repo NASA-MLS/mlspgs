@@ -1347,13 +1347,20 @@ contains
     ! Tidy up
     call Deallocate_test ( channels, 'channels', ModuleName )
 
-call dump ( qty%mask, format='(1x,z8.8)' )
+      if ( index(switches,'msk') /= 0 ) then
+        call output ( 'Elements per mask = ' )
+        call output ( size(qty%values,1), advance='yes' )
+        call dump ( qty%mask, format='(1x,z8.8)' )
+      end if
     end subroutine SetupSubset
   end subroutine Retrieve
 
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.68  2001/09/27 20:14:50  vsnyder
+! Add 'msk' switch to control printing the mask after a Subset
+!
 ! Revision 2.67  2001/09/27 18:40:26  vsnyder
 ! Explicitly control mask use for FormNormalEquations
 !
