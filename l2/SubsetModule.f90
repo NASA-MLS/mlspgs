@@ -262,7 +262,7 @@ contains ! ========= Public Procedures ============================
   subroutine SetupSubset ( key, vectors )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Expr_m, only: EXPR
+    use Expr_m, only: EXPR, GETINDEXFLAGSFROMLIST
     use MLSCommon, only: R8
     use Declaration_table, only: NUM_VALUE
     use Intrinsic, only: PHYQ_LENGTH, PHYQ_PRESSURE, PHYQ_INVALID, PHYQ_DIMENSIONLESS
@@ -276,7 +276,7 @@ contains ! ========= Public Procedures ============================
     use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
       & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
     use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
-    use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN, GETINDEXFLAGSFROMLIST
+    use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
     use String_Table, only: DISPLAY_STRING
     use Toggles, only: SWITCHES
     use Output_M, only: OUTPUT
@@ -699,7 +699,7 @@ contains ! ========= Public Procedures ============================
   subroutine SetupFlagCloud ( key, vectors )
     
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use EXPR_M, only: EXPR
+    use EXPR_M, only: EXPR, GETINDEXFLAGSFROMLIST
     use MLSCommon, only: R8
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, &
@@ -709,7 +709,7 @@ contains ! ========= Public Procedures ============================
     use Declaration_table, only: NUM_VALUE
     use Intrinsic, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE, &
       & PHYQ_DIMENSIONLESS
-    use MoreTree, only: GET_FIELD_ID, GETINDEXFLAGSFROMLIST
+    use MoreTree, only: GET_FIELD_ID
     use VectorsModule, only: ClearMask, CreateMask, &
       & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T, Vector_T, &
       & M_LINALG, m_cloud
@@ -1149,6 +1149,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.12  2004/05/28 00:57:50  vsnyder
+! Move GetIndexFlagsFromList from MoreTree to Expr_m
+!
 ! Revision 2.11  2003/08/06 17:24:16  livesey
 ! Essentially cosmetic change
 !
