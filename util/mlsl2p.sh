@@ -1,0 +1,74 @@
+#!/bin/sh
+# mlsl2p.sh
+# runs the master task for mlsl2
+#
+# Assumes that:
+
+# (1) It has been called from PGS_PC_Shell.sh as the (pge) in
+#  PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v
+# (2) (HOME)/pvm3/bin/LINUX/ contains both mlsl2 and slavetmplt.sh
+#     (or else define an enviromental variable (PVM_EP) and put them there)
+# (3) PVM_HOSTS_INFO is defined as an environment variable
+#     It should be the path and name of the host file,
+#     a text file containing the hosts available
+#     for running the slave tasks, one host per line
+#
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# usage: see (1) above
+
+# Check that assumptions are valid
+if [ "$PGS_PC_INFO_FILE" = "" ]
+then
+  echo 'PGS_PC_INFO_FILE undefined'
+  echo 'usage:'
+  echo 'PGS_PC_Shell.sh (pge) 0111 (PCF_file) 25 -v'
+elif [ "$PVM_HOSTS_INFO" = "" ]
+then
+  echo 'PVM_HOSTS_INFO undefined'
+  echo 'It should be the path and name of the host file'
+  echo 'a text file containing the hosts available'
+  echo 'for running the slave tasks, one host per line'
+fi
+
+# In case you used the ep=(PVM_EP)
+# in the host file
+if [ "$PVM_EP" = "" ]
+then
+  PVM_EP=$HOME/pvm3/bin/LINUX
+fi
+
+if [ ! -x "$PVM_EP/mlsl2"  ]
+then
+  echo "mlsl2 not in $PVM_EP"
+elif [ ! -r "$PVM_EP/slavetmplt.sh"  ]
+then
+  echo "slavetmplt.sh not in $PVM_EP"
+fi
+
+# Use sed to convert slavetmplt.sh into an executable script
+# The resulting script sets some toolkt-savvy environment variables
+# and then launches the regular mlsl2 binary when summoned to do so.
+SLV_SUF=slave
+rm -f $PVM_EP/mlsl2.$SLV_SUF
+sed "s=ssllaavvee=$SLV_SUF=; s=ppggssbbiinn=$PGSBIN=; \
+s=ppccff=$PGS_PC_INFO_FILE=; s=ppvvmmbbiinn=$PVM_EP=" \
+"$PVM_EP/slavetmplt.sh" > $PVM_EP/mlsl2.$SLV_SUF
+chmod a+x $PVM_EP/mlsl2.$SLV_SUF
+
+NORMAL_STATUS=2
+
+# Now we launch the master task itself to set everything in motion
+$PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO -g -S'mas,chu,pro,log,opt1,pcf,time'
+
+return_status=`expr $?`
+
+if [ $return_status != $NORMAL_STATUS ]
+then
+   exit 1
+else
+   exit 0
+fi
+
+# $Log$
