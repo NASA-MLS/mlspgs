@@ -18,7 +18,7 @@ contains
 !-----------------------------------------------  Compute_GL_Grid  -----
 
   subroutine Compute_GL_Grid ( FwdModelConf, Temp, Qtys, &
-    &                          Nlvl, NLm1, MaxVert, P_GLgrid, Z_GLgrid, &
+    &                          Nlvl, MaxVert, P_GLgrid, Z_GLgrid, &
     &                          Tan_Inds, Tan_Press )
 
   ! Compute the pressure and zeta GL grids.  Compute Tan_Inds and Tan_Press
@@ -39,7 +39,7 @@ contains
     type (qtyStuff_t), intent(in) :: Qtys(:)      ! Array of pointers to Qty's.
 
   ! Outputs
-    integer, intent(out) :: Nlvl, NLm1            ! Levels in coarse grid
+    integer, intent(out) :: Nlvl                  ! Levels in coarse grid
     integer, intent(out) :: MaxVert               ! Levels in find grid
 
   ! Would be intent(out) if they weren't pointers.  First thing here
@@ -52,6 +52,7 @@ contains
   ! Local variables
     integer :: J
     integer, parameter :: Ngp1 = Ng+1  ! NG + 1
+    integer :: NLM1                               ! NLVL - 1
     integer :: No_Tan_Hts
     integer(ip), dimension(:), pointer :: Rec_Tan_Inds ! recommended tangent
       !                                             point indices from make_z_grid
@@ -164,6 +165,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.2  2003/05/20 00:06:23  vsnyder
+! Remove stuff not used by FullForwardModel
+!
 ! Revision 2.1  2003/05/15 20:25:23  vsnyder
 ! Initial commit
 !
