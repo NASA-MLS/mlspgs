@@ -40,7 +40,7 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
    CHARACTER (LEN=480) :: msr
 
-   INTEGER :: allGrids, err, i, j, l2Days
+   INTEGER :: allGrids, count, err, i, j, k, l, l2Days
    INTEGER, ALLOCATABLE :: nlev(:)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
@@ -78,16 +78,6 @@ PROGRAM MLSL3 ! MLS Level 3 software
       msr = 'Insufficient input data to process ' // cfProd(1)%l3prodNameD
       CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
    ENDIF
-
-! Deallocate the array, and its internal pointers, when finished
-
-   DO i = 1, l2Days
-      CALL DestroyL2GPContents(l2gp(i))
-   ENDDO
-
-   DEALLOCATE(l2gp, STAT=err )
-   IF ( err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-                                          &deallocate l2gp product array.')
 
 ! Simulated CORE output
 
@@ -163,10 +153,23 @@ PROGRAM MLSL3 ! MLS Level 3 software
    DO i = 1, allGrids
 
       DO j = 1, l3dm(i)%nLevels
-         l3dm(i)%pressure(j) = j*1.0
+
+         l3dm(i)%pressure(j) = l2gp(1)%pressures(j)
+
+         count = 1
+         DO k = 1, l3dm(i)%nLons
+            DO l = 1, l3dm(i)%nLats
+               IF (count > SIZE(l2gp(1)%l2gpValue,3)) THEN
+                  l3dm(i)%l3dmValue(j,l,k) = 0.0
+               ELSE
+                  l3dm(i)%l3dmValue(j,l,k) = l2gp(1)%l2gpValue(1,j,count)
+               ENDIF
+               count = l + 1
+            ENDDO
+         ENDDO
+
       ENDDO
 
-      l3dm(i)%l3dmValue = 0.0
       l3dm(i)%l3dmPrecision = -1.0
 
    ENDDO
@@ -175,6 +178,10 @@ PROGRAM MLSL3 ! MLS Level 3 software
 ! metadata.  Perform any outstanding deallocations.
 
    CALL OutputAndClose(pcf, cf, cfProd, l3dm)
+
+! Deallocate the l2gp database, when finished
+
+   CALL DestroyL2GPDatabase(l2gp)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
                                                      &successfully completed!')
@@ -187,6 +194,9 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.4  2000/11/22 17:25:23  nakamura
+! Required to go back to 1.2 -- same as 1.1
+!
 !
 ! Revision 1.3  2000/11/22 17:24:45  nakamura
 ! Required to go back to 1.2 -- same as 1.1
