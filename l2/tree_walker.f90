@@ -90,7 +90,8 @@ contains ! ====     Public Procedures     ==============================
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
 !       call set_global_settings ( son, fwdModelInfo ) !??? Restore when l2load isn't needed
-        call set_global_settings ( son, fwdModelInfo, fmc, fmi, tfmi ) !??? for l2load
+        call set_global_settings ( son, fwdModelInfo, &
+          & fmc, fmi, tfmi ) !??? This line is temporary for l2load
       case ( z_mlsSignals )
         call MLSSignals ( son )
       case ( z_readapriori )
@@ -117,8 +118,9 @@ subtrees: do while ( j <= howmany )
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo )
             case ( z_retrieve )
-!             call retrieve ( son, vectors, matrices ) !??? Restore when l2load isn't needed
-              call retrieve ( son, vectors, matrices, fmc, fmi, tfmi )
+!             call retrieve ( son, vectors, matrices, fwdModelInfo ) !??? Restore when l2load isn't needed
+              call retrieve ( son, vectors, matrices, fwdModelInfo, &
+                & fmc, fmi, tfmi ) !??? This line is temporary for l2load
             case default
           exit subtrees
             end select
@@ -151,6 +153,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.13  2001/03/08 03:23:10  vsnyder
+! More stuff to work with L2_Load
+!
 ! Revision 2.12  2001/03/07 22:46:05  vsnyder
 ! Add temporary stuff for Zvi's "l2_load", which will wither away.
 !
