@@ -146,6 +146,9 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
+    nullify ( hgrid%phi, hgrid%geodLat, hgrid%lon, hgrid%time, &
+      & hgrid%solarTime, hgrid%solarZenith, hgrid%losAngle ) ! for Sun's rubbish compiler
+    
     hGrid%name = name
     if ( toggle(gen) ) call trace_begin ( "CreateHGridFromMLSCFInfo", root )
 
@@ -1092,6 +1095,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.35  2002/08/04 16:03:33  mjf
+! Added some nullify statements for Sun's rubbish compiler.
+!
 ! Revision 2.34  2002/08/01 17:19:56  livesey
 ! Flipped geometry dump over the right way.
 !
