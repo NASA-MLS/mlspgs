@@ -22,6 +22,11 @@ module FilterShapes_m
   public :: Destroy_Filter_Shapes_Database, Destroy_DACS_Filter_Database
   public :: Dump_Filter_Shapes_Database, Dump_DACS_Filter_Database
 
+  public :: Dump
+  interface Dump
+    module procedure Dump_DACS_Filter
+  end interface Dump
+
   ! There is a separate FilterShape_T object for each COMPLETE signal
   ! specification, including the channel number.  It isn't necessary
   ! for all of the filter shapes to have the same size.
@@ -203,8 +208,11 @@ contains
     real(r8) :: DX                      ! To compute FilterGrid
     real(r8) :: LHS, RHS                ! For computing grid
     integer :: I, N                     ! Loop inductor, subscript
+    integer :: LogChan                  ! Number_in_chan == 2 ** LogChan + 1
+                                        ! Default 7
     integer :: LogSize                  ! Number_in_shape == 2 ** LogSize + 1
     character(80) :: Line               ! From the file
+    integer :: Number_in_chan           ! How many channels?
     integer :: Number_in_shape          ! How many points in each filter?
     integer :: NumFilterShapes          ! How many filter shapes in file?
     integer :: Offset                   ! From start of FilterShapes -- to extend it
@@ -217,7 +225,7 @@ contains
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
     type(DACSfilterShape_T), dimension(:), pointer :: TempFilterShapes
 
-    namelist /Filter/ lhs, rhs, logSize
+    namelist /Filter/ lhs, rhs, logSize, logChan
 
     if ( toggle(gen) ) call trace_begin ( "Read_DACS_Filter_Shapes_File" )
 
@@ -230,18 +238,22 @@ contains
       if ( status < 0 ) exit
       if ( status > 0 ) go to 99
       ! Read the lhs, rhs and number_in_shape
+      logChan = 7
+      logSize = -1
       read ( lun, filter, iostat=status )
       if ( status /= 0 ) go to 99
+      if ( logSize < 0 ) &
+        & call MLSMessage ( MLSMSG_Error, moduleName, "LogSize < 0" )
       ! Skip the shape, using LHS for a temp
       number_in_shape = 2 ** logSize + 1
       read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
       if ( status /= 0 ) go to 99
-      number_in_shape = number_in_shape / 2 + 1
+      number_in_chan = 2 ** logChan + 1
       ! Skip the LO apodization
-      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_chan)
       if ( status /= 0 ) go to 99
       ! Skip the channel normalization
-      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_shape)
+      read ( lun, *, iostat=status ) (lhs, i = 1, number_in_chan)
       if ( status /= 0 ) go to 99
       numFilterShapes = numFilterShapes + 1
     end do
@@ -281,6 +293,7 @@ contains
       call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
 
       ! Read the lhs, rhs and number_in_shape
+      logChan = 7
       read ( lun, filter, iostat=status )
       if ( status /= 0 ) go to 99
       number_in_shape = 2 ** logSize + 1
@@ -299,14 +312,14 @@ contains
       if ( status /= 0 ) go to 99
 
       ! Read the LO_Apod and CH_Norm arrays
-      number_in_shape = number_in_shape / 2 + 1
+      number_in_chan = 2 ** logChan + 1
       call allocate_test ( DACSfilterShapes(n)%lo_apod,&
-        & number_in_shape, 'DACSfilterShapes(n)%lo_apod', ModuleName )
+        & number_in_chan, 'DACSfilterShapes(n)%lo_apod', ModuleName )
       read ( lun, *, iostat=status ) DACSfilterShapes(n)%lo_apod
       if ( status /= 0 ) go to 99
 
       call allocate_test ( DACSfilterShapes(n)%ch_norm,&
-        & number_in_shape, 'DACSfilterShapes(n)%ch_norm', ModuleName )
+        & number_in_chan, 'DACSfilterShapes(n)%ch_norm', ModuleName )
       read ( lun, *, iostat=status ) DACSfilterShapes(n)%ch_norm
       if ( status /= 0 ) go to 99
 
@@ -426,26 +439,34 @@ contains
     end do ! i
   end subroutine Dump_Filter_Shapes_Database
 
+  ! -------------------------------------------  Dump_DACS_Filter  -----
+  subroutine Dump_DACS_Filter ( Filter )
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+    type (DACSFilterShape_T), intent(in) :: Filter
+    character(len=MaxSigLen) :: sigName
+
+    call output ( 'Signal = ' )
+    call GetNameOfSignal ( filter%signal, sigName )
+    call output ( trim(sigName), advance='yes' )
+    call dump ( filter%filterShape, name='FilterShape' )
+    call dump ( filter%filterGrid, name='FilterGrid', width=5, format='(f14.5)' )
+    call dump ( filter%lo_apod, name='LO_Apod', width=7, format='(f10.6)' )
+    call dump ( filter%ch_norm, name='CH_Norm' )
+  end subroutine Dump_DACS_Filter
+
   ! ----------------------------------  Dump_DACS_Filter_Database  -----
   subroutine Dump_DACS_Filter_Database
     use Dump_0, only: Dump
     use Output_m, only: Output
 
     integer :: I                   ! Subscripts, loop inductors
-    character(len=MaxSigLen) :: sigName
     call output ( 'DACS Filter Shapes: SIZE = ' )
     call output ( size(DACSfilterShapes), advance='yes' )
     do i = 1, size(DACSfilterShapes)
       call output ( i, 4 )
-      call output ( ':    Signal = ' )
-      call GetNameOfSignal ( DACSfilterShapes(i)%signal, sigName )
-      call output ( trim(sigName), advance='yes' )
-      call dump ( DACSfilterShapes(i)%filterShape, name='FilterShape' )
-      call dump ( DACSfilterShapes(i)%filterGrid, name='FilterGrid', &
-        & width=5, format='(f14.5)' )
-      call dump ( DACSfilterShapes(i)%lo_apod, name='LO_Apod', &
-        & width=7, format='(f10.6)' )
-      call dump ( DACSfilterShapes(i)%ch_norm, name='CH_Norm' )
+      call output ( ':    ' )
+      call dump_DACS_filter ( DACSfilterShapes(i) )
     end do ! i
   end subroutine Dump_DACS_Filter_Database
 
@@ -477,6 +498,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.11  2004/01/21 22:01:37  vsnyder
+! Trim signal name before printing, cosmetics
+!
 ! Revision 2.10  2003/08/15 00:20:50  michael
 ! changed debugging switch for dump_DACS_filter_database
 !
