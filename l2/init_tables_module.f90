@@ -111,54 +111,9 @@ module INIT_TABLES_MODULE
 ! based on the file field_names.txt
   include 'field_parm.f9h'    
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
-  integer, parameter :: L_ADDNOISE             = last_Spectroscopy_Lit + 1
-  integer, parameter :: L_ANGLE                = l_addnoise + 1
-  integer, parameter :: L_APRIORI              = l_angle + 1
-  integer, parameter :: L_BOTH 	               = l_apriori + 1
-  integer, parameter :: L_BOUNDARYPRESSURE     = l_both + 1
-  integer, parameter :: L_CHISQCHAN            = l_boundarypressure + 1
-  integer, parameter :: L_CHISQMMAF            = l_chisqchan + 1
-  integer, parameter :: L_CHISQMMIF            = l_chisqmmaf + 1
-  integer, parameter :: L_CHOLESKY             = l_chisqmmif + 1
-  integer, parameter :: L_CLIMATOLOGY          = l_cholesky+1
-  integer, parameter :: L_CLOUDFULL            = l_climatology + 1
-  integer, parameter :: L_COLUMNABUNDANCE      = l_cloudFull + 1
-  integer, parameter :: L_COVARIANCE           = l_columnabundance + 1
-  integer, parameter :: L_DAO 	               = l_covariance + 1
-  integer, parameter :: L_DIRECT               = l_dao + 1
-  integer, parameter :: L_EITHER               = l_direct + 1
-  integer, parameter :: L_ESTIMATEDNOISE       = l_either + 1
-  integer, parameter :: L_EXPLICIT             = l_estimatedNoise + 1
-  integer, parameter :: L_FIXED                = l_explicit + 1
-  integer, parameter :: L_FRACTIONAL           = l_fixed + 1
-  integer, parameter :: L_FULL                 = l_fractional + 1
-  integer, parameter :: L_GRIDDED              = l_full + 1
-  integer, parameter :: L_HEIGHT               = l_gridded + 1
-  integer, parameter :: L_HYDROSTATIC          = l_height + 1
-  integer, parameter :: L_ISOTOPE              = l_hydrostatic + 1
-  integer, parameter :: L_KRONECKER            = l_isotope + 1
-  integer, parameter :: L_L1B                  = l_kronecker + 1
-  integer, parameter :: L_L2AUX                = l_l1b + 1
-  integer, parameter :: L_L2DGG                = l_l2aux + 1
-  integer, parameter :: L_L2GP 	               = l_l2dgg + 1
-  integer, parameter :: L_L2PC                 = l_l2gp + 1
-  integer, parameter :: L_LINEAR               = l_l2pc + 1
-  integer, parameter :: L_LOGARITHMIC          = l_linear + 1
-  integer, parameter :: L_LOWCLOUD             = l_logarithmic + 1
-  integer, parameter :: L_NCEP 	               = l_lowcloud+ 1
-  integer, parameter :: L_NEITHER              = l_ncep + 1
-  integer, parameter :: L_NEWTONIAN            = l_neither + 1
-  integer, parameter :: L_NORM                 = l_newtonian + 1
-  integer, parameter :: L_PLAIN                = l_norm + 1
-  integer, parameter :: L_PRESSURE             = l_plain + 1
-  integer, parameter :: L_RECTANGLEFROMLOS     = l_pressure + 1
-  integer, parameter :: L_SCAN                 = l_rectanglefromlos + 1
-  integer, parameter :: L_SPD                  = l_scan + 1
-  integer, parameter :: L_SPECIAL              = l_spd + 1
-  integer, parameter :: L_VECTOR               = l_special + 1
-  integer, parameter :: L_VGRID                = l_vector + 1
-  integer, parameter :: L_WEIGHTED             = l_vGrid + 1
-  integer, parameter :: LAST_LIT               = l_weighted
+! Don't edit the following file directly--it is generated automatically
+! based on the file lit_names.txt
+  include 'lit_parm.f9h'    
 ! Section identities.  Indices are in the order the sections are allowed to
 ! appear.  They're also used to index SECTION_ORDERING, so BE CAREFUL if
 ! you change them!
@@ -291,62 +246,16 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_units) =           add_ident ( 'units' )
     data_type_indices(t_vgridcoord) =      add_ident ( 'vGridCoord' )
     data_type_indices(t_vgridtype) =       add_ident ( 'vGridType' )
-    ! Put enumeration literals into the symbol table.  Don't add ones
-    ! that are already put in by init_intrinsic or init_molecules.
-    lit_indices(l_addnoise) =              add_ident ( 'addnoise' )
-    lit_indices(l_angle) =                 add_ident ( 'angle' )
-    lit_indices(l_apriori) =               add_ident ( 'apriori' )
-    lit_indices(l_both) =                  add_ident ( 'both' )
-    lit_indices(l_boundarypressure) =      add_ident ( 'boundarypressure' )
-    lit_indices(l_chisqchan) =             add_ident ( 'chisqchan' )
-    lit_indices(l_chisqmmaf) =             add_ident ( 'chisqmmaf' )
-    lit_indices(l_chisqmmif) =             add_ident ( 'chisqmmif' )
-    lit_indices(l_cholesky) =              add_ident ( 'cholesky' )
-    lit_indices(l_climatology) =           add_ident ( 'climatology' )
-    lit_indices(l_cloudFull) =             add_ident ( 'cloudFull' )
-    lit_indices(l_columnabundance) =       add_ident ( 'columnabundance' )
-    lit_indices(l_covariance) =            add_ident ( 'covariance' )
-    lit_indices(l_dao) =                   add_ident ( 'dao' )
-    lit_indices(l_direct) =                add_ident ( 'direct' )
-    lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
-    lit_indices(l_either) =                add_ident ( 'either' )
-    lit_indices(l_explicit) =              add_ident ( 'explicit' )
-    lit_indices(l_estimatedNoise) =        add_ident ( 'estimatedNoise' )
-    lit_indices(l_fixed) =                 add_ident ( 'fixed' )
-    lit_indices(l_fractional) =            add_ident ( 'fractional' )
-    lit_indices(l_full) =                  add_ident ( 'full' )
-    lit_indices(l_gridded) =               add_ident ( 'gridded' )
-    lit_indices(l_height) =                add_ident ( 'height' )
-    lit_indices(l_hydrostatic) =           add_ident ( 'hydrostatic' )
-    lit_indices(l_isotope) =               add_ident ( 'isotope' )
-    lit_indices(l_kronecker) =             add_ident ( 'kronecker' )
-    lit_indices(l_l1b) =                   add_ident ( 'l1b' )
-    lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
-    lit_indices(l_l2dgg) =                 add_ident ( 'l2dgg' )
-    lit_indices(l_l2gp) =                  add_ident ( 'l2gp' )
-    lit_indices(l_l2pc) =                  add_ident ( 'l2pc' )
-    lit_indices(l_linear) =                add_ident ( 'linear' )
-    lit_indices(l_logarithmic) =           add_ident ( 'logarithmic' )
-    lit_indices(l_lowcloud) =              add_ident ( 'lowcloud' )
-    lit_indices(l_ncep) =                  add_ident ( 'ncep' )
-    lit_indices(l_neither) =               add_ident ( 'neither' )
-    lit_indices(l_newtonian) =             add_ident ( 'newtonian' )
-    lit_indices(l_norm) =                  add_ident ( 'norm' )
-    lit_indices(l_plain) =                 add_ident ( 'plain' )
-    lit_indices(l_pressure) =              add_ident ( 'pressure' )
-    lit_indices(l_rectanglefromlos) =      add_ident ( 'rectanglefromlos' )
-    lit_indices(l_scan) =                  add_ident ( 'scan' )
-    lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
-    lit_indices(l_spd) =                   add_ident ( 'spd' )
-    lit_indices(l_special) =               add_ident ( 'special' )
-    lit_indices(l_vector) =                add_ident ( 'vector' )
-    lit_indices(l_vGrid) =                 add_ident ( 'vGrid' )
-    lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     ! Don't edit the following file directly--it is generated automatically
     ! based on the file field_names.txt
     include 'field_add.f9h'    
+    ! Put enumeration literals into the symbol table.  Don't add ones
+    ! that are already put in by init_intrinsic or init_molecules.
+    ! Don't edit the following file directly--it is generated automatically
+    ! based on the file lit_names.txt
+    include 'lit_add.f9h'    
     ! Put parameter names into the symbol table:
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -459,11 +368,11 @@ contains ! =====     Public procedures     =============================
              l+l_chisqchan, l+l_chisqmmaf, l+l_chisqmmif, l+l_cloudIce, &
              l+l_cloudInducedRadiance, l+l_cloudExtinction, l+l_cloudRadSensitivity, &
              l+l_cloudWater, l+l_columnabundance, &
-             l+l_dnwt_ajn,  l+l_dnwt_axmax,  l+l_dnwt_cait, &
-             l+l_dnwt_diag,  l+l_dnwt_dxdx,  l+l_dnwt_dxdxl, &
-             l+l_dnwt_dxn,  l+l_dnwt_dxnl,  l+l_dnwt_fnmin, &
-             l+l_dnwt_fnorm,  l+l_dnwt_gdx,  l+l_dnwt_gfac, &
-             l+l_dnwt_gradn,  l+l_dnwt_sq,  l+l_dnwt_sq,  l+l_dnwt_sqt,&
+             l+l_dnwt_ajn, l+l_dnwt_axmax, l+l_dnwt_cait, &
+             l+l_dnwt_diag, l+l_dnwt_dxdx, l+l_dnwt_dxdxl, &
+             l+l_dnwt_dxn, l+l_dnwt_dxnl, l+l_dnwt_fnmin, &
+             l+l_dnwt_fnorm, l+l_dnwt_gdx, l+l_dnwt_gfac, &
+             l+l_dnwt_gradn, l+l_dnwt_sq, l+l_dnwt_sq, l+l_dnwt_sqt,&
              l+l_earthRefl, l+l_effectiveOpticalDepth, l+l_elevOffset, &
              l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, &
              l+l_jacobian_cols, l+l_jacobian_rows, &
@@ -788,6 +697,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_snoop, &
              begin, f+f_comment, t+t_string, n+n_field_type, &
+             begin, f+f_level, t+t_numeric, n+n_field_type, &
              nd+n_spec_def, &
       begin, s+s_dumpblocks, &
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
@@ -829,7 +739,8 @@ contains ! =====     Public procedures     =============================
              s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
-      begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
+      begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section /) )
+    call make_tree ( (/ &
       begin, z+z_chunkdivide, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
              begin, p+p_critical_scanning_modules, t+t_criticalModule, n+n_name_def, &
@@ -849,7 +760,8 @@ contains ! =====     Public procedures     =============================
                        s+s_remove, s+s_snoop, s+s_time, s+s_vector, &
                        s+s_transfer, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
-             s+s_subset, s+s_sids, s+s_time, n+n_section, &
+                           s+s_sids, s+s_snoop, s+s_subset, s+s_time, &
+                           n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
@@ -888,6 +800,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.169  2001/10/05 01:19:03  vsnyder
+! Added 'level' field to Snoop spec
+!
 ! Revision 2.168  2001/10/03 23:33:48  vsnyder
 ! Create t_method type with l_newtonian and l_lowcloud lits
 !
