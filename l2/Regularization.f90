@@ -460,7 +460,7 @@ o:          do while ( c2 <= ni )
                   iq = a%col%quant(i)
                   ii = a%col%inst(i)
                   if ( weightVec%quantities(iq)%values(h,ii) /= 0.0 ) then
-                    wtVec(j-c1+1) = weightVec%quantities(iq)%values(h,ii)
+                    wtVec(j-c1+1) = 1.0 / weightVec%quantities(iq)%values(h,ii)
                   else
                     wtVec(j-c1+1) = 0.0
                   end if
@@ -620,6 +620,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.31  2002/10/22 19:23:28  livesey
+! Fixed the bug with hRegVweightVec not being reciprocated.
+!
 ! Revision 2.30  2002/10/21 22:27:44  vsnyder
 ! Update comments to reflect reality
 !
