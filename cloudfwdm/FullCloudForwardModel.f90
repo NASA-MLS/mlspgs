@@ -168,8 +168,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Outputs
     do quantity_type = 1, fwdModelOut%template%noQuantities
       l_quantity_type = fwdModelOut%quantities(quantity_type)%template%quantityType
-      print*,'quantity_type: ', 'outputs', quantity_type
-      print*,'l_quantity_type: ', 'outputs', l_quantity_type
+!      print*,'quantity_type: ', 'outputs', quantity_type
+!      print*,'l_quantity_type: ', 'outputs', l_quantity_type
       select case (l_quantity_type)
         case (l_radiance) 
           radiance => GetVectorQuantityByType ( fwdModelOut,                 &
@@ -225,8 +225,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       l_quantity_type = fwdModelIn%quantities(quantity_type)%template%quantityType
       if (quantity_type .gt. NQ1) &
       l_quantity_type = fwdModelExtra%quantities(quantity_type-NQ1)%template%quantityType
-      print*,'quantity_type: ', 'inputs', quantity_type
-      print*,'l_quantity_type: ', 'inputs', l_quantity_type
+!      print*,'quantity_type: ', 'inputs', quantity_type
+!      print*,'l_quantity_type: ', 'inputs', l_quantity_type
 
       select case (l_quantity_type)
         case (l_ptan)
@@ -367,6 +367,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     WC (1,:) = CloudIce%values(:,instance)
     WC (2,:) = CloudWater%values(:,instance)
 
+!    print*, noFreqs, noSurf, radiance%template%noSurfs, size( ForwardModelConfig%molecules)
+!    print*, 10.0**(-temp%template%surfs)
+
     call CloudForwardModel (                                                 &
       & noFreqs,                                                             &
       & noSurf,                                                              & 
@@ -374,16 +377,16 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & size( ForwardModelConfig%molecules),                                 &
       & ForwardModelConfig%no_cloud_species,                                 &
       & ForwardModelConfig%no_model_surfs,                                   &
-      & frequencies/1e3_r8,                                                  &
-      & 10.0**(-temp%template%surfs),                                        &
-      & gph%values(:, instance),                                             &
-      & temp%values(:,instance),                                             &
-      & vmrArray,                                                            &
-      & WC,                                                                  &
+      & real(frequencies/1e3_r8),                                            &
+      & real(10.0**(-temp%template%surfs)),                                  &
+      & real(gph%values(:, instance)),                                       &
+      & real(temp%values(:,instance)),                                       &
+      & real(vmrArray),                                                      &
+      & real(WC),                                                            &
       & sizeDistribution%values(1,instance),                                 &
-      & 10.0**(-ptan%values(:,maf)),                                         &
-      & earthradius%values(1,1),                                           &
-      & surfaceType%values(1, instance),                                     &
+      & real(10.0**(-ptan%values(:,maf))),                                   &
+      & earthradius%values(1,1),                                             &
+      & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
       & a_clearSkyRadiance,                                                  &
