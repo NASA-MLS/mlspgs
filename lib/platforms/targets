@@ -131,7 +131,7 @@ ifdef LAPACK
 else
    lapack_message=Building mlslib with lapack supplied by f95 intrinsics
 #   lapack_objs := gemm_intrinsic.o
-   lapack_objs := dgemm_intrinsic.o sgemm_intrinsic.o
+   lapack_objs := dgemm_intrinsic.o sgemm_intrinsic.o gemm_external_m.o
 endif
 
 ifdef PGSTK
@@ -204,6 +204,9 @@ sdot.o:
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.37  2001/11/12 19:17:38  pwagner
+# gemm_intinsic replaced by sgemm_intrinsic and dgemm_intrinsic
+#
 # Revision 1.36  2001/11/07 00:31:44  pwagner
 # Added lapack linker line and msg
 #
