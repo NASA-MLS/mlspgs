@@ -17,7 +17,7 @@ program l2gpdiff ! show diffs between swaths in two different files
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig
-   use MLSStrings, only: GetStringElement, NumStringElements
+   use MLSStringLists, only: GetStringElement, NumStringElements
    use output_m, only: output
    use PCFHdr, only: GlobalAttributes
    use Time_M, only: Time_Now, USE_WALL_CLOCK
@@ -218,6 +218,9 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.2  2004/07/22 17:10:46  pwagner
+! Added -ignore and -rms options
+!
 ! Revision 1.1  2004/06/16 17:55:06  pwagner
 ! First commit
 !

@@ -20,7 +20,7 @@
      use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
      use MLSFiles, only: split_path_name
      use MLSMessageModule, ONLY : MLSMessage, MLSMSG_Error, MLSMSG_Warning
-     use MLSStrings, only: GetIntHashElement
+     use MLSStringLists, only: GetIntHashElement
 
      IMPLICIT NONE
 
@@ -354,6 +354,9 @@
 END PROGRAM l1b_h4toh5
 
 ! $Log$
+! Revision 1.2  2004/03/25 18:40:41  pwagner
+! Many compile-time bugs caught, fixed
+!
 ! Revision 1.1  2002/10/29 00:56:57  pwagner
 ! First commit
 !
