@@ -5,19 +5,6 @@ module ForwardModelWrappers
 
   ! This module contains a wrapper routine for calling the various forward
   ! models we have.
-  
-  use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
-  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
-    & FORWARDMODELSTATUS_T
-  use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
-  use FullForwardModel_m, only: FULLFORWARDMODEL
-  use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-  use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL
-  use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
-  use MatrixModule_1, only: MATRIX_T
-  use MLSL2Timings, only: add_to_retrieval_timing
-  use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
-  use VectorsModule, only: VECTOR_T
 
   implicit none
   private
@@ -35,11 +22,24 @@ module ForwardModelWrappers
 contains ! ============= Public Procedures ==========================
 
   !----------------------------------------- ForwardModel -----------
-  subroutine ForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+  subroutine ForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
     FwdModelOut, Ifm, fmStat, Jacobian )
 
+    use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
+      & FORWARDMODELSTATUS_T
+    use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
+    use FullForwardModel_m, only: FULLFORWARDMODEL
+    use Init_tables_module, only: L_LINEAR, L_SCAN, L_SCAN2D, L_FULL, L_CLOUDFULL
+    use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
+    use MatrixModule_1, only: MATRIX_T
+    use MLSL2Timings, only: Add_to_retrieval_timing
+    use ScanModelModule, only: SCANFORWARDMODEL, TWODSCANFORWARDMODEL
+    use VectorsModule, only: VECTOR_T
+
     ! Dummy arguments
-    type(forwardModelConfig_T), intent(inout) :: FORWARDMODELCONFIG
+    type(ForwardModelConfig_T), intent(inout) :: TheForwardModelConfig
     type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
     type(forwardModelIntermediate_T), intent(inout) :: IFM ! Workspace
@@ -47,29 +47,29 @@ contains ! ============= Public Procedures ==========================
     type(matrix_T), intent(inout), optional :: JACOBIAN
 
     ! Executable code
-    select case (ForwardModelConfig%fwmType)
+    select case (TheForwardModelConfig%fwmType)
     case ( l_full )
-      call FullForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call FullForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
-      call BaselineForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'full_fwm' )
     case ( l_linear )
-      call LinearizedForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call LinearizedForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
-      call BaselineForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'linear_fwm' )
     case ( l_scan )
-      call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call ScanForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'scan_fwm' )
     case ( l_scan2d )
-      call TwoDScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call TwoDScanForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'twod_scan_fwm' )
     case ( l_cloudFull )
-      call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+      call FullCloudForwardModelWrapper ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call add_to_retrieval_timing( 'fullcloud_fwm' )
     case default ! Shouldn't get here if parser etc. worked
@@ -79,6 +79,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.14  2002/08/21 23:43:33  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.13  2002/07/23 00:06:05  pwagner
 ! No upper-case allowed in section names
 !
