@@ -6,8 +6,8 @@ module GET_BETA_PATH_M
   implicit NONE
   private
   public :: Create_Beta, Create_Beta_Path
-  public :: Get_Beta_Path, Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
-  public :: Get_Beta_Path_Cloud
+  public :: Get_Beta_Path, Get_Beta_Path_Cloud, Get_Beta_Path_PFA
+  public :: Get_Beta_Path_Polarized, Get_Beta_Path_Scalar
 
   interface Get_Beta_Path
     module procedure Get_Beta_Path_Scalar, Get_Beta_Path_Polarized
@@ -54,7 +54,7 @@ contains
 !                               are needed. Only useful for subsetting.
     real(rp), pointer :: dTanh_dT(:)    ! dTanh( (-h nu) / (k T) ) / dT on path
 
-! outputs
+! Outputs
 
     real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
 
@@ -110,19 +110,23 @@ contains
   end subroutine Get_Beta_Path_Scalar
 
   ! ------------------------------------------  Get_Beta_Path_PFA  -----
-  subroutine Get_Beta_Path_PFA ( P_Path, Path_Inds, T_Path, PFAInds, &
-    & Sps_1, Sps_N, Beta_Path, T_Der_Path_Flags, &
+  subroutine Get_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, PFAInds, &
+    & BetaInds, Vel_Cor, Beta_Path, T_Der_Path_Flags, &
     & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path )
 
-    use MLSCommon, only: RP
+    use MLSCommon, only: RP, R8
     use PFADataBase_m, only: PFAData
 
+! Inputs
+    real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
     real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
     integer, intent(in) :: Path_inds(:) ! indicies for reading P_path
     real(rp), intent(in) :: T_path(:)   ! path temperatures
     integer, intent(in) :: PFAInds(:)   ! indices in PFA database
-    integer, intent(in) :: Sps_1, Sps_N ! first and last species in Beta_path, etc.
+    integer, intent(in) :: BetaInds(:)  ! indices in Beta_path, etc.
+    real(rp), intent(in) :: Vel_Cor     ! Velocity correction
 
+! Output
     real(rp), intent(out) :: beta_path(:,:) ! path beta for each specie
 
 ! Optional input.  We use ASSOCIATED instead of PRESENT so that the
@@ -142,29 +146,35 @@ contains
     real(rp), pointer :: dBeta_dv_path(:,:) ! line position
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
-    integer :: I
+    integer :: I, SV_I
 
     nullify ( dBdT, dBdn, dBdv, dBdw )
 
-    do i = sps_1, sps_n
+    do i = 1, size(betaInds)
+      sv_i = betaInds(i)
       if ( associated(dBeta_dt_path) ) then
-        dBdT => dBeta_dt_path(:,i)
+        dBdT => dBeta_dt_path(:,sv_i)
         dBdT = 0.0_rp
       end if
       if ( associated(dBeta_dn_path) ) then
-        dBdn => dBeta_dn_path(:,i)
+        dBdn => dBeta_dn_path(:,sv_i)
         dBdn = 0.0_rp
       end if
       if ( associated(dBeta_dv_path) ) then
-        dBdv => dBeta_dv_path(:,i)
+        dBdv => dBeta_dv_path(:,sv_i)
         dBdv = 0.0_rp
       end if
       if ( associated(dBeta_dw_path) ) then
-        dBdw => dBeta_dw_path(:,i)
+        dBdw => dBeta_dw_path(:,sv_i)
         dBdw = 0.0_rp
       end if
 
-      beta_path(:,i) = 0.0_rp
+      beta_path(:,sv_i) = 0.0_rp
+
+      call create_beta_path_pfa ( frq, path_inds, p_path, t_path, vel_cor, &
+        & PFAData(PFAInds(i)), beta_path(:,sv_i), t_der_path_flags, &
+        & dBdT, dBdw, dBdn, dBdv )
+
     end do
 
   end subroutine Get_Beta_Path_PFA
@@ -187,7 +197,7 @@ contains
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
     type (beta_group_T), dimension(:), intent(in) :: Beta_group
 
-! outputs
+! Outputs
 
 !{ The variable {\tt Beta\_Path} isn't really $\beta$.  It lacks a factor of
 !  $\tanh\left( \frac{h \nu}{2 k T}\right)$.  This is put in after we
@@ -269,7 +279,7 @@ contains
     real(rp) :: W0       ! SINGLE SCATTERING ALBEDO
     real(rp) :: PHH(fwdModelConf%num_scattering_angles)   ! PHASE FUNCTION
 
-! outputs
+! Outputs
 
     real(rp), intent(out) :: beta_path_cloud(:) ! cloud extinction
     real(rp), intent(out) :: w0_path(:)         ! single scattering albedo
@@ -357,12 +367,12 @@ contains
     ! ! "Don't do line(L) if slabs%catalog%polarized(L)"
     logical, intent(in) :: NoPolarized
 
-! optional inputs for temperature derivatives
+! Optional inputs for temperature derivatives
     ! (h frq) / (k T^2) ( tanh( (h frq) / (k T) ) - 1/tanh( (h frq) / (k T) ) ):
     real(rp), intent(in), optional :: dTanh_dT ! 1/tanh d/dT tanh
-! outputs
+! Outputs
     real(rp), intent(out) :: beta_value
-! optional outputs
+! Optional outputs
     real(rp), optional, intent(out) :: DBETA_DT ! Temperature derivative
     real(rp), optional, intent(out) :: DBETA_DW ! line width derivative
     real(rp), optional, intent(out) :: DBETA_DN ! temperature dependence deriv
@@ -522,14 +532,14 @@ contains
     ! "Don't do line L if slabs_0(k)%catalog%Polarized(L)"
     logical, intent(in) :: NoPolarized
 
-! outputs
+! Outputs
     real(rp), intent(inout) :: Beta_value(:)
 
 ! Optional inputs for temperature derivatives:
     real(rp), pointer :: dTanh_dT(:) ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
     logical, pointer :: Path_Flags(:) ! to do on fine path -- default true
 
-! optional outputs
+! Optional outputs
     real(rp), pointer :: dBeta_dT(:) ! temperature derivative
     real(rp), pointer :: dBeta_dw(:) ! line width derivative
     real(rp), pointer :: dBeta_dn(:) ! temperature dependence deriv
@@ -673,6 +683,118 @@ contains
     end do ! j = 1, size(path_inds)
 
   end Subroutine Create_beta_path
+
+  ! ---------------------------------------  Create_Beta_Path_PFA  -----
+  subroutine Create_Beta_Path_PFA ( Frq, Path_Inds, P_Path, T_Path, Vel_Cor, &
+    & PFAD, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
+
+    use D_Hunt_m, only: Hunt
+    use MLSCommon, only: RP, R8
+    use PFADataBase_m, only: PFAData_t, RK
+    use Physics, only: SpeedOfLight ! M/s
+
+! Inputs:
+    real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
+    integer, intent(in) :: Path_inds(:) ! Which Pressures to use
+    real(rp), intent(in) :: P_Path(:)   ! Pressure in hPa on the fine path grid
+    real(rp), intent(in) :: T_Path(:)   ! Temperature in K along the path
+    real(rp), intent(in) :: Vel_Cor     ! Velocity correction, 1.0 - vel_los/c
+    type(PFAData_t), intent(in) :: PFAD ! PFA datum from PFA Database
+    
+! Outputs
+    real(rp), intent(inout) :: Beta_Path(:)
+
+! Optional inputs for temperature derivatives:
+    logical, pointer :: T_Der_Path(:)   ! To do on fine path -- default true
+
+! Optional outputs
+    real(rp), pointer :: dBdT(:) ! Temperature derivative
+    real(rp), pointer :: dBdw(:) ! Line width derivative
+    real(rp), pointer :: dBdn(:) ! Temperature dependence deriv
+    real(rp), pointer :: dBdv(:) ! Line position derivative
+
+! -----     Local variables     ----------------------------------------
+
+    real(rk), pointer :: A(:,:)  ! Absorption from PFAD
+    real(rp) :: dBdNu            ! d log Beta / d nu, for Doppler correction
+    real(rp) :: Del_T            ! Temperature step in tGrid
+    real(r8) :: Doppler          ! Doppler corrected frequency offset, MHz
+    integer :: J, K
+    real(rp) :: LogT             ! Log10 ( temperature )
+    integer :: P_I1, P_I2        ! Indices in PFAData%vGrid%surfs
+    real(rp) :: P_Fac            ! Interpolating factor for Pressure
+    logical :: Temp_Der          ! Temperature derivatives required
+    integer :: T_I1, T_I2        ! Indices in PFAData%tGrid%surfs
+    real(rp) :: T_Fac            ! Interpolating factor for Temperature
+
+    a => PFAD%absorption
+    doppler = frq * ( vel_cor - ( 1.0 - PFAD%velLin * 1000.0 / speedOfLight ) )
+
+    p_i1 = 0 ! Initialize for Hunt
+    t_i1 = 0
+
+    do j = 1, size(path_inds)
+
+      k = path_inds(j)
+      temp_der = associated(dBdT)
+      if ( temp_der .and. associated(t_der_path) ) temp_der = t_der_path(k)
+
+      ! Get interpolating factors
+      logT = log(t_path(j))
+      call hunt ( logT, PFAD%tGrid%surfs(:,1), PFAD%tGrid%noSurfs, &
+        & t_i1, t_i2 )
+      del_t = PFAD%tGrid%surfs(t_i2,1) - PFAD%tGrid%surfs(t_i1,1)
+      t_fac = (logT - PFAD%tGrid%surfs(t_i1,1)) / del_t
+      call hunt ( p_path(k), PFAD%vGrid%surfs(:,1), PFAD%tGrid%noSurfs, &
+        & p_i1, p_i2 )
+      p_fac = (p_path(k) - PFAD%vGrid%surfs(p_i1,1)) / &
+        & (PFAD%vGrid%surfs(p_i2,1) - PFAD%vGrid%surfs(p_i1,1))
+
+      ! Interpolate to get log Beta at the linearization velocity, then
+      ! exponentiate to get Beta
+      beta_path(j) = exp( &
+        & a(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
+        & a(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
+        & a(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
+        & a(t_i1+1,p_i1+1) * t_fac * p_fac )
+
+      ! Interpolate to get d log Beta / d nu.  We need this to Doppler-correct
+      ! Beta even if dBdv is not associated.
+      dBdNu = &
+        & PFAD%dAbsDnu(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
+        & PFAD%dAbsDnu(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
+        & PFAD%dAbsDnu(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
+        & PFAD%dAbsDnu(t_i1+1,p_i1+1) * t_fac * p_fac
+
+      ! Now correct beta_path(j) for Doppler
+      beta_path(j) = beta_path(j) * ( 1.0 + doppler * dBdNu )
+
+      ! Interpolate to get d log Beta / d log T, then multiply by Beta / T
+      ! to get dBeta / dT
+      if ( temp_der ) &
+        & dBdT(j) = beta_path(j) / t_path(j) * ( &
+          & ( a(t_i1+1,p_i1  ) - a(t_i1,  p_i1  ) ) * (1.0-p_fac) + &
+          & ( a(t_i1+1,p_i1+1) - a(t_i1,  p_i1+1) ) * p_fac )
+
+      ! Interpolate to get d log Beta / d*, then multiply by Beta to get
+      ! dBeta / d*
+      if ( associated(dBdw) ) dBdw(j) = beta_path(j) * ( &
+        & PFAD%dAbsDwc(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
+        & PFAD%dAbsDwc(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
+        & PFAD%dAbsDwc(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
+        & PFAD%dAbsDwc(t_i1+1,p_i1+1) * t_fac * p_fac )
+
+      if ( associated(dBdn) ) dBdn(j) = beta_path(j) * ( &
+        & PFAD%dAbsDnc(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
+        & PFAD%dAbsDnc(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
+        & PFAD%dAbsDnc(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
+        & PFAD%dAbsDnc(t_i1+1,p_i1+1) * t_fac * p_fac )
+
+      if ( associated(dBdv) ) dBdv(j) = beta_path(j) * dBdNu
+
+    end do ! j
+
+  end subroutine Create_Beta_Path_PFA
 
 !     =====     Private Procedures     =================================
 
@@ -854,6 +976,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.62  2004/08/31 18:32:17  vsnyder
+! Move initialization for temp_der into loop in create_beta_path
+!
 ! Revision 2.61  2004/08/05 20:59:02  vsnyder
 ! Get rid of beta_group%n_elements
 !

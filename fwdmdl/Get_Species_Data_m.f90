@@ -47,7 +47,7 @@ contains
     & Radiometer, Sps )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use ForwardModelConfig, only: ForwardModelConfig_t
+    use ForwardModelConfig, only: Dump, ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO, L_VMR
     use MLSCommon, only: RP
@@ -63,7 +63,7 @@ contains
 
     ! Inputs
 
-    type(forwardModelConfig_T), intent(in) :: FwdModelConf
+    type(forwardModelConfig_T), intent(inout) :: FwdModelConf ! Only PFAIndex is changed
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     integer, intent(in) :: Radiometer
 
@@ -79,9 +79,10 @@ contains
     integer :: I, IER, J, K, L
     integer, dimension(:), pointer :: LINEFLAG ! /= 0 => Use this line
     ! (noLines per species)
-    character (len=32) :: molName       ! Name of a molecule
-    integer :: NLines                   ! count(lineFlag)
+    character (len=32) :: MolName       ! Name of a molecule
     integer :: N_elements(size(fwdModelConf%molecules) - 1) ! in beta group
+    integer :: NLines                   ! count(lineFlag)
+    integer :: NoCat                    ! Sum of sizes of sps%beta_group%cat_index
     integer :: NoMol                    ! size(fwdModelConf%molecules) - 1; includes
       ! negative ones that indicate molecule grouping
     integer  :: NoNonPFA                ! No. of non-PFA Molecules under
@@ -128,6 +129,7 @@ contains
         sps%beta_group(sv_i)%cat_index(1) = j
         sps%beta_group(sv_i)%ratio(1)     = beta_ratio
       end do
+      noCat = sps%no_lbl
 
     else
 
@@ -162,6 +164,7 @@ contains
       end do
 
       ! Fill beta_group fields for line-by-line
+      noCat = 0
       sv_i = 0
       do j = 1, noNonPFA
         k = fwdModelConf%molecules(j)
@@ -174,24 +177,26 @@ contains
           ! Last element is a huge sentinel, not a molecule
           if ( fwdModelConf%molecules(j+1) > 0 ) then
             ! Two consecutive positive ones => first is lonesome molecule
-            sps%beta_group(sv_i)%cat_index(1) = j
+            noCat = noCat + 1
+            sps%beta_group(sv_i)%cat_index(1) = noCat
             sps%beta_group(sv_i)%ratio(1)     = beta_ratio
           end if
         else ! Negative one is group member
           i = i + 1
+          noCat = noCat + 1
           f => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_isotopeRatio, molecule=l, noError=.TRUE., &
             & config=fwdModelConf )
           if ( associated ( f ) ) beta_ratio = f%values(1,1)
-          sps%beta_group(sv_i)%cat_index(i) = j
+          sps%beta_group(sv_i)%cat_index(i) = noCat
           sps%beta_group(sv_i)%ratio(i)     = beta_ratio
         end if
       end do
 
     end if
 
-    ! All that's needed for PFA is sps%mol_cat_index(sv_i), to get indices
-    ! for Beta_Path and dBetaD*
+    ! What's needed for PFA is sps%mol_cat_index(sv_i), to get values
+    ! for the second subscript Beta_Path and dBetaD*
     do j = noNonPFA+1, noMol
       l = fwdModelConf%molecules(j)
       !        if ( l == l_extinction ) CYCLE
@@ -199,10 +204,30 @@ contains
       sps%mol_cat_index(sv_i) = j
     end do
 
+    ! Now that we have sps%mol_cat_index, we can go through
+    ! FwdModelConf%forwardModelDerived%channels and fill in PFAIndex
+    ! (there has to be a better way to do this...).
+    do i = 1, size(fwdModelConf%forwardModelDerived%channels)
+      if ( .not. associated(fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules) ) cycle
+      fwdModelConf%forwardModelDerived%channels(i)%PFAIndex = 0
+      do j = 1, size(fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules)
+        do sv_i = sps%no_lbl+1, sps%no_mol
+          if ( fwdModelConf%forwardModelDerived%channels(i)%PFAMolecules(j) == &
+               fwdModelConf%molecules(sps%mol_cat_index(sv_i)) ) then
+            fwdModelConf%forwardModelDerived%channels(i)%PFAIndex(j) = sv_i
+            exit
+          end if
+        end do ! sv_i
+        if ( fwdModelConf%forwardModelDerived%channels(i)%PFAIndex(j) == 0 ) &
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Unable to find index for PFA molecule' )
+      end do ! j
+    end do ! i
+
     ! Work out which spectroscopy we're going to need ------------------------
 
     allocate ( &
-      & sps%catalog(fwdModelConf%sidebandStart:fwdModelConf%sidebandStop,noNonPFA), &
+      & sps%catalog(fwdModelConf%sidebandStart:fwdModelConf%sidebandStop,noCat), &
       & stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'sps%catalog' )
@@ -211,18 +236,11 @@ contains
     do s = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
       j = 0
       do sv_i = 1, noNonPFA
-        j = j + 1
         ! Skip if the next molecule is negative (indicates that this one is a
         ! parent)
         l = fwdModelConf%molecules(sv_i)
-        if ( l > 0 .and. fwdModelConf%molecules(sv_i+1) < 0 ) then
-          ! sps%catalog springs into existence with %lines and %polarized null
-          call allocate_test ( sps%catalog(s,j)%lines, 0, &
-            & 'sps%catalog(?,?)%lines(0)', moduleName )
-          call allocate_test ( sps%catalog(s,j)%polarized, 0, &
-            & 'sps%catalog(?,?)%polarized(0)', moduleName )
-          cycle
-        end if
+        if ( l > 0 .and. fwdModelConf%molecules(sv_i+1) < 0 ) cycle
+        j = j + 1
         l = abs(l)
         thisCatalogEntry => Catalog(FindFirst(catalog%molecule, l ) )
         sps%catalog(s,j) = thisCatalogEntry
@@ -333,6 +351,7 @@ contains
     end do
 
     if ( index(switches,'sps') /= 0 ) call dump ( sps )
+    if ( index(switches,'fwmg') /= 0 ) call dump ( fwdModelConf, 'Get_Species_Data' )
 
   end subroutine Get_Species_Data
 
@@ -476,6 +495,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.14  2004/08/05 20:58:23  vsnyder
+! Exploit sentinel at end of %molecules to get rid of a temp
+!
 ! Revision 2.13  2004/08/03 22:46:30  vsnyder
 ! Destroy my_catalog(start:end:2) instead of (-1:1:2)
 !
