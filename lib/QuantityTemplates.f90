@@ -383,9 +383,6 @@ contains ! =====     Public Procedures     =============================
     call allocate_test ( qty%losAngle, noSurfsToAllocate, qty%noInstances, &
       & "qty%losAngle", ModuleName )
 
-    call allocate_test ( qty%frequencies, qty%noChans, &
-        & "qty%frequencies", ModuleName )
-
     ! Now some other stuff to allocate
 
     if ( qty%minorFrame ) then
@@ -417,6 +414,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.18  2001/09/13 19:59:43  pwagner
+! Added majorframe as possible quantity type
+!
 ! Revision 2.17  2001/07/31 23:39:12  dwu
 ! allocate and deallocate qty%frequencies
 !
