@@ -24,6 +24,7 @@ program TEST_CHOLESKY
   real(r8), allocatable :: S(:)         ! Solution, from DCHOL
   type(MatrixElement_T) :: S1, S2       ! Steps in solution, from SolveCholesky
   real :: T1, T2, T3, T4, T5, T6        ! For timing
+  real(r8) :: U = 0.0_r8                ! for DCHOL
   type(MatrixElement_T) :: Z            ! The input
   type(MatrixElement_T) :: ZF           ! Factored normal equations
   type(MatrixElement_T) :: ZTEST        ! ZF .TX. ZF
@@ -111,7 +112,7 @@ program TEST_CHOLESKY
 
   ! Get a solution using the Cholesky decomposition routine from Math77
   call cpu_time ( t3 )
-  call dchol ( ztzd, nc, nc, s, 0.0, 1.0e-12, ierr )
+  call dchol ( ztzd, nc, nc, s, u, 1.0d-12, ierr )
   call cpu_time ( t4 )
   if ( ierr /= 0 ) then
     print *, "DCHOL reports IERR =", ierr
@@ -148,6 +149,9 @@ program TEST_CHOLESKY
 end program TEST_CHOLESKY
 
 ! $Log$
+! Revision 1.1  2000/11/09 17:29:47  pwagner
+! First commit
+!
 ! Revision 2.1  2000/10/31 23:32:32  vsnyder
 ! Initial commit
 !
