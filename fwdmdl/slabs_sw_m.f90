@@ -808,7 +808,7 @@ contains
       c = c * OneOvSPi
       sb = c * y * d1
       sc = c * sigmaX1 * yi * d1
-      sd = c * a * yi * d2
+      sd = c * yi * d2
       beta = beta + sa + sb - sc + sd
 
       c = slabs%dSlabs1_dT(l) + dtanh_dT
@@ -819,7 +819,7 @@ contains
         &      + sa * ( c + du / u ) &
         &      + sb * ( c + dd1 + dy_dT ) &
         &      - sc * ( c + dd1 + dyi_dT + dx1_dT + dv0s_dT / sigma ) &
-        &      + sd * ( c + dd2 + dyi_dT + da / a )
+        &      + sd * ( a * (c + dd2 + dyi_dT) + da )
 
     end do
 
@@ -1383,6 +1383,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.37  2004/09/01 01:14:48  vsnyder
+! Correct 'not_used_here' routine
+!
 ! Revision 2.36  2004/08/05 20:59:32  vsnyder
 ! Don't do any calculations for gl_slabs with no lines
 !
