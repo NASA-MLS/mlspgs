@@ -39,6 +39,41 @@ UserPrompt()
     read user_response
 }
 
+#------------------------------- extant_files ------------
+#
+# Function to return only those files among the args
+# that actually exist
+# Useful when passed something like *.f which may 
+# (1) expand to list of files, returned as extant_files_result, or
+# (2) stay *.f, in which case a blank is returned as extant_files_result 
+#     (unless you have perversely named a file '*.f')
+# usage: extant_files arg1 [arg2] ..
+
+extant_files()
+{
+   extant_files_result=
+   # Trivial case ($# = 0)
+   if [ "$1" != "" ]
+   then
+      for file
+      do
+         if [ -f "$file" ]
+         then
+               extant_files_result="$extant_files_result $file"
+         fi
+      done
+   fi
+}
+
+#------------------------------- Main Program ------------
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#                                                               *
+#	The entry point where control is given to the script         *
+#****************************************************************
 #
 
 DEBUG=0
@@ -96,6 +131,7 @@ me="$0"
 my_name=ghostbuster.sh
 
 wrong_list=""
+rm_any_libs="no"
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
@@ -115,6 +151,10 @@ while [ "$more_opts" = "yes" ] ; do
        shift
 	    shift
        ;;
+    -lib )
+       rm_any_libs="yes"
+       shift
+	;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
@@ -194,6 +234,11 @@ done
 				echo "*** You have fixed f90GhostFiles.pl to look for $your_perl"
          fi
        fi
+	if [ "$DEBUG" = "1" ]
+	then
+      echo "About to call $the_GHOSTFINDER $@"
+      echo "from directory `pwd`"
+   fi
 	the_ghosts=`$the_GHOSTFINDER "$@"`
 
 	if [ "$DEBUG" = "1" ]
@@ -237,6 +282,9 @@ fi
 exit
 exit
 # $Log$
+# Revision 1.3  2001/11/13 23:21:44  pwagner
+# option -d bad_file_name added
+#
 # Revision 1.2  2001/05/31 20:16:26  pwagner
 # Added -lib option to rm any haunted libs
 #
