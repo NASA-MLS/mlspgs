@@ -75,8 +75,8 @@ contains
 
     ! Exectuable code
 
-    noMAFs = size ( ifm%z_path, 1)
-    no_tan_hts = size ( ifm%z_path, 2)
+    no_tan_hts = size ( ifm%z_path, 1)
+    noMAFs = size ( ifm%z_path, 2)
 
     deallocate (ifm%ndx_path, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
@@ -145,6 +145,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 1.3  2001/04/19 20:29:46  livesey
+! Added destroy routine
+!
 ! Revision 1.2  2001/04/10 23:16:14  livesey
 ! Working version.
 !
