@@ -1,11 +1,11 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module L2ParInfo
   ! This module provides definitions needed by L2Parallel and other modules to
   ! manage the parallel aspects of the L2 code.
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use dump_0, only: DUMP
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, &
     & MLSMSG_Deallocate, MLSMSG_INFO
@@ -16,6 +16,7 @@ module L2ParInfo
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
   use MLSStrings, only: LowerCase
+  use MLSStringLists, only: GetUniqueInts, GetUniqueStrings
   use Output_M, only: Output
   use Toggles, only: SWITCHES
 
@@ -133,6 +134,8 @@ module L2ParInfo
   ! This datatype describes the machines that will host parallel tasks
   type machine_T
     character(len=MACHINENAMELEN) :: name = ' '
+    character(len=MACHINENAMELEN) :: master_name = ' '
+    character(len=16            ) :: master_date = ' '
     integer                       :: master_tid = 0
     integer                       :: tid = 0
     integer                       :: chunk = 0
@@ -310,6 +313,8 @@ contains ! ==================================================================
     ! Internal variables
     integer :: i
     integer :: myDetails
+    integer, dimension(:), pointer :: master_tids
+    character(len=MACHINENAMELEN), dimension(:), pointer :: master_names
     ! Executable
     if ( .not. associated(machines) ) then
       call output('machine database not associated', advance='yes')
@@ -323,6 +328,21 @@ contains ! ==================================================================
     call output (count(machines%OK), advance='yes')
     call output ('Number of machines free: ', advance='no')
     call output (count(machines%free .and. machines%OK), advance='yes')
+    if ( size(machines) < 1 ) return
+    call Allocate_test ( master_tids, size(machines), 'machine_tids', moduleName )
+    call Allocate_test ( master_names, size(machines), 'machine_names', moduleName )
+    master_tids = 0
+    call GetUniqueInts(machines%master_tid, master_tids, i, minValue=1)
+    call output ('Number of unique master_ids: ', advance='no')
+    call output (i, advance='yes')
+    call GetUniqueStrings(machines%master_name, master_names, i, fillValue=' ')
+    call output ('Number of unique master_names: ', advance='no')
+    call output (i, advance='yes')
+    call GetUniqueStrings(machines%master_date, master_names, i, fillValue=' ')
+    call output ('Number of unique master_dates: ', advance='no')
+    call output (i, advance='yes')
+    call DeAllocate_test ( master_tids,  'machine_tids', moduleName )
+    call DeAllocate_test ( master_names, 'machine_names', moduleName )
     if ( myDetails < 1 ) return
     do i = 1, size(machines)
       call dump_machine(machines(i))
@@ -337,6 +357,10 @@ contains ! ==================================================================
     call output(trim(machine%name), advance = 'yes')
     call output('master tid: ', advance = 'no')
     call output(machine%master_tid, advance = 'yes')
+    call output('master name: ', advance = 'no')
+    call output(trim(machine%master_name), advance = 'yes')
+    call output('master date: ', advance = 'no')
+    call output(trim(machine%master_date), advance = 'yes')
     call output('tid: ', advance = 'no')
     call output(machine%tid, advance = 'yes')
     call output('chunk: ', advance = 'no')
@@ -741,6 +765,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.43  2005/02/03 19:07:35  pwagner
+! master_name and master_date fields added to machine type
+!
 ! Revision 2.42  2005/01/13 00:01:31  pwagner
 ! Dumping machineDB shows only free machines that are still alive
 !
