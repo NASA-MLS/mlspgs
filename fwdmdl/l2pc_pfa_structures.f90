@@ -127,22 +127,36 @@ module L2PC_PFA_STRUCTURES
     real(r8), dimension(:), pointer :: dx1_dv0 => NULL()
     real(r8), dimension(:), pointer :: dy_dv0 => NULL()
     real(r8), dimension(:), pointer :: dslabs1_dv0 => NULL()
+    ! For temperature derivatives.  Most are logarithmic derivatives,
+    ! so dz_dT really means 1/z dz_dT.
+    real(r8), dimension(:), pointer :: dv0s_dT => NULL()    ! not * 1 / v0s
+    real(r8), dimension(:), pointer :: dx1_dT => NULL()     ! / x1
+    real(r8), dimension(:), pointer :: dy_dT => NULL()      ! / y
+    real(r8), dimension(:), pointer :: dyi_dT => NULL()     ! / yi
+    real(r8), dimension(:), pointer :: dslabs1_dT => NULL() ! / slabs1
+
   end type SLABS_STRUCT
 
 contains
 
   ! -------------------------------------------- AllocateOneSlabs ---------
-  subroutine AllocateOneSlabs ( slabs, nl )
+  subroutine AllocateOneSlabs ( slabs, nl, TempDer )
     ! Allocates the items in a slabs structure
     use Allocate_Deallocate, only: ALLOCATE_TEST
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
-    integer, intent(in) :: nl         ! Number of lines
+    integer, intent(in) :: nl                   ! Number of lines
+    logical, intent(in), optional :: TempDer    ! "Allocate temperature
+                                                !  derivative fields"
 
     ! Local variables
     integer :: myl
+    logical :: MyDer
 
     ! Executable code
     myl = MAX(1,nl)
+    myDer = .false.
+    if ( present(tempDer) ) myDer = tempDer
+
     call Allocate_test ( slabs%v0s,         myl, 'v0s',         ModuleName )
     call Allocate_test ( slabs%x1,          myl, 'x1',          ModuleName )
     call Allocate_test ( slabs%y,           myl, 'y',           ModuleName )
@@ -151,6 +165,13 @@ contains
     call Allocate_test ( slabs%dx1_dv0,     myl, 'dx1_dv0',     ModuleName )
     call Allocate_test ( slabs%dy_dv0,      myl, 'dy_dv0',      ModuleName )
     call Allocate_test ( slabs%dslabs1_dv0, myl, 'dslabs1_dv0', ModuleName )
+    if ( myDer ) then
+      call Allocate_test ( slabs%dv0s_dT,    myl, 'dv0s_dT',    ModuleName )
+      call Allocate_test ( slabs%dx1_dT,     myl, 'dx1_dT',     ModuleName )
+      call Allocate_test ( slabs%dy_dT,      myl, 'dy_dT',      ModuleName )
+      call Allocate_test ( slabs%dyi_dT,     myl, 'dyi_dT',     ModuleName )
+      call Allocate_test ( slabs%dslabs1_dT, myl, 'dslabs1_dT', ModuleName )
+    end if
     slabs%no_lines = nl
     if ( nl == 0 ) then
       slabs%v0s = 0.0_r8
@@ -161,11 +182,18 @@ contains
       slabs%dx1_dv0 = 0.0_r8
       slabs%dy_dv0 = 0.0_r8
       slabs%dslabs1_dv0 = 0.0_r8
+      if ( myDer ) then
+        slabs%dv0s_dT = 0.0_r8
+        slabs%dx1_dT = 0.0_r8
+        slabs%dy_dT = 0.0_r8
+        slabs%dyi_dT = 0.0_r8
+        slabs%dslabs1_dT = 0.0_r8
+      end if
     end if
   end subroutine AllocateOneSlabs
 
   ! --------------------------------------------  AllocateSlabs  ----------
-  subroutine AllocateSlabs ( Slabs, No_Ele, Catalog, Caller )
+  subroutine AllocateSlabs ( Slabs, No_Ele, Catalog, Caller, TempDer )
   ! Allocate an array of slabs structures, and then the items in each one
 
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
@@ -175,6 +203,8 @@ contains
     integer, intent(in) :: No_Ele
     type (catalog_t), dimension(:), intent(in) :: Catalog
     character(len=*), intent(in) :: Caller
+    logical, intent(in), optional :: TempDer    ! "Allocate temperature
+                                                !  derivative fields"
 
     integer :: I, J
 
@@ -222,6 +252,11 @@ contains
     call Deallocate_test ( slabs%dx1_dv0,     'dx1_dv0',     inName )
     call Deallocate_test ( slabs%dy_dv0,      'dy_dv0',      inName )
     call Deallocate_test ( slabs%dslabs1_dv0, 'dslabs1_dv0', inName )
+    call Deallocate_test ( slabs%dv0s_dT,     'dv0s_dT',     inName )
+    call Deallocate_test ( slabs%dx1_dT,      'dx1_dT',      inName )
+    call Deallocate_test ( slabs%dy_dT,       'dy_dT',       inName )
+    call Deallocate_test ( slabs%dyi_dT,      'dyi_dT',      inName )
+    call Deallocate_test ( slabs%dslabs1_dT,  'dslabs1_dT',  inName )
   end subroutine DeallocateOneSlabs
 
   ! ------------------------------------------- DestroyCompleteSlabs -----
@@ -264,6 +299,13 @@ contains
       call dump ( the_slabs_struct%dx1_dv0(:nl), name='dx1_dv0' )
       call dump ( the_slabs_struct%dy_dv0(:nl), name='dy_dv0' )
       call dump ( the_slabs_struct%dslabs1_dv0(:nl), name='dslabs1_dv0' )
+      if ( associated (the_slabs_struct%dslabs1_dT) ) then
+        call dump ( the_slabs_struct%dv0s_dT(:nl), name='dv0s_dT' )
+        call dump ( the_slabs_struct%dx1_dT(:nl), name='dx1_dT' )
+        call dump ( the_slabs_struct%dy_dT(:nl), name='dy_dT' )
+        call dump ( the_slabs_struct%dyi_dT(:nl), name='dyi_dT' )
+        call dump ( the_slabs_struct%dslabs1_dT(:nl), name='dslabs1_dT' )
+      end if
     end if
 
   end subroutine Dump_Slabs_Struct
@@ -304,6 +346,9 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.9  2003/07/09 23:39:56  vsnyder
+! Add AllocateSlabs
+!
 ! Revision 2.8  2003/07/04 02:46:33  vsnyder
 ! Create DeallocateAllSlabs subroutine, futzing
 !

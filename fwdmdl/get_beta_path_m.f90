@@ -242,7 +242,7 @@ contains
       end do ! i
     end if
 
-    deallocate ( lineWidth )
+    deallocate ( lineCenter, lineWidth )
 
   end subroutine Get_Beta_Path_Scalar
 
@@ -930,6 +930,34 @@ contains
 
   end function Abs_CS_Cont
 
+  ! -------------------------------------------  Abs_CS_Cont_dT  -----
+
+  ! Compute the general continuum contribution and its temperature derivative
+  subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+    & Beta, dBeta_dT )
+    use MLSCommon, only: RP
+
+    real(rp), intent(in) :: CONT(:)     ! continuum parameters
+    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rp), intent(in) :: PRESSURE    ! in mbar
+    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp), intent(out) :: Beta, dBeta_dT
+
+    real(rp) :: Onedt ! 1/T
+
+!{ Let $\theta = \frac{300}T$.  Then the general continuum contribution is
+!  $\beta = c_1 p^2 \nu^2 \theta^{c_2}$.  Noticing that
+!  $\frac{\partial \theta}{\partial T} = -\frac{\theta}T$, we have
+!  $\frac{\partial \beta}{\partial T} = -\beta \frac{c_2}T$.
+
+    onedt = 1.0 / temperature
+    beta = cont(1) * pressure * pressure * frequency * frequency * &
+      & ( (300.0_rp * onedt)**cont(2) )
+
+    dBeta_dT = -beta * cont(2) * onedt
+
+  end subroutine Abs_CS_Cont_dT
+
   ! -------------------------------------------  Abs_CS_N2_Cont  -----
 
   ! Compute the N2 continuum contribution
@@ -956,6 +984,45 @@ contains
 
   end function Abs_CS_N2_Cont
 
+  ! ----------------------------------------  Abs_CS_N2_Cont_dT  -----
+
+  ! Compute the N2 continuum contribution and its temperature derivative
+  subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+    & Beta, dBeta_dT )
+
+    use MLSCommon, only: RP
+
+    real(rp), intent(in) :: CONT(:)     ! continuum parameters
+    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rp), intent(in) :: PRESSURE    ! in mbar
+    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp), intent(out) :: Beta, dBeta_dT
+
+    real(rp) :: E1, E2, F, FSQR, FSXT, OneDT, THETA
+
+!{ Let $\theta = \frac{300}T$ and $f = p^2 \nu^2 \theta^{c_2}$. Then the N2
+!  continuum contribution to $\beta$ is\\
+!  $\beta = f ( c_1 e^{-c_3 \nu^2 \theta} +
+!   c_4 e^{-c_5  \nu^2 \theta} (c_6^2 + \nu^2) )$.  Noticing that
+!  $\frac{\partial \theta}{\partial T} = -\frac{\theta}T$, we have\\
+!  $\frac{\partial \beta}{\partial T} = \frac1T \left ( -\beta c_2 +
+!   f \nu^2 \theta \left( c_3 c_1 e^{-c_3 \nu^2 \theta} +
+!    c_5 c_4 (c_6^2 + \nu^2) e^{-c_5  \nu^2 \theta} \right) \right)$.
+
+    onedt = 1.0 / temperature
+    theta = 300.0_rp * onedt
+    fsqr = frequency * frequency
+    fsxt = fsqr * theta
+    f = pressure * pressure * fsqr * (theta**cont(2))
+    e1 = cont(1) * exp(-cont(3) * fsxt)
+    e2 = cont(4) * exp(-cont(5) * fsxt) * (cont(6)**2 + fsqr)
+    beta = f * ( e1 + e2 )
+
+    dBeta_dT = onedt * ( f * fsxt * ( cont(3) * e1 + cont(5) * e2 ) &
+      &                  - beta * cont(2) )
+
+  end subroutine Abs_CS_N2_Cont_dT
+
   ! -------------------------------------------  Abs_CS_O2_Cont  -----
 
   ! Compute the O2 continuum contribution
@@ -979,6 +1046,41 @@ contains
 
   end function Abs_CS_O2_Cont
 
+  ! ----------------------------------------  Abs_CS_O2_Cont_dT  -----
+
+  ! Compute the O2 continuum contribution
+  subroutine Abs_CS_O2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+      & Beta, dBeta_dT )
+
+    use MLSCommon, only: RP
+
+    real(rp), intent(in) :: CONT(:)     ! continuum parameters
+    real(rp), intent(in) :: TEMPERATURE ! in Kelvin
+    real(rp), intent(in) :: PRESSURE    ! in mbar
+    real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
+    real(rp), intent(out) :: Beta, dBeta_dT
+
+    real(rp) :: D, F, FSQR, Onedt, THETA
+
+!{ Let $\theta = \frac{300}T$, $f = (c_3 p \theta^{c_4})^2$ and
+!  $D = \frac1{\nu^2 + f}$.
+!  Then the O2 continuum contribution to beta
+!  is $\beta = c_1 p^2 \nu^2 \theta^{c_2} D$. Noticing that
+!  $\frac{\partial \theta}{\partial T} = -\frac{\theta}T$, we have
+!  $\frac{\partial \beta}{\partial T} = \frac{\beta}T
+!   ( 2 c_4 f D - c_2)$.
+
+    onedt = 1.0 / temperature
+    theta = log( 300.0_rp * onedt )
+    fsqr = frequency * frequency
+    f = ( cont(3) * pressure * exp(cont(4)*theta) )**2
+    d = 1.0 / (fsqr + f)
+    beta = cont(1) * pressure * pressure * fsqr * exp(cont(2)*theta) * d
+
+    dBeta_dT = beta * onedt * ( 2.0 * cont(4) * f * d - cont(2) )
+
+  end subroutine Abs_CS_O2_Cont_dT
+
 !-----------------------------------------------------------------------
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -987,6 +1089,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.53  2004/03/20 01:15:23  jonathan
+!  minor changes
+!
 ! Revision 2.52  2004/03/19 04:07:31  vsnyder
 ! Fix some blunders re dNu for spectral derivatives
 !
