@@ -41,6 +41,9 @@ contains ! ============= Public Procedures ==========================
     use SwitchingMirrorModel_m, only: SWITCHINGMIRRORMODEL
     use VectorsModule, only: VECTOR_T
     use Time_M, only: Time_Now
+    use String_table, only: GET_STRING
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Toggles, only: Emit, Toggle
 
     ! Dummy arguments
     type(ForwardModelConfig_T), intent(inout) :: TheForwardModelConfig
@@ -50,22 +53,29 @@ contains ! ============= Public Procedures ==========================
     type(forwardModelStatus_t), intent(inout) :: FMSTAT ! Reverse comm. stuff
     type(matrix_T), intent(inout), optional :: JACOBIAN
     
+    ! Local variables
     real :: time_start, time_end, deltaTime  
+    character(len=132) :: THISNAME
 
     ! Executable code
+    ! Report we're starting
+    if ( toggle(emit) ) then
+      if ( theForwardModelConfig%name /= 0 ) then
+        call get_string ( theForwardModelConfig%name, thisName )
+      else
+        thisName = '[unnamed]'
+      end if
+      call trace_begin ( 'Forward model config: ' // trim(thisName) )
+    end if
+
+    ! Setup the timing
+    call time_now (time_start)
+
+    ! Do the actual forward models
     select case (TheForwardModelConfig%fwmType)
     case ( l_full )
-      call time_now (time_start)
       call FullForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
-      call time_now (time_end)
-      deltaTime = time_end - time_start
-      TheForwardModelConfig%Ntimes = TheForwardModelConfig%Ntimes + 1
-      TheForwardModelConfig%sum_DeltaTime = &
-	& TheForwardModelConfig%sum_DeltaTime + deltaTime
-      TheForwardModelConfig%sum_squareDeltaTime = &
-	& TheForwardModelConfig%sum_squareDeltaTime + (deltaTime * deltaTime)
-
       call BaselineForwardModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call SwitchingMirrorModel ( TheForwardModelConfig, FwdModelIn, FwdModelExtra, &
@@ -100,6 +110,21 @@ contains ! ============= Public Procedures ==========================
         FwdModelOut, Ifm, fmStat, Jacobian )
     case default ! Shouldn't get here if parser etc. worked
     end select
+
+    ! Report we're finished
+    if ( toggle(emit) ) then
+      call trace_end ( 'Forward model config: ' // trim(thisName) )
+    end if
+
+    ! Do the timing stuff
+    call time_now (time_end)
+    deltaTime = time_end - time_start
+    TheForwardModelConfig%Ntimes = TheForwardModelConfig%Ntimes + 1
+    TheForwardModelConfig%sum_DeltaTime = &
+      & TheForwardModelConfig%sum_DeltaTime + deltaTime
+    TheForwardModelConfig%sum_squareDeltaTime = &
+      & TheForwardModelConfig%sum_squareDeltaTime + (deltaTime * deltaTime)
+    
   end subroutine ForwardModel
 
   logical function not_used_here()
@@ -109,6 +134,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.19  2003/07/15 18:18:39  livesey
+! Made timing apply to all configs.
+!
 ! Revision 2.18  2003/06/30 22:55:01  cvuu
 ! Find mean, std dev timing of fullForwardModel calls
 !
