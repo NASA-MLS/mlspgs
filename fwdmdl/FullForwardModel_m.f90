@@ -292,7 +292,7 @@ CONTAINS
     INTEGER(ip) :: beg_ind, end_ind, beg_ind_z, end_ind_z
     INTEGER(ip) :: beg_ind_p, end_ind_p
 
-    REAL(rp) :: cp2, sp2, surf_angle(1), one_dhdz(1), one_dxdh(1)
+    REAL(rp) :: surf_angle(1), one_dhdz(1), one_dxdh(1)
     REAL(rp) :: earthradc ! minor axis of orbit plane projected Earth ellipse
 
     INTEGER(ip), DIMENSION(:), pointer :: rec_tan_inds ! recommended tangent
@@ -307,6 +307,7 @@ CONTAINS
     REAL(rp), DIMENSION(:), POINTER :: tan_chi_out
     REAL(rp), DIMENSION(:), POINTER :: dx_dh_out
     REAL(rp), DIMENSION(:), POINTER :: dhdz_out
+    REAL(rp), DIMENSION(:), POINTER :: req_out
     REAL(rp), DIMENSION(:), POINTER :: tan_press
     REAL(rp), DIMENSION(:), POINTER :: tan_phi
     REAL(rp), DIMENSION(:), POINTER :: est_scgeocalt
@@ -394,7 +395,7 @@ CONTAINS
     ! Nullify all our pointers!
 
     nullify ( grids, usedchannels, channelOrigins, usedsignals, superset, &
-           &  indices_c, tan_inds, tan_press )
+           &  indices_c, tan_inds, tan_press)
     nullify ( gl_ndx, gl_indgen )
     nullify ( do_gl)
     nullify ( do_calc_zp, do_calc_dn, do_calc_dv, do_calc_dw, &
@@ -419,7 +420,7 @@ CONTAINS
       & t_glgrid, dh_dt_glgrid)
     NULLIFY(tan_phi, est_scgeocalt, tan_chi_out, dx_dh_out, dxdt_tan, &
       &     d2xdxdt_tan,ddhidhidtl0,tan_d2h_dhdt,dhdz_out,dxdt_surface,&
-      &     d2xdxdt_surface)
+      &     d2xdxdt_surface, req_out)
     nullify ( lineFlag )
 
     ! Work out what we've been asked to do -----------------------------------
@@ -801,13 +802,15 @@ CONTAINS
 !
 ! compute equivalent earth radius at phi_t(1), nearest surface
 !
+    Call ALLOCATE_TEST(req_out,ptan%template%nosurfs,'req_out', &
+                     & ModuleName )
     earthradc = earthrada*earthradb / &
           & SQRT(earthrada**2*SIN(Deg2Rad*orbIncline%values(1,maf))**2 + &
           & earthradb**2*COS(Deg2Rad*orbIncline%values(1,maf))**2)
-    cp2 = COS(Deg2Rad*SUM(phitan%values(:,maf))/phitan%template%nosurfs)**2
-    sp2 = 1.0_rp - cp2
-    req = 0.001_rp*sqrt((earthrada**4*sp2 + earthradc**4*cp2) / &
-        & (earthrada**2*cp2 + earthradc**2*sp2))
+    req_out = COS(Deg2Rad*phitan%values(:,maf))**2
+    req_out = 0.001_rp*SQRT((earthrada**4*(1.0_rp-req_out) &
+    & + earthradc**4*req_out) / (earthrada**2*req_out &
+    & + earthradc**2*(1.0-req_out)))
     Call ALLOCATE_TEST(tan_chi_out,ptan%template%nosurfs,'tan_chi_out', &
                      & ModuleName )
     Call ALLOCATE_TEST(dx_dh_out,ptan%template%nosurfs,'dx_dh_out', &
@@ -828,7 +831,7 @@ CONTAINS
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
-         & req,tan_chi_out,dhdz_out,dx_dh_out,&
+         & req_out,tan_chi_out,dhdz_out,dx_dh_out,&
          & h2o_zeta_basis=grids_f%zet_basis(beg_ind_z:end_ind_z), &
          & h2o_phi_basis=grids_f%phi_basis(beg_ind_p:end_ind_p), &
          & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
@@ -839,7 +842,7 @@ CONTAINS
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
-         & req,tan_chi_out,dhdz_out,dx_dh_out)
+         & req_out,tan_chi_out,dhdz_out,dx_dh_out)
     ELSE IF (h2o_ind > 0 .and.  temp_der) THEN
       Call ALLOCATE_TEST(dxdt_tan,ptan%template%nosurfs,sv_t_len, &
                       & 'dxdt_tan',ModuleName )
@@ -858,7 +861,7 @@ CONTAINS
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
-         & req,tan_chi_out,dhdz_out,dx_dh_out, &
+         & req_out,tan_chi_out,dhdz_out,dx_dh_out, &
          & h2o_zeta_basis=grids_f%zet_basis(beg_ind_z:end_ind_z), &
          & h2o_phi_basis=grids_f%phi_basis(beg_ind_p:end_ind_p), &
          & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
@@ -874,7 +877,7 @@ CONTAINS
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
-         & req,tan_chi_out,dhdz_out,dx_dh_out, &
+         & req_out,tan_chi_out,dhdz_out,dx_dh_out, &
          & dxdt_tan=dxdt_tan, d2xdxdt_tan=d2xdxdt_tan)
     ENDIF
 !
@@ -1080,7 +1083,7 @@ CONTAINS
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
            & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
-           & req,surf_angle,one_dhdz,one_dxdh, &
+           & (/req_out(1)/),surf_angle,one_dhdz,one_dxdh, &
            & h2o_zeta_basis=grids_f%zet_basis(beg_ind_z:end_ind_z), &
            & h2o_phi_basis=grids_f%phi_basis(beg_ind_p:end_ind_p), &
            & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
@@ -1092,11 +1095,12 @@ CONTAINS
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
            & orbIncline%values(1,maf)*Deg2Rad,elevoffset%values(1,1)*Deg2Rad,&
-           & req,surf_angle,one_dhdz,one_dxdh,  &
+           & (/req_out(1)/),surf_angle,one_dhdz,one_dxdh,  &
            & dxdt_tan=dxdt_surface,d2xdxdt_tan=d2xdxdt_surface)
       ENDIF
       Call deallocate_test(d2xdxdt_surface,'d2xdxdt_surface',modulename)
     ENDIF
+    Call deallocate_test(req_out,'req_out',modulename)
 
  ! Now, allocate other variables we're going to need later ----------------
 
@@ -1453,7 +1457,6 @@ CONTAINS
               &  TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp)
           endif
         endif
-
         !  ** Determine the eta_zxp_dw, eta_zxp_dn, eta_zxp_dv
         if(spect_der) then
           Call eval_spect_path(Grids_dw,z_path(1:no_ele),phi_path(1:no_ele), &
@@ -2458,6 +2461,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.71  2002/07/09 17:37:10  livesey
+! Fixed more DACs problems
+!
 ! Revision 2.70  2002/07/08 17:45:37  zvi
 ! Make sure spect_der is turned off for now
 !
