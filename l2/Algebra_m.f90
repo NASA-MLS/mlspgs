@@ -286,7 +286,6 @@ contains
 
       type(decls) :: DECL          ! Declaration of a name
       real(r8) :: DValue2          ! Value of RH operand if Value2 == 0
-      integer :: I                 ! Index for sons of function operator
       integer :: ME                ! Node ID for root
       integer :: Son1, Son2        ! Sons of Root
       integer :: String            ! String table index
@@ -347,7 +346,7 @@ contains
               call copyMatrix ( matrix_K%m, matrix_KP%m )
             case ( w_matrix_s )
               call getFromMatrixDatabase ( matrixDatabase(value), matrix_SP )
-              call copyMatrix ( matrix_C%m, matrix_SP%m )
+              call copyMatrix ( matrix_S%m, matrix_SP%m )
             end select
           end select
         end if
@@ -721,6 +720,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.3  2004/01/20 19:33:35  vsnyder
+! Correct bug in identifier handling; delete unused variable declaration
+!
 ! Revision 2.2  2004/01/17 03:04:15  vsnyder
 ! Provide for functions in expressions
 !
