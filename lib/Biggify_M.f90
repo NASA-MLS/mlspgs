@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module Biggify_M
@@ -6,7 +6,7 @@ module Biggify_M
   use Allocate_Deallocate, only: Allocate_Test
   use MatrixModule_0, only: Densify, M_Absent
   use MatrixModule_1, only: Matrix_T, RC_Info
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, RM, RV
   use VectorsModule, only: Vector_T
 
   interface Biggify
@@ -34,7 +34,7 @@ contains
   ! it's being constructed little by little.
 
     type(matrix_T), intent(in) :: Matrix
-    real(r8), dimension(:,:), pointer :: Array
+    real(rm), dimension(:,:), pointer :: Array
     logical, intent(in), optional :: Update
 
     integer :: I, J           ! Subscripts, loop inductors
@@ -74,7 +74,7 @@ contains
 
     type(rc_Info), intent(in) :: RC
     type(vector_T), intent(in) :: Vector
-    real(r8), dimension(:), pointer :: Array
+    real(rv), dimension(:), pointer :: Array
 
     integer :: I              ! Subscript in RC%inst, RC%quant
     integer :: M              ! Subscript in Array of beginning of quantity
@@ -95,6 +95,9 @@ contains
 end module Biggify_M
 
 ! $Log$
+! Revision 2.4  2002/09/11 17:47:21  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 2.3  2002/02/02 00:10:16  vsnyder
 ! Get rid of 'Extra' component
 !
