@@ -1467,11 +1467,14 @@ contains ! =====     Public Procedures     =============================
     call gemm ( 'N', 'N', xb%nRows, yb%nCols, xb%nCols, alpha, &
       & x, xb%nRows, y, yb%nRows, beta, z, xb%nRows )
 
-    call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_0', moduleName ) ! Zb := Z
-
+    if ( myX .and. myY ) then
+      call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_0', moduleName ) ! Zb := Z
+    else
+      call createBlock ( zb, xb%nRows, yb%nCols, m_full, noValues=.true. )
+      zb%values => z
+    end if
     if ( myX ) call deallocate_test ( x, 'X in MultiplyMatrix_XY_0', moduleName )
     if ( myY ) call deallocate_test ( y, 'Y in MultiplyMatrix_XY_0', moduleName )
-    call deallocate_test ( z, 'Z in MultiplyMatrix_XY_0', moduleName )
 
   end subroutine MultiplyMatrix_XY_0
 
@@ -1543,11 +1546,14 @@ contains ! =====     Public Procedures     =============================
     call gemm ( 'N', 'T', xb%nRows, yb%nRows, xb%nCols, alpha, &
       & x, xb%nRows, y, yb%nRows, beta, z, xb%nRows )
 
-    call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_T_0', moduleName ) ! Zb := Z
-
+    if ( myX .and. myY ) then
+      call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_T_0', moduleName ) ! Zb := Z
+    else
+      call createBlock ( zb, xb%nRows, yb%nRows, M_Full, noValues=.true. )
+      zb%values => z
+    endif
     if ( myX ) call deallocate_test ( x, 'X in MultiplyMatrix_XY_T_0', moduleName )
     if ( myY ) call deallocate_test ( y, 'Y in MultiplyMatrix_XY_T_0', moduleName )
-    call deallocate_test ( z, 'Z in MultiplyMatrix_XY_T_0', moduleName )
 
   end subroutine MultiplyMatrix_XY_T_0
 
@@ -3117,6 +3123,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.78  2002/08/29 04:44:53  livesey
+! Made the MultiplyMatrix_XY and XT_T slightly more efficient.
+!
 ! Revision 2.77  2002/08/19 20:50:56  vsnyder
 ! Add Add_Matrix_Blocks_Unscaled, clean up x(i) == 0.0_r8
 !
