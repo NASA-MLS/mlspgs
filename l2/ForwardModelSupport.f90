@@ -233,6 +233,7 @@ contains ! =====     Public Procedures     =============================
     integer :: THISSIGNALCOUNT          ! Number of signals for one signal string
 
     ! Exeuctable code
+    nullify ( binSelector%signals, binSelector%sidebands ) ! for Sun's rubbish compiler
     do i = 2, nsons(root)               ! Skip binSelector command
       son = subtree ( i, root )
       field = get_field_id ( son )
@@ -337,6 +338,7 @@ contains ! =====     Public Procedures     =============================
     ! Don't initialize them with =>NULL() because that makes them SAVEd.
 
     nullify ( channels, signalInds )
+    nullify ( info%molecules, info%moleculeDerivatives, info%signals ) ! for Sun's rubbish compiler
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "ConstructForwardModelConfig", root )
@@ -648,6 +650,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.34  2002/08/04 16:02:23  mjf
+! Added some nullify statements for Sun's rubbish compiler.
+!
 ! Revision 2.33  2002/07/17 06:02:36  livesey
 ! New HDF5 l2pc stuff
 !
