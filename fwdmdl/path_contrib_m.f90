@@ -88,7 +88,7 @@ contains
 ! where to do Gauss-Legendre quadrature.  Then allocate and fill
 ! arrays that control the Gauss-Legendre quadratures.
 
-  subroutine Path_Contrib_Polarized ( incoptdepth, e_rflty, tol, do_gl )
+  subroutine Path_Contrib_Polarized ( deltau, e_rflty, tol, do_gl )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use CS_Expmat_M, only: CS_Expmat
@@ -96,7 +96,8 @@ contains
 
   ! inputs
 
-    complex(rk), intent(in) :: incoptdepth(:,:,:) ! layer optical depth
+!    complex(rk), intent(in) :: incoptdepth(:,:,:) ! layer optical depth
+    complex(rk), intent(in) :: deltau(:,:,:)    ! exp(incoptdepth)
                                            ! (2,2,:)
     real(rk), intent(in) :: e_rflty        ! earth reflectivity
     real(rk), intent(in) :: tol            ! accuracy target in K
@@ -108,13 +109,12 @@ contains
 
   ! Internal stuff
 
-    complex(rk) :: deltau(2,2,size(incoptdepth,3))    ! exp(incoptdepth)
-    complex(rk) :: dtaudn(2,2,size(incoptdepth,3))    ! path derivative of the
+    complex(rk) :: dtaudn(2,2,size(deltau,3))    ! path derivative of the
                                            ! transmission function
     complex(rk), parameter :: Ident(2,2) = reshape( (/ 1.0, 0.0, &
       &                                                0.0, 1.0 /), (/ 2,2 /) )
 
-    complex(rk) :: tmp(2,2,size(incoptdepth,3)), tmp1(2,2,size(incoptdepth,3))
+    complex(rk) :: tmp(2,2,size(deltau,3)), tmp1(2,2,size(deltau,3))
 
     integer(ip) :: i, i_tan, n_path
 
@@ -124,14 +124,15 @@ contains
 
   ! start code
 
-    n_path = size(incoptdepth,3)
+    n_path = size(deltau,3)
     i_tan = n_path / 2
 
-  ! Compute exp(incoptdepth) for all but the first and last levels
+  ! Compute exp(incoptdepth) for all but the last level
+  !(now done ouside)
 
-    do i = 1, n_path - 1
-      call cs_expmat ( incoptdepth(:,:,i), deltau(:,:,i) )
-    end do
+  !  do i = 1, n_path - 1
+  !    call cs_expmat ( incoptdepth(:,:,i), deltau(:,:,i) )
+  !  end do
 
     tmp(:,:,1) = ident
     tmp1(:,:,1) = ident
@@ -210,6 +211,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.7  2003/02/06 21:36:18  vsnyder
+! Cosmic -- errr -- cosmetic changes
+!
 ! Revision 2.6  2003/02/03 22:56:20  vsnyder
 ! Get rid of an array temp
 !
