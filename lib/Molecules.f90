@@ -50,7 +50,8 @@ module Molecules
   integer, parameter :: L_H2O_V2 =       l_h2o_18 + 1
   integer, parameter :: L_HC_13_N =      l_h2o_v2 + 1
   integer, parameter :: L_HCL =          l_hc_13_n + 1
-  integer, parameter :: L_HCL_37 =       l_hcl + 1
+  integer, parameter :: L_HCL_35 =       l_hcl + 1
+  integer, parameter :: L_HCL_37 =       l_hcl_35 + 1
   integer, parameter :: L_HCN =          l_hcl_37 + 1
   integer, parameter :: L_HCN_15 =       l_hcn + 1
   integer, parameter :: L_HDO =          l_hcn_15 + 1
@@ -110,6 +111,7 @@ module Molecules
   data spec_tags(l_h2o_v2)       / 00018005 /
   data spec_tags(l_hc_13_n)      / 00028002 /
   data spec_tags(l_hcl)          / 00036001 /
+  data spec_tags(l_hcl_35)       / 00036001 /
   data spec_tags(l_hcl_37)       / 00038001 /
   data spec_tags(l_hcn)          / 00027001 /
   data spec_tags(l_hcn_15)       / 00028003 /
@@ -197,6 +199,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_h2o_v2) =       add_ident ( 'h2o_v2' )
     lit_indices(l_hc_13_n) =      add_ident ( 'hc_13_n' )
     lit_indices(l_hcl) =          add_ident ( 'hcl' )
+    lit_indices(l_hcl_35) =       add_ident ( 'hcl_35' )
     lit_indices(l_hcl_37) =       add_ident ( 'hcl_37' )
     lit_indices(l_hcn) =          add_ident ( 'hcn' )
     lit_indices(l_hcn_15) =       add_ident ( 'hcn_15' )
@@ -246,6 +249,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.7  2001/04/05 01:27:26  vsnyder
+! Add hcl_35
+!
 ! Revision 2.6  2001/04/04 17:56:42  vsnyder
 ! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
 ! (because of the "include").
