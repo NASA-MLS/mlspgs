@@ -58,8 +58,9 @@
          DQ=(XQ(I+1)+XQ(I))*0.5
 
          DO J=1,NS
-            VMR1(J)=(LOG10(VMR(J,I+1))+LOG10(VMR(J,I)))*0.5
-            VMR1(J)=10**VMR1(J)
+!            VMR1(J)=(LOG10(VMR(J,I+1))+LOG10(VMR(J,I)))*0.5   !vmr may be zero
+!            VMR1(J)=10**VMR1(J)
+           VMR1(J)=(VMR(J,I+1)+VMR(J,I))*0.5
          ENDDO
 
          CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
