@@ -142,10 +142,10 @@ MODULE QuantityTemplates         ! Quantities within vectors
      REAL(r8), DIMENSION(:,:), POINTER :: geodLat,lon,time, &
           & solarTime,solarZenith,losAngle
 
-     ! This integer array can be used to tie subVectors to say l2gp profile
-     ! numbers or to MAF indices
+     ! These integer arrays are used for minor frame quantities to index the
+     ! major frames.
 
-     INTEGER, DIMENSION(:), POINTER :: subVectorIndex
+     INTEGER, DIMENSION(:), POINTER :: mafIndex,mafCounter
 
      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      ! For quantities containing `channels' the following information may or
@@ -325,9 +325,13 @@ MODULE QuantityTemplates         ! Quantities within vectors
          & MLSMSG_Allocate//"losAngle")
 
     ! Now some other stuff to allocate
-    ALLOCATE (qty%subVectorIndex(qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"subVectorIndex")
+    IF (qty%minorFrame) THEN
+       ALLOCATE (qty%MAFIndex(qty%noSubVectors), &
+            & qty%MAFCounter(qty%noSubVectors), &
+            & STAT=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"MAFIndex/MAFCounter")
+    END IF
 
     IF (.NOT. qty%regular) THEN
        ALLOCATE (qty%surfIndex(qty%subVectorLen,qty%noSubVectors),STAT=status)
@@ -363,7 +367,8 @@ MODULE QuantityTemplates         ! Quantities within vectors
     DEALLOCATE (qty%solarTime)
     DEALLOCATE (qty%solarZenith)
     DEALLOCATE (qty%losAngle)
-    DEALLOCATE (qty%subVectorIndex)
+
+    IF (qty%minorFrame) DEALLOCATE (qty%MAFIndex,qty%MAFCounter)
     
     IF (.NOT. qty%regular) THEN
        DEALLOCATE (qty%surfIndex)
@@ -435,6 +440,10 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.8  2000/01/20 01:28:21  livesey
+! Removed the horizontal coordinate information, and beefed up the
+! frequency coordinate information.
+!
 ! Revision 1.7  2000/01/18 21:27:00  livesey
 ! Added noSubVectors(Lower/Upper)Overlap, copied from HGrid or similar.
 !
