@@ -67,7 +67,7 @@ contains
 
     ! Put field names into the symbol table
     field_indices(f_delta)    = add_ident ( 'delta' )
-    field_indices(f_el)       = add_ident ( 'el)' )
+    field_indices(f_el)       = add_ident ( 'el' )
     field_indices(f_gamma)    = add_ident ( 'gamma' )
     field_indices(f_lines)    = add_ident ( 'lines' )
     field_indices(f_molecule) = add_ident ( 'molecule' )
@@ -147,3 +147,6 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 1.1  2001/04/03 19:41:40  vsnyder
+! Initial commit
+!
