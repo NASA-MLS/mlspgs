@@ -386,9 +386,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       instance = closestInstances(maf)
 
       call InterpolateValues ( &
-        & vmr%template%surfs(:,instance), &    ! Old X
+        & vmr%template%surfs(:,1), &    ! Old X
         & vmr%values(:,instance), &            ! Old Y
-        & temp%template%surfs(:,instance), &   ! New X
+        & temp%template%surfs(:,1), &   ! New X
         & vmrArray(i,:), &                     ! New Y
         & 'Linear', extrapolate='Clamp' )
       Got(ivmr)=.true.
@@ -977,6 +977,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.44  2001/10/08 19:25:48  jonathan
+! delet vmrINS
+!
 ! Revision 1.43  2001/10/07 23:42:17  jonathan
 ! add CloudProfile module
 !
