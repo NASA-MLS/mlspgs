@@ -1162,8 +1162,9 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  MultiplyMatrix_XY_0  -----
   subroutine MultiplyMatrix_XY_0 ( XB, YB, ZB, Update, Subtract )
-  ! If Update is absent or false, ZB = +/- XB YB.  Otherwise, ZB = ZB +/- XB YB
-  ! The +/- is + unless subtract is present and true
+  ! If Update is absent or false, ZB = +/- XB YB.
+  ! Otherwise, ZB = ZB +/- XB YB
+  ! The +/- is + unless subtract is present and true.
   !??? Someday, do sparse multiplies in the non-M_Full cases.
     type(MatrixElement_T), intent(in) :: XB, YB
     type(MatrixElement_T), intent(inout) :: ZB
@@ -1236,8 +1237,9 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------  MultiplyMatrix_XY_T_0  -----
   subroutine MultiplyMatrix_XY_T_0 ( XB, YB, ZB, Update, Subtract )
-  ! If Update is absent or false, ZB = +/- XB YB^T.  Otherwise, ZB = ZB +/ XB YB^T.
-  ! The +/- is + unless subtract is present and true
+  ! If Update is absent or false, ZB = +/- XB YB^T.
+  ! Otherwise, ZB = ZB +/- XB YB^T.
+  ! The +/- is + unless subtract is present and true.
   !??? Someday, do sparse multiplies in the non-M_Full cases.
     type(MatrixElement_T), intent(in) :: XB, YB
     type(MatrixElement_T), intent(inout) :: ZB
@@ -2772,6 +2774,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.69  2002/03/12 01:38:33  vsnyder
+! Fix typo in a comment
+!
 ! Revision 2.68  2002/03/05 23:16:35  livesey
 ! Fixed various bugs in MultiplyMatrix_XY_0 and MultiplyMatrix_XY_T_0
 !
