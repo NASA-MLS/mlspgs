@@ -303,18 +303,27 @@ contains ! ==================================================================
   end subroutine CompactDirectWriteRequestDB
 
   ! --------------------------------------- dump_machine_database ---------
-  subroutine dump_machine_database(machines)
+  subroutine dump_machine_database(machines, Details)
     ! dump data type
     type(Machine_T), dimension(:), pointer :: machines
+    integer, intent(in), optional :: DETAILS  ! 1: dump each machine, too
     ! Internal variables
     integer :: i
+    integer :: myDetails
     ! Executable
     if ( .not. associated(machines) ) then
       call output('machine database not associated', advance='yes')
       return
     endif
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     call output ('Size of machine database: ', advance='no')
     call output (size(machines), advance='yes')
+    call output ('Number of machines alive: ', advance='no')
+    call output (count(machines%OK), advance='yes')
+    call output ('Number of machines free: ', advance='no')
+    call output (count(machines%free), advance='yes')
+    if ( myDetails < 1 ) return
     do i = 1, size(machines)
       call dump_machine(machines(i))
     enddo
@@ -732,6 +741,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.41  2005/01/07 17:27:21  pwagner
+! Details an optional arg to dump_machine_database to bypass dumping each machine
+!
 ! Revision 2.40  2004/12/14 21:53:30  pwagner
 ! Added machine_T, tags and signals related to l2q
 !
