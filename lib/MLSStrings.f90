@@ -36,6 +36,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
 ! readIntsFromChars  Converts an array of strings to ints using Fortran read
+! ReformatDate       Turns 'yyyymmdd' -> 'yyyy-mm-dd'
+! ReformatTime       Turns 'hhmmss.sss' -> 'hh:mm:ss'
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! strings2Ints       Converts an array of strings to ints using "ichar" ftn
@@ -54,6 +56,8 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
+! char* ReformatDate (char* date, [char* form])
+! char* ReformatTime (char* time, [char* form])
 ! char* Reverse (char* str)
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
@@ -77,13 +81,26 @@ MODULE MLSStrings               ! Some low level string handling stuff
    & ints2Strings, LinearSearchStringArray, &
    & LowerCase, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
-   & Reverse, &
+   & reformatDate, reformatTime, Reverse, &
    & SplitWords, strings2Ints, &
    & writeIntsToChars
 
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
   
+  integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
+  ! The following arrays contains the maximum permissible day for each month
+  ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
+  integer, dimension(-1:12), parameter :: DAYMAXLY = (/ &
+    & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+    & /)
+  integer, dimension(-1:12), parameter :: DAYMAXNY = (/ &
+    & 365, 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+    & /)
+  character(len=*), dimension(12), parameter :: MONTHNAME = (/ &
+    & 'January  ', 'February ', 'March    ', 'April    ', 'May      ', &
+    & 'June     ', 'July     ', 'August   ', 'September', 'October  ', &
+    & 'November ', 'December '/)
 contains
 
   ! -------------------------------------------------  CAPITALIZE  -----
@@ -497,7 +514,113 @@ contains
 
   END SUBROUTINE readIntsFromChars
 
-  ! --------------------------------------------------  Reverse  -----
+
+  function reFormatDate(date, form) result(reFormat)
+    ! Reformat yyyymmdd as yyyy-mm-dd
+    ! Wouldn't it be clever to allow an optional string arg defining
+    ! the output format; E.g. 'dd M yyyy' for '03 September 2005'
+    ! or 'yyyy-doy' for '2005-d245'
+    ! Args
+    character(len=*), intent(in)            :: date
+    character(len=len(date)+24)             :: reFormat
+    character(len=*), optional, intent(in)  :: form
+    ! Internal variables
+    character(len=1), parameter             :: ymSpacer = '-'
+    character(len=1), parameter             :: mdSpacer = '-'
+    integer                                 :: i
+    integer                                 :: doy
+    character(len=4)                        :: doyString
+    integer                                 :: month
+    ! Executable
+    reFormat = date(1:4) // ymSpacer // date(5:6) // mdSpacer // date(7:8)
+    if ( .not. present(form) ) return
+    if ( len_trim(form) < 1 ) return
+    reFormat = ' '
+    i = 0
+    do
+      if ( i >= len_trim(form) ) exit
+      i = i + 1
+      select case (form(i:i))
+      case ('y')
+        reFormat = trim(reFormat) // date(1:4)
+        i = i + 3
+      case ('m')
+        reFormat = trim(reFormat) // date(5:6)
+        i = i + 1
+      case ('M')
+        read(date(5:6), *) month
+        reFormat = trim(reFormat) // trim(MONTHNAME(month))
+      case ('d')
+        if ( form(i:i+1) == 'dd' ) then
+          reFormat = trim(reFormat) // date(7:8)
+          i = i + 1
+        else
+          call yyyymmdd_to_doy_str(date, doy)
+          write(doyString, '(a1, i3.3)') 'd', doy
+          reFormat = trim(reFormat) // doyString
+          i = i + 2
+        endif
+      case default
+        reFormat = trim(reFormat) // form(i:i)
+      end select
+    enddo
+  end function reFormatDate
+
+  function reFormatTime(time, form) result(reFormat)
+    ! Reformat hhmmss.sss as hh:mm:ss
+    ! (Note it truncates instead of rounding)
+    ! Wouldn't it be clever to allow an optional string arg defining
+    ! the output format; E.g. 'hh:mm' for '13:23'
+    ! or 'HH:mm' for '01:23 PM'
+    ! Args
+    character(len=*), intent(in)            :: time
+    character(len=len(time)+24)             :: reFormat
+    character(len=*), optional, intent(in)  :: form
+    ! Internal variables
+    character(len=1), parameter             :: hmSpacer = ':'
+    character(len=1), parameter             :: msSpacer = ':'
+    integer                                 :: hours
+    integer                                 :: i
+    character(len=2)                        :: ampm
+    character(len=2)                        :: hh
+    ! Executable
+    reFormat = time(1:2) // hmSpacer // time(3:4) // msSpacer // time(5:6)
+    if ( .not. present(form) ) return
+    if ( len_trim(form) < 1 ) return
+    ampm = ' '
+    reFormat = ' '
+    i = 0
+    do
+      if ( i >= len_trim(form) ) exit
+      i = i + 1
+      select case (form(i:i))
+      case ('h')
+        reFormat = trim(reFormat) // time(1:2)
+        i = i + 1
+      case ('H')
+        read(time(1:2), *) hours
+        ampm = 'AM'
+        if ( hours > 12 ) then
+          hours = hours - 12
+          ampm = 'PM'
+        endif
+        write(hh, '(i2.2)') hours
+        reFormat = trim(reFormat) // hh
+        i = i + 1
+      case ('m')
+        reFormat = trim(reFormat) // time(3:4)
+        i = i + 1
+      case ('s')
+        reFormat = trim(reFormat) // time(5:6)
+        i = i + 1
+      case default
+        reFormat = trim(reFormat) // form(i:i)
+      end select
+    enddo
+    if ( ampm /= ' ' ) reFormat = trim(reFormat) // ' ' // ampm
+  end function reFormatTime
+
+   ! --------------------------------------------------  Reverse  -----
   FUNCTION Reverse (str) RESULT (outstr)
     ! takes a string and returns one with chars in reversed order
 	 ! Useful in certain contexts:
@@ -679,6 +802,65 @@ contains
 
   END SUBROUTINE writeIntsToChars
 
+  ! ---------------------------------------------  yyyymmdd_to_doy_ints  -----
+  subroutine yyyymmdd_to_doy_ints(year, month, day, doy)
+    ! Routine that returns the number of days after the year's start
+    ! for year, month, day
+    !--------Argument--------!
+    integer, intent(in) :: year, month, day
+    integer, intent(out) :: doy
+    !----------Local vars----------!
+    integer :: m
+    integer, dimension(-1:12) :: DAYMAX
+    !----------Executable part----------!
+     if ( year < 0 .or. year > YEARMAX ) then
+       doy = -1
+     endif
+     doy = day
+     if ( month <= 1 ) then
+       return
+     endif
+     if ( leapyear(year) ) then
+       DAYMAX = DAYMAXLY
+     else
+       DAYMAX = DAYMAXNY
+     endif
+     do m=1, month-1
+       doy = doy + DAYMAX(m)
+     enddo
+     
+  end subroutine yyyymmdd_to_doy_ints
+
+  ! ---------------------------------------------  yyyymmdd_to_doy_str  -----
+  subroutine yyyymmdd_to_doy_str(str, doy)
+    ! Routine that returns the number of days after the year's start
+    ! for a string of the form yyyymmdd
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    integer,intent(out) :: doy
+    !----------Local vars----------!
+    integer :: year, month, day
+    integer :: ErrTyp
+    !----------Executable part----------!
+     ! call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
+     read(str(1:4), *) year
+     read(str(5:6), *) month
+     read(str(7:8), *) day
+     call yyyymmdd_to_doy_ints(year, month, day, doy)
+  end subroutine yyyymmdd_to_doy_str
+
+  logical function leapyear(year)
+    integer,intent(in) :: year
+     ! This is to capture rule that centuries are leap only
+     ! if divisible by 400
+     ! Otherwise, as perhaps you knew, leapyears are those years divisible by 4
+     if ( 100 * (year/100) >= year ) then
+       leapyear = ( 400 * (year/400) >= year )
+     else
+       leapyear = ( 4 * (year/4) >= year )
+     endif
+  end function leapyear
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -687,6 +869,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.47  2004/09/23 22:56:38  pwagner
+! Added reformats of date, time
+!
 ! Revision 2.46  2004/09/16 00:15:52  pwagner
 ! Added writeIntsToChars
 !
