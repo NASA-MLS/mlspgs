@@ -11,12 +11,13 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   USE MLSCommon, ONLY: R8
 
   USE Hdf, ONLY: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32
-  USE HDFEOS, ONLY: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
-     & SWDETACH
-  USE SWAPI, ONLY: SWWRFLD
-
+  USE HDFEOS!, ONLY: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
+     !& SWDETACH
+  USE SWAPI, ONLY: SWWRFLD,SWRDFLD
+  
   IMPLICIT NONE
-
+!  INTEGER:: SWRDFLD
+!  EXTERNAL::SWRDFLD !Should USE SWAPI
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER(len=256), PRIVATE :: Id = &
        & "$Id$"
@@ -32,20 +33,20 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   INTEGER, PARAMETER :: L2GPNameLen = 80
 
-   CHARACTER (len=*), PARAMETER :: DATA_FIELD1 = 'l2gpValue'
-   CHARACTER (len=*), PARAMETER :: DATA_FIELD2 = 'l2gpPrecision'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD1 = 'L2gpValue'
+   CHARACTER (len=*), PARAMETER :: DATA_FIELD2 = 'L2gpPrecision'
    CHARACTER (len=*), PARAMETER :: DATA_FIELD3 = 'status'
    CHARACTER (len=*), PARAMETER :: DATA_FIELD4 = 'quality'
 
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD1 = 'latitude'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'longitude'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD3 = 'time'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD4 = 'solarTime'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD5 = 'solarZenith'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD6 = 'losAngle'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD7 = 'geodAngle'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD1 = 'Latitude'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD3 = 'Time'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD4 = 'LocalSolarTime'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD5 = 'SolarZenithAngle'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD6 = 'LineOfSightAngle'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD7 = 'OrbitGeodeticAngle'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD8 = 'chunkNumber'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD9 = 'pressures'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD9 = 'Pressure'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD10= 'frequency'
 
    CHARACTER (len=*), PARAMETER :: DIM_NAME1 = 'nTimes'
@@ -139,9 +140,9 @@ CONTAINS ! =====     Public Procedures     =============================
     l2gp%nFreqs = useNFreqs
 
     ! But allocate to at least one for times, freqs
-
-    useNLevels=MIN(useNLevels,1)
-    useNFreqs=MIN(useNFreqs,1)    
+ 
+    useNLevels=MAX(useNLevels,1)
+    useNFreqs=MAX(useNFreqs,1)    
 
     ! Allocate the frequency coordinate
 
@@ -271,7 +272,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ! Local variables
     TYPE (L2GPData_T), DIMENSION(:), POINTER :: tempDatabase
 
-    INCLUDE "addItemToDatabase.f9h"
+    INCLUDE "../mlspgs/lib/addItemToDatabase.f9h" !remove path before commit
 
     database(newSize) = item
     AddL2GPToDatabase = newSize
@@ -326,7 +327,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Functions
 
-    INTEGER, EXTERNAL :: swattach, swdetach, swdiminfo, swinqdims, swrdfld
+    !INTEGER, EXTERNAL :: swattach, swdetach, swdiminfo, swinqdims, swrdfld
 
     ! Variables
 
@@ -366,7 +367,7 @@ CONTAINS ! =====     Public Procedures     =============================
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
     l2gp%nTimes = size
-
+    nTimes=size
     IF (lev == 0) THEN
        nLevels = 0
     ELSE
@@ -376,6 +377,7 @@ CONTAINS ! =====     Public Procedures     =============================
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
        nLevels = size
+       print*,"nLevels =", size
     ENDIF
 
     IF (freq == 1) THEN
@@ -434,9 +436,9 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Allocate temporary arrays
 
-    nFreqsOr1=MIN(nFreqs,1)
-    nLevelsOr1=MIN(nLevelsOr1)
-
+    nFreqsOr1=MAX(nFreqs,1)
+    nLevelsOr1=MAX(nLevels, 1)
+    print*,"l2gp%nLevels=",l2gp%nLevels
     ALLOCATE(realProf(numProfs), realSurf(l2gp%nLevels), &
          realFreq(l2gp%nFreqs), &
          real3(nFreqsOr1,nLevelsOr1,numProfs), STAT=alloc_err)
@@ -450,8 +452,10 @@ CONTAINS ! =====     Public Procedures     =============================
     edge(1) = nFreqsOr1
     edge(2) = nLevelsOr1
     edge(3) = numProfs
-
-    status = swrdfld(swid, GEO_FIELD1, start(3), stride(3), edge(3), &
+    print*,"Start=",start
+    print*,"Edge=",edge
+    print*,"stride=",stride
+    status = swrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD1
@@ -459,7 +463,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ENDIF
     l2gp%latitude = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD2, start(3), stride(3), edge(3), &
+    status = swrdfld(swid, GEO_FIELD2, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD2
@@ -467,14 +471,14 @@ CONTAINS ! =====     Public Procedures     =============================
     ENDIF
     l2gp%longitude = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD3, start(3), stride(3), edge(3), &
+    status = swrdfld(swid, GEO_FIELD3, start(3:3), stride(3:3), edge(3:3), &
          l2gp%time)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD3
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
 
-    status = swrdfld(swid, GEO_FIELD4, start(3), stride(3), edge(3), &
+    status = swrdfld(swid, GEO_FIELD4, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD4
@@ -482,7 +486,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ENDIF
     l2gp%solarTime = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD5, start(3), stride(3), edge(3), &
+    status = swrdfld(swid, GEO_FIELD5, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD5
@@ -490,7 +494,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ENDIF
     l2gp%solarZenith = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD6, start(3), stride(3), edge(3), &
+    status = swrdfld(swid, GEO_FIELD6, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD6
@@ -498,7 +502,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ENDIF
     l2gp%losAngle = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD7, start(3), stride(3), edge(3), &
+    status = swrdfld(swid, GEO_FIELD7, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD7
@@ -506,7 +510,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ENDIF
     l2gp%geodAngle = DBLE(realProf)
 
-    status = swrdfld(swid, GEO_FIELD8, start(3), stride(3), edge(3), &
+    status = swrdfld(swid, GEO_FIELD8, start(3:3), stride(3:3), edge(3:3), &
          l2gp%chunkNumber)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // GEO_FIELD8
@@ -517,13 +521,21 @@ CONTAINS ! =====     Public Procedures     =============================
 
     IF (lev /= 0) THEN
 
-       status = swrdfld(swid, GEO_FIELD9, start(2), stride(2), edge(2), &
+       status = swrdfld(swid, GEO_FIELD9, start(2:2), stride(2:2), edge(2:2), &
             realSurf)
        IF (status == -1) THEN
           msr = MLSMSG_L2GPRead // GEO_FIELD9
           CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
        ENDIF
+       print*,"realSurf=",realsurf
+       print*,"Status=",status
+       print*,"Start=",start
+       print*,"Edge=",edge
+       print*,"stride=",stride
+
+       print*,"L2GP%PRssures=",l2gp%pressures
        l2gp%pressures = DBLE(realSurf)
+       print*,"L2GP%PRssures=",l2gp%pressures
 
     ENDIF
 
@@ -533,7 +545,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
        edge(1) = l2gp%nFreqs
 
-       status = swrdfld(swid, GEO_FIELD10, start(1), stride(1), edge(1), &
+       status = swrdfld(swid, GEO_FIELD10, start(1:1), stride(1:1), edge(1:1), &
             realFreq)
        IF (status == -1) THEN
           msr = MLSMSG_L2GPRead // GEO_FIELD10
@@ -581,7 +593,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ELSE
 
-       status = swrdfld( swid, DATA_FIELD1, start(3), stride(3), edge(3), &
+       status = swrdfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
             real3(1,1,:) )
        IF (status == -1) THEN
           msr = MLSMSG_L2GPRead // DATA_FIELD1
@@ -589,7 +601,7 @@ CONTAINS ! =====     Public Procedures     =============================
        ENDIF
        l2gp%l2gpValue = DBLE(real3)
 
-       status = swrdfld( swid, DATA_FIELD2, start(3), stride(3), edge(3), &
+       status = swrdfld( swid, DATA_FIELD2, start(3:3), stride(3:3), edge(3:3), &
             real3(1,1,:) )
        IF (status == -1) THEN
           msr = MLSMSG_L2GPRead // DATA_FIELD2
@@ -601,14 +613,14 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Read the data fields that are 1-dimensional
 
-    !     status = swrdfld(swid, DATA_FIELD3, start(3), stride(3), edge(3), &
+    !     status = swrdfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
     !                      l2gp%l2gpStatus)
     !     IF (status == -1) THEN
     !        msr = MLSMSG_L2GPRead // DATA_FIELD3
     !        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     !     ENDIF
 
-    status = swrdfld(swid, DATA_FIELD4, start(3), stride(3), edge(3), &
+    status = swrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
          realProf)
     IF (status == -1) THEN
        msr = MLSMSG_L2GPRead // DATA_FIELD4
@@ -852,7 +864,7 @@ CONTAINS ! =====     Public Procedures     =============================
 
     status = swdetach(swid)
     IF ( status == -1 ) THEN
-       CALL MLSMessage ( MLSMSG, Error, ModuleName, &
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Failed to detach from swath interface after definition.' )
     END IF
 
@@ -1027,8 +1039,7 @@ CONTAINS ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
-    CALL get_string ( l2gp%name, name )
-    swid = swattach (l2FileHandle, name)
+    swid = swattach (l2FileHandle, l2gp%name)
     IF ( l2gp%nFreqs > 0 ) THEN
 
        ! Value and Precision are 3-D fields
@@ -1082,8 +1093,9 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! 1-D status & quality fields
 
-    status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-         l2gp%status)
+    !status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+    !     l2gp%status) ! absoft f90 barfs here
+    status=-1
     IF ( status == -1 ) THEN
        msr = WR_ERR // DATA_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1118,7 +1130,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ! Arguments
 
     INTEGER, INTENT(IN) :: l2FileHandle ! From swopen
-    TYPE (L2GPData_T), INTENT(IN) :: l2gp
+    TYPE (L2GPData_T), INTENT(INOUT) :: l2gp
     CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: swathName ! (defaults to l2gp%swathName)
 
     ! Exectuable code
@@ -1135,6 +1147,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.1  2000/09/15 21:50:18  livesey
+! New version of L2GP data, moved some stuff from l2 to lib
+!
 ! Revision 2.0  2000/09/05 18:57:03  ahanzel
 ! Changing file revision to 2.0.
 !
