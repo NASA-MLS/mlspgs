@@ -138,7 +138,12 @@ levels:
 
 $(CONFDIR)/.configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -pv -fl
+# equivalent to the following:
+#		$(MAKE) -f $(MakeFName) configure_full
+# (except w/o the infinite regress)
+#	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+#          -c "$(MLSF95)" -p "$(MLSPLAT)"
 #	$(MAKE) -f $(MakeFName) configure_subdirs
 #	@echo "Configuring $(SUBDIRS)"; \
 #	 for dir in $(SUBDIRS); do \
@@ -198,7 +203,7 @@ configure_fopts:
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -fl
 
 configure_full:
-	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+	echo $(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -pv -fl
 
 configure_help:
@@ -239,7 +244,7 @@ update:
 	 for dir in $(SUBDIRS); do \
 		cd $$dir ; \
 		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -nd; \
+          -nc -nd; \
 		cd .. ; \
 	done
 
@@ -317,6 +322,9 @@ update: depends
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.22  2001/03/08 21:08:01  pwagner
+# Tweaked EVERYTHING
+#
 # Revision 1.21  2001/03/08 20:59:53  pwagner
 # Added TAR=... option
 #
