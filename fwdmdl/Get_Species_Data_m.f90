@@ -357,7 +357,7 @@ contains
     type(catalog_t), pointer :: My_Catalog(:,:)
 
     integer :: I, J
-    do j = -1, 1, 2
+    do j = lbound(my_catalog,1), ubound(my_catalog,1), 2
       do i = 1, size(my_catalog,2)
         ! Note that we don't deallocate the signals/sidebands stuff for each line
         ! as these are shallow copies of the main spectroscopy catalog stuff
@@ -461,6 +461,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.12  2004/08/03 22:06:45  vsnyder
+! Inching further toward PFA
+!
 ! Revision 2.11  2004/07/08 21:00:23  vsnyder
 ! Inching toward PFA
 !
