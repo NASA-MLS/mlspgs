@@ -81,6 +81,8 @@ DEPMAKER=2
 #if you use f90makedep.pl, you may have a problem if the path where you keep
 #your copy of perl is different from the one in its 1st line
 #compare 'which perl' with 'sed -n "1 p" f90makedep.pl
+#The script will attempt ot anticipate this problem and ask you if it
+#should fix f90makedep.pl
 #
 #makemakedep.sh may act courteously in the following sense:
 #if makemakedep.sh finds there is already a file named Makefile.dep
@@ -88,6 +90,9 @@ DEPMAKER=2
 #
 ACT_COURTEOUS=1
 #             ^  -- set this to 1 to rename older Makefile.dep, 0 deletes it
+#
+TRY_CLEANUP=1
+#           ^  -- set this to 1 to try cleaning up from a prior faulty run
 #
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
@@ -105,13 +110,17 @@ dsuffix=".xui"
 if [ -w "`pwd`" ]
 then
 	f90suffix=".f90"
-	if [ -d "$dsuffix" ]
-	then
-		echo "Sorry--$dsuffix already exists"
-		echo "Aborting new Makefile.dep"
+	if [ -d "$dsuffix" ] ; then
+		if [ $TRY_CLEANUP = "1" ] ; then
+			mv "$dsuffix"/* .
+			rmdir "$dsuffix"
+		else
+			echo "Sorry--$dsuffix already exists"
+			echo "Aborting new Makefile.dep"
                 exit
-        fi
-        mkdir "$dsuffix"
+      fi
+    fi
+    mkdir "$dsuffix"
 else
 	f90suffix="$dsuffix"
 fi
@@ -160,10 +169,10 @@ then
 	echo "#Delete the following files from the dependency lists:" >> Makefile.dep
         echo "#$wrong_list" >> Makefile.dep
 fi
-#The following may be useful in rare circumstances
+#The following may be useful in rare circumstances to include special macros
 #but violates assertion that Makefile.dep includes only dependency info
-#so for purity we should avoid relying on it
-#e.g., the mlspgs software does not include any file "Makefile.mac"
+#Therefore uniformity and simplicity suggest against relying on it
+#e.g., the mlspgs software does not require such a file "Makefile.mac"
 #
 if [ -f Makefile.mac ]
 then
@@ -203,12 +212,16 @@ else
 # && give user a chance to redirect it if it is not
 	script_perl=`sed -n '1 p' $the_DEPMAKER`
 	your_perl='#!'`which perl` 
-        if [ "$script_perl" != "$your_perl" ]
+   if [ "$script_perl" != "$your_perl" ]
         then
 		#Warn user that perl script may need to be changed
 
 		echo " *** Warning: f90makedep.pl may need to be changed"
 		echo " ***          to point to where your perl actually is"
+		echo " ***          "
+		echo " ***  (unless you know of a compelling reason to do otherwise"
+		echo " ***  you probably want to answer 'yes' to the following)"
+		echo " ***          "
  		UserPrompt "Change f90makedep.pl to look in [$your_perl](yes) or no?"
    		if [ "$user_response" != "" ] ; then
 			case  "$user_response" in
@@ -225,18 +238,17 @@ else
                 		change_perl="$user_response"
 	    		;;
 			esac
-		else
+			else
 				echo "Continuing to use $script_perl"
               		  	change_perl=
-		fi
+			fi
    		if [ "$change_perl" != "" ] ; then
-                	sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > temp.pl
-			chmod u+w "$the_DEPMAKER"
-			chmod u+w "$the_DEPMAKER"
-                        mv temp.pl "$the_DEPMAKER"
-			chmod a+x "$the_DEPMAKER"
-			echo "*** You have changed f90makedep.f90"
-                fi
+            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > temp.pl
+				chmod u+w "$the_DEPMAKER"
+         	mv temp.pl "$the_DEPMAKER"
+				chmod a+x "$the_DEPMAKER"
+				echo "*** You have fixed f90makedep.f90 to look for $your_perl"
+         fi
        fi
 #	f90makedep.pl >> Makefile.dep
 	$the_DEPMAKER "$@" >> Makefile.dep
@@ -260,6 +272,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.6  2000/11/21 00:47:34  pwagner
+# Warns user if script's perl not which's; allows change
+#
 # Revision 1.5  2000/11/14 21:50:14  pwagner
 # Can exclude specified files from dependencies
 #
