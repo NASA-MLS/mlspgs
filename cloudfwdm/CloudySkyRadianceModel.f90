@@ -10,6 +10,7 @@ module CloudySkyRadianceModel
       use AntennaPatterns_m, only: AntennaPattern_T
       use ClearSkyModule, only: CLEAR_SKY
       use CloudySkyModule, only: CLOUDY_SKY
+      use SpectroscopyCatalog_m, only: CATALOG_T
       use DCSPLINE_DER_M, only: CSPLINE_DER
       use FOV_CONVOLVE_M, only: FOV_CONVOLVE
       use HYDROSTATIC_INTRP, only: GET_PRESSURES
@@ -37,13 +38,13 @@ module CloudySkyRadianceModel
 
 contains 
 
-      SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N, &
-             &   NZmodel,                                         &
-             &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin, &
+      SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N,      &
+             &   NZmodel,                                              &
+             &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
              &   WCin, IPSDin, ZT, ZZT, RE, ISURF, ISWI, ICON, IFOV,   &
-             &   phi_tan, h_obs, elev_offset, AntennaPattern,     &
-             &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,  &
-             &   NU, NUA, NAB, NR, Slevl, noS)
+             &   phi_tan, h_obs, elev_offset, AntennaPattern,          &
+             &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
+             &   NU, NUA, NAB, NR, Slevl, noS, Catalog )
 
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -216,11 +217,11 @@ contains
       REAL(r8) :: SS(NT,NF)                    ! CLOUD RADIANCE SENSITIVITY
                                                ! (NT+1) FOR ZENITH LOOKING) 
 
-      REAL(r8) :: Trans(noS,NT,NF)               ! Clear Trans Func
-      REAL(r8) :: BETA(NZ,NF)                ! TOTAL OPTICAL DEPTH
-      REAL(r8) :: BETAc(NZ,NF)               ! CLOUDY OPTICAL DEPTH
-
-      REAL(r8) :: Dm(N,NZ)                   ! MASS-MEAN-DIAMETER
+      REAL(r8) :: Trans(noS,NT,NF)             ! Clear Trans Func
+      REAL(r8) :: BETA(NZ,NF)                  ! TOTAL OPTICAL DEPTH
+      REAL(r8) :: BETAc(NZ,NF)                 ! CLOUDY OPTICAL DEPTH
+ 
+      REAL(r8) :: Dm(N,NZ)                     ! MASS-MEAN-DIAMETER
 
                                                ! -- END OF INTERFACE AREA -- !
 
@@ -310,8 +311,8 @@ contains
       INTEGER :: IL
       INTEGER :: ISPI
       INTEGER :: IIWC
-      INTEGER :: ICLD_TOP                     ! cloud top index
-      INTEGER :: I100_TOP                     ! 100 mb index
+      INTEGER :: ICLD_TOP                      ! cloud top index
+      INTEGER :: I100_TOP                      ! 100 mb index
       INTEGER :: MY_NIWC
       INTEGER :: L
 
@@ -343,6 +344,7 @@ contains
       REAL(r8) :: ptg_angle(NZmodel/8-1)       ! POINTING ANGLES CORRESPONDING TO ZZT1
 
       type(antennaPattern_T), intent(in) :: AntennaPattern
+      Type(Catalog_T), INTENT(IN) :: Catalog(:)
       integer :: FFT_INDEX(size(antennaPattern%aaap))
       integer :: FFT_pts, ntr, ier, is, ktr, Ptg_i, brkpt
       REAL(r8) :: schi, center_angle, Q
@@ -487,7 +489,8 @@ contains
         
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
-              &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
+              &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100, &
+              &         Catalog ) 
 
 !         CALL HEADER(3)
 
@@ -667,15 +670,15 @@ contains
 ! 	 THEN DO THE FIELD OF VIEW AVERAGING
 ! ----------------------------------------------------------------
 
-         Ier = 0.
+         Ier = 0
          ntr = size(antennaPattern%aaap)
 
 	 fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
 
-         RAD0=0.0
+         RAD0=0.0_r8
          RAD0(1:Multi)=TT0(1:Multi,NZmodel)
 
-         RAD=0.0
+         RAD=0.0_r8
          RAD(1:Multi)=TT(1:Multi,NZmodel)
 
          fft_angles=0.0
@@ -790,6 +793,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.27  2001/10/30 21:14:01  dwu
+! change order of delTau100 and Tau0 initialization
+!
 ! Revision 1.26  2001/10/30 05:55:35  dwu
 ! make clear sky dTcir =0
 !

@@ -12,6 +12,7 @@ module ClearSkyModule
       use PrtMsg, only: HEADER
       use SpectraLines, only: SETUP_SPECTRA
       use SurfaceModel, only: SURFACE
+      use SpectroscopyCatalog_m, only: CATALOG_T, LINES
 
       IMPLICIT NONE
       Private
@@ -28,7 +29,7 @@ module ClearSkyModule
 contains
 
       SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,WIND,XZ,XP,XT,XQ,VMR, NS, &
-                 &         F,RS,U,T,TAU,Z,TAU100)
+                 &         F,RS,U,T,TAU,Z,TAU100, Catalog )
 
 !======================================================
 !     >>>>>>>>CLEAR-SKY RADIATION SCHEME<<<<<<<<<<
@@ -56,6 +57,12 @@ contains
       REAL(r8):: RH(NU)                   ! HORIZONTAL
       REAL(r8):: RV(NU)                   ! VERTICAL
       REAL(r8):: X(NU)                    ! SCATTERING ANGLES
+
+!-----------------------------------------------------
+! Spectra Catalog 
+!----------------------------------------------------
+
+      Type(Catalog_T), INTENT(IN) :: Catalog(:)
 
 !------------------------------------------------------------------------
 !      CALL HEADER(2)
@@ -113,6 +120,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.7  2001/10/04 23:35:15  dwu
+! *** empty log message ***
+!
 ! Revision 1.6  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
