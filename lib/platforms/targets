@@ -33,6 +33,14 @@ MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
 # If this is done, i.e. if PVM is defined, then PVM_OBJS will
 # be defined and built and added to libmls.a
 
+# LAPACK
+# If it is desired to link the executable with external LAPACK support,
+# the variable LAPACK should be defined
+# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
+# If this is done, i.e., LAPACK is defined, then 
+# lapack_objs will be gemm_external.o
+# otherwise it will be gemm_intrinsic.o
+
 # BLAS
 # If it is desired to link the executable with external BLAS support,
 # the variable BLAS should be defined
@@ -40,13 +48,26 @@ MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
 # If this is done, i.e., BLAS is defined, then blas_objs will
 # be blank
 # Otherwise, i.e. if BLAS is left undefined, then blas_objs will
+# depend on LIB_BLAS:
+# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
+# and blas_objs will be dot_intrinsic.o; otherwise
 # be set to the compiled objects based on the routines in blaslib
 # currently sdot and ddot, which will be built and added to libmls.a
+# along with dot_external_m
 
 # PGSTK
 # This variable is defined only if you will use the toolkit
 # to build the library and all the other software
 # otherwise it is blank
+
+# MACH_OBJS
+# This variable is calculated based on the contents of 
+# lib/machines/$(MLSCONFG)
+# but with object paths the same as all of those derived from lib's own modules
+# It satisfies the dependencies of some of lib's modules
+# Note similarly that dir1, which gets prepended to machine.o in Makefile.dep,
+# is *not* set to lib/machines/$(MLSCONFG) because the compiled
+# objects get placed here in cwd, not there
 
 # ========================================================================
 #          The different versions of libmls.a
@@ -59,8 +80,9 @@ all: libmls.a
 #	if PVM_ROOT non-blank               PVMwrappers.o
 #	if PVM_ROOT blank                
 #                                    and also from the blas 
-#	if BLAS blank                      sdot.o ddot.o
-#	if BLAS non-blank                
+#	if BLAS blank, LIB_BLAS != f95   sdot.o ddot.o dot_external_m.o
+#	if BLAS blank, LIB_BLAS = f95        dot_intrinsic.o
+#	if BLAS non-blank                    dot_external_m.o
 
 #--------------------- default name of GNU-compatible c compiler
 CC=cc
@@ -77,8 +99,6 @@ ifndef INSTALLDIR
 endif
 endif
 
-#--------------------- dependency rules for PVM_OBJS
-
 # "yes" is safer--
 # in case modules have been deleted or excluded since the last build
 # Nope--will need to think harder about what to do about excluded modules
@@ -94,14 +114,14 @@ endif
 
 ifdef BLAS
    blas_message=Building mlslib with external blas support
-   blas_objs :=
+   blas_objs := dot_external_m.o
 else
 ifeq ($(LIB_BLAS),f95)
    blas_message=Building mlslib with blas supplied by f95 intrinsics
    blas_objs := dot_intrinsic.o
 else
    blas_message=Building mlslib with internal blas support
-   blas_objs := sdot.o ddot.o
+   blas_objs := sdot.o ddot.o  dot_external_m.o
 endif
 endif
 
@@ -120,7 +140,9 @@ else
 endif
 
 #${OBJS}: machine.o
-${OBJS}: ${MACH_OBJS}
+#${OBJS}: ${MACH_OBJS} ${blas_objs} ${lapack_objs}
+
+MatrixModule_0.o MatrixModule_0.o: ${blas_objs} ${lapack_objs}
 
 #libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
 libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} ${blas_objs} ${lapack_objs}
@@ -143,11 +165,6 @@ tar:
 	tar hcvzf libmls.tgz * --exclude \*.o --exclude \*.mod --exclude libmls.a
 
 # ========================================================================
-
-# vpath %.c $(S) $(srclib)
-
-#PVMwrappers.o: $(S)/PVMwrappers.c
-#	$(CC) -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
 
 # Custom build commands for some modules
 
@@ -176,12 +193,8 @@ BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 
 DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
 
-#L1BData.o:
-#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90 $(FAFTER)
 Hdf.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
-#L2GPData.o:
-#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
 string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
 ddot.o:
@@ -190,6 +203,9 @@ sdot.o:
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.34  2001/11/02 01:03:30  pwagner
+# Added stuff for lapack, inrinsic BLAS
+#
 # Revision 1.33  2001/10/15 17:20:09  pwagner
 # Uses new -j option in init_gen
 #
