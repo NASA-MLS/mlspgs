@@ -8,12 +8,14 @@ module DNWT_CLONE
 
   use DNWT_TYPE, only: RK
   use DNWT_MODULE, only: NF_DX, NF_EVALF, NF_EVALJ, NF_NEWX, &
-    & NF_SOLVE, NF_START, NWT_T
+    & NF_SOLVE, NF_START, NWT_T, FLAGNAME, NF_GMOVE, NF_BEST, NF_AITKEN,&
+    & NF_DX_AITKEN, NF_TOLX, NF_TOLF, NF_TOLX_BEST, NF_TOO_SMALL, NF_FANDJ
 
   interface NWT; module procedure DNWT; end interface
   interface NWTA; module procedure DNWTA; end interface
   interface NWTDB; module procedure DNWTDB; end interface
 
+    
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -63,6 +65,9 @@ contains
 end module DNWT_CLONE
 
 ! $Log$
+! Revision 2.2  2001/06/01 21:28:21  livesey
+! Added some more USE's to make it compile
+!
 ! Revision 2.1  2001/06/01 01:34:52  vsnyder
 ! Initial commit.  For debugging only
 !
