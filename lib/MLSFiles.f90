@@ -6,8 +6,8 @@ module MLSFiles               ! Utility file routines
   !===============================================================================
   use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_READ, DFACC_RDWR, &
     & sfstart, sfend
-  use Hdf5, only: h5fopen_f, h5fclose_f, h5fis_hdf5_f
-!  use Hdf5_params, only: H5F_ACC_RDONLY, H5F_ACC_RDWR, H5F_ACC_TRUNC
+  use HDF5, only: hid_t, h5fopen_f, h5fcreate_f, h5fclose_f, h5fis_hdf5_f, &
+      H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F, H5F_ACC_EXCL_F
   use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
     & he5_gdopen, he5_gdclose, &
@@ -38,7 +38,8 @@ module MLSFiles               ! Utility file routines
 
   public :: GetPCFromRef, get_free_lun, mls_io_gen_openF, &
   & mls_io_gen_closeF, split_path_name, &
-  & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend
+  & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend, &
+  & mls_openFile, mls_closeFile
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -1155,13 +1156,79 @@ contains
      & hdf_version = WRONGHDFVERSION
 
   end function mls_hdf_version
+!-----------------------------------------------
 
-  !====================
+  subroutine mls_openFile(filename, access, file_id)
+!
+! External Variables
+!
+    character(len=*), intent(in) :: filename, access
+    integer(hid_t), intent(out) :: file_id
+!
+! Internal Variables
+!
+    integer :: h5error
+    logical :: is_hdf5
+
+  if (trim(access) == 'create') then 
+
+  call h5fcreate_f(trim(filename), H5F_ACC_EXCL_F, file_id, h5error)
+  if (h5error /= 0) call MLSMessage (MLSMSG_Error, ModuleName, "Error Creating File: "//trim(filename))
+
+  elseif (trim(access) == 'update') then
+
+   is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
+   call h5fis_hdf5_f(trim(filename), is_hdf5, h5error)
+
+  if (is_hdf5) then 
+   call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, file_id, h5error)
+   if (h5error /= 0) call MLSMessage (MLSMSG_Error, ModuleName, "Error Updating File: "//trim(filename))
+  endif
+
+  elseif (trim(access) == 'readonly') then 
+
+  is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) 
+  call h5fis_hdf5_f(trim(filename), is_hdf5, h5error)
+
+  if (is_hdf5) then 
+  call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, file_id, h5error)
+  if (h5error /= 0) call MLSMessage (MLSMSG_Error, ModuleName, "Error Reading File: "//trim(filename))
+  endif
+
+  endif
+
+  end subroutine mls_openFile
+
+!-----------------------------------------------
+
+  subroutine mls_closeFile(file_id)
+!
+! External Variables
+!
+    integer(hid_t), intent(in) :: file_id
+!
+! Internal Variables
+!
+    integer :: h5error
+
+    call h5fclose_f(file_id, h5error)
+    if (h5error /= 0) then 
+       call MLSMessage (MLSMSG_Error, ModuleName, "Error closing file.")
+    endif
+
+  end subroutine mls_closeFile
+
+!-----------------------------------------------
+
+!====================
 end module MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 2.35  2002/08/08 22:40:42  jdone
+! New routines to Open/Close HDF5 Files
+!
 ! Revision 2.34  2002/07/23 00:06:55  pwagner
 ! debug set to false in sfstart and sfend
 !
