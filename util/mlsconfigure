@@ -209,7 +209,8 @@ Currently your paths are given by:
         "include" files:  $current_PGSINC
         toolkit:          $current_PGSTK
         hdf-eos:          $current_HDFEOS
-        hdf:              $current_HDF
+        hdf(4):           $current_HDF
+        hdf(5):           $current_HDF5
         gctp:             $current_GCTP
 
 If any of these settings are wrong or blank, or you wish to change them in
@@ -272,7 +273,7 @@ if [ $change_paths = "true" ] ; then
 	 current_GCTP=$user_response
 	 GCTP=$user_response
    elif [ "$current_HDFEOS" != "" ] ; then
-	echo "Toolkit path is still $current_HDFEOS."
+	echo "hdfeos path is still $current_HDFEOS."
         HDFEOS=$current_HDFEOS
    else
 	echo "Warning: No HDFEOS path selected; none found"
@@ -281,16 +282,30 @@ if [ $change_paths = "true" ] ; then
 	HDFEOS="/"
    fi
 
-#Change hdf path
- UserPrompt "HDF path [$current_HDF]"
+#Change hdf(4) path
+ UserPrompt "HDF(4) path [$current_HDF]"
    if [ "$user_response" != "" ] ; then
 	 HDF=$user_response
    elif [ "$current_HDF" != "" ] ; then
-	echo "Toolkit path is still $current_HDF."
+	echo "hdf(4) path is still $current_HDF."
         HDF=$current_HDF
    else
 	echo "Warning: No HDF path selected; none found"
 	echo "mls software may not link properly "
+	echo "unless you reconfigure; enter 'make configure'."
+	HDF="/"
+   fi
+
+#Change hdf(5) path
+ UserPrompt "HDF(5) path [$current_HDF5]"
+   if [ "$user_response" != "" ] ; then
+	 HDF5=$user_response
+   elif [ "$current_HDF" != "" ] ; then
+	echo "hdf(5) path is still $current_HDF5."
+        HDF5=$current_HDF5
+   else
+	echo "Warning: No HDF(5) path selected; none found"
+	echo "mls software may not link properly with newer Toolkit"
 	echo "unless you reconfigure; enter 'make configure'."
 	HDF="/"
    fi
@@ -569,6 +584,7 @@ current_PGSTK=$PGSLIB
 current_HDFEOS=$HDFEOS_LIB
 current_HDF=$HDFLIB
 current_GCTP=$HDFEOS_LIB
+current_HDF5=$HDF5
 
 # Whether to include PVM & FFTW paths in .configure
 add_PVM_PATH="false"
@@ -589,6 +605,7 @@ if [ "$debugging" = "on" ] ; then
 	echo "PGSLIB=$PGSLIB"
 	echo "HDFEOS_LIB=$HDFEOS_LIB"
 	echo "HDFLIB=$HDFLIB"
+	echo "HDF5=$HDF5"
 	echo "add_PVM_PATH=$add_PVM_PATH"
 	echo "PVM_ROOT=$PVM_ROOT"
 	echo "PVM_ARCH=$PVM_ARCH"
@@ -768,6 +785,7 @@ if [ $write_confg = "true" ] ; then
 	echo "PGSTK=$PGSTK" >> $conf_dir/$MLSCFILE
 	echo "HDFEOS=$HDFEOS" >> $conf_dir/$MLSCFILE
 	echo "HDF=$HDF" >> $conf_dir/$MLSCFILE
+	echo "HDF5=$HDF5" >> $conf_dir/$MLSCFILE
 	echo "GCTP=$GCTP" >> $conf_dir/$MLSCFILE
 	echo "PGSLIB=$PGSTK" >> $conf_dir/$MLSCFILE
 	echo "HDFEOS_LIB=$HDFEOS" >> $conf_dir/$MLSCFILE
@@ -787,6 +805,7 @@ if [ $write_confg = "true" ] ; then
 	echo "export PGSTK" >> $conf_dir/$MLSCFILE
 	echo "export HDFEOS" >> $conf_dir/$MLSCFILE
 	echo "export HDF" >> $conf_dir/$MLSCFILE
+	echo "export HDF5" >> $conf_dir/$MLSCFILE
 	echo "export GCTP" >> $conf_dir/$MLSCFILE
 	echo "export PVM_ROOT" >> $conf_dir/$MLSCFILE
 	echo "export PVM_ARCH" >> $conf_dir/$MLSCFILE
@@ -877,6 +896,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.12  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
 # Revision 1.11  2001/03/23 00:40:42  pwagner
 # Better message if pvm, fftw not set
 #
