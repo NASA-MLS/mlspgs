@@ -16,7 +16,7 @@ module L1BData
   use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData
   use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
-    & MLS_IO_GEN_OPENF
+    & MLS_HDF_VERSION, MLS_IO_GEN_OPENF
   use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
     & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
@@ -229,7 +229,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     type (L1BInfo_T) :: L1BINFO         ! File handles etc. for L1B dataset
     integer, intent(in) :: ROOT         ! of the l1brad file specification.
     integer, intent(in) :: F_FILE       ! From init_tables_module
-    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(inout) :: hdfVersion
 
     ! Local variables
 
@@ -239,6 +239,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: record_length
     integer :: SON                      ! Some subtree of root.
     integer :: SD_ID                    ! From HDF
+    integer :: the_hdf_version
 
     ! Exectuable code
     error = 0
@@ -248,6 +249,7 @@ contains ! ============================ MODULE PROCEDURES ======================
       if(get_field_id(son) == f_file) then
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         ! sd_id = sfstart(Filename, DFACC_READ)
+        the_hdf_version = mls_hdf_version(FileName)
         sd_id = mls_io_gen_openF('hg', .true., error, &
           & record_length, DFACC_READ, &
           & FileName, hdfVersion=hdfVersion)
@@ -257,6 +259,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         else
           l1bInfo%L1BOAID = sd_id
           l1bInfo%L1BOAFileName = Filename
+          if ( present(hdfVersion) ) hdfVersion = the_hdf_version
         end if
       else
         call announce_error ( son, &
@@ -275,10 +278,10 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, intent(in) :: F_FILE
     integer, intent(in) :: MAXNUML1BRADIDS
     integer, intent(in) :: ILLEGALL1BRADID
-    integer, optional, intent(in) :: hdfVersion
+    integer, optional, intent(inout) :: hdfVersion
 
     ! Local variables
-    character(len=FileNameLen) :: FILENAME       ! Duh
+    character(len=FileNameLen) :: FILENAME
 
     integer :: I                        ! Loop inductor, subscript
     integer :: SON                      ! Some subtree of root.
@@ -286,7 +289,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: SD_ID                    ! ID from HDF
 
     integer, save :: IFL1 = 0           ! num. of L1brad files opened so far
-    integer :: record_length
+    integer :: record_length, the_hdf_version
 
     ! Executable code
     error = 0
@@ -304,6 +307,7 @@ contains ! ============================ MODULE PROCEDURES ======================
             & call announce_error ( son, 'Allocation failed for l1bInfo' )
         endif
         ! sd_id = sfstart(Filename, DFACC_READ)
+        the_hdf_version = mls_hdf_version(FileName)
         sd_id = mls_io_gen_openF('hg', .true., error, &
           & record_length, DFACC_READ, &
           & FileName, hdfVersion=hdfVersion)
@@ -317,6 +321,7 @@ contains ! ============================ MODULE PROCEDURES ======================
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
           l1bInfo%L1BRADFileNames(ifl1) = Filename
+          if ( present(hdfVersion) ) hdfVersion = the_hdf_version
         end if
       else
         call announce_error ( son, &
@@ -801,6 +806,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.22  2002/10/03 23:04:11  pwagner
+! hdfVersion now inout instead of intent(in)
+!
 ! Revision 2.21  2002/09/27 23:37:54  pwagner
 ! More progress toward hdf5-capable l1b files
 !
