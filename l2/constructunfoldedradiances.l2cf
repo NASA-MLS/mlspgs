@@ -1,0 +1,109 @@
+; This partial l2cf is for constructing vector quantities describing
+; unfolded radiances
+BEGIN Construct
+
+    ;; ------------------------------------------ Lower sidebands
+    ;; First the 25 channel filterbanks
+    band1L:  Quantity, type=radiance, signal='R1A:118.B1LF:PT'
+
+    band2L:  Quantity, type=radiance, signal='R2:190.B2LF:H2O'
+    band3L:  Quantity, type=radiance, signal='R2:190.B3LF:N2O'
+    band4L:  Quantity, type=radiance, signal='R2:190.B4LF:HNO3'
+    band5L:  Quantity, type=radiance, signal='R2:190.B5LF:ClO'
+    band6L:  Quantity, type=radiance, signal='R2:190.B6LF:O3'
+
+    band7L:  Quantity, type=radiance, signal='R3:240.B7LF:O3'
+    band8L:  Quantity, type=radiance, signal='R3:240.B8LF:PT'
+    band9L:  Quantity, type=radiance, signal='R3:240.B9LF:CO'
+
+    band10L: Quantity, type=radiance, signal='R4:640.B10LF:ClO'
+    band11L: Quantity, type=radiance, signal='R4:640.B11LF:BrO'
+    band12L: Quantity, type=radiance, signal='R4:640.B12LF:N2O'
+    band13L: Quantity, type=radiance, signal='R4:640.B13LF:HCl'
+    band14L: Quantity, type=radiance, signal='R4:640.B14LF:O3'
+
+    band15L: Quantity, type=radiance, signal='R5H:2T5.B15LF:OH'
+    band16L: Quantity, type=radiance, signal='R5H:2T5.B16LF:OH'
+    band17L: Quantity, type=radiance, signal='R5H:2T5.B17LF:PT'
+
+    band18L: Quantity, type=radiance, signal='R5V:2T5.B18LF:OH'
+    band19L: Quantity, type=radiance, signal='R5V:2T5.B19LF:OH'
+    band20L: Quantity, type=radiance, signal='R5V:2T5.B20LF:PT'
+
+    band21L: Quantity, type=radiance, signal='R1B:118.B21LF:PT'
+
+    ;; Now the DACs
+    band22L: Quantity, type=radiance, signal='R1A:118.B22LD:PT'
+    band23L: Quantity, type=radiance, signal='R2:190.B23LD:H2O'
+    band24L: Quantity, type=radiance, signal='R3:240.B24LD:O3'
+    band25L: Quantity, type=radiance, signal='R3:240.B25LD:CO'
+    band26L: Quantity, type=radiance, signal='R1B:118.B26LD:PT'
+
+    ;; Now the 11 channel filter banks
+    band27L: Quantity, type=radiance, signal='R2:190.B27LM:HCN'
+    band28L: Quantity, type=radiance, signal='R4:640.B28LM:HO2'
+    band29L: Quantity, type=radiance, signal='R4:640.B29LM:HOCl'
+    band30L: Quantity, type=radiance, signal='R4:640.B30LM:HO2'
+    band31L: Quantity, type=radiance, signal='R4:640.B31LM:BrO'
+
+    ;; Finally the wide filters
+    band32L: Quantity, type=radiance, signal='R1A:118.B32LW:PT'
+    band33L: Quantity, type=radiance, signal='R3:240.B33LW:O3'
+    band34L: Quantity, type=radiance, signal='R1B:118.B34LW:PT'
+
+    ;; ------------------------------------------ Upper sidebands
+    ;; First the 25 channel filterbanks
+    band1U:  Quantity, type=radiance, signal='R1A:118.B1UF:PT'
+
+    band2U:  Quantity, type=radiance, signal='R2:190.B2UF:H2O'
+    band3U:  Quantity, type=radiance, signal='R2:190.B3UF:N2O'
+    band4U:  Quantity, type=radiance, signal='R2:190.B4UF:HNO3'
+    band5U:  Quantity, type=radiance, signal='R2:190.B5UF:ClO'
+    band6U:  Quantity, type=radiance, signal='R2:190.B6UF:O3'
+
+    band7U:  Quantity, type=radiance, signal='R3:240.B7UF:O3'
+    band8U:  Quantity, type=radiance, signal='R3:240.B8UF:PT'
+    band9U:  Quantity, type=radiance, signal='R3:240.B9UF:CO'
+
+    band10U: Quantity, type=radiance, signal='R4:640.B10UF:ClO'
+    band11U: Quantity, type=radiance, signal='R4:640.B11UF:BrO'
+    band12U: Quantity, type=radiance, signal='R4:640.B12UF:N2O'
+    band13U: Quantity, type=radiance, signal='R4:640.B13UF:HCl'
+    band14U: Quantity, type=radiance, signal='R4:640.B14UF:O3'
+
+    band15U: Quantity, type=radiance, signal='R5H:2T5.B15UF:OH'
+    band16U: Quantity, type=radiance, signal='R5H:2T5.B16UF:OH'
+    band17U: Quantity, type=radiance, signal='R5H:2T5.B17UF:PT'
+
+    band18U: Quantity, type=radiance, signal='R5V:2T5.B18UF:OH'
+    band19U: Quantity, type=radiance, signal='R5V:2T5.B19UF:OH'
+    band20U: Quantity, type=radiance, signal='R5V:2T5.B20UF:PT'
+
+    band21U: Quantity, type=radiance, signal='R1B:118.B21UF:PT'
+
+    ;; Now the DACs
+    band22U: Quantity, type=radiance, signal='R1A:118.B22UD:PT'
+    band23U: Quantity, type=radiance, signal='R2:190.B23UD:H2O'
+    band24U: Quantity, type=radiance, signal='R3:240.B24UD:O3'
+    band25U: Quantity, type=radiance, signal='R3:240.B25UD:CO'
+    band26U: Quantity, type=radiance, signal='R1B:118.B26UD:PT'
+
+    ;; Now the 11 channel filter banks
+    band27U: Quantity, type=radiance, signal='R2:190.B27UM:HCN'
+    band28U: Quantity, type=radiance, signal='R4:640.B28UM:HO2'
+    band29U: Quantity, type=radiance, signal='R4:640.B29UM:HOCl'
+    band30U: Quantity, type=radiance, signal='R4:640.B30UM:HO2'
+    band31U: Quantity, type=radiance, signal='R4:640.B31UM:BrO'
+
+    ;; Finally the wide filters
+    band32U: Quantity, type=radiance, signal='R1A:118.B32UW:PT'
+    band33U: Quantity, type=radiance, signal='R3:240.B33UW:O3'
+    band34U: Quantity, type=radiance, signal='R1B:118.B34UW:PT'
+
+    ;; ---------------------------------------------- Now macros
+
+    define(_AllLower, {forloop({i}, 1, 33, {{band}i{L}, })band34L})
+    define(_AllUpper, {forloop({i}, 1, 33, {{band}i{U}, })band34U})
+    define(_AllSidebands, {_AllLower, _AllUpper} )
+
+END Construct

@@ -1,0 +1,93 @@
+; This partial l2cf is really just m4 commands, defining the molecules
+; to be included in the forward model for each band.
+
+define(_mol1L,  { [ o2, n2 ] })
+define(_mol1,   { [ o2, n2 ] })
+
+define(_mol2L,  { [ h2o, hno3, o3, n2 ] })
+define(_mol2U,  { [ n2o, n2] })
+define(_mol2,   { [ h2o, hno3, o3, n2, n2o ] })
+
+define(_mol3L,  { [ h2o, hno3,o3, n2 ] })
+define(_mol3U,  { [ n2o, n2 ] })
+define(_mol3,   { [ h2o, hno3, o3, n2, n2o ] })
+
+define(_mol4L,  { [ h2o, hno3, o3, n2 ] })
+define(_mol4U,  { [ n2o, n2 ] })
+define(_mol4,   { [ h2o, hno3, o3, n2, n2o ] })
+
+define(_mol5L,  { [ o3, n2 ] })
+define(_mol5U,  { [ h2o_18, cl_35_o, cl_37_o, n2 ] })
+define(_mol5,   { [ h2o, h2o_18, cl_35_o, cl_37_o, n2 ] })
+
+define(_mol6L,  { [ hcn, n2] })
+define(_mol6U,  { [ o3, hno3, n2 ] })
+define(_mol6,   { [ hcn, n2, o3, hno3 ] })
+
+define(_mol7L,  { [ o3, o_18_o, n2 ] })
+define(_mol7U,  { [ o3, n2 ] })
+define(_mol7,   { [ o3, o_18_o, n2 ] })
+
+define(_mol8L,  { [ o3, o_18_o, n2 ] })
+define(_mol8U,  { [ o3, o3_v2, n2 ] })
+define(_mol8,   { [ o3, o_18_o, n2, o3_v2 ] })
+
+define(_mol9L,  { [ co, o3, n2 ] })
+define(_mol9U,  { [ o3, n2 ] })
+define(_mol9,   { [ co, o3, n2 ] })
+
+define(_mol10L, { [ hocl, o3, o3_v1_3, o3_asym_o_18, n2 ] })
+define(_mol10U, { [ ho2, o3, o3_v1_3, o3_asym_o_18, cl_35_o, $
+                    cl_37_o, br_79_o, br_81_o, n2 ] })
+define(_mol10,  { [ hocl, o3, o3_v1_3, o3_asym_o_18, n2, ho2, $
+                    cl_35_o, cl_37_o, br_79_o, br_81_o ] })
+
+define(_mol11L, { [ hocl, o3, o3_v1_3, o3_asym_o_18, n2 ] })
+define(_mol11U, { [ ho2, o3, o3_v1_3, o3_asym_o_18, cl_35_o, $
+                    cl_37_o, br_79_o, br_81_o, n2 ] })
+define(_mol11,  { [ hocl, o3, o3_v1_3, o3_asym_o_18, n2, ho2, $
+                    cl_35_o, cl_37_o, br_79_o, br_81_o ] })
+
+define(_mol12L, { [ o3, o3_v1_3, n2 ] })
+define(_mol12U, { [ n2o, o3_v2, n2 ] })
+define(_mol12,  { [ o3, o3_v1_3, o3_v2, n2o, n2 ] })
+
+define(_mol13L, { [ hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, n2 ] })
+define(_mol13U, { [ ho2, o3, o3_v1_3, o3_v2, o3_sym_o_18,  $
+                              o3_asym_o_18, hno3, n2 ] })
+define(_mol13,  { [ hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, n2, $
+                              o3_v1_3, o3_sym_o_18, o3_asym_o_18, hno3 ] })
+
+define(_mol14L, { [ hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, n2 ] })
+define(_mol14U, { [ ho2, o3, o3_v1_3, o3_v2, o3_sym_o_18, $
+                              o3_asym_o_18, hno3, n2 ] })
+define(_mol14,  { [ hcl_35, hcl_37, br_81_o, ho2, o3, o3_v2, n2,  $
+                              o3_v1_3, o3_sym_o_18, o3_asym_o_18, hno3 ] })
+
+define(_mol15L, { [ oh, o3_asym_o_18, hocl_37, h2o ] })
+define(_mol15U, { [ o2_v1, o3_asym_o_18, h2o ] })
+define(_mol15,  { [ oh, o3_asym_o_18, hocl_37, h2o, o2_v1 ] })
+
+define(_mol16L, { [ o2, o3, o3_v2, h2o ] })
+define(_mol16U, { [ o3, o3_v2, o3_v1_3, o3_sym_o_18, h2o ] })
+define(_mol16,  { [ o2, o3, o3_v1_3, o3_v2, h2o, o3_sym_o_18, h2o ] })
+
+define(_mol17L, { [ o2, o3, o3_v2, h2o ] })
+define(_mol17U, { [ o3, o3_v1_3, o3_v2, h2o ] })
+define(_mol17,  { [ o2, o3, o3_v1_3, o3_v2, h2o ] })
+
+define(_mol18L, { [ oh, o3_asym_o_18, hocl_37, h2o ] })
+define(_mol18U, { [ o2_v1, o3_asym_o_18, h2o ] })
+define(_mol18,  { [ oh, o3_asym_o_18, hocl_37, h2o, o2_v1 ] })
+
+define(_mol19L, { [ o2, o3, o3_v2, h2o ] })
+define(_mol19U, { [ o3, o3_v2, o3_v1_3, o3_sym_o_18, h2o ] })
+define(_mol19,  { [ o2, o3, o3_v1_3, o3_v2, h2o, o3_sym_o_18, h2o ] })
+
+define(_mol20L, { [ o2, o3, o3_v2, h2o ] })
+define(_mol20U, { [ o3, o3_v1_3, o3_v2, h2o ] })
+define(_mol20,  { [ o2, o3, o3_v1_3, o3_v2, h2o ] })
+
+
+
+
