@@ -246,17 +246,26 @@ contains
     end if
   end subroutine DESTROY_STRING_TABLE
   ! =======================================     DISPLAY_STRING     =====
-  subroutine DISPLAY_STRING ( STRING, ADVANCE, STRIP )
+  subroutine DISPLAY_STRING ( STRING, ADVANCE, STRIP, IERR )
   ! Write the string indexed by STRING.
+  ! If IERR is present return 0 if all went well, 1 otherwise
     integer, intent(in) :: STRING
     character(len=*), intent(in), optional :: ADVANCE
     logical, intent(in), optional :: STRIP
+    integer, intent(out), optional :: IERR
 
     integer :: offset
     logical :: myStrip
     character (len=1) :: firstChar, lastChar
 
-    call test_string ( string, 'Display_String' )
+    call test_string ( string, 'Display_String', ierr )
+    if ( present(ierr) ) then
+      if ( ierr /= 0 ) then
+        call output ( '(not found in string table)', &
+                        advance=advance )
+        return
+      end if
+    end if
     myStrip=.false.
     if (present(strip)) myStrip=strip
 
@@ -352,23 +361,30 @@ contains
     return
   end subroutine GET_CHAR
   ! ===========================================     GET_STRING     =====
-  subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP, NOERROR )
+  subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR )
   ! Put as much as will fit of the string indexed by STRING into STRING_TEXT.
   ! If CAP is present and .TRUE., capitalize STRING_TEXT.
+  ! If NOERROR is present and TRUE, return safely no matter what
+  ! If IERR is present and error occurs, set it to 1 && return safely
     integer, intent(in) :: STRING
     character(len=*), intent(out) :: STRING_TEXT
     logical, intent(in), optional :: CAP
     logical, intent(in), optional :: STRIP
     logical, intent(in), optional :: NOERROR
+    integer, intent(out), optional :: IERR
     integer :: I, J, offset
     logical :: MY_CAP, MY_STRIP
 
+    string_text=''         ! No matter what, return string_text
     if ( string < lbound(strings,1) .or. string > ubound(strings,1) ) then
       if ( present(noError) ) then
         if (noError) then
-          string_text=''
+          if ( present(ierr) ) ierr=1
           return
         end if
+      elseif ( present(ierr) ) then
+        ierr = 1
+        return
       end if
     end if
 
@@ -384,8 +400,10 @@ contains
         &    (char_table(strings(string)) == "'") ) ) &
         & offset=1
     endif
-    call test_string ( string, 'GET_STRING' )
-    string_text = ' '
+    call test_string ( string, 'GET_STRING', ierr )
+    if ( present(ierr) ) then
+      if ( ierr /= 0 ) return
+    endif
     j = 0
     if ( my_cap ) then
       do i = strings(string-1)+1+offset, strings(string)-offset
@@ -402,6 +420,7 @@ contains
 !     string_text = transfer(char_table(strings(string-1)+1:strings(string)), &
 !                            string_text(:strings(string)-strings(string-1))
     end if
+!    if ( present(ierr) ) ierr=0 ! Already zeroed by call to test_string
     return
   end subroutine GET_STRING
   ! =====================================     HOW_MANY_STRINGS     =====
@@ -679,21 +698,32 @@ char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
     end if
   end function IACAP
   ! ------------------------------------------     TEST_STRING     -----
-  subroutine TEST_STRING ( STRING, ROUTINE )
+  subroutine TEST_STRING ( STRING, ROUTINE, IERR )
   ! Test whether STRING is within bounds.  If not, use ROUTINE to emit
   ! an error message.
+  ! Unless IERR is present, in which case set IERR and return
     integer, intent(in) :: STRING
+    integer, intent(out), optional :: IERR
     character(len=*), intent(in) :: ROUTINE
     if ( string < 1 .or. string > nstring ) then
-      write ( *, * ) 'STRING_TABLE%', routine, '-E- String index ', &
-        string, ' not in 1 .. ', nstring
-      stop
+      if ( present(ierr) ) then
+        ierr=1
+        return
+      else
+        write ( *, * ) 'STRING_TABLE%', routine, '-E- String index ', &
+          string, ' not in 1 .. ', nstring
+        stop
+      end if
     end if
+    if ( present(ierr) ) ierr=0
     return
   end subroutine TEST_STRING
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.11  2001/10/12 23:08:14  pwagner
+! New ierr option to prevent (unwanted) stoppings
+!
 ! Revision 2.10  2001/10/04 00:14:21  pwagner
 ! Some more messages if lookup_and_insert fails
 !
