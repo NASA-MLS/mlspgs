@@ -19,6 +19,7 @@ module L2Parallel
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
   use MLSCommon, only: R8, MLSCHUNK_T
+  use MLSL2Common, only: FindFirst
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, ADDVECTORTODATABASE, &
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO
@@ -188,24 +189,6 @@ contains ! ================================ Procedures ======================
 
     close ( unit=lun )
   end subroutine GetMachineNames
-
-  ! -------------------------------------------- FindFirst --------------
-  integer function FindFirst ( condition )
-    ! Find the first logical in the array that is true
-    logical, dimension(:), intent(in) :: CONDITION
-
-    ! Local variables
-    integer :: I                        ! Loop counter
-
-    ! Executable code
-    FindFirst = -1
-    do i = 1, size(condition)
-      if ( condition(i) ) then
-        FindFirst = i
-        return
-      end if
-    end do
-  end function FindFirst
 
   ! --------------------------------------------- L2MasterTask ----------
   subroutine L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
@@ -791,6 +774,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.14  2001/06/22 05:19:46  livesey
+! Moved FindFirst into MLSL2Common
+!
 ! Revision 2.13  2001/06/19 22:58:07  pwagner
 ! Eliminated duplicate declaration of MLSCommon
 !
