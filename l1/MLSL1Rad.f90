@@ -1,13 +1,13 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
 MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
 !=============================================================================
 
-  USE MLSL1Common, ONLY: FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, R4, &
-       DACSnum, DACSchans, GHzNum, THzNum, THzChans, Chan_R_T
-  USE MLSSignalNomenclature !, ONLY: ParseMLSSignalRequest, MLSSignal_T
+  USE MLSL1Common, ONLY: FBchans, MBnum, MBchans, WFnum, WFchans, R4, &
+       DACSnum, DACSchans, GHzNum, THzNum, THzChans
+  USE MLSSignalNomenclature, ONLY: ParseMLSSignalRequest, MLSSignal_T
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
 
   IMPLICIT NONE
@@ -16,6 +16,7 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
 
   PUBLIC :: InitRad, BandToBanks, UpdateRadSignals, RadPwr
   PUBLIC :: Radiance_T, L1Brad, FBrad, MBrad, WFrad, DACSrad, THzRad
+  PUBLIC :: SideBandFrac_T, SideBandFrac, SpilloverLoss_T, SpilloverLoss
 
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -36,13 +37,25 @@ MODULE MLSL1Rad     ! Radiance data types and routines for the MLSL1 program
   TYPE (Radiance_T), DIMENSION(:), POINTER :: L1Brad, FBrad, MBrad, WFrad, &
        DACSrad, THzRad
 
+  TYPE SideBandFrac_T
+     REAL(r4), DIMENSION(:), POINTER :: lower, upper
+  END TYPE SideBandFrac_T
+
+  TYPE (SideBandFrac_T) :: SideBandFrac(34)
+
+  TYPE SpilloverLoss_T
+     REAL(r4), DIMENSION(:,:), POINTER :: lower, upper
+  END TYPE SpilloverLoss_T
+
+  TYPE (SpilloverLoss_T) :: SpilloverLoss(34)
+
 CONTAINS
 
 !=============================================================================
   SUBROUTINE InitRad (THz)
 !=============================================================================
 
-    USE MLSL1Config, ONLY: L1Config, MIFsGHz, MIFsTHz
+    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
     USE MLSL1Common, ONLY: BandSwitch
 
     ! Arguments
@@ -55,6 +68,41 @@ CONTAINS
     TYPE (MLSSignal_T), DIMENSION(:), POINTER :: signal => NULL()
     CHARACTER (LEN=11) :: request
     INTEGER, PARAMETER :: DACSbandNo(4) = (/ 25, 23, 24, 22 /)
+
+!! Allocate Sideband fraction arrays:
+
+    DO i = 1, 21
+       ALLOCATE (SideBandFrac(i)%lower(FBchans))
+       ALLOCATE (SideBandFrac(i)%upper(FBchans))
+    ENDDO
+    DO i = 22, 26
+       ALLOCATE (SideBandFrac(i)%lower(DACSchans))
+       ALLOCATE (SideBandFrac(i)%upper(DACSchans))
+    ENDDO
+    DO i = 27, 31
+       ALLOCATE (SideBandFrac(i)%lower(MBchans))
+       ALLOCATE (SideBandFrac(i)%upper(MBchans))
+    ENDDO
+    DO i = 32, 34
+       ALLOCATE (SideBandFrac(i)%lower(WFchans))
+       ALLOCATE (SideBandFrac(i)%upper(WFchans))
+    ENDDO
+
+!! Allocate and Initialize Spillover Loss
+
+    DO i = 1, 31
+       ALLOCATE (SpilloverLoss(i)%lower(3,1))
+       ALLOCATE (SpilloverLoss(i)%upper(3,1))
+       SpilloverLoss(i)%lower = 0.0
+       SpilloverLoss(i)%upper = 0.0
+    ENDDO
+
+    DO i = 32, 34
+       ALLOCATE (SpilloverLoss(i)%lower(3,4))
+       ALLOCATE (SpilloverLoss(i)%upper(3,4))
+       SpilloverLoss(i)%lower = 0.0
+       SpilloverLoss(i)%upper = 0.0
+    ENDDO
 
     IF (THz) THEN  ! Allocate for THz
        ALLOCATE (L1Brad(THzNum), STAT=status)
@@ -289,6 +337,9 @@ END MODULE MLSL1Rad
 
 !
 ! $Log$
+! Revision 2.4  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.3  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -41,11 +41,9 @@ CONTAINS
 
     !! ==================== LOCALS =========================
 
-    INTEGER :: astat
-    INTEGER, SAVE :: nsize = 0
     REAL(r8) :: sx1, sx2, sx3, sx4
-    REAL(r8), ALLOCATABLE, DIMENSION(:), SAVE :: apoVec_x, tVec_x
-    REAL(r8), ALLOCATABLE, DIMENSION(:), SAVE :: x1, x2, x3, x4
+    REAL(r8) :: apoVec_x(nVec), tVec_x(nVec)
+    REAL(r8) :: x1(nVec), x2(nVec), x3(nVec), x4(nVec)
 
     status = 0   ! OK so far
 
@@ -61,24 +59,6 @@ CONTAINS
     IF (SUM (qualVec) <= 3) THEN
        status = 2   ! Not enough valid data
        RETURN
-    ENDIF
-
-    !! Allocate local arrays:
-    
-    IF (nsize /= nVec) THEN
-       DEALLOCATE (tVec_x, STAT=astat)
-       ALLOCATE (tVec_x(nVec))
-       DEALLOCATE (apoVec_x, STAT=astat)
-       ALLOCATE (apoVec_x(nVec))
-       DEALLOCATE (x1, STAT=astat)
-       ALLOCATE (x1(nVec))
-       DEALLOCATE (x2, STAT=astat)
-       ALLOCATE (x2(nVec))
-       DEALLOCATE (x3, STAT=astat)
-       ALLOCATE (x3(nVec))
-       DEALLOCATE (x4, STAT=astat)
-       ALLOCATE (x4(nVec))
-       nsize = nVec
     ENDIF
 
     tVec_x = tVec - time
@@ -112,6 +92,9 @@ END MODULE Interpolation
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.3  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

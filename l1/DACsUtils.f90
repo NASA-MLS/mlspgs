@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -96,11 +96,12 @@ CONTAINS
 
 !! Masks for extending sign bits:
 
-    INTEGER :: bitmask7, signmask7, bitmask11, signmask11
+    INTEGER :: bitmask7, signmask7, bitmask11, signmask11, upper4bits
     DATA bitmask7 / z'80' /
     DATA signmask7 / z'FFFFFF00' /
     DATA bitmask11 / z'800' /
     DATA signmask11 / z'FFFFF000' /
+    DATA upper4bits / z'FFF' /
 
 ! Get the 12 bit quantities
 
@@ -117,7 +118,7 @@ CONTAINS
     DO i = 2, 32, 2      ! even indexes
        rindx = i + (i - 1) / 2
        i12 = BigEndianStr (rawdata(rindx)//rawdata(rindx+1))
-       i12 = IAND (i12, z'FFF')        ! mask off upper 4 bits
+       i12 = IAND (i12, upper4bits)        ! mask off upper 4 bits
        IF (IAND (i12, bitmask11) /= 0) THEN
           i12 = IOR (i12, signmask11)
        ENDIF
@@ -432,6 +433,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.4  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.3  2003/03/25 19:53:54  perun
 ! Test D before bit test
 !
