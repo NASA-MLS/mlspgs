@@ -76,9 +76,12 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
 #RETRIEVAL_OBJS = RetrievalModule.o ForwardModelInterface.o
 
 #Special load libraries
-l_specials = 
+l_specials = -lPGSTK.sv3
 
 # $Log$
+# Revision 1.16  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.15  2001/05/31 23:31:36  pwagner
 # Added clouddir to INC_PATHS
 #
