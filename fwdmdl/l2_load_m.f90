@@ -44,7 +44,7 @@ Logical :: geom_deriv(6)
 Integer(i4) :: i, j, k, kk, ht_i, no_t, mnz, kz, si, n_sps, io, nl, &
                Spectag, m, no_phi_t, no_mmaf, jj
 
-Integer(i4) :: ch1, ch2, no_pfa_ch, pfa_ch(2)
+Integer(i4) :: ch1, ch2, no_pfa_ch, pfa_ch(25)
 
 Real(r8) :: dummy(N2lvl), thbs(10), Qlog(3)
 
@@ -127,7 +127,7 @@ Character (LEN=80) :: Fnd, Line
     read(11,*,iostat=io) ch1, ch2
     if(io /= 0) goto 99
 
-    no_pfa_ch = min(2,ch2-ch1+1)
+    no_pfa_ch = ch2-ch1+1
     do i = 1, no_pfa_ch
       ch2 = ch1 + i - 1
       pfa_ch(i) = ch2
@@ -615,7 +615,7 @@ Character (LEN=80) :: Fnd, Line
 !
 ! Get all the filter's loaded & define:
 !
-  no_pfa_ch = min(2,FMC%Channels_range(2)-FMC%Channels_range(1)+1)
+  no_pfa_ch = FMC%Channels_range(2)-FMC%Channels_range(1)+1
   do i = 1, no_pfa_ch
     ch2 = FMC%Channels_range(1) + i - 1
     pfa_ch(i) = ch2
@@ -868,6 +868,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.13  2001/03/24 00:41:48  zvi
+! Get rid of the UARS Channel's center frequency in F_grid_Filter ..
+!
 ! Revision 1.12  2001/03/20 23:22:40  zvi
 ! Change to new geoc_geod routine..
 !
