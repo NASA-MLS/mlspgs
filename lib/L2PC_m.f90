@@ -11,22 +11,22 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL
-  use Intrinsic, only: Lit_Indices, l_zeta, l_none
-  use MLSCommon, only: R8
-  use VectorsModule, only: DESTROYVECTORINFO, VECTOR_T, VECTORVALUE_T
-  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
+  use Intrinsic, only: Lit_Indices, L_NONE, L_RADIANCE, L_TEMPERATURE, &
+    & L_VMR, L_ZETA
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
+  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
+  use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+  use MLSSignals_m, only: GETSIGNALNAME
   use Parse_Signal_m, only: Parse_Signal
   use QuantityTemplates, only: QUANTITYTEMPLATE_T
-  use Intrinsic, only: L_RADIANCE, L_TEMPERATURE, L_VMR
   use String_Table, only: GET_STRING, DISPLAY_STRING
-  use MLSSignals_m, only: GETSIGNALNAME
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_IDENTIFIER
+  use Symbol_Table, only: ENTER_TERMINAL
+  use Symbol_Types, only: T_IDENTIFIER
   use Tree, only: DECORATION
+  use VectorsModule, only: DESTROYVECTORINFO, VECTOR_T, VECTORVALUE_T
 
   implicit NONE
   private
@@ -60,14 +60,14 @@ module L2PC_m
 contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteOneL2PC ---------------
-  subroutine WriteOneL2PC ( l2pc, unit )
+  subroutine WriteOneL2PC ( L2pc, Unit )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
     ! some kind of HDF file
 
     ! Dummy arguments
-    type (l2pc_T), intent(in), target :: l2pc
-    integer, intent(in) :: unit
+    type (l2pc_T), intent(in), target :: L2pc
+    integer, intent(in) :: Unit
 
     ! Local parameters
     character (len=*), parameter :: rFmt = "(4(2x,1pg15.8))"
@@ -75,17 +75,17 @@ contains ! ============= Public Procedures ==========================
 
 
     ! Local variables
-    integer :: blockRow                 ! Index
-    integer :: blockCol                 ! Index
-    integer :: quantity                 ! Loop counter
-    integer :: instance                 ! Loop counter
-    integer :: vector                   ! Loop counter
+    integer :: BlockCol                 ! Index
+    integer :: BlockRow                 ! Index
+    integer :: Instance                 ! Loop counter
+    integer :: Quantity                 ! Loop counter
+    integer :: Vector                   ! Loop counter
 
-    type (QuantityTemplate_T), pointer :: qt  ! Temporary pointers
-    type (Vector_T), pointer :: v       ! Temporary pointer
-    type (MatrixElement_T), pointer :: m0 ! A Matrix0 within kStar
+    character (len=132) :: Line, Word1, Word2 ! Line of text
 
-    character (len=132) :: line,word1,word2 ! Line of text
+    type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
+    type (QuantityTemplate_T), pointer :: Qt  ! Temporary pointers
+    type (Vector_T), pointer :: V       ! Temporary pointer
 
     ! executable code
 
@@ -176,20 +176,20 @@ contains ! ============= Public Procedures ==========================
   end subroutine WriteOneL2PC
   
   ! --------------------------------------- WriteL2PC ---------------
-  subroutine ReadOneL2PC ( l2pc, unit, eof )
+  subroutine ReadOneL2PC ( L2pc, Unit, Eof )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
     ! some kind of HDF file
 
     ! Dummy arguments
-    type (l2pc_T), intent(out), target :: l2pc
-    integer, intent(in) :: unit
-    logical, intent(inout) :: eof
+    type (l2pc_T), intent(out), target :: L2pc
+    integer, intent(in) :: Unit
+    logical, intent(inout) :: Eof
 
     ! Local variables
     integer :: BLOCKCOL                 ! Index
-    integer :: BLOCKROW                 ! Index
     integer :: BLOCKKIND                ! Kind of matrix block
+    integer :: BLOCKROW                 ! Index
     integer :: INSTANCE                 ! Loop counter
     integer :: NOINSTANCESOR1           ! For allocates
     integer :: NOSURFSOR1               ! For allocates
@@ -205,16 +205,16 @@ contains ! ============= Public Procedures ==========================
 
     integer, dimension(:), pointer :: SIGINDS ! Result of parse signal
 
-    logical :: ROWINSTFIRST             ! Matrix order
     logical :: COLINSTFIRST             ! Matrix order
+    logical :: ROWINSTFIRST             ! Matrix order
 
-    type (QuantityTemplate_T), pointer :: qt  ! Temporary pointers
-    type (VectorValue_T), pointer :: vv ! Temporary pointer
-    type (Vector_T), pointer :: v       ! Temporary pointer
-    type (MatrixElement_T), pointer :: m0 ! A Matrix0 within kStar
-    type (Decls) :: decl                ! From the declaration table
+    character (len=132) :: Line         ! Line of text
 
-    character (len=132) :: line         ! Line of text
+    type (Decls) :: Decl                ! From the declaration table
+    type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
+    type (QuantityTemplate_T), pointer :: Qt  ! Temporary pointers
+    type (VectorValue_T), pointer :: Vv ! Temporary pointer
+    type (Vector_T), pointer :: V       ! Temporary pointer
 
     ! executable code
 
@@ -391,16 +391,16 @@ contains ! ============= Public Procedures ==========================
   end subroutine Close_L2PC_File
 
   ! ------------------------------------- Read_l2pc_file ------
-  subroutine Read_l2pc_file ( lun )
+  subroutine Read_l2pc_file ( Lun )
     use Trace_M, only: Trace_begin, Trace_end
     use Toggles, only: Toggle, gen
     ! Read all the bins in an l2pc file
     integer, intent(in) :: lun
 
     ! Local variables
-    type (l2pc_T) :: l2pc
-    integer :: dummy
-    logical :: eof
+    type (l2pc_T) :: L2pc
+    integer :: Dummy
+    logical :: Eof
 
     ! Executable code
     if ( toggle (gen) ) call trace_begin ( "Read_l2pc_file" )
@@ -435,8 +435,8 @@ contains ! ============= Public Procedures ==========================
     integer :: QUANTITY                 ! Loop index
     integer :: VECTOR                   ! Loop index
 
-    type (Vector_T), pointer :: v       ! Temporary pointer
-    type (QuantityTemplate_T), pointer :: qt ! Temporary pointer
+    type (QuantityTemplate_T), pointer :: Qt ! Temporary pointer
+    type (Vector_T), pointer :: V       ! Temporary pointer
 
     ! Exectuable code
     ! If this wasn't created from a file we don't have to do anything,
@@ -471,7 +471,7 @@ contains ! ============= Public Procedures ==========================
   subroutine DestroyL2PCDatabase
 
     ! Local variables
-    integer :: i, status
+    integer :: I, Status
 
     if (associated(l2pcDatabase)) then
       do i = 1, size(l2pcDatabase)
@@ -486,6 +486,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.10  2001/04/26 22:32:04  vsnyder
+! Alphabetize USEs and declarations
+!
 ! Revision 2.9  2001/04/26 22:12:21  livesey
 ! Fixed, gets l_zeta, l_none
 !
