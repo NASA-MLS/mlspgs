@@ -40,7 +40,7 @@ contains
                                     &   ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg
-    use Geometry, only: EarthRadA, EarthRadB, SpeedOfLight
+    use Geometry, only: EarthRadA, EarthRadB
     use Get_Beta_Path_m, only: Get_Beta_Path, Beta_Group_T
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
@@ -77,7 +77,7 @@ contains
     use Toggles, only: Emit, Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
-    use Units, only: Deg2Rad
+    use Units, only: Deg2Rad, SpeedOfLight
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
                          &   GETVECTORQUANTITYBYTYPE, &
                          &   M_FullDerivatives
@@ -2406,6 +2406,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.102  2003/01/08 00:16:39  vsnyder
+! Use "associated" instead of "present" to control optional computations.
+! Cosmetic changes, too.
+!
 ! Revision 2.101  2002/12/12 01:12:47  vsnyder
 ! Let InvalidQuantity have a length > 1
 !

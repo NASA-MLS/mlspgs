@@ -993,7 +993,7 @@ contains
   subroutine Get_GL_Slabs_Arrays ( Catalog,p_path,t_path,vel_z,gl_slabs, &
                              &     no_ele,dt )
 
-    use Geometry, only: SpeedOfLight
+    use Units, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
 
     type(Catalog_T), dimension(:), intent(in) :: Catalog
@@ -1059,6 +1059,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.10  2002/12/20 20:22:59  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.9  2002/12/03 00:34:23  vsnyder
 ! Test optional argument presence before using them
 !
