@@ -37,35 +37,35 @@ module MLSSignals_M
 
   ! =====     Defined Operators and Generic Identifiers     ==============
   
-  interface DUMP
-    module procedure DUMP_BANDS, DUMP_RADIOMETERS, DUMP_SIGNALS, &
-      & DUMP_SPECTROMETERTYPES
+  interface Dump
+    module procedure Dump_Bands, Dump_Radiometers, Dump_Signals, &
+      & Dump_SpectrometerTypes
   end interface
 
   ! This boring type defines a module
   type, public :: Module_T
+    integer :: Name                     ! Sub_rosa index of declaration's label
     integer :: Node                     ! Node of tree where module declared
-    integer :: Name                     ! Sub_rosa index
     logical :: spaceCraft               ! Set if `module' is in fact s/c
   end type Module_T
 
   ! This type defines a radiometer.
 
   type, public :: Radiometer_T
-    integer :: InstrumentModule         ! Tree index
-    integer :: Prefix                   ! Sub_rosa index
-    integer :: Suffix                   ! Sub_rosa index
     real(r8) :: LO                      ! Local oscillator in MHz
+    integer :: InstrumentModule         ! Tree index
+    integer :: Prefix                   ! Sub_rosa index of declaration's label
+    integer :: Suffix                   ! Sub_rosa index
   end type Radiometer_T
 
   ! The second type describes a band within that radiometer
 
   type, public :: Band_T
-    integer :: Prefix                   ! Sub_rosa index
+    real(r8) :: CenterFrequency         ! Negative if not present (wide filter)
+    integer :: Prefix                   ! Sub_rosa index of declaration's label
     integer :: Radiometer               ! Tree index
     integer :: SpectrometerType         ! Tree index
     integer :: Suffix                   ! Sub_rosa index
-    real(r8) :: CenterFrequency         ! Negative if not present (wide filter)
   end type Band_T
 
   ! This type gives the information for specific spectrometer families.  For
@@ -73,8 +73,8 @@ module MLSSignals_M
   ! Otherwise, the arrays are empty.
 
   type, public :: SpectrometerType_T
-    integer :: Name                     ! Name for spectrometer type
     real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
+    integer :: Name                     ! Sub_rosa index of declaration's label
   end type SpectrometerType_T
 
   ! This is the key type, it describes a complete signal (one band, or a
@@ -82,18 +82,19 @@ module MLSSignals_M
   ! type flying around, see later.
 
   type, public :: Signal_T
+    real(r8) :: CenterFrequency         ! Band local oscillator
+    real(r8) :: LO                      ! Radiometer local oscillator
+    real(r8), pointer, dimension(:) :: Frequencies=>NULL() ! Mainly a shallow copy
+    real(r8), pointer, dimension(:) :: Widths=>NULL() ! Mainly a shallow copy
+
     integer :: Band                     ! Tree index
     integer :: InstrumentModule         ! Tree index
+    integer :: Name                     ! Sub_rosa index of declaration's label
     integer :: Radiometer               ! Tree index
     integer :: SideBand                 ! -1:lower, +1:upper, 0:folded
     integer :: Spectrometer             ! Just a spectrometer number
     integer :: SpectrometerType         ! Tree index
     integer :: Switch                   ! Just a switch number
-
-    real(r8) :: LO                      ! Radiometer local oscillator
-    real(r8) :: CenterFrequency         ! Band local oscillator
-    real(r8), pointer, dimension(:) :: Frequencies=>NULL() ! Mainly a shallow copy
-    real(r8), pointer, dimension(:) :: Widths=>NULL() ! Mainly a shallow copy
   end type Signal_T
 
   ! Now some databases, the first are fairly obvious.
@@ -121,11 +122,10 @@ module MLSSignals_M
 contains
 
   ! -------------------------------------------------  MLSSignals  -----
-  subroutine MLSSignals ( ROOT, Field_Indices, Spec_Indices )
+  subroutine MLSSignals ( ROOT, Field_Indices )
     ! Process the MLSSignals section of the L2 configuration file.
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
     integer, intent(in) :: Field_Indices(field_first:)
-    integer, intent(in) :: Spec_Indices(spec_first:)
 
     type(band_T) :: Band                ! To be added to the database
     integer :: MyChannels               ! subtree index of field
@@ -950,6 +950,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.3  2001/03/15 18:39:42  vsnyder
+! Periodic commit
+!
 ! Revision 2.2  2001/03/14 23:44:47  vsnyder
 ! Correct a comment, other cosmetic changes in comments
 !
