@@ -10,7 +10,7 @@ module STRING_TABLE
                   INSERTED, HASH_FULL => FULL, HASH_NOT_KEY => NOT_KEY, &
                   HASH_BAD_LOC => BAD_LOC, HASH_EMPTY => EMPTY
   use IO_STUFF, only: GET_LUN
-  use MACHINE, only: IO_ERROR
+  use MACHINE, only: CRASH_BURN, IO_ERROR
   use OUTPUT_M, only: BLANKS, OUTPUT
   implicit NONE
   private
@@ -100,7 +100,7 @@ contains
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_CHAR_TABLE-E- Unable to allocate storage', &
       stat )
-    stop
+    call crash_burn
   end subroutine ALLOCATE_CHAR_TABLE
   ! ==================================     ALLOCATE_HASH_TABLE     =====
   subroutine ALLOCATE_HASH_TABLE ( AMOUNT, STATUS )
@@ -139,7 +139,7 @@ contains
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_HASH_TABLE-E- Unable to allocate storage', &
       stat )
-    stop
+    call crash_burn
   end subroutine ALLOCATE_HASH_TABLE
  ! =================================     ALLOCATE_STRING_TABLE     =====
   subroutine ALLOCATE_STRING_TABLE ( AMOUNT, STATUS )
@@ -160,7 +160,7 @@ contains
     call io_error &
       ( 'STRING_TABLE%ALLOCATE_STRING_TABLE-E- Unable to allocate storage', &
       stat )
-    stop
+    call crash_burn
   end subroutine ALLOCATE_STRING_TABLE
   ! =========================================     CLEAR_STRING     =====
   subroutine CLEAR_STRING
@@ -390,7 +390,7 @@ contains
     char = char_table(cur_pos)
     return
 400 call io_error ( 'While reading input in String_Table%Get_Char', iostat )
-    stop
+    call crash_burn
   end subroutine GET_CHAR
   ! ===========================================     GET_STRING     =====
   subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP, NOERROR, IERR )
@@ -590,7 +590,7 @@ contains
              call output( 'the last arg in the call to init_lexer ' // &
               & 'in your main program', advance='yes')
           end if
-        stop
+        call crash_burn
       end if
       ! The hash key matches; check whether the string does
       if ( myDEBUG ) then
@@ -672,7 +672,7 @@ contains
         return
       end if
       call output ( 'STRING_TABLE%OPEN_INPUT-E- Unable to get LUN', advance='yes' )
-      stop
+      call crash_burn
     end if
     my_file = file_name
     do
@@ -692,7 +692,7 @@ contains
       call output( 'Enter input file name: ', advance='yes')
       read ( *, '(a)', end=999 ) my_file
     end do
-999 stop
+999 call crash_burn
   end subroutine OPEN_INPUT
  ! =========================================     STRING_LENGTH     =====
   integer function STRING_LENGTH ( STRING )
@@ -730,7 +730,7 @@ contains
       end if
       call io_error &
       ( 'stat_TABLE%DOUBLE_CHARS-E- Unable to allocate storage', stat )
-      stop
+      call crash_burn
     end if
     old_char = char_table
     deallocate ( char_table )
@@ -742,7 +742,7 @@ contains
       end if
       call io_error &
       ( 'stat_TABLE%DOUBLE_CHARS-E- Unable to allocate storage', stat )
-      stop
+      call crash_burn
     end if
     char_table(:ubound(old_char,1)) = old_char
     deallocate ( old_char )
@@ -762,7 +762,7 @@ contains
       end if
       call io_error &
       ( 'STRING_TABLE%DOUBLE_STRINGS-E- Unable to allocate storage', stat )
-      stop
+      call crash_burn
     end if
     old_string = strings
     deallocate ( strings )
@@ -774,7 +774,7 @@ contains
       end if
       call io_error &
       ( 'STRING_TABLE%DOUBLE_STRINGS-E- Unable to allocate storage', stat )
-      stop
+      call crash_burn
     end if
     strings(0:ubound(old_string,1)) = old_string
     deallocate ( old_string )
@@ -810,7 +810,7 @@ contains
         call output( string, advance='no')
         call output( ' not in 1 .. ', advance='no')
         call output( nstring, advance='yes')
-        stop
+        call crash_burn
       end if
     end if
     if ( present(ierr) ) ierr=0
@@ -823,6 +823,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.18  2004/08/19 00:14:03  pwagner
+! crash_burn instead of stop
+!
 ! Revision 2.17  2004/05/20 23:53:10  vsnyder
 ! Handle no-luns-available error condition
 !
