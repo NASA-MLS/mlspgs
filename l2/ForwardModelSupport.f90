@@ -412,6 +412,9 @@ contains ! =====     Public Procedures     =============================
     info%windowUnits = phyq_profiles
     info%xStar = 0
     info%yStar = 0
+    ! Make sure PFAMolecules is associated, because its size is used in
+    ! a specification expression.
+    call allocate_test ( info%PFAMolecules, 0, 'info%PFAMolecules', moduleName )
 
     got = .false.
     info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
@@ -886,6 +889,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.93  2004/06/12 00:42:35  vsnyder
+! Make sure PFAMolecules is associated -- at least with zero size
+!
 ! Revision 2.92  2004/05/18 01:25:14  vsnyder
 ! Hopefully finish pfaMolecules field support
 !
