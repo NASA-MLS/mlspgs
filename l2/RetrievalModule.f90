@@ -88,6 +88,7 @@ contains
       & DestroyVectorInfo, GetVectorQuantityByType, M_LinAlg, &
       & Vector_T, VectorValue_T
     use CloudRetrievalModule, only: CloudRetrieval
+    use IEEE_Arithmetic
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST;
@@ -1878,12 +1879,26 @@ contains
             exit
           end if
 
+          if ( ieee_is_nan ( aj%fnorm ) ) then
+            abandoned = .true.
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Retrieval abandoned due to numerical problems (with radiances?)' )
+            exit
+          end if
 
           ! aj%fnorm is now the norm of f, not its square.
           ! The following calculation of fnmin was commented out, but on
           ! 11 September 2002 FTK told me it's the right thing to do
           ! after all.
           aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
+
+          if ( ieee_is_nan ( aj%fnmin ) ) then
+            abandoned = .true.
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Retrieval abandoned due to numerical problems (with derivatives?)' )
+            exit
+          end if
+
           if ( aj%fnmin < 0.0 ) then
             call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
             call output ( aj%fnmin, advance='yes' )
@@ -2241,6 +2256,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.255  2004/04/19 19:23:44  livesey
+! Better handling of NaNs in radiances or derivatives
+!
 ! Revision 2.254  2004/01/29 01:45:32  livesey
 ! Removed print statement
 !
