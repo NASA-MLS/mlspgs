@@ -18,8 +18,8 @@ module Fill                     ! Create vectors and fill them.
     & F_LSB, F_LSBFRACTION, &
     & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
     & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISEBANDWIDTH, F_PRECISION,  &
-    & F_PRECISIONFACTOR, &
-    & F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
+    & F_ORBITINCLINATION, F_PRECISIONFACTOR, &
+    & F_PTANQUANTITY, F_PHITAN, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
     & F_REFRACT, F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
     & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
     & F_SOURCE, F_SOURCEGRID, &
@@ -70,7 +70,7 @@ module Fill                     ! Create vectors and fill them.
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
-  use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure
+  use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure
   use SnoopMLSL2, only: SNOOP
   use String_Table, only: Display_String
   use Time_M, only: Time_Now
@@ -150,7 +150,8 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: ErrorReadingL1B = miscellaneous_err + 1
   integer, parameter :: NeedTempREFGPH = errorReadingL1B + 1
   integer, parameter :: NeedH2O = needTempRefGPH + 1
-  integer, parameter :: NeedGeocAltitude = needH2O + 1
+  integer, parameter :: NeedOrbitInclination = needH2O + 1
+  integer, parameter :: NeedGeocAltitude = needOrbitInclination + 1
   integer, parameter :: BadGeocAltitudeQuantity = needGeocAltitude + 1
   integer, parameter :: BadTemperatureQuantity = badGeocAltitudeQuantity + 1
   integer, parameter :: BadREFGPHQuantity = badTemperatureQuantity + 1
@@ -213,6 +214,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: MODELQTY
     type (vectorValue_T), pointer :: NBWQUANTITY
     type (vectorValue_T), pointer :: NOISEQTY
+    type (vectorValue_T), pointer :: ORBITINCLINATIONQUANTITY
     type (vectorValue_T), pointer :: PRECISIONQUANTITY
     type (vectorValue_T), pointer :: QUANTITY ! Quantity to be filled
     type (vectorValue_T), pointer :: RADIANCEQUANTITY
@@ -224,6 +226,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: SYSTEMPQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
+    type (vectorValue_T), pointer :: PHITANQUANTITY
     type (vectorValue_T), pointer :: PTANQUANTITY
     type (vectorValue_T), pointer :: USB
     type (vectorValue_T), pointer :: USBFRACTION
@@ -287,6 +290,10 @@ contains ! =====     Public Procedures     =============================
     integer :: NBWVECTORINDEX           ! In vector database
     integer :: NBWQUANTITYINDEX         ! In vector database
     integer :: NoFineGrid               ! no of fine grids for cloud extinction calculation
+    integer :: ORBITINCLINATIONVECTORINDEX ! In the vector database
+    integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
+    integer :: PHITANVECTORINDEX        ! In the vector database
+    integer :: PHITANQUANTITYINDEX      ! In the quantities database
     integer :: PTANVECTORINDEX          ! In the vector database
     integer :: PTANQUANTITYINDEX        ! In the quantities database
     integer :: QUANTITYINDEX            ! Within the vector
@@ -565,6 +572,11 @@ contains ! =====     Public Procedures     =============================
           case ( f_noiseBandwidth )
             nbwVectorIndex = decoration(decoration(subtree(1,gson)))
             nbwQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_orbitInclination ) ! For hydrostatic fill
+            orbitinclInationVectorIndex = &
+              & decoration(decoration(subtree(1,gson)))
+            orbitinclInationQuantityIndex = &
+              & decoration(decoration(decoration(subtree(2,gson))))
           case ( f_precision )      ! For masking l1b radiances
             precisionVectorIndex = decoration(decoration(subtree(1,gson)))
             precisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -577,6 +589,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_PtanQuantity ) ! For losGrid fill
             PtanVectorIndex = decoration(decoration(subtree(1,gson)))
             PtanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_Phitan ) ! For losGrid fill
+            PhitanVectorIndex = decoration(decoration(subtree(1,gson)))
+            PhitanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
             vectorIndex = decoration(decoration(subtree(1,gson)))
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -745,6 +760,14 @@ contains ! =====     Public Procedures     =============================
               & vectors(geocAltitudeVectorIndex), geocAltitudeQuantityIndex)
             if ( geocAltitudeQuantity%template%quantityType /= l_tngtgeocAlt ) &
               & call Announce_Error ( key, badGeocAltitudeQuantity )
+
+            if ( .not. got(f_phiTan) ) &
+              & call Announce_Error ( key, 0, 'Needs phiTan quantity' )
+            phiTanQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(phiTanVectorIndex), phiTanQuantityIndex)
+            if ( phiTanQuantity%template%quantityType /= l_phiTan ) &
+              & call Announce_Error ( key, 0, 'Has a bad phiTan quantity' )
+
             if ( .not. got(f_h2oQuantity) ) &
               & call Announce_Error ( key, needH2O )
             h2oQuantity => GetVectorQtyByTemplateIndex( &
@@ -752,11 +775,18 @@ contains ! =====     Public Procedures     =============================
             if ( .not. ValidateVectorQuantity(h2oQuantity, &
               & quantityType=(/l_vmr/), molecule=(/l_h2o/)) )&
               & call Announce_Error ( key, badGeocAltitudeQuantity )
+
+            if ( .not. got(f_orbitInclination) ) &
+              & call Announce_Error ( key, needOrbitInclination )
+            orbitInclinationQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(orbitInclinationVectorIndex), orbitInclinationQuantityIndex)
+
           else
             nullify ( geocAltitudeQuantity, h2oQuantity )
           end if
           call FillVectorQtyHydrostatically ( key, quantity, temperatureQuantity, &
-            & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations )          
+            & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
+            & phiTanQuantity, geocAltitudeQuantity, maxIterations )          
 
         case ( l_isotope ) ! --------------- Isotope based fills -------
           if (.not. all(got( (/f_ratioQuantity, f_sourceQuantity/) ) ) ) &
@@ -2847,13 +2877,15 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------- FillVectorHydrostatically ----
   subroutine FillVectorQtyHydrostatically ( key, quantity, &
     & temperatureQuantity, refGPHQuantity, h2oQuantity, &
-    & geocAltitudeQuantity, maxIterations )
+    & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations )
     ! Various hydrostatic fill operations
     integer, intent(in) :: key          ! For messages
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
     type (VectorValue_T), intent(in) :: TEMPERATUREQUANTITY
     type (VectorValue_T), intent(in) :: REFGPHQUANTITY
     type (VectorValue_T), pointer :: H2OQUANTITY
+    type (VectorValue_T), pointer :: ORBITINCLINATIONQUANTITY
+    type (VectorValue_T), pointer :: PHITANQUANTITY
     type (VectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     integer, intent(in) :: MAXITERATIONS
     ! H2OQuantity and GeocAltitudeQuantity have to be pointers
@@ -2944,8 +2976,9 @@ contains ! =====     Public Procedures     =============================
 	if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
         return
       end if
-      call GetHydrostaticTangentPressure ( quantity, temperatureQuantity,&
-        & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations )
+      call Get2DHydrostaticTangentPressure ( quantity, temperatureQuantity,&
+        & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
+        & phiTanQuantity, geocAltitudeQuantity, maxIterations )
     case default
       call Announce_error ( 0, 0, 'No such fill yet' )
     end select
@@ -3473,6 +3506,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " needs geocAltitudeQuantity.", advance='yes' )
     case ( needH2O )
       call output ( " needs H2OQuantity.", advance='yes' )
+    case ( needOrbitInclination )
+      call output ( " needs OrbitalInclination.", advance='yes' )
     case ( needTempREFGPH )
       call output ( " needs temperatureQuantity and refGPHquantity.", advance='yes' )
     case ( noExplicitValuesGiven )
@@ -3538,6 +3573,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.131  2002/06/26 01:26:21  livesey
+! Added 2D pressure guesser
+!
 ! Revision 2.130  2002/06/18 20:00:36  livesey
 ! Removed unwanted print
 !
