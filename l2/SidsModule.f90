@@ -129,16 +129,6 @@ contains
           call forwardModel ( configDatabase(configs(config)), &
             & FwdModelIn, FwdModelExtra, &
             & FwdModelOut, ifm, fmStat, Jacobian )
-
-          ! For the moment, destroy the jacobian here-----------------------
-          call DestroyBlock ( Jacobian )
-          allocate ( Jacobian%block ( jacobian%row%nb, jacobian%col%nb ), &
-            & STAT=status )
-          if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
-            & MLSMSG_Allocate//'jacobian%block' )
-          !-----------------------------------------------------------------
-
-          fmStat%rows = .false. 
         else
           call forwardModel ( configDatabase(configs(config)), &
             & FwdModelIn, FwdModelExtra, &
@@ -178,6 +168,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.28  2001/05/03 23:09:09  livesey
+! Removed temporary code to delete jacobian
+!
 ! Revision 2.27  2001/05/03 20:33:51  vsnyder
 ! Added a nullify and did some cosmetic changes
 !
