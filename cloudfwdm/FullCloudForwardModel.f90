@@ -367,6 +367,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !---------------------------------------------------------
     call FindClosestInstances ( temp, radiance, closestInstances )
     instance = closestInstances(maf)
+    tLat = temp%template%geodLat(1,instance)    ! get latitude for each instance
+    print*,'Lat=',tLat
 
 
     ivmr=0
@@ -546,8 +548,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        print*,'Frequency=', frequencies/1e3_r8
     endif
 
-    tLat = temp%template%geodLat(1,instance)
-
 
     if (prt_log) print*, 'jacobian is true'
 
@@ -575,17 +575,18 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           CloudType='Frontal'
        endif
 
+      ! find cloud top index from state_ext that is defaulted as zero
        iCloudHeight = 0
        do i = 1, noCldSurf
-          if(state_ext%values(i,instance) .ne. 0.) then
+          if(state_ext%values(i,instance) > 1.e-6_r8) then
             iCloudHeight = i                    ! FIND INDEX FOR CLOUD-TOP              
           endif
-        enddo
+       enddo
 
-        CloudHeight = 20.e3_r8     ! meters  as a default
-        if(iCloudHeight .ne. 0) CloudHeight = gph%values(iCloudHeight, instance)
+       CloudHeight = 18.e3_r8     ! meters
+       if(iCloudHeight .ne. 0) CloudHeight = gph%values(iCloudHeight, instance)
 
-        call CLOUD_MODEL ( CloudType, CloudHeight, gph%values(:,instance),   &
+       call CLOUD_MODEL ( CloudType, CloudHeight, gph%values(:,instance),   &
 	     &            noSurf, WC )
 
     ENDIF
@@ -643,8 +644,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     if (prt_log) print*, 'Successfully done with Full Cloud Foward Model ! '
 
-    deallocate (WC, stat=status)
-     
     !------------------------------------------------------------------------
     ! Now store results in relevant vectors
     ! Vectors are stored (noChannels*noSurfaces, noInstances), so transpose
@@ -844,13 +843,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              do i=1,noSgrid
              ! now we normalize cloud extinction weighting functions at 200GHz 
              ! and output the transmission functions via Jacobian
-             if(a_trans(i,mif,chan) .ne. 0._r8) then
                jBlock%values(chan,i+(mif-1)*noSgrid)= a_trans(i,mif,chan)* &
                   & (frequencies(chan)/200000._r8)**4
-             else    ! in case of very tiny IWC
-               jBlock%values(chan,i+(mif-1)*noSgrid) = -106._r8 * &
-                  & (frequencies(chan)/200000._r8)**4
-             end if
              end do
              end do
           end if  ! doChannel
@@ -865,6 +859,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !------------------------------
     ! Remove temporary quantities
     !------------------------------
+    deallocate (WC, stat=status)
+     
     call deallocate_test ( superset, 'superset',          ModuleName )
 
     call Deallocate_test ( a_massMeanDiameter,                               &
@@ -912,6 +908,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.63  2001/10/18 22:17:02  dwu
+! pretection for sensitivity=0
+!
 ! Revision 1.62  2001/10/18 06:06:24  dwu
 ! minor
 !
