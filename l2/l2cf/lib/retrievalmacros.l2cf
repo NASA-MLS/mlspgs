@@ -29,7 +29,7 @@
 
 ; These macros define the MLS standard products
 ; IWC is somewhat special
-!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH})
+!define(allStandardProductsWithColumns,{BrO,CH3CN,ClO,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2})
 !define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
@@ -567,6 +567,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusL
 
 
 ; $Log$
+; Revision 1.99  2004/09/12 22:13:25  pwagner
+; Directwrite of fwmrads and scan residuals independent of whether l2version defined
+;
 ; Revision 1.98  2004/06/26 00:57:14  livesey
 ; Added macros to write scan residual
 ;
