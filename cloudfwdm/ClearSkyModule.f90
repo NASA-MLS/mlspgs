@@ -7,12 +7,13 @@ module ClearSkyModule
 ! MLS CLEAR SKY RADIANCE MODEL
 ! -------------------------------------------------------------------------
 
+      use Bill_GasAbsorption, only: get_beta_bill
       use GasAbsorption, only: GET_BETA
       use MLSCommon, only: r8
       use PrtMsg, only: HEADER
       use SpectraLines, only: SETUP_SPECTRA
       use SurfaceModel, only: SURFACE
-      use SpectroscopyCatalog_m, only: CATALOG_T, LINES
+      use SpectroscopyCatalog_m, only: CATALOG_T
 
       IMPLICIT NONE
       Private
@@ -44,7 +45,8 @@ contains
 !     ATMOSPHERIC PROFILE PARAMETERS
 !-------------------------------------------------
 
-      INTEGER :: L, NU, I, J, LORS, NS
+      INTEGER :: L, NU, I, J, LORS, NS, n_sps, Spectag
+
       REAL(r8) :: RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
       REAL(r8) :: XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
       REAL(r8) :: VMR(NS,L+1),VMR1(NS)
@@ -54,6 +56,7 @@ contains
 !     SURFACE REFLECTIVITY
 !-------------------------------------------------
 ! local variables
+
       REAL(r8):: RH(NU)                   ! HORIZONTAL
       REAL(r8):: RV(NU)                   ! VERTICAL
       REAL(r8):: X(NU)                    ! SCATTERING ANGLES
@@ -64,8 +67,19 @@ contains
 
       Type(Catalog_T), INTENT(IN) :: Catalog(:)
 
-!------------------------------------------------------------------------
+      Logical :: Bill_Spectra
+
+!-------------------------Begin Execution----------------------------------------
+
 !      CALL HEADER(2)
+
+      Bill_Spectra = .false.
+
+!      n_sps = Size(Catalog)
+
+!      DO i = 1, n_sps
+!        Spectag = Catalog(i)%Spec_Tag
+!      Enddo
       
       CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,   &
                   &      GAMMA,N2,MOL,NMOL,NCNT)
@@ -88,10 +102,8 @@ contains
          Z(I)=XZ(I+1)-XZ(I)
          T(I)=(XT(I+1)+XT(I))*0.5
 
-         P=(LOG10(XP(I+1))+LOG10(XP(I)))*0.5     !!! NEED TO CHANGE TO P(I)
+         P=(LOG10(XP(I+1))+LOG10(XP(I)))*0.5     
          P=10**P
-
-!         DQ=(XQ(I+1)+XQ(I))*0.5
 
          DQ=(LOG10( max(1.e-39_r8, XQ(I+1)) )+ &
          &         LOG10( max(1.e-39_r8, XQ(I)) ) )*0.5
@@ -103,15 +115,25 @@ contains
             VMR1(J)=10**VMR1(J)
          ENDDO
 
-         CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-              &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS)   
-                                             ! HERE DQ IS H2O MIXING RATIO
-         TAU(I)=DR*Z(I)
+         If ( .not. Bill_Spectra ) then
 
-         CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
-              &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS) 
+           ! Using default spectroscopy data
+
+           CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
+                &        MOL,NMOL,NCNT,T(I),P,F,DQ,VMR1,DR,NS)   
+                                             ! HERE DQ IS H2O MIXING RATIO
+           TAU(I)=DR*Z(I)
+
+           CALL GET_BETA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,GAMMA,N2,  &
+                &        MOL,NMOL,NCNT,T(I),P,F,100._r8,VMR1,DR,NS) 
                                              ! HERE DQ IS RELATIVE HUMIDITY!
-         TAU100(I)=DR*Z(I)
+           TAU100(I)=DR*Z(I)
+         
+         else
+
+           ! Using bill's spectroscopy data
+           call get_beta_bill (T(I), P, F, DQ, VMR1, DR, NS, Catalog)
+         endif
 
       ENDDO
 
@@ -120,6 +142,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.8  2001/11/09 18:07:36  jonathan
+! add spectra catalog
+!
 ! Revision 1.7  2001/10/04 23:35:15  dwu
 ! *** empty log message ***
 !
