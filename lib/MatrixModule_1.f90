@@ -12,10 +12,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use DUMP_0, only: DUMP
   use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
     & ColumnScale, CopyBlock, CreateBlock, DestroyBlock, Dump, GetDiagonal, &
-    & GetVectorFromColumn, M_Absent, M_Banded, M_Full, MatrixElement_T, &
-    & MaxAbsVal, MinDiag, MultiplyMatrixBlocks, MultiplyMatrixVector, &
-    & MultiplyMatrixVectorNoT, operator(+), operator(.TX.), RowScale, &
-    & ScaleBlock, SolveCholesky, UpdateDiagonal
+    & GetMatrixElement, GetVectorFromColumn, M_Absent, M_Banded, M_Full, &
+    & MatrixElement_T, MaxAbsVal, MinDiag, MultiplyMatrixBlocks, &
+    & MultiplyMatrixVector, MultiplyMatrixVectorNoT, operator(+), &
+    & operator(.TX.), RowScale, ScaleBlock, SolveCholesky, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -33,7 +33,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_L1
   public :: Dump_Struct, FillExtraCol, FillExtraRow, FindBlock, GetDiagonal
   public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
-  public :: GetVectorFromColumn, GetVectorFromColumn_1, InvertCholesky
+  public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
+  public :: GetVectorFromColumn_1, InvertCholesky
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
@@ -107,6 +108,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface MinDiag
     module procedure MinDiag_Cholesky, MinDiag_SPD
+  end interface
+
+  interface GetMatrixElement
+    module procedure GetMatrixElement_1
   end interface
 
   interface MultiplyMatrixVector   ! A^T V
@@ -423,7 +428,6 @@ contains ! =====     Public Procedures     =============================
     if (associated(x%block)) then
       do i = 1, x%row%nb
         do j = 1, x%col%nb
-          ! if ( associated(x%block(i,j)) )
           call destroyBlock ( x%block(i,j) )
         end do ! j
       end do ! i
@@ -452,7 +456,8 @@ contains ! =====     Public Procedures     =============================
   subroutine ColumnScale_1 ( X, V, NEWX ) ! Z = X V where V is a diagonal
   !                                matrix represented by a vector and Z is X
   !                                or NEWX.
-  !                                Any "extra" row or column is not scaled.
+  !                                Any "extra" column is not scaled (but an
+  !                                extra row is).
     type (Matrix_T), intent(inout), target :: X
     type (Vector_T), intent(in) :: V
     type (Matrix_T), intent(out), target, optional :: NEWX 
@@ -463,14 +468,13 @@ contains ! =====     Public Procedures     =============================
     nc = x%col%nb
     if ( x%col%extra ) nc = nc - 1
     nr = x%row%nb
-    if ( x%row%extra ) nr = nr - 1
     if ( present(newx) ) then
       call createEmptyMatrix ( newx, 0, x%row%vec, x%col%vec, &
         & x%row%instFirst, x%col%instFirst )
       do j = 1, nc
         do i = 1, nr
           call ColumnScale ( x%block(i,j), &
-            & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
+            & v%quantities(x%row%quant(j))%values(:,x%row%inst(j)), &
             & newx%block(i,j) )
         end do ! i = nr
       end do ! j = nc
@@ -478,7 +482,7 @@ contains ! =====     Public Procedures     =============================
       do j = 1, nc
         do i = 1, nr
           call ColumnScale ( x%block(i,j), &
-            & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)) )
+            & v%quantities(x%row%quant(j))%values(:,x%row%inst(j)) )
         end do ! i = nr
       end do ! j = nc
     end if
@@ -880,6 +884,46 @@ contains ! =====     Public Procedures     =============================
     kronecker => databaseElement%kronecker
   end subroutine GetKroneckerFromDatabase
 
+  ! -----------------------------------------  GetMatrixElement_1  -----
+  real(r8) function GetMatrixElement_1 ( Matrix, Row, Col )
+  ! Get the (row,col) element of Matrix
+    type(matrix_T), intent(in) :: Matrix
+    integer, intent(in) :: Row, Col
+
+    integer :: I, J      ! Block of Matrix
+    integer :: II, JJ    ! Element of matrix%block(i,j)
+    integer :: MM, NN    ! Number of rows and columns in blocks before (i,j)
+
+    if ( .not. associated(matrix%block) ) call MLSMessage ( MLSMSG_Error, &
+      & "Block not associated in GetMatrixElement", moduleName )
+    ii = 0
+    jj = 0
+    mm = 0
+    nn = 0
+    if ( row > 0 ) then
+      do i = 1, matrix%row%nb
+        if ( mm + matrix%block(i,1)%nrows >= row ) then
+          ii = row - mm
+          exit
+        end if
+        mm = mm + matrix%block(i,1)%nrows
+      end do ! i
+    end if
+    if ( col > 0 ) then
+      do j = 1, matrix%col%nb
+        if ( nn + matrix%block(1,j)%ncols >= col ) then
+          jj = col - nn
+          exit
+        end if
+        nn = nn + matrix%block(1,j)%ncols
+      end do
+    end if
+    if ( ii == 0 .or. jj == 0 ) call MLSMessage ( MLSMSG_Error, &
+      & "Row or Column subscript out-of-bounds in GetMatrixElement", &
+      & moduleName )
+    getMatrixElement_1 = getMatrixElement ( matrix%block(i,j), ii, jj )
+  end function GetMatrixElement_1
+
   ! --------------------------------------  GetMatrixFromDatabase  -----
   subroutine GetMatrixFromDatabase ( DatabaseElement, Matrix )
   ! Get a POINTER to a matrix object from DatabaseElement.
@@ -977,11 +1021,16 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------  MaxAbsVal_1  -----
   real(r8) function MaxAbsVal_1 ( A )
   ! Return the magnitude of the element in A that has the largest magnitude.
+  ! Don't include the extra row or column.
     type(Matrix_T), intent(in) :: A
-    integer :: I, J
+    integer :: I, J, M, N
     maxAbsVal_1 = 0.0_r8
-    do i = 1, a%row%nb
-      do j = 1, a%col%nb
+    m = a%row%nb
+    if ( a%row%extra ) m = m - 1
+    n = a%col%nb
+    if ( a%col%extra ) n = n - 1
+    do i = 1, m
+      do j = 1, n
         if ( a%block(i,j)%kind /= m_absent ) &
           & maxAbsVal_1 = max(maxAbsVal_1,maxAbsVal(a%block(i,j)))
       end do
@@ -1217,26 +1266,9 @@ contains ! =====     Public Procedures     =============================
           mi => a%col%vec%quantities(a%row%quant(i))%mask(:,a%row%inst(i))
         do_update = my_update
         do k = 1, a%row%nb
-          if ( associated(mi) ) then
-            if ( associated(mj) ) then
-              call multiplyMatrixBlocks ( &
-                & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update, &
-                & xmask=mi, ymask=mj )
-            else
-              call multiplyMatrixBlocks ( &
-                & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update, &
-                & xmask=mi )
-            end if
-          else
-            if ( associated(mj) ) then
-              call multiplyMatrixBlocks ( &
-                & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update, &
-                & ymask=mj )
-            else
-              call multiplyMatrixBlocks ( &
-                & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update )
-            end if
-          end if
+          call multiplyMatrixBlocks ( &
+            & a%block(k,i), a%block(k,j), z%m%block(i,j), update=do_update, &
+            & xmask=mi, ymask=mj, upper = i == j )
           do_update = .true.
         end do ! k = 2, a%row%nb
       end do ! i = 1, a%col%nb
@@ -1250,7 +1282,8 @@ contains ! =====     Public Procedures     =============================
   subroutine RowScale_1 ( V, X, NEWX ) ! Z = V X where V is a diagonal
   !                                matrix represented by a vector and Z is X
   !                                or NEWX.
-  !                                An "extra" row or column is not scaled.
+  !                                An "extra" row is not scaled (but an extra
+  !                                column is).
     type (Vector_T), intent(in) :: V
     type (Matrix_T), intent(inout), target :: X
     type (Matrix_T), intent(out), target, optional :: NEWX 
@@ -1259,7 +1292,6 @@ contains ! =====     Public Procedures     =============================
     integer :: NC, NR    ! Numbers of columns and rows.
 
     nc = x%col%nb
-    if ( x%col%extra ) nc = nc - 1
     nr = x%row%nb
     if ( x%row%extra ) nr = nr - 1
     if ( present(newx) ) then
@@ -1680,6 +1712,11 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.36  2001/05/17 20:19:20  vsnyder
+! Implement GetMatrixElement.  Change handling of mask in NormalEquations.
+! Don't scale the extra column/row if column/row scaling, but do scale
+! the extra row/column.
+!
 ! Revision 2.35  2001/05/12 18:58:47  livesey
 ! Fixed a bug, not sure it's what Van intended but it should compile
 !
