@@ -36,9 +36,10 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
         and the PCF.
       --ncfpcf assumed if L2CF-name is present.  
         Default: --cfpcf (SIPS) --ncfpcf (JPL)
+  --check: Just check l2cf and quit
   --chunk[ ]<chunk index> Run just this chunk
   --[n]ckbk: Check the block calculations against full block algebra
-  --[n]countChunks: Just print thenumber of chunks and quit
+  --[n]countChunks: Just print the number of chunks and quit
   --[n]gcch: Do [not] force garbage collection after each chunk processed
   --[n]gcdt: Do [not] force garbage collection after each deallocate_test
   --[n]kit: Output error messages [not] using the SDP Toolkit
@@ -82,6 +83,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.11  2002/02/12 00:26:05  pwagner
+ Added --version
+
  Revision 1.10  2002/02/05 00:39:56  pwagner
  garbage collecting options
 
