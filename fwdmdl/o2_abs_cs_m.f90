@@ -5,7 +5,7 @@ module O2_Abs_CS_M
 
   implicit NONE
   private
-  public :: O2_Abs_CS, Get_QN, Get_QN_By_Frequency
+  public :: O2_Abs_CS, Get_QN_By_Frequency
 
   integer :: O2_in_catalog = -1   ! Index in Spectroscopy catalog of O2 line.
 
@@ -21,8 +21,9 @@ module O2_Abs_CS_M
 contains
 
 ! ----------------------------------------------------  O2_Abs_CS  -----
-  subroutine O2_Abs_CS ( freq, qn, h, slabs_0, slabs_nonres, y_nonres, &
-    &                    sigma_p, pi, sigma_m )
+  subroutine O2_Abs_CS ( Freq, Qn, H, Slabs_0, Polarized, &
+    &                    Slabs_nonres, Y_nonres, &
+    &                    Sigma_p, Pi, Sigma_m )
 
 ! Compute the complex absorption cross section.
 ! Modified to use Voigt with interfered lineshape
@@ -33,106 +34,66 @@ contains
     use Units, only: SqrtPi
 
     real(r8), intent(in) :: Freq              ! Observation frequency
-    integer(ip), intent(in) :: qn(:)          ! Quantum numbers
+    integer(ip), intent(in) :: Qn(:)          ! Quantum numbers
     real(rk), intent(in) :: H                 ! Magnetic field
-    type(slabs_struct), intent(in) :: slabs_0 ! contains, among others:
+    type(slabs_struct), intent(in) :: Slabs_0 ! contains, among others:
 !    v0s(:)         ! pressure shifted line centers
 !    x1(:)          ! Doppler width
 !    y(:)           ! ratio Pressure to Doppler widths
 !    yi(:)          ! Interference coefficients
 !    slabs1(:)      ! strengths
-    real(rk), intent(in) :: slabs_nonres      ! Nonresonant absorption
-    real(rk), intent(in) :: y_nonres          ! Nonresonant ratio
-    complex(rk), intent(out) :: sigma_p       ! Output Beta values
-    complex(rk), intent(out) :: pi
-    complex(rk), intent(out) :: sigma_m
+    logical, intent(in) :: Polarized(:)       ! Which lines to use.  Same
+                                              ! size as Slabs_0%v0s.
+    real(rk), intent(in) :: Slabs_nonres      ! Nonresonant absorption
+    real(rk), intent(in) :: Y_nonres          ! Nonresonant ratio
+    complex(rk), intent(out) :: Sigma_p       ! Output Beta values
+    complex(rk), intent(out) :: Pi
+    complex(rk), intent(out) :: Sigma_m
 
-    integer(ip) :: i, j, no_lines
+    integer(ip) :: J, No_lines
 
-    real(rk) :: f_o_v0, x, z, u, v, denomm
+    real(rk) :: F_o_v0, X, Z, U, V, Denomm
 
-    complex(rk) :: wing
+    complex(rk) :: Wing
 
-    no_lines = size(slabs_0%v0s)
+    no_lines = size(polarized)
 
-! Find index of nearest line that line will be treated as if it were
-! magnetically split regardless of field and pressure
+    sigma_p = 0.0_rk
+    pi = 0.0_rk
+    sigma_m = 0.0_rk
+    wing = 0.0_rk
 
-    j = 1
-    x = abs(slabs_0%v0s(1) - freq)
-    do i = 2 , no_lines
-      z = abs(slabs_0%v0s(i) - freq)
-      if ( z < x ) then
-        x = z
-        j = i
-      end if
-    end do
+! Do magnetic calculation even if h = 0 for all of the Zeeman-split lines
 
-! Do magnetic calculation even if h = 0
-! The nearest line has been found so continue with cross section
-! calculation
+    do j = 1, no_lines
 
-    call mag_o2_abs_cs ( qn(j), freq, slabs_0%x1(j), slabs_0%slabs1(j),  &
-      &                  slabs_0%y(j), slabs_0%yi(j), h, slabs_0%v0s(j), &
-      &                  sigma_p, pi, sigma_m )
+      if ( .not. polarized(j) ) cycle
 
-! Add contribution from nearby lines excluding the already computed
-! magnetic line
+      call mag_o2_abs_cs ( qn(j), freq, slabs_0%x1(j), slabs_0%slabs1(j),  &
+        &                  slabs_0%y(j), slabs_0%yi(j), h, slabs_0%v0s(j), &
+        &                  sigma_p, pi, sigma_m )
 
 ! Fill in negative frequency part of VVW lineshape for jth line
 
-    f_o_v0 = freq / slabs_0%v0s(j)
-    z = slabs_0%x1(j) * (slabs_0%v0s(j) + freq)
-    denomm = sqrtPi * (z*z + slabs_0%y(j)*slabs_0%y(j))
-    wing = ( 0.5_rk * slabs_0%slabs1(j) * f_o_v0 ) * cmplx( &
-      & f_o_v0 * (slabs_0%y(j) - slabs_0%yi(j)*z) / denomm, & ! Real part
-      & (z + slabs_0%y(j) * (slabs_0%y(j)/slabs_0%x1(j) - &  ! Imaginary part...
-      &   freq*slabs_0%yi(j)) / slabs_0%v0s(j)) / denomm - &
-      &   2.0_rk/(slabs_0%x1(j) * slabs_0%v0s(j)) &
-      & )
-
-! Now for the other lines (do the same thing on both sides of j).
-
-    do i = 1 , j - 1
-      f_o_v0 = freq / slabs_0%v0s(i)
-      x = slabs_0%x1(i) * (slabs_0%v0s(i) - freq)
-      call simple_voigt ( x, slabs_0%y(i), u, v )
-      z = slabs_0%x1(i) * (slabs_0%v0s(i) + freq)
-      denomm = sqrtPi * (z*z + slabs_0%y(i)*slabs_0%y(i))
-      wing = wing + ( 0.5_rk * slabs_0%slabs1(i) * f_o_v0 ) * cmplx( &
-        & f_o_v0 * (u - slabs_0%yi(i)*v + (slabs_0%y(i) - slabs_0%yi(i)*z) / denomm), & ! Real
-        & u * (slabs_0%y(i)/slabs_0%x1(i) + freq*slabs_0%yi(i)) / slabs_0%v0s(i) + v + & ! Imag...
-        &  (z + slabs_0%y(i) * (slabs_0%y(i) / slabs_0%x1(i) - freq*slabs_0%yi(i)) / &
-        &   slabs_0%v0s(i)) / denomm -                                               &
-        &   2.0_rk / (slabs_0%x1(i) * slabs_0%v0s(i))                                &
+      f_o_v0 = freq / slabs_0%v0s(j)
+      z = slabs_0%x1(j) * (slabs_0%v0s(j) + freq)
+      denomm = sqrtPi * (z*z + slabs_0%y(j)*slabs_0%y(j))
+      wing = wing + ( 0.5_rk * slabs_0%slabs1(j) * f_o_v0 ) * cmplx( &
+        & f_o_v0 * (slabs_0%y(j) - slabs_0%yi(j)*z) / denomm, & ! Real part
+        & (z + slabs_0%y(j) * (slabs_0%y(j)/slabs_0%x1(j) -   & ! Imaginary part...
+        &   freq*slabs_0%yi(j)) / slabs_0%v0s(j)) / denomm -  &
+        &   2.0_rk/(slabs_0%x1(j) * slabs_0%v0s(j)) &
         & )
+
     end do
 
-    do i = j + 1 , no_lines
-      f_o_v0 = freq / slabs_0%v0s(i)
-      x = slabs_0%x1(i) * (slabs_0%v0s(i) - freq)
-      call simple_voigt ( x, slabs_0%y(i), u, v )
-      z = slabs_0%x1(i) * (slabs_0%v0s(i) + freq)
-      denomm = sqrtPi * (z*z + slabs_0%y(i)*slabs_0%y(i))
-      wing = wing + ( 0.5_rk * slabs_0%slabs1(i) * f_o_v0 ) * cmplx( &
-        & f_o_v0 * (u - slabs_0%yi(i)*v + (slabs_0%y(i) - slabs_0%yi(i)*z) / denomm), & ! Real
-        & u * (slabs_0%y(i)/slabs_0%x1(i) + freq*slabs_0%yi(i)) / slabs_0%v0s(i) + v + & ! Imag...
-        &  (z + slabs_0%y(i) * (slabs_0%y(i) / slabs_0%x1(i) - freq*slabs_0%yi(i)) / &
-        &   slabs_0%v0s(i)) / denomm -                                               &
-        &   2.0_rk / (slabs_0%x1(i) * slabs_0%v0s(i))                                &
-        & )
-    end do
-
-! Now add non resonant contribution:
-
-    u = freq * freq
-    v = y_nonres * y_nonres
-    wing = cmplx( real(wing) + 0.5_rk * slabs_nonres * u * y_nonres / (u + v), &
-      &          aimag(wing) )
-
-    pi = pi + wing
     sigma_p = sigma_p + 0.5_rk * wing
+    pi = pi + wing
     sigma_m = sigma_m + 0.5_rk * wing
+
+! Contribution from non-Zeeman-split lines is done in get_beta_path_scalar.
+
+! Non resonant contribution is done in get_beta_path_scalar too.
 
   end subroutine O2_Abs_CS
 
@@ -159,21 +120,17 @@ contains
     real(rk), intent(in) :: H   ! magnetic field in Gauss
     real(rk), intent(in) :: V0  ! zero magnetic field line position
 
-    complex(rk), intent(out) :: Sigma_P ! absorption coefficient at unity mixing
+    complex(rk), intent(inout) :: Sigma_P ! absorption coefficient at unity mixing
                                 ! ratio for Delta M = +1
-    complex(rk), intent(out) :: Pi ! absorption coefficient at unity mixing
+    complex(rk), intent(inout) :: Pi ! absorption coefficient at unity mixing
                                 ! ratio for Delta M = 0
-    complex(rk), intent(out) :: Sigma_M ! absorption coefficient at unity mixing
+    complex(rk), intent(inout) :: Sigma_M ! absorption coefficient at unity mixing
                                 ! ratio for Delta M = -1
-    integer(ip) :: m
+    integer(ip) :: M
 
-    real(rk) :: nu_offst, del_nu, xi, denom1, denom2, z, f_o_v0, u, v, zr, zi
+    real(rk) :: Nu_offst, Del_nu, Xi, Denom1, Denom2, Z, F_o_v0, U, V, Zr, Zi
 
 ! Compute the absorption coefficient at unity mixing ratio for N transition
-
-    pi      = 0.0
-    sigma_p = 0.0
-    sigma_m = 0.0
 
     if ( n == 0 ) return
 
@@ -375,32 +332,6 @@ contains
     o2_in_catalog = -1 ! Not found
   end subroutine Find_O2
 
-! -------------------------------------------------------  Get_QN  -----
-  subroutine Get_QN ( V0, N )
-
-    use MLSCommon, only: IP, R8, Rk => RP
-    use O2_DBase, only: O2_Freq, O2_Data
-
-    real(r8), intent(in) :: V0
-    integer(ip), intent(out) :: N
-
-    integer(ip) :: I, J
-    real(rk) :: Q, R
-
-    j = 1
-    r = abs(v0-o2_freq(i))
-    do i = 2, size(o2_freq)
-      q = abs(v0-o2_freq(i))
-      if ( q < r ) then
-        r = q
-        j = i
-      end if
-    end do
-
-    n = nint(o2_data(1,j))           ! Quantum number
-
-  end subroutine Get_QN
-
 ! ------------------------------------------  Get_QN_By_Frequency  -----
   subroutine Get_QN_By_Frequency ( V0, N )
 
@@ -446,6 +377,24 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.2  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.5  2003/03/05 03:29:59  vsnyder
+! Add in the wing calculation
+!
+! Revision 2.1.2.4  2003/03/01 03:15:19  vsnyder
+! Finish deleting Get_QN -- form the PUBLIC statement
+!
+! Revision 2.1.2.3  2003/03/01 03:13:47  vsnyder
+! Delete unused procedure Get_QN so we won't need o2_DBase
+!
+! Revision 2.1.2.2  2003/03/01 03:11:02  vsnyder
+! Use 'polarized' array for size, delete nonresonant computation
+!
+! Revision 2.1.2.1  2003/02/27 23:35:24  vsnyder
+! Process all Zeeman-split lines, and no others
+!
 ! Revision 2.1  2003/02/03 22:55:26  vsnyder
 ! Initial commit
 !

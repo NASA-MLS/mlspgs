@@ -130,9 +130,8 @@ contains
 !     del_opcty(2,1,h_i) = rhorrx * (alpha_path(0,h_i) - del_p) &
 !       &                  + im_one * del_m
       del_opcty(1,2,h_i) = rhorrx * (alpha_path(0,h_i) - del_p)
-      del_opcty(2,1,h_i) = del_opcty(1,2,h_i)
-      del_opcty(1,2,h_i) = del_opcty(1,2,h_i) + cmplx(-aimag(del_m),real(del_m))
       del_opcty(2,1,h_i) = del_opcty(1,2,h_i) - cmplx(-aimag(del_m),real(del_m))
+      del_opcty(1,2,h_i) = del_opcty(1,2,h_i) + cmplx(-aimag(del_m),real(del_m))
       del_opcty(2,2,h_i) = rhopi2 * alpha_path(0,h_i) + rhosi2 * del_p
 
     end do
@@ -146,6 +145,12 @@ contains
 end module Opacity_M
 
 ! $Log$
+! Revision 2.2  2003/05/05 23:00:26  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.1  2003/03/05 03:30:32  vsnyder
+! Calculate the off-diagonal elements in the correct order
+!
 ! Revision 2.1  2003/02/06 22:38:22  vsnyder
 ! Initial commit
 !

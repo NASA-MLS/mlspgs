@@ -87,17 +87,17 @@ contains
 !  as h -> 0).
 
     ez2 = exp(Ev(2))
-    h = ev(1) - ev(2)
+    h = ev(1) - ev(2) ! z1 - z2
     eh = crrexp ( h ) ! (exp(h)-1)/h
-    w = ez2 * eh      ! conjg(z) / abs(z)**2 * (exp(h)-1)/h
+    w = ez2 * eh      ! exp(z2) * (exp(h)-1)/h
 
-    Ex(1,1) = cs_zerofix( ez2 * ( eh * (A(1,1)-ev(2)) - 1.0_rk ) )
+    Ex(1,1) = cs_zerofix( w * (A(1,1)-ev(2)) + ez2 )
 
     Ex(1,2) = cs_zerofix( w * A(1,2) )
 
     Ex(2,1) = cs_zerofix( w * A(2,1) )
 
-    Ex(2,2) = cs_zerofix( ez2 * ( eh * (A(2,2)-ev(2)) - 1.0_rk ) )
+    Ex(2,2) = cs_zerofix( w * (A(2,2)-ev(2)) + ez2 )
 
   end subroutine CS_ExpMat
 
@@ -108,6 +108,12 @@ contains
 end module CS_ExpMat_M
 
 ! $Log$
+! Revision 2.2  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.1  2003/03/06 21:53:23  vsnyder
+! Correct a sign error
+!
 ! Revision 2.1  2003/02/04 01:41:33  vsnyder
 ! Initial commit
 !

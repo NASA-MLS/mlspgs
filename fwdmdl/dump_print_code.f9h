@@ -54,8 +54,8 @@
           f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
              & quantityType=l_vmr, molecule=l )
           print *, 'Species'
-          call get_string (f%template%name, molName )
-          print *, molName
+          call get_string (f%template%name, sigName )
+          print *, trim(sigName)
           print *, 'no_phi_f:'
           j = f%template%noInstances
           print *, j
@@ -107,6 +107,12 @@
 !     Call MLSMessage ( MLSMSG_Error, ModuleName, "End of DUMP print cycle")
 !
 ! $Log$
+! Revision 2.2  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.1  2003/02/14 23:26:41  vsnyder
+! Change molName to sigName
+!
 ! Revision 2.1  2002/10/02 23:00:48  vsnyder
 ! Initial commit of some of Zvi's debugging code
 !

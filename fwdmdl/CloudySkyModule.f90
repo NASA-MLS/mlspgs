@@ -7,10 +7,6 @@ module CloudySkyModule
 ! MLS CLOUD RADIANCE MODEL
 ! -------------------------------------------------------------------------
 
-      use MieTheory, only: MieCoeff
-      use MLSCommon, only: r8      
-      use PhaseFunction, only: pfsetup
-      use SizeDistribution, only: DRP_SIZE
       IMPLICIT NONE
       Private
       Public :: CLOUDY_SKY, CLOUD_MODEL
@@ -36,8 +32,12 @@ contains
 !     LATEST UPDATE: J.JIANG, MAY 20, 2001
 !=======================================================
 
-      REAL :: PI
-      PARAMETER (PI=3.1415926)
+      use MieTheory, only: MieCoeff
+      use MLSCommon, only: r8      
+      use PhaseFunction, only: PFsetup
+      use SizeDistribution, only: DRP_SIZE
+      use Units, only: Pi
+
       REAL(r8) :: F                            ! FREQUENCY IN GHz
       REAL(r8) :: WL                           ! WAVELENGTH IN METERS
 
@@ -173,6 +173,8 @@ contains
 !  J.JIANG -05/18/2001                                                    C
 !          -10/05/2001, MODIFIED TO FIT CLOUD RETREVIAL REQUIREMENTS      C
 !=========================================================================C
+
+      use MLSCommon, only: r8      
 
       CHARACTER :: ITYPE
 
@@ -326,6 +328,12 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 2.2  2003/05/05 23:00:24  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.1  2003/04/16 00:50:33  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.1  2003/01/31 18:35:55  jonathan
 ! moved from cldfwm
 !

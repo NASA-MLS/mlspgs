@@ -7,11 +7,19 @@ module SizeDistribution
 ! THIS MODULE CONTAINS VARIOUS PARTICLE SIZE DISTRIBUTIONS
 ! -------------------------------------------------------------------------
 
-    use MLSCommon, only: r8
-    USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    IMPLICIT NONE
-    Private
-    Public :: DRP_SIZE
+  implicit NONE
+  private
+  public :: DRP_SIZE
+
+  ! These are legal values of ISPI argument for DRP_SIZE
+  integer, public, parameter :: ice = 1
+  integer, public, parameter :: water = ice + 1
+
+  ! These are legal values of IPSD argument for DRP_SIZE
+  integer, public, parameter :: mh_sd = 1000
+  integer, public, parameter :: gamma_sd = 2000
+  integer, public, parameter :: liu_curry_sd = 1100
+  integer, public, parameter :: knollenberg_sd = 4000
 
  !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm =                          &
@@ -31,17 +39,16 @@ contains
 !     J.JIANG, MAY 1, 2001                                               C
 !========================================================================C
 
+      use MLSCommon, only: r8
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+
       ! Arguments
-      INTEGER, intent(in) :: ISPI
+      INTEGER, intent(in) :: ISPI            ! ICE or WATER?
 
       INTEGER, intent(in) :: NR              ! NUMBER OF SIZE BINS
 
       INTEGER, intent(in) :: IPSD            ! SIZE-DISTRIBUTION TYPE
-                                             ! 0 = USER DEFINED
-                                             ! 1 = MH
-                                             ! 2 = GAMMA
-                                             ! 3 = LIU-CURRY 
-                                             ! 4 = KNOLLENGBERG
+                                             ! See parameters MH_SD etc. above.
 
       REAL(r8), intent(out) :: RN(NR)        ! INTEGRATED NUMBER DENSITY OF EACH 
                                              ! SIZE BIN
@@ -69,14 +76,6 @@ contains
       INTEGER :: J, I, J1, J2
 
       REAL(r8) :: V1, B1
-      ! These are legal values of ispi
-      integer, parameter :: ice = 1
-      integer, parameter :: water = ice + 1
-      ! These are legal values of IPSD
-      integer, parameter :: mh_sd = 1000
-      integer, parameter :: gamma_sd = 2000
-      integer, parameter :: liu_curry_sd = 1100
-      integer, parameter :: knollenberg_sd = 4000
 
 !------------------------------------------------------------------------
 
@@ -293,6 +292,12 @@ contains
 end module SizeDistribution
 
 ! $Log$
+! Revision 2.2  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.1  2003/04/16 00:57:24  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.1  2003/01/31 18:35:55  jonathan
 ! moved from cldfwm
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 !     function *REXP ( X ) result ( REXP )
 !>> 2002-10-10 REXP  WVS    Adapted to Fortran 95
 !>> 1998-10-29 SREXP Krogh  Moved external statement up for mangle.
@@ -13,13 +16,8 @@
 !            EVALUATION OF THE FUNCTION EXP(X) - 1
 !-----------------------------------------------------------------------
 
-      real(rk), intent(in) :: X
-      real(rk) :: REXP
-
-!     EXMIN is the smallest number such that EXP(EXMIN) - 1 > -1.
 !     ROUND is the smallest number such that ROUND + 1 > 1.
-      real(rk), save :: EXMIN = 1.0_rk
-      real(rk), parameter :: ROUND = epsilon(round)
+      real(rk), parameter :: ROUND = epsilon(1.0_rk)
 !---------------------------
       real(rk), parameter :: A0 =  .248015873015873015873016E-04_rk
       real(rk), parameter :: A1 = -.344452080605731005808147E-05_rk
@@ -50,7 +48,6 @@
 !-----------------------
       real(rk) :: Z
 
-      if ( exmin > 0.0e0_rk )  exmin = log(round)
       if ( abs(x) <= 0.15e0_rk ) then
          if ( round < 1.0e-14_rk ) then
 
@@ -80,7 +77,7 @@
          rexp = z*(0.5e0_rk + (0.5e0_rk - 1.0e0_rk/z))
          return
       end if
-      if (x >= exmin ) then
+      if (x >= log(round) ) then
          rexp = (exp(x) - 0.5e0_rk) - 0.5e0_rk
          return
       end if
@@ -89,6 +86,12 @@
 !     end function *REXP
 
 ! $Log$
+! Revision 2.2  2003/05/05 23:00:05  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.1.2.1  2003/04/16 20:12:15  vsnyder
+! Remove save variable and argument declarations
+!
 ! Revision 2.1  2002/10/10 20:35:22  vsnyder
 ! Initial conversion from Math77
 !
