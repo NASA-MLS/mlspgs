@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L2Parallel
@@ -552,7 +552,11 @@ contains ! ================================ Procedures ======================
             call output ( ' chunk ' )
             call output ( chunk )
             call output ( ' ticket ' )
-            call output ( nextTicket - 1, advance='yes' )
+            call output ( nextTicket - 1, advance='no' )
+            call output ( ' index ' )
+            call output ( fileIndex, advance='no' )
+            call output ( ' file ' )
+            call output ( directWriteFilenames ( fileIndex ), advance='yes' )
             call display_string ( requestedFile, strip=.true., advance='yes' )
           end if
 
@@ -838,7 +842,11 @@ contains ! ================================ Procedures ======================
           call output ( ' chunk ' )
           call output ( request%chunk )
           call output ( ' ticket ' )
-          call output ( request%ticket, advance='yes' )
+          call output ( request%ticket, advance='no' )
+          call output ( ' index ' )
+          call output ( request%fileIndex, advance='yes' )
+          call output ( ' file ' )
+          call output ( directWriteFilenames(request%fileIndex), advance='yes' )
           call display_string ( directWriteFilenames(request%fileIndex), strip=.true., &
             & advance='yes' )
         end if
@@ -850,11 +858,15 @@ contains ! ================================ Procedures ======================
         call PVMF90Pack ( SIG_DirectWriteGranted, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'packing direct write granted flag' )
-        call PVMF90Pack ( (/ request%node, request%ticket, createFile, request%fileIndex /),&
+        call PVMF90Pack ( (/ request%node, request%ticket, createFile, &
+          & directWriteFilenames(request%fileIndex) /),&
           &  info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'packing direct write granted info' )
         
+        call PVMPackStringIndex ( directWriteFilenames(request%fileIndex), info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, "packing direct write request filename" )
         call PVMFSend ( chunkTids(request%chunk), InfoTag, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'sending direct write granted' )
@@ -1292,6 +1304,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.61  2004/01/22 00:56:35  pwagner
+! Fixed many bugs in auto-distribution of DirectWrites
+!
 ! Revision 2.60  2004/01/02 23:36:00  pwagner
 ! DirectWrites may choose files automatically from db
 !
