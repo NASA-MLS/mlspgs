@@ -1,0 +1,39 @@
+!
+!---------------------------------------------------------------------
+!
+!     SUBROUTINE ?_POLINT_DER(XX,YY,N,X,Y,DY,D2Y)
+!
+      INTEGER, INTENT(IN) :: N
+      REAL(rk), INTENT(IN) :: XX(*),YY(*),X
+      REAL(rk), INTENT(OUT) :: Y,DY,D2Y
+
+      INTEGER :: I,J
+      REAL(rk) :: DX,YM,YP,D
+!
+      CALL POLINT(XX,YY,N,X,Y)
+
+      J = 2
+      DX = ABS(XX(N)-XX(1))
+      DO I = 1, N
+        IF(ABS(XX(I)-X) < DX) THEN
+          J = I
+          DX = ABS(XX(I)-X)
+        ENDIF
+      END DO
+
+      IF(J == 1) THEN
+        D = ABS(XX(2) - XX(1))
+      ELSE IF(J == N) THEN
+        D = ABS(XX(N) - XX(N-1))
+      ELSE
+        D = 0.5D0 * ABS(XX(J+1) - XX(J-1))
+      ENDIF
+
+      DX = MAX(1.0D-12, 0.05D0 * D)
+
+      CALL POLINT(XX,YY,N,X+DX,YP)
+      CALL POLINT(XX,YY,N,X-DX,YM)
+      DY = (YP - YM) / (2.0d0 * DX)
+      D2Y = (YP - 2.0d0 * Y + YM) / (DX*DX)
+!
+!     END SUBROUTINE ?_POLINT_DER

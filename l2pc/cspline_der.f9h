@@ -1,0 +1,79 @@
+! subroutine ?CSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT )
+!
+!  Given arrays xin & yin of lenght nin containing a tabulated function,
+!  with xin ordered, and given the (ordered) array: xout of length: nout,
+!  this subroutine Returns the array: yout which is the cubic-spline
+!  interpolation of (xin,yin) computed for each: xout, and the array: dyout
+!  which is the derivative of yout.
+!
+    integer, intent(in) :: NIN, NOUT
+    real(rk), intent(in) :: XIN(abs(nin)), XOUT(nout), YIN(abs(nin))
+    real(rk), intent(out) :: YOUT(nout), DYOUT(nout)
+    integer :: JIN, I, J, K, KLO, KHI, KPL
+    real(rk) :: COEFF(4, abs(nin)), X_IN(abs(nin))
+    real(rk) :: X, Y, XL, XH, YL, YH, DY, YLIN, YSPL, DYDX, DP,H
+!
+    jin = abs(nin)
+!
+    if ( all(yin == 0.0) ) then
+      yout = 0.0
+      dyout = 0.0
+      return
+    end if
+!
+    if (xin(jin) > xin(1)) then
+      x_in = xin
+      coeff(1,:) = yin
+    else
+      x_in = xin(1:jin)
+      coeff(1,:) = yin(jin:1:-1)
+    end if
+!
+    coeff(2,1) = 0.0
+    coeff(2,jin) = 0.0
+!
+    call pcspl ( x_in, coeff, jin, 0, 0 )
+!
+    klo = -1
+    kpl = -2
+    do i = 1, nout
+!
+      x = xout(i)
+      call hunt ( x, x_in, jin, klo, khi )
+      if (klo /= kpl) then
+        kpl = klo
+        xl = x_in(klo)
+        xh = x_in(khi)
+        yl = coeff(1,klo)
+        yh = coeff(1,khi)
+        dydx = (yh-yl)/(xh-xl)
+      end if
+!
+      h = x - xl
+      ylin = yl + dydx * h
+!
+      y = 0.0
+      dy = 0.0
+      do j = 4, 1, -1
+        y = (y/j)*h + coeff(j,klo)
+        if (j < 4) then
+          dy = (dy/j)*h + coeff(j+1,klo)
+        end if
+      end do
+!
+! If spline is more the 25% different from linear, revert back to
+! linear interpolation:
+!
+      dp = 1.0e2_rk * abs(y-ylin) / (abs(ylin)+epsilon(ylin))
+!
+      if (dp < 25.0) then         ! spline ok
+        yout(i) = y
+        dyout(i) = dy
+      else                        ! use linear
+        yout(i) = ylin
+        dyout(i) = dydx
+      end if
+!
+    end do
+!
+! end subroutine ?CSPLINE_DER

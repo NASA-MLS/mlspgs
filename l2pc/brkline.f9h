@@ -1,0 +1,67 @@
+! subroutine ?_BRKLINE ( LINE, V, NV, IO )
+!
+    character(len=*), intent(inout) :: LINE
+    real(rk), intent(out) :: V(*)
+    integer, intent(out) :: NV, IO
+!
+    character(len=29) :: AX
+    character :: CH
+    character(len=*), parameter :: EXPC = 'DDEE+-.'
+    integer :: I, IAX, J, L, N
+    character(len=*), parameter :: OKCHAR = '0123456789EEDD+-.'
+    real(rk) :: R
+!
+    n = 0
+    nv = 0
+    iax = 0
+    ax(1:)=' '
+    line = adjustl(line)
+    l = len(line)
+    do i = 1, l
+      ch=line(i:i)
+      if (index(okchar,ch) < 1) then
+        if (iax > 0) then
+          if (iax == 1) then
+            ch=ax(1:1)
+            if (index(expc,ch) > 0) then
+              j=1
+            else
+              read (ax,*,iostat=j) r
+            end if
+          else
+            read (ax,*,iostat=j) r
+          end if
+          if (j == 0)  then
+            nv = nv + 1
+            v(nv) = r
+          end if
+          ax(1:)=' '
+          iax = 0
+        end if
+      else
+        iax = iax + 1
+        ax(iax:iax)=ch
+      end if
+    end do
+!
+    if (iax > 0) then
+      if (iax == 1) then
+        ch=ax(1:1)
+        if (index(expc,ch) > 0) then
+          j = 1
+        else
+          read (ax,*,iostat=j) r
+        end if
+      else
+        read (ax,*,iostat=j) r
+      end if
+      if (j == 0) then
+        nv = nv + 1
+        v(nv) = r
+      end if
+    end if
+!
+    io = 0
+    if (nv < 1) io = -1
+!
+! end subroutine ?_BRKLINE

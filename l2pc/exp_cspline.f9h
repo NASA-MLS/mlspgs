@@ -1,0 +1,57 @@
+!
+!---------------------------------------------------------------------
+!
+!     SUBROUTINE ?_EXP_CSPLINE(XIN,XOUT,YIN,YOUT,NIN,NOUT)
+!
+      INTEGER, INTENT(IN) :: NIN,NOUT
+      REAL(rk), INTENT(IN)  :: XIN(:),XOUT(:),YIN(:)
+      REAL(rk), INTENT(OUT)  :: YOUT(:)
+!
+      REAL(rk), ALLOCATABLE, DIMENSION(:) :: YT,YY
+
+      INTEGER :: I
+      REAL(rk) :: Y,S,P,PS
+!
+      S = YIN(1)
+      DO I = 2, NIN
+        PS = S
+        S = YIN(I)
+        P = S * PS
+        IF(P <= 0.0) THEN
+          PRINT *,'** Error in ?_EXP_CSPLINE Routine **'
+          PRINT *,'   Non-exponential input, zero or changes sign ..'
+          PRINT *,'   Resorting to regular cubic spline ..'
+          CALL CSPLINE(XIN,XOUT,YIN,YOUT,NIN,NOUT)
+          RETURN
+        ENDIF
+      END DO
+!
+      ALLOCATE(YT(1:NIN),YY(1:NOUT),STAT=I)
+      IF(I /= 0) THEN
+        PRINT *,'** Error in ?_EXP_CSPLINE  Subroutine !!'
+        PRINT *,'   Could not allocate arrays ..'
+        print *,'   Resorting to regular cubic spline ..'
+        CALL CSPLINE(XIN,XOUT,YIN,YOUT,NIN,NOUT)
+        RETURN
+      ENDIF
+!
+      S = SIGN(1.0D0,PS)
+      YT(1:NIN) = DLOG(S*YIN(1:NIN))
+
+      CALL CSPLINE(XIN,XOUT,YT,YY,NIN,NOUT)
+!
+      DO I = 1, NOUT
+        Y = YY(I)
+        IF(ABS(Y) < 85.0) THEN
+          P = EXP(Y)
+        ELSE IF(Y < 0.0) THEN
+          P = 0.0D0
+        ELSE
+          P = 1.0D38
+        ENDIF
+        YOUT(I) = S * P
+      END DO
+
+      DEALLOCATE(YT,YY,STAT=I)
+!
+!     END SUBROUTINE ?_EXP_CSPLINE

@@ -1,0 +1,48 @@
+! subroutine ?_LINTRP ( XIN, XOUT, YIN, YOUT, NIN, NOUT )
+!
+!  Given arrays XIN & YIN of lenght NIN containing a tabulated function,
+!  with XIN ordered, and given the (ordered) array: XOUT of length: NOUT,
+!  this subroutine Returns the array: YOUT which is a linear interpolation
+!  of (XIN,YIN) computed for each: XOUT.
+!
+    integer, intent(in) :: NIN, NOUT
+    real(rk),intent(in)  :: XIN(nin), XOUT(nout), YIN(nin)
+    real(rk),intent(out) :: YOUT(:)
+!
+    real(rk) :: DX, DELX, DYDX, X, Y
+    integer :: I, J, KHI, KLO
+    real(rk), parameter :: TINY = epsilon(dx)
+!
+    if (nin < 2) then
+      yout(1:nout) = yin(1)
+      return
+    end if
+!
+    if ( all(yin(2:) == yin(1)) ) then
+      yout(1:nout) = yin(1)
+      return
+    end if
+!
+    do i = 1, Nout
+      x = xout(i)
+      Call hunt(x, xin, nin, klo, khi)
+      delx = x - xin(klo)
+      if(abs(delx).lt.tiny) then
+        y = yin(klo)
+      else if(abs(x-xin(khi)).lt.tiny) then
+        y = yin(khi)
+      else
+        dx = xin(khi) - xin(klo)
+        if(abs(dx).lt.tiny) then
+          y = yin(klo)
+        else
+          dydx = (yin(khi)-yin(klo)) / dx
+          y = yin(klo) + dydx * delx
+        endif
+      endif
+      yout(i) = y
+    end do
+!
+    Return
+!
+! end subroutine ?_LINTRP
