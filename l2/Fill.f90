@@ -77,7 +77,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMIN, &
       & L_BOUNDARYPRESSURE, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
-      & L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
+      & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GEODALTITUDE, &
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, &
       & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
@@ -4420,9 +4420,12 @@ contains ! =====     Public Procedures     =============================
       endif
       
       select case ( quantity%template%quantityType )
+      case ( l_ECRtoFOV )
+        call GetModuleName( quantity%template%instrumentModule, nameString )
+        nameString = AssembleL1BQtyName('ECRtoFOV', this_hdfVersion, .TRUE., &
+          & trim(nameString))
       case ( l_ptan )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-!        nameString=TRIM(nameString)//'.ptan'
         nameString = AssembleL1BQtyName('ptan', this_hdfVersion, .FALSE., &
           & trim(nameString))
       case ( l_radiance )
@@ -4432,39 +4435,34 @@ contains ! =====     Public Procedures     =============================
         fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, this_hdfVersion )
       case ( l_tngtECI )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-!        nameString=TRIM(nameString)//'.tpECI'
         nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .TRUE., &
           & trim(nameString))
       case ( l_tngtGeodAlt )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-!        nameString=TRIM(nameString)//'.tpGeodAlt'
         nameString = AssembleL1BQtyName('GeodAlt', this_hdfVersion, .TRUE., &
           & trim(nameString))
+      case ( l_LosVel )
+        call GetModuleName ( quantity%template%instrumentModule, nameString )
+        nameString = AssembleL1BQtyName ('LosVel', this_hdfVersion, .TRUE., &
+             & trim(nameString) )
       case ( l_tngtGeocAlt )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-!        nameString=TRIM(nameString)//'.tpGeocAlt'
         nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .TRUE., &
           & trim(nameString))
       case ( l_scECI )
-!        nameString='scECI'
         nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .FALSE., 'sc')
       case ( l_scVel )
-!        nameString='scVel'
         nameString = AssembleL1BQtyName('Vel', this_hdfVersion, .FALSE., 'sc')
       case ( l_scVelECI )
-!        nameString='scVelECI'
         nameString = AssembleL1BQtyName('VelECI', this_hdfVersion, .FALSE., &
           & 'sc')
       case ( l_scVelECR )
-!        nameString='scVelECR'
         nameString = AssembleL1BQtyName('VelECR', this_hdfVersion, .FALSE., &
           & 'sc')
       case ( l_scGeocAlt )
-!        nameString='scGeocAlt'
         nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .FALSE., &
           & 'sc')
       case ( l_orbitInclination )
-!        nameString='scOrbIncl'
         nameString = AssembleL1BQtyName('OrbIncl', this_hdfVersion, .FALSE., &
           & 'sc')
       case default
@@ -5510,6 +5508,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.207  2003/05/06 21:00:23  livesey
+! Bug fix on L1B stuff
+!
 ! Revision 2.206  2003/04/30 22:07:14  pwagner
 ! Always sets errorCode to 0 in return from FillVectorQuantityFromL2AUX
 !
