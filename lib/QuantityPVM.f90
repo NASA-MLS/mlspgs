@@ -17,6 +17,7 @@ module QuantityPVM                      ! Send and receive vector quantities usi
   use MLSCommon, only: R8
   use Intrinsic, only: LIT_INDICES
   use MLSSignals_m, only: GETSIGNALNAME
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
   use Dump_0, only: DUMP
   use VectorsModule, only: CREATEMASKARRAY
@@ -40,12 +41,13 @@ module QuantityPVM                      ! Send and receive vector quantities usi
 contains ! ================================== Module procedures ============
 
   ! ---------------------------------- PVMSendQuantity ---------------------
-  subroutine PVMSendQuantity ( Q, tid, justPack, noValues, noMask )
+  subroutine PVMSendQuantity ( Q, tid, justPack, noValues, noMask, skipMIFGeolocation )
     type (VectorValue_T), intent(in) :: Q ! Quantity to send
     integer, intent(in), optional :: TID ! Task to send it to
     logical, intent(in), optional :: JUSTPACK ! Just pack it into an existing buffer
     logical, intent(in), optional :: NOVALUES ! Don't send the values
     logical, intent(in), optional :: NOMASK ! Don't send the mask
+    logical, intent(in), optional :: SKIPMIFGEOLOCATION ! Skip geolocation if minor frame
 
     ! Local variables
     integer :: BUFFERID                 ! From pvm
@@ -53,6 +55,7 @@ contains ! ================================== Module procedures ============
     logical :: MYJUSTPACK               ! Copy of justPack
     logical :: MYNOVALUES               ! Copy of noValues
     logical :: MYNOMASK                 ! Copy of noMask
+    logical :: MYSKIPMIFGEOLOCATION     ! If set, skip geolocation
 
     character(len=132) :: WORD          ! Result of get_string etc.
 
@@ -60,9 +63,11 @@ contains ! ================================== Module procedures ============
     myJustPack = .false.
     myNoValues = .false.
     myNoMask = .false.
+    mySkipMIFGeolocation = .false.
     if ( present(justPack) ) myJustPack = justPack
     if ( present(noValues) ) myNoValues = noValues
     if ( present(noMask) ) myNoMask = noMask
+    if ( present(skipMIFGeolocation) ) mySkipMIFGeolocation = skipMIFGeolocation
 
     ! Now we simply pack the quantity up and send it down the pvm spigot
     if (.not. myJustPack) call PVMFInitSend ( PvmDataDefault, bufferID )
@@ -116,49 +121,50 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing molecule" )
 
     ! Now pack the arrays
+    if ( .not. q%template%minorFrame .or. .not. mySkipMIFGeolocation ) then
+      call PVMIDLPack ( q%template%surfs, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfs" )
+      
+      call PVMIDLPack ( q%template%phi, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing phi" )
+      
+      call PVMIDLPack ( q%template%geodLat, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing geodLat" )
+      
+      call PVMIDLPack ( q%template%lon, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing lon" )
+      
+      call PVMIDLPack ( q%template%time, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing time" )
+      
+      call PVMIDLPack ( q%template%solarTime, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarTime" )
+      
+      call PVMIDLPack ( q%template%solarZenith, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarZenith" )
+      
+      call PVMIDLPack ( q%template%losAngle, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing losAngle" )
+      
+      if ( associated ( q%template%mafIndex ) ) then
+        call PVMIDLPack ( (/.true./), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "packing flag" )
+        call PVMIDLPack ( q%template%mafIndex, info )
+      else
+        call PVMIDLPack ( (/ .false. /), info )
+      end if
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafIndex/flag" )
 
-    call PVMIDLPack ( q%template%surfs, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing surfs" )
-
-    call PVMIDLPack ( q%template%phi, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing phi" )
-
-    call PVMIDLPack ( q%template%geodLat, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing geodLat" )
-
-    call PVMIDLPack ( q%template%lon, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing lon" )
-
-    call PVMIDLPack ( q%template%time, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing time" )
-
-    call PVMIDLPack ( q%template%solarTime, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarTime" )
-
-    call PVMIDLPack ( q%template%solarZenith, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing solarZenith" )
-
-    call PVMIDLPack ( q%template%losAngle, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing losAngle" )
-
-    if ( associated ( q%template%mafIndex ) ) then
-      call PVMIDLPack ( (/.true./), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "packing flag" )
-      call PVMIDLPack ( q%template%mafIndex, info )
-    else
-      call PVMIDLPack ( (/ .false. /), info )
+      if ( associated ( q%template%mafCounter ) ) then
+        call PVMIDLPack ( (/.true./), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "packing flag" )
+        call PVMIDLPack ( q%template%mafCounter, info )
+      else
+        call PVMIDLPack ( (/ .false. /), info )
+      end if
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafCounter/flag" )
     end if
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafIndex/flag" )
-
-    if ( associated ( q%template%mafCounter ) ) then
-      call PVMIDLPack ( (/.true./), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "packing flag" )
-      call PVMIDLPack ( q%template%mafCounter, info )
-    else
-      call PVMIDLPack ( (/ .false. /), info )
-    end if
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing mafCounter/flag" )
-
+      
     if ( associated ( q%template%frequencies ) ) then
       call PVMIDLPack ( (/.true./), info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing flag" )
@@ -215,15 +221,16 @@ contains ! ================================== Module procedures ============
   end subroutine PVMSendQuantity
 
   ! ---------------------------------- PVMReceiveQuantity ---------------------
-  subroutine PVMReceiveQuantity ( QT, values, tid, mask, justUnpack )
+  subroutine PVMReceiveQuantity ( QT, values, tid, mask, justUnpack, mifGeolocation )
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
     ! It's not inout, because then setupNewQuantityTemplate would deallocate
     ! the pointer components.  But the actual argument is put into a database
     ! using a shallow copy, so cleaning it up would clobber a database item.
-    real (r8), dimension(:,:), pointer :: VALUES ! Values for quantity
+    real (r8), dimension(:,:), optional, pointer :: VALUES ! Values for quantity
     integer, intent(in), optional :: TID ! Task to get it from
     character, dimension(:,:), optional, pointer :: MASK ! Mask
     logical, intent(in), optional :: JUSTUNPACK ! Just unpack from existing buffer
+    type (QuantityTemplate_T), dimension(:), intent(in), optional :: MIFGEOLOCATION
 
     ! Local variables
     integer :: BUFFERID                 ! From pvm
@@ -291,7 +298,7 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking quantityType" )
     ! Just ignore it, we got it as an integer already
-    
+
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking verticalCoordinate" )
@@ -318,44 +325,57 @@ contains ! ================================== Module procedures ============
     ! Juest ignore it, we got it as an integer already
 
     ! Now unpack the arrays
+    if ( .not. qt%minorFrame .or. .not. present ( mifGeolocation ) ) then
 
-    call PVMIDLUnpack ( qt%surfs, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking surfs" )
-    
-    call PVMIDLUnpack ( qt%phi, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking phi" )
+      call PVMIDLUnpack ( qt%surfs, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking surfs" )
 
-    call PVMIDLUnpack ( qt%geodLat, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking geodLat" )
+      call PVMIDLUnpack ( qt%phi, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking phi" )
 
-    call PVMIDLUnpack ( qt%lon, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking lon" )
+      call PVMIDLUnpack ( qt%geodLat, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking geodLat" )
 
-    call PVMIDLUnpack ( qt%time, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking time" )
+      call PVMIDLUnpack ( qt%lon, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking lon" )
 
-    call PVMIDLUnpack ( qt%solarTime, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking solarTime" )
+      call PVMIDLUnpack ( qt%time, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking time" )
 
-    call PVMIDLUnpack ( qt%solarZenith, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking solarZenith" )
+      call PVMIDLUnpack ( qt%solarTime, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking solarTime" )
 
-    call PVMIDLUnpack ( qt%losAngle, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking losAngle" )
+      call PVMIDLUnpack ( qt%solarZenith, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking solarZenith" )
+
+      call PVMIDLUnpack ( qt%losAngle, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking losAngle" )
 
 
-    call PVMIDLUnpack ( flag, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking flag" )
-    if ( flag(1) ) then
-      call PVMIDLUnpack ( qt%mafIndex, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mafIndex" )
-    end if
+      call PVMIDLUnpack ( flag, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking flag" )
+      if ( flag(1) ) then
+        call PVMIDLUnpack ( qt%mafIndex, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mafIndex" )
+      end if
 
-    call PVMIDLUnpack ( flag, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking flag" )
-    if ( flag(1) ) then
-      call PVMIDLUnpack ( qt%mafCounter, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mafCounter" )
+      call PVMIDLUnpack ( flag, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking flag" )
+      if ( flag(1) ) then
+        call PVMIDLUnpack ( qt%mafCounter, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mafCounter" )
+      end if
+    else
+      ! If it's minor frame and we've got mif geolocation information just point to that.
+      qt%surfs => mifGeolocation(qt%instrumentModule)%surfs
+      qt%phi => mifGeolocation(qt%instrumentModule)%phi
+      qt%geodLat => mifGeolocation(qt%instrumentModule)%geodLat
+      qt%lon => mifGeolocation(qt%instrumentModule)%lon
+      qt%time => mifGeolocation(qt%instrumentModule)%time
+      qt%solarTime => mifGeolocation(qt%instrumentModule)%solarTime
+      qt%solarZenith => mifGeolocation(qt%instrumentModule)%solarZenith
+      qt%mafIndex => mifGeolocation(qt%instrumentModule)%mafIndex
+      qt%mafCounter => mifGeolocation(qt%instrumentModule)%mafCounter
     end if
 
     call PVMIDLUnpack ( flag, info )
@@ -385,9 +405,15 @@ contains ! ================================== Module procedures ============
     noMask = l2(2)
 
     ! Setup the values
-    nullify ( values )
-    call Allocate_Test ( values, qt%instanceLen, qt%noInstances, &
-      & 'values', ModuleName )
+    if ( .not. noValues .and. .not. present ( values ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Values sent but no place to put them' )
+
+    if ( present ( values ) ) then
+      nullify ( values )
+      call Allocate_Test ( values, qt%instanceLen, qt%noInstances, &
+        & 'values', ModuleName )
+    endif
 
     if ( .not. myJustUnpack .and. .not. all ((/noValues,noMask/)) ) then
       ! Now we're going to receive the values in a separate message
@@ -406,12 +432,15 @@ contains ! ================================== Module procedures ============
       call PVMIDLUnpack ( mask, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "unpacking mask" )
     end if
-      
+
   end subroutine PVMReceiveQuantity
 
 end module QuantityPVM
 
 ! $Log$
+! Revision 2.12  2002/10/06 01:08:53  livesey
+! Put in the skipMIFGeolocation functionality
+!
 ! Revision 2.11  2002/10/05 00:42:52  livesey
 ! Modified to use stuff from MorePVM
 !
