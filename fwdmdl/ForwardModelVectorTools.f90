@@ -65,7 +65,6 @@ contains
     logical :: MyNoError                ! Copy of no error
     logical, dimension(:), pointer :: MATCHV ! Flags for vector 
     logical, dimension(:), pointer :: MATCHOV ! Flags for otherVector
-    logical, dimension(:), pointer :: MATCHSC ! Flags for specificQuantities
     logical, dimension(:), pointer :: MATCH ! One of the match...s
     integer :: MolEntry                 ! How many similar molecules in list?
     integer :: NoFound                  ! Number of matches found so far.
@@ -267,6 +266,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.6  2002/10/02 22:52:19  vsnyder
+! Remove declaration for unused variable MATCHSC
+!
 ! Revision 2.5  2002/10/02 22:51:07  vsnyder
 ! OOPS, mispelled 'parameter' as 'private'
 !
