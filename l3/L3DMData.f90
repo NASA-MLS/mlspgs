@@ -375,7 +375,7 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         if ((associated(l3dmData(i)%pressure) ).and.(l3dmData(i)%nLevels.gt.0)) then
+         if (l3dmData(i)%nLevels.gt.0) then
 
          status = gdwrfld( gdId, GEO_FIELD9, start(1), stride(1), edge(1), &
                            REAL(l3dmData(i)%pressure) )
@@ -387,7 +387,7 @@ CONTAINS
 
          endif
 
-         if ((associated(l3dmData(i)%latitude) ).and.(l3dmData(i)%nLats.gt.0)) then
+         if (l3dmData(i)%nLats.gt.0) then
 
          status = gdwrfld( gdId, GEO_FIELD1, start(2), stride(2), edge(2), &
                            REAL(l3dmData(i)%latitude) )
@@ -399,7 +399,7 @@ CONTAINS
 
          endif
 
-         if ((associated(l3dmData(i)%longitude) ).and.(l3dmData(i)%nLons.gt.0)) then
+         if (l3dmData(i)%nLons.gt.0) then
          status = gdwrfld( gdId, GEO_FIELD2, start(3), stride(3), edge(3), &
                            REAL(l3dmData(i)%longitude) )
          IF (status /= 0) THEN
@@ -412,7 +412,6 @@ CONTAINS
 
          if ((l3dmData(i)%nLons.gt.0).and.(l3dmData(i)%nLats.gt.0).and.(l3dmData(i)%nLevels.gt.0)) then
 
-         if (associated (l3dmData(i)%l3dmValue) ) then
          status = gdwrfld( gdId, DATA_FIELDV, start, stride, edge, &
                            REAL(l3dmData(i)%l3dmValue) )
          IF (status /= 0) THEN
@@ -420,11 +419,7 @@ CONTAINS
                   // l3dmData(i)%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
-
-         endif
  
-
-         if (associated(l3dmData(i)%l3dmPrecision) ) then
          status = gdwrfld( gdId, DATA_FIELDP, start, stride, edge, &
                            REAL(l3dmData(i)%l3dmPrecision) )
          IF (status /= 0) THEN
@@ -432,8 +427,6 @@ CONTAINS
                   // l3dmData(i)%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
-
-         endif
 
          endif
 
@@ -498,7 +491,6 @@ CONTAINS
       INTEGER :: swfID, swId, status, i, j
       INTEGER :: start(2), stride(2), edge(2)
 
-	print *, 'OutputDiags'
 ! Re-open the file for the creation of diagnostic swaths
 
       swfID = swopen(physicalFilename, DFACC_RDWR)
@@ -628,7 +620,8 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      if ( associated(dg%pressure) ) then
+      if (dg%nLevels.gt.0) then
+
       status = swwrfld( swId, GEO_FIELD9, start(1), stride(1), edge(1), &
                         REAL(dg%pressure) )
       IF (status /= 0) THEN
@@ -636,9 +629,9 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      endif
+      endif 
 
-      if ( associated(dg%latitude) ) then 
+      if (dg%nLats.gt.0) then
 
       status = swwrfld( swId, GEO_FIELD1, start(2), stride(2), edge(2), &
                         REAL(dg%latitude) )
@@ -651,8 +644,7 @@ CONTAINS
 
 ! One-dimensional data fields
 
-
-      if ( associated(dg%gRss) ) then
+      if (dg%nLevels.gt.0) then
 
       status = swwrfld( swId, DG_FIELD, start(1), stride(1), edge(1), &
                         REAL(dg%gRss) )
@@ -661,10 +653,6 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       
-      endif
-
-      if ( associated(dg%perMisPoints) ) then
-
       status = swwrfld(swId, DG_FIELD2, start(1), stride(1), edge(1), &
                        dg%perMisPoints )
       IF (status /= 0) THEN
@@ -676,8 +664,7 @@ CONTAINS
 
 ! Two-dimensional data fields
 
-
-      if ( associated(dg%latRss) ) then
+      if ((dg%nLevels.gt.0).and.(dg%nLats.gt.0)) then
 
       status = swwrfld( swId, DG_FIELD1, start, stride, edge, real(dg%latRss) )
       IF (status /= 0) THEN
@@ -685,12 +672,12 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      endif
+      endif 
 
       edge(1) = dg%N
       edge(2) = dg%nLevels
 
-      if (( associated (dg%maxDiff) ).and.(dg%N.gt.0).and.(dg%nLevels.gt.0) )  then
+      if ( (dg%N.gt.0).and.(dg%nLevels.gt.0) )  then
 
       status = swwrfld( swId, MD_FIELD, start, stride, edge, real(dg%maxDiff) )
       IF (status /= 0) THEN
@@ -698,12 +685,8 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      endif
-
-      if (( associated(dg%maxDiffTime) ).and.(dg%N.gt.0).and.(dg%nLevels.gt.0) ) then 
-
       status = swwrfld( swId, MDT_FIELD, start, stride, edge, real(dg%maxDiffTime) )
-
+!
       IF (status /= 0) THEN
          msr = WR_ERR //  MDT_FIELD // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1125,11 +1108,9 @@ CONTAINS
 
 ! Annotate the file with the PCF
 
-         if (associated (anText) ) then
 
          CALL WritePCF2Hdr(files%name(i), anText)
 
-         endif
 
       ENDDO
 
@@ -1408,6 +1389,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.18  2002/03/27 21:33:32  jdone
+!# allocate statements checked and maxDiff is initialized
+!#
 !# Revision 1.17  2001/12/13 20:47:50  nakamura
 !# Removed unused subroutine ReadL3DMData; merged dg fields into L3DMData_T.
 !#
