@@ -258,6 +258,7 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T) :: newVector
     integer :: NumProfs            ! number of profiles actually read
 !   integer :: quantityName        ! Sub-rosa index
+    integer :: sd_id
     integer :: SON                 ! Of root, an n_spec_args or a n_named
     integer :: sourceName          ! Sub-rosa index of name in source='name'
     character(len=FileNameLen) :: SourceNameString ! actual literal source name
@@ -309,15 +310,15 @@ contains ! =====     Public Procedures     =============================
       call get_string ( FileName, FileNameString )
       call get_string ( sourceName, sourceNameString )
 
+
+      select case( FileType )
+      case ( s_l2gp )
+
       fileHandle = swopen(FileNameString, DFACC_READ)
       if (fileHandle == -1) then
         msr = MLSMSG_Fileopen // FileNameString
         call MLSMessage ( MLSMSG_Error, ModuleName, trim(msr) )
       end if
-
-      select case( FileType )
-      case ( s_l2gp )
-
 ! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
 !       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
@@ -337,8 +338,20 @@ contains ! =====     Public Procedures     =============================
         call ReadL2GPData ( fileHandle, sourceNameString, &
           & L2GPDatabase(vectorIndex), numProfs )
 
+          fileHandle = swclose(fileHandle)
+          if (fileHandle == -1) THEN
+             msr = 'Failed to close file ' // FileNameString
+             call MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
+          end if
+
       case ( s_l2aux )
 
+            ! create SD interface identifier for l2aux
+                sd_id = sfstart(FilenameString, DFACC_READ)
+            IF (sd_id == -1) THEN
+               msr = MLSMSG_Fileopen // FileNameString
+               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+            ENDIF
 ! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
 !       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
@@ -357,17 +370,12 @@ contains ! =====     Public Procedures     =============================
 ! ???   call decorate ( key, l2Index )
 ! ???   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
 ! Need to add this routine to L2AUXData.f90 before uncommenting this line
-!       CALL ReadL2AUXData ( fileHandle, sourceNameString, &
-!         & L2AUXDatabase(vectorIndex), numProfs )
+           CALL ReadL2AUXData(sd_id, sourceNameString, L2GPDatabase(vectorIndex),&
+           & numProfs)
 
       case default ! Can't get here if tree_checker worked correctly
       end select
 
-      fileHandle = swclose(fileHandle)
-      if (fileHandle == -1) THEN
-         msr = 'Failed to close file ' // FileNameString
-         call MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
-      end if
 
     end do
 
@@ -379,6 +387,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.9  2000/12/02 01:11:59  pwagner
+! Added ReadL2AUXData
+!
 ! Revision 2.8  2000/12/02 00:00:40  vsnyder
 ! More misc. cleanup.
 !
