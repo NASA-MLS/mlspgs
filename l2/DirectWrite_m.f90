@@ -375,11 +375,15 @@ contains ! ======================= Public Procedures =========================
     & chunkNo, chunks )
 
     use Chunks_m, only: MLSChunk_T
+    use HDF5, only: h5gclose_f, h5gopen_f
     use Intrinsic, only: L_None
-    use L2AUXData, only:  L2AUXData_T, DestroyL2AUXContents, &
+    use L2AUXData, only:  L2AUXData_T, PHASENAMEATTRIBUTES, &
+      & DestroyL2AUXContents, &
       & SetupNewL2AUXRecord, WriteL2AUXAttributes
     use MLSFiles, only: HDFVERSION_5
-    use MLSHDF5, only: ISHDF5DSPRESENT, SaveAsHDF5DS
+    use MLSHDF5, only: IsHDF5AttributePresent, ISHDF5DSPRESENT, &
+      & MakeHDF5Attribute, SaveAsHDF5DS
+    use MLSL2Timings, only: showTimingNames
     use PCFHdr, only: h5_writeglobalattr
     use VectorsModule, only: VectorValue_T
 
@@ -397,11 +401,13 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     logical :: already_there
     integer :: first_maf
+    integer :: grp_id
     type (L2AUXData_T) :: l2aux
     integer :: last_maf
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
     integer :: NODIMS                   ! Also index of maf dimension
     integer :: Num_qty_values
+    integer :: returnStatus
     integer :: SIZES(3)                 ! HDF array sizes
     integer :: START(3)                 ! HDF array starting position
     integer :: STRIDE(3)                ! HDF array stride
@@ -500,6 +506,18 @@ contains ! ======================= Public Procedures =========================
     call DestroyL2AUXContents ( l2aux )
     ! file-level attributes
     call h5_writeglobalattr(fileID, skip_if_already_there=.true.)
+    if ( PHASENAMEATTRIBUTES ) then
+      call h5gopen_f(fileID, '/', grp_id, returnstatus)
+      if ( .not. &
+        & IsHDF5AttributePresent('/', fileID, 'Phase Names') ) &
+        & call MakeHDF5Attribute(grp_id, &
+        & 'Phase Names', trim(showTimingNames('phases', .true.)), .true.)
+      if ( .not. &
+        & IsHDF5AttributePresent('/', fileID, 'Section Names') ) &
+        & call MakeHDF5Attribute(grp_id, &
+        & 'Section Names', trim(showTimingNames('sections', .true.)), .true.)
+      call h5gclose_f(grp_id, returnstatus)
+    endif
 
   end subroutine DirectWrite_L2Aux_hdf5
 
@@ -889,6 +907,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.26  2004/06/29 18:05:26  pwagner
+! May write phase, section names as file-level attributes
+!
 ! Revision 2.25  2004/06/10 00:58:45  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
