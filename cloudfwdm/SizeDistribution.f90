@@ -1,13 +1,34 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module SizeDistribution
+
+! -------------------------------------------------------------------------  
+! THIS MODULE CONTAINS VARIOUS PARTICLE SIZE DISTRIBUTIONS
+! -------------------------------------------------------------------------
+
+      use MLSCommon, only: r8
+      IMPLICIT NONE
+      Private
+      Public :: DRP_SIZE
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+      
+contains
 
       SUBROUTINE DRP_SIZE(ISPI,R,RN,NR,CWC,T,IPSD,Dm)
 
 !========================================================================C
 !     PRODUCE SIZE DISTRIBUTIONS FOR ICE PARTICLES AND WATER DROPLETS    C
-!     J.JIANG, MAY 1, 2001
+!     J.JIANG, MAY 1, 2001                                               C
 !========================================================================C
 
-      use MLSCommon, only: r8
-      IMPLICIT NONE
       INTEGER :: ISPI,ITP
 
       INTEGER :: NR                          ! NUMBER OF SIZE BINS
@@ -239,9 +260,9 @@
         enddo
         Dm=sum1/sum2
 
-	return
+      END SUBROUTINE DRP_SIZE
 
-      END
+end module SizeDistribution
 
-! $Log: drp_size.f90,v      
+! $Log: SizeDistribution.f90,v      
 

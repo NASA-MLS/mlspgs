@@ -9,6 +9,7 @@ module CloudySkyModule
 
       use MLSCommon, only: r8      
       use PhaseFunction, only: pfsetup
+      use SizeDistribution, only: DRP_SIZE
       IMPLICIT NONE
       Private
       Public :: CLOUDY_SKY
