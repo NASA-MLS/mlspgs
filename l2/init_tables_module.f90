@@ -340,10 +340,10 @@ contains ! =====     Public procedures     =============================
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
-             l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_negativePrecision, &
-             l+l_offsetRadiance, l+l_profile, l+l_vector, l+l_special, &
-             l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_H2OFromRHI, l+l_fold, &
-             l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
+             l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_manipulate, &
+             l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, l+l_vector, &
+             l+l_special, l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, &
+             l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
@@ -558,7 +558,11 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
+             begin, f+f_a, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
              begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_b, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -586,6 +590,7 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_lsbFraction, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_manipulation, t+t_string, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot /) )
@@ -906,6 +911,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.261  2002/11/27 19:26:20  livesey
+! Added stuff for manipulate fill
+!
 ! Revision 2.260  2002/11/21 01:17:54  livesey
 ! Added the negativePrecision command to fill (distinct from the
 ! negativePrecision option to the fill command)
