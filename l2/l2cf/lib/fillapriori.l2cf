@@ -243,6 +243,9 @@ begin Fill
 
   ;; Now set the smoothing weights - we'll use a profile fill, even if
   ;; it's only one value.
+  ;; In the cases where there are different smoothings for products in
+  ;; different phases, I'm quoting there the one for the 'standard' product.
+
   ;; Vertical
   Fill, quantity=vReg.baselineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
   Fill, quantity=vReg.baselineR1B, method=profile, profileValues=[146mb:0K, 100mb:5K ]
@@ -252,37 +255,42 @@ begin Fill
   Fill, quantity=vReg.baselineR5H, method=profile, profileValues=[146mb:0K, 100mb:5K ]
   Fill, quantity=vReg.baselineR5V, method=profile, profileValues=[146mb:0K, 100mb:5K ]
 
-  Fill, quantity=vReg.bro,   method=profile, profileValues= [ 100mb:0.1ppbv ]
-  Fill, quantity=vReg.ch3cn, method=profile, profileValues= [ 100mb:30pptv ]
-  Fill, quantity=vReg.clo,   method=profile, profileValues= [ 100mb:0.3ppbv ]
-  Fill, quantity=vReg.co,    method=profile, profileValues= $
-    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.01mb:10ppmv, 0.001mb:10ppmv ]
+  Fill, quantity=vReg.bro, method=profile, $
+    profileValues= [ 1mb:0.1ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ch3cn, method=profile, $
+    profileValues= [ 1mb:30pptv, 0.68mb:0pptv ]
+  Fill, quantity=vReg.clo, method=profile, $
+    profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.co, method=profile, profileValues= $
+    [ 10mb:30ppbv, 1mb:300ppbv, 0.1mb:3ppmv, 0.068mb:0ppmv ]
 
-  Fill, quantity=vReg.h2o,   method=profile, profileValues= $
-    [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv ], logSpace=false
-  Fill, quantity=vReg.h2o_hr,   method=profile, profileValues= $
-    [ 1000mb:80ppmv, 300:8ppmv, 100mb:0.3ppmv ], logSpace=false
+  Fill, quantity=vReg.h2o, method=profile, profileValues= $
+    [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
+  Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
+    [ 1000mb:80ppmv, 300:8ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
 
-  Fill, quantity=vReg.hcl,   method=profile, profileValues= [ 100mb:0.3ppbv ]
-  Fill, quantity=vReg.hcn,   method=profile, profileValues= [ 100mb:100pptv ]
-  Fill, quantity=vReg.hno3,  method=profile, profileValues= [ 100mb:10ppbv ]
-  Fill, quantity=vReg.ho2,   method=profile, profileValues= [ 100mb:10ppbv ]
-  Fill, quantity=vReg.hocl,  method=profile, profileValues= [ 100mb:0.3ppbv ]
-  Fill, quantity=vReg.n2o,   method=profile, profileValues= [ 100mb:30ppbv ]
+  Fill, quantity=vReg.hcl, method=profile, $
+    profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
+  Fill, quantity=vReg.hcn, method=profile, $
+    profileValues= [ 1mb:100pptv, 0.68mb:0pptv ]
+  Fill, quantity=vReg.hno3, method=profile, $
+    profileValues= [ 1mb:10ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=vReg.ho2, method=profile, profileValues= [ 100mb:10ppbv ]
+  Fill, quantity=vReg.hocl, method=profile, $
+    profileValues= [ 1mb:0.3ppmv, 0.68mb:0ppmv ]
+  Fill, quantity=vReg.n2o, method=profile, $
+    profileValues= [ 1mb:30ppbv, 0.68mb:0ppbv ]
 
-  Fill, quantity=vReg.o3,    method=profile, profileValues= [ 100mb:1ppmv ]
-  Fill, quantity=vReg.o3_HR, method=profile, profileValues=[ 100mb:1ppmv ]
+  Fill, quantity=vReg.o3, method=profile, $
+    profileValues= [ 0.1mb:1ppmv, 0.068mb:0ppmv ]
+  Fill, quantity=vReg.o3_HR, method=profile, profileValues=[ 0.1mb:1ppmv, 0.68mb:0ppmv ]
 
-  Fill, quantity=vReg.oh,    method=profile, profileValues= [ 10mb:30pptv, 1mb:300pptv ]
-  Fill, quantity=vReg.temperature, method=explicit, explicitValues=1K, /spread
-  Fill, quantity=vReg.temperature_hr, method=explicit, explicitValues=1K, /spread
+  Fill, quantity=vReg.oh, method=profile, profileValues= [ 10mb:30pptv, 1mb:300pptv ]
 
-  !define(fillOneExtinctionShapedVReg,{!dnl
-  Fill, quantity=vReg.extinctionShaped$1, method=profile, $
-    profileValues=[ 100mb:1.0e-5 ]
-  Fill, quantity=vReg.extinctionShaped$1_HR, method=profile, $
-    profileValues=[ 100mb:1.0e-5 ]!nl})
-  !forall(fillOneExtinctionShapedVReg,!allRadiometers)
+  Fill, quantity=vReg.temperature, method=profile, $
+    profileValues=[ 1mb:1K, 0.68mb:0K ]
+  Fill, quantity=vReg.temperature_hr, method=profile, $
+    profileValues=[ 1mb:1K, 0.68mb:0K ]
 
   ;; Horizontal
   Fill, quantity=hReg.baselineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
@@ -293,39 +301,44 @@ begin Fill
   Fill, quantity=hReg.baselineR5H, method=profile, profileValues=[146mb:0K, 100mb:5K ]
   Fill, quantity=hReg.baselineR5V, method=profile, profileValues=[146mb:0K, 100mb:5K ]
 
-  Fill, quantity=hReg.temperature, method=explicit, explicitValues=1K, /spread
-  Fill, quantity=hReg.temperature_HR, method=explicit, explicitValues= 1K, /spread
+  Fill, quantity=hReg.bro, method=profile, $
+    profileValues= [  1mb:0.3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=hReg.ch3cn, method=profile, $
+    profileValues= [  1mb:30pptv, 0.68mb:0pptv ]
+  Fill, quantity=hReg.clo, method=profile, $
+    profileValues= [  1mb:0.1ppbv, 0.68:0pptv ]
+  Fill, quantity=hReg.co, method=profile, profileValues= $
+    [ 10mb:10ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.0068mb:0ppmv ]
+
+  Fill, quantity=hReg.h2o, method=profile, $
+    profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
+  Fill, quantity=hReg.h2o_HR, method=profile, $
+    profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
+
+  Fill, quantity=hReg.hcl, method=profile, $
+    profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
+  Fill, quantity=hReg.hcn, method=profile, $
+    profileValues= [ 1mb:100pptv, 0.68mb:0pptv ]
+  Fill, quantity=hReg.hno3, method=profile, $
+    profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
+  Fill, quantity=hReg.ho2, method=profile, profileValues= [ 100mb:10ppbv ]
+  Fill, quantity=hReg.hocl, method=profile, $
+    profileValues= [ 1mb:0.3ppmv, 0.68mb:0ppmv ]
+  Fill, quantity=hReg.n2o, method=profile, $
+    profileValues= [ 1mb:10ppbv, 0.68mb:0ppbv ]
+
+  Fill, quantity=hReg.o3, method=profile, $
+    profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ]
+  Fill, quantity=hReg.o3_HR, method=profile, $
+    profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ]
+
+  Fill, quantity=hReg.oh, method=profile, profileValues= [ 10mb:30pptv, 1mb:300pptv ]
+
+  Fill, quantity=hReg.temperature, method=profile, $
+    profileValues=[ 1mb:1K, 0.68mb:0K ]
+  Fill, quantity=hReg.temperature_hr, method=profile, $
+    profileValues=[ 1mb:1K, 0.68mb:0K ]
 
   Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
-
-  Fill, quantity=hReg.bro,   method=profile, profileValues= [ 100mb:0.1ppbv ]
-  Fill, quantity=hReg.ch3cn, method=profile, profileValues= [ 100mb:30pptv ]
-  Fill, quantity=hReg.clo,   method=profile, profileValues= [ 100mb:0.1ppbv ]
-  Fill, quantity=hReg.co,    method=profile, profileValues= $
-    [ 10mb:10ppbv, 1mb:100ppbv, 0.1mb:1ppmv, 0.01mb:3ppmv, 0.001mb:3ppmv ]
-
-  Fill, quantity=hReg.h2o,   method=profile, profileValues= $
-    [ 146mb:0ppmv, 100mb:0.3ppmv ], logSpace=false
-  Fill, quantity=hReg.h2o_HR, method=profile, $
-    profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv ], logSpace=false
-
-  Fill, quantity=hReg.hcl,   method=profile, profileValues= [ 100mb:0.3ppbv ]
-  Fill, quantity=hReg.hcn,   method=profile, profileValues= [ 100mb:100pptv ]
-  Fill, quantity=hReg.hno3,  method=profile, profileValues= [ 100mb:0.3ppbv ]
-  Fill, quantity=hReg.ho2,   method=profile, profileValues= [ 100mb:10ppbv ]
-  Fill, quantity=hReg.hocl,  method=profile, profileValues= [ 100mb:0.3ppbv ]
-  Fill, quantity=hReg.n2o,   method=profile, profileValues= [ 100mb:10ppbv ]
-
-  Fill, quantity=hReg.o3,    method=profile, profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv ]
-  Fill, quantity=hReg.o3_HR, method=profile, profileValues= [ 100mb:0.3ppmv ]
-
-  Fill, quantity=hReg.oh,    method=profile, profileValues= [ 10mb:30pptv, 1mb:300pptv ]
-
-  !define(fillOneExtinctionShapedHReg,{!dnl
-  Fill, quantity=vReg.extinctionShaped$1, method=profile, $
-    profileValues=[ 100mb:1.0e-5 ]
-  Fill, quantity=vReg.extinctionShaped$1_HR, method=profile, $
-    profileValues=[ 100mb:1.0e-5 ]!nl})
-  !forall(fillOneExtinctionShapedHReg,!allRadiometers)
 
 end Fill
