@@ -11,6 +11,7 @@ module FilterShapes_m
   use MLSSignals_m, only: Bands, Dump_Bands, Dump_Signals, GetSignalName, &
     & Signals
   use Output_m, only: Blanks, MLSMSG_Level, Output, PrUnit
+  use String_Table, only: Display_String
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -71,7 +72,7 @@ contains
     integer, intent(in) :: Spec_Indices(:)   ! Needed by Parse_Signal, q.v.
 
     integer :: DataBaseSize                  ! How many filter shapes?
-    integer :: I                             ! Loop inductor, subscript
+    integer :: I                             ! Loop inductors, subscripts
     integer :: NumChannels                   ! For the signal
     integer :: NumFilterPts                  ! How many points in each filter
     !                                          shape array -- all the same
@@ -90,23 +91,28 @@ contains
       if ( status > 0 ) go to 99
       if ( status < 0 ) exit
       call parse_signal ( sigName, signal_indices, spec_indices )
-      if ( size(signal_indices) > 1 ) then
-        call output ( 'Too many signals specified for a filter shape.', &
-          & advance='yes' )
-        call output ( 'Signal string = ' )
-        call output ( trim(sigName), advance='yes' )
+      if ( .not. associated(signal_indices) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "Too many signals specified for a filter shape." )
-      end if
-      if ( size(signal_indices) == 0 ) then
-        call output ( 'No valid signal specified for a filter shape.', &
-          & advance='yes' )
-        call output ( 'Signal string = ' )
-        call output ( trim(sigName), advance='yes' )
-        call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "No valid signal specified for a filter shape." )
-      end if
+          & trim(sigName) // " is not a valid signal." )
+      ! Check that filter shapes have not already been specified for any
+      ! signal implied by the present signal string.
+      do i = 1, size(signal_indices)
+        if ( signals(signal_indices(i))%filterShapeFirst /= 0 ) then
+          prunit = -2 ! To do output via MLSMessage
+          MLSMSG_Level = MLSMSG_Info
+          call dump_signals ( (/ signals(signal_indices(i)) /) )
+          MLSMSG_Level = MLSMSG_Error
+          call output ( "More than one filter shape specified for signal " )
+          call display_string ( signals(signal_indices(i))%name, advance='yes' )
+        end if
+      end do
       numChannels = size(signals(signal_indices(1))%frequencies)
+      do i = 1, size(signal_indices)
+        if ( size(signals(signal_indices(i))%frequencies) /= numChannels ) &
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "The signals implied by " // trim(sigName) // &
+            & " do not all have the same number of frequencies" )
+      end do
       dataBaseSize = 0
       if ( associated(filterShapes) ) dataBaseSize = size(filterShapes)
       tempFilterShapes => filterShapes
@@ -191,3 +197,5 @@ contains
   end subroutine Dump_Filter_Shapes_Database
 
 end module FilterShapes_m
+
+! $Log$
