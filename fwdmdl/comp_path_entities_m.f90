@@ -69,8 +69,6 @@ contains
   Real(r8), dimension(:)  , allocatable :: zpath, tpath, hpath, ppath, dhdzp
   Real(r8), dimension(:,:), allocatable :: phi_eta
 
-  integer, dimension(NoMAFs) :: closestInstance
-
   ier = 0
   ngt = 2 * (Ng+1) * (N_lvls+1)
 
@@ -139,6 +137,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.29  2001/04/23 21:56:25  livesey
+! Accepts closestInstances as parameter
+!
 ! Revision 1.28  2001/04/23 21:43:28  zvi
 ! Introducing no_phi_t etc.
 !
