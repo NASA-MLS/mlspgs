@@ -64,7 +64,7 @@ module L2PC_m
     real(r8) :: cost                    ! The cost for that range
   end type BinSelector_T
 
-  type(BinSelector_T), dimension(:), pointer, save :: BINSELECTORS
+  type(BinSelector_T), dimension(:), pointer, save :: BINSELECTORS => NULL()
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -722,6 +722,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.26  2002/01/23 00:50:50  pwagner
+! Initialize binselectors to null
+!
 ! Revision 2.25  2002/01/22 18:14:29  livesey
 ! Fixed typo.
 !
