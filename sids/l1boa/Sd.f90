@@ -23,7 +23,7 @@ MODULE Sd
      & SDS36_NAME, SDS37_NAME, SDS38_NAME, SDS39_NAME, SDS40_NAME, &
      & SDS41_NAME, SDS42_NAME, SDS43_NAME, SDS44_NAME, SDS45_NAME, &
      & SDS46_NAME, SDS47_NAME, SDS48_NAME, SDS49_NAME, SDS50_NAME, &
-     & SDS51_NAME, &
+     & SDS51_NAME, SDS62_NAME, SDS63_NAME, &
      & DIM1_NAME, DIM2_NAME, DIM3_NAME, DIM4_NAME, DIM5_NAME, DIM6_NAME, &
      & LENUTC, LENCOORD, FILL_DP, FILL_REAL
    IMPLICIT NONE
@@ -88,6 +88,7 @@ CONTAINS
       INTEGER :: sds38_id, sds39_id, sds40_id, sds41_id, sds42_id, sds43_id
       INTEGER :: sds44_id, sds45_id, sds46_id, sds47_id, sds48_id, sds49_id
       INTEGER :: sds50_id, sds51_id
+      INTEGER :: sds62_id, sds63_id
       INTEGER :: dimSize(3)
       INTEGER, ALLOCATABLE :: maf(:)
 
@@ -136,6 +137,7 @@ CONTAINS
       sds9_id = sfcreate( sd_id, SDS9_NAME, DFNT_FLOAT32, rank, dimSize(1:2) )
       sds10_id = sfcreate(sd_id, SDS10_NAME, DFNT_FLOAT32, rank, dimSize(1:2))
       sds11_id = sfcreate(sd_id, SDS11_NAME, DFNT_FLOAT32, rank, dimSize(1:2))
+      sds63_id = sfcreate(sd_id, SDS63_NAME, DFNT_FLOAT32, rank, dimSize(1:2))
 
       sds15_id = sfcreate(sd_id, SDS15_NAME, DFNT_FLOAT64, rank, dimSize(1:2))
       sds16_id = sfcreate(sd_id, SDS16_NAME, DFNT_FLOAT64, rank, dimSize(1:2))
@@ -194,6 +196,7 @@ CONTAINS
       sds4_id = sfcreate(sd_id, SDS4_NAME, DFNT_FLOAT64, rank, dimSize)
       sds5_id = sfcreate(sd_id, SDS5_NAME, DFNT_FLOAT64, rank, dimSize)
       sds12_id = sfcreate(sd_id, SDS12_NAME, DFNT_FLOAT64, rank, dimSize)
+      sds62_id = sfcreate(sd_id, SDS62_NAME, DFNT_FLOAT64, rank, dimSize)
       sds13_id = sfcreate(sd_id, SDS13_NAME, DFNT_FLOAT64, rank, dimSize)
       sds14_id = sfcreate(sd_id, SDS14_NAME, DFNT_FLOAT64, rank, dimSize)
 
@@ -270,11 +273,23 @@ CONTAINS
       dim_id = sfdimid(sds11_id, 1)
       status = sfsdmname(dim_id, DIM1_NAME)
 
+      dim_id = sfdimid(sds63_id, 0)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds63_id, 1)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
       dim_id = sfdimid(sds12_id, 0)
       status = sfsdmname(dim_id, DIM5_NAME)
       dim_id = sfdimid(sds12_id, 1)
       status = sfsdmname(dim_id, DIM2_NAME)
       dim_id = sfdimid(sds12_id, 2)
+      status = sfsdmname(dim_id, DIM1_NAME)
+
+      dim_id = sfdimid(sds62_id, 0)
+      status = sfsdmname(dim_id, DIM5_NAME)
+      dim_id = sfdimid(sds62_id, 1)
+      status = sfsdmname(dim_id, DIM2_NAME)
+      dim_id = sfdimid(sds62_id, 2)
       status = sfsdmname(dim_id, DIM1_NAME)
 
       dim_id = sfdimid(sds13_id, 0)
@@ -501,7 +516,9 @@ CONTAINS
       status = sfendacc(sds9_id)
       status = sfendacc(sds10_id)
       status = sfendacc(sds11_id)
+      status = sfendacc(sds63_id)
       status = sfendacc(sds12_id)
+      status = sfendacc(sds62_id)
       status = sfendacc(sds13_id)
       status = sfendacc(sds14_id)
       status = sfendacc(sds15_id)
@@ -644,6 +661,7 @@ CONTAINS
       INTEGER :: sds_index, status
       INTEGER :: sds4_id, sds5_id, sds6_id, sds7_id, sds8_id, sds9_id
       INTEGER :: sds10_id, sds11_id, sds12_id, sds13_id, sds14_id
+      INTEGER :: sds62_id, sds63_id
       INTEGER :: edge(3), start(3), stride(3)
 
 ! Find data sets by name
@@ -672,8 +690,14 @@ CONTAINS
       sds_index = sfn2index(sd_id, SDS11_NAME)
       sds11_id = sfselect(sd_id, sds_index)
 
+      sds_index = sfn2index(sd_id, SDS63_NAME)
+      sds63_id = sfselect(sd_id, sds_index)
+
       sds_index = sfn2index(sd_id, SDS12_NAME)
       sds12_id = sfselect(sd_id, sds_index)
+
+      sds_index = sfn2index(sd_id, SDS62_NAME)
+      sds62_id = sfselect(sd_id, sds_index)
 
       sds_index = sfn2index(sd_id, SDS13_NAME)
       sds13_id = sfselect(sd_id, sds_index)
@@ -703,6 +727,9 @@ CONTAINS
 
       status = sfsfill(sds12_id, FILL_DP)
       status = sfwdata(sds12_id, start, stride, edge, sc%scVelECI)
+
+      status = sfsfill(sds62_id, FILL_DP)
+      status = sfwdata(sds62_id, start, stride, edge, sc%scVelECR)
 
       status = sfsfill(sds13_id, FILL_DP)
       status = sfwdata(sds13_id, start, stride, edge, sc%ypr)
@@ -739,6 +766,10 @@ CONTAINS
       status = sfwdata(sds11_id, start(1:2), stride(1:2), edge(1:2), &
                        sc%scGeodAngle)
 
+      status = sfsfill(sds63_id, FILL_REAL)
+      status = sfwdata(sds63_id, start(1:2), stride(1:2), edge(1:2), &
+                       sc%scOrbIncl)
+
 ! Terminate access to the data sets
 
       status = sfendacc(sds4_id)
@@ -749,7 +780,9 @@ CONTAINS
       status = sfendacc(sds9_id)
       status = sfendacc(sds10_id)
       status = sfendacc(sds11_id)
+      status = sfendacc(sds63_id)
       status = sfendacc(sds12_id)
+      status = sfendacc(sds62_id)
       status = sfendacc(sds13_id)
       status = sfendacc(sds14_id)
 
@@ -1103,6 +1136,9 @@ END MODULE Sd
 !===============================================================================
 
 !# $Log$
+!# Revision 1.3  2001/12/04 00:54:03  pwagner
+!# Add only: .. to last use statement
+!#
 !# Revision 1.2  2001/12/04 00:26:16  pwagner
 !# sc%scvelECI is new name of scvel; added only .. to use statements
 !#

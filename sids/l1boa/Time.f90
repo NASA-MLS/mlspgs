@@ -5,8 +5,8 @@
 module Time
 
   use MLSCommon, only: R8, TAI93_RANGE_T
-  use MLSMessageModule, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, &
-    & MLSMSG_WARNING, MLSMESSAGE
+  use MLSMessageModule, only: MLSMSG_ALLOCATE, MLSMSG_DeAllocate, &
+    & MLSMSG_ERROR, MLSMSG_WARNING, MLSMESSAGE
   use SDPToolkit, only: PI, EARTHMODEL
   use OutputL1B, only: L1BOASC_T, LENCOORD
   use Scan, only: SCAN_GUESS
@@ -68,6 +68,7 @@ contains
       sc%scGeocAlt(numValues), sc%scGeocLat(numValues), &
       sc%scGeodAlt(numValues), sc%scGeodLat(numValues), sc%scLon(numValues), &
       sc%scGeodAngle(numValues), sc%scVelECI(lenCoord,numValues), &
+      sc%scVelECR(lenCoord,numValues), sc%scOrbIncl(numValues), &
       sc%ypr(lenCoord,numValues), sc%yprRate(lenCoord,numValues), STAT=error)
     if ( error /= 0 ) then
       msr = MLSMSG_Allocate // '  s/c quantities.'
@@ -92,6 +93,19 @@ contains
       returnStatus = Pgs_csc_grazingRay(earthModel, sc%scECR, ray, tpLat, &
         longitude, missAltitude, slantRange, posNear, posSurf)
     enddo
+
+    ! Not sure why these weren't deallocated
+    ! but better late than never (pw)
+    deallocate( sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, &
+      sc%scGeodAngle, sc%scOrbIncl, sc%scVelECI, &
+      sc%scVelECR, &
+      sc%ypr, sc%yprRate, &
+      & STAT=error )
+    if ( error /= 0 ) then
+      msr = MLSMSG_DeAllocate // ' Failed to deallocate s/c quantities.'
+      call MLSMessage(MLSMSG_Error, ModuleName, msr)
+    endif
 
   end subroutine Time_lat
 
@@ -479,6 +493,9 @@ contains
 end module Time
 
 ! $Log$
+! Revision 1.3  2001/12/04 00:25:25  pwagner
+! sc%scvelECI is new name of scvel
+!
 ! Revision 1.2  2001/10/11 23:27:23  livesey
 ! Tried to change the chmod stuff
 !

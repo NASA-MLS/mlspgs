@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L1boa
@@ -60,8 +60,9 @@ contains
     ! Get oa data
     allocate(sc%scECI(lenCoord,nV), sc%scECR(lenCoord,nV), &
       sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
-      sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
+      sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), sc%scOrbIncl(nV), &
       sc%scVelECI(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+      sc%scVelECR(lenCoord,nV), &
       tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
       tp%scanRate(nV), STAT=alloc_err)
     if ( alloc_err /= 0 ) then
@@ -75,7 +76,8 @@ contains
     call Mc_aux(mafTime, sc%scECI(:,1), sc%scGeocLat(1), q)
 
     call TkL1B_mc(ascTAI, dscTAI, sc%scECI, sc%scGeocLat, nV, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write s/c information
     call OutputL1B_sc(noMAF, L1FileHandle, sc)
@@ -103,7 +105,8 @@ contains
 
     ! Compute GHz master coordinate
     call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifG, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write GHz information
     call OutputL1B_GHz(noMAF, L1FileHandle, tp)
@@ -135,7 +138,8 @@ contains
 
     ! Compute THz master coordinate
     call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifT, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write THZ information
     call OutputL1B_THz(noMAF, L1FileHandle, tp)
@@ -149,7 +153,8 @@ contains
 
     ! Deallocate the MIF quantities
     deallocate(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
-      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVelECI, &
+      sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle, sc%scVelECI, &
+      sc%scOrbIncl, sc%scVelECR, &
       sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
       tp%scanRate, STAT=dealloc_err)
     if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -194,6 +199,7 @@ contains
       sc%scGeocAlt(nV), sc%scGeocLat(nV), sc%scGeodAlt(nV), &
       sc%scGeodLat(nV), sc%scLon(nV), sc%scGeodAngle(nV), &
       sc%scVelECI(lenCoord,nV), sc%ypr(lenCoord,nV), sc%yprRate(lenCoord,nV), &
+      sc%scVelECR(lenCoord,nV), sc%scOrbIncl(nV),&
       tp%encoderAngle(nV), tp%scAngle(nV), tp%scanAngle(nV), &
       tp%scanRate(nV), STAT=alloc_err)
     if ( alloc_err /= 0 ) then
@@ -206,7 +212,8 @@ contains
     ! Get s/c master coordinate
     call Mc_aux(mafTime, sc%scECI(:,1), sc%scGeocLat(1), q)
     call TkL1B_mc(ascTAI, dscTAI, sc%scECI, sc%scGeocLat, nV, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:nV), sc%scGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write s/c information
     call Sd_sc(noMAF, nV, L1FileHandle, sc)
@@ -234,7 +241,8 @@ contains
 
     ! Compute GHz master coordinate
     call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifG, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifG), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write GHz information
 
@@ -266,7 +274,8 @@ contains
 
     ! Compute THz master coordinate
     call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, mifT, numOrb, &
-      orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle)
+      & orbIncline, orbitNumber, q, mafTAI, offsets(1:mifT), tp%tpGeodAngle, &
+      & sc%scOrbIncl)
 
     ! Write THZ information
     call Sd_THz(mifT, noMAF, nV, L1FileHandle, tp)
@@ -282,6 +291,7 @@ contains
 
     deallocate(sc%scECI, sc%scECR, sc%scGeocAlt, sc%scGeocLat, &
       sc%scGeodAlt, sc%scGeodLat, sc%scLon, sc%scGeodAngle,  sc%scVelECI, &
+      sc%scVelECR, sc%scOrbIncl,&
       sc%ypr, sc%yprRate, tp%encoderAngle, tp%scAngle, tp%scanAngle, &
       tp%scanRate, STAT=dealloc_err)
     if ( dealloc_err /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -292,6 +302,9 @@ contains
 end module L1boa
 
 ! $Log$
+! Revision 1.5  2001/11/19 20:36:53  livesey
+! Changed name of scVel to scVelECI to make it clear.
+!
 ! Revision 1.4  2001/10/12 22:11:46  livesey
 ! Tidied up
 !
