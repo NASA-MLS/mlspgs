@@ -84,9 +84,9 @@ CONTAINS
 
 	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, numSwaths, rDays
 
-        integer i, j, k, ctype, iP, iD
+        integer i, j, k, ctype, iP, iD, iL
         real(r8), Dimension(nlons) :: xlon, result
-	real zonAvg, tau0
+	real zonAvg, tau0, l3ret
 
 !*** Initilize variables & POINTERS
  
@@ -238,10 +238,8 @@ CONTAINS
 
 !*** Main Loop 
 
-	!DO iP = 1, l2gp(1)%nLevels
-	DO iP = 1, 1
-	  !DO J = 1, cfProd%nLats
-	  DO J = 10, 10 
+	DO iP = 1, l2gp(1)%nLevels
+	  DO J = 1, cfProd%nLats
        	     IF( anlats(J, iP) > 0 ) THEN
 	        CALL Init(cfProd%mode, 				&
 			  nt_a_i   = anlats(J, iP), 		&
@@ -269,10 +267,19 @@ CONTAINS
 		      ENDDO
 		      l3dz(iD)%l3dzValue(iP, J) = zonAvg/float(l3dm(iD)%nLons) 
 		   ENDDO
+                   DO iL = 1, anlats(J, iP)
+		      !CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		      !print *, atimes(J, iL, iP), alons(J, iL, iP), afields(J, iL, iP)-l3ret
+		   ENDDO
+                   DO iL = 1, anlats(J, iP)
+		      !CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+		      !print *, dfields(J, iL, iP)-l3ret
+		   ENDDO
 		   DeAllocate(l3Result)
 		   flags%writel3dmCom = .TRUE.
 		   flags%writel3dzCom = .TRUE.
-		   flags%writel3sp = .TRUE.
+		   flags%writel3sp    = .TRUE.
+             	   flags%writel3rCom  = .TRUE.
 		ELSE IF (cfProd%mode == 'asc') THEN
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -290,7 +297,8 @@ CONTAINS
 		   DeAllocate(l3Result)
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3dzAsc = .TRUE.
-		   flags%writel3sp = .TRUE.
+		   flags%writel3sp    = .TRUE.
+        	   flags%writel3rAsc  = .TRUE.
 		ELSE IF (cfProd%mode == 'des') THEN
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -308,7 +316,8 @@ CONTAINS
 		   DeAllocate(l3Result)
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3dzDes = .TRUE.
-		   flags%writel3sp = .TRUE.
+		   flags%writel3sp    = .TRUE.
+        	   flags%writel3rDes  = .TRUE.
 		ELSE IF (cfProd%mode == 'all') THEN
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    CALL CordTransform('com')
@@ -327,6 +336,7 @@ CONTAINS
 
 		   flags%writel3dmCom = .TRUE.
 		   flags%writel3dzCom = .TRUE.
+             	   flags%writel3rCom  = .TRUE.
 
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -345,6 +355,7 @@ CONTAINS
 
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3dzAsc = .TRUE.
+        	   flags%writel3rAsc  = .TRUE.
 
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -363,6 +374,7 @@ CONTAINS
 
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3dzDes = .TRUE.
+        	   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		END IF
 
@@ -710,6 +722,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.3  2001/02/28 19:27:03  ybj
+! Fix residue allocation & flags initialization
+!
 ! Revision 1.2  2001/02/28 17:15:06  ybj
 ! Fix residue structure alocation
 !
