@@ -48,6 +48,7 @@ MODULE L3DMData
    INTEGER, PARAMETER :: CCSDS_LEN = 27
    INTEGER, PARAMETER :: CCSDSB_LEN = 25
    INTEGER, PARAMETER :: INVENTORYMETADATA = 2
+   INTEGER, PARAMETER :: GridNameLen = 64
    INTEGER, PARAMETER :: maxNumGrids = 100
    INTEGER, PARAMETER :: maxWindow = 30
 
@@ -752,6 +753,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.3  2000/10/24 19:21:08  nakamura
+!# Removed dependence on OutputL2GP.
+!#
 !# Revision 1.2  2000/10/17 20:17:09  nakamura
 !# Added parameters used globally by L3; updated WriteMetaL3DM for new input.
 !#
