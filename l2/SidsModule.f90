@@ -170,7 +170,6 @@ contains
             doThisOne=.false.
           endif
         end if
-        print*,'Doing perturbation:', i, element, instance, quantity
       end if
 
       ! Now loop over the MAFs / forward model configs and run the models
@@ -220,11 +219,9 @@ contains
             do row = 1, jacobian%row%nb
               rowQuantity = jacobian%row%quant(row)
               rowInstance = jacobian%row%inst(row)
-              print*,'Possibly filling:',row,col
               ! Is there anydeviaiton to store?
               if ( maxval ( abs ( &
                 & deviation%quantities(rowQuantity)%values(:,rowInstance))) /= 0.0 ) then
-                print*,'Yes'
                 
                 ! If so, this column of the block (creating if necessary)
                 m0 => jacobian%block(row,col)
@@ -299,6 +296,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.30  2001/05/08 21:33:56  livesey
+! Removed some print statements
+!
 ! Revision 2.29  2001/05/05 00:02:27  livesey
 ! Got a numerical derivative code working.
 !
