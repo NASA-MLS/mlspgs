@@ -1,10 +1,11 @@
 ! This module computes the output angles to interpolate to
 MODULE get_chi_out_m
+  USE MLSCommon, only: I4, RP, IP
   USE Allocate_Deallocate, only: allocate_test, deallocate_test
+  USE Load_sps_data_m, ONLY: Grids_T
   USE get_eta_matrix_m, only: get_eta_sparse
   USE get_chi_angles_m, only: get_chi_angles
   USE two_d_hydrostatic_m, only: two_d_hydrostatic
-  USE MLSCommon, only: I4, RP, IP
   USE refraction_m, only: refractive_index
   IMPLICIT none
   !---------------------------- RCS Ident Info -------------------------------
@@ -16,10 +17,9 @@ MODULE get_chi_out_m
 !---------------------------------------------------------------------------
  CONTAINS
 !
-  SUBROUTINE get_chi_out(zetatan,phitan,scgeocalt,temp_zeta_basis, &
-  & temp_phi_basis,temp_coeffs,ref_zeta,ref_gph,orb_inc,elev_offset, &
-  & req,tan_chi_out,h2o_zeta_basis,h2o_phi_basis,h2o_coeffs,lin_log, &
-  & dxdt_tan,d2xdxdt_tan)
+  SUBROUTINE get_chi_out(zetatan,phitan,scgeocalt,Grids_tmp,ref_zeta, &
+           & ref_gph,orb_inc,elev_offset,req,tan_chi_out,h2o_zeta_basis,&
+           & h2o_phi_basis,h2o_coeffs,lin_log,dxdt_tan,d2xdxdt_tan)
 !
 ! inputs
 !
@@ -27,10 +27,8 @@ MODULE get_chi_out_m
   REAL(rp), INTENT(in) :: phitan(:)    ! tangent phi profle for input mmaf
 !                                        (in radians)
   REAL(rp), INTENT(in) :: scgeocalt(:) ! spacecraft geocentric altitude profile in km
-  REAL(rp), INTENT(in) :: temp_zeta_basis(:) ! temperature zeta basis
-  REAL(rp), INTENT(in) :: temp_phi_basis(:) ! temperature phi basis
-  REAL(rp), INTENT(in) :: temp_coeffs(:) ! temperature coefficients in long
-!                          vector format zetaXphi.
+  type (Grids_T), INTENT(in) :: Grids_tmp  ! All Temperature's coordinates
+
   REAL(rp), INTENT(in) :: ref_zeta(:) ! zetas for inputted gph's
   REAL(rp), INTENT(in) :: ref_gph(:) ! reference geopotential heights along the
 !                          temperature horizontal basis in km
@@ -61,7 +59,6 @@ MODULE get_chi_out_m
   REAL(rp), POINTER :: h_tan_out(:)
   REAL(rp), POINTER :: t_tan_out(:)
   REAL(rp), POINTER :: n_tan_out(:)
-  REAL(rp), POINTER :: dzdh_tan_out(:)
   REAL(rp), POINTER :: h2o_tan_out(:)
   REAL(rp), POINTER :: temp_tan(:,:)
   REAL(rp), POINTER :: height_tan(:,:)
@@ -75,11 +72,12 @@ MODULE get_chi_out_m
 ! dimensions we use
 !
   n_out = SIZE(zetatan)
-  n_t_phi = SIZE(temp_phi_basis)
-  n_t_zeta = SIZE(temp_zeta_basis)
+  n_t_phi = Grids_tmp%no_p(1)
+  n_t_zeta = Grids_tmp%no_z(1)
 !
   NULLIFY(temp_tan,height_tan,dhdz_tan,dhdt_tan,d2hdhdt_tan,eta_t,h_tan_out, &
-  & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out,dzdh_tan_out)
+  & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out)
+!
   CALL allocate_test(temp_tan,n_out,n_t_phi,'temp_tan',ModuleName)
   CALL allocate_test(height_tan,n_out,n_t_phi,'height_tan',ModuleName)
   CALL allocate_test(dhdz_tan,n_out,n_t_phi,'dhdz_tan',ModuleName)
@@ -91,14 +89,12 @@ MODULE get_chi_out_m
   CALL allocate_test(t_tan_out,n_out,'t_tan_out',ModuleName)
   CALL allocate_test(n_tan_out,n_out,'n_tan_out',ModuleName)
 !
-  CALL two_d_hydrostatic(temp_zeta_basis, temp_phi_basis, &
-  & RESHAPE(temp_coeffs, (/n_t_zeta,n_t_phi/)), ref_zeta, ref_gph, &
-  & zetatan, orb_inc, temp_tan, height_tan, dhdz_tan, dhdt_tan, &
-  & d2hdhdt_tan)
+  CALL two_d_hydrostatic(Grids_tmp,ref_zeta,ref_gph,zetatan,orb_inc, &
+           & temp_tan, height_tan, dhdz_tan, dhdt_tan,d2hdhdt_tan)
 !
 ! tangent heights for inputted pressures along phi
 !
-  CALL get_eta_sparse(temp_phi_basis, phitan, eta_t)
+  CALL get_eta_sparse(Grids_tmp%phi_basis, phitan, eta_t)
   h_tan_out = SUM(height_tan * eta_t, dim=2)
   t_tan_out = SUM(temp_tan * eta_t, dim=2)
 !
@@ -145,24 +141,16 @@ MODULE get_chi_out_m
 !
     dhdt_tan = dhdt_tan  * SPREAD(eta_t,3,n_t_zeta)
     d2hdhdt_tan = d2hdhdt_tan * SPREAD(eta_t,3,n_t_zeta)
-    CALL allocate_test(eta_z, n_out, n_t_zeta, 'eta_z',ModuleName)
-    CALL allocate_test(dzdh_tan_out,n_out,'n_tan_out',ModuleName)
-    dzdh_tan_out = 1.0 / SUM(dhdz_tan * eta_t, dim=2)
-    CALL get_eta_sparse(temp_zeta_basis, zetatan, eta_z)
     DO ht_i = 1, n_out
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
           &    h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
           &    tan_chi_out(ht_i), RESHAPE(dhdt_tan(ht_i,:,:), &
           &    (/n_t_phi,n_t_zeta/)), RESHAPE(d2hdhdt_tan(ht_i,:,:), &
-          &    (/n_t_phi,n_t_zeta/)), t_tan_out(ht_i), dzdh_tan_out(ht_i), &
-          &    RESHAPE(SPREAD(RESHAPE(eta_t(ht_i,:),(/n_t_phi/)),2,n_t_zeta) &
-          &   *SPREAD(RESHAPE(eta_z(ht_i,:), &
-          &    (/n_t_zeta/)),1,n_t_phi),(/n_t_phi,n_t_zeta/)),  &
-          &    dxdt_tan(ht_i,:,:),d2xdxdt_tan(ht_i,:,:))
-    ENDDO
-    CALL deallocate_test(eta_z,'eta_z',ModuleName)
-    CALL deallocate_test(dzdh_tan_out,'n_tan_out',ModuleName)
-  ELSE
+          &    (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
+          &    d2xdxdt_tan(ht_i,:,:))
+     ENDDO
+!
+   ELSE
 !
     DO ht_i = 1, n_out
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
@@ -185,3 +173,9 @@ MODULE get_chi_out_m
  END SUBROUTINE get_chi_out
 !
 END MODULE get_chi_out_m
+! $Log$
+! Revision 2.4  2002/06/24 21:01:28  zvi
+! *** empty log message ***
+!
+! Revision 1.0  2002/06/24 14:59:00  bill
+! First release ...
