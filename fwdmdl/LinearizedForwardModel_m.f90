@@ -62,6 +62,7 @@ contains ! =====     Public Procedures     =============================
     type(matrix_T), intent(inout), optional :: JACOBIAN
 
     ! Local variables
+    integer :: CENTER                   ! Center instance of l2pc
     integer :: CHAN                     ! Loop counter
     integer :: CLOSESTINSTANCE          ! A closest profile to this MAF
     integer :: COLJBLOCK                ! Column index in jacobian
@@ -98,6 +99,7 @@ contains ! =====     Public Procedures     =============================
     logical, dimension(:), pointer :: doChannel ! Do this channel?
 
     real (r8) :: BESTCOST               ! Output from SelectL2PCBin
+    real (r8) :: DELTAPHI               ! Difference in geod Angle in l2pc
 
     ! The `prime' quantities are important.
     ! - yPrime (yP) is contains one maf of the relevant radiances, but on the
@@ -414,11 +416,28 @@ contains ! =====     Public Procedures     =============================
         end if
 
         ! Loop over profiles
+        center = l2pcQ%template%noInstances/2 - 1
         do xStarInstance = 1, l2pcQ%template%noInstances
           ! Identify this instance in state
-          deltaInstance = xStarInstance - l2pcQ%template%noInstances/2 - 1
-          deltaInstance = max ( nint(-forwardModelConfig%phiWindow/2), &
-            &                   min ( deltaInstance, nint(forwardModelConfig%phiWindow/2)) )
+          if ( forwardModelConfig%phiWindow == 0.0 ) then
+            ! If 0, user wants 1D, always choose the closest instance
+            deltaInstance = 0
+          else
+            deltaInstance = xStarInstance - center
+            ! Try to fit within phiWindow
+            phiWindowLoop: do
+              deltaPhi = l2pcQ%template%phi(1,center+deltaInstance) - &
+                & l2pcQ%template%phi(1,center)
+              if ( deltaPhi > forwardModelConfig%phiWindow ) then
+                deltaInstance = deltaInstance - 1
+              else if ( deltaPhi < -forwardModelConfig%phiWindow ) then
+                deltaInstance = deltaInstance + 1
+              else
+                exit phiWindowLoop
+              end if
+            end do phiWindowLoop
+          end if
+          
           xInstance = closestInstance + deltaInstance
           xInstance = max ( 1, min ( xInstance, stateQ%template%noInstances ) )
 
@@ -833,6 +852,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.17  2002/06/12 17:02:25  livesey
+! Very TEMPORARY! change to LinearizedForwardModel to skip round real
+! value of phiWindow.  Fix it properly later.
+!
 ! Revision 2.16  2002/05/28 22:34:21  livesey
 ! Added more useful diagnostic message
 !
