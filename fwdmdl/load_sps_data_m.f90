@@ -86,8 +86,7 @@ contains
 !-----------------------------------------------------------------------------
     real(r8), dimension(:), optional, intent(in) :: &
                                     & temp_supersat  ! What temperatures to use for supersaturation
-! Begin code:
-
+! Begin execution
     call load_one_grid ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
        & radiometer, mol_cat_index, f_len, l_vmr, Grids_f, p_len, h2o_ind,&
        & ext_ind, i_supersat, temp_supersat )
@@ -144,13 +143,13 @@ contains
     integer, intent(out) :: P_LEN
     integer, intent(out) :: H2O_IND
     integer, intent(out) :: EXT_IND
-    integer, intent(in)  :: i_supersat     ! Do the suprsaturation calculation?
+    integer, optional, intent(in)  :: i_supersat     ! Do the suprsaturation calculation?
 !-----------------------------------------------------------------------------
 ! i_supersat indicates different clear and cloudy sky combinations:
 !        i_supersat =-1 is for clear-sky radiance limit assuming 110%RHi
 !        i_supersat =-2 is for clear-sky radiance limit assuming 0%RHi
 !-----------------------------------------------------------------------------
-    real(r8), dimension(:), intent(in) :: &
+    real(r8), optional, dimension(:), intent(in) :: &
                                     & temp_supersat  ! What temperatures to use for supersaturation
 ! Local variables:
 
@@ -169,7 +168,21 @@ contains
     integer :: values_index
     real(r8), parameter :: refPRESSURE = 100._r8
     real(r8) :: RHI 
+    real(rp), dimension(:), pointer :: Grids_x_values
+    real :: diff, pct_diff, max_value
 
+
+! Local variables
+    integer :: my_supersat
+
+! Begin code:
+    my_supersat = 0
+    if ( present( i_supersat) ) my_supersat = i_supersat
+    if ( my_supersat /= 0 ) then
+      if ( .not. present(temp_supersat) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'temp_supersat must be supplied for supersaturation' )
+    endif
 
     !******************* LOAD SPECIES DATA ************
 
@@ -207,9 +220,11 @@ contains
         & quantityType=quantityType, molIndex=mol_cat_index(ii), &
         & radiometer=radiometer, config=fwdModelConf )
       kz = f%template%noSurfs
-      if ( kz /= size(temp_supersat) ) &
+      if ( present(temp_supersat) ) then
+        if ( kz /= size(temp_supersat) ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'template for this molecule on different vertical grid' )
+      endif
       if ( f%template%frequencyCoordinate == l_none ) then
         kf = 1
       else
@@ -250,6 +265,8 @@ contains
     call allocate_test ( Grids_x%deriv_flags,f_len,'Grids_x%deriv_flags',&
                        & ModuleName )
 
+    allocate(Grids_x_values(size(Grids_x%values)))
+    Grids_x_values = Grids_x%values
     j = 1
     l = 1
     s = 1
@@ -304,21 +321,17 @@ contains
         grids_x%deriv_flags(f_len:r-1) = .false.
       end if
 
-      j = k
-      l = n
-      s = m
-      f_len = r
-
-      if ( i_supersat /= 0 ) then
-        select case ( i_supersat )
+      if ( my_supersat /= 0 ) then
+        select case ( my_supersat )
         case ( -1 )
           RHI=110.0_r8
         case ( -2 )
           RHI=1.0e-9_r8
-        end select  
+        end select
+        values_index = f_len - 1 + 1 + kf*(supersat_Index-1)
 
-        call Hunt (Grids_x%zet_basis(1:n-1), -log(refPRESSURE), supersat_Index, &
-        & l, nearest=.true.)
+        call Hunt (Grids_x%zet_basis(l:n-1), -log10(refPRESSURE), supersat_Index, &
+        & 1, nearest=.true.)
 
         if (supersat_Index < 1) then        
            call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -338,9 +351,25 @@ contains
             end do
           end do
         end if
+
+        values_index = f_len - 1 + 1 + kf*(supersat_Index-1)
+
       end if
 
+      j = k
+      l = n
+      s = m
+      f_len = r
+
     end do
+
+    diff = sum(abs(Grids_x_values - Grids_x%values))
+    max_value = 0.
+    do i=1, size(Grids_x%values)
+      max_value = max(max_value, abs(Grids_x_values(i)))
+    enddo
+
+    deallocate(Grids_x_values)
 
     f_len = f_len - 1
 
@@ -373,6 +402,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.39  2003/02/11 00:48:25  jonathan
+! fix index bug
+!
 ! Revision 2.38  2003/02/07 18:47:47  vsnyder
 ! Back to 2.35
 !
