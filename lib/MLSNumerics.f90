@@ -5,7 +5,7 @@
 module MLSNumerics              ! Some low level numerical stuff
   !=============================================================================
 
-  use MLSCommon, only : R8
+  use MLSCommon, only : r8
   use MLSMessageModule, only: MLSMessage,MLSMSG_Error
   use MLSStrings, only: Capitalize
   use MatrixModule_0, only: MatrixElement_T,CreateBlock_0,M_Column_Sparse, Sparsify
@@ -220,7 +220,7 @@ contains
 
     ! Local variables
 
-    real(R8), dimension(1) :: values ! To pass to HuntArray
+    real(r8), dimension(1) :: values ! To pass to HuntArray
     integer, dimension(1) :: indices ! To pass to HuntScalar
 
     values(1) = value
@@ -247,10 +247,10 @@ contains
     & badValue, missingRegions, dyByDx, dNewByDOld )
 
     ! Dummy arguments
-    real(R8), dimension(:), intent(IN) :: oldX
-    real(R8), dimension(:,:), intent(IN) :: oldY
-    real(R8), dimension(:), intent(IN) :: newX
-    real(R8), dimension(:,:), intent(OUT) :: newY
+    real(r8), dimension(:), intent(IN) :: oldX
+    real(r8), dimension(:,:), intent(IN) :: oldY
+    real(r8), dimension(:), intent(IN) :: newX
+    real(r8), dimension(:,:), intent(OUT) :: newY
 
     character (len=*), intent(in) :: method ! See comments above
     character (len=*), optional, intent(in) :: extrapolate ! See comments above
@@ -266,29 +266,30 @@ contains
     integer :: ind, newInd         ! Loop counters
     logical :: computeDNewByDOld   ! Set if dNewByDOld is present
 
-    real(R8), dimension(:),   pointer :: A
-    real(R8), dimension(:,:), pointer :: AA
-    real(R8), dimension(:),   pointer :: B
-    real(R8), dimension(:,:), pointer :: BB
-    real(R8), dimension(:),   pointer :: C
-    real(R8), dimension(:,:), pointer :: CC
-    real(R8), dimension(:),   pointer :: D ! Coefficients
-    real(R8), dimension(:,:), pointer :: DD ! Spread coefs.
-    real(R8), dimension(:),   pointer :: gap
-    real(R8), dimension(:),   pointer :: gap2
+    real(r8), dimension(:),   pointer :: A
+    real(r8), dimension(:,:), pointer :: AA
+    real(r8), dimension(:),   pointer :: B
+    real(r8), dimension(:,:), pointer :: BB
+    real(r8), dimension(:),   pointer :: C
+    real(r8), dimension(:,:), pointer :: CC
+    real(r8), dimension(:),   pointer :: D ! Coefficients
+    real(r8), dimension(:,:), pointer :: DD ! Spread coefs.
+    real(r8), dimension(:),   pointer :: gap
+    real(r8), dimension(:),   pointer :: gap2
     integer, dimension(:),    pointer :: lowerInds
-    real(R8), dimension(:),   pointer :: maskVector
-    real(R8), dimension(:,:), pointer :: oldSecond
-    real(R8), dimension(:,:), pointer :: oldSecondLower
-    real(R8), dimension(:,:), pointer :: oldSecondUpper
-    real(R8), dimension(:,:), pointer :: oldYlower
-    real(R8), dimension(:,:), pointer :: oldYupper
-    real(R8), dimension(:),   pointer :: p ! For 2nd der. guess
-    real(R8), dimension(:,:), pointer :: spreadGap
-    real(R8), dimension(:,:), pointer :: temp ! For 2nd der. guess
-    real(R8), dimension(:,:), pointer :: tempDNewByDOld ! Dense version.
+    real(r8), dimension(:),   pointer :: maskVector
+    real(r8), dimension(:,:), pointer :: oldSecond
+    real(r8), dimension(:,:), pointer :: oldSecondLower
+    real(r8), dimension(:,:), pointer :: oldSecondUpper
+    real(r8), dimension(:,:), pointer :: oldYlower
+    real(r8), dimension(:,:), pointer :: oldYupper
+    real(r8), dimension(:),   pointer :: p ! For 2nd der. guess
+    real(r8), dimension(:,:), pointer :: spreadGap
+    real(r8), dimension(:,:), pointer :: temp ! For 2nd der. guess
+    real(r8), dimension(:,:), pointer :: tempDNewByDOld ! Dense version.
     integer, dimension(:),    pointer :: upperInds
-    real(R8) :: sig       ! For second derivative guesser
+    real(r8) :: sig       ! For second derivative guesser
+    real(r8) :: dyByDxFill              ! Fill value for dyByDx
 
     character :: extrapolateMethod ! Tidy copy of extrapolate parameter
 
@@ -432,7 +433,7 @@ contains
           & (oldYupper==badValue) )
         dyByDx = badValue
         oldYlower = 0.0      ! Only way to guarentee bad derivative
-        oldYupper  =0.0      ! But don't need to worry about spline
+        oldYupper = 0.0      ! But don't need to worry about spline
       end where
     end if
   end if
@@ -477,6 +478,21 @@ contains
       & (3.0*AA**2-1.0)*oldSecondLower)
   end if
 
+  ! Now make sure the dyByDX's are correct for extrapolated regions
+  if ( present ( dyByDx ) ) then
+    select case ( extrapolateMethod )
+    case ( "C" )
+      dyByDxFill = 0.0
+    case ( "B" )
+      dyByDxFill = badValue
+    end select
+    do ind = 1, noNew
+      if ( ( newX(ind) >= oldX(noOld) ) .or. ( newX(ind) < oldX(1) ) ) &
+        & dyByDx ( ind, : ) = dyByDXFill
+    end do
+  end if
+
+  ! Tidy up
   call Deallocate_Test ( lowerInds, "lowerInds", ModuleName )
   call Deallocate_Test ( upperInds, "upperInds", ModuleName )
   call Deallocate_Test ( gap, "gap", ModuleName )
@@ -585,6 +601,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.16  2001/10/19 23:41:43  livesey
+! Fixed bug with dyByDx extrapolation
+!
 ! Revision 2.15  2001/09/24 17:27:50  pwagner
 ! Removed random number things
 !
