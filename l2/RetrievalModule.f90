@@ -85,8 +85,8 @@ contains
   subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, ConfigDatabase, &
     & chunk )
 
-  !{Process the "Retrieve" section of the L2 Configuration File.
-  ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
+  !{Process the ``Retrieve'' section of the L2 Configuration File.
+  ! The ``Retrieve'' section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
 
     ! Dummy arguments:
@@ -592,7 +592,7 @@ contains
         & quantityType=QuantityIndex, noError=.true. )
       if ( associated(diag_qty) ) diag_qty%values(1,1) = value
     end subroutine FillDiagVec
-    ! 
+    !
     ! ------------------------------------------  NewtonianSolver  -----
     subroutine NewtonianSolver
 
@@ -918,7 +918,7 @@ contains
         ! Triangularize ${\bf J}$, and compute the (negative of the) gradient =
         ! $-{\bf J^T f}$.  This is the RHS of the normal equations ${\bf J^T J
         ! \delta \hat x} = -{\bf J^T f}$ where ${\bf \delta \hat x}$ is a
-        ! "Candidate DX" that might not actually get used.
+        ! ``Candidate DX'' that might not actually get used.
         ! Set \begin{description}
         !   \item[AJ\%DIAG] = element on diagonal with smallest absolute
         !           value, after triangularization,
@@ -1192,11 +1192,11 @@ contains
           !{AJ\%FNMIN = $L_2$ norm of residual, $||{\bf\Sigma}^T {\bf J}^T
           ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} +
           ! {\bf \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}||$ where
-          ! $\bf\delta \hat x$ is the "Candidate DX" that may not get
+          ! $\bf\delta \hat x$ is the ``Candidate DX'' that may not get
           ! used. This can be gotten without saving $\bf J$ as ${\bf \hat f}^T
           ! {\bf \hat f} - {\bf y}^T {\bf y}$ where ${\bf\hat f} = {\bf
           ! \Sigma}^T {\bf J}^T {\bf S}_m^{-1} {\bf f}$ and ${\bf y} = {\bf
-          ! U}^{-T} {\bf \delta \hat x}$. The variable {\tt candidateDX} is a
+          ! U}^{-T} {\bf \hat f}$. The variable {\tt candidateDX} is a
           ! temp here = $\bf y$.
           aj%fnmin = aj%fnorm - (v(candidateDX) .dot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
@@ -1226,9 +1226,10 @@ contains
         ! ${\bf \Sigma}^{-1} {\bf \delta \hat x}$.  Set
         ! \begin{description}
         !   \item[AJ\%FNMIN] as for NWT\_FLAG = NF\_EVALJ, but taking
-        !     account of Levenberg-Marquardt stabilization.
-        !   \item[AJ\%DXN] = L2 norm of "candidate DX",
-        !   \item[AJ\%GDX] = (Gradient) .dot. ("candidate DX")
+        !     account of Levenberg-Marquardt stabilization.  Actually,
+        !     we don't have to compute this, because we did it at NF\_EVALF;
+        !   \item[AJ\%DXN] = L2 norm of ``candidate DX'';
+        !   \item[AJ\%GDX] = (Gradient) .dot. (``candidate DX'')
         ! \end{description}
           call updateDiagonal ( normalEquations, aj%sq**2 )
           ! factored%m%block => normalEquations%m%block ! to save space
@@ -1255,12 +1256,15 @@ contains
             if ( index(switches,'spa') /= 0 ) &
               & call dump_struct ( factored%m, &
                 & 'Sparseness structure of blocks of factor:', upper=.true. )
-          !{Solve for "candidate DX" = ${\bf \delta \hat x} = -({\bf J}^T {\bf
+          !{Solve for ``candidate DX'' = ${\bf \delta \hat x} = -({\bf J}^T {\bf
           ! J})^{-1} {\bf J}^T {\bf F} = -({\bf U}^T {\bf U})^{-1} {\bf J}^T 
           ! {\bf F}$ using two back solves.  First solve ${\bf U}^T {\bf y} =
           ! -{\bf J}^T {\bf F}$, then $\mathbf{U \delta \hat x}$ =
           ! $\mathbf{y}$. Meanwhile, set AJ\%FNMIN as for NWT\_FLAG =
           ! NF\_EVALJ, but taking account of Levenberg-Marquardt stabilization
+          ! (actually, ``taking account of Levenberg-Marquardt stabilization''
+          ! means ``not including Levenberg-Marquardt stabilization,'' which
+          ! is how we did it at NF\_EVALF, so we don't need to do it now).
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call time_now ( t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
@@ -1268,7 +1272,7 @@ contains
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call time_now ( t1 )
           ! aj%fnorm is now the norm of f, not its square.
-          aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
+!         aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
             call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
             call output ( aj%fnmin, advance='yes' )
@@ -2819,6 +2823,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.153  2002/07/24 01:08:40  vsnyder
+! Don't compute FNMIN at NF_SOLVE time -- it should be the same as at NF_EVALJ
+!
 ! Revision 2.152  2002/07/22 23:14:28  pwagner
 ! Fixed some bugs in timings (there may be more)
 !
