@@ -31,12 +31,13 @@ program INIT_GEN
   logical :: DoCap = .false.                 ! "Capitalize declaration"
   character(len=40) :: FirstName = '1', LastName = ' '
   integer :: I, J                            ! subscripts, loop inductors
-  character(len=127) :: InFile
+  character(len=127) :: InFile = ' '
   character(len=30) :: Index_Name            ! Array for output from add_ident
   integer :: Index_Wid                       ! Width of Index_Name
   integer :: IOSTAT
   character(len=127) :: LINE
   integer :: Margin = 0                      ! Internal margin
+  integer :: MaxNames = 1000                 ! Maximum number of names
   integer :: MaxWid                          ! of a name
   character(len=30), dimension(:), allocatable :: Names ! for the symbol table
   integer :: Nspaces
@@ -58,6 +59,12 @@ program INIT_GEN
         call getarg ( i, line(3:) )
       end if
       firstName = line(3:)
+    else if ( line(1:2) == '-i' ) then
+      if ( line(3:3) == ' ' ) then
+        i = i + 1
+        call getarg ( i, line(3:) )
+      end if
+      inFile = line(3:)
     else if ( line(1:2) == '-l' ) then
       if ( line(3:3) == ' ' ) then
         i = i + 1
@@ -74,7 +81,17 @@ program INIT_GEN
         call io_error ( 'While reading "m" option', iostat )
         margin = 0
       end if
-    else if ( line(1:2) == '-p' ) then
+    else if ( line(1:2) == '-n' ) then
+      if ( line(3:3) == ' ' ) then
+        i = i + 1
+        call getarg ( i, line(3:) )
+      end if
+      read ( line(3:), *, iostat=iostat ) maxNames
+      if ( iostat /= 0 ) then
+        call io_error ( 'While reading "n" option', iostat )
+        maxNames = 1000
+      end if
+     else if ( line(1:2) == '-p' ) then
       if ( line(3:3) == ' ' ) then
         i = i + 1
         call getarg ( i, line(3:) )
@@ -82,17 +99,19 @@ program INIT_GEN
       pfx = line(3:)
     else if ( line(1:1) == '-' ) then
       call getarg ( hp, line )
-      print *, 'Usage: ', trim(line), ' [options] input_file out_parm out_add index_name'
+      print *, 'Usage: ', trim(line), ' [options] out_parm out_add index_name'
       print *, ' Options:  -c: Capitalize entire name in declarations'
       print *, '           -f[ ]first_name -- The expression from which the'
       print *, '             first name gets its value.  Default 1.'
+      print *, '           -i[ ]input_file -- stdin used otherwise.'
       print *, '           -l[ ]last_name -- A name made equal to the last name.'
       print *, '             Not emitted if not present.'
       print *, '           -m[ ]margin -- The "middle" margin, which is otherwise'
       print *, '             computed from the width of the widest name.'
+      print *, '           -n[ ]number -- the maximum number of names, default ', &
+        &                    maxNames
       print *, '           -p[ ]prefix -- Prefix for variable names.'
       print *, '           -<anything else>: This output.'
-      print *, ' input_file: The file of names'
       print *, ' out_parm:   The file to store the generated parameter declarations.'
       print *, ' out_add:    The file to store the generated references to add_ident.'
       print *, ' index_name: The name of the array in which to store the outputs'
@@ -103,32 +122,29 @@ program INIT_GEN
     end if
   end do
 
-  call getarg ( i, inFile )
-  if ( inFile == ' ' ) then
-    print *, 'No input file name given.'
-    stop
-  end if
-  call getarg ( i+1, out_parm )
+  call getarg ( i, out_parm )
   if ( out_parm == ' ' ) then
     print *, 'No parameter declarations file name given.'
     stop
   end if
-  call getarg ( i+2, out_add )
+  call getarg ( i+1, out_add )
   if ( out_add == ' ' ) then
     print *, 'No file name given for references to add_ident.'
     stop
   end if
-  call getarg ( i+3, index_name )
+  call getarg ( i+2, index_name )
   if ( index_name == ' ' ) then
     print *, 'No name given for the array to store references to add_ident.'
     stop
   end if
   index_Wid = len_trim(index_name)
 
-  open ( 10, file=inFile, form='formatted', status='old', iostat=iostat )
-  if ( iostat /= 0 ) then
-    call io_error ( 'Opening input file', iostat, inFile )
-    stop
+  if ( inFile /= ' ' ) then
+    open ( 10, file=inFile, form='formatted', status='old', iostat=iostat )
+    if ( iostat /= 0 ) then
+      call io_error ( 'Opening input file', iostat, inFile )
+      stop
+    end if
   end if
 
   open ( 11, file=out_add, form='formatted', iostat=iostat )
@@ -143,10 +159,21 @@ program INIT_GEN
     stop
   end if
 
-  ! Count the names
+  ! Read the names.  Calculate the width of the widest name.
+  maxWid = 0
   numNames = 0
+  allocate ( names(maxNames), p_names(maxNames), stat=iostat )
+  if ( iostat > 0 ) then
+    call io_error ( 'Allocating arrays', iostat )
+    stop
+  end if
+
   do
-    read ( 10, '(a)', iostat=iostat ) line
+    if ( infile == ' ' ) then
+      read ( *, '(a)', iostat=iostat ) line
+    else
+      read ( 10, '(a)', iostat=iostat ) line
+    end if
     if ( iostat < 0 ) exit
     if ( iostat > 0 ) then
       call io_error ( 'Reading input file', iostat, inFile )
@@ -154,51 +181,22 @@ program INIT_GEN
     end if
     if ( line == ' ' ) cycle
     line = adjustl(line)
-    if ( line(1:1) /= '#' ) numNames = numNames + 1
-  end do
-  rewind ( 10 )
-
-  ! Allocate space for the names
-  allocate ( names(numNames), stat=iostat )
-  allocate ( P_names(numNames), stat=iostat )
-  if ( iostat /= 0 ) then
-    call io_error ( 'Allocating table to store the names', iostat )
-    stop
-  end if
-
-  ! Read the names.  Make sure the file size hasn't changed.  Calculate
-  ! the width of the widest name.
-  maxWid = 0
-  i = 0
-  do
-    read ( 10, '(a)', iostat=iostat ) line
-    if ( iostat < 0 ) then
-      if ( i == numNames ) exit
-      print *, 'The file of names changed size!'
-      stop
-    end if
-    if ( iostat > 0 ) then
-      call io_error ( 'Reading input file', iostat, inFile )
-      stop
-    end if
-    if ( line == ' ' ) cycle
-    line = adjustl(line)
     if ( line(1:1) == '#' ) cycle
-    i = i + 1
-    if ( i > numNames ) then
-      print *, 'The file of names changed size!'
+    numNames = numNames + 1
+    if ( numNames > maxNames ) then
+      print *, numNames, ' is too many names.  Use the "-n" option.'
       stop
     end if
     j = index(line,' ')
-    p_names(i) = line(:j-1)
+    p_names(numNames) = line(:j-1)
     line = adjustl(line(j+1:))
     if ( line == ' ' ) then
-      names(i) = p_names(i)
+      names(numNames) = p_names(numNames)
     else
-      names(i) = line
+      names(numNames) = line
     end if
-    p_names(i) = trim(pfx) // p_names(i)
-    maxWid = max(maxWid, len_trim(p_names(i)))
+    p_names(numNames) = trim(pfx) // p_names(numNames)
+    maxWid = max(maxWid, len_trim(p_names(numNames)))
   end do
   line = ' '
   close ( 10 )
@@ -272,6 +270,9 @@ contains
 end program INIT_GEN
 
 ! $Log$
+! Revision 1.2  2001/07/25 18:26:34  vsnyder
+! Insert copyright notice
+!
 ! Revision 1.1  2001/07/25 02:07:02  vsnyder
 ! Initial commit
 !
