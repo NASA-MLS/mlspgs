@@ -45,7 +45,8 @@ libdir = ../../lib/$(MLSCONFG)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S 
+INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S \
+ -I $(PGSINC) -I $(srclib) -I $S 
 
 # Define some suffix rules
 
@@ -67,6 +68,9 @@ MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.1  2001/03/06 00:15:19  pwagner
+# First commit
+#
 # Revision 1.8  2001/02/26 21:14:39  pwagner
 # Commented out FOPTS assignment; now part of .configure setting
 #

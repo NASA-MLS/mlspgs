@@ -48,7 +48,8 @@ DUSTY = $(FOPTS)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir)
+INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
+ -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 
 # Define some suffix rules
 
@@ -86,6 +87,9 @@ INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir)
 l_specials =
 
 # $Log$
+# Revision 1.1  2001/03/06 00:15:19  pwagner
+# First commit
+#
 # Revision 1.4  2001/03/05 17:23:15  pwagner
 # gets .f9h from srclib
 #

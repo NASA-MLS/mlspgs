@@ -60,9 +60,11 @@ l2_NEEDS_fwdmdl = true
 
 ifdef l2_NEEDS_fwdmdl
 l2: fwdmdl
-     INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) -p $(fwdmdldir)
+ INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) -p $(fwdmdldir) \
+ -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(fwdmdldir) 
 else
-     INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir)
+ INC_PATHS = -p $(PGSINC) -p $(srclib) -p $S -p $(libdir) \
+ -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) 
 endif
 
 # Define some suffix rules
@@ -105,6 +107,9 @@ endif
 l_specials = 
 
 # $Log$
+# Revision 1.2  2001/03/08 00:53:21  pwagner
+# l2_NEEDS_fwdmdl now set by default
+#
 # Revision 1.1  2001/03/06 00:15:19  pwagner
 # First commit
 #
