@@ -29,6 +29,7 @@ contains ! ====     Public Procedures     ==============================
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
     use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
     use Construct, only: MLSL2Construct, MLSL2DeConstruct, ConstructMIFGeolocation
+    use DirectWrite_m, only: DirectData_T, DestroyDirectDatabase
     use Dumper, only: Dump
     use EmpiricalGeometry, only: ForgetOptimumLon0
     use FGrid, only: FGrid_T, DestroyFGridDatabase
@@ -104,6 +105,7 @@ contains ! ====     Public Procedures     ==============================
     integer ::                                   LASTCHUNK ! For chunk loop
     type (L1BInfo_T) ::                          L1BInfo  ! File handles etc. for L1B dataset
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
     type (PCFData_T) ::                          L2pcf
     type (Matrix_Database_T), dimension(:), &
@@ -263,7 +265,7 @@ subtrees:   do while ( j <= howmany )
                 call add_to_section_timing ( 'fill', t1)
               case ( z_join )
                 call MLSL2Join ( son, vectors, l2gpDatabase, &
-                  & l2auxDatabase, chunkNo, chunks )
+                  & l2auxDatabase, DirectDatabase, chunkNo, chunks )
                 call add_to_section_timing ( 'join', t1)
               case ( z_retrieve )
                 call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
@@ -335,6 +337,7 @@ subtrees:   do while ( j <= howmany )
           call Dump(l2auxDatabase)
         end if
         call DestroyL2AUXDatabase ( l2auxDatabase )
+        call DestroyDirectDatabase ( DirectDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
         ! end of each chunk
         call add_to_section_timing ( 'output', t1)
@@ -400,6 +403,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.106  2003/06/20 19:38:26  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.105  2003/06/09 22:51:35  pwagner
 ! Renamed scan_divide to chunk_divide in timings table
 !
