@@ -22,10 +22,21 @@ include ../Makefile.dep
 # the variables PVM_PATH, PVM_ARCH should be defined
 # e.g. in .configure
 
+# LAPACK
+# If it is desired to link the executable with external LAPACK support,
+# the variable LAPACK should be defined
+# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
+# If this is done, i.e., LAPACK is defined, then 
+
 # BLAS
 # If it is desired to link the executable with external BLAS support,
 # the variable BLAS should be defined
-# e.g. in the make statement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
+# If this is done, i.e., BLAS is defined, then blas_objs will
+# be blank
+# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
+# depend on LIB_BLAS:
+# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
 
 # ========================================================================
 #       The objects for the shared source files (in srclib)
@@ -36,6 +47,14 @@ include $(srclib)/Makefile.dep
 ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o
 
 PROG_NAME=test
+
+UTILDIR=../../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -59,6 +78,19 @@ endif
 else
    blas_linker_line=
    blas_message=Building $(PROG_NAME) with internally-supplied BLAS
+endif
+
+ifdef LAPACK
+ifdef LIB_LAPACK
+    lapack_linker_line := $(shell ${REECHO} -dir ${LAPACK} -prefixn=-l -lib ${LIB_LAPACK})
+    lapack_linker_line := -L${LAPACK} ${lapack_linker_line}
+else
+   lapack_linker_line=-L${LAPACK} -llapack
+endif
+   lapack_message=Building mlsl2 with externally-supplied LAPACK
+else
+   lapack_linker_line=
+   lapack_message=Building mlsl2 with internally-supplied LAPACK
 endif
 
 ifdef HDF5
@@ -86,6 +118,7 @@ endif
 $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libfwdmdl.a $(libdir)/libmls.a
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L${ourdir} -lfwdmdl \
@@ -99,6 +132,7 @@ $(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libfwdmdl.a $(libdir)/libmls.a
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
+        $(lapack_linker_line) \
         $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
@@ -113,6 +147,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2001/10/11 18:15:29  pwagner
+# Allows PROG_NAME variable to specify name of executable built
+#
 # Revision 1.7  2001/07/16 18:00:21  pwagner
 # Builds correctly with hdf5 on new and older Linux
 #

@@ -22,10 +22,21 @@ include ../Makefile.dep
 # the variables PVM_PATH, PVM_ARCH should be defined
 # e.g. in .configure
 
+# LAPACK
+# If it is desired to link the executable with external LAPACK support,
+# the variable LAPACK should be defined
+# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
+# If this is done, i.e., LAPACK is defined, then 
+
 # BLAS
 # If it is desired to link the executable with external BLAS support,
 # the variable BLAS should be defined
-# e.g. in the make staement: make -f MakeFC BLAS=/my_path/to_BLAS_library
+# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
+# If this is done, i.e., BLAS is defined, then blas_objs will
+# be blank
+# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
+# depend on LIB_BLAS:
+# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
 
 # ========================================================================
 MLSBIN=../../../util
@@ -92,6 +103,19 @@ else
    mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a 
 endif
 
+ifdef LAPACK
+ifdef LIB_LAPACK
+    lapack_linker_line := $(shell ${REECHO} -dir ${LAPACK} -prefixn=-l -lib ${LIB_LAPACK})
+    lapack_linker_line := -L${LAPACK} ${lapack_linker_line}
+else
+   lapack_linker_line=-L${LAPACK} -llapack
+endif
+   lapack_message=Building mlsl2 with externally-supplied LAPACK
+else
+   lapack_linker_line=
+   lapack_message=Building mlsl2 with internally-supplied LAPACK
+endif
+
 ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
    hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
@@ -124,6 +148,7 @@ endif
 $(PROG_NAME): $(mlsl2_prereqs)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
 		@echo "$(fwdmdl_message)"
 		@echo "$(cloud_message)"
@@ -141,6 +166,7 @@ $(PROG_NAME): $(mlsl2_prereqs)
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
+        $(lapack_linker_line) \
         $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
@@ -155,6 +181,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.11  2001/10/11 18:15:29  pwagner
+# Allows PROG_NAME variable to specify name of executable built
+#
 # Revision 1.10  2001/08/13 18:09:08  pwagner
 # replaced shell echo -> shell {REECHO}
 #

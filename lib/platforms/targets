@@ -38,7 +38,7 @@ MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
 # the variable LAPACK should be defined
 # e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
 # If this is done, i.e., LAPACK is defined, then 
-# lapack_objs will be gemm_external.o
+# lapack_objs will be gemm_external_m.o
 # otherwise it will be gemm_intrinsic.o
 
 # BLAS
@@ -127,7 +127,7 @@ endif
 
 ifdef LAPACK
    lapack_message=Building mlslib with external lapack support
-   lapack_objs := gemm_external.o
+   lapack_objs := gemm_external_m.o
 else
    lapack_message=Building mlslib with lapack supplied by f95 intrinsics
    lapack_objs := gemm_intrinsic.o
@@ -203,6 +203,9 @@ sdot.o:
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.35  2001/11/03 00:56:03  pwagner
+# Some small changes to blas; changes to MACH_OBJS no longer trigger recompile of every module
+#
 # Revision 1.34  2001/11/02 01:03:30  pwagner
 # Added stuff for lapack, inrinsic BLAS
 #
