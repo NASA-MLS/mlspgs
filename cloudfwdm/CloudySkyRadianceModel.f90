@@ -11,7 +11,7 @@ module CloudySkyRadianceModel
       use ClearSkyModule,          only: CLEAR_SKY
       use CloudySkyModule,         only: CLOUDY_SKY
       use DCSPLINE_DER_M,          only: CSPLINE_DER
-      use FOV_CONVOLVE_M,          only: FOV_CONVOLVE
+      use FOV_CONVOLVE_M,          only: FOV_CONVOLVE_OLD
       use HYDROSTATIC_INTRP,       only: GET_PRESSURES
       use L2PC_FILE_PARAMETERS,    only: DEG2RAD
       use ModelInput,              only: MODEL_ATMOS
@@ -681,14 +681,14 @@ contains
          fft_angles=0.0
          fft_angles(1:Multi) = ptg_angle(1:Multi)    ! Multi = No. of tangent heights
 	
-         Call fov_convolve ( fft_angles, RAD0, center_angle, 1, Multi,   &
+         Call fov_convolve_old ( fft_angles, RAD0, center_angle, 1, Multi,   &
               &              fft_pts, AntennaPattern, Ier )
               if ( Ier /= 0) then
 	         print*,'error in FOV CONV'
 	         stop
 	      endif
 
-         Call fov_convolve ( fft_angles, RAD, center_angle, 1, Multi,   &
+         Call fov_convolve_old ( fft_angles, RAD, center_angle, 1, Multi,   &
               &              fft_pts, AntennaPattern, Ier )
               if ( Ier /= 0) then
 	         print*,'error in FOV CONV'
@@ -790,6 +790,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.31  2002/05/08 17:00:55  jonathan
+! fix tangent height bug
+!
 ! Revision 1.30  2001/11/16 00:41:08  jonathan
 ! add losVel
 !
