@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module Parse_Signal_M
@@ -21,6 +21,17 @@ module Parse_Signal_M
 
   implicit NONE
   private
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+! Parse_Signal                   Return database indices matching signal string
+! === (end of toc) ===
+
+! === (start of api) ===
+! Parse_Signal  ( char* Signal_String, *int Signal_Indices(:),
+!    [int Tree_Index], [int Sideband],[*log Channels(:)], [int OnlyCountEm] )
+! === (end of api) ===
   public :: Parse_Signal
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -322,13 +333,18 @@ o:  do
       integer, intent(in), optional :: Expected(:)  ! Expected tokens
 
       integer :: I
+      integer :: myTree
 
       error = max(error,1)
-      if ( present(tree) ) then
-        call output ( 'At ' )
-        call print_source ( source_ref(tree) )
-        call output ( ', ' )
+      myTree = 0
+      if ( present(tree) ) myTree = tree
+      call output ( 'At ' )
+      if ( mytree > 0 ) then
+        call print_source ( source_ref(mytree) )
+      else
+        call output ( '(no lcf tree available)' )
       end if
+      call output ( ', ' )
       call output ( 'In column ' )
       call output ( where )
       call output ( ' of ' )
@@ -447,6 +463,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.13  2002/11/06 00:13:32  pwagner
+! Should not dump core if parse_signal called with tree_index 0
+!
 ! Revision 2.12  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
