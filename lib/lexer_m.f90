@@ -7,9 +7,10 @@ module LEXER_M
   use ERROR_HANDLER, only: ERROR_WALKBACK
   use LEXER_CORE, only: NEED, TOKEN
   use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: ADD_CHAR, CLEAR_STRING, ENTER_STRING, EOF, EOL, &
-                          GET_CHAR, HOW_MANY_STRINGS, LOOKUP_AND_INSERT, &
-                          NEW_LINE, SOURCE_COLUMN, SOURCE_LINE
+  use STRING_TABLE, only: ADD_CHAR, CLEAR_STRING, DISPLAY_STRING, &
+                          ENTER_STRING, EOF, EOL, GET_CHAR, HOW_MANY_STRINGS, &
+                          LOOKUP_AND_INSERT, NEW_LINE, SOURCE_COLUMN, &
+                          SOURCE_LINE
   use SYMBOL_TABLE, only: ADD_TERMINAL, DUMP_1_SYMBOL, ENTER_TERMINAL, &
                           SET_SYMBOL, SYMBOL
   use SYMBOL_TYPES ! everything
@@ -195,7 +196,8 @@ contains
         case ( cmt )
           call new_line
           state = start
-          need = .true.
+          need = .false.
+          ch = EOL
         case ( spaces );           need = .true.
         case ( cont );             state = contin; need = .true.
         case ( eof_in )
@@ -465,11 +467,15 @@ contains
         call output ( column ); call output ( ' to ' )
         call output ( source_column, advance='yes' )
       case ( unrec_char )
-        call output ( ': Unrecognized character in column ' )
+        call output ( ': Unrecognized character ' )
+        call output ( ch )
+        call output ( ' in column ' )
         call output ( source_column )
         call output ( ' ignored.', advance='yes' )
       case ( unrec_token )
-        call output ( ': Unrecognized token starting in column ' )
+        call output ( ': Unrecognized token ' )
+        call display_string ( string_index )
+        call output ( ' starting in column ' )
         call output ( column )
         call output ( ' and ending in column ' )
         call output ( source_column - 1 )
@@ -483,6 +489,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.6  2000/11/30 20:03:57  vsnyder
+! Correct handling of end-of-comment; improve error messages.
+!
 ! Revision 2.5  2000/11/30 00:31:12  vsnyder
 ! Make [] punctuators instead of operators.
 !
