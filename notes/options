@@ -36,6 +36,7 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
         and the PCF.
       --ncfpcf assumed if L2CF-name is present.  
         Default: --cfpcf (SIPS) --ncfpcf (JPL)
+  --chunk[ ]<chunk index> Run just this chunk
   --[n]ckbk: Check the block calculations against full block algebra
   --[n]countChunks: Just print thenumber of chunks and quit
   --[n]kit: Output error messages [not] using the SDP Toolkit
@@ -78,6 +79,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.8  2001/12/13 23:21:33  livesey
+ Added countChunks
+
  Revision 1.7  2001/11/09 23:40:38  vsnyder
  Add --wall option
 
