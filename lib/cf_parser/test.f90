@@ -1,19 +1,26 @@
 program TEST
 
+! A test harness for the MLS CF parser.  It also illustrates how to use
+! it, including how to cause the input to come from a Fortran unit instead
+! of standard input.
+
   use GETCF_M, only: GetCF, InitGetCF
-  use MACHINE ! At least HP, for command lines, and maybe GETARG
+  use MACHINE ! At least HP, for command lines, IO_ERROR, and maybe GETARG
   use MLSCF, only: MLSCF_T
+  use OUTPUT_M, only: PRUNIT
   use TOGGLES, only: CON, GEN, LEX, PAR, SYN, TAB, TOGGLE
 
+  type(mlscf_t) :: CF_DATA
   logical :: DO_DUMP = .false.     ! Dump declaration table
   logical :: DO_DUMP_EARLY = .false.    ! Dump declaration table before check
   logical :: DO_LISTING = .false.  ! List input
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from GetCF
   integer :: I                     ! counter for command line arguments
+  integer :: INUNIT = -1           ! Fortran unit number for input -1 = stdin
   integer :: J                     ! index within option
-  type(mlscf_t) :: CF_DATA
   character(len=80) :: LINE        ! to read command line arguments
+  integer :: STATUS
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256) :: Id = &
@@ -51,18 +58,39 @@ program TEST
           do_listing = .true.
         end if
       end do
-    else    
+    else
   exit
     end if
     i = i + 1
   end do
 
-  call getCF ( cf_data, error, inUnit=-1, listing=do_listing, &
+  if ( line /= ' ' ) then     ! Process input file name
+    open ( 98, file=trim(line), form='formatted', iostat=status )
+    if ( status /= 0 ) then
+      call io_error ( 'While opening input file', status, trim(line) )
+      stop
+    end if
+    inUnit = 98
+    call getarg ( i+1, line )
+    if ( line /= ' ' ) then   ! Process output file name
+      open ( 99, file=trim(line), form='formatted', iostat=status )
+      if ( status /= 0 ) then
+        call io_error ( 'While opening output file', status, trim(line) )
+        stop
+      end if
+      prUnit = 99
+    end if
+  end if
+
+  call getCF ( cf_data, error, inUnit=inUnit, listing=do_listing, &
     & dump=do_dump, dumpEarly=do_dump_early, dumpTables=.true. )
 
 end program TEST
 
 ! $Log$
+! Revision 2.2  2000/10/03 00:54:44  vsnyder
+! Revised to account for changing getL2CF_m.f90 to getCF_m.f90
+!
 ! Revision 2.1  2000/09/29 23:30:09  vsnyder
 ! Revised to account for getL2CF_m
 !
