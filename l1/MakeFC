@@ -155,8 +155,9 @@ $(PROG):  $(PROG_prereqs)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
-        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
-        $$return_status = "0" ]; then \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi
@@ -165,8 +166,9 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)" ; \
         return_status=`expr $$?` ; \
-        if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" -a \
-        $$return_status = "0" ]; then \
+        if [ $$return_status != "0" ]; then \
+		     exit 2 ; \
+        elif [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi
@@ -257,6 +259,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.34  2002/07/15 16:52:59  pwagner
+# Exits make with status 2 if error in any level
+#
 # Revision 2.33  2002/07/02 00:14:01  pwagner
 # Skips marking uptodate after an error
 #
