@@ -151,8 +151,8 @@ contains ! =====     Public Procedures     =============================
 
     !Local Variables
     logical, parameter :: DEBUG = .FALSE.
-    integer, parameter :: CCSDSEndId = 10412    ! Illegal PCFid
-    integer, parameter :: CCSDSStartId = 10411    ! Illegal PCFid
+    ! integer, parameter :: CCSDSEndId = 10412    ! Illegal PCFid
+    ! integer, parameter :: CCSDSStartId = 10411    ! Illegal PCFid
     logical, parameter :: CaseSensitive = .true.
 
    ! The following parameters will only be needed if PCF ids are missing
@@ -363,10 +363,10 @@ contains ! =====     Public Procedures     =============================
                                            CCSDSStartTime)
     if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
       call announce_error ( 0, "Missing pcf param: CCSDSStartTime" )
-    else if ( returnstatus /= PGS_S_SUCCESS ) then
-      returnStatus = pgs_pc_getconfigdata (CCSDSStartId, CCSDSStartTime)
-      if ( returnstatus /= PGS_S_SUCCESS ) &
-        & call announce_error ( 0, "Could not get CCSDS Start Time" )
+    !else if ( returnstatus /= PGS_S_SUCCESS ) then
+    !  returnStatus = pgs_pc_getconfigdata (CCSDSStartId, CCSDSStartTime)
+    !  if ( returnstatus /= PGS_S_SUCCESS ) &
+    !    & call announce_error ( 0, "Could not get CCSDS Start Time" )
     end if
 
     returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
@@ -375,16 +375,16 @@ contains ! =====     Public Procedures     =============================
       &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) &
         & call announce_error ( 0, "Could not convert UTC Start time to TAI" )
     if ( returnstatus == PGSTD_E_NO_LEAP_SECS ) &
-      & call MLSMessage ( MLSMSG_Warning, ModuleName, 'No leap second information' )
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'No leap second information' )
 
    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSEndId, &
                                           CCSDSEndTime)
     if ( returnstatus /= PGS_S_SUCCESS .and. TOOLKIT ) then
       call announce_error ( 0, "Missing pcf param: CCSDSEndTime" )
-    else if ( returnstatus /= PGS_S_SUCCESS ) then
-      returnStatus = pgs_pc_getconfigdata (CCSDSEndId, CCSDSEndTime)
-      if ( returnstatus /= PGS_S_SUCCESS ) &
-        & call announce_error ( 0, "Could not get CCSDS End Time" )
+    !else if ( returnstatus /= PGS_S_SUCCESS ) then
+    !  returnStatus = pgs_pc_getconfigdata (CCSDSEndId, CCSDSEndTime)
+    !  if ( returnstatus /= PGS_S_SUCCESS ) &
+    !    & call announce_error ( 0, "Could not get CCSDS End Time" )
     end if
 
     returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
@@ -448,8 +448,8 @@ contains ! =====     Public Procedures     =============================
    ! This way we can still dump vectors, monitor iterations or activities
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_switches, extra_switches)
 
-    if ( returnstatus == PGS_S_SUCCESS ) then
-      switches = trim(switches) // trim(extra_switches)
+    if ( returnstatus == PGS_S_SUCCESS .and. extra_switches /= ' ') then
+      switches = trim(switches) // ',' // trim(extra_switches)
     end if
 	
 ! Get the name of the log file from the PCF
@@ -747,6 +747,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.75  2003/10/09 23:41:06  pwagner
+! Ignore illegal PCFids; extra_switches ,-separated
+!
 ! Revision 2.74  2003/09/12 16:28:56  cvuu
 ! Read OrbitNumber and OrbitPeriod attributes from L1BOA
 !
