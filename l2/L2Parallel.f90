@@ -389,6 +389,9 @@ contains ! ================================ Procedures ======================
         chunk = FindFirst ( chunkTids == slaveTid )
         if ( chunk == 0 .and. &
           &  (.not. usingSubmit .or. signal /= sig_register) ) then
+          call output ( 'Signal is:' )
+          call output ( signal )
+          call output ( 'Tid: ' // GetNiceTidString ( slaveTid ) )
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Got a message from an unknown slave")
         else
@@ -1174,6 +1177,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.47  2003/05/22 02:23:59  livesey
+! More informative error message
+!
 ! Revision 2.46  2003/05/13 04:48:06  livesey
 ! Can now stage to temporary hdf5 file instead of in memory.
 !
