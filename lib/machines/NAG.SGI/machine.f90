@@ -76,6 +76,8 @@ contains
 select case (iostat)
 
 	! start of included file iostat_rev.f90
+    case(IOERR_SCALE_FOLLOWED_BY_REPEAT)  ! 217
+		print*, '! Scale factors cannot be followed by repeat count in FMT! specifier'
     case(IOERR_DIRECT_POSITION_INCOMPAT)  ! 216
 		print*, '! Direct access is incompatible with the POSITION! specifier'
     case(IOERR_REAL_INPUT_OVERFLOW)       ! 215
@@ -84,8 +86,8 @@ select case (iostat)
 		print*, '! READ beyond end of direct access file on unit %d'
     case(IOERR_RECL_LE_ZERO)              ! 213
 		print*, '! Invalid value for RECL! specifier (must be positive)'
-!    case(IOERR_NO_FILE_WITH_REPLACE)      ! 212
-!		print*, '! No FILE! specifier with STATUS=REPLACE'
+    case(IOERR_REPLACE_OR_NEW_NEED_FILE)  ! 212
+		print*, '! No FILE! specifier with STATUS=REPLACE or STATUS=NEW'
     case(IOERR_INTEGER64_TOO_BIG)         ! 211
 		print*, '! Input value too large for 64-bit integer'
     case(IOERR_RW_AFTER_ENDFILE)          ! 210
@@ -195,11 +197,11 @@ select case (iostat)
     case(IOERR_DIFFERENT_ACCESS)          ! 158
 		print*, '! OPEN on connected unit has different ACCESS! specifier'
     case(IOERR_DIFFERENT_STATUS)          ! 157
-		print*, '! OPEN on connected unit has different STATUS! specifier'
+		print*, '! OPEN on connected unit with STATUS! specifier must have STATUS=OLD'
     case(IOERR_SCRATCH_NAMED)             ! 156
 		print*, '! FILE! specifier on OPEN with STATUS=SCRATCH'
-!    case(IOERR_NOT_CONNECTED_NO_FILENAME) ! 155
-!		print*, '! Unit is not connected and no FILE! specifier on OPEN'
+    case(IOERR_OLD_UNCONNECTED_NEED_FILE) ! 155
+		print*, '! Unit is not connected on OPEN with STATUS!OLD and no FILE= specifier'
     case(IOERR_NOT_UNFORMATTED)           ! 154
 		print*, '! Unit is not connected for UNFORMATTED i/o'
     case(IOERR_NOT_WRITE)                 ! 153
@@ -336,6 +338,9 @@ end select
 end module MACHINE
 
 ! $Log$
+! Revision 1.3  2001/05/08 22:10:28  pwagner
+! Imitated Exit_With_Status routine for Linux
+!
 ! Revision 1.2  2001/03/21 00:42:34  pwagner
 ! Added print_iostat_msg_NAG
 !
