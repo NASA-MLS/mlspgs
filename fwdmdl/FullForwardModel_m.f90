@@ -25,7 +25,9 @@ module FullForwardModel_m
   use D_HUNT_M, only: hunt_zvi => HUNT
 
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
-                       &   GETVECTORQUANTITYBYTYPE
+                       &   GETVECTORQUANTITYBYTYPE, &
+                       &   M_FullDerivatives
+
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
   use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
                                   &   FORWARDMODELSTATUS_T
@@ -33,8 +35,7 @@ module FullForwardModel_m
   use FilterShapes_m, only: FILTERSHAPES
   use PointingGrid_m, only: POINTINGGRIDS
 
-! use Load_sps_data_m, only: LOAD_SPS_DATA, Grids_T
-  use Load_sps_data_m, only: LOAD_SPS_DATA, LOAD_DERIV_FLAG, Grids_T ! ** ZEBUG
+  use Load_sps_data_m, only: LOAD_SPS_DATA, Grids_T
 
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
@@ -159,7 +160,7 @@ contains ! ================================ FullForwardModel routine ======
     logical :: DOTHIS                   ! Flag for lines
     character (len=32) :: molName       ! Name of a molecule
 
-    logical :: dummy(2) = (/.false.,.false./)  ! dummy Flag array
+    logical :: dummy(2) = (/.FALSE.,.FALSE./)  ! dummy Flag array
 
     character (len=78) :: ErrMsg        ! Error Message
 
@@ -431,7 +432,8 @@ contains ! ================================ FullForwardModel routine ======
     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
     sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.true. )
+      & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.TRUE. )
+
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
     ! vmr => GetVectorQuantityBytype (fwdModelIn, fwdModelExtra, &
@@ -440,10 +442,10 @@ contains ! ================================ FullForwardModel routine ======
     ! Now we're going to validate the quantities we've been given, don't forget
     ! we already know what their quantityType's are as that's how we found them
     !, so we don't need to check that.
-    if ( .not. ValidateVectorQuantity(temp, stacked=.true., coherent=.true., &
+    if ( .not. ValidateVectorQuantity(temp, stacked=.TRUE., coherent=.TRUE., &
       & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'temperature' )
-    if ( .not. ValidateVectorQuantity(ptan, minorFrame=.true., &
+    if ( .not. ValidateVectorQuantity(ptan, minorFrame=.TRUE., &
       & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, InvalidQuantity//'ptan' )
     if ( .not. ValidateVectorQuantity(elevOffset, verticalCoordinate=(/l_none/), &
@@ -490,7 +492,7 @@ contains ! ================================ FullForwardModel routine ======
     do sigInd = 1, size(fwdModelConf%signals)
       thisRadiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
         & signal=fwdModelConf%signals(sigInd)%index, sideband=firstSignal%sideband )
-      if ( .not. ValidateVectorQuantity(thisRadiance, minorFrame=.true.,&
+      if ( .not. ValidateVectorQuantity(thisRadiance, minorFrame=.TRUE.,&
         & frequencyCoordinate=(/l_channel/)) ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, InvalidQuantity//'radiance' )
       noUsedChannels = noUsedChannels + &
@@ -525,7 +527,7 @@ contains ! ================================ FullForwardModel routine ======
       maxNoFFreqs = max(maxNoFFreqs, f%template%noChans)
       maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
     end do
-
+!
     allocate ( mol_cat_index(no_mol), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'mol_cat_index' )
@@ -586,7 +588,7 @@ contains ! ================================ FullForwardModel routine ======
         else
           if(gl_inds(j-1) > 0) sv_i = sv_i + 1
           f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_isotoperatio, molecule=l, noError=.true. )
+              & quantityType=l_isotoperatio, molecule=l, noError=.TRUE. )
           if ( associated ( f ) ) beta_ratio = f%values(1,1)
           i = beta_group(sv_i)%n_elements + 1
           beta_group(sv_i)%n_elements   = i
@@ -615,7 +617,7 @@ contains ! ================================ FullForwardModel routine ======
         ! Now subset the lines according to the signal we're using
         call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', &
                          &   ModuleName )
-        lineFlag = .false.
+        lineFlag = .FALSE.
         do k = 1, size ( thisCatalogEntry%lines )
           thisLine => lines(thisCatalogEntry%lines(k))
           if ( associated(thisLine%signals) ) then
@@ -894,17 +896,23 @@ contains ! ================================ FullForwardModel routine ======
 
       call Allocate_test ( t_deriv_flag, sv_t_len, 't_deriv_flag', ModuleName )
 
-      t_deriv_flag(1:sv_t_len) = .TRUE.   ! ** initialize values to .TRUE.
+      t_deriv_flag(1:sv_t_len) = .FALSE.  ! ** Initialize to NO derivatives
 
-! ** ZEBUG *** Loading the Temp. derivative coeff. flag from file ***
-      Spectag = 10000     ! Temperature's 'Spectag'
-      j = WindowFinish - WindowStart + 1
-      Call load_deriv_flag(Spectag,j,n_t_zeta,1,t_deriv_flag,ErrMsg,k)
-      if(k < 0) then
-        Print *,ErrMsg(1:Len_Trim(ErrMsg))
-        Print *,'** Setting all t_deriv_flag = .TRUE.'
-      endif
-! ** END ZEBUG ***
+! ** Loading the Temp. derivative coeff. flag according to the L2CF
+
+      IF(associated(temp%mask)) THEN
+        k = 0
+        do j = 1, WindowFinish - WindowStart + 1
+          do i = 1, n_t_zeta
+            k = k + 1
+            DoThis = (iand(M_FullDerivatives,ichar(temp%mask(i,j))) /= 0)
+            t_deriv_flag(k) = DoThis
+          end do
+        end do
+! ** ZEBUG: Until Van changes the Subset logic, we will invert it here:
+        t_deriv_flag(1:k) = (.NOT. t_deriv_flag(1:k))
+! ** END ZEBUG
+      ENDIF
 
       call Allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', ModuleName )
       call Allocate_test ( dbeta_dt_path_c, npc, no_mol, 'dbeta_dt_path_c', ModuleName )
@@ -1002,7 +1010,7 @@ contains ! ================================ FullForwardModel routine ======
         ! within it.
         call allocate_test ( grids, no_tan_hts, "Grids", ModuleName )
         call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
-                 &  tan_press, grids, allowTopValue=.true. )
+                 &  tan_press, grids, allowTopValue=.TRUE. )
         ! Work out the maximum number of frequencies
         maxNoPtgFreqs = 0
         do ptg_i = 1, no_tan_hts
@@ -1202,9 +1210,8 @@ contains ! ================================ FullForwardModel routine ======
           &    one_tan_ht(1),phi_tan,Req,elev_offset,ptg_angles(ptg_i,maf))
         endif
 
-        call comp_refcor(Req+h_path(indecies_c(1:npc)), &
-          &   1.0_rp+n_path(1:npc),Req+one_tan_ht(1), &
-          &   del_s(1:npc),ref_corr(1:npc))
+        call comp_refcor(Req+h_path(indecies_c(1:npc)), 1.0_rp+n_path(1:npc), &
+                      &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc))
 
         ! This only needs to be computed on the gl (not coarse) grid thus there is
         ! some duplication here.
@@ -1236,13 +1243,14 @@ contains ! ================================ FullForwardModel routine ======
 
         ! If we're doing frequency averaging, get the frequencies we need for
         ! this pointing.
+
         if ( FwdModelConf%do_freq_avg ) then
-! billsdebug
+! ** BILLs DEBUG
         nofreqs = SIZE(PointingGrids(whichPointingGrid)%oneGrid( &
           &            grids(ptg_i))%frequencies)
         call allocate_test ( frequencies,nofreqs, "frequencies", &
           &   ModuleName )
-! velocity shift correction to frequency grid
+! VELOCITY shift correction to frequency grid
           frequencies =  &
          & PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
           frequencies = frequencies * (1.0_r8 - losvel%values(1,maf) &
@@ -1539,9 +1547,8 @@ contains ! ================================ FullForwardModel routine ======
               & size(FilterShapes(shapeInd)%FilterGrid(channel,:)), &
               & Radiances(ptg_i,i) )
           end do
-             
         else
-          Radiances(ptg_i,1:noUsedChannels) = RadV
+          Radiances(ptg_i,1:noUsedChannels) = RadV(1:)
         end if
 
         ! Frequency averaging of derivatives if needed -----------------------
@@ -1801,10 +1808,11 @@ contains ! ================================ FullForwardModel routine ======
         if ( toggle(emit) .and. levels(emit) > 3 ) &
           & call trace_end ( 'ForwardModel.Pointing ', index=ptg_i )
 
-        ! End of pointing loop -------------------------------------------------
-! billsdebug
+! BILLs DEBUG
         if ( FwdModelConf%do_freq_avg ) &
            & CALL DEALLOCATE_TEST(frequencies,'frequencies',ModuleName )
+
+        ! End of pointing loop -------------------------------------------------
       end do
 
       if ( toggle(emit) .and. levels(emit) > 2 ) &
@@ -1886,7 +1894,7 @@ contains ! ================================ FullForwardModel routine ======
 
 
       ! Deallocate maxNoPtgFreqs stuff
-      call Deallocate_test ( radv, 'radV', ModuleName )
+      call Deallocate_test ( Radv, 'RadV', ModuleName )
 
       if ( fwdModelConf%temp_der ) &
         & call Deallocate_test ( k_temp_frq, 'k_temp_frq', ModuleName )
@@ -2102,9 +2110,6 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
-! Revision 2.33  2002/02/15 22:52:29  livesey
-! Bug fix in antenna pattern selection
-!
 ! Revision 2.32  2002/02/14 19:05:01  bill
 ! Fixed no spectral avg bug--wgr
 !
