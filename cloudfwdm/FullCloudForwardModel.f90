@@ -436,8 +436,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_scGeocAlt )
         elevOffset => GetVectorQuantityByType ( fwdModelExtra,               &
           & quantityType=l_elevOffset, radiometer=Signal%radiometer )
-        orbIncline => GetVectorQuantityByType ( fwdModelExtra, &
-          & quantityType=l_orbitInclination )	
         losVel => GetVectorQuantityByType ( fwdModelExtra,                   &
           & quantityType=l_losVel, instrumentModule=Signal%instrumentModule )
     !-----------------------------------------
@@ -767,7 +765,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS,                                    &
       & Slevl*1000._r8, noSgrid,                                             &
-      & My_Catalog, losVel%values(1,1), orbIncline%values(1,1)*Deg2Rad )   
+      & My_Catalog, losVel%values(1,1) )   
 
 !      & My_Catalog, losVel%values(1,maf) )                    
                                 
@@ -1065,6 +1063,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.101  2002/12/18 16:09:24  jonathan
+! add phi_tan
+!
 ! Revision 1.100  2002/11/30 21:31:46  dwu
 ! fix signal loop and move obsCloudRadiance inside jacobian loop
 !

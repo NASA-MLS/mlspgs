@@ -47,7 +47,7 @@ contains
              &   Bill_data,                                            &
              &   h_obs, elev_offset, AntennaPattern,                   &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
-             &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel, beta_orb )
+             &   NU, NUA, NAB, NR, Slevl, noS, Catalog, LosVel )
 
 !============================================================================C
 !   >>>>>>>>> FULL CLOUD FORWARD MODEL FOR MICROWAVE LIMB SOUNDER >>>>>>>>   C
@@ -369,7 +369,6 @@ contains
 
       REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
-      real(r8), intent(in) :: beta_orb       !orbital incline angle (Radians)
 
       Logical :: Bill_data 
 
@@ -770,6 +769,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.42  2002/12/18 16:09:57  jonathan
+! add orbI
+!
 ! Revision 1.41  2002/12/09 17:34:04  jonathan
 ! *** empty log message ***
 !
