@@ -238,7 +238,7 @@ contains
            minTime = l1bField%dpField(1,1,1)
            maxTime = l1bField%dpField(1,1,noMAFs) ! This is start time of last MAF
       endif
-      call DeallocateL1BData ( l1bField, l1bFlag )
+      call DeallocateL1BData ( l1bField )
    endif
    if(got(1)) then
       processingrange%starttime = minTime + start_time_from_1stMAF
@@ -471,6 +471,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.36  2001/05/30 23:04:40  pwagner
+! Gets returnStatus from forwardModelGlobalSetup
+!
 ! Revision 2.35  2001/05/29 23:21:07  livesey
 ! Now uses ForwardModelSupport, not ForwardModelInterface
 !
