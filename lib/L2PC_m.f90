@@ -12,9 +12,9 @@ module L2PC_m
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL, DUMP_DECL
   use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
-    & L_RADIANCE, L_PTAN, L_NONE
+    & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY
   use machine, only: io_error
-  use MLSCommon, only: R8, RM
+  use MLSCommon, only: R8, RM, R4, FindFirst
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
@@ -31,6 +31,7 @@ module L2PC_m
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSignals_m, only: GETSIGNALNAME
+  use Molecules, only: L_EXTINCTION
   use Output_m, only: output
   use Parse_Signal_m, only: Parse_Signal
   use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T, &
@@ -400,7 +401,7 @@ contains ! ============= Public Procedures ==========================
           call MakeHDF5Attribute ( blockGroupID, 'kind', m0%kind )
           ! Write the datasets
           if ( m0%kind /= m_absent ) then
-            call SaveAsHDF5DS ( blockGroupID, 'values', m0%values )
+            call SaveAsHDF5DS ( blockGroupID, 'values', real ( m0%values, r4 ) )
             if ( m0%kind /= m_full ) then
               call MakeHDF5Attribute ( blockGroupID, 'noValues', size(m0%values) )
               call SaveAsHDF5DS ( blockGroupID, 'r1', m0%r1 )
@@ -1183,6 +1184,7 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
   subroutine ReadOneVectorFromHDF5 ( location, name, vector )
+    use MLSSignals_m, only: Radiometers, Radiometer_T
     ! Read a vector from an l2pc HDF5 and adds it to internal databases.
     ! Dummy arguments
     integer, intent(in) :: LOCATION     ! Node in HDF5
@@ -1205,6 +1207,7 @@ contains ! ============= Public Procedures ==========================
     integer :: QTINDEXOFFSET            ! First free index in quantity template database
     integer :: QUANTITY                 ! Loop inductor
     integer :: QUANTITYTYPE             ! Enumerated
+    integer :: RADIOMETER               ! Enumerated
     integer :: SIDEBAND                 ! Sideband -1,0,1
     integer :: SIGNAL                   ! Index
     integer :: STATUS                   ! Flag from HDF
@@ -1275,7 +1278,7 @@ contains ! ============= Public Procedures ==========================
         call output ( 'Reading quantity ' )
         call output ( quantity )
         call output ( ': ' )
-        call output ( trim(name), advance='yes' )
+        call output ( trim(quantityNames(quantity)), advance='yes' )
       end if
 
       ! Point to this quanity
@@ -1298,6 +1301,7 @@ contains ! ============= Public Procedures ==========================
       signal = 0
       sideband = 0
       molecule = 0
+      radiometer = 0
       frequencyCoordinate = l_none
       select case ( quantityType )
       case ( l_vmr )
@@ -1305,7 +1309,14 @@ contains ! ============= Public Procedures ==========================
         stringIndex = enter_terminal ( trim(word), t_identifier ) 
         decl = get_decl ( stringIndex, type=enum_value )
         molecule = decl%units
-        frequencyCoordinate = l_none
+        if ( molecule == l_extinction ) then
+          call GetHDF5Attribute ( qID, 'radiometer', word )
+          stringIndex = enter_terminal ( trim(word), t_identifier ) 
+          radiometer = FindFirst ( stringIndex == Radiometers%prefix )
+          frequencyCoordinate = l_intermediateFrequency
+        else
+          frequencyCoordinate = l_none
+        end if
       case ( l_radiance )
         call GetHDF5Attribute ( qID, 'signal', word )
         call Parse_Signal ( word, sigInds, sideband=sideband)
@@ -1345,6 +1356,7 @@ contains ! ============= Public Procedures ==========================
       qt%quantityType = quantityType
       qt%name = nameIndex
       qt%molecule = molecule
+      qt%radiometer = radiometer
       qt%signal = signal
       qt%sideband = sideband
       qt%verticalCoordinate = verticalCoordinate
@@ -1423,6 +1435,7 @@ contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteVectorAsHDF5 ----------
   subroutine WriteVectorAsHDF5 ( location, vector, name, packInfo )
+    use MLSSignals_m, only: Radiometers, Radiometer_T
     integer, intent(in) :: LOCATION     ! The HDF5 location for the vector
     type (Vector_T), intent(in) :: VECTOR ! The vector to write
     character(len=*), intent(in) :: NAME ! Name for vector
@@ -1461,6 +1474,10 @@ contains ! ============= Public Procedures ==========================
         case (l_vmr)
           call get_string ( lit_indices(qt%molecule), line )
           call MakeHDF5Attribute ( qID, 'molecule', trim(line) )
+          if ( qt%molecule == l_extinction ) then
+            call get_string ( radiometers(qt%radiometer)%prefix, line )
+            call MakeHDF5Attribute ( qID, 'radiometer', trim(line) )
+          end if
         case (l_radiance)
           call GetSignalName ( qt%signal, line, sideband=qt%sideband )
           call MakeHDF5Attribute ( qID, 'signal', trim(line) )
@@ -1500,6 +1517,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.49  2002/10/02 23:20:19  livesey
+! Added radiometer and saving as single precision
+!
 ! Revision 2.48  2002/09/11 17:43:38  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !
