@@ -1303,15 +1303,17 @@ contains
       ! Is this probe in signals?
       match = MatchSignal ( signals, probe(i), sideband=sideband, channel=channel )
       if ( match == 0 ) return
-
       ! OK, now how big is this probe
-      if ( associated(probe(i)%channels ) ) then
-        noPbChannels = noPbChannels + count( probe(i)%channels )
+      if ( present(channel) ) then
+        noPbChannels = 1
       else
-        noPbChannels = noPbChannels + size ( probe(i)%frequencies )
+        if ( associated(probe(i)%channels ) ) then
+          noPbChannels = noPbChannels + count( probe(i)%channels )
+        else
+          noPbChannels = noPbChannels + size ( probe(i)%frequencies )
+        end if
       end if
     end do
-  
     ! OK, if we got here, then we know we're a superset
     ! How many channels in signals
     do i = 1, size(signals)
@@ -1330,6 +1332,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.44  2002/02/14 18:37:40  livesey
+! Big fix for AreSignalsSuperset
+!
 ! Revision 2.43  2002/02/13 23:57:34  livesey
 ! Tidied up a bit.  Channels doesn't need to be set for
 ! defered signals.  Made getSignalName skip channels field
