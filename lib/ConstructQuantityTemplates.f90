@@ -306,7 +306,7 @@ CONTAINS
        CASE("MOLECULE")
           molecule=cell%charValue
        CASE("RADIOMETER")
-          molecule=cell%charValue
+          radiometer=cell%charValue
        CASE("BAND")
           band=cell%charValue
        CASE("FIRSTINDEXCHANNEL")
@@ -422,6 +422,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.9  2000/01/20 22:03:13  livesey
+! Dealt with replacement of subVectorIndex with mafCounter and mafIndex
+!
 ! Revision 1.8  2000/01/20 01:29:03  livesey
 ! Replaced storeByChannel with firstIndexChannel, removed stride stuff.
 !
