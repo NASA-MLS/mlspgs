@@ -92,7 +92,7 @@ contains ! =====     Public Procedures     =============================
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_MATRIX,  S_NEGATIVEPRECISION, S_SNOOP, S_TIME, &
-      & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD
+      & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE
     ! Now some arrays
     use Intrinsic, only: FIELD_INDICES
     use Intrinsic, only: &
@@ -131,7 +131,7 @@ contains ! =====     Public Procedures     =============================
     use ScanModelModule, only: GetBasisGPH, Get2DHydrostaticTangentPressure, GetGPHPrecision
     use SnoopMLSL2, only: SNOOP
     use String_Table, only: Display_String
-    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD
+    use SubsetModule, only: SETUPSUBSET, SETUPFLAGCLOUD, RESTRICTRANGE
     use Time_M, only: Time_Now
     use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -567,17 +567,24 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_subset )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.subset", root )
+          & call trace_begin ( "Fill.subset", root )
         call SetupSubset ( key, vectors )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.subset" )
+          & call trace_end ( "Fill.subset" )
+
+      case ( s_restrictRange )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Fill.RestrictRange", root )
+        call RestrictRange ( key, vectors )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Fill.RestrictRange" )
 
       case ( s_flagCloud )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_begin ( "Retrieve.flagCloud", root )
+          & call trace_begin ( "Fill.flagCloud", root )
         call SetupflagCloud ( key, vectors )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
-          & call trace_end ( "Retrieve.flagCloud" )
+          & call trace_end ( "Fill.flagCloud" )
 
       case ( s_fill ) ! ===================================  Fill  =====
         ! Now we're on actual Fill instructions.
@@ -4879,6 +4886,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.189  2003/03/07 03:16:12  livesey
+! Added RestrictRange
+!
 ! Revision 2.188  2003/03/06 00:46:30  livesey
 ! Added ability to do subset and flagCloud
 !
