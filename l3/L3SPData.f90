@@ -40,7 +40,6 @@ MODULE L3SPData
 
 ! Parameters
 
-   CHARACTER (LEN=*), PARAMETER :: DIML_NAME = 'nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMW_NAME = 'nWaveNum'
    CHARACTER (LEN=*), PARAMETER :: DIMSP_NAME = 'nLevels,nLats,nWaveNum,nFreqs'
 
@@ -76,8 +75,11 @@ MODULE L3SPData
 
      ! Now we store the waveNumber and frequency fields:
 
-     REAL(r8), DIMENSION(:), POINTER :: waveNumber	! dimensioned (nWaveNum)
-     REAL(r8), DIMENSION(:), POINTER :: frequency	! dimensioned (nFreqs)
+     REAL(r8), DIMENSION(:,:), POINTER :: waveNumber
+
+     REAL(r8), DIMENSION(:,:), POINTER :: frequency
+
+	! dimensioned (nLevels, nLats)
 
      ! Now the spectra fields:
 
@@ -98,7 +100,7 @@ CONTAINS
 !--------------------------------------------------------
 
 ! Brief description of subroutine
-! This subroutine allocates the internal field pointers of the L3DMData_T
+! This subroutine allocates the internal field pointers of the L3SPData_T
 ! derived type.
 
 ! Arguments
@@ -142,13 +144,13 @@ CONTAINS
 
 ! Wavenumber & frequency
 
-      ALLOCATE(l3sp%waveNumber(l3sp%nWaveNum), STAT=err)
+      ALLOCATE(l3sp%waveNumber(l3sp%nLevels,l3sp%nLats), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T waveNumber pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ALLOCATE(l3sp%frequency(l3sp%nFreqs), STAT=err)
+      ALLOCATE(l3sp%frequency(l3sp%nLevels,l3sp%nLats), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T frequency pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -295,14 +297,14 @@ CONTAINS
 
 ! Define the waveNumber & frequency fields
 
-         status = swdefgfld(swID, GEO_FIELDWN, DIMW_NAME, DFNT_FLOAT32, &
+         status = swdefgfld(swID, GEO_FIELDWN, DIMLL_NAME, DFNT_FLOAT32, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELDWN
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swdefgfld(swID, GEO_FIELD10, DIM_NAME3, DFNT_FLOAT32, &
+         status = swdefgfld(swID, GEO_FIELD10, DIMLL_NAME, DFNT_FLOAT32, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD10
@@ -383,8 +385,8 @@ CONTAINS
 
 ! Write the waveNumber data
 
-         status = swwrfld( swID, GEO_FIELDWN, start(3), stride(3), edge(3), &
-                           REAL(sp(i)%waveNumber) )
+         status = swwrfld( swID, GEO_FIELDWN, start(1:2), stride(1:2), &
+                           edge(1:2), REAL(sp(i)%waveNumber) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELDWN
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -392,8 +394,8 @@ CONTAINS
 
 ! Write the frequency data
 
-         status = swwrfld( swID, GEO_FIELD10, start(4), stride(4), edge(4), &
-                           REAL(sp(i)%frequency) )
+         status = swwrfld( swID, GEO_FIELD10, start(1:2), stride(1:2), &
+                           edge(1:2), REAL(sp(i)%frequency) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD10
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -578,7 +580,7 @@ CONTAINS
 
          DO i = 1, SIZE(l3spdb)
             CALL DeallocateL3SP( l3spdb(i) )
-         END DO
+         ENDDO
 
 ! Deallocate the database itself
 
@@ -599,6 +601,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.3  2001/01/16 17:44:38  nakamura
+! Added annotation.
+!
 ! Revision 1.2  2000/12/29 20:51:11  nakamura
 ! Added subroutine OutputL3SP.
 !
