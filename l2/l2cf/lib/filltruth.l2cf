@@ -13,6 +13,7 @@ begin Fill
   ;; Get the contents from apriori
   Transfer, source=apriori, destination=truth
 
+  !ifdef(precisionEstimates,{},{
   ;; Now, the rest of the l2cf fragment is replacing parts of this
   ;; with truth data.
 
@@ -73,6 +74,7 @@ begin Fill
     orbitInclination=truth.orbitInclination, $
     phiTan=truth.phiTanTHz, $
     maxIterations=20
+  })
   })
 
 end Fill
