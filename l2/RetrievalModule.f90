@@ -180,9 +180,9 @@ contains
     integer, parameter :: Gradient = f_rowScaled + 1   ! for NWT
     integer, parameter :: Reg_X_x = gradient + 1   ! Regularization * X_n
     integer, parameter :: Weight = reg_X_x + 1     ! Scaling vector for rows, 1/measurementSD
-    integer, parameter :: X = weight + 1  ! for NWT
+    integer, parameter :: X = weight + 1           ! for NWT
     integer, parameter :: LastVec = X
- 
+
     type(vector_T), dimension(firstVec:lastVec) :: V   ! Database for snoop
 
     ! Error message codes
@@ -194,8 +194,7 @@ contains
     integer, parameter :: InconsistentUnits = Inconsistent + 1
     integer, parameter :: NoFields = InconsistentUnits + 1  ! No fields are allowed
     integer, parameter :: NotSPD = noFields + 1   ! Not symmetric pos. definite
-    integer, parameter :: OrderAndWeight = notSPD + 1  ! Need both or neither
-    integer, parameter :: WrongUnits = OrderAndWeight + 1
+    integer, parameter :: WrongUnits = notSPD + 1
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
@@ -759,8 +758,9 @@ contains
           call add_to_retrieval_timing( 'forward_model', t1 )
           call time_now ( t1 )
           call subtractFromVector ( v(f), measurements )
-          if ( got(f_measurementSD) ) call multiply ( v(f), v(weight) )
-          aj%fnorm = sqrt ( aprioriNorm + ( v(f) .dot. v(f) ) )
+          call copyVector ( v(f_rowScaled), v(f) ) ! f_rowScaled := f
+          if ( got(f_measurementSD) ) call multiply ( v(f_rowScaled), v(weight) )
+          aj%fnorm = sqrt ( aprioriNorm + ( v(f_rowScaled) .dot. v(f_rowScaled) ) )
             if ( index(switches,'fvec') /= 0 ) &
               & call dump ( v(f), name='Residual' )
             if ( index(switches,'sca') /= 0 ) then
@@ -911,7 +911,7 @@ contains
           fmStat%newScanHydros = .true.
 
           ! Loop over MAFs
-          call clearVector ( v(f) )
+          call clearVector ( v(f_rowScaled) )
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             call add_to_retrieval_timing( 'newton_solver', t1 )
             call time_now ( t1 )
@@ -2494,6 +2494,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.117  2001/11/13 23:35:12  vsnyder
+! Keep f and f_rowScaled separate in EVALF case
+!
 ! Revision 2.116  2001/11/12 18:25:02  dwu
 ! speed up some cloud calculations
 !
