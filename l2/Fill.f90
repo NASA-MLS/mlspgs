@@ -82,7 +82,7 @@ contains ! =====     Public Procedures     =============================
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, L_L1B, L_L2GP, &
-      & L_L2AUX, L_LOSVEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
+      & L_L2AUX, L_LOSVEL, L_MAGAZEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
       & L_MANIPULATE, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
@@ -145,7 +145,7 @@ contains ! =====     Public Procedures     =============================
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
       & SOURCE_REF, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED, N_SET_ONE
-    use UNITS, only: PI
+    use UNITS, only: Deg2Rad
     use VectorsModule, only: AddVectorToDatabase, &
       & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
       & DestroyVectorInfo, Dump, &
@@ -1185,6 +1185,12 @@ contains ! =====     Public Procedures     =============================
           end if
           call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
             & manipulation, key )
+
+        case ( l_magAzEl ) ! -- Magnetic Explicit from stren, azim, elev --
+          if ( .not. got(f_explicitValues) ) &
+            & call Announce_Error ( key, noExplicitValuesGiven )
+          call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
+            & vectors(vectorIndex)%globalUnit, dontmask, azEl=.true. )
 
         case ( l_magneticModel ) ! --------------------- Magnetic Model --
           if ( .not. got ( f_gphQuantity ) ) then
@@ -4618,8 +4624,8 @@ contains ! =====     Public Procedures     =============================
     end subroutine RotateMagneticField
 
     !=============================================== ExplicitFillVectorQuantity ==
-    subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spreadFlag, globalUnit, &
-      & dontmask)
+    subroutine ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
+      & globalUnit, dontmask, AzEl )
 
       ! This routine is called from MLSL2Fill to fill values from an explicit
       ! fill command line
@@ -4630,22 +4636,32 @@ contains ! =====     Public Procedures     =============================
       logical, intent(in) :: SPREADFLAG   ! One instance given, spread to all
       integer, intent(in) :: GLOBALUNIT   ! From parent vector
       logical, intent(in) :: DONTMASK     ! Don't bother with the mask
+      logical, intent(in), optional :: AzEl ! Values are in [Mag, Az, El]; the
+        ! desired quantity is components of Mag in the coordinate system to
+        ! which Az and El are referenced.  So the number of values has to be
+        ! a multiple of 3.
 
       ! Local variables
       integer :: K                        ! Loop counter
       integer :: I,J                      ! Other indices
-      integer, DIMENSION(2) :: unitAsArray ! Unit for value given
-      real (r8), DIMENSION(2) :: valueAsArray ! Value given
+      logical :: MyAzEl
+      integer :: NoValues
       integer :: TestUnit                 ! Unit to use
-      integer :: noValues
+      integer, dimension(2) :: unitAsArray ! Unit for value given
+      real (r8), dimension(2) :: valueAsArray ! Value given
       real (r8), pointer, dimension(:) :: VALUES
 
       ! Executable code
+      myAzEl = .false.
+      if ( present(azEl) ) myAzEl = azEl
+
       testUnit = quantity%template%unit
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
       noValues = nsons(valuesNode) - 1
 
       ! Check the dimensions work out OK
+      if ( myAzEl .and. mod(noValues,3) /= 0 ) &
+          & call Announce_Error ( valuesNode, invalidExplicitFill )
       if ( spreadFlag ) then
         if ( noValues /= quantity%template%instanceLen .and. &
           & noValues /= quantity%template%noChans .and. &
@@ -4662,14 +4678,43 @@ contains ! =====     Public Procedures     =============================
       ! Get the values the user asked for, checking their units
       nullify ( values )
       call Allocate_test ( values, noValues, 'values', ModuleName )
-      do k = 1, noValues
-        call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
-        ! Check unit OK
-        if ( (unitAsArray(1) /= testUnit) .and. &
-          &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-          & call Announce_error ( valuesNode, badUnitsForExplicit )
-        values ( k ) = valueAsArray(1)
-      end do
+      if ( .not. myAzEl ) then
+        do k = 1, noValues
+          call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
+          ! Check unit OK
+          if ( (unitAsArray(1) /= testUnit) .and. &
+            &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
+            & call Announce_error ( valuesNode, badUnitsForExplicit )
+          values ( k ) = valueAsArray(1)
+        end do
+      else
+        ! Convert from Mag, Az, El to 3-D projections
+        do k = 1, noValues, 3
+          call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
+          ! Check unit OK
+          if ( (unitAsArray(1) /= testUnit) .and. &
+            &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
+            & call Announce_error ( valuesNode, badUnitsForExplicit, &
+              & extraInfo = (/ testUnit, PHYQ_Dimensionless /) )
+          values ( k ) = valueAsArray(1)
+          ! Next two quantities have to be angles
+          call expr(subtree(k+2,valuesNode),unitAsArray,valueAsArray)
+          ! Check unit OK
+          if ( unitAsArray(1) /= PHYQ_Angle ) &
+            & call Announce_error ( valuesNode, badUnitsForExplicit, &
+              & extraInfo = (/ PHYQ_Angle /) )
+          values (k+1) = deg2rad * valueAsArray(1)
+          call expr(subtree(k+3,valuesNode),unitAsArray,valueAsArray)
+          ! Check unit OK
+          if ( unitAsArray(1) /= PHYQ_Angle ) &
+            & call Announce_error ( valuesNode, badUnitsForExplicit, &
+              & extraInfo = (/ PHYQ_Angle /) )
+          values (k+2) = deg2rad * valueAsArray(1)
+          values(k:k+2) = values(k) * (/ cos(values(k+1))*cos(values(k+2)), &
+                                         sin(values(k+1))*cos(values(k+2)), &
+                                         sin(values(k+2)) /)
+        end do
+      end if
 
       ! Now loop through the quantity
       k = 0
@@ -5196,7 +5241,7 @@ contains ! =====     Public Procedures     =============================
 
           ! get phi along path for each mif (phi is in degree)
           y_in = los%template%phi(mif,maf) &
-            & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
+            & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*deg2rad
           ! interpolate phi onto standard vertical grids     
           call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
             & method='Linear')
@@ -5766,6 +5811,10 @@ contains ! =====     Public Procedures     =============================
 
     ! ---------------------------------------------  ANNOUNCE_ERROR  -----
     subroutine ANNOUNCE_ERROR ( where, CODE , ExtraMessage, ExtraInfo )
+
+      use Intrinsic, only: PHYQ_Indices
+      use String_Table, only: Display_String
+
       integer, intent(in) :: where   ! Tree node where error was noticed
       integer, intent(in) :: CODE    ! Code for error message
       character (LEN=*), intent(in), optional :: ExtraMessage
@@ -5804,6 +5853,14 @@ contains ! =====     Public Procedures     =============================
       case ( badUnitsForExplicit )
         call output ( " explitictValues field has inappropriate " // &
           & "units for Fill instruction.", advance='yes' )
+        if ( present(extraInfo) ) then
+          call output ( "Units should be" )
+          do i = 1, size(extraInfo)
+            call output ( ' ' )
+            call display_String ( phyq_indices(extraInfo(i)) )
+          end do
+          call output ( '', advance='yes' )
+        end if
       case ( badUnitsForIntegrationTime )
         call output ( " has inappropriate units for integration time.", advance='yes' )
       case ( badUnitsForSystemTemperature )
@@ -5924,6 +5981,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.236  2003/08/15 23:58:48  vsnyder
+! Add MagAzEl fill method
+!
 ! Revision 2.235  2003/08/13 19:23:45  vsnyder
 ! Make an error message more informative
 !
