@@ -1,16 +1,17 @@
 program sids_l1boa ! Generate simulated L1BOA data for MLS
 
+  use Hdf, only: DFACC_WRITE, SFEND, SFSTART
   use L1boa, only: L1BOA_FILL, L1BOA_NOFILL
-  use Orbit, only: ALTG, ALTT, ASCTAI, DSCTAI, ORBINCLINE, ORBITNUMBER, &
-    & ORBIT_MET, NUMORB
-  use read, only: READ_SCAN, READ_UIF
-  use Sd, only: DFACC_WRITE, SD_CREATE, SFEND, SFSTART
-  use Time, only: TIME_DAY, TIME_MAF, TIME_POST, TIME_PRE
+  use MLSCommon, only: R8, TAI93_RANGE_T
   use MLSMessageModule, only: MLSMSG_ALLOCATE, MLSMSG_ERROR, MLSMSG_FILEOPEN, &
     & MLSMESSAGE
+  use Orbit, only: ALTG, ALTT, ASCTAI, DSCTAI, ORBINCLINE, ORBITNUMBER, &
+    & ORBIT_MET, NUMORB
   use OutputL1B, only: L1BOAINDEX_T
-  use MLSCommon, only: R8, TAI93_RANGE_T
+  use Read, only: READ_SCAN, READ_UIF
+  use Sd, only: SD_CREATE
   use SDPToolkit, only: PGS_PC_GETREFERENCE
+  use Time, only: TIME_DAY, TIME_MAF, TIME_POST, TIME_PRE
 
   implicit none
 
@@ -217,6 +218,9 @@ program sids_l1boa ! Generate simulated L1BOA data for MLS
 end program sids_l1boa
 
 ! $Log$
+! Revision 1.6  2001/10/11 23:27:23  livesey
+! Tried to change the chmod stuff
+!
 ! Revision 1.5  2001/10/11 23:25:19  livesey
 ! Tidied up a bit
 !
