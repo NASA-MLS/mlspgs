@@ -104,6 +104,10 @@ contains
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'Grids_f%no_f' )
 
+    Grids_f%no_z = 0
+    Grids_f%no_p = 0
+    Grids_f%no_f = 0
+
     call Allocate_test ( lin_log, no_mol, 'lin_log', ModuleName )
 
     f_len = 0
@@ -111,16 +115,17 @@ contains
     h2o_ind = 0
     ext_ind = 0
     skip_eta_frq = .FALSE.
+
     do ii = 1, no_mol
-      i = mol_cat_index(ii)
-      kk = abs(molecules(i))
+      kk = molecules(mol_cat_index(ii))
+      if(spec_tags(kk) == 18003) h2o_ind = ii
       if ( kk == l_extinction ) then
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_extinction, radiometer=radiometer )
         ext_ind = ii
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_extinction, radiometer=radiometer)
       else
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_vmr, molecule=kk )
+          & quantityType=l_vmr, molecule=kk)
       endif
       kz = f%template%noSurfs
       kp = f%template%noInstances
@@ -135,7 +140,6 @@ contains
       Grids_f%no_p(ii) = kp
       p_len = p_len + kz * kp
       f_len = f_len + kz * kp * kf
-      if(spec_tags(kk) == 18003) h2o_ind = ii
     end do
 
     call Allocate_test ( sps_values, f_len, 'sps_values', ModuleName )
@@ -166,7 +170,7 @@ contains
     f_len = 1
     do ii = 1, no_mol
       i = mol_cat_index(ii)
-      kk = abs(molecules(i))
+      kk = molecules(i)
       if ( kk == l_extinction ) then
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_extinction, radiometer=radiometer )
@@ -246,8 +250,7 @@ contains
                                   & MLSMSG_Allocate//'deriv_flag array' )
     m = 0
     do ii = 1, no_mol
-      i = mol_cat_index(ii)
-      kk = abs(molecules(i))
+      kk = molecules(mol_cat_index(ii))
       if ( kk == l_extinction ) then
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_extinction, radiometer=radiometer )
@@ -338,8 +341,7 @@ contains
 !
     do ii = 1, no_mol
       m = 0
-      i = mol_cat_index(ii)
-      kk = abs(molecules(i))
+      kk = molecules(mol_cat_index(ii))
       Spectag = spec_tags(kk)
       do
         m = m + 1
@@ -425,8 +427,7 @@ contains
 !
     do ii = 1, no_mol
       m = 0
-      i = mol_cat_index(ii)
-      kk = abs(molecules(i))
+      kk = molecules(mol_cat_index(ii))
       Spectag = spec_tags(kk)
       do
         m = m + 1
@@ -498,6 +499,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.15  2002/02/20 22:19:46  zvi
+! Reversing the subset logic ..
+!
 ! Revision 2.14  2002/02/16 20:43:54  zvi
 ! Changing the code for Log of Neg. VMR
 !
