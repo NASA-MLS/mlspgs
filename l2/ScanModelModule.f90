@@ -56,6 +56,7 @@ module ScanModelModule          ! Scan model and associated calculations
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! Define various constants etc.
@@ -1849,9 +1850,16 @@ contains ! =============== Subroutines and functions ==========================
       end do
     end function Z_surface
   end subroutine TwoDScanForwardModel
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.49  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.48  2002/09/27 01:47:45  vsnyder
 ! Move some USEs from module scope to procedure scope.  Move parameters from
 ! module scope to procedure scope.  Simplify iteration in z_surface.
