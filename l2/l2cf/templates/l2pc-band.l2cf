@@ -1,0 +1,158 @@
+; This template l2cf performs a l2pc calculation for one band or
+; sideband, defined by the macro band
+
+; First some m4 directives
+include(m4defs.l2cf)
+
+; This l2cf run ignores the l1b file
+!define(avoidL1BOA,{yes})
+
+; Get a default for band and phi if not already supplied
+!define(day,{1996d051})
+!ifdef(band,{},{!define(band,{1})})
+!ifdef(phi,{},{!define(phi,0)})
+!ifdef(l1boaversion,{},{!define(l1boaversion,{s5--t})})
+!ifdef(l2pcversion,{},{!define(l1pcversion,{v0-9-0})})
+
+; Now define our directories
+!define(inpathl1boa,{/data/emls/l1boa/!l1boaversion/!year(!day)/})
+!define(outpathl2pc,{/bigdata/livesey/misc})
+!include(clarifypaths.l2cf)
+
+; ----------------------------------- Boiler plate l2cf stuff -------
+
+; Valid signals database
+!include(!calpath/MLS-Aura_L2Cal-Signals_v1-0-0_0000d000.l2cf)
+
+; Spectroscopy and molecule/isotope information
+!include(!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-0-0_0000d000.l2cf)
+
+; Sideband ratio information
+!include(!calpath/MLS-Aura_L2Cal-SBRatio_v1-0-0_0000d000.l2cf)
+
+; System temperature information
+!include(!calpath/MLS-Aura_L2Cal-Tsys_v1-0-0_0000d000.l2cf)
+
+; Noise bandwidth information
+!include(!calpath/MLS-Aura_L2Cal-NBW_v1-0-0_0000d000.l2cf)
+
+; Now include some minor calibration parameters
+!include(lesserparams.l2cf)
+
+; Now read the climatology information
+!include(readclimatology.l2cf)
+
+; -------------------------------------------- Global settings ------
+begin GlobalSettings
+
+  ;; Setup the stuff for reading and dealing with l1b files
+  l1boa, file='!inpathl1boa/MLS-Aura_L1BOA-Full_s5--t_!day.h4'
+;   startTime = '!year(!day)-!doy(!day)T00:00:00.0000'
+;   endTime = '!year(!day)-!doy(!day)T23:59:59.9999'
+;   leapsecfile = '/software/SRC/TOOLKIT-5.2.7.4v1.00/database/common/TD/leapsec.dat'
+
+  ;; Setup our vertical grids
+  vGridStandard: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+  vGridHiRes: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+  vGridBaseline: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+  vGridExtinction: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+  vGridRefGPH: vGrid, type=Explicit, coordinate=Zeta, values=100 mb
+  vGridPtan: vGrid, type=Logarithmic, coordinate=Zeta, $
+    start=1000mb, formula=[73:12]
+
+  ;; Define the frequency grids for the extinciton quantities
+  !include(extinctionfgrids.l2cf)
+
+  ;; Load our forward model databases
+  ForwardModelGlobal, $
+    antennaPatterns='!calpath/MLS-Aura_L2Cal-AAAP_v1-0-0_0000d000.txt', $
+    filterShapes='!calpath/MLS-Aura_L2Cal-Filters_v1-0-0_0000d000.txt', $
+    pointingGrids='!calpath/MLS-Aura_L2Cal-PFG_v1-0-0_0000d000.txt'
+
+  ;; Setup the particular forward model we're going to want
+  l2pcFwm: forwardModel, type=full,  $
+    signals = !signal(!band), $
+    molecules = !molecules(!band), $
+    moleculeDerivatives = !moleculeFamilies(!band), $
+    phiWindow=5, $
+    /skipOverlaps, $
+    integrationGrid=vGridStandard, $
+    tangentGrid=vGridStandard, /do_conv, /do_freq_avg, $
+    /temp_der, /atmos_der
+
+end GlobalSettings
+
+; ------------------------------------------ Chunk divide  ----
+!include(chunkdividel2pc.l2cf)
+
+; ------------------------------------------- Construct sections --
+
+begin Construct
+  hGridStandard: hGrid, type=explicit, module=GHz, $
+    values = [ $
+    !phi degrees - 3.0 degrees, $
+    !phi degrees - 1.5 degrees, $
+    !phi degrees, $
+    !phi degrees + 1.5 degrees, $
+    !phi degrees + 3.0 degrees ]
+
+  Forge, module=GHz, noMIFs=73, geodAngle= !phi degrees, inclination = 98.145 degrees
+  Forge, module=THz, noMIFs=73, geodAngle= !phi degrees, inclination = 98.145 degrees
+end Construct
+
+!include(constructstandardspecies.l2cf)
+
+begin Construct
+  yTemplate: VectorTemplate, quantities = [ band!band ]
+end Construct
+
+; --------------------------------------- Define and fill vectors --
+
+; This next lot of stuff may seem a little long winded, but
+; we do it this way to make the l2cf similar to others, and thus
+; containing more in common with them.
+
+; Define and fill the apriori vector
+!include(fillapriori.l2cf)
+
+begin Fill
+  ;; Now fill the two tangent pressures
+  Fill, quantity=apriori.ptanGHz, method=vGrid, sourceVGrid=vGridPtan
+  Fill, quantity=apriori.ptanTHz, method=vGrid, sourceVGrid=vGridPtan
+end Fill
+
+; Define radiance vectors and noise vector
+begin Fill
+  y: Vector, template=yTemplate
+  K: Matrix, rows=y, columns=apriori
+end Fill
+
+; -------------------------------------------- Forward model ----
+
+begin Retrieve
+ sids, fwdModelIn=apriori, fwdModelOut=y,$
+   forwardModel=[l2pcFwm], jacobian=K
+end Retrieve
+
+; ------------------------------------------ Joinp
+
+begin Join
+end Join
+
+; ---------------------------------------  Output the result
+
+; Get a nice bin name based on phi
+!ifelse(1,!eval(!phi<0),
+  {!define(phiStr,{!eval(-(!phi))S})},
+  {!define(phiStr,{!eval(!phi)N})})
+
+begin Output
+  output, file= $
+    '!outpathl2pc/MLS-Aura_L12Cal-L2PC-band!band-bin!phiStr_!l2pcversion_0000-000.txt', $
+    quantities=K, type=l2pc
+end Output
+

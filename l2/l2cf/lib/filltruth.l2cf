@@ -1,0 +1,58 @@
+;; $Id$
+
+;; This l2cf fragment is for constructing and filling the 'truth'
+;; state vector.
+
+;; First define the vector in question
+begin Fill
+
+  ;; --------------------------------------------- Setup vector
+
+  truth: Vector, template=stateTemplate
+
+  ;; Get the contents from apriori
+  Transfer, source=apriori, destination=truth
+
+  ;; Now, the rest of the l2cf fragment is replacing parts of this
+  ;; with truth data.
+
+  ;; --------------------------------------------- L2GPs
+  
+  ;; This macro fills one truth quantity with l2gp data
+  !define(fillWithL2GP,{Fill, quantity=truth.$1, method=l2gp, $
+    sourceL2GP={l2gp}$1{Input},/interpolate!nl})
+
+  ;; Now execute this macro for all the species for which we have l2gp
+  ;; data
+  !forall(fillWithL2GP,!l2gpInputSpecies)
+
+  ;; We'll also do the same for refgph, which is a special case
+  Fill, quantity=truth.refGPH, method=l2gp, sourceL2GP=l2gpGPHInput, /interpolate
+
+  ;; --------------------------------------------- RHi
+
+  ;; Get RHI from H2O
+  Fill, quantity=truth.rhi, h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, method=special, /dontMask
+
+  ;; --------------------------------------------- Ptan
+
+  ;; Now deduce a corresponding ptan for this using hydrostatic
+  ;; balance.
+
+  Fill, quantity=truth.ptanGHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltGHz, $
+    maxIterations=10
+
+  Fill, quantity=truth.ptanTHz, method=hydrostatic, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
+    refGPHQuantity=truth.refGPH, $
+    geocAltitudeQuantity=truth.tngtGeocAltTHz, $
+    maxIterations=10
+
+end Fill
+

@@ -1,52 +1,72 @@
-!divert(-1)
 ;; $Id$
 
 ;; This l2cf fragment is for setting up a priori vectors with
 ;; appropriate quantities
 
-!divert!dnl
+;; ----------------------------------------------- Setup vectors
+
 ;; First define the vectors in question
 begin Fill
-
   apriori: Vector, template=stateTemplate
   aprioriPrecision: Vector, template=stateTemplate
   length: Vector, template=stateTemplate, /lengthScale
+end Fill
+
+;; ----------------------------------- Fill with climatology
+
+begin Fill
+  
+  ;; Now we're only going to do this if we have climatological data to
+  ;; fill with.
+
+  !ifdef(gotClimatology,{
+  ;; This macro fills one apriori quantity with climatlogical data
+  !define(fillWithClimatology,{Fill, quantity=apriori.$1, method=gridded, $
+    sourceGrid=grid$1!nl})
+
+  ;; Now invoke it for all relevant species
+  !forall(fillWithClimatology,!allClimatologicalSpecies)
+
+  ;; Get RHI from H2O
+  Fill, quantity=apriori.rhi, h2oQuantity=apriori.h2o, $
+    temperatureQuantity=apriori.temperature, method=special, /dontMask
+  })
 
 end Fill
 
-;; Fill the standard species
-!include(fillfromclimatology.l2cf)
-
-;; Fill the sideband ratios
-!include(fillsidebandratios.l2cf)
+;; ----------------------------------- Lesser state
 
 ;; Fill the lesser stuff
-;; !ifdef(l2pcrun,{!include(filllesserstate_l2pc.m4)},{!include(filllesserstate.m4)})
-!include(filllesserstate.m4)
+!include(filllesserstate.l2cf)
 
-;; Fill the minor isotopes
-!define(vec,{apriori})!dnl
-!include(fillisotopes.m4)
+;; ----------------------------------- Tangent pressures
 
 begin Fill
 
+  !ifdef(gotClimatology,{
   ;; Now fill some remaining stuff
   Fill, quantity=apriori.refGPH, method=explicit, explicitvalues=16 km,/spread
 
   ;; Now compute the tangent presssures for apriori
   Fill, quantity=apriori.ptanGHz, method=hydrostatic, $
     h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temp, $
+    temperatureQuantity=apriori.temperature, $
     refGPHQuantity=apriori.refGPH, $
     geocAltitudeQuantity=apriori.tngtGeocAltGHz, $
     maxIterations=10
   Fill, quantity=apriori.ptanTHz, method=hydrostatic, $
     h2oQuantity=apriori.h2o, $
-    temperatureQuantity=apriori.temp, $
+    temperatureQuantity=apriori.temperature, $
     refGPHQuantity=apriori.refGPH, $
     geocAltitudeQuantity=apriori.tngtGeocAltTHz, $
     maxIterations=10
+})
 
+end Fill
+
+;; -------------------------------- Apriori precisions and length scales
+
+begin Fill
   ;; Now we're going to fill the apriori errors up
   Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 100 pptv
   Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 100 pptv
@@ -63,33 +83,28 @@ begin Fill
   Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 1 ppbv
   Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 100 pptv
 
-  Fill, quantity=aprioriPrecision.temp,   method=explicit, /spread, explicitValues= 20 K
+  Fill, quantity=aprioriPrecision.temperature,   method=explicit, /spread, explicitValues= 20 K
   Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
 
   ;; Now we're going to fill the a priori length scales up
   !ifdef(standardLength,{},{!define(standardLength, 5 km)})
   Fill, quantity=length.bro,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.br_79_o, method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.br_81_o, method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.ch3cn,   method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.cl_35_o, method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.clo,     method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.co,      method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.h2o,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.h2o_18,  method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hcl_35,  method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.hcl,     method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.hcn,     method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.hno3,    method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.ho2,     method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.hocl,    method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hocl_35, method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.n2o,     method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.o3,      method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.oh,      method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.so2,     method=explicit, /spread, explicitValues= !standardLength
 
-  Fill, quantity=length.temp,    method=explicit, /spread, explicitValues= !standardLength
+  Fill, quantity=length.temperature, method=explicit, /spread, $
+    explicitValues= !standardLength
 
   ;; Now do the same for baseline
   !define(baselinePrecision, 5 K )
@@ -109,10 +124,5 @@ begin Fill
     explicitValues= !baselinePrecision
 
 end Fill
-
-;; Now also scale the apriori precisions into isotope space
-!define(vec,{aprioriPrecision})!dnl
-!include(fillisotopes.m4)
-
 
 

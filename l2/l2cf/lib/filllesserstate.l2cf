@@ -1,68 +1,126 @@
 ; This bit of an l2cf fills all the boring stuff in the `lesser' state vector
 
-BEGIN Fill
+begin Fill
 
-    ;; Now the elevation offsets
-    Fill, quantity=apriori.r1aElev, method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=apriori.r1bElev, method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=apriori.r2Elev,  method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=apriori.r3Elev,  method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=apriori.r4Elev,  method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=apriori.r5hElev, method=explicit, explicitValues= 0.0 degrees
-    Fill, quantity=apriori.r5vElev, method=explicit, explicitValues= 0.0 degrees
-
-    ;; Now the isotope ratios
-    
-    Fill, quantity=apriori.br_79_o_ratio,      method=explicit, explicitValues= 0.50418
-    Fill, quantity=apriori.br_81_o_ratio,      method=explicit, explicitValues= 0.49341
-    Fill, quantity=apriori.cl_35_o_ratio,      method=explicit, explicitValues= 0.75348
-    Fill, quantity=apriori.cl_37_o_ratio,      method=explicit, explicitValues= 0.24411
-    Fill, quantity=apriori.h2o_18_ratio,       method=explicit, explicitValues= 0.00204
-    Fill, quantity=apriori.hocl_35_ratio,      method=explicit, explicitValues= 0.75337
-    Fill, quantity=apriori.hocl_37_ratio,      method=explicit, explicitValues= 0.24407
-    Fill, quantity=apriori.o2_v1_ratio,        method=explicit, explicitValues= 0.20950
-    Fill, quantity=apriori.o3_asym_o_18_ratio, method=explicit, explicitValues= 0.00406
-    Fill, quantity=apriori.o3_sym_o_18_ratio,  method=explicit, explicitValues= 0.00203
-    Fill, quantity=apriori.o3_v1_3_ratio,      method=explicit, explicitValues= 0.99279
-    Fill, quantity=apriori.o3_v2_ratio,        method=explicit, explicitValues= 0.99279
-    Fill, quantity=apriori.o_18_o_ratio,       method=explicit, explicitValues= 0.00407
-;   Fill, quantity=apriori.c_12_o_18_ratio,    method=explicit,
-;   explicitValues= 0.98652
-    Fill, quantity=apriori.hcl_35_ratio,       method=explicit, explicitValues= 0.75519
-    Fill, quantity=apriori.hcl_37_ratio,       method=explicit, explicitValues= 0.24466
-    Fill, quantity=apriori.s_32_o2_ratio,      method=explicit, explicitValues= 0.94548
-
-    ;; Now the more minor stuff
-    Fill, quantity = apriori.earthReflectivity, $
-      method = explicit, explicitValues = 0.05
-    Fill, quantity = apriori.orbitInclination, $
-      method = explicit, explicitValues = 98.145 degrees
-    Fill, quantity = apriori.spaceRadiance, $
-      method =explicit, explicitValues = 2.735 K
-
-    Fill, quantity=apriori.scGeocAlt, method=l1b
-    Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
-    Fill, quantity=apriori.tngtGeocAltTHz, method=l1b
-
-    Fill, quantity=apriori.scECI, method = l1b
-    Fill, quantity=apriori.tngtECIGHz, method = l1b
-    Fill, quantity=apriori.tngtECITHz, method = l1b
-
-;    Fill, quantity=apriori.scVel, method = l1b
-;    Fill, quantity = apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
-;      scECI=apriori.scECI, scVel=apriori.scVel, method=special
-;    Fill, quantity = apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
-;      scECI=apriori.scECI, scVel=apriori.scVel, method=special
+  ;; -------------------------------------------------- Elev offsets
  
-    Fill, quantity=apriori.scVelECR, method = l1b
-    Fill, quantity = apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
-      scECI=apriori.scECI, scVelECR=apriori.scVelECR, method=special
-    Fill, quantity = apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
-      scECI=apriori.scECI, scVelECR=apriori.scVelECR, method=special
- 
-    Fill, quantity = apriori.o2, method = explicit,  $
-      explicitValues = 0.2095 vmr , /spread
-    Fill, quantity = apriori.n2, method = explicit,  $
-      explicitValues = 0.805 vmr , /spread
+  ;; This macro below fills <x>Elev for radiometer <x> with the value
+  ;; given in the macro !elev<x>
+  !define(fillElevOffset,{Fill, quantity=apriori.elev$1, method=explicit, $
+    explicitValues=!elev$1!nl})
 
-END Fill
+  ;; Call that macro for all radiometers
+  !forall(fillElevOffset,!allRadiometers)
+
+  ;; --------------------------------------------------- Isotope ratios
+
+  ;; This macro below fills the isotope ratio quanity for molecule <x>
+  ;; (apriori.<x>_ratio) with the value in the macro !isotoperatiox
+  !define(fillIsotopeRatio,{Fill, quantity=apriori.isotoperatio$1, method=explicit, $
+    explicitValues=!indir(isotoperatio$1)!nl})
+  ;; Note the use of indir as the molecule can contain underscores
+  ;; which are not part of valid macro names generally in the l2cf
+
+  ;; Call this macro for all molecules
+  !forall(fillIsotopeRatio,!isotopicMolecules)
+
+  ;; ------------------------------------- Sideband ratios
+
+  ;; This macro fills one sideband ratio for one band.
+  !define(fillSidebandRatio,{Fill, quantity=apriori.sidebandRatio$1, method=explicit, $
+    explicitValues=!sbfraction$1!nl})
+
+  ;; Call that macro for all sidebands
+  !forall(fillSidebandRatio,!allBandLSBs)
+  !forall(fillSidebandRatio,!allBandUSBs)  
+
+  ;; ----------------------------------------- System temperatures
+
+  ;; This macro fills one system temperature for one band
+  !define(fillSystemTemperature,{Fill, quantity=apriori.systemTemperature$1, $
+    method=explicit, explicitValues=!systemp$1!nl})
+
+  ;; Call that macro for all bands
+  !forall(fillSystemTemperature,!allBands)
+
+  ;; ----------------------------------------- Noise bandwidths
+
+  ;; This macro fills one noise bandwidth for one band
+  !define(fillNoiseBandwidth,{Fill, quantity=apriori.noiseBandwidth$1, $
+    method=explicit, explicitValues=!nbw$1!nl})
+
+  ;; Call that macro for all bands
+  !forall(fillNoiseBandwidth,!allBands)
+
+  ;; --------------------------------------------------- Minor terms
+
+  Fill, quantity=apriori.earthReflectivity, $
+    method=explicit, explicitValues=!earthReflectivity
+
+  Fill, quantity=apriori.spaceRadiance, $
+    method=explicit, explicitValues=!spaceRadiance
+
+  Fill, quantity=apriori.o2, method=explicit,  $
+    explicitValues=!o2vmr, /spread
+
+  Fill, quantity=apriori.n2, method=explicit,  $
+    explicitValues=!n2vmr, /spread
+
+  ;; --------------------------------------------------- Stuff from L1BOA
+
+  ;; In some cases (e.g. when computing l2pc files) the l1boa file is
+  ;; not the desired source of information
+
+  !ifdef(avoidL1BOA,{
+  ;; ----------------- Avoiding l1boa
+
+  Fill, quantity=apriori.orbitInclination, $
+    method=explicit, explicitValues=98.145 degrees
+
+  ;; Get an approximate line of sight velocity
+  Fill, quantity = apriori.losVelGHz, method = explicit, $
+    explicitValues = -6.8e3, /spread
+  Fill, quantity = apriori.losVelTHz, method = explicit, $
+    explicitValues = -6.8e3, /spread
+
+  ;; Get an approximate spacecraft geocentric altitude
+  Fill, quantity = apriori.scGeocAlt, method = explicit, $
+    explicitValues = 7070 km, /spread
+
+  ;; Note, we're doing NOTHING here about tangent point altitudes.
+  ;; The presumption is that we don't need them for an l2pc calculation.
+  },{
+  ;; ----------------- Using l1boa
+  ;; Geocentric altitudes
+  Fill, quantity=apriori.scGeocAlt, method=l1b
+  Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
+  Fill, quantity=apriori.tngtGeocAltTHz, method=l1b
+
+  ;; We're after the line of sight velocities here, have to get them
+  ;; in a slightly awkward manner.  First get the position of the
+  ;; spacecraft and tangent points in ECI coordinates.
+  Fill, quantity=apriori.scECI, method=l1b
+  Fill, quantity=apriori.tngtECIGHz, method=l1b
+  Fill, quantity=apriori.tngtECITHz, method=l1b
+
+  ;; Now get the spacecraft velocity in ECI coordinates
+  Fill, quantity=apriori.scVelECI, method=l1b
+
+  ;; Now do a special vector computation to get the LOS velocities.
+  ;; Note that this DOES take into account the earth's rotation, even
+  ;; though it's been given ECI coordinates.
+  Fill, quantity=apriori.losVelGHz, tngtECI=apriori.tngtECIGHz, $
+    scECI=apriori.scECI, scVelECI=apriori.scVelECI, method=special
+  Fill, quantity=apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
+    scECI=apriori.scECI, scVelECI=apriori.scVelECI, method=special
+  })
+end Fill
+
+
+
+
+
+
+
+
+

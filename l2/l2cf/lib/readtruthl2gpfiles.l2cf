@@ -1,0 +1,24 @@
+; This section of the l2cf is for reading the 'latest' truth l2gp data
+
+begin ReadApriori
+
+  !define(readTruthL2GP,{l2gp$1Input: l2gp, $
+    file='/data/emls/l2gp/s5--t/!year(!day)/MLS-Aura_L2GP-$1_s5$2--t_!day.he4'!nl})
+
+  ;; Use forall to do the ones that are just s5--t
+  ;; NOTE, no space before close parentheses
+  !forall(readTruthL2GP, BrO, ClO, GPH)
+  !forall(readTruthL2GP, HCl, HNO3, HO2, HOCl, N2O)
+  !forall(readTruthL2GP, OH, SO2, Temperature)
+
+  ;; Do the others (e.g. s5a--t) explicitly.
+  !readTruthL2GP(CH3CN,a)
+  !readTruthL2GP(CO,a)
+  !readTruthL2GP(H2O,-2)
+  !readTruthL2GP(O3,a)
+  !readTruthL2GP(RHi,-2)
+
+  ;; Use this macro for later
+  !define(l2gpInputSpecies,{Temperature,GPH,BrO,ClO,HCl,HNO3,HO2,HOCl,N2O,OH,SO2})
+  
+end ReadApriori

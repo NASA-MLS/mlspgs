@@ -1,14 +1,20 @@
-; ----------------------------------------------- ReadApriori -----
+;; This l2cf fragment reads the climatological information into
+;; a gridded data type
+
 begin ReadApriori
+
+;; List the species for which we currently have climatologies  
+!define(allClimatologicalSpecies,{Temperature,H2O,O3,N2O,HNO3,HCl,ClO,HO2,CO})
+
+;; This macro reads one entry from grid format file into the gridded
+;; quantity grid<x>
 !define(readGrid,{grid$1: gridded,field='$1', origin=climatology, $
-       file='/bigdata/livesey/misc/emls_clim_v0-1.dat'})
-!readGrid(Temperature)
-!readGrid(H2O)
-!readGrid(O3)
-!readGrid(N2O)
-!readGrid(HNO3)
-!readGrid(HCl)
-!readGrid(ClO)
-!readGrid(HO2)
-!readGrid(CO)
+       file='!calpath/MLS-Aura_L2Cal-Climatologies_v1-0-0_0000d000.txt'!nl})
+
+;; Now invoke that macro for all species defined above.
+!forall(readGrid,!allClimatologicalSpecies)
+
+;; Put up a macro to indicate we have the climatology
+!define(gotClimatology,1)
+
 end ReadApriori

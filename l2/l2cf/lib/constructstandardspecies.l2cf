@@ -10,12 +10,13 @@ begin Construct
   !define(allBands,{!forloop({i},1,33,{!i, })34}) ; 1,2,3..34
   !define(allBandLSBs,{!makelist({},{L},!allBands)})
   !define(allBandUSBs,{!makelist({},{U},!allBands)})
-  
-  ;; Now break out which are linear and log, hiRes etc.
+ 
+  ;; Define all the molecules we'll consider.  Note that this is only
+  ;; non-isotopic species (at least for the moment).
   ;; *** NOTE NO CONTINUATION LINES ALLOWED, SORRY!
-  !define(allLinearMolecules,{Br_81_O, CH3CN, CO, Cl_35_O, HCl_35, HCl_37, HCN, H2O2, HNO3, HNO3_v6, HNO3_v7, HNO3_v8, HNO3_v9, HOCl_35, HOCl_37, HO2, N2, N2O, OH, O2, O2_v1, O_18_O, O3, O3_v1_3, O3_v2, O3_ASYM_O_18, O3_SYM_O_18, S_32_O2})
+  !define(allLinearMolecules,{BrO, CH3CN, CO, ClO, HCl, HCN, H2O2, HNO3, HOCl, HO2, N2, N2O, OH, O2, O3, SO2})
 
-  !define(allLogMolecules,{H2O, H2O_18})
+  !define(allLogMolecules,{H2O})
 
   !define(allLinearHRMolecules,{O3})
   !define(allLogHRMolecules,{H2O})
@@ -26,9 +27,9 @@ begin Construct
   ;; ----------------------------------------- Derived macros
 
   ;; These are macros derived from above
-  !define(allMolecules, {!allLinearMolecules, !allLogMolecules} )
+  !define(allMolecules,{!allLinearMolecules,!allLogMolecules})
   !define(allHiResMolecules,
-    {!makelist({},{_HR},!allLinearHRMolecules), !makelist({},{_HR},!allLogHRMolecules)})
+    {!makelist({},{_HR},!allLinearHRMolecules),!makelist({},{_HR},!allLogHRMolecules)})
   ;; ----------------------------------------- Tangent pressures
 
   ptanGHz: Quantity, type=ptan, module=GHz
@@ -76,7 +77,6 @@ begin Construct
 
   !forall(constructBaseline, !allRadiometers )
   !define(allBaselines, {!makelist({baseline},{},!allRadiometers)})
-  !allBaselines
 
   ;; ----------------------------------------- Extinctions
 
@@ -88,17 +88,17 @@ begin Construct
 
   ;; ----------------------------------------- Isotope ratios
   
-  !define(constructIsotopeRatio,{ratio_$1: Quantity, type=isotopeRatio, $
+  !define(constructIsotopeRatio,{isotoperatio$1: Quantity, type=isotopeRatio, $
     molecule=$1!nl})
     
   ;; Note! Do not put a space before the close parentheses here
   ;; otherwise it will end up before the _ratio on the last molecule
-  !forall(constructIsotopeRatio,!allMolecules)
-  !define(allIsotopeRatios,{!makelist({ratio_},{},!allMolecules)})
+  !forall(constructIsotopeRatio,!isotopicMolecules)
+  !define(allIsotopeRatios,{!makelist({isotoperatio},{},!isotopicMolecules)})
 
   ;; ----------------------------------------- Radiances
 
-  !define(constructRadiance,{band$1: Quantity, type=radiance, signal=!sigBand$1!nl})
+  !define(constructRadiance,{band$1: Quantity, type=radiance, signal=!signal($1)!nl})
 
   ;; Folded
   !forall(constructRadiance,!allBands)
@@ -115,7 +115,7 @@ begin Construct
 
   ;; ----------------------------------------- OpticalDepths
 
-  !define(constructDepth,{depthBand$1: Quantity, type=opticalDepth, signal=!sigBand$1!nl})
+  !define(constructDepth,{depth$1: Quantity, type=opticalDepth, signal=!signal($1)!nl})
 
   ;; Folded
   !forall(constructDepth,!allBands)
@@ -125,24 +125,44 @@ begin Construct
   !forall(constructDepth,!allBandUSBs)
 
   ;; All
-  !define(allFoldedDepths, {!makelist({depthBand},{},!allBands)})
-  !define(allLSBDepths, {!makelist({depthBand},{},!allBandLSBs)})
-  !define(allUSBDepths, {!makelist({depthBand},{},!allBandUSBs)})
+  !define(allFoldedDepths, {!makelist({depth},{},!allBands)})
+  !define(allLSBDepths, {!makelist({depth},{},!allBandLSBs)})
+  !define(allUSBDepths, {!makelist({depth},{},!allBandUSBs)})
   !define(allUnfoldedDepths,{!allLSBDepths, !allUSBDepths})
 
   ;; ----------------------------------------- Sideband ratios
 
-  !define(constructSidebandRatio, {band$1ratio: Quantity, type=sidebandRatio, $
-    signale=!sigBand$1!nl})
+  !define(constructSidebandRatio, {sidebandRatio$1: Quantity, type=sidebandRatio, $
+    signal=!signal($1)!nl})
   
   ;; These are all split now
   !forall(constructSidebandRatio,!allBandLSBs)
   !forall(constructSidebandRatio,!allBandUSBs)
 
   ;; All
-  !define(allLSBRatios, {!makelist({band},{ratio},!allBandLSBs)})
-  !define(allUSBRatios, {!makelist({band},{ratio},!allBandUSBs)})
+  !define(allLSBRatios, {!makelist({sidebandRatio},{},!allBandLSBs)})
+  !define(allUSBRatios, {!makelist({sidebandRatio},{},!allBandUSBs)})
   !define(allSidebandRatios, {!allLSBRatios, !allUSBRatios})
+
+  ;; ----------------------------------------- System temperatures
+
+  !define(constructSystemTemperature, {systemTemperature$1: Quantity, $
+    type=systemTemperature, signal=!signal($1)!nl})
+  
+  !forall(constructSystemTemperature,!allBands)
+
+  ;; All
+  !define(allSystemTemperatures, {!makelist({systemTemperature},{},!allBands)})
+
+  ;; ----------------------------------------- Noise bandwidths
+
+  !define(constructNoiseBandwidth, {noiseBandwidth$1: Quantity, $
+    type=noiseBandwidth, signal=!signal($1)!nl})
+  
+  !forall(constructNoiseBandwidth,!allBands)
+
+  ;; All
+  !define(allNoiseBandwidths, {!makelist({noiseBandwidth},{},!allBands)})
 
   ;; ----------------------------------------- Scan residuals
 
@@ -174,17 +194,26 @@ begin Construct
   losVelGHz: quantity, type=losVel, module=GHz
   losVelTHz: quantity, type=losVel, module=THz
 
-  !define(lesserState, { earthReflectivity, orbitInclination, spaceRadiance, $
+  !define(lesserState, {earthReflectivity, orbitInclination, spaceRadiance, $
     scGeocAlt, tngtGeocAltGHz, tngtGeocAltTHz, scECI, tngtECIGHz, tngtECITHz, $
-    scVel, scVelECR, scVelECI, losVelGHz, losVelTHz})
+    scVelECR, scVelECI, losVelGHz, losVelTHz})
 
-  ; ------------------------------------------- Now define vector templates
+  ;; ------------------------------------------- Now define vector templates
 
+  ;; Put extra line breaks here to get round a problem I'm having
+  ;; running this with NAG.
   stateTemplate: VectorTemplate, quantities = [ $
     ptanGHZ, ptanTHz, temperature, temperature_HR, refGPH, GPH, $
-    !allMolecules, !allHiResMolecules, rhi, $
-    !allBaselines, !allExtinctions, !allIsotopeRatios, $
-    !allSidebandRatios, !allElevs, !lesserState ]
+    !allMolecules, $
+    !allHiResMolecules, $
+    rhi, !allBaselines, $
+    !allExtinctions, $
+    !allIsotopeRatios, $
+    !allSidebandRatios, $
+    !allSystemTemperatures, $
+    !allNoiseBandwidths, $
+    !allElevs, $
+    !lesserState ]
 
   measTemplate: VectorTemplate, quantities = [ $
     !allFoldedRadiances, scanResidualGHz, scanResidualTHz ]

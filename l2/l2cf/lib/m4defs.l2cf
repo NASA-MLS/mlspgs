@@ -1,0 +1,50 @@
+; ----------------------------------------------------------------
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+;
+; This Level 2 Configuration File (l2cf) has been automatically
+; generated using the GNU m4 macro preprocessor.  While it is
+; perfectly allowable to edit this file directly, it will probably
+; be more efficient to edit the `source' files that went into m4.
+; ----------------------------------------------------------------
+;
+; These are the m4 definitions for l2cf's
+; Change the quotes to braces
+changequote({,})
+; Insist all m4 stuff is prefixed with !
+changesyntax({@!})
+; Change the comment to a semicolon
+!changecom(;)
+; Make _ not a possible part of m4 names
+!changesyntax({O_})
+; Define a very simple for loop prototcol
+!define({forloop},
+  {!pushdef({$1}, {$2})!forloopint({$1}, {$2}, {$3}, {$4})!popdef({$1})})
+!define(forloopint,{$4{}!ifelse(!$1, {$3}, ,
+    {!define({$1}, !incr(!$1))!forloopint({$1}, {$2}, {$3}, {$4})})})
+; ------------------------------------------------------------------
+; This next bit commented out as never really made use of it
+; Redefine include to do fancy stuff for error checking.
+; !undefine({include})
+; !define(include,{
+; {;}@0 $1
+; !builtin(include,$1)
+; {;}@!builtin(__line__) !builtin(__file__)}
+; )
+; ------------------------------------------------------------------
+; Define a year function that just returns the first four digits of day.
+!define(year,{!substr(}$1{,0,4)})
+!define(doy,{!substr(}$1{,5,3)})
+; A macro that removes the last character from another.  This is
+; mainly to deal with the output of esyscmd
+!define(TrimNL, {!substr($1,0,!eval(!len($1)-1))})
+; This is the reverse in many senses, it's just a newline.
+; Used to simplify forall
+!define(nl,{
+})
+; The users home directory, should we need it.
+!define(home,!TrimNL(!esyscmd({echo $HOME})))
+; Define a macro that calls the macro being its first argument, with
+; each sucessive argument
+!define({forall},{!$1($2)!ifelse($#,2,{},{!forall}($1,!shift(!shift($@))))})
+!define({makelist},{$1$3$2!ifelse($#,3,{},{, !makelist}($1,$2,!shift(!shift(!shift($@)))))})
+

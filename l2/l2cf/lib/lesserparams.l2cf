@@ -1,0 +1,16 @@
+; This l2cf fragment defines those remaining parameters that have
+; nowhere obvious else to go.
+
+!define(elevR1A,{0.000 degrees})
+!define(elevR1B,{0.000 degrees})
+!define(elevR2,{0.000 degrees})
+!define(elevR3,{0.000 degrees})
+!define(elevR4,{0.000 degrees})
+!define(elevR5H,{0.000 degrees})
+!define(elevR5V,{0.000 degrees})
+
+!define(o2vmr,{0.0295 vmr})
+!define(n2vmr,{0.805 vmr})
+
+!define(spaceRadiance,{2.735 K})
+!define(earthReflectivity,{0.05})

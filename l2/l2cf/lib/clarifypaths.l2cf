@@ -1,0 +1,20 @@
+; This l2cf fragment clears up path definitions for the level 2 stuff.
+
+; Go through the file types by level.
+; ------------------------------------------ Calibration files
+!ifdef(calpath,{},{!define(calpath,{/data/emls/l2cal})})
+; ------------------------------------------ Level 1 files
+!ifdef(inpathl1boa,{},{!define(inpathl1boa,!inpath)})
+!ifdef(inpathl1brad,{},{!define(inpathl1brad,!inpath)})
+; ------------------------------------------ Level 2 files
+!ifdef(inpathl2gp,{},{!define(inpathl2gp,!inpath)})
+!ifdef(outpathl2gp,{},{!define(outpathl2gp,!outpath)})
+!ifdef(outpathl2gp,{},{!define(inpathl2aux,!inpath)})
+!ifdef(outpathl2gp,{},{!define(outpathl2aux,!outpath)})
+; ------------------------------------------ Climatology files
+!ifdef(inpathcli,{},{!define(inpathcli,!calpath)})
+; ------------------------------------------ Forward model input
+!ifdef(inpathfwm,{},{!define(inpathfwm,!calpath)})
+; ------------------------------------------ L2PCs
+!ifdef(inpathl2pc,{},{!define(inpathl2pc,!calpath)})
+!ifdef(outpathl2pc,{},{!define(outpathl2pc,!outpath)})
