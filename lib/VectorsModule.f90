@@ -101,7 +101,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! Types
   public :: VectorTemplate_T, VectorValue_T, Vector_T
   ! Parameters
-  public :: M_FullDerivatives, M_LinAlg
+  public :: M_ExplicitFill, M_FullDerivatives, M_LinAlg
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -186,6 +186,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end type VectorValue_T
 
   ! Bit of MASK field of VectorValue_T
+  integer, parameter :: M_ExplicitFill = 4
   integer, parameter :: M_FullDerivatives = 2
   integer, parameter :: M_LinAlg = 1
 
@@ -1774,6 +1775,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.78  2002/02/14 23:15:22  vsnyder
+! Add .mdot. operator
+!
 ! Revision 2.77  2002/02/08 22:58:14  livesey
 ! Made CopyVectorMask public
 !
