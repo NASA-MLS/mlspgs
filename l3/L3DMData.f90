@@ -1534,40 +1534,6 @@ CONTAINS
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
             
-            ! QAFlags Group
-            
-            attrName = 'AutomaticQualityFlag' // '.' // cNum
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & 'Passed')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-            
-            attrName = 'AutomaticQualityFlagExplanation' // '.' // cNum
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & 'pending algorithm update')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-            
-            attrName = 'OperationalQualityFlag' // '.' // cNum
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & 'Not Investigated')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-            attrName = 'OperationalQualityFlagExplanation' // '.' // cNum
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & 'Not Investigated')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-            
             ! QAStats Group
             
             attrName = 'QAPercentInterpolatedData' // '.' // cNum
@@ -2183,6 +2149,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.37  2004/08/04 23:20:55  pwagner
+!# Much moved from MLSStrings to MLSStringLists
+!#
 !# Revision 1.36  2004/05/04 15:33:15  cvuu
 !# v1.4.3: Use int array for Date in Data Field
 !#

@@ -1642,41 +1642,7 @@ MODULE L3DZData
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            ! QAFlags Group
-
-            attrName = 'AutomaticQualityFlag' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & 'Passed')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-            
-            attrName = 'AutomaticQualityFlagExplanation' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & 'pending algorithm update')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-            attrName = 'OperationalQualityFlag' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & 'Not Investigated')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-            attrName = 'OperationalQualityFlagExplanation' // '.' // TRIM(cNum)
-            result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & 'Not Investigated')
-            IF (result /= PGS_S_SUCCESS) THEN
-               msr = METAWR_ERR // attrName
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-
-! QAStats Group
+           ! QAStats Group
 
             attrName = 'QAPercentInterpolatedData' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
@@ -2201,6 +2167,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.16  2004/08/04 23:21:23  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 1.15  2004/05/04 15:57:20  cvuu
 ! Fixed bug
 !
