@@ -40,7 +40,7 @@ contains
                                     &   ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg
-    use Geometry, only: EarthRadA, EarthRadB
+    use Geometry, only: EarthRadA, EarthRadB, MaxRefraction
     use Get_Beta_Path_m, only: Get_Beta_Path, Beta_Group_T
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
@@ -1511,6 +1511,8 @@ contains
              & ptg_angles(ptg_i), r, 1.0_rp )
         end if
 
+        n_path(1:npc) = min ( n_path(1:npc), MaxRefraction )
+
         call comp_refcor ( Req+h_path(indices_c(1:npc)), 1.0_rp+n_path(1:npc), &
                       &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc) )
 
@@ -2037,6 +2039,20 @@ contains
       if ( toggle(emit) .and. levels(emit) > 2 ) &
         & call Trace_End ( 'ForwardModel.PointingLoop' )
 
+      ! Now check that the angles are in the correct order.  If they
+      ! are not it means (give or take some approximations in the
+      ! horizontal acording to Bill), that the rays crossed over
+      ! between the tangent point and the spacecraft.  One could dream
+      ! up all sorts of elegant schemes to get around that problem, but
+      ! it's simplest just to bail out (and is certainly preferable to
+      ! the infinite loop in the convolution (Hunt on angles) that
+      ! results otherwise).
+      do ptg_i = 2, no_tan_hts
+        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Pointing angles in wrong order, too much refraction?' )
+      end do
+
 !       ! EXTRA DEBUG FOR NATHANIEL/BILL ********************
 !       call dump ( tan_temps, 'tan_temps' )
 !       call dump ( tan_press, 'tan_press' )
@@ -2411,6 +2427,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.105  2003/01/16 18:04:01  jonathan
+! add Do_1D option to get_gl_slabs_arrays
+!
 ! Revision 2.104  2003/01/14 21:48:58  jonathan
 ! add i_saturation
 !
