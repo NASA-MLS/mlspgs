@@ -89,7 +89,6 @@ type (VectorValue_T), pointer :: f, h2o
 
   h2o => GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
     & quantityType=l_vmr, molecule=l_h2o, noError=.true.)
-  print*,'Wet would have been:',associated(h2o)
   if (associated(h2o)) then
     jp = h2o%template%noInstances
     kk = h2o%template%noSurfs
@@ -108,6 +107,9 @@ type (VectorValue_T), pointer :: f, h2o
 
 end module GET_PATH_SPSFUNC_NGRID_M
 ! $Log$
+! Revision 1.3  2001/04/19 06:48:14  zvi
+! Fixing memory leaks..
+!
 ! Revision 1.2  2001/04/07 23:51:17  zvi
 ! New code - move the spsfunc & refraction along the path to get_path_spsfunc
 !
