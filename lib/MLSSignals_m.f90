@@ -128,7 +128,7 @@ module MLSSignals_M
     real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
     integer :: Name                     ! Sub_rosa index of declaration's label
     logical :: Deferred=.false.         ! "Frequencies/widths are deferred"
-    logical :: DACS                     ! Set if this spectrometer is a DACS
+    logical :: DACS=.false.             ! Set if this spectrometer is a DACS
   end type SpectrometerType_T
 
   ! This is the key type; it describes a complete signal (one band, or a
@@ -1571,6 +1571,10 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.65  2004/02/11 02:24:18  livesey
+! Added (probably unnecessary) initialization for DACS in
+! SpectromterType_T
+!
 ! Revision 2.64  2004/01/28 02:10:07  vsnyder
 ! Polish up some dump routines, other cosmetics
 !
