@@ -516,8 +516,8 @@ contains
   end if
 
   ! Now make sure the dyByDX's are correct for extrapolated regions
-  if ( present ( dyByDx ) ) then
-    select case ( extrapolateMethod )
+  if ( present ( dyByDx ) .and. scan(extrapolateMethod(1:1),"BC") > 0) then
+    select case ( extrapolateMethod(1:1) )
     case ( "C" )
       dyByDxFill = 0.0
     case ( "B" )
@@ -638,6 +638,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.18  2001/12/01 01:03:07  livesey
+! Bug fix with derivatives.
+!
 ! Revision 2.17  2001/11/14 01:47:40  livesey
 ! Added nearest option to Hunt
 !
