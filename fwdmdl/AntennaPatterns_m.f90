@@ -8,6 +8,8 @@ module AntennaPatterns_m
     & MLSMSG_Error
   use MLSSignals_m, only: MaxSigLen, Signals
 
+  implicit none
+
   ! More USEs below in each procedure, if they're only used therein.
 
   private
@@ -172,6 +174,7 @@ outer1: do
 
   ! -----------------------------------  Close_Antenna_Patterns_File  -----
   subroutine Close_Antenna_Patterns_File ( Lun )
+    integer, intent(in) :: lun
     close ( lun )
   end subroutine Close_Antenna_Patterns_File
 
@@ -220,6 +223,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.11  2001/04/21 01:21:11  vsnyder
+! Fix a memory leak
+!
 ! Revision 1.10  2001/04/09 23:45:03  livesey
 ! Files now two columns rather than 6
 !
