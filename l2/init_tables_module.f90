@@ -410,7 +410,8 @@ contains ! =====     Public procedures     =============================
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
              l+l_manipulate, l+l_magneticModel, l+l_magAzEl, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, &
-             l+l_phaseTiming, l+l_sectionTiming, l+l_quality, &
+             l+l_phaseTiming, l+l_sectionTiming, l+l_fwdModelTiming, &
+             l+l_fwdModelMean, l+l_fwdModelStdDev, l+l_quality, &
              l+l_reflectorTempModel, l+l_rotateField, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
              l+l_status, l+l_resetUnusedRadiances, &
@@ -456,6 +457,7 @@ contains ! =====     Public procedures     =============================
              l+l_earthRefl, l+l_ECRtoFOV, l+l_effectiveOpticalDepth, &
              l+l_elevOffset, l+l_extinction, &
              l+l_fieldAzimuth, l+l_fieldElevation, l+l_fieldStrength, &
+             l+l_fwdModelTiming, l+l_fwdModelMean, l+l_fwdModelStdDev, &
              l+l_gph, l+l_heightOffset, &
              l+l_isotopeRatio, l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_limbSidebandFraction, &
@@ -1275,6 +1277,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.380  2004/07/22 20:39:14  cvuu
+! Now can fill ForwardModel time, mean and std_dev
+!
 ! Revision 2.379  2004/07/17 02:28:19  vsnyder
 ! Add dump for entire PFA database
 !
