@@ -58,8 +58,8 @@ contains ! =====     Public Procedures     =============================
       &	F_INTEGRATIONTIME, F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOGSPACE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
-      & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
-      & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
+      & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MAXVALUE, F_MEASUREMENTS, F_METHOD, &
+      & F_MINVALUE, F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
       & F_OFFSETAMOUNT, F_ORBITINCLINATION, F_PHITAN, &
       & F_PHIWINDOW, F_PHIZERO, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
@@ -68,7 +68,7 @@ contains ! =====     Public Procedures     =============================
       & F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
-      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
+      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, &
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, F_WIDTH, &
@@ -91,7 +91,7 @@ contains ! =====     Public Procedures     =============================
       & L_REFLTEMP, L_RESETUNUSEDRADIANCES, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
       & L_SCALEOVERLAPS, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
       & L_LIMBSIDEBANDFRACTION, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
-      & L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
+      & L_SPLITSIDEBAND, L_STATUS, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
       & L_XYZ, L_ZETA
@@ -369,6 +369,8 @@ contains ! =====     Public Procedures     =============================
     type(matrix_Kronecker_T) :: MatrixKronecker
     type(matrix_SPD_T) :: MatrixSPD
     type(matrix_T) :: MatrixPlain
+    real(r8) :: MAXVALUE                 ! Value of f_maxValue field
+    integer :: MAXVALUEUNIT              ! Unit for f_maxValue field
     integer :: MANIPULATION             ! String index
     type(matrix_T), pointer :: MATRIX
     integer :: MATRIXTOFILL             ! Index in database
@@ -377,6 +379,8 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXITERATIONS            ! For hydrostatic fill
     character(len=80) :: MESSAGE        ! Possible error message
     real, dimension(2) :: MULTIPLIER   ! To scale source,noise part of addNoise
+    real(r8) :: MINVALUE                 ! Value of f_minValue field
+    integer :: MINVALUEUNIT              ! Unit for f_minValue field
     integer :: MULTIPLIERNODE           ! For the parser
     integer :: NBWVECTORINDEX           ! In vector database
     integer :: NBWQUANTITYINDEX         ! In vector database
@@ -423,6 +427,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SOURCEVECTORINDEX        ! In the vector database
     logical :: SPREADFLAG               ! Do we spread values accross instances in explict
     integer :: STATUS                   ! Flag from allocate etc.
+    real(r8) :: STATUSVALUE              ! Vaue of f_status
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
     !                                     -- for FillCovariance
@@ -497,6 +502,10 @@ contains ! =====     Public Procedures     =============================
       interpolate = .false.
       invert = .false.
       isPrecision = .false.
+      maxValue = huge(0.0_r8)
+      maxValueUnit = 0
+      minValue = -huge(0.0_r8)
+      minValueUnit = 0
       logSpace = .false.
       resetSeed = .false.
       refract = .false.
@@ -511,6 +520,7 @@ contains ! =====     Public Procedures     =============================
       phiWindow = 4
       phiWindowUnits = phyq_angle
       phiZero = 0.0
+      statusValue = 0.0
       heightNode = 0
 
       ! Node_id(key) is now n_spec_args.
@@ -827,11 +837,19 @@ contains ! =====     Public Procedures     =============================
             if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
               & call Announce_error ( key, badUnitsForMaxIterations )
             maxIterations = valueAsArray(1)
+          case ( f_maxValue )      ! For status fill
+            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
+            maxValueUnit = unitAsArray(1)
+            maxValue = valueAsArray(1)
           case ( f_measurements )   ! Only used for diagnostic special fills
             measVectorIndex = decoration(decoration(subtree(1,gson)))
             measQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_method )   ! How are we going to fill it?
             fillMethod = decoration(gson)
+          case ( f_minValue )      ! For status fill
+            call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
+            minValueUnit = unitAsArray(1)
+            minValue = valueAsArray(1)
           case ( f_model )   ! Only used for diagnostic special fills
             modelVectorIndex = decoration(decoration(subtree(1,gson)))
             modelQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1311,7 +1329,7 @@ contains ! =====     Public Procedures     =============================
             nullify ( bQuantity )
           end if
           call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
-            & manipulation, key )
+            & manipulation, key, force )
 
         case ( l_magAzEl ) ! -- Magnetic Explicit from stren, azim, elev --
           if ( .not. got(f_explicitValues) ) &
@@ -1424,9 +1442,9 @@ contains ! =====     Public Procedures     =============================
             end if
 
           case ( l_quality )
-            if ( .not. all ( got ( (/ f_sourceQuantity, f_height, f_scale /) ) ) ) &
+            if ( .not. all ( got ( (/ f_sourceQuantity, f_scale /) ) ) ) &
               call Announce_error ( key, no_error_code, &
-              & 'Need sourceQuanitity, height and scale for quality fill' )
+              & 'Need sourceQuanitity and scale for quality fill' )
             sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
               & sourceQuantityIndex )
             call FillQualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
@@ -1635,6 +1653,29 @@ contains ! =====     Public Procedures     =============================
           if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
             & no_error_code, 'Must supply channel for spreadChannel fill' )
           call SpreadChannelFill ( quantity, channel, dontMask, key )
+
+        case ( l_status )
+          if ( .not. all ( got ( (/ f_sourceQuantity, f_status /) ) ) ) &
+            & call Announce_Error ( key, no_error_code, &
+            & 'Need sourceQuantity and status fields for status fill' )
+          if ( .not. any ( got ( (/ f_minValue, f_maxValue /) ) ) ) &
+            & call Announce_Error ( key, no_error_code, &
+            & 'Need one or both of maxValue, minValue for status fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex ( vectors(sourceVectorIndex), &
+            & sourceQuantityIndex )
+          if ( got ( f_maxValue) .and. &
+            &  all ( maxValueUnit /= (/ sourceQuantity%template%unit, PHYQ_Dimensionless/) ) ) &
+            & call Announce_Error ( key, no_error_code, &
+            & 'Bad unit for maxValue' )
+          if ( got ( f_minValue) .and. &
+            &  all ( minValueUnit /= (/ sourceQuantity%template%unit, PHYQ_Dimensionless/) ) ) &
+            & call Announce_Error ( key, no_error_code, &
+            & 'Bad unit for minValue' )
+          if ( all ( got ( (/ f_minValue, f_maxValue /) ) ) .and. &
+            &  maxValue <= minValue ) call Announce_Error ( key, no_error_code, &
+            & 'Bad combination of max/min values' )
+          call FillStatusQuantity ( key, quantity, sourceQuantity, nint ( statusValue ), &
+            & minValue, maxValue, heightNode, additional )
           
         case ( l_vector ) ! ---------------- Fill from another qty.
           ! This is VERY PRELIMINARY, A more fancy one needs to be written
@@ -1650,7 +1691,7 @@ contains ! =====     Public Procedures     =============================
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           if ( quantity%template%name /= sourceQuantity%template%name ) then
-            if ( .not. interpolate) then
+            if ( .not. interpolate .and. .not. force ) then
               call Announce_Error ( key, No_Error_Code, &
                 & 'Quantity and sourceQuantity do not have the same template' )
             else
@@ -5753,13 +5794,14 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQuantityFromLosGrid
 
     ! --------------------------------------------- FillQuantityByManipulation ---
-    subroutine FillQuantityByManipulation ( quantity, a, b, manipulation, key )
+    subroutine FillQuantityByManipulation ( quantity, a, b, manipulation, key, force )
       use String_table, only: GET_STRING
       type (VectorValue_T), intent(inout) :: QUANTITY
       type (VectorValue_T), pointer :: A
       type (VectorValue_T), pointer :: B
       integer, intent(in) :: MANIPULATION
       integer, intent(in) :: KEY        ! Tree node
+      logical, intent(in) :: FORCE      ! If set throw caution to the wind
       ! Local parameters
       integer, parameter :: NOMANIPULATIONS = 5
       character(len=3), parameter :: VALIDMANIPULATIONS ( noManipulations ) = &
@@ -5798,20 +5840,26 @@ contains ! =====     Public Procedures     =============================
         end if
         
         ! For minor frame quantities, check that we're on the same page
-        if ( quantity%template%minorFrame ) then
-          okSoFar = okSoFar .and. aorb%template%minorFrame .and. &
-            & quantity%template%signal == aorb%template%signal .and. &
-            & quantity%template%sideband == aorb%template%sideband .and. &
-            & quantity%template%frequencyCoordinate == aorb%template%frequencyCoordinate
-        else if ( mstr == 'a*b' ) then
-          ! In this case, just check that the coordinate systems for these quantities match
-          okSoFar = okSoFar .and. &
-            & DoHGridsMatch ( quantity, aorb ) .and. &
-            & DoVGridsMatch ( quantity, aorb ) .and. &
-            & DoFGridsMatch ( quantity, aorb, sizeOnly=.true. )
+        if ( .not. force ) then
+          if ( quantity%template%minorFrame ) then
+            okSoFar = okSoFar .and. aorb%template%minorFrame .and. &
+              & quantity%template%signal == aorb%template%signal .and. &
+              & quantity%template%sideband == aorb%template%sideband .and. &
+              & quantity%template%frequencyCoordinate == aorb%template%frequencyCoordinate
+          else if ( mstr == 'a*b' ) then
+            ! In this case, just check that the coordinate systems for these quantities match
+            okSoFar = okSoFar .and. &
+              & DoHGridsMatch ( quantity, aorb ) .and. &
+              & DoVGridsMatch ( quantity, aorb ) .and. &
+              & DoFGridsMatch ( quantity, aorb, sizeOnly=.true. )
+          else
+            ! For a+/-b these quantities must share a template
+            okSoFar = okSoFar .and. quantity%template%name == aorb%template%name
+          end if
         else
-          ! For a+/-b these quantities must share a template
-          okSoFar = okSoFar .and. quantity%template%name == aorb%template%name
+          okSoFar = okSoFar &
+            & .and. quantity%template%noInstances == aorb%template%noInstances &
+            & .and. quantity%template%instanceLen == aorb%template%instanceLen
         end if
         
         if ( .not. okSoFar ) then
@@ -6230,12 +6278,14 @@ contains ! =====     Public Procedures     =============================
     subroutine FillWithBoxcarFunction ( key, quantity, sourceQuantity, width, method )
       integer, intent(in) :: KEY        ! Key for tree node
       type (VectorValue_T), intent(inout) :: QUANTITY
-      type (VectorValue_T), intent(in) :: SOURCEQUANTITY
+      type (VectorValue_T), intent(in), target :: SOURCEQUANTITY
       integer, intent(in) :: WIDTH
       integer, intent(in) :: METHOD     ! L_MEAN, L_MAX, L_MIN
       ! Local variables
       integer :: I, I1, I2              ! Instance indices
       integer :: HALFWIDTH
+      real(r8), dimension(:,:), pointer :: OLDVALUES
+
       ! Executable code
       if ( quantity%template%name /= sourceQuantity%template%name ) then
         call Announce_Error ( key, 0, 'Quantity and source quantity do not match' )
@@ -6246,29 +6296,88 @@ contains ! =====     Public Procedures     =============================
         return
       end if
 
+      if ( associated ( quantity%values, sourceQuantity%values ) ) then
+        nullify ( oldValues )
+        call Allocate_test ( oldValues, quantity%template%instanceLen, quantity%template%noInstances, &
+          & 'oldValues', ModuleName )
+        oldValues = sourceQuantity%values
+      else
+        oldValues => sourceQuantity%values
+      end if
+
       halfWidth = width/2
       select case ( method )
       case ( l_mean )
         do i = 1, quantity%template%noInstances
           i1 = max ( i - halfWidth, 1 )
           i2 = min ( i + halfWidth, quantity%template%noInstances )
-          quantity%values(:,i) = sum ( quantity%values(:,i1:i2), dim=2 ) / (i2-i1+1)
+          quantity%values(:,i) = sum ( oldValues(:,i1:i2), dim=2 ) / (i2-i1+1)
         end do
       case ( l_min )
         do i = 1, quantity%template%noInstances
           i1 = max ( i - halfWidth, 1 )
           i2 = min ( i + halfWidth, quantity%template%noInstances )
-          quantity%values(:,i) = minval ( quantity%values(:,i1:i2), dim=2 )
+          quantity%values(:,i) = minval ( oldValues(:,i1:i2), dim=2 )
         end do
       case ( l_max )
         do i = 1, quantity%template%noInstances
           i1 = max ( i - halfWidth, 1 )
           i2 = min ( i + halfWidth, quantity%template%noInstances )
-          quantity%values(:,i) = maxval ( quantity%values(:,i1:i2), dim=2 )
+          quantity%values(:,i) = maxval ( oldValues(:,i1:i2), dim=2 )
         end do
       end select
 
+      if ( associated ( quantity%values, sourceQuantity%values ) ) then
+        call Deallocate_test ( oldValues, 'oldValues', ModuleName )
+      end if
+
     end subroutine FillWithBoxcarFunction
+
+    ! -------------------------------------------- FillQualityFromChisq --------
+    subroutine FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
+      & minValue, maxValue, heightNode, additional )
+      integer, intent(in) :: KEY        ! Tree node
+      type ( VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      type ( VectorValue_T), intent(in) :: SOURCEQUANTITY ! Chisq like quantity on which it's based
+      integer, intent(in) :: STATUSVALUE
+      real(r8), intent(in) :: MINVALUE     ! A scale factor
+      real(r8), intent(in) :: MAXVALUE     ! A scale factor
+      integer, intent(in) :: HEIGHTNODE ! What heights
+      logical, intent(in) :: ADDITIONAL ! Is this an additional flag or a fresh start?
+      ! Local variables
+      integer, dimension(2) :: UNITASARRAY ! From expr
+      real(r8), dimension(2) :: VALUEASARRAY ! From expr
+      real(r8) :: HEIGHT                ! The height to consider
+      integer :: SURFACE                ! Surface index
+      ! Executable code
+      ! Do some sanity checking
+      if ( quantity%template%quantityType /= l_status ) call Announce_error ( key, no_error_code, &
+        & 'Quality quantity must be quality' )
+      if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_error ( &
+        & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
+
+      ! Work out the height
+      if ( heightNode /= 0 ) then
+        if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
+          & 'Only one height can be supplied for satus fill' )
+        if ( sourceQuantity%template%verticalCoordinate /= l_zeta ) &
+          & call Announce_Error ( key, 0, 'Bad vertical coordinate for sourceQuantity' )
+        call expr ( heightNode, unitAsArray, valueAsArray )
+        height = valueAsArray(1)
+        if ( all ( unitAsArray(1) /= (/ PHYQ_Pressure /) ) ) &
+          call Announce_Error ( key, 0, 'Bad units for height' )
+        height = - log10 ( height )
+        call Hunt ( sourceQuantity%template%surfs(:,1), height, surface, nearest=.true. )
+      else
+        surface = 1
+      end if
+
+      if ( .not. additional ) &
+        & quantity%values = iand ( nint ( quantity%values ), not ( statusValue ) )
+      where ( sourceQuantity%values(surface,:) > maxValue .or. sourceQuantity%values(surface,:) < minValue )
+        quantity%values(1,:) = ior ( nint ( quantity%values(1,:) ), statusValue )
+      end where
+    end subroutine FillStatusQuantity
 
     ! -------------------------------------------- FillQualityFromChisq --------
     subroutine FillQualityFromChisq ( key, quantity, sourceQuantity, scale, heightNode )
@@ -6290,17 +6399,22 @@ contains ! =====     Public Procedures     =============================
         & key, no_error_code, 'sourceQuantity must be of type chisqBinned' )
       if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) call Announce_error ( &
         & key, no_error_code, 'quantity and sourceQuantity do not have matching hGrids' )
-      if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
-        & 'Only one height can be supplied for quality fill' )
-      ! Work out the height
 
-      call expr ( heightNode, unitAsArray, valueAsArray )
-      height = valueAsArray(1)
-      if ( all ( unitAsArray(1) /= (/ PHYQ_Pressure /) ) ) &
-        call Announce_Error ( key, 0, 'Bad units for height' )
-      ! chisqBinned must be on zeta surfaces already, forced at construction, so take log.
-      height = - log10 ( height )
-      call Hunt ( sourceQuantity%template%surfs(:,1), height, surface, nearest=.true. )
+      ! Work out the height
+      if ( heightNode /= 0 ) then
+        if ( nsons ( heightNode ) /= 2 ) call Announce_Error ( key, no_error_code, &
+          & 'Only one height can be supplied for quality fill' )
+        call expr ( heightNode, unitAsArray, valueAsArray )
+        height = valueAsArray(1)
+        if ( all ( unitAsArray(1) /= (/ PHYQ_Pressure /) ) ) &
+          call Announce_Error ( key, 0, 'Bad units for height' )
+        ! chisqBinned must be on zeta surfaces already, forced at construction, so take log.
+        height = - log10 ( height )
+        call Hunt ( sourceQuantity%template%surfs(:,1), height, surface, nearest=.true. )
+      else
+        surface = 1
+      end if
+
       quantity%values(1,:) = 1.0 - tanh ( sourceQuantity%values(surface,1) / scale )
     end subroutine FillQualityFromChisq
 
@@ -6640,6 +6754,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.261  2004/03/17 17:16:11  livesey
+! New status fill and new manipulations.
+!
 ! Revision 2.260  2004/03/10 22:19:51  livesey
 ! Added quality fill method
 !
