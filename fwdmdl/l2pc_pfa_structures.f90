@@ -136,17 +136,18 @@ contains
     integer, intent(in) :: nl         ! Number of lines
     
     ! Local variables
-    logical :: MYFULL
-    
+    integer :: myl
+
     ! Executable code
-    call Allocate_test ( slabs%v0s, nl,         'v0s',         ModuleName )
-    call Allocate_test ( slabs%x1, nl,          'x1',          ModuleName )
-    call Allocate_test ( slabs%y, nl,           'y',           ModuleName )
-    call Allocate_test ( slabs%yi, nl,          'yi',          ModuleName )
-    call Allocate_test ( slabs%slabs1, nl,      'slabs1',      ModuleName )
-    call Allocate_test ( slabs%dx1_dv0, nl,     'dx1_dv0',     ModuleName )
-    call Allocate_test ( slabs%dy_dv0, nl,      'dy_dv0',      ModuleName )
-    call Allocate_test ( slabs%dslabs1_dv0, nl, 'dslabs1_dv0', ModuleName )
+    myl = MAX(1,nl)
+    call Allocate_test ( slabs%v0s, myl,         'v0s',         ModuleName )
+    call Allocate_test ( slabs%x1, myl,          'x1',          ModuleName )
+    call Allocate_test ( slabs%y, myl,           'y',           ModuleName )
+    call Allocate_test ( slabs%yi, myl,          'yi',          ModuleName )
+    call Allocate_test ( slabs%slabs1, myl,      'slabs1',      ModuleName )
+    call Allocate_test ( slabs%dx1_dv0, myl,     'dx1_dv0',     ModuleName )
+    call Allocate_test ( slabs%dy_dv0, myl,      'dy_dv0',      ModuleName )
+    call Allocate_test ( slabs%dslabs1_dv0, myl, 'dslabs1_dv0', ModuleName )
   end subroutine AllocateOneSlabs
   
   ! ------------------------------------------ DeallocateOneSlabs ---------
@@ -187,6 +188,9 @@ contains
   
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.11.2.6  2001/09/13 01:50:26  livesey
 ! Added DestroyCompleteSlabs
 !
