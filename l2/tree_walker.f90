@@ -56,29 +56,33 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) :: FIRST_SECTION! Index of son of root of first n_cf
 
     CHARACTER (LEN=1), POINTER :: anText(:)
-    type (GriddedData_T), dimension(:), pointer :: griddedData => NULL() 
+    type (GriddedData_T), dimension(:), pointer :: GriddedData
     integer :: chunkNo                  ! Index of Chunks
-    type (MLSChunk_T), dimension(:), pointer :: CHUNKS => NULL() ! of data
+    type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
     integer :: HOWMANY                  ! Nsons(Root)
     integer :: I, J                     ! Loop inductors
     type (L1BInfo_T) :: L1BInfo         ! File handles etc. for L1B dataset
-    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase => NULL()
-    type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase => NULL()
-    type (Matrix_Database_T), dimension(:), pointer :: Matrices => NULL()
+    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
+    type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase
+    type (Matrix_Database_T), dimension(:), pointer :: Matrices
 	 type(PCFData_T) :: l2pcf
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
-    type (Vector_T), dimension(:), pointer :: Vectors => NULL()
-    type (VGrid_T), dimension(:), pointer :: VGrids => NULL()
+    type (Vector_T), dimension(:), pointer :: Vectors
+    type (VGrid_T), dimension(:), pointer :: VGrids
 
     ! Forward model configurations
     type (ForwardModelConfig_T), dimension(:), &
-      & pointer :: ForwardModelConfigDatabase => NULL()
+      & pointer :: ForwardModelConfigDatabase
 
     ! Arguments for Construct not declared above:
-    type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates => NULL()
-    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation => NULL()
-    type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates => NULL()
+    type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
+    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+    type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
+
+    nullify ( griddedData, chunks, l2auxDatabase, l2gpDatabase, matrices, &
+      & vectors, vGrids, forwardModelConfigDatabase, qtyTemplates, &
+      & mifGeolocation, vectorTemplates )
 
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
@@ -155,6 +159,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.31  2001/04/10 02:46:17  livesey
+! Working version, no more FMI/TFMI
+!
 ! Revision 2.30  2001/04/10 00:02:19  vsnyder
 ! Implement 'matrix' spec in Fill section
 !
