@@ -32,12 +32,13 @@ dir2 = $(itmdir)/
 
 # Do the load options include garbage collection?
 # The answer  will determine what we do to the machine.f90 file from
+# (  (not applicable yet for this compiler/platform))
 MACH_DIR=../../../lib/machines/$(MLSCONFG)
 GC_IN_LDOPTS := $(shell echo ${LDOPTS} | grep '\-gc')
 ifeq ($(GC_IN_LDOPTS),)
-BAD_MATCH=-gc  (not applicable yet for this compiler/platform)
+BAD_MATCH=-gc
 else
-BAD_MATCH=no -gc  (not applicable yet for this compiler/platform)
+BAD_MATCH=no -gc
 endif
 
 # Set paths for finding source files (different from .o and .mod)
@@ -77,6 +78,9 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -I$(PGSINC) -I$S
 l_specials =  -lnsl
 
 # $Log$
+# Revision 1.5  2002/02/08 18:34:45  pwagner
+# Defines BAD_MATCH for machine.f90 depending on whether collecting garbage
+#
 # Revision 1.4  2002/02/06 18:48:52  pwagner
 # Where to get machine.f90 now depends on whether to collect garbage
 #
