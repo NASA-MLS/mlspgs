@@ -212,15 +212,8 @@ begin Fill
   ;; ------------------------------ A priori extinction precisions
 
   !define(fillExtinctionApriori,{
-  Fill, quantity=aprioriPrecision.extinctionConstant$1, $
-    method=explicit, /spread, explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShaped$1, $
-    method=explicit, /spread, explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstant$1_HR, $
-    method=explicit, /spread, explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShaped$1_HR, $
-    method=explicit, /spread, explicitValues=1.0e-3!nl
-  })
+  Fill, quantity=aprioriPrecision.extinction$1, $
+    method=explicit, /spread, explicitValues=1.0e-3!nl})
   !forall({fillExtinctionApriori},!allRadiometers)
 
   ;; Now do the same for baseline
@@ -283,7 +276,7 @@ begin Fill
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
     [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-    [ 10mb:0ppmv ], logSpace=false
+   [ 178mb:0ppmv, 146mb: 5.0ppmv, 121mb: 2.5ppmv, 100mb:1.5ppmv ], logSpace=false
 
   Fill, quantity=vReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
@@ -311,7 +304,7 @@ begin Fill
   Fill, quantity=vReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=vReg.temperature_hr, method=profile, $
-    profileValues=[ 10mb:0K ]
+    profileValues=[ 1mb:3K ]
 
   ;; Horizontal
   Fill, quantity=hReg.baselineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
@@ -341,8 +334,9 @@ begin Fill
 
   Fill, quantity=hReg.h2o, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
-  Fill, quantity=hReg.h2o_HR, method=profile, $
-    profileValues=[ 10mb:0ppmv ], logSpace=false
+  Fill, quantity=hReg.h2o_HR, method=profile, profileValues= $
+    [ 316mb:10ppmv, 215mb:1ppmv, 147mb:0.1ppmv, $
+    100mb:0.05ppmv, 10mb:0.05ppmv, 1mb:0.3ppmv ], logSpace=false
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
@@ -370,7 +364,7 @@ begin Fill
   Fill, quantity=hReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=hReg.temperature_hr, method=profile, $
-    profileValues=[ 10mb:0K ]
+    profileValues=[ 1mb:3K ]
 
   Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
 
