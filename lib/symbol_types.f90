@@ -31,21 +31,22 @@ module SYMBOL_TYPES
   integer, parameter :: T_LESS_COLON_LESS = 14
   integer, parameter :: T_EQUAL = 15
   integer, parameter :: T_COMMA = 16
-  integer, parameter :: T_BEGIN = 17              ! BEGIN
-  integer, parameter :: T_END = 18                ! END
-  integer, parameter :: T_AND = 19                ! AND
-  integer, parameter :: T_OR = 20                 ! OR
-  integer, parameter :: T_END_OF_INPUT = 21       ! <EOF>
-  integer, parameter :: T_END_OF_STMT = 22        ! <EOS>
-  integer, parameter :: T_IDENTIFIER = 23         ! <IDENTIFIER>
-  integer, parameter :: T_NUMBER = 24             ! <NUMBER>
-  integer, parameter :: T_STRING = 25             ! <STRING>
-  integer, parameter :: T_UNK_OP = 26             ! unknown operator
-  integer, parameter :: T_UNK_PUN = 27            ! unknown punctuator
-  integer, parameter :: T_UNK_CH = 28             ! unknown character
-  integer, parameter :: T_INC_NUM = 29            ! incomplete number
-  integer, parameter :: T_INC_STR = 30            ! incomplete string
-  integer, parameter :: T_AFT_CONT = 31           ! junk after continuation
+  integer, parameter :: T_HAT = 17
+  integer, parameter :: T_BEGIN = 18              ! BEGIN
+  integer, parameter :: T_END = 19                ! END
+  integer, parameter :: T_AND = 20                ! AND
+  integer, parameter :: T_OR = 21                 ! OR
+  integer, parameter :: T_END_OF_INPUT = 22       ! <EOF>
+  integer, parameter :: T_END_OF_STMT = 23        ! <EOS>
+  integer, parameter :: T_IDENTIFIER = 24         ! <IDENTIFIER>
+  integer, parameter :: T_NUMBER = 25             ! <NUMBER>
+  integer, parameter :: T_STRING = 26             ! <STRING>
+  integer, parameter :: T_UNK_OP = 27             ! unknown operator
+  integer, parameter :: T_UNK_PUN = 28            ! unknown punctuator
+  integer, parameter :: T_UNK_CH = 29             ! unknown character
+  integer, parameter :: T_INC_NUM = 30            ! incomplete number
+  integer, parameter :: T_INC_STR = 31            ! incomplete string
+  integer, parameter :: T_AFT_CONT = 32           ! junk after continuation
 
 ! The parameters T_LAST_TERMINAL, MIN_PSEUDO, MAX_PSEUDO and CASELESS_LOOK
 ! MUST be defined.
@@ -90,8 +91,8 @@ module SYMBOL_TYPES
   (/ object,   def_pun,  def_pun,  def_pun,  def_pun,  def_op,   def_op,   &
   !  *         /         \         .         :         <:        :<      
      def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   def_op,   &
-  !  <:<       =         ,         begin
-     def_op,   def_op,   def_pun,  res_word, &
+  !  <:<       =         ,         ^         begin
+     def_op,   def_op,   def_pun,  def_op,   res_word, &
   !  end       and       or        <eof>     <eos>     <ident>   <numcon>
      res_word, res_word, res_word, object,   object,   ident,    numcon,   &
   !  <string>  unk_op    unk_pun     unk_ch    inc_num   inc_str   junk
@@ -131,6 +132,7 @@ contains
     case ( t_less_colon_less );   call add_char ( '<:<' )
     case ( t_equal );             call add_char ( '=' )
     case ( t_comma );             call add_char ( ',' )
+    case ( t_hat );               call add_char ( '^' )
     case ( t_begin );             call add_char ( 'BEGIN' )
     case ( t_end );               call add_char ( 'END' )
     case ( t_and );               call add_char ( 'AND' )
@@ -187,6 +189,9 @@ contains
 end module SYMBOL_TYPES
 
 ! $Log$
+! Revision 2.8  2004/05/28 23:12:21  vsnyder
+! Add power (^) operator
+!
 ! Revision 2.7  2004/04/26 21:55:29  vsnyder
 ! Make strings case sensitive
 !
