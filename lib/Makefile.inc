@@ -39,6 +39,7 @@ clean:
 GriddedData.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 Hdf.o: MLSCommon.o
 L1BData.o: MLSCommon.o MLSMessageModule.o
+	$(F90) $(F90FLAGS) -c $I$S $I$C $I$T $(DUSTY) $S/L1BData.f90
 MLSCF.o: Hdf.o MLSCommon.o MLSMessageModule.o MLSStrings.o SDPToolkit.o
 MLSMessageModule.o: SDPToolkit.o
 MLSNumerics.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
@@ -59,3 +60,8 @@ swapi.o: swapi_character_array.o swapi_character_scalar.o swapi_double.o \
 	swapi_integer.o swapi_real.o
 
 # $Log$
+# Revision 2.2  2000/09/29 18:05:32  vsnyder
+# Add CVS comments.  Replace inference rule ".f90.o" with "%.o: %.f90"
+# because the former sometimes didn't "make" out-of-date files, but the
+# latter seems always to do so.
+#
