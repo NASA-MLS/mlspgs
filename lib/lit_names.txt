@@ -63,6 +63,7 @@ K
 KHz
 km
 
+latitude
 linewidth
 logp
 LOSTransFunc
@@ -133,6 +134,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.8  2002/03/15 21:22:07  livesey
+# Added latitude
+#
 # Revision 2.7  2002/03/14 00:32:15  pwagner
 # Added scVelECI and scVelECR
 #
