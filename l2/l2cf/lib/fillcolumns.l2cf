@@ -23,6 +23,7 @@ begin Fill
   !columnFill(clo,state,tpPressure)
   !columnFill(co,state,tpPressure)
   !columnFill(h2o,state,tpPressure)
+  !ifdef(skipHiRes,{},!columnFill(h2o_HR,state,tpPressure))
   !columnFill(hcl,state,tpPressure)
   !columnFill(hcn,state,tpPressure)
   !columnFill(hno3,state,tpPressure)
@@ -32,6 +33,7 @@ begin Fill
   !columnFill(n2o,state,tpPressure)
   !columnFill(o2,state,tpPressure)
   !columnFill(o3,state,tpPressure)
+  !ifdef(skipHiRes,{},!columnFill(o3_HR,state,tpPressure))
   !columnFill(oh,state,tpPressure)
   !columnFill(so2,state,tpPressure)
 
