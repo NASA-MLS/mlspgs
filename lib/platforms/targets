@@ -135,8 +135,13 @@ L1BData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
 #L2GPData.o:
 #	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
+string_table.o:
+	$(FC) -c $(INC_PATHS) $(S)/string_table.f90
 
 # $Log$
+# Revision 1.17  2001/02/09 18:38:49  pwagner
+# Removed special treatment of Matrix_OBJS
+#
 # Revision 1.16  2001/02/08 23:22:14  pwagner
 # variable_linker_line tied to PVM and BLAS
 #
