@@ -89,7 +89,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ mlsl1
+.PHONY: configure depends clean tar mostlyclean tarz targ mlsl1 ghostbuster
 
 tar:
 
@@ -148,6 +148,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.18  2001/05/31 20:19:31  pwagner
+# Added ghostbuster to .PHONY list
+#
 # Revision 2.17  2001/05/24 17:56:39  pwagner
 # Expanded LIB_prereqs
 #
