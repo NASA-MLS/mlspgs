@@ -1323,6 +1323,10 @@ contains
         end if
         print*,'Mask:'
         call DumpMask ( qty%mask(:,instance), qty%template%instanceLen )
+
+        ! Tidy up
+        if ( associated ( channels ) ) &
+          & call Deallocate_test ( channels, 'channels', ModuleName )
       end do
 
     end subroutine SetupSubset
@@ -1331,6 +1335,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.54  2001/07/02 17:21:48  livesey
+! Fixed memory leak with channels.
+!
 ! Revision 2.53  2001/06/30 03:10:35  vsnyder
 ! Don't access sub_rosa(0) when creating a covariance matrix
 !
