@@ -368,7 +368,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call FindClosestInstances ( temp, radiance, closestInstances )
     instance = closestInstances(maf)
     tLat = temp%template%geodLat(1,instance)    ! get latitude for each instance
-    print*,'Lat=',tLat
+!   print*,'Lat=',tLat
 
 
     ivmr=0
@@ -723,7 +723,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          print*,'only one frequency and one signal is allowed'
          stop
       end if
-      
+      do i=1, noFreqs
+        if (doChannel(i)) whichChannel=i
+      end do
+
       colJBlock = FindBlock ( Jacobian%col, state_ext%index, maf )
       rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
       fmStat%rows(rowJBlock) = .true.
@@ -907,6 +910,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.65  2001/10/19 19:29:50  dwu
+! initialize output quantities
+!
 ! Revision 1.64  2001/10/19 16:26:09  dwu
 ! some minors
 !
