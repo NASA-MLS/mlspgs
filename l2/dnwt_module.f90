@@ -857,7 +857,7 @@ contains
 
 ! Error processing
 
-  927 call ermsg ( me, 2, 0, 'J or F may be in error', ',' )
+  927 call ermsg ( me, 2, 0, 'J or F may be in error', '.' )
       nfl = nf_fandj
       nflag = nfl
       return
@@ -1210,6 +1210,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.32  2002/09/21 00:33:47  vsnyder
+! Repair an error message
+!
 ! Revision 2.31  2002/09/21 00:21:44  vsnyder
 ! Correct a FlagName result
 !
