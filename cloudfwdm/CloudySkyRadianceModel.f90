@@ -57,9 +57,10 @@ contains
 !     JONATHAN H. JIANG                                                      C
 !     -- MAY 18, 2001: FIRST F77 WORKING VERSION.                            C
 !     -- JUNE 9, 2001: FIRST F90 VERSION.                                    C
-!     -- AUG 6,  2001: ADDED TRANS FUNCTION FOR CLOUD RETRIEVAL              C
+!     -- AUG  6, 2001: ADDED TRANS FUNCTION FOR CLOUD RETRIEVAL              C
 !     -- AUG 18, 2001: ADDED FIELD OF VIEW AVERAGING                         C
-!     -- SEP 19, 2001: MODIFIED TO MODULES                                   C  
+!     -- SEP 19, 2001: MODIFIED F95 VERSION USE MODULES                      C
+!     -- SEP 25, 2001: ADDED EFFECT OF ATMOSPHERIC REFRACTION                C 
 !----------------------------------------------------------------------------C
 !                                                                            C
 !     <<< INPUT PARAMETERS >>>                                               C
@@ -202,6 +203,7 @@ contains
                                                ! N=1: ICE; N=2: LIQUID
       REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
       REAL(r8) :: RE                           ! EARTH RADIUS
+      REAL(r8) :: RT
 
       REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr,freq
 
@@ -394,27 +396,33 @@ contains
 
       MULTI=NZmodel/8-1
 
-      IF (IFOV .EQ. 0) THEN       
-         DO I=1, Multi
-            ZZT1(I)=YZ(I*8-7)
-         ENDDO
+!         DO I=1, Multi
+!            ZZT1(I)=YZ(I*8-7)
+!            ZPT1(I)=YP(I*8-7)
+!            ZTT1(I)=YT(I*8-7)
+!            ZVT1(I)=YQ(I*8-7)      
+!         ENDDO
+!
+! ---------------The following sets first 9 tangent heights below zero
+
+      DO I=1, Multi
+         if (i .le. 10) zzt1(i) = -20000.0_r8 + i*2000.0_r8 
+         if (i .gt. 10) zzt1(i) = 1000._r8*i-10000._r8
+         ZPT1(I) = 0._r8    
+         ZTT1(I) = 0._r8
+         ZVT1(I) = 0._r8                
+      ENDDO
+
+      IF (IFOV .EQ. 1) THEN         
+               CALL GET_TAN_PRESS ( YP, YZ, YT, YQ, NZmodel,        &
+                    &               ZPT1, ZZT1, ZTT1, ZVT1, Multi )
+
       ENDIF
 
-      IF (IFOV .EQ. 1) THEN 
-         DO I=1, Multi
-            ZZT1(I)=YZ(I*8-7)
-            ZPT1(I)=YP(I*8-7)
-            ZTT1(I)=YT(I*8-7)
-            ZVT1(I)=YQ(I*8-7)
-         ENDDO
-         !      DO I=1, Multi
-         !        if (i .lt. 10) zzt1(i) = -200000.0_r8 + i*20000.0_r8 
-         !        if (i .ge. 10) zzt1(i) = 1000._r8*i-10000._r8
-         !      ENDDO
-!
-         !      CALL GET_TAN_PRESS ( YP, YZ, YT, YQ, NZmodel,        &
-         !           &               ZPT1, ZZT1, ZTT1, ZVT1, Multi )
-      ENDIF
+!      DO I=1, Multi
+!       print*,  ZZT1(I), ZPT1(I), ZTT1(I), ZVT1(I)                
+!      ENDDO
+!      stop
 
 !-----------------------------------------------
 !     INITIALIZE SCATTERING AND INCIDENT ANGLES 
@@ -599,21 +607,48 @@ contains
 ! ==========================================================================
 !    >>>>>> ADDS THE EFFECTS OF ANTENNA SMEARING TO THE RADIANCE <<<<<<
 ! ==========================================================================
-	 Ier = 0
-!	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
-	 Rs_eq = h_obs
 
-         znt1 = const1 * zpt1 / ztt1
-         znt1 = znt1*(1.0_r8 + const2*zvt1/ztt1)
+!----------------------------------------------------------------------------
+!        Compute the effect of air refraction. The following method is based 
+!        on the discussion with Bill Read, personal communication (09/25/01)    
+!        (1+znt1) is air refractive index.   
+!
+!        NOTE IF TANGENT HEIGHT ZZT1 IS BELOW SURFACE, USE SURFACE VALUE OF
+!        ZPT1, ZTT1 AND ZVT1 TO COMPUTE REFRACTIVE INDEX   
+!----------------------------------------------------------------------
 
+         K=0
+         DO I=1, Multi
+            IF (ZZT1(I) .LT. 0._r8) K=I
+         END DO
+
+         DO I=1, Multi                      
+            IF (ZZT1(I) .LT. 0._r8) THEN
+               znt1(I) = const1 * zpt1(K+1)/ztt1(K+1)
+               znt1(I) = znt1(I)*(1.0_r8 + const2*zvt1(K+1)/ztt1(K+1)) 
+            ELSE IF (ZZT1(I) .GE. 0._r8) THEN
+               znt1(I) = const1 * zpt1(I)/ztt1(I)
+               znt1(I) = znt1(I)*(1.0_r8 + const2*zvt1(I)/ztt1(I))                
+            END IF
+         END DO
+    
 !---------------------------------------------------------------------------
 !	 FIRST COMPUTE THE POINTING ANGLES (ptg_angle) 
 !---------------------------------------------------------------------------
+!	 Rs_eq = h_obs + 38.9014 * Sin(2.0*(phi_tan - 51.6814 * deg2rad)) 
+
+	 Rs_eq = h_obs
 
   	 DO I = 1, Multi
-            schi = (1+znt1(i))*(ZZT1(I) + RE) / Rs_eq    ! approximition account for 
-                                                         ! refractive effect
-    	    IF(ABS(schi) > 1.0) THEN
+
+            If (ZZT1(I) .LT. 0._r8) then
+               RT= MIN( (ZZT1(I)+RE), RE)
+               schi = (1+znt1(I)) * ( RT/RE ) * (ZZT1(I) + RE) / Rs_eq    
+            else if (ZZT1(I) .GE. 0._r8) then
+               schi = (1+znt1(I)) * (ZZT1(I) + RE) / Rs_eq 
+            Endif
+
+   	    IF(ABS(schi) > 1.0) THEN
       	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
                PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
                STOP
@@ -622,13 +657,12 @@ contains
   	 END DO
 
 	 center_angle = ptg_angle(1)
-!	 center_angle = Asin(RE/Rs_eq)        ! ptg_angle for zero tangent height         
-!         center_angle = (ptg_angle(1) + ptg_angle(79)) /2.
 
 ! ----------------------------------------------------------------
 ! 	 THEN DO THE FIELD OF VIEW AVERAGING
 ! ----------------------------------------------------------------
 
+         Ier = 0.
          ntr = size(antennaPattern%aaap)
 
 	 fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
@@ -680,7 +714,7 @@ contains
          do while (is < Ntr-1  .and.  fft_press(is) >= fft_press(is+1)) 
             is = is + 1                                                  
          end do                                                         
-          ! There is an error in zvi's code, in which he wrote is<Ntr. This will cause 
+          ! There was an error in zvi's code, in which he wrote is<Ntr. This will cause 
           ! subscript fft_press(is+1) out of range when run the program after compile 
           ! with -C, as "Subscript 1 of FFT_PRESS (value 1025) is out of range (1:1024)"
           ! UPDATE: zvi and I have fixed above error on 08/29/01
@@ -764,6 +798,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.11  2001/09/24 23:51:35  jonathan
+! minor changes
+!
 ! Revision 1.10  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
