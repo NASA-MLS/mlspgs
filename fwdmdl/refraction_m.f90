@@ -296,6 +296,12 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.16  2003/09/17 23:33:26  vsnyder
+! Major revision
+!
+! Revision 2.15  2003/09/17 23:32:56  vsnyder
+! Clean up a few loose ends before major revision
+!
 ! Revision 2.14  2003/09/13 02:02:00  vsnyder
 ! Converges faster with derivatives instead of differences
 !
