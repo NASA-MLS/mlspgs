@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L2ParInfo
@@ -6,7 +6,8 @@ module L2ParInfo
   ! manage the parallel aspects of the L2 code.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, MLSMSG_Deallocate
+  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, &
+    & MLSMSG_Deallocate
   use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT
   use PVMIDL, only: PVMIDLPACK
@@ -78,6 +79,7 @@ module L2ParInfo
     integer :: masterTid                ! task ID in pvm
     integer :: noFWMSlaves              ! No. slaves in pvm system for fwm cases
     integer :: chunkNo                  ! Chunk No. if this is a slave
+    integer :: Delay = 200000           ! For Usleep, no. microsecs
     character(len=132) :: pgeName="mlsl2"   ! command name, if not 'mlsl2'
     character(len=132) :: slaveFilename ! Filename with list of slaves
     character(len=132) :: executable    ! Executable filename
@@ -548,6 +550,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.33  2003/11/14 23:37:13  pwagner
+! Lets user change masterLoop delay via commandline option
+!
 ! Revision 2.32  2003/08/11 23:23:31  pwagner
 ! ChunkNo component added to L2ParallelInfo_T
 !
