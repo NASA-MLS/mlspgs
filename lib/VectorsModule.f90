@@ -619,24 +619,46 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQuantity
 
   ! ------------------------------------  GetVectorQuantityByType  -----
-  function GetVectorQuantityByType ( vector, quantityType, &
-    & molecule, radiometer )
+  function GetVectorQuantityByType ( vector, otherVector, quantityType, &
+    & molecule, instrumentModule, radiometer, signal, foundInFirst )
 
-  ! Given a quantity type index (l_...), this function returns the first
-  ! quantity within the vector that has that type.  If molecule and/or
-  ! radiometer are supplied, the quantity that has the specified type, as
-  ! well as the specified molecule and/or radiometer index, is returned.
+    ! Given a quantity type index (l_...), this function returns the first
+    ! quantity within the vector that has that type.  If molecule and/or
+    ! radiometer are supplied, the quantity that has the specified type, as
+    ! well as the specified molecule and/or radiometer index, is returned.
+    
+    ! If otherVector is present it will look for the quantity there.
 
     ! Dummy arguments
-    type (Vector_T), intent(in) :: Vector
-    integer, intent(in) :: QuantityType ! Quantity type index (l_...)
-    integer, intent(in), optional :: Molecule     ! Molecule index (l_...)
-    integer, intent(in), optional :: Radiometer   ! Radiometer index
+    type (Vector_T), intent(in) :: VECTOR ! First vector to look in
+    type (Vector_T), intent(in), optional :: OTHERVECTOR ! Second vector to look in
+    integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
+    integer, intent(in), optional :: MOLECULE     ! Molecule index (l_...)
+    integer, intent(in), optional :: INSTRUMENTMODULE ! Instrument module index
+    integer, intent(in), optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in), optional :: SIGNAL       ! Signal index
+    logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
     ! Result
     type (VectorValue_T), pointer :: GetVectorQuantityByType
 
-    GetVectorQuantityByType => vector%quantities( getVectorQuantityIndexByType &
-      & ( vector, quantityType, molecule, radiometer ) )
+    ! Local variable
+    integer :: index
+
+    ! Look in the first vector
+    index = GetVectorQuantityIndexByType ( vector, &
+      & quantityType, molecule, instrumentModule, radiometer, signal, &
+      &   noError = present(otherVector) )
+    if ( index /= 0 ) then
+      if ( present (foundInFirst) ) foundInFirst = .true.
+      GetVectorQuantityByType => vector%quantities(index)
+    else
+      ! Can only get here if not found in first vector and 
+      ! otherVector is present
+      index = GetVectorQuantityIndexByType ( otherVector, &
+        &  quantityType, molecule, instrumentModule, radiometer, signal )
+      if ( present (foundInFirst) ) foundInFirst = .false.
+      GetVectorQuantityByType => otherVector%quantities( index )
+    end if
   end function GetVectorQuantityByType
 
   ! ------------------------------- GetVectorQtyByTemplateIndex --i
@@ -696,7 +718,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------  GetVectorQuantityIndexByType  -----
   integer function GetVectorQuantityIndexByType ( vector, quantityType, &
-    & molecule, radiometer )
+    & molecule, instrumentModule, radiometer, signal, noError )
 
   ! Given a quantity type index (l_...), this function returns the index
   ! of the first quantity within the vector that has that type.  If
@@ -705,14 +727,21 @@ contains ! =====     Public Procedures     =============================
   ! index, is returned.
 
     ! Dummy arguments
-    type (Vector_T), intent(in) :: Vector
-    integer, intent(in) :: QuantityType ! Quantity type index (l_...)
-    integer, intent(in), optional :: Molecule     ! Molecule index (l_...)
-    integer, intent(in), optional :: Radiometer   ! Radiometer index
+    type (Vector_T), intent(in) :: VECTOR
+    integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
+    integer, intent(in), optional :: MOLECULE     ! Molecule index (l_...)
+    integer, intent(in), optional :: INSTRUMENTMODULE ! Module index
+    integer, intent(in), optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in), optional :: SIGNAL       ! Signal Index
+    logical, intent(in), optional :: NOERROR ! Don't give error if not found
 
     ! Local variables
     character(len=127) :: MSG
-    integer :: Search
+    integer :: SEARCH
+    logical :: MYNOERROR
+
+    myNoError = .false.
+    if (present(noError)) myNoError = noError
 
     ! Executable code
     do search = 1, size(vector%quantities)
@@ -720,22 +749,36 @@ contains ! =====     Public Procedures     =============================
         if ( present(molecule) ) then
           if ( vector%quantities(search)%template%molecule /= molecule ) cycle
         end if
+        if ( present(instrumentModule) ) then
+          if ( vector%quantities(search)%template%instrumentModule /= &
+            &  instrumentModule ) cycle
+        end if
         if ( present(radiometer) ) then
           if ( vector%quantities(search)%template%radiometer /= &
             &  radiometer ) cycle
+        end if
+        if ( present(signal) ) then
+          if ( vector%quantities(search)%template%signal /= &
+            &  signal ) cycle
         end if
         GetVectorQuantityIndexByType = search
     return
       end if
     end do
-    msg = 'There is no quantity in vector '
-    if ( vector%name /= 0 ) then
-      call get_string ( vector%name, msg(len_trim(msg)+2:) )
+
+    ! Not found, perhaps generate an error
+    if (myNoError) then
+      GetVectorQuantityIndexByType = 0
     else
-      msg(len_trim(msg)+2:) = '[unnamed]'
+      msg = 'There is no quantity in vector '
+      if ( vector%name /= 0 ) then
+        call get_string ( vector%name, msg(len_trim(msg)+2:) )
+      else
+        msg(len_trim(msg)+2:) = '[unnamed]'
+      end if
+      msg = trim(msg) // ' that has the required type'
+      call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
     end if
-    msg = trim(msg) // ' that has the required type'
-    call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
 
   end function GetVectorQuantityIndexByType
 
@@ -953,6 +996,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.17  2001/03/05 00:53:59  livesey
+! Added molecule argument to ValidateVectorQuantity
+!
 ! Revision 2.16  2001/03/03 00:07:01  livesey
 ! Added GetVectorQtyByTemplateIndex
 !
