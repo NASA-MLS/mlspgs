@@ -9,31 +9,31 @@ begin Fill
   
   ;; ------------------------------------- H2O
   !define(flaggingBands,{2,3,4,5,6,23})
-  !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=100.0,minRads=7000,cloudMax=30K)
+  !makeFlagsForOneProduct(product=H2O,radiometer=R2,chisqScale=100.0,minRads=6500,cloudMax=30K)
 
   ;; --------------------------------------- N2O
   !define(flaggingBands,{3})
-  !makeFlagsForOneProduct(product=N2O,radiometer=R2,chisqScale=50.0,minRads=1200,cloudMax=5K)
+  !makeFlagsForOneProduct(product=N2O,radiometer=R2,chisqScale=50.0,minRads=1000,cloudMax=5K)
 
   ;; ---------------------------------------- HNO3
   !define(flaggingBands,{4,6})
-  !makeFlagsForOneProduct(product=HNO3,radiometer=R2,chisqScale=10.0,minRads=3000,cloudMax=5K)
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R2,chisqScale=10.0,minRads=2500,cloudMax=5K)
 
   ;; ----------------------------------------- ClO
   !define(flaggingBands,{5})
-  !makeFlagsForOneProduct(product=ClO,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=5K)
+  !makeFlagsForOneProduct(product=ClO,radiometer=R2,chisqScale=10.0,minRads=1200,cloudMax=5K)
 
   ;; ----------------------------------------- O3
   !define(flaggingBands,{6})
-  !makeFlagsForOneProduct(product=O3,radiometer=R2,chisqScale=10.0,minRads=1500,cloudMax=5K)
+  !makeFlagsForOneProduct(product=O3,radiometer=R2,chisqScale=10.0,minRads=1200,cloudMax=5K)
 
   ;; ----------------------------------------- HCN
   !define(flaggingBands,{6,27})
-  !makeFlagsForOneProduct(product=HCN,radiometer=R2,chisqScale=10.0,minRads=1800,cloudMax=5K)
+  !makeFlagsForOneProduct(product=HCN,radiometer=R2,chisqScale=10.0,minRads=1400,cloudMax=5K)
 
   ;; ----------------------------------------- CH3CN
   !define(flaggingBands,{2,3,4,5})
-  !makeFlagsForOneProduct(product=CH3CN,radiometer=R2,chisqScale=500.0,minRads=5000,cloudMax=5K)
+  !makeFlagsForOneProduct(product=CH3CN,radiometer=R2,chisqScale=500.0,minRads=4500,cloudMax=5K)
 
 end Fill
 
