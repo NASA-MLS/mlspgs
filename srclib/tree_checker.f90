@@ -626,7 +626,7 @@ m:              do j = 3, nsons(field)
         units = decl%units
         value = value * decl%value
       end if
-    case ( n_colon )
+    case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
       son1 = subtree(1,root); son2 = subtree(2,root)
       call expr ( son1, type, units, value )
       call expr ( son2, type2, units2, value2 )
@@ -865,6 +865,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.9  2001/06/07 21:56:55  pwagner
+! Added Copyright statement
+!
 ! Revision 1.8  2001/05/18 21:24:26  vsnyder
 ! Missing 'sub_rosa' around a 'son' in a call to 'dump_1_decl'
 !
