@@ -36,7 +36,7 @@ module TREE_WALKER
   use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
     & Destroy_SpectCat_Database, Spectroscopy
   use Test_Parse_Signals_m, only: Test_Parse_Signals
-  use Toggles, only: EMIT, GEN, LEVELS, TOGGLE
+  use Toggles, only: GEN, LEVELS, SWITCHES, TOGGLE
   use Trace_m, only: DEPTH, TRACE_BEGIN, TRACE_END
   use Tree, only: DECORATION, NSONS, SUBTREE
   use VectorsModule, only: DestroyVectorDatabase, Vector_T, VectorTemplate_T
@@ -105,7 +105,7 @@ contains ! ====     Public Procedures     ==============================
         call set_global_settings ( son, forwardModelConfigDatabase, vGrids, l2gpDatabase )
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
-        if ( toggle(emit) ) call test_parse_signals
+        if ( index(switches,'tps') /= 0 ) call test_parse_signals
       case ( z_spectroscopy )
         call spectroscopy ( son, lit_indices )
       case ( z_readapriori )
@@ -179,6 +179,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.39  2001/04/24 20:20:02  livesey
+! L2PC moved to lib, and renamed
+!
 ! Revision 2.38  2001/04/24 20:05:50  livesey
 ! New stuff to support joining of l2pc's
 !
