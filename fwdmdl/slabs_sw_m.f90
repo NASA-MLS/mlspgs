@@ -999,7 +999,7 @@ contains
 
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
   subroutine Get_GL_Slabs_Arrays ( Catalog, P_path, T_path, Vel_z, GL_slabs, &
-                             &     No_ele, Do_1D )
+                             &     No_ele, Do_1D, t_der_flags )
 
     use Units, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -1012,6 +1012,7 @@ contains
     real(rp), intent(in) :: t_path(:)
 
     real(rp), intent(in) :: vel_z
+    LOGICAL, intent(in) :: t_der_flags(:)
 
     type (slabs_struct), pointer :: gl_slabs(:,:)
 
@@ -1043,7 +1044,7 @@ contains
       if ( .not. Do_1D ) then
 
         do j = 1, no_ele
-
+          if (.not. t_der_flags(j)) cycle
           call Slabs_Prep_Arrays ( catalog(i)%molecule, nl, t_path(j),&
             &  p_path(j), catalog(i)%mass, Qlog, &
             &  Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
@@ -1060,7 +1061,7 @@ contains
         ! compute each element along the LOS path before tangent point
 
         do j = 1, no_ele/2
-
+          if (.not. t_der_flags(j)) cycle
           call Slabs_Prep_Arrays ( catalog(i)%molecule, nl, t_path(j), p_path(j), &
             & catalog(i)%mass, Qlog, &
             & Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
@@ -1073,7 +1074,7 @@ contains
         ! fill in grid points on other side with above value
         
         do j = no_ele, no_ele/2+1, -1
-          
+          if (.not. t_der_flags(j)) cycle          
           k = no_ele - j + 1
           gl_slabs(j,i)%v0s         = gl_slabs(k,i)%v0s
           gl_slabs(j,i)%x1          = gl_slabs(k,i)%x1
@@ -1099,6 +1100,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.20  2003/06/13 21:28:20  bill
+! fixed/improved some bugs with line shape derivative computations
+!
 ! Revision 2.19  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !

@@ -26,6 +26,7 @@ contains
   subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
         & Catalog, beta_group, polarized, gl_slabs, path_inds,     &
         & beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,   &
+        & t_der_path_flags,                                        &
         & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path)
 
     use CREATE_BETA_M, only: CREATE_BETA
@@ -59,6 +60,8 @@ contains
     type(slabs_struct), pointer :: gl_slabs_p(:,:) ! reduced
 !                               strength data for t_path_p
     real(rp), intent(in) :: t_path_p(:) ! path temperatures for gl_slabs_p
+    LOGICAL, intent(in) :: t_der_path_flags(:) ! indicies where temperature
+! derivatives are needed. Only useful for subsetting.
 
 ! outputs
 
@@ -155,16 +158,17 @@ contains
           end do
           do j = 1 , n_path
             k = path_inds(j)
-            tm = t_path_m(k)
-            call create_beta ( molecule, catalog(ib)%continuum, p_path(k), &
-            &  tm, frq, linewidth, gl_slabs_m(k,ib),                      &
-            &  tanh1_m(j), vm, polarized .and. catalog(ib)%polarized )
-            betam(j) = betam(j) + ratio * vm
-            tp = t_path_p(k)
-            call create_beta ( molecule, Catalog(ib)%continuum, p_path(k), &
-            &  tp, Frq, LineWidth, gl_slabs_p(k,ib),                      &
-            &  tanh1_p(j), vp, polarized .and. catalog(ib)%polarized )
-            betap(j) = betap(j) + ratio * vp
+            IF ( .not. t_der_path_flags(k)) CYCLE 
+              tm = t_path_m(k)
+              call create_beta ( molecule, catalog(ib)%continuum, p_path(k), &
+              &  tm, frq, linewidth, gl_slabs_m(k,ib),                      &
+              &  tanh1_m(j), vm, polarized .and. catalog(ib)%polarized )
+              betam(j) = betam(j) + ratio * vm
+              tp = t_path_p(k)
+              call create_beta ( molecule, Catalog(ib)%continuum, p_path(k), &
+              &  tp, Frq, LineWidth, gl_slabs_p(k,ib),                      &
+              &  tanh1_p(j), vp, polarized .and. catalog(ib)%polarized )
+              betap(j) = betap(j) + ratio * vp
           end do
           deallocate ( LineWidth )
         end do
@@ -349,6 +353,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.35  2003/06/02 22:41:33  vsnyder
+! Remove unused symbols
+!
 ! Revision 2.34  2003/05/16 23:51:51  livesey
 ! Now uses molecules rather than spectags
 !
