@@ -7,6 +7,7 @@ program MLSL2
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
+  use MLSL2Options, only: PCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2CF_START
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
@@ -32,7 +33,7 @@ program MLSL2
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
   character(len=255) :: LINE       ! Into which is read the command args
-  logical :: PCF = .false.         ! Open L2CF using PCF
+!  logical :: PCF = .false.         ! Open L2CF using PCF
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
 
@@ -158,7 +159,11 @@ program MLSL2
     end if
     inunit = l2cf_unit
   else if ( pcf ) then
-    call open_MLSCF ( MLSPCF_L2CF_Start, inunit )
+    call open_MLSCF ( MLSPCF_L2CF_Start, inunit, status )
+    if(status /= 0) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to open L2CF file " // trim(line) )
+    endif
   end if
   call configuration ( root )
   if ( pcf ) then
@@ -196,6 +201,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.19  2001/04/16 23:46:58  pwagner
+! Gets PCF flag from MLSL2Options
+!
 ! Revision 2.18  2001/04/06 20:11:53  vsnyder
 ! Add -e option
 !
