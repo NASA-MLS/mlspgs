@@ -59,6 +59,7 @@ contains
       & Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, Matrix_T, &
       & MultiplyMatrixVectorNoT, multiplyMatrixVectorSPD_1, &
       & MultiplyMatrix_XY, ReflectMatrix, ScaleMatrix, Dump_Struct, TransposeMatrix
+    use MatrixTools, only: COMBINECHANNELSINMATRIX
     use MLSCommon, only: R8, RV
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_M, only: Output
@@ -75,7 +76,7 @@ contains
     type(vector_T), dimension(:), pointer :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(MLSChunk_T), intent(in) :: CHUNK
-    type(ForwardModelConfig_T), intent(inout), dimension(:) :: FORWARDMODELCONFIGDATABASE
+    type(ForwardModelConfig_T), pointer, dimension(:) :: FORWARDMODELCONFIGDATABASE
 
     type(decls) :: DECL            ! Declaration of the LHS name
     real(r8) :: DVALUE             ! Value of expr if it's a number
@@ -274,18 +275,19 @@ contains
         & F_RHSOUT, F_FORWARDMODEL, F_FWDMODELIN, F_FWDMODELOUT, F_FWDMODELEXTRA, &
         & F_MEASUREMENTS, F_MEASUREMENTSD, F_REGORDERS, F_REGQUANTS, F_REGWEIGHTS, F_REGWEIGHTVEC, &
         & F_HORIZONTAL, F_RETRIEVALEXTRA, F_RETRIEVALFORWARDMODEL, F_RETRIEVALIN, &
-        & F_TRUTHEXTRA, F_TRUTHFORWARDMODEL, F_TRUTHIN
+        & F_SOURCEMATRIX, F_TRUTHEXTRA, F_TRUTHFORWARDMODEL, F_TRUTHIN
       use Init_Tables_Module, only: L_TRUE
-      use Init_Tables_Module, only: S_COLUMNSCALE, S_CYCLICJACOBI, S_DISJOINTEQUATIONS, S_REFLECT, &
-        & S_ROWSCALE, S_NORMALEQUATIONS, S_REGULARIZATION
+      use Init_Tables_Module, only: S_COLUMNSCALE, S_COMBINECHANNELS, S_CYCLICJACOBI, &
+        & S_DISJOINTEQUATIONS, S_REFLECT, S_ROWSCALE, S_NORMALEQUATIONS, S_REGULARIZATION
       use MoreTree, only: GET_SPEC_ID, GET_BOOLEAN
+      use MatrixTools, only: COMBINECHANNELSINMATRIX
         
       ! Dummy arguments
       integer, intent(in) :: ROOT
       type(vector_T), dimension(:), pointer :: VectorDatabase
       type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
       type(MLSChunk_T), intent(in) :: CHUNK
-      type(ForwardModelConfig_T), intent(inout), dimension(:) :: FORWARDMODELCONFIGDATABASE
+      type(ForwardModelConfig_T), pointer, dimension(:) :: FORWARDMODELCONFIGDATABASE
 
       ! Local variables
       logical, dimension(field_first:field_last) :: GOT ! Fields
@@ -303,11 +305,16 @@ contains
       integer :: REGWEIGHTS             ! Regularization weights
       integer :: ROWS                   ! Rows of regularization
       integer :: SON                    ! Tree node
+      integer :: SOURCEMATRIXIND        ! Source matrix index
+      integer :: SOURCEMATRIXKIND       ! Kind of source matrix.
       integer :: VALUE                  ! Value node
       type(Matrix_T), pointer :: EIGENVECTORS ! Eigen vector matrix
       type(Matrix_T), pointer :: MATRIX ! The matrix to work on
       type(Matrix_SPD_T), pointer :: MATRIX_S ! SPD version of matrix
       type(Matrix_Cholesky_T), pointer :: MATRIX_C ! SPD version of matrix
+      type(Matrix_T), pointer :: MATRIX2 ! The matrix to work on
+      type(Matrix_SPD_T), pointer :: MATRIX_S2 ! SPD version of matrix
+      type(Matrix_Cholesky_T), pointer :: MATRIX_C2 ! SPD version of matrix
       type(Vector_T), pointer :: FWDMODELEXTRA ! Input for forward models
       type(Vector_T), pointer :: FWDMODELIN ! Input for forward models
       type(Vector_T), pointer :: FWDMODELOUT ! Output of forward models
@@ -392,6 +399,19 @@ contains
           end select
         case ( f_rhsOut )
           rhsOut => vectorDatabase ( decoration ( value ) )
+        case ( f_sourceMatrix )
+          sourceMatrixInd = decoration ( value )
+          sourceMatrixKind = GetKindFromMatrixDatabase ( matrixDatabase(sourceMatrixInd) )
+          select case ( sourceMatrixKind )
+          case ( k_plain )
+            call GetFromMatrixDatabase ( matrixDatabase(sourceMatrixInd), matrix2 )
+          case ( k_cholesky )
+            call GetFromMatrixDatabase ( matrixDatabase(sourceMatrixInd), matrix_c2 )
+          case ( k_spd )
+            call GetFromMatrixDatabase ( matrixDatabase(sourceMatrixInd), matrix_s2 )
+          case default
+            call Announce_Error ( key, notSupported )
+          end select
         case ( f_truthExtra )
           truthExtra => vectorDatabase ( decoration ( value ) )
         case ( f_truthForwardModel )
@@ -413,6 +433,10 @@ contains
         case default
           call Announce_Error ( key, notSupported )
         end select
+      case ( s_combineChannels )
+        if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        if ( sourceMatrixKind /= k_plain ) call Announce_Error ( key, notSupported )
+        call CombineChannelsInMatrix ( matrix, matrix2 )
       case ( s_cyclicJacobi ) 
         if ( matrixKind /= k_plain ) call Announce_Error ( key, notSupported )
         call CyclicJacobi ( matrix, eigenVectors )
@@ -1392,6 +1416,9 @@ contains
 end module ALGEBRA_M
 
 ! $Log$
+! Revision 2.15  2004/09/25 00:16:10  livesey
+! Added combineChannels
+!
 ! Revision 2.14  2004/05/28 00:58:35  vsnyder
 ! Catch use of unsupported function
 !
