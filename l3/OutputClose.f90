@@ -168,16 +168,16 @@ CONTAINS
    END SUBROUTINE FindDatabaseIndex
 !----------------------------------
 
-!--------------------------------
-   SUBROUTINE WriteMetaLog (date)
-!--------------------------------
+!-------------------------------
+   SUBROUTINE WriteMetaLog (pcf)
+!-------------------------------
 
 ! Brief description of subroutine
 ! This subroutine writes metadata for the log file to a separate ASCII file.
 
 ! Arguments
 
-      CHARACTER (LEN=*), INTENT(IN) :: date
+      TYPE( PCFData_T ), INTENT(IN) :: pcf
 
 ! Parameters
 
@@ -198,8 +198,6 @@ CONTAINS
 
       INTEGER :: result
 
-      REAL(r8) :: dval
-
       nullStr = ''
 
 ! Initialize the MCF file
@@ -210,37 +208,25 @@ CONTAINS
 
 ! Set PGE values
 
-      sval = 'Horizontal & Vertical'
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "GranuleSpatialDomainType", sval)
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
+                                 pcf%logGranID)
+
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
+                                 pcf%outputVersion)
 
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "RangeBeginningDate", date)
+                                 "RangeBeginningDate", pcf%l3StartDay)
       sval= '00:00:00.000000'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
                                  "RangeBeginningTime", sval)
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
-                                 "RangeEndingDate", date)
+                                 "RangeEndingDate", pcf%l3EndDay)
       sval= '23:59:59.999999'
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
                                  "RangeEndingTime", sval)
 
-      sval = 'Other Grid System'
-      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "ZoneIdentifier", &
-                                 sval)
-
-      dval = -180.0
-      result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), &
-                                "WestBoundingCoordinate", dval)
-      dval = 90.0
-      result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), &
-                                "NorthBoundingCoordinate", dval)
-      dval = 180.0
-      result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), &
-                                "EastBoundingCoordinate", dval)
-      dval = -90.0
-      result = pgs_met_setAttr_d(groups(INVENTORYMETADATA), &
-                                "SouthBoundingCoordinate", dval)
+      result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "PGEVersion", &
+                                 pcf%outputVersion)
 
       IF (result /= PGS_S_SUCCESS) THEN
          call Pgs_smf_getMsg(result, mnemonic, msg)
@@ -295,7 +281,7 @@ CONTAINS
       CHARACTER (LEN=FileNameLen) :: l3File
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: err, i, match, mlspcf_l3dm, mlspcf_mcf, numGrids, numProds
+      INTEGER :: err, i, match, mlspcf_l3dm, numGrids, numProds
       INTEGER :: returnStatus
       INTEGER :: indx(maxNumGrids)
 
@@ -370,24 +356,15 @@ CONTAINS
 
          CALL OutputGrids(l3File, numGrids, indx, l3dm)
 
-! Find the PCF number of the MCF
-
-         CALL SearchPCFNames(l3cf(i)%mcf, mlspcf_l3dm_mcf_start, &
-                             mlspcf_l3dm_mcf_end, mlspcf_mcf, match)
-         IF (match == 0) THEN
-            msr = 'No match in the PCF for file ' // l3cf(i)%mcf
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
 ! Write the L3DM metadata
 
-         CALL WriteMetaL3DM(l3File, mlspcf_mcf, numGrids, indx, l3dm, dataDT)
+         CALL WriteMetaL3DM(l3File, l3cf(i)%mcf, numGrids, indx, l3dm, dataDT)
 
       ENDDO
 
 ! Write the log file metadata
 
-      CALL WriteMetaLog(dataDT(1:10))
+      CALL WriteMetaLog(pcf)
 
 ! Deallocate the l3dm database
 
@@ -414,3 +391,6 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.1  2000/10/17 20:27:49  nakamura
+!Module for the Output/Close task.
+!
