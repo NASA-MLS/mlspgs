@@ -6,7 +6,7 @@ module ReadAPriori
 
   use GriddedData, only: GriddedData_T, v_is_pressure
   use Hdf, only: DFACC_READ, SFSTART
-  use Hdfeos, only: swopen, swclose
+  use Hdfeos, only: SWOPEN, SWCLOSE, SWINQSWATH
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, S_L2AUX, &
     & S_L2GP
@@ -62,7 +62,8 @@ contains ! =====     Public Procedures     =============================
     type (L2AUXData_T), dimension(:), pointer :: L2auxDatabase
     type (GriddedData_T), dimension(:), pointer :: GriddedDatabase 
 
-    !Local Variables
+    ! Local Variables
+    integer :: COMMAPOS                 ! For parsing string
     integer :: FIELD               ! Son of KEY, must be n_assign
     integer :: FIELDINDEX          ! Literal
     integer :: FieldName        ! sub-rosa index of name in field='name'
@@ -79,10 +80,12 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J                ! Loop indices for section, spec
     integer :: KEY                 ! Index of n_spec_args in the AST
     integer :: LastClimPCF
+    integer :: LISTSIZE                 ! Size of string from SWInqSwath
     type (L2AUXData_T) :: L2AUX
     type (L2GPData_T) :: L2GP
     integer :: L2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
+    integer :: NOSWATHS                 ! In an input file
     integer :: pcf_indx            ! loop index of climatology pcf numbers
     integer :: ReturnStatus
     integer :: SON              ! Of root, an n_spec_args or a n_named
@@ -92,6 +95,8 @@ contains ! =====     Public Procedures     =============================
     integer :: SwathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
     integer :: Version
+
+    character(len=2048) :: ALLSWATHNAMES ! Buffer to get info back.
 
     if ( toggle (gen) ) call trace_begin ( "read_apriori", root )
 
@@ -146,11 +151,26 @@ contains ! =====     Public Procedures     =============================
         
       select case ( FileType )
       case ( s_l2gp )
-        if ( .not. all(got((/f_swath, f_file/)))) &
+        if ( .not. got(f_file) ) &
           & call announce_error ( son, &
-            & 'Swath/filename name not specified in read a priori' )
-        call get_string ( swathName, swathNameString )
-        swathNameString = swathNameString(2:LEN_TRIM(swathNameString)-1)
+            & 'Filename name not specified in read a priori' )
+        swathNameString=''
+        if ( got(f_swath) ) &
+          & call get_string ( swathName, swathNameString, strip=.true. )
+
+        ! If we didn't get a name get the first swath name in the file
+        if ( len_trim(swathNameString) == 0 ) then
+          noSwaths = SWInqSwath ( fileNameString, allSwathNames, listSize )
+          if ( listSize < len(allSwathNames) ) then
+            commaPos = index ( allSwathNames, ',' )
+            if ( commaPos == 0 ) commaPos = len_trim(allSwathNames)
+            swathNameString = allSwathNames ( 1:commaPos )
+          else
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Failed to determinne swath names, string too long.' )
+          end if
+        endif
+        
         ! Open the l2gp file
         fileHandle = swopen(FileNameString, DFACC_READ)
         if ( fileHandle == -1 ) then
@@ -356,6 +376,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.20  2001/05/12 00:20:00  livesey
+! Allowed user to not supply swath name when reading l2gp
+!
 ! Revision 2.19  2001/05/07 18:03:56  pwagner
 ! Checks for PCF before looping over pcf_indx
 !
