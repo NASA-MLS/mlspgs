@@ -1319,6 +1319,7 @@ contains ! =====     Public Procedures     =============================
       nullify ( mj )
       if ( associated(y%col%vec%quantities(y%col%quant(j))%mask) .and. myMaskY ) &
         & mj => y%col%vec%quantities(y%col%quant(j))%mask(:,y%col%inst(j))
+      !$OMP PARALLEL DO private ( mi, k )
       do i = 1, x%col%nb
         nullify ( mi )
         if ( associated(x%col%vec%quantities(x%col%quant(i))%mask) .and. myMaskX ) &
@@ -1328,6 +1329,7 @@ contains ! =====     Public Procedures     =============================
             & update=myUpdate .or. k > 1, xMask=mi, yMask=mj )
         end do ! k = 2, x%row%nb
       end do ! i = 1, x%col%nb
+      !$OMP END PARALLEL DO
     end do ! j = 1, y%col%nb
   end subroutine MultiplyMatrix_XTY_1
 
@@ -1353,6 +1355,7 @@ contains ! =====     Public Procedures     =============================
           & "Incompatible arrays in MultiplyMatrix_XY_1" )
     call createEmptyMatrix ( z, 0, x%row%vec, y%col%vec )
     do j = 1, y%col%nb
+      !$OMP PARALLEL DO private ( k )
       do i = 1, x%row%nb
         call multiplyMatrix_XY ( x%block(i,1), y%block(1,j), z%block(i,j) )
         do k = 2, x%col%nb
@@ -1360,6 +1363,7 @@ contains ! =====     Public Procedures     =============================
             & update=.true. )
         end do ! k = 2, x%col%nb
       end do ! i = 1, x%row%nb
+      !$OMP END PARALLEL DO
     end do ! j = 1, y%col%nb
   end subroutine MultiplyMatrix_XY_1
 
@@ -1383,6 +1387,7 @@ contains ! =====     Public Procedures     =============================
     if ( present ( diagonalOnly ) ) myDiagonalOnly = diagonalOnly
 
     call createEmptyMatrix ( z, 0, x%row%vec, y%row%vec )
+    !$OMP PARALLEL DO private ( i, i0, i1, k )
     do j = 1, y%row%nb
       if ( myDiagonalOnly ) then
         i0 = j
@@ -1399,6 +1404,7 @@ contains ! =====     Public Procedures     =============================
         end do ! k = 2, x%col%nb
       end do ! i = 1, x%row%nb
     end do ! j = 1, y%row%nb
+    !$OMP END PARALLEL DO
   end subroutine MultiplyMatrix_XY_T_1
 
   ! -------------------------------------  MultiplyMatrixVector_1  -----
@@ -2226,6 +2232,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.89  2003/02/21 04:06:30  livesey
+! Added some OpenMP stuff
+!
 ! Revision 2.88  2003/02/12 02:10:52  livesey
 ! New code to support extended averaging kernels.  Rewrite of
 ! MultiplyMatrix_XTY_1.
