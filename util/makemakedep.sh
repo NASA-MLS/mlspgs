@@ -24,6 +24,7 @@
 # -c            include files with .c extensions, too
 #                (default is not to include them)
 # -d file_name  exclude file_name
+# -h[elp]       print brief help message; exit
 # dir1          search directory named by dir1 as well as cwd for files
 #
 #
@@ -83,7 +84,7 @@ UserPrompt()
 # (1) expand to list of files, returned as extant_files_result, or
 # (2) stay *.f, in which case a blank is returned as extant_files_result 
 #     (unless you have perversely named a file '*.f')
-# usage: mega_buck n color
+# usage: extant_files arg1 [arg2] ..
 
 extant_files()
 {
@@ -247,7 +248,7 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
-           | sed -n 's/^.//p' | sed '$ d'
+           | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
 	;;
 
@@ -407,10 +408,13 @@ then
 	then
         	mv "$dsuffix"/* .
 	fi
-        rmdir "$dsuffix"
+   rmdir "$dsuffix"
 fi
 exit
 # $Log$
+# Revision 1.12  2001/08/10 17:42:33  pwagner
+# Added -h(elp) option; general housekeeping
+#
 # Revision 1.11  2001/08/09 23:35:11  pwagner
 # Omits bogus *.o lines from Makefile.dep
 #

@@ -11,7 +11,7 @@
 # (4) mv \$MLSCONFG/test ../../bin/\$MLSCONFG/test
 
 # options
-# -h                 helpful summary of usage and options
+# -h[elp]            brief summary of usage and options; then exit
 # -p prog_name       name resulting program prog_name instead of test
 # -d prog_path       install resulting program in prog_path
 # -m test_dir_name   use tests/test_dir_name instead of tests/misc
@@ -128,7 +128,7 @@ while [ "$1" != "" ] ; do
 
 	-h | -help )
 	   sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
-   		| sed -n 's/^..//p' | sed '$ d'
+   		| sed -n 's/^..//p' | sed '1 d; $ d'
         exit
 	;;
 
@@ -233,6 +233,9 @@ mv $test_dir_path/$test_dir_name/$MLSCONFG/test $prog_path/$prog_name
 exit 0
 
 # $Log$
+# Revision 1.2  2001/08/10 17:43:19  pwagner
+# Fixed -h(elp) option; general housekeeping
+#
 # Revision 1.1  2001/07/26 22:49:56  pwagner
 # First commit
 #
