@@ -78,7 +78,7 @@ contains
       z = slabs_0%x1(j) * (slabs_0%v0s(j) + freq)
       denomm = sqrtPi * (z*z + slabs_0%y(j)*slabs_0%y(j))
       wing = wing + ( 0.5_rk * slabs_0%slabs1(j) * f_o_v0 ) * cmplx( &
-        & f_o_v0 * (slabs_0%y(j) - slabs_0%yi(j)*z) / denomm, & ! Real part
+        &  (slabs_0%y(j) - slabs_0%yi(j)*z) / denomm, & ! Real part
         & (z + slabs_0%y(j) * (slabs_0%y(j)/slabs_0%x1(j) -   & ! Imaginary part...
         &   freq*slabs_0%yi(j)) / slabs_0%v0s(j)) / denomm -  &
         &   2.0_rk/(slabs_0%x1(j) * slabs_0%v0s(j)) &
@@ -157,8 +157,8 @@ contains
 !     xi = 0.5_rk
 !     z  = 0.5_rk * s * xi * f_o_v0
       z  = 0.25_rk * s * f_o_v0
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z * (u - y*v)
+      zi = z * (v + u * (w/(x1*nu) + y))
       sigma_p = sigma_p + cmplx(zr, zi)
 
 !     m = -n
@@ -174,8 +174,8 @@ contains
 !     xi = 0.5_rk
 !     z  =  0.5_rk * s * xi * f_o_v0
 !     z  =  0.25_rk * s * f_o_v0
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z * (u - y*v)
+      zi = z * (v + u * (w/(x1*nu) + y))
       sigma_m = sigma_m + cmplx(zr, zi)
 
 !     m = n + 1
@@ -191,8 +191,8 @@ contains
 !     z  = 0.5_rk * s * xi * f_o_v0
 !     z  = 0.5_rk * s * f_o_v0
       z = 2.0_rk * z
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z * (u - y*v)
+      zi = z * (v + u * (w/(x1*nu) + y))
       pi = pi + cmplx(zr, zi)
 
     else if ( n > 0 ) then
@@ -210,8 +210,8 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * ((n + 1) * (n + 1) - m * m) / denom2
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y * v)
-        zi = z * (v + u * f_o_v0 * (w / (x1*nu) + y))
+        zr = z  * (u - y * v)
+        zi = z * (v + u  * (w / (x1*nu) + y))
         pi = pi + cmplx(zr, zi)
 
 ! sigma_p transition
@@ -220,8 +220,8 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * (n + m + 1) * (n + m + 2) / (4.0_rk * denom2)
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y * v)
-        zi = z * (v + u * f_o_v0 * (w/(x1 * nu) + y))
+        zr = z  * (u - y * v)
+        zi = z * (v + u  * (w/(x1 * nu) + y))
         sigma_p = sigma_p + cmplx(zr, zi)
 
 ! sigma_m transition
@@ -230,8 +230,8 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * (n - m + 1) * (n - m + 2) / (4.0_rk * denom2)
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y * v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+        zr = z  * (u - y * v)
+        zi = z * (v + u  * (w/(x1*nu) + y))
         sigma_m = sigma_m + cmplx(zr, zi)
 
       end do
@@ -251,8 +251,8 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * (n * n - m * m) / denom2
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y * v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+        zr = z  * (u - y * v)
+        zi = z * (v + u  * (w/(x1*nu) + y))
         pi = pi + cmplx(zr, zi)
 
 ! sigma_p transition
@@ -261,8 +261,8 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+        zr = z  * (u - y*v)
+        zi = z * (v + u  * (w/(x1*nu) + y))
         sigma_p = sigma_p + cmplx(zr, zi)
 
 ! sigma_m transition
@@ -271,8 +271,8 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y * v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+        zr = z  * (u - y * v)
+        zi = z * (v + u  * (w/(x1*nu) + y))
         sigma_m = sigma_m + cmplx(zr, zi)
 
       end do
@@ -288,8 +288,8 @@ contains
       call simple_voigt ( nu_offst, w, u, v )
       xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
       z  = 0.5_rk * s * xi * f_o_v0
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z  * (u - y*v)
+      zi = z * (v + u  * (w/(x1*nu) + y))
       sigma_p = sigma_p + cmplx(zr, zi)
 
 ! m = n
@@ -302,8 +302,8 @@ contains
       call simple_voigt ( nu_offst, w, u, v )
       xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
       z  =  0.5_rk * s * xi * f_o_v0
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z  * (u - y*v)
+      zi = z * (v + u  * (w/(x1*nu) + y))
       sigma_m = sigma_m + cmplx(zr, zi)
 
 ! m = -(n-1)
@@ -316,8 +316,8 @@ contains
       call simple_voigt ( nu_offst, w, u, v )
       xi = 3.0_rk * (n * n - m * m) / denom2
       z  = 0.5_rk * s * xi * f_o_v0
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z  * (u - y*v)
+      zi = z * (v + u  * (w/(x1*nu) + y))
       pi = pi + cmplx(zr, zi)
 
 ! sigma_p transition
@@ -326,8 +326,8 @@ contains
       call simple_voigt ( nu_offst, w, u, v )
       xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
       z  = 0.5_rk * s * xi * f_o_v0
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z  * (u - y*v)
+      zi = z * (v + u  * (w/(x1*nu) + y))
       sigma_p = sigma_p + cmplx(zr, zi)
 
 ! m = n - 1
@@ -340,8 +340,8 @@ contains
       call simple_voigt ( nu_offst, w, u, v )
       xi = 3.0_rk * (n * n - m * m) / denom2
       z  = 0.5_rk * s * xi * f_o_v0
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z  * (u - y*v)
+      zi = z * (v + u  * (w/(x1*nu) + y))
       pi = pi + cmplx(zr, zi)
 
 ! sigma_m transition
@@ -350,8 +350,8 @@ contains
       call simple_voigt ( nu_offst, w, u, v )
       xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
       z  = 0.5_rk * s * xi * f_o_v0
-      zr = z * f_o_v0 * (u - y*v)
-      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      zr = z  * (u - y*v)
+      zi = z * (v + u  * (w/(x1*nu) + y))
       sigma_m = sigma_m + cmplx(zr, zi)
 
     end if
@@ -417,6 +417,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.9  2003/08/15 00:17:45  michael
+! Removed extra f_o_v0 terms from mag_o2_abs_cs.  Now zero-field polarized and scalar are consistent.
+!
 ! Revision 2.8  2003/08/14 02:15:03  vsnyder
 ! Optimize n=-1 special case
 !
