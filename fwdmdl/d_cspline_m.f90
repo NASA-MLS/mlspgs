@@ -12,9 +12,9 @@ module D_CSPLINE_M
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
-    & "$id: d_cspline_m.f90,v 2.2 2002/10/08 17:08:02 pwagner exp $"
+    & "$Id$"
   character (len=len(idParm)) :: Id = idParm
-  character (len=*), parameter :: ModuleName = "$rcsfile: d_cspline_m.f90,v $"
+  character (len=*), parameter :: ModuleName = "$RCSfile$"
 !---------------------------------------------------------------------------
 
 contains
@@ -32,6 +32,9 @@ contains
 
 end module D_CSPLINE_M
 ! $Log$
+! Revision 2.3  2002/10/14 20:51:06  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.2  2002/10/08 17:08:02  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
