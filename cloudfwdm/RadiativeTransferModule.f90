@@ -26,7 +26,7 @@ module RadiativeTransferModule
       
 contains
 
-      SUBROUTINE RADXFER(L,NU,NUA,U,DU,PHH,NT,ZT,W0,TAU,RS,TS,FREQ, &
+      SUBROUTINE RADXFER(L,NU,NUA,U,DU,PHH,NT,ZT,W0,dTAU,RS,TS,FREQ, &
       &          YZ,TEMP_AIR,N,THETA,THETAI,PHI,UI,UA,TT,ICON,RE)
 
 !===================================================================
@@ -54,7 +54,9 @@ contains
 
       REAL(r8) :: U(NU),DU(NU),THETA(NU),PHI(NUA),      &
       &     THETAI(NU,NU,NUA),UI(NU,NU,NUA),UA(NUA) 
-      REAL(r8) :: PHH(N,NU,L),RS(NU/2),W0(N,L),TAU(L)
+      REAL(r8) :: PHH(N,NU,L),RS(NU/2),W0(N,L)
+      REAL(r8) :: TAU(L+1,2*L+1)          ! Integrated ptical depth at each LOS point for each tangent height 
+      REAL(r8) :: dTAU(L)                 ! Optical depth increment at each layer 
 
       REAL(r8) :: TEMP_AIR(L)             ! MEAN AIR TEMPERATURE AT L
       REAL(r8) :: YZ(L+1)                 ! PRESSURE HEIGHT (km)
@@ -79,7 +81,7 @@ contains
                                           ! 2 = DEFAULT
                                           ! 3 = NEAR SIDE CLOUD ONLY
 
-      REAL(r8) :: UAVE(L+1,L+1)             ! INCIDENT ANGLES FOR EACH TANGENT HT
+      REAL(r8) :: UAVE(L+1,L+1)           ! INCIDENT ANGLES FOR EACH TANGENT HT
       REAL(r8) :: UEFF                    ! EFFECTIVE U BETWEEN K AND K+1
 
       REAL(r8) :: ITS0                    ! NO. OF MAXIMUM ITERATIONS
@@ -120,8 +122,7 @@ contains
 !-----------------------------------------------------
 !     CALCULATE EQUIVALENT U FOR EACH TANGENT HEIGHT
 !----------------------------------------------------
-
-
+      Tau=0._r8
       DO I=1,NT
          LMIN(I)=1
          if (zt(i) .ge. 0._r8) then
@@ -143,7 +144,18 @@ contains
             ENDIF
 
          ENDDO
-      ENDDO
+!---------------------------------------------------
+!     Calculate integrated optical depth
+!---------------------------------------------------
+!         Do K=L-1,LMIN(I)-1,-1
+!         K1=L+1-K
+!         Tau(I,K1)=Tau(I,K1-1)+dTau(K)/UAVE(I,K)
+!         Enddo
+!         Tau(I,L+LMIN(I))=Tau(I,L-LMIN(I)+1)
+!         Do K=LMIN(I),L
+!         Tau(I,K+L+1)=Tau(I,K+L)+dTau(K)/UAVE(I,K)
+!         Enddo
+      ENDDO    ! end of tangent height
 
 !      print*,'here again'
 !------------------------------------------------
@@ -224,8 +236,8 @@ contains
 
             tsource=(1-WW0)*TEMP(K)+WK
 
-            TB(I,K)=TB(I,K+1)*EXP(-TAU(K)/UEFF)+           &
-     &              (1._r8-EXP(-TAU(K)/UEFF))*tsource
+            TB(I,K)=TB(I,K+1)*EXP(-dTAU(K)/UEFF)+           &
+     &              (1._r8-EXP(-dTAU(K)/UEFF))*tsource
 
  1100 CONTINUE
 
@@ -233,8 +245,8 @@ contains
 !     DETERMINE SURFACE REFLECTION 
 !-----------------------------------------------------------------------
       DO J=1,NU/2
-        TB0(J)=TS*(1._r8-RS(J))+TB(J+NU/2,1)*RS(J)
-	TB(J,1) = TB0(J)
+         TB0(J)=TS*(1._r8-RS(J))+TB(J+NU/2,1)*RS(J)
+         TB(J,1) = TB0(J)
       ENDDO
     
 !------------------------------------
@@ -254,8 +266,8 @@ contains
 
            tsource=(1-WW0)*TEMP(K)+WK
 
-           TB(I,K+1)=TB(I,K)*EXP(-TAU(K)/UEFF)+      &
-     &               (1._r8-EXP(-TAU(K)/UEFF))*tsource
+           TB(I,K+1)=TB(I,K)*EXP(-dTAU(K)/UEFF)+      &
+     &               (1._r8-EXP(-dTAU(K)/UEFF))*tsource
 
  1200 CONTINUE
 
@@ -302,14 +314,17 @@ contains
             WW0=WW0+W0(ISPI,K1)
          END DO
 
-         tsource=(1._r8-WW0)*TEMP(K1)+WK 
+         D1= TEMP(K1)
+! The second term takes into account temperature slope  (causing error < 0.1K)
+         D2= (TEMP(K1+1)-TEMP(K1))*dTau(K1)/UU/2
+         tsource=(1._r8-WW0)*D1+WK 
 
          IF (ICON .eq. 3) THEN
-            tsource=( TEMP(K1)+TEMP(K1+1) )/2._r8 ! NO CLOUD AFTER TANGENT POINT
+            tsource=D1 ! NO CLOUD AFTER TANGENT POINT
          ENDIF
 
-         TT(ITT,K1)=TT(ITT,K1+1)*EXP(-TAU(K1)/UU)+  &
-     &              (1._r8-EXP(-TAU(K1)/UU))*tsource
+         TT(ITT,K1)=TT(ITT,K1+1)*EXP(-dTAU(K1)/UU)+  &
+     &        (1._r8-EXP(-dTAU(K1)/UU))*tsource - D2*(1._r8-WW0)
 
  2000 CONTINUE
 
@@ -345,10 +360,12 @@ contains
             WW0=WW0+W0(ISPI,K)
          END DO
 
-         tsource= (1._r8-WW0)*TEMP(K)+WK
-
-         TT(ITT,K+1)=TT(ITT,K)*EXP(-TAU(K)/UU)+          &
-     &                (1._r8-EXP(-TAU(K)/UU))*tsource
+         D1= TEMP(K)
+! The second term takes into account temperature slope (causing error < 0.1K)
+         D2= (TEMP(K+1)-TEMP(K))*dTau(K1)/UU/2
+         tsource=(1._r8-WW0)*D1+WK 
+         TT(ITT,K+1)=TT(ITT,K)*EXP(-dTAU(K)/UU)+  &
+     &        (1._r8-EXP(-dTAU(K)/UU))*tsource - D2*(1._r8-WW0)
 
  3000 CONTINUE
   
@@ -371,6 +388,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.9  2002/10/08 17:08:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.8  2002/08/19 22:21:53  jonathan
 ! debug stuff
 !
