@@ -11,7 +11,8 @@
 #     
 #     ((1)not done if I am called with -nc option)
 #     these get written to .configure
-# (2) Create a new directory ./$MLSCONFG in parallel with ./platforms; then
+# (2) Create a new directory $mcfg_dir/$MLSCONFG
+#      in parallel with $plat_dir/platforms; then
 #     put Makefile in it created from appropriate 2 files in platforms;
 #     e.g., say $MLSCONFG is NAG.Linux
 #     this Makefile will then contain the following lines:
@@ -27,7 +28,7 @@
 #         (etc.)
 #
 #     *.o, *.mod, etc. files will go in this new directory
-#     ((2) not done if ./platforms directory fails to exist)
+#     ((2) not done if $plat_dir/platforms directory fails to exist)
 #
 #        O p t i o n s
 #  -h[elp]              (if present) Help (a work in progress)
@@ -35,13 +36,16 @@
 #  -p platform_name     Name of computer or OS (Linux , sun, or sgi)
 #  -dc conf_dir         Directory where .configuration file is to be stored
 #  -pc plat_dir         Directory where platforms directory to be found
+#                        (defaults to ./)
+#  -mc mcfg_dir         Directory where $MLSCONFG directory will be created
+#                        (defaults to ./)
 #  -nc                  (if present) Don't query nor change configuration
 #  -nd                  (if present) Don't delete ./$MLSCONFG if it already exists
 #  -pv                  (if present) Change PVM and FFTW settings
 #  -fl                  (if present) Change default FOPTS and LDOPTS
 #  -cf file_name        (if present) Use file_name instead of .configure
 #
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -683,6 +687,7 @@ MLSCFILE=.configure
 
 conf_dir="./"
 plat_dir="./"
+mcfg_dir="./"
 get_confg="true"
 del_exist_dir="true"
 chngd_confg="false"
@@ -755,6 +760,11 @@ while [ "$1" != "" ] ; do
 
 	-pc )
 	    plat_dir=$2
+	    shift
+	;;
+
+	-mc )
+	    mcfg_dir=$2
 	    shift
 	;;
 
@@ -944,20 +954,20 @@ made_new_dir="false"
 if [ "$MLSCONFG" = "." ] ; then
 	echo "MLSCONFG not yet defined--still $MLSCONFG"
 elif [ "$del_exist_dir" != "true" ] ; then
-	if [ ! -d $plat_dir/$MLSCONFG ] ; then
-        mkdir $plat_dir/$MLSCONFG
+	if [ ! -d $mcfg_dir/$MLSCONFG ] ; then
+        mkdir $mcfg_dir/$MLSCONFG
 			made_new_dir="true"
 	fi
-elif [ -d $plat_dir/$MLSCONFG ] ; then
-#	echo "Clearing out directory `pwd`$plat_dir/$MLSCONFG"
+elif [ -d $mcfg_dir/$MLSCONFG ] ; then
+#	echo "Clearing out directory `pwd`$mcfg_dir/$MLSCONFG"
 #	echo "(Be careful that this is not too ambitious)"
-	chmod u+w $plat_dir/$MLSCONFG/*
-#	rm -f $plat_dir/$MLSCONFG/*.o
-#	rm -f $plat_dir/$MLSCONFG/*.mod
-#	rm -f $plat_dir/$MLSCONFG/Makefile
-	rm -f $plat_dir/$MLSCONFG/*
+	chmod u+w $mcfg_dir/$MLSCONFG/*
+#	rm -f $mcfg_dir/$MLSCONFG/*.o
+#	rm -f $mcfg_dir/$MLSCONFG/*.mod
+#	rm -f $mcfg_dir/$MLSCONFG/Makefile
+	rm -f $mcfg_dir/$MLSCONFG/*
 else
-        mkdir $plat_dir/$MLSCONFG
+        mkdir $mcfg_dir/$MLSCONFG
 			made_new_dir="true"
 fi
 
@@ -971,10 +981,11 @@ if [ ! -f $plat_dir/platforms/targets ] ; then
 	exit
 fi
 
-cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSCONFG \
+       $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
 
 if [ "$made_new_dir" = "true" ] ; then
-	echo "Configured mls to use $plat_dir/platforms/$MLSCONFG "
+	echo "Configured mls to use $mcfg_dir/$MLSCONFG "
 	echo "(This is where your object files, .mod files, libraries,"
 	echo "and executable programs will be created)"
 	echo "To build the software, enter the 'make' command again"
@@ -985,6 +996,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.21  2001/09/04 23:33:35  pwagner
+# Added Sun's own f95 option for MLSF95
+#
 # Revision 1.20  2001/08/15 20:57:26  pwagner
 # Fixed bug--MLSF95 vand MLSPLAT were undefined
 #
