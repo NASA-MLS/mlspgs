@@ -76,8 +76,7 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_HEIGHT              = f_hdfname + 1
   integer, public, parameter :: F_HGRID               = f_height + 1
   integer, public, parameter :: F_INTERPOLATIONFACTOR = f_hGrid + 1
-  integer, public, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
-  integer, public, parameter :: F_LENGTH              = f_jacobian + 1
+  integer, public, parameter :: F_LENGTH              = f_interpolationFactor + 1
   integer, public, parameter :: F_MAXITERATIONS       = f_length + 1
   integer, public, parameter :: F_MATRIX              = f_maxIterations + 1
   integer, public, parameter :: F_MEASUREMENTS        = f_matrix + 1
@@ -342,7 +341,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationfactor' )
-    field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_length) =              add_ident ( 'length' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
     field_indices(f_maxIterations) =       add_ident ( 'maxiterations' )
@@ -417,6 +415,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
+    spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_time) =                 add_ident ( 'time' )
     spec_indices(s_tpfill) =               add_ident ( 'tpfill' )
@@ -623,7 +622,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_measurements, s+s_vector, n+n_field_spec, &
              begin, f+f_weight, s+s_vector, n+n_field_spec, &
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
-             begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_outputCovariance, s+s_vector, s+s_matrix, &
                     n+n_field_spec, &
@@ -729,6 +727,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.6  2001/01/17 01:29:51  vsnyder
+! Define s_subset's string table entry
+!
 ! Revision 2.5  2001/01/10 21:02:44  vsnyder
 ! Add radiometer names, stuff for "retrieve" and "subset"
 !
