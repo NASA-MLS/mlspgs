@@ -28,11 +28,6 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! --------------------------------------------------------------------------
 
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  ! The foolowing are most useful for internal development
-  ! They may be set to FALSE to spare the SIPS possibly unwanted output
-  logical            :: ECHO_GLOBAL_STNGS = .false. ! Show l2cf, pcf params in log?
-  logical            :: LOG_TO_STDOUT = .true. ! Send log msgs to stdout?
-
   ! Set each of the following to TRUE before delivering level 2 to sips
   logical            :: PUNISH_FOR_INVALID_PCF=.false. 
   logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false. 
@@ -75,6 +70,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.8  2001/05/15 23:46:08  pwagner
+! Removed 2 settings from MLSL2Opts; now in switches
+!
 ! Revision 2.7  2001/05/11 23:48:23  pwagner
 ! Changed to not echo globals; added note on SIPS
 !
