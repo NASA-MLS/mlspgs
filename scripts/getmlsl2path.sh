@@ -2,7 +2,12 @@
 # $Id$
 # This shell script prints the name of the desired directory for a given file type
 # First work out where we are.
-MACHINE=$(cat ~/machine.id)
+if [ -f "$MACHINE" ]
+then
+  MACHINE=$(cat ~/machine.id)
+else
+  MACHINE="desktop"
+fi
 SUMS=0
 
 VERSION=v1.0.1
@@ -140,6 +145,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.26  2004/03/10 22:36:41  livesey
+# Added scramjet
+#
 # Revision 1.25  2004/02/09 19:23:03  livesey
 # Made more lightspeed ready, gets machine name from ~/machine.id file.
 #
