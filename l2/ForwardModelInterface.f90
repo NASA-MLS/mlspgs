@@ -1062,9 +1062,9 @@ contains ! =====     Public Procedures     =============================
           do i = 1, noUsedChannels
             ch = usedChannels(i)
             call Freq_Avg ( frequencies,                           &
-              &       centerFreq+sense*FilterShapes(i)%FilterGrid, &
-              &       FilterShapes(i)%FilterShape, RadV, noFreqs,  &
-              &       Size(FilterShapes(i)%FilterGrid), Radiances(ptg_i,ch) )
+              &       centerFreq+sense*FilterShapes(ch)%FilterGrid, &
+              &       FilterShapes(ch)%FilterShape, RadV, noFreqs,  &
+              &       Size(FilterShapes(ch)%FilterGrid), Radiances(ptg_i,ch) )
           end do
         else
           Radiances(ptg_i,usedChannels) = RadV(1:noFreqs)
@@ -1081,9 +1081,9 @@ contains ! =====     Public Procedures     =============================
                 do surface = 1, temp%template%noSurfs
                   ToAvg => k_temp_frq%values(1:noFreqs,surface,instance)
                   call Freq_Avg ( frequencies,                        &
-                    &        centerFreq+sense*FilterShapes(i)%FilterGrid, &
-                    &        FilterShapes(i)%FilterShape, real(ToAvg,r8), &
-                    &        noFreqs, Size(FilterShapes(i)%FilterGrid), r )
+                    &        centerFreq+sense*FilterShapes(ch)%FilterGrid, &
+                    &        FilterShapes(ch)%FilterShape, real(ToAvg,r8), &
+                    &        noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
                   k_temp(ch,ptg_i,surface,instance) = r
                 end do                  ! Surface loop
               end do                    ! Instance loop
@@ -1110,9 +1110,9 @@ contains ! =====     Public Procedures     =============================
                   do surface = 1, f%template%noSurfs
                     ToAvg => k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
                     call Freq_Avg ( frequencies,                      &
-                      &          centerFreq+sense*FilterShapes(i)%FilterGrid, &
-                      &          FilterShapes(i)%FilterShape, real(ToAvg,r8),  &
-                      &          noFreqs, Size(FilterShapes(i)%FilterGrid), r )
+                      &          centerFreq+sense*FilterShapes(ch)%FilterGrid, &
+                      &          FilterShapes(ch)%FilterShape, real(ToAvg,r8),  &
+                      &          noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
                     k_atmos(ch,ptg_i,surface,instance,specie) = r
                   end do                ! Surface loop
                 end do                  ! Instance loop
@@ -1227,7 +1227,7 @@ contains ! =====     Public Procedures     =============================
     if ( associated(beta_path) ) then
       do i = 1, size(beta_path,1)
         do j = 1, size(beta_path,2)
-          DEALLOCATE ( beta_path(i,j)%values, beta_path(i,j)%t_power, &
+          deallocate ( beta_path(i,j)%values, beta_path(i,j)%t_power, &
             & beta_path(i,j)%dbeta_dw, beta_path(i,j)%dbeta_dn, &
             & beta_path(i,j)%dbeta_dnu, STAT=k )
         end do
@@ -1432,6 +1432,10 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.96  2001/04/19 20:42:34  livesey
+! Minor bug in calls to freq_avg fixed.  Going to change agains soon
+! anyway
+!
 ! Revision 2.95  2001/04/19 20:31:14  livesey
 ! Removed stuff that destroyed ifm (now upto calling code, e.g. in
 ! SidsModule) to do it.  Also added sideband folding loop, works
