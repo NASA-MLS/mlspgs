@@ -5,16 +5,6 @@ module EXPR_M
 
 ! Evaluate an expression from its tree.
 
-  use DECLARATION_TABLE, only: DECLARED, DECLS, EMPTY, ENUM_VALUE, &
-                               EXPRN, GET_DECL, NAMED_VALUE, &
-                               NUM_VALUE, RANGE, STR_RANGE, STR_VALUE, &
-                               UNDECLARED, UNITS_NAME
-  use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
-  use STRING_TABLE, only: FLOAT_VALUE
-  use TOGGLES, only: CON, TOGGLE
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: NODE_ID, NSONS, SUB_ROSA, SUBTREE
-  use TREE_TYPES ! Everything, especially everything beginning with N_
   implicit NONE
   private
   public :: EXPR
@@ -31,6 +21,21 @@ contains ! ====     Public Procedures     ==============================
   ! -------------------------------------------------------  EXPR  -----
   recursive subroutine EXPR ( ROOT, UNITS, VALUE, TYPE, SCALE )
   ! Analyze an expression, return its type, units and value.
+
+    use DECLARATION_TABLE, only: DECLARED, DECLS, EMPTY, ENUM_VALUE, &
+                                 EXPRN, GET_DECL, NAMED_VALUE, &
+                                 NUM_VALUE, RANGE, STR_RANGE, STR_VALUE, &
+                                 UNDECLARED, UNITS_NAME
+    use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
+    use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: FLOAT_VALUE
+    use TOGGLES, only: CON, TOGGLE
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
+      & SUBTREE
+    use TREE_TYPES ! Everything, especially everything beginning with N_
+
     integer, intent(in) :: ROOT         ! Root of expression subtree
     integer, intent(out) :: UNITS(2)    ! Units of expression value -- UNITS(2)
                                         ! is PHYQ_INVALID if ROOT is not a
@@ -113,7 +118,15 @@ contains ! ====     Public Procedures     ==============================
         case ( n_into )
           value = value2 / value
         case default
-          ! Shouldn't get here -- presumably checked already
+          call output ( '***** At ', from_where = "Expr_M" )
+          call print_source ( source_ref(root) )
+          call output ( ': ' )
+          call dump_tree_node ( root, 0 )
+          call output ( ' is not supported.', advance='yes' )
+          ! There's no way to return an error, so return something
+          type = empty
+          units = PHYQ_INVALID
+          value = 0.0
         end select
       end if
     end select
@@ -126,6 +139,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.7  2004/01/17 03:04:48  vsnyder
+! Provide for functions in expressions
+!
 ! Revision 2.6  2004/01/14 18:32:58  vsnyder
 ! Stuff for Algebra module
 !

@@ -21,8 +21,8 @@ module DECLARATION_TABLE
 
   public :: ALLOCATE_DECL, DEALLOCATE_DECL, DECLARATION, DECLARE
   public :: DECLARED, DECLS, DUMP_DECL, DUMP_1_DECL, EMPTY
-  public :: ENUM_VALUE, EXPRN, EXPRN_M, EXPRN_V, FIELD, GET_DECL, INIT_DECL
-  public :: LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE
+  public :: ENUM_VALUE, EXPRN, EXPRN_M, EXPRN_V, FIELD, FUNCTION, GET_DECL
+  public :: INIT_DECL, LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, NUM_VALUE
   public :: PRIOR_DECL, RANGE, REDECLARE
   public :: SECTION, SECTION_NODE, STR_RANGE, STR_VALUE, SPEC, TREE_NODE
   public :: TYPE_MAP, TYPE_NAME, TYPE_NAMES, UNDECLARED, UNITS_NAME
@@ -37,6 +37,7 @@ module DECLARATION_TABLE
                               !            Index > offset in vector database
                               !            0 = double-precision value only
                               ! "field" => Index of field
+                              ! "function" => Index of function
                               ! "section" => Index of section
                               ! "spec" => Index of specification
     integer :: TREE           ! Index of declaration in the tree
@@ -56,37 +57,40 @@ module DECLARATION_TABLE
   integer, parameter :: EXPRN_V = 4     ! The "tree" field points to a
                                         ! vector expression
   integer, parameter :: FIELD = 5       ! Field of a structure definition
-  integer, parameter :: LABEL = 6       ! A "name:" label for a stru
-  integer, parameter :: LOG_VALUE = 7   ! Entity is a logical value, value is
+  integer, parameter :: FUNCTION = 6    ! Name is a built-in function
+  integer, parameter :: LABEL = 7       ! A "name:" label for a stru
+  integer, parameter :: LOG_VALUE = 8   ! Entity is a logical value, value is
                                         ! .false. if the "value" field is zero.
-  integer, parameter :: NAMED_VALUE = 8 ! X = expr
-  integer, parameter :: NUM_VALUE = 9   ! Entity is a numeric value, value is
+  integer, parameter :: NAMED_VALUE = 9 ! X = expr
+  integer, parameter :: NUM_VALUE = 10  ! Entity is a numeric value, value is
                                         ! in the "value" field"
-  integer, parameter :: RANGE = 10      ! A range -- not used in decl table
-  integer, parameter :: SECTION = 11    ! Name of a section
-  integer, parameter :: SECTION_NODE = 12 ! Tree node of a section
-  integer, parameter :: STR_RANGE = 13  ! String range -- for dates
-  integer, parameter :: STR_VALUE = 14  ! The string is the value
-  integer, parameter :: SPEC = 15       ! Name of a specification, e.g. vGrid
-  integer, parameter :: TREE_NODE = 16  ! Name of a tree node, e.g. n_plus
-  integer, parameter :: TYPE_NAME = 17  ! Name of a data type
-  integer, parameter :: UNDECLARED = 18 ! Entity is undeclared
-  integer, parameter :: UNITS_NAME = 19 ! Name is a units name, e.g. km, hPa
+  integer, parameter :: RANGE = 11      ! A range -- not used in decl table
+  integer, parameter :: SECTION = 12    ! Name of a section
+  integer, parameter :: SECTION_NODE = 13 ! Tree node of a section
+  integer, parameter :: STR_RANGE = 14  ! String range -- for dates
+  integer, parameter :: STR_VALUE = 15  ! The string is the value
+  integer, parameter :: SPEC = 16       ! Name of a specification, e.g. vGrid
+  integer, parameter :: TREE_NODE = 17  ! Name of a tree node, e.g. n_plus
+  integer, parameter :: TYPE_NAME = 18  ! Name of a data type
+  integer, parameter :: UNDECLARED = 19 ! Entity is undeclared
+  integer, parameter :: UNITS_NAME = 20 ! Name is a units name, e.g. km, hPa
                                         ! Scale to "canonical" units of the
                                         ! name is in "value", e.g. km = 1000.0
 
   character(len=*), parameter :: TYPE_NAMES(empty:units_name) = &
   (/ 'empty     ', 'enum_value', 'exprn     ', 'exprn_m   ', 'exprn_v   ', &
-     'field     ', 'label     ', 'log_value ', 'nam_value ', 'num_value ', &
-     'range     ', 'section   ', 'section_n ', 'str_range ', 'str_value ', &
-     'spec      ', 'tree      ', 'type_name ', 'undeclared', 'units     ' /)
+     'field     ', 'function  ', 'label     ', 'log_value ', 'nam_value ', &
+     'num_value ', 'range     ', 'section   ', 'section_n ', 'str_range ', &
+     'str_value ', 'spec      ', 'tree      ', 'type_name ', 'undeclared', &
+     'units     ' /)
 
 ! Mapping from declaration table types to data types:
   integer, parameter :: TYPE_MAP(empty:units_name) = &
-  (/ 0,               0, 0,         0, 0, &
-     0,               0, t_boolean, 0, t_numeric, &
-     t_numeric_range, 0, 0,         0, t_string, &
-     0,               0, 0,         0, 0 /)
+  (/ 0,         0,               0, 0,         0, &      
+     0,         0,               0, t_boolean, 0, &   
+     t_numeric, t_numeric_range, 0, 0,         0, &
+     t_string,  0,               0, 0,         0, &
+     0 /)
 
 ! -----     Private declarations     -----------------------------------
   type(decls), save, allocatable :: DECL_TABLE(:)
@@ -366,6 +370,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.7  2004/01/17 03:04:48  vsnyder
+! Provide for functions in expressions
+!
 ! Revision 2.6  2004/01/16 23:51:23  vsnyder
 ! Add more declaration table types for Algebra
 !
