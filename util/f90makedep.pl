@@ -434,6 +434,7 @@ sub MakeDependsf90 {
    local($value);
    local($BUILD_PART1) = '$(UTILDIR)/newAifBdiff.sh -a ';
    local($BUILD_PART2) = '$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/';
+   local($BUILD_PART3) = ' $(FAFTER)';
    #
    # Associate each module with the name of the file that contains it
    #
@@ -623,6 +624,7 @@ sub MakeDependsf90 {
              print MAKEFILE "$modulename_by_file{$objfile}.mod ";
              print MAKEFILE $BUILD_PART2;
              print MAKEFILE $file;
+             print MAKEFILE $BUILD_PART3;
              print MAKEFILE "\n";
 #             print MAKEFILE "$objfile: $file\n";
 #             print MAKEFILE "\t";
@@ -630,6 +632,7 @@ sub MakeDependsf90 {
 #             print MAKEFILE "$modulename_by_file{$objfile}.mod ";
 #             print MAKEFILE $BUILD_PART2;
 #             print MAKEFILE $file;
+#             print MAKEFILE $BUILD_PART3;
 #             print MAKEFILE "\n";
            }
          }
@@ -651,6 +654,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.6  2002/06/04 17:04:06  pwagner
+# fixed bare word assignment value =
+#
 # Revision 1.5  2002/05/29 22:19:49  pwagner
 # New changes--hurriedly committed because of filesys errors
 #
