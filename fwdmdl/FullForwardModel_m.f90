@@ -1834,10 +1834,10 @@ contains
       end if
       do ptg_i = 2, no_tan_hts - 1
         ! this is a temporary fix
-        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
+        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) ) then
           & ptg_angles(ptg_i) = (ptg_angles(ptg_i-1) + ptg_angles(ptg_i+1))/2
-        if ( index(switches,'ptg') /= 0 ) then
-          call Dump ( ptg_angles, 'ptg_angles (after a patch)' )
+          if ( index(switches,'ptg') /= 0 ) &
+            & call Dump ( ptg_angles, 'ptg_angles (after a patch)' )
         end if
 !        if ( ptg_angles(ptg_i) < ptg_angles(ptg_i-1) )  &
 !          & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -3082,6 +3082,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.216  2004/08/05 20:53:50  vsnyder
+! More PFA preparations, some cannonball polishing
+!
 ! Revision 2.215  2004/08/05 20:24:00  livesey
 ! Added ptg switch to dump ptg_angles
 !
