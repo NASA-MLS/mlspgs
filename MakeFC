@@ -2,13 +2,13 @@
 #	targets: configure, clean, clean_objs, depends, tar, and SUBDIRS
 #	true targets: the same make commands in $(SUBDIRS)
 #	special treatment is reserved for srclib which contains
-#	shared sources, but no Makefile
+#	shared sources, but no Makefile: see 'depends' below
 #
 #special case:
 #the 1st time through, before .configure exists yet,
 #execute $(MLSBIN)/configure to create .configure
 
-#This file name is usu. Makefile but may be different;
+#This file name is usu. named Makefile but may be different;
 #the same file names must be used in $(SUBDIRS)
 #i.e., if you call are building this mls
 #by calling make with a different Makefile name,
@@ -37,18 +37,29 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
-# l3 not yet configurable
-#SUBDIRS = lib l2 l3
+#----------------------------------------------------------
+#          Default levels
+#You may choose whether "make -f MakeFC' defaults to making
+#only l2 or all of l1 l2 and l3
+#by commenting out exactly one of the following assignments
+#(the prerequisite lib will always be made)
 
-SUBDIRS = lib l2
+#comment out the following to make only l2
+LEVELS = l1 l2 l3
+
+#comment out the following to make l1, l2, and l3
+#LEVELS = l2
+#----------------------------------------------------------
+
+SUBDIRS = lib $(LEVELS)
 
 subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -f $(MakeFName) -C $@
 
-l2: lib
-#l3: lib
+$(LEVELS): lib
+
 tar: clean
 
 .PHONY: configure depends subdirs $(SUBDIRS) clean clean_objs tar
@@ -94,6 +105,9 @@ tar:
 	tar hcvzf srclib.tgz srclib
 
 # $Log$
+# Revision 1.5  2000/11/06 23:26:58  pwagner
+# Calculates srclib dependency
+#
 # Revision 1.4  2000/11/02 23:23:45  pwagner
 # clean_objs option now available
 #
