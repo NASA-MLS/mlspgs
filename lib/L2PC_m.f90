@@ -313,10 +313,10 @@ contains ! ============= Public Procedures ==========================
             &  'noChans, noSurfs, noInstances'
           write (unit,*) qt%coherent, qt%stacked, &
             &  'coherent, stacked'
-          if ( all (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
-            & .and. (vector==1) .and. (qt%quantityType /= l_ptan) ) &
-            &   call MLSMessage(MLSMSG_Error,ModuleName, &
-            &     "Only zeta coordinates allowed (or none) for xStar.")
+!           if ( all (qt%verticalCoordinate /= (/ l_none, l_zeta /)) &
+!             & .and. (vector==1) .and. (qt%quantityType /= l_ptan) ) &
+!             &   call MLSMessage(MLSMSG_Error,ModuleName, &
+!             &     "Only zeta coordinates allowed (or none) for xStar.")
           write (unit,*) 'surfs'
           write (unit, rFmt) qt%surfs
           write (unit,*) 'phi'
@@ -721,6 +721,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.29  2002/03/13 01:28:48  livesey
+! Commented out an error message I think I don't need
+!
 ! Revision 2.28  2002/02/08 22:51:28  livesey
 ! Minor changes and tidy up
 !
