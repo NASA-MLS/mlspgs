@@ -9,7 +9,8 @@ module ForwardModelSupport
   implicit none
   private
   public :: ConstructForwardModelConfig, ForwardModelGlobalSetup, &
-    & CreateBinSelectorFromMLSCFInfo
+    & CreateBinSelectorFromMLSCFInfo, printForwardModelTiming, &
+    & resetForwardModelTiming
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -674,6 +675,53 @@ contains ! =====     Public Procedures     =============================
 
   end function ConstructForwardModelConfig
 
+  ! ---------------------- print mean, std_dev for timing FullforwardModel ---
+  subroutine printForwardModelTiming (FWModelConfig)
+                                                                                
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use Output_m, only: BLANKS, Output
+                                                                                
+    ! Dummy argument
+    type(ForwardModelConfig_T), intent(inout) :: FWModelConfig
+                                                                                
+    ! Local variables
+    real :: mean, mean_sqDelta, meanTimes, std_dev
+
+    mean = FWModelConfig%sum_DeltaTime/FWModelConfig%Ntimes
+    mean_sqDelta =  FWModelConfig%sum_squareDeltaTime / FWModelConfig%Ntimes 
+    if (FWModelConfig%Ntimes <= 1) then
+       meanTimes = 1.0 
+    else
+       meanTimes = FWModelConfig%Ntimes / (FWModelConfig%Ntimes - 1)
+    end if
+    std_dev = sqrt(abs(meanTimes * (mean_sqDelta - (mean*mean)))) 
+    call output ( "======= printForwardModelTiming =========", advance = 'yes')
+    call output ( " ", advance = 'yes')
+    call output ( "Ntimes = ")
+    call output ( FWModelConfig%Ntimes, advance = 'yes' )
+    call output ( "mean = ")
+    call output ( mean, advance = 'yes' )
+    call output ( "standard_deviation = ")
+    call output ( std_dev, advance = 'yes' )
+    call output ( " ", advance = 'yes')
+    call output ( "======= end printForwardModelTiming =====", advance = 'yes')
+                                                                                
+  end subroutine printForwardModelTiming
+                                                                                
+  ! ----------------------- reset the values for timing FullforwardModel -----
+  subroutine resetForwardModelTiming (FWModelConfig)
+                                                                                
+    use ForwardModelConfig, only: ForwardModelConfig_T
+                                                                                
+    ! Dummy argument
+    type(ForwardModelConfig_T), intent(inout) :: FWModelConfig
+                                                                                
+    FWModelConfig%Ntimes = 0
+    FWModelConfig%sum_DeltaTime = 0.0
+    FWModelConfig%sum_squareDeltaTime = 0.0
+                                                                                
+  end subroutine resetForwardModelTiming
+
   ! =====     Private Procedures     =====================================
   ! ----------------------------------------------  AnnounceError  -----
   subroutine AnnounceError ( Code, where, FieldIndex, extraMessage )
@@ -749,6 +797,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.66  2003/06/30 22:55:01  cvuu
+! Find mean, std dev timing of fullForwardModel calls
+!
 ! Revision 2.65  2003/06/26 23:15:07  vsnyder
 ! Reinstate revision 2.63, which inscrutably got lost
 !
