@@ -17,7 +17,8 @@
 # to point to the actual location of Perl on your system.
 #
 # P.A. Wagner (April 25 2001)
-# (see mlsconfigure.sh for copyright statement)
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 #
 # "$Id$"
 
@@ -143,19 +144,7 @@ print STDERR "Extra source directory: $extra_source_dir \n" unless !($debug);
    }     # end while loop over source_dirs
    
    #
-   # chop($cwd = \`pwd\`);
-   # The above line, although found among man pages, won't pass muster
-   #
-   # The following is a poor way to fill $cwd with the current working directory
-   # Ask a more perl-savvy programmer how to do this w/o creating temp file
-     system "pwd > temp";
-     open (TEMPFILE, temp);
-     while (<TEMPFILE>) {
-       chop;
-       $cwd = $_;
-       }
-     unlink temp;
-
+   chomp($cwd = `pwd`);
    $num_sources = 0;
 
    $num_source_dirs = $#ARGV;
@@ -276,10 +265,12 @@ print STDERR "modules: @modules \n \n" unless !($debug);
    }
   }
 # $Log$
+# Revision 1.3  2003/09/24 19:18:42  pwagner
+# Restored to proper functioning despite new perl
+#
 # Revision 1.2  2001/11/26 23:46:45  pwagner
 # Now works better with Absoft--test lower-case against module names
 #
 # Revision 1.1  2001/05/01 17:03:31  pwagner
 # First commit
-#
 #

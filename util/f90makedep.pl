@@ -78,10 +78,10 @@
 #      Options
 # -s pattern        suffix to be matched by source files
 # -o pattern        suffix to be matched by object files
-# -p text           text to be split among several lines
+# -p text           text to be split among several lines; Usage (3)
 # -d char           delimiter between words of text
 # -t char           line termination at split
-# -f file_name      file containing text to be split
+# -f file_name      file containing text to be split; Usage (4)
 # -db file_name     don't add build commands below target file_name
 #                    if "(1)-mod" variant
 # -c char           comment character
@@ -89,7 +89,7 @@
 #                    with module names all in case (UPPER, lower)
 #
 # P.A. Wagner (May 15 2002)
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 # however ..
 # based on f90mkmf from H. Pumphrey (check that this is true in fact)
@@ -98,7 +98,7 @@
 # Cotopaxi (Consulting), Albuquerque, New Mexico
 # Bugs and limitations
 #(1) Does too much--should be split up into dependency maker and
-#     separate swiss army knife
+#     separate swiss army knife (especially usages (3) and (4))
 #(2) Still too specialized--works well only with NAG-like compilers
 #(3) Build commands used with (1)-mod variant are grotesque
 #    shouldn't they be configurable at least?
@@ -465,18 +465,7 @@ sub MakeDependsf90 {
    #
    if ($ARG_DEPENDS) {
    #
-   # chop($cwd = \`pwd\`);
-   # The above line, although found among man pages, won't pass muster
-   #
-   # The following is a poor way to fill $cwd with the current working directory
-   # Ask a more perl-savvy programmer how to do this w/o creating temp file
-     system "pwd > temp";
-     open (TEMPFILE, temp);
-     while (<TEMPFILE>) {
-       chop;
-       $cwd = $_;
-       }
-     unlink temp;
+   chomp($cwd = `pwd`);
  #   Now loop over list of directories which are command-line arguments
     $arg_number = 0;
     while ($#ARGV >= $[) {
@@ -684,6 +673,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.11  2003/09/24 19:18:42  pwagner
+# Restored to proper functioning despite new perl
+#
 # Revision 1.10  2002/07/18 17:58:49  pwagner
 # .o now depends on file_name even if .mod mediated
 #
