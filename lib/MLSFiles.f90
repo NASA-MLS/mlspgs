@@ -269,6 +269,8 @@ contains
     ! In case of premature return
     theFileHandle = FH_ON_ERROR
     record_length = DEFAULTRECLEN
+    myPC = FH_ON_ERROR
+    returnStatus = 0           ! In case using Toolkit but supplied FileName
 
     if(present(versionNum)) then
       version = versionNum
@@ -276,8 +278,9 @@ contains
       version = 1
     endif
 
+   the_eff_mode = LowerCase(toolbox_mode(1:2))
+   
    if(UseSDPToolkit) then
-    the_eff_mode = LowerCase(toolbox_mode(1:2))
     your_version = version
    ! Using Toolkit
     if(present(thePC)) then
@@ -324,7 +327,6 @@ contains
       
    else
       myName = FileName
-      the_eff_mode = LowerCase(toolbox_mode(1:2))
       if(the_eff_mode == 'pg') the_eff_mode = 'op'
    endif
 
@@ -337,9 +339,11 @@ contains
        call output('File Name: ', advance='no')
        call blanks(2)
        call output(trim(myName), advance='yes')
-       call output('PCF-supplied number: ', advance='no')
-       call blanks(2)
-       call output(myPC, advance='yes')
+       if(UseSDPToolkit) then
+          call output('PCF-supplied number: ', advance='no')
+          call blanks(2)
+          call output(myPC, advance='yes')
+       endif
        call output('Case sensitive? ', advance='no')
        call blanks(2)
        call output(caseSensitive, advance='yes')
@@ -738,6 +742,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.25  2002/01/18 18:51:22  pwagner
+! Fixed bug when calling mls_open w/o toolkit
+!
 ! Revision 2.24  2002/01/18 00:53:37  pwagner
 ! Added inqswath, sfend, sfstart wrappers; not ready yet for hdf5
 !
