@@ -31,24 +31,25 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
 ! Plust interfaces for toolkit routines.
 
 ! Remarks:  This module contains include files required to use the toolkit.
-! At this point, a number of files were included that were no longer
-! supplied with the SDP toolkit. I (HCP) have commented out the lines 
-! in question. If this breaks your code, please work out why, and consider
-! which of the *CURRENT* toolkit include files are needed. 
+! Note that the include files with numbers in the names are generated 
+! automagically when you install the toolkit. They are *not* in the toolkit
+! tarball. If the toolkit has not installed properly on your system, those
+! files will not be present and hence you will find that this file will 
+! not compile
 
    INCLUDE 'PGS_CBP.f'
-!   INCLUDE 'PGS_CBP_6.f'
-!   INCLUDE 'PGS_CSC_4.f'
-!   INCLUDE 'PGS_EPH_5.f'
+   INCLUDE 'PGS_CBP_6.f'
+   INCLUDE 'PGS_CSC_4.f'
+   INCLUDE 'PGS_EPH_5.f'
    INCLUDE 'PGS_IO.f'
-!   INCLUDE 'PGS_IO_1.f'
-!   INCLUDE 'PGS_MEM_7.f'
+   INCLUDE 'PGS_IO_1.f'
+   INCLUDE 'PGS_MEM_7.f'
    INCLUDE 'PGS_PC.f'
-!   INCLUDE 'PGS_PC_9.f'
+   INCLUDE 'PGS_PC_9.f'
    INCLUDE 'PGS_SMF.f'
    INCLUDE 'PGS_TD.f'
-!   INCLUDE 'PGS_TD_3.f'
-!   INCLUDE 'PGS_MET_13.f'
+   INCLUDE 'PGS_TD_3.f'
+   INCLUDE 'PGS_MET_13.f'
    INCLUDE 'PGS_MET.f'
 
 
@@ -112,6 +113,10 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.3  2000/09/27 15:01:08  pumphrey
+! Reinstated "numbered" Toolkit include files now I understand
+! where they come from. (Duh. Groan.)
+!
 ! Revision 2.2  2000/09/26 14:18:02  pumphrey
 ! Changed an arg of PGS_PC_Getreference to INOUT.
 !
