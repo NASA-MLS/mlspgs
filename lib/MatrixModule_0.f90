@@ -1152,8 +1152,6 @@ contains ! =====     Public Procedures     =============================
       & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
     if ( b%ncols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
-    if ( any(shape(v) /= shape(p)) ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Vectors not compatible in MultiplyMatrixVector_0" )
     my_update = .false.
     if ( present(update) ) my_update = update
     if ( .not. my_update ) p = 0.0_r8
@@ -1198,9 +1196,6 @@ contains ! =====     Public Procedures     =============================
       & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
     if ( b%nrows /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
-! Why is this here?
-!     if ( any(shape(v) /= shape(p)) ) call MLSMessage ( MLSMSG_Error, &
-!       & ModuleName, "Vectors not compatible in MultiplyMatrixVector_0" )
     my_update = .false.
     if ( present(update) ) my_update = update
     my_diag = .true.
@@ -1213,7 +1208,7 @@ contains ! =====     Public Procedures     =============================
         v1 = b%r2(j-1)             ! (starting position in B%VALUES) - 1
         n = b%r2(j) - v1           ! how many values
         m = b%r1(j)                ! starting row subscript in B%VALUES
-        if ( my_diag ) then        ! do the whome matrix
+        if ( my_diag ) then        ! do the whole matrix
           do i = m, m+n-1          ! rows
             p(i) = p(i) + b%values(v1+i-m+1,1) * v(j)
           end do ! i = 1, n
@@ -1830,6 +1825,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.20  2001/04/30 23:44:25  vsnyder
+! Correct/remove some incorrect size tests in MultiplyMatrixVectorNoT
+!
 ! Revision 2.19  2001/04/30 17:47:18  livesey
 ! Reverted to original size of R2, the problem must be somewhere else.
 !
