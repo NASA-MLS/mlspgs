@@ -55,6 +55,7 @@ module FullForwardModel_m
   use Output_m, only: OUTPUT
   use ManipulateVectorQuantities, only: FindOneClosestInstance
   use Trace_M, only: Trace_begin, Trace_end
+  USE Make_Z_Grid_M, only: MAKE_Z_GRID
 
   use Dump_0, only: DUMP
 
@@ -88,7 +89,7 @@ contains ! ================================ FullForwardModel routine ======
 
     ! Define local parameters
     character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
-    integer, parameter :: NGP1=NG+1     ! NG + 1
+    integer, parameter :: Ngp1 = Ng+1     ! NG + 1
 
     ! Now define local variables, group by type and then
     ! alphabetically
@@ -109,19 +110,20 @@ contains ! ================================ FullForwardModel routine ======
     integer :: L                        ! Loop index and other uses ..
     integer :: JF                       ! Loop index and other uses ..
     integer :: MAF                      ! MAF under consideration
-    integer :: MAFTINSTANCE             ! Temperature instance closest to this MAF
+    integer :: MAFTINSTANCE             ! Temperature instance closest to 
+                                        ! this MAF
     integer :: MAXNOPTGFREQS            ! Used for sizing arrays
     integer :: MAXNOFFREQS              ! Max. no. frequencies for any molecule
     integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
     integer :: MAXSUPERSET              ! Max. value of superset
     integer :: MAXVERT                  ! Number of points in gl grid
     integer :: NL                       ! Number of lines
-    integer :: NLM1                     ! NLVL - 1
-    integer :: NLVL                     ! Size of integration grid
+    integer :: NLM1                     ! Nlvl - 1
+    integer :: Nlvl                     ! Size of integration grid
     integer :: NOFREQS                  ! Number of frequencies for a pointing
     integer :: NOMAFS                   ! Number of major frames
     integer :: NOMIFS                   ! Number of minor frames
-    integer :: NOSPECIES                ! Number of molecules under consideration
+    integer :: NOSPECIES                ! No. of molecules under consideration
     integer :: NO_MOL                   ! Number of major molecules (NO iso/vib)
     integer :: NOUSEDCHANNELS           ! How many channels are we considering
     integer :: NO_ELE                   ! Length of a gl path
@@ -138,7 +140,8 @@ contains ! ================================ FullForwardModel routine ======
     integer :: SIDEBANDSTOP             ! Loop limit
     integer :: SIGIND                   ! Signal index, loop counter
     integer :: SPECTAG                  ! A single spectag
-    integer :: SURFACETANGENTINDEX      ! Index in tangent grid of earth's surface
+    integer :: SURFACETANGENTINDEX      ! Index in tangent grid of earth's 
+                                        ! surface
     integer :: THISSIDEBAND             ! Loop counter for sidebands
     integer :: WHICHPOINTINGGRID        ! Index into the pointing grids
     integer :: WINDOWFINISH             ! End of temperature `window'
@@ -163,7 +166,7 @@ contains ! ================================ FullForwardModel routine ======
     integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
 
-    integer, dimension(:), pointer :: GRIDS ! Heights in ptgGrid for each tangent
+    integer, dimension(:), pointer :: GRIDS !Heights in ptgGrid for each tangent
     integer, dimension(:), pointer :: USEDCHANNELS ! Which channel is this
     integer, dimension(:), pointer :: USEDSIGNALS ! Which signal is this channel from
     integer, dimension(:), pointer :: SUPERSET ! Used for matching signals
@@ -188,8 +191,9 @@ contains ! ================================ FullForwardModel routine ======
     logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
 
-    logical, dimension(:), pointer :: T_DERIV_FLAG  ! Array of Flags indicating which 
-                                                    ! Temp. coefficient to process
+    logical, dimension(:), pointer :: T_DERIV_FLAG  ! Array of Flags indicating
+                                                    ! which Temp. coefficient 
+                                                    ! to process
 
     real(r8) :: FRQ                     ! Frequency
     real(r8) :: CENTERFREQ              ! Of band
@@ -198,7 +202,8 @@ contains ! ================================ FullForwardModel routine ======
     real(rp) :: DEL_TEMP   ! Temp. step-size in evaluation of Temp. power dep.
     real(rp) :: ELEV_OFFSET             ! Elevation offset
     real(rp) :: E_RFLTY                 ! Earth reflectivity at given tan. point
-    real(rp) :: NEG_TAN_HT              ! GP Height (in KM.) of tan. press. below surface
+    real(rp) :: NEG_TAN_HT              ! GP Height (in KM.) of tan. press. 
+                                        ! below surface
     real(rp) :: PHI_TAN                 ! Phi at tanget point for given pointing
     real(rp) :: R                       ! real variable for various uses
     real(rp) :: RAD                     ! Radiance
@@ -211,7 +216,7 @@ contains ! ================================ FullForwardModel routine ======
 
     real(r8), dimension(:), pointer :: FREQUENCIES ! What frequencies to compute for
     real(rp), dimension(:), pointer :: ALPHA_PATH_C ! coarse grid Sing.
-    real(rp), dimension(:), pointer :: DEL_S ! Integration lengths along the path
+    real(rp), dimension(:), pointer :: DEL_S ! Integration lengths along path
     real(rp), dimension(:), pointer :: DHDZ_PATH ! dH/dZ on path
     real(rp), dimension(:), pointer :: DRAD_DF ! dI/dVmr
     real(rp), dimension(:), pointer :: DRAD_DN ! dI/dN
@@ -229,7 +234,8 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:), pointer :: PHI_PATH ! Phi's on path
     real(rp), dimension(:), pointer :: P_GLGRID ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: P_PATH ! Pressure on path
-    real(rp), dimension(:), pointer :: RADV ! Radiances for 1 pointing on freqGrid
+    real(rp), dimension(:), pointer :: RADV ! Radiances for 1 pointing on 
+                                            ! Freq_Grid
     real(rp), dimension(:), pointer :: REF_CORR ! Refraction correction
     real(rp), dimension(:), pointer :: SPS_VALUES ! all vmrs (f_len)
     real(rp), dimension(:), pointer :: TAU ! Optical depth
@@ -238,7 +244,7 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:), pointer :: XM ! Midpoint of integration grid intervals
     real(rp), dimension(:), pointer :: YM ! Half length of integration grid intervals
     real(rp), dimension(:), pointer :: ZGX ! Gauss weights (with -1 at front)
-    real(rp), dimension(:), pointer :: Z_BASIS ! zeta basis per species (n_f_zeta)
+    real(rp), dimension(:), pointer :: Z_BASIS !zeta basis per specie (n_f_zeta)
     real(rp), dimension(:), pointer :: Z_BASIS_DN ! zeta basis for dw (n_dn_z)
     real(rp), dimension(:), pointer :: Z_BASIS_DV ! zeta basis for dw (n_dv_z)
     real(rp), dimension(:), pointer :: Z_BASIS_DW ! zeta basis for dw (n_dw_z)
@@ -281,7 +287,23 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:,:), pointer :: T_GLGRID ! Temp on glGrid surfs
 
     real(rp), dimension(:,:,:), pointer :: DH_DT_GLGRID ! *****
+!
+! Some declarations by bill
+!
+    INTEGER(ip) :: sps_i  ! a species counter
 
+    INTEGER(ip), DIMENSION(:), pointer :: rec_tan_inds ! recommended tangent
+!                        point indecies from make_z_grid
+    REAL(rp), DIMENSION(:), pointer :: z_tmp ! temporary zeta storage
+    REAL(rp), DIMENSION(:), pointer :: z_all ! mass storage of representation
+!                                      bases for z_grid determination
+    REAL(rp), DIMENSION(:), POINTER :: z_psig(:) ! recommended PSIG for
+!                                      radiative transfer calculations
+! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
+!
+    REAL(rp), DIMENSION(:), POINTER :: tan_press(:)
+! THIS VARIABLE REPLACES fwdModelConf%tangentGrid%surfs
+!
     type (VectorValue_T), pointer :: EARTHREFL ! Earth reflectivity
     type (VectorValue_T), pointer :: ELEVOFFSET ! Elevation offset
     type (VectorValue_T), pointer :: FIRSTRADIANCE ! Radiance qty for first signal
@@ -339,7 +361,7 @@ contains ! ================================ FullForwardModel routine ======
     ! Nullify all our pointers!
 
     nullify ( grids, usedchannels, usedsignals, superset, indecies_c, &
-      &       tan_inds )
+      &       tan_inds, tan_press )
     nullify ( gl_ndx, gl_indgen )
     nullify ( do_gl, lin_log )
     nullify ( do_calc_zp, do_calc_dn, do_calc_dv, do_calc_dw, &
@@ -657,52 +679,103 @@ contains ! ================================ FullForwardModel routine ======
 
     call Allocate_test ( skip_eta_frq, no_mol, 'skip_eta_frq', ModuleName )
 
-    ! Setup our temporary `state vector' like arrays -------------------------
+! Setup our temporary `state vector' like arrays -------------------------
+
     call load_sps_data ( fwdModelIn, fwdModelExtra, fwdModelConf%molecules, &
      &   firstSignal%radiometer, mol_cat_index, p_len, f_len, h2o_ind, &
      &   ext_ind, lin_log, sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, &
      &   temp, My_Catalog, skip_eta_frq )
 
-    ! Compute Gauss Legendre (GL) grid ---------------------------------------
-    nlvl = size(FwdModelConf%integrationGrid%surfs)
+! Compute Gauss Legendre (GL) grid ---------------------------------------
+!
+! Insert automatic preselected integration gridder here. Need to make a 
+! large concatenated vector of bases and pointings.
+!
+    CALL Allocate_Test (z_all,temp%template%nosurfs+2,'z_all', ModuleName )
+!
+! the -3.000 is a designated "surface" value
+! initialize step
+!
+    z_all = (/-3.000_rp,RESHAPE(temp%template%surfs(:,1), &
+         &  (/temp%template%nosurfs/)),4.0_rp/)
+!
+    DO sps_i = 1 , noSpecies
+!
+      IF(abs(fwdModelConf%molecules(mol_cat_index(sps_i))) == &
+          &  l_extinction ) THEN
+        f => getvectorquantitybytype(fwdmodelin,fwdmodelextra, &
+          &  quantitytype = l_extinction, radiometer = &
+          &  firstsignal%radiometer)
+      ELSE
+        f => getvectorquantitybytype(fwdmodelin,fwdmodelextra, &
+          &  quantitytype = l_vmr, molecule = &
+          &  abs(fwdModelConf%molecules(sps_i)))
+      ENDIF
+!
+! Concatenate vector
+!
+      j = SIZE(z_all) + f%template%nosurfs
+      CALL allocate_test (z_tmp, j, 'z_tmp', ModuleName )
+      z_tmp = (/z_all,f%template%surfs(:,1)/)
+!
+! Move z_tmp to z_all
+!
+      CALL Deallocate_test(z_all,'z_all',ModuleName)
+      CALL Allocate_test(z_all,SIZE(z_tmp),'z_all',ModuleName)
+      z_all = z_tmp
+      CALL Deallocate_Test(z_tmp,'z_tmp',ModuleName)
+!
+    END DO
+!
+    CALL make_z_grid(z_all,z_psig,rec_tan_inds)
+    CALL Deallocate_test(z_all,'z_all',ModuleName)
+!
+! We are going to ignore data in FwdModelConf%integrationGrid%surfs
+! and replace this with z_psig
+!
+    write(6,928)
+ 928 format('** Note **',/,3x,'Ignoring FwdModelConf%integrationGrid%surfs, &
+       &fwdModelConf%tangentGrid%surfs',/,3x,'and replacing it with the &
+       &output from the make_z_grid subroutine !')
+
+    Nlvl = SIZE(z_psig)
     maxVert = (Nlvl-1) * Ng + Nlvl
 
     ! Work out the dimensions of it
-    NLm1 = nlvl - 1
+    NLm1 = Nlvl - 1
 
-    ! Allocate GL grid stuff
+! Allocate GL grid stuff
+
     call Allocate_test ( xm, NLm1, 'xm', ModuleName )
     call Allocate_test ( ym, NLm1, 'ym', ModuleName )
     call Allocate_test ( zgx, Ngp1, 'zgx', ModuleName )
 
     call Allocate_test ( z_glGrid, maxVert, 'z_glGrid', ModuleName )
-    call Allocate_test ( p_glGrid, maxVert, 'z_glGrid', ModuleName )
+    call Allocate_test ( p_glGrid, maxVert, 'p_glGrid', ModuleName )
 
     call allocate_test ( h_glgrid, maxVert, n_t_phi, 'h_glgrid', ModuleName )
     call allocate_test ( t_glgrid, maxVert, n_t_phi, 't_glgrid', ModuleName )
-    call allocate_test ( dhdz_glgrid, maxVert, n_t_phi, 'dhdz_glgrid', ModuleName )
+    call allocate_test ( dhdz_glgrid, maxVert, n_t_phi, 'dhdz_glgrid', &
+                      &  ModuleName )
     call allocate_test ( dh_dt_glgrid, maxVert, n_t_phi, n_t_zeta, &
       &  'dh_dt_glgrid', ModuleName )
-
-    ! From the selected integration grid pressures define the GL pressure
-    ! grid:
+!
+! From the selected integration grid pressures define the GL pressure grid:
+!
     zGx(1) = -1.0_rp
     zGx(2:Ngp1) = Gx(1:Ng)
-    xm(1:NLm1) = 0.5_rp * ( &
-      &   FwdModelConf%integrationGrid%surfs(2:nlvl) + &
-      &   FwdModelConf%integrationGrid%surfs(1:NLm1) )
-    ym(1:NLm1) = 0.5_rp * ( &
-      &   FwdModelConf%integrationGrid%surfs(2:nlvl) - &
-      &   FwdModelConf%integrationGrid%surfs(1:NLm1) )
-    z_glgrid(1:maxVert-1) = reshape ((spread(xm,1,Ngp1) +          &
-      &   spread(ym,1,Ngp1) * spread(zGx,2,NLm1)), &
-      &  (/maxVert-1/))
-    z_glgrid(maxVert) = FwdModelConf%integrationGrid%surfs(nlvl)
+!
+    xm(1:NLm1) = 0.5_rp * (z_psig(2:Nlvl) + z_psig(1:Nlm1))
+    ym(1:NLm1) = 0.5_rp * (z_psig(2:Nlvl) - z_psig(1:Nlm1))
+    z_glgrid(1:maxVert-1) = RESHAPE ((SPREAD(xm,1,Ngp1) +          &
+      &   SPREAD(ym,1,Ngp1) * SPREAD(zGx,2,NLm1)), (/maxVert-1/))
+    z_glgrid(maxVert) = z_psig(Nlvl)
     p_glgrid = 10.0_rp**(-z_glgrid)
 
     call Deallocate_test ( xm, 'xm', ModuleName )
     call Deallocate_test ( ym, 'ym', ModuleName )
     call Deallocate_test ( zgx,'zgx', ModuleName )
+    CALL Deallocate_test ( z_psig, 'z_psig', ModuleName)
 
     ! Compute hydrostatic grid -----------------------------------------------
 
@@ -715,15 +788,23 @@ contains ! ================================ FullForwardModel routine ======
       & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
     call two_d_hydrostatic(temp%template%surfs(:,1),  &
       &  temp%template%phi(1,:)*Deg2Rad,temp%values,  &
-      &  spread(refGPH%template%surfs(1,1),1,n_t_phi),&
+      &  SPREAD(refGPH%template%surfs(1,1),1,n_t_phi),&
       &  0.001*refGPH%values(1,:),z_glgrid,ORB_INC,   &
       &  t_glgrid, h_glgrid, dhdz_glgrid,dh_dt_glgrid )
+!
+    j = COUNT(fwdModelConf%tangentGrid%surfs < (z_glgrid(1) - 0.0001_rp))
+    no_tan_hts = Nlvl + j
+    call allocate_test (tan_inds, no_tan_hts, 'tan_inds', ModuleName )
+    call allocate_test (tan_press, no_tan_hts, 'tan_press', ModuleName )
+    tan_inds(j+1:no_tan_hts) = (rec_tan_inds - 1) * Ngp1 + 1
+    CALL Deallocate_test(rec_tan_inds,'rec_tan_inds',ModuleName)
+    IF(j > 0) then
+      tan_inds(1:j) = 1
+      tan_press(1:j) = fwdModelConf%tangentGrid%surfs(1:j)
+    ENDIF
 
-    call allocate_test ( tan_inds, no_tan_hts, 'tan_inds', ModuleName )
-    call Hunt ( z_glgrid-0.0001_rp, &
-      & fwdModelConf%tangentGrid%surfs, &
-      & tan_inds, allowTopValue=.true. )
-    surfaceTangentIndex = count ( tan_inds == 1 )
+    tan_press(j+1:no_tan_hts) = z_glgrid(tan_inds(j+1:no_tan_hts))
+    surfaceTangentIndex = COUNT(tan_inds == 1)
 
     elev_offset= 0.0_rp
 
@@ -914,7 +995,7 @@ contains ! ================================ FullForwardModel routine ======
         call allocate_test ( grids, FwdModelConf%TangentGrid%nosurfs, &
           "Grids", ModuleName )
         call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
-          & FwdModelConf%TangentGrid%surfs, grids, allowTopValue=.true. )
+          & tan_press, grids, allowTopValue=.true. )
         ! Work out the maximum number of frequencies
         maxNoPtgFreqs = 0
         do ptg_i = 1, no_tan_hts
@@ -999,7 +1080,7 @@ contains ! ================================ FullForwardModel routine ======
 
         if (ptg_i < surfaceTangentIndex) then
           neg_tan_ht = temp%values(1,mafTInstance) * &
-            &  (fwdModelConf%tangentGrid%surfs(ptg_i) - z_glgrid(1)) / 14.8_rp
+            &  (tan_press(ptg_i) - z_glgrid(1)) / 14.8_rp
           e_rflty = earthRefl%values(1,1)
           phi_tan = firstRadiance%template%phi(1,MAF)*Deg2Rad
 
@@ -1107,8 +1188,7 @@ contains ! ================================ FullForwardModel routine ======
           &    one_tan_ht(1),phi_tan,Req,elev_offset,ptg_angles(ptg_i,maf), &
           &    tan_dh_dt(1,:), temp%template%surfs(:,1),                    &
           &    temp%template%geodLat(1,:)*Deg2Rad, one_tan_temp(1),         &
-          &    fwdModelConf%tangentGrid%surfs(ptg_i),dx_dt(ptg_i,:),        &
-          &    d2x_dxdt(ptg_i,:))
+          &    tan_press(ptg_i),dx_dt(ptg_i,:),d2x_dxdt(ptg_i,:))
         else
           call get_chi_angles(0.001*scGeocAlt%values(1,1),n_path(npc/2), &
           &    one_tan_ht(1),phi_tan,Req,elev_offset,ptg_angles(ptg_i,maf))
@@ -1245,7 +1325,7 @@ contains ! ================================ FullForwardModel routine ======
 
           ! compute the gl indicies
 
-          gl_inds = reshape(spread(gl_ndx(1:no_gl_ndx,2),1,Ng) +  &
+          gl_inds = RESHAPE(SPREAD(gl_ndx(1:no_gl_ndx,2),1,Ng) +  &
             &  gl_indgen,(/Ng*no_gl_ndx/))
 
           j = Ng*no_gl_ndx
@@ -1758,13 +1838,12 @@ contains ! ================================ FullForwardModel routine ======
           center_angle = ptg_angles(surfaceTangentIndex,maf)
           call convolve_all ( fwdModelConf, fwdModelIn, maf, channel, &
             &  windowStart, windowFinish, mafTInstance-windowStart+1, &
-            &  temp, ptan, thisRadiance,FwdModelConf%tangentGrid%surfs,&
-            &  ptg_angles(:,maf), tan_temp(:,maf), dx_dt, d2x_dxdt,  &
-            &  surfaceTangentIndex, center_angle, &
-            &  Radiances(:, i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:,:), &
-            &  thisRatio, Jacobian, fmStat%rows,  &
+            &  temp, ptan, thisRadiance, tan_press, ptg_angles(:,maf),&
+            &  tan_temp(:,maf), dx_dt, d2x_dxdt, surfaceTangentIndex, &
+            &  center_angle, Radiances(:,i), k_temp(i,:,:,:),         &
+            &  k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows, &
             &  antennaPatterns(whichPattern), ier )
-          !??? Need to choose some index other than 1 for AntennaPatterns ???
+!??? Need to choose some index other than 1 for AntennaPatterns ???
           if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'convolve_all failed' )
 
@@ -1772,9 +1851,8 @@ contains ! ================================ FullForwardModel routine ======
 
           call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel,  &
             &     windowStart, windowFinish, temp, ptan, thisRadiance, &
-            &     FwdModelConf%tangentGrid%surfs, &
-            &     Radiances(:,i), k_temp(i,:,:,:), k_atmos(i,:,:,:,:,:), &
-            &     thisRatio, Jacobian, fmStat%rows )
+            &     tan_press, Radiances(:,i), k_temp(i,:,:,:),          &
+            &     k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows )
 
         end if
 
@@ -1838,7 +1916,7 @@ contains ! ================================ FullForwardModel routine ======
       Print 902,Ptan%values(1:k,maf)
 
 901   format ( 'ptan\ ',i3.3)
-902   format ( 4(4x, f10.7))
+902   format ( 4(3x, f11.7))
 
       Allocate(PrtRad(k), STAT=i)
 
@@ -1915,6 +1993,7 @@ contains ! ================================ FullForwardModel routine ======
     call Deallocate_test ( dh_dt_glgrid, 'dh_dt_glgrid', ModuleName )
 
     call Deallocate_test ( tan_inds, 'tan_inds', ModuleName )
+    call Deallocate_test ( tan_press, 'tan_press', ModuleName )
     call Deallocate_test ( tan_temp, 'tan_temp', ModuleName )
 
     call DestroyCompleteSlabs ( gl_slabs )
@@ -2001,6 +2080,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.25  2002/01/30 01:11:18  zvi
+! Fix bug in user selectable coeff. code
+!
 ! Revision 2.24  2002/01/27 08:37:45  zvi
 ! Adding Users selected coefficients for derivatives
 !

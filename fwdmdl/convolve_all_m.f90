@@ -82,30 +82,31 @@ contains
     Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
     Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
 
-    ! -----  Begin the code  -----------------------------------------
-    no_tan_hts = size(tan_press)
+ ! -----  Begin the code  -----------------------------------------
+
     k_star_tmp = 0.0
+    no_tan_hts = size(tan_press)
 
     ! Compute the ratio of the strengths
 
     ! This subroutine is called by channel
 
     Ier = 0
-    ntr = size(antennaPattern%aaap)
+    Ntr = Size(antennaPattern%aaap)
 
-    rad=0.0
+    Rad = 0.0
     Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
 
     j = ptan%template%noSurfs
 
     ! Compute the convolution of the mixed radiances
 
-    fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
+    fft_pts = nint(Log(Real(Ntr))/log(2.0))
 
-    fft_angles=0.0
-    fft_angles(1:size(tan_press)) = ptg_angles(1:size(tan_press))
+    fft_angles = 0.0
+    fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
 
-    Call fov_convolve ( fft_angles, Rad,center_angle, 1, no_tan_hts, &
+    Call fov_convolve ( fft_angles, Rad, center_angle, 1, no_tan_hts, &
       &                 fft_pts, AntennaPattern, Ier )
     if ( Ier /= 0) Return
 
@@ -137,15 +138,17 @@ contains
       end if
     end do
 
-    ! Interpolate the output values
-    ! (Store the radiances derivative with respect to pointing pressures in: Term)
+! Interpolate the output values
+! (Store the radiances derivative with respect to pointing pressures in: Term)
 
     want_deriv = present(jacobian) .and. any( (/ &
       & forwardModelConfig%temp_der, &
       & forwardModelConfig%atmos_der,&
       & forwardModelConfig%spect_der/) )
+
 !??? Can we use cspline instead of cspline_der if .not. want_deriv ???
-    Call Cspline_der ( fft_press, Ptan%values(:,maf), Rad, SRad, Term, Ktr, j )
+
+    Call Cspline_der(fft_press,Ptan%values(:,maf),Rad,SRad,Term,Ktr,j) 
     do ptg_i = 1, j
       ind = channel + radiance%template%noChans*(ptg_i-1)
       radiance%values( ind, maf ) = radiance%values ( ind, maf ) + &
@@ -154,6 +157,7 @@ contains
 
     ! Find out if user wants pointing derivatives
     if ( .not. want_deriv ) return
+
     ! Derivatives wanted,find index location Jacobian and write the derivative
     row = FindBlock( Jacobian%row, radiance%index, maf )
     rowFlags(row) = .true.
@@ -391,6 +395,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.2  2002/01/27 08:37:47  zvi
+! Adding Users selected coefficients for derivatives
+!
 ! Revision 2.1  2001/11/08 00:10:36  livesey
 ! Updated for extinction stuff
 !
