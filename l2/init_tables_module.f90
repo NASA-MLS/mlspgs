@@ -131,7 +131,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L2AUX              = s_l1boa + 1
   integer, parameter :: S_L2GP               = s_l2aux + 1
   integer, parameter :: S_L2PARSF            = s_l2gp + 1
-  integer, parameter :: S_MATRIX             = s_l2parsf + 1
+  integer, parameter :: S_LABEL              = s_l2parsf + 1
+  integer, parameter :: S_MATRIX             = s_label + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
   integer, parameter :: S_OUTPUT             = s_negativePrecision + 1
@@ -311,6 +312,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
     spec_indices(s_l2parsf) =              add_ident ( 'l2parsf' )
+    spec_indices(s_label) =                add_ident ( 'label' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
@@ -745,6 +747,13 @@ contains ! =====     Public procedures     =============================
       begin, s+s_flushL2PCBins, ndp+n_spec_def /) )
 
     call make_tree( (/ &
+      begin, s+s_label, &
+             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, nr+n_dot, &
+             begin, f+f_label, t+t_string, n+n_field_type, &
+             begin, f+f_prefixSignal, t+t_boolean, nr+n_field_type, &
+             ndp+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_destroy, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
@@ -1035,7 +1044,8 @@ contains ! =====     Public procedures     =============================
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_flagCloud, s+s_time, &
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
-      begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, s+s_directWrite, n+n_section, &
+      begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
+                       s+s_directWrite, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
   contains
@@ -1052,6 +1062,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.320  2003/06/20 19:38:26  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.319  2003/06/06 01:06:44  livesey
 ! Added delete option for grids
 !
