@@ -117,8 +117,8 @@ module DNWT_MODULE
   implicit NONE
 
   private
-  public :: RK, DNWT, DNWTA, DNWTDB, DNWTOP
-  public :: NWT, NWT_T, NWTA, NWTDB, NWTOP
+  public :: RK, DNWT, DNWTA, DNWTDB, DNWTOP, DNWT_GUTS
+  public :: NWT, NWTA, NWTDB, NWTOP, NWT_GUTS, NWT_T
   public :: FlagName
 
   type NWT_T               ! Stuff about the problem, neatly packaged.  This
@@ -197,16 +197,29 @@ module DNWT_MODULE
 ! *****     Private data     *******************************************
   save
 
-  real(rk) :: AJN, AJSCAL, CAIT, CDXDXL, CONDAI, DIAG
-  real(rk) :: DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
+  real(rk) :: AJN, AJSCAL, AXMAX, AXMAXB, CAIT, CDXDXL, CGDX, CONDAI
+  real(rk) :: DIAG, DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
   real(rk) :: FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
   real(rk) :: FRZL, GFAC, GRADN, GRADNB, GRADNL
   integer :: IFL, INC, ITER, ITKEN
   integer :: K1IT, K2IT, KB
   integer :: NFL
-  real(rk) :: RELSF, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
-  real(rk) :: SPSTRT, SQB, SQL, SQMIN
+  real(rk) :: RELSF, SP, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
+  real(rk) :: SPSTRT, SQ, SQB, SQL, SQMIN
   real(rk) :: TOLXA, TOLXR      ! WVS added 2000-04-05
+
+  type NWT_GUTS    ! Public type returned by DNWT_GUTS
+    real(rk) :: AJN, AJSCAL, AXMAX, AXMAXB, CAIT, CDXDXL, CGDX, CONDAI
+    real(rk) :: DIAG, DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
+    real(rk) :: FN, FNB, FNL, FNMIN, FNXE, FRZ, FRZB
+    real(rk) :: FRZL, GFAC, GRADN, GRADNB, GRADNL
+    integer :: IFL, INC, ITER, ITKEN
+    integer :: K1IT, K2IT, KB
+    integer :: NFL
+    real(rk) :: RELSF, SP, SPACT, SPB, SPFAC, SPG, SPINC, SPL, SPMINI
+    real(rk) :: SPSTRT, SQ, SQB, SQL, SQMIN
+    real(rk) :: TOLXA, TOLXR      ! WVS added 2000-04-05
+  end type NWT_GUTS
 
   character(len=*), parameter :: ME = 'DNWT'
 
@@ -458,7 +471,6 @@ contains
     real(rk), parameter :: CP76 = 0.76_rk
     real(rk), parameter :: CP9 = 0.9_rk
 
-    real(rk), save :: AXMAX, AXMAXB, CGDX, SP, SQ
     real(rk) :: TP, TP1
 
     real(rk), parameter :: RND = 10.0_rk * epsilon(c0)
@@ -1020,6 +1032,65 @@ contains
     write ( output_line, '(5es14.7)' ) SQL, SQMIN, TOLXA, TOLXR
     call output(trim(output_line), advance='yes')
   end subroutine DNWTDB
+! **********************************************     DNWT_GUTS     *****
+
+  subroutine DNWT_GUTS ( GUTS )
+  ! Get the private saved variables of DNWT, for debugging purposes
+    type(NWT_GUTS), intent(out) :: GUTS
+
+    guts%ajn = ajn
+    guts%ajscal = ajscal
+    guts%axmax = axmax
+    guts%axmaxb = axmaxb
+    guts%cait = cait
+    guts%cdxdxl = cdxdxl
+    guts%cgdx = cgdx
+    guts%condai = condai
+    guts%diag = diag
+    guts%dxi = dxi
+    guts%dxinc = dxinc
+    guts%dxmaxi = dxmaxi
+    guts%dxn = dxn
+    guts%dxnbig = dxnbig
+    guts%dxnl = dxnl
+    guts%dxnois = dxnois
+    guts%fn = fn
+    guts%fnb = fnb
+    guts%fnl = fnl
+    guts%fnmin = fnmin
+    guts%fnxe = fnxe
+    guts%frz = frz
+    guts%frzb = frzb
+    guts%frzl = frzl
+    guts%gfac = gfac
+    guts%gradn = gradn
+    guts%gradnb = gradnb
+    guts%gradnl = gradnl
+    guts%ifl = ifl
+    guts%inc = inc
+    guts%iter = iter
+    guts%itken = itken
+    guts%k1it = k1it
+    guts%k2it = k2it
+    guts%kb = kb
+    guts%nfl = nfl
+    guts%relsf = relsf
+    guts%sp = sp
+    guts%spact = spact
+    guts%spb = spb
+    guts%spfac = spfac
+    guts%spg = spg
+    guts%spinc = spinc
+    guts%spl = spl
+    guts%spmini = spmini
+    guts%spstrt = spstrt
+    guts%sq = sq
+    guts%sqb = sqb
+    guts%sql = sql
+    guts%sqmin = sqmin
+    guts%tolxa = tolxa
+    guts%tolxr = tolxr
+  end subroutine DNWT_GUTS
 
 ! ***********************************************     FlagName     *****
 
@@ -1066,6 +1137,10 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.23  2002/07/24 20:32:15  vsnyder
+! Moved AXMAX, AXMAXB, CGDX, SP and SQ from DNWTA to module scope.
+! Added a "get DNWT's guts" routine.
+!
 ! Revision 2.22  2002/07/24 01:08:11  vsnyder
 ! Made most local variables SAVE.  Mark Filipiak noticed this problem.
 !
