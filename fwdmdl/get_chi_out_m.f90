@@ -17,9 +17,10 @@ MODULE get_chi_out_m
 !---------------------------------------------------------------------------
  CONTAINS
 !
-  SUBROUTINE get_chi_out(zetatan,phitan,scgeocalt,Grids_tmp,ref_zeta, &
-           & ref_gph,orb_inc,elev_offset,req,tan_chi_out,h2o_zeta_basis,&
-           & h2o_phi_basis,h2o_coeffs,lin_log,dxdt_tan,d2xdxdt_tan)
+  SUBROUTINE get_chi_out(zetatan,phitan,scgeocalt,Grids_tmp,ref_zeta,&
+           & ref_gph,orb_inc,elev_offset,req,tan_chi_out,dhdz_out,dx_dh_out,&
+           & h2o_zeta_basis,h2o_phi_basis,h2o_coeffs,lin_log,dxdt_tan,&
+           & d2xdxdt_tan)
 !
 ! inputs
 !
@@ -47,6 +48,9 @@ MODULE get_chi_out_m
 !
   REAL(rp), INTENT(out) :: tan_chi_out(:) ! computed tangent pointing angles
 !                               corrected for refraction in radians
+  REAL(rp), INTENT(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
+  REAL(rp), INTENT(out) :: dhdz_out(:)    ! dh/dz on the output grid
+
   REAL(rp), OPTIONAL, INTENT(out) :: dxdt_tan(:,:,:) ! computed dchi dt.
   REAL(rp), OPTIONAL, INTENT(out) :: d2xdxdt_tan(:,:,:) ! computed d2chi dxdt.
 !
@@ -56,6 +60,8 @@ MODULE get_chi_out_m
   INTEGER(i4) :: n_out, n_t_phi, n_t_zeta, n_h2o_zeta, n_h2o_phi
   INTEGER(i4) :: sv_p, sv_z, ht_i
 !
+  REAL(rp) :: dhdz, q
+
   REAL(rp), POINTER :: h_tan_out(:)
   REAL(rp), POINTER :: t_tan_out(:)
   REAL(rp), POINTER :: n_tan_out(:)
@@ -76,7 +82,7 @@ MODULE get_chi_out_m
   n_t_zeta = Grids_tmp%no_z(1)
 !
   NULLIFY(temp_tan,height_tan,dhdz_tan,dhdt_tan,d2hdhdt_tan,eta_t,h_tan_out, &
-  & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out)
+        & t_tan_out,n_tan_out,eta_p,eta_z,h2o_tan_out)
 !
   CALL allocate_test(temp_tan,n_out,n_t_phi,'temp_tan',ModuleName)
   CALL allocate_test(height_tan,n_out,n_t_phi,'height_tan',ModuleName)
@@ -95,18 +101,22 @@ MODULE get_chi_out_m
 ! tangent heights for inputted pressures along phi
 !
   CALL get_eta_sparse(Grids_tmp%phi_basis, phitan, eta_t)
+
   h_tan_out = SUM(height_tan * eta_t, dim=2)
   t_tan_out = SUM(temp_tan * eta_t, dim=2)
+  dhdz_out = SUM(dhdz_tan * eta_t, dim=2)
 !
 ! compute the tangent water vapor profile along inputted phi_tan
 !
   IF (PRESENT(h2o_coeffs)) THEN
+
     n_h2o_zeta = SIZE(h2o_zeta_basis)
     n_h2o_phi  = SIZE(h2o_phi_basis)
+
     CALL allocate_test(eta_p, n_out, n_h2o_phi, 'eta_p',ModuleName)
     CALL allocate_test(eta_z, n_out, n_h2o_zeta, 'eta_z',ModuleName)
-    CALL allocate_test(h2o_tan_out, n_out, 'h2o_tan_out', &
-    & ModuleName)
+    CALL allocate_test(h2o_tan_out, n_out, 'h2o_tan_out',ModuleName)
+
     CALL get_eta_sparse(h2o_phi_basis, phitan, eta_p)
     CALL get_eta_sparse(h2o_zeta_basis, zetatan, eta_z)
 !
@@ -115,16 +125,18 @@ MODULE get_chi_out_m
     h2o_tan_out(:) = 0.0_rp
     DO sv_p = 1, n_h2o_phi
       DO sv_z = 1, n_h2o_zeta
-        h2o_tan_out = h2o_tan_out + h2o_coeffs(sv_z - n_h2o_zeta &
-        & + n_h2o_zeta * sv_p) * eta_z(:,sv_z) * eta_p(:,sv_p)
+        q = h2o_coeffs(sv_z + n_h2o_zeta * (sv_p - 1))
+        h2o_tan_out = h2o_tan_out + q * eta_z(:,sv_z) * eta_p(:,sv_p)
       ENDDO
     ENDDO
+
     IF (lin_log) h2o_tan_out = EXP(h2o_tan_out)
 !
 ! compute refractive index
 !
     CALL refractive_index(10.0**(-zetatan), t_tan_out, n_tan_out, &
-    & h2o_path = h2o_tan_out)
+                        & h2o_path=h2o_tan_out)
+
     CALL deallocate_test(eta_p,'eta_p',ModuleName)
     CALL deallocate_test(eta_z,'eta_z',ModuleName)
     CALL deallocate_test(h2o_tan_out,'h2o_tan_out',ModuleName)
@@ -142,20 +154,22 @@ MODULE get_chi_out_m
     dhdt_tan = dhdt_tan  * SPREAD(eta_t,3,n_t_zeta)
     d2hdhdt_tan = d2hdhdt_tan * SPREAD(eta_t,3,n_t_zeta)
     DO ht_i = 1, n_out
+      dhdz = dhdz_out(ht_i)
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
-          &    h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
-          &    tan_chi_out(ht_i), RESHAPE(dhdt_tan(ht_i,:,:), &
-          &    (/n_t_phi,n_t_zeta/)), RESHAPE(d2hdhdt_tan(ht_i,:,:), &
-          &    (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
-          &    d2xdxdt_tan(ht_i,:,:))
-     ENDDO
+         & h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
+         & tan_chi_out(ht_i),q,dhdz,RESHAPE(dhdt_tan(ht_i,:,:),&
+         & (/n_t_phi,n_t_zeta/)), RESHAPE(d2hdhdt_tan(ht_i,:,:), &
+         & (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
+         & d2xdxdt_tan(ht_i,:,:))
+      dx_dh_out(ht_i) = q
+    ENDDO
 !
    ELSE
 !
     DO ht_i = 1, n_out
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
-          &    h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
-          &    tan_chi_out(ht_i))
+         & h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
+         & tan_chi_out(ht_i),dx_dh_out(ht_i),dhdz_out(ht_i))
      ENDDO
 !
   ENDIF
@@ -174,6 +188,9 @@ MODULE get_chi_out_m
 !
 END MODULE get_chi_out_m
 ! $Log$
+! Revision 2.7  2002/06/28 11:06:51  zvi
+! computes dx_dh & dh_dz on output grid as well
+!
 ! Revision 2.6  2002/06/24 21:11:24  zvi
 ! Adding Grids_tmp stracture and modifying calling sequences
 !
