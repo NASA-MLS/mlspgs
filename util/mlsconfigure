@@ -118,7 +118,9 @@ which_lapack()
 
 if [ "$1" != "" ] ; then
 #  Use externally-supplied library to satisfy lapack calls
-	which_lapack_msg="$1/lib${2}.a"
+#	which_lapack_msg="$1/lib${2}.a"
+   which_lapack_msg=`$REECHO -dir $1 -prefixn=-l -lib $2`
+   which_lapack_msg="-L$1 ${which_lapack_msg}"
 	which_lapack_option="a"
 else
 #  Use f95 intrinsic functions
@@ -613,7 +615,8 @@ if [ $change_paths = "true" ] ; then
      fi
 
      #Change LAPACK library name                                               
-     UserPrompt "LAPACK library name (if x, then libx.a) [$current_LIB_LAPACK]"  
+	  echo "(Enter multiple names on the same line like this: x y z)"
+     UserPrompt "LAPACK library names (if x, then libx.a) [$current_LIB_LAPACK]"  
      if [ "$user_response" = "<b>" ] ; then                                  
       LIB_LAPACK=""                                                            
       echo "LAPACK library name is lapack (default)"                             
@@ -897,6 +900,7 @@ fi
 #
 
 me="$0"
+REECHO="`echo $0 | sed 's/mlsconfigure/reecho.sh/'`"
 
 while [ "$1" != "" ] ; do
 
@@ -969,6 +973,9 @@ fi
 write_confg="false"
 
 if [ $get_confg = "true" ] ; then
+   if [ "$debugging" = "on" ] ; then
+      echo "Calling GetPlatform"
+   fi
 	GetPlatform
 	write_confg="true"
 else
@@ -987,11 +994,17 @@ if [ $chngd_confg = "true" ] ; then
 fi
 
 if [ $add_PVM_PATH = "true" ] ; then
+   if [ "$debugging" = "on" ] ; then
+      echo "Calling GetPVM"
+   fi
 	GetPVM
 	write_confg="true"
 fi
 
 if [ $add_FOPTS = "true" ] ; then
+   if [ "$debugging" = "on" ] ; then
+      echo "Calling GetFOPTS"
+   fi
 	GetFOPTS
 	write_confg="true"
 fi
@@ -1161,6 +1174,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.23  2001/11/06 00:20:34  pwagner
+# Sets BLAS, LAPACK options and paths in new, simpler way
+#
 # Revision 1.22  2001/10/10 23:23:54  pwagner
 # New parameter allows use of single platforms directory by > 1 (MLSCONFG)
 #
