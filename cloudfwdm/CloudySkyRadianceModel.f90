@@ -19,6 +19,9 @@ module CloudySkyRadianceModel
       use ScatteringAngle,         only: ANGLE
       use SpectroscopyCatalog_m,   only: CATALOG_T
       use Tmp,                     only: GET_TAN_PRESS
+      USE Intrinsic,    only: l_clear, l_clear_0RH, l_clear_110RH_below_top, &
+         & l_clear_lowest_0_110RH, l_cloudy_110RH_below_top, &
+         & l_cloudy_110RH_in_cloud, l_cloudy_nearside_only, l_none
 
       IMPLICIT NONE
       private
@@ -39,7 +42,7 @@ contains
       SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N,      &
              &   NZmodel,                                              &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
-             &   WCin, IPSDin, ZZT, RE, ISURF, ISWI, I_Saturation, IFOV,   &
+             &   WCin, IPSDin, ZZT, RE, ISURF, Cloud_der, I_Saturation, IFOV,   &
              &   Bill_data,                                            &
              &   h_obs, elev_offset, AntennaPattern,                   &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
@@ -97,10 +100,12 @@ contains
 !     ZT         (NT)     -> Tangent Pressure (hPa).                         C
 !     RE                  -> Radius of Earth (m).                            C
 !     ISURF               -> Surface Types (Default: 0).                     C
-!     ISWI                -> Switch for Sensitivity Calculation. C
-!     ( overridden if ALWAYSSKIPSENSITIVITY )
+!     Cloud_der                -> Switch for Sensitivity Calculation. 
+!           none
+!           iwc_low_height
+!           iwc_high_height
 !     ICON                -> Cloud Control Switch.              C
-!           ICON = 0                if WCin==0 and i_saturation > 0
+!           ICON = 0                if WCin==0 and i_saturation is cloudy
 !           ICON = I_Saturation     otherwise
 !           
 ! Different cases for clear and cloudy sky combinations:
@@ -182,14 +187,9 @@ contains
                                                ! 1 = LAND
                                                ! 2 = SEA 
   
-      INTEGER, intent(in) :: ISWI              ! SENSITIVITY SWITCH
-                                               ! 0 = no sensitity calculation
-                                               ! 10 = multi IWC samples
-                                               ! 1 = High Tngt-ht clouds
-                                               ! 2 = Low Tngt-ht clouds
-                                               ! 
+      INTEGER, intent(in) :: Cloud_der         ! SENSITIVITY SWITCH                                               ! 
 
-      INTEGER, intent(in) :: I_Saturation              ! CONTROL SWITCH 
+      INTEGER, intent(in) :: I_Saturation      ! Clear-Cloudy-sky CONTROL SWITCH 
 
 
       LOGICAL, intent(in) :: IFOV              ! FIELD OF VIEW AVERAGING SWITCH
@@ -236,7 +236,6 @@ contains
 !     INTERNAL MODEL PARAMETERS                ! -- INTERNAL AREA -- !
 !-------------------------------
 
-      INTEGER :: ICON
       INTEGER :: MULTI
       integer, parameter :: Nsub=5             !Below surface tangent grids
       
@@ -384,6 +383,8 @@ contains
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
 
       Logical :: Bill_data
+      Logical :: isClear                        ! clear-sky indicator
+      Logical :: doSensitivity                  ! do Sensitivity ?
 
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
 
@@ -415,12 +416,13 @@ contains
       RC_TMP=0.0_r8
       RC_tot=0.0_r8
       chk_cld = 0._r8
-
-! Deside what clear-cloudy sky configuration is to use
-      ICON = I_Saturation
+         
       !Save time if there is no cloud in cloudy-sky requests
-      if(maxval(WCin) == 0 .and. I_Saturation > 0) ICON = 0
-!print*,maxval(WCin),icon
+      isClear = .false.
+      if(maxval(WCin) == 0) isClear = .true.
+      doSensitivity = .true.
+      if(cloud_der == l_none) doSensitivity = .false.
+!print*,maxval(WCin)
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 !-------------------------------------------------------------------------
@@ -497,12 +499,10 @@ contains
       S     = 35._r8
       SWIND = 0._r8
 
-      RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
-      NIWC=10
-      IF (ISWI .GT. 0) THEN                  
+!      RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9_r8
+!      NIWC=10
          RATIO=1._r8
-         NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
-      ENDIF
+         NIWC=1                ! FAST SENSITIVITY CALCULATION
 
 !------------------------------------------
 !     PERFORM FULL SENSITIVITY CALCULATION
@@ -524,7 +524,7 @@ contains
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll, &
-              &         tau_dry,Catalog, Bill_data, LosVel, ICON ) 
+              &         tau_dry,Catalog, Bill_data, LosVel, i_saturation ) 
 
 !         CALL HEADER(3)
 
@@ -549,18 +549,24 @@ contains
          ENDDO                              
          ! tau_wetCld will be used for transmission function calculation
 
-! the following stuffs are only used in cloudy cases icon > 0
+! the following stuffs are only used in cloudy cases
             PHH      = 0._r8     ! phase function
             DDm      = 0._r8     ! mass-mean diameter
             W0       = 0._r8     ! single scattering albedo
             PH0      = 0._r8 
             W00      = 0._r8
             tau_clear = 0._r8
-      IF (ICON .gt. 0) then  
-
-            tau_clear = tau_wetCld
-            if(icon .eq. 1) tau_clear = tau_fewCld
-
+      IF (.not. isClear) then 
+      
+            select case (i_saturation)
+            case (l_cloudy_110RH_below_top) 
+               tau_clear = tau_wetCld
+            case (l_cloudy_110RH_in_cloud) 
+               tau_clear = tau_fewCld
+            case default
+               call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
+            end select
+               
          model_layer_loop: do ILYR=1, NZmodel-1
  
             RC0(1)=tau_clear(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
@@ -572,7 +578,7 @@ contains
             cdepth = 0._r8
             DO ISPI=1,N
                CWC = RATIO*WC(ISPI,ILYR)
-               IF(CWC .ge. 1.e-9_r8 .and. ICON .gt. 0) then           
+               IF(CWC .ge. 1.e-9_r8) then           
               
                   CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
                        &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,    &
@@ -603,23 +609,23 @@ contains
 
 ! call radiative transfer calculations
       
-       select case ( ICON )
-       case ( 0 )
+       select case ( i_saturation )
+       case ( l_clear )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
          TT  = TT0	   ! so that dTcir=0
-       case ( -1 )
+       case ( l_clear_110RH_below_top )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wetCld,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
          TT  = TT0	   ! so that dTcir=0
-       case ( -2 )
+       case ( l_clear_0RH )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_dry,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
          TT  = TT0	   ! so that dTcir=0
-       case ( -3 )
+       case ( l_clear_lowest_0_110RH )
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_dry,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
@@ -629,28 +635,59 @@ contains
          TT0 = min(TT, TT0)
          TT  = TT0	   ! so that dTcir=0
 
-       case (1)
+       case (l_cloudy_110RH_in_cloud)
          ! this is for the sids/retrieval calculations (saturation only inside clouds)
          ! wc is supplied by model if it's the retrieval mode
          ! wc is supplied from IWC file if it's the sids mode
+         IF (isClear) THEN
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
+              &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         TT  = TT0	   ! so that dTcir=0
+         ELSE
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
               &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &   UI,UA,TT0,0,RE)                          !CLEAR-SKY
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
               &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
-              &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
-       case (2)
+              &  UI,UA,TT,1,RE)                            !CLOUDY-SKY
+         ENDIF
+       case (l_cloudy_110RH_below_top)
          ! this is for the sids/retrieval calculations (saturation below cloud top)
          ! wc is supplied by model if it's the retrieval mode
          ! wc is supplied from IWC file if it's the sids mode
+         IF (isClear) THEN
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
+              &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         TT  = TT0	   ! so that dTcir=0
+         ELSE
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
               &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &   UI,UA,TT0,0,RE)                          !CLEAR-SKY
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
               &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
-              &  UI,UA,TT,ICON,RE)                            !CLOUDY-SKY
+              &  UI,UA,TT,1,RE)                            !CLOUDY-SKY
+         ENDIF
+       case (l_cloudy_nearside_only)
+         ! this is for the sids/retrieval calculations (cloud on the nearside of the tgt pt)
+         ! wc is supplied by model if it's the retrieval mode
+         ! wc is supplied from IWC file if it's the sids mode
+         IF (isClear) THEN
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
+              &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         TT  = TT0	   ! so that dTcir=0
+         ELSE
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
+              &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
+              &   UI,UA,TT0,0,RE)                          !CLEAR-SKY
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH,MULTI,ZZT1,W0,TAU,RS,TS,&
+              &  FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,         &
+              &  UI,UA,TT,3,RE)                            !CLOUDY-SKY
+         ENDIF
        case default
-         call MLSMessage(MLSMSG_Error, ModuleName,'You gave a wrong i_saturation')
+         call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
        end select
  
 
@@ -762,7 +799,7 @@ contains
           & DTcir(:,IFR), &
               &                 method='Linear')
 
-         IF(ICON .GT. 0 .and. iswi .ne. 0) THEN
+         IF(doSensitivity) THEN
 
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &      tau,tauc,tau_clear,TAUeff(:,IFR),SS(:,IFR), &
@@ -799,6 +836,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.57  2003/04/05 17:30:27  dwu
+! make icon=0 for cloudy-sky request if there is no cloud
+!
 ! Revision 1.56  2003/04/03 22:37:15  dwu
 ! fix a couple of bugs plus some cleanups
 !
