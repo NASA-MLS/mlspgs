@@ -586,16 +586,16 @@ contains
         & quantityType=l_ECRtoFOV, config=fwdModelConf )
     end if
     if ( FwdModelConf%incl_cld ) then          !JJ
-      cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
-        & quantityType=l_cloudIce, noError=.true. )
-      cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_cloudWater, noError=.true. )
-      sizeDistribution => GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_sizeDistribution, noError=.true. )
+      cloudIce => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra,  &
+        & quantityType=l_cloudIce, noError=.true., config=fwdModelConf )
+      cloudWater => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_cloudWater, noError=.true., config=fwdModelConf )
+      sizeDistribution => GetQuantityForForwardModel( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_sizeDistribution, noError=.true., config=fwdModelConf )
     end if
     if ( FwdModelConf%i_saturation /= l_clear ) then
-      boundaryPressure => GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
-        & quantityType=l_boundaryPressure )
+      boundaryPressure => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_boundaryPressure, config=fwdModelConf )
     end if
 
     ! Now we're going to validate the quantities we've been given; don't
@@ -2613,6 +2613,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.141  2003/05/29 16:37:38  livesey
+! Renamed sideband fraction
+!
 ! Revision 2.140  2003/05/26 01:42:50  michael
 ! Two temporary fixes only relevant to the polarized model.
 ! Added a bug-fix removing scalar contribution to magnetic GL.
