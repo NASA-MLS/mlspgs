@@ -1002,7 +1002,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------  GetActualMatrixFromDatabse ---
   subroutine GetActualMatrixFromDatabase ( DatabaseElement, m )
     ! Get POINTER to the actuall Matrix_T part of any kind of matrix
-    type ( matrix_database_t), intent(in) :: DatabaseElement
+    type ( matrix_database_t), intent(in), target :: DatabaseElement
     type ( matrix_t), pointer :: m
 
     ! Executable code
@@ -2295,6 +2295,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.93  2003/09/15 17:45:18  livesey
+! Added target declaration for fussy intel compiler
+!
 ! Revision 2.92  2003/07/07 20:20:59  livesey
 ! Mainly cosmetic changes
 !
