@@ -1,4 +1,4 @@
- ! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+ ! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -29,9 +29,11 @@ module MLSCommon                ! Common definitions for the MLS software
 
 !     (subroutines and functions)
 ! FindFirst     Find the first logical in the array that is true
+! FindNext      Find the next logical in the array that is true
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
 ! int FindFirst (log condition(:))      
+! int FindNext (log condition(:), int current, {log wrap}, {log repeat})      
 ! === (end of api) ===
  private :: Id, ModuleName
   !---------------------------- RCS Ident Info -------------------------------
@@ -151,6 +153,49 @@ module MLSCommon                ! Common definitions for the MLS software
     end do
   end function FindFirst
 
+  ! -------------------------------------------- FindNext --------------
+  integer function FindNext ( condition, current, wrap, repeat )
+    ! Find the next logical in the array that is true after the current one
+    ! May optionally wrap or repeat
+    ! e.g., if repeat is true and current is also last true, return current
+    ! e.g., if wrap is true and current is last true, return first true
+    logical, dimension(:), intent(in) :: CONDITION
+    integer, intent(in) :: CURRENT
+    logical, optional, intent(in) :: WRAP
+    logical, optional, intent(in) :: REPEAT
+
+    ! Local variables
+    integer :: I                        ! Loop counter
+    logical :: myWrap
+    logical :: myRepeat
+
+    ! Executable code
+    myWrap = .false.
+    if ( present(wrap) ) myWrap = wrap
+    myRepeat = .false.
+    if ( present(repeat) ) myRepeat = repeat
+    FindNext = 0
+    ! We'll assume you gave us valid args; otherwise return 0
+    if ( current < 1 .or. current > size(condition)) return
+    if ( .not. condition(current)) return
+    ! Now check for current already at end of array
+    if ( current < size(condition) ) then
+      do i = current+1, size(condition)
+        if ( condition(i) ) then
+          FindNext = i
+          return
+        end if
+      end do
+    endif
+    ! Uh-oh, this means current is last true
+    if ( myWrap ) then
+      FindNext = FindFirst(condition)
+    elseif ( myRepeat ) then
+      FindNext = current
+    endif
+    return
+  end function FindNext
+
 
 !=============================================================================
   logical function not_used_here()
@@ -162,6 +207,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.18  2004/01/09 00:38:04  pwagner
+! Added FindNext function
+!
 ! Revision 2.17  2003/06/20 19:31:39  pwagner
 ! Changes to allow direct writing of products
 !
