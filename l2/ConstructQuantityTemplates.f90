@@ -137,6 +137,7 @@ contains ! =====     Public Procedures     =============================
     natural_units = 0
     natural_units(l_baseline) =       PHYQ_Temperature
     natural_units(l_cloudice) =       PHYQ_IceDensity
+    natural_units(l_losTransFunc) =   PHYQ_Dimensionless
     natural_units(l_earthRefl) =      PHYQ_Dimensionless
     natural_units(l_elevOffset) =     PHYQ_Angle
     natural_units(l_extinction) =     PHYQ_Extinction
@@ -687,6 +688,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.41  2001/07/13 18:10:03  dwu
+! add quantity losTransFunc
+!
 ! Revision 2.40  2001/07/11 21:40:00  livesey
 ! More bug fixes
 !
