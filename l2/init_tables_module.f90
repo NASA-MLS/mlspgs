@@ -133,7 +133,8 @@ module INIT_TABLES_MODULE
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
-  integer, parameter :: S_DUMP               = s_apriori + 1
+  integer, parameter :: S_DESTROY            = s_apriori + 1
+  integer, parameter :: S_DUMP               = s_destroy + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_FILL               = s_dumpblocks + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
@@ -150,8 +151,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_OUTPUT             = s_merge + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
-  integer, parameter :: S_REMOVE             = s_quantity + 1
-  integer, parameter :: S_RETRIEVE           = s_remove + 1
+  integer, parameter :: S_RETRIEVE           = s_quantity + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1
   integer, parameter :: S_SNOOP              = s_sids + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
@@ -293,6 +293,7 @@ contains ! =====     Public procedures     =============================
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
+    spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
@@ -310,7 +311,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
-    spec_indices(s_remove) =               add_ident ( 'remove' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
@@ -553,6 +553,7 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_method, t+t_fillmethod, nr+n_field_type/))
      call acorn((/begin, f+f_model, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_multiplier, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_noFineGrid, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_noise, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
@@ -587,8 +588,8 @@ contains ! =====     Public procedures     =============================
      call make_tree ( id_cum(1:id_last) )
 
     call make_tree( (/ &
-      begin, s+s_remove, &
-             begin, f+f_source, s+s_vector, n+n_field_spec, &
+      begin, s+s_destroy, &
+             begin, f+f_vector, s+s_vector, n+n_field_spec, &
              nadp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
@@ -761,7 +762,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_matrix, &
-                       s+s_remove, s+s_snoop, s+s_time, s+s_vector, &
+                       s+s_destroy, s+s_snoop, s+s_time, s+s_vector, &
                        s+s_transfer, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_time, &
@@ -804,6 +805,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.174  2001/10/18 23:59:55  pwagner
+! Replaced remove with destroy; added multiplier to addnoise
+!
 ! Revision 2.173  2001/10/18 23:42:31  livesey
 ! Added dump to fill
 !
