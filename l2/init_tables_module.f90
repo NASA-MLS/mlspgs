@@ -97,7 +97,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_HGRID               = f_height + 1
   integer, parameter :: F_INCLINATION         = f_hgrid + 1
   integer, parameter :: F_INTEGRATIONGRID     = f_inclination + 1
-  integer, parameter :: F_INTERPOLATIONFACTOR = f_integrationGrid + 1
+  integer, parameter :: F_INTEGRATIONTIME     = f_integrationGrid + 1
+  integer, parameter :: F_INTERPOLATIONFACTOR = f_integrationTime + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
   integer, parameter :: F_LENGTH              = f_jacobian + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
@@ -123,7 +124,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_QUANTITIES          = f_prefixSignal + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
-  integer, parameter :: F_RATIOQUANTITY       = f_range + 1
+  integer, parameter :: F_RADIANCEQUANTITY    = f_range + 1
+  integer, parameter :: F_RATIOQUANTITY       = f_radianceQuantity + 1
   integer, parameter :: F_REFGPHQUANTITY      = f_ratioQuantity + 1
   integer, parameter :: F_ROWCHANNELS         = f_refGPHQuantity + 1
   integer, parameter :: F_ROWINSTANCES        = f_rowChannels + 1 
@@ -150,7 +152,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_STOP                = f_state + 1
   integer, parameter :: F_SUPERDIAGONAL       = f_stop + 1
   integer, parameter :: F_SWATH               = f_superDiagonal + 1
-  integer, parameter :: F_TANGENTGRID         = f_swath + 1
+  integer, parameter :: F_SYSTEMTEMPERATURE   = f_swath + 1
+  integer, parameter :: F_TANGENTGRID         = f_systemTemperature + 1
   integer, parameter :: F_TEMP_DER            = f_tangentGrid + 1
   integer, parameter :: F_TEMPERATUREQUANTITY = f_temp_der + 1
   integer, parameter :: F_TEMPLATE            = f_temperaturequantity + 1
@@ -178,7 +181,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_EARTHREFL     = l_direct + 1
   integer, parameter :: L_EITHER        = l_earthRefl + 1
   integer, parameter :: L_ELEVOFFSET    = l_either + 1
-  integer, parameter :: L_EXPLICIT      = l_elevOffset + 1
+  integer, parameter :: L_ESTIMATEDNOISE= l_elevOffset + 1
+  integer, parameter :: L_EXPLICIT      = l_estimatedNoise + 1
   integer, parameter :: L_FIXED         = l_explicit + 1
   integer, parameter :: L_FRACTIONAL    = l_fixed + 1
   integer, parameter :: L_FULL          = l_fractional + 1
@@ -189,7 +193,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_KRONECKER     = l_isotope + 1
   integer, parameter :: L_L1B           = l_kronecker + 1
   integer, parameter :: L_L2AUX         = l_l1b + 1
-  integer, parameter :: L_L2DGG 	        = l_l2aux + 1
+  integer, parameter :: L_L2DGG         = l_l2aux + 1
   integer, parameter :: L_L2GP 	        = l_l2dgg + 1
   integer, parameter :: L_L2PC          = l_l2gp + 1
   integer, parameter :: L_LINEAR        = l_l2pc + 1
@@ -352,6 +356,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_either) =                add_ident ( 'either' )
     lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
     lit_indices(l_explicit) =              add_ident ( 'explicit' )
+    lit_indices(l_estimatedNoise) =        add_ident ( 'estimatedNoise' )
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
     lit_indices(l_fractional) =            add_ident ( 'fractional' )
     lit_indices(l_full) =                  add_ident ( 'full' )
@@ -428,6 +433,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
     field_indices(f_inclination) =         add_ident ( 'inclination' )
     field_indices(f_integrationGrid) =     add_ident ( 'integrationGrid' )
+    field_indices(f_integrationTime) =     add_ident ( 'integrationTime' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_length) =              add_ident ( 'length' )
@@ -455,6 +461,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_range) =               add_ident ( 'range' )
+    field_indices(f_radianceQuantity ) =   add_ident ( 'radianceQuantity' )
     field_indices(f_ratioQuantity) =       add_ident ( 'ratioQuantity' )
     field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_rowChannels) =         add_ident ( 'rowChannels' )
@@ -482,6 +489,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_stop) =                add_ident ( 'stop' )
     field_indices(f_superDiagonal) =       add_ident ( 'superDiagonal' )
     field_indices(f_swath) =               add_ident ( 'swath' )
+    field_indices(f_systemTemperature) =   add_ident ( 'systemTemperature' )
     field_indices(f_tangentGrid) =         add_ident ( 'tangentGrid' )
     field_indices(f_temp_der) =            add_ident ( 'temp_der' )
     field_indices(f_temperaturequantity) = add_ident ( 'temperatureQuantity' )
@@ -589,7 +597,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_gridded, l+l_explicit, l+l_hydrostatic, &
+      begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
+             l+l_hydrostatic, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
              l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, n+n_dt_def, &
@@ -756,6 +765,8 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_ratioQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
+             begin, f+f_radianceQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
              begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, &
@@ -775,9 +786,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec, &
              begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
+             begin, f+f_systemTemperature, t+t_numeric, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def, &
+             begin, f+f_integrationTime, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree( (/ &
       begin, s+s_fillCovariance, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
@@ -937,6 +951,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.104  2001/05/16 19:44:05  livesey
+! Added estimatedNoise stuff
+!
 ! Revision 2.103  2001/05/14 23:21:33  livesey
 ! Added frqGap
 !
