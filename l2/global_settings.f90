@@ -20,7 +20,6 @@ module GLOBAL_SETTINGS
   use String_Table, only: Get_String
   use TREE, only: NODE_ID, DECORATE
   use TREE_TYPES, only: N_EQUAL, N_NAMED
-  use ForwardModelInterface, only: dump
 !??? End of temporary stuff to start up the forward model
 
   implicit NONE
@@ -122,13 +121,14 @@ contains
 
     if ( toggle(gen) ) call trace_end ( 'SET_GLOBAL_SETTINGS' )
 
-    call dump(forwardModelConfigDatabase)
-
   end subroutine SET_GLOBAL_SETTINGS
 
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.7  2001/03/17 00:45:38  livesey
+! Added ForwardModelConfigDatabase
+!
 ! Revision 2.6  2001/03/09 02:30:13  vsnyder
 ! Allocate correct size for FMI and TFMI
 !
