@@ -9,7 +9,7 @@ MODULE L2Interface
    USE SDPToolkit
    USE MLSMessageModule
    USE MLSCommon
-   USE L3DMData
+   USE MLSL3Common
    USE L2GPData
    USE Hdf
    USE MLSPCF
@@ -43,9 +43,9 @@ MODULE L2Interface
 
 CONTAINS
 
-!----------------------------------------------------------
-   SUBROUTINE GetL2GPfromPCF (template, numFiles, pcfNames)
-!----------------------------------------------------------
+!----------------------------------------------------------------------------
+   SUBROUTINE GetL2GPfromPCF (template, startDOY, endDOY, numFiles, pcfNames)
+!----------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This routine searches the PCF for l2gp files for a desired species.  It
@@ -53,7 +53,9 @@ CONTAINS
 
 ! Arguments
 
-      CHARACTER (LEN=*), INTENT(IN) :: template 
+      CHARACTER (LEN=8), INTENT(IN) :: endDOY, startDOY
+
+      CHARACTER (LEN=*), INTENT(IN) :: template
 
       INTEGER, INTENT(OUT) :: numFiles
 
@@ -65,19 +67,14 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=5) :: aNum
-      CHARACTER (LEN=480) :: msr
-      CHARACTER (LEN=FileNameLen) :: capName, capString, cmpString
-      CHARACTER (LEN=FileNameLen) :: physicalFilename
+      CHARACTER (LEN=8) :: date
+      CHARACTER (LEN=FileNameLen) :: physicalFilename, type
 
       INTEGER :: i, indx, returnStatus, version
 
-! Extract the species name from the file template
+! Expand the level/species template
 
-      indx = INDEX(template, 'level')
-      cmpString = template(indx+5:)
-      indx = INDEX(cmpString(2:), '_')
-      capString = Capitalize(cmpString(:indx+1))
+      CALL ExpandFileTemplate(template, type, 'L2GP')
 
       numFiles = 0
 
@@ -86,24 +83,26 @@ CONTAINS
       DO i = mlspcf_l2gp_start, mlspcf_l2gp_end
 
          version = 1
-
          returnStatus = Pgs_pc_getReference(i, version, physicalFilename)
 
-         IF (returnStatus /= PGS_S_SUCCESS) THEN
+! If no file name was returned, go on to the next PCF number
 
-            WRITE(aNum, '(I5)') i
-            msr = MLSMSG_Fileopen // 'PCF number ' // aNum
-            CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
 
-         ELSE
+! Check that the returned file name is for the proper species
 
-! Check that the file is for the proper species
+         IF ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
 
-            capName = Capitalize(physicalFilename)
+! Extract the date from the file name
 
-            IF ( INDEX(capName, TRIM(capString)) /= 0 ) THEN
+            indx = INDEX(physicalFilename, '.', .TRUE.)
+            date = physicalFilename(indx-8:indx-1)
 
-! If so, save the name in an array of files for the species
+! Check that the date is within the desired boundaries for reading
+
+            IF ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
+
+! Save the name in an array of files for the species
 
                numFiles = numFiles + 1
                pcfNames(numFiles) = physicalFilename
@@ -118,9 +117,9 @@ CONTAINS
    END SUBROUTINE GetL2GPfromPCF
 !-------------------------------
 
-!----------------------------------------------------------
-   SUBROUTINE ReadL2GPProd (cfProd, pcf, numDays, prodL2GP)
-!----------------------------------------------------------
+!-----------------------------------------------------------------------
+   SUBROUTINE ReadL2GPProd (cfProd, startDOY, endDOY, numDays, prodL2GP)
+!-----------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine reads l2gp files for a quantity over a range of days.  It
@@ -130,7 +129,7 @@ CONTAINS
 
       TYPE( L3CFProd_T ), INTENT(IN) :: cfProd
 
-      TYPE( PCFData_T ), INTENT(IN) :: pcf
+      CHARACTER (LEN=8), INTENT(IN) :: endDOY, startDOY
 
       INTEGER, INTENT(OUT) :: numDays
 
@@ -151,16 +150,16 @@ CONTAINS
 
 ! Search the PCF for L2GP files for this species
 
-      CALL GetL2GPfromPCF(cfProd%fileTemplate, numDays, pcfNames)
+      CALL GetL2GPfromPCF(cfProd%fileTemplate, startDOY, endDOY, numDays, &
+                          pcfNames)
 
-! Decide whether there are enough input data to process the quantity
+! Check that numDays is at least 1, so pointer allocation is possible
 
-      IF (numDays < pcf%minDays) THEN
+      IF (numDays == 0) THEN
 
 ! If not, issue a warning
 
-         msr = 'Not enough input data to process quantity:  ' // &
-               cfProd%l3prodNameD
+         msr = 'No L2GP data found for ' // cfProd%l3prodNameD
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
          NULLIFY(prodL2GP)
 
@@ -559,20 +558,16 @@ CONTAINS
    END SUBROUTINE ResidualWrite
 !------------------------------
 
-!----------------------------------------------------------------
-   SUBROUTINE ResidualOutput (l3File, numGrids, iGrid, l3dm, l3r)
-!----------------------------------------------------------------
+!---------------------------------------
+   SUBROUTINE ResidualOutput (type, l3r)
+!---------------------------------------
 
 ! Brief description of subroutine
 ! This program creates & writes the L3Residual swaths in an l3 map file.
 
 ! Arguments
 
-      CHARACTER (LEN=*), INTENT(IN) :: l3File
-
-      INTEGER, INTENT(IN) :: numGrids, iGrid(:)
-
-      TYPE( L3DMData_T ), INTENT(IN) :: l3dm(:)
+      CHARACTER (LEN=*), INTENT(IN) :: type
 
       TYPE( L2GPData_T ), INTENT(IN) :: l3r(:)
 
@@ -580,89 +575,78 @@ CONTAINS
 
 ! Functions
 
-      INTEGER, EXTERNAL :: swattach, swclose, swdetach, swopen,swwrfld
+      INTEGER, EXTERNAL :: swattach, swclose, swdetach, swopen
 
 ! Variables
 
-      CHARACTER (LEN=GridNameLen) :: swathName
+      CHARACTER (LEN=8) :: date
       CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=FileNameLen) :: l3File
 
-      INTEGER :: i, indx, l3id, numSwaths, status, swid
-      INTEGER :: iSwath(4)
+      INTEGER :: i, l3id, match, numDays, status, swid
 
-! Find the elements of the l3r database for swaths in this output file
+! For each element of the database,
 
-      numSwaths = 0
-      iSwath = 0
+      numDays = SIZE(l3r)
 
-      DO i = 1, numGrids
+      DO i = 1, numDays
 
-         swathName = TRIM(l3dm(iGrid(i))%name) // 'Residuals'
-         indx = LinearSearchStringArray( l3r%name, TRIM(swathName) )
-         IF (indx == 0) THEN
-            msr = 'No residual swath found in database for:  ' // &
-                   l3dm(iGrid(i))%name
-            CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-         ELSE
-            numSwaths = numSwaths + 1
-            iSwath(numSwaths) = indx
+! Find the l3dm file for the proper day
+
+         CALL FindFileDay(type, l3r(i)%time(1), mlspcf_l3dm_start, &
+                          mlspcf_l3dm_end, match, l3File, date)
+         IF (match == -1) THEN
+            msr = 'No ' // TRIM(type) // ' file for day ' // date // ' found &
+                  &for appending ' // TRIM(l3r(i)%name) // 'swath.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
-
-      ENDDO
-
-      IF (numSwaths == 0) THEN
-         msr = 'No l3r data found for file ' // l3File
-         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-         RETURN
-      ENDIF
 
 ! Re-open the l3dm grid file for the creation of swaths
 
-      l3id = swopen(l3File, DFACC_RDWR)
-      IF (l3id == -1) THEN
-         msr = MLSMSG_Fileopen // l3File
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+         l3id = swopen(l3File, DFACC_RDWR)
+         IF (l3id == -1) THEN
+            msr = MLSMSG_Fileopen // l3File
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
 
-! For all swaths in this output file
+! Create the L3Residual swath in this day's file
 
-      DO i = 1, numSwaths
-
-! Create L3Residual swath
-
-         CALL ResidualCreate( l3id, l3r(iSwath(i)) )
+         CALL ResidualCreate( l3id, l3r(i) )
 
 ! Re-attach to the swath for writing
 
-         swid = swattach(l3id, l3r(iSwath(i))%name)
+         swid = swattach(l3id, l3r(i)%name)
          IF (status == -1) THEN
             msr = 'Failed to re-attach to swath interface for writing to ' // &
-                   l3r(iSwath(i))%name
+                   l3r(i)%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
 ! Write to the geolocation & data fields
 
-         CALL ResidualWrite(l3r(iSwath(i)), swid)
+         CALL ResidualWrite(l3r(i), swid)
+         msr = TRIM(l3r(i)%name) // ' swath successfully written to file ' // &
+               l3File
+         CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
 
 ! After writing, detach from swath interface
 
          status = swdetach(swid)
          IF (status == -1) THEN
             msr = 'Failed to detach from swath interface after writing to ' &
-                  // l3r(iSwath(i))%name
+                  // l3r(i)%name
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Close the file
+
+         status = swclose(l3id)
+         IF (status == -1) THEN
+            msr = 'Failed to close file ' // l3File // ' after writing.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
       ENDDO
-
-! Close the file
-
-      status = swclose(l3id)
-      IF (status == -1) THEN
-         msr = 'Failed to close file ' // l3File // ' after writing.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
 
 !-------------------------------
    END SUBROUTINE ResidualOutput
@@ -673,6 +657,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.2  2000/12/07 19:28:27  nakamura
+!# Updated for level becoming an expandable template field.
+!#
 !# Revision 1.1  2000/11/15 20:56:51  nakamura
 !# Module containing subroutines related to L2GP data.
 !#
