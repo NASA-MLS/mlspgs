@@ -397,8 +397,8 @@ contains
     call TkL1B_sc(nV, offsets, mafTime, sc)
 
     ! Get s/c master coordinate
-    call Mc_aux(mafTime, sc%scECI(:,1), sc%scGeocLat(1), q)
-    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, sc%scGeocLat, nV, numOrb, &
+    call Mc_aux(mafTime, sc%scECI(:,1), q)
+    call TkL1B_mc(ascTAI, dscTAI, sc%scECI, nV, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets, sc%scGeodAngle, &
       & sc%scOrbIncl)
 
@@ -429,7 +429,7 @@ contains
       scRate, tp%scAngle(1), tp)
 
     ! Compute GHz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, lenG, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, lenG, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, &
       & sc%scOrbIncl)
 
@@ -463,7 +463,7 @@ contains
       scRateT, tp%scAngle(1), tp)
 
     ! Compute THz master coordinate
-    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, tp%tpGeocLat, lenT, numOrb, &
+    call TkL1B_mc(ascTAI, dscTAI, tp%tpECI, lenT, numOrb, &
       & orbIncline, orbitNumber, q, mafTAI, offsets(1:lenT), tp%tpGeodAngle, &
       & sc%scOrbIncl)
 
@@ -488,12 +488,13 @@ contains
   end subroutine L1boa_MAF
 
   !------------------------------------------- Mc_Aux --------
-  subroutine Mc_aux (asciiUTC, scECI, scGeocLat, q)
+  subroutine Mc_aux (asciiUTC, scECI, q)
     ! This subroutine computes q, an auxilliary vector used in the calculation of
-    ! the master coordinate.
+    ! the master coordinate.  Q is a vector that points from the center of the Earth
+    ! to the ascending node of the orbit in ECI coordinates.  Thus any point
+    ! dotted with q can give you the master coordinate.
     ! Arguments
     character (LEN=27), intent(IN) :: asciiUTC
-    real, intent(IN) :: scGeocLat
     real(r8), intent(IN) :: scECI(3)
     real(r8), intent(OUT) :: q(3)
 
@@ -530,30 +531,30 @@ contains
     ! Define l & a, where l is the distance to the equator along the direction of
     ! one of the auxilliary vectors from the s/c, and a is the auxilliary vector
     ! for which l was defined.
-    if ( aux1ECI(3) == 0 ) then
+    if ( abs(aux1ECI(3)) < sqrt( tiny(aux1ECI(3)) ) ) then
       ! If aux1 has a zero z-component, set l & a for aux2, if its z-component /= 0
-      if ( aux2ECI(3) /= 0 ) then
+      if ( abs(aux2ECI(3)) > sqrt( tiny(aux2ECI(3)) ) ) then
         l = -scECI(3)/aux2ECI(3)
         aECI = aux2ECI
-      endif
-    else
-
+      else
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Problem computing auxilliary vector for master coordinate' )
+      end if
+    else if ( abs(aux2ECI(3)) < sqrt( tiny(aux2ECI(3)) ) ) then
       ! If aux1(3) is not zero, but aux2(3) is, then set l & a for aux1
-      if ( aux2ECI(3) == 0 ) then
-        l = -scECI(3)/aux1ECI(3)
+      l = -scECI(3)/aux1ECI(3)
+      aECI = aux1ECI
+    else
+      ! If both aux1(3) and aux2(3) are non-zero, choose the one which gives the
+      ! minimum absolute value of l.
+      dist(1) = -scECI(3)/aux1ECI(3)
+      dist(2) = -scECI(3)/aux2ECI(3)
+      if ( abs(dist(1)) < abs(dist(2)) ) then
+        l = dist(1)
         aECI = aux1ECI
       else
-        ! If both aux1(3) and aux2(3) are non-zero, choose the one which gives the
-        ! minimum absolute value of l.
-        dist(1) = -scECI(3)/aux1ECI(3)
-        dist(2) = -scECI(3)/aux2ECI(3)
-        if ( abs(dist(1)) < abs(dist(2)) ) then
-          l = dist(1)
-          aECI = aux1ECI
-        else
-          l = dist(2)
-          aECI = aux2ECI
-        endif
+        l = dist(2)
+        aECI = aux2ECI
       endif
     endif
 
@@ -562,7 +563,7 @@ contains
     q(3) = 0.0
 
     ! Modify q, depending on which hemisphere the s/c is in, and the sign of l
-    if ( scGeocLat < 0.0 ) then
+    if ( scECI(3) < 0.0 ) then
       if ( l < 0 ) q = -q
     else
       if ( l > 0 ) q = -q
@@ -714,7 +715,7 @@ contains
   end function orbInclineCrossProd
 
   !----------------------------------------------------TkL1B_mc -----------------
-  subroutine TkL1B_mc(ascTAI, dscTAI, dotVec, geocLat, nV, numOrb, &
+  subroutine TkL1B_mc(ascTAI, dscTAI, dotVec, nV, numOrb, &
     orbIncline, orbitNumber, q, timeTAI, time_offset, geodAngle, &
     & scOrbIncl)
     ! This subroutine computes phi, the master coordinate for the spacecraft and
@@ -722,7 +723,6 @@ contains
     ! Arguments
     integer, intent(IN) :: nV, numOrb
     integer, intent(IN) :: orbitNumber(:)
-    real, intent(IN) ::    geocLat(nV)
     real(r8), intent(IN) :: orbIncline, timeTAI
     real(r8), intent(IN) :: q(3)
     real(r8), intent(IN) :: time_offset(nV)
@@ -759,22 +759,25 @@ contains
         call MLSMessage(MLSMSG_Error, ModuleName, &
           & 'Error in calculating orbital inclination angle')
       endif
-      ! Calculate C-squared
-      orbRad= Deg2Rad * (orbInclineNow - 90)
-      cSq = (1 + (tan(orbRad)**2)) * (a**2)*(b**2)/(a**2 + &
-        &(b**2)*(tan(orbRad)**2))
 
+      ! Get a unit ECR vector to the point.
       s(:,i) = dotVec(:,i) / sqrt(dotVec(1,i)**2 + dotVec(2,i)**2 + &
-        &dotVec(3,i)**2)
-
+        & dotVec(3,i)**2)
+      
       ! Calculate the geocentric angle as a number of radians between 0 and PI
       gamma(i) = acos( q(1)*s(1,i) + q(2)*s(2,i) )
       if ( i == 1 ) then
-        print*,'Dot product: ',q(1)*s(1,i) + q(2)*s(2,i)
+        print*,'q:',q(1),q(2)
         print*,'Gamma: ', gamma(i)
       end if
-      ! Place angle between PI and 2*PI, if lat indicates Southern Hemisphere
-      if ( geocLat(i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
+      
+      ! Place angle between PI and 2*PI, if in Southern Hemisphere
+      if ( dotVec(3,i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
+
+      ! Going to convert this to geodetic, calculate som parameters.
+      orbRad= Deg2Rad * (orbInclineNow - 90)
+      cSq = (1 + (tan(orbRad)**2)) * (a**2)*(b**2)/(a**2 + &
+        &(b**2)*(tan(orbRad)**2))
 
       ! If |gamma| <= 45 deg of the equator, calculate phi using the SIN equation
       if ( (gamma(i) <= PI/4 ) .or. ( (gamma(i) >= 3*PI/4) .and. &
@@ -816,6 +819,12 @@ contains
 end module TkL1B
 
 ! $Log$
+! Revision 2.7  2001/12/12 19:05:44  livesey
+! Fixed bug with master coordinate for very low latitudes.
+! However, this version it turns out is basing master coordinate
+! on the ECI orbital node, not ECR which I think is what we really
+! want. So expect another version soon!
+!
 ! Revision 2.6  2001/12/12 03:07:32  livesey
 ! Interim version needs debugging more
 !
