@@ -6,11 +6,13 @@ module ReadAPriori
 
   use GriddedData, only: GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump
+  use Expr_M, only: Expr
   use Hdf, only: DFACC_READ, SFSTART
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_HDFVERSION, &
     & F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & L_GLORIA, S_L2AUX, S_L2GP
+  use Intrinsic, only: PHYQ_Dimensionless
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, Dump
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
@@ -102,6 +104,9 @@ contains ! =====     Public Procedures     =============================
     real :: T1, T2                      ! for timing
     logical :: TIMING
     integer :: Version
+    integer :: Type                     ! Type of value returned by EXPR
+    integer :: Units(2)                 ! Units of value returned by EXPR
+    double precision :: Value(2)        ! Value returned by EXPR
 
     character(len=2048) :: ALLSWATHNAMES ! Buffer to get info back.
 
@@ -162,7 +167,11 @@ contains ! =====     Public Procedures     =============================
         case ( f_origin )
           griddedOrigin = decoration(subtree(2,subtree(j,key)))
         case ( f_hdfVersion )           
-          hdfVersion = subtree(2,field)  
+          call expr ( subtree(2,field), units, value, type )             
+          if ( units(1) /= phyq_dimensionless ) &                        
+            & call Announce_error ( field, &                               
+              & 'No units allowed for hdfVersion: just integer 4 or 5')  
+          hdfVersion = value(1)                                          
         end select
       end do
 
@@ -222,7 +231,7 @@ contains ! =====     Public Procedures     =============================
           call announce_error ( son, &
             & 'Failed to close swath file ' // trim(FileNameString) )
         elseif(index(switches, 'pro') /= 0) then                            
-           call proclaim(FilenameString, 'l2gp', &                    
+           call announce_success(FilenameString, 'l2gp', &                    
            & swathNameString, hdfVersion=hdfVersion)    
         end if
 
@@ -363,8 +372,8 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
-  ! ---------------------------------------------  proclaim  -----
-  subroutine proclaim ( Name, l2_type, quantityName, hdfVersion )
+  ! ---------------------------------------------  announce_success  -----
+  subroutine announce_success ( Name, l2_type, quantityName, hdfVersion )
     character(LEN=*), intent(in)   :: Name
     character(LEN=*), intent(in)   :: l2_type
     integer, optional,  intent(in) :: hdfVersion
@@ -387,7 +396,7 @@ contains ! =====     Public Procedures     =============================
     call output ( 'quantity', advance='yes')           
     call blanks(5)                                        
     call output ( trim(quantityName), advance='yes')      
-  end subroutine proclaim
+  end subroutine announce_success
 
   ! ------------------------------------------------  announce_error  -----
   subroutine Announce_error ( lcf_where, full_message, use_toolkit, &
@@ -457,6 +466,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.33  2002/01/26 00:10:45  pwagner
+! Correctly sets hdfVersion; changed proclaim to announce_success
+!
 ! Revision 2.32  2002/01/23 23:09:46  pwagner
 ! Handles optional hdfVersion field; proclaims files input
 !
