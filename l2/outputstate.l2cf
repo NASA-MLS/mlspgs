@@ -5,10 +5,10 @@
 
 ;; Only do the output if the output version has been defined
 begin Output
-!ifdef(ver,{
+!ifdef(outputVersion,{
 
   !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
-    file='!outpath/MLS-Aura_L2GP_$2_!ver_!day.dat'})
+    file='!outpath/MLS-Aura_L2GP_$2_!outputVersion_!day.dat'})
 
   !stdprod(temp,Temperature)
   !stdprod(gph,GPH)
@@ -31,13 +31,13 @@ begin Output
     joined_BaselineR1A, joined_BaselineR1B, $
     joined_BaselineR2, joined_BaselineR3, joined_BaselineR4, $
     joined_BaselineR5H, joined_BaselineR5V ], $
-    file='!outpath/MLS-Aura_L2GP_DGG_!ver_!day.dat'
+    file='!outpath/MLS-Aura_L2GP_DGG_!outputVersion_!day.dat'
   
   Output, type=l2aux, quantities=[ $
     joined_ptanGHz, joined_ptanTHz, $
     joined_ptanGHz_precision, joined_ptanTHz_precision, $
     joined_losVelGHz, joined_losVelTHz, $
     joined_losVelGHz_precision, joined_losVelTHz_precision ], $
-    file='!outpath/MLS-Aura_L2GP_DGM_!ver_!day.dat'
+    file='!outpath/MLS-Aura_L2GP_DGM_!outputVersion_!day.dat'
 })
 end Output
