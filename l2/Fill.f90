@@ -11,8 +11,8 @@ module Fill                     ! Create vectors and fill them.
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_Columns, F_Decay, F_Diagonal, &
     & F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, &
-    & F_INTEGRATIONTIME, F_INTERPOLATE, F_MAXITERATIONS, F_MATRIX, F_METHOD, &
-    & F_QUANTITY, F_RADIANCEQUANTITY, &
+    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MAXITERATIONS, &
+    & F_MATRIX, F_METHOD, F_QUANTITY, F_RADIANCEQUANTITY, &
     & F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
     & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
@@ -205,6 +205,7 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
     integer :: INSTANCE                 ! Loop counter
+    logical :: INVERT                   ! "Invert the specified covariance matrix"
     integer :: KEY                      ! Definitely n_named
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
@@ -572,6 +573,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_decay )
             decay = gson
             call announce_error ( key, notImplemented, "Decay" ) !???
+          case ( f_invert )
+            invert = get_boolean ( subtree(j,key) )
           case ( f_superDiagonal )
             superDiagonal = gson
             call announce_error ( key, notImplemented, "SuperDiagonal" ) !???
@@ -579,8 +582,11 @@ contains ! =====     Public Procedures     =============================
         end do
 
         ! All the fields are collected.  Now fill the matrix.
+        !??? This will need a lot more work when f_decay ???
+        !??? and f_superDiagonal are implemented.        ???
         call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
-        call updateDiagonal ( covariance, vectors(diagonal), square=.true. )
+        call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
+          & invert=invert )
 
       ! End of fill operations
 
@@ -1301,6 +1307,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.54  2001/05/30 20:16:26  vsnyder
+! Add 'invert' field to 'fillCovariance' spec
+!
 ! Revision 2.53  2001/05/23 04:38:16  livesey
 ! Changes chunks to pointer rather than intent(in), so it gets the right indices
 !
