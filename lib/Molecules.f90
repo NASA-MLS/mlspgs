@@ -149,6 +149,9 @@ contains ! =====     Public procedures     =============================
   subroutine Init_Molecules ( DATA_TYPE_INDICES, FIELD_INDICES, LIT_INDICES, &
     & PARM_INDICES, SECTION_INDICES, SPEC_INDICES )
 
+    ! This really belongs in make_tree, but "make depends" can't see it there
+    ! (because of the "include"):
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DT_DEF
 
     integer, intent(inout) :: DATA_TYPE_INDICES(:)
@@ -243,6 +246,10 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.6  2001/04/04 17:56:42  vsnyder
+! Insert "USE TREE" because "make depends" can't see the one in "make_tree"
+! (because of the "include").
+!
 ! Revision 2.5  2001/04/03 19:09:12  vsnyder
 ! Change the order of initialization to intrinsic, Molecules, MLSSignals.
 ! Use the revised make_tree.f9h, which requires revision of init...
