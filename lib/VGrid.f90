@@ -157,6 +157,10 @@ CONTAINS
     ! Executable code
 
     IF (ASSOCIATED(database)) THEN
+       ! Check we don't already have one of this name
+       IF (LinearSearchStringArray(database%name,vGrid%name, &
+            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+            & ModuleName,MLSMSG_Duplicate//vGrid%name)
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -196,6 +200,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.6  1999/12/17 00:59:32  livesey
+! Nightly checkin
+!
 ! Revision 1.5  1999/12/16 18:04:15  livesey
 ! Whoops, wrong name for END SUBROUTINE!
 !
