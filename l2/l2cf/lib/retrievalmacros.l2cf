@@ -540,12 +540,15 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusH
 })
 !ifdef(MFcloudmin,{
 ;; Status - cloudy radiances - already had the box car run on it.
-Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
+Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusLowCloud+!statusBeWary, $
   sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
 })})
 
 
 ; $Log$
+; Revision 1.94  2004/04/27 23:41:48  livesey
+; Simplified the status/quality flagging by changing diagTmp
+;
 ; Revision 1.93  2004/04/27 23:02:11  livesey
 ; Added makeStandardProductMergeDiag and removed flagBand32Clouds (should
 ; be done by parent l2cf now).
