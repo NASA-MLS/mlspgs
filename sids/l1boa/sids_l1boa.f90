@@ -86,6 +86,12 @@ PROGRAM sids_l1boa ! End-to-end check on subroutines
       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
    ENDIF
 
+   ! Need to zero numValues. The program does not set all the elements of 
+   ! numValues(1:orbPerDay-1) before it calculates minSC. This may lead to 
+   ! minSC being (e.g.) -28484737282 yucky consequences. This is doubtless
+   ! compiler dependent -- it is needed for NAG f95 / linux. (HCP)
+   numValues=0
+
    mfps = DBLE(mifRate)
    spm = 1/mfps
 
@@ -234,4 +240,7 @@ END PROGRAM sids_l1boa
 !=====================
 
 !# $Log$
+!# Revision 1.1  2000/11/30 16:34:27  nakamura
+!# The SIDS L1BOA program.
+!#
 !#
