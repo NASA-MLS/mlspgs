@@ -352,7 +352,7 @@ CONTAINS
 ! Save only the date portion, for comparison to file names
 
 !      date = timeB(1:8)
-      date = timeB(1:4)//'d'//timeB(6:8) !to be the same format with RangeDays
+      date = timeB(1:4)//'d'//timeB(6:8) !to be the same format with RangeDays for compare
 
 ! Loop through all the files in this range of PCF numbers
 
@@ -389,6 +389,10 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+! Change it back to original format (yyyy-xxx)
+
+      date = timeB(1:4)//'-'//timeB(6:8) !to be the same format with RangeDays
+    
 !----------------------------
    END SUBROUTINE FindFileDay
 !----------------------------
@@ -485,6 +489,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.13  2004/01/07 21:43:18  cvuu
+! version 1.4 commit
+!
 ! Revision 1.12  2003/08/11 23:29:09  cvuu
 ! brought closer to James Johnson want to
 !
