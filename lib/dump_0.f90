@@ -29,8 +29,17 @@ contains
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer :: J, K
-    if ( size(array) == 1 ) then
-      if ( present(name) ) call output ( name )
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' ' )
+      end if
       call output ( array(1), '(1x,1pg13.6)', advance='yes' )
     else
       if ( present(name) ) call output ( name, advance='yes' )
@@ -49,8 +58,17 @@ contains
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer :: J, K
-    if ( size(array) == 1 ) then
-      if ( present(name) ) call output ( name )
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' ' )
+      end if
       call output ( array(1), advance='yes' )
     else
       if ( present(name) ) call output ( name, advance='yes' )
@@ -69,8 +87,17 @@ contains
     logical, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     integer :: J, K
-    if ( size(array) == 1 ) then
-      if ( present(name) ) call output ( name )
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' ' )
+      end if
       call output ( array(1), advance='yes' )
     else
       if ( present(name) ) call output ( name, advance='yes' )
@@ -89,8 +116,17 @@ contains
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     integer :: I, J, K
-    if ( size(array) == 1 ) then
-      if ( present(name) ) call output ( name )
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' ' )
+      end if
       call output ( array(1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name )
@@ -115,8 +151,17 @@ contains
     integer, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     integer :: I, J, K
-    if ( size(array) == 1 ) then
-      if ( present(name) ) call output ( name )
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' ' )
+      end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name )
@@ -140,8 +185,17 @@ contains
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     integer :: I, J, K, L
-    if ( size(array) == 1 ) then
-      if ( present(name) ) call output ( name )
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' ' )
+      end if
       call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name )
@@ -174,6 +228,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.4  2001/03/10 03:39:58  vsnyder
+! Improve handling of "name" if size==1 or size==0
+!
 ! Revision 2.3  2001/03/02 01:32:08  livesey
 ! Handles larger arrays better
 !
