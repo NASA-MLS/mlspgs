@@ -8,13 +8,14 @@ module ForwardModelWrappers
   
   use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
     & FORWARDMODELSTATUS_T
+!  use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
   use VectorsModule, only: VECTOR_T
   use MatrixModule_1, only: MATRIX_T
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-  use Init_tables_module, only: L_LINEAR, L_SCAN, L_FULL
+  use Init_tables_module, only: L_LINEAR, L_SCAN, L_FULL, L_CLOUDFULL
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
-  use ForwardModelInterface, only: FULLFORWARDMODEL
+  use FullForwardModel_m, only: FULLFORWARDMODEL
   use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
   use ScanModelModule, only: SCANFORWARDMODEL
 
@@ -56,6 +57,9 @@ contains ! ============= Public Procedures ==========================
     case ( l_scan )
       call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+    case ( l_cloudFull )
+!      call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+!        FwdModelOut, Ifm, fmStat, Jacobian )
     case default ! Shouldn't get here if parser etc. worked
     end select
   end subroutine ForwardModel
@@ -63,6 +67,10 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.5  2001/05/29 23:22:20  livesey
+! FullForwardModel moved, also added (but commented out)
+! call to FullCloudForwardModelWrapper
+!
 ! Revision 2.4  2001/05/03 23:42:48  livesey
 ! Activated scan model.
 !
