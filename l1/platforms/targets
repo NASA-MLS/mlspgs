@@ -1,3 +1,5 @@
+mlsl1: MLSL1.o
+
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
 ifdef HOSTMLSCFILE
@@ -6,15 +8,27 @@ else
    MLSCFILE=.configure
 endif
 
+ifndef CASCADE
+the_file := $(shell ${REECHO} Makefile.dep)
+ifeq ($(strip $(the_file)),)
+CASCADE = "yes"
+endif
+endif
+
+ifndef CASCADE
+include Makefile.dep
+else
 ifdef NOCASCADE
 include ../Makefile.nodep
 else
 include ../Makefile.dep
 endif
+endif
 
 # where which_fftw.sh is stored
 MLSBIN=../../util
-CONFDIR=../..
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE)
 
 # "$Id$"
 
@@ -62,14 +76,6 @@ include $(srclib)/Makefile.dep
 
 # Add them to L1OBJS
 ALLOBJS = $(OBJS) $(srclib_objs)
-
-UTILDIR=../../util
-
-# reecho.sh can filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-# However we will be using it just to create lapack_linker_line 
-# where LIB_LAPACK may contain multiple libraries
-REECHO=$(UTILDIR)/reecho.sh
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -135,7 +141,11 @@ endif
 
 fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
-mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CONFDIR)/$(MLSCFILE)
+mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CONFDIR)/$(MLSCFILE) \
+     $(MODULES)
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes -v ; \
+		fi
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -165,6 +175,12 @@ mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CONFDIR)/$(MLSCFILE)
 clean:
 	rm -f *.o *.mod mlsl1
 
+mark_all_as_uptodate:
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl1 -M $(MAKE) $(MARKING_ARG) -v \
+       $(libdir) ; \
+		fi
+
 tar:
 	rm -f l1.tgz
 	tar hcvzf l1.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
@@ -173,11 +189,14 @@ tar:
 
 #	special options for compiling some modules--override .f90 rules
 
-OutputL1B.o: $(S)/OutputL1B.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+#OutputL1B.o: $(S)/OutputL1B.f90
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.19  2002/05/10 20:18:58  pwagner
+# Corrected he5lib message
+#
 # Revision 1.18  2002/05/08 22:03:25  pwagner
 # Can build mlsl1 with he5lib if HDFVERSIONS set
 #
