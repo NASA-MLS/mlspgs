@@ -382,40 +382,38 @@
 
          CALL HEADER(3)
 
-!         print*, tau0
-!         stop
 !-----------------------------------------------------
 !        ASSUME 100% SATURATION IN CLOUD LAYER
 !-----------------------------------------------------
-!         print*, chk_cld
-!         stop
-
-! =========================================================================
+! ==============================================================================
 ! my original intention is that ICON=0 is Clear-Sky only
 !                               ICON=1 is Clear-Sky but 100RH below 100mb
-!                               ICON=2 is default cloudy and clear-sky
-!                                      calculations
-! =========================================================================
+!                               ICON=2 is default for both cloudy and clear-sky
+!                                         calculations
+! ==============================================================================
 
          ICLD_TOP = 0
-         DO IL=1, NZmodel-1 
-            IF(CHK_CLD(IL) .NE. 0._r8) ICLD_TOP=IL
-!            IF(YP(IL) .LE. 100._r8) I100_TOP=IL  !this is wrong
-            IF(YP(IL) .GE. 100._r8) I100_TOP=IL   !this is right
+         I100_TOP = 0
+
+         DO IL=1, NZmodel-1                   ! 100% SATURATION INSIDE CLOUD 
+            IF(CHK_CLD(IL) .NE. 0.)THEN
+               ICLD_TOP=IL
+               IF(YZ(IL) .LT. 20.)THEN
+                  TAU0(IL)=TAU100(IL)
+                  I100_TOP=IL 
+               ENDIF
+            ENDIF
          ENDDO
 
-         IF (ICON .GE. 1) THEN
-            DO IL=1,MAX(ICLD_TOP,I100_TOP)          ! 100% SATURATION BELOW CLOUD 
-               TAU0(IL)=TAU100(IL)      
+         IF (ICON .EQ. 1) THEN
+            DO IL=1,ICLD_TOP                  ! 100% SATURATION BELOW CLOUD 
+               TAU0(IL)=TAU100(IL)       
             ENDDO
          ENDIF   
 
          DO IL=1,MAX(ICLD_TOP,I100_TOP)             ! 100% SATURATION BELOW CLOUD 
-            delTAU100(IL)=TAU100(IL)      
+              delTAU100(IL)=TAU100(IL)      
          ENDDO
-
-!         print*, tau0
-!         stop
 
 !--------------------------------------------------------
 
@@ -457,14 +455,10 @@
 !=================================================
 !    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<
 !=================================================
-!                  write(11,*) 'cloud'
-!                  write(11,*) ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR)
 
                   CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
                        &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,       &
                        &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
-
-!                  write(11,*) PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR
 
                   DO K=1,NU
                      PHH(ISPI,K,ILYR)=P11(K)      ! INTERGRATED PHASE FUNCTION
@@ -508,9 +502,6 @@
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
-
-!         print*, tt0
-!         stop
 
         IF(ICON .GT. 1) THEN                               
 
