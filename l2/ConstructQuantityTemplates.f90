@@ -224,7 +224,7 @@ contains ! =====     Public Procedures     =============================
     if ( family == 0 ) family = natural_units(quantityType)
     minorFrame = any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
-      & l_scVel, l_losTransFunc, l_losVel, l_heightOffset, l_scanResidual/) )
+      & l_scVel, l_losVel, l_heightOffset, l_scanResidual/) )
 
     ! Set defaults for other parameters
     frequencyCoordinate = L_None
@@ -237,8 +237,7 @@ contains ! =====     Public Procedures     =============================
     if ( minorFrame ) then
 
       ! This is a minor frame type quantity.
-      if ( ((hGridIndex /= 0) .OR. (vGridIndex /= 0 )) &
-         &  .AND. quantityType /= l_losTransFunc ) then
+      if ( (hGridIndex /= 0) .OR. (vGridIndex /= 0 )) then
         call announce_error ( root, unnecessaryGrid )
       end if
       if ( instrumentModule == 0 ) then 
@@ -258,16 +257,22 @@ contains ! =====     Public Procedures     =============================
         frequencyCoordinate = l_xyz
       end if
 
-      ! For quantity type l_losTransFunc
-      if ( quantityType == l_losTransFunc ) then
-        noChans = vGrids(vGridIndex)%noSurfs
-        frequencyCoordinate = l_losTransFunc
-      end if
 
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
-    else
+        
+   ! for losTransFunc type of quantity
+   else if (quantityType == l_losTransFunc) then
+
+        noChans = vGrids(vGridIndex)%noSurfs
+        frequencyCoordinate = l_losTransFunc
+
+       ! Construct an empty quantity
+       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
+        & qty, noChans=noChans, mifGeolocation=mifGeolocation )
+        
+   else
 
       ! This is not a minor frame quantity, set it up from VGrids and HGrids
 
@@ -696,6 +701,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.44  2001/07/17 23:23:05  dwu
+! make l_losTransFunc as non-minorframe but minorframe-like quantity
+!
 ! Revision 2.43  2001/07/16 18:24:45  dwu
 ! add feature for losTransFunc type of quantities
 !
