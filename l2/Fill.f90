@@ -2238,6 +2238,7 @@ contains ! =====     Public Procedures     =============================
       integer :: C                      ! Channel loop counter
       integer :: HEIGHTUNIT             ! Unit for height
       integer :: NOPOINTS               ! Number of points supplied
+      integer :: NOUNIQUE               ! Number of unique heights supplied
       integer :: I,J                    ! Loop counters / indices
       integer :: S                      ! Surface loop counter
       integer :: STATUS                 ! Flag
@@ -2249,6 +2250,7 @@ contains ! =====     Public Procedures     =============================
       real (r8), dimension(:), pointer :: OUTHEIGHTS ! Heights for output
       real (r8), dimension(:), pointer :: OUTVALUES ! Single profile for output
       logical, dimension(:), pointer :: INSTANCES ! Flags
+      logical, dimension(:), pointer :: DUPLICATED ! Flags
       real (r8), dimension(2) :: EXPRVALUE ! Value of expression
       integer, dimension(2) :: EXPRUNIT   ! Unit for expression
       integer, dimension(:), pointer :: ININDS ! Indices
@@ -2269,9 +2271,10 @@ contains ! =====     Public Procedures     =============================
       myLogSpace = quantity%template%logBasis
       if ( present ( logSpace ) ) myLogSpace = logSpace
       noPoints = nsons ( valuesNode ) - 1
-      nullify ( heights, values, outHeights, outValues, instances )
+      nullify ( heights, values, duplicated, outHeights, outValues, instances )
       call Allocate_test ( heights, noPoints, 'heights', ModuleName )
       call Allocate_test ( values, noPoints, 'values', ModuleName )
+      call Allocate_test ( duplicated, noPoints, 'duplicated', ModuleName )
       call Allocate_test ( outValues, quantity%template%noSurfs, &
         & 'outValues', ModuleName )
       call Allocate_test ( instances, quantity%template%noInstances, &
@@ -2325,12 +2328,23 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( inInds, noPoints, 'inInds', ModuleName )
         call hunt ( outHeights, heights, inInds, &
           & nearest=.true., allowTopValue=.true. )
-        heights = outHeights ( inInds )
+        duplicated = .false.
+        do i = 1, noPoints - 1
+          do j = i + 1, noPoints
+            if ( inInds(i) == inInds(j) ) then
+              duplicated ( j ) = .true.
+            end if
+          end do
+        end do
+        noUnique = count ( .not. duplicated )
+        inInds(1:noUnique) = pack ( inInds, .not. duplicated )
+        heights(1:noUnique) = outHeights ( inInds(1:noUnique) )
+        values(1:noUnique) = pack ( values, .not. duplicated )
         call deallocate_test ( inInds, 'inInds', ModuleName )
       end if
 
       ! Now do the interpolation for the first instance
-      call InterpolateValues ( heights, values, outHeights, &
+      call InterpolateValues ( heights(1:noUnique), values(1:noUnique), outHeights, &
         & outValues, 'Linear', extrapolate='Constant' )
 
       if ( myLogSpace ) outValues = exp ( outValues )
@@ -2368,6 +2382,7 @@ contains ! =====     Public Procedures     =============================
         & 'outHeights', ModuleName )
       call Deallocate_test ( heights, 'heights', ModuleName )
       call Deallocate_test ( values, 'values', ModuleName )
+      call Deallocate_test ( duplicated, 'duplicated', ModuleName )
       call Deallocate_test ( outValues, 'outValues', ModuleName )
       call Deallocate_test ( instances, 'instances', ModuleName )
     end subroutine FillVectorQtyFromProfile
@@ -5715,6 +5730,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.225  2003/05/28 06:00:06  livesey
+! Bug fix in profile fill where the 'latching' to the output surfaces was
+! leading to redundancy in the interpolation
+!
 ! Revision 2.224  2003/05/26 06:32:50  livesey
 ! Various mainly cosmetic changes to the column stuff
 !
