@@ -77,23 +77,29 @@ contains ! =====     Public Procedures     =============================
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
-    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
+    use INIT_TABLES_MODULE, only: L_ADDNOISE, &
+      & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
       & L_CHANNEL, L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
-      & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
+      & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, &
+      & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
-      & L_IWCFROMEXTINCTION, L_KRONECKER, L_L1B, L_L2GP, &
-      & L_L2AUX, L_LOSVEL, L_MAGAZEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
+      & L_IWCFROMEXTINCTION, L_KRONECKER, &
+      & L_L1B, L_L2GP, L_L2AUX, L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
+      & L_MAGAZEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
       & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_NEGATIVEPRECISION, &
       & L_NOISEBANDWIDTH, L_NONE, &
-      & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
+      & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, &
+      & l_PHASETIMING, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN,  L_QUALITY, &
-      & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_REFLECTORTEMPMODEL, &
-      & L_REFLTEMP, L_RESETUNUSEDRADIANCES, L_RHI, L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
+      & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, &
+      & L_REFLECTORTEMPMODEL, L_REFLTEMP, L_RESETUNUSEDRADIANCES, L_RHI, &
+      & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_ROTATEFIELD, &
       & L_SCALEOVERLAPS, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
-      & L_LIMBSIDEBANDFRACTION, L_SINGLECHANNELRADIANCE, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
+      & L_SECTIONTIMING, &
+      & L_SINGLECHANNELRADIANCE, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_STATUS, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
@@ -129,7 +135,8 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: mls_hdf_version, &
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
     use MLSL2Options, only: LEVEL1_HDFVERSION
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
+      & add_to_phase_timing, fillTimings, finishTimings
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
       & MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues, Hunt
@@ -1107,7 +1114,7 @@ contains ! =====     Public Procedures     =============================
             & quantity, radianceQuantity, sysTempQuantity, nbwQuantity, &
             & integrationTime )
 
-        case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
+        case ( l_explicit ) ! ---------  Explicitly fill from l2cf  -----
           if ( .not. got(f_explicitValues) ) &
             & call Announce_Error ( key, noExplicitValuesGiven )
           call ExplicitFillVectorQuantity ( quantity, valuesNode, spreadFlag, &
@@ -1352,6 +1359,20 @@ contains ! =====     Public Procedures     =============================
           radianceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(radianceVectorIndex), radianceQuantityIndex )
           call OffsetRadianceQuantity ( quantity, radianceQuantity, offsetAmount )
+
+        case ( l_phaseTiming ) ! ---------  Fill timings for phases  -----
+          call finishTimings('phases', returnStatus=status)
+          if ( status /= 0 ) &
+            & call Announce_error ( key, 0, 'Unable to finish phases timings' )
+          call FillTimings ( quantity%values(:,1), 'phases', 'all', .true. )
+          call dump( quantity%values(:,1), 'phases' )
+
+        case ( l_sectionTiming ) ! ---------  Fill timings for sections  -----
+          call finishTimings('sections', returnStatus=status)
+          if ( status /= 0 ) &
+            & call Announce_error ( key, 0, 'Unable to finish sections timings' )
+          call FillTimings ( quantity%values(:,1), 'sections', 'all', .true. )
+          call dump( quantity%values(:,1), 'sections' )
 
         case ( l_profile ) ! ------------------------ Profile fill -------
           if ( .not. got ( f_profileValues ) ) &
@@ -6855,6 +6876,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.275  2004/06/29 18:06:28  pwagner
+! May fill phase, section timings
+!
 ! Revision 2.274  2004/06/10 00:58:45  vsnyder
 ! Move FindFirst, FindNext from MLSCommon to MLSSets
 !
