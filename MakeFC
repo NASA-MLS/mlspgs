@@ -623,6 +623,9 @@ install:
            echo "To install parallel executables for level 2: " ;\
            echo "enter  make install L2PARALLEL=yes" ;\
 			else \
+           echo "Installing level 2 parallel executables into $(INSTALLDIR)"; \
+           cp -a $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh $(INSTALLDIR); \
+           chmod a+x "$(INSTALLDIR)/mlsl2p.sh"; \
            if [ "$$PVM_EP" = "" ] ; then \
              PVM_EP=$$HOME/pvm3/bin/LINUX ;\
            fi; \
@@ -1089,6 +1092,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.85  2003/09/30 00:10:11  pwagner
+# Added build of util/command
+#
 # Revision 1.84  2003/08/01 19:59:46  pwagner
 # installs l2 parallel executables into (PVM_EP) if (L2PARALLEL) set
 #
