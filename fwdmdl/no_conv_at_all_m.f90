@@ -1,10 +1,13 @@
 module NO_CONV_AT_ALL_M
   use MLSCommon, only: I4, R4, R8
-  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, SPECTRO_PARAM, &
-                                 K_MATRIX_INFO
+  use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
   use D_LINTRP_M, only: LINTRP
   use D_CSPLINE_M, only: CSPLINE
   use dump_0,only:dump
+  use VectorsModule, only: Vector_T, VectorValue_T, GETVECTORQUANTITYBYTYPE
+  use ForwardModelConfig, only: ForwardModelConfig_T
+  use Intrinsic, only: L_VMR
+  use String_Table, only: GET_STRING
   implicit NONE
   private
   public :: NO_CONV_AT_ALL
@@ -20,28 +23,20 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
-           spect_der,i_raw,k_temp,k_atmos, k_spect_dw, k_spect_dn,           &
-           k_spect_dnu, spect_atmos,no_tan_hts,k_info_count,i_star_all,      &
-           k_star_all, k_star_info,no_t,no_phi_t,no_phi_f,t_z_basis,         &
-           atmospheric,spectroscopic)
+  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, &
+  Ptan,n_sps,tan_press,i_raw,k_temp,k_atmos,no_tan_hts,k_info_count,i_star_all,      &
+           k_star_all, k_star_info,no_t,no_phi_t,t_z_basis)
 !
+    type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
+    type (Vector_T), intent(in) :: FORWARDMODELIN
     real(r8), intent(in), dimension(:) :: Ptan
-    Logical, intent(IN) :: temp_der,atmos_der,spect_der
 !
-    integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,band,no_phi_t
-    integer(i4), intent(IN) :: no_phi_f(:), spect_atmos(:)
+    integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,no_phi_t
 !
     real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:),T_Z_BASIS(:)
 
     Real(r4) :: k_temp(:,:,:)                    ! (Nptg,mxco,mnp)
     Real(r4) :: k_atmos(:,:,:,:)                 ! (Nptg,mxco,mnp,Nsps)
-    Real(r4) :: k_spect_dw(:,:,:,:)              ! (Nptg,mxco,mnp,Nsps)
-    Real(r4) :: k_spect_dn(:,:,:,:)              ! (Nptg,mxco,mnp,Nsps)
-    Real(r4) :: k_spect_dnu(:,:,:,:)             ! (Nptg,mxco,mnp,Nsps)
-!
-    type(atmos_comp), intent(IN) :: ATMOSPHERIC(:)
-    type (spectro_param), intent(IN) :: SPECTROSCOPIC(:)
 !
 ! -----     Output Variables   ----------------------------------------
 !
@@ -53,6 +48,7 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
 ! -----     Local Variables     ----------------------------------------
 !
+    type (VectorValue_T), pointer :: F  ! vmr quantity
     integer(i4) :: nz
     integer(i4) :: N, I, IS, J, K, NF, SV_I, Spectag, ki, kc
 !
@@ -74,7 +70,8 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
     j = size(Ptan)
     Call Cspline(tan_press,Ptan,i_raw,i_star_all,k,j)
 !
-    if(.not. ANY((/temp_der,atmos_der,spect_der/))) Return
+    if(.not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der,&
+      & forwardModelConfig%spect_der/))) Return
 !
 ! Now transfer the other fwd_mdl derivatives to the output pointing
 ! values
@@ -83,7 +80,7 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
 ! check to determine if derivative is desired for this parameter
 !
-    if (temp_der) then
+    if (forwardModelConfig%temp_der) then
 !
 ! Derivatives needed continue to process
 !
@@ -110,30 +107,34 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
     endif
 !
-    if(atmos_der) then
+    if(forwardModelConfig%atmos_der) then
 !
 ! ****************** atmospheric derivatives ******************
 !
       do is = 1, n_sps
 !
-        if (atmospheric(is)%der_calc(band)) then
+         f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
+          & molecule=forwardModelConfig%molecules(is), noError=.true. )
+
+        if (associated(f)) then
 !
           ki = ki + 1
           kc = kc + 1
-          nz = atmospheric(is)%no_lin_values
-          k_star_info(kc)%name = atmospheric(is)%name
+          nz = f%template%noSurfs
+          call get_string(f%template%name,k_star_info(kc)%name)
           k_star_info(kc)%first_dim_index = ki
-          k_star_info(kc)%no_phi_basis = no_phi_f(is)
+          k_star_info(kc)%no_phi_basis = f%template%noInstances
           k_star_info(kc)%no_zeta_basis = nz
-          k_star_info(kc)%zeta_basis(1:nz) = &
-                  &  atmospheric(is)%basis_peaks(1:nz)
+          k_star_info(kc)%zeta_basis(1:f%template%noSurfs) = f%template%surfs(:,1)
+          Rad(1:) = 0.0
+!
+          ! Derivatives needed continue to process
+!
+          do nf = 1, f%template%noInstances
+!
+            do sv_i = 1, f%template%noSurfs
 !
 ! Derivatives needed continue to process
-!
-          Rad(1:) = 0.0
-          do nf = 1, no_phi_f(is)
-!
-            do sv_i = 1, nz
 !
               Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
               Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
@@ -149,64 +150,64 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
     endif
 !
-    if(spect_der) then
+!     if(spect_der) then
 !
-! ****************** Spectroscopic derivatives ******************
-!
-      do is = 1, n_sps
-!
-        i = spect_atmos(is)
-        if(i < 1) CYCLE
-        if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
-!
-! Derivatives needed continue to process
-!
-        Spectag = atmospheric(is)%spectag
-!
-        DO
-!
-          if(spectroscopic(i)%Spectag /= Spectag) EXIT
-          n = spectroscopic(i)%no_phi_values
-          nz = spectroscopic(i)%no_zeta_values
-          CA = spectroscopic(i)%type
-          ki = ki + 1
-          kc = kc + 1
-          k_star_info(kc)%name = spectroscopic(i)%NAME
-          k_star_info(kc)%first_dim_index = ki
-          k_star_info(kc)%no_phi_basis = n
-          k_star_info(kc)%no_zeta_basis = nz
-          k_star_info(kc)%zeta_basis(1:nz) = &
-                  &  spectroscopic(i)%zeta_basis(1:nz)
-!
-          Rad(1:) = 0.0
-          do nf = 1, n
-!
-            do sv_i = 1, nz
-!
-              select case ( CA )
-                case ( 'W' )
-                  Rad(1:k) = k_spect_dw(1:k,sv_i,nf,i)
-                case ( 'N' )
-                  Rad(1:k) = k_spect_dn(1:k,sv_i,nf,i)
-                case ( 'V' )
-                  Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
-              end select
-!
-              Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
-              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
-!
-            end do        ! sv_i loop
-!
-          end do          ! nf loop
-!
-          i = i + 1
-          if(i > 3 * n_sps) EXIT
-!
-        END DO
-!
-      end do
-!
-    endif
+! ! ****************** Spectroscopic derivatives ******************
+! !
+!       do is = 1, n_sps
+! !
+!         i = spect_atmos(is)
+!         if(i < 1) CYCLE
+!         if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+! !
+! ! Derivatives needed continue to process
+! !
+!         Spectag = atmospheric(is)%spectag
+! !
+!         DO
+! !
+!           if(spectroscopic(i)%Spectag /= Spectag) EXIT
+!           n = spectroscopic(i)%no_phi_values
+!           nz = spectroscopic(i)%no_zeta_values
+!           CA = spectroscopic(i)%type
+!           ki = ki + 1
+!           kc = kc + 1
+!           k_star_info(kc)%name = spectroscopic(i)%NAME
+!           k_star_info(kc)%first_dim_index = ki
+!           k_star_info(kc)%no_phi_basis = n
+!           k_star_info(kc)%no_zeta_basis = nz
+!           k_star_info(kc)%zeta_basis(1:nz) = &
+!                   &  spectroscopic(i)%zeta_basis(1:nz)
+! !
+!           Rad(1:) = 0.0
+!           do nf = 1, n
+! !
+!             do sv_i = 1, nz
+! !
+!               select case ( CA )
+!                 case ( 'W' )
+!                   Rad(1:k) = k_spect_dw(1:k,sv_i,nf,i)
+!                 case ( 'N' )
+!                   Rad(1:k) = k_spect_dn(1:k,sv_i,nf,i)
+!                 case ( 'V' )
+!                   Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
+!               end select
+! !
+!               Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
+!               k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
+! !
+!             end do        ! sv_i loop
+! !
+!           end do          ! nf loop
+! !
+!           i = i + 1
+!           if(i > 3 * n_sps) EXIT
+! !
+!         END DO
+! !
+!       end do
+! !
+!     endif
 !
     K_INFO_COUNT = kc
 
@@ -216,6 +217,9 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.7  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.6  2001/03/29 02:54:49  livesey
 ! Removed print statements
 !

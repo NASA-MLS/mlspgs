@@ -6,7 +6,7 @@ module CONVOLVE_ALL_M
   use D_CSPLINE_M, only: CSPLINE
   use FOV_CONVOLVE_M, only: FOV_CONVOLVE
   use HYDROSTATIC_INTRP, only: GET_PRESSURES
-  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, LIMB_PRESS, K_MATRIX_INFO
+  use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
   use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
   use ForwardModelConfig, only: ForwardModelConfig_T
   use MLSCommon, only: I4, R4, R8
@@ -31,7 +31,7 @@ contains
   Subroutine convolve_all (ForwardModelConfig, ForwardModelIn,&
     Ptan,n_sps, &
     tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,  &
-    si,center_angle,fft_pts,i_raw, k_temp, k_atmos, &
+    si,center_angle,i_raw, k_temp, k_atmos, &
     no_tan_hts,k_info_count,  &
     i_star_all,k_star_all,k_star_info,no_t,no_phi_t,     &
     t_z_basis,AntennaPattern,Ier)
@@ -42,7 +42,7 @@ contains
     real(r8), dimension(:), intent(IN) :: Ptan
 
     integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, si,&
-      &                           fft_pts, no_phi_t
+      &                           no_phi_t
 
     real(r8), intent(IN) :: CENTER_ANGLE
     real(r8), intent(IN) :: I_RAW(:), T_Z_BASIS(:)
@@ -65,13 +65,12 @@ contains
 
     type (VectorValue_t), pointer :: f
 !
-    integer(i4) :: FFT_INDEX(2**fft_pts), nz
-    integer(i4) :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp
+    integer(i4) :: FFT_INDEX(size(antennaPattern%aaap)), nz
+    integer(i4) :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc,jp, fft_pts
 !
     Real(r8) :: Q, R
     Real(r8) :: SRad(size(Ptan)), Term(size(Ptan))
-    Real(r8) :: FFT_PRESS(2**fft_pts), FFT_ANGLES(2**fft_pts), &
-      &            RAD(2**fft_pts)
+    Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
 !
     Character(LEN=01) :: CA
 !
@@ -82,7 +81,7 @@ contains
     ! This subroutine is called by channel
 !
     Ier = 0
-    ntr = 2**fft_pts
+    ntr = size(antennaPattern%aaap)
     K_INFO_COUNT = 0
     jp = (no_phi_t+1)/2
 !
@@ -94,6 +93,7 @@ contains
 !
     ! Compute the convolution of the mixed radiances
 !
+    fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
     fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
     Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
       &                  fft_pts,AntennaPattern,Ier)
@@ -411,6 +411,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.13  2001/04/10 01:16:34  livesey
+! Tidied up convolution
+!
 ! Revision 1.12  2001/04/05 22:54:39  vsnyder
 ! Use AntennaPatterns_M
 !

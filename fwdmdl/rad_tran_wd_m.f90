@@ -25,10 +25,10 @@ contains
 ! This is the radiative transfer model with derivatives
 
 Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-       &   elvar,frq_i,band,Frq,n_sps,z_path,h_path,t_path,phi_path,  &
+       &   elvar,frq_i,Frq,n_sps,z_path,h_path,t_path,phi_path,  &
        &   dHdz_path,beta_path,spsfunc_path,t_z_basis,no_t,ref_corr,  &
-       &   no_phi_t,t_phi_basis,dh_dt_path,spect_atmos,spectroscopic, &
-       &   k_temp,k_atmos,k_spect_dw,k_spect_dn,k_spect_dnu,brkpt,    &
+       &   no_phi_t,t_phi_basis,dh_dt_path, &
+       &   k_temp,k_atmos,brkpt,    &
        &   no_ele,mid,ilo,ihi,t_script,tau,max_zeta_dim,max_phi_dim,Ier)
 !
     type(forwardModelConfig_T), intent(in) :: forwardModelConfig
@@ -36,11 +36,10 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
 !
     Type(ELLIPSE), INTENT(IN OUT) :: elvar
 
-    Integer(i4), intent(in) :: FRQ_I,NO_PHI_T,NO_T, BAND, &
+    Integer(i4), intent(in) :: FRQ_I,NO_PHI_T,NO_T, &
    &                           N_SPS, BRKPT, NO_ELE, MID, ILO, IHI, &
    &                           max_zeta_dim, max_phi_dim
 
-    Integer(i4), intent(in) :: SPECT_ATMOS(:)
 
     Integer(i4), intent(out) :: IER
 
@@ -52,8 +51,6 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
     Real(r8), intent(in) :: T_SCRIPT(:)
     Real(r8), intent(in) :: REF_CORR(:)
 
-    Type(spectro_param), intent(in) :: SPECTROSCOPIC(:)
-
     Type(path_beta), intent(in) :: BETA_PATH(:)   ! (Nsps)
 
     Type(path_vector), intent(in) :: SPSFUNC_PATH(:)
@@ -63,8 +60,7 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
     Real(r8), intent(in) :: dh_dt_path(:,:,:)
 
     Type(path_derivative), intent(in out) :: k_temp
-    Type(path_derivative), intent(in out) :: k_atmos(:), k_spect_dw(:), &
-                                             k_spect_dn(:), k_spect_dnu(:)
+    Type(path_derivative), intent(in out) :: k_atmos(:)
 !
     CHARACTER (LEN=01) :: CA
 
@@ -118,65 +114,65 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
 !
     end if
 !
-    if (ForwardModelConfig%spect_der) then
-!
-!  ** Spectroscopic derivatives here:
-!
-!  Get the dI/d(Spectral parameters) (w, n & nu0) FOR EACH SPECIE,
-!  and for each Zeta/Phi coefficient.
-!
-      do nf = 1, n_sps
-!
-        sa = spect_atmos(nf)
-        if (sa < 1) CYCLE
-!
-        if(.not.spectroscopic(sa)%DER_CALC(band)) CYCLE
-!
-        Spectag = spectroscopic(sa)%spectag
-!
-        DO
-!
-          if(spectroscopic(sa)%Spectag /= Spectag) EXIT
-!
-          s_np = spectroscopic(sa)%no_phi_values
-          s_nz = spectroscopic(sa)%no_zeta_values
-          if(s_nz < 1 .or. s_np < 1) EXIT
-!
-          CA = spectroscopic(sa)%type
+!     if (ForwardModelConfig%spect_der) then
+! !
+! !  ** Spectroscopic derivatives here:
+! !
+! !  Get the dI/d(Spectral parameters) (w, n & nu0) FOR EACH SPECIE,
+! !  and for each Zeta/Phi coefficient.
+! !
+!       do nf = 1, n_sps
+! !
+!         sa = spect_atmos(nf)
+!         if (sa < 1) CYCLE
+! !
+!         if(.not.spectroscopic(sa)%DER_CALC(band)) CYCLE
+! !
+!         Spectag = spectroscopic(sa)%spectag
+! !
+!         DO
+! !
+!           if(spectroscopic(sa)%Spectag /= Spectag) EXIT
+! !
+!           s_np = spectroscopic(sa)%no_phi_values
+!           s_nz = spectroscopic(sa)%no_zeta_values
+!           if(s_nz < 1 .or. s_np < 1) EXIT
+! !
+!           CA = spectroscopic(sa)%type
 
-          if (CA == 'W') then
-            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
- &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
- &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &               frq_i,elvar,k_spect_dw(nf), Ier )
-!
-          else if (CA == 'N') then
-            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
- &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
- &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &               frq_i,elvar,k_spect_dn(nf), Ier )
-!
-          else if (CA == 'V') then
-            Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
- &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
- &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
- &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &               frq_i,elvar,k_spect_dnu(nf), Ier )
-!
-          end if
-!
-          if (Ier /= 0) Return
-!
-          sa = sa + 1
-          if(sa > 3 * n_sps) EXIT
-!
-        END DO
-!
-      end do                      ! On nf (Specie loop)
-!
-    end if                        ! on Derivatives 'if'
+!           if (CA == 'W') then
+!             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+!  &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+!  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
+!  &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+!  &               frq_i,elvar,k_spect_dw(nf), Ier )
+! !
+!           else if (CA == 'N') then
+!             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+!  &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+!  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
+!  &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+!  &               frq_i,elvar,k_spect_dn(nf), Ier )
+! !
+!           else if (CA == 'V') then
+!             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
+!  &               h_path, phi_path, DHDZ_PATH, N_lvls,ref_corr,    &
+!  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
+!  &               t_script,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
+!  &               frq_i,elvar,k_spect_dnu(nf), Ier )
+! !
+!           end if
+! !
+!           if (Ier /= 0) Return
+! !
+!           sa = sa + 1
+!           if(sa > 3 * n_sps) EXIT
+! !
+!         END DO
+! !
+!       end do                      ! On nf (Specie loop)
+! !
+!     end if                        ! on Derivatives 'if'
 !
 
     Return
@@ -184,6 +180,9 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.10  2001/04/09 22:24:38  livesey
+! Clear error flag on entry
+!
 ! Revision 1.9  2001/04/09 20:52:07  zvi
 ! Debugging Derivatives version
 !
