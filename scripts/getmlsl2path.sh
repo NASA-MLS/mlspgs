@@ -73,7 +73,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l2pc" ]; then
 	case $MACHINE in
 	    soundbarrier )
-		echo "/data1/$MYUSER/l2pc/";;
+		echo "/data1/$MYUSER/$L2PCNAME/";;
 	    scramjet )
 		echo "/state/partition1/livesey";;
 	    lightspeed )
@@ -189,6 +189,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.41  2004/10/09 22:54:17  livesey
+# L2PC files moved at SCF
+#
 # Revision 1.40  2004/09/27 16:28:56  livesey
 # Changed l1breal to l1bvsp for Vince's data.
 #
