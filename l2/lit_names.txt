@@ -110,6 +110,7 @@ regular
 RHIFromH2O
 RHIPrecisionFromH2O
 
+scaleOverlaps
 scan
 scan2d
 # spaceRadiance -- in lib/lit_names
@@ -124,6 +125,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.27  2003/03/26 21:23:18  livesey
+# Added scaleOverlaps
+#
 # Revision 2.26  2003/03/06 19:46:49  pwagner
 # columnAbundance moved to lib from l2
 #
