@@ -31,6 +31,7 @@ contains
     use MLSCommon, only: RP
     use Refraction_m, only: Refractive_index
     use Two_d_hydrostatic_m, only: Two_d_hydrostatic
+    use Geometry, only: MaxRefraction
 
 ! Inputs
 
@@ -140,6 +141,7 @@ contains
 
       call refractive_index ( 10.0**(-zetatan), t_tan_out, n_tan_out, &
                           & h2o_path=h2o_tan_out )
+      n_tan_out = min ( n_tan_out, maxRefraction )
 
       call deallocate_test ( h2o_tan_out, 'h2o_tan_out', modulename )
       call deallocate_test ( eta_z, 'eta_z', modulename )
@@ -187,6 +189,9 @@ contains
 end module Get_Chi_Out_m
 
 ! $Log$
+! Revision 2.13  2004/05/17 22:06:07  livesey
+! Guard against large refractive indices
+!
 ! Revision 2.12  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
