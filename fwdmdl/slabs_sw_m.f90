@@ -1051,6 +1051,8 @@ contains
 
       ELSE
 
+        ! NEED MORE WORK HERE -JHJ
+        PRINT*, NO_ELE 
         ! compute first element along the LOS path
         call Slabs_Prep_Arrays ( Spectag, nl, t_path(1)+dt, p_path(1), mass, Qlog, &
           &  Catalog(i), gl_slabs(1,i)%v0s, gl_slabs(1,i)%x1, gl_slabs(1,i)%y, &
@@ -1086,6 +1088,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.13  2003/01/16 18:50:20  jonathan
+! For 1D FWM compute first element along the LOS path then fill other grid points with value of the first grid point
+!
 ! Revision 2.12  2003/01/16 18:04:12  jonathan
 ! add Do_1D option to get_gl_slabs_arrays
 !
