@@ -601,8 +601,8 @@ contains
 
     ! ---------------------------- Begin main Major Frame loop --------
 
-    !do maf = 3, 3
-    do maf = 1, radiance%template%noInstances
+    do maf = 3, 3
+    !do maf = 1, radiance%template%noInstances
       print*,'Major frame: ',maf
 
       phi_tan = fmc%phi_tan_mmaf(maf) !??? Get this from state vector lter
@@ -635,6 +635,7 @@ contains
         call allocate_test(frequencies,noFreqs,"frequencies",ModuleName)
         frequencies = pack ( signal%frequencies, &
           & forwardModelConfig%sigInfo(1)%channelIncluded )
+        print*,'Interim frequencies:',frequencies
         select case (signal%sideband)
         case ( l_lower )
           frequencies = signal%lo - (signal%centerFrequency+frequencies)
@@ -648,6 +649,9 @@ contains
             & 'Bad value of signal%sideband')
         end select
         noFreqs = size(frequencies)
+        print*,'Center frequency:', signal%centerFrequency
+        print*,'LO:', signal%lo
+        print*,'Using frequency: ',frequencies
       endif
 
       ! First we have a mini loop over pointings to work out an upper limit
@@ -696,7 +700,7 @@ contains
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
-        print*,'  Pointing:',ptg_i,' of ',no_tan_hts
+        print*,'  Pointing:',ptg_i,' of ',no_tan_hts, FMI%tan_press(ptg_i)
 
         k = ptg_i
         h_tan = tan_hts(k,maf)
@@ -708,9 +712,18 @@ contains
         ! If we're doing frequency averaging, get the frequencies we need for
         ! this pointing.
         if (FMC%do_frqavg) then
-          frequencies => PointingGrids(whichPointingGrid)%oneGrid(&
-            & grids(ptg_i))%frequencies
+          call Allocate_Test(frequencies, &
+            & size(PointingGrids(whichPointingGrid)%&
+            &      oneGrid(grids(ptg_i))%frequencies),&
+            &      'frequencies', ModuleName)
+          ! Note that this deallocates the ones from the previous go round
+!          print*,'Center frequency is:',PointingGrids(whichPointingGrid)%CenterFrequency
+!          print*,'Offsets:'
+!          call dump(PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
+          frequencies =>PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies 
           noFreqs = size(frequencies)
+          print*,'     Using:'
+          call dump(frequencies)
         endif ! If not, we dealt with this outside the loop
 
         call get_beta_path(frequencies,&
@@ -719,6 +732,7 @@ contains
         if(ier /= 0) goto 99
 
         ! ------------------------------- Begin loop over frequencies ------
+        print*,'    Loop over frequencies will be:', noFreqs
         do frq_i = 1, noFreqs
 
           Frq = frequencies(frq_i)
@@ -991,7 +1005,8 @@ contains
       print *,'Frequency Averaging: ON'
     endif
     print *
-    if (.not. FMC%do_frqavg) deallocate(frequencies)
+
+    if (.not. forwardModelConfig%do_freq_avg) deallocate(frequencies)
 
     tau(1:Nptg) = 0.0
     tau(1:ptan%template%noSurfs) = dble(ptan%values(:,3))
@@ -1187,6 +1202,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.37  2001/03/25 00:50:31  livesey
+! Interim version, bug with frequency averaging
+!
 ! Revision 2.36  2001/03/24 00:33:38  livesey
 ! Bug fix (Typo)
 !
