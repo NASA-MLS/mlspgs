@@ -103,10 +103,6 @@ program MLSL2
               levels(gen) = ichar(line(j:j)) - ichar('0')
             end if
           end if
-        case ( 'G' )
-          toggle(gen) = .true.
-          switches = line(j+1:)
-      exit
         case ( 'h', 'H', '?' )     ! Describe command line usage
           call getarg ( 0+hp, line )
           print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
@@ -120,18 +116,18 @@ program MLSL2
             &                    'more output.'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
             &                    'more output.'
-          print *, '  -Gstring: Trace "generation".  Characters in "string" '
-          print *, '            may control individual outputs.'
           print *, '  -l: Trace lexical analysis.'
           print *, '  -K: Capitalize identifiers.'
           print *, "  -k: Don't capitalize identifiers."
           print *, '  -M: Send output through MLSMessage.'
           print *, '  -p: Trace parsing.'
+          print *, '  -Sstring: Set "switches" = "string".  Characters in'
+          print *, '            "string" may control individual outputs.'
           print *, '  -T: Time parsing, type checking and processing separately.'
           print *, '  -t: Trace declaration table construction.'
           print *, '  -v: List the configuration file.'
           print *, '  The above options can be concatenated after one hyphen,'
-          print *, '  except that -G takes the rest of the option as its ', &
+          print *, '  except that -S takes the rest of the option as its ', &
             &         '"string".'
           print *, '  --[n]pcf: Open the L2CF [without] using the Toolkit ', &
             &        'and the PCF.'
@@ -156,6 +152,9 @@ program MLSL2
         case ( 'l' ); toggle(lex) = .true.
         case ( 'M' ); prunit = -2
         case ( 'p' ); toggle(par) = .true.
+        case ( 'S' )
+          switches = line(j+1:)
+      exit ! Took the rest of the string, so there can't be more options
         case ( 'T' ); timing = .true.
         case ( 't' ); toggle(tab) = .true.
         case ( 'v' ); do_listing = .true.
@@ -242,6 +241,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.26  2001/04/27 20:59:16  vsnyder
+! Change -G option to -S
+!
 ! Revision 2.25  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
