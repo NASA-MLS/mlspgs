@@ -41,7 +41,7 @@ contains
                                              ! 4 = KNOLLENGBERG
 
       REAL(r8) :: DR0                        ! INTEGRATION STEP FOR SIZE BINS
-      REAL(r8) :: RN0                        ! INTEGRATION NUMBER DENSITY
+      REAL(r8) :: RN0                        ! INTEGRATION NUMBER DENSITY 
       REAL(r8) :: RN(NR)                     ! INTEGRATED NUMBER DENSITY OF EACH 
                                              ! SIZE BIN
       REAL(r8) :: R(NR)                      ! PARTICLE RADIUS (micron)
@@ -69,6 +69,7 @@ contains
 
       IWC00=1.
       DIAM0=1.
+      dm=0._r8
       TEMPC=t-273.15_r8
 
 	if(ISPI .eq. 1) then    
@@ -116,12 +117,16 @@ contains
 
 !... MH size dist has two parts separated at 100 micron
 
-           if(diam .le. 100) rn0=iwc0*alpha0**5/3.14/raoi/4    &
-     &        *diam*exp(-alpha0*diam)
-           if(diam .gt. 100 .and. iwc1 .gt. 0) &
-     &        rn0=6*iwc1/raoi/sqrt(3.14**3*2)  &
+!           if(diam .le. 100) 
+
+           rn0=iwc0*alpha0**5/3.14/raoi/4    &
+     &        *diam*exp(-alpha0*diam)                         ! diam <=100
+
+!           if(diam .gt. 100 .and. iwc1 .gt. 0) &
+
+           rn0=rn0+6*iwc1/raoi/sqrt(3.14**3*2)  &
      &	      /exp(3*mu1+9./2*rao1*rao1)/diam/rao1/diam0**3    &
-     &	      *exp(-0.5*((log(diam/diam0)-mu1)/rao1)**2)
+     &	      *exp(-0.5*((log(diam/diam0)-mu1)/rao1)**2)      ! diam >100
 
         ELSE IF(IPSD .EQ. 2000) THEN   ! GAMMA DISTRIBUTION 
 
@@ -158,10 +163,10 @@ contains
 
 !... MH size dist has two parts separated at 100 micron
 
-           if(diam .le. 100) rn0=iwc0*alpha0**5/3.14/raoi/4  &
+           rn0=iwc0*alpha0**5/3.14/raoi/4  &
      &        *diam*exp(-alpha0*diam)
-           if(diam .gt. 100 .and. iwc1 .gt. 0)   &
-     &        rn0=6*iwc1/raoi/sqrt(3.14**3*2)    &
+           
+           rn0=rn0+6*iwc1/raoi/sqrt(3.14**3*2)    &
      &	      /exp(3*mu1+9./2*rao1*rao1)/diam/rao1/diam0**3  &
      &	      *exp(-0.5*((log(diam/diam0)-mu1)/rao1)**2)
 
@@ -175,9 +180,9 @@ contains
 
 !... converted to meters
 	do i=1,nr
-	rn(i)=rn(i)/1e-12
+	rn(i)=rn(i)/1.e-12
 	enddo
-	sum = sum/1e-12
+	sum = sum/1.e-12
 
 !... normalized by iwc
         do i=1,nr
@@ -188,8 +193,8 @@ contains
         SUM1=0.
         SUM2=0.
         do i=1,nr
-           SUM1=SUM1+rn(i)*r(I)**4
-           SUM2=SUM2+rn(i)*r(I)**3
+           SUM1=SUM1+rn(i)*1.e-12*(2.*r(I))**4
+           SUM2=SUM2+rn(i)*1.e-12*(2.*r(I))**3
         enddo
         Dm=sum1/max(1.e-29_r8,sum2)
 
@@ -254,8 +259,8 @@ contains
         SUM1=0.
         SUM2=0.
         do i=1,nr
-           SUM1=SUM1+rn(i)*r(I)**4
-           SUM2=SUM2+rn(i)*r(I)**3
+           SUM1=SUM1+rn(i)*(2.*r(I))**4
+           SUM2=SUM2+rn(i)*(2.*r(I))**3
         enddo
         Dm=sum1/max(1.e-29_r8,sum2)
 
@@ -266,6 +271,9 @@ contains
 end module SizeDistribution
 
 ! $Log$
+! Revision 1.6  2001/10/24 21:53:41  jonathan
+! changes in Dm formula
+!
 ! Revision 1.5  2001/10/23 23:57:40  jonathan
 ! fix mass-mean-diameter
 !
