@@ -1,4 +1,4 @@
- ! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DO_DELTA_M
@@ -19,6 +19,12 @@ contains
 
   subroutine PATH_OPACITY ( DEL_ZETA, SINGULARITY, FUNCT, DS_DH_GL, DH_DZ_GL, &
                      &      INTEGRAL )
+
+! Assume FUNCT, DS_DH_GL and DH_DZ_GL have been evaluated at NG Gauss
+! abscissae in each DEL_ZETA interval.  Then for each of those intervals,
+! estimate the integral of (FUNCT-SINGULARITY) * DS_DH_GL * DH_DZ_GL
+! using the NG-point Gauss quadrature.
+
     use GLNP, only: NG, GW
     use MLSCommon, only: IP, RP
 
@@ -26,7 +32,7 @@ contains
 
     real(rp), intent(in) :: del_zeta(:) ! difference in integration boundary
 !                                         in -log(p) units
-    real(rp), intent(in) :: singularity(:) ! value of function at lower
+    real(rp), intent(in) :: singularity(:) ! value of function at lower boundary
     real(rp), intent(in) :: funct(:)    ! function evaluated on gl integration
 !                                         grid
     real(rp), intent(in) :: ds_dh_gl(:) ! path length derivative wrt height on
@@ -158,6 +164,9 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.4  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.3.2.2  2003/03/06 21:52:39  vsnyder
 ! Use the correct size
 !
