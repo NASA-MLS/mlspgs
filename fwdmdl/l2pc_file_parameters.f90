@@ -2,14 +2,14 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L2PC_FILE_PARAMETERS
-  use MLSCommon, only: I4, R4, R8
+  use MLSCommon, only: I4
   implicit NONE
   public
 !---------------------------- RCS Ident Info -------------------------------
-  private ID, ModuleName
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+  character (len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), parameter, private :: ModuleName = &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 ! * * * * * * * * * * *  L2PC_FILE_PARAMETERS V51 * * * * * * * * * * * * *
@@ -67,13 +67,12 @@ module L2PC_FILE_PARAMETERS
  &                                 'Third header record.    '
   integer(i4), parameter :: J2D=max_no_sv_components,                   &
  &                          MAX_TABLE_2D=(j2d*(j2d+1))/2
-  ! Conversion factor degrees to radians.
-  real(r8), parameter :: DEG2RAD = 1.745329252E-2 ! [Radians / Degree]
-  ! Conversion factor radians to degrees.
-  real(r8), parameter :: RAD2DEG = 57.29577951308 ! [Degrees / Radian]
 !
 end module L2PC_FILE_PARAMETERS
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.7  2001/06/07 23:39:31  pwagner
 ! Added Copyright statement
 !
