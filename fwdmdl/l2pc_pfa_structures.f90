@@ -164,7 +164,11 @@ contains
     ! Executable code
     myDer = .false.
     if ( present(tempDer) ) myDer = tempDer
-    nl = size(catalog%lines)
+    if ( associated(catalog%lines) ) then
+      nl = size(catalog%lines)
+    else
+      nl = 0
+    end if
     myL = nl
 
     slabs%catalog => catalog
@@ -364,6 +368,9 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.13  2004/12/13 20:48:34  vsnyder
+! Add UseYi field to Slabs_Struct type definition
+!
 ! Revision 2.12  2004/03/27 03:35:27  vsnyder
 ! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
 ! line centers and line widths around.  Write slabs_lines and slabswint_lines
