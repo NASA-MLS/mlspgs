@@ -1418,7 +1418,7 @@ contains ! =====     Public Procedures     =============================
     call output ( r_or_c )
     call output ( ' blocks = ' )
     call output ( rc%nb )
-    call output ( 'Vector that defines ' )
+    call output ( ' Vector that defines ' )
     call output ( r_or_c )
     call output ( 's' )
     if ( rc%vec%name == 0 ) then
@@ -1427,7 +1427,7 @@ contains ! =====     Public Procedures     =============================
       call output ( ': ' )
       call display_string ( rc%vec%name, advance='yes' )
     end if
-    call output ( 'Order of blocks is ' )
+    call output ( 'Order of '//r_or_c//' blocks is ' )
     if ( rc%instFirst ) then
       call output ( 'instance, then quantity', advance='yes' )
     else
@@ -1438,11 +1438,11 @@ contains ! =====     Public Procedures     =============================
       call output ( r_or_c )
       call output ( 's in each block: ', advance='yes' )
       call dump ( rc%nelts )
-      call output ( 'Instance indices for blocks in the' )
+      call output ( 'Instance indices for blocks in the ' )
       call output ( r_or_c )
       call output ( 's:', advance='yes' )
       call dump ( rc%inst )
-      call output ( 'Quantity indices for blocks in the' )
+      call output ( 'Quantity indices for blocks in the ' )
       call output ( r_or_c )
       call output ( 's:', advance='yes' )
       call dump ( rc%quant )
@@ -1465,6 +1465,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.21  2001/04/27 22:51:52  livesey
+! Some changes/improvements to dump
+!
 ! Revision 2.20  2001/04/26 23:56:02  livesey
 ! Fix to test for MatrixVectorMultiplyNoT
 !
