@@ -82,7 +82,8 @@ contains
     integer, parameter :: NoFWM = dimless + 1
     integer, parameter :: NoHGrid = NoFWM + 1
     integer, parameter :: NoQT = noHGrid + 1
-    integer, parameter :: NoTG = noQT + 1
+    integer, parameter :: NoSpec = noQT + 1
+    integer, parameter :: NoTG = NoSpec + 1
     integer, parameter :: NoVectors = noTG + 1
     integer, parameter :: NoVG = noVectors + 1
     integer, parameter :: NoVT = noVG + 1
@@ -147,7 +148,11 @@ contains
           case ( f_pointingGrids )
             call dump_pointing_grid_database ( son )
           case ( f_spectroscopy )
-            call dump ( catalog, details=details )
+            if ( associated(catalog) ) then
+              call dump ( catalog, details=details )
+            else
+              call announceError ( son, noSpec )
+            end if
           end select
         end if
       case ( f_details )
@@ -257,6 +262,8 @@ contains
         call output ( "Can't dump HGrids here." )
       case ( noQT )
         call output ( "Can't dump Quantity Templates here." )
+      case ( noSpec )
+        call output ( "Can't dump spectroscopy database here." )
       case ( noTG )
         call output ( "Can't dump TGrids here." )
       case ( noVectors )
@@ -277,6 +284,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.14  2004/11/01 20:16:20  vsnyder
+! Check for spectroscopy catalog before trying to dump it
+!
 ! Revision 2.13  2004/10/30 00:26:46  vsnyder
 ! Add 'spectroscopy' field to DumpCommand
 !
