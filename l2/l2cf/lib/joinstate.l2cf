@@ -35,9 +35,9 @@ begin Join
   joined_$1_precision: l2aux, source=outputPrecision.$1, $
     sdName='$2 precision'})
 
-  !l2auxJoin(ptanGHz,ptanGHz)
-  !l2auxJoin(ptanTHz,ptanTHz)
-  !l2auxJoin(losVelGHz,losVelGHz)
-  !l2auxJoin(losVelTHz,losVelTHz)
+  !l2auxJoin(ptanGHz,GHz.ptan)
+  !l2auxJoin(ptanTHz,THz.ptan)
+  !l2auxJoin(phitanGHz,GHz.phitan)
+  !l2auxJoin(phitanTHz,THz.phitan)
 
 end Join
