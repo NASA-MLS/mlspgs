@@ -4509,9 +4509,9 @@ contains ! =====     Public Procedures     =============================
       character (len=128) :: MSTR
       ! Executable code
       call get_string ( manipulation, mstr, strip=.true. )
-      if ( mstr /= 'a+b' ) then
+      if ( mstr /= 'a+b' .or. mstr /= 'a-b' ) then
         call Announce_Error ( key, 0, &
-          & 'Only a+b allowed for manipulation at the moment' )
+          & 'Only a+b or a-b allowed for manipulation at the moment' )
         return
       end if
       ! Check that this operation makes sense. Most of the time this means that
@@ -4547,7 +4547,8 @@ contains ! =====     Public Procedures     =============================
       ! OK do the simple work for now
       ! Later we'll do fancy stuff to parse the manipulation.
       if ( .not. associated ( quantity%mask ) ) then
-        quantity%values = a%values + b%values
+        if(mstr .eq. 'a+b') quantity%values = a%values + b%values
+        if(mstr .eq. 'a-b') quantity%values = a%values - b%values
       else
         where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
           quantity%values = a%values + b%values
@@ -4766,6 +4767,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.171  2003/01/12 05:13:50  dwu
+! add a-b manipulation (under the same conditions of the a+b case
+!
 ! Revision 2.170  2003/01/08 23:52:16  livesey
 ! Bug fix in offset radiance
 !
