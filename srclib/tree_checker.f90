@@ -113,7 +113,7 @@ contains ! ====     Public Procedures     ==============================
     error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref(where) )
-    call output ( ': ' )
+    call output ( ' the tree_checker detected: ' )
     select case ( code )
     case ( already_declared )
       call dump_tree_node ( where, 0 )
@@ -802,6 +802,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.1  2000/11/02 21:36:45  vsnyder
+! Initial entry into CVS
+!
 ! Revision 2.1  2000/10/11 18:33:25  vsnyder
 ! Move from lib/cf_parser to lib; insert copyright notice
 !
