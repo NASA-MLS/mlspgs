@@ -154,7 +154,7 @@ endif
 $(PROG):  $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)"
-	@if [ "$(WE_CAN)" != "" ]; then \
+	@if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi
@@ -162,7 +162,7 @@ $(PROG):  $(PROG_prereqs)
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)"
-	@if [ "$(WE_CAN)" != "" ]; then \
+	@if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
 		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
            UNPREFXDPTHS="$(ADD2PATHS)" MARK_ALL_AS_UPTODATE= ;\
          fi
@@ -253,6 +253,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.31  2002/06/21 00:15:27  pwagner
+# Enroute to ending cascading recompiles
+#
 # Revision 2.30  2002/06/19 19:39:46  pwagner
 # Allows use of .mod and .f9h files from hdf5
 #
