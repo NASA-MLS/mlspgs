@@ -59,12 +59,12 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_LIN   = l_des + 1
   integer, public, parameter :: LAST_LIT = l_lin
 ! Section identities:
-  integer, public, parameter :: Z_DIAGNOSTIC = 3
   integer, public, parameter :: Z_GLOBALSETTINGS = 1
-  integer, public, parameter :: Z_OUTPUT = 4
-  integer, public, parameter :: Z_STANDARD = 2
-  integer, public, parameter :: SECTION_FIRST = z_globalSettings, &
-                                SECTION_LAST = z_Output
+  integer, public, parameter :: Z_STANDARD       = 2
+  integer, public, parameter :: Z_DIAGNOSTIC     = 3
+  integer, public, parameter :: Z_OUTPUT         = 4
+  integer, public, parameter :: SECTION_FIRST    = z_globalSettings, &
+                                SECTION_LAST     = z_Output
 ! Specification indices:
   integer, public, parameter :: S_DG = last_Signal_Spec + 1
   integer, public, parameter :: S_OUT = s_dg + 1
@@ -72,19 +72,23 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: SPEC_LAST = s_Std
 ! Parameter names:
   ! In GlobalSettings section:
-  integer, public, parameter :: P_DLAT = spec_last + 1
-  integer, public, parameter :: P_DTYPE = p_dlat + 1
-  integer, public, parameter :: P_IMETHOD = p_dtype + 1
-  integer, public, parameter :: P_L2_MAP_LATS = p_imethod + 1
-  integer, public, parameter :: P_L2_NOM_LATS = p_l2_map_lats + 1
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = spec_last + 1
+  integer, public, parameter :: & 
+       & P_HDF_OUTPUT_VERSION_STRING = p_output_version_string + 1
+  integer, public, parameter :: & 
+       & P_Average_Orbital_Period = p_hdf_output_version_string + 1
+  integer, public, parameter :: P_L2_MAP_LATS = p_average_orbital_period + 1
+  integer, public, parameter :: P_DLAT = p_l2_map_lats + 1
+  integer, public, parameter :: P_L2_NOM_LATS = p_dlat + 1
   integer, public, parameter :: P_L2DGTYPE = p_l2_nom_lats + 1
-  integer, public, parameter :: P_MAX_GAP = p_l2dgtype + 1
-  integer, public, parameter :: P_MIN_DAYS = p_max_gap + 1
-  integer, public, parameter :: P_N = p_min_days + 1
-  integer, public, parameter :: P_OUTPUT_VERSION_STRING = p_n + 1
-  integer, public, parameter :: P_STYPE = p_output_version_string + 1
-  integer, public, parameter :: FIRST_PARM = P_DLAT
-  integer, public, parameter :: LAST_PARM = P_STYPE
+  integer, public, parameter :: P_STYPE = p_l2dgtype + 1
+  integer, public, parameter :: P_DTYPE = p_stype + 1
+  integer, public, parameter :: P_MIN_DAYS = p_dtype + 1
+  integer, public, parameter :: P_MAX_GAP = p_min_days + 1
+  integer, public, parameter :: P_N = p_max_gap + 1
+  integer, public, parameter :: P_IMETHOD = p_n + 1
+  integer, public, parameter :: FIRST_PARM = P_OUTPUT_VERSION_STRING
+  integer, public, parameter :: LAST_PARM = P_IMETHOD
 
 ! Table for section ordering:
   integer, public, parameter :: OK = 1, & ! NO = 0
@@ -138,23 +142,33 @@ contains ! =====     Public procedures     =============================
     field_indices(f_rangfreq) =             add_ident ( 'rangFrequency' )
     field_indices(f_rangwavnum) =           add_ident ( 'rangWavenumber' )
     field_indices(f_time) =                 add_ident ( 'timeD' )
+
     ! Put parameter names into the symbol table
-    parm_indices(p_dlat) =                  add_ident ( 'dLat' )
-    parm_indices(p_dtype) =                 add_ident ( 'dgType' )
-    parm_indices(p_imethod) =               add_ident ( 'intpMethod' )
-    parm_indices(p_l2_map_lats) =           add_ident ( 'latGridMap' )
-    parm_indices(p_l2_nom_lats) =           add_ident ( 'l2nomLats' )
-    parm_indices(p_l2dgtype) =              add_ident ( 'L2dgType' )
-    parm_indices(p_max_gap) =               add_ident ( 'MaxGap' )
-    parm_indices(p_min_days) =              add_ident ( 'MinDays' )
-    parm_indices(p_n)=                      add_ident ( 'N' )
-    parm_indices(p_output_version_string) = add_ident ( 'OutputVersionString' )
-    parm_indices(p_stype) =                 add_ident ( 'stdType' )
+
+    parm_indices(p_output_version_string)     = & 
+         & add_ident ( 'OutputVersionString' )
+    parm_indices(p_hdf_output_version_string) = & 
+         & add_ident ( 'HDFOutputVersionString' )
+    parm_indices(p_average_orbital_period)    = & 
+         & add_ident ( 'AverageOrbitalPeriod' )
+    parm_indices(p_l2_map_lats)               = add_ident ( 'latGridMap' )
+    parm_indices(p_dlat)                      = add_ident ( 'dLat' )
+    parm_indices(p_l2_nom_lats)               = add_ident ( 'l2nomLats' )
+    parm_indices(p_l2dgtype)                  = add_ident ( 'L2dgType' )
+    parm_indices(p_stype)                     = add_ident ( 'stdType' )
+    parm_indices(p_dtype)                     = add_ident ( 'dgType' )
+    parm_indices(p_min_days)                  = add_ident ( 'MinDays' )
+    parm_indices(p_max_gap)                   = add_ident ( 'MaxGap' )
+    parm_indices(p_n)                         = add_ident ( 'N' )
+    parm_indices(p_imethod)                   = add_ident ( 'intpMethod' )
+
     ! Put section names into the symbol table
-    section_indices(z_diagnostic) =         add_ident ( 'Diagnostic' )
+
     section_indices(z_globalsettings) =     add_ident ( 'GlobalSettings' )
-    section_indices(z_output) =             add_ident ( 'Output' )
     section_indices(z_standard) =           add_ident ( 'Standard' )
+    section_indices(z_diagnostic) =         add_ident ( 'Diagnostic' )
+    section_indices(z_output) =             add_ident ( 'Output' )
+
     ! Put spec names into the symbol table
     spec_indices(s_dg) =                    add_ident ( 'dg' )
     spec_indices(s_out) =                   add_ident ( 'out' )
@@ -181,7 +195,8 @@ contains ! =====     Public procedures     =============================
     ! Define the intrinsic data types
     call make_tree ( (/ &
       begin, t+t_intp, l+l_csp, l+l_lin, n+n_dt_def, &
-      begin, t+t_pmode, l+l_ado, l+l_all, l+l_asc, l+l_com, l+l_des, n+n_dt_def, &
+      begin, t+t_pmode, l+l_ado, l+l_all, l+l_asc, l+l_com, l+l_des, & 
+      & n+n_dt_def, &
       begin, t+t_units, l+l_days, l+l_deg, l+l_degrees, &
              l+l_dimensionless, l+l_dimless, l+l_dl, l+l_ghz, &
              l+l_hours, l+l_hpa, l+l_hz, l+l_k, l+l_khz, l+l_km, l+l_logp, &
@@ -241,9 +256,12 @@ contains ! =====     Public procedures     =============================
     !              < n_name_def p_parameter t_type ... t_type > ...
     !  > or
     !  < n_section section_name s_spec ... s_spec >
+
     call make_tree ( (/ &
       begin, z+z_globalsettings, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
+             begin, p+p_hdf_output_version_string, t+t_string, n+n_name_def, &
+             begin, p+p_average_orbital_period, t+t_numeric, n+n_name_def, &
              begin, p+p_l2_map_lats, t+t_numeric_range, n+n_name_def, &
              begin, p+p_dlat, t+t_numeric, n+n_name_def, &
              begin, p+p_l2_nom_lats, t+t_numeric, n+n_name_def, &
@@ -267,6 +285,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.13  2001/07/19 15:55:49  nakamura
+! Corrected l3prodName field.
+!
 ! Revision 1.12  2001/07/19 14:04:35  nakamura
 ! Changed dLat from field to parameter.
 !
