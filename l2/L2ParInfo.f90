@@ -6,8 +6,9 @@ module L2ParInfo
   ! manage the parallel aspects of the L2 code.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST
+  use dump_0, only: DUMP
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate, &
-    & MLSMSG_Deallocate
+    & MLSMSG_Deallocate, MLSMSG_INFO
   use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
     & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT
   use PVMIDL, only: PVMIDLPACK
@@ -21,14 +22,19 @@ module L2ParInfo
   implicit none
   private
 
-  public :: L2ParallelInfo_T, parallel, InitParallel, CloseParallel
-  public :: SIG_ToJoin, SIG_Finished, SIG_Register, ChunkTag, InfoTag, SlaveJoin
+  public :: L2ParallelInfo_T, parallel, Machine_T
+  public :: AddMachineNameToDataBase, AddMachineToDataBase
+  public :: InitParallel, CloseParallel
+  public :: SIG_ToJoin, SIG_Finished, SIG_Register
+  public :: ChunkTag, GRANTEDTAG, InfoTag, SlaveJoin
   public :: SIG_AckFinish, SIG_RequestDirectWrite, SIG_DirectWriteGranted
   public :: SIG_DirectWriteFinished
   public :: SIG_NewSetup, SIG_RunMAF, SIG_SendResults
+  public :: PETITIONTAG
+  public :: SIG_REQUESTHOST, SIG_RELEASEHOST, SIG_HOSTDIED, SIG_THANKSHOST
   public :: NotifyTag, GetNiceTidString, GiveUpTag, SlaveArguments
   public :: AccumulateSlaveArguments, LogDirectWriteRequest
-  public :: FinishedDirectWrite, MachineNameLen, GetMachineNames
+  public :: FinishedDirectWrite, MachineNameLen, GetMachineNames, GetMachines
   public :: FWMSlaveGroup, MachineFixedTag, DirectWriteRequest_T
   public :: DW_Invalid, DW_Pending, DW_InProgress, DW_Completed
   public :: InflateDirectWriteRequestDB, WaitForDirectWritePermission
@@ -47,9 +53,11 @@ module L2ParInfo
 
   integer, parameter :: DELAYFOREACHSLAVESTDOUTBUFFER   = 500
   integer, parameter :: FIXDELAYFORSLAVESTDOUTBUFFER   = 500000
-  integer, parameter :: CHUNKTAG   = 10
-  integer, parameter :: INFOTAG    = ChunkTag + 1
-  integer, parameter :: NOTIFYTAG  = InfoTag + 1
+  integer, parameter :: CHUNKTAG   = 10  ! Master => slave: chunkinfo
+  integer, parameter :: INFOTAG    = ChunkTag + 1 ! Slave <=> master
+  integer, parameter :: NOTIFYTAG  = InfoTag + 1  ! pvm => master: Slave exited
+  integer, parameter :: PETITIONTAG  = NotifyTag + 1 ! master => l2q
+  integer, parameter :: GRANTEDTAG  = PetitionTag + 1 ! l2q => master
   integer, parameter :: MACHINEFIXEDTAG = 800
   integer, parameter :: GIVEUPTAG  = 999
 
@@ -63,6 +71,10 @@ module L2ParInfo
   integer, parameter :: SIG_NEWSETUP = SIG_DirectWriteFinished + 1
   integer, parameter :: SIG_RUNMAF = SIG_NewSetup + 1
   integer, parameter :: SIG_SENDRESULTS = SIG_RunMAF + 1
+  integer, parameter :: SIG_REQUESTHOST = SIG_SendResults + 1
+  integer, parameter :: SIG_RELEASEHOST = SIG_RequestHost + 1
+  integer, parameter :: SIG_HOSTDIED = SIG_ReleaseHost + 1
+  integer, parameter :: SIG_THANKSHOST = SIG_HostDied + 1
 
   integer, parameter :: MACHINENAMELEN = 64 ! Max length of name of machine
 
@@ -118,12 +130,24 @@ module L2ParInfo
     real    :: WHENFIRSTPERMITTED
   end type DirectWriteRequest_T
 
+  ! This datatype describes the machines that will host parallel tasks
+  type machine_T
+    character(len=MACHINENAMELEN) :: name = ' '
+    integer                       :: master_tid = 0
+    integer                       :: tid = 0
+    integer                       :: chunk = 0
+    integer                       :: jobsKilled = 0
+    logical                       :: OK = .true.
+    logical                       :: free = .true.
+  end type machine_T
+
   ! Shared variables
   type (L2ParallelInfo_T), save :: parallel
   character ( len=2048 ), save :: slaveArguments = ""
 
   interface dump
     module procedure DumpDirectWriteRequest, DumpAllDirectWriteRequests
+    module procedure Dump_Machine, Dump_Machine_DataBase
   end interface
 
   interface LogDirectWriteRequest
@@ -137,12 +161,41 @@ contains ! ==================================================================
     ! This routine accumulates the command line arguments for the slaves
     character (len=*), intent(in) :: arg
     ! Executable code
-    call NextPVMArg ( arg )
+    call NextPVMArg ( trim(arg) )
     if ( len_trim(slaveArguments) + len_trim(arg) +1 > len(slaveArguments) ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Argument list for slave too long.' )
     slaveArguments = trim(slaveArguments)//' '//trim(arg)
   end subroutine AccumulateSlaveArguments
     
+  ! ---------------------------------- AddMachineNameToDataBase ------------
+  integer function AddMachineNameToDataBase ( DATABASE, ITEM )
+    ! Add a machine name to a databsse of machine names
+    ! an array of machine names
+    character(len=MachineNameLen), dimension(:), pointer :: DATABASE
+    character(len=MachineNameLen), intent(in) :: ITEM
+    ! Local variables
+    character(len=MachineNameLen), dimension(:), pointer :: tempDatabase
+    !This include causes real trouble if you are compiling in a different 
+    !directory.
+    include "addItemToDatabase.f9h" 
+
+    AddMachineNameToDatabase = newSize
+  end function AddMachineNameToDataBase
+
+  ! ---------------------------------- AddMachineToDataBase ------------
+  integer function AddMachineToDataBase ( DATABASE, ITEM )
+    ! Add a machine to a database of machines
+    type(machine_t), dimension(:), pointer :: DATABASE
+    type(machine_t), intent(in) :: ITEM
+    ! Local variables
+    type(machine_t), dimension(:), pointer :: tempDatabase
+    !This include causes real trouble if you are compiling in a different 
+    !directory.
+    include "addItemToDatabase.f9h" 
+
+    AddMachineToDatabase = newSize
+  end function AddMachineToDataBase
+
   ! ---------------------------------------------- InitParallel -------------
   subroutine InitParallel ( chunkNo, MAFNo )
     use Output_m, only: PRUNIT
@@ -185,27 +238,39 @@ contains ! ==================================================================
   end subroutine InitParallel
 
   ! --------------------------------------------- CloseParallel -------------
-  subroutine CloseParallel(noSlaves)
+  subroutine CloseParallel(noSlaves, dontWait)
     ! This routine closes down any parallel stuff
     integer, intent(in) :: noSlaves     ! How many slaves
+    logical, intent(in), optional :: dontWait
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
 
     integer :: SIGNAL                   ! From acknowledgement packet
     integer :: slave
+    logical :: myDontWait
 
     ! Executable code
+    myDontWait = .false.
+    if ( present(dontWait) ) myDontWait = dontWait
     if ( parallel%slave ) then
+      ! call MLSMessage ( MLSMSG_Info, ModuleName, &
+      !  & 'About to call PVMFInitSend' )
       ! Send a request to finish
       call PVMFInitSend ( PvmDataDefault, bufferID )
+      ! call MLSMessage ( MLSMSG_Info, ModuleName, &
+      !  & 'About to call PVMF90Pack' )
       call PVMF90Pack ( SIG_Finished, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'packing finished signal' )
+      ! call MLSMessage ( MLSMSG_Info, ModuleName, &
+      !  & 'About to call PVMFSend' )
       call PVMFSend ( parallel%masterTid, InfoTag, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'sending finish packet' )
-
+      ! call MLSMessage ( MLSMSG_Info, ModuleName, &
+      !  & 'Hey--we did it' )
+      if ( myDontWait ) return
       ! Wait for an acknowledgement from the master
       call PVMFrecv ( parallel%masterTid, InfoTag, bufferID )
       if ( bufferID <= 0 ) &
@@ -219,7 +284,7 @@ contains ! ==================================================================
     elseif ( parallel%master ) then
       call usleep(FIXDELAYFORSLAVESTDOUTBUFFER)
       if ( noSlaves < 1 ) return
-      do slave=1, noSlaves
+      do slave=1, noSlaves+40
         call usleep(DELAYFOREACHSLAVESTDOUTBUFFER)
       enddo
     end if
@@ -237,6 +302,42 @@ contains ! ==================================================================
     database(noRequests+1:)%status = DW_Invalid
   end subroutine CompactDirectWriteRequestDB
 
+  ! --------------------------------------- dump_machine_database ---------
+  subroutine dump_machine_database(machines)
+    ! dump data type
+    type(Machine_T), dimension(:), pointer :: machines
+    ! Internal variables
+    integer :: i
+    ! Executable
+    if ( .not. associated(machines) ) then
+      call output('machine database not associated', advance='yes')
+      return
+    endif
+    call output ('Size of machine database: ', advance='no')
+    call output (size(machines), advance='yes')
+    do i = 1, size(machines)
+      call dump_machine(machines(i))
+    enddo
+  end subroutine dump_machine_database
+
+  ! --------------------------------------- dump_machine ---------
+  subroutine dump_machine(machine)
+    ! dump data type
+    type(Machine_T), intent(in) :: machine
+    call output('machine name: ', advance = 'no')
+    call output(trim(machine%name), advance = 'yes')
+    call output('master tid: ', advance = 'no')
+    call output(machine%master_tid, advance = 'yes')
+    call output('tid: ', advance = 'no')
+    call output(machine%tid, advance = 'yes')
+    call output('chunk: ', advance = 'no')
+    call output(machine%chunk, advance = 'yes')
+    call output('alive?: ', advance = 'no')
+    call output(machine%OK, advance = 'yes')
+    call output('free?: ', advance = 'no')
+    call output(machine%free, advance = 'yes')
+  end subroutine dump_machine
+   
   ! --------------------------------------- DumpDirectWriteRequest ---------
   subroutine DumpDirectWriteRequest ( request )
     type(DirectWriteRequest_T), intent(in) :: REQUEST
@@ -420,7 +521,29 @@ contains ! ==================================================================
 
       close ( unit=lun )
     end if
+    if ( index(switches,'mach') /=0 ) call dump ( machineNames, trim=.true. )
   end subroutine GetMachineNames
+
+  ! ---------------------------------------- GetMachines ------------
+  subroutine GetMachines ( machines )
+    ! This reads the parallel slave name file and returns
+    ! an array of machine types
+    type(machine_t), dimension(:), pointer :: MACHINES
+
+    ! Local variables
+    integer :: noMachines, stat
+    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+    type(machine_t) :: MACHINE
+    ! Executable
+    nullify(machineNames, machines)
+    call GetMachineNames(machineNames)
+    noMachines = size(machineNames)
+    if ( noMachines < 1 ) return
+    allocate ( machines(noMachines), stat=stat )
+    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//' machines')
+    machines%name = machineNames
+  end subroutine GetMachines
 
   ! ------------------------------------ InflateDirectWriteRequestDB --
   integer function InflateDirectWriteRequestDB ( database, extra )
@@ -609,6 +732,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.40  2004/12/14 21:53:30  pwagner
+! Added machine_T, tags and signals related to l2q
+!
 ! Revision 2.39  2004/09/16 23:57:32  pwagner
 ! Now tracks machine names of failed chunks
 !
