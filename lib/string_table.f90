@@ -1,4 +1,3 @@
-
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -61,10 +60,11 @@ module STRING_TABLE
   integer, save :: NSTRING    ! How full, not how big
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-       "$Id$"
-  character (len=*), private, parameter :: ModuleName= &
-       "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile$"
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
@@ -844,6 +844,7 @@ contains
     if ( present(ierr) ) ierr=0
     return
   end subroutine TEST_STRING
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -851,6 +852,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.20  2004/10/30 00:19:56  vsnyder
+! Revised the CVS stuff
+!
 ! Revision 2.19  2004/10/21 00:37:25  vsnyder
 ! Add Display_String_List and 'before' argument to Display_String
 !
