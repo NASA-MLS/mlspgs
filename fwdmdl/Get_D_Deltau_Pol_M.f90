@@ -200,8 +200,10 @@ contains
   subroutine Get_D_Deltau_Pol_DT ( Frq, H, CT, STCP, STSP, My_Catalog, &
                 & Beta_group, GL_slabs_M, GL_slabs_P, &
                 & T_Path_C, T_Path_M, T_Path_P, T_Path_F, &
-                & Beta_Path, Beta_Path_F, SPS_Path, Alpha_Path_C, Alpha_Path_f, &
-                & Eta_zxp, Eta_zxp_f, Del_S, Path_inds, GL_Inds, &
+                & Beta_Path_C, Beta_Path_F, SPS_Path, &
+                & Alpha_Path_C, Alpha_Path_F, &
+                & Alpha_xn_path_C, Alpha_xn_path_F, &
+                & Eta_zxp, Eta_zxp_F, Del_S, Path_inds, GL_Inds, &
                 & Del_Zeta, Do_Calc_T_c, Do_Calc_T_f, Do_GL, &
                 & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
                 & H_path_c, H_path_f, dH_dt_path_c, dH_dt_path_f, H_tan, dH_dt_tan, &
@@ -217,6 +219,7 @@ contains
     use Physics, only: H_OVER_K
     use Rad_Tran_m, only: Get_Do_Calc
     use SpectroscopyCatalog_m, only: CATALOG_T
+use toggles, only: switches
 
   ! Arguments
     ! SVE == # of state vector elements
@@ -238,13 +241,15 @@ contains
     real(rp), intent(in) :: T_Path_m(:), T_Path_p(:) ! path temperatures -/+ del_temp
     !                                         on fine grid -- index with path_inds
     real(rp), intent(in) :: T_Path_f(:)     ! path temperatures on GL grid
-    complex(rp), intent(in) :: Beta_Path(-1:,:,:) ! beta * tanh(h nu / 2 k t) on
+    complex(rp), intent(in) :: Beta_Path_c(-1:,:,:) ! beta * tanh(h nu / 2 k t) on
                                             ! coarse path.  -1:1 x path x sps
     complex(rp), intent(in) :: Beta_Path_f(-1:,:,:) ! beta * tanh(h nu / 2 k t) on
                                             ! GL path.  -1:1 x path x sps
     real(rp), intent(in) :: SPS_Path(:,:)   ! species on whole path, path x sps
     complex(rp), intent(in) :: Alpha_Path_c(-1:,:) ! -1:1 x path on coarse grid
     complex(rp), intent(in) :: Alpha_Path_f(-1:,:) ! -1:1 x path on fine grid
+    real(rp) :: Alpha_xn_path_C(:)          ! nonpolarized alpha * N on coarse grid
+    real(rp) :: Alpha_xn_path_F(:)          ! nonpolarized alpha * N on fine grid
     real(rp), intent(in) :: Eta_zxp(:,:)    ! representation basis function
       !                                       on coarse grid.  path x sve
     real(rp), intent(in) :: Eta_zxp_f(:,:)  ! representation basis function
@@ -316,7 +321,7 @@ contains
     complex(rp) :: Alpha_Path_N_T_F(-1:1,size(t_path_f)) ! Alpha * n/T on the
                                      ! fine path
     complex(rp) :: Beta_0(-1:1), Beta_M(-1:1), Beta_P(-1:1) ! Single elements of
-      ! Beta_Path, Beta_Path_M, Beta_Path_P multiplied by Tanh_Path,  Tanh_M, Tanh_P
+      ! beta_path_c, Beta_Path_M, Beta_Path_P multiplied by Tanh_Path,  Tanh_M, Tanh_P
     complex(rp), dimension(-1:1,size(path_inds),size(beta_group)) :: &
       & Beta_Path_M, &  ! At T_path_M on coarse path
       & Beta_Path_P     ! At T_path_P on coarse path
@@ -332,24 +337,26 @@ contains
     integer :: H_Stop                ! Stop point for hydrostatic parts
     integer :: I_start               ! Start point, not necessarily 1.
     integer :: I_stop                ! Stop point, which may be before N_Path
-    integer :: Inds(size(path_inds)) ! Where on coarse path is DO_CALC and DO_GL?
     integer :: J, K, L
     real(rp) :: L_TTM, L_TPTM, L_TPT ! Logarithms of temperature ratios
     integer :: Mid                   ! tangent index along the path = N_Path/2
     complex(rp) :: N(-1:1)           ! Exponent of (T/T_0) in
                ! approximation to beta.  One each for Sigma_-, Pi and Sigma_+.
-    integer :: N_Inds                ! How much of Inds is used?
     integer :: N_Path                ! Total coarse path length.
     integer :: N_Sps                 ! Number of species
     logical :: NeedFA                ! Need FA in hydrostatic calculation
+    real(rp) :: NI(-1:1), NR(-1:1)   ! Real and imaginary exponents of (T/T_0)
+               ! in approximation to beta.  One each for Sigma_-, Pi and Sigma_+.
     integer :: P_i                   ! Index on the path
     complex(rp) :: R0M(-1:1), RPM(-1:1), RP0(-1:1)  ! Beta ratios
+    real(rp) :: RR0M(-1:1), RRPM(-1:1), RRP0(-1:1)  ! Beta ratios
     real(rp) :: S_Del_S              ! Sum of Del_S
     complex(rp) :: Singularity(-1:1,size(path_inds)) ! n/T * Alpha * Eta on the
                                      ! coarse path
     integer :: SV_i                  ! Index of state vector element
     real(rp) :: Tanh_M, Tanh_P       ! for T -/+ del_T
 
+if ( index(switches,'klp') /= 0 ) print *, 'Get_D_Deltau_Pol_DT'
     frqhk = 0.5_r8 * Frq * H_Over_K
     i_stop = size(path_inds)
     n_path = size(del_zeta)
@@ -363,7 +370,6 @@ contains
 
     a = 1
     b = 1 + ng
-    n_inds = 0
     do p_i = 1, i_stop
       alpha_path_n = (0.0_rp,0.0_rp)
       alpha_path_n_f = (0.0_rp,0.0_rp)
@@ -377,8 +383,13 @@ contains
       tanh_p = tanh( frqhk / t_path_p(k) )
 
       do j = 1, n_sps
-        ! Solve for n
-        beta_0 = beta_path(:,p_i,j) ! * tanh1(p_i) done by caller
+        !{ Assume $\beta = \beta_0 \left(\frac{T}{T_0}\right)^n$. We
+        ! solve for $n$ by computing $\beta$ at $T$, $T+\delta T$ and
+        ! $T-\delta T$, and assume $n$ is roughly constant over $\delta
+        ! T$. We don't know $\beta_0$ and $T_0$, but with two $\beta$'s
+        ! they cancel out.  We use three estimates to account for the
+        ! possibility that $n$ isn't really constant.
+        beta_0 = beta_path_c(:,p_i,j) ! * tanh1(p_i) done by caller
         beta_m = beta_path_m(:,p_i,j) * tanh_m
         beta_p = beta_path_p(:,p_i,j) * tanh_p
         where ( beta_m /= 0.0 .and. beta_p /= 0.0 )
@@ -398,24 +409,83 @@ contains
           n = 0.0
         end where
 
-        ! not quite D alpha, because we haven't divided by T.  beta_path was
-        ! multiplied by tanh in FullForwardModel.
-        alpha_path_n = alpha_path_n + n * beta_0 * sps_path(k,j)
+        where ( real(beta_m) > 0.0 .and. real(beta_p) > 0.0 )
+          rrpm = log(real(beta_p)/real(beta_m)) / l_tptm
+          where ( real(beta_0) > 0.0 )
+            rr0m = log(real(beta_0)/real(beta_m)) / l_ttm
+            rrp0 = log(real(beta_p)/real(beta_0)) / l_tpt
+            nr = 0.25 * ( rr0m + 2.0 * rrpm + rrp0 )
+          elsewhere
+            nr = rrpm
+          end where
+        elsewhere ( real(beta_m) > 0.0 .and. real(beta_0) > 0.0 )
+          nr = log(real(beta_0)/real(beta_m)) / l_ttm
+        elsewhere ( real(beta_0) > 0.0 .and. real(beta_p) > 0.0 )
+          nr = log(real(beta_p)/real(beta_0)) / l_tpt
+        elsewhere
+          nr = 0.0
+        end where
+
+if ( index(switches,'klnt') /= 0 ) print '("pbm",2i5,1p,6g14.6)', p_i, j, aimag(beta_m)
+if ( index(switches,'klnt') /= 0 ) print '("pbp",2i5,1p,6g14.6)', p_i, j, aimag(beta_p)
+
+        where ( aimag(beta_m) > 0.0 .and. aimag(beta_p) > 0.0 )
+          rrpm = log(aimag(beta_p)/aimag(beta_m)) / l_tptm
+          where ( aimag(beta_0) > 0.0 )
+            rr0m = log(aimag(beta_0)/aimag(beta_m)) / l_ttm
+            rrp0 = log(aimag(beta_p)/aimag(beta_0)) / l_tpt
+            ni = 0.25 * ( rr0m + 2.0 * rrpm + rrp0 )
+          elsewhere
+            ni = rrpm
+          end where
+        elsewhere ( aimag(beta_m) > 0.0 .and. aimag(beta_0) > 0.0 )
+          ni = log(aimag(beta_0)/aimag(beta_m)) / l_ttm
+        elsewhere ( aimag(beta_0) > 0.0 .and. aimag(beta_p) > 0.0 )
+          ni = log(aimag(beta_p)/aimag(beta_0)) / l_tpt
+        elsewhere
+          ni = 0.0
+        end where
+
+if ( index(switches,'klnt') /= 0 ) print '("pnr",2i5,1p,6g14.6)', p_i, j, nr
+if ( index(switches,'klnt') /= 0 ) print '("pni",2i5,1p,6g14.6)', p_i, j, ni
+
+        !{ Now that we have $n$, we can use $\frac{\partial \beta}{\partial T} =
+        ! \frac{n}{T}\beta$.  We weight each $\frac{n}{T}\beta$ with its mixing
+        ! ratio and add them up to get $\frac{\partial \alpha}{\partial T}$.
+
+        ! Not quite D alpha, because we haven't divided by T.  beta_path_c was
+        ! multiplied by tanh in FullForwardModel, so we don't need to do that
+        ! here.
+!       alpha_path_n = alpha_path_n + n * beta_0 * sps_path(k,j)
+        alpha_path_n = alpha_path_n + &
+          & cmplx ( nr * real(beta_0), ni * aimag(beta_0) ) * sps_path(k,j)
         ! Use the same N for the GL points.  Getting 3*NG more N's would cost
         ! 6*NG more Beta's.  N varies slowly, so this is probably OK.
         ! alpha_path_n_f is dimensioned (-1:1,NG).
         if ( do_gl(p_i) ) then
           do l = -1, 1
-            alpha_path_n_f(l,:) = alpha_path_n_f(l,:) + n(l) * &
-              & beta_path_f(l,a:b-1,j) * sps_path(gl_inds(a:b-1),j)
+!           alpha_path_n_f(l,:) = alpha_path_n_f(l,:) + n(l) * &
+!             & beta_path_f(l,a:b-1,j) * sps_path(gl_inds(a:b-1),j)
+            alpha_path_n_f(l,:) = alpha_path_n_f(l,:) +  &
+              & cmplx ( nr(l) * real(beta_path_f(l,a:b-1,j)), &
+              &         ni(l) * aimag(beta_path_f(l,a:b-1,j)) ) * &
+              & sps_path(gl_inds(a:b-1),j)
           end do ! l
         end if
       end do ! j = 1, n_sps
 
+      !{ Now we divide by $T$ to get $\frac{\partial\alpha}{\partial T}$.
+      ! We wait until now because it's the same $T$ for every $\beta$.
+
+      alpha_path_n = alpha_path_n + (/ 0.25, 0.50, 0.25 /) * alpha_xn_path_c(p_i) !?
+!?alpha_path_n = (/ 0.25, 0.50, 0.25 /) * alpha_xn_path_c(p_i)                      !?
       alpha_path_n_t(:,p_i) = alpha_path_n / t_path_c(p_i)
       if ( do_gl(p_i) ) then
         do l = -1, 1
-          alpha_path_n_t_f(l,a:b-1) = alpha_path_n_f(l,:) / t_path_f(a:b-1)
+          alpha_path_n_f(l,:) = alpha_path_n_f(l,:) + &                      !?
+            & (0.5-0.25*abs(l)) * alpha_xn_path_f(a:b-1)                     !?
+!?alpha_path_n_t_f(l,a:b-1) = (0.5-0.25*abs(l)) * alpha_xn_path_f(a:b-1)       !?
+            alpha_path_n_t_f(l,a:b-1) = alpha_path_n_f(l,:) / t_path_f(a:b-1)
         end do
         a = b
         b = b + ng
@@ -434,6 +504,7 @@ contains
 
       call get_do_calc ( do_calc_t_c(:,sv_i), do_calc_t_f(:,sv_i), do_gl, &
         & do_calc )
+if ( index(switches,'doca') /= 0 ) do_calc=.true.
 
       a = 1
       do p_i = 1, i_stop
@@ -445,6 +516,8 @@ contains
           !    \frac{\partial \alpha}{\partial T} \eta_i \text{d}s$
           singularity(:,p_i) = alpha_path_n_t(:,p_i) * eta_zxp(p_i,sv_i)
           d_alpha_dT_eta(:,p_i) = singularity(:,p_i) * del_s(p_i)
+if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
+print '("pbb",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
         else
           singularity(:,p_i) = 0.0_rp
           d_alpha_dT_eta(:,p_i) = 0.0_rp
@@ -464,11 +537,18 @@ contains
           a = b
         end if
       end do ! p_i
+if ( index(switches,'klpt') /= 0 ) then
+do p_i = 1, i_stop
+if ( do_calc(p_i) .and. do_gl(p_i) .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
+print '("pba",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
+end do
+end if
 
       ! Now do the hydrostatic part
       !??? This only goes as far as I_Stop.  We may     ???
       !??? want to do it this way in DRad_Tran_dT also. ???
 
+if ( index(switches,'nhyc') == 0 ) then
       ! First combine boundary flags
       do_calc = do_calc_hyd_c(:,sv_i)
       if ( i_stop < mid ) then           
@@ -479,6 +559,8 @@ contains
         h_stop = mid - 1
       end if
       do_calc(1) = .false.
+if ( index(switches,'doca') /= 0 ) do_calc(2:) = .true.
+if ( i_stop == n_path .and. index(switches,'doca') /= 0 ) do_calc(n_path) = .false.
       s_del_s = sum(del_s(2:mid)) ! Yes, this goes to the midpoint of the coarse path
       needFA = .true.
       fa = 0.0_rp ! In case n_path <= 4
@@ -493,6 +575,10 @@ contains
           fb = (h_path_c(p_i) * dh_dt_path_c(p_i,sv_i) &
             & - h_tan * dh_dt_tan(sv_i)) / s_del_s
           d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) + alpha_path_c(:,p_i) * (fa - fb)
+if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
+print '("pab",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
+if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
+print '("pac",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(alpha_path_c(0,p_i))
           fa = fb
         else
           s_del_s = s_del_s - del_s(p_i)
@@ -504,6 +590,8 @@ contains
       if ( i_stop >= mid ) then
         if ( do_calc(mid) ) &
           & d_alpha_dT_eta(:,mid) = d_alpha_dT_eta(:,mid) + alpha_path_c(:,mid) * fa
+if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,mid) /= 0.0 .and. do_calc(mid) .and. fa /= 0.0) &
+print '("pax",3i5,1pg15.7)', sv_i, mid, n_path, 2.0*real(d_alpha_dT_eta(0,mid))
       end if
       if ( i_stop > mid + 1 ) then ! mid+1 instead of mid so that mid+2 will be
                                    ! in bounds if i_stop == 2.
@@ -523,6 +611,8 @@ contains
           fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) &
             & - h_tan * dh_dt_tan(sv_i)) / s_del_s
           d_alpha_dT_eta(:,mid+1) = d_alpha_dT_eta(:,mid+1) + alpha_path_c(:,mid+1) * fa
+if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,mid+1) /= 0.0 .and. fa /= 0.0 ) &
+print '("pay",3i5,1pg15.7)', sv_i, mid+1, n_path, 2.0*real(d_alpha_dT_eta(0,mid+1))
         end if
 
         s_del_s = del_s(mid+1)
@@ -537,12 +627,15 @@ contains
             fb = (h_path_c(p_i+1) * dh_dt_path_c(p_i+1,sv_i) &
               & - h_tan * dh_dt_tan(sv_i)) / s_del_s
             d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) + alpha_path_c(:,p_i)*(fb - fa)
+if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
+print '("paz",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
             fa = fb
           else
             s_del_s = s_del_s + del_s(p_i)
           end if
         end do ! p_i
       end if
+end if
 
       ! Do GL for hydrostatic for any panels that need it; the singularity
       ! correction is alpha_path_c.
@@ -551,34 +644,49 @@ contains
       ! 0.5 for pi.
       a = 1
       do p_i = 1, i_stop             ! along the path
+if ( index(switches,'nhyc') == 0 ) then
         if ( do_gl(p_i) ) then
           b = a + ng
-          if ( do_calc(p_i) ) then
-            f = (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*h_tan**2)      &     
-              &   * dh_dt_path_f(a:b-1,sv_i) +                       &     
-              &   h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /       &     
-              &  (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3            &     
-              &  + eta_zxp_f(a:b-1,sv_i) * ds_dh(gl_inds(a:b-1)) /   &     
-              &  t_path_f(a:b-1)) * dh_dz_gw(gl_inds(a:b-1))
-            do l = -1, 1
-              d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
-                 & del_zeta(p_i) * &
-                 & sum( ( alpha_path_f(l,a:b-1) - alpha_path_c(l,p_i) ) * f )
-            end do ! l
-          end if
+          ! Don't test do_calc: There may be GL corrections even if
+          ! dh_dt_path_c (from whence came do_calc) is zero.
+          f = (((2.0_rp*h_path_f(a:b-1)**2 - 3.0_rp*h_tan**2)      &     
+            &   * dh_dt_path_f(a:b-1,sv_i) +                       &     
+            &   h_path_f(a:b-1) * h_tan * dh_dt_tan(sv_i)) /       &     
+            &  (sqrt(h_path_f(a:b-1)**2 - h_tan**2))**3            &     
+            &  + eta_zxp_f(a:b-1,sv_i) * ds_dh(gl_inds(a:b-1)) /   &     
+            &  t_path_f(a:b-1)) * dh_dz_gw(gl_inds(a:b-1))
+          do l = -1, 1
+            d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
+               & del_zeta(p_i) * &
+               & sum( ( alpha_path_f(l,a:b-1) - alpha_path_c(l,p_i) ) * f )
+          end do ! l
+if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
+print '("paa",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
           a = b
         end if
+end if
+end do ! p_i
+do p_i = 1, i_stop             ! along the path
+if ( index(switches,'klpt') /= 0 .and. d_alpha_dT_eta(0,p_i) /= 0.0 ) &
+print '("pff",3i5,1pg15.7)', sv_i, p_i, n_path, 2.0*real(d_alpha_dT_eta(0,p_i))
+        d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) * ref_cor(p_i) !? + &
+!?          & 0.25_rp * d_delta_dT(p_i,sv_i)
+!?        d_alpha_dT_eta(0,p_i) = d_alpha_dT_eta(0,p_i) + &
+!?          & 0.25_rp * d_delta_dT(p_i,sv_i)
+!d_alpha_dT_eta(:,p_i) = (/ 0.25, 0.5, 0.25 /) * d_delta_dT(p_i,sv_i)
       end do ! p_i
-      do p_i = 1, i_stop             ! along the path
-        d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) * ref_cor(p_i) + &
-          & 0.25_rp * d_delta_dT(p_i,sv_i)
-        d_alpha_dT_eta(0,p_i) = d_alpha_dT_eta(0,p_i) + &
-          & 0.25_rp * d_delta_dT(p_i,sv_i)
-      end do ! p_i
-      ! d_alpha_dT_eta is now really \int incremental opacity ds.
 
+      !{ {\tt d\_alpha\_dT\_eta} is now really
+      ! $\int \frac{\partial \Delta \delta}{\partial T} \,\text{d}s$,
+      ! where $\Delta \delta$ is the incremental opacity.
+      !%
+      ! Compute {\tt d\_incoptdepth\_dT} =
+      ! $\frac{\partial \int {\bf G} \,\text{d}s}{\partial T}$
       call opacity ( ct, stcp, stsp, d_alpha_dT_eta, d_incoptdepth_dT )
 
+      !{ Compute $\frac{\partial \bf E}{\partial T} =
+      !           \frac{\partial \, \exp(-{\int \bf G}\, \text{d}s)}{\partial T}$
+      ! where {\bf G} is the incremental optical depth matrix.
       do p_i = 1, i_stop             ! along the path
         if ( eta_zxp(p_i,sv_i) /= 0.0 .or. d_delta_dT(p_i,sv_i) /= 0.0 .or. &
           & do_calc(p_i) ) then
@@ -589,6 +697,8 @@ contains
         end if
       end do ! p_i
     end do ! sv_i
+if ( index(switches,'klpts') /= 0 ) stop
+if ( index(switches,'klnts') /= 0 ) stop
   end subroutine Get_D_Deltau_Pol_DT
 
 !-----------------------------------------------------------------------
@@ -599,6 +709,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.21  2004/02/03 02:47:55  vsnyder
+! Progress (hopefully) on polarized temperature derivatives
+!
 ! Revision 2.20  2003/12/03 00:25:32  vsnyder
 ! Corrections to hydrostatic calculation
 !
