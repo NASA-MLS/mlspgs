@@ -344,7 +344,8 @@ contains ! =====     Public procedures     =============================
              l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_regular, l+l_l2gp, n+n_dt_def, &
-      begin, t+t_masks, l+l_fill, l+l_full_derivatives, l+l_linalg, n+n_dt_def, &
+      begin, t+t_masks, l+l_fill, l+l_full_derivatives, l+l_linalg, &
+             l+l_tikhonov, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
              n+n_dt_def, &
       begin, t+t_method, l+l_highcloud,l+l_lowcloud, l+l_newtonian, n+n_dt_def, &
@@ -763,6 +764,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_regOrders, t+t_numeric, n+n_field_type, &
              begin, f+f_regQuants, t+t_quantityType, n+n_field_type, &
              begin, f+f_regWeights, t+t_numeric, n+n_field_type, &
+             begin, f+f_regWeightVec, s+s_vector, n+n_field_spec, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
@@ -863,6 +865,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.232  2002/08/08 22:04:16  vsnyder
+! Add tikhonov to mask type
+!
 ! Revision 2.231  2002/08/04 16:07:57  mjf
 ! New method PE for ChunkDivide.
 !
