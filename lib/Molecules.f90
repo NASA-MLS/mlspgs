@@ -37,9 +37,9 @@ module Molecules
   integer, parameter :: L_CH3CN =        l_ch3cl_37 + 1
   integer, parameter :: L_CL_35_NO3 =    l_ch3cn + 1
   integer, parameter :: L_CL_37_NO3 =    l_cl_35_no3 + 1
-  integer, parameter :: L_CL_37_O =      l_cl_37_no3 + 1
-  integer, parameter :: L_CL_35_O =      l_cl_37_o + 1
-  integer, parameter :: L_CLO =          l_cl_35_o + 1
+  integer, parameter :: L_CL_35_O =      l_cl_37_no3 + 1
+  integer, parameter :: L_CL_37_O =      l_cl_35_o + 1
+  integer, parameter :: L_CLO =          l_cl_37_o + 1
   integer, parameter :: L_CO =           l_clo + 1
   integer, parameter :: L_CO_18 =        l_co + 1
   integer, parameter :: L_COF2 =         l_co_18 + 1
@@ -280,6 +280,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.14  2002/07/18 22:05:26  vsnyder
+! Alphabetize L_CL_35, L_CL_37
+!
 ! Revision 2.13  2001/11/08 00:11:44  livesey
 ! Added extinction as a molecule
 !
