@@ -213,7 +213,7 @@ contains
     real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
     logical, optional, intent(in) :: missingRegions ! Allow missing regions
 
-    include "InterpolateScalar.f9h
+    include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r4
 
   subroutine InterpolateScalar_r8 ( oldX, oldY, newX, newY, method, extrapolate, &
@@ -233,7 +233,7 @@ contains
     real(rk), dimension(:), optional, intent(out) :: dyByDx
     real(rk), dimension(2), optional, intent(in) :: rangeofperiod	  ! for periodic data
 
-    include "InterpolateScalar.f9h
+    include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r8
 
 !=============================================================================
@@ -242,6 +242,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.24  2002/10/04 16:40:30  pwagner
+! Fixed missing close quotes on include lines
+!
 ! Revision 2.23  2002/10/04 01:48:27  vsnyder
 ! Get rid of a local variable
 !
