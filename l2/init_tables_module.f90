@@ -626,10 +626,14 @@ contains ! =====     Public procedures     =============================
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_noiseBandwidth, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_orbitInclination, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_precision, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_precisionFactor, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
+            n+n_dot/))
+     call acorn((/begin, f+f_phitan, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
             nr+n_dot/))
@@ -918,6 +922,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.226  2002/06/26 01:26:48  livesey
+! Added 2d pressure guessing stuff
+!
 ! Revision 2.225  2002/06/24 18:27:17  livesey
 ! Added 2D scan model
 !
