@@ -5,12 +5,13 @@
 MODULE WriteMetaL1 ! Populate metadata and write it out
 ! -------------------------------------------------------
 
-  USE Hdf, ONLY: DFACC_RDWR, sfstart, sfend
+  USE Hdf, ONLY: DFACC_RDWR
   USE MLSCommon, ONLY: R8
   USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMSG_Warning, MLSMessage
   USE SDPToolkit
   USE MLSPCF1
   USE Orbit, ONLY: orbitNumber, numOrb
+  USE MLSFiles, only: HDFVERSION_5, HDFVERSION_4 
 
   IMPLICIT NONE
 
@@ -29,6 +30,9 @@ CONTAINS
   SUBROUTINE populate_metadata_l1 (HDF_FILE, MCF_FILE)
 
     USE InitPCFs, ONLY: L1PCF
+    USE MLSFiles, only: mls_sfstart, mls_sfend
+    USE MLSStrings, ONLY: lowercase
+    USE MLSL1Config, ONLY: L1Config
 
     !Arguments
 
@@ -36,7 +40,6 @@ CONTAINS
 
     !Local Variables
  
-    INTEGER :: hdfReturn
     INTEGER :: returnStatus
     INTEGER :: sdid
 
@@ -45,7 +48,7 @@ CONTAINS
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
     CHARACTER (LEN=132) :: attrname, errmsg
-    INTEGER :: version, ival, indx
+    INTEGER :: hdfVersion, version, ival, indx, error
     CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
          'Error writing metadata attribute '
 
@@ -64,7 +67,17 @@ CONTAINS
 
     !Executable code
 
+    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
+       case ('hdf4')
+          hdfVersion = HDFVERSION_4
+       case ('hdf5')
+          hdfVersion = HDFVERSION_5
+       case default
+          hdfVersion = HDFVERSION_4
+    end select 
+
     version = 1
+
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
     returnStatus = pgs_met_init (MCF_FILE, groups)
@@ -79,6 +92,7 @@ CONTAINS
     ! ECSDataGranule
 
     attrName = 'ReprocessingPlanned'
+
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'further update anticipated using enhanced PGE')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
@@ -97,6 +111,7 @@ CONTAINS
     attrName = 'LocalGranuleID'
     sval = physical_filename
     indx = INDEX (sval, "/", .TRUE.) + 1  ! Begin after last "/"
+
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval(indx:))
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
@@ -104,6 +119,7 @@ CONTAINS
     ENDIF
 
     attrName = 'DayNightFlag'
+
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, 'Both')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
@@ -303,6 +319,7 @@ CONTAINS
 
        attrName = 'NorthBoundingCoordinate'
        dval = 90.0
+
        returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
        IF (returnStatus /= PGS_S_SUCCESS) THEN
           errmsg = METAWR_ERR // attrName
@@ -311,6 +328,7 @@ CONTAINS
 
        attrName = 'EastBoundingCoordinate'
        dval = 180.0
+
        returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
        IF (returnStatus /= PGS_S_SUCCESS) THEN
           errmsg = METAWR_ERR // attrName
@@ -331,6 +349,7 @@ CONTAINS
     ! RangeDateTime Group
 
     attrName = 'RangeBeginningDate'
+
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), &
          attrName, L1PCF%startUTC(1:indx-1))
     IF (returnStatus /= PGS_S_SUCCESS) THEN 
@@ -340,6 +359,7 @@ CONTAINS
 
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), &
          "RangeBeginningTime", L1PCF%startUTC(indx+1:))
+
     IF (returnStatus /= PGS_S_SUCCESS) THEN 
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "Error setting RangeBeginningTime")
@@ -347,6 +367,7 @@ CONTAINS
 
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), "RangeEndingDate", &
          L1PCF%endUTC(1:indx-1))
+
     IF (returnStatus /= PGS_S_SUCCESS) THEN 
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "Error setting RangeEndingDate")
@@ -354,6 +375,7 @@ CONTAINS
 
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), "RangeEndingTime", &
          L1PCF%endUTC(indx+1:))
+
     IF (returnStatus /= PGS_S_SUCCESS) THEN 
        CALL MLSMessage (MLSMSG_Error, ModuleName, &
             "Error setting RangeEndingTime")
@@ -364,18 +386,13 @@ CONTAINS
     attrName = 'PGEVersion'
     sval = L1PCF%OutputVersion
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
+
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
     ENDIF
 
-    sdid = sfstart (physical_fileName, DFACC_RDWR) 
-
-    IF (sdid == -1) THEN
-       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            "Failed to open the hdf file "//physical_fileName ) 
-    ENDIF
-
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion)
     returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
 
     IF (returnStatus /= PGS_S_SUCCESS .AND. &
@@ -386,13 +403,22 @@ CONTAINS
        ELSE 
           CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
           CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
-               "Metadata write failed "//attrname//errmsg) 
+               "Metadata write failed "//attrname//errmsg//" for file "& 
+               //physical_fileName ) 
        ENDIF
     ENDIF
 
-    hdfReturn = sfend(sdid)
+    returnStatus = mls_sfend(sdid,hdfVersion)
+    IF (returnStatus /= 0) THEN 
+          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+               "Calling mls_sfend failed for file "//physical_fileName ) 
+    ENDIF          
 
-    returnStatus = pgs_met_remove() 
+   returnStatus = pgs_met_remove() 
+    IF (returnStatus /= PGS_S_SUCCESS) THEN 
+          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+               "Calling pgs_met_remove() failed." )
+    ENDIF          
 
   END SUBROUTINE populate_metadata_l1
 
@@ -409,6 +435,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.5  2002/11/07 21:32:35  jdone
+! Added HDF4/HDF5 capabilities.
+!
 ! Revision 2.4  2002/01/09 23:53:09  pwagner
 ! Now gets r8 explicitly from MLSCommon
 !
