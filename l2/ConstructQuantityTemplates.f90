@@ -478,7 +478,7 @@ contains ! =====     Public Procedures     =============================
           & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
         if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
-        call DeallocateL1BData(l1bfield, l1bFlag)
+        call DeallocateL1BData(l1bfield)
         
         ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
         
@@ -701,6 +701,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.36  2001/05/30 23:59:51  livesey
+! Thought I'd made this change already.  I'm confused
+!
 ! Revision 2.35  2001/05/30 23:55:28  livesey
 ! Previous one was debug version, this is correct one.
 !
