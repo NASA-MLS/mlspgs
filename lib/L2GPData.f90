@@ -632,17 +632,24 @@ contains ! =====     Public Procedures     =============================
 
     ! Read the data fields that are 1-dimensional
 
+!??? There appears to be a problem with reading character data using
+!??? HDF-EOS.  HDF_EOS's swrdfld expects a C void* pointer, no matter what
+!??? the type of object.  Burkhard Burow's cfortran macros need to be told
+!??? whether the argument is character, because compilers represent character
+!??? arguments in various ways, usually different from non-character arguments.
+!??? I.e., never the twain shall meet.
 !    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
 !      l2gp%status)
-    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
-      the_status_buffer)
+!    status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+!      the_status_buffer)
 ! These lines commented out as they make NAG core dump on the deallocate statement.
 ! below.
-    if ( status == -1 ) then
-      msr = MLSMSG_L2GPRead // DATA_FIELD3
-      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    end if
-    l2gp%status = the_status_buffer(:)(1:1)
+!    if ( status == -1 ) then
+!      msr = MLSMSG_L2GPRead // DATA_FIELD3
+!      call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+!    end if
+!    l2gp%status = the_status_buffer(:)(1:1)
+    l2gp%status = ' ' ! So it has a value.
 
     status = swrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
       &   realProf)
@@ -1230,6 +1237,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.30  2001/06/06 17:28:13  pwagner
+! the_status_buffer allows reading l2gp%status
+!
 ! Revision 2.29  2001/05/03 23:59:56  vsnyder
 ! Trying to find out why realProf is undefined
 !
