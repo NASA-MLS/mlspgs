@@ -290,6 +290,11 @@ all: $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
 
+# This makes fwdmdl a prerequisite for l2 -- *if* l2_NEEDS_fwdmdl defined
+ifdef l2_NEEDS_fwdmdl
+l2: fwdmdl
+endif
+
 # This requires rm-ing uniquely-named sub-subs before archiving
 tar tar_subs tar_sips: clean_all
 
@@ -299,10 +304,14 @@ update: depends
 
 .PHONY: configure depends subdirs clean clean_objs clean_config clean_all\
   tar tar_subs tar_sips all install levels configure_subdirs update\
-  configure_pvm configure_fopts configure_full configure_help help
+  configure_pvm configure_fopts configure_full configure_help help\
+  $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.18  2001/03/02 01:06:19  pwagner
+# lib part of automatic targets
+#
 # Revision 1.17  2001/02/27 18:13:37  pwagner
 # New help configure_help targets; tweaks to all, subdirs targets
 #
