@@ -6,6 +6,13 @@
     real(rk), INTENT(IN)  :: A, B, C
     real(rk), INTENT(OUT) :: X1, X2
     real(rk) :: DIS, R, SA, SB, SC
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+
 !
 !  Scale the coefficients (for better numerical stabiliy)
 !
@@ -44,3 +51,5 @@
     x2 = (sc / sa) / x1
 !
 ! end subroutine ?_SOLVE_QUAD
+
+! $Log$

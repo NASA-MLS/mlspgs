@@ -1,4 +1,11 @@
 ! subroutine ?_CSPLINE ( XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+
 !
 !  Given arrays XIN & YIN of lenght NIN containing a tabulated function,
 !  with XIN ordered, and given the (ordered) array: XOUT of length: NOUT,
@@ -68,3 +75,5 @@
     end do
 !
 ! end subroutine ?_CSPLINE
+
+! $Log$

@@ -1,6 +1,13 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+
+
 !
     Integer(i4), intent(in) :: N
 !
@@ -32,6 +39,9 @@
     endif
     Return
 ! $Log$
+! Revision 2.2  2002/04/18 10:46:27  zvi
+! Fix a minor bug for N Odd
+!
 ! Revision 2.1  2002/03/21 23:35:36  zvi
 ! Fixing minor bug & making it more efficient
 !

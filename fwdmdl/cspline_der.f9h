@@ -1,5 +1,12 @@
 ! subroutine ?CSPLINE_DER ( XIN, XOUT, YIN, YOUT, DYOUT, NIN, NOUT,YMIN,YMAX)
 !
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+
 !  Given arrays xin & yin of lenght nin containing a tabulated function,
 !  with xin ordered, and given the (ordered) array: xout of length: nout,
 !  this subroutine Returns the array: yout which is the cubic-spline
@@ -85,3 +92,5 @@
     end do
 !
 ! end subroutine ?CSPLINE_DER
+
+! $Log$
