@@ -80,6 +80,7 @@ contains
     real(r8) :: Q                            ! Factor used to scale derivatives
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: Status                        ! From read or allocate
+    integer :: SignalCount
     integer, pointer, dimension(:) :: Signal_Indices => NULL()   ! From Parse_Signal, q.v.
     real(r8) :: V(2)                         ! To read a line from the file
 
@@ -100,9 +101,9 @@ outer1: do
       do ! Count how many signals there are
         sigName = adjustl(sigName)
         if ( verify(sigName(1:1), '0123456789.+-') == 0 ) exit ! a number
-        call parse_signal ( sigName, signal_indices, spec_indices )
-        if ( .not. associated(signal_indices) ) &
-          call MLSMessage ( MLSMSG_Error, moduleName, &
+        call parse_signal ( sigName, signal_indices, spec_indices, &
+          & onlyCountEm=signalCount )
+        if ( signalCount == 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
             & trim(sigName) // " is not a valid signal." )
         howManySignals(dataBaseSize) = howManySignals(dataBaseSize) + 1
         read ( lun, '(a)', end=98, err=99, iostat=status ) sigName
@@ -219,6 +220,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.10  2001/04/09 23:45:03  livesey
+! Files now two columns rather than 6
+!
 ! Revision 1.9  2001/04/06 00:49:13  vsnyder
 ! Remove unused variable declarations
 !

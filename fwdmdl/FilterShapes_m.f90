@@ -98,6 +98,7 @@ contains
             & "The signals implied by " // trim(sigName) // &
             & " do not all have the same number of frequencies" )
       end do
+      call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
       dataBaseSize = 0
       if ( associated(filterShapes) ) dataBaseSize = size(filterShapes)
       tempFilterShapes => filterShapes
@@ -126,6 +127,7 @@ contains
         end do ! j
       end do ! i
     end do
+
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'F') /= 0 ) &
@@ -194,6 +196,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.8  2001/04/20 17:19:05  vsnyder
+! Deallocate FilterGrid component in Destroy...
+!
 ! Revision 1.7  2001/04/02 20:56:56  vsnyder
 ! Add FilterGrid field and compute it
 !
