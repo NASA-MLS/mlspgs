@@ -356,13 +356,18 @@ contains ! =====     Public Procedures     =============================
   end subroutine ConstructVectorTemplate
 
   ! -------------------------------------------------  CopyVector  -----
-  subroutine CopyVector ( Z, X, CLONE ) ! If CLONE is present and .true.,
-  ! Destroy Z, deep Z = X, except the name of Z is not changed.  Otherwise,
-  ! copy only the values and mask of X to Z
+  subroutine CopyVector ( Z, X, CLONE, Quant, Inst )
+  ! If CLONE is present and .true., Destroy Z, deep Z = X, except the
+  ! name of Z is not changed.  Otherwise, copy only the values and mask
+  ! of X to Z.
 
     type(Vector_T), intent(inout) :: Z
     type(Vector_T), intent(in) :: X
     logical, intent(in), optional :: CLONE
+    integer, intent(in), optional :: Quant, Inst  ! If Quant is present,
+    !  only that quantity is copied.  If furthermore Inst is present,
+    !  only that instance is copied.  If Inst is present but Quant
+    !  is not, the entire vector is copied.
     integer :: I
     logical MyClone
     myclone = .false.
@@ -373,11 +378,23 @@ contains ! =====     Public Procedures     =============================
       if ( x%template%id /= z%template%id ) call MLSMessage &
         & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
     end if
-    do i = 1, size(x%quantities)
-      z%quantities(i)%values = x%quantities(i)%values
-      if ( associated (x%quantities(i)%mask ) ) &
-        & z%quantities(i)%mask = x%quantities(i)%mask
-    end do
+    if ( present(quant) ) then
+      if ( present(inst) ) then
+        z%quantities(quant)%values(:,inst) = x%quantities(quant)%values(:,inst)
+        if ( associated (x%quantities(quant)%mask ) ) &
+          z%quantities(quant)%mask(:,inst) = x%quantities(quant)%mask(:,inst)
+      else
+        z%quantities(quant)%values = x%quantities(quant)%values
+        if ( associated (x%quantities(quant)%mask ) ) &
+        & z%quantities(quant)%mask = x%quantities(i)%mask
+      end if
+    else
+      do i = 1, size(x%quantities)
+        z%quantities(i)%values = x%quantities(i)%values
+        if ( associated (x%quantities(i)%mask ) ) &
+          & z%quantities(i)%mask = x%quantities(i)%mask
+      end do
+    end if
   end subroutine CopyVector
 
   ! ---------------------------------------------  CreateMaskArray  -----
@@ -872,7 +889,7 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQuantityIndexByType
 
   !---------------------------------------------  MultiplyVectors  -----
-  subroutine MultiplyVectors ( X, Y, Z )
+  subroutine MultiplyVectors ( X, Y, Z, Quant, Inst )
   ! If Z is present, destroy Z and clone a new one from X, then
   ! Z = X # Y where # means "element-by-element"; otherwise X = X # Y
 
@@ -880,6 +897,10 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(inout), target :: X
     type(Vector_T), intent(in) :: Y
     type(Vector_T), intent(out), optional, target :: Z
+    integer, intent(in), optional :: Quant, Inst  ! If Quant is present,
+    !  only that quantity is multiplied.  If furthermore Inst is present,
+    !  only that instance is multiplied.  If Inst is present but Quant
+    !  is not, the entire vector is multiplied.
     ! Local Variables:
     integer :: I                        ! Subscript and loop inductor
     type(Vector_T), pointer :: Result   ! associated to either X or Z
@@ -892,10 +913,21 @@ contains ! =====     Public Procedures     =============================
     else
       result => x
     end if
-    do i = 1, size(x%quantities)
-      result%quantities(i)%values = &
-        & x%quantities(i)%values * y%quantities(i)%values
-    end do
+    if ( present(quant) ) then
+      if ( present(inst) ) then
+        result%quantities(quant)%values(:,inst) = &
+          & x%quantities(quant)%values(:,inst) * &
+          & y%quantities(quant)%values(:,inst)
+      else
+        result%quantities(quant)%values = x%quantities(quant)%values * &
+          &                               y%quantities(quant)%values
+      end if
+    else
+      do i = 1, size(x%quantities)
+        result%quantities(i)%values = &
+          & x%quantities(i)%values * y%quantities(i)%values
+      end do
+    end if
   end subroutine MultiplyVectors
 
   !-------------------------------------------------  ScaleVector  -----
@@ -945,9 +977,9 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments:
     type(Vector_T), intent(inout) :: X
     type(Vector_T), intent(in) :: Y
-    integer, intent(in), optional :: Quant, Inst  ! If Quant\ is present,
-    !  only that quantity is subtracted.  If furthermore Inst\ is present,
-    !  only that instance is subtracted.  If Inst\ is present but Quant\
+    integer, intent(in), optional :: Quant, Inst  ! If Quant is present,
+    !  only that quantity is subtracted.  If furthermore Inst is present,
+    !  only that instance is subtracted.  If Inst is present but Quant
     !  is not, the entire vector is subtracted.
 
     ! Local Variables:
@@ -1177,6 +1209,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.48  2001/07/17 17:33:21  livesey
+! Added CreateMaskArray
+!
 ! Revision 2.47  2001/07/06 22:04:02  livesey
 ! Added call to DestroyVectorMask in DestroyVectorInfo
 !
