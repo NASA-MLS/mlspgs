@@ -469,7 +469,9 @@ contains
         call output ( source_column )
         call output ( ' ignored.', advance='yes' )
       case ( unrec_token )
-        call output ( ': Unrecognized token ending in column ' )
+        call output ( ': Unrecognized token starting in column ' )
+        call output ( column )
+        call output ( ' and ending in column ' )
         call output ( source_column - 1 )
         call output ( ' ignored.', advance='yes' )
       end select
@@ -481,6 +483,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.3  2000/10/18 18:43:14  vsnyder
+! Added starting column number to "Unrecognized token" error message
+!
 ! Revision 2.2  2000/10/18 18:36:58  vsnyder
 ! Add line number of input to error message.
 !
