@@ -1459,7 +1459,7 @@ contains ! ===================================== Public Procedures =====
           enddo
         endif
       enddo
-      call dump ( signals_buffer, 'signals_buffer' )
+      ! call dump ( signals_buffer, 'signals_buffer' )
 
       ! Task (1a): Find mafs where there is at least one signal which
       ! changes from either nogood to good or from good to nogood
@@ -2071,6 +2071,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.43  2003/08/26 19:43:42  livesey
+! Commented out a print statement
+!
 ! Revision 2.42  2003/08/26 18:05:14  livesey
 ! Various fixes to the obstruction stuff.  More to come probably.
 !
