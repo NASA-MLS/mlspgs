@@ -21,7 +21,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_COLUMNABUNDANCE, L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
-    L_NONE, L_ORBITINCLINATION, &
+    L_NONE, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PTAN, L_RADIANCE, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SIDEBANDRATIO, &
     L_SPACERADIANCE, &
@@ -266,7 +266,8 @@ contains ! =====     Public Procedures     =============================
     minorFrame = any(quantityType == (/ l_Ptan, l_Radiance, &
       & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
-      & l_scVel, l_losVel, l_heightOffset, l_scanResidual, l_chisqmmif /) )
+      & l_scVel, l_losVel, l_heightOffset, l_scanResidual, l_chisqmmif, &
+      & l_opticalDepth /) )
 
     majorFrame = any(quantityType == (/ l_chisqchan, l_chisqmmaf /) )
  
@@ -855,6 +856,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.60  2002/02/09 21:35:52  livesey
+! Added optical depth stuff
+!
 ! Revision 2.59  2001/11/08 00:13:38  livesey
 ! Sorted out extinction stuff
 !
