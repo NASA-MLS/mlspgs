@@ -42,19 +42,14 @@ module L2PC_FILE_PARAMETERS
   integer(i4), parameter :: MAX_NO_AVAIL_KEYS = 48
   integer(i4), parameter :: MAX_NO_BANDS = 6
   integer(i4), parameter :: MAX_NO_CHANNELS_PER_BAND = 15
-! integer(i4), parameter :: MAX_NO_POINTINGS = 85
-  integer(i4), parameter :: MAX_NO_POINTINGS = 67
-! integer(i4), parameter :: MAX_NO_ELMNTS_PER_SV_COMPONENT = 43
-  integer(i4), parameter :: MAX_NO_ELMNTS_PER_SV_COMPONENT = 34
-! integer(i4), parameter :: MAX_NO_KEY_ADDR = 100000
+  integer(i4), parameter :: MAX_NO_POINTINGS = 130
+  integer(i4), parameter :: MAX_NO_ELMNTS_PER_SV_COMPONENT = 50
   integer(i4), parameter :: MAX_NO_KEY_ADDR = 5000
   integer(i4), parameter :: MAX_NO_THETA_VAL = 6
   integer(i4), parameter :: MAX_NO_MAG_FIELDS = 4
   integer(i4), parameter :: MAX_NO_SV_COMPONENTS = 32
   integer(i4), parameter :: MAX_NO_SV_ELMNTS =                          &
      &                       MAX_NO_ELMNTS_PER_SV_COMPONENT * NSPS
-! integer(i4), parameter :: MAX_NO_SV_DERIVATIVES = 350
-! integer(i4), parameter :: MAX_NO_SV_DERIVATIVES = 385
   integer(i4), parameter :: MAX_NO_SV_DERIVATIVES = 400
   integer(i4), parameter :: MAX_CHAR_LEN_L2PC_KEY_DES =                 &
  &                            max_char_len_l2pc_key - max_char_len_avail_keys
@@ -77,6 +72,9 @@ module L2PC_FILE_PARAMETERS
 !
 end module L2PC_FILE_PARAMETERS
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

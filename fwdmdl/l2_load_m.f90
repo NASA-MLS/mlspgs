@@ -376,9 +376,6 @@ Character (LEN=80) :: Fnd, Line
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
-  kk = mxco
-  k = FMI%mfi + 2
-
   Line(1:) = ' '
   do j = 1, FMI%no_spectro
     read(11,'(A)',iostat=io) Ax
@@ -390,19 +387,19 @@ Character (LEN=80) :: Fnd, Line
     read(11,*,iostat=io) Spectag
     if(io /= 0) goto 99
     FMI%spectroscopic(j)%SPECTAG = Spectag
-    read(11,*,iostat=io) ht_i
+    read(11,*,iostat=io) k
     if(io /= 0) goto 99
-    FMI%spectroscopic(j)%NO_PHI_VALUES = ht_i
-    read(11,*,iostat=io) ht_i
+    FMI%spectroscopic(j)%NO_PHI_VALUES = k
+    read(11,*,iostat=io) kk
     if(io /= 0) goto 99
-    FMI%spectroscopic(j)%NO_ZETA_VALUES = ht_i
+    FMI%spectroscopic(j)%NO_ZETA_VALUES = kk
     read(11,*,iostat=io) (FMI%spectroscopic(j)%DER_CALC(i),i=1,6)
     if(io /= 0) goto 99
     dummy(1:k) = 0.0
     read(11,*,iostat=io) (dummy(i),i=1,k)
     if(io /= 0) goto 99
     FMI%spectroscopic(j)%PHI_BASIS(1:k) = dummy(1:k) * deg2rad
-    read(11,*,iostat=io) (FMI%spectroscopic(j)%ZETA_BASIS(i),i=1,kk+2)
+    read(11,*,iostat=io) (FMI%spectroscopic(j)%ZETA_BASIS(i),i=1,kk)
     if(io /= 0) goto 99
   end do
 !
@@ -455,7 +452,6 @@ Character (LEN=80) :: Fnd, Line
   ALLOCATE(T_FMI%Atmospheric(n_sps),STAT=i)
   if(i /= 0) goto 99
 
-  kk = mxco
   do k = 1, n_sps
     j = -1
     read(11,'(A)',iostat=io) Ax
@@ -476,15 +472,14 @@ Character (LEN=80) :: Fnd, Line
     T_FMI%Atmospheric(j)%NAME = Name
     read(11,*,iostat=io) Spectag, ht_i
     if(io /= 0) goto 99
+    T_FMI%Atmospheric(j)%LIN_VAL(1:) = 0.0
     T_FMI%Atmospheric(j)%SPECTAG = Spectag
     T_FMI%Atmospheric(j)%NO_LIN_VALUES = ht_i
     read(11,*,iostat=io) (T_FMI%Atmospheric(j)%FWD_CALC(i),i=1,6)
     if(io /= 0) goto 99
     read(11,*,iostat=io) (T_FMI%Atmospheric(j)%DER_CALC(i),i=1,6)
     if(io /= 0) goto 99
-    read(11,*,iostat=io) (T_FMI%Atmospheric(j)%LIN_VAL(i),i=1,kk)
-    if(io /= 0) goto 99
-    read(11,*,iostat=io) (T_FMI%Atmospheric(j)%BASIS_PEAKS(i),i=1,kk+2)
+    read(11,*,iostat=io) (T_FMI%Atmospheric(j)%BASIS_PEAKS(i),i=1,ht_i)
     if(io /= 0) goto 99
   end do
   read(11,'(A)',iostat=io) Ax
@@ -515,11 +510,9 @@ Character (LEN=80) :: Fnd, Line
 
   no_t = T_FMI%no_t
   no_phi_t = T_FMI%no_phi_t
-  DEALLOCATE(T_FMI%t_zeta_basis,T_FMI%t_phi_basis,T_FMI%t_coeff, &
- &           T_FMI%t_phi_basis_copy,STAT=i)
+  DEALLOCATE(T_FMI%t_zeta_basis,T_FMI%t_phi_basis,T_FMI%t_coeff,STAT=i)
   ALLOCATE(T_FMI%t_zeta_basis(no_t),T_FMI%t_phi_basis(no_phi_t),   &
- &    T_FMI%t_phi_basis_copy(no_phi_t),T_FMI%t_coeff(no_t,no_mmaf),&
-      STAT=i)
+ &         T_FMI%t_coeff(no_t,no_mmaf),STAT=i)
   if(i /= 0) goto 99
 
   read(11,*,iostat=io) (T_FMI%t_zeta_basis(i),i=1,no_t)
@@ -532,7 +525,6 @@ Character (LEN=80) :: Fnd, Line
   read(11,*,iostat=io) (dummy(i),i=1,no_phi_t)
   if(io /= 0) goto 99
   T_FMI%t_phi_basis(1:no_phi_t) = dummy(1:no_phi_t) * deg2rad
-  T_FMI%t_phi_basis_copy(1:no_phi_t) = T_FMI%t_phi_basis(1:no_phi_t)
 
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
@@ -577,11 +569,9 @@ Character (LEN=80) :: Fnd, Line
 
   kk = MAXVAL(T_FMI%no_phi_f)
   ht_i = MAXVAL(T_FMI%no_coeffs_f)
-  DEALLOCATE(T_FMI%f_zeta_basis,T_FMI%f_phi_basis,T_FMI%mr_f, &
-             T_FMI%f_phi_basis_copy,STAT=i)
+  DEALLOCATE(T_FMI%f_zeta_basis,T_FMI%f_phi_basis,T_FMI%mr_f,STAT=i)
   ALLOCATE(T_FMI%f_zeta_basis(ht_i,n_sps),   &
  &         T_FMI%f_phi_basis(kk,n_sps),      &
- &         T_FMI%f_phi_basis_copy(kk,n_sps), &
  &         T_FMI%mr_f(ht_i,kk,n_sps), STAT=i)
   if(i /= 0) goto 99
 !
@@ -594,7 +584,6 @@ Character (LEN=80) :: Fnd, Line
     read(11,*,iostat=io) (dummy(i),i=1,kk)
     if(io /= 0) goto 99
     T_FMI%f_phi_basis(1:kk,m) = dummy(1:kk) * deg2rad
-    T_FMI%f_phi_basis_copy(1:kk,m) = T_FMI%f_phi_basis(1:kk,m)
     read(11,*,iostat=io) ((T_FMI%mr_f(i,j,m),j=1,kk),i=1,ht_i)
     if(io /= 0) goto 99
   END DO
@@ -615,20 +604,6 @@ Character (LEN=80) :: Fnd, Line
     end do
   end do
 !
-  kk = mxco
-  k = FMI%mfi + 2
-
-  DEALLOCATE(T_FMI%S_PHI_BASIS_COPY,STAT=i)
-  ALLOCATE(T_FMI%S_PHI_BASIS_COPY(k,FMI%no_spectro),STAT=io)
-  IF(io /= 0) then
-    Print *,'** ALLOCATE Error: T_FMI%S_PHI_BASIS_COPY, STAT =',io
-    goto 99
-  endif
-
-  do j = 1, FMI%no_spectro
-    T_FMI%S_PHI_BASIS_COPY(1:k,j) = FMI%spectroscopic(j)%PHI_BASIS(1:k)
-  end do
-
   CLOSE(11,iostat=i)
 !
 ! Get all the filter's loaded & define:
@@ -982,6 +957,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.10  2001/03/20 02:31:00  livesey
+! Interim version, gets same numbers as zvi
+!
 ! Revision 1.9  2001/03/15 12:18:03  zvi
 ! Adding the Velocity effect on Line center frequency
 !

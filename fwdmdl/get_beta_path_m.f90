@@ -66,6 +66,7 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
   ier = 0
   no_sps = pfs(1)%no_sps
   mnf =  size(frequencies)
+
   call output('In get_beta_path_m',advance='yes')
   call dump(frequencies)
 !
@@ -207,6 +208,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.10  2001/03/20 02:29:26  livesey
+! Interim version, gets same numbers as zvi
+!
 ! Revision 1.9  2001/03/15 12:18:03  zvi
 ! Adding the Velocity effect on Line center frequency
 !

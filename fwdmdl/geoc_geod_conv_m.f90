@@ -50,7 +50,16 @@ Real(r8) :: q,r,incl,cw,sw,b2
   sw = spt * spt
   cw = 1.0d0 - sw
   r = a2*a2*cw +b2*b2*sw
-  q = spt*b2/Sqrt(r)/COS(incl)
+
+! q = spt*b2/Sqrt(r)/COS(incl)
+  q = spt*b2/Sqrt(r)
+
+  if(q > 1.0) then
+    Print *,'** Error in geoc_geod_conv routine ...'
+    Print *,'   Trying to take ArcSin(arg) for arg > 1.0'
+    Stop
+  endif
+
   geoc_lat = DASIN(q)                  ! In Radians
 
   nphi_tan = a2 / SQRT(c2-(c2-a2)*cw)
@@ -74,6 +83,9 @@ Real(r8) :: q,r,incl,cw,sw,b2
 
 End module GEOC_GEOD_CONV_M
 ! $Log$
+! Revision 1.1  2001/01/31 22:40:12  zvi
+! Add new version
+!
 ! Revision 1.1  2000/06/21 21:56:13  zvi
 ! First version D.P.
 !

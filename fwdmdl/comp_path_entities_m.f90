@@ -5,7 +5,7 @@ module COMP_PATH_ENTITIES_M
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM
   use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
   use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, CPS, SPS, CPTS, SPTS, HT, &
-      HT2, RR, PHI_TAN, NPHI_TAN, PHI_S, NPHI_S, PS, ROC, XOC, YOC, EARTHX
+      HT2, RR, NPHI_TAN, PHI_S, NPHI_S, PS, ROC, XOC, YOC, EARTHX
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_DERIVATIVE
   use REFRACTION_M, only: REFRACTIVE_INDEX
   use VERT_TO_PATH_M, only: VERT_TO_PATH
@@ -25,7 +25,7 @@ SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
            f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps,no_phi_f, &
            f_phi_basis,z_path,h_path,t_path,phi_path,n_path,dhdz_path, &
            dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,is_f_log,      &
-           no_mmaf,phi_tan_mmaf, Ier)
+           no_mmaf,Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: comp_path_entities
@@ -43,8 +43,6 @@ Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
 Integer(i4), INTENT(OUT) :: ier
 !
-Real(r8), INTENT(IN) :: phi_tan_mmaf(*)
-
 Real(r8), INTENT(IN) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:)
 Real(r8), INTENT(IN) :: dh_dt_glgrid(:,:,:), dhdz_glgrid(:,:)
 
@@ -73,10 +71,7 @@ Real(r4) :: dhdtp(ngt,mnp,mxco)
 
 Real(r8) :: h, q, r, zeta, phi
 
-Real(r8), DIMENSION(:)  , ALLOCATABLE :: t_phi_tan
 Real(r8), DIMENSION(:)  , ALLOCATABLE :: zpath,tpath,hpath,ppath,dhdzp
-
-Real(r8), DIMENSION(:,:), ALLOCATABLE :: f_phi_tan
 
 !  PFA variables:
 
@@ -86,13 +81,6 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
 
 ! Compute all the various integration paths according to tanget heights.
 ! Get the z, t, h, phi, dhdz & dh_dt arrays on these paths.
-
-  DEALLOCATE(t_phi_tan,STAT=i)
-  ALLOCATE(t_phi_tan(no_phi_t),STAT=ier)
-  if(ier /= 0) then
-    Print *,'** Allocation Error in comp_path_entities: t_phi_tan..'
-    Return
-  endif
 
   DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
   ALLOCATE(zpath(ngt),hpath(ngt),tpath(ngt),ppath(ngt),dhdzp(ngt), &
@@ -112,14 +100,12 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
       lmax = no_mmaf
       lmin = lmax - 2 * jp
     endif
-    phi_tan = phi_tan_mmaf(l)
-    t_phi_tan(1:no_phi_t) = t_phi_basis(1:no_phi_t) + phi_tan
     DO k = 1, no_tan_hts
       h = tan_hts(k,l)
       CALL vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,   &
            z_glgrid,t_glgrid(1:,lmin:lmax),h_glgrid(1:,lmin:lmax),  &
            dhdz_glgrid(1:,lmin:lmax),dh_dt_glgrid(1:,lmin:lmax,1:), &
-           t_phi_tan,zpath,hpath,tpath,ppath,dhdzp,dhdtp,klo,khi,Ier)
+           t_phi_basis,zpath,hpath,tpath,ppath,dhdzp,dhdtp,klo,khi,Ier)
       IF(ier /= 0) RETURN
       DEALLOCATE(z_path(k,l)%values, h_path(k,l)%values,   &
                  t_path(k,l)%values, phi_path(k,l)%values, &
@@ -147,26 +133,14 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
     END DO
   END DO
 
-  DEALLOCATE(t_phi_tan,STAT=i)
-  DEALLOCATE(f_phi_tan,STAT=i)
-!
-  l = MAXVAL(no_phi_f,n_sps)
-  ALLOCATE(f_phi_tan(l,n_sps),STAT=ier)
-  IF(ier /= 0) then
-    Print *,'** ALLOCATE Error, comp_path_entities: f_phi_tan, STAT =',ier
-    goto 99
-  endif
-!
 ! Create the specie function along the path for all species
 !
   DO l = 1, no_mmaf
-    phi_tan = phi_tan_mmaf(l)
     DO k = 1, no_tan_hts
       jj = ndx_path(k,l)%total_number_of_elements
       do j = 1, n_sps
         jp = no_phi_f(j)
         kk = no_coeffs_f(j)
-        f_phi_tan(1:jp,j) = f_phi_basis(1:jp,j) + phi_tan
         DEALLOCATE(spsfunc_path(j,k,l)%values,STAT=i)
         ALLOCATE(spsfunc_path(j,k,l)%values(jj),STAT=ier)
         IF(ier /= 0) THEN
@@ -179,11 +153,11 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
           phi = phi_path(k,l)%values(i)
           if (is_f_log(j)) then
             Call TWO_D_POLATE(f_basis(1:,j), LOG(mr_f(1:kk,1:jp,j)), &
-           &           kk, f_phi_tan(1:,j), jp, zeta, phi, r)
+           &           kk, f_phi_basis(1:,j), jp, zeta, phi, r)
             q = exp(r)
           else
             Call TWO_D_POLATE(f_basis(1:,j), mr_f(1:kk,1:jp,j), kk,  &
-           &                  f_phi_tan(1:,j), jp, zeta, phi, q)
+           &                  f_phi_basis(1:,j), jp, zeta, phi, q)
           endif
           spsfunc_path(j,k,l)%values(i) = q
         end do
@@ -214,15 +188,12 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
   kk = no_coeffs_f(j)
 
   DO l = 1, no_mmaf
-    phi_tan = phi_tan_mmaf(l)
-    f_phi_tan(1:jp,j) = f_phi_basis(1:jp,j) + phi_tan
-    CALL refractive_index(mr_f(1:,1:,j),f_basis(1:,j),f_phi_tan(1:,j), &
+    CALL refractive_index(mr_f(1:,1:,j),f_basis(1:,j),f_phi_basis(1:,j), &
   &                 kk,jp,ndx_path(1:,l),z_path(1:,l),t_path(1:,l),    &
   &                 phi_path(1:,l),n_path(1:,l),wet,no_tan_hts)
   END DO
 
- 99  DEALLOCATE(f_phi_tan,t_phi_tan,STAT=i)
-     DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
+ 99  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
 
   RETURN
 
@@ -230,6 +201,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.3  2001/03/05 21:37:20  zvi
+! New filter format
+!
 ! Revision 1.1  2000/06/21 21:56:13  zvi
 ! First version D.P.
 !

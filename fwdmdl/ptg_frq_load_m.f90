@@ -62,48 +62,36 @@ Character (LEN=80) :: Fnd, Line
     Call Hunt(r,FMI%tan_press,size(FMI%tan_press),k,i)
     IF(ABS(r-FMI%tan_press(i)) < ABS(r-FMI%tan_press(k))) k = i
 !
-    if(ABS(r-FMI%tan_press(k)) > 0.001) then
-      Print *,'** Warning **'
-      Print *,'   Zeta:',Sngl(r),' not an entry in tan_press !'
-      Print *,'   ptg_frq_grid for this Zeta is ignored ..'
-      Print *
-      Read(32,*,iostat=io) (dummy(i),i=1,jp)
-      if(io /= 0) goto 10
-!
+    DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
+
+    if(FMC%do_frqavg) then
+      FMI%no_ptg_frq(k) = jp
+      ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
     else
+      FMI%no_ptg_frq(k) = 1
+      ALLOCATE(FMI%ptg_frq_grid(k)%values(2),STAT=i)
+    endif
 
-      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
+    IF(i /= 0) THEN
+      ier = i
+      PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
+      PRINT *,'   tan_hts index:',k,' STAT =',ier
+      do l = 1, k
+        DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
+      end do
+      goto 99
+    ENDIF
 
-      if(FMC%Zfrq > 0.0) then
-        FMI%no_ptg_frq(k) = 1
-        ALLOCATE(FMI%ptg_frq_grid(k)%values(2),STAT=i)
-      else
-        FMI%no_ptg_frq(k) = jp
-        ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
-      endif
+    Read(32,*,iostat=io) (dummy(i),i=1,jp)
+    if(io /= 0) goto 10
+    if(kk < 0) kk = k
 
-      IF(i /= 0) THEN
-        ier = i
-        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
-        PRINT *,'   tan_hts index:',k,' STAT =',ier
-        do l = 1, k
-          DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
-        end do
-        goto 99
-      ENDIF
-
-      Read(32,*,iostat=io) (dummy(i),i=1,jp)
-      if(io /= 0) goto 10
-      if(kk < 0) kk = k
-
-      if(FMC%Zfrq > 0.0) dummy(1) = FMC%Zfrq - q
+    if(FMC%Zfrq > 0.0) dummy(1) = FMC%Zfrq - q
 !
 ! Add 'band' frequency to ptg_frq_grid to convert to absolute grid
 !
-      jp = FMI%no_ptg_frq(k)
-      FMI%ptg_frq_grid(k)%values(1:jp) = dummy(1:jp) + q
-!
-    endif
+    jp = FMI%no_ptg_frq(k)
+    FMI%ptg_frq_grid(k)%values(1:jp) = dummy(1:jp) + q
 !
   END DO
 !
@@ -126,6 +114,22 @@ Character (LEN=80) :: Fnd, Line
      &           FMI%ptg_frq_grid(kk)%values(1:jp)
     end do
   endif
+!
+  do k = 1, size(FMI%tan_press)
+    if(FMI%no_ptg_frq(k) < 1) then
+      i = k
+      do while(i > 1 .and. FMI%no_ptg_frq(i) < 1)
+        i = i - 1
+      end do
+      jp = FMI%no_ptg_frq(i)
+      if(jp < 1) CYCLE
+      FMI%no_ptg_frq(k) = jp
+      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=l)
+      ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=l)
+      FMI%ptg_frq_grid(k)%values(1:jp) = &
+     &           FMI%ptg_frq_grid(i)%values(1:jp)
+    endif
+  end do
 !
  10 CLOSE(32,iostat=i)
     if(io > 0) then

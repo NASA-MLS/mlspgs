@@ -44,9 +44,9 @@ Real(r4), INTENT(OUT) :: dhdt_path(:,:,:)
 Real(r8), INTENT(OUT) :: h_path(:), z_path(:), t_path(:), phi_path(:), &
                          dhdz_path(:)
 
-Real(r8), INTENT(IN) :: htan
-Real(r8), INTENT(IN) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:), &
-                     t_phi_basis(:), dhdz_glgrid(:,:), dh_dt_glgrid(:,:,:)
+Real(r8), INTENT(IN) :: htan, z_glgrid(:)
+Real(r8), INTENT(IN) :: h_glgrid(:,:), t_glgrid(:,:), t_phi_basis(:), &
+                        dhdz_glgrid(:,:), dh_dt_glgrid(:,:,:)
 
 !  ----------------
 !  Local variables:
@@ -333,6 +333,9 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a, phi_eta
 END SUBROUTINE vert_to_path
 end module VERT_TO_PATH_M
 ! $Log$
+! Revision 1.3  2001/03/09 00:40:32  zvi
+! Correcting an error in HUNT routine
+!
 ! Revision 1.2  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

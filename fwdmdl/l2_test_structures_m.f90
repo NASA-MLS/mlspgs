@@ -37,13 +37,10 @@ module L2_TEST_STRUCTURES_M
     Real(r8), DIMENSION(:), POINTER :: Href => NULL()
     Real(r8), DIMENSION(:), POINTER :: t_zeta_basis => NULL()
     Real(r8), DIMENSION(:), POINTER :: t_phi_basis => NULL()
-    Real(r8), DIMENSION(:), POINTER :: t_phi_basis_copy => NULL()
     Logical , DIMENSION(:), POINTER :: is_f_log => NULL()
     Real(r8), DIMENSION(:,:), POINTER :: t_coeff => NULL()
     Real(r8), DIMENSION(:,:), POINTER :: f_zeta_basis => NULL()
     Real(r8), DIMENSION(:,:), POINTER :: f_phi_basis => NULL()
-    Real(r8), DIMENSION(:,:), POINTER :: f_phi_basis_copy => NULL()
-    Real(r8), DIMENSION(:,:), POINTER :: s_phi_basis_copy => NULL()
     Real(r8), DIMENSION(:,:,:), POINTER :: mr_f => NULL()
   end type TEMPORARY_FWD_MDL_INFO
 
@@ -106,6 +103,9 @@ module L2_TEST_STRUCTURES_M
 !
 end module L2_TEST_STRUCTURES_M
 ! $Log$
+! Revision 1.5  2001/03/15 12:18:03  zvi
+! Adding the Velocity effect on Line center frequency
+!
 ! Revision 1.4  2001/03/08 00:08:04  vsnyder
 ! Modifications to work inside of MLSL2.
 !

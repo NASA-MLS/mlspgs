@@ -1,6 +1,7 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
+PointingGrid_m.o  	      get_delta_m.o  \
 abs_cs_air_cont_m.o  	      get_drad_m.o  \
 abs_cs_h2o_213g_cont_m.o      get_eta_m.o  \
 abs_cs_liq_h2o_m.o  	      get_lun.o  \
@@ -32,7 +33,6 @@ generic_delta_integral_m.o    two_d_polate.o  \
 geoc_geod_conv_m.o  	      vert_to_path_m.o  \
 get_beta_path_m.o  	      zatmos_deriv_m.o  \
 get_chi_angles_m.o  	      zopacity_m.o  \
-get_delta_m.o  \
  
 # using f90makedep.pl to calculate dependencies 
 comp_path_entities_m.o: comp_path_entities_m.f90 $(dir1)MLSCommon.o ellipse.o \
@@ -108,6 +108,11 @@ path_entities.o: path_entities.f90 $(dir1)MLSCommon.o
 pfa_db_delta_m.o: pfa_db_delta_m.f90 $(dir1)MLSCommon.o \
 	generic_delta_integral_m.o path_entities.o
 physics.o: physics.f90 $(dir1)MLSCommon.o
+PointingGrid_m.o: PointingGrid_m.f90 $(dir1)Allocate_Deallocate.o \
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSSignals_m.o \
+	$(dir1)Parse_Signal_m.o $(dir1)dump_0.o $(dir1)output_m.o \
+	$(dir1)string_table.o $(dir1)toggles_core.o $(dir1)trace_m.o \
+	d_hunt_m.o
 ptg_frq_load_m.o: ptg_frq_load_m.f90 $(dir1)MLSCommon.o d_hunt_m.o \
 	l2_test_structures_m.o l2pcdim.o
 rad_tran_m.o: rad_tran_m.f90 $(dir1)MLSCommon.o do_t_script_m.o \

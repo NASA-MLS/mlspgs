@@ -25,25 +25,26 @@ module L2PCDIM
 ! Integer(i4) :: Maxmagch, Maxmagsps, Maxbfields
   Integer(i4), parameter :: NBAND=6      ! Max. # of bands
   Integer(i4), parameter :: NCH=90       ! Max. # of channels
-  Integer(i4), parameter :: NLVL=100     ! Max. # of pre-selected major
+  Integer(i4), parameter :: NLVL=130     ! Max. # of pre-selected major
 !                                          grid points
   Integer(i4), parameter :: N2LVL=2*NLVL ! Twice Nlvl
-  Integer(i4), parameter :: NCF=43       ! Max. # of profile coefficients
+  Integer(i4), parameter :: NCF=50       ! Max. # of profile coefficients
   Integer(i4), parameter :: NRAD=32      ! Max. # of radiances per channel
   Integer(i4), parameter :: MAXFFT=1024  ! Max. # of FFT points
   Integer(i4), parameter :: MAX_NO_MMAF=10 ! Max. # of MMAF per chunk
 !
-  Integer(i4), parameter :: NSPS=3       ! Max. # of species
-  Integer(i4), parameter :: NPTG=54      ! Max. # of convolution hights
+  Integer(i4), parameter :: NSPS=4       ! Max. # of species
+  Integer(i4), parameter :: NPTG=130     ! Max. # of convolution hights
   Integer(i4), parameter :: MAX_NO_PHI=5
 !
 ! Integer(i4), parameter :: MAX_NO_MMAF=70 ! Max. # of MMAF per chunk
 ! Integer(i4), parameter :: MAX_NO_PHI=13
 ! Integer(i4), parameter :: NSPS=20      ! Max. # of species
-! Integer(i4), parameter :: NSPS=14      ! Max. # of species
-! Integer(i4), parameter :: NPTG=67      ! Max. # of convolution hights
 
 end module L2PCDIM
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
