@@ -17,7 +17,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
     & S_VECTORTEMPLATE
   use Intrinsic, ONLY: L_None
   use L2GPData, only: L2GPDATA_T
-  use MLSCommon, only: L1BInfo_T, MLSChunk_T
+  use MLSCommon, only: L1BInfo_T, MLSChunk_T, TAI93_Range_T
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use MLSSignals_m, only: Modules
@@ -55,7 +55,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  MLSL2Construct  -----
-  subroutine MLSL2Construct ( root, l1bInfo, chunk, &
+  subroutine MLSL2Construct ( root, l1bInfo, processingRange, chunk, &
        & quantityTemplates, vectorTemplates, FGrids, VGrids, HGrids, &
        & l2gpDatabase, mifGeolocation )
 
@@ -64,6 +64,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Root of the tree for the Construct section
     type (L1BInfo_T), intent(in) :: l1bInfo
+    type (TAI93_Range_T), intent(in) :: processingRange
     type (MLSChunk_T), intent(in) :: chunk
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
@@ -135,7 +136,8 @@ contains ! =====     Public Procedures     =============================
         call ForgeMinorFrames ( key, chunk, mifGeolocation )
       case( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
-          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, chunk ) ) )
+          & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
+          & processingRange, chunk ) ) )
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
@@ -206,6 +208,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.31  2001/12/14 01:42:47  livesey
+! Passes processingRange to HGrid construction
+!
 ! Revision 2.30  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
