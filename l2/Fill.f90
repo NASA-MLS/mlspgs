@@ -1151,10 +1151,11 @@ contains ! =====     Public Procedures     =============================
     
     ! Executable code
 
-    if (spread ) then      ! 1 instance given, spread to all instances
+    if (spread) then      ! 1 instance/value given, spread to all instances
 
       ! Check we have the right number of values
-      if ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .or. &
+      if ( ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .and. &
+        &    (nsons(valuesNode)-1 /= 1) ) .or. &
         &  (.not. quantity%template%regular)) &
         & call Announce_error(valuesNode,invalidExplicitFill)
 
@@ -1167,7 +1168,11 @@ contains ! =====     Public Procedures     =============================
           &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
           & call Announce_error(valuesNode,badUnitsForExplicit)
         ! Store value
-        quantity%values(k,:)=valueAsArray(1)
+        if (nsons(valuesNode)-1 == 1) then
+          quantity%values=valueAsArray(1)
+        else
+          quantity%values(k,:)=valueAsArray(1)
+        endif
       end do
 
     else                  ! Not spread, fill all values
@@ -1533,6 +1538,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.42  2001/04/24 23:12:02  livesey
+! Made spread more flexible
+!
 ! Revision 2.41  2001/04/23 23:26:05  livesey
 ! Removed some unnecessary logic
 !
