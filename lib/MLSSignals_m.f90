@@ -486,13 +486,13 @@ contains
     if ( error > 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "Unable to create MLSSignals database" )
 
+    if ( index(switches, 'sig') /= 0 ) then
+      call dump ( radiometers )
+      call dump ( spectrometerTypes )
+      call dump ( bands )
+      call dump ( signals )
+    end if
     if ( toggle(gen) ) then
-      if ( levels(gen) > 0 .or. index(switches, 'S') /= 0 ) then
-        call dump ( radiometers )
-        call dump ( spectrometerTypes )
-        call dump ( bands )
-        call dump ( signals )
-      end if
       call trace_end ( "MLSSignals" )
     end if
     if ( timing ) call sayTime
@@ -1514,6 +1514,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.56  2003/05/10 22:21:12  livesey
+! Tried to calm down -g1..
+!
 ! Revision 2.55  2003/03/07 03:17:50  livesey
 ! Add optional justchannels argument to DestroySignalDatabase
 !
