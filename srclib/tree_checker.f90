@@ -13,11 +13,11 @@ module TREE_CHECKER
 ! in table_generator.
 
   use DECLARATION_TABLE, only: DECLARATION, DECLARE, DECLARED, DECLS, &
-    &                          DUMP_1_DECL, ENUM_VALUE, FIELD, GET_DECL, &
-    &                          LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, &
-    &                          NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE, &
-    &                          SECTION, SPEC, STR_VALUE, UNDECLARED, &
-    &                          TYPE_MAP, TYPE_NAME, UNITS_NAME
+    &                          DUMP_1_DECL, EMPTY, ENUM_VALUE, FIELD, &
+    &                          FUNCTION, GET_DECL, LABEL, LOG_VALUE, &
+    &                          NAMED_VALUE, NULL_DECL, NUM_VALUE, PRIOR_DECL, &
+    &                          RANGE, REDECLARE, SECTION, SPEC, STR_VALUE, &
+    &                          UNDECLARED, TYPE_MAP, TYPE_NAME, UNITS_NAME
   use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_FIRST, FIELD_INDICES, &
     &                           FIELD_LAST, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
@@ -25,7 +25,8 @@ module TREE_CHECKER
   use INTRINSIC, only: ALL_FIELDS, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
     &                  PHYQ_INVALID, REQ_FLD
   use LEXER_CORE, only: PRINT_SOURCE
-  use OUTPUT_M, only: OUTPUT
+  use MoreTree, only: StartErrorMessage
+  use OUTPUT_M, only: NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, FLOAT_VALUE
   use TOGGLES, only: CON, TOGGLE
   use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
@@ -53,15 +54,19 @@ module TREE_CHECKER
   integer, private, parameter :: NO_SUCH_FIELD = NO_POSITIONAL_FIELDS + 1
   integer, private, parameter :: NO_SUCH_REFERENCE = NO_SUCH_FIELD + 1
   integer, private, parameter :: NOT_FIELD_OF = NO_SUCH_REFERENCE + 1
-  integer, private, parameter :: NOT_NAME = NOT_FIELD_OF + 1
+  integer, private, parameter :: NOT_FUNC = NOT_FIELD_OF + 1
+  integer, private, parameter :: NOT_NAME = NOT_FUNC + 1
   integer, private, parameter :: NOT_NAME_OR_STRING = NOT_NAME + 1
-  integer, private, parameter :: NOT_SECTION = NOT_NAME_OR_STRING + 1
+  integer, private, parameter :: NOT_NUMERIC = NOT_NAME_OR_STRING + 1
+  integer, private, parameter :: NOT_SECTION = NOT_NUMERIC + 1
   integer, private, parameter :: NOT_SPEC = NOT_SECTION + 1
   integer, private, parameter :: NOT_STRING = NOT_SPEC + 1
-  integer, private, parameter :: NOT_UNITS = NOT_STRING + 1
+  integer, private, parameter :: NOT_UNITLESS = NOT_STRING + 1
+  integer, private, parameter :: NOT_UNITS = NOT_UNITLESS + 1
   integer, private, parameter :: OUT_OF_PLACE = NOT_UNITS + 1
   integer, private, parameter :: SECTION_ORDER = OUT_OF_PLACE + 1
-  integer, private, parameter :: WRONG_TYPE = SECTION_ORDER + 1
+  integer, private, parameter :: WRONG_NUM_ARGS = SECTION_ORDER + 1
+  integer, private, parameter :: WRONG_TYPE = WRONG_NUM_ARGS + 1
 
   logical, private :: ALL_FIELDS_FLAG   ! All fields are required
   integer, private :: CURRENT_SECTION = section_first - 1
@@ -124,9 +129,7 @@ contains ! ====     Public Procedures     ==============================
                                    ! or subtrees of "sons"
 
     error = max(error,1)
-    call output ( '***** At ', from_where = "type checker" )
-    call print_source ( source_ref(where) )
-    call output ( ': ' )
+    call StartErrorMessage ( where )
     select case ( code )
     case ( already_declared )
       call dump_tree_node ( where, 0 )
@@ -165,8 +168,15 @@ contains ! ====     Public Procedures     ==============================
       call display_string ( sub_rosa(where) )
       call output ( ' is not a field of ' )
       call display_string ( sub_rosa(subtree(1,fields(1))), advance='yes' )
+    case ( not_func )
+      call display_string ( fields(1) )
+      call output ( ' is not a valid function.', advance='yes' )
     case ( not_name )
       call output ( 'is not a name.', advance = 'yes' )
+    case ( not_numeric )
+      call output ( 'Argument of ' )
+      call display_string ( fields(1) )
+      call output ( ' is not numeric.', advance='yes' )
     case ( not_name_or_string )
       call output ( 'is not a name or a string.', advance = 'yes' )
     case ( not_section )
@@ -178,6 +188,14 @@ contains ! ====     Public Procedures     ==============================
     case ( not_string )
       call output ( 'is not a string or of logical type.', &
                     advance = 'yes' )
+    case ( not_unitless )
+      if ( present(fields) ) then
+        call output ( 'Argument of ' )
+        call display_string ( fields(1) )
+      else
+        call output ( 'Operand' )
+      end if
+      call output ( ' is not unitless.', advance='yes' )
     case ( not_units )
       call dump_tree_node ( where, 0 )
       call output ( ' is not a units name.', advance = 'yes' )
@@ -195,7 +213,10 @@ contains ! ====     Public Procedures     ==============================
           call output ( ' ' ); call display_string ( section_indices(i) )
         end if
       end do
-      call output ( '', advance='yes' )
+      call newLine
+    case ( wrong_num_args )
+      call output ( 'Incorrect number of arguments for ' )
+      call display_string ( fields(1), advance='yes' )
     case ( wrong_type )
       call output ( 'the "' )
       if ( present(fields) ) then
@@ -214,7 +235,7 @@ contains ! ====     Public Procedures     ==============================
           if ( i > 2 .and. i == nsons(sons(1)) ) call output ( 'or ' )
           call display_string ( sub_rosa(subtree(i,sons(1))) )
         end do
-        call output ( '', advance='yes' )
+        call newLine
       end if
     case default
       call output ( 'No message in TREE_CHECKER for error code ' )
@@ -369,7 +390,7 @@ m:              do j = 3, nsons(field)
       case default
         call expr ( son, type, units, value )
         if ( .not. check_field_type(field,type_map(type)) ) then
-          call announce_error ( son1, wrong_type, fields = (/ field /) )
+          call announce_error ( son1, wrong_type, fields = (/ son1 /) )
         end if
       end select
     end subroutine AssignBody
@@ -602,6 +623,7 @@ m:              do j = 3, nsons(field)
     double precision, intent(out) :: VALUE   ! Expression value, if any
 
     type(decls) :: DECL            ! Declaration record for "root"
+    integer :: I
     integer :: ME                  ! node_id(root)
     integer :: SON1, SON2          ! Sons of "root"
     integer :: STRING              ! sub_rosa(root)
@@ -714,6 +736,35 @@ m:              do j = 3, nsons(field)
         value = value / value2
       else ! me == n_into
         value = value2 / value
+      end if
+    case ( n_pow )
+      value = 1.0
+      do i = nsons(root), 1, -1 ! POW is right associative
+        son1 = subtree(i,root)
+        call expr ( son1, type, units, value2 )
+        if ( units /= phyq_dimensionless ) &
+          & call announce_error ( son1, not_unitless )
+        value = value2 ** value
+      end do
+    case ( n_func_ref )
+      son1 = subtree(1,root)
+      ! Look up the function name
+      string = sub_rosa(son1)
+      decl = get_decl(string,function)
+      type = empty ! in case of error
+      if ( decl%type /= function ) then
+        call announce_error ( son1, not_func, fields=(/string/) )
+      else
+        if ( nsons(root) /= 2 ) then
+          call announce_error ( root, wrong_num_args, fields=(/string/) )
+        else
+          call expr ( subtree(2,root), type, units, value )
+          if ( type /= num_value ) then
+            call announce_error ( subtree(2,root), not_numeric, fields=(/string/) )
+          else if ( units /= phyq_dimensionless ) then
+            call announce_error ( subtree(2,root), not_unitless, fields=(/string/) )
+          end if
+        end if
       end if
     case ( n_dot )
       call announce_error ( root, no_dot )
@@ -885,6 +936,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.18  2004/02/14 00:15:18  vsnyder
+! More precise error message for wrong type
+!
 ! Revision 1.17  2004/01/14 02:19:51  vsnyder
 ! Get PHYQ_INVALID from Intrinsic instead of Init_Tables_Module
 !
