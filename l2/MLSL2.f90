@@ -365,8 +365,12 @@ program MLSL2
     if ( error == 0 .and. first_section /= 0 ) then
       ! Now do the L2 processing.
       call cpu_time ( t1 )
+      if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section )
-      if ( timing ) call sayTime ( 'Processing' )
+      if ( timing ) then
+        call output ( "-------- Processing Ended ------ ", advance='yes' )
+        call sayTime ( 'Processing' )
+      end if
     end if
   end if
 
@@ -431,6 +435,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.59  2001/10/12 23:11:28  pwagner
+! Clarified what Processing time means?
+!
 ! Revision 2.58  2001/10/09 22:37:55  livesey
 ! Increased tree size and hash table size to accomodate new
 ! spectroscopy database from Bill
