@@ -16,6 +16,7 @@ program test_l3ascii
   !open(file="deleteme",unit=1,status="replace",action="write")
 
   call l3ascii_open(filename,unit)
+  field%reusing=0
   print*,"Using unit",unit  
   print*,"Reading file"
   call l3ascii_read_field(unit,field)
