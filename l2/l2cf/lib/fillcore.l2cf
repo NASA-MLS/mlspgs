@@ -21,11 +21,6 @@ begin Fill
   ;; Also do ptan
   Fill, quantity=stateCore.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
 
-  ;; Put the apriori back in the stratospheric h2o
-  Subset, quantity=stateCore.h2o, height=[1000mb:680mb, 68.0mb:0.00001mb], mask=fill
-  Fill, quantity=stateCore.h2o, method=vector, sourceQuantity=apriori.h2o
-  Subset, quantity=stateCore.h2o, mask=fill, /reset
-
   ;; Transfer the low resolution data into the high resolution data
   Fill, quantity=stateCore.h2o_hr, method=vector, sourceQuantity=stateCore.h2o, /interpolate
   Fill, quantity=stateCore.o3_hr, method=vector, sourceQuantity=stateCore.o3, /interpolate
