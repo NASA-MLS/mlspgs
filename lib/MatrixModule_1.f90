@@ -1261,12 +1261,13 @@ contains ! =====     Public Procedures     =============================
   end function NewMultiplyMatrixVector
 
   ! --------------------------------------------  NormalEquations  -----
-  subroutine NormalEquations ( A, Z, RHS_IN, RHS_OUT, UPDATE )
+  subroutine NormalEquations ( A, Z, RHS_IN, RHS_OUT, UPDATE, ROW_BLOCK )
   ! If UPDATE is absent, or present but false, form normal equations of the
   ! least-squares problem A X = RHS_IN. Z = A^T A and RHS_OUT = A^T RHS_IN.
   ! If UPDATE is present and true, update normal equations of the least-
-  ! squares problem A X = RHS_IN. Z = Z + A^T A and RHS_OUT = RHS_OUT +
-  ! A^T RHS_IN.
+  ! squares problem A X = RHS_IN. Z = Z + A^T A and RHS_OUT = RHS_OUT + A^T
+  ! RHS_IN. If ROW_BLOCK is present, it specifies that only that row of
+  ! blocks of A is to be accumulated.
   ! Only the upper triangle of A^T A is formed or updated.
     type(Matrix_T), intent(in) :: A
     type(Matrix_SPD_T), intent(inout) :: Z
@@ -1274,6 +1275,7 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(inout), optional :: RHS_OUT
     logical, intent(in), optional :: UPDATE  ! True (default false) means
     !                                          to update Z and RHS_OUT
+    integer, intent(in), optional :: ROW_BLOCK
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! If this subroutine is invoked with UPDATE absent, or present and false,
@@ -1286,6 +1288,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J, K             ! Subscripts for [AZ]%Block
     integer, dimension(:), pointer :: MI, MJ ! Masks for columns I, J if any
     logical :: MY_UPDATE
+    integer :: R1, R2              ! Rows upon which to operate
 
     ! Compute Z = A^T A or Z = Z + A^T A
     my_update = .false.
@@ -1293,13 +1296,17 @@ contains ! =====     Public Procedures     =============================
     if ( .not. my_update ) &
       & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec, &
         &  extra_Row = a%col%extra, extra_Col=a%col%extra )
+    r1 = 1
+    if ( present(row_block) ) r1 = row_block
     do j = 1, a%col%nb
       nullify ( mj )
       if ( .not. ( j == a%col%nb .and. a%col%extra ) ) then
         if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) ) &
           mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
       end if
-      do i = 1, j
+      r2 = j
+      if ( present(row_block) ) r2 = min(j,row_block)
+      do i = r1, r2
         nullify ( mi )
         if ( .not. ( i == a%col%nb .and. a%col%extra ) ) then
           if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) ) &
@@ -1319,26 +1326,36 @@ contains ! =====     Public Procedures     =============================
   end subroutine NormalEquations
 
   ! -------------------------------------------------  RowScale_1  -----
-  subroutine RowScale_1 ( V, X, NEWX ) ! Z = V X where V is a diagonal
-  !                                matrix represented by a vector and Z is X
-  !                                or NEWX.
-  !                                An "extra" row is not scaled (but an extra
-  !                                column is).
+  subroutine RowScale_1 ( V, X, NEWX, RowBlock )
+  ! Z = V X where V is a diagonal matrix represented by a vector and Z
+  !   is X or NEWX. An "extra" row is not scaled (but an extra column
+  !   is).
+  ! If RowBlock is present, only that block of rows is scaled.
+
     type (Vector_T), intent(in) :: V
     type (Matrix_T), intent(inout), target :: X
     type (Matrix_T), intent(out), target, optional :: NEWX 
+    integer, intent(in), optional :: RowBlock
 
     integer :: I, J      ! Subscripts for [XZ]%Block
     integer :: NC, NR    ! Numbers of columns and rows.
+    integer :: R1, R2    ! First and last rows to scale
 
     nc = x%col%nb
     nr = x%row%nb
     if ( x%row%extra ) nr = nr - 1
+    if ( present(rowBlock) ) then
+      r1 = rowBlock
+      r2 = rowBlock
+    else
+      r1 = 1
+      r2 = nr
+    end if
     if ( present(newx) ) then
       call createEmptyMatrix ( newx, 0, x%row%vec, x%col%vec, &
         & x%row%instFirst, x%col%instFirst )
       do j = 1, nc
-        do i = 1, nr
+        do i = r1, r2
           call RowScale ( &
             & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
             & x%block(i,j), newx%block(i,j) )
@@ -1346,7 +1363,7 @@ contains ! =====     Public Procedures     =============================
       end do ! j = nc
     else
       do j = 1, nc
-        do i = 1, nr
+        do i = r1, r2
           call RowScale ( &
             & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
             & x%block(i,j) )
@@ -1388,7 +1405,7 @@ contains ! =====     Public Procedures     =============================
 
     my_transpose = .false.
     if ( present(transpose) ) my_transpose = transpose
-    if ( present(rhs) ) call copyVector ( x, rhs )
+    if ( present(rhs) ) call copyVector ( x, rhs ) ! X := RHS
     if ( z%m%col%vec%template%id /= x%template%id ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Z and RHS not compatible in SolveCholesky_1" )
@@ -1402,7 +1419,7 @@ contains ! =====     Public Procedures     =============================
         do j = 1, i-1
           ir = z%m%row%inst(j)
           qr = z%m%row%quant(j)
-          ! rhs := rhs - block^T * x
+          ! x := x - block^T * x
           call multiply ( z%m%block(j,i), x%quantities(qr)%values(:,ir), &
             & x%quantities(qc)%values(:,ic), update=.true., subtract=.true. )
         end do ! j = 1, i-1
@@ -1416,7 +1433,7 @@ contains ! =====     Public Procedures     =============================
         do j = i+1, n
           ir = z%m%col%inst(j)
           qr = z%m%col%quant(j)
-          ! rhs := rhs - block * x
+          ! x := x - block * x
           call multiplyMatrixVectorNoT ( z%m%block(i,j), &
             & x%quantities(qr)%values(:,ir), x%quantities(qc)%values(:,ic), &
             & update=.true., subtract=.true. )
@@ -1774,6 +1791,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.49  2001/07/19 17:50:42  vsnyder
+! Add 'row_block' optional argument to RowScale and NormalEquations
+!
 ! Revision 2.48  2001/07/12 22:12:19  vsnyder
 ! Forget to get CopyVector
 !
