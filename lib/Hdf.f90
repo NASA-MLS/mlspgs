@@ -97,6 +97,11 @@ module Hdf
       integer, intent (IN) :: sds_index
     end function sfselect
 
+    integer function sffinfo(file_id, n_datasets, n_globattrs)
+      integer, intent (IN) :: file_id
+      integer, intent (OUT) :: n_datasets, n_globattrs
+    end function sffinfo
+
     integer function sfginfo(sds_id, sds_name, rank, dimsizes, data_type, &
       & num_attrs)      
       integer, intent (IN) :: sds_id
@@ -669,6 +674,9 @@ contains ! ============================= Local wrappers ======================
 end module Hdf
 
 ! $Log$
+! Revision 2.14  2002/10/29 00:57:36  pwagner
+! Added sffinfo
+!
 ! Revision 2.13  2002/10/08 00:09:09  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
