@@ -191,9 +191,9 @@ MODULE HGrid                    ! Horizontal grid information
     l1bItemName=MLSInstrumentModuleNames(instrumentModule)
     SELECT CASE(hGridType)
     CASE (HG_Fractional)
-       l1bItemName=TRIM(l1bItemName)//"tpGeodAngle"
+       l1bItemName=TRIM(l1bItemName)//"."//"tpGeodAngle"
     CASE (HG_Height)
-       l1bItemName=TRIM(l1bItemName)//"tpGeodAlt"
+       l1bItemName=TRIM(l1bItemName)//"."//"tpGeodAlt"
     END SELECT
 
     ! Read the data
@@ -262,7 +262,7 @@ MODULE HGrid                    ! Horizontal grid information
        ! Get the name of the item to read
        l1bItemName=l1bItemsToRead(l1bItem)
        IF (l1bItem>=TransitionToModularItems) l1bItemName=&
-            & MLSInstrumentModuleNames(instrumentModule)//l1bItemName
+            & MLSInstrumentModuleNames(instrumentModule)//"."//l1bItemName
        
        ! Read it from the l1boa file
        CALL ReadL1BData(l1bInfo%l1boaid,l1bItemName,l1bField,noMAFs, &
@@ -377,7 +377,7 @@ MODULE HGrid                    ! Horizontal grid information
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=hGrid
-    DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database)
     database=>tempDatabase
   END SUBROUTINE AddHGridToDatabase
 
@@ -407,6 +407,9 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.8  2000/05/17 18:15:23  livesey
+! Finished off interaction with l2cf.
+!
 ! Revision 1.7  2000/05/16 19:59:37  livesey
 ! Added stuff to deal with `time' correctly.
 !
