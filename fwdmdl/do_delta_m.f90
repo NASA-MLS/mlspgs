@@ -137,7 +137,7 @@ contains
     do i = 1, size(c_inds)
       aa = f_inds(a)
       do j = -1, 1
-        integral(j,i) = 0.5_rp * del_zeta(i) * &
+        integral(j,i) = 0.5_rp * del_zeta(c_inds(i)) * &
                &  sum((funct(j,a:a+ng-1) - singularity(j,c_inds(i))) * &
                &  ds_dh_gl(aa:aa+ng-1) * dh_dz_gl(aa:aa+ng-1) * gw)
       end do 
@@ -192,7 +192,7 @@ contains
     do i = 1 , size(c_inds)
       a = f_inds(i)
       b = a + ng - 1
-      integral(i) = 0.5_rp * del_zeta(i) *                             &
+      integral(i) = 0.5_rp * del_zeta(c_inds(i)) *                             &
         & sum( ( alpha_path(a:b) - singularity(c_inds(i)) )            &
         &      * (((2.0_rp*h_path(a:b)**2 - 3.0_rp*h_tan**2)           &
         &         * dh_dt_path(a:b) + h_path(a:b) * h_tan * dh_dt_tan) &
@@ -210,6 +210,9 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.9  2003/09/26 01:25:56  vsnyder
+! Restore a deleted CVS log comment
+!
 ! Revision 2.8  2003/09/25 20:04:48  vsnyder
 ! Insert TeXnicalities
 !
