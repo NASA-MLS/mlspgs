@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+ ! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -10,7 +10,30 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   IMPLICIT NONE
   PUBLIC
 
-  PRIVATE :: Id, ModuleName
+ ! === (start of toc) ===                                                 
+!     c o n t e n t s                                                    
+!     - - - - - - - -                                                    
+
+!     (data types and parameters)
+
+! i1, i2, i4    integer types
+! r4, r8        floating point types
+! ip, rp        integer, floating point types used in forward model
+! rv            floating point type used in vector quantity values
+! rm            floating point type used in matrix values
+! NameLen       character-length of quantity names
+! LineLen       character-length of most input
+! FileNameLen   character-length of path/filenames
+! BareFNLen     character-length of filenames
+! L1BInfo_T     L1B data file names, etc.
+
+!     (subroutines and functions)
+! FindFirst     Find the first logical in the array that is true
+! === (end of toc) ===                                                   
+! === (start of api) ===
+! int FindFirst (log condition(:))      
+! === (end of api) ===
+ PRIVATE :: Id, ModuleName
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
@@ -118,6 +141,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.14  2002/11/06 00:16:48  pwagner
+! Added toc/api blocks
+!
 ! Revision 2.13  2002/10/08 00:09:11  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
