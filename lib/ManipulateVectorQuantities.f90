@@ -25,7 +25,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   public :: AnyGoodDataInQty, FindClosestInstances, FindOneClosestInstance, &
     & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch, &
-    & DoQuantitiesMatch, DoQtysDescribeSameThing, DoVectorsMatch
+    & DoQuantitiesMatch, DoQtysDescribeSameThing, DoVectorsMatch, FillWithCombinedChannels
 
 contains
 
@@ -153,6 +153,111 @@ contains
         & 'Invalid units for window specification' )
     end if
   end subroutine FindInstanceWindow
+
+  ! -------------------------------------- FillWithCombinedChannels ----------
+  subroutine FillWithCombinedChannels ( key, quantity, sourceQuantity, message, mapping )
+    use MatrixModule_0, only: MatrixElement_T, M_Full, CreateBlock
+    use MLSSignals_m, only: SIGNAL_T, GETSIGNAL
+    use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+    ! This routine takes a (typically radiance) quantity on one set of channels
+    ! and combines the channels together appropriately to make them representative
+    ! of the data in another (presumably at a finer resolution.
+    integer, intent(in) :: KEY        ! Tree node
+    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+    type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantitiy on finer(?) channel grid
+    character (len=80), intent(out) :: MESSAGE ! Possible error message
+    type (MatrixElement_T), intent(inout), optional :: MAPPING ! A matrix_0 mapping
+    ! Local variables
+    type (Signal_T) :: signal, sourceSignal
+    integer :: COUT, CIN              ! Channel counters
+    integer :: IOUT, IIN              ! Indices
+    integer :: SURF                   ! Loop counter
+    real(r8) :: CENTER, HALFWIDTH     ! Channel locations
+    integer, dimension(:), pointer :: NOINSIDE ! Number of channels that were caught
+
+    ! Do some sanity checking
+    message = ''
+    if ( .not. DoVGridsMatch ( quantity, sourceQuantity ) ) then
+      message = 'Quantities must have matching vGrids'
+      return
+    end if
+    if ( .not. DoHGridsMatch ( quantity, sourceQuantity ) ) then
+      message = 'Quantities must have matching hGrids'
+      return
+    end if
+
+    if ( quantity%template%signal == 0 .or. &
+      &  quantity%template%frequencyCoordinate /= l_channel ) then
+      message = 'Quantity must have channels'
+      return
+    end if
+    if ( sourceQuantity%template%signal == 0 .or. &
+      &  sourceQuantity%template%frequencyCoordinate /= l_channel ) then
+      message = 'source quantity must have channels'
+      return
+    end if
+
+    signal = GetSignal ( quantity%template%signal )
+    sourceSignal = GetSignal ( sourceQuantity%template%signal )
+
+    if ( signal%radiometer /= sourceSignal%radiometer ) then
+      message = 'quantities must be from same radiometer'
+      return
+    end if
+
+    nullify ( noInside )
+    call Allocate_test ( noInside, quantity%template%noChans, 'noInside', ModuleName )
+
+    ! Possibly setup a mapping matrix
+    if ( present ( mapping ) ) then
+      call CreateBlock ( mapping, &
+        & quantity%template%instanceLen, sourceQuantity%template%instanceLen, &
+        & kind=m_full )
+    end if
+
+    ! Do a quick first pass to get the numbers in each output channel
+    do cOut = 1, quantity%template%noChans
+      ! Work out where this output channel is
+      center = signal%centerFrequency + signal%direction * signal%frequencies ( cOut )
+      halfWidth = signal%frequencies ( cOut )
+      ! Now map this back into sourceSignal%frequencies
+      center = ( center - sourceSignal%centerFrequency ) * sourceSignal%direction
+      noInside(cOut) = count ( &
+        & ( sourceSignal%frequencies >= ( center - halfWidth ) ) .and. &
+        & ( sourceSignal%frequencies < ( center + halfWidth ) ) )
+    end do
+    if ( any ( noInside == 0 ) ) then
+      message = 'Some channels have no source'
+      return
+    end if
+
+    ! Loop over the channels in the result
+    do cOut = 1, quantity%template%noChans
+      ! Work out where this output channel is
+      center = signal%centerFrequency + signal%direction * signal%frequencies ( cOut )
+      halfWidth = signal%frequencies ( cOut )
+      ! Now map this back into sourceSignal%frequencies
+      center = ( center - sourceSignal%centerFrequency ) * sourceSignal%direction
+      ! Use nested loops to make the code easier to read, rather than complicated indexing
+      do cIn = 1, sourceQuantity%template%noChans
+        if ( ( sourceSignal%frequencies(cIn) >= ( center - halfWidth ) ) .and. &
+          &  (  sourceSignal%frequencies(cIn) < ( center + halfWidth ) ) ) then
+          do surf = 0, quantity%template%noSurfs - 1 ! 0..n-1 makes indexing easier
+            iOut = cOut + surf * quantity%template%noChans
+            iIn = cIn + surf * sourceQuantity%template%noChans
+            quantity%values ( iOut, : ) = quantity%values ( iOut, : ) + &
+              & sourceQuantity%values ( iIn, : ) / noInside(cOut)
+            ! Possibly fill mapping matrix
+            if ( present ( mapping ) ) then
+              mapping%values ( iOut, iIn ) = 1.0 / noInside(cOut)
+            end if
+          end do
+        end if
+      end do
+    end do
+
+    call Deallocate_test ( noInside, 'noInside', ModuleName )
+  end subroutine FillWithCombinedChannels
 
   ! --------------------------------------- DoHGridsMatch --------------
   logical function DoHGridsMatch ( a, b, spacingOnly )
@@ -330,6 +435,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.27  2004/09/24 17:55:41  livesey
+! Gained ManipulateVectorQuantities from fill
+!
 ! Revision 2.26  2004/01/24 01:01:48  livesey
 ! Improvements to DoFGridsMatch
 !
