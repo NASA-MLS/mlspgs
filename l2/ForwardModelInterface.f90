@@ -11,21 +11,23 @@ module ForwardModelInterface
   !??? Do we want a forward model database ???
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use AntennaPatterns_m, only: Close_Antenna_Patterns_File, &
+    & Open_Antenna_Patterns_File, Read_Antenna_Patterns_File
   use Declaration_Table, only: NUM_VALUE, RANGE
   use Dump_0, only: DUMP
   use Expr_M, only: EXPR
   use FilterShapes_m, only: Close_Filter_Shapes_File, &
-    & Open_Filter_Shapes_File, Read_Filter_Shapes_File, FilterShapes
+    & Open_Filter_Shapes_File, Read_Filter_Shapes_File
   ! We're going to use lots of things from init_tables_module, so let's sort
   ! them into some sort of order
   ! First admin stuff
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
     & LIT_INDICES, SPEC_INDICES
   ! Now fields
-  use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, &
-    & F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, F_INTEGRATIONGRID, &
-    & F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, F_POINTINGGRIDS, &
-    & F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
+  use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
+    & F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, &
+    & F_INTEGRATIONGRID, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
+    & F_POINTINGGRIDS,F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
   ! Now literals
   use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, L_FOLDED, &
     & L_LINEAR, L_LOSVEL, L_LOWER, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
@@ -140,6 +142,11 @@ contains
     do i = 2, nsons(root)
       son = subtree(i,root)
       select case ( get_field_id(son) )
+      case ( f_antennaPatterns )
+        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        call open_antenna_patterns_file ( fileName, lun )
+        call read_antenna_patterns_file ( lun, spec_indices )
+        call close_antenna_patterns_file ( lun )
       case ( f_filterShapes )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         call open_filter_shapes_file ( fileName, lun )
@@ -1366,6 +1373,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.60  2001/03/30 03:05:49  vsnyder
+! Add 'antennaPatterns' field to 'forwardModelGlobal'
+!
 ! Revision 2.59  2001/03/30 02:45:23  livesey
 ! Numbers agree again, was velocity.
 !
