@@ -757,8 +757,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         !----------------------------------
         ! find intervals of stateQ at maf
         !----------------------------------
-        dz = abs(state_ext%template%surfs(2,maf)-state_ext%template%surfs(1,maf))
-        dphi = abs(state_ext%template%phi(2,maf)-state_ext%template%phi(1,maf))
+        dz = abs(state_ext%template%surfs(2,instance)-state_ext%template%surfs(1,instance))
+        dphi = abs(state_ext%template%phi(1,instance+1)-state_ext%template%phi(1,instance))
 
         !------------------------------
         ! find z for given phi_fine
@@ -910,6 +910,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.67  2001/11/02 00:25:58  dwu
+! correction in high cloud Jacobian
+!
 ! Revision 1.66  2001/10/30 05:25:48  dwu
 ! assign whichchannle
 !
