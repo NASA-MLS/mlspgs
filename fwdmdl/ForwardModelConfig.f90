@@ -34,6 +34,7 @@ module ForwardModelConfig
     logical :: do_Baseline    ! Do a baseline computation
     logical :: Do_Conv        ! Do convolution
     logical :: Do_Freq_Avg    ! Do Frequency averaging
+    logical :: Do_1D          ! Do 1D forward model calculation
     integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
     type (Signal_T), dimension(:), pointer :: signals=>NULL()
@@ -174,7 +175,7 @@ contains
     ! Executable code
     ! First pack the scalars
     call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, config%do_baseline, &
-      & config%do_conv, config%do_freq_avg, config%differentialScan, &
+      & config%do_conv, config%do_freq_avg, config%do_1d, config%differentialScan, &
       & config%lockBins, config%spect_der, config%temp_der, config%skipOverlaps, &
       & config%default_spectroscopy /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
@@ -283,6 +284,7 @@ contains
     config%temp_der = l11(9)
     config%skipOverlaps = l11(10)
     config%default_spectroscopy = l11(11)
+    config%do_1d = l11(12)
     call PVMIDLUnpack ( i11, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
     config%instrumentModule = i11(1)
@@ -457,10 +459,12 @@ contains
         call output ( database(i)%do_conv, advance='yes' )
         call output ( '  Do_Baseline:' )
         call output ( database(i)%do_Baseline, advance='yes' )
-        call output ( '  Do_freq_avg:' )
-        call output ( database(i)%Default_spectroscopy, advance='yes' )
         call output ( '  Default_spectroscopy:' )
+        call output ( database(i)%Default_spectroscopy, advance='yes' )
+        call output ( '  Do_freq_avg:' )
         call output ( database(i)%do_freq_avg, advance='yes' )
+        call output ( '  Do_1D:' )
+        call output ( database(i)%do_1d, advance='yes' )
         call output ( '  Spect_der:' )
         call output ( database(i)%spect_der, advance='yes' )
         call output ( '  Temp_der:' )
@@ -496,6 +500,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.18  2003/01/13 17:16:23  jonathan
+! chane cloud_width to i_saturation
+!
 ! Revision 2.17  2002/12/04 21:55:22  livesey
 ! Added the name fragment packing
 !
