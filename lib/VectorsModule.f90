@@ -2023,6 +2023,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: LOWBOUND
     integer :: QTY
     logical :: MYHIGHBOUND, MYLOWBOUND
+    real(rv), parameter :: MYHUGE = 1.0e15
     myHighBound = .false.
     myLowBound = .false.
     if ( present ( highBound ) ) myHighBound = highBound
@@ -2034,9 +2035,9 @@ contains ! =====     Public Procedures     =============================
         & vector%quantities(qty)%template%noInstances, &
         & "Vector%quantities(qty)%values", ModuleName )
       if ( myHighBound ) then
-        vector%quantities(qty)%values = huge ( 0.0_rv )
+        vector%quantities(qty)%values = myHuge
       else if ( myLowBound ) then
-        vector%quantities(qty)%values = - huge ( 0.0_rv )
+        vector%quantities(qty)%values = - myHuge
       else
         vector%quantities(qty)%values = 0.0_rv
       end if
@@ -2052,6 +2053,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.92  2002/10/17 18:18:25  livesey
+! Added low/high bound stuff
+!
 ! Revision 2.91  2002/10/08 00:09:15  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
