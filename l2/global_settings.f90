@@ -21,6 +21,7 @@ module GLOBAL_SETTINGS
   use INIT_TABLES_MODULE, only: S_ForwardModelGlobal
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use String_Table, only: Get_String
+  use L2GPData, only: L2GPDATA_T
 
   implicit NONE
 
@@ -43,12 +44,13 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & VGrids )
+    & VGrids, l2gpDatabase )
 
     integer, intent(in) :: ROOT    ! Index of N_CF node in abstract syntax tree
     type(ForwardModelConfig_T), dimension(:), pointer :: &
       & ForwardModelConfigDatabase
     type ( vGrid_T ), pointer, dimension(:) :: VGrids
+    type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
     
     integer :: I         ! Index of son of root
     integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
@@ -84,7 +86,7 @@ contains
             & forwardModelConfigDatabase, ConstructForwardModelConfig ( son, vGrids ) ) )
         case ( s_vgrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
-            & CreateVGridFromMLSCFInfo ( name, son ) ) )
+            & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase ) ) )
         end select
       end if
     end do
@@ -100,6 +102,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.14  2001/04/10 23:44:44  vsnyder
+! Improve 'dump'
+!
 ! Revision 2.13  2001/04/10 02:46:17  livesey
 ! Working version, no more FMI/TFMI
 !
