@@ -95,6 +95,7 @@ then
    test_31=`gcc -v 2>&1 | grep -i '3\.1'`
    test_32=`gcc -v 2>&1 | grep -i '3\.2'`
    test_322=`gcc -v 2>&1 | grep -i '3\.2\.2'`
+   test_323=`gcc -v 2>&1 | grep -i '3\.2\.3'`
    gcc_version=
    if [ "$test_295" != "" ]
    then
@@ -108,6 +109,9 @@ then
    elif [ "$test_322" != "" ]
    then
      gcc_version="3.2.2"
+   elif [ "$test_323" != "" ]
+   then
+     gcc_version="3.2.3"
    elif [ "$test_32" != "" ]
    then
      gcc_version="3.2"
@@ -187,6 +191,9 @@ echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message
 echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.4  2003/05/12 22:08:46  jonathan
+# added v3.2.2
+#
 # Revision 1.3  2002/10/03 23:06:10  pwagner
 # Added Use(2) to return gcc version
 #
