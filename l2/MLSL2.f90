@@ -19,7 +19,8 @@ program MLSL2
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, &
-    & SKIPDIRECTWRITES, SKIPRETRIEVAL, SECTIONTIMINGUNITS, TOOLKIT
+    & SKIPDIRECTWRITES, SKIPRETRIEVAL, SECTIONTIMINGUNITS, SIPS_VERSION, &
+    & TOOLKIT
   use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -152,7 +153,7 @@ program MLSL2
   endif
   ! Before looking at command-line options, TOOLKIT is set to SIPS_VERSION
   ! So here's a good place to put any SIPS-specific settings overriding defaults
-  if ( TOOLKIT ) then
+  if ( SIPS_VERSION ) then
     ! SIPS_VERSION
     parallel%maxFailuresPerMachine = 2
     parallel%maxFailuresPerChunk = 1
@@ -627,6 +628,12 @@ program MLSL2
     do j=1, size(current_version_id)
       call output(trim(current_version_id(j)), advance='yes')
     end do
+    call output('Version built for  ', advance='no')
+    if ( SIPS_VERSION ) then
+      call output('S I P S', advance='yes')
+    else
+      call output('S C F', advance='yes')
+    endif
     call dump_settings
   end if
 
@@ -912,6 +919,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.121  2004/07/08 22:48:44  pwagner
+! Made SIPS_VERSION public
+!
 ! Revision 2.120  2004/06/29 00:10:17  pwagner
 ! Exploit catlist function
 !
