@@ -605,12 +605,12 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! Read the data fields that are 1-dimensional
 
-    !     status = swrdfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-    !                      l2gp%l2gpStatus)
-    !     IF (status == -1) THEN
-    !        msr = MLSMSG_L2GPRead // DATA_FIELD3
-    !        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-    !     ENDIF
+         status = swrdfld(swid, DATA_FIELD3,start(3:3),stride(3:3),edge(3:3),&
+              l2gp%status)
+         IF (status == -1) THEN
+            msr = MLSMSG_L2GPRead // DATA_FIELD3
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
 
     status = swrdfld(swid, DATA_FIELD4, start(3:3), stride(3:3), edge(3:3), &
          realProf)
@@ -1023,7 +1023,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE
        name=l2gp%name
     ENDIF
-
+    !print*,"OutputL2GP_writeData -- name=",name
     ! Write data to the fields
 
     start = 0
@@ -1031,9 +1031,10 @@ CONTAINS ! =====     Public Procedures     =============================
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
-    swid = swattach (l2FileHandle, l2gp%name)
+    swid = swattach (l2FileHandle, name)
+    !print*," attached swath with swid=",swid," filehandle=",l2FileHandle
     IF ( l2gp%nFreqs > 0 ) THEN
-
+       !print*,"Writing 3D field"
        ! Value and Precision are 3-D fields
 
        status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
@@ -1050,11 +1051,12 @@ CONTAINS ! =====     Public Procedures     =============================
        END IF
 
     ELSE IF ( l2gp%nLevels > 0 ) THEN
-
+       !Print*,"Writing 2-d field"
        ! Value and Precision are 2-D fields
 
        status = swwrfld( swid, DATA_FIELD1, start(2:3), stride(2:3), &
             edge(2:3), REAL(l2gp%l2gpValue(1,:,:) ))
+       !print*,"Status of write was ",status
        IF ( status == -1 ) THEN
           msr = WR_ERR // DATA_FIELD1
           CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1068,7 +1070,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE
 
        ! Value and Precision are 1-D fields
-
+       !Print*,"Writing 1-D field"
        status = swwrfld( swid, DATA_FIELD1, start(3:3), stride(3:3), edge(3:3), &
             REAL(l2gp%l2gpValue(1,1,:) ))
        IF ( status == -1 ) THEN
@@ -1085,9 +1087,10 @@ CONTAINS ! =====     Public Procedures     =============================
 
     ! 1-D status & quality fields
 
-    !status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
-    !     l2gp%status) ! absoft f90 barfs here
-    status=-1
+    status = swwrfld(swid, DATA_FIELD3, start(3:3), stride(3:3), edge(3:3), &
+         l2gp%status) ! absoft f90 barfs here
+    !status=0 
+    !print*,"Warning. Writing of status field disabled"
     IF ( status == -1 ) THEN
        msr = WR_ERR // DATA_FIELD3
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1139,6 +1142,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.5  2000/09/19 12:42:11  pumphrey
+! added chunkNumber to SetupNewL2GPRecord and other bug fixes
+!
 ! Revision 2.4  2000/09/18 10:19:49  pumphrey
 ! Removed some debugging statements.
 !
