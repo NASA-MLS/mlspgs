@@ -177,7 +177,6 @@ contains
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
-    character(len=20) :: kChar, myFormat
 
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
@@ -334,8 +333,6 @@ contains
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
-    character(len=20) :: kChar, myFormat
-    logical :: char_by_char               ! Build line char by char?
 
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
@@ -446,6 +443,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.27  2003/09/15 23:08:44  vsnyder
+! Remove five unused local variables
+!
 ! Revision 2.26  2003/09/08 17:43:25  pwagner
 ! Fixed bug in nCharsinFormat when no 'x' in Format
 !
