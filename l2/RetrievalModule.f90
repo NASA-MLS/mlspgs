@@ -989,10 +989,10 @@ contains
     ! ------------------------------------------  NewtonianSolver  -----
     subroutine NewtonianSolver
 
-      use DNWT_Module, only: FlagName, NF_EVALF, NF_EVALJ, NF_SOLVE, &
-        & NF_NEWX, NF_GMOVE, NF_BEST, NF_AITKEN, NF_DX, NF_DX_AITKEN, &
-        & NF_SMALLEST_FLAG, NF_START, NF_TOLX, NF_TOLX_BEST, NF_TOLF, &
-        & NF_TOO_SMALL, NF_FANDJ, NWT, NWT_T, NWTA, NWTDB, NWTOP, RK
+      use DNWT_Module, only: FlagName, NF_AITKEN, NF_BEST, NF_DX, &
+      & NF_DX_AITKEN, NF_EVALF, NF_EVALJ, NF_FANDJ, NF_GMOVE, NF_LEV, &
+      & NF_NEWX, NF_SMALLEST_FLAG, NF_SOLVE, NF_START, NF_TOLX, NF_TOLF, &
+      & NF_TOLX_BEST, NF_TOO_SMALL, NWT, NWTA, NWTDB, NWTOP, NWT_T, RK
       use Dump_0, only: Dump
       use ForwardModelWrappers, only: ForwardModel
       use ForwardModelIntermediate, only: ForwardModelIntermediate_T, &
@@ -1045,8 +1045,8 @@ contains
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
       integer, parameter :: SnoopLevels(NF_DX_AITKEN:NF_FANDJ) = (/ &
-      ! dx_aitken dx aitken best gmove newx solve evalj evalf
-        &      3, 2,     3,   2,    2,   1,    2,    2,    2,  &
+      ! dx_aitken dx aitken best gmove newx lev solve evalj evalf
+        &      3, 2,     3,   2,    2,   1,  2,   2,    2,    2,  &
       ! start tolx tolx_best tolf too_small fandj
         &  9,   2,        2,   2,        3,    9  /)
       integer :: T                      ! Which Tikhonov: 1 -> V, 2 -> H
@@ -1727,6 +1727,9 @@ contains
               call dump ( (/ aj%chiSqNorm, aj%chiSqMinNorm /), &
                 & '  chi^2/n      chimin^2/n ', clean=.true. )
             end if
+        case ( nf_lev ) ! ..................................  LEV  .....
+        ! Calculate quantities necessary to determine the
+        ! Levenberg-Marquardt stabilization parameter
         case ( nf_solve ) ! ..............................  SOLVE  .....
         !{Apply Levenberg-Marquardt stabilization with parameter
         ! $\lambda =$ {\bf AJ\%SQ}.  I.e., form $({\bf \Sigma}^T {\bf J}^T
@@ -1894,8 +1897,9 @@ contains
         ! Set X = "Best X"
         !     DX = AJ%GFAC * "Best Gradient"
           call copyVector ( v(x), v(bestX) ) ! x = bestX
+          if ( .not. aj%starting ) aj%dxdxl = &
+            & aj%gfac * ( v(dx) .dot. v(bestGradient) )
           ! dx = aj%gfac * "Best Gradient":
-          if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(bestGradient)
           call scaleVector ( v(bestGradient), aj%gfac, v(dx) )
             if ( index(switches,'dvec') /= 0 ) &
               & call dump ( v(dx), name='Gradient move from best X' )
@@ -3646,6 +3650,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.224  2003/01/18 01:40:10  vsnyder
+! Prepare for More and Sorensen
+!
 ! Revision 2.223  2003/01/17 22:59:47  livesey
 ! Minor bug fix in units checking for max/minValue in subset.
 !
