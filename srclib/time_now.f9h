@@ -13,17 +13,42 @@
 
   integer :: VALUES(8)          ! For DATE_AND_TIME
   character (len=8) :: date
+  character (len=4) :: yyyy
+  character (len=2) :: mm, dd
   integer :: daysoff
 
   if ( use_wall_clock ) then
     call date_and_time ( date=date, values=values )
+    if ( present(inValues) ) then
+      values = inValues
+      write(yyyy, '(i4)') values(1)
+      write(mm, '(i2)') values(2)
+      write(dd, '(i2)') values(3)
+      date = yyyy // mm // dd
+    endif
     if ( any(startTime == -1) ) then
-      startTime = values(1:3)
-      t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + 60*values(5)))
-    elseif ( any(startTime /= values(1:3)) ) then
-      call yyyymmdd_to_dai(date, daysoff)
-      t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + &
+      startTime = values
+      call yyyymmdd_to_dai(date, startdaysoff)
+      if ( WALLCLOCKISELAPSEDFROMSTART ) then
+        t = 0.
+      else
+        t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + 60*values(5)))
+      endif
+    else
+      if ( any(startTime(1:3) /= values(1:3)) ) then
+        call yyyymmdd_to_dai(date, daysoff)
+        daysoff = daysoff - startdaysoff
+      else
+        daysoff = 0
+      endif
+      if ( WALLCLOCKISELAPSEDFROMSTART ) then
+        t = (values(8)-startTime(8))/1000.0_rk + (values(7) - startTime(7) &
+        & + 60*(values(6) - startTime(6) + &
+        & 60*(values(5) - startTime(5) + 24*daysoff)))
+      else
+        t = values(8)/1000.0_rk + (values(7) + 60*(values(6) + &
         & 60*(values(5) + 24*daysoff)))
+      endif
     endif
   else
     call cpu_time ( t )
@@ -31,6 +56,9 @@
   t = t / TIME_DIVISOR
 
 !$Log$
+!Revision 1.2  2003/12/05 00:55:07  pwagner
+!Tries to avoid cyling back to 0 when crossing midnight if using wall clock
+!
 !Revision 1.1  2001/11/10 00:32:56  vsnyder
 !Moved from lib
 !
