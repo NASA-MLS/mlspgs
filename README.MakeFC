@@ -14,59 +14,58 @@ it is mostly self-configuring. You will need:
   f95 compiler (either NAG or Lahey)
   Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
   mls software (probably where you're reading this)
-  perl (unless it or an alias is at /usr/bin/perl you may need to edit
-     the first line of f90makedep.pl before recalculating dependencies;
-     do this only if you plan to modify the software)
-Then, from the "top" level (where you see this file, as well as the l2,
+  perl (not needed if you plan only to build and run the software,
+    not change it)
+Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
 lib, srclib, and util directories) simply type
   make -f MakeFC
 and you'll be asked to respond to some questions about your compiler,
 platform, and where the Toolkit is installed. Then the software will
-be made. You may quit out of this now and try it out, perhaps coming
-back later if you are curious or if something  goes wrong.
+be built. You may quit out of this now and try it out, perhaps coming
+back later if you are curious or if something goes wrong.
 
 INTRODUCTION
 An attempt has been made to minimize the amount of editing and configuring each
 user must perform in building the mls software. "User" in this context means
 either someone who will actively modify the software, or someone who wishes
-simply to use it. Specially named Makefiles and a few shell scripts are
-available to guide the new user through an initial query driven configuration
-which creates a file named .configure. It contains information about the
-compiler, platform/OS, and paths to relevant libraries. Subsequent uses of make
-automatically use this configuration.
+simply to run it. Specially named Makefiles and a few shell scripts take the
+new user through an initial query driven configuration which creates a file
+named .configure. It contains information about the compiler, platform/OS, and
+paths to relevant libraries. Subsequent uses of make automatically use this
+configuration.
 
-The mls software should be buildable by different users at sites remote
+The mls software should be buildable by different users at sites possibly remote
 from each other, and using whatever compiler and platform/OS combination
-they prefer or already have. The limitation on the last is that they
+they already have. The limitation on the last is that they
 must have installed the SDP Toolkit, HDF and HDFEOS libraries, and have
 an f95 compiler. It is possible to simply supply the source code and
 leave it up to the user to figure out how to put it together, probably
 by reading parts of it, using an automated make utility or a Makefile
-that worked for someone else, and trial and error. An alternative is to
+that worked for someone else, plus trial and error. An alternative is to
 create a configurable Makefile or series of such files that will work,
 at least most of the time. This is what has been done with mls software.
 
-The configurable Makefile for the lib and l2 mls software is MakeFC. It
-is found in the mlspgs directory. The name MakeFC was chosen as unlikely
-to conflict with other Makefiles. An unfortunate consequence of this
-decision is that to use it to build the software, the "make" command
-must always be accompanied by the "-f MakeFC" arguments. E.g., the usual
-way to invoke it is
+The configurable Makefile is MakeFC. It is found in the mlspgs directory. The
+name MakeFC was chosen as unlikely to conflict with other Makefiles. An
+unfortunate consequence of this decision is that to use it to build the
+software, the "make" command must always be accompanied by the "-f MakeFC"
+arguments. E.g., the usual way to invoke it is
          "make -f MakeFC".
 
 WHAT YOU NEED
-You may begin when you checkout a fresh copy of the mlspgs archive. If
-you already have an archive with some changes you wish to keep but not
-share yet, make sure you update the following files and directories:
+You may begin when you checkout a fresh copy of the mlspgs archive or obtain
+the tar file. If you already have an archive with some changes you wish to
+keep but not share yet, make sure you update the following files and
+directories:
 
-   mlspgs/     mlspgs/util/       mlspgs/l2/       mlspgs/lib/    mlspgs/srclib
+   mlspgs/     mlspgs/util/     mlspgs/l[1-3]/      mlspgs/lib/    mlspgs/srclib
    ------      ------------       ----------       -----------      ---------
    MakeFC      mlsconfigure         MakeFC           MakeFC       (shared
 README.MakeFC  makemakedep.sh     Makefile.dep     Makefile.dep      source
                f90makedep.pl      platforms/*      platforms/*         files)
 
 BUILDING THE SOFTWARE
-Then to make the mls software, both the lib and mlsl2, from the top
+Then to make the mls software, both the lib and all levels, from the top
 level of the mlspgs directory, enter the command "make -f MakeFC". This
 should launch util/mlsconfigure. It will first query you for your
 compiler (only two choices available: NAG or Lahey) and for your
@@ -88,7 +87,7 @@ already, a first step is to find where your copy of the Toolkit was
 installed. You will find a file there which you may cp to your home
 directory and invoke at login. Or you may do it just before running
 make. For example, the following is from a session in which I hunted
-this file down, used it, and echoed the resulting settings.
+this file down, sourced it, and echoed the resulting settings.
 
 [pwagner@riverrun ~]$ ls /software/SRC/TOOLKIT-5.2.6v1.00.NAG/bin/sgi
 INSTALL-AAdata@           PGS_PC_GetTempReferenceCom*  pgs-dev-env.csh
@@ -120,15 +119,15 @@ BUILDING ONLY PARTS OF THE SOFTWARE
 If you wish to build only lib, for example, you may specify that target,
 i.e.
         make -f MakeFC lib
-and similarly for l2. Alternatively, if you are in lib, perhaps changing
-some of its modules, then while there you may use the simple
+and similarly for l1, l2, or l3. Alternatively, if you are in lib, perhaps
+changing some of its modules, then while there you may use the simple
         make -f MakeFC
-and only libmls.a will be rebuilt. Again the same is true while in l2
-when only mlsl2 will be built.
+and only libmls.a will be rebuilt. Again the same is true while in the other
+levels when only the software in that level will be built.
 
 OTHER OPTIONS
-These are available either at the "top" level, mlspgs, or in parts at
-the level of lib and l2.
+These are available either at the "top" level, mlspgs, or in parts at lib or
+the other levels.
 make -f MakeFC the_option
 
 clean      removes all binaries created during compilation and linking;
@@ -141,15 +140,15 @@ depends    recalculates dependencies;
            may require editing first line of f90makedep.pl (see below)
 configure  change configuration: compiler, (less often) platform/OS,
            paths
-tar        bind up the current directory (or lib and l2 if at top) for
+tar        bind up the current directory (or the whole if at top) for
            distribution
 
 HOW IT WORKS
+Chronology:
 Each time make is called, it finds mlspgs/.configure among the list of
-dependencies. If it doesn't exist yet, as with a fresh copy of the
-archive, it creates one, using mlspgs/util/mlsconfigure. This will cause
-the file to be created. The contents of the resulting file will be
-something like the following:
+dependencies. If it doesn't exist yet, as with a fresh copy of the archive, it
+creates one, using mlspgs/util/mlsconfigure. The contents of the resulting file
+will be something like the following:
 #       .configure for mls
 MLSF95=NAG
 MLSPLAT=Linux
@@ -170,35 +169,52 @@ export PGSLIB
 export HDFEOS_LIB
 export HDFLIB
 
-In addition, in lib and l2 a new directory will be created with a unique
-name given by the value of MLSCONFG. In the example above that name
-would be NAG.Linux. In this directory mlsconfigure places a Makefile
-which is the catenation of .configure with two files found in the
-directory platforms: e.g.,
+In addition, in lib, l1, l2, and l3 a new directory will be created with a
+unique name given by the value of MLSCONFG. In the example above that name
+would be NAG.Linux. In this directory mlsconfigure places a Makefile which is
+the catenation of .configure with two files found in the directory platforms:
+e.g.,
         cat .configure l2/platforms/NAG.Linux l2/platforms/targets > \
                 l2/NAG.Linux/Makefile
-Here platforms/NAG.Linux is mostly a file of compiler settings specific
-to the NAG compiler. platforms/targets is a list of makefile-like
-targets and the commands to build them, independent of any particular
-compiler or platform/OS.
+Here platforms/NAG.Linux is a file of compiler settings specific to the NAG
+compiler. platforms/targets is a list of makefile-like targets and the commands
+to build them, independent of any particular compiler or platform/OS.
 
 As make proceeds to build the prerequisites of the final program, the
-binaries, .o and .mod files, and end products, libmls.a and mlsl2, are
+binaries, .o and .mod files, and end products, e.g. libmls.a or mlsl2, are
 all placed in MLSCONFG.
 
 In subsequent invocations, .configure already exists, so make simply
 executes any commands needed to build the end products if any
 prerequisites are newer.
 
+Hierarchy of make
+The following is a partial org chart showing how make invoked at higher levels
+will call make in lower levels, and the names of the Makefile thus summoned.
+
+                    <----------mlspgs/MakeFC------------>
+                   /              /   |    \            \
+           l1/MakeFC      l2/MakeFC   |    l3/MakeFC    ...  
+               |   \              \   |    /            /
+               |    -------------->lib/MakeFC<----------
+               |                      |
+           MLSCONFG/Makefile   MLSCONFG/Makefile
+           
+where the bottom MLSCONFG directories only below lib and l1 have been shown,
+although they exist in the  other levels, too. Note also the ability of make at
+the levels of l1, l2, ... to call make in lib. The actual path and name of the
+file shown at bottom center is (assuming a typical location for the archive)
+	${HOME}/mlspgs/lib/${MLSCONFG}/Makefile
+
 MLSCONFG/Makefile has the command near its start
  include 'Makefile.dep'
-that causes the dependencies to be copied in in the form of the file
-Makefile.dep. This is how make learns which sources to compile to create the
-binaries, called OBJS. A dependency is a line containing a target and a list of
-prerequisites needed to build that target. Makefile.dep contains only the
-dependencies, no explicit build commands.
+that copies in the dependencies in the form of the file Makefile.dep. This is
+how make learns which sources to compile to create the binaries, called OBJS. A
+dependency is a line containing a target and a list of prerequisites needed to
+build that target. Makefile.dep contains only the dependencies, no explicit
+build commands.
 
-It would be desirable to list Makefile.dep among the prerequisites and
+It would be desirable to make Makefile.dep a target of prerequisites to
 force it to be updated on any change to the source files. Instead, the
 only way to change it is by the explicit command 
 	"make -f MakeFC depends". 
@@ -221,12 +237,12 @@ is clearly marked. Change the "2" to a "1". Of course you will need to obtain
 makedepf90, too. A drawback of doing this is that future dependency lists will
 fail to show any dependency on modules in files outside the source directory.
 
-The perl script f90makedep.pl assumes your perl, or an alias to it, is
-/usr/bin/perl. This assumption is embodied in line 1 of the script. If
-your perl is elsewhere, edit this line to show the true path. A possible
-future refinement would be for makemakedep.sh to 
-	"sed 's/path_to_perl/'`which perl`''" 
-the perl script before running it.
+The perl script f90makedep.pl assumes your perl, or a link to it, is
+/usr/bin/perl. This assumption is embodied in line 1 of the script. If your
+perl is elsewhere, edit this line to show the true path. Otherwise, you will be
+asked, when you recalculate dependencies, whether you want to have the
+makefile edit the line for you or else use it as is. Allowing this change will
+free you from being prompted about this again.
 
 CALL TO ACTION
 This is useable now. Please try it out and inform me of any bugs you
@@ -241,10 +257,9 @@ Unless the latest, "beta" copy of the NAG f95 is used, Matrix_Module.f90
 in lib and l2 won't compile. The solution is to upgrade to the latest
 NAG f95. Changing the Makefile alone won't help.
 
-The current NAG Linux HDFEOS, HDF, PGSTK, etc. libraries can not be made
-to link properly. Sun and SGI versions seem correct. The solution is to
-obtain correct ones. This will be moot when newer versions are made
-available.
+The current NAG Linux HDFEOS, HDF, PGSTK, etc. libraries can not be made to
+link properly. Sun and SGI versions seem correct. The solution is to obtain
+correct ones. This will be moot when newer versions are made available.
 
 IMPERFECTIONS AND COMPLICATIONS
 The only combinations of compiler.platform/OS provided for so far are
@@ -265,19 +280,22 @@ or "cvs commit".
 
 Do not 'cvs add/commit' your .configure. Instead, if you want to keep a copy of
 your configuration handy, copy it someplace, like ~/mls.configure, then copy it
-back whenever needed.
+back whenever needed. As each MLSCONFG directory is uniquely named, you may
+build multiple versions of the mls software. For example, I built versions for
+both Sun and Linux platforms in my home directory. I can switch between versions
+by overwriting the current .configure with one saved for the other version.
 
-The sources currently must reside directly under lib, srclib, or l2, and this
-fact is "hard-wired" into the Makefiles. It may become desirable to
+The sources currently must reside directly under lib, srclib, or l[1-3], and
+this fact is "hard-wired" into the Makefiles. It may become desirable to
 segregate them into a /src subdirectory parallel to the /MLSCONFG and
-/platforms subdirectories, and thus the Makefiles would need to changed
-to accomplish this. In general, replacing "hard-wired" directory paths
-with variable ones, set in either .configure or set in a more permanent
-file, seems like a good idea.
+/platforms subdirectories, and thus the Makefiles would need to changed to
+accomplish this. In general, replacing "hard-wired" directory paths with
+variable ones, set in either .configure or set in a more permanent file, seems
+like a good idea.
 
-Under the lib directory is a lib/tests subdirectory containing three
-test programs. They were used to test progress during development. It
-is possible they may no longer work, or even compile and link properly.
+Under the lib directory is a lib/tests subdirectory containing five
+test programs. They were used to test libmls.a during development. It
+is possible they may no longer work, nor even compile and link properly.
 
 Another wrinkle in the lib directory is the versions of machine.f90
 which lurk under platforms with names like NAG.Linux.machine. They are
@@ -286,34 +304,35 @@ software can obtain at runtime. As a start, I simply copied NAG.Linux
 into NAG.*, which is probably incorrect.
 
 Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
-sources required special compiler flags to compile successfully under
-NAG. You will see them mentioned explicitly at the end with their custom
-build instructions. In the extreme case where every source required a
-different, custom command, the idea of an automatic, self configuring
-Makefile would lose any meaning.
+sources required special compiler flags to compile successfully under NAG. You
+will see them mentioned explicitly at the end with their custom build
+instructions. The method whereby machine.o is created is also concealed there.
 
 Adding a "make -f MakeFC install" would, like clean_objs, zap the .o and .mod
 files, but also moving the libmls.a and mlsl2, to a permanent, final location.
 
 At the cost of making configuration more complex, an option could be
-made that would allow extra settings, e.g. compiler flags could be set
+added that would allow extra settings, e.g. compiler flags could be set
 to suppress warning messages.
 
 The dependencies calculated by makedepf90 check only among files in the same
 directory as the source files. A consequence of this is that it does not show
 dependencies of files in l2 on prerequisites in lib. A consequence of this is
-that after changes to source files in lib, files in l2 may not be recompiled,
-even when they should be. This is a good reason to use f90makedep.pl, the
-default.
+that after changes to source files in lib, if the dependencies were recalculated
+by makedepf90, files in l2 may not be recompiled, even when they should be.
+This is a good reason to use f90makedep.pl, the default.
 
 If this ever seems to work well enough, similar MakeFC and platforms
-could be devised for the other levels of mls. By design it remains an
+could be devised for the remaining parts of mls. By design it remains an
 optional way to build, coexisting in parallel with other ways.
 
--pw                           2000-Oct-24
+-pw                           2000-Oct-24 to Nov-20
 EOF
 exit
 # $Log$
+# Revision 1.4  2000/11/06 18:05:42  pwagner
+# SHared source library
+#
 # Revision 1.3  2000/11/03 21:51:10  pwagner
 # Cross-directory depends; clean_objs
 #
