@@ -702,13 +702,14 @@ contains ! =====     Public Procedures     =============================
                                                                                 
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Output_m, only: BLANKS, Output
-    use String_Table, only: DISPLAY_STRING
+    use String_Table, only: DISPLAY_STRING, GET_STRING
                                                                                 
     ! Dummy argument
     type(ForwardModelConfig_T), intent(inout) :: FWModelConfig
                                                                                 
     ! Local variables
     real :: mean, mean_sqDelta, meanTimes, std_dev
+    character(len=25) :: thisName
 
     mean = FWModelConfig%sum_DeltaTime/FWModelConfig%Ntimes
     mean_sqDelta =  FWModelConfig%sum_squareDeltaTime / FWModelConfig%Ntimes 
@@ -718,18 +719,17 @@ contains ! =====     Public Procedures     =============================
        meanTimes = FWModelConfig%Ntimes / (FWModelConfig%Ntimes - 1)
     end if
     std_dev = sqrt(abs(meanTimes * (mean_sqDelta - (mean*mean)))) 
-    call output ( "======= printForwardModelTiming =========", advance = 'yes')
-    call output ( " ", advance = 'yes')
-    call output ( "Configuration: " )
-    call display_string ( fwModelConfig%name, strip=.true., advance='yes' )
-    call output ( "Ntimes = ")
-    call output ( FWModelConfig%Ntimes, advance = 'yes' )
-    call output ( "mean = ")
-    call output ( mean, advance = 'yes' )
-    call output ( "standard_deviation = ")
-    call output ( std_dev, advance = 'yes' )
-    call output ( " ", advance = 'yes')
-    call output ( "======= end printForwardModelTiming =====", advance = 'yes')
+    call get_string ( FWModelConfig%name, thisName )
+    call output ( thisName, advance='no')
+    call output ( FWModelConfig%Ntimes, format = '(i6)',advance = 'no' )
+    call blanks (12, advance = 'no')
+    if (FWModelconfig%Ntimes == 0) then
+	mean = 0.0
+	std_dev = 0.0
+    end if
+    call output ( mean, format='(f8.2)', advance = 'no' )
+    call blanks (10, advance = 'no')
+    call output ( std_dev, format='(f8.2)', advance = 'yes' )
                                                                                 
   end subroutine PrintForwardModelTiming
                                                                                 
@@ -834,6 +834,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.82  2003/08/21 21:15:18  cvuu
+! Change the output format for fullForwardModel Timing
+!
 ! Revision 2.81  2003/08/19 05:51:31  livesey
 ! Extra call to CreateDefaultBinSelectors
 !
