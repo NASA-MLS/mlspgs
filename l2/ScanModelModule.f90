@@ -370,7 +370,7 @@ contains ! =============== Subroutines and functions ==========================
 
   ! ---------------------------------- Get2DHydroStaticTangentPressure ----------
   subroutine Get2DHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, &
-    & orbIncl, phiTan, geocAlt, maxIterations )
+    & orbIncl, phiTan, geocAlt, maxIterations, phiWindow, phiWindowUnits )
     ! This is a new pressure guesser routine which works by simply running the
     ! new 2D scan model 'backwards'
     ! Dummy arguments
@@ -387,6 +387,8 @@ contains ! =============== Subroutines and functions ==========================
     type (VectorValue_T), intent(in) :: PHITAN ! Tangent phi
     type (VectorValue_T), intent(in) :: GEOCALT ! L1B Tp Geoc alt.
     integer, intent(IN) :: MAXITERATIONS ! Number of iterations to use
+    real(r8), intent(in) :: PHIWINDOW   ! For 2D or not
+    integer, intent(in) :: PHIWINDOWUNITS
 
     ! Local parameters
     integer, parameter :: NoQtys = 8
@@ -430,8 +432,8 @@ contains ! =============== Subroutines and functions ==========================
     call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
     call Deallocate_test ( geocLat, 'geocLat', ModuleName )
 
-    fmConf%phiWindow = 4
-    fmConf%windowUnits = phyq_profiles
+    fmConf%phiWindow = phiWindow
+    fmConf%windowUnits = phiWindowUnits
     fmConf%instrumentModule = ptan%template%instrumentModule
     fmConf%differentialScan = .false.
 
@@ -2037,6 +2039,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.58  2003/02/18 23:59:28  livesey
+! Added phiWindow stuff for hydrostatic fill
+!
 ! Revision 2.57  2003/02/13 01:15:39  bill
 ! made reference geopotential height calculation constants the same as those used in the hydrostatic calcs
 !
