@@ -557,13 +557,9 @@ FAFTER             Appears at the end of each line invoking the compiler
 FC                 Overrides the name by which the Fortran compiler is called
                    e.g., Hugh Pumphrey renamed NAG to nagf95 to avoid conflict
                    with Sun's own f95; then used "make FC=nagf95"
-HDFVERSIONS        Build in support for both hdf4 and hdf5 versions of files
-                    if non-blank
-INSTALLDIR         Destination where install moves mlsl1, etc.
 LAFTER             Appears at the end of the very long link statement
                    e.g., for additional libraries required to link successfully
                    or else to highlight errors as in FAFTER
-MLSCFILE           Overrides the name of the .configure file
 NOCLEANING         Don't rebuild everything on any change to .configure
                     if non-blank
 NOHUNTING          Stop make from hunting if non-blank
@@ -571,14 +567,6 @@ PGSTK              Also mentioned below in connection with .configure,
                    but if set to blank on the line invoking make, it will
                    cause make to build a toolkit-free version of lib and l2;
                    E.g., "make PGSTK="
-TAR                Overrides name of tar command; e.g. path to GNU tar 
-                   in case your tar won't gzip for targets *targ
-
-The following are environmental settings
-HOSTMLSCFILE       Get all the mls settings from this file instead of .configure 
-                   (may be overridden by MLSCFILE)
-MLSINSTALLDIR      install puts all the executables here instead of bin/MLSCONFG
-                   (may be overridden by INSTALLDIR)
 
 ASSORTED COMMENTS
 The sources currently must reside directly under the mlslevels, and this fact
@@ -589,9 +577,9 @@ this.  In general, replacing "hard-wired" directory paths with variable ones,
 set in either .configure or set in a more permanent file, seems like a good
 idea. 
 
-Under the lib directory is a lib/tests subdirectory containing five
-test programs. They were used to test libmls.a during development. It
-is likely they no longer compile nor link properly.
+Under the lib directory is a lib/tests subdirectory containing five test
+programs. They were used to test libmls.a during development. It is likely they
+no longer compile nor link properly. In the long run they should be removed.
 
 Another wrinkle in the lib directory is the versions of machine.f90 which lurk
 under machines with names like machines/NAG.Linux/machine.f90 They are intended
@@ -605,6 +593,29 @@ with the statement "make LDOPTS=" effectively erasing "-gc" from the link.
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
 line. E.g., "make PGSTK=/some/other/path MLSCONFG=some.other.name".
+
+There are special variables used by the Makefiles that may not be assigned in
+the .configure file, yet may be overridden on the command line. These should be
+used with care, however.
+
+EVERYTHING         All the directories to be tarred up by "make tar"
+HDFVERSIONS        Build in support for both hdf4 and hdf5 versions of files
+                    if non-blank
+INSTALLDIR         Destination where install moves mlsl1, etc. 
+                    (see also MLSINSTALLDIR)
+LEVELS             A subset of l1 l2 l3 l3m; e.g. LEVELS="l1 l2" skips l3 l3m
+MLSCFILE           Overrides the name of the .configure file
+                    (see also HOSTMLSCFILE)
+OMIT               The names of any source files to be excluded; e.g.
+                     make depends OMIT="wont_compile.f90 never_would.f90"
+TAR                Overrides name of tar command; e.g. path to GNU tar 
+                   in case your tar won't gzip for targets *targ
+
+The following are environmental settings
+HOSTMLSCFILE       Get all the mls settings from this file instead of .configure 
+                   (may be overridden by MLSCFILE)
+MLSINSTALLDIR      install puts all the executables here instead of bin/MLSCONFG
+                   (may be overridden by INSTALLDIR)
 
 EXAMPLE OF A .configure FILE
 #	.configure for mls
@@ -653,10 +664,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2002-Feb-12
+-pw                           2000-Oct-24 to 2002-Feb-21
 EOF
 exit
 # $Log$
+# Revision 1.28  2002/02/12 19:11:48  pwagner
+# Mention illegal configuration names, HDFVERSIONS, -gc effect on machine.f90
+#
 # Revision 1.27  2001/11/15 19:44:26  pwagner
 # Adds blas to hierarchy of make
 #
