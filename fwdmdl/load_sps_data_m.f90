@@ -5,7 +5,8 @@ module LOAD_SPS_DATA_M
   use MLSCommon, only: R8, RP, IP
   use Units, only: Deg2Rad
   use Intrinsic, only: L_VMR, L_FREQUENCY, L_NONE
-  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType, &
+                        &  M_FullDerivatives
   use Molecules, only: spec_tags, L_EXTINCTION
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
@@ -16,8 +17,7 @@ module LOAD_SPS_DATA_M
   implicit none
 
   Private
-! Public :: load_sps_data
-  Public :: load_sps_data, load_deriv_flag    ! ** ZEBUG
+  Public :: load_sps_data
 
   type, public :: Grids_T             ! Fit all Gridding categories
     integer,  pointer :: no_f(:)      ! No. of entries in frq. grid per sps
@@ -84,7 +84,7 @@ contains
 
     type (VectorValue_T), pointer :: F             ! An arbitrary species
 
-    Character(len=78) :: ErrMsg
+    Logical :: mask
     Logical, allocatable :: deriv_flag(:)
 
     Integer :: mp, mz, ii, jj, kk
@@ -110,7 +110,7 @@ contains
     p_len = 0
     h2o_ind = 0
     ext_ind = 0
-    skip_eta_frq = .false.
+    skip_eta_frq = .FALSE.
     do ii = 1, no_mol
       i = mol_cat_index(ii)
       kk = abs(molecules(i))
@@ -126,7 +126,7 @@ contains
       kp = f%template%noInstances
       if ( f%template%frequencyCoordinate == l_none ) then
         kf = 1
-        skip_eta_frq(ii) = .true.
+        skip_eta_frq(ii) = .TRUE.
       else
         kf = f%template%noChans
       endif
@@ -143,8 +143,6 @@ contains
     allocate ( Grids_f%deriv_flags(f_len), stat=j )
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'Grids_f%deriv_flags' )
-
-    Grids_f%deriv_flags(1:f_len) = .TRUE.   ! ** Initialize all values to TRUE
 !
     n_f_zet = SUM(Grids_f%no_z)
     n_f_phi = SUM(Grids_f%no_p)
@@ -226,10 +224,10 @@ contains
       r = f_len + kz * kp * kf
       sps_values(f_len:r-1)=RESHAPE(f%values(1:kz*kf,1:kp),(/kz*kf*kp/))
       if (f%template%logBasis) then
-        lin_log(ii) = .true.
+        lin_log(ii) = .TRUE.
         sps_values(f_len:r-1) = LOG(sps_values(f_len:r-1))
       else
-        lin_log(ii) = .false.
+        lin_log(ii) = .FALSE.
       endif
 !
       j = k
@@ -241,37 +239,54 @@ contains
 !
     f_len = f_len - 1
 
-!   if(f_len > -100) return    ! ** By-pass the tempoprary code below ..
-!
-! *** ZEBUG: Temporary code to load the derivatives flags for each species
+! *** Load the derivatives flags for each species according to L2CF
 !
     allocate (deriv_flag(f_len), stat=j )
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
                                   & MLSMSG_Allocate//'deriv_flag array' )
-
     m = 0
     do ii = 1, no_mol
       i = mol_cat_index(ii)
       kk = abs(molecules(i))
-      if ( kk == l_extinction ) CYCLE
-      Spectag = spec_tags(kk)
+      if ( kk == l_extinction ) then
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_extinction, radiometer=radiometer )
+      else
+        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_vmr, molecule=kk )
+      endif
       kp = Grids_f%no_p(ii)
       kz = Grids_f%no_z(ii)
       kf = Grids_f%no_f(ii)
-      Call load_deriv_flag(Spectag,kp,kz,kf,deriv_flag,ErrMsg,j)
-      if(j < 0) EXIT
+      j = kp * kz * kf
+      deriv_flag(1:j) = .FALSE.     ! ** Initialize to NO derivatives
+      IF(associated(f%mask)) THEN
+        j = 0
+        do mp = 1, kp
+          do mz = 1, kz
+            mask = (iand(M_FullDerivatives,ichar(f%mask(mz,mp))) /= 0)
+            deriv_flag(j+1:j+kf) = mask
+            j = j + kf
+          end do
+        end do
+! *** ZEBUG: Until Van changes the Subset logic, we will invert it here ***
+        deriv_flag(1:j) = (.NOT. deriv_flag(1:j))
+! *** END ZEBUG ***
+      ENDIF
       Grids_f%deriv_flags(m+1:m+j) = deriv_flag(1:j)
       m = m + j
     end do
 
     deallocate (deriv_flag, stat=j )
+
+!*** ZEBUG
 !   Print *,' f_len, m = ',f_len,m
 !   Print *,' Grids_f%deriv_flags(1...m):'
 !   Print 932,Grids_f%deriv_flags(1:m)
 932 format(37(1x,l1))
 !   if (m > 0) call MLSMessage (MLSMSG_Error,ModuleName,'DEBUG Stop' )
-!
-! *** End of Temporary code
+!*** END ZEBUG
+
 !
     !******************* LOAD SPECTRAL SPECIES DATA ****************
 !
@@ -484,173 +499,11 @@ contains
 !
  end subroutine load_sps_data
 
-! *********************  ZEBUG  ******************
-! A temporary routine to load data from ASCII file into the deriv_flag array
-!
- Subroutine load_deriv_flag(Spectag,kp,kz,kf,deriv_flag,ErrMsg,ier)
-!
-  Integer, intent(in) :: Spectag, kp,kz,kf
-
-  Logical, intent(out) :: deriv_flag(:)
-
-  Integer, intent(out) :: ier
-  Character(LEN=*), intent(out) :: ErrMsg
-!
-! ** Local variables
-!
-  Integer :: j,k,m
-  Integer, allocatable :: dum_phi(:),dum_zet(:),dum_frq(:)
-!
-! ** Begin executable code
-!
-    ier = 0
-    ErrMsg(1:) = ' '
-    deriv_flag = .TRUE.     ! Initialized to .TRUE.
-
-    Close(31,iostat=j)
-    Open(31,file='der_flags.dat',status='OLD',action='READ',iostat=j)
-    if ( j /= 0 ) then
-      ier = -1
-      ErrMsg = 'Could not open der_flags.dat file'
-      Return
-    endif
-
-    Allocate(dum_phi(1:kp),STAT=j)
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Could not allocate dum_phi array'
-      goto 99
-    endif
-
-    Allocate(dum_zet(1:kz),STAT=j)
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Could not allocate dum_zet array'
-      goto 99
-    endif
-
-    Allocate(dum_frq(1:kf),STAT=j)
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Could not allocate dum_frq array'
-      goto 99
-    endif
-!
-    do
-      Read(31,*,iostat=j) m
-      if(j == 0) then
-        if(Spectag == m) EXIT
-      else if(j < 0) then
-        j = -1
-        ErrMsg = 'Requeted Spectag not found in in der_flags.dat file'
-        goto 99
-      else
-        j = -1
-        ErrMsg = 'Error reading der_flags.dat file'
-        goto 99
-      endif
-    end do
-
-    read(31,*,iostat=j) k
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Error reading der_flags.dat file'
-      goto 99
-    endif
-
-    if(k /= kp) then
-      j = -1
-      Print *,'** Spectag:',Spectag,' Inputs: phi deriv. flags ..'
-      ErrMsg = 'Incosistent number of entries in der_flags.dat file'
-      goto 99
-    endif
-
-    dum_phi = 0
-    Backspace(31,iostat=m)
-    read(31,*,iostat=j) k,dum_phi(1:k)
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Error reading der_flags.dat file'
-      goto 99
-    endif
-
-    read(31,*,iostat=j) k
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Error reading der_flags.dat file'
-      goto 99
-    endif
-
-    if(k /= kz) then
-      j = -1
-      Print *,'** Spectag:',Spectag,' Inputs: phi deriv. flags ..'
-      ErrMsg = 'Incosistent number of entries in der_flags.dat file'
-      goto 99
-    endif
-
-    dum_zet = 0
-    Backspace(31,iostat=m)
-    read(31,*,iostat=j) k,dum_zet(1:k)
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Error reading der_flags.dat file'
-      goto 99
-    endif
-
-    read(31,*,iostat=j) k
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Error reading der_flags.dat file'
-      goto 99
-    endif
-
-    if(k /= kf) then
-      j = -1
-      Print *,'** Spectag:',Spectag,' Inputs: phi deriv. flags ..'
-      ErrMsg = 'Incosistent number of entries in der_flags.dat file'
-      goto 99
-    endif
-
-    dum_frq = 0
-    Backspace(31,iostat=m)
-    read(31,*,iostat=j) k,dum_frq(1:k)
-    if ( j /= 0 ) then
-      j = -1
-      ErrMsg = 'Error reading der_flags.dat file'
-      goto 99
-    endif
-
-    m = 0
-    do k = 1, kp
-      if(dum_phi(k) < 1) then
-        m = m + kz * kf
-      else
-        do j = 1, kz
-          if(dum_zet(j) > 0) then
-            deriv_flag(m+1:m+kf) =  (dum_frq(1:kf) > 0)
-          endif
-          m = m + kf
-        end do
-      endif
-    end do
-    j = m
-
-!   Print *,'** Spectag:',Spectag
-!   Print *,' m =',m,' deriv_flag(1...m):'
-!   Print 934,deriv_flag(1:m)
-934 format(37(1x,l1))
-!   if (m > 0) call MLSMessage (MLSMSG_Error,ModuleName,'DEBUG Stop' )
-
- 99 ier = j
-    Close(31,iostat=j)
-    deallocate ( dum_phi, dum_zet, dum_frq, stat=j )
-!
- End Subroutine load_deriv_flag
-
-! *********************  END ZEBUG  ******************
-
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.11  2002/02/08 00:46:04  zvi
+! Fixing a bug in the t_deriv_flag code
+!
 ! Revision 2.10  2002/01/30 01:11:20  zvi
 ! Fix bug in user selectable coeff. code
 !
