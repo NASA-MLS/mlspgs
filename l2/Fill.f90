@@ -436,8 +436,6 @@ contains ! =====     Public Procedures     =============================
             valuesNode=subtree(j,key)
           case ( f_sourceGrid )
             gridIndex=decoration(decoration(gson))
-          case ( f_sourceSGrid )
-            vGridIndex=decoration(decoration(gson))
           case ( f_sourceVGrid )
             vGridIndex=decoration(decoration(gson))
           case ( f_vmrQuantity )     ! For special fill of columnAbundance
@@ -534,7 +532,7 @@ contains ! =====     Public Procedures     =============================
             & ratioQuantity )
 
         case ( l_rectanglefromlos ) ! -------fill from losGrid quantity -------
-          if (.not. all(got((/f_sourceSGrid,f_losQty,f_earthRadius,f_PtanQuantity/))))&
+          if (.not. all(got((/f_losQty,f_earthRadius,f_PtanQuantity/))))&
             & call Announce_Error ( key, badlosGridFill )
           earthRadiusQty => GetVectorQtyByTemplateIndex( &
             & vectors(earthRadiusVectorIndex), earthRadiusQtyIndex )
@@ -543,7 +541,7 @@ contains ! =====     Public Procedures     =============================
           losQty => GetVectorQtyByTemplateIndex( &
             & vectors(losVectorIndex), losQtyIndex )
           call FillQuantityFromLosGrid ( key, Quantity, losQty, &
-            & Vgrids(vGridIndex), tngtPresQuantity, earthRadiusQty, &
+            & tngtPresQuantity, earthRadiusQty, &
             & noFineGrid, extinction, errorCode )
 
         case ( l_special ) ! -  Special fills for some quantities  -----
@@ -1371,7 +1369,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillVectorQuantityFromL1B
 
   !=============================== FillQuantityFromLosGrid ====
-  subroutine FillQuantityFromLosGrid ( key, Qty, LOS, Sgrid, &
+  subroutine FillQuantityFromLosGrid ( key, Qty, LOS, &
    & Ptan, Re, noFineGrid, extinction, errorCode )
 
     ! This is to fill a l2gp type of quantity with a los grid type of quantity.
@@ -1383,7 +1381,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     integer, intent(in) :: key          ! For messages    
-    type (VGrid_T), intent(in) :: SGrid
     type (VectorValue_T), intent(in) :: LOS ! Vector quantity to fill from
     type (VectorValue_T), intent(in) :: Ptan ! tangent pressure
     type (VectorValue_T), intent(in) :: Re ! Earth's radius
@@ -1399,7 +1396,7 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
     real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: out
     real (r8), dimension(qty%template%noSurfs) :: outZeta, phi_out, beta_out
-    real (r8), dimension(los%template%noChans) :: x_in, y_in
+    real (r8), dimension(los%template%noChans) :: x_in, y_in, sLevel
     real (r8), dimension(los%template%noSurfs) :: zt
     real (r8), dimension(los%template%noChans*noFineGrid) :: betaFine, TransFine, SFine
     real (r8), dimension(los%template%noChans,los%template%noSurfs,los%template%noInstances) :: beta
@@ -1423,16 +1420,18 @@ contains ! =====     Public Procedures     =============================
 
     noMAFs=los%template%noInstances
     noMIFs=los%template%noSurfs
+! Now, we use frequency coordinate as sGrid along the path
     noDepths=los%template%noChans
+    sLevel = los%template%frequencies
       
 ! the input losQty is the increment of cloud transmission function by default.
 ! it is converted to cloud extinction if extinction flag is on.
    if(extinction) then
    ! both sGrid and sFineGrid are expected to be evenly spaced at present
-   ds = sGrid%surfs(2)-sGrid%surfs(1)  
+   ds = sLevel(2)-sLevel(1)  
    do i=1,noDepths
    do j=1,noFineGrid
-      Sfine(j+(i-1)*noFineGrid) = sGrid%surfs(i)+(j-1._r8)*ds/noFineGrid
+      Sfine(j+(i-1)*noFineGrid) = sLevel(i)+(j-1._r8)*ds/noFineGrid
    end do
    end do
    
@@ -1441,7 +1440,7 @@ contains ! =====     Public Procedures     =============================
       do i=1,noDepths
         y_in(i) = los%values(i+(mif-1)*noDepths,maf)/ds  ! convert increments to derivatives
       end do
-      call InterpolateValues(sGrid%surfs,y_in,sFine,TransFine,method='Linear')  
+      call InterpolateValues(sLevel,y_in,sFine,TransFine,method='Linear')  
       ! calculate column transmission function by integrating the derivatives on fine grid
       do i=1,noFineGrid*noDepths
       betaFine(i) = 0._r8
@@ -1453,7 +1452,7 @@ contains ! =====     Public Procedures     =============================
       if(colTrans > 0.02_r8) betaFine(i)= transFine(i)/colTrans
       end do
       ! interpolate betaFine back to the coarser sGrid
-      call InterpolateValues(sFine,betaFine,sGrid%surfs,beta(:,mif,maf),method='Linear')
+      call InterpolateValues(sFine,betaFine,sLevel,beta(:,mif,maf),method='Linear')
 
    end do
    end do
@@ -1485,7 +1484,7 @@ contains ! =====     Public Procedures     =============================
       do mif=1,noMIFs
       if (ptan%values(mif,maf) .gt. -2.5) cycle ! for testing
       ! find altitude of each s grid
-      x_in = sGrid%surfs**2/2./(re%values(1,maf)*0.001_r8 + zt(mif))
+      x_in = sLevel**2/2./(re%values(1,maf)*0.001_r8 + zt(mif))
       ! converted to zeta
       x_in = x_in/16. + ptan%values(mif,maf)
       ! find minimum and maximum pressures indices in sGrid
@@ -1507,7 +1506,7 @@ contains ! =====     Public Procedures     =============================
 
       ! get phi along path for each mif (phi is in degree)
       y_in = los%template%phi(mif,maf) &
-        & - atan(sgrid%surfs/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
+        & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
         ! interpolate phi onto standard vertical grids     
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
            & method='Linear')
@@ -1705,6 +1704,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.67  2001/07/31 23:53:37  dwu
+! remove sGrid source
+!
 ! Revision 2.66  2001/07/31 23:24:17  pwagner
 ! column abundance calculation more fleshed out--not tested
 !
