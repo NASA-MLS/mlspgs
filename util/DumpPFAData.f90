@@ -18,7 +18,7 @@ program DumpPFAData
   character(31), allocatable :: Molecules(:)
   integer :: nTemps, nPress, nMol
   character(127) :: Signal = ''
-  real :: VelLin
+  real :: TStart, TStep, VelLin, VStart, VStep
 
   call getarg ( 1, fileName )
   open ( 10, file=trim(fileName), form='unformatted' )
@@ -28,7 +28,8 @@ program DumpPFAData
     open ( 11, file=trim(fileName) )
   end if
 
-  read ( 10 ) nTemps, nPress, nMol, velLin, l, signal(:l)
+  read ( 10 ) nTemps, nPress, nMol, velLin, l, signal(:l), &
+    & vStart, vStep, tStart, tStep
 
   allocate ( absorption(nTemps,nPress), dAbsDwc(nTemps,nPress), &
     &        dAbsDnc(nTemps,nPress), dAbsDnu(nTemps,nPress), molecules(nMol) )
@@ -48,10 +49,20 @@ program DumpPFAData
     end do
     write ( lun, '()' )
     write ( lun, '(a,a)' ) 'Signal, ', trim(signal)
-    write ( lun, '(a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=???hpa,formula = [', &
-      & nPress, ':???]'
-    write ( lun, '(a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=???K,formula = [', &
-      & nTemps, ':???]'
+    if ( vStep == anint(vStep) ) then
+      write ( lun, '(a,f0.3,a,i0,a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+        & vStart,'hpa,formula = [', nPress, ':', nint(vStep), ']'
+    else
+      write ( lun, '(a,f0.3,a,i0,a,f0.3,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+        & vStart,'hpa,formula = [', nPress, ':', vStep, ']'
+    end if
+    if ( tStep == anint(tStep) ) then
+      write ( lun, '(a,f0.3,a,i0,a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+        & tStart,'K,formula = [', nTemps, ':', nint(tStep), ']'
+    else
+      write ( lun, '(a,f0.3,a,i0,a,f0.3,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+        & tStart,'K,formula = [', nTemps, ':', tStep, ']'
+    end if
     write ( lun, '(a,f6.2,a)' ) 'Velocity Linearization', velLin, ' km/sec'
     write ( lun, '(a)' ) 'ln(Absorption (km^-1)) data(logT, logp)'
     write ( lun, format ) absorption
@@ -69,10 +80,20 @@ program DumpPFAData
     end do
     write ( *, '()' )
     write ( *, '(a,a)' ) 'Signal, ', trim(signal)
-    write ( *, '(a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=???hpa,formula = [', &
-      & nPress, ':???]'
-    write ( *, '(a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=???K,formula = [', &
-      & nTemps, ':???]'
+    if ( vStep == anint(vStep) ) then
+      write ( *, '(a,f0.3,a,i0,a,i0,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+        & vStart,'hpa,formula = [', nPress, ':', nint(vStep), ']'
+    else
+      write ( *, '(a,f0.3,a,i0,a,f0.3,a)' ) 'vgrid, type=Logarithmic,coordinate=Zeta,Start=', &
+        & vStart,'hpa,formula = [', nPress, ':', vStep, ']'
+    end if
+    if ( tStep == anint(tStep) ) then
+      write ( *, '(a,f0.3,a,i0,a,i0,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+        & tStart,'K,formula = [', nTemps, ':', nint(tStep), ']'
+    else
+      write ( *, '(a,f0.3,a,i0,a,f0.3,a)' ) 'tgrid, type=Logarithmic,coordinate=logT,Start=', &
+        & tStart,'K,formula = [', nTemps, ':', tStep, ']'
+    end if
     write ( *, '(a,f6.2,a)' ) 'Velocity Linearization', velLin, ' km/sec'
     write ( *, '(a)' ) 'ln(Absorption (km^-1)) data(logT, logp)'
     write ( *, format ) absorption
@@ -87,6 +108,9 @@ program DumpPFAData
 end program DumpPFAData
 
 ! $Log$
+! Revision 1.2  2004/06/17 01:05:02  vsnyder
+! Added 'use Machine' in case it's needed for GETARG
+!
 ! Revision 1.1  2004/06/17 00:39:58  vsnyder
 ! Initial commit
 !
