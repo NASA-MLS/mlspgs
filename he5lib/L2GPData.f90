@@ -16,7 +16,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
        & MLSMSG_Error, MLSMSG_Warning
   use MLSCommon, only: R8
   use MLSStrings, only: ints2Strings, strings2Ints
-  use OUTPUT_M, only: OUTPUT ! Added as HDF4 version uses it
+  use OUTPUT_M, only: OUTPUT
   use SWAPI, only: SWWRFLD, SWRDFLD
   use STRING_TABLE, only: DISPLAY_STRING
 
@@ -27,10 +27,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPNameLen
   public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
     & Dump, ExpandL2GPDataInPlace, AppendL2GPData, &
-    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData !, &
-!    & OutputL2GP_createFile, OutputL2GP_writeData,  OutputL2GP_writeGeo
-  !INTEGER:: HE5_SWRDFLD
-  !EXTERNAL HE5_SWRDFLD !Should USE HE5_SWAPI
+    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData
+
   !---------------------------- RCS Ident Info -------------------------------
   character(len=256), private :: Id = &
        & "$Id$"
@@ -45,6 +43,23 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! This module defines datatypes and gives basic routines for storing and
   ! manipulating L2GP data.
+  ! It is prepared to handle io for both file versions: hdfeos2 and hdfeos5
+
+!     c o n t e n t s
+!     - - - - - - - -
+
+! L2GPData_T              The l2gp data type; holds all data for one swath
+
+! AddL2GPToDatabase       Adds an l2gp data type to a database
+! DestroyL2GPContents     Deallocates all the arrays allocated for an L2GP
+! DestroyL2GPDatabase     Destroys an L2GP database
+! Dump                    Reveals info about an L2GP or a database of L2GP
+!                            to any desired level of detail
+! ExpandL2GPDataInPlace   Adds more profiles to an existing L2GP
+! AppendL2GPData          Appends L2GP onto end of existing swath file
+! ReadL2GPData            Reads L2GP from existing swath file
+! SetupNewL2GPRecord      Allocates arrays for a new L2GP
+! WriteL2GPData           Writes an L2GP into a swath file
 
   ! First some local parameters
 
@@ -164,7 +179,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: nTimes            ! Dimensions
 
     ! Local variables
-    integer :: freqsArrayLen, status, surfsArrayLen
     integer :: useNFreqs, useNLevels, useNTimes
 
     if (present(nFreqs)) then
@@ -236,9 +250,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     type (L2GPData_T), intent(inout) :: L2GP
-    ! Local variables
-
-    integer status
 
     ! Executable code
 
@@ -273,9 +284,8 @@ contains ! =====     Public Procedures     =============================
     integer, optional, intent(in) :: newNTimes
 
     ! Local variables
-    integer :: status                   ! From ALLOCATE
     type (L2GPData_T) :: tempL2gp       ! For copying data around
-    integer :: myNTimes, myNColms
+    integer :: myNTimes
     ! Executable code
 
    if(present(newNTimes)) then
@@ -351,7 +361,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------------------------------------
 
-  ! This subroutine destroys a quantity template database
+  ! This subroutine destroys an L2GP database
 
   subroutine DestroyL2GPDatabase ( DATABASE )
 
@@ -444,9 +454,6 @@ contains ! =====     Public Procedures     =============================
     integer :: alloc_err, first, freq, lev, nDims, size, swid, status
     integer :: start(3), stride(3), edge(3), dims(3)
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
-    integer :: nColumns
-    integer :: col_start(2), col_stride(2), col_edge(2)
-
     logical :: firstCheck, lastCheck
 
     real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
@@ -815,9 +822,6 @@ contains ! =====     Public Procedures     =============================
     integer :: alloc_err, first, freq, lev, nDims, size, swid, status
     integer :: start(3), stride(3), edge(3), dims(3)
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
-    integer :: nColumns
-    integer :: col_start(2), col_stride(2), col_edge(2)
-
     logical :: firstCheck, lastCheck
 
     real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
@@ -1393,7 +1397,7 @@ contains ! =====     Public Procedures     =============================
   !--------------------------------------
 
   !-----------------------------------------  OutputL2GP_writeGeo_hdf4  -----
-  subroutine OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
+  subroutine OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName, offset)
 
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
@@ -1403,6 +1407,7 @@ contains ! =====     Public Procedures     =============================
     type( l2GPData_T ), intent(inout) :: l2gp
     integer, intent(in) :: l2FileHandle ! From swopen
     character (len=*), intent(in), optional :: swathName ! Defaults to l2gp%name
+    integer,intent(IN),optional::offset
 
     ! Parameters
 
@@ -1414,8 +1419,15 @@ contains ! =====     Public Procedures     =============================
     character (len=480) :: msr
     character (len=132) :: name ! Either swathName or l2gp%name
 
-    integer :: status, swid
+    integer :: status, swid,myOffset
     integer :: start(2), stride(2), edge(2)
+
+    ! Begin
+    if (present(offset)) then
+       myOffset=offset
+    else
+       myOffset=0
+    endif
 
     if ( present(swathName) ) then
        name=swathName
@@ -1427,8 +1439,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Write data to the fields
 
-    stride(1) = 1
-    start(1) = 0
+    stride = 1
+    start = myOffset
     edge(1) = l2gp%nTimes
 
     status = swwrfld(swid, GEO_FIELD1, start, stride, edge, &
@@ -1489,6 +1501,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
+       start(1)=0 ! needed because offset may have made this /=0
        status = swwrfld(swid, GEO_FIELD9, start, stride, edge, &
             real(l2gp%pressures))
        if ( status == -1 ) then
@@ -1499,6 +1512,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
+       start(1)=0 ! needed because offset may have made this /=0
        l2gp%frequency = 0
        status = swwrfld(swid, GEO_FIELD10, start, stride, edge, &
             real(l2gp%frequency))
@@ -1522,7 +1536,7 @@ contains ! =====     Public Procedures     =============================
   !------------------------------------
 
   !----------------------------------------  OutputL2GP_writeData_hdf4  -----
-  subroutine OutputL2GP_writeData_hdf4(l2gp, l2FileHandle, swathName)
+  subroutine OutputL2GP_writeData_hdf4(l2gp, l2FileHandle, swathName, offset)
 
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
@@ -1532,6 +1546,7 @@ contains ! =====     Public Procedures     =============================
     type( l2GPData_T ), intent(inout) :: l2gp
     integer, intent(in) :: l2FileHandle ! From swopen
     character (len=*), intent(in), optional :: swathName ! Defaults to l2gp%name
+    integer,intent(IN),optional::offset
 
     ! Parameters
 
@@ -1542,7 +1557,7 @@ contains ! =====     Public Procedures     =============================
     character (len=480) :: msr
     character (len=132) :: name     ! Either swathName or l2gp%name
 
-    integer :: status
+    integer :: status, myOffset
     integer :: start(3), stride(3), edge(3)
     integer :: swid
 
@@ -1553,6 +1568,12 @@ contains ! =====     Public Procedures     =============================
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
     integer, allocatable, dimension(:,:) :: string_buffer
 
+    ! Begin
+    if (present(offset)) then
+       myOffset=offset
+    else
+       myOffset=0
+    endif
     if ( present(swathName) ) then
        name=swathName
     else
@@ -1562,6 +1583,7 @@ contains ! =====     Public Procedures     =============================
 
     start = 0
     stride = 1
+    start(3)= myOffset
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
@@ -1972,12 +1994,12 @@ contains ! =====     Public Procedures     =============================
     integer :: status, swid,myOffset
     integer :: start(2), stride(2), edge(2)
 
+    ! Begin
     if (present(offset)) then
        myOffset=offset
     else
        myOffset=0
     endif
-
 
     if (present(swathName)) then
        name=swathName
@@ -2123,6 +2145,8 @@ contains ! =====     Public Procedures     =============================
 !    character (LEN=8), allocatable :: the_status_buffer(:)
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
     integer, allocatable, dimension(:,:) :: string_buffer
+
+    ! Begin
     if (present(offset)) then
        myOffset=offset
     else
@@ -2140,7 +2164,7 @@ contains ! =====     Public Procedures     =============================
 
     start = 0
     stride = 1
-    start(3)=myOffset
+    start(3)= myOffset
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
@@ -2295,8 +2319,6 @@ contains ! =====     Public Procedures     =============================
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     integer,intent(IN),optional::offset
     integer, optional, intent(in) :: hdfVersion
-    !----Local variable
-    integer::myOffset
     ! Local
     integer :: myhdfVersion
 
@@ -2307,18 +2329,12 @@ contains ! =====     Public Procedures     =============================
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
 
-    ! ----Executable code---
-    if (present(offset)) then
-       myOffset=offset
-    else
-       myOffset=0
-    endif
     if (myhdfVersion == 4) then
-      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
-      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName, offset)
+      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName, offset)
     else
-      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName,myOffset)
-      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName,myOffset)
+      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName, offset)
+      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName, offset)
     endif
 
   end subroutine AppendL2GPData
@@ -2366,7 +2382,7 @@ contains ! =====     Public Procedures     =============================
     !                                        ! Default 1
 
     ! Local variables
-    integer :: i, ierr
+    integer :: ierr
     logical :: myColumnsOnly
     integer :: MYDETAILS
 
@@ -2443,6 +2459,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.14  2002/01/29 23:47:21  pwagner
+! Repaired bugs relating to hdf4 compatibility
+!
 ! Revision 1.13  2002/01/29 00:48:43  pwagner
 ! Now should handle both hdfVersions; not tested yet
 !
