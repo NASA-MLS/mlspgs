@@ -2,7 +2,7 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 program MLSL2
-  use DECLARATION_TABLE, only: ALLOCATE_DECL, DUMP_DECL
+  use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
@@ -15,10 +15,12 @@ program MLSL2
 ! use Open_Init, only: Close_MLSCF, Open_MLSCF !!! Enormous compile time !!!
   use OUTPUT_M, only: OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
-  use STRING_TABLE, only: DO_LISTING, INUNIT
+  use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
+    & DESTROY_STRING_TABLE, DO_LISTING, INUNIT
+  use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
     & TOGGLE
-  use TREE, only: ALLOCATE_TREE, PRINT_SUBTREE
+  use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
   use UNITS, only: INIT_UNITS
@@ -37,11 +39,14 @@ program MLSL2
 !  logical :: PCF = .false.         ! Open L2CF using PCF
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
+  logical :: Timing = .false.      ! -T option is set
+  real :: T1, T2                   ! For timing
 
   !------------------------------- RCS Ident Info ------------------------------
-  CHARACTER(LEN=130) :: Id = & 
+  character(len=*), parameter :: IdParm = & 
      "$Id$"
-  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+  character(len=len(idParm)) :: Id = idParm
+  character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
 ! Where to send output, how severe an error to quit
@@ -113,6 +118,7 @@ program MLSL2
           print *, "  -k: Don't capitalize identifiers."
           print *, '  -M: Send output through MLSMessage.'
           print *, '  -p: Trace parsing.'
+          print *, '  -T: Time parsing, type checking and processing separately.'
           print *, '  -t: Trace declaration table construction.'
           print *, '  -v: List the configuration file.'
           print *, '  The above options can be concatenated after one hyphen,'
@@ -141,6 +147,7 @@ program MLSL2
         case ( 'l' ); toggle(lex) = .true.
         case ( 'M' ); prunit = -2
         case ( 'p' ); toggle(par) = .true.
+        case ( 'T' ); timing = .true.
         case ( 't' ); toggle(tab) = .true.
         case ( 'v' ); do_listing = .true.
         case default
@@ -168,9 +175,11 @@ program MLSL2
     if(status /= 0) then
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Unable to open L2CF file " // trim(line) )
-    endif
+    end if
   end if
+  call cpu_time ( t1 )
   call configuration ( root )
+  if ( timing ) call sayTime ( 'Parsing the L2CF' )
   if ( pcf ) then
     call close_MLSCF ( inunit )
   else
@@ -191,7 +200,9 @@ program MLSL2
 
     ! Check that supra-syntactic conditions are met, e.g. correct
     ! types for fields of commands, correct command order, etc.
+    call cpu_time ( t1 )
     call check_tree ( root, error, first_section )
+    if ( timing ) call sayTime ( 'Type checking the L2CF' )
     if ( do_dump ) call dump_decl
     if ( toggle(syn) ) then
       call output ( 'Begin type-checked abstract syntax tree:', advance='yes' )
@@ -200,12 +211,31 @@ program MLSL2
     end if
     if ( error == 0 .and. first_section /= 0 ) then
       ! Now do the L2 processing.
+      call cpu_time ( t1 )
       call walk_tree_to_do_MLS_L2 ( root, error, first_section )
+      if ( timing ) call sayTime ( 'Processing' )
     end if
   end if
+  call destroy_char_table
+  call destroy_hash_table
+  call destroy_string_table
+  call destroy_symbol_table
+  call deallocate_decl
+  call deallocate_tree
+
+contains
+  subroutine SayTime ( What )
+    character(len=*), intent(in) :: What
+    call cpu_time ( t2 )
+    call output ( "Timing for " // what // " =" )
+    call output ( dble(t2 - t1), advance = 'yes' )
+  end subroutine SayTime
 end program MLSL2
 
 ! $Log$
+! Revision 2.22  2001/04/21 01:42:21  vsnyder
+! Add -T option for timing
+!
 ! Revision 2.21  2001/04/20 20:44:18  pwagner
 ! Sets MLSMSG_Severity_to_quit
 !
