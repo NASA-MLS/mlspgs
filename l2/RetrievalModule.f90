@@ -45,7 +45,7 @@ contains
       & F_mask, F_maxJ, F_measurements, F_measurementSD, F_method, &
       & F_opticalDepth, F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
       & F_phaseName, F_ptanQuantity, F_quantity, &
-      & F_regAfter, F_regApriori, F_state, F_toleranceA, F_toleranceF, &
+      & F_regAfter, F_regApriori, F_serial, F_state, F_toleranceA, F_toleranceF, &
       & F_toleranceR, f_vRegOrders, f_vRegQuants, &
       & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
       & L_apriori, L_covariance, &
@@ -59,6 +59,7 @@ contains
       & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
       & S_subset, S_time
     use Intrinsic, only: PHYQ_Dimensionless
+    use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, Dump
@@ -153,6 +154,7 @@ contains
     type(matrix_T), pointer :: OutputAverage      ! Averaging Kernel
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
+    logical :: ParallelMode             ! Run forward models in parallel
     character(len=127) :: PhaseName     ! To pass to snoopers
     integer :: Son                      ! Of Root or Key
     character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
@@ -227,8 +229,6 @@ contains
     snoopComment = ' '           ! Ditto
     snoopKey = 0
     snoopLevel = 1               ! Ditto
-    tikhonovApriori = .false.
-    tikhonovBefore = .true.
     timing = section_times
     do j = firstVec, lastVec ! Make the vectors in the database initially empty
       nullify ( v(j)%quantities, v(j)%template%quantities )
@@ -298,6 +298,9 @@ contains
         toleranceR = defaultToleranceR
         vRegQuants = 0
         vRegWeights = 0
+        parallelMode = parallel%fwmParallel .and. parallel%master
+        tikhonovApriori = .false.
+        tikhonovBefore = .true.
         nullify ( vRegWeightVec )
         do j = 2, nsons(key) ! fields of the "retrieve" specification
           son = subtree(j, key)
@@ -355,6 +358,8 @@ contains
             tikhonovBefore = .not. get_Boolean(son)
           case ( f_regApriori )
             tikhonovApriori = get_Boolean(son)
+          case ( f_serial )
+            parallelMode = parallelMode .and. .not. get_boolean ( son )
           case ( f_outputCovariance )
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
@@ -826,7 +831,6 @@ contains
       use VectorsModule, only: AddToVector, DestroyVectorInfo, &
         & DestroyVectorValue, Dump, Multiply, operator(.DOT.), &
         & operator(.MDOT.), operator(-), ScaleVector, SubtractFromVector
-      use L2ParInfo, only: PARALLEL
       use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
         & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
 
@@ -873,7 +877,7 @@ contains
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
       ! Launch fwmParallel slaves
-      if ( parallel%master .and. parallel%fwmParallel ) &
+      if ( parallelMode ) &
         & call SetupFWMSlaves ( configDatabase(configIndices), &
         & state, fwdModelExtra, FwdModelOut, jacobian )
       ! Set options for NWT
@@ -1185,7 +1189,7 @@ contains
           end if
 
           ! If in fwm parallel mode, get all slaves computing the forward models
-          if ( parallel%master .and. parallel%fwmParallel ) then
+          if ( parallelMode ) then
             if ( index ( switches, 'mas' ) /= 0 ) &
               & call output ( "Triggering slave forward model runs", advance='yes' )
             do t = 1, chunk%lastMAFIndex-chunk%firstMAFIndex+1
@@ -1202,7 +1206,7 @@ contains
             !??? to do? Ermmm, think of this next time.
             fmStat%maf = fmStat%maf + 1
             fmstat%rows = .false.
-            if ( parallel%master .and. parallel%fwmParallel ) then
+            if ( parallelMode ) then
               call ReceiveSlavesOutput ( v(f_rowScaled), fmStat, jacobian )
               ! Set the next slave about packing up its output while we do
               ! our normal equations stuff
@@ -3166,6 +3170,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.193  2002/10/19 01:52:21  livesey
+! Added serial option and associated flags.
+!
 ! Revision 2.192  2002/10/18 22:05:42  vsnyder
 ! Get in bounds before starting.  Account for scaling when bounding a move.
 !
