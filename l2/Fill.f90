@@ -1240,7 +1240,7 @@ contains ! =====     Public Procedures     =============================
             do j = 1, n
               if ( condition(j) ) M(j,j) = 1.0
             end do
-            call MatrixInversion(M)
+            call MatrixInversion(M, upper=.true.)
             do j = 1, n
               if ( condition(j) ) M(j,j) = 0.0
             end do
@@ -2851,6 +2851,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.97  2001/10/26 18:15:18  livesey
+! Added upper argument to MatrixInversion in FillCovariance
+!
 ! Revision 2.96  2001/10/25 23:32:11  pwagner
 ! Responds to l1b switch by dumping l1b quantity during Fill
 !
