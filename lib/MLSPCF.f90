@@ -42,6 +42,26 @@ MODULE MLSPCF
    !
    INTEGER, PARAMETER :: mlspcf_nomen_start = 23000
    INTEGER, PARAMETER :: mlspcf_nomen_end = 23000
+   !
+   INTEGER, PARAMETER :: mlspcf_l3cf_InputVersion = 3000
+   INTEGER, PARAMETER :: mlspcf_l3cf_OutputVersion = 3001
+   INTEGER, PARAMETER :: mlspcf_l3cf_Cycle = 3002
+   INTEGER, PARAMETER :: mlspcf_l3cf_L2DayRange = 3003
+   INTEGER, PARAMETER :: mlspcf_l3cf_MinDays = 3004
+   INTEGER, PARAMETER :: mlspcf_l3cf_RangDays = 3005
+   INTEGER, PARAMETER :: mlspcf_l3cf_Month = 3006
+   !
+   INTEGER, PARAMETER :: mlspcf_l3cf_start = 30000
+   INTEGER, PARAMETER :: mlspcf_l3cf_end = 30002 
+   !
+   INTEGER, PARAMETER :: mlspcf_l3dm_start = 30100
+   INTEGER, PARAMETER :: mlspcf_l3dm_end = 30199 
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l3log_start = 50001
+   INTEGER, PARAMETER :: mlspcf_mcf_l3log_end = 50001
+   !
+   INTEGER, PARAMETER :: mlspcf_l3dm_mcf_start = 50100
+   INTEGER, PARAMETER :: mlspcf_l3dm_mcf_end = 50199
 END MODULE MLSPCF
 
 !$Log $
