@@ -176,7 +176,7 @@ contains
   end function eudtf2daysince
 
   function daysince2eudtf(daysince,eudtf0) result (eudtf)
-    ! Converts days since a given eudtf date to am eudtf date
+    ! Converts days since a given eudtf date to an eudtf date
     !----args-----!
     integer,intent(in)::daysince,eudtf0
     !---result---!

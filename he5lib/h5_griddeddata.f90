@@ -73,8 +73,6 @@ subroutine h5_write_griddeddata(loc_id,field)
   CALL h5dclose_f(dset_id, error)
   CALL h5sclose_f(dspace_id, error)
 
-
-
   call h5gclose_f(group_id,error)
 
 

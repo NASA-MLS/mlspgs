@@ -69,7 +69,7 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    CHARACTER (len=*), PARAMETER :: MAX_DIML12 = 'nLevels,Unlim'
    CHARACTER (len=*), PARAMETER :: MAX_DIML123 = 'nFreqs,nLevels,Unlim'
 
-   INTEGER,PARAMETER::CHUNKFREQS=13,CHUNKLEVELS=17,CHUNKTIMES=9,CHUNK4=1
+!   INTEGER,PARAMETER::CHUNKFREQS=13,CHUNKLEVELS=17,CHUNKTIMES=9,CHUNK4=1
 
    INTEGER, PARAMETER :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
    INTEGER, PARAMETER :: HDFE_NOMERGE = 0       ! don't merge
@@ -669,7 +669,7 @@ CONTAINS ! =====     Public Procedures     =============================
   !-----------------------------
 
   ! --------------------------------------  OutputL2GP_createFile  -----
-  SUBROUTINE OutputL2GP_createFile (l2gp, L2FileHandle, swathName)
+  SUBROUTINE OutputL2GP_createFile (l2gp, L2FileHandle, swathName,nLevels)
 
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
@@ -679,7 +679,7 @@ CONTAINS ! =====     Public Procedures     =============================
     INTEGER, INTENT(in) :: L2FileHandle ! From swopen
     TYPE( L2GPData_T ), INTENT(inout) :: l2gp
     CHARACTER (LEN=*), OPTIONAL, INTENT(IN) :: swathName ! Defaults to l2gp%swathName
-
+    INTEGER,optional::nLevels
     ! Parameters
 
     CHARACTER (len=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
@@ -695,6 +695,7 @@ CONTAINS ! =====     Public Procedures     =============================
     ! THESE ARE HDF5 CHUNKS, _NOT_ MLS ALONG-TRACK PROCESSING CHUNKS 
     INTEGER,DIMENSION(7)::CHUNK_DIMS
     INTEGER::CHUNK_RANK
+    INTEGER::CHUNKTIMES,CHUNKFREQS,CHUNKLEVELS
 
     INTEGER :: SWID, STATUS
     character(len=1)::poop
@@ -703,7 +704,14 @@ CONTAINS ! =====     Public Procedures     =============================
     ELSE
        name=l2gp%name
     ENDIF
-
+    chunktimes=1
+    chunkfreqs=1 ! better as nFreqs, but I have yet to see a case with nfreqs>1
+    if(present(nLevels))then
+       chunklevels=nLevels
+    else
+       chunklevels=5
+    endif
+    
     ! Create the swath within the file
     print*,"Creating swath called ",name
     swid = HE5_SWcreate(L2FileHandle, TRIM(name))
@@ -1027,14 +1035,8 @@ CONTAINS ! =====     Public Procedures     =============================
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
 
-    status = HE5_SWwrfld(swid, GEO_FIELD4, start, stride, edge, &
-        REAL(l2gp%solarTime))
-    IF ( status == -1 ) THEN
-       msr = WR_ERR // GEO_FIELD4
-       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
-    END IF
 
-    
+    print*,"writing ", REAL(l2gp%solarZenith)," as SZA"
     status = HE5_SWwrfld(swid, GEO_FIELD5, start, stride, edge, &
          REAL(l2gp%solarZenith))
     print*,"just wrote ", REAL(l2gp%solarZenith)," as SZA"
@@ -1042,6 +1044,14 @@ CONTAINS ! =====     Public Procedures     =============================
        msr = WR_ERR // GEO_FIELD5
        CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
     END IF
+
+    status = HE5_SWwrfld(swid, GEO_FIELD4, start, stride, edge, &
+        REAL(l2gp%solarTime))
+    IF ( status == -1 ) THEN
+       msr = WR_ERR // GEO_FIELD4
+       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
+    END IF
+
 
     status = HE5_SWwrfld(swid, GEO_FIELD6, start, stride, edge, &
          REAL(l2gp%losAngle))
@@ -1341,6 +1351,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.5  2001/04/06 20:16:38  pumphrey
+! Not much, just keeping in sync
+!
 ! Revision 1.4  2001/03/29 17:33:27  pumphrey
 ! Huge changes to L2GPData to sync with the HDF4 version and add unlimited
 ! dimension along the track
