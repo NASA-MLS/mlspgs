@@ -66,13 +66,16 @@ L1BData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90
 L2GPData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
-machine.o: $(S)/platforms/$(MLSCONFG).machine
-	rm -f machine.f90
-	cp "$(S)/platforms/$(MLSCONFG).machine" machine.f90
-	chmod u+w machine.f90
-	$(FC) -c $(DUSTY) machine.f90
+#machine.o: $(S)/platforms/$(MLSCONFG).machine
+#	rm -f machine.f90
+#	cp "$(S)/platforms/$(MLSCONFG).machine" machine.f90
+#	chmod u+w machine.f90
+#	$(FC) -c $(DUSTY) machine.f90
 
 # $Log$
+# Revision 1.11  2000/11/27 18:17:06  pwagner
+# MatrixModules part of lib only for LF95
+#
 # Revision 1.10  2000/11/21 18:01:42  pwagner
 # Repaired machine.o commands
 #

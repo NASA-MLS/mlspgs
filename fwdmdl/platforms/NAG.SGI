@@ -29,7 +29,7 @@ dir2 =
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ $(srclib)
+vpath %.f90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
 
 FC = f95
@@ -88,6 +88,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.1  2000/11/22 23:35:07  pwagner
+# First commit
+#
 # Revision 1.1  2000/11/22 22:55:25  pwagner
 # First commit
 #

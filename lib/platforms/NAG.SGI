@@ -15,7 +15,7 @@ srclib = ../../srclib
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../
+vpath %.f90 ../ ../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
 vpath %.f $(PGSINC)
 
@@ -59,6 +59,9 @@ MATRIX_OBJS =
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.4  2000/11/27 18:17:06  pwagner
+# MatrixModules part of lib only for LF95
+#
 # Revision 1.3  2000/11/16 22:57:02  pwagner
 # Looks for %.f9h in srclib
 #

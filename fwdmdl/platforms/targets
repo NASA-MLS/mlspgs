@@ -52,13 +52,16 @@ fwd_mdl_set_up_m.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/fwd_mdl_set_up_m.f90
 MLSCommon.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(LIB_SRCS_DIR)/MLSCommon.f90
-machine.o: $(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine
-	rm -f machine.f90
-	cp "$(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine" machine.f90
-	chmod u+w machine.f90
-	$(FC) -c $(DUSTY) machine.f90
+#machine.o: $(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine
+#	rm -f machine.f90
+#	cp "$(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine" machine.f90
+#	chmod u+w machine.f90
+#	$(FC) -c $(DUSTY) machine.f90
 # ========================================================================
 # $Log$
+# Revision 1.2  2000/11/22 23:40:57  pwagner
+# Fixed program name
+#
 # Revision 1.1  2000/11/22 23:35:07  pwagner
 # First commit
 #
