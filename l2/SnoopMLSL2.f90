@@ -22,7 +22,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_0, ONLY: MatrixElement_T
   use MatrixModule_1, ONLY: Matrix_T, RC_Info
-  use MLSCommon, only: FINDFIRST, R4, R8, I4
+  use MLSCommon, only: FINDFIRST, R4, R8, I4, RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
   use MLSSignals_M, only: GETSIGNALNAME
@@ -657,6 +657,8 @@ contains ! ========  Public Procedures =========================================
     integer,dimension(2) :: RC          ! Index of row/column requested
     integer :: INFO                     ! Flag from PVM
     type (MatrixElement_T), pointer :: BLOCK ! The block of interest
+    real(r8), dimension(:,:), pointer :: values
+    integer :: n_rows, n_cols
 
     ! Executable code
 
@@ -693,7 +695,16 @@ contains ! ========  Public Procedures =========================================
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing kind, noRows, noCols' )
 
     if ( associated ( block%values ) ) then
-      call PVMIDLPack ( block%values, info )
+!      if ( rm == r8 ) then
+!        call PVMIDLPack ( block%values, info )
+!      else
+        n_rows = size(block%values, 1)
+        n_cols = size(block%values, 2)
+        allocate(values(n_rows, n_cols))
+        values = block%values
+        call PVMIDLPack ( values, info )
+        deallocate(values)
+!      endif
       if ( info /= 0 ) call PVMErrorMessage ( info, 'packing block values' )
     endif
 
@@ -773,6 +784,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.32  2002/09/13 18:10:10  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.31  2002/08/21 23:05:59  livesey
 ! Handles unknown matrices better
 !
