@@ -10,7 +10,7 @@ module SubsetModule
   implicit none
   private
 
-  public :: SetupSubset, SetupFlagCloud
+  public :: RestrictRange, SetupSubset, SetupFlagCloud
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -21,7 +21,241 @@ module SubsetModule
   private :: not_used_here 
   !---------------------------------------------------------------------------
   
+  ! Local parameters
+  character(len=32), private, parameter :: WRONGUNITS = 'The wrong units were supplied'
+
 contains ! ========= Public Procedures ============================
+
+  ! -------------------------------------------------- RestrictRange ---
+  subroutine RestrictRange ( key, vectors )
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Intrinsic, only: PHYQ_DIMENSIONLESS
+    use MLSCommon, only: R8
+    use Expr_M, only: EXPR
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQTYBYTEMPLATEINDEX, &
+      & M_LINALG, GETVECTORQUANTITYBYTYPE, SETMASK, CREATEMASK
+    use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, F_BASISFRACTION, &
+      & F_MINCHANNELS, F_SIGNALS, F_MEASUREMENTS, F_MASK
+    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+    use Init_Tables_Module, only: L_ZETA, L_RADIANCE
+    use Tree, only: NSONS, SUBTREE, DECORATION, SUB_ROSA
+    use MoreTree, only: GET_FIELD_ID
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
+      & MLSMSG_DEALLOCATE
+    use MLSSignals_M, only: Signal_T
+    use Parse_Signal_M, only: EXPAND_SIGNAL_LIST
+    use String_Table, only: GET_STRING
+    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
+    use MLSNumerics, only: HUNT
+
+    ! Dummy arguments
+    integer, intent(in) :: KEY          ! Tree node
+    type (Vector_T), dimension(:), intent(inout), target :: VECTORS
+
+    ! Local variables
+
+    integer :: CHANNEL                  ! Loop counter / channel index
+    integer :: FIELD                    ! ID for field in l2cf line
+    integer :: GSON                     ! Tree node
+    integer :: INDEX                    ! Loop counter
+    integer :: INDEX0                   ! Array index
+    integer :: INDEX1                   ! Array index
+    integer :: INSTANCE                 ! Instance index
+    integer :: J                        ! Loop counter
+    integer :: MAF                      ! Major frame index
+    integer :: MASK                     ! Bits to mask
+    integer :: MEASQTY                  ! Loop counter
+    integer :: MINCHANNELS              ! Value of argument of same name
+    integer :: NOGOODMIFS               ! How many MIFs meet our criteria for one chan
+    integer :: NOINSTANCES              ! Number of instances
+    integer :: NOMAFS                   ! Number of major frames
+    integer :: NOMEASUREMENTS           ! Number of relevant measurements
+    integer :: NOMIFS                   ! Number of minor frames
+    integer :: NOVALIDCHANNELS          ! How many channels meet our criteria
+    integer :: QUANTITYINDEX            ! Index in database, not vector
+    integer :: SIDEBAND                 ! Returned by parse_signal
+    integer :: SON                      ! Tree node
+    integer :: STATUS                   ! Flag from allocate etc.
+    integer :: SURF                     ! Loop counter
+    integer :: VECTORINDEX              ! Vector index for quantity
+
+    integer, dimension(2) :: EXPRUNIT   ! Units for expression
+    integer, dimension(:), pointer :: MAFFORINSTANCE ! Maps instances to mafs
+    integer, dimension(:), pointer :: MAFSFORINSTANCE ! Which maf relevant for each inst.
+    integer, dimension(:), pointer :: MEASQTYINDS ! Indices
+    integer, dimension(:), pointer :: MIFPOINTINGS ! Which basis for each mif?
+    integer, dimension(:), pointer :: SIGNALINDS ! Returned by parse_signal
+
+    logical :: ERRORFLAG                ! Set if problem
+    logical :: FOUNDONE                 ! Flag for instance identification
+    logical :: Got(field_first:field_last)   ! "Got this field already"
+
+    character (len=132) :: SIGNALSTRING ! One signal
+    character(len=1), dimension(:), pointer :: MIFMASKS ! Part of rad%mask
+
+    real(r8) :: BASISFRACTION           ! Value of argument of same name
+    real(r8), dimension(2) :: EXPRVALUE ! Vaue for expression
+    real(r8), dimension(:), pointer :: SURFS ! Surfaces for quantity
+
+    type (Signal_T), dimension(:), pointer :: SIGNALS
+    type (VectorValue_T), pointer :: PTAN ! The ptan quantity
+    type (VectorValue_T), pointer :: QTY ! The quantity to subset
+    type (VectorValue_T), pointer :: RAD ! A radiance quantity
+    type (Vector_T), pointer :: MEASUREMENTS ! Measurement vector
+
+    ! Executable code
+    ! Setup defaults
+    basisFraction = 0.5
+    minChannels = 1
+    mask = m_linAlg
+    got = .false.
+    ! Loop over arguments to this l2cf command
+    do j = 2, nsons ( key )
+      son = subtree ( j, key )
+      field = get_field_id ( son )
+      if ( nsons ( son )  > 1 ) gson = subtree ( 2, son )
+      select case ( field )
+      case ( f_quantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        qty => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
+      case ( f_ptanQuantity )
+        vectorIndex = decoration(decoration(subtree(1,gson)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+        ptan => GetVectorQtyByTemplateIndex ( vectors(vectorIndex), quantityIndex )
+      case ( f_minChannels )
+        call expr ( gson, exprUnit, exprValue )
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( key, &
+          WrongUnits, f_minChannels )
+        minChannels = nint ( exprValue(1) )
+      case ( f_basisFraction )
+        call expr ( gson, exprUnit, exprValue )
+        if ( exprUnit(1) /= PHYQ_Dimensionless ) call AnnounceError ( key, &
+          WrongUnits, f_basisFraction )
+        basisFraction = exprValue(1)
+      case ( f_measurements )
+        vectorIndex = decoration(decoration(gson))
+        measurements => vectors ( vectorIndex )
+      case ( f_signals )
+        call Expand_Signal_List ( son, signals, errorFlag )
+        if ( errorFlag ) call AnnounceError ( key, 'Bad signal spec.' )
+      case ( f_mask )
+        mask = GetMaskBit ( son )
+      end select
+    end do
+    ! The parser has ensured that we 'got' all the fields we required,
+    ! and we supplied defaults for the rest, so we're ready to go now.
+    ! Some quick error checking
+    if ( qty%template%verticalCoordinate /= l_zeta ) &
+      & call AnnounceError ( key, 'Quantity is not on log pressure surfaces' )
+    if ( .not. associated ( qty%mask ) ) call CreateMask ( qty )
+
+    ! Identify all the measurement quantities we'll be using
+    noMeasurements = size(signals)
+    nullify ( measQtyInds )
+    call Allocate_test ( measQtyInds, noMeasurements, 'measQtyInds', ModuleName )
+    do measQty = 1, noMeasurements
+      rad => GetVectorQuantityByType ( measurements, quantityType=l_radiance, &
+        & signal=signals(measQty)%index, sideband=signals(measQty)%sideband )
+      if ( rad%template%instrumentModule /= ptan%template%instrumentModule ) &
+        & call AnnounceError ( key, 'Ptan/radiance not from the same module' )
+      measQtyInds(measQty) = rad%index
+    end do
+
+    ! Now identify the relevant MAFs for each profile of our quantity
+    ! This kind of involves running FindOneClosestInstance backwards
+    noInstances = qty%template%noInstances
+    noMAFS = ptan%template%noInstances
+    nullify ( mafsForInstance )
+    call Allocate_test ( mafsForInstance, noInstances, 'mafsForInstance', ModuleName )
+    mafsForInstance = 0
+    do maf = 1, noMAFs
+      instance = FindOneClosestInstance ( qty, ptan, maf )
+      mafsForInstance ( instance ) = maf
+    enddo
+    ! Deal with any we missed (probably at the ends)
+    foundOne = .false.
+    do instance = 1, noInstances
+      if ( mafsForInstance ( instance ) /= 0 ) then
+        foundOne = .true.
+      else
+        if ( foundOne ) then
+          ! OK, make this gap contain the previous value,
+          ! we know instance>1 here.
+          mafsForInstance ( instance ) = mafsForInstance ( instance - 1 )
+        else
+          ! OK, still not seen on, make this use the first maf
+          mafsForInstance ( instance ) = 1
+        end if
+      end if
+    end do
+
+    ! Setup some more arrrays
+    nullify ( mifPointings )
+    call Allocate_test ( mifPointings, ptan%template%noSurfs, &
+      & 'mifPointings', ModuleName )
+
+    ! Now we get down to the main work, we'll go through this instance by instance
+    do instance = 1, noInstances
+      maf = MAFsForInstance ( instance )
+      if ( qty%template%coherent ) then
+        surfs => qty%template%surfs ( :, 1 )
+      else
+        surfs => qty%template%surfs ( :, instance )
+      end if
+      ! Work out where each MIF points
+      call Hunt ( surfs, ptan%values(:,maf), mifPointings, allowTopValue=.true. )
+      ! Go through each surface/channel in the quantity and work out whether
+      ! We're going to use it.
+      surfLoop: do surf = 1, qty%template%noSurfs
+        index0 = ( surf-1 ) * qty%template%noChans + 1
+        index1 = index0 + qty%template%noChans - 1
+        ! If were retrieving data for any 'channel' at this surface
+        ! think about changing our minds, otherwise don't bother.
+        if ( any ( iand ( ichar(qty%mask(index0:index1,instance)), &
+          & m_linAlg ) == 0 ) ) then
+          ! How many MIFs total above this surface?
+          noMIFs = count ( mifPointings == surf )
+          ! Now, how many channels have enough good channels (i.e. enough channels
+          ! with more valid MIFs in this basis range than goodMIFs*basisFraction)
+          noValidChannels = 0
+          do measQty = 1, noMeasurements
+            rad => measurements%quantities ( measQtyInds ( measQty ) )
+            if ( associated ( rad%mask ) ) then
+              channelLoop: do channel = 1, rad%template%noChans
+                if ( .not. signals(measQty)%channels(channel) ) cycle channelLoop
+                ! Point to the relevant masks for this radiance channel only
+                mifMasks => rad%mask ( channel : rad%template%instanceLen : &
+                  & rad%template%noChans, instance )
+                noGoodMIFs = count ( mifPointings == surf .and. &
+                  & iand( ichar(mifMasks), m_linAlg ) == 0 )
+                if ( (1.0*noGoodMIFs)/noMIFs > basisFraction ) &
+                  & noValidChannels = noValidChannels + 1
+              end do channelLoop
+            else
+              noValidChannels = noValidChannels + 1
+            end if
+          end do ! Signal loop
+          if ( noValidChannels < minChannels ) then
+            ! We don't have enough information to retrieve this value,
+            ! So mark it as not to be retrieved (or whatever bits have been supplied)
+            do index = index0, index1
+              call SetMask ( qty%mask(:,instance), (/ index /), what=mask )
+            end do
+          else
+            ! We can retrieve this surface.  Not only that, I want this code
+            ! to only consider the 'bottom' limit case, above that I don't
+            ! want it to bother, so I'm going to escape from the surface loop here
+            exit surfLoop
+          end if                        ! Is this surface ok?
+        end if                          ! Was planning to retrieve here
+      end do surfLoop                   ! Surface loop
+    end do                              ! Instance loop
+
+    call Deallocate_test ( mifPointings, 'mifPointings', ModuleName )
+    call Deallocate_test ( MAFsForInstance, 'MAFsForInstance', ModuleName )
+    call Deallocate_test ( measQtyInds, 'measQtyInds', ModuleName )
+  end subroutine RestrictRange
 
   ! -------------------------------------------------- SetupSubset ---
   subroutine SetupSubset ( key, vectors )
@@ -35,13 +269,11 @@ contains ! ========= Public Procedures ============================
     use Init_Tables_Module, only: F_QUANTITY, F_PTANQUANTITY, F_CHANNELS, F_HEIGHT, &
       & F_MASK, F_OPTICALDEPTH, F_OPTICALDEPTHCUTOFF, F_MAXVALUE, F_MINVALUE, &
       & F_IGNORE, F_RESET, F_ADDITIONAL
-    use Init_Tables_Module, only: L_FILL, L_FULL_DERIVATIVES, L_LINALG, L_TIKHONOV, &
-      & L_RADIANCE, L_OPTICALDEPTH, L_NONE, L_ZETA, L_PRESSURE
+    use Init_Tables_Module, only: L_RADIANCE, L_OPTICALDEPTH, L_NONE, L_ZETA, L_PRESSURE
     use Tree_Types, only: N_COLON_LESS, N_LESS_COLON, &
       & N_LESS_COLON_LESS, N_NAMED
     use VectorsModule, only: GETVECTORQTYBYTEMPLATEINDEX, SETMASK, VECTORVALUE_T, &
-      & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK, M_FULLDERIVATIVES, &
-      & M_TIKHONOV, M_FILL
+      & VECTOR_T, CLEARMASK, CREATEMASK, M_LINALG, DUMPMASK
     use Tree, only: NSONS, SUBTREE, DECORATION, NODE_ID
     use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN, GETINDEXFLAGSFROMLIST
     use String_Table, only: DISPLAY_STRING
@@ -49,9 +281,6 @@ contains ! ========= Public Procedures ============================
     use Output_M, only: OUTPUT
     integer, intent(in) :: KEY        ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
-
-    ! Local parameters
-    character(len=32), parameter :: WRONGUNITS = 'The wrong units were supplied'
 
     ! Local variables
     integer :: CHANNEL                ! Loop index
@@ -66,7 +295,6 @@ contains ! ========= Public Procedures ============================
     integer :: IND                    ! An array index
     integer :: INSTANCE               ! Loop counter
     integer :: INSTANCEOR1            ! For coherent quantities
-    integer :: MASK                   ! Which thing are we talking about?
     integer :: MaskBit                ! Bits corresponding to Mask
     integer :: MAINVECTORINDEX        ! Vector index of quantity to subset
     integer :: NROWS                  ! Loop limit dumping mask
@@ -131,19 +359,7 @@ contains ! ========= Public Procedures ============================
         heightNode = son
       case ( f_mask )
         if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
-        do i = 2, nsons(son)
-          mask = decoration(subtree(i,son))
-          select case ( mask )
-          case ( l_fill )
-            maskBit = ior(maskBit, m_fill)
-          case ( l_full_derivatives )
-            maskBit = ior(maskBit, m_fullDerivatives)
-          case ( l_linAlg )
-            maskBit = ior(maskBit, m_linAlg)
-          case ( l_Tikhonov )
-            maskBit = ior(maskBit, m_Tikhonov)
-          end select
-        end do
+        maskBit = GetMaskBit ( son )
       case ( f_opticalDepth )
         vectorIndex = decoration(decoration(subtree(1,gson)))
         quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -499,9 +715,6 @@ contains ! ========= Public Procedures ============================
     integer, intent(in) :: KEY        ! Tree node
     type (Vector_T), dimension(:) :: VECTORS
 
-    ! Local parameters
-    character(len=32), parameter :: WRONGUNITS = 'The wrong units were supplied'
-
     ! Local variables
     integer :: CHANNEL                ! Loop index
     integer :: CHANNELSNODE           ! Tree node for channels values
@@ -717,6 +930,8 @@ contains ! ========= Public Procedures ============================
  
   ! ===================================== Private procedures ============
 
+  ! --------------------------------------- AnnounceError -----------
+  
   subroutine AnnounceError ( NODE, STRING, FIELDINDEX, ANOTHERFIELDINDEX )
     
     use Intrinsic, only: FIELD_INDICES, SPEC_INDICES
@@ -747,6 +962,37 @@ contains ! ========= Public Procedures ============================
       & 'Problem in SubsetModule, see above' )
   end subroutine AnnounceError
 
+  ! -------------------------------------- GetMaskBit -------------
+
+  function GetMaskBit ( node ) result ( maskBit )
+    use Tree, only: NSONS, DECORATION, SUBTREE
+    use Init_Tables_Module, only: L_FILL, L_FULL_DERIVATIVES, &
+      & L_TIKHONOV, L_LINALG
+    use VectorsModule, only: M_FILL, M_FULLDERIVATIVES, M_LINALG, &
+      & M_TIKHONOV
+
+    ! This routine parses the mask field in an l2cf command
+    ! Dummy arguments
+    integer, intent(in) :: NODE         ! Tree node
+    integer :: MASKBIT                  ! Result
+    integer :: MASK                     ! Tree decoration
+    integer :: I
+    maskBit = 0
+    do i = 2, nsons(node)
+      mask = decoration(subtree(i,node))
+      select case ( mask )
+      case ( l_fill )
+        maskBit = ior(maskBit, m_fill)
+      case ( l_full_derivatives )
+        maskBit = ior(maskBit, m_fullDerivatives)
+      case ( l_linAlg )
+        maskBit = ior(maskBit, m_linAlg)
+      case ( l_Tikhonov )
+        maskBit = ior(maskBit, m_Tikhonov)
+      end select
+    end do
+  end function GetMaskBit
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -754,6 +1000,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.3  2003/03/07 03:17:12  livesey
+! Added RestrictRange
+!
 ! Revision 2.2  2003/03/06 00:47:04  livesey
 ! Added logging information
 !
