@@ -548,7 +548,6 @@ contains ! =====     Public Procedures     =============================
       index = decoration(key)
       l2auxDataIsNew = (index>=0)
     end if
-    print*,'L2AUXDataIsNew:',l2auxDataIsNew
     ! Work out what to do with the first and last Instance information
     
     if ( present(firstInstance) ) then
@@ -639,7 +638,6 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Now we setup the new quantity
-      print*,'Setting up l2aux'
       call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, &
         & dimensionStarts, newL2AUX )
       newL2AUX%minorFrame=quantity%template%minorFrame
@@ -694,7 +692,6 @@ contains ! =====     Public Procedures     =============================
       ! at full size from the start.
       if ( .not. &
         & (quantity%template%minorFrame .or. quantity%template%majorFrame) ) then
-        print*,'Expanding l2aux'
         call ExpandL2AUXDataInPlace ( thisL2AUX, noMAFs )
       end if
     end if
@@ -750,6 +747,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.60  2002/05/28 17:09:57  livesey
+! Removed print statements
+!
 ! Revision 2.59  2002/05/22 00:48:52  livesey
 ! Added direct write stuff
 !
