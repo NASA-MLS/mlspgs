@@ -55,6 +55,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! NumStringElements  Returns number of elements in string list
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
+! readIntsFromChars  Converts an array of strings to ints using Fortran read
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
 ! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
@@ -88,6 +89,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! char* LowerCase (char* str)
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inDelim], [int LongestLen])
+! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
 ! char* Reverse (char* str)
@@ -126,7 +128,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   public :: Array2List, Capitalize, CompressString, count_words, &
    & depunctuate, GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueStrings, hhmmss_value, ints2Strings, LinearSearchStringArray, &
-   & List2Array, LowerCase, NumStringElements, ReadCompleteLineWithoutComments,&
+   & List2Array, LowerCase, NumStringElements, &
+   & ReadCompleteLineWithoutComments, readIntsFromChars, &
    & Reverse, ReverseList, SortArray, SortList, SplitWords, strings2Ints, &
    & StringElementNum, unquote
   ! Error return values from:
@@ -1150,6 +1153,55 @@ CONTAINS
 
   END SUBROUTINE ReadCompleteLineWithoutComments
 
+  ! --------------------------------------------------  readIntsFromChars  -----
+  SUBROUTINE readIntsFromChars (strs, ints, forbiddens)
+    ! takes an array of strings and returns integer array
+    ! using Fortran "read"
+    ! If any element of string array is blank or contains one of forbiddens
+    ! the corresponding element of ints is left undefined
+	 ! Not useful yet
+	 !
+    !--------Argument--------!
+    !    dimensions are (len(strs(1)), size(strs(:)))
+    CHARACTER (LEN=*), INTENT(in), dimension(:) ::   strs
+    integer, intent(out), dimension(:)          ::   ints
+    CHARACTER (LEN=*), INTENT(in), optional     ::   forbiddens
+    character(len=40)                           ::   myForbiddens
+
+    !----------Local vars----------!
+    INTEGER :: i, j, arrSize
+    LOGICAL :: leave_undef
+    !----------Executable part----------!
+
+   ! Check that all is well (if not returns blanks)
+   arrSize = MIN(size(strs), size(ints))
+   if ( arrSize <= 0 ) then
+     ints = LENORSIZETOOSMALL
+     return
+   endif
+   if ( present(forbiddens) ) then
+     myForbiddens = adjustl(forbiddens)
+   else
+     myForbiddens = ' '
+   endif
+   do i=1, arrSize
+      leave_undef = (strs(i) == ' ')
+      if ( myForbiddens /= ' ' ) then
+        do j=1, len(trim(myForbiddens))
+           leave_undef = leave_undef &
+            & .or. &
+            & ( &
+            &    index(strs(i), myForbiddens(j:j)) > 0 &
+            &  .and. &
+            &    myForbiddens(j:j) /= ' ' &
+            & )
+        enddo
+      endif
+      if ( .not. leave_undef ) read(strs(i), *) ints(i)
+   enddo
+
+  END SUBROUTINE readIntsFromChars
+
   ! --------------------------------------------------  Reverse  -----
   FUNCTION Reverse (str) RESULT (outstr)
     ! takes a string and returns one with chars in reversed order
@@ -1721,7 +1773,7 @@ CONTAINS
 
   END SUBROUTINE SplitWords
        
-  ! --------------------------------------------------  int2String  -----
+  ! --------------------------------------------------  strings2Ints  -----
   SUBROUTINE strings2Ints (strs, ints)
     ! takes an array of strings and returns integer array
     ! using "ichar"
@@ -1988,6 +2040,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.26  2003/01/15 21:20:00  pwagner
+! Added readIntsFromChars
+!
 ! Revision 2.25  2002/10/29 19:55:39  pwagner
 ! Fixed mistake in StringElementNum that caused crashes
 !
