@@ -272,7 +272,7 @@ contains
 
     type (beta_group_T), dimension(:) :: beta_group
 
-    real(r8), intent(in)  :: RHi
+    real(rp), intent(in)  :: RHi
     logical, intent(in) :: Incl_Cld
     INTEGER :: NC, NU, NUA, NAB, NR
     INTEGER, intent(in) :: IPSD(:)
@@ -296,7 +296,7 @@ contains
 
     integer(ip) :: i, j, k, n, ib, Spectag, no_of_lines, &
               &    no_mol, n_path
-    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm, cld_ext, RHI
+    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm, cld_ext
 
 ! begin the code
 
@@ -325,6 +325,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.27  2003/04/22 00:16:16  dwu
+! change icon to RHi
+!
 ! Revision 2.26  2003/02/13 23:06:01  jonathan
 ! changes dimension for beta_path_cloud
 !
