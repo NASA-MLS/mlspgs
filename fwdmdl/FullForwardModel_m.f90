@@ -78,7 +78,7 @@ contains
     use Opacity_m, only: Opacity
     use Output_m, only: Output
     use Path_Contrib_M, only: Get_GL_Inds, Path_Contrib
-    use Physics, only: H_OVER_K
+    use Physics, only: H_OVER_K, SpeedOfLight
     use PointingGrid_m, only: POINTINGGRIDS
     use RAD_TRAN_M, only: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, &
       & DRAD_TRAN_DX
@@ -91,7 +91,7 @@ contains
     use Toggles, only: Emit, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use TWO_D_HYDROSTATIC_M, only: Two_D_Hydrostatic
-    use Units, only: Deg2Rad, SpeedOfLight
+    use Units, only: Deg2Rad
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, GETVECTORQUANTITYBYTYPE
 
     type(forwardModelConfig_T), intent(in) :: fwdModelConf
@@ -311,9 +311,6 @@ contains
     real(rp), dimension(:,:), pointer :: D_DELTA_DF ! Incremental opacity derivative
                                            ! schlep from drad_tran_dt to
                                            ! get_d_deltau_pol_df.  Path x SVE.
-!    real(rp), dimension(:,:), pointer :: D_DELTA_DT ! Incremental opacity derivative
-!                                           ! schlep from drad_tran_dt to
-!                                           ! get_d_deltau_pol_dt.  Path x SVE.
     real(rp), dimension(:,:), pointer :: D_T_SCR_dT  ! D Delta_B in some notes
                                            ! path x state-vector-components
     real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
@@ -3055,6 +3052,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.198  2004/03/20 01:15:16  jonathan
+! add in scattering correction term in two t_script
+!
 ! Revision 2.196  2004/03/01 19:22:14  jonathan
 ! following the changes made to load_one_item
 !
