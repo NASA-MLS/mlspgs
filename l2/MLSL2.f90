@@ -97,8 +97,8 @@ program MLSL2
           print *, '  -d: Dump the declaration table after type checking'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
             &                    'more output.'
-          print *, '  -Gstring: Trace "generation".  Characters in "string" ', &
-            &                   ' may control individual outputs.'
+          print *, '  -Gstring: Trace "generation".  Characters in "string" '
+          print *, '            may control individual outputs.'
           print *, '  -l: Trace lexical analysis.'
           print *, '  -K: Capitalize identifiers.'
           print *, "  -k: Don't capitalize identifiers."
@@ -193,6 +193,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.16  2001/03/28 01:29:48  vsnyder
+! Add description of -G to -h output
+!
 ! Revision 2.15  2001/03/16 21:47:57  vsnyder
 ! Add -G option
 !
