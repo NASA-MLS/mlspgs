@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 ! $Id$
@@ -61,13 +61,19 @@
       useStart = 1
     end if
 
-    if ( useNearest .and. useAllowBelowValue ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
-
     listLen = size(list)
     valuesLen = size(values)
-    if ( size(indices) < valuesLen ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Result array is too small" )
+    if ( useNearest .and. useAllowBelowValue ) then
+      call dump(values, 'values')
+      call dump(list, 'list')
+      call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Can't set nearest and allowBelowValue in Hunt" )
+    elseif ( size(indices) < valuesLen ) then
+      call dump(values, 'values')
+      call dump(list, 'list')
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Result array is too small" )
+    endif
 
     ! Try to work out the direction, also skip if there's only one value
 
@@ -142,10 +148,13 @@
 
         if ( (.not. lowerBelow) .and. (.not. upperAbove) ) then
           ! The list is really screwey
-          call MLSMessage ( MLSMSG_Error, ModuleName, 'List out of order in Hunt (case 1)' )
+          call dump(values, 'values')
+          call dump(list, 'list')
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'List out of order in Hunt (case 1)' )
         end if
         
-        ! Now the very first change of direction is the end of hte
+        ! Now the very first change of direction is the end of the
         ! `expanding' phase
 
         if ( (searchDirection /= oldSearchDirection) .and. &
@@ -165,8 +174,22 @@
         wentUp =   ( list(index) - list(oldIndex) ) * listDirection > 0.0
         wentDown = ( list(index) - list(oldIndex) ) * listDirection < 0.0
         if ( ( searchDirection == 1  .and. wentDown ) .or. &
-          &  ( searchDirection == -1 .and. wentUp ) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, 'List out of order in Hunt (case 2)' )
+          &  ( searchDirection == -1 .and. wentUp ) ) then
+           call dump(values, 'values')
+           call dump(list, 'list')
+           ! print*, 'valueIndex ', valueIndex
+           ! print*, 'thisValue ', thisValue
+           ! print*, 'lowerBelow ', lowerBelow
+           ! print*, 'upperAbove ', upperAbove
+           ! print*, 'searchDirection ', searchDirection
+           ! print*, 'listDirection ', listDirection
+           ! print*, 'oldindex ', oldindex
+           ! print*, 'list(oldindex) ', list(oldindex)
+           ! print*, 'index ', index
+           ! print*, 'list(index) ', list(index)
+           call MLSMessage ( MLSMSG_Error, ModuleName, &
+             & 'List out of order in Hunt (case 2)' )
+        endif
       end do HuntLoop
 
       ! If user asked for nearest then check to see if one above is closer
@@ -182,9 +205,13 @@
         ! If this is closer, use it
         if ( useLogSpace ) then
           ! Check for errors in log space case
-          if ( any ( (/ list(index), list(alternativeIndex), thisValue /) <= 0.0 ) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Non positive value in logSpace nearest hunt' )
+          if ( any ( (/ list(index), list(alternativeIndex), thisValue /) &
+            &                    <= 0.0 ) ) then
+            call dump(values, 'values')
+            call dump(list, 'list')
+            call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Non positive value in logSpace nearest hunt' )
+          endif
           logThisValue = log ( thisValue )
           if ( abs ( log ( list(alternativeIndex) ) - logThisValue ) < &
             &  abs ( log ( list(index) ) - logThisValue ) ) then
@@ -213,6 +240,10 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.5  2004/09/10 23:52:13  livesey
+! Added the logSpace option for nearest (turns out I didn't need it
+! anyway but never mind!)
+!
 ! Revision 1.4  2004/07/31 19:22:53  livesey
 ! Some checking against infiniate looping.
 !
