@@ -1523,7 +1523,7 @@ contains ! =============== Subroutines and functions ==========================
   & * (1.0_rp - j2*p2*ratio2_gph - j4*p4*ratio4_gph) &
   & + ((omega*l1refalt)**2*coslat2)/(2.0_rp*g0) &
   & + mass_corr*boltz*SUM(RESHAPE(SPREAD(temp%values(:,windowstart_t: &
-  & windowfinish_t),3,ptan%template%nosurfs), (/ptan%template%nosurfs, &
+  & windowfinish_t),1,ptan%template%nosurfs), (/ptan%template%nosurfs, &
   & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
   & * eta_piqxp,dim=2) / g0
 !  WRITE(*,'(a)') 'residuals'
@@ -1593,7 +1593,7 @@ contains ! =============== Subroutines and functions ==========================
 !  WRITE(*,'(a,i3)') 'dscandgph phi = ', sv_p
 !  WRITE(*,'(8f8.4)') block%values(:,1)
         end if
-        call dump ( block%values, 'Block%values' )
+!        call dump ( block%values, 'Block%values' )
         if ( fmConf%differentialScan ) then
 ! ------------- Differential model
           block%values = EOSHIFT(block%values, &
@@ -1662,6 +1662,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.33  2002/06/25 14:55:15  bill
+! work in progress--wgr
+!
 ! Revision 2.32  2002/06/25 00:01:32  bill
 ! work in progress--wgr
 !
