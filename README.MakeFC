@@ -154,13 +154,13 @@ something like the following:
 MLSF95=NAG
 MLSPLAT=Linux
 MLSCONFG=NAG.Linux
-PGSINC=/nas/users/pwagner/TOOLKIT/include
-PGSTK=/nas/users/pwagner/TOOLKIT/NAG
-HDFEOS=/nas/users/pwagner/TOOLKIT
+PGSINC=/nas/user2/pwagner/TOOLKIT/include
+PGSTK=/nas/user2/pwagner/TOOLKIT/NAG
+HDFEOS=/nas/user2/pwagner/TOOLKIT
 HDF=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
-GCTP=/nas/users/pwagner/TOOLKIT
-PGSLIB=/nas/users/pwagner/TOOLKIT/NAG
-HDFEOS_LIB=/nas/users/pwagner/TOOLKIT
+GCTP=/nas/user2/pwagner/TOOLKIT
+PGSLIB=/nas/user2/pwagner/TOOLKIT/NAG
+HDFEOS_LIB=/nas/user2/pwagner/TOOLKIT
 HDFLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
 export MLSF95
 export MLSPLAT
@@ -193,10 +193,10 @@ prerequisites are newer.
 MLSCONFG/Makefile has the command near its start
  include 'Makefile.dep'
 that causes the dependencies to be copied in in the form of the file
-Makefile.dep. This is how make learns which sources to compile to create
-the binaries, called OBJS. Makefile.dep contains only the dependencies,
-no explicit build commands, and lists among the dependent files only
-those it finds in the same directory.
+Makefile.dep. This is how make learns which sources to compile to create the
+binaries, called OBJS. A dependency is a line containing a target and a list of
+prerequisites needed to build that target. Makefile.dep contains only the
+dependencies, no explicit build commands.
 
 It would be desirable to list Makefile.dep among the prerequisites and
 force it to be updated on any change to the source files. Instead, the
@@ -301,9 +301,10 @@ to suppress warning messages.
 
 The dependencies calculated by makedepf90 check only among files in the same
 directory as the source files. A consequence of this is that it does not show
-dependencies of files in l2 on files in lib. A consequence of this is that
-after changes to source files in lib, files in l2 may not be recompiled, even
-when they should be. This is a good reason to use f90makedep.pl, the default.
+dependencies of files in l2 on prerequisites in lib. A consequence of this is
+that after changes to source files in lib, files in l2 may not be recompiled,
+even when they should be. This is a good reason to use f90makedep.pl, the
+default.
 
 If this ever seems to work well enough, similar MakeFC and platforms
 could be devised for the other levels of mls. By design it remains an
@@ -313,6 +314,9 @@ optional way to build, coexisting in parallel with other ways.
 EOF
 exit
 # $Log$
+# Revision 1.3  2000/11/03 21:51:10  pwagner
+# Cross-directory depends; clean_objs
+#
 # Revision 1.2  2000/10/30 19:35:47  pwagner
 # Reflects change to f90makedep.pl
 #
