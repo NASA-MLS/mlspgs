@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -15,7 +15,8 @@ module ReadAPriori
   use Intrinsic, only: PHYQ_Dimensionless
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, Dump
-  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
+  use L2GPData, only: L2GPData_T, MAXSWATHNAMESBUFSIZE, &
+    & AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
   use MLSFiles, only: FILENOTFOUND, WILDCARDHDFVERSION, &
@@ -126,7 +127,7 @@ contains ! =====     Public Procedures     =============================
     integer :: Units(2)                 ! Units of value returned by EXPR
     double precision :: Value(2)        ! Value returned by EXPR
 
-    character(len=2048) :: ALLSWATHNAMES ! Buffer to get info back.
+    character(len=MAXSWATHNAMESBUFSIZE) :: ALLSWATHNAMES ! Buffer to get info back.
     character(len=8) :: description
 
     if ( toggle (gen) ) call trace_begin ( "read_apriori", root )
@@ -643,6 +644,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.54  2004/01/23 01:10:58  pwagner
+! Gets max swathlist length from L2GPData
+!
 ! Revision 2.53  2003/10/06 13:16:09  cvuu
 ! add new description=strat to handle reading the ncep data file
 !
