@@ -722,7 +722,7 @@ contains
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
-      call output ( "Timing for Retrieve =" )
+      call output ( "Timing for Retrieve = " )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
@@ -731,6 +731,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.17  2001/04/21 01:44:43  vsnyder
+! Make the timing message prettier
+!
 ! Revision 2.16  2001/04/19 23:56:23  livesey
 ! New fmStat
 !
