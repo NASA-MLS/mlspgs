@@ -16,6 +16,8 @@
 
 # $Id$
 
+angle
+
 baseline
 
 C
@@ -100,6 +102,7 @@ ptan
 ppbv
 ppmv
 pptv
+pressure
 
 rad
 radiance
@@ -142,6 +145,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.14  2002/08/20 19:19:08  livesey
+# Moved in angle and pressure from l2
+#
 # Revision 2.13  2002/07/18 22:04:43  vsnyder
 # Add dn, dv, dw
 #
