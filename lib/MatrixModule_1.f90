@@ -18,7 +18,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, operator(+), &
     & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &
     & Spill, TransposeMatrix, UpdateDiagonal
-  use MLSCommon, only: RM
+  use MLSCommon, only: RM, RV, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -341,7 +341,7 @@ contains ! =====     Public Procedures     =============================
   subroutine AddToMatrix ( X, Y, Scale ) ! X = X + [Scale*] Y
     type(Matrix_T), intent(inout) :: X
     type(Matrix_T), intent(in) :: Y
-    real(rm), intent(in), optional :: Scale
+    real(r8), intent(in), optional :: Scale
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
@@ -1657,7 +1657,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------------  ScaleMatrix  -----
   subroutine ScaleMatrix ( Z, A )       ! Z := A * Z, where A is scalar
     type(matrix_T), intent(inout) :: Z
-    real(rm), intent(in) :: A
+    real(r8), intent(in) :: A
     integer :: I, J                     ! Subscripts and loop inductors
     do i = 1, z%row%nb
       do j = 1, z%col%nb
@@ -1749,13 +1749,13 @@ contains ! =====     Public Procedures     =============================
   subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUARE, INVERT )
   ! Add LAMBDA to the diagonal of A.
     type(Matrix_SPD_T), intent(inout) :: A
-    real(rm), intent(in) :: LAMBDA
+    real(rv), intent(in) :: LAMBDA
     logical, intent(in), optional :: SQUARE ! Update with square of lambda
     logical, intent(in), optional :: INVERT ! Update with inverse of (square
     !                                         of) lambda
 
     integer :: I
-    real(rm) :: MYLAMBDA
+    real(rv) :: MYLAMBDA
 
     myLambda = lambda
     if ( present(square) ) then
@@ -2125,6 +2125,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.82  2002/09/13 18:08:12  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.81  2002/09/11 17:43:38  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !
