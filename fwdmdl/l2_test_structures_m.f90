@@ -37,10 +37,13 @@ module L2_TEST_STRUCTURES_M
     Real(r8), DIMENSION(:), POINTER :: Href
     Real(r8), DIMENSION(:), POINTER :: t_zeta_basis
     Real(r8), DIMENSION(:), POINTER :: t_phi_basis
+    Real(r8), DIMENSION(:), POINTER :: t_phi_basis_copy
     Logical , DIMENSION(:), POINTER :: is_f_log
     Real(r8), DIMENSION(:,:), POINTER :: t_coeff
     Real(r8), DIMENSION(:,:), POINTER :: f_zeta_basis
     Real(r8), DIMENSION(:,:), POINTER :: f_phi_basis
+    Real(r8), DIMENSION(:,:), POINTER :: f_phi_basis_copy
+    Real(r8), DIMENSION(:,:), POINTER :: s_phi_basis_copy
     Real(r8), DIMENSION(:,:,:), POINTER :: mr_f
   end type TEMPORARY_FWD_MDL_INFO
 
@@ -82,6 +85,7 @@ module L2_TEST_STRUCTURES_M
     Integer(i4) :: Surface_index
     Integer(i4) :: No_filt_pts
     Integer(i4) :: no_ptg_frq(Nptg)
+    Integer(i4), DIMENSION(:), POINTER :: Spect_atmos
     Real(r8) :: Xlamda
     Real(r8), DIMENSION(:), POINTER :: z_grid
     Real(r8), DIMENSION(:), POINTER :: tan_press

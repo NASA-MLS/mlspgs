@@ -1,0 +1,150 @@
+module PTG_FRQ_LOAD_M
+  use MLSCommon, only: I4, R8
+  use L2_TEST_STRUCTURES_M
+  use L2PCdim, only: N2lvl, Nptg
+  use D_HUNT_M, only: HUNT
+  implicit NONE
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+    "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+    "$RCSfile$"
+!---------------------------------------------------------------------------
+contains
+!---------------------------------------------------------------------------
+! ===========================================     ptg_frq_load =====
+! This subprogram loads the pointing frequency gridding by band
+!
+  SUBROUTINE ptg_frq_load(FMC, FMI, Ier)
+!---------------------------------------------------------------------------
+
+Type(fwd_mdl_config), INTENT(IN OUT) :: FMC
+Type(fwd_mdl_info), INTENT(IN OUT) :: FMI
+Integer(i4), INTENT(OUT) :: ier
+!
+! ---- Local variables ---------
+!
+Integer(i4) :: i, k, kk, kz, jp, io, l
+
+Real(r8) :: dummy(N2lvl)
+
+Real(r8) :: q, r
+!
+Character (LEN=80) :: Fnd, Line
+!
+! Load the pointing vs. frequencies database for the given band
+! (needed for frequency averaging)
+!
+  Fnd(1:) = ' '
+  Fnd = FMC%B
+!
+  kk = -1
+  kz = FMI%no_ptg_frq(1)
+  FMI%no_ptg_frq(1:Nptg) = 0
+!
+  CLOSE(32,iostat=i)
+  OPEN(32,file=Fnd,action='READ',status='OLD',iostat=io)
+  if(io /= 0) goto 10
+!
+! First entry in the file is the 'Band' frequency. All the rest are
+! relative to this (center) frequency for this band
+!
+  Read(32,*,iostat=io) q
+  if(io /= 0) goto 10
+!
+  DO
+!
+    Read(32,*,iostat=io) r, jp
+    if(io > 0) goto 10
+    if(io /= 0) EXIT
+    Call Hunt(r,FMI%tan_press,kz,k,i)
+    IF(ABS(r-FMI%tan_press(i)) < ABS(r-FMI%tan_press(k))) k = i
+!
+    if(ABS(r-FMI%tan_press(k)) > 0.001) then
+      Print *,'** Warning **'
+      Print *,'   Zeta:',Sngl(r),' not an entry in tan_press !'
+      Print *,'   ptg_frq_grid for this Zeta is ignored ..'
+      Print *
+      Read(32,*,iostat=io) (dummy(i),i=1,jp)
+      if(io /= 0) goto 10
+!
+    else
+
+      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
+
+      if(FMC%Zfrq > 0.0) then
+        FMI%no_ptg_frq(k) = 1
+        ALLOCATE(FMI%ptg_frq_grid(k)%values(2),STAT=i)
+      else
+        FMI%no_ptg_frq(k) = jp
+        ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
+      endif
+
+      IF(i /= 0) THEN
+        ier = i
+        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
+        PRINT *,'   tan_hts index:',k,' STAT =',ier
+        do l = 1, k
+          DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
+        end do
+        goto 99
+      ENDIF
+
+      Read(32,*,iostat=io) (dummy(i),i=1,jp)
+      if(io /= 0) goto 10
+      if(kk < 0) kk = k
+
+      if(FMC%Zfrq > 0.0) dummy(1) = FMC%Zfrq - q
+!
+! Add 'band' frequency to ptg_frq_grid to convert to absolute grid
+!
+      jp = FMI%no_ptg_frq(k)
+      FMI%ptg_frq_grid(k)%values(1:jp) = dummy(1:jp) + q
+!
+    endif
+!
+  END DO
+!
+  if(kk > 1) then
+    jp = FMI%no_ptg_frq(kk)
+    do k = 1, kk-1
+      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
+      ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
+      IF(i /= 0) THEN
+        ier = i
+        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
+        PRINT *,'   tan_hts index:',k,' STAT =',ier
+        do l = 1, k
+          DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
+        end do
+        goto 99
+      ENDIF
+      FMI%no_ptg_frq(k) = jp
+      FMI%ptg_frq_grid(k)%values(1:jp) = &
+     &           FMI%ptg_frq_grid(kk)%values(1:jp)
+    end do
+  endif
+!
+ 10 CLOSE(32,iostat=i)
+    if(io > 0) then
+      ier = io
+      goto 99
+    else
+      io = 0
+    endif
+!
+ 99  CLOSE(32,iostat=i)
+!
+     if(io /= 0) then
+       Ier = iabs(io)
+       Call ErrMsg(Line,io)
+     endif
+
+     Return
+
+  END SUBROUTINE PTG_FRQ_LOAD
+
+end module PTG_FRQ_LOAD_M
+! $Log$
+! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
+! Initial conversion to Fortran 90

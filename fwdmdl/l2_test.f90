@@ -8,6 +8,7 @@ Program l2_Test
                      MNM => max_no_mmaf
   use ELLIPSE, only: PHI_TAN, ROC
   use L2_LOAD_M, only: L2_LOAD
+  use PTG_FRQ_LOAD_M, only: PTG_FRQ_LOAD
   use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
   use REFRACTION_M, only: REFRACTION_CORRECTION
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
@@ -31,12 +32,10 @@ Type(fwd_mdl_info) :: FMI
 Type(fwd_mdl_config) :: FMC
 Type(temporary_fwd_mdl_info) :: T_FMI
 
-Integer(i4) :: SPECT_ATMOS(Nsps), ld
-
-Integer(i4) :: i, j, k, kk, kz, ht_i, no_t, mnz, no_tan_hts, ch, Spectag, &
-               m, prev_npf, ier, n_obs, mmaf, n_sps, si, band, ptg_i, &
+Integer(i4) :: i, j, k, kk, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
+               m, prev_npf, ier, mmaf, si, ptg_i, &
                frq_i, io, klo, jj, l, n, brkpt, no_ele, mid, ilo, ihi, &
-               no_phi_t, k_info_count, gl_count
+               k_info_count, gl_count, ld
 
 Integer(i4) :: ch1, ch2, no_pfa_ch, pfa_ch(2)
 
@@ -95,11 +94,7 @@ Character (LEN=16) :: Vname
 Character (LEN=80) :: Line
 Character (LEN=40) :: Ax, Dtm1, Dtm2
 
-real(r8) :: T_PHI_BASIS_COPY(mnp)
-real(r8) :: F_PHI_BASIS_COPY(mnp,Nsps)
-
 Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
-Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
 
 !  ----------------------
 
@@ -125,54 +120,11 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
   end do
 
   elev_offset = 0.0                         ! Zero elev_offset in any case
-  SPECT_ATMOS(1:Nsps) = -1
-!
-! Set n_obs to be: N_lvls always.
-!   (Changed, Aug/6/96 Z.Shippony & W.G.Read)
-
-  band = FMI%band
-  n_obs = FMC%n_lvls
-
-  no_t = T_FMI%no_t
-  no_phi_t = T_FMI%no_phi_t
-
-  T_PHI_BASIS_COPY(1:no_phi_t) = T_FMI%t_phi_basis(1:no_phi_t)
-!
-  n_sps = FMI%n_sps
-  DO m = 1, n_sps
-    kk = T_FMI%no_phi_f(m)
-    F_PHI_BASIS_COPY(1:kk,m) = T_FMI%f_phi_basis(1:kk,m)
-  END DO
-!
-! Create spect_atmos array:
-!
-  do k = 1, n_sps
-    Spectag = T_FMI%atmospheric(k)%Spectag
-    do i = 1, FMI%no_spectro
-      if(Spectag == FMI%spectroscopic(i)%Spectag) then
-        spect_atmos(k) = i
-        EXIT
-      endif
-    end do
-  end do
-!
-  kk = mxco
-  k = FMI%mfi + 2
-
-  DEALLOCATE(S_PHI_BASIS_COPY,STAT=i)
-  ALLOCATE(S_PHI_BASIS_COPY(k,FMI%no_spectro),STAT=io)
-  IF(io /= 0) then
-    Print *,'** ALLOCATE Error: S_PHI_BASIS_COPY, STAT =',io
-    goto 99
-  endif
-
-  do j = 1, FMI%no_spectro
-    S_PHI_BASIS_COPY(1:k,j) = FMI%spectroscopic(j)%PHI_BASIS(1:k)
-  end do
 
   Call Z_DATETIME(Dtm1)
 
-  Zeta = -1.666667
+  Call ptg_frq_load(FMC, FMI, Ier)
+  if(ier /= 0) goto 99
 !
 ! Convert GeoDetic Latitude to GeoCentric Latitude, and convert both to
 ! Radians (instead of Degrees). Also compute the effective earth radius.
@@ -193,6 +145,7 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
        gl_count, Ier)
   IF(ier /= 0) goto 99
 !
+  Zeta = -1.666667
   no_tan_hts = FMC%no_tan_hts
   Call Hunt(Zeta,FMI%tan_press,no_tan_hts,jj,i)
   IF(ABS(Zeta-FMI%tan_press(i)) < ABS(Zeta-FMI%tan_press(jj))) jj = i
@@ -216,17 +169,18 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
 !
     phi_tan = FMC%phi_tan_mmaf(l)
 !
-    T_FMI%t_phi_basis(1:no_phi_t) = T_PHI_BASIS_COPY(1:no_phi_t) + phi_tan
+    T_FMI%t_phi_basis(1:T_FMI%no_phi_t) = &
+                    T_FMI%T_PHI_BASIS_COPY(1:T_FMI%no_phi_t) + phi_tan
 
-    DO j = 1, n_sps
+    DO j = 1, FMI%n_sps
       k = T_FMI%no_phi_f(j)
-      T_FMI%f_phi_basis(1:k,j) = F_PHI_BASIS_COPY(1:k,j) + phi_tan
+      T_FMI%f_phi_basis(1:k,j) = T_FMI%F_PHI_BASIS_COPY(1:k,j) + phi_tan
     end do
 
     k = FMI%mfi + 2
     do j = 1, FMI%no_spectro
       FMI%spectroscopic(j)%PHI_BASIS(1:k) = &
-     &                S_PHI_BASIS_COPY(1:k,j) + phi_tan
+     &                T_FMI%S_PHI_BASIS_COPY(1:k,j) + phi_tan
     end do
 !
 ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
@@ -273,7 +227,7 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
           DEALLOCATE(k_spect_dnu_frq(j)%values,STAT=i)
         end do
 !
-        ALLOCATE(k_temp_frq%values(kk,no_t,no_phi_t),STAT=ier)
+        ALLOCATE(k_temp_frq%values(kk,T_FMI%no_t,T_FMI%no_phi_t),STAT=ier)
         IF(ier /= 0) then
           Print *,'** ALLOCATE Error: k_temp_frq array, STAT =',ier
           goto 99
@@ -290,9 +244,9 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
         end do
 !
         do m = 1, FMI%n_sps
-          j = spect_atmos(m)
+          j = FMI%spect_atmos(m)
           if(j < 1) CYCLE
-          if(.not. FMI%spectroscopic(j)%DER_CALC(band)) CYCLE
+          if(.not. FMI%spectroscopic(j)%DER_CALC(FMI%band)) CYCLE
           Vname(1:) = ' '
           Spectag = FMI%spectroscopic(j)%Spectag
           DO
@@ -358,13 +312,14 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
 !
 ! Now, Compute the radiances derivatives:
 !
-        CALL Rad_Tran_WD(frq_i,band,Frq,FMC%N_lvls,FMI%n_sps,z_path(k,l),&
-       &     h_path(k,l),t_path(k,l),phi_path(k,l),dHdz_path(k,l),      &
-       &     T_FMI%atmospheric,beta_path(1:,frq_i),spsfunc_path(1:,k,l),  &
-       &     T_FMI%t_zeta_basis,T_FMI%f_zeta_basis,T_FMI%no_coeffs_f,   &
+        CALL Rad_Tran_WD(frq_i,FMI%band,Frq,FMC%N_lvls,FMI%n_sps, &
+       &     z_path(k,l),h_path(k,l),t_path(k,l),phi_path(k,l),   &
+       &     dHdz_path(k,l),T_FMI%atmospheric,beta_path(1:,frq_i),&
+       &     spsfunc_path(1:,k,l),T_FMI%t_zeta_basis,  &
+       &     T_FMI%f_zeta_basis,T_FMI%no_coeffs_f,   &
        &     T_FMI%mr_f,T_FMI%no_t,ref_corr(1:,k),T_FMI%no_phi_f,       &
        &     T_FMI%f_phi_basis,FMC%temp_der,T_FMI%no_phi_t,             &
-       &     T_FMI%t_phi_basis,dh_dt_path(k,l),spect_atmos,             &
+       &     T_FMI%t_phi_basis,dh_dt_path(k,l),FMI%spect_atmos,         &
        &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq,   &
        &     k_spect_dn_frq,k_spect_dnu_frq,T_FMI%is_f_log,brkpt,       &
        &     no_ele,mid,ilo,ihi,t_script,tau,ier)
@@ -420,7 +375,7 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
 !       ch = pfa_ch(i)
         ch = i                 ! ** DEBUG, memory limitations on MLSGATE
         do j = 1, FMI%n_sps
-          if(T_FMI%atmospheric(j)%der_calc(band)) THEN
+          if(T_FMI%atmospheric(j)%der_calc(FMI%band)) THEN
             RadV(1:kk) = 0.0
             do k = 1, T_FMI%no_phi_f(j)
               do n = 1, T_FMI%no_coeffs_f(j)
@@ -448,8 +403,8 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
 !       ch = pfa_ch(i)
         ch = i                 ! ** DEBUG, memory limitations on MLSGATE
         do m = 1, FMI%n_sps
-          j = spect_atmos(m)
-          if(.not.  FMI%spectroscopic(j)%DER_CALC(band)) CYCLE
+          j = FMI%spect_atmos(m)
+          if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) CYCLE
           Spectag = FMI%spectroscopic(j)%Spectag
           DO
             if(FMI%spectroscopic(j)%Spectag /= Spectag) EXIT
@@ -502,15 +457,15 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
       k_temp(i,kk,1:T_FMI%no_t,1:T_FMI%no_phi_t) = &
      &            k_temp(i,kk-1,1:T_FMI%no_t,1:T_FMI%no_phi_t)
       do m = 1, FMI%n_sps
-        if(T_FMI%atmospheric(m)%der_calc(band)) then
+        if(T_FMI%atmospheric(m)%der_calc(FMI%band)) then
           k = T_FMI%no_phi_f(m)
           n = T_FMI%no_coeffs_f(m)
           k_atmos(i,kk,1:n,1:k,m)=k_atmos(i,kk-1,1:n,1:k,m)
         endif
       end do
       do m = 1, FMI%n_sps
-        j = spect_atmos(m)
-        if(.not.  FMI%spectroscopic(j)%DER_CALC(band)) CYCLE
+        j = FMI%spect_atmos(m)
+        if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) CYCLE
         Spectag =  FMI%spectroscopic(j)%Spectag
         DO
           if(FMI%spectroscopic(j)%Spectag /= Spectag) EXIT
@@ -533,12 +488,12 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
 !
       if(FMC%do_conv) then
 !
-        Call convolve_all(T_FMI%ptg_press,T_FMI%atmospheric,FMI%n_sps, &
+        Call convolve_all(T_FMI%ptg_press,T_FMI%atmospheric,FMI%n_sps,   &
        &     FMC%temp_der,FMI%tan_press,ptg_angles(1:,l),tan_temp(1:,l), &
-       &     dx_dt, d2x_dxdt,band,center_angle,FMI%fft_pts,          &
+       &     dx_dt, d2x_dxdt,FMI%band,center_angle,FMI%fft_pts,          &
        &     Radiances(1:,ch),k_temp(i,1:,1:,1:),k_atmos(i,1:,1:,1:,1:), &
        &     k_spect_dw(i,1:,1:,1:,1:),k_spect_dn(i,1:,1:,1:,1:),    &
-       &     k_spect_dnu(i,1:,1:,1:,1:),spect_atmos,no_tan_hts,      &
+       &     k_spect_dnu(i,1:,1:,1:,1:),FMI%spect_atmos,no_tan_hts,  &
        &     k_info_count,i_star_all(i,1:),k_star_all(i,1:,1:,1:,1:), &
        &     k_star_info,T_FMI%no_t,T_FMI%no_phi_t,T_FMI%no_phi_f,   &
        &     FMI%spectroscopic,T_FMI%t_zeta_basis,FMI%Xlamda,FMI%Aaap,&
@@ -547,13 +502,14 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: S_PHI_BASIS_COPY
 !
       else
 !
-        Call no_conv_at_all(T_FMI%ptg_press,FMI%n_sps,FMI%tan_press,band, &
-       &     Radiances(1:,ch),k_temp(i,1:,1:,1:),k_atmos(i,1:,1:,1:,1:), &
-       &     k_spect_dw(i,1:,1:,1:,1:), k_spect_dn(i,1:,1:,1:,1:),     &
-       &     k_spect_dnu(i,1:,1:,1:,1:), spect_atmos, no_tan_hts,      &
-       &     k_info_count, i_star_all(i,1:), k_star_all(i,1:,1:,1:,1:), &
-       &     k_star_info,FMC%temp_der,T_FMI%no_t,T_FMI%no_phi_t,       &
-       &     T_FMI%no_phi_f,T_FMI%t_zeta_basis,T_FMI%atmospheric,        &
+        Call no_conv_at_all(T_FMI%ptg_press,FMI%n_sps,FMI%tan_press, &
+       &     FMI%band,Radiances(1:,ch),k_temp(i,1:,1:,1:),           &
+       &     k_atmos(i,1:,1:,1:,1:),k_spect_dw(i,1:,1:,1:,1:),       &
+       &     k_spect_dn(i,1:,1:,1:,1:),k_spect_dnu(i,1:,1:,1:,1:),   &
+       &     FMI%spect_atmos, no_tan_hts,k_info_count,               &
+       &     i_star_all(i,1:), k_star_all(i,1:,1:,1:,1:),            &
+       &     k_star_info,FMC%temp_der,T_FMI%no_t,T_FMI%no_phi_t,     &
+       &     T_FMI%no_phi_f,T_FMI%t_zeta_basis,T_FMI%atmospheric,    &
        &     FMI%spectroscopic)
 !
       endif

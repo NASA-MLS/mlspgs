@@ -27,18 +27,18 @@ Type(fwd_mdl_config), INTENT(IN OUT) :: FMC
 
 Type(fwd_mdl_info), OPTIONAL, INTENT(OUT) :: FMI
 Type(temporary_fwd_mdl_info), OPTIONAL, INTENT(OUT) :: T_FMI
+
+Integer(i4), INTENT(OUT) :: ier
 !
 ! ---- Local variables ---------
 !
 Logical :: geom_deriv(6)
-Integer(i4) :: i, j, k, kk, ht_i, no_t, mnz, kz, band, si, ier, jp, &
-               n_sps, io, l, nl, Spectag, m, no_phi_t, no_mmaf, jj
+Integer(i4) :: i, j, k, kk, ht_i, no_t, mnz, kz, si, n_sps, io, nl, &
+               Spectag, m, no_phi_t, no_mmaf, jj
 
 Integer(i4) :: ch1, ch2, no_pfa_ch, pfa_ch(2)
 
 Real(r8) :: dummy(N2lvl), thbs(10), Qlog(3)
-
-Real(r8), DIMENSION(:), ALLOCATABLE :: z_gnlv
 
 real(r8) :: freqs(Nch)
 
@@ -258,6 +258,7 @@ Character (LEN=80) :: Fnd, Line
     j = FMC%t_indx(i)
     FMI%tan_press(kz) = FMI%z_grid(j)
   end do
+  FMI%no_ptg_frq(1) = kz
 !
   j = 2**FMI%fft_pts
   DEALLOCATE(FMI%AAAP,FMI%D1AAAP,FMI%D2AAAP,STAT=i)
@@ -306,9 +307,10 @@ Character (LEN=80) :: Fnd, Line
     read(11,'(A)',iostat=io) Line
     if(io /= 0) goto 99
     if(Index(Line,'END_CAT').gt.0) EXIT
-    read(Line,*,iostat=io) Name, Spectag, nl, (Qlog(i),i=1,3)
+!
+    Read(Line,*,iostat=io) Name, Spectag, nl, (Qlog(i),i=1,3)
     if(io /= 0) goto 99
-
+!
     j = 0
     DO i = 1, n_sps
       if(Name == FMI%Species(i)) then
@@ -364,6 +366,7 @@ Character (LEN=80) :: Fnd, Line
   kk = mxco
   k = FMI%mfi + 2
 
+  Line(1:) = ' '
   do j = 1, FMI%no_spectro
     Ax(1:)=' '
     read(11,'(A)',iostat=io) Ax
@@ -396,9 +399,12 @@ Character (LEN=80) :: Fnd, Line
 !
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
+!
+  read(11,'(A)',iostat=io) Ax
+  if(io /= 0) goto 99
 
   read(11,*,iostat=io) T_FMI%ptg_press%name, &
- &                    (T_FMI%ptg_press%der_calc(i),i=1,6)
+                      (T_FMI%ptg_press%der_calc(i),i=1,6)
   if(io /= 0) goto 99
 
   read(11,*,iostat=io) j
@@ -418,7 +424,7 @@ Character (LEN=80) :: Fnd, Line
   if(io /= 0) goto 99
 
   do i = 1, T_FMI%No_Geometric
-    read(11,*,iostat=io) Name,geom_deriv,r
+    read(11,*,iostat=io) Name, geom_deriv, r
     if(io /= 0) goto 99
     IF(Name == 'ELEV_183') THEN
       T_FMI%elev_183 = r
@@ -508,9 +514,10 @@ Character (LEN=80) :: Fnd, Line
   no_t = T_FMI%no_t
   no_phi_t = T_FMI%no_phi_t
   DEALLOCATE(T_FMI%t_zeta_basis,T_FMI%t_phi_basis,T_FMI%t_coeff, &
- &           STAT=i)
-  ALLOCATE(T_FMI%t_zeta_basis(no_t),T_FMI%t_phi_basis(no_phi_t), &
- &         T_FMI%t_coeff(no_t,no_mmaf),STAT=i)
+ &           T_FMI%t_phi_basis_copy,STAT=i)
+  ALLOCATE(T_FMI%t_zeta_basis(no_t),T_FMI%t_phi_basis(no_phi_t),   &
+ &    T_FMI%t_phi_basis_copy(no_phi_t),T_FMI%t_coeff(no_t,no_mmaf),&
+      STAT=i)
   if(i /= 0) goto 99
 
   read(11,*,iostat=io) (T_FMI%t_zeta_basis(i),i=1,no_t)
@@ -524,6 +531,7 @@ Character (LEN=80) :: Fnd, Line
   if(io /= 0) goto 99
 
   T_FMI%t_phi_basis(1:no_phi_t) = dummy(1:no_phi_t) * deg2rad
+  T_FMI%t_phi_basis_copy(1:no_phi_t) = T_FMI%t_phi_basis(1:no_phi_t)
 
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
@@ -569,13 +577,14 @@ Character (LEN=80) :: Fnd, Line
 
   kk = MAXVAL(T_FMI%no_phi_f)
   ht_i = MAXVAL(T_FMI%no_coeffs_f)
-  DEALLOCATE(T_FMI%f_zeta_basis,T_FMI%f_phi_basis,T_FMI%mr_f,STAT=i)
-  ALLOCATE(T_FMI%f_zeta_basis(ht_i,n_sps), &
- &         T_FMI%f_phi_basis(kk,n_sps),    &
+  DEALLOCATE(T_FMI%f_zeta_basis,T_FMI%f_phi_basis,T_FMI%mr_f, &
+             T_FMI%f_phi_basis_copy,STAT=i)
+  ALLOCATE(T_FMI%f_zeta_basis(ht_i,n_sps),   &
+ &         T_FMI%f_phi_basis(kk,n_sps),      &
+ &         T_FMI%f_phi_basis_copy(kk,n_sps), &
  &         T_FMI%mr_f(ht_i,kk,n_sps), STAT=i)
   if(i /= 0) goto 99
 !
-  dummy(1:mnp) = 0.0
   DO m = 1, n_sps
     kk = T_FMI%no_phi_f(m)
     ht_i = T_FMI%no_coeffs_f(m)
@@ -585,9 +594,40 @@ Character (LEN=80) :: Fnd, Line
     read(11,*,iostat=io) (dummy(i),i=1,kk)
     if(io /= 0) goto 99
     T_FMI%f_phi_basis(1:kk,m) = dummy(1:kk) * deg2rad
+    T_FMI%f_phi_basis_copy(1:kk,m) = T_FMI%f_phi_basis(1:kk,m)
     read(11,*,iostat=io) ((T_FMI%mr_f(i,j,m),j=1,kk),i=1,ht_i)
     if(io /= 0) goto 99
   END DO
+!
+! Create spect_atmos array:
+!
+  DEALLOCATE(FMI%spect_atmos,STAT=i)
+  ALLOCATE(FMI%spect_atmos(n_sps),STAT=i)
+  if(i /= 0) goto 99
+
+  do k = 1, n_sps
+    Spectag = T_FMI%atmospheric(k)%Spectag
+    do i = 1, FMI%no_spectro
+      if(Spectag == FMI%spectroscopic(i)%Spectag) then
+        FMI%spect_atmos(k) = i
+        EXIT
+      endif
+    end do
+  end do
+!
+  kk = mxco
+  k = FMI%mfi + 2
+
+  DEALLOCATE(T_FMI%S_PHI_BASIS_COPY,STAT=i)
+  ALLOCATE(T_FMI%S_PHI_BASIS_COPY(k,FMI%no_spectro),STAT=io)
+  IF(io /= 0) then
+    Print *,'** ALLOCATE Error: T_FMI%S_PHI_BASIS_COPY, STAT =',io
+    goto 99
+  endif
+
+  do j = 1, FMI%no_spectro
+    T_FMI%S_PHI_BASIS_COPY(1:k,j) = FMI%spectroscopic(j)%PHI_BASIS(1:k)
+  end do
 
   CLOSE(11,iostat=i)
 !
@@ -611,116 +651,12 @@ Character (LEN=80) :: Fnd, Line
  &                 FMC%InDir,ier)
   if(ier /= 0) goto 99
 !
-! Load the pointing vs. frequencies database for the given band
-! (needed for frequency averaging)
-!
-  Fnd(1:) = ' '
-  Fnd = FMC%B
-!
-  kk = -1
-  FMI%no_ptg_frq(1:Nptg) = 0
-!
-  CLOSE(32,iostat=i)
-  OPEN(32,file=Fnd,action='READ',status='OLD',iostat=io)
-  if(io /= 0) goto 44
-!
-! First entry in the file is the 'Band' frequency. All the rest are
-! relative to this (center) frequency for this band
-!
-  Read(32,*,iostat=io) q
-  if(io /= 0) goto 44
-!
-  DO
-!
-    Read(32,*,iostat=io) r, jp
-    if(io > 0) goto 44
-    if(io /= 0) EXIT
-    Call Hunt(r,FMI%tan_press,kz,k,i)
-    IF(ABS(r-FMI%tan_press(i)) < ABS(r-FMI%tan_press(k))) k = i
-!
-    if(ABS(r-FMI%tan_press(k)) > 0.001) then
-      Print *,'** Warning **'
-      Print *,'   Zeta:',Sngl(r),' not an entry in tan_press !'
-      Print *,'   ptg_frq_grid for this Zeta is ignored ..'
-      Print *
-      Read(32,*,iostat=io) (dummy(i),i=1,jp)
-      if(io /= 0) goto 44
-!
-    else
-
-      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
-
-      if(FMC%Zfrq > 0.0) then
-        FMI%no_ptg_frq(k) = 1
-        ALLOCATE(FMI%ptg_frq_grid(k)%values(2),STAT=i)
-      else
-        FMI%no_ptg_frq(k) = jp
-        ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
-      endif
-
-      IF(i /= 0) THEN
-        ier = i
-        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
-        PRINT *,'   tan_hts index:',k,' STAT =',ier
-        do l = 1, k
-          DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
-        end do
-        goto 99
-      ENDIF
-
-      Read(32,*,iostat=io) (dummy(i),i=1,jp)
-      if(io /= 0) goto 44
-      if(kk < 0) kk = k
-
-      if(FMC%Zfrq > 0.0) dummy(1) = FMC%Zfrq - q
-!
-! Add 'band' frequency to ptg_frq_grid to convert to absolute grid
-!
-      jp = FMI%no_ptg_frq(k)
-      FMI%ptg_frq_grid(k)%values(1:jp) = dummy(1:jp) + q
-!
-    endif
-!
-  END DO
-!
-  if(kk > 1) then
-    jp = FMI%no_ptg_frq(kk)
-    do k = 1, kk-1
-      DEALLOCATE(FMI%ptg_frq_grid(k)%values,STAT=i)
-      ALLOCATE(FMI%ptg_frq_grid(k)%values(jp),STAT=i)
-      IF(i /= 0) THEN
-        ier = i
-        PRINT *,'** Error: ALLOCATION error for ptg_frq_grid ..'
-        PRINT *,'   tan_hts index:',k,' STAT =',ier
-        do l = 1, k
-          DEALLOCATE(FMI%ptg_frq_grid(l)%values,STAT=i)
-        end do
-        goto 99
-      ENDIF
-      FMI%no_ptg_frq(k) = jp
-      FMI%ptg_frq_grid(k)%values(1:jp) = &
-     &           FMI%ptg_frq_grid(kk)%values(1:jp)
-    end do
-  endif
-!
- 44 CLOSE(32,iostat=i)
-    if(io > 0) then
-      ier = io
-      goto 99
-    else
-      io = 0
-    endif
-!
-!  **** END DEBUG
-!
  99  CLOSE(11,iostat=i)
      CLOSE(13,iostat=i)
-     CLOSE(32,iostat=i)
 !
      if(io /= 0) then
        Ier = iabs(io)
        Call ErrMsg(Line,io)
-       Stop
      endif
 
      Return
@@ -811,7 +747,7 @@ END SUBROUTINE radiometry
 !
   Subroutine ANTENNA (Fn, M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IER)
 
-    use GET_LUN, only: AAAP_UNIT
+    use UNITS, only: AAAP_UNIT
     use MACHINE, only: IO_ERROR
 
     Integer(i4), parameter :: MaxV= 2048
@@ -925,7 +861,7 @@ SUBROUTINE get_filters(no_pfa_ch,no_filt_pts,pfa_ch,f_grid_filter, &
                &       freqs,filter_func,InDir,ier)
 
   use MLSCommon, only: I4, R8
-  use GET_LUN, only: filter_unit
+  use UNITS, only: filter_unit
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_filters
