@@ -14,18 +14,16 @@ module L2PC_m
     & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
     & L_ROWS, L_COLUMNS, L_ADOPTED, L_TEMPERATURE, PHYQ_DIMENSIONLESS, PHYQ_TEMPERATURE, PHYQ_VMR
   use machine, only: io_error
-  use MLSCommon, only: R8, RM, R4, FindFirst
-  use VectorsModule, only: assignment(=), DESTROYVECTORINFO, COPYVECTOR, &
-    & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE, &
-    & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, NULLIFYVECTORTEMPLATE
   use ManipulateVectorQuantities, only: DOVECTORSMATCH
+  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
+    & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
     & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, &
     & GETACTUALMATRIXFROMDATABASE, DUMP_STRUCT, COPYMATRIXVALUE
-  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
-    & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
+  use MLSCommon, only: R8, RM, R4
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
+  use MLSSets, only: FindFirst
   use MLSSignals_m, only: GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
   use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
@@ -38,6 +36,9 @@ module L2PC_m
   use String_Table, only: GET_STRING
   use TOGGLES, only: TAB, TOGGLE, SWITCHES
   use Tree, only: DECORATION, NSONS, SUBTREE
+  use VectorsModule, only: assignment(=), DESTROYVECTORINFO, COPYVECTOR, &
+    & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE, &
+    & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, NULLIFYVECTORTEMPLATE
 
   implicit NONE
   private
@@ -141,7 +142,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
     message = ''
-    i = FindFirst ( l2pcDatabase%name == name )
+    i = FindFirst ( l2pcDatabase%name, name )
     if ( i == 0 ) then
       message = 'No such l2pc matrix'
       return
@@ -177,7 +178,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Executable code
     message = ''
-    i = FindFirst ( l2pcDatabase%name == name )
+    i = FindFirst ( l2pcDatabase%name, name )
     if ( i == 0 ) then
       message = 'No such l2pc matrix'
       return
@@ -224,7 +225,7 @@ contains ! ============= Public Procedures ==========================
     message = ''
     call NullifyVectorTemplate ( vectorTemplate )
 
-    i = FindFirst ( l2pcDatabase%name == bin )
+    i = FindFirst ( l2pcDatabase%name, bin )
     if ( i == 0 ) then
       message = 'No such l2pc bin found'
       return
@@ -246,7 +247,7 @@ contains ! ============= Public Procedures ==========================
     ! Copy each quantity from the l2pc database into the mainstream one
     do qty = 1, vectorTemplate%noQuantities
       call CopyQuantityTemplate ( qt, l2pcQTs ( sourceTemplate%quantities(qty) ) )
-      i = FindFirst ( quantityTemplates%name == qt%name )
+      i = FindFirst ( quantityTemplates%name, qt%name )
       if ( i /= 0 ) then
         ! Found this quantity already. Is it marked as one to be adopted
         if ( quantityTemplates(i)%quantityType == l_adopted ) then
@@ -867,7 +868,7 @@ contains ! ============= Public Procedures ==========================
     integer, intent(in) :: NAME         ! Name index
     integer :: INDEX
     ! Executable code
-    index = FindFirst ( l2pcDatabase%name == name )
+    index = FindFirst ( l2pcDatabase%name, name )
     if ( index /= 0 ) call PopulateL2PCBin ( index )
   end subroutine PopulateL2PCBinByName
 
@@ -1515,7 +1516,7 @@ contains ! ============= Public Procedures ==========================
         if ( molecule == l_extinction ) then
           call GetHDF5Attribute ( qID, 'radiometer', word )
           stringIndex = GetStringIndexFromString ( word )
-          radiometer = FindFirst ( stringIndex == Radiometers%prefix )
+          radiometer = FindFirst ( Radiometers%prefix, stringIndex )
           frequencyCoordinate = l_intermediateFrequency
         else
           frequencyCoordinate = l_none
@@ -1729,6 +1730,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.73  2004/06/10 00:57:47  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.72  2004/02/11 01:08:44  livesey
 ! Removed print statement.
 !
