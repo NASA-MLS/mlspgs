@@ -7,7 +7,6 @@ module ReadAPriori
   use GriddedData, only: GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump
   use Hdf, only: DFACC_READ, SFSTART
-  use Hdfeos, only: SWOPEN, SWCLOSE
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & S_L2AUX, S_L2GP
@@ -179,9 +178,6 @@ contains ! =====     Public Procedures     =============================
 
         ! If we didn't get a name get the first swath name in the file
         if ( len_trim(swathNameString) == 0 ) then
-!
-! (((((( This will have to be changed before transition to hdfeos5 ))))))
-!        Maybe put wrapper in MLSFiles?
 !          noSwaths = SWInqSwath ( fileNameString, allSwathNames, listSize )
           allSwathNames = ''
           noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize )
@@ -199,7 +195,7 @@ contains ! =====     Public Procedures     =============================
 !        fileHandle = swopen(FileNameString, DFACC_READ)
         fileHandle = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
              & record_length, DFACC_READ, FileName=FileNameString, &
-             & debugOption=.true. )
+             & debugOption=.false. )
         if ( fileHandle < 0 ) then
           call announce_error ( son, &
             & 'Failed to open swath file ' // trim(FileNameString) )
@@ -231,7 +227,11 @@ contains ! =====     Public Procedures     =============================
         
         call get_string ( sdName, sdNameString )
         sdNameString = sdNameString(2:LEN_TRIM(sdNameString)-1)
+
+  ! ((( This will have to change if we wish to convert l2aux to hdf5
+  !          Maybe put another wrapper in MSLFiles
         ! create SD interface identifier for l2aux
+!        sd_id = mls_sfstart(FilenameString, DFACC_READ)
         sd_id = sfstart(FilenameString, DFACC_READ)
         if (sd_id == -1 ) then
           call announce_error ( son, 'Failed to open l2aux ' // &
@@ -421,6 +421,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.30  2002/01/18 19:01:34  pwagner
+! Changed debugOption to .false.
+!
 ! Revision 2.29  2002/01/18 18:50:08  pwagner
 ! Better check when swopen fails
 !
