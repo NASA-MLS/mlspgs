@@ -660,7 +660,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
              begin, f+f_columns, s+s_vector, n+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
-             np+n_spec_def /) )
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -820,6 +820,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.69  2001/04/10 00:01:53  vsnyder
+! Prevent duplicate fields on 'matrix' spec
+!
 ! Revision 2.68  2001/04/09 20:59:05  vsnyder
 ! Add C (for Celsius) unit and l_c name for it
 !
