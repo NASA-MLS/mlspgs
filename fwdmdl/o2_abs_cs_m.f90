@@ -30,7 +30,6 @@ contains
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: IP, R8, Rk => RP
-    use SLabs_SW_M, only: Simple_Voigt
     use Units, only: SqrtPi
 
     real(r8), intent(in) :: Freq              ! Observation frequency
@@ -377,6 +376,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.3  2003/05/16 02:45:08  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.2  2003/05/05 23:00:26  livesey
 ! Merged in feb03 newfwm branch
 !
