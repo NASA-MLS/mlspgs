@@ -1890,16 +1890,16 @@ contains ! =====     Public Procedures     =============================
        chunk_rank=2
        chunk_dims(1:7)=(/ CHUNKLEVELS,CHUNKTIMES,37,38,39,47,49/)
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
-       print*,"Set chunking with status=",status
-       print*,"chunking=",chunk_dims
-       print*,"About to define 2-D extendible field"
+       !print*,"Set chunking with status=",status
+       !print*,"chunking=",chunk_dims
+       !print*,"About to define 2-D extendible field"
 
-       print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
-            DIM_NAME12, MAX_DIML12, H5T_NATIVE_FLOAT, HDFE_NOMERGE
+       !print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
+       !      DIM_NAME12, MAX_DIML12, H5T_NATIVE_FLOAT, HDFE_NOMERGE
        status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML12, &
             H5T_NATIVE_FLOAT, HDFE_NOMERGE)
-       print*,"Defined 2-D extendible field"
-    
+       !print*,"Defined 2-D extendible field"
+
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD1 //  ' for 2D quantity.'
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -2262,7 +2262,7 @@ contains ! =====     Public Procedures     =============================
     !     Detach from the swath interface.
 
     status = HE5_SWdetach(swid)
-    print*,"Detatched from swath -- error=",status
+    !print*,"Detatched from swath -- error=",status
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Failed to detach  from swath interface' )
@@ -2469,6 +2469,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.16  2002/03/15 23:02:29  pwagner
+! Gets HDFVERSION_4 and 5 from MLSFiles; checks for illegal hdfversions
+!
 ! Revision 1.15  2002/02/01 21:32:34  pwagner
 ! offset treated properly for appendl2gp for hdf4; untested
 !
