@@ -112,6 +112,7 @@ maxJ
 maxLength
 measurements
 measurementSD
+metaName
 method
 model
 mif
@@ -219,6 +220,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.27  2002/02/22 01:07:58  pwagner
+# Added metaName
+#
 # Revision 2.26  2002/02/13 02:08:52  vsnyder
 # Add differentialScan
 #
