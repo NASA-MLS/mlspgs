@@ -369,7 +369,7 @@ contains ! =====     Public procedures     =============================
              l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_gphPrecision, l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_iwcfromextinction, l+l_l1b, l+l_l2aux, l+l_l2gp, &
-             l+l_manipulate, l+l_magneticModel, &
+             l+l_manipulate, l+l_magneticModel, l+l_magAzEl, &
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, &
              l+l_reflectorTempModel, l+l_rotateField, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
@@ -1079,6 +1079,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.330  2003/08/16 00:30:25  vsnyder
+! Add magAzEl to fill method type
+!
 ! Revision 2.329  2003/08/14 20:11:31  pwagner
 ! DirectWrite may take l2fwm types for fwm radiances
 !
