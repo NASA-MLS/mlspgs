@@ -34,7 +34,7 @@ module L2PC_m
   use Output_m, only: output
   use Parse_Signal_m, only: Parse_Signal
   use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T, &
-    & SETUPNEWQUANTITYTEMPLATE
+    & SETUPNEWQUANTITYTEMPLATE, INFLATEQUANTITYTEMPLATEDATABASE
   use String_Table, only: GET_STRING
   use Symbol_Table, only: ENTER_TERMINAL, DUMP_SYMBOL_CLASS
   use Symbol_Types, only: T_IDENTIFIER
@@ -1029,15 +1029,18 @@ contains ! ============= Public Procedures ==========================
     call h5gn_members_f ( fileID, '/', noBins, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get number of bins from input l2pc file:'//trim(filename) )
+
+    if ( index ( switches, 'l2pc' ) /= 0 ) then
+      call output ( 'Reading l2pc ' )
+      call output ( trim(filename), advance='yes' )
+      call output ( 'Number of bins: ' )
+      call output ( noBins, advance='yes' )
+    endif
     
     ! Don't forget HDF5 numbers things from zero
     do bin = 0, noBins-1
       call ReadOneHDF5L2PCRecord ( L2PC, fileID, bin, &
         & shallow=.true., info=Info )
-!       if ( .not. CheckIntegrity ( l2pc ) ) then
-!         call MLSMessage ( MLSMSG_Error, ModuleName, &
-!           & 'L2PC failed integrity test' )
-!       end if
       dummy = AddL2PCToDatabase ( l2pcDatabase, L2PC )
       if ( index ( switches, 'spa' ) /= 0 ) call Dump_struct ( l2pc, 'One l2pc bin' ) 
 
@@ -1054,10 +1057,10 @@ contains ! ============= Public Procedures ==========================
   end subroutine ReadCompleteHDF5L2PCFile
 
   ! --------------------------------------- ReadOneHDF5L2PC ------------
-  subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, index, shallow, info )
+  subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, l2pcIndex, shallow, info )
     type ( Matrix_T ), intent(out), target :: L2PC
     integer, intent(in) :: FILEID       ! HDF5 ID of input file
-    integer, intent(in) :: INDEX        ! Index of l2pc entry to read
+    integer, intent(in) :: L2PCINDEX        ! Index of l2pc entry to read
     logical, optional, intent(in) :: SHALLOW ! Don't read blocks
     type ( L2PCInfo_T), intent(out), optional :: INFO ! Information output
 
@@ -1089,7 +1092,10 @@ contains ! ============= Public Procedures ==========================
     myShallow = .false.
     if ( present ( shallow ) ) myShallow = shallow
 
-    call h5gGet_obj_info_idx_f ( fileID, '/', index, matrixName, &
+    if ( index ( switches, 'l2pc' ) /= 0 ) &
+      & call output ( 'Reading bin from l2pc file', advance='yes' )
+
+    call h5gGet_obj_info_idx_f ( fileID, '/', l2pcIndex, matrixName, &
       & objType, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get information on matrix in input l2pc file' )
@@ -1170,6 +1176,9 @@ contains ! ============= Public Procedures ==========================
         & 'Unable to close matrix group for input l2pc' )
     endif
 
+    if ( index ( switches, 'l2pc' ) /= 0 ) &
+      & call output ( 'Done reading bin from l2pc file', advance='yes' )
+
   end subroutine ReadOneHDF5L2PCRecord
 
   ! --------------------------------------- ReadOneVectorFromHDF5 ------
@@ -1182,7 +1191,7 @@ contains ! ============= Public Procedures ==========================
 
     ! Local variables
     integer :: FREQUENCYCOORDINATE      ! Enumeration
-    integer :: INDEX                    ! Index into various arrays
+    integer :: I                        ! Index into various arrays
     integer :: MOLECULE                 ! Enumeration
     integer :: NAMEINDEX                ! Quantity name
     integer :: NOCHANS                  ! Dimension
@@ -1193,6 +1202,7 @@ contains ! ============= Public Procedures ==========================
     integer :: NOSURFSOR1               ! Dimension
     integer :: OBJTYPE                  ! Irrelevant argument to HDF5
     integer :: QID                      ! HDF5 ID of quantity group
+    integer :: QTINDEXOFFSET            ! First free index in quantity template database
     integer :: QUANTITY                 ! Loop inductor
     integer :: QUANTITYTYPE             ! Enumerated
     integer :: SIDEBAND                 ! Sideband -1,0,1
@@ -1213,7 +1223,7 @@ contains ! ============= Public Procedures ==========================
     integer, dimension(:), pointer :: QTINDS ! Quantity indices
 
     character (len=64), pointer, dimension(:) :: QUANTITYNAMES ! Names of quantities
-    type ( QuantityTemplate_T) :: QT    ! Template for the quantity
+    type ( QuantityTemplate_T), pointer :: QT    ! Template for the quantity
     type ( VectorTemplate_T) :: VT    ! Template for the vector
     type ( Vector_T ) :: V              ! The vector
     type ( Decls ) :: DECL              ! From tree
@@ -1221,6 +1231,11 @@ contains ! ============= Public Procedures ==========================
     ! Executable code
     nullify ( sigInds, qtInds )
 
+    if ( index ( switches, 'l2pc' ) /= 0 ) then
+      call output ( 'Reading ' )
+      call output ( trim(name) )
+      call output ( ' vector from l2pc', advance='yes' )
+    end if
     ! Open the vector group
     call h5gOpen_f ( location, name, vId, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1233,6 +1248,10 @@ contains ! ============= Public Procedures ==========================
     nullify ( quantityNames )
     call Allocate_test ( quantityNames, noQuantities, 'quantityNames', ModuleName )
     do quantity = 1, noQuantities
+      if ( index ( switches, 'l2pc' ) /= 0) then
+        call output ( 'Identifying quantity ' )
+        call output ( quantity, advance='yes' )
+      end if
       call h5gget_obj_info_idx_f ( location, name, quantity-1, thisName, &
         & objType, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1240,15 +1259,24 @@ contains ! ============= Public Procedures ==========================
       call h5gOpen_f ( vId, trim(thisName), qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open quantity '//trim(thisName)//' in vector '//trim(name) )
-      call GetHDF5Attribute ( qId, 'index', index )
-      quantityNames ( index ) = thisName
+      call GetHDF5Attribute ( qId, 'index', i )
+      quantityNames ( i ) = thisName
       call h5gClose_f ( qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to close quantity '//trim(thisName)//' in vector '//trim(name) )
     end do
 
+    QTINDEXOFFSET = InflateQuantityTemplateDatabase ( l2pcQTs, noQuantities )
+
     ! Now go through quantities in order
     do quantity = 1, noQuantities
+      qt => l2pcQTs ( QTINDEXOFFSET + quantity - 1 )
+      if ( index ( switches, 'l2pc' ) /= 0 ) then
+        call output ( 'Reading quantity ' )
+        call output ( quantity )
+        call output ( ': ' )
+        call output ( trim(name), advance='yes' )
+      end if
 
       ! Point to this quanity
       call h5gOpen_f ( vId, trim(quantityNames(quantity)), qId, status )
@@ -1345,16 +1373,9 @@ contains ! ============= Public Procedures ==========================
         call LoadFromHDF5DS ( qId, 'frequencies', qt%frequencies )
       end if
 
-      ! Now add this template to our private database 
-      qt%id = l2pcQTCounter
-      l2pcQTCounter = l2pcQtCounter + 1
-      qtInds(quantity) = AddQuantityTemplateToDatabase ( l2pcQTs, qt )
-
-      ! Now nullify the arrays in qt so we don't clobber them later
-      nullify ( qt%surfs )
-      nullify ( qt%phi, qt%geodLat, qt%lon, qt%time, qt%solarTime )
-      nullify ( qt%solarZenith, qt%losAngle, qt%mafIndex, qt%mafCounter )
-      nullify ( qt%frequencies )
+      ! Now record the index for this quantity template
+      qt%id = QTINDEXOFFSET + quantity - 1
+      qtInds ( quantity ) = qt%id
 
       ! For the moment, close the quantity. We'll come back to it later to fill
       ! up the values for the vector
@@ -1372,11 +1393,19 @@ contains ! ============= Public Procedures ==========================
     call deallocate_test ( qtInds, 'qtInds', ModuleName )
     
     ! Now create a vector for this vector template
+    if ( index ( switches, 'l2pc' ) /= 0 ) &
+      & call output ( 'Creating vector', advance='yes' )
     v = CreateVector ( 0, l2pcVTs(vtIndex), l2pcQTs, vectorNameText='_v' )
+    if ( index ( switches, 'l2pc' ) /= 0 ) &
+      & call output ( 'Adding vector to database', advance='yes' )
     vector = AddVectorToDatabase ( l2pcVs, v )
     
     ! Now go through the quantities again and read the values
     do quantity = 1, noQuantities
+      if ( index ( switches, 'l2pc' ) /= 0 ) then
+        call output ( 'Reading values for ' )
+        call output ( trim(quantityNames(quantity)), advance='yes' )
+      end if
       call h5gOpen_f ( vId, trim(quantityNames(quantity)), qId, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open quantity '//trim(quantityNames(quantity))// &
@@ -1471,6 +1500,10 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.46  2002/08/28 20:42:39  livesey
+! Now uses inflateQuantityTemplateDatabase, much much faster on reading
+! l2pcs.
+!
 ! Revision 2.45  2002/08/28 01:12:20  livesey
 ! Bug fix in frequency coordinate.
 !
