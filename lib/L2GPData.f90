@@ -265,7 +265,6 @@ contains ! =====     Public Procedures     =============================
 
     ! But allocate to at least one for times, freqs
  
-    useNTimes=MAX(useNTimes,1)
     useNLevels=MAX(useNLevels,1)
     useNFreqs=MAX(useNFreqs,1)    
 
@@ -1678,7 +1677,7 @@ contains ! =====     Public Procedures     =============================
     status = mls_swdefdim(swid, UNLIM, HE5S_UNLIMITED_F, &
       & hdfVersion=HDFVERSION_5)
 
-    status = mls_swdefdim(swid, 'nTimes', l2gp%nTimes, &
+    status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimes,1), &
       & hdfVersion=HDFVERSION_5)
 
     if ( l2gp%nLevels > 0 ) then
@@ -1701,6 +1700,7 @@ contains ! =====     Public Procedures     =============================
     status = mls_gfldsetup(swid, 'Latitude', 'nTimes', MAX_DIML1, &
       & HE5T_NATIVE_FLOAT, HDFE_NOMERGE, chunk_rank, chunk_dims, &
       & hdfVersion=HDFVERSION_5)
+
 !    print*,"Defined geolocation field ",GEO_FIELD1,"of dim.", DIM_NAME1
 !    print*,"... and of type ",HE5T_NATIVE_FLOAT
 
@@ -1834,6 +1834,7 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
            & 'Cant set fill for ' // 'Pressure' )
     endif
+
     if ( l2gp%nFreqs > 0 ) then
       status =  mls_swsetfill(swid, 'Frequency', HE5T_NATIVE_FLOAT, &
        & l2gp%MissingValue)
@@ -2447,6 +2448,7 @@ contains ! =====     Public Procedures     =============================
           & 'Failed to detach from swath in AppendL2GPData_fileID')
       endif
     endif
+
     if ( swath_exists ) then
       if(DEEBUG) print *, 'OK, swath already exists'
     else
@@ -2472,25 +2474,26 @@ contains ! =====     Public Procedures     =============================
       ! l2gp%nTimes = actual_ntimes
     endif
 
-    if (myLastProfile <= 0) then
+    if ( offset == totNumProfs ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & "No profiles in this chunk" )
-    elseif (myhdfVersion == HDFVERSION_4) then
-      if(DEEBUG) print *, 'Writing geolocation data'
-      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, myswathName, offset)
-      if(DEEBUG) print *, 'Writing swath data'
-      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, myswathName, offset)
-    elseif (myhdfVersion /= HDFVERSION_5) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & "Unrecognized hdfVersion passed to AppendL2GPData" )
     else
-      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, myswathName, offset)
-      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, myswathName, offset)
-      if ( .not. swath_exists .and. APPENDSWRITEATTRIBUTES) then
-        call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
-        call SetL2GP_aliases (l2gp, l2FileHandle, swathName)
-      endif
-    endif
+      select case ( myHDFVersion )
+      case ( HDFVERSION_4 )
+        call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, myswathName, offset)
+        call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, myswathName, offset)
+      case ( HDFVERSION_5 )
+        call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, myswathName, offset)
+        call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, myswathName, offset)
+        if ( .not. swath_exists .and. APPENDSWRITEATTRIBUTES) then
+          call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
+          call SetL2GP_aliases (l2gp, l2FileHandle, swathName)
+        end if
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Unrecognized hdfVersion passed to AppendL2GPData" )
+      end select
+    end if
 
   end subroutine AppendL2GPData_fileID
 
@@ -2733,6 +2736,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.75  2003/08/27 20:06:26  livesey
+! Removed some print statements
+!
 ! Revision 2.74  2003/07/21 23:32:09  pwagner
 ! Will write attributes, create alias when appending hdfeos5 if mustcreate
 !
