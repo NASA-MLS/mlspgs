@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -15,9 +15,12 @@ module HGrid                    ! Horizontal grid information
     & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
     & L_MIF, L_REGULAR, PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_ANGLE
   use LEXER_CORE, only: PRINT_SOURCE
-  use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData
+  use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
+    & AssembleL1BQtyName
   use L2GPData, only: L2GPDATA_T
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8, TAI93_RANGE_T
+  use MLSFiles, only: mls_hdf_version       
+  use MLSL2Options, only: LEVEL1_HDFVERSION  
   use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
   use MLSNumerics, only: HUNT, InterpolateValues
@@ -145,7 +148,12 @@ contains ! =====     Public Procedures     =============================
 
     character (len=NameLen) :: InstrumentModuleName
 
+    integer ::  hdfVersion
+    character(len=NameLen) :: l1bItemName
+
     ! Executable code
+
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
 
     nullify ( hgrid%phi, hgrid%geodLat, hgrid%lon, hgrid%time, &
       & hgrid%solarTime, hgrid%solarZenith, hgrid%losAngle ) ! for Sun's rubbish compiler
@@ -261,10 +269,11 @@ contains ! =====     Public Procedures     =============================
     case ( l_l2gp) ! -------------------- L2GP ------------------------
       
       ! Get the time from the l1b file
-      call ReadL1BData ( l1bInfo%l1boaID, "MAFStartTimeTAI", l1bField, noMAFs, &
+      l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
+      call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
         & l1bFlag, &
         & firstMAF=chunks(chunkNo)%firstMAFIndex, &
-        & lastMAF=chunks(chunkNo)%lastMAFIndex)
+        & lastMAF=chunks(chunkNo)%lastMAFIndex, hdfVersion=hdfVersion)
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//"MAFStartTimeTAI" )
       
@@ -346,10 +355,12 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: defaultMIFs
     real(r8), dimension(:), pointer :: defaultIndex
     real(r8), dimension(:), pointer :: interpolatedIndex
+    integer ::  hdfVersion
     character (len=NameLen) :: L1BItemName
 
     ! Executable code
 
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     nullify ( tpGeodAlt, tpGeodAngle, defaultField, interpolatedField, &
       & defaultMIFs, defaultIndex, interpolatedIndex )
 
@@ -376,8 +387,10 @@ contains ! =====     Public Procedures     =============================
     end select
 
     if ( hGridType /= l_Fixed ) then
+      l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex )
+        & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
+        & hdfVersion=hdfVersion )
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
     else
@@ -450,8 +463,10 @@ contains ! =====     Public Procedures     =============================
         & trim(instrumentModuleName)//"."//l1bItemName
       
       ! Read it from the l1boa file
+      l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField,noMAFs, &
-        & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex )
+        & l1bFlag, firstMAF=chunk%firstMafIndex, lastMAF=chunk%lastMafIndex, &
+        & hdfVersion=hdfVersion )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
       
@@ -573,7 +588,12 @@ contains ! =====     Public Procedures     =============================
     type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
     type (MLSChunk_T) :: CHUNK
 
+    integer ::  hdfVersion
+    character(len=NameLen) :: l1bItemName
+
     ! Executable code
+
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     chunk = chunks ( chunkNo )
 
     ! Setup the empircal geometry estimate of lon0
@@ -583,10 +603,11 @@ contains ! =====     Public Procedures     =============================
     ! First we're going to work out the geodetic angle range
     ! Read an extra MAF if possible, as we may use it later
     ! when computing the overlaps.
-    call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpGeodAngle", &
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", hdfVersion, .false. )
+    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex+1 )
+      & lastMAF=chunk%lastMAFIndex+1, hdfVersion=hdfVersion )
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
     minAngle = minval ( l1bField%dpField(1,:,1) )
     maxAngleFirstMAF = maxval ( l1bField%dpField(1,:,1) )
@@ -675,10 +696,11 @@ contains ! =====     Public Procedures     =============================
 
     ! Now fill the other geolocation information, first latitude
     ! Get orbital inclination
-    call ReadL1BData ( l1bInfo%l1bOAID, "scOrbIncl", &
+    l1bItemName = AssembleL1BQtyName ( "scOrbIncl", hdfVersion, .false. )
+    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex )
+      & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion )
     ! Use the average of all the first MIFs to get inclination for chunk
     incline = sum ( l1bField%dpField(1,1,:) ) / noMAFs
     call DeallocateL1BData ( l1bField )
@@ -690,9 +712,11 @@ contains ! =====     Public Procedures     =============================
 
     ! Now time, because this is important to get right, I'm going to put in
     ! special code for the case where the chunk is of length one.
-    call ReadL1BData ( l1bInfo%l1bOAID, "MAFStartTimeTAI", &
+    l1bItemName = AssembleL1BQtyName ( "MAFStartTimeTAI", hdfVersion, .false. )
+    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
-      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & hdfVersion=hdfVersion )
     if ( chunk%firstMAFIndex /= chunk%lastMAFIndex ) then
       call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
         & hGrid%phi, hGrid%time, &
@@ -715,9 +739,11 @@ contains ! =====     Public Procedures     =============================
 
     ! Solar zenith
     ! This we'll have to do with straight interpolation
-    call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpSolarZenith", &
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpSolarZenith", hdfVersion, .false. )
+    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
-      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & hdfVersion=hdfVersion )
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi, hGrid%solarZenith, &
       & method='Spline', extrapolate='Allow' )
@@ -725,9 +751,11 @@ contains ! =====     Public Procedures     =============================
 
     ! Line of sight angle
     ! This we'll have to do with straight interpolation
-    call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpLosAngle", &
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpLosAngle", hdfVersion, .false. )
+    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
-      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+      & hdfVersion=hdfVersion )
     call InterpolateValues ( mif1GeodAngle, l1bField%dpField(1,1,:), &
       & hGrid%phi, hGrid%losAngle, &
       & method='Spline', extrapolate='Allow' )
@@ -981,13 +1009,19 @@ contains ! =====     Public Procedures     =============================
     real (r8), dimension(:,:), pointer :: MIFPHI ! Tangent phis
     type (L1BData_T) :: L1BFIELD
 
+    integer ::  hdfVersion
+    character(len=NameLen) :: l1bItemName
+
     ! Executable code
 
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+
     ! Read the geodetic angle from the L1Bfile
-    call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpGeodAngle", &
+    l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", hdfVersion, .false. )
+    call ReadL1BData ( l1bInfo%l1bOAID, l1bItemName, &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex )
+      & lastMAF=chunk%lastMAFIndex, hdfVersion=hdfVersion )
     mifPhi => l1bField%dpField(1,:,:)
 
     phiMin = minval ( mifPhi )
@@ -1119,6 +1153,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.39  2002/11/13 01:07:04  pwagner
+! Actually reads hdf5 radiances
+!
 ! Revision 2.38  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
