@@ -416,12 +416,12 @@ contains
             ! Create extra vectors.  Altogether, we need F, X, "Best X", DX,
             ! "Candidate DX" Gradient and "Best Gradient".
             x => state
-            call cloneVector ( f, measurements )
-            call cloneVector ( bestGradient, x )
-            call cloneVector ( bestX, x )
-            call cloneVector ( candidateDX, x )
-            call cloneVector ( DX, x )
-            call cloneVector ( gradient, x )
+            call cloneVector ( f, measurements, vectorNameText='_f' )
+            call cloneVector ( bestGradient, x, vectorNameText='_bestGradient' )
+            call cloneVector ( bestX, x, vectorNameText='_bestX' )
+            call cloneVector ( candidateDX, x, vectorNameText='_candidateDX' )
+            call cloneVector ( DX, x, vectorNameText='_DX' )
+            call cloneVector ( gradient, x, vectorNameText='_gradient' )
             if ( got(f_apriori) ) then
               aprioriNorm = apriori .dot. apriori ! norm**2
               call multiplyMatrixVector ( covariance, apriori, &
@@ -727,6 +727,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.26  2001/05/03 02:00:15  vsnyder
+! Put names on cloned vectors
+!
 ! Revision 2.25  2001/05/02 05:28:04  livesey
 ! Added DumpBlocks
 !
