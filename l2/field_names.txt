@@ -120,6 +120,7 @@ hgrid
 highBound # for the state vector during retrieval
 homeGeodAngle
 homeModule
+horizontal
 hRegOrders
 hRegQuants
 hRegWeights
@@ -244,6 +245,10 @@ reflector
 refract
 regAfter
 regApriori               ! Regularization is to apriori, not zero
+regOrders
+regQuants
+regWeights
+regWeightVec
 reset
 resetSeed
 resolution
@@ -334,6 +339,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.121  2004/04/29 01:26:31  livesey
+# Added regOrders etc. for Algebra
+#
 # Revision 2.120  2004/04/28 23:07:23  livesey
 # Added rhsOut
 #
