@@ -1668,9 +1668,13 @@ contains
             call output ( t3-t0, advance='yes' )
           end if
         preserveMatrixName = outputCovariance%m%name
-        call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m ) ! U^{-1} U^{-T}
+        call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m, &
+          & diagonalOnly = .not. any ( got ( (/ f_outputCovariance, f_average/) ) ) ) ! U^{-1} U^{-T}
           if ( index(switches,'cov') /= 0 ) then
-            call output ( 'Computed U^{-1} U^{-T} at ' )
+            call output ( 'Computed ' )
+            if ( .not. any ( got ( (/ f_outputCovariance, f_average /) ) ) ) &
+              & call output ( 'diagonal blocks of ' )
+            call output ( 'U^{-1} U^{-T} at ' )
             call time_now ( t3 )
             call output ( t3-t0, advance='yes' )
           end if
@@ -3009,6 +3013,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.168  2002/08/29 04:45:37  livesey
+! Sped up covariance calculations
+!
 ! Revision 2.167  2002/08/28 00:51:04  vsnyder
 ! Correct more blunders in Tikhonov regularization
 !
