@@ -263,8 +263,8 @@ contains
       fsqr = frequency * frequency
       fsxt = fsqr * theta
       abs_cs_n2_cont = pressure * pressure * fsqr * (theta**cont(2)) * &
-                     & ( cont(1) * exp(-cont(3) * fsxt * theta) + &
-                     &   cont(4) * exp(-cont(5) * fsxt * theta) * &
+                     & ( cont(1) * exp(-cont(3) * fsxt) + &
+                     &   cont(4) * exp(-cont(5) * fsxt) * &
                      & (cont(6)**2 + fsqr))
 
     end function Abs_CS_N2_Cont
@@ -298,6 +298,9 @@ contains
 end module CREATE_BETA_M
 
 ! $Log$
+! Revision 2.24  2003/06/25 02:41:53  vsnyder
+! Cleaning things up, hoping to be faster...
+!
 ! Revision 2.23  2003/05/16 23:51:30  livesey
 ! Now uses molecule indices rather than spectags
 !

@@ -690,8 +690,10 @@ contains
 
       select case ( molecule )
       case ( l_n2 ) ! ...........................................  Dry Air
+! This nominally gets multiplied by "ratio**2" but in practice this
+! function is for all isotopics forms of N2 hence the ratio is one.
 
-        beta_value(j) = beta_value(j) + ratio * abs_cs_n2_cont(cont,Temp(j),Pressure(k),Fgr)
+        beta_value(j) = beta_value(j) + abs_cs_n2_cont(cont,Temp(j),Pressure(k),Fgr)
         if ( present(t_power) ) then
           bm = abs_cs_n2_cont(cont,tm,Pressure(k),Fgr)
           bp = abs_cs_n2_cont(cont,tp,Pressure(k),Fgr)
@@ -935,14 +937,14 @@ contains
     real(rp), intent(in) :: FREQUENCY   ! in MegaHertz
     real(rp) :: Abs_CS_N2_Cont_r
 
-    real(rp) :: THETA, FSQR, FSXT
+    REAL(rp) :: THETA, FSQR, FSXT
 
     theta = 300.0_rp / temperature
     fsqr = frequency * frequency
     fsxt = fsqr * theta
     Abs_CS_N2_Cont_r = pressure * pressure * fsqr * (theta**cont(2)) * &
-                   & ( cont(1) * exp(-cont(3) * fsxt * theta) + &
-                   &   cont(4) * exp(-cont(5) * fsxt * theta) * &
+                   & ( cont(1) * exp(-cont(3) * fsxt) + &
+                   &   cont(4) * exp(-cont(5) * fsxt) * &
                    & (cont(6)**2 + fsqr))
 
   end function Abs_CS_N2_Cont
@@ -978,6 +980,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.49  2004/01/26 21:57:00  vsnyder
+! Improve TeXnicalities
+!
 ! Revision 2.48  2003/12/07 19:46:10  jonathan
 ! update for use in 2D cloud FWM
 !
