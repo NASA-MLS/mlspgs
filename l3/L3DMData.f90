@@ -12,7 +12,7 @@ MODULE L3DMData
    USE MLSCommon
    USE MLSL3Common
    USE MLSMessageModule
-   USE MLSPCF
+   USE MLSPCF3
    USE MLSStrings
    USE OpenInit
    USE PCFModule
@@ -34,6 +34,7 @@ MODULE L3DMData
 !                L3DMFiles_T 
 ! Subroutines -- ConvertDeg2DMS
 !                OutputGrids
+!                ReadL3DMData
 !                WriteMetaL3DM
 !                AllocateL3DM
 !                DeallocateL3DM
@@ -43,6 +44,13 @@ MODULE L3DMData
 !           as any routines pertaining to it.
 
 ! Parameters
+
+   CHARACTER (LEN=*), PARAMETER :: DIMX_NAME = 'XDim'
+   CHARACTER (LEN=*), PARAMETER :: DIMY_NAME = 'YDim'
+   CHARACTER (LEN=*), PARAMETER :: DIMZ_NAME = 'ZDim'
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDV = 'L3dmValue'
+   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDP = 'L3dmPrecision'
+   CHARACTER (LEN=*), PARAMETER :: GD_ERR = 'Failed to detach from grid '
 
 ! This data type is used to store the l3 daily map data.
 
@@ -70,9 +78,6 @@ MODULE L3DMData
      REAL(r8), DIMENSION(:,:,:), POINTER :: l3dmValue	  ! Field value
      REAL(r8), DIMENSION(:,:,:), POINTER :: l3dmPrecision ! Field precision
 	! dimensioned as (nLevels, nLats, nLons)
-
-!    REAL(r8), DIMENSION(:,:), POINTER :: l3dmColumn	! Column data
-	! dimensioned as (nLats, nLons)
 
    END TYPE L3DMData_T
 
@@ -164,14 +169,7 @@ CONTAINS
    
 ! Parameters
 
-      CHARACTER (LEN=*), PARAMETER :: DIMX_NAME = 'XDim'
-      CHARACTER (LEN=*), PARAMETER :: DIMY_NAME = 'YDim'
-      CHARACTER (LEN=*), PARAMETER :: DIMZ_NAME = 'ZDim'
       CHARACTER (LEN=*), PARAMETER :: DIMXYZ_NAME = 'ZDim,YDim,XDim'
-      CHARACTER (LEN=*), PARAMETER :: DATA_FIELDV = 'L3dmValue'
-      CHARACTER (LEN=*), PARAMETER :: DATA_FIELDP = 'L3dmPrecision'
-
-      CHARACTER (LEN=*), PARAMETER :: GD_ERR = 'Failed to detach from grid '
 
       INTEGER, PARAMETER :: GCTP_GEO = 0
 
@@ -189,7 +187,7 @@ CONTAINS
       INTEGER :: gdfID, gdId, i, match, status
       INTEGER :: start(3), stride(3), edge(3)
 
-      REAL :: maxLat, maxLon, minLat
+      REAL :: maxLat, maxLon, minLat, minLon
 
       REAL(r8) :: uplft(2), lowrgt(2)
       REAL(r8) :: projparm(13)
@@ -228,8 +226,6 @@ CONTAINS
 ! varying latitude.  Grid into 90 bins along the x-axis, by nLats bins along
 ! the y-axis (4x2 bins).  Upper Left & Lower Right corners in DDDMMMSSS.ss.
 
-         uplft(1) = -180000000.00
-
          projparm = 0.0
 
 ! Find boundaries of measured latitude, upper bound of measure longitude
@@ -237,12 +233,14 @@ CONTAINS
          maxLat = MAXVAL( l3dmData(i)%latitude )
          minLat = MINVAL( l3dmData(i)%latitude )
          maxLon = MAXVAL( l3dmData(i)%longitude )
+         minLon = MINVAL( l3dmData(i)%longitude )
 
 ! Convert to "packed degree format"
 
          CALL ConvertDeg2DMS(maxLat, uplft(2))
          CALL ConvertDeg2DMS(minLat, lowrgt(2))
          CALL ConvertDeg2DMS(maxLon, lowrgt(1))
+         CALL ConvertDeg2DMS(minLon, uplft(1))
 
 ! Create the grid
 
@@ -449,6 +447,152 @@ CONTAINS
    END SUBROUTINE OutputGrids
 !----------------------------
 
+!-------------------------------------------------
+   SUBROUTINE ReadL3DMData (gdfid, gridName, l3dm)
+!-------------------------------------------------
+
+! Brief description of subroutine
+! This  subroutine reads a grid from a file into the L3DMData structure.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: gridName
+
+      INTEGER, INTENT(IN) :: gdfid  
+
+      TYPE( L3DMData_T ), INTENT(OUT) :: l3dm
+
+! Parameters
+
+      CHARACTER (LEN=*), PARAMETER :: RDGD_ERR = 'Failed to read grid field '
+
+! Functions
+
+      INTEGER :: gdattach, gddetach, gddiminfo, gdrdfld
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: err, gdid, nlev, nlat, nlon, size, status
+      INTEGER :: start(3), stride(3), edge(3)
+
+      REAL, ALLOCATABLE :: rp(:), rlat(:), rlon(:)
+      REAL, ALLOCATABLE :: r3(:,:,:)
+
+! Attach to the grid
+
+      gdid = gdattach(gdfid, gridName)
+      IF (gdId == -1) THEN
+         msr = 'Failed to attach to grid ' // gridName
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Get dimension names, sizes
+
+      size = gddiminfo(gdid, DIMX_NAME)
+      IF (size == -1) THEN
+         msr = SZ_ERR // DIMX_NAME
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      nlon = size
+
+      size = gddiminfo(gdid, DIMY_NAME)
+      IF (size == -1) THEN
+         msr = SZ_ERR // DIMY_NAME
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      nlat = size
+      
+      size = gddiminfo(gdid, DIMZ_NAME)
+      IF (size == -1) THEN
+         msr = SZ_ERR // DIMZ_NAME
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      nlev = size
+
+! Allocate the local REAL variables & the output structure pointers
+
+      ALLOCATE(rp(nlev), rlat(nlat), rlon(nlon), r3(nlev,nlat,nlon), STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // ' local REAL variables.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      CALL AllocateL3DM(nlev, nlat, nlon, l3dm)
+
+! Read data into the output structure 
+
+      l3dm%name = gridName
+
+      start = 0
+      stride = 1
+      edge(1) = l3dm%nLevels
+      edge(2) = l3dm%nLats
+      edge(3) = l3dm%nLons
+
+      status = gdrdfld(gdid, GEO_FIELD3, start(1), stride(1), stride(1), &
+                       l3dm%time)
+      IF (status == -1) THEN
+         msr = RDGD_ERR // GEO_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = gdrdfld(gdid, GEO_FIELD9, start(1), stride(1), edge(1), rp)
+      IF (status == -1) THEN
+         msr = RDGD_ERR // GEO_FIELD9
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l3dm%pressure = DBLE(rp)
+
+      status = gdrdfld(gdid, GEO_FIELD1, start(2), stride(2), edge(2), rlat)
+      IF (status == -1) THEN
+         msr = RDGD_ERR // GEO_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l3dm%latitude = DBLE(rlat)
+
+      status = gdrdfld(gdid, GEO_FIELD2, start(3), stride(3), edge(3), rlon)
+      IF (status == -1) THEN
+         msr = RDGD_ERR // GEO_FIELD2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l3dm%longitude = DBLE(rlon)
+
+      status = gdrdfld(gdid, DATA_FIELDV, start, stride, edge, r3)
+      IF (status == -1) THEN
+         msr = RDGD_ERR // DATA_FIELDV
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l3dm%l3dmValue = DBLE(r3)
+
+      status = gdrdfld(gdid, DATA_FIELDP, start, stride, edge, r3)
+      IF (status == -1) THEN
+         msr = RDGD_ERR // DATA_FIELDP
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      l3dm%l3dmPrecision = DBLE(r3)
+
+! Detach from and close the grid interface
+
+      status = gddetach(gdid)
+      IF (status == -1) THEN
+         msr = GD_ERR // TRIM(gridName) // ' after reading.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Deallocate the local variables
+
+      DEALLOCATE (rp, rlat, rlon, r3, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  local REAL variables.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!-----------------------------
+   END SUBROUTINE ReadL3DMData
+!-----------------------------
+
 !-----------------------------------------------------
    SUBROUTINE WriteMetaL3DM (pcf, l3cf, files, anText)
 !-----------------------------------------------------
@@ -478,12 +622,10 @@ CONTAINS
 ! Variables
 
       CHARACTER (LEN=1) :: cNum
-      CHARACTER (LEN=12) :: shortName
-      CHARACTER (LEN=45) :: attrName, sval
-      CHARACTER (LEN=80) :: identifier
+      CHARACTER (LEN=45) :: attrName
       CHARACTER (LEN=132) :: list
       CHARACTER (LEN=480) :: msr
-      CHARACTER (LEN=FileNameLen) :: type
+      CHARACTER (LEN=FileNameLen) :: sval
       CHARACTER (LEN=GridNameLen) :: gridName
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
@@ -695,15 +837,9 @@ CONTAINS
 
 ! InputPointer
 
-         indx = INDEX(l3cf%mcfName, '.', .TRUE.)
-         shortName = l3cf%mcfName(:indx-1)
-         indx = INDEX(shortName, '.')
-         shortName = shortName(:indx-1) // ':' // shortName(indx+1:)
-         CALL ExpandFileTemplate(l3cf%fileTemplate, type, 'L2GP')
-         identifier = TRIM(type) // files%date(i)
-         sval = 'LGID:' // TRIM(shortName) // ':' // TRIM(identifier)
          attrName = 'InputPointer'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                   'See the PCF annotation to this file.')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1018,7 +1154,7 @@ CONTAINS
 
          DO i = 1, SIZE(l3dmdb)
             CALL DeallocateL3DM( l3dmdb(i) )
-         END DO
+         ENDDO
 
 ! Deallocate the database itself
 
@@ -1039,6 +1175,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.8  2001/02/09 19:18:05  nakamura
+!# Moved DIMT to MLSL3Common; changed LocalGranuleID to file - .dat
+!#
 !# Revision 1.7  2001/01/16 17:44:00  nakamura
 !# Made lowrgt corner of the grid variable; updated WriteMetaL3DM for new MCF and added writing of annotation.
 !#
