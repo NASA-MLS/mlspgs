@@ -102,10 +102,12 @@ contains
     else if ( config%atmos_Der .or. config%spect_Der .or. config%temp_der ) then
       call announceError ( needJacobian )
     else
+      print*,'Calling forward model without derivatives'
       call forwardModel ( config, FwdModelExtra, FwdModelIn, &
         &                   FwdModelOut=FwdModelOut, &
         &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
       !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+      print*,'Got back from forward model'
     end if
     print*,'Done the forward model!!!'
     stop
@@ -133,6 +135,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.9  2001/03/25 00:50:31  livesey
+! Interim version, bug with frequency averaging
+!
 ! Revision 2.8  2001/03/20 02:30:15  livesey
 ! Interim version, gets same numbers as Zvi
 !
