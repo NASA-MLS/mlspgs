@@ -31,6 +31,7 @@ module ForwardModelConfig
   ! and unpacking for PVM as easy as possible to maintain
   type, public :: ForwardModelConfig_T
     ! First the lit_indices
+    integer :: Name                     ! String index of config name
     integer :: Cloud_der              ! Compute cloud sensitivity in cloud models.
                                       ! l_iwc_low_height, l_iwc_high_height, l_iwp
                                       ! l_none
@@ -563,6 +564,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.38  2003/06/30 22:55:01  cvuu
+! Find mean, std dev timing of fullForwardModel calls
+!
 ! Revision 2.37  2003/06/18 01:58:01  vsnyder
 ! Add SidebandStart and SidebandStop fields
 !
