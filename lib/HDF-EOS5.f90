@@ -193,6 +193,16 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
        character(len=*),intent(IN)::DIMNAME
     end function HE5_SWDIMINFO
 
+    integer function HE5_SWFLDINFO (SWATHID,FIELDNAME,&
+     & RANK,DIMS,NUMBERTYPE,DIMLIST, MAXDIMLIST)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::FIELDNAME
+       integer,intent(out),dimension(*):: DIMS, NUMBERTYPE
+       integer,intent(out)             :: RANK
+       character(len=*),intent(OUT)::DIMLIST
+       character(len=*),intent(OUT)::MAXDIMLIST
+    end function HE5_SWFLDINFO
+
     integer function HE5_SWINQDFLDS (SWATHID, FIELDLIST, RANK, NUMBERTYPE)
        integer,intent(in)::SWATHID
        character(len=*),intent(out)::FIELDLIST
@@ -217,6 +227,9 @@ end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 2.8  2003/09/03 22:38:42  pwagner
+! Added HE5_SWFLDINFO
+!
 ! Revision 2.7  2003/06/03 20:39:39  pwagner
 ! Added some grid apis
 !
