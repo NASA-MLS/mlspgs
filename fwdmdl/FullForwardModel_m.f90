@@ -2486,17 +2486,20 @@ contains
     call destroygrids_t ( grids_f )
     call destroygrids_t ( grids_tmp )
 
-    call deallocate_test ( dhdz_path, 'dhdz_path', moduleName )
-    call deallocate_test ( h_path,    'h_path',    moduleName )
-    call deallocate_test ( h_path_c,  'h_path_c',  moduleName )
-    call deallocate_test ( p_path,    'p_path',    moduleName )
-    call deallocate_test ( p_path_c,  'p_path_c',  moduleName )
-    call deallocate_test ( path_dsdh, 'path_dsdh', moduleName )
-    call deallocate_test ( phi_path,  'phi_path',  moduleName )
-    call deallocate_test ( t_path,    't_path',    moduleName )
-    call deallocate_test ( t_path_c,  't_path_c',  moduleName )
-    call deallocate_test ( z_path,    'z_path',    moduleName )
-    call deallocate_test ( z_path_c,  'z_path_c',  moduleName )
+    call deallocate_test ( dhdz_path,   'dhdz_path',   moduleName )
+    call deallocate_test ( dhdz_path_f, 'dhdz_path_f', moduleName )
+    call deallocate_test ( h_path,      'h_path',      moduleName )
+    call deallocate_test ( h_path_c,    'h_path_c',    moduleName )
+    call deallocate_test ( h_path_f,    'h_path_f',    moduleName )
+    call deallocate_test ( p_path,      'p_path',      moduleName )
+    call deallocate_test ( p_path_c,    'p_path_c',    moduleName )
+    call deallocate_test ( path_dsdh,   'path_dsdh',   moduleName )
+    call deallocate_test ( path_dsdh_f, 'path_dsdh_f', moduleName )
+    call deallocate_test ( phi_path,    'phi_path',    moduleName )
+    call deallocate_test ( t_path,      't_path',      moduleName )
+    call deallocate_test ( t_path_c,    't_path_c',    moduleName )
+    call deallocate_test ( z_path,      'z_path',      moduleName )
+    call deallocate_test ( z_path_c,    'z_path_c',    moduleName )
 
     call deallocate_test ( alpha_path_c,     'alpha_path_c',     moduleName )
     call deallocate_test ( alpha_path_f,     'alpha_path_f',     moduleName )
@@ -2517,9 +2520,11 @@ contains
     call deallocate_test ( do_calc_zp,    'do_calc_zp',    moduleName )
     call deallocate_test ( do_calc_fzp,   'do_calc_fzp',   moduleName )
     call deallocate_test ( do_calc_fzp_c, 'do_calc_fzp_c', moduleName )
+    call deallocate_test ( do_calc_fzp_f, 'do_calc_fzp_f', moduleName )
     call deallocate_test ( eta_zp,        'eta_zp',        moduleName )
     call deallocate_test ( eta_fzp,       'eta_fzp',       moduleName )
     call deallocate_test ( eta_fzp_c,     'eta_fzp_c',     moduleName )
+    call deallocate_test ( eta_fzp_f,     'eta_fzp_f',     moduleName )
     call deallocate_test ( sps_path,      'sps_path',      moduleName )
     call deallocate_test ( sps_path_c,    'sps_path_c',    moduleName )
 
@@ -2534,12 +2539,15 @@ contains
       call deallocate_test ( dbeta_dt_path_f, 'dbeta_dt_path_f', moduleName )
       call deallocate_test ( dh_dt_path,      'dh_dt_path',      moduleName )
       call deallocate_test ( dh_dt_path_c,    'dh_dt_path_c',    moduleName )
+      call deallocate_test ( dh_dt_path_f,    'dh_dt_path_f',    moduleName )
       call deallocate_test ( do_calc_hyd,     'do_calc_hyd',     moduleName )
       call deallocate_test ( do_calc_hyd_c,   'do_calc_hyd_c',   moduleName )
       call deallocate_test ( do_calc_t,       'do_calc_t',       moduleName )
       call deallocate_test ( do_calc_t_c,     'do_calc_t_c',     moduleName )
+      call deallocate_test ( do_calc_t_f,     'do_calc_t_f',     moduleName )
       call deallocate_test ( eta_zxp_t,       'eta_zxp_t',       moduleName )
       call deallocate_test ( eta_zxp_t_c,     'eta_zxp_t_c',     moduleName )
+      call deallocate_test ( eta_zxp_t_f,     'eta_zxp_t_f',     moduleName )
       call deallocate_test ( tan_dh_dt,       'tan_dh_dt',       moduleName )
       call deallocate_test ( tan_d2h_dhdt,    'tan_d2h_dhdt',    moduleName )
       call deallocate_test ( dxdt_tan,        'dxdt_tan',        moduleName )
@@ -2565,17 +2573,23 @@ contains
 
       call deallocate_test ( do_calc_dw,   'do_calc_dw',   moduleName )
       call deallocate_test ( do_calc_dw_c, 'do_calc_dw_c', moduleName )
+      call deallocate_test ( do_calc_dw_f, 'do_calc_dw_f', moduleName )
       call deallocate_test ( do_calc_dn,   'do_calc_dn',   moduleName )
       call deallocate_test ( do_calc_dn_c, 'do_calc_dn_c', moduleName )
+      call deallocate_test ( do_calc_dn_f, 'do_calc_dn_f', moduleName )
       call deallocate_test ( do_calc_dv,   'do_calc_dv',   moduleName )
       call deallocate_test ( do_calc_dv_c, 'do_calc_dv_c', moduleName )
+      call deallocate_test ( do_calc_dv_f, 'do_calc_dv_f', moduleName )
 
       call deallocate_test ( eta_zxp_dw,   'eta_zxp_dw',   moduleName )
       call deallocate_test ( eta_zxp_dw_c, 'eta_zxp_dw_c', moduleName )
+      call deallocate_test ( eta_zxp_dw_f, 'eta_zxp_dw_f', moduleName )
       call deallocate_test ( eta_zxp_dn,   'eta_zxp_dn',   moduleName )
       call deallocate_test ( eta_zxp_dn_c, 'eta_zxp_dn_c', moduleName )
+      call deallocate_test ( eta_zxp_dn_f, 'eta_zxp_dn_f', moduleName )
       call deallocate_test ( eta_zxp_dv,   'eta_zxp_dv',   moduleName )
       call deallocate_test ( eta_zxp_dv_c, 'eta_zxp_dv_c', moduleName )
+      call deallocate_test ( eta_zxp_dv_f, 'eta_zxp_dv_f', moduleName )
 
       call deallocate_test ( drad_dw, 'drad_dw', moduleName )
       call deallocate_test ( drad_dn, 'drad_dn', moduleName )
@@ -2607,6 +2621,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.114  2003/01/31 17:53:39  jonathan
+! change z_path to z_path_c in passing to get_beta_path
+!
 ! Revision 2.113  2003/01/31 17:15:49  jonathan
 ! add Inc_Cld to get_beta_path
 !
