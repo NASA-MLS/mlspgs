@@ -4,19 +4,22 @@
 # $Id$
 
 # Places to look for sources without being explicitly told to do so:
-VPATH=..
+VPATH = ..
+
+# End of the path to the directory containing this Makefile:
+ME = NAG
 
 # Fortran compiler:
-F90=f95
+F90 = f95
 
 # Compiler options:
-FOPTS=-g
+FOPTS = -g
 
 # DUSTY is used to allow picky compilers to handle references to "sfrdata",
 # which has an inconsistent interface in that it can have any type
 # object for its fifth argument.
 
-DUSTY=-dusty
+DUSTY = -dusty
 
 # Loader options:
 LDOPTS = -g
@@ -25,10 +28,7 @@ LDOPTS = -g
 I = -I
 
 # Path to source files
-S=..
-
-# Path to cf_parser
-CF=$S/cf_parser/NAG
+S = ..
 
 # Beginning of path to toolkit libraries:
 TOOLKIT = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
@@ -37,7 +37,7 @@ TOOLKIT = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
 PLATFORM = linux
 
 # Path to libPGSTK.a
-PGSTK = $(HOME)/mlspgs/SDPToolkit/LF95
+PGSTK = $(HOME)/mlspgs/SDPToolkit/$(ME)
 #PGSTK = $(TOOLKIT)/lib/$(PLATFORM)
 
 include $S/Makefile.inc
@@ -47,6 +47,9 @@ machine.o: machine.f90
 
 #
 # $Log$
+# Revision 2.5  2000/10/12 22:05:28  vsnyder
+# Remove CF variable, introduce ME variable.
+#
 # Revision 2.4  2000/10/11 18:23:15  vsnyder
 # Insert copyright notice
 #
