@@ -38,9 +38,9 @@ contains
     double precision, intent(in) :: Y(*)
     ! double precision, dimension(:), pointer :: dbleX
     if ( n <= 0 ) then
-      sddot = 0.d0
+      msddot = 0.d0
     elseif ( n == 1 ) then
-      sddot = x(1) * y(1)
+      msddot = x(1) * y(1)
     else
       ! allocate(dbleX(n))
       ! dbleX = x(1:1+(n-1)*incx:incx)
@@ -61,6 +61,9 @@ contains
 end module Dot_M
 
 ! $Log$
+! Revision 1.4  2002/09/13 22:50:51  pwagner
+! Change external names to MSDDOT and MDSDOT; removed pointer copies
+!
 ! Revision 1.3  2002/09/13 18:04:31  pwagner
 ! Added mixed type dot products: a_r4 . b_r8 and a_r8 . b_r4
 !
