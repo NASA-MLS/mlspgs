@@ -393,10 +393,11 @@ contains
           d_alpha_dT_eta(:,mid) = d_alpha_dT_eta(:,mid) + alpha_path(:,mid) * fa
         end if
       end if
-      if ( i_stop > mid ) then
+      if ( i_stop > mid + 1 ) then ! mid+1 instead of mid so that mid+2 will be
+                                   ! in bounds if i_stop == 2.
         if ( do_calc(mid+1) ) then
-          fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) - &
-              & h_tan * dh_dt_tan(sv_i)) / del_s(mid+1)
+          fa = (h_path_c(mid+2) * dh_dt_path_c(mid+2,sv_i) &
+              & - h_tan * dh_dt_tan(sv_i)) / del_s(mid+1)
           d_alpha_dT_eta(:,mid+1) = d_alpha_dT_eta(:,mid+1) + alpha_path(:,mid+1) * fa
         else
           needFA = .true.
@@ -463,6 +464,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.13  2003/09/10 22:35:09  vsnyder
+! Avoid a subscript out-of-bounds in case of path length == 2
+!
 ! Revision 2.12  2003/09/09 00:03:48  vsnyder
 ! Repair an indexing blunder
 !
