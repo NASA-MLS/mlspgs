@@ -73,19 +73,10 @@ end Fill})
 ;; results back.
 !define(completePhase,{!dnl
 ;; Set default values for some parameters
-!undefine(completePhasetroph2o)
-!ProcessParVal({completePhase},!shift($@))
 begin Fill
   ;; Put state etc. back
   Transfer, source=x$1, destination=state
   Transfer, source=sdOut$1, destination=outputPrecision
-  !ifdef(completePhasetroph2o,{!dnl
-    ;; In this case copy TropH2O into H2O as requested
-    Fill, quantity=state.h2o, sourceQuantity=state.tropH2O, $
-      method=vector, /interpolate
-    ;; And its precision
-    Fill, quantity=outputPrecision.h2o, sourceQuantity=outputPrecision.tropH2O, $
-      method=vector, /interpolate})
 
   ;; FM output will be turned on again, sometime, for the PEs
   !ifdef(flagPrecisionEstimates,{},{Transfer, source=f$1, destination=fwm})
@@ -355,6 +346,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.64  2003/08/06 17:49:31  livesey
+; Changed output of matrices
+;
 ; Revision 1.63  2003/07/24 22:13:28  livesey
 ; Changed type for DGG file
 ;
