@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 !
 module I_HUNT_M
   use MLSCommon, only: I4
@@ -75,6 +78,9 @@ contains
   end subroutine I_HUNT
 end module I_HUNT_M
 ! $Log$
+! Revision 1.4  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.3  2001/03/09 00:40:32  zvi
 ! Correcting an error in HUNT routine
 !

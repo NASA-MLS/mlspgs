@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module SCRT_DN_M
   use MLSCommon, only: I4, R8
   implicit NONE
@@ -85,6 +88,9 @@ contains
   End Subroutine Scrt_Dn
 end module SCRT_DN_M
 ! $Log$
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

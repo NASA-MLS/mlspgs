@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module L2PC_PFA_STRUCTURES
   use MLSCommon, only: I4, R4, R8
   use L2PC_File_Parameters, only: MAX_NO_ELMNTS_PER_SV_COMPONENT, &
@@ -120,6 +123,9 @@ module L2PC_PFA_STRUCTURES
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 1.9  2001/04/03 07:32:45  zvi
+! Modify the spectral structure - eliminating sps_ from the names
+!
 ! Revision 1.8  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !

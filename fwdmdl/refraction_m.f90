@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module REFRACTION_M
   use MLSCommon, only: I4, R4, R8
   use D_LINTRP_M, only: LINTRP
@@ -464,6 +467,9 @@ END SUBROUTINE solve_hn
 
 end module REFRACTION_M
 ! $Log$
+! Revision 1.5  2001/03/31 23:40:56  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.4  2001/03/21 22:46:34  livesey
 ! Some bug found with range checking fixed
 !

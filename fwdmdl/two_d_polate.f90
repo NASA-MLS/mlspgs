@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module TWO_D_POLATE_M
   use MLSCommon, only: I4, R8
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
@@ -43,6 +46,9 @@ contains
   End Subroutine TWO_D_POLATE
 end module TWO_D_POLATE_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/06/21 21:56:18  zvi
 ! First version D.P.
 !

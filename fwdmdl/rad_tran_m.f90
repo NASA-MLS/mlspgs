@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module RAD_TRAN_M
   use GL6P, only: NG
   use MLSCommon, only: I4, R8
@@ -105,6 +108,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 1.8  2001/04/09 23:33:41  zvi
+! Initialize error flag
+!
 ! Revision 1.7  2001/04/09 20:52:07  zvi
 ! Debugging Derivatives version
 !

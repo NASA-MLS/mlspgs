@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module GL6P
 ! **************  Gauss-Legendre 6 point formula ***************
   use MLSCommon, only: I4, R8
@@ -27,6 +30,9 @@ module GL6P
 !---------------------------------------------------------------------------
 end module GL6P
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module STRINGS
   implicit NONE
   public
@@ -59,6 +62,9 @@ contains
 !---------------------------------------------------------------------------
 end module STRINGS
 ! $Log$
+! Revision 1.5  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.2  2000/05/04 23:43:32  vsnyder
 ! Initial Fortran 90 version
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module PFA_DB_DELTA_M
   use MLSCOmmon, only: I4, R8
   use ELLIPSE_M, only: ELLIPSE
@@ -80,6 +83,9 @@ contains
 !
 end module PFA_DB_DELTA_M
 ! $Log$
+! Revision 1.6  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.5  2001/03/29 08:51:01  zvi
 ! Changing the (*) toi (:) everywhere
 !

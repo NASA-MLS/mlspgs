@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module SPECTRO_DERIVATIVE_M
   use ELLIPSE_M, only: ELLIPSE
   use GET_DRAD_NOTDER_M, only: GET_DRAD_NOTDER
@@ -66,6 +69,9 @@ contains
   End Subroutine SPECTRO_DERIVATIVE
 end module SPECTRO_DERIVATIVE_M
 ! $Log$
+! Revision 1.9  2001/04/07 23:51:33  zvi
+! *** empty log message ***
+!
 ! Revision 1.8  2001/03/31 23:40:56  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !

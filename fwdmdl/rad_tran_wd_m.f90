@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module RAD_TRAN_WD_M
   use GL6P, only: NG
   use ELLIPSE_M, only: ELLIPSE
@@ -115,6 +118,9 @@ Subroutine Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.12  2001/05/02 20:49:23  zvi
+! Cleaning up code
+!
 ! Revision 1.11  2001/04/10 02:25:14  livesey
 ! Tidied up some code
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 ! Subroutine ?_GET_ONE_ETA ( h, peaks, no_peaks, iq, eta )
     real(rk), intent(in) :: H, PEAKS(:)
     integer(i4), intent(in) :: NO_PEAKS, IQ
@@ -41,3 +44,6 @@
 ! End Subroutine ?_GET_ONE_ETA
 
 ! $Log$
+! Revision 1.5  2001/04/13 01:45:28  vsnyder
+! Add CVS comment at the end
+!

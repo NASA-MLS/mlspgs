@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 ! subroutine ?_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
 !
     integer(i4), intent(in) :: N
@@ -60,3 +63,6 @@
 !
 ! end subroutine ?_HUNT
 ! $Log$
+! Revision 1.5  2001/03/09 00:45:13  vsnyder
+! Change Log to $Log
+!

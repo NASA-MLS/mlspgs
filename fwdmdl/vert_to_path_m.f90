@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module VERT_TO_PATH_M
   use Allocate_Deallocate, only: Allocate_test, Deallocate_Test
   use MLSCommon, only: I4, R4, R8
@@ -305,6 +308,9 @@ contains
   end subroutine Vert_To_Path
 end module Vert_To_Path_M
 ! $Log$
+! Revision 1.15  2001/05/21 22:08:35  zvi
+! A small modification in searching for tanget
+!
 ! Revision 1.14  2001/04/23 21:43:28  zvi
 ! Introducing no_phi_t etc.
 !

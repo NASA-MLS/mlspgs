@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module HYDROSTATIC_MODEL_M
   use MLSCommon, only: I4, R8
   use GL6P, only: NG, GX
@@ -375,6 +378,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.17  2001/05/11 22:18:03  livesey
+! Changed an old fixed dimension variable.
+!
 ! Revision 1.16  2001/04/23 21:43:28  zvi
 ! Introducing no_phi_t etc.
 !

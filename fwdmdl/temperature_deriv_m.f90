@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module TEMPERATURE_DERIV_M
   use ELLIPSE_M, only: ELLIPSE
   use D_DELTA_DT_M, only: D_DELTA_DT
@@ -75,6 +78,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.11  2001/04/24 00:05:36  livesey
+! Update, phi window correction for Temperature
+!
 ! Revision 1.10  2001/04/11 00:51:44  livesey
 ! Moving window implemented
 !

@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module L2PC_FILE_PARAMETERS
   use MLSCommon, only: I4, R4, R8
   implicit NONE
@@ -71,6 +74,9 @@ module L2PC_FILE_PARAMETERS
 !
 end module L2PC_FILE_PARAMETERS
 ! $Log$
+! Revision 1.6  2001/03/31 23:40:55  zvi
+! Eliminate l2pcdim (dimension parameters) move to allocatable ..
+!
 ! Revision 1.5  2001/03/20 11:03:16  zvi
 ! Fixing code for "real" data run, increase dim. etc.
 !
