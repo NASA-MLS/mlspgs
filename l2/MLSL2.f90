@@ -271,7 +271,7 @@ program MLSL2
           stop
         end if
       else if ( lowercase(line(3+n:8+n)) == 'evercr' ) then
-        neverCrash = switch
+        neverCrash = .not. switch ! Because "neverCrash" makes NEVERCRASH TRUE
       else if ( lowercase(line(3+n:14+n)) == 'fwmparallel ' ) then
         parallel%fwmParallel = .true.
       else if ( line(3+n:9+n) == 'idents ' ) then
@@ -1001,6 +1001,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.130  2005/01/22 00:39:08  pwagner
+! Reversed buggy evercrash option
+!
 ! Revision 2.129  2004/12/27 23:05:27  pwagner
 ! Commented out useless prints; warns on checkPaths option
 !
