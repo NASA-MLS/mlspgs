@@ -249,7 +249,7 @@ contains
     
 !------------------------------------
 !     COMPUTE TB AT ANGLES U
-!     INTEGRATION FROM TOP TO BOTTOM
+!     INTEGRATION FROM BOTTOM TO TOP
 !------------------------------------
       DO 1200 I=1,NU/2
         X2 = U(I)*U(I)
@@ -386,6 +386,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.12  2003/04/10 20:25:15  dwu
+! make i_saturation as a verbal argument
+!
 ! Revision 1.11  2003/02/03 19:24:46  dwu
 ! make it more efficient
 !
