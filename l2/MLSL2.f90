@@ -163,19 +163,21 @@ program MLSL2
     i = i + 1
   end do
 
+  if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
+   call switch_usage
+  endif
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
-   if( index(switches, 'log') /= 0 ) then
+   if ( .not. toolkit ) then
+      pcf = .false.
+      prunit = max(-1, prunit)   ! stdout or Fortran unit
+   endif
+
+   if( index(switches, 'log') /= 0 .or. .not. toolkit ) then
       MLSMessageConfig%LogFileUnit = -1
    else
       MLSMessageConfig%LogFileUnit = -2   ! the default in MLSMessageModule
-   endif
-
-   if ( .not. toolkit ) then
-      pcf = .false.
-      OUTPUT_PRINT_UNIT = max(-1, OUTPUT_PRINT_UNIT)   ! stdout or Fortran unit
-      prunit = OUTPUT_PRINT_UNIT
    endif
 
    UseSDPToolkit = pcf    ! Redundant, but may be needed in lib
@@ -262,6 +264,30 @@ contains
     call output ( dble(t2 - t1), advance = 'yes' )
   end subroutine SayTime
 
+  subroutine switch_usage
+    print *, 'Switch usage: -S"sw1 sw2 .. swn" or -Ssw1 -Ssw2 ..'
+    print *, ' where each of the swk may be one of the following'
+    print *, '  A => AntennaPatterns'
+    print *, '  C => SpectroscopyCatalog'
+    print *, '  F => FilterShapes'
+    print *, '  O => Open_init'
+    print *, '  P => PointingGrids'
+    print *, '  S => MLSSignals'
+    print *, '  V => VGrids (in globalSettings)'
+    print *, ' '
+    print *, '  fac => Factors of normal equations during retriever iterations'
+    print *, '  glo => Global settings'
+    print *, '  jac => Jacobian during retriever iterations'
+    print *, '  log => Log file messages'
+    print *, '  pro => Product files: l2gp, l2aux, l2dgg, l2pc, meta'
+    print *, '  neq => Normal equations during retriever iterations'
+    print *, '  nwt => Action flag at each return from Newton solver'
+    print *, '  rad => Radiances in ForwardModelInterface'
+    print *, '  sca => Scalars of interest to the Newton method'
+    print *, '  spa => Sparsity structure of fac, jac, neq'
+    print *, '  tps => Test_Parse_Signals'
+  end subroutine switch_usage
+
   subroutine Usage
     call getarg ( 0+hp, line )
     print *, 'Usage: ', trim(line), ' [options] [--] [L2CF-name]'
@@ -284,6 +310,7 @@ contains
     print *, '  -Sstring: Set "switches" = "string".  Characters in'
     print *, '            "string" may control individual outputs.  If -S is'
     print *, '            specified several times, the strings are concatenated.'
+    print *, '     (For specific strings and their effects, use -S"?")'
     print *, '  -T: Time parsing, type checking and processing separately.'
     print *, '  -t: Trace declaration table construction.'
     print *, '  -v: List the configuration file.'
@@ -324,6 +351,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.42  2001/05/17 22:34:55  pwagner
+! output and MLSMessage modules cooperate better w/o toolkit; switch_usage
+!
 ! Revision 2.41  2001/05/15 23:46:07  pwagner
 ! Removed 2 settings from MLSL2Opts; now in switches
 !
