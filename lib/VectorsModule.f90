@@ -889,7 +889,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments:
     type(Vector_T), intent(inout), target :: X
     real(r8), intent(in) :: A
-    type(Vector_T), intent(out), optional, target :: Y
+    type(Vector_T), intent(inout), optional, target :: Y
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     type(Vector_T), pointer :: Z
@@ -1161,6 +1161,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.42  2001/05/11 23:33:29  vsnyder
+! Get rid of double-printing of 'Without mask'
+!
 ! Revision 2.41  2001/05/11 22:01:00  vsnyder
 ! Simplify dumping just one vector
 !
