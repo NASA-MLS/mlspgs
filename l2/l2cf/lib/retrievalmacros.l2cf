@@ -131,11 +131,10 @@ end Fill
 
 !ifdef(flagPrecisionEstimates,{},{
   begin Join
-    !forall(directWriteOneDiagDGG,!outputRetrievalDiagnostics)
+    !ifdef(flagAvoidDirectWrite,
+    {!forall(joinOneDiagDGG,!outputRetrievalDiagnostics)},
+    {!forall(directWriteOneDiagDGG,!outputRetrievalDiagnostics)})
   end Join})
-;;  begin Fill
-;;    Destroy, vector=diag$1
-;;  end Fill
 })
 
 ;; This macro initialises the _HR species with interpolations of their
@@ -149,10 +148,12 @@ end Fill
 end Fill})
 
 ;; These macros define the various diverts we're going to get going
-!define(directDGGDivert,1)
-!define(directDGMDivert,2)
-!define(directCloudDivert,3)
-!define(AVKDivert,4)
+!define(joinedDGGDivert,1)
+!define(joinedDGMDivert,2)
+!define(AVKDivert,3)
+!define(directDGGDivert,4)
+!define(directDGMDivert,5)
+!define(directCloudDivert,6)
 
 ;; This macro is used to note an averaging kernel to be output later
 !define(storeAVK,{!ifdef(flagGotAVKs,{!divert(!AVKDivert),!divert})!dnl
@@ -160,11 +161,17 @@ end Fill})
 
 ;; These macros are used to note a new directWrite DGG or DGM at a
 ;; rather low level.
-!define(noteDirectDGG,{!ifdef(flagGotDirectDGGs,{!divert(!directDGGDivert),!divert})!dnl
-!define(flagGotDirectDGGs,{Yes})!divert(!directDGGDivert)$1!divert})
+!define(noteDirectDGG,{!dnl
+  !ifdef(flagAvoidDirectWrite,{!dnl
+    !M4Error({You are supposed to be avoiding direct writes})})!dnl
+  !ifdef(flagGotDirectDGGs,{!divert(!directDGGDivert),!divert})!dnl
+  !define(flagGotDirectDGGs,{Yes})!divert(!directDGGDivert)$1!divert})
 
-!define(noteDirectDGM,{!ifdef(flagGotDirectDGMs,{!divert(!directDGMDivert),!divert})!dnl
-!define(flagGotDirectDGMs,{Yes})!divert(!directDGMDivert)$1!divert})
+!define(noteDirectDGM,{!dnl
+  !ifdef(flagAvoidDirectWrite,{!dnl
+    !M4Error({You are supposed to be avoiding direct writes})})!dnl
+  !ifdef(flagGotDirectDGMs,{!divert(!directDGMDivert),!divert})!dnl
+  !define(flagGotDirectDGMs,{Yes})!divert(!directDGMDivert)$1!divert})
 
 !define(noteDirectCloud,{!ifdef(flagGotDirectClouds,{!divert(!directCloudDivert),!divert})!dnl
 !define(flagGotDirectClouds,{Yes})!divert(!directCloudDivert)$1!divert})
@@ -221,6 +228,28 @@ DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
   file='!outpathl2fwm/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion', $
   hdfVersion=!hdfVersion})})
 
+;; These macros are used to note the joined DGM/DGGs
+!define(storeJoinedDGG,{!ifdef(flagGotJoinedDGGs,{!divert(!joinedDGGDivert),!divert})!dnl
+!define(flagGotJoinedDGGs,{Yes})!divert(!joinedDGGDivert)$1!divert})
+
+!define(storeJoinedDGM,{!ifdef(flagGotJoinedDGMs,{!divert(!joinedDGMDivert),!divert})!dnl
+!define(flagGotJoinedDGMs,{Yes})!divert(!joinedDGMDivert)$1!divert})
+
+!define(joinDGG,{!dnl
+!ifdef(flagAvoidDirectWrite,{},{!dnl
+  !M4Error({You should set flagAvoidDirectWrite to use joinDGG})})!dnl
+!storeJoinedDGG(joinedDGG_$1_!phase)!dnl
+joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$2'
+})
+
+!define(joinDGM,{!dnl
+!ifdef(flagAvoidDirectWrite,{},{!dnl
+  !M4Error({You should set flagAvoidDirectWrite to use joinDGM})})!dnl
+!storeJoinedDGM(joinedDGM_$1_!phase)!storeJoinedDGM(joinedDGM_$1_!phase_precision)!dnl
+joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
+joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
+})
+
 ;; This macro is used to fill radiance chi squares
 !define(fillRadianceDiagnostics,{!dnl
    Fill, quantity=radianceDiagnostics.chisqMMAF$1, method=special, $
@@ -241,8 +270,8 @@ DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
      sourceQuantity=radianceDiagnostics.noRadsPerMIF$1, $
      ptanQuantity=state.ptan!moduleForBand($1)!nl})
 
-;; This macro joins the above filled quantities
-!define(joinRadianceDiagnostics,{!dnl
+;; This macro direct writes the above filled quantities
+!define(directWriteRadianceDiagnostics,{!dnl
  !directWriteDGM(radianceDiagnostics.chisqMMAF$1,' chisqMMAF !phase', /prefixSignal)
  !directWriteDGM(radianceDiagnostics.chisqMMIF$1,' chisqMMIF !phase', /prefixSignal)
  !directWriteDGM(radianceDiagnostics.chisqChan$1,' chisqChan !phase', /prefixSignal)
@@ -253,13 +282,45 @@ DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
  !directWriteDGGNoPrecision( radianceDiagnostics.noRadsBinned$1,!dnl
    ' noRadsBinned !phase', /prefixSignal)!nl})
 
+;; This macro joins the above filled quantities
+!define(joinRadianceDiagnostics,{!dnl
+   joinedDGM_chisqMMAF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMAF$1, $
+     /prefixSignal, sdName=' chisqMMAF !phase'
+   joinedDGM_chisqMMIF$1_!phase: l2aux, source=radianceDiagnostics.chisqMMIF$1, $
+     /prefixSignal, sdName=' chisqMMIF !phase'
+   joinedDGM_chisqChan$1_!phase: l2aux, source=radianceDiagnostics.chisqChan$1, $
+     /prefixSignal, sdName=' chisqChan !phase'
+   joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=radianceDiagnostics.noRadsPerMIF$1, $
+     /prefixSignal, sdName=' noRadsPerMIF !phase'
+   joinedDGG_chisqBinned$1_!phase: l2gp, source=radianceDiagnostics.chisqBinned$1, $
+     /prefixSignal, swath=' chisqBinned !phase'
+   joinedDGG_noRadsBinned$1_!phase: l2gp, source=radianceDiagnostics.noRadsBinned$1, $
+     /prefixSignal, swath=' noRadsBinned !phase'
+   !storeJoinedDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
+   !storeJoinedDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
+   !storeJoinedDGM(joinedDGM_chisqChan$1_!phase)!dnl
+   !storeJoinedDGM(joinedDGM_noRadsPerMIF$1_!phase)!dnl
+   !storeJoinedDGG(joinedDGG_chisqBinned$1_!phase)
+   !storeJoinedDGG(joinedDGG_noRadsBinned$1_!phase)
+})
+
+;; This macro is the composite of the two above
 !define(doRadianceDiagnostics,{!dnl
    begin Fill
      !forall(fillRadianceDiagnostics,$*)
    end Fill
    begin Join
-     !forall(joinRadianceDiagnostics,$*)
+     !ifdef(flagAvoidDirectWrite,
+       {!forall(joinRadianceDiagnostics,$*)},
+       {!forall(directWriteRadianceDiagnostics,$*)})
    end Join!nl})
+
+;; This macro uses the joinDGG (for the moment, will use DGM when we
+;; got to hdf5) to join the diagnostics stuff
+!define(joinOneDiagDGG,{!storeJoinedDGG(joinedDGG_$1_!phase)!dnl
+  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, $
+    swath='!translit($1,{_},{-})-!phase'!nl})
+
 
 ;; This macro is used to offset the forward model radiances
 ;; It is called inside a Fill statement.  Note it takes !phase as a
@@ -299,6 +360,9 @@ DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.61  2003/07/09 19:41:54  livesey
+; Bug fix in cloud filename
+;
 ; Revision 1.60  2003/07/09 17:58:01  livesey
 ; Added cloud file.
 ;
