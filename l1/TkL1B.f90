@@ -4,7 +4,7 @@
 MODULE TkL1B
 
   USE Geometry, ONLY: Omega => W
-  USE MLSCommon, ONLY: R8
+  USE MLSCommon, ONLY: R8, DEFAULTUNDEFINEDVALUE
   USE MLSL1Common
   USE MLSMessageModule, ONLY: MLSMESSAGE, MLSMSG_Error, MLSMSG_Warning, &
        MLSMSG_Allocate
@@ -31,7 +31,7 @@ MODULE TkL1B
   REAL :: GHz_GeodAlt(LENG), GHz_GeodLat(LENG), GHz_GeodAngle(LENG)
 
   LOGICAL, PARAMETER :: ORBINCLINE_IS_CONSTANT = .FALSE.
-  REAL, PARAMETER ::    UNDEFINED_VALUE = -999.99
+  REAL, PARAMETER ::    UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE ! -999.99
   REAL, PARAMETER ::    HUGE_F = HUGE (1.0)
 
   !------------------- RCS Ident Info -----------------------
@@ -1378,6 +1378,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.17  2004/08/03 20:41:14  pwagner
+! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+!
 ! Revision 2.16  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
