@@ -321,19 +321,19 @@ CONTAINS
 
 ! Deallocate the databases
 
-      CALL DestroyL2GPDatabase(l3r)
-      CALL DestroyL2GPDatabase(residA)
-      CALL DestroyL2GPDatabase(residD)
+!     CALL DestroyL2GPDatabase(l3r)
+!     CALL DestroyL2GPDatabase(residA)
+!     CALL DestroyL2GPDatabase(residD)
 
-      CALL DestroyL3DMDatabase(l3dm)
-      CALL DestroyL3DMDatabase(dmA)
-      CALL DestroyL3DMDatabase(dmD)
+!     CALL DestroyL3DMDatabase(l3dm)
+!     CALL DestroyL3DMDatabase(dmA)
+!     CALL DestroyL3DMDatabase(dmD)
 
-      CALL DestroyL3SPDatabase(l3sp)
+!     CALL DestroyL3SPDatabase(l3sp)
 
-      CALL DestroyL3DZDatabase(dzs)
-      CALL DestroyL3DZDatabase(dza)
-      CALL DestroyL3DZDatabase(dzd)
+!     CALL DestroyL3DZDatabase(dzs)
+!     CALL DestroyL3DZDatabase(dza)
+!     CALL DestroyL3DZDatabase(dzd)
 
 !---------------------------
    END SUBROUTINE OutputProd
@@ -415,6 +415,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.7  2001/02/21 21:16:31  nakamura
+!Changed MLSPCF to MLSPCF3; added L3DZ stuff; changed log LocalGranuleID; renamed/split OutputAndClose tasks.
+!
 !Revision 1.6  2001/01/16 17:49:03  nakamura
 !Updated for new MCFs and annotation.
 !
