@@ -1,0 +1,33 @@
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! How to handle dumping stats in every module procedure of dump_0
+! where it makes sense to dump stats
+! 
+! $Id$
+! $RCSfile$
+
+    if ( myStats ) then
+      numNonFill = count(array /= myFillValue)
+      numFill = size(array) - numNonFill
+      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
+      pctFill = 100.0 - pctNonFill
+      if ( present(name) ) call output(trim(name) // ' ', advance='no')
+      call output('Statistics on elements = or != ', advance='no')
+      call output(myFillValue, advance='yes')
+      call output('"!=" ', advance='no')
+      call output(numNonFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctNonFill, advance='no')
+      call output('%)   ', advance='no')
+      call output(' "=" ', advance='no')
+      call output(numFill, advance='no')
+      call output('( ', advance='no')
+      call output(pctFill, advance='no')
+      call output('%)   ', advance='yes')
+      return
+    endif
+! $Log$
+! Revision 2.1  2004/06/11 00:14:29  pwagner
+! First commit
+!
