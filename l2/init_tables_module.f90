@@ -896,7 +896,8 @@ contains ! =====     Public procedures     =============================
              begin, p+p_ccsdsendtime, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, s+s_l1boa, &
-             s+s_forwardModel, s+s_forwardModelGlobal, s+s_time, s+s_vgrid, n+n_section, &
+             s+s_forwardModel, s+s_forwardModelGlobal, s+s_time, s+s_vgrid, &
+             s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
@@ -932,6 +933,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.101  2001/05/11 00:24:22  livesey
+! Added l1brad and l1boa to global settings
+!
 ! Revision 2.100  2001/05/10 23:26:05  livesey
 ! Added isotope scaling stuff to fill, and isotope ratio vector quantities.
 !
