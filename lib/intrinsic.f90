@@ -203,7 +203,7 @@ contains ! =====     Public procedures     =============================
     ! Define the enumerated types
     call make_tree ( (/ &
       begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def,   &
-      begin, t+t_instrument, l+l_emls, l+l_umls, n+n_dt_def, &
+      begin, t+t_instrument, l+l_emls, l+l_umls, l+l_mls1, n+n_dt_def, &
       begin, t+t_polarization, l+l_a, l+l_b, n+n_dt_def /) )
 
   contains
@@ -237,6 +237,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.52  2004/01/09 07:24:59  livesey
+! Added the fictitious instrument mls1
+!
 ! Revision 2.51  2003/09/15 17:01:09  livesey
 ! Put the use statement back, it's needed because the includes need
 ! it and make doesn't spot it in there.
