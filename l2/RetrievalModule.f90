@@ -733,13 +733,6 @@ contains
       do ! Newtonian iteration
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
           call nwta ( nwt_flag, aj )
-          if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) then
-            if ( index(switches,'nwt') /= 0 ) then
-              call nwtdb
-            else
-              call nwtdb ( aj )
-            end if
-          end if
         end if
           if ( index(switches,'nwt') /= 0 ) then
             call FlagName ( nwt_flag, theFlagName )
@@ -1270,18 +1263,18 @@ contains
           call time_now ( t1 )
           ! aj%fnorm is now the norm of f, not its square.
 !         aj%fnmin = aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX))
-          if ( aj%fnmin < 0.0 ) then
-            call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
-            call output ( aj%fnmin, advance='yes' )
-            call output ( 'aj%fnorm**2 = ' )
-            call output ( aj%fnorm**2, advance='yes' )
-            call output ( 'norm(candidateDX) = ' )
-            call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Norm of residual is imaginary!' )
-            aj%fnmin = tiny ( aj%fnmin )
-          end if
-          aj%fnmin = sqrt(aj%fnmin)
+!         if ( aj%fnmin < 0.0 ) then
+!           call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
+!           call output ( aj%fnmin, advance='yes' )
+!           call output ( 'aj%fnorm**2 = ' )
+!           call output ( aj%fnorm**2, advance='yes' )
+!           call output ( 'norm(candidateDX) = ' )
+!           call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
+!           call MLSMessage ( MLSMSG_Warning, ModuleName, &
+!             & 'Norm of residual is imaginary!' )
+!           aj%fnmin = tiny ( aj%fnmin )
+!         end if
+!         aj%fnmin = sqrt(aj%fnmin)
           call solveCholesky ( factored, v(candidateDX) )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
@@ -1303,6 +1296,13 @@ contains
                 call output ( cosine, format='(1pe14.7)', advance='yes' )
               ! call output ( ',  DX . DXL = ' )
               ! call output ( aj%dxdxl, format='(1pe14.7)', advance='yes' )
+              end if
+            end if
+            if ( index(switches,'ndb') /= 0 ) then
+              if ( index(switches,'sca') /= 0 ) then
+                call nwtdb ( width=9 )
+              else
+                call nwtdb ( aj, width=9 )
               end if
             end if
         case ( nf_newx ) ! ................................  NEWX  .....
@@ -1449,6 +1449,14 @@ contains
 
         end if
       end do ! Newton iteration
+
+        if ( index(switches,'ndb') /= 0 ) then
+          if ( index(switches,'sca') /= 0 ) then
+            call nwtdb ( width=9 )
+          else
+            call nwtdb ( aj, width=9 )
+          end if
+        end if
 
       ! Compute the covariance of the solution
       if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
@@ -2820,6 +2828,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.155  2002/07/26 22:47:56  vsnyder
+! Only do DNWT internal output after NF_SOLVE and at the end.
+! Finish commenting-out FNMIN calculation when NWT_FLAG = NF_SOLVE
+!
 ! Revision 2.154  2002/07/26 01:20:22  vsnyder
 ! Exploit added output from DNWTDB, get rid of bogus Levenberg at start
 !
