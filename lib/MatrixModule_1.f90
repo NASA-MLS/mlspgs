@@ -30,7 +30,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
-  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_L1
+  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_Linf
   public :: Dump_Struct, FillExtraCol, FillExtraRow, FindBlock, GetDiagonal
   public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetMatrixElement, GetMatrixElement_1, GetVectorFromColumn
@@ -1486,13 +1486,13 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( rc%quant, "rc%quant in DestroyRCInfo", moduleName )
   end subroutine DestroyRCInfo
 
-  ! ---------------------------------------------------  Dump_L1  -----
-  subroutine Dump_L1 ( Matrix, Name, Upper )
+  ! --------------------------------------------------  Dump_Linf  -----
+  subroutine Dump_Linf ( Matrix, Name, Upper )
     type(Matrix_T), intent(in) :: Matrix
     character(len=*), intent(in), optional :: Name
     logical, intent(in), optional :: Upper
-    ! Dump the L1 norms of the matrix blocks.  Only dump the upper triangle
-    ! if Upper is present and true.
+    ! Dump the L_infty norms of the matrix blocks.  Only dump the upper
+    ! triangle if Upper is present and true.
 
     integer :: I, J, K             ! Subscripts, loop inductors
     logical :: My_upper
@@ -1530,7 +1530,7 @@ contains ! =====     Public Procedures     =============================
         end if
       end do ! i
     end do ! k
-  end subroutine Dump_L1
+  end subroutine Dump_Linf
 
   ! ------------------------------------------------  Dump_Matrix  -----
   subroutine Dump_Matrix ( Matrix, Name, Details )
@@ -1716,6 +1716,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.38  2001/05/18 23:48:34  vsnyder
+! Correct Dump_L1 -> Dump_Linf
+!
 ! Revision 2.37  2001/05/18 22:28:11  vsnyder
 ! Don't look for a mask in the extra column during NormalEquations
 !
