@@ -1,9 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module HE5_SWAPI_CHARACTER_SCALAR
 
-  public
+  public :: HE5_EHWRGLATT_CHARACTER_SCALAR, HE5_EHRDGLATT_CHARACTER_SCALAR, &
+    & HE5_SWRDFLD_CHARACTER_SCALAR, HE5_SWWRFLD_CHARACTER_SCALAR, &
+    & HE5_SWWRATTR_CHARACTER_SCALAR, HE5_SWWRLATTR_CHARACTER_SCALAR, &
+    & HE5_SWRDATTR_CHARACTER_SCALAR, HE5_SWRDLATTR_CHARACTER_SCALAR
+  private
 
   !------------------------------- RCS Ident Info ----------------------------
   character(len=256), private :: Id = &
@@ -28,6 +32,18 @@ contains
     he5_ehwrglatt_character_scalar = he5_ehwrglatt(fileID, &
          & attrname, datatype, count, buffer )
   end function HE5_EHWRGLATT_CHARACTER_SCALAR
+
+  integer function HE5_EHRDGLATT_CHARACTER_SCALAR ( FILEID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER   ! Buffer for read
+
+    integer, external :: HE5_EHRDGLATT
+
+    he5_ehrdglatt_CHARACTER_SCALAR = he5_ehrdglatt(fileID, &
+         & attrname, buffer )
+  end function HE5_EHRDGLATT_CHARACTER_SCALAR
 
   integer function HE5_SWRDFLD_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
@@ -88,6 +104,31 @@ contains
          & attrname, datatype, count, buffer )
   end function HE5_SWWRLATTR_CHARACTER_SCALAR
 
+  integer function HE5_SWRDATTR_CHARACTER_SCALAR ( SWATHID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER       ! Buffer for read
+
+    integer, external :: HE5_SWRDATTR
+
+    HE5_SWRDATTR_CHARACTER_SCALAR = he5_swrdattr(swathid, &
+         & attrname, buffer )
+  end function HE5_SWRDATTR_CHARACTER_SCALAR
+
+  integer function HE5_SWRDLATTR_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER       ! Buffer for read
+
+    integer, external :: HE5_SWRDLATTR
+
+    HE5_SWRDLATTR_CHARACTER_SCALAR = he5_swrdlattr(swathid, fieldname, &
+         & attrname, buffer )
+  end function HE5_SWRDLATTR_CHARACTER_SCALAR
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -95,6 +136,9 @@ contains
 end module HE5_SWAPI_CHARACTER_SCALAR
 
 ! $Log$
+! Revision 2.6  2004/02/13 00:16:02  pwagner
+! New stuff for reading swath attributes
+!
 ! Revision 2.5  2003/10/28 00:27:46  pwagner
 ! Corrected some comments
 !
