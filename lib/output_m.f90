@@ -189,7 +189,7 @@ contains
     character(len=*), intent(in), optional :: FORMAT
     logical :: My_Fill
     integer :: I
-    character(len=6) :: LINE
+    character(len=12) :: LINE
     character(len=3) :: MY_ADV
     integer :: MY_PLACES
     my_places = 0
@@ -201,7 +201,7 @@ contains
     if ( present(format) ) then
       write ( line, format ) int
     else
-      write ( line, '(i6)' ) int
+      write ( line, '(i12)' ) int
     end if
     i = max( 1, min(len(line)+1-my_places, index(line,' ',back=.true.)+1) )
     if ( my_fill ) write ( line, '(i6.6)' ) int
@@ -311,6 +311,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.11  2001/05/10 22:52:03  vsnyder
+! Increase maximum integer width
+!
 ! Revision 2.10  2001/05/10 18:22:00  pwagner
 ! Added LogFOrmat to output_double
 !
