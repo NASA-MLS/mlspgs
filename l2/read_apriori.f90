@@ -9,7 +9,7 @@ module ReadAPriori
   use Hdf, only: DFACC_READ, SFSTART
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
-    & S_L2AUX, S_L2GP
+    & L_GLORIA, S_L2AUX, S_L2GP
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, Dump
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
@@ -22,7 +22,7 @@ module ReadAPriori
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
   use MoreTree, only: Get_Spec_ID
-  use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData
+  use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, ReadGloriaFile
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
@@ -260,32 +260,31 @@ contains ! =====     Public Procedures     =============================
         call get_string ( fieldName, fieldNameString, strip=.true. )
         
         select case ( griddedOrigin )
-        case ( l_ncep )
-          
+        case ( l_ncep ) ! --------------------------- NCEP Data
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
             & GriddedDatabase(gridIndex), &
             & 'XDim,YDim,Height,TIME', TRIM(fieldNameString) )
           
-        case ( l_dao )
-          
+        case ( l_dao ) ! ---------------------------- DAO Data
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
             & GriddedDatabase(gridIndex), fieldName = TRIM(fieldNameString) )
-          
-        case ( l_climatology )
-          
-          ! Identify file (maybe from PCF if no name given)
 
+        case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
+          call decorate ( key, &
+            & AddGriddedDataToDatabase ( griddedDatabase, &
+            & ReadGloriaFile ( FilenameString ) ) )
+          
+        case ( l_climatology ) ! -------------------- Climatology data
+          ! Identify file (maybe from PCF if no name given)
           if ( .NOT. got(f_file) .and. PCF) then
-            
             do pcf_indx = lastClimPCF+1, mlspcf_l2clim_end
               returnStatus = Pgs_pc_getReference(i, version, fileNameString)
               if ( returnStatus == PGS_S_SUCCESS) exit
             end do
-            
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call announce_error ( son, &
                 & 'PCF number not found to supply' // &
@@ -305,7 +304,6 @@ contains ! =====     Public Procedures     =============================
           end if
        
           ! Locate requested grid by name, store index in gridIndex
-          
           ! Check that field name is among those added by the source field
           do gridIndex = 1, size(griddedDatabase)
             if ( trim(fieldNameString) == &
@@ -326,7 +324,6 @@ contains ! =====     Public Procedures     =============================
 
       case default
       end select     ! types of apriori data
-      
     end do                              ! Lines in l2cf loop
     
     if ( ERROR/=0 ) then
@@ -421,6 +418,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.31  2002/01/23 22:35:47  livesey
+! Added ReadGloriaFile stuff
+!
 ! Revision 2.30  2002/01/18 19:01:34  pwagner
 ! Changed debugOption to .false.
 !
