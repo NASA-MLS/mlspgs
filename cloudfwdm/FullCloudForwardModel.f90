@@ -808,8 +808,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          do k = 1, nfine*noInstances      ! sum up all the lengths
            if(abs(zp_fine(k) - state_ext%template%surfs(j,i)) < dz/2. &
            & .AND. abs(phi_fine(k) - state_ext%template%phi(j,i)) < dphi/2.) &
-           & jBlock%values(mif,j+(i-1)*noInstances) = &
-           & jBlock%values(mif,j+(i-1)*noInstances) + ds_fine(k)/ds_tot
+           & jBlock%values(mif,j+(i-1)*noCldSurf) = &
+           & jBlock%values(mif,j+(i-1)*noCldSurf) + ds_fine(k)/ds_tot
          end do
          end do
          end do 
@@ -910,6 +910,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.66  2001/10/30 05:25:48  dwu
+! assign whichchannle
+!
 ! Revision 1.65  2001/10/19 19:29:50  dwu
 ! initialize output quantities
 !
