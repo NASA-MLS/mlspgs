@@ -10,7 +10,7 @@ case "$MACHINE" in
     headnode | sum* )
 	SUMS=1
 	DESKTOP=0 ;;
-    frontend* | compute* )
+    frontend* | compute* | lightpseed* )
 	SOUNDBARRIER=1
 	DESKTOP=0 ;;
 esac
@@ -120,6 +120,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.22  2004/01/22 21:15:45  livesey
+# Bug fix from previous change
+#
 # Revision 1.21  2004/01/22 21:15:18  livesey
 # Added ability to overwrite user.
 #
