@@ -70,6 +70,21 @@ contains
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
 ! we could say so.
 
+!{ The variable {\tt dBeta\_dT\_path} isn't really
+!  $\frac{\partial\beta}{\partial T}$.  First, we evaluate $\beta$ at
+!  $T+\delta T$ and $T-\delta T$.  These are called {\tt bp} and {\tt bm}
+!  below.  We assume $\beta$ has the form
+!
+!  $\beta_0 \left(\frac{T}{T_0}\right) ^n$.  Taking logarithms, we have
+!  $\ln \beta = \ln \beta_0 + n \ln T - n \ln T_0$.
+!  Using three estimates for $\frac{\partial\beta}{\partial T}$, \emph{viz}.
+!  $(\beta(T+\delta T) - \beta(T-\delta T)) / ( 2 \delta T)$,
+!  $(\beta(T+\delta T) - \beta(T) ) / \delta T$, and
+!  $(\beta(T) - \beta(T - \delta T)) / \delta T$, we compute three estimates
+!  for $n$.  It's the value of $n$ that's returned in {\tt dBeta\_dT\_path},
+!  not $\frac{\partial\beta}{\partial T}$.  $\frac{\partial\beta}{\partial T}$
+!  is actually assembled in {\tt dRad\_tran\_dT}.
+
     real(rp), pointer :: dbeta_dt_path(:,:) ! t dep.
     real(rp), pointer :: dbeta_dw_path(:,:) ! line width
     real(rp), pointer :: dbeta_dn_path(:,:) ! line width t dep.
@@ -215,7 +230,12 @@ contains
 
 ! outputs
 
-    complex(rp), intent(out) :: beta_path(-1:,:,:) ! path beta for each species
+!{ The variable {\tt Beta\_Path} isn't really $\beta$.  It lacks a factor of
+!  $\tanh\left( \frac{h \nu}{2 k T}\right)$.  This is put in after we
+!  compute the weighted average over species, saving as many multiplies as
+!  there are species.
+
+    complex(rp), intent(out) :: Beta_path(-1:,:,:) ! path beta for each species
     ! beta_path(-1,:,:) is Sigma_m, beta_path(0,:,:) is Pi,
     ! beta_path(+1,:,:) is Sigma_p
 
@@ -333,6 +353,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.31  2003/05/09 20:07:07  vsnyder
+! Correct kind parameter for H, specify intent for GL_slabs and Beta_group
+!
 ! Revision 2.30  2003/05/09 19:24:38  vsnyder
 ! Cosmetic change
 !
