@@ -44,7 +44,7 @@ module SpectroscopyCatalog_m
     real(r8) :: V0                 ! Line center frequency MHz
     real(r8) :: W                  ! Collision broadening parameter
                                    ! MHz/mbar at 300 K
-    logical :: UseYi               ! Delta /= 0 or Gamma /= 0
+    logical :: UseYi               ! Delta /= 0 .or. Gamma /= 0
     integer, dimension(:), pointer :: QN=>NULL()      ! Optional quantum numbers
     integer, dimension(:), pointer :: Signals=>NULL() ! List of signal indices for line
     integer, dimension(:), pointer :: Sidebands=>NULL() ! Sidebands for above bands (-1,0,1)
@@ -54,6 +54,7 @@ module SpectroscopyCatalog_m
 
   type, public :: Catalog_T        ! Catalog entry for a species
     real(r8) :: Continuum(MaxContinuum)  ! Continuum coefficients
+    real :: DefaultIsotopeRatio = 1.0
     integer, pointer :: Lines(:)=>NULL() ! Indices in Lines database
     real(r8) :: Mass               ! Molecular mass in AMU
     integer :: Molecule = l_none   ! L_...; l_none => no catalog entry
@@ -61,12 +62,12 @@ module SpectroscopyCatalog_m
                                    ! indicate that the lines(:) are to be
                                    ! processed with the polarized model
     real(r8) :: Qlog(3)            ! Logarithm of the partition function
-                                   ! At 300, 225, and 150 K
+                                   ! at 300, 225, and 150 K
     integer :: Species_Name        ! Sub_rosa index of s_spectra label
   end type Catalog_T
 
   type(catalog_T), public, parameter :: Empty_Cat = catalog_t ( &
-    & 0.0_r8, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, -1 )
+    & 0.0_r8, 1.0, NULL(), 0.0_r8, l_none, NULL(), 0.0_r8, -1 )
 
   ! Public Variables:
   ! The spectroscopy database:
@@ -99,10 +100,10 @@ contains ! =====  Public Procedures  ===================================
     use Init_Spectroscopy_M, only: S_Line, S_Spectra, S_ReadSpectroscopy, &
       & S_WriteSpectroscopy
     ! Now the Fields:
-    use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_El, F_EMLSSIGNALS, &
-      & F_EMLSSIGNALSPOL, F_Gamma, F_Lines, F_Mass, F_Molecule, &
-      & F_MLS1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, &
-      & F_UMLSSIGNALS, F_V0, F_W
+    use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_DefaultIsotopeRatio, &
+      & F_El, F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_Gamma, F_Lines, F_Mass, &
+      & F_Molecule, F_MLS1SIGNALS, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, &
+      & F_Str, F_UMLSSIGNALS, F_V0, F_W
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
       & S_Time, L_EMLS, L_UMLS, L_MLS1
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
@@ -146,6 +147,7 @@ contains ! =====  Public Procedures  ===================================
     integer :: THISMANY                 ! Conted up to noSignals
     logical :: TIMING                   ! For S_Time
     real :: T1, T2                      ! For S_Time
+    real(r8) :: VALUE                   ! From Expr_Check
 
     ! Error message codes
     integer, parameter :: DupSpectra = 1               ! Duplicate s_spectra
@@ -355,6 +357,9 @@ contains ! =====  Public Procedures  ===================================
               call expr_check ( subtree(k,son), catalog(molecule)%continuum(k-1), &
                 & phyq_dimless )
             end do
+          case ( f_defaultIsotopeRatio )
+            call expr_check ( subtree(2,son), value, phyq_dimless )
+            catalog(molecule)%defaultIsotopeRatio = value
           case ( f_mass )
             gotMass = .true.
             if ( nsons(son) /= 2 ) call announce_error ( son, wrongSize, 1 )
@@ -653,6 +658,9 @@ contains ! =====  Public Procedures  ===================================
       if ( j < MaxContinuum ) call output ( ', ' )
     end do
     call output ( ' ]', advance='yes' )
+    call blanks ( 6 )
+    call output ( catalog%defaultIsotopeRatio, before='Default Isotope Ratio = ', &
+      & advance='yes' )
     if ( myDetails > 0 ) then
       call blanks ( 6 )
       call output ( 'Lines:' )
@@ -867,6 +875,7 @@ contains ! =====  Public Procedures  ===================================
       call loadPtrFromHDF5DS ( fileID, 'MoleculeNames', moleculeNames  )
       call loadPtrFromHDF5DS ( fileID, 'Qlog', qlog )
       call loadFromHDF5DS ( fileID, 'Mass', myCatalog%mass )
+      call loadFromHDF5DS ( fileID, 'IsotopeRatio', myCatalog%defaultIsotopeRatio )
       call loadFromHDF5DS ( fileID, 'Molecule', myCatalog%molecule )
       do i = 1, size(myCatalog)
         myCatalog(i)%species_name = 0
@@ -915,7 +924,7 @@ contains ! =====  Public Procedures  ===================================
         catalogItem%species_name = 0
         read ( lun, iostat=iostat, err=9 ) l, speciesName(:l), &
           & l2, moleculeName(:l2), catalogItem%continuum, catalogItem%mass, &
-          & catalogItem%qlog, nLines
+          & catalogItem%defaultIsotopeRatio, catalogItem%qlog, nLines
         catalogItem%molecule = getLitIndexFromString ( moleculeName(:l2) )
         if ( catalogItem%molecule < first_molecule .or. &
           &  catalogItem%molecule > last_molecule ) &
@@ -1243,6 +1252,7 @@ contains ! =====  Public Procedures  ===================================
       call saveAsHDF5DS ( fileID, 'LineList', lineList )
       call saveAsHDF5DS ( fileID, 'LineIndices', lineIndices )
       call saveAsHDF5DS ( fileID, 'Mass', catalog%mass )
+      call saveAsHDF5DS ( fileID, 'IsotopeRatio', catalog%defaultIsotopeRatio )
       ! Molecule indexes MoleculeNames, not the lits -- the lits may change.
       molecules = catalog%molecule
       where ( molecules == l_none )
@@ -1279,7 +1289,7 @@ contains ! =====  Public Procedures  ===================================
         if ( associated(catalog(i)%lines) ) nLines = size(catalog(i)%lines)
         write ( lun, iostat=iostat, err=9 ) l, speciesName(:l), &
           & l2, moleculeName(:l2), catalog(i)%continuum, catalog(i)%mass, &
-          & catalog(i)%qlog, nLines
+          & catalog(i)%defaultIsotopeRatio, catalog(i)%qlog, nLines
         ! Write the lines for the catalog entry
         do j = 1, nLines
           l = catalog(i)%lines(j)
@@ -1327,6 +1337,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.34  2005/01/12 03:10:00  vsnyder
+! Add error message in Read_Spectroscopy if the file cannot be opened
+!
 ! Revision 2.33  2005/01/03 18:56:31  pwagner
 ! Moved use hdf5 statements to avoid Lahey internal compiler error
 !

@@ -27,7 +27,8 @@ module Init_Spectroscopy_m
 
   ! Fields used in spectroscopy specifications:
   integer, parameter :: F_continuum  = last_signal_field + 1
-  integer, parameter :: F_delta      = f_continuum + 1
+  integer, parameter :: F_defaultIsotopeRatio = f_continuum + 1
+  integer, parameter :: F_delta      = f_defaultIsotopeRatio + 1
   integer, parameter :: F_el         = f_delta + 1
   integer, parameter :: F_emlsSignals  = f_el + 1
   integer, parameter :: F_emlsSignalsPol  = f_emlsSignals + 1
@@ -88,6 +89,7 @@ contains
 
     ! Put field names into the symbol table
     field_indices(f_continuum)  = add_ident ( 'continuum' )
+    field_indices(f_defaultIsotopeRatio) = add_ident ( 'defaultIsotopeRatio' )
     field_indices(f_delta)      = add_ident ( 'delta' )
     field_indices(f_el)         = add_ident ( 'el' )
     field_indices(f_emlsSignals)  = add_ident ( 'emlsSignals' )
@@ -175,6 +177,7 @@ contains
              ndp+n_spec_def, &
       begin, s+s_spectra, & ! Must be AFTER S_Line
              begin, f+f_continuum, t+t_numeric, n+n_field_type, &
+             begin, f+f_defaultIsotopeRatio, t+t_numeric, n+n_field_type, &
              begin, f+f_lines, s+s_line, n+n_field_spec, &
              begin, f+f_mass, t+t_numeric, n+n_field_type, &
              begin, f+f_molecule, t+t_molecule, nr+n_field_type, &
@@ -196,6 +199,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.14  2004/12/31 02:40:44  vsnyder
+! Read/Write HDF Spectroscopy catalog
+!
 ! Revision 2.13  2004/05/29 02:43:27  vsnyder
 ! Rearrange function definition stuff
 !
