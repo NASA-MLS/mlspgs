@@ -16,6 +16,7 @@ YEAR=1996
 DOY=''
 FWMVERSION=''
 L1BVERSION=''
+L2PCNAME=''
 MYUSER=$USER
 
 # Now work out what we have been asked for.
@@ -41,6 +42,9 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ -z "${1##--l1bVersion=*}" ]; then
 	L1BVERSION=${1#--l1bVersion=}
+    fi
+    if [ -z "${1##--l2pcName=*}" ]; then
+	L2PCNAME=${1#--l2pcName=}
     fi
     if [ $1 == "--dao" ] || [ $1 == "--gmao" ]; then
 	case $MACHINE in
@@ -75,7 +79,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "/science/l2cal";;
 	    desktop )
-		echo "/testing/workspace/$MYUSER/l2pc";;
+		echo "/testing/workspace/$MYUSER/$L2PCNAME";;
 	esac
     fi
     if [ $1 == "--truthl2gp" ]; then
@@ -105,7 +109,7 @@ while [ -n "$(echo $1)" ]; do
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
-		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY/";;
+		echo "/data/emls/l1b/$L1BVERSION/$YEAR/$DOY";;
 	esac
     fi
     if [ $1 == "--l1brad" ]; then
@@ -185,6 +189,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.38  2004/09/16 00:40:38  livesey
+# Better L1B handling
+#
 # Revision 1.37  2004/08/20 05:59:59  livesey
 # Updated l2pc path for soundbarrier
 #
