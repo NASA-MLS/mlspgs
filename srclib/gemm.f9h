@@ -40,3 +40,5 @@
         & "TRANSA is neither N nor T" )
     end if
 ! end subroutine *GEMM
+
+! $Log$
