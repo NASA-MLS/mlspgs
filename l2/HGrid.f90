@@ -154,6 +154,9 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &                                            
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
 
     call nullifyHGrid ( hgrid ) ! for Sun's rubbish compiler
     
@@ -361,6 +364,9 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &                                            
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     nullify ( tpGeodAlt, tpGeodAngle, defaultField, interpolatedField, &
       & defaultMIFs, defaultIndex, interpolatedIndex )
 
@@ -604,6 +610,9 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &                                            
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
     chunk = chunks ( chunkNo )
 
     ! Setup the empircal geometry estimate of lon0
@@ -1065,6 +1074,9 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &                                            
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &                      
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )    
 
     ! Read the geodetic angle from the L1Bfile
     l1bItemName = AssembleL1BQtyName ( instrumentModuleName//".tpGeodAngle", hdfVersion, .false. )
@@ -1218,6 +1230,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.43  2002/12/11 22:17:05  pwagner
+! Added error checks on hdf version
+!
 ! Revision 2.42  2002/12/06 01:07:54  pwagner
 ! A lot of extra debugging output possible
 !
