@@ -86,6 +86,14 @@ MODULE L3DMData
      INTEGER :: nLevels		! Total number of surfaces
      INTEGER :: nLats		! Total number of latitudes
 
+     ! Now we store the geolocation fields.  First, the vertical one:
+
+     REAL(r8), DIMENSION(:), POINTER :: pressure	! dimensioned (nLevels)
+
+     ! Now the horizontal geolocation information:
+
+     REAL(r8), DIMENSION(:), POINTER :: latitude	! dimensioned (nLats)
+
      ! Global Root-Sum_Square, dimensioned (nLevels)
 
      REAL(r8), DIMENSION(:), POINTER :: gRss
@@ -1191,6 +1199,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.14  2001/10/05 20:16:25  nakamura
+!# Added L3DMDiag_T.
+!#
 !# Revision 1.13  2001/07/18 15:54:37  nakamura
 !# Gets metadata time from l3cf, rather than hard-coded to noon.
 !#
