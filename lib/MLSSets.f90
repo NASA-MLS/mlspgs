@@ -168,14 +168,13 @@ contains ! =====     Public Procedures     =============================
   ! Compute the intersection C of the sets A and B, each represented by
   ! arrays of integers.
 
-    use Allocate_Deallocate, only: Allocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use Sort_M, only: Sort
 
     integer, intent(in) :: A(:), B(:)
     integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
 
-    integer :: I, J, K
-    integer :: TA(size(a)), TB(size(b)), TC(size(a)+size(b))
+    integer :: I, J, K, Stat, TA(size(a)), TB(size(b)), TC(size(a)+size(b))
 
     ta = a
     tb = b
@@ -195,7 +194,9 @@ contains ! =====     Public Procedures     =============================
     end do
 
     nullify ( c )
-    call allocate_test ( c, k, 'C in Intersection', moduleName )
+    allocate ( c(k), stat=stat )
+    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_Allocate // 'C in Intersection' )
     c = tc(:k)
 
   end function Intersection
@@ -205,13 +206,13 @@ contains ! =====     Public Procedures     =============================
   ! Compute the union C of the sets A and B, each represented by
   ! arrays of integers.
 
-    use Allocate_Deallocate, only: Allocate_Test
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use Sort_M, only: Sort
 
     integer, intent(in) :: A(:), B(:)
     integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
 
-    integer :: I, J, T(size(a)+size(b))
+    integer :: I, J, Stat, T(size(a)+size(b))
 
     t(1:size(a)) = a
     t(size(a)+1:size(t)) = b
@@ -228,8 +229,9 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
 
-    nullify ( c )
-    call allocate_test ( c, i, 'C in Union', moduleName )
+    allocate ( c(i), stat=stat )
+    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      MLSMSG_Allocate // 'C in Intersection' )
     c = t(:i)
 
   end function Union
@@ -243,6 +245,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.2  2004/06/10 20:03:14  vsnyder
+! Don't use Allocate_Test -- results in USE cycle
+!
 ! Revision 2.1  2004/06/10 00:12:22  vsnyder
 ! Initial commit
 !
