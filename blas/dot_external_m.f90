@@ -23,20 +23,23 @@ module Dot_M
       integer, intent(in) :: N, INCX, INCY
       double precision, intent(in) :: X, Y
     end function DDOT
-    double precision function SDDOT ( N, X, INCX, Y, INCY )
+    double precision function MSDDOT ( N, X, INCX, Y, INCY )
       integer, intent(in) :: N, INCX, INCY
       real, intent(in) :: X
       double precision, intent(in) :: Y
-    end function SDDOT
-    double precision function DSDOT ( N, X, INCX, Y, INCY )
+    end function MSDDOT
+    double precision function MDSDOT ( N, X, INCX, Y, INCY )
       integer, intent(in) :: N, INCX, INCY
       double precision, intent(in) :: X
       real, intent(in) :: Y
-    end function DSDOT
+    end function MDSDOT
   end interface
 end module Dot_M
 
 ! $Log$
+! Revision 1.4  2002/09/13 18:04:31  pwagner
+! Added mixed type dot products: a_r4 . b_r8 and a_r8 . b_r4
+!
 ! Revision 1.3  2001/11/08 02:37:50  vsnyder
 ! Make real argumemnts of ?DOT scalar
 !
