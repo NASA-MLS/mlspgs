@@ -133,16 +133,17 @@ contains ! ======================================== BaselineForwardModel ======
         & quantityType=l_baseline, radiometer=signal%radiometer, foundInFirst=bslInFirst )
 
       noBslChans = baseline%template%noChans
-      if (present(jacobian) .and. bslInFirst) then
-        rowBlock = FindBlock ( jacobian%row, radiance%index, maf )
-        fmStat%rows(rowBlock) = .true.
-      endif
 
       ! Get ptans, we'll need these for interpolation
       ptan => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra, &
         & quantityType = l_ptan, &
         & instrumentModule = radiance%template%instrumentModule,&
         & foundInFirst=ptanInFirst )
+
+      if (present(jacobian) .and. (bslInFirst .or. ptanInFirst) ) then
+        rowBlock = FindBlock ( jacobian%row, radiance%index, maf )
+        fmStat%rows(rowBlock) = .true.
+      endif
 
       ! Now check the validity of the quantities we've been given
       if ( .not. ValidateVectorQuantity(baseline, stacked=.true., coherent=.true., &
@@ -390,6 +391,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.7  2002/01/17 02:16:38  livesey
+! Bug, rowBlock wasn't set in some cases
+!
 ! Revision 2.6  2001/10/03 17:46:37  livesey
 ! Added correction to ptan derivatives
 !
