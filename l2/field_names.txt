@@ -41,11 +41,12 @@ covariance
 criteria
 criticalModules
 
+default_spectroscopy
 destination
 destroyJacobian
 diagnostics
 diagonal
-default_spectroscopy
+differentialScan
 do_baseline
 do_conv
 do_freq_avg
@@ -218,6 +219,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.26  2002/02/13 02:08:52  vsnyder
+# Add differentialScan
+#
 # Revision 2.25  2002/02/09 19:12:12  livesey
 # Added optical depth stuff
 #
