@@ -465,9 +465,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     start(rank) = l1bData%firstMAF
 
     ! allocate, read counterMAF
+    call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
+      & 'counterMAF', ModuleName )
     if ( sds1_id /= SD_NO_COUNTERMAF ) then
-      call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
-        & 'counterMAF', ModuleName )
       status = sfrdata_f90(sds1_id,  (/ l1bData%firstMAF /) , (/1/), &
         & (/l1bData%noMAFs/), l1bData%counterMAF )
       if ( status == -1 ) then
@@ -632,6 +632,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.17  2002/05/28 22:34:47  livesey
+! Bug fix, wasn't properly allocating counterMAF in some circumstances.
+!
 ! Revision 2.16  2002/01/09 23:42:23  pwagner
 ! Replaced discouraged print statements with favored calls to output
 !
