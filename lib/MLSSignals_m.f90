@@ -92,8 +92,8 @@ module MLSSignals_M
 
     real(r8) :: LO                      ! Radiometer local oscillator
     real(r8) :: CenterFrequency         ! Band local oscillator
-    real(r8), POINTER, DIMENSION(:) :: Frequencies=>NULL() ! Mainly a shallow copy
-    real(r8), POINTER, DIMENSION(:) :: Widths=>NULL() ! Mainly a shallow copy
+    real(r8), pointer, dimension(:) :: Frequencies=>NULL() ! Mainly a shallow copy
+    real(r8), pointer, dimension(:) :: Widths=>NULL() ! Mainly a shallow copy
   end type Signal_T
 
   ! Now some databases, the first are fairly obvious.
@@ -494,7 +494,7 @@ contains
 
   end subroutine MLSSignals
 
-  ! ----------------------------------  AddBandToDatabase  -----
+  ! ------------------------------------------  AddBandToDatabase  -----
   integer function AddBandToDatabase ( Database, Item )
     type(band_T), dimension(:), pointer :: Database
     type(band_T), intent(in) :: Item
@@ -507,7 +507,7 @@ contains
     AddBandToDatabase = newSize
   end function AddBandToDatabase
 
-  ! ----------------------------------  AddModuleToDatabase  -----
+  ! ----------------------------------------  AddModuleToDatabase  -----
   integer function AddModuleToDatabase ( Database, Item )
     type(module_T), dimension(:), pointer :: Database
     type(module_T), intent(in) :: Item
@@ -520,7 +520,7 @@ contains
     AddModuleToDatabase = newSize
   end function AddModuleToDatabase
 
-  ! ----------------------------------  AddRadiometerToDatabase  -----
+  ! ------------------------------------  AddRadiometerToDatabase  -----
   integer function AddRadiometerToDatabase ( Database, Item )
     type(radiometer_T), dimension(:), pointer :: Database
     type(radiometer_T), intent(in) :: Item
@@ -533,7 +533,7 @@ contains
     AddRadiometerToDatabase = newSize
   end function AddRadiometerToDatabase
 
-  ! ----------------------------------  AddSignalToDatabase  -----
+  ! ----------------------------------------  AddSignalToDatabase  -----
   integer function AddSignalToDatabase ( Database, Item )
     type(signal_T), dimension(:), pointer :: Database
     type(signal_T), intent(in) :: Item
@@ -546,7 +546,7 @@ contains
     AddSignalToDatabase = newSize
   end function AddSignalToDatabase
 
-  ! -------------------------------  AddSpectrometerTypeToDatabase  -----
+  ! ------------------------------  AddSpectrometerTypeToDatabase  -----
   integer function AddSpectrometerTypeToDatabase ( Database, Item )
     type(spectrometerType_T), dimension(:), pointer :: Database
     type(spectrometerType_T), intent(in) :: Item
@@ -559,7 +559,7 @@ contains
     AddSpectrometerTypeToDatabase = newSize
   end function AddSpectrometerTypeToDatabase
 
-  ! --------------------------------  DestroyBandDatabase  -----
+  ! ----------------------------------------  DestroyBandDatabase  -----
   subroutine DestroyBandDatabase ( Bands )
     type(band_T), dimension(:), pointer :: Bands
     integer :: Status
@@ -570,7 +570,7 @@ contains
     end if
   end subroutine DestroyBandDatabase
 
-  ! --------------------------------  DestroyModuleDatabase  -----
+  ! --------------------------------------  DestroyModuleDatabase  -----
   subroutine DestroyModuleDatabase ( Modules )
     type(module_T), dimension(:), pointer :: Modules
     integer :: Status
@@ -581,7 +581,7 @@ contains
     end if
   end subroutine DestroyModuleDatabase
 
-  ! --------------------------------  DestroyRadiometerDatabase  -----
+  ! ----------------------------------  DestroyRadiometerDatabase  -----
   subroutine DestroyRadiometerDatabase ( Radiometers )
     type(radiometer_T), dimension(:), pointer :: Radiometers
     integer :: Status
@@ -592,7 +592,7 @@ contains
     end if
   end subroutine DestroyRadiometerDatabase
 
-  ! --------------------------------  DestroySignalDatabase  -----
+  ! --------------------------------------  DestroySignalDatabase  -----
   subroutine DestroySignalDatabase ( Signals )
     type(signal_T), dimension(:), pointer :: Signals
     integer :: Status
@@ -628,7 +628,7 @@ contains
     end if
   end subroutine DestroySpectrometerTypeDatabase
 
-  ! ------------------------------------------------ DumpBands -----
+  ! --------------------------------------------------  DumpBands  -----
   subroutine DUMP_BANDS ( BANDS )
     type (Band_T), intent(in) :: BANDS(:)
     integer :: i
@@ -654,7 +654,7 @@ contains
     end do
   end subroutine DUMP_BANDS
 
-  ! ----------------------------------------------- Dump_Radiometers --
+  ! -------------------------------------------  Dump_Radiometers  -----
   subroutine DUMP_RADIOMETERS ( RADIOMETERS )
     type (Radiometer_T), intent(in) :: RADIOMETERS(:)
     integer :: i
@@ -675,7 +675,7 @@ contains
     end do
   end subroutine DUMP_RADIOMETERS
 
-  ! ------------------------------------------- DumpSpectrometerTypes --
+  ! --------------------------------------  DumpSpectrometerTypes  -----
   subroutine DUMP_SIGNALS ( SIGNALS )
     type (signal_T), intent(in) :: SIGNALS(:)
     integer :: i
@@ -717,7 +717,7 @@ contains
     end do
   end subroutine DUMP_SIGNALS
 
-  ! ------------------------------------------- DumpSpectrometerTypes --
+  ! --------------------------------------  DumpSpectrometerTypes  -----
   subroutine DUMP_SPECTROMETERTYPES ( SPECTROMETERTYPES )
     type (SpectrometerType_T), intent(in) :: SPECTROMETERTYPES(:)
     integer :: i
@@ -742,7 +742,7 @@ contains
     end do
   end subroutine DUMP_SPECTROMETERTYPES
 
-  ! ---------------------------------------------- GetAllModules -------
+  ! ----------------------------------------------  GetAllModules  -----
   subroutine GetAllModules(moduleNodes)
     ! Return tree nodes for all modules
     integer, dimension(:), pointer :: moduleNodes
@@ -751,21 +751,21 @@ contains
     moduleNodes=modules%node
   end subroutine GetAllModules
 
-  ! --------------------------------------- GetModuleFromRadiometer ----
+  ! ------------------------------------  GetModuleFromRadiometer  -----
   integer function GetModuleFromRadiometer(radiometer)
     ! Returns module field from given radiometer given as tree index
     integer, intent(in) :: radiometer
     GetModuleFromRadiometer=radiometers(decoration(decoration(radiometer)))%instrumentModule
   end function GetModuleFromRadiometer
 
-  ! --------------------------------------- GetModuleFromSignal ----
+  ! ----------------------------------------  GetModuleFromSignal  -----
   integer function GetModuleFromSignal(signal)
     ! Returns module field from given signal given as tree index
     integer, intent(in) :: signal
     GetModuleFromSignal=signals(decoration(decoration(signal)))%instrumentModule
   end function GetModuleFromSignal
 
-  ! --------------------------------------- GetModuleIndex -----
+  ! ---------------------------------------------  GetModuleIndex  -----
   integer function GetModuleIndex(thisModule)
     ! Returns module field from given radiometer given as tree index
     integer, intent(in) :: thisModule
@@ -776,7 +776,7 @@ contains
     end do
   end function GetModuleIndex
 
-  ! --------------------------------------- GetModuleName -----
+  ! ----------------------------------------------  GetModuleName  -----
   subroutine GetModuleName(instrumentModule, string_text)
     ! Returns module name in mixed case
     integer, intent(in) :: instrumentModule
@@ -784,7 +784,7 @@ contains
     call Get_String(modules(decoration(decoration(instrumentModule)))%name, string_text)
   end subroutine GetModuleName
 
-  ! --------------------------------------- GetRadiometerName ------
+  ! ------------------------------------------------  GetBandName  -----
   subroutine GetBandName(band, string_text, sideband, noSuffix)
     ! Place band name in string
     integer, intent(in) :: BAND   ! Tree index
@@ -825,14 +825,14 @@ contains
 
   end subroutine GetBandName
 
-  ! -------------------------------------- GetRadiometerFromSignal ---
+  ! ------------------------------------  GetRadiometerFromSignal  -----
   integer function GetRadiometerFromSignal(signal)
     ! Returns radiometer field from given signal given as tree index
     integer, intent(in) :: signal
     GetRadiometerFromSignal=signals(decoration(decoration(signal)))%radiometer
   end function GetRadiometerFromSignal
 
-  ! --------------------------------------- GetRadiometerName --------
+  ! ------------------------------------------  GetRadiometerName  -----
   subroutine GetRadiometerName(radiometer, string_text, noSuffix)
     ! Place radiometer name in string
     integer, intent(in) :: RADIOMETER   ! Tree index
@@ -856,8 +856,7 @@ contains
 
   end subroutine GetRadiometerName
 
-  ! ------------------------------------ GetSignalName ---------
-
+  ! ----------------------------------------------  GetSignalName  -----
   subroutine GetSignalName(signal, string_text, noRadiometer, noBand, &
     & noSwitch, noSpectrometer, noChannels, noSuffix)
     ! This routine constructs a full signal name
@@ -921,7 +920,7 @@ contains
     end if
   end subroutine GetSignalName
 
-  ! -------------------------------------- GetSpectrometerName -----
+  ! ----------------------------------------  GetSpectrometerName  -----
   subroutine GetSpectrometerTypeName(spectrometerType, number, string_text)
     ! Place spectrometer name and number in string
     integer, intent(in) :: SPECTROMETERTYPE
@@ -941,7 +940,7 @@ contains
       & string_text = TRIM(string_text) // TRIM(word)
   end subroutine GetSpectrometerTypeName
 
-  ! ----------------------------------------- IsModuleSpacecraft ----
+  ! ------------------------------------------  IsModuleSpacecraft  ----
   logical function IsModuleSpacecraft(thisModule)
     ! Returns true if the module is really the spacecraft
     integer, intent(in) :: thisModule
@@ -951,6 +950,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.2  2001/03/14 23:44:47  vsnyder
+! Correct a comment, other cosmetic changes in comments
+!
 ! Revision 2.1  2001/03/14 02:05:52  vsnyder
 ! Moved MLSSignals_m to mlspgs/lib.
 !
