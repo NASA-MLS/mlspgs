@@ -1,54 +1,70 @@
 module Init_MLSSignals_m
 
-  use INTRINSIC, only: Add_Ident, Begin, D, F, L, N, NADP, NDP, NP, &
-    & NR, S, T, T_Boolean, T_Numeric, T_String, Z
+  use INTRINSIC, only: Add_Ident, Begin, D, F, L, Last_Intrinsic_Lit, N, &
+    & NADP, NDP, NP, NR, S, T, T_Boolean, T_Last_Intrinsic, T_Numeric, &
+    & T_String, Z
 
+  public
   private :: Make_Tree
 
+  ! Types used in signal specifications:
+  integer, parameter :: t_sideband = t_last_intrinsic + 1
+  integer, parameter :: t_last_signal = t_sideband
+
   ! Fields used in signal specifications:
-  integer, parameter, public :: Field_First = 1
-  integer, parameter, public :: F_band = field_First
-  integer, parameter, public :: F_centerFrequency   = f_band + 1
-  integer, parameter, public :: F_channel           = f_centerFrequency + 1
-  integer, parameter, public :: F_channels          = f_channel + 1
-  integer, parameter, public :: F_deferred          = f_channels + 1
-  integer, parameter, public :: F_first             = f_deferred + 1
-  integer, parameter, public :: F_frequencies       = f_first + 1
-  integer, parameter, public :: F_frequency         = f_frequencies + 1
-  integer, parameter, public :: F_last              = f_frequency + 1
-  integer, parameter, public :: F_lo                = f_last + 1
-  integer, parameter, public :: F_module            = f_lo + 1
-  integer, parameter, public :: F_radiometer        = f_module + 1
-  integer, parameter, public :: F_spacecraft        = f_radiometer + 1
-  integer, parameter, public :: F_spectrometer      = f_spacecraft + 1
-  integer, parameter, public :: F_spectrometerType  = f_spectrometer + 1
-  integer, parameter, public :: F_start             = f_spectrometerType + 1
-  integer, parameter, public :: F_step              = f_start + 1
-  integer, parameter, public :: F_suffix            = f_step + 1
-  integer, parameter, public :: F_switch            = f_suffix + 1
-  integer, parameter, public :: F_width             = f_switch + 1
-  integer, parameter, public :: F_widths            = f_width + 1
-  integer, parameter, public :: Last_Signal_Field = f_widths
+  integer, parameter :: Field_First = 1
+  integer, parameter :: F_band = field_First
+  integer, parameter :: F_centerFrequency   = f_band + 1
+  integer, parameter :: F_channel           = f_centerFrequency + 1
+  integer, parameter :: F_channels          = f_channel + 1
+  integer, parameter :: F_deferred          = f_channels + 1
+  integer, parameter :: F_first             = f_deferred + 1
+  integer, parameter :: F_frequencies       = f_first + 1
+  integer, parameter :: F_frequency         = f_frequencies + 1
+  integer, parameter :: F_last              = f_frequency + 1
+  integer, parameter :: F_lo                = f_last + 1
+  integer, parameter :: F_module            = f_lo + 1
+  integer, parameter :: F_radiometer        = f_module + 1
+  integer, parameter :: F_spacecraft        = f_radiometer + 1
+  integer, parameter :: F_spectrometer      = f_spacecraft + 1
+  integer, parameter :: F_spectrometerType  = f_spectrometer + 1
+  integer, parameter :: F_start             = f_spectrometerType + 1
+  integer, parameter :: F_step              = f_start + 1
+  integer, parameter :: F_suffix            = f_step + 1
+  integer, parameter :: F_switch            = f_suffix + 1
+  integer, parameter :: F_width             = f_switch + 1
+  integer, parameter :: F_widths            = f_width + 1
+  integer, parameter :: Last_Signal_Field   = f_widths
+
+  ! Literals used in signal specifications:
+  integer, parameter :: L_FOLDED            = last_intrinsic_lit + 1
+  integer, parameter :: L_LOWER             = l_folded + 1
+  integer, parameter :: L_UPPER             = l_lower + 1
+  integer, parameter :: Last_Signal_Lit     = l_upper
 
   ! Signal specifications:
-  integer, parameter, public :: Spec_First = 1
-  integer, parameter, public :: S_band             = spec_First
-  integer, parameter, public :: S_module           = s_band + 1
-  integer, parameter, public :: S_radiometer       = s_module + 1
-  integer, parameter, public :: S_signal           = s_radiometer + 1
-  integer, parameter, public :: S_spectrometerType = s_signal + 1
-  integer, parameter, public :: Last_Signal_Spec = s_spectrometerType
+  integer, parameter :: Spec_First = 1
+  integer, parameter :: S_band             = spec_First
+  integer, parameter :: S_module           = s_band + 1
+  integer, parameter :: S_radiometer       = s_module + 1
+  integer, parameter :: S_signal           = s_radiometer + 1
+  integer, parameter :: S_spectrometerType = s_signal + 1
+  integer, parameter :: Last_Signal_Spec = s_spectrometerType
 
   ! The MLSSignals section is NOT defined here, because it appears
   ! in the section ordering requirements array in init_tables_module.
 
 contains
   ! --------------------------------------------  Init_MLSSignals  -----
-  subroutine Init_MLSSignals ( Field_Indices, Spec_Indices, Data_Type_Indices )
-    use TREE_TYPES, only: N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
+  subroutine Init_MLSSignals ( Data_Type_Indices, Field_Indices, Lit_Indices, &
+    & Spec_Indices )
+    use TREE_TYPES, only: N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
+    integer, intent(inout) :: Data_Type_Indices(:)
+    integer, intent(inout) :: Lit_Indices(:)
     integer, intent(inout) :: Field_Indices(field_First:last_Signal_Field)
     integer, intent(inout) :: Spec_Indices(spec_First:last_Signal_Spec)
-    integer, intent(in) :: Data_Type_Indices(:)
+    ! Put type names into the symbol table
+    data_type_indices(t_sideband) =        add_ident ( 'sideband' )
     ! Put field names into the symbol table
     field_indices(f_band) =                add_ident ( 'band' )
     field_indices(f_centerFrequency) =     add_ident ( 'centerFrequency' )
@@ -71,6 +87,10 @@ contains
     field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_width) =               add_ident ( 'width' )
     field_indices(f_widths) =              add_ident ( 'widths' )
+    ! Put literal names into the symbol table
+    lit_indices(l_folded) =                add_ident ( 'folded' )
+    lit_indices(l_lower) =                 add_ident ( 'lower' )
+    lit_indices(l_upper) =                 add_ident ( 'upper' )
     ! Put spec names into the symbol table
     spec_indices(s_band) =                 add_ident ( 'band' )
     spec_indices(s_module) =               add_ident ( 'module' )
@@ -92,6 +112,14 @@ contains
     ! "left" of the trees that represent the input.  The tree-walker
     ! stumbles upon them in its normal course of operation, never really
     ! realizing they're special (because by then they're not).
+
+  ! Start with the definitions of types. These are represented by trees of
+  ! the form  < n_dt_def t_type_name l_lit ... l_lit >
+    ! The intrinsic data types are defined in the intrinsic module
+    ! Define the nonintrinsic enumerated types
+
+    call make_tree ( (/ &
+      begin, t+t_sideband, l+l_folded, l+l_lower, l+l_upper, n+n_dt_def /) )
 
     ! Define the relations between specs and fields, and the field types
     ! or names of other specifications allowed.  These are represented by
