@@ -23,6 +23,7 @@ apriori
 aprioriPrecision
 aprioriScale
 ascii
+atmos
 atmos_der
 AuraInstrument
 autofill
@@ -85,6 +86,7 @@ force
 formula
 forwardModel
 fraction
+frequencies
 fuzz
 fwdModelExtra
 fwdModelIn
@@ -300,6 +302,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.91  2003/04/30 00:07:59  vsnyder
+# Add 'atmos' and 'frequencies' fields
+#
 # Revision 2.90  2003/04/17 23:08:28  pwagner
 # Added optional AuraInstrument field to l2gp apriori reads
 #
