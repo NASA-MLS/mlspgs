@@ -152,7 +152,8 @@ contains
   end subroutine Mcrt
 
 ! -----------------------------------------------------  Mcrt_Der  -----
-  subroutine Mcrt_Der ( T_script, D_T_script, D_E, Prod, Tau, D_Radiance )
+  subroutine Mcrt_Der ( T_script, D_T_script, D_E, Prod, Tau, Do_Calc, &
+    & D_Radiance )
 
 !       Magnetic    Condensed    Radiative    Transfer    Derivative
 
@@ -202,36 +203,45 @@ contains
     use dExDt_M, only: dExDt               ! D (exp(2x2 matrix))
     use MLSCommon, only: Rk => Rp
 
-    real(rk), intent(in) :: T_script(:)    ! Called Delta B above
-    real(rk), intent(in) :: D_T_script(:)  ! 0.5 * D Delta B
-    complex(rk), intent(in) :: D_E(:,:,:)  ! 2 x 2 x :.  D (deltau)
-    complex(rk), intent(in) :: Prod(:,:,:) ! 2 x 2 x :.  Called P above.
-    complex(rk), intent(in) :: Tau(:,:,:)  ! 2 x 2 x :. Matmul(Prod,conjg(Prod)).
-    complex(rk), intent(out) :: D_Radiance(2,2)
+    ! SVE == state_vector_elements
+    real(rk), intent(in) :: T_script(:)     ! Called Delta B above
+    real(rk), intent(in) :: D_T_script(:,:) ! path x sve. D Delta B
+    complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.  D (deltau) / dT
+    complex(rk), intent(in) :: Prod(:,:,:)  ! 2 x 2 x path.  Called P above.
+    complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
+    logical, intent(in) :: Do_Calc(:,:)     ! path x sve. Eta_Zxp /= 0.0
+    complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2,2,sve
 
-    integer :: i, k
-    complex(rk) :: PINV(2,2)               ! P_{k+1}^{-1}
+    integer :: i_p, i_sv, k
+    complex(rk) :: PINV(2,2)                ! P_{k+1}^{-1}
     complex(rk) :: Q(2,2)
-    complex(rk) :: Q_Tau(2,2)              ! Q x Tau
+    complex(rk) :: Q_Tau(2,2)               ! Q x Tau
     complex(rk) :: W(2,2)
 
     d_radiance = 0.0_rk
-    do i = 1, size(t_script)
-      w = 0.0_rk
-      do k = 1, i-1
-        ! w = w + P_k DE_k P_{k+1}^{-1}
-        pinv = reshape( (/ prod(2,2,k+1), -prod(2,1,k+1), &
-          &             -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
-          &   ( prod(1,1,k+1)*prod(2,2,k+1) - prod(1,2,k+1)*prod(2,1,k+1) )
-        w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k) ), pinv )
-      end do
-      q(1,1) = d_t_script(k) + t_script(k) * w(1,1)
-      q(1,2) =                 t_script(k) * w(1,2)
-      q(2,1) =                 t_script(k) * w(2,2)
-      q(2,2) = d_t_script(k) + t_script(k) * w(2,2)
-      q_tau = matmul(q,tau(1:2,1:2,i))
-      d_radiance = d_radiance + q_tau + conjg(transpose(q_tau))
-    end do
+    do i_sv = 1, size(d_radiance,3)      ! state vector elements
+      do i_p = 1, size(t_script)         ! path elements
+        if ( do_calc(i_p,i_sv) ) then
+          w = 0.0_rk
+          if ( do_calc(i_p,i_sv) ) then     ! non-zero derivative D_E
+            do k = 1, i_p-1
+              ! w = w + P_k DE_k P_{k+1}^{-1}
+              pinv = reshape( (/ prod(2,2,k+1), -prod(2,1,k+1), &
+                &             -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
+                &   ( prod(1,1,k+1)*prod(2,2,k+1) - prod(1,2,k+1)*prod(2,1,k+1) )
+              w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k,i_p) ), pinv )
+            end do
+            q(1,1) = 0.5 * d_t_script(k,i_p) + t_script(k) * w(1,1)
+            q(1,2) =                           t_script(k) * w(1,2)
+            q(2,1) =                           t_script(k) * w(2,2)
+            q(2,2) = 0.5 * d_t_script(k,i_p) + t_script(k) * w(2,2)
+            q_tau = matmul(q,tau(1:2,1:2,i_p))
+            d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
+                                     &  q_tau + conjg(transpose(q_tau))
+          end if
+        end if
+      end do ! i_p
+    end do ! i_sv
 
   end subroutine Mcrt_Der
 
@@ -242,6 +252,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.3  2003/05/10 01:05:07  livesey
+! Typo!
+!
 ! Revision 2.2  2003/05/09 19:27:02  vsnyder
 ! Initial stuff for temperature derivatives
 !

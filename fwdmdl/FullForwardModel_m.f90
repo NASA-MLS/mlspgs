@@ -28,9 +28,11 @@ contains
     use AntennaPatterns_m, only: ANTENNAPATTERNS
     use Comp_Eta_Docalc_No_Frq_m, only: Comp_Eta_Docalc_No_Frq
     use Comp_Sps_Path_Frq_m, only: Comp_Sps_Path, Comp_Sps_Path_Frq
+    use Compute_GL_Grid_m, only: Compute_GL_Grid
     use Convolve_All_m, only: Convolve_All
     use CS_Expmat_m, only: CS_Expmat
     use D_Hunt_m, only: Hunt
+    use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
     use DO_T_SCRIPT_M, ONLY: TWO_D_T_SCRIPT
     use Dump_0, only: Dump
     use Eval_Spect_Path_m, only: Eval_Spect_Path
@@ -45,10 +47,11 @@ contains
       & Get_Beta_Path_Polarized
     use Get_Chi_Angles_m, only: Get_Chi_Angles
     use Get_Chi_Out_m, only: Get_Chi_Out
+    use Get_d_Deltau_pol_m, only: Get_d_Deltau_pol_dT
     use Get_GL_delta_m, only: Get_GL_Delta
     use Get_Species_Data_M, only: Beta_Group_T, Get_Species_Data, &
       Destroy_Species_Data, Destroy_Beta_Group
-    use GLnp, only: NG, GX
+    use GLnp, only: NG
     use Intrinsic, only: L_CHANNEL, L_CLOUDICE, L_CLOUDWATER, &      ! JJ
       & L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
       & L_ELEVOFFSET, L_LOSVEL, L_MAGNETICFIELD, L_NONE, L_ORBITINCLINATION,  &
@@ -59,7 +62,6 @@ contains
       & Load_Sps_Data, Modify_values_for_supersat                    ! JJ
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
                                 &  DESTROYCOMPLETESLABS
-    use Make_Z_Grid_M, only: Make_Z_Grid
     use ManipulateVectorQuantities, only: DoHGridsMatch
     use MatrixModule_1, only: MATRIX_T
     use Mcrt_m, only: Mcrt, Mcrt_der
@@ -165,8 +167,6 @@ contains
     integer :: WHICHPOINTINGGRID        ! Index into the pointing grids
     integer :: WINDOWFINISH             ! End of temperature `window'
     integer :: WINDOWSTART              ! Start of temperature `window'
-    integer :: Z_ALL_PREV               ! Z_ALL_SIZE before adding something
-    integer :: Z_ALL_SIZE               ! Size of Z_ALL, q.v.
 
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
     logical :: Update                   ! Just update radiances etc.
@@ -210,6 +210,7 @@ contains
 
     real(rp) :: E_RFLTY       ! Earth reflectivity at given tan. point
     real(r8) :: FRQ           ! Frequency
+    real(r8) :: FRQHK         ! 0.5 * Frq * H_Over_K
     real(rp) :: NEG_TAN_HT    ! GP Height (in KM.) of tan. press.
                               ! below surface
     real(rp) :: R,R1,R2       ! real variables for various uses
@@ -226,7 +227,6 @@ contains
     real(rp), dimension(:), pointer :: BETA_PATH_cloud_C ! Beta on path coarse   !JJ
     real(rp), dimension(:), pointer :: CT           ! Cos(Theta), where theta
       ! is the angle between the line of sight and magnetic field vectors.
-    real(rp), dimension(:), pointer :: D_T_SCRIPT   ! D Delta_B in some notes
     real(rp), dimension(:), pointer :: DEL_S        ! Integration lengths along path
     real(rp), dimension(:), pointer :: DHDZ_PATH    ! dH/dZ on path
     real(rp), dimension(:), pointer :: DRAD_DF      ! dI/dVmr
@@ -280,6 +280,8 @@ contains
     real(rp), dimension(:,:), pointer :: BETA_PATH_PHH_C   ! Scattering phase function !JJ 
     real(rp), dimension(:),   pointer :: BETA_PATH_W0_C    ! Single scattering albedo 
     real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
+    real(rp), dimension(:,:), pointer :: D_T_SCR_dT  ! D Delta_B in some notes
+                                           ! path x state-vector-components
     real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_C ! dBeta_dn on coarse grid
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_F ! dBeta_dn on fine grid
@@ -326,7 +328,7 @@ contains
 
     real(rp), dimension(:,:,:), pointer :: DH_DT_GLGRID ! *****
 
-    complex(rp) :: D_RAD_POL_DT(2,2) ! From mcrt_der
+    complex(rp), pointer :: D_RAD_POL_DT(:,:,:) ! From mcrt_der
     complex(rp) :: RAD_POL(2,2)  ! polarized radiance output of mcrt for one freq and pointing
 
     complex(rp), dimension(:,:), pointer :: ALPHA_PATH_POLARIZED
@@ -334,6 +336,7 @@ contains
       ! (-1,:,:) are Sigma_-, (0,:,:) are Pi, (+1,:,:) are Sigma_+
     complex(rp), dimension(:,:,:), pointer :: BETA_PATH_POLARIZED
     complex(rp), dimension(:,:,:), pointer :: BETA_PATH_POLARIZED_F
+    complex(rp), dimension(:,:,:,:), pointer :: DE_DT    ! DE/DT in Michael's notes
     complex(rp), dimension(:,:,:), pointer :: DELTAU_POL ! E in Michael's notes
     complex(rp), dimension(:,:,:), pointer :: DINCOPTDEPTH_POL_DT ! D Incoptdepth_Pol / DT
     complex(rp), dimension(:,:),   pointer :: GL_DELTA_POLARIZED
@@ -349,14 +352,6 @@ contains
 
     real(rp) :: earthradc ! minor axis of orbit plane projected Earth ellipse
     real(rp) :: surf_angle(1), one_dhdz(1), one_dxdh(1)
-
-    integer(ip), dimension(:), pointer :: rec_tan_inds ! recommended tangent
-!                        point indices from make_z_grid
-    real(rp), dimension(:), pointer :: z_all ! mass storage of representation
-!                                      bases for z_grid determination
-    real(rp), dimension(:), pointer :: z_psig(:) ! recommended PSIG for
-!                                      radiative transfer calculations
-! THIS VARIABLE REPLACES FwdModelConf%integrationGrid%surfs
 
     real(rp), dimension(:), pointer :: dhdz_out
     real(rp), dimension(:), pointer :: dx_dh_out
@@ -457,11 +452,11 @@ contains
     nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
       & alpha_path_polarized_f, beta_path_c, beta_path_cloud_c, &
       & beta_path_phh_c, beta_path_w0_c, beta_path_f, beta_path_polarized, &
-      & channelOrigins, d_t_script, &
+      & channelOrigins, d_rad_pol_dt, d_t_scr_dt, &
       & d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
-      & ddhidhidtl0, del_s, deltau_pol, &
+      & ddhidhidtl0, de_dt, del_s, deltau_pol, &
       & dh_dt_glgrid, dh_dt_path, dh_dt_path_f, dh_dt_path_c, &
       & dhdz_glgrid, dhdz_out, dhdz_path, dincoptdepth_pol_dt, &
       & do_calc_dn, do_calc_dn_c, do_calc_dn_F, &
@@ -482,14 +477,14 @@ contains
       & k_atmos, k_atmos_frq, k_spect_dn, k_spect_dn_frq, &
       & k_spect_dv, k_spect_dv_frq, k_spect_dw, k_spect_dw_frq, k_temp, &
       & k_temp_frq, mag_path, mol_cat_index, n_path, path_dsdh, &
-      & p_glgrid, p_path, p_path_c, phi_path, prod_pol, ptg_angles, &
+      & p_path, p_path_c, phi_path, prod_pol, ptg_angles, &
       & radiances, RadV, ref_corr, req_out, reqs, scat_src%values, &
       & sps_beta_dbeta_c, sps_beta_dbeta_f, sps_path, superset, &
-      & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tan_hts, tan_inds, &
-      & tan_phi, tan_press, tan_temp, tan_temps, tanh1_c, tanh1_f, tau, &
+      & tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tan_hts, &
+      & tan_phi, tan_temp, tan_temps, tanh1_c, tanh1_f, tau, &
       & tau_pol, t_glgrid, t_path, t_path_c, t_path_f, t_path_m, t_path_p, &
       & t_script, &
-      & usedchannels, usedsignals, wc, z_all, z_glgrid, z_path, z_path_c )
+      & usedchannels, usedsignals, wc, z_path, z_path_c )
 
     ! Work out what we've been asked to do -----------------------------------
 
@@ -769,60 +764,14 @@ contains
 
 ! Compute Gauss Legendre (GL) grid ---------------------------------------
 
-! Insert automatic preselected integration gridder here. Need to make a
-! large concatenated vector of bases and pointings.
+    call compute_GL_grid ( fwdModelConf, temp, qtys, nlvl, nlm1, maxVert, &
+      &                    p_glgrid, z_glgrid, tan_inds, tan_press )
 
-! Calculate size of z_all and allocate it
+    surfaceTangentIndex = COUNT(tan_inds == 1)
 
-    z_all_size = temp%template%nosurfs+2 + &
-      & Size(FwdModelConf%integrationGrid%surfs)
-    if ( associated(FwdModelConf%tangentGrid) ) &
-      & z_all_size = z_all_size + FwdModelConf%tangentGrid%nosurfs
-    do sps_i = 1 , no_mol
-      z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
-    end do
-    call allocate_test ( z_all, z_all_size, 'z_all', moduleName )
+    no_tan_hts = size(tan_inds)
 
-! Fill in z_all
-! the -3.000 is a designated "surface" value
-
-    z_all_prev = temp%template%nosurfs+2
-    z_all(1) = -3.000_rp
-    z_all(2:z_all_prev-1) = temp%template%surfs(:,1)
-    z_all(z_all_prev) = 4.000_rp
-
-    ! Add the original Integration Grid:
-    z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
-    z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs
-    z_all_prev = z_all_size
-
-    if ( associated(FwdModelConf%tangentGrid) ) then
-      ! if pointing grid is associated concatenate it to the state vector
-      z_all_size = z_all_prev + FwdModelConf%tangentGrid%nosurfs
-      z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs
-      z_all_prev = z_all_size
-    end if
-
-    do sps_i = 1 , no_mol
-      z_all_size = z_all_size + qtys(sps_i)%qty%template%nosurfs
-      z_all(z_all_prev+1:z_all_size) = qtys(sps_i)%qty%template%surfs(:,1)
-      z_all_prev = z_all_size
-    end do
-
-! Now, create the final grid and discard the temporary array:
-
-    call make_z_grid ( z_all, z_psig, rec_tan_inds )
-    call deallocate_test ( z_all, 'z_all', moduleName )
-
-! note that z_psig(1) is the designated surface
-    Nlvl = SIZE(z_psig)
-    NLm1 = Nlvl - 1
-    maxVert = NLm1 * Ngp1 + 1
-
-! Allocate GL grid stuff
-
-    call allocate_test ( z_glGrid,    maxVert, 'z_glGrid', moduleName )
-    call allocate_test ( p_glGrid,    maxVert, 'p_glGrid', moduleName )
+! Allocate more GL grid stuff
 
     call allocate_test ( h_glgrid,    maxVert, no_sv_p_t, 'h_glgrid', moduleName )
     call allocate_test ( t_glgrid,    maxVert, no_sv_p_t, 't_glgrid', moduleName )
@@ -833,41 +782,17 @@ contains
     call allocate_test ( ddhidhidtl0, maxVert, n_t_zeta, no_sv_p_t, &
                       &  'ddhidhidtl0', moduleName )
 
-! From the selected integration grid pressures define the GL pressure grid:
-
-    z_glgrid(1:maxVert-1) = reshape ( &
-      ! Midpoint of integration grid intervals:
-      & spread(0.5_rp * (z_psig(2:Nlvl) + z_psig(1:Nlm1)),1,Ngp1) + &
-      ! Half length of integration grid intervals:
-      & spread(0.5_rp * (z_psig(2:Nlvl) - z_psig(1:Nlm1)),1,Ngp1) * &
-      ! Gauss points (with -1 at front):
-      & spread((/-1.0_rp,Gx(1:Ng)/),2,NLm1), (/maxVert-1/))
-    z_glgrid(maxVert) = z_psig(Nlvl)
-    p_glgrid = 10.0_rp**(-z_glgrid)
-
-    call deallocate_test ( z_psig, 'z_psig', moduleName )
-
 ! Compute tan_press from fwdModelConf%tangentGrid%surfs
 
-    j = COUNT(fwdModelConf%tangentGrid%surfs < (z_glgrid(1) - 0.0001_rp))
-    no_tan_hts = Nlvl + j
-    call allocate_test ( tan_inds,      no_tan_hts, 'tan_inds',      moduleName )
-    call allocate_test ( tan_press,     no_tan_hts, 'tan_press',     moduleName )
     call allocate_test ( tan_phi,       no_tan_hts, 'tan_phi',       moduleName )
     call allocate_test ( est_scgeocalt, no_tan_hts, 'est_scgeocalt', moduleName )
     call allocate_test ( tan_hts,       no_tan_hts, 'tan_hts',       moduleName )
     call allocate_test ( tan_temps,     no_tan_hts, 'tan_temps',     moduleName )
     call allocate_test ( reqs,          no_tan_hts, 'reqs',          moduleName )
-    tan_inds(1:j) = 1
-    tan_inds(j+1:no_tan_hts) = (rec_tan_inds - 1) * Ngp1 + 1
-    call deallocate_test ( rec_tan_inds, 'rec_tan_inds', moduleName )
-
-    tan_press(1:j) = fwdModelConf%tangentGrid%surfs(1:j)
-    tan_press(j+1:no_tan_hts) = z_glgrid(tan_inds(j+1:no_tan_hts))
-
-    surfaceTangentIndex = COUNT(tan_inds == 1)
 
 ! estimate tan_phi
+
+    j = no_tan_hts - nlvl
 
     tan_phi(1:j) = phitan%values(1,MAF)
     est_scgeocalt(1:j) = scGeocAlt%values(1,maf)
@@ -1074,7 +999,11 @@ contains
       call allocate_test ( eta_mag_zp,     no_ele, grids_mag%p_len,        'eta_mag_zp',     moduleName )
       call allocate_test ( mag_path,       no_ele, magfield%template%noChans+1, 'mag_path', &
         & moduleName )
-      if ( temp_der ) call allocate_test ( d_t_script, npc, 'd_t_script', moduleName )
+      if ( temp_der ) then
+        allocate ( d_rad_pol_dt(2,2,sv_t_len), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'d_rad_pol_dt' )
+      end if
     end if
     if ( temp_der ) then
 
@@ -1084,6 +1013,7 @@ contains
 !                         & no_sv_p_t, 'k_temp',moduleName )
       allocate ( k_temp(noUsedChannels, no_tan_hts, n_t_zeta, no_sv_p_t) )
 
+      call allocate_test ( d_t_scr_dt, npc, sv_t_len, 'd_t_scr_dt', moduleName )
       call allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', moduleName )
       call allocate_test ( dbeta_dt_path_c,      npc, no_mol, 'dbeta_dt_path_c', &
                          & moduleName )
@@ -1221,6 +1151,9 @@ contains
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate//'deltau_pol' )
       if ( temp_der ) then
+        allocate ( de_dt(2,2,npc,sv_t_len), stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'de_dt' )
         allocate ( dincoptdepth_pol_dt(2,2,npc), stat=ier )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
           & MLSMSG_Allocate//'dincoptdepth_pol_dt' )
@@ -1639,6 +1572,9 @@ contains
             & call Trace_Begin ('ForwardModel.Frequency ',index=frq_i)
 
           Frq = frequencies(frq_i)
+          frqhk = 0.5_r8 * frq * h_over_k
+
+          tanh1_c(1:npc) = tanh( frqhk / t_path_c(1:npc) )
 
           if ( FwdModelConf%incl_cld ) then   !JJ
             ! Compute Scattering source function based on temp_prof at all
@@ -1658,17 +1594,17 @@ contains
 
           ! Compute the sps_path for this Frequency
           call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
-            & Frq, eta_zp(1:no_ele,:),                           &
-            & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
+            & Frq, eta_zp(1:no_ele,:),                            &
+            & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),       &
             & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
 
-          call get_beta_path ( Frq,                              &     
-            &  p_path(1:no_ele), t_path(1:no_ele),               &     
-            &  my_Catalog, beta_group, FwdModelConf%polarized,   &     
-            &  gl_slabs, indices_c(1:npc), beta_path_c(1:npc,:), &     
-            &  gl_slabs_m, t_path_m(1:no_ele),                   &
-            &  gl_slabs_p, t_path_p(1:no_ele),                   &
-            &  dbeta_dt_path_c, dbeta_dw_path_c,                 &     
+          call get_beta_path ( Frq,                               &    
+            &  p_path(1:no_ele), t_path_c(1:npc), tanh1_c(1:npc), &    
+            &  my_Catalog, beta_group, FwdModelConf%polarized,    &    
+            &  gl_slabs, indices_c(1:npc), beta_path_c(1:npc,:),  &    
+            &  gl_slabs_m, t_path_m(1:no_ele),                    &
+            &  gl_slabs_p, t_path_p(1:no_ele),                    &
+            &  dbeta_dt_path_c, dbeta_dw_path_c,                  &    
             &  dbeta_dn_path_c, dbeta_dv_path_c )                    
 
           do_gl = .false.
@@ -1710,8 +1646,6 @@ contains
               call get_beta_path_polarized ( frq, h, my_Catalog, beta_group, gl_slabs, &
                 & indices_c(1:npc), beta_path_polarized )
 
-              tanh1_c(1:npc) = tanh( 0.5_rp * frq * h_over_k / t_path_c(1:npc) )
-
               alpha_path_polarized(-1,1:npc) = SUM( sps_path(indices_c(1:npc),:) * &
                 & beta_path_polarized(-1,1:npc,:), DIM=2 ) * tanh1_c(1:npc)
               alpha_path_polarized( 0,1:npc) = SUM( sps_path(indices_c(1:npc),:) * &
@@ -1747,13 +1681,16 @@ contains
           call get_GL_inds ( do_gl(1:npc), gl_inds, ngl )
           ! ngl is ng * count(do_gl)
 
+          t_path_f(:ngl) = t_path(gl_inds(:ngl))
+          tanh1_f(1:ngl) = tanh( frqhk / t_path_f(:ngl) )
+
           ! The derivatives that get_beta_path computes depend on which
           ! derivative arrays are allocated, not which ones are present.
           ! This avoids having four paths through the code, each with a
           ! different set of optional arguments.
 
           call get_beta_path ( Frq,                                   &
-            & p_path(1:no_ele), t_path(1:no_ele),                     &
+            & p_path(1:no_ele), t_path_f(:ngl), tanh1_f(1:ngl),       &
             & my_Catalog, beta_group, FwdModelConf%polarized,         &
             & gl_slabs, gl_inds(:ngl), beta_path_f(:ngl,:),           &
             & gl_slabs_m, t_path_m(1:no_ele),                         &
@@ -1798,7 +1735,6 @@ alpha_path_f = 0.5 * alpha_path_f
             call get_beta_path_polarized ( frq, h, my_Catalog, beta_group, gl_slabs, &
               & gl_inds(:ngl), beta_path_polarized_f )
 
-            tanh1_f(1:ngl) = tanh( 0.5_rp * frq * h_over_k / t_path(gl_inds(:ngl)) )
             alpha_path_polarized_f(-1,1:ngl) = SUM( sps_path(gl_inds(1:ngl),:) * &
               & beta_path_polarized_f(-1,1:ngl,:), DIM=2 ) * tanh1_f(1:ngl) + &
               & 0.25 * alpha_path_f(1:ngl)
@@ -1855,11 +1791,14 @@ alpha_path_f = 0.5 * alpha_path_f
 
           if ( temp_der ) then
 
+            ! get d Delta B / d T * d T / eta
+            call dt_script_dt ( t_path_c(1:npc), eta_zxp_t_c(1:npc,:), frq, &
+                              & d_t_scr_dt(1:npc,:) )
+
             dh_dt_path_f(:ngl,:) = dh_dt_path(gl_inds(:ngl),:)
             do_calc_t_f(:ngl,:) = do_calc_t(gl_inds(:ngl),:)
             eta_zxp_t_f(:ngl,:) = eta_zxp_t(gl_inds(:ngl),:)
             h_path_f(:ngl) = h_path(gl_inds(:ngl))
-            t_path_f(:ngl) = t_path(gl_inds(:ngl))
             sps_beta_dbeta_c(:npc) = SUM(sps_path(indices_c(1:npc),:) * &
               &                          beta_path_c(1:npc,:) * &
               &                          dbeta_dt_path_c(1:npc,:),DIM=2)
@@ -1873,32 +1812,37 @@ alpha_path_f = 0.5 * alpha_path_f
               & sps_beta_dbeta_c(:npc), &
               & eta_zxp_t_c(1:npc,:), do_calc_t_c(1:npc,:),                    &
               & do_calc_hyd_c(1:npc,:), del_s(1:npc), ref_corr(1:npc),         &
-              & Req + one_tan_ht(1), dh_dt_path(brkpt,:), frq, do_gl(1:npc),   &
+              & Req + one_tan_ht(1), dh_dt_path(brkpt,:), do_gl(1:npc),        &
               & h_path_f(:ngl), t_path_f(:ngl), dh_dt_path_f(:ngl,:),          &
               & alpha_path_f(1:ngl),                                           &
               & sps_beta_dbeta_f(:ngl),    &
               & eta_zxp_t_f(:ngl,:), do_calc_t_f(:ngl,:), path_dsdh(gl_inds(1:ngl)),   &
-              & dhdz_path(gl_inds(1:ngl)), t_script(1:npc), tau(1:npc), i_stop,        &
+              & dhdz_path(gl_inds(1:ngl)), t_script(1:npc), d_t_scr_dt(1:npc,:), &
+              & tau(1:npc), i_stop,        &
               & drad_dt, ptg_i, frq_i )
 
             k_temp_frq(frq_i,:) = drad_dt
 
             ! Temperature derivatives for polarized radiance if needed
             if ( FwdModelConf%polarized ) then
-              ! Compute D Deltau_Pol / DT from D Incoptdepth_Pol / DT and put
-              ! into Deltau_Pol.
-              deltau_pol = 0.0
+              ! Compute DE / DT from D Incoptdepth_Pol / DT and put
+              ! into DE_DT.
+              call get_d_deltau_pol_dT ( frq, h, ct, stcp, stsp, my_catalog, &
+                & beta_group, gl_slabs_m, gl_slabs_p, &
+                & t_path_c(1:npc), t_path_m(1:npc), t_path_p(1:npc), &
+                & tanh1_c(1:npc), beta_path_polarized(:,1:npc,:), &
+                & sps_path, eta_zxp_t_c(1:npc,:), &
+                & del_s(1:npc), indices_c(1:npc), incoptdepth_pol(:,:,1:npc), &
+                & de_dt(:,:,1:npc,:) )
 
-              ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Script
-              ! and D Deltau_Pol / DT (which is in deltau_pol by now).
+              ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
+              ! and DE / DT.
 
-              d_t_script = 0.5 * h_over_k * frq * &
-                         & t_script(1:npc) / t_path(indices_c(1:npc))**2
+              call mcrt_der ( t_script(1:npc), d_t_scr_dt(1:npc,:), &
+                & de_dt(:,:,1:npc,:), prod_pol(:,:,1:npc), &
+                & tau_pol(:,:,1:npc), do_calc_t_c(1:npc,:), d_rad_pol_dt )
 
-              call mcrt_der ( t_script(1:npc), d_t_script (1:npc), deltau_pol(:,:,1:npc), &
-              & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), d_rad_pol_dt )
-
-              k_temp_frq(frq_i,:) = drad_dt + real(d_rad_pol_dt(1,1))
+              k_temp_frq(frq_i,:) = drad_dt + real(d_rad_pol_dt(1,1,:))
 
             end if
 
@@ -2434,6 +2378,7 @@ alpha_path_f = 0.5 * alpha_path_f
 
     if ( temp_der ) then
       deallocate ( k_temp, STAT=i )
+      call deallocate_test ( d_t_scr_dt,      'd_t_scr_dt',      moduleName )
       call deallocate_test ( dRad_dt,         'dRad_dt',         moduleName )
       call deallocate_test ( dbeta_dt_path_c, 'dbeta_dt_path_c', moduleName )
       call deallocate_test ( dbeta_dt_path_f, 'dbeta_dt_path_f', moduleName )
@@ -2530,6 +2475,9 @@ alpha_path_f = 0.5 * alpha_path_f
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_DeAllocate//'incoptdepth_pol_gl' )
       if ( temp_der ) then
+        deallocate ( de_dt, stat=ier )
+        if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate//'de_dt' )
         deallocate ( dincoptdepth_pol_dt, stat=ier )
         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_DeAllocate//'dincoptdepth_pol_dt' )
@@ -2617,6 +2565,10 @@ alpha_path_f = 0.5 * alpha_path_f
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.135  2003/05/09 19:26:36  vsnyder
+! Expect T+DT instead of T and DT separately in Get_GL_Slabs_Arrays,
+! initial stuff for temperature derivatives of polarized radiance.
+!
 ! Revision 2.134  2003/05/05 23:00:24  livesey
 ! Merged in feb03 newfwm branch
 !
