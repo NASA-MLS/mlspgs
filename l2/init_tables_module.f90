@@ -134,8 +134,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_TEST                = f_temperaturequantity + 1
   integer, parameter :: F_TYPE                = f_test + 1
   integer, parameter :: F_UNIT                = f_type + 1
-  integer, parameter :: F_UNPACKOUTPUT        = f_unit + 1
-  integer, parameter :: F_VALUES              = f_unpackOutput + 1
+  integer, parameter :: F_VALUES              = f_unit + 1
   integer, parameter :: F_VGRID               = f_values + 1
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
   integer, parameter :: F_WIDTH               = f_weight + 1
@@ -443,7 +442,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_test) =                add_ident ( 'test' )
     field_indices(f_type) =                add_ident ( 'type' )
     field_indices(f_unit) =                add_ident ( 'unit' )
-    field_indices(f_unpackOutput) =        add_ident ( 'unpackOutput' )
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_vGrid) =               add_ident ( 'vgrid' )
     field_indices(f_weight) =              add_ident ( 'weight' )
@@ -701,7 +699,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
-             begin, f+f_unpackOutput, t+t_boolean, n+n_field_type, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
@@ -710,7 +707,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
-             begin, f+f_unpackOutput, t+t_boolean, n+n_field_type, &
              begin, f+f_sdname, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_matrix, &  ! Must be AFTER s_vector
@@ -842,6 +838,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.36  2001/03/06 20:52:33  livesey
+! Removed unpackOutput option for joins
+!
 ! Revision 2.35  2001/03/05 01:19:03  livesey
 ! Minor changes
 !
