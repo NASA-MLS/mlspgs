@@ -52,7 +52,8 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
       & F_APRIORIPRECISION, F_B, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
       & F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
-      & F_ECRTOFOV, F_EARTHRADIUS, F_EXPLICITVALUES, F_EXTINCTION, F_FIELDECR, F_FORCE, &
+      & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
+      & F_EXTINCTION, F_FIELDECR, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
       & F_HEIGHT, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, F_INSTANCES, & 
@@ -320,6 +321,7 @@ contains ! =====     Public Procedures     =============================
     integer :: ECRTOFOVQUANTITYINDEX    ! Rotation matrix
     integer :: ECRTOFOVVECTORINDEX      ! Rotation matirx
     integer :: ERRORCODE                ! 0 unless error; returned by called routines
+    logical :: EXCLUDEBELOWBOTTOM       ! If set in binmax/binmin does not consider stuff below bottom
     logical :: Extinction               ! Flag for cloud extinction calculation
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FieldValue               ! Value of a field in the L2CF
@@ -493,6 +495,7 @@ contains ! =====     Public Procedures     =============================
       boxCarMethod = l_mean
       channel = 0
       dontMask = .false.
+      excludeBelowBottom = .false.
       extinction = .false.
       force = .false.
       fromPrecision = .false.
@@ -726,6 +729,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_earthRadius ) ! For losGrid fill
             earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
             earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_excludeBelowBottom )
+            excludeBelowBottom = get_boolean ( gson )
           case ( f_noise )   ! Only used for chi^2 special fills or addnoise
             noiseVectorIndex = decoration(decoration(subtree(1,gson)))
             noiseQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1062,7 +1067,7 @@ contains ! =====     Public Procedures     =============================
           end if
 
           call FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
-            & channel, fillMethod, additional )
+            & channel, fillMethod, additional, excludeBelowBottom )
 
         case ( l_boxcar )
           if ( .not. got ( f_sourceQuantity ) ) &
@@ -6125,7 +6130,7 @@ contains ! =====     Public Procedures     =============================
 
     ! -------------------------------------------- FillWithBinResults -----
     subroutine FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
-      & channel, method, additional )
+      & channel, method, additional, excludeBelowBottom )
       ! This fills a coherent quantity with the max/min binned value of 
       ! a typically incoherent one.  The bins are centered horizontally
       ! on the profiles in quantity, but vertically the bins run between one
@@ -6137,6 +6142,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: CHANNEL
       integer, intent(in) :: METHOD
       logical, intent(in) :: ADDITIONAL
+      logical, intent(in) :: EXCLUDEBELOWBOTTOM
 
       ! Local variables
       real(r8), dimension(:,:), pointer :: SOURCEHEIGHTS ! might be ptan.
@@ -6180,12 +6186,12 @@ contains ! =====     Public Procedures     =============================
       ! incoherent quantities
       if ( sourceQuantity%template%coherent ) then
         call Hunt ( quantity%template%surfs(:,1), sourceHeights(:,1), surfs(:,1), &
-          & allowTopValue=.true. )
+          & allowTopValue=.true., allowBelowValue=excludeBelowBottom )
         surfs = spread ( surfs(:,1), 2, sourceQuantity%template%noInstances )
       else
         do si = 1, sourceQuantity%template%noInstances
           call Hunt ( quantity%template%surfs(:,1), sourceHeights(:,si), surfs(:,si), &
-            & allowTopValue=.true. )
+            & allowTopValue=.true., allowBelowValue=excludeBelowBottom )
         end do
       end if
 
@@ -6851,6 +6857,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.270  2004/05/04 01:03:56  livesey
+! Added excludeBelowBottom flag for binmax/binmin fill
+!
 ! Revision 2.269  2004/05/01 04:04:36  vsnyder
 ! Use DumpCommand
 !
