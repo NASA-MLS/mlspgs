@@ -3,13 +3,43 @@
 
 module Geometry
 
-  ! This module contains some geometry routines common to the forward model and
-  ! the scan model.
+  ! This module contains some geometry routines and constants common to the
+  ! forward model and the scan model.
 
   use MLSCommon, only: R8, RP
+  use Units, only: Deg2Rad, PI
 
-  implicit none
+  implicit NONE
   private
+
+  public :: EarthRadA, EarthRadB, EarthSurfaceGPH, GM, G0, J2, J4, W
+
+  public :: GeodToGeocLat
+
+  ! Earth dimensions.
+
+  real(r8), parameter :: EarthRadA = 6378137.0_r8    ! Major axis radius in m 
+  real(r8), parameter :: EarthRadB = 6356752.3141_r8 ! Minor axis radius in m 
+  real(r8), parameter :: Earth_Axis_Ratio_Squared = EarthRadA**2 / EarthRadB**2
+
+  ! Gravity-related terms.
+
+  real (r8), parameter :: G0 = 9.80665         ! Nominal little g ms-2
+  real(rp), parameter :: GM = 3.98600436e14_rp ! m^3/sec^2
+
+  ! These are the 1980 reference geoid values.
+
+  real(rp), parameter :: J2 = 0.0010826256_rp
+  real(rp), parameter :: J4 = -.0000023709122_rp
+
+  ! earth rotational velocity.
+
+  real(rp), parameter :: W = 7.292115e-05_rp ! rad/sec
+
+  ! Earth surface geopotential height
+
+  real (r8), parameter :: EarthSurfaceGPH = 6387182.265_r8 ! meters
+
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
        "$Id$"
@@ -17,56 +47,34 @@ module Geometry
   character (len=*), parameter :: ModuleName= "$RCSfile$"
   !---------------------------------------------------------------------------
 
-
-  public :: EarthRadA, EarthRadB, GM, J2, J4, W, PI, LN10, GeodToGeocLat
-
-  ! Now parameters etc
-
-  real(r8), parameter :: EarthRadA=6378137.0_r8    ! Major axis radius in m 
-  real(r8), parameter :: EarthRadB=6356752.3141_r8 ! Minor axis radius in m 
-
-  ! These are the 1980 reference geoid values.
-
-  real(rp), parameter :: GM = 3.98600436e14_rp ! m^3/sec^2
-  real(rp), parameter :: J2 = 0.0010826256_rp
-  real(rp), parameter :: J4 = -.0000023709122_rp
-
-  ! earth rotational velocity
-
-  real(rp), parameter :: W = 7.292115e-05_rp ! rad/sec
-
-  ! Just in case these constants aren't defined everywhere else.
-  
-  real(r8), parameter :: PI=3.14159265358979323846264338328_r8   
-  real(r8), parameter :: LN10=2.30258509299404568401799145468_r8 
-
 contains ! ------------------------------- Subroutines and functions ----
 
   ! This function converts a geodetic latitude (IN DEGREES!) into a geocentric
   ! one (IN RADIANS!)
   
-  real(r8) elemental function GeodToGeocLat(geodLat)
+  real(r8) elemental function GeodToGeocLat ( geodLat )
 
     ! Arguments
     real (r8), intent(IN) :: geodLat
 
     ! Executable code, use special method for high latitudes.
-    if (abs(geodLat).gt.89.0) then
-       if (geodLat.gt.0.0) then
-          geodtoGeocLat=PI/2.0+((earthRadA/earthRadB)**2)*&
-               (geodLat-90.0)*PI/180.0
-       else
-          geodToGeocLat=-PI/2.0+((earthRadA/earthRadB)**2)*&
-               (geodLat+90.0)*PI/180.0
-       endif
+    if ( geodLat > 89.0 ) then
+      geodtoGeocLat = 0.5 * PI + Earth_Axis_Ratio_Squared * &
+           (geodLat-90.0) * deg2rad
+    else if ( geodLat < -89.0 ) then
+      geodToGeocLat = -0.5 * PI + Earth_Axis_Ratio_Squared * &
+           (geodLat+90.0) * deg2rad
     else
-       geodToGeocLat=atan(((earthRadB/earthRadA)**2)*tan(geodLat*PI/180.0))
-    endif
+       geodToGeocLat=atan( (1.0/Earth_Axis_Ratio_Squared) * tan(geodLat*deg2rad))
+    end if
   end function GeodToGeocLat
-  
+
 end module Geometry
 
 ! $Log$
+! Revision 2.6  2002/09/26 20:33:19  vsnyder
+! Remove PI and LN10 -- they're in Units
+!
 ! Revision 2.5  2002/09/26 16:27:14  livesey
 ! Changes from Van, new constants etc.
 !
