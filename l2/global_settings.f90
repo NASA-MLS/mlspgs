@@ -59,10 +59,12 @@ contains
       & P_VERSION_COMMENT, S_BINSELECTOR, S_EMPIRICALGEOMETRY, S_FGRID, &
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, S_TIME, S_VGRID
     use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
-      & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
+      & AssembleL1BQtyName, DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
     use L2GPData, only: L2GPDATA_T
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
     use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
+    use MLSFiles, only: mls_hdf_version
+    use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSStrings, only: hhmmss_value
@@ -94,7 +96,6 @@ contains
 
     integer :: Details   ! How much info about l1b files to dump
     logical :: GOT(2) = .false.
-    integer :: hdfVersion          ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: I                   ! Index of son of root
     integer :: L1BFLAG
     real(r8) :: MINTIME, MAXTIME   ! Time Span in L1B file data
@@ -103,7 +104,7 @@ contains
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
     integer :: Sub_rosa_index
-    integer :: the_hdf_version
+    integer :: the_hdf_version     ! 4 or 5 (corresp. to hdf4 or hdf5)
     logical :: TIMING              ! For S_Time
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2                 ! For S_Time
@@ -116,6 +117,8 @@ contains
     character(LEN=FileNameLen) :: FilenameString, LeapSecFileName
     character (len=name_len) :: QUANTITY
     character(LEN=*), parameter :: Time_conversion='(F32.0)'
+    integer ::  hdfVersion
+    character(len=Name_Len) :: l1bItemName
 
     timing = section_times
     if ( timing ) call time_now ( t1 )
@@ -296,6 +299,7 @@ contains
       end if
     end do
 
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     ! add maf offsets to start, end times
     ! or convert them to tai93
     ! This is optional way to define processingRange if using PCF
@@ -311,8 +315,9 @@ contains
           & 'L1BOA file required by global data--but not set')
       end if
       quantity = 'MAFStartTimeTAI'
-      call ReadL1BData ( l1bInfo%l1boaID, quantity, l1bField, noMAFs, &
-        & l1bFlag)
+      l1bItemName = AssembleL1BQtyName ( quantity, hdfVersion, .false. )
+      call ReadL1BData ( l1bInfo%l1boaID, l1bItemName, l1bField, noMAFs, &
+        & l1bFlag, hdfVersion=hdfVersion)
       if ( l1bFlag==-1) then
         call announce_error(son, &
           & 'unrecognized MAFStarttimeTAI in L1BOA file')
@@ -507,8 +512,11 @@ contains
   !                                    &       'R1A:118.B1F:PT.S0.FB25-1'
       character (len=LEN(BASE_QUANT_NAME)) :: l1b_quant_name
       logical, parameter ::                   DUMPPRECISIONTOO = .true.
+      integer ::  hdfVersion
+      character(len=Name_Len) :: l1bItemName
 
       ! Begin
+      hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
       myL1BDetails = -2
       if ( present(dumpL1BDetails) ) myL1BDetails = dumpL1BDetails
       version = 1
@@ -528,8 +536,9 @@ contains
     	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
          if ( myL1BDetails > -2 ) then
            l1b_quant_name = BASE_QUANT_NAME
-           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
-            & NoMAFs, IERR, NeverFail=.true. )
+           l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
+           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemName, L1bData, &
+            & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
            if ( IERR == 0 ) then
              call Dump(l1bData, myL1BDetails )
              call DeallocateL1BData ( l1bData )
@@ -542,8 +551,9 @@ contains
          end if
          if ( myL1BDetails > -2 .and. DUMPPRECISIONTOO ) then
            l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
-           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
-            & NoMAFs, IERR, NeverFail=.true. )
+           l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
+           call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemName, L1bData, &
+            & NoMAFs, IERR, NeverFail=.true., hdfVersion=hdfVersion )
            if ( IERR == 0 ) then
              call Dump(l1bData, myL1BDetails )
              call DeallocateL1BData ( l1bData )
@@ -670,6 +680,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.60  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.59  2002/10/03 23:01:19  pwagner
 ! gets the_hdf_version from l1b..setup
 !
