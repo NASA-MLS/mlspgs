@@ -129,7 +129,7 @@ contains
       end if
     end if
     if ( associated(weightVec) ) then
-      if ( weightVec%template%id /= a%col%vec%template%id ) &
+      if ( weightVec%template%name /= a%col%vec%template%name ) &
         & call announceError ( regTemplate, orders )
     end if
 
@@ -687,6 +687,9 @@ o:          do while ( c2 <= ni )
 end module Regularization
 
 ! $Log$
+! Revision 2.36  2003/06/20 19:38:26  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.35  2003/05/16 02:57:13  vsnyder
 ! Removed USE's for unreferenced symbols
 !
