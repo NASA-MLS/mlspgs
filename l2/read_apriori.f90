@@ -17,12 +17,13 @@ module ReadAPriori
   use MLSCommon, only: FileNameLen
   use MLSFiles, only: SPLIT_PATH_NAME
   use MLSL2Options, only: PCF
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     &                         MLSMSG_Error, MLSMSG_FileOpen
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
   use MoreTree, only: Get_Spec_ID
   use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, source_file_already_read
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
   use TOGGLES, only: GEN, TOGGLE
@@ -93,12 +94,16 @@ contains ! =====     Public Procedures     =============================
     integer :: Sd_id
     integer :: SwathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen) :: SWATHNAMESTRING ! actual literal swath name
+    real :: T1, T2                      ! for timing
+    logical :: TIMING
     integer :: Version
 
     character(len=2048) :: ALLSWATHNAMES ! Buffer to get info back.
 
     if ( toggle (gen) ) call trace_begin ( "read_apriori", root )
 
+    timing = section_times
+    if ( timing ) call cpu_time ( t1 )
     error = 0
     version = 1
     lastClimPCF = mlspcf_l2clim_start - 1
@@ -305,6 +310,21 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) ) call trace_end("read_apriori")
   
+    if ( timing ) call sayTime
+    return
+
+  contains
+    subroutine SayTime
+      call cpu_time ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
+      call output ( "Timing for read_apriori = " )
+      call output ( dble(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
   end subroutine read_apriori
 
   ! ------------------------------------------------  announce_error  -----
@@ -375,6 +395,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.22  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.21  2001/09/10 23:37:44  livesey
 ! New GriddedData stuff
 !
