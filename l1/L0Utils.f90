@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -10,8 +10,7 @@ MODULE L0Utils ! Utilities to read L0 data
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGSIO_W_L0_END_OF_VIRTUAL_DS, &
        PGSIO_M_L0_HEADER_CHANGED, PGS_PC_GetReference
   USE OpenInit, ONLY: OpenL0File
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning, &
-       MLSMSG_Error
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMSG_Warning
 
   IMPLICIT NONE
 
@@ -68,14 +67,16 @@ CONTAINS
 
   END FUNCTION ReadL0Packet
 
+!=============================================================================
   SUBROUTINE ReadL0Sci (SciPkt, OK)
+!=============================================================================
 
     USE MLSL1Config, ONLY: L1Config
 
     CHARACTER(LEN=*), DIMENSION(:) :: SciPkt
     LOGICAL :: OK
 
-    INTEGER :: i, returnStatus, version
+    INTEGER :: returnStatus, version
     REAL(r8) :: TAI93(2)
     INTEGER :: ret_len, sindx, MIF(2)
     LOGICAL :: EOD
@@ -136,7 +137,9 @@ CONTAINS
 
   END SUBROUTINE ReadL0Sci
 
+!=============================================================================
   SUBROUTINE ReadL0Eng (engpkt, MAFno, TotalMAF, MIFsPerMAF, MAFtime, OK)
+!=============================================================================
 
     USE MLSL1Utils, ONLY: BigEndianStr
 
@@ -145,7 +148,7 @@ CONTAINS
     REAL(r8) :: MAFtime
     LOGICAL :: OK
 
-    INTEGER :: i, returnStatus, MAF(6), version
+    INTEGER :: i, n, returnStatus, MAF(6), version
     REAL(r8) :: TAI93, engtime
     INTEGER :: ret_len
     LOGICAL :: EOD
@@ -157,7 +160,9 @@ CONTAINS
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
-    DO i = 1, 6
+    MAF = -1
+    i = 1   ! start with eng packet #1
+    DO
 
        DO
 
@@ -191,27 +196,35 @@ CONTAINS
                   L0FileInfo%EngFilename(i), "Engineering")
           ENDIF
 
-          IF (TAI93 >= engtime) EXIT  ! Put in time order for packets 1-6
+         IF (TAI93 >= engtime) EXIT  ! Put in time order for packets 1-6
 
        ENDDO
 
        MAF(i) = BigEndianStr (EngPkt(i)(MAF_offset(i):MAF_offset(i)+1))
 
+       IF (i == 1) THEN
+          DO n = (i+1), 6
+             IF (MAF(n) /= MAF(n-1)) EXIT
+          ENDDO
+       ELSE
+          IF (MAF(i) == MAF(1)) THEN
+             DO n = (i+1), 6
+                IF (MAF(n) /= MAF(n-1)) EXIT
+             ENDDO
+          ELSE
+             n = 1    ! Start with the next MAF
+          ENDIF
+       ENDIF
+       i = n
+       IF (i > 6) EXIT
+
     ENDDO
 
     MIFsPerMAF = BigEndianStr (EngPkt(6)(244:245))
     TotalMAF = BigEndianStr (EngPkt(6)(246:249))
-
-    OK = .TRUE.
-
     MAFno = MAF(1)
 
-    DO i = 2, 6
-       IF (MAF(i) /= MAFno) THEN  ! All must be the same MAF number
-          OK = .FALSE.
-          EXIT
-       ENDIF
-    ENDDO
+    OK = .TRUE.
 
   END SUBROUTINE ReadL0Eng
 
@@ -220,6 +233,9 @@ END MODULE L0Utils
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.4  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

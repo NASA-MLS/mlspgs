@@ -1,11 +1,10 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
 MODULE SciUtils ! L0 science utilities
 !=============================================================================
 
-  USE MLSCommon, ONLY: r8
   USE L0_sci_tbls, ONLY: sci_type, l0_sci1, l0_sci2, sci1_T1_fmt, sci2_T1_fmt, &
        sci1_T2_fmt, sci2_T2_fmt, sci1_T1, sci2_T1, sci1_T2, sci2_T2, &
        sci_cptr, Sci_pkt, SciMAF, type_sci1, THzSciMAF, DACS_pkt, DACS_MAF
@@ -13,14 +12,14 @@ MODULE SciUtils ! L0 science utilities
   USE MLSL1Utils, ONLY: BigEndianStr, ExtractBigEndians, SwapBytes, QNan, &
        Finite
   USE DACsUtils, ONLY: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata
-  USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, WFchans, deg24, DACSnum, &
+  USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, WFchans, deg24, &
        DACSchans, BandSwitch, L1ProgType, THzType, MaxMIFs
 
   IMPLICIT NONE
 
   PRIVATE
 
-  PUBLIC :: NextSciMAF
+  PUBLIC :: NextSciMAF, SwMirPos, GetScAngles
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -52,8 +51,8 @@ MODULE SciUtils ! L0 science utilities
     CHARACTER (LEN=24) :: DN
 
     INTEGER :: DACS_C_K(DACSchans)
-    INTEGER :: DACS_i1, DACS_i2, DACS_indx(2)
-    INTEGER :: D(4), Dtot, TP, DIO, LO, nchans, Zlag
+    INTEGER :: DACS_i1, DACS_i2
+    INTEGER :: D(4), TP, DIO, LO, Zlag
 
     INTEGER, PARAMETER :: type_I = 1
     INTEGER, PARAMETER :: type_II = 3
@@ -124,6 +123,12 @@ MODULE SciUtils ! L0 science utilities
        Sci_pkt%GME_pos(:) = QNan()
     ENDIF
     Sci_pkt%GHz_sw_pos = SwMirPos ("G", Sci_pkt%GME_pos)
+
+!! Get GHz scanning angles
+
+    Sci_pkt%APE_pos(:) = QNan()
+    DN = sci_cptr(tindex)%GHz_ant_scan
+    CALL GetAPE_pos (DN, Sci_pkt%APE_pos)
 
 !! Filter bank switches
 
@@ -238,7 +243,7 @@ MODULE SciUtils ! L0 science utilities
 
     INTEGER, PARAMETER :: no_data = -1   ! no data is available
     INTEGER, SAVE :: prev_MAF = no_data
-    INTEGER :: last_MIF, i, ios
+    INTEGER :: last_MIF, i
     REAL :: pos1(2)
     CHARACTER(len=1) :: mir_pos
 
@@ -291,18 +296,27 @@ MODULE SciUtils ! L0 science utilities
           IF (Sci_pkt%MIFno > 0) THEN
              SciMAF(Sci_pkt%MIFno-1)%GME_pos = &
                   SciMAF(Sci_pkt%MIFno)%GME_pos
+             SciMAF(Sci_pkt%MIFno)%GME_pos = 0.0
              SciMAF(Sci_pkt%MIFno-1)%APE_pos(2) = &
                   SciMAF(Sci_pkt%MIFno)%APE_pos(2)
+             SciMAF(Sci_pkt%MIFno)%APE_pos(2) = 0.0
              SciMAF(Sci_pkt%MIFno-1)%ASE_pos(2) = &
                   SciMAF(Sci_pkt%MIFno)%ASE_pos(2)
+             SciMAF(Sci_pkt%MIFno)%ASE_pos(2) = 0.0
              SciMAF(Sci_pkt%MIFno-1)%GHz_sw_pos = &
                   SciMAF(Sci_pkt%MIFno)%GHz_sw_pos
+             SciMAF(Sci_pkt%MIFno)%GHz_sw_pos = "D"
+             SciMAF(Sci_pkt%MIFno-1)%TSE_pos = &
+                  SciMAF(Sci_pkt%MIFno)%TSE_pos
+             SciMAF(Sci_pkt%MIFno)%TSE_pos = 0.0
 
              IF (L1ProgType == THzType) THEN            ! THz if needed
                 THzSciMAF(Sci_pkt%MIFno-1)%TSE_pos = &
                      THzSciMAF(Sci_pkt%MIFno)%TSE_pos
+                THzSciMAF(Sci_pkt%MIFno)%TSE_pos = 0.0
                 THzSciMAF(Sci_pkt%MIFno-1)%SwMirPos = &
                      THzSciMAF(Sci_pkt%MIFno)%SwMirPos
+                THzSciMAF(Sci_pkt%MIFno)%SwMirPos = "D"
              ENDIF
 
           ENDIF
@@ -345,6 +359,10 @@ MODULE SciUtils ! L0 science utilities
 ! Process DACS data for the current MAF
 
     IF (L1ProgType /= LogType) CALL ProcessDACSdata
+
+! Get scAngles to be used for L1BOA
+
+    CALL GetScAngles
 
   END SUBROUTINE NextSciMAF
 
@@ -391,6 +409,80 @@ MODULE SciUtils ! L0 science utilities
   END FUNCTION SwMirPos
 
 !=============================================================================
+  SUBROUTINE GetScAngles
+!=============================================================================
+
+    USE L0_sci_tbls, ONLY: APE2_dflt, TSE2_dflt
+    USE MLSL1Config, ONLY: L1Config
+    USE EngTbls, ONLY: EngMAF
+
+    INTEGER :: i
+    REAL :: APE, TSE
+    REAL, PARAMETER :: APE_eps = 27.7340
+    REAL, PARAMETER :: APE_B_A = 0.734
+    REAL, PARAMETER :: TSE_eps = 26.301
+
+    DO i = 0, (MaxMIFs - 1)
+       IF (L1Config%Globals%SimOA) THEN
+          APE = APE2_dflt(i)
+          TSE = TSE2_dflt(i)
+       ELSE
+          APE = SciMAF(i)%APE_pos(2)
+          IF (EngMAF%ASE_Side == "B") APE = APE - APE_B_A  ! Adjust for "B" side
+          TSE = SciMAF(i)%TSE_pos(2)
+       ENDIF
+       IF (APE >= 0.0) THEN
+          SciMAF(i)%scAngleG = MOD ((APE + APE_eps), 360.0)
+       ELSE
+          SciMAF(i)%scAngleG = -999.9
+       ENDIF
+       IF (TSE >= 0.0) THEN
+          SciMAF(i)%scAngleT = MOD ((TSE + TSE_eps), 360.0)
+       ELSE
+          SciMAF(i)%scAngleT = -999.9
+       ENDIF
+    ENDDO
+
+  END SUBROUTINE GetScAngles
+
+!=============================================================================
+  SUBROUTINE GetAPE_pos (DN, pos)
+!=============================================================================
+
+    CHARACTER (LEN=24) :: DN
+    REAL :: pos(2)
+
+    INTEGER :: iape
+
+    iape = 0   ! indicate not yet available
+
+! Check for leading commands:
+
+    SELECT CASE (ICHAR(DN(1:1)))
+
+! possible leading commands (z'0e', z'0f', z'18', z'19', z'1a', z'1b', z'22'
+
+       CASE (14, 15, 24, 25, 26, 27, 34)
+          DN = DN(6:)   ! drop the first 5 bytes
+
+    END SELECT
+
+    IF (DN(1:1) /= CHAR(7) .AND. DN(1:1) /= CHAR(9)) DN = DN(4:)
+
+    IF (DN(1:1) == CHAR(9)) THEN
+       iape = 3
+    ELSE IF (DN(10:10) == CHAR(9)) THEN
+       iape = 12
+    ENDIF
+
+    IF (iape > 0) THEN
+       pos(1)  = deg24 * BigEndianStr (DN(iape:iape+2))
+       pos(2)  = deg24 * BigEndianStr (DN(iape+3:iape+5))
+    ENDIF
+
+  END SUBROUTINE GetAPE_pos
+
+!=============================================================================
   SUBROUTINE Band_switch (switch, sw_val, band)
 !=============================================================================
 
@@ -398,8 +490,9 @@ MODULE SciUtils ! L0 science utilities
 
     INTEGER :: i, pos
 
-    INTEGER :: pos_no(6) 
+    INTEGER :: pos_no(6), FF
     DATA pos_no / z'FE', z'FD', z'FB', z'F7', z'EF', z'DF' /
+    DATA FF / z'FF' /
 
     INTEGER, PARAMETER :: sw_bands(6,5) = RESHAPE ((/ &
          25, 26,  0,  0,  0,  0, &                 ! switch #1 bands
@@ -414,7 +507,7 @@ MODULE SciUtils ! L0 science utilities
        RETURN
     ENDIF
 
-    IF (sw_val == z'FF') THEN  ! in process of changing
+    IF (sw_val == FF) THEN  ! in process of changing
        band = -1
        print *, 'switching bands for switch ', switch
        RETURN
@@ -468,6 +561,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.5  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.4  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
@@ -475,6 +571,9 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
+! Revision 2.5  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.4  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

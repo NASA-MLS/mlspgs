@@ -1,11 +1,11 @@
 !
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 !
 MODULE OutputL1B_HDF5
-  ! This module contains the subroutines needed to write L1B data to HDF files.
-  USE OutputL1B_DataTypes, ONLY: LENG, LENT, LENUTC, LENCOORD, & 
-       L1BOAINDEX_T, L1BOASC_T, L1BOATP_T
+  ! This module contains the subroutines needed to write L1B data to HDF5 files.
+
+  USE OutputL1B_DataTypes, ONLY: LENUTC, L1BOAINDEX_T, L1BOASC_T, L1BOATP_T
   USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
   USE MLSAuxData, ONLY: Build_MLSAuxData, CreateGroup_MLSAuxData
   USE HDF5, ONLY: HID_T
@@ -14,8 +14,11 @@ MODULE OutputL1B_HDF5
   USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
   USE MLSL1Rad, ONLY: Radiance_T
   USE MLSSignalNomenclature, ONLY:GetFullMLSSignalName
+
   IMPLICIT NONE
+
   PRIVATE
+
   PUBLIC :: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, OUTPUTL1B_SC_HDF5, &
        OUTPUTL1B_GHZ_HDF5, OUTPUTL1B_THZ_HDF5, OUTPUTL1B_RAD_HDF5
   !------------------- RCS Ident Info -----------------------------------------
@@ -25,6 +28,7 @@ MODULE OutputL1B_HDF5
   !----------------------------------------------------------------------------
 !---------------------------------------------------------Names of Dimensions:
 CONTAINS
+
   !----------------------------------------------------------- OutputL1B_Create
   SUBROUTINE OutputL1B_create_HDF5 (sdId)
     ! This routine assigns the groups and subgroups in the orbit and attitude 
@@ -37,6 +41,7 @@ CONTAINS
     CALL CreateGroup_MLSAuxData (sdId%OAId, 'THz')
 
   END SUBROUTINE OutputL1B_create_HDF5
+
   !------------------------------------------------------------ OutputL1B_index
   SUBROUTINE OutputL1B_index_HDF5 (noMAF, sd_id, index)
     ! This subroutine writes the time/MIF indexing quantities to the HDF file. 
@@ -49,32 +54,27 @@ CONTAINS
     TYPE( DataProducts_T ) :: dataset
     INTEGER :: status
 !------------------------------------------------------------------------------
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'MAFStartTimeUTC   '
-     dataset%data_type = 'character         '
-     ALLOCATE (dataset%Dimensions(1), stat=status)
-     dataset%Dimensions(1) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,index%MAFStartTimeUTC, & 
-          char_length=lenUTC, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'MAFStartTimeTAI   '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(1), stat=status)
-     dataset%Dimensions(1) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,index%MAFStartTimeTAI,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'noMIFs            '
-     dataset%data_type = 'integer           '
-     ALLOCATE (dataset%Dimensions(1), stat=status)
-     dataset%Dimensions(1) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,index%noMIFs,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'counterMAF        '
-     dataset%data_type = 'integer           '
-     ALLOCATE (dataset%Dimensions(1), stat=status)
-     dataset%Dimensions(1) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,index%counterMAF, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
+    CALL Deallocate_DataProducts (dataset)
+
+    ALLOCATE (dataset%Dimensions(1), stat=status)
+
+    dataset%name      = 'MAFStartTimeUTC   '
+    dataset%data_type = 'character         '
+    dataset%Dimensions(1) = 'MAF                 '
+    CALL Build_MLSAuxData (sd_id,dataset, index%MAFStartTimeUTC, & 
+         char_length=lenUTC, lastIndex=noMAF)
+    dataset%name      = 'MAFStartTimeTAI   '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, index%MAFStartTimeTAI, &
+         lastIndex=noMAF)
+    dataset%name      = 'noMIFs            '
+    dataset%data_type = 'integer           '
+    CALL Build_MLSAuxData (sd_id,dataset, index%noMIFs,lastIndex=noMAF)
+    dataset%name      = 'counterMAF        '
+    CALL Build_MLSAuxData (sd_id,dataset, index%counterMAF, lastIndex=noMAF)
+
+    CALL Deallocate_DataProducts (dataset)
+
 !------------------------------------------------------------------------------
   END SUBROUTINE OutputL1B_index_HDF5
 !----------------------------------------------------------------- OutputL1B_sc
@@ -89,107 +89,63 @@ CONTAINS
     TYPE( DataProducts_T ) :: dataset
     INTEGER :: status
 !------------------------------------------------------------------------------
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/ECI            '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz                 '
-     dataset%Dimensions(2) = 'MIF                 '
-     dataset%Dimensions(3) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scECI, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/ECR            '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz                 '
-     dataset%Dimensions(2) = 'MIF                 '
-     dataset%Dimensions(3) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scECR, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/GeocAlt        '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                '
-     dataset%Dimensions(2) = 'MAF                '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scGeocAlt, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/GeocLat        '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                '
-     dataset%Dimensions(2) = 'MAF                '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scGeocLat, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/GeodAlt        '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodAlt, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/GeodLat        '
-     dataset%data_type = 'real              '    
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '          
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodLat, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/Lon            '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '          
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scLon, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/GeodAngle      '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '          
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/VelECI         '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz                 '
-     dataset%Dimensions(2) = 'MIF                 '
-     dataset%Dimensions(3) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scVelECI,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/ypr            '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz                 '
-     dataset%Dimensions(2) = 'MIF                 '
-     dataset%Dimensions(3) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%ypr, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/yprRate        '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz                 '
-     dataset%Dimensions(2) = 'MIF                 '
-     dataset%Dimensions(3) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%yprRate, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/VelECR         '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz                 '
-     dataset%Dimensions(2) = 'MIF                 '
-     dataset%Dimensions(3) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scVelECR,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'sc/OrbIncl        '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id, dataset, sc%scOrbIncl,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
+    CALL Deallocate_DataProducts (dataset)
+
+! 2-d first:
+
+    ALLOCATE (dataset%Dimensions(2), stat=status)
+
+    dataset%name      = 'sc/GeocAlt        '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'MIF                '
+    dataset%Dimensions(2) = 'MAF                '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeocAlt, lastIndex=noMAF)
+    dataset%name      = 'sc/GeocLat        '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeocLat, lastIndex=noMAF)
+    dataset%name      = 'sc/GeodAlt        '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodAlt, lastIndex=noMAF)
+    dataset%name      = 'sc/GeodLat        '
+    dataset%data_type = 'real              '    
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodLat, lastIndex=noMAF)
+    dataset%name      = 'sc/Lon            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scLon, lastIndex=noMAF)
+    dataset%name      = 'sc/GeodAngle      '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scGeodAngle, lastIndex=noMAF)
+    dataset%name      = 'sc/OrbIncl        '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scOrbIncl, lastIndex=noMAF)
+    dataset%name      = 'sc/MIF_TAI        '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%MIF_TAI, lastIndex=noMAF)
+
+! 3-d next:
+
+    DEALLOCATE (dataset%Dimensions, stat=status)
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%name      = 'sc/ECI            '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'xyz                 '
+    dataset%Dimensions(2) = 'MIF                 '
+    dataset%Dimensions(3) = 'MAF                 '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scECI, lastIndex=noMAF)
+    dataset%name      = 'sc/ECR            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scECR, lastIndex=noMAF)
+    dataset%name      = 'sc/VelECI         '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scVelECI, lastIndex=noMAF)
+    dataset%name      = 'sc/ypr            '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%ypr, lastIndex=noMAF)
+    dataset%name      = 'sc/yprRate        '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%yprRate, lastIndex=noMAF)
+    CALL Deallocate_DataProducts (dataset)
+    dataset%name      = 'sc/VelECR         '
+    CALL Build_MLSAuxData (sd_id, dataset, sc%scVelECR, lastIndex=noMAF)
+
+    CALL Deallocate_DataProducts (dataset)
 !------------------------------------------------------------------------------
   END SUBROUTINE OutputL1B_sc_HDF5
-  !-------------------------------------------------------------- OutputL1B_GHz
+
+!---------------------------------------------------------------- OutputL1B_GHz
   SUBROUTINE OutputL1B_GHz_HDF5 (noMAF, sd_id, tp)
   ! This subroutine writes the GHz tangent point quantities to a group 
   ! in an HDF5 file.  Assumes HDF5 FORTRAN APIs have been invoked by 
@@ -202,137 +158,78 @@ CONTAINS
     TYPE( DataProducts_T ) :: dataset
     INTEGER :: status
 !------------------------------------------------------------------------------
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/encoderAngle  '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%encoderAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/scAngle       '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%scAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/scanAngle     '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%scanAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/scanRate      '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF                 '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%scanRate,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/ECI           '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz                 '
-     dataset%Dimensions(2) = 'GHz.MIF             '
-     dataset%Dimensions(3) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpECI,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/ECR           '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz                 '
-     dataset%Dimensions(2) = 'GHz.MIF             '
-     dataset%Dimensions(3) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpECR,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/OrbY          '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF              '
-     dataset%Dimensions(2) = 'MAF                  '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpOrbY,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/GeocAlt       '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF              '
-     dataset%Dimensions(2) = 'MAF                  '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpGeocAlt,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/GeocLat       '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF             '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpGeocLat,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/GeocAltRate   '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF             '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpGeocAltRate,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/GeodAlt       '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF             '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpGeodAlt,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/GeodLat       '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF             '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpGeodLat,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/GeodAltRate   '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF             '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpGeodAltRate,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/Lon           '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF             '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpLon,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/GeodAngle     '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF             '
-     dataset%Dimensions(2) = 'MAF                 '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpGeodAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/SolarTime     '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF            '
-     dataset%Dimensions(2) = 'MAF                '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpSolarTime,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/SolarZenith   '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF            '
-     dataset%Dimensions(2) = 'MAF                '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpSolarZenith,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'GHz/LosAngle      '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'GHz.MIF            '
-     dataset%Dimensions(2) = 'MAF                '
-     CALL Build_MLSAuxData (sd_id,dataset,tp%tpLosAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
+    CALL Deallocate_DataProducts (dataset)
+
+! 2-d first:
+
+    ALLOCATE (dataset%Dimensions(2), stat=status)
+
+    dataset%name      = 'GHz/encoderAngle  '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'MIF                 '
+    dataset%Dimensions(2) = 'MAF                 '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%encoderAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/scAngle       '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%scAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/scanAngle     '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%scanAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/scanRate      '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%scanRate, lastIndex=noMAF)
+    dataset%name      = 'GHz/OrbY          '
+    dataset%data_type = 'real              '
+    dataset%Dimensions(1) = 'GHz.MIF              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpOrbY, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeocAlt       '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeocAlt, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeocLat       '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeocLat, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeocAltRate   '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeocAltRate, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeodAlt       '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeodAlt, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeodLat       '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeodLat, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeodAltRate   '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeodAltRate, lastIndex=noMAF)
+    dataset%name      = 'GHz/Lon           '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpLon, lastIndex=noMAF)
+    dataset%name      = 'GHz/GeodAngle     '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpGeodAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/SolarTime     '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpSolarTime, lastIndex=noMAF)
+    dataset%name      = 'GHz/SolarZenith   '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpSolarZenith, lastIndex=noMAF)
+    dataset%name      = 'GHz/LosAngle      '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpLosAngle, lastIndex=noMAF)
+    dataset%name      = 'GHz/LosVel        '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpLosVel, lastIndex=noMAF)
+
+! 3-d next:
+
+    DEALLOCATE (dataset%Dimensions, stat=status)
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%name      = 'GHz/ECI           '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'xyz                 '
+    dataset%Dimensions(2) = 'GHz.MIF             '
+    dataset%Dimensions(3) = 'MAF                 '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECI, lastIndex=noMAF)
+    dataset%name      = 'GHz/ECR           '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECR, lastIndex=noMAF)
+    dataset%name      = 'GHz/ECRtoFOV      '
+    dataset%Dimensions(1) = '3x3                 '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpECRtoFOV, lastIndex=noMAF)
+
+    CALL Deallocate_DataProducts (dataset)
 !------------------------------------------------------------------------------
   END SUBROUTINE OutputL1B_GHz_HDF5
+
 !---------------------------------------------------------------- OutputL1B_THz
   SUBROUTINE OutputL1B_THz_HDF5 (noMAF, sd_id, tp)
     ! This subroutine writes the THz tangent point quantities to a 
@@ -347,145 +244,86 @@ CONTAINS
     TYPE( DataProducts_T ) :: dataset
     INTEGER :: status
 !------------------------------------------------------------------------------
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/encoderAngle  '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%encoderAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/scAngle       '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%scAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/scanAngle     '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%scanAngle,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/scanRate      '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%scanRate, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/ECI           '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz'
-     dataset%Dimensions(2) = 'THz.MIF'
-     dataset%Dimensions(3) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpECI, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/ECR           '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(3), stat=status)
-     dataset%Dimensions(1) = 'xyz'
-     dataset%Dimensions(2) = 'THz.MIF'
-     dataset%Dimensions(3) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpECR, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/OrbY          '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpOrbY, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/GeocAlt       '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpGeocAlt, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/GeocLat       '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpGeocLat, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/GeocAltRate   '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpGeocAltRate,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/GeodAlt       '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpGeodAlt, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/GeodLat       '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpGeodLat, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/GeodAltRate   '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpGeodAltRate,lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/Lon           '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpLon, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/GeodAngle     '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpGeodAngle, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/SolarTime     '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpSolarTime, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/SolarZenith   '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpSolarZenith, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'THz/LosAngle      '
-     dataset%data_type = 'real              '
-     ALLOCATE (dataset%Dimensions(2), stat=status)
-     dataset%Dimensions(1) = 'THz.MIF'
-     dataset%Dimensions(2) = 'MAF' 
-     CALL Build_MLSAuxData (sd_id, dataset,tp%tpLosAngle, lastIndex=noMAF)
-     CALL Deallocate_DataProducts (dataset)
+    CALL Deallocate_DataProducts (dataset)
+
+! 2-d first:
+
+    ALLOCATE (dataset%Dimensions(2), stat=status)
+    dataset%name      = 'THz/encoderAngle  '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'MIF'
+    dataset%Dimensions(2) = 'MAF' 
+    CALL Build_MLSAuxData (sd_id, dataset, tp%encoderAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/scAngle       '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%scAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/scanAngle     '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%scanAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/scanRate      '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%scanRate, lastIndex=noMAF)
+    dataset%name      = 'THz/OrbY          '
+    dataset%Dimensions(1) = 'THz.MIF'
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpOrbY, lastIndex=noMAF)
+    dataset%name      = 'THz/GeocAlt       '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocAlt, lastIndex=noMAF)
+    dataset%name      = 'THz/GeocLat       '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocLat, lastIndex=noMAF)
+    dataset%name      = 'THz/GeocAltRate   '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeocAltRate,lastIndex=noMAF)
+    dataset%name      = 'THz/GeodAlt       '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAlt, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodLat       '
+    dataset%data_type = 'real              '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodLat, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodAltRate   '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAltRate, lastIndex=noMAF)
+    dataset%name      = 'THz/Lon           '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpLon, lastIndex=noMAF)
+    dataset%name      = 'THz/GeodAngle     '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpGeodAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/SolarTime     '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpSolarTime, lastIndex=noMAF)
+    dataset%name      = 'THz/SolarZenith   '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpSolarZenith, lastIndex=noMAF)
+    dataset%name      = 'THz/LosAngle      '
+    CALL Build_MLSAuxData (sd_id, dataset, tp%tpLosAngle, lastIndex=noMAF)
+    dataset%name      = 'THz/LosVel        '
+    dataset%data_type = 'double            '
+    CALL Build_MLSAuxData (sd_id,dataset, tp%tpLosVel, lastIndex=noMAF)
+
+! 3-d next:
+
+    DEALLOCATE (dataset%Dimensions, stat=status)
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%name      = 'THz/ECI           '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'xyz'
+    dataset%Dimensions(2) = 'THz.MIF'
+    dataset%Dimensions(3) = 'MAF' 
+    CALL Build_MLSAuxData (sd_id, dataset,tp%tpECI, lastIndex=noMAF)
+    dataset%name      = 'THz/ECR           '
+    CALL Build_MLSAuxData (sd_id, dataset,tp%tpECR, lastIndex=noMAF)
+
+    CALL Deallocate_DataProducts (dataset)
 !------------------------------------------------------------------------------
   END SUBROUTINE OutputL1B_THz_HDF5
+
 !---------------------------------------------------------------- OutputL1B_rad
-  SUBROUTINE OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, MAFStartTimeGIRD, rad)
+  SUBROUTINE OutputL1B_rad_HDF5 (noMAF, sdId, counterMAF, Reflec, &
+       MAFStartTimeGIRD, rad)
     ! This subroutine writes an MAF's worth of data to the L1BRad D & F files
     ! Assumes HDF5 FORTRAN APIs have been invoked by l1/OpenInit to open files.
     ! Assumes l1/Close_Files will close files.
     ! Arguments
-    TYPE( L1BFileInfo_T ) :: sdId
-    TYPE( Radiance_T    ) :: rad(:)
+
+    USE EngTbls, ONLY: Reflec_T
+
+    TYPE (L1BFileInfo_T) :: sdId
+    TYPE (Radiance_T) :: rad(:)
+    TYPE (Reflec_T) :: Reflec
     INTEGER, INTENT(IN) :: counterMAF, noMAF
     REAL(r8), INTENT(IN) :: MAFStartTimeGIRD
     ! Variables
@@ -497,70 +335,98 @@ CONTAINS
 ! Find the sds_id number for counterMAF in the file RADF, write the data to it,
 ! terminate access to the data set
 !------------------------------------------------------------------------------
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'counterMAF        '
-     dataset%data_type = 'integer           '
-     ALLOCATE (dataset%Dimensions(1), stat=status)
-     dataset%Dimensions(1) = 'MAF'
-     IF (sdId%RADDID /= 0) THEN
-        CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, &
-             lastIndex=noMAF)
-        CALL Build_MLSAuxData (sdId%RADFID, dataset, counterMAF, &
-             lastIndex=noMAF)
-     ELSE
-        CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, &
-             lastIndex=noMAF)
-     ENDIF
-     CALL Deallocate_DataProducts (dataset)
-!------------------------------------------------------------------------------
-     CALL Deallocate_DataProducts (dataset)
-     dataset%name      = 'MAFStartTimeGIRD  '
-     dataset%data_type = 'double            '
-     ALLOCATE (dataset%Dimensions(1), stat=status)
-     dataset%Dimensions(1) = 'MAF'
-     IF (sdId%RADDID /= 0) THEN
-        CALL Build_MLSAuxData (sdId%RADDID, dataset, MAFStartTimeGIRD, &
-             lastIndex=noMAF)
-        CALL Build_MLSAuxData (sdId%RADFID, dataset, MAFStartTimeGIRD, &
-             lastIndex=noMAF)
-     ELSE
-         CALL Build_MLSAuxData (sdId%RADTID, dataset, MAFStartTimeGIRD, &
-             lastIndex=noMAF)
+    CALL Deallocate_DataProducts (dataset)
+
+    ALLOCATE (dataset%Dimensions(1), stat=status)
+    dataset%name      = 'counterMAF        '
+    dataset%data_type = 'integer           '
+    dataset%Dimensions(1) = 'MAF'
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, counterMAF, &
+            lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADFID, dataset, counterMAF, &
+            lastIndex=noMAF)
+    ELSE
+       CALL Build_MLSAuxData (sdId%RADTID, dataset, counterMAF, &
+            lastIndex=noMAF)
     ENDIF
-     CALL Deallocate_DataProducts (dataset)
+
+!------------------------------------------------------------------------------
+
+    dataset%name      = 'MAFStartTimeGIRD  '
+    dataset%data_type = 'double            '
+    dataset%Dimensions(1) = 'MAF'
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, MAFStartTimeGIRD, &
+            lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADFID, dataset, MAFStartTimeGIRD, &
+            lastIndex=noMAF)
+    ELSE
+       CALL Build_MLSAuxData (sdId%RADTID, dataset, MAFStartTimeGIRD, &
+            lastIndex=noMAF)
+    ENDIF
+
+! Reflector temperatures:
+
+    dataset%data_type = 'real              '
+    dataset%name      = 'Pri_Reflec        '
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Pri, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADFID, dataset, Reflec%Pri, lastIndex=noMAF)
+    ENDIF
+    dataset%name      = 'Sec_Reflec        '
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Sec, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADFID, dataset, Reflec%Sec, lastIndex=noMAF)
+    ENDIF
+    dataset%name      = 'Ter_Reflec        '
+    IF (sdId%RADDID /= 0) THEN
+       CALL Build_MLSAuxData (sdId%RADDID, dataset, Reflec%Ter, lastIndex=noMAF)
+       CALL Build_MLSAuxData (sdId%RADFID, dataset, Reflec%Ter, lastIndex=noMAF)
+    ENDIF
+
+    DEALLOCATE (dataset%Dimensions, stat=status)
+
+! Prepare for radiance output
+
+    ALLOCATE (dataset%Dimensions(3), stat=status)
+    dataset%data_type = 'real'
+    dataset%Dimensions(3) = 'MAF                 '
+
 !------------------------------------------------------------------------------
     DO i = 1, SIZE(rad) ! Loop on number of SDs per MAF
+
        CALL GetFullMLSSignalName(rad(i)%signal, name) ! Concatenate SD names
        prec = TRIM(name) // ' precision'
        ! Set parameters based on input data dimensions
        ! Based on the SD name, set dim name for channel, get Id of output file
-       IF ( INDEX(name,'FB') /= 0 ) THEN
+       IF (INDEX(name,'FB') /= 0 ) THEN
           dim_chan = 'chanFB              '
           IF (sdId%RADFID /= 0) THEN
              sd_id = sdId%RADFID
           ELSE
              sd_id = sdId%RADTID
           ENDIF
-       ELSE IF ( INDEX(name,'MB') /= 0 ) THEN
+       ELSE IF (INDEX(name,'MB') /= 0 ) THEN
           dim_chan = 'chanMB              '
           sd_id = sdId%RADFID
-       ELSE IF ( INDEX(name,'WF') /= 0 ) THEN
+       ELSE IF (INDEX(name,'WF') /= 0 ) THEN
           dim_chan = 'chanWF              '
           sd_id = sdId%RADFID
-       ELSE IF ( INDEX(name,'DACS') /= 0 ) THEN
+       ELSE IF (INDEX(name,'DACS') /= 0 ) THEN
           dim_chan = 'chanDACS            '
           sd_id = sdId%RADDID
        ELSE
           dim_chan = ''
           sd_id = -999
        ENDIF
-       IF ((ANY(rad(i)%value /= 0.0)).AND.(sd_id /= -999)) THEN   
+       IF ((ANY(rad(i)%value /= 0.0)) .AND. (sd_id /= -999)) THEN   
           ! if good radiance data exists 
           ! Create/Open the value SDs
           dims(1) = SIZE(rad(i)%value,1)
           dims(2) = SIZE(rad(i)%value,2)
           dims(3) = 1
-          IF ( INDEX(name,'R5') /= 0 ) THEN
+          IF (INDEX(name,'R5') /= 0 ) THEN
              dim_mif = 'THz.MIF              '
              dims(2) = MIFsTHz      !! lenT
           ELSE
@@ -568,35 +434,31 @@ CONTAINS
              dims(2) = MIFsGHz      !! lenG
           ENDIF
 !------------------------------------------------Create/Open the value datasets
-          CALL Deallocate_DataProducts (dataset)
           dataset%name = TRIM(name)
-          dataset%data_type = 'real'
-          ALLOCATE (dataset%Dimensions(3), stat=status)
           dataset%Dimensions(1) = dim_chan
           dataset%Dimensions(2) = dim_mif
-          dataset%Dimensions(3) = 'MAF                 '
-          CALL Build_MLSAuxData (sd_id, dataset, rad(i)%value, lastIndex=noMAF,&
-               dims=dims)
-          CALL Deallocate_DataProducts (dataset)
+          CALL Build_MLSAuxData (sd_id, dataset, rad(i)%value, &
+               lastIndex=noMAF, dims=dims)
+
 !------------------------------------------ Create/Open the precision datasets
-          CALL Deallocate_DataProducts (dataset)
+
           dataset%name = TRIM(prec)
-          dataset%data_type = 'real' 
-          ALLOCATE (dataset%Dimensions(3), stat=status)
-          dataset%Dimensions(1) = dim_chan
-          dataset%Dimensions(2) = dim_mif
-          dataset%Dimensions(3) = 'MAF                 '
           CALL Build_MLSAuxData (sd_id, dataset, rad(i)%precision, &
-               lastIndex=noMAF,&
-               dims=dims)
-          CALL Deallocate_DataProducts (dataset)
+               lastIndex=noMAF, dims=dims)
 !-----------------------------------------------------------------------------
        ENDIF
     ENDDO
+
+    CALL Deallocate_DataProducts (dataset)
+
   END SUBROUTINE OutputL1B_rad_HDF5
+
 END MODULE OutputL1B_HDF5
 
 ! $Log$
+! Revision 2.5  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.4  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !

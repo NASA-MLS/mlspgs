@@ -136,10 +136,11 @@ CONTAINS
           ENDIF
        ELSE IF (INDEX (mnemonic, "_I") /= 0) THEN
           IF (INDEX (mnemonic, "Quiet") /= 0) THEN
-             val = (tval - 0.317) / 0.162    ! Quiet Bus Current
+             val = (-0.156313 + SQRT (0.156313 * 0.156313 - 4.0 * 0.00026955 * &
+                  (0.361124 - tval))) / (2 * 0.00026955)  ! Quiet Bus Current
           ELSE IF (INDEX (mnemonic, "Device") /= 0) THEN
-             val = (tval - 0.228) / 1.691    ! Device Bus Current
-          ENDIF
+             val = 1.36 * (tval - 0.4852) / (1.3635 - 0.4852) ! Device Bus I
+           ENDIF
        ENDIF
     ELSE IF (INDEX (mnemonic, "R4_IF_voltage") /= 0) THEN
        IF (tval > 0.0) THEN
@@ -282,9 +283,8 @@ CONTAINS
   SUBROUTINE NextEngMAF (more_data)
 !=============================================================================
 
-    USE EngTbls, ONLY: ConvEngPkt, EngPkt, EngMAF, Eng_tbl
+    USE EngTbls, ONLY: EngPkt, EngMAF, Eng_tbl
     USE L0Utils, ONLY: ReadL0Eng
-    USE MLSL1Config, ONLY: L1Config
     USE MLSL1Common, ONLY: L1BFileInfo
 
     !! Get the next MAF's engineering data
@@ -293,7 +293,9 @@ CONTAINS
 
     LOGICAL :: OK, GMAB_ON(4)
     INTEGER :: ios
-    INTEGER, PARAMETER :: maskbit3 = z'8', maskbit7 = z'80'
+    INTEGER :: maskbit3, maskbit7
+    DATA maskbit3 / z'8' /
+    DATA maskbit7 / z'80' /
 
     more_data = .TRUE.
 
@@ -308,6 +310,16 @@ CONTAINS
        GMAB_ON(2) =(IAND (ICHAR (EngPkt(6)(103:103)), maskbit3) == maskbit3)
        GMAB_ON(3) =(IAND (ICHAR (EngPkt(6)(109:109)), maskbit3) == maskbit3)
        GMAB_ON(4) =(IAND (ICHAR (EngPkt(6)(110:110)), maskbit7) == maskbit7)
+
+       ! Determine which side ASE (GM01/GM02) is on:
+
+       IF (GMAB_ON(1) .AND. .NOT. GMAB_ON(2)) THEN
+          EngMAF%ASE_Side = "A"
+       ELSE IF (.NOT. GMAB_ON(1) .AND. GMAB_ON(2)) THEN
+          EngMAF%ASE_Side = "B"
+       ELSE
+          EngMAF%ASE_Side = "U"
+       ENDIF
 
        ! Determine which side GSM (GM03/GM04) is on:
 
@@ -351,6 +363,9 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.4  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
