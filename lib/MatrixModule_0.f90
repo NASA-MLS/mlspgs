@@ -1351,7 +1351,7 @@ contains ! =====     Public Procedures     =============================
     case ( M_Banded )
       do i = 1, size(p)
         if ( associated(my_mask) ) then
-          if ( btest(my_mask(i/b+1),mod(i,b)) ) &
+          if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
       cycle
         end if
         v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
@@ -1367,7 +1367,7 @@ contains ! =====     Public Procedures     =============================
      case ( M_Column_Sparse )
       do i = 1, size(p)
         if ( associated(my_mask) ) then
-          if ( btest(my_mask(i/b+1),mod(i,b)) ) &
+          if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
       cycle
         end if
         av = 0.0_r8
@@ -1379,7 +1379,7 @@ contains ! =====     Public Procedures     =============================
     case ( M_Full )
       do i = 1, size(p)
         if ( associated(my_mask) ) then
-          if ( btest(my_mask(i/b+1),mod(i,b)) ) &
+          if ( btest(my_mask((i-1)/b+1),mod(i-1,b)) ) &
       cycle
         end if
         av = dot(size(v), a%values(1,i), 1, v(1), 1)
@@ -2144,6 +2144,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.49  2001/10/01 20:32:27  vsnyder
+! Handle word and bit indexing in mask consistently
+!
 ! Revision 2.48  2001/09/29 00:25:51  vsnyder
 ! Correct word indexing for mask operations
 !
