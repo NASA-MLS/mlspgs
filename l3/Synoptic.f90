@@ -103,6 +103,8 @@ CONTAINS
 	IF (nlev == 0) THEN
 		nlev_temp = 1
 		nlev = 1
+                pStartIndex = 1
+                pEndIndex = 1
 	ELSE
 		nlev_temp = -1
 	END IF
@@ -548,7 +550,7 @@ CONTAINS
 !-------------------------------------------------------------------------
 
         integer error, i, j, iT, iD, iP, kP, nterms, nstart, nr, lindex, lindex_prev
-	INTEGER ::  l2Days, nloop, aindex, aindex_prev, dindex, dindex_prev
+	INTEGER ::  l2Days, nloop, aindex, aindex_prev, dindex_prev
 
         TYPE( L3CFProd_T ) :: cfProd
         TYPE( L2GPData_T ), POINTER :: l2gp(:)
@@ -564,7 +566,7 @@ CONTAINS
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  alons_interp_old(:, :, :), dlons_interp_old(:, :, :)
 
 	Real (r8) dlons, alons, lons_found, lats_found, times_found, fields_found, 	&
-		  slope, slope_time, slope_field, sTime, ddtad
+		  slope, slope_time, slope_field, sTime
 
 	Real (r8) lons_found_old
 
@@ -821,6 +823,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.15  2001/08/13 19:28:03  ybj
+! *** empty log message ***
+!
 ! Revision 1.14  2001/08/13 16:42:20  ybj
 ! *** empty log message ***
 !
