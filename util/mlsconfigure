@@ -9,7 +9,7 @@
 #     (b) SDP, HDF, HDF-EOS paths; 
 #     (c) paths to BLAS, LAPACK, PVM and FFTW (the "pv") libraries; 
 #     
-#     ((1)not done if I am called with -nc option)
+# Note: (1) not done if I am called with -nc option
 #     these get written to .configure
 # (2) Create a new directory $mcfg_dir/$MLSCONFG
 #      in parallel with $plat_dir/platforms; then
@@ -46,6 +46,7 @@
 #                        (defaults to ./)
 #  -mc mcfg_dir         Directory where $MLSCONFG directory will be created
 #                        (defaults to ./)
+#  -machine             (if present) Check that machine files up-to-date
 #  -nc                  (if present) Don't query nor change configuration
 #  -nd                  (if present) Don't delete ./$MLSCONFG if it already exists
 #  -pv                  (if present) Change PVM and FFTW settings
@@ -53,7 +54,7 @@
 #  -cf file_name        (if present) Use file_name instead of .configure
 # --------------- End mlsconfigure help
 #
-# Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -1047,6 +1048,7 @@ mcfg_dir="./"
 get_confg="true"
 del_exist_dir="true"
 chngd_confg="false"
+m_update="false"
 
 # These three used to stand out as poorly chosen--
 # They violated the pattern current_VARIABLE=$VARIABLE
@@ -1098,6 +1100,7 @@ fi
 me="$0"
 me_simple=mlsconfigure
 REECHO="`echo $0 | sed 's/mlsconfigure/reecho.sh/'`"
+MYPATH="`echo $0 | sed 's/mlsconfigure//'`"
 
 while [ "$1" != "" ] ; do
 
@@ -1172,6 +1175,10 @@ while [ "$1" != "" ] ; do
 	-cf )
 	    MLSCFILE=$2
 	    shift
+	;;
+
+	-machine )
+	    m_update="true"
 	;;
 
 	-nc )
@@ -1447,8 +1454,25 @@ if [ "$made_new_dir" = "true" ] ; then
    fi
 fi
 
+if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
+# In case of a custom configuration name, make sure machine files are up-to-date
+  machines_root=$conf_dir/lib/machines            
+  machines_base=$machines_root/$MLSF95.$MLSPLAT   
+  the_files=`$REECHO -dirn $machines_root/$MLSCONFG`
+  echo "About to make sure $the_files"
+  echo "are up-to-date in $machines_root/$MLSCONFG"
+  for file in $the_files
+  do
+    make -f $MYPATH/uptodate.make \
+      SOURCE=$machines_base/$file TARGET=$machines_root/$MLSCONFG/$file \
+        $machines_root/$MLSCONFG/$file
+  done
+fi
 exit
 # $Log$
+# Revision 1.28  2001/11/17 00:23:05  pwagner
+# New helps; split GetToolkit from GetPlatform; automated current_SETTING=SETTING
+#
 # Revision 1.27  2001/11/13 23:22:46  pwagner
 # Tweaked help; note added describing future current_VARIABLE method
 #
