@@ -22,9 +22,6 @@
 # old_B         the file to be compared with new_B
 # command       the command to be executed (producing new_A and _B)
 # arg1 ..       optional arguments to command
-#Note:
-#The option(s) marked with "-", if present,
-#must precede the command and args on the command line
 #Result:
 #file(s) named the same as old_A and old_B
 #record file named newAifBdiff.out
@@ -33,6 +30,14 @@
 #compiling according to whether .mod file of prerequisite has changed;
 #this reduces the cascade of massive recompilations that results
 #when the prerequisite changes
+#
+#Notes:
+#(1) The option(s) marked with "-", if present,
+#must precede the command and args on the command line
+#(2) The option "-a" is passed to diff if the first file is
+#    does not return a string containing "text" when passed as arg
+#    to the unix utility "file";
+#    this option is legal to gnu diff, but not to Sun's diff; so beware
 #
 #Record file
 #file name: newAifBdiff.out
@@ -43,13 +48,40 @@
 #  file_name_of_this_A  new
 # --------------- End newAifBdiff.sh help
 #Bugs and limitations:
-#(1) Why have two ways to essentially the same thing: newAifAdiff.sh?
+#(1) Why have two ways to do essentially the same thing: newAifAdiff.sh?
 #(2) Why such a lousy name?
 #(3) How about optionally using a user-supplied program instead of diff?
+#      that way we could get rid of conditional option "-a", 
+#      bad Sun implementation, etc.
 # Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
+
+#
+#------------------------------- what_diff_opt ------------
+#
+# Function to determine whether a diff_opt of "-a" is
+# warranted by the type of file passed as argument
+# i.e., if ascii, then diff_opt is ""
+# but if data, then "-a"
+# usage: extant_files arg1 [arg2] ..
+
+what_diff_opt()
+{
+   diff_opt=
+   # Trivial case ($# = 0)
+   if [ "$1" != ""  -a -f "$1" ]
+   then
+      file_type=`file "$1" | sed 's/^.*://'`
+#      echo $file_type
+      reduced_file_type=`echo $file_type | grep -i text`
+      if [ "$reduced_file_type" = "" ]
+      then
+         diff_opt="-a"
+      fi
+   fi
+}
 
 #
 #------------------------------- extant_files ------------
@@ -93,6 +125,7 @@ extant_files()
 # old B exists                 yes 
 # keeping old unchanged B      no
 # keeping records of A         yes
+# diff_opt                     -a
 ASameAsB="no"
 oldAExists="yes"
 oldBExists="yes"
@@ -173,7 +206,10 @@ elif [ "$ASameAsB" = "yes" ]; then
 # A and B the same, so check if new A diff from old
   mv "$old_A" "$old_A.1"
   "$the_command" "$@"
-  the_diff=`diff -a $old_A $old_A.1 | wc -l`
+#  the_diff=`diff -a $old_A $old_A.1 | wc -l`
+  what_diff_opt $old_A
+#  echo diff $diff_opt $old_A $old_A.1 | wc -l
+  the_diff=`diff $diff_opt $old_A $old_A.1 | wc -l`
   if [ "$the_diff" -gt 0 ] ; then
     rm -f "$old_A.1"
       message="($the_diff) A, B same; old A, new A differ =>need new A"
@@ -193,7 +229,10 @@ else
   mv "$old_A" "$old_A.1"
   mv "$old_B" "$old_B.1"
   "$the_command" "$@"
-  the_diff=`diff -a $old_B $old_B.1 | wc -l`
+#  the_diff=`diff -a $old_B $old_B.1 | wc -l`
+  what_diff_opt $old_B
+#  echo diff $diff_opt $old_B $old_B.1 | wc -l
+  the_diff=`diff $diff_opt $old_B $old_B.1 | wc -l`
   if [ "$the_diff" -gt 0 ] ; then
     rm -f "$old_A.1" "$old_B.1"
       message="($the_diff) old B, new B differ =>need new A"
@@ -217,6 +256,9 @@ if [ "$keepRecords" = "yes" ]; then
 fi
 exit
 # $Log$
+# Revision 1.2  2002/06/21 00:09:32  pwagner
+# Added -nr option
+#
 # Revision 1.1  2002/05/22 00:36:28  pwagner
 # First commit
 #
