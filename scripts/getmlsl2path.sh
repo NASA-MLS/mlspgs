@@ -39,7 +39,11 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "/research1/$USER"
 	else
-	    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
+	    if [ $YEAR == "1996" ]; then
+		echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
+	    else
+		echo "/data/dao/D4FAPMIS/$YEAR"
+	    fi
 	fi
     fi
     if [ $1 == "--output" ]; then
@@ -112,6 +116,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.17  2003/11/07 01:08:34  livesey
+# More changes for soundbarrier
+#
 # Revision 1.16  2003/08/28 00:43:31  livesey
 # Changed work3 to work1
 #
