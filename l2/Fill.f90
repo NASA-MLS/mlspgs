@@ -9,7 +9,8 @@ module Fill                     ! Create vectors and fill them.
   use Expr_M, only: EXPR
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
-  use INIT_TABLES_MODULE, only: F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, &
+  use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, &
+    & F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, &
     & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
     & F_EXTINCTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MAXITERATIONS, &
@@ -18,9 +19,11 @@ module Fill                     ! Create vectors and fill them.
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
     & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCESGRID, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
-    & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, FIELD_FIRST, FIELD_LAST
+    & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, &
+    & F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
-  use INIT_TABLES_MODULE, only: L_CHOLESKY, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
+  use INIT_TABLES_MODULE, only: L_BOUNDARYPRESSURE, L_CHOLESKY, &
+    & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, L_EARTHRADIUS, &
@@ -76,7 +79,8 @@ module Fill                     ! Create vectors and fill them.
   integer, private :: ERROR
 
   ! Error codes for "announce_error"  
-  integer, parameter :: Wrong_Number = 1     ! of fields of a VECTOR command
+  integer, parameter :: No_Error_code = 0
+  integer, parameter :: Wrong_Number = No_Error_code+1     ! of fields of a VECTOR command
   integer, parameter :: UnknownQuantityName = wrong_number + 1
   integer, parameter :: Source_not_in_db = unknownQuantityName + 1
   integer, parameter :: ZeroProfilesFound = source_not_in_db + 1
@@ -189,7 +193,12 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: TNGTPRESQUANTITY
     type (vectorValue_T), pointer :: earthRadiusQty
     type (vectorValue_T), pointer :: losQty
+    type (vectorValue_T), pointer :: bndPressQty
+    type (vectorValue_T), pointer :: colAbundQty
+    type (vectorValue_T), pointer :: vmrQty
 
+    integer :: bndPressQtyIndex
+    integer :: bndPressVctrIndex
     integer :: ColVector                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
     integer :: Decay                    ! Index of decay-rate vector in database
@@ -268,6 +277,8 @@ contains ! =====     Public Procedures     =============================
     integer :: VECTORINDEX              ! In the vector database
     integer :: VECTORNAME               ! Name of vector to create
     integer :: VGRIDINDEX               ! Index of sourceVGrid
+    integer :: vmrQtyIndex
+    integer :: vmrQtyVctrIndex
 
     ! Executable code
     timing = .false.
@@ -370,6 +381,9 @@ contains ! =====     Public Procedures     =============================
           if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
           got(fieldIndex)=.TRUE.
           select case ( fieldIndex )
+          case ( f_boundaryPressure )     ! For special fill of columnAbundance
+            bndPressVctrIndex = decoration(decoration(subtree(1,gson)))
+            bndPressQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
             vectorIndex = decoration(decoration(subtree(1,gson)))
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -426,6 +440,9 @@ contains ! =====     Public Procedures     =============================
             vGridIndex=decoration(decoration(gson))
           case ( f_sourceVGrid )
             vGridIndex=decoration(decoration(gson))
+          case ( f_vmrQuantity )     ! For special fill of columnAbundance
+            vmrQtyVctrIndex = decoration(decoration(subtree(1,gson)))
+            vmrQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_systemTemperature )
             call expr ( gson , unitAsArray, valueAsArray )
             if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
@@ -544,6 +561,18 @@ contains ! =====     Public Procedures     =============================
               call FillLOSVelocity ( key, quantity, tngtECIQuantity, &
                 & scECIquantity, scVelQuantity )
             end if
+          case ( l_columnAbundance )
+            if ( .not. any(got( (/f_vmrQuantity, f_boundaryPressure/) )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill column abundance'  )
+            else
+              bndPressQty => GetVectorQtyByTemplateIndex( &
+                & vectors(bndPressVctrIndex), bndPressQtyIndex)
+              vmrQty => GetVectorQtyByTemplateIndex( &
+                & vectors(vmrQtyVctrIndex), vmrQtyIndex)
+              call FillColAbundance ( key, quantity, &
+                & bndPressQty, vmrQty )
+            endif
           case default
             call Announce_error ( key, noSpecialFill )
           end select
@@ -916,6 +945,33 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
   end subroutine FillLOSVelocity
+
+  ! ------------------------------------------- FillColAbundance ---
+  subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty)
+    ! A special fill according to Appendix A of EOS MLS ATBD
+    ! JPL D-16159
+    ! EOS MLS DRL 601 (part 3)
+    ! ATBD-MLS-03
+    ! (Livesey and Wu)
+    integer, intent(in) :: KEY
+    type (VectorValue_T), intent(inout) :: QTY
+    type (VectorValue_T), intent(in) :: bndPressQty
+    type (VectorValue_T), intent(in) :: vmrQty
+
+
+    ! Local variables
+
+    ! Executable code
+    ! First check that things are OK.
+    if ( (qty%template%quantityType /= l_columnAbundance) .or. &
+      &  (bndPressQty%template%quantityType /= l_boundaryPressure) .or. &
+      &  (vmrQty%template%quantityType /= l_vmr) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Wrong quantity type found while filling column abundance'  )
+      return
+    end if
+
+  end subroutine FillColAbundance
 
   ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
   subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
@@ -1565,6 +1621,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.65  2001/07/30 23:28:38  pwagner
+! Added columnAbundances scaffolding--needs fleshing out
+!
 ! Revision 2.64  2001/07/26 20:33:40  vsnyder
 ! Eliminate the 'extra' field of the 'matrix' spec
 !
