@@ -655,6 +655,7 @@ contains ! =====     Public Procedures     =============================
     print*,'phiWindow:',phiWindow
     print*,'noSpecies:',noSpecies
     print*,'maxNoFSurfs:',maxNoFSurfs
+!   fmStat%maf = 3       ! DEBUG, Zvi
     print*,'MAF:',fmStat%maf
 
     ! Work out which channels are used
@@ -931,25 +932,27 @@ contains ! =====     Public Procedures     =============================
       if ( ier /= 0 ) goto 99
 
       !??? Choose better value for phi_tan later
-      phi_tan = Deg2Rad * temp%template%phi(1,maf)
+      phi_tan = Deg2Rad * temp%template%phi(1,mafTInstance)
 
       ! Compute the ptg_angles (chi) for Antenna convolution, also the
       ! derivatives of chi w.r.t to T and other parameters
       call get_chi_angles ( ifm%ndx_path(:,maf), n_path, &
-        &  forwardModelConfig%tangentGrid%surfs,      &
-        &  ifm%tan_hts(:,maf),ifm%tan_temp(:,maf),phi_tan,ifm%elvar(maf)%Roc,&
+        &  forwardModelConfig%tangentGrid%surfs, &
+        &  ifm%tan_hts(:,mafTInstance),ifm%tan_temp(:,mafTInstance),&
+        &  phi_tan,ifm%elvar(maf)%Roc,&
         &  0.001*scGeocAlt%values(1,1),  &
         &  elevOffset%values(1,1), &
-        &  ifm%tan_dh_dt(:,maf,:), no_tan_hts, temp%template%noSurfs, &
+        &  ifm%tan_dh_dt(:,mafTInstance,:), no_tan_hts, &
+        &  temp%template%noSurfs, &
         &  temp%template%surfs(:,1), &
         &  forwardModelConfig%SurfaceTangentIndex, &
         &  center_angle, ptg_angles, dx_dt, d2x_dxdt, ier )
       if ( ier /= 0 ) goto 99
 
       ! Compute the refraction correction scaling matrix for this mmaf:
-      call refraction_correction(no_tan_hts, ifm%tan_hts(:,maf), &
+      call refraction_correction(no_tan_hts, ifm%tan_hts(:,mafTInstance), &
         &  ifm%h_path(:,maf), n_path, ifm%ndx_path(:,maf),      &
-        &  ifm%E_rad(maf), ref_corr)
+        &  ifm%E_rad(mafTInstance), ref_corr)
 
       Radiances = 0.0
 
@@ -1000,7 +1003,7 @@ contains ! =====     Public Procedures     =============================
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
         k = ptg_i
-        h_tan = ifm%tan_hts(k,maf)
+        h_tan = ifm%tan_hts(k,mafTInstance)
 
    ! Compute the beta's along the path, for this tanget hight and this mmaf:
 
@@ -1373,6 +1376,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.108  2001/04/23 22:09:54  zvi
+! Re-Introducing no_phi_t etc.
+!
 ! Revision 2.107  2001/04/23 21:56:06  livesey
 ! Pass closest instances to comp_path_entities
 !
