@@ -546,14 +546,14 @@ contains
          ! tau_wetCld will be used for transmission function calculation
 
 ! the following stuffs are only used in cloudy cases icon > 0
-      IF (ICON .gt. 0) then  
             PHH      = 0._r8     ! phase function
             DDm      = 0._r8     ! mass-mean diameter
             W0       = 0._r8     ! single scattering albedo
             PH0      = 0._r8 
             W00      = 0._r8
-            
             tau_clear = 0._r8
+      IF (ICON .gt. 0) then  
+            
             if(icon .eq. 1) tau_clear = tau_fewCld
             if(icon .eq. 2) tau_clear = tau_wetCld
 
@@ -619,6 +619,7 @@ contains
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_wetCld,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT,0,RE)                          !CLEAR-SKY
+  print*,zzt1(6),tt0(6,nzmodel),tt(6,nzmodel)
          TT0 = min(TT, TT0)
          TT  = TT0	   ! so that dTcir=0
 
@@ -720,6 +721,7 @@ contains
 
          END IF      ! do FOV  
 
+print*,zzt(10),tb0(10,ifr)
 ! **** END OF FOV AVERAGING ****
 
 
@@ -771,6 +773,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.51  2003/02/02 01:45:17  dwu
+! some minor changes
+!
 ! Revision 1.50  2003/01/31 23:17:15  dwu
 ! rename tau_wet to tau_wetAll
 !
@@ -826,9 +831,6 @@ end module CloudySkyRadianceModel
 ! newly improved version
 !
 ! Revision 1.32  2002/06/17 17:49:41  bill
-! changed fov_convolve to fov_convolve_old--wgr
-!
-! Revision 1.31  2002/05/08 17:00:55  jonathan
 ! fix tangent height bug
 !
 ! Revision 1.30  2001/11/16 00:41:08  jonathan
