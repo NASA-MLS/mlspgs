@@ -25,9 +25,9 @@ ConstructQuantityTemplates.o: ConstructQuantityTemplates.f90 $(dir1)L1BData.o \
 	$(dir1)tree_types.o HGrid.o VGrid.o init_tables_module.o
 ConstructVectorTemplates.o: ConstructVectorTemplates.f90 \
 	$(dir1)Allocate_Deallocate.o $(dir1)MLSMessageModule.o \
-	$(dir1)QuantityTemplates.o $(dir1)VectorsModule.o \
-	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
-	init_tables_module.o
+	$(dir1)QuantityTemplates.o $(dir1)VectorsModule.o $(dir1)output_m.o \
+	$(dir1)string_table.o $(dir1)toggles_core.o $(dir1)trace_m.o \
+	$(dir1)tree.o init_tables_module.o
 dumper.o: dumper.f90 $(dir1)MLSCommon.o $(dir1)QuantityTemplates.o \
 	$(dir1)dump_0.o $(dir1)output_m.o $(dir1)string_table.o HGrid.o \
 	VGrid.o init_tables_module.o
