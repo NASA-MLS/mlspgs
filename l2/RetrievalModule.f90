@@ -1249,8 +1249,12 @@ contains
         end if
         if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
           call FlagName ( nwt_flag, theFlagName )
-          call snoop ( snoopKey, vectorDatabase, v, &
-            & trim(snoopComment) // ': ' // trim(theFlagName) )
+          call snoop ( key=snoopKey, vectorDatabase=vectorDatabase,&
+            & anotherVectorDatabase=v, &
+            & anotherComment=trim(snoopComment) // ': ' // trim(theFlagName) )
+          ! Was going to to matrixDatabase, but had a problem with names
+          !   matrixDatabase=(/ factored%m, normalEquations%m /)
+
         end if
       end do ! Newton iteration
       if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
@@ -2080,6 +2084,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.104  2001/10/22 22:40:21  livesey
+! Tried to add a matrixDatabase to snoop call
+!
 ! Revision 2.103  2001/10/22 22:34:47  dwu
 ! oops
 !
