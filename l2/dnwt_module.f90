@@ -715,7 +715,7 @@ contains
       cgdx = aj%gdx/(gradn*dxn) ! Cosine ( gradient, dx )
       condai = min(cgdx,gradn/(dxn*ajn**2),diag/ajn)
       fnxe = fnmin**2
-      if (sq /= c0) fnxe = fnxe-(spl*ajn*dxn)**2
+      if (sq /= c0) fnxe = fnxe-(sq*dxn)**2
       tp = dxinc
       if (inc < 0) then
         if (dxn <= dxinc) then
@@ -958,7 +958,7 @@ contains
 
 ! *************************************************     DNWTDB     *****
 
-  subroutine DNWTDB ( AJ, WIDTH )
+  subroutine DNWTDB ( AJ, WIDTH, LEVEL )
 
 !   Print the scalars in the module.  Print the stuff in AJ if it's
 !   present.  Print the integer scalars first.  Then print
@@ -967,6 +967,9 @@ contains
 
     type (NWT_T), intent(in), optional :: AJ
     integer, intent(in), optional :: WIDTH
+    integer, intent(in), optional :: LEVEL ! Absent, do everything
+    ! Present and 1 do everything
+    ! Present and 0 do CDXDXL, CGDX, DXN, FN, FNMIN, INC, SP, SQ, SQRT(FNXE)
 
 !   namelist /DNWTDB_OUT/ AJN, AJSCAL, CAIT, CDXDXL, CONDAI, DIAG
 !   namelist /DNWTDB_OUT/ DXI, DXINC, DXMAXI, DXN, DXNBIG, DXNL, DXNOIS
@@ -980,11 +983,14 @@ contains
 
     integer :: I ! Which one in the line is being worked
     character(len=9) :: IFLname, NFLname
-    integer :: MyWidth
+    integer :: MyLevel, MyWidth
     character(132) :: Name_Line ! For names
 
+    myLevel = 1
+    if ( present(level) ) myLevel = level
     myWidth = 5
     if ( present(width) ) myWidth = max(5,min(9,width))
+    if ( level == 0 ) myWidth = min(8,myWidth)
 
     output_line = '-----     DNWT internal variables     ----------------------&
       &------------------------------------------------------------------'
@@ -992,61 +998,68 @@ contains
 
     call flagName ( ifl, iflName ); call flagName ( nfl, nflName )
 
-!    write ( *, '(a)' ) &
-    call output( &
-      & '       IFL        INC    ITER   ITKEN    K1IT    K2IT      KB       NFL', &
-      & advance='yes' )
-    write ( output_line, '(1x,a9,i11,5i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
-      & K1IT, K2IT, KB, adjustr(nflName)
+    if ( myLevel > 0 ) then
+!     write ( *, '(a)' ) &
+      call output( &
+        & '       IFL        INC    ITER   ITKEN    K1IT    K2IT      KB       NFL', &
+        & advance='yes' )
+      write ( output_line, '(1x,a9,i11,5i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
+        & K1IT, K2IT, KB, adjustr(nflName)
+    else
+      call output ( &
+        & '       IFL        INC       NFL', advance='yes' )
+      write ( output_line, '(1x,a9,i11,1x,a9)' ) &
+        & adjustr(iflName), inc, adjustr(nflName)
+    end if
     call output(trim(output_line), advance='yes')
 
     i = 1
     name_line = ''
     output_line = ''
-    call add_to_line ( ajn,    'AJN' )
-    call add_to_line ( ajscal, 'AJSCAL' )
-    call add_to_line ( axmax,  'AXMAX' )
-    call add_to_line ( axmaxb, 'AXMAXB' )
-    call add_to_line ( cait,   'CAIT' )
+    if ( myLevel > 0 ) call add_to_line ( ajn,    'AJN' )
+    if ( myLevel > 0 ) call add_to_line ( ajscal, 'AJSCAL' )
+    if ( myLevel > 0 ) call add_to_line ( axmax,  'AXMAX' )
+    if ( myLevel > 0 ) call add_to_line ( axmaxb, 'AXMAXB' )
+    if ( myLevel > 0 ) call add_to_line ( cait,   'CAIT' )
     call add_to_line ( cdxdxl, 'CDXDXL' )
     call add_to_line ( cgdx,   'CGDX' )
-    call add_to_line ( condai, 'CONDAI' )
-    call add_to_line ( diag,   'DIAG' )
-    call add_to_line ( dxi,    'DXI' )
-    call add_to_line ( dxinc,  'DXINC' )
-    call add_to_line ( dxmaxi, 'DXMAXI' )
+    if ( myLevel > 0 ) call add_to_line ( condai, 'CONDAI' )
+    if ( myLevel > 0 ) call add_to_line ( diag,   'DIAG' )
+    if ( myLevel > 0 ) call add_to_line ( dxi,    'DXI' )
+    if ( myLevel > 0 ) call add_to_line ( dxinc,  'DXINC' )
+    if ( myLevel > 0 ) call add_to_line ( dxmaxi, 'DXMAXI' )
     call add_to_line ( dxn,    'DXN' )
-    call add_to_line ( dxnbig, 'DXNBIG' )
-    call add_to_line ( dxnl,   'DXNL' )
-    call add_to_line ( dxnois, 'DXNOIS' )
+    if ( myLevel > 0 ) call add_to_line ( dxnbig, 'DXNBIG' )
+    if ( myLevel > 0 ) call add_to_line ( dxnl,   'DXNL' )
+    if ( myLevel > 0 ) call add_to_line ( dxnois, 'DXNOIS' )
     call add_to_line ( fn,     'FN ')
-    call add_to_line ( fnb,    'FNB' )
-    call add_to_line ( fnl,    'FNL' )
+    if ( myLevel > 0 ) call add_to_line ( fnb,    'FNB' )
+    if ( myLevel > 0 ) call add_to_line ( fnl,    'FNL' )
     call add_to_line ( fnmin,  'FNMIN' )
-    call add_to_line ( fnxe,   'FNXE' )
-    call add_to_line ( frz,    'FRZ' )
-    call add_to_line ( frzb,   'FRZB' )
-    call add_to_line ( frzl ,  'FRZL' )
-    call add_to_line ( gfac,   'GFAC' )
-    call add_to_line ( gradn,  'GRADN' )
-    call add_to_line ( gradnb, 'GRADNB' )
-    call add_to_line ( gradnl, 'GRADNL' )
-    call add_to_line ( relsf,  'RELSF' )
+    call add_to_line ( sqrt(fnxe),   'FNXE**.5' )
+    if ( myLevel > 0 ) call add_to_line ( frz,    'FRZ' )
+    if ( myLevel > 0 ) call add_to_line ( frzb,   'FRZB' )
+    if ( myLevel > 0 ) call add_to_line ( frzl ,  'FRZL' )
+    if ( myLevel > 0 ) call add_to_line ( gfac,   'GFAC' )
+    if ( myLevel > 0 ) call add_to_line ( gradn,  'GRADN' )
+    if ( myLevel > 0 ) call add_to_line ( gradnb, 'GRADNB' )
+    if ( myLevel > 0 ) call add_to_line ( gradnl, 'GRADNL' )
+    if ( myLevel > 0 ) call add_to_line ( relsf,  'RELSF' )
     call add_to_line ( sp,     'SP ')
-    call add_to_line ( spact,  'SPACT' )
-    call add_to_line ( spb,    'SPB' )
-    call add_to_line ( spfac,  'SPFAC' )
-    call add_to_line ( spg,    'SPG' )
-    call add_to_line ( spinc,  'SPINC' )
-    call add_to_line ( spl,    'SPL' )
-    call add_to_line ( spmini, 'SPMINI' )
-    call add_to_line ( spstrt, 'SPSTRT' )
+    if ( myLevel > 0 ) call add_to_line ( spact,  'SPACT' )
+    if ( myLevel > 0 ) call add_to_line ( spb,    'SPB' )
+    if ( myLevel > 0 ) call add_to_line ( spfac,  'SPFAC' )
+    if ( myLevel > 0 ) call add_to_line ( spg,    'SPG' )
+    if ( myLevel > 0 ) call add_to_line ( spinc,  'SPINC' )
+    if ( myLevel > 0 ) call add_to_line ( spl,    'SPL' )
+    if ( myLevel > 0 ) call add_to_line ( spmini, 'SPMINI' )
+    if ( myLevel > 0 ) call add_to_line ( spstrt, 'SPSTRT' )
     call add_to_line ( sq,     'SQ ')
-    call add_to_line ( sqb,    'SQB' )
-    call add_to_line ( sql,    'SQL' )
-    call add_to_line ( sqmin,  'SQMIN' )
-    call add_to_line ( tolxa,  'TOLXA' )
-    call add_to_line ( tolxr,  'TOLXR' )
+    if ( myLevel > 0 ) call add_to_line ( sqb,    'SQB' )
+    if ( myLevel > 0 ) call add_to_line ( sql,    'SQL' )
+    if ( myLevel > 0 ) call add_to_line ( sqmin,  'SQMIN' )
+    if ( myLevel > 0 ) call add_to_line ( tolxa,  'TOLXA' )
+    if ( myLevel > 0 ) call add_to_line ( tolxr,  'TOLXR' )
     if ( i /= 1 ) call print_lines
 
     if ( present(aj) ) then
@@ -1217,6 +1230,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.37  2003/01/15 01:49:51  vsnyder
+! Add an '12-interesting-variables' dump
+!
 ! Revision 2.36  2002/10/25 22:24:33  livesey
 ! Changed order of nwt_t
 !
