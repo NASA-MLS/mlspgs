@@ -2,6 +2,8 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module MACHINE
+  use F90_GC, only: GCOLLECT, NCOLLECTIONS, &
+   & DONT_EXPAND, DONT_GC, FULL_FREQUENCY, MAX_RETRIES, SILENT_GC
   use F90_IOSTAT				! everything; see iostat_msg_NAG
   use F90_UNIX_ENV, only: IARGC, NAG_GETARG => GETARG
   ! Exit and return an integer status to the invoking process
@@ -15,6 +17,7 @@ module MACHINE
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
   public :: SHELL_COMMAND
+  public :: MLS_DISABLE_AUTOGC, MLS_GC_NOW, MLS_HOWMANY_GC, MLS_CONFIG_GC
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -70,8 +73,48 @@ contains
     if ( present(status) ) status = myStatus
   end subroutine SHELL_COMMAND
 
+  subroutine MLS_CONFIG_GC ( EXPAND, FREQUENCY, RETRIES, SILENT )
+  ! Configures various parameters affecting garbage collection
+
+    logical, optional, intent(in) :: expand    ! Autoexpand heap?
+    integer, optional, intent(in) :: frequency ! How many incremental colls. betw. fulls
+    integer, optional, intent(in) :: retries   ! How many attempts before giving up
+    logical, optional, intent(in) :: silent    ! Quash report on each collection?
+    if ( present(expand) ) dont_expand = .not. expand
+    if ( present(frequency) ) full_frequency = frequency
+    if ( present(retries) ) max_retries = retries
+    if ( present(silent) ) silent_gc = silent
+  end subroutine MLS_CONFIG_GC
+
+  subroutine MLS_DISABLE_AUTOGC ( Which )
+  ! Turns automatic garbage collection on/off
+
+    character(len=*), intent(in) :: Which  ! 'On' or 'Off'
+    if ( Which == 'On' .or. Which == 'ON' &
+      & .or. Which == 'on' ) then
+      DONT_GC = .false.
+    else
+      DONT_GC = .true.
+    endif
+  end subroutine MLS_DISABLE_AUTOGC
+
+  subroutine MLS_GC_NOW
+  ! Manually collects garbage when called
+
+    CALL GCOLLECT
+  end subroutine MLS_GC_NOW
+
+  integer function MLS_HOWMANY_GC()
+  ! Retuyrns how many garbage collections have been performed
+
+    MLS_HOWMANY_GC = NCOLLECTIONS()
+  end function MLS_HOWMANY_GC
+
 end module MACHINE
 
 ! $Log$
+! Revision 1.2  2002/01/31 19:16:28  pwagner
+! Brought up-to-date with shell_command using library as appropriate; untested
+!
 ! Revision 1.1  2001/01/13 00:29:44  pwagner
 ! moved to lib/machines/MLSCONFG/machine.f90
