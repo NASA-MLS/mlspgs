@@ -35,3 +35,6 @@ changesyntax({@!})
 !define(tai93start, {!TrimNL(!esyscmd(ccsdsbtotai93 !day))})
 !define(tai93end, {!TrimNL(!esyscmd(ccsdsbtotai93 -e !day ))})
 !define(home,!TrimNL(!esyscmd({echo $HOME})))
+; Define a macro that calls the macro being its first argument, with
+; each sucessive argument
+!define({forall},{!$1($2)!ifelse($#,2,,{!forall}($1,!shift(!shift($@))))})
