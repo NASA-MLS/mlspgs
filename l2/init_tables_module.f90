@@ -70,7 +70,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_FIELD               = f_extraHeights + 1
   integer, parameter :: F_FILE                = f_field + 1
   integer, parameter :: F_FRACTION            = f_file + 1
-  integer, parameter :: F_FWDMODELEXTRA       = f_fraction + 1
+  integer, parameter :: F_FORWARDMODEL        = f_fraction + 1
+  integer, parameter :: F_FWDMODELEXTRA       = f_forwardModel + 1
   integer, parameter :: F_FWDMODELIN          = f_fwdModelExtra + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, parameter :: F_GEOCALTITUDEQUANTITY= f_fwdModelOut + 1
@@ -87,7 +88,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_METHOD              = f_measurements + 1
   integer, parameter :: F_MIF                 = f_method + 1
   integer, parameter :: F_MOLECULE            = f_MIF + 1 
-  integer, parameter :: F_NUMBER              = f_molecule + 1
+  integer, parameter :: F_MOLECULEDERIVATIVES = f_molecule + 1
+  integer, parameter :: F_MOLECULES           = f_moleculeDerivatives + 1
+  integer, parameter :: F_NUMBER              = f_molecules + 1
   integer, parameter :: F_ORIGIN              = f_number + 1
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
@@ -352,6 +355,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
+    field_indices(f_forwardModel) =        add_ident ( 'forwardModel' )
     field_indices(f_fwdModelExtra) =       add_ident ( 'fwdModelExtra' )
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
@@ -369,6 +373,8 @@ contains ! =====     Public procedures     =============================
     field_indices(f_method) =              add_ident ( 'method' )
     field_indices(f_mif) =                 add_ident ( 'mif' )
     field_indices(f_molecule) =            add_ident ( 'molecule' )
+    field_indices(f_moleculeDerivatives) = add_ident ( 'moleculeDerivatives' )
+    field_indices(f_molecules) =           add_ident ( 'molecules' )
     field_indices(f_number) =              add_ident ( 'number' )
     field_indices(f_origin) =              add_ident ( 'origin' )
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
@@ -678,16 +684,19 @@ contains ! =====     Public procedures     =============================
              begin, f+f_criteria, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
-             ndp+n_spec_def, &
+             begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_channels, t+t_numeric, t+t_numeric_range, &
+                    n+n_field_type, &
+             begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
+             begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
+             begin, f+f_frequency, t+t_numeric, n+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
+             begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
+             begin, f+f_signals, s+s_signal, nr+n_field_spec, &
+             begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
+             np+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &                                !???
-             begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &     !???
-             begin, f+f_do_conv, t+t_boolean, n+n_field_type, &       !???
-             begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &   !???
-             begin, f+f_extraHeights, t+t_numeric, nr+n_field_type, & !???
-             begin, f+f_frequency, t+t_numeric, n+n_field_type, &     !???
-             begin, f+f_pointingGrids, t+t_string, nr+n_field_type, & !???
-             begin, f+f_spect_der, t+t_boolean, n+n_field_type, &     !???
-             begin, f+f_temp_der, t+t_boolean, n+n_field_type, &      !???
              ndp+n_spec_def /) )                                      !???
     call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
@@ -697,6 +706,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
              begin, f+f_diagonalOut, t+t_boolean, n+n_field_type, &
+             begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
@@ -712,6 +722,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_weight, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def, &
       begin, s+s_sids, & ! Must be AFTER s_vector and s_matrix
+             begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, nr+n_field_spec, &
@@ -741,9 +752,8 @@ contains ! =====     Public procedures     =============================
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, &
-                    n+n_name_def, &
-             s+s_time, &
-             s+s_l2load, s+s_forwardModelGlobal, &           !???
+                    n+n_name_def,&
+             s+s_time, s+s_l2load, s+s_forwardModel, s+s_forwardModelGlobal,&
              n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
@@ -765,7 +775,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, s+s_time, s+s_vector, s+s_create, &
                        s+s_fill, s+s_matrix, s+s_snoop, &
              n+n_section, &
-      begin, z+z_retrieve, s+s_matrix, s+s_forwardModel, s+s_retrieve, &
+      begin, z+z_retrieve, s+s_matrix, s+s_retrieve, &
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
@@ -777,6 +787,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.52  2001/03/17 00:50:38  livesey
+! New forwardModel section (plus merge from Van)
+!
 ! Revision 2.51  2001/03/16 21:49:10  vsnyder
 ! Add "pointingGrids" and "extraHeights" fields to ForwardModelGlobal
 !
