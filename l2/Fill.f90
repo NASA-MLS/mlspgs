@@ -4184,7 +4184,7 @@ contains ! =====     Public Procedures     =============================
           & 'Quantity does not describe magnetic field' )
         return
       end if
-      if ( qty%verticalCoordinate /= l_geodAltitude ) then
+      if ( qty%template%verticalCoordinate /= l_geodAltitude ) then
         call Announce_Error ( key, needGeodAltitude )
         return
       end if
@@ -4776,6 +4776,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.174  2003/01/14 21:58:59  vsnyder
+! OOPS, Left out 'template' in reference to verticalCoordinate
+!
 ! Revision 2.173  2003/01/14 21:34:09  vsnyder
 ! More work on magnetic field vector quantity
 !
