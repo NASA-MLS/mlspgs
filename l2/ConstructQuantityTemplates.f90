@@ -557,13 +557,14 @@ contains ! =====     Public Procedures     =============================
   end subroutine ConstructMinorFrameQuantity
 
   ! ------------------------------------ ForgeMinorFrames --------------
-  subroutine ForgeMinorFrames ( root, mifGeolocation )
+  subroutine ForgeMinorFrames ( root, chunk, mifGeolocation )
     ! This routine is used when we're in the mode of creating l2pc files
     ! and we want to invent a set of minor frame quantities with no
     ! reference to the l1 files
     
     ! Dummy arguments
-    integer, intent(in) :: ROOT          ! Tree vertex
+    integer, intent(in) :: ROOT         ! Tree vertex
+    type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
     type (QuantityTemplate_T), dimension(:), intent(inout) :: MIFGEOLOCATION
 
     ! Local variables
@@ -626,6 +627,8 @@ contains ! =====     Public Procedures     =============================
       mifGeolocation(instrumentModule)%phi(:,maf) = expr_value(1)
       mifGeolocation(instrumentModule)%geodLat(:,maf) = &
         & mifGeolocation(instrumentModule)%phi(:,maf) ! Sort this out later
+      mifGeolocation(instrumentModule)%mafIndex(maf) = maf + chunk%firstMAFIndex - 1
+      mifGeolocation(instrumentModule)%mafCounter(maf) = maf + chunk%firstMAFIndex - 1
     end do
 
   end subroutine ForgeMinorFrames
@@ -689,6 +692,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.25  2001/04/25 19:29:49  livesey
+! Fixed bug in forge, now sets mafCounter and mafIndex correctly.
+!
 ! Revision 2.24  2001/04/25 00:01:23  livesey
 ! Bug fix, no default units for scGeocAlt
 !
