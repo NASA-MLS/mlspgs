@@ -27,6 +27,10 @@ module DUMP_0
     module procedure DUMP_NAME_V_PAIRS_REAL
   end interface
 
+  interface SAY_FILL
+    module procedure SAY_FILL_CHAR, SAY_FILL_DOUBLE, SAY_FILL_INT, SAY_FILL_REAL
+  end interface
+
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -71,9 +75,7 @@ contains
       do j = 1, size(array), 10
         if (.not. myClean) then
           if ( any(array(j:min(j+9, size(array))) /= myFillValue) ) then
-            if ( numZeroRows /= 0 ) &
-              & call say_fill_char ( (/ j-1, size(array) /), numZeroRows, myFillValue )
-            call say_subs_only ( (/ j, size(array) /) )
+            call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
@@ -85,8 +87,7 @@ contains
           call output ( '', advance='yes' )
         end if
       end do ! j
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_char ( (/ j-1, size(array) /), numZeroRows, myFillValue )
+      call say_fill ( (/ j-10, size(array) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_1D_CHAR
 
@@ -242,9 +243,7 @@ contains
       do j = 1, size(array), myWidth
         if (.not. myClean) then
           if ( any(array(j:min(j+myWidth-1, size(array))) /= 0) ) then
-            if ( numZeroRows /= 0 ) &
-              & call say_fill_int ( (/ j-1, size(array) /), numZeroRows )
-            call say_subs_only ( (/ j, size(array) /) )
+            call say_fill ( (/ j-1, size(array) /), numZeroRows, 0, inc=1 )
           else
             numZeroRows = numZeroRows + 1
           end if
@@ -260,8 +259,7 @@ contains
           call output ( '', advance='yes' )
         end if
       end do ! j
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_int ( (/ j-1, size(array) /), numZeroRows )
+      call say_fill ( (/ j-myWidth, size(array) /), numZeroRows, 0 )
     end if
   end subroutine DUMP_1D_INTEGER
 
@@ -371,10 +369,8 @@ contains
         do j = 1, size(array,2), 10
           if (.not. myClean) then
             if ( any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
-              if ( numZeroRows /= 0 ) &
-                & call say_fill_char ( (/ i-1, size(array,1), j-1, size(array,2) /), &
-                  & numZeroRows, myFillValue )
-              call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
+              call say_fill ( (/ i-1, size(array,1), j, size(array,2) /), &
+                & numZeroRows, myFillValue, inc=1 )
             else
               numZeroRows = numZeroRows + 1
             end if
@@ -387,9 +383,8 @@ contains
           end if
         end do ! j
       end do ! i
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_char ( (/ i-1, size(array,1), j-1, size(array,2) /), &
-           & numZeroRows, myFillValue )
+      call say_fill ( (/ i-1, size(array,1), j-10, size(array,2) /), &
+        & numZeroRows, myFillValue )
     end if
   end subroutine DUMP_2D_CHAR
 
@@ -524,22 +519,27 @@ contains
   end subroutine DUMP_2D_DCOMPLEX
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
-  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN )
+  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
 
     logical :: myClean
     integer :: I, J, K
     integer :: NumZeroRows
     double precision :: myFillValue
-
-    myFillValue = 0.d0
-    if ( present(FillValue) ) myFillValue = FillValue
+    character(len=64) :: MyFormat
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+
+    myFillValue = 0.0d0
+    if ( present(FillValue) ) myFillValue = FillValue
+
+    myFormat = '(1x,1pg13.6)'
+    if ( present(format) ) myFormat = format
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -557,50 +557,44 @@ contains
           do j = 1, size(array,2), 5
             if (.not. myClean) then
               if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) &
-                  & call say_fill_double ( (/ i-1, size(array,1), j, size(array,2) /), &
-                    & numZeroRows, myFillValue )
-                call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                  & numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
             if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
               do k = j, min(j+4, size(array,2))
-                call output ( array(i,k), '(1x,1pg13.6)' )
+                call output ( array(i,k), myFormat )
               end do
               call output ( '', advance='yes' )
             end if
           end do
         end do
-        if ( numZeroRows /= 0 ) &
-          & call say_fill_double ( (/ i-1, size(array,1), j-1, size(array,2) /), &
-                    & numZeroRows, myFillValue )
+        call say_fill ( (/ i-1, size(array,1), j-5, size(array,2) /), &
+          & numZeroRows, myFillValue )
       else ! Dump the transpose
         if ( present(name) ) call output ( ' ' )
         call output ( '(transposed)', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), 5
             if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
-              if ( numZeroRows /= 0 ) &
-                & call say_fill_double ( (/ i-1, size(array,1), j, size(array,2) /), &
-                  & numZeroRows, myFillValue )
-              call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
+              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                & numZeroRows, myFillValue, inc=3 )
             else                                                            
               numZeroRows = numZeroRows + 1                                 
             end if                                                          
             if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then
               do k = i, min(i+4, size(array,1))
-                call output ( array(k,j), '(1x,1pg13.6)' )
+                call output ( array(k,j), myFormat )
               end do
               call output ( '', advance='yes' )
             end if                                                          
           end do
         end do
       end if
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_double ( (/ i-1, size(array,1), j-1, size(array,2) /), &
-           & numZeroRows, myFillValue )
+      call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
+        & numZeroRows, myFillValue )
     end if
   end subroutine DUMP_2D_DOUBLE
 
@@ -637,10 +631,8 @@ contains
         do j = 1, size(array,2), myWidth
           if (.not. myClean) then
             if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= 0) ) then
-              if ( numZeroRows /= 0 ) &
-                & call say_fill_int ( (/ i, size(array,1), j-1, size(array,2) /), &
-                  & numZeroRows )
-              call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
+              call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                & numZeroRows, 0, inc=3 )
             else
               numZeroRows = numZeroRows + 1
             end if
@@ -657,9 +649,8 @@ contains
           end if
         end do ! j
       end do ! i
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_int ( (/ i-1, size(array,1), j-1, size(array,2) /), &
-          & numZeroRows )
+      call say_fill ( (/ i-1, size(array,1), j-myWidth, size(array,2) /), &
+        & numZeroRows, 0 )
     end if
   end subroutine DUMP_2D_INTEGER
 
@@ -703,22 +694,27 @@ contains
   end subroutine DUMP_2D_LOGICAL
 
   ! -----------------------------------------------  DUMP_2D_REAL  -----
-  subroutine DUMP_2D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN )
+  subroutine DUMP_2D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
 
     logical :: myClean
     integer :: I, J, K
     integer :: NumZeroRows
     real :: myFillValue
-
-    myFillValue = 0.e0
-    if ( present(FillValue) ) myFillValue = FillValue
+    character(len=64) :: MyFormat
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+
+    myFillValue = 0.0e0
+    if ( present(FillValue) ) myFillValue = FillValue
+
+    myFormat = '(1x,1pg13.g)'
+    if ( present(format) ) myFormat = format
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -736,50 +732,44 @@ contains
           do j = 1, size(array,2), 5
             if (.not. myClean) then
               if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) &
-                  & call say_fill_real ( (/ i, size(array,1), j-1, size(array,2) /), &
-                    & numZeroRows, myFillValue )
-                call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2) /), &
+                  & numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
             if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
               do k = j, min(j+4, size(array,2))
-                call output ( array(i,k), '(1x,1pg13.6)' )
+                call output ( array(i,k), myFormat )
               end do
               call output ( '', advance='yes' )
             end if
           end do
         end do
-        if ( numZeroRows /= 0 ) &
-          & call say_fill_real ( (/ i-1, size(array,1), j-1, size(array,2) /), &
-            & numZeroRows, myFillValue )
+        call say_fill ( (/ i-1, size(array,1), j-5, size(array,2) /), &
+          & numZeroRows, myFillValue )
       else ! Dump the transpose
         if ( present(name) ) call output ( ' ' )
         call output ( '(transposed)', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), 5
             if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
-              if ( numZeroRows /= 0 ) &   
-                & call say_fill_real ( (/ i-1, size(array,1), j, size(array,2) /), &
-                  & numZeroRows, myFillValue )
-              call say_subs_only ( (/ i, size(array,1), j, size(array,2) /) )
+              call say_fill ( (/ i-1, size(array,1), j, size(array,2) /), &
+                & numZeroRows, myFillValue, inc=1 )
             else                                                            
               numZeroRows = numZeroRows + 1                                 
             end if                                                          
             if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then
               do k = i, min(i+4, size(array,1))
-                call output ( array(k,j), '(1x,1pg13.6)' )
+                call output ( array(k,j), myFormat )
               end do
               call output ( '', advance='yes' )
             end if                                                          
           end do
         end do
       end if
-      if ( numZeroRows /= 0 ) &   
-        & call say_fill_real ( (/ i-1, size(array,1), j-1, size(array,2) /), &
-          & numZeroRows, myFillValue )
+      call say_fill ( (/ i-5, size(array,1), j-1, size(array,2) /), &
+        & numZeroRows, myFillValue )
     end if
   end subroutine DUMP_2D_REAL
 
@@ -825,11 +815,8 @@ contains
           do k = 1, size(array,3), 10
             if (.not. myClean) then
               if ( any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) &
-                  & call say_fill_char ( (/ i, size(array,1), j, size(array,2), &
-                    & k-1, size(array,3) /), numZeroRows, myFillValue )
-                call say_subs_only ( (/ i, size(array,1), j, size(array,2), &
-                  & k, size(array,3) /) )
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
+                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
@@ -843,28 +830,31 @@ contains
           end do
         end do
       end do
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_char ( (/ i-1, size(array,1), j-1, size(array,2), &
-          & k-1, size(array,3) /), numZeroRows, myFillValue )
+      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
+        & k-10, size(array,3) /), numZeroRows, myFillValue )
     end if
   end subroutine DUMP_3D_CHAR
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
-  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN )
+  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
 
     logical :: myClean
     integer :: I, J, K, L
     integer :: NumZeroRows
     double precision :: myFillValue
+    character(len=64) :: myFormat
 
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue = FillValue
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myFormat = '(1x,1pg13.6)'
+    if ( present(format) ) myFormat = format
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -884,27 +874,23 @@ contains
           do k = 1, size(array,3), 5
             if (.not. myClean) then
               if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) &
-                  & call say_fill_double ( (/ i, size(array,1), j, size(array,2), &
-                    & k-1, size(array,3) /), numZeroRows, myFillValue )
-                call say_subs_only ( (/ i, size(array,1), j, size(array,2), &
-                  & k, size(array,3) /) )
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
+                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
             if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
               do l = k, min(k+4, size(array,3))
-                call output ( array(i,j,l), '(1x,1pg13.6)' )
+                call output ( array(i,j,l), myFormat )
               end do
               call output ( '', advance='yes' )
             end if
           end do
         end do
       end do
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_double ( (/ i-1, size(array,1), j-1, size(array,2), &
-          & k-1, size(array,3) /), numZeroRows, myFillValue )
+      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
+        & k-5, size(array,3) /), numZeroRows, myFillValue )
    end if
   end subroutine DUMP_3D_DOUBLE
 
@@ -950,11 +936,8 @@ contains
           do k = 1, size(array,3), myWidth
             if (.not. myClean) then
               if ( any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= 0) ) then
-                if ( numZeroRows /= 0 ) &
-                  & call say_fill_int ( (/ i, size(array,1), j, size(array,2), &
-                    & k-1, size(array,3) /), numZeroRows )
-                call say_subs_only ( (/ i, size(array,1), j, size(array,2), &
-                  & k, size(array,3) /) )
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
+                  & k, size(array,3) /), numZeroRows, 0, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
@@ -972,28 +955,31 @@ contains
           end do
         end do
       end do
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_int ( (/ i-1, size(array,1), j-1, size(array,2), &
-          & k-1, size(array,3) /), numZeroRows )
+      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
+        & k-myWidth, size(array,3) /), numZeroRows, 0 )
     end if
   end subroutine DUMP_3D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
-  subroutine DUMP_3D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN )
+  subroutine DUMP_3D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN, FORMAT )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
+    character(len=*), intent(in), optional :: FORMAT
 
     logical :: myClean
     integer :: I, J, K, L
     integer :: NumZeroRows
     real    :: myFillValue
+    character(len=64) :: MyFormat
 
     myFillValue = 0.e0
     if ( present(FillValue) ) myFillValue = FillValue
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myFormat = '(1x,1pg13.6)'
+    if ( present(format) ) myFormat = format
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -1013,27 +999,23 @@ contains
           do k = 1, size(array,3), 5
             if (.not. myClean) then
               if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) &
-                  & call say_fill_real ( (/ i, size(array,1), j, size(array,2), &
-                    & k-1, size(array,3) /), numZeroRows, myFillValue )
-                call say_subs_only ( (/ i, size(array,1), j, size(array,2), &
-                  & k, size(array,3) /) )
+                call say_fill ( (/ i, size(array,1), j-1, size(array,2), &
+                  & k, size(array,3) /), numZeroRows, myFillValue, inc=3 )
               else
                 numZeroRows = numZeroRows + 1
               end if
             end if
             if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
               do l = k, min(k+4, size(array,3))
-                call output ( array(i,j,l), '(1x,1pg13.6)' )
+                call output ( array(i,j,l), myFormat )
               end do
               call output ( '', advance='yes' )
             endif
           end do
         end do
       end do
-      if ( numZeroRows /= 0 ) &
-        & call say_fill_real ( (/ i-1, size(array,1), j-1, size(array,2), &
-          & k-1, size(array,3) /), numZeroRows, myFillValue )
+      call say_fill ( (/ i-1, size(array,1), j-1, size(array,2), &
+        & k-5, size(array,3) /), numZeroRows, myFillValue )
    end if
   end subroutine DUMP_3D_REAL
 
@@ -1191,46 +1173,68 @@ contains
   end subroutine Name_And_Size
 
   ! ----------------------------------------------  Say_Fill_Char  -----
-  subroutine Say_Fill_Char ( Subs, NumZeroRows, Fill )
+  subroutine Say_Fill_Char ( Subs, NumZeroRows, Fill, Inc  )
     integer, intent(in) :: Subs(:)
     integer, intent(inout) :: NumZeroRows
     character(len=*), intent(in) :: Fill
-    call say_subs ( subs, numZeroRows  )
-    call output ( '"', advance='no' )
-    call output ( trim(fill), advance='no' )
-    call output ( '" not printed.', advance='yes' )
-    numZeroRows = 0
+    integer, intent(in), optional :: Inc
+    if ( numZeroRows /= 0 ) then
+      call say_subs ( subs, numZeroRows  )
+      call output ( '"', advance='no' )
+      call output ( trim(fill), advance='no' )
+      call output ( '" not printed.', advance='yes' )
+      numZeroRows = 0
+    end if
+    if ( present(inc) ) &
+      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
   end subroutine Say_Fill_Char
 
   ! --------------------------------------------  Say_Fill_Double  -----
-  subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill )
+  subroutine Say_Fill_Double ( Subs, NumZeroRows, Fill, Inc )
     integer, intent(in) :: Subs(:)
     integer, intent(inout) :: NumZeroRows
     double precision, intent(in) :: Fill
-    call say_subs ( subs, numZeroRows )
-    call output ( fill, advance='no' )
-    call output ( ' not printed.', advance='yes' )
-    numZeroRows = 0
+    integer, intent(in), optional :: Inc
+    if ( numZeroRows /= 0 ) then
+      call say_subs ( subs, numZeroRows )
+      call output ( fill, advance='no' )
+      call output ( ' not printed.', advance='yes' )
+      numZeroRows = 0
+    end if
+    if ( present(inc) ) &
+      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
   end subroutine Say_Fill_Double
 
   ! -----------------------------------------------  Say_Fill_Int  -----
-  subroutine Say_Fill_Int ( Subs, NumZeroRows )
+  subroutine Say_Fill_Int ( Subs, NumZeroRows, Fill, Inc )
     integer, intent(in) :: Subs(:)
     integer, intent(inout) :: NumZeroRows
-    call say_subs ( subs, numZeroRows )
-    call output ( 'zeros not printed.', advance='yes' )
-    numZeroRows = 0
+    integer, intent(in) :: Fill
+    integer, intent(in), optional :: Inc
+    if ( numZeroRows /= 0 ) then
+      call say_subs ( subs, numZeroRows )
+      call output ( fill, advance='no' )
+      call output ( ' not printed.', advance='yes' )
+      numZeroRows = 0
+    end if
+    if ( present(inc) ) &
+      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
   end subroutine Say_Fill_Int
 
   ! ----------------------------------------------  Say_Fill_Real  -----
-  subroutine Say_Fill_Real ( Subs, NumZeroRows, Fill )
+  subroutine Say_Fill_Real ( Subs, NumZeroRows, Fill, Inc )
     integer, intent(in) :: Subs(:)
     integer, intent(inout) :: NumZeroRows
     real, intent(in) :: Fill
-    call say_subs ( subs, numZeroRows )
-    call output ( fill, advance='no' )
-    call output ( ' not printed.', advance='yes' )
-    numZeroRows = 0
+    integer, intent(in), optional :: Inc
+    if ( numZeroRows /= 0 ) then
+      call say_subs ( subs, numZeroRows )
+      call output ( fill, advance='no' )
+      call output ( ' not printed.', advance='yes' )
+      numZeroRows = 0
+    end if
+    if ( present(inc) ) &
+      & call say_subs_only ( (/ subs(:inc-1), subs(inc)+1, subs(inc+1:) /) )
   end subroutine Say_Fill_Real
 
   ! ----------------------------------------------------  Say_Subs -----
@@ -1339,6 +1343,11 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.27  2003/08/08 20:45:42  vsnyder
+! Made say_fill_* generic, made them test for numZeroRows, and made them
+! optionally do say_subs_only.  This simplified several dump routines.
+! Added optional FORMAT arguments in several more routines.
+!
 ! Revision 2.26  2003/07/04 02:41:33  vsnyder
 ! Substantial simplification by putting little things into subroutines
 !
