@@ -3,9 +3,8 @@
 
 module ScanDivide
 
-  use Dumper, only : DUMP
   use EXPR_M, only: EXPR   
-  use INIT_TABLES_MODULE, only:  FIRST_PARM, L_BOTH, L_EITHER, L_GHZ, &
+  use INIT_TABLES_MODULE, only:  FIRST_PARM, L_BOTH, L_EITHER, &
     L_NONE, L_THZ, LAST_PARM, L_TRUE
   use INIT_TABLES_MODULE, only: P_CRITICAL_BANDS, P_CRITICAL_SCANNING_MODULES, &
     P_HOME_GEOD_ANGLE, P_HOME_MODULE, P_IDEAL_LENGTH, P_IGNOREL1B, P_MAX_GAP, &
@@ -24,7 +23,7 @@ module ScanDivide
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: MAX_ORBITS
   use STRING_TABLE, only: DISPLAY_STRING
-  use TOGGLES, only: GEN, SWITCHES, TOGGLE
+  use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUBTREE
   use Tree_Types, only: N_EQUAL, N_NAMED
@@ -135,6 +134,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_begin ("ScanDivide", root )
 
     timing = section_times
+    if ( timing ) call cpu_time ( t1 )
 
     ! Get MLSCF values for configuration of this bit
     call ScanDivide_mlscf ( root, config )
@@ -1183,6 +1183,9 @@ contains ! =====     Public Procedures     =============================
 end module ScanDivide
 
 ! $Log$
+! Revision 2.17  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.16  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
