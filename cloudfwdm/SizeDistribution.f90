@@ -129,7 +129,7 @@ contains
      &	      /exp(3*mu1+9./2*rao1*rao1)/diam/rao1/diam0**3    &
      &	      *exp(-0.5*((log(diam/diam0)-mu1)/rao1)**2)      ! diam >100
 
-           else if (iwc1 .eq. 0.) then
+           else
              rn0=rn0
            endif
  
@@ -149,31 +149,8 @@ contains
           b1=0.05
           rn0=(1.e-5+diam**v1)*exp(-b1*diam)
         ELSE 
-!           WRITE(*,*) 'SIZE-DISTRIBUTION NOT DEFINED!'
-!           STOP
-! default using MH
-
-           iwc0 = min(CWC, 0.252*(CWC/iwc00)**0.837)
-           iwc1 = CWC - iwc0
-
-           amu	= 5.2 + 0.0013*tempc
-           bmu	= 0.026 - 1.2e-3*tempc
-           arao	= 0.47 + 2.1e-3*tempc
-           brao	= 0.018 - 2.1e-4*tempc
-
-           alpha0= -4.99e-3 - 0.0494*log10(iwc0/iwc00) 
-           if(alpha0 .lt. 0.) alpha0=0. ! NEED TO BE POSITIVE
-           if(iwc1 .gt. 0) mu1	= amu + bmu*log10(iwc1/iwc00)
-           if(iwc1 .gt. 0) rao1	= arao + brao*log10(iwc1/iwc00)
-
-!... MH size dist has two parts separated at 100 micron
-
-           rn0=iwc0*alpha0**5/3.14/raoi/4  &
-     &        *diam*exp(-alpha0*diam)
-           
-           rn0=rn0+6*iwc1/raoi/sqrt(3.14**3*2)    &
-     &	      /exp(3*mu1+9./2*rao1*rao1)/diam/rao1/diam0**3  &
-     &	      *exp(-0.5*((log(diam/diam0)-mu1)/rao1)**2)
+           WRITE(*,*) 'SIZE-DISTRIBUTION NOT DEFINED!'
+           STOP
 
         ENDIF
 
@@ -280,6 +257,9 @@ contains
 end module SizeDistribution
 
 ! $Log$
+! Revision 1.9  2002/10/08 17:08:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 1.8  2002/04/16 03:42:39  jonathan
 ! fix a bug
 !
