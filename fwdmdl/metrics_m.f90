@@ -195,29 +195,29 @@ contains
       z_coeffs = size(z_basis)
       nullify ( dhtdtl )
       call Allocate_test ( dhtdtl, z_coeffs, 'dhtdtl', ModuleName )
-      dhtdtl = sum(reshape(dhidtlm(1,:,:),(/p_coeffs,z_coeffs/)) &
-        * spread(reshape(eta_t(1,:),(/p_coeffs/)),2,z_coeffs),dim=1)
+      dhtdtl = sum(RESHAPE(dhidtlm(1,:,:),(/p_coeffs,z_coeffs/)) &
+        * SPREAD(RESHAPE(eta_t(1,:),(/p_coeffs/)),2,z_coeffs),dim=1)
 
       ! adjust the 2d hydrostatic relative to the surface
-      dhidtlm = dhidtlm - spread(spread(dhtdtl,1,n_vert),2,p_coeffs)
-      if(present(dhtdtl0)) dhtdtl0 = sum(dhidtlm(tan_inds,:,:) &
-        * spread(eta_t,3,z_coeffs),dim=2)
-      if(present(ddhtdhtdtl0)) ddhtdhtdtl0 = &
-        sum(ddhidhidtl0(tan_inds,:,:) * spread(eta_t,3,z_coeffs),dim=2)
+      dhidtlm = dhidtlm - SPREAD(SPREAD(dhtdtl,1,n_vert),2,p_coeffs)
+      if(PRESENT(dhtdtl0)) dhtdtl0 = sum(dhidtlm(tan_inds,:,:) &
+        * SPREAD(eta_t,3,z_coeffs),dim=2)
+      if(PRESENT(ddhtdhtdtl0)) ddhtdhtdtl0 = &
+        sum(ddhidhidtl0(tan_inds,:,:) * SPREAD(eta_t,3,z_coeffs),dim=2)
       call Deallocate_test ( dhtdtl, 'dhtdtl', ModuleName )
     endif
 
     call Deallocate_test ( eta_t, 'eta_t', ModuleName )
 
     ss_htan = 0
-    if(present(neg_h_tan)) then
+    if(PRESENT(neg_h_tan)) then
       ss_htan = size(neg_h_tan)
-      if(present(tan_phi_h_grid)) tan_phi_h_grid(1:ss_htan)=neg_h_tan-h_surf
+      if(PRESENT(tan_phi_h_grid)) tan_phi_h_grid(1:ss_htan)=neg_h_tan-h_surf
     endif
 
     ! construct some basic matricies
-    h_tans = spread(h_grid_t,1,2*n_vert)
-    phi_tans = spread(phi_t,1,2*n_vert)
+    h_tans = SPREAD(h_grid_t,1,2*n_vert)
+    phi_tans = SPREAD(phi_t,1,2*n_vert)
 
     nullify ( eta_t, h_grid_tt )
     call Allocate_test ( eta_t, n_vert, max (1,n_tan-ss_htan), 'n_vert', ModuleName )
@@ -228,7 +228,7 @@ contains
     h_grid_tt = matmul(eta_t,h_grid_t(min(n_tan,ss_htan+1):n_tan))
 
     ! basic pressure grid
-    m_z_grid = spread(z_grid((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/)),2,n_tan)
+    m_z_grid = SPREAD(z_grid((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/)),2,n_tan)
 
     ! determine condensed vector format so we don't mess with a bunch
     ! of zeros
@@ -251,10 +251,10 @@ contains
     call Allocate_test ( near_inds, n_cvf/2, 'near_inds', ModuleName )
     call Allocate_test ( cvf_inds, n_cvf, 'cvf_inds', ModuleName )
 
-    cvf_inds = pack((/(i,i=1,2*n_vert*n_tan)/), &
-      reshape(spread((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/),2,n_tan), &
+    cvf_inds = PACK((/(i,i=1,2*n_vert*n_tan)/), &
+      RESHAPE(SPREAD((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/),2,n_tan), &
       (/2*n_vert*n_tan/)) &
-      - reshape(spread(tan_inds,1,2*n_vert),(/2*n_vert*n_tan/)) >= 0)
+      - RESHAPE(SPREAD(tan_inds,1,2*n_vert),(/2*n_vert*n_tan/)) >= 0)
 
     ! sign of phi matrix
     cvf_sign = (-1.0_rp)**((modulo(cvf_inds-1,2*n_vert)/n_vert)+1)
@@ -265,7 +265,7 @@ contains
     call Allocate_test ( mask, 2*n_vert*n_tan, 'mask', ModuleName )
     mask = .false.
     mask(cvf_inds) = .true.
-    cvf_ang_offset = pack(phi_tans,reshape(mask,(/2*n_vert,n_tan/)))
+    cvf_ang_offset = PACK(phi_tans,RESHAPE(mask,(/2*n_vert,n_tan/)))
 
     ! compute phi_s - phi_t
     j = n_vert
@@ -275,10 +275,10 @@ contains
       h_tans(:,i) = neg_h_tan(i)
       j = j + n_vert + n_vert
     end do
-    h_grid = pack(spread(h_grid_tt((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/)), &
-      2,n_tan),reshape(mask,(/2*n_vert,n_tan/)))
-    cvf_h_tan = pack(h_tans,reshape(mask,(/2*n_vert,n_tan/)))
-    cvf_z_grid = pack(m_z_grid,reshape(mask,(/2*n_vert,n_tan/)))
+    h_grid = PACK(SPREAD(h_grid_tt((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/)), &
+      2,n_tan),RESHAPE(mask,(/2*n_vert,n_tan/)))
+    cvf_h_tan = PACK(h_tans,RESHAPE(mask,(/2*n_vert,n_tan/)))
+    cvf_z_grid = PACK(m_z_grid,RESHAPE(mask,(/2*n_vert,n_tan/)))
     call Deallocate_test ( m_z_grid, 'm_z_grid', ModuleName )
     call Deallocate_test ( h_tans, 'h_tans', ModuleName )
     call Deallocate_test ( phi_tans, 'phi_tans', ModuleName )
@@ -319,7 +319,7 @@ contains
 
     path_inds = modulo((cvf_inds - 1),2*n_vert) + 1
     vert_inds = path_inds - n_vert
-    near_inds = pack((/(i,i=1,n_cvf)/),path_inds <= n_vert)
+    near_inds = PACK((/(i,i=1,n_cvf)/),path_inds <= n_vert)
     vert_inds(near_inds) = n_vert - path_inds(near_inds) + 1
 
     ! h_ref with surface adjustment
@@ -340,7 +340,7 @@ contains
 
     nullify ( junk )
     call Allocate_Test ( junk , no_of_bad_fits, 'junk', ModuleName )
-    junk = pack((/(i,i=1,n_cvf)/),mask)
+    junk = PACK((/(i,i=1,n_cvf)/),mask)
     where(h_grid < cvf_h_tan) 
       h_grid = cvf_h_tan
     endwhere
@@ -386,7 +386,7 @@ contains
 
       call Deallocate_test ( junk, 'junk', ModuleName )
       call Allocate_test ( junk, no_of_bad_fits, 'junk', ModuleName )
-      junk = pack((/(i,i=1,n_cvf)/),mask)
+      junk = PACK((/(i,i=1,n_cvf)/),mask)
       iter = iter + 1
     end do
 
@@ -475,7 +475,7 @@ contains
     dhitdzi = sum(dhidzij(vert_inds,:) * eta_p,dim=2)
 
     ! compute the temperature derivative grid
-    if (present(dhitdtlm)) then
+    if (PRESENT(dhitdtlm)) then
       nullify ( inds, eta_t, not_zero_t )
       call Allocate_test ( inds, n_cvf, 'inds', ModuleName )
       call Allocate_test ( eta_t, n_cvf, z_coeffs, 'eta_t', ModuleName )
@@ -526,6 +526,9 @@ end module metrics_m
 
 
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.1.2.8  2001/09/13 01:26:53  zvi
 ! fixing allocation bug
 !
