@@ -645,7 +645,11 @@ contains ! ======================= Public Procedures =========================
         mls_swsetfill_double = HE5_SWsetfill(swathid, trim(fieldname), &
         & datatype, fillvalue)
       endif
-      if ( mls_swsetfill_double == -1 ) return
+      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
+      if ( mls_swsetfill_double /= 0 ) then
+        mls_swsetfill_double = -1
+        return
+      endif
     enddo
 
   end function MLS_SWSETFILL_DOUBLE
@@ -673,7 +677,11 @@ contains ! ======================= Public Procedures =========================
         mls_swsetfill_integer = HE5_SWsetfill(swathid, trim(fieldname), &
         & datatype, fillvalue)
       endif
-      if ( mls_swsetfill_integer == -1 ) return
+      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
+      if ( mls_swsetfill_integer /= 0 ) then
+        mls_swsetfill_integer = -1
+        return
+      endif
     enddo
 
   end function MLS_SWSETFILL_INTEGER
@@ -701,7 +709,11 @@ contains ! ======================= Public Procedures =========================
         mls_swsetfill_real = HE5_SWsetfill(swathid, trim(fieldname), &
         & datatype, fillvalue)
       endif
-      if ( mls_swsetfill_real == -1 ) return
+      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
+      if ( mls_swsetfill_real /= 0 ) then
+        mls_swsetfill_real = -1
+        return
+      endif
     enddo
 
   end function MLS_SWSETFILL_REAL
@@ -1804,6 +1816,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.20  2004/05/05 21:28:42  pwagner
+! More debug printing
+!
 ! Revision 2.19  2004/03/24 23:53:02  pwagner
 ! Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
 !
