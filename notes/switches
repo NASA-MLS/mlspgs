@@ -40,6 +40,7 @@ Switches (set by -S option in mlsl2's command line):
   neq =>    Normal equations during retriever iterations
   ngc =>    Show how many times garbage collected during each chunk
   nin =>    Turn on Newton Method's internal output
+  nodb =>   Subvert the DumpBlocks command
   nwt =>    Action flag at each return from Newton solver
   opt[n] => Print command line options [higher the n, more the info]
   pcf[n] => open init params obtained from pcf,
@@ -92,6 +93,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.36  2003/06/30 22:56:16  cvuu
+ Print mean, std dev for fullForwardModel timing
+
  Revision 1.35  2003/05/21 22:17:49  vsnyder
  Add 'bgrp' switch
 
