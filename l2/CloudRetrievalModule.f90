@@ -23,7 +23,7 @@ contains
 ! ------------------------------------------  HighCloudRetrieval  -----
     subroutine HighCloudRetrieval(ConfigDatabase,configIndices,fwdModelExtra,&
       & measurements,MeasurementSD, state, OutputSD, Covariance, &
-      & chunk,maxJacobians,initlambda)
+      & jacobian, chunk,maxJacobians,initlambda)
 
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
@@ -357,7 +357,7 @@ contains
 ! ------------------------------------------  LowCloudRetrieval  -----
     subroutine LowCloudRetrieval(ConfigDatabase,configIndices,fwdModelExtra,&
       & measurements,MeasurementSD, state, OutputSD, Covariance, &
-      & chunk,maxJacobians,initlambda)
+      & jacobian, chunk,maxJacobians,initlambda)
 
       use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
@@ -471,8 +471,7 @@ contains
             
       allocate(doMaf(nMAFs))
                
-      call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
-        & ModuleName )
+      call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName )
       ! create FwdModelOut1 vector by cloning measurements
         call cloneVector ( FwdModelOut1, measurements, vectorNameText='_covarianceDiag' )
                
@@ -495,8 +494,7 @@ contains
         
         ! get Tcir from extraState vector for constraining cloud top
         ConstrainTcir => GetVectorQuantityByType ( fwdModelExtra,     &
-         & quantityType=l_cloudInducedRadiance,             &
-         & signal=signal%index, sideband=signal%sideband )
+         & quantityType=l_cloudInducedRadiance)
         
       ! find how many channels total in all models
         doMaf = .false.
@@ -954,6 +952,9 @@ contains
 
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.3  2003/05/13 22:25:52  dwu
+! changes in lowcloudretrieval
+!
 ! Revision 2.2  2003/05/13 20:48:38  dwu
 ! fix a bug
 !
