@@ -13,8 +13,8 @@ ALLOBJS = $(OBJS) $(LIB_OBJS) units.o
 ${OBJS}: $(LIB_OBJS) units.o
 
 # ========================================================================
-l2pc_file: $(ALLOBJS) $(libdir)/libmls.a
-	$(FC) -o l2pc_file $(ALLOBJS) \
+l2_test: $(ALLOBJS) $(libdir)/libmls.a
+	$(FC) -o l2_test $(ALLOBJS) \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
@@ -28,11 +28,11 @@ l2pc_file: $(ALLOBJS) $(libdir)/libmls.a
 # ========================================================================
 
 clean:
-	rm -f *.o *.mod l2pc_file
+	rm -f *.o *.mod l2_test
 
 tar:
-	rm -f l2pc.tgz
-	tar hcvzf l2pc.tgz * --exclude \*.o --exclude \*.mod --exclude l2pc_file
+	rm -f fwdmdl.tgz
+	tar hcvzf fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # ========================================================================
 
@@ -59,6 +59,9 @@ machine.o: $(LIB_SRCS_DIR)/platforms/$(MLSCONFG).machine
 	$(FC) -c $(DUSTY) machine.f90
 # ========================================================================
 # $Log$
+# Revision 1.1  2000/11/22 23:35:07  pwagner
+# First commit
+#
 # Revision 1.1  2000/11/22 22:55:25  pwagner
 # First commit
 #

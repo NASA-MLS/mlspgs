@@ -41,7 +41,7 @@ SHELL = /bin/sh
 
 libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
 
-PROG=l2pc_file
+PROG=l2_test
 
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
@@ -93,10 +93,13 @@ clean_objs:
 	fi
 
 tar:
-	rm -f ../$(PROG).tgz
-	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude l2pc_file
+	rm -f ../fwdmdl.tgz
+	tar hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.1  2000/11/22 23:34:06  pwagner
+# First commit
+#
 # Revision 1.1  2000/11/22 22:51:32  pwagner
 # First commit
 #
