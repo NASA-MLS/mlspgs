@@ -42,6 +42,18 @@ module Open_Init
   use WriteMetadata, only: PCFData_T, MCFCASESENSITIVE
 
   implicit none
+
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data types and parameters)
+! MLSPCF_LOG                      PCF number of the log file
+! CCSDSLen                        Max length of coded start, end times
+
+!     (subroutines and functions)
+! DestroyL1BInfo                  Called when the l1bInfo is finished with
+! OpenAndInitialize               Gets run parameters from pcf
+
   private
   public :: DestroyL1BInfo, OpenAndInitialize
 
@@ -107,7 +119,6 @@ contains ! =====     Public Procedures     =============================
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     type(PCFData_T) :: l2pcf
-!    integer, external :: Pgs_pc_getFileSize
 
     !Local Variables
     logical, parameter :: DEBUG = .FALSE.
@@ -140,7 +151,6 @@ contains ! =====     Public Procedures     =============================
 
     real :: T1, T2                      ! for timing
     logical :: TIMING
-!    integer :: pgs_td_utctotai, pgs_pc_getconfigdata
 
     ! Executable code
     timing = section_times
@@ -151,12 +161,12 @@ contains ! =====     Public Procedures     =============================
 
 ! Read the PCF into an annotation for file headers
 
-   if ( .not.( PCF .and. CREATEMETADATA) ) then
-      Status = PGS_S_SUCCESS - 1
-   else
-    version = 1
-    Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
-   endif
+    if ( .not.( PCF .and. CREATEMETADATA) ) then
+       Status = PGS_S_SUCCESS - 1
+    else
+     version = 1
+     Status = Pgs_pc_getFileSize(mlspcf_pcf_start, version, size)
+    endif
    
     if ( Status == PGS_S_SUCCESS ) then
       call createPCFAnnotation(mlspcf_pcf_start, l2pcf%anText)
@@ -182,17 +192,17 @@ contains ! =====     Public Procedures     =============================
    l2pcf%spec_hash = '(not applicable)'      ! will not create metadata
 
    if( .not. PCF ) then
-      if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) &
-!        & call dump_L1B_database &
-!        & ( mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1, l1binfo, l2pcf, &
-!          & CCSDSEndTime, CCSDSStartTime, processingrange )
-      call output('======== No parameters or radiances read :: no pcf ========', advance='yes')
-      call output('========   (These must supplied through the l2cf)  ========', advance='yes')
-    if ( toggle(gen) ) then
-      call trace_end ( "OpenAndInit" )
-    end if
-    if ( timing ) call sayTime
-    return
+     if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) then
+       call output('====== No parameters or radiances read :: no pcf ======', &
+         & advance='yes')
+       call output('====  (These must be supplied through the l2cf) ======', &
+         & advance='yes')
+     endif
+     if ( toggle(gen) ) then
+       call trace_end ( "OpenAndInit" )
+     end if
+     if ( timing ) call sayTime
+     return
    endif
 
     ifl1 = 0
@@ -263,6 +273,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Get the Start and End Times from PCF
     ! Temporarily we allow the use of older PCFids: CCSDSStartId, CCSDEndId
+    ! (if PUNISH_FOR_INVALID_PCF is FALSE)
 
     returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_CCSDSStartId, &
                                            CCSDSStartTime)
@@ -358,7 +369,6 @@ contains ! =====     Public Procedures     =============================
 ! Get the name of the log file from the PCF
 
     version = 1
-!    mlspcf_log = 10101			! This seems to be hard-wired into PCF
 
     returnStatus = Pgs_pc_getReference(MLSPCF_LOG, version, name)
     if ( returnStatus /= PGS_S_SUCCESS .AND. PUNISH_FOR_INVALID_PCF) then
@@ -386,11 +396,11 @@ contains ! =====     Public Procedures     =============================
    if ( levels(gen) > 0 .or. index(switches,'pcf') /= 0 ) &
         & call Dump_open_init ( ifl1, l1binfo, l2pcf, &
           & CCSDSEndTime, CCSDSStartTime, processingrange, details )
-    if ( toggle(gen) ) then
-      call trace_end ( "OpenAndInit" )
-    end if
-    if ( timing ) call sayTime
-    return
+   if ( toggle(gen) ) then            
+     call trace_end ( "OpenAndInit" ) 
+   end if                             
+   if ( timing ) call sayTime         
+   return                             
 
   contains
     subroutine SayTime
@@ -583,6 +593,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.57  2001/11/01 21:06:17  pwagner
+! Fixed if block; added toc
+!
 ! Revision 2.56  2001/10/30 00:33:24  pwagner
 ! Renamed Dump_L1B_database Dump_open_init; switches now checked for pcf[n]
 !
