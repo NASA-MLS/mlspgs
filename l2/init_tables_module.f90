@@ -181,7 +181,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_BOTH 	        = l_apriori + 1
   integer, parameter :: L_CHOLESKY      = l_both + 1
   integer, parameter :: L_CLIMATOLOGY   = l_cholesky+1
-  integer, parameter :: L_COVARIANCE    = l_climatology + 1
+  integer, parameter :: L_CLOUDFULL     = l_climatology + 1
+  integer, parameter :: L_COVARIANCE    = l_cloudFill + 1
   integer, parameter :: L_DAO 	        = l_covariance + 1
   integer, parameter :: L_DIRECT        = l_dao + 1
   integer, parameter :: L_EARTHREFL     = l_direct + 1
@@ -353,6 +354,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_both) =                  add_ident ( 'both' )
     lit_indices(l_cholesky) =              add_ident ( 'cholesky' )
     lit_indices(l_climatology) =           add_ident ( 'climatology' )
+    lit_indices(l_cloudFull) =             add_ident ( 'cloudFull' )
     lit_indices(l_covariance) =            add_ident ( 'covariance' )
     lit_indices(l_dao) =                   add_ident ( 'DAO' )
     lit_indices(l_direct) =                add_ident ( 'direct' )
@@ -609,7 +611,7 @@ contains ! =====     Public procedures     =============================
              l+l_hydrostatic, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
              l+l_vGrid, n+n_dt_def, &
-      begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, n+n_dt_def, &
+      begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_linear, l+l_l2gp, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
@@ -962,6 +964,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.111  2001/05/29 20:19:27  livesey
+! Added cloudFull forward model type
+!
 ! Revision 2.110  2001/05/25 20:26:31  livesey
 ! Added skipOverlaps option to ForwardModel
 !
