@@ -1,0 +1,32 @@
+\fillMethod{L1B}
+
+\index{Radiances!reading}
+
+\begin{cfFragment}
+Fill, quantity=<vector>.<quantity>, method=l1b 
+   [, isPrecision=<true|false>]
+   [, precisionQuantity=<vector>.<quantity>]
+\end{cfFragment}
+\index{isPrecision}
+\index{precisionQuantity}
+
+This fill method can only be applied to a limited set of vector
+quantities.  The quantity is filled with data read directly from the
+appropriate field in the input L1B data set.
+
+Special options can apply when reading radiance and radiance quantities.
+The \cf+isPrecision+ flag should be set to read the precision for a
+radiance quantity instead of the radiance itself from the L1B files.
+When reading the radiances (\ie \cf+isPrecision+ not set), one can supply
+the \cf+precisionQuantity+ to the fill command.  In this case, the
+supplied precision quantity (presumably filled earlier) is inspected,
+and where it is negative, the corresponding radiance quantity is masked
+with the `linAlg' flag.  It is by this mechanism that the level~2
+software is told not to use radiances who's corresponding errors have
+been set negative by level~1.  Naturally the quantity to fill and the
+precision quantity must describe the same signal and sideband.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "l2ug"
+%%% End: 

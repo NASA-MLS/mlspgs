@@ -10,23 +10,39 @@
 \usepackage{times}
 \usepackage{graphicx}
 \usepackage{array}
-\usepackage{chicago}
+\usepackage[square]{natbib}
 \usepackage{pifont}
 \usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xspace}
+\usepackage{makeidx}
 \usepackage[letterpaper,dvips,breaklinks,bookmarksopen=true,extension=dvi]{hyperref}
+%
+% General preamble macros
+\lstloadlanguages{Idl}
+\makeindex
+\renewcommand{\sfdefault}{cmss}
+\renewcommand{\ttdefault}{cmtt}
 %
 % Now begin the document and setup various counters etc.
 \begin{document}
 \rcsInfo $Id$
 %
-%
 \lhead[\fancyplain{}{\large\it Contents}]{\fancyplain{}\rcsLockedStatus}
 \rhead[\fancyplain{}\rcsLockedStatus]{\fancyplain{}{\large\it Contents}}
 %
-\bibliographystyle{chicago}
+\bibliographystyle{plainnat}
 %
 % Now some macros and definitions
 \input{l2ugmacros.tex}
+%
+% Setup the listings
+\lstset{language=Idl,basicstyle=\ttfamily}
+\lstset{commentstyle=\color{red}}
+\lstset{keywordstyle=\color{blue}}
+\lstset{basewidth=0.5em}
+%% \lstset{breaklines=true}
+%% \lstset{prebreak=$} % $ close dollar to stop confusing emacs
 %
 % ------------------------------------------------------------------------------
 %
@@ -59,8 +75,8 @@
 \cleardoublepage
 \pagenumbering{arabic}
 %
-\lhead[\fancyplain{}{\large\it\leftmark}]{\fancyplain{}\rcsLockedStatus}
-\rhead[\fancyplain{}\rcsLockedStatus]{\fancyplain{}{\large\it\rightmark}}
+% \lhead[\fancyplain{}{\large\it\leftmark}]{\fancyplain{}\rcsLockedStatus}
+% \rhead[\fancyplain{}\rcsLockedStatus]{\fancyplain{}{\large\it\rightmark}}
 %
 \input{chapIntroduction.tex}
 %
@@ -73,8 +89,5 @@
 \input{chapm4.tex}
 %
 \bibliography{fullnames,mybib}
-\renewcommand{\leftmark}{Bibliography}
-\renewcommand{\rightmark}{Bibliography}
+\printindex
 \end{document}
-
-

@@ -1,0 +1,29 @@
+\cfCommand{Fill}
+
+Fill is one of the most complex commands in the level~2 configuration
+file.  It is used to fill the values of one quantity within a vector.
+The data placed in the quantity can come from a variety of sources.
+These are distinguished by the `fill method'.  The basic syntax of the
+fill command is:
+
+\begin{cfFragment}
+Fill, quantity=<vector>.<quantity>, method=<fill method>, <parameters>
+\end{cfFragment}
+
+Some but not all of the fill methods obey the `fill' mask flag.  Those
+that do, typically also take the \cf+dontMask+ option, which indicates
+that the fill mask flag should be ignored.
+
+The rest of this section breaks down the various fill methods in detail.
+
+% Each fill method is described in alphabetical order.  If you add more
+% methods please do so in a separate file as done below, and in the
+% right place.
+
+\input{l2cf_Fill_L1B.tex}
+\input{l2cf_Fill_L2GP.tex}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "l2ug"
+%%% End: 

@@ -1,0 +1,45 @@
+\fillMethod{L2GP}
+
+\index{L2GP!filling from}
+\index{L2PC!intelligent}
+
+\begin{cfFragment}
+Fill, quantity=<vector>.<quantity>, method=l2gp,
+   sourceL2GP=<l2gp>
+   [, interpolate=<true|false>]
+   [, profile=<profile number>]
+\end{cfFragment}
+\index{interpolate}
+\index{profile}
+
+This method fills a vector quantity with the values of an l2gp,
+typically read in an earlier `Read a priori' section of the l2cf.  This
+method can only be used to fill coherent, stacked quantities on pressure
+surfaces.
+
+The program checks the l2gp data to find which profiles correspond to
+those to fill in the vector and raises an error if it cannot find a
+match for all the profiles.  This can give problems on occasions,
+particularly at the start and end of the input dataset (typically day
+boundaries).  Setting the \cf+forbidOverspill+ option on the definition
+of the hGrid for the quantity may alleviate such problems.  On rare
+occasions, one might want to fill every profile in the vector with data
+from a specific profile in the l2gp file (this is the case when setting
+up `intelligent' l2pc files for example).  To do this, one can supply
+the \cf+profile+ argument.
+
+The program also checks that the vertical coordinates of the quantity
+match those in the l2pc file, and raises an error if they do not.  To
+bypass this check and to have the program vertically interpolate the
+data (in log pressure) from the l2gp surfaces to those in the vector,
+set the \cf+interpolate+ flag.  Note that for those quantities who's
+\cf+logBasis+ flag is set on creation the interpolation is made in log
+space.
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "l2ug"
+%%% End: 

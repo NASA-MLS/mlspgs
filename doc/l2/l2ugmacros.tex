@@ -1,3 +1,19 @@
 % $Id$
 %
 % This LaTeX file defines common macros used in this document
+%
+\newcommand{\eg}{e.g.,\xspace}
+\newcommand{\ie}{i.e.,\xspace}
+%
+% Standard sections and subsections
+\newcommand{\cfCommand}[1]{\clearpage\section*{#1}\index{#1|textbf}}
+\newcommand{\fillMethod}[1]{\subsection*{Fill method #1}\index{#1}\index{Fill!#1}}
+%
+% Wrappers for the listings stuff
+\lstnewenvironment{cfFragment}{\vspace{1ex}}{\vspace{1ex}}
+\newcommand{\cf}{\lstinline}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "l2ug"
+%%% End: 
