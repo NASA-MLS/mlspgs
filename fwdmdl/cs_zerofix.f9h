@@ -5,7 +5,6 @@
 
 ! function CS_ZeroFix_* ( W ) result ( V )
     real(rk)    :: R, I
-    complex(rk) :: Z
     real(rk), parameter :: Dinky = epsilon(r) ** 2
 
     r = real(w)
@@ -16,6 +15,9 @@
 ! end function CS_ZeroFix_*
 
 ! $Log$
+! Revision 2.3  2003/02/04 18:50:19  vsnyder
+! Remove declaration for unused variable
+!
 ! Revision 2.2  2003/02/04 18:47:37  vsnyder
 ! Get rid of nonstandard equivalence
 !
