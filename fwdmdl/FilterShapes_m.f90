@@ -7,9 +7,9 @@ module FilterShapes_m
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Info
+    & MLSMSG_Error
   use MLSSignals_m, only: Signals
-  use Output_m, only: Blanks, MLSMSG_Level, Output, PrUnit
+  use Output_m, only: Output
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -63,7 +63,6 @@ contains
   subroutine Read_Filter_Shapes_File ( Lun, Spec_Indices )
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
-    use String_Table, only: Display_String
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
 
@@ -104,7 +103,7 @@ contains
       if ( associated(filterShapes) ) dataBaseSize = size(filterShapes)
       tempFilterShapes => filterShapes
       allocate ( filterShapes(dataBaseSize + numChannels), stat=status )
-      if ( status /= 0 ) call call MLSMessage ( MLSMSG_Error, moduleName, &
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_Allocate // 'FilterShapes' )
       if ( dataBaseSize > 0 ) then
         filterShapes(:dataBaseSize) = tempFilterShapes
@@ -116,7 +115,7 @@ contains
         call allocate_test ( filterShapes(i)%filterShape, numFilterPts, &
           & "filterShapes(i)%filterShape", moduleName )
         call read_one_filter ( filterShapes(i)%lhs, filterShapes(i)%rhs, &
-          filterShapes(i)%filterShape, numFilterPts )
+          filterShapes(i)%filterShape )
         if ( status < 0 ) go to 99
         if ( status > 0 ) go to 98
       end do
@@ -135,11 +134,14 @@ contains
 
   contains
     ! ..........................................  Read_One_Filter  .....
-    subroutine Read_One_Filter ( LHS, RHS, FilterShape, N )
+    subroutine Read_One_Filter ( LHS, RHS, ArgFilterShape )
+      real(r8), intent(out) :: LHS, RHS, ArgFilterShape(:)
+      real(r8) :: FilterShape(255)
       integer :: N
-      real(r8), intent(out) :: LHS, RHS, FilterShape(n)
       namelist / Filter / LHS, RHS, FilterShape
+      n = size(argFilterShape)
       read ( lun, filter, iostat=status )
+      argFilterShape(:n) = filterShape(:n)
     end subroutine Read_One_Filter
   end subroutine Read_Filter_Shapes_File
 
@@ -182,6 +184,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.1  2001/03/29 21:42:41  vsnyder
+! Changed name to FilterShapes_m
+!
 ! Revision 1.3  2001/03/29 21:27:05  vsnyder
 ! This one may actually work...
 !
