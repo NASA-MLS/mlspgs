@@ -654,8 +654,8 @@ contains ! ===================================== Public Procedures =====
         endif
         if ( testAngle > maxAngle ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Unable to establish a home major frame, using the first' )
-          home = 1
+            & 'Unable to establish a home major frame, using the first in your range' )
+          home = m1
           exit homeHuntLoop
         end if
         ! Find MAF which starts before this test angle
@@ -685,7 +685,7 @@ contains ! ===================================== Public Procedures =====
       ! maxLength field is specified.
       if ( config%maxLengthFamily == PHYQ_MAFs ) then
         maxLength = nint ( config%maxLength )
-        noMAFsBelowHome = home - m1 + 1
+        noMAFsBelowHome = home - m1
         noChunksBelowHome = noMAFsBelowHome / maxLength
         if ( mod ( noMAFsBelowHome, maxLength ) /= 0 ) noChunksBelowHome = noChunksBelowHome + 1
         noMAFsAtOrAboveHome = m2 - home + 1
@@ -2093,6 +2093,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.50  2004/08/02 23:40:29  livesey
+! Bug fixes in the orbital case when chunk length is expressed in MAFs
+!
 ! Revision 2.49  2004/07/31 19:58:28  livesey
 ! Various bug fixes and clean ups in the light of real data.
 !
