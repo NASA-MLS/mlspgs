@@ -6,27 +6,30 @@
 begin Fill
   ;; ------------------------------------ O3-240
   !define(flaggingBands,{7,24,33})
-  !makeFlagsForOneProduct(product=O3,radiometer=R3,chisqScale=7.0,minRads=1500,cloudMax=8K,cloudMin= -20K)
+  !makeFlagsForOneProduct(product=O3,radiometer=R3,chisqScale=7.0,minRads=1500,cloudMax=5K,cloudMin= -20K)
 
   ;; ------------------------------------- CO-240
   !define(flaggingBands,{9,25,33})
-  !makeFlagsForOneProduct(product=CO,radiometer=R3,chisqScale=7.0,minRads=1500,cloudMax=8K,cloudMin= -20K)
+  !makeFlagsForOneProduct(product=CO,radiometer=R3,chisqScale=7.0,minRads=1500,cloudMax=5K,cloudMin= -20K)
 
   ;; ------------------------------------- HNO3-240
   !define(flaggingBands,{7,8,9,33})
-  !makeFlagsForOneProduct(product=HNO3,radiometer=R3,chisqScale=10.0,minRads=2000,cloudMax=10K,cloudMin= -20K)
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R3,chisqScale=10.0,minRads=2000,cloudMax=5K,cloudMin= -20K)
 
   ;; ------------------------------------- Temperature-CorePlusR3
   !define(flaggingBands,{1,8,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -20K)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -20K)
 
   ;; ------------------------------------- GPH-CorePlusR3
   !define(flaggingBands,{1,8,22,32})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin= -20K)
+  !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=10.0,minRads=1500,cloudMax=5K,cloudMin= -20K)
 
 end Fill
 
 ; $Log$
+; Revision 1.6  2004/04/28 00:32:04  livesey
+; Bug fix
+;
 ; Revision 1.5  2004/04/27 23:51:24  livesey
 ; Added log information
 ;

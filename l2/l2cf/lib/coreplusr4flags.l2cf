@@ -6,43 +6,46 @@
 begin Fill
   ;; ------------------------------------ ClO-640
   !define(flaggingBands,{10})
-  !makeFlagsForOneProduct(product=ClO,radiometer=R4,chisqScale=7.0,minRads=600,cloudMax=8K)
+  !makeFlagsForOneProduct(product=ClO,radiometer=R4,chisqScale=7.0,minRads=600,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ BrO-640
   !define(flaggingBands,{11,31})
-  !makeFlagsForOneProduct(product=BrO,radiometer=R4,chisqScale=10.0,minRads=1000,cloudMax=8K)
+  !makeFlagsForOneProduct(product=BrO,radiometer=R4,chisqScale=10.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ HOCl-640
   !define(flaggingBands,{10,11,28,29})
-  !makeFlagsForOneProduct(product=HOCl,radiometer=R4,chisqScale=10.0,minRads=2000,cloudMax=8K)
+  !makeFlagsForOneProduct(product=HOCl,radiometer=R4,chisqScale=10.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ N2O-640
   !define(flaggingBands,{12})
-  !makeFlagsForOneProduct(product=N2O,radiometer=R4,chisqScale=7.0,minRads=800,cloudMax=8K)
+  !makeFlagsForOneProduct(product=N2O,radiometer=R4,chisqScale=7.0,minRads=800,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ HCl-640
   !define(flaggingBands,{13,14})
-  !makeFlagsForOneProduct(product=HCl,radiometer=R4,chisqScale=5.0,minRads=1000,cloudMax=8K)
+  !makeFlagsForOneProduct(product=HCl,radiometer=R4,chisqScale=5.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ O3-640
   !define(flaggingBands,{13,14,30,31})
-  !makeFlagsForOneProduct(product=O3,radiometer=R4,chisqScale=7.0,minRads=2000,cloudMax=8K)
+  !makeFlagsForOneProduct(product=O3,radiometer=R4,chisqScale=7.0,minRads=2000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------ HO2-640
   !define(flaggingBands,{31})
-  !makeFlagsForOneProduct(product=HO2,radiometer=R4,chisqScale=10.0,minRads=200,cloudMax=8K)
+  !makeFlagsForOneProduct(product=HO2,radiometer=R4,chisqScale=10.0,minRads=200,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------- Temperature-CorePlusR4
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------- GPH-CorePlusR4
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=5K,cloudMin= -10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.5  2004/04/28 00:32:11  livesey
+; Bug fix
+;
 ; Revision 1.4  2004/04/27 23:50:38  livesey
 ; Added low cloud flagging for temperature/GPH
 ;
