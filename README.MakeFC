@@ -482,6 +482,15 @@ created by a recompile (in the case of a compiler like NAG) is actually
 identical with the existing one, could pare the cascade down, but at the cost
 of requiring an even more complex system of Makefiles than this one.
 
+In place of the more complex system is one that requires more care on the
+user's part. If you put the NOCASCADE setting to "yes", or in fact to anything
+other than its blank default, only the source files that actually changed will
+be recompiled. This dispensation applies each time it is used, but is good for
+that time only; i.e., if the next make is issued without the setting, the
+recompilations that were forestalled on the previous make will likely be
+triggered. And it should be mentioned that changes to the "public" parts of the
+sources usually require the cascade of recompilations to build properly.
+
 Another way to trigger massive recompilation is to modify the .configure file.
 Sometimes this may be appropriate, but not always. If you're certain that it is
 not necessary, for example if you only changed the path to a library, you may
@@ -567,6 +576,8 @@ FC                 Overrides the name by which the Fortran compiler is called
 LAFTER             Appears at the end of the very long link statement
                    e.g., for additional libraries required to link successfully
                    or else to highlight errors as in FAFTER
+NOCASCADE          Don't rebuild anything besides changed sources
+                    if non-blank
 NOCLEANING         Don't rebuild everything on any change to .configure
                     if non-blank
 NOHUNTING          Stop make from hunting if non-blank
@@ -683,6 +694,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.31  2002/04/29 17:51:00  pwagner
+# Mentions concealed utctotai library
+#
 # Revision 1.30  2002/04/18 20:18:21  pwagner
 # Level 1 needs fftw; new paths in sample .configure
 #
