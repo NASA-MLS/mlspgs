@@ -1168,7 +1168,7 @@ contains
     if ( present(name) ) then
       call output ( name )
       if ( clean ) then 
-        call output ( ' \' )
+        call output ( " \ " )
         call output ( size )
       end if
       if ( size == 1 ) call output ( ' ' )
@@ -1347,6 +1347,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.29  2003/09/15 17:43:41  livesey
+! Cosmetic change for fussy (and wrong) intel compiler
+!
 ! Revision 2.28  2003/09/06 00:48:40  vsnyder
 ! Specify default formats with a module parameter instead of literals.
 ! Change default (1x,1pg13.6) to (1pg14.6) to avoid problems with length
