@@ -53,7 +53,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_LAST           = t_vgridtype
   integer :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
-  integer, parameter :: F_APRIORI             = last_Signal_Field + 1
+  integer, parameter :: F_ANTENNAPATTERNS     = last_Signal_Field + 1
+  integer, parameter :: F_APRIORI             = f_antennaPatterns + 1
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_ATMOS_DER           = f_aprioriScale + 1
   integer, parameter :: F_AUTOFILL            = f_atmos_der + 1
@@ -349,6 +350,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
+    field_indices(f_antennaPatterns) =     add_ident ( 'antennaPatterns' )
     field_indices(f_apriori) =             add_ident ( 'apriori' )
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_atmos_der) =           add_ident ( 'atmos_der' )
@@ -719,6 +721,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              np+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &                                 !???
+             begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
              nadp+n_spec_def /) )                                      !???
@@ -811,6 +814,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.62  2001/03/30 03:05:49  vsnyder
+! Add 'antennaPatterns' field to 'forwardModelGlobal'
+!
 ! Revision 2.61  2001/03/29 23:42:55  vsnyder
 ! Add 'filterShapes' field to forwardModelGlobal
 !
