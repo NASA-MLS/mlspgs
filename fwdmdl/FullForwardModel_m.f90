@@ -1918,45 +1918,55 @@ contains
           sv_i = 1
           do k = 1, no_mol
             specie = mol_cat_index(k)
-            if ( fwdModelConf%moleculeDerivatives(specie) ) then
-              if ( fwdModelConf%do_freq_avg ) then
-                sv_start = sv_i
-                do i = 1, noUsedChannels
-                  sv_i = sv_start
-                  sigInd = usedSignals(i)
-                  channel = usedChannels(i)
-                  j = Size(FilterShapes(shapeInd)%FilterGrid)
-                  shapeInd = MatchSignal ( filterShapes%signal, &
-                    & fwdModelConf%signals(sigInd), &
-                    & sideband = thisSideband, channel=channel )
-                  do instance = Grids_f%WindowStart(k), Grids_f%WindowFinish(k)
-                    do surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
-                      call Freq_Avg ( frequencies, &
-                          & FilterShapes(shapeInd)%FilterGrid, &
-                          & FilterShapes(shapeInd)%FilterShape, &
-                          & k_atmos_frq(1:noFreqs,sv_i), noFreqs, j, r )
-                      k_atmos(i,ptg_i,sv_i) = r
-                      sv_i = sv_i + 1
-                    end do                ! Surface loop
-                  end do                  ! Instance loop
-                end do                    ! Channel loop
-              else                        ! else not frequency averaging
-                sv_start = sv_i
-                do i = 1, noUsedChannels
-                  sv_i = sv_start
-                  do instance = Grids_f%WindowStart(k), Grids_f%WindowFinish(k)
-                    do surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
+            ! Did have a test here for moleculeDerivatives(specie), however
+            ! this didn't work as it screwed up sv_1 which is supposed to accumulate
+            ! over all molecules.  However, deriv_flags conveys the same information
+            ! so not much speed will be lost.  NJL.
+            if ( fwdModelConf%do_freq_avg ) then
+              sv_start = sv_i
+              do i = 1, noUsedChannels
+                sv_i = sv_start
+                sigInd = usedSignals(i)
+                channel = usedChannels(i)
+                j = Size(FilterShapes(shapeInd)%FilterGrid)
+                shapeInd = MatchSignal ( filterShapes%signal, &
+                  & fwdModelConf%signals(sigInd), &
+                  & sideband = thisSideband, channel=channel )
+                do instance = Grids_f%WindowStart(k), Grids_f%WindowFinish(k)
+                  do surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
+                    if ( grids_f%deriv_flags(sv_i) ) then
+                      Call Freq_Avg ( frequencies, &
+                        & FilterShapes(shapeInd)%FilterGrid, &
+                        & FilterShapes(shapeInd)%FilterShape, &
+                        & k_atmos_frq(1:noFreqs,sv_i), noFreqs, j, r )
+                    else
+                      r = 0.0
+                    end if
+                    k_atmos(i,ptg_i,sv_i) = r
+                    sv_i = sv_i + 1
+                  end do                ! Surface loop
+                end do                  ! Instance loop
+              end do                    ! Channel loop
+            else                        ! Else not frequency averaging
+              sv_start = sv_i
+              do i = 1, noUsedChannels
+                sv_i = sv_start
+                do instance = Grids_f%WindowStart(k), Grids_f%WindowFinish(k)
+                  do surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
+                    if ( grids_f%deriv_flags(sv_i) ) then
                       k_atmos(i,ptg_i,sv_i) = k_atmos_frq(i,sv_i)
-                      sv_i = sv_i + 1
-                    end do
+                    else
+                      k_atmos(i,ptg_i,sv_i) = 0.0
+                    end if
+                    sv_i = sv_i + 1
                   end do
                 end do
-              end if                      ! Frequency averaging or not
-            end if                        ! Want derivatives for this
+              end do
+            end if                      ! Frequency averaging or not
           end do                          ! Loop over major molecules
-!
+          !
         end if                          ! Want derivatives for atmos
-
+        
         ! Frequency Average the spectroscopic derivatives with the appropriate
         ! filter shapes
         !??? Do we need to do this if there's no Jacobian ???
@@ -2479,6 +2489,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.86  2002/09/06 18:19:04  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.85  2002/09/05 21:00:38  vsnyder
 ! Get rid of some auxiliary variables
 !
