@@ -944,35 +944,35 @@ contains
     character(len=9) :: IFLname, NFLname
 
 !   write (*,dnwtdb_out)
-    write ( *, '(a)' ) &
-      & '       AJN        AJSCAL          CAIT        CDXDXL        CONDAI'
-    write ( *, '(1p5e14.7)' ) AJN, AJSCAL, CAIT, CDXDXL, CONDAI
-    write ( *, '(a)' ) &
-      & '      DIAG           DXI         DXINC        DXMAXI           DXN'
-    write ( *, '(1p5e14.7)' ) DIAG, DXI, DXINC, DXMAXI, DXN
-    write ( *, '(a)' ) &
-      & '    DXNBIG          DXNL        DXNOIS            FN           FNB'
-    write ( *, '(1p5e14.7)' ) DXNBIG, DXNL, DXNOIS, FN, FNB
-    write ( *, '(a)' ) &
-      & '       FNL         FNMIN          FNXE           FRZ          FRZB'
-    write ( *, '(1p5e14.7)' ) FNL, FNMIN, FNXE, FRZ, FRZB
-    write ( *, '(a)' ) &
-      & '      FRZL          GFAC         GRADN        GRADNB        GRADNL'
-    write ( *, '(1p5e14.7)' ) FRZL, GFAC, GRADN, GRADNB, GRADNL
+!     write ( *, '(a)' ) &
+!       & '       AJN        AJSCAL          CAIT        CDXDXL        CONDAI'
+!     write ( *, '(1p5e14.7)' ) AJN, AJSCAL, CAIT, CDXDXL, CONDAI
+!     write ( *, '(a)' ) &
+!       & '      DIAG           DXI         DXINC        DXMAXI           DXN'
+!     write ( *, '(1p5e14.7)' ) DIAG, DXI, DXINC, DXMAXI, DXN
+!     write ( *, '(a)' ) &
+!       & '    DXNBIG          DXNL        DXNOIS            FN           FNB'
+!     write ( *, '(1p5e14.7)' ) DXNBIG, DXNL, DXNOIS, FN, FNB
+!     write ( *, '(a)' ) &
+!       & '       FNL         FNMIN          FNXE           FRZ          FRZB'
+!     write ( *, '(1p5e14.7)' ) FNL, FNMIN, FNXE, FRZ, FRZB
+!     write ( *, '(a)' ) &
+!       & '      FRZL          GFAC         GRADN        GRADNB        GRADNL'
+!     write ( *, '(1p5e14.7)' ) FRZL, GFAC, GRADN, GRADNB, GRADNL
     call flagName ( ifl, iflName ); call flagName ( nfl, nflName )
-    write ( *, '(a)' ) &
-      & '       IFL        INC    ITER   ITKEN    K1IT    K2IT      KB       NFL'
-    write ( *, '(1x,a9,i11,5i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
-      & K1IT, K2IT, KB, adjustr(nflName)
-    write ( *, '(a)' ) &
-      & '     RELSF         SPACT           SPB         SPFAC           SPG'
-    write ( *, '(1p5e14.7)' ) RELSF, SPACT, SPB, SPFAC, SPG
-    write ( *, '(a)' ) &
-      & '     SPINC           SPL        SPMINI        SPSTRT           SQB'
-    write ( *, '(1p5e14.7)' ) SPINC, SPL, SPMINI, SPSTRT, SQB
-    write ( *, '(a)' ) &
-      & '       SQL         SQMIN         TOLXA         TOLXR'
-    write ( *, '(1p5e14.7)' ) SQL, SQMIN, TOLXA, TOLXR
+!     write ( *, '(a)' ) &
+!       & '       IFL        INC    ITER   ITKEN    K1IT    K2IT      KB       NFL'
+!     write ( *, '(1x,a9,i11,5i8,1x,a9)' ) adjustr(iflName), INC, ITER, ITKEN, &
+!       & K1IT, K2IT, KB, adjustr(nflName)
+!     write ( *, '(a)' ) &
+!       & '     RELSF         SPACT           SPB         SPFAC           SPG'
+!     write ( *, '(1p5e14.7)' ) RELSF, SPACT, SPB, SPFAC, SPG
+!     write ( *, '(a)' ) &
+!       & '     SPINC           SPL        SPMINI        SPSTRT           SQB'
+!     write ( *, '(1p5e14.7)' ) SPINC, SPL, SPMINI, SPSTRT, SQB
+!     write ( *, '(a)' ) &
+!       & '       SQL         SQMIN         TOLXA         TOLXR'
+!     write ( *, '(1p5e14.7)' ) SQL, SQMIN, TOLXA, TOLXR
   end subroutine DNWTDB
 
 ! ***********************************************     FlagName     *****
@@ -1020,6 +1020,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.14  2001/05/25 04:58:50  livesey
+! Had to comment out some of Van's code to make it compile on NAG.
+!
 ! Revision 2.13  2001/05/24 23:28:06  vsnyder
 ! Improve internal output; initial value for dxnl=1, not zero
 !
