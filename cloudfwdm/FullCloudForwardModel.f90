@@ -582,10 +582,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & 'number of levels in radiance does not match no of levels in ptan' )
     endif
 
-    allocate ( WC(2,NoSurf), STAT=status )
+    allocate ( WC(ForwardModelConfig%no_cloud_species,NoSurf), STAT=status )
 
-    WC (1,:) = CloudIce%values(:,instance)
-    WC (2,:) = CloudWater%values(:,instance)
+    do i=1,ForwardModelConfig%no_cloud_species
+      if(i .eq. 1) WC (i,:) = CloudIce%values(:,instance)
+      if(i .eq. 2) WC (i,:) = CloudWater%values(:,instance)
+    enddo
 
 !    phi_tan = Deg2Rad * temp%template%phi(1,instance)
 
@@ -1072,6 +1074,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.113  2003/04/05 17:30:43  dwu
+! clean up
+!
 ! Revision 1.112  2003/04/03 22:38:05  dwu
 ! change the way vmr and molecule are handled
 !
