@@ -15,6 +15,7 @@
 # $Id$
 
 a
+absorption
 additional
 adopt
 allLinesForRadiometer
@@ -40,7 +41,6 @@ boxCarMethod
 
 climatology
 cloud_der
-i_saturation
 cloudChannels
 cloudHeight
 cloudRadiance
@@ -63,6 +63,9 @@ criteria
 criticalModules
 criticalSignals
 
+dAbsDnc
+dAbsDnu
+dAbsDwc
 DACSfilterShapes
 date
 default_spectroscopy
@@ -128,6 +131,7 @@ hRegQuants
 hRegWeights
 hRegWeightVec
 
+i_saturation
 ignore
 ignoreGeolocation
 ignoreNegative
@@ -220,6 +224,7 @@ overlaps
 
 packed
 perturbation
+pfaData
 pfaMolecules
 phaseName
 phiTan
@@ -312,6 +317,7 @@ systemTemperature
 tangentGrid
 temp_der
 temperatureQuantity
+temperatures
 template
 tempPrecisionQuantity
 terms
@@ -333,6 +339,7 @@ usbFraction
 
 values
 vector
+velLin # Velocity linearization
 versionRange
 vGrid
 vmrQuantity
@@ -348,6 +355,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.125  2004/05/22 02:29:02  vsnyder
+# Add fields for PFAData
+#
 # Revision 2.124  2004/05/04 01:03:17  livesey
 # Added excludeBelowBottom flag for binmax/binmin fill.
 #
