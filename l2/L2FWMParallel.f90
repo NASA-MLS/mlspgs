@@ -48,10 +48,12 @@ contains
     use MLSCommon, only: MLSChunk_T
     use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
       & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG
+    use MLSCommon, only: FINDFIRST
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Toggles, only: SWITCHES
     use PVM, only: PVMDATADEFAULT, MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
-      & PVMFRECV, PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK
+      & PVMFRECV, PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
+      & PVMTASKHOST
     ! Dummy arguments
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
 
@@ -63,7 +65,6 @@ contains
     integer :: MSGTAG                   ! Message tag
     integer :: NOMACHINES               ! Number of machines
     integer :: NOMAFS                   ! Number of MAFs to process
-    integer :: PVMTASKHOST              ! For bufInfo
     integer :: SIGNAL                   ! Flag from slave
     integer :: SLAVETID                 ! ID of one slave
 
@@ -143,13 +144,15 @@ contains
       if ( usingSubmit ) then
         slaveTids ( maf ) = slaveTid
         maf = maf + 1
+      else
+        maf = FindFirst ( slaveTids == slaveTid )
       end if
-      ! Otherwise, we know who this is.
       heardFromSlave ( maf ) = .true.
+      if ( all ( heardFromSlave ) ) exit contactLoop
     end do contactLoop
 
     if ( index ( switches, 'mas' ) /= 0 ) &
-      & call output ( 'All slaves ready', advance='yes' )
+      & call output ( 'All slaves started', advance='yes' )
 
     call Deallocate_test ( machineNames, 'MachineNames', ModuleName )
     call Deallocate_test ( heardFromSlave, 'heardFromSlave', ModuleName )
@@ -179,6 +182,8 @@ contains
     use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX
     use QuantityPVM, only: PVMRECEIVEQUANTITY
     use ForwardModelWrappers, only: FORWARDMODEL
+    use String_table, only: DISPLAY_STRING
+    use Output_M, only: OUTPUT
     ! Dummy argument
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
@@ -299,14 +304,14 @@ contains
             do j = 1, noQuantitiesInVector
               if ( i == FWMExtra ) then
                 call PVMIDLUnpack ( vectors(i)%quantities(j)%values, info )
-                if ( info /= 0 ) call PVMErrorMessage ( info, 'vector values' )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'extra/out vector values' )
               end if
               call PVMIDLUnpack ( flag, info )
-              if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask flag' )
+              if ( info /= 0 ) call PVMErrorMessage ( info, 'extra/out vector mask flag' )
               if ( flag ) then
                 call CreateMask ( vectors(i)%quantities(j) )
                 call PVMIDLUnpack ( vectors(i)%quantities(j)%mask, info )
-                if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask' )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'extra/out vector mask' )
               end if
             end do
           end if
@@ -318,7 +323,7 @@ contains
         call PVMIDLUnpack ( l2, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, '2 logical flags' )
         call CreateEmptyMatrix ( jacobian, 0, vectors(fwmOut), vectors(fwmIn), &
-          & l2(1), l2(2) )
+          & .not. l2(1), .not. l2(2) )
         call Allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName )
 
         ! OK, I think we're ready to go
@@ -326,14 +331,16 @@ contains
       case ( SIG_RunMAF )
         ! Get the state vector for this iteration
         do j = 1, size ( vectors(fwmIn)%quantities )
+          call output ( "Getting values for state quantity " )
+          call output ( j, advance='yes' )
           call PVMIDLUnpack ( vectors(fwmIn)%quantities(j)%values, info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector values' )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'state vector values' )
           call PVMIDLUnpack ( flag, info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask flag' )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'state vector mask flag' )
           if ( flag ) then
             call CreateMask ( vectors(fwmIn)%quantities(j) )
             call PVMIDLUnpack ( vectors(fwmIn)%quantities(j)%mask, info )
-            if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask' )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'state vector mask' )
           end if
         end do
         ! Setup the fmStat stuff
@@ -413,6 +420,8 @@ contains
     use L2ParInfo, only: INFOTAG
     use MatrixModule_1, only: CREATEBLOCK
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
+    use Toggles, only: SWITCHES
+    use Output_m, only: OUTPUT
     type (Vector_T), intent(inout) :: OUTVECTOR
     type (ForwardModelStatus_T), intent(inout) :: FMSTAT
     type (Matrix_T), intent(inout) :: JACOBIAN
@@ -425,9 +434,16 @@ contains
     type ( MatrixElement_T), pointer :: B ! A block from the jacobian
 
     ! Executable code
+    if ( index ( switches, 'mas' ) /= 0 ) then
+      call output ( 'Recieving results packet from slave ' )
+      call output ( fmStat%maf )
+      call output ( ' ...' )
+    end if
     call PVMFrecv ( slaveTids ( fmStat%maf ), infoTag, bufferID )
     if ( bufferID <= 0 ) &
       & call PVMErrorMessage ( bufferID, 'Receiveing results from slave' )
+    if ( index ( switches, 'mas' ) /= 0 ) &
+      & call output ( ' Done', advance='yes' )
     call PVMIDLUnpack ( fmStat%rows, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking fmStat%rows' )
     do i = 1, jacobian%row%nb
@@ -440,9 +456,11 @@ contains
         do j = 1, jacobian%col%nb
           call PVMIDLUnpack ( kind, info )
           if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking block kind' )
-          if ( b%kind == M_Banded .or. b%kind == M_Column_sparse ) then
+          if ( kind == M_Banded .or. kind == M_Column_sparse ) then
             call PVMIDLUnpack ( noValues, info )
             if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking noValues for block' )
+          else
+            noValues = 1                ! Not really used
           end if
           call CreateBlock ( jacobian, i, j, kind, noValues )
           b => jacobian%block ( i, j )
@@ -468,11 +486,17 @@ contains
     use PVM, only: PVMFINITSEND, PVMF90PACK, PVMFSEND, PVMDATADEFAULT, &
       & PVMERRORMESSAGE
     use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, INFOTAG
+    use Toggles, only: SWITCHES
+    use Output_m, only: OUTPUT
     integer, intent(in) :: MAF
     ! Local variables
     integer :: INFO
     integer :: BUFFERID
     ! Executable code
+    if ( index ( switches, 'mas' ) /= 0 ) then 
+      call output ( 'Requesting output from slave ' )
+      call output ( maf, advance='yes' )
+    end if
     call PVMFInitSend ( PVMDataDefault, bufferID )
     if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Setting up output request' )
     call PVMF90Pack ( SIG_SendResults, info )
@@ -482,7 +506,7 @@ contains
   end subroutine RequestSlavesOutput
 
   ! ------------------------------------------------ SetupFWMSlaves ----
-  subroutine SetupFWMSlaves ( configs, inVector, extraVector, outVector )
+  subroutine SetupFWMSlaves ( configs, inVector, extraVector, outVector, jacobian )
     ! The master uses this routine to send the core information on the
     ! state vector layout etc. to each forward model slave.
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
@@ -494,10 +518,14 @@ contains
     use L2ParInfo, only: SIG_NEWSETUP, FWMSLAVEGROUP, INFOTAG
     use QuantityPVM, only: PVMSENDQUANTITY
     use MorePVM, only: PVMPACKSTRINGINDEX
+    use Toggles, only: SWITCHES
+    use Output_m, only: OUTPUT
+    use MatrixModule_1, only: MATRIX_T
     type (ForwardModelConfig_T), dimension(:), intent(in) :: CONFIGS
     type (Vector_T), target, intent(in) :: INVECTOR
     type (Vector_T), target, intent(in) :: EXTRAVECTOR
     type (Vector_T), target, intent(in) :: OUTVECTOR
+    type (Matrix_T), intent(in) :: JACOBIAN
 
     ! Local variables
     integer :: BUFFERID                 ! For PVM
@@ -509,6 +537,8 @@ contains
     type (Vector_T), pointer :: V
 
     ! Executable code
+    if ( index ( switches, 'mas' ) /= 0 ) &
+      & call output ( 'Setting up forward model slaves', advance='yes' )
     call PVMFInitSend ( PVMDataDefault, bufferID )
     if ( bufferID <= 0 ) &
       & call PVMErrorMessage ( bufferID, 'Setting up buffer for FWMSlaveSetup' )
@@ -549,6 +579,8 @@ contains
       end do
     end do
     ! Now pack up the relevant ones.
+    call PVMIDLpack ( noQuantities, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'packing noQuantities' )
     do j = 1, noQuantities
       call PVMIDLPack ( vecInds ( j ) /= 0 , info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing quantity relevant flag' )
@@ -579,7 +611,7 @@ contains
       ! Send the vector template information
       call PVMIDLPack ( size ( v%quantities ), info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'packing size(quantities)' )
-      call PVMIDLUnpack ( v%template%quantities, info )
+      call PVMIDLPack ( v%template%quantities, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'packing template%quantities' )
       call PVMPackStringIndex ( v%template%name, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, 'packing vector template name' )
@@ -604,6 +636,11 @@ contains
       end if                            ! Extra or output
     end do                              ! Loop over vectors
 
+    ! Finally, just send the 'instance first' flags
+    call PVMIDLPack ( (/ jacobian%row%instFirst, jacobian%col%instFirst /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & 'packing jacobian instance first flags' )
+
     ! That's it, let's get this information sent off
     call PVMFBcast ( FWMSlaveGroup, InfoTag, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Broadcasting setup information' )
@@ -618,6 +655,8 @@ contains
       & PVMErrorMessage
     use PVMIDL, only: PVMIDLPACK
     use L2ParInfo, only: SIG_RUNMAF, INFOTAG
+    use Toggles, only: SWITCHES
+    use Output_m, only: OUTPUT
     type (Vector_T), intent(in) :: STATE
     integer, intent(in) :: MAF
     ! Local variables
@@ -660,6 +699,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.7  2002/10/08 17:40:35  livesey
+! Lots of debugging
+!
 ! Revision 2.6  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
