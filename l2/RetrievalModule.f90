@@ -35,6 +35,7 @@ contains
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use BitStuff, only: CountBits
     use Chunks_m, only: MLSChunk_T
+    use DumpCommand_m, only: DumpCommand
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
@@ -59,8 +60,8 @@ contains
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_numJ, &
-      & S_dumpBlocks, S_flagCloud, S_matrix, S_retrieve, S_sids, S_snoop, &
-      & S_subset, S_time, S_RESTRICTRANGE, S_UPDATEMASK
+      & S_dump, S_dumpBlocks, S_flagCloud, S_matrix, S_retrieve, S_sids, &
+      & S_snoop, S_subset, S_time, S_RESTRICTRANGE, S_UPDATEMASK
     use Intrinsic, only: PHYQ_Dimensionless
     use L2ParInfo, only: PARALLEL
     use MatrixModule_1, only: AddToMatrixDatabase, CopyMatrix, CreateEmptyMatrix, &
@@ -269,7 +270,9 @@ contains
       spec = get_spec_id(key)
 
       select case ( spec )
-      
+      case ( s_dump )
+        call dumpCOmmand ( key, forwardModelConfigs=configDatabase, &
+          & vectors=vectorDatabase )
       case ( s_dumpblocks )
         call DumpBlocks ( key, matrixDatabase )
       case ( s_matrix )
@@ -2285,6 +2288,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.261  2005/03/15 01:27:58  vsnyder
+! Allow Dump command in Retrieve section
+!
 ! Revision 2.260  2004/06/16 23:41:39  vsnyder
 ! Put a limit on the total number of DNWT iterations, regardless of Jacobians
 !
