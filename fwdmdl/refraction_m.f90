@@ -147,12 +147,12 @@ contains
     real(rp), intent(out) :: Del_s(:)
     real(rp), intent(out) :: REF_CORR(:)
 
-    integer(ip) :: i, j, j1, j2, k, m, mid, no_ele
+    integer(ip) :: j, j1, j2, k, m, mid, no_ele
 
     real(rp) :: INTEGRAND_GL(Ng)
 
     real(rp) :: q, htan2, Nt2Ht2
-    real(rp) :: dndh, eps, H, h1, h2, N, NH, n1, n2, x1, x2, xm, ym, ys
+    real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, x1, x2, xm, ym, ys
 
     real(rp), parameter :: Tiny = 1.0e-8_rp
 
@@ -318,6 +318,9 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.19  2003/11/04 01:55:08  vsnyder
+! simplify nonconverged case
+!
 ! Revision 2.18  2003/11/03 23:15:15  vsnyder
 ! Get rid of path_ds_dh procedure -- a one-liner used in one place
 !
