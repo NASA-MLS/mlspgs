@@ -261,15 +261,6 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
           CurMAFdata%BankWall%DACS = .TRUE.
        ENDWHERE
 
-       IF (ANY (CurMAFdata%BankWall%FB) .OR. ANY (CurMAFdata%BankWall%MB) .OR. &
-         ANY (CurMAFdata%BankWall%WF) .OR. ANY (CurMAFdata%BankWall%DACS)) THEN
-          n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
-          msg = 'Attenuation change'
-          WRITE (L1BFileInfo%LogId, *) ''
-          WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
-          WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
-       ENDIF
-
 !! Rule #5: Set Switching Mirror position
 
        !! Save current sw pos:
@@ -337,6 +328,17 @@ print *, 'Data:', CurMAFdata%SciPkt%GHz_sw_pos
        CurMAFdata%SciPkt(MIF)%GHz_sw_pos = GHz_sw_pos
 
     ENDDO
+
+! Check for any walls flagged in MAF: 
+
+    IF (ANY (CurMAFdata%BankWall%FB) .OR. ANY (CurMAFdata%BankWall%MB) .OR. &
+         ANY (CurMAFdata%BankWall%WF) .OR. ANY (CurMAFdata%BankWall%DACS)) THEN
+       n = PGS_TD_TAItoUTC (CurMAFdata%SciPkt(0)%secTAI, asciiUTC)
+       msg = 'Attenuation change'
+       WRITE (L1BFileInfo%LogId, *) ''
+       WRITE (L1BFileInfo%LogId, *) TRIM(msg)//' at MAF UTC '//asciiUTC
+       WRITE (L1BFileInfo%LogId, *) 'WALL event at MAF UTC '//asciiUTC
+    ENDIF
 
 print *, 'Sort:', CurMAFdata%ChanType(0:149)%FB(1,1)
 
@@ -640,6 +642,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.12  2004/08/12 18:44:48  perun
+! Moved "Wall" messages outside MIF loop
+!
 ! Revision 2.11  2004/08/12 13:51:51  perun
 ! Version 1.44 commit
 !
