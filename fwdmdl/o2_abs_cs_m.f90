@@ -151,7 +151,7 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * ((n + 1) * (n + 1) - m * m) / denom2
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
+        zr = z * f_o_v0 * (u - y * v)
         zi = z * (v + u * f_o_v0 * (w / (x1*nu) + y))
         pi = pi + cmplx(zr, zi)
 
@@ -192,7 +192,7 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * (n * n - m * m) / denom2
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
+        zr = z * f_o_v0 * (u - y * v)
         zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
         pi = pi + cmplx(zr, zi)
 
@@ -212,7 +212,7 @@ contains
         call simple_voigt ( nu_offst, w, u, v )
         xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
         z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
+        zr = z * f_o_v0 * (u - y * v)
         zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
         sigma_m = sigma_m + cmplx(zr, zi)
 
@@ -376,6 +376,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.7  2003/06/03 23:58:38  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.6  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !
