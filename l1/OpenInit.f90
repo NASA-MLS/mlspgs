@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -38,7 +38,8 @@ CONTAINS
          mlspcf_nomen_start, mlspcf_pcf_start, mlspcf_l1cf_start, &
          mlspcf_defltgains_start, mlspcf_defltzeros_start, &
          mlspcf_dacsconst_start
-    USE PCFHdr, ONLY: CreatePCFAnnotation
+    USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
+    use MLSStrings, only: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
     USE MLSL1Common, ONLY: L1BFileInfo, deflt_gain, deflt_zero, L1ProgType, &
          THzType
@@ -97,6 +98,16 @@ CONTAINS
     returnStatus = PGS_TD_UTCtoTAI (L1PCF%endUTC, procRange%endTime)
 
     L1Config%Input_TAI = procRange
+
+    ! Store appropriate user input as global attributes
+    GlobalAttributes%InputVersion = L1PCF%OutputVersion
+    GlobalAttributes%StartUTC = L1PCF%StartUTC
+    GlobalAttributes%EndUTC = L1PCF%EndUTC
+    GlobalAttributes%PGEVersion = 'v1.2'  ! L1PCF%PGEVersion
+    call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+      & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+      & GlobalAttributes%GranuleDay) 
+    call FillTAI93Attribute
 
 !! Will determine the expanded time later!!!
 
@@ -853,6 +864,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.11  2003/06/03 20:43:54  pwagner
+! Fills global attributes
+!
 ! Revision 2.10  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
