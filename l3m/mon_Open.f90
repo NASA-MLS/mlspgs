@@ -14,6 +14,7 @@ MODULE mon_Open
    USE OpenInit, ONLY:  SetProcessingWindow
    USE PCFHdr
    USE SDPToolkit
+   use GETCF_M, only: GetCF, InitGetCF
    IMPLICIT NONE
    PUBLIC
 
@@ -207,7 +208,7 @@ CONTAINS
 
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: pcfId, returnStatus
+      INTEGER :: error, pcfId, returnStatus
 
 ! Read the PCF into an annotation for file headers
 
@@ -228,7 +229,9 @@ CONTAINS
 
 ! Read the configuration file into an MLSCF_T structure
 
-      CALL ReadParseMON (cf)
+      CALL InitGetCF
+
+      CALL getCF(cf, error, inUnit=pcfId)
 
 ! Close the configuration file
 
@@ -249,4 +252,7 @@ END MODULE mon_Open
 !==================
 
 ! $Log$
+! Revision 1.1  2001/07/18 15:43:44  nakamura
+! Module for the Monthly Open/Init task.
+!
 !
