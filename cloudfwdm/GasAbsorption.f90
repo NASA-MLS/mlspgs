@@ -75,7 +75,6 @@ contains
          VP=VMR_H2O*PB                 ! VP IS VAPOR PRESSURE, PB IS TOTAL
          P=PB-VP                       ! PRESSURE, P IS DRY-AIR PRESSURE
       ELSE IF (RH .EQ. 100._r8) THEN
-!         CALL RHtoEV(PB,T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
          CALL RHtoEV(T,100._r8,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
          P = PB-VP
          VMR_H2O = VP/(max(1.e-9_r8, P))
@@ -102,7 +101,6 @@ contains
             IF(IMOL.GE.3.AND.ABS(V0(i)-FF).GT.10000.) GOTO 100 ! SAVE CPU
 
             IF(T .LE. QTP(2)) THEN
-!               QRAT = (QLG(3,I)-QLG(1,I))*(T-QTP(2))/(QTP(3)-QTP(2))
                QRAT = (QLG(2,I)-QLG(1,I))+(QLG(3,I)-QLG(2,I))*(T-QTP(2))/(QTP(3)-QTP(2))
             ELSE
                QRAT = (QLG(2,I)-QLG(1,I))*(T-QTP(1))/(QTP(2)-QTP(1))
@@ -198,6 +196,9 @@ contains
       ABSC = ABSC + B * VMR_H2O
       ABSC = ABSC * 1.e-3       ! converted from 1/km to 1/m
 
+!      print*, absc
+!      stop
+
       END SUBROUTINE GET_BETA
 
 !--------------------------------------------------------------
@@ -243,3 +244,6 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.4  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
