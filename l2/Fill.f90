@@ -1115,7 +1115,7 @@ contains ! =====     Public Procedures     =============================
           call FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
             & ratioQuantity )
 
-        case ( l_IWCfromExtinction ) ! -------fill H2O from RHI quantity -------
+        case ( l_IWCfromExtinction ) ! -------fill IWC from cloud extinction -------
             if ( .not. any(got( &
              & (/f_extinction, f_temperatureQuantity/) &
              & )) ) then
@@ -3219,10 +3219,61 @@ contains ! =====     Public Procedures     =============================
      & sourceQuantity, temperatureQuantity)
       integer, intent(in) :: key          ! For messages
       ! Actually, the meaning of the next two is reversed if invert is TRUE)
-      type (VectorValue_T), intent(inout) :: QUANTITY ! (rhi) Quantity to fill
-      type (VectorValue_T), intent(in) :: sourceQuantity ! extinction
+      type (VectorValue_T), intent(inout) :: QUANTITY ! (IWC) Quantity to fill
+      type (VectorValue_T), intent(in) :: sourceQuantity ! cloud extinction
       type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
+      ! local variables
+      real (r8), dimension(quantity%template%noSurfs) :: z, Tz, Ez, iwc0
+      real (r8), dimension(Temperaturequantity%template%noSurfs) :: zt
+      real (r8), dimension(sourceQuantity%template%noSurfs) :: ze
+      integer :: i
      
+      if(sourceQuantity%template%noInstances /= Quantity%template%noInstances) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "IWC and Extinction profile numbers are not matched")
+      if(TemperatureQuantity%template%noInstances /= Quantity%template%noInstances) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "IWC and Temperature profile numbers are not matched")
+      if(.not. (quantity%template%coherent .and. sourceQuantity%template%coherent &
+         .and. Temperaturequantity%template%coherent)) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "one of the quantities is not coherent")
+
+      do i=1, quantity%template%noInstances
+      
+        if ( quantity%template%verticalCoordinate == l_pressure ) then 
+          z = -log10 ( quantity%template%surfs(:,i) )             
+        else                                                           
+          z = quantity%template%surfs(:,i)            
+        end if
+        
+        if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
+          ze = -log10 ( sourceQuantity%template%surfs(:,i) )             
+        else                                                           
+          ze = sourceQuantity%template%surfs(:,i)            
+        end if
+        
+        if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
+          zt = -log10 ( Temperaturequantity%template%surfs(:,i) )             
+        else                                                           
+          zt = Temperaturequantity%template%surfs(:,i)            
+        end if
+        
+        call InterpolateValues( Tz, TemperatureQuantity%values(:, i), &
+             & z, zt, 'Linear', extrapolate='Constant' )
+        call InterpolateValues( Ez, sourceQuantity%values(:, i), &
+             & z, ze, 'Linear', extrapolate='Constant' )
+             
+        ! see ATBD for the conversion based on the size distribution from
+        ! McFarquhar and Heymsfield [1996] 
+        ! 
+        iwc0 = 10**(-2.77+0.01*(Tz-273.15))  
+        where(Ez < 0._r8) Ez = 0._r8
+        Ez = Ez**(1./1.4)
+        
+        quantity%values(:,i) = iwc0*Ez
+      end do
+
     end subroutine FillIWCFromExtinction 
     
       ! ------------------------------------- FillRHIFromH2O ----
@@ -5716,6 +5767,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.219  2003/05/20 23:10:24  dwu
+! complete the addition of fill IWC from extinction
+!
 ! Revision 2.218  2003/05/20 20:20:01  dwu
 ! add IWCfromExtinction
 !
