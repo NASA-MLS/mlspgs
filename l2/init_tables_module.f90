@@ -122,7 +122,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SOURCEL2AUX         = f_sourceGrid + 1
   integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
-  integer, parameter :: F_SPECIES             = f_sourcequantity + 1
+  integer, parameter :: F_SOURCEVGRID         = f_sourcequantity + 1
+  integer, parameter :: F_SPECIES             = f_sourcevGrid + 1
   integer, parameter :: F_SPECT_DER           = f_species + 1
   integer, parameter :: F_SPREAD              = f_spect_der + 1
   integer, parameter :: F_STATE               = f_spread + 1
@@ -183,7 +184,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_SPD           = l_spaceRadiance + 1
   integer, parameter :: L_SPECIAL       = l_spd + 1
   integer, parameter :: L_VECTOR        = l_special + 1
-  integer, parameter :: L_WEIGHTED      = l_vector + 1
+  integer, parameter :: L_VGRID         = l_vector + 1
+  integer, parameter :: L_WEIGHTED      = l_vGrid + 1
   integer, parameter :: LAST_LIT        = l_weighted
   integer :: LIT_INDICES(first_lit:last_lit)
 ! Section identities.  Indices are in the order the sections are allowed to
@@ -345,6 +347,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_spd) =                   add_ident ( 'spd' )
     lit_indices(l_special) =               add_ident ( 'special' )
     lit_indices(l_vector) =                add_ident ( 'vector' )
+    lit_indices(l_vGrid) =                 add_ident ( 'vGrid' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
@@ -417,6 +420,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_sourcel2aux) =         add_ident ( 'sourceL2AUX' )
     field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
+    field_indices(f_sourcevGrid) =         add_ident ( 'sourcevGrid' )
     field_indices(f_species) =             add_ident ( 'species' )
     field_indices(f_spect_der) =           add_ident ( 'spect_der' )
     field_indices(f_spread) =              add_ident ( 'spread' )
@@ -515,7 +519,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_gridded, l+l_explicit, l+l_hydrostatic, &
-             l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, n+n_dt_def, &
+             l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
+             l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_linear, n+n_dt_def, &
@@ -679,6 +684,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
              begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec, &
+             begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
@@ -807,6 +813,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.75  2001/04/20 17:13:00  livesey
+! Added stuff for vGrid fill
+!
 ! Revision 2.74  2001/04/19 20:04:44  livesey
 ! Added sideband ratio to quantityType
 !
