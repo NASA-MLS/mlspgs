@@ -172,13 +172,18 @@ targ:
 	rm -f ../$(PROG).tgz
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
-update: depends ghostbuster
+#update: depends ghostbuster
+update:
 	@cp $(MakeFName) Makefile; \
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
           -mc "$(OBJ_DIR)" -nc -nd
+	$(MAKE) -f $(MakeFName) depends ghostbuster
 
 # $Log$
+# Revision 1.3  2001/11/07 00:30:04  pwagner
+# Improved and silenced update target
+#
 # Revision 1.2  2001/10/11 18:14:21  pwagner
 # Now builds sids_l1boa, not test
 #
