@@ -1106,6 +1106,7 @@ contains
           j = i
           do while ( j < ubound(signal%channels, 1) )
             if ( .not. signal%channels(j+1) ) exit
+            j = j + 1
           end do
           if ( j > i ) then
             write ( word, * ) i
@@ -1392,6 +1393,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.51  2002/10/03 05:38:11  livesey
+! Infinite loop fix
+!
 ! Revision 2.50  2002/09/05 20:27:39  livesey
 ! Got rid of print statement left over from long ago.
 !
