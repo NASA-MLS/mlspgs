@@ -34,7 +34,8 @@ module Init_Spectroscopy_m
   integer, parameter :: F_emlsSignalsPol  = f_emlsSignals + 1
   integer, parameter :: F_gamma      = f_emlsSignalsPol + 1
   integer, parameter :: F_lines      = f_gamma + 1
-  integer, parameter :: F_molecule   = f_lines + 1
+  integer, parameter :: F_mass       = f_lines + 1
+  integer, parameter :: F_molecule   = f_mass + 1
   integer, parameter :: F_n          = f_molecule + 1
   integer, parameter :: F_n1         = f_n + 1
   integer, parameter :: F_n2         = f_n1 + 1
@@ -90,6 +91,7 @@ contains
     field_indices(f_emlsSignalsPol)  = add_ident ( 'emlsSignalsPol' )
     field_indices(f_gamma)      = add_ident ( 'gamma' )
     field_indices(f_lines)      = add_ident ( 'lines' )
+    field_indices(f_mass)       = add_ident ( 'mass' )
     field_indices(f_molecule)   = add_ident ( 'molecule' )
     field_indices(f_n1)         = add_ident ( 'n1' )
     field_indices(f_n2)         = add_ident ( 'n2' )
@@ -164,6 +166,7 @@ contains
       begin, s+s_spectra, & ! Must be AFTER S_Line
              begin, f+f_continuum, t+t_numeric, n+n_field_type, &
              begin, f+f_lines, s+s_line, n+n_field_spec, &
+             begin, f+f_mass, t+t_numeric, n+n_field_type, &
              begin, f+f_molecule, t+t_molecule, nr+n_field_type, &
              begin, f+f_qlog, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
@@ -180,6 +183,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.8  2003/05/16 02:44:46  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.7  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
