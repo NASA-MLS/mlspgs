@@ -3,34 +3,33 @@
 
 !=============================================================================
 module Open_Init
-!=============================================================================
 
-! Opens and closes several files
-! Creates and destroys the L1BInfo database
+  ! Opens and closes several files
+  ! Creates and destroys the L1BInfo database
 
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: swopen, swclose
-  use INIT_TABLES_MODULE, only: F_FILE, F_SOURCE, S_L2AUX, S_L2GP
-  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, & 
+  use INIT_TABLES_MODULE, only: F_FILE, F_SWATH, S_L2AUX, S_L2GP
+  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, SetupNewL2AUXRecord
-  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, &
-    &                  SetupNewL2GPRecord
+  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, DestroyL2GPContents, ReadL2GPData, &
+    &                 SetupNewL2GPRecord
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_FileOpen
+    &                         MLSMSG_Error, MLSMSG_FileOpen, MLSMSG_Info
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
-    &               MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START, &
-    &               MLSPCF_L2CF_START
+    &                MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START, &
+    &                MLSPCF_L2CF_START
   use MLSSignalNomenclature, only: ReadSignalsDatabase
   use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
   use String_Table, only: L2CFUnit => INUNIT, GET_STRING
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
-    & SOURCE_REF, SUB_ROSA, SUBTREE
+    &             SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_DOT
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, Vector_T, &
-    & VectorTemplate_T
+    &                      VectorTemplate_T
 
   implicit none
   private
@@ -41,7 +40,7 @@ module Open_Init
   private :: Id, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
   character(len=130) :: id = &
-     "$id: open_init.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
+    "$id: open_init.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
@@ -54,13 +53,13 @@ contains ! =====     Public Procedures     =============================
     character (len=256) :: Msg
     integer :: ReturnStatus
 
-   returnStatus = Pgs_io_gen_closeF ( L2CFUnit )
+    returnStatus = Pgs_io_gen_closeF ( L2CFUnit )
 
-   if ( returnStatus /= PGS_S_SUCCESS ) then
-     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-     call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & 'Error closing L2CF:  '//mnemonic//' '//msg)
-   end if
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Error closing L2CF:  '//mnemonic//' '//msg)
+    end if
 
   end subroutine CloseMLSCF
 
@@ -69,18 +68,18 @@ contains ! =====     Public Procedures     =============================
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     integer :: STATUS ! from deallocate
     deallocate( l1bInfo%L1BRADIDs, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_DeAllocate // "l1bInfo" )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "l1bInfo" )
   end subroutine DestroyL1BInfo
 
 
   ! ------------------------------------------  OpenAndInitialize  -----
   subroutine OpenAndInitialize ( processingRange, l1bInfo )
 
-  ! Opens L1 RAD files
-  ! Opens L1OA file
-  ! Opens and reads the signal nomenclature file
-  ! Gets the start and end times from the PCF
+    ! Opens L1 RAD files
+    ! Opens L1OA file
+    ! Opens and reads the signal nomenclature file
+    ! Gets the start and end times from the PCF
 
     ! Arguments
 
@@ -118,9 +117,9 @@ contains ! =====     Public Procedures     =============================
 
       if (returnStatus == PGS_S_SUCCESS) then
 
-    ! Open the HDF file and initialize the SD interface
+        ! Open the HDF file and initialize the SD interface
 
-    ! Allocate L1BRADIDs
+        ! Allocate L1BRADIDs
 
         allocate( l1bInfo%L1BRADIDs(10), stat=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -149,8 +148,7 @@ contains ! =====     Public Procedures     =============================
 
     if (returnStatus == PGS_S_SUCCESS) then
 
-    ! Open the HDF file and initialize the SD interface
-
+      ! Open the HDF file and initialize the SD interface
 
       sd_id = sfstart(L1physicalFilename, DFACC_READ)
       if (sd_id == -1) then
@@ -189,7 +187,7 @@ contains ! =====     Public Procedures     =============================
       & ModuleName, "Could not get CCSDS Start Time" )
 
     returnStatus = pgs_td_utctotai (CCSDSStartTime, processingrange%starttime)
-!   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
+    !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       &  returnstatus /= PGSTD_E_NO_LEAP_SECS ) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, "Could not convert UTC Start time to TAI" )
@@ -199,14 +197,10 @@ contains ! =====     Public Procedures     =============================
       & ModuleName, "Could not get CCSDS End Time" )
 
     returnStatus = pgs_td_utctotai (CCSDSEndTime, processingrange%endtime)
-!   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
+    !   ??? Is PGSTD_E_NO_LEAP_SECS an OK status ???
     if ( returnstatus /= PGS_S_SUCCESS .and. &
       & returnstatus /= PGSTD_E_NO_LEAP_SECS) call MLSMessage ( MLSMSG_Error, &
       & ModuleName, "Could not convert UTC Start time to TAI" )
-
-    !processingrange%starttime = 220838406.65045166
-    !processingrange%endtime = 220841983.31690979
-    !processingrange%endtime = 220924616.64530945
 
     return
 
@@ -220,23 +214,25 @@ contains ! =====     Public Procedures     =============================
     character (len=256) :: Msg
     integer :: ReturnStatus
 
-!   Open the MLSCF as a generic file for reading
+    !   Open the MLSCF as a generic file for reading
     L2CF_Version = 1
-   returnStatus = Pgs_io_gen_openF ( mlspcf_l2cf_start, PGSd_IO_Gen_RSeqFrm, &
-     &                               0, L2CFUnit, L2CF_Version)
+    returnStatus = Pgs_io_gen_openF ( mlspcf_l2cf_start, PGSd_IO_Gen_RSeqFrm, &
+      &                               0, L2CFUnit, L2CF_Version)
 
-   if ( returnStatus /= PGS_S_SUCCESS ) then
-     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-     call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Error opening MLSCF:  "//mnemonic//"  "//msg)
-   end if
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Error opening MLSCF:  "//mnemonic//"  "//msg)
+    end if
 
   end subroutine OpenMLSCF
 
   ! --------------------------------------------------  read_apriori  -----
+  ! Read a priori data from data files, be they l2gp, l2aux, climatology,
+  ! NCEP, DAO etc.
+
   subroutine read_apriori ( root, L2GPDatabase, l2auxDatabase)
 
-    ! Read a priori data from l2gp files and l2aux files
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
@@ -257,22 +253,13 @@ contains ! =====     Public Procedures     =============================
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     character (LEN=480) :: msr     ! Error message if can't find file
     type (Vector_T) :: newVector
-    integer :: NumProfs            ! number of profiles actually read
-!   integer :: quantityName        ! Sub-rosa index
+
     integer :: sd_id
-    integer :: SON                 ! Of root, an n_spec_args or a n_named
-    integer :: sourceName          ! Sub-rosa index of name in source='name'
-    character(len=FileNameLen) :: SourceNameString ! actual literal source name
+    integer :: SON              ! Of root, an n_spec_args or a n_named
+    integer :: swathName        ! sub-rosa index of name in swath='name'
+    character(len=FileNameLen) :: SwathNameString ! actual literal swath name
     integer :: vectorIndex         ! In the vector database
 
-    ! HDFEOS Functions
-
-    integer, external :: SWCLOSE, SWOPEN
-
-    ! Assume specifications take the following form:
-    !   vName: fileType, file='fileName', source='fieldName'
-    ! Currently, fileType is restricted to one of
-    !   'l2gp' or 'l2aux'
     do i = 2, nsons(root)-1 ! Skip the section name at begin and end
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -289,91 +276,79 @@ contains ! =====     Public Procedures     =============================
 
       ! Now parse file and field names
       fileName = 0
-      sourceName = 0
+      swathName = 0
       do j = 2, nsons(key)
         field = subtree(j,key)
         select case ( decoration(subtree(1,field)) )
         case ( f_file )
-          if ( fileName /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'File name specified twice in read a priori')
           fileName = sub_rosa(subtree(2,field))
-        case ( f_source )
-          if ( sourceName /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Source name specified twice in read a priori')
-          sourceName = sub_rosa(subtree(2,field))
+        case ( f_swath )
+          swathName = sub_rosa(subtree(2,field))
         end select
       end do
       if ( fileName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
         & 'File name not specified in read a priori')
-      if ( sourceName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Source name not specified in read a priori')
-      call get_string ( FileName, FileNameString )
-      call get_string ( sourceName, sourceNameString )
+      if ( swathName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Swath name not specified in read a priori')
 
+      call get_string ( FileName, fileNameString )
+      call get_string ( swathName, swathNameString )
+      fileNameString=fileNameString(2:LEN_TRIM(fileNameString)-1)
+      swathNameString=swathNameString(2:LEN_TRIM(swathNameString)-1)
 
       select case( FileType )
       case ( s_l2gp )
 
-      fileHandle = swopen(FileNameString, DFACC_READ)
-      if (fileHandle == -1) then
-        msr = MLSMSG_Fileopen // FileNameString
-        call MLSMessage ( MLSMSG_Error, ModuleName, trim(msr) )
-      end if
-! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
-!       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
+        ! Open the l2gp file
+        fileHandle = swopen(FileNameString, DFACC_READ)
+        if (fileHandle == -1) then
+          msr = MLSMSG_Fileopen // FileNameString
+          call MLSMessage ( MLSMSG_Error, ModuleName, trim(msr) )
+        end if
 
-        ! Create the l2gp, and add it to the database.
-        call SetupNewL2GPRecord ( l2gp )
-        l2gp%nameIndex = l2Name
+        ! Read the swath
+        call ReadL2GPData ( fileHandle, swathNameString, l2gp )
 
-!        call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
+        ! Close the file
+        fileHandle = swclose(fileHandle)
+        if (fileHandle == -1) THEN
+          msr = 'Failed to close file ' // FileNameString
+          call MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
+        end if
 
-        ! That's the end of the create operation
-
-! ??? Should "vectorIndex" be "decoration(key)" ???
-! ??? If so, do something like
-        l2Index = AddL2GPToDatabase( L2GPDatabase, l2gp )
-        call decorate ( key, l2Index )
-! ???        call ReadL2GPData ( ... L2GPDataBase(l2Index) ... )
-        call ReadL2GPData ( fileHandle, sourceNameString, &
-          & L2GPDatabase(l2Index), numProfs )
-
-          fileHandle = swclose(fileHandle)
-          if (fileHandle == -1) THEN
-             msr = 'Failed to close file ' // FileNameString
-             call MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
-          end if
-
+        ! Add this l2gp to the database, decorate this key with index
+        call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
+        ! Don't call destroy contents as the AddL2GPToDatabase has done a shallow
+        ! copy.
       case ( s_l2aux )
 
-            ! create SD interface identifier for l2aux
-                sd_id = sfstart(FilenameString, DFACC_READ)
-            IF (sd_id == -1) THEN
-               msr = MLSMSG_Fileopen // FileNameString
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
-! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
-!       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
+        ! create SD interface identifier for l2aux
+        sd_id = sfstart(FilenameString, DFACC_READ)
+        IF (sd_id == -1) THEN
+          msr = MLSMSG_Fileopen // FileNameString
+          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+        ENDIF
+        ! ??? subtree(1,key) is l2aux or l2gp.  It doesn't have a subtree ???
+        !       vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
         ! Create the l2aux, and add it to the database.
-! This doesn't match the interface in module L2AUXData
-!       CALL SetupNewL2AUXRecord ( l2aux )
-! It has been relocated to READL2AUXData
+        ! This doesn't match the interface in module L2AUXData
+        !       CALL SetupNewL2AUXRecord ( l2aux )
+        ! It has been relocated to READL2AUXData
 
         l2aux%name = l2Name
 
-!        call decorate ( key, AddL2AUXToDatabase( L2AUXDatabase, l2aux ) )
+        !        call decorate ( key, AddL2AUXToDatabase( L2AUXDatabase, l2aux ) )
 
         ! That's the end of the create operation
-        
-! ??? Should "vectorIndex" be "decoration(key)" ???
-! ??? If so, do something like
-   l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
-   call decorate ( key, l2Index )
-!   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
-! Need to add this routine to L2AUXData.f90 before uncommenting this line
-           CALL ReadL2AUXData(sd_id, sourceNameString, L2AUXDatabase(l2Index),&
-           & numProfs)
+
+        ! ??? Should "vectorIndex" be "decoration(key)" ???
+        ! ??? If so, do something like
+        l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
+        call decorate ( key, l2Index )
+        !   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
+        ! Need to add this routine to L2AUXData.f90 before uncommenting this line
+        CALL ReadL2AUXData(sd_id, swathNameString, L2AUXDatabase(l2Index))
 
       case default ! Can't get here if tree_checker worked correctly
       end select
@@ -383,12 +358,15 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine read_apriori
 
-!=============================================================================
+
 end module Open_Init
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.15  2001/02/16 00:48:07  livesey
+! Added stuff to read l2gp's in
+!
 ! Revision 2.14  2001/02/13 22:59:36  pwagner
 ! l2 modules can only use MLSPCF2
 !
