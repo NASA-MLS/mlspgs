@@ -10,11 +10,12 @@ module HGrid                    ! Horizontal grid information
   use EXPR_M, only: EXPR
   use Dump_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INCLINATION, &
-    & F_INTERPOLATIONFACTOR, F_INSETOVERLAPS, F_MIF, F_MODULE, F_TYPE, F_VALUES, &
+    & F_INTERPOLATIONFACTOR, F_INSETOVERLAPS, F_MIF, F_MODULE, F_TYPE, &
     & FIELD_FIRST, F_SPACING, F_ORIGIN, F_FORBIDOVERSPILL, &
     & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
+    & F_SOLARTIME, F_SOLARZENITH, F_GEODANGLE, &
     & L_MIF, L_REGULAR, PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_ANGLE,&
-    & F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP
+    & F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, PHYQ_TIME
   use LEXER_CORE, only: PRINT_SOURCE
   use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
     & AssembleL1BQtyName
@@ -33,6 +34,7 @@ module HGrid                    ! Horizontal grid information
   use TREE, only: DECORATION, DUMP_TREE_NODE, NSONS, NULL_TREE, SOURCE_REF, &
                   SUB_ROSA, SUBTREE
   use UNITS, only: DEG2RAD, RAD2DEG
+  use Intrinsic, only: T_NUMERIC
 
   implicit none
 
@@ -135,6 +137,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
+    integer :: GEODANGLENODE            ! Tree node
     logical :: GOT_FIELD(field_first:field_last)
     logical :: INSETOVERLAPS            ! Flag
     integer :: L1BFLAG
@@ -146,8 +149,9 @@ contains ! =====     Public Procedures     =============================
     integer :: NOMAFS                   ! Number of MAFs of L1B data read
     integer :: PROF                     ! Loop counter
     integer :: SON                      ! Son of Root
+    integer :: SOLARTIMENODE            ! Tree node
+    integer :: SOLARZENITHNODE          ! Tree node
     integer :: STATUS                   ! From Allocate, ReadL1B... etc.
-    integer :: VALUESNODE               ! Node of tree for explicit
     logical :: FORBIDOVERSPILL          ! If set don't allow overlaps beyond L1B
 
     character (len=NameLen) :: InstrumentModuleName
@@ -173,6 +177,9 @@ contains ! =====     Public Procedures     =============================
     maxLowerOverlap = -1
     maxUpperOverlap = -1
     insetOverlaps = .false.
+    solarTimeNode = 0
+    solarZenithNode = 0
+    geodAngleNode = 0
 
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -236,8 +243,12 @@ contains ! =====     Public Procedures     =============================
         origin = expr_value(1)
         if ( expr_units(1) /= PHYQ_Angle) &
           & call announce_error ( field, angleUnitMessage )
-      case ( f_values )
-        valuesNode = son
+      case ( f_geodAngle )
+        geodAngleNode = son
+      case ( f_solarTime )
+        solarTimeNode = son
+      case ( f_solarZenith )
+        solarZenithNode = son
       case ( f_sourceL2gp )
         l2gp => l2gpDatabase(decoration(decoration(subtree(2,son))))
       case ( f_inclination )
@@ -259,23 +270,8 @@ contains ! =====     Public Procedures     =============================
       end if
 
     case ( l_explicit ) ! ----------------- Explicit ------------------
-      ! For explicit hGrids, do things differently
-      hGrid%noProfs = nsons(valuesNode)-1
-      hGrid%noProfsLowerOverlap = 0
-      hGrid%noProfsUpperOverlap = 0
-      call CreateEmptyHGrid(hGrid)
-      hGrid%lon = 0.0_r8
-      hGrid%time = 0.0_r8
-      hGrid%solarTime = 0.0_r8
-      hGrid%losAngle = 0.0_r8
-      hGrid%solarZenith = 0.0_r8
-      
-      do prof = 1, hGrid%noProfs
-        call expr ( subtree ( prof+1, valuesNode), expr_units, expr_value )
-        hGrid%phi(prof) = expr_value(1)
-        hGrid%geodLat(prof) = hGrid%phi(prof) !???? Sort this out later!
-        hGrid%time = processingRange%startTime
-      end do
+      call CreateExplicitHGrid ( geodAngleNode, solarTimeNode, &
+        & solarZenithNode, processingRange%startTime, hGrid )
 
     case ( l_regular ) ! ----------------------- Regular --------------
       if (.not. got_field(f_module) ) then
@@ -327,6 +323,98 @@ contains ! =====     Public Procedures     =============================
       & trim(instrumentModuleName), l1bInfo )
 
   end function CreateHGridFromMLSCFInfo
+
+  ! ----------------------------------------- CreateExplicitHGrid -------
+  subroutine CreateExplicitHGrid ( geodAngleNode, solarTimeNode, &
+    & solarZenithNode, time, hGrid )
+    ! dummy arguments
+    integer, intent(in) :: GEODANGLENODE ! Geod angle if any
+    integer, intent(in) :: SOLARTIMENODE ! Solar time if any
+    integer, intent(in) :: SOLARZENITHNODE ! Solar zenith angle if any
+    real(r8), intent(in) :: TIME        ! Time for HGrid
+    type (HGrid_T), intent(inout) :: HGRID
+    ! Local variables
+    integer :: PROF                     ! Loop counter
+    integer :: NOPROFS                  ! Number of profiles
+    integer :: PARAM                    ! Loop counter
+    integer :: NODE                     ! A tree node
+    integer :: UNITS                    ! Units
+    integer :: TYPE                     ! Type of a tree node
+    real(r8), dimension(:), pointer :: VALUES
+    integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
+    real(r8) :: EXPR_VALUE(2)   ! Output from Expr subroutine
+
+    ! Executable code
+
+    noProfs = 0
+    if ( geodAngleNode /= 0 ) noProfs = nsons ( geodAngleNode ) - 1
+    if ( solarTimeNode /= 0 ) then
+      if ( noProfs /= 0 ) then
+        if ( nsons ( solarTimeNode ) - 1 /= noProfs ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Inconsistent explicit hGrid definition' )
+      else
+        noProfs = nsons ( solarTimeNode ) - 1
+      end if
+    end if
+    if ( solarZenithNode /= 0 ) then
+      if ( noProfs /= 0 ) then
+        if ( nsons ( solarZenithNode ) - 1 /= noProfs ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Inconsistent explicit hGrid definition' )
+      else
+        noProfs = nsons ( solarZenithNode ) - 1
+      end if
+    end if
+
+    ! Create an hGrid with this many profiles and no overlaps
+    hGrid%noProfs = noProfs
+    hGrid%noProfsLowerOverlap = 0
+    hGrid%noProfsUpperOverlap = 0
+
+    call CreateEmptyHGrid(hGrid)
+    ! Fill up the obvious stuff
+    hGrid%lon = 0.0_r8
+    hGrid%losAngle = 0.0_r8
+    hGrid%time = time
+    ! Set defaults for the others, our expressions may overwrite them
+    hGrid%phi = 0.0_r8
+    hGrid%geodLat = 0.0_r8
+    hGrid%solarTime = 0.0_r8
+    hGrid%solarZenith = 0.0_r8
+
+    ! Loop over the parameters we might have
+    do param = 1, 3
+      select case ( param )
+      case ( 1 )
+        values => hGrid%phi
+        node = geodAngleNode
+        units = phyq_angle
+      case ( 2 )
+        values => hGrid%solarTime
+        node = solarTimeNode
+        units = phyq_time
+      case ( 3 )
+        values => hGrid%solarZenith
+        node = solarZenithNode
+        units = phyq_angle
+      end select
+
+      do prof = 1, hGrid%noProfs
+        call expr ( subtree ( prof+1, node), expr_units, expr_value, type )
+        if ( type /= t_numeric ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Only numerics, not ranges allowed in explicit hGrid' )
+        if ( all ( expr_units(1) /= (/ phyq_dimensionless, units /) ) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Invalid units for explicit hGrid' )
+        values(prof) = expr_value(1)
+      end do
+    end do
+    ! Make the latitude the same as the geod angle
+    ! This is a bit of a hack, but it should be OK in all cases.
+    hGrid%geodLat = hGrid%phi
+
+  end subroutine CreateExplicitHGrid
 
   ! ------------------------------------- CreateMIFBasedHGrids -----------
   subroutine CreateMIFBasedHGrids ( l1bInfo, hGridType, &
@@ -1268,6 +1356,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.45  2003/02/06 23:30:50  livesey
+! New approach for explicit hGrids
+!
 ! Revision 2.44  2003/01/06 20:13:46  livesey
 ! New handling of overlaps
 !
