@@ -33,7 +33,6 @@ contains
     use Get_Species_Data_m, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
-    use Physics, only: H_OVER_K
 
 ! Inputs:
 
@@ -65,24 +64,6 @@ contains
 ! caller doesn't need multiple branches.  These would be INTENT(OUT) if
 ! we could say so.
 
-!{ The variable {\tt dBeta\_dT\_path} isn't really
-!  $\frac{\partial\beta}{\partial T}$.  First, we evaluate $\beta$ at
-!  $T+\delta T$ and $T-\delta T$.  These are called {\tt bp} and {\tt bm}
-!  below.  We assume $\beta$ has the form
-!
-!  $\beta_0 \left(\frac{T}{T_0}\right) ^n$.  Taking logarithms, we have $\ln
-!  (\beta / \beta_0) = n ( \ln ( T / T_0 ) )$.  Assuming $n$ doesn't change
-!  too quickly as a function of $T$, you can solve for $n$ from estimates of
-!  $\beta(T)$ and $\beta(T+\delta T)$ (you need $\beta$ at two temperatures
-!  because you don't know $\beta_0$ and $T_0$).  Actually, we use three
-!  estimates for $\frac{\partial\beta}{\partial T}$, \emph{viz}.
-!  $(\beta(T+\delta T) - \beta(T-\delta T)) / ( 2 \delta T)$,
-!  $(\beta(T+\delta T) - \beta(T) ) / \delta T$, and $(\beta(T) - \beta(T -
-!  \delta T)) / \delta T$, from which we compute three estimates for $n$. 
-!  It's the value of $n$ that's returned in {\tt dBeta\_dT\_path}, not
-!  $\frac{\partial\beta}{\partial T}$.  $\frac{\partial\beta}{\partial T}$ is
-!  actually assembled in {\tt dRad\_tran\_dT}.
-
     real(rp), pointer :: dBeta_dT_path(:,:) ! Temperature
     real(rp), pointer :: dBeta_dw_path(:,:) ! line width
     real(rp), pointer :: dBeta_dn_path(:,:) ! line width t dep.
@@ -91,14 +72,11 @@ contains
 ! Local variables.
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
-    integer(ip) :: I, J, K, N, IB, No_mol, N_path
-    real(rp) :: BB, BP, BM
-    real(rp) :: T
+    integer(ip) :: I, N, IB, No_mol
 
 ! begin the code
 
     no_mol = size(beta_group)
-    n_path = size(path_inds)
 
     nullify ( dBdn, dBdv, dBdw )
 
@@ -127,7 +105,7 @@ contains
         ib = beta_group(i)%cat_index(n)
         call create_beta_path ( path_inds, p_path, t_path, frq,             &
           & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
-          & beta_path(:,i), dTanh_dT, dBdT, dBdw, dBdn, dBdv )
+          & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
       end do
     end do
 
@@ -452,7 +430,7 @@ contains
 
   subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio, &
          &   Slabs_0, Tanh1, NoPolarized, Beta_value, dTanh_dT,        &
-         &   dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv, Path_flags  )
+         &   Path_flags, dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv )
 
 !  For a given frequency and height, compute beta_value function. This routine
 !  should be called for primary and image separately. Compute dBeta_dT if it's
@@ -490,17 +468,15 @@ contains
 ! outputs
     real(rp), intent(inout) :: Beta_value(:)
 
-! Optional input for temperature derivatives:
+! Optional inputs for temperature derivatives:
     real(rp), pointer :: dTanh_dT(:) ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
+    logical, pointer :: Path_Flags(:) ! to do on fine path -- default true
 
 ! optional outputs
     real(rp), pointer :: dBeta_dT(:) ! temperature derivative
     real(rp), pointer :: dBeta_dw(:) ! line width derivative
     real(rp), pointer :: dBeta_dn(:) ! temperature dependence deriv
     real(rp), pointer :: dBeta_dv(:) ! line position derivative
-
-! Optional inputs
-    logical, intent(in), optional :: Path_Flags(:) ! to do on fine path -- default true
 
 ! -----     Local variables     ----------------------------------------
 
@@ -522,7 +498,7 @@ contains
 
     do j = 1, size(path_inds)
       k = path_inds(j)
-      if ( temp_der .and. present(path_flags) ) temp_der = path_flags(k)
+      if ( temp_der .and. associated(path_flags) ) temp_der = path_flags(k)
 
       cont => slabs_0(k)%catalog%continuum
       select case ( slabs_0(k)%catalog%molecule )
@@ -821,6 +797,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.57  2004/04/17 00:37:00  vsnyder
+! Analytic temperature derivatives
+!
 ! Revision 2.56  2004/04/02 00:59:24  vsnyder
 ! Get catalog from slabs structure
 !
