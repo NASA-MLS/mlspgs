@@ -14,7 +14,7 @@ module GLOBAL_SETTINGS
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
     & S_L1BRAD, S_L1BOA, P_INSTRUMENT
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, NAME_LEN, &
-    & DeallocateL1BData
+    & DeallocateL1BData, DumpL1BData
   use L2GPData, only: L2GPDATA_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T
@@ -76,6 +76,7 @@ contains
     type (L1BData_T) :: l1bField ! L1B data
     type(PCFData_T) :: l2pcf
     
+    integer :: Details
     logical :: GOT(2) = .false.
     integer :: I         ! Index of son of root
     integer :: L1BFLAG
@@ -259,9 +260,14 @@ contains
       processingrange%endtime = maxTime + 1.0
    endif
 
+   if ( index(switches, 'global') /= 0 ) then
+     Details = 1
+   else
+     Details = -2
+   endif
    if( levels(gen) > 0 .or. &
    & index(switches, 'glo') /= 0 ) &
-   & call dump_global_settings( l2pcf, processingRange, l1bInfo )
+   & call dump_global_settings( l2pcf, processingRange, l1bInfo, details )
 
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -292,7 +298,8 @@ contains
   end subroutine SET_GLOBAL_SETTINGS
 
   ! ------------------------------------------  dump_global_settings  -----
-  subroutine dump_global_settings ( l2pcf, processingRange, l1bInfo )
+  subroutine dump_global_settings ( l2pcf, processingRange, l1bInfo, &
+    & dumpL1BDetails )
   
     ! Dump info obtained during OpenAndInitialize and global_settings:
     ! L1B databse
@@ -308,15 +315,28 @@ contains
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
     type(PCFData_T) :: l2pcf
     type (TAI93_Range_T) :: processingRange ! Data processing range
+    
+    ! The following dtermines the level of detail to expose:
+    ! -1 Skip even counterMAF
+    ! -2 Skip all but name (default)
+    ! >0 Dump even multi-dim arrays
+    integer, optional, intent(in) :: dumpL1BDetails
 !    character(len=CCSDSlen) CCSDSEndTime
 !    character(len=CCSDSlen) CCSDSStartTime
 	
     ! Local
 
-    integer :: i, version
+    type (L1BData_T) :: l1bData   ! L1B dataset
+    integer :: i, version, NoMAFs, IERR
+    integer :: myL1BDetails
     character (len=*), parameter :: time_format='(1pD18.12)'
+    character (len=*), parameter :: l1b_quant_name='R1A:118.B1F:PT.S0.FB25-1'
+
+    type (L1BData_T) :: l1bField ! L1B data
 
     ! Begin
+    myL1BDetails = -2
+    if ( present(dumpL1BDetails) ) myL1BDetails = dumpL1BDetails
     version = 1
 
     call output ( '============ Global Settings ============', advance='yes' )
@@ -330,8 +350,21 @@ contains
       if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
   	    call output ( 'fileid:   ' )
 	    call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
-      	call output ( 'name:   ' )
-    	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
+       call output ( 'name:   ' )
+    	 call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
+       if ( myL1BDetails > -2 ) then
+         call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
+          & NoMAFs, IERR, NeverFail=.true. )
+         if ( IERR == 0 ) then
+           call DumpL1BData(l1bData, myL1BDetails )
+           call DeallocateL1BData ( l1bData )
+         else
+           call output ( 'Error number  ' )
+           call output ( IERR )
+           call output ( ' while reading quantity named  ' )
+           call output ( trim(l1b_quant_name) )
+         endif
+       endif
       endif
       end do
 
@@ -482,6 +515,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.43  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.42  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
