@@ -9,7 +9,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 
   use Allocate_Deallocate, only: Allocate_Test
   use HGrid, only: hGrid_T
-  use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_MODULE, &
+  use INIT_TABLES_MODULE, only: F_BAND, F_HGRID, F_LOGBASIS, F_MODULE, &
     F_MOLECULE, F_RADIOMETER, F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_EARTHREFL, &
     L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
@@ -89,6 +89,7 @@ contains ! =====     Public Procedures     =============================
     integer :: InstrumentModule         ! Database index
     integer :: Key            ! Field name, F_... from Init_Tables_Module
     character(len=127) :: LIT_TEXT
+    logical :: LOGBASIS                 ! To place in quantity
     integer :: Molecule
     integer :: Natural_Units(first_lit:last_lit)
     integer :: NoInstances
@@ -148,8 +149,7 @@ contains ! =====     Public Procedures     =============================
     do i = 2, nsons(root)
       son = subtree(i,root)
       key = subtree(1,son)
-      if ( node_id(key) == n_set_one ) then
-        key = subtree(1,key)
+      if ( node_id(son) == n_set_one ) then
         value = l_true
       else
         value = decoration(subtree(2,son))
@@ -163,6 +163,8 @@ contains ! =====     Public Procedures     =============================
       case ( f_type )
         quantityType = value
         type_field = son
+      case ( f_logBasis )
+        logBasis = (value == l_true)
       case ( f_unit );              scaleFactor = value
       case ( f_molecule );          molecule = value
       case ( f_radiometer )
@@ -269,6 +271,7 @@ contains ! =====     Public Procedures     =============================
     ! Now fill up the remaining items, e.g. name etc.
 
     qty%unit = family
+    qty%logBasis = logBasis
     qty%molecule = molecule
     qty%name = name
     qty%quantityType = quantityType
@@ -276,6 +279,7 @@ contains ! =====     Public Procedures     =============================
     qty%radiometer = radiometer
     qty%signal = signal
     qty%scaleFactor = scaleFactor
+    qty%badValue = -999.99              ! Think more about this later NJL !????
 
     if ( toggle(gen) ) call trace_end ( "CreateQtyTemplateFromMLSCFInfo" )
 
@@ -559,6 +563,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.12  2001/03/17 02:23:55  livesey
+! Added logBasis (and set value for badData)
+!
 ! Revision 2.11  2001/03/15 21:07:47  vsnyder
 ! Cross-references between databases are by database index, not tree index
 !
