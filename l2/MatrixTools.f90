@@ -139,13 +139,13 @@ contains ! ================ Public procedures ================================
       case ( f_colChannels )
         colChannelsNode = son
       case ( f_rowSurfaces )
-        colSurfacesNode = son
-      case ( f_colSurfaces )
         rowSurfacesNode = son
+      case ( f_colSurfaces )
+        colSurfacesNode = son
       case ( f_rowInstances )
-        colInstancesNode = son
-      case ( f_colInstances )
         rowInstancesNode = son
+      case ( f_colInstances )
+        colInstancesNode = son
       case default
       end select
     end do
@@ -379,7 +379,9 @@ contains ! ================ Public procedures ================================
                 & call deallocate_test ( val, 'val', ModuleName )
             endif
 
-            call dump ( toDump )
+            call output ( 'Number of elements dumped:\ ' )
+            call output ( size(toDump), advance='yes' )
+            call dump ( toDump, clean=.true. )
 
           end if
         end do
