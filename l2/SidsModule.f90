@@ -88,8 +88,7 @@ contains
     if ( ixJacobian > 0 ) then
       i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
-    else if ( fmc%atmos_Der .or. fmc%do_conv .or. fmc%spect_Der .or. &
-      & fmc%temp_der ) then
+    else if ( fmc%atmos_Der .or. fmc%spect_Der .or. fmc%temp_der ) then
       call announceError ( needJacobian )
     end if
 
@@ -127,6 +126,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.5  2001/03/09 01:30:10  vsnyder
+! Don't ask for Jacobian if convolution is requested
+!
 ! Revision 2.4  2001/03/08 23:52:24  vsnyder
 ! Process sons correctly
 !
