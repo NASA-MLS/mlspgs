@@ -342,7 +342,7 @@ contains ! =====     Public Procedures     =============================
     type(Matrix_Cholesky_T), intent(inout) :: Z   ! Factored matrix.
 
     integer :: I, J, K                  ! Subscripts and loop inductors
-    integer :: N, N0                    ! Columns(blocks), Columns(0-level)
+    integer :: N                        ! Columns(blocks)
     type(MatrixElement_T) :: S          ! Sum, to accumulate "inner product"
 
     ! Check that the matrices are compatible.  We don't need to check
@@ -354,27 +354,31 @@ contains ! =====     Public Procedures     =============================
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Matrices in CholeskyFactor are not compatible" )
     n = x%m%row%nb
-    do i = 1, n
-      if ( i > 1 ) then
-        n0 = x%m%col%nelts(i)
-        call createBlock ( s, n0, n0, M_Absent )
-        do k = 1, i-1
-          call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,i), s, &
-            & update=.true. )
-        end do ! k = 1, i-1
-        call choleskyFactor ( z%m%block(i,i), s ) ! Factor block on diagonal
-      else
-        call choleskyFactor ( z%m%block(i,i) )
-      end if
+    ! Handle the first row specially, to avoid a copy followed by no-dot-product
+    call choleskyFactor ( z%m%block(1,1), x%m%block(1,1) )! Factor block on diagonal
+    do j = 2, n
+      call solveCholesky ( z%m%block(1,1), z%m%block(1,j), transpose=.true. )
+    end do
+    do i = 2, n
+      call copyBlock ( s, x%m%block(i,i) )        ! Destroy s, then s := z...
+      do k = 1, i-1
+        call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,i), s, &
+          & update=.true., subtract=.true. )
+      end do ! k = 1, i-1
+      call choleskyFactor ( z%m%block(i,i), s )   ! Factor block on diagonal
       do j = i+1, n
-        call destroyBlock ( s )    ! Avoid a memory leak
-        do k = 1, i-1
-          call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,j), s, &
-            & update=.true. )
-        end do ! k = 1, i-1
-        call solveCholesky ( z%m%block(i,i), z%m%block(i,j), s, transpose=.true. )
+        if ( i == 1 ) then                        ! Avoid a copy
+        else
+          call copyBlock ( s, z%m%block(i,j) )    ! Destroy s, then s := z...
+          do k = 1, i-1
+            call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,j), s, &
+              & update=.true., subtract=.true. )
+          end do ! k = 1, i-1
+          call solveCholesky ( z%m%block(i,i), z%m%block(i,j), s, &
+            & transpose=.true. )
+        end if
       end do ! j = 1, n
-      call destroyBlock( s )       ! Avoid a memory leak
+      call destroyBlock( s )                      ! Avoid a memory leak
     end do ! i = 1, n
   end subroutine CholeskyFactor_1
 
@@ -1156,7 +1160,7 @@ contains ! =====     Public Procedures     =============================
       do i = 1, j
         nullify ( mi )
         if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) ) &
-          mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%col%inst(i))
+          mi => a%col%vec%quantities(a%row%quant(i))%mask(:,a%row%inst(i))
         do_update = my_update
         do k = 1, a%row%nb
           if ( associated(mi) ) then
@@ -1528,6 +1532,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.30  2001/05/09 01:56:15  vsnyder
+! periodic commit -- Work on block Cholesky
+!
 ! Revision 2.29  2001/05/08 20:29:40  vsnyder
 ! Periodic commit -- workong on sparse matrix blunders
 !
