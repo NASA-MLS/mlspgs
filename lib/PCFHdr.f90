@@ -12,16 +12,17 @@ MODULE PCFHdr
    USE Hdf, only: DFACC_RDWR, DFACC_WRITE, AN_FILE_DESC
 !  USE Hdf, only: hOpen, afStart, afFCreate, afWriteAnn, afEndAccess, &
 !    & afEnd, hClose
-   USE MLSCommon, only: i4, r4, r8, FileNameLen
+   USE MLSCommon, only: i4, r4, r8, FileNameLen, NameLen
    USE MLSFiles, only: GetPCFromRef, HDFVERSION_4, HDFVERSION_5, &
      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-     & MLSMSG_DeAllocate, MLSMSG_FILEOPEN
+     & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF
    IMPLICIT NONE
    PUBLIC :: GlobalAttributes_T, &
+     & FillTAI93Attribute, &
      & CreatePCFAnnotation,  &
      & h5_writeglobalattr, he5_writeglobalattr, &
      & InputInputPointer, &
@@ -69,6 +70,7 @@ MODULE PCFHdr
     integer :: GranuleMonth                  = 0
     integer :: GranuleDay                    = 0
     integer :: GranuleYear                   = 0
+    real(r8) :: TAI93At0zOfGranule           = 0.d0
   end type GlobalAttributes_T
 
   ! This variable describes the global attributes
@@ -144,11 +146,56 @@ CONTAINS
    END SUBROUTINE CreatePCFAnnotation
 !------------------------------------
 
+!----------------------------------------
+   SUBROUTINE FillTAI93Attribute (LeapSecFileName)
+!----------------------------------------
+
+    use SDPTOOLKIT, only: mls_utctotai, pgs_td_utctotai
+    use MLSSTRINGS, only: utc_to_yyyymmdd
+!  Fill the TAI93 component of the global attribute based on the
+!  StartUTC component
+
+!  Arguments
+    character(LEN=*), optional :: LeapSecFileName
+    character(len=NameLen)     :: start_time_string
+!  Local variables
+    integer             :: returnStatus
+    character(len=16)   :: year, month, day
+!   Executable statements
+    if ( GlobalAttributes%StartUTC /= ' ' ) then
+      call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+        & year, month, day, utcAt0z=start_time_string)
+      if ( present(LeapSecFileName) ) then
+        returnStatus = mls_utctotai(trim(LeapSecFileName), start_time_string, &
+        & GlobalAttributes%TAI93At0zOfGranule )
+        if ( returnStatus /= 0 ) then
+          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'Unable to get convert utc to tai using leapsecfile ' &
+            & // trim(LeapSecFileName) // ' Error number ' &
+            & // trim(int_to_char(returnStatus)) &
+            & )
+        end if
+      else
+        returnStatus = pgs_td_utctotai (start_time_string, &
+        & GlobalAttributes%TAI93At0zOfGranule )
+        if ( returnStatus /= 0 ) then
+          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'Unable to get convert utc to tai using toolbox; Error number ' &
+            & // trim(int_to_char(returnStatus)) &
+            & )
+        end if
+      endif
+    endif
+
+!------------------------------------
+   END SUBROUTINE FillTAI93Attribute
+!------------------------------------
+
 !------------------------------------------------------------
    SUBROUTINE gd_writeglobalattr (gridID)
 !------------------------------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
       ! use he5_gdapi, only: he5_GDwrattr    ! Not coded yet
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 grid
@@ -187,6 +234,9 @@ CONTAINS
 ! >       status = he5_GDwrattr(gridID, &
 ! >        & 'GranuleYear', HE5T_NATIVE_INT, 1, &
 ! >        &  GlobalAttributes%GranuleYear)
+! >       status = he5_GDwrattr(gridID, &
+! >        & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+! >        &  GlobalAttributes%TAI93At0zOfGranule )
 !------------------------------------------------------------
    END SUBROUTINE gd_writeglobalattr
 !------------------------------------------------------------
@@ -244,6 +294,8 @@ CONTAINS
       endif
       call MakeHDF5Attribute(grp_id, &
        & 'GranuleYear', GlobalAttributes%GranuleYear, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'TAI93At0zOfGranule', GlobalAttributes%TAI93At0zOfGranule, .true.)
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
@@ -255,7 +307,7 @@ CONTAINS
 !------------------------------------------------------------
 
 !     use HDF5, only: H5T_NATIVE_CHARACTER
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
       use he5_swapi, only: he5_EHwrglatt
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 file
@@ -303,6 +355,9 @@ CONTAINS
       status = he5_EHwrglatt(fileID, &
        & 'GranuleYear', HE5T_NATIVE_INT, 1, &
        &  (/ GlobalAttributes%GranuleYear/) )
+      status = he5_EHwrglatt(fileID, &
+       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+       &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr
 !------------------------------------------------------------
@@ -314,6 +369,9 @@ CONTAINS
 !  Prepare Input for WriteInputPointer consisting of universal refs
 !  This can be done for an array of fileids or of file names or both
 !  that were input during the run; e.g., l1brads for level 2
+!  If no universal refs are found, as always happens with my test cases,
+!  then put the file names as returned by pgs_pc_getReference in their place
+!  for the fileIDArray, or else the fileNameArray itself if appropriate
 !  Arguments
     CHARACTER (LEN=INPUTPTR_STRING_LENGTH), intent(out)    :: urefs(:)
     CHARACTER (LEN=*), dimension(:), intent(in), optional  :: fileNameArray
@@ -326,30 +384,48 @@ CONTAINS
    integer  :: thePC
    integer  :: version
    character(len=INPUTPTR_STRING_LENGTH) :: sval
-   INTEGER, EXTERNAL :: pgs_pc_getUniversalRef
+   INTEGER, EXTERNAL :: pgs_pc_getUniversalRef, pgs_pc_getReference
 
  ! Executable
    if (size(urefs) < 1) return
    urefs = ' '
    ref = 0
    if ( size(fileIDArray) > 0 ) then
-      DO i = 0, size(fileIDArray)
+      DO i = 1, size(fileIDArray)
         version = 1
         if ( fileIDArray(i) > 0 ) then
-         returnStatus = pgs_pc_getUniversalRef(fileIDArray(i), &
+          returnStatus = pgs_pc_getUniversalRef(fileIDArray(i), &
            & version, sval)
         else
-         returnStatus = PGS_S_SUCCESS + 1
+          returnStatus = PGS_S_SUCCESS + 1
         endif
         IF (returnStatus == PGS_S_SUCCESS) THEN 
-           ref = min(ref+1, size(urefs))
-           urefs(ref) = sval                     
+          ref = min(ref+1, size(urefs))
+          urefs(ref) = sval                     
+        elseif(fileIDArray(i) > 0) then
+          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+            & 'Unable to get Universal Ref for file ID ' &
+            & // trim(int_to_char(fileIDArray(i))) // ' Error number ' &
+            & // trim(int_to_char(returnStatus)) &
+            & )
+          returnStatus = pgs_pc_getReference(fileIDArray(i), &
+           & version, sval)
+          IF (returnStatus == PGS_S_SUCCESS) THEN 
+            ref = min(ref+1, size(urefs))
+            urefs(ref) = sval
+          else
+            CALL MLSMessage(MLSMSG_Error, ModuleName, &
+              & 'Unable to get even a file Ref for file ID ' &
+              & // trim(int_to_char(fileIDArray(i))) // ' Error number ' &
+              & // trim(int_to_char(returnStatus)) &
+              & )
+          endif
         ENDIF                                   
       ENDDO
    endif
 
    if ( size(fileNameArray) > 0 ) then
-      DO i = 0, size(fileNameArray)
+      DO i = 1, size(fileNameArray)
         version = 1
         thePC = GetPCFromRef(trim(fileNameArray(i)), PCBottom, PCTop, &
           & .true., returnStatus, version)
@@ -363,6 +439,9 @@ CONTAINS
         IF (returnStatus == PGS_S_SUCCESS) THEN 
            ref = min(ref+1, size(urefs))
            urefs(ref) = sval                     
+        else                                   
+           ref = min(ref+1, size(urefs))
+           urefs(ref) = fileNameArray(i)                     
         ENDIF                                   
       ENDDO
    endif
@@ -375,7 +454,7 @@ CONTAINS
    SUBROUTINE sw_writeglobalattr (swathID)
 !------------------------------------------------------------
 
-      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE
       use HE5_SWAPI, only: he5_SWwrattr
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 swath
@@ -421,6 +500,9 @@ CONTAINS
       status = he5_SWwrattr(swathID, &
        & 'GranuleYear', HE5T_NATIVE_INT, 1, &
        &  (/ GlobalAttributes%GranuleYear/) )
+      status = he5_SWwrattr(swathID, &
+       & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
+       &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
 !------------------------------------------------------------
    END SUBROUTINE sw_writeglobalattr
 !------------------------------------------------------------
@@ -590,12 +672,14 @@ CONTAINS
 !----------------------------------------
 
       use HDF5, only: h5gclose_f, h5gopen_f
-      USE MLSHDF5, only: MakeHDF5Attribute
+      USE MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
 ! Brief description of subroutine
-! This subroutine writes the PCF into an HDF5 file as an attribute.
-! It does so at the root '/' group level, treating the file as if
+! This subroutine writes the PCF into an HDF5 file as 
+! (1) a datset if MAKEDATASET is TRUE
+! (2) an attribute if MAKEATTRIBUTE is TRUE
+! It does (2) at the root '/' group level, treating the file as if
 ! it were a plain hdf5 file
-! If the file were in fact and hdfeos5 file
+! If the file were in fact an hdfeos5 file
 ! this may result in the dread hybrid file syndrome which may
 ! confuse some hdf-eos5 readers (not tested)
 
@@ -607,13 +691,41 @@ CONTAINS
       integer :: fileID
       integer :: grp_id
       integer :: status
-! Executable
+      CHARACTER (LEN=1), dimension(:), POINTER              :: an40
+      integer :: how_big
+      logical, parameter :: USELENGTHONECHARS = .true.
+      logical, parameter :: MAKEDATASET = .true.
+      logical, parameter :: MAKEATTRIBUTE = .true.
+      character(len=size(anText)) :: anScalar
+      ! Executable
+      if ( MAKEDATASET ) then
+        anScalar = transfer(anText, anScalar)
+        call SaveAsHDF5DS ( fileID, '/PCF', anScalar )
+      endif
+      if ( .not. MAKEATTRIBUTE ) return
       call h5gopen_f(fileID, '/', grp_id, status)
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Error opening hdf5 file root group for annotating with PCF' )
-      call MakeHDF5Attribute(grp_id, &
-       & 'PCF file text', anText, .true.)
+      if ( USELENGTHONECHARS ) then
+        call MakeHDF5Attribute(grp_id, &
+         & 'PCF file text', anText, .true.)
+      else
+        ! Find how big an40 must be to hold anText
+        how_big = 1 + (size(anText)-1)/40
+        allocate(an40(how_big), stat=status)
+        if ( status /= 0 ) &
+          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate // 'an40 for annotating hdfeos5 PCF' )
+        an40 = ' '
+        ! Do some nonsense here
+        call MakeHDF5Attribute(grp_id, &
+         & 'PCF file text', an40, .true.)
+        deallocate(an40, stat=status)
+        if ( status /= PGS_S_SUCCESS) &
+          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & MLSMSG_DeAllocate // 'an40 annotating hdf5 with PCF' )
+      endif
       call h5gclose_f(grp_id, status)
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -631,8 +743,9 @@ CONTAINS
 ! Brief description of subroutine
 ! This subroutine writes the PCF into an HDF-EOS5 file as an attribute.
 ! It does so as file level attributes
+! It does not do so as a dataset because that would create a hybrid file
 ! For unclear reasons the attributes are stored as an array of 40-length chars
-
+! Unless the parameter USELENGTHONECHARS is true
 ! Arguments
 
       CHARACTER (LEN=1), POINTER              :: anText(:)
@@ -646,25 +759,43 @@ CONTAINS
       integer :: status
       CHARACTER (LEN=40), POINTER             :: an40(:)
       integer :: how_big
+      logical, parameter :: USELENGTHONECHARS = .true.
 ! Executable
-! Find how big an40 must be to hold anText
+      if ( USELENGTHONECHARS ) then
+        status = he5_EHwrglatt(fileID, &
+         & 'PCF', HE5T_NATIVE_SCHAR, size(anText), &
+         &  anText)
+        if ( status /= PGS_S_SUCCESS) &
+          & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+          & 'Error annotating with PCF using length one chars' )
+        return
+      endif
+      ! Find how big an40 must be to hold anText
       how_big = 1 + (size(anText)-1)/40
       allocate(an40(how_big), stat=status)
       if ( status /= 0 ) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
         & MLSMSG_Allocate // 'an40 for annotating hdfeos5 PCF' )
       an40 = ' '
+      ! Do some nonsense here
+      ! (This is clever, but is it necessary?)
       do i=1, size(anText)
         divisor = (i-1) / 40
         remainder = mod(i-1, 40)
         an40(divisor+1)(remainder+1:remainder+1) = anText(i)
       enddo
+      print *, 'size(anText) ', size(anText)
+      print *, 'how_big ', how_big
+      ! print *, 'an40 '
+      ! do i=1, how_big
+      !  print *, trim(an40(i))
+      ! enddo
       status = he5_EHwrglatt(fileID, &
        & 'PCF', HE5T_NATIVE_SCHAR, how_big, &
        &  an40)
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Error annotating with PCF' )
+        & 'Error annotating with PCF using length 40 chars' )
       deallocate(an40, stat=status)
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -672,6 +803,15 @@ CONTAINS
 !-----------------------------
    END SUBROUTINE WritePCF2Hdr_hdfeos5
 !-----------------------------
+
+  function int_to_char (int) result (chars)
+    ! Arguments
+    integer , intent(in) :: int
+    character(len=16) :: chars
+    ! Executable
+    write(chars, * ) int
+    chars = adjustl(chars)
+  end function int_to_char
 
 !================
   logical function not_used_here()
@@ -682,6 +822,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.14  2003/02/27 21:52:48  pwagner
+!# Added FillTAI93Attribute; tweaks to PCF as attribute; unsatisfactory for hdfeos5
+!#
 !# Revision 2.13  2003/02/12 21:47:05  pwagner
 !# Optional skip_if_already_there arg to h5_writeglobalattr
 !#
