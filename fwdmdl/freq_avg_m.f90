@@ -5,7 +5,7 @@ module Freq_Avg_m
 
   implicit NONE
   private
-  public :: Freq_Avg, Freq_Avg_DACS
+  public :: Freq_Avg, Freq_Avg_Avg, Freq_Avg_DACS, Freq_Avg_Setup
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -23,33 +23,41 @@ contains
 
     use D_CSPLINE_M, only: CSPLINE
     use DSIMPSON_MODULE, only: SIMPS
-    use D_HUNT_M, only: HUNT
-    use MLSCommon, only: I4, R8, RP
+    use MLSCommon, only: R8, RP
 
     real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
     real(rp), intent(in) :: Rad(:)
 
     real(rp), intent(out)   :: Avg
 
-    integer(i4) :: I, Khi, Klo, N, Nfp
-    real(r8) :: dF, Fmax, Fmin, Rmax, Rmin, Tmpary(size(f_grid_fltr))
+    integer :: Khi, Klo
+    real(r8) :: dF
+
+    call freq_avg_setup ( f_grid, f_grid_fltr, klo, khi, dF )
+    call freq_avg_avg ( f_grid, f_grid_fltr, fltr_func, rad, klo, khi, dF, avg )
+
+  end subroutine Freq_Avg
+
+  ! -----------------------------------------------  Freq_Avg_Avg  -----
+  subroutine Freq_Avg_Avg ( F_grid, F_grid_fltr, Fltr_func, Rad, Klo, Khi, dF, &
+                          & Avg )
+
+    use D_CSPLINE_M, only: CSPLINE
+    use DSIMPSON_MODULE, only: SIMPS
+    use MLSCommon, only: R8, RP
+
+    real(r8), intent(in) :: F_grid(:), F_grid_fltr(:), Fltr_func(:)
+    real(rp), intent(in) :: Rad(:)
+    integer, intent(in) :: KLo, KHi
+    real(r8), intent(in) :: dF
+
+    real(rp), intent(out)   :: Avg
+
+    integer :: N, Nfp
+    real(r8) :: Rmax, Rmin, Tmpary(size(f_grid_fltr))
 
     n = size(f_grid)
     nfp = size(f_grid_fltr)
-    i = nfp / 2
-    dF = F_grid_fltr(i+1) - F_grid_fltr(i)
-    if ( dF > 0.0_r8 ) then
-      Fmin = F_grid_fltr(001)
-      Fmax = F_grid_fltr(nfp)
-    else
-      dF = -dF
-      Fmin = F_grid_fltr(nfp)
-      Fmax = F_grid_fltr(001)
-    end if
-
-    klo = -1
-    call Hunt ( Fmin, F_grid, n, klo, i )
-    call Hunt ( Fmax, F_grid, n, i, khi )
 
     rmin = minval(Rad(klo:khi))
     rmax = maxval(Rad(klo:khi))
@@ -59,9 +67,7 @@ contains
     tmpary = tmpary * Fltr_func(1:nfp)
     call Simps ( tmpary, dF, nfp, Avg )
 
-    return
-
-  end subroutine Freq_Avg
+  end subroutine Freq_Avg_Avg
 
   ! ----------------------------------------------  Freq_Avg_DACS  -----
   subroutine Freq_Avg_DACS ( F_grid, DACSFilter, Rad, Avg )
@@ -136,6 +142,41 @@ contains
 
   end subroutine Freq_Avg_DACS
 
+  ! ---------------------------------------------  Freq_Avg_Setup  -----
+  subroutine Freq_Avg_Setup ( F_grid, F_grid_fltr, Klo, Khi, dF )
+
+    ! Determine which frequencies from F_Grid to use to span F_Grid_Fltr
+
+    use D_HUNT_M, only: HUNT
+    use MLSCommon, only: R8
+
+    real(r8), intent(in) :: F_grid(:), F_grid_fltr(:)
+
+    integer, intent(out)   :: Klo, Khi
+    real(r8), intent(out) :: dF
+
+    integer :: I, N, Nfp
+    real(r8) :: Fmax, Fmin
+
+    n = size(f_grid)
+    nfp = size(f_grid_fltr)
+    i = nfp / 2
+    dF = F_grid_fltr(i+1) - F_grid_fltr(i)
+    if ( dF > 0.0_r8 ) then
+      Fmin = F_grid_fltr(001)
+      Fmax = F_grid_fltr(nfp)
+    else
+      dF = -dF
+      Fmin = F_grid_fltr(nfp)
+      Fmax = F_grid_fltr(001)
+    end if
+
+    klo = -1
+    call Hunt ( Fmin, F_grid, n, klo, i )
+    call Hunt ( Fmax, F_grid, n, i, khi )
+
+  end subroutine Freq_Avg_Setup
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -143,6 +184,9 @@ contains
 end module Freq_Avg_m
 
 ! $Log$
+! Revision 2.9  2004/02/14 00:23:48  vsnyder
+! New DACS convolution algorithm
+!
 ! Revision 2.8  2004/02/12 02:20:22  vsnyder
 ! Use SineTables_m for sine tables for FFTs
 !
