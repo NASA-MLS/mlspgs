@@ -142,8 +142,8 @@ end Retrieve
 begin Join
   radL2AUX: l2aux, source=y.band!band, /prefixSignal, sdName=''
   noiseL2AUX: l2aux, source=yNoise.band!band, /prefixSignal, sdName=' precision'
-  ptanGHzL2AUX: l2aux, source=apriori.ptanGHz
-  ptanTHzL2AUX: l2aux, source=apriori.ptanTHz
+  ptanGHzL2AUX: l2aux, source=truth.ptanGHz
+  ptanTHzL2AUX: l2aux, source=truth.ptanTHz
 end Join
 
 ; ---------------------------------------  Output the result
