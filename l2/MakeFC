@@ -85,6 +85,12 @@ TAR=tar
 
 SHELL = /bin/sh
 
+ifdef MLSINSTALLDIR
+   INSTALLDIR=$(MLSINSTALLDIR)
+else
+   INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+
 #--------------- Target definitions
 # $PROG          -- automatic; built when target is not specified
 
@@ -111,7 +117,8 @@ depends_where:=$(libmls_sources) $(srclib) \
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a \
 	  $(libfwdmdl_objs)/libfwdmdl.a \
-	  $(libcloud_objs)/libcloud.a $(REECHO)
+	  $(libcloud_objs)/libcloud.a $(REECHO) \
+     $(INSTALLDIR)/libutctotai.a
 
 ifdef HDFVERSIONS
    PROG_prereqs := $(PROG_prereqs) $(he5lib_objs)/libhe5.a
@@ -217,6 +224,9 @@ $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 	fi ; \
 	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib)
 
+$(INSTALLDIR)/libutctotai.a:
+	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
+
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl2 ghostbuster
 
 tar:
@@ -279,6 +289,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.45  2002/04/29 17:43:29  pwagner
+# Directs build of utctotai library in INSTALLDIR
+#
 # Revision 2.44  2002/01/31 00:34:33  pwagner
 # Tries to get .mod files from he5lib
 #
