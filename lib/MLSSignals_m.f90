@@ -965,12 +965,12 @@ contains
     type(signal_T), intent(in) :: Probe
 
     integer :: BestMatch                ! The smallest number of 
-    integer :: I, J                     ! Loop inductors, subscripts
+    integer :: I                        ! Loop inductors, subscripts
     integer :: NumChannelsMatch
 
     bestMatch = huge(bestMatch)
     matchSignal = 0
-o:  do i = 1, size(signals)
+    do i = 1, size(signals)
       ! First, the signal must have the same band, instrument module,
       ! radiometer, spectrometer, spectrometer type and switch number as
       ! the probe signal
@@ -981,22 +981,19 @@ o:  do i = 1, size(signals)
         &  signals(i)%spectrometerType /= probe%spectrometerType .or. &
         &  signals(i)%switch /= probe%switch ) cycle
       ! Now the channels in Probe all have to be present in Signals(i)
-      numChannelsMatch = 0
-      do j = lbound(probe%channels,1), ubound(probe%channels,1)
-        if ( probe%channels(j) ) then
-          if ( j < lbound(signals(i)%channels,1) .or. &
-            &  j > ubound(signals(i)%channels,1) ) cycle o
-          if ( .not. signals(i)%channels(j) ) cycle o
-          numChannelsMatch = numChannelsMatch + 1
-        end if
-      end do ! j
+      if ( all( (probe%channels .and. &
+        & signals(i)%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
+        & .eqv. probe%channels ) ) numChannelsMatch = count(signals(i)%channels)
       if ( numChannelsMatch < bestMatch ) matchSignal = i
-    end do o
+    end do
   end function MatchSignal
 
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.14  2001/04/09 20:16:40  vsnyder
+! Correct numChannelsMatch calculation
+!
 ! Revision 2.13  2001/04/07 01:52:58  vsnyder
 ! Initial cut at MatchSignal
 !
