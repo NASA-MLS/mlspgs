@@ -87,22 +87,26 @@ module QuantityTemplates         ! Quantities within vectors
 
     ! Give the vertical coordinates
 
-    real(r8), dimension(:,:), pointer :: surfs
+    real(r8), dimension(:,:), pointer :: surfs => NULL()
 
     ! This is dimensioned (noSurfs,1) for coherent quantities and
     ! (noSurfs, noInstances) for incoherent ones.
 
     ! Horizontal coordinates
 
-    real(r8), dimension(:,:), pointer :: phi
+    real(r8), dimension(:,:), pointer :: phi => NULL()
 
     ! This is dimensioned (1, noInstances) for stacked quantities and
     ! (noSurfs, noInstances) for unstacked ones.
     
     ! These other coordinates are dimensioned in the same manner:
 
-    real(r8), dimension(:,:), pointer :: geodLat, lon, time, &
-      & solarTime, solarZenith, losAngle
+    real(r8), dimension(:,:), pointer :: geodLat => NULL()
+    real(r8), dimension(:,:), pointer :: lon => NULL()
+    real(r8), dimension(:,:), pointer :: time => NULL()
+    real(r8), dimension(:,:), pointer :: solarTime => NULL()
+    real(r8), dimension(:,:), pointer :: solarZenith => NULL()
+    real(r8), dimension(:,:), pointer :: losAngle => NULL()
 
     ! These optional integer arrays are used for minor frame quantities,
     ! to index the major frames.
@@ -117,7 +121,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! to those.
 
     integer :: frequencyCoordinate ! An enumerated type, e.g. FG_USBFreq
-    real(r8), dimension(:), pointer :: frequencies ! List of frequencies
+    real(r8), dimension(:), pointer :: frequencies => NULL() ! List of frequencies
                                                    ! (noChans)
 
     real(r8) :: lo     ! Local oscillator (optional)
@@ -137,8 +141,8 @@ module QuantityTemplates         ! Quantities within vectors
     ! For irregular quantities, instead of using the we have these arrays to
     ! help us navigate around the quantity.
 
-    integer, dimension(:,:), pointer :: surfIndex
-    integer, dimension(:,:), pointer :: chanIndex
+    integer, dimension(:,:), pointer :: surfIndex => NULL()
+    integer, dimension(:,:), pointer :: chanIndex => NULL()
     ! These are actually dimensioned (instanceLen, noInstances)
   end type QuantityTemplate_T
 
@@ -376,6 +380,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.4  2001/02/14 00:12:34  livesey
+! Removed firstIndexChannel
+!
 ! Revision 2.3  2001/02/09 00:38:56  livesey
 ! Various changes
 !
