@@ -382,6 +382,12 @@ begin spectroscopy
     lines=[ Cl_35_O_L1, Cl_35_O_L2, Cl_35_O_L3, Cl_35_O_L4, Cl_35_O_L5, $
     Cl_35_O_L6, Cl_35_O_L7, Cl_35_O_L8, Cl_35_O_L9, Cl_35_O_L10 ]
 
+  ;; ----------------------------------- EXTINCTION
+
+
+  spectra, molecule= EXTINCTION, Qlog=[ 0.0000, 0.0000, 0.0000 ], $
+    continuum=[ 1.00000 ]
+
   ;; ----------------------------------- HCl_35
 
   HCl_35_L1: line, v0= 625901.6030 MHz, el= 0.0000000, str= -1.3118, $
