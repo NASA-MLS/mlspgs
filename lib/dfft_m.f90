@@ -293,7 +293,7 @@ contains
 !--D replaces "?": ?FFT, C?FFTC
 !     -----------------------------------------------------------------
       INTEGER I, I1, I2, I3, IJ
-      INTEGER J, JDIF, JGO, JI, JI2, JJ, JR
+      INTEGER J, JDIF, JI, JI2, JJ, JR
       INTEGER K, KSI
       INTEGER L, L1, L4, LJ, LL
       INTEGER MTC
@@ -955,6 +955,9 @@ ii_l:      do
 end module DFFT_M
 
 ! $Log$
+! Revision 2.8  2004/01/29 19:54:35  vsnyder
+! Remove unused variable
+!
 ! Revision 2.7  2004/01/29 01:57:10  vsnyder
 ! Replace DFFT subroutine with version from Math77.6.1
 !
