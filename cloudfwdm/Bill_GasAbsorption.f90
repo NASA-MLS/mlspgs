@@ -27,7 +27,7 @@ contains
 !      LATEST UPDATE: J.JIANG, NOVEMBER 14, 2001
 !==============================================================
 
-    use CREATE_BETA_M, only: CREATE_BETA
+    use Get_Beta_Path_m, only: CREATE_BETA
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
       & DESTROYCOMPLETESLABS
     use MLSCommon, only: R8, RP, IP
@@ -141,7 +141,7 @@ contains
     myLosVel=losVel*0.00_rp   ! The Doppler correction already been done 
                               ! in the FullCloudForwardModel, so set it 0
 
-    call get_gl_slabs_arrays( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
+    call get_gl_slabs_arrays ( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
       & gl_slabs, Do_1D, true_path_flags )
 
 ! Note that expa only depends on temperature.
@@ -198,6 +198,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.20  2003/07/04 02:49:12  vsnyder
+! Simplify interface to Get_GL_Slabs_Arrays
+!
 ! Revision 1.19  2003/06/18 14:43:26  bill
 ! modified interface to get_gl_slabs_arrays
 !
