@@ -44,24 +44,25 @@ MODULE QuantityTemplates         ! Quantities within vectors
   INTEGER, PARAMETER :: QTY_Baseline=5
   INTEGER, PARAMETER :: QTY_Extinction=6
 
-  ! This set of integers defines another enumerated type describing the types
-  ! of `horizontal' divisions there can be in vector quantities
+  ! This set of integers defines how quantities are broken into `channels'
+  ! These are known as FGrid information.  Rather than have an FGrid module,
+  ! for the moment we'll just handle this information here. This may be split
+  ! out in later versions of the code.
 
-  INTEGER, PARAMETER :: NoHDTypes=5
-  CHARACTER (LEN=13), PARAMETER, DIMENSION(NoHDTypes) :: &
-       & HDTypeNames= (/ &
-       & "L2GP profile ", &
-       & "Major Frame  ", &
-       & "Orbital      ", &
-       & "Temporal     ", &
-       & "Constant     "/)
-  
-  INTEGER, PARAMETER :: HD_Invalid=0
-  INTEGER, PARAMETER :: HD_L2GProfile=1
-  INTEGER, PARAMETER :: HD_MAF=2
-  INTEGER, PARAMETER :: HD_Orbital=3
-  INTEGER, PARAMETER :: HD_Temporal=4
-  INTEGER, PARAMETER :: HD_Constant=5
+  INTEGER, PARAMETER :: NoFGTypes=5
+  CHARACTER (LEN=24), PARAMETER, DIMENSION(NoFGTypes) :: &
+       & FGTypeNames= (/ &
+       & "No frequency dependence ", &
+       & "MLS Channel             ", &
+       & "Intermediate Frequecny  ", &
+       & "Upper Sideband Frequency", &
+       & "Lower Sideband Frequency"/)
+  INTEGER, PARAMETER :: FG_Invalid=0
+  INTEGER, PARAMETER :: FG_None=1
+  INTEGER, PARAMETER :: FG_InstrumentChannel=2
+  INTEGER, PARAMETER :: FG_IntermediateFrequency=3
+  INTEGER, PARAMETER :: FG_USBFrequency=4
+  INTEGER, PARAMETER :: FG_LSBFrequency=5
 
   ! First we'll define some global parameters and data types.
 
@@ -121,7 +122,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
      ! Now we define how the data in each subvector is stored whether by
      ! surface or channels (regular quantities only).
 
-     INTEGER :: surfStride, chanStride
+     LOGICAL :: firstIndexChannel
 
      ! Now we give the vertical coordinates
 
@@ -146,11 +147,6 @@ MODULE QuantityTemplates         ! Quantities within vectors
 
      INTEGER, DIMENSION(:), POINTER :: subVectorIndex
 
-     ! This integer is an enumerated type which defines how the `horizontal'
-     ! profiles in a quantity are divided.
-
-     INTEGER :: horizontalDivision 
-
      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      ! For quantities containing `channels' the following information may or
      ! may not be useful.
@@ -158,8 +154,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
      ! Some quantities are on abritrary freqency grids, these quantities refer
      ! to those.
 
-     INTEGER :: frequencyCoordinate ! An enumerated type, explains next fields
-
+     INTEGER :: frequencyCoordinate ! An enumerated type, e.g. FG_USBFreq
      REAL(r8), DIMENSION(:), POINTER :: frequencies 
      ! List of frequencies (noChans)
 
@@ -175,8 +170,9 @@ MODULE QuantityTemplates         ! Quantities within vectors
      
      ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-     ! Now for irregular quantities, instead of using the stride information,
-     ! we have these arrays to help us navigate around the quantity.
+     ! Now for irregular quantities, instead of using the firstIndexChannel
+     ! information, we have these arrays to help us navigate around the
+     ! quantity.
 
      INTEGER, DIMENSION(:,:), POINTER :: surfIndex
      INTEGER, DIMENSION(:,:), POINTER :: chanIndex
@@ -198,7 +194,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
   ! modifications), or created from scratch.
 
   SUBROUTINE SetupNewQuantityTemplate(qty, source, noSubVectors, noSurfs, &
-       & noChans, coherent, stacked, regular, subVectorLen, storeByChannel, &
+       & noChans, coherent, stacked, regular, subVectorLen, firstIndexChannel, &
        & minorFrame)
 
     ! Dummy arguments
@@ -212,12 +208,12 @@ MODULE QuantityTemplates         ! Quantities within vectors
     LOGICAL, INTENT(IN), OPTIONAL :: stacked
     LOGICAL, INTENT(IN), OPTIONAL :: regular
     INTEGER, INTENT(IN), OPTIONAL :: subVectorLen
-    LOGICAL, INTENT(IN), OPTIONAL :: storeByChannel
+    LOGICAL, INTENT(IN), OPTIONAL :: firstIndexChannel
     LOGICAL, INTENT(IN), OPTIONAL :: minorFrame
 
     ! Local variables
     INTEGER :: status           ! Status from allocates etc.
-    LOGICAL :: useStoreByChannel ! Copy of store by channel
+    LOGICAL :: useFirstindexchannel ! Copy of store by channel
     INTEGER :: noSurfsToAllocate ! For allocations
     INTEGER :: noSubVectorsToAllocate ! For allocations
 
@@ -273,23 +269,10 @@ MODULE QuantityTemplates         ! Quantities within vectors
        qty%subVectorLen=qty%noSurfs*qty%noChans
     ENDIF
 
-    ! Deal with the storeByChannel argument
-    useStoreByChannel=.FALSE.
-    IF (PRESENT(storeByChannel)) useStoreByChannel=storeByChannel
-
-    ! Now think about strides
-    IF (qty%regular) THEN
-       IF (useStoreByChannel) THEN
-          qty%surfStride=qty%noChans
-          qty%chanStride=1
-       ELSE
-          qty%chanStride=qty%noSurfs
-          qty%surfStride=1
-       ENDIF
-    ELSE
-       qty%surfStride=0
-       qty%chanStride=0
-    ENDIF
+    ! Deal with the firstindexchannel argument
+    useFirstindexchannel=.TRUE.
+    IF (PRESENT(firstindexchannel)) useFirstindexchannel=firstindexchannel
+    qty%firstIndexChannel=useFirstIndexChannel
 
     ! Now we allocate all the arrays we're going to need
 
@@ -452,6 +435,9 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.7  2000/01/18 21:27:00  livesey
+! Added noSubVectors(Lower/Upper)Overlap, copied from HGrid or similar.
+!
 ! Revision 1.6  2000/01/12 20:55:49  livesey
 ! Added minorFrame flag.
 !
