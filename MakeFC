@@ -2,7 +2,7 @@
 #
 #  Lost? Type 'make help -f MakeFC' from the directory where you see this file
 #
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # ---------------------- The name of this file (is the right-hand-side below)
@@ -56,9 +56,9 @@ NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
 MLSHOME := $(shell pwd)
 
 # where to store .configure; 
-# also where to install mls programs by default
 CONFDIR=.
 
+# also where to install mls programs by default
 ifdef MLSINSTALLDIR
    INSTALLDIR=$(MLSINSTALLDIR)
 else
@@ -215,8 +215,11 @@ SHELL = /bin/sh
 # heconvert      -- build and install this prog
 # hl             -- build and install this prog
 # init_gen       -- build and install this prog
-# MLS_h5ls          -- build and install this prog
+# killmaster     -- build and install this prog
+# machineok      -- build and install this prog
+# MLS_h5ls       -- build and install this prog
 # utctotai       -- build and install this lib
+# WordSplit      -- build and install this prog
 #
 #    The following are useful if you stored multiple configurations
 #     besides current one
@@ -763,6 +766,18 @@ hl: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/hl.c
 	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
       $(UTIL_OPTS) -main hl.c
 
+killmaster: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/killmaster.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main killmaster.c
+
+machineok: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/machineok.c
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main machineok.c
+
 MLS_h5ls: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/MLS_h5ls.f90 l1
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -773,6 +788,12 @@ utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
 		-c $(MLSCONFG) -p $@ -M $(MAKE) -T lib -ni\
 		-C $(MLSCFILE) $(utctotai_sources)
 		mv ./tests/misc/$(MLSCONFG)/libmisc.a $(INSTALLDIR)/libutctotai.a
+
+WordSplit: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/WordSplit.f90
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 # allow user to forego "-f MakeFC" nonsense
 makefile:
 	@if [ $(COPY_NUMBER) -lt $(MAX_COPIES) ] ; then \
@@ -1088,10 +1109,13 @@ update:
   makefile mostlyclean $(SUBDIRS) subdirs\
   tar substar tarz substarz targ substarg substars update\
   CondenseLeakLog end_stmts f90tex heconvert init_gen h5subset h5cat \
-  hl MLS_h5ls utctotai
+  hl killmaster machineok MLS_h5ls utctotai WordSplit
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.86  2003/10/15 17:00:25  pwagner
+# Installs mlsl2p.sh slavetmplt.sh in (INSTALLDIR), too
+#
 # Revision 1.85  2003/09/30 00:10:11  pwagner
 # Added build of util/command
 #

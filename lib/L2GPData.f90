@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -10,17 +10,21 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     & DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use HDFEOS, only: SWATTACH, SWDETACH, SWINQDIMS
   use Intrinsic ! "units" type literals, beginning with L_
-  use MLSCommon, only: R4, R8
+  use MLSCommon, only: I4, R4, R8
   use MLSFiles, only: FILENOTFOUND, &
-    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
-    & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_EXISTS
+    & HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, WRONGHDFVERSION, &
+    & MLS_HDF_VERSION, MLS_INQSWATH, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    & MLS_EXISTS
   use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
-  use MLSStrings, only: Capitalize, ExtractSubString, GetStringHashElement, &
-    & ints2Strings, list2array, lowercase, strings2Ints, StringElementNum
+  use MLSStrings, only: Capitalize, ExtractSubString, &
+    & GetStringHashElement, GetStringElement, &
+    & ints2Strings, list2array, lowercase, NumStringElements, &
+    & strings2Ints, StringElementNum
   use OUTPUT_M, only: OUTPUT
-  use PCFHdr, only: GA_VALUE_LENGTH
+  use PCFHdr, only: GA_VALUE_LENGTH, GlobalAttributes_T, GlobalAttributes, &
+    & he5_readglobalattr, he5_writeglobalattr
   use STRING_TABLE, only: DISPLAY_STRING
 
   implicit none
@@ -28,9 +32,10 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   private
   public :: L2GPData_T
   public :: L2GPNameLen
-  public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
-    & Dump, ExpandL2GPDataInPlace, AppendL2GPData, &
-    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData
+  public :: AddL2GPToDatabase, AppendL2GPData, cpL2GPData, &
+    & DestroyL2GPContents,  DestroyL2GPDatabase, Dump, &
+    & ExpandL2GPDataInPlace, &
+    & ReadL2GPData, SetupNewL2GPRecord, WriteL2GPData
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -44,6 +49,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface DUMP
     module procedure DUMP_L2GP
     module procedure DUMP_L2GP_DataBase
+    module procedure DumpL2GP_attributes_hdf5
   end interface
 
   interface ReadL2GPData
@@ -54,6 +60,11 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   interface AppendL2GPData
     module procedure AppendL2GPData_fileID
     module procedure AppendL2GPData_fileName
+  end interface
+
+  interface cpL2GPData
+    module procedure cpL2GPData_fileID
+    module procedure cpL2GPData_fileName
   end interface
 
   ! This module defines datatypes and gives basic routines for storing and
@@ -84,10 +95,18 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   ! r4 corresponds to sing. prec. :: same as stored in files
   integer, public, parameter :: rgp = r4
 
-  integer, parameter :: CHARATTRLEN = GA_VALUE_LENGTH
+  ! How long may the list of swath names grow (~80 x max num. of swaths/file)
+  integer, public, parameter :: MAXNUMSWATHPERFILE = 200
+  integer, public, parameter :: MAXSWATHNAMESBUFSIZE = 80*MAXNUMSWATHPERFILE
+
+  ! TRUE means we can avoid using unlimited dimension and its time penalty
+  logical, public            :: AVOIDUNLIMITEDDIMS = .true.
+
+  integer, parameter :: CHARATTRLEN = 255   ! was GA_VALUE_LENGTH
   real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
   integer, parameter :: L2GPNameLen = 80
   integer, parameter :: NumGeolocFields = 10
+  integer, parameter :: MAXNLEVELS = 1000
 
    ! The following are the current data fields
    character (len=*), parameter :: DATA_FIELD1 = 'L2gpValue'
@@ -202,7 +221,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      ! We always write this data field
      ! However, because some l2gp files were created incorrectly,
      ! It takes a special forcing option to read it
-     character (len=1), pointer, dimension(:) :: status=>NULL()
+     ! character (len=1), pointer, dimension(:) :: status=>NULL()
+     ! Now we've changed our minds: status will be a 4-byte integer
+     integer(i4), pointer, dimension(:) :: status=>NULL()
      !                (status is a reserved word in F90)
      real (rgp), pointer, dimension(:) :: quality=>NULL()
      ! Both the above dimensioned (nTimes)
@@ -221,7 +242,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 contains ! =====     Public Procedures     =============================
 
   !------------------------------------------  SetupNewL2GPRecord  -----
-  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes, &
+  subroutine SetupNewL2GPRecord ( l2gp, nFreqs, nLevels, nTimes, nTimesTotal, &
     & FillIn)
 
     ! This routine sets up the arrays for an l2gp datatype.
@@ -231,10 +252,11 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: nFreqs            ! Dimensions
     integer, intent(in), optional :: nLevels           ! Dimensions
     integer, intent(in), optional :: nTimes            ! Dimensions
+    integer, intent(in), optional :: nTimesTotal       ! Dimensions
     logical, intent(in), optional :: FillIn    ! Fill with MissingValue
 
     ! Local variables
-    integer :: useNFreqs, useNLevels, useNTimes
+    integer :: useNFreqs, useNLevels, useNTimes, useNTimesTotal
 
     if ( present(nFreqs) ) then
        useNFreqs=nFreqs
@@ -254,10 +276,21 @@ contains ! =====     Public Procedures     =============================
        useNTimes=0              ! Default to empty l2gp
     end if
 
+    if ( present(nTimesTotal) ) then
+       useNTimesTotal=nTimesTotal
+    else
+       useNTimesTotal=0              ! Default to empty l2gp
+    end if
+
+    ! Sanity
+    useNTimesTotal = max(useNTimesTotal, useNTimes)
+    if ( useNLevels > MAXNLEVELS ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'Too many levels in SetUpNewL2GPRecord')
     ! Store the dimensionality
 
     l2gp%nTimes = useNTimes
-    l2gp%nTimesTotal = useNTimes
+    l2gp%nTimesTotal = useNTimesTotal
     l2gp%nLevels = useNLevels
     l2gp%nFreqs = useNFreqs
 
@@ -308,7 +341,8 @@ contains ! =====     Public Procedures     =============================
     l2gp%chunkNumber = l2gp%MissingValue
     l2gp%l2gpValue = l2gp%MissingValue
     l2gp%l2gpPrecision = l2gp%MissingValue
-    l2gp%status = ' '
+    l2gp%status = l2gp%MissingValue
+    ! l2gp%status = ' '
     l2gp%quality = l2gp%MissingValue
 
   end subroutine SetupNewL2GPRecord
@@ -673,6 +707,9 @@ contains ! =====     Public Procedures     =============================
     else
       nDims = HE5_SWinqdims(swid, list, dims)
     endif
+    if ( DEEBUG ) print *, 'dimlist: ', trim(list)
+    if ( DEEBUG ) print *, 'ndims: ', ndims
+    if ( DEEBUG ) print *, 'dims: ', dims
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'Failed to get dimension information on hdfeos5 swath ' // trim(swathname))
     if ( index(list,'nLevels') /= 0 ) lev = 1
@@ -772,12 +809,16 @@ contains ! =====     Public Procedures     =============================
 
     else
 
-       myNumProfs = nTimes - first
+       myNumProfs = l2gp%nTimes - first
 
     endif
 
     ! Allocate result
-
+    if ( DEEBUG ) then
+      print *, 'nFreqs: ', nFreqs
+      print *, 'nLevels: ', nLevels
+      print *, 'mynumProfs: ', mynumProfs
+    endif
     call SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, &
       &  nTimes=mynumProfs, FillIn = .true.)
 
@@ -894,7 +935,8 @@ contains ! =====     Public Procedures     =============================
     
     ! Read the data fields that are 1-dimensional
 
-    l2gp%status = ' ' ! So it has a value.
+    l2gp%status = l2gp%MissingValue ! So it has a value.
+    ! l2gp%status = ' ' ! So it has a value.
     if ( ReadingStatus) &
       & status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
       & l2gp%status, hdfVersion=hdfVersion, dontfail=.true. )
@@ -932,7 +974,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------  OutputL2GP_createFile_hdf  -----
   subroutine OutputL2GP_createFile_hdf (l2gp, L2FileHandle, hdfVersion, &
-    & swathName, fileName, nLevels, notUnlimited)
+    & swathName, fileName, nLevels, notUnlimited, compressTimes)
 
   use HDFEOS5, only: HE5_SWdetach, &
     & HE5S_UNLIMITED_F, &
@@ -950,7 +992,8 @@ contains ! =====     Public Procedures     =============================
     character (LEN=*), optional, intent(IN) :: swathName ! Defaults to l2gp%swathName
     character (LEN=*), optional, intent(IN) :: fileName
     integer, optional, intent(in) :: nLevels
-    logical, optional, intent(in) :: notUnlimited
+    logical, optional, intent(in) :: notUnlimited   !               as nTimes
+    logical, optional, intent(in) :: compressTimes  ! don't store nTimesTotal
     ! Parameters
 
     character (len=*), parameter :: DIM_ERR = 'Failed to define dimension '
@@ -971,6 +1014,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: SWID, STATUS
     logical :: myNotUnlimited
+    logical :: mycompressTimes
     ! integer, external :: he5_swsetfill
 
     if (present(swathName)) then
@@ -980,6 +1024,8 @@ contains ! =====     Public Procedures     =============================
     endif
     myNotUnlimited = .false.
     if ( present ( notUnlimited ) ) myNotUnlimited = notUnlimited
+    mycompressTimes = .false.
+    if ( present (compressTimes ) ) mycompressTimes = compressTimes
     
     ! Work out the chunking
     if ( myNotUnlimited ) then
@@ -1036,7 +1082,14 @@ contains ! =====     Public Procedures     =============================
       print *, 'nLevels ', l2gp%nLevels
       print *, 'nFreqs ', l2gp%nFreqs
     endif
-    status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimesTotal,1), &
+    if ( mycompressTimes ) then
+      status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimes,1), &
+        & hdfVersion=hdfVersion)
+    else
+      status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimesTotal,1), &
+        & hdfVersion=hdfVersion)
+    endif
+    status = mls_swdefdim(swid, 'nTimesTotal', max(l2gp%nTimesTotal,1), &
       & hdfVersion=hdfVersion)
 
     if ( l2gp%nLevels > 0 ) then
@@ -1378,6 +1431,7 @@ contains ! =====     Public Procedures     =============================
     swid = mls_SWattach (l2FileHandle, name, hdfVersion=hdfVersion)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
+       if (DEEBUG) print *, 'start, stride, edge ', start, stride, edge
        status = mls_SWwrfld(swid, 'L2gpValue', start, stride, edge, &
             & reshape(real(l2gp%l2gpValue), (/size(l2gp%l2gpValue)/)), &
             & hdfVersion=hdfVersion )
@@ -1388,6 +1442,7 @@ contains ! =====     Public Procedures     =============================
     else if ( l2gp%nLevels > 0 ) then
        ! Value and Precision are 2-D fields
       
+       if (DEEBUG) print *, 'start, stride, edge: ', start(2:3), stride(2:3), edge(2:3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(2:3), stride(2:3), &
             edge(2:3), real(l2gp%l2gpValue(1,:,:) ), hdfVersion=hdfVersion)
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(2:3), stride(2:3), &
@@ -1395,6 +1450,7 @@ contains ! =====     Public Procedures     =============================
     else
 
        ! Value and Precision are 1-D fields
+       if (DEEBUG) print *, 'start, stride, edge: ', start(3), stride(3), edge(3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(3:3), stride(3:3), edge(3:3), &
             real(l2gp%l2gpValue(1,1,:) ), hdfVersion=hdfVersion)
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(3:3), stride(3:3), edge(3:3), &
@@ -1576,6 +1632,8 @@ contains ! =====     Public Procedures     =============================
     call GetStringHashElement (UniqueFieldDefKeys, &
       & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
       & expnd_uniq_fdef, .false.)
+    if ( expnd_uniq_fdef == '' .or. expnd_uniq_fdef == ',' ) &
+      & expnd_uniq_fdef = 'MLS-Specific'
     select case (trim(lowercase(species_name)))
     case ('temperature')
       units_name = 'K'
@@ -1611,8 +1669,10 @@ contains ! =====     Public Procedures     =============================
       & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Status')
     status = mls_swwrlattr(swid, 'Status', 'Units', &
       & HE5T_NATIVE_SCHAR, 1, 'NoUnits')
-    status = mls_swwrlattr(swid, 'Status', 'MissingValue', &
-      & HE5T_NATIVE_SCHAR, 1, ' ' )
+    status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
+      & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
+    ! status = mls_swwrlattr(swid, 'Status', 'MissingValue', &
+    !   & HE5T_NATIVE_SCHAR, 1, ' ' )
     status = mls_swwrlattr(swid, 'Status', &
       & 'UniqueFieldDefinition', &
       & HE5T_NATIVE_SCHAR, 1, 'MLS-Specific')
@@ -1694,7 +1754,8 @@ contains ! =====     Public Procedures     =============================
 
   ! This subroutine is an amalgamation of the last three
   ! Should be renamed CreateAndWriteL2GPData
-  subroutine WriteL2GPData(l2gp, l2FileHandle, swathName, filename, hdfVersion)
+  subroutine WriteL2GPData(l2gp, l2FileHandle, swathName, filename, hdfVersion, &
+    & notUnlimited)
 
     ! Arguments
 
@@ -1703,6 +1764,7 @@ contains ! =====     Public Procedures     =============================
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     character (LEN=*), optional, intent(IN) ::fileName
     integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: notUnlimited
     ! Exectuable code
 
     ! Local
@@ -1716,13 +1778,15 @@ contains ! =====     Public Procedures     =============================
     endif
 
     call OutputL2GP_createFile_hdf (l2gp, l2FileHandle, myhdfVersion, &
-      & swathName, filename)
+      & swathName, filename, notUnlimited=notUnlimited)
     call OutputL2GP_writeGeo_hdf (l2gp, l2FileHandle, myhdfVersion, &
       & swathName)
     call OutputL2GP_writeData_hdf (l2gp, l2FileHandle, myhdfVersion, &
       & swathName)
     if (myhdfVersion == HDFVERSION_5) then
+      if ( DEEBUG ) print *, 'Outputting attributes'
       call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
+      if ( DEEBUG ) print *, 'Setting aliases'
       call SetL2GP_aliases (l2gp, l2FileHandle, swathName)
     endif
 
@@ -1730,7 +1794,8 @@ contains ! =====     Public Procedures     =============================
   !-------------------------------------------------------------
 
   subroutine AppendL2GPData_fileID(l2gp, l2FileHandle, &
-    & swathName, filename, offset, TotNumProfs, hdfVersion, createSwath)
+    & swathName, filename, offset, lastProfile, TotNumProfs, hdfVersion, &
+    & createSwath)
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
     ! in the file has offset==0). If this runs off the end of the swath, 
@@ -1751,13 +1816,14 @@ contains ! =====     Public Procedures     =============================
     ! This (offset) is the point in the swath at which the data is written. 
     ! First profile in the file has offset==0. If the swath in the file is 
     ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
-    integer,intent(IN),optional::offset
+    integer, intent(IN), optional::offset
     ! TotNumProfs is a new argument. It seems only to be used if we are 
     ! creating a swath, rather than adding to one. In that case I guess
     ! it is the total number of profiles in the swath created. I also 
     ! guess that this is done so that we can avoid growing and re-growing 
     ! the swath.
-    integer,intent(IN),optional::TotNumProfs
+    integer, intent(IN), optional::TotNumProfs
+    integer, intent(IN), optional::lastProfile
     integer, optional, intent(in) :: hdfVersion ! better be 4 or 5!
     logical, intent(in), optional :: createSwath
     ! Local
@@ -1780,7 +1846,9 @@ contains ! =====     Public Procedures     =============================
     ! of TotNumProfs with myLastProfile as they are equal if TotNumProfs
     ! is present and cause a crash if it is not. Another occurrance seemed 
     ! wrong anyway, so I commented it out.
-    if (present(TotNumProfs)) then
+    if (present(lastProfile)) then
+      myLastProfile = lastProfile 
+    elseif (present(TotNumProfs)) then
       myLastProfile = TotNumProfs 
     else
       myLastProfile = L2GP%nTimesTotal
@@ -1821,11 +1889,13 @@ contains ! =====     Public Procedures     =============================
           & myswathName, filename, notUnlimited=.false. .and. present(totNumProfs))
         l2gp%nTimes = actual_ntimes
       case (HDFVERSION_5)
-        ! Currently force unlimited, remove the .false. .and. to allow limited
+        ! By default allow limited; 
+        ! may force unlimited by setting avoidUnlimitedDims to FALSE
         ! if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
         call OutputL2GP_createFile_hdf (l2gp, L2FileHandle, myhdfVersion, &
-          & myswathName, filename, notUnlimited=present(totNumProfs))
-          ! & myswathName, filename, notUnlimited=.false. .and. present(totNumProfs))
+          & myswathName, filename,&
+          & notUnlimited=(avoidUnlimitedDims .and. present(totNumProfs)) )
+          ! & myswathName, filename, notUnlimited=present(totNumProfs))
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Illegal hdf version in AppendL2GPData_fileName')
@@ -1834,8 +1904,13 @@ contains ! =====     Public Procedures     =============================
     endif
 
     if(DEEBUG) then
-      print*,"offset=",offset,"myLastProfile=",myLastProfile,&
+      if ( present(offset) ) then
+        print*,"offset=",offset,"myLastProfile=",myLastProfile,&
         "size(l2gp%l2gpValue,3)=",size(l2gp%l2gpValue,3)
+      else
+        print*,"no offset; myLastProfile=",myLastProfile,&
+        "size(l2gp%l2gpValue,3)=",size(l2gp%l2gpValue,3)
+      endif
     endif
     ! This line caused an error because TotNumProfs is optional and 
     ! is not here checked for present-ness. 
@@ -1845,6 +1920,8 @@ contains ! =====     Public Procedures     =============================
         & "No profiles in this chunk" )
 
     else
+      ! actual_ntimes = l2gp%nTimes
+      ! l2gp%nTimes = max(myLastProfile - offset + 1, 1)
       call OutputL2GP_writeGeo_hdf (l2gp, l2FileHandle, myHDFVersion, &
         & myswathName, offset)
       call OutputL2GP_writeData_hdf (l2gp, l2FileHandle, myHDFVersion, &
@@ -1860,14 +1937,15 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Unrecognized hdfVersion passed to AppendL2GPData" )
       end select
+      ! l2gp%nTimes = actual_ntimes
     end if
 
   end subroutine AppendL2GPData_fileID
 
-  ! ---------------------- AppendL2GPData_fileName  -----------------------------
+  ! ---------------------- AppendL2GPData_fileName  ---------------------------
 
   subroutine AppendL2GPData_fileName(l2gp, fileName, &
-    & swathname, offset, TotNumProfs, hdfVersion)
+    & swathname, offset, lastProfile, TotNumProfs, hdfVersion)
     !------------------------------------------------------------------------
 
     ! Given a file name,
@@ -1880,6 +1958,7 @@ contains ! =====     Public Procedures     =============================
     type( l2GPData_T ), intent(inout) :: l2gp ! Result
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     integer,intent(IN),optional :: offset
+    integer, intent(IN), optional::lastProfile
     integer,intent(IN),optional :: TotNumProfs
     integer, optional, intent(in) :: hdfVersion
     ! logical, optional, intent(in) :: clean   ! Not implemented yet
@@ -1925,13 +2004,210 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
     call AppendL2GPData_fileID(l2gp, L2FileHandle, swathname, &
-      & FileName, offset, totNumProfs=totNumProfs, hdfVersion=the_hdfVersion)
+      & FileName, offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
+      & hdfVersion=the_hdfVersion)
     status = mls_io_gen_closeF('swclose', L2FileHandle, FileName=FileName, &
       & hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to close L2gp file: " // trim(FileName) // ' after appending')
   end subroutine AppendL2GPData_fileName
+
+  ! ---------------------- cpL2GPData_fileID  ---------------------------
+
+  subroutine cpL2GPData_fileID(file1, file2, swathList, hdfVersion, &
+    & notUnlimited)
+    !------------------------------------------------------------------------
+
+    ! Given file names file1 and file2,
+    ! This routine copies swathList from 1 to 2
+
+    ! Arguments
+
+    integer, intent(in) :: file1 ! handle of file 1
+    integer, intent(in) :: file2 ! handle of file 1
+    character (len=*), intent(in) :: swathList
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: notUnlimited
+
+    ! Local variables
+    logical, parameter            :: countEmpty = .true.
+    type (L2GPData_T) :: l2gp
+    integer :: i
+    integer :: noSwaths
+    character (len=L2GPNameLen) :: swath
+    
+    ! Executable code
+    noSwaths = NumStringElements(trim(swathList), countEmpty)
+    if ( noSwaths < 1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No swaths cp to file--unable to count swaths in ' // trim(swathList) )
+    endif
+    ! Loop over swaths in file 1
+    do i = 1, noSwaths
+      call GetStringElement (trim(swathList), swath, i, countEmpty )
+      ! Allocate and fill l2gp
+      if ( DEEBUG ) print *, 'Reading swath from file: ', trim(swath)
+      call ReadL2GPData ( file1, trim(swath), l2gp, &
+           & hdfVersion=hdfVersion )
+      if ( DEEBUG ) then
+        print *, 'Writing swath to file: ', trim(swath)
+        print *, 'l2gp%nFreqs:  ', l2gp%nFreqs
+        print *, 'l2gp%nLevels: ', l2gp%nLevels
+        print *, 'l2gp%nTimes:  ', l2gp%nTimes
+        print *, 'shape(l2gp%l2gpvalue):  ', shape(l2gp%l2gpvalue)
+      endif
+      ! Write the filled l2gp to file2
+      call WriteL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion, &
+        & notUnlimited=notUnlimited)
+      call DestroyL2GPContents ( l2gp )
+    enddo
+       
+  end subroutine cpL2GPData_fileID
+
+  ! ---------------------- cpL2GPData_fileName  ---------------------------
+
+  subroutine cpL2GPData_fileName(file1, file2, create2, hdfVersion, swathList, &
+    & notUnlimited, andGlAttributes)
+    !------------------------------------------------------------------------
+
+    ! Given file names file1 and file2,
+    ! This routine copies all the l2gpdata from 1 to 2
+    ! (see cpL2GPData_fileID)
+    ! If file2 doesn't exist yet, or if create2 is TRUE, it'll create it
+
+    ! Arguments
+
+    character (len=*), intent(in) :: file1 ! Name of file 1
+    character (len=*), intent(in) :: file2 ! Name of file 2
+    logical, optional, intent(in) :: create2
+    logical, optional, intent(in) :: andGlAttributes
+    integer, optional, intent(in) :: hdfVersion
+    character (len=*), optional, intent(in) :: swathList
+    logical, optional, intent(in) :: notUnlimited
+
+    ! Local
+    integer :: File1Handle
+    integer :: File2Handle
+    integer :: record_length
+    integer :: status
+    integer :: the_hdfVersion
+    logical :: file_exists
+    integer :: file_access
+    integer :: listsize
+    integer :: noSwaths
+    character (len=MAXSWATHNAMESBUFSIZE) :: mySwathList
+    type(GlobalAttributes_T) :: gAttributes
+    type(GlobalAttributes_T) :: gAttributesOriginal
+    character(len=40)        :: ProcessLevel
+    integer                  :: DayofYear
+    double precision         :: TAI93At0zOfGranule
+    logical                  :: myandGlAttributes
+    
+    ! Executable code
+    the_hdfVersion = L2GPDEFAULT_HDFVERSION
+    if ( present(hdfVersion) ) the_hdfVersion = hdfVersion
+    file_exists = ( mls_exists(trim(File1)) == 0 )
+    if ( .not. file_exists ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'File 1 not found; make sure the name and path are correct' &
+        & // trim(file1) )
+    endif
+    if ( the_hdfVersion == WILDCARDHDFVERSION ) then
+      the_hdfVersion = mls_hdf_version(File1, hdfVersion)
+      if ( the_hdfVersion == FILENOTFOUND ) &
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'File 1 not found; make sure the name and path are correct' &
+          & // trim(file1) )
+    endif
+    if ( present(swathList) ) then
+      if ( DEEBUG ) then
+        noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
+           & hdfVersion=the_hdfVersion)
+        print *, 'swathList you requested to cp: ', trim(swathList)
+        print *, 'mls_InqSwath finds: ', trim(mySwathList)
+      endif
+      mySwathList = swathList
+    else
+      noSwaths = mls_InqSwath ( file1, mySwathList, listSize, &
+           & hdfVersion=the_hdfVersion)
+    endif
+    File1Handle = mls_io_gen_openF('swopen', .TRUE., status, &
+       & record_length, DFACC_READ, FileName=File1, &
+       & hdfVersion=the_hdfVersion, debugOption=.false. )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to open L2gp file: " // trim(File1) // ' for cp-ing')
+
+    file_exists = ( mls_exists(trim(File2)) == 0 )
+    if ( file_exists ) then
+      file_access = DFACC_RDWR
+    else
+      file_access = DFACC_CREATE
+    endif
+    if ( present(create2) ) then
+      if ( create2 ) then
+        file_access = DFACC_CREATE
+      elseif ( .not. file_exists ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+         & "L2gp file: " // trim(File2) // ' for cp-ing not yet existing')
+        file_access = DFACC_RDWR
+      else
+        file_access = DFACC_RDWR
+      endif
+    endif
+    if ( DEEBUG ) then
+      print *, 'About to open file2: ', trim(file2)
+      print *, 'file_access: ', file_access
+      print *, 'hdfVersion: ', the_hdfVersion
+    endif
+    myandGlAttributes = (file_access == DFACC_CREATE)
+    if ( present(andGlAttributes) ) &
+      & myandGlAttributes = myandGlAttributes .and. andGlAttributes
+    File2Handle = mls_io_gen_openF('swopen', .TRUE., status, &
+       & record_length, file_access, FileName=File2, &
+       & hdfVersion=the_hdfVersion, debugOption=.false. )
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to open L2gp file: " // trim(File2) // ' for cping')
+    if ( DEEBUG ) then
+      print *, 'About to cp from file1 to file2: ', File1Handle, File2Handle
+      print *, trim(mySwathList)
+    endif
+    ! Maybe copy global attributes, too
+    if ( myandGlAttributes ) then
+      call he5_readglobalattr (File1Handle, gAttributes, &
+        & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
+      if ( status == 0 ) then
+        ! Unfortunately, he5_writeglobalattr writes class-level data
+        ! so must store original version so can copy new data into it 
+        gAttributesOriginal = GlobalAttributes
+        GlobalAttributes = gAttributes
+        call he5_writeglobalattr (File2Handle)
+        ! Before leaving must copy original data back
+        GlobalAttributes = gAttributesOriginal
+      endif
+    endif
+    call cpL2GPData_fileID(File1Handle, File2Handle, &
+      & mySwathList, hdfVersion=the_hdfVersion, notUnlimited=notUnlimited)
+    if ( DEEBUG ) print *, 'About to close File1Handle: ', File1Handle
+    status = mls_io_gen_closeF('swclose', File1Handle, FileName=File1, &
+      & hdfVersion=the_hdfVersion, debugOption=.false.)
+    if ( status /= 0 ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2gp file: " // trim(File1) // ' after cping')
+    if ( DEEBUG ) print *, 'About to close File2Handle: ', File2Handle
+    ! status = mls_io_gen_closeF('swclose', File2Handle, FileName=File2, &
+    !  & hdfVersion=the_hdfVersion, debugOption=.true.)
+    status = mls_io_gen_closeF('swclose', File2Handle, &
+      & hdfVersion=the_hdfVersion, debugOption=.false.)
+    if ( status /= 0 ) then
+      print *, 'status returned from mls_io_gen_closeF: ', status
+      print *, 'WRONGHDFVERSION: ', WRONGHDFVERSION
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+       & "Unable to close L2gp file: " // trim(File2) // ' after cping')
+    endif
+  end subroutine cpL2GPData_fileName
 
   ! ------------------------------------------ DUMP_L2GP_DATABASE ------------
 
@@ -2047,12 +2323,253 @@ contains ! =====     Public Procedures     =============================
       call dump ( real(l2gp%l2gpPrecision, r8), 'L2GPPrecision:', &
         & FillValue=FillValue )
       
-      !    call dump ( l2gp%status, 'Status:' )
+      call dump ( l2gp%status, 'Status:' )
       
       call dump ( l2gp%quality, 'Quality:' )
       
   end subroutine Dump_L2GP
     
+  !----------------------------------------  DumpL2GP_attributes_hdf5  -----
+  subroutine DumpL2GP_attributes_hdf5(l2FileHandle, l2gp, swathName)
+
+  use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
+    & HE5T_NATIVE_SCHAR, &
+    & HE5_SWattach, HE5_SWdetach
+  use he5_swapi, only: he5_swrdattr, he5_swrdlattr
+  ! use MLSHDFEOS, only: he5_swwrattr, he5_swwrlattr
+  use PCFHdr, only:  GlobalAttributes_T, he5_readglobalattr
+    ! Brief description of subroutine
+    ! This subroutine dumps the attributes for an l2gp
+    ! These include
+    ! Global attributes which are file level
+    ! Swath level
+    ! Geolocation field attributes
+    ! Data field attributes
+    ! Arguments
+
+    type( L2GPData_T ), intent(inout) :: l2gp
+    integer, intent(in) :: l2FileHandle ! From swopen
+    character (len=*), optional, intent(IN) :: swathName ! Defaults->l2gp%name
+
+    ! Variables
+    type (GlobalAttributes_T)         :: gAttributes
+    character(len=255)                :: ProcessLevel
+    integer                           :: DayofYear
+    double precision                  :: TAI93At0zOfGranule
+    real(rgp), dimension(MAXNLEVELS)  :: pressures
+    integer, dimension(1)             :: ibuf
+
+    character (len=132) :: name     ! Either swathName or l2gp%name
+    ! The following pair of string list encode the Units attribute
+    ! corresponding to each Title attribute; e.g., the Units for Latitude is deg
+    character (len=*), parameter :: GeolocationTitles = &
+      & 'Latitude,Longitude,Time,LocalSolarTime,SolarZenithAngle,' // &
+      & 'LineOfSightAngle,OrbitGeodeticAngle,ChunkNumber,Pressure,Frequency'
+    character (len=*), parameter :: GeolocationUnits = &
+      & 'deg,deg,s,h,deg,' // &
+      & 'deg,deg,NoUnits,hPa,GHz'
+    character (len=*), parameter :: GeoUniqueFieldDefinition = &
+      & 'HMT,HMT,AS,HMT,HMT,' // &
+      & 'M,M,M,AS,M'   ! These are abbreviated values
+    character (len=*), parameter :: UniqueFieldDefKeys = &
+      & 'HM,HMT,MT,AS,M'
+    character (len=*), parameter :: UniqueFieldDefValues = &
+      & 'HIRDLS-MLS-Shared,HIRDLS-MLS-TES-Shared,MLS-TES-Shared,' // &
+      & 'Aura-Shared,MLS-Specific'  ! Expanded values
+    ! The following associate UniqueFieldDefs with species names
+    character (len=*), parameter :: Species = &
+      & 'Temperature,BrO,CH3CN,CO,ClO,GPH,HCl,HCN,H2O,H2O2,' // &
+      & 'HNO3,HOCl,HO2,N2,N2O,OH,O2,O3,RHI,SO2'
+    character (len=*), parameter :: SpUniqueFieldDefinition = &
+      & 'HMT,M,M,MT,M,M,M,M,HMT,M,' // &
+      & 'HMT,M,M,M,HM,M,M,HMT,M,M'   ! These are abbreviated values
+
+    integer :: field
+    logical :: isColumnAmt
+    integer :: rgp_type
+    integer :: status
+    integer :: swid
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theTitles
+    character(len=CHARATTRLEN), dimension(NumGeolocFields) :: theUnits
+    character(len=CHARATTRLEN) :: field_name
+    character(len=CHARATTRLEN) :: units_name
+    character(len=CHARATTRLEN) :: uniqueness
+    character(len=CHARATTRLEN) :: species_name
+    character(len=CHARATTRLEN) :: abbr_uniq_fdef
+    character(len=CHARATTRLEN) :: expnd_uniq_fdef
+    
+    ! Begin
+    if (present(swathName)) then
+       name=swathName
+    else
+       name=l2gp%name
+    endif
+    call output ( 'L2GP Attributes: (swath name) ')
+    call output ( trim(name), advance='yes' )
+    if ( rgp == r4 ) then
+      rgp_type = HE5T_NATIVE_REAL
+    elseif ( rgp == r8 ) then
+      rgp_type = HE5T_NATIVE_DOUBLE
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, & 
+        & 'Attributes have unrecognized numeric data type; should be r4 or r8')
+    endif
+    call List2Array(GeolocationTitles, theTitles, .true.)
+    call List2Array(GeolocationUnits, theUnits, .true.)
+
+    ! - -   G l o b a l   A t t r i b u t e s   - -
+    call output ( '(Global Attributes) ', advance='yes')
+    call he5_readglobalattr(l2FileHandle, gAttributes, &
+     & ProcessLevel, DayofYear, TAI93At0zOfGranule, status)
+    if ( status /= 0 ) then
+      call output ('No global attributes found in file', advance='yes')
+    else
+      call dump(gAttributes%orbNum, 'Orbit numbers')
+      call dump(gAttributes%orbPeriod, 'Orbit Periods')
+      call output ('InstrumentName: ' // trim( gAttributes%InstrumentName  ))
+      call output ('Process level: ' // trim(  gAttributes%ProcessLevel    ))
+      call output ('Input version: ' // trim(  gAttributes%inputVersion    ))
+      call output ('PGE version: ' // trim(    gAttributes%PGEVersion      ))
+      call output ('Start UTC: ' // trim(      gAttributes%StartUTC        ))
+      call output ('End UTC: ' // trim(        gAttributes%EndUTC          ))
+      call dump_int ( gAttributes%GranuleMonth, 'Granule month:' )
+      call dump_int ( gAttributes%GranuleDay, 'Granule day:' )
+      call dump_int ( gAttributes%GranuleYear, 'Granule year:' )
+      call dump_int ( DayOfYear, 'Granule day of year:' )
+      call dump_r8 ( TAI93At0zOfGranule, 'Equator crossing time (tai93):' )
+    endif
+    swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
+    if ( swid == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to attach swath ' // trim(name))
+    end if
+    
+    !   - -   S w a t h   A t t r i b u t e s   - -
+    call output ( '(Swath Attributes) ', advance='yes')
+    status = he5_swrdattr(swid, 'Pressure', pressures)
+    call dump ( pressures, 'Vertical coordinates:' )
+    status = he5_swrdattr(swid, 'VerticalCoordinate', field_name)
+    call dump_chars ( field_name, 'Vertical coordinates type:' )
+    
+    !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
+    call output ( '(Geolocation Attributes) ', advance='yes')
+    do field=1, NumGeolocFields
+      ! Take care not to write attributes to "missing fields"
+      if ( trim(theTitles(field)) == 'Frequency' &
+        & .and. l2gp%nFreqs < 1 ) then
+        field_name = ''
+      elseif ( trim(theTitles(field)) == 'Pressure' &
+        & .and. l2gp%nLevels < 1 ) then
+        field_name = ''
+      else
+        call GetStringHashElement (GeolocationTitles, &
+          & GeoUniqueFieldDefinition, trim(theTitles(field)), &
+          & abbr_uniq_fdef, .false.)
+        call GetStringHashElement (UniqueFieldDefKeys, &
+          & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+          & expnd_uniq_fdef, .false.)
+        status = he5_swrdlattr(swid, trim(theTitles(field)), 'Title', field_name)
+        status = he5_swrdlattr(swid, trim(theTitles(field)), 'Units', units_name)
+        call dump_chars ( field_name, 'Field title:' )
+        call dump_chars ( units_name, 'Units:' )
+
+        status = he5_swrdlattr(swid, trim(theTitles(field)), &
+          & 'UniqueFieldDefinition', uniqueness)
+        call dump_chars ( uniqueness, 'Unique field definition:' )
+      endif
+    enddo
+    !   - -   D a t a   A t t r i b u t e s   - -
+    call output ( '(Data Attributes) ', advance='yes')
+    field_name = Name
+    species_name = name
+    isColumnAmt = ( index(species_name, 'Column') > 0 )
+    if ( isColumnAmt ) then
+      call ExtractSubString(Name, species_name, 'Column', 'wmo')
+    endif
+    call GetStringHashElement (lowercase(Species), &
+      & SpUniqueFieldDefinition, trim(lowercase(species_name)), &
+      & abbr_uniq_fdef, .false.)
+    call GetStringHashElement (UniqueFieldDefKeys, &
+      & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
+      & expnd_uniq_fdef, .false.)
+    select case (trim(lowercase(species_name)))
+    case ('temperature')
+      units_name = 'K'
+    case ('gph')
+      units_name = 'm'
+    case ('rhi')
+      units_name = '%rhi'
+    case default
+      units_name = 'vmr'
+    end select
+    if ( isColumnAmt ) units_name = 'DU'
+    status = he5_swrdlattr(swid, 'L2gpValue', 'Title', field_name)
+    status = he5_swrdlattr(swid, 'L2gpValue', 'Units',  units_name)
+    status = he5_swrdlattr(swid, 'L2gpValue', &
+      & 'UniqueFieldDefinition', uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    status = he5_swrdlattr(swid, 'L2gpPrecision', 'Title', field_name)
+    status = he5_swrdlattr(swid, 'L2gpPrecision', 'Units', units_name)
+    status = he5_swrdlattr(swid, 'L2gpPrecision', &
+      & 'UniqueFieldDefinition', uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+
+    ! ('Status' data field newly written)
+    status = he5_swrdlattr(swid, 'Status', 'Title', field_name)
+    status = he5_swrdlattr(swid, 'Status', 'Units', units_name)
+    status = he5_swrdlattr(swid, 'Status', &
+      & 'UniqueFieldDefinition', uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    
+    status = he5_swrdlattr(swid, 'Quality', 'Title', field_name)
+    status = he5_swrdlattr(swid, 'Quality', 'Units', units_name)
+    status = he5_swrdlattr(swid, 'Quality', &
+      & 'UniqueFieldDefinition', uniqueness)
+    call dump_chars ( field_name, 'Field title:' )
+    call dump_chars ( units_name, 'Units:' )
+    call dump_chars ( uniqueness, 'Unique field definition:' )
+    
+    status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
+    if ( status == -1 ) then
+       call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'Failed to detach  from swath interface' )
+    end if
+    contains
+    subroutine dump_chars(value, name)
+      ! arguments
+      character(len=*), intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(trim(value), advance='yes')
+    end subroutine dump_chars
+    subroutine dump_int(value, name)
+      ! arguments
+      integer, intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(value, advance='yes')
+    end subroutine dump_int
+    subroutine dump_r8(value, name)
+      ! arguments
+      real(r8), intent(in) :: value
+      character(len=*), intent(in) :: name
+      ! Executable
+      call output(trim(name) // ' ', advance='no')
+      call output(value, advance='yes')
+    end subroutine dump_r8
+
+  !-------------------------------------
+  end subroutine DumpL2GP_attributes_hdf5
+  !-------------------------------------
+
   ! ----------------------------------  GetGeolocUnits  -----
   function GetGeolocUnits ( Title ) result( dim_string )
 
@@ -2103,6 +2620,36 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.95  2004/02/13 00:18:58  pwagner
+! Added DumpL2GP_attributes_hdf5 which doesnt work yet
+!
+! Revision 2.94  2004/02/11 23:05:05  pwagner
+! Undid effect of 2nd-to-last fix; seems to have been wrong
+!
+! Revision 2.93  2004/02/11 23:04:38  pwagner
+! Undid effect of 2nd-to-last fix; seems to have been wrong
+!
+! Revision 2.92  2004/02/11 22:59:59  pwagner
+! Undid effect of 2nd-to-last fix; seems to have been wrong
+!
+! Revision 2.91  2004/02/11 17:23:25  pwagner
+! l2gp status an integer, not a char
+!
+! Revision 2.90  2004/02/10 18:45:43  pwagner
+! lastProfile among optional args to AppendL2GPData
+!
+! Revision 2.89  2004/02/05 23:33:21  pwagner
+! Some bug fixes in cpL2GPData and its relatives
+!
+! Revision 2.88  2004/01/23 01:14:04  pwagner
+! Can cp l2gps from one file to another
+!
+! Revision 2.87  2004/01/09 00:20:56  pwagner
+! Added avoidUnlimitedDims to allow bypassing bug directWriting range of chunks
+!
+! Revision 2.86  2003/12/03 17:51:14  pwagner
+! L2GP tracks both nTimes (for this slave) and nTimesTotal (done by all)
+!
 ! Revision 2.85  2003/11/19 22:14:08  livesey
 ! Added option (not invoked at the moment) for 'limited' dimensions in
 ! AppendL2GP
