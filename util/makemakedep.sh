@@ -217,23 +217,6 @@ else
 	f90suffix="$dsuffix"
 fi
 
-#   Rename older Makefile.dep if one already exists
-if [ -f Makefile.dep ]
-then
-	if [ $ACT_COURTEOUS = "1" ]
-	then
-		if [ $PRINT_TOO_MUCH = "1" ]
-		then
-			echo "Renaming older Makefile.dep Make.dep.n"
-		fi
-		name=Make.dep.`ls -1 Make*.dep* | wc -l`
-		cname=`echo $name | sed 's/ //'g`
-		mv Makefile.dep $cname
-        else
-                chmod u+w Makefile.dep
-                rm -f Makefile.dep
-	fi
-fi
 # The initial settings are
 # include *.f90   yes
 # include *.f     yes
@@ -352,6 +335,24 @@ then
    echo " DEPMAKER: $DEPMAKER "  
    echo " EDIT_GB_PERL_PATH: $EDIT_GB_PERL_PATH "  
 fi                                                      
+
+#   Rename or remove older Makefile.dep if one already exists
+if [ -f "$dep_file" ]
+then
+	if [ $ACT_COURTEOUS = "1" ]
+	then
+		if [ $PRINT_TOO_MUCH = "1" ]
+		then
+			echo "Renaming older $dep_file Make.dep.n"
+		fi
+		name=Make.dep.`ls -1 Make*.dep* | wc -l`
+		cname=`echo $name | sed 's/ //'g`
+		mv $dep_file $cname
+    else
+      chmod u+w "$dep_file"
+      rm -f "$dep_file"
+	fi
+fi
 
 #                Create Makefile.dep; write 1st line
 echo "#Makefile.dep -- a file to be included by a Makefile" > $dep_file
@@ -539,6 +540,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.19  2002/06/04 17:03:07  pwagner
+# fixed bare word assignment value =
+#
 # Revision 1.18  2002/05/22 00:37:26  pwagner
 # Work with new (1)-mod variant dependency files
 #

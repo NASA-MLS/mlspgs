@@ -24,12 +24,14 @@ REECHO=$(MLSBIN)/reecho.sh
 
 # --------------- End uptodate.make help
 help:
-	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(MLSBIN)/uptodate.make \
+	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' \
+      $(MLSBIN)/uptodate.make \
 		| sed -n 's/^..//p' | sed '1 d; $$ d'
 
 # These are just dummy names
 SOURCE=sourcefile
 TARGET=targetfile
+CP=cp
 
 $(TARGET): $(SOURCE)
 	cp $(SOURCE) $(TARGET)
@@ -50,5 +52,15 @@ $(TARGET): $(SOURCE)
 #      TARGET=$(TARGETDIR)/$$file $(TARGETDIR)/$$file ;\
 #	done
 
+# Another improvement would be to turn cp into a make variable
+# so that the actual command carried out would be
+#  $(CP) $(SOURCE) $(TARGET)
+# thus the user could summon it with
+# make -f uptodate.make SOURCE=sourcefile TARGET=targetfile targetfile CP=foo
+# where foo could be a shell script, perl script, executable binary, etc.
+
 # $Log$
+# Revision 1.1  2002/02/06 00:45:24  pwagner
+# First commit
+#
 
