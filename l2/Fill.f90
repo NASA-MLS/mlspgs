@@ -49,7 +49,7 @@ contains ! =====     Public Procedures     =============================
     use Geometry, only: OMEGA => W
     use GriddedData, only: GriddedData_T
     ! We need many things from Init_Tables_Module.  First the fields:
-    use INIT_TABLES_MODULE, only: F_APRIORIPRECISION, F_BOUNDARYPRESSURE, &
+    use INIT_TABLES_MODULE, only: F_A, F_APRIORIPRECISION, F_B, F_BOUNDARYPRESSURE, &
       & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
       & F_EXPLICITVALUES, F_EXTINCTION, &
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
@@ -57,7 +57,7 @@ contains ! =====     Public Procedures     =============================
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
-      & F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
+      & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
       & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
       & F_OFFSETAMOUNT, &
       & F_ORBITINCLINATION, F_PHITAN, F_PRECISION, F_PRECISIONFACTOR, &
@@ -79,7 +79,8 @@ contains ! =====     Public Procedures     =============================
       & L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, &
       & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, &
-      & L_L2AUX, L_LOSVEL, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_NONE, &
+      & L_L2AUX, L_LOSVEL, L_MANIPULATE, L_NEGATIVEPRECISION, &
+      & L_NOISEBANDWIDTH, L_NONE, &
       & L_OFFSETRADIANCE, L_ORBITINCLINATION, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
@@ -93,7 +94,7 @@ contains ! =====     Public Procedures     =============================
       & S_FILLDIAGONAL, S_MATRIX,  S_NEGATIVEPRECISION, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR
     ! Now some arrays
-    use Intrinsic, only: Field_Indices
+    use Intrinsic, only: FIELD_INDICES
     use Intrinsic, only: &
       & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
       & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta
@@ -234,11 +235,13 @@ contains ! =====     Public Procedures     =============================
     ! Local variables
 
     type (vectorValue_T), pointer :: APRIORIPRECISION
+    type (vectorValue_T), pointer :: AQUANTITY
     type (vectorValue_T), pointer :: BNDPRESSQTY
+    type (vectorValue_T), pointer :: BQUANTITY
     type (vectorValue_T), pointer :: EARTHRADIUSQTY
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
-    type (vectorValue_T), pointer :: H2OQUANTITY
     type (vectorValue_T), pointer :: H2OPRECISIONQUANTITY
+    type (vectorValue_T), pointer :: H2OQUANTITY
     type (vectorValue_T), pointer :: LOSQTY
     type (vectorValue_T), pointer :: LSB
     type (vectorValue_T), pointer :: LSBFRACTION
@@ -269,10 +272,14 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_T), dimension(:), pointer :: SNOOPMATRICES
     type (Matrix_T), pointer :: ONEMATRIX
 
-    integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: APRPRECQTYINDEX          ! Index of apriori precision quantity    
+    integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
+    integer :: AQTYINDEX                ! Index of a quantity in vector
+    integer :: AVECINDEX                ! Index of a vector
     integer :: BNDPRESSQTYINDEX
     integer :: BNDPRESSVCTRINDEX
+    integer :: BQTYINDEX                ! Index of a quantity in vector
+    integer :: BVECINDEX                ! Index of a vector
     integer :: COLVECTOR                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
     integer :: DESTINATIONVECTORINDEX   ! For transfer commands
@@ -323,9 +330,10 @@ contains ! =====     Public Procedures     =============================
     type(matrix_Kronecker_T) :: MatrixKronecker
     type(matrix_SPD_T) :: MatrixSPD
     type(matrix_T) :: MatrixPlain
-    integer :: MatrixToFill             ! Index in database
-    integer :: MatrixToKill             ! Index in database
-    integer :: MatrixType               ! Type of matrix, L_... from init_tables
+    integer :: MANIPULATION             ! String index
+    integer :: MATRIXTOFILL             ! Index in database
+    integer :: MATRIXTOKILL             ! Index in database
+    integer :: MATRIXTYPE               ! Type of matrix, L_... from init_tables
     integer :: MAXITERATIONS            ! For hydrostatic fill
     real, dimension(2) :: MULTIPLIER   ! To scale source,noise part of addNoise
     integer :: MULTIPLIERNODE           ! For the parser
@@ -552,9 +560,15 @@ contains ! =====     Public Procedures     =============================
           if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
           got(fieldIndex)=.TRUE.
           select case ( fieldIndex )
+          case ( f_a )
+            aVecIndex = decoration(decoration(subtree(1,gson)))
+            aQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_aprioriPrecision )
             aprPrecVctrIndex = decoration(decoration(subtree(1,gson)))
             aprPrecQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_b )
+            bVecIndex = decoration(decoration(subtree(1,gson)))
+            bQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_boundaryPressure )     ! For special fill of columnAbundance
             bndPressVctrIndex = decoration(decoration(subtree(1,gson)))
             bndPressQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -615,6 +629,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_lsbFraction ) ! For folding
             lsbFractionVectorIndex = decoration(decoration(subtree(1,gson)))
             lsbFractionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_manipulation )
+            manipulation = sub_rosa ( gson )
           case ( f_maxIterations )      ! For hydrostatic fill
             call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
             if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
@@ -896,6 +912,22 @@ contains ! =====     Public Procedures     =============================
           call FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
             & ratioQuantity )
 
+        case ( l_manipulate ) ! ---------------------------- Manipulate --
+          if ( .not. got ( f_a ) ) &
+            & call Announce_error ( key, 0 ,'aQuantity not supplied' )
+          if ( .not. got ( f_manipulation ) ) &
+            & call Announce_error ( key, 0 ,'manipulation not supplied' )
+          aQuantity => GetVectorQtyByTemplateIndex ( &
+            & vectors(aVecIndex), aQtyIndex )
+          if ( got ( f_b ) ) then
+            bQuantity => GetVectorQtyByTemplateIndex ( &
+              & vectors(bVecIndex), bQtyIndex )
+          else
+            nullify ( bQuantity )
+          end if
+          call FillQuantityByManipulation ( quantity, aQuantity, bQuantity, &
+            & manipulation, key )
+          
         case ( l_offsetRadiance ) ! ------------------- Offset radiance --
           if ( .not. got ( f_radianceQuantity ) ) &
             & call Announce_error ( key, 0, 'radianceQuantity not supplied' )
@@ -1466,22 +1498,26 @@ contains ! =====     Public Procedures     =============================
       case ( s_snoop )
         ! Generate a matrix database
         noSnoopedMatrices = 0
-        do j = 1, size ( matrices )
-          call GetActualMatrixFromDatabase ( matrices(j), oneMatrix )
-          if ( associated ( oneMatrix ) ) &
-            & noSnoopedMatrices = noSnoopedMatrices + 1
-        end do
+        if ( associated ( matrices ) ) then
+          do j = 1, size ( matrices )
+            call GetActualMatrixFromDatabase ( matrices(j), oneMatrix )
+            if ( associated ( oneMatrix ) ) &
+              & noSnoopedMatrices = noSnoopedMatrices + 1
+          end do
+        end if
         allocate ( snoopMatrices ( noSnoopedMatrices ), STAT=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_Allocate//'snoopMatrices' )
-        noSnoopedMatrices = 1
-        do j = 1, size ( matrices )
-          call GetActualMatrixFromDatabase ( matrices(j), oneMatrix )
-          if ( associated ( oneMatrix ) ) then 
-            snoopMatrices(noSnoopedMatrices) = oneMatrix
-            noSnoopedMatrices = noSnoopedMatrices + 1
-          end if
-        end do
+        if ( associated ( matrices ) ) then
+          noSnoopedMatrices = 1
+          do j = 1, size ( matrices )
+            call GetActualMatrixFromDatabase ( matrices(j), oneMatrix )
+            if ( associated ( oneMatrix ) ) then 
+              snoopMatrices(noSnoopedMatrices) = oneMatrix
+              noSnoopedMatrices = noSnoopedMatrices + 1
+            end if
+          end do
+        end if
         call Snoop ( key=key, vectorDatabase=vectors, matrixDatabase=snoopMatrices )
         deallocate ( snoopMatrices, STAT=status )
         if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -4389,6 +4425,52 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillQuantityFromLosGrid
 
+    ! --------------------------------------------- FillQuantityByManipulation ---
+    subroutine FillQuantityByManipulation ( quantity, a, b, manipulation, key )
+      use String_table, only: GET_STRING
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), intent(inout) :: A
+      type (VectorValue_T), pointer :: B
+      integer, intent(in) :: MANIPULATION
+      integer, intent(in) :: KEY        ! Tree node
+      ! Local variables
+      character (len=128) :: MSTR
+      ! Executable code
+      call get_string ( manipulation, mstr, strip=.true. )
+      if ( mstr /= 'a+b' ) then
+        call Announce_Error ( key, 0, &
+          & 'Only a+b allowed for manipulation at the moment' )
+        return
+      end if
+      ! Check that this operation makes sense
+      if ( a%template%name /= quantity%template%name ) then
+        call Announce_Error ( key, 0, &
+          & 'The a quantity is not of the same type as the result quantity' )
+        return
+      end if
+      if ( associated ( b ) ) then
+        if ( b%template%name /= quantity%template%name ) then
+          call Announce_Error ( key, 0, &
+            & 'The a quantity is not of the same type as the result quantity' )
+          return
+        end if
+      else
+        ! Later we'll be more tolerant of this
+        call Announce_Error ( key, 0, &
+          & 'You did not supply a b quantity' )
+        return
+      end if
+      ! OK do the simple work for now
+      ! Later we'll do fancy stuff to parse the manipulation.
+      if ( .not. associated ( quantity%mask ) ) then
+        quantity%values = a%values + b%values
+      else
+        where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+          quantity%values = a%values + b%values
+        end where
+      end if
+    end subroutine FillQuantityByManipulation
+
     ! ----------------------------------------------- OffsetRadianceQuantity ---
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -4599,6 +4681,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.165  2002/11/27 19:25:45  livesey
+! Added manipulate method and bug fix in snooper when no matrices
+!
 ! Revision 2.164  2002/11/21 01:18:11  livesey
 ! Added negativePrecision command (as distinct from fill method of same
 ! name).
