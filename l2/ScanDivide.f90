@@ -516,6 +516,8 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: MAX, MIN, NEWHOME, PHILEN
     real(r8), allocatable :: ABOVEHOME(:), BELOWHOME(:), BDRYPHI(:)
 
+    flag = 0        ! Assume no errors occur -- but make sure FLAG is defined!
+
 ! Find max & min phi for data set
 
     max = MAXVAL( phi(firstMAF+1:lastMAF+1) )
@@ -1347,6 +1349,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.6  2001/03/08 23:36:19  vsnyder
+!# Make sure FLAG is defined in ScanDivide_firstGuess
+!#
 !# Revision 2.5  2001/03/02 19:32:06  pwagner
 !# Gets MLSMSG_L1BRead from MLSMessageModule, not MLSStrings
 !#
