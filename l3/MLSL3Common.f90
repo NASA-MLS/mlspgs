@@ -6,6 +6,7 @@
 MODULE MLSL3Common
 !===============================================================================
 
+   USE MLSCommon
    IMPLICIT NONE
    PUBLIC
 
@@ -31,6 +32,7 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD8 = 'ChunkNumber'
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD9 = 'Pressure'
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD10 = 'Frequency'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD11 = 'Date'
 
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME1 = 'nTimes'
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME2 = 'nLevels'
@@ -62,6 +64,7 @@ MODULE MLSL3Common
 
    INTEGER, PARAMETER :: CCSDS_LEN = 27
    INTEGER, PARAMETER :: CCSDSB_LEN = 25
+   INTEGER, PARAMETER :: DATE_LEN = 8
    INTEGER, PARAMETER :: GCTP_GEO = 0
    INTEGER, PARAMETER :: HDFE_NOMERGE = 0
    INTEGER, PARAMETER :: INVENTORYMETADATA = 2
@@ -69,11 +72,28 @@ MODULE MLSL3Common
    INTEGER, PARAMETER :: maxGridPoints = 500
    INTEGER, PARAMETER :: maxWindow = 30
 
+! This data type is used to store the names/dates of output files actually created.
+
+   TYPE OutputFiles_T
+
+     INTEGER :: nFiles			! number of distinct output files created
+
+     CHARACTER (LEN=FileNameLen) :: name(maxwindow)
+	! array of names of the created files
+
+     CHARACTER (LEN=8) :: date(maxWindow)       ! CCSDS B format dates of files
+
+   END TYPE OutputFiles_T
+
+
 !=====================
 END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.6  2001/04/24 19:41:13  nakamura
+!# Added parameters that L2 wishes to keep PRIVATE.
+!#
 !# Revision 1.5  2001/03/27 19:32:12  nakamura
 !# Added some grid parameters.
 !#
