@@ -16,18 +16,18 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: Add_Matrix_Blocks, Assignment(=), CholeskyFactor, &
-    & CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale, &
-    & ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, Densify, &
-    & DestroyBlock, DestroyBlock_0, Dump, GetDiagonal, GetDiagonal_0, &
-    & GetVectorFromColumn, GetVectorFromColumn_0,  M_Absent, M_Banded, &
-    & M_Column_Sparse, M_Full, MatrixElement_T, MaxAbsVal, MaxAbsVal_0, &
-    & MinDiag, MinDiag_0, MultiplyMatrixBlocks, MultiplyMatrixVector, &
-    & MultiplyMatrixVector_0, MultiplyMatrixVectorNoT, &
-    & MultiplyMatrixVectorNoT_0, operator(+), operator(.TX.), RowScale, &
-    & RowScale_0, ScaleBlock, SolveCholesky, SolveCholeskyM_0, &
-    & SolveCholeskyV_0, Sparsify, UpdateDiagonal, UpdateDiagonal_0, &
-    & UpdateDiagonalVec_0
+  public :: Add_Matrix_Blocks, Assignment(=), CholeskyFactor
+  public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
+  public :: ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, Densify
+  public :: DestroyBlock, DestroyBlock_0, Dump, GetDiagonal, GetDiagonal_0
+  public :: GetMatrixElement, GetMatrixElement_0, GetVectorFromColumn
+  public :: GetVectorFromColumn_0, M_Absent, M_Banded, M_Column_Sparse, M_Full
+  public :: MatrixElement_T, MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0
+  public :: MultiplyMatrixBlocks, MultiplyMatrixVector, MultiplyMatrixVector_0
+  public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_0, operator(+)
+  public :: operator(.TX.), RowScale, RowScale_0, ScaleBlock, SolveCholesky
+  public :: SolveCholeskyM_0, SolveCholeskyV_0, Sparsify, UpdateDiagonal
+  public :: UpdateDiagonal_0, UpdateDiagonalVec_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -61,6 +61,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface GetDiagonal
     module procedure GetDiagonal_0
+  end interface
+
+  interface GetMatrixElement
+    module procedure GetMatrixElement_0
   end interface
 
   interface GetVectorFromColumn
@@ -710,6 +714,36 @@ contains ! =====     Public Procedures     =============================
     end select
   end subroutine GetDiagonal_0
 
+  ! -----------------------------------------  GetMatrixElement_0  -----
+  real(r8) function GetMatrixElement_0 ( Matrix, Row, Col )
+  ! Get the (row,col) element of Matrix
+    type(matrixElement_T), intent(in) :: Matrix
+    integer, intent(in) :: Row, Col
+    integer :: J
+    select case ( matrix%kind )
+    case ( m_absent )
+      getMatrixElement_0 = 0.0_r8
+    case ( m_banded )
+      if ( row < matrix%r1(col) .or. &
+        &  row > matrix%r1(col) + matrix%r2(col)-matrix%r2(col-1) ) then
+        getMatrixElement_0 = 0.0_r8
+      else
+        getMatrixElement_0 = matrix%values(row - matrix%r1(col) + &
+          &                                  matrix%r2(col-1) +1, 1)
+      end if
+    case ( m_column_sparse )
+      do j = matrix%r1(col-1)+1, matrix%r1(col)
+        if ( row == matrix%r2(j) ) then
+          getMatrixElement_0 = matrix%values(j,1)
+          return
+        end if
+      end do
+      getMatrixElement_0 = 0.0_r8
+    case ( m_full )
+      getMatrixElement_0 = matrix%values(row,col)
+    end select
+  end function GetMatrixElement_0
+
   ! --------------------------------------  GetVectorFromColumn_0  -----
   subroutine GetVectorFromColumn_0 ( B, Column, X )
   ! Fill the vector X from "Column" of B.
@@ -783,7 +817,8 @@ contains ! =====     Public Procedures     =============================
   end function MinDiag_0
 
   ! ---------------------------------------  MultiplyMatrixBlocks  -----
-  subroutine MultiplyMatrixBlocks ( XB, YB, ZB, UPDATE, SUBTRACT, XMASK, YMASK )
+  subroutine MultiplyMatrixBlocks ( XB, YB, ZB, UPDATE, SUBTRACT, XMASK, YMASK, &
+    &                               UPPER )
   ! ZB = XB^T YB if UPDATE is absent or false and SUBTRACT is absent or false;
   ! ZB = -XB^T YB if UPDATE is absent or false and SUBTRACT is present and
   !      true;
@@ -791,13 +826,15 @@ contains ! =====     Public Procedures     =============================
   !      or false;
   ! ZB = ZB - XB^T YB if UPDATE is present and true and  SUBTRACT is present
   !      and true;
-  ! If XMASK (resp. YMASK) is present, ignore columns of XB (resp. YB)
-  ! that correspond to nonzero bits of XMASK (resp. YMASK).
+  ! If XMASK (resp. YMASK) is present and associated, ignore columns of XB
+  ! (resp. YB) that correspond to nonzero bits of XMASK (resp. YMASK).
+  ! If UPPER is present and true, compute only the upper triangle of ZB.
     type(MatrixElement_T), intent(in) :: XB, YB
     type(MatrixElement_T), intent(inout) :: ZB
     logical, intent(in), optional :: UPDATE
     logical, intent(in), optional :: SUBTRACT
-    integer, intent(in), optional, dimension(0:) :: XMASK, YMASK
+    integer, optional, pointer, dimension(:) :: XMASK, YMASK ! Intent(in)
+    logical, intent(in), optional :: UPPER
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! If UPDATE is absent or false, it is important to invoke DestroyBlock
@@ -805,15 +842,20 @@ contains ! =====     Public Procedures     =============================
   ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
-    integer :: I, J, K, L, M, N, P, R
-    logical :: MY_SUB, MY_UPD
+    integer :: I, J, K, L, M, MZ, N, P, R
+    logical :: MY_SUB, MY_UPD, MY_UPPER
+    integer, pointer, dimension(:) :: XM, YM
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
 
-    nullify ( z )
-    my_sub = .false.
-    if ( present(subtract) ) my_sub = subtract
+    nullify ( xm, ym, z )
     my_upd = .false.
     if ( present(update) ) my_upd = update
+    my_sub = .false.
+    if ( present(subtract) ) my_sub = subtract
+    if ( present(xmask) ) xm => xmask
+    if ( present(ymask) ) ym => ymask
+    my_upper = .false.
+    if ( present(upper) ) my_upper = upper
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
       if ( .not. my_upd) call createBlock ( zb, xb%nCols, yb%nCols, M_Absent )
       return
@@ -848,17 +890,19 @@ contains ! =====     Public Procedures     =============================
           z = 0.0_r8
         end if
         do j = 1, zb%ncols    ! Columns of Z = columns of YB
-          if ( present(ymask) ) then
-            if ( btest(ymask(j/b),mod(j,b)) ) cycle
+          if ( associated(ym) ) then
+            if ( btest(ym(j/b),mod(j,b)) ) cycle
           end if
           p = yb%r2(j-1)+1
           k = yb%r1(j)        ! k,l = row indices of YB
           l = k+yb%r2(j)-p
           p = p-k
-          do i = 1, zb%nrows  ! Rows of Z = columns of XB
+          mz = zb%nrows
+          if ( my_upper ) mz = j
+          do i = 1, mz  ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
-            if ( present(xmask) ) then
-              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+            if ( associated(xm) ) then
+              if ( btest(xm(i/b),mod(i,b)) ) cycle
             end if
             m = xb%r1(i)
             r = xb%r2(i-1)+1-m
@@ -889,13 +933,15 @@ contains ! =====     Public Procedures     =============================
         else
           z = 0.0_r8
         end if
-        do j = 1, yb%ncols    ! Columns of Z
-          if ( present(ymask) ) then
-            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+        do j = 1, zb%ncols    ! Columns of Z
+          if ( associated(ym) ) then
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
-          do i = 1, xb%ncols  ! Rows of Z
-            if ( present(xmask) ) then
-              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+          mz = zb%nrows
+          if ( my_upper ) mz = j
+          do i = 1, mz  ! Rows of Z = columns of XB
+            if ( associated(xm) ) then
+              if ( btest(xm(i/b),mod(i,b)) ) cycle
             end if
             k = xb%r1(i)      ! Row subscript of first nonzero in XB's column I
             l = xb%r2(i-1)+1  ! Position in XB%VALUES of it
@@ -936,15 +982,17 @@ contains ! =====     Public Procedures     =============================
         end if
         if ( .not. my_upd ) zb%values = 0.0_r8
         do i = 1, xb%ncols    ! Rows of ZB
-          if ( present(xmask) ) then
-            if ( btest(xmask(i/b),mod(i,b)) ) cycle
+          if ( associated(xm) ) then
+            if ( btest(xm(i/b),mod(i,b)) ) cycle
           end if
           m = xb%r1(i)        ! Index of first row of XB with nonzero value
           k = xb%r2(i-1) + 1
           l = xb%r2(i)
-          do j = 1, yb%ncols  ! Columns of ZB
-            if ( present(ymask) ) then
-              if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+          mz = 1
+          if ( my_upper ) mz = i
+          do j = mz, yb%ncols  ! Columns of ZB
+            if ( associated(ym) ) then
+              if ( btest(ym(j/b+1),mod(j,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             if ( .not. my_sub ) then
@@ -973,13 +1021,15 @@ contains ! =====     Public Procedures     =============================
         else
           z = 0.0_r8
         end if
-        do j = 1, yb%ncols    ! Columns of Z
-          if ( present(ymask) ) then
-            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+        do j = 1, zb%ncols    ! Columns of Z
+          if ( associated(ym) ) then
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
-          do i = 1, xb%ncols  ! Rows of Z
-            if ( present(xmask) ) then
-              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+          mz = zb%nrows
+          if ( my_upper ) mz = j
+          do i = 1, mz  ! Rows of Z = columns of XB
+            if ( associated(xm) ) then
+              if ( btest(xm(i/b),mod(i,b)) ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
@@ -1020,13 +1070,15 @@ contains ! =====     Public Procedures     =============================
         else
           z = 0.0_r8
         end if
-        do j = 1, yb%ncols    ! Columns of Z
-          if ( present(ymask) ) then
-            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+        do j = 1, zb%ncols    ! Columns of Z
+          if ( associated(ym) ) then
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
-          do i = 1, xb%ncols  ! Rows of Z
-            if ( present(xmask) ) then
-              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+          mz = zb%nrows
+          if ( my_upper ) mz = j
+          do i = 1, mz  ! Rows of Z = columns of XB
+            if ( associated(xm) ) then
+              if ( btest(xm(i/b),mod(i,b)) ) cycle
             end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
@@ -1069,13 +1121,15 @@ contains ! =====     Public Procedures     =============================
           zb%values => z
         end if
         if ( .not. my_upd ) zb%values = 0.0_r8
-        do j = 1, yb%ncols    ! Columns of ZB
-          if ( present(ymask) ) then
-            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+        do j = 1, zb%ncols    ! Columns of ZB
+          if ( associated(ym) ) then
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
-          do i = 1, xb%ncols  ! Rows of ZB
-            if ( present(xmask) ) then
-              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+          mz = zb%nrows
+          if ( my_upper ) mz = j
+          do i = 1, mz  ! Rows of Z = columns of XB
+            if ( associated(xm) ) then
+              if ( btest(xm(i/b),mod(i,b)) ) cycle
             end if
             k = xb%r1(i-1)+1
             l = xb%r1(i)
@@ -1105,16 +1159,18 @@ contains ! =====     Public Procedures     =============================
       if ( .not. my_upd ) zb%values = 0.0_r8
       select case ( yb%kind )
       case ( M_Banded )       ! XB full, YB banded
-        do j = 1, yb%ncols    ! Columns of ZB
-          if ( present(ymask) ) then
-            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+        do j = 1, zb%ncols    ! Columns of ZB
+          if ( associated(ym) ) then
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           m = yb%r1(j)        ! Index of first row of YB with nonzero value
           k = yb%r2(j-1)+1    ! K and L are indices of YB
           l = yb%r2(j)
-          do i = 1, xb%ncols  ! Rows of ZB
-            if ( present(xmask) ) then
-              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+          mz = zb%nrows
+          if ( my_upper ) mz = j
+          do i = 1, mz  ! Rows of Z = columns of XB
+            if ( associated(xm) ) then
+              if ( btest(xm(i/b),mod(i,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             if ( .not. my_sub ) then
@@ -1131,15 +1187,17 @@ contains ! =====     Public Procedures     =============================
           end do ! i
         end do ! j
       case ( M_Column_sparse ) ! XB full, YB column-sparse
-        do j = 1, yb%ncols    ! Columns of ZB
-          if ( present(ymask) ) then
-            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+        do j = 1, zb%ncols    ! Columns of ZB
+          if ( associated(ym) ) then
+            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
           end if
           k = yb%r1(j-1)+1    ! K and L are indices of YB
           l = yb%r1(j)
-          do i = 1, xb%ncols  ! Rows of ZB
-            if ( present(xmask) ) then
-              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+          mz = zb%nrows
+          if ( my_upper ) mz = j
+          do i = 1, mz  ! Rows of Z = columns of XB
+            if ( associated(xm) ) then
+              if ( btest(xm(i/b),mod(i,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             if ( .not. my_sub ) then
@@ -1152,14 +1210,16 @@ contains ! =====     Public Procedures     =============================
           end do ! i
         end do ! j
       case ( M_Full )         ! XB full, YB full
-        if ( present(xmask) .or. present(ymask) ) then
-          do j = 1, yb%ncols    ! Columns of ZB
-          if ( present(ymask) ) then
-            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
-          end if
-            do i = 1, xb%ncols  ! Rows of ZB
-              if ( present(xmask) ) then
-                if ( btest(xmask(i/b),mod(i,b)) ) cycle
+        if ( associated(xm) .or. associated(ym) ) then
+          do j = 1, zb%ncols  ! Columns of ZB
+            if ( associated(ym) ) then
+              if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            end if
+            mz = zb%nrows
+            if ( my_upper ) mz = j
+            do i = 1, mz      ! Rows of Z = columns of XB
+              if ( associated(xm) ) then
+                if ( btest(xm(i/b),mod(i,b)) ) cycle
               end if
               if ( .not. my_sub ) then
                 zb%values(i,j) = zb%values(i,j) + dot( xb%nrows, &
@@ -1170,6 +1230,18 @@ contains ! =====     Public Procedures     =============================
               end if
             end do ! i = 1, xb%ncols
           end do ! j = 1, yb%ncols
+        else if ( my_upper ) then
+          do j = 1, zb%ncols  ! Columns of ZB
+            do i = 1, j       ! Rows of Z = columns of XB
+              if ( .not. my_sub ) then
+                zb%values(i,j) = zb%values(i,j) + dot(xb%nrows, &
+                                 & xb%values(1,i), 1, yb%values(1,j), 1 )
+              else
+                zb%values(i,j) = zb%values(i,j) - dot( xb%nrows, &
+                                 & xb%values(1,i), 1, yb%values(1,j), 1 )
+              end if
+            end do
+          end do
         else
           if ( .not. my_sub ) then
             zb%values = zb%values + matmul(transpose(xb%values),yb%values)
@@ -1908,6 +1980,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.29  2001/05/17 20:17:56  vsnyder
+! Implement GetMatrixElement.  Change handling of mask in MultiplyMatrixBlocks.
+!
 ! Revision 2.28  2001/05/12 01:05:23  vsnyder
 ! Change 'details' argumet of 'dump_matrix_block' to integer
 !
