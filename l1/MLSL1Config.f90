@@ -259,7 +259,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
                L1Config%Output%HDFversion = HDFVERSION_5
             CASE default
                CALL MLSMessage (MLSMSG_Error, ModuleName, &
-                    L1Config%Output%HDFVersionString//' is not a legal input')
+                    'HDFVersionString '//&
+                    '"'//TRIM(L1Config%Output%HDFVersionString)//'"'// &
+                    ' is not a correct input')
             END SELECT
 
          END SELECT
@@ -593,6 +595,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.9  2002/11/20 18:30:50  perun
+! Restated HDFVersionString error message
+!
 ! Revision 2.8  2002/11/19 20:35:16  perun
 ! Convert HDFVersionstring to HDFversion number
 !
