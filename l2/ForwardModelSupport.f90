@@ -33,7 +33,8 @@ module ForwardModelSupport
   integer, parameter :: NoPolarizedAtmosDer  = LinearSidebandHasUnits + 1
   integer, parameter :: TangentNotSubset     = NoPolarizedAtmosDer + 1
   integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
-  integer, parameter :: TooManyHeights       = ToleranceNotK + 1
+  integer, parameter :: ToleranceNotPolarized  = ToleranceNotK + 1
+  integer, parameter :: TooManyHeights       = ToleranceNotPolarized + 1
   integer, parameter :: TooManyCosts         = TooManyHeights + 1
   integer, parameter :: BadHeightUnit        = TooManyCosts + 1
   integer, parameter :: NoMolecule           = BadHeightUnit + 1
@@ -577,6 +578,9 @@ contains ! =====     Public Procedures     =============================
       if ( info%polarized .and. info%atmos_der ) &
         & call AnnounceError ( NoPolarizedAtmosDer, root )
 
+      if ( info%polarized .and. info%tolerance >= 0.0 ) &
+        & call AnnounceError ( ToleranceNotPolarized, root )
+
       ! Make sure signal specifications make sense; get sideband Start/Stop
       call validateSignals
     case ( l_cloudfull )
@@ -781,6 +785,9 @@ contains ! =====     Public Procedures     =============================
     case ( ToleranceNotK )
       call output ( 'tolerance does not have dimensions of temperature/radiance',&
         & advance='yes' )
+    case ( ToleranceNotPolarized )
+      call output ( 'asks for non negative tolerance in the polarized forward model',&
+        & advance='yes' )
     case ( TooManyHeights )
       call output ( 'Bin Selectors can only refer to one height range',&
         & advance='yes' )
@@ -812,6 +819,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.76  2003/08/12 18:16:13  livesey
+! Forbid non negative tolerance in polarized model.
+!
 ! Revision 2.75  2003/08/12 17:12:08  livesey
 ! Added check to ensure you don't ask for mixing ratio derivatives from
 ! the polarized model
