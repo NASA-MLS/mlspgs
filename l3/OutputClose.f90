@@ -278,10 +278,10 @@ CONTAINS
       CHARACTER (LEN=8) :: procDay
       CHARACTER (LEN=CCSDS_LEN) :: dataDT
       CHARACTER (LEN=CCSDSB_LEN) :: timeB
-      CHARACTER (LEN=FileNameLen) :: l3File
+      CHARACTER (LEN=FileNameLen) :: l3File, match
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: err, i, match, mlspcf_l3dm, numGrids, numProds
+      INTEGER :: err, i, mlspcf_l3dm, numGrids, numProds
       INTEGER :: returnStatus
       INTEGER :: indx(maxNumGrids)
 
@@ -330,24 +330,30 @@ CONTAINS
          CALL ExpandFileTemplate(l3cf(i)%fileTemplate, l3File, 'l3dm', &
                                  pcf%outputVersion, pcf%cycle, procDay)
 
-! If the bypass flag is set, issue a message to that effect, giving the file
-! name to be used
+! Check that the expanded name appears in the PCF. 
 
-         IF (l3cf(i)%bpFlag == 1) THEN
-
-            msr = 'Bypassing PCF:  using file name ' // l3File
-            CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
-
-         ELSE
-
-! If not, check that the expanded name appears in the PCF.  Exit with an error,
-! if the required name has no PCF entry
-
-            CALL SearchPCFNames(l3File, mlspcf_l3dm_start, mlspcf_l3dm_end, &
+         CALL SearchPCFNames(l3File, mlspcf_l3dm_start, mlspcf_l3dm_end, &
                                 mlspcf_l3dm, match)
-            IF (TRIM(match) == 'NONE') THEN
+
+! If no match was found,
+
+         IF (mlspcf_l3dm == -1) THEN
+
+! Check the bypass flag is set.  If set, issue a message to that effect, giving
+! the file name to be used
+
+            IF (l3cf(i)%bpFlag == 1) THEN
+
+               msr = 'Bypassing PCF:  using file name ' // match
+               CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
+
+            ELSE
+
+! If not set, exit with an error.
+
                msr = 'No match in the PCF for file ' // l3File
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+
             ENDIF
      
          ENDIF
@@ -391,6 +397,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.3  2000/12/07 19:40:37  nakamura
+!Updated for modified ExpandFileTemplate.
+!
 !Revision 1.2  2000/10/24 19:36:56  nakamura
 !Updated WriteMetaLog for new MCF; moved search for PCF number of MCF to L3CF module.
 !
