@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
@@ -106,7 +106,7 @@ module MLSStats1                 ! Calculate Min, Max, Mean, rms, std deviation
   end interface
   
   real, parameter :: FAC = 64.0E0
-
+  logical, parameter :: DEEBUG = .false.
   ! Function names
   ! Stored using sequence of integers
   integer, parameter              :: FN_MIN = 1
@@ -152,14 +152,22 @@ contains
           x1 = bounds(1)
           x2 = bounds(2)
         endif
-        stats(1) = MLSStat%count
-        stats(2) = MLSStat%min
-        stats(3) = MLSStat%max
-        stats(4) = MLSStat%mean
-        stats(5) = MLSStat%stddev
         myAddedData = .false.
         if ( present(addedData) ) myAddedData = addedData
-        if ( .not. myAddedData ) stats(1) = 0  ! Reset count to start again
+        if ( myAddedData ) then
+          stats(1) = MLSStat%count
+          stats(2) = MLSStat%min
+          stats(3) = MLSStat%max
+          stats(4) = MLSStat%mean
+          stats(5) = MLSStat%stddev
+          if ( DEEBUG ) then
+          call output('Merging with existing stats count min max mean stddev ', advance='yes')
+          call output(stats, advance='yes')
+          endif
+        else
+          stats(1) = 0  ! Reset count to start again
+          if ( DEEBUG ) call output('Resetting count to 0', advance='yes')
+        endif
         if ( present(fillValue) ) then
           call filterValues_r4(values, XTAB, NX, fillValue=fillValue)
           call STAT1_r4(XTAB, NX, STATS, bincount, NCELLS, X1, X2)
@@ -904,6 +912,9 @@ end module MLSStats1
 
 !
 ! $Log$
+! Revision 2.4  2005/03/24 21:16:40  pwagner
+! Avoid assigning to undefined values
+!
 ! Revision 2.3  2004/09/28 23:15:35  pwagner
 ! Uses isFillValue to allow slight tolerance
 !
