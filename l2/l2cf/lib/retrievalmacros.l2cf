@@ -447,13 +447,23 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 
 ; ---------------------------------------------------------------- Standard products
 
-;; This macro is used to transfer a product into the 'standard products'
-;; vector
+;; These macros are used to transfer a product into the 'standard
+;; products' vector
 !define(makeStandardProduct,{!dnl
   Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
   Fill, quantity=standardDiagnostics.status$1, method=vector, sourceQuantity=otherDiagnostics.status$1
   Fill, quantity=standardDiagnostics.quality$1, method=vector, sourceQuantity=otherDiagnostics.quality$1
+})
+!define(makeStandardProductMergeDiag,{!dnl
+  Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
+  Fill, quantity=standardDiagnostics.status$1, method=manipulate, $
+    a=standardDiagnostics.status$1, b=otherDiagnostics.status$1, $
+    manipulation='a|b'
+  Fill, quantity=standardDiagnostics.quality$1, method=manipulate, $
+    a=standardDiagnostics.quality$1, b=otherDiagnostics.quality$1, $
+    manipulation='a<b'
 })
 !define(makeStandardProductNoDiag,{!dnl
   Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
@@ -482,15 +492,6 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(computeDT,{!dnl
 Fill, quantity=cloudOutput.DTband$1, method=manipulate, $
   a=measurement.band$1, b=cloudOutput.band$1, manipulation='a-b'!nl})
-
-!define(flagBand32Clouds,{!dnl
-  FlagCloud, quantity=y!phase.band32, ptanQuantity=state.ptanGHz, $ 
-    height = [ 4000mb : 150mb ], cloudChannels=[ 1 ], cloudHeight=[ 1000mb : 700mb ],$
-    cloudRadiance=cloudOutput.DTband5, cloudRadianceCutoff= -10K, mask=[ cloud, linAlg ]
-  FlagCloud, quantity=y!phase.band32, ptanQuantity=state.ptanGHz, $
-    height = [ 150mb : 46mb ], cloudChannels=[ 1 ], mask=[ cloud, linAlg ], $
-    cloudRadiance=cloudOutput.DTband5, cloudRadianceCutoff=2K
-})
 
 ; ------------------ High level macros for status and quality filling
 !define(addInOneChisq,{!dnl
@@ -545,6 +546,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusH
 
 
 ; $Log$
+; Revision 1.92  2004/04/24 00:24:32  pwagner
+; Prefixes L2GP- to l2gpFileName if using PCF
+;
 ; Revision 1.91  2004/04/19 19:24:23  livesey
 ; Slight changes to L2AUX handling.
 ;
