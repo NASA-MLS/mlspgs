@@ -15,7 +15,7 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
   private :: not_used_here 
   !----------------------------------------------------------
 
-  !The following is included only because hte original file
+  !The following is included only because the original file
   ! $(HDFEOS5)/../../include/hdfeos5.inc isn't f95-compatible
   ! as of Toolkit version 5.2.8
   include 'hdfeos5.f9h'
@@ -117,6 +117,12 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
        character(len=*),intent(IN)::DIMNAME
     end function HE5_SWDIMINFO
 
+    integer function HE5_SWSETALIAS (SWATHID,FIELDNAME,ALIASLIST)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(IN)::FIELDNAME
+       character(len=*),intent(IN)::ALIASLIST
+    end function HE5_SWSETALIAS
+
   end interface
 
 !====================
@@ -129,6 +135,9 @@ end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 2.3  2002/12/11 22:21:47  pwagner
+! Added HE5_SWSETALIAS
+!
 ! Revision 2.2  2002/10/08 00:09:09  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
