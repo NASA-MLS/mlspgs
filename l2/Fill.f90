@@ -122,7 +122,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
-    use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft
+    use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft, GetSignal
     use Molecules, only: L_H2O
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -4005,6 +4005,7 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), intent(in) :: USBFRACTION
       integer, intent(in) :: KEY
       ! Local variables
+      type (MLSSignals_T) :: signal
 
       ! Executable code
       ! Do some checking first
@@ -4020,6 +4021,8 @@ contains ! =====     Public Procedures     =============================
       if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
         & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
         & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+
+      signal = GetSignal ( sourceQuantity%template%signal )
 
       ! OK Dong, this is where you do your stuff
       ! You're filling the lsb or usb radiance quantity 'quantity', using
@@ -5031,6 +5034,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.196  2003/04/05 00:05:37  livesey
+! Added call to getSignal in split sideband
+!
 ! Revision 2.195  2003/04/04 23:53:57  livesey
 ! Added skeleton for split sideband fill
 !
