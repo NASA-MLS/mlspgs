@@ -370,7 +370,7 @@ contains ! =====     Public Procedures     =============================
   ! -------------------------------------------------------------------------
 
   subroutine ReadL2GPData(L2FileHandle, swathname, l2gp, numProfs, &
-       firstProf, lastProf)
+       firstProf, lastProf, hdfVersion)
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, returning a filled data structure and the !
@@ -383,6 +383,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(IN), optional :: firstProf, lastProf ! Defaults to first and last
     type( L2GPData_T ), intent(OUT) :: l2gp ! Result
     integer, intent(OUT),optional :: numProfs ! Number actually read
+    integer, optional, intent(in) :: hdfVersion
 
     ! Local Parameters
     character (LEN=*), parameter :: SZ_ERR = 'Failed to get size of &
@@ -413,7 +414,7 @@ contains ! =====     Public Procedures     =============================
     ! Attach to the swath for reading
 
     l2gp%Name = swathname
-
+    
     swid = HE5_SWattach(L2FileHandle, l2gp%Name)
     if (swid == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &attach to swath interface for reading.')
@@ -1340,13 +1341,14 @@ contains ! =====     Public Procedures     =============================
 
   ! This subroutine is an amalgamation of the last three
   ! Should be renamed CreateAndWriteL2GPData
-  subroutine WriteL2GPData(l2gp,l2FileHandle,swathName)
+  subroutine WriteL2GPData(l2gp,l2FileHandle,swathName, hdfVersion)
 
     ! Arguments
 
     integer, intent(IN) :: l2FileHandle ! From swopen
     type (L2GPData_T), intent(INOUT) :: l2gp
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
+    integer, optional, intent(in) :: hdfVersion
     ! Exectuable code
 
     call OutputL2GP_createFile (l2gp, l2FileHandle, swathName)
@@ -1501,6 +1503,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.11  2001/11/29 10:07:13  pumphrey
+! L2GPData (HDF-EOS5 version) brought up to date with HDF-EOS4 version
+!
 ! Revision 1.10  2001/11/28 17:46:28  pumphrey
 ! In the middle of syncing up l2gpdata with HDF4 version in lib.
 ! Compiles, but not tested. Hack to write char swaths cut-n-pasted but not
