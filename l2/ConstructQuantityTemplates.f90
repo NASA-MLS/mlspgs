@@ -948,7 +948,9 @@ contains ! ============= Public procedures ===================================
       L_DNWT_FNORM, L_DNWT_GDX, L_DNWT_GFAC, &
       L_DNWT_GRADN, L_DNWT_SQ, L_DNWT_SQT,&
       L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
-      L_ELEVOFFSET, L_EXTINCTION, L_GPH, L_HEIGHTOFFSET, &
+      L_ELEVOFFSET, L_EXTINCTION, &
+      L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH, &
+      L_GPH, L_HEIGHTOFFSET, &
       L_ISOTOPERATIO, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
       L_LIMBSIDEBANDFRACTION, L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
@@ -1028,6 +1030,9 @@ contains ! ============= Public procedures ===================================
       l_elevOffset, phyq_angle, p_signal, next, &
       l_extinction, phyq_extinction, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
                     p_mustBeZeta, next, &
+      l_fieldAzimuth, phyq_angle, p_hGrid, p_vGrid, next, &
+      l_fieldElevation, phyq_angle, p_hGrid, p_vGrid, next, &
+      l_fieldStrength, phyq_gauss, p_hGrid, p_vGrid, next, &
       l_gph, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_heightOffset, phyq_length, p_hGrid, p_vGrid, next, &
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
@@ -1179,6 +1184,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.105  2003/08/08 23:06:53  livesey
+! Added the fieldStrength etc. quantities.
+!
 ! Revision 2.104  2003/07/07 20:22:37  livesey
 ! Minor bug fix in minor frame quantities
 !
