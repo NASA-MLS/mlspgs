@@ -671,15 +671,22 @@ contains
   end subroutine DestroyRadiometerDatabase
 
   ! ----------------------------------------------  DestroySignal  -----
-  subroutine DestroySignal ( Signal )
+  subroutine DestroySignal ( Signal, justChannels )
     ! Destroy one signal in the signals database (or elsewhere)
-    type(signal_T), intent(inout) :: Signal
+    ! If justChannels is set, don't destroy frequencies/widths, even
+    ! for deferred, as it is a copy of the master.
+    type(signal_T), intent(inout) :: SIGNAL
+    logical, intent(in), optional :: JUSTCHANNELS
 
+    logical :: MYJUSTCHANNELS
+
+    myJustChannels = .false.
+    if ( present(justChannels) ) myJustChannels = justChannels
     call deallocate_test ( signal%channels, 'Signal%channels', moduleName )
     ! Don't destroy Frequencies or Widths unless signal%Deferred.  Those
     ! fields are shallow copies here.  They're destroyed in
     ! DestroySpectrometerType.
-    if ( signal%deferred ) then
+    if ( signal%deferred .and. .not. myJustChannels ) then
       call deallocate_test ( signal%frequencies, "signal%frequencies", &
         & moduleName )
       call deallocate_test ( signal%widths, "signal%widths", moduleName )
@@ -1332,6 +1339,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.45  2002/02/14 23:00:45  livesey
+! Added justChannels optional argument to destroySignal
+!
 ! Revision 2.44  2002/02/14 18:37:40  livesey
 ! Big fix for AreSignalsSuperset
 !
