@@ -347,7 +347,7 @@ contains ! =====     Public Procedures     =============================
         l2Index = AddL2AUXToDatabase( L2AUXDatabase, l2aux )
         call decorate ( key, l2Index )
         call ReadL2AUXData ( sd_id, sdNameString, quantityType, L2AUXDatabase(l2Index), &
-          & hdfVersion=hdfVersion, checkDimNames=.true. )
+          & hdfVersion=hdfVersion, checkDimNames=.false. )
 
         if( index(switches, 'apr') /= 0 ) &
         & call dump( L2AUXDatabase(l2Index), details )
@@ -602,6 +602,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.48  2003/05/05 23:00:34  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.47  2003/04/17 23:08:29  pwagner
 ! Added optional AuraInstrument field to l2gp apriori reads
 !
