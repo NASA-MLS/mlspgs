@@ -18,7 +18,8 @@ module TREE_WALKER
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
-  use L2Parallel, only: PARALLEL, INITPARALLEL, GETCHUNKFROMMASTER
+  use L2Parallel, only: PARALLEL, GETCHUNKFROMMASTER, L2MASTERTASK, &
+    & CLOSEPARALLEL
   use L2PC_m, only: DestroyL2PCDatabase
   use MatrixModule_1, only: DestroyMatrixDatabase, Matrix_Database_T
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_RANGE_T
@@ -76,7 +77,7 @@ contains ! ====     Public Procedures     ==============================
     type (L1BInfo_T) :: L1BInfo         ! File handles etc. for L1B dataset
     type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
     type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
-    type(PCFData_T) :: L2pcf
+    type (PCFData_T) :: L2pcf
     type (Matrix_Database_T), dimension(:), pointer :: Matrices
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
@@ -91,8 +92,6 @@ contains ! ====     Public Procedures     ==============================
     nullify ( chunks, forwardModelConfigDatabase, griddedData, &
       & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, vGrids )
-
-    call InitParallel
 
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
@@ -124,41 +123,46 @@ contains ! ====     Public Procedures     ==============================
         endif
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
       case ( z_construct, z_fill, z_join, z_retrieve )
-        do chunkNo = lbound(chunks,1), ubound(chunks,1)
-          j = i
-subtrees: do while ( j <= howmany )
-            son = subtree(j,root)
-            select case ( decoration(subtree(1,son)) ) ! section index
-            case ( z_construct )
-              call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
-                & qtyTemplates, vectorTemplates, vGrids, hGrids, &
-                & l2gpDatabase, mifGeolocation )
-            case ( z_fill )
-              call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
-                & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
-                & l2auxDatabase, chunks, chunkNo)
-            case ( z_join )
-              call MLSL2Join ( son, vectors, l2gpDatabase, &
-                & l2auxDatabase, chunkNo, chunks )
-            case ( z_retrieve )
-              call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
-            case default
-          exit subtrees
-            end select
-            j = j + 1
-          end do subtrees
-          ! Now, if we're dealing with more than one chunk destroy stuff
-          ! Otherwise, we'll save them as we may need to output them as l2pc files.
-          if ( size(chunks) > 1) then
-            call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
-              & mifGeolocation, hGrids )
-            call DestroyVectorDatabase ( vectors )
-            call DestroyMatrixDatabase ( matrices )
-          end if
-        end do ! on chunkNo
-        i = j - 1 ! one gets added back in at the end of the outer loop
+        if ( parallel%master ) then 
+          call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
+        else
+          do chunkNo = lbound(chunks,1), ubound(chunks,1)
+            j = i
+subtrees:   do while ( j <= howmany )
+              son = subtree(j,root)
+              select case ( decoration(subtree(1,son)) ) ! section index
+              case ( z_construct )
+                call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
+                  & qtyTemplates, vectorTemplates, vGrids, hGrids, &
+                  & l2gpDatabase, mifGeolocation )
+              case ( z_fill )
+                call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
+                  & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
+                  & l2auxDatabase, chunks, chunkNo)
+              case ( z_join )
+                call MLSL2Join ( son, vectors, l2gpDatabase, &
+                  & l2auxDatabase, chunkNo, chunks )
+              case ( z_retrieve )
+                call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
+              case default
+                exit subtrees
+              end select
+              j = j + 1
+            end do subtrees
+            ! Now, if we're dealing with more than one chunk destroy stuff
+            ! Otherwise, we'll save them as we may need to output them as l2pc files.
+            if ( size(chunks) > 1) then
+              call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
+                & mifGeolocation, hGrids )
+              call DestroyVectorDatabase ( vectors )
+              call DestroyMatrixDatabase ( matrices )
+            end if
+          end do ! on chunkNo
+          i = j - 1 ! one gets added back in at the end of the outer loop
+        end if
       case ( z_output ) ! Write out the data
-        call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
+        if ( .not. parallel%slave ) &
+          & call Output_Close ( son, l2gpDatabase, l2auxDatabase, matrices, l2pcf,&
           & size(chunks)==1 )
 
         ! For case where there was one chunk, destroy vectors etc.
@@ -196,12 +200,16 @@ subtrees: do while ( j <= howmany )
     call DestroySpectrometerTypeDatabase ( SpectrometerTypes )
     call DestroySignalDatabase ( Signals )
     call destroyVGridDatabase ( vGrids )
+    call CloseParallel
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
   end subroutine WALK_TREE_TO_DO_MLS_L2
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.52  2001/05/10 00:43:23  livesey
+! Tree walker now owns hGrids
+!
 ! Revision 2.51  2001/05/04 17:12:25  pwagner
 ! Passes necessary args to global_settings
 !
