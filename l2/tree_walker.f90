@@ -9,6 +9,7 @@ module TREE_WALKER
   use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
   use Construct, only: MLSL2Construct, MLSL2DeConstruct
   use Dumper, only: Dump
+  use EmpiricalGeometry, only: ForgetOptimumLon0
   use Fill, only: MLSL2Fill
   use FGrid, only: FGrid_T, DestroyFGridDatabase
   use FilterShapes_m, only: Destroy_Filter_Shapes_Database
@@ -220,6 +221,7 @@ subtrees:   do while ( j <= howmany )
               call DestroyVectorDatabase ( vectors )
               call DestroyMatrixDatabase ( matrices )
             end if
+            call ForgetOptimumLon0
           end do ! on chunkNo
           i = j - 1 ! one gets added back in at the end of the outer loop
         end if
@@ -285,6 +287,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.71  2001/11/20 00:48:15  livesey
+! Fixed problem when no chunks to process
+!
 ! Revision 2.70  2001/11/16 17:24:13  livesey
 ! Now calls new ChunkDivide routine.
 !
