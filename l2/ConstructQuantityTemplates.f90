@@ -22,15 +22,16 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
     L_NONE, L_ORBITINCLINATION, L_OPTICALDEPTH, &
-    L_PTAN, L_RADIANCE, &
+    L_PTAN, L_RADIANCE, L_RHI, &
     L_REFGPH, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, &
     L_SPACERADIANCE, &
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
-    PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PRESSURE, &
-    PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
+    PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PCTRHI, &
+    PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, &
+    PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
@@ -169,6 +170,7 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_effectiveopticaldepth) =   PHYQ_Dimensionless
     natural_units(l_earthradius) =             PHYQ_Length
     natural_units(l_refGPH) =                  PHYQ_Length
+    natural_units(l_rhi) =                     PHYQ_PctRHI
     natural_units(l_scGeocAlt ) =              PHYQ_Length
     natural_units(l_scVel) =                   PHYQ_Velocity
     natural_units(l_scVelECI) =                PHYQ_Velocity   
@@ -861,6 +863,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.62  2002/04/10 17:44:22  pwagner
+! Added rhi quantity (but is this enough?)
+!
 ! Revision 2.61  2002/03/19 00:51:32  pwagner
 ! Added new scVel quantity types
 !
