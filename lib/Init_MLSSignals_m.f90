@@ -39,7 +39,8 @@ module Init_MLSSignals_m
   integer, parameter :: F_lo                = f_last + 1
   integer, parameter :: F_module            = f_lo + 1
   integer, parameter :: F_radiometer        = f_module + 1
-  integer, parameter :: F_spacecraft        = f_radiometer + 1
+  integer, parameter :: F_singleSideband    = f_radiometer + 1
+  integer, parameter :: F_spacecraft        = f_singleSideband + 1
   integer, parameter :: F_spectrometer      = f_spacecraft + 1
   integer, parameter :: F_spectrometerType  = f_spectrometer + 1
   integer, parameter :: F_start             = f_spectrometerType + 1
@@ -97,6 +98,7 @@ contains
     field_indices(f_lo) =                  add_ident ( 'lo' )
     field_indices(f_module) =              add_ident ( 'module' )
     field_indices(f_radiometer) =          add_ident ( 'radiometer' )
+    field_indices(f_singleSideband) =      add_ident ( 'singleSideband' )
     field_indices(f_spacecraft) =          add_ident ( 'spacecraft' )
     field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
     field_indices(f_spectrometerType) =    add_ident ( 'spectrometerType' )
@@ -156,6 +158,7 @@ contains
              begin, f+f_lo, t+t_numeric, n+n_field_type, &
              begin, f+f_suffix, t+t_string, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
+             begin, f+f_singleSideband, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def, &
       begin, s+s_spectrometerType, &
              begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
@@ -189,6 +192,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.17  2002/05/14 22:31:47  livesey
+! Added singleSideband
+!
 ! Revision 2.16  2002/05/03 22:38:55  livesey
 ! Added direction field
 !
