@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -31,7 +31,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   character*(*), parameter           :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
-    & 'read_apriori,scan_divide,construct,fill,retrieve,join,output'
+    & 'read_apriori,chunk_divide,construct,fill,retrieve,join,output'
   integer, parameter                 :: num_section_times = 12
   character*(*), parameter           :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
@@ -276,6 +276,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.14  2003/06/09 22:51:36  pwagner
+! Renamed scan_divide to chunk_divide in timings table
+!
 ! Revision 2.13  2003/02/27 21:56:07  pwagner
 ! Passes LOGFORMAT along with FORMAT
 !
