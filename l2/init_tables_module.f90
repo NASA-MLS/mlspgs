@@ -1069,6 +1069,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_pointingGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_spectroscopy, t+t_boolean, n+n_field_type, &
              begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
              begin, f+f_tGrid, s+s_tGrid, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
@@ -1293,6 +1294,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.388  2004/10/30 00:26:47  vsnyder
+! Add 'spectroscopy' field to DumpCommand
+!
 ! Revision 2.387  2004/10/21 00:45:02  vsnyder
 ! Require mlsSignals and spectroscopy before globalSettings etc.
 !
