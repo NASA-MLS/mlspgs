@@ -89,6 +89,7 @@ kronecker
 l1b
 l2aux
 l2dgg
+l2fwm
 l2gp
 l2pc
 linalg
@@ -141,6 +142,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.41  2003/08/14 20:10:25  pwagner
+# Added l2fwm
+#
 # Revision 2.40  2003/08/08 23:06:03  livesey
 # Added rotateField
 #
