@@ -1,6 +1,8 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module D_STAT_TEMP_M
-  USE MLSCommon, ONLY: R8
-  use PHYSICS, only: H_OVER_K
+
   implicit NONE
   private
   public :: D_STAT_TEMP, STAT_TEMP
@@ -10,23 +12,33 @@ module D_STAT_TEMP_M
 !{ This module calculates the energy emitted at the input frequency(MHz)
 ! from a black body source with temperature TEMP kelvins. The Returned
 ! energy is the statistical temperature equivalent in kelvins:
-!
-! \begin{equation*}
+
+!{ \begin{equation*}
 !  B = \frac{h \nu}{k \left( \exp(\frac{h \nu}{k T}) -1 \right )}
 !  \end{equation*}
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile$"
 !---------------------------------------------------------------------------
-  integer, private, parameter :: RK = r8
+
 contains
+
 ! pure function D_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
-  ELEMENTAL function D_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
+  elemental function D_STAT_TEMP ( TEMP, FREQ ) result ( STAT_TEMP )
+    use MLSCommon, ONLY: R8
+    use PHYSICS, only: H_OVER_K
+    integer, parameter :: RK = r8
     include 'stat_temp.f9h'
-  End function D_STAT_TEMP
+  end function D_STAT_TEMP
 end module D_STAT_TEMP_M
+
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.5.2.1  2001/09/10 10:02:32  zvi
 ! Cleanup..comp_path_entities_m.f90
 !
