@@ -242,8 +242,8 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to cp: attribute not found ' // trim(name) )
     is_present = IsHDF5AttributePresent_in_DSID(toitemID, name)
     if ( my_skip .and. is_present ) return
-    call GetHDF5Attribute_string ( fromitemID, name, value1 )
-    call MakeHDF5Attribute_string ( toitemID, name, trim(value1), &
+    call GetHDF5Attribute ( fromitemID, name, value1 )
+    call MakeHDF5Attribute ( toitemID, name, trim(value1), &
       & skip_if_already_there )
   end subroutine CpHDF5Attribute_string
 
@@ -4117,6 +4117,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.49  2005/01/07 01:04:37  vsnyder
+! Use generics for some internal references
+!
 ! Revision 2.48  2005/01/07 00:38:17  vsnyder
 ! Add IsHDF5GroupPresent, simplify some stuff, delete unused stuff
 !
