@@ -426,7 +426,7 @@ contains ! ============================ MODULE PROCEDURES ======================
         flag = FIRSTMAFNOTFOUND
         if ( MyNeverFail ) return
         call MLSMEssage ( MLSMSG_Error, ModuleName, &
-        & input_err // 'firstMAF' )
+        & input_err // 'firstMAF (bad chunkNo?)' )
       endif
       l1bData%firstMAF = firstMAF
     else
@@ -621,6 +621,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.19  2002/07/23 23:16:06  pwagner
+! Added suggested cause of firstMAF error being bad chunk num
+!
 ! Revision 2.18  2002/07/01 23:48:00  vsnyder
 ! Plug memory leaks, cosmetic changes
 !
