@@ -1315,6 +1315,8 @@ contains
             if ( associated(channels) ) doThis = channels(channel)
             if ( doThis ) then
               do height = 1, qty%template%noSurfs
+                !??? Make sure mask bit numbers begin at 1, even when
+                !??? channel numbers don't.
                 call SetMask ( qty%mask(:,instance), &
                   & (/ channel+qty%template%noChans*(height-1) /) )
               end do
@@ -1346,6 +1348,8 @@ contains
               if ( associated(channels) ) doThis = channels(channel)
               if ( doThis ) then
                 do height = s1(1), s2(1)
+                  !??? Make sure mask bit numbers begin at 1, even when
+                  !??? channel numbers don't.
                   call ClearMask ( qty%mask(:,instance), &
                     & (/ channel+qty%template%noChans*(height-1) /) )
                 end do
@@ -1369,6 +1373,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.72  2001/10/01 20:30:48  vsnyder
+! Insert a reminder for necessary future work
+!
 ! Revision 2.71  2001/09/29 00:07:11  pwagner
 ! Fixed various timing problems
 !
