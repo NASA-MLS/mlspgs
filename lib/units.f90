@@ -30,7 +30,7 @@ module UNITS
 
 contains ! =====     Public procedures     =============================
 ! ---------------------------------------------------  INIT_UNITS  -----
-  subroutine INIT_UNITS ( LIT_INDICES )
+  subroutine INIT_UNITS
     ! Put scale factors for units into the declaration table.
 
     ! If the scale factor is negative, it is subtracted instead of
@@ -42,7 +42,6 @@ contains ! =====     Public procedures     =============================
     ! dependence.  We can't put it there because a circular dependence
     ! between "init_tables_module" and "declaration_table" would
     ! result.
-    integer, intent(in) :: LIT_INDICES(:)
 
     call declare_unit ( l_dimensionless, 1.0d0, phyq_dimensionless )
     call declare_unit ( l_dimless, 1.0d0, phyq_dimensionless )
@@ -104,6 +103,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.7  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.6  2001/04/09 20:59:35  vsnyder
 ! Add C (for Celsius) unit and l_c name for it
 !
