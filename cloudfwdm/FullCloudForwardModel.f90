@@ -173,6 +173,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: THISSIDEBAND                        ! Loop counter for sidebands
     integer :: SIGIND                              ! Signal index, loop counter
     integer :: SPECTAG                             ! A single spectag
+    integer :: ispec                             ! species
 
     integer :: iCloudHeight                        ! Index for Cloud Top Height
 
@@ -267,7 +268,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !--------------------------------------------
     ! Loop over signals
     !--------------------------------------------
-
     do sigInd = 1, size(forwardModelConfig%signals)
 
     ! -------------------------------------
@@ -500,10 +500,27 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     got = .false.
     do i = 1, size(forwardModelConfig%molecules)
       select case (forwardModelConfig%molecules(i))
-        case ( L_H2O, L_O3, L_N2O, L_HNO3, L_N2, L_O2 )
-          got(forwardModelConfig%molecules(i)) = .true.
+        case ( L_H2O ) 
+            ispec = 1
+            got(i) = .true.
+        case ( L_O3 )
+            ispec = 2
+            got(i) = .true.
+        case ( L_N2O )
+            ispec = 3
+            got(i) = .true.
+        case ( L_HNO3 )
+            ispec = 4
+            got(i) = .true.
+        case ( L_N2 )
+            ispec = 5
+            got(i) = .true.
+        case ( L_O2 )
+            ispec = 6
+            got(i) = .true.
         case default
-          cycle
+            print*,'cloud fwd model does not allow this molecule:', forwardModelConfig%molecules(i)
+          stop
       end select
 
       vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
@@ -518,14 +535,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
         & reshape(vmr%values(:,instance),(/novmrSurf/)),  &    ! Old Y
         & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
-        & vmrArray(i,:),                                  &    ! New Y
+        & vmrArray(ispec,:),                                  &    ! New Y
         & 'Linear', extrapolate='Clamp' )
 
     end do
+
     if ( .not. got(l_n2o)) vmrArray(3,:) = 0._r8
     if ( .not. got(l_hno3)) vmrArray(4,:) = 0._r8
     if ( .not. got(l_n2)) vmrArray(5,:) = 0.805_r8
-    if ( .not. got(l_o2)) vmrArray(5,:) = 0.2095_r8
+    if ( .not. got(l_o2)) vmrArray(6,:) = 0.2095_r8
 
     if ( .not. got(l_h2o) .or. .not. got(l_o3) ) then
     !make sure we have at least two molecules h2o and o3. 
@@ -636,7 +654,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       end if
       
     ENDIF
-
 
     call Allocate_test ( frequencies, noFreqs, 'frequencies', ModuleName )
 
@@ -813,7 +830,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
              &      + thisRatio(i)*a_cloudRADSensitivity(mif,i)
 
          enddo
-   print*,maf,thissideband,i,thisRatio(i),a_cloudRADSensitivity(1,i),a_clearSkyRadiance(1,i)
+!   print*,maf,thissideband,i,thisRatio(i),a_cloudRADSensitivity(1,i),a_clearSkyRadiance(1,i)
        endif
      enddo
 ! print*,maf,thissideband,a_clearSkyRadiance(:,25)
@@ -1063,6 +1080,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.109  2003/04/02 20:00:12  dwu
+! some clearup and replace ifov with do_conv
+!
 ! Revision 1.108  2003/01/23 00:19:09  pwagner
 ! Some cosmetic only (or so I hope) changes
 !
