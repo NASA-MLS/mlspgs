@@ -468,7 +468,7 @@ contains
 !                nf_evalf nf_evalj nf_solve nf_newx nf_gmove nf_best
         & go to (160,     260,     540,     850,    240,     740, &
 !                nf_aitken nf_dx nf_dx_aitken
-        &        740,      770,  770), -ifl
+        &        750,      770,  770), -ifl
 
 ! Initialization
    10 if (ifl /= 0) go to 222 ! retreat to best X
@@ -747,6 +747,7 @@ contains
 ! Compute scalar factor for (modified) Aitken acceleration
 
       ifl = nf_aitken
+      nflag = ifl
       return
 
 ! Re-enter here after computing some numbers needed for (modified)
@@ -1021,6 +1022,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.17  2001/06/01 23:04:11  vsnyder
+! Corrected two bugs having to do with Aitken acceleration
+!
 ! Revision 2.16  2001/06/01 01:38:27  vsnyder
 ! Correct some comments, and some cosmetic changes
 !
