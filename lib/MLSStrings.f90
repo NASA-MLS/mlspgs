@@ -632,7 +632,9 @@ contains
     ! Reformat yyyymmdd as yyyy-mm-dd
     ! Wouldn't it be clever to allow an optional string arg defining
     ! the output format; E.g. 'dd M yyyy' for '03 September 2005'
-    ! or 'yyyy-doy' for '2005-d245'
+    ! (Thus 'M' expands into the full month name)
+    ! or 'yyyy-doy' for '2005-d245' (note the inclusion of the letter 'd')
+    ! or 'yyyy-Doy' for '2005-245' (note the absence of the letter 'd')
     ! And yet another optional string to hold the input format
     ! in case it wasn't yyyymmdd?
     ! Args
@@ -653,6 +655,7 @@ contains
     logical                                 :: inputWasDoy
     character(len=1), parameter             :: SPACESUBSTITUTE = '?'
     ! Executable
+    ! print *, 'date: ', trim(date)
     tempFormat = date
     if ( present(fromform) ) then
       ! print *, 'fromForm: ', trim(fromForm)
@@ -676,7 +679,6 @@ contains
             i = i + 1
             j = j + 1
           case ('M')
-            ! print *, j, trim(date), trim(date(j:))
             month = monthNameToNumber(date(j:))
             if ( month < 1 .or. month > 12 ) then
               reFormat = 'month name uncrecognized'
@@ -684,9 +686,12 @@ contains
             endif
             j = j + len_trim(MONTHNAME(month)) - 1
             write(tempFormat(5:6),'(i2.2)') month
-            ! print *, j, trim(date), trim(date(j:))
+          case ('D')
+            inputWasDoy = .true.
+            doyString = 'd' // date(j:j+2)
+            i = i + 2
+            j = j + 2
           case ('d')
-            ! print *, fromform(i:i+1)
             if ( fromform(i:i+1) == 'dd' ) then
               tempFormat(7:8) = date(j:j+1)
               i = i + 1
@@ -727,9 +732,13 @@ contains
         reFormat = trim(reFormat) // tempFormat(5:6)
         i = i + 1
       case ('M')
-        ! print *, 'Now trying to convert to month name ', trim(tempFormat), ' ', tempFormat(5:6)
         read(tempFormat(5:6), *) month
         reFormat = trim(reFormat) // trim(MONTHNAME(month))
+      case ('D')
+        call yyyymmdd_to_doy_str(tempFormat, doy)
+        write(doyString, '(i3.3)') doy
+        reFormat = trim(reFormat) // doyString
+        i = i + 2
       case ('d')
         if ( toform(i:i+1) == 'dd' ) then
           reFormat = trim(reFormat) // tempFormat(7:8)
@@ -761,8 +770,8 @@ contains
     ! Reformat hhmmss.sss as hh:mm:ss
     ! (Note it truncates instead of rounding)
     ! Wouldn't it be clever to allow an optional string arg defining
-    ! the output format; E.g. 'hh:mm' for '13:23'
-    ! or 'HH:mm' for '01:23 PM'
+    ! the output format; E.g. 'hh:mm' for '13:23' (note 24-hour time)
+    ! or 'HH:mm' for '01:23 PM' (note AM/PM marking)
     ! Args
     character(len=*), intent(in)            :: time
     character(len=len(time)+24)             :: reFormat
@@ -1035,7 +1044,8 @@ contains
     !----------Executable part----------!
      ! call utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, nodash=.true.)
      doy = -1
-     if ( len_trim(str) < 8 ) return 
+     if ( len_trim(str) < 8 ) return
+     ! print *, 'str: ', str
      read(str(1:4), *) year
      read(str(5:6), *) month
      read(str(7:8), *) day
@@ -1049,7 +1059,7 @@ contains
     ! for a string of the form yyyymmdd
     !--------Argument--------!
     character(len=*),intent(in) :: yyyy
-    character(len=*),intent(in) :: doy
+    character(len=*),intent(in) :: doy ! w/o the letter 'd'
     character(len=*),intent(out) :: yyyymmdd
     !----------Local vars----------!
     integer :: year, month, day, doynum
@@ -1130,6 +1140,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.51  2004/10/13 20:25:45  pwagner
+! In reFormatDate allow day of year w/o letter d; e.g. 2004-274
+!
 ! Revision 2.50  2004/10/13 16:23:03  pwagner
 ! Moved declaration of hhmmss_value result to after use statement
 !
