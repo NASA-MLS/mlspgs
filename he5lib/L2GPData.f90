@@ -7,7 +7,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use DUMP_0, only: DUMP
   use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
-  use HDF5_params
+!  use HDF5_params
   use HDFEOS!, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
   use HDFEOS5
@@ -1738,8 +1738,8 @@ contains ! =====     Public Procedures     =============================
     ! Define dimensions
 
     ! Defining special "unlimited dimension called UNLIM
-    !print*,"Defined Unlim with size", H5S_UNLIMITED
-    status = HE5_SWdefdim(swid, UNLIM, H5S_UNLIMITED)
+    !print*,"Defined Unlim with size", HE5S_UNLIMITED
+    status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED)
 
     !print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
     status = HE5_SWdefdim(swid, DIM_NAME1, l2gp%nTimes)
@@ -1769,25 +1769,25 @@ contains ! =====     Public Procedures     =============================
     ! Define horizontal geolocation fields using above dimensions
 
 !    print*,"Defining geolocation field ",GEO_FIELD1," of dim. ", DIM_NAME1
-!    print*,"... and of type ",H5T_NATIVE_FLOAT
+!    print*,"... and of type ",HE5T_NATIVE_FLOAT
     chunk_rank=1
     chunk_dims=1
     chunk_dims(1)=CHUNKTIMES
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
 !    print*,"Set chunking -- status=",status
     status = HE5_SWdefgfld(swid, GEO_FIELD1, DIM_NAME1,MAX_DIML1,&
-         H5T_NATIVE_FLOAT , 0)
+         HE5T_NATIVE_FLOAT , 0)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD1
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
 !    print*,"Defined geolocation field ",GEO_FIELD1,"of dim.", DIM_NAME1
-!    print*,"... and of type ",H5T_NATIVE_FLOAT
+!    print*,"... and of type ",HE5T_NATIVE_FLOAT
 
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
 
     status = HE5_SWdefgfld(swid, GEO_FIELD2, DIM_NAME1, MAX_DIML1,&
-         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD2
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1795,7 +1795,7 @@ contains ! =====     Public Procedures     =============================
 
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
     status = HE5_SWdefgfld(swid, GEO_FIELD3, DIM_NAME1, MAX_DIML1, &
-    H5T_NATIVE_DOUBLE, HDFE_NOMERGE)
+    HE5T_NATIVE_DOUBLE, HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD3
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1803,7 +1803,7 @@ contains ! =====     Public Procedures     =============================
 
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
     status = HE5_SWdefgfld(swid, GEO_FIELD4, DIM_NAME1,MAX_DIML1,&
-         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD4
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1811,7 +1811,7 @@ contains ! =====     Public Procedures     =============================
 
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
     status = HE5_SWdefgfld(swid, GEO_FIELD5, DIM_NAME1, MAX_DIML1, &
-         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD5
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1819,7 +1819,7 @@ contains ! =====     Public Procedures     =============================
 
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
     status = HE5_SWdefgfld(swid, GEO_FIELD6, DIM_NAME1,MAX_DIML1,&
-         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD6
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1827,7 +1827,7 @@ contains ! =====     Public Procedures     =============================
 
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
     status = HE5_SWdefgfld(swid, GEO_FIELD7, DIM_NAME1, MAX_DIML1,&
-    H5T_NATIVE_FLOAT,   HDFE_NOMERGE)
+    HE5T_NATIVE_FLOAT,   HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD7
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1835,7 +1835,7 @@ contains ! =====     Public Procedures     =============================
 
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
     status = HE5_SWdefgfld(swid, GEO_FIELD8, DIM_NAME1, MAX_DIML1,&
-         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = GEO_ERR // GEO_FIELD8
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1844,7 +1844,7 @@ contains ! =====     Public Procedures     =============================
     if ( l2gp%nLevels > 0 ) then
 
        status = HE5_SWdefgfld(swid, GEO_FIELD9, DIM_NAME2,MAX_DIML,&
-            H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
        if ( status == -1 ) then
           msr = GEO_ERR // GEO_FIELD9
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1854,7 +1854,7 @@ contains ! =====     Public Procedures     =============================
     if ( l2gp%nFreqs > 0 ) then
 
        status = HE5_SWdefgfld(swid, GEO_FIELD10, DIM_NAME3,MAX_DIML,&
-            H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
        if ( status == -1 ) then
           msr = GEO_ERR // GEO_FIELD10
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1869,7 +1869,7 @@ contains ! =====     Public Procedures     =============================
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
 
        status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME123, MAX_DIML123,&
-       H5T_NATIVE_FLOAT,HDFE_NOMERGE)
+       HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
@@ -1879,7 +1879,7 @@ contains ! =====     Public Procedures     =============================
 
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME123, MAX_DIML123,&
-            H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD2 // ' for 3D quantity.'
@@ -1896,9 +1896,9 @@ contains ! =====     Public Procedures     =============================
        !print*,"About to define 2-D extendible field"
 
        !print*,"Calling SWdefdfld with args ",swid, DATA_FIELD1, &
-       !      DIM_NAME12, MAX_DIML12, H5T_NATIVE_FLOAT, HDFE_NOMERGE
+       !      DIM_NAME12, MAX_DIML12, HE5T_NATIVE_FLOAT, HDFE_NOMERGE
        status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML12, &
-            H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+            HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
        !print*,"Defined 2-D extendible field"
 
        if ( status == -1 ) then
@@ -1908,7 +1908,7 @@ contains ! =====     Public Procedures     =============================
 
            status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
            status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME12, MAX_DIML12,&
-            H5T_NATIVE_FLOAT,HDFE_NOMERGE)
+            HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD2 //  ' for 2D quantity.'
@@ -1921,7 +1921,7 @@ contains ! =====     Public Procedures     =============================
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
     
        status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME1,MAX_DIML1,&
-            H5T_NATIVE_FLOAT,HDFE_NOMERGE)
+            HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD1 // ' for 1D quantity.'
@@ -1929,7 +1929,7 @@ contains ! =====     Public Procedures     =============================
        end if
 
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML1,&
-       H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+       HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD2 // ' for 1D quantity.'
@@ -1939,10 +1939,10 @@ contains ! =====     Public Procedures     =============================
     end if
 
 !    print*,"Defining data field ",DATA_FIELD3,"of dim.", DIM_NAME1
-!    print*,"... and of type ",H5T_NATIVE_CHAR
+!    print*,"... and of type ",HE5T_NATIVE_CHAR
 
 !    status = HE5_SWdefdfld(swid, DATA_FIELD3, DIM_NAME1,MAX_DIML1,&
-!         H5T_NATIVE_CHAR, HDFE_NOMERGE)
+!         HE5T_NATIVE_CHAR, HDFE_NOMERGE)
 !    IF ( status == -1 ) THEN
 !       msr = DAT_ERR // DATA_FIELD3
 !       CALL MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1954,7 +1954,7 @@ contains ! =====     Public Procedures     =============================
     status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
 
     status = HE5_SWdefdfld(swid, DATA_FIELD4, DIM_NAME1,MAX_DIML1,&
-         H5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
     if ( status == -1 ) then
        msr = DAT_ERR // DATA_FIELD4
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -2472,6 +2472,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.18  2002/05/01 13:05:53  hcp
+! Changed a warning to a debug so I didn't have to see it
+!
 ! Revision 1.17  2002/05/01 09:28:10  hcp
 ! Some print statements commented
 !
