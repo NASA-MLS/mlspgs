@@ -107,7 +107,7 @@ contains ! ====     Public Procedures     ==============================
 ! ---------------------------------------------------------  EXPR  -----
   recursive subroutine EXPR
     integer :: NSONS
-    if ( toggle(par) ) call output ( 'Enter EXPR', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter EXPR', advance='yes' )
     if ( next%class == t_left_bracket ) then
       nsons = 0
       call array ( nsons )
@@ -137,7 +137,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine EXPR
 ! -------------------------------------------------------  FACTOR  -----
   recursive subroutine FACTOR  ! factor -> ( +|- )? primary
-    if ( toggle(par) ) call output ( 'Enter FACTOR', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter FACTOR', advance='yes' )
     if ( next%class == t_plus ) then
       call get_token
       call primary
@@ -154,7 +154,7 @@ contains ! ====     Public Procedures     ==============================
 ! ----------------------------------------------------  FIELD_LIST  -----
   subroutine FIELD_LIST
     integer :: HOW_MANY       ! sons of the n_asg node
-    if ( toggle(par) ) call output ( 'Enter FIELD_LIST', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter FIELD_LIST', advance='yes' )
     do
       select case ( next%class )
       case ( t_identifier, t_string, & ! field_list -> expr ( '=' expr + )?
@@ -189,7 +189,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine GET_TOKEN
 ! --------------------------------------------------------  LFACTOR  -----
   recursive subroutine LFACTOR ! lfactor -> term ( +|- term ) *
-    if ( toggle(par) ) call output ( 'Enter LFACTOR', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter LFACTOR', advance='yes' )
     call term
     do
       if ( next%class == t_plus ) then
@@ -208,7 +208,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine LFACTOR
 ! --------------------------------------------------------  LIMIT  -----
   recursive subroutine LIMIT  ! limit -> lterm ( or lterm ) *
-    if ( toggle(par) ) call output ( 'Enter LIMIT', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter LIMIT', advance='yes' )
     call lterm
     do while ( next%class == t_or )
       call get_token
@@ -219,7 +219,7 @@ contains ! ====     Public Procedures     ==============================
   end subroutine LIMIT
 ! --------------------------------------------------------  LTERM  -----
   recursive subroutine LTERM  ! lterm -> lfactor ( and lfactor ) *
-    if ( toggle(par) ) call output ( 'Enter LTERM', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter LTERM', advance='yes' )
     call lfactor
     do while ( next%class == t_and )
       call get_token
@@ -231,7 +231,7 @@ contains ! ====     Public Procedures     ==============================
 ! -------------------------------------------------------  ONE_CF  -----
   subroutine ONE_CF
     integer :: HOW_MANY       ! How many sons of the generated tree node
-    if ( toggle(par) ) call output ( 'Enter ONE_CF', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter ONE_CF', advance='yes' )
 o:  do
       select case ( next%class )
       case ( t_end_of_stmt )  ! one_cf -> 'eos'
@@ -263,7 +263,7 @@ o:  do
   end subroutine ONE_CF
 ! ------------------------------------------------------  PRIMARY  -----
   recursive subroutine PRIMARY
-    if ( toggle(par) ) call output ( 'Enter PRIMARY', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter PRIMARY', advance='yes' )
     do
       select case ( next%class )
       case ( t_identifier )   ! primary -> 'name' ( '.' 'name' ) ?
@@ -308,7 +308,7 @@ o:  do
   integer function SPEC ()
   ! Analyze specifications in a section.
   ! Return how many specifications got generated -- 0 or 1
-    if ( toggle(par) ) call output ( 'Enter SPEC', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter SPEC', advance='yes' )
     do
       select case ( next%class )
       case ( t_end_of_stmt )  ! spec -> 'EOS'
@@ -332,7 +332,7 @@ o:  do
 ! ----------------------------------------------------  SPEC_LIST  -----
   subroutine SPEC_LIST
     integer :: HOW_MANY       ! sons of the n_asg node
-    if ( toggle(par) ) call output ( 'Enter SPEC_LIST', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter SPEC_LIST', advance='yes' )
     how_many = 1
     do while ( next%class == t_comma )  ! spec_list -> ( ',', field_list ) *
       call get_token
@@ -345,7 +345,7 @@ o:  do
 ! ----------------------------------------------------  SPEC_REST  -----
   subroutine SPEC_REST
     integer :: HOW_MANY       ! sons of the n_equal node
-    if ( toggle(par) ) call output ( 'Enter SPEC_REST', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter SPEC_REST', advance='yes' )
     do
       select case ( next%class )
       case ( t_end_of_stmt )  ! spec_rest -> \lambda
@@ -380,7 +380,7 @@ o:  do
   end subroutine SPEC_REST
 ! ---------------------------------------------------------  TERM  -----
   recursive subroutine TERM   ! term -> primary ( *|/ primary )*
-    if ( toggle(par) ) call output ( 'Enter TERM', advance='yes' )
+    if ( toggle(par) ) call where ( 'Enter TERM', advance='yes' )
     call factor
     do
       if ( next%class == t_star ) then
@@ -421,10 +421,20 @@ o:  do
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
+! --------------------------------------------------------  WHERE  -----
+  subroutine WHERE ( WHAT, ADVANCE )
+    character(len=*), intent(in) :: WHAT, ADVANCE
+    call output ( what )
+    call output ( ' at ' )
+    call print_source ( next%source, advance=advance )
+  end subroutine WHERE
 
 end module PARSER
 
 ! $Log$
+! Revision 2.10  2003/01/29 03:14:14  vsnyder
+! Print the line and column in ENTER debugging output
+!
 ! Revision 2.9  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
