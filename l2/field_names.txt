@@ -102,6 +102,7 @@ level
 logBasis
 losqty
 
+mask
 matrix
 maxF
 maxGap
@@ -216,6 +217,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.24  2002/02/07 02:55:02  vsnyder
+# Add a 'mask' field to the 'setup' spec
+#
 # Revision 2.23  2002/01/24 17:45:21  pwagner
 # Added climatology, operational
 #
