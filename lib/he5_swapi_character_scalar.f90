@@ -23,7 +23,7 @@ contains
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
@@ -79,7 +79,7 @@ contains
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
@@ -94,7 +94,7 @@ contains
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_charType
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
 
@@ -136,6 +136,9 @@ contains
 end module HE5_SWAPI_CHARACTER_SCALAR
 
 ! $Log$
+! Revision 2.8  2004/03/24 23:53:02  pwagner
+! Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+!
 ! Revision 2.7  2004/02/26 21:57:25  pwagner
 ! Takes care that attribute return values nulled out before being read
 !
