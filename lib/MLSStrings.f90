@@ -716,15 +716,15 @@ CONTAINS
     CHARACTER (LEN=LEN(str)) :: outstr
 
     !----------Local vars----------!
-    INTEGER :: i, icode, offset
+    INTEGER :: i, icode
+    INTEGER, parameter :: offset=IACHAR("a")-IACHAR("A")
     !----------Executable part----------!
     outstr=str
-    offset=ICHAR("a")-ICHAR("A")
 
     DO i = 1, LEN(str)
-       icode=ICHAR(outstr(i:i))
-       IF ( icode >=ICHAR("A") .AND. icode <= ICHAR("Z")) THEN
-          outstr(i:i)=char(icode+offset)
+       icode=IACHAR(outstr(i:i))
+       IF ( icode >=IACHAR("A") .AND. icode <= IACHAR("Z")) THEN
+          outstr(i:i)=achar(icode+offset)
        END IF
     END DO
 
@@ -1323,6 +1323,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2001/06/20 23:23:39  vsnyder
+! Same as last time, but for LowerCase instead of Capitalize.
+!
 ! Revision 2.14  2001/06/20 23:21:49  vsnyder
 ! Replace ICHAR with IACHAR and CHAR with ACHAR, to improve portability.
 ! Make "offset" a parameter.
