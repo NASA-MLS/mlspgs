@@ -97,7 +97,7 @@ contains
     nb = a%col%nb
     if ( a%col%extra ) nb = nb - 1
     if ( nsons(orders) /= 2 ) then
-      if ( quants == 0 ) call call announceError ( regQuantsReq, orders )
+      if ( quants == 0 ) call announceError ( regQuantsReq, orders )
       if ( nsons(orders) /= nsons(quants) ) &
         & call announceError ( fieldSizes, orders )
     end if
@@ -217,6 +217,9 @@ o:    do ib = 1, nb
 end module Regularization
 
 ! $Log$
+! Revision 2.5  2001/06/26 20:13:24  vsnyder
+! Fixed a blunder -- call call announceError
+!
 ! Revision 2.4  2001/06/26 19:01:00  vsnyder
 ! Specify regularization orders according to quantities
 !
