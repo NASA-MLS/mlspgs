@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module DUMPER
 
 ! Dump various stuff so we can look at it.
@@ -192,6 +195,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.10  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.9  2001/04/10 23:44:44  vsnyder
 ! Improve 'dump'
 !
