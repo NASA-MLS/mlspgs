@@ -1536,7 +1536,7 @@ contains ! =====     Public Procedures     =============================
   ! index, is returned.
 
     ! Dummy arguments
-    type (Vector_T), intent(in) :: VECTOR
+    type (Vector_T), intent(in), target :: VECTOR
     integer, intent(in) :: QUANTITYTYPE ! Quantity type index (l_...)
     integer, intent(in), optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in), optional :: INSTRUMENTMODULE ! Module index
@@ -2165,6 +2165,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.103  2003/08/27 20:06:42  livesey
+! Bug fix in MaskVectorQty
+!
 ! Revision 2.102  2003/06/20 19:33:53  pwagner
 ! Quanities now share grids stored separately in databses
 !
