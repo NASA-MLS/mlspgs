@@ -483,8 +483,8 @@ contains ! =====     Public Procedures     =============================
         if ( .not. associated(info%molecules) ) then
           call announceError( DefineMoleculesFirst, root)
         else
-          do j = 1, nsons(son)-1
-            thisMolecule = decoration( subtree( j+1, son ) )
+          do j = 2, nsons(son)
+            thisMolecule = decoration( subtree( j, son ) )
             if ( .not. any(info%molecules == thisMolecule ) ) &
               & call announceError( BadMolecule, root )
             where ( info%molecules == thisMolecule )
@@ -513,6 +513,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_pfaMolecules )
         call allocate_test ( info%pfaMolecules, nsons(son)-1, "info%pfaMolecules", &
           & moduleName )
+        do j = 2, nsons(son)
+          info%pfaMolecules(j-1) = decoration( subtree( j, son ) )
+        end do
       case ( f_phiWindow )
         call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
@@ -883,6 +886,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.92  2004/05/18 01:25:14  vsnyder
+! Hopefully finish pfaMolecules field support
+!
 ! Revision 2.91  2004/05/01 04:05:50  vsnyder
 ! Added pfaMolecules -- but more work needed
 !
