@@ -156,6 +156,7 @@ contains
 
     logical :: doThis                   ! Flag for lines
     logical :: temp_der, atmos_der, spect_der, ptan_der ! Flags for various derivatives
+    logical :: Update                   ! Just update radiances etc.
 
     character (len=32) :: molName       ! Name of a molecule
 
@@ -2148,6 +2149,7 @@ contains
         end if
 
         ! Here comes the Convolution codes
+        update = ( thisSideband /= sidebandStart )
 
         if ( FwdModelConf%do_conv ) then
 
@@ -2165,13 +2167,13 @@ contains
           where ( superset < 0 ) superset = maxSuperset + 1
           whichPattern = minloc ( superset, 1 )
 
-   ! Now change channel from starting at 0 or 1 to definately 1
-
+          ! Now change channel from starting at 0 or 1 to definately 1
+          
           j = sv_t_len
           if ( .not. temp_der .AND. .not. atmos_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
                & chanInd, windowStart, windowFinish, mol_cat_index, temp,ptan, &
-               & thisRadiance, ptg_angles, Radiances(:,i), tan_chi_out,        &
+               & thisRadiance, update, ptg_angles, Radiances(:,i), tan_chi_out,        &
                & dhdz_out, dx_dh_out, thisRatio,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2179,7 +2181,7 @@ contains
           else if ( temp_der .AND. .not. atmos_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra,maf,   &
                & chanInd, windowStart, windowFinish, mol_cat_index, temp,ptan, &
-               & thisRadiance, ptg_angles, Radiances(:,i), tan_chi_out,        &
+               & thisRadiance, update, ptg_angles, Radiances(:,i), tan_chi_out,        &
                & dhdz_out, dx_dh_out, thisRatio,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2189,7 +2191,7 @@ contains
           else if ( atmos_der .AND. .not. temp_der ) then
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
                & chanInd, windowStart, windowFinish, mol_cat_index, temp, ptan,&
-               & thisRadiance, ptg_angles, Radiances(:,i), tan_chi_out,        &
+               & thisRadiance, update, ptg_angles, Radiances(:,i), tan_chi_out,        &
                & dhdz_out, dx_dh_out, thisRatio,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2198,7 +2200,7 @@ contains
           else
             call convolve_all ( FwdModelConf, FwdModelIn, FwdModelExtra, maf,  &
                & chanInd, windowStart, windowFinish, mol_cat_index, temp, ptan,&
-               & thisRadiance, ptg_angles, Radiances(:,i), tan_chi_out,        &
+               & thisRadiance, update, ptg_angles, Radiances(:,i), tan_chi_out,        &
                & dhdz_out, dx_dh_out, thisRatio,                               &
                & antennaPatterns(whichPattern), Grids_tmp%deriv_flags,         &
                & Grids_f, Jacobian, fmStat%rows, SURF_ANGLE=surf_angle(1),     &
@@ -2214,14 +2216,14 @@ contains
           j = sv_t_len
           if ( .not. temp_der .AND. .not. atmos_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
-              &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+              &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, mol_cat_index, fmStat%rows,   &
               &  Jacobian, PTAN_DER=ptan_der)
           else if ( temp_der .AND. .not. atmos_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
-              &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+              &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, mol_cat_index, fmStat%rows,   &
@@ -2230,7 +2232,7 @@ contains
               &  PTAN_DER=ptan_der )
           else if ( atmos_der .AND. .not. temp_der ) then
             call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
-              &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+              &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, mol_cat_index, fmStat%rows,   &
@@ -2238,7 +2240,7 @@ contains
 !             &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           else
             call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
-              &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+              &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, mol_cat_index, fmStat%rows,   &
@@ -2488,6 +2490,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.88  2002/09/07 02:18:50  vsnyder
+! More cosmetic changes
+!
 ! Revision 2.87  2002/09/06 20:23:22  livesey
 ! Merged in bug fixes with change from Van
 !
