@@ -28,7 +28,7 @@ module RetrievalModule
     & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
     & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
     & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, L_dnwt_gradn,  L_dnwt_sq, &
-    & L_dnwt_sq,  L_dnwt_sqt, L_full_derivatives, &
+    & L_dnwt_sq,  L_dnwt_sqt, L_ExplicitFill, L_full_derivatives, &
     & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
     & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, L_numF, &
     & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_zeta, &
@@ -57,7 +57,7 @@ module RetrievalModule
   use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
     & CloneVector, CopyVector, CopyVectorMask, DestroyVectorInfo, &
     & DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
-    &IsVectorQtyMasked, M_FullDerivatives, M_LinAlg, &
+    &IsVectorQtyMasked, M_ExplicitFill, M_FullDerivatives, M_LinAlg, &
     & Vector_T, VectorValue_T
 
   implicit NONE
@@ -2383,6 +2383,8 @@ contains
           do i = 2, nsons(son)
             mask = decoration(subtree(i,son))
             select case ( mask )
+            case ( l_explicitFill )
+              maskBit = ior(maskBit, m_explicitFill)
             case ( l_full_derivatives )
               maskBit = ior(maskBit, m_fullDerivatives)
             case ( l_linAlg )
@@ -2730,6 +2732,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.137  2002/03/08 08:07:16  livesey
+! Added explicit fill mask
+!
 ! Revision 2.136  2002/03/06 01:44:30  livesey
 ! Changed manner in which optical depth cutoff applied so that
 ! once a channel is too optically thick it always is (as a function of
