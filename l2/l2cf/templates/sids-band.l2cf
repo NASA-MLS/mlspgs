@@ -18,6 +18,9 @@ include(m4defs.l2cf)
 
 ; ----------------------------------- Boiler plate l2cf stuff -------
 
+; Retrieval macros, defines bands
+!include(retrievalmacros.l2cf)
+
 ; Valid signals database
 !include(!signalsL2cf)
 
@@ -140,13 +143,23 @@ end Retrieve
 ; ------------------------------------------ Join the chunks
 
 begin Join
+  ;; Don't do anything if we've not defined an output version, to
+  ;; help avoid overwriting old data in one off tests.
+  !ifdef(l1bradversion,{
+
   !define(outfile,{'!outpathl1brad/MLS-Aura_L1BRAD-band!band-clean_!l1bradversion_!day.h4'})
   directWrite, source=y.band!band, /prefixSignal, sdName='', file=!outfile
   directWrite, source=yNoise.band!band, /prefixSignal, sdName=' precision', file=!outfile
   directWrite, source=truth.ptanGHz, sdName='GHz.ptan', file=!outfile
   directWrite, source=truth.ptanTHz, sdName='THz.ptan', file=!outfile
+
+})
 end Join
 
 ; ---------------------------------------  Output the result
 begin Output
 end Output
+
+
+
+
