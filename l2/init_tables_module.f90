@@ -77,8 +77,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_EXPLICITVALUES      = f_diagonalout + 1
   integer, parameter :: F_FILE                = f_explicitvalues + 1
   integer, parameter :: F_FIRST               = f_file + 1
-  integer, parameter :: F_FIRSTINDEXCHANNEL   = f_first + 1
-  integer, parameter :: F_FRACTION            = f_firstIndexChannel + 1
+  integer, parameter :: F_FRACTION            = f_first + 1
   integer, parameter :: F_FREQUENCIES         = f_fraction + 1
   integer, parameter :: F_FREQUENCY           = f_frequencies + 1
   integer, parameter :: F_FWDMODELIN          = f_frequency + 1
@@ -368,7 +367,6 @@ contains ! =====     Public procedures     =============================
     field_indices(f_explicitvalues) =      add_ident ( 'explicitValues' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_first) =               add_ident ( 'first' )
-    field_indices(f_firstIndexChannel) =   add_ident ( 'firstIndexChannel' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
     field_indices(f_frequencies) =         add_ident ( 'frequencies' )
     field_indices(f_frequency) =           add_ident ( 'frequency' )
@@ -656,7 +654,6 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_band, t+t_string, n+n_field_type, &
-             begin, f+f_firstindexchannel, t+t_boolean, n+n_field_type, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
@@ -863,6 +860,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.23  2001/02/20 18:44:02  livesey
+! Removed firstIndexChannel
+!
 ! Revision 2.22  2001/02/17 00:26:58  livesey
 ! Added more stuff to Fill section
 !
