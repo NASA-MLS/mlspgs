@@ -111,13 +111,18 @@ BEFORE.mls    makemakedep.sh     Makefile.dep       source
 README.MakeFC  f90makedep.pl      platforms/*          files)
               f90ghostfiles.pl                     Makefile.dep
               ghostbuster.sh
+                (much else)
 
 BUILDING THE SOFTWARE
 Then to make the mls software, both the lib and all mlslevels, from the top
 level of the mlspgs directory, enter the command "make -f MakeFC". This should
 launch util/mlsconfigure. It will first query you for your compiler (only three
 choices available: NAG, Lahey, or Sun) and for your platform/OS (only three
-choices available: Sun, SGI, or Linux).
+choices available: Sun, SGI, or Linux). You'll also be offered the chance to
+give your configuration a name--the default offered to you, based on the
+compiler and platform, should be accepted unless you intend to maintain
+multiple configurations simultaneously with different compiler or linker
+options, linked libraries, and so on.
 
 Next it will prompt you to enter the paths to the SDP Toolkit includes
 directories and to the PGSTK, HDFEOS, HDF, and Gctp libraries. These may
@@ -135,11 +140,11 @@ Note whether you have the latest version of the toolkit (currently
 the HDF and HDFEOS libraries, and so their paths need to be set. Gor earlier
 versions, leave their paths blank.
 
-The next set of questions will pertain to three special libraries: BLAS, PVM
-and FFTW. BLAS is completely optional.  PVM is required only for level 2. FFTW
-is required only for level 3.
+The next set of questions will pertain to four special libraries: BLAS, LAPACK,
+PVM and FFTW. BLAS is completely optional.  PVM is required only for level 2.
+FFTW is required only for level 3.
 
-The final two questions allow to set your own default compiler and loader
+The final two questions allow you to set your own default compiler and loader
 options. You can instead safely accept the default values.
 
 To set these paths as environment variables, if they are not so set
@@ -185,10 +190,19 @@ changing some of its modules, then while there you may use the simple
 and only libmls.a will be rebuilt. Again the same is true while in the other
 mlslevels when only the software in that level will be built.
 
-MULTIPLE PLATFORMS
-If you wish to build the software on more than one platform, one reliable
-method is to keep multiple copies of the .configure file and alternately rename
-or hide them according to the machine and compiler in use at a particular time.
+MULTIPLE PLATFORMS/CONFIGURATION NAMES
+Using multiple platforms or simply having multiple named configurations on a
+single platform is easy. You must take precautions to ensure that 
+  (1) each configuration's name is unique
+  (2) when you type "make" you know which named configuration is in force
+Because each named configuration "owns" the uniquely-named sub-directory where
+it puts binary objects, named in fact after the configuration, two different
+configurations with the same name would step on each other's binaries.
+
+If you wish to build the software on more than one platform, or use more than
+one combination of compiler/linker/library options, one reliable method is to
+keep multiple copies of the .configure file and alternately rename or hide them
+according to the machine and compiler in use at a particular time.
 
 Alternatively, let us first assume you have more than one .configure file
 already. If you don't, you may create multiple ones either by hand-editing them
@@ -245,14 +259,19 @@ invoking make takes precedence for that invocation.
 
 Another setting that may need to vary running on multiple platforms is the
 destination where you wish "make install" to place your executables. By default
-this would be mlspgs/bin/MLSCONFG and so automatically tracks different
-platforms correctly. You might choose alternatively, especially if you have
-root priviledge, and so may need more flexibility. The counterpart to
-HOSTMLSCFILE is MLSINSTALLDIR. Set it as an environment variable at login, and
-it will dictate where install moves mlsl1, etc. As an alternative, the
-counterpart to the command-line varaible MLSCFILE above is INSTALLDIR. Thus you
-may specify the destination via
+this would be mlspgs/bin/MLSCONFG where MLSCONFG is a variable whose value is
+the configuration name and so automatically tracks different platforms
+correctly. You might choose alternatively, especially if you have root
+privilege, and so may need more flexibility. The counterpart to HOSTMLSCFILE
+is MLSINSTALLDIR. Set it as an environment variable at login, and it will
+dictate where install moves mlsl1, etc. As an alternative, the counterpart to
+the command-line varaible MLSCFILE above is INSTALLDIR. Thus you may specify
+the destination via
            make INSTALLDIR=/usr/local/bin install
+
+It is possible for two different .configure files to name the same configuration,
+i.e. to have the same MLSCONFG setting. As stated above, be aware that objects
+made when either is in force will then be placed in the same sub-directory.
 
 OTHER OPTIONS
 These are available either at the "top" level, mlspgs, or in parts at lib or
@@ -264,21 +283,30 @@ make the_target
 the_target                 Effect
 
 mostlyclean  removes all binaries created during compilation and linking;
-             then deletes the subdirectory containing them
+             then deletes the uniquely-named subdirectory containing them
 clean        removes only the .o and .mod files from the subdirectory;
              any library or program files remain
 depends      recalculates dependencies;
              typically done only after adding/removing a module or adding a
-             "USE ..." line to an existing module;
-             may require editing first line of f90makedep.pl (see below)
-configure    change configuration: compiler, (less often) platform/OS,
+             "USE ..." line to an existing module; but see update below
+configure    change compiler, (less often) platform/OS, name,
              paths to Toolkit and other necessary libraries
 
-(All the following apply only at the top level)
+(All the following apply only at the top mlspgs level)
 all          builds all the mlslevels
+configure_pvm    reset paths to PVM_ROOT, FFTW_ROOT, BLAS, LAPACK
+configure_fopts  reset default Fortran95 compiler and linker switches
+configure_full   combines configure, configure_pvm, configure_fopts
+configure_help   prints some details on the mlsconfigure script
 distclean    does a clean; restores archive nearly to initial state
 disthelp     prints this file
-help         prints a summary of targets, settings, usage of MakeFC
+firsthelp    summarizes prerequisite libraries for building mls
+help         lists topics on which more help is available
+help--brief  brief overview of building mls
+help--Makefile
+             summarizes targets, settings, usage of Makefiles
+help--mlsconfigure
+             prints some details on the mlsconfigure script
 install      moves the built programs from the mlslevels to INSTALLDIR
              also puts shell script versions of each binary executable there
              with names composed of binary + '.sh'; e.g., mlsl1.sh
@@ -287,14 +315,9 @@ makefile     makes a new symbolic link from MakeFC to Makefile
              useful for older archives before the link became automatic
 update       replaces Makefiles in subdirectories with latest versions after
              recalculating dependencies; useful after a cvs update; also deletes
-             orphaned .o and .mod files left behind after sources removed
-
-(The following are more specialized)
-configure_pvm    reset paths to PVM_ROOT, FFTW_ROOT, BLAS, LAPACK
-                 (see BEFORE.mls)
-configure_fopts  reset default Fortran95 compiler and linker switches
-configure_full   combines configure, configure_pvm, configure_fopts
-configure_help   prints brief help on how to configure the build
+             orphaned .o and .mod files left behind after sources removed;
+             also useful after minor configuration changes to prevent 
+             unnecessary recompilation
 
   If the target is entered exactly as shown below, the
   resulting archive will be an uncompressed .tar file; but with:
@@ -312,10 +335,10 @@ creates one, using mlspgs/util/mlsconfigure. The contents of the resulting file
 will be similar to example shown at the end of this file.
 
 In addition, inside the mlslevels a new directory will be created with a unique
-name given by the value of MLSCONFG. In the example above that name would be
-NAG.Linux. In this directory mlsconfigure places a Makefile which is the
-catenation of .configure with two files found in the directory platforms: e.g.,
-assuming the value of MLSCONFG is NAG.Linux:
+name given by the value of MLSCONFG. As we stated above, this value is the name
+you gave when you configured make. In this directory mlsconfigure places a
+Makefile which is the catenation of .configure with two files found in the
+directory platforms: e.g., assuming the default value of MLSCONFG NAG.Linux:
         cat .configure l2/platforms/NAG.Linux l2/platforms/targets > \
                 l2/NAG.Linux/Makefile
 Here platforms/NAG.Linux is a file of compiler settings specific to the NAG
@@ -326,10 +349,10 @@ As make proceeds to build the prerequisites of the final program, the
 binaries, .o and .mod files, and end products, e.g. libmls.a or mlsl2, are
 all placed in MLSCONFG.
 
-Another step make takes at its first invocation is to create a symbolic link
-from MakeFC to a new file named Makefile. If a file named Makefile already
-exists, it is renamed Makefile.old. That is why subsequent uses of make can
-omit the "-f MakeFC" part.
+Another step make takes at its first invocation is to copy MakeFC to a new file
+named Makefile. If a file named Makefile already exists, it is renamed
+Makefile.old. That is why subsequent uses of make can omit the "-f MakeFC"
+part.
 
 Also, in subsequent uses, .configure already exists, so make simply executes
 any commands needed to build the end products if any prerequisites are newer.
@@ -410,11 +433,12 @@ different combination and can get it to work, send it to me, or "cvs commit".
 
 Do not 'cvs add/commit' your .configure. Instead, if you want to keep a copy of
 your configuration handy, copy it someplace, like ~/mls.configure, then copy it
-back whenever needed. As each MLSCONFG directory is uniquely named, you may
-build multiple versions of the mls software. For example, I built versions for
-both Sun and Linux platforms in my home directory. I can switch between versions
-by overwriting the current .configure with one saved for the other platform. See
-above for fuller explanation of how to easily handle multiple platforms.
+back whenever needed. As each MLSCONFG directory is uniquely named after the
+configuration, you may build multiple versions of the mls software. For
+example, I built versions for both Sun and Linux platforms in my home
+directory. I can switch between versions by overwriting the current .configure
+with one saved for the other platform. See above for fuller explanation of how
+to easily handle multiple platforms.
 
 Sometimes after doing a cvs update, especially if there has been a lot of
 active coding and cvs committing, the next make will exit complaining about an
@@ -435,8 +459,12 @@ of requiring a more complex system of Makefiles than the this one.
 
 Another way to trigger massive recompilation is to modify the .configure file.
 Sometimes this may be appropriate, but not always. If you're certain that it is
-not necessary, you may put the NOCLEANING setting to "yes", or in fact to
-anything other than its blank default.
+not necessary, for example if you only changed the path to a library, you may
+put the NOCLEANING setting to "yes", or in fact to anything other than its
+blank default. Another way to forestall the massive recompilation in this case
+is to immediately enter "make update" after modifying the .configure file, e.g.
+after "make configure_pvm". Indeed, these two can be conveniently entered on
+the same line as "make configure_pvm update".
 
 There may be cases where make can be observed "hunting", where it enters a
 prerequisite-containing directory repeatedly, as if to rebuild the
@@ -551,13 +579,13 @@ far.
 
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
-line. E.g., "make PGSTK=/some/other/path".
+line. E.g., "make PGSTK=/some/other/path MLSCONFG=some.other.name".
 
 EXAMPLE OF A .configure FILE
 #	.configure for mls
 MLSF95=NAG
 MLSPLAT=Linux
-MLSCONFG=NAG.Linux
+MLSCONFG=customized
 PGSINC=/software/SRC/TOOLKIT-5.2.7.3v1.00/include
 PGSTK=/software/SRC/TOOLKIT-5.2.7.3v1.00/lib/linux
 HDFEOS=/software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/lib/linux
@@ -575,7 +603,7 @@ LIB_LAPACK=f95
 PVM_ROOT=/usr/share/pvm3
 PVM_ARCH=LINUX
 FFTW_ROOT=/usr/lib
-FOPTS=-C -O
+FOPTS=-w
 LDOPTS=
 export MLSF95
 export MLSPLAT
@@ -604,6 +632,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.25  2001/11/08 00:39:14  pwagner
+# New help system; mention of NOCLEANING where appropriate
+#
 # Revision 1.24  2001/11/06 00:22:51  pwagner
 # BLAS, LAPACK usage explained
 #
