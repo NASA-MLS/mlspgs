@@ -199,9 +199,10 @@ CONTAINS
       CHARACTER (LEN=FileNameLen) :: match
 
       INTEGER :: err, i, iGlob, iLab, iMap, iOut, indx, j
-      INTEGER :: mlspcf_mcf, numProds, returnStatus
+      INTEGER :: mlspcf_mcf, nNon, numProds, returnStatus
 
       REAL(r8) :: start, end, delta
+      REAL(r8) :: non(maxGridPoints)
 
 ! Find the section indices in the CF
 
@@ -220,8 +221,9 @@ CONTAINS
       IF (l3Ver /= pcfL3Ver) CALL MLSMessage(MLSMSG_Error, ModuleName, &
                                   'Output versions in the CF and PCF differ.')
 
-! Find the L2 nominal latitude grid in the GlobalSettings section of the cf;
-! save it in L3CFDef_T
+! Find the non-negative values for the L2 nominal latitude grid in the
+! GlobalSettings section of the cf; add the negative values, and save all in
+! L3CFDef_T
 
       indx = LinearSearchStringArray(cf%Sections(iGlob)%Cells%Keyword, &
                                      'l2nomLats')
@@ -229,11 +231,17 @@ CONTAINS
                                      &the CF for l2nomLats.')
 
       DO i = 1, maxGridPoints
-         cfDef%l2nomLats(i) = cf%Sections(iGlob)%Cells(indx)%RealValue
+         non(i) = cf%Sections(iGlob)%Cells(indx)%RealValue
          IF (cf%Sections(iGlob)%Cells(indx)%More == 0) EXIT
          indx = indx + 1
       ENDDO
-      cfDef%nNom = i
+      nNon = i
+      cfDef%nNom = 2*nNon - 1
+      cfDef%l2nomLats(nNon:cfDef%nNom) = non(:nNon)
+
+      DO i = 1, nNon-1
+         cfDef%l2nomLats(i) = -non( nNon-(i-1) )
+      ENDDO
  
 ! Find/save the log type from the GlobalSettings section of the cf
 
@@ -579,6 +587,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.11  2001/05/04 18:29:16  nakamura
+! Added DZ stuff.
+!
 ! Revision 1.10  2001/03/27 17:26:11  nakamura
 ! Moved maxGridPoints to MLSL3Common.
 !
