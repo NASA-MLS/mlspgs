@@ -2,22 +2,25 @@
 # mlsxxyyzz.sh
 # run a program specified as the variable MLSPROG
 # assuming that it's in directory MLSBIN
-# Then return an exit status
-# of 1 if program's exit status is different from
-# the variable specified as TARGET_STATUS
-# else 0
+# Then return an exit status of:
+# 1 if program's exit status is different from
+# the variable specified as NORMAL_STATUS; otherwise
+# 0
 #
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-# usage: mlsxxyyzz.sh
+# usage: mlsxxyyzz.sh [option_1] [option_2] ..
 
 # Used by mlspgs/MakeFC to install script versions of each mls program
 # MLSPROG. The script version returns a status of 0 only if 
 # the MLSPROG goes past some "finish" line in the code
-# causing it to exit with status=TARGET_STATUS
+# causing it to exit with status=NORMAL_STATUS
+# MakeFC sed's this file to replace xxyyzz, hhoommee, etc. as appropriate
 
-TARGET_STATUS=2
+NORMAL_STATUS=2
+# Use the following line to add extra options to MLSPROG
+EXTRA_OPTIONS=mlseexxttrraa
 
 MLSPROG=mlsxxyyzz
 # This directory may be a relative path or an absolute one
@@ -32,16 +35,16 @@ is_absolute=`echo "$MLSBIN" | grep '^\/'`
 
 if [ "$is_absolute" = "" ]
 then
-   echo $MLSHOME/$MLSBIN/$MLSPROG "$@"
-   $MLSHOME/$MLSBIN/$MLSPROG "$@"
+   echo $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
+   $MLSHOME/$MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
 else
-   echo $MLSBIN/$MLSPROG "$@"
-   $MLSBIN/$MLSPROG "$@"
+   echo $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
+   $MLSBIN/$MLSPROG $EXTRA_OPTIONS "$@"
 fi
 
 return_status=`expr $?`
 
-if [ $return_status != $TARGET_STATUS ]
+if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
 else
@@ -49,3 +52,6 @@ else
 fi
 
 # $Log$
+# Revision 1.1  2001/08/07 20:57:47  pwagner
+# First commit
+#
