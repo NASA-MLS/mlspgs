@@ -73,19 +73,22 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 !  First: Get table of temperature basis functions
 !
   IF(PRESENT(tan_dh_dt)) THEN
-    IF(tan_ht > 0.0_rp) THEN
+!    IF(tan_ht > 0.0_rp) THEN
       tp = TAN(ptg_angle)
       dx_dt = tp * tan_dh_dt / ht
       d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
-    ELSE
-      dx_dt = 0.0_rp
-      d2x_dxdt = 0.0_rp
-    ENDIF
+!    ELSE
+!      dx_dt = 0.0_rp
+!      d2x_dxdt = 0.0_rp
+!    ENDIF
   ENDIF
   RETURN
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 2.2  2002/06/07 04:50:36  bill
+! fixes and improvements--wgr
+!
 ! Revision 2.1  2001/10/16 22:32:11  zvi
 ! Correcting for Earth intersection case
 !
