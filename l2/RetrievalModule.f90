@@ -513,7 +513,8 @@ contains
       call cloneVector ( atb, state, vectorNameText='_ATb' )
       call cloneVector ( reg_X_x, state, vectorNameText='_reg_X_x' )
       call cloneVector ( f, measurements, vectorNameText='_f' )
-      call cloneVector ( f_rowScaled, f, vectorNameText='_f_rowScaled' )
+      call cloneVector ( f_rowScaled, measurements, vectorNameText='_f_rowScaled' )
+      call copyVector ( f_rowScaled, measurements, noValues=.true. ) ! mask only
       call cloneVector ( bestGradient, x, vectorNameText='_bestGradient' )
       call cloneVector ( bestX, x, vectorNameText='_bestX' )
       call cloneVector ( candidateDX, x, vectorNameText='_candidateDX' )
@@ -1357,6 +1358,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.61  2001/09/25 00:49:59  vsnyder
+! Copy mask from measurements to f_rowScaled
+!
 ! Revision 2.60  2001/09/25 00:18:36  livesey
 ! Bug fix in Subset
 !
