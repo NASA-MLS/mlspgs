@@ -96,7 +96,7 @@ contains ! ====     Public Procedures     ==============================
       case ( z_globalsettings )
 !       call set_global_settings ( son, forwardModelConfigDatabase ) !??? Restore when l2load isn't needed
         call set_global_settings ( son, forwardModelConfigDatabase, &
-          & fmc, fmi, tfmi ) !??? This line is temporary for l2load
+          & fmc ) !??? This line is temporary for l2load
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
 !       call test_parse_signals  ! Uncomment this to test Parse_Signals
@@ -160,6 +160,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.20  2001/03/17 00:45:53  livesey
+! Added forwardModelConfigDatabase
+!
 ! Revision 2.19  2001/03/15 23:26:09  livesey
 ! Added chunks to call to MLSL2Join
 !
