@@ -584,6 +584,7 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_extinction, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_height, t+t_numeric, t+t_numeric_range, n+n_field_type/))
      call acorn((/begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type/))
@@ -869,6 +870,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.202  2002/02/20 02:12:59  livesey
+! Added height to Fill
+!
 ! Revision 2.201  2002/02/13 00:08:40  livesey
 ! Added differential scan model
 !
