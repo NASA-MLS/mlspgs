@@ -42,7 +42,8 @@ l3_driver = MLSL3.o
 
 # "yes" is safer--
 # in case modules have been deleted or excluded since the last build
-delete_lib_first = yes
+# Nope--will need to think harder about what to do about excluded modules
+delete_lib_first = no
 
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
@@ -99,6 +100,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2001/05/29 22:35:31  pwagner
+# Added delete_lib_first
+#
 # Revision 1.4  2001/05/18 23:30:23  pwagner
 # Brought into harmony with latest non-tests versions
 #

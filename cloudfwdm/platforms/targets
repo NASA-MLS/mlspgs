@@ -33,7 +33,8 @@ l2_test.o: ${OBJS}
 
 # "yes" is safer--
 # in case modules have been deleted or excluded since the last build
-delete_lib_first = yes
+# Nope--will need to think harder about what to do about excluded modules
+delete_lib_first = no
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -124,3 +125,6 @@ d_delta_dt_m.o:
 #	$(FC) -c $(DUSTY) machine.f90 $(FAFTER)
 # ========================================================================
 # $Log$
+# Revision 1.1  2001/05/30 16:46:50  pwagner
+# First commit
+#
