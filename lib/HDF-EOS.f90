@@ -19,6 +19,19 @@ module HDFEOS               ! F90 interface to HDF-EOS.
   ! Now define f90 interfaces for some HDF-EOS.
 
   interface
+
+  ! grid interfaces
+    integer function GDATTACH ( GDFID, GRIDNAME )
+      integer, intent(in) :: GDFID
+      character (len=*), intent(in) :: GRIDNAME
+    end function GDATTACH
+
+        integer function GDDIMINFO (GRIDID,DIMNAME)
+       integer,intent(in)::GRIDID
+       character(len=*),intent(IN)::DIMNAME
+    end function GDDIMINFO
+
+  ! swath interfaces
     integer function SWATTACH ( SWFID, SWATHNAME )
       integer, intent(in) :: SWFID
       character (len=*), intent(in) :: SWATHNAME
@@ -27,6 +40,7 @@ module HDFEOS               ! F90 interface to HDF-EOS.
     integer function SWCLOSE ( FILE_ID )
       integer, intent(in) :: FILE_ID
     end function SWCLOSE
+
     integer function SWCREATE ( SWFID, SWATHNAME )
       integer, intent(in) :: SWFID
       character (len=*), intent(in) :: SWATHNAME
@@ -75,14 +89,12 @@ module HDFEOS               ! F90 interface to HDF-EOS.
        integer,intent(in)::SWATHID
        character(len=*),intent(out)::DIMNAME
        integer,intent(out),dimension(*)::DIMS
-    
     end function SWINQDIMS
     
     integer function SWINQDFLDS (SWATHID, FIELDLIST, RANK, NUMBERTYPE)
        integer,intent(in)::SWATHID
        character(len=*),intent(out)::FIELDLIST
        integer,intent(out),dimension(*)::RANK, NUMBERTYPE
-    
     end function SWINQDFLDS
     
     integer function SWDIMINFO (SWATHID,DIMNAME)
@@ -107,6 +119,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.7  2001/02/24 01:01:26  pwagner
+! Started adding gd routine interfaces
+!
 ! Revision 2.6  2001/02/23 17:27:20  pwagner
 ! Added Access types for gdnentries
 !
