@@ -4,8 +4,6 @@
 ; products.
 
 begin Fill
-  diagR4: Vector, template=diagTmp
-
   ;; ------------------------------------ ClO-640
   !define(flaggingBands,{10})
   !makeFlagsForOneProduct(product=ClO,radiometer=R4,chisqScale=7.0,minRads=600,cloudMax=8K)
@@ -36,11 +34,18 @@ begin Fill
 
   ;; ------------------------------------- Temperature-CorePlusR4
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R4,chisqScale=10.0,minRads=1000,cloudMax=10K)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=10K)
+
+  ;; ------------------------------------- GPH-CorePlusR4
+  !define(flaggingBands,{1,22,32})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.2  2004/04/17 05:47:37  livesey
+; Backed off the number of radiances missing flags
+;
 ; Revision 1.1  2004/04/06 01:18:19  livesey
 ; First version
 ;
