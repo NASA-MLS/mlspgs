@@ -24,7 +24,7 @@ module L2PC_m
   implicit NONE
   private
   
-  public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase
+  public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
 
   ! Public types
   type, public :: l2pc_T
@@ -43,7 +43,7 @@ module L2PC_m
 contains ! ============= Public Procedures ==========================
 
   ! --------------------------------------- WriteOneL2PC ---------------
-  subroutine WriteOneL2PC ( l2pc, unit )
+  subroutine WriteOneL2PC ( l2pc, unit, lit_indices )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
     ! some kind of HDF file
@@ -51,6 +51,7 @@ contains ! ============= Public Procedures ==========================
     ! Dummy arguments
     type (l2pc_T), intent(in), target :: l2pc
     integer, intent(in) :: unit
+    integer, intent(in), dimension(:) :: lit_indices
 
     ! Local variables
     integer :: blockRow                 ! Index
@@ -76,18 +77,19 @@ contains ! ============= Public Procedures ==========================
         v => l2pc%yStar
       end if
 
+      write (unit,*) size(v%quantities)
       ! Loop over quantities
       do quantity = 1, size(v%quantities)
         qt => v%quantities(quantity)%template
 
         ! Write quantity type
-        call get_string ( qt%quantityType, line )
+        call get_string ( lit_indices(qt%quantityType), line )
         write (unit,*) trim(line)
         
         ! Write other info associated with type
         select case ( qt%quantityType )
         case (l_vmr)
-          call get_string ( qt%molecule, line )
+          call get_string ( lit_indices(qt%molecule), line )
           write (unit,*) trim(line)
         case (l_radiance)
           call GetSignalName ( qt%signal, line )
@@ -96,14 +98,16 @@ contains ! ============= Public Procedures ==========================
 
         ! Write out the dimensions for the quantity and the edges
         write (unit,*) qt%noSurfs, qt%noInstances, qt%noChans
-        write (unit,*) qt%surfs
-        write (unit,*) qt%phi
+        write (unit, 900) qt%surfs
+        write (unit, 900) qt%phi
 
         ! Write the values
-        write (unit,*) v%quantities(quantity)%values
+        write (unit,900) v%quantities(quantity)%values
 
       end do                            ! Loop over quantities
     end do                              ! Loop over xStar/yStar
+
+900 format (4(2x,1pg15.8))
 
     ! Now dump kStar
     do blockRow = 1, l2pc%kStar%row%NB
@@ -256,6 +260,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.3  2001/04/25 20:32:42  livesey
+! Interim version, tidied up write
+!
 ! Revision 2.2  2001/04/24 20:20:48  livesey
 ! Word bin dropped from various places e.g. type
 !
