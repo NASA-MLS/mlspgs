@@ -30,8 +30,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
-  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, FillExtraCol
-  public :: FillExtraRow, FindBlock, GetDiagonal, GetDiagonal_1
+  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_Struct
+  public :: FillExtraCol, FillExtraRow, FindBlock, GetDiagonal, GetDiagonal_1
   public :: GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetVectorFromColumn, GetVectorFromColumn_1, InvertCholesky
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
@@ -335,11 +335,11 @@ contains ! =====     Public Procedures     =============================
   end subroutine AssignMatrix
 
   ! -------------------------------------------  CholeskyFactor_1  -----
-  subroutine CholeskyFactor_1 ( X, Z )
+  subroutine CholeskyFactor_1 ( Z, X )
   ! Compute the Cholesky factor Z of the matrix X.  Z%M%Block can be
   ! associated with X%M%Block to save space.
-    type(Matrix_SPD_T), intent(in) :: X ! Matrix to factor.
     type(Matrix_Cholesky_T), intent(inout) :: Z   ! Factored matrix.
+    type(Matrix_SPD_T), intent(in) :: X ! Matrix to factor.
 
     integer :: I, J, K                  ! Subscripts and loop inductors
     integer :: N                        ! Columns(blocks)
@@ -353,27 +353,60 @@ contains ! =====     Public Procedures     =============================
       & .or. (x%m%row%instFirst .neqv. z%m%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Matrices in CholeskyFactor are not compatible" )
+
+!{Suppose $A$ is symmetric and positive definite.  Regard $A = (A_{ij})$
+!  and its upper-triangular Cholesky factor $G = (G_{ij})$ as $N \times N$
+!  matrices with square diagonal blocks.  By equating $(i,j)$ blocks in the
+!  equation $A = G^T G$ with $i \leq j$, it follows that
+!  \begin{equation*}
+!   A_{ij} = \sum_{k=1}^i G_{ki}^T G_{kj}
+!  \end{equation*}
+!  Define
+!  \begin{equation*}
+!  S = A_{ij} - \sum_{k=1}^{i-1} G_{ki}^T G_{kj}
+!    = A_{ij} - \sum_{k=1}^i G_{ki}^T G_{kj} + G_{ii}^T G_{ij}
+!    = G_{ii}^T G_{ij}
+!  \end{equation*}
+!  
+!  Rearranging, we have the following algorithm:
+!  
+!  {\bf do} $i = 1, N$\\
+!  \hspace*{0.25in} $S= A_{ii} - \sum_{k=1}^{i-1} G_{ki}^T G_{ki}$\\
+!  \hspace*{0.25in} $G_{ii} = $ Cholesky factor of $S$\\
+!  \hspace*{0.25in} {\bf do} $j = i+1, N$\\
+!  \hspace*{0.5in}    $S= A_{ij} - \sum_{k=1}^{i-1} G_{ki}^T G_{kj}$\\
+!  \hspace*{0.5in}    solve $G_{ii}^T G_{ij} = S$ for $G_{ij}$\\
+!  \hspace*{0.25in} {\bf end do} ! j\\
+!  {\bf end do} ! i
+
     n = x%m%row%nb
     ! Handle the first row specially, to avoid a copy followed by no-dot-product
-    call choleskyFactor ( z%m%block(1,1), x%m%block(1,1) )! Factor block on diagonal
+    !{ $Z_{11}^T Z_{11} = X_{11}$
+    call choleskyFactor ( z%m%block(1,1), x%m%block(1,1) )
     do j = 2, n
-      call solveCholesky ( z%m%block(1,1), z%m%block(1,j), transpose=.true. )
+      !{ Solve $Z_{11}^T Z_{1j} = X_{1j}$ for $Z_{1j}$
+      call solveCholesky ( z%m%block(1,1), z%m%block(1,j), x%m%block(1,j), &
+        & transpose=.true. )
     end do
     do i = 2, n
       call copyBlock ( s, x%m%block(i,i) )        ! Destroy s, then s := z...
       do k = 1, i-1
+        !{ $S = X_{ii} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{ki}$
         call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,i), s, &
           & update=.true., subtract=.true. )
       end do ! k = 1, i-1
-      call choleskyFactor ( z%m%block(i,i), s )   ! Factor block on diagonal
+      !{ $Z_{ii}^T Z_{ii} = S$
+      call choleskyFactor ( z%m%block(i,i), s )   ! z%m%block(i,i) = factor of s
       do j = i+1, n
         if ( i == 1 ) then                        ! Avoid a copy
         else
-          call copyBlock ( s, z%m%block(i,j) )    ! Destroy s, then s := z...
+          call copyBlock ( s, x%m%block(i,j) )    ! Destroy s, then s := x...
           do k = 1, i-1
+            !{ $S = X_{ij} - \sum_{k=1}^{i-1} Z_{ki}^T Z_{kj}$
             call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,j), s, &
               & update=.true., subtract=.true. )
           end do ! k = 1, i-1
+          !{ Solve $Z_{ii}^T Z_{ij} = S$ for $Z_{ij}$
           call solveCholesky ( z%m%block(i,i), z%m%block(i,j), s, &
             & transpose=.true. )
         end if
@@ -935,7 +968,8 @@ contains ! =====     Public Procedures     =============================
     maxAbsVal_1 = 0.0_r8
     do i = 1, a%row%nb
       do j = 1, a%col%nb
-        maxAbsVal_1 = max(maxAbsVal_1,maxAbsVal(a%block(i,j)))
+        if ( a%block(i,j)%kind /= m_absent ) &
+          & maxAbsVal_1 = max(maxAbsVal_1,maxAbsVal(a%block(i,j)))
       end do
     end do
   end function MaxAbsVal_1
@@ -1112,7 +1146,8 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J
     do i = 1, a%row%nb
       do j = 1, a%col%nb
-        a%block(i,j)%values = -a%block(i,j)%values
+        if ( a%block(i,j)%kind /= m_absent ) &
+          & a%block(i,j)%values = -a%block(i,j)%values
       end do
     end do
   end subroutine Negate_1
@@ -1521,6 +1556,44 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine Dump_RC
 
+  ! ------------------------------------------------  Dump_Struct  -----
+  subroutine Dump_Struct ( Matrix, Name, Upper )
+  ! Display the structure of the kinds of the matrix blocks
+    type(Matrix_T), intent(in) :: Matrix
+    character(len=*), intent(in), optional :: Name
+    logical, intent(in), optional :: Upper   ! Only do the upper triangle
+    !                                          if present and true.
+
+    !                         Absent Banded Sparse   Full
+    character :: CHARS(0:3) = (/ 'A',   'B',   'S',   'F' /)
+    integer :: I, J
+    logical :: MyUpper
+
+    if ( present(name) ) call output ( name )
+    if ( matrix%name > 0 ) then
+      if ( present(name) ) call output ( ', ' )
+      call output ( 'Name = ' )
+      call display_string ( matrix%name, advance='yes' )
+    else
+      if ( present(name) ) call output ( '', advance='yes' )
+    end if
+    myUpper = .false.
+    if ( present(upper) ) myUpper = upper
+    do i = 1, matrix%row%nb
+      call output ( i, 3 )
+      call output ( ':' )
+      do j = 1, matrix%col%nb
+        call output ( ' ' )
+        if ( myUpper .and. j < i ) then
+          call output ( ' ' )
+        else
+          call output ( chars(matrix%block(i,j)%kind) )
+        end if
+      end do ! j
+      call output ( '', advance='yes' )
+    end do ! i
+  end subroutine Dump_Struct
+
   ! --------------------------------------------------  MinDiag_1  -----
   real(r8) function MinDiag_1 ( A )
   ! Return the magnitude of the element on the diagonal of A that has the
@@ -1537,6 +1610,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.32  2001/05/10 02:14:58  vsnyder
+! Repair CholeskyFactor, MaxAbsVal; add Dump_Struct
+!
 ! Revision 2.31  2001/05/09 19:46:06  vsnyder
 ! Add BandHeight argument to CreateBlock_1
 !
