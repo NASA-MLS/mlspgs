@@ -1377,8 +1377,6 @@ contains ! =====     Public Procedures     =============================
             & 'Failed to detach from swath interface after definition.' )
     end if
 
-    print*,'Detached from swath sucessfully'
-
     !--------------------------------------
   end subroutine OutputL2GP_createFile_hdf4
   !--------------------------------------
@@ -1438,7 +1436,6 @@ contains ! =====     Public Procedures     =============================
     ! print *, 'stride', stride
     ! print *, 'edge', edge
     ! print *, 'shape(Latitude)', shape(l2gp%latitude)
-    call dump ( l2gp%latitude, 'latitude' )
 
     status = mls_swwrfld(swid, 'Latitude', start, stride, edge, &
          real(l2gp%latitude), hdfVersion=HDFVERSION_4)
@@ -2736,6 +2733,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.74  2003/07/21 23:32:09  pwagner
+! Will write attributes, create alias when appending hdfeos5 if mustcreate
+!
 ! Revision 2.73  2003/07/15 23:35:11  pwagner
 ! Disabled most printing; uses mls_SWdetach
 !
