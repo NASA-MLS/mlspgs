@@ -3528,7 +3528,32 @@ contains
         end if
       end if
 
+      ! Preprocess the height stuff.
+      heightUnit = phyq_dimensionless
+      if ( got(f_height) ) then
+        do j = 2, nsons(heightNode)
+          call expr ( subtree(j,heightNode), units, value, type )
+          ! Make sure the range has non-dimensionless units -- the type
+          ! checker only verifies that they're consistent.  We need to
+          ! check each range separately, because the units determine the
+          ! scaling of the values.
+          if ( all(units == phyq_dimensionless) ) call announceError ( &
+            & wrongUnits, f_height, string = 'length or pressure.' )
+          ! Check consistency of units -- all the same, or dimensionless. The
+          ! type checker verifies the consistency of units of ranges, but not
+          ! of array elements.
+          do i = 1, 2
+            if ( heightUnit == phyq_dimensionless ) then
+              heightUnit = units(i)
+            else if ( units(i) /= phyq_dimensionless ) then
+              call announceError ( inconsistentUnits, f_height )
+            end if
+          end do
+        end do
+      end if
+
       ! ----- finish checking ------
+
       ! Create the mask if it doesn't exist
       if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
 
@@ -3543,11 +3568,10 @@ contains
             rangeId = node_id ( son )
             call expr ( son, units, value, type )
             ! Now maybe do something nasty to value to get in right units.
-            if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
+            if ( heightUnit == phyq_pressure ) then
               value = -log10(value)
             else
-              if ( coordinate /= qty%template%verticalCoordinate ) &
-                & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & 'Inappropriate units for height in subset' )
             end if
 
@@ -3597,6 +3621,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.214  2003/01/11 15:51:34  dwu
+! follow-up fix for FlagCloud
+!
 ! Revision 2.213  2003/01/11 08:08:01  dwu
 ! add flagCloud
 !
