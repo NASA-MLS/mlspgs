@@ -6,7 +6,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
 
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
-  USE MLSCommon, only: i4, r8, NameLen
+  USE MLSCommon, only: i4, r8, NameLen, BareFNLen
 
   IMPLICIT NONE
   PRIVATE
@@ -40,30 +40,35 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !                    Finds string index of substring in array of strings
 ! List2Array         Converts a single string list to an array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
-! NumStringElements  Returns number of elements in list of strings
+! NumStringElements  Returns number of elements in string list
 ! ReadCompleteLineWithoutComments     
 !                    Knits continuations, snips comments
 ! Reverse            Turns 'a string' -> 'gnirts a'
 ! ReverseList        Turns 'abc,def,ghi' -> 'ghi,def,abc'
-! SortArray          Similar to SortList, but for an array of strings
+! SortArray          Turns (/'def','ghi','abc'/) -> (/'abc','def','ghi'/)
 ! SortList           Turns 'def,ghi,abc' -> 'abc,def,ghi'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
 ! strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! StringElementNum   Returns element number of test string in string list
 ! unquote            Removes surrounding [quotes]
 
-! in the above, a list is a string of words (usu. comma-delimited)
+! in the above, a string list is a string of elements (usu. comma-delimited)
+! e.g., units='cm,m,in,ft'
 ! an array is a Fortran array of strings or integers
 ! a hash is a list of key strings and either
 ! (1) a list of associated strings
 ! (2) an array of associated integers
+! (an idea called a hash in perl or a dictionary in python)
+! Many of these routines take optional arguments that greatly modify
+! their default operation
 
 ! Warning: in the routines LinearSearchStringArray, Array2List, and SortArray
 ! the input arguments include an array of strings;
-! it is assumed that this array is og assumed-size
+! it is assumed that this array is of assumed-size
 ! I.e., all elements from array(1:size(array)) are relevant
 ! Therefore in calling one of these you probably need to use the format
 !   call SortArray(myArray(1:mySize), ..
+! to avoid operating on undefined array elements
 
   public :: Array2List, Capitalize, CompressString, count_words, &
    & depunctuate, GetIntHashElement, GetStringElement, GetStringHashElement, &
@@ -71,16 +76,27 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
    & List2Array, LowerCase, NumStringElements, ReadCompleteLineWithoutComments,&
    & Reverse, ReverseList, SortArray, SortList, SplitWords, strings2Ints, &
    & StringElementNum, unquote
+  ! Error return values from:
+  ! GetIntHashElement
+!  public :: KEYNOTFOUND, KEYBEYONDHASHSIZE
+  integer, public, parameter :: KEYNOTFOUND=-1
+  integer, public, parameter :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
+  ! hhmmss_value
+!  public :: INVALIDHHMMSSSTRING
+  integer, public, parameter :: INVALIDHHMMSSSTRING = 1
+  ! strings2Ints
+!  public :: LENORSIZETOOSMALL
+  integer, public, parameter :: LENORSIZETOOSMALL=-999
 
 CONTAINS
 
   ! ---------------------------------------------  Array2List  -----
 
   ! This subroutine returns a (usually) comma-delimited string list, interpreted it
-  ! as a list of individual elements, given returns an equivalent array of
-  ! sub-strings in which the n'th element is the n'th element
+  ! as a list of individual elements, given an equivalent array of
+  ! sub-strings in which the n'th element becomes the n'th element
 
-  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the delimiter may supplied, in case it isn't a comma
   ! As an optional arg the ordering in which the array elements are to be
   ! taken may be supplied; e.g. (/4, 1, 3, 2/) means 1st take 4th element,
   ! then 1st, then 3rd, and finally 2nd: list[k] = array[ordering[k]]
@@ -281,11 +297,7 @@ CONTAINS
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
 
     ! Local variables
-	INTEGER, PARAMETER :: KEYNOTFOUND=-1
-	INTEGER, PARAMETER :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
 	INTEGER :: elem
-!    CHARACTER (LEN=1)                          :: Delim
-!    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
 
     ! Executable code
 
@@ -548,7 +560,6 @@ CONTAINS
     logical,intent(in), optional :: strict
     !----------Local vars----------!
     character(len=1), parameter :: colon=':'
-    integer, parameter :: INVALIDHHMMSSSTRING = 1
     character(len=1) :: myColon
     character(len=2) :: mm
     character(len=NameLen) :: ss
@@ -1188,37 +1199,80 @@ CONTAINS
   ! sorting the array; i.e., if ss[n] is the sub-string which is
   ! the n'th element, and ia[k] is the k'th element of the integer array
   ! then {psl[ia[k]]=ss[k], k=1..n} yields the properly sorted array
+  ! (unless the further optional arg leftRight is also supplied and equals
+  ! one of {"r", "R"} in which case {psl[k]=ss[ia[k]], k=1..n})
+  ! Parallel use of ia is how you would normally 
+  ! sort any other arrays associated with ss
   
   ! The sorting is ordered by ascii collating sequence:
   ! "0" < "9" < "A" < "Z" < "a" < "z"
   ! unless caseSensitive is FALSE, when "0" < "9" < "A" < "a" < "Z" < "z"
 
   ! As an optional arg the properly sorted array is returned, too
+  ! You may safely supply the same arg for both inStrArray and sortedArray
+  ! If the optional arg shorterFirst is TRUE, the sorting is modified
+  ! so that shorter strings come first
+  ! e.g., (/'abc', 'st', 'Z', '1'/) -> (/'1', 'Z', 'st', 'abc'/)
+  
+  ! If shorterFirst, leading spaces are always ignored
+  ! otherwise they are always significant
+  ! (See SortList for contrasting treatment options)
+  !  (If you want them ignored, it's easy enough: create a tempArray
+  !     tempArray(1:N) = adjustl(strArray(1:N))
+  !   and pass it in instead)
 
-  SUBROUTINE SortArray(inStrArray, outIntArray, CaseSensitive, sortedArray)
+  ! Method:
+  ! The strings are sifted one character at a time through a series
+  ! of ever-finer bins using the selection sort embodied in
+  ! subroutine tie_breaker (which see; it surely can be easily improved
+  ! upon, but the overall computational gains would be modest)
+  ! until each bin is occupied by no more than one string
+  ! The bin number is the ranking index of that string which
+  ! is returned as outIntArray
+  SUBROUTINE SortArray(inStrArray, outIntArray, CaseSensitive, &
+   & sortedArray, shorterFirst, leftRight)
     ! Dummy arguments
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN)   :: inStrArray
     INTEGER, DIMENSION(:), INTENT(OUT)            :: outIntArray
-    LOGICAL, INTENT(IN)                           :: CaseSensitive
+    LOGICAL, INTENT(IN)                           :: caseSensitive
     CHARACTER (LEN=*), DIMENSION(:), OPTIONAL, INTENT(OUT)  &
      &                                            :: sortedArray
+    LOGICAL, OPTIONAL, INTENT(IN)                 :: shorterFirst
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
 
     ! Local variables
     INTEGER(i4) :: elem, nElems
     integer, parameter              :: MAXCHARVALUE = 256
-    integer, parameter              :: MAXELEM = NameLen
+    integer, parameter              :: MAXELEM = BareFNLen
     integer, dimension(MAXELEM)     :: chValue, cvInvBN
     integer, dimension(MAXELEM)     :: binNumber, invBinNumber 
     integer, dimension(MAXELEM)     :: jsort, inTheBin
     integer                         :: numBins, oldNumBins
     integer                         :: i, bin, ck, strPos
+    integer                         :: status
     integer                         :: maxStrPos
     logical                         :: allTheSameInThisBin
+    logical                         :: myShorterFirst
     CHARACTER (LEN=1)               :: theChar  
     CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '
+    CHARACTER (LEN=BareFNLen), DIMENSION(:), ALLOCATABLE    &
+      &                             :: stringArray
+    CHARACTER (LEN=BareFNLen)         :: theString  
+    CHARACTER (LEN=1)               :: myLeftRight
     logical, parameter              :: DeeBUG = .false.
 
     ! Executable code
+    IF(PRESENT(shorterFirst)) THEN
+	     myshorterFirst = shorterFirst
+	 ELSE
+	     myshorterFirst = .false.
+	 ENDIF
+    IF(PRESENT(leftRight)) THEN
+	     myleftRight = Capitalize(leftRight)
+	 ELSE
+	     myleftRight = "L"
+	 ENDIF
+
     nElems = size(inStrArray)
     if ( size(outIntArray) <= 0 .or. nElems <= 0 ) then
       return
@@ -1227,18 +1281,36 @@ CONTAINS
          & 'Too many elements in inStrArray in SortArray')
        return
     endif
+    ALLOCATE (stringArray(nElems), STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"stringArray in SortArray")
     outIntArray = 0
     numBins = 1
-    maxStrPos = 1
+    maxStrPos = 1                ! This will hold max string length needed
     do elem = 1, nElems    
       outIntArray(elem) = 1
-      maxStrPos = max(maxStrPos, len_trim(inStrArray(elem)))
+      if ( myShorterFirst ) then
+        maxStrPos = max(maxStrPos, len_trim(adjustl(inStrArray(elem))))
+      else
+        maxStrPos = max(maxStrPos, len_trim(inStrArray(elem)))
+      endif
     enddo                  
     if ( DEEBUG ) then
       do elem = 1, nElems    
         print *, 'Array element ', elem, ' ', trim(inStrArray(elem))
       enddo                  
-    endif    
+    endif
+    do elem = 1, nElems    
+      if ( myshorterFirst ) then
+        ! This causes shorter strings to have more leading spaces
+        ! and therefore come up first when sorted
+        ! (which is why we always ignore leading spaces in inStrArray)
+        theString = adjustl(inStrArray(elem))
+        stringArray(elem) = adjustr(theString(1:maxStrPos))
+      else
+        stringArray(elem) = inStrArray(elem)
+      endif
+    enddo                  
     DO strPos = 1, maxStrPos
       
       if ( DEEBUG ) then
@@ -1246,23 +1318,23 @@ CONTAINS
         print *, 'array of bins: ', (outIntArray(elem), elem=1, nElems)
       endif
       do elem = 1, nElems
-        theChar = inStrArray(elem)(strPos:strPos)
-        if ( inStrArray(elem) == ' ' ) then
+        theChar = stringArray(elem)(strPos:strPos)
+        if ( stringArray(elem) == ' ' ) then
           chValue(elem) = MAXCHARVALUE
         elseif ( theChar == ' ' ) then
           chValue(elem) = 0
         elseif ( CaseSensitive ) then
-          chValue(elem) = ichar(theChar)
-        elseif (ichar("a") <= ichar(theChar) .and. &
-          & ichar(theChar) <= ichar("z") ) then
-          chValue(elem) = 2*ichar(Capitalize(theChar)) - ichar("A") + 1
-        elseif (ichar("A") <= ichar(theChar) .and. &
-          & ichar(theChar) <= ichar("Z") ) then
-          chValue(elem) = 2*ichar(theChar) - ichar("A")
-        elseif (ichar("Z") < ichar(theChar) ) then
-          chValue(elem) = 2*ichar(theChar)
+          chValue(elem) = IACHAR(theChar)
+        elseif (IACHAR("a") <= IACHAR(theChar) .and. &
+          & IACHAR(theChar) <= IACHAR("z") ) then
+          chValue(elem) = 2*IACHAR(Capitalize(theChar)) - IACHAR("A") + 1
+        elseif (IACHAR("A") <= IACHAR(theChar) .and. &
+          & IACHAR(theChar) <= IACHAR("Z") ) then
+          chValue(elem) = 2*IACHAR(theChar) - IACHAR("A")
+        elseif (IACHAR("Z") < IACHAR(theChar) ) then
+          chValue(elem) = 2*IACHAR(theChar)
         else
-          chValue(elem) = ichar(theChar)
+          chValue(elem) = IACHAR(theChar)
         endif
       enddo
       if ( DEEBUG ) print *, 'array of chValues: ', (chValue(elem), elem=1, nElems)
@@ -1305,12 +1377,29 @@ CONTAINS
       print *, 'Sorting order: ', (outIntArray(i), i=1, nElems)
     endif
 
-    if ( .not. present(sortedArray) ) return
-    do elem=1, nElems
-      i = max(1, outIntArray(elem))
-      i = min(i, nElems, size(sortedArray))
-      sortedArray(i) = inStrArray(elem)
-    enddo
+    if ( present(sortedArray) ) then
+      do elem=1, nElems
+        i = max(1, outIntArray(elem))
+        i = min(i, nElems, size(sortedArray))
+        if ( myShorterFirst ) then
+          sortedArray(i) = adjustl(stringArray(elem))
+        else
+          sortedArray(i) = stringArray(elem)
+        endif
+      enddo
+    endif
+    DEALLOCATE(stringArray)
+    if ( myLeftRight == 'R' ) then
+      ! Need to 'invert' outIntArray
+      do elem=1, nElems
+        do i=1, nElems
+          if ( outIntArray(i) == elem ) invBinNumber(elem) = i
+        enddo
+      enddo
+      do elem=1, nElems
+        outIntArray(elem) = invBinNumber(elem)
+      enddo
+    endif
 
    contains
      subroutine warm_up(theBin)
@@ -1332,15 +1421,17 @@ CONTAINS
      subroutine tie_breaker(theBin)
        ! Form array jsort = j[k] = {j_1, j_2, .., j_N}
        ! sorted so that c[j_1} <= c[j_2] <= .. <= c{j_N]
+       ! This is a naive selection sort--make any improvements you wish
+       ! (Order N^2 sorting algorithms are inefficient)
        integer, intent(in)      :: theBin
        integer                  :: kp, k, ck, jsortie
-       CHARACTER (LEN=NameLen)  :: stringElement  
+       CHARACTER (LEN=BareFNLen)  :: stringElement  
        allTheSameInThisBin = (inTheBin(theBin) /= 1)
-       stringElement = inStrArray(invBinNumber(1))
+       stringElement = stringArray(invBinNumber(1))
        do k=1, inTheBin(theBin)
          jsort(k) = k
          allTheSameInThisBin = allTheSameInThisBin .and. &
-           & stringElement == inStrArray(invBinNumber(k))
+           & stringElement == stringArray(invBinNumber(k))
        enddo
        if ( inTheBin(theBin) == 1 .or. allTheSameInThisBin) return
        do k=1, inTheBin(theBin) - 1
@@ -1366,6 +1457,10 @@ CONTAINS
   ! sorting the list; i.e., if ss[n] is the sub-string which is
   ! the n'th element, and ia[k] is the k'th element of the integer array
   ! then {psl[ia[k]]=ss[k], k=1..n} yields the properly sorted list
+  ! (unless the further optional arg leftRight is also supplied and equals
+  ! one of {"r", "R"} in which case {psl[k]=ss[ia[k]], k=1..n})
+  ! Parallel use of ia is how you would normally 
+  ! sort any other arrays associated with ss
   
   ! The sorting is ordered by ascii collating sequence:
   ! "0" < "9" < "A" < "Z" < "a" < "z"
@@ -1378,12 +1473,15 @@ CONTAINS
   ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the properly sorted list is returned, too
+  ! You may safely supply the same arg for both inList and sortedList
   ! As an optional arg the delimiter may supplied, in case it isn't comma
   ! If the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
   ! sorted like "a,b,c"; otherwise the leading spaces make" b, c,a"
 
+  ! Method:
+  ! (see SortArray)
   SUBROUTINE SortList(inList, outArray, CaseSensitive, countEmpty, &
-   & ignoreLeadingSpaces, inDelim, sortedList)
+   & ignoreLeadingSpaces, inDelim, sortedList, leftRight)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)                 :: inList
     INTEGER, DIMENSION(:), INTENT(OUT)            :: outArray
@@ -1392,22 +1490,29 @@ CONTAINS
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
     CHARACTER (LEN=*), OPTIONAL, INTENT(OUT)      :: sortedList
     LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
 
     ! Local variables
-    integer, parameter              :: MAXELEM = NameLen
+    integer, parameter              :: MAXELEM = BareFNLen
     INTEGER(i4) :: nElems, status
 
     CHARACTER (LEN=1)               :: Delim
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
-    CHARACTER (LEN=NameLen), DIMENSION(:), ALLOCATABLE    &
+    CHARACTER (LEN=BareFNLen), DIMENSION(:), ALLOCATABLE    &
       &                             :: stringArray
+    CHARACTER (LEN=1)               :: myLeftRight
     logical, parameter              :: DeeBUG = .false.
     ! Executable code
-
     IF(PRESENT(inDelim)) THEN
 	     Delim = inDelim
 	 ELSE
 	     Delim = COMMA
+	 ENDIF
+
+    IF(PRESENT(leftRight)) THEN
+	     myleftRight = Capitalize(leftRight)
+	 ELSE
+	     myleftRight = "L"
 	 ENDIF
 
     if ( DEEBUG ) then
@@ -1431,10 +1536,16 @@ CONTAINS
          & MLSMSG_Allocate//"stringArray in SortList")
     call list2Array(inList, stringArray, countEmpty, inDelim, &
      & IgnoreLeadingSpaces)
-    call SortArray(stringArray(1:nElems), outArray, CaseSensitive)
+    call SortArray(stringArray(1:nElems), outArray, CaseSensitive, &
+     & leftRight=leftRight)
     if ( present(sortedList) ) then
-      call Array2List(stringArray(1:nElems), sortedList, &
-       & inDelim, outArray, leftRight='L')
+      if ( myLeftRight == 'R' ) then
+        call Array2List(stringArray(1:nElems), sortedList, &
+         & inDelim, outArray, leftRight='R')
+      else
+        call Array2List(stringArray(1:nElems), sortedList, &
+         & inDelim, outArray, leftRight='L')
+      endif
     endif
     DEALLOCATE(stringArray)
 
@@ -1536,7 +1647,6 @@ CONTAINS
     integer, intent(out), dimension(:,:) ::          ints
 
     !----------Local vars----------!
-    integer, parameter :: LENORSIZETOOSMALL=-999
     INTEGER :: i, substr, strLen, arrSize
     !----------Executable part----------!
 
@@ -1774,6 +1884,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.19  2002/02/19 23:12:03  pwagner
+! New optional args to Sorting routines
+!
 ! Revision 2.18  2002/02/15 01:06:12  pwagner
 ! Added new array and sorting routines
 !
