@@ -153,7 +153,7 @@ endif
 
 $(PROG):  $(PROG_prereqs)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" ; \
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -164,7 +164,7 @@ $(PROG):  $(PROG_prereqs)
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
-        UNPREFXDPTHS="$(ADD2PATHS)" ; \
+        UNPREFXDPTHS="$(ADD2PATHS) $(HDF5)/../fortran/src $(HDF5)/../include" ;\
         return_status=`expr $$?` ; \
         if [ $$return_status != "0" ]; then \
 		     exit 2 ; \
@@ -259,6 +259,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.35  2002/07/16 17:18:31  pwagner
+# UNPREFXDPTHS adds hdf5 dirs for f95 to search
+#
 # Revision 2.34  2002/07/15 16:52:59  pwagner
 # Exits make with status 2 if error in any level
 #
