@@ -299,8 +299,8 @@ contains ! =====     Public Procedures     =============================
       & MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
     use MLSHDFEOS, only: mls_swath_in_file
-    use MLSL2Options, only: CHECKPATHS, DEFAULT_HDFVERSION_WRITE, &
-      & PATCH, TOOLKIT
+    use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
+      & DEFAULT_HDFVERSION_WRITE, PATCH, TOOLKIT
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
@@ -845,6 +845,7 @@ contains ! =====     Public Procedures     =============================
         hdfNameIndex = qty%label
         call get_string ( hdfNameIndex, hdfName, strip=.true. )
         if ( TOOLKIT ) call ExpandSDNames(thisDirect, trim(hdfName))
+        if ( TOOLKIT .and. DEEBUG ) call dump(thisDirect)
         if ( precisionVectors(source) /= 0 ) then
           precQty => GetVectorQtyByTemplateIndex &
             & ( vectors(precisionVectors(source)), precisionQuantities(source) )
@@ -1005,7 +1006,8 @@ contains ! =====     Public Procedures     =============================
       if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'DirectWriteCommand unable to close ' // trim(filename) )
       if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
-        & outputType /= l_l2fwm ) then
+        & outputType /= l_l2fwm .and. &
+        & .not. (distributingSources .and. CATENATESPLITS) ) then
         call add_metadata ( node, file_base, NumPermitted, thisDirect%sdNames, &
           & hdfVersion, filetype, errortype )
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1806,6 +1808,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.108  2004/03/03 19:28:04  pwagner
+! Should not add metadata if dgg/dgm to be unsplit
+!
 ! Revision 2.107  2004/02/19 23:56:23  pwagner
 ! Fixed tiny memory leak; skipdgg/m skips directwrite of filetype
 !
