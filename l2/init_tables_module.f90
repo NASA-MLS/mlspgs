@@ -460,6 +460,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, t+t_hGridType, nr+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_fraction, t+t_numeric, n+n_field_type, &
+             begin, f+f_forbidOverspill, t+t_boolean, n+n_field_type, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
@@ -891,6 +892,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.216  2002/05/06 21:37:50  livesey
+! Added forbidOverspill to hGrid
+!
 ! Revision 2.215  2002/05/01 22:02:09  pwagner
 ! Can again read leapsecfile in global_settings
 !
