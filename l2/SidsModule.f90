@@ -88,21 +88,19 @@ contains
     if ( ixJacobian > 0 ) then
       i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
-    else if ( fmc%atmos_Der .or. fmc%spect_Der .or. fmc%temp_der ) then
-      call announceError ( needJacobian )
-    end if
-
-    if ( ixjacobian > 0 ) then
       call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
       &                   Jacobian, FwdModelOut=FwdModelOut, &
       &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
 !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+    else if ( fmc%atmos_Der .or. fmc%spect_Der .or. fmc%temp_der ) then
+      call announceError ( needJacobian )
     else
       call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
       &                   FwdModelOut=FwdModelOut, &
       &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
 !     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
     end if
+
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
   contains
@@ -126,6 +124,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.6  2001/03/09 01:35:18  vsnyder
+! Don't run fwd model if derivatives requested but Jacobian not supplied
+!
 ! Revision 2.5  2001/03/09 01:30:10  vsnyder
 ! Don't ask for Jacobian if convolution is requested
 !
