@@ -81,6 +81,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
@@ -936,11 +937,18 @@ contains ! =====     Public Procedures     =============================
 
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ConstructQuantityTemplates
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.74  2002/10/08 17:36:19  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.73  2002/09/26 18:03:06  livesey
 ! Changed extinction to a vmr
 !
