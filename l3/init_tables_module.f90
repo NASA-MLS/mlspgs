@@ -134,7 +134,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_mcf) =                  add_ident ( 'mcf' )
     field_indices(f_mode) =                 add_ident ( 'mode' )
     field_indices(f_preslvl) =              add_ident ( 'l3presLvl' )
-    field_indices(f_prodname) =             add_ident ( 'l3prodNameD' )
+    field_indices(f_prodname) =             add_ident ( 'l3prodName' )
     field_indices(f_rangfreq) =             add_ident ( 'rangFrequency' )
     field_indices(f_rangwavnum) =           add_ident ( 'rangWavenumber' )
     field_indices(f_time) =                 add_ident ( 'timeD' )
@@ -267,6 +267,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.12  2001/07/19 14:04:35  nakamura
+! Changed dLat from field to parameter.
+!
 ! Revision 1.11  2001/07/18 15:49:17  nakamura
 ! Modified to work with L3M as well.
 !
