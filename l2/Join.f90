@@ -194,7 +194,8 @@ contains ! =====     Public Procedures     =============================
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DirectWrite_m, only: DirectData_T, &
-      & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux
+      & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux, &
+      & SetUpNewDirect
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
     use intrinsic, only: L_NONE, L_GEODANGLE, &
       & L_MAF, PHYQ_DIMENSIONLESS
@@ -264,6 +265,7 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(DirectData_T) :: newDirect
+    type(DirectData_T), pointer :: thisDirect
     logical :: DEEBUG
 
     ! Executable code
@@ -425,12 +427,18 @@ contains ! =====     Public Procedures     =============================
         & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
     end select
 
+    call SetUpNewDirect(newDirect, noSources)
+    ! Add it to the database of directly writeable quantities
+    dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
+    call decorate ( node, -dbindex ) ! So we can find it later
+    thisDirect => DirectDatabase(dbindex)
     ! Loop over the quantities to output
     do source = 1, noSources
       qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
         & sourceQuantities(source) )
       hdfNameIndex = qty%label
       call get_string ( hdfNameIndex, hdfName, strip=.true. )
+      thisDirect%sdNames(source) = hdfName
       if ( precisionVectors(source) /= 0 ) then
         precQty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
           & sourceQuantities(source) )
@@ -441,11 +449,6 @@ contains ! =====     Public Procedures     =============================
       else
         precQty => NULL()
       end if
-
-      newDirect%type = outputType
-      newDirect%sdname = hdfName
-      ! Add it to the database of directly writeable quantities
-      dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
 
       select case ( outputType )
       case ( l_l2gp )
@@ -468,6 +471,9 @@ contains ! =====     Public Procedures     =============================
       end select
     end do ! End loop over swaths/sds
 
+    thisDirect%type = outputType
+    thisDirect%fileNameBase = file_base
+    
     ! Close the output file of interest (does this need to be split like this?)
     select case ( outputType )
     case ( l_l2gp )
@@ -1198,6 +1204,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.75  2003/06/24 23:54:07  pwagner
+! New db indexes stored for entire direct file
+!
 ! Revision 2.74  2003/06/24 23:30:00  livesey
 ! Finished LabelVectorQuantity and made some other bug fixes.
 !
