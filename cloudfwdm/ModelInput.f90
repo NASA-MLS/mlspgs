@@ -104,7 +104,7 @@ contains
 
          DO J=1,NH
 
-            CALL LOCATE (HEIGHT,NZ,NZ,ZH(J),JM)              
+            CALL LOCATE (HEIGHT,NZ,NH,ZH(J),JM)              
 
             YP(J)=((HEIGHT(JM+1)-ZH(J))*ZA(JM)+(ZH(J)-HEIGHT(JM))*  &
      &            ZA(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
@@ -125,8 +125,8 @@ contains
 
             CHK_CLD(J) = WC(1,J) + WC(2,J)
 
-            IPSD(J)=((HEIGHT(JM+1)-ZH(J))*IPSDin(JM)+(ZH(J)-HEIGHT(JM))*  &
-     &            IPSDin(JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
+            ! IPSD INDEX CAN NOT BE INTERPOLATED
+            IPSD(J) = IPSDin(1)     
 
 ! VMR QUANTITIES
             Yq(J)=((HEIGHT(JM+1)-ZH(J))*zvmr(JM)+(ZH(J)-HEIGHT(JM))*  &
