@@ -10,6 +10,20 @@ module GLOBAL_SETTINGS
 
   private
 
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+!     (data types and parameters)
+! ALLOW_CLIMATOLOGY_OVERLOADS     Not used yet
+! INPUT_VERSION_STRING            Not used yet
+! OUTPUT_VERSION_STRING           stored as pgeversion among metadata
+! VERSION_COMMENT                 Not used yet
+
+!     (subroutines and functions)
+! SET_GLOBAL_SETTINGS             Get global settings from l2cf
+! === (end of toc) ===
+
   public :: SET_GLOBAL_SETTINGS
 
   logical, public :: ALLOW_CLIMATOLOGY_OVERLOADS = .false.
@@ -88,6 +102,7 @@ contains
     integer :: ReturnStatus        ! non-zero means trouble
     integer :: SON                 ! Son of root
     integer :: Sub_rosa_index
+    integer :: the_hdf_version
     logical :: TIMING              ! For S_Time
     logical :: StartTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2                 ! For S_Time
@@ -225,13 +240,14 @@ contains
         case ( s_l1brad )
   ! ((( If we convert level 1 files to hdf5, return hdfVersion  )))
   !      as an argument from l1bradSetup
+          the_hdf_version = LEVEL1_HDFVERSION
           call l1bradSetup ( son, l1bInfo, F_FILE, &
-            & MAXNUML1BRADIDS, ILLEGALL1BRADID )
+            & MAXNUML1BRADIDS, ILLEGALL1BRADID, hdfVersion=the_hdf_version )
           if(index(switches, 'pro') /= 0) then  
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))                         
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1brad', &                   
-            & hdfVersion=LEVEL1_HDFVERSION) 
+            & hdfVersion=the_hdf_version) 
           end if
           if ( pcf ) &
             & call announce_error(0, &
@@ -240,12 +256,13 @@ contains
         case ( s_l1boa )
   ! ((( If we convert level 1 files to hdf5, return hdfVersion  )))
   !      as an argument from l1boaSetup
-          call l1boaSetup ( son, l1bInfo, F_FILE )
+          the_hdf_version = LEVEL1_HDFVERSION
+          call l1boaSetup ( son, l1bInfo, F_FILE, hdfVersion=the_hdf_version )
           if(index(switches, 'pro') /= 0) then  
             sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
             call get_string ( sub_rosa_index, FilenameString, strip=.true. )
             call proclaim(FilenameString, 'l1boa', &                   
-            & hdfVersion=LEVEL1_HDFVERSION) 
+            & hdfVersion=the_hdf_version) 
           end if
           if ( pcf ) &
             & call announce_error(0, &
@@ -648,6 +665,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.58  2002/09/25 20:09:14  livesey
+! New global argument to ConstructForwardModelConfig
+!
 ! Revision 2.57  2002/08/28 22:26:39  pwagner
 ! Moved LEVEL1_HDFVERSION, ILLEGALL1BRADID, MAXNUML1BRADIDS to MLSL2Options
 !
