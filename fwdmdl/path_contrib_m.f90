@@ -27,27 +27,27 @@ contains
   subroutine Path_Contrib_Scalar ( incoptdepth, e_rflty, tol, do_gl )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use MLSCommon, only: RP, IP
+    use MLSCommon, only: RK => RP, IP
 
   ! inputs
 
-    real(rp), intent(in) :: incoptdepth(:) ! layer optical depth
-    real(rp), intent(in) :: e_rflty        ! earth reflectivity
-    real(rp), intent(in) :: tol            ! accuracy target in K
+    real(rk), intent(in) :: incoptdepth(:) ! layer optical depth
+    real(rk), intent(in) :: e_rflty        ! earth reflectivity
+    real(rk), intent(in) :: tol            ! accuracy target in K
 
   ! outputs
 
-    logical(ip), intent(inout) :: do_gl(:) ! TRUEs added for indicies to do
+    logical, intent(inout) :: do_gl(:)     ! TRUEs added for indicies to do
   !                                          gl computation
 
   ! Internal stuff
 
-    real(rp) :: dtaudn(size(incoptdepth))  ! path derivative of the
+    real(rk) :: dtaudn(size(incoptdepth))  ! path derivative of the
                                            ! transmission function
     integer(ip) :: i, i_tan, n_path
 
-    real(rp), parameter :: temp = 250.0_rp
-    real(rp), parameter :: TolScale = 2.0_rp / temp ! 2.0 comes from centered
+    real(rk), parameter :: temp = 250.0_rk
+    real(rk), parameter :: TolScale = 2.0_rk / temp ! 2.0 comes from centered
                                            ! difference used to compute dtaudn
 
   ! start code
@@ -57,7 +57,7 @@ contains
 
   ! Compute the indefinite sum of (-incoptdepth).
 
-    dtaudn(1) = 0.0_rp
+    dtaudn(1) = 0.0_rk
     do i = 2 , i_tan
       dtaudn(i) = dtaudn(i-1) - incoptdepth(i)
     end do
@@ -91,61 +91,74 @@ contains
   subroutine Path_Contrib_Polarized ( incoptdepth, e_rflty, tol, do_gl )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use MLSCommon, only: RP, IP
+    use CS_Expmat_M, only: CS_Expmat
+    use MLSCommon, only: RK => RP, IP
 
   ! inputs
 
-    complex(rp), intent(in) :: incoptdepth(:,:) ! layer optical depth
-                                           ! First dimension is 3
-    real(rp), intent(in) :: e_rflty        ! earth reflectivity
-    real(rp), intent(in) :: tol            ! accuracy target in K
+    complex(rk), intent(in) :: incoptdepth(:,:,:) ! layer optical depth
+                                           ! (2,2,:)
+    real(rk), intent(in) :: e_rflty        ! earth reflectivity
+    real(rk), intent(in) :: tol            ! accuracy target in K
 
   ! outputs
 
-    logical(ip), intent(out) :: do_gl(:)       ! set true for indicies to do
-  !                                              gl computation
+    logical, intent(inout) :: do_gl(:)     ! set true for indicies to do
+  !                                          gl computation
 
   ! Internal stuff
 
-    complex(rp) :: dtaudn(3,size(incoptdepth,2))    ! path derivative of the
+    complex(rk) :: deltau(2,2,size(incoptdepth,3))    ! exp(incoptdepth)
+    complex(rk) :: dtaudn(2,2,size(incoptdepth,3))    ! path derivative of the
                                            ! transmission function
+    complex(rk), parameter :: Ident(2,2) = reshape( (/ 1.0, 0.0, &
+      &                                                0.0, 1.0 /), (/ 2,2 /) )
+
+    complex(rk) :: tmp(2,2,size(incoptdepth,3)), tmp1(2,2,size(incoptdepth,3))
+
     integer(ip) :: i, i_tan, n_path
 
-    real(rp), parameter :: temp = 250.0_rp
-    real(rp), parameter :: TolScale = 2.0_rp / temp ! 2.0 comes from centered
+    real(rk), parameter :: temp = 250.0_rk
+    real(rk), parameter :: TolScale = 2.0_rk / temp ! 2.0 comes from centered
                                            ! difference used to compute dtaudn
 
   ! start code
 
-    n_path = size(incoptdepth,2)
+    n_path = size(incoptdepth,3)
     i_tan = n_path / 2
 
-  ! Compute the indefinite sum of (-incoptdepth).
+  ! Compute exp(incoptdepth) for all but the first and last levels
 
-    dtaudn(:,1) = 0.0_rp
-    do i = 2 , i_tan
-      dtaudn(:,i) = dtaudn(:,i-1) - incoptdepth(:,i)
+    do i = 1, n_path - 1
+      call cs_expmat ( incoptdepth(:,:,i), deltau(:,:,i) )
     end do
 
-    dtaudn(:,i_tan+1) = dtaudn(:,i_tan)
+    tmp(:,:,1) = ident
+    tmp1(:,:,1) = ident
+
+  ! Multiply the exp(incoptdepth) matrices together.
+
+    do i = 2, i_tan
+      tmp(:,:,i) =  matmul ( tmp(:,:,i-1),  deltau(:,:,i-1) )
+      tmp1(:,:,i) = matmul ( tmp1(:,:,i-1), conjg(tmp(:,:,i)) )
+    end do
+
+    tmp(:,:,i_tan+1) = tmp(:,:,i_tan) * sqrt(e_rflty)
+    tmp1(:,:,i_tan+1) = tmp1(:,:,i_tan) * e_rflty
 
     do i = i_tan+2, n_path
-      dtaudn(:,i) = dtaudn(:,i-1) - incoptdepth(:,i-1)
+      tmp(:,:,i) =  matmul ( tmp(:,:,i-1),  deltau(:,:,i-1) )
+      tmp1(:,:,i) = matmul ( tmp1(:,:,i-1), conjg(tmp(:,:,i)) )
     end do
 
-  ! compute the tau path derivative ~ exp(Tau) dTau/ds.
+  ! Where is the derivative of that product large?
 
-    dtaudn = (eoshift(dtaudn,+1,dim=2) -             &
-      &       eoshift(dtaudn,-1,dim=2) ) * exp(dtaudn)
+    dtaudn = 0.5_rk * ( eoshift(tmp1(:,:,1:n_path),+1,dim=3) - &
+                      & eoshift(tmp1(:,:,1:n_path),-1,dim=3) )
 
-    dtaudn(:,i_tan+1:n_path) = dtaudn(:,i_tan+1:n_path) * e_rflty
-
-  ! find where the tau derivative is large.
-
-    do i = 2, n_path - 1
-      if ( max(maxval(abs( real(dtaudn(:,i)))), &
-        &      maxval(abs(aimag(dtaudn(:,i))))) > tol * tolscale ) &
-        & do_gl(i) = .true.
+    do i = 2, n_path-1
+      if ( any(abs(real(dtaudn(:,:,i)))  > tolScale*tol ) .or. &
+           any(abs(aimag(dtaudn(:,:,i))) > tolScale*tol ) ) do_gl(i) = .true.
     end do
 
   end subroutine Path_Contrib_Polarized
@@ -157,11 +170,11 @@ contains
     use GLnp, only: NG
     use MLSCommon, only: IP
 
-    logical(ip), intent(inout) :: DO_GL(:)     ! Set true for indicies to do
+    logical, intent(inout) :: DO_GL(:)         ! Set true for indicies to do
                                                ! gl computation.  First and
                                                ! last are set false here.
-    integer, intent(out) :: GL_INDS(:)         ! Indices of where to do GL
-    integer, intent(out) :: NGL                ! How much of GL_INDS to use
+    integer(ip), intent(out) :: GL_INDS(:)     ! Indices of where to do GL
+    integer(ip), intent(out) :: NGL            ! How much of GL_INDS to use
 
     integer :: I, N_PATH
 
@@ -197,6 +210,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.6  2003/02/03 22:56:20  vsnyder
+! Get rid of an array temp
+!
 ! Revision 2.5  2003/01/31 01:53:28  vsnyder
 ! Calculate where to do GL with one less array temp
 !
