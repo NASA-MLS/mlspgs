@@ -17,7 +17,7 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   
   IMPLICIT NONE
   INTEGER:: SWRDFLD
-  EXTERNAL SWRDFLD !Should USE SWAPI
+!  EXTERNAL SWRDFLD !Should USE SWAPI
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER(len=256), PRIVATE :: Id = &
        & "$Id$"
@@ -52,8 +52,8 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    CHARACTER (len=*), PARAMETER :: DIM_NAME1 = 'nTimes'
    CHARACTER (len=*), PARAMETER :: DIM_NAME2 = 'nLevels'
    CHARACTER (len=*), PARAMETER :: DIM_NAME3 = 'nFreqs'
-   CHARACTER (len=*), PARAMETER :: DIM_NAME12 = 'nLevels,nTimes'
-   CHARACTER (len=*), PARAMETER :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
+   CHARACTER (len=*), PARAMETER :: DIM_NAME12 = 'nTimes,nLevels' ! Note C order!!!!
+   CHARACTER (len=*), PARAMETER :: DIM_NAME123 = 'nTimes,nLevels,nFreqs' ! Note C order!!!!
 
    INTEGER, PARAMETER :: HDFE_AUTOMERGE = 1     ! MERGE FIELDS WITH SHARE DIM
    INTEGER, PARAMETER :: HDFE_NOMERGE = 0       ! don't merge
@@ -1141,6 +1141,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.9  2001/01/29 18:17:49  livesey
+! Changed status, quality and frequency to upper case first character.
+!
 ! Revision 2.8  2000/12/04 23:43:59  vsnyder
 ! Move more of addItemToDatabase into the include
 !
