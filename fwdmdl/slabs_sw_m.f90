@@ -29,8 +29,8 @@ contains
   subroutine dVoigt_spectral ( dNu, Nu0, x1, yi, y, w, t, slabs1, SwI,  &
                          &  dslabs1_dNu0, dSwI_dw, dSwI_dn, dSwI_dNu0 )
 
-! Computes the Voigt function and its first derivative with respect
-! to spectaral parameters: w, n & Nu0
+! Compute the Voigt function and its first derivatives with respect
+! to spectral parameters: w, n & Nu0
 
 ! NOTE: Before calling this routine, the user needs to call slabs_prep_wder()
 !       routine to compute dslabs1_dNu0
@@ -90,7 +90,6 @@ contains
     dvvw_dv0 = (du_dv0+dr_dv0)*q2 + 2.0_rp*q*dq_dv0*(u+r)
     if ( present(dslabs1_dNu0) ) dSwI_dNu0 = dslabs1_dNu0*vvw + slabs1*dvvw_dv0
 
-    return
   end subroutine dVoigt_spectral
 
   ! ------------------------------------------------------  Slabs  -----
@@ -118,7 +117,6 @@ contains
     Slabs = slabs1 * (1.0_rp + dNu / v0s)**2 &
               * (u + OneOvSPi*y/((x1*(2.0_rp*v0s+dNu))**2 + y*y))
 
-    return
   end function Slabs
 
   ! --------------------------------------------------  Slabswint  -----
@@ -151,15 +149,15 @@ contains
     w = (u + z) * q
     Slabswint = slabs1 *  w
 
-    return
   end function Slabswint
 
   ! ----------------------------------------------  Voigt_Lorentz  -----
 
   subroutine Voigt_Lorentz ( dNu,  Nu0,  x1,  yi,  y,  w,  t,  slabs1,  VL,   &
                          &   dslabs1_dNu0,  dVL_dw,  dVL_dn,  dVL_dNu0 )
- ! Computes the Voigt/Lorentz function and its first derivative with respect
-! to spectaral parameters: w, n & Nu0
+
+! Compute the Voigt/Lorentz function and its first derivatives with respect
+! to spectral parameters: w, n & Nu0
 
 ! NOTE: Before calling this routine, the user needs to call slabs_prep()
 !       routine to compute dslabs1_dNu0
@@ -222,7 +220,6 @@ contains
               &         2.0 * slabs1 * q * dq_dNu0 * Sum + &
               &         slabs1 * q2 * dSum_dNu0)
 
-    return
   end subroutine Voigt_Lorentz
 
   ! ------------------------------------------  Real_Simple_Voigt  -----
@@ -389,7 +386,7 @@ contains
     real(rp), parameter :: gw = 0.28209479177388_rp
     real(rp) :: y2
 
-    y2 = y*y
+    y2 = y**2
     rvoigth2 = gw * y * (1.0_rp/(y2 + (x-gx)**2) + &
              &           1.0_rp/(y2 + (x+gx)**2))
 
@@ -467,14 +464,15 @@ contains
                                       1.57067320322856644036e-1_rp, &
                                       4.53000990550884564224e-3_rp /) / Pi
     integer :: i
-    real(rp) :: denom1,denom2,xp,xm
+    real(rp) :: denom1,denom2,xp,xm,y2
 
     cvoigth6 = cmplx(0.0_rp,0.0_rp)
+    y2 = y**2
     do i = 1 , n
       xm = x-gx(i)
       xp = x+gx(i)
-      denom1 = gw(i)/(y**2 + xm**2)
-      denom2 = gw(i)/(y**2 + xp**2)
+      denom1 = gw(i)/(y2 + xm**2)
+      denom2 = gw(i)/(y2 + xp**2)
       cvoigth6 = cvoigth6+cmplx(y*(denom1+denom2), xm*denom1+xp*denom2, KIND=rp)
     end do
 
@@ -835,7 +833,6 @@ contains
    slabs1 = r * s
    dslabs1 = r * ds
 
-   return
  end subroutine Slabs_prep
 
   !  -------------------------------------------  Slabs_prep_wder  -----
@@ -954,8 +951,6 @@ contains
     dy_dv0 = y*dx1_dv0/x1
     dslabs1_dv0 = r * ds_dv0 + s * dr_dv0
 
-    return
-
  end subroutine Slabs_prep_wder
 
   ! -----------------------------------------  Slabs_Prep_Arrays   -----
@@ -1053,10 +1048,8 @@ contains
 
     end do              ! On i
 
-    return
-
   end subroutine Get_GL_Slabs_Arrays
-!
+
 !=====================================================================
 
   logical function not_used_here()
@@ -1066,6 +1059,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.9  2002/12/03 00:34:23  vsnyder
+! Test optional argument presence before using them
+!
 ! Revision 2.8  2002/10/08 17:08:06  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
