@@ -1,0 +1,23 @@
+; $Id$
+
+; This l2cf fragment does all the quality flagging for the Core+R5
+; products.
+
+begin Fill
+  diagR5: Vector, template=diagTmp
+
+  ;; ------------------------------------ OH-2T5
+  !define(flaggingBands,{15,17,18,19})
+  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=20.0,minRads=5000,cloudMax=10K,radiometerName=R5H)
+
+  ;; ------------------------------------ O3-2T5
+  !define(flaggingBands,{15,17,18,19})
+  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=20.0,minRads=5000,cloudMax=10K,radiometerName=R5H)
+
+  ;; ------------------------------------- Temperature-CorePlusR4
+  !define(flaggingBands,{1,22})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R5,chisqScale=10.0,minRads=1500,cloudMax=10K,radiometerName=R5H)
+
+end Fill
+
+; $Log$
