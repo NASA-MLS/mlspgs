@@ -7,7 +7,12 @@ module TRACE_M
   use OUTPUT_M, only: OUTPUT
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
+  private
+  public :: Trace_Begin, Trace_End
   integer, public, save :: DEPTH   ! Depth in tree.  Used for trace printing.
+
+  integer, parameter :: ClockStackMax = 100
+  real :: ClockStack(0:clockStackMax) = 0.0
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -49,6 +54,10 @@ contains ! ====     Public Procedures     ==============================
     else
       call output ( '', advance='yes' )
     end if
+    if ( depth >= 0 .and. depth < clockStackMax ) then
+      call cpu_time ( clockStack(depth) )
+      clockStack(depth+1) = 0.0
+    end if
     depth = depth + 1
   end subroutine TRACE_BEGIN
 ! --------------------------------------------------    TRACE_END  -----
@@ -57,6 +66,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in) :: NAME
     integer :: I              ! Loop inductor
     integer :: Values(8)      ! For Date_and_time
+    real :: T                 ! For timing
     depth = depth - 1
     call output ( '      ' )
     do i = 1, depth
@@ -65,14 +75,26 @@ contains ! ====     Public Procedures     ==============================
     call output ( 'Exit ' ); call output ( name )
     call date_and_time ( values=values )
     call output ( ' at ' )
-    call output ( values(5) ); call output ( ':' )     ! The hour
-    call output ( values(6) ); call output ( ':' )     ! The minute
-    call output ( values(7) ); call output ( '.' )     ! The second
-    call output ( values(8), 3, 'yes', .true. )        ! The milliseconds
+    call output ( values(5), 2, 'no', .true. ); call output ( ':' ) ! hour
+    call output ( values(6), 2, 'no', .true. ); call output ( ':' ) ! minute
+    call output ( values(7), 2, 'no', .true. ); call output ( '.' ) ! second
+    if ( depth >= 0 .and. depth < clockStackMax ) then
+      call cpu_time ( t )
+      clockStack(depth) = t - clockStack(depth)
+      call output ( values(8), 3, 'no', .true. )        ! milliseconds
+      call output ( ' used ' )
+      call output ( dble(clockStack(depth) - clockStack(depth+1)), &
+        & format='(g10.3)', advance='yes' )
+    else
+      call output ( values(8), 3, 'yes', .true. )        ! milliseconds
+    end if
   end subroutine TRACE_END
 end module TRACE_M
 
 ! $Log$
+! Revision 2.7  2001/05/01 23:53:40  vsnyder
+! Print CPU time exclusive of deeper ones at each end_trace
+!
 ! Revision 2.6  2001/04/25 00:08:26  vsnyder
 ! Use 'fill' argument of 'output' to get leading zeroes on milliseconds
 !
