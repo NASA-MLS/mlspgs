@@ -233,7 +233,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   end type L2GPData_T
 
   ! Print debugging stuff?
-  logical, parameter :: DEEBUG = .false.  
+  logical, parameter :: DEEBUG = .true.  
   logical, parameter ::SWATHLEVELMISSINGVALUE = .false. ! Make it swath attr?
 
 contains ! =====     Public Procedures     =============================
@@ -2347,6 +2347,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.92  2004/02/11 22:59:59  pwagner
+! Undid effect of 2nd-to-last fix; seems to have been wrong
+!
 ! Revision 2.91  2004/02/11 17:23:25  pwagner
 ! l2gp status an integer, not a char
 !
