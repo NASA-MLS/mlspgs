@@ -196,27 +196,28 @@ contains ! =====     Public Procedures     =============================
     use DirectWrite_m, only: DirectData_T, &
       & AddDirectToDatabase, DirectWrite_l2GP, DirectWrite_l2aux, &
       & SetUpNewDirect
+    use Expr_m, only: EXPR
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
+    use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
+    use Init_tables_module, only: L_L2GP, L_L2AUX, L_PRESSURE, L_ZETA
     use intrinsic, only: L_NONE, L_GEODANGLE, &
       & L_MAF, PHYQ_DIMENSIONLESS
-    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
-      & GETVECTORQTYBYTEMPLATEINDEX
+    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
     use MLSFiles, only: MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF
-    use MLSL2Options, only: TOOLKIT
+    use MLSL2Options, only: TOOLKIT, DEFAULT_HDFVERSION_WRITE
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end
-    use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
-    use Init_tables_module, only: L_L2GP, L_L2AUX, L_PRESSURE, L_ZETA
-    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
-    use Expr_m, only: EXPR
     use MoreTree, only: GET_FIELD_ID
+    use Output_m, only: OUTPUT, BLANKS
     use String_Table, only: DISPLAY_STRING, GET_STRING
     use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
       & SUB_ROSA, SUBTREE
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
+      & GETVECTORQTYBYTEMPLATEINDEX
     ! Dummy arguments
     integer, intent(in) :: NODE    ! Of the JOIN section in the AST
     type (Vector_T), dimension(:), pointer :: VECTORS
@@ -286,6 +287,7 @@ contains ! =====     Public Procedures     =============================
     ! Also pick upthe hdfVersion and the filename
     lastFieldIndex = 0
     noSources = 0
+    hdfVersion = DEFAULT_HDFVERSION_WRITE
     do keyNo = 2, nsons(node)           ! Skip DirectWrite command
       son = subtree ( keyNo, node )
       if ( keyNo > 2 ) lastFieldIndex = fieldIndex
@@ -368,6 +370,16 @@ contains ! =====     Public Procedures     =============================
       if ( outputType /= expectedType ) call Announce_Error ( son, no_error_code, &
         & "Inappropriate quantity for this file type in direct write" )
     end do
+    
+    if ( DeeBUG ) then
+      call output('Direct write to file', advance='yes')
+      call output('File name: ', advance='no')
+      call output(trim(filename), advance='yes')
+      call output('hdfVersion: ', advance='no')
+      call output(hdfVersion, advance='yes')
+      call output('Num sources: ', advance='no')
+      call output(noSources, advance='yes')
+    endif
 
     ! If we're a slave, we need to request permission from the master.
     if ( parallel%slave ) then
@@ -427,6 +439,10 @@ contains ! =====     Public Procedures     =============================
         & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
     end select
 
+    if ( ErrorType /= 0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'DirectWriteCommand unable to open' // trim(filename) )
+    endif
     call SetUpNewDirect(newDirect, noSources)
     ! Add it to the database of directly writeable quantities
     dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
@@ -449,6 +465,17 @@ contains ! =====     Public Procedures     =============================
       else
         precQty => NULL()
       end if
+
+      if ( DeeBUG ) then
+        call output('file access: ', advance='no')
+        call output(fileaccess, advance='yes')
+        call output('file handle: ', advance='no')
+        call output(handle, advance='yes')
+        call output('outputType: ', advance='no')
+        call output(outputType, advance='yes')
+        call output('sd name: ', advance='no')
+        call output(trim(hdfname), advance='yes')
+      endif
 
       select case ( outputType )
       case ( l_l2gp )
@@ -720,17 +747,26 @@ contains ! =====     Public Procedures     =============================
       ! vector quantity appropriately.
       if ( ValidateVectorQuantity ( quantity, &
         & coherent=.true., stacked=.true., regular=.true., &
+        & minorFrame=.false., majorFrame=.false., &
         & verticalCoordinate = (/ l_pressure, l_zeta, l_none/) ) ) then 
         ! Coherent, stacked, regular quantities on pressure surfaces, or
         ! with no vertical coordinate system go in l2gp files.
-        if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
-          & ModuleName, 'This quantity should be joined as an l2gp')
+        if ( get_spec_id(key) /= s_l2gp ) then
+          call Announce_Error ( key, NO_ERROR_CODE, &
+            & 'This quantity should be joined as an l2gp' )
+          call MLSMessage ( MLSMSG_Error,&
+            & ModuleName, 'This quantity should be joined as an l2gp')
+        endif
         call JoinL2GPQuantities ( key, hdfNameIndex, quantity, &
           & precisionQuantity, l2gpDatabase, chunkNo )
       else
         ! All others go in l2aux files.
-        if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
-          & ModuleName, 'This quantity should be joined as an l2aux')
+        if ( get_spec_id(key) /= s_l2aux ) then
+          call Announce_Error ( key, NO_ERROR_CODE, &
+            & 'This quantity should be joined as an l2aux' )
+          call MLSMessage ( MLSMSG_Error,&
+            & ModuleName, 'This quantity should be joined as an l2aux')
+        endif
         call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
           & l2auxDatabase, chunkNo, chunks )
       end if
@@ -1204,6 +1240,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.76  2003/06/26 23:13:52  pwagner
+! New debugging output; distinguishes between l2gp/l2aux quantities better
+!
 ! Revision 2.75  2003/06/24 23:54:07  pwagner
 ! New db indexes stored for entire direct file
 !
