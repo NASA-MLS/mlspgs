@@ -124,7 +124,7 @@ contains ! ========================= Public Procedures ====================
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
 
     ! Local parameters
-    integer, parameter :: NOLON0OPTIONS = 19
+    integer, parameter :: NOLON0OPTIONS = 18
 
     ! Local variables
     integer :: BESTOPTION(1)            ! With lowest cost
@@ -161,7 +161,7 @@ contains ! ========================= Public Procedures ====================
 
     ! First get a dataset to compare against
     do i = 1, noLon0Options
-      options(i) = -180.0 + (i-1) * 360.0 / (noLon0Options-1)
+      options(i) = -180.0 + (i-1) * 360.0 / noLon0Options
     end do
 
     do i = 1, noIterations
@@ -181,7 +181,6 @@ contains ! ========================= Public Procedures ====================
     end do
     lon0 = options(bestOption(1))
     lon0Valid = .true.
-    print*,'Choose lon0=',lon0
 
     call Deallocate_test ( testPhi, 'testPhi', ModuleName )
     call Deallocate_test ( testLon, 'testLon', ModuleName )
@@ -208,6 +207,9 @@ contains ! ========================= Public Procedures ====================
 end module EmpiricalGeometry
 
 ! $Log$
+! Revision 2.3  2001/12/14 01:43:02  livesey
+! Various bug fixes
+!
 ! Revision 2.2  2001/12/13 23:05:08  vsnyder
 ! Add a kind parameter in MODULO; Add a CVS Log comment
 !
