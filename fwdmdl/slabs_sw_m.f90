@@ -19,12 +19,6 @@ module SLABS_SW_M
 
   private :: Slabs_Prep, Slabs_Prep_dT
 
-  ! Routines to compute Fadeeva/Voigt/Lorentz:
-  public :: Real_Simple_Voigt, D_Real_Simple_Voigt,                     &
-         &  Simple_Voigt, D_Simple_Voigt,                               &
-         &  RLorentz, CLorentz, RVoigth2, CVoigth2, RVoigth6, CVoigth6, &
-         &  RHui6, CHui6, RDrayson, CDrayson, Taylor
-
   real(rp), parameter :: OneOvSPi = 1.0_rp / sqrtPi  ! 1.0/Sqrt(Pi)
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -50,6 +44,8 @@ contains
 
 ! NOTE: In here and in all other routines in this module, 
 !       tanh1 = tanh(h * nu / ( 2.0 * k * T ) )
+
+    use Voigt_m, only: Simple_Voigt
 
     real(r8), intent(in) :: dnu, nu0
     real(rp), intent(in) :: x1, yi, y, w, t, tanh1, slabs1             
@@ -126,6 +122,7 @@ contains
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
+    use Voigt_m, only: Simple_Voigt
 
     real(r8), intent(in) :: dnu
     type(slabs_struct), intent(in) :: Slabs
@@ -217,6 +214,8 @@ contains
   ! ------------------------------------------------------  Slabs  -----
   real(rp) function Slabs ( Nu, v0, v0s, x1, tanh1, slabs1, y )
 
+    use Voigt_m, only: Real_Simple_Voigt
+
     real(r8), intent(in) :: Nu    ! Frequency
     real(r8), intent(in) :: v0    ! Line center frequency
     real(r8), intent(in) :: v0s   ! Pressure-shifted line center frequency
@@ -254,6 +253,8 @@ contains
     &                   Slabs, dSlabs_dT )
 
   ! Compute single-line absorption and its derivative w.r.t. temperature.
+
+    use Voigt_m, only: D_Real_Simple_Voigt
 
     real(r8), intent(in) :: Nu, v0, v0s, dv0s_dT
     real(rp), intent(in) :: x1
@@ -339,6 +340,7 @@ contains
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
+    use Voigt_m, only: Real_Simple_Voigt
 
     real(r8), intent(in) :: Nu    ! Frequency
     type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
@@ -403,6 +405,7 @@ contains
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
+    use Voigt_m, only: D_Real_Simple_Voigt
 
     real(r8), intent(in) :: Nu    ! Frequency
     type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
@@ -476,6 +479,8 @@ contains
   ! --------------------------------------------------  Slabswint  -----
   real(rp) function Slabswint ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi )
 
+    use Voigt_m, only: Real_Simple_Voigt
+
     real(r8), intent(in) :: Nu    ! Frequency
     real(r8), intent(in) :: v0    ! Line center frequency
     real(r8), intent(in) :: v0s   ! Pressure-shifted line center frequency
@@ -517,6 +522,8 @@ contains
     &                              dv0s_dT, dx1_dT, dtanh_dT, dslabs1_dT, &
     &                              dy_dT, dyi_dT, &
     &                              Slabswint, dSlabs_dT )
+
+    use Voigt_m, only: D_Real_Simple_Voigt
 
     real(r8), intent(in) :: Nu, v0, v0s, dv0s_dT
     real(rp), intent(in) :: x1
@@ -652,6 +659,7 @@ contains
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
+    use Voigt_m, only: Real_Simple_Voigt
 
     real(r8), intent(in) :: Nu    ! Frequency
     type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
@@ -727,6 +735,7 @@ contains
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
+    use Voigt_m, only: D_Real_Simple_Voigt
 
     real(r8), intent(in) :: Nu    ! Frequency
     type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
@@ -827,6 +836,8 @@ contains
 ! NOTE: Before calling this routine, the user needs to call slabs_prep()
 !       routine to compute dslabs1_dNu0
 
+    use Voigt_m, only: Simple_Voigt
+
     real(r8), intent(in) :: dNu, nu0
     real(rp), intent(in) :: x1, yi, y, w, t, tanh1, slabs1, dslabs1_dNu0
 
@@ -892,753 +903,6 @@ contains
            & + (yi*x1*  dn1     -2.0_rp*   up1   *x1*zj)/dn1**2)
 
   end subroutine Voigt_Lorentz
-
-  ! ------------------------------------------  Real_Simple_Voigt  -----
-  elemental subroutine Real_Simple_Voigt ( x, y, u )
-
-! simple REAL(Voigt) function
-
-! inputs
-
-    real(rp), intent(in) :: x ! doppler width, del frequency ratio
-    real(rp), intent(in) :: y ! doppler width, collision width ratio
-
-! outputs
-
-    real(rp), intent(out) :: u ! real part of Voigt
-
-! internals
-
-    integer :: I, J, MAXJ, N
-    real :: DELY, DX, F, FD, IS, IT, Q(5), R(5), RS, RT, W, XA, Y2
-
-    !   Note that the dimensions of R and Q are 2 less than the a and b
-    !   coefficients because we start the r and q coeffients at 2.
-
-    ! For Hui
-    real(rp), parameter :: a(7) = (/ &
-       &     122.607931777104326_rp, 214.382388694706425_rp, &
-       &     181.928533092181549_rp,  93.155580458138441_rp, &
-       &      30.180142196210589_rp,   5.912626209773153_rp, &
-       &       0.564189583562615_rp /)
-
-    real(rp), parameter :: b(7) = (/ &
-       &     122.607931773875350_rp, 352.730625110963558_rp, &
-       &     457.334478783897737_rp, 348.703917719495792_rp, &
-       &     170.354001821091472_rp,  53.992906912940207_rp, &
-       &      10.479857114260399_rp /)
-
-    ! For Drayson
-    real(rp), parameter :: TwoOvSPi = 2.0_rp * oneOvSPi  ! 2.0/Sqrt(Pi)
-
-    real(rp), parameter :: H = 0.2_rp
-    real(rp), parameter :: HN(26) = (/(h*(i-1),i=1,26)/)
-    real(rp), parameter :: RI(15) = (/(-i/2.0_rp,i=1,15)/)
-
-    real(rp), parameter :: Dawson(26) = (/  &
-       &   0.000000000000000000000_rp, 0.194751033368028049654_rp, &
-       &   0.359943481934888104273_rp, 0.474763203662977930602_rp, &
-       &   0.532101707056365429017_rp, 0.538079506912768419134_rp, &
-       &   0.507273496407739614173_rp, 0.456507237526897257242_rp, &
-       &   0.399939894323081412623_rp, 0.346772769114872245155_rp, &
-       &   0.301340388923791966033_rp, 0.264510759950831957658_rp, &
-       &   0.235313055663842576224_rp, 0.212165124242499004111_rp, &
-       &   0.193550723859366792343_rp, 0.178271030610558287342_rp, &
-       &   0.165461999878675203167_rp, 0.154524057736963452532_rp, &
-       &   0.145041773054088859351_rp, 0.136721221674636496320_rp, &
-       &   0.129348001236005115591_rp, 0.122760816006522922545_rp, &
-       &   0.116835039953297254075_rp, 0.111472268532125307267_rp, &
-       &   0.106593431283281074400_rp, 0.102134074424276835438_rp /)
-
-    real(rp), parameter :: FDer1(26) = 1.0_rp-2.0_rp*hn*dawson
-    real(rp), parameter :: FDer2(26) = (hn*FDer1+Dawson)/ri(2)
-    real(rp), parameter :: FDer3(26) = (hn*FDer2+FDer1)/ri(3)
-    real(rp), parameter :: FDer4(26) = (hn*FDer3+FDer2)/ri(4)
-    real(rp), parameter :: FDer5(26) = (hn*FDer4+FDer3)/ri(5)
-    real(rp), parameter :: FDer6(26) = (hn*FDer5+FDer4)/ri(6)
-
-    ! For 2-pt Gauss-Hermite
-    real(rp), parameter :: gx = 0.70710678118655_rp ! 1.0/sqrt(2.0)
-    real(rp), parameter :: gw = 0.88622692545277_rp / Pi
-
-    ! For 6-pt Gauss-Hermite
-    real(rp), parameter :: gx6(3) = (/ 4.36077411927616508271e-1_rp, &
-                                       1.33584907401369694957_rp,    &
-                                       2.35060497367449222280_rp /)
-    real(rp), parameter :: gw6(3) = (/ 7.24629595224392524608e-1_rp, &
-                                       1.57067320322856644036e-1_rp, &
-                                       4.53000990550884564224e-3_rp /) / Pi
-
-    real(rp), parameter :: TwoThirds = 2.0_rp / 3.0_rp
-    real(rp), parameter :: XL=5.2_rp, YL=0.05_rp, YH=0.6_rp, DYDX=(yh-yl)/xl
-
-! This is sorted in likely occurance of each case
-
-    xa = ABS(x)
-
-! I am assuming that the OR are evaluated sequentially until the first
-! true is found. Also routines are ordered according to speed
-
-    if ( y + TwoThirds*xa > 100.0_rp ) then
-
-      ! Here x is sqrt(ln2)*delnu / wd and y is sqrt(ln2)*wc / wd
-      ! u = rlorentz ( x, y )
-      u = OneOvSPi * y / (y*y + x*x)
-
-    else if ( y + 0.6875_rp * xa > 11.0_rp ) then
-
-! Drayson's quick 2pt hermite integral (essentially a lorentz)
-
-      ! u = rvoigth2(xa,y)
-      y2 = y**2
-      u = gw * y * (1.0_rp/(y2 + (xa-gx)**2) + &
-        &           1.0_rp/(y2 + (xa+gx)**2))
-
-    else if ( y > 0.6_rp .OR. y > yl + dydx*xa ) then
-
-! Intermediate region
-
-      ! u = rhui6(xa,y)
-
-      !   Fill the r, q coefficients with the recursion
-      !   r(0)=1.0, r(1) = y q(0) = 0.0, q(1) = -x
-
-      r(1) = y**2 - xa**2
-      q(1) = -2.0_rp*xa*y
-      do i = 2, 5
-        r(i) = xa * q(i-1) +  y * r(i-1)
-        q(i) = y  * q(i-1) - xa * r(i-1)
-      end do
-      rs = a(1) + a(2)*y  + dot_product(a(3:),r)
-      rt = b(1) + b(2)*y  + dot_product(b(3:),r) + xa * q(5) +  y * r(5)
-      is =      - a(2)*xa + dot_product(a(3:),q)
-      it =      - b(2)*xa + dot_product(b(3:),q) +  y * q(5) - xa * r(5)
-
-      u = (rs*rt + is*it) / (rt*rt + it*it)
-
-    else if ( xa > 5.2_rp ) then
-
-! small y large x limit
-
-      ! u = rvoigth6(xa,y)
-
-      ! Real Voigt region IV 6pt GH integration
-
-      y2 = y**2
-
-      u = y * ( gw6(1) * (1.0_rp/(y2 + (xa-gx6(1))**2) + &
-                     &    1.0_rp/(y2 + (xa+gx6(1))**2)) + &
-                gw6(2) * (1.0_rp/(y2 + (xa-gx6(2))**2) + &
-                     &    1.0_rp/(y2 + (xa+gx6(2))**2)) + &
-                gw6(3) * (1.0_rp/(y2 + (xa-gx6(3))**2) + &
-                     &    1.0_rp/(y2 + (xa+gx6(3))**2)) )
-    else
-
-! Near line center where Doppler dominates Pressure broadening
-
-      ! u = rdrayson(xa,y)
-
-      !******** Region I. Compute Dawson's function at x from Taylor series
-
-      if ( y <= 1.0e-12_rp ) then
-        u = exp(-xa*xa)
-      else
-
-        !  Taylor series expansion about y = 0.0
-
-        y2 = y*y
-        j = xa / h
-        n = 1 + min(j, 25)
-        dx = xa - hn(n)
-        f = 0.0_rp
-        if ( xa > 0.05*h) &
-           f = (((((fDer6(n)*dx + fDer5(n))*dx + fDer4(n))*dx  + &
-                 &  fDer3(n))*dx + fDer2(n))*dx + fDer1(n))*dx + Dawson(n)
-        dely = -y
-        fd = 1.0_rp - 2.0_rp * xa * f
-        w = fd * dely
-        j = 5.0_rp + (12.5_rp - xa) * 0.8_rp * y
-        maxj = min(j, 14)
-        do j = 2, maxj, 2
-          f  = (xa*fd + f) / ri(j)
-          fd  = (xa*f + fd) / ri(j+1)
-          dely = -y2 * dely
-          w = w + fd * dely
-        end do
-
-        u = exp(y2-xa*xa)*cos(2.0_rp*xa*y) + TwoOvSpi*w
-      end if
-
-    end if
-
-  end subroutine Real_Simple_Voigt
-
-  ! -----------------------------------------------  Simple_Voigt  -----
-  elemental subroutine Simple_Voigt ( x, y, u, v )
-
-! simple Voigt function
-
-! inputs
-
-    real(rp), intent(in) :: x ! doppler width, del frequency ratio
-    real(rp), intent(in) :: y ! doppler width, collision width ratio
-
-! outputs
-
-    real(rp), intent(out) :: u ! real part of Voigt
-    real(rp), optional, intent(out) :: v ! imaginary part of Voigt
-
-! internals
-
-    ! For 2-pt Gauss-Hermite
-    real(rp), parameter :: GX = 0.70710678118655_rp ! 1.0/sqrt(2.0)
-    real(rp), parameter :: GW = 0.88622692545277_rp / Pi
-
-    real(rp), parameter :: XL=5.2_rp, YL=0.05_rp, YH=0.6_rp, DYDX=(yh-yl)/xl
-    real(rp) :: DENOM1, DENOM2, XA, XM, XP, Y2
-    complex(rp) :: UV
-
-! This is sorted in likely occurance of each case
-
-    xa = ABS(x)
-
-! I am assuming that the OR are evaluated sequentially until the first
-! true is found. Also routines are ordered according to speed
-
-!    if ( y + 0.666666*xa > 100.0_rp ) then
-! NOTE: clorentz is not accurate enough for spectral derivative
-!       computations. This may be something for Van S. to investigate
-!       later.
-
-!      uv = clorentz(xa,y)
-
-!    else if ( y + 0.6875_rp * xa > 11.0_rp ) then
-
-    if ( y + 0.6875_rp * xa > 11.0_rp ) then
-
-      ! Drayson's quick 2pt hermite integral (essentially a lorentz)
-
-      ! uv = cvoigth2(xa,y)
-      xm = xa - gx
-      xp = xa + gx
-      y2 = y**2
-      denom1 = gw/(y2 + xm**2)
-      denom2 = gw/(y2 + xp**2)
-      uv = CMPLX(y*(denom1+denom2), xm*denom1 + xp*denom2, KIND=rp)
-
-    else if ( y > 0.6_rp .OR. y > yl + dydx*xa ) then
-
-! Intermediate region
-
-      uv = chui6(xa,y)
-
-    else if ( xa > 5.2_rp ) then
-
-! small y large x limit
-
-      uv = cvoigth6(xa,y)
-
-    else if ( x*x + y*y > 0.0036 ) then
-
-! Near line center where Doppler dominates Pressure broadening
-
-      uv = cdrayson(xa,y)
-
-    else
-
-! Very close to the line center, where cdrayson seems to have a bug
-
-      uv = taylor(xa,y)
-
-    end if
-
-    u = real(uv,kind=rp)
-    if ( present(v) ) v = sign(aimag(uv),x)
-
-  end subroutine Simple_Voigt
-
-  ! ---------------------------------------------------  RLorentz  -----
-    real(rp) pure function RLorentz ( x, y )
-
-  ! Real Lorentz
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-  ! Internals
-
-    rlorentz = OneOvSPi * y / (y*y + x*x)
-
-  end function RLorentz
-
-  ! ---------------------------------------------------  CLorentz  -----
-  complex(rp) elemental function CLorentz(x,y)
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-!   Internals
-
-    real(rp) :: denom
-
-    denom = OneOvSPi / (x*x + y*y)
-    clorentz = CMPLX(y*denom,x*denom,KIND=rp)
-
-  end function CLorentz
-
-  ! ---------------------------------------------------  RVoigth2  -----
-  real(rp) elemental function RVoigth2 ( x, y )
-
-! Real Voigt region IV 2pt GL integration
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-!   Internals
-
-    real(rp), parameter :: gx = 0.70710678118655_rp ! 1.0/sqrt(2.0)
-    real(rp), parameter :: gw = 0.88622692545277_rp / Pi
-    real(rp) :: y2
-
-    y2 = y**2
-    rvoigth2 = gw * y * (1.0_rp/(y2 + (x-gx)**2) + &
-             &           1.0_rp/(y2 + (x+gx)**2))
-
-  end function RVoigth2
-
-  ! ---------------------------------------------------  CVoigth2  -----
-  complex(rp) elemental function CVoigth2 ( x, y )
-
-! Voigt region  2pt GL integration
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu) / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-!   Internals
-
-    real(rp), parameter :: gx = 0.70710678118655_rp ! 1.0/sqrt(2.0)
-    real(rp), parameter :: gw = 0.88622692545277_rp / Pi
-    real(rp) :: denom1,denom2,xm,xp,y2
-
-    xm = x-gx
-    xp = x+gx
-    y2 = y**2
-    denom1 = gw/(y2 + xm**2)
-    denom2 = gw/(y2 + xp**2)
-    cvoigth2 = CMPLX(y*(denom1+denom2),xm*denom1 + xp*denom2,KIND=rp)
-
-  end function CVoigth2
-
-  ! ---------------------------------------------------  RVoigth6  -----
-  real(rp) elemental function RVoigth6 ( x, y )
-
-! Real Voigt region IV 6pt GL integration
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-!   Internals
-
-    integer, parameter :: n = 3
-    real(rp), parameter :: gx(n) = (/ 4.36077411927616508271e-1_rp, &
-                                      1.33584907401369694957_rp,    &
-                                      2.35060497367449222280_rp /)
-    real(rp), parameter :: gw(n) = (/ 7.24629595224392524608e-1_rp, &
-                                      1.57067320322856644036e-1_rp, &
-                                      4.53000990550884564224e-3_rp /) / Pi
-    real(rp) :: y2
-    integer :: i
-
-    rvoigth6 = 0.0
-    y2 = y**2
-    do i = 1 , n
-      rvoigth6 = rvoigth6 + gw(i) * y * (1.0_rp/(y2 + (x-gx(i))**2) + &
-                                     &   1.0_rp/(y2 + (x+gx(i))**2))
-    end do
-
-  end function RVoigth6
-
-  ! ---------------------------------------------------  CVoigth6  -----
-  complex(rp) elemental function CVoigth6 ( x, y )
-
-! Voigt region IV 6pt GL integration
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu) / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-!   Internals
-
-    integer, parameter :: n = 3
-    real(rp), parameter :: Pi = 3.1415926535897932385_rp
-    real(rp), parameter :: gx(n) = (/ 4.36077411927616508271e-1_rp, &
-                                      1.33584907401369694957_rp,    &
-                                      2.35060497367449222280_rp /)
-    real(rp), parameter :: gw(n) = (/ 7.24629595224392524608e-1_rp, &
-                                      1.57067320322856644036e-1_rp, &
-                                      4.53000990550884564224e-3_rp /) / Pi
-    integer :: i
-    real(rp) :: denom1,denom2,xp,xm,y2
-
-    cvoigth6 = cmplx(0.0_rp,0.0_rp)
-    y2 = y**2
-    do i = 1 , n
-      xm = x-gx(i)
-      xp = x+gx(i)
-      denom1 = gw(i)/(y2 + xm**2)
-      denom2 = gw(i)/(y2 + xp**2)
-      cvoigth6 = cvoigth6+cmplx(y*(denom1+denom2), xm*denom1+xp*denom2, KIND=rp)
-    end do
-
-    end function CVoigth6
-
-  ! ------------------------------------------------------  RHui6  -----
-  real(rp) elemental function RHui6 ( x, y )
-
-! Voigt region II Hui polynomial
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-!   Internal stuff
-
-    real(rp), parameter :: a(7) = (/ &
-       &     122.607931777104326_rp, 214.382388694706425_rp, &
-       &     181.928533092181549_rp,  93.155580458138441_rp, &
-       &      30.180142196210589_rp,   5.912626209773153_rp, &
-       &       0.564189583562615_rp /)
-
-    real(rp), parameter :: b(7) = (/ &
-       &     122.607931773875350_rp, 352.730625110963558_rp, &
-       &     457.334478783897737_rp, 348.703917719495792_rp, &
-       &     170.354001821091472_rp,  53.992906912940207_rp, &
-       &      10.479857114260399_rp /)
-
-    integer :: i
-    real :: rs,rt,is,it,r(5),q(5)
-
-!   Note that this dimension is 2 less than the a and b coefficients
-!   because we start the r and q coeffients at 2. r(0)=1.0,r(1) = y
-!   q(0) = 0.0, q(1) = -x
-!   Fill the r, q coefficients with this recursion
-
-    r(1) = y**2 - x**2
-    q(1) = -2.0_rp*x*y
-    do i = 2 , 5
-      r(i) = x * q(i-1) + y * r(i-1)
-      q(i) = y * q(i-1) - x * r(i-1)
-    end do
-    rs = a(1) + a(2)*y + dot_product(a(3:),r)
-    rt = b(1) + b(2)*y + dot_product(b(3:),r) + x * q(5) + y * r(5)
-    is =      - a(2)*x + dot_product(a(3:),q)
-    it =      - b(2)*x + dot_product(b(3:),q) + y * q(5) - x * r(5)
-
-    rhui6 = (rs*rt + is*it) / (rt*rt + it*it)
-
-!   FYI ihui6 = (is*rt - rs*it) / (rt*rt + it*it)
-
-  end function rhui6
-
-  ! ------------------------------------------------------  CHui6  -----
-  complex(rp) elemental function CHui6 ( x, y )
-
-! Voigt region II Hui polynomial
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu) / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-! Internal stuff
-
-    real(rp), parameter :: a(7) = (/ &
-       &     122.607931777104326_rp, 214.382388694706425_rp, &
-       &     181.928533092181549_rp,  93.155580458138441_rp, &
-       &      30.180142196210589_rp,   5.912626209773153_rp, &
-       &       0.564189583562615_rp /)
-
-    real(rp), parameter :: b(7) = (/ &
-       &     122.607931773875350_rp, 352.730625110963558_rp, &
-       &     457.334478783897737_rp, 348.703917719495792_rp, &
-       &     170.354001821091472_rp,  53.992906912940207_rp, &
-       &      10.479857114260399_rp /)
-
-    integer :: i
-    real :: rs,rt,is,it,r(5),q(5),denom
-
-! Note that this dimension is 2 less than the a and b coefficients
-! because we start the r and q coeffients at 2. r(0)=1.0,r(1) = y
-! q(0) = 0.0, q(1) = -x
-! Fill the r, q coefficients with this recursion
-
-    r(1) = y**2 - x**2
-    q(1) = -2.0_rp*x*y
-    do i = 2, 5
-      r(i) = x * q(i-1) + y * r(i-1)
-      q(i) = y * q(i-1) - x * r(i-1)
-    end do
-
-    rs = a(1) + a(2)*y + dot_product(a(3:),r)
-    rt = b(1) + b(2)*y + dot_product(b(3:),r) + x * q(5) + y * r(5)
-    is =      - a(2)*x + dot_product(a(3:),q)
-    it =      - b(2)*x + dot_product(b(3:),q) + y * q(5) - x * r(5)
-    denom = 1.0_rp / (rt*rt + it*it)
-    chui6 = cmplx((rs*rt+is*it)*denom, (is*rt-rs*it)*denom,kind=rp)
-
-  end function chui6
-
-  ! ---------------------------------------------------  RDrayson  -----
-  real(rp) elemental function RDrayson ( x, y )
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu) / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-! Internal stuff
-
-    integer :: I, J, MAXJ, N
-    real(rp), parameter :: TwoOvSPi = 2.0_rp * oneOvSPi  ! 2.0/Sqrt(Pi)
-
-    real(rp), parameter :: H = 0.2_rp
-    real(rp), parameter :: HN(26) = (/(h*(i-1),i=1,26)/)
-    real(rp), parameter :: RI(15) = (/(-i/2.0_rp,i=1,15)/)
-
-    real(rp), parameter :: Dawson(26) = (/  &
-       &   0.000000000000000000000_rp, 0.194751033368028049654_rp, &
-       &   0.359943481934888104273_rp, 0.474763203662977930602_rp, &
-       &   0.532101707056365429017_rp, 0.538079506912768419134_rp, &
-       &   0.507273496407739614173_rp, 0.456507237526897257242_rp, &
-       &   0.399939894323081412623_rp, 0.346772769114872245155_rp, &
-       &   0.301340388923791966033_rp, 0.264510759950831957658_rp, &
-       &   0.235313055663842576224_rp, 0.212165124242499004111_rp, &
-       &   0.193550723859366792343_rp, 0.178271030610558287342_rp, &
-       &   0.165461999878675203167_rp, 0.154524057736963452532_rp, &
-       &   0.145041773054088859351_rp, 0.136721221674636496320_rp, &
-       &   0.129348001236005115591_rp, 0.122760816006522922545_rp, &
-       &   0.116835039953297254075_rp, 0.111472268532125307267_rp, &
-       &   0.106593431283281074400_rp, 0.102134074424276835438_rp /)
-
-    real(rp), parameter :: FDer1(26) = 1.0_rp-2.0_rp*hn*dawson
-    real(rp), parameter :: FDer2(26) = (hn*FDer1+Dawson)/ri(2)
-    real(rp), parameter :: FDer3(26) = (hn*FDer2+FDer1)/ri(3)
-    real(rp), parameter :: FDer4(26) = (hn*FDer3+FDer2)/ri(4)
-    real(rp), parameter :: FDer5(26) = (hn*FDer4+FDer3)/ri(5)
-    real(rp), parameter :: FDer6(26) = (hn*FDer5+FDer4)/ri(6)
-
-! internal stuff
-
-    real(rp) :: Y2, DX, F, FD, W, dely
-
-!******** Region I. Compute Dawson's function at x from Taylor series
-
-    if ( y <= 1.0e-12_rp ) then
-      rdrayson = exp(-X*X)
-      return
-    end if
-
-!  Taylor series expansion about y = 0.0
-
-    y2 = y*y
-    j = x / h
-    n = 1 + min(j, 25)
-    dx = x - hn(n)
-    f = 0.0_rp
-    if ( x > 0.05*h) &
-       f = (((((fDer6(n)*dx + fDer5(n))*dx + fDer4(n))*dx  + &
-             &  fDer3(n))*dx + fDer2(n))*dx + fDer1(n))*dx + Dawson(n)
-    dely = -y
-    fd = 1.0_rp - 2.0_rp * x * f
-    w = fd * dely
-    j = 5.0_rp + (12.5_rp - x) * 0.8_rp * y
-    maxj = min(j, 14)
-    do j = 2, maxj,2
-      f  = (x*fd + f) / ri(j)
-      fd  = (x*f + fd) / ri(j+1)
-      dely = -y2 * dely
-      w = w + fd * dely
-    end do
-
-    rdrayson = exp(y2-x*x)*cos(2.0_rp*x*y) + TwoOvSpi*w
-
-  end function RDrayson
-
-  ! ---------------------------------------------------  CDrayson  -----
-  complex(rp) elemental function CDrayson ( x, y )
-
-    real(rp), intent(in) :: x ! sqrt(ln2)*delnu) / wd
-    real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
-
-! Internal stuff
-
-    integer :: I, J, MAXJ, N
-    real(rp), parameter :: TwoOvSPi = 2.0_rp * oneOvSPi  ! 2.0/Sqrt(Pi)
-
-! This is a way to set the mesh points without having to use a SAVE statement
-
-    real(rp), parameter :: H = 0.2_rp
-    real(rp), parameter :: HN(26) = (/(H*(I-1),I=1,26)/)
-    real(rp), parameter :: RI(15) = (/(-I/2.0_rp,I=1,15)/)
-
-    real(rp), parameter :: Dawson(26) = (/  &
-       &   0.000000000000000000000_rp, 0.194751033368028049654_rp, &
-       &   0.359943481934888104273_rp, 0.474763203662977930602_rp, &
-       &   0.532101707056365429017_rp, 0.538079506912768419134_rp, &
-       &   0.507273496407739614173_rp, 0.456507237526897257242_rp, &
-       &   0.399939894323081412623_rp, 0.346772769114872245155_rp, &
-       &   0.301340388923791966033_rp, 0.264510759950831957658_rp, &
-       &   0.235313055663842576224_rp, 0.212165124242499004111_rp, &
-       &   0.193550723859366792343_rp, 0.178271030610558287342_rp, &
-       &   0.165461999878675203167_rp, 0.154524057736963452532_rp, &
-       &   0.145041773054088859351_rp, 0.136721221674636496320_rp, &
-       &   0.129348001236005115591_rp, 0.122760816006522922545_rp, &
-       &   0.116835039953297254075_rp, 0.111472268532125307267_rp, &
-       &   0.106593431283281074400_rp, 0.102134074424276835438_rp /)
-
-    real(rp), parameter :: FDer1(26) = 1.0_rp-2.0_rp*hn*Dawson
-    real(rp), parameter :: FDer2(26) = (hn*fDer1+Dawson)/ri(2)
-    real(rp), parameter :: FDer3(26) = (hn*fDer2+fDer1)/ri(3)
-    real(rp), parameter :: FDer4(26) = (hn*fDer3+fDer2)/ri(4)
-    real(rp), parameter :: FDer5(26) = (hn*fDer4+fDer3)/ri(5)
-    real(rp), parameter :: FDer6(26) = (hn*fDer5+fDer4)/ri(6)
-
-! internal stuff
-
-    real(rp) :: DX, F, FD,wr,wi,dely,twoxy
-
-!******** Region I. Compute Dawson's function at x from Taylor series
-
-    j = x / h
-    n = 1 + min(j, 25)
-    dx = x - hn(n)
-    f = 0.0_rp
-    if ( x > 0.05*h) &
-       f = (((((fder6(n)*dx + fder5(n))*dx + fder4(n))*dx  + &
-             &  fder3(n))*dx + fder2(n))*dx + fder1(n))*dx + dawson(n)
-    if ( y <= 1.0e-12_rp ) then
-      cdrayson = cmplx(exp(-x*x),twoovspi * f,kind=rp)
-      return
-    end if
-
-!  Taylor series expansion about y = 0.0
-
-    wr = exp(y*y-x*x)
-    twoxy = 2.0_rp*x*y
-    cdrayson = cmplx(wr*cos(twoxy),-wr*sin(twoxy),kind=rp)
-    dely = -twoovspi*y
-    fd = 1.0_rp - 2.0_rp * x * f
-    wi = twoovspi*f
-    wr = fd*dely
-    j = 5.0 + 10.0*y - 0.4*twoxy
-    maxj = min(j, 14)
-    do j = 2, maxj,2
-      f  = (x*fd + f) / ri(j)
-      fd = (x*f + fd) / ri(j+1)
-      dely = y * dely
-      wi = wi + f*dely
-      dely = -y*dely
-      wr = wr + fd*dely
-    end do
-
-    cdrayson = cdrayson + cmplx(wr,wi,kind=rp)
-
-  end function CDrayson
-
-  ! -----------------------------------------------------  Taylor  -----
-  complex(rp) elemental function Taylor ( x, y )
-
-  !{ $w(z) = \sum_{n=0}^\infty \frac{(iz)^n}{\Gamma(\frac{n}2+1)}$.
-  !  Separating even and odd terms, we have
-  !  $w(z) = \sum_{n=0}^\infty \frac{(-z^2)^n}{n!} +
-  !          \frac{2 i z}{\sqrt{\pi}}
-  !            \sum_{n=0}^\infty \frac{(-z^2)^n}{1\cdot3\cdot\cdot\cdot(2n+1)}$
-  !  The even terms are $e^{-z^2}$; the odd ones are erf$(iz)$.  We only use
-  !  terms up to second order in each of the even and odd series, so this
-  !  approximation gets seven digits only for $x, y \leq 0.06$.
-
-    use MLSCommon, only: RP
-    use Units, only: SqrtPi
-    real(rp), intent(in) :: X, Y
-    real(rp) :: U, V
-    real(rp) :: X2, Y2, Y4, TR, TI
-    real(rp), parameter :: TwoOvSqpi = 2.0_rp / sqrtPi
-
-    real(rp), parameter :: Q0 = TwoOvSqpi, Q1 = 2.0 * TwoOvSqpi / 3.0
-    real(rp), parameter :: Q2 = 4.0 * TwoOvSqpi / 15.0, Q3 = 2.0 * q2
-
-    ! (x2,y2) = -z**2
-    x2 = y*y - x*x
-    y2 = -2.0_rp * x * y
-    y4 = y2 * y2
-
-    tr = q0 - q2 * y4 + ( q1 + q2 * x2 ) * x2
-    ti = ( q1 + q3 * x2 ) * y2
-    u = ( 1.0_rp + 0.5_rp * x2 ) * x2 + 1.0 - 0.5 * y4 - tr * y - ti * x
-    v = ( x2 + 1.0_rp ) * y2 + x * tr - y * ti
-    taylor = cmplx(u,v)
-
-  end function Taylor
-
-!{ \newpage
-
-  ! ----------------------------------------  D_Real_Simple_Voigt  -----
-  subroutine D_Real_Simple_Voigt ( x, y, dx, dy, u, du )
-  ! Compute the real part of Fadeeva = Voigt (without Lorentz) and
-  ! the real part of the derivative (which isn't just the derivative
-  ! of Voigt).
-
-!{ The Fadeeva function $w(z)$, where $z = x + i y$, can be written as
-!  $V(x,y) + i L(x,y)$, where $V(x,y)$ is the Voigt function and
-!  $L(x,y)$ is the Lorentz function. 
-!
-!  From 7.1.20 in {\bf Handbook of Mathematical Functions} by Abramowitz
-!  and Stegun (National Bureau of Standards Applied Math Series 55) we have
-!  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
-!  $\Re \, \frac{\partial w(z(t))}{\partial T} =
-!   2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial T} +
-!            \left( x L(x,y) + y V(x,y) +\frac1{\sqrt{\pi}} \right)
-!             \frac{\partial y}{\partial T} \right]$.
-
-    real(rp), intent(in) :: x, y, dx, dy
-    real(rp), intent(out) :: u, du
-
-    real(rp) :: v ! Lorentz function
-
-    call simple_voigt ( x, y, u, v )
-    du = 2.0_rp * ( (-x * u + y * v) * dx + (x * v + y * u - oneOvSpi) * dy )
-
-  end subroutine D_Real_Simple_Voigt
-
-  ! ---------------------------------------------  D_Simple_Voigt  -----
-  subroutine D_Simple_Voigt ( x, y, dx, dy, u, v, du, dv )
-  ! Compute Fadeeva = Voigt and Lorentz its derivative
-
-!{ The Fadeeva function $w(z)$, where $z = x + i y$, can be written as
-!  $V(x,y) + i L(x,y)$, where $V(x,y)$ is the Voigt function and
-!  $L(x,y)$ is the Lorentz function. 
-!
-!  From 7.1.20 in {\bf Handbook of Mathematical Functions} by Abramowitz
-!  and Stegun (National Bureau of Standards Applied Math Series 55) we have
-!  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
-!  \begin{equation*}\begin{split}
-!  \frac{\partial w(z(t))}{\partial T}
-!   =& 2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial T} +
-!            \left( x L(x,y) + y V(x,y) +\frac1{\sqrt{\pi}} \right)
-!             \frac{\partial y}{\partial T} \right]\\
-!   +& 2 i \left [ - \left( x L(x,y) + y V(x,y) +\frac1{\sqrt{\pi}} \right)
-!             \frac{\partial x}{\partial T} +
-!            \left( - x V(x,y) + y L(x,y) \right) \frac{\partial y}{\partial T} \right]\\
-!   =& a \frac{\partial x}{\partial T} + b \frac{\partial y}{\partial T}
-!    + i \left( -b \frac{\partial x}{\partial T} + a \frac{\partial y}{\partial T} \right).
-!  \end{split}\end{equation*}
-
-    real(rp), intent(in) :: x, y, dx, dy
-    real(rp), intent(out) :: u, v, du, dv
-
-    real :: a, b
-
-    call simple_voigt ( x, y, u, v )
-    a = -x * u + y * v
-    b = x * v + y * u - oneOvSpi
-    du = 2.0_rp * ( a * dx + b * dy )
-    dv = 2.0_rp * ( -b * dx + a * dy )
-
-  end subroutine D_Simple_Voigt
 
   ! -------------------------------------------------  Slabs_prep  -----
   subroutine Slabs_prep ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
@@ -2113,11 +1377,15 @@ contains
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
+    print *, ModuleName(1:1)
   end function not_used_here
 
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.33  2004/04/20 00:48:06  vsnyder
+! Only use Taylor really close to the origin
+!
 ! Revision 2.32  2004/04/19 21:02:19  vsnyder
 ! Use Taylor instead of CDrayson near the origin
 !
