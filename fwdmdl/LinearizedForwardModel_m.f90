@@ -417,8 +417,8 @@ contains ! =====     Public Procedures     =============================
         do xStarInstance = 1, l2pcQ%template%noInstances
           ! Identify this instance in state
           deltaInstance = xStarInstance - l2pcQ%template%noInstances/2 - 1
-          deltaInstance = max ( -forwardModelConfig%phiWindow/2, &
-            &                   min ( deltaInstance, forwardModelConfig%phiWindow/2) )
+          deltaInstance = max ( nint(-forwardModelConfig%phiWindow/2), &
+            &                   min ( deltaInstance, nint(forwardModelConfig%phiWindow/2)) )
           xInstance = closestInstance + deltaInstance
           xInstance = max ( 1, min ( xInstance, stateQ%template%noInstances ) )
 
@@ -833,6 +833,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.16  2002/05/28 22:34:21  livesey
+! Added more useful diagnostic message
+!
 ! Revision 2.15  2002/05/14 22:32:53  livesey
 ! Added single sideband stuff
 !
