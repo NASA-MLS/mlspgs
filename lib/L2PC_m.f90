@@ -18,8 +18,8 @@ module L2PC_m
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, GETFROMMATRIXDATABASE, &
-    & DUMP_STRUCT
+    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, &
+    & GETACTUALMATRIXFROMDATABASE, DUMP_STRUCT
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
@@ -265,7 +265,7 @@ contains ! ============= Public Procedures ==========================
       & 'Unable to open hdf5 l2pc file for output.' )
     do field = 2, nsons(quantitiesNode)
       db_index = decoration(decoration(subtree(field, quantitiesNode )))
-      call GetFromMatrixDatabase ( matrices(db_index), tmpMatrix )
+      call GetActualMatrixFromDatabase ( matrices(db_index), tmpMatrix )
       call writeOneHDF5L2PC ( tmpMatrix, fileID, packed )
     end do ! in_field_no = 2, nsons(gson)
     call H5FClose_F ( fileID, status )
@@ -1550,6 +1550,10 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.56  2003/01/28 02:41:10  livesey
+! Bug fix in writing matrix, now gets right element from database in all
+! cases.
+!
 ! Revision 2.55  2003/01/13 19:28:20  pwagner
 ! Moved several uses to speed Lahey buggs compiler
 !
