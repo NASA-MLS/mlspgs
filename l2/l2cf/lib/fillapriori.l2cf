@@ -51,8 +51,12 @@ begin Fill
 
   !ifdef(gotClimatology,{
   ;; Now fill some remaining stuff
-  !ifdef(precisionEstimates,{},{
-  Fill, quantity=apriori.refGPH, method=explicit, explicitvalues=16 km,/spread
+  ;; PEs read in an apriori reference GPH from climatology
+  !ifdef(precisionEstimates,{
+  ; PEs have read in an apriori reference GPH from climatology
+  },{
+    Fill, quantity=apriori.refGPH, method=explicit, $
+      explicitvalues=16 km,/spread
   })
 
   ;; Compute non refracted phitans for apriori
@@ -97,53 +101,30 @@ end Fill
 
 begin Fill
   ;; Now we're going to fill the apriori errors up
-  !ifdef(precisionEstimates,{
-  Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 1000 pptv
-  Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 1000 pptv
-  Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 4 ppbv
-  Fill, quantity=aprioriPrecision.co,   method=explicit, /spread, explicitValues= 30000 ppmv
-  Fill, quantity=aprioriPrecision.h2o,  method=explicit, /spread, explicitValues= 10000 ppmv
-  Fill, quantity=aprioriPrecision.hcl,  method=explicit, /spread, explicitValues= 30 ppmv
-  Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 30 ppbv
-  Fill, quantity=aprioriPrecision.hno3, method=explicit, /spread, explicitValues= 3 ppmv
-  Fill, quantity=aprioriPrecision.ho2,  method=explicit, /spread, explicitValues= 300 ppbv
-  Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 300 ppbv
-  Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 10 ppmv
-  Fill, quantity=aprioriPrecision.o3,   method=explicit, /spread, explicitValues= 30000 ppmv
-  Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 30 ppmv
-  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 1 ppmv
-
-  Fill, quantity=aprioriPrecision.temperature,   method=explicit, /spread, explicitValues= 300 K
-  Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 10 km
-  },{
   Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 1 ppbv
   Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 500 pptv
   Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 3 ppbv
-  Fill, quantity=aprioriPrecision.co,   method=explicit, /spread, explicitValues= 500 ppbv
-  Fill, quantity=aprioriPrecision.hcl,  method=explicit, /spread, explicitValues= 3 ppbv
-  Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 0.2 ppbv
-  Fill, quantity=aprioriPrecision.hno3, method=explicit, /spread, explicitValues= 10 ppbv
-  Fill, quantity=aprioriPrecision.ho2,  method=explicit, /spread, explicitValues= 1 ppbv
-  Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 3 ppbv
-  Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 0.2 ppmv
-  Fill, quantity=aprioriPrecision.o3,   method=explicit, /spread, explicitValues= 4 ppmv
-  Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 1 ppbv
-  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 100 pptv
-
-  Fill, quantity=aprioriPrecision.temperature, method=explicit, /spread, explicitValues= 20 K
-  Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
+  Fill, quantity=aprioriPrecision.co,   method=profile, $
+    profileValues= [ 100 mb : 0.5 ppmv, 0.001 mb : 100 ppmv ]
+    ; 500 ppbv too small in meso/thermosphere
   Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
     [ 464mb : 10000ppmv, 316mb : 5000ppmv, $
       215mb : 1000ppmv, 147mb : 200ppmv, 100mb : 5.0ppmv ]
+  Fill, quantity=aprioriPrecision.hcl,  method=explicit, /spread, explicitValues= 3 ppbv
+  Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 1 ppbv ; 0.2 ppbv is too small
+  Fill, quantity=aprioriPrecision.hno3, method=explicit, /spread, explicitValues= 10 ppbv
+  Fill, quantity=aprioriPrecision.ho2,  method=explicit, /spread, explicitValues= 100 ppbv ; 1 ppbv is too small
+  Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 3 ppbv
+  Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 0.2 ppmv ; 0.2 ppmv is too small for the troposphere
+  Fill, quantity=aprioriPrecision.o3,   method=explicit, /spread, explicitValues= 4 ppmv
+  Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 10 ppbv ; 1 ppbv is too small.  Better with a profile?
+  Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 100 ppbv ; 100pptv is far too small
 
-  })
-
+  Fill, quantity=aprioriPrecision.temperature, method=explicit, /spread, explicitValues= 20 K
+  Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
   ;; Now we're going to fill the a priori length scales up
-  !ifdef(precisionEstimates,{
-  !ifdef(standardLength,{},{!define(standardLength, 2.67 km)})
-  },{
-  !ifdef(standardLength,{},{!define(standardLength, 5 km)})
-  })
+  !ifdef(standardLength,{},{!define(standardLength, 0 km)})
+
   Fill, quantity=length.bro,     method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.ch3cn,   method=explicit, /spread, explicitValues= !standardLength
   Fill, quantity=length.clo,     method=explicit, /spread, explicitValues= !standardLength
@@ -195,23 +176,24 @@ begin Fill
 
   ;; Now do the same for baseline
   !define(baselinePrecision, 5 K )
-  !ifdef(precisionEstimates,{
+;; Not sure what the baseline error is.  These values are from the SRD
+;   !ifdef(precisionEstimates,{
+;   Fill, quantity=aprioriPrecision.baselineR1A, method=explicit, /spread, $
+;     explicitValues= 0.245 K
+;   Fill, quantity=aprioriPrecision.baselineR1B, method=explicit, /spread, $
+;     explicitValues= 0.245 K
+;   Fill, quantity=aprioriPrecision.baselineR2, method=explicit, /spread, $
+;     explicitValues= 0.653 K
+;   Fill, quantity=aprioriPrecision.baselineR3, method=explicit, /spread, $
+;     explicitValues= 0.653 K
+;   Fill, quantity=aprioriPrecision.baselineR4, method=explicit, /spread, $
+;     explicitValues= 1.96 K
+;   Fill, quantity=aprioriPrecision.baselineR5H, method=explicit, /spread, $
+;     explicitValues= 24.5 K
+;   Fill, quantity=aprioriPrecision.baselineR5V, method=explicit, /spread, $
+;     explicitValues= 24.5 K
+;   },{
   Fill, quantity=aprioriPrecision.baselineR1A, method=explicit, /spread, $
-    explicitValues= 0.245 K
-  Fill, quantity=aprioriPrecision.baselineR1B, method=explicit, /spread, $
-    explicitValues= 0.245 K
-  Fill, quantity=aprioriPrecision.baselineR2, method=explicit, /spread, $
-    explicitValues= 0.653 K
-  Fill, quantity=aprioriPrecision.baselineR3, method=explicit, /spread, $
-    explicitValues= 0.653 K
-  Fill, quantity=aprioriPrecision.baselineR4, method=explicit, /spread, $
-    explicitValues= 1.96 K
-  Fill, quantity=aprioriPrecision.baselineR5H, method=explicit, /spread, $
-    explicitValues= 24.5 K
-  Fill, quantity=aprioriPrecision.baselineR5V, method=explicit, /spread, $
-    explicitValues= 24.5 K
-  },{
-  Fill, quantity=aprioriPrecision.baselineR1A, method=explicit, /spread, $
     explicitValues= !baselinePrecision
   Fill, quantity=aprioriPrecision.baselineR1B, method=explicit, /spread, $
     explicitValues= !baselinePrecision
@@ -225,7 +207,7 @@ begin Fill
     explicitValues= !baselinePrecision
   Fill, quantity=aprioriPrecision.baselineR5V, method=explicit, /spread, $
     explicitValues= !baselinePrecision
-  })
+;  })
 
   ;; Setup the low and high bounds for stuff that needs them.
   Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
