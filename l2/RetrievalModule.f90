@@ -40,13 +40,14 @@ contains
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
       & F_channels, F_columnScale, F_Comment, F_covariance, F_diagnostics, &
       & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
-      & F_height, F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, &
+      & F_height, f_hRegOrders, f_hRegQuants, f_hRegWeights, f_hRegWeightVec, &
+      & F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, &
       & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
-      & F_opticalDepthCutoff, &
-      & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
-      & F_quantity, F_regAfter, F_regApriori, F_regOrders, F_regQuants, &
-      & F_regWeights, F_regWeightVec, F_state, F_toleranceA, F_toleranceF, &
-      & F_toleranceR, Field_first, Field_last, &
+      & F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
+      & F_phaseName, F_ptanQuantity, F_quantity, &
+      & F_regAfter, F_regApriori, F_state, F_toleranceA, F_toleranceF, &
+      & F_toleranceR, f_vRegOrders, f_vRegQuants, &
+      & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
       & L_apriori, L_covariance, &
       & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
       & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
@@ -122,6 +123,10 @@ contains
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
     logical :: Got(field_first:field_last)   ! "Got this field already"
+    integer :: HRegOrders                ! Regularization orders
+    integer :: HRegQuants                ! Regularization quantities
+    integer :: HRegWeights               ! Weight of regularization conditions
+    type(vector_T), pointer :: HRegWeightVec  ! Weight vector for regularization
     integer :: I, J, K                  ! Subscripts and loop inductors
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
     integer :: IxAverage                ! Index in tree of averagingKernel
@@ -149,10 +154,6 @@ contains
     type(matrix_SPD_T), pointer :: OutputCovariance    ! Covariance of the sol'n
     type(vector_T), pointer :: OutputSD ! Vector containing SD of result
     character(len=127) :: PhaseName     ! To pass to snoopers
-    integer :: RegOrders                ! Regularization orders
-    integer :: RegQuants                ! Regularization quantities
-    integer :: RegWeights               ! Weight of regularization conditions
-    type(vector_T), pointer :: RegWeightVec  ! Weight vector for regularization
     integer :: Son                      ! Of Root or Key
     character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
@@ -175,6 +176,10 @@ contains
     integer :: Units(2)                 ! Units of value returned by EXPR
     logical :: Update                   ! "We are updating normal equations"
     double precision :: Value(2)        ! Value returned by EXPR
+    integer :: VRegOrders                ! Regularization orders
+    integer :: VRegQuants                ! Regularization quantities
+    integer :: VRegWeights               ! Weight of regularization conditions
+    type(vector_T), pointer :: VRegWeightVec  ! Weight vector for regularization
 
     ! Indexes in the private vectors database
     integer, parameter :: FirstVec = 1
@@ -280,16 +285,19 @@ contains
         aprioriScale = 1.0
         columnScaling = l_none
         diagonal = .false.
+        hRegQuants = 0
+        hRegWeights = 0
+        nullify ( hRegWeightVec )
         initLambda = defaultInitLambda
         maxFunctions = defaultMaxF
         maxJacobians = defaultMaxJ
         method = defaultMethod
-        regQuants = 0
-        regWeights = 0
-        nullify ( regWeightVec )
         toleranceA = defaultToleranceA
         toleranceF = defaultToleranceF
         toleranceR = defaultToleranceR
+        vRegQuants = 0
+        vRegWeights = 0
+        nullify ( vRegWeightVec )
         do j = 2, nsons(key) ! fields of the "retrieve" specification
           son = subtree(j, key)
           field = get_field_id(son)  ! tree_checker prevents duplicates
@@ -321,6 +329,14 @@ contains
             fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_fwdModelOut )
             fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
+          case ( f_hRegOrders )
+            hRegOrders = son
+          case ( f_hRegQuants )
+            hRegQuants = son
+          case ( f_hRegWeights )
+            hRegWeights = son
+          case ( f_hRegWeightVec )
+            hRegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_jacobian )
             ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
           case ( f_measurements )
@@ -334,14 +350,6 @@ contains
             tikhonovBefore = .not. get_Boolean(son)
           case ( f_regApriori )
             tikhonovApriori = get_Boolean(son)
-          case ( f_regOrders )
-            regOrders = son
-          case ( f_regQuants )
-            regQuants = son
-          case ( f_regWeights )
-            regWeights = son
-          case ( f_regWeightVec )
-            RegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_outputCovariance )
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
@@ -371,6 +379,14 @@ contains
             case ( f_toleranceR )
               toleranceR = value(1)
             end select
+          case ( f_vRegOrders )
+            vRegOrders = son
+          case ( f_vRegQuants )
+            vRegQuants = son
+          case ( f_vRegWeights )
+            vRegWeights = son
+          case ( f_vRegWeightVec )
+            vRegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
           case default
             ! Shouldn't get here if the type checker worked
           end select
@@ -380,13 +396,20 @@ contains
           & call announceError ( bothOrNeither, f_apriori, f_covariance )
         if ( got(f_regApriori) .and. .not. got(f_apriori) ) &
           & call announceError ( ifAThenB, f_regApriori, f_apriori )
-        if ( got(f_regOrders) .neqv. &
-          & (got(f_regWeights) .or. got(f_regWeightVec)) ) then
-          call announceError ( bothOrNeither, f_regOrders, f_regWeights )
-          call announceError ( bothOrNeither, f_regOrders, f_regWeightVec )
+        if ( got(f_hRegOrders) .neqv. &
+          & (got(f_hRegWeights) .or. got(f_hRegWeightVec)) ) then
+          call announceError ( bothOrNeither, f_hRegOrders, f_hRegWeights )
+          call announceError ( bothOrNeither, f_hRegOrders, f_hRegWeightVec )
         end if
-        if ( got(f_regQuants) .and. .not. got(f_regOrders) ) &
-          & call announceError ( ifAThenB, f_regQuants, f_regOrders )
+        if ( got(f_hRegQuants) .and. .not. got(f_hRegOrders) ) &
+          & call announceError ( ifAThenB, f_hRegQuants, f_hRegOrders )
+        if ( got(f_vRegOrders) .neqv. &
+          & (got(f_vRegWeights) .or. got(f_vRegWeightVec)) ) then
+          call announceError ( bothOrNeither, f_vRegOrders, f_vRegWeights )
+          call announceError ( bothOrNeither, f_vRegOrders, f_vRegWeightVec )
+        end if
+        if ( got(f_vRegQuants) .and. .not. got(f_vRegOrders) ) &
+          & call announceError ( ifAThenB, f_vRegQuants, f_vRegOrders )
         if ( error == 0 ) then
 
           ! Verify the consistency of various matrices and vectors
@@ -471,7 +494,7 @@ contains
 
           ! Create the matrix for adding the Tikhonov regularization to the
           ! normal equations
-          if ( got(f_regOrders) ) then
+          if ( got(f_hRegOrders) .or. got(f_vRegOrders) ) then
             call createEmptyMatrix ( tikhonov, 0, state, state, text='_Tikhonov' )
             k = addToMatrixDatabase( matrixDatabase, tikhonov )
           end if
@@ -682,6 +705,7 @@ contains
         &      3, 2,     3,   2,    2,   1,    2,    2,    2,  &
       ! start tolx tolx_best tolf too_small fandj
         &  9,   2,        2,   2,        3,    9  /)
+      integer :: T                      ! Which Tikhonov: 1 -> V, 2 -> H
       real :: T1
       type(matrix_T) :: Temp            ! Because we can't do X := X * Y
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
@@ -1017,7 +1041,7 @@ contains
           aj%fnorm = aprioriNorm
 
           ! Add Tikhonov regularization if requested.
-          if ( got(f_regOrders) .and. tikhonovBefore ) then
+          if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. tikhonovBefore ) then
             call add_to_retrieval_timing( 'newton_solver', t1 )
             call time_now ( t1 )
 
@@ -1028,29 +1052,38 @@ contains
             !  to get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$ or ${\bf
             !  R \delta x} \simeq {\bf R} ( {\bf a - x}_{n-1})$.
 
-            call regularize ( tikhonov, regOrders, regQuants, regWeights, &
-              & RegWeightVec, tikhonovRows )
-            if ( got(f_regApriori) ) then
-              call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
-            else
-              call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
-              call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
-            end if
-              if ( index(switches,'reg') /= 0 ) then
-                call dump_struct ( tikhonov, 'Tikhonov' )
-                call dump ( tikhonov, name='Tikhonov', details=2 )
+            do t = 1, 2
+              if ( t == 1 ) then
+                if ( .not. got(f_vRegOrders) ) cycle
+                call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
+                  & vRegWeightVec, tikhonovRows )
+              else
+                if ( .not. got(f_hRegOrders) ) cycle
+                call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
+                  & hRegWeightVec, tikhonovRows )
               end if
-            call formNormalEquations ( tikhonov, normalEquations, &
-              & v(reg_X_x), v(aTb), update=update, useMask=.false. )
-            update = .true.
-            call clearMatrix ( tikhonov )           ! free the space
-            ! aj%fnorm is still the square of the norm of f
-            aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-            ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
-            ! Don't destroy reg_X_x unless we move the 'clone' for it
-            ! inside the loop.  Also, if we destroy it, we can't snoop it.
-            call add_to_retrieval_timing( 'tikh_reg', t1 )
-            call time_now ( t1 )
+              if ( got(f_regApriori) ) then
+                call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
+              else
+                call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
+                call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+              end if
+                if ( index(switches,'reg') /= 0 ) then
+                  call dump_struct ( tikhonov, 'Tikhonov' )
+                  call dump ( tikhonov, name='Tikhonov', details=2 )
+                end if
+              call formNormalEquations ( tikhonov, normalEquations, &
+                & v(reg_X_x), v(aTb), update=update, useMask=.false. )
+              update = .true.
+              call clearMatrix ( tikhonov )           ! free the space
+              ! aj%fnorm is still the square of the norm of f
+              aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
+              ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
+              ! Don't destroy reg_X_x unless we move the 'clone' for it
+              ! inside the loop.  Also, if we destroy it, we can't snoop it.
+              call add_to_retrieval_timing( 'tikh_reg', t1 )
+              call time_now ( t1 )
+            end do ! t
           else
             tikhonovRows = 0
           end if
@@ -1143,62 +1176,73 @@ contains
           ! place (roughly) on the column-scaled problem, and if scaling by
           ! the column norm is requested, it's still makes the column norms
           ! all 1.0.
-          if ( got(f_regOrders) .and. .not. tikhonovBefore ) then
-            call add_to_retrieval_timing( 'newton_solver', t1 )
-            call time_now ( t1 )
+          if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. .not. tikhonovBefore ) then
+              call add_to_retrieval_timing( 'newton_solver', t1 )
+              call time_now ( t1 )
 
-            ! Get the column scale vector.
-            select case ( columnScaling )
-            case ( l_apriori ) ! v(columnScaleVector) := apriori
-              call copyVector ( v(columnScaleVector), apriori )
-            case ( l_covariance )
-              !??? Can't get here until allowed by init_tables
-            case ( l_norm ) ! v(columnScaleVector) := diagonal of normal
-                            !                         equations = column norms^2
-              call getDiagonal ( normalEquations%m, v(columnScaleVector) )
-            end select
             !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
             !  0}$. So that all of the parts of the problem are solving for
             !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
             !  get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$.
 
-            call regularize ( tikhonov, regOrders, regQuants, regWeights, &
-              & regWeightVec, tikhonovRows )
-            if ( got(f_regApriori) ) then
-              call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
-            else
-              call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
-              call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
-            end if
-            call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
-
-            if ( columnScaling /= l_none ) then ! Compute $\Sigma$
-              forall (j = 1: v(columnScaleVector)%template%noQuantities)
-                where ( v(columnScaleVector)%quantities(j)%values <= 0.0 )
-                  v(columnScaleVector)%quantities(j)%values = 0.0
-                elsewhere
-                  v(columnScaleVector)%quantities(j)%values = &
-                    & sqrt( v(columnScaleVector)%quantities(j)%values )
-                end where
-              end forall
-              call columnScale ( tikhonov, v(columnScaleVector) )
-            end if
-
-              if ( index(switches,'reg') /= 0 ) then
-                call dump_struct ( tikhonov, 'Tikhonov' )
-                call dump ( tikhonov, name='Tikhonov', details=2 )
+            do t = 1, 2
+              if ( t == 1 ) then
+                if ( .not. got(f_vRegOrders) ) cycle
+                call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
+                  & vRegWeightVec, tikhonovRows )
+              else
+                if ( .not. got(f_hRegOrders) ) cycle
+                call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
+                  & hRegWeightVec, tikhonovRows )
               end if
-            call formNormalEquations ( tikhonov, normalEquations, &
-              & v(reg_X_x), v(aTb), update=update, useMask=.false. )
-            update = .true.
-            call clearMatrix ( tikhonov )           ! free the space
-            ! aj%fnorm is still the square of the norm of f
-            aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-            ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
-            ! Don't destroy reg_X_x unless we move the 'clone' for it
-            ! inside the loop.  Also, if we destroy it, we can't snoop it.
-            call add_to_retrieval_timing( 'tikh_reg', t1 )
-            call time_now ( t1 )
+
+              ! Get the column scale vector.
+              select case ( columnScaling )
+              case ( l_apriori ) ! v(columnScaleVector) := apriori
+                call copyVector ( v(columnScaleVector), apriori )
+              case ( l_covariance )
+                !??? Can't get here until allowed by init_tables
+              case ( l_norm ) ! v(columnScaleVector) := diagonal of normal
+                              !                         equations = column norms^2
+                call getDiagonal ( normalEquations%m, v(columnScaleVector) )
+              end select
+
+              if ( got(f_regApriori) ) then
+                call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
+              else
+                call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
+                call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+              end if
+              call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
+
+              if ( columnScaling /= l_none ) then ! Compute $\Sigma$
+                forall (j = 1: v(columnScaleVector)%template%noQuantities)
+                  where ( v(columnScaleVector)%quantities(j)%values <= 0.0 )
+                    v(columnScaleVector)%quantities(j)%values = 0.0
+                  elsewhere
+                    v(columnScaleVector)%quantities(j)%values = &
+                      & sqrt( v(columnScaleVector)%quantities(j)%values )
+                  end where
+                end forall
+                call columnScale ( tikhonov, v(columnScaleVector) )
+              end if
+
+                if ( index(switches,'reg') /= 0 ) then
+                  call dump_struct ( tikhonov, 'Tikhonov' )
+                  call dump ( tikhonov, name='Tikhonov', details=2 )
+                end if
+              call formNormalEquations ( tikhonov, normalEquations, &
+                & v(reg_X_x), v(aTb), update=update, useMask=.false. )
+              update = .true.
+              call clearMatrix ( tikhonov )           ! free the space
+              ! aj%fnorm is still the square of the norm of f
+              aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
+              ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
+              ! Don't destroy reg_X_x unless we move the 'clone' for it
+              ! inside the loop.  Also, if we destroy it, we can't snoop it.
+              call add_to_retrieval_timing( 'tikh_reg', t1 )
+              call time_now ( t1 )
+            end do ! t
           else
             tikhonovRows = 0
           end if
@@ -1600,7 +1644,7 @@ contains
           end do
           if ( got(f_apriori) ) &
             & jacobian_rows = jacobian_rows + jacobian_cols
-          if ( got(f_regOrders) ) &
+          if ( got(f_hRegOrders) ) &
             & jacobian_rows = jacobian_rows + tikhonovRows
           call fillDiagVec ( l_jacobian_cols, real(jacobian_cols,r8) )
           call fillDiagVec ( l_jacobian_cols, real(jacobian_rows,r8) )
@@ -2982,6 +3026,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.165  2002/08/24 01:38:28  vsnyder
+! Implement horizontal regularization
+!
 ! Revision 2.164  2002/08/22 00:06:50  vsnyder
 ! Implement regularize-to-apriori
 !
@@ -2992,7 +3039,7 @@ end module RetrievalModule
 ! Use matrix with same row and column templates for Tikhonov
 !
 ! Revision 2.161  2002/08/08 22:02:52  vsnyder
-! Add regWeightVec and Tikhonov mask
+! Add hRegWeightVec and Tikhonov mask
 !
 ! Revision 2.160  2002/08/06 02:16:09  livesey
 ! Fixed averaging kernels by reflecting the kTk matrix
@@ -3058,7 +3105,7 @@ end module RetrievalModule
 ! Mark Filipiak noticed this bug.
 !
 ! Revision 2.141  2002/05/07 01:02:24  vsnyder
-! Change regWeight to regWeights -- which is now a tree node instead of
+! Change regWeight to hRegWeights -- which is now a tree node instead of
 ! a real scalar.  Add dump for regularization matrix.
 !
 ! Revision 2.140  2002/04/22 23:00:58  vsnyder
