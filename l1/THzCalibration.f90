@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -437,23 +437,25 @@ CONTAINS
              mfit3 = -SUM (tsq * tval)
              mfit4 = mfit2
              mfit2 = SUM (tsq * tsq)
-             det = mfit2 * mfit4 - mfit3 * mfit3
-             DO nBank = 1, THzNum
-                DO nChan = 1, THzChans
-                   yfit2(nChan,nBank) = &
-                        DOT_PRODUCT (yval(nChan,nBank,:), tsq)
+             IF (ABS (mfit3) > 0.0) THEN
+                det = mfit2 * mfit4 - mfit3 * mfit3
+                DO nBank = 1, THzNum
+                   DO nChan = 1, THzChans
+                      yfit2(nChan,nBank) = &
+                           DOT_PRODUCT (yval(nChan,nBank,:), tsq)
+                   ENDDO
                 ENDDO
-             ENDDO
-             mfit2 = mfit2 /det
-             mfit3 = mfit3 /det
-             mfit4 = mfit4 /det
-             bv = mfit2 * yfit1 + mfit3 * yfit2
-             cv = mfit3 * yfit1 + mfit4 * yfit2
-             av = av - cv * tsqavg
-             tsqavg = -2.0 * tsqavg
-             mfit1 = tsqavg * mfit3
-             mfit2 = mfit2 + tsqavg * mfit4
-             mfit3 = 2.0 * mfit3
+                mfit2 = mfit2 /det
+                mfit3 = mfit3 /det
+                mfit4 = mfit4 /det
+                bv = mfit2 * yfit1 + mfit3 * yfit2
+                cv = mfit3 * yfit1 + mfit4 * yfit2
+                av = av - cv * tsqavg
+                tsqavg = -2.0 * tsqavg
+                mfit1 = tsqavg * mfit3
+                mfit2 = mfit2 + tsqavg * mfit4
+                mfit3 = 2.0 * mfit3
+             ENDIF
           ENDIF
           last_fit = .TRUE.
 
@@ -573,6 +575,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2004/01/13 17:15:45  perun
+! Protect from arithmetic exception.
+!
 ! Revision 2.3  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !
