@@ -6,9 +6,13 @@ module MLSHDFEOS
   ! This module contains MLS specific routines to do common HDFEOS
   ! tasks not specifically found in he5_swapi or he5_gdapi.
 
-  use HDFEOS, only: swdefdfld, swdefgfld, swdefdim, swdiminfo
+  use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_FLOAT64, &
+    & DFNT_INT8, DFNT_INT16, DFNT_INT32, DFNT_INT64
+  use HDFEOS, only: swdefdfld, swdefgfld, swdefdim, swdiminfo, swinqdflds
+  use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
+    & HE5T_NATIVE_INT, HE5T_NATIVE_INT8, HE5T_NATIVE_INT16, HE5T_NATIVE_INT64
   use HDFEOS5, only: HE5_SWdefchunk, HE5_swdefdfld, HE5_SWdefgfld, &
-    & HE5_swdefdim, HE5_swdiminfo
+    & HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds
   use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
   use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY
   use HE5_SWAPI_CHARACTER_SCALAR, only: HE5_EHWRGLATT_CHARACTER_SCALAR
@@ -23,7 +27,7 @@ module MLSHDFEOS
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & mls_hdf_version
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSStrings, only: GetStringElement, NumStringElements
+  use MLSStrings, only: GetStringElement, NumStringElements, StringElementNum
   use SWAPI_DOUBLE, only: SWRDFLD_DOUBLE, SWRDFLD_DOUBLE_2D, SWRDFLD_DOUBLE_3D, &
     &                     SWWRFLD_DOUBLE, SWWRFLD_DOUBLE_2D, SWWRFLD_DOUBLE_3D
   use SWAPI_INTEGER, only: SWRDFLD_INTEGER, SWRDFLD_INTEGER_2D, SWRDFLD_INTEGER_3D, &
@@ -79,6 +83,7 @@ module MLSHDFEOS
 
   interface MLS_SWRDFLD
     module procedure &
+      & MLS_SWRDFLD_CHAR_1D, &
       & MLS_SWRDFLD_DOUBLE_1D, MLS_SWRDFLD_DOUBLE_2D, MLS_SWRDFLD_DOUBLE_3D, &
       & MLS_SWRDFLD_INTEGER, &
       & MLS_SWRDFLD_REAL_1D, MLS_SWRDFLD_REAL_2D, MLS_SWRDFLD_REAL_3D
@@ -86,10 +91,14 @@ module MLSHDFEOS
 
   interface MLS_SWWRFLD
     module procedure &
+      & MLS_SWWRFLD_CHAR_1D, &
       & MLS_SWWRFLD_DOUBLE_1D, MLS_SWWRFLD_DOUBLE_2D, MLS_SWWRFLD_DOUBLE_3D, &
       & MLS_SWWRFLD_INTEGER, &
       & MLS_SWWRFLD_REAL_1D, MLS_SWWRFLD_REAL_2D, MLS_SWWRFLD_REAL_3D
   end interface
+
+  integer, public, parameter :: MAXNODFIELDS = 80
+  integer, public, parameter :: MAXDLISTLENGTH = 1024
 
 contains ! ======================= Public Procedures =========================
 
@@ -236,7 +245,13 @@ contains ! ======================= Public Procedures =========================
         & mls_dfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
       if ( mls_dfldsetup == 0 ) &
         & mls_dfldsetup = HE5_SWdefdfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
-        & Datatype, MERGE)
+        & he2he5_DataType(Datatype), MERGE)
+!>       if ( Datatype == DFNT_CHAR8 ) then
+!>         print *,' Hey, we just tried to set up a char-valued hdfeos5 field'
+!>         print *,' Data type: ', Datatype
+!>         print *,' he2he5_DataType(Datatype): ', he2he5_DataType(Datatype)
+!>         print *,' HE5T_NATIVE_SCHAR: ', HE5T_NATIVE_SCHAR
+!>       endif
     case default
       mls_dfldsetup = -1
     end select
@@ -294,7 +309,7 @@ contains ! ======================= Public Procedures =========================
         & mls_gfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
       if ( mls_gfldsetup == 0 ) &
         & mls_gfldsetup = HE5_SWdefgfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
-        & Datatype, MERGE)
+        & he2he5_DataType(Datatype), MERGE)
     case default
       mls_gfldsetup = -1
     end select
@@ -387,6 +402,74 @@ contains ! ======================= Public Procedures =========================
     enddo
 
   end function MLS_SWSETFILL_REAL
+
+  integer function MLS_SWRDFLD_CHAR_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    character(len=*), dimension(:), intent(out) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+    ! Internal variables
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+    ! Declare these as externals to try to fool hdfeos(5)
+    integer, external :: swrdfld
+    integer, external :: he5_swrdfld
+    mls_swrdfld_CHAR_1D = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        mls_swrdfld_CHAR_1D = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_CHAR_1D' )
+      endif
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    if (myDontFail) then
+      if (.not. is_datafield_in_swath(swathid, trim(fieldname), myHdfVersion) )&
+        & return
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      if (myDontFail) then
+        if (.not. is_swath_datatype_right(swathid, trim(fieldname), &
+          & DFNT_CHAR8, myHdfVersion) ) return
+      endif
+      mls_swrdfld_CHAR_1D = SWRDFLD(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      mls_swrdfld_CHAR_1D = HE5_SWRDFLD(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+      if (myDontFail) then
+        if (.not. is_swath_datatype_right(swathid, trim(fieldname), &
+          & HE5T_NATIVE_SCHAR, myHdfVersion) ) return
+      endif
+    case default
+      mls_swrdfld_CHAR_1D = -1
+    end select
+    if ( myDontFail .or. mls_swrdfld_CHAR_1D /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 1-d char field ' // trim(fieldname) )
+
+  end function MLS_SWRDFLD_CHAR_1D
 
   integer function MLS_SWRDFLD_DOUBLE_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
@@ -759,6 +842,74 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWRDFLD_REAL_3d
 
+  integer function MLS_SWWRFLD_CHAR_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    character(len=*), dimension(:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+    ! Internal variables
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+    ! Declare these as externals to try to fool hdfeos(5)
+    integer, external :: swwrfld
+    integer, external :: he5_swwrfld
+    integer, dimension(12) :: dfrank
+    integer, dimension(12) :: numbertype
+    character(len=80)      :: fieldlist
+    integer                :: nflds
+    ! begin execution
+    mls_SWWRFLD_CHAR_1D = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        mls_SWWRFLD_CHAR_1D = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWWRFLD_CHAR_1D' )
+      endif
+      return
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      mls_SWWRFLD_CHAR_1D = SWWRFLD(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      mls_SWWRFLD_CHAR_1D = HE5_SWWRFLD(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case default
+      mls_SWWRFLD_CHAR_1D = -1
+    end select
+    needsFileName = is_swath_datatype_right(swathid, fieldname, DFNT_CHAR8, &
+      & myHdfVersion, rank_out=dfrank, numbertype_out=numbertype, &
+      & fieldlist_out=fieldlist, nflds_out=nflds)
+!>     print *, 'num data fields  ', nflds
+!>     print *, 'data field ranks ', dfrank
+!>     print *, 'data field types ', numbertype
+!>     print *, 'data field list  ', trim(fieldlist)
+    if ( myDontFail .or. mls_SWWRFLD_CHAR_1D /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to write 1-d char field ' // trim(fieldname) )
+
+  end function MLS_SWWRFLD_CHAR_1D
+
   integer function MLS_SWWRFLD_DOUBLE_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
     integer, parameter :: RANK = 1
@@ -808,7 +959,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_double_1d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d double field ' // trim(fieldname) )
+          & 'Failed to write 1-d double field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_DOUBLE_1D
 
@@ -861,7 +1012,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_double_2d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 2-d double field ' // trim(fieldname) )
+          & 'Failed to write 2-d double field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_DOUBLE_2d
 
@@ -914,7 +1065,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_double_3d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d double field ' // trim(fieldname) )
+          & 'Failed to write 1-d double field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_DOUBLE_3d
 
@@ -967,7 +1118,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_integer /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d double field ' // trim(fieldname) )
+          & 'Failed to write 1-d integer field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_INTEGER
 
@@ -1020,7 +1171,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_REAL_1d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d REAL field ' // trim(fieldname) )
+          & 'Failed to write 1-d REAL field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_REAL_1D
 
@@ -1073,7 +1224,7 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_REAL_2d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 2-d REAL field ' // trim(fieldname) )
+          & 'Failed to write 2-d REAL field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_REAL_2d
 
@@ -1126,11 +1277,107 @@ contains ! ======================= Public Procedures =========================
     end select
     if ( myDontFail .or. mls_SWWRFLD_REAL_3d /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
-          & 'Failed to read 1-d REAL field ' // trim(fieldname) )
+          & 'Failed to write 1-d REAL field ' // trim(fieldname) )
 
   end function MLS_SWWRFLD_REAL_3d
 
 ! ======================= Private Procedures =========================  
+
+  logical function is_datafield_in_swath(swathid, field, HdfVersion)
+    integer, intent(in) :: swathid
+    character(len=*), intent(in) :: field
+    integer, intent(in) :: HdfVersion
+    ! Internal variables
+    integer, dimension(MAXNODFIELDS) :: rank
+    integer, dimension(MAXNODFIELDS) :: numbertype
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+    integer                         :: nflds
+    ! Begin execution
+    nflds = 0
+    is_datafield_in_swath = .false.
+    select case (HdfVersion)
+    case (HDFVERSION_4)
+      nflds = swinqdflds(swathid, fieldlist, rank, numbertype)
+    case (HDFVERSION_5)
+      nflds = HE5_swinqdflds(swathid, fieldlist, rank, numbertype)
+    end select
+    if ( nflds == 0 ) return
+    is_datafield_in_swath = &
+      & ( StringElementNum(fieldlist, trim(field), .true.) > 0 )
+  end function is_datafield_in_swath
+
+  logical function is_swath_datatype_right(swathid, field, datatype, &
+    & HdfVersion, rank_out, numbertype_out, fieldlist_out, nflds_out)
+    integer, intent(in)                          :: swathid
+    character(len=*), intent(in)                 :: field
+    integer, intent(in)                          :: datatype
+    integer, intent(in)                          :: HdfVersion
+    integer, dimension(:), intent(out), optional :: rank_out
+    integer, dimension(:), intent(out), optional :: numbertype_out
+    character(len=*), intent(out), optional      :: fieldlist_out
+    integer, intent(out), optional               :: nflds_out
+    ! Internal variables
+    integer, dimension(MAXNODFIELDS) :: rank
+    integer, dimension(MAXNODFIELDS) :: numbertype
+    character(len=MAXDLISTLENGTH)    :: fieldlist
+    integer                         :: nflds
+    ! Begin execution
+    nflds = 0
+    is_swath_datatype_right = .false.
+    select case (HdfVersion)
+    case (HDFVERSION_4)
+      nflds = swinqdflds(swathid, fieldlist, rank, numbertype)
+    case (HDFVERSION_5)
+      nflds = HE5_swinqdflds(swathid, fieldlist, rank, numbertype)
+    end select
+    if ( present(nflds_out) ) nflds_out = nflds
+    if ( present(rank_out) ) rank_out = 0
+    if ( present(numbertype_out) ) numbertype_out = 0
+    if ( present(fieldlist_out) ) fieldlist_out = ' '
+    if ( nflds == 0 ) return
+    if ( present(rank_out) ) rank_out = rank(1:size(rank_out))
+    if ( present(numbertype_out) ) &
+      & numbertype_out = numbertype(1:size(numbertype_out))
+    if ( present(fieldlist_out) ) fieldlist_out = fieldlist
+    nflds = StringElementNum(fieldlist, trim(field), .true.)
+    is_swath_datatype_right = ( nflds > 0 .and. nflds <= MAXNODFIELDS )
+    if ( .not. is_swath_datatype_right ) return
+    is_swath_datatype_right = &
+      & ( numbertype(nflds) == datatype )
+  end function is_swath_datatype_right
+
+  ! ---------------------------------------------  he2he5_DataType  -----
+
+  ! This function converts hdfeos2 datatypes to
+  ! corresponding hdfeos5 numbers
+  ! (unless they are already HE5 types in which it returns them unchanged)
+
+  function he2he5_DataType(dataType) result (HE5_dataType)
+
+    ! Arguments
+    integer, intent(IN)       :: dataType
+    integer                   :: HE5_dataType
+    ! begin
+    HE5_dataType = dataType
+    select case (dataType)
+    case(DFNT_FLOAT32)
+      HE5_dataType = HE5T_NATIVE_FLOAT
+    case(DFNT_FLOAT64)
+      HE5_dataType = HE5T_NATIVE_DOUBLE
+    case(DFNT_CHAR8)
+      HE5_dataType = HE5T_NATIVE_SCHAR
+    case(DFNT_INT8)
+      HE5_dataType = HE5T_NATIVE_INT8
+    case(DFNT_INT16)
+      HE5_dataType = HE5T_NATIVE_INT16
+    case(DFNT_INT32)
+      HE5_dataType = HE5T_NATIVE_INT
+    case(DFNT_INT64)
+      HE5_dataType = HE5T_NATIVE_INT64
+    !case default
+      !HE5_dataType = HE5T_NATIVE_INT
+    end select
+  end function he2he5_DataType
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -1139,6 +1386,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.5  2003/04/21 19:32:27  pwagner
+! Can read/write 1-d char fields
+!
 ! Revision 2.4  2003/04/17 23:04:51  pwagner
 ! Now sits between L2GPData and HDFEOS(5)
 !
