@@ -516,6 +516,14 @@ CONTAINS
             " reports warnings!")
     ENDIF
 
+    IF (SciMAFs > EngMAFs) THEN
+
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+            "Check PCF L0 inputs!")
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "L0 input error-> SciMAFs greater than EngMAFs!")
+    ENDIF
+
     IF (eng_errs > 0 .OR. sci_errs > 0) THEN
 
 ! send email on failure (next version?!):
@@ -534,6 +542,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2005/01/25 15:45:21  perun
+! Compare SciMAFs against EngMAFs and report error if greater
+!
 ! Revision 2.7  2004/08/12 13:51:50  perun
 ! Version 1.44 commit
 !
