@@ -1,3 +1,6 @@
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 # $Id$
 
 # Places to look for sources without being explicitly told to do so:
@@ -44,6 +47,9 @@ machine.o: machine.f90
 
 #
 # $Log$
+# Revision 2.4  2000/10/11 18:04:57  vsnyder
+# Put rule for machine.o back in -- it was erroneously deleted
+#
 # Revision 2.3  2000/10/10 22:44:25  vsnyder
 # Correct actions for test_sparsify and test_multiply
 #
