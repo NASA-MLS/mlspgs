@@ -37,7 +37,7 @@ module Fill                     ! Create vectors and fill them.
     & GetVectorQtyByTemplateIndex, ValidateVectorQuantity, Vector_T, &
     & VectorTemplate_T, VectorValue_T
   use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure
-  use Intrinsic, only: PHYQ_Dimensionless
+  use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Invalid
 
   implicit none
   private
@@ -189,7 +189,7 @@ contains ! =====     Public Procedures     =============================
     templateIndex = -1
     vectorIndex = -1
     spread=.FALSE.
-    maxIterations = 0
+    maxIterations = 4
 
     ! Loop over the lines in the configuration file
 
@@ -255,8 +255,8 @@ contains ! =====     Public Procedures     =============================
           case (f_explicitValues) ! For explicit fill
             valuesNode=subtree(j,key)
           case (f_maxIterations)      ! For hydrostatic fill
-            call expr(subtree(2,key), unitAsArray,valueAsArray)
-            if (unitAsArray(1) /= PHYQ_Dimensionless) &
+            call expr(subtree(2,subtree(j,key)), unitAsArray,valueAsArray)
+            if (all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/))) &
               & call Announce_error( key, badUnitsForMaxIterations)
             maxIterations=valueAsArray(1)
           case (f_spread) ! For explicit fill, note that gson here is not same as others
@@ -305,7 +305,7 @@ contains ! =====     Public Procedures     =============================
             h2oQuantity=>NULL()
           endif
           call FillVectorQtyHydrostatically(key, quantity, temperatureQuantity, &
-            & refGPHQuantity, h2oQuantity, geocAltitudeQuantity)          
+            & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)          
         case (l_l2gp)
           if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
           call FillVectorQuantityFromL2GP(quantity,l2gpDatabase(l2gpIndex),errorCode)
@@ -542,7 +542,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------- FillVectorHydrostatically ----
   subroutine FillVectorQtyHydrostatically(key, quantity, &
-    & temperatureQuantity, refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)
+    & temperatureQuantity, refGPHQuantity, h2oQuantity, &
+    & geocAltitudeQuantity, maxIterations)
     ! Various hydrostatic fill operations
     integer, intent(in) :: key          ! For messages
     type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -550,11 +551,14 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) :: REFGPHQUANTITY
     type (VectorValue_T), intent(in) :: H2OQUANTITY
     type (VectorValue_T), intent(in) :: GEOCALTITUDEQUANTITY
-    integer, intent(in), optional :: MAXITERATIONS
+    integer, intent(in) :: MAXITERATIONS
 
     ! Local variables
 
     ! Executable code
+
+    if ( toggle(gen) ) call trace_begin ( "FillVectorQtyHydrostatically", key )
+
     select case (quantity%template%quantityType)
     case (l_gph)
       if ( (temperatureQuantity%template%noSurfs /= &
@@ -596,12 +600,12 @@ contains ! =====     Public Procedures     =============================
         return
       end if
       call GetHydrostaticTangentPressure(quantity, temperatureQuantity,&
-        & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations=maxIterations)
-!      call output ("Resulting ptan")
-!      call dump(quantity%values)
+        & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)
     case default
       call MLSMessage(MLSMSG_Error, ModuleName, 'No such fill yet')
     end select
+
+    if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically" )
 
   end subroutine FillVectorQtyHydrostatically
 
@@ -1203,6 +1207,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.25  2001/03/06 00:34:46  livesey
+! Regular commit.
+!
 ! Revision 2.24  2001/03/05 01:20:14  livesey
 ! Regular commit, hydrostatic stuff in place.
 !
