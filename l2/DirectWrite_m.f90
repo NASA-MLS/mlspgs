@@ -178,6 +178,8 @@ contains ! ======================= Public Procedures =========================
     ! Write plain hdf-formatted files ala l2aux for datasets that
     ! are too big to keep all chunks stored in memory
     ! so instead write them out chunk-by-chunk
+    
+    ! Despite the name the routine takes vector quantities, not l2aux ones
     use MLSCommon, only: MLSCHUNK_T
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
     use VectorsModule, only: VectorValue_T
@@ -361,6 +363,8 @@ contains ! ======================= Public Procedures =========================
     & chunkNo, chunks )
 
     use Intrinsic, only: L_None
+    use L2AUXData, only:  L2AUXData_T, DestroyL2AUXContents, &
+      & SetupNewL2AUXRecord, WriteL2AUXAttributes
     use MLSCommon, only: MLSCHUNK_T
     use MLSFiles, only: HDFVERSION_5
     use MLSHDF5, only: ISHDF5DSPRESENT, SaveAsHDF5DS
@@ -381,6 +385,7 @@ contains ! ======================= Public Procedures =========================
     ! Local variables
     logical :: already_there
     integer :: first_maf
+    type (L2AUXData_T) :: l2aux
     integer :: last_maf
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
     integer :: NODIMS                   ! Also index of maf dimension
@@ -470,12 +475,18 @@ contains ! ======================= Public Procedures =========================
     endif
 
     ! Now some attribute stuff
-    ! This first call to write dataset-specific stuff needs work
-    ! basically repeat the steps you go through in SetupNewl2auxRecord;
-    ! see e.g. Join
-    ! call WriteL2AUXAttributes(fileID, l2aux, trim(dataProduct%name))
-    ! However I'm too lazy--these files won't be archived at DAAC
-    ! so the attribute writing can wait
+    if ( already_there ) return
+    ! sd-level attributes
+    call SetupNewL2AUXRecord ( L2AUX, quantity%template, &
+      & first_MAF, last_MAF-first_MAF+1 )
+    if ( DEEBUG ) then
+      call output('Writing attributes to: ', advance='no')
+      call output(trim(sdName), advance='yes')
+    endif
+    call WriteL2AUXAttributes(fileID, l2aux, trim(sdName))
+    ! Deallocate memory used by the l2aux
+    call DestroyL2AUXContents ( l2aux )
+    ! file-level attributes
     call h5_writeglobalattr(fileID, skip_if_already_there=.true.)
 
   end subroutine DirectWrite_L2Aux_hdf5
@@ -846,6 +857,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.18  2004/02/05 23:38:41  pwagner
+! Writes attributes to directwrite l2aux file
+!
 ! Revision 2.17  2004/01/23 01:09:48  pwagner
 ! Only directwrite files entered in global settings eligible to be auto-sourced
 !
