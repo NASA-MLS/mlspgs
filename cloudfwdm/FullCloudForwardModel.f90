@@ -30,6 +30,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          ! CLOUD FORWARD MODEL
          ! ---------------------------------------------------------------------
 
+  !----------------------------------------  FullCloudForwardModelWrapper  -----
   subroutine FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn,  &
                                             FwdModelExtra, FwdModelOut, Ifm, &
                                             fmStat, Jacobian                 )  
@@ -38,24 +39,24 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     use AntennaPatterns_m,          only: ANTENNAPATTERNS
     use CloudySkyModule,            only: CLOUD_MODEL
     use CloudySkyRadianceModel,     only: CloudForwardModel
-    use ForwardModelIntermediate,   only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
-    use Hdf,                        only: DFACC_READ, DFACC_CREATE
-    use HDFEOS,                     only: SWOPEN, SWCLOSE
-    use L2GPData,                   only: L2GPData_T, ReadL2GPData, WriteL2GPData
-    use MLSCommon,                  only: NameLen, FileNameLen, r8, rm, rp, FINDFIRST
-    use MLSMessageModule,           only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, MLSMSG_Allocate, MLSMSG_Deallocate
+    use ForwardModelIntermediate,   only: FORWARDMODELINTERMEDIATE_T, &
+                                        & FORWARDMODELSTATUS_T
+    use MLSCommon,                  only: r8, rm, rp, FINDFIRST
+    use MLSMessageModule,           only: MLSMessage, MLSMSG_Error, &
+                                        & MLSMSG_Warning, MLSMSG_Deallocate
     use MLSSignals_m,               only: SIGNAL_T, ARESIGNALSSUPERSET
-    use MatrixModule_0,             only: M_Absent, M_BANDED, MATRIXELEMENT_T, &
-                                        & M_COLUMN_SPARSE, M_FULL, CREATEBLOCK
+    use MatrixModule_0,             only: MATRIXELEMENT_T, &
+                                        & M_FULL, CREATEBLOCK
     use MatrixModule_1,             only: MATRIX_T, FINDBLOCK
     use ManipulateVectorQuantities, only: FindClosestInstances
     use MLSNumerics,                only: InterpolateValues
-    use Molecules,                  only: L_H2O, L_O3, L_N2O, L_HNO3, L_N2, L_O2, &
-                                        & spec_tags, FIRST_MOLECULE, LAST_MOLECULE
+    use Molecules,                  only: L_H2O, L_O3, L_N2O, L_HNO3, L_N2, &
+                                        & L_O2, spec_tags, FIRST_MOLECULE, &
+                                        & LAST_MOLECULE
     use Output_m,                   only: OUTPUT
-    use PointingGrid_m,             only: POINTINGGRIDS
+!   use PointingGrid_m,             only: POINTINGGRIDS
     use SpectroscopyCatalog_m,      only: CATALOG_T, LINE_T, LINES, CATALOG
-    use String_table,               only: GET_STRING, DISPLAY_STRING
+    use String_table,               only: GET_STRING
     use Toggles,                    only: Emit, Levels, Toggle
     use Trace_M,                    only: Trace_begin, Trace_end
     use Units,                      only: Deg2Rad                         
@@ -67,7 +68,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 ! ----------------------------------------------------------
 
     use Intrinsic, only: &
-                       & L_CHANNEL,                                            &
                        & L_CLOUDEXTINCTION,                                    &
                        & L_CLOUDICE,                                           &
                        & L_CLOUDINDUCEDRADIANCE,                               &
@@ -90,11 +90,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_SIZEDISTRIBUTION,                                   &
                        & L_SURFACETYPE,                                        &
                        & L_TEMPERATURE,                                        &
-                       & L_TNGTGEOCALT,                                        &
                        & L_TOTALEXTINCTION,                                    &
                        & L_VMR,                                                &
-                       & LIT_INDICES,                                          &
-                       & L_ORBITINCLINATION
+                       & LIT_INDICES
 
 
 
@@ -108,7 +106,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
 
     ! Local parameters ---------------------------------------------------------
-    character, parameter :: INVALIDQUANTITY = "Invalid vector quantity for "
+    character(len=*), parameter :: INVALIDQUANTITY = &
+     & "Invalid vector quantity for "
 
     ! Local variables
     type (VectorValue_T), pointer :: CLOUDICE                   ! Profiles
@@ -132,7 +131,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: SCGEOCALT                  ! Geocentric spacecraft altitude
     type (VectorValue_T), pointer :: ELEVOFFSET                 ! Elevation offset quantity
     type (VectorValue_T), pointer :: LOSVEL                     ! Line of sight velocity
-    type (VectorValue_T), pointer :: ORBINCLINE                 ! Orbital inclination
     type (Signal_T)               :: signal                     ! A signal
     type(VectorValue_T),  pointer :: STATE_ext                  ! A state vector quantity
     type(VectorValue_T),  pointer :: STATE_los                  ! A state vector quantity
@@ -155,7 +153,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: novmrSurf                           ! Number of vmr levels
     integer :: noCldSurf                           ! Number of cloud ext levels
     integer :: NOFREQS                             ! Number of frequencies
-    integer :: NOFREQS0                            ! Number of frequencies of the last signal
     integer :: DIRECTION                           ! Direction of channel numbering
 
     integer :: i                                   ! Loop counter
@@ -170,7 +167,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: nfine                               ! no of fine resolution grids
     integer :: nNear                               ! no of nearest profiles
     integer :: status                              ! allocation status 
-    integer :: SIDEBAND                            ! Loop index    
     integer :: SIDEBANDSTART                       ! For sideband loop
     integer :: SIDEBANDSTEP                        ! For sideband loop
     integer :: SIDEBANDSTOP                        ! For sideband loop
@@ -222,7 +218,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     logical :: DoHighZt                            ! Flag
     logical :: DoLowZt                             ! Flag
     logical :: Got( FIRST_MOLECULE : LAST_MOLECULE )
-    logical :: dee_bug = .true.  
+!   logical :: dee_bug = .true.  
     logical :: prt_log = .false.
     logical :: FOUNDINFIRST                        ! Flag to indicate derivatives
     logical, dimension(:), pointer :: LINEFLAG     ! Use this line (noLines per species)
@@ -325,7 +321,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
  ! When using Bill's Spectral data, work out which spectroscopy we're going to need
  !----------------------------------------------------------------------------------
     allocate ( My_Catalog(size(forwardModelConfig%molecules)), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, 'my_catalog' )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+     & 'Unable to allocate my_catalog' )
 
     do j = 1, size(forwardModelConfig%molecules)      ! Loop over species
 
@@ -1063,6 +1060,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.103  2003/01/13 17:59:52  jonathan
+!  change cloud_width to i_saturation
+!
 ! Revision 1.102  2003/01/09 21:08:09  dwu
 ! drop orbI
 !

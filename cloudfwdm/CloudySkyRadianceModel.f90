@@ -1,5 +1,4 @@
-
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
  
 module CloudySkyRadianceModel
@@ -10,20 +9,21 @@ module CloudySkyRadianceModel
       use AntennaPatterns_m,       only: AntennaPattern_T
       use ClearSkyModule,          only: CLEAR_SKY
       use CloudySkyModule,         only: CLOUDY_SKY
-      use DCSPLINE_DER_M,          only: CSPLINE_DER
+!     use DCSPLINE_DER_M,          only: CSPLINE_DER
       use FOV_CONVOLVE_M,          only: FOV_CONVOLVE_OLD, FOV_CONVOLVE
-      use HYDROSTATIC_INTRP,       only: GET_PRESSURES
+!     use HYDROSTATIC_INTRP,       only: GET_PRESSURES
       use MLSCommon,               only: r8, rp
+      use MLSMessageModule,        only: MLSMessage, MLSMSG_Error
       use MLSNumerics,             only: INTERPOLATEVALUES
       use ModelInput,              only: MODEL_ATMOS
       use ModelOutput,             only: SENSITIVITY
-      use PrtMsg,                  only: HEADER
+!     use PrtMsg,                  only: HEADER
       use RadiativeTransferModule, only: RADXFER
       use ScatteringAngle,         only: ANGLE
       use SpectroscopyCatalog_m,   only: CATALOG_T
       use Tmp,                     only: GET_TAN_PRESS
-      use Units,                   only: DEG2RAD
-      use Geometry,                only: EarthRadA, EarthRadB
+!     use Units,                   only: DEG2RAD
+!     use Geometry,                only: EarthRadA, EarthRadB
 
       IMPLICIT NONE
       private
@@ -40,6 +40,7 @@ module CloudySkyRadianceModel
 
 contains 
 
+  !----------------------------------------  CloudForwardModel  -----
       SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N,      &
              &   NZmodel,                                              &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
@@ -98,7 +99,7 @@ contains
 !     --------------------                                                   C
 !     ZT         (NT)     -> Tangent Pressure (hPa).                         C
 !     RE                  -> Radius of Earth (m).                            C
-!     ISURE               -> Surface Types (Default: 0).                     C
+!     ISURF               -> Surface Types (Default: 0).                     C
 !     ISWI                -> Switch for Sensitivity Calculation (Default:0). C
 !     ICON                -> Cloud Control Switch (Default: 2).              C
 !     -----------------------------------------------                        C
@@ -230,10 +231,7 @@ contains
 !     INTERNAL MODEL PARAMETERS                ! -- INTERNAL AREA -- !
 !-------------------------------
 
-      REAL :: PI
-      integer :: Nsub
-      PARAMETER (PI=3.1415926)
-      PARAMETER (Nsub=5)  !Below surface tangent grids
+      integer, parameter :: Nsub=5             !Below surface tangent grids
       
       INTEGER :: NU                            ! NO. OF SCATTERING ANGLES
       INTEGER :: NUA                           ! NO. OF SCAT. AZIMUTH ANGLES
@@ -296,8 +294,8 @@ contains
       REAL(r8) :: CDEPTH(N)                    ! CLOUD OPTICAL DEPTH
       REAL(r8) :: DEPTH                        ! TOTAL OPTICAL DEPTH
                                                ! (CLEAR+CLOUD)
-
-      REAL(r8) :: delTAU100(NZmodel-1)         ! TOTAL AIR EXTINCTION for 100%RHi
+                                               !                      | 100%RHi
+      REAL(r8) :: delTAU100(NZmodel-1)         ! TOTAL AIR EXTINCTION for 
       REAL(r8) :: delTAU(NZmodel-1)            ! TOTAL EXTINCTION
       REAL(r8) :: delTAUc(NZmodel-1)           ! CLOUDY-SKY EXTINCTION
       
@@ -316,7 +314,6 @@ contains
       INTEGER :: ICLD_TOP                      ! cloud top index
       INTEGER :: I100_TOP                      ! 100 mb index
       INTEGER :: MY_NIWC
-      INTEGER :: L
       INTEGER :: n1, n2
 
       REAL(r8) :: DMA
@@ -328,33 +325,33 @@ contains
       REAL(r8) :: RC_TMP(N,3)
       REAL(r8) :: CHK_CLD(NZmodel)                        
       REAL(r8) :: ZZT(NT)                      ! TANGENT HEIGHTS (meters)
-
-      REAL(r8) :: ZZT1(NZmodel/8-1+Nsub)       ! TANGENT HEIGHTS (meters) FOR CALCULATION 
-                                               ! (a subset OF YZ)
-                                               ! THE RESULT WILL BE INTERPOLATED TO ZZT
-
-      REAL(r8) :: ZPT1(NZmodel/8-1+Nsub)       ! TANGENT PRESSURE (mb) FOR CALCULATION 
+                                               !                   | CALCULATION
+      REAL(r8) :: ZZT1(NZmodel/8-1+Nsub)       ! TANGENT HEIGHTS (meters) FOR 
+                                               ! (a subset OF YZ)     | TO ZZT
+                                               ! THE RESULT WILL BE INTERPOLATED
+                                               !                 | CALCULATION 
+      REAL(r8) :: ZPT1(NZmodel/8-1+Nsub)       ! TANGENT PRESSURE (mb) FOR 
                                                ! (a subset OF YP)
                                                ! THIS IS ASSOCIATED WITH ZZT1
-
-      REAL(r8) :: ZTT1(NZmodel/8-1+Nsub)       ! TEMPERATURE CORRESPONDING TO TANGENT PRESSURE 
+                                               !             | TANGENT PRESSURE 
+      REAL(r8) :: ZTT1(NZmodel/8-1+Nsub)       ! TEMPERATURE CORRESPONDING TO 
                                                ! (a subset OF YT)
                                                ! THIS IS ASSOCIATED WITH ZZT1
 
       REAL(r8) :: ZVT1(NZmodel/8-1+Nsub) 
       REAL(r8) :: ZNT1(NZmodel/8-1+Nsub) 
-
-      REAL(r8) :: ptg_angle(NZmodel/8-1+Nsub)       ! POINTING ANGLES CORRESPONDING TO ZZT1
-      REAL(r8) :: ptg_angle_out(NZmodel/8-1+Nsub)       
+                                               !                  | TO ZZT1
+      REAL(r8) :: ptg_angle(NZmodel/8-1+Nsub)  ! POINTING ANGLES CORRESPONDING 
+!     REAL(r8) :: ptg_angle_out(NZmodel/8-1+Nsub)       
 
       type(antennaPattern_T), intent(in) :: AntennaPattern
       Type(Catalog_T), INTENT(IN) :: Catalog(:)
-      integer :: FFT_INDEX(size(antennaPattern%aaap))
-      integer :: FFT_pts, ntr, ier, is, ktr, Ptg_i, brkpt
-      REAL(r8) :: schi, center_angle, Q
-      Real(r8) :: dTB0_dZT(NT,NF), dDTcir_dZT(NT,NF)
+!     integer :: FFT_INDEX(size(antennaPattern%aaap))
+      integer :: FFT_pts
+      REAL(r8) :: schi
+!     Real(r8) :: dTB0_dZT(NT,NF), dDTcir_dZT(NT,NF)
 
-      Real(r8), dimension( NZmodel/8+Nsub ) :: RAD0, RAD, SRad0, SRad, RADIANCE0, RADIANCE
+      Real(r8), dimension( NZmodel/8+Nsub ) :: RAD0, RAD, SRad0, SRad
 
       REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
       REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
@@ -368,8 +365,9 @@ contains
 
       REAL(r8) :: RT
 
-      REAL(r8) :: h_obs, Rs_eq, elev_offset, pp, ti, rr,freq, Req
+      REAL(r8) :: h_obs, Rs_eq, elev_offset
 
+      ! Constants used in formula for antenna smearing
       REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
 
@@ -420,8 +418,10 @@ contains
 !     TAKE FIRST NT ELEMENT OF YZ AS TANGENT Z
 
       IF (NZmodel-1 .LE. NT) THEN
-        PRINT*,'TOO MANY TANGENT HEIGHTS'
-        STOP
+!        PRINT*,'TOO MANY TANGENT HEIGHTS'
+!        STOP
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+           &   'Too many tangent heights' )
       ENDIF
 
 ! ----------------------------------
@@ -492,7 +492,8 @@ contains
 !     PERFORM FULL SENSITIVITY CALCULATION
 !------------------------------------------
 
-      DO 3000 IIWC=1, MY_NIWC    ! START OF IWC LOOP
+    iwc_loop: do IIWC=1, MY_NIWC
+!      DO 3000 IIWC=1, MY_NIWC    ! START OF IWC LOOP
 !         IF (ISWI .EQ. 0) THEN
             RATIO=1._r8
 !         ELSE
@@ -506,7 +507,9 @@ contains
 !     CONTINUMA AND LINE EMISSIONS.   
 !=========================================================================
 
-      DO 2000 IFR=1, NF
+!
+      frequency_loop: do IFR=1, NF
+!      DO 2000 IFR=1, NF
 
       IF ( doChannel(IFR) ) then
                
@@ -531,7 +534,7 @@ contains
          
          DO IL=1, NZmodel-1
             IF (ICON .eq. 0) then
-               CHK_CLD(IL) =0. !test clear sky
+               CHK_CLD(IL) =0.                ! test clear sky
             ENDIF
             IF(CHK_CLD(IL) .NE. 0.)THEN
                ICLD_TOP=IL                    ! FIND INDEX FOR CLOUD-TOP 
@@ -561,7 +564,7 @@ contains
                TAU0(IL)=TAU100(IL)            ! 100% SATURATION BELOW 100hPa
             ENDDO
          ENDIF
-!----------------------------------------------------------------------------------
+!----------------------------------------------------------------------------
 
             PHH      = 0._r8     ! phase function
             DDm      = 0._r8     ! mass-mean diameter
@@ -570,15 +573,16 @@ contains
             PH0      = 0._r8 
             W00      = 0._r8 
 
-         DO 1000 ILYR=1, NZmodel-1            ! START OF MODEL LAYER LOOP:   
+          model_layer_loop: do ILYR=1, NZmodel-1
+!         DO 1000 ILYR=1, NZmodel-1        ! START OF MODEL LAYER LOOP:   
  
-            RC0(1)=TAU0(ILYR)/Z(ILYR)         ! GAS ABSORPTION COEFFICIENT
+            RC0(1)=TAU0(ILYR)/Z(ILYR)     ! GAS ABSORPTION COEFFICIENT
             RC0(2)=0._r8
-            RC0(3)=RC0(1)                     ! CLEAR-SKY EXTINCTION COEFFICIENT
+            RC0(3)=RC0(1)                 ! CLEAR-SKY EXTINCTION COEFFICIENT
 
             RC_TOT   = 0._r8     ! total extinction
             RC11     = 0._r8     ! cloud abs. scat. ext. coefficients
-            RC_TMP   = 0._r8     ! cloud abs. scat. ext. coefficients (for ice/water)
+            RC_TMP   = 0._r8     ! (ditto) (for ice/water)
             CDEPTH   = 0._r8     ! cloud optical depth
 
             DEPTH  = 0._r8
@@ -608,10 +612,14 @@ contains
             ENDDO
 
             DO ISPI=1,N
-               W0(ISPI,ILYR)=RC_TMP(ISPI,2)/RC_TOT(3) ! SINGLE SCATTERING ALBEDO   
-               IF(W0(ISPI,ILYR) .GT. 1.) THEN         
-                  W0(ISPI,ILYR)=1.
-               ENDIF
+               ! The following
+               ! SINGLE SCATTERING ALBEDO   
+               !W0(ISPI,ILYR)=RC_TMP(ISPI,2)/RC_TOT(3) 
+               !IF(W0(ISPI,ILYR) .GT. 1.) THEN         
+               !   W0(ISPI,ILYR)=1.
+               !ENDIF
+               !  are equiavalent to
+               W0(ISPI,ILYR) = min( 1._r8, RC_TMP(ISPI,2)/RC_TOT(3) )
             ENDDO
 
             TAU(ILYR)=RC_TOT(3)*Z(ILYR)
@@ -620,8 +628,8 @@ contains
             delTAU(ILYR) = max(0._r8, DEPTH )
             delTAUc(ILYR)= max(0._r8, CDEPTH(1) )
 
- 1000    CONTINUE                         ! END OF MODEL LAYER LOOP
-
+! 1000    CONTINUE                         ! END OF MODEL LAYER LOOP
+         enddo model_layer_loop
 !==================================================
 !    >>>>>>> RADIATIVE TRANSFER MODULE <<<<<<<<<<
 !==================================================
@@ -669,7 +677,7 @@ contains
                znt1(I) = znt1(I)*(1.0_r8 + const2*zvt1(K+1)/ztt1(K+1)) 
             ELSE IF (ZZT1(I) .GT. 0._r8) THEN
                znt1(I) = const1 * zpt1(I)/ztt1(I)
-               znt1(I) = znt1(I)*(1.0_r8 + const2*zvt1(I)/ztt1(I))                
+               znt1(I) = znt1(I)*(1.0_r8 + const2*zvt1(I)/ztt1(I))
             END IF
          END DO
     
@@ -695,9 +703,11 @@ contains
             Endif
 
    	    IF(ABS(schi) > 1.0) THEN
-      	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
-               PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
-               STOP
+!      	       PRINT *,'*** ERROR IN COMPUTING POINTING ANGLES'
+!               PRINT *,'    arg > 1.0 in ArcSin(arg) ..'
+!               STOP
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+           &   'Pointing angle computation error: arg > 1.0 in ArcSin(arg)' )
           END IF
     	    ptg_angle(i) = Asin(schi) + elev_offset
 
@@ -743,10 +753,12 @@ contains
 !           zzt1(NZmodel/8-1)=120000._r8     !not necessary now
 
          ! CLEAR-SKY BACKGROUND
-         CALL INTERPOLATEVALUES(ZZT1,TT0(:,NZmodel),ZZT,TB0(:,IFR),method='Linear')
+         CALL INTERPOLATEVALUES(ZZT1, TT0(:,NZmodel), ZZT, TB0(:,IFR), &
+          & method='Linear')
 
          ! CLOUD-INDUCED RADIANCE
-         CALL INTERPOLATEVALUES(ZZT1,TT(:,NZmodel)-TT0(:,NZmodel),ZZT,DTcir(:,IFR), &
+         CALL INTERPOLATEVALUES(ZZT1, TT(:,NZmodel)-TT0(:,NZmodel), ZZT, &
+          & DTcir(:,IFR), &
               &                 method='Linear')
 
          ENDIF
@@ -754,14 +766,16 @@ contains
 
          CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            delTAU,delTAUc,delTAU100,TAUeff(:,IFR),SS(:,IFR), &
-              &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
-              &            N,RE, noS, Slevl) ! COMPUTE SENSITIVITY
+              &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
+              & Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
 
       END IF                                 ! END OF DO CHANNEL
 
- 2000 CONTINUE                               ! END OF FREQUENCY LOOP   
+! 2000 CONTINUE                               ! END OF FREQUENCY LOOP   
+      enddo frequency_loop
 
- 3000 CONTINUE                               ! END OF IWC LOOP
+! 3000 CONTINUE                               ! END OF IWC LOOP
+      enddo iwc_loop
 
 !      CALL HEADER(5)
 
@@ -779,6 +793,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.45  2003/01/12 04:49:09  dwu
+! change icon=4 to icon=-1 for better definition
+!
 ! Revision 1.44  2003/01/12 03:52:22  dwu
 ! add ICON=4 for calculating clear-sky radiance limits assuming 100% RHi below 100hPa
 !
