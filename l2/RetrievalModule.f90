@@ -1646,16 +1646,16 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
             deallocate(A,C,y,sy,dx,x,x0,sx0,xext,sx)
 
       xExtPtr%values = 0._r8
-   	call BinFromLOS2Grid(xExtPtr,xLosPtr,Ptan,Re,p_lowcut,method='Average')
+   	call LOS2Grid(xExtPtr,xLosPtr,Ptan,Re,p_lowcut,method='Average')
       
       if(associated(xLosVar) .and. associated(xExtVar) &
          & .and. associated(outLosSD) .and. associated(outExtSD)) then
       ! get variances after re-sampling
-   	   call BinFromLOS2Grid(xExtVar,xLosVar,Ptan,Re,p_lowcut,method='Variance')
+   	   call LOS2Grid(xExtVar,xLosVar,Ptan,Re,p_lowcut,method='Variance')
       ! get output variances after re-sampling, outLosSD is SD at present
          outLosSD%values = 1._r8/outLosSD%values**2 ! converted to 1/variance
          outExtSD%values = xExtVar%values      ! initialized to inversed a priori variance
-         call BinFromLOS2Grid(outExtSD,outLosSD,Ptan,Re,p_lowcut,method='Variance')
+         call LOS2Grid(outExtSD,outLosSD,Ptan,Re,p_lowcut,method='Variance')
       ! output SD of the retrieved extinction
          outLosSD%values = sqrt(1._r8/outLosSD%values) ! converted back to SD
          outExtSD%values = sqrt(1._r8/outExtSD%values) ! converted back to SD
@@ -1671,8 +1671,8 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
       
     end subroutine LowCloudRetrieval
 
-  !=============================== BinFromLOS2L2GP ====
-  subroutine BinFromLOS2Grid( Qty, LOS,Ptan, Re, Pcut, method)
+  !=============================== LOS2Grid ====
+  subroutine LOS2Grid( Qty, LOS,Ptan, Re, Pcut, method)
 
     ! This is to fill a l2gp type of quantity with a los grid type of quantity.
     ! The los quantity is a vector quantity that has dimension of (s, mif, maf),
@@ -1786,7 +1786,7 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
     if(Capitalize(method(1:1))=="A") where (cnt > 0) qty%values = out/cnt
     if(Capitalize(method(1:1))=="V") where (cnt > 0) qty%values = out
 
-  end subroutine BinFromLOS2Grid
+  end subroutine LOS2Grid
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
@@ -2078,6 +2078,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.101  2001/10/22 20:52:00  dwu
+! renaming some cloud functions
+!
 ! Revision 2.100  2001/10/20 17:50:48  livesey
 ! A little more information on aj%fnmin < 0.0
 !
