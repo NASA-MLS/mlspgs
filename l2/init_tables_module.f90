@@ -83,7 +83,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_H2OQUANTITY         = f_gph + 1
   integer, parameter :: F_HEIGHT              = f_h2oquantity + 1
   integer, parameter :: F_HGRID               = f_height + 1
-  integer, parameter :: F_INTERPOLATIONFACTOR = f_hgrid + 1
+  integer, parameter :: F_INTEGRATIONGRID     = f_hgrid + 1
+  integer, parameter :: F_INTERPOLATIONFACTOR = f_integrationGrid + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
   integer, parameter :: F_LENGTH              = f_jacobian + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
@@ -123,7 +124,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_STATE               = f_spread + 1
   integer, parameter :: F_STOP                = f_state + 1
   integer, parameter :: F_SWATH               = f_stop + 1
-  integer, parameter :: F_TEMP_DER            = f_swath + 1
+  integer, parameter :: F_TANGENTGRID         = f_swath + 1
+  integer, parameter :: F_TEMP_DER            = f_tangentGrid + 1
   integer, parameter :: F_TEMPERATUREQUANTITY = f_temp_der + 1
   integer, parameter :: F_TEMPLATE            = f_temperaturequantity + 1
   integer, parameter :: F_TEST                = f_template + 1
@@ -372,6 +374,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_h2oquantity) =         add_ident ( 'h2oquantity' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
+    field_indices(f_integrationGrid) =     add_ident ( 'integrationGrid' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_length) =              add_ident ( 'length' )
@@ -412,19 +415,20 @@ contains ! =====     Public procedures     =============================
     field_indices(f_state) =               add_ident ( 'state' )
     field_indices(f_stop) =                add_ident ( 'stop' )
     field_indices(f_swath) =               add_ident ( 'swath' )
+    field_indices(f_tangentGrid) =         add_ident ( 'tangentGrid' )
     field_indices(f_temp_der) =            add_ident ( 'temp_der' )
     field_indices(f_temperaturequantity) = add_ident ( 'temperatureQuantity' )
+    field_indices(f_template) =            add_ident ( 'template' )
+    field_indices(f_test) =                add_ident ( 'test' )
     field_indices(f_tngtECI) =             add_ident ( 'tngtECI' )
     field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
     field_indices(f_tolerancef) =          add_ident ( 'Ftolerance' )
     field_indices(f_tolerancer) =          add_ident ( 'Rtolerance' )
-    field_indices(f_versionRange) =        add_ident ( 'versionRange' )
-    field_indices(f_template) =            add_ident ( 'template' )
-    field_indices(f_test) =                add_ident ( 'test' )
     field_indices(f_type) =                add_ident ( 'type' )
     field_indices(f_unit) =                add_ident ( 'unit' )
-    field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_vGrid) =               add_ident ( 'vgrid' )
+    field_indices(f_values) =              add_ident ( 'values' )
+    field_indices(f_versionRange) =        add_ident ( 'versionRange' )
     field_indices(f_weight) =              add_ident ( 'weight' )
     field_indices(f_zvi) =                 add_ident ( 'zvi' )         !???
     ! Put parameter names into the symbol table:
@@ -702,6 +706,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
+             begin, f+f_integrationGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              np+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &                                 !???
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
@@ -795,6 +801,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.58  2001/03/28 23:43:49  livesey
+! Added stuff for forward models
+!
 ! Revision 2.57  2001/03/28 03:04:30  vsnyder
 ! remove f_per_decade, add f_formula for s_vGrid
 !
