@@ -8,7 +8,7 @@ module ObtainDAO !provides subroutines to access DAO files
 ! use DATES_MODULE
   use HDF, only: DFACC_RDONLY
   use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase
-! use MLSCommon
+ use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DAO_END, MLSPCF_L2DAO_START
 ! use MLSStrings
@@ -18,7 +18,7 @@ module ObtainDAO !provides subroutines to access DAO files
 
   implicit none
   private
-  public :: OBTAIN_DAO
+  public :: OBTAIN_DAO, READ_DAO
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=130) :: id = & 
@@ -42,7 +42,7 @@ contains ! =====     Public Procedures     =============================
 
 ! Local Variables
 
-    real :: data_array(XDIM, YDIM, ZDIM)
+    real(R8) :: data_array(XDIM, YDIM, ZDIM)
     integer :: DAOFileHandle, DAO_Version
     character (LEN=132) :: DAOphysicalFilename
     character (len=256) :: mnemonic, msg
@@ -100,9 +100,8 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Obtain_DAO
 
-! =====     Private Procedures     =====================================
-
   ! ---------------------------------------------------  READ_DAO  -----
+
   !=====================================================================
   subroutine READ_DAO ( FNAME, VNAME, DATA_ARRAY )
   !=====================================================================
@@ -113,7 +112,7 @@ contains ! =====     Public Procedures     =============================
 
   ! Arguments
     character*(*), intent(in) :: FNAME, VNAME
-    real :: DATA_ARRAY(xdim,ydim, zdim)
+    real(R8) :: DATA_ARRAY(xdim,ydim, zdim)
 
   ! - - - local declarations - - -
 
@@ -212,10 +211,14 @@ contains ! =====     Public Procedures     =============================
     return
   end subroutine READ_DAO
 
+! =====     Private Procedures     =====================================
 
 END MODULE ObtainDAO
 
 ! $Log$
+! Revision 2.4  2001/03/03 00:11:29  pwagner
+! Began transformations to act like L2GPData module for Gridded data
+!
 ! Revision 2.3  2001/02/21 00:37:51  pwagner
 ! Uses more of GriddedData
 !
