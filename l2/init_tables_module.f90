@@ -18,6 +18,7 @@ module INIT_TABLES_MODULE
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
     ! T_STRING, S_TIME and Z are used here, but everything is included so
     ! that it can be gotten by USE INIT_TABLES_MODULE.
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MOLECULES ! Everything.
   use Units, only: Init_Units
 
@@ -25,6 +26,30 @@ module INIT_TABLES_MODULE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
   private :: ADD_IDENT, INIT_INTRINSIC, INIT_MOLECULES, INIT_SPECTROSCOPY
+
+  ! The following will be used by subroutine acorn to build an array 
+  ! id_cum(1:id_last) that can be passed directly to make_tree
+  ! The advantage is that successive calls to acorn extend id_cum
+  ! eliminating the many continuation statements a single call to
+  ! make_tree would require
+  ! To do this, replace
+  !   call make_tree ( (/ &
+  !      begin, stuff, .. &
+  !      begin, morestuff, .. &
+  !        ..
+  !      begin, laststuff, .. &
+  !      / ) )  
+  ! with
+  !   id_last = 0
+  !   call acorn ( begin, stuff, ..)
+  !   call acorn ( begin, morestuff, ..)
+  !        ..
+  !   call acorn ( begin, laststuff, ..)
+  !   call make_tree ( id_cum(1:id_last) )
+  private :: ID_CUM, ID_LAST, ID_LAST_MAX, ACORN
+  integer :: ID_LAST
+  integer, parameter :: ID_LAST_MAX = 200     ! More or less
+  integer, allocatable, dimension(:) :: ID_CUM
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -347,6 +372,13 @@ contains ! =====     Public procedures     =============================
     use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
+
+  ! This belongs somewhere before first call to acorn
+    allocate(id_cum(1:id_last_max), stat=id_last)
+    if(id_last /= 0) then
+            call MLSMessage ( MLSMSG_Error, ModuleName,&
+            &   'Unable to allocate id_cum' )
+    endif
 
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_Spectroscopy ( t_last, field_last, last_lit, &
@@ -1036,6 +1068,11 @@ contains ! =====     Public procedures     =============================
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
+    deallocate(id_cum, stat=id_last)
+    if(id_last /= 0) then
+            call MLSMessage ( MLSMSG_Error, ModuleName,&
+            &   'Unable to deallocate id_cum' )
+    endif
   contains
 
     ! ------------------------------------------------  MAKE_TREE  -----
@@ -1043,9 +1080,34 @@ contains ! =====     Public procedures     =============================
 
   end subroutine INIT_TABLES
 
+  subroutine ACORN ( IDS )
+  ! Build a tree specified by the "ids" array.
+  ! Global use made of id_last, id_last_max and id_cum
+    integer, intent(in) :: IDS(:)
+    
+    integer :: id_next
+    
+    id_next = id_last + size(ids)
+
+    if(size(ids) < 1) then
+            call MLSMessage ( MLSMSG_Error, ModuleName,&
+            &   'Illegal num of args to acorn' )
+    elseif(id_next > id_last_max) then
+            call MLSMessage ( MLSMSG_Error, ModuleName,&
+            &   'Accumulated too many ids in acorn' )
+    else
+            id_cum(id_last+1:id_next) = ids
+    endif
+    id_last = id_next
+      
+  end subroutine acorn
+
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.152  2001/08/07 23:48:20  pwagner
+! Added acorn routine to get around excessive continuations
+!
 ! Revision 2.151  2001/07/31 23:25:32  pwagner
 ! Able to accept 2 new fields for join of column; does nothing yet
 !
