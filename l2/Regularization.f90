@@ -152,7 +152,7 @@ contains
       error = max(error,1)
       call output ( '***** At or near ' )
       call print_source ( source_ref(where) )
-      call output ( ' RetrievalModule complained: ' )
+      call output ( ', Regularization complained: ' )
       select case ( code )
       case ( fieldSizes )       ! size(regOrders) /= size(regQuants)
         call output ( "Number of values of regOrders or regWeights shall be 1 " )
@@ -601,6 +601,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.26  2002/09/23 22:08:20  vsnyder
+! Fixed the error messages to say Regularization instead of RetrievalModule
+!
 ! Revision 2.25  2002/08/29 16:18:39  livesey
 ! Bug fix in horizontal regularization
 !
