@@ -39,8 +39,9 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !     (subroutines and functions)
 ! Array2List         Converts an array of strings to a single string list
 ! Capitalize         tr[a-z] -> [A-Z]
+! catLists           cats 2 string lists, taking care if either one is blank
 ! CompressString     Removes all leading and embedded blanks
-! count_words        Counts the number of space-delimited words in a string
+! count_words        Counts the number of space-separated words in a string
 ! depunctuate        Replaces punctuation with blanks
 ! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
 ! GetIntHashElement  Returns int from hash array corresponding to key string
@@ -76,51 +77,52 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
 ! === (start of api) ===
 ! Array2List (char* inArray(:), char* outList(:), &
-!   & [char inDelim], [int ordering], [char leftRight]) 
+!   & [char inseparator], [int ordering], [char leftRight]) 
 ! char* Capitalize (char* str)
+! char* catLists (char* str1, char* str2)
 ! char* CompressString (char* str)
 ! int count_words (char* str)
 ! char* depunctuate (char* str)
 ! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* how], [log no_trim])
 ! GetIntHashElement (strlist keyList, hashArray(:), char* key, 
-!   int ErrType, log countEmpty, [char inDelim], [log part_match])
+!   int ErrType, log countEmpty, [char inseparator], [log part_match])
 ! GetStringElement (strlist inList, char* outElement,
-!   i4 nElement, log countEmpty, [char inDelim])
+!   i4 nElement, log countEmpty, [char inseparator])
 ! GetStringHashElement (strlist keyList, strlist hashList, char* key, 
-!   char* outElement, log countEmpty, [char inDelim], [log part_match])
+!   char* outElement, log countEmpty, [char inseparator], [log part_match])
 ! GetUniqueList (char* str, char* outstr(:), int noUnique, &
-!   & log countEmpty, [char inDelim], [log IgnoreLeadingSpaces]) 
+!   & log countEmpty, [char inseparator], [log IgnoreLeadingSpaces]) 
 ! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique) 
 ! r8 hhmmss_value (char* str, int ErrTyp, [char separator], [log strict])
 ! ints2Strings (int ints(:,:), char* strs(:))
 ! int LinearSearchStringArray (char* list(:), char* string, 
 !   [log caseInsensitive, [log testSubstring], [log listInString])
-! List2Array (strlist inList, char* outArray(:), log countEmpty, [char inDelim],
+! List2Array (strlist inList, char* outArray(:), log countEmpty, [char inseparator],
 !    [log IgnoreLeadingSpaces])
 ! char* LowerCase (char* str)
 ! int NumStringElements(strlist inList, log countEmpty, &
-!   & [char inDelim], [int LongestLen])
+!   & [char inseparator], [int LongestLen])
 ! readIntsFromChars (char* strs(:), int ints(:), char* forbiddens)
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
 !       & [char* which], [log no_trim])
 ! char* Reverse (char* str)
-! strlist ReverseList (strlist str, [char inDelim])
+! strlist ReverseList (strlist str, [char inseparator])
 ! SortArray (char* inStrArray(:), int outIntArray(:), log CaseSensitive, &
 !   & [char* sortedArray(:)], [log shorterFirst], [char leftRight])
 ! SortList (strlist inStrArray, int outIntArray(:), log CaseSensitive, &
-!   & log countEmpty, [char inDelim], [log IgnoreLeadingSpaces], 
+!   & log countEmpty, [char inseparator], [log IgnoreLeadingSpaces], 
 !     [strlist sortedList], [char leftRight])
 ! SplitWords (char *line, char* first, char* rest, [char* last], &
 !       & [log threeWay], [char* delimiter])
 ! strings2Ints (char* strs(:), int ints(:,:))
 ! int StringElementNum(strlist inList, char* test_string, log countEmpty, &
-!    & [char inDelim], [log part_match])
+!    & [char inseparator], [log part_match])
 ! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
 
-! in the above, a string list is a string of elements (usu. comma-delimited)
+! in the above, a string list is a string of elements (usu. comma-separated)
 ! e.g., units='cm,m,in,ft'
 ! an array is a Fortran array of strings or integers
 ! a hash is a list of key strings and either
@@ -142,7 +144,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! element is longer than a limit: MAXSTRELEMENTLENGTH
 ! === (end of api) ===
 
-  public :: Array2List, Capitalize, CompressString, count_words, &
+  public :: catLists, Array2List, Capitalize, CompressString, count_words, &
    & depunctuate, ExtractSubString, &
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueStrings, GetUniqueList, &
@@ -193,38 +195,38 @@ CONTAINS
 
   ! ---------------------------------------------  Array2List  -----
 
-  ! This subroutine returns a (usually) comma-delimited string list, interpreted it
+  ! This subroutine returns a (usually) comma-separated string list, interpreted it
   ! as a list of individual elements, given an equivalent array of
   ! sub-strings in which the n'th element becomes the n'th element
 
-  ! As an optional arg the delimiter may supplied, in case it isn't a comma
+  ! As an optional arg the separator may supplied, in case it isn't a comma
   ! As an optional arg the ordering in which the array elements are to be
   ! taken may be supplied; e.g. (/4, 1, 3, 2/) means 1st take 4th element,
   ! then 1st, then 3rd, and finally 2nd: list[k] = array[ordering[k]]
   ! (unless the further optional arg leftRight is also supplied and equals
   ! one of {"l", "L"} in which case list[ordering[k]] = array[k])
 
-  SUBROUTINE Array2List ( inArray, outList, inDelim, ordering, leftRight )
+  SUBROUTINE Array2List ( inArray, outList, inseparator, ordering, leftRight )
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN)   :: inArray
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
     INTEGER, DIMENSION(:), OPTIONAL, INTENT(IN)   :: ordering
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
 
     ! Local variables
     INTEGER(i4) :: listElem, arrayElem, nElems
 
-    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=1)               :: myLeftRight
     ! Executable code
 
-    IF(PRESENT(inDelim)) THEN
-      Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+      separator = inseparator
     ELSE
-      Delim = COMMA
+      separator = COMMA
     END IF
 
     IF(PRESENT(leftRight)) THEN
@@ -253,7 +255,7 @@ CONTAINS
       if ( listElem == 1 ) then
         outList = trim(inArray(arrayElem))
       else
-        outList = trim(outList) // Delim // trim(inArray(arrayElem))
+        outList = trim(outList) // separator // trim(inArray(arrayElem))
       endif
       listElem = listElem + 1
       if ( listElem > min(nElems, len(outList)) ) return
@@ -283,6 +285,37 @@ CONTAINS
     end do
 
   end function Capitalize
+
+  ! -------------------------------------------------  catLists  -----
+  function catLists (STR1, STR2, inseparator) result (OUTSTR)
+    ! cats 2 string lists, taking care if either is blank
+    ! E.g., given str1 = 'a,b,c' and str2 = 'd,e,f'
+    ! returns 'a,b,c,d,e,f'
+    ! If either is blank, returns the other
+    ! If both blank, returns a blank
+    !--------Argument--------!
+    character (len=*), intent(in) :: STR1
+    character (len=*), intent(in) :: STR2
+    character (len=1), optional, intent(in)       :: inseparator
+    character (len=len(str1)+len(str2)+1) :: OUTSTR
+
+    !----------Local vars----------!
+    character (len=1), parameter    :: COMMA = ','
+    character (len=1)               :: separator
+    !----------executable part----------!
+    if(present(inseparator)) then
+      separator = inseparator
+    else
+      separator = comma
+    end if
+    if ( len_trim(str2) < 1 ) then
+      outstr=str1
+    elseif ( len_trim(str1) < 1 ) then
+      outstr=str2
+    else
+      outstr = trim(str1) // separator // trim(str2)
+    endif
+  end function catLists
 
   ! ---------------------------------------------  CompressString  -----
   FUNCTION CompressString (str) RESULT (outstr)
@@ -515,13 +548,13 @@ CONTAINS
       ! print *, 'results in: ', trim(tmpstr)
     end select
     call GetStringElement (tmpstr, outstr, 2, .true., &
-      & inDelim=separator )
+      & inseparator=separator )
 
   END SUBROUTINE ExtractSubString
 
   ! ---------------------------------------------  GetIntHashElement  -----
 
-  ! This function takes one (usually) comma-delimited string list, interprets it
+  ! This function takes one (usually) comma-separated string list, interprets it
   ! it as a list of elements, and an array of ints
   ! treating the list as keys and the array as
   ! a hash table, associative array or dictionary
@@ -530,15 +563,15 @@ CONTAINS
   ! otherwise ErrType=0
   
   ! This is useful because many of the hdfeos routines *inq*() return
-  ! comma-delimited lists
+  ! comma-separated lists
 
-  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single delimiter
+  ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
   ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
-  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the separator may supplied, in case it isn't comma
   ! Another optional arg, part_match, returns a match for the 
   ! first hash element merely found in the key; e.g.
   ! 'won, to, tree' and key 'protocol.dat' matches 'to'
@@ -547,7 +580,7 @@ CONTAINS
   ! Use this index for the array of ints
   
   FUNCTION GetIntHashElement(keyList, hashArray, key, ErrType, &
-  & countEmpty, inDelim, part_match) RESULT (hashInt)
+  & countEmpty, inseparator, part_match) RESULT (hashInt)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: keyList
     INTEGER, DIMENSION(:), INTENT(IN)         :: hashArray
@@ -555,7 +588,7 @@ CONTAINS
     CHARACTER (LEN=*), INTENT(IN)             :: key
     INTEGER, INTENT(OUT)                      :: ErrType
     LOGICAL, INTENT(IN)                       :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
@@ -564,7 +597,7 @@ CONTAINS
     ! Executable code
 
    ErrType = 0
-	elem = StringElementNum(keyList, key, countEmpty, inDelim, part_match)
+	elem = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
 	hashInt = elem
 	IF(elem <= 0) THEN
 		ErrType = KEYNOTFOUND
@@ -578,66 +611,66 @@ CONTAINS
 
   ! ---------------------------------------------  GetStringElement  -----
 
-  ! This subroutine takes a (usually) comma-delimited string list, interprets it
+  ! This subroutine takes a (usually) comma-separated string list, interprets it
   ! as a list of individual elements and returns the
   ! sub-string which is the n'th element
-  ! if n is too large or small, it returns the delimiter
+  ! if n is too large or small, it returns the separator
   ! This is useful because many of the hdfeos routines *inq*() return
-  ! comma-delimited lists
+  ! comma-separated lists
 
-  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single delimiter
+  ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
   ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
-  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the separator may supplied, in case it isn't comma
   ! See also SplitWords
 
-  SUBROUTINE GetStringElement(inList, outElement, nElement, countEmpty, inDelim)
+  SUBROUTINE GetStringElement(inList, outElement, nElement, countEmpty, inseparator)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: inList
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
     INTEGER(i4), INTENT(IN)         :: nElement 	! Entry number to return
     LOGICAL, INTENT(IN)   :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
 
     ! Local variables
     INTEGER(i4) :: i           ! Loop counters
-    INTEGER(i4) :: elem, nextDelim
+    INTEGER(i4) :: elem, nextseparator
 
-    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned if element empty
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     ! Executable code
 
-    IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
 	 ELSE
-	     Delim = COMMA
+	     separator = COMMA
 	 ENDIF
 
 	 IF(nElement.LE.0) THEN
-	     outElement = Delim
+	     outElement = separator
 	 ELSEIF(LEN(inList) < nElement) THEN
-	     outElement = Delim
+	     outElement = separator
     ENDIF
     i = 1
 	 elem = 1
     DO
-	     nextDelim = i - 1 + INDEX(inList(i:), Delim)
+	     nextseparator = i - 1 + INDEX(inList(i:), separator)
 
-	! No more delimiters
-		  IF(nextDelim == i - 1) THEN
+	! No more separators
+		  IF(nextseparator == i - 1) THEN
 		      IF(elem >= nElement) THEN
 				    outElement = inList(i:)
 			    ELSE
-				    outElement = Delim
+				    outElement = separator
 			    ENDIF
 				 RETURN
 
-	! Next delimiter is the adjacent char
-			ELSEIF(nextDelim == i) THEN
+	! Next separator is the adjacent char
+			ELSEIF(nextseparator == i) THEN
 				IF(countEmpty) THEN
 		     	 IF(elem >= nElement) THEN
 				    	outElement = BLANK
@@ -647,45 +680,45 @@ CONTAINS
 			    	ENDIF
 				ENDIF
 
-	! Until next delimiter is the next element
+	! Until next separator is the next element
 			ELSE
 		      IF(elem >= nElement) THEN
-				    IF(i < nextDelim) THEN
-				       outElement = inList(i:nextDelim-1)
+				    IF(i < nextseparator) THEN
+				       outElement = inList(i:nextseparator-1)
 						ELSE
-				       outElement = Delim
+				       outElement = separator
 						ENDIF
    				 RETURN
-			    ELSEIF(nextDelim >= LEN(inList)) THEN
-				    outElement = Delim
+			    ELSEIF(nextseparator >= LEN(inList)) THEN
+				    outElement = separator
 				    RETURN
 			    ELSE
 					 elem = elem+1
 			    ENDIF
 			ENDIF
-			i = nextDelim+1
+			i = nextseparator+1
 	 ENDDO
 
   END SUBROUTINE GetStringElement
 
   ! ---------------------------------------------  GetStringHashElement  -----
 
-  ! This subroutine takes two (usually) comma-delimited string lists, interprets it
+  ! This subroutine takes two (usually) comma-separated string lists, interprets it
   ! each as a list of elements, treating the first as keys and the second as
   ! a hash table, associative array or dictionary
   ! It returns the sub-string from the hash table corresponding to the key
-  ! If the key is not found in the array of keys, it returns the delimiter
+  ! If the key is not found in the array of keys, it returns the separator
   
   ! This is useful because many of the hdfeos routines *inq*() return
-  ! comma-delimited lists
+  ! comma-separated lists
 
-  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single delimiter
+  ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
   ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
-  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the separator may supplied, in case it isn't comma
   ! Another optional arg, part_match, returns a match for the 
   ! first hash element merely found in the key; e.g.
   ! 'won, to, tree' and key 'protocol.dat' matches 'to'
@@ -697,35 +730,35 @@ CONTAINS
   ! strings
   
   SUBROUTINE GetStringHashElement(keyList, hashList, key, outElement, &
-  & countEmpty, inDelim, part_match)
+  & countEmpty, inseparator, part_match)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: keyList
     CHARACTER (LEN=*), INTENT(IN)   :: hashList
     CHARACTER (LEN=*), INTENT(IN)   :: key
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
     LOGICAL, INTENT(IN)   :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
 	INTEGER(i4) :: elem
-    CHARACTER (LEN=1)                          :: Delim
+    CHARACTER (LEN=1)                          :: separator
     CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
 
     ! Executable code
 
-    IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
 	 ELSE
-	     Delim = COMMA
+	     separator = COMMA
 	 ENDIF
 
-	elem = StringElementNum(keyList, key, countEmpty, inDelim, part_match)
+	elem = StringElementNum(keyList, key, countEmpty, inseparator, part_match)
 	IF(elem <= 0) THEN
-		outElement = Delim
+		outElement = separator
 	ELSE
 		CALL GetStringElement(hashList, outElement, elem, &
-        & countEmpty, inDelim)
+        & countEmpty, inseparator)
 	ENDIF
 
   END SUBROUTINE GetStringHashElement
@@ -740,18 +773,18 @@ CONTAINS
   ! returns list from str that are not also in str2
 
   SUBROUTINE GetUniqueList(str, outStr, noUnique, countEmpty, &
-    & inDelim, IgnoreLeadingSpaces, str2)
+    & inseparator, IgnoreLeadingSpaces, str2)
     ! Dummy arguments
     CHARACTER (LEN=*), intent(in) :: str
     CHARACTER (LEN=*), intent(out) :: outstr
     INTEGER :: noUnique ! Number of unique entries
     LOGICAL, INTENT(IN)                           :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)       :: IgnoreLeadingSpaces
     CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: str2
 
     ! Local variables
-    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
       &                             :: inStringArray, outStringArray, inStrAr2
@@ -761,13 +794,13 @@ CONTAINS
     integer :: status
 
     ! Executable code
-    IF(PRESENT(inDelim)) THEN
-      Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+      separator = inseparator
     ELSE
-      Delim = COMMA
+      separator = COMMA
     ENDIF
     if ( len(str) <= 0 .or. len(outstr) <= 0 ) return
-    nElems = NumStringElements(str, countEmpty, inDelim, LongestLen)
+    nElems = NumStringElements(str, countEmpty, inseparator, LongestLen)
     noUnique = nElems
     if ( present(str2) ) then
       outStr = ''
@@ -788,19 +821,19 @@ CONTAINS
     ALLOCATE (inStringArray(nElems), outStringArray(nElems), STAT=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"stringArray in GetUniqueList")
-    call list2Array(str, inStringArray, countEmpty, inDelim, &
+    call list2Array(str, inStringArray, countEmpty, inseparator, &
      & IgnoreLeadingSpaces)
     if ( present(str2) ) then
-      nElems2 = NumStringElements(str2, countEmpty, inDelim, LongestLen)
+      nElems2 = NumStringElements(str2, countEmpty, inseparator, LongestLen)
       ALLOCATE (inStrAr2(nElems2), STAT=status)
       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
            & MLSMSG_Allocate//"stringArray2 in GetUniqueList")
-      call list2Array(str2, inStrAr2, countEmpty, inDelim, &
+      call list2Array(str2, inStrAr2, countEmpty, inseparator, &
        & IgnoreLeadingSpaces)
       call GetUniqueStrings(inStringArray, outStringArray, noUnique, inStrAr2)
       if ( noUnique > 0 ) then
         call Array2List(outStringArray(1:noUnique), outStr, &
-         & inDelim)
+         & inseparator)
       else
         outStr=''
       endif
@@ -809,7 +842,7 @@ CONTAINS
       call GetUniqueStrings(inStringArray, outStringArray, noUnique)
       if ( noUnique > 0 ) then
         call Array2List(outStringArray(1:noUnique), outStr, &
-         & inDelim)
+         & inseparator)
       else
         outStr=''
       endif
@@ -987,9 +1020,9 @@ CONTAINS
    ErrTyp=INVALIDHHMMSSSTRING
    value=0.
    
-   call GetStringElement(str, hh, 1, countEmpty=.true., inDelim=myColon)
-   call GetStringElement(str, mm, 2, countEmpty=.true., inDelim=myColon)
-   call GetStringElement(str, ss, 3, countEmpty=.true., inDelim=myColon)
+   call GetStringElement(str, hh, 1, countEmpty=.true., inseparator=myColon)
+   call GetStringElement(str, mm, 2, countEmpty=.true., inseparator=myColon)
+   call GetStringElement(str, ss, 3, countEmpty=.true., inseparator=myColon)
    
    ! Check if ss terminates in a non-digit
    ss=Reverse(trim(ss))
@@ -1211,42 +1244,42 @@ CONTAINS
 
   ! ---------------------------------------------  List2Array  -----
 
-  ! This subroutine takes a (usually) comma-delimited string list, interprets it
+  ! This subroutine takes a (usually) comma-separated string list, interprets it
   ! as a list of individual elements and returns an equivalent array of
   ! sub-strings in which the n'th element is the n'th element
 
-  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single delimiter
+  ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
   ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
-  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the separator may supplied, in case it isn't comma
   ! If the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
   ! treated like "a,b,c"; otherwise the leading spaces are retained
 
-  SUBROUTINE List2Array(inList, outArray, countEmpty, inDelim, &
+  SUBROUTINE List2Array(inList, outArray, countEmpty, inseparator, &
    & IgnoreLeadingSpaces)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)                 :: inList
     CHARACTER (LEN=*), DIMENSION(:), INTENT(OUT)  :: outArray
     LOGICAL, INTENT(IN)                           :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
 
     ! Local variables
     INTEGER(i4) :: elem, nElems
 
-    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     logical                         :: myIgnoreLeadingSpaces
     ! Executable code
 
-    IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
 	 ELSE
-	     Delim = COMMA
+	     separator = COMMA
 	 ENDIF
 
     IF(PRESENT(IgnoreLeadingSpaces)) THEN
@@ -1258,10 +1291,10 @@ CONTAINS
     if ( size(outArray) <= 0 ) return
     outArray = BLANK
 	 elem = 1
-    nElems = NumStringElements(inList, countEmpty, inDelim)
+    nElems = NumStringElements(inList, countEmpty, inseparator)
     if ( nElems <= 0 ) return
     DO
-      call GetStringElement(inList, outArray(elem), elem, countEmpty, inDelim)
+      call GetStringElement(inList, outArray(elem), elem, countEmpty, inseparator)
       if ( myIgnoreLeadingSpaces ) outArray(elem) = adjustl(outArray(elem))
       elem = elem + 1
       if ( elem > min(nElems, size(outArray)) ) return
@@ -1294,73 +1327,73 @@ CONTAINS
 
   ! ---------------------------------------------  NumStringElements  -----
 
-  ! This function takes a (usually) comma-delimited string list, interprets it
+  ! This function takes a (usually) comma-separated string list, interprets it
   ! as a list of individual elements and returns the
   ! number of elements
   ! This is useful because many of the hdfeos routines *inq*() return
-  ! comma-delimited lists
+  ! comma-separated lists
   !
-  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single delimiter
+  ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE  
 
-  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the separator may supplied, in case it isn't comma
 
   ! See also GetStringElement
 
   FUNCTION NumStringElements(inList, countEmpty, &
-   & inDelim, LongestLen) RESULT (nElements)
+   & inseparator, LongestLen) RESULT (nElements)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
     LOGICAL, INTENT(IN)                       :: countEmpty
 	 INTEGER                                   :: nElements
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
     INTEGER, OPTIONAL, INTENT(OUT)            :: LongestLen  ! Length of longest
 
     ! Local variables
-    INTEGER :: i, sinceLastDelim           ! Loop counters
-	 LOGICAL :: lastWasNotDelim
+    INTEGER :: i, sinceLastseparated           ! Loop counters
+	 LOGICAL :: lastWasNotseparated
 
-    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     ! Executable code
 
-    IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
 	 ELSE
-	     Delim = COMMA
+	     separator = COMMA
 	 ENDIF
 
-	! Count the number of delimiters
+	! Count the number of separators
    if ( present(LongestLen) ) &
      & LongestLen =0
-	! nElements-1 = number of delimiters
+	! nElements-1 = number of separators
 	IF(LEN_TRIM(inList) <= 0) THEN
 		nElements=0
       if ( present(LongestLen) ) LongestLen = 0
 		RETURN
 	ENDIF
 	
-	lastWasNotDelim = .FALSE.
+	lastWasNotseparated = .FALSE.
 	nElements = 1
-   sinceLastDelim = 0
+   sinceLastseparated = 0
 	DO i=1, LEN_TRIM(inList)
-		IF(inList(i:i) == Delim) THEN
-			IF(countEmpty .OR. lastWasNotDelim) THEN
+		IF(inList(i:i) == separator) THEN
+			IF(countEmpty .OR. lastWasNotseparated) THEN
 				nElements = nElements+1
             if ( present(LongestLen) ) &
-             & LongestLen = max(LongestLen, sinceLastDelim)
+             & LongestLen = max(LongestLen, sinceLastseparated)
 			ENDIF
-			lastWasNotDelim = .FALSE.
-         sinceLastDelim = 0
+			lastWasNotseparated = .FALSE.
+         sinceLastseparated = 0
 		ELSE
-			lastWasNotDelim = .TRUE.
-         sinceLastDelim = sinceLastDelim + 1
+			lastWasNotseparated = .TRUE.
+         sinceLastseparated = sinceLastseparated + 1
 		ENDIF
 	ENDDO
    if ( present(LongestLen) ) &
-     & LongestLen = max(LongestLen, sinceLastDelim)
+     & LongestLen = max(LongestLen, sinceLastseparated)
 
   END FUNCTION NumStringElements
 
@@ -1529,37 +1562,37 @@ CONTAINS
   END SUBROUTINE readIntsFromChars
 
   ! --------------------------------------------------  RemoveElemFromList  -----
-  SUBROUTINE RemoveElemFromList (inList, outList, elem, inDelim)
+  SUBROUTINE RemoveElemFromList (inList, outList, elem, inseparator)
     ! Takes a list and removes all occurrence(s) of elem
 	 ! E.g., given 'a,b,c,d,..,z' and asked to remove 'c' returns 'a,b,d,..z'
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: inList
     CHARACTER (LEN=*), INTENT(IN) :: elem
     CHARACTER (LEN=*), INTENT(OUT)                :: outList
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
     ! Method:
     ! Prepend elem onto start of list, make it unique,
     ! Then snip it back off
     !----------Local vars----------!
     character(len=len(inList)+len(elem)+1) :: temp_list, unique_list
-    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned for any element empty
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     integer :: numUnique
     !----------Executable part----------!
-    IF(PRESENT(inDelim)) THEN
-      Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+      separator = inseparator
     ELSE
-      Delim = COMMA
+      separator = COMMA
     END IF
 
     outList = inList
     IF (LEN_trim(elem) < 1 .or. len_trim(inList) < 1 &
       & .or. StringElementNum(inList, elem, countEmpty=.true., &
-    & inDelim=inDelim) < 1 ) RETURN
-    temp_list = trim(elem) // Delim // trim(inList)
+    & inseparator=inseparator) < 1 ) RETURN
+    temp_list = trim(elem) // separator // trim(inList)
     call GetUniqueList(temp_list, unique_list, numUnique, countEmpty=.true., &
-    & inDelim=inDelim, ignoreLeadingSpaces=.true.)
+    & inseparator=inseparator, ignoreLeadingSpaces=.true.)
     outList = unique_list(len(elem)+1:)
   END SUBROUTINE RemoveElemFromList
 
@@ -1796,8 +1829,8 @@ CONTAINS
   END FUNCTION Reverse
 
   ! --------------------------------------------------  ReverseList  -----
-  FUNCTION ReverseList (str, inDelim) RESULT (outstr)
-    ! takes a string list, usually comma-delimited,
+  FUNCTION ReverseList (str, inseparator) RESULT (outstr)
+    ! takes a string list, usually comma-separated,
 	 ! and returns one with elements in reversed order
 
 	 ! E.g., given "alpha, beta, gamma" => "gamma, beta, alpha"
@@ -1807,28 +1840,28 @@ CONTAINS
     !--------Argument--------!
     CHARACTER (LEN=*), INTENT(IN) :: str
     CHARACTER (LEN=LEN(str)) :: outstr
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
 
     !----------Local vars----------!
     INTEGER(i4) :: i, istr, irev, elem, iBuf
     INTEGER, PARAMETER :: MAXWORDLENGTH=80
-    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=1), DIMENSION(:), ALLOCATABLE :: charBuf
     CHARACTER (LEN=MAXWORDLENGTH) :: word
-! Treat consecutive delimiters as if enclosing an empty element
+! Treat consecutive separators as if enclosing an empty element
 	LOGICAL, PARAMETER :: countEmpty = .TRUE.    
 
     !----------Executable part----------!
-    IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
 	 ELSE
-	     Delim = COMMA
+	     separator = COMMA
 	 ENDIF
 
 !  Special case--only one element of str
     outstr = str
-    IF(LEN(str) == 1 .OR. INDEX(str, Delim) == 0) RETURN
+    IF(LEN(str) == 1 .OR. INDEX(str, separator) == 0) RETURN
 	 
 ! General case
 	 ALLOCATE(charBuf(LEN(str)+1), STAT=istr)
@@ -1844,8 +1877,8 @@ CONTAINS
 	elem = 1
 	iBuf=0
 	DO
-		CALL GetStringElement(str, word, elem, countEmpty, Delim)
-		IF(word == Delim) THEN
+		CALL GetStringElement(str, word, elem, countEmpty, separator)
+		IF(word == separator) THEN
 			EXIT
 		ELSEIF(iBuf > LEN(str)) THEN
 			EXIT
@@ -1857,12 +1890,12 @@ CONTAINS
 				charBuf(iBuf) = word(i:i)
 			ENDDO
 			iBuf=iBuf+1
-			charBuf(iBuf) = Delim
+			charBuf(iBuf) = separator
 			elem = elem+1
 		ENDIF
 	ENDDO
 	
-	IF(charBuf(iBuf) == Delim) THEN
+	IF(charBuf(iBuf) == separator) THEN
 		iBuf = iBuf-1
 	ENDIF
 	
@@ -2145,7 +2178,7 @@ CONTAINS
 
   ! ---------------------------------------------  SortList  -----
 
-  ! This subroutine takes a (usually) comma-delimited string list, interprets it
+  ! This subroutine takes a (usually) comma-separated string list, interprets it
   ! as a list of individual elements and returns the array of ordered integers
   ! sorting the list; i.e., if ss[n] is the sub-string which is
   ! the n'th element, and ia[k] is the k'th element of the integer array
@@ -2159,28 +2192,28 @@ CONTAINS
   ! "0" < "9" < "A" < "Z" < "a" < "z"
   ! unless caseSensitive is FALSE, when "0" < "9" < "A" < "a" < "Z" < "z"
 
-  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single delimiter
+  ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
   ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the properly sorted list is returned, too
   ! You may safely supply the same arg for both inList and sortedList
-  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the separator may supplied, in case it isn't comma
   ! If the optional arg ignoreLeadingSpaces is TRUE, "a, b, c" is
   ! sorted like "a,b,c"; otherwise the leading spaces make" b, c,a"
 
   ! Method:
   ! (see SortArray)
   SUBROUTINE SortList(inList, outArray, CaseSensitive, countEmpty, &
-   & ignoreLeadingSpaces, inDelim, sortedList, leftRight)
+   & ignoreLeadingSpaces, inseparator, sortedList, leftRight)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)                 :: inList
     INTEGER, DIMENSION(:), INTENT(OUT)            :: outArray
     LOGICAL, INTENT(IN)                           :: CaseSensitive
     LOGICAL, INTENT(IN)                           :: countEmpty
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
     CHARACTER (LEN=*), OPTIONAL, INTENT(OUT)      :: sortedList
     LOGICAL, OPTIONAL, INTENT(IN)                 :: IgnoreLeadingSpaces
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: leftRight
@@ -2189,17 +2222,17 @@ CONTAINS
     integer, parameter              :: MAXELEM = MAXSTRELEMENTLENGTH
     INTEGER(i4) :: nElems, status, LongestLen
 
-    CHARACTER (LEN=1)               :: Delim
+    CHARACTER (LEN=1)               :: separator
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
     CHARACTER (LEN=MAXSTRELEMENTLENGTH), DIMENSION(:), ALLOCATABLE    &
       &                             :: stringArray
     CHARACTER (LEN=1)               :: myLeftRight
     logical, parameter              :: DeeBUG = .false.
     ! Executable code
-    IF(PRESENT(inDelim)) THEN
-	     Delim = inDelim
+    IF(PRESENT(inseparator)) THEN
+	     separator = inseparator
 	 ELSE
-	     Delim = COMMA
+	     separator = COMMA
 	 ENDIF
 
     IF(PRESENT(leftRight)) THEN
@@ -2210,13 +2243,13 @@ CONTAINS
 
     if ( DEEBUG ) then
        print *, 'Entered SortList'
-       print *, 'present(inDelim)?: ', PRESENT(inDelim)
-       print *, 'Delim: ', Delim
+       print *, 'present(inseparator)?: ', PRESENT(inseparator)
+       print *, 'separator: ', separator
        print *, 'string: ', trim(inList)
     endif
     if ( size(outArray) <= 0 ) return
     outArray = 0
-    nElems = NumStringElements(inList, countEmpty, inDelim, LongestLen)
+    nElems = NumStringElements(inList, countEmpty, inseparator, LongestLen)
     if ( nElems <= 0 ) then
       return
     elseif ( LongestLen > MAXSTRELEMENTLENGTH ) then
@@ -2231,17 +2264,17 @@ CONTAINS
     ALLOCATE (stringArray(nElems), STAT=status)
     IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & MLSMSG_Allocate//"stringArray in SortList")
-    call list2Array(inList, stringArray, countEmpty, inDelim, &
+    call list2Array(inList, stringArray, countEmpty, inseparator, &
      & IgnoreLeadingSpaces)
     call SortArray(stringArray(1:nElems), outArray, CaseSensitive, &
      & leftRight=leftRight)
     if ( present(sortedList) ) then
       if ( myLeftRight == 'R' ) then
         call Array2List(stringArray(1:nElems), sortedList, &
-         & inDelim, outArray, leftRight='R')
+         & inseparator, outArray, leftRight='R')
       else
         call Array2List(stringArray(1:nElems), sortedList, &
-         & inDelim, outArray, leftRight='L')
+         & inseparator, outArray, leftRight='L')
       endif
     endif
     DEALLOCATE(stringArray)
@@ -2258,8 +2291,12 @@ CONTAINS
 
   ! Note that there is a slight subtlety here, spaces are treated specially
   ! due to the use of TRIM.  Thus while two commas in a row would count as
-  ! two delimters, two spaces would count as one. Also if , is the delimeter
-  ! then ,<space> counts as complete delimiter.
+  ! two separators, two spaces would count as one. Also if , is the separator
+  ! then ,<space> counts as complete separator.
+  
+  ! Apologies--I have replaced almost all uses of the word "delimiter" with
+  ! the word "separator" in a global manner, excepting only
+  ! the optional last arg to this subroutine
 
   SUBROUTINE SplitWords(line,first,rest,last,&
        & threeWay,delimiter)
@@ -2272,15 +2309,15 @@ CONTAINS
     CHARACTER (LEN=*), INTENT(OUT), OPTIONAL :: last
 
     LOGICAL, INTENT(IN), OPTIONAL :: threeWay
-    CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: delimiter
+    CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: delimiter ! really separator
 
     ! Local variables
 
-    CHARACTER (LEN=1) :: useDelimiter
+    CHARACTER (LEN=1) :: useseparator
     LOGICAL :: useThreeWay
     CHARACTER (LEN=LEN(line)) useLine ! Line with leading spaces removed
 
-    INTEGER :: firstDelimiterPos,lastDelimiterPos,trimmedLen
+    INTEGER :: firstseparatorPos,lastseparatorPos,trimmedLen
 
     ! Executable code
 
@@ -2288,9 +2325,9 @@ CONTAINS
     trimmedLen=LEN_TRIM(useLine)
 
     IF (PRESENT(delimiter)) THEN
-       useDelimiter=delimiter
+       useseparator=delimiter
     ELSE
-       useDelimiter=","
+       useseparator=","
     END IF
 
     IF (PRESENT(threeWay)) THEN
@@ -2304,27 +2341,27 @@ CONTAINS
     IF (PRESENT(last)) last=""
     rest=""
 
-    ! Find the first delimiter
+    ! Find the first separator
 
-    firstDelimiterPos=INDEX(useLine,useDelimiter)
+    firstseparatorPos=INDEX(useLine,useseparator)
 
-    IF (firstDelimiterPos == 0) THEN
+    IF (firstseparatorPos == 0) THEN
        first=useLine
     ELSE
-       first=useLine(1:firstDelimiterPos-1)
+       first=useLine(1:firstseparatorPos-1)
        IF (useThreeWay) THEN
-          ! In three way mode, find the last delimiter
-          lastDelimiterPos=INDEX(TRIM(useLine),useDelimiter,back=.TRUE.)
+          ! In three way mode, find the last separator
+          lastseparatorPos=INDEX(TRIM(useLine),useseparator,back=.TRUE.)
           IF (PRESENT(last) .AND. &
-               & lastDelimiterPos /= trimmedLen) THEN
-             last=TRIM(useLine(lastDelimiterPos+1:))
+               & lastseparatorPos /= trimmedLen) THEN
+             last=TRIM(useLine(lastseparatorPos+1:))
           END IF
-          IF (firstDelimiterPos+1 <= lastDelimiterPos-1) THEN
-             rest=TRIM(useLine(firstDelimiterPos+1:lastDelimiterPos-1))
+          IF (firstseparatorPos+1 <= lastseparatorPos-1) THEN
+             rest=TRIM(useLine(firstseparatorPos+1:lastseparatorPos-1))
           END IF
        ELSE
-          IF (firstDelimiterPos /= trimmedLen) THEN
-             rest=TRIM(useLine(firstDelimiterPos+1:))
+          IF (firstseparatorPos /= trimmedLen) THEN
+             rest=TRIM(useLine(firstseparatorPos+1:))
           END IF
        END IF
     END IF
@@ -2363,7 +2400,7 @@ CONTAINS
 
   ! ---------------------------------------------  StringElementNum  -----
 
-  ! This function takes a (usually) comma-delimited string list, interprets it
+  ! This function takes a (usually) comma-separated string list, interprets it
   ! as a list of individual elements, and a test string which may be an element
   ! It returns the element number of the test string in the string list
   ! or, 0 if the test string is not found
@@ -2379,17 +2416,17 @@ CONTAINS
   ! the answer from nElements
   
   ! This is useful because many of the hdfeos routines *inq*() return
-  ! comma-delimited lists
+  ! comma-separated lists
   
   ! It will be the immediate precursor function in a hash table
   ! == aka associative array == aka dictionary
   !
-  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! If countEmpty is TRUE, consecutive separators, with no chars in between,
   ! are treated as enclosing an empty element
-  ! Otherwise, they are treated the same as a single delimiter
+  ! Otherwise, they are treated the same as a single separator
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE  
 
-  ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! As an optional arg the separator may supplied, in case it isn't comma
   ! Another optional arg, part_match, returns the number of the 
   ! first element merely found in the test string; e.g.
   ! 'won, to, tree' and test 'protocol.dat' returns 2
@@ -2397,13 +2434,13 @@ CONTAINS
   ! See also GetStringElement, NumStringElements
 
   FUNCTION StringElementNum(inList, test_string, countEmpty, &
-    & inDelim, part_match) RESULT (elem)
+    & inseparator, part_match) RESULT (elem)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
     CHARACTER (LEN=*), INTENT(IN)             :: test_string
     LOGICAL, INTENT(IN)                       :: countEmpty
 	 INTEGER                                   :: elem
-    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
@@ -2412,11 +2449,11 @@ CONTAINS
 
     CHARACTER (LEN=MAXELEMENTLENGTH)           :: listElement
     logical ::                                    match
-!    CHARACTER (LEN=1)                          :: Delim
+!    CHARACTER (LEN=1)                          :: separator
 !    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
     ! Executable code
 
-	nElements = NumStringElements(inList, countEmpty, inDelim)
+	nElements = NumStringElements(inList, countEmpty, inseparator)
 	
 	IF(nElements <= 0) THEN
 		elem = 0
@@ -2427,7 +2464,7 @@ CONTAINS
 
 	! Check for matches--snipping off any leading blanks
 	DO elem=1, nElements
-		CALL GetStringElement(inList, listElement, elem, countEmpty, inDelim)
+		CALL GetStringElement(inList, listElement, elem, countEmpty, inseparator)
       if ( match ) then
         if (trim(listElement) /= ' ' .and. &
           & index(trim(test_string), trim(listElement)) > 0) RETURN
@@ -2470,13 +2507,16 @@ CONTAINS
     !    a particle
     ! (For this case, strict matching is always on)
     
-    ! Useful because the parser will return quote-delimited strings if that's
+    ! Useful because the parser will return quote-surrounded strings if that's
     ! how they appear in the lcf
     
     ! Calling get_string with "strip=.true." renders this unnecessary.
     ! However, you might find another use for it, especially with
     ! feature of being able to trim other, user-supplied detritus:
-    ! e.g., braces, parentheses, extraneous delimiters
+    ! e.g., braces, parentheses, extraneous separators
+    
+    ! (Aside from switches, we haven't found such a use so far;
+    ! instead see more powerful ExtractSubString or ReplaceSubString)
     !--------Argument--------!
     character(len=*),intent(in) :: str
     character(len=len(str)) :: outstr, tmpstr
@@ -2682,7 +2722,7 @@ CONTAINS
    ErrTyp=INVALIDUTCSTRING
    ! Snip off time fields from date fields
    call GetStringElement(lowercase(str), date, 1, &
-     & countEmpty=.true., inDelim='t')
+     & countEmpty=.true., inseparator='t')
    if ( date == ' ' ) then
      if ( .not. mystrict) Errtyp = 0
      return
@@ -2692,14 +2732,14 @@ CONTAINS
      mm = date(5:6)
      dd = date(7:8)
    else
-     call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inDelim=dash)
+     call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inseparator=dash)
      if ( &
-       & NumStringElements(trim(date), countEmpty=.true., inDelim=dash) == 2) then
-       call GetStringElement(trim(date), dd, 2, countEmpty=.true., inDelim=dash)
+       & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
+       call GetStringElement(trim(date), dd, 2, countEmpty=.true., inseparator=dash)
        utc_format = 'b'
      else
-       call GetStringElement(trim(date), mm, 2, countEmpty=.true., inDelim=dash)
-       call GetStringElement(trim(date), dd, 3, countEmpty=.true., inDelim=dash)
+       call GetStringElement(trim(date), mm, 2, countEmpty=.true., inseparator=dash)
+       call GetStringElement(trim(date), dd, 3, countEmpty=.true., inseparator=dash)
        utc_format = 'a'
      endif
    endif
@@ -2804,21 +2844,21 @@ CONTAINS
    ErrTyp=INVALIDUTCSTRING
    ! Snip off time fields from date fields
    call GetStringElement(lowercase(str), date, 1, &
-     & countEmpty=.true., inDelim='t')
+     & countEmpty=.true., inseparator='t')
    if ( date == ' ' ) then
      if ( .not. mystrict) Errtyp = 0
      if ( present(utcAt0z) ) utcAt0z = ' '
      return
    endif
    if ( present(utcAt0z) ) utcAt0z = trim(date) // chars_0z
-   call GetStringElement(trim(date), year, 1, countEmpty=.true., inDelim=dash)
+   call GetStringElement(trim(date), year, 1, countEmpty=.true., inseparator=dash)
    if ( &
-     & NumStringElements(trim(date), countEmpty=.true., inDelim=dash) == 2) then
-     call GetStringElement(trim(date), day, 2, countEmpty=.true., inDelim=dash)
+     & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
+     call GetStringElement(trim(date), day, 2, countEmpty=.true., inseparator=dash)
      utc_format = 'b'
    else
-     call GetStringElement(trim(date), month, 2, countEmpty=.true., inDelim=dash)
-     call GetStringElement(trim(date), day, 3, countEmpty=.true., inDelim=dash)
+     call GetStringElement(trim(date), month, 2, countEmpty=.true., inseparator=dash)
+     call GetStringElement(trim(date), day, 3, countEmpty=.true., inseparator=dash)
      utc_format = 'a'
    endif
    
@@ -2997,6 +3037,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.44  2004/06/29 00:06:13  pwagner
+! Tried to straighten out delimiter-separator terms in comments
+!
 ! Revision 2.43  2004/06/16 22:15:28  pwagner
 ! Make lowerCase elemental
 !
