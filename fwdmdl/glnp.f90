@@ -12,7 +12,7 @@ module GLNP
 !
 ! These are the 3-point-Gauss-Legendre abscissae (X-axis) values in [-1,1]:
 !
-  real(r8), parameter :: Gx(Ng) = (/ & ! sqrt(3.0/5.0), 0.0, sqrt(3.0/5.0)
+  real(r8), parameter :: Gx(Ng) = (/ & ! -sqrt(3.0/5.0), 0.0, sqrt(3.0/5.0)
      & -7.74596669241483377036e-1_r8,  0.00000000000000000000e+0_r8, &
      &  7.74596669241483377036e-1_r8 /)
 !
@@ -39,6 +39,9 @@ contains
 end module GLNP
 
 ! $Log$
+! Revision 2.2  2002/10/08 17:08:04  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/09/06 18:18:43  vsnyder
 ! Cosmetic changes
 !
