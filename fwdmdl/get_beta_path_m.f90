@@ -29,9 +29,14 @@ contains
         & beta_path, t_der_path_flags, dTanh_dT, dBeta_dt_path,     &
         & dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
 
+    use Dump_0, only: Dump
     use ForwardModelConfig, only: LBL_T
+    use Intrinsic, only: Lit_Indices
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Toggles, only: Switches
 
 ! Inputs:
 
@@ -71,8 +76,17 @@ contains
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     integer(ip) :: I, N
+    logical, save :: DumpAll, DumpBeta, DumpStop
+    logical, save :: First = .true. ! Fist-time flag
 
 ! begin the code
+
+    if ( first ) then
+      first = .false.
+      dumpStop = index(switches,'LBLB') > 0
+      dumpAll = dumpStop .or. index(switches,'lblB') > 0
+      dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
+    end if
 
     nullify ( dBdn, dBdv, dBdw )
 
@@ -102,8 +116,22 @@ contains
           & beta_group(i)%ratio(n), gl_slabs(:,beta_group(i)%cat_index(n)), &
           & tanh_path, noPolarized, &
           & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
+
+        if ( dumpBeta ) then
+          call display_string ( lit_indices(beta_group(i)%molecules(n)), &
+            & before='LBL Betas for ' )
+          call output ( frq, before=', FRQ = ', advance='yes' )
+          call dump ( beta_path(:,i), name='Beta' )
+          if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+        end if
       end do
     end do
+
+    if ( dumpAll ) then
+      call dump ( p_path(path_inds), name='Pressures' )
+      call dump ( t_path, name='Temperatures' )
+    end if
+    if ( dumpStop ) stop
 
   end subroutine Get_Beta_Path_Scalar
 
@@ -112,9 +140,14 @@ contains
     & Beta_Group, Vel_Rel, Beta_Path, T_Der_Path_Flags, &
     & dBeta_dT_Path, dBeta_dw_Path, dBeta_dn_Path, dBeta_dv_Path )
 
+    use Dump_0, only: Dump
     use ForwardModelConfig, only: PFA_T
+    use Intrinsic, only: Lit_Indices
     use MLSCommon, only: RP, R8
+    use Output_m, only: Output
     use PFADataBase_m, only: PFAData
+    use String_Table, only: Display_String
+    use Toggles, only: Switches
 
 ! Inputs
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -146,6 +179,15 @@ contains
 
     real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
     integer :: I, N
+    logical, save :: DumpAll, DumpBeta, DumpStop
+    logical, save :: First = .true. ! First-time flag
+
+    if ( first ) then
+      first = .false.
+      dumpStop = index(switches,'PFAB') > 0
+      dumpAll = dumpStop .or. index(switches,'pfaB') > 0
+      dumpBeta = dumpAll .or. ( index(switches,'pfab') > 0 )
+    end if
 
     nullify ( dBdT, dBdn, dBdv, dBdw )
 
@@ -170,14 +212,29 @@ contains
       beta_path(:,i) = 0.0_rp
 
       do n = 1, size(beta_group(i)%molecules)
-        if ( beta_group(i)%indices(frq_i,n) /= 0 ) &
-          & call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
+        if ( beta_group(i)%indices(frq_i,n) /= 0 ) then
+          call create_beta_path_pfa ( frq, p_path, path_inds, t_path, vel_rel, &
             & PFAData(beta_group(i)%indices(frq_i,n)), beta_group(i)%ratio(n), &
             & beta_path(:,i), t_der_path_flags, &
             & dBdT, dBdw, dBdn, dBdv )
+
+          if ( dumpBeta ) then
+            call display_string ( lit_indices(beta_group(i)%molecules(n)), &
+            & before='PFA Betas for ' )
+            call output ( frq, before=', FRQ = ', advance='yes' )
+            call dump ( beta_path(:,i), name='Beta' )
+            if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
+          end if
+        end if
       end do ! n = 1, size(beta_group(i)%molecules)
 
     end do ! i = 1, size(beta_group)
+
+    if ( dumpAll ) then
+      call dump ( p_path(path_inds), name='Pressures' )
+      call dump ( t_path, name='Temperatures' )
+    end if
+    if ( dumpStop ) stop
 
   end subroutine Get_Beta_Path_PFA
 
@@ -499,15 +556,12 @@ contains
 !  should be called for primary and image separately. Compute dBeta_dT if it's
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
 
-    use Dump_0, only: Dump
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: RP, R8
     use Molecules, only: L_N2, L_Extinction, L_O2
-    use Output_m, only: Output
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
       & SLABS_LINES, SLABS_LINES_DT, SLABSWINT_LINES, SLABSWINT_LINES_DT
     use SpectroscopyCatalog_m, only: LINES
-    use Toggles, only: Switches
 
 ! Inputs:
     integer, intent(in) :: Path_inds(:)! Which Pressures to use
@@ -546,8 +600,6 @@ contains
 ! -----     Local variables     ----------------------------------------
 
     real(rp), pointer :: Cont(:) ! continuum parameters
-    logical, save :: DumpAll, DumpBeta, DumpStop
-    logical, save :: First = .true. ! Fist-time flag
     integer :: J, K              ! Subscript, loop inductor
     integer :: LN_I              ! Line index
     integer :: NL                ! no of lines
@@ -557,13 +609,6 @@ contains
     real(rp) :: dNu, bv, dw, dn, dv, dbdT, dbdw, dbdn, dbdv
 
 !----------------------------------------------------------------------------
-
-    if ( first ) then
-      first = .false.
-      dumpStop = index(switches,'LBLB') > 0
-      dumpAll = dumpStop .or. index(switches,'lblB') > 0
-      dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
-    end if
 
     if ( associated(dBeta_dw) .or. associated(dBeta_dn) .or. associated(dBeta_dv) ) then
       dbdw = 0.0_rp
@@ -695,30 +740,16 @@ contains
 
     end do ! j = 1, size(path_inds)
 
-    if ( dumpBeta ) then
-      call output ( fgr, before='LBL Betas, FRQ = ', advance='yes' )
-      call dump ( beta_value, name='Beta_Value' )
-      if ( dumpAll ) then
-        call dump ( pressure(path_inds), name='Pressures' )
-        call dump ( temp, name='Temperatures' )
-      end if
-      if ( temp_der ) call dump ( dBeta_dT, name='dBdT' )
-      if ( dumpStop ) stop
-    end if
-
   end Subroutine Create_beta_path
 
   ! ---------------------------------------  Create_Beta_Path_PFA  -----
   subroutine Create_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, Vel_Rel, &
     & PFAD, Ratio, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
-    use Dump_0, only: Dump
     use D_Hunt_m, only: Hunt
     use MLSCommon, only: RP, R8
-    use Output_m, only: Output
     use PFADataBase_m, only: PFAData_t, RK
     use Physics, only: SpeedOfLight ! M/s
-    use Toggles, only: Switches
 
 ! Inputs:
     real(r8), intent(in) :: Frq         ! Channel center frequency in MHz
@@ -750,8 +781,6 @@ contains
     real(rp) :: dBdNu            ! d log Beta / d nu, for Doppler correction
     real(rp) :: Del_T            ! Log Temperature step in tGrid
     real(r8) :: Doppler          ! Doppler corrected frequency offset, MHz
-    logical, save :: DumpAll, DumpBeta, DumpStop
-    logical, save :: First = .true. ! First-time flag
     integer :: J, K
     real(rp) :: LogT             ! Ln ( temperature )
     integer :: P_I1, P_I2        ! Indices in PFAData%vGrid%surfs
@@ -759,13 +788,6 @@ contains
     logical :: Temp_Der          ! Temperature derivatives required
     integer :: T_I1, T_I2        ! Indices in PFAData%tGrid%surfs
     real(rp) :: T_Fac            ! Interpolating factor for Temperature
-
-    if ( first ) then
-      first = .false.
-      dumpStop = index(switches,'PFAB') > 0
-      dumpAll = dumpStop .or. index(switches,'pfaB') > 0
-      dumpBeta = dumpAll .or. ( index(switches,'pfab') > 0 )
-    end if
 
     a => PFAD%absorption
 
@@ -885,18 +907,6 @@ contains
       if ( associated(dBdv) ) dBdv(j) = dBdv(j) + bp * dBdNu
 
     end do ! j
-
-    if ( dumpBeta ) then
-      call output ( frq, before='PFA Betas, FRQ = ' )
-      call output ( doppler, before=', Doppler correction = ', advance='yes' )
-      call dump ( beta_path, name='Beta_Path' )
-      if ( dumpAll ) then
-        call dump ( p_path(path_inds), name='Pressures' )
-        call dump ( t_path, name='Temperatures' )
-      end if
-      if ( associated(dBdT) ) call dump ( dBdT, name='dBdT' )
-      if ( dumpStop ) stop
-    end if
 
   end subroutine Create_Beta_Path_PFA
 
@@ -1080,6 +1090,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.71  2005/02/17 02:35:13  vsnyder
+! Remove PFA stuff from Channels part of config
+!
 ! Revision 2.70  2005/02/16 23:16:50  vsnyder
 ! Revise data structures for split-sideband PFA
 !
