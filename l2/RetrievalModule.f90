@@ -33,7 +33,7 @@ module RetrievalModule
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
     & ClearMatrix, ColumnScale, CopyMatrix, CopyMatrixValue, CreateEmptyMatrix, &
-    & DestroyMatrix, dump_l1, dump_struct, &
+    & DestroyMatrix, dump_Linf, dump_struct, &
     & FillExtraCol, FillExtraRow, FormNormalEquations => NormalEquations, &
     & GetDiagonal, GetFromMatrixDatabase, GetVectorFromColumn, InvertCholesky, &
     & Matrix_T, &
@@ -465,14 +465,13 @@ contains
                 call random_number(fuzzMeasurements%quantities(j)%values)
                 measurements%quantities(j)%values = &
                   & measurements%quantities(j)%values * &
-                    & ( 1.0_r8 + fuzz * epsilon(fuzz) * &
+                    & ( 1.0_r8 + fuzz * &
                       & ( fuzzMeasurements%quantities(j)%values - 0.5 ) )
               end do
               do j = 1, x%template%noQuantities
                 call random_number(fuzzState%quantities(j)%values)
                 x%quantities(j)%values = x%quantities(j)%values * &
-                  & ( 1.0_r8 + fuzz * epsilon(fuzz) * &
-                    & ( fuzzState%quantities(j)%values - 0.5 ) )
+                  & ( 1.0_r8 + fuzz * ( fuzzState%quantities(j)%values - 0.5 ) )
               end do
             end if
             numF = 0
@@ -620,12 +619,11 @@ contains
                   call formNormalEquations ( jacobian, normalEquations, &
                     & update=update )
                   update = .true.
-                  if ( index(switches,'jac') /= 0 ) then
-                    call dump_l1 ( jacobian, 'L1 norms of Jacobian blocks:' )
-                    if ( index(switches,'spa') /= 0 ) &
-                      & call dump_struct ( jacobian, &
-                        & 'Sparseness structure of Jacobian blocks:' )
-                  end if
+                  if ( index(switches,'jac') /= 0 ) &
+                    call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
+                  if ( index(switches,'spa') /= 0 ) &
+                    & call dump_struct ( jacobian, &
+                      & 'Sparseness structure of Jacobian blocks:' )
                   call clearMatrix ( jacobian )  ! free the space
 !                 call destroyVectorValue ( f )  ! free the space
                 end do ! mafs
@@ -671,29 +669,27 @@ contains
 !???            Can't do this because we need to keep the normal equations
 !???            around, in order to subtract Levenberg-Marquardt and
 !???            apriori covariance, in order to compute a posteriori covariance
-                if ( index(switches,'neq') /= 0 ) then
-                  call dump_l1 ( normalEquations%m, &
-                    & 'L1 norms of Normal Equations blocks after scaling:', &
+                if ( index(switches,'neq') /= 0 ) &
+                  call dump_Linf ( normalEquations%m, &
+                    & 'L_infty norms of Normal Equations blocks after scaling:', &
                     & upper=.true. )
-                  if ( index(switches,'spa') /= 0 ) &
-                    & call dump_struct ( normalEquations%m, &
-                      & 'Sparseness structure of Normal equations blocks:', &
-                      & upper=.true. )
-                end if
+                if ( index(switches,'spa') /= 0 ) &
+                  & call dump_struct ( normalEquations%m, &
+                    & 'Sparseness structure of Normal equations blocks:', &
+                    & upper=.true. )
                 call choleskyFactor ( factored, normalEquations )
-                if ( index(switches,'fac') /= 0 ) then
-                  call dump_l1 ( factored%m, 'L1 norms of blocks of factor:', &
+                if ( index(switches,'fac') /= 0 ) &
+                  call dump_Linf ( factored%m, 'L_infty norms of blocks of factor:', &
                     & upper=.true. )
-                  if ( index(switches,'spa') /= 0 ) &
-                    & call dump_struct ( factored%m, &
-                      & 'Sparseness structure of blocks of factor:', upper=.true. )
-                end if
+                if ( index(switches,'spa') /= 0 ) &
+                  & call dump_struct ( factored%m, &
+                    & 'Sparseness structure of blocks of factor:', upper=.true. )
                 if ( index(switches,'cho') /= 0 ) then
                   call copyMatrix ( testCholesky%m, normalEquations%m )
                   call negate ( testCholesky%m )
                   call formNormalEquations ( factored%m, testCholesky, &
                     & update=.true. )
-                  call dump_L1 ( testCholesky%m, 'How good was Cholesky?', &
+                  call dump_Linf ( testCholesky%m, 'How good was Cholesky?', &
                     & upper=.true. )
                   call destroyMatrix ( testCholesky%m )
                 end if
@@ -723,30 +719,28 @@ contains
 !???            Can't do this because we need to keep the normal equations
 !???            around, in order to subtract Levenberg-Marquardt and
 !???            apriori covariance, in order to compute a posteriori covariance
-                if ( index(switches,'neq') /= 0 ) then
-                  call dump_l1 ( normalEquations%m, &
+                if ( index(switches,'neq') /= 0 ) &
+                  call dump_Linf ( normalEquations%m, &
                     & 'L1 norms of Normal Equations blocks after Marquardt:', &
                     & upper=.true. )
-                  if ( index(switches,'spa') /= 0 ) &
-                    & call dump_struct ( normalEquations%m, &
-                      & 'Sparseness structure of Normal equations blocks:', &
-                      & upper=.true. )
-                end if
+                if ( index(switches,'spa') /= 0 ) &
+                  & call dump_struct ( normalEquations%m, &
+                    & 'Sparseness structure of Normal equations blocks:', &
+                    & upper=.true. )
                 call choleskyFactor ( factored, normalEquations )
-                if ( index(switches,'fac') /= 0 ) then
-                  call dump_l1 ( factored%m, &
+                if ( index(switches,'fac') /= 0 ) &
+                  call dump_Linf ( factored%m, &
                     & 'L1 norms of blocks of factor after Marquardt:', &
                     & upper=.true. )
-                  if ( index(switches,'spa') /= 0 ) &
-                    & call dump_struct ( factored%m, &
-                      & 'Sparseness structure of blocks of factor:', upper=.true. )
-                end if
+                if ( index(switches,'spa') /= 0 ) &
+                  & call dump_struct ( factored%m, &
+                    & 'Sparseness structure of blocks of factor:', upper=.true. )
                 if ( index(switches,'cho') /= 0 ) then
                   call copyMatrix ( testCholesky%m, normalEquations%m )
                   call negate ( testCholesky%m )
                   call formNormalEquations ( factored%m, testCholesky, &
                     & update=.true. )
-                  call dump_L1 ( testCholesky%m, 'How good was Cholesky?', &
+                  call dump_Linf ( testCholesky%m, 'How good was Cholesky?', &
                     & upper=.true. )
                   call destroyMatrix ( testCholesky%m )
                 end if
@@ -963,6 +957,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.31  2001/05/19 00:22:31  vsnyder
+! Dump_L1 -> Dump_Linf, uncouple 'spa' and Linf dumps
+!
 ! Revision 2.30  2001/05/18 23:18:42  vsnyder
 ! Replace 'weight' field of 'retrieve' by 'measurementSD'
 !
