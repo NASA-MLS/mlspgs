@@ -1203,8 +1203,9 @@ contains ! =====     Public Procedures     =============================
     chunk_dims(1)=CHUNKTIMES
     status = mls_dfldsetup(swid, 'Status', 'nTimes', &
     & MYDIM1, &
-    & DFNT_CHAR8, HDFE_NOMERGE, chunk_rank, chunk_dims, &
+    & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
     & hdfVersion=hdfVersion)
+    ! & DFNT_CHAR8, HDFE_NOMERGE, chunk_rank, chunk_dims, &
 
     chunk_rank=1
     chunk_dims(1)=CHUNKTIMES
@@ -2626,6 +2627,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.98  2004/03/24 23:53:02  pwagner
+! Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+!
 ! Revision 2.97  2004/03/12 00:38:19  pwagner
 ! cpL2GPData can convert hdfVersions; hdf version default increased to 5
 !
