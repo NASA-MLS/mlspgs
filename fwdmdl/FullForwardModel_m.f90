@@ -241,6 +241,7 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:), pointer :: REF_CORR ! Refraction correction
     real(rp), dimension(:), pointer :: SPS_VALUES ! all vmrs (f_len)
     real(rp), dimension(:), pointer :: TAU ! Optical depth
+    real(rp), dimension(:), pointer :: TAN_TEMP ! ***
     real(rp), dimension(:), pointer :: T_PATH ! Temperatures on path
     real(rp), dimension(:), pointer :: T_SCRIPT ! ********
     real(rp), dimension(:), pointer :: XM ! Midpoint of integration grid intervals
@@ -285,7 +286,6 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:,:), pointer :: RADIANCES     ! (Nptg,noChans)
     real(rp), dimension(:,:), pointer :: SPS_PATH ! spsices on path
     real(rp), dimension(:,:), pointer :: TAN_DH_DT ! dH/dT at Tangent
-    real(rp), dimension(:,:), pointer :: TAN_TEMP ! ***
     real(rp), dimension(:,:), pointer :: T_GLGRID ! Temp on glGrid surfs
 
     real(rp), dimension(:,:,:), pointer :: DH_DT_GLGRID ! *****
@@ -871,7 +871,7 @@ contains ! ================================ FullForwardModel routine ======
       & maxNoFSurfs, windowStart:windowFinish, no_mol), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'k_spect_dv' )
-    call allocate_test ( tan_temp, no_tan_hts, n_t_phi, 'tan_temp', &
+    call allocate_test ( tan_temp, no_tan_hts, 'tan_temp', &
       &  ModuleName )
 
     ! Allocate path quantities -----------------------------------------------
@@ -1253,7 +1253,7 @@ contains ! ================================ FullForwardModel routine ======
             &  phi_path(1:no_ele),do_calc_dv(1:no_ele,:),         &
             &  eta_zxp_dv(1:no_ele,:))
         endif
-        tan_temp(ptg_i,maf) = one_tan_temp(1)
+        tan_temp(ptg_i) = one_tan_temp(1)
 
         ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
         call comp_eta_docalc_no_frq(Grids_f,z_path(1:no_ele), &
@@ -1941,7 +1941,7 @@ contains ! ================================ FullForwardModel routine ======
           call convolve_all ( fwdModelConf, fwdModelIn, maf, channel, &
             &  windowStart, windowFinish, mafTInstance-windowStart+1, &
             &  temp, ptan, thisRadiance, tan_press, ptg_angles(:,maf),&
-            &  tan_temp(:,maf), dx_dt, d2x_dxdt, surfaceTangentIndex, &
+            &  tan_temp, dx_dt, d2x_dxdt, surfaceTangentIndex,        &
             &  center_angle, Radiances(:,i), k_temp(i,:,:,:),         &
             &  k_atmos(i,:,:,:,:,:), thisRatio, t_deriv_flag, Grids_f,&
             &  Jacobian, fmStat%rows, antennaPatterns(whichPattern),  &
@@ -2194,6 +2194,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.52  2002/06/04 23:06:47  livesey
+! On the way to having phiTan
+!
 ! Revision 2.51  2002/06/04 10:27:59  zvi
 ! Encorporate deriv. flag into convolution
 !
