@@ -72,17 +72,18 @@ module L2ParInfo
   type L2ParallelInfo_T
     logical :: fwmParallel = .false.    ! Set if we are in forward model parallel mode
     logical :: master = .false.         ! Set if this is a master task
-    logical :: slave = .false.          ! Set if this is a slace task
-    logical :: stageInMemory = .false.  ! Set if master stages to memory rather than a file
-    integer :: myTid                    ! My task ID in pvm
+    logical :: slave = .false.          ! Set if this is a slave task
+    logical :: stageInMemory = .false.  ! Set if master stages to memory rather
+    integer :: myTid                    ! My task ID in pvm       | than a file
     integer :: masterTid                ! task ID in pvm
     integer :: noFWMSlaves              ! No. slaves in pvm system for fwm cases
+    integer :: chunkNo                  ! Chunk No. if this is a slave
     character(len=132) :: pgeName="mlsl2"   ! command name, if not 'mlsl2'
     character(len=132) :: slaveFilename ! Filename with list of slaves
     character(len=132) :: executable    ! Executable filename
     character(len=132) :: submit=""     ! Submit comand for batch queue system
-    character(len=132) :: stagingFile=DefaultStagingFile ! Filename for possible staging
-    integer :: maxFailuresPerMachine = 1 ! More than this then don't use it
+    character(len=132) :: stagingFile=DefaultStagingFile ! Filename for possible
+    integer :: maxFailuresPerMachine = 1 ! More than this then don't use it | staging
     integer :: maxFailuresPerChunk = 10 ! More than this then give up on getting it
   end type L2ParallelInfo_T
 
@@ -101,6 +102,7 @@ module L2ParInfo
     integer :: TICKET=0                 ! What ticket number is it
     integer :: VALUE=0                  ! Workspace for master
     integer :: STATUS=DW_INVALID        ! One of the DW_... above
+    real    :: WHENFIRSTPERMITTED
   end type DirectWriteRequest_T
 
   ! Shared variables
@@ -546,6 +548,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.32  2003/08/11 23:23:31  pwagner
+! ChunkNo component added to L2ParallelInfo_T
+!
 ! Revision 2.31  2003/08/01 20:26:53  pwagner
 ! slave command name saved as component pgeName
 !
