@@ -87,3 +87,10 @@
 !define(mol20L, { [ o2, o3, o3_v2, h2o ] })
 !define(mol20U, { [ o3, o3_v1_3, o3_v2, h2o ] })
 !define(mol20,  { [ o2, o3, o3_v1_3, o3_v2, h2o ] })
+
+!define(mol32L, { [ o2, n2 ] })
+!define(mol32,  { [ o2, n2 ] })
+
+!define(mol33L, { [ o3, h2o, n2] })
+!define(mol33U, { [ o3, h2o, n2 ] })
+!define(mol33,  { [ o3, h2o, n2 ] })
