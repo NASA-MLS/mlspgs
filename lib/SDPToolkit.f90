@@ -7,13 +7,13 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
    IMPLICIT NONE
    PUBLIC
 
-   PRIVATE :: ID
-
-!------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &
-   &"$Id$"&
-    & "$RCSfile$"
-!----------------------------------------------------------
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
 ! Contents:
 
@@ -195,6 +195,9 @@ END MODULE SDPToolkit
 
 !
 ! $Log$
+! Revision 2.11  2002/10/01 22:03:55  pwagner
+! Fixed RCS Ident Block
+!
 ! Revision 2.10  2002/10/01 20:27:11  bwknosp
 ! Fixed problem
 !
