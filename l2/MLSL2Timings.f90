@@ -8,7 +8,8 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL
-  USE MLSL2Options, only: SECTIONTIMINGUNITS
+  USE MLSL2Options, only: SECTIONTIMINGUNITS, SKIPDIRECTWRITES, SKIPRETRIEVAL, &
+    & STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error
   USE MLSStrings, only: LowerCase 
   USE MLSStringLists, only: catLists, GetStringElement, &
@@ -303,7 +304,6 @@ contains ! =====     Public Procedures     =============================
     call output ( 'time ', advance='no' )
     call blanks ( 8, advance='no' )
     call output ( 'percent ', advance='yes' )
-
     call finishTimings('sections')
     total = sum(section_timings(1:num_section_times)) ! + &
 
@@ -351,13 +351,19 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 4, advance='no' )
     call printTaskType
     ! Subdivision of Retrieval section
+    if ( STOPAFTERCHUNKDIVIDE .or. STOPAFTERGLOBAL ) then
+      call output ( '(Some sections skipped) ', advance='yes' )
+      return
+    endif
     retrElem = StringElementNum(section_names, 'retrieve', countEmpty)
     if ( retrElem == 0 ) then
       call output ( '(Illegal section name--spelling?) ', advance='yes' )
       return
     endif
     retrFinal = section_timings(retrElem) 
-    if ( retrFinal == 0.0 ) then
+    if ( SKIPRETRIEVAL ) then
+      call output ( '(Retrieval section skipped) ', advance='yes' )
+    elseif ( retrFinal == 0.0 ) then
       call output ( '(Retrieval section number ', advance='no' )
       call blanks ( 2, advance='no' )
       call output ( elem, advance='no' )
@@ -403,7 +409,9 @@ contains ! =====     Public Procedures     =============================
       return
     endif
     dwFinal = section_timings(elem) 
-    if ( dwFinal == 0.0 ) then
+    if ( SKIPDIRECTWRITES ) then
+      call output ( '(DirectWrite section skipped) ', advance='yes' )
+    elseif ( dwFinal == 0.0 ) then
       call output ( '(DirectWrite section number ', advance='no' )
       call blanks ( 2, advance='no' )
       call output ( elem, advance='no' )
@@ -742,6 +750,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.26  2004/12/14 21:40:20  pwagner
+! Notes skipped sections
+!
 ! Revision 2.25  2004/08/16 17:13:06  pwagner
 ! Commented out debug printing
 !
