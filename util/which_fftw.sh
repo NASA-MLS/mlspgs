@@ -6,6 +6,8 @@
 # Creates fftw_link_line to build mlspgs level 3d program (default)
 # Use (2):
 # Echoes version number of gcc compiler; e.g. '2.96' or '3.2' (-gcc option)
+# Use (3):
+# object needed to build static executable; e.g. './temp/ctype-info.o' (-static option)
 # 
 # Usage:
 # which_fftw.sh [options] FFTW_ROOT [FFTW_PREC]
@@ -13,6 +15,7 @@
 #    O p t i o n s   a n d   a r g s
 # -h[elp]       print brief help message; exit
 # -gcc          Use (2) above
+# -static       Use (3) above
 # FFTW_ROOT     a directory path where the fftw libraries might be found
 #                These two libraries must have names matching the patterns
 #                1st library: lib[ sd]rfftw.a
@@ -39,7 +42,7 @@
 #      and is in the same directory as which_fftw.sh
 #
 # --------------- End which_fftw.sh help
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -54,8 +57,11 @@
 #****************************************************************
 me="$0"
 my_name=which_fftw.sh
+# What to echo as need object for building static executable
+# (if Lahey compiler < v6.2 and Red Hat > v8 )
+my_stobject="/users/pwagner/lib/lf95/ctype-info.o"
 DEEBUG=off
-USE_2="no"
+USE="1"
 
 # The following is echoed if we can't any fftw libraries in FFTW_ROOT
 nothing='-L${FFTW_ROOT} -ldrfftw -ldfftw'
@@ -78,7 +84,11 @@ while [ "$more_opts" = "yes" ] ; do
        exit
        ;;
     -gcc )
-       USE_2="yes"
+       USE="2"
+       shift
+       ;;
+    -static )
+       USE="3"
        shift
        ;;
     * )
@@ -87,9 +97,10 @@ while [ "$more_opts" = "yes" ] ; do
     esac
 done
 
-if [ $USE_2 = "yes" ]
+if [ $USE != "1" ]
 then
-#   - - - U s e  ( 2 ) - - -
+   stobject=''
+#   - - - U s e  ( 2 ) o r ( 3 ) - - -
    test_295=`gcc -v 2>&1 | grep -i '2\.95'`
    test_296=`gcc -v 2>&1 | grep -i '2\.96'`
    test_31=`gcc -v 2>&1 | grep -i '3\.1'`
@@ -109,16 +120,23 @@ then
    elif [ "$test_322" != "" ]
    then
      gcc_version="3.2.2"
+     stobject="$my_stobject"
    elif [ "$test_323" != "" ]
    then
      gcc_version="3.2.3"
+     stobject="$my_stobject"
    elif [ "$test_32" != "" ]
    then
      gcc_version="3.2"
    else
      exit 1
    fi
-   echo $gcc_version
+   if [ "$USE" = "2" ]
+   then
+     echo $gcc_version
+   else
+     echo $stobject
+   fi
    exit 0
 fi
 
@@ -191,6 +209,9 @@ echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message
 echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.5  2004/02/06 18:31:34  pwagner
+# Added gcc version 3.2.3
+#
 # Revision 1.4  2003/05/12 22:08:46  jonathan
 # added v3.2.2
 #
