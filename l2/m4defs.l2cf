@@ -34,4 +34,4 @@ changesyntax({@!})
 !define(TrimNL, {!substr($1,0,!eval(!len($1)-1))})
 !define(tai93start, {!TrimNL(!esyscmd(ccsdsbtotai93 !day))})
 !define(tai93end, {!TrimNL(!esyscmd(ccsdsbtotai93 -e !day ))})
-
+!define(home,!TrimNL(!esyscmd({echo $HOME})))
