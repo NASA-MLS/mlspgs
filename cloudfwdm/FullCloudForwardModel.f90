@@ -641,24 +641,25 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! First the minor frame stuff
     !------------------------------
 
-    radiance%values ( :, maf) =                                              &
-      & reshape ( transpose(a_clearSkyRadiance),                             &
-      & (/radiance%template%instanceLen/) )
+    do i =1 , noFreqs
+    if (doChannel(i)) then
+    do mif=1, noMIFs
+    radiance%values (i+(mif-1)*noFreqs, maf) = a_clearSkyRadiance(i, mif) 
 
     if(associated(cloudInducedRadiance)) &
-      & cloudInducedRadiance%values ( :, maf ) =                             &
-      & reshape ( transpose(a_cloudInducedRadiance),                         &
-      & (/cloudInducedRadiance%template%instanceLen/) )
+      & cloudInducedRadiance%values (i+(mif-1)*noFreqs, maf ) = &
+      & a_cloudInducedRadiance(i, mif)
 
     if(associated(effectiveOpticalDepth)) &
-      & effectiveOpticalDepth%values ( :, maf ) =                            &
-      & reshape ( transpose(a_effectiveOpticalDepth),                        &
-      & (/effectiveOpticalDepth%template%instanceLen/) )
+      & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) = &
+      & a_effectiveOpticalDepth(i, mif)
 
     if(associated(cloudRADSensitivity)) &
-      & cloudRADSensitivity%values ( :, maf ) =                              &
-      & reshape ( transpose(a_cloudRADSensitivity),                          &
-      & (/cloudRADSensitivity%template%instanceLen/) )
+      & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =   &
+      & a_cloudRADSensitivity(i, mif)
+    enddo
+    endif
+    enddo
 
     ! -----------------------------------------------------------------------------
     ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
@@ -976,6 +977,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.53  2001/10/08 23:43:00  dwu
+! fix jBlock%kind initialization
+!
 ! Revision 1.52  2001/10/08 21:46:39  jonathan
 ! add CloudySkyModule
 !
