@@ -186,8 +186,11 @@ begin Fill
   Fill, quantity=aprioriPrecision.gph, method=explicit, /spread, explicitValues= 5 km
 
   ;; Convert H2O precision to RHI precision
-  Fill, quantity=aprioriPrecision.rhi, h2oQuantity=aprioriPrecision.h2o, $
-    temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
+  Fill, quantity=aprioriPrecision.rhi, $
+    h2oPrecisionQuantity=aprioriPrecision.h2o, $
+    tempPrecisionQuantity=aprioriPrecision.temperature, $
+    h2oQuantity=apriori.h2o, temperatureQuantity=apriori.temperature, $
+    method=RHIFromH2O, /dontMask
 
   ;; This macro interpolates standard resolution quantities to the
   ;; hiRes equivalents. 
