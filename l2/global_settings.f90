@@ -214,7 +214,8 @@ contains
           error = max(error, returnStatus)
         case ( s_forwardModel )
           call decorate (son, AddForwardModelConfigToDatabase ( &
-            & forwardModelConfigDatabase, ConstructForwardModelConfig ( son, vGrids ) ) )
+            & forwardModelConfigDatabase, &
+            & ConstructForwardModelConfig ( son, vGrids, .true. ) ) )
         case ( s_vgrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
             & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase ) ) )
@@ -647,6 +648,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.57  2002/08/28 22:26:39  pwagner
+! Moved LEVEL1_HDFVERSION, ILLEGALL1BRADID, MAXNUML1BRADIDS to MLSL2Options
+!
 ! Revision 2.56  2002/08/20 23:02:17  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
