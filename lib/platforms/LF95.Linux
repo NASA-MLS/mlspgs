@@ -22,13 +22,13 @@ FOPTS = -g --chk --info
 DUSTY = $(FOPTS)
 
 # Beginning of path to libraries:
-L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
 #L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
 
-PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00/include
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00/include
 
 # Beginning of path to HDFEOS  libraries:
-E = /van1/opt/TOOLKIT
+#E = /van1/opt/TOOLKIT
 
 # Use the lib directory, too
 libdir = ../../lib/$(MLSCONFG)
@@ -46,3 +46,6 @@ libdir = ../../lib/$(MLSCONFG)
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
 # $Log$
+# Revision 1.1  2000/10/18 22:11:28  pwagner
+# First commit
+#
