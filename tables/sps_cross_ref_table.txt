@@ -4,6 +4,7 @@ group designations
 mlspgs_name, l2cf_species, l2gp_species, group flag
 format = '(a24,1x,a24,1x,a24,1x,i3)'
 ----*----1----*----2----*----3----*----4----*----5----*----6----*----7----*----8
+               AIR\_CONT                 AIR_CONT                 air-cont   0
                      BrO                      BRO                      BrO   4
               $^{79}$BrO                  BR_79_O                  Br-79-O   0
    $^{79}$BrO$(\nu_{1})$               BR_79_O_V1               Br-79-O-v1   0
