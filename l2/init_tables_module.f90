@@ -565,6 +565,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
              begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
+             begin, f+f_instances, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_integrationTime, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
              begin, f+f_intrinsic, t+t_boolean, n+n_field_type, &
@@ -870,6 +871,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.235  2002/08/26 20:01:36  livesey
+! Added instances argument to fill (profile method)
+!
 ! Revision 2.234  2002/08/24 01:38:28  vsnyder
 ! Implement horizontal regularization
 !
