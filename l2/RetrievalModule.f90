@@ -88,7 +88,7 @@ contains
       & DestroyVectorInfo, GetVectorQuantityByType, M_LinAlg, &
       & Vector_T, VectorValue_T
     use CloudRetrievalModule, only: CloudRetrieval
-    use IEEE_Arithmetic
+    use IEEE_Arithmetic, only: IEEE_IS_NAN
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST;
@@ -2256,6 +2256,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.256  2004/04/19 23:25:55  livesey
+! Added an only to the use of ieee_arithemtic
+!
 ! Revision 2.255  2004/04/19 19:23:44  livesey
 ! Better handling of NaNs in radiances or derivatives
 !
