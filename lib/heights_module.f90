@@ -11,7 +11,8 @@ module heights_module
   ! and scan calculations" by N. J. Livesey
 
 
-  use Geometry, only: Earth_Major_Axis => EarthRadA, &
+  use Geometry, only: Earth_Axis_Ratio_Squared, &
+                    & Earth_Major_Axis => EarthRadA, &
                     & Earth_Minor_Axis => EarthRadB, EarthSurfaceGPH, GM, G0, &
                     & J2, J4, Omega => W
 
@@ -24,13 +25,6 @@ module heights_module
   implicit NONE
   private
   public:: Geom_to_GPH, Lat_geod_to_geoc, GPH_to_geom
-
-  ! Geodetic parameter used by more than one routine. 
-  ! Should maybe be public if it doesn't interfere with anyone elses
-  ! code
-  real(kind=r8), private, parameter :: earth_axis_ratio_squared = &
-       & earth_major_axis**2 / earth_minor_axis**2
-
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -161,3 +155,6 @@ contains
 end module heights_module
 
 ! $Log$
+! Revision 2.1  2002/09/26 20:54:43  vsnyder
+! Get constants from Geometry and Units, cosmetic changes
+!
