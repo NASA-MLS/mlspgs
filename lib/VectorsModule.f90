@@ -455,6 +455,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vector%name = 0
+    ! Let the destruction of the vector template take care of vector%template%quantities
     nullify ( vector%template%quantities )
     if ( .not. associated(vector%quantities) ) return
     call destroyVectorValue ( vector )
@@ -1161,6 +1162,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.43  2001/05/17 20:17:00  vsnyder
+! Don't clobber Y argument of ScaleVector by making it intent(out) -- we
+! need to check its template.
+!
 ! Revision 2.42  2001/05/11 23:33:29  vsnyder
 ! Get rid of double-printing of 'Without mask'
 !
