@@ -207,12 +207,9 @@ contains
                 & Do_calc_hyd_c, Deriv_Flags, D_Deltau_Pol_DT )
 
     use DExdT_m, only: dExdT
-    use Get_Beta_Path_m, only: Get_Beta_Path_Polarized
     use GLNP, only: NG
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-    use MLSCommon, only: R8, RP, IP
+    use MLSCommon, only: RP, IP
     use Opacity_m, only: Opacity
-    use Physics, only: H_OVER_K
     use Rad_Tran_m, only: Get_Do_Calc
 
   ! Arguments
@@ -502,6 +499,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.26  2004/04/19 21:00:53  vsnyder
+! Remove unreferenced USE names
+!
 ! Revision 2.25  2004/04/17 00:37:00  vsnyder
 ! Analytic temperature derivatives
 !
