@@ -140,6 +140,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SWFID
     REAL :: T1, T2     ! for timing
     logical :: TIMING
+    logical, parameter :: DEBUG = .TRUE.
 
     ! Executable code
     timing = .false.
@@ -148,8 +149,6 @@ contains ! =====     Public Procedures     =============================
 
     error = 0
     got = .false.
-    l2gp_Version = 1
-    l2aux_Version = 1
 
     l2gp_mcf = mlspcf_mcf_l2gp_start
     l2aux_mcf = mlspcf_mcf_l2dgm_start
@@ -158,6 +157,10 @@ contains ! =====     Public Procedures     =============================
     ! Loop over the lines in the l2cf
 
     do spec_no = 2, nsons(root)-1 ! Skip name at begin and end of section
+
+    	l2gp_Version = 1
+    	l2aux_Version = 1
+
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
@@ -185,7 +188,7 @@ contains ! =====     Public Procedures     =============================
 
         select case ( output_type )
         case ( l_l2gp )
-
+			if(DEBUG) call output('output file type l2gp', advance='yes')
           ! Get the l2gp file name from the PCF
 
  !         l2gpFileHandle = mlspcf_l2gp_start
@@ -201,11 +204,13 @@ contains ! =====     Public Procedures     =============================
  
   				l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
 				& mlspcf_l2gp_end, &
-  & .TRUE., returnStatus, l2gp_Version)
+  & .TRUE., returnStatus, l2gp_Version, .true.)
  
             if ( returnStatus == 0 ) then
+					if(DEBUG) call output('file name: ' // TRIM(file_base), advance='yes')
                 ! Open the HDF-EOS file and write swath data
                 
+					if(DEBUG) call output('Attempting swopen', advance='yes')
                 swfid = swopen(file_base, DFACC_CREATE)
 
                 ! Loop over the segments of the l2cf line
@@ -226,6 +231,7 @@ contains ! =====     Public Procedures     =============================
                   end select
                 end do ! field_no = 2, nsons(key)
 
+					if(DEBUG) call output('Attempting swclose', advance='yes')
                 returnStatus = swclose(swfid)
                 if (returnStatus /= PGS_S_SUCCESS) then
                   call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
@@ -247,6 +253,7 @@ contains ! =====     Public Procedures     =============================
 					& == QuantityNames(1) ) then
 
 					! Typical homogeneous l2gp file: e.g., BrO is ML2BRO.001.MCF
+					if(DEBUG) call output('preparing to populate metadata_std', advance='yes')
 						call populate_metadata_std &
 						& (swfid, l2gp_mcf, l2pcf, QuantityNames(1), anText)
 						l2gp_mcf = l2gp_mcf + 1
@@ -254,6 +261,7 @@ contains ! =====     Public Procedures     =============================
 					else
 
 					! Type l2gp file 'other'
+					if(DEBUG) call output('preparing to populate metadata_oth', advance='yes')
 						call populate_metadata_oth &
 						& (swfid, l2gp_mcf, l2pcf, &
 						& numquantitiesperfile, QuantityNames, anText)
@@ -278,7 +286,8 @@ contains ! =====     Public Procedures     =============================
           
         case ( l_l2aux )
           
-          ! Get the l2aux file name from the PCF
+ 			if(DEBUG) call output('output file type l2aux', advance='yes')
+         ! Get the l2aux file name from the PCF
           
 !          l2auxFileHandle = mlspcf_l2dgm_start
 !          found = .FALSE.
@@ -293,23 +302,44 @@ contains ! =====     Public Procedures     =============================
                 
   				l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
 				& mlspcf_l2dgm_end, &
-  & .TRUE., returnStatus, l2aux_Version)
+  & .TRUE., returnStatus, l2aux_Version, .true.)
  
             if ( returnStatus == 0 ) then
 				
+					if(DEBUG) call output('file name: ' // TRIM(file_base), advance='yes')
                 ! Create the HDF file and initialize the SD interface
+					if(DEBUG) call output('Attempting sfstart', advance='yes')
                 sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
                 
+              	if(DEBUG) call output ( "looping over quantities", advance='yes')
 					numquantitiesperfile = 0
                 do field_no = 2, nsons(key) ! Skip "output" name
                   gson = subtree(field_no,key)
                   select case ( decoration(subtree(1,gson)) )
                   case ( f_quantities )
                     do in_field_no = 2, nsons(gson)
+              				if(DEBUG) &
+								& call output ( "computing db index", advance='yes')
                       db_index = -decoration(decoration(subtree(in_field_no ,gson)))
-                      CALL WriteL2AUXData(l2auxDatabase(db_index),sdfid)
-							 numquantitiesperfile=numquantitiesperfile+1
-			            call get_string ( sub_rosa(subtree(2,gson)), QuantityNames(numquantitiesperfile) )
+              				if(DEBUG) then
+								  call output ( "db index:  ", advance='no')
+								  call output ( db_index, advance='yes')
+								  call output ( "db size:  ", advance='no')
+              				  call output ( size(l2auxDatabase), advance='yes')
+								endif
+								if(db_index <= size(l2auxDatabase)) then
+                     		 CALL WriteL2AUXData(l2auxDatabase(db_index),sdfid)
+									 numquantitiesperfile=numquantitiesperfile+1
+              				 if(DEBUG) call output("attempting to fill quantity name", advance='yes')
+			          		  call get_string ( sub_rosa(subtree(2,gson)), QuantityNames(numquantitiesperfile) )
+								else
+              				 call announce_error ( ROOT, &
+               			 &  "l2aux database smaller than db_index  ")
+								 call output ( "db size:  ", advance='no')
+              				 call output ( size(l2auxDatabase), advance='yes')
+								 call output ( "db index:  ", advance='no')
+              				 call output ( db_index, advance='yes')
+								endif
                     end do ! in_field_no = 2, nsons(gson)
                   case ( f_overlaps )
                     ! ??? More work needed here
@@ -319,10 +349,12 @@ contains ! =====     Public Procedures     =============================
                 ! Now close the file
                 returnStatus = sfend(sdfid)
                 if ( returnStatus /= PGS_S_SUCCESS ) then
-                  call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-                  call MLSMessage ( MLSMSG_Error, ModuleName, &
-                    &  "Error closing l2aux file:  "//mnemonic//" "//msg )
-                end if
+ !                 call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+ !                 call MLSMessage ( MLSMSG_Error, ModuleName, &
+ !                   &  "Error closing l2aux file:  "//mnemonic//" "//msg )
+              		 call announce_error ( ROOT, &
+               	 &  "Error closing l2aux file:  "//file_base, returnStatus)
+               end if
 
 				! Write the metadata file
 					if(numquantitiesperfile <= 0) then
@@ -331,6 +363,7 @@ contains ! =====     Public Procedures     =============================
 					else
 
 					! We will need to think harder about this; until then reuse
+					if(DEBUG) call output('preparing to populate metadata_oth', advance='yes')
 						call populate_metadata_oth &
 						& (swfid, l2aux_mcf, l2pcf, &
 						& numquantitiesperfile, QuantityNames, anText)
@@ -418,6 +451,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.17  2001/04/07 00:13:44  pwagner
+! Extra error checks
+!
 ! Revision 2.16  2001/04/04 23:44:52  pwagner
 ! Now deallocates anText of PCF file at last
 !
