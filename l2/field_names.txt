@@ -163,9 +163,7 @@ minChannels
 minValue
 missingValue
 moleculeDerivatives
-moleculeDerivativesPol # want derivatives w.r.t. moleculesPol
 molecules
-moleculesPol           # That have Zeeman-split lines
 multiplier
 muMin
 
@@ -302,6 +300,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.92  2003/05/05 23:00:34  livesey
+# Merged in feb03 newfwm branch
+#
 # Revision 2.91  2003/04/30 00:07:59  vsnyder
 # Add 'atmos' and 'frequencies' fields
 #
@@ -334,6 +335,24 @@ writeCounterMAF
 #
 # Revision 2.81  2003/02/27 17:45:11  bill
 # Added polarized
+#
+# Revision 2.80  2003/02/20 21:26:21  pwagner
+# Lets you read field dimList=x,y,.. w/ griddeddata
+#
+# Revision 2.79  2003/02/14 01:56:36  livesey
+# Added the 'additional' capability in subset
+#
+# Revision 2.78  2003/02/13 21:41:58  livesey
+# Added profile
+#
+# Revision 2.77.2.4  2003/04/08 23:41:28  jonathan
+# remove cloud_fov
+#
+# Revision 2.77.2.3  2003/03/13 00:06:23  vsnyder
+# Delete moleculesPol and moleculeDerivativesPol
+#
+# Revision 2.77.2.2  2003/02/27 17:48:39  bill
+# Added additional, dimlist, etc.
 #
 # Revision 2.80  2003/02/20 21:26:21  pwagner
 # Lets you read field dimList=x,y,.. w/ griddeddata
