@@ -189,25 +189,19 @@ contains
 !
       IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
         do ln_i = 1, nl
-          ds = Fgr - v0s(ln_i)
-          IF(abs(ds) <= 3.0e3) THEN
-            dNu = Fgr - v0sp(ln_i)
-            bp = bp + Slabs(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i),yp(ln_i))
-            dNu = Fgr - v0sm(ln_i)
-            bm = bm + Slabs(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i),ym(ln_i))
-          ENDIF
+          dNu = Fgr - v0sp(ln_i)
+          bp = bp + Slabs(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i),yp(ln_i))
+          dNu = Fgr - v0sm(ln_i)
+          bm = bm + Slabs(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i),ym(ln_i))
         end do
       ELSE
         do ln_i = 1, nl
-          ds = Fgr - v0s(ln_i)
-          IF(abs(ds) <= 3.0e3) THEN
-            dNu = Fgr - v0sp(ln_i)
-            bp = bp + Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
-                             &  yp(ln_i),yip(ln_i))
-            dNu = Fgr - v0sm(ln_i)
-            bm = bm + Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
-                             &  ym(ln_i),yim(ln_i))
-          ENDIF
+          dNu = Fgr - v0sp(ln_i)
+          bp = bp + Slabswint(dNu,v0sp(ln_i),x1p(ln_i),slabs1p(ln_i), &
+                           &  yp(ln_i),yip(ln_i))
+          dNu = Fgr - v0sm(ln_i)
+          bm = bm + Slabswint(dNu,v0sm(ln_i),x1m(ln_i),slabs1m(ln_i), &
+                           &  ym(ln_i),yim(ln_i))
         end do
       ENDIF
 
@@ -222,6 +216,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 2.9  2002/02/28 07:16:41  zvi
+! Removing limit on large dNu
+!
 ! Revision 2.8  2002/02/27 07:04:10  zvi
 ! Fixing limit on large dNu
 !
