@@ -141,7 +141,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
   integer, parameter :: S_CHUNKDIVIDE        = s_binselector + 1
   integer, parameter :: S_DESTROY            = s_chunkDivide + 1
-  integer, parameter :: S_DUMP               = s_destroy + 1
+  integer, parameter :: S_DIRECTWRITE        = s_destroy + 1
+  integer, parameter :: S_DUMP               = s_directWrite + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_EMPIRICALGEOMETRY  = s_dumpblocks + 1
   integer, parameter :: S_FGRID              = s_empiricalGeometry + 1
@@ -311,6 +312,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
+    spec_indices(s_directWrite) =          add_ident ( 'directWrite' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fGrid) =                add_ident ( 'fGrid' )
@@ -690,6 +692,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
+      begin, s+s_directWrite, &
+             begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
+                    nr+n_dot, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
+             begin, f+f_sdname, t+t_string, nr+n_field_type, &
+             begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def /) )
+    call make_tree ( (/ &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
@@ -866,7 +877,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
                            s+s_sids, s+s_snoop, s+s_subset, s+s_time, &
                            n+n_section, &
-      begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
+      begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, s+s_directWrite, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
     call deallocate_test(id_cum, &
@@ -904,6 +915,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.221  2002/05/22 00:48:10  livesey
+! Added direct write
+!
 ! Revision 2.220  2002/05/17 17:56:39  livesey
 ! Stuff for sideband folding fills
 !
