@@ -523,12 +523,8 @@ contains ! =====     Public Procedures     =============================
         select case (jBlock%kind)
         case (m_absent)
           call CreateBlock ( Jacobian, rowJBlock, colJBlock, m_banded, &
-            &   noMIFs*noChans )
+            & noMIFs*noChans, bandHeight=noChans )
           jBlock%values = 0.0_r8
-          do mif = 1, noMIFs
-            jBlock%r1(mif) = 1 + noChans * (mif-1)
-            jBlock%r2(mif) = noChans * mif
-          end do
         case (m_banded)
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -580,6 +576,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.16  2001/05/08 23:26:36  livesey
+! Embarassing typo/bug fixed
+!
 ! Revision 1.15  2001/05/03 22:58:38  livesey
 ! Removed bug work around
 !

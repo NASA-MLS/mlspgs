@@ -155,14 +155,9 @@ contains
     select case (jacobian%block(Row,col)%kind)
     case (m_absent)
       call CreateBlock ( Jacobian, row, col, m_banded, &
-        &    radiance%template%noSurfs*radiance%template%noChans )
+        & radiance%template%noSurfs*radiance%template%noChans, &
+        & bandHeight=radiance%template%noChans )
       jacobian%block(row,col)%values = 0.0_r8
-      do ptg_i = 1, j
-        jacobian%block(row,col)%r1(ptg_i) = &
-          & 1 + radiance%template%noChans*(ptg_i-1)
-        jacobian%block(row,col)%r2(ptg_i) = &
-          & radiance%template%noChans*ptg_i
-      end do
     case (m_banded)
     case default
       call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -368,6 +363,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.26  2001/05/03 02:03:16  vsnyder
+! Insert copyright notice
+!
 ! Revision 1.25  2001/05/02 20:49:23  zvi
 ! Cleaning up code
 !

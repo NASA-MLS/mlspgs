@@ -94,14 +94,9 @@ contains
       select case ( jacobian%block(Row,col)%kind )
       case ( m_absent )
         call CreateBlock ( Jacobian, row, col, m_banded, &
-          &    radiance%template%noSurfs*radiance%template%noChans )
+          & radiance%template%noSurfs*radiance%template%noChans, &
+          & bandHeight=radiance%template%noChans )
         jacobian%block(row,col)%values = 0.0_r8
-        do ptg = 1, j
-          jacobian%block(row,col)%r1(ptg) = &
-            & 1 + radiance%template%noChans*(ptg-1)
-          jacobian%block(row,col)%r2(ptg) = &
-            & radiance%template%noChans*ptg
-        end do
       case ( m_banded )
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName,&
@@ -110,7 +105,7 @@ contains
       do ptg = 1, j
         ind = channel + radiance%template%noChans*(ptg-1)
         jacobian%block(row,col)%values(ind ,1 ) = &
-          &   jacobian%block(row,col)%values( ind ,1 ) + sbRatio*der_all(ptg)
+          & jacobian%block(row,col)%values( ind ,1 ) + sbRatio*der_all(ptg)
       end do
     else
       Call Cspline ( tan_press, Ptan%values(:,maf), i_raw, i_star_all, k, j )
@@ -220,6 +215,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.20  2001/05/03 22:26:29  vsnyder
+! Insert copyright notice, some cosmetic changes
+!
 ! Revision 1.19  2001/05/02 20:49:23  zvi
 ! Cleaning up code
 !
