@@ -1424,14 +1424,15 @@ contains ! ======================= Public Procedures =========================
     integer(hsize_t), dimension(2) :: chunk_dims, dims, maxdims
     integer :: spaceID                  ! ID for filespace
     integer :: memSpaceID               ! ID for arrayspace
+    integer :: filespaceID              ! ID for filespace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
     integer, dimension(2) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
-    integer :: test_rank
-    integer(hsize_t), dimension(7) :: test_dims, test_maxdims
-    integer(hssize_t), dimension(7) :: test_offset
-    logical :: test_issimple
+    ! integer :: test_rank
+    ! integer(hsize_t), dimension(7) :: test_dims, test_maxdims
+    ! integer(hssize_t), dimension(7) :: test_offset
+    ! logical :: test_issimple
 
     ! Executable code
     style = 0  ! The default
@@ -1441,7 +1442,7 @@ contains ! ======================= Public Procedures =========================
     if ( present(adding_to) ) then
       if ( adding_to ) style = 2
     endif
-   ! print *, 'style:   ', style
+    if ( DEEBUG ) print *, 'style:   ', style
       
     ! Create the dataspace
     shp = shape(value)
@@ -1458,14 +1459,21 @@ contains ! ======================= Public Procedures =========================
         & status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 2D real array '//trim(name) )
+      memspaceID = spaceID
+      filespaceID = spaceID
     elseif (style == 1) then
      ! print *, 'Creating a dynamic data space'
       maxdims(2) = H5S_UNLIMITED_F
       dims(2) = max(1, shp(2))
       chunk_dims(2) = 1
-      call h5screate_simple_f(2, dims, spaceID, status, maxdims)
+      if ( DEEBUG ) print *, 'shape ', shp
+      if ( DEEBUG ) print *, 'maxdims ', maxdims
+      if ( DEEBUG ) print *, 'dims ', dims
+      if ( DEEBUG ) print *, 'chunk_dims ', chunk_dims
+      call h5screate_simple_f(2, dims, memspaceID, status, maxdims)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataspace for 2D real array '//trim(name) )
+        & 'Unable to create memspace for 2D real array '//trim(name) )
+      spaceID = memspaceID
       call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create property list for 2D real array '//trim(name) )
@@ -1476,6 +1484,17 @@ contains ! ======================= Public Procedures =========================
         & status, cparms )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 2D real array '//trim(name) )
+      call h5dextend_f ( setID, dims, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to extend dataset creating 2D real array '//trim(name) )
+      call h5dget_space_f(setID, filespaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get filespaceID creating 2D real array '//trim(name) )
+      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
+      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
+      if ( DEEBUG ) print *, 'cparms ', cparms
+      if ( DEEBUG ) print *, 'locID ', locID
+      if ( DEEBUG ) print *, 'setID ', setID
     else
      ! print *, 'Reopening/extending a dynamic data space'
       call h5dopen_f ( locID, trim(name), setID, status )
@@ -1486,43 +1505,50 @@ contains ! ======================= Public Procedures =========================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to get dataspace for 2D real array '//trim(name) )
      ! print *, 'spaceID:   ', spaceID
-      call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get space rank for 2D real array '//trim(name) )
+      ! call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !  & 'Unable to get space rank for 2D real array '//trim(name) )
      ! print *, 'rank:   ', test_rank
-      call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
-       &  test_maxdims(1:test_rank), status )
-      if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & 'Unable to get dims for datset '//trim(name) )
+      ! call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
+      ! &  test_maxdims(1:test_rank), status )
+      ! if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      ! & 'Unable to get dims for datset '//trim(name) )
      ! print *, 'status                  : ', status
      ! print *, 'dims (before extending) : ', test_dims(1:test_rank)
      ! print *, 'max_dims                : ', test_maxdims(1:test_rank)
       ! Can't test on status--it's set to the test_rank
-      test_dims(2) = test_dims(2) + shp(2)
+      ! test_dims(2) = test_dims(2) + shp(2)
      ! print *, 'dims (sfter extending)  : ', test_dims(1:test_rank)
-      call h5dextend_f( setID, test_dims, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to extend dims for 2D real array '//trim(name) )
-      call h5dget_space_f( setID, spaceID, status)
+      ! call h5dextend_f( setID, test_dims, status)
+      ! if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      !  & 'Unable to extend dims for 2D real array '//trim(name) )
+      if ( .not. present(start) ) &
+        & call mls_extend ( setID, shp )
+      memspaceID = spaceID
+      call h5dget_space_f( setID, filespaceID, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to get dataspace for 2D real array '//trim(name) )
      ! print *, 'new spaceID             : ', spaceID
     endif
     if ( present(start) ) then
      ! print *, 'start ', start
-      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+      call mls_extend ( setID, Count, start, filespaceID )
+      call mls_hyperslab_save(filespaceID, &
         & start, count, stride, block)
 !     Check before actually writing
      ! print *, 'About to write'
       ! space defined for data
      ! print *, 'We received mem space (defined for data)', memspaceID
-      call h5sis_simple_f ( memspaceID, test_issimple, status )
-      call h5sget_simple_extent_ndims_f ( memspaceID, test_rank, status )
-      call h5sget_simple_extent_dims_f ( memspaceID, test_dims(1:test_rank), &
-        &  test_maxdims(1:test_rank), status )
-      if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get dims for datset '//trim(name) )
-      call h5soffset_simple_f( memspaceID, test_offset(1:test_rank), status)
+      if ( style == 2 ) then
+        call h5screate_simple_f(2, dims, memspaceID, status, maxdims)
+      endif
+     ! call h5sis_simple_f ( memspaceID, test_issimple, status )
+     ! call h5sget_simple_extent_ndims_f ( memspaceID, test_rank, status )
+     ! call h5sget_simple_extent_dims_f ( memspaceID, test_dims(1:test_rank), &
+     !   &  test_maxdims(1:test_rank), status )
+     ! if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+     !   & 'Unable to get dims for datset '//trim(name) )
+     ! call h5soffset_simple_f( memspaceID, test_offset(1:test_rank), status)
      ! print *, 'Is simple? ', test_issimple
      ! print *, 'rank    : ', test_rank
      ! print *, 'dims    : ', test_dims(1:test_rank)
@@ -1530,13 +1556,13 @@ contains ! ======================= Public Procedures =========================
      ! print *, 'offsets : ', test_offset(1:test_rank)
       ! space defined for file
      ! print *, 'We received file space', spaceID
-      call h5sis_simple_f ( spaceID, test_issimple, status )
-      call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
-      call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
-        &  test_maxdims(1:test_rank), status )
-      if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get dims for datset '//trim(name) )
-      call h5soffset_simple_f( spaceID, test_offset(1:test_rank), status)
+     ! call h5sis_simple_f ( spaceID, test_issimple, status )
+     ! call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
+     ! call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
+     !   &  test_maxdims(1:test_rank), status )
+     ! if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+     !   & 'Unable to get dims for datset '//trim(name) )
+     ! call h5soffset_simple_f( spaceID, test_offset(1:test_rank), status)
      ! print *, 'Is simple? ', test_issimple
      ! print *, 'rank    : ', test_rank
      ! print *, 'dims    : ', test_dims(1:test_rank)
@@ -1544,8 +1570,9 @@ contains ! ======================= Public Procedures =========================
      ! print *, 'offsets : ', test_offset(1:test_rank)
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
         & int ( (/ shp, ones(1:5) /), hID_T ), status, &
-        & memspaceID, spaceID )
+        & memspaceID, filespaceID )
      ! print *, 'After writing mem space ', memspaceID
+      spaceID = filespaceID
     else
       ! Write the data
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
@@ -1700,6 +1727,9 @@ contains ! ======================= Public Procedures =========================
       call mls_extend ( setID, Count, start, filespaceID )
       call mls_hyperslab_save(filespaceID, &
         & start, count, stride, block)
+      if ( style == 2 ) then
+        call h5screate_simple_f(3, dims, memspaceID, status, maxdims)
+      endif
       if ( DEEBUG ) print *, 'filespaceID ', filespaceID
       call dump_space(filespaceID)
       if ( DEEBUG ) print *, 'memspaceID ', memspaceID
@@ -1753,13 +1783,12 @@ contains ! ======================= Public Procedures =========================
     integer(hid_t) :: cparms
     integer(hsize_t), dimension(4) :: chunk_dims, dims, maxdims
     integer :: spaceID                  ! ID for filespace
+    integer :: filespaceID              ! ID for filespace
     integer :: memSpaceID               ! ID for arrayspace
     integer (HID_T) :: setID            ! ID for dataset
     integer :: status                   ! Flag from HDF5
     integer, dimension(4) :: SHP        ! Shape
     integer :: style   ! fixed static (0), dynamic 1st (1), adding to (2)
-    integer :: test_rank
-    integer(hsize_t), dimension(7) :: test_dims, test_maxdims
 
     ! Executable code
     style = 0  ! The default
@@ -1770,6 +1799,7 @@ contains ! ======================= Public Procedures =========================
       if ( adding_to ) style = 2
     endif
 
+    if ( DEEBUG ) print *, 'style:   ', style
     ! Create the dataspace
     shp = shape(value)
     maxdims = shp
@@ -1785,52 +1815,72 @@ contains ! ======================= Public Procedures =========================
         & status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 4D real array '//trim(name) )
+      memspaceID = spaceID
+      filespaceID = spaceID
     elseif (style == 1) then
       maxdims(4) = H5S_UNLIMITED_F
       dims(4) = max(1, shp(4))
       chunk_dims(4) = 1
-      call h5screate_simple_f(4, dims, spaceID, status, maxdims)
+      if ( DEEBUG ) print *, 'shape ', shp
+      if ( DEEBUG ) print *, 'maxdims ', maxdims
+      if ( DEEBUG ) print *, 'dims ', dims
+      if ( DEEBUG ) print *, 'chunk_dims ', chunk_dims
+      call h5screate_simple_f(4, dims, memspaceID, status, maxdims)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to create dataspace for 4D real array '//trim(name) )
+        & 'Unable to create memspace for 4D real array '//trim(name) )
+      spaceID = memspaceID
       call h5pcreate_f(H5P_DATASET_CREATE_F, cparms, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create property list for 4D real array '//trim(name) )
       call h5pset_chunk_f(cparms, 4, chunk_dims, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to set chunking 4D real array '//trim(name) )
-      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, setID, &
-        & status, cparms )
+      call h5dCreate_f ( locID, trim(name), H5T_NATIVE_REAL, spaceID, &
+        & setID, status, cparms )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to create dataset for 4D real array '//trim(name) )
+      call h5dextend_f ( setID, dims, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to extend dataset creating 4D real array '//trim(name) )
+      call h5dget_space_f(setID, filespaceID, status)
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to get filespaceID creating 4D real array '//trim(name) )
+      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
+      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
+      if ( DEEBUG ) print *, 'cparms ', cparms
+      if ( DEEBUG ) print *, 'locID ', locID
+      if ( DEEBUG ) print *, 'setID ', setID
     else
       call h5dopen_f ( locID, trim(name), setID, status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to open dataset for 4D real array '//trim(name) )
       call h5dget_space_f( setID, spaceID, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get dataspace for 4D real array '//trim(name) )
-      call h5sget_simple_extent_ndims_f ( spaceID, test_rank, status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to get space rank for 4D real array '//trim(name) )
-      call h5sget_simple_extent_dims_f ( spaceID, test_dims(1:test_rank), &
-       &  test_maxdims(1:test_rank), status )
-      ! Can't test on status--it's set to the test_rank
-      if ( status /= test_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & 'Unable to get dims for datset '//trim(name) )
-      test_dims(test_rank) = test_dims(test_rank) + shp(test_rank)
-      call h5dextend_f( setID, test_dims, status)
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Unable to extend dims for 4D real array '//trim(name) )
-      call h5dget_space_f( setID, spaceID, status)
+      if ( .not. present(start) ) &
+        & call mls_extend ( setID, shp )
+      memspaceID = spaceID
+      call h5dget_space_f( setID, filespaceID, status)
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unable to get dataspace for 4D real array '//trim(name) )
     endif
     if ( present(start) ) then
-      call mls_hyperslab(spaceID, shape(value), name, memspaceID, &
+      if ( DEEBUG ) print *, 'name ', name
+      if ( DEEBUG ) print *, 'shape(value) ', shape(value)
+      if ( DEEBUG ) print *, 'start ', start
+      if ( DEEBUG ) print *, 'count ', count
+      call mls_extend ( setID, Count, start, filespaceID )
+      call mls_hyperslab_save(filespaceID, &
         & start, count, stride, block)
+      if ( style == 2 ) then
+        call h5screate_simple_f(4, dims, memspaceID, status, maxdims)
+      endif
+      if ( DEEBUG ) print *, 'filespaceID ', filespaceID
+      call dump_space(filespaceID)
+      if ( DEEBUG ) print *, 'memspaceID ', memspaceID
+      call dump_space(memspaceID)
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
         & int ( (/ shp, ones(1:3) /), hID_T ), status, &
-        & memspaceID, spaceID )
+        & memspaceID, filespaceID )
+      spaceID = filespaceID
     else
       ! Write the data
       call h5dWrite_f ( setID, H5T_NATIVE_REAL, value, &
@@ -2972,6 +3022,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.30  2003/07/24 22:10:45  pwagner
+! Fixed another bug preventing multiple chunks from writing to same dataset
+!
 ! Revision 2.29  2003/07/21 23:30:23  pwagner
 ! Check on returnstatus from h5sget_simple_extent_dims_f being rank (marking success)
 !
