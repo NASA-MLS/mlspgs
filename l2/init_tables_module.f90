@@ -120,7 +120,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
   integer, parameter :: F_SPECIES             = f_sourcequantity + 1
   integer, parameter :: F_SPECTROMETER        = f_species + 1
-  integer, parameter :: F_SPREAD              = f_spectrometer + 1
+  integer, parameter :: F_SPECTROMETERTYPE    = f_spectrometer + 1
+  integer, parameter :: F_SPREAD              = f_spectrometerType + 1
   integer, parameter :: F_START               = f_spread + 1
   integer, parameter :: F_STATE               = f_start + 1
   integer, parameter :: F_STEP                = f_state + 1
@@ -222,31 +223,31 @@ module INIT_TABLES_MODULE
   integer :: SECTION_INDICES(section_first:section_last)
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
-  integer, parameter :: S_APRIORI        = last_parm + 1
-  integer, parameter :: S_BAND           = s_apriori + 1
-  integer, parameter :: S_CHANNEL        = s_band + 1
-  integer, parameter :: S_CLIMATOLOGY    = s_channel + 1
-  integer, parameter :: S_CREATE         = s_climatology + 1
-  integer, parameter :: S_FILL           = s_create + 1
-  integer, parameter :: S_FORWARDMODEL   = s_fill + 1
-  integer, parameter :: S_HGRID          = s_forwardModel + 1
-  integer, parameter :: S_L2GP           = s_hgrid + 1
-  integer, parameter :: S_L2AUX          = s_l2gp + 1
-  integer, parameter :: S_MATRIX         = s_l2aux + 1
-  integer, parameter :: S_MERGE          = s_matrix + 1
-  integer, parameter :: S_OUTPUT         = s_merge + 1
-  integer, parameter :: S_QUANTITY       = s_output + 1
-  integer, parameter :: S_RADIOMETER     = s_quantity + 1
-  integer, parameter :: S_RETRIEVE       = s_radiometer + 1
-  integer, parameter :: S_SIGNAL         = s_retrieve + 1
-  integer, parameter :: S_SUBSET         = s_signal + 1
-  integer, parameter :: S_SPECTROMETER   = s_subset + 1
-  integer, parameter :: S_TEMPLATE       = s_spectrometer + 1
-  integer, parameter :: S_TIME           = s_template + 1
-  integer, parameter :: S_TPFILL         = s_time + 1
-  integer, parameter :: S_VECTOR         = s_tpfill + 1
-  integer, parameter :: S_VECTORTEMPLATE = s_vector + 1
-  integer, parameter :: S_VGRID          = s_vectortemplate + 1
+  integer, parameter :: S_APRIORI            = last_parm + 1
+  integer, parameter :: S_BAND               = s_apriori + 1
+  integer, parameter :: S_CHANNEL            = s_band + 1
+  integer, parameter :: S_CLIMATOLOGY        = s_channel + 1
+  integer, parameter :: S_CREATE             = s_climatology + 1
+  integer, parameter :: S_FILL               = s_create + 1
+  integer, parameter :: S_FORWARDMODEL       = s_fill + 1
+  integer, parameter :: S_HGRID              = s_forwardModel + 1
+  integer, parameter :: S_L2GP               = s_hgrid + 1
+  integer, parameter :: S_L2AUX              = s_l2gp + 1
+  integer, parameter :: S_MATRIX             = s_l2aux + 1
+  integer, parameter :: S_MERGE              = s_matrix + 1
+  integer, parameter :: S_OUTPUT             = s_merge + 1
+  integer, parameter :: S_QUANTITY           = s_output + 1
+  integer, parameter :: S_RADIOMETER         = s_quantity + 1
+  integer, parameter :: S_RETRIEVE           = s_radiometer + 1
+  integer, parameter :: S_SIGNAL             = s_retrieve + 1
+  integer, parameter :: S_SUBSET             = s_signal + 1
+  integer, parameter :: S_SPECTROMETERTYPE   = s_subset + 1
+  integer, parameter :: S_TEMPLATE           = s_spectrometerType + 1
+  integer, parameter :: S_TIME               = s_template + 1
+  integer, parameter :: S_TPFILL             = s_time + 1
+  integer, parameter :: S_VECTOR             = s_tpfill + 1
+  integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
+  integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_vGrid
   integer :: SPEC_INDICES(spec_first:spec_last)
 
@@ -411,6 +412,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
     field_indices(f_species) =             add_ident ( 'species' )
     field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
+    field_indices(f_spectrometerType) =    add_ident ( 'spectrometerType' )
     field_indices(f_spread) =              add_ident ( 'spread' )
     field_indices(f_start) =               add_ident ( 'start' )
     field_indices(f_state) =               add_ident ( 'state' )
@@ -480,7 +482,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_radiometer) =           add_ident ( 'radiometer' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_signal) =               add_ident ( 'signal' )
-    spec_indices(s_spectrometer) =         add_ident ( 'spectrometer' )
+    spec_indices(s_spectrometerType) =     add_ident ( 'spectrometerType' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_time) =                 add_ident ( 'time' )
@@ -584,8 +586,9 @@ contains ! =====     Public procedures     =============================
       begin, s+s_radiometer, &
              begin, f+f_lo, t+t_numeric, n+n_field_type, &
              begin, f+f_suffix, t+t_string, n+n_field_type, &
+             begin, f+f_module, t+t_module, n+n_field_type, &
              nadp+n_spec_def, &
-      begin, s+s_spectrometer, & ! MUST be AFTER S_Channel
+      begin, s+s_spectrometerType, & ! MUST be AFTER S_Channel
              begin, f+f_channels, s+s_channel, n+n_field_spec, &
              begin, f+f_first, t+t_numeric, n+n_field_type, &
              begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
@@ -597,9 +600,9 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_signal, & ! MUST be AFTER S_Band, S_Radiometer and S_Spectrometer
              begin, f+f_band, s+s_band, n+n_field_spec, &
-             begin, f+f_channel, t+t_numeric, n+n_field_type, &
+             begin, f+f_spectrometer, t+t_numeric, n+n_field_type, &
              begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
-             begin, f+f_spectrometer, s+s_spectrometer, n+n_field_spec, &
+             begin, f+f_spectrometerType, s+s_spectrometerType, n+n_field_spec, &
              begin, f+f_switch, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def /) )
     call make_tree ( (/ &
@@ -761,7 +764,7 @@ contains ! =====     Public procedures     =============================
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
       begin, z+z_mlsSignals, s+s_band, s+s_channel, s+s_radiometer, &
-                             s+s_signal, s+s_spectrometer, &
+                             s+s_signal, s+s_spectrometerType, &
              n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
@@ -863,6 +866,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.26  2001/02/27 02:12:52  livesey
+! Regular commit
+!
 ! Revision 2.25  2001/02/22 23:26:30  vsnyder
 ! Removed "required" from "source" field of "l2gp" spec
 !
