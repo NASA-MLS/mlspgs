@@ -728,7 +728,7 @@ CONTAINS
       integer :: how_big
       logical, parameter :: USELENGTHONECHARS = .true.
       logical, parameter :: MAKEDATASET = .true.
-      logical, parameter :: MAKEATTRIBUTE = .true.
+      logical, parameter :: MAKEATTRIBUTE = .not. MAKEDATASET
       character(len=size(anText)) :: anScalar
       character(len=80) :: myPCFPATHNAME
       ! Executable
@@ -739,13 +739,15 @@ CONTAINS
         call SaveAsHDF5DS ( fileID, trim(myPCFPATHNAME), anScalar )
       endif
       if ( .not. MAKEATTRIBUTE ) return
+      myPCFPATHNAME = PCFATTRIBUTENAME
+      if ( present(name) ) myPCFPATHNAME = name
       call h5gopen_f(fileID, '/', grp_id, status)
       if ( status /= PGS_S_SUCCESS) &
         & CALL MLSMessage(MLSMSG_Error, ModuleName, &
         & 'Error opening hdf5 file root group for annotating with PCF' )
       if ( USELENGTHONECHARS ) then
         call MakeHDF5Attribute(grp_id, &
-         & PCFATTRIBUTENAME, anText, .true.)
+         & trim(myPCFPATHNAME), anText, .true.)
          ! & 'PCF file text', anText, .true.)
       else
         ! Find how big an40 must be to hold anText
@@ -757,7 +759,7 @@ CONTAINS
         an40 = ' '
         ! Do some nonsense here
         call MakeHDF5Attribute(grp_id, &
-         & 'PCF file text', an40, .true.)
+         & trim(myPCFPATHNAME), an40, .true.)
         deallocate(an40, stat=status)
         if ( status /= PGS_S_SUCCESS) &
           & CALL MLSMessage(MLSMSG_Error, ModuleName, &
@@ -937,6 +939,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.21  2003/06/11 19:33:33  pwagner
+!# No longer tries to write hdf5 pcf as both ds and attr
+!#
 !# Revision 2.20  2003/05/30 23:47:00  pwagner
 !# Now standardized to write PCF, InputPointer for all levels
 !#
