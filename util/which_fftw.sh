@@ -103,10 +103,10 @@ then
 #   - - - U s e  ( 2 ) o r ( 3 ) - - -
    test_295=`gcc -v 2>&1 | grep -i '2\.95'`
    test_296=`gcc -v 2>&1 | grep -i '2\.96'`
-   test_31=`gcc -v 2>&1 | grep -i '3\.1'`
-   test_32=`gcc -v 2>&1 | grep -i '3\.2'`
-   test_322=`gcc -v 2>&1 | grep -i '3\.2\.2'`
-   test_323=`gcc -v 2>&1 | grep -i '3\.2\.3'`
+   # test_31=`gcc -v 2>&1 | grep -i '3\.1'`
+   # test_32=`gcc -v 2>&1 | grep -i '3\.2'`
+   # test_322=`gcc -v 2>&1 | grep -i '3\.2\.2'`
+   # test_323=`gcc -v 2>&1 | grep -i '3\.2\.3'`
    gcc_version=
    if [ "$test_295" != "" ]
    then
@@ -114,22 +114,40 @@ then
    elif [ "$test_296" != "" ]
    then
      gcc_version="2.96"
-   elif [ "$test_31" != "" ]
-   then
-     gcc_version="3.1"
-   elif [ "$test_322" != "" ]
-   then
-     gcc_version="3.2.2"
-     stobject="$my_stobject"
-   elif [ "$test_323" != "" ]
-   then
-     gcc_version="3.2.3"
-     stobject="$my_stobject"
-   elif [ "$test_32" != "" ]
-   then
-     gcc_version="3.2"
+  #elif [ "$test_31" != "" ]
+  #then
+  #  gcc_version="3.1"
+  #elif [ "$test_322" != "" ]
+  #then
+  #  gcc_version="3.2.2"
+  #  stobject="$my_stobject"
+  #elif [ "$test_323" != "" ]
+  #then
+  #  gcc_version="3.2.3"
+  #  stobject="$my_stobject"
+  #elif [ "$test_32" != "" ]
+  #then
+  #  gcc_version="3.2"
    else
-     exit 1
+     gcc_version=`gcc -dumpversion`
+     #exit 1
+     case "$gcc_version" in
+        3.1)
+        stobject=
+        ;;
+        3.2)
+        stobject=
+        ;;
+        3.2.2)
+        stobject="$my_stobject"
+        ;;
+        3.2.3)
+        stobject="$my_stobject"
+        ;;
+        *)
+        stobject="$my_stobject"
+        ;;
+      esac
    fi
    if [ "$USE" = "2" ]
    then
@@ -209,6 +227,9 @@ echo "You probably have to reset FFTW_ROOT in .configure" >> fftw_link_message
 echo "Do that by 'make configure_pvm'" >> fftw_link_message                      
 exit
 # $Log$
+# Revision 1.6  2004/03/17 00:19:35  pwagner
+# Use(3) to fix building static Lahey executables when Red Hat>8
+#
 # Revision 1.5  2004/02/06 18:31:34  pwagner
 # Added gcc version 3.2.3
 #
