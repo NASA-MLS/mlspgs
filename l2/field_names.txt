@@ -152,6 +152,7 @@ nscatteringangles
 nsizebins
 number
 
+offsetAmount
 operational
 opticalDepth
 opticalDepthCutoff
@@ -259,6 +260,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.59  2002/10/25 23:55:56  livesey
+# Added offsetAmount
+#
 # Revision 2.58  2002/10/23 01:32:31  vsnyder
 # Add CovSansReg switch to retrieve spec
 #
