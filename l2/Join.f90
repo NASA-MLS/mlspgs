@@ -398,11 +398,13 @@ contains ! =====     Public Procedures     =============================
     thisL2GP%l2gpValue(:,:,firstProfile:lastProfile) = &
          RESHAPE(quantity%values(:,useFirstInstance:useLastInstance),&
          (/MAX(thisL2GP%nFreqs,1),MAX(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
-    if (associated(precision)) &
+    if (associated(precision)) then
       thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = &
       RESHAPE(precision%values(:,useFirstInstance:useLastInstance),&
          (/MAX(thisL2GP%nFreqs,1),MAX(thisL2GP%nLevels,1),lastProfile-firstProfile+1/))
-    thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0 ! Later put something here
+    else
+      thisL2GP%l2gpPrecision(:,:,firstProfile:lastProfile) = 0.0
+    end if
     thisL2GP%status(firstProfile:lastProfile)='G'
     thisL2GP%quality(firstProfile:lastProfile)=0.0
 
@@ -632,6 +634,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.39  2001/05/19 01:19:58  livesey
+! Fills precision correctly for l2gp!
+!
 ! Revision 2.38  2001/05/14 22:23:53  livesey
 ! Embarassing bug fix, to do with renumbering of minor frame L2AUX quantities.
 !
