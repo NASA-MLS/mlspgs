@@ -58,8 +58,8 @@ contains ! =====     Public Procedures     =============================
       & F_LENGTHSCALE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
       & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
       & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISE, F_NOISEBANDWIDTH, &
-      & F_OFFSETAMOUNT, &
-      & F_ORBITINCLINATION, F_PHITAN, F_PRECISION, F_PRECISIONFACTOR, &
+      & F_OFFSETAMOUNT, F_ORBITINCLINATION, F_PHITAN, &
+      & F_PHIWINDOW, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
       & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
@@ -96,7 +96,7 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: FIELD_INDICES
     use Intrinsic, only: &
       & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
-      & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta
+      & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta, PHYQ_Angle, PHYQ_Profiles
     use L1BData, only: DeallocateL1BData, Dump, FindL1BData, L1BData_T, &
       & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
     use L2GPData, only: L2GPData_T
@@ -350,6 +350,8 @@ contains ! =====     Public Procedures     =============================
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
     integer :: PHITANVECTORINDEX        ! In the vector database
     integer :: PHITANQUANTITYINDEX      ! In the quantities database
+    real(r8) :: PHIWINDOW               ! For hydrostatic ptan guesser
+    integer :: PHIWINDOWUNITS           ! For hydrostatic ptan guesser
     real(r8) :: PRECISIONFACTOR         ! For setting -ve error bars
     integer :: PRECISIONQUANTITYINDEX   ! For precision quantity
     integer :: PRECISIONVECTORINDEX     ! In the vector database
@@ -454,6 +456,8 @@ contains ! =====     Public Procedures     =============================
       precisionFactor = 0.5
       offsetAmount = 1000.0             ! Default to 1000K
       profile = -1
+      phiWindow = 4
+      phiWindowUnits = phyq_angle
 
       ! Node_id(key) is now n_spec_args.
 
@@ -696,6 +700,12 @@ contains ! =====     Public Procedures     =============================
           case ( f_Phitan ) ! For losGrid fill
             PhitanVectorIndex = decoration(decoration(subtree(1,gson)))
             PhitanQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_phiWindow )
+            call expr ( gson, unitAsArray, valueAsArray )
+            phiWindow = valueAsArray(1)
+            if ( all ( unitAsArray(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
+              call Announce_Error ( key, 0, 'Bad units for phiWindow' )
+            phiWindowUnits = unitAsArray(1)
           case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
             vectorIndex = decoration(decoration(subtree(1,gson)))
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -914,7 +924,8 @@ contains ! =====     Public Procedures     =============================
           end if
           call FillVectorQtyHydrostatically ( key, quantity, temperatureQuantity, &
             & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
-            & phiTanQuantity, geocAltitudeQuantity, maxIterations )          
+            & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
+            & phiWindow, phiWindowUnits )          
 
         case ( l_isotope ) ! --------------- Isotope based fills -------
           if (.not. all(got( (/f_ratioQuantity, f_sourceQuantity/) ) ) ) &
@@ -3764,7 +3775,8 @@ contains ! =====     Public Procedures     =============================
     ! ------------------------------------- FillVectorHydrostatically ----
     subroutine FillVectorQtyHydrostatically ( key, quantity, &
       & temperatureQuantity, refGPHQuantity, h2oQuantity, &
-      & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations )
+      & orbitInclinationQuantity, phiTanQuantity, geocAltitudeQuantity, maxIterations, &
+      & phiWindow, phiWindowUnits )
       ! Various hydrostatic fill operations
       integer, intent(in) :: key          ! For messages
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
@@ -3775,6 +3787,8 @@ contains ! =====     Public Procedures     =============================
       type (VectorValue_T), pointer :: PHITANQUANTITY
       type (VectorValue_T), pointer :: GEOCALTITUDEQUANTITY
       integer, intent(in) :: MAXITERATIONS
+      real(r8), intent(in) :: PHIWINDOW
+      integer, intent(in) :: PHIWINDOWUNITS
       ! H2OQuantity and GeocAltitudeQuantity have to be pointers
       ! as they may be absent.
 
@@ -3871,7 +3885,8 @@ contains ! =====     Public Procedures     =============================
         end if
         call Get2DHydrostaticTangentPressure ( quantity, temperatureQuantity,&
           & refGPHQuantity, h2oQuantity, orbitInclinationQuantity, &
-          & phiTanQuantity, geocAltitudeQuantity, maxIterations )
+          & phiTanQuantity, geocAltitudeQuantity, maxIterations, &
+          & phiWindow, phiWindowUnits )
       case default
         call Announce_error ( 0, 0, 'No such fill yet' )
       end select
@@ -4828,6 +4843,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.184  2003/02/18 23:59:06  livesey
+! Added phiWindow for hydrostatic fill.
+!
 ! Revision 2.183  2003/02/15 00:35:03  livesey
 ! Added error checking for range of profile on L2GP fill.
 !
