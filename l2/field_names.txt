@@ -44,6 +44,7 @@ destroyJacobian
 diagonal
 do_conv
 do_freq_avg
+dontMask
 
 earthRadius
 explicitValues
@@ -70,7 +71,6 @@ height
 hgrid
 
 ignore
-ignoreMask
 ignoreNegative
 ignoreZero
 inclination
@@ -186,6 +186,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.6  2001/09/20 20:54:25  pwagner
+# Replaced ignoreMask with dontMask
+#
 # Revision 2.5  2001/09/19 23:36:52  pwagner
 # Added ignoreMask, ..Negative, ..Zero
 #
