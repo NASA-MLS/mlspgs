@@ -176,10 +176,12 @@ contains ! ====     Public Procedures     ==============================
           end if
         case ( n_mult )
           value = value * value2
+          where ( units == phyq_dimensionless ) units = units2
         case ( n_div )
           value = value / value2
         case ( n_into )
           value = value2 / value
+          units = units2
         case default
           call announceError ( root, badNode )
         end select
@@ -301,6 +303,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.10  2004/05/28 23:45:09  vsnyder
+! Get units from either operand of *, second operand of \\
+!
 ! Revision 2.9  2004/05/28 23:13:46  vsnyder
 ! Add power (^) operator, log, exp and sqrt functions
 !
