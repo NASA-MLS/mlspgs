@@ -6,7 +6,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   ! This modules contains routines needed for manipulating vectors.
 
   use MLSMessageModule, only: MLSMessage,MLSMSG_Error,MLSMSG_Allocate,MLSMSG_Deallocate
-  use MLSCommon, only: r8
+  use MLSCommon, only: r8, rv
   use MLSNumerics, only: Hunt
   use VectorsModule, only: VectorValue_T
   use Dump_0, only: Dump
@@ -25,11 +25,30 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
   private
 
-  public :: FindClosestInstances, FindOneClosestInstance, &
+  public :: AnyGoodDataInQty, FindClosestInstances, FindOneClosestInstance, &
     & FindInstanceWindow, DoHGridsMatch, DoVGridsMatch, DoFGridsMatch, &
     & DoQtysDescribeSameThing
 
 contains
+
+  ! --------------------------------------- AnyGoodDataInQty --------------
+  logical function AnyGoodDataInQty ( a, a_precision )
+    ! Returns true if any of the mask != char(0)
+    ! Returns true if any of the precision values >= 0 (if present)
+    type ( VectorValue_T ), intent(in) :: a           ! Precision of qty
+    type ( VectorValue_T ), intent(in), optional :: a_precision ! Precision of qty
+
+    ! Executable code
+    AnyGoodDataInQty = .false.
+    if ( present(a_precision) ) then
+      if ( .not. associated ( a_precision%values ) ) return
+      AnyGoodDataInQty = any(a_precision%values >= 0._rv)
+      return
+    endif
+    AnyGoodDataInQty = .true.
+    if ( .not. associated ( a%mask ) ) return
+    AnyGoodDataInQty = any(a%mask == char(0) )
+  end function AnyGoodDataInQty
 
   ! ------------------------------ FindClosestInstances -----------------
   subroutine FindClosestInstances ( referenceQuantity, soughtQuantity,&
@@ -260,7 +279,7 @@ contains
     type ( VectorValue_T ), intent(in) :: A ! First quantity
     type ( VectorValue_T ), intent(in) :: B ! Second quantity
 
-    DoQtysDescribeSameThing = .true.
+    DoQtysDescribeSameThing = .false.
     if ( a%template%quantityType /= b%template%quantityType ) return
     if ( a%template%logBasis .neqv. b%template%logBasis ) return
     if ( a%template%verticalCoordinate /= b%template%verticalCoordinate ) return
@@ -277,6 +296,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.19  2002/09/19 00:30:36  pwagner
+! Added AnyGoodDataInQty; set DoQtysDescribeSameThing at its start
+!
 ! Revision 2.18  2002/09/10 20:47:44  livesey
 ! Added DoQtysDescribeSameThing
 !
