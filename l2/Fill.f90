@@ -205,7 +205,8 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: InvalidExplicitFill= noSourceQuantityGiven + 1
     integer, parameter :: BadUnitsForExplicit= invalidExplicitFill + 1
     integer, parameter :: BadUnitsForIntegrationTime = badUnitsForExplicit + 1
-    integer, parameter :: BadUnitsForSystemTemperature = badUnitsForIntegrationTime + 1
+    integer, parameter :: BadUnitsForStatus = badUnitsForIntegrationTime + 1
+    integer, parameter :: BadUnitsForSystemTemperature = badUnitsForStatus + 1
     integer, parameter :: BadUnitsForWidth = badUnitsForSystemTemperature + 1
     integer, parameter :: BadIsotopeFill = badUnitsForWidth + 1
     integer, parameter :: BadlosGridFill = badIsotopeFill + 1
@@ -427,7 +428,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SOURCEVECTORINDEX        ! In the vector database
     logical :: SPREADFLAG               ! Do we spread values accross instances in explict
     integer :: STATUS                   ! Flag from allocate etc.
-    real(r8) :: STATUSVALUE              ! Vaue of f_status
+    integer :: STATUSVALUE              ! Vaue of f_status
     integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     logical :: Switch2intrinsic         ! Have mls_random_seed call intrinsic
     !                                     -- for FillCovariance
@@ -520,7 +521,7 @@ contains ! =====     Public Procedures     =============================
       phiWindow = 4
       phiWindowUnits = phyq_angle
       phiZero = 0.0
-      statusValue = 0.0
+      statusValue = 0
       heightNode = 0
 
       ! Node_id(key) is now n_spec_args.
@@ -961,6 +962,11 @@ contains ! =====     Public Procedures     =============================
             vGridIndex=decoration(decoration(gson))
           case ( f_spread ) ! For explicit fill, note that gson here is not same as others
             spreadFlag = get_boolean ( gson )
+          case ( f_status )
+            call expr ( gson , unitAsArray, valueAsArray )
+            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
+              call Announce_error ( key, badUnitsForStatus )
+            statusValue = nint ( valueAsArray(1) )
           case ( f_systemTemperature )
             sysTempVectorIndex = decoration(decoration(subtree(1,gson)))
             sysTempQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1682,7 +1688,7 @@ contains ! =====     Public Procedures     =============================
           if ( all ( got ( (/ f_minValue, f_maxValue /) ) ) .and. &
             &  maxValue <= minValue ) call Announce_Error ( key, no_error_code, &
             & 'Bad combination of max/min values' )
-          call FillStatusQuantity ( key, quantity, sourceQuantity, nint ( statusValue ), &
+          call FillStatusQuantity ( key, quantity, sourceQuantity, statusValue, &
             & minValue, maxValue, heightNode, additional )
           
         case ( l_vector ) ! ---------------- Fill from another qty.
@@ -6379,9 +6385,8 @@ contains ! =====     Public Procedures     =============================
       else
         surface = 1
       end if
-
-      if ( .not. additional ) &
-        & quantity%values = iand ( nint ( quantity%values ), not ( statusValue ) )
+      if ( .not. additional ) quantity%values = 0.0_r8
+        ! quantity%values = iand ( nint ( quantity%values ), not ( statusValue ) )
       where ( sourceQuantity%values(surface,:) > maxValue .or. sourceQuantity%values(surface,:) < minValue )
         quantity%values(1,:) = ior ( nint ( quantity%values(1,:) ), statusValue )
       end where
@@ -6717,6 +6722,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " has inappropriate units for integration time.", advance='yes' )
       case ( badUnitsForSystemTemperature )
         call output ( " has inappropriate units for system temperature.", advance='yes' )
+      case ( badUnitsForStatus )
+        call output ( " has inappropriate units for status.", advance='yes' )
       case ( badUnitsForMaxIterations )
         call output ( " maxIterations should be dimensionless", advance='yes' )
       case ( badUnitsForWidth )
@@ -6837,6 +6844,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.264  2004/04/02 01:06:46  livesey
+! Got the status filling working.
+!
 ! Revision 2.263  2004/03/22 18:25:25  livesey
 ! Added CombineChannels fill (may actually replace this before too long).
 !
