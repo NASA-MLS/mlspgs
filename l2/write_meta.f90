@@ -696,8 +696,12 @@ contains
         call announce_error ( 0, &
         & "Error: some of the mandatory parameters not set.") 
       else
+        call output('hdf_sdid: ', advance='no')
+        call output(hdf_sdid, advance='yes')
+        call output('hdfVersion: ', advance='no')
+        call output(hdfVersion, advance='yes')
         call announce_error ( 0, &
-        & "Error: metadata write failed in third_grouping.", &
+        & "Error: metadata write failed in third_grouping." // trim(physical_fileName), &
         & error_number=returnStatus) 
       end if
     end if
@@ -1552,6 +1556,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.50  2003/09/04 22:41:09  pwagner
+! Added some extra printing if metadata write fails in third_grouping
+!
 ! Revision 2.49  2003/09/03 23:56:24  pwagner
 ! Can get species name from trivial file name fragment
 !
