@@ -17,7 +17,7 @@ MODULE PCFHdr
      & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_Warning, MLSMSG_DeAllocate, MLSMSG_FILEOPEN
-   use MLSStrings, only: utc_to_yyyymmdd
+   use MLSStrings, only: utc_to_yyyymmdd, lowerCase
    USE SDPToolkit, only: PGSD_PC_UREF_LENGTH_MAX, PGS_S_SUCCESS, &
      & PGSD_MET_GROUP_NAME_L, PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, &
      & PGSD_IO_GEN_RDIRUNF, &
@@ -529,7 +529,7 @@ CONTAINS
 !------------------------------------
 
 !----------------------------------------
-   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, isHDFEOS)
+   SUBROUTINE WritePCF2Hdr (file, anText, hdfVersion, fileType)
 !----------------------------------------
       use HDF5, only: H5F_ACC_RDWR_F, &
         & h5fopen_f, h5fclose_f
@@ -543,36 +543,53 @@ CONTAINS
 
       CHARACTER (LEN=1), POINTER              :: anText(:)
       integer, intent(in), optional           :: hdfVersion
-      logical, intent(in), optional           :: isHDFEOS
+      character(len=*), intent(in), optional  :: fileType ! 'sw', 'gd', 'hdf'
+      ! logical, intent(in), optional         :: isHDFEOS
 
 ! Parameters
       integer :: fileID
       integer :: my_hdfVersion
-      logical :: myisHDFEOS
+      ! logical :: myisHDFEOS
       integer :: record_length
       integer :: status
+      character (len=2) :: the_type
 ! Executable
       my_hdfVersion = PCFHDR_DEFAULT_HDFVERSION
       if ( present(hdfVersion) ) my_hdfVersion = hdfVersion
-      myisHDFEOS = .false.
-      if ( present(isHDFEOS) ) myisHDFEOS = isHDFEOS
+      ! myisHDFEOS = .false.
+      ! if ( present(isHDFEOS) ) myisHDFEOS = isHDFEOS
+      the_type = 'hd'
+      if ( present(fileType) ) the_type = lowercase(fileType)
       select case(my_hdfVersion)
       case (HDFVERSION_4)
         call WritePCF2Hdr_hdf4 (file, anText)
       case (HDFVERSION_5)
-        if ( myisHDFEOS ) then
+        if ( the_type == 'sw' ) then
           fileID = mls_io_gen_openF('swopen', .TRUE., status, &
            & record_length, DFACC_RDWR, FileName=trim(file), &
            & hdfVersion=hdfVersion, debugOption=.false. )
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Error opening hdfeos5 file for annotating with PCF' )
+            & 'Error opening hdfeos5 swath file for annotating with PCF' )
           call WritePCF2Hdr_hdfeos5 (fileID, anText)
           status = mls_io_gen_closeF('swclose', fileID, &
             & hdfVersion=hdfVersion)
           if ( status /= PGS_S_SUCCESS) &
             & CALL MLSMessage(MLSMSG_Error, ModuleName, &
-            & 'Error closing hdfeos5 file for annotating with PCF' )
+            & 'Error closing hdfeos5 swath file for annotating with PCF' )
+        elseif ( the_type == 'gd' ) then
+          fileID = mls_io_gen_openF('gdopen', .TRUE., status, &
+           & record_length, DFACC_RDWR, FileName=trim(file), &
+           & hdfVersion=hdfVersion, debugOption=.false. )
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error opening hdfeos5 grid file for annotating with PCF' )
+          call WritePCF2Hdr_hdfeos5 (fileID, anText)
+          status = mls_io_gen_closeF('gdclose', fileID, &
+            & hdfVersion=hdfVersion)
+          if ( status /= PGS_S_SUCCESS) &
+            & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Error closing hdfeos5 grid file for annotating with PCF' )
         else
           call h5fopen_f(trim(file), H5F_ACC_RDWR_F, fileID, status)
           if ( status /= PGS_S_SUCCESS) &
@@ -899,6 +916,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.16  2003/03/11 00:20:14  pwagner
+!# can WritePCF2Hdr for swath, grid, or hdf files
+!#
 !# Revision 2.15  2003/03/07 00:37:24  pwagner
 !# Write GranuleDay -Month and -Year even if StartUTC in format yyy-ddd
 !#
