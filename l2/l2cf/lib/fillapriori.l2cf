@@ -172,7 +172,7 @@ begin Fill
   Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 1 ppbv
   Fill, quantity=aprioriPrecision.hno3, method=explicit, /spread, explicitValues= 10 ppbv
   ;; 1 ppbv is too small for ho2
-  Fill, quantity=aprioriPrecision.ho2,  method=explicit, /spread, explicitValues= 100 ppbv
+  Fill, quantity=aprioriPrecision.ho2,  method=explicit, /spread, explicitValues= 10 ppbv
   Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 3 ppbv
   ;; For N2O, 0.2 ppmv is too small for the troposphere, but we don't
   ;; have sensitivity there
@@ -275,7 +275,9 @@ begin Fill
     profileValues= [ 1mb:100pptv, 0.68mb:0pptv ]
   Fill, quantity=vReg.hno3, method=profile, $
     profileValues= [ 1mb:10ppbv, 0.68mb:0ppbv ]
-  Fill, quantity=vReg.ho2, method=profile, profileValues= [ 100mb:10ppbv ]
+  Fill, quantity=vReg.ho2,    method=profile, profileValues= $
+    [ 1000mb:0.01ppbv, 100mb:0.05ppbv, 10mb:0.1ppbv, 1mb:0.5ppbv, $
+      0.1mb:5ppbv, 0.01mb:100ppbv, 0.001mb:100ppbv ], /logspace
   Fill, quantity=vReg.hocl, method=profile, $
     profileValues= [ 1mb:0.3ppmv, 0.68mb:0ppmv ]
   Fill, quantity=vReg.n2o, method=profile, $
@@ -286,7 +288,9 @@ begin Fill
   Fill, quantity=vReg.o3_HR, method=profile, $
     profileValues=[ 10mb:0ppmv ]
 
-  Fill, quantity=vReg.oh, method=profile, profileValues= [ 10mb:30pptv, 1mb:300pptv ]
+  Fill, quantity=vReg.oh,    method=profile, profileValues= $
+    [ 1000mb:0.001ppbv, 100mb:0.001ppbv, 10mb:0.001ppbv, 1mb:0.02ppbv, $
+      0.1mb:0.2ppbv, 0.01mb:100ppbv, 0.001mb:0.1ppbv ], /logspace
 
   Fill, quantity=vReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
@@ -322,7 +326,9 @@ begin Fill
     profileValues= [ 1mb:100pptv, 0.68mb:0pptv ]
   Fill, quantity=hReg.hno3, method=profile, $
     profileValues= [ 1mb:0.3ppbv, 0.68mb:0ppbv ]
-  Fill, quantity=hReg.ho2, method=profile, profileValues= [ 100mb:10ppbv ]
+  Fill, quantity=hReg.ho2,    method=profile, profileValues= $
+    [ 1000mb:0.01ppbv, 100mb:0.05ppbv, 10mb:0.05ppbv, 1mb:0.2ppbv, $
+    0.1mb:3ppbv, 0.01mb:15ppbv, 0.001mb:10ppbv ], /logspace
   Fill, quantity=hReg.hocl, method=profile, $
     profileValues= [ 1mb:0.3ppmv, 0.68mb:0ppmv ]
   Fill, quantity=hReg.n2o, method=profile, $
@@ -333,8 +339,10 @@ begin Fill
   Fill, quantity=hReg.o3_HR, method=profile, $
     profileValues= [ 10mb:0ppmv ]
 
-  Fill, quantity=hReg.oh, method=profile, profileValues= [ 10mb:30pptv, 1mb:300pptv ]
-
+  Fill, quantity=hReg.oh,    method=profile, profileValues= $
+    [ 1000mb:0.001ppbv, 100mb:0.0005ppbv, 10mb:0.0005ppbv, 1mb:0.005ppbv, $
+    0.1mb:0.05ppbv, 0.01mb:0.1ppbv, 0.001mb:0.5ppbv ], /logspace
+  
   Fill, quantity=hReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=hReg.temperature_hr, method=profile, $
