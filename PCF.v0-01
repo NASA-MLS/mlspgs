@@ -80,7 +80,6 @@
 #-----------------
 # Test input files
 #-----------------
-322|sids_uif.txt|/duke/nakamura/L1BOA||||1
 22000|mls_l1b_oa_v0-03.2000-001|/duke/nakamura/L1BOA||||1
 22010|mls_l1b_rada_v0-01.2000-001|/duke/nakamura/L1BOA||||1
 22011|mls_l1b_radb_v0-01.2000-001|/duke/nakamura/L1BOA||||1
@@ -179,23 +178,7 @@
 # -----------------------------------------------------------------------
 #
 10501|EOSCHEM_2000-01-01.eph|/duke/nakamura/L1BOA/EPH||||1
-#10501|EOSPM1_1998-04-25.eph|/duke/nakamura/L1BOA/EPH||||3
-#10501|EOSPM1_1998-04-24.eph|/duke/nakamura/L1BOA/EPH||||2
-#10501|EOSPM1_1998-04-23.eph|/duke/nakamura/L1BOA/EPH||||1
-#10501|EOSPM1_2000-02-11.eph|/duke/nakamura/L1BOA/EPH||||1
-#10501|EOSPM1_2000-03-31.eph|/duke/nakamura/L1BOA/EPH||||1
-#10501|EOSPM1_1998-06-30.eph|/duke/nakamura/L1BOA/EPH||||1
-#10501|TRMM_1998-06-30.eph|/duke/nakamura/L1BOA/EPH||||1
-#10501|TRMM_1994-01-12.eph|/duke/nakamura/L1BOA/EPH||||1
 10502|EOSCHEM_2000-01-01.att|/duke/nakamura/L1BOA/EPH||||1
-#10502|EOSPM1_1998-04-25.att|/duke/nakamura/L1BOA/EPH||||3
-#10502|EOSPM1_1998-04-24.att|/duke/nakamura/L1BOA/EPH||||2
-#10502|EOSPM1_1998-04-23.att|/duke/nakamura/L1BOA/EPH||||1
-#10502|EOSPM1_2000-02-11.att|/duke/nakamura/L1BOA/EPH||||1
-#10502|EOSPM1_2000-03-31.att|/duke/nakamura/L1BOA/EPH||||1
-#10502|EOSPM1_1998-06-30.att|/duke/nakamura/L1BOA/EPH||||1
-#10502|TRMM_1998-06-30.att|/duke/nakamura/L1BOA/EPH||||1
-#10502|TRMM_1994-01-12.att|/duke/nakamura/L1BOA/EPH||||1
 #
 #------------------------------------------------------------------------
 # Datasets for PGS_DEM tools.
@@ -234,10 +217,6 @@
 #------------------
 # Test output files
 #------------------
-334|temp_l2gp.hdfeos|/duke/nakamura/L1BOA||||1
-333|temp_l1boa.sds|/duke/nakamura/L1BOA||||1
-332|temp_l1boa.txt|/duke/nakamura/L1BOA||||1
-331|temp_l1boa.hdf|/duke/nakamura/L1BOA||||1
 22500|mls_l2gp_temp_v0-01.2000-001|/duke/nakamura/L1BOA||||1
 22501|mls_l2gp_gph_v0-01.2000-001|/duke/nakamura/L1BOA||||1
 22502|mls_l2gp_h2o_v0-01.2000-001|/duke/nakamura/L1BOA||||1
@@ -399,7 +378,6 @@
 # earth model tags file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
 10402|earthfigure.dat|~/database/common/CSC||||1
-#10402|earthfigure.sids|/duke/nakamura/L1BOA/EPH||||1
 #
 # -----------------------------------------------------------------------
 # JPL planetary ephemeris file (binary form) (DO NOT REMOVE THIS ENTRY)
