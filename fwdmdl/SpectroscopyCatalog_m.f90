@@ -571,7 +571,7 @@ contains ! =====  Public Procedures  ===================================
         & call dump ( lines(i)%polarized, '      Polarized' )
     end do
   end subroutine Dump_Lines_Database
-  ! -------------------------------------  Dump_SpectCat_Database  -----
+  ! ----------------------------------  Dump_SpectCat_Database_2D  -----
   subroutine Dump_SpectCat_Database_2d ( Catalog, Name )
     use Output_m, only: Output
     type(catalog_T), intent(in) :: Catalog(:,:)
@@ -680,6 +680,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.20  2004/01/09 07:25:20  livesey
+! Added the fictitious instrument mls1
+!
 ! Revision 2.19  2003/07/15 18:17:31  livesey
 ! Added a 2D dump
 !
