@@ -7,13 +7,10 @@ module PointingGrid_m
   ! Link them to and from the Signals database in MLSSignals_m
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use D_HUNT_M, only: HUNT
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Info
-  use MLSSignals_m, only: Bands, DestroySignalDatabase, GetNameOfSignal, &
-    & MaxSigLen, Signals, Signal_T
-  use Output_m, only: Blanks, MLSMSG_Level, Output, PrUnit
+  use MLSSignals_m, only: GetNameOfSignal, MaxSigLen, Signals, Signal_T
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -265,6 +262,7 @@ outer2: do
   ! --------------------------------  Dump_Pointing_Grid_Database  -----
   subroutine Dump_Pointing_Grid_Database
     use Dump_0, only: Dump
+    use Output_m, only: Blanks, Output
 
     integer :: I, J                     ! Subscripts, loop inductors
     character(len=MaxSigLen) :: SigName ! From GetSignalName
@@ -293,6 +291,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.1  2002/05/08 08:53:43  zvi
+! All radiometers grid concept implementation
+!
 ! Revision 2.0  2001/09/17 20:26:26  livesey
 ! New forward model
 !
