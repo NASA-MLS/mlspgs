@@ -11,12 +11,13 @@ module Open_Init
   use Hdfeos, only: swopen, swclose
   use INIT_TABLES_MODULE, only: F_FILE, F_SWATH, S_L2AUX, S_L2GP
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
-    &                  ReadL2AUXData, SetupNewL2AUXRecord
-  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, DestroyL2GPContents, ReadL2GPData, &
-    &                 SetupNewL2GPRecord
+    &                  ReadL2AUXData!, SetupNewL2AUXRecord
+! use L2GPData, only: L2GPData_T, AddL2GPToDatabase, DestroyL2GPContents, &
+!   &                 ReadL2GPData, SetupNewL2GPRecord
+  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    &                         MLSMSG_Error, MLSMSG_FileOpen, MLSMSG_Info
+    &                         MLSMSG_Error, MLSMSG_FileOpen!, MLSMSG_Info
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
     &                MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START, &
     &                MLSPCF_L2CF_START
@@ -27,11 +28,14 @@ module Open_Init
   use String_Table, only: L2CFUnit => INUNIT, GET_STRING
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
-    &             SOURCE_REF, SUB_ROSA, SUBTREE
-  use TREE_TYPES, only: N_NAMED, N_DOT
-  use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, Vector_T, &
-    &                      VectorTemplate_T
+! use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
+!   &             SOURCE_REF, SUB_ROSA, SUBTREE
+  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
+    &             SUB_ROSA, SUBTREE
+  use TREE_TYPES, only: N_NAMED!, N_DOT
+! use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, Vector_T, &
+!   &                      VectorTemplate_T
+! use VectorsModule, only: Vector_T
 
   implicit none
   private
@@ -254,13 +258,13 @@ contains ! =====     Public Procedures     =============================
     integer :: l2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     character (LEN=480) :: msr     ! Error message if can't find file
-    type (Vector_T) :: newVector
+!?  type (Vector_T) :: newVector
 
     integer :: sd_id
     integer :: SON              ! Of root, an n_spec_args or a n_named
     integer :: swathName        ! sub-rosa index of name in swath='name'
     character(len=FileNameLen) :: SwathNameString ! actual literal swath name
-    integer :: vectorIndex         ! In the vector database
+!?  integer :: vectorIndex         ! In the vector database
 
 
     if ( toggle (gen) ) call trace_begin( "read_apriori", root )
@@ -371,6 +375,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.18  2001/02/27 01:30:46  vsnyder
+! Commented-out several USEd entities that NAG says actually aren't used.
+!
 ! Revision 2.17  2001/02/23 18:17:35  livesey
 ! Added trace calls
 !
