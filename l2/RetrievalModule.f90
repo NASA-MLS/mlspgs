@@ -666,6 +666,9 @@ contains
       ! Create the normal equations matrix
       call createEmptyMatrix ( normalEquations%m, &
         & enter_terminal ('_normalEquations', t_identifier), state, state )
+      ! Create a separate matrix for J^T J in case averaging kernel requested
+      call createEmptyMatrix ( kTkSep%m, &
+        & enter_terminal ('_kTkSep', t_identifier), state, state )
       ! Create the vectors we need.
       call copyVector ( v(x), state, vectorNameText='_x', clone=.true. ) ! x := state
       call cloneVector ( v(aTb), v(x), vectorNameText='_ATb' )
@@ -774,7 +777,8 @@ contains
             ! leak.  Then make it look like apriori.
             call cloneVector ( v(aprioriMinusX), apriori, &
               & vectorNameText='_aprioriMinusX' )
-            v(aprioriMinusX) = apriori - v(x)
+!           v(aprioriMinusX) = apriori - v(x)
+            call subtractFromVector ( v(aprioriMinusX), v(x) )
             if ( got(f_aprioriScale) ) &
               & call scaleVector ( v(aprioriMinusX), aprioriScale )
             !{Let the covariance of the apriori be $\mathbf{S_a}$, let
@@ -1477,16 +1481,20 @@ contains
       end if
 
       ! Compute the averaging kernel
-      if ( got(f_average) ) outputAverage = outputCovariance%m .tx. kTk%m
+      if ( got(f_average) ) then
+        outputAverage = outputCovariance%m .tx. kTk%m
+        call destroyMatrix ( kTk%m )
+      end if
 
       call copyVector ( state, v(x) )
         if ( index(switches,'svec') /= 0 ) &
           & call dump ( state, name='Final state' )
       ! Clean up the temporaries, so we don't have a memory leak.
-      ! Most of them are in the myVectors database, which is destroyed
-      ! upon exit from Retrieve.
+      ! Most of the vectors are in the myVectors database, which is
+      ! destroyed upon exit from Retrieve.
       if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyMatrix ( normalEquations%m )
+      call destroyMatrix ( kTkSep%m )
       call destroyMatrix ( factored%m )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       call add_to_retrieval_timing( 'newton_solver', t1 )
@@ -2799,6 +2807,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.147  2002/07/01 23:43:17  vsnyder
+! Plug some memory leaks
+!
 ! Revision 2.146  2002/06/25 20:45:31  vsnyder
 ! DestroyVectorValue should have been ClearVector in the case that there is
 ! no apriori covariance.
