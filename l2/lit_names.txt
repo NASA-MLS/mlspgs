@@ -19,6 +19,7 @@ apriori
 
 binmax
 binmin
+binTotal
 both
 
 chisqbinned
@@ -100,6 +101,8 @@ manipulate
 ncep
 negativeprecision
 newtonian
+noRadsBinned
+noRadsPerMIF
 norm
 numJ # Number of Jacobian values used by the Newtonian solver
 
@@ -136,6 +139,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.35  2003/05/10 22:22:45  livesey
+# New types
+#
 # Revision 2.34  2003/05/07 01:01:39  livesey
 # Added chisqBinned
 #
