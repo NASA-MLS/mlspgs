@@ -26,8 +26,7 @@ begin Output
 !standardProduct(o3,O3,)
 !standardProduct(oh,OH,)
 !standardProduct(so2,SO2,)
-;; We need to define RHI first before I can fill this properly.
-;!standardProduct(rhi,RHI,)
+!standardProduct(rhi,RHI,)
 
 ;; Now output the DGG file
 !ifdef(gotDGGs,{
