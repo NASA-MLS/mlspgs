@@ -19,12 +19,13 @@ module CONVOLVE_ALL_M
   implicit NONE
   private
   public :: CONVOLVE_ALL
-  !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-    "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-    "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 contains
   !---------------------------------------------------------------------------
   ! This subroutine transfers the derivatives over from the internal
@@ -69,16 +70,17 @@ contains
     type (VectorValue_t), pointer :: f
 
     integer :: FFT_INDEX(size(antennaPattern%aaap))
-    integer :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc, fft_pts
-    integer :: row,col                  ! Matrix entries
-    integer :: no_t, no_tan_hts, no_phi_t, phiWindow, lk, uk
-    integer :: ind                      ! Index
+    integer :: Ind                      ! Index
+    integer :: N, I, J, Is, Ktr, Nf, Ntr, Ptg_i, Sv_i, Spectag, Ki, Kc, FFT_pts
+    integer :: Row, Col                 ! Matrix entries
+    integer :: No_t, No_tan_hts, No_phi_t, PhiWindow, Lk, Uk
+    logical :: Want_Deriv
 
     Real(r8) :: Q, R
     Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
     Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
 
-    Character(LEN=01) :: CA
+    Character :: CA
 
     ! -----  Begin the code  -----------------------------------------
     phiWindow = windowFinish - windowStart +1
@@ -104,15 +106,15 @@ contains
 
     fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
     fft_angles(1:size(tan_press)) = ptg_angles(1:size(tan_press))
-    Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-      &               fft_pts,AntennaPattern,Ier)
-    if (Ier /= 0) Return
+    Call fov_convolve ( fft_angles, Rad,center_angle, 1, no_tan_hts, &
+      &                 fft_pts, AntennaPattern, Ier )
+    if ( Ier /= 0) Return
 
     !  Get 'Ntr' pressures associated with the fft_angles:
 
-    Call get_pressures('a',ptg_angles,tan_temp,tan_press,no_tan_hts, &
-      &                   fft_angles,fft_press,Ntr,Ier)
-    if (Ier /= 0) Return
+    Call get_pressures ( 'a', ptg_angles, tan_temp, tan_press, no_tan_hts, &
+      &                   fft_angles, fft_press, Ntr, Ier )
+    if ( Ier /= 0) Return
 
     ! Make sure the fft_press array is MONOTONICALY increasing:
 
@@ -128,18 +130,23 @@ contains
 
     do ptg_i = is+1, Ntr
       q = fft_press(ptg_i)
-      if (q > fft_press(Ktr)) then
+      if ( q > fft_press(Ktr)) then
         Ktr = Ktr + 1
         fft_press(Ktr) = q
         Rad(Ktr) = Rad(ptg_i)
         fft_index(Ktr) = ptg_i
-      endif
+      end if
     end do
 
     ! Interpolate the output values
     ! (Store the radiances derivative with respect to pointing pressures in: Term)
 
-    Call Cspline_der(fft_press,Ptan%values(:,maf),Rad,SRad,Term,Ktr,j)
+    want_deriv = present(jacobian) .and. any( (/ &
+      & forwardModelConfig%temp_der, &
+      & forwardModelConfig%atmos_der,&
+      & forwardModelConfig%spect_der/) )
+!??? Can we use cspline instead of cspline_der if .not. want_deriv ???
+    Call Cspline_der ( fft_press, Ptan%values(:,maf), Rad, SRad, Term, Ktr, j )
     do ptg_i = 1, j
       ind = channel + radiance%template%noChans*(ptg_i-1)
       radiance%values( ind, maf ) = radiance%values ( ind, maf ) + &
@@ -147,44 +154,35 @@ contains
     end do
 
     ! Find out if user wants pointing derivatives
-    if (present(Jacobian) ) then                    ! Add a condition later !??? NJL
-      ! Derivatives wanted,find index location k_star_all and write the derivative
-      row = FindBlock( Jacobian%row, radiance%index, maf )
-      col = FindBlock ( Jacobian%col, ptan%index, maf )
-      select case (jacobian%block(Row,col)%kind)
-      case (m_absent)
-        call CreateBlock ( Jacobian, row, col, m_banded, &
-          &    radiance%template%noSurfs*radiance%template%noChans )
-        jacobian%block(row,col)%values = 0.0_r8
-        do ptg_i = 1, j
-          jacobian%block(row,col)%r1(ptg_i) = &
-            & 1 + radiance%template%noChans*(ptg_i-1)
-          jacobian%block(row,col)%r2(ptg_i) = &
-            & radiance%template%noChans*ptg_i
-        end do
-      case (m_banded)
-      case default
-        call MLSMessage ( MLSMSG_Error, ModuleName,&
-          & 'Wrong matrix type for ptan derivative')
-      end select
+    if ( .not. want_deriv ) return
+    ! Derivatives wanted,find index location k_star_all and write the derivative
+    row = FindBlock( Jacobian%row, radiance%index, maf )
+    col = FindBlock ( Jacobian%col, ptan%index, maf )
+    select case (jacobian%block(Row,col)%kind)
+    case (m_absent)
+      call CreateBlock ( Jacobian, row, col, m_banded, &
+        &    radiance%template%noSurfs*radiance%template%noChans )
+      jacobian%block(row,col)%values = 0.0_r8
       do ptg_i = 1, j
-        ind = channel + radiance%template%noChans*(ptg_i-1)
-        jacobian%block(row,col)%values( ind, 1 ) = &
-          & jacobian%block(row,col)%values( ind, 1 ) + sbRatio*term(ptg_i)
         jacobian%block(row,col)%r1(ptg_i) = &
           & 1 + radiance%template%noChans*(ptg_i-1)
         jacobian%block(row,col)%r2(ptg_i) = &
           & radiance%template%noChans*ptg_i
       end do
-    endif
-
-    if(.not. ANY((/forwardModelConfig%temp_der, &
-      & forwardModelConfig%atmos_der,&
-      & forwardModelConfig%spect_der/))) then
-      Return
-    endif
-
-    row = FindBlock( Jacobian%row, radiance%index, maf )
+    case (m_banded)
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Wrong matrix type for ptan derivative')
+    end select
+    do ptg_i = 1, j
+      ind = channel + radiance%template%noChans*(ptg_i-1)
+      jacobian%block(row,col)%values( ind, 1 ) = &
+        & jacobian%block(row,col)%values( ind, 1 ) + sbRatio*term(ptg_i)
+      jacobian%block(row,col)%r1(ptg_i) = &
+        & 1 + radiance%template%noChans*(ptg_i-1)
+      jacobian%block(row,col)%r2(ptg_i) = &
+        & radiance%template%noChans*ptg_i
+    end do
 
     ! Now transfer the other fwd_mdl derivatives to the output pointing
     ! values
@@ -193,7 +191,7 @@ contains
 
     ! check to determine if derivative is desired for this parameter
 
-    if (forwardModelConfig%temp_der) then
+    if ( forwardModelConfig%temp_der) then
 
       ! Derivatives needed continue to process
 
@@ -216,29 +214,29 @@ contains
 
           do ptg_i = 1, no_tan_hts
             q = 0.0
-            if(nf == mafTInstance) q = d2x_dxdt(ptg_i,sv_i)
+            if ( nf == mafTInstance) q = d2x_dxdt(ptg_i,sv_i)
             Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,lk)
           end do
 
           ! Now, Convolve:
 
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
-          Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-            &               fft_pts,AntennaPattern,Ier)
-          if (Ier /= 0) Return
+          Call fov_convolve ( fft_angles, Rad, center_angle, 1, no_tan_hts, &
+            &                 fft_pts, AntennaPattern, Ier )
+          if ( Ier /= 0) Return
 
-          if(fft_index(1).gt.0) then
+          if ( fft_index(1).gt.0) then
             do ptg_i = 1, Ktr
               Rad(ptg_i) = Rad(fft_index(ptg_i))
             end do
-          endif
+          end if
 
-          Call Cspline(fft_press,Ptan%values(:,maf),Rad,SRad,Ktr,j)
+          Call Cspline ( fft_press, Ptan%values(:,maf), Rad, SRad, Ktr, j )
           k_star_tmp(1:j) = SRad(1:j)
 
           !  For any index off center Phi, skip the rest of the phi loop ...
 
-          if(nf /= mafTInstance) then
+          if ( nf /= mafTInstance) then
             do ptg_i = 1, j
               ind = channel + radiance%template%noChans*(ptg_i-1)
               jacobian%block(row,col)%values( ind, sv_i ) = &
@@ -246,7 +244,7 @@ contains
                 &   sbRatio*k_star_tmp(ptg_i)
             end do
             cycle
-          endif
+          end if
 
           ! Now the convolution of radiance with the derivative antenna field
 
@@ -255,21 +253,22 @@ contains
           ! Now, Convolve:
 
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
-          Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
-            &               fft_pts,AntennaPattern,Ier)
-          if (Ier /= 0) Return
+          Call fov_convolve ( fft_angles, Rad, center_angle, 2, no_tan_hts, &
+            &                 fft_pts, AntennaPattern, Ier )
+          if ( Ier /= 0) Return
 
-          if(fft_index(1).gt.0) then
+          if ( fft_index(1).gt.0) then
             do ptg_i = 1, Ktr
               Rad(ptg_i) = Rad(fft_index(ptg_i))
             end do
-          endif
+          end if
 
-          Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
+          Call Cspline ( fft_press, Ptan%values(:,maf), Rad, Term, Ktr, j )
 
           ! Transfer dx_dt from convolution grid onto the output grid
 
-          Call Lintrp(tan_press,Ptan%values(:,maf),dx_dt(1:,sv_i),SRad,no_tan_hts,j)
+          Call Lintrp (tan_press, Ptan%values(:,maf), dx_dt(1:,sv_i), SRad, &
+            & no_tan_hts, j )
 
           k_star_tmp = k_star_tmp + srad*term
 
@@ -282,15 +281,15 @@ contains
           ! Now, convolve:
 
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
-          Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
-            &               fft_pts,AntennaPattern,Ier)
-          if (Ier /= 0) Return
+          Call fov_convolve ( fft_angles, Rad, center_angle, 2, no_tan_hts, &
+            &                 fft_pts, AntennaPattern, Ier )
+          if ( Ier /= 0) Return
 
-          if(fft_index(1).gt.0) then
+          if ( fft_index(1).gt.0) then
             do ptg_i = 1, Ktr
               Rad(ptg_i) = Rad(fft_index(ptg_i))
             end do
-          endif
+          end if
 
           Call Cspline(fft_press,Ptan%values(:,maf),Rad,Term,Ktr,j)
 
@@ -305,11 +304,11 @@ contains
 
       end do
 
-    endif
+    end if
 
     ! ****************** atmospheric derivatives ******************
 
-    if(forwardModelConfig%atmos_der) then
+    if ( forwardModelConfig%atmos_der) then
 
       lk = lbound(k_atmos,3)
       uk = ubound(k_atmos,3)
@@ -318,12 +317,12 @@ contains
         f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
           & molecule=forwardModelConfig%molecules(is), noError=.true. )
 
-        if (associated(f)) then
+        if ( associated(f)) then
 
           ! Derivatives needed continue to process
 
           do nf = 1, f%template%noInstances
-            if(nf+lk-1 > uk) EXIT
+            if ( nf+lk-1 > uk) EXIT
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
             select case ( Jacobian%block(row,col)%kind ) 
             case ( m_absent )
@@ -346,13 +345,13 @@ contains
               fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
               Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
                 &               fft_pts,AntennaPattern,Ier)
-              if (Ier /= 0) Return
+              if ( Ier /= 0) Return
 
-              if(fft_index(1).gt.0) then
+              if ( fft_index(1).gt.0) then
                 do ptg_i = 1, Ktr
                   Rad(ptg_i) = Rad(fft_index(ptg_i))
                 end do
-              endif
+              end if
 
               ! Interpolate onto the output grid, and store in k_star_all ..
 
@@ -366,17 +365,17 @@ contains
           end do                        ! F instances
         end if                          ! Want derivatives for this species
       end do                            ! Loop over species
-    endif                               ! Any derivatives
+    end if                              ! Any derivatives
 !
     !     ! ****************** Spectroscopic derivatives ******************
     ! !
-    !     if(spect_der) then
+    !     if ( spect_der) then
     ! !
     !       do is = 1, n_sps
     ! !
     !         i = spect_atmos(is)
-    !         if(i < 1) CYCLE
-    !         if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+    !         if ( i < 1) CYCLE
+    !         if ( .not.spectroscopic(i)%DER_CALC(band)) CYCLE
     ! !
     !         ! Derivatives needed continue to process
     ! !
@@ -384,7 +383,7 @@ contains
     ! !
     !         DO
     ! !
-    !           if(spectroscopic(i)%Spectag /= Spectag) EXIT
+    !           if ( spectroscopic(i)%Spectag /= Spectag) EXIT
     !           n = spectroscopic(i)%no_phi_values
     !           nz = spectroscopic(i)%no_zeta_values
     !           CA = spectroscopic(i)%type
@@ -419,13 +418,13 @@ contains
     !               fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
     !               Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
     !                 &               fft_pts,AntennaPattern,Ier)
-    !               if (Ier /= 0) Return
+    !               if ( Ier /= 0) Return
     ! !
-    !               if(fft_index(1).gt.0) then
+    !               if ( fft_index(1).gt.0) then
     !                 do ptg_i = 1, Ktr
     !                   Rad(ptg_i) = Rad(fft_index(ptg_i))
     !                 end do
-    !               endif
+    !               end if
     ! !
     !               ! Interpolate onto the output grid, and store in k_star_all ..
     ! !
@@ -437,13 +436,13 @@ contains
     !           end do          ! nf loop
     ! !
     !           i = i + 1
-    !           if(i > 3 * n_sps) EXIT
+    !           if ( i > 3 * n_sps) EXIT
     ! !
     !         END DO
     ! !
     !       end do
     ! !
-    !     endif
+    !     end if
 !
 10  CONTINUE ! K_INFO_COUNT = kc
     Return
@@ -452,6 +451,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.20  2001/04/27 00:13:10  zvi
+! Fixing some more phiwindow bug
+!
 ! Revision 1.19  2001/04/26 22:54:41  zvi
 ! Fixing some phiwindow bug
 !
