@@ -8,12 +8,14 @@ module Tau_M
   implicit NONE
   private
 
-  public :: Get_Tau
+  public :: Destroy_Tau, Dump, Dump_Tau, Get_Tau
 
   type, public :: Tau_T
     real(rp), pointer :: Tau(:,:) => NULL() ! Path X Frequencies
     integer, pointer :: I_Stop(:) => NULL() ! Amount of path to use, size = #Frequencies
   end type Tau_T
+
+  interface Dump; module procedure Dump_Tau; end interface Dump
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -149,6 +151,33 @@ contains
 
   end subroutine Get_Tau
 
+! --------------------------------------------------  Destroy_Tau  -----
+  subroutine Destroy_Tau ( Tau, What, Where )
+    use Allocate_Deallocate, only: Deallocate_test
+    type(tau_t), intent(inout) :: Tau
+    character(len=*), intent(in) :: What, Where
+    call deallocate_test ( tau%tau, what//"%Tau", where )
+    call deallocate_test ( tau%i_stop, what//"%I_stop", where )
+  end subroutine Destroy_Tau
+
+! -----------------------------------------------------  Dump_Tau  -----
+  subroutine Dump_Tau ( Tau, What )
+    use Dump_0, only: Dump
+    use Output_m, only: Output
+
+    type(tau_t), intent(in) :: Tau
+    character(len=*), intent(in), optional :: What
+
+    integer :: I
+
+    if ( present(what) ) call output ( what, advance='yes' )
+
+    do i = 1, size(tau%i_stop)
+      call dump ( tau%tau(:tau%i_stop(i),i) )
+    end do
+
+  end subroutine Dump_Tau
+
   logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function NOT_USED_HERE
@@ -156,6 +185,9 @@ contains
 end module Tau_M
 
 ! $Log$
+! Revision 2.2  2005/03/03 02:08:32  vsnyder
+! Add Destroy, Dump routines
+!
 ! Revision 2.1  2004/10/07 17:34:15  vsnyder
 ! Initial commit
 !
