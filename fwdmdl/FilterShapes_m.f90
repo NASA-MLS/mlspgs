@@ -5,12 +5,10 @@ module FilterShapes_m
 
   ! Read the filter shapes file.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
   use MLSSignals_m, only: GetNameOfSignal, MaxSigLen, Signals, Signal_T
-  use Dump_0, only: Dump
   
   implicit none
 
@@ -68,6 +66,7 @@ contains
 
   ! ------------------------------------  Read_Filter_Shapes_File  -----
   subroutine Read_Filter_Shapes_File ( Lun )
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Machine, only: IO_Error
     use Parse_Signal_m, only: Parse_Signal
     use Toggles, only: Gen, Levels, Switches, Toggle
@@ -180,6 +179,7 @@ contains
 
   ! -----------------------------  Destroy_Filter_Shapes_Database  -----
   subroutine Destroy_Filter_Shapes_Database
+    use Allocate_Deallocate, only: Deallocate_Test
     integer :: I, Status
     if ( .not. associated(filterShapes) ) return
     do i = 1, size(filterShapes)
@@ -217,6 +217,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.3  2002/05/14 20:02:12  livesey
+! Bug fix in handling of channels field in signal part of filter shape.
+!
 ! Revision 2.2  2002/05/10 00:33:18  vsnyder
 ! Repair a botched comment
 !
