@@ -113,7 +113,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    character (len=*), parameter :: GEO_FIELD10= 'Frequency'
    character (len=*), parameter :: GEO_FIELDS = &
      & 'Latitude,Longitude,LocalSolarTime,SolarZenithAngle,LineOfSightAngle' // &
-     & ',OrbitGeodeticAngle,Pressure,Frequency'
+     & ',OrbitGeodeticAngle'
 
    character (len=*), parameter :: DIM_NAME1 = 'nTimes'
    character (len=*), parameter :: DIM_NAME2 = 'nLevels'
@@ -1857,8 +1857,11 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------  OutputL2GP_createFile_hdf5  -----
   subroutine OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, swathName,nLevels)
 
-  use HDFEOS5
-  use HE5_SWAPI
+  use HDFEOS5, only: HE5_SWdefchunk, HE5_SWcreate, HE5_SWdefdfld, &
+    & HE5_SWdefdim, HE5_SWdetach, &
+    & HE5_SWdefgfld, &
+    & HE5S_UNLIMITED_F, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_INT, HE5T_NATIVE_FLOAT
+  ! use HE5_SWAPI
   use MLSHDFEOS, only : mls_swsetfill
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
@@ -1887,18 +1890,19 @@ contains ! =====     Public Procedures     =============================
     integer::CHUNKTIMES,CHUNKFREQS,CHUNKLEVELS
 
     integer :: SWID, STATUS
+    ! integer, external :: he5_swsetfill
 
     if (present(swathName)) then
        name=swathName
     else
        name=l2gp%name
     endif
-    chunktimes=1
+    chunktimes=120      ! was 1
     chunkfreqs=1 ! better as nFreqs, but I have yet to see a case with nfreqs>1
     if(present(nLevels))then
        chunklevels = nLevels
     else
-       chunklevels = min(l2gp%nLevels, 5)
+       chunklevels = min(l2gp%nLevels, 500)     ! was .., 5)
        chunklevels = max(chunklevels, 1)
     endif
     
@@ -2048,6 +2052,8 @@ contains ! =====     Public Procedures     =============================
 
        status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME123, MAX_DIML123,&
        HE5T_NATIVE_FLOAT,HDFE_NOMERGE)
+       ! status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
+       !  & UNDEFINED_VALUE)
 
        if ( status == -1 ) then
           msr = DAT_ERR // DATA_FIELD1 // ' for 3D quantity.'
@@ -2076,6 +2082,8 @@ contains ! =====     Public Procedures     =============================
        !      DIM_NAME12, MAX_DIML12, HE5T_NATIVE_FLOAT, HDFE_NOMERGE
        status = HE5_SWdefdfld(swid, DATA_FIELD1, DIM_NAME12, MAX_DIML12, &
             HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+       ! status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
+       !  & UNDEFINED_VALUE)
        ! print*,"Defined 2-D extendible field"
 
        if ( status == -1 ) then
@@ -2105,6 +2113,8 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
        end if
 
+       ! status = HE5_SWsetfill(swid, DATA_FIELD1, HE5T_NATIVE_FLOAT, &
+       !  & UNDEFINED_VALUE)
        status=HE5_SWdefchunk(swid,chunk_rank,chunk_dims)
        status = HE5_SWdefdfld(swid, DATA_FIELD2, DIM_NAME1, MAX_DIML1,&
        HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
@@ -2140,13 +2150,40 @@ contains ! =====     Public Procedures     =============================
 
     ! Set Fill Values
     status =  mls_swsetfill(swid, DATA_FIELDS, HE5T_NATIVE_FLOAT, &
-      & UNDEFINED_VALUE)
+     & UNDEFINED_VALUE)
+    if ( status == -1 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & 'Cant set fill for ' // DATA_FIELDS )
     status =  mls_swsetfill(swid, GEO_FIELDS, HE5T_NATIVE_FLOAT, &
-      & UNDEFINED_VALUE)
+     & UNDEFINED_VALUE)
+    if ( status == -1 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & 'Cant set fill for ' // GEO_FIELDS )
     status =  mls_swsetfill(swid, GEO_FIELD3, HE5T_NATIVE_DOUBLE, &
-      & real(UNDEFINED_VALUE, r8) )
+     & real(UNDEFINED_VALUE, r8) )
+    if ( status == -1 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & 'Cant set fill for ' // GEO_FIELD3 )
     status =  mls_swsetfill(swid, GEO_FIELD8, HE5T_NATIVE_INT, &
-      & int(UNDEFINED_VALUE) )
+     & int(UNDEFINED_VALUE) )
+    if ( status == -1 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & 'Cant set fill for ' // GEO_FIELD8 )
+    if ( l2gp%nLevels > 0 ) then
+      status =  mls_swsetfill(swid, GEO_FIELD9, HE5T_NATIVE_FLOAT, &
+       & UNDEFINED_VALUE)
+      if ( status == -1 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & 'Cant set fill for ' // GEO_FIELD9 )
+    endif
+    if ( l2gp%nFreqs > 0 ) then
+      status =  mls_swsetfill(swid, GEO_FIELD10, HE5T_NATIVE_FLOAT, &
+       & UNDEFINED_VALUE)
+      if ( status == -1 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & 'Cant set fill for ' // GEO_FIELD10 )
+    endif
+
     ! Detach from the HE5_SWath interface.This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
     ! swath. (May be un-necessary for HDF5 -- test program works OK without.)
@@ -2945,6 +2982,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.61  2003/04/11 23:35:10  pwagner
+! Added new UniqueFieldDefinition attribute; sets fill and MissingValue attributes for all fields
+!
 ! Revision 2.60  2003/04/03 22:58:40  pwagner
 ! Alias now set in lib/L2GPData instead of l2/write_meta
 !
