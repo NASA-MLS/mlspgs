@@ -117,6 +117,12 @@ module HDFEOS5               ! F90 interface to HDF-EOS5.
        character(len=*),intent(IN)::DIMNAME
     end function HE5_SWDIMINFO
 
+    integer function HE5_SWINQDFLDS (SWATHID, FIELDLIST, RANK, NUMBERTYPE)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(out)::FIELDLIST
+       integer,intent(out),dimension(*)::RANK, NUMBERTYPE
+    end function HE5_SWINQDFLDS
+    
     integer function HE5_SWSETALIAS (SWATHID,FIELDNAME,ALIASLIST)
        integer,intent(in)::SWATHID
        character(len=*),intent(IN)::FIELDNAME
@@ -135,6 +141,9 @@ end module HDFEOS5
 !====================
 
 ! $Log$
+! Revision 2.6  2003/04/21 19:30:07  pwagner
+! Added interface to HE5_SWINQDFLDS
+!
 ! Revision 2.5  2003/04/11 23:32:23  pwagner
 ! Moved he5_swsetfill he5_ehwrglatt interfaces
 !
