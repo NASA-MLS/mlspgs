@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 ! NOTE: This module is automatically created by the makemlspcfmodule
 !       perl script.  Do *NOT* attempt to modify this by hand.
@@ -56,7 +56,10 @@ MODULE MLSPCF1
    !
    INTEGER, PARAMETER :: mlspcf_defltzeros_start = 906
    INTEGER, PARAMETER :: mlspcf_defltzeros_end = 906
-   !
+    !
+   INTEGER, PARAMETER :: mlspcf_dacsconst_start = 907
+   INTEGER, PARAMETER :: mlspcf_dacsconst_end = 907
+  !
    INTEGER, PARAMETER :: mlspcf_l1b_radf_start = 30000
    INTEGER, PARAMETER :: mlspcf_l1b_radf_end = 30000
    !
@@ -72,6 +75,9 @@ MODULE MLSPCF1
    INTEGER, PARAMETER :: mlspcf_l1b_diag_start = 30004
    INTEGER, PARAMETER :: mlspcf_l1b_diag_end = 30004
    !
+   INTEGER, PARAMETER :: mlspcf_l1b_radt_start = 30005
+   INTEGER, PARAMETER :: mlspcf_l1b_radt_end = 30005
+   !
    INTEGER, PARAMETER :: mlspcf_mcf_l1log_start = 4000
    INTEGER, PARAMETER :: mlspcf_mcf_l1log_end = 4000
    !
@@ -83,5 +89,8 @@ MODULE MLSPCF1
    !
    INTEGER, PARAMETER :: mlspcf_mcf_l1bradd_start = 4003
    INTEGER, PARAMETER :: mlspcf_mcf_l1bradd_end = 4003
+   !
+   INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_start = 4004
+   INTEGER, PARAMETER :: mlspcf_mcf_l1bradt_end = 4004
    !
 END MODULE MLSPCF1
