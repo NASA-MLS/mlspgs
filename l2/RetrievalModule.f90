@@ -1419,7 +1419,8 @@ contains
                
       ! find which channel is used
         ich = 0
-        do k=1,size (signal%frequencies)
+        nFreqs = size (signal%frequencies)
+        do k=1,nFreqs
               if(signal%channels(k)) ich=k
         end do
 
@@ -1639,7 +1640,7 @@ contains
                                                    ! radiance to optical depth
                                           
       integer :: i,j,k,ich,imodel,mif,maf,isignal          ! Loop subscripts
-      integer :: cloudysky     ! cloudysky index from Model Configuration
+      integer :: cloudysky(size(configIndices))   ! cloudysky index from Model Configuration
       integer :: coljBlock     ! Column index for jacobian
       integer :: rowjBlock     ! Row index for jacobian
       integer :: nFreqs      ! number of frequencies in each block
@@ -1710,6 +1711,8 @@ contains
         doMaf = .false.
         nChans = 0
         do imodel = 1, size(configIndices)
+          !memorize the initial model configuration
+           cloudysky(imodel) = configDatabase(configIndices(imodel))%cloud_width
         do isignal = 1, size(configDatabase(configIndices(imodel))%signals)
           nChans = nChans + &
           & count(configDatabase(configIndices(imodel))%signals(isignal)%channels)
@@ -1751,7 +1754,6 @@ contains
           allocate(dx(nSgrid,nMifs),sx(nSgrid,nMifs))
 
       ! Loop over MAFs
-        cloudysky = 1
         do maf =1,nMAFs
         fmStat%maf = maf
         print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs, 'type= ',&
@@ -1766,10 +1768,10 @@ contains
           ich = 0
           do imodel = 1, size(configIndices)
             fmStat%rows = .false.
-            ! memorize cloud configuration type
-            ! to save time, only skip cloud sensitivity calculation if there is no cloud
+            ! to save time, skip cloud sensitivity calculation if there is no cloud
+            ! overwrite model configuration
             configDatabase(configIndices(imodel))%cloud_width=0
-            if(doMaf(maf)) configDatabase(configIndices(imodel))%cloud_width=cloudysky
+            if(doMaf(maf)) configDatabase(configIndices(imodel))%cloud_width=cloudysky(imodel)
             
             call forwardModel ( configDatabase(configIndices(imodel)), &
                 & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
@@ -1846,7 +1848,7 @@ contains
                            & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
 
                      ! in case we go into ambiguity altitudes with small sensitivity
-                     if(abs(sensitivity) < 1._r8) sensitivity = 1._r8
+                     if(abs(sensitivity) < 1._r8) sensitivity = 105._r8
                      
                      teff = y(ich,mif)/sensitivity
                      if(teff > 1._r8) teff = 1._r8
@@ -1952,6 +1954,11 @@ contains
       call clearMatrix ( jacobian )           ! free the space
       
       end do ! end of mafs
+      
+    ! give back the model config value
+      do imodel = 1,size(configIndices)
+        configDatabase(configIndices(imodel))%cloud_width=cloudysky(imodel)
+      end do
       
     ! deallocate arrays and free memory
       deallocate(A,C,y,sy,dx,x,x0,sx0,xext,sx)
@@ -2110,7 +2117,7 @@ contains
 !    where (cnt > 0._r8 .and. cnt > 0.5_r8*cnta) vQty%values = -cnt  ! assign negative
 
   end subroutine LOS2Grid    
-  
+    
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
@@ -2402,6 +2409,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.110  2001/11/01 19:29:01  dwu
+! corrections in cloud retrievals
+!
 ! Revision 2.109  2001/10/31 21:59:56  livesey
 ! Added phaseName to snooper
 !
