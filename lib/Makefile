@@ -12,15 +12,15 @@ OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	ConstructVectorTemplates.o gridded_data_module.o \
 	dates_module.o MLSPCF.o MLSCF.o GriddedData.o
 
-OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
-		VerticalCoordinate.o_debug QuantityTemplates.o_debug \
-		MLSNumerics.o_debug MLSMessageModule.o_debug \
-		SDPToolkit.o_debug L2GPData.o_debug L2AUXData.o_debug \
-		VectorsModule.o_debug Units.o_debug VGrid.o_debug \
-		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug \
-		ConstructVectorTemplates.o_debug \
-		gridded_data_module.o_debug dates_module.o_debug \
-		MLSPCF.o_debug MLSCF.o_debug GriddedData.o_debug
+OBJS_DEBUG= 	MLSStrings.dbg.o MLSSignalNomenclature.dbg.o \
+		VerticalCoordinate.dbg.o QuantityTemplates.dbg.o \
+		MLSNumerics.dbg.o MLSMessageModule.dbg.o \
+		SDPToolkit.dbg.o L2GPData.dbg.o L2AUXData.dbg.o \
+		VectorsModule.dbg.o Units.dbg.o VGrid.dbg.o \
+		HGrid.dbg.o L1BData.o ConstructQuantityTemplates.dbg.o \
+		ConstructVectorTemplates.dbg.o \
+		gridded_data_module.dbg.o dates_module.dbg.o \
+		MLSPCF.dbg.o MLSCF.dbg.o GriddedData.dbg.o
 
 Libpath=.
 MODULEPATH=.
@@ -36,11 +36,11 @@ mlslib.a_debug: ${OBJS_DEBUG}
 
 SDPToolkitSubstitute.a: SDPToolkitSubstitute.o
 	ar ru $@ $?
-SDPToolkitSubstitute.a_debug: SDPToolkitSubstitute.o_debug
+SDPToolkitSubstitute.a_debug: SDPToolkitSubstitute.dbg.o
 	ar ru $@ $?
 
 clean:
-	-rm -f *.o *.a *.mod *.M *.o_debug *.a_debug
+	-rm -f *.o *.a *.mod *.M *.dbg.o *.a_debug
 #
 # Here we list manually dependencies present through USE statements.
 # Later on we may try to adapt Hugh's script to deal with these
@@ -69,25 +69,30 @@ ConstructVectorTemplates.o: MLSCommon.o MLSMessageModule.o VectorsModule.o \
 # Now the debug dependencies
 #
 
-gridded_data_module.o_debug: MLSCommon.o_debug MLSStrings.o_debug MLSMessageModule.o_debug \
-	dates_module.o_debug
-MLSMessageModule.o_debug: SDPToolkit.o_debug
-MLSStrings.o_debug: MLSMessageModule.o_debug
-MLSSignalNomenclature.o_debug: MLSStrings.o_debug MLSMessageModule.o_debug MLSCommon.o_debug
-QuantityTemplates.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug MLSMessageModule.o_debug \
-	VGrid.o_debug 
-MLSNumerics.o_debug: MLSMessageModule.o_debug
-L1BData.o_debug: Hdf.o_debug SDPToolkit.o_debug MLSCommon.o_debug
-HGrid.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug MLSStrings.o_debug L1BData.o_debug MLSNumerics.o_debug
-VGrid.o_debug: MLSCommon.o_debug VerticalCoordinate.o_debug MLSStrings.o_debug
-ConstructQuantityTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug \
-	QuantityTemplates.o_debug VGrid.o_debug HGrid.o_debug VerticalCoordinate.o_debug \
-	Units.o_debug MLSSignalNomenclature.o_debug
-VerticalCoordinate.o_debug: MLSCommon.o_debug MLSStrings.o_debug Units.o_debug
-ConstructVectorTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug VectorsModule.o_debug \
-	QuantityTemplates.o_debug
+MLSCF.dbg.o: SDPToolkit.dbg.o Hdf.dbg.o MLSMessageModule.dbg.o
+gridded_data_module.dbg.o: MLSCommon.dbg.o MLSStrings.dbg.o MLSMessageModule.dbg.o \
+	dates_module.dbg.o
+MLSMessageModule.dbg.o: SDPToolkit.dbg.o
+MLSStrings.dbg.o: MLSMessageModule.dbg.o
+MLSSignalNomenclature.dbg.o: MLSStrings.dbg.o MLSMessageModule.dbg.o MLSCommon.dbg.o
+QuantityTemplates.dbg.o: MLSSignalNomenclature.dbg.o MLSStrings.dbg.o MLSMessageModule.dbg.o \
+	VGrid.dbg.o 
+MLSNumerics.dbg.o: MLSMessageModule.dbg.o
+L1BData.dbg.o: Hdf.dbg.o SDPToolkit.dbg.o MLSCommon.dbg.o
+HGrid.dbg.o: MLSCommon.dbg.o MLSMessageModule.dbg.o MLSStrings.dbg.o L1BData.dbg.o MLSNumerics.dbg.o
+VGrid.dbg.o: MLSCommon.dbg.o VerticalCoordinate.dbg.o MLSStrings.dbg.o \
+	 MLSCF.dbg.o
+ConstructQuantityTemplates.dbg.o: MLSCommon.dbg.o MLSMessageModule.dbg.o \
+	QuantityTemplates.dbg.o VGrid.dbg.o HGrid.dbg.o VerticalCoordinate.dbg.o \
+	Units.dbg.o MLSSignalNomenclature.dbg.o
+VerticalCoordinate.dbg.o: MLSCommon.dbg.o MLSStrings.dbg.o Units.dbg.o
+ConstructVectorTemplates.dbg.o: MLSCommon.dbg.o MLSMessageModule.dbg.o VectorsModule.dbg.o \
+	QuantityTemplates.dbg.o
 
 # $Log$
+# Revision 1.25  2000/02/05 00:30:14  livesey
+# Removed temporary types stuff
+#
 # Revision 1.24  2000/01/21 21:00:52  livesey
 # No longer necessary
 #
