@@ -6,14 +6,16 @@
 SUBROUTINE read_l2cf (l2cf_data, returnStatus) 
 !===================================
 
-USE l2cf
+
 
 IMPLICIT NONE
 
-
+USE l2cf
+USE MLSMessageModule
 !------------------- RCS Ident Info -----------------------
 CHARACTER(LEN=130) :: Id = &                                                    
 "$Id$"
+CHARACTER (LEN=*), PARAMETER :: ModuleName= 
 !----------------------------------------------------------
 
 ! Brief description of program
@@ -46,6 +48,7 @@ CHARACTER (LEN=1000) :: buff
 INTEGER :: nc, returnStatus, version, isection, igs
 
 LOGICAL :: eof = .FALSE.
+
 version = 1
 isection = 0
 igs=0
@@ -55,9 +58,11 @@ returnStatus = Pgs_io_gen_openF (L2CF, PGSd_IO_Gen_RSeqFrm, 0, &
                                 processL2CF, version)
 
 IF (returnStatus /= PGS_S_SUCCESS) THEN
+
   CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
-  PRINT *, 'Error opening L2CF:  ', mnemonic
-  PRINT *, msg
+  CALL MSMessage (MLSMSG_Error,
+         & ModuleName, "Error opening L2CF:  "//mnemonic//" "//msg)
+
 ENDIF
 
 ! Read  input
@@ -89,6 +94,9 @@ DO WHILE (.NOT. eof)
 
           buff(ib:ib+ncnb-1) = line(1:ncnb)
           ib = ib + ncnb
+
+! copy continuation lines into buff
+
           DO WHILE (line(ncnb:ncnb) = '$')
             ib = ib- 1
 
@@ -104,7 +112,9 @@ DO WHILE (.NOT. eof)
 
           END DO
           ncb = ib
+
 ! Proces l2cf entry
+
           AnEntry(1:L2cfEntryLen) =' '
           ib = INDEX(buff, ',')
           AnEntry(1:ib-1)=buff(1:ib-1)
@@ -112,7 +122,9 @@ DO WHILE (.NOT. eof)
           igs = igs + 1
           L2cf_data%Sections(isection)%Section(igs)%L2cfEntryName = AnEntry
           CellIndex = 1
+
 ! Process keyword = value pairs
+
           DO WHILE (ib < ncb)
             ie = INDEX(buff(ib:ncb), '=')
             key(1:maxKeyLen) = ' '
@@ -177,7 +189,7 @@ DO WHILE (.NOT. eof)
 
                    END IF
                  ELSE
-                   PRINT, *, 'Range expected, :', Value
+                   CALL MSMessage (MLSMSG_Error, ModuleName, "Range expected, : "//Value
                  END IF
 
                ELSE IF(l2cfTable(i)%Type .EQ. 'string')THEN
@@ -188,10 +200,10 @@ DO WHILE (.NOT. eof)
                    IF(k > 0)THEN
                       L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%CharValue=Value(j:k)
                    ELSE
-                      PRINT, *, 'Quote expected', Value(1:ValueLen)
+                     CALL MSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
                    END IF
                  ELSE
-                   PRINT, *, 'Quote expected', Value(1:ValueLen)
+                   CALL MSMessage (MLSMSG_Error, ModuleName, "Quote expected, : "//Value(1:ValueLen))
                  END IF
     
                END IF
@@ -226,7 +238,7 @@ ENDIF
 
 
 !===================
-END PROGRAM read_l2cf
+END subroutine  read_l2cf
 !===================
 
 
