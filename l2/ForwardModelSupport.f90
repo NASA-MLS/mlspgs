@@ -40,6 +40,7 @@ module ForwardModelSupport
   integer, parameter :: NoMolecule           = BadHeightUnit + 1
   integer, parameter :: BadQuantityType      = NoMolecule + 1
   integer, parameter :: WrongUnitsForWindow  = BadQuantityType + 1
+  integer, parameter :: NeedBothXYStar       = WrongUnitsForWindow + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -289,7 +290,7 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
-    & ( NAME, ROOT, VGRIDS, GLOBAL ) result ( info )
+    & ( name, root, vgrids, global ) result ( info )
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
 
@@ -308,7 +309,7 @@ contains ! =====     Public Procedures     =============================
       & F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
       & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
       & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
-      & F_TOLERANCE, F_TYPE, F_LINEARSIDEBAND
+      & F_TOLERANCE, F_TYPE, F_LINEARSIDEBAND, F_XSTAR, F_YSTAR
     use Intrinsic, only: L_NONE, L_CLEAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_PROFILES, PHYQ_TEMPERATURE
     use L2PC_m, only: BINSELECTORS, DEFAULTSELECTOR_LATITUDE, CREATEDEFAULTBINSELECTORS
@@ -397,6 +398,8 @@ contains ! =====     Public Procedures     =============================
     info%switchingMirror= .false.
     info%temp_der = .false.
     info%windowUnits = phyq_profiles
+    info%xStar = 0
+    info%yStar = 0
 
     got = .false.
     info%tolerance = -1.0 ! Kelvins, in case the tolerance field is absent
@@ -558,13 +561,21 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( toleranceNotK, root )
       case ( f_type )
         info%fwmType = decoration(subtree(2,son))
+      case ( f_xStar )
+        info%xStar = decoration ( decoration ( subtree ( 2, son ) ) )
+      case ( f_yStar )
+        info%yStar = decoration ( decoration ( subtree ( 2, son ) ) )
       case default
         ! Shouldn't get here if the type checker worked
       end select
 
     end do ! i = 2, nsons(root)
 
+
     ! Now some more error checking
+    if ( ( info%xStar == 0 ) .neqv. ( info%yStar == 0 ) ) &
+      & call AnnounceError ( NeedBothXYStar, root )
+
     select case ( info%fwmType )
     case ( l_full, l_hybrid )
       if ( .not. all(got( (/ f_molecules, f_signals, f_integrationGrid, &
@@ -829,7 +840,10 @@ contains ! =====     Public Procedures     =============================
     case ( WrongUnitsForWindow )
       call output ( 'phiWindow must be in degrees or profiles', &
         & advance='yes' )
-   case default
+    case ( NeedBothXYStar )
+      call output ( 'x/yStar must either be both present or both absent', &
+        & advance='yes' )
+    case default
       call output ( '(no specific description of this error)', advance='yes' )
     end select
     if ( present(extraMessage) ) call output ( extraMessage, advance='yes' )
@@ -842,6 +856,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.85  2003/09/11 23:15:42  livesey
+! Added handling of xStar / yStar arguments to l2pc models.
+!
 ! Revision 2.84  2003/09/03 16:07:52  cvuu
 ! Add all of the printout stuff into routine PrintForwardModelTiming
 !
