@@ -239,11 +239,15 @@ CONTAINS
 
       numProds = cf%Sections(iMap)%NoSectionEntries
 
+      if (numProds .gt. 0) then 
+
       ALLOCATE (l3cf(numProds), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' array of L3CFProd_T pointers.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
 
 ! Fill L3CFProd_T from the Standard & Output sections of the cf
 
@@ -432,6 +436,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.15  2001/10/05 20:12:02  nakamura
+! Added N for diagnostics.
+!
 ! Revision 1.14  2001/07/18 15:53:30  nakamura
 ! Revised for new l3cf; added asc/des lvls; removed DZ stuff.
 !

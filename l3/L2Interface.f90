@@ -98,9 +98,6 @@ CONTAINS
 
 ! If no file name was returned, go on to the next PCF number
 
-         !IF (physicalFilename == '/data/emls/l2gp/v0.5/1996/MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-038.dat' &
-         !   .or. physicalFilename == '/data/emls/l2gp/v0.5/1996/MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-045.dat' &
-	 !		.or. returnStatus /= PGS_S_SUCCESS) THEN
 	 IF(returnStatus /= PGS_S_SUCCESS) THEN
 
             IF ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
@@ -244,19 +241,117 @@ CONTAINS
 
 ! Allocate output pointers for fields that are always present
 
-      ALLOCATE (l2gpData%latitude(numProfs), l2gpData%longitude(numProfs), &
-                l2gpData%time(numProfs), l2gpData%solarTime(numProfs), &
-                l2gpData%solarZenith(numProfs), l2gpData%losAngle(numProfs), &
-                l2gpData%geodAngle(numProfs), l2gpData%chunkNumber(numProfs), &
-                l2gpData%l2gpValue(numFreq,numLev,numProfs), &
-                l2gpData%l2gpPrecision(numFreq,numLev,numProfs), &
-                l2gpData%status(numProfs), l2gpData%quality(numProfs), &
-                realProf(numProfs), realSurf(numLev), realFreq(numFreq), &
-                real3(numFreq,numLev,numProfs), STAT=alloc_err)
+      if (numProfs.gt.0) then 
+
+      ALLOCATE (l2gpData%latitude(numProfs), STAT=alloc_err)
       IF ( alloc_err /= 0 ) THEN
-         msr = MLSMSG_Allocate // '  output pointers.'
+         msr = MLSMSG_Allocate // '  latitude pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      ALLOCATE (l2gpData%longitude(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  longitude pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%time(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  time pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%solarTime(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  solarTime pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%solarZenith(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  solarZenith pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%losAngle(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  losAngle pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%geodAngle(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  geodAngle pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%chunkNumber(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  chunkNumber pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%status(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  status pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%quality(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  quality pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (realProf(numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  realProf array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      endif
+
+      if (numLev.gt.0) then 
+
+      ALLOCATE (realSurf(numLev), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  realSurf array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      endif
+
+      if (numFreq.gt.0) then 
+
+      ALLOCATE (realFreq(numFreq), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  realFreq array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      endif
+
+      if ((numFreq.gt.0).and.(numLev.gt.0).and.(numProfs.gt.0)) then 
+
+      ALLOCATE (l2gpData%l2gpValue(numFreq,numLev,numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  l2gpValue pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (l2gpData%l2gpPrecision(numFreq,numLev,numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  l2gpPrecision pointer.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      ALLOCATE (real3(numFreq,numLev,numProfs), STAT=alloc_err)
+      IF ( alloc_err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  real3 array.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      endif
 
 ! Read the horizontal geolocation fields
 
@@ -265,6 +360,8 @@ CONTAINS
       edge(1) = numFreq
       edge(2) = numLev
       edge(3) = numProfs
+
+      if (numProfs .gt. 0) then
 
       status = swrdfld(swid, GEO_FIELD1, start(3), stride(3), edge(3), realProf)
       IF (status == -1) THEN
@@ -281,7 +378,7 @@ CONTAINS
       l2gpData%longitude = DBLE(realProf)
 
       status = swrdfld(swid, GEO_FIELD3, start(3), stride(3), edge(3), &
-                       l2gpData%time)
+        l2gpData%time)
       IF (status == -1) THEN
          msr = MLSMSG_L2GPRead // GEO_FIELD3
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -321,6 +418,8 @@ CONTAINS
          msr = MLSMSG_L2GPRead // GEO_FIELD8
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
       ENDIF
+
+      endif
 
 ! Read the pressures vertical geolocation field, if it exists
 
@@ -419,6 +518,8 @@ CONTAINS
 
 ! Read the data fields that are 1-dimensional
 
+      if (numProfs .gt. 0) then
+
       status = swrdfld(swid, DATA_FIELD3, start(3), stride(3), edge(3), &
                        l2gpData%status)
       IF (status == -1) THEN
@@ -433,11 +534,25 @@ CONTAINS
       ENDIF
       l2gpData%quality = DBLE(realProf)
 
+      endif
+
 ! Deallocate local variables
 
-      DEALLOCATE(realFreq, realSurf, realProf, real3, STAT=alloc_err)
+      DEALLOCATE(realFreq, STAT=alloc_err)
       IF ( alloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
-                                'Failed deallocation of local real variables.')
+                                'Failed deallocation of local realFreq array.')
+
+      DEALLOCATE(realSurf, STAT=alloc_err)
+      IF ( alloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                'Failed deallocation of local realSurf array.')
+
+      DEALLOCATE(realProf, STAT=alloc_err)
+      IF ( alloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                'Failed deallocation of local realProf array.')
+
+      DEALLOCATE(real3, STAT=alloc_err)
+      IF ( alloc_err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                                'Failed deallocation of local real3 array.')
 
 !  After reading, detach from swath interface
 
@@ -758,6 +873,8 @@ CONTAINS
       edge(2) = l2gp%nLevels
       edge(3) = l2gp%nTimes
 
+      if (l2gp%nTimes .gt. 0) then
+
       status = swwrfld( swid, GEO_FIELD1, start(3), stride(3), edge(3), &
                         REAL(l2gp%latitude) )
       IF (status == -1) THEN
@@ -814,6 +931,8 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
       IF (l2gp%nLevels > 0) THEN
 
          status = swwrfld( swid, GEO_FIELD9, start(2), stride(2), edge(2), &
@@ -863,6 +982,7 @@ CONTAINS
       ELSE
 
 ! 1-D residual
+      if (l2gp%nTimes .gt. 0) then
 
          status = swwrfld( swid, DATA_FIELD5, start(3), stride(3), edge(3), &
                            REAL(l2gp%l2gpValue(1,1,:)) )
@@ -870,6 +990,8 @@ CONTAINS
             msr = WR_ERR // DATA_FIELD5
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
+
+      endif
 
       ENDIF
 
@@ -1109,6 +1231,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.7  2002/02/20 19:21:15  ybj
+!# *** empty log message ***
+!#
 !# Revision 1.6  2001/07/18 15:50:59  nakamura
 !# Generalized to work with L3M as well.
 !#
