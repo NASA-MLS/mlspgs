@@ -252,7 +252,7 @@ contains
 !------------------------------------------------------------------
   subroutine Get_Beta_Path_Cloud ( Frq, p_path, t_path, z_path_c, &
         & Catalog, beta_group, gl_slabs, path_inds, beta_path_cloud,    &
-        & ICON, Incl_Cld, IPSD, WC, NU, NUA, NAB, NR, NC )
+        & RHi, Incl_Cld, IPSD, WC, NU, NUA, NAB, NR, NC )
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
@@ -272,7 +272,7 @@ contains
 
     type (beta_group_T), dimension(:) :: beta_group
 
-    integer, intent(in)  :: ICON
+    real(r8), intent(in)  :: RHi
     logical, intent(in) :: Incl_Cld
     INTEGER :: NC, NU, NUA, NAB, NR
     INTEGER, intent(in) :: IPSD(:)
@@ -325,6 +325,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.26  2003/02/13 23:06:01  jonathan
+! changes dimension for beta_path_cloud
+!
 ! Revision 2.25  2003/02/11 00:48:18  jonathan
 ! changes made after adding get_beta_path_cloud
 !
