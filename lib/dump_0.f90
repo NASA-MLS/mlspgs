@@ -27,6 +27,9 @@ module DUMP_0
     module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
     module procedure DUMP_NAME_V_PAIRS_REAL
   end interface
+  interface DUMPSIZE
+    module procedure DUMPSIZE_INTEGER, DUMPSIZE_REAL
+  end interface
 
   interface SAY_FILL
     module procedure SAY_FILL_CHAR, SAY_FILL_DOUBLE, SAY_FILL_INT, SAY_FILL_REAL
@@ -1180,8 +1183,8 @@ contains
 
   end subroutine DUMP_NAME_V_PAIRS_REAL
 
-  ! ----------------------------------------------------- DumpSize -----
-  subroutine DumpSize ( n, advance )
+  ! ----------------------------------------------------- DumpSize_integer -----
+  subroutine DumpSize_integer ( n, advance )
     integer, intent(in) :: N
     character(len=*), intent(in), optional :: ADVANCE
     ! Local parameters
@@ -1202,7 +1205,31 @@ contains
       call output ( n*1.0/Gb, format='(f6.1)' )
       call output ( ' Gb', advance=advance )
     end if
-  end subroutine DumpSize
+  end subroutine DumpSize_integer
+
+  ! ----------------------------------------------------- DumpSize_real -----
+  subroutine DumpSize_real ( n, advance )
+    real, intent(in) :: N
+    character(len=*), intent(in), optional :: ADVANCE
+    ! Local parameters
+    integer, parameter :: KB = 1024
+    integer, parameter :: MB = KB * 1024
+    integer, parameter :: GB = MB * 1024
+    ! Make a 'nice' output
+    if ( n < kb ) then
+      call output ( n*1.0, format='(f6.1)' )
+      call output ( ' bytes', advance=advance )
+    else if ( n < Mb ) then
+      call output ( n*1.0/kb, format='(f6.1)' )
+      call output ( ' kb', advance=advance )
+    else if ( n < Gb ) then
+      call output ( n*1.0/Mb, format='(f6.1)' )
+      call output ( ' Mb', advance=advance )
+    else
+      call output ( n*1.0/Gb, format='(f6.1)' )
+      call output ( ' Gb', advance=advance )
+    end if
+  end subroutine DumpSize_real
 
   ! ------------------------------------------------------  Empty  -----
   subroutine Empty ( Name )
@@ -1411,6 +1438,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.35  2004/04/05 17:47:43  livesey
+! Split dumpsize into real and integer versions
+!
 ! Revision 2.34  2004/04/03 05:43:23  livesey
 ! Added DumpSize
 !
