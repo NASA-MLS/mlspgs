@@ -94,10 +94,11 @@ contains
 
   subroutine HuntScalar_r4 (list, value, index, start, allowTopValue, &
     & allowBelowValue, nearest )
+    integer, parameter :: RK = R4
 
     ! Dummy arguments
-    real(r4), dimension(:), intent(in) :: list ! List to search
-    real(r4), intent(in) :: value ! Value to search for
+    real(rk), dimension(:), intent(in) :: list ! List to search
+    real(rk), intent(in) :: value ! Value to search for
     integer, intent(out) :: index ! Resulting index
     integer, intent(in), optional :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
@@ -106,21 +107,20 @@ contains
 
     ! Local variables
 
-    real(r4), dimension(1) :: values ! To pass to HuntArray
     integer, dimension(1) :: indices ! To pass to HuntScalar
 
-    values(1) = value
-    call Hunt ( list, values, indices, start, &
+    call Hunt ( list, (/ value /), indices, start, &
       & allowTopValue, allowBelowValue, nearest )
     index = indices(1)
   end subroutine HuntScalar_r4
 
   subroutine HuntScalar_r8 (list, value, index, start, allowTopValue, &
     & allowBelowValue, nearest )
+    integer, parameter :: RK = R8
 
     ! Dummy arguments
-    real(r8), dimension(:), intent(in) :: list ! List to search
-    real(r8), intent(in) :: value ! Value to search for
+    real(rk), dimension(:), intent(in) :: list ! List to search
+    real(rk), intent(in) :: value ! Value to search for
     integer, intent(out) :: index ! Resulting index
     integer, intent(in), optional :: start ! Optional start index
     logical, optional, intent(in) :: allowTopValue ! Can return N
@@ -129,11 +129,9 @@ contains
 
     ! Local variables
 
-    real(r8), dimension(1) :: values ! To pass to HuntArray
     integer, dimension(1) :: indices ! To pass to HuntScalar
 
-    values(1) = value
-    call Hunt ( list, values, indices, start, &
+    call Hunt ( list, (/ value /), indices, start, &
       & allowTopValue, allowBelowValue, nearest )
     index = indices(1)
   end subroutine HuntScalar_r8
@@ -244,6 +242,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.23  2002/10/04 01:48:27  vsnyder
+! Get rid of a local variable
+!
 ! Revision 2.22  2002/10/04 00:48:05  vsnyder
 ! Move declarations of local variables to includes.  Use generic
 ! InterpolateValues in InterpolateScalar routines.  Move guts of
