@@ -135,13 +135,14 @@ contains
       l = l + k
       do j = 1, size(signalIndices)
         l = l + k
-        if ( sideband == 0 .and. signals(signalIndices(j))%singleSideband /= 0 ) &
+        if ( sideband == 0 .and. signals(signalIndices(j))%singleSideband == 0 ) &
           & l = l + k ! pick up both sidebands
       end do ! j = 1, size(signalIndices)
     end do ! i = 1, size(inSignals)
     ! Fill mySignals
     call allocate_test ( mySignals, l, 'mySignals', moduleName )
     if ( l /= 0 ) then
+      l = 0
       do i = 1, size(inSignals)
         call parse_signal ( inSignals(i), signalIndices, sideband=sideband, &
           & channels=channels )
@@ -149,12 +150,15 @@ contains
           do k = lbound(channels,1), ubound(channels,1)
             if ( channels(k) ) then
               l = l + 1
-              if ( sideband == 0 .and. signals(signalIndices(j))%singleSideband /= 0 ) then
-                call getSignalName ( signalIndices(j), mySignals(l), sideband=-1 )
+              if ( sideband == 0 .and. signals(signalIndices(j))%singleSideband == 0 ) then
+                call getSignalName ( signalIndices(j), mySignals(l), &
+                  & channel=k, sideband=-1 )
                 l = l + 1
-                call getSignalName ( signalIndices(j), mySignals(l), sideband=+1 )
+                call getSignalName ( signalIndices(j), mySignals(l), &
+                  & channel=k, sideband=+1 )
               else
-                call getSignalName ( signalIndices(j), mySignals(l), sideband=sideband )
+                call getSignalName ( signalIndices(j), mySignals(l), &
+                  & channel=k, sideband=sideband )
               end if
             end if
           end do ! k = lbound(channels), ubound(channels)
@@ -622,6 +626,10 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.19  2005/01/12 23:58:47  vsnyder
+! All in Get_Individual_Sgnals: Detect DSB signals correctly.  Correct an
+! indexing error.  Include the channel.
+!
 ! Revision 2.18  2005/01/12 03:08:38  vsnyder
 ! Add Get_Individual_Signals
 !
