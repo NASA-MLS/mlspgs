@@ -8,6 +8,7 @@ module GLOBAL_SETTINGS
   use MLSStrings, only: utc_to_yyyymmdd
   use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
   use SDPToolkit, only: max_orbits
+  use MLSCommon, only: FILENAMELEN
 
   implicit NONE
 
@@ -33,6 +34,7 @@ module GLOBAL_SETTINGS
   integer, public :: INPUT_VERSION_STRING = 0     ! Sub_rosa index
   integer, public :: OUTPUT_VERSION_STRING = 0    ! Sub_rosa index
   integer, public :: VERSION_COMMENT = 0          ! Sub_rosa index
+  character(LEN=FileNameLen), public :: LEAPSECFILENAME = ''
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -134,7 +136,7 @@ contains
 
     character(LEN=NameLen) :: Name_string
     character(LEN=NameLen) :: End_time_string, Start_time_string
-    character(LEN=FileNameLen) :: FilenameString, LeapSecFileName
+    character(LEN=FileNameLen) :: FilenameString
     character (len=name_len) :: QUANTITY
     character(LEN=*), parameter :: Time_conversion='(F32.0)'
     character(len=Name_Len) :: l1bItemName
@@ -818,6 +820,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.79  2004/01/23 01:09:48  pwagner
+! Only directwrite files entered in global settings eligible to be auto-sourced
+!
 ! Revision 2.78  2004/01/22 00:54:36  pwagner
 ! Fixed mistaken impression that direct arg is a pointer
 !
