@@ -152,7 +152,7 @@ program MLSL2
         case ( 'm' ); prunit = -1
         case ( 'p' ); toggle(par) = .true.
         case ( 'S' )
-          switches = line(j+1:)
+          switches = trim(switches) // line(j+1:)
       exit ! Took the rest of the string, so there can't be more options
         case ( 'T' ); timing = .true.
         case ( 't' ); toggle(tab) = .true.
@@ -283,7 +283,8 @@ contains
     print *, "  -m: Don't send output through MLSMessage."
     print *, '  -p: Trace parsing.'
     print *, '  -Sstring: Set "switches" = "string".  Characters in'
-    print *, '            "string" may control individual outputs.'
+    print *, '            "string" may control individual outputs.  If -S is'
+    print *, '            specified several times, the strings are concatenated.'
     print *, '  -T: Time parsing, type checking and processing separately.'
     print *, '  -t: Trace declaration table construction.'
     print *, '  -v: List the configuration file.'
@@ -324,6 +325,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.39  2001/05/11 17:34:31  vsnyder
+! Improve built-in usage display
+!
 ! Revision 2.38  2001/05/09 23:33:00  pwagner
 ! Sets new MLSL2Options
 !
