@@ -12,13 +12,14 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      !& SWDETACH
   use HDFEOS5
   use HE5_SWAPI 
+  use MLSCommon, only: R8
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
        & MLSMSG_Error, MLSMSG_Warning
-  use MLSCommon, only: R8
   use MLSStrings, only: ints2Strings, strings2Ints
   use OUTPUT_M, only: OUTPUT
-  use SWAPI, only: SWWRFLD, SWRDFLD
   use STRING_TABLE, only: DISPLAY_STRING
+  use SWAPI, only: SWWRFLD, SWRDFLD
 
   implicit none
 
@@ -36,7 +37,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
        & "$RCSfile$"
   !---------------------------------------------------------------------------
 
-  interface DUMP !And this does WTF? 
+  interface DUMP !And this does WTF? On-the-fly dumps; see l2/tree_walker.f90
     module procedure DUMP_L2GP
     module procedure DUMP_L2GP_DataBase
   end interface
@@ -65,7 +66,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
-  integer, parameter :: L2GPDEFAULT_HDFVERSION = 4            
+  integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_4
 
   integer, parameter :: L2GPNameLen = 80
 
@@ -410,9 +411,12 @@ contains ! =====     Public Procedures     =============================
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
 
-    if (myhdfVersion == 4) then
+    if (myhdfVersion == HDFVERSION_4) then
       call ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
        firstProf, lastProf)
+    elseif (myhdfVersion /= HDFVERSION_5) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized hdfVersion passed to ReadL2GPData" )
     else
       call ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, numProfs, &
        firstProf, lastProf)
@@ -1204,8 +1208,8 @@ contains ! =====     Public Procedures     =============================
 
     swid = swcreate(L2FileHandle, TRIM(name))
     if ( swid == -1 ) then
-       msr = 'Failed to create swath ' // TRIM(name)
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       msr = 'Failed to create swath ' // TRIM(name) &
+        & // ' (maybe has the same name as another swath in this file?)'
     end if
 
     ! Define dimensions
@@ -1726,8 +1730,8 @@ contains ! =====     Public Procedures     =============================
     swid = HE5_SWcreate(L2FileHandle, trim(name))
     !print*,"Swath ",name,"has SW id :",swid
     if ( swid == -1 ) then
-       msr = 'Failed to create swath ' // trim(name)
-       call MLSMessage ( MLSMSG_Error, ModuleName, msr )
+       msr = 'Failed to create swath ' // TRIM(name) &
+        & // ' (maybe has the same name as another swath in this file?)'
     end if
 
     ! Define dimensions
@@ -2293,10 +2297,13 @@ contains ! =====     Public Procedures     =============================
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
 
-    if (myhdfVersion == 4) then
+    if (myhdfVersion == HDFVERSION_4) then
       call OutputL2GP_createFile_hdf4 (l2gp, l2FileHandle, swathName)
       call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
       call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName)
+    elseif (myhdfVersion /= HDFVERSION_5) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized hdfVersion passed to WriteL2GPData" )
     else
       call OutputL2GP_createFile_hdf5 (l2gp, l2FileHandle, swathName)
       call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName)
@@ -2329,9 +2336,12 @@ contains ! =====     Public Procedures     =============================
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
 
-    if (myhdfVersion == 4) then
+    if (myhdfVersion == HDFVERSION_4) then
       call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName, offset)
       call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName, offset)
+    elseif (myhdfVersion /= HDFVERSION_5) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized hdfVersion passed to AppendL2GPData" )
     else
       call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName, offset)
       call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName, offset)
@@ -2459,6 +2469,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.15  2002/02/01 21:32:34  pwagner
+! offset treated properly for appendl2gp for hdf4; untested
+!
 ! Revision 1.14  2002/01/29 23:47:21  pwagner
 ! Repaired bugs relating to hdf4 compatibility
 !

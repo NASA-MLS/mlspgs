@@ -7,16 +7,17 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use DUMP_0, only: DUMP
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-       & MLSMSG_Error, MLSMSG_Warning
-  use MLSCommon, only: R8
-  use MLSStrings, only: ints2Strings, strings2Ints
   use Hdf, only: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   use HDFEOS!, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
+  use MLSCommon, only: R8
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+       & MLSMSG_Error, MLSMSG_Warning
+  use MLSStrings, only: ints2Strings, strings2Ints
   use OUTPUT_M, only: OUTPUT
-  use SWAPI, only: SWWRFLD, SWRDFLD
   use STRING_TABLE, only: DISPLAY_STRING
+  use SWAPI, only: SWWRFLD, SWRDFLD
  
   implicit none
 
@@ -58,7 +59,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   ! Assume L2GP files w/o explicit hdfVersion field are this
   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
-  integer, parameter :: L2GPDEFAULT_HDFVERSION = 4            
+  integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_4
 
   integer, parameter :: L2GPNameLen = 80
 
@@ -105,7 +106,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   !     the vertical coordinate is suppressed; instead we set nLevels=1
   !     and store the tropopause in pressures(1)
 
-  typE L2GPData_T
+  type L2GPData_T
 
      ! First some variables we use for book keeping
 
@@ -164,7 +165,6 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: nTimes            ! Dimensions
 
     ! Local variables
-    integer :: freqsArrayLen, status, surfsArrayLen
     integer :: useNFreqs, useNLevels, useNTimes
 
     if ( present(nFreqs) ) then
@@ -236,9 +236,6 @@ contains ! =====     Public Procedures     =============================
 
     ! Dummy arguments
     type (L2GPData_T), intent(inout) :: L2GP
-    ! Local variables
-
-    integer status
 
     ! Executable code
 
@@ -274,9 +271,8 @@ contains ! =====     Public Procedures     =============================
     integer, optional, intent(in)    :: newNTimes
 
     ! Local variables
-    integer :: status                   ! From ALLOCATE
     type (L2GPData_T) :: tempL2gp       ! For copying data around
-    integer :: myNTimes, myNColms
+    integer :: myNTimes
 
     ! Executable code
 
@@ -403,9 +399,12 @@ contains ! =====     Public Procedures     =============================
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
 
-    if (myhdfVersion == 4) then
+    if (myhdfVersion == HDFVERSION_4) then
       call ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
        firstProf, lastProf)
+    elseif (myhdfVersion /= HDFVERSION_5) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized hdfVersion passed to ReadL2GPData" )
     else
        call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'This version of L2GPData not yet ready for hdf5' )
@@ -441,13 +440,9 @@ contains ! =====     Public Procedures     =============================
     ! Local Variables
     character (len=80) :: list
     character (len=480) :: msr
-
     integer :: alloc_err, first, freq, lev, nDims, size, swid, status
     integer :: start(3), stride(3), edge(3), dims(3)
     integer :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
-    integer :: nColumns
-    integer :: col_start(2), col_stride(2), col_edge(2)
-
     logical :: firstCheck, lastCheck
 
     real, allocatable :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
@@ -822,7 +817,8 @@ contains ! =====     Public Procedures     =============================
 
     swid = swcreate(L2FileHandle, TRIM(name))
     if ( swid == -1 ) then
-       msr = 'Failed to create swath ' // TRIM(name)
+       msr = 'Failed to create swath ' // TRIM(name) &
+        & // ' (maybe has the same name as another swath in this file?)'
        call MLSMessage ( MLSMSG_Error, ModuleName, msr )
     end if
 
@@ -1300,10 +1296,13 @@ contains ! =====     Public Procedures     =============================
       myhdfVersion = L2GPDEFAULT_HDFVERSION
     endif
 
-    if (myhdfVersion == 4) then
+    if (myhdfVersion == HDFVERSION_4) then
       call OutputL2GP_createFile_hdf4 (l2gp, l2FileHandle, swathName)
       call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
       call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName)
+    elseif (myhdfVersion /= HDFVERSION_5) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Unrecognized hdfVersion passed to WriteL2GPData" )
     else
        call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'This version of L2GPData not yet ready for hdf5' )
@@ -1353,7 +1352,7 @@ contains ! =====     Public Procedures     =============================
     !                                        ! Default 1
 
     ! Local variables
-    integer :: i, ierr
+    integer :: ierr
     logical :: myColumnsOnly
     integer :: MYDETAILS
 
@@ -1429,6 +1428,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.39  2002/01/23 21:47:12  pwagner
+! Begun to make hdf5-capable; not yet, though
+!
 ! Revision 2.38  2001/10/26 23:13:18  pwagner
 ! Provides a single dump module interface and details
 !
