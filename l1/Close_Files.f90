@@ -29,23 +29,13 @@ CONTAINS
     USE OpenInit, ONLY: antextPCF, antextCF
     USE PCFHdr, ONLY: WritePCF2Hdr
     USE SDPToolkit, ONLY: PGS_IO_Gen_closeF
-    USE MLSFiles, only: mls_closeFile, HDFVERSION_4, HDFVERSION_5  
-    USE MLSStrings, ONLY: lowercase
+    USE MLSFiles, ONLY: mls_closeFile, HDFVERSION_4, HDFVERSION_5  
 
     INTEGER :: i, returnStatus, error, hdfVersion
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
 
     ! Close L0 Science Files:
-
-    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-          hdfVersion = HDFVERSION_4
-       case ('hdf5')
-          hdfVersion = HDFVERSION_5
-       case default
-          hdfVersion = HDFVERSION_4
-    end select 
 
     DO i = 1, 2
        
@@ -67,6 +57,10 @@ CONTAINS
 
     ENDDO
 
+! Close HDF files
+
+    hdfVersion = L1Config%Output%HDFversion
+
     ! Write Annotations and Close L1RAD D file
 !
 ! Commented for now due to the fact that lib/PCFHdr.f90 is HDF4 only.
@@ -75,7 +69,7 @@ CONTAINS
 !
 !     CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextCF)
 !
-    call mls_closeFile(L1BFileInfo%RADDid, hdfVersion)
+    CALL mls_closeFile (L1BFileInfo%RADDid, hdfVersion)
 
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
@@ -86,7 +80,7 @@ CONTAINS
 !
 !    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextCF)
 !
-    call mls_closeFile(L1BFileInfo%RADFid, hdfVersion)
+    CALL mls_closeFile (L1BFileInfo%RADFid, hdfVersion)
     
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
@@ -97,7 +91,7 @@ CONTAINS
 !
 !    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextCF)
 
-    call mls_closeFile(L1BFileInfo%OAid, hdfVersion)
+    CALL mls_closeFile (L1BFileInfo%OAid, hdfVersion)
 
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BOA file: '//L1BFileInfo%OAFileName)
@@ -122,24 +116,23 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BDIAG file: '//l1BFileInfo%DiagFileName)
 
-!! Close the HDF Fortran Interface
+!! Close the HDF 5 Fortran Interface
 
-    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-       case ('hdf5')
-          call h5close_f(error)
-          if (error /= 0) then 
-             call MLSMessage (MLSMSG_Error, ModuleName, "Fortran API error on closing.")
-          endif
-       case default
-    end select 
+    IF (HDFversion == HDFVERSION_5) THEN
+       CALL h5close_f (error)
+       IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Fortran HDF 5 API error on closing.")
+    ENDIF
        
-  END Subroutine CloseFiles
+  END SUBROUTINE CloseFiles
 
 !=============================================================================
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.7  2002/11/19 21:33:23  perun
+! Use HDFversion instead of HDFVersionString
+!
 ! Revision 2.6  2002/11/07 21:54:54  jdone
 ! Added HDF4/HDF5 switch.
 !
