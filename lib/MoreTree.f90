@@ -6,14 +6,14 @@ module MoreTree
 ! Some routines for tree analysis that don't quite fit anywhere else.
 
   use Tree, only: Decoration, Node_ID, Subtree, nsons
-  use Tree_Types, only: N_Set_one
   
   implicit NONE
   public
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   private :: not_used_here 
@@ -27,6 +27,7 @@ contains ! ====     Public Procedures     ==============================
   ! Return true if node_id(root) is n_set_one.  Otherwise return decoration of
   ! root, or of child of root if children
     use Intrinsic, only: L_true
+    use Tree_Types, only: N_Set_one
     integer, intent(in) :: Root
     if ( node_id(root) == n_set_one ) then
       get_boolean = .true.
@@ -118,6 +119,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.11  2004/06/16 19:51:25  vsnyder
+! Move a use from module scope to procedure scope
+!
 ! Revision 2.10  2004/06/16 01:45:13  vsnyder
 ! Return -huge(0) from GetLitIndexFromString if the string isn't a lit
 !
