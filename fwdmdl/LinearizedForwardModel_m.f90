@@ -219,9 +219,17 @@ contains ! =====     Public Procedures     =============================
           & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
           & call MLSMessage(MLSMSG_Error,ModuleName, &
           & "No sideband ratio supplied")
-        sidebandStart = -1
-        sidebandStop = 1
-        sidebandStep = 2
+        if ( signal%singleSideband == 0 ) then
+          ! This is not a single sideband radiometer
+          sidebandStart = -1
+          sidebandStop = 1
+          sidebandStep = 2
+        else
+          ! This is a single sideband radiometer
+          sidebandStart = signal%singleSideband
+          sidebandStop = sidebandStart
+          sidebandStep = 1
+        end if
       end if
     else
       sidebandStart = forwardModelConfig%signals(1)%sideband
@@ -819,6 +827,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.14  2002/05/03 23:29:31  livesey
+! Added split sideband ratio stuff
+!
 ! Revision 2.13  2002/03/15 21:23:09  livesey
 ! New bin selectors based on 'latitude' allowed
 !
