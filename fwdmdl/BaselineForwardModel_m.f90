@@ -93,7 +93,7 @@ contains ! ======================================== BaselineForwardModel ======
 
     ! Executable code -------------------------------------------------------
     
-    ! if (.not. fwdModelConf%doBaseline ) return
+    if (.not. fwdModelConf%do_Baseline ) return
 
     nullify ( chan0, chan1, inst0, inst1, surf0, surf1 )
     nullify ( chanWt0, chanWt1, instWt0, instWt1, surfWt0, surfWt1 )
@@ -304,6 +304,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.4  2001/10/02 20:37:19  livesey
+! Pays attention to do_baseline
+!
 ! Revision 2.3  2001/10/02 20:20:46  livesey
 ! First linkable version
 !
