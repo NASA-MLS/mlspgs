@@ -257,7 +257,6 @@ contains ! =====     Public Procedures     =============================
 						& (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), anText, &
                   & metadata_error)
                   error=max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-						l2gp_mcf = l2gp_mcf + 1
 
 					else
 
@@ -342,7 +341,9 @@ contains ! =====     Public Procedures     =============================
                      		 CALL WriteL2AUXData(l2auxDatabase(db_index),sdfid)
 									 numquantitiesperfile=numquantitiesperfile+1
               				 if(DEBUG) call output("attempting to fill quantity name", advance='yes')
-			          		  call get_string ( sub_rosa(subtree(2,gson)), QuantityNames(numquantitiesperfile) )
+			          		  call get_string &
+                          & ( l2auxDatabase(db_index)%name, &
+                          &     QuantityNames(numquantitiesperfile) )
 								else
               				 call announce_error ( ROOT, &
                			 &  "l2aux database smaller than db_index  ")
@@ -383,6 +384,13 @@ contains ! =====     Public Procedures     =============================
 						call output(l2aux_mcf , advance='no')
 						call output('   sdfId: ', advance='no')
 						call output(sdfId , advance='yes')
+						call output('   number of quantities: ', advance='no')
+						call output(numquantitiesperfile , advance='yes')
+                  do field_no=1, numquantitiesperfile
+						   call output(field_no , advance='no')
+						   call output('       ', advance='no')
+						   call output(trim(QuantityNames(field_no)) , advance='yes')
+                  enddo
 					endif
 						call populate_metadata_oth &
 						& (l2auxFileHandle, l2aux_mcf, l2pcf, &
@@ -492,6 +500,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.22  2001/04/13 23:48:37  pwagner
+! Removed bogus increment of l2gp_mcf
+!
 ! Revision 2.21  2001/04/13 00:26:23  pwagner
 ! Whether files named in PCF agree in case with l2cf controlled
 !
