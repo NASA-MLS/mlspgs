@@ -156,6 +156,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: noExtSurf                           ! Number of cloud ext levels
     integer :: noIWCSurf                           ! Number of cloud IWC levels
     integer :: noLWCSurf                           ! Number of cloud LWC levels
+    integer :: noPSDSurf                           ! Number of size dist. levels
     integer :: NOFREQS                             ! Number of frequencies
     integer :: DIRECTION                           ! Direction of channel numbering
 
@@ -199,7 +200,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: VMRARRAY  ! The VMRs
     real(r8), dimension(:), allocatable :: Slevl   ! S grid
     real(r8), dimension(:), allocatable :: Zt      ! tangent height
-    real (r8), dimension(:), pointer :: thisFraction ! Sideband ratio values
+    real(r8), dimension(:), pointer :: thisFraction ! Sideband ratio values
     real(rp) :: Vel_Cor                 ! Velocity correction due to Vel_z
 
     real(r8), dimension(:), pointer :: phi_fine    ! Fine resolution for phi 
@@ -212,6 +213,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:,:), allocatable  :: A_TRANS
     real(r8), dimension(:), pointer :: FREQUENCIES 
     real(r8), dimension(:,:), allocatable :: WC
+    real(r8), dimension(:), allocatable :: PSD
 
     real(r8) :: dz                                 ! thickness of state quantity
     real(r8) :: dphi                               ! phi interval of state quantity
@@ -386,9 +388,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        state_los => GetVectorQuantityByType(FwdModelIn,quantityType=l_LosTransFunc)
 
         ! Get number of cloud surfaces for retrieval
+        noPSDSurf=sizeDistribution%template%noSurfs
         noIWCSurf=cloudice%template%noSurfs
         noLWCSurf=cloudwater%template%noSurfs
         noExtSurf=state_ext%template%noSurfs
+
+        ! use Temp vGrid for all cloud variables
+        allocate ( WC(ForwardModelConfig%no_cloud_species,NoSurf), STAT=status )
+        allocate ( PSD(NoSurf), STAT=status )
 
         ! check if these dimensions are same
         if(noIWCSurf .ne. noLWCSurf &
@@ -396,7 +403,27 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           call MLSMessage(MLSMSG_Error, ModuleName, &
           &'IWC, LWC and Extinction profiles have different vertical grids')
         endif
+        
+        if(noPSDSurf .ne. noSurf) then
+          call InterpolateValues ( &
+           & reshape(sizeDistribution%template%surfs(:,1),(/noPSDSurf/)), &    ! Old X
+           & reshape(sizeDistribution%values(:,instance),(/noPSDSurf/)),  &    ! Old Y
+           & reshape(temp%template%surfs(:,1),(/noSurf/)),      &    ! New X
+           & PSD, 'Linear')                                   ! New Y
+          call MLSMessage(MLSMSG_Warning, ModuleName, &
+          &'Particle size dist vGrid is NOT same as Temperature and interpolation is enforced')
+        else
+            PSD = sizeDistribution%values(:,instance)
+        endif
 
+        if (noSurf .ne. GPH%template%nosurfs) then
+         call MLSMessage ( MLSMSG_Error, ModuleName,                            &
+         & 'number of levels in gph does not match no of levels in temp' )
+         else if (radiance%template%nosurfs .ne. ptan%template%nosurfs) then
+         call MLSMessage ( MLSMSG_Error, ModuleName,                          &
+         & 'number of levels in radiance does not match no of levels in ptan' )
+         endif
+         
         ! Get s dimension
         noSgrid=state_los%template%noChans
         
@@ -569,16 +596,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & 2, temp%template%noSurfs,                                            &
       & 'a_massMeanDiameter', ModuleName )
     
-    if (noSurf /= GPH%template%nosurfs) then
-      call MLSMessage ( MLSMSG_Error, ModuleName,                            &
-      & 'number of levels in gph does not match no of levels in temp' )
-     else if (radiance%template%nosurfs /= ptan%template%nosurfs) then
-        call MLSMessage ( MLSMSG_Error, ModuleName,                          &
-        & 'number of levels in radiance does not match no of levels in ptan' )
-    endif
-
-    allocate ( WC(ForwardModelConfig%no_cloud_species,NoSurf), STAT=status )
-
     do i=1,ForwardModelConfig%no_cloud_species
      if(noSurf .eq. noIWCSurf) then
       if(i .eq. 1) WC (i,:) = CloudIce%values(:,instance)
@@ -588,13 +605,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & call InterpolateValues ( &
         & reshape(CloudIce%template%surfs(:,1),(/noIWCSurf/)), &    ! Old X
         & reshape(CloudIce%values(:,instance),(/noIWCSurf/)),  &    ! Old Y
-        & reshape(temp%values(:,instance),(/noSurf/)),      &    ! New X
+        & reshape(temp%template%surfs(:,1),(/noSurf/)),      &    ! New X
         & WC (i,:), 'Linear' )                                   ! New Y
       if(i .eq. 2) &
         & call InterpolateValues ( &
-        & reshape(CloudWater%template%surfs(:,1),(/noIWCSurf/)), &    ! Old X
-        & reshape(CloudWater%values(:,instance),(/noIWCSurf/)),  &    ! Old Y
-        & reshape(temp%values(:,instance),(/noSurf/)),      &    ! New X
+        & reshape(CloudWater%template%surfs(:,1),(/noLWCSurf/)), &    ! Old X
+        & reshape(CloudWater%values(:,instance),(/noLWCSurf/)),  &    ! Old Y
+        & reshape(temp%template%surfs(:,1),(/noSurf/)),      &    ! New X
         & WC (i,:), 'Linear' )                                   ! New Y
      endif      
     enddo
@@ -761,7 +778,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & temp%values(:,instance),                                             &
       & vmrArray,                                                            &
       & WC,                                                                  &
-      & int(sizeDistribution%values(:,instance)),                            &
+      & int(PSD),                            &
       & zt,                                                                  &
       & earthradius%values(1,1),                                             &
       & int(surfaceType%values(1, instance)),                                &
@@ -1055,6 +1072,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     endif
 
     Deallocate (WC, stat=ier )
+    Deallocate (PSD, stat=ier )
 
     end do  ! End of signals
 
@@ -1084,6 +1102,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.121  2003/11/20 20:30:58  dwu
+! fit the problem when IWC and Temp vGrid mismatch
+!
 ! Revision 1.120  2003/07/09 20:17:22  livesey
 ! Anticipative bug fix in sideband fraction
 !
