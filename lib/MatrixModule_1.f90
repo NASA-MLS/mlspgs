@@ -11,9 +11,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
   use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
-    & ColumnScale, CreateBlock, DestroyBlock, Dump, M_Absent, MatrixElement_T, &
-    & MultiplyMatrixBlocks, MultiplyMatrixVector, MultiplyMatrixVectorNoT, &
-    & operator(+), operator(.TX.), RowScale, SolveCholesky, UpdateDiagonal
+    & ColumnScale, CreateBlock, DestroyBlock, Dump, M_Absent, M_Full, &
+    & MatrixElement_T, MaxAbsVal, MinDiag, MultiplyMatrixBlocks, &
+    & MultiplyMatrixVector, MultiplyMatrixVectorNoT, operator(+), &
+    & operator(.TX.), RowScale, SolveCholesky, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error
@@ -27,11 +28,12 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: ClearRows, ClearRows_1, CopyMatrix, CreateEmptyMatrix
   public :: CholeskyFactor, CholeskyFactor_1, ColumnScale, ColumnScale_1
   public :: DestroyMatrix, DestroyMatrixDatabase, Dump, FindBlock
+  public :: GetFromMatrixDatabase
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
-  public :: Matrix_SPD_T, MultiplyMatrices, MultiplyMatrixVector
-  public :: MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
-  public :: NewMultiplyMatrixVector, NormalEquations
+  public :: Matrix_SPD_T, MaxAbsVal, MaxAbsVal_1, MinDiag, MinDiag_1
+  public :: MultiplyMatrices, MultiplyMatrixVector, MultiplyMatrixVector_1
+  public :: MultiplyMatrixVectorSPD_1, NewMultiplyMatrixVector, NormalEquations
   public :: operator(.TX.), operator(+), RC_Info, RowScale, RowScale_1
   public :: SolveCholesky, SolveCholesky_1
   public :: UpdateDiagonal, UpdateDiagonal_1
@@ -66,6 +68,14 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   interface GetFromMatrixDatabase
     module procedure GetMatrixFromDatabase, GetCholeskyFromDatabase
     module procedure GetKroneckerFromDatabase, GetSPDFromDatabase
+  end interface
+
+  interface MaxAbsVal
+    module procedure MaxAbsVal_1
+  end interface
+
+  interface MinDiag
+    module procedure MinDiag_1
   end interface
 
   interface MultiplyMatrixVector   ! A^T V
@@ -104,6 +114,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     type(Vector_T), pointer :: Vec ! Vector used to define the row or column
       ! space of the matrix, if any.
     integer :: NB                  ! Number of blocks of rows or columns
+    logical :: Extra               ! There is an extra row or column that is
+      ! not accounted for by vec.
     logical :: InstFirst = .true.  ! TRUE means horizontal instance is the
       ! major order and quantity is the minor order.
     integer, pointer :: Nelts(:) => NULL()  ! Numbers of rows or columns in
@@ -188,10 +200,12 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
-    ! Check that the matrices are compatible.  We don't need to check
-    ! Nelts or Nb, because these are deduced from Vec.
-    if ( .not. associated(x%col%vec%template,y%col%vec%template) &
-      & .or. .not. associated(x%row%vec%template,y%row%vec%template) &
+    ! Check that the matrices are compatible.  We also need to check
+    ! Nb, because the matrices may have been created with an extra
+    ! row or column.
+    if ( x%col%vec%template%id /= y%col%vec%template%id &
+      & .or. x%row%vec%template%id /= y%row%vec%template%id &
+      & .or. x%col%nb /= y%col%nb .or. x%row%nb /= y%row%nb &
       & .or. (x%col%instFirst .neqv. y%col%instFirst) &
       & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -243,10 +257,12 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
-    ! Check that the matrices are compatible.  We don't need to check
-    ! Nelts or Nb, because these are deduced from Vec.
-    if ( .not. associated(x%col%vec%template,y%col%vec%template) &
-      & .or. .not. associated(x%row%vec%template,y%row%vec%template) &
+    ! Check that the matrices are compatible.  We need to check
+    ! Nb, because the matrices may have been created with an extra
+    ! row or column.
+    if ( x%col%vec%template%id /= y%col%vec%template%id &
+      & .or. x%row%vec%template%id /= y%row%vec%template%id &
+      & .or. x%col%nb /= y%col%nb .or. x%row%nb /= y%row%nb &
       & .or. (x%col%instFirst .neqv. y%col%instFirst) &
       & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -392,7 +408,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  CreateEmptyMatrix  -----
   subroutine CreateEmptyMatrix ( Z, Name, Row, Col &
-    &,                           Row_Quan_First, Col_Quan_First )
+    &,                           Row_Quan_First, Col_Quan_First &
+    &,                           Extra_Row, Extra_Col )
     type(Matrix_T), intent(out) :: Z    ! The matrix to create
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
     type(Vector_T), pointer :: Row      ! Vector used to define the row
@@ -405,29 +422,37 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: Col_Quan_First    ! True (default false)
       ! means the quantity is the major order of the columns of blocks and the
       ! instance is the minor order.
+    logical, intent(in), optional :: Extra_Row         ! Allocate one extra
+      ! row, beyond what's specified by Col, if Extra_Row is present and true.
+    logical, intent(in), optional :: Extra_Col         ! Allocate one extra
+      ! column, beyond what's specified by Row, if Extra_Col is present and true.
 
     integer :: STATUS    ! From ALLOCATE
 
     z%name = name
-    call defineInfo ( z%row, row, row_Quan_First )
-    call defineInfo ( z%col, col, col_Quan_First )
+    call defineInfo ( z%row, row, row_Quan_First, extra_Row )
+    call defineInfo ( z%col, col, col_Quan_First, extra_Col )
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
 
   contains
-    subroutine DefineInfo ( RC, Vec, QuanFirst )
+    subroutine DefineInfo ( RC, Vec, QuanFirst, extra )
       type(RC_Info), intent(out) :: RC
       type(Vector_T), pointer :: Vec ! intent(in)
       logical, intent(in), optional :: QuanFirst
+      logical, intent(in), optional :: Extra
 
       integer :: I, J, N      ! Subscripts or loop inductors
       logical :: NEW          ! Was an instance seen?
 
+      rc%extra = .false.
+      if ( present(extra) ) rc%extra = extra
       rc%vec => vec
       rc%instFirst = .true.
       if ( present(quanFirst) ) rc%instFirst = .not. quanFirst
       rc%nb = row%template%totalInstances
+      if ( rc%extra ) rc%nb = rc%nb + 1
       call allocate_test ( rc%nelts, rc%nb, &
         & "rc%nelts in CreateEmptyMatrix", ModuleName )
       call allocate_test ( rc%inst, rc%nb, "rc%inst in CreateEmptyMatrix", &
@@ -463,6 +488,11 @@ contains ! =====     Public Procedures     =============================
             rc%quant(n) = i
           end do ! j
         end do ! i
+      end if
+      if ( rc%extra ) then
+        rc%nelts(rc%nb) = 1
+        rc%inst(rc%nb) = 0
+        rc%quant(rc%nb) = 0
       end if
     end subroutine DefineInfo
   end subroutine CreateEmptyMatrix
@@ -506,6 +536,29 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // "D in DestroyMatrixDatabase" )
   end subroutine DestroyMatrixDatabase
+
+  ! -----------------------------------------------  FillExtraCol  -----
+  subroutine FillExtraCol ( A, X )
+  ! Fill the "extra" column of A (see type RC_Info) from the vector X.
+  ! Assume it is full -- i.e. don't bother to sparsify it.
+    type(Matrix_T), intent(inout) :: A
+    type(Vector_T), intent(in) :: X
+
+    integer :: I
+
+    ! Check compatibility of X with the row template for A
+    if ( a%col%vec%template%id /= x%template%id ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Vector incompatible with matrix in FillExtraCol" )
+    if ( .not. a%col%extra ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "No extra column to fill in FillExtraCol" )
+    do i = 1, a%row%nb
+      call destroyBlock ( a%block(i,a%col%nb) )
+      call createBlock ( a%block(i,a%col%nb), a%row%nelts(i), 1, m_full )
+      a%block(i,a%col%nb)%values(:,i) = &
+        & x%quantities(a%row%quant(i))%values(:,a%row%inst(i))
+    end do ! i
+  end subroutine FillExtraCol
 
   ! --------------------------------------------------  FindBlock  -----
   integer function FindBlock ( RC, Quantity, Instance )
@@ -559,6 +612,18 @@ contains ! =====     Public Procedures     =============================
     SPD => databaseElement%SPD
   end subroutine GetSPDFromDatabase
 
+  ! ----------------------------------------  GetVectorFromColumn  -----
+  subroutine GetVectorFromColumn ( Matrix, Column, Vector )
+  ! Fill the Vector from the Column of the Matrix
+    type(matrix_T), intent(in) :: Matrix
+    integer, intent(in) :: Column
+    type(vector_T), intent(inout) :: Vector  ! Must already be "created"
+
+    if ( matrix%col%vec%template%id /= vector%template%id ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Vector incompatible with matrix in GetVectorFromColumn" )
+  end subroutine GetVectorFromColumn
+
   ! ------------------------------------  LevenbergUpdateCholesky  -----
 ! subroutine LevenbergUpdateCholesky ( Z, LAMBDA )
 ! ! Given a Cholesky factor Z of a matrix of normal equations A^T A,
@@ -567,6 +632,31 @@ contains ! =====     Public Procedures     =============================
 !   type(Matrix_T), intent(inout) :: Z
 !   real(r8), intent(in) :: LAMBDA
 ! end subroutine LevenbergUpdateCholesky
+
+  ! ------------------------------------------------  MaxAbsVal_1  -----
+  real(r8) function MaxAbsVal_1 ( A )
+  ! Return the magnitude of the element in A that has the largest magnitude.
+    type(Matrix_T), intent(in) :: A
+    integer :: I, J
+    maxAbsVal_1 = 0.0_r8
+    do i = 1, a%row%nb
+      do j = 1, a%col%nb
+        maxAbsVal_1 = max(maxAbsVal_1,maxAbsVal(a%block(i,j)))
+      end do
+    end do
+  end function MaxAbsVal_1
+
+  ! --------------------------------------------------  MinDiag_1  -----
+  real(r8) function MinDiag_1 ( A )
+  ! Return the magnitude of the element on the diagonal of A that has the
+  ! smallest magnitude.
+    type(Matrix_SPD_T), intent(in) :: A
+    integer :: I
+    minDiag_1 = minDiag(a%m%block(1,1))
+    do i = 2, a%m%row%nb
+      minDiag_1 = min(minDiag_1,minDiag(a%m%block(i,i)))
+    end do
+  end function MinDiag_1
 
   ! -------------------------------------------  MultiplyMatrices  -----
   function MultiplyMatrices ( X, Y ) result ( Z ) ! Z = X^T Y
@@ -964,6 +1054,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.6  2001/01/19 23:53:26  vsnyder
+! Add FillExtraCol, GetVectorFromColumn (incomplete); SolveCholesky_1
+! still needs work, too.
+!
 ! Revision 2.5  2001/01/10 21:03:14  vsnyder
 ! Periodic commit
 !
