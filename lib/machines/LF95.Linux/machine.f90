@@ -8,8 +8,16 @@ module MACHINE
   character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
   integer, parameter :: HP = 0          ! Offset for first argument for GETARG
 
+  public :: GETARG
+  interface
+    subroutine GETARG ( ARGNUM, ARGVAL )
+      integer, intent(in) :: ARGNUM  ! 0 = command name, 1 = first arg, etc.
+      character(len=*), intent(out) :: ARGVAL   ! Blank if argnum out-of-range
+    end subroutine GETARG
+  end interface
+
   interface IO_ERROR; module procedure IO_ERROR_; end interface
-  private IO_ERROR_
+  private :: IO_ERROR_
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -53,6 +61,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.2  2001/05/04 23:25:10  vsnyder
+! Added Exit_With_Status routine
+!
 ! Revision 1.1  2001/01/13 00:29:44  pwagner
 ! moved to lib/machines/MLSCONFG/machine.f90
 !
