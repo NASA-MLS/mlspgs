@@ -9,9 +9,10 @@ program MLSL2
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
-  use MLSCOMMON, only: FILENAMELEN
+  use MLSCOMMON, only: FILENAMELEN, MLSFile_T
   USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
-    & MLSFile_T, MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
+    & MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
+  !    & MLSFile_T, MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
     & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, CURRENT_VERSION_ID, &
     & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS, &
@@ -685,6 +686,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.88  2002/12/05 19:45:20  pwagner
+! Moved MLSFile_T from MLSFiles to MLSCommon
+!
 ! Revision 2.87  2002/12/04 01:18:21  pwagner
 ! First halting steps toward using filedatabase
 !
