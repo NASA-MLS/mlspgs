@@ -1739,7 +1739,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Defining special "unlimited dimension called UNLIM
     !print*,"Defined Unlim with size", HE5S_UNLIMITED
-    status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED)
+    status = HE5_SWdefdim(swid, UNLIM, HE5S_UNLIMITED_F)
 
     !print*,"Defining dimension ", DIM_NAME1," with size",l2gp%nTimes
     status = HE5_SWdefdim(swid, DIM_NAME1, l2gp%nTimes)
@@ -2473,6 +2473,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.20  2002/08/15 22:26:22  pwagner
+! Added he5_swdefchunk to .._createFile_hdf5
+!
 ! Revision 1.19  2002/06/10 12:00:43  hcp
 ! Removed use hdf5_params as hdf-eos5 now has an include file with the
 ! parameters you need ready-defined. References to various types changed
