@@ -1,4 +1,4 @@
-! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -7,7 +7,7 @@ module ReadAPriori
   use GriddedData, only: GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump
   use Hdf, only: DFACC_READ, SFSTART
-  use Hdfeos, only: SWOPEN, SWCLOSE, SWINQSWATH
+  use Hdfeos, only: SWOPEN, SWCLOSE
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & S_L2AUX, S_L2GP
@@ -16,6 +16,8 @@ module ReadAPriori
   use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
+  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    & split_path_name, mls_InqSwath
   use MLSL2Options, only: PCF
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -88,6 +90,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
     integer :: NOSWATHS                 ! In an input file
     integer :: pcf_indx            ! loop index of climatology pcf numbers
+    integer :: record_length
     integer :: ReturnStatus
     integer :: SON              ! Of root, an n_spec_args or a n_named
     integer :: SdName        ! sub-rosa index of name in sdName='name'
@@ -176,7 +179,12 @@ contains ! =====     Public Procedures     =============================
 
         ! If we didn't get a name get the first swath name in the file
         if ( len_trim(swathNameString) == 0 ) then
-          noSwaths = SWInqSwath ( fileNameString, allSwathNames, listSize )
+!
+! (((((( This will have to be changed before transition to hdfeos5 ))))))
+!        Maybe put wrapper in MLSFiles?
+!          noSwaths = SWInqSwath ( fileNameString, allSwathNames, listSize )
+          allSwathNames = ''
+          noSwaths = mls_InqSwath ( fileNameString, allSwathNames, listSize )
           if ( listSize < len(allSwathNames) ) then
             commaPos = index ( allSwathNames, ',' )
             if ( commaPos == 0 ) commaPos = len_trim(allSwathNames)
@@ -188,7 +196,10 @@ contains ! =====     Public Procedures     =============================
         endif
         
         ! Open the l2gp file
-        fileHandle = swopen(FileNameString, DFACC_READ)
+!        fileHandle = swopen(FileNameString, DFACC_READ)
+        fileHandle = mls_io_gen_openF('swopen', .TRUE., returnStatus, &
+             & record_length, DFACC_READ, FileName=FileNameString, &
+             & debugOption=.true. )
         if ( fileHandle == -1 ) then
           call announce_error ( son, &
             & 'Failed to open swath file ' // trim(FileNameString) )
@@ -201,7 +212,8 @@ contains ! =====     Public Procedures     =============================
         & call dump( l2gp, details=details )
 
         ! Close the file
-        fileHandle = swclose(fileHandle)
+!        fileHandle = swclose(fileHandle)
+        fileHandle = mls_io_gen_closeF('swclose', fileHandle)
         if ( fileHandle == -1 ) then
           call announce_error ( son, &
             & 'Failed to close swath file ' // trim(FileNameString) )
@@ -409,6 +421,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.28  2002/01/18 00:55:30  pwagner
+! Uses MLSFiles for swapi wrappers
+!
 ! Revision 2.27  2002/01/09 00:00:04  pwagner
 ! Replaced write or print statements with calls to output
 !
