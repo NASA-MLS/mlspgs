@@ -139,7 +139,8 @@ endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
 ifeq ($(MLSF95),LF95)
-   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+   gcc_version=$(shell ${MLSBIN}/which_fftw.sh -gcc)
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
 endif
 else
    hdfeos5_linker_line=
@@ -210,6 +211,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.24  2002/09/04 18:10:22  pwagner
+# LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
+#
 # Revision 1.23  2002/08/29 23:54:59  pwagner
 # l_specials set to special value for Lahey
 #

@@ -140,7 +140,8 @@ endif
 ifdef HDFEOS5
    hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
 ifeq ($(MLSF95),LF95)
-   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/2.96 -lgcc
+   gcc_version=$(shell ${MLSBIN}/which_fftw.sh -gcc)
+   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
 endif
 else
    hdfeos5_linker_line=
@@ -156,18 +157,6 @@ else
    hdf5_message=Building mlsl3m without hdf5
 endif
 
-# ifdef FFTW_PREC
-# ifeq ($(FFTW_PREC),s)
-#    fftw_linker_line=-L${FFTW_ROOT} -lsrfftw -lsfftw
-#    fftw_message=Building mlsl3d with single-precision fftw
-# else
-#    fftw_linker_line=-L${FFTW_ROOT} -ldrfftw -ldfftw
-#    fftw_message=Building mlsl3d with double-precision fftw
-# endif
-# else
-#    fftw_linker_line=-L${FFTW_ROOT} -lrfftw -lfftw
-#    fftw_message=Building mlsl3d with default-precision fftw
-# endif
 fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
 mlsl3m: $(mlsl3m_prereqs)
@@ -217,27 +206,10 @@ tar:
 
 # ========================================================================
 
-# L3DZData.o: $(S)/L3DZData.f90
-# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
-# 
-# L3MZData.o: $(S)/L3MZData.f90
-# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
-# 
-# L3MMData.o: $(S)/L3MMData.f90
-# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
-# 
-# L3DZDiag.o: $(S)/L3DZDiag.f90
-# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
-# 
-# L3MZDiag.o: $(S)/L3MZDiag.f90
-# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
-# 
-# L3MMDiag.o: $(S)/L3MMDiag.f90
-# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
-# 
-# ========================================================================
-
 # $Log$
+# Revision 1.13  2002/09/04 18:10:22  pwagner
+# LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
+#
 # Revision 1.12  2002/08/29 23:54:59  pwagner
 # l_specials set to special value for Lahey
 #
