@@ -73,7 +73,7 @@ contains ! =====     Public Procedures     =============================
       & VALIDATEVECTORQUANTITY, M_LINALG
 
     ! Dummy arguments
-    type(forwardModelConfig_T), intent(inout) :: fmConf
+    type(forwardModelConfig_T), intent(inout) :: FMCONF
     type(vector_T), intent(in) ::  FWDMODELIN
     type(vector_T), intent(in) ::  FWDMODELEXTRA
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
@@ -217,9 +217,9 @@ contains ! =====     Public Procedures     =============================
 
     ! If we're doing a split calculation then get the relevant
     ! sideband information
-    if ( sidebandStart /= sidebandStop ) then 
+    if ( sidebandStart /= sidebandStop .or. fmConf%forceSidebandFraction ) then 
       ! Change to this if statement later !????
-      ! if ( signal%sideband == 0 ) then
+      ! if ( signal%sideband == 0 .or. fmConf%forceSidebandFraction ) then
       sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
       lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -999,6 +999,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.41  2003/07/09 20:16:26  livesey
+! Anticipative bug fix in sideband stuff (not really used so far)
+!
 ! Revision 2.40  2003/05/29 16:37:45  livesey
 ! Renamed sideband fraction
 !
