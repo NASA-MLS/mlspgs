@@ -6,7 +6,7 @@
 PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 !==============================================
 
-   USE L2GPData
+   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
    USE L2Interface
    USE L3DZData
    USE L3MMData
@@ -111,17 +111,20 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
       CALL DestroyL2GPDatabase(l2gp)
 
+      CALL DestroyL3DZDatabase(dz)
+      CALL DeallocateL3MZ(mz)
+
 ! Output and Close for the product
 
-      CALL OutputStd(pcf, cfDef%stdType, cfStd(i)%mode, dz, dzA, dzD, mz, mzA, mzD, &
+      CALL OutputStd(pcf, cfDef%stdType, cfStd(i)%mode, dzA, dzD, mzA, mzD, &
                      mm, mmA, mmD, sFiles, flag)
 
    ENDDO
 
+! Begin Diagnostic processing
+
    msr = 'Standard product loop completed; beginning Diagnostic product loop ...'
    CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
-
-   numFiles = 0
 
 ! Get the names of any L2GP Diagnostics files from the PCF
 
@@ -160,8 +163,8 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
 ! Monthly Core processing
 
-         CALL MonthlyCoreProcessing(cfDg(i), pcf, cfDef, l2Days, l2gp, mm, mmA, mmD, &
-                                    mz, mzA, mzD, dz, dzA, dzD)
+         CALL MonthlyCoreProcessing(cfDg(i), pcf, cfDef, l2Days, l2gp, &
+                                    mm, mmA, mmD, mz, mzA, mzD, dz, dzA, dzD)
 
          msr = 'CORE processing completed for ' // TRIM(cfDg(i)%l3prodName) &
                // '; starting Output task ...'
@@ -171,9 +174,12 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
          CALL DestroyL2GPDatabase(l2gp)
 
+         CALL DestroyL3DZDatabase(dz)
+         CALL DeallocateL3MZ(mz)
+
 ! Output and Close for the product
 
-         CALL OutputDg(pcf, cfDef%dgType, dz, dzA, dzD, mz, mzA, mzD, mm, mmA, mmD, &
+         CALL OutputDg(pcf, cfDef%dgType, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
                        dFiles, flag)
 
       ENDDO
@@ -185,7 +191,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
    CALL MLSMessage (MLSMSG_Info, ModuleName, &
             'Product processing completed; beginning Output/Close task ... ')
 
-   CALL OutputMON(sFiles, dFiles, flag, pcf, cfStd, cf, anText)
+   CALL OutputMON(sFiles, dFiles, flag, pcf, cfStd, cfDg, cf, anText)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, &
     'EOS MLS Level 3 Monthly data processing successfully completed!')
@@ -198,6 +204,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.6  2001/09/06 18:48:39  nakamura
+! Modified so that dg products are processed with the same Core as std prods.
+!
 ! Revision 1.5  2001/08/08 19:27:47  nakamura
 ! Added cfDef to MonthlyCoreProcessing args; added comments delineating CORE from I/O.
 !

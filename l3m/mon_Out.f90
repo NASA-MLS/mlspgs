@@ -137,10 +137,10 @@ CONTAINS
    END SUBROUTINE WriteMetaLogM
 !------------------------------
 
-!-----------------------------------------------------------------------------------
-   SUBROUTINE OutputStd(pcf, type, mode, dz, dzA, dzD, mz, mzA, mzD, mm, mmA, mmD, &
+!---------------------------------------------------------------------------
+   SUBROUTINE OutputStd(pcf, type, mode, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
                         sFiles, flag)
-!-----------------------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Output/Close task within the standard product loop of
@@ -153,11 +153,11 @@ CONTAINS
 
       CHARACTER (LEN=*), INTENT(IN) :: mode, type
 
-      TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
+      TYPE( L3DZData_T ), POINTER :: dzA(:), dzD(:)
 
       TYPE( L3MMData_T ), INTENT(INOUT) :: mm, mmA, mmD
 
-      TYPE( L3MZData_T ), INTENT(INOUT) :: mz, mzA, mzD
+      TYPE( L3MZData_T ), INTENT(INOUT) :: mzA, mzD
 
       TYPE( OutputFiles_T ), INTENT(OUT) :: sFiles
 
@@ -171,9 +171,6 @@ CONTAINS
 
 ! Daily Zonal Mean output
 
-      CALL OutputL3DZ(type, dz, sFiles)
-      CALL DestroyL3DZDatabase(dz)
-
       CALL OutputL3DZ(type, dzA, sFiles)
       CALL DestroyL3DZDatabase(dzA)
 
@@ -181,9 +178,6 @@ CONTAINS
       CALL DestroyL3DZDatabase(dzD)
 
 ! Monthly Zonal Mean output
-
-      CALL OutputL3MZ(pcf%zsName, mz, flag%createZS)
-      CALL DeallocateL3MZ(mz)
 
       CALL OutputL3MZ(pcf%zsName, mzA, flag%createZS)
       CALL DeallocateL3MZ(mzA)
@@ -216,10 +210,9 @@ CONTAINS
    END SUBROUTINE OutputStd
 !--------------------------
 
-!------------------------------------------------------------------------------------
-   SUBROUTINE OutputDg(pcf, type, dz, dzA, dzD, mz, mzA, mzD, mm, mmA, mmD, dFiles, &
-                       flag)
-!------------------------------------------------------------------------------------
+!--------------------------------------------------------------------------------
+   SUBROUTINE OutputDg(pcf, type, dzA, dzD, mzA, mzD, mm, mmA, mmD, dFiles, flag)
+!--------------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Output/Close task within the standard product loop of
@@ -231,11 +224,11 @@ CONTAINS
 
       CHARACTER (LEN=*), INTENT(IN) :: type
 
-      TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
+      TYPE( L3DZData_T ), POINTER :: dzA(:), dzD(:)
 
       TYPE( L3MMData_T ), INTENT(INOUT) :: mm, mmA, mmD
 
-      TYPE( L3MZData_T ), INTENT(INOUT) :: mz, mzA, mzD
+      TYPE( L3MZData_T ), INTENT(INOUT) :: mzA, mzD
 
       TYPE( OutputFiles_T ), INTENT(OUT) :: dFiles
 
@@ -254,9 +247,6 @@ CONTAINS
 
 ! Daily Zonal Mean output
 
-      CALL OutputL3DZ(type, dz, dFiles)
-      CALL DestroyL3DZDatabase(dz)
-      
       CALL OutputL3DZ(type, dzA, dFiles)
       CALL DestroyL3DZDatabase(dzA)
 
@@ -264,9 +254,6 @@ CONTAINS
       CALL DestroyL3DZDatabase(dzD)
 
 ! Monthly Zonal Mean output
-
-      CALL OutputL3MZ(pcf%zdName, mz, flag%createZD)
-      CALL DeallocateL3MZ(mz)
 
       CALL OutputL3MZ(pcf%zdName, mzA, flag%createZD)
       CALL DeallocateL3MZ(mzA)
@@ -283,9 +270,9 @@ CONTAINS
    END SUBROUTINE OutputDg
 !-------------------------
 
-!-----------------------------------------------------------------------
-   SUBROUTINE OutputMON (sFiles, dFiles, flags, pcf, cfProd, cf, anText)
-!-----------------------------------------------------------------------
+!-----------------------------------------------------------------------------
+   SUBROUTINE OutputMON (sFiles, dFiles, flags, pcf, cfProd, cfDg, cf, anText)
+!-----------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the monthly Output/Close task for a product.
@@ -300,7 +287,7 @@ CONTAINS
 
       TYPE( Mlscf_T ), INTENT(INOUT) :: cf
 
-      TYPE( L3CFMProd_T ), POINTER :: cfProd(:)
+      TYPE( L3CFMProd_T ), POINTER :: cfDg(:), cfProd(:)
 
       CHARACTER (LEN=1), POINTER :: anText(:)
 
@@ -374,7 +361,7 @@ CONTAINS
 
 ! Deallocations
 
-      DEALLOCATE(cfProd, anText, STAT=err)
+      DEALLOCATE(cfProd, cfDg, anText, STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_DeAllocate // '  Open/Init quantities.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -395,6 +382,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.3  2001/09/06 18:51:45  nakamura
+!Added subroutine OutputDg; moved database deallocation back down into Output subroutines.
+!
 !Revision 1.2  2001/08/01 18:30:03  nakamura
 !Added OutputStd subroutine; updated WriteMetaLogM for separation from Daily.
 !
