@@ -161,7 +161,7 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine SayTime
       call cpu_time ( t2 )
-      call output ( "Timing for MLSL2Construct =" )
+      call output ( "Timing for MLSL2Construct = " )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
@@ -188,6 +188,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.22  2001/04/28 01:43:10  vsnyder
+! Improved the timing message
+!
 ! Revision 2.21  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
