@@ -225,8 +225,6 @@ contains
             end if
           end do                        ! MAF loop
 
-            call add_to_retrieval_timing( 'forward_model', t1 )
-
           ! Destroy jacobian if asked to
           if (destroyJacobian .and. ixJacobian > 0 ) then
             call DestroyBlock ( Jacobian )
@@ -333,6 +331,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.41  2002/09/23 18:04:47  livesey
+! Got rid of unnecessary timing
+!
 ! Revision 2.40  2002/09/18 23:56:01  vsnyder
 ! Call time_now at end of add_to_retrieval_timing
 !
