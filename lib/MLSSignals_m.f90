@@ -7,7 +7,8 @@ module MLSSignals_M
   use DUMP_0, only: DUMP
   use Expr_M, only: Expr
   use Init_MLSSignals_m ! Everything
-  use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time
+  use Intrinsic, only: Field_First, Field_indices, &
+    & PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
@@ -131,10 +132,9 @@ module MLSSignals_M
 contains
 
   ! -------------------------------------------------  MLSSignals  -----
-  subroutine MLSSignals ( ROOT, Field_Indices )
+  subroutine MLSSignals ( ROOT )
     ! Process the MLSSignals section of the L2 configuration file.
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
-    integer, intent(in) :: Field_Indices(field_first:)
 
     type(band_T) :: Band                ! To be added to the database
     integer :: Channels                 ! subtree index of field
@@ -1123,6 +1123,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.33  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.32  2001/04/24 22:36:27  vsnyder
 ! Correct the 'what' argument to deallocate_test
 !
