@@ -217,6 +217,9 @@ contains ! =====     Public Procedures     =============================
       if ( DEBUG ) call output('output type number: ', advance='no')
       if ( DEBUG ) call output(output_type, advance='yes')
 
+      if ( DEBUG ) call output('file_base: ', advance='no')
+      if ( DEBUG ) call output(trim(file_base), advance='yes')
+
         select case ( output_type )
         case ( l_l2gp ) ! --------------------- Writing l2gp files -----
           if ( DEBUG ) call output('output file type l2gp', advance='yes')
@@ -224,6 +227,9 @@ contains ! =====     Public Procedures     =============================
 
           if ( PCF ) then
             call split_path_name(file_base, path, file_base)
+           if ( DEBUG ) call output('file_base after split: ', advance='no')
+           if ( DEBUG ) call output(trim(file_base), advance='yes')
+
             l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
             & mlspcf_l2gp_end, &
             & PCFL2CFSAMECASE, returnStatus, l2gp_Version, DEBUG, &
@@ -389,9 +395,10 @@ contains ! =====     Public Procedures     =============================
                     & call output ( "computing db index", advance='yes')
                   db_index = -decoration(decoration(subtree(in_field_no ,gson)))
                   if ( db_index >= 1 ) then
-                    call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, &
+                    call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, returnStatus,&
                       & WriteCounterMAF = &
-                      &   (writeCounterMAF .and. numquantitiesperfile == 0) )
+                      &   (writeCounterMAF .and. numquantitiesperfile == 0))
+                    error = max(error, returnStatus)
                     numquantitiesperfile = numquantitiesperfile+1
                     if ( DEBUG ) call output(&
                       & "attempting to fill quantity name", advance='yes')
@@ -879,6 +886,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.55  2002/08/15 21:47:04  pwagner
+! WriteL2AuxData now returns non-zero status if it fails
+!
 ! Revision 2.54  2002/06/12 17:58:42  livesey
 ! Intermediate support for HDF5 L2PCs
 !
