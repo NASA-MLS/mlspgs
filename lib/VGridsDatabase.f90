@@ -123,24 +123,33 @@ contains
     call output ( vgrid%noSurfs )
     call output ( ' verticalCoordinate = ' )
     call display_string ( lit_indices(vgrid%verticalCoordinate) )
-    if ( details > 0 ) call dump ( vgrid%surfs(:,1), ' Surfs = ' )
+    if ( myDetails > 0 ) call dump ( vgrid%surfs(:,1), ' Surfs = ' )
   end subroutine Dump_a_VGrid
 
 
   ! ------------------------------------------------  Dump_VGrids  -----
-  subroutine Dump_VGrids ( VGrids, Details )
+  subroutine Dump_VGrids ( VGrids, Details, Where )
+
+    use MoreTree, only: StartErrorMessage
     use OUTPUT_M, only: OUTPUT
-    type(vGrid_T), intent(in) :: VGrids(:)             ! The database
+    type(vGrid_T), pointer :: VGrids(:)             ! The database
     integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
     !                                        ! Default 1
+    integer, intent(in), optional :: Where   ! Tree node index
+
     integer :: I
-    call output ( 'VGRIDS: SIZE = ' )
-    call output ( size(vgrids), advance='yes' )
-    do i = 1, size(vgrids)
-      call output ( i, 4 )
-      call dump_a_vGrid ( vgrids(i), details )
-    end do
+    if ( associated(vGrids) ) then
+      call output ( 'VGRIDS: SIZE = ' )
+      call output ( size(vgrids), advance='yes' )
+      do i = 1, size(vgrids)
+        call output ( i, 4 )
+        call dump_a_vGrid ( vgrids(i), details )
+      end do
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No VGrids to dump.', advance='yes' )
+    end if
   end subroutine Dump_VGrids
 
   ! ------------------------------------------------  GetUnitForVGrid  -----
@@ -246,6 +255,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.12  2004/05/29 02:46:39  vsnyder
+! Fix a bug in Dump_a_VGrid, some cannonball-polishing
+!
 ! Revision 2.11  2004/05/22 02:27:07  vsnyder
 ! Add Dump_a_VGrid
 !
