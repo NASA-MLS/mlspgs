@@ -1,4 +1,4 @@
-#! /bin/bash
+<#! /bin/bash
 # $Id$
 # This shell script prints the name of the desired directory for a given file type
 # First work out where we are.
@@ -48,7 +48,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--output" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/$VERSION"
+	    echo "/research1/$USER"
 	else
 	    echo "/bigdata/$USER/$VERSION"
 	fi
@@ -69,7 +69,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--corel2gp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/$VERSION"
+	    echo "/research1/$USER"
 	else
 	    echo "/bigdata/$USER/$VERSION"
 	fi
@@ -116,6 +116,10 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.18  2003/11/14 21:25:45  livesey
+# A little more (irrelevant as it turns out) intelligence for the dao
+# data.
+#
 # Revision 1.17  2003/11/07 01:08:34  livesey
 # More changes for soundbarrier
 #
