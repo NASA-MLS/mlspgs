@@ -1,9 +1,8 @@
 #	Makefile
 #
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 #
-#special case:
 # "$Id$"
 
 MakeFName = MakeFC
@@ -26,15 +25,21 @@ else
 endif
 
 # This will set our MLS platform, compiler. etc.
-# w/o complaining if it does nor exist yet
+# w/o complaining if it does not exist yet
 -include $(CONFDIR)/$(MLSCFILE)
+
+# All the implicit pattern-matching involving suffixes
+# will be done in the uniquely-named sub-directories, not here--so
+.SUFFIXES:
 
 TAR=tar
 
 SHELL = /bin/sh
 
 #--------------- Target definitions
-# $PROG          -- automatic; built when target is not specified
+# $PROG          -- automatic; built when no target is specified
+# lib            -- test w/o its driver, i.e. any subroutines/functions
+#                   these are built into an object named libmisc.a
 
 #                           (functional)
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
@@ -55,7 +60,10 @@ PROG=test
 $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ test ghostbuster
+lib:
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmisc.a
+
+.PHONY: configure depends clean ghostbuster lib mostlyclean tar tarz targ test
 
 tar:
 
@@ -113,3 +121,6 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.1  2001/06/14 22:18:42  pwagner
+# First commit
+#

@@ -56,7 +56,7 @@ DUSTY = $(FOPTS)
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I" . Don't put spaces between "-I" and the path
 # Same goes for "-M" for module paths.
-INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -I$(PGSINC) -I$S
+INC_PATHS = $(EXTRA_PATHS) -M$S -M$(PGSINC) -I$S -I$(PGSINC)
 
 # Define some suffix rules
 
@@ -78,6 +78,9 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -I$(PGSINC) -I$S
 l_specials =  -lnsl
 
 # $Log$
+# Revision 1.6  2002/02/13 17:27:45  pwagner
+# Removed excess stuff in defining BAD_MATCH
+#
 # Revision 1.5  2002/02/08 18:34:45  pwagner
 # Defines BAD_MATCH for machine.f90 depending on whether collecting garbage
 #

@@ -141,6 +141,9 @@ $(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
         $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
+libmisc.a: $(ALLOBJS)
+	ar ru $@ $?
+	ar d $@ $(PROG_NAME).o
 # ========================================================================
 
 # Custom build commands for some modules
@@ -163,6 +166,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.9  2002/04/18 20:55:28  pwagner
+# .configure now a prerequisite for executable
+#
 # Revision 1.8  2002/02/08 18:34:52  pwagner
 # Custom build for machine.o depends on whether collecting garbage
 #
