@@ -701,32 +701,47 @@ contains ! =====     Public Procedures     =============================
     use String_Table, only: DISPLAY_STRING, GET_STRING
                                                                                 
     ! Dummy argument
-    type(ForwardModelConfig_T), intent(inout) :: FWModelConfig
-                                                                                
+    type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
+
     ! Local variables
     real :: mean, mean_sqDelta, meanTimes, std_dev
     character(len=25) :: thisName
+    integer :: i
 
-    mean = FWModelConfig%sum_DeltaTime/FWModelConfig%Ntimes
-    mean_sqDelta =  FWModelConfig%sum_squareDeltaTime / FWModelConfig%Ntimes 
-    if (FWModelConfig%Ntimes <= 1) then
-       meanTimes = 1.0 
-    else
-       meanTimes = FWModelConfig%Ntimes / (FWModelConfig%Ntimes - 1)
-    end if
-    std_dev = sqrt(abs(meanTimes * (mean_sqDelta - (mean*mean)))) 
-    call get_string ( FWModelConfig%name, thisName )
-    call output ( thisName, advance='no')
-    call output ( FWModelConfig%Ntimes, format = '(i6)',advance = 'no' )
-    call blanks (12, advance = 'no')
-    if (FWModelconfig%Ntimes == 0) then
-	mean = 0.0
-	std_dev = 0.0
-    end if
-    call output ( mean, format='(f8.2)', advance = 'no' )
-    call blanks (10, advance = 'no')
-    call output ( std_dev, format='(f8.2)', advance = 'yes' )
-                                                                                
+    call output ( "======= printForwardModelTiming =========", advance='yes')
+    call output ( " ", advance = 'yes')
+    call output ( "Name", advance='no')
+    call blanks (18, advance ='no')
+    call output ("| Invocation ", advance = 'no')
+    call output ( "| Mean_time / s ", advance='no')
+    call output ("| St. dev. / s", advance='yes')
+    call output ("-------------------------------------------&
+         &-----------------------------", advance= 'yes')
+    do i =1, size(FWModelConfig)
+
+       mean = FWModelConfig(i)%sum_DeltaTime/FWModelConfig(i)%Ntimes
+       mean_sqDelta =  FWModelConfig(i)%sum_squareDeltaTime / &
+                & FWModelConfig(i)%Ntimes
+       if (FWModelConfig(i)%Ntimes <= 1) then
+          meanTimes = 1.0
+       else
+          meanTimes = FWModelConfig(i)%Ntimes / (FWModelConfig(i)%Ntimes - 1)
+       end if
+       std_dev = sqrt(abs(meanTimes * (mean_sqDelta - (mean*mean))))
+       call get_string ( FWModelConfig(i)%name, thisName )
+       call output ( thisName, advance='no')
+       call output ( FWModelConfig(i)%Ntimes, format = '(i6)',advance = 'no' )
+       call blanks (8, advance = 'no')
+       if (FWModelconfig(i)%Ntimes == 0) then
+          mean = 0.0
+          std_dev = 0.0
+       end if
+       call output ( mean, format='(f8.2)', advance = 'no' )
+       call blanks (6, advance = 'no')
+       call output ( std_dev, format='(f8.2)', advance = 'yes' )
+       call output ( " ", advance = 'yes')
+       call resetForwardModelTiming ( FWModelConfig(i))
+     end do
   end subroutine PrintForwardModelTiming
                                                                                 
   ! ------------------------------------  ResetForwardModelTiming  -----
@@ -827,6 +842,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.84  2003/09/03 16:07:52  cvuu
+! Add all of the printout stuff into routine PrintForwardModelTiming
+!
 ! Revision 2.83  2003/08/27 20:31:07  livesey
 ! Removed the prevention of tolerance>0.0 on polarized runs
 !
