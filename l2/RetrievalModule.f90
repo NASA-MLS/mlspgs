@@ -1508,11 +1508,9 @@ contains
                 call time_now ( t3 )
                 call output ( t3-t0, advance='yes' )
               end if
-            if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
-              &  got(f_average) ) then
-              nwt_flag = nf_getJ
-              cycle
-            end if
+            nwt_flag = nf_getJ
+            if ( ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
+              &  got(f_average) ) .and. nwt_flag == nf_tolx_best ) cycle
             exit
           end if
           diagonal = .false.
@@ -2961,6 +2959,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.183  2002/09/21 00:33:34  vsnyder
+! Don't take a getJ iteration if TOLF convergence occurs
+!
 ! Revision 2.182  2002/09/21 00:04:14  vsnyder
 ! Put back an erroneously-removed timing call
 !
