@@ -120,9 +120,9 @@ contains ! ====     Public Procedures     ==============================
     integer :: I                   ! Index for "sons" or "section_ordering"
 
     error = max(error,1)
-    call output ( '***** At ' )
+    call output ( '***** At ', from_where = "type checker" )
     call print_source ( source_ref(where) )
-    call output ( ' the type checker detected: ' )
+    call output ( ': ' )
     select case ( code )
     case ( already_declared )
       call dump_tree_node ( where, 0 )
@@ -709,45 +709,43 @@ m:              do j = 3, nsons(field)
       call output ( '*****      and END at ' )
       call print_source ( source_ref(subtree(n,root)) )
       call output ( ' are not the same.', advance='yes' )
-      call output ( '***** Processing suppressed.', advance='yes' )
+!     call output ( '***** Processing suppressed.', advance='yes' )
       error = max(error,1)
-    else
-      decl = get_decl(sub_rosa(son1),section)
-      if ( decl%type /= section ) &
-        call announce_error ( son1, not_section )
-      if ( section_ordering(decl%units,current_section) /= 1 ) &
-        call announce_error ( son1, section_order )
-      current_section = decl%units
-!     call decorate ( son1, decl%tree )
-      call decorate ( son1, decoration(subtree(1,decl%tree)) )
-!     call declare ( sub_rosa(son1) 0.0d0, section_node, decl%units, root )
-      do i = 2, n-1
-        sonn = subtree(i,root)
-        select case ( node_id(sonn) )
-        case ( n_equal )                ! x = expr
-          call decorate ( sonn, son1 )  ! show equal the section name
-          call equal ( sonn )
-        case ( n_named )                ! label:x,(y[=expr])+
-          gson1 = subtree(1,sonn)       ! Label
-          gson2 = subtree(2,sonn)       ! spec_args tree
-          string1 = sub_rosa(gson1)
-          decl = get_decl ( string1, label )
-          if ( decl%type == label ) then
-            call announce_error ( gson1, already_declared )
-          else
-            call declare ( string1, 0.0d0, label, phyq_invalid, gson2 )
-          end if
-          call decorate ( gson1, gson2 )
-          call decorate ( gson2, son1 ) ! show spec_args the section name
-          call spec_args ( gson2 )
-        case ( n_spec_args )            ! x,(y[=expr])+
-          call decorate ( sonn, son1 )  ! show spec_args the section name
-          call spec_args ( sonn )
-        case default
-          call announce_error ( sonn, no_code_for )
-        end select
-      end do
     end if
+    decl = get_decl(sub_rosa(son1),section)
+    if ( decl%type /= section ) &
+      call announce_error ( son1, not_section )
+    if ( section_ordering(decl%units,current_section) /= 1 ) &
+      call announce_error ( son1, section_order )
+    current_section = decl%units
+    if ( decl%tree /= null_tree ) &
+      & call decorate ( son1, decoration(subtree(1,decl%tree)) )
+    do i = 2, n-1
+      sonn = subtree(i,root)
+      select case ( node_id(sonn) )
+      case ( n_equal )                ! x = expr
+        call decorate ( sonn, son1 )  ! show equal the section name
+        call equal ( sonn )
+      case ( n_named )                ! label:x,(y[=expr])+
+        gson1 = subtree(1,sonn)       ! Label
+        gson2 = subtree(2,sonn)       ! spec_args tree
+        string1 = sub_rosa(gson1)
+        decl = get_decl ( string1, label )
+        if ( decl%type == label ) then
+          call announce_error ( gson1, already_declared )
+        else
+          call declare ( string1, 0.0d0, label, phyq_invalid, gson2 )
+        end if
+        call decorate ( gson1, gson2 )
+        call decorate ( gson2, son1 ) ! show spec_args the section name
+        call spec_args ( gson2 )
+      case ( n_spec_args )            ! x,(y[=expr])+
+        call decorate ( sonn, son1 )  ! show spec_args the section name
+        call spec_args ( sonn )
+      case default
+        call announce_error ( sonn, no_code_for )
+      end select
+    end do
     if ( toggle(con) ) call trace_end ( 'ONE_CF' )
   end subroutine ONE_CF
 ! ------------------------------------------------------  SET_ONE  -----
@@ -852,6 +850,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.4  2001/02/22 19:43:04  vsnyder
+! Improve some messages
+!
 ! Revision 1.3  2001/02/07 19:42:06  vsnyder
 ! Add checking for duplicate fields, all fields and no-positional.
 !
