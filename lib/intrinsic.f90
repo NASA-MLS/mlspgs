@@ -7,6 +7,10 @@ module INTRINSIC
 
 ! Declaring the definitions is handled by the tree walker.
 
+! We need this  because the  i n c l u d e  line below hides the
+! following  u s e  statement
+    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
+
   implicit NONE
   public
 
@@ -293,6 +297,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.17  2001/04/04 17:21:12  pwagner
+! Added extra use tree line to tweak dependencies
+!
 ! Revision 2.16  2001/04/03 19:09:12  vsnyder
 ! Change the order of initialization to intrinsic, Molecules, MLSSignals.
 ! Use the revised make_tree.f9h, which requires revision of init...
