@@ -16,7 +16,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
     & S_VGRID
   use MLSCommon, only: L1BInfo_T, MLSChunk_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
-  use MLSSignals_m, only: GetAllModules
+  use MLSSignals_m, only: Modules
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
     & DestroyQuantityTemplateDatabase, QuantityTemplate_T
@@ -69,14 +69,12 @@ contains ! =====     Public Procedures     =============================
     type (HGrid_T), dimension(:), pointer :: hGrids => NULL()
 
     integer :: I                ! Loop counter
-    integer :: INSTRUMENTMODULEINDEX ! Loop counter
+    integer :: InstrumentModuleIndex ! Loop counter
     integer :: KEY              ! S_... from Init_Tables_Module.
-    integer, dimension(:), pointer :: modules=>NULL() ! Tree indices of modules
     integer :: NAME             ! Sub-rosa index of name
     integer :: SON              ! Son or grandson of Root
     integer :: STATUS           ! Flag
-!    double precision :: T1, T2  ! for timing
-    REAL :: T1, T2  ! for timing
+    REAL :: T1, T2              ! for timing
     logical :: TIMING
 
     ! Executable code
@@ -90,16 +88,13 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
 
-    call GetAllModules(modules)
     allocate ( mifGeolocation(size(modules)), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//"mifGeolocation" )
     do instrumentModuleIndex = 1, size(modules)
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
-        & modules(instrumentModuleIndex), mifGeolocation(instrumentModuleIndex) )
+        & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
     end do
-
-    call Deallocate_test(modules,"Modules",ModuleName)
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
     ! instructions and hand them off to people
@@ -185,6 +180,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.9  2001/03/15 21:03:46  vsnyder
+! Cross-references between databases are by database index, not tree index
+!
 ! Revision 2.8  2001/03/03 00:07:51  livesey
 ! New mifGeolocation stuff
 !
