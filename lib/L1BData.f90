@@ -22,7 +22,7 @@ module L1BData
   private
 
   public :: L1BData_T, L1BRadSetup, L1BOASetup, ReadL1BData, DeallocateL1BData, &
-    & FINDL1BDATA, NAME_LEN
+    & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -34,6 +34,8 @@ module L1BData
 
   ! Parameters
   integer, parameter :: NAME_LEN = 64  ! Max len of SDS array name
+  ! suffix of sd precision; check against 'grep -i precision l1/OutputL1B.f90'
+  character  (len=*), parameter :: PRECISIONSUFFIX = ' precision'
 
   ! This data type is used to store quantities from an L1B data file.
 
@@ -469,6 +471,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.11  2001/10/23 17:09:04  pwagner
+! Added PRECISIONSUFFIX as parameter
+!
 ! Revision 2.10  2001/10/03 22:50:03  vsnyder
 ! Add unfound-quantity name to an error message
 !
