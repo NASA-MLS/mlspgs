@@ -656,8 +656,9 @@ contains ! =====     Public procedures     =============================
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
-             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, n+n_field_spec, &
+             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, nr+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
+             begin, f+f_packed, t+t_boolean, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
@@ -855,6 +856,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.192  2002/01/18 00:24:58  livesey
+! Added packed option for output (l2pcs)
+!
 ! Revision 2.191  2002/01/08 18:15:34  livesey
 ! Made fwdModelExtra optional for sids
 !
