@@ -176,7 +176,7 @@ MODULE convolve_all_m
   IF (.not. ANY( (/FwdMdlConfig%temp_der, FwdMdlConfig%atmos_der, &
                 &  FwdMdlConfig%spect_der/)) ) RETURN
 !
-  nullify (drad_dt_out,drad_df_out)
+  nullify (drad_dt_out,drad_df_out,temp_dxdt_tan)
 !
   IF (FwdMdlConfig%atmos_der .AND. .not. FwdMdlConfig%temp_der) THEN
 !
@@ -322,6 +322,9 @@ MODULE convolve_all_m
 
 END MODULE convolve_all_m
 ! $Log$
+! Revision 2.15  2002/07/08 17:45:38  zvi
+! Remove unnecessary variables
+!
 ! Revision 2.14  2002/07/05 07:52:46  zvi
 ! Coor. switch (phi,z) -> (z,phi)
 !
