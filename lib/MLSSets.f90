@@ -509,13 +509,11 @@ contains ! =====     Public Procedures     =============================
   ! Compute the size of the union of the sets A and B, each represented by
   ! arrays of integers.
 
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use Sort_M, only: Sort
 
     integer, intent(in) :: A(:), B(:)
-    integer, pointer :: C(:) ! Intent(out) -- nullified and then allocated here
 
-    integer :: I, J, Stat, T(size(a)+size(b))
+    integer :: I, J, T(size(a)+size(b))
 
     t(1:size(a)) = a
     t(size(a)+1:size(t)) = b
@@ -545,6 +543,9 @@ contains ! =====     Public Procedures     =============================
 end module MLSSets
 
 ! $Log$
+! Revision 2.8  2004/07/02 01:34:11  vsnyder
+! Get rid of unused stuff
+!
 ! Revision 2.7  2004/06/16 22:14:16  pwagner
 ! character arrays can bow be args of find... methods
 !
