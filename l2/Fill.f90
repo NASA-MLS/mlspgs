@@ -3503,7 +3503,7 @@ contains ! =====     Public Procedures     =============================
             i0 = 1 +  ( mif-1 ) * measQty%template%noChans
             i1 = i0 + measQty%template%noChans - 1
             quantity%values ( mif, maf ) = count ( &
-              & iand ( ichar ( quantity%mask ( i0:i1, maf ) ), m_linAlg ) == 0 )
+              & iand ( ichar ( measQty%mask ( i0:i1, maf ) ), m_linAlg ) == 0 )
           end do
         end do
       else
@@ -4595,6 +4595,15 @@ contains ! =====     Public Procedures     =============================
           & call trace_end ( "FillVectorQuantityFromL1B")
         return
       end if
+      if ( quantity%template%noInstances /= size ( l1bData%dpField, 3 ) .or. &
+        &  quantity%template%instanceLen /= &
+        &   size ( l1bData%dpField, 1 ) * size ( l1bData%dpField, 2 ) ) then
+        call Announce_Error ( root, no_error_code, 'L1B data is wrong shape' )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "FillVectorQuantityFromL1B")
+        return
+      end if
+
       quantity%values = RESHAPE(l1bData%dpField, &
         & (/ quantity%template%instanceLen, quantity%template%noInstances /) )
       if ( isPrecision ) then
@@ -5116,12 +5125,12 @@ contains ! =====     Public Procedures     =============================
       ! grid).
 
       ! Loop over the instances
+      tpPres%values = 0.0
       instanceLoop: do i = 1, temperature%template%noInstances
         ! Check the temperatures are in a sensible range
         if ( any ( &
           & temperature%values(:,i) < 10.0 .or. &
           & temperature%values(:,i) > 1000.0 ) ) then
-          tpPres%values(1,i) = 0.0
           cycle instanceLoop
         end if
         ! Perhaps think later about keeping track of the 'top'.
@@ -5150,7 +5159,6 @@ contains ! =====     Public Procedures     =============================
 
         ! Find the 'first' tropopause.  We're not going to bother
         ! with the 'second'
-        tpPres%values(1,i) = 0.0
         lowCandidate = 0
         validTP = .false.
         s0 = 1
@@ -5202,7 +5210,7 @@ contains ! =====     Public Procedures     =============================
       end do instanceLoop
     end subroutine FillQtyWithWMOTropopause
 
-    ! -------------------------------------------- FillWithBinMinMax -----
+    ! -------------------------------------------- FillWithBinResults -----
     subroutine FillWithBinResults ( key, quantity, sourceQuantity, ptanQuantity, &
       & channel, method )
       ! This fills a coherent quantity with the max/min binned value of 
@@ -5222,6 +5230,7 @@ contains ! =====     Public Procedures     =============================
       integer, dimension(:,:), pointer :: SURFS ! Surface mapping source->quantity
       integer, dimension(:,:), pointer :: INSTS ! Instance mapping source->quantity
       integer :: QS, QI, SS, SI                   ! Loop counters
+      integer :: MYCHANNEL              ! Channel or 1
 
       ! Executable code
 
@@ -5298,8 +5307,13 @@ contains ! =====     Public Procedures     =============================
       ! Modify the surfs index to account for the channel, so now it's more
       ! of a 'values' index
       if ( sourceQuantity%template%frequencyCoordinate /= l_none .and. &
-        & channel == 0 ) call Announce_Error ( key, 0, &
-        & 'Must supply channel for this bin max/min fill' )
+        & channel == 0 ) then
+        call Announce_Error ( key, 0, &
+          & 'Must supply channel for this bin max/min fill' )
+        return
+      end if
+      myChannel = channel
+      if ( channel == 0 ) myChannel = 1
      
       ! Now loop over the output quantity points and work out the information
       do qi = 1, quantity%template%noInstances
@@ -5308,17 +5322,17 @@ contains ! =====     Public Procedures     =============================
             select case ( method )
             case  ( l_binMax )
               quantity%values(qs,qi) = maxval ( pack ( sourceQuantity%values ( &
-                & channel : sourceQuantity%template%instanceLen : &
+                & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
             case ( l_binMin )
               quantity%values(qs,qi) = minval ( pack ( sourceQuantity%values ( &
-                & channel : sourceQuantity%template%instanceLen : &
+                & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
             case ( l_binTotal )
               quantity%values(qs,qi) = sum ( pack ( sourceQuantity%values ( &
-                & channel : sourceQuantity%template%instanceLen : &
+                & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
             end select
@@ -5638,6 +5652,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.212  2003/05/10 23:40:27  livesey
+! Bug fixes in bining, other general tidyups.
+!
 ! Revision 2.211  2003/05/10 22:20:12  livesey
 ! Made wmo tropopause resilient to being given stupid (i.e. 0) profiles.
 !
