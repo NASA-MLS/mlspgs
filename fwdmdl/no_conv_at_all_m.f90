@@ -139,7 +139,8 @@ CONTAINS
 
     else
 
-      Call InterpolateValues(ptg_angles,i_raw,chi_out,i_star_all,METHOD='S')
+      CALL InterpolateValues(ptg_angles,i_raw,chi_out,i_star_all,METHOD='S', &
+        & extrapolate = 'C')
 
     endif
 
@@ -192,7 +193,8 @@ CONTAINS
           if(.NOT. t_deriv_flag(sv_t_len)) CYCLE
 
           Rad(1:k) = di_dt(1:k,sv_t_len)
-          Call InterpolateValues ( ptg_angles, Rad, chi_out, Srad, 'S')
+          CALL InterpolateValues ( ptg_angles, Rad, chi_out, Srad, 'S', &
+          & extrapolate = 'C')
           do ptg_i = 1, noPtan
             ind = channel + noChans*(ptg_i-1)
             q = Jacobian%block(row,col)%values(ind,jz)
@@ -252,7 +254,8 @@ CONTAINS
             if(.NOT. Grids_f%deriv_flags(sv_f) ) CYCLE
 
             Rad(1:no_tan_hts) = di_df(1:no_tan_hts,sv_f)
-            Call InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L')
+            CALL InterpolateValues (ptg_angles, Rad, chi_out, Srad, 'L', &
+            & extrapolate = 'C')
             do ptg_i = 1, noPtan
               ind = channel + noChans*(ptg_i-1)
               q = Jacobian%block(row,col)%values(ind,k)
@@ -274,6 +277,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.12  2002/08/20 22:36:47  livesey
+! Moved uses inside routine
+!
 ! Revision 2.11  2002/07/29 23:16:32  bill
 ! got rid of debugging write
 !
