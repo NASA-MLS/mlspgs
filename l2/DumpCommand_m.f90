@@ -47,7 +47,7 @@ contains
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
-    use PFAData_m, only: Dump, PFAData
+    use PFADataBase_m, only: Dump, PFAData
     use PointingGrid_m, only: Dump_Pointing_Grid_Database
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use Tree, only: Decoration, Node_Id, Nsons, Subtree
@@ -255,6 +255,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.8  2004/06/09 19:59:38  pwagner
+! Gets PFAData type and dump method from PFADataBase_m
+!
 ! Revision 2.7  2004/06/08 20:20:18  vsnyder
 ! Add tGrid
 !
