@@ -1162,25 +1162,28 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------  MultiplyMatrix_XY_0  -----
   subroutine MultiplyMatrix_XY_0 ( XB, YB, ZB, Update, Subtract )
-  ! If Update is absent or false, ZB = XB YB.  Otherwise, if Subtract is
-  ! absent or false, ZB = ZB + XB YB.  Otherwise ZB = ZB - XB YB
+  ! If Update is absent or false, ZB = +/- XB YB.  Otherwise, ZB = ZB +/- XB YB
+  ! The +/- is + unless subtract is present and true
   !??? Someday, do sparse multiplies in the non-M_Full cases.
     type(MatrixElement_T), intent(in) :: XB, YB
     type(MatrixElement_T), intent(inout) :: ZB
     logical, intent(in), optional :: Update, Subtract
 
+    real(r8) :: Alpha                   ! -1 or 1 depending on subtract
     real(r8) :: Beta                    ! 0 or 1, depending on Update
     logical :: MyX, MyY                 ! Did X or Y result from densify?
     real(r8), pointer, dimension(:,:) :: X, Y, Z  ! Dense matrices
 
+    alpha = 1.0_r8
+    if ( present(subtract) ) then
+      if ( subtract ) alpha = -1.0_r8
+    end if
+
     beta = 0.0_r8
     if ( present(update) ) then
       if ( update ) beta = 1.0_r8
-      if ( present(subtract) ) then
-        if ( subtract ) beta = -1.0_r8
-      end if
     end if
-
+    
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
       if ( abs(beta) < 0.5_r8 ) call createBlock ( zb, xb%nRows, yb%nCols, M_Absent )
       return
@@ -1190,6 +1193,7 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_0" )
 
+    nullify ( z )
     call allocate_test ( z, xb%nRows, yb%nCols, 'Z in MultiplyMatrix_XY_0', &
       & moduleName )
     if ( abs(beta) < 0.5_r8 ) then
@@ -1202,6 +1206,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. myX ) then
       x => xb%values
     else
+      nullify ( x )
       call allocate_test ( x, xb%nRows, xb%nCols, 'X in MultiplyMatrix_XY_0', &
         & moduleName )
       call densify ( x, xb )
@@ -1211,13 +1216,15 @@ contains ! =====     Public Procedures     =============================
     if ( .not. myY ) then
       y => yb%values
     else
+      nullify ( y )
       call allocate_test ( y, yb%nRows, yb%nCols, 'Y in MultiplyMatrix_XY_0', &
         & moduleName )
       call densify ( y, yb )
     end if
 
-    call gemm ( 'N', 'N', xb%nRows, yb%nCols, xb%nCols, 1.0_r8, &
-      & x, xb%nRows, y, yb%nRows, beta, z, zb%nRows )
+    ! zb%noRows/zb%noCols undefined here, so avoid using them.
+    call gemm ( 'N', 'N', xb%nRows, yb%nCols, xb%nCols, alpha, &
+      & x, xb%nRows, y, yb%nRows, beta, z, xb%nRows )
 
     call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_0', moduleName ) ! Zb := Z
 
@@ -1229,25 +1236,29 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------  MultiplyMatrix_XY_T_0  -----
   subroutine MultiplyMatrix_XY_T_0 ( XB, YB, ZB, Update, Subtract )
-  ! If Update is absent or false, ZB = XB YB^T.  Otherwise, if Subtract is
-  ! absent or false, ZB = ZB + XB YB^T.  Otherwise ZB = ZB - XB YB^T
+  ! If Update is absent or false, ZB = +/- XB YB^T.  Otherwise, ZB = ZB +/ XB YB^T.
+  ! The +/- is + unless subtract is present and true
   !??? Someday, do sparse multiplies in the non-M_Full cases.
     type(MatrixElement_T), intent(in) :: XB, YB
     type(MatrixElement_T), intent(inout) :: ZB
     logical, intent(in), optional :: Update, Subtract
 
+    real(r8) :: Alpha                   ! -1 or 1 depending on subtract
     real(r8) :: Beta                    ! 0 or 1, depending on Update
     logical :: MyX, MyY                 ! Did X or Y result from densify?
     real(r8), pointer, dimension(:,:) :: X, Y, Z  ! Dense matrices
 
+
+    alpha = 1.0_r8
+    if ( present(subtract) ) then
+      if ( subtract ) alpha = -1.0_r8
+    end if
+
     beta = 0.0_r8
     if ( present(update) ) then
       if ( update ) beta = 1.0_r8
-      if ( present(subtract) ) then
-        if ( subtract ) beta = -1.0_r8
-      end if
     end if
-
+    
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
       if ( abs(beta) < 0.5_r8 ) call createBlock ( zb, xb%nRows, yb%nCols, M_Absent )
       return
@@ -1257,6 +1268,7 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_T_0" )
 
+    nullify ( z )
     call allocate_test ( z, xb%nRows, yb%nCols, 'Z in MultiplyMatrix_XY_T_0', &
       & moduleName )
     if ( abs(beta) < 0.5_r8 ) then
@@ -1269,6 +1281,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. myX ) then
       x => xb%values
     else
+      nullify ( x )
       call allocate_test ( x, xb%nRows, xb%nCols, 'X in MultiplyMatrix_XY_T_0', &
         & moduleName )
       call densify ( x, xb )
@@ -1278,13 +1291,15 @@ contains ! =====     Public Procedures     =============================
     if ( .not. myY ) then
       y => yb%values
     else
+      nullify ( y )
       call allocate_test ( y, yb%nRows, yb%nCols, 'Y in MultiplyMatrix_XY_T_0', &
         & moduleName )
       call densify ( y, yb )
     end if
 
-    call gemm ( 'N', 'T', xb%nRows, yb%nRows, xb%nCols, 1.0_r8, &
-      & x, xb%nRows, y, yb%nRows, beta, z, zb%nRows )
+    ! zb%noRows/zb%noCols undefined here, so avoid using them.
+    call gemm ( 'N', 'T', xb%nRows, yb%nRows, xb%nCols, alpha, &
+      & x, xb%nRows, y, yb%nRows, beta, z, xb%nRows )
 
     call sparsify ( z, zb, 'Z in MultiplyMatrix_XY_T_0', moduleName ) ! Zb := Z
 
@@ -2757,6 +2772,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.68  2002/03/05 23:16:35  livesey
+! Fixed various bugs in MultiplyMatrix_XY_0 and MultiplyMatrix_XY_T_0
+!
 ! Revision 2.67  2002/02/23 02:59:51  vsnyder
 ! Correct tests for 'don't update, don't subtract; fix LaTeX
 !
