@@ -5,9 +5,10 @@
 # Runs the command line arguments through sed, replacing
 # (depending on option(s) selected)
 # them with the changes sed brings about
-# Useful 
+# Useful for automating scripts that modify text files
 # (1) comment/uncomment lines
 # (2) add/remove line(s)
+# (3) change hard-coded paths (e.g. in perl scripts)
 #
 # Usage:
 # resed.sh [opt] ..  file1 [file2 ..]
@@ -20,6 +21,7 @@
 # -n            rename new file "old_name"+suffix, keeping old as old_name
 # -o            rename new file "old_name", keeping old as old_name+suffix
 # -suffix=xxx   suffix to use when renaming either new or old file
+#               (w/o any separator; e.g., to add ".bak" use -suffix=.bak)
 # filen         file name (with path)
 #
 # Note:
@@ -54,16 +56,33 @@
 #****************************************************************
 #
 #   Notes
-# (none)
+# Bugs: 
+# (1) If the old_name+suffix exceeds the longest possible file name
+#     the script does not fail gracefully
+# (2) If filen+suffix is the same as filem for some pair (n,m)
+#     one will replace the other w/o any warning of this possibility
+# Unimplemented improvements: 
+# (1) Why not allow the user to input original and replacement strings
+#     via -os "string1" -rs "string2"
+# (2) Also allow inserting a block of text stored in a file after  
+#     line nnn via -l nnn -b block_file
+# (3) Instead of messing with suffixes, let the script edit files
+#     from one dir, saving the modified versions in another
+#     via -d1 d_orig -d2 d_mod
+#     (you will have to disable reecho part if you do this)
 me="$0"
 my_name=resed.sh
+I=resed
+NORMAL_STATUS=0
+return_status=0
 # $unique_name is unique_name with me's path prepended
-unique_name="`echo $0 | sed 's/resed/unique_name/'`"
+unique_name="`echo $0 | sed 's/'$I'/unique_name/'`"
 # $the_splitter is split_path with me's path prepended
-the_splitter="`echo $0 | sed 's/resed/split_path/'`"
+the_splitter="`echo $0 | sed 's/'$I'/split_path/'`"
 # $reecho is reecho with me's path prepended
-reecho="`echo $0 | sed 's/resed/reecho/'`"
-DEEBUG=off
+reecho="`echo $0 | sed 's/'$I'/reecho/'`"
+DEEBUG=on
+NO_REPLACE=off
 if [ $DEEBUG = "on" ]
 then
    echo "Called me as $0"
@@ -171,17 +190,35 @@ do
   fi
   if [ "$the_command" != "" ]
   then
-    sed $the_opt "'"$the_command"'" $file > "$temp_name"
+    # echo sed $the_opt "'"$the_command"'" $file
+    sed $the_opt "$the_command" $file > "$temp_name"
   else
+    # echo sed $the_opt $file
     sed $the_opt $file > "$temp_name"
   fi
+  # If sed failed, give up right now
+  return_status=`expr $?`
+  if [ "$return_status" != "$NORMAL_STATUS" ]; then       
+     echo "Sorry--sed returned an error"   
+    if [ "$the_command" != "" ]
+    then
+     echo "Possibly a syntax error in your command: $the_command"   
+    else
+     echo "Possibly a syntax error in your command-file: $command_file"   
+    fi
+    rm "$temp_name"
+    exit 1                                               
+  elif [ "$NO_REPLACE" = "on" ]
+  then
+    exit 0
+  fi                                                      
   # Now, which file do we rename? (The other retains the original name)
   case $rename_which in
     new)
-      mv "$temp_name" "$file.$the_suffix"
+      mv "$temp_name" "$file${the_suffix}"
       ;;
     old)
-      mv "$file" "$file.$the_suffix"
+      mv "$file" "$file${the_suffix}"
       mv "$temp_name" "$file"
       ;;
     *)
@@ -191,3 +228,6 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.1  2002/10/29 00:56:57  pwagner
+# First commit
+#
