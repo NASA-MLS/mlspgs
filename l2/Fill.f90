@@ -26,6 +26,7 @@ module Fill                     ! Create vectors and fill them.
   use MLSSignals_m, only: GetSignalName, GetModuleName
   use MLSMessageModule, only: MLSMSG_Error, MLSMessage
   use Molecules, only: L_H2O
+  use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use string_table, only: get_string
@@ -221,7 +222,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
 
-      select case( decoration(subtree(1,decoration(subtree(1,key)))) )
+      select case( get_spec_id(key) )
       case ( s_vector )
         if ( nsons(key) /= 2 ) call announce_error ( son, wrong_number )
         templateIndex = decoration(decoration(subtree(2,subtree(2,key))))
@@ -1348,6 +1349,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.31  2001/03/15 21:18:57  vsnyder
+! Use Get_Spec_ID instead of decoration(subtree...
+!
 ! Revision 2.30  2001/03/15 21:12:11  livesey
 ! Added special fill for losVel, and dealt with new MLSSignals_m
 !
