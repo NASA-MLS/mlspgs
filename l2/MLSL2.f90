@@ -1,6 +1,6 @@
 program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DUMP_DECL
-  use INIT_TABLES_MODULE, only: INIT_TABLES
+  use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
   use LEXER_CORE, only: INIT_LEXER
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
   use OUTPUT_M, only: OUTPUT
@@ -29,7 +29,7 @@ program MLSL2
   call allocate_decl ( ndecls=1000 )
   call allocate_tree ( n_tree=10000 )
   call init_tables
-  call init_units
+  call init_units ( lit_indices )
 
   i = 1+hp
   do ! Process the command line options to set toggles
