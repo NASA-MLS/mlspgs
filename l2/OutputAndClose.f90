@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=======================================================================================
 
@@ -83,6 +83,7 @@ contains ! =====     Public Procedures     =============================
       & Mlspcf_mcf_l2dgg_start
     use MLSSets, only: FindFirst, FindNext
     use MLSStringLists, only: Array2List
+    use MLSStrings, only: trim_safe
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
     use readAPriori, only: writeAPrioriAttributes
@@ -169,7 +170,7 @@ contains ! =====     Public Procedures     =============================
       call output ( ' ', advance='yes' )
     end if
 
-    usingSubmit = trim(parallel%submit) /= ''
+    usingSubmit = trim_safe(parallel%submit) /= ''
 
     ! l2gp_mcf will be incremented in get_l2gp_mcf (if MCFFORL2GPOPTION == 1)
     l2gp_mcf = mlspcf_mcf_l2gp_start - 1   
@@ -728,16 +729,19 @@ contains ! =====     Public Procedures     =============================
             parallel%numFailedChunks = 3
             parallel%FailedChunks = '2,5,129'
             parallel%FailedMachs = 'c0-1,c0-66,c0-66'
+            parallel%FailedMachs = 'msg 1\msg 2\msg 3'
           endif
           call MakeHDF5Attribute(grp_id, &
            & 'NumCompletedChunks', parallel%numCompletedChunks, .true.)
           call MakeHDF5Attribute(grp_id, &
            & 'NumFailedChunks', parallel%numFailedChunks, .true.)
           call MakeHDF5Attribute(grp_id, &
-           & 'FailedChunks', trim(parallel%FailedChunks), .true.)
+           & 'FailedChunks', trim_safe(parallel%FailedChunks), .true.)
           if ( .not. usingSubmit ) &
             call MakeHDF5Attribute(grp_id, &
-             & 'FailedMachines', trim(parallel%FailedMachs), .true.)
+             & 'FailedMachines', trim_safe(parallel%FailedMachs), .true.)
+          call MakeHDF5Attribute(grp_id, &
+           & 'FailedMsgs', trim_safe(parallel%FailedMsgs), .true.)
           call h5gclose_f(grp_id, returnStatus)
           returnStatus = mls_sfend(sdfid, hdfVersion=HDFVERSION_5)
         endif
@@ -1014,6 +1018,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.105  2005/03/15 23:57:23  pwagner
+! Makes error messages from about-to-die chunks dgm attributes
+!
 ! Revision 2.104  2004/12/14 21:45:01  pwagner
 ! Avoid catenating non-existent split files
 !
