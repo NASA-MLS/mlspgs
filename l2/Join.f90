@@ -25,7 +25,6 @@ module Join                     ! Join together chunk based data.
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
-  use SDPToolkit, only: PGS_S_SUCCESS, PGS_TD_TAItoUTC, PGSTD_E_NO_LEAP_SECS
   use String_Table, only: DISPLAY_STRING, GET_STRING
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -598,6 +597,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.32  2001/05/02 22:22:43  pwagner
+! Removed SDPToolkit use
+!
 ! Revision 2.31  2001/04/28 01:30:14  livesey
 ! Basically gone back to an earlier version.  As l2pc's now output
 ! directly as matrices there is no need for Join to think about them.
