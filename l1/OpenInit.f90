@@ -30,7 +30,6 @@ CONTAINS
 !=============================================================================
 
     USE MLSL1Config, ONLY: L1Config, GetL1Config
-    USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
     USE InitPCFs, ONLY: L1PCF, GetPCFParameters
     USE MLSPCF1, ONLY: mlspcf_engtbl_start, mlspcf_bwtbl_start, &
          mlspcf_nomen_start, mlspcf_pcf_start, mlspcf_l1cf_start, &
@@ -50,38 +49,22 @@ CONTAINS
     TYPE (TAI93_Range_T) :: procRange
     CHARACTER (LEN=132) :: PhysicalFilename
     INTEGER :: bw_tbl_unit, eng_tbl_unit, gains_tbl_unit, nomen_unit, &
-         zeros_tbl_unit, errno, ios, lenarg, lenval, returnStatus, version, &
-         error, hdfVersion
+         zeros_tbl_unit, errno, ios, lenarg, lenval, returnStatus, version
     INTEGER, EXTERNAL :: PGS_TD_UTCtoTAI
 
 !! Get user parameters from the PCF file
 
     CALL GetPCFParameters
 
+!! Get annotation from PCF and CF files
+
+    CALL CreatePCFAnnotation (mlspcf_pcf_start, anTextPCF)
+
+    CALL CreatePCFAnnotation (mlspcf_l1cf_start, anTextCF)
+
 !! Get the Level 1 configuration from the L1CF file
 
     CALL GetL1Config
-
-!! Open the HDF Fortran Interface based on CF file
-
-    hdfVersion = L1Config%Output%HDFVersion
-
-!! Get annotation from PCF and CF files  (ONLY HDF 4!)
-
-    IF (hdfVersion == HDFVERSION_4) THEN
-
-       CALL CreatePCFAnnotation (mlspcf_pcf_start, anTextPCF)
-
-       CALL CreatePCFAnnotation (mlspcf_l1cf_start, anTextCF)
-
-    ELSE       ! Open HDF 5
-
-       error = 0
-       CALL h5open_f (error)
-       IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            "Fortran HDF 5 API error on opening.")
-
-    ENDIF
 
 !! Check output versions from CF and PCF
 
@@ -473,9 +456,20 @@ CONTAINS
     USE MLSL1Config, ONLY: L1Config
 
     CHARACTER (LEN=132) :: PhysicalFilename
-    INTEGER :: returnStatus, sd_id, version, hdfVersion
+    INTEGER :: error, returnStatus, sd_id, version, hdfVersion
 
     hdfVersion = L1Config%Output%HDFversion
+
+!! Open the HDF 5 Fortran Interface based on CF file
+
+    IF (hdfVersion == HDFVERSION_5) THEN
+
+       error = 0
+       CALL h5open_f (error)
+       IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            "Fortran HDF 5 API error on opening.")
+
+    ENDIF
 
     ! Open L1BRADD File
 
@@ -727,6 +721,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2002/11/20 16:07:28  perun
+! Always get PCF annotations and moved h5open_f to OpenL1BFiles routine
+!
 ! Revision 2.8  2002/11/19 21:21:46  perun
 ! Use HDFversion instead of HDFVersionString
 !
