@@ -2,21 +2,21 @@
 ! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
+!==============================================================================
 MODULE PCFModule
-!===============================================================================
+!==============================================================================
 
-   USE MLSCommon
-   USE MLSL3Common
-   USE MLSMessageModule
-   USE SDPToolkit
+   USE MLSCommon, ONLY: FileNameLen, r8
+   USE MLSL3Common, ONLY: TAI2A_ERR, CCSDS_LEN
+   USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMessage
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference, Pgs_td_taiToUTC
    IMPLICIT NONE
    PUBLIC
 
    PRIVATE :: ID, ModuleName
 
 !------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
+   CHARACTER(LEN=130) :: Id = &                                                
    "$Id$"
    CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !----------------------------------------------------------
@@ -36,7 +36,7 @@ CONTAINS
 
 !-----------------------------------------------------------------------------
    SUBROUTINE ExpandFileTemplate (template, filename, level, version, cycle, &
-                                  day)
+        & day)
 !-----------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -87,20 +87,20 @@ CONTAINS
 
             IF ( PRESENT(level) ) THEN
                fileName = fileName(:(indx-1)) // TRIM(level) // &
-                          fileName((indx+6):)
+                    & fileName((indx+6):)
             ELSE
-               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input level &
-                                            &required to expand the template.')
+               CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                    & 'Input level required to expand the template.')
             ENDIF
 
          ELSE IF (field == '$ver') THEN
 
             IF ( PRESENT(version) ) THEN
                fileName = fileName(:(indx-1)) // TRIM(version) // &
-                          fileName((indx+8):)
+                    & fileName((indx+8):)
             ELSE
-               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input version &
-                                            &required to expand the template.')
+               CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                    & 'Input version required to expand the template.')
             ENDIF
 
          ELSE IF (field == '$cyc') THEN
@@ -120,12 +120,12 @@ CONTAINS
                ENDIF
 
                fileName = fileName(:(indx-1)) // 'C' // TRIM(zCy) // &
-                          fileName((indx+6):)
+                    & fileName((indx+6):)
 
             ELSE
 
-               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input cycle &
-                                            &required to expand the template.')
+               CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                    & 'Input cycle required to expand the template.')
 
             ENDIF
 
@@ -133,10 +133,10 @@ CONTAINS
 
             IF ( PRESENT(day) ) THEN
                fileName = fileName(:(indx-1)) // TRIM(day) // &
-                          fileName((indx+4):)
+                    & fileName((indx+4):)
             ELSE
-               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input day required &
-                                                    &to expand the template.')
+               CALL MLSMessage(MLSMSG_Error, ModuleName, &
+                    & 'Input day required to expand the template.')
             ENDIF
 
          ENDIF
@@ -149,7 +149,7 @@ CONTAINS
 
 !------------------------------------------------------------------------
    SUBROUTINE SearchPCFNames (inName, mlspcf_start, mlspcf_end, mlspcf, &
-                              outName)
+        & outName)
 !------------------------------------------------------------------------
 
 ! Brief description of subroutine 
@@ -294,7 +294,7 @@ CONTAINS
 
 !-----------------------------------------------------------------------------
    SUBROUTINE FindFileDay(type, time, mlspcf_start, mlspcf_end, match, name, &
-                          date)
+        & date)
 !-----------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -317,29 +317,29 @@ CONTAINS
 
 ! Parameters
 
-! Functions
-
-      INTEGER, EXTERNAL :: Pgs_td_asciiTime_aToB
 
 ! Variables
 
-      CHARACTER (LEN=26) :: timeB
-      CHARACTER (LEN=CCSDS_LEN) :: timeA
       CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=CCSDS_LEN) :: timeA
+      CHARACTER (LEN=26) :: timeB
 
       INTEGER :: i, returnStatus, version
+! Functions
+
+      INTEGER, EXTERNAL :: Pgs_td_asciiTime_aToB, Pgs_td_taiToUTC
 
 ! Convert input time to CCSDS A format
 
       returnStatus = Pgs_td_taiToUTC(time, timeA)
       IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                                                         ModuleName, TAI2A_ERR)
+           & ModuleName, TAI2A_ERR)
 
 ! Convert from CCSDS A to B
 
       returnStatus = Pgs_td_asciiTime_aToB(timeA, timeB)
       IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                ModuleName,'Error converting data time from CCSDS A to B.')
+           & ModuleName,'Error converting data time from CCSDS A to B.')
 
 ! Save only the date portion, for comparison to file names
 
@@ -384,15 +384,16 @@ CONTAINS
    END SUBROUTINE FindFileDay
 !----------------------------
 
-!-------------------------------------------------------------------------------
-   SUBROUTINE SearchPCFDates (type, date, mlspcf_start, mlspcf_end, match, file)
-!-------------------------------------------------------------------------------
+!------------------------------------------------------------------------------
+   SUBROUTINE SearchPCFDates(type, date, mlspcf_start, mlspcf_end, match, file)
+!------------------------------------------------------------------------------
 
 ! Brief description of subroutine
-! This routine searches the PCF for a file for desired type and date.  For input,
+! This routine searches the PCF for a file for desired type and date.  
+! For input,
 ! the date is given as a CHARACTER string in CCSDS B format.  For output, a
-! matching PCF number & name, or a value of match = -1 if no match was found, are
-! returned.
+! matching PCF number & name, or a value of match = -1 if no match was found,
+! are returned.
 
 
 ! Arguments
@@ -413,8 +414,8 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=8) :: pDate
       CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=8) :: pDate
 
       INTEGER :: i, indx, returnStatus, version
 
@@ -471,6 +472,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.9  2001/07/18 15:59:37  nakamura
+! Added subroutine SearchPCFDates.
+!
 ! Revision 1.8  2001/03/27 19:42:38  nakamura
 ! Moved annotation routines to PCFHdr module.
 !
