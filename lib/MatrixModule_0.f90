@@ -1884,24 +1884,31 @@ contains ! =====     Public Procedures     =============================
   end subroutine UpdateDiagonal_0
 
   ! ----------------------------------------  UpdateDiagonalVec_0  -----
-  subroutine UpdateDiagonalVec_0 ( A, X, SUBTRACT )
+  subroutine UpdateDiagonalVec_0 ( A, X, SUBTRACT, INVERT )
   ! Add X to the diagonal of A if SUBTRACT is absent or false.
   ! Subtract X from the diatonal of A if SUBTRACT is present and true.
+  ! If INVERT is present and true, use the inverses of the elements of X.
     type(MatrixElement_T), intent(inout) :: A
     real(r8), intent(in) :: X(:)
     logical, intent(in), optional :: SUBTRACT
+    logical, intent(in), optional :: INVERT  ! Update with inverse of X
 
     integer :: I, J                          ! Subscripts and loop inductors
+    logical :: MyInvert
     integer :: N                             ! min(a%ncols,a%nrows)
     integer :: NCols, NRows                  ! Copies of a%...
     real(r8) :: S                            ! Sign to use for X, +1 or -1
     real(r8), dimension(:,:), pointer :: T   ! A temporary dense matrix
+    real(r8) :: V                            ! The value to update.  Either
+    !                                          S*X or S/X.
 
     nullify ( t )
     s = 1.0_r8
     if ( present(subtract) ) then
       if ( subtract ) s = -1.0_r8
     end if
+    myInvert = .false.
+    if ( present(invert) ) myInvert = invert
     n = min(a%ncols,a%nrows)
     select case ( a%kind )
     case ( m_absent )
@@ -1925,22 +1932,36 @@ contains ! =====     Public Procedures     =============================
           call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
           return
         end if
+        if ( myInvert ) then
+          if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+          v = s / x(i)
+        else
+          v = s * x(i)
+        end if
         a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
-          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + s*x(i)
+          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + v
       end do
     case ( m_column_sparse )
       do i = 1, n
         do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
           if ( a%r2(j) == i ) then
-            a%values(j,1) = a%values(j,1) + s*x(i)
+            if ( myInvert ) then
+              if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+              v = s / x(i)
+            else
+              v = s * x(i)
+            end if
+            a%values(j,1) = a%values(j,1) + v
           else if ( a%r2(j) > i ) then
             ! No diagonal element.  Make room for one by densify-update-sparsify
             call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
               & ModuleName )
             call densify ( t, a )
             call updateDenseDiagonal ( t, x, s, i )
-            call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
-            call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
+            call sparsify ( t, a, "T in UpdateDiagonal_0", moduleName ) ! A := T
+            call deallocate_test ( t, "T in UpdateDiagonal_0", moduleName )
             return
           end if
         end do
@@ -1957,7 +1978,14 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: START      ! Where to start
       integer :: I
       do i = start, n
-        t(i,i) = t(i,i) + s*x(i)
+        if ( myInvert ) then
+          if ( x(i) == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+          v = s / x(i)
+        else
+          v = s * x(i)
+        end if
+        t(i,i) = t(i,i) + v
       end do
     end subroutine UpdateDenseDiagonal
   end subroutine UpdateDiagonalVec_0
@@ -2023,6 +2051,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.34  2001/05/30 20:18:01  vsnyder
+! Add 'invert' argument to 'UpdateDiagonal'
+!
 ! Revision 2.33  2001/05/24 23:15:24  vsnyder
 ! Don't scale absent blocks -- their VALUES pointer isn't associated
 !
