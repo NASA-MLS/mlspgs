@@ -7,9 +7,9 @@ module Join                     ! Join together chunk based data.
 
   ! This module performs the 'join' task in the MLS level 2 software.
 
-  use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_OUTPUTOVERLAPS, F_SOURCE, &
-    & F_UNPACKOUTPUT, FIELD_FIRST, FIELD_LAST, L_PRESSURE, L_NONE, L_TRUE, &
-    & S_L2AUX, S_L2GP, S_TIME
+  use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, F_SOURCE, &
+    & F_UNPACKOUTPUT, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, L_PRESSURE, L_NONE, &
+    & L_TRUE, S_L2AUX, S_L2GP, S_TIME
   use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
     & L2AUXData_T, L2AUXDim_Channel, L2AUXDim_geodAngle, &
     & L2AUXDim_IntermediateFrequency, L2AUXDim_LSBFrequency, L2AUXDim_MAF, &
@@ -23,6 +23,7 @@ module Join                     ! Join together chunk based data.
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use SDPToolkit, only: PGS_S_SUCCESS, PGS_TD_TAItoUTC, PGSTD_E_NO_LEAP_SECS
+  use String_Table, only: DISPLAY_STRING
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
@@ -45,6 +46,7 @@ module Join                     ! Join together chunk based data.
   ! Parameters for Announce_Error
 
   integer :: ERROR
+  integer, parameter :: NotAllowed=1
 
 contains ! =====     Public Procedures     =============================
 
@@ -149,6 +151,8 @@ contains ! =====     Public Procedures     =============================
           compareOverlaps = value == l_true
         case ( f_outputoverlaps )
           outputOverlaps = value == l_true
+        case ( f_file)
+          call announce_error(key,NotAllowed,field_index)
         case ( f_unpackoutput )
           unpackOutput = value == l_true
         case default ! Can't get here if tree_checker worked properly
@@ -203,15 +207,20 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  Announce_Error  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE )
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, FIELDINDEX )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
+    integer, intent(in), OPTIONAL :: FIELDINDEX ! Extra information for msg
 
     error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref(where) )
     call output ( ': ' )
     select case ( code )
+      case ( NotAllowed )
+        call output('Field ')
+        call display_string(field_indices(fieldIndex))
+        call output(' is not allowed in this context',advance='yes')
     end select
   end subroutine ANNOUNCE_ERROR
   ! -----------------------------------------  JoinL2GPQuantities  -----
@@ -679,6 +688,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.10  2001/02/16 00:50:17  livesey
+! Added error to avoid confusion with L2GP in ReadApriori section
+!
 ! Revision 2.9  2001/02/09 19:30:16  vsnyder
 ! Move checking for required and duplicate fields to init_tables_module
 !
