@@ -6,9 +6,8 @@ program ConvertPFA
 
   ! Emit a PFAData command:
 
-  ! pfaData, molecules=[<molecules from the file>], $
-  !   temperatures=pfaTgrid, vGrid=pfaVgrid, signal=<signal from the file>, $
-  !   file=<stuff before signal from outfile>$<stuff after signal from outfile>
+  ! pfaData, file=<stuff before signal from outfile>$<stuff after signal from outfile>, $
+  !   temperatures=pfaTgrid, vGrid=pfaVgrid, signal=<signal from the file>
 
   ! The input file format is
 
@@ -156,3 +155,6 @@ program ConvertPFA
 end program ConvertPFA
 
 ! $Log$
+! Revision 1.1  2004/06/17 00:39:58  vsnyder
+! Initial commit
+!
