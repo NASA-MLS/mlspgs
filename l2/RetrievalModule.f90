@@ -607,7 +607,8 @@ contains
         & FormNormalEquations => NormalEquations, &
         & GetDiagonal, InvertCholesky, Matrix_T, Matrix_Database_T, &
         & Matrix_Cholesky_T, Matrix_SPD_T, MaxL1, MinDiag, Multiply, &
-        & Negate, RowScale, ScaleMatrix, SolveCholesky, UpdateDiagonal
+        & MultiplyMatrix_XY_T,  Negate, RowScale, ScaleMatrix, SolveCholesky, &
+        & UpdateDiagonal
       use Regularization, only: Regularize
       use Symbol_Table, only: ENTER_TERMINAL
       use Symbol_Types, only: T_IDENTIFIER
@@ -647,6 +648,7 @@ contains
       ! start tolx tolx_best tolf too_small fandj
         &  9,   2,        2,   2,        3,    9  /)
       real :: T1
+      type(matrix_T) :: Temp            ! Because we can't do X := X * Y
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
 
       call time_now ( t1 )
@@ -1435,10 +1437,10 @@ contains
           stop
         end if
         if ( got(f_diagnostics) ) then
-          ! Compute rows of Jacobian actually used.  Don't count rows due
-          ! to Levenberg-Marquardt stabilization.  Do count rows due to
-          ! a priori or regularization.  Put numbers of rows and columns
-          ! into diagnostic vector.
+          ! Compute number of rows of Jacobian actually used.  Don't count
+          ! rows due to Levenberg-Marquardt stabilization.  Do count rows
+          ! due to a priori or regularization.  Put numbers of rows and
+          ! columns into diagnostic vector.
           jacobian_cols = sum(normalEquations%m%col%nelts)
           jacobian_rows = sum(normalEquations%m%row%nelts)
           do j = 1, normalEquations%m%col%nb
@@ -1455,7 +1457,9 @@ contains
           call fillDiagVec ( l_jacobian_cols, real(jacobian_rows,r8) )
         end if
         call time_now ( t1 )
-        call invertCholesky ( factored, outputCovariance%m )
+        call invertCholesky ( factored, temp ) ! U^{-1}
+        call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m ) ! U^{-1} U^{-T}
+        call destroyMatrix ( temp )
         call add_to_retrieval_timing( 'cholesky_invert', t1 )
         call time_now ( t1 )
         ! Scale the covariance
@@ -2790,6 +2794,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.142  2002/05/22 19:00:38  vsnyder
+! Correct covariance calculation -- it ought to be U^{-1} U^{-T}, not U^{-1}.
+! Mark Filipiak noticed this bug.
+!
 ! Revision 2.141  2002/05/07 01:02:24  vsnyder
 ! Change regWeight to regWeights -- which is now a tree note instead of
 ! a real scalar.  Add dump for regularization matrix.
