@@ -81,28 +81,28 @@ testdir = tests
 
 testsubdirs = $(testdir)/multiply $(testdir)/sparsify $(testdir)/test_cf_parser
 
-omit_srcs := -d test_cholesky.f90 -d test_multiply.f90 \
-        -d test_sparsify.f90
+#OMIT_SRCS := -d test_cholesky.f90 -d test_multiply.f90 \
+#        -d test_sparsify.f90
+OMIT_SRCS := $(OMIT_SRCS) -d sbinom.f
+
 #PVM and PVMIDL require PVM_ROOT
 ifdef PVM_ROOT
 else
-   omit_srcs := $(omit_srcs) -d PVM.f90 -d PVMIDL.f90 -d QuantityPVM.f90
+   OMIT_SRCS := $(OMIT_SRCS) -d PVM.f90 -d PVMIDL.f90 -d QuantityPVM.f90
 endif
 
 #Toolkit-free version requires SDPToolkitSubstitute
 ifdef PGSTK
-   omit_srcs := $(omit_srcs) -d SDPToolkitSubstitute.f90
+   OMIT_SRCS := $(OMIT_SRCS) -d SDPToolkitSubstitute.f90
 endif
 
 #----------------------- Build instructions
 
-#$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
-#	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
 	@case "$(MLSCONFG)" in \
 	"") \
 		echo "Sorry--your configuration is not yet defined" ; \
-		echo "Try make -f MakeFC configure_full" ; \
+		echo "Try make configure_full" ; \
 		exit 2 ; \
 		;; \
 	*) \
@@ -128,7 +128,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc 
 
 depends:
-	$(MLSBIN)/makemakedep.sh $(omit_srcs)
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(PLATFORMS)/$(MLSCONFG) ./ $(srclib) \
@@ -182,6 +182,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.27  2001/08/15 21:01:05  pwagner
+# Now excludes OMIT_SRCS from dependencies
+#
 # Revision 2.26  2001/07/03 17:18:21  pwagner
 # Shield QuantityPVM from pvm-less lib
 #
