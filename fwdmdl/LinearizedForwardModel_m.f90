@@ -133,6 +133,8 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: XSTARPTAN ! Tangent pressure in l2pc
     type(VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
     type(VectorValue_T), pointer :: SIDEBANDRATIO ! From the state vector
+    type(VectorValue_T), pointer :: LOWERSIDEBANDRATIO ! From the state vector
+    type(VectorValue_T), pointer :: UPPERSIDEBANDRATIO ! From the state vector
 
     ! Executable code
     if ( toggle(emit) ) call trace_begin ( 'LinearizedForwardModel' )
@@ -206,14 +208,22 @@ contains ! =====     Public Procedures     =============================
       else
         ! We have to fold it ourselves
         sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType = l_sidebandRatio, signal=signal%index )
-        thisRatio = sidebandRatio%values(:,1)
+          & quantityType = l_sidebandRatio, signal=signal%index, noError=.true. )
+        lowerSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType = l_sidebandRatio, signal=signal%index, &
+          & sideband=-1, noError=.true. )
+        upperSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType = l_sidebandRatio, signal=signal%index, &
+          & sideband=1, noError=.true. )
+        if (.not. associated (sidebandRatio) .and. .not. &
+          & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
+          & call MLSMessage(MLSMSG_Error,ModuleName, &
+          & "No sideband ratio supplied")
         sidebandStart = -1
         sidebandStop = 1
         sidebandStep = 2
       end if
     else
-      thisRatio = 1.0
       sidebandStart = forwardModelConfig%signals(1)%sideband
       sidebandStop = sideBandStart
       sidebandStep = 1
@@ -223,11 +233,21 @@ contains ! =====     Public Procedures     =============================
     do sideband = sidebandStart, sidebandStop, sidebandStep
 
       ! Setup a sideband ratio array
-      if ( sidebandStart /= sidebandStop ) then
-        thisRatio = sidebandRatio%values(:,1)
-        if ( sideband == 1 ) thisRatio = 1.0 - thisRatio
-      end if
-      
+        if ( sidebandStart /= sidebandStop ) then   ! We're folding
+          if ( associated ( sidebandRatio ) ) then
+            thisRatio = sidebandRatio%values(:,1)
+            if ( sideband == 1 ) thisRatio = 1.0 - thisRatio
+          else
+            if ( sideband == -1 ) then
+              thisRatio = lowerSidebandRatio%values(:,1)
+            else
+              thisRatio = upperSidebandRatio%values(:,1)
+            end if
+          end if
+        else                  ! Otherwise, want just unfolded signal
+          thisRatio = 1.0
+        end if
+
       ! Work out which l2pc bin we want
       l2pcBin = SelectL2PCBin ( FwdModelIn, FwdModelExtra, radiance, &
         & sideband, maf, bestCost )
@@ -799,6 +819,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.13  2002/03/15 21:23:09  livesey
+! New bin selectors based on 'latitude' allowed
+!
 ! Revision 2.12  2002/02/20 03:00:23  livesey
 ! Made the verbose dump more unlikely
 !
