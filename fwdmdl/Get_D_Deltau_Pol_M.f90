@@ -104,7 +104,7 @@ contains
 
   ! Local variables
     complex(rp) :: Alpha_Path_N(-1:1)    ! alpha_path_n * N
-    complex(rp) :: Beta(-1:1), Beta_M(-1:1), Beta_P(-1:1) ! Single elements of
+    complex(rp) :: Beta_0(-1:1), Beta_M(-1:1), Beta_P(-1:1) ! Single elements of
       ! Beta_Path, Beta_Path_M, Beta_Path_P multiplied by Tanh_Path,  Tanh_M, Tanh_P
     complex(rp), dimension(-1:1,size(path_inds,1),size(beta_group)) :: &
       & Beta_Path_M, &  ! At T_path_M on coarse path
@@ -116,8 +116,9 @@ contains
     integer :: J, K
     real(rp) :: L_TTM, L_TPTM, L_TPT     ! Logarithms of temperature ratios
     complex(rp) :: N(-1:1)               ! Exponent of (T/T_0) in
-    ! approximation to beta.  One each for Sigma_-, Pi and Sigma_+.
+               ! approximation to beta.  One each for Sigma_-, Pi and Sigma_+.
     integer :: N_Path, N_Sps
+    complex(rp) :: R0M(-1:1), RPM(-1:1), RP0(-1:1)  ! Beta ratios
     real(rp) :: Tanh_M, Tanh_P           ! for T -/+ del_T
 
     frqhk = 0.5_r8 * Frq * H_Over_K
@@ -142,12 +143,33 @@ contains
 
       do j = 1, n_sps
         ! Solve for n
-        beta = beta_path(:,k,j) * tanh_path(k)
+        beta_0 = beta_path(:,k,j) * tanh_path(k)
         beta_m = beta_path_m(:,i,j) * tanh_m
         beta_p = beta_path_p(:,i,j) * tanh_p
-        n = 0.25 * (      log(beta/beta_m)   / l_ttm +    &
-          &         2.0 * log(beta_p/beta_m) / l_tptm +   &
-          &               log(beta_p/beta)   / l_tpt )
+        where ( beta_m /= 0.0 .and. beta_p /= 0.0 )
+          rpm = log(beta_p/beta_m) / l_tptm
+          where ( beta_0 /= 0.0 )
+            r0m = log(beta_0/beta_m) / l_ttm
+            rp0 = log(beta_p/beta_0) / l_tpt
+          elsewhere
+            r0m = rpm
+            rp0 = rpm
+          end where
+        elsewhere ( beta_m /= 0.0 .and. beta_0 /= 0.0 )
+          r0m = log(beta_0/beta_m) / l_ttm
+          rpm = r0m
+          rp0 = r0m
+        elsewhere ( beta_0 /= 0.0 .and. beta_p /= 0.0 )
+          rp0 = log(beta_p/beta_0) / l_tpt
+          rpm = rp0
+          r0m = rp0
+        elsewhere
+          rp0 = 0.0
+          rpm = 0.0
+          r0m = 0.0
+        end where
+          
+        n = 0.25 * ( r0m + 2.0 * rpm + rp0 )
 
         ! not quite D alpha, because we haven't multiplied by tanh or
         ! divided by T.
@@ -159,7 +181,6 @@ contains
       ! Now it's more than D alpha, because we've multiplied by del_s, but
       ! this is OK, because OPACITY is linear.
       d_alpha_dT(:,i) = alpha_path_n * del_s(k) / t_path_c(k)
-
     end do ! i
 
     call opacity ( ct, stcp, stsp, d_alpha_dT, d_incoptdepth_dT )
@@ -190,6 +211,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.3  2003/05/24 02:26:18  vsnyder
+! More work on polarized temperature derivatives
+!
 ! Revision 2.2  2003/05/15 20:50:34  vsnyder
 ! Correct some subscript errors -- coarse vs. fine path
 !
