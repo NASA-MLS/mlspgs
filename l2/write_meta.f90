@@ -128,6 +128,7 @@ module WriteMetadata ! Populate metadata and write it out
   integer, public, parameter :: INVENTORYMETADATA=2
   logical, public, parameter :: MCFCASESENSITIVE=.FALSE.
   logical, public, parameter :: ANNOTATEWITHPCF=.FALSE.
+  logical, public, parameter :: SFINBETWEENSTARTEND=.FALSE.
   integer, public, parameter :: MCFFORL2GPOPTION=3     ! 1, public, 2 or 3
   integer, private :: Module_error
 
@@ -177,9 +178,7 @@ contains
     ! Externals
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, &
-      &  PGS_MET_write
-
+      &  PGS_MET_setAttr_s
     ! Executable code
 
     version = 1
@@ -291,9 +290,7 @@ contains
     ! Externals
 
     integer, external :: PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, PGS_MET_SETATTR_I, &
-      &  PGS_MET_write
-
+      &  PGS_MET_setAttr_s, PGS_MET_SETATTR_I
     !Executable code
 
     version = 1
@@ -390,7 +387,7 @@ contains
 
   ! ---------------------------------------------  Third_grouping  -----
 
-  subroutine Third_grouping ( HDF_FILE, L2pcf, Groups, hdfVersion )
+  subroutine Third_grouping ( HDF_FILE, hdf_sdid, L2pcf, Groups, hdfVersion )
 
     ! This writes the following metadata attributes:
 
@@ -423,6 +420,7 @@ contains
     ! Arguments
 
     integer :: HDF_FILE
+    integer :: hdf_sdid
     type(PCFData_T) :: l2pcf
 
     ! the group have to be defined as 49 characters long. The C interface is 50.
@@ -437,7 +435,6 @@ contains
 
     integer :: HdfReturn
     integer :: ReturnStatus
-    integer :: Sdid
 
     real(r8) Dval
     integer, parameter :: INVENTORY=2, ARCHIVE=1
@@ -640,15 +637,15 @@ contains
       & "Error in setting PGEVersion attribute.") 
     end if
 
-!    sdid = sfstart (physical_fileName, DFACC_RDWR) 
-    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion) 
+!    hdf_sdid = sfstart (physical_fileName, DFACC_RDWR) 
+    hdf_sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion) 
 
-    if ( sdid == -1 ) then
+    if ( hdf_sdid == -1 ) then
       call announce_error ( 0, &
       & "Error: failed to open hdf file: "//physical_fileName) 
     end if
 
-    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
+    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", hdf_sdid)
 
     if ( returnStatus /= PGS_S_SUCCESS .AND. &
       &  returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
@@ -662,15 +659,17 @@ contains
       end if
     end if
 
-!    hdfReturn = sfend(sdid)
-    hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
-    if ( hdfReturn /= 0 ) then
-        call announce_error ( 0, &
-        & "Error: metadata mls_sfend in third_grouping.", &
-        & error_number=hdfReturn) 
-    end if
+!    hdfReturn = sfend(hdf_sdid)
+    if ( SFINBETWEENSTARTEND ) then
+      hdfReturn = mls_sfend(hdf_sdid, hdfVersion=hdfVersion)
+      if ( hdfReturn /= 0 ) then
+          call announce_error ( 0, &
+          & "Error: metadata mls_sfend in third_grouping.", &
+          & error_number=hdfReturn) 
+      end if
 
-    returnStatus = pgs_met_remove() 
+      returnStatus = pgs_met_remove() 
+    endif
 
   end subroutine Third_grouping
 
@@ -702,7 +701,7 @@ contains
 
     integer :: hdfReturn
     integer :: returnStatus
-    integer :: sdid
+    integer :: sdid, hdf_sdid
     character (len=132) :: attrname, errmsg
 
     integer, parameter :: INVENTORY=2, ARCHIVE=1
@@ -755,10 +754,14 @@ contains
 		
     call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
     call measured_parameter (HDF_FILE, field_name, groups, 1)
-    call third_grouping (HDF_FILE, l2pcf, groups, hdfVersion)
+    call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, hdfVersion)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
-    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion) 
+    if ( SFINBETWEENSTARTEND ) then
+      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion)
+    else
+      sdid = hdf_sdid
+    endif 
 
     if ( sdid == -1 ) then
       call announce_error ( 0, &
@@ -767,21 +770,21 @@ contains
       return
     end if
 
-    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
+!    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
 
-    if ( returnStatus /= PGS_S_SUCCESS .AND. &
-         returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
-      if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
-        call announce_error ( 0, &
-        & "Error--some of the mandatory parameters were not set") 
+!    if ( returnStatus /= PGS_S_SUCCESS .AND. &
+!         returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
+!      if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
+!        call announce_error ( 0, &
+!        & "Error--some of the mandatory parameters were not set") 
 !					return
-      else
-        call Pgs_smf_getMsg (returnStatus, attrname, errmsg)
-        call MLSMessage (MLSMSG_WARNING, ModuleName, &
-             "Metadata write failed in populate_metadata_std " &
-             & //trim(attrname)//trim(errmsg))
-      end if
-    end if
+!      else
+!        call Pgs_smf_getMsg (returnStatus, attrname, errmsg)
+!        call MLSMessage (MLSMSG_WARNING, ModuleName, &
+!             "Metadata write failed in populate_metadata_std " &
+!             & //trim(attrname)//trim(errmsg))
+!      end if
+!    end if
 
 !    hdfReturn = sfend(sdid)
     hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
@@ -796,6 +799,11 @@ contains
     if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText)
 
     returnStatus = pgs_met_remove() 
+    if ( returnStatus /= 0 ) then
+        call announce_error ( 0, &
+        & "Error: metadata removal in populate_metadata_std.", &
+        & error_number=hdfReturn) 
+    end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -828,7 +836,7 @@ contains
 
     integer :: HdfReturn
     integer :: ReturnStatus
-    integer :: Sdid
+    integer :: Sdid, hdf_sdid
     character (len=132) :: Attrname, Errmsg
 
     integer, parameter :: INVENTORY=2, ARCHIVE=1
@@ -888,10 +896,14 @@ contains
 
     end do
 
-    call third_grouping (HDF_FILE, l2pcf, groups, hdfVersion)
+    call third_grouping (HDF_FILE, hdf_sdid, l2pcf, groups, hdfVersion)
 
 !    sdid = sfstart (physical_fileName, DFACC_RDWR) 
-    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion)
+    if ( SFINBETWEENSTARTEND ) then
+      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion=hdfVersion)
+    else
+      sdid = hdf_sdid
+    endif 
 
     if ( sdid == -1 ) then
       call announce_error ( 0, &
@@ -899,20 +911,20 @@ contains
       return
     end if
 
-    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
+!    returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
 
-    if ( returnStatus /= PGS_S_SUCCESS .AND. &
-         returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
-      if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
-        call announce_error ( 0, &
-        & "Error: Some of the mandatory parameters were not set in populate_metadata_oth.")
-      else
-        call Pgs_smf_getMsg (returnStatus, attrname, errmsg)
-        call MLSMessage (MLSMSG_WARNING, ModuleName, &
-             "Metadata write failed in populate_metadata_oth " &
-             & //trim(attrname)//trim(errmsg))
-      end if
-    end if
+!    if ( returnStatus /= PGS_S_SUCCESS .AND. &
+!         returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
+!      if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
+!        call announce_error ( 0, &
+!        & "Error: Some of the mandatory parameters were not set in populate_metadata_oth.")
+!      else
+!        call Pgs_smf_getMsg (returnStatus, attrname, errmsg)
+!        call MLSMessage (MLSMSG_WARNING, ModuleName, &
+!             "Metadata write failed in populate_metadata_oth " &
+!             & //trim(attrname)//trim(errmsg))
+!      end if
+!    end if
 
 !    hdfReturn = sfend(sdid)
     hdfReturn = mls_sfend(sdid, hdfVersion=hdfVersion)
@@ -927,6 +939,11 @@ contains
     if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText)
 
     returnStatus = pgs_met_remove() 
+    if ( returnStatus /= 0 ) then
+        call announce_error ( 0, &
+        & "Error: metadata removal in populate_metadata_oth.", &
+        & error_number=hdfReturn) 
+    end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -1244,6 +1261,11 @@ contains
     end if
 
     result = pgs_met_remove()
+    if ( result /= 0 ) then
+        call announce_error ( 0, &
+        & "Error: metadata removal in WriteMetaLog.", &
+        & error_number=result) 
+    end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -1441,6 +1463,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.27  2002/03/13 18:31:01  pwagner
+! Opens, writes metadata, closes each file only once
+!
 ! Revision 2.26  2002/02/22 19:20:12  pwagner
 ! Added mcf file name to announce_success
 !
