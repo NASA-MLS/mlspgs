@@ -11,8 +11,8 @@ module MLSFiles               ! Utility file routines
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
     & he5_gdopen, he5_gdclose
   use machine, only: io_error
-  use MLSCommon, only: i4
-  use MLSStrings, only: Capitalize, LowerCase, Reverse
+  use MLSCommon, only: i4, NameLen, BareFNLen
+  use MLSStrings, only: Capitalize, LowerCase, Reverse, SortArray
   use output_m, only: blanks, output
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, &
     & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
@@ -72,6 +72,7 @@ module MLSFiles               ! Utility file routines
 
   integer, parameter, public :: NAMENOTFOUND=-1
   integer, parameter, public :: INVALIDPCRANGE=NAMENOTFOUND-1
+  integer, parameter, public :: CANTALLOCATENAMEARRAY=INVALIDPCRANGE-1
 
   ! These are error codes that may be returned by mls_io_gen_openF
 
@@ -131,19 +132,24 @@ contains
     ! Dummy arguments
     character (LEN=*), intent(IN)            :: FileName
     integer(i4),  intent(IN)                 :: PCBottom, PCTop
-    integer(i4)                              :: thePC
+    integer(i4)                              :: thePC, notThePC
     integer(i4),  intent(OUT)                :: ErrType
     logical,  intent(IN)                     :: caseSensitive
     integer(i4),  optional                   :: versionNum
     logical,  optional, intent(IN)           :: debugOption
-    character (LEN=*),  optional, intent(IN)       :: path
+    character (LEN=*),  optional, intent(IN) :: path
     character (LEN=*), optional, intent(out) :: ExactName
 
     ! Local variables
-
+    character (LEN=BareFNLen), dimension(:), allocatable &
+     &                                :: nameArray
+    integer, dimension(:), allocatable &
+     &                                :: intArray
+    character (LEN=*), parameter      :: UNASSIGNEDFILENAME = '*'
     character (LEN=MAXFILENAMELENGTH) :: MatchName, TryName, NameOnly
     character (LEN=MAXFILENAMELENGTH) :: PhysicalName, MatchPath
-    integer                       ::     version, returnStatus
+	 integer                       ::     version, returnStatus
+    integer                       ::     numberPCs
     logical ::                            debug
 
    if(.not. UseSDPToolkit) then
@@ -183,12 +189,19 @@ contains
       MatchName = Capitalize(FileName)
     endif
 
-    ErrType = NAMENOTFOUND
-
     if(debug) then
       call output('getting ref from pc:', advance='no')
     endif
 
+    numberPCs = PCTop - PCBottom + 1
+    Allocate(nameArray(numberPCs), intArray(numberPCs), STAT=ErrType)
+    if ( ErrType /= 0 ) then
+      ErrType = CANTALLOCATENAMEARRAY
+      return
+    endif
+
+    ErrType = NAMENOTFOUND
+    nameArray = UNASSIGNEDFILENAME
     do thePC = PCBottom, PCTop
 
       if(present(versionNum)) then
@@ -209,16 +222,42 @@ contains
         endif
         
         call split_path_name(TryName, MatchPath, NameOnly)
-
-        if ( index(NameOnly, trim(MatchName)) /= 0 )then
-          ErrType = 0
-          exit
-        endif
-
+        nameArray(thePC-PCBottom+1) = NameOnly
       endif
 
     enddo
+    ! Sort the file names from short to long
+    ! to prevent unwanted matches between "O3" and "HNO3"
+    call SortArray(nameArray, intArray, caseSensitive, &
+     & sortedArray=nameArray, shorterFirst=.true., leftRight='r')
+    do notThePC = 1, numberPCs
+      thePC = intArray(notThePC) + PCBottom - 1         
+      NameOnly = nameArray(notThePC)            
+      if ( index(NameOnly, trim(MatchName)) /= 0 )then  
+        ErrType = 0                                     
+        exit                                            
+      endif                                             
+    enddo
 
+    if(present(versionNum)) then  
+      version = versionNum        
+    else                          
+      version = 1                 
+    endif                         
+    returnStatus = Pgs_pc_getReference(thePC, version, &
+        & PhysicalName)
+    if ( returnStatus == PGS_S_SUCCESS ) then             
+
+      if(.not. caseSensitive) then                        
+        TryName = Capitalize(PhysicalName)                
+      else                                                
+        TryName = PhysicalName                            
+      endif                                               
+                                                          
+      call split_path_name(TryName, MatchPath, NameOnly)
+    else
+      ErrType = NAMENOTFOUND
+    endif  
     if(present(path) .and. ErrType == 0) then
         if ( index(MatchPath, trim(path)) == 0 )then
           ErrType = NAMENOTFOUND
@@ -229,6 +268,7 @@ contains
       ExactName = PhysicalName
     endif
 
+    Deallocate(nameArray, intArray)
   end function GetPCFromRef
 
   ! ---------------------------------------------  mls_io_gen_openF  -----
@@ -1030,6 +1070,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 1.8  2002/01/31 00:36:41  pwagner
+! Repaired comment statements
+!
 ! Revision 1.7  2002/01/29 23:46:30  pwagner
 ! Added WILDCARDHDFVERSION as public param
 !
