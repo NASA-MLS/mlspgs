@@ -323,7 +323,7 @@ contains
         end if
       else
         do i = 2, nsons(quants)
-          if ( decoration(subtree(i,quants)) == theQuant ) then
+          if ( decoration(decoration(subtree(i,quants))) == theQuant ) then
             call expr ( subtree(min(i,nsons(orders)),orders), units, value, type )
             ord = nint(value(1))
             if ( weights /= 0 ) then
@@ -385,8 +385,8 @@ contains
             need(ib) = .false.     ! Going to do it
           else
             do i = 2, nsons(quants)
-              if ( decoration(subtree(i,quants)) == &
-                & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
+              if ( decoration(decoration(subtree(i,quants))) == &
+                & a%col%vec%template%quantities(ib) ) then
                 need(ib) = .false. ! Going to do it
               end if
             end do
@@ -405,8 +405,7 @@ contains
         end if
 
         call getOrdAndWeight ( orders, quants, weights, &
-          & a%col%vec%quantities(a%col%quant(ib))%template%quantityType, &
-          & ord, wt )
+          & a%col%vec%template%quantities(ib), ord, wt )
 
         if ( ord > ni-1 ) then
           warn = .true.
@@ -452,7 +451,11 @@ o:          do while ( c2 <= ni )
                   i = insts(j)
                   iq = a%col%quant(i)
                   ii = a%col%inst(i)
-                  wtVec(j-c1+1) = weightVec%quantities(iq)%values(h,ii)
+                  if ( weightVec%quantities(iq)%values(h,ii) /= 0.0 ) then
+                    wtVec(j-c1+1) = weightVec%quantities(iq)%values(h,ii)
+                  else
+                    wtVec(j-c1+1) = 0.0
+                  end if
                 end do
                 call coeffs ( myOrd, wt, c, wtVec(c1:c2-1), c2-c1 )
               else
@@ -515,8 +518,8 @@ o:          do while ( c2 <= ni )
         maxCols = 0
         do ib = 1, nb ! Find number of columns in widest block
           do i = 2, nsons(quants)
-            if ( decoration(subtree(i,quants)) == &
-              & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
+            if ( decoration(decoration(subtree(i,quants))) == &
+              & a%col%vec%template%quantities(ib) ) then
                 maxCols = max(maxCols, a%col%nelts(ib))
                 exit
             end if
@@ -528,8 +531,7 @@ o:          do while ( c2 <= ni )
 
       do ib = 1, nb             ! Loop over matrix blocks = quantities
         call getOrdAndWeight ( orders, quants, weights, &
-          & a%col%vec%quantities(a%col%quant(ib))%template%quantityType, &
-          & ord, wt )
+          & a%col%vec%template%quantities(ib), ord, wt )
         ncol = a%col%nelts(ib)
         nrow = a%row%nelts(ib)
         if ( ord > ncol-1 ) then
@@ -556,8 +558,11 @@ o:          do while ( c2 <= ni )
             c1 = 1
             c2 = ncol
             if ( associated(weightVec) ) then
-              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
-                & weightVec%quantities(nq)%values(:,ni)
+              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = 0.0
+              where ( weightVec%quantities(nq)%values(:,ni) /= 0.0 )
+                wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
+                  & 1.0 / weightVec%quantities(nq)%values(:,ni)
+              end where
               call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt, wtVec )
             else
               call fillBlock ( a%block(ib,ib), ord, rows, 1, ncol, wt )
@@ -580,7 +585,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
               end do
               if ( associated(weightVec) ) then
                 wtVec = 0.0_r8
-                wtVec ( c1 : c2-1 ) = weightVec%quantities(nq)%values(c1:c2-1,ni)
+                where ( weightVec%quantities(nq)%values(c1:c2-1,ni) /= 0.0 )
+                  wtVec ( c1 : c2-1 ) = 1.0 / weightVec%quantities(nq)%values(c1:c2-1,ni)
+                end where
                 call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt, wtVec )
               else
                 call fillBlock ( a%block(ib,ib), ord, rows, c1, c2-1, wt )
@@ -601,6 +608,10 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.27  2002/10/02 19:24:48  livesey
+! Changed regWeightVec to be a reciprocal, changed regQuants to choose
+! based on quantityTemplate rather than quantityType.
+!
 ! Revision 2.26  2002/09/23 22:08:20  vsnyder
 ! Fixed the error messages to say Regularization instead of RetrievalModule
 !
