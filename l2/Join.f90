@@ -9,7 +9,7 @@ module Join                     ! Join together chunk based data.
 
   use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_OUTPUTOVERLAPS, F_SOURCE, &
     & F_UNPACKOUTPUT, FIELD_FIRST, FIELD_LAST, L_PRESSURE, L_NONE, L_TRUE, &
-    & S_L2AUX, S_L2GP
+    & S_L2AUX, S_L2GP, S_TIME
   use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
     & L2AUXData_T, L2AUXDim_Channel, L2AUXDim_geodAngle, &
     & L2AUXDim_IntermediateFrequency, L2AUXDim_LSBFrequency, L2AUXDim_MAF, &
@@ -83,8 +83,11 @@ contains ! =====     Public Procedures     =============================
     integer :: vectorIndex, quantityIndex
     type (QuantityTemplate_T), pointer :: quantity
     logical :: compareOverlaps, outputOverlaps, unpackOutput
+    double precision :: T1, T2     ! for timing
+    logical :: TIMING
 
     ! Executable code
+    timing = .false.
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
 
@@ -110,6 +113,13 @@ contains ! =====     Public Procedures     =============================
       select case( decoration(subtree(1,decoration(subtree(1,key)))) )
       case( s_l2aux )
       case ( s_l2gp )
+      case ( s_time )
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
       end select
 
       got_field = .false.
@@ -183,6 +193,15 @@ contains ! =====     Public Procedures     =============================
       end if
       call trace_end ( "MLSL2Join" )
     end if
+    if ( timing ) call sayTime
+
+  contains
+    subroutine SayTime
+      call cpu_time ( t2 )
+      call output ( "Timing for MLSL2Join =" )
+      call output ( t2 - t1, advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
 
   end subroutine MLSL2Join
 
@@ -695,6 +714,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.5  2000/11/16 02:19:01  vsnyder
+! Implement timing.
+!
 ! Revision 2.4  2000/11/13 23:02:21  pwagner
 ! Adapted for rank2 vectorsModule
 !

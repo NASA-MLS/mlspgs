@@ -7,7 +7,8 @@ module Fill                     ! Create vectors and fill them.
 
   USE L2GPData
   use GriddedData, only: GriddedData_T
-  use INIT_TABLES_MODULE, only: S_VECTOR,F_SOURCE   ! Later, s_Fill will be added
+  use INIT_TABLES_MODULE, only: F_SOURCE, S_TIME, S_VECTOR ! Later, s_Fill
+                                                           ! will be added
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, NameLen
   use OUTPUT_M, only: OUTPUT
@@ -82,8 +83,11 @@ contains ! =====     Public Procedures     =============================
 
     INTEGER :: OL2FileHandle
     INTEGER :: qtiesStart
+    double precision :: T1, T2     ! for timing
+    logical :: TIMING
 
     ! Executable code
+    timing = .false.
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Fill", root )
 
@@ -175,6 +179,13 @@ contains ! =====     Public Procedures     =============================
 
           qtiesStart = qtiesStart+1
 
+      case ( s_time )
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
       case default ! Can't get here if tree_checker worked correctly
       end select
     end do
@@ -185,6 +196,15 @@ contains ! =====     Public Procedures     =============================
       end if
       call trace_end ( "MLSL2Fill" )
     end if
+    if ( timing ) call sayTime
+
+  contains
+    subroutine SayTime
+      call cpu_time ( t2 )
+      call output ( "Timing for MLSL2Fill =" )
+      call output ( t2 - t1, advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
   end subroutine MLSL2Fill
 
 ! =====     Private Procedures     =====================================
@@ -516,6 +536,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.5  2000/11/16 02:15:25  vsnyder
+! Implement timing.
+!
 ! Revision 2.4  2000/11/13 23:02:21  pwagner
 ! Adapted for rank2 vectorsModule
 !
