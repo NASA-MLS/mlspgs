@@ -22,7 +22,7 @@ MODULE comp_sps_path_frq_m
 !-----------------------------------------------------------------
 !
   SUBROUTINE comp_sps_path_frq(Grids_x,Frq,values,eta_zp,do_calc_zp, &
-              &   skip_eta_frq,lin_log,path_values,do_calc_fzp,eta_fzp)
+              &   skip_eta_frq,lin_log,sps_values,do_calc_fzp,eta_fzp)
 !
 ! Input:
 !
@@ -41,7 +41,7 @@ MODULE comp_sps_path_frq_m
 !
 ! Output:
 !
-  REAL(rp), INTENT(out) :: path_values(:,:) ! vmr values along the path
+  REAL(rp), INTENT(out) :: sps_values(:,:) ! vmr values along the path
 !                          by species number
   REAL(rp), INTENT(out) :: eta_fzp(:,:) ! Eta_z x Eta_phi x Eta_f for each
 !                          state vector element. This is the same length as
@@ -52,7 +52,7 @@ MODULE comp_sps_path_frq_m
 ! Notes:
 ! units of z_basis must be same as zeta_path (usually -log(P)) and units of
 ! phi_basis must be the same as phi_path (either radians or degrees).
-! Units of path_values = values.
+! Units of sps_values = values.
 !
 ! Internal declaritions
 !
@@ -69,11 +69,11 @@ MODULE comp_sps_path_frq_m
 !
   IF(Frq < 1.0) THEN
     eta_fzp = 0.0_rp
-    path_values = 0.0_rp
+    sps_values = 0.0_rp
     do_calc_fzp = .false.
   ELSE
     DO sps_i = 1, n_sps
-      IF(.NOT. skip_eta_frq(sps_i)) path_values(:,sps_i) = 0.0_rp
+      IF(.NOT. skip_eta_frq(sps_i)) sps_values(:,sps_i) = 0.0_rp
     END DO
   ENDIF
 
@@ -120,8 +120,8 @@ MODULE comp_sps_path_frq_m
           WHERE(do_calc_zp(:,sv_zp))
             do_calc_fzp(:,sv_j) = .true.
             eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
-            path_values(:,sps_i) = path_values(:,sps_i) +  &
-                               &   EXP(values(sv_j) * eta_fzp(:,sv_j))
+            sps_values(:,sps_i) = sps_values(:,sps_i) +  &
+                               &  EXP(values(sv_j) * eta_fzp(:,sv_j))
           ENDWHERE
         ENDIF
       END DO
@@ -136,8 +136,8 @@ MODULE comp_sps_path_frq_m
           WHERE(do_calc_zp(:,sv_zp))
             do_calc_fzp(:,sv_j) = .true.
             eta_fzp(:,sv_j) = eta_f(1,sv_f) * eta_zp(:,sv_zp)
-            path_values(:,sps_i) = path_values(:,sps_i) +  &
-                               &   values(sv_j) * eta_fzp(:,sv_j)
+            sps_values(:,sps_i) = sps_values(:,sps_i) +  &
+                               &  values(sv_j) * eta_fzp(:,sv_j)
           ENDWHERE
         ENDIF
       END DO
@@ -158,6 +158,9 @@ MODULE comp_sps_path_frq_m
 END MODULE comp_sps_path_frq_m
 !
 ! $Log$
+! Revision 2.3  2001/11/10 00:45:08  zvi
+! Fixing a bug..
+!
 ! Revision 2.2  2001/11/07 09:59:12  zvi
 ! More effective code for sps_path calculations
 !
