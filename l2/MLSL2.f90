@@ -120,6 +120,11 @@ program MLSL2
   !---------------- Task (1) ------------------
 
   call time_now ( t0 )
+  call h5open_f(error)
+  if (error /= 0) then
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to h5_open_f" )
+  endif    
 
 ! Initialize the lexer, symbol table, and tree checker's tables:
 !  ( Under some circumstances, you may need to increase these )
@@ -458,6 +463,13 @@ program MLSL2
   if ( timing ) call sayTime ( 'Closing and deallocating' )
   call add_to_section_timing( 'main', t0 )
   if ( index(switches, 'time') /= 0 ) call dump_section_timings
+  if ( error == 0 ) then
+     call h5close_f(error)
+     if (error /= 0) then
+       call MLSMessage ( MLSMSG_Error, moduleName, &
+        & "Unable to h5_close_f" )
+     endif    
+  endif    
   if(error /= 0) then
      call MLSMessageExit(1)
   elseif(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
@@ -583,6 +595,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.78  2002/08/15 21:48:51  pwagner
+! h5open(close)_f now called at start (end)
+!
 ! Revision 2.77  2002/07/23 23:15:05  pwagner
 ! Moved dump_settings call after learning name of l2cf file
 !
