@@ -4,21 +4,23 @@
 module TREE_CHECKER
 
 ! Traverse the tree output by the parser, which includes definitions
-! put into it before the parser runs by init_tables_module.  Check
+! put into it by init_tables_module before the parser runs.  Check
 ! that things fit together.  Fill in the declaration table.  Decorate
 ! cross-references within the tree with anything that might be useful
 ! in table_generator.
 
   use DECLARATION_TABLE, only: DECLARATION, DECLARE, DECLARED, DECLS, &
-                               DUMP_1_DECL, ENUM_VALUE, &
-                               FIELD, GET_DECL, LABEL, LOG_VALUE, NAMED_VALUE, &
-                               NULL_DECL, NUM_VALUE, PRIOR_DECL, RANGE, &
-                               REDECLARE, SECTION, SPEC, STR_VALUE, &
-                               UNDECLARED, TYPE_MAP, TYPE_NAME, UNITS_NAME
-  use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_INDICES, &
-                                PHYQ_DIMENSIONLESS, PHYQ_INVALID, &
-                                SECTION_FIRST, SECTION_INDICES, SECTION_LAST, &
+                               DUMP_1_DECL, ENUM_VALUE, FIELD, GET_DECL, &
+                               LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, &
+                               NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE, &
+                               SECTION, SPEC, STR_VALUE, UNDECLARED, &
+                               TYPE_MAP, TYPE_NAME, UNITS_NAME
+  use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_FIRST, FIELD_INDICES, &
+                                FIELD_LAST, PHYQ_DIMENSIONLESS, &
+                                PHYQ_INVALID, SECTION_FIRST, &
+                                SECTION_INDICES, SECTION_LAST, &
                                 SECTION_ORDERING, T_BOOLEAN
+  use INTRINSIC, only: ALL_FIELDS, NO_DUP, NO_POSITIONAL
   use LEXER_CORE, only: PRINT_SOURCE
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, FLOAT_VALUE
@@ -38,24 +40,30 @@ module TREE_CHECKER
 
 ! Error codes for "announce_error"
   integer, private, parameter :: ALREADY_DECLARED = 1
-  integer, private, parameter :: INCONSISTENT_TYPES = 2
-  integer, private, parameter :: INCONSISTENT_UNITS = 3
-  integer, private, parameter :: NO_CODE_FOR = 4
-  integer, private, parameter :: NO_DOT = 5
-  integer, private, parameter :: NO_SUCH_FIELD = 6
-  integer, private, parameter :: NO_SUCH_REFERENCE = 7
-  integer, private, parameter :: NOT_FIELD_OF = 8
-  integer, private, parameter :: NOT_NAME = 9
-  integer, private, parameter :: NOT_NAME_OR_STRING = 10
-  integer, private, parameter :: NOT_SECTION = 11
-  integer, private, parameter :: NOT_SPEC = 12
-  integer, private, parameter :: NOT_STRING = 13
-  integer, private, parameter :: NOT_UNITS = 14
-  integer, private, parameter :: OUT_OF_PLACE = 15
-  integer, private, parameter :: SECTION_ORDER = 16
-  integer, private, parameter :: WRONG_TYPE = 17
+  integer, private, parameter :: INCONSISTENT_TYPES = ALREADY_DECLARED + 1
+  integer, private, parameter :: INCONSISTENT_UNITS = INCONSISTENT_TYPES + 1
+  integer, private, parameter :: MISSING_FIELD = INCONSISTENT_UNITS + 1
+  integer, private, parameter :: NO_CODE_FOR = MISSING_FIELD + 1
+  integer, private, parameter :: NO_DOT = NO_CODE_FOR + 1
+  integer, private, parameter :: NO_DUPLICATE_FIELDS = NO_DOT + 1
+  integer, private, parameter :: NO_POSITIONAL_FIELDS = NO_DUPLICATE_FIELDS + 1
+  integer, private, parameter :: NO_SUCH_FIELD = NO_POSITIONAL_FIELDS + 1
+  integer, private, parameter :: NO_SUCH_REFERENCE = NO_SUCH_FIELD + 1
+  integer, private, parameter :: NOT_FIELD_OF = NO_SUCH_REFERENCE + 1
+  integer, private, parameter :: NOT_NAME = NOT_FIELD_OF + 1
+  integer, private, parameter :: NOT_NAME_OR_STRING = NOT_NAME + 1
+  integer, private, parameter :: NOT_SECTION = NOT_NAME_OR_STRING + 1
+  integer, private, parameter :: NOT_SPEC = NOT_SECTION + 1
+  integer, private, parameter :: NOT_STRING = NOT_SPEC + 1
+  integer, private, parameter :: NOT_UNITS = NOT_STRING + 1
+  integer, private, parameter :: OUT_OF_PLACE = NOT_UNITS + 1
+  integer, private, parameter :: SECTION_ORDER = OUT_OF_PLACE + 1
+  integer, private, parameter :: WRONG_TYPE = SECTION_ORDER + 1
 
+  logical, private :: ALL_FIELDS_FLAG   ! All fields are required
   integer, private :: CURRENT_SECTION = section_first - 1
+  logical, private :: GOT(field_first:field_last)
+  logical, private :: NO_DUP_FLAG       ! Duplicate named fields prohibited
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -102,12 +110,13 @@ contains ! ====     Public Procedures     ==============================
   end subroutine CHECK_TREE
 ! =====     Private Procedures     =====================================
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS )
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
     integer, intent(in), optional :: SONS(:) ! Tree nodes, maybe sons of
                                    ! "where".  If they're pseudo_terminal,
                                    ! their declarations are dumped.
+    integer, intent(in), optional :: FIELDS(:) ! Field indices
     integer :: I                   ! Index for "sons" or "section_ordering"
 
     error = max(error,1)
@@ -119,44 +128,51 @@ contains ! ====     Public Procedures     ==============================
       call dump_tree_node ( where, 0 )
       call output ( ' is already defined.', advance='yes' )
     case ( inconsistent_types )
-      call output ( ' types are not consistent.', advance = 'yes' )
+      call output ( 'types are not consistent.', advance = 'yes' )
     case ( inconsistent_units )
-      call output ( ' units are not consistent.', advance = 'yes' )
+      call output ( 'units are not consistent.', advance = 'yes' )
+    case ( missing_field )
+      call output ( 'the field "' )
+      call display_string ( field_indices(fields(1)) )
+      call output ( '" is required but not present.', advance='yes' )
     case ( no_code_for )
-      call output ( ' there is no code to analyze ' )
+      call output ( 'there is no code to analyze ' )
       call dump_tree_node ( where, 0, advance='yes' )
     case ( no_dot )
-      call output ( ' a reference of the form X.Y is not allowed.', &
+      call output ( 'a reference of the form X.Y is not allowed.', &
         advance='yes' )
+    case ( no_duplicate_fields )
+      call output ( 'the field "' )
+      call display_string ( field_indices(fields(1)) )
+      call output ( '" shall not be specified twice.', advance='yes' )
+    case ( no_positional_fields )
+      call output ( 'positional fields are not allowed.', advance='yes' )
     case ( no_such_field )
-      call output ( ' a required field ' )
+      call output ( 'a required field ' )
       call display_string ( field_indices(sons(1)) )
       call output ( ' is absent in the chain of specifications.', &
         advance='yes' )
     case ( no_such_reference )
-      call output ( ' there is no reference to ' )
+      call output ( 'there is no reference to ' )
       call display_string ( sub_rosa(where) )
       call output ( ' in the field at ' )
       call print_source ( source_ref(sons(1)), advance='yes' )
     case ( not_field_of )
-      call output ( ' ' )
       call display_string ( sub_rosa(where) )
       call output ( ' is not a field of ' )
-      call display_string ( sub_rosa(sons(1)), advance='yes' )
+      call display_string ( sub_rosa(fields(1)), advance='yes' )
     case ( not_name )
-      call output ( ' is not a name.', advance = 'yes' )
+      call output ( 'is not a name.', advance = 'yes' )
     case ( not_name_or_string )
-      call output ( ' is not a name or a string.', advance = 'yes' )
+      call output ( 'is not a name or a string.', advance = 'yes' )
     case ( not_section )
-      call output ( ' ' )
       call display_string ( sub_rosa(where) )
       call output ( ' is not a section name.', advance = 'yes' )
     case ( not_spec )
-      call output ( ' ' )
       call display_string ( sub_rosa(where) )
       call output ( ' is not a spec name.', advance = 'yes' )
     case ( not_string )
-      call output ( ' is not a string or of logical type.', &
+      call output ( 'is not a string or of logical type.', &
                     advance = 'yes' )
     case ( not_units )
       call dump_tree_node ( where, 0 )
@@ -202,6 +218,7 @@ contains ! ====     Public Procedures     ==============================
 
     type(decls) :: DECL  ! Declaration of a name
     integer :: FIELD     ! Tree node of field's declaration
+    integer :: FIELD_LIT ! f_... for a field
     integer :: FIELD_LOOK ! A field being sought during n_dot checking
     integer :: FIELD_REF ! The value of a field -- a ref to a n_spec_arg
     integer :: FIELD_TEST ! A son of Field_Ref
@@ -221,7 +238,8 @@ contains ! ====     Public Procedures     ==============================
       spec_decl = decoration(root)
       field = check_field(son1,spec_decl)   ! Is field a field of spec?
       if ( field == 0 ) then
-        call announce_error ( son1, not_field_of, (/ spec_decl /) )
+        call announce_error ( son1, not_field_of, &
+          & fields=(/ subtree(1,spec_decl) /) )
       else
         if ( node_id(field) == n_field_type ) then
           look_for = enum_value
@@ -229,7 +247,14 @@ contains ! ====     Public Procedures     ==============================
           look_for = label
         end if
         call decorate ( root, field )
-        call decorate ( son1, decoration(subtree(1,field)) )
+        field_lit = decoration(subtree(1,field))
+        if ( no_dup_flag ) then
+          if ( got(field_lit) ) &
+            & call announce_error ( root, no_duplicate_fields, &
+            & fields=(/ field_lit /) )
+        end if
+        got(field_lit) = .true.
+        call decorate ( son1, field_lit )
 o:      do i = 2, nsons(root)
           son = subtree(i,root)
           if ( node_id(son) == n_dot ) then ! label_ref.field
@@ -733,6 +758,7 @@ m:              do j = 3, nsons(field)
   ! make sure "name" is a field of the specification.
     integer, intent(in) :: ROOT    ! Index of the "n_set_one" tree node
     integer :: FIELD               ! Tree node of field's declaration
+    integer :: FIELD_LIT           ! f_... for a field
     integer :: SON                 ! Son of n_set_one tree node
     integer :: SPEC_DECL           ! Tree node of the spec's declaration
     if ( toggle(con) ) call trace_begin ( 'SET_ONE', root )
@@ -745,7 +771,14 @@ m:              do j = 3, nsons(field)
     else
       if ( check_field_type(field,t_boolean) ) then
         call decorate ( root, field )
-        call decorate ( son, decoration(subtree(1,field)) )
+        field_lit = decoration(subtree(1,field))
+        call decorate ( son, field_lit )
+        if ( no_dup_flag ) then
+          if ( got(field_lit) ) &
+            & call announce_error ( root, no_duplicate_fields, &
+            & fields=(/ field_lit /) )
+        end if
+        got(field_lit) = .true.
       else
         call announce_error ( son, wrong_type )
       end if
@@ -758,6 +791,8 @@ m:              do j = 3, nsons(field)
   ! starting at ROOT
     integer, intent(in) :: ROOT
 
+    integer :: FIELD_LIT      ! f_... for a field
+    integer :: FLAGS          ! Flags from decoration(spec_decl)
     integer :: I              ! Loop inductor
     integer :: SECT           ! The section the spec appears in
     integer :: SON            ! I'th son of "root"
@@ -779,6 +814,10 @@ m:              do j = 3, nsons(field)
         call announce_error ( son, not_spec )
       else
         call decorate ( son, spec_decl%tree )
+        flags = decoration(spec_decl%tree)
+        all_fields_flag = mod(flags/all_fields,2) .ne. 0
+        no_dup_flag = mod(flags/no_dup,2) .ne. 0
+        got = .false.
         do i = 2, nsons(root)
           son = subtree(i,root)
           select case ( node_id(son) )
@@ -791,10 +830,22 @@ m:              do j = 3, nsons(field)
           case ( n_dot )
           ! ??? Need some checking and generation here
           case default
-            call expr ( son, type, units, value )
-            ! ??? Generate some table here
+            if ( mod(flags/no_positional,2) /= 0 ) then
+              call announce_error ( son, no_positional_fields )
+            else
+              call expr ( son, type, units, value )
+              ! ??? Generate some table here
+            end if
           end select
         end do
+        if ( all_fields_flag ) then
+          do i = 2, nsons(spec_decl%tree)
+            field_lit = decoration(subtree(1,subtree(i,spec_decl%tree)))
+            if ( .not. got(field_lit) ) &
+              call announce_error ( root, missing_field, &
+                & fields=(/ field_lit /) )
+          end do
+        end if
       end if
     end if
     if ( toggle(con) ) call trace_end ( 'SPEC_ARGS' )
@@ -802,6 +853,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.2  2001/02/02 00:04:36  vsnyder
+! Improved some error messages
+!
 ! Revision 1.1  2000/11/02 21:36:45  vsnyder
 ! Initial entry into CVS
 !
