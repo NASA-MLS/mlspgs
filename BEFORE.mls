@@ -15,7 +15,7 @@ SUMMARY
 Before building the mls software you will need the following (absolutely
 mandatory items are marked with a *; the others may be in fact required for
 building certain levels of the mls software, except for BLAS)
- *(1) f95 compiler (either NAG or Lahey)
+ *(1) f95 compiler (NAG, Lahey, or Sun)
  (2) Installed SDP Toolkit libraries:
     (a) PGSTK
     *(b) HDFEOS
@@ -23,7 +23,7 @@ building certain levels of the mls software, except for BLAS)
  *(3) mls software (probably where you're reading this)
  (4) PVM--a library to emulate parallel virtual machines
  (5) FFTW--a library to accomplish fast Fourier tranforms
- (6) BLAS--a library to speed up linear algebra
+ (6) BLAS and LAPACK--libraries to speed up linear algebra
 
 The first step is to find out if you already have (1)-(6). If you do, you may
 safely ignore the rest of this guide. Obtaining (1), (3), and (6) is not
@@ -39,6 +39,7 @@ III   THE SDP TOOLKIT
 IV    PVM
 V     FFTW
 VI    BLAS
+VII   LAPACK
 
 THE SDP TOOLKIT
 The distribution to build the libraries and ancillary files making up the SDP
@@ -108,13 +109,12 @@ and replace it with
 
 Thanks to Robert Thurstans (JPL) for pointing this out.
 
-	
 BLAS
 It is possible that highly-optimized blas libraries exist on your platform or
 are made available through your f95 compiler or hardware vendor. If so, you
 should note their paths and names. For example, Intel supplies: libmkl32_p3.a,
 libmkl32_p4.a and libmkl64_itp.a. Or your compiler vendor or OS vendor may have
-put a copy in an easy-to-access place:
+put a copy in an easy-to-access place: e.g.
 
 me/mlspgs:186%ls /usr/lib/*blas*
 /usr/lib/libblas.a    /usr/lib/libblas.so.3@    /usr/lib/libblas.so.3.0.3*
@@ -124,12 +124,36 @@ In either case, note
 (1) Whether you have such a library; and
 (2) If so, its path and name
 
+You have to choose one of the three options:
+(a) Use the externally-supplied library of BLAS routines
+(b) Use f95 intrinsics to satisfy BLAS routines
+(c) Let the mls software build its own BLAS routines
+
+Note that (b) and (c) will always be available, and (c) is the built-in default
+
+LAPACK
+Highly-optimized LAPACK libraries may also exist on your platform. Again,
+note their paths and names. 
+
+If you are ambitious, you might check the site named ATLAS for "Automatically
+Tuned Linear Algebra Software"
+   http://www.netlib.org/atlas/index.html
+so that you can download or indeed build your own.
+
+You have to choose one of the two options:
+(a) Use the externally-supplied library of LAPACK routines
+(b) Use f95 intrinsics to satisfy LAPACK routines
+
+Note that (b) will always be available, and is the built-in default
 
 -pw
 EOF
 
 exit
 # $Log$
+# Revision 1.3  2001/07/07 00:27:30  pwagner
+# Mentions new version of Toolkit, LIB_BLAS, and cloudfwdm
+#
 # Revision 1.2  2001/03/01 23:46:21  pwagner
 # Noted changes to configure.in for FFTW
 #

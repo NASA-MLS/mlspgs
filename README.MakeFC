@@ -20,10 +20,13 @@ it is mostly self-configuring. First, you will need:
  (1) f95 compiler (either NAG, Lahey, or Sun)
  (2) Installed SDP Toolkit (PGSTK, HDFEOS, HDF)
  (3) mls software (probably where you're reading this)
- (4) perl (not needed if you plan only to build and run the software,
-       not change it)
+ (4) perl
  (5) PVM--a library to emulate parallel virtual machines
  (6) FFTW--a library to accomplish fast Fourier transforms
+and you may want to inquire about the availability of the following two: 
+having them can result in greatly improved performance
+ (7) BLAS--a library of basic linear algebra software
+ (8) LAPACK--another linear algebra library
 
 Then, from the "top" level (where you see this file, as well as the l1, l2, l3,
 l3m, lib, fwmdl, cloudfwdm, srclib, and util directories) simply type
@@ -283,7 +286,8 @@ update       replaces Makefiles in subdirectories with latest versions after
              orphaned .o and .mod files left behind after sources removed
 
 (The following are more specialized)
-configure_pvm    reset paths to PVM_ROOT, FFTW_ROOT (see BEFORE.mls)
+configure_pvm    reset paths to PVM_ROOT, FFTW_ROOT, BLAS, LAPACK
+                 (see BEFORE.mls)
 configure_fopts  reset default Fortran95 compiler and linker switches
 configure_full   combines configure, configure_pvm, configure_fopts
 configure_help   prints brief help on how to configure the build
@@ -469,10 +473,16 @@ BLAS               Path to an external blas library; unless LIB_BLAS set the
 FFTW_ROOT          Path to the FFTW library; required for mlsl3
 FOPTS              Override default compiler option; note that you must
                    use only legal options
+LAPACK             Path to an external lapack library; unless LIB_LAPACK
+                   set the library must then be named \$LAPACK/liblapack.a
+                   You would use this if you already had a precompiled, 
+                   highly-optimized library; e.g., ATLAS
 LDOPTS             Override default (blank) loader option; note that you must
                    use only legal options
 LIB_BLAS           Name of the external blas library; if left unset the library
                    must then be named \$BLAS/libblas.a
+LIB_LAPACK         Name of the external lapack library; if left unset the 
+                   library must then be named \$LAPACK/liblapack.a
 PVM_ROOT           Path to the root of the pvm libraries; note that they
                    must then be named \$PVM_ROOT/\$PVM_ARCH/lib*.a;
                    Warning: if PVM_ROOT is set, then so must PVM_ARCH
@@ -577,6 +587,9 @@ export LDOPTS
 EOF
 exit
 # $Log$
+# Revision 1.23  2001/09/26 17:32:20  pwagner
+# Renamed SIMPLIFYMAKE to NOHUNTING
+#
 # Revision 1.22  2001/09/25 23:53:22  pwagner
 # Mentions Sun.Sun, SIMPLIFYMAKE
 #
