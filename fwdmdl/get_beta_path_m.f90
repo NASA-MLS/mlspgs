@@ -75,7 +75,8 @@ contains
   ! call output('In get_beta_path_m',advance='yes')
   ! call dump(frequencies)
 
-  Vel_z_correction = 1.0_r8 + vel_z / c
+  !  Vel_z_correction = 1.0_r8 + vel_z / c
+  Vel_z_correction = 1.0_r8 - vel_z / c ! Debug
 
   ! Allocate all the needed space for beta..
 
@@ -212,6 +213,9 @@ contains
   end subroutine get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.20  2001/05/15 03:47:26  zvi
+! Adding derivative flag to beta calculations
+!
 ! Revision 1.19  2001/05/14 23:14:54  zvi
 ! Added Freq. Gap test..
 !
