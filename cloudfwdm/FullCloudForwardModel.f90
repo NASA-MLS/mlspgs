@@ -109,6 +109,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     integer :: i                        ! Loop counter
     integer :: ivmr
+    integer :: NQ1
+    integer :: NQ2
     integer :: MAF                      ! The major frame 
     integer :: VMRINST                  ! Instance index
     integer :: INSTANCE                 ! Relevant instance for temperature
@@ -165,7 +167,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     ! Outputs
     do quantity_type = 1, fwdModelOut%template%noQuantities
-      l_quantity_type = fwdModelOut%template%quantities(quantity_type)
+      l_quantity_type = fwdModelOut%quantities(quantity_type)%template%quantityType
+      print*,'quantity_type: ', 'outputs', quantity_type
+      print*,'l_quantity_type: ', 'outputs', l_quantity_type
       select case (l_quantity_type)
         case (l_radiance) 
           radiance => GetVectorQuantityByType ( fwdModelOut,                 &
@@ -198,25 +202,43 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut,    &
           & quantityType=l_massMeanDiameterWater )
         case default
+          print*, 'l_radiance: ', l_radiance
+          print*, 'l_cloudInducedRadiance: ', l_cloudInducedRadiance
+          print*, 'l_cloudextinction: ', l_cloudextinction
+          print*, 'l_massmeandiameterice: ', l_massmeandiameterice
+          print*, 'l_cloudRADSensitivity: ', l_cloudRADSensitivity
+          print*, 'l_totalExtinction: ', l_totalExtinction
+          print*, 'l_effectiveOpticalDepth: ', l_effectiveOpticalDepth
+          print*, 'l_massMeanDiameterWater: ', l_massMeanDiameterWater
+          print*, 'l_quantity_type: ', l_quantity_type
+
           call MLSMessage ( MLSMSG_Error, ModuleName,                        &
-                            'Did not understand l_quantity_types')
+                            'Did not understand output l_quantity_types')
       end select
     enddo
 
 !-------------------------------------------------------------------
 
     ! Inputs
-    do quantity_type = 1, fwdModelIn%template%noQuantities
-      l_quantity_type = fwdModelIn%template%quantities(quantity_type)
+    NQ1 = fwdModelIn%template%noQuantities
+    NQ2 = fwdModelExtra%template%noQuantities
+    do quantity_type = 1, NQ1+NQ2
+      if (quantity_type .le. NQ1) &
+      l_quantity_type = fwdModelIn%quantities(quantity_type)%template%quantityType
+      if (quantity_type .gt. NQ1) &
+      l_quantity_type = fwdModelExtra%quantities(quantity_type-NQ1)%template%quantityType
+      print*,'quantity_type: ', 'inputs', quantity_type
+      print*,'l_quantity_type: ', 'inputs', l_quantity_type
+
       select case (l_quantity_type)
-        case (l_ptan) 
-          ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,       &
-          & quantityType=l_ptan, radiometer=signal%radiometer )
+        case (l_ptan)
+          ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,      &
+          & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
         case (l_temperature)
-          temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,       &
+          temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
           & quantityType=l_temperature )
         case (l_gph)
-          gph => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,        &
+          gph => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,       &
           & quantityType=l_gph )
         case (l_cloudIce)
           cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,   &
@@ -225,17 +247,19 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_cloudWater )
         case (l_surfaceType)
-          surfaceType => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,&
+          surfaceType => GetVectorQuantityByType ( fwdModelIn,fwdModelExtra, &
           & quantityType=l_surfaceType )
         case (l_sizeDistribution)
-          sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra,&
+          sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra, &
           & quantityType=l_sizeDistribution )
         case (l_earthradius)
-          earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,&
-          & quantityType=l_tngtgeocalt ) 
+          earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_earthradius ) 
+        case (l_vmr)
+!          need to do nothing, will be treated below.
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName,                        &
-                            'Did not understand l_quantity_types')
+                            'Did not understand Input l_quantity_types')
       end select
     enddo
 
@@ -263,8 +287,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & size(forwardModelConfig%molecules), temp%template%noSurfs,           &
       & 'vmrArray', ModuleName )
 
+    ivmr=0
     do i = 1, size(forwardModelConfig%molecules)
-
       select case (forwardModelConfig%molecules(i))
         case(L_H2O)
           ivmr=1
@@ -276,15 +300,17 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       if(ivmr==0) then
         cycle
       endif
-
+      print*, 'i: ', i, 'about to get vmr for molecule of i'
       vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
         & quantityType=l_vmr, molecule=forwardModelConfig%molecules(i) )
       if (.not.ValidateVectorQuantity( vmr, stacked=.true., coherent=.true., &
         & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,  &
         & ModuleName, InvalidQuantity//'vmr' )
+      print*, 'i: ', i, 'got vmr for molecule of i'
 
       call FindClosestInstances ( vmr, radiance, closestInstances )
       vmrInst = closestInstances(maf)
+
       call InterpolateValues ( &
         & vmr%template%surfs(:,1), &    ! Old X
         & vmr%values(:,vmrInst), &      ! Old Y
