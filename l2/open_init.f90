@@ -10,15 +10,17 @@ module Open_Init
 
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: swopen, swclose
-  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase	!, ReadL2AUXData
-  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData
-  use MLSCommon, only: L1BInfo_T, TAI93_Range_T
+  use INIT_TABLES_MODULE, only: F_FILE, F_SOURCE, S_L2AUX, S_L2GP
+  use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, & !, ReadL2AUXData
+    &                  SetupNewL2AUXRecord
+  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, &
+    &                  SetupNewL2GPRecord
+  use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_FileOpen
   use MLSPCF, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
     &               MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START
   use MLSSignalNomenclature, only: ReadSignalsDatabase
-  use MLSStrings, only: lowercase
   use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
@@ -41,9 +43,6 @@ module Open_Init
      "$id: open_init.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
-
-  integer, parameter :: s_l2gp = 0   ! to be replaced by entry in init_tables_module
-  integer, parameter :: s_l2aux = s_l2gp+1   ! to be replaced by entry in init_tables_module
 
 contains ! =====     Public Procedures     =============================
 
@@ -237,41 +236,37 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------------------  read_apriori  -----
   subroutine read_apriori ( root, L2GPDatabase, l2auxDatabase)
 
-	! Read in  a priori data from l2gp files and l2aux files
+    ! Read a priori data from l2gp files and l2aux files
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
-    TYPE (L2GPData_T), DIMENSION(:), POINTER :: L2GPDatabase
+    type (l2gpdata_t), dimension(:), pointer :: L2GPDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
 
     !Local Variables
+    integer :: FIELD               ! Son of KEY, must be n_assign
+    integer :: fileHandle          ! fileHandle of a priori data file
+    integer :: fileName            ! Sub-rosa index of name in file='name'
+    character(len=FileNameLen) :: FileNameString   ! actual literal file name
+    integer :: FileType            ! either s_l2gp or s_l2aux
     integer :: I, J                ! Loop indices for section, spec
-    integer :: KEY                 ! Definitely n_named
+    integer :: KEY                 ! Index of n_spec_args in the AST
+    type (L2AUXData_T) :: L2AUX
+    type (L2GPData_T) :: L2GP
+    integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
+    character (LEN=480) :: msr     ! Error message if can't find file
     type (Vector_T) :: newVector
+    integer :: NumProfs            ! number of profiles actually read
+!   integer :: quantityName        ! Sub-rosa index
     integer :: SON                 ! Of root, an n_spec_args or a n_named
+    integer :: sourceName          ! Sub-rosa index of name in source='name'
+    character(len=FileNameLen) :: SourceNameString ! actual literal source name
     integer :: templateIndex       ! In the template database
     integer :: vectorIndex         ! In the vector database
-    integer :: vectorName          ! Sub-rosa index
-    integer :: quantityName        ! Sub-rosa index
-    integer :: sourceName          ! Sub-rosa index
-    integer :: FileType            ! Sub-rosa index of either 'l2gp' or 'l2aux'
-    integer :: fileHandle          ! fileHandle of a priori data file
-    integer :: NumProfs            ! number of profiles actually read
-    CHARACTER (LEN=24) :: FileTypeString     ! 'l2gp' or 'l2aux'
-    CHARACTER (LEN=480) :: msr     ! Error message if can't find file
-    integer :: JName               ! index to spec name of 3rd son of root
-    CHARACTER*16 :: JString        ! index to spec name of 3rd son of root
-    integer :: FileRoot            ! index to spec name of file field
-    integer :: SourceRoot          ! index to spec name of source field
-    integer :: FileName            ! subrosa indexed of name in file='name'
-    CHARACTER*16 :: FileNameString ! actual literal file name
-    CHARACTER*16 :: SourceNameString ! actual literal source name
-    TYPE (L2GPData_T) :: L2GP
-    TYPE (L2AUXData_T) :: L2AUX
 
 ! Toolkit Functions
 
-      INTEGER, EXTERNAL :: swclose, swopen
+    INTEGER, EXTERNAL :: swclose, swopen
 
 	! Assume specifications take the following form:
         !   vName: fileType, file='fileName', source='fieldName'
@@ -281,88 +276,92 @@ contains ! =====     Public Procedures     =============================
       son = subtree(i,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
         key = subtree(2,son)
-        vectorName = sub_rosa(subtree(1,son))
+        l2Name = sub_rosa(subtree(1,son))
       else
         key = son
-        vectorName = 0
+        l2Name = 0
       end if
 
       ! Node_id(key) is now n_spec_args.
 
-        if ( nsons(key) /= 4 ) call MLSMessage(MLSMSG_Error, ModuleName, &
-        & 'Wrong number of fields in read a priori')
+      if ( nsons(key) /= 4 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Wrong number of fields in read a priori')
 
-        FileType = sub_rosa(subtree(2,son))
-        CALL get_string(FileType, FileTypeString)
-	FileTypeString = lowercase(FileTypeString)
+      FileType = decoration(subtree(1,decoration(subtree(1,key))))
 
-        ! Now parse file and field names
-        ! Does file spec precede field spec?
-        J = subtree(3, key)
-        JName = decoration(subtree(1,decoration(subtree(1,J))))
-        CALL get_string(JName, JString)
-        JString = lowercase(JString)
-        IF(JString.EQ.'file') THEN
- 		! Yes
-        	fileRoot = subtree(3, key)
-        	sourceRoot = subtree(4, key)
-	ELSE
- 		! No
-        	fileRoot = subtree(4, key)
-        	sourceRoot = subtree(3, key)
-	ENDIF
-	FileName=sub_rosa(subtree(2, fileRoot))
-        CALL get_string(FileName, FileNameString)
-	sourceName=sub_rosa(subtree(2, sourceRoot))
-        CALL get_string(sourceName, sourceNameString)
+      ! Now parse file and field names
+      fileName = 0
+      sourceName = 0
+      do j = 2, nsons(key)
+        field = subtree(j,key)
+        select case ( decoration(subtree(1,decoration(subtree(1,field)))) )
+        case ( f_file )
+          if ( fileName /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'File name specified twice in read a priori')
+          fileName = sub_rosa(subtree(2,field))
+        case ( f_source )
+          if ( sourceName /= 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+            & 'Source name specified twice in read a priori')
+          sourceName = sub_rosa(subtree(2,field))
+        end select
+      end do
+      if ( fileName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'File name not specified in read a priori')
+      if ( sourceName == 0 ) call MLSMessage(MLSMSG_Error, ModuleName, &
+        & 'Source name not specified in read a priori')
+      call get_string ( FileName, FileNameString )
+      call get_string ( sourceName, sourceNameString )
 
-            fileHandle = swopen(FileNameString, DFACC_READ)
-            IF (fileHandle == -1) THEN
-               msr = MLSMSG_Fileopen // FileNameString
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
+      fileHandle = swopen(FileNameString, DFACC_READ)
+      if (fileHandle == -1) then
+        msr = MLSMSG_Fileopen // FileNameString
+        call MLSMessage(MLSMSG_Error, ModuleName, msr)
+      end if
 
-      select case( FileTypeString )
-      case ( 'l2gp' )
+      select case( FileType )
+      case ( s_l2gp )
 
         vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
         ! Create the l2gp, and add it to the database.
-        CALL SetupNewL2GPRecord ( l2gp )
+        call SetupNewL2GPRecord ( l2gp )
+        l2gp%nameIndex = l2Name
 
         call decorate ( key, AddL2GPToDatabase( L2GPDatabase, l2gp ) )
 
         ! That's the end of the create operation
         
 
-           CALL ReadL2GPData(fileHandle, sourceNameString, L2GPDatabase(vectorIndex),&
-           & numProfs)
+        call ReadL2GPData ( fileHandle, sourceNameString, &
+          & L2GPDatabase(vectorIndex), numProfs )
 
 
-      case ( 'l2aux' )
+      case ( s_l2aux )
 
         vectorIndex = decoration(decoration(subtree(2,subtree(1,key))))
 
         ! Create the l2aux, and add it to the database.
-        CALL SetupNewL2AUXRecord ( l2aux )
+! This doesn't match the interface in module L2AUXData
+!       CALL SetupNewL2AUXRecord ( l2aux )
+        l2aux%name = l2Name
 
         call decorate ( key, AddL2AUXToDatabase( L2AUXDatabase, l2aux ) )
 
         ! That's the end of the create operation
         
 ! Need to add this routine to L2AUXData.f90 before uncommenting this line
-!           CALL ReadL2AUXData(fileHandle, sourceNameString, L2GPDatabase(vectorIndex),&
-!           & numProfs)
+!       CALL ReadL2AUXData ( fileHandle, sourceNameString, &
+!         & L2GPDatabase(vectorIndex), numProfs )
 
 
       case default ! Can't get here if tree_checker worked correctly
       end select
 
-            fileHandle = swclose(fileHandle)
-            IF (fileHandle == -1) THEN
-               msr = 'Failed to close file ' // FileNameString
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-            ENDIF
+      fileHandle = swclose(fileHandle)
+      IF (fileHandle == -1) THEN
+         msr = 'Failed to close file ' // FileNameString
+         CALL MLSMessage(MLSMSG_Error, ModuleName, trim(msr))
+      END IF
 
     end do
 
@@ -374,6 +373,10 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.7  2000/12/01 23:35:25  vsnyder
+! Use abstract syntax tree more efficiently, general clean-up -- alphabetization
+! etc.
+!
 ! Revision 2.6  2000/11/30 00:23:58  pwagner
 ! functions properly moved here from Fill
 !
