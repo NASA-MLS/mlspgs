@@ -128,8 +128,8 @@ MODULE QuantityTemplates         ! Quantities within vectors
 
      REAL(r8), DIMENSION(:,:), POINTER :: surfs
 
-     ! This is dimensioned (noSurfs,1) for regular quantities and (noSurfs
-     !,noSubVectors) for irregular ones.
+     ! This is dimensioned (noSurfs,1) for coherent quantities and (noSurfs
+     !,noSubVectors) for incoherent ones.
 
      ! Now the horizontal coordinates
 
@@ -440,6 +440,9 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.9  2000/01/20 21:59:28  livesey
+! Replaced subVectorIndex with MAFIndex and MAFCounter
+!
 ! Revision 1.8  2000/01/20 01:28:21  livesey
 ! Removed the horizontal coordinate information, and beefed up the
 ! frequency coordinate information.
