@@ -40,10 +40,11 @@ contains
 
     real(rp), dimension(:), pointer :: z_grid(:) ! a suitable
 !                  preselected integration grid
-    integer(ip), dimension(:), pointer:: tan_inds(:) ! a
-!                  suitable set of pointing indicies.
 
 ! Keywords (Optional variables):
+
+    integer(ip), dimension(:), pointer, optional :: tan_inds(:) ! a
+!                  suitable set of pointing indicies (output).
 
     real(rp), optional, intent(in) :: logp_eq_th ! threshold value for
 !                                recognizing equality
@@ -91,13 +92,16 @@ contains
       m = 1
     end if
     n_grid = m * (n - 1) + 1
-    nullify ( z_grid, tan_inds )
+    nullify ( z_grid )
     call allocate_test ( z_grid, n_grid, 'z_grid', modulename )
 
 ! Create a tangent pointing array index
 
-    call allocate_test ( tan_inds, n_grid, 'tan_inds', modulename )
-    tan_inds = (/(i,i = 1, n_grid)/)
+    if ( present(tan_inds) ) then
+      nullify ( tan_inds )
+      call allocate_test ( tan_inds, n_grid, 'tan_inds', modulename )
+      tan_inds = (/(i,i = 1, n_grid)/)
+    end if
 
 ! Fill the grid
 
@@ -139,6 +143,9 @@ contains
 end module Make_Z_Grid_m
 
 ! $Log$
+! Revision 2.6  2003/09/19 18:10:51  vsnyder
+! Make tangent point indices optional
+!
 ! Revision 2.5  2002/10/08 17:08:05  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
