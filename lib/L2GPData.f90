@@ -961,7 +961,6 @@ CONTAINS ! =====     Public Procedures     =============================
 
     IF ( l2gp%nLevels > 0 ) THEN
        edge(1) = l2gp%nLevels
-       PRINT*,l2gp%pressures
        status = swwrfld(swid, GEO_FIELD9, start, stride, edge, &
             REAL(l2gp%pressures))
        IF ( status == -1 ) THEN
@@ -1136,6 +1135,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.17  2001/02/13 00:51:31  livesey
+! Fixed bug, copy pressure information in ExpandL2GPDataInPlace
+!
 ! Revision 2.16  2001/02/09 18:38:04  livesey
 ! Even more print statemets removed!
 !
