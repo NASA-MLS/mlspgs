@@ -578,9 +578,18 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
       do while (.NOT. end_of_file)
 
 			call output('reading l3ascii file')
-        call l3ascii_read_field ( processCli, gddata, end_of_file)
-			call output('adding to grid database')
+
+        call l3ascii_read_field ( CliUnit, gddata, end_of_file)
+			call output('adding to grid database', advance='yes')
+			call output('adding grid template to database ', advance='yes')
+			call output('quantity name ' // gddata%quantityName, advance='yes')
+			call output('description ' // gddata%description, advance='yes')
+			call output('units ' // gddata%units, advance='yes')
+
         ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
+
+			call output('Destroying our grid template', advance='yes')
+			
         call DestroyGridTemplateContents ( gddata )
 
       end do !(.not. end_of_file)
@@ -772,6 +781,9 @@ END MODULE ncep_dao
 
 !
 ! $Log$
+! Revision 2.5  2001/03/24 00:29:32  pwagner
+! Now seems to read climatology files better
+!
 ! Revision 2.4  2001/03/21 00:47:29  pwagner
 ! Changes to READ_CLIMATOLOGY, announce_error
 !

@@ -8,6 +8,7 @@ MODULE MLSFiles               ! Utility file routines
    USE machine, only: io_error
    USE MLSCommon, only: i4, NameLen
    USE MLSStrings, only: Capitalize, LowerCase
+   USE output_m, only: output
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg, &
   & PGSd_IO_Gen_RSeqFrm, PGSd_IO_Gen_RSeqUnf, & 
   & PGSd_IO_Gen_RDirFrm, PGSd_IO_Gen_RDirUnf, & 
@@ -25,6 +26,18 @@ MODULE MLSFiles               ! Utility file routines
    CHARACTER(LEN=130) :: Id = &
    "$Id$"
 !----------------------------------------------------------
+
+  ! These are error codes that may be returned by GetPCFromRef
+
+	INTEGER, PARAMETER :: NAMENOTFOUND=-1
+	INTEGER, PARAMETER :: INVALIDPCRANGE=NAMENOTFOUND-1
+
+  ! These are error codes that may be returned by mls_io_gen_openF
+
+	INTEGER, PARAMETER :: UNKNOWNFILEACCESSTYPE=-999
+	INTEGER, PARAMETER :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
+	INTEGER, PARAMETER :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
+	INTEGER, PARAMETER :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
 
   ! Now we have the legal unit numbers that files may be assigned
 
@@ -56,8 +69,6 @@ MODULE MLSFiles               ! Utility file routines
     INTEGER(i4),  OPTIONAL     :: versionNum
   
     ! Local variables
-	INTEGER, PARAMETER :: NAMENOTFOUND=-1
-	INTEGER, PARAMETER :: INVALIDPCRANGE=NAMENOTFOUND-1
 	INTEGER, PARAMETER :: MAXNAMELENGTH=NameLen
 	
 	CHARACTER (LEN=MAXNAMELENGTH) :: MatchName, TryName
@@ -150,10 +161,7 @@ MODULE MLSFiles               ! Utility file routines
   
     ! Local variables
 
-	INTEGER, PARAMETER :: UNKNOWNFILEACCESSTYPE=-999
-	INTEGER, PARAMETER :: UNKNOWNTOOLBOXMODE=UNKNOWNFILEACCESSTYPE+1
-	INTEGER, PARAMETER :: NOFREEUNITS=UNKNOWNTOOLBOXMODE+1
-	INTEGER, PARAMETER :: MUSTSUPPLYFILENAMEORPC=NOFREEUNITS+1
+	LOGICAL, PARAMETER :: PRINT_EVERY_OPEN=.TRUE.
 	INTEGER, PARAMETER :: FH_ON_ERROR=-99
 	INTEGER, PARAMETER :: KEYWORDLEN=12			! Length of keywords in OPEN(...)
 	CHARACTER (LEN=NameLen) :: myName
@@ -330,12 +338,6 @@ MODULE MLSFiles               ! Utility file routines
 			return
 		endif
 			
-		print*, 'Fortran opening unit ', unit
-		print*, 'access ', access
-		print*, 'action ', action
-		print*, 'form ', form
-		print*, 'position ', position
-		print*, 'status ', status
 
 		if(access /= 'direct') then
 			open(unit=unit, access=access, action=action, form=form, &
@@ -345,11 +347,25 @@ MODULE MLSFiles               ! Utility file routines
 			& status=status, file=myName, iostat=ErrType)
 		endif
 		
-		print*, 'iostat ', ErrType
-		call io_error('io error in MLSFiles: mls_io_gen_openF' // &
-		& ' Fortran open', ErrType, myName)
-
-		theFileHandle = unit
+		if(ErrType /= 0 .OR. PRINT_EVERY_OPEN) then
+			call output( 'Fortran opening unit ', advance='no')
+			call output(  unit)
+			call output( 'access ' // access)
+			call output( 'action ' // action)
+			call output( 'form ' // form)
+			call output( 'position ' // position)
+			call output( 'status ' // status)
+			call output( 'file ' // myName)
+		endif
+		
+		if(ErrType /= 0) then
+			call output( 'iostat ', advance='no')
+			call output(  ErrType)
+			call io_error('io error in MLSFiles: mls_io_gen_openF' // &
+			& ' Fortran open', ErrType, myName)
+		else
+			theFileHandle = unit
+		endif
 			
 	case default
 		ErrType = UNKNOWNTOOLBOXMODE
@@ -368,6 +384,9 @@ END MODULE MLSFiles
 
 !
 ! $Log$
+! Revision 2.5  2001/03/24 00:30:14  pwagner
+! Now complains only if an error, and then via output
+!
 ! Revision 2.4  2001/03/22 01:09:31  pwagner
 ! Added file name to Fortran open statement
 !
