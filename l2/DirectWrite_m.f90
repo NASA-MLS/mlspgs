@@ -20,7 +20,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
   use MLSCommon, only: RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error
+    & MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
   use VectorsModule, only: VectorValue_T
@@ -54,6 +54,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     character(len=80), dimension(:), pointer :: sdNames => null()
     character(len=1024) :: fileNameBase ! E.g., 'H2O'
   end type DirectData_T
+  logical, parameter :: DEEBUG = .true.
   ! For Announce_Error
   integer :: ERROR
 
@@ -204,7 +205,7 @@ contains ! ======================= Public Procedures =========================
     ! Local parameters
     type (L2GPData_T) :: l2gp
     logical, parameter :: DEBUG = .FALSE.
-    character (len=L2GPNameLen) :: swathname    ! From the FILE location in string table
+    ! character (len=L2GPNameLen) :: swathname    ! From the FILE location in string table
     integer :: offset
     integer :: myFirstProf
     integer :: myLastProf
@@ -220,17 +221,25 @@ contains ! ======================= Public Procedures =========================
         
     myFirstProf = 1
     if ( present(firstprof) ) myFirstProf = firstprof
-    myLastProf = 1
+    myLastProf = quantity%template%grandTotalInstances
     if ( present(lastprof) ) myLastProf = lastprof
 
     TotNumProfs = myLastProf
     offset = myFirstProf - 1
     if ( .not. present(firstprof) ) offset=quantity%template%instanceOffset
+    if ( myLastProf > quantity%template%grandTotalInstances ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'last profile > grandTotalInstances for ' // trim(sdName))
+      call output('last profile: ', advance='no')
+      call output(myLastProf, advance='yes')
+      call output('grandTotalInstances: ', advance='no')
+      call output(quantity%template%grandTotalInstances, advance='yes')
+    endif
     call vectorValue_to_l2gp(quantity, Quantity_precision, l2gp, &
       & sdname, chunkNo, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
     call AppendL2GPData(l2gp, l2gpFileHandle, &
-      & swathname, offset, TotNumProfs, hdfVersion)
+      & SDNAME, offset, TotNumProfs, hdfVersion)
     call DestroyL2GPContents(l2gp)
   end subroutine DirectWrite_L2GP_fileID
 
@@ -355,6 +364,28 @@ contains ! ======================= Public Procedures =========================
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
     ! executable code
 
+    if ( (quantity%template%instanceOffset+quantity%template%noInstances - &
+      & quantity%template%noInstancesLowerOverlap - &
+      & quantity%template%noInstancesUpperOverlap) &
+      & > &
+      & quantity%template%grandTotalInstances) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'last profile > grandTotalInstances for ' // trim(sdName))
+      call output('instanceOffset: ', advance='no')
+      call output(quantity%template%instanceOffset, advance='yes')
+      call output('noInstances: ', advance='no')
+      call output(quantity%template%noInstances, advance='yes')
+      call output('noInstancesLowerOverlap: ', advance='no')
+      call output(quantity%template%noInstancesLowerOverlap, advance='yes')
+      call output('noInstancesUpperOverlap: ', advance='no')
+      call output(quantity%template%noInstancesUpperOverlap, advance='yes')
+      call output('last profile: ', advance='no')
+      call output((quantity%template%instanceOffset+quantity%template%noInstances - &
+        & quantity%template%noInstancesLowerOverlap - &
+        & quantity%template%noInstancesUpperOverlap), advance='yes')
+      call output('grandTotalInstances: ', advance='no')
+      call output(quantity%template%grandTotalInstances, advance='yes')
+    endif
     select case (hdfversion)
     case (HDFVERSION_4)
       call DirectWrite_L2Aux_hdf4 ( quantity, sdName, fileID, &
@@ -443,8 +474,8 @@ contains ! ======================= Public Procedures =========================
     ! start(noDims) = quantity%template%mafIndex ( &
     !  & 1+quantity%template%noInstancesLowerOverlap )
     start(noDims) = quantity%template%instanceOffset
-    if ( quantity%template%minorFrame ) &
-      & start(noDims) = quantity%template%instanceOffset + 1
+    ! if ( quantity%template%minorFrame ) &
+    !  & start(noDims) = quantity%template%instanceOffset + 1
 
     ! Now write it out
     status = SFWDATA_F90(sdId, start(1:noDims), &
@@ -457,6 +488,23 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) then
       call announce_error (0,&
         & "Error writing SDS data " // trim(sdName) // " to l2aux file:  " )
+    end if
+    if ( DEEBUG ) then
+      call output('noDims: ', advance='no')
+      call output(noDims, advance='yes')
+      call output('start: ', advance='no')
+      call output(start, advance='yes')
+      call output('stride: ', advance='no')
+      call output(stride, advance='yes')
+      call output('sizes: ', advance='no')
+      call output(sizes, advance='yes')
+      call output('shape(values): ', advance='no')
+      call output(shape(quantity%values), advance='yes')
+      call output('first instance: ', advance='no')
+      call output(1+quantity%template%noInstancesLowerOverlap, advance='yes')
+      call output('last instance: ', advance='no')
+      call output(quantity%template%noInstances &
+        & - quantity%template%noInstancesUpperOverlap, advance='yes')
     end if
 
     ! End access to the SD and close the file
@@ -490,7 +538,6 @@ contains ! ======================= Public Procedures =========================
 
     ! Local variables
     logical :: already_there
-    logical, parameter :: DEEBUG = .false.
     integer :: first_maf
     integer :: last_maf
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
@@ -530,8 +577,8 @@ contains ! ======================= Public Procedures =========================
     ! start(noDims) = quantity%template%mafIndex ( &
     !  & 1+quantity%template%noInstancesLowerOverlap )
     start(noDims) = quantity%template%instanceOffset
-    if ( quantity%template%minorFrame ) &
-      & start(noDims) = quantity%template%instanceOffset + 1
+    ! if ( quantity%template%minorFrame ) &
+    !  & start(noDims) = quantity%template%instanceOffset + 1
     first_maf = 1+quantity%template%noInstancesLowerOverlap
     last_maf = quantity%template%noInstances &
       &       - quantity%template%noInstancesUpperOverlap
@@ -540,6 +587,8 @@ contains ! ======================= Public Procedures =========================
       print *, 'sdname ', trim(sdName)
       print *, 'already_there ', already_there
       print *, 'noDims ', noDims
+      print *, 'instanceOffset ', quantity%template%instanceOffset
+      print *, 'minorFrame ', quantity%template%minorFrame
       print *, 'start ', start
       print *, 'sizes ', sizes
       print *, 'shape(quantity%values) ', shape(quantity%values)
@@ -667,6 +716,7 @@ contains ! ======================= Public Procedures =========================
     else
       firstProfile=1
     endif
+    nProfiles = useLastInstance - useFirstInstance + 1
     lastProfile = firstProfile - 1 + nProfiles
     call SetupNewl2gpRecord ( l2gp, noFreqsInL2GP, noSurfsInL2GP, lastProfile )
     ! Setup the standard stuff, only pressure as it turns out.
@@ -748,7 +798,7 @@ contains ! ======================= Public Procedures =========================
     else
       call output ( '(no lcf node available)' )
     end if
-    call output ( ' OutputAndClose complained: ' )
+    call output ( ModuleName // ' complained: ' )
 
     call output ( trim(full_message), advance='yes', &
       & from_where=ModuleName )
@@ -765,6 +815,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.5  2003/07/02 00:55:27  pwagner
+! Some improvements in DirectWrites of l2aux, l2gp
+!
 ! Revision 2.4  2003/06/25 18:24:57  pwagner
 ! A fix to vectorValue_to_l2gp
 !
