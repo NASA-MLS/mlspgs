@@ -284,7 +284,7 @@ contains
       REAL(r8) :: YT (NZmodel)
       REAL(r8) :: YQ (NZmodel)                 ! H2O VOLUME MIXING RATIO
       REAL(r8) :: VMR(NS,NZmodel)              ! 1=O3 VOLUME MIXING RATIO
-      REAL(r8) :: DDm(N,NZmodel)                         
+      REAL(r8) :: DDm(N,NZmodel-1)                         
 
 !----------------------------
 !     CLOUD MODEL PARAMETERS
@@ -807,6 +807,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.20  2001/10/19 19:30:36  dwu
+! initialize output quantities
+!
 ! Revision 1.19  2001/10/19 19:16:39  dwu
 ! change Nz-1 to NZ
 !
