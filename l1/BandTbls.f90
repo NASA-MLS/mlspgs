@@ -43,7 +43,7 @@ MODULE BandTbls   ! Tables for all bands
        RadiometerLoss_T ("R1B", 0.9982**3, 0.9964, 150.0), &
        RadiometerLoss_T ("R2 ", 0.99736**3, 0.9992, 150.0), &
        RadiometerLoss_T ("R3 ", 0.99449**3, 0.9987, 150.0), &
-       RadiometerLoss_T ("R4 ", 0.98819**3, 0.9916, 150.0)  /)
+       RadiometerLoss_T ("R4 ", 0.99400**3, 0.9916, 150.0)  /)  ! WGR 10/13/04
 
 CONTAINS
 
@@ -273,13 +273,13 @@ CONTAINS
   SUBROUTINE LoadDefltChi2 (unit, stat)
 !=============================================================================
 
-    USE MLSL1Common, ONLY: deflt_chi2, WFnum
+    USE MLSL1Common, ONLY: deflt_chi2, WFnum, BandChi2
 
     INTEGER :: unit, stat
 
     CHARACTER(LEN=80) :: line
     CHARACTER(LEN=2) :: chan_type
-    INTEGER :: i, ios
+    INTEGER :: i, ios, bandindx
     REAL, POINTER, DIMENSION(:,:) :: chan_dat
 
     stat = 0
@@ -293,6 +293,7 @@ CONTAINS
 
 ! read data
 
+    bandindx = 1   ! index for BandChi2 array to output to L1B RAD files
     i = 1
     chan_type = "FB"
     chan_dat => deflt_chi2%fb
@@ -306,20 +307,23 @@ CONTAINS
        IF (ios /= 0) EXIT
 
        READ (unit, *) chan_dat(:,i)
-       chan_dat(:,i) = SQRT (chan_dat(:,i))   ! square root here for later use
+       BandChi2(bandindx,1:SIZE(chan_dat(:,i))) = chan_dat(:,i)
        i = i + 1
+       bandindx = bandindx + 1
 
        SELECT CASE (chan_type)
 
        CASE ("FB")
           IF (I > SIZE (deflt_chi2%fb(1,:))) THEN
              i = 1
+             bandindx = 27    ! Start of MB data
              chan_dat => deflt_chi2%mb
              chan_type = "MB"
           ENDIF
        CASE ("MB")
           IF (I > SIZE (deflt_chi2%mb(1,:))) THEN
              i = 1
+             bandindx = 32    ! Start of WF data
              chan_dat => deflt_chi2%wf
              chan_type = "WF"
           ENDIF
@@ -334,6 +338,10 @@ CONTAINS
 END MODULE BandTbls
 
 ! $Log$
+! Revision 2.4  2004/11/10 15:41:58  perun
+! Change radiometer ohmic loss value for R4 (per WGR); correct indexes to read MB
+!  and WF default chi2
+!
 ! Revision 2.3  2004/08/12 13:51:49  perun
 ! Version 1.44 commit
 !
