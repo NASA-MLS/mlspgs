@@ -3,10 +3,7 @@
 
 module L2PC_PFA_STRUCTURES
   use MLSCommon, only: I4, R4, R8
-  use L2PC_File_Parameters, only: MAX_NO_ELMNTS_PER_SV_COMPONENT, &
-                                  MAX_NO_POINTINGS
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_DEALLOCATE
+  use L2PC_File_Parameters, only: MAX_NO_POINTINGS
   implicit none
 !  This has the standard structure constructions used for
 !    computing the data for the l2pc_xx.dat file.
@@ -132,6 +129,7 @@ contains
   subroutine AllocateOneSlabs ( slabs, nl )
     ! Allocates the commonly used items in a slabs, or all if the optional
     ! Full parameter is set
+    use Allocate_Deallocate, only: ALLOCATE_TEST
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
     integer, intent(in) :: nl         ! Number of lines
     
@@ -164,6 +162,7 @@ contains
   subroutine DeallocateOneSlabs ( slabs, inName )
     ! Allocates the commonly used items in a slabs, or all if the optional
     ! Full parameter is set
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
     character (len=*), intent(in) :: inName ! ModuleName of caller
     
@@ -181,6 +180,7 @@ contains
   ! ------------------------------------------- DestroyCompleteSlabs -----
   subroutine DestroyCompleteSlabs ( slabs )
     ! Destroys all the components of a slabs
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_DEALLOCATE
     type (slabs_struct), dimension(:,:), pointer :: slabs
 
     integer :: I
@@ -198,6 +198,10 @@ contains
   
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.2  2002/09/26 23:58:35  livesey
+! Clear arrays in zero lines case (think about whether we need to do the
+! max(nl,1) stuff later
+!
 ! Revision 2.1  2002/05/23 22:03:35  zvi
 ! Prevention of zero allocation size
 !
