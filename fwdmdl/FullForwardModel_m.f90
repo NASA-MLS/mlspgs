@@ -40,7 +40,7 @@ module FullForwardModel_m
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
   use Molecules, only: L_EXTINCTION, spec_tags
-  use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
+  use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET, DUMP
   use String_table, only: GET_STRING, DISPLAY_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
@@ -470,19 +470,35 @@ contains ! ================================ FullForwardModel routine ======
     ! There will be more to come here.
 
     ! Think about sidebands
-    if ( fwdModelConf%signals(1)%sideband == 0 ) then
+    if ( ( fwdModelConf%signals(1)%sideband == 0 ) .and.&
+      &  ( fwdModelConf%signals(1)%singleSideband == 0 ) ) then 
       if (.not. associated (sidebandRatio) .and. .not. &
         & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & "No sideband ratio supplied")
+      ! Do a folded measurement
       sidebandStart = -1
       sidebandStop = 1
       sidebandStep = 2
     else
-      sidebandStart = fwdModelConf%signals(1)%sideband
-      sidebandStop = sideBandStart
+      ! It's either a single sideband radiometer, or the user requested a
+      ! specific sideband.
+      ! Check sanity, if they are both non zero they should be the same.
+      if ( ( fwdModelConf%signals(1)%singleSideband /= 0 ) .and. &
+        &  ( fwdModelConf%signals(1)%sideband /= 0 ) .and. &
+        &  ( fwdModelConf%signals(1)%singleSideband /= &
+        &    fwdModelConf%signals(1)%sideband ) ) call MLSMessage ( &
+        & MLSMSG_Error, ModuleName, &
+        & "User requested a sideband that doesn't exist" )
+      ! OK, use whichever one is given
+      if ( fwdModelConf%signals(1)%singleSideband /= 0 ) then
+        sidebandStart = fwdModelConf%signals(1)%singleSideband
+      else
+        sidebandStart = fwdModelConf%signals(1)%sideband
+      end if
+      sidebandStop = sidebandStart
       sidebandStep = 1
-    endif
+    end if
 
  ! Sort out some important dimensions
     noSpecies = size ( fwdModelConf%molecules )
@@ -629,6 +645,11 @@ contains ! ================================ FullForwardModel routine ======
       & MLSMSG_Allocate//'my_catalog' )
 
     do j = 1, noSpecies
+      ! Skip if the next molecule is negative (indicates that this one is a
+      ! parent)
+      if ( j < noSpecies ) then
+        if ( fwdModelConf%molecules(j+1) < 0 ) cycle
+      end if
       l=abs(fwdModelConf%molecules(j))
       Spectag = spec_tags(l)
       thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
@@ -2142,6 +2163,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.42  2002/05/14 00:19:10  livesey
+! Minor bug fixes
+!
 ! Revision 2.41  2002/05/10 16:18:45  livesey
 ! Code for dealing with new channel shape information
 !
