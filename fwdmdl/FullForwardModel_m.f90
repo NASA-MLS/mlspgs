@@ -703,7 +703,7 @@ contains
       & fwdModelConf%num_scattering_angles, 'scat_src', moduleName )
 
       call allocate_test ( scat_alb%values, n_t_zeta, 1, 'scat_alb', moduleName )
-      call allocate_test ( cld_ext%values, n_t_zeta, 1, 'cld_ext', moduleName )
+      call allocate_test (  cld_ext%values, n_t_zeta, 1, 'cld_ext', moduleName )
 
       if ( size(FwdModelConf%molecules) .lt. 2 ) then
          !   make sure we have enough molecules
@@ -1633,8 +1633,6 @@ contains
             call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
 
             scat_src%template = temp%template
-            scat_alb%template = temp%template
-            cld_ext%template = temp%template
 
             call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false. )
 
@@ -1659,9 +1657,13 @@ contains
 
             call allocate_test ( tt_path, max_ele, 1, 'tt_path', moduleName )            
 
+            ! project Tscat onto LOS
             call interp_tscat ( tscat_path(1:no_ele,:), Scat_ang(:), phi_path(1:no_ele), tt_path )
 
-            if ( .not. cld_fine ) then                 ! project onto LOS
+            if ( .not. cld_fine ) then                 ! interpolate onto gl grids along the LOS
+
+            scat_alb%template = temp%template
+            cld_ext%template = temp%template
 
             call load_one_item_grid ( grids_salb,  scat_alb, phitan, maf, fwdModelConf, .false. )
             call load_one_item_grid ( grids_cext,  cld_ext,  phitan, maf, fwdModelConf, .false. )
@@ -1701,7 +1703,7 @@ contains
                               & beta_path_cloud_c(1:npc), w0_path_c(1:npc),     &
                               & tt_path_c(1:npc) )
            
-            else                                  ! re-compute cext and w0 alone LOS
+            else                           ! re-compute cext and w0 along the LOS
             
             call get_beta_path_cloud ( Frq,                              &
               &  p_path(1:no_ele), t_path(1:no_ele),                     &  
@@ -2902,6 +2904,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.190  2003/12/08 17:52:02  jonathan
+! update for 2d cldfwm
+!
 ! Revision 2.189  2003/12/07 19:45:46  jonathan
 ! update for 2D cloud FWM
 !
