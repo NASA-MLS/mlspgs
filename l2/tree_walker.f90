@@ -162,7 +162,11 @@ contains ! ====     Public Procedures     ==============================
       ! Chunk divide can be a special one, in slave mode, we just listen out
       ! for instructions.
       case ( z_chunkdivide )
-        if ( .not. parallel%slave ) then
+        if ( parallel%slave .and. .not. parallel%fwmParallel ) then
+          call GetChunkInfoFromMaster ( chunks, chunkNo )
+          firstChunk = chunkNo
+          lastChunk = chunkNo
+        else
           call ChunkDivide ( son, processingRange, l1bInfo, chunks )
           if ( singleChunk /= 0 ) then
             firstChunk = singleChunk
@@ -176,10 +180,6 @@ contains ! ====     Public Procedures     ==============================
             call output ( size(chunks) )
             return
           end if
-        else
-          call GetChunkInfoFromMaster ( chunks, chunkNo )
-          firstChunk = chunkNo
-          lastChunk = chunkNo
         end if
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
         call add_to_section_timing ( 'scan_divide', t1)
@@ -188,13 +188,15 @@ contains ! ====     Public Procedures     ==============================
       case ( z_construct, z_fill, z_join, z_retrieve )
         ! Do special stuff in some parallel cases, or where there are
         ! no chunks.
-        if ( size(chunks) < 1 .or. parallel%master .or. &
+        if ( ( size(chunks) < 1 ) .or. &
+          & ( parallel%master .and. .not. parallel%fwmParallel ) .or. &
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
-          if ( parallel%master ) &
+          if ( parallel%master .and. .not. parallel%fwmParallel ) &
             & call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           if ( parallel%slave .and. parallel%fwmParallel ) then
+            print*,'Single chunk is:', singleChunk
             call ConstructMIFGeolocation ( mifGeolocation, l1bInfo, &
-              & chunks, chunkNo ) 
+              & chunks, singleChunk ) 
             call L2FWMSlaveTask ( mifGeolocation )
           end if
           ! Sort out the timings
@@ -372,6 +374,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.94  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.93  2002/10/05 00:44:29  livesey
 ! Included the FWMParallel stuff
 !
