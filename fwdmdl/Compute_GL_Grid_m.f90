@@ -30,7 +30,7 @@ contains
     use ForwardModelVectorTools, only: QtyStuff_T
     use GLnp, only: NG, GX
     use Make_Z_Grid_M, only: Make_Z_Grid
-    use MLSCommon, only: RP, IP
+    use MLSCommon, only: RP
     use VectorsModule, only: VectorValue_T
 
   ! Inputs:
@@ -160,6 +160,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.6  2004/05/19 18:53:50  vsnyder
+! Remove USE for unreferenced symbol
+!
 ! Revision 2.5  2004/02/12 02:21:21  vsnyder
 ! Cosmetics
 !
