@@ -331,14 +331,14 @@ module PVM ! Interface to the f77 pvm library.
 
   interface pvmf90pack
      module procedure pvmf90packString, pvmf90packInteger, &
-       & pvmf90packReal, pvmf90packChararr1, &
+       & pvmf90packReal, pvmf90packChararr1, pvmf90packChararr2, &
        & pvmf90packIntarr1, pvmf90packIntarr2, pvmf90packIntarr3, &
        & pvmf90packRealarr1, pvmf90packRealarr2, pvmf90packRealarr3
   end interface
 
   interface pvmf90unpack
      module procedure pvmf90unpackString, pvmf90unpackInteger, &
-       & pvmf90unpackReal, pvmf90packChararr1, &
+       & pvmf90unpackReal, pvmf90unpackChararr1, pvmf90unpackChararr2, &
        & pvmf90unpackIntarr1, pvmf90unpackIntarr2, pvmf90unpackIntarr3, &
        & pvmf90unpackRealarr1, pvmf90unpackRealarr2, pvmf90unpackRealarr3
   end interface
@@ -363,6 +363,13 @@ contains
     
     info=pvm_pkbyte(values,size(values),1)
   end subroutine pvmf90packChararr1
+
+  subroutine pvmf90packChararr2(values,info)
+    character(len=1), dimension(:,:), intent(in) :: values
+    integer, intent(out) :: info
+    
+    info=pvm_pkbyte(values,size(values),1)
+  end subroutine pvmf90packChararr2
 
   subroutine pvmf90packIntarr1(values,info)
     integer, dimension(:), intent(in) :: values
@@ -430,6 +437,13 @@ contains
     
     info=pvm_upkbyte(values,size(values),1)
   end subroutine pvmf90unpackChararr1
+
+  subroutine pvmf90unpackChararr2(values,info)
+    character(len=1), dimension(:,:), intent(out) :: values
+    integer, intent(out) :: info
+    
+    info=pvm_upkbyte(values,size(values),1)
+  end subroutine pvmf90unpackChararr2
 
   subroutine pvmf90unpackIntarr1(values,info)
     integer, dimension(:), intent(out) :: values
@@ -510,6 +524,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.9  2002/02/05 02:39:59  vsnyder
+! Change mask from 1-bit per to 8-bits per (using character)
+!
 ! Revision 2.8  2002/02/01 23:49:45  livesey
 ! Added stuff for character arrays (i.e. not strings)
 !
