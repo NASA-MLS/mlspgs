@@ -86,12 +86,14 @@ contains
 
       ELSE IF (RH .GE. 1._r8) THEN   ! RH HERE IS RELATIVE HUMIDITY 
 
-!         CALL RHtoEV(T,100._r8,VP)    
-!         P = PB-VP
-!         VMR_H2O = VP/(max(1.e-9_r8, P))
-         VMR_H2O = RHIFromH2O_Factor (T, -log(PB), 6, .true.)*100._r8
+         CALL RHtoEV(T,RH,VP)    
+         P = PB-VP
+         VMR_H2O = VP/(max(1.e-9_r8, P))
+!         VMR_H2O = RHIFromH2O_Factor (T, -log(PB), 6, .true.)*100._r8
          ! optional 6 will return mixing ratio in units of ppmv
       END IF
+
+         VMR_H2O = max(1.e-9_r8, vmr_h2o)
 
       VMR_O2 = 0.209476_r8
       FF     = F*1000.                   ! CONVERT F TO MHz
@@ -284,8 +286,10 @@ contains
 
 ! difference with Bill's FWM f15 Band2U~6K, B10L~1K
 
-!      CONT_1 = 7.53e-16     ! wu's version
-      CONT_1 = 7.53e-16/1.3 ! best fit to band2 and band6
+! case R1
+      if(abs(f-127.) .lt. 14.) CONT_1 = 7.53e-16   ! wu's version
+! case R2
+      if(abs(f-192.) .lt. 16.) CONT_1 = 7.53e-16/1.3 ! best fit to R2
       CONT_2 = 4.20
       CONT_3 = 0.00
       SC_CONST = CONT_1 * FF**2 * EXP(-CONT_3 * FF**2)
@@ -357,6 +361,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.17  2003/02/01 06:43:16  dwu
+! some fixes
+!
 ! Revision 1.16  2003/01/30 18:03:20  jonathan
 ! switch to use Bill's RHIFromH2O
 !
