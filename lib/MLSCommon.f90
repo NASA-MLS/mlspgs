@@ -77,6 +77,21 @@ MODULE MLSCommon                ! Common definitions for the MLS software
 
   ! --------------------------------------------------------------------------
   
+  ! Moved here from MLSFiles module
+  ! Information describing the files used by the mls software
+  ! Stop passing file handles back & forth bewteen routines
+  ! -- pass one of these instead
+  TYPE MLSFile_T
+    CHARACTER (LEN=8) :: Type=""  ! e.g., 'ascii', 'hdf', 'swath', 'binary'
+    CHARACTER (LEN=8) :: access=""  ! e.g., 'rdonly', 'write', 'rdwrite'
+    CHARACTER (LEN=8) :: content=""  ! e.g., 'l1brad', 'l2gp', 'l2aux'
+    CHARACTER (LEN=FileNameLen) :: Name=""  ! its name (usu. w/path)
+    INTEGER :: File_Id=0     ! The HDF ID (handle) or io unit for the file
+    INTEGER :: PCF_Id=0      ! The PCF ID (ref), if any,  for the file
+    INTEGER :: HDFVersion=0  ! Which hdf version is the file if hdf(eos)
+    LOGICAL :: StillOpen=.false.
+  END TYPE MLSFile_T
+
   ! The next datatype describes the information on the L1B data files in use
 
   TYPE L1BInfo_T
@@ -141,6 +156,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.15  2002/12/05 19:44:24  pwagner
+! Moved MLSFile_T from MLSFiles to MLSCommon
+!
 ! Revision 2.14  2002/11/06 00:16:48  pwagner
 ! Added toc/api blocks
 !
