@@ -192,9 +192,9 @@ contains ! ================================ FullForwardModel routine ======
     logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
 
-    logical, dimension(:), pointer :: T_DERIV_FLAG  ! Array of Flags indicating
-                                                    ! which Temp. coefficient 
-                                                    ! to process
+! Array of Flags indicating  which Temp. coefficient to process
+
+    logical, dimension(:), pointer :: T_DERIV_FLAG
 
     real(r8) :: FRQ                     ! Frequency
 
@@ -652,9 +652,9 @@ contains ! ================================ FullForwardModel routine ======
       if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
         if ( fwdModelConf%molecules(j+1) < 0 ) then
           nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
-          call Allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
-            & ModuleName )
-          cycle
+          call Allocate_test ( my_catalog(j)%lines, 0, &
+                            & 'my_catalog(?)%lines(0)', ModuleName )
+          CYCLE
         end if
       end if
       l=abs(fwdModelConf%molecules(j))
@@ -959,11 +959,16 @@ contains ! ================================ FullForwardModel routine ======
       ENDIF
 
       call Allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', ModuleName )
-      call Allocate_test ( dbeta_dt_path_c, npc, no_mol, 'dbeta_dt_path_c', ModuleName )
-      call Allocate_test ( dh_dt_path, no_ele, sv_t_len, 'dh_dt_path', ModuleName )
-      call Allocate_test ( do_calc_hyd, no_ele, sv_t_len, 'do_calc_hyd', ModuleName )
-      call Allocate_test ( do_calc_t, no_ele, sv_t_len, 'do_calc_t', ModuleName )
-      call Allocate_test ( eta_zxp_t, no_ele, sv_t_len, 'eta_zxp_t', ModuleName )
+      call Allocate_test ( dbeta_dt_path_c,npc,no_mol,'dbeta_dt_path_c', &
+                         & ModuleName )
+      call Allocate_test ( dh_dt_path, no_ele, sv_t_len, 'dh_dt_path', &
+                         & ModuleName )
+      call Allocate_test ( do_calc_hyd, no_ele, sv_t_len, 'do_calc_hyd', &
+                         & ModuleName )
+      call Allocate_test ( do_calc_t, no_ele, sv_t_len, 'do_calc_t', &
+                         & ModuleName )
+      call Allocate_test ( eta_zxp_t, no_ele, sv_t_len, 'eta_zxp_t', &
+                         & ModuleName )
       call Allocate_test ( tan_dh_dt, 1, n_t_zeta, 'tan_dh_dt', ModuleName )
 
     endif
@@ -1663,7 +1668,7 @@ contains ! ================================ FullForwardModel routine ======
         if ( fwdModelConf%atmos_der ) then
 
           sv_i = 1
-          do k = 1, NO_MOL
+          do k = 1, no_mol
             specie = mol_cat_index(k)
             if ( fwdModelConf%moleculeDerivatives(specie) ) then
               if ( fwdModelConf%do_freq_avg ) then
@@ -1717,7 +1722,7 @@ contains ! ================================ FullForwardModel routine ======
 
           !  *** dI/dW
 
-          do k = 1, NO_MOL
+          do k = 1, no_mol
             specie = mol_cat_index(k)
 ! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
             if ( fwdModelConf%moleculeDerivatives(specie) ) then
@@ -1762,7 +1767,7 @@ contains ! ================================ FullForwardModel routine ======
 
           !  *** dI/dN
 
-          do k = 1, NO_MOL
+          do k = 1, no_mol
             specie = mol_cat_index(k)
 ! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
             if ( fwdModelConf%moleculeDerivatives(specie) ) then
@@ -1807,7 +1812,7 @@ contains ! ================================ FullForwardModel routine ======
 
           !  *** dI/dV
 
-          do k = 1, NO_MOL
+          do k = 1, no_mol
             specie = mol_cat_index(k)
 ! ** ZEBUG     if ( fwdModelConf%moleculeSpectDerivatives(specie) ) then
             if ( fwdModelConf%moleculeDerivatives(specie) ) then
@@ -1929,8 +1934,9 @@ contains ! ================================ FullForwardModel routine ======
             &  temp, ptan, thisRadiance, tan_press, ptg_angles(:,maf),&
             &  tan_temp(:,maf), dx_dt, d2x_dxdt, surfaceTangentIndex, &
             &  center_angle, Radiances(:,i), k_temp(i,:,:,:),         &
-            &  k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows, &
-            &  antennaPatterns(whichPattern), mol_cat_index, ier )
+            &  k_atmos(i,:,:,:,:,:), thisRatio, t_deriv_flag, Grids_f,&
+            &  Jacobian, fmStat%rows, antennaPatterns(whichPattern),  &
+            &  mol_cat_index, ier )
 !??? Need to choose some index other than 1 for AntennaPatterns ???
           if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'convolve_all failed' )
@@ -2179,6 +2185,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.50  2002/05/28 17:09:14  livesey
+! Removed print statement
+!
 ! Revision 2.49  2002/05/24 17:10:57  livesey
 ! Fixed bug with my_catalog(?)%lines not being associated for parent
 ! species.
