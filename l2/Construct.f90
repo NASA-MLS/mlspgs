@@ -12,8 +12,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use DUMPER, only: DUMP
   use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
     & DestroyHGridDatabase, HGrid_T
-  use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE, &
-    & S_VGRID
+  use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use MLSSignals_m, only: Modules
@@ -28,8 +27,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use TREE_TYPES, only: N_NAMED
   use VectorsModule, only: AddVectorTemplateToDatabase, &
     & DestroyVectorTemplateDatabase, Dump, VectorTemplate_T
-  use VGrid, only: AddVGridToDatabase, CreateVGridFromMLSCFInfo, &
-    & DestroyVGridDatabase, VGrid_T
+  use VGrid, only: VGrid_T
   use Intrinsic, ONLY: L_None
   use String_Table, ONLY: GET_STRING
   use Init_tables_module, ONLY: LIT_INDICES
@@ -53,7 +51,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, l1bInfo, chunk, &
-       & quantityTemplates, vectorTemplates, mifGeolocation )
+       & quantityTemplates, vectorTemplates, VGrids, mifGeolocation )
 
   ! This is the `main' subroutine for this module
 
@@ -63,10 +61,10 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: chunk
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
+    type (VGrid_T), dimension(:), pointer :: vGrids
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
     ! Local variables
-    type (VGrid_T), dimension(:), pointer :: vGrids => NULL()
     type (HGrid_T), dimension(:), pointer :: hGrids => NULL()
 
     integer :: I                ! Loop counter
@@ -116,13 +114,10 @@ contains ! =====     Public Procedures     =============================
       case( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, chunk ) ) )
-      case ( s_vgrid )
-        call decorate ( key, AddVGridToDatabase ( vGrids, &
-          & CreateVGridFromMLSCFInfo ( name, key ) ) )
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
-          quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
-             & hGrids, vGrids, l1bInfo, chunk ) ) )
+          & quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
+            & hGrids, vGrids, l1bInfo, chunk ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplates ) ) )
@@ -140,7 +135,6 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) then
       if (  levels(gen) > 0 ) then
         call dump ( hgrids )
-        call dump ( vgrids )
         call dump ( quantityTemplates )
         call dump ( vectorTemplates )
       end if
@@ -148,7 +142,6 @@ contains ! =====     Public Procedures     =============================
     end if
 
     call destroyHGridDatabase ( hGrids )
-    call destroyVGridDatabase ( vGrids )
     if ( timing ) call sayTIme
 
   contains
@@ -181,6 +174,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.11  2001/03/28 01:24:55  vsnyder
+! Move vGrid from construct section to global settings section
+!
 ! Revision 2.10  2001/03/15 21:09:52  vsnyder
 ! Use 'get_spec_id' from More_Tree
 !
