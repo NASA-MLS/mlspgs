@@ -45,7 +45,7 @@ contains
     integer, intent(in) :: INDEX        ! String index
     integer, intent(out) :: INFO        ! Flag from pvm
     ! Local variables
-    character (len=80) :: WORD
+    character (len=4096) :: WORD
     ! Executable code
     if ( index == 0 ) then
       call PVMIDLPack ( '', info )
@@ -64,7 +64,7 @@ contains
     integer, intent(out) :: INDEX        ! String index
     integer, intent(out) :: INFO        ! Flag from pvm
     ! Local variables
-    character (len=80) :: WORD
+    character (len=4096) :: WORD
     ! Executable code
     call PVMIDLUnpack ( word, info )
     if ( info == 0 ) then
@@ -84,7 +84,7 @@ contains
     integer, intent(out) :: INDEX        ! String index
     integer, intent(out) :: INFO        ! Flag from pvm
     ! Local variables
-    character (len=80) :: WORD
+    character (len=4096) :: WORD
     ! Executable code
     call PVMIDLUnpack ( word, info )
     if ( info == 0 ) then
@@ -103,6 +103,9 @@ contains
 end module MorePVM
 
 ! $Log$
+! Revision 2.5  2003/07/07 20:21:17  livesey
+! Increased length of string literals
+!
 ! Revision 2.4  2002/12/04 21:54:12  livesey
 ! Minor bug fixes with string stuff
 !
