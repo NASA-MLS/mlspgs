@@ -1500,7 +1500,7 @@ END SUBROUTINE measured_parameter
     integer :: Toolbox_error_num
 
     just_print_it = .not. default_output_by_toolkit
-    if ( present(use_toolkit) ) just_print_it = use_toolkit
+    if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
 
     if ( .not. just_print_it ) then
       module_error = max(module_error,1)
@@ -1547,6 +1547,9 @@ END SUBROUTINE measured_parameter
 
 END MODULE WriteMetadata 
 ! $Log$
+! Revision 2.11  2001/04/16 23:49:11  pwagner
+! Tiny change to announce_error
+!
 ! Revision 2.10  2001/04/16 17:43:35  pwagner
 ! mcf text matching case sensitive if MCFCASESENSITIVE
 !
