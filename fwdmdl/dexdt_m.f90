@@ -69,7 +69,7 @@ contains
 !
 !  If you assume that {\bf A} is a function of some parameter $p$, and work
 !  through $\frac{\text{d} F({\bf A})}{\text{d}p}$ you will eventually
-!  find $\frac{\text{d}z_1}{\text{d}p}$ and $\frac{\text{d}z_1}{\text{d}p}$.
+!  find $\frac{\text{d}z_1}{\text{d}p}$ and $\frac{\text{d}z_2}{\text{d}p}$.
 !  These derivatives approach infinity as the eigenvalues approach each other.
 !  Using
 !  $s = \frac12 ( z_1 + z_2 ) = \frac12 \text{tr}(\mathbf{A})$
@@ -152,6 +152,9 @@ contains
 end module dExDt_M
 
 ! $Log$
+! Revision 2.3  2003/06/03 00:29:30  vsnyder
+! Prettify TeXnicalities
+!
 ! Revision 2.2  2003/05/16 02:44:55  vsnyder
 ! Removed USE's for unreferenced symbols
 !
