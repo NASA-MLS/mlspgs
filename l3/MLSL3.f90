@@ -187,7 +187,9 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.2  2000/11/22 17:24:30  nakamura
+! Required to go back to 1.2 -- same as 1.1
+!
 ! Revision 1.1  2000/11/22 17:02:39  nakamura
 ! MLS Level 3 program
-!
 !
