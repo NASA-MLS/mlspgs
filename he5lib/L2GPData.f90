@@ -63,7 +63,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 ! WriteL2GPData           Writes an L2GP into a swath file
 
   ! First some local parameters
-  ! (This 1st one enables some changes *not* made by paw)
+  ! (This 1st one enables some changes *not* made by paw zeroing out frequency)
   logical, private, parameter :: MONKEYAROUND = .FALSE. ! If true, then ???
 
 
@@ -1550,8 +1550,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
+       start(1)=0 ! needed because offset may have made this /=0
        if (MONKEYAROUND) then
-         start(1)=0 ! needed because offset may have made this /=0
          l2gp%frequency = 0
        endif
        status = swwrfld(swid, GEO_FIELD10, start, stride, edge, &
@@ -2136,7 +2136,7 @@ contains ! =====     Public Procedures     =============================
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
        start(1)=0 ! needed because offset may have made this /=0
-       l2gp%frequency = 0
+       if (MONKEYAROUND) l2gp%frequency = 0
        status = HE5_SWwrfld(swid, GEO_FIELD10, start, stride, edge, &
             real(l2gp%frequency))
        if ( status == -1 ) then
@@ -2221,7 +2221,7 @@ contains ! =====     Public Procedures     =============================
        !print*,"Writing 3D field"
        ! Value and Precision are 3-D fields
        status = HE5_SWwrfld(swid, DATA_FIELD1, start, stride, edge, &
-            & reshape(l2gp%l2gpValue, (/size(l2gp%l2gpValue)/)) )
+            & reshape(real(l2gp%l2gpValue), (/size(l2gp%l2gpValue)/)) )
        if ( status == -1 ) then
           msr = WR_ERR // DATA_FIELD1
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -2514,6 +2514,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.25  2003/01/15 00:05:34  pwagner
+! Now can write L2GPData w/o monkeying around
+!
 ! Revision 1.24  2003/01/09 01:02:27  pwagner
 ! Moved some use statements in attempt to work around Lahey long compile time bug
 !
