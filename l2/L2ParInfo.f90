@@ -45,8 +45,8 @@ module L2ParInfo
     integer :: myTid                    ! My task ID in pvm
     integer :: masterTid                ! task ID in pvm
     character(len=132) :: slaveFilename ! Filename with list of slaves
-    integer :: maxFailuresPerMachine = 3 ! More than this then don't use it
-    integer :: maxFailuresPerChunk = 6 ! More than this then give up on getting it
+    integer :: maxFailuresPerMachine = 8 ! More than this then don't use it
+    integer :: maxFailuresPerChunk = 3 ! More than this then give up on getting it
   end type L2ParallelInfo_T
 
   ! Shared variables
@@ -121,14 +121,15 @@ contains ! ==================================================================
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing key, gotPrecision" )
     call PVMIDLPack ( hdfName, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing hdfName" )
+
+    call PVMSendQuantity ( quantity, justPack=.true. )
+    if ( associated ( precisionQuantity ) ) &
+      call PVMSendQuantity ( precisionQuantity, justPack=.true. )
+    
     call PVMFSend ( parallel%masterTid, InfoTag, info )
     if ( info /= 0 ) &
       & call PVMErrorMessage( info, 'sending join packet' )
 
-    call PVMSendQuantity ( quantity, parallel%masterTid )
-    if ( associated ( precisionQuantity ) ) &
-      call PVMSendQuantity ( precisionQuantity, parallel%masterTid )
-    
   end subroutine SlaveJoin
 
   ! ----------------------------------------- GetNiceTidString -----
@@ -143,6 +144,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.7  2001/05/30 23:53:54  livesey
+! Vectors now sent within info packets
+!
 ! Revision 2.6  2001/05/29 20:42:18  pwagner
 ! Added Log at bottom of source
 !
