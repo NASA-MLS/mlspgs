@@ -48,8 +48,10 @@ module GLOBAL_SETTINGS
 contains
 
   subroutine SET_GLOBAL_SETTINGS ( ROOT, ForwardModelConfigDatabase, &
-    & FGrids, VGrids, l2gpDatabase, processingRange, l1bInfo )
+    & FGrids, VGrids, l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
 
+    use DirectWrite_m, only: DirectData_T, &
+      & AddDirectToDatabase, SetupNewDirect
     use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
     use EXPR_M, only: EXPR
     use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
@@ -57,12 +59,13 @@ contains
       & ForwardModelConfig_T
     use ForwardModelSupport, only: ConstructForwardModelConfig, &
       & ForwardModelGlobalSetup, CreateBinSelectorFromMLSCFInfo
-    use INIT_TABLES_MODULE, only: F_FILE, L_TRUE, &
+    use INIT_TABLES_MODULE, only: F_FILE, F_TYPE, &
+      & L_TRUE, L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM, &
       & P_ALLOW_CLIMATOLOGY_OVERLOADS, &
       & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
       & P_VERSION_COMMENT, &
-      & S_BINSELECTOR, S_EMPIRICALGEOMETRY, S_FGRID, &
+      & S_BINSELECTOR, S_DIRECTWRITEFILE, S_EMPIRICALGEOMETRY, S_FGRID, &
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
       & S_L2PARSF, S_TIME, S_VGRID
     use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
@@ -72,13 +75,18 @@ contains
     use L2ParInfo, only: parallel
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
     use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
-    use MLSFiles, only: FILENOTFOUND, mls_hdf_version
+    use MLSFiles, only: FILENOTFOUND, &
+      & GetPCFromRef, mls_hdf_version, split_path_name
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
+      & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
+      & mlspcf_l2fwm_full_end, &
+      & mlspcf_l2dgg_start, mlspcf_l2dgg_end
     use MLSStrings, only: hhmmss_value
     use MLSSignals_m, only: INSTRUMENT
-    use MoreTree, only: GET_SPEC_ID
+    use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
     use SDPTOOLKIT, only: mls_utctotai
     use String_Table, only: Get_String
@@ -98,6 +106,7 @@ contains
     type ( fGrid_T ), pointer, dimension(:) :: FGrids
     type ( vGrid_T ), pointer, dimension(:) :: VGrids
     type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
+    type (DirectData_T), dimension(:), pointer :: DirectDatabase
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo    ! File handles etc. for L1B dataset
     type (L1BData_T) :: l1bField   ! L1B data
@@ -248,6 +257,9 @@ contains
         case ( s_binSelector )
           call decorate (son, AddBinSelectorToDatabase ( &
             & binSelectors, CreateBinSelectorFromMLSCFInfo ( son ) ) )
+        case ( s_directWriteFile )
+          call decorate (son, AddDirectToDatabase ( &
+            & DirectDatabase, CreateDirectTypeFromMLSCFInfo ( son ) ) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
           call forwardModelGlobalSetup ( son, returnStatus )
           error = max(error, returnStatus)
@@ -726,6 +738,69 @@ contains
       timing = .false.
     end subroutine SayTime
 
+    ! --------------------------  CreateDirectTypeFromMLSCFInfo  -----
+    function CreateDirectTypeFromMLSCFInfo ( root ) result (Direct)
+    integer, intent(in) :: ROOT         ! Tree node
+    type (DirectData_T), pointer :: Direct
+    ! Local variables
+    integer :: SON                      ! Tree node
+    integer :: GSON                     ! Tree node
+    integer :: I                        ! Loop counters
+    integer :: FIELD                    ! Field identifier
+    integer :: FILE
+    character(len=1024) :: FILENAME     ! Output full filename
+    character(len=1024) :: FILE_BASE    ! made up of
+    integer :: l2gp_Version
+    character(len=1024) :: PATH         ! path/file_base
+    integer :: RETURNSTATUS
+    logical, parameter :: DEEBUG = .false.
+    ! Executable
+    nullify(Direct)
+    call SetupNewDirect(Direct, 0)
+    l2gp_Version = 1
+    do i = 2, nsons(root)               ! Skip DirectFileName command
+      son = subtree ( i, root )
+      field = get_field_id ( son )
+      if ( nsons(son) == 2 ) gson = subtree(2,son)
+      select case ( field )
+      case ( f_type )
+        Direct%Type = decoration(gson)
+      case ( f_file )
+        file = sub_rosa(subtree(2,son))
+      end select
+    end do
+    call get_string ( file, filename, strip=.true. )
+      call split_path_name(filename, path, file_base)
+      if ( .not. TOOLKIT ) then
+        Direct%handle = 0
+        Direct%filename = filename
+      elseif ( Direct%Type ==  l_l2gp  ) then
+        Direct%Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+          & mlspcf_l2gp_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+          & exactName=Direct%Filename)
+      elseif ( Direct%Type ==  l_l2dgg ) then
+        Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+          & mlspcf_l2dgg_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+          & exactName=Direct%Filename)
+      elseif ( Direct%Type ==  l_l2fwm  ) then
+        Direct%Handle = GetPCFromRef(file_base, mlspcf_l2fwm_full_start, &
+          & mlspcf_l2fwm_full_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+          & exactName=Direct%Filename)
+      else
+        Direct%Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+          & mlspcf_l2dgm_end, &
+          & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+          & exactName=Direct%Filename)
+      end if
+      if ( returnStatus /= 0 ) call MLSMessage ( &
+         & MLSMSG_Error, ModuleName, &
+         & 'Failed in GetPCFromRef for ' // trim(filename) )
+
+    end function CreateDirectTypeFromMLSCFInfo
+
   end subroutine SET_GLOBAL_SETTINGS
 
 ! =====     Private Procedures     =====================================
@@ -737,6 +812,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.76  2003/11/15 00:46:41  pwagner
+! maxfailurespermachine, maxfailuresperchunk no longer configuration settings (see comline opts)
+!
 ! Revision 2.75  2003/09/26 21:55:54  pwagner
 ! Less likely to complain about missing attributes from hdf4 l1boa files
 !

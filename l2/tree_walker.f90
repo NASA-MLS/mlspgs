@@ -96,8 +96,8 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) ::     LASTCHUNKIN ! Just run range [single,last]
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
-    integer ::                                  chunkNo                  ! Index of Chunks
-    type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
+    integer ::                                  chunkNo ! Index of Chunks
+    type (MLSChunk_T), dimension(:), pointer :: Chunks  ! of data
     type (FGrid_T), dimension(:), pointer ::     FGrids
     ! Forward model configurations:
     integer ::                                   FIRSTCHUNK ! For chunk loop
@@ -157,7 +157,7 @@ contains ! ====     Public Procedures     ==============================
         ! --------------------------------------------------------- Init sections
       case ( z_globalsettings )
         call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
-          & l2gpDatabase, processingRange, l1bInfo )
+          & l2gpDatabase, DirectDatabase, processingRange, l1bInfo )
         call add_to_section_timing ( 'global_settings', t1)
       case ( z_mlsSignals )
         call MLSSignals ( son )
@@ -387,7 +387,7 @@ subtrees:   do while ( j <= howmany )
     end do
 
     ! Now finish up
-    call CloseParallel
+    call CloseParallel(size(Chunks))
     call destroy_ant_patterns_database
     call DestroyBinSelectorDatabase
     call DestroyL2PCDatabase
@@ -443,6 +443,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.120  2003/12/05 00:42:05  pwagner
+! Removed last vestige of explicit garbage collection
+!
 ! Revision 2.119  2003/11/07 00:46:51  pwagner
 ! New quicker preflight option: --checkPaths
 !
