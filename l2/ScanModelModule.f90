@@ -39,7 +39,7 @@ module ScanModelModule          ! Scan model and associated calculations
   use Output_M, only: OUTPUT
   USE piq_int_m, only: piq_int
   USE refraction_m, only: refractive_index
-  use Toggles, only: EMIT, TOGGLE
+  use Toggles, only: EMIT, TOGGLE, SWITCHES
   use Trace_M, only: TRACE_BEGIN, TRACE_END
   USE VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
     & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
@@ -78,7 +78,7 @@ module ScanModelModule          ! Scan model and associated calculations
   
   real (r8), parameter :: REFRATERM = 0.0000776D0 ! First term
   real (r8), parameter :: REFRBTERM = 4810.0D0 ! Second term
-  real (r8), parameter :: MAXREFRACTION = 10.0!1e-2 ! Don't allow stupidly large n.
+  real (r8), parameter :: MAXREFRACTION = 0.1_rp ! Don't allow stupidly large n.
   real (r8), parameter :: MAXPRESSURE = 1400.0 ! /mb Don't allow very large pressures
   
   ! Now some terms to do with the gas 'constant'
@@ -307,6 +307,8 @@ contains ! =============== Subroutines and functions ==========================
       & (earthRadA*sin(geocLat))**2+ &
       & (earthRadB*cos(geocLat))**2)
     ptan%values = -3.0+(geocAlt%values - earthRadius)/16e3
+    if ( index ( switches, 'pguess' ) /= 0 ) &
+      & call dump ( ptan%values, 'Initial ptan guess' )
     call Deallocate_test ( geocLat, 'geocLat', ModuleName )
     call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
 
@@ -322,6 +324,21 @@ contains ! =============== Subroutines and functions ==========================
           &   jacobian%block(maf,maf)%values(:,1)
         call ClearMatrix ( jacobian )
       end do
+      if ( index ( switches, 'pguess' ) /= 0 ) then
+        call output ( 'Pressure guesser iteration ' )
+        call output ( i )
+        call output ( ' mean, min abs, max abs residual:', advance='yes' )
+        call output ( '  ' )
+        call output ( sum(residual%quantities(1)%values) / &
+          & (ptan%template%noInstances*ptan%template%noSurfs), &
+          & format='(f10.2)' )
+        call output ( ', ' )
+        call output ( minval(abs(residual%quantities(1)%values)), &
+          & format='(f10.2)' )
+        call output ( ', ' )
+        call output ( maxval(abs(residual%quantities(1)%values)), &
+          & format='(f10.2)', advance='yes' )
+      end if
     end do
 
     ! Put the result back in state
@@ -1854,6 +1871,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.39  2002/06/26 19:18:53  livesey
+! Merge of Bills fixes and my diagnostics
+!
 ! Revision 2.38  2002/06/26 18:44:12  bill
 ! added a feature to limit the index of refraction to its surface value--wgr
 !
