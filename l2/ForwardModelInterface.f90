@@ -93,6 +93,7 @@ module ForwardModelInterface
     logical :: Temp_Der       ! Do temperature derivatives
     type(vGrid_T), pointer :: integrationGrid ! Zeta grid for integration
     type(vGrid_T), pointer :: tangentGrid     ! Zeta grid for integration
+    integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
   end type ForwardModelConfig_T
 
   ! Error codes
@@ -622,13 +623,14 @@ contains
 
     ! Now compute a hydrostatic grid given the temperature and refGPH
     ! information.
-    call hydrostatic_model(si,FMC%N_lvls,temp%template%noSurfs, &
-      & radiance%template%noInstances,FMC%t_indx, &
-      & no_tan_hts,geoc_lat,refGPH%values(1,:)/1e3, &
-      & refGPH%template%surfs(1,1),FMI%z_grid,FMI%Tan_hts_below_surface(1:si-1), &
-      & temp%template%surfs(:,1), temp%values, z_glgrid, h_glgrid, t_glgrid, &
-      dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
-      gl_count, Ier)
+    call hydrostatic_model(ForwardModelConfig%SurfaceTangentIndex, &
+      &  FMC%N_lvls,temp%template%noSurfs, &
+      &  radiance%template%noInstances,FMC%t_indx, &
+      &  no_tan_hts,geoc_lat,refGPH%values(1,:)/1e3, &
+      &  refGPH%template%surfs(1,1),FMI%z_grid, &
+      &  temp%template%surfs(:,1),temp%values,z_glgrid,h_glgrid,t_glgrid, &
+      &  dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
+      &  gl_count, Ier)
     if(ier /= 0) goto 99
 
     ! Now we have the full information about the number of tangent heights,
@@ -1305,6 +1307,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.47  2001/03/28 23:51:15  zvi
+! Tanget below surface are in Zeta units
+!
 ! Revision 2.46  2001/03/28 22:41:10  livesey
 ! Got rid of a print statement that was annoying zvi
 !
