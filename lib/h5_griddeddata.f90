@@ -10,6 +10,14 @@ module h5_griddeddata
 ! (2) provide a drop-in replacement for l3ascii_read_field that supposes 
 !     the working climatology for the retrieval is in HDF5 format instead
 !     of ASCII.
+
+!  PRIVATE :: id, ModuleName
+!------------------------------- RCS Ident Info ------------------------------
+CHARACTER(LEN=130) :: id = & 
+   "$Id$"
+CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+!-------------------------------------------------------------------------------
+
 use l3ascii
 use hdf5
 implicit none

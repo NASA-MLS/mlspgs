@@ -1,6 +1,12 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
+!------------------------------- RCS Ident Info ------------------------------
+CHARACTER(LEN=130) :: id = & 
+   "$Id$"
+CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
+!-------------------------------------------------------------------------------
+
 module DFFT_M
 
   implicit NONE
@@ -544,6 +550,9 @@ contains
 end module DFFT_M
 
 ! $Log$
+! Revision 2.2  2002/10/01 20:06:00  bwknosp
+! Added Id and RCS Info
+!
 ! Revision 2.1  2002/09/06 22:31:51  vsnyder
 ! Initial commit
 !
