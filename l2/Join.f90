@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -11,8 +11,7 @@ module Join                     ! Join together chunk based data.
     & F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
     & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
-  use INIT_TABLES_MODULE, only: L_BOUNDARYPRESSURE, L_COLUMNABUNDANCE, &
-    & L_PRESSURE, &
+  use INIT_TABLES_MODULE, only: L_PRESSURE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
   use Intrinsic, ONLY: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
     & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY
@@ -180,11 +179,11 @@ contains ! =====     Public Procedures     =============================
           compareOverlaps = value == l_true
         case ( f_outputoverlaps )
           outputOverlaps = value == l_true 
-        case (f_swath)
+        case ( f_swath )
           hdfNameIndex = sub_rosa(subtree(2,gson))
-        case (f_sdName)
+        case ( f_sdName )
           hdfNameIndex = sub_rosa(subtree(2,gson))
-       case ( f_file)
+        case ( f_file )
           call announce_error(key,NotAllowed,FIELDINDEX=field_index)
         case default ! Can't get here if tree_checker worked properly
         end select
@@ -704,6 +703,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.55  2002/03/20 00:46:47  pwagner
+! Removed 2 unused lits
+!
 ! Revision 2.54  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
