@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module MLSHDF5
@@ -13,6 +13,7 @@ module MLSHDF5
   ! to finish compiling the highest modules.
 
   use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
+  use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
   ! Lets break down our use, parameters first
   use HDF5, only: H5F_ACC_RDONLY_F, &
     & H5P_DATASET_CREATE_F, &
@@ -44,7 +45,7 @@ module MLSHDF5
   public :: MakeHDF5Attribute, SaveAsHDF5DS, IsHDF5AttributePresent, &
     & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS, &
     & IsHDF5DSInFile, IsHDF5AttributeInFile, &
-    & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
+    & GetAllHDF5DSNames, GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
     & ReadLitIndexFromHDF5Attr, ReadStringIndexFromHDF5Attr, &
     & WriteLitIndexAsHDF5Attribute, WriteStringIndexAsHDF5Attribute
 
@@ -61,6 +62,7 @@ module MLSHDF5
 !     c o n t e n t s
 !     - - - - - - - -
 
+! GetAllHDF5DSNames    Retrieves names of all DS in file (under group name)
 ! GetHDF5Attribute     Retrieves an attribute
 ! GetHDF5DSRank        How many dimensions in dataset
 ! GetHDF5DSDims        Size of the dimensions in dataset
@@ -73,6 +75,9 @@ module MLSHDF5
 ! === (end of toc) ===
 
 ! === (start of api) ===
+! GetAllHDF5DSNames (file, char gname, char DSNames) 
+!     file can be one of:
+!    {char* filename, int fileID}
 ! GetHDF5Attribute (int itemID, char name, value) 
 ! GetHDF5DSDims (int FileID, char name, hsize_t dims(:), [hsize_t maxdims(:)]) 
 ! GetHDF5DSRank (int FileID, char name, int rank) 
@@ -92,6 +97,10 @@ module MLSHDF5
 !     r4 value(:), r4 value(:,:), r4 value(:,:,:),
 !     r8 value(:), r8 value(:,:), r8 value(:,:,:)}
 ! === (end of api) ===
+  interface GetAllHDF5DSNames
+    module procedure GetAllHDF5DSNames_fileID, GetAllHDF5DSNames_filename
+  end interface
+
   interface MakeHDF5Attribute
     module procedure MakeHDF5Attribute_dbl, &
       & MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
@@ -135,8 +144,83 @@ module MLSHDF5
   logical, parameter    :: DEEBUG = .false.
   integer, save :: cantGetDataspaceDims = 0
   integer, parameter :: MAXNUMWARNS = 40
+  integer, parameter :: MAXNDSNAMES = 1000   ! max number of DS names in a file
 
 contains ! ======================= Public Procedures =========================
+
+
+  ! ------------------------------------- GetAllHDF5DSNames_fileID
+  subroutine GetAllHDF5DSNames_fileID ( FileID, gname, DSNames )
+    integer, intent(in) :: FILEID       ! fileID
+    character (len=*), intent(in) :: GNAME ! Name of group; e.g. '/'
+    character (len=*), intent(out) :: DSNames ! Names of DS in file (,-separated)
+
+    ! Local variables
+    integer :: i                        ! loop counter
+    integer :: STATUS                   ! Flag
+    type(MLSDataInfo_T) :: dataset_info
+
+    ! Executable code
+    ! Initializing values returned if there was trouble
+    DSNames = ''
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before getting DSNames' )
+! The structure, dataset_info, is initialized below.
+!
+    allocate( dataset_info%name(1:MAXNDSNAMES), stat=status)             
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to allocate name array before getting DSNames' )
+    dataset_info%name = ''
+    dataset_info%number_of_entries = 0
+    call Query_MLSData(fileid, trim(gname), dataset_info)
+    if ( dataset_info%number_of_entries < 0 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      & 'Unable to get DSNames' )
+    elseif ( dataset_info%number_of_entries == 1 ) then
+      DSNames = dataset_info%name(1)
+    elseif ( dataset_info%number_of_entries > 1 ) then
+      DSNames = dataset_info%name(1)
+      do i=2, dataset_info%number_of_entries
+        DSNames = trim(DSNames) // ',' // dataset_info%name(i)
+      enddo
+    endif
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after getting DSNames' )
+    deallocate(dataset_info%name, stat=status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to deallocate name array after getting DSNames' )
+  end subroutine GetAllHDF5DSNames_fileID
+
+  ! ------------------------------------- GetAllHDF5DSNames_filename
+  subroutine GetAllHDF5DSNames_filename ( FileName, gname, DSNames )
+    character (len=*), intent(in) :: FILENAME       ! file name
+    character (len=*), intent(in) :: GNAME ! Name of group; e.g. '/'
+    character (len=*), intent(out) :: DSNames ! Names of DS in file (,-separated)
+
+    ! Local variables
+    integer :: fileID
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    call h5eSet_auto_f ( 0, status )
+    call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, fileID, status)
+    if ( status == 0 ) then
+      call h5eSet_auto_f ( 1, status )
+      call GetAllHDF5DSNames_fileID(fileID, gname, DSNames)
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open file for getting DSNames '//trim(filename) )
+    endif
+    call h5eSet_auto_f ( 0, status )
+    call h5fclose_f(fileID, status)
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close file after getting DSNames '//trim(filename) )
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after getting DSNames '//trim(filename) )
+  end subroutine GetAllHDF5DSNames_filename
 
   ! ------------------------------------- MakeHDF5Attribute_dbl
   subroutine MakeHDF5Attribute_dbl ( itemID, name, value, &
@@ -3170,6 +3254,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.35  2004/02/26 21:59:09  pwagner
+! Added GetAllHDF5DSNames
+!
 ! Revision 2.34  2003/10/02 23:09:47  pwagner
 ! Some small fixes; can get string array attribute
 !
