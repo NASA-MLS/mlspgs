@@ -15,7 +15,7 @@ module ForwardModelSupport
     & F_CLOUD_DER, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, F_FRQGAP,&
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE,&
-    & F_MODULE, F_SKIPOVERLAPS
+    & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSCommon, only: R8
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
@@ -31,7 +31,7 @@ module ForwardModelSupport
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Tree_Types, only: N_named
-  use Units, only: Deg2Rad, PHYQ_FREQUENCY
+  use Units, only: Deg2Rad, PHYQ_FREQUENCY, PHYQ_TEMPERATURE
   use VGridsDatabase, only: VGrid_T
   use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE
   use AntennaPatterns_m, only: OPEN_ANTENNA_PATTERNS_FILE, READ_ANTENNA_PATTERNS_FILE,&
@@ -69,6 +69,7 @@ module ForwardModelSupport
   integer, parameter :: TangentNotSubset     =  IrrelevantFwmParameter + 1
   integer, parameter :: PhiWindowMustBeOdd   = TangentNotSubset + 1
   integer, parameter :: FrqGapNotFrq         = PhiWindowMustBeOdd + 1
+  integer, parameter :: ToleranceNotK        = FrqGapNotFrq + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -260,6 +261,11 @@ contains ! =====     Public Procedures     =============================
         info%frqGap = value(1)
         if ( units(1) /= phyq_frequency ) &
           & call AnnounceError ( frqGapNotFrq, key )
+      case ( f_tolerance )
+        call expr ( subtree(2,son), units, value, type )
+        info%tolerance = value(1)
+        if ( units(1) /= phyq_temperature ) &
+          & call AnnounceError ( toleranceNotK, key )
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_molecules )
@@ -408,10 +414,13 @@ contains ! =====     Public Procedures     =============================
       call output ('non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
     case ( PhiWindowMustBeOdd )
-      call output ( 'phiWindow is not odd', advance='yes' )
+      call output ( 'phiWindow is not odd', advance='yes' ) 
     case ( FrqGapNotFrq )
       call output ( 'frqGap does not have dimensions of frequency', advance='yes' )
-    case default
+    case ( ToleranceNotK )
+      call output ( 'tolerance does not have dimensions of temperature/radiance',&
+        & advance='yes' )
+   case default
       call output ( '(no specific description of this error)', advance='yes' )
     end select
     if ( present(extraMessage) ) call output ( extraMessage, advance='yes' )
@@ -420,6 +429,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.6  2001/06/21 15:05:20  livesey
+! Added tolerance field to config
+!
 ! Revision 2.5  2001/06/19 22:48:42  pwagner
 ! Eliminated duplicate declaration of PointingGrid_m
 !
