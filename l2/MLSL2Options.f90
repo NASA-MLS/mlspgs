@@ -75,12 +75,19 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
    ! and without error
    integer, parameter :: NORMAL_EXIT_STATUS = 2
 
+   ! Assume hdf files w/o explicit hdfVersion field are this
+   ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
+   integer, parameter :: DEFAULT_HDFVERSION = 4
+
 !=============================================================================
 END MODULE MLSL2Options
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.12  2002/01/23 21:48:16  pwagner
+! Added DEFAULT_HDFVERSION
+!
 ! Revision 2.11  2001/09/28 17:57:47  pwagner
 ! SIPS_VERSION controls other logical options
 !
