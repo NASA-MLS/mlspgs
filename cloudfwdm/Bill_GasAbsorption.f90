@@ -75,6 +75,7 @@ contains
     Integer(ip) :: Spectag, status
     REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp
     REAL(rp), allocatable, dimension(:) :: PP, TT, z_psig
+    logical :: Do_1D
 
 !-----------------------------------------------------------------------------
 
@@ -125,7 +126,7 @@ contains
     losVel=losVel*0.00_rp   ! Bill use km/sec ! The Doppler correction already been done 
                                               ! in the FullCloudForwardModel, so set it 0
 
-    call get_gl_slabs_arrays( Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,n_ele,del_temp)
+    call get_gl_slabs_arrays( Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,n_ele,del_temp, Do_1D)
 
     DO i = 1, n_sps
       Spectag = Catalog(i)%Spec_Tag
@@ -174,6 +175,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.9  2002/12/13 02:07:18  vsnyder
+! Use a SLABS structure for the slabs quantities, use spectag names
+!
 ! Revision 1.8  2002/10/08 17:08:06  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
