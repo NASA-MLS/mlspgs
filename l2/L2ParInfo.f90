@@ -456,16 +456,17 @@ contains ! ==================================================================
   end subroutine LogDirectWriteRequest
 
   ! -------------------------------------------- WaitForDirectWritePermission --
-  subroutine WaitForDirectWritePermission ( node, ticket, createFile )
+  subroutine WaitForDirectWritePermission ( node, ticket, theFile, createFile )
     integer, intent(out) :: NODE        ! Which line was granted
     integer, intent(out) :: TICKET      ! What is the ticket number
+    integer, intent(out) :: THEFILE     ! What is the file name
     logical, intent(out) :: CREATEFILE  ! Do we have to create the file?
     ! Local variables
     integer :: BUFFERID                 ! From PVM
     integer :: INFO                     ! From PVM
     integer :: SIGNAL                   ! The signal from the master
     integer :: CREATE                   ! Integer version of createFile
-    integer :: I3(3)                    ! Information from master
+    integer :: I4(4)                    ! Information from master
     ! Executable code
     call PVMFRecv ( parallel%masterTid, InfoTag, bufferID )
     if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
@@ -477,12 +478,13 @@ contains ! ==================================================================
       & call PVMErrorMessage ( info, 'unpacking direct write permission signal')
 
     if ( signal == SIG_DirectWriteGranted ) then
-      call PVMF90Unpack ( i3, info )
+      call PVMF90Unpack ( I4, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'unpacking direct write permission information')
-      node = i3(1)
-      ticket = i3(2)
-      createFile = i3(3) /= 0
+      node = I4(1)
+      ticket = I4(2)
+      createFile = I4(3) /= 0
+      theFile = I4(4)
 
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -559,6 +561,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.35  2004/01/02 23:36:00  pwagner
+! DirectWrites may choose files automatically from db
+!
 ! Revision 2.34  2003/12/11 23:00:58  pwagner
 ! Make master task wait for slaves stdout buffers to flush
 !
