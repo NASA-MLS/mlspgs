@@ -4,11 +4,13 @@
 ;; results from the 'core' retrievals
 
 begin ReadApriori
+  !ifdef(CoreHDFVersion,{},{!define(CoreHDFVersion,4)})
   
   ;; This macro reads in the core l2gps for species $1 from swath name
   ;; $1-Core
   !define(readCoreL2GP,{l2gpCore$1Input: l2gp, $
-    file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he4', swath='$1-Core'!nl})
+    file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!CoreHDFVersion', $
+    swath='$1-Core', hdfVersion=!CoreHDFVersion!nl})
   ;; These are the species for which we want to read Core data (no
   ;; continuations allowed).
   !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH})
@@ -16,7 +18,7 @@ begin ReadApriori
 
   ;; Ptan we have to get from an l2aux file, this could be fun!
   l2auxCorePtanInput: l2aux, $
-    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h4', sdName='GHz.ptan-Core', $
-    quantityType=ptan, hdfVersion=4
+    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!CoreHDFVersion', $
+    sdName='GHz.ptan-Core', quantityType=ptan, hdfVersion=!CoreHDFVersion
 
 end ReadApriori
