@@ -56,12 +56,6 @@ contains
     type (beta_group_T), dimension(:) :: beta_group
 
     integer, intent(in)  :: ICON
-
-!-----------------------------------------------------------------------------
-! ICON indicates different clear and cloudy sky combinations:
-!		ICON=-1 is for clear-sky radiance limit assuming 110%RHi
-!		ICON=-2 is for clear-sky radiance limit assuming 0%RHi
-!-----------------------------------------------------------------------------
     logical, intent(in) :: Incl_Cld
 
 !    include 'constants.f9h'
@@ -123,18 +117,6 @@ contains
          
         do j = 1, n_path
           k = path_inds(j)
-
-          ! do the following only if ICON not equal to 0
-!          if ( Spectag == SP_H2O .and. p_path(k) >= 100. .and. ICON .ne. 0) then
-!            select case ( ICON )
-!            case ( -1 )
-!              RHI=110.0_r8
-!            case ( -2 )
-!              RHI=1.0e-9_r8
-!            end select  
-!            ratio = RHIFromH2O_Factor (t_path(k), z_path_c(k), 0, .true.)*RHI
-            ! optional 0 will return ratio as parts per 1, as Bill uses here.
-!          end if                                 
 
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
             &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,                &
@@ -288,6 +270,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.22  2003/02/06 22:12:49  jonathan
+! fix bug
+!
 ! Revision 2.21  2003/02/06 00:20:16  jonathan
 ! Add in many stuff to deal with clouds CloudIce, iwc_path, etc
 !
