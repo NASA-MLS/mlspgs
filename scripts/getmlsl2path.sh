@@ -65,7 +65,7 @@ while [ -n "$(echo $1)" ]; do
 	    scramjet )
 		echo "/state/partition1/livesey/";;
 	    lightspeed )
-		echo "$HOME/$VERSION";;
+		echo "/science/l2cal/";;
 	    desktop )
 		echo "/bigdata/$MYUSER/$VERSION";;
 	esac
@@ -147,6 +147,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.30  2004/04/17 05:58:37  livesey
+# Bug fix
+#
 # Revision 1.29  2004/04/17 05:50:03  livesey
 # Moved the l2pcs on scramjet
 #
