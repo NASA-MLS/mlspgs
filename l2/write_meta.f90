@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 ! -------------------------------------------------------
@@ -733,11 +733,11 @@ contains
       end if
 
       returnStatus = pgs_met_remove() 
-      if (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
-        write(sval, *) returnStatus
-        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-              "Calling pgs_met_remove() failed with value " // trim(sval) )
-      endif          
+      ! if (returnStatus /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+      !  write(sval, *) returnStatus
+      !  CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+      !        "Calling pgs_met_remove() failed with value " // trim(sval) )
+      ! endif          
     endif
 
   end subroutine Third_grouping
@@ -862,11 +862,11 @@ contains
     end if
 
     returnStatus = pgs_met_remove() 
-    if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
-        write(errmsg, *) returnStatus
-        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-              "Calling pgs_met_remove() failed with value " // trim(errmsg) )
-    end if
+    ! if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
+    !    write(errmsg, *) returnStatus
+    !    CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+    !          "Calling pgs_met_remove() failed with value " // trim(errmsg) )
+    ! end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -1011,14 +1011,14 @@ contains
     end if
 
     returnStatus = pgs_met_remove() 
-    if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
+    ! if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
         ! call announce_error ( 0, &
         ! & "Error: metadata removal in populate_metadata_oth.", &
         ! & error_number=hdfReturn) 
-        write(errmsg, *) returnStatus
-        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-              "Calling pgs_met_remove() failed with value " // trim(errmsg) )
-    end if
+    !    write(errmsg, *) returnStatus
+    !    CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+    !          "Calling pgs_met_remove() failed with value " // trim(errmsg) )
+    ! end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -1352,16 +1352,16 @@ contains
     end if
 
     result = pgs_met_remove()
-    if ( result /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
+    ! if ( result /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
         ! call announce_error ( 0, &
         ! & "Error: metadata removal in WriteMetaLog.", &
         ! & error_number=result) 
-      if (result /= PGS_S_SUCCESS) THEN 
-        write(sval, *) result
-        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-              "Calling pgs_met_remove() failed with value " // trim(sval) )
-      endif          
-    end if
+    !  if (result /= PGS_S_SUCCESS) THEN 
+    !    write(sval, *) result
+    !    CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+    !          "Calling pgs_met_remove() failed with value " // trim(sval) )
+    !  endif          
+    ! end if
 
     if ( present(metadata_error)) metadata_error=module_error
 
@@ -1573,6 +1573,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.52  2004/01/30 00:31:10  pwagner
+! Stops useless warnings about pgs_met_remove return value
+!
 ! Revision 2.51  2003/09/12 16:32:00  cvuu
 ! Output the right orbit numbers for StartOrbitNumber and StopOrbitNumber
 !
