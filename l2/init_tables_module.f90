@@ -760,6 +760,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_average, s+s_matrix, n+n_field_spec, &
              begin, f+f_columnScale, t+t_scale, n+n_field_type, &
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
+             begin, f+f_covSansReg, t+t_boolean, n+n_field_type, &
              begin, f+f_diagnostics, s+s_vector, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
              begin, f+f_forwardModel, s+s_forwardModel, nr+n_field_spec, &
@@ -892,6 +893,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.255  2002/10/23 01:32:31  vsnyder
+! Add CovSansReg switch to retrieve spec
+!
 ! Revision 2.254  2002/10/19 23:41:39  livesey
 ! Added muMin
 !
