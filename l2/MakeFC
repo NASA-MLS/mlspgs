@@ -31,8 +31,21 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../srclib
 
+# where sources for the forward model are stored
+libfwdmdl_sources=../fwdmdl
+
+# where forward model objects and libfwdmdl.a are stored
+libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
+
 # where the platforms directory is
 PLATFORMS = .
+
+#Where else to look for USEd and INCLUDED files to add to dependency list
+ifdef l2_NEEDS_fwdmdl
+   depends_where=$(libmls_sources) $(srclib) $(libfwdmdl_sources)
+else
+   depends_where=$(libmls_sources) $(srclib)
+endif
 
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
@@ -99,7 +112,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 depends:
 	$(MLSBIN)/makemakedep.sh \
 	-d SnoopMLSL2.f90 \
-	$(libmls_sources) $(srclib) 
+	$(depends_where) 
 
 clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -127,6 +140,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.11  2001/03/05 21:48:50  pwagner
+# fwdmdl searched for dependencies if l2_NEEDS_fwdmdl
+#
 # Revision 2.10  2001/02/12 17:43:13  pwagner
 # RetrievalModule and ForwardModelInterface now included
 #
