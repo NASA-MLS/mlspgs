@@ -22,7 +22,7 @@ module DumpCommand_M
 contains
 
   subroutine DumpCommand ( Root, QuantityTemplatesDB, &
-    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids )
+    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids, VGrids )
 
   ! Process a "dump" command
 
@@ -36,24 +36,27 @@ contains
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
     use HGridsDatabase, only: Dump, HGRID_T
     use Init_Tables_Module, only: F_Details, F_ForwardModel, F_HGrid, &
-      & F_Quantity, F_Template, F_Vector, &
+      & F_PfaData, F_Quantity, F_Template, F_Vector, F_VGrid, &
       & S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Field_ID, Get_Spec_ID
     use Output_M, only: Output
+    use PFAData_m, only: Dump, PFAData
     use QuantityTemplates, only: Dump, QuantityTemplate_T
     use Tree, only: Decoration, Node_Id, Nsons, Subtree
     use Tree_Types, only: N_Spec_Args
     use VectorsModule, only: Dump, & ! for vectors, vector quantities and templates
       & GetVectorQtyByTemplateIndex, Vector_T, VectorTemplate_T
+    use VGridsDatabase, only: Dump, VGrid_T
 
     integer, intent(in) :: Root ! Root of the parse tree for the dump command
     ! Databases:
-    type (quantityTemplate_t), dimension(:), intent(in) :: QuantityTemplatesDB
-    type (vectorTemplate_T), dimension(:), intent(in) :: VectorTemplates
+    type (quantityTemplate_t), dimension(:), intent(in), optional :: QuantityTemplatesDB
+    type (vectorTemplate_T), dimension(:), intent(in), optional :: VectorTemplates
     type (vector_T), dimension(:), intent(in), optional :: Vectors
     type (forwardModelConfig_t), dimension(:), intent(in), optional :: ForwardModelConfigs
     type (HGrid_T), dimension(:), intent(in), optional :: HGrids
+    type (VGrid_T), dimension(:), intent(in), optional :: VGrids
 
     integer :: Details
     integer :: FieldIndex
@@ -69,8 +72,11 @@ contains
     integer, parameter :: Dimless = 1
     integer, parameter :: NoFWM = dimless + 1
     integer, parameter :: NoHGrid = NoFWM + 1
-    integer, parameter :: NoVectors = noHGrid + 1
-    integer, parameter :: Numeric = noVectors + 1
+    integer, parameter :: NoQT = noHGrid + 1
+    integer, parameter :: NoVectors = noQT + 1
+    integer, parameter :: NoVG = noVectors + 1
+    integer, parameter :: NoVT = noVG + 1
+    integer, parameter :: Numeric = noVT + 1
     integer, parameter :: Unknown = numeric + 1 ! Unknown template
 
     details = 0
@@ -99,6 +105,9 @@ contains
         else
           call announceError ( gson, noHGrid )
         end if
+      case ( f_pfaData )
+        call output ( ' PFA Data', advance='yes' )
+        call dump ( pfaData(decoration(decoration(gson))) )
       case ( f_quantity ) ! Dump a vector quantity
         vectorIndex = decoration(decoration(subtree(1,gson)))
         quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -110,19 +119,33 @@ contains
         what = decoration(look)
         select case ( get_spec_id(look) )
         case ( s_quantity )
-          call output ( ' Quantity template' )
-          call dump ( quantityTemplatesDB(what), details=details )
+          if ( present(quantityTemplatesDB) ) then
+            call output ( ' Quantity template' )
+            call dump ( quantityTemplatesDB(what), details=details )
+          else
+            call announceError ( gson, noQT )
+          end if
         case ( s_vectorTemplate )
-          call output ( ' Vector template' )
-          call dump ( vectorTemplates(what), details=details, quantities=quantityTemplatesDB )
+          if ( present(vectorTemplates) ) then
+            call output ( ' Vector template' )
+            call dump ( vectorTemplates(what), details=details, quantities=quantityTemplatesDB )
+          else
+            call announceError ( gson, noVT )
+          end if
         end select
       case ( f_vector ) ! Dump an entire vector
         if ( present(vectors) ) then
-          vectorIndex = decoration(decoration(gson))
           call output ( ' Vector ' )
-          call dump ( vectors(vectorIndex), details=details )
+          call dump ( vectors(decoration(decoration(gson))), details=details )
         else
           call announceError ( gson, noVectors )
+        end if
+      case ( f_vGrid )
+        if ( present(vGrids) ) then
+          call output ( ' VGrid ' )
+          call dump ( vGRids(decoration(decoration(gson))), details=details )
+        else
+          call announceError ( gson, noVG )
         end if
       end select
     end do
@@ -130,16 +153,11 @@ contains
   contains
 
     subroutine AnnounceError ( where, what )
-      use LEXER_CORE, only: PRINT_SOURCE
-      use Tree, only: Source_Ref
+      use MoreTree, only: StartErrorMessage
+
       integer, intent(in) :: What, Where
 
-      call output ( '***** At ' )
-      if ( where > 0 ) then
-        call print_source ( source_ref(where) )
-      else
-        call output ( '(no lcf tree available)' )
-      end if
+      call StartErrorMessage ( where )
 
       select case ( what )
       case ( dimless )
@@ -148,8 +166,14 @@ contains
         call output ( "Can't dump Forward Model Configs here." )
       case ( noHGrid )
         call output ( "Can't dump HGrids here." )
+      case ( noQT )
+        call output ( "Can't dump Quantity Templates here." )
       case ( noVectors )
-        call output ( "Can't dump vectors here." )
+        call output ( "Can't dump Vectors here." )
+      case ( noVG )
+        call output ( "Can't dump VGrids here." )
+      case ( noVT )
+        call output ( "Can't dump Vector Templates here." )
       case ( numeric )
         call output ( "The details field is not numeric." )
       case ( unknown )
@@ -162,6 +186,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.5  2004/05/22 02:31:23  vsnyder
+! Dump PFAData, VGrids
+!
 ! Revision 2.4  2004/05/20 19:47:36  vsnyder
 ! Move Dump*Hgrid from Dumper to HgridsDatabse
 !
