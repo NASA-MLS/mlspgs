@@ -187,7 +187,7 @@ contains
   subroutine PVMPackFWMConfig ( config )
     use PVMIDL, only: PVMIDLPack
     use PVM, only: PVMErrorMessage
-    use MorePVM, only: PVMPackLitIndex
+    use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex
     use MLSSignals_m, only: PVMPackSignal
     use VGridsDatabase, only: PVMPackVGrid
     ! Dummy arguments
@@ -198,6 +198,8 @@ contains
 
     ! Executable code
     ! First pack the lit indices
+    call PVMPackStringIndex ( config%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig name" )
     call PVMPackLitIndex ( config%cloud_der, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig cloud_der" )
     call PVMPackLitIndex ( config%fwmType, info )
@@ -211,6 +213,7 @@ contains
 
     ! Now pack the integer scalars
     call PVMIDLPack ( (/ &
+      & config%linearSideband, &
       & config%no_cloud_species, config%no_model_surfs, &
       & config%num_ab_terms, config%num_azimuth_angles, &
       & config%num_scattering_angles, config%num_size_bins, &
@@ -223,7 +226,7 @@ contains
       & config%allLinesForRadiometer, config%atmos_der, &
       & config%default_spectroscopy, config%differentialScan,&
       & config%do_1d, config%do_baseline, config%do_conv, &
-      & config%do_freq_avg, config%globalConfig, config%incl_cld, &
+      & config%do_freq_avg, config%forceSidebandFraction, config%globalConfig, config%incl_cld, &
       & config%lockBins, config%polarized, config%skipOverlaps, &
       & config%spect_Der, config%temp_Der /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
@@ -301,7 +304,7 @@ contains
   subroutine PVMUnpackFWMConfig ( CONFIG )
     use PVMIDL, only: PVMIDLUnpack
     use PVM, only: PVMErrorMessage
-    use MorePVM, only: PVMUnpackLitIndex
+    use MorePVM, only: PVMUnpackLitIndex, PVMUnpackStringIndex
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use Allocate_Deallocate, only: Allocate_test
     use MLSSignals_m, only: PVMUnpackSignal
@@ -311,14 +314,16 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(15) :: LS        ! Temporary array
-    integer, dimension(9) :: IS         ! Temporary array
+    logical, dimension(16) :: LS        ! Temporary array
+    integer, dimension(10) :: IS         ! Temporary array
     real(r8), dimension(2) :: RS        ! Temporary array
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
 
     ! Executable code
     ! First unpack the lit indices
+    call PVMUnpackStringIndex ( config%name, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig name" )
     call PVMUnpackLitIndex ( config%cloud_der, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig cloud_der" )
     call PVMUnpackLitIndex ( config%fwmType, info )
@@ -333,40 +338,45 @@ contains
     ! Now the integer scalars
     call PVMIDLUnpack ( is, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
-    config%no_cloud_species = is(1)
-    config%no_model_surfs = is(2)
-    config%num_ab_terms = is(3)
-    config%num_azimuth_angles = is(4)
-    config%num_scattering_angles = is(5)
-    config%num_size_bins = is(6)
-    config%sideBandStart = is(7)
-    config%sideBandStop = is(8)
-    config%surfaceTangentIndex = is(9)
+    i = 1
+    config%linearsideband        = is(i) ; i = i + 1
+    config%no_cloud_species      = is(i) ; i = i + 1
+    config%no_model_surfs        = is(i) ; i = i + 1
+    config%num_ab_terms          = is(i) ; i = i + 1
+    config%num_azimuth_angles    = is(i) ; i = i + 1
+    config%num_scattering_angles = is(i) ; i = i + 1
+    config%num_size_bins         = is(i) ; i = i + 1
+    config%sideBandStart         = is(i) ; i = i + 1
+    config%sideBandStop          = is(i) ; i = i + 1
+    config%surfaceTangentIndex   = is(i) ; i = i + 1
 
     ! Now the logical scalars
     call PVMIDLUnpack ( ls, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
-    config%allLinesForRadiometer = ls(1)
-    config%atmos_der = ls(2)
-    config%default_spectroscopy = ls(3)
-    config%differentialScan = ls(4)
-    config%do_1d = ls(5)
-    config%do_baseline = ls(6)
-    config%do_conv = ls(7)
-    config%do_freq_avg = ls(8)
-    config%globalConfig = ls(9)
-    config%incl_cld = ls(10)
-    config%lockBins = ls(11)
-    config%polarized = ls(12)
-    config%skipOverlaps = ls(13)
-    config%spect_der = ls(14)
-    config%temp_der = ls(15)
+    i = 1
+    config%allLinesForRadiometer = ls(i) ; i = i + 1
+    config%atmos_der             = ls(i) ; i = i + 1
+    config%default_spectroscopy  = ls(i) ; i = i + 1
+    config%differentialScan      = ls(i) ; i = i + 1
+    config%do_1d                 = ls(i) ; i = i + 1
+    config%do_baseline           = ls(i) ; i = i + 1
+    config%do_conv               = ls(i) ; i = i + 1
+    config%do_freq_avg           = ls(i) ; i = i + 1
+    config%forceSidebandFraction = ls(i) ; i = i + 1
+    config%globalConfig          = ls(i) ; i = i + 1
+    config%incl_cld              = ls(i) ; i = i + 1
+    config%lockBins              = ls(i) ; i = i + 1
+    config%polarized             = ls(i) ; i = i + 1
+    config%skipOverlaps          = ls(i) ; i = i + 1
+    config%spect_der             = ls(i) ; i = i + 1
+    config%temp_der              = ls(i) ; i = i + 1
 
     ! Now the real scalars
     call PVMIDLUnpack ( rs, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig reals" )
-    config%phiWindow = rs(1)
-    config%tolerance = rs(2)
+    i = 1
+    config%phiWindow = rs(i) ; i = i + 1
+    config%tolerance = rs(i) ; i = i + 1
 
     ! ------- The rest are arrays and/or types
     ! Bin selectors
@@ -579,6 +589,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.43  2003/09/15 23:45:00  vsnyder
+! Remove unused local variables and USEs
+!
 ! Revision 2.42  2003/09/11 23:10:04  livesey
 ! Added xStar and yStar
 !
