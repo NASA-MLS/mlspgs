@@ -99,7 +99,7 @@ EOF_1
 
 #accept user compiler and platforms settings to be written to file .configure
 
- UserPrompt "Fortran 95 Compiler (Lahey, NAG) [$current_compiler]"
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG, absoft) [$current_compiler]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
 	    n* | N* )
@@ -109,6 +109,10 @@ EOF_1
 	    l* | L* )
 		echo "Lahey compiler selected."
 		compiler=LF95
+	    ;;
+	    a* | A* )
+		echo "Absoft compiler selected."
+		compiler=Abs
 	    ;;
 	    * )
 		echo "Unknown compiler selected."
@@ -497,6 +501,7 @@ debugging="off"
 #Default compiler and linker options
 MLS_default_FOPTS_NAG="-w"
 MLS_default_FOPTS_LF95=
+MLS_default_FOPTS_Abs="-w"
 MLS_default_LDOPTS=
 
 #conf_dir   the directory where the .configure file is to be stored
@@ -623,6 +628,8 @@ fi
 if [ "$current_FOPTS" = "" ] ; then
 		if [ "$compiler" = "NAG" ] ; then
 			FOPTS="$MLS_default_FOPTS_NAG"
+		elif [ "$compiler" = "Abs" ] ; then
+			FOPTS="$MLS_default_FOPTS_Abs"
 		else
 			FOPTS="$MLS_default_FOPTS_LF95"
 		fi
@@ -795,6 +802,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.8  2001/02/27 18:10:44  pwagner
+# exports FOPTS and LDOPTS; better Help
+#
 # Revision 1.7  2001/02/26 18:39:15  pwagner
 # Fixed problem with older .configure files
 #
