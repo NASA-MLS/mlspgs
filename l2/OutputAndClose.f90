@@ -14,22 +14,13 @@ module OutputAndClose ! outputs all data from the Join module to the
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
     & FIELD_FIRST, FIELD_LAST, L_L2AUX, L_L2GP, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, L2AUXDIMNAMES
-!  use L2GPData, only: L2GPData_T
+  use L2GPData, only: L2GPData_T, WriteL2GPData
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF, only: MLSPCF_L2AUX_END, MLSPCF_L2AUX_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START
   use OUTPUT_M, only: OUTPUT
-
-!These functions now in L2GPData
-!  use OutputL2GP, only: OutputL2GP_createFile, OutputL2GP_writeData, &
-!    & OutputL2GP_writeGEO
-
-  use L2GPData, only: L2GPData_T, &
-       & OutputL2GP_createFile, OutputL2GP_writeData, &
-    & OutputL2GP_writeGEO
-
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
   use TREE, only: DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, &
@@ -136,6 +127,7 @@ contains ! =====     Public Procedures     =============================
             select case ( field_index )   ! Field name
             case ( f_file )
               call get_string ( sub_rosa(subtree(2,gson)), file_base )
+              file_base=file_base(2:LEN_TRIM(file_base)-1) ! Parser includes quotes
             case ( f_type )
               output_type = decoration(subtree(2,gson))
             case default                  ! Everything else processed later
@@ -151,60 +143,50 @@ contains ! =====     Public Procedures     =============================
           l2gpFileHandle = mlspcf_l2gp_start
           found = .FALSE.
           do while ((.NOT. found) .AND. (l2gpFileHandle <=  mlspcf_l2gp_end))
+            l2gp_Version=1
             returnStatus = Pgs_pc_getReference(l2gpFileHandle, l2gp_Version, &
               & l2gpPhysicalFilename)
-
+            
             if ( returnStatus == PGS_S_SUCCESS ) then
-              if ( INDEX(file_base, l2gpPhysicalFilename) /= 0 ) then
-                found = .true.
+               if ( INDEX(l2gpPhysicalFilename, TRIM(file_base)) /= 0 ) then
+                  found = .true.
+                  ! Open the HDF-EOS file and write swath data
 
-                ! Open the HDF-EOS file and write swath data
+                  swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
 
-                swfid = swopen(l2gpPhysicalFilename, DFACC_CREATE)
+                  ! Loop over the segments of the l2cf line
 
-                ! Loop over the segments of the l2cf line
+                  do field_no = 2, nsons(key) ! Skip "output" name
+                     gson = subtree(field_no,key)
+                     select case ( decoration(subtree(1,gson)) )
+                     case ( f_quantities )
+                        do in_field_no = 2, nsons(gson)
+                           db_index = -decoration(decoration(subtree(in_field_no ,gson)))
+                           CALL WriteL2GPData(l2gpDatabase(db_index),swfid,swathName='Fred')
+                        end do ! in_field_no = 2, nsons(gson)
+                     case ( f_overlaps )
+                        ! ??? More work needed here
+                     end select
+                  end do ! field_no = 2, nsons(key)
+                  returnStatus = swclose(swfid)
+                  if (returnStatus /= PGS_S_SUCCESS) then
+                     call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+                     call MLSMessage ( MLSMSG_Error, ModuleName, &
+                          &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
+                  end if
 
-                do field_no = 2, nsons(key) ! Skip "output" name
-                  gson = subtree(field_no,key)
-                  select case ( decoration(subtree(1,gson)) )
-                  case ( f_quantities )
-                    do in_field_no = 2, nsons(gson)
-                      db_index = decoration(decoration(subtree(in_field_no ,gson)))
-
-!Reordered parameters in following call to reflect recoded L2GPData
-!and eliminated optional parameter flag which was of inconsistent
-!type INTEGER when CHARACTER was expected, anyway
-!                    call OutputL2GP_createFile ( swfid,l2gpDatabase(db_index), &
-!                      & flag )
-
-                      call OutputL2GP_createFile ( l2gpDatabase(db_index), &
-                        & swfid)
-
-                      call OutputL2GP_writeGEO ( l2gpDatabase(db_index), swfid )
-                      call OutputL2GP_writeData ( l2gpDatabase(db_index), swfid )
-                    end do ! in_field_no = 2, nsons(gson)
-                  case ( f_overlaps )
-                  ! ??? More work needed here
-                  end select
-                end do ! field_no = 2, nsons(key)
-                returnStatus = swclose(swfid)
-                if (returnStatus /= PGS_S_SUCCESS) then
-                  call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-                  call MLSMessage ( MLSMSG_Error, ModuleName, &
-                    &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
-                end if
-
-              else
-                 l2gpFileHandle = l2gpFileHandle + 1
-              end if
+               else                ! Found the right file
+                  l2gpFileHandle = l2gpFileHandle + 1
+               end if
             else
-
-              call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
-              call MLSMessage ( MLSMSG_Error, ModuleName, &
-                &  "Error finding  l2gp file:  "//mnemonic//" "//msg )
+               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
+               call MLSMessage ( MLSMSG_Error, ModuleName, &
+                    &  "Error finding  l2gp file:  "//mnemonic//" "//msg )
             end if
 
-          end do !(.not. found) .and. (l2gpFileHandle <=  mlspcf_l2gp_end)
+        end do !(.not. found) .and. (l2gpFileHandle <=  mlspcf_l2gp_end)
+        IF (.NOT. found) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+             'Unable to find filename containing '//TRIM(file_base))
 
         case ( l_l2aux )
 
@@ -213,6 +195,7 @@ contains ! =====     Public Procedures     =============================
           l2auxFileHandle = mlspcf_l2aux_start
           found = .FALSE.
           do while ((.NOT. found) .AND. (l2auxFileHandle <=  mlspcf_l2aux_end))
+             l2aux_Version=1
             returnStatus = Pgs_pc_getReference(l2auxFileHandle, l2aux_Version, &
               & l2auxPhysicalFilename)
 
@@ -232,7 +215,7 @@ contains ! =====     Public Procedures     =============================
                   case ( f_quantities )
                     do in_field_no = 2, nsons(gson) ! Skip "quantities" name
                       in_field = subtree(in_field_no,gson)
-                      db_index = decoration(decoration(in_field_no))
+                      db_index = -decoration(decoration(in_field_no))
 
                       ! Set up dimensions
                       dim_sizes(1:3) = &
@@ -343,6 +326,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.6  2001/02/09 00:38:22  livesey
+! Various updates
+!
 ! Revision 2.5  2001/01/03 18:15:13  pwagner
 ! Changed types of t1, t2 to real
 !

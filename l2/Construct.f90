@@ -13,7 +13,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
     & DestroyHGridDatabase, HGrid_T
   use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE, &
     & S_VGRID
-  use MLSCommon, only: L1BInfo_T, MLSChunk_T, MLSInstrumentNoModules
+  use MLSCommon, only: L1BInfo_T, MLSChunk_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use MLSSignalNomenclature
   use OUTPUT_M, only: OUTPUT
@@ -28,6 +28,9 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
     & DestroyVectorTemplateDatabase, Dump, VectorTemplate_T
   use VGrid, only: AddVGridToDatabase, CreateVGridFromMLSCFInfo, &
     & DestroyVGridDatabase, VGrid_T
+  use Intrinsic, ONLY: L_None, L_GHz, L_THz
+  use String_Table, ONLY: GET_STRING
+  use Init_tables_module, ONLY: LIT_INDICES
 
   implicit none
 
@@ -60,12 +63,17 @@ contains ! =====     Public Procedures     =============================
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
+    ! Local parameters
+    INTEGER, PARAMETER :: MLSInstrumentNoModules=2
+    INTEGER, DIMENSION(MLSInstrumentNoModules), PARAMETER :: &
+         MLSInstrumentModules= (/L_GHz,L_THz/)
+
     ! Local variables
     type (VGrid_T), dimension(:), pointer :: vGrids => NULL()
     type (HGrid_T), dimension(:), pointer :: hGrids => NULL()
 
     integer :: I                ! Loop counter
-    integer :: INSTRUMENTMODULE ! Loop counter
+    integer :: INSTRUMENTMODULEINDEX ! Loop counter
     integer :: KEY              ! S_... from Init_Tables_Module.
     integer :: NAME             ! Sub-rosa index of name
     integer :: SON              ! Son or grandson of Root
@@ -74,6 +82,7 @@ contains ! =====     Public Procedures     =============================
     REAL :: T1, T2  ! for timing
     logical :: TIMING
 
+CHARACTER(LEN=132) :: dummy
     ! Executable code
     timing = .false.
 
@@ -85,12 +94,14 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
 
+    CALL Get_String(lit_indices(L_THz),dummy)
     allocate ( mifGeolocation(MLSInstrumentNoModules), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//"mifGeolocation" )
-    do instrumentModule = 1, MLSInstrumentNoModules
-      call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-        & mifGeolocation(instrumentModule) )
+    do instrumentModuleIndex = 1, MLSInstrumentNoModules
+      call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+           MLSinstrumentModules(instrumentModuleIndex), &
+           mifGeolocation(instrumentModuleIndex) )
     end do
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
@@ -107,7 +118,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Node_id(key) is now n_spec_args.
-
+      
       select case( decoration(subtree(1,decoration(subtree(1,key)))) )
       case( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
@@ -177,6 +188,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.6  2001/02/09 00:38:22  livesey
+! Various updates
+!
 ! Revision 2.5  2001/01/03 17:51:05  pwagner
 ! Changed types of t1, t2 to real
 !
