@@ -24,7 +24,7 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: DIML_NAME = 'nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMLL_NAME = 'nLevels,nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMT_NAME = 'TDim'
- 
+
    CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
    CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
    CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation &
@@ -34,6 +34,7 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: TAI2A_ERR = 'Error converting time from &
                                                &TAI to UTC.'
    CHARACTER (LEN=*), PARAMETER :: WR_ERR = 'Failed to write field '
+   CHARACTER (LEN=*), PARAMETER :: SZ_ERR = 'Failed to get size of dimension '
 
    INTEGER, PARAMETER :: CCSDS_LEN = 27
    INTEGER, PARAMETER :: CCSDSB_LEN = 25
@@ -46,6 +47,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.3  2001/02/09 19:18:33  nakamura
+!# Added some dimension parameters.
+!#
 !# Revision 1.2  2001/01/16 17:46:18  nakamura
 !# Added parameter for metadata writing error.
 !#
