@@ -6,12 +6,9 @@ module VGridsDatabase
 !=============================================================================
 
   use Allocate_Deallocate, only: Deallocate_Test
-  use Dump_0, only: DUMP
   use MLSCommon, only: R8
   use MLSMessageModule, only: & ! Message logging
     & MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_Error
-  use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: DISPLAY_STRING
 
   implicit NONE
   private
@@ -34,8 +31,8 @@ module VGridsDatabase
     module procedure Dump_VGrids
   end interface Dump
 
-  public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase, Dump
-  public :: Dump_VGrids
+  public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase
+  public :: Dump, Dump_VGrids
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -105,9 +102,12 @@ contains
   end subroutine DestroyVGridDatabase
 
   ! ------------------------------------------------  Dump_VGrids  -----
-  subroutine Dump_VGrids ( VGrids, Lit_Indices, Details )
+  subroutine Dump_VGrids ( VGrids, Details )
+    use Dump_0, only: DUMP
+    use Intrinsic, only: Lit_Indices
+    use OUTPUT_M, only: OUTPUT
+    use STRING_TABLE, only: DISPLAY_STRING
     type(vGrid_T), intent(in) :: VGrids(:)             ! The database
-    integer, intent(in), dimension(:) :: Lit_Indices   ! From init_tables
     integer, intent(in), optional :: Details ! <= 0 => Don't dump arrays
     !                                        ! >0   => Do dump arrays
     !                                        ! Default 1
@@ -131,6 +131,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.3  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.2  2001/04/11 00:03:52  vsnyder
 ! Improve 'dump'
 !
