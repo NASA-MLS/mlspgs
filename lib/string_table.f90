@@ -1,3 +1,4 @@
+
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -350,15 +351,26 @@ contains
     return
   end subroutine GET_CHAR
   ! ===========================================     GET_STRING     =====
-  subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP )
+  subroutine GET_STRING ( STRING, STRING_TEXT, CAP, STRIP, NOERROR )
   ! Put as much as will fit of the string indexed by STRING into STRING_TEXT.
   ! If CAP is present and .TRUE., capitalize STRING_TEXT.
     integer, intent(in) :: STRING
     character(len=*), intent(out) :: STRING_TEXT
     logical, intent(in), optional :: CAP
     logical, intent(in), optional :: STRIP
+    logical, intent(in), optional :: NOERROR
     integer :: I, J, offset
     logical :: MY_CAP, MY_STRIP
+
+    if ( string < lbound(strings,1) .or. string > ubound(strings,1) ) then
+      if ( present(noError) ) then
+        if (noError) then
+          string_text=''
+          return
+        end if
+      end if
+    end if
+
     my_cap = .false.
     my_strip = .false.
     offset = 0
@@ -646,6 +658,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.8  2001/05/15 16:44:41  livesey
+! Added noError argument to get_string
+!
 ! Revision 2.7  2001/04/20 17:43:35  vsnyder
 ! OOPS -- previous commit was premature -- forgot to declare a variable
 !
