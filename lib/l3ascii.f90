@@ -77,7 +77,7 @@ contains
     ! ----Arguments ----!
     integer, intent(in) :: unit
     integer, intent(out), optional :: ErrType
-    type(GriddedData_T), intent(inout) :: field
+    type(GriddedData_T), intent(out) :: field
     logical , intent(out) :: end_of_file
     !-------Local Variables --------!
     character(len=*),parameter :: dummyyear="1993"
@@ -93,56 +93,35 @@ contains
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
     !---- Executable statements ----! 
     error = 0
-	 
-! Abrupt termination--as with an error--means use field at own risk
+
+    ! Abrupt termination--as with an error--means use field at own risk
     if ( present(ErrType) ) then
       ErrType = 1
     end if
 
-!    nullify(tmpaxis)
-	 end_of_file = .TRUE.	! Terminate loops based around this on error
+    !    nullify(tmpaxis)
+    end_of_file = .TRUE.	! Terminate loops based around this on error
 
     write(unit=unitstring,fmt="(i3)") unit ! For use in error reporting
     inquire(unit=unit,opened=opened)
     if ( .not. opened ) then
-        call announce_error(0, &
-       " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
-       "is not connected to a file. Do call l3ascii_open(filename,unit) first")
-       return
+      call announce_error(0, &
+        " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
+        "is not connected to a file. Do call l3ascii_open(filename,unit) first")
+      return
     end if
     inquire(unit=unit,name=filename) ! find the file name connected to this
     ! unit for use in error messages.
 
-	field%sourceFileName = filename
+    field%sourceFileName = filename
 
     ! Fix axis arrays: set to default values with length 1 and a sensible 
     ! value. These will be used if the file does not have variation 
     ! along that axis
 
-    ! Unfortunately, we can't tell if this defined type has
-    ! been used before by testing a pointer for being associated as for 
-    ! a new  struct they are in the undefined state. (This will change with 
-    ! Fortran 95, where you can define a pointer to be initialised to the 
-    ! nullified state)
-    ! We therefore use a special number field%reusing to test whether 
-    ! this defined type has been used before.  
-!    if ( field%reusing==313323435 ) then
-    if ( associated(field%field) ) then
-       !       print*,"This struct has been used before : deallocating"
-       deallocate(field%heights)
-       deallocate(field%lats)
-       deallocate(field%lons)
-       deallocate(field%lsts)
-       deallocate(field%szas)
-       deallocate(field%dateStarts)
-       deallocate(field%dateEnds)
-       deallocate(field%field)
-!    else
-       !       print*,"This is a new struct"
-!       field%reusing=313323435
-    end if
-! Automatically create a stub grid template with minimal size
-! Each component will be deallocated && reallocated with correct sizes later
+
+    ! Automatically create a stub grid template with minimal size
+    ! Each component will be deallocated && reallocated with correct sizes later
     allocate(field%heights(1:1))
     field%heights(1)=1000.0
     field%noHeights=1
@@ -172,19 +151,19 @@ contains
     ! Dates are mandatory, so we don't have to give them a default value
 
     !--- Read field info and all the axis info ---!
-!    call get_next_noncomment_line(unit,inline)
+    !    call get_next_noncomment_line(unit,inline)
     end_of_file=.false.
     call ReadCompleteLineWithoutComments ( unit, inline, eof=end_of_file )
-!    print*,"Read line"
-!    print*,inline
+    !    print*,"Read line"
+    !    print*,inline
     if ( Capitalize(inline(1:5)) /= "FIELD" ) then
       call announce_error ( 0, &
         & "in subroutine l3ascii_read_field, File "//trim(filename)// &
         &  "on unit"//trim(unitstring)//" contains no more Fields" )
-	     end_of_file=.true.
+      end_of_file=.true.
       return
     end if
-    
+
     if ( end_of_file ) then
       call announce_error ( 0,&
         & "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
@@ -193,8 +172,8 @@ contains
     end if
 
     read ( unit=inline, fmt=* ) linetype, field%quantityName, &
-         field%description, field%units
-axesloop:do
+      field%description, field%units
+    axesloop:do
 
       call ReadCompleteLineWithoutComments ( unit, inline )
       !print*,inline
@@ -205,26 +184,26 @@ axesloop:do
         exit axesloop                 ! and is different from the others
       end if
       if ( axistype(1:6) =="LINEAR" ) then
-!        print*,"Doing linear axis"
+        !        print*,"Doing linear axis"
         call make_linear_axis ( inline, tmpaxis, tmpaxis_len )
-!        print*,"Done linear axis"
+        !        print*,"Done linear axis"
       else if ( axistype(1:3) =="LOG" ) then
         !print*,"Doing log axis"
         call make_log_axis ( inline, tmpaxis, tmpaxis_len )
         !print*,"Done log axis"
       else if ( axistype(1:8) =="EXPLICIT" ) then
-!       print*,"Doing explicit axis"
+        !       print*,"Doing explicit axis"
         backspace(unit=unit)
         call read_explicit_axis ( unit, tmpaxis, tmpaxis_len )
-!         print*,"Done explicit axis"
+        !         print*,"Done explicit axis"
       else
-                   end_of_file=.true.
-         call announce_error(0,&
-              "in subroutine l3ascii_read_field,File"//trim(filename)//&
-              " on unit"//trim(unitstring)//" contains coordinate"//&
-              " of invalid type "//trim(axistype)//"for axis"//&
-              trim(linetype))
-         return
+        end_of_file=.true.
+        call announce_error(0,&
+          "in subroutine l3ascii_read_field,File"//trim(filename)//&
+          " on unit"//trim(unitstring)//" contains coordinate"//&
+          " of invalid type "//trim(axistype)//"for axis"//&
+          trim(linetype))
+        return
       end if
 
       ! I do not entirely grok what NJL intended verticalCoordinate to be.
@@ -236,13 +215,13 @@ axesloop:do
         field%heights = tmpaxis
 
         if ( linetype(1:8) == "PRESSURE" ) then
-           field%verticalCoordinate = v_is_pressure ! 1
+          field%verticalCoordinate = v_is_pressure ! 1
         else if ( linetype(1:8) == "ALTITUDE" ) then
-           field%verticalCoordinate = v_is_altitude    ! 2
+          field%verticalCoordinate = v_is_altitude    ! 2
         else if ( linetype(1:3) == "GPH" ) then
-           field%verticalCoordinate = v_is_gph ! 3
+          field%verticalCoordinate = v_is_gph ! 3
         else if ( linetype(1:5) == "THETA" ) then
-           field%verticalCoordinate = v_is_theta ! 4
+          field%verticalCoordinate = v_is_theta ! 4
         end if
       else if ( linetype(1:8) == "LATITUDE" .or. &
         &  linetype(1:8) == "EQUIVLAT" ) then
@@ -251,9 +230,9 @@ axesloop:do
         allocate(field%lats(1:tmpaxis_len))
         field%lats=tmpaxis
         if ( linetype(1:8) == "LATITUDE" ) then
-           field%equivalentLatitude = .false.
+          field%equivalentLatitude = .false.
         else
-           field%equivalentLatitude = .true.
+          field%equivalentLatitude = .true.
         end if
       else if ( linetype(1:9) == "LONGITUDE" ) then
         field%noLons = tmpaxis_len
@@ -281,12 +260,12 @@ axesloop:do
     ! right size 
     field%noDates=1
     allocate(tmpfield(1:field%noHeights,1:field%noLats,1:field%noLons, &
-         1:field%noLsts,1:field%noSzas,1:maxNoDates))
+      1:field%noLsts,1:field%noSzas,1:maxNoDates))
     allocate(dateStarts(1:maxNoDates),dateEnds(1:maxNoDates))
 
     ! Loop to read in the data for the current date and check to see if 
     ! there is another date
-datesloop: do idate = 1, maxNoDates
+    datesloop: do idate = 1, maxNoDates
       !print*,"Datesloop: idate=",idate
       word_count = count_words(inline)
       if ( word_count == 3 ) then
@@ -305,7 +284,7 @@ datesloop: do idate = 1, maxNoDates
         end_of_file = .true.
         return
       end if
- 
+
       ! Date strings can begin with - indicating the year is
       ! missing and that the file belongs to no year in particular.
       ! To convert dates to SDP toolkit (TAI) times (Seconds since start of
@@ -323,7 +302,7 @@ datesloop: do idate = 1, maxNoDates
       backspace ( unit=unit )
       !print*,"About to read data: inline=",inline
       !print*,"tmpfield has size:",size(tmpfield),shape(tmpfield)
- 
+
       read ( unit=unit, fmt=* ) tmpfield(:,:,:,:,:,idate)
       !print*,"Read data"
       end_of_file = .false.
@@ -365,7 +344,7 @@ datesloop: do idate = 1, maxNoDates
     field%field = tmpfield(:,:,:,:,:,1:field%noDates)
     deallocate(tmpfield,dateStarts,dateEnds)
 
-! Normal termination--assume field is valid maybe even correct
+    ! Normal termination--assume field is valid maybe even correct
     if ( present(ErrType) ) then
       ErrType = 0
     end if
@@ -955,6 +934,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.11  2001/07/12 23:28:39  livesey
+! Tidied up a bit.  More work needs to come here.
+!
 ! Revision 2.10  2001/05/07 23:24:16  pwagner
 ! Removed unused prints; detached from toolkit
 !
