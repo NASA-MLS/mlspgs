@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 program MLSL2
   use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION, TRACKALLOCATES, &
@@ -29,8 +29,8 @@ program MLSL2
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Warning, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
   use MLSStrings, only: lowerCase
-  use MLSStringLists, only: catLists, GetUniqueList, &
-    & RemoveElemFromList, unquote
+  use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
+    & NumStringElements, RemoveElemFromList, unquote
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, NEWLINE, OUTPUT, OUTPUT_DATE_AND_TIME, PRUNIT
   use PARSER, only: CONFIGURATION
@@ -144,6 +144,8 @@ program MLSL2
   real :: T0, T1, T2               ! For timing
   logical :: Timing = .false.      ! -T option is set
   character(len=FILENAMELEN) :: L2CF_file       ! Some text
+  character(len=len(switches)) :: removeSwitches = ''
+  character(len=16) :: aSwitch
   character(len=len(switches)) :: tempSwitches
   character(len=2048) :: WORD      ! Some text
   character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
@@ -501,6 +503,9 @@ program MLSL2
         case ( 'M' ); prunit = -2
         case ( 'm' ); prunit = -1
         case ( 'p' ); toggle(par) = .true.
+        case ( 'R' ) ! This does the opposite of what S does
+          removeSwitches = catLists(trim(removeSwitches), line(j+1:))
+          exit ! Took the rest of the string, so there can't be more options
         case ( 'S' )
           switches = catLists(trim(switches), line(j+1:))
           exit ! Took the rest of the string, so there can't be more options
@@ -541,10 +546,20 @@ program MLSL2
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
    call switch_usage
   end if
+  ! Remove any quote marks from RemoveSwitches array
+  tempSwitches = unquote(removeSwitches, quotes=quotes, stripany=.true.)
+  call GetUniqueList(tempSwitches, removeSwitches, numSwitches, countEmpty=.true., &
+        & ignoreLeadingSpaces=.true.)
   ! Remove any quote marks from switches array
   tempSwitches = unquote(switches, quotes=quotes, stripany=.true.)
   call GetUniqueList(tempSwitches, Switches, numSwitches, countEmpty=.true., &
         & ignoreLeadingSpaces=.true.)
+  ! Remove any switches embedded in the removeSwitches option 'R'
+  do i=1, NumStringElements(removeSwitches, countEmpty=.true.)
+    call GetStringElement(trim(removeSwitches), aSwitch, i, countEmpty=.true.)
+    call RemoveElemFromList(switches, tempSwitches, trim(aSwitch))
+    switches = tempSwitches
+  enddo
   if ( parallel%slave ) then
   ! Don't dump all the chunks agagin and again for each slave's chunk
     call RemoveElemFromList(switches, tempSwitches, 'chu')
@@ -1001,6 +1016,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.131  2005/03/03 00:23:42  pwagner
+! Added -Rs1,s2,.. Removeswitches option
+!
 ! Revision 2.130  2005/01/22 00:39:08  pwagner
 ! Reversed buggy evercrash option
 !
