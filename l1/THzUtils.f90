@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -26,6 +26,8 @@ MODULE THzUtils
        "RF Forward Power ", "Max FIR Power    ", "RFPA AGC         ", &
        "FIR Thermopile   ", "+5 V Supply      ", "+12 V Supply     ", &
        "-12 V Supply     " /)
+  CHARACTER (LEN=5), PARAMETER :: ack7 = CHAR(250)//CHAR(250)//CHAR(3)// &
+       CHAR(0)//CHAR(7)
 
 CONTAINS
 
@@ -38,8 +40,6 @@ CONTAINS
     REAL :: Bias
 
     CHARACTER (LEN=80) :: DN
-    CHARACTER (LEN=5), PARAMETER :: ack7 = CHAR(250)//CHAR(250)//CHAR(3)//&
-         CHAR(0)//CHAR(7)
     CHARACTER (LEN=5), PARAMETER :: msg01 = CHAR(250)//CHAR(250)//CHAR(11)//&
          CHAR(1)//CHAR(28)
     CHARACTER (LEN=5), PARAMETER :: msg02 = CHAR(250)//CHAR(250)//CHAR(35)//&
@@ -50,8 +50,8 @@ CONTAINS
 
     IF (MIF == 141) THEN    ! Could be re-optimizing
 
-       IF (DN(7:11) == msg01 .AND. DN(16:16) == CHAR(1) .AND. DN(27:31) == &
-            msg02) DN = DN(21:80)
+       IF (DN(7:11) == msg01 .AND. DN(16:16) == CHAR(1) .AND. &
+            DN(27:31) == msg02) DN = DN(21:80)
 
     ENDIF
     IF (DN(1:5) == ack7) THEN
@@ -81,8 +81,6 @@ CONTAINS
          1.0, 1.0, 1.0, 3.5636, 6.84, 1.0, 2.0, 6.0 /)
 
     CHARACTER (LEN=2) :: cdat
-    CHARACTER (LEN=5), PARAMETER :: ack7 = CHAR(250)//CHAR(250)//CHAR(3)//&
-         CHAR(0)//CHAR(7)
 
     INTEGER :: i, n1
     REAL :: xdn
@@ -118,6 +116,9 @@ CONTAINS
 END MODULE THzUtils
 
 ! $Log$
+! Revision 2.4  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.3  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !

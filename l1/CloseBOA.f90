@@ -31,7 +31,7 @@ CONTAINS
     USE L1BOAutils, ONLY: WriteHdrAnnots
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
     USE HDF5, ONLY: H5gClose_f, H5gOpen_f
-    USE MLSHDF5, ONLY: MakeHDF5Attribute, mls_h5close
+    USE MLSHDF5, ONLY: MakeHDF5Attribute, MLS_h5close
 
     INTEGER :: returnStatus, error, grp_id
 
@@ -51,7 +51,7 @@ CONTAINS
 
 !! Close the HDF 5 Fortran Interface
 
-    CALL mls_h5close (error)
+    CALL MLS_h5close (error)
     IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          "Fortran HDF 5 API error on closing.")
     
@@ -61,6 +61,9 @@ CONTAINS
 END MODULE CloseBOA
 !=============================================================================
 ! $Log$
+! Revision 2.4  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.3  2004/05/06 21:59:23  pwagner
 ! Uses mls_h5open/close
 !
