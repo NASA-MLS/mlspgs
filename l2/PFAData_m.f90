@@ -4,10 +4,11 @@
 module PFAData_m
 
   ! Read the PFA data file(s).  Build a database.  Provide for access to it.
+  ! Setup to make the PFA Data tables, as specified by a MakePFA statement.
 
   implicit NONE
   private
-  public :: Get_PFAdata_from_l2cf
+  public :: Get_PFAdata_from_l2cf, Make_PFAData, Write_PFAData
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -40,7 +41,7 @@ contains ! =====     Public Procedures     =============================
     use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, RK, &
       & Write_PFADatum
     use Physics, only: SpeedOfLight
-    use String_Table, only: Get_String
+    use String_Table, only: Create_String, Get_String
     use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_Checker, only: Check_Type
     use Tree_Types, only: N_String
@@ -72,8 +73,9 @@ contains ! =====     Public Procedures     =============================
     real(ck) :: C = speedOfLight / 1000.0_ck ! km/s
     logical, pointer :: Channels(:)
     integer :: dAbsDncTree, dAbsDnuTree, dAbsDwcTree
-    integer :: Field, FileIndex ! Where in the tree is the filename?
+    integer :: Field, FileIndex, FilterFileIndex ! Where in the tree is the filename?
     character(255) :: FileName, FileType ! Formatted(default), Unformatted
+    character(255) :: FilterFile ! From PFAData file, not from L2cf
     logical :: Got(field_first:field_last)
     integer :: I, IOStat, J
     character(127) :: Line      ! of formatted PFA data file
@@ -105,15 +107,16 @@ contains ! =====     Public Procedures     =============================
         dAbsDnuTree = son
       case ( f_dAbsDwc )
         dAbsDwcTree = son
-      case ( f_file )
+      case ( f_file ) ! "filename" [: "<format>"]
         fileIndex = subtree(2,son)
-        fileType = 'unformatted'
-        if ( node_id(fileIndex) /= n_string ) then
+        fileType = 'UNFORMATTED'
+        if ( node_id(fileIndex) /= n_string ) then ! must be n_*colon
           call get_string( sub_rosa(subtree(2,fileIndex)), fileType, strip=.true. )
           fileIndex = subtree(1,fileIndex)
         end if
         call get_string ( sub_rosa(fileIndex), fileName, strip=.true. )
       case ( f_molecules )
+        nullify ( pfaDatum%molecules )
         call allocate_test ( pfaDatum%molecules, nsons(son)-1, &
           & 'pfaDatum%molecules', moduleName )
         do j = 2, nsons(son)
@@ -156,6 +159,8 @@ contains ! =====     Public Procedures     =============================
     nTemps = pfaDatum%tGrid%noSurfs
     nArrays = nPress * nTemps + 1
 
+    ! Nullify shouldn't be needed, but just to be safe....
+    nullify ( pfaDatum%absorption, pfaDatum%dAbsDnc, pfaDatum%dAbsDnu, pfaDatum%dAbsDwc )
     call allocate_test ( pfaDatum%absorption, nTemps, nPress, 'pfaDatum%absorption', moduleName )
     call allocate_test ( pfaDatum%dAbsDnc,    nTemps, nPress, 'pfaDatum%dAbsDnc',    moduleName )
     call allocate_test ( pfaDatum%dAbsDnu,    nTemps, nPress, 'pfaDatum%dAbsDnu',    moduleName )
@@ -212,6 +217,12 @@ contains ! =====     Public Procedures     =============================
               pfaDatum%molecules(i) = getLitIndexFromString ( line(:j) )
               if ( .not. check_type ( t_molecule, pfaDatum%molecules(i) ) ) &
                 & call announce_error ( fileIndex, notMolecule, line(:j) )
+              pfaDatum%filterFile = 0
+              read ( lun, iostat=iostat ) j, filterFile(:j)
+              if ( iostat > 0 ) &
+                & call announce_error ( fileIndex, cannotRead, fileName, iostat )
+              if ( iostat == 0 ) pfaDatum%filterFile = &
+                & create_string ( filterFile(:j), caseless=.false. )
             end do
           end if
         else if ( capitalize(fileType) == 'HDF' ) then ! HDF
@@ -369,6 +380,238 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Get_PFAdata_from_l2cf
 
+  ! -----------------------------------------------  Make_PFAData  -----
+  subroutine Make_PFAData ( Root, VGrids, Error )
+
+    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
+    use Create_PFAData_m, only: Create_PFAData
+    use Expr_m, only: Expr
+    use Init_Tables_Module, only: F_LOSVEL, F_Molecules, F_Signals, &
+      & F_Temperatures, F_VGrid, L_Zeta
+    use Intrinsic, only: PHYQ_Velocity
+    use MLSCommon, only: RP
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
+      & MLSMSG_Error
+    use MLSSignals_m, only: Signal_T, Signals
+    use MoreTree, only: Get_Field_ID
+    use Parse_Signal_m, only: Parse_Signal
+    use String_Table, only: Get_String
+    use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree
+    use Tree_types, only: N_Array
+    use VGridsDatabase, only: VGrid_t
+
+    integer, intent(in) :: Root ! of the MakePFA subtree
+    type(vGrid_T), intent(in), target :: VGrids(:) ! Both temperature and pressure
+    integer, intent(out) :: Error
+
+    logical, pointer :: Channels(:)
+    integer :: Field, I, J, K, Son
+    real(rp) :: LosVel
+    integer, pointer :: Molecules(:)
+    type(signal_t), pointer :: MySignals(:), SignalsTemp(:)
+    integer :: Sideband
+    character(127) :: Signal
+    integer, pointer :: SignalIndices(:)
+    integer :: Stat
+    type(vGrid_T), pointer :: TGrid, VGrid
+    integer :: Units(2) ! of losVel
+    double precision :: Values(2) ! of losVel
+
+    ! Error codes
+    integer, parameter :: NoFolded = 1
+    integer, parameter :: NoGroup = noFolded + 1
+    integer, parameter :: NotVelocity = noGroup + 1
+    integer, parameter :: NotZeta = notVelocity + 1
+    integer, parameter :: SignalParse = notZeta + 1
+
+    ! Gather the data from the command
+    error = 0
+    nullify ( signalIndices )
+    allocate ( mySignals(0), stat=stat )
+    if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Allocate // 'Signals' )
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = get_field_id(son)
+      select case ( field )
+      case ( f_losvel )
+        call expr ( subtree(2,son), units, values ) ! can't be a range
+        if ( units(1) /= phyq_velocity ) call announce_error ( son, notVelocity )
+        losVel = values(1)
+      case ( f_molecules )
+        nullify ( molecules )
+        call allocate_test ( molecules, nsons(son)-1, 'molecules', moduleName )
+        do j = 2, nsons(son)
+          k = subtree(j,son)
+          if ( node_id(k) == n_array ) call announce_error ( son, noGroup )
+          molecules(j-1) = decoration(k)
+        end do
+      case ( f_signals )
+        nullify ( channels )
+        do j = 2, nsons(son)
+          call get_string ( sub_rosa(subtree(j,son)), signal, strip=.true. )
+          call parse_signal ( signal, signalIndices, tree_index=son, &
+            & sideband=sideband, channels=channels )
+          if ( .not. associated(signalIndices) ) & ! A parse error occurred
+            & call announce_error ( subtree(j,son), signalParse, signal )
+          if ( sideband == 0 ) &
+            & call announce_error ( subtree(j,son), noFolded, signal )
+          signalsTemp => mySignals
+          allocate ( mySignals(size(signalsTemp)+size(signalIndices)), stat=stat )
+          if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & MLSMSG_Allocate // 'Signals' )
+          mySignals(:size(signalsTemp)) = signalsTemp
+          mySignals(size(signalsTemp)+1:) = signals(signalIndices)
+          mySignals(size(signalsTemp)+1:)%sideband = sideband
+          ! Unlike the full forward model, use all of the matching signals.
+          do k = size(signalsTemp)+1, size(mySignals)
+            mySignals(k)%sideband = sideband
+            ! Don't hose channels in database
+            nullify ( mySignals(k)%channels )
+            call allocate_test ( mySignals(k)%channels, &
+              & size(mySignals(k)%frequencies), 'mySignals%channels', &
+              & ModuleName ) ! , lowBound=lbound(mySignals(k)%frequencies,1) )
+            if ( associated(channels) ) then
+              mySignals(k)%channels(1:lbound(channels,1)-1) = .false.
+              mySignals(k)%channels(lbound(channels,1):ubound(channels,1)) = &
+                & channels
+              mySignals(k)%channels(ubound(channels,1)+1:) = .false.
+            else
+              mySignals(k)%channels = .true.
+            end if
+          end do ! k
+          call deallocate_test ( channels, 'Channels', moduleName )
+          call deallocate_test ( signalIndices, 'signalIndices', moduleName )
+          deallocate ( signalsTemp, stat=stat )
+          if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & MLSMSG_DeAllocate // 'SignalsTemp' )
+        end do ! j
+      case ( f_temperatures )
+        tGrid => vgrids(decoration(decoration(subtree(2,son))))
+      case ( f_vGrid )
+        vGrid => vgrids(decoration(decoration(subtree(2,son))))
+        if ( vGrid%verticalCoordinate /= l_zeta ) &
+          & call announce_error ( subtree(1,son), notZeta )
+      end select
+    end do ! i
+    if ( error /= 0 ) return
+
+    call decorate ( root, &
+      & create_PFAData ( molecules, mySignals, tGrid, vGrid, losVel, root ) )
+
+  contains
+
+    ! ...........................................  Announce_Error  .....
+    subroutine Announce_Error ( Where, What, String )
+      use MoreTree, only: StartErrorMessage
+      use Output_m, only: Output
+      integer, intent(in) :: Where             ! Tree node index
+      integer, intent(in) :: What              ! Error index
+      character(len=*), intent(in), optional :: String
+      error = 1
+      call startErrorMessage ( where )
+      select case ( what )
+      case ( noFolded )
+        call output ( 'Folded sidaband PFA not allowed: ' )
+        call output ( trim(string), advance='yes' )
+      case ( noGroup )
+        call output ( 'Molecule groups not allowed.', advance='yes' )
+      case ( notVelocity )
+        call output ( 'Units are not velocity.', advance='yes' )
+      case ( notZeta )
+        call output ( 'Vertical coordinate for pressure grid must be Zeta.', &
+          & advance='yes' )
+      case ( signalParse )
+        call output ( 'Unable to parse signal ' )
+        call output ( trim(string), advance='yes' )
+      end select
+    end subroutine Announce_Error
+
+  end subroutine Make_PFAData
+
+  ! ----------------------------------------------  Write_PFAData  -----
+  subroutine Write_PFAData ( Root, Error )
+
+    ! Write PFA data on a file generated from the file= field, the molecule,
+    ! and the signal.  If the file= field is a range, the second element
+    ! specifies the format.  Default is "UNFORMATTED".
+
+    use Init_Tables_Module, only: F_AllPFA, F_File, F_PFAData
+    use MoreTree, only: Get_Boolean, Get_Field_ID
+    use PFADataBase_m, only: PFAData, Write_PFADatabase, Write_PFADatum
+    use String_Table, only: Get_String
+    use Tree, only: Decoration, Node_Id, NSons, Sub_Rosa, Subtree
+    use Tree_Types, only: N_String
+
+    integer, intent(in) :: Root ! of the MakePFA subtree, below name if any
+    integer, intent(out) :: Error ! 0 => OK
+
+    logical :: AllPFA
+    integer :: Field, FileIndex ! Where in the tree is the filename?
+    character(255) :: FileName, FileType ! Unformatted(default), ???
+    integer :: I
+    integer :: PFATree          ! Tree index of PFAData=...
+    integer :: Son
+
+    integer, parameter :: AtLeastOne = 1           ! Either allPFA and pfaDATA
+    integer, parameter :: NotBoth = atLeastOne + 1 ! not both allPFA and pfaDATA
+
+    allPFA = .false.
+    error = 0
+    pfaTree = 0
+    do i = 2, nsons(root)
+      son = subtree(i,root)
+      field = get_field_id(son)
+      select case ( field )
+      case ( f_allPFA )
+        allPFA = get_boolean(son)
+      case ( f_file )
+        fileIndex = subtree(2,son)
+        fileType = 'UNFORMATTED'
+        if ( node_id(fileIndex) /= n_string ) then ! must be n_*colon
+          call get_string( sub_rosa(subtree(2,fileIndex)), fileType, strip=.true. )
+          fileIndex = subtree(1,fileIndex)
+        end if
+        call get_string ( sub_rosa(fileIndex), fileName, strip=.true. )
+      case ( f_pfaData )
+        pfaTree = son
+      end select
+    end do
+
+    if ( .not. allPFA .and. pfaTree == 0 ) call announce_error ( root, atLeastOne )
+    if ( allPFA .and. pfaTree /= 0 )  call announce_error ( root, notBoth )
+
+    if ( error /= 0 ) return
+
+    if ( allPFA ) then
+      call write_PFADataBase ( fileName, fileType )
+    else
+      do i = 2, nsons(pfaTree)
+        call write_PFADatum ( pfaData(decoration(decoration(subtree(i,pfaTree)))), &
+          & fileName, fileType, useMolecule=.true. )
+      end do
+    end if
+
+  contains
+
+    ! ...........................................  Announce_Error  .....
+    subroutine Announce_Error ( Where, What )
+      use MoreTree, only: StartErrorMessage
+      use Output_m, only: Output
+      integer, intent(in) :: Where             ! Tree node index
+      integer, intent(in) :: What              ! Error index
+      error = 1
+      call startErrorMessage ( where )
+      select case ( what )
+      case ( atLeastOne )
+        call output ( 'Either AllPFA or PFAData is required', advance='yes' )
+      case ( notBoth )
+        call output ( 'Cannot specify both AllPFA and PFAData', advance='yes' )
+      end select
+    end subroutine Announce_Error
+
+  end subroutine Write_PFAData
+
 ! =====     Private Procedures     =====================================
 
   logical function not_used_here()
@@ -378,6 +621,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.11  2004/12/13 23:58:48  vsnyder
+! Add Make_PFAData; add HDF5 to Write_PFAData
+!
 ! Revision 2.10  2004/09/25 00:29:44  vsnyder
 ! Don't know how the defective one got committed....
 !
