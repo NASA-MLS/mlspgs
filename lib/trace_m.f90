@@ -24,11 +24,12 @@ module TRACE_M
 
 contains ! ====     Public Procedures     ==============================
 ! --------------------------------------------------  TRACE_BEGIN  -----
-  subroutine TRACE_BEGIN ( NAME, ROOT )
+  subroutine TRACE_BEGIN ( NAME, ROOT, INDEX )
   ! Print "ENTER NAME with ROOT = <node_id(root)>" with DEPTH dots in
   ! front.  Increment DEPTH.
     character(len=*), intent(in) :: NAME
     integer, intent(in), optional :: ROOT
+    integer, intent(in), optional :: INDEX
     integer :: I              ! Loop inductor
     integer :: Values(8)      ! For Date_and_time
     if ( present(root) ) then
@@ -40,6 +41,7 @@ contains ! ====     Public Procedures     ==============================
       call output ( '.' )
     end do
     call output ( 'Enter ' ); call output ( name )
+    if ( present(index) ) call output( index )
     call date_and_time ( values=values )
     call output ( ' at ' )
     call output ( values(5) ); call output ( ':' )     ! The hour
@@ -61,9 +63,10 @@ contains ! ====     Public Procedures     ==============================
     depth = depth + 1
   end subroutine TRACE_BEGIN
 ! --------------------------------------------------    TRACE_END  -----
-  subroutine TRACE_END ( NAME )
+  subroutine TRACE_END ( NAME, INDEX )
   ! Decrement DEPTH.  Print "EXIT NAME with DEPTH dots in front.
     character(len=*), intent(in) :: NAME
+    integer, intent(in), optional :: INDEX
     integer :: I              ! Loop inductor
     integer :: Values(8)      ! For Date_and_time
     real :: T                 ! For timing
@@ -73,26 +76,30 @@ contains ! ====     Public Procedures     ==============================
       call output ( '.' )
     end do
     call output ( 'Exit ' ); call output ( name )
+    if ( present(index) ) call output( index )
     call date_and_time ( values=values )
     call output ( ' at ' )
-    call output ( values(5), 2, 'no', .true. ); call output ( ':' ) ! hour
-    call output ( values(6), 2, 'no', .true. ); call output ( ':' ) ! minute
-    call output ( values(7), 2, 'no', .true. ); call output ( '.' ) ! second
+    call output ( values(5) ); call output ( ':' ) ! hour
+    call output ( values(6) ); call output ( ':' ) ! minute
+    call output ( values(7) ); call output ( '.' ) ! second
     if ( depth >= 0 .and. depth < clockStackMax ) then
       call cpu_time ( t )
       clockStack(depth) = t - clockStack(depth)
-      call output ( values(8), 3, 'no', .true. )        ! milliseconds
+      call output ( values(8) )        ! milliseconds
       call output ( ' used ' )
 !     call output ( dble(clockStack(depth) - clockStack(depth+1)), &
 !       & format='(g10.3)', advance='yes' )
       call output ( dble(clockStack(depth)), format='(g10.3)', advance='yes' )
     else
-      call output ( values(8), 3, 'yes', .true. )        ! milliseconds
+      call output ( values(8), advance='yes' )        ! milliseconds
     end if
   end subroutine TRACE_END
 end module TRACE_M
 
 ! $Log$
+! Revision 2.9  2001/09/13 19:36:50  livesey
+! Added optional index arguments
+!
 ! Revision 2.8  2001/05/03 02:13:25  vsnyder
 ! Trying to print time exclusive of calls isn't working
 !
