@@ -408,8 +408,8 @@ contains ! =====     Public procedures     =============================
              l+l_refGPH, l+l_rhi, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scVelECI, &
              l+l_scVelECR, l+l_scGeocAlt, l+l_sidebandRatio, &
-             l+l_spaceRadiance, l+l_surfacetype, l+l_temperature,&
-             l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
+             l+l_spaceRadiance, l+l_surfacetype, l+l_systemTemperature, &
+             l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, l+l_tngtGeocAlt, &
              l+l_totalExtinction, l+l_vmr, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
@@ -617,6 +617,8 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_noFineGrid, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_noise, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_noiseBandwidth, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_precision, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_precisionFactor, t+t_numeric, n+n_field_type/))
@@ -646,8 +648,9 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec/))
      call acorn((/begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec/))
      call acorn((/begin, f+f_spread, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_systemTemperature, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_systemTemperature, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -893,6 +896,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.219  2002/05/14 00:27:22  livesey
+! Added system temperature and noise bandwidth quantity types
+!
 ! Revision 2.218  2002/05/07 20:25:59  livesey
 ! Added writeCounterMAF option for l2aux
 !
