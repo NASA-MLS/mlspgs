@@ -169,7 +169,7 @@ CONTAINS
        CALL SetupNewQuantityTemplate(qty,noSubVectors=noMAFs, &
             & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE.,&
             & stacked=.FALSE.,regular=regular,subVectorLen=subVectorLen,&
-            & storeByChannel=storeByChannel)
+            & storeByChannel=storeByChannel,minorFrame=.TRUE.)
 
        ! Now we're going to deal with a VGrid for this quantity
 
@@ -227,7 +227,7 @@ CONTAINS
   ! passed in an mlscf line.
   
   SUBROUTINE CreateQtyTemplateFromMLSCFInfo(qty,cfInfo,hGrids,vGrids, &
-       & l1bInfo,chunk,mlsSignalsDatabase,mifGeolocation)
+       & l1bInfo,chunk,mifGeolocation)
 
     ! Dummy arguments
     TYPE (QuantityTemplate_T), INTENT(OUT) :: qty
@@ -236,7 +236,6 @@ CONTAINS
     TYPE (VGrid_T), DIMENSION(:), INTENT(IN) :: vGrids
     TYPE (l1bInfo_T), INTENT(IN) :: l1bInfo
     TYPE (MLSChunk_T), INTENT(IN) :: chunk
-    TYPE (MLSSignalsDatabase_T), INTENT(IN) :: mlsSignalsDatabase
     TYPE (QuantityTemplate_T), DIMENSION(:), INTENT(IN), OPTIONAL :: &
          & mifGeolocation
 
@@ -365,11 +364,11 @@ CONTAINS
 
        SELECT CASE(quantityType)
        CASE(QTY_Ptan)
-          CALL ParseMLSSignalRequest(radiometer,mlsSignalsDatabase,signals)
+          CALL ParseMLSSignalRequest(radiometer,signals)
           instrumentModule=signals(1)%instrumentModule
           CALL DestroyMLSSignalsInfo(signals)
        CASE (QTY_Radiance)
-          CALL ParseMLSSignalRequest(band,mlsSignalsDatabase,signals)
+          CALL ParseMLSSignalRequest(band,signals)
           IF (SIZE(signals)>1) CALL MLSMessage(MLSMSG_Error,ModuleName,&
                & "Only one matching signal allowed: "//band)
           noChans=signals(1)%noChannelsInBand
@@ -408,6 +407,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.3  2000/01/11 22:51:34  livesey
+! Dealt with ramifications of change from read_parse_l2cf to MLSCF
+!
 ! Revision 1.2  1999/12/18 01:07:00  livesey
 ! Change vGrids and hGrids from pointer to intent(in)
 !
