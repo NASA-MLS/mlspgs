@@ -45,7 +45,7 @@ contains
       & F_mask, F_maxJ, F_measurements, F_measurementSD, F_method, F_muMin, &
       & F_opticalDepth, F_opticalDepthCutoff, F_outputCovariance, F_outputSD, &
       & F_phaseName, F_ptanQuantity, F_quantity, &
-      & F_regAfter, F_regApriori, F_serial, F_state, F_toleranceA, F_toleranceF, &
+      & F_regAfter, F_regApriori, F_reset, F_serial, F_state, F_toleranceA, F_toleranceF, &
       & F_toleranceR, f_vRegOrders, f_vRegQuants, &
       & f_vRegWeights, f_vRegWeightVec, Field_first, Field_last, &
       & L_apriori, L_covariance, &
@@ -224,6 +224,7 @@ contains
     integer, parameter :: NotSPD = notGeneral + 1    ! Not symmetric pos. definite
     integer, parameter :: RangeNotAppropriate = NotSPD + 1
     integer, parameter :: WrongUnits = RangeNotAppropriate + 1
+    integer, parameter :: MustHaveOne = WrongUnits + 1
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
@@ -653,6 +654,9 @@ contains
         call output ( '" field shall have ' )
         call output ( trim(string) )
         call output ( ' units.', advance='yes' )
+      case ( mustHaveOne )
+        call output ( 'Must supply one and only one of height, ignore or reset', &
+          & advance='yes' )
       end select
     end subroutine AnnounceError
 
@@ -2957,6 +2961,7 @@ contains
       logical :: Got(field_first:field_last)   ! "Got this field already"
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
       logical :: IGNORE                 ! Flag
+      logical :: RESET                  ! Flag
       logical :: DOTHISCHANNEL          ! Flag
       logical :: DOTHISHEIGHT           ! Flag
       integer, parameter ::                      MAXCOLUMNS = 127
@@ -2967,6 +2972,7 @@ contains
       nullify ( channels, qty, ptan, opticalDepth )
       got = .false.
       ignore = .false.
+      reset = .false.
       maskBit = m_linalg
       do j = 2, nsons(key) ! fields of the "subset" specification
         son = subtree(j, key)
@@ -3013,6 +3019,8 @@ contains
           opticalDepthCutoff = value(1)
         case ( f_ignore )
           ignore = Get_Boolean ( son )
+        case ( f_reset )
+          reset = Get_Boolean ( son )
         case default
           ! Shouldn't get here if the type checker worked
         end select
@@ -3044,10 +3052,13 @@ contains
         end if
       end if
 
+      ! Check that got one of ignore, height, reset
+      if ( count ( got ( (/ f_ignore, f_height, f_reset /) ) ) /= 1 ) &
+        & call announceError ( MustHaveOne )
+
       ! Preprocess the height stuff.  
       heightUnit = phyq_dimensionless
       if ( got(f_height) ) then
-        if ( ignore ) call announceError ( inconsistent, f_height, f_ignore )
         do j = 2, nsons(heightNode)
           call expr ( subtree(j,heightNode), units, value, type )
           ! Make sure the range has non-dimensionless units -- the type
@@ -3098,7 +3109,8 @@ contains
         end if
 
         ! Now, make sure for the channels we're considering that the
-        ! default is to ignore all
+        ! default is to ignore all, unless we've not got a heights or ignore
+        ! in which case we default to use all
         if ( got(f_height) .or. ignore ) then
           do channel = 1, qty%template%noChans
             doThisChannel = .true.
@@ -3113,6 +3125,23 @@ contains
               end do                    ! Height loop
             end if                      ! Do this channel
           end do                        ! Channel loop
+        else
+          ! If not got heights and/or ignore, default must be 
+          if ( reset ) then
+            do channel = 1, qty%template%noChans
+              doThisChannel = .true.
+              if ( associated(channels) ) doThisChannel = channels(channel)
+              if ( doThisChannel ) then
+                do height = 1, qty%template%noSurfs
+                  !??? Make sure mask bit numbers begin at 1, even when
+                  !??? channel numbers don't.
+                  call ClearMask ( qty%mask(:,instance), &
+                    & (/ channel+qty%template%noChans*(height-1) /), &
+                    & what=maskBit )
+                end do                  ! Height loop
+              end if                    ! Do this channel
+            end do                      ! Channel loop
+          end if                        ! Reset specified
         end if                          ! Got heights or ignore
 
         ! Now go and `unmask' the ones we want to consider.  For coherent
@@ -3327,6 +3356,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.209  2003/01/07 23:44:17  livesey
+! Added reset option to subset
+!
 ! Revision 2.208  2002/12/11 01:58:54  livesey
 ! Changed detail of forward model parallel stuff
 !
