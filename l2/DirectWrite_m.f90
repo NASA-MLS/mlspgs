@@ -39,16 +39,6 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   private :: not_used_here 
   !-----------------------------------------------------------------------------
 
-  interface DirectWrite_L2GP
-    module procedure DirectWrite_L2GP_fileID
-    module procedure DirectWrite_L2GP_fileName
-  end interface
-
-  interface DirectWrite_L2Aux
-    module procedure DirectWrite_L2Aux_fileID
-    ! module procedure DirectWrite_L2Aux_fileName
-  end interface
-
   type DirectData_T
     integer :: type ! l_l2aux or l_l2gp  ! should be at least L2GPNameLen
     character(len=80), dimension(:), pointer :: sdNames => null()
@@ -108,88 +98,10 @@ contains ! ======================= Public Procedures =========================
     end if
   end subroutine DestroyDirectDatabase
 
-  ! ----------------------------------------------- DirectWrite_L2GP --------
-  subroutine DirectWrite_L2GP_filename ( quantity, quantity_precision, sdName, &
-    & file, chunkNo, hdfVersion, firstProf, lastProf, createSwath )
-
-    ! Purpose:
-    ! Write standard hdfeos-formatted files ala l2gp for datasets that
-    ! are too big to keep all chunks stored in memory
-    ! so instead write them out profile-by-profile
-    use Hdf, only: DFACC_CREATE, DFACC_RDWR
-    use L2GPData, only: L2GPNameLen
-    use MLSFiles, only:  &
-      & GetPCFromRef, split_path_name, mls_exists, &
-      & mls_io_gen_openF, mls_io_gen_closeF
-    use MLSL2Options, only: TOOLKIT
-    use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end
-
-    type (VectorValue_T), intent(in) :: QUANTITY
-    type (VectorValue_T), pointer :: QUANTITY_PRECISION
-    ! integer, intent(in) :: SDNAME       ! Name of sd in output file
-    character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
-    integer, intent(in) :: FILE         ! Name of output file
-    integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
-    integer, intent(in)              :: chunkNo
-    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
-    logical, intent(in), optional :: createSwath
-    ! Local parameters
-    logical, parameter :: DEBUG = .FALSE.
-    character (len=132) :: FILE_BASE    ! From the FILE location in string table
-    character (len=1024) :: FILENAME    ! The actual filename
-    integer :: L2gpFileHandle, L2gp_Version
-    integer, parameter :: MAXFILES = 100             ! Set for an internal array
-    character (len=132) :: path
-    character (len=L2GPNameLen) :: swathname    ! From the FILE location in string table
-    integer :: fileaccess               ! DFACC_CREATE or DFACC_RDWR
-    integer :: record_length
-    integer :: ReturnStatus
-    ! executable code
-
-    ! Setup information, sanity checks etc.
-    call get_string ( file, file_base, strip=.true. )
-    ! call get_string ( sdname, swathname, strip=.true. )
-    swathname=sdName
-    L2gp_Version = 1
-    if ( TOOLKIT ) then
-      call split_path_name(file_base, path, file_base)
-      if ( DEBUG ) call output('file_base after split: ', advance='no')
-      if ( DEBUG ) call output(trim(file_base), advance='yes')
-
-      L2gpFileHandle = GetPCFromRef(file_base, &
-      & mlspcf_l2gp_start, mlspcf_l2gp_end, &
-      & TOOLKIT, returnStatus, L2gp_Version, DEBUG, &
-      & exactName=Filename)
-    else
-      Filename = file_base
-      returnStatus = 0
-    end if
-    if ( returnStatus /= 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-         &  "Error finding l2gp file matching:  "// trim(file_base))
-    endif
-    if ( mls_exists(trim(Filename)) == 0 ) then
-      fileaccess = DFACC_RDWR
-    else
-      fileaccess = DFACC_CREATE
-    endif
-    L2gpFileHandle = mls_io_gen_openF('sw', .true., returnStatus, &
-        & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
-    call DirectWrite_L2GP_fileID( L2gpFileHandle, &
-      & quantity, quantity_precision, sdName, chunkNo, &
-      & hdfVersion, firstProf, lastProf, filename=filename, &
-      & createSwath=createSwath )
-    ReturnStatus = mls_io_gen_closeF('swclose', L2gpFileHandle, &
-      & FileName=FileName, hdfVersion=hdfVersion)
-    if ( ReturnStatus /= 0 ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-       & "Unable to close L2gp file: " // trim(FileName) // ' after reading')
-  end subroutine DirectWrite_L2GP_filename
-
-  ! ------------------------------------------ DirectWrite_L2GP_fileID --------
-  subroutine DirectWrite_L2GP_fileID ( L2gpFileHandle, &
+  ! ------------------------------------------ DirectWrite_L2GP --------
+  subroutine DirectWrite_L2GP ( L2gpFileHandle, &
     & quantity, quantity_precision, sdName, chunkNo, &
-    & hdfVersion, firstProf, lastProf, fileName, createSwath )
+    & hdfVersion, fileName, createSwath )
 
     ! Purpose:
     ! Write standard hdfeos-formatted files ala l2gp for datasets that
@@ -205,55 +117,47 @@ contains ! ======================= Public Procedures =========================
     character(len=*), intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
     integer, intent(in)              :: chunkNo
-    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
     character(len=*), intent(in), optional :: FILENAME
     logical, intent(in), optional :: createSwath
-    ! Local parameters
+    ! Local variables
     type (L2GPData_T) :: l2gp
-    logical, parameter :: DEBUG = .FALSE.
-    ! character (len=L2GPNameLen) :: swathname    ! From the FILE location in string table
-    integer :: offset
-    integer :: myFirstProf
-    integer :: myLastProf
-    integer :: FirstInstance
-    integer :: LastInstance
-    integer :: TotNumProfs
-    ! executable code qty%template%instanceOffset + 1
-    
-    ! Non-overlapped portion of quantity:
-    FirstInstance = quantity%template%noInstancesLowerOverlap+1
-    LastInstance = quantity%template%noInstances- &
-        & quantity%template%noInstancesUpperOverlap
-        
-    myFirstProf = 1
-    if ( present(firstprof) ) myFirstProf = firstprof
-    myLastProf = quantity%template%grandTotalInstances
-    if ( present(lastprof) ) myLastProf = lastprof
+    integer :: OFFSET
+    integer :: FIRSTINSTANCE
+    integer :: LASTINSTANCE
+    integer :: TOTALPROFS
+    integer :: NOTOWRITE
 
-    TotNumProfs = myLastProf
-    offset = myFirstProf - 1
-    if ( .not. present(firstprof) ) offset=quantity%template%instanceOffset
-    if ( myLastProf > quantity%template%grandTotalInstances .and. &
-      & quantity%template%grandTotalInstances > 0 ) then
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-          & 'last profile > grandTotalInstances for ' // trim(sdName))
-      if (DEEBUG) then
-        call output('last profile: ', advance='no')
-        call output(myLastProf, advance='yes')
-        call output('grandTotalInstances: ', advance='no')
-        call output(quantity%template%grandTotalInstances, advance='yes')
-      endif
-    endif
+    ! Executable code
+    ! Size the problem
+    firstInstance = quantity%template%noInstancesLowerOverlap + 1
+    lastInstance = quantity%template%noInstances - &
+      & quantity%template%noInstancesUpperOverlap
+    noToWrite = lastInstance - firstInstance + 1
+!     if ( noToWrite <= 0 ) then
+!       call MLSMessage ( MLSMSG_Warning, 'No profiles in chunk to write' )
+!       return
+!     end if
+    offset = quantity%template%instanceOffset
+    totalProfs = quantity%template%grandTotalInstances
+
+    ! Check sanity
+    if ( offset + noToWrite - 1 > totalProfs .and. totalProfs > 0 ) &
+      & call MLSMessage ( MLSMSG_Warning, ModuleName, &
+      'last profile > grandTotalInstances for ' // trim(sdName) )
+
+    ! Convert vector quantity to l2gp
     call vectorValue_to_l2gp(quantity, Quantity_precision, l2gp, &
       & sdname, chunkNo, offset=0, &
       & firstInstance=firstInstance, lastInstance=lastInstance)
+    ! Output the l2gp into the file
     call AppendL2GPData(l2gp, l2gpFileHandle, &
-      & SDNAME, filename, offset, TotNumProfs, hdfVersion, createSwath)
+      & sdName, filename, offset, TotalProfs, hdfVersion, createSwath)
+    ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
-  end subroutine DirectWrite_L2GP_fileID
+  end subroutine DirectWrite_L2GP
 
   ! ------------------------------------------- DirectWrite_L2Aux_FileName --------
-  subroutine DirectWrite_L2Aux_FileID ( fileID, quantity, precision, sdName, &
+  subroutine DirectWrite_L2Aux ( fileID, quantity, precision, sdName, &
     & hdfVersion, chunkNo, chunks )
 
     ! Purpose:
@@ -273,7 +177,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: CHUNKNO      ! Index into chunks
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
     ! Local parameters
-    logical, parameter :: DEBUG = .FALSE.
+    logical, parameter :: DEEBUG = .FALSE.
     integer, parameter :: MAXFILES = 100             ! Set for an internal array
     ! executable code
 
@@ -324,7 +228,7 @@ contains ! ======================= Public Procedures =========================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
     end select
-  end subroutine DirectWrite_L2Aux_FileID
+  end subroutine DirectWrite_L2Aux
 
   ! ----------------------------------------------- DirectWrite_L2Aux_hdf4 --------
   subroutine DirectWrite_L2Aux_hdf4 ( quantity, sdName, fileID, &
@@ -743,6 +647,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.12  2003/08/28 23:51:39  livesey
+! Various bug fixes and simplifications
+!
 ! Revision 2.11  2003/08/01 20:39:34  pwagner
 ! Skip warning mesg about grandTotalInstances when 0
 !
