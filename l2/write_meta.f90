@@ -486,33 +486,37 @@ contains
     end if
 
     ! Orbit Calculated Spatial Domain Container
+    ! Per James Johnson's email 6/12/03, use either OrbitNumber OR 
+    ! (StartOrbitNumber and StopOrbitNumber)
 
-    attrName = 'OrbitNumber' // '.1'
+    !attrName = 'OrbitNumber' // '.1'
     !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
     ! This change to confirm James Johnson suggestion on 6/12/03
-    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 999)
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error in writing OrbitNumber attribute.") 
-    end if
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 999)
+    !if ( returnStatus /= PGS_S_SUCCESS ) then
+    !  call announce_error ( 0, &
+    !  & "Error in writing OrbitNumber attribute.") 
+    !end if
 
     ! Start, Stop orbit numbers: level one has actual calculated numbers
     ! but, for now at least, we'll not trouble
-    !attrName = 'StartOrbitNumber' // '.1'
-    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
-    !     -1)
-    !if ( returnStatus /= PGS_S_SUCCESS ) then
-    !  call announce_error ( 0, &
-    !  & "Error in writing StartOrbitNumber attribute.") 
-    !end if
+    ! For now, use 99999 for invalid value
 
-    !attrName = 'StopOrbitNumber' // '.1'
-    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
-    !     -1)
-    !if ( returnStatus /= PGS_S_SUCCESS ) then
-    !  call announce_error ( 0, &
-    !  & "Error in writing StopOrbitNumber attribute.") 
-    !end if
+    attrName = 'StartOrbitNumber' // '.1'
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 99999)
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error in writing StartOrbitNumber attribute.") 
+    end if
+
+    attrName = 'StopOrbitNumber' // '.1'
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 99999)
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
+    if ( returnStatus /= PGS_S_SUCCESS ) then
+      call announce_error ( 0, &
+      & "Error in writing StopOrbitNumber attribute.") 
+    end if
 
     attrName = 'EquatorCrossingLongitude' // '.1'
     dval = 0.0
@@ -831,8 +835,10 @@ contains
 
     ! Annotate the file with the PCF
 
-    if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText, &
+    if ( ANNOTATEWITHPCF ) then
+	call writePCF2Hdr(physical_filename, l2pcf%anText, &
      & hdfVersion, filetype=filetype)
+    end if
 
     returnStatus = pgs_met_remove() 
     if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
@@ -977,9 +983,11 @@ contains
 
 ! Annotate the file with the PCF
 
-    if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText, &
+    if ( ANNOTATEWITHPCF ) then
+	call writePCF2Hdr(physical_filename, l2pcf%anText, &
       & hdfVersion, filetype=filetype)
       ! & hdfVersion, isHDFEOS)
+    end if
 
     returnStatus = pgs_met_remove() 
     if ( returnStatus /= 0 .and. WARNIFCANTPGSMETREMOVE ) then
@@ -1538,6 +1546,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.48  2003/08/11 17:29:36  cvuu
+! Change to output attributes StartOrbitNumber and StopOrbitNumber instead of OrbitNumber
+!
 ! Revision 2.47  2003/08/01 20:25:08  pwagner
 ! Removed ref to undefined sd_path
 !
