@@ -222,7 +222,7 @@ if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
 # In case of a custom configuration name, make sure machine files are up-to-date
   machines_root=$conf_dir/lib/machines            
   machines_base=$machines_root/$MLSF95.$MLSPLAT   
-  the_files=`$REECHO -dirn $machines_root/$MLSCONFG`
+  the_files=`$REECHO -dirn $machines_root/"$MLSF95.$MLSPLAT"`
   echo "About to make sure $the_files"
   echo "are up-to-date in $machines_root/$MLSCONFG"
   for file in $the_files
@@ -236,6 +236,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.3  2002/09/24 18:10:28  pwagner
+# Fixed -h option
+#
 # Revision 1.2  2002/09/04 18:11:36  pwagner
 # my_dot repairs problem of multiple LIB_BLAS libraries
 #
