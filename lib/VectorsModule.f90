@@ -98,7 +98,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   public :: Dump_Vectors, Dump_Vector_Templates, Dump_Vector_Quantity
   public :: GetVectorQuantity, GetVectorQuantityByType
   public :: GetVectorQtyByTemplateIndex, GetVectorQuantityIndexByName
-  public :: GetVectorQuantityIndexByType, IsVectorQtyMasked, MultiplyVectors
+  public :: GetVectorQuantityIndexByType, InflateVectorDatabase
+  public :: InflateVectorTemplateDatabase, IsVectorQtyMasked, MultiplyVectors
   public :: NullifyVectorTemplate, NullifyVectorValue, NullifyVector
   public :: RmVectorFromDatabase, ScaleVector, SetMask, SubtractFromVector
   public :: SubtractVectors, ValidateVectorQuantity, MaskVectorQty
@@ -1615,6 +1616,38 @@ contains ! =====     Public Procedures     =============================
 
   end function GetVectorQuantityIndexByType
 
+  ! ---------------------------------- InflateQuantityTemplateDatabase --
+  integer function InflateVectorDatabase ( database, extra )
+    ! Make a vector database bigger by extra
+    ! Return index of first new element
+
+    ! Dummy arguments
+    type (Vector_T), dimension(:), pointer :: DATABASE
+    integer, intent(in) :: EXTRA
+
+    ! Local variables
+    type (Vector_T), dimension(:), pointer :: TEMPDATABASE
+
+    include "inflateDatabase.f9h"
+    InflateVectorDatabase = firstNewItem
+  end function InflateVectorDatabase
+
+  ! ---------------------------------- InflateQuantityTemplateDatabase --
+  integer function InflateVectorTemplateDatabase ( database, extra )
+    ! Make a vector template database bigger by extra
+    ! Return index of first new element
+
+    ! Dummy arguments
+    type (VectorTemplate_T), dimension(:), pointer :: DATABASE
+    integer, intent(in) :: EXTRA
+
+    ! Local variables
+    type (VectorTemplate_T), dimension(:), pointer :: TEMPDATABASE
+
+    include "inflateDatabase.f9h"
+    InflateVectorTemplateDatabase = firstNewItem
+  end function InflateVectorTemplateDatabase
+
   ! -------------------------------  IsVectorQtyMasked  -----
   logical function IsVectorQtyMasked ( vectorQty, Row, Column, What )
 
@@ -2117,6 +2150,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.96  2003/05/05 23:00:05  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.95  2003/04/04 22:54:58  livesey
 ! New mask bits
 !
