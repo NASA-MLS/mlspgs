@@ -85,7 +85,7 @@ contains
           dev(1) = CS_ZeroFix( 0.5_rk * (dw - dq) )
           dev(2) = CS_ZeroFix( 0.5_rk * (dw + dq) )
         else ! enormous derivatives due to really close eigenvalues
-          dev(1) = cmplx(huge(qa),huge(qa))
+          dev(1) = cmplx(huge(qa),huge(qa),rk)
           dev(2) = -dev(1)
         end if
       end if
@@ -185,7 +185,7 @@ contains
         dev(1) = CS_ZeroFix( 0.5_rk * (dw - dq) )
         dev(2) = CS_ZeroFix( 0.5_rk * (dw + dq) )
       else ! enormous derivatives due to really close eigenvalues
-        dev(1) = cmplx(huge(qa),huge(qa))
+        dev(1) = cmplx(huge(qa),huge(qa),rk)
         dev(2) = -dev(1)
       end if
     end if
@@ -231,6 +231,9 @@ contains
 end module CS_GetEv_M
 
 ! $Log$
+! Revision 2.3  2003/02/06 18:58:58  vsnyder
+! Put an explicit kind on CMPLX references, otherwise NAG gets an overflow
+!
 ! Revision 2.2  2003/02/05 21:47:41  vsnyder
 ! Remove a USE that wasn't used
 !
