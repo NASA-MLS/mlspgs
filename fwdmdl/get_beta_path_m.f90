@@ -206,12 +206,12 @@ contains
 ! Inputs:
 
     real(r8), intent(in) :: Frq ! frequency in MHz
-    real(r8), intent(in) :: H(:)      ! Magnetic field component in instrument
+    real(rp), intent(in) :: H(:)      ! Magnetic field component in instrument
                                       ! polarization on the path
     type(catalog_t), intent(in) :: Catalog(:)
-    type (slabs_struct), dimension(:,:) :: Gl_slabs
+    type (slabs_struct), dimension(:,:), intent(in) :: GL_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
-    type (beta_group_T), dimension(:) :: beta_group
+    type (beta_group_T), dimension(:), intent(in) :: Beta_group
 
 ! outputs
 
@@ -333,6 +333,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.30  2003/05/09 19:24:38  vsnyder
+! Cosmetic change
+!
 ! Revision 2.29  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
