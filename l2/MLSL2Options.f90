@@ -16,6 +16,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! This module simply contains initial or permanent settings. Values
@@ -106,11 +107,19 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! --------------------------------------------------------------------------
 
 !=============================================================================
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 END MODULE MLSL2Options
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.19  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.18  2002/10/03 23:00:03  pwagner
 ! You can set l1b, l2gp hdfversions on command line
 !
