@@ -14,10 +14,10 @@ begin ReadApriori
 ;; quantity grid<x>
 !ifdef(precisionEstimates,{
 !define(readGrid,{grid$1: gridded,field='$1', origin=climatology, $
-       file='!calpath/MLS-Aura_L2Cal-Climatologies_pe-feb-!phiStr_0000d000.txt'!nl})
+       file='!inpathcli/MLS-Aura_L2Cal-Climatologies_pe-feb-!phiStr-v1-0-1_0000d000.txt'!nl})
 },{
 !define(readGrid,{grid$1: gridded,field='$1', origin=climatology, $
-       file='!calpath/MLS-Aura_L2Cal-Climatologies_v1-0-0_0000d000.txt'!nl})
+       file='!inpathcli/MLS-Aura_L2Cal-Climatologies_v1-0-0_0000d000.txt'!nl})
 })
 
 ;; Now invoke that macro for all species defined above.
