@@ -21,7 +21,7 @@ module L2ParInfo
   public :: L2ParallelInfo_T, parallel, InitParallel, CloseParallel
   public :: SIG_ToJoin, SIG_Finished, SIG_Register, ChunkTag, InfoTag, SlaveJoin
   public :: SIG_AckFinish, SIG_RequestDirectWrite, SIG_DirectWriteGranted
-  public :: SIG_DirectWriteFinished
+  public :: SIG_DirectWriteFinished, SIG_NewSetup, SIG_RunMAF, SIG_SendResults
   public :: NotifyTag, GetNiceTidString, SlaveArguments
   public :: AccumulateSlaveArguments, RequestDirectWritePermission
   public :: FinishedDirectWrite, MachineNameLen, MAFTAG, GetMachineNames
@@ -48,6 +48,9 @@ module L2ParInfo
   integer, parameter :: SIG_REQUESTDIRECTWRITE = SIG_Register + 1
   integer, parameter :: SIG_DIRECTWRITEGRANTED = SIG_RequestDirectWrite + 1
   integer, parameter :: SIG_DIRECTWRITEFINISHED = SIG_DirectWriteGranted + 1
+  integer, parameter :: SIG_NEWSETUP = SIG_DirectWriteFinished + 1
+  integer, parameter :: SIG_RUNMAF = SIG_NewSetup + 1
+  integer, parameter :: SIG_SENDRESULTS = SIG_RunMAF + 1
 
   integer, parameter :: MACHINENAMELEN = 64 ! Max length of name of machine
 
@@ -382,6 +385,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.18  2002/10/06 01:10:17  livesey
+! More progress on the fwmParallel stuff
+!
 ! Revision 2.17  2002/10/05 00:43:20  livesey
 ! Started work on the fwmParallel stuff
 !
