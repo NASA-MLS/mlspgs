@@ -1195,7 +1195,7 @@ CONTAINS
       ENDIF
 
       status = he5_swdefgfld(swId, GEO_FIELD9, DIM_NAME2, "", & 
-           & HE5T_NATIVE_FLOAT, & HDFE_NOMERGE)
+           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
       IF (status /= 0) THEN
          msr = GEO_ERR // GEO_FIELD9
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2146,6 +2146,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.22  2003/03/22 02:13:20  jdone
+!# added HDFEOS5/HDFEOS2 capability
+!#
 !# Revision 1.21  2003/03/15 00:16:38  pwagner
 !# May warn if pgs_met_remove returns non-zero value
 !#
