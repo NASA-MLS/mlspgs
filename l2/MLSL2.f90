@@ -164,7 +164,7 @@ program MLSL2
 !  ( Under some circumstances, you may need to increase these )
   call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=611957 )
   call allocate_decl ( ndecls=8000 )
-  call allocate_tree ( n_tree=360000 )
+  call allocate_tree ( n_tree=2000000 )
   call init_tables
 
   !---------------- Task (2) ------------------
@@ -901,6 +901,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.114  2004/03/24 01:03:34  livesey
+! Increased tree size.
+!
 ! Revision 2.113  2004/02/05 23:26:22  pwagner
 ! Added --cat option
 !
