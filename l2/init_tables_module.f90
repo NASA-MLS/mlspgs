@@ -901,7 +901,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
-             begin, f+f_polarized, t+t_boolean, n+n_field_type, &
+             begin, f+f_polarized, t+t_boolean, n+n_field_type /) )
+    call make_tree ( (/ &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_switchingMirror, t+t_boolean, n+n_field_type, &
@@ -912,7 +913,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tolerance, t+t_numeric, n+n_field_type, &
-             begin, f+f_type, t+t_fwmType, nr+n_field_type, ndp+n_spec_def /) )
+             begin, f+f_type, t+t_fwmType, nr+n_field_type, &
+             begin, f+f_xStar, s+s_vector, n+n_field_spec, &
+             begin, f+f_yStar, s+s_vector, n+n_field_spec, &
+             ndp+n_spec_def /), continue=.true. )
     call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
@@ -1081,6 +1085,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.333  2003/09/11 23:15:22  livesey
+! Added xStar and yStar to forward model config
+!
 ! Revision 2.332  2003/09/02 18:03:23  pwagner
 ! Now can reset maxfailuresper chunk, machine from global settings
 !
