@@ -33,6 +33,8 @@ format = '(a24,1x,a24,1x,a24,1x,i3)'
              ClONO$_{2}$                   CLONO2                   ClONO2   2
       $^{35}$ClONO$_{2}$               CL_35_ONO2               Cl-35-ONO2   0
       $^{37}$ClONO$_{2}$               CL_37_ONO2               Cl-37-ONO2   0
+                CLOUD\_A                  CLOUD_A                  CLOUD-A   0
+                CLOUD\_S                  CLOUD_S                  CLOUD-S   0
               EXTINCTION               EXTINCTION               EXTINCTION   0
                      HBr                      HBR                      HBr   2
               H$^{79}$Br                   HBR_79                   HBr-79   0
@@ -115,7 +117,8 @@ H$_{2}^{18}$O$(\nu_{2})$                H2O_18_V2                H2O-18-v2   0
                O$^{18}$O                   O_18_O                   O-18-O   0
     O$^{18}$O$(\nu_{1})$                O_18_O_V1                O-18-O-v1   0
  $^{1}\Delta_{g}^{18}$OO        SNGLT_DLTA_O_18_O        snglt-dlta-O-18-O   0
-                 O$_{3}$                       O3                       O3 -10
+                 O$_{3}$                       O3                       O3 -11
+               O$_{3}$-r                     O3_R                     O3-r   0
       O$_{3}(\nu_{1,3})$                  O3_V1_3                  O3-v1-3   0
         O$_{3}(\nu_{2})$                    O3_V2                    O3-v2   0
        O$_{3}(2\nu_{2})$                   O3_2V2                   O3-2v2   0
