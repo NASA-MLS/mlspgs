@@ -82,7 +82,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
       CALL Allocate_Decl (ndecls=1000)
       CALL Allocate_Tree (n_tree=10000)
       CALL Init_tables
-      CALL Init_units (lit_indices)
+      CALL Init_units
 
 !! Produce the abstract syntax tree
 
@@ -186,6 +186,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.3  2001/04/27 14:00:32  perun
+! For the latest parser version
+!
 ! Revision 2.2  2001/03/22 16:45:06  perun
 ! Changed call to Get_string to strip "'s from globals
 !
