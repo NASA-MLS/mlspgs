@@ -21,6 +21,23 @@ MODULE MLSL3Common
 
 ! Parameters
 
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD1 = 'Latitude'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD2 = 'Longitude'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD3 = 'Time'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD4 = 'LocalSolarTime'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD5 = 'SolarZenithAngle'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD6 = 'LineOfSightAngle'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD7 = 'OrbitGeodeticAngle'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD8 = 'ChunkNumber'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD9 = 'Pressure'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD10 = 'Frequency'
+
+   CHARACTER (LEN=*), PARAMETER :: DIM_NAME1 = 'nTimes'
+   CHARACTER (LEN=*), PARAMETER :: DIM_NAME2 = 'nLevels'
+   CHARACTER (LEN=*), PARAMETER :: DIM_NAME3 = 'nFreqs'
+   CHARACTER (LEN=*), PARAMETER :: DIM_NAME12 = 'nLevels,nTimes'
+   CHARACTER (LEN=*), PARAMETER :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
+
    CHARACTER (LEN=*), PARAMETER :: DIML_NAME = 'nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMT_NAME = 'TDim'
    CHARACTER (LEN=*), PARAMETER :: DIMX_NAME = 'XDim'
@@ -46,6 +63,7 @@ MODULE MLSL3Common
    INTEGER, PARAMETER :: CCSDS_LEN = 27
    INTEGER, PARAMETER :: CCSDSB_LEN = 25
    INTEGER, PARAMETER :: GCTP_GEO = 0
+   INTEGER, PARAMETER :: HDFE_NOMERGE = 0
    INTEGER, PARAMETER :: INVENTORYMETADATA = 2
    INTEGER, PARAMETER :: GridNameLen = 64
    INTEGER, PARAMETER :: maxGridPoints = 500
@@ -56,6 +74,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.5  2001/03/27 19:32:12  nakamura
+!# Added some grid parameters.
+!#
 !# Revision 1.4  2001/02/21 20:52:21  nakamura
 !# Added SZ_ERR parameter.
 !#
@@ -67,5 +88,4 @@ END MODULE MLSL3Common
 !#
 !# Revision 1.1  2000/12/29 20:52:48  nakamura
 !# Module for parameters common across L3 routines.
-!#
 !#
