@@ -25,7 +25,7 @@ CONTAINS
   SUBROUTINE CloseFiles  ! Close production Level 1 files
 !=============================================================================
 
-    USE OpenInit, ONLY: antext
+    USE OpenInit, ONLY: antextPCF, antextCF
     USE PCFHdr, ONLY: WritePCF2Hdr
 
     INTEGER :: i, returnStatus
@@ -54,9 +54,11 @@ CONTAINS
 
     ENDDO
 
-    ! Write Annotation and Close L1RAD D file
+    ! Write Annotations and Close L1RAD D file
 
-    CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anText)
+    CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextPCF)
+
+    CALL WritePCF2Hdr (l1BFileInfo%RADDFileName, anTextCF)
 
     returnStatus = sfend (L1BFileInfo%RADDid)
     IF (returnStatus == -1) THEN
@@ -67,9 +69,11 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD D file: '//L1BFileInfo%RADDFileName)
 
-    ! Write Annotation and Close L1RAD F file
+    ! Write Annotations and Close L1RAD F file
 
-    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anText)
+    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextPCF)
+
+    CALL WritePCF2Hdr (l1BFileInfo%RADFFileName, anTextCF)
 
     returnStatus = sfend (L1BFileInfo%RADFid)
     IF (returnStatus == -1) THEN
@@ -80,9 +84,11 @@ CONTAINS
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BRAD F file: '//L1BFileInfo%RADFFileName)
 
-    ! Write Annotation and Close L1BOA file
+    ! Write Annotations and Close L1BOA file
 
-    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anText)
+    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextPCF)
+
+    CALL WritePCF2Hdr (l1BFileInfo%OAFileName, anTextCF)
 
     returnStatus = sfend (L1BFileInfo%OAid)
     IF (returnStatus == -1) THEN
@@ -101,8 +107,8 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
-! Revision 2.3  2001/03/12 16:00:01  perun
-! Write PCF file annotation to output files
+! Revision 2.4  2001/03/12 19:40:11  perun
+! Write PCF and CF contents as annotations
 !
 ! Revision 2.2  2001/03/05 22:35:13  perun
 ! Corrected L0_Close call
