@@ -82,11 +82,13 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_FWDMODELIN          = f_fwdModelExtra + 1
   integer, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, parameter :: F_GEOCALTITUDEQUANTITY= f_fwdModelOut + 1
-  integer, parameter :: F_GPH                 = f_geocAltitudeQuantity + 1
+  integer, parameter :: F_GEODANGLE           = f_geocAltitudeQuantity + 1
+  integer, parameter :: F_GPH                 = f_geodAngle + 1
   integer, parameter :: F_H2OQUANTITY         = f_gph + 1
   integer, parameter :: F_HEIGHT              = f_h2oquantity + 1
   integer, parameter :: F_HGRID               = f_height + 1
-  integer, parameter :: F_INTEGRATIONGRID     = f_hgrid + 1
+  integer, parameter :: F_INCLINATION         = f_hgrid + 1
+  integer, parameter :: F_INTEGRATIONGRID     = f_inclination + 1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_integrationGrid + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
   integer, parameter :: F_LENGTH              = f_jacobian + 1
@@ -98,7 +100,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_MIF                 = f_method + 1
   integer, parameter :: F_MOLECULEDERIVATIVES = f_MIF + 1
   integer, parameter :: F_MOLECULES           = f_moleculeDerivatives + 1
-  integer, parameter :: F_NUMBER              = f_molecules + 1
+  integer, parameter :: F_NOMIFS              = f_molecules + 1
+  integer, parameter :: F_NUMBER              = f_nomifs + 1
   integer, parameter :: F_ORIGIN              = f_number + 1
   integer, parameter :: F_OUTPUTCOVARIANCE    = f_origin + 1
   integer, parameter :: F_OUTPUTOVERLAPS      = f_outputCovariance + 1
@@ -210,7 +213,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
   integer, parameter :: S_CREATE             = s_apriori + 1
   integer, parameter :: S_FILL               = s_create + 1
-  integer, parameter :: S_FORWARDMODEL       = s_fill + 1
+  integer, parameter :: S_FORGE              = s_fill + 1
+  integer, parameter :: S_FORWARDMODEL       = s_forge + 1
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
   integer, parameter :: S_HGRID              = s_gridded + 1
@@ -379,10 +383,12 @@ contains ! =====     Public procedures     =============================
     field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
     field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
     field_indices(f_geocAltitudeQuantity) =add_ident ( 'geocAltitudeQuantity' )
+    field_indices(f_geodAngle) =           add_ident ( 'geodAngle' )
     field_indices(f_gph) =                 add_ident ( 'gph' )
     field_indices(f_h2oquantity) =         add_ident ( 'h2oquantity' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
+    field_indices(f_inclination) =         add_ident ( 'inclination' )
     field_indices(f_integrationGrid) =     add_ident ( 'integrationGrid' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
@@ -396,6 +402,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_mif) =                 add_ident ( 'mif' )
     field_indices(f_moleculeDerivatives) = add_ident ( 'moleculeDerivatives' )
     field_indices(f_molecules) =           add_ident ( 'molecules' )
+    field_indices(f_noMIFs) =              add_ident ( 'noMIFs' )
     field_indices(f_number) =              add_ident ( 'number' )
     field_indices(f_origin) =              add_ident ( 'origin' )
     field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
@@ -475,6 +482,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
+    spec_indices(s_forge) =                add_ident ( 'forge' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
     spec_indices(s_gridded) =              add_ident ( 'gridded' )
@@ -592,6 +600,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
+             begin, f+f_inclination, t+t_numeric, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -619,6 +628,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_stop, t+t_numeric, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
+      begin, s+s_forge, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
+             begin, f+f_geodAngle, t+t_numeric, n+n_field_type, &
+             begin, f+f_noMIFs, t+t_numeric, n+n_field_type, &
+             begin, f+f_inclination, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
@@ -813,6 +828,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.76  2001/04/20 23:12:14  livesey
+! Added the `forge' stuff
+!
 ! Revision 2.75  2001/04/20 17:13:00  livesey
 ! Added stuff for vGrid fill
 !
