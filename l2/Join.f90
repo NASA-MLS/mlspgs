@@ -13,7 +13,7 @@ module Join                     ! Join together chunk based data.
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use OUTPUT_M, only: BLANKS, OUTPUT
   use String_Table, only: DISPLAY_STRING, GET_STRING
-  use TOGGLES, only: GEN, TOGGLE
+  use TOGGLES, only: GEN, TOGGLE, LEVELS
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
     & SUB_ROSA, SUBTREE
@@ -339,7 +339,8 @@ contains ! =====     Public Procedures     =============================
     logical :: L2gpDataIsNew
 !   real(r8), dimension(:,:), pointer :: Values !??? Not used ???
     
-    if ( toggle(gen) ) call trace_begin ( "JoinL2GPQuantities", key )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_begin ( "JoinL2GPQuantities", key )
 
     ! If this is the first chunk, we have to setup the l2gp quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
@@ -460,7 +461,7 @@ contains ! =====     Public Procedures     =============================
     thisL2GP%status(firstProfile:lastProfile)='G'
     thisL2GP%quality(firstProfile:lastProfile)=0.0
 
-    if ( toggle(gen) ) call trace_end ( "JoinL2GPQuantities" )
+    if ( toggle(gen) .and. levels(gen) > 0 ) call trace_end ( "JoinL2GPQuantities" )
   end subroutine JoinL2GPQuantities
 
   ! ----------------------------------------  JoinL2AUXQuantities  -----
@@ -505,7 +506,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    if ( toggle(gen) ) call trace_begin ( "JoinL2AUXQuantities", key )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_begin ( "JoinL2AUXQuantities", key )
 
     if ( DEEBUG ) then
       call output('Joining vector quantity to L2AUX quantities', advance='yes')
@@ -721,7 +723,8 @@ contains ! =====     Public Procedures     =============================
       &      thisL2AUX%dimensions(2)%noValues, &
       &      lastProfile-firstProfile+1/) )
     
-    if ( toggle(gen) ) call trace_end ( "JoinL2AUXQuantities" )
+    if ( toggle(gen) .and. levels(gen) > 0 ) &
+      & call trace_end ( "JoinL2AUXQuantities" )
 
   end subroutine JoinL2AUXQuantities
 
@@ -766,6 +769,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.64  2002/10/29 21:54:21  livesey
+! Made join less verbose.
+!
 ! Revision 2.63  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
