@@ -70,6 +70,8 @@ MODULE PCFHdr
   character(len=*), parameter, private :: HDFINPTPTRVALUE = 'Found at ' // &
     & '/PCF'
   character(len=*), parameter, private :: DEFAULTPROCESSLEVEL = 'L2'
+  ! No MAF number can ever be this big (as in L1BData module)
+  integer, parameter :: BIGGESTMAFCTR = huge(0)/2
 
    ! May get some of these from MLSLibOptions? 
   type GlobalAttributes_T
@@ -90,6 +92,8 @@ MODULE PCFHdr
     integer :: GranuleDay                    = 0
     integer :: GranuleYear                   = 0
     real(r8) :: TAI93At0zOfGranule           = 0.d0
+    integer :: FirstMAFCtr                   = BIGGESTMAFCTR
+    integer :: LastMAFCtr                    = 0
   end type GlobalAttributes_T
 
   ! This variable describes the global attributes
@@ -210,63 +214,6 @@ CONTAINS
 !------------------------------------
 
 !------------------------------------------------------------
-   SUBROUTINE gd_writeglobalattr (gridID)
-!------------------------------------------------------------
-
-      use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, MLS_charType
-      use MLSHDFEOS, only: mls_GDwrattr
-! Brief description of subroutine
-! This subroutine writes the global attributes for an hdf-eos5 grid
-
-! Arguments
-
-      INTEGER, INTENT(IN) :: gridID
-! Internal variables
-      integer :: status
-      character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
-! Executable
-      !status = he5_GDwrattr(gridID, &
-      ! & 'OrbitNumber', HE5T_NATIVE_INT, max_orbits, &
-      ! &  GlobalAttributes%OrbNum)
-      !status = he5_GDwrattr(gridID, &
-      ! & 'OrbitPeriod', HE5T_NATIVE_DOUBLE, max_orbits, &
-      ! &  GlobalAttributes%OrbPeriod)
-      status = mls_GDwrattr(gridID, &
-       & 'InstrumentName', MLS_CHARTYPE, 1, &
-       &  GlobalAttributes%InstrumentName)
-      ProcessLevel = ProcessLevelFun()
-      status = mls_GDwrattr(gridID, &
-       & 'ProcessLevel', MLS_CHARTYPE, 1, &
-       &  ProcessLevel)
-!     status = he5_GDwrattr(gridID, &
-!      & 'InputVersion', MLS_CHARTYPE, 1, &
-!      &  GlobalAttributes%InputVersion)
-      status = mls_GDwrattr(gridID, &
-       & 'PGEVersion', MLS_CHARTYPE, 1, &
-       &  GlobalAttributes%PGEVersion)
-      status = mls_GDwrattr(gridID, &
-       & 'StartUTC', MLS_CHARTYPE, 1, &
-       &  GlobalAttributes%StartUTC)
-      status = mls_GDwrattr(gridID, &
-       & 'EndUTC', MLS_CHARTYPE, 1, &
-       &  GlobalAttributes%EndUTC)
-! >       status = he5_GDwrattr(gridID, &
-! >        & 'GranuleMonth', HE5T_NATIVE_INT, 1, &
-! >        &  GlobalAttributes%GranuleMonth)
-! >       status = he5_GDwrattr(gridID, &
-! >        & 'GranuleDay', HE5T_NATIVE_INT, 1, &
-! >        &  GlobalAttributes%GranuleDay)
-! >       status = he5_GDwrattr(gridID, &
-! >        & 'GranuleYear', HE5T_NATIVE_INT, 1, &
-! >        &  GlobalAttributes%GranuleYear)
-! >       status = he5_GDwrattr(gridID, &
-! >        & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
-! >        &  GlobalAttributes%TAI93At0zOfGranule )
-!------------------------------------------------------------
-   END SUBROUTINE gd_writeglobalattr
-!------------------------------------------------------------
-
-!------------------------------------------------------------
    SUBROUTINE h5_writeglobalattr (fileID, skip_if_already_there)
 !------------------------------------------------------------
 
@@ -325,6 +272,10 @@ CONTAINS
        & 'GranuleYear', GlobalAttributes%GranuleYear, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'TAI93At0zOfGranule', GlobalAttributes%TAI93At0zOfGranule, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'FirstMAF', GlobalAttributes%FirstMAFCtr, .true.)
+      call MakeHDF5Attribute(grp_id, &
+       & 'LastMAF', GlobalAttributes%LastMAFCtr, .true.)
       call h5gclose_f(grp_id, status)
 
 !------------------------------------------------------------
@@ -401,6 +352,12 @@ CONTAINS
       status = he5_EHwrglatt(fileID, &
        & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
        &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
+      status = he5_EHwrglatt(fileID, &
+       & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%FirstMAFCtr /) )
+      status = he5_EHwrglatt(fileID, &
+       & 'LastMAF', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%LastMAFCtr /) )
 !------------------------------------------------------------
    END SUBROUTINE he5_writeglobalattr
 !------------------------------------------------------------
@@ -482,6 +439,14 @@ CONTAINS
          & 'TAI93At0zOfGranule', dbuf )
         TAI93At0zOfGranule = dbuf(1)
       endif
+      status = he5_EHrdglatt(fileID, &
+       & 'FirstMAF', &
+       &  ibuf  )
+      gAttributes%FirstMAFCtr = ibuf(1)
+      status = he5_EHrdglatt(fileID, &
+       & 'LastMAF', &
+       &  ibuf  )
+      gAttributes%LastMAFCtr = ibuf(1)
       if ( present(returnStatus) ) returnStatus = status
 !------------------------------------------------------------
    END SUBROUTINE he5_readglobalattr
@@ -637,6 +602,12 @@ CONTAINS
       status = he5_SWwrattr(swathID, &
        & 'TAI93At0zOfGranule', HE5T_NATIVE_DOUBLE, 1, &
        &  (/ GlobalAttributes%TAI93At0zOfGranule/) )
+      status = he5_SWwrattr(swathID, &
+       & 'FirstMAF', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%FirstMAFCtr/) )
+      status = he5_SWwrattr(swathID, &
+       & 'LastMAF', HE5T_NATIVE_INT, 1, &
+       &  (/ GlobalAttributes%LastMAFCtr/) )
 !------------------------------------------------------------
    END SUBROUTINE sw_writeglobalattr
 !------------------------------------------------------------
@@ -1076,6 +1047,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.33  2004/08/16 17:05:38  pwagner
+!# First,LastMAFCtr now global attributes
+!#
 !# Revision 2.32  2004/08/04 23:19:01  pwagner
 !# Much moved from MLSStrings to MLSStringLists
 !#
