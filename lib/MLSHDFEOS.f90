@@ -1650,17 +1650,24 @@ contains ! ======================= Public Procedures =========================
     ! Begin execution
     nflds = 0
     is_swath_datatype_right = .false.
+    ! Set defaults for inputs to HDF routines so that
+    ! we get appropriate answers at all times.
+    rank = 0
+    fieldlist = ''
+    numbertype = 0
     select case (HdfVersion)
     case (HDFVERSION_4)
       nflds = swinqdflds(swathid, fieldlist, rank, numbertype)
     case (HDFVERSION_5)
       nflds = HE5_swinqdflds(swathid, fieldlist, rank, numbertype)
     end select
+    ! Set defaults for ouptuts
     if ( present(nflds_out) ) nflds_out = nflds
     if ( present(rank_out) ) rank_out = 0
     if ( present(numbertype_out) ) numbertype_out = 0
     if ( present(fieldlist_out) ) fieldlist_out = ' '
     if ( nflds == 0 ) return
+    ! Now update our outputs
     if ( present(rank_out) ) rank_out = rank(1:size(rank_out))
     if ( present(numbertype_out) ) &
       & numbertype_out = numbertype(1:size(numbertype_out))
@@ -1712,6 +1719,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.12  2003/07/11 21:50:31  livesey
+! Minor bug fix, probably of little consquence
+!
 ! Revision 2.11  2003/07/11 01:22:55  livesey
 ! Bug fixes and tidyups
 !
