@@ -4,7 +4,7 @@
 program MLSL2
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
-  use L2PARALLEL, only: PARALLEL
+  use L2PARALLEL, only: PARALLEL, INITPARALLEL
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
@@ -26,6 +26,7 @@ program MLSL2
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
+  use PVM, only: ClearPVMArgs, NextPVMArg, FreePVMArgs
 
   implicit NONE
 
@@ -43,7 +44,9 @@ program MLSL2
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
   logical :: Timing = .false.      ! -T option is set
+  logical :: COPYARG               ! Copy this argument to parallel command line
   real :: T1, T2                   ! For timing
+  character(len=255) :: WORD       ! Some text
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = & 
@@ -52,9 +55,14 @@ program MLSL2
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
+
 ! Where to send output, how severe an error to quit
    prunit = OUTPUT_PRINT_UNIT
    MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
+
+! Clear the command line arguments we're going to accumulate to pass
+! to slave tasks
+   call ClearPVMArgs
    
 ! Initialize the lexer, symbol table, and tree checker's tables:
   call init_lexer ( n_chars=10000, n_symbols=1000, hash_table_size=2017 )
@@ -62,12 +70,15 @@ program MLSL2
   call allocate_tree ( n_tree=15000 )
   call init_tables
 
+  ! We set up a mirror command line for launching slaves
   i = 1+hp
   do ! Process the command line options to set toggles
+    copyArg = .true.
     call getarg ( i, line )
     if ( line(1:4) == '-Wl,' ) then     ! skip Lahey/Fujitsu run-time options
       i = i + 1
-  cycle
+      call NextPVMArg(trim(line))
+      cycle
     end if
     if ( line(1:2) == '--' ) then       ! "word" options
       n = 0
@@ -87,8 +98,21 @@ program MLSL2
       else if ( line(3+n:5+n) == 'tk ' ) then
         toolkit = switch
       else if ( line(3+n:9+n) == 'master ' ) then
+        copyArg = .false.
         parallel%master = .true.
+        i = i + 1
+        call getarg ( i, line )
+        read ( line, *, iostat=status ) parallel%slaveFilename
+        if ( status /= 0 ) then
+          call io_error ( "After --master option", status, line )
+          stop
+        end if
+        call InitParallel
+        word = '--slave'
+        write ( word(len_trim(word)+1:), * ) parallel%myTid
+        call NextPVMArg(trim(word))
       else if ( line(3+n:7+n) == 'slave' ) then
+        copyArg=.false.
         parallel%slave = .true.
         if ( line(8+n:) /= ' ' ) then
           line(:7+n) = ' '
@@ -96,7 +120,8 @@ program MLSL2
           i = i + 1
           call getarg ( i, line )
         end if
-        read ( line(8:), *, iostat=status ) parallel%masterTid
+        call InitParallel
+        read ( line, *, iostat=status ) parallel%masterTid
         if ( status /= 0 ) then
           call io_error ( "After --slave option", status, line )
           stop
@@ -104,7 +129,8 @@ program MLSL2
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
-  exit
+        call NextPVMArg(trim(line))
+        exit
       else
         print *, 'unrecognized option ', trim(line), ' ignored.'
         call usage
@@ -158,9 +184,11 @@ program MLSL2
         end select
       end do
     else    
-  exit
+      call NextPVMArg(trim(line))
+      exit ! This must be the l2cf filename
     end if
     i = i + 1
+    if ( copyArg ) call NextPVMArg(trim(line))
   end do
 
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
@@ -255,6 +283,7 @@ program MLSL2
   call destroy_symbol_table
   call deallocate_decl
   call deallocate_tree
+  call FreePVMArgs
 
 contains
   subroutine SayTime ( What )
@@ -335,7 +364,9 @@ contains
     print *, '    (--npcf sets --nmeta and --ncfpcf.)'
     print *, '  --[n]tk: [Do not] Use the panoply of the PGS_toolkit'
     print *, '    (--ntk sets --npcf, --ncfpcf and --nmeta).'
-    print *, '  --master: This is the master task in a PVM setup'
+    print *, '  --master <filename>: This is the master task in a PVM setup'
+    print *, '    filename contains simply ascii list of slave host names'
+    print *, '    can list a machine more than once (e.g. for SMP slaves)'
     print *, '  --slave[ ]<master-tid>: This is a slave; <master-tid>'
     print *, '    is the id of the master.  This option is set by a master'
     print *, '    task and is not recommneded for manual invocations.'
@@ -352,6 +383,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.44  2001/05/23 01:44:24  livesey
+! Parallel code starting to fit into place
+!
 ! Revision 2.43  2001/05/18 01:14:21  vsnyder
 ! Add a 'stop' in 'switch_usage', plus cosmetic changes
 !
