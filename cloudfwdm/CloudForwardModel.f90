@@ -173,7 +173,7 @@
       REAL(r8) :: ZT(NT)                       ! TANGENT PRESSURE
       REAL(r8) :: RE                           ! EARTH RADIUS
 
-      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr
+      REAL(r8) :: phi_tan, h_obs, Rs_eq, elev_offset, pp, ti, rr,freq
 
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
@@ -311,7 +311,7 @@
 
       type(antennaPattern_T), intent(in) :: AntennaPattern
       integer :: FFT_INDEX(size(antennaPattern%aaap))
-      integer :: FFT_pts, ntr, ier, is, ktr, Ptg_i
+      integer :: FFT_pts, ntr, ier, is, ktr, Ptg_i, brkpt
       REAL(r8) :: schi, center_angle, Q
       Real(r8) :: dTB0_dZT(NT,NF), dDTcir_dZT(NT,NF)
 
@@ -422,7 +422,7 @@
 
       DO 2000 IFR=1, NF
       IF ( doChannel(IFR) ) then
-
+        
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
@@ -571,6 +571,11 @@
 !---------------------------------------------------------------------------
 
   	 DO I = 1, Multi
+!            brkpt = minloc(abs(YZ(:)-zzt1(i)))
+!            print*, brkpt, zzt1(i)
+!            ti = 1.0_r8 / ztt1(i)
+!            n_r = 7.76e-5 * zpt1(i) * ti
+!            n_r = n_r * (1.0_r8 + 4810.0_r8 * vmr * ti)            
 
             if (zzt1(i) .lt. 5000.0) then
               schi = (ZZT1(I)*1.2 + RE) / Rs_eq    ! approximition account for 
@@ -704,7 +709,20 @@
               &            Trans(:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
               &            N,ISWI,RE) ! COMPUTE SENSITIVITY
 
-      END IF
+
+      ELSE IF ( .NOT. doChannel(IFR) ) then
+         DO I = 1, NZ-1
+            BETA(I,IFR) = 0.0_r8
+            BETAc(I,IFR)= 0.0_r8
+            do j=1,N
+               Dm(J,I)  = 0.0_r8
+            end do  
+         END DO
+         DO K = 1, NT
+            TB0(K,IFR)  = 0.0_r8 
+            DTcir(K,IFR)= 0.0_r8 
+         END DO
+      END IF                                 ! END OF DO CHANNEL
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 
@@ -718,13 +736,6 @@
       END
 
 ! $Log: CloudForwardModel.f90,v      
-
-
-
-
-
-
-
 
 
 

@@ -85,9 +85,6 @@ SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
       ENDDO
 
 
-
-
-
 !==========================================================================
 !     RADIANCE SENSITIVITY CALCULATIONS
 !==========================================================================
@@ -121,9 +118,9 @@ SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
                      ENDIF
                      DS = SQRT((RE+YZ(K))**2-(RE+HT)**2)-    &
      &                    SQRT((RE+TGT)**2-(RE+HT)**2)
-                     DTAU = DS * delTAU(K)/(YZ(K)-YZ(K-1))
+                     DTAU = DS * delTAU(K)*DDZ(k)/(YZ(K)-YZ(K-1))
                      A_COL = A_EXT + DTAU/2.
-                     C_EXT=C_EXT + delTAUc(K)*EXP(-A_COL)*   &
+                     C_EXT=C_EXT + delTAUc(K)*DDZ(k)*EXP(-A_COL)*   &
      &                     DS/(YZ(K)-YZ(K-1))
                      A_EXT = A_EXT + DTAU
                   ENDIF
@@ -139,9 +136,9 @@ SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,  &
                      ENDIF 
                      DS = SQRT((RE+YZ(K))**2-(RE+HT)**2)-    &
      &                    SQRT((RE+TGT)**2-(RE+HT)**2)
-                     DTAU = DS * delTAU(K)/(YZ(K)-YZ(K-1))
+                     DTAU = DS * delTAU(K)*DDZ(k)/(YZ(K)-YZ(K-1))
                      A_COL = A_EXT + DTAU/2.
-                     C_EXT=C_EXT + delTAUc(K)*EXP(-A_COL)*   &
+                     C_EXT=C_EXT + delTAUc(K)*DDZ(k)*EXP(-A_COL)*   &
      &                     DS/(YZ(K)-YZ(K-1))
                      A_EXT = A_EXT + DTAU
                   ENDIF
