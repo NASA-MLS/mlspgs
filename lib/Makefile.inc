@@ -135,7 +135,7 @@ table_dumper.o: MLSCF.o declaration_table.o intrinsic.o output_m.o \
 table_generator.o: MLSCF.o declaration_table.o expr_m.o intrinsic.o \
 	lexer_core.o output_m.o string_table.o toggles_core.o trace_m.o \
 	tree.o tree_types.o
-test_multiply.o: MatrixModule_0.o MLSCommon.o
+test_multiply.o: MatrixModule_0.o MLSCommon.o machine.o
 test_sparsify.o: MatrixModule_0.o MLSCommon.o
 trace_m.o: lexer_core.o output_m.o tree.o
 tree.o: error_handler.o machine.o output_m.o string_table.o symbol_table.o \
@@ -159,6 +159,9 @@ test_sparsify: test_sparsify.o libmls.a
 # ========================================================================
 
 # $Log$
+# Revision 2.15  2000/10/12 20:42:45  vsnyder
+# Remove special action for dump_0.o
+#
 # Revision 2.14  2000/10/12 20:24:08  vsnyder
 # Simplify default inference rule's action; remove explicit rules for
 # test_multiply.o and test_sparsify.o
