@@ -6,34 +6,6 @@ module ForwardModelSupport
 
   ! Set up the forward model stuff.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Expr_M, only: EXPR
-  use Intrinsic, only: T_NUMERIC_RANGE
-  use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, &
-    & L_NAMEFRAGMENT, L_VMR, L_TEMPERATURE, L_LATITUDE, L_SZA
-  use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, &
-    & F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
-    & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
-    & F_FREQUENCY, F_HEIGHT, F_DIFFERENTIALSCAN, F_DO_1D, F_INCL_CLD, &
-    & F_INTEGRATIONGRID, F_LOCKBINS, F_L2PC, F_MOLECULE, F_MOLECULES, &
-    & F_MOLECULESPOL, F_MOLECULEDERIVATIVES, F_MOLECULEDERIVATIVESPOL, &
-    & F_PHIWINDOW, F_POINTINGGRIDS, F_SPECT_DER, &
-    & F_TANGENTGRID, F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
-    & F_NABTERMS, F_NAMEFRAGMENT, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
-    & F_NSCATTERINGANGLES, F_NSIZEBINS, F_I_SATURATION, F_CLOUD_FOV, &
-    & F_DEFAULT_spectroscopy, F_SPECIFICQUANTITIES, F_SIGNALS, F_BINSELECTORS
-  use MLSCommon, only: R8
-  use MoreTree, only: Get_Boolean, Get_Field_ID
-  use Parse_Signal_m, only: PARSE_SIGNAL
-  use String_Table, only: Get_String
-  use Toggles, only: Gen, Levels, Toggle
-  use Trace_M, only: Trace_begin, Trace_end
-  use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
-  use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS, PHYQ_PROFILES, &
-    & PHYQ_ANGLE, PHYQ_VMR, PHYQ_INVALID
-
-
   implicit none
   private
   public :: ConstructForwardModelConfig, ForwardModelGlobalSetup, &
@@ -78,6 +50,8 @@ contains ! =====     Public Procedures     =============================
       & READ_ANTENNA_PATTERNS_FILE, CLOSE_ANTENNA_PATTERNS_FILE
     use FilterShapes_m, only: OPEN_FILTER_SHAPES_FILE, &
       & READ_FILTER_SHAPES_FILE, CLOSE_FILTER_SHAPES_FILE
+    use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_FILTERSHAPES, &
+      &  F_L2PC, F_POINTINGGRIDS
     use L2ParInfo, only: PARALLEL
     use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
       & READCOMPLETEHDF5L2PCFILE
@@ -85,8 +59,13 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
       &          MLSPCF_ptggrids_start, mlspcf_l2pc_start, mlspcf_l2pc_end
+    use MoreTree, only: Get_Field_ID
     use PointingGrid_m, only: Close_Pointing_Grid_File, &
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
+    use String_Table, only: Get_String
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+    use Tree, only: Nsons, Sub_Rosa, Subtree
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
@@ -130,7 +109,7 @@ contains ! =====     Public Procedures     =============================
             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
               call AnnounceError(0, son, &
                 & extraMessage='Antenna Patterns File not found in PCF')
-            elseif( returnStatus == 0) then
+            else if( returnStatus == 0) then
               fileName = PCFFileName
             endif
           endif
@@ -149,7 +128,7 @@ contains ! =====     Public Procedures     =============================
             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
               call AnnounceError(0, son, &
                 & extraMessage='Filter Shapes File not found in PCF')
-            elseif( returnStatus == 0) then
+            else if( returnStatus == 0) then
               fileName = PCFFileName
             endif
           endif
@@ -168,7 +147,7 @@ contains ! =====     Public Procedures     =============================
             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
               call AnnounceError(0, son, &
                 & extraMessage='Pointing Grids File not found in PCF')
-            elseif( returnStatus == 0) then
+            else if( returnStatus == 0) then
               fileName = PCFFileName
             endif
           endif
@@ -187,7 +166,7 @@ contains ! =====     Public Procedures     =============================
             if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
               call AnnounceError(0, son, &
                 & extraMessage='L2PC File not found in PCF')
-            elseif( returnStatus == 0) then
+            else if( returnStatus == 0) then
               fileName = PCFFileName
             endif
           endif
@@ -213,23 +192,30 @@ contains ! =====     Public Procedures     =============================
   type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
     & result ( binSelector )
 
+    use Expr_M, only: EXPR
+    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+    use Init_Tables_Module, only: L_NAMEFRAGMENT, L_VMR, L_TEMPERATURE, &
+      & L_LATITUDE, L_SZA
+    use Init_Tables_Module, only: F_COST, F_HEIGHT, F_MOLECULE, F_TYPE, &
+      & F_NAMEFRAGMENT
+    use Intrinsic, only: T_NUMERIC_RANGE
     use L2PC_m, only: BINSELECTOR_T
+    use MLSCommon, only: R8
+    use MoreTree, only: Get_Field_ID
+    use Tree, only: Decoration, Nsons, Sub_Rosa, Subtree
+    use Units, only: PHYQ_TEMPERATURE, PHYQ_PRESSURE, PHYQ_DIMENSIONLESS, &
+      & PHYQ_ANGLE, PHYQ_VMR, PHYQ_INVALID
 
     integer, intent(in) :: ROOT         ! Tree node
     ! Local variables
     integer :: SON                      ! Tree node
     integer :: GSON                     ! Tree node
-    integer :: I,J                      ! Loop counters
+    integer :: I                        ! Loop counters
     integer :: FIELD                    ! Field identifier
     logical :: GOT(field_first:field_last) ! "Got this field already"
     integer :: TYPE                     ! Type of value returned by expr
-    integer :: UNITS(2)                 ! Units from expr
+    integer :: EXPR_UNITS(2)            ! Units from expr
     real(r8) :: VALUE(2)                ! Value from expr
-    character ( len=132 ) :: signalString ! Value of signal
-    integer, dimension(:), pointer :: THESESIGNALS => NULL()! From one parseSignal
-    integer :: THISSIDEBAND
-    integer :: SIGNALCOUNT              ! Number of signals
-    integer :: THISSIGNALCOUNT          ! Number of signals for one signal string
     integer :: COSTUNIT                 ! Units for cost
     integer :: WANTEDUNIT               ! Units wanted for cost
 
@@ -249,22 +235,22 @@ contains ! =====     Public Procedures     =============================
       case ( f_height )
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyHeights, son, &
           & f_height )
+        call expr ( gson, expr_units, value, type )
         if ( type /= t_numeric_range ) call AnnounceError ( 0, son, f_height, &
           & 'Height range expected' )
-        call expr ( gson, units, value, type )
-        if ( any ( units /= phyq_pressure .and. units /= phyq_dimensionless ) .or. &
-          & all ( units /= phyq_pressure ) ) &
+        if ( any ( expr_units /= phyq_pressure .and. expr_units /= phyq_dimensionless ) .or. &
+          & all ( expr_units /= phyq_pressure ) ) &
           & call AnnounceError ( BadHeightUnit, son, f_height )
         binSelector%heightRange = value
       case ( f_cost )
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyCosts, son, &
           & f_cost )
-        call expr ( gson, units, value, type )
+        call expr ( gson, expr_units, value, type )
         if ( type == t_numeric_range ) call AnnounceError ( 0, son, &
           & f_cost, 'Cost must not be a range' ) 
         ! Some units checking should probably go here in the long run !???? NJL
         binSelector%cost = value(1)
-        costUnit = units(1)
+        costUnit = expr_units(1)
       end select
     end do
 
@@ -296,11 +282,33 @@ contains ! =====     Public Procedures     =============================
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
 
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+    use Expr_M, only: EXPR
     use ForwardModelConfig, only: ForwardModelConfig_T, NullifyForwardModelConfig
-    use MLSSignals_M, only: Signals
+    use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
+    use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL
+    use Init_Tables_Module, only: F_ALLLINESFORRADIOMETER, F_ATMOS_DER, &
+      & F_BINSELECTORS, F_CHANNELS, F_CLOUD_DER, F_CLOUD_FOV, &
+      & F_DEFAULT_spectroscopy, F_DIFFERENTIALSCAN, F_DO_BASELINE, F_DO_CONV, &
+      & F_DO_FREQ_AVG, F_DO_1D, F_FREQUENCY, F_I_SATURATION, F_INCL_CLD, &
+      & F_INTEGRATIONGRID, F_LOCKBINS, F_MODULE, F_MOLECULES, F_MOLECULESPOL, &
+      & F_MOLECULEDERIVATIVES, F_MOLECULEDERIVATIVESPOL, F_NABTERMS, &
+      & F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
+      & F_NSIZEBINS, F_PHIWINDOW, F_SIGNALS, F_SKIPOVERLAPS, &
+      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, &
+      & F_TOLERANCE, F_TYPE
+    use MLSCommon, only: R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: HUNT
+    use MLSSignals_M, only: Signals
+    use MoreTree, only: Get_Boolean, Get_Field_ID
+    use Parse_Signal_m, only: PARSE_SIGNAL
+    use String_Table, only: Get_String
+    use Toggles, only: Gen, Levels, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+    use Tree, only: Decoration, Node_ID, Nsons, Sub_Rosa, Subtree
     use Tree_Types, only: N_Array, N_named
+    use Units, only: PHYQ_TEMPERATURE, PHYQ_PROFILES, PHYQ_ANGLE
     use VGridsDatabase, only: VGrid_T
 
     integer, intent(in) :: ROOT         ! of the forwardModel specification.
@@ -310,18 +318,16 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in) :: GLOBAL       ! Goes into info%globalConfig
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
-    integer :: COMMONSIZE               ! Dimension
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
     integer :: J                        ! Subscript and loop inductor.
     integer :: Key                      ! Indexes the spec_args vertex.
     integer :: MoleculeSign             ! in the info%molecules array.
-    integer :: Mol, MolPol              ! Tree indices of f_molecules, ...Pol
+    integer :: Mol                      ! Tree indices of f_molecules, ...Pol
     integer :: Name                     ! sub_rosa of label of specification,
     ! if any, else zero.
     integer :: NELTS                    ! Number of elements of an array tree
-    integer :: NoChannelsSpecs          ! Number of channel specs we've had
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
     character (len=80) :: SIGNALSTRING  ! E.g. R1A....
@@ -330,7 +336,7 @@ contains ! =====     Public Procedures     =============================
     integer :: TANGENT                  ! Loop counter
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
-    integer :: Units(2)                 ! Units of value returned by EXPR
+    integer :: Expr_Units(2)            ! Units of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
 
@@ -380,8 +386,6 @@ contains ! =====     Public Procedures     =============================
     info%i_saturation = 0
     info%cloud_fov = 1
 
-    noChannelsSpecs=0
-
     ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
 
@@ -423,9 +427,9 @@ contains ! =====     Public Procedures     =============================
       case ( f_skipOverlaps )
         info%skipOverlaps = get_boolean(son)
       case ( f_tolerance )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%tolerance = value(1)
-        if ( units(1) /= phyq_temperature ) &
+        if ( expr_units(1) /= phyq_temperature ) &
           & call AnnounceError ( toleranceNotK, key )
       case ( f_module )
         info%instrumentModule = decoration(decoration(subtree(2,son)))
@@ -446,7 +450,6 @@ contains ! =====     Public Procedures     =============================
           call fillElements ( subtree(j,son), nelts, 0, info%molecules )
         end do
       case ( f_moleculesPol )
-        molPol = son
         nelts = 0
         do j = 2, nsons(son)
           call countElements ( subtree(j,son), nelts )
@@ -528,11 +531,11 @@ contains ! =====     Public Procedures     =============================
           info%specificQuantities(j) = decoration ( decoration ( subtree ( j+1, son ) ) )
         end do
       case ( f_phiWindow )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
-        if ( all ( units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
+        if ( all ( expr_units(1) /= (/ PHYQ_Profiles, PHYQ_Angle /) ) ) &
           call AnnounceError ( WrongUnitsForWindow, root )
-        info%windowUnits = units(1)
+        info%windowUnits = expr_units(1)
       case ( f_spect_der )
         info%spect_der = get_boolean(son)
       case ( f_temp_der )
@@ -542,33 +545,33 @@ contains ! =====     Public Procedures     =============================
       case ( f_tangentGrid )
         info%tangentGrid => vGrids(decoration(decoration(subtree(2,son))))
       case ( f_ncloudspecies )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%no_cloud_species = nint( value(1) )
       case ( f_nmodelsurfs )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%no_model_surfs = nint( value(1) )
       case ( f_nscatteringangles )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SCATTERING_ANGLES = nint( value(1) )
       case ( f_nazimuthangles )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_AZIMUTH_ANGLES = nint( value(1) )
       case ( f_nabterms )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_AB_TERMS = nint( value(1) )
       case ( f_nsizebins )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%NUM_SIZE_BINS = nint( value(1) )
       case ( f_cloud_der )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%cloud_der = nint( value(1) )
 !      case ( f_cloud_width )
       case ( f_i_saturation )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
 !        info%cloud_width = nint( value(1) )
         info%i_saturation = nint( value(1) )
       case ( f_cloud_fov )
-        call expr ( subtree(2,son), units, value, type )
+        call expr ( subtree(2,son), expr_units, value, type )
         info%cloud_fov = nint( value(1) )
       case default
         ! Shouldn't get here if the type checker worked
@@ -668,6 +671,7 @@ contains ! =====     Public Procedures     =============================
     use Lexer_Core, only: PRINT_SOURCE
     use Output_M, only: Output
     use String_Table, only: Display_String
+    use Tree, only: Source_Ref
 
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: where      ! Where in the tree did the error occur?
@@ -738,6 +742,11 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.56  2003/02/08 05:28:47  vsnyder
+! Squash a bug (looking at type before evaluating the expression).
+! Move USE statements from module scope to procedure scope, so as not to
+! cause TREE_WALKER to be recompiled every time there's a minor change here.
+!
 ! Revision 2.55  2003/02/06 22:04:48  vsnyder
 ! Add f_moleculesPol, f_moleculeDerivativesPol, delete f_polarized
 !
