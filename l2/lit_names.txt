@@ -14,6 +14,7 @@
 # $Id$
 
 addnoise
+andMasks
 apriori
 
 both
@@ -24,7 +25,9 @@ chisqmmaf
 chisqmmif
 cholesky
 climatology
+cloud
 cloudFull
+copy
 covariance
 
 dao
@@ -72,6 +75,7 @@ height
 highcloud
 hydrostatic
 
+invert
 isotope
 
 jacobian_cols
@@ -98,6 +102,7 @@ norm
 numJ # Number of Jacobian values used by the Newtonian solver
 
 offsetRadiance
+orMasks
 orbital
 
 PE
@@ -114,6 +119,7 @@ scaleOverlaps
 scan
 scan2d
 # spaceRadiance -- in lib/lit_names
+spare
 spd
 special
 
@@ -125,6 +131,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.28  2003/04/04 22:01:03  livesey
+# Added the stuff for UpdateMask
+#
 # Revision 2.27  2003/03/26 21:23:18  livesey
 # Added scaleOverlaps
 #
