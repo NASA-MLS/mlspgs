@@ -41,7 +41,6 @@ include ../Makefile.dep
 include $(srclib)/Makefile.dep
 
 # Add them to L2OBJS
-#ALLOBJS = $(OBJS) $(srclib_objs) $(RETRIEVAL_OBJS)
 ALLOBJS = $(OBJS) $(srclib_objs)
 
 CONFDIR=../..
@@ -71,11 +70,15 @@ l2_NEEDS_fwdmdl = true
 ifdef l2_NEEDS_fwdmdl
    fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
    fwdmdl_message=Building mlsl2 with forward model
+   cloud_linker_line=-L${clouddir} -lcloud
+   cloud_message=Building mlsl2 with cloud forward model
    mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a \
-	 $(fwdmdldir)/libfwdmdl.a
+	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a
 else
    fwdmdl_linker_line=
    fwdmdl_message=Building mlsl2 without forward model
+   cloud_linker_line=
+   cloud_message=Building mlsl2 without cloud forward model
    mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
 endif
 
@@ -101,7 +104,9 @@ mlsl2: $(mlsl2_prereqs)
 		@echo "$(blas_message)"
 		@echo "$(hdf5_message)"
 		@echo "$(fwdmdl_message)"
+		@echo "$(cloud_message)"
 		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) \
+        $(cloud_linker_line) \
         $(fwdmdl_linker_line) \
                       -L${libdir} -lmls \
 		$(tk_linker_line) \
@@ -129,7 +134,8 @@ tar:
 
 # Custom build commands for some modules
 
-# This is to keep switch_usage up-to-date with notes/switches
+# This keeps switch_usage up-to-date with notes/switches
+# (and similarly for options)
 MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 	@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
 	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
@@ -154,6 +160,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.20  2001/05/25 22:29:10  pwagner
+# Conditionally links with hdf5
+#
 # Revision 1.19  2001/05/23 23:22:20  pwagner
 # Did the same for options, switches
 #
