@@ -137,7 +137,8 @@ begin Construct
   ;; ----------------------------------------- Baselines
   
   !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
-    radiometer=$1, hGrid=hGridStandard, vGrid=vGridBaseline!nl})
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridBaseline, $
+    fGrid=fGridBaseline$1!nl})
 
   !forall(constructBaseline, !allRadiometers )
   !define(allBaselines, {!makelist({baseline},{},!allRadiometers)})
