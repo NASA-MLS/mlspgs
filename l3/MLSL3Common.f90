@@ -50,8 +50,7 @@ MODULE MLSL3Common
 
    CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
    CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
-   CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation &
-                                             &field '
+   CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation field '
    CHARACTER (LEN=*), PARAMETER :: GD_ERR = 'Failed to detach from grid '
    CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = 'Error writing metadata &
                                                 &attribute '
@@ -69,14 +68,15 @@ MODULE MLSL3Common
    INTEGER, PARAMETER :: HDFE_NOMERGE = 0
    INTEGER, PARAMETER :: INVENTORYMETADATA = 2
    INTEGER, PARAMETER :: GridNameLen = 64
+   INTEGER, PARAMETER :: maxDgProds = 42
    INTEGER, PARAMETER :: maxGridPoints = 500
-   INTEGER, PARAMETER :: maxWindow = 30
+   INTEGER, PARAMETER :: maxWindow = 31
 
 ! This data type is used to store the names/dates of output files actually created.
 
    TYPE OutputFiles_T
 
-     INTEGER :: nFiles			! number of distinct output files created
+     INTEGER :: nFiles		! number of distinct output files created
 
      CHARACTER (LEN=FileNameLen) :: name(maxwindow)
 	! array of names of the created files
@@ -91,6 +91,9 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.7  2001/05/04 18:37:51  nakamura
+!# Added date-related params, OutputFiles_T.
+!#
 !# Revision 1.6  2001/04/24 19:41:13  nakamura
 !# Added parameters that L2 wishes to keep PRIVATE.
 !#
