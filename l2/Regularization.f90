@@ -444,7 +444,7 @@ o:          do while ( c2 <= ni )
                 c2 = c2 + 1
                 if ( c2 > ni ) exit
                 iq = a%col%quant(insts(c2))
-                if ( .not. associated(a%col%vec%quantities(iq)%mask) ) exit
+                if ( .not. associated(a%col%vec%quantities(iq)%mask) ) cycle
                 ii = a%col%inst(insts(c2))
                 if ( iand(ichar(a%col%vec%quantities(iq)%mask(h,ii)),M_Tikhonov) &
                   & /= 0 ) exit
@@ -620,6 +620,10 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.33  2002/11/20 21:04:08  livesey
+! Bug fix in horiztonal regularization of unmasked quantities (only worked
+! for quantities which had masks upto now).
+!
 ! Revision 2.32  2002/10/30 00:09:25  vsnyder
 ! Fix bugs in handling wtVec -- hopefully without introducing new ones
 !
