@@ -1,0 +1,54 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+ALLOBJS = $(OBJS)
+
+PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+
+# ========================================================================
+test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libfwdmdl.a $(libdir)/libmls.a
+	case "$(PVM_ROOT)" in \
+		"") \
+		echo "Building test without PVM support" ; \
+		$(FC) -o test $(ALLOBJS) \
+                      -L${itmdir} -lfwdmdl \
+                      -L${libdir} -lmls \
+		-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+		-L${GCTP} -lGctp \
+        $(l_specials) ; \
+		;; \
+		*) \
+		echo "Building test with PVM support" ; \
+		$(FC) -o test $(ALLOBJS) $(PVM_OBJS)  \
+                      -L${itmdir} -lfwdmdl \
+                      -L${libdir} -lmls \
+		-L${PGSTK} -lPGSTK \
+        -L${HDFEOS} -lhdfeos \
+		-L${HDF} -lmfhdf \
+        -ldf \
+        -lz \
+        -ljpeg \
+		-L${GCTP} -lGctp \
+		-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3 \
+        $(l_specials) ; \
+		;; \
+	esac 
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod test
+
+tar:
+	rm -f libtest.tgz
+	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude test
+
+# ========================================================================
+# $Log$
+#

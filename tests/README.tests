@@ -1,0 +1,88 @@
+#!/bin/sh
+#    README.tests        Instructions about building the mls software
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+# "$Id$"
+# A self-reading guide to testing the mls software;
+# usage: README.tests
+# related documents:
+#  README.MakeFC     a self-reading guide to building the software
+#  BEFORE.mls        a self-reading guide to prerequisites to the software
+
+        more << EOF
+tests--A set of sub-directories for testing the mls software
+
+SUMMARY
+To test the mls software first make sure that you have properly built each of
+the levels with the following set of names: {l1 l2 l3 fwdmdl lib}. These are
+the subdirectories in the parent directory to tests, which is the one where you
+are reading this one. For more information on building the mls software, enter
+../README.MakeFC. Sub-directories with the same set of names are contained in
+tests, and they allow easy testing of the corresponding level of the mls
+software.
+
+INTRODUCTION
+During development it may be necessary to test portions of the mls software
+apart from its driver, PCF files, or other complicating circumstances that
+may prevent a clear picture of where a problem is occurring. For example,
+a simple case might be to test reading a L2GP vector from a template file
+using the modules in lib. Another example might be to test coordination among
+the parts of the retrieval algorithm with the modules in fwdmdl.
+
+In attempting to make this easy, most of the steps have been automated, so you
+are required to do only the following:
+
+METHOD
+(1) Choose which of the levels {l1 l2 l3 fwdmdl lib} contains what needs to be
+tested; call this _level_
+
+(2) Write a test program that USE's the modules of _level_ to be tested
+
+(3) Copy that test program to tests/_level_ 
+
+(4) cd tests/_level_
+
+(5) make -f MakeFC depends
+
+(6) make -f MakeFC
+
+and run the resulting test program with suitable data.
+
+WARNINGS
+Since the modules of level to be USE'd by test will not include _level_'s own
+driver, any internal subprograms inside that driver may have to copied to the
+test program if they are needed during the test. That due care is shown to
+needed declarations, assignments, allocations, and so on need not be elaborated
+but neither can it be overemphasized.
+
+No debugging flags have been set among the the compiler switches. Setting them
+for the test program might not accomplish what is really desired, anyway, which
+might be intermediate data within a module of _level_. For a future refinement
+of this automatic build and test procedure, a debug option may be set during
+configuration which would facilitate obtaining the immediate results upon
+passing steps defined as milestones in the course of computation.
+
+The lib test requires a special word of warning. A copy of init_tables_module
+is required to link properly with the test program and modules in the source
+library. By default, this copy of init_tables_module is taken from l2. If not
+appropriate for the test case you are considering, you have two choices:
+(1) Carry out the test in another level, i.e. l1 or l3
+
+(2) Edit the file tests/lib/platforms/\$(MLSCONFG)
+at the following lines: (line 27)
+
+  # This is the directory name from which we will get init_tables_module
+  # (either l1, l2, or l3)
+  init_m_dir = l2
+
+and change the assignment to l1 or l3. Then 
+	make -f MakeFC clean to remake
+the file tests/lib/\$(MLSCONFG)/Makefile in accord with this change, and
+	make -f MakeFC.
+	
+-pw                           2001-Feb-01 to 2001-Feb-01
+EOF
+exit
+# $Log$
+#
