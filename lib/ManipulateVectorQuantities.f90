@@ -230,7 +230,6 @@ contains
     ! Exectuable code
     DoVectorsMatch = .false.
     if ( a%template%noQuantities /= b%template%noQuantities ) return
-
     do q = 1, a%template%noQuantities
       if ( .not. DoQuantitiesMatch ( &
         & a%quantities(q), b%quantities(q) ) ) return
@@ -290,12 +289,14 @@ contains
         if ( a%template%signal /= b%template%signal ) return
         if ( a%template%sideband /= b%template%sideband ) return
       case default
-        if ( .not. associated ( a%template%frequencies ) .or. &
-          & .not. associated ( b%template%frequencies ) ) return
-        if ( any ( shape(a%template%frequencies) /= &
-          & shape(b%template%frequencies) ) ) return
-        if ( any ( abs ( a%template%frequencies - &
-          & b%template%frequencies ) > fTol ) ) return
+        if ( associated ( a%template%frequencies ) .neqv. &
+          &  associated ( b%template%frequencies ) ) return
+        if ( associated ( a%template%frequencies ) ) then
+          if ( any ( shape(a%template%frequencies) /= &
+            & shape(b%template%frequencies) ) ) return
+          if ( any ( abs ( a%template%frequencies - &
+            & b%template%frequencies ) > fTol ) ) return
+        end if
       end select
     end if
     DoFGridsMatch = .true.
@@ -329,6 +330,9 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.26  2004/01/24 01:01:48  livesey
+! Improvements to DoFGridsMatch
+!
 ! Revision 2.25  2004/01/23 05:37:01  livesey
 ! Added DoVectors/QuantitiesMatch
 !
