@@ -19,6 +19,7 @@ module Open_Init
     &                MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START!, &
 !   &                MLSPCF_L2CF_START
   use MLSSignalNomenclature, only: ReadSignalsDatabase
+  use MoreTree, only: Get_Spec_ID
   use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
@@ -286,7 +287,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Node_id(key) is now n_spec_args.
 
-      FileType = decoration(subtree(1,decoration(subtree(1,key))))
+      FileType = get_spec_id(key)
 
       ! Now parse file and field names
       fileName = 0
@@ -379,6 +380,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.22  2001/03/15 21:18:57  vsnyder
+! Use Get_Spec_ID instead of decoration(subtree...
+!
 ! Revision 2.21  2001/03/10 07:07:58  livesey
 ! Made it not mind if no L1B radiance files.
 !
