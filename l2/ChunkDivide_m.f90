@@ -18,13 +18,14 @@ module ChunkDivide_m
 
 ! ChunkDivide              Divide MAFs in processing range among chunks  
 ! DestroyChunkDatabase     Deallocate memory taken by chunk database     
+! ReduceChunkDatabase      Reduce chunk database to [first, last] chunks
 ! === (end of toc) ===                                                   
 ! === (start of api) ===
 ! ChunkDivide (int root, TAI93_Range_T processingRange,
 !    L1BInfo_T l1bInfo, *mlSChunk_T Chunks(:) )      
 ! DestroyChunkDatabase (*mlSChunk_T Chunks(:) )      
 ! === (end of api) ===
-  public :: DestroyChunkDatabase, ChunkDivide
+  public :: DestroyChunkDatabase, ChunkDivide, ReduceChunkDatabase
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -114,6 +115,37 @@ contains ! ===================================== Public Procedures =====
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & MLSMSG_DeAllocate // "Chunks" )
   end subroutine DestroyChunkDatabase
+
+  !----------------------------------------  ReduceChunkDatabase  -----
+  subroutine ReduceChunkDatabase ( chunks, firstChunk, lastChunk )
+    use MLSCommon, only: MLSCHUNK_T
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+
+    type (MLSChunk_T), dimension(:), pointer :: chunks
+    integer, intent(in) :: firstChunk, lastChunk
+    ! Local variables
+    type (MLSChunk_T), dimension(:), pointer :: TEMPDATABASE
+    integer :: newSize, status
+    ! Executable
+    print *, 'size(chunks) ', size(chunks)
+    print *, 'firstChunk, lastChunk ', firstChunk, lastChunk
+    print *, 'associated ( chunks ) ', associated ( chunks )
+    if ( .not. associated ( chunks ) ) return
+    newSize = lastChunk - firstChunk + 1
+    print *, 'new size ', newSize
+    if ( newSize < 1 ) return
+    print *, 'lastChunk > size(chunks) ', (lastChunk > size(chunks))
+    if ( lastChunk > size(chunks) ) return
+    allocate(tempDatabase(newSize), STAT=status)
+    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "tempDatabase")
+
+    tempDatabase(1:newSize) = chunks(firstChunk:lastChunk)
+    call DestroyChunkDatabase ( chunks )
+    chunks => tempDatabase
+    print *, 'new size(chunks) ', size(chunks)
+
+  end subroutine ReduceChunkDatabase
 
   ! ------------------------------------------------  Chunk Divide -----
   subroutine ChunkDivide ( root, processingRange, l1bInfo, chunks )
@@ -2057,6 +2089,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.41  2003/08/25 23:43:08  pwagner
+! Added ReduceChunkDatabase
+!
 ! Revision 2.40  2003/08/21 22:51:18  livesey
 ! Removed yet more print statements!
 !
