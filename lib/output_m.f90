@@ -391,14 +391,17 @@ contains
 
     ! Use one or both optional formats
     if ( present(Format) ) then
-      if ( prunit == -1 .or. prunit < -2 ) then
-        write ( *, Format, advance=my_adv ) value
-      else if ( prunit >= 0 ) then
-        write ( prunit, Format, advance=my_adv ) value
-      end if
+      !if ( prunit == -1 .or. prunit < -2 ) then
+      !  write ( *, Format, advance=my_adv ) value
+      !else if ( prunit >= 0 ) then
+      !  write ( prunit, Format, advance=my_adv ) value
+      !end if
+      line = ' '
+      write ( line, Format ) value
     else
       call output ( line(:k), advance=my_adv )
     end if
+    !call output ( line(:k), advance=my_adv )
 
     if ( prunit >= -1 ) return
 
@@ -446,6 +449,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.21  2003/08/21 21:20:35  cvuu
+! Change output of format in OUTPUT_SINGLE
+!
 ! Revision 2.20  2003/07/02 01:07:27  vsnyder
 ! Add complex output
 !
