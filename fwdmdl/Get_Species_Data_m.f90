@@ -42,8 +42,10 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
       & MLSMSG_Warning
     use MLSSignals_m, only: GetRadiometerFromSignal
-    use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog, Empty_Cat
+    use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Dump, Empty_Cat, &
+      & Line_t, Lines
     use String_table, only: GET_STRING
+    use Toggles, only: Switches
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T
 
   ! Inputs
@@ -244,6 +246,11 @@ contains
       end if
     end do         ! Loop over species
 
+    if ( index(switches,'bgrp') /= 0 ) then
+      call dump ( my_catalog, 'My_Catalog in Get_Species_Data' )
+      call dump ( beta_group )
+    end if
+
   end subroutine Get_Species_Data
 
   ! ---------------------------------------  Destroy_Species_Data  -----
@@ -329,6 +336,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.3  2003/05/17 01:19:32  vsnyder
+! Remove unreferenced USE name, futzing
+!
 ! Revision 2.2  2003/05/16 23:48:59  livesey
 ! Removed references to spectags (note old code had a bug when looking for
 ! h2o_r??, which led to a 0.08K error in band 2).
