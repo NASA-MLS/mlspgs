@@ -23,9 +23,9 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, &
-  Ptan,n_sps,tan_press,i_raw,k_temp,k_atmos,no_tan_hts,k_info_count,i_star_all,      &
-           k_star_all, k_star_info,no_t,no_phi_t,t_z_basis)
+  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, Ptan, &
+         n_sps,tan_press,i_raw,k_temp,k_atmos,no_tan_hts,k_info_count, &
+         i_star_all, k_star_all, k_star_info,no_t,no_phi_t,t_z_basis)
 !
     type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     type (Vector_T), intent(in) :: FORWARDMODELIN
@@ -125,7 +125,7 @@ contains
           k_star_info(kc)%first_dim_index = ki
           k_star_info(kc)%no_phi_basis = f%template%noInstances
           k_star_info(kc)%no_zeta_basis = nz
-          k_star_info(kc)%zeta_basis(1:f%template%noSurfs) = f%template%surfs(:,1)
+          k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
           Rad(1:) = 0.0
 !
           ! Derivatives needed continue to process
@@ -217,6 +217,9 @@ contains
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.8  2001/04/10 02:25:14  livesey
+! Tidied up some code
+!
 ! Revision 1.7  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !

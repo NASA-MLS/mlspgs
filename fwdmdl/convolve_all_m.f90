@@ -96,7 +96,7 @@ contains
     fft_pts = nint(log(real(size(AntennaPattern%aaap)))/log(2.0))
     fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
     Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-      &                  fft_pts,AntennaPattern,Ier)
+      &               fft_pts,AntennaPattern,Ier)
     if (Ier /= 0) Return
 !
     !  Get 'Ntr' pressures associated with the fft_angles:
@@ -192,7 +192,7 @@ contains
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-            &           fft_pts,AntennaPattern,Ier)
+            &               fft_pts,AntennaPattern,Ier)
           if (Ier /= 0) Return
 !
           if(fft_index(1).gt.0) then
@@ -216,7 +216,7 @@ contains
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
-            &           fft_pts,AntennaPattern,Ier)
+            &               fft_pts,AntennaPattern,Ier)
           if (Ier /= 0) Return
 !
           if(fft_index(1).gt.0) then
@@ -247,7 +247,7 @@ contains
 !
           fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
           Call fov_convolve(fft_angles,Rad,center_angle,2,no_tan_hts, &
-            &           fft_pts,AntennaPattern,Ier)
+            &               fft_pts,AntennaPattern,Ier)
           if (Ier /= 0) Return
 !
           if(fft_index(1).gt.0) then
@@ -287,7 +287,7 @@ contains
           k_star_info(kc)%first_dim_index = ki
           k_star_info(kc)%no_phi_basis = f%template%noInstances
           k_star_info(kc)%no_zeta_basis = nz
-          k_star_info(kc)%zeta_basis(1:f%template%noSurfs) = f%template%surfs(:,1)
+          k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
 !
           ! Derivatives needed continue to process
 !
@@ -377,7 +377,7 @@ contains
 ! !
 !               fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
 !               Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-!                 &               band,fft_pts,AntennaPattern,Ier)
+!                 &               fft_pts,AntennaPattern,Ier)
 !               if (Ier /= 0) Return
 ! !
 !               if(fft_index(1).gt.0) then
@@ -411,6 +411,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.14  2001/04/10 02:25:14  livesey
+! Tidied up some code
+!
 ! Revision 1.13  2001/04/10 01:16:34  livesey
 ! Tidied up convolution
 !
