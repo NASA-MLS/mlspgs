@@ -63,7 +63,8 @@ module FullCloudForwardModel
                      & L_CLOUDWATER,                                         &
                      & L_LOSTRANSFUNC,                                       &
    		     & L_SCGEOCALT,                                          &
-		     & L_ELEVOFFSET
+		     & L_ELEVOFFSET,                                         &
+                     & L_SIDEBANDRATIO
 
   implicit none
   private
@@ -123,6 +124,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
     type(VectorValue_T), pointer :: STATEQ         ! A state vector quantity
 
+    type(VectorValue_T), pointer :: SIDEBANDRATIO  ! From the state vector
+
     ! for jacobian
     integer :: COLJBLOCK                ! Column index in jacobian
     integer :: ROWJBLOCK                ! Row index in jacobian
@@ -151,7 +154,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: nfine                    ! no of fine resolution grids
     character :: reply
     integer :: status                   ! allocation status 
-    
+    integer :: SIDEBAND                 ! Loop index
+    integer :: SIDEBANDSTART            ! For sideband loop
+    integer :: SIDEBANDSTEP             ! For sideband loop
+    integer :: SIDEBANDSTOP             ! For sideband loop
+    integer :: THISSIDEBAND             ! Loop counter for sidebands
+
     integer :: quantity_type, L_quantity_type       ! added on Jul 13
     integer :: L_stateQ_type
 
@@ -170,6 +178,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: A_MASSMEANDIAMETER
     real(r8), dimension(:,:), pointer :: A_TOTALEXTINCTION
     real(r8), dimension(:,:), pointer :: VMRARRAY               ! The VMRs
+
+    real (r8), dimension(:), pointer :: thisRatio ! Sideband ratio values
 
     real(r8), dimension(:), pointer :: phi_fine  !fine resolution for phi 
     real(r8), dimension(:), pointer :: z_fine  !fine resolution for z
@@ -205,29 +215,47 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     nullify ( doChannel )
     
     ! Check the model configuration 
-    if ( size ( forwardModelConfig%signals ) /= 1 )                          &
-      & call MLSMessage ( MLSMSG_Error, ModuleName,                          &
-      & 'Cannot call the full cloud forward model with multiple signals' )
-    signal = forwardModelConfig%signals(1)
-!  find which maf is called at present
-    maf = fmStat%maf
-!    print*, maf
+!j    if ( size ( forwardModelConfig%signals ) /= 1 )                          &
+!j      & call MLSMessage ( MLSMSG_Error, ModuleName,                          &
+!j      & 'Cannot call the full cloud forward model with multiple signals' )
 
-    ! For the moment make it only single sideband
+    signal = forwardModelConfig%signals(1)
+
+    !Find which maf is called at present
+    maf = fmStat%maf
+    !print*, maf
+
+!j    ! For the moment make it only single sideband
+!j    if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
+!j     & 'Only single sidebands allowed in FullForwardCloudModel for now' )
+
+    if ( signal%sideband == 0 ) then
+      if (.not. associated (sidebandRatio) ) &
+        & call MLSMessage(MLSMSG_Error,ModuleName, &
+        & "No sideband ratio supplied")
+      sidebandStart = -1
+      sidebandStop = 1
+      sidebandStep = 2
+    else
+      sidebandStart = signal%sideband
+      sidebandStop = sideBandStart
+      sidebandStep = 1
+    endif
+
+    sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_sidebandRatio, signal= signal%index, noError=.true. )
+
     noFreqs = size (signal%frequencies)
-    if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
-      & 'Only single sidebands allowed in FullForwardCloudModel for now' )
     call Allocate_test ( frequencies, noFreqs,             &
       & 'frequencies', ModuleName )
-
-!    frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
-!      & pack ( signal%frequencies, signal%channels ) )
 
     frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
       signal%frequencies)
 
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
+
     doChannel = .true.
+
     if ( associated ( signal%channels ) ) doChannel = signal%channels
 
     call allocate_test ( superset, size(antennaPatterns), &
@@ -905,10 +933,12 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 
      enddo
 
-                    
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.33  2001/09/28 21:45:50  dwu
+! modify low cloud Jacobian output format
+!
 ! Revision 1.32  2001/09/28 15:54:39  jonathan
 ! minor
 !
