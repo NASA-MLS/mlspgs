@@ -55,7 +55,7 @@ contains ! =====     Public Procedures     =============================
     use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
       & READCOMPLETEHDF5L2PCFILE
     use MLSFiles, only: GetPCFromRef
-    use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
+    use MLSL2Options, only: TOOLKIT
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
       &          MLSPCF_ptggrids_start, mlspcf_l2pc_start, mlspcf_l2pc_end
     use MoreTree, only: Get_Field_ID
@@ -100,12 +100,12 @@ contains ! =====     Public Procedures     =============================
       case ( f_antennaPatterns )
         do j = 2, nsons(son)
           call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
-          if ( PCF ) then
+          if ( TOOLKIT ) then
             lun = GetPCFromRef(fileName, mlspcf_antpats_start, &
               & mlspcf_antpats_start, &
-              & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+              & TOOLKIT, returnStatus, Version, DEBUG, &
               & exactName=PCFFileName)
-            if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+            if ( returnStatus /= 0 .and. TOOLKIT) then
               call AnnounceError(0, son, &
                 & extraMessage='Antenna Patterns File not found in PCF')
             else if( returnStatus == 0) then
@@ -119,12 +119,12 @@ contains ! =====     Public Procedures     =============================
       case ( f_filterShapes )
         do j = 2, nsons(son)
           call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
-          if ( PCF ) then
+          if ( TOOLKIT ) then
             lun = GetPCFromRef(fileName, mlspcf_filtshps_start, &
               & mlspcf_filtshps_start, &
-              & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+              & TOOLKIT, returnStatus, Version, DEBUG, &
               & exactName=PCFFileName)
-            if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+            if ( returnStatus /= 0 .and. TOOLKIT) then
               call AnnounceError(0, son, &
                 & extraMessage='Filter Shapes File not found in PCF')
             else if( returnStatus == 0) then
@@ -138,12 +138,12 @@ contains ! =====     Public Procedures     =============================
       case ( f_pointingGrids )
         do j = 2, nsons(son)
           call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
-          if ( PCF ) then
+          if ( TOOLKIT ) then
             lun = GetPCFromRef(fileName, mlspcf_ptggrids_start, &
               & mlspcf_ptggrids_start, &
-              & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+              & TOOLKIT, returnStatus, Version, DEBUG, &
               & exactName=PCFFileName)
-            if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+            if ( returnStatus /= 0 .and. TOOLKIT) then
               call AnnounceError(0, son, &
                 & extraMessage='Pointing Grids File not found in PCF')
             else if( returnStatus == 0) then
@@ -157,12 +157,12 @@ contains ! =====     Public Procedures     =============================
       case ( f_l2pc )
         do j = 2, nsons(son)
           call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
-          if ( PCF ) then
+          if ( TOOLKIT ) then
             lun = GetPCFromRef(fileName, mlspcf_l2pc_start, &
               & mlspcf_l2pc_end, &
-              & PCFL2CFSAMECASE, returnStatus, Version, DEBUG, &
+              & TOOLKIT, returnStatus, Version, DEBUG, &
               & exactName=PCFFileName)
-            if ( returnStatus /= 0 .and. PUNISH_FOR_INVALID_PCF) then
+            if ( returnStatus /= 0 .and. TOOLKIT) then
               call AnnounceError(0, son, &
                 & extraMessage='L2PC File not found in PCF')
             else if( returnStatus == 0) then
@@ -696,6 +696,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.62  2003/06/09 22:50:13  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
 ! Revision 2.61  2003/05/29 16:42:19  livesey
 ! New switchingMirror stuff
 !
