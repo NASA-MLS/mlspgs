@@ -1,8 +1,8 @@
 module Init_MLSSignals_m
 
-  use INTRINSIC, only: Add_Ident, Begin, D, F, L, Last_Intrinsic_Lit, N, &
-    & NADP, NDP, NP, NR, P, S, T, T_Boolean, T_Numeric, &
-    & T_Numeric_Range, T_String, Z
+  use INTRINSIC, only: Add_Ident, Begin, D, F, L, Last_Intrinsic_Lit, &
+    & Last_Intrinsic_Spec, N, NADP, NDP, NP, NR, P, S, Spec_First, T, &
+    & T_Boolean, T_Numeric, T_Numeric_Range, T_String, Z
 
   use MOLECULES, only: Init_Molecules, Last_Molecule, Last_Molecule_Type
   implicit NONE
@@ -47,8 +47,7 @@ module Init_MLSSignals_m
   integer, parameter :: Last_Signal_Lit     = last_molecule
 
   ! Signal specifications:
-  integer, parameter :: Spec_First = 1
-  integer, parameter :: S_band             = spec_First
+  integer, parameter :: S_band             = last_intrinsic_spec + 1
   integer, parameter :: S_module           = s_band + 1
   integer, parameter :: S_radiometer       = s_module + 1
   integer, parameter :: S_signal           = s_radiometer + 1
@@ -181,6 +180,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.13  2001/04/23 20:57:42  vsnyder
+! Move the first spec (time) to 'intrinsic'
+!
 ! Revision 2.12  2001/04/11 20:19:27  vsnyder
 ! Undo changes to 'deferred'
 !
