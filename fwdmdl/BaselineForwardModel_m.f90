@@ -104,7 +104,7 @@ contains ! ======================================== BaselineForwardModel ======
 
     ! Executable code -------------------------------------------------------
     
-    if (.not. fwdModelConf%do_Baseline ) return
+    if ( (.not. fwdModelConf%do_Baseline) .and. fwdModelConf%fwmType /= l_baseline ) return
     nullify ( chan0, chan1, inst0, inst1, surf0, surf1 )
     nullify ( chanWt0, chanWt1, instWt0, instWt1, surfWt0, surfWt1 )
     nullify ( surf0m, surf1m, surfWt0Prime, surfWt1Prime )
@@ -127,7 +127,6 @@ contains ! ======================================== BaselineForwardModel ======
       baseline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType=l_baseline, signal=signal%index, sideband=signal%sideband,&
         & noError=.true., foundInFirst=bslInFirst )
-
       ! If we can't find one, look for one for this radiometer instead,
       ! if that fails, raise an error
       if ( .not. associated(baseline) ) &
@@ -226,7 +225,7 @@ contains ! ======================================== BaselineForwardModel ======
       chan1 = min ( chan0+1, noBslChans )
       if ( associated ( baseline%template%frequencies ) ) then
         where ( chan1 /= chan0 )
-          chanWt1 = ( signal%frequencies+signal%direction*signal%centerFrequency - &
+          chanWt1 = ( signal%frequencies*signal%direction+signal%centerFrequency - &
             & baseline%template%frequencies(chan0) ) / &
             & ( baseline%template%frequencies(chan1) - &
             &   baseline%template%frequencies(chan0) ) 
@@ -236,7 +235,7 @@ contains ! ======================================== BaselineForwardModel ======
       else
         chanWt1 = 0.0
       end if
-      chanWt0 = 1 - chanWt1
+      chanWt0 = 1.0 - chanWt1
       chanWt1 = max(min(chanWt1,1.0_rp),0.0_rp)
       chanWt0 = max(min(chanWt0,1.0_rp),0.0_rp)
 
@@ -421,6 +420,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.17  2003/08/15 22:42:24  livesey
+! Bug fix in frequency interpolation, other minor changes
+!
 ! Revision 2.16  2003/02/20 20:31:33  livesey
 ! Bug fix, now does 1D correctly when phiWindow=0
 !
