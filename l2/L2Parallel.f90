@@ -64,10 +64,8 @@ module L2Parallel
   type StoredResult_T
     integer :: key                      ! Tree node for this join
     logical :: gotPrecision             ! If set have precision as well as value
-    logical :: gotBP                    ! If set have tropopause, too.
     integer, dimension(:), pointer :: valInds=>NULL() ! Array vec. dtbs. inds (noChunks)
     integer, dimension(:), pointer :: precInds=>NULL() ! Array vec. dtbs. inds (noChunks)
-    integer, dimension(:), pointer :: BPInds=>NULL() ! Array vec. dtbs. inds (noChunks)
     character(len=HDFNameLen) :: hdfName ! Name of swath/sd
   end type StoredResult_T
 
@@ -209,7 +207,6 @@ contains ! ================================ Procedures ======================
     character(len=132) :: COMMANDLINE
     character(len=132) :: WORD
 
-    integer :: BPIND                    ! Array index
     integer :: BUFFERID                 ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     integer :: CHUNK                    ! Loop counter
@@ -253,7 +250,6 @@ contains ! ================================ Procedures ======================
     ! Local vector database
     type (StoredResult_T), dimension(:), pointer :: storedResults
     ! Map into the above arrays
-    type (VectorValue_T), pointer :: BPQTY
     type (VectorValue_T), pointer :: QTY
     type (VectorValue_T), pointer :: PRECQTY
     
@@ -546,13 +542,6 @@ contains ! ================================ Procedures ======================
             nullify ( precQty )
           endif
           
-          if ( storedResults(resInd)%gotBP ) then
-            BPInd = storedResults(resInd)%BPInds(chunk)
-            BPQty => joinedVectors(BPInd)%quantities(1)
-          else
-            nullify ( BPQty )
-          endif
-          
           if ( index(switches,'mas') /= 0 .and. chunk==1 ) then
             call output ( 'Joining ' )
             call display_string ( qty%template%name, advance='yes' )
@@ -561,7 +550,7 @@ contains ! ================================ Procedures ======================
           select case ( get_spec_id ( storedResults(resInd)%key ) )
           case ( s_l2gp )
             call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-              & qty, precQty, BPQty, l2gpDatabase, chunk)
+              & qty, precQty, l2gpDatabase, chunk)
           case ( s_l2aux )
             call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
               & qty, l2auxDatabase, chunk, chunks )
@@ -579,11 +568,6 @@ contains ! ================================ Procedures ======================
             call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
           end if
 
-          if ( storedResults(resInd)%gotBP ) then
-            call DestroyVectorInfo ( joinedVectors(BPInd) )
-            call DestroyVectorTemplateInfo ( joinedVectorTemplates(BPInd) )
-            call DestroyQuantityTemplateContents ( joinedQuantities(BPInd) )
-          end if
         end if                          ! Didn't give up on this chunk
       end do
     end do
@@ -640,9 +624,6 @@ contains ! ================================ Procedures ======================
       if ( associated ( database(i)%precInds ) ) &
         & call deallocate_test ( database(i)%precInds,&
         & 'database(?)%precInds', ModuleName)
-      if ( associated ( database(i)%bpInds ) ) &
-        & call deallocate_test ( database(i)%bpInds,&
-        & 'database(?)%bpInds', ModuleName)
     end do
     deallocate ( database, STAT=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -666,7 +647,7 @@ contains ! ================================ Procedures ======================
     ! Local saved variables
     integer, save      :: JOINEDQTCOUNTER = CounterStart ! To place in qt%id
     integer, save      :: JOINEDVTCOUNTER = CounterStart ! To place in vt%id
-    integer, parameter :: NINJOINPACKET   = 3 ! Num of ints in join packet
+    integer, parameter :: NINJOINPACKET   = 2 ! Num of ints in join packet
 
     ! Local variables
     integer, dimension(NINJOINPACKET) :: I2         ! Array to unpack
@@ -674,12 +655,10 @@ contains ! ================================ Procedures ======================
     character(len=132) :: HDFNAME                   ! HDF name for quantity
     integer :: KEY                                  ! Tree node
     integer :: GOTPRECISION                         ! Flag
-    integer :: GOTBP                                ! Flag
     integer :: QTIND                                ! Index for quantity template
     integer :: VTIND                                ! Index for vector template
     integer :: VIND                                 ! Index for vector
     integer :: PVIND                                ! Index for precision vector
-    integer :: BPIND                                ! Index for tropopause vector
     integer :: I                                    ! Loop inductor
     integer :: NOSTOREDRESULTS                      ! Array size
     logical :: SEENTHISBEFORE                       ! Flag
@@ -701,38 +680,32 @@ contains ! ================================ Procedures ======================
       & "unpacking hdf name from" )
     key = i2(1)
     gotPrecision = i2(2)
-    gotBP = i2(3)
     
     ! Now get the quantity itself, possibly the precision and tropopause
-!    do i = 1, gotPrecision+1
-    do i = 1, NINJOINPACKET
-      if( i2(i) /= 0 ) then	
-        call PVMReceiveQuantity ( qt, values, justUnpack=.true. )
-
-        ! Now add its template to our template database
-        qt%id = joinedQTCounter
-        joinedQTCounter = joinedQTCounter + 1
-        qtInd = AddQuantityTemplateToDatabase ( joinedQuantities, qt )
- 
-        ! Now make a vector template up for this
-        call ConstructVectorTemplate ( 0, joinedQuantities, (/ qtInd /), vt )
-        vt%id = joinedVTCounter
-        joinedVTCounter = joinedVTCounter + 1
-        vtInd = AddVectorTemplateToDatabase ( joinedVectorTemplates, vt )
- 
-        ! Now make a vector up for this
-        v = CreateVector ( 0, joinedVectorTemplates(vtInd), &
-          & joinedQuantities, vectorNameText='joined' )
-        v%quantities(1)%values => values
-        select case ( i )
-        case ( 1 )
-          vInd = AddVectorToDatabase ( joinedVectors, v )
-        case ( 2 )
-          pvInd = AddVectorToDatabase ( joinedVectors, v )
-        case ( 3 )
-          bpInd = AddVectorToDatabase ( joinedVectors, v )
-        end select
-      end if
+    do i = 1, gotPrecision+1
+      call PVMReceiveQuantity ( qt, values, justUnpack=.true. )
+      
+      ! Now add its template to our template database
+      qt%id = joinedQTCounter
+      joinedQTCounter = joinedQTCounter + 1
+      qtInd = AddQuantityTemplateToDatabase ( joinedQuantities, qt )
+      
+      ! Now make a vector template up for this
+      call ConstructVectorTemplate ( 0, joinedQuantities, (/ qtInd /), vt )
+      vt%id = joinedVTCounter
+      joinedVTCounter = joinedVTCounter + 1
+      vtInd = AddVectorTemplateToDatabase ( joinedVectorTemplates, vt )
+      
+      ! Now make a vector up for this
+      v = CreateVector ( 0, joinedVectorTemplates(vtInd), &
+        & joinedQuantities, vectorNameText='joined' )
+      v%quantities(1)%values => values
+      select case ( i )
+      case ( 1 )
+        vInd = AddVectorToDatabase ( joinedVectors, v )
+      case ( 2 )
+        pvInd = AddVectorToDatabase ( joinedVectors, v )
+      end select
     end do
 
     ! Now update our stored result stuff
@@ -761,7 +734,6 @@ contains ! ================================ Procedures ======================
 
     thisResult%valInds(chunk) = vInd
     if ( thisResult%gotPrecision ) thisResult%precInds(chunk) = pvInd
-    if ( thisResult%gotBP ) thisResult%BPInds(chunk) = BPInd
 
   end subroutine StoreSlaveQuantity
 
@@ -777,7 +749,6 @@ contains ! ================================ Procedures ======================
     type (StoredResult_T), dimension(:), pointer :: STOREDRESULTS
 
     ! Local variables
-    integer :: BPIND                    ! Index for tropopause (if any)
     integer :: PRECIND                  ! Index for precision (if any)
     integer :: VALIND                   ! Index for value
     integer :: RES                      ! Loop counter
@@ -800,15 +771,8 @@ contains ! ================================ Procedures ======================
           call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
         end if
       end if
-      if ( storedResults(res)%gotBP ) then
-        bpInd = storedResults(res)%bpInds(chunk)
-        call DestroyVectorInfo ( joinedVectors(bpInd) )
-        call DestroyVectorTemplateInfo ( joinedVectorTemplates(bpInd) )
-        call DestroyQuantityTemplateContents ( joinedQuantities(bpInd) )
-      end if
       storedResults(res)%valInds(chunk) = 0
       storedResults(res)%precInds(chunk) = 0
-      storedResults(res)%bpInds(chunk) = 0
     end do
   end subroutine CleanUpDeadChunksOutput
 
@@ -816,6 +780,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.21  2001/10/30 01:45:21  livesey
+! Some modifications/fixes to parallel join
+!
 ! Revision 2.20  2001/09/10 23:39:12  livesey
 ! Minor change, not sure what it did, sorry.
 !
