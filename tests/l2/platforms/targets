@@ -56,7 +56,6 @@ ifndef INSTALLDIR
 endif
 endif
 
-include $(CONFDIR)/customblds/$(MLSF95).$(MLSPLAT)
 
 ALLOBJS = $(OBJS)
 
@@ -209,6 +208,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.20  2003/02/06 18:17:08  pwagner
+# Now links in utctotai library
+#
 # Revision 1.19  2002/11/25 21:21:02  pwagner
 # gcc_version to allow building with Lahey on gcc post 2.96
 #

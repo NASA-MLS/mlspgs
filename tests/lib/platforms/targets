@@ -56,7 +56,6 @@ ifndef INSTALLDIR
 endif
 endif
 
-include $(CONFDIR)/customblds/$(MLSF95).$(MLSPLAT)
 # ========================================================================
 #       The objects for the shared source files (in srclib)
 # Include their dependencies
@@ -181,6 +180,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.18  2003/02/28 18:54:13  pwagner
+# Forgot to define INSTALLDIR in last commit
+#
 # Revision 1.17  2003/02/28 18:46:37  pwagner
 # Links utctotai library
 #

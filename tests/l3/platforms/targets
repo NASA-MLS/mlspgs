@@ -56,7 +56,6 @@ ifndef INSTALLDIR
 endif
 endif
 
-include $(CONFDIR)/customblds/$(MLSF95).$(MLSPLAT)
 # ========================================================================
 MLSBIN=../../../util
 # This will filter out globbed file expansions that fail
@@ -195,6 +194,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.20  2003/02/28 18:54:13  pwagner
+# Forgot to define INSTALLDIR in last commit
+#
 # Revision 1.19  2003/02/28 18:46:37  pwagner
 # Links utctotai library
 #
