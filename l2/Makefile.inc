@@ -24,38 +24,38 @@ L2OBJS = Construct.o ConstructQuantityTemplates.o \
        ConstructVectorTemplates.o dumper.o Fill.o get_3d_view.o \
        global_settings.o HGrid.o init_tables_module.o Join.o L2AUXData.o \
        MLSL2.o obtainclimatology.o obtaindao.o obtain_mlscf.o \
-       obtainncep.o open_init.o OutputAndClose.o QuantityTemplates.o \
-       ScanDivide.o tree_checker.o tree_walker.o VGrid.o VectorsModule.o
+       obtainncep.o open_init.o OutputAndClose.o \
+       ScanDivide.o tree_checker.o tree_walker.o VGrid.o
 
 all: mlsl2
 
 Construct.o: $S/Construct.f90 ConstructQuantityTemplates.o \
           ConstructVectorTemplates.o dumper.o HGrid.o init_tables_module.o \
-          $M/MLSMessageModule.o $M/MLSSignalNomenclature.o QuantityTemplates.o \
-          $M/toggles_core.o $M/trace_m.o $M/tree.o $M/tree_types.o \
-          VectorsModule.o VGrid.o
+          $M/MLSMessageModule.o $M/MLSSignalNomenclature.o \
+          $M/QuantityTemplates.o $M/toggles_core.o $M/trace_m.o \
+          $M/tree.o $M/tree_types.o $M/VectorsModule.o VGrid.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/Construct.f90
 
 ConstructQuantityTemplates.o: $S/ConstructQuantityTemplates.f90 \
           $M/declaration_table.o HGrid.o init_tables_module.o $M/lexer_core.o \
           $M/MLSMessageModule.o $M/MLSSignalNomenclature.o $M/output_m.o \
-          QuantityTemplates.o $M/string_table.o $M/toggles_core.o \
+          $M/QuantityTemplates.o $M/string_table.o $M/toggles_core.o \
           $M/trace_m.o $M/tree.o VGrid.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/ConstructQuantityTemplates.f90
 
 ConstructVectorTemplates.o: $S/ConstructVectorTemplates.f90 \
           $M/Allocate_Deallocate.o init_tables_module.o $M/MLSMessageModule.o \
-          QuantityTemplates.o $M/toggles_core.o $M/trace_m.o $M/tree.o \
-          VectorsModule.o
+          $M/QuantityTemplates.o $M/toggles_core.o $M/trace_m.o $M/tree.o \
+          $M/VectorsModule.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/ConstructVectorTemplates.f90
 
 dumper.o: $S/dumper.f90 $M/dump_0.o HGrid.o init_tables_module.o \
-          $M/output_m.o QuantityTemplates.o $M/string_table.o VGrid.o
+          $M/output_m.o $M/QuantityTemplates.o $M/string_table.o VGrid.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/dumper.f90
 
 Fill.o: $S/Fill.f90 dumper.o init_tables_module.o $M/lexer_core.o \
           $M/output_m.o $M/toggles_core.o $M/trace_m.o $M/tree.o \
-          $M/tree_types.o VectorsModule.o
+          $M/tree_types.o $M/VectorsModule.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/Fill.f90
 
 get_3d_view.o: $S/get_3d_view.f90
@@ -65,7 +65,7 @@ global_settings.o: $S/global_settings.f90 init_tables_module.o \
           $M/toggles_core.o $M/trace_m.o $M/tree.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/global_settings.f90
 
-HGrid.o: $S/HGrid.f90 $S/addItemToDatabase.f9h $M/expr_m.o \
+HGrid.o: $S/HGrid.f90 $(MLS)/addItemToDatabase.f9h $M/expr_m.o \
           init_tables_module.o $M/lexer_core.o $M/output_m.o \
           $M/string_table.o $M/toggles_core.o $M/trace_m.o $M/tree.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/HGrid.f90
@@ -76,14 +76,14 @@ init_tables_module.o: $S/init_tables_module.f90 $M/intrinsic.o \
 
 Join.o: $S/Join.f90 init_tables_module.o L2AUXData.o $M/L2GPData.o \
           $M/lexer_core.o $M/MLSMessageModule.o $M/output_m.o \
-          QuantityTemplates.o $M/tree.o $M/tree_types.o VectorsModule.o
+          $M/QuantityTemplates.o $M/tree.o $M/tree_types.o $M/VectorsModule.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/Join.f90
 
-L2AUXData.o: $S/L2AUXData.f90 $S/addItemToDatabase.f9h \
+L2AUXData.o: $S/L2AUXData.f90 $(MLS)/addItemToDatabase.f9h \
           $M/Allocate_Deallocate.o $M/MLSMessageModule.o
 	$(F90) -c $(FOPTS) $I$S $I$M $S/L2AUXData.f90
 
-MatrixModule.o: $S/MatrixModule.f90 $S/addItemToDatabase.f9h \
+MatrixModule.o: $S/MatrixModule.f90 $(MLS)/addItemToDatabase.f9h \
           $M/Allocate_Deallocate.o dump_0.o $M/MLSMessageModule.o \
           $M/output_m.o $M/string_table.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/MatrixModule.f90
@@ -117,11 +117,6 @@ OutputAndClose.o: $S/OutputAndClose.f90 init_tables_module.o \
           $M/tree_types.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/OutputAndClose.f90
 
-QuantityTemplates.o: $S/QuantityTemplates.f90 $S/addItemToDatabase.f9h \
-          $M/Allocate_Deallocate.o $M/MLSMessageModule.o \
-          $M/MLSSignalNomenclature.o
-	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/QuantityTemplates.f90
-
 ScanDivide.o: $S/ScanDivide.f90 dumper.o $M/expr_m.o init_tables_module.o \
           $M/MLSMessageModule.o $M/string_table.o $M/tree.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/ScanDivide.f90
@@ -135,20 +130,13 @@ tree_checker.o: $(MLS)/tree_checker.f90 $M/declaration_table.o \
 tree_walker.o: $S/tree_walker.f90 Construct.o $M/declaration_table.o dumper.o \
           global_settings.o Fill.o init_tables_module.o Join.o L2AUXData.o \
           $M/L2GPData.o $M/lexer_core.o obtainclimatology.o \
-          obtaindao.o obtainncep.o \
-          open_init.o $M/output_m.o OutputAndClose.o QuantityTemplates.o \
-          ScanDivide.o \
+          obtaindao.o obtainncep.o open_init.o $M/output_m.o \
+          OutputAndClose.o $M/QuantityTemplates.o ScanDivide.o \
           $M/string_table.o $M/toggles_core.o $M/trace_m.o $M/tree.o \
-          $M/tree_types.o VectorsModule.o
+          $M/tree_types.o $M/VectorsModule.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/tree_walker.f90
 
-VectorsModule.o: $S/VectorsModule.f90 $S/addItemToDatabase.f9h \
-          $M/Allocate_Deallocate.o dumper.o get_3d_view.o \
-          $M/MLSMessageModule.o $M/MLSSignalNomenclature.o $M/output_m.o \
-          QuantityTemplates.o
-	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/VectorsModule.f90
-
-VGrid.o: $S/VGrid.f90 $S/addItemToDatabase.f9h $M/expr_m.o \
+VGrid.o: $S/VGrid.f90 $(MLS)/addItemToDatabase.f9h $M/expr_m.o \
           init_tables_module.o $M/lexer_core.o $M/output_m.o $M/string_table.o \
           $M/toggles_core.o $M/trace_m.o $M/tree.o
 	$(F90) -c $(FOPTS) $I$M $I$S $I$M $S/VGrid.f90
@@ -204,6 +192,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 2.7  2000/10/12 00:44:07  vsnyder
+# Add dependence of MLSL2.o on tree_checker.o
+#
 # Revision 2.6  2000/10/12 00:38:52  vsnyder
 # Account for lib/cf_parser moving to lib
 #

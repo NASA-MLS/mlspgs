@@ -29,27 +29,29 @@ SRCS =	Allocate_Deallocate.f90 GriddedData.f90 HDF-EOS.f90 Hdf.f90 \
         L1BData.f90 L2GPData.f90 MLSCF.f90 MLSCommon.f90 \
         MLSMessageModule.f90 MLSNumerics.f90 MLSPCF.f90 \
         MLSSignalNomenclature.f90 MLSStrings.f90 MatrixModule_0.f90 \
-        Units.f90 dates_module.f90 declaration_table.f90 dump_0.f90 \
+        QuantityTemplates.f90 Units.f90 VectorsModule.f90 \
+        dates_module.f90 declaration_table.f90 dump_0.f90 \
         error_handler.f90 expr_m.f90 gridded_data_module.f90 hash.f90 \
         heights_module.f90 intrinsic.f90 io_stuff.f90 lexer_core.f90 \
         lexer_m.f90 output_m.f90 parser.f90 string_table.f90 swapi.f90 \
         swapi_character_array.f90 swapi_character_scalar.f90 \
         swapi_double.f90 swapi_integer.f90 swapi_real.f90 \
         symbol_table.f90 symbol_types.f90 table_dumper.f90 \
-        table_generator.f90 \
-        toggles_core.f90 trace_m.f90 tree.f90 tree_types.f90 units.f90
+        table_generator.f90 toggles_core.f90 trace_m.f90 tree.f90 \
+        tree_types.f90 units.f90
 
 OBJS =	Allocate_Deallocate.o GriddedData.o HDF-EOS.o Hdf.o L1BData.o \
         L2GPData.o MLSCF.o MLSCommon.o MLSMessageModule.o MLSNumerics.o \
         MLSPCF.o MLSSignalNomenclature.o MLSStrings.o MatrixModule_0.o \
-        Units.o dates_module.o declaration_table.o dump_0.o \
-        error_handler.o expr_m.o gridded_data_module.o hash.o \
-        heights_module.o intrinsic.o io_stuff.o lexer_core.o lexer_m.o \
-        output_m.o parser.o string_table.o swapi.o \
-        swapi_character_array.o swapi_character_scalar.o swapi_double.o \
-        swapi_integer.o swapi_real.o symbol_table.o symbol_types.o \
-        table_dumper.o table_generator.o \
-        toggles_core.o trace_m.o tree.o tree_types.o units.o
+        QuantityTemplates.o Units.o VectorsModule.o dates_module.o \
+        declaration_table.o dump_0.o error_handler.o expr_m.o \
+        gridded_data_module.o hash.o heights_module.o intrinsic.o \
+        io_stuff.o lexer_core.o lexer_m.o output_m.o parser.o \
+        string_table.o swapi.o swapi_character_array.o \
+        swapi_character_scalar.o swapi_double.o swapi_integer.o \
+        swapi_real.o symbol_table.o symbol_types.o table_dumper.o \
+        table_generator.o toggles_core.o trace_m.o tree.o tree_types.o \
+        units.o
 
 all: libmls.a SDPToolkitSubstitute.a
 
@@ -103,7 +105,12 @@ MLSSignalNomenclature.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 MLSStrings.o: MLSMessageModule.o
 MatrixModule_0.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
 	dump_0.o output_m.o
+QuantityTemplates.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
+        MLSSignalNomenclature.o addItemToDatabase.f9h
 Units.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
+VectorsModule.o: Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o \
+        QuantityTemplates.o dump_0.o output_m.o string_table.o \
+        addItemToDatabase.f9h
 dates_module.o: MLSMessageModule.o MLSStrings.o
 declaration_table.o: intrinsic.o machine.o output_m.o string_table.o \
 	toggles_core.o
@@ -159,6 +166,9 @@ test_sparsify: test_sparsify.o libmls.a
 # ========================================================================
 
 # $Log$
+# Revision 2.16  2000/10/12 22:34:41  vsnyder
+# Correct dependencies for test_multiply.o (again)
+#
 # Revision 2.15  2000/10/12 20:42:45  vsnyder
 # Remove special action for dump_0.o
 #
