@@ -25,9 +25,10 @@ module MLSFiles               ! Utility file routines
 
   private 
 
-  PUBLIC :: GetPCFromRef, get_free_lun, mls_io_gen_openF, &
+  public :: GetPCFromRef, get_free_lun, mls_io_gen_openF, &
   & mls_io_gen_closeF, split_path_name, &
-  & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend
+  & mls_hdf_version, mls_inqswath, mls_sfstart, mls_sfend, &
+  & mls_openFile, mls_closeFile
 
   !------------------- RCS Ident Info -----------------------
   character(LEN=130) :: Id = &
@@ -87,6 +88,28 @@ module MLSFiles               ! Utility file routines
 
   integer, parameter :: bottom_unit_num=1
   integer, parameter :: top_unit_num=99
+
+!
+!  This was stolen from h5fortran_types.f90--
+!  a file that contains HDF5 Fortran90 type definitions
+!
+         !
+         !  HDF5 integers 
+         !
+         !  Each of the arguments of SELECTED_INT_KIND function should be 
+         !  determined by configure. 
+         !  R_LARGE is the number of digits for the biggest integer supported.
+         !  R_INTEGER is the number of digits in INTEGER  
+         !  For example: 
+         !  On 64 bit machine ( DEC ALPHA) R_LARGE = 18 and R_INTEGER = 9
+         !  On 32 bit machines ( Sparc Solaris ) R_LARGE = 9 and R_INTEGER = 9 
+         !   
+         INTEGER, PARAMETER :: R_LARGE = 18
+         INTEGER, PARAMETER :: R_INTEGER = 9
+         INTEGER, PARAMETER :: HSIZE_T  = SELECTED_INT_KIND(R_LARGE)
+         INTEGER, PARAMETER :: HSSIZE_T = SELECTED_INT_KIND(R_LARGE)
+         INTEGER, PARAMETER :: HID_T    = SELECTED_INT_KIND(R_INTEGER)
+         INTEGER, PARAMETER :: SIZE_T   = SELECTED_INT_KIND(R_INTEGER)
 
 contains
 
@@ -903,12 +926,39 @@ contains
 
   end function mls_hdf_version
 
+!-----------------------------------------------
+
+  subroutine mls_openFile(filename, access, file_id)
+!
+! External Variables
+!
+    character(len=*), intent(in) :: filename, access
+    integer(hid_t), intent(out) :: file_id
+    file_id = 0
+
+  end subroutine mls_openFile
+
+!-----------------------------------------------
+
+  subroutine mls_closeFile(file_id)
+!
+! External Variables
+!
+    integer(hid_t), intent(in) :: file_id
+
+  end subroutine mls_closeFile
+
+!-----------------------------------------------
+
 !====================
 end module MLSFiles
 !====================
 
 !
 ! $Log$
+! Revision 1.1  2002/07/12 23:36:13  pwagner
+! These transferred here having been succeeded by he5lib versions
+!
 ! Revision 2.32  2002/06/04 18:11:39  bill
 ! added a get free lun module--wgr
 !
