@@ -44,8 +44,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: T_MOLECULE       = t_module+1
   integer, parameter :: T_OUTPUTTYPE     = t_molecule+1
   integer, parameter :: T_QUANTITYTYPE   = t_outputtype+1
-  integer, parameter :: T_RADIOMETER     = t_quantitytype+1
-  integer, parameter :: T_SCALE          = t_radiometer+1
+  integer, parameter :: T_SCALE          = t_quantitytype+1
   integer, parameter :: T_SPECIES        = t_scale+1
   integer, parameter :: T_UNITS          = t_species+1
   integer, parameter :: T_VGRIDCOORD     = t_units+1
@@ -168,14 +167,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_ORBITINCLINE  = l_norm + 1
   integer, parameter :: L_PLAIN         = l_orbitIncline + 1
   integer, parameter :: L_PRESSURE      = l_plain + 1
-  integer, parameter :: L_R1A           = l_pressure + 1
-  integer, parameter :: L_R1B           = l_r1a + 1
-  integer, parameter :: L_R2            = l_r1b + 1
-  integer, parameter :: L_R3            = l_r2 + 1
-  integer, parameter :: L_R4            = l_r3 + 1
-  integer, parameter :: L_R5H           = l_r4 + 1
-  integer, parameter :: L_R5V           = l_r5h + 1
-  integer, parameter :: L_SCGEOCALT     = l_r5v + 1
+  integer, parameter :: L_SCGEOCALT     = l_pressure + 1
   integer, parameter :: L_SPACERADIANCE = l_scGeocAlt + 1
   integer, parameter :: L_SPD           = l_spaceRadiance + 1
   integer, parameter :: L_SPECIAL       = l_spd + 1
@@ -295,7 +287,6 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_molecule) =        add_ident ( 'molecule' )
     data_type_indices(t_outputtype) =      add_ident ( 'outputType' )
     data_type_indices(t_quantitytype) =    add_ident ( 'quantityType' )
-    data_type_indices(t_radiometer) =      add_ident ( 'radiometer' )
     data_type_indices(t_scale) =           add_ident ( 'scale' )
     data_type_indices(t_species) =         add_ident ( 'species' )
     data_type_indices(t_units) =           add_ident ( 'units' )
@@ -332,13 +323,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_orbitIncline) =          add_ident ( 'orbitIncline' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
-    lit_indices(l_r1a) =                   add_ident ( 'r1a' )
-    lit_indices(l_r1b) =                   add_ident ( 'r1b' )
-    lit_indices(l_r2) =                    add_ident ( 'r2' )
-    lit_indices(l_r3) =                    add_ident ( 'r3' )
-    lit_indices(l_r4) =                    add_ident ( 'r4' )
-    lit_indices(l_r5h) =                   add_ident ( 'r5h' )
-    lit_indices(l_r5v) =                   add_ident ( 'r5v' )
     lit_indices(l_scGeocAlt) =             add_ident ( 'scGeocAlt' )
     lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
@@ -522,8 +506,6 @@ contains ! =====     Public procedures     =============================
              l+l_radiance, l+l_refGPH, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_spaceRadiance, l+l_temperature, l+l_tngtECI, l+l_tngtGeodAlt, &
              l+l_tngtGeocAlt, l+l_vmr, n+n_dt_def, &
-      begin, t+t_radiometer, l+l_r1a, l+l_r1b, l+l_r2, l+l_r3, l+l_r4, &
-             l+l_r5h, l+l_r5v, n+n_dt_def, &
       begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
              l+l_none, l+l_norm, n+n_dt_def, &
       begin, t+t_species, l+l_gph, l+l_gph_precision, l+l_temperature, &
@@ -611,7 +593,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vgrid, n+n_field_spec, &
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
-             begin, f+f_radiometer, t+t_radiometer, n+n_field_type, &
+             begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_signal, s+s_signal, n+n_field_spec, &
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
@@ -788,6 +770,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.49  2001/03/15 23:25:07  vsnyder
+! Remove t_radiometer and its lits.
+!
 ! Revision 2.48  2001/03/15 20:35:57  livesey
 ! Added new stuff for special fills
 !
