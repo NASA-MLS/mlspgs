@@ -612,7 +612,7 @@ contains ! =====     Public Procedures     =============================
         ! Get temperature and interpolate to tangent points
         temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_temperature )
-        closestInstance = FindOneClosestInstance ( temp, radiance, mif )
+        closestInstance = FindOneClosestInstance ( temp, radiance, maf )
         call Allocate_test ( tangentTemperature, noMIFs, &
           & 'tangentTemperature', ModuleName )
         call InterpolateValues ( &
@@ -622,13 +622,13 @@ contains ! =====     Public Procedures     =============================
           & tangentTemperature, &
           & 'Spline', extrapolate='Allow' )
         ! Now convert radiance to optical depth
-        radiance%values(:,mif) = 1.0 - &
-          & radiance%values(:,mif) / reshape ( spread ( &
+        radiance%values(:,maf) = 1.0 - &
+          & radiance%values(:,maf) / reshape ( spread ( &
           & tangentTemperature, 1, noChans ), (/ radiance%template%instanceLen /) )
-        where ( radiance%values(:,mif) > 0.0 )
-          radiance%values(:,mif) = -log( radiance%values(:,mif) )
+        where ( radiance%values(:,maf) > 0.0 )
+          radiance%values(:,maf) = -log( radiance%values(:,maf) )
         elsewhere
-          radiance%values(:,mif) = 1.0e5 ! Choose a suitable large value
+          radiance%values(:,maf) = 1.0e5 ! Choose a suitable large value
         end where
       end if
       
@@ -765,6 +765,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.9  2002/02/09 19:11:19  livesey
+! Added optical depth calculation etc.
+!
 ! Revision 2.8  2002/02/08 22:51:00  livesey
 ! Working (hopefully) version of bin selection
 !
