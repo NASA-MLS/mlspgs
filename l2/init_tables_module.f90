@@ -735,6 +735,9 @@ contains ! =====     Public procedures     =============================
              continue = .true. ) ! WHEW! Finally done for s_fill
 
     call make_tree( (/ &
+      begin, s+s_flushL2PCBins, ndp+n_spec_def /) )
+
+    call make_tree( (/ &
       begin, s+s_destroy, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
@@ -1041,6 +1044,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.317  2003/06/04 01:09:10  livesey
+! Added flushL2PCBins
+!
 ! Revision 2.316  2003/06/03 19:24:33  livesey
 ! Added flushL2PCBins
 !
