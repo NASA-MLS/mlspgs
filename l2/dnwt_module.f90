@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module DNWT_MODULE
 !>> 2000-12-19 W. V. Snyder Removed fwd communication and linear algebra
 !>> 2000-03-21 DNWT_MODULE W. V. Snyder Converted to Fortran 90
@@ -929,6 +932,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.6  2001/05/03 02:00:39  vsnyder
+! Insert copyright notice
+!
 ! Revision 2.5  2001/04/28 01:47:39  vsnyder
 ! Get correct initial value for nflag
 !
