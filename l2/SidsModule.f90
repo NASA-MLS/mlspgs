@@ -21,12 +21,7 @@ module SidsModule
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use VectorsModule, only: Vector_T
-  use l2_load_m, only: l2_load
   use Dump_0, only: dump
-
-  !??? The next USE statement is Temporary for l2load:
-  use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
-    & TEMPORARY_FWD_MDL_INFO
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=130), private :: Id = &
@@ -38,8 +33,7 @@ module SidsModule
 contains
 
   ! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
-  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase, &
-    & FMC, FMI, TFMI )
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase)
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
@@ -47,12 +41,6 @@ contains
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
-
-    !??? Begin temporary stuff to start up the forward model
-    type(fwd_mdl_config) :: FMC
-    type(fwd_mdl_info), dimension(:), pointer :: FMI
-    type(temporary_fwd_mdl_info), dimension(:), pointer :: TFMI
-    !??? End of temporary stuff to start up the forward model
 
     type (ForwardModelConfig_T), pointer :: CONFIG ! Selected configuration
     integer :: Error                    ! >= indicates an error occurred
@@ -97,17 +85,13 @@ contains
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
       if ( .not. associated(jacobian) ) call announceError ( notPlain )
       call forwardModel ( config, FwdModelExtra, FwdModelIn, &
-        &                 Jacobian, FwdModelOut=FwdModelOut, &
-        &                 FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
-      !     &                  FMI=FMI,TFMI=TFMI) !??? Last line temporary
+        &                   Jacobian, FwdModelOut=FwdModelOut)
     else if ( config%atmos_Der .or. config%spect_Der .or. config%temp_der ) then
       call announceError ( needJacobian )
     else
       print*,'Calling forward model without derivatives'
       call forwardModel ( config, FwdModelExtra, FwdModelIn, &
-        &                 FwdModelOut=FwdModelOut, &
-        &                 FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
-      !     &             FMI=FMI,TFMI=TFMI) !??? Last line temporary
+        &                   FwdModelOut=FwdModelOut)
       print*,'Got back from forward model'
     end if
     print*,'Done the forward model!!!'
@@ -137,6 +121,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.14  2001/04/10 02:46:17  livesey
+! Working version, no more FMI/TFMI
+!
 ! Revision 2.13  2001/04/10 00:24:30  vsnyder
 ! Add an error message if Jacobian isn't 'plain'
 !
