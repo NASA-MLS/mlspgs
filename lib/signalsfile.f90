@@ -272,7 +272,6 @@ CONTAINS
     database%noBands=SIZE(bandNames)
     database%noSwitches=SIZE(switchNames)
 
-    PRINT*,"No radiometers:",database%noRadiometers
     DO radiometer=0,database%noRadiometers-1
        PRINT*,radiometerNames(radiometer)
     ENDDO
@@ -321,6 +320,9 @@ END MODULE SignalsFile
 !=============================================================================
 
 ! $Log$
+! Revision 1.1  1999/11/03 23:53:58  livesey
+! Added mlsstrings and signalsfile
+!
 ! Revision 1.2  1999/11/03 03:59:26  livesey
 ! Transfer home
 !
