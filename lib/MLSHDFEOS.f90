@@ -46,12 +46,10 @@ module MLSHDFEOS
 
   public :: HE5_EHWRGLATT, HE5_EHRDGLATT, &
     & MLS_EHWRGLATT, MLS_DFLDSETUP, MLS_GFLDSETUP, &
-    & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWSETFILL, MLS_SWWRFLD, &
+    & MLS_SWDEFDIM, MLS_SWDIMINFO, MLS_SWRDFLD, MLS_SWWRFLD, &
     & MLS_SWATTACH, MLS_SWCREATE, MLS_SWDETACH, MLS_GDCREATE, MLS_GDWRATTR, &
     & MLS_SWWRATTR, MLS_SWWRLATTR, &
     & mls_swath_in_file
-  logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
-  character(len=*), parameter :: SETFILLTITLE = '_FillValue'
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -66,10 +64,10 @@ module MLSHDFEOS
 !     c o n t e n t s
 !     - - - - - - - -
 
+! MLS_DFLDSETUP     Sets up a data field in a swath
 ! HE5_EHWRGLATT     Sets the global attributes at file level
 ! MLS_GFLDSETUP     Sets up a geolocation field in a swath
 ! MLS_SWRDFLD       Reads a field from a swath, data or geolocation
-! MLS_SWSETFILL     Sets the fill value for one or more fields
 ! MLS_SWWRFLD       Writes a field to a swath, data or geolocation
 ! === (end of toc) ===
 
@@ -96,10 +94,10 @@ module MLSHDFEOS
       & MLS_SWATH_IN_FILE_SCA
   end interface
 
-  interface MLS_SWSETFILL
-    module procedure MLS_SWSETFILL_DOUBLE, &
-      & MLS_SWSETFILL_INTEGER, MLS_SWSETFILL_REAL
-  end interface
+!   interface MLS_SWSETFILL
+!     module procedure MLS_SWSETFILL_DOUBLE, &
+!       & MLS_SWSETFILL_INTEGER, MLS_SWSETFILL_REAL
+!   end interface
 
   interface MLS_SWRDFLD
     module procedure &
@@ -488,7 +486,8 @@ contains ! ======================= Public Procedures =========================
   end function MLS_SWdiminfo
 
   integer function MLS_dfldsetUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
-    & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, FILENAME, hdfVersion, DONTFAIL )
+    & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, &
+    & FILENAME, hdfVersion, DONTFAIL, iFill, rFill, dFill )
     integer, parameter :: RANK = 7
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
@@ -498,9 +497,12 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in)          :: MERGE
     integer, intent(in)          :: CHUNK_RANK
     integer, dimension(RANK), intent(in) :: CHUNK_DIMS
-    character(len=*), optional :: FIleName
+    character(len=*), optional :: FileName
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: DONTFAIL
+    integer, optional, intent(in) :: iFill
+    real, optional, intent(in) :: rFill
+    double precision, optional, intent(in) :: dFill
     ! Internal variables
     logical :: myDontFail
     integer :: myHdfVersion
@@ -533,6 +535,18 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_5)
       if ( chunk_rank /= 0 ) &
         & mls_dfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
+      if ( mls_dfldsetup == 0 ) then
+        if ( present(iFill) ) then
+          mls_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), iFill)
+        elseif ( present(rFill) ) then
+          mls_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), rFill)
+        elseif ( present(dFill) ) then
+          mls_dfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), dFill)
+        endif
+      endif
       if ( mls_dfldsetup == 0 ) &
         & mls_dfldsetup = HE5_SWdefdfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
         & he2he5_DataType(Datatype), MERGE)
@@ -552,7 +566,8 @@ contains ! ======================= Public Procedures =========================
   end function MLS_dfldsetUP
 
   integer function MLS_GFLDSETUP ( SWATHID, FIELDNAME, DIMNAME, MAXDIMList, &
-    & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, FILENAME, hdfVersion, DONTFAIL )
+    & DATATYPE, MERGE, CHUNK_RANK, CHUNK_DIMS, &
+    & FILENAME, hdfVersion, DONTFAIL, iFill, rFill, dFill )
     integer, parameter :: RANK = 7
     integer, intent(in) :: SWATHID      ! Swath structure ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
@@ -565,6 +580,9 @@ contains ! ======================= Public Procedures =========================
     character(len=*), optional :: FIleName
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in) :: DONTFAIL
+    integer, optional, intent(in) :: iFill
+    real, optional, intent(in) :: rFill
+    double precision, optional, intent(in) :: dFill
     ! Internal variables
     logical :: myDontFail
     integer :: myHdfVersion
@@ -608,6 +626,18 @@ contains ! ======================= Public Procedures =========================
     case (HDFVERSION_5)
       if ( chunk_rank /= 0 ) &
         & mls_gfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
+      if ( mls_gfldsetup == 0 ) then
+        if ( present(iFill) ) then
+          mls_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), iFill)
+        elseif ( present(rFill) ) then
+          mls_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), rFill)
+        elseif ( present(dFill) ) then
+          mls_gfldsetup = HE5_SWsetfill(swathid, trim(fieldname), &
+            & he2he5_DataType(Datatype), dFill)
+        endif
+      endif
       if ( mls_gfldsetup == 0 ) &
         & mls_gfldsetup = HE5_SWdefgfld(swathid, trim(FIELDName), &
         & trim(DIMNAME), trim(MAXDIMLIST), &
@@ -621,102 +651,6 @@ contains ! ======================= Public Procedures =========================
           & 'Failed to set up geoloc field ' // trim(fieldname) )
 
   end function MLS_GFLDSETUP
-
-  integer function MLS_SWSETFILL_DOUBLE ( SWATHID, FIELDNAMES, DATATYPE, &
-    & FILLVALUE )
-    integer, intent(in) :: SWATHID      ! Swath structure ID
-    character(len=*), intent(in) :: FIELDNAMES     ! Field names
-    integer, intent(in) :: DATATYPE
-    double precision, intent(in) :: FILLVALUE
-
-    integer :: Field
-    integer :: numFields
-    character(len=len(FIELDNAMES)) :: FIELDNAME
-    mls_swsetfill_double = 0
-    numFields = NumStringElements(fieldnames, .false.)
-    if ( numFields < 1 ) return
-    do Field=1, numFields
-      call GetStringElement(fieldnames, fieldname, Field, .true.)
-      if ( HE5_SWSETFILL_BROKEN ) then
-        mls_swsetfill_double = he5_swwrlattr(swathid, trim(fieldname), &
-          & trim(SETFILLTITLE), &
-          & DATATYPE, 1, (/ FILLVALUE /) )
-      else
-        mls_swsetfill_double = HE5_SWsetfill(swathid, trim(fieldname), &
-        & datatype, fillvalue)
-      endif
-      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
-      if ( mls_swsetfill_double /= 0 ) then
-        mls_swsetfill_double = -1
-        return
-      endif
-    enddo
-
-  end function MLS_SWSETFILL_DOUBLE
-
-  integer function MLS_SWSETFILL_INTEGER ( SWATHID, FIELDNAMES, DATATYPE, &
-    & FILLVALUE )
-    integer, intent(in) :: SWATHID      ! Swath structure ID
-    character(len=*), intent(in) :: FIELDNAMES     ! Field names
-    integer, intent(in) :: DATATYPE
-    integer, intent(in) :: FILLVALUE
-
-    integer :: Field
-    integer :: numFields
-    character(len=len(FIELDNAMES)) :: FIELDNAME
-    mls_swsetfill_integer = 0
-    numFields = NumStringElements(fieldnames, .false.)
-    if ( numFields < 1 ) return
-    do Field=1, numFields
-      call GetStringElement(fieldnames, fieldname, Field, .true.)
-      if ( HE5_SWSETFILL_BROKEN ) then
-        mls_swsetfill_integer = he5_swwrlattr(swathid, trim(fieldname), &
-          & trim(SETFILLTITLE), &
-          & DATATYPE, 1, (/ FILLVALUE /) )
-      else
-        mls_swsetfill_integer = HE5_SWsetfill(swathid, trim(fieldname), &
-        & datatype, fillvalue)
-      endif
-      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
-      if ( mls_swsetfill_integer /= 0 ) then
-        mls_swsetfill_integer = -1
-        return
-      endif
-    enddo
-
-  end function MLS_SWSETFILL_INTEGER
-
-  integer function MLS_SWSETFILL_REAL ( SWATHID, FIELDNAMES, DATATYPE, &
-    & FILLVALUE )
-    integer, intent(in) :: SWATHID      ! Swath structure ID
-    character(len=*), intent(in) :: FIELDNAMES     ! Field names
-    integer, intent(in) :: DATATYPE
-    real, intent(in) :: FILLVALUE
-    integer, external :: HE5_SWsetfill
-    integer :: Field
-    integer :: numFields
-    character(len=len(FIELDNAMES)) :: FIELDNAME
-    mls_swsetfill_real = 0
-    numFields = NumStringElements(fieldnames, .false.)
-    if ( numFields == -1 ) return
-    do Field=1, numFields
-      call GetStringElement(fieldnames, fieldname, Field, .true.)
-      if ( HE5_SWSETFILL_BROKEN ) then
-        mls_swsetfill_real = he5_swwrlattr(swathid, trim(fieldname), &
-          & trim(SETFILLTITLE), &
-          & DATATYPE, 1, (/ FILLVALUE /) )
-      else
-        mls_swsetfill_real = HE5_SWsetfill(swathid, trim(fieldname), &
-        & datatype, fillvalue)
-      endif
-      if ( DEEBUG ) print *, 'Set fill to field ', trim(fieldname), fillvalue
-      if ( mls_swsetfill_real /= 0 ) then
-        mls_swsetfill_real = -1
-        return
-      endif
-    enddo
-
-  end function MLS_SWSETFILL_REAL
 
   integer function MLS_SWRDFLD_CHAR_1D ( SWATHID, FIELDNAME, &
     & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
@@ -1816,6 +1750,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.21  2004/07/22 17:07:15  pwagner
+! Fixed set fill values
+!
 ! Revision 2.20  2004/05/05 21:28:42  pwagner
 ! More debug printing
 !
