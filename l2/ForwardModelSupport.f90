@@ -7,6 +7,11 @@ module ForwardModelSupport
   ! Set up the forward model stuff.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use AntennaPatterns_m, only: OPEN_ANTENNA_PATTERNS_FILE, READ_ANTENNA_PATTERNS_FILE,&
+    & CLOSE_ANTENNA_PATTERNS_FILE
+  use Expr_M, only: EXPR
+  use FilterShapes_m, only: OPEN_FILTER_SHAPES_FILE, READ_FILTER_SHAPES_FILE,&
+    & CLOSE_FILTER_SHAPES_FILE
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
     & ForwardModelConfig_T
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
@@ -20,33 +25,29 @@ module ForwardModelSupport
     & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
     & F_DEFAULT_spectroscopy
-  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+  use Lexer_Core, only: PRINT_SOURCE
+  use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE
   use MLSCommon, only: R8
+  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate,&
      & MLSMSG_Error
+  use MLSNumerics, only: HUNT
   use MLSPCF2, only: mlspcf_antpats_start, mlspcf_filtshps_start, &
      &          mlspcf_ptggrids_start
   use MoreTree, only: Get_Boolean, Get_Field_ID, GET_SPEC_ID
   use Output_M, only: Output
   use Parse_Signal_m, only: PARSE_SIGNAL
+  use PointingGrid_m, only: Close_Pointing_Grid_File, &
+    & Open_Pointing_Grid_File, Read_Pointing_Grid_File
   use String_Table, only: Display_String, Get_String
   use Toggles, only: Emit, Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
+use Tree, only: Print_Subtree
   use Tree_Types, only: N_Array, N_named
   use Units, only: Deg2Rad, PHYQ_FREQUENCY, PHYQ_TEMPERATURE
   use VGridsDatabase, only: VGrid_T
-  use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE
-  use AntennaPatterns_m, only: OPEN_ANTENNA_PATTERNS_FILE, READ_ANTENNA_PATTERNS_FILE,&
-    & CLOSE_ANTENNA_PATTERNS_FILE
-  use FilterShapes_m, only: OPEN_FILTER_SHAPES_FILE, READ_FILTER_SHAPES_FILE,&
-    & CLOSE_FILTER_SHAPES_FILE
-  use Expr_M, only: EXPR
-  use Lexer_Core, only: PRINT_SOURCE
-  use MLSNumerics, only: HUNT
-  use PointingGrid_m, only: Close_Pointing_Grid_File, &
-    & Open_Pointing_Grid_File, Read_Pointing_Grid_File
 
 
   implicit none
@@ -209,7 +210,6 @@ contains ! =====     Public Procedures     =============================
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: COMMONSIZE               ! Dimension
-    integer :: Depth                    ! in an array tree
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
@@ -317,10 +317,9 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( info%moleculeDerivatives, nelts, &
           & "info%moleculeDerivatives", ModuleName )
         info%moleculeDerivatives = .false.
-        depth = 0
         nelts = 0
         do j = 2, nsons(son)
-          call fillElements ( subtree(j,son), nelts, depth, info%molecules )
+          call fillElements ( subtree(j,son), nelts, 0, info%molecules )
         end do
       case ( f_moleculeDerivatives )
         if ( .not. associated(info%molecules) ) then
@@ -456,11 +455,9 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: ROOT       ! of a subtree
       integer, intent(inout) :: COUNT   ! Number of array elements
       integer :: I                      ! Subtree index, loop inductor
-      integer :: SON                    ! of ROOT
       if ( node_id(root) == n_array ) then
         do i = 1, nsons(root)
-          son = subtree(i,root)
-          call countElements ( son, count )
+          call countElements ( subtree(i,root), count )
         end do
       else
         count = count + 1
@@ -470,19 +467,17 @@ contains ! =====     Public Procedures     =============================
     recursive subroutine FillElements ( root, count, depth, molecules )
       integer, intent(in) :: ROOT       ! of a subtree
       integer, intent(inout) :: COUNT   ! of array elements processed
-      integer, intent(inout) :: DEPTH   ! in the array tree
+      integer, intent(in) :: DEPTH      ! in the array tree
       integer, intent(inout) :: MOLECULES(:)      ! The array to be filled
       if ( node_id(root) == n_array ) then
-        depth = depth + 1
         do i = 1, nsons(root)
-          son = subtree(i,root)
-          call fillElements ( son, count, depth, molecules )
+          call fillElements ( subtree(i,root), count, depth+1, molecules )
         end do
-        depth = depth - 1
       else
         count = count + 1
         molecules(count) = decoration(root)
-        if ( depth > 0 ) molecules(count) = -molecules(count)
+        if ( count > 1 .and. (depth > 1 .or. depth > 0 .and. i > 1 ) ) &
+          & molecules(count) = -molecules(count)
       end if
     end subroutine FillElements
   end function ConstructForwardModelConfig
@@ -537,6 +532,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.19  2001/11/29 00:27:56  vsnyder
+! Fix blunders in arrays-of-arrays, alphabetize USEs
+!
 ! Revision 2.18  2001/11/28 03:50:07  vsnyder
 ! Allow array of arrays for 'molecules' field
 !
