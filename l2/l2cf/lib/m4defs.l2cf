@@ -104,7 +104,16 @@ changesyntax({@!})
 ; ------------------------------------------------ Other low level
 ;                                                  macros
 
+;; This one is fairly obvious
 !define(home,!TrimLastChar(!esyscmd({echo $HOME})))
-
-!define(comment,{!ifelse($1)})
+;; This can be used to `comment out' whole sections of code
+!define(comment,{!ifelse({$1})})
+;; This prints out an appropriate error message of our devising
 !define(M4Error,{!errprint({M4-Error:},$*,!nl)!m4exit(1)})
+;; This one takes a name and removes any white space, $ signs and new
+;; lines from it
+;; !define(tidyOneWord,{!patsubst({$1},{[$ ($)]*}),})
+!define(tidyOneWord,{!translit({$1},{ $
+})})
+!define(tidyList,{!tidyOneWord({$1})!ifelse($#,1,{},{,!tidyList}(!shift($@)))})
+
