@@ -89,7 +89,7 @@ contains ! =====     Public Procedures     =============================
       & L_COMBINECHANNELS, L_COLUMNABUNDANCE, &
       & L_ECRTOFOV, L_ESTIMATEDNOISE, L_EXPLICIT, L_EXTRACTCHANNEL, L_FOLD, &
       & L_FWDMODELTIMING, L_FWDMODELMEAN, L_FWDMODELSTDDEV, &
-      & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
+      & L_GEOCALTITUDE, L_GEODALTITUDE, L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
       & L_L1B, L_L1BMAFBASELINE, L_L2GP, L_L2AUX, L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
@@ -407,6 +407,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MULTIPLIERNODE           ! For the parser
     integer :: NBWVECTORINDEX           ! In vector database
     integer :: NBWQUANTITYINDEX         ! In vector database
+    integer :: NEEDEDCOORDINATE         ! For vGrid fills
     integer :: NOFINEGRID               ! no of fine grids for cloud extinction calculation
     integer :: NOSNOOPEDMATRICES        ! No matrices to snoop
     real(rv) :: OFFSETAMOUNT            ! For offsetRadiance
@@ -1768,14 +1769,17 @@ contains ! =====     Public Procedures     =============================
           end if
 
         case ( l_vGrid ) ! ---------------------  Fill from vGrid  -----
-          if ( .not. ValidateVectorQuantity(quantity, &
-            & quantityType=(/l_ptan/), &
-            & frequencyCoordinate=(/l_none/) ) ) &
+          select case ( quantity%template%quantityType )
+          case ( l_ptan )
+            neededCoordinate = l_zeta
+          case ( l_tngtGeodAlt )
+            neededCoordinate = l_geodAltitude
+          case ( l_tngtGeocAlt )
+            neededCoordinate = l_geocAltitude
+          end select
+          if ( vGrids(vGridIndex)%verticalCoordinate /= neededCoordinate ) &
             & call Announce_Error ( key, No_Error_code, &
-            &   'vGrids can only be used to fill ptan quantities' )
-          if ( vGrids(vGridIndex)%verticalCoordinate /= l_zeta ) &
-            & call Announce_Error ( key, No_Error_code, &
-            &  'Vertical coordinate in vGrid is not zeta' )
+            &  'Vertical coordinate vGrid does not match fill' )
           if ( vGrids(vGridIndex)%noSurfs /= quantity%template%noSurfs )&
             & call Announce_Error ( key, No_Error_code, &
             &  'VGrid is not of the same size as the quantity' )
@@ -6914,6 +6918,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.290  2004/10/13 02:25:11  livesey
+! Changes to fill from vGrid
+!
 ! Revision 2.289  2004/09/28 22:26:46  livesey
 ! Bug fix in applyBaseline, had quadrature handled the wrong way round.
 !
