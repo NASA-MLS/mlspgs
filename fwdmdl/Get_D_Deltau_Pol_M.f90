@@ -202,15 +202,15 @@ contains
                 & T_Path_C, T_Path_M, T_Path_P, T_Path_F, &
                 & Beta_Path, Beta_Path_F, SPS_Path, Alpha_Path_C, Alpha_Path_f, &
                 & Eta_zxp, Eta_zxp_f, Del_S, Path_inds, GL_Inds, &
-                & Del_Zeta, Do_Calc_T_c, Do_Calc_T_f, Do_GL, ds_dh, dh_dz, &
-                & Incoptdepth, Ref_cor, &
+                & Del_Zeta, Do_Calc_T_c, Do_Calc_T_f, Do_GL, &
+                & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
                 & H_path_c, H_path_f, dH_dt_path_c, dH_dt_path_f, H_tan, dH_dt_tan, &
                 & Do_calc_hyd_c, Deriv_Flags, D_Delta_dT, D_Deltau_Pol_DT )
 
     use DExdT_m, only: dExdT
     use Get_Beta_Path_m, only: Get_Beta_Path_Polarized
     use Get_Species_Data_m, only: Beta_Group_T
-    use GLNP, only: NG, GW
+    use GLNP, only: NG
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
     use Opacity_m, only: Opacity
@@ -265,9 +265,11 @@ contains
       !              representation basis function is not zero on gl grid.
     logical, intent(in) :: do_gl(:)         ! Indicates where on the coarse path
       !                                       to do gl integrations.
-    real(rp), intent(in) ::  ds_dh(:)       ! path length wrt height derivative
+    real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
       !                                       on entire grid.
-    real(rp), intent(in) :: dh_dz(:)        ! path height wrt zeta derivative
+    real(rp), intent(in) :: dh_dz_gw(:)     ! path height wrt zeta derivative * gw.
+      !                                       on entire grid.
+    real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative * gw.
       !                                       on entire grid.
     complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
       !                                       optical depth.  2 x 2 x path
@@ -450,10 +452,10 @@ contains
           b = a + ng
           if ( do_calc(p_i) ) then
             etaDT = eta_zxp_f(a:b-1,sv_i) / t_path_f(a:b-1)
-            f = ds_dh(gl_inds(a:b-1)) * dh_dz(gl_inds(a:b-1)) * gw
+            f = ds_dz_gw(gl_inds(a:b-1))
             do l = -1, 1
               d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
-                 & 0.5_rp * del_zeta(p_i) * &
+                 & del_zeta(p_i) * &
                  & sum( ( alpha_path_n_t_f(l,a:b-1) * etaDT - &
                  &        singularity(l,p_i) ) * f )
             end do ! l
@@ -538,8 +540,9 @@ contains
         end do ! p_i
       end if
 
-      ! Do GL for hydrostatic for any panels that need it
-      ! Apply refraction correction
+      ! Do GL for hydrostatic for any panels that need it; the singularity
+      ! correction is alpha_path_c.
+      ! Apply refraction correction.
       ! Add in contribution from scalar model, 0.25 for +/- sigma,
       ! 0.5 for pi.
       a = 1
@@ -552,11 +555,11 @@ contains
               &   h_path_f(a:b-1) * dh_dt_tan(sv_i) * dh_dt_tan(sv_i)) /  &
               &  (sqrt(h_path_f(a:b-1)**2 - dh_dt_tan(sv_i)**2))**3       &
               &  + eta_zxp_f(a:b-1,sv_i) * ds_dh(gl_inds(a:b-1)) /        &
-              &  t_path_f(a:b-1)) * dh_dz(gl_inds(a:b-1)) * gw
+              &  t_path_f(a:b-1)) * dh_dz_gw(gl_inds(a:b-1))
             do l = -1, 1
               d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
-                 & 0.5_rp * del_zeta(p_i) * &
-                 & sum( ( alpha_path_f(l,a:b-1) - singularity(l,p_i) ) * f )
+                 & del_zeta(p_i) * &
+                 & sum( ( alpha_path_f(l,a:b-1) - alpha_path_c(l,p_i) ) * f )
             end do ! l
           end if
           a = b
@@ -591,6 +594,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.16  2003/11/01 03:03:46  vsnyder
+! Use ds_dz_gw instead of ds_dh, dh_dz and gw; use del_zeta from FullForwardModel
+!
 ! Revision 2.15  2003/10/30 20:45:51  vsnyder
 ! Finish removing z_path_c in favor of del_zeta
 !
