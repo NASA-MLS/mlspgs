@@ -93,9 +93,10 @@ begin Construct
   IWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
   LWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudWater
 
-  iwcR2: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
-  iwcR3: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
-  iwcR4: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+  iwcR1A: Quantity,vGrid=vGridBaseline, hGrid=hGridfine, type=CloudIce
+  iwcR2: Quantity,vGrid=vGridBaseline, hGrid=hGridfine, type=CloudIce
+  iwcR3: Quantity,vGrid=vGridBaseline, hGrid=hGridfine, type=CloudIce
+  iwcR4: Quantity,vGrid=vGridBaseline, hGrid=hGridfine, type=CloudIce
 
   IwcFine:  Quantity, vGrid=vGridIWC, hGrid=hGridFine, type=CloudIce
 
@@ -138,6 +139,13 @@ begin Construct
     !makelist({cloudRadMax},{},!allBands)})
 
   ;; ----------------------------------------- Baselines
+  !define(constructBaselineFine,{baselineFine$1: Quantity, type=baseline, $
+    radiometer=$1, hGrid=hGridfine, vGrid=vGridBaseline, $
+    fGrid=fGridBaseline$1!nl})
+
+  !forall(constructBaselineFine, !allRadiometers )
+  !define(allBaselinesFine, {!makelist({baselineFine},{},!allRadiometers)})
+
   !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridBaseline, $
     fGrid=fGridBaseline$1!nl})
@@ -412,7 +420,8 @@ begin Construct
     temperature, temperature_HR, $
     refGPH, GPH, GPH_HR, $
     tpPressure, oneHundredHPa, $
-    iwc, iwcFine, iwcR2, iwcR3, iwcR4, lwc, surfaceType, psd, earthRadius, $
+    iwc, iwcFine, iwcR1A, iwcR2, iwcR3, iwcR4, lwc, $
+    surfaceType, psd, earthRadius, $
     trans, cext, cextFine, $
     massMeanDiameterIce, massMeanDiameterWater, $
     !allMolecules, $
@@ -420,6 +429,7 @@ begin Construct
     rhi, rhi_HR, $
     !allColumns, $
     !allBaselines, $
+    !allBaselinesFine, $
     !allExtinctions, $
     !allIsotopeRatios, $
     !allSidebandFractions, $
