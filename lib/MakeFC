@@ -103,10 +103,11 @@ clean:
 		echo "Deleting $(MLSCONFG) directory" ; \
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi ; \
-	echo "Cleaning $(testsubdirs)"; \
-	 for dir in $(testsubdirs); do \
-	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
-	done
+	echo "Cleaning $(testdir)"; \
+	$(MAKE) -f $(MakeFName) -C $(testdir) clean
+#	 for dir in $(testsubdirs); do \
+#	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
+#	done
 
 clean_objs:
 	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
@@ -114,19 +115,27 @@ clean_objs:
 		echo "Deleting $(MLSCONFG) files" ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
-	fi
+	fi; \
+	echo "Cleaning objects from $(testdir)"; \
+	$(MAKE) -f $(MakeFName) -C $(testdir) clean_objs
+
 
 tar:
 	rm -f ../lib.tgz
 	tar hcvzf ../lib.tgz * --exclude \*.o --exclude \*.mod
 
 #================= For testing purposes only =============
-alltests: $(testsubdirs)
+#alltests: $(testsubdirs)
+alltests:
+	$(MAKE) -f $(MakeFName) -C $(testdir)
 
 $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.10  2001/01/16 22:52:33  pwagner
+# clean* and alltests go thru testdir
+#
 # Revision 2.9  2001/01/10 23:45:34  pwagner
 # General housekeeping
 #
