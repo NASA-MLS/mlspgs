@@ -10,6 +10,8 @@ module Open_Init
   use Hdf, only: DFACC_READ, SFSTART
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
+  use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
+  &                        PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA
   use MLSMessageModule, only: MLSMessage, &
     &                         MLSMSG_Error!, MLSMSG_FileOpen, MLSMSG_Info
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
@@ -21,7 +23,7 @@ module Open_Init
     &                mlspcf_l2_param_CCSDSEndId, &
     &                mlspcf_l2_param_spec_keys, &
     &                mlspcf_l2_param_spec_hash, &
-    &                mlspcf_pcf_start, PENALTY_FOR_NO_METADATA
+    &                mlspcf_pcf_start
   USE MLSStrings, only: LowerCase
   USE output_m, only: output
   USE PCFHdr, only: CreatePCFAnnotation
@@ -50,13 +52,6 @@ module Open_Init
     integer, parameter :: CCSDSLen=27
   integer, private :: ERROR
   
-  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-  ! Set the following to TRUE before delivering level 2 to sids
-  logical, private :: PUNISH_FOR_INVALID_PCF=.FALSE.  ! set to true
-  logical, private :: PUNISH_FOR_NO_L1BRAD=.FALSE.  ! set to true
-  logical, private :: PUNISH_FOR_NO_L1BOA=.FALSE.  ! set to true
-  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  DestroyL1BInfo  -----
@@ -296,8 +291,6 @@ contains ! =====     Public Procedures     =============================
 
       returnStatus = Pgs_pc_getReference(mlspcf_log, version, name)
       IF (returnStatus /= PGS_S_SUCCESS) then
-		!	CALL MLSMessage(MLSMSG_Error, &
-      !                  ModuleName, 'Error retrieving log file name from PCF.')
 			call announce_error(0, "Error retrieving log file name from PCF" )
 	endif
 
@@ -416,8 +409,8 @@ endif
     logical :: Just_print_it
     logical, parameter :: Default_output_by_toolkit = .true.
 
-    just_print_it = default_output_by_toolkit
-    if ( present(use_toolkit) ) just_print_it = use_toolkit
+    just_print_it = .not. default_output_by_toolkit
+    if ( present(use_toolkit) ) just_print_it = .not. use_toolkit
 
     if ( .not. just_print_it ) then
       error = max(error,1)
@@ -464,6 +457,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.39  2001/04/16 23:45:59  pwagner
+! Gets penalty settings from MLSL2Options
+!
 ! Revision 2.38  2001/04/16 17:45:54  pwagner
 ! Makes l2pcf hash, keys lowercase if not MCFCASESENSITIVE
 !
