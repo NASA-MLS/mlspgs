@@ -655,9 +655,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_copy, n+n_field_type, &
              begin, f+f_autofill, n+n_field_type, &
              np+n_spec_def, &
+!      begin, s+s_l2gp, np+n_spec_def, & ! To avoid forward reference in h/vGrid
       begin, s+s_hGrid, &
              begin, f+f_type, t+t_hGridType, nr+n_field_type, &
-             begin, f+f_module, s+s_module, nr+n_field_spec, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
              begin, f+f_fraction, t+t_numeric, n+n_field_type, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
@@ -684,7 +685,7 @@ contains ! =====     Public procedures     =============================
              np+n_spec_def, &
       begin, s+s_vgrid, &
              begin, f+f_type, t+t_vGridType, nr+n_field_type, &
-             begin, f+f_coordinate, t+t_vGridCoord, nr+n_field_type, &
+             begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
              begin, f+f_formula, t+t_numeric_range, n+n_field_type, &
              begin, f+f_number, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, n+n_field_type, &
@@ -933,6 +934,11 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.102  2001/05/12 00:19:38  livesey
+! Tidied up construct hGrid and vGrid from existing l2gp.
+! However, parser cannot yet handle it as it involves forward
+! references.
+!
 ! Revision 2.101  2001/05/11 00:24:22  livesey
 ! Added l1brad and l1boa to global settings
 !
