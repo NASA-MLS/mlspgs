@@ -50,27 +50,20 @@ contains ! =====     Private Procedures     ============================
     call output ( 'CHUNKS: SIZE = ' )
     call output ( size(chunks), advance='yes' )
     do i = 1, size(chunks)
-      call output ( ' Chunk ' )
-      call output ( i, advance='yes' )
-      call output ( '  firstMAFIndex: ' )
-      call output ( chunks(i)%firstMAFIndex )
-      call output ( '  lastMAFIndex: ' )
-      call output ( chunks(i)%lastMAFIndex, advance='yes' )
-      call output ( '  noMAFsLowerOverlap: ' )
-      call output ( chunks(i)%noMAFsLowerOverlap )
-      call output ( '  noMAFsUpperOverlap: ' )
-      call output ( chunks(i)%noMAFsUpperOverlap, advance='yes' )
-      call output ( '  1st non-overlapped MAF: ' )
-      call output ( chunks(i)%firstMAFIndex + chunks(i)%noMAFsLowerOverlap )
-      call output ( '  last non-overlapped MAF: ' )
+      call output ( i, before=' Chunk ', advance='yes' )
+      call output ( chunks(i)%firstMAFIndex, before='  firstMAFIndex: ' )
+      call output ( chunks(i)%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
+      call output ( chunks(i)%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
+      call output ( chunks(i)%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
+      call output ( chunks(i)%firstMAFIndex + chunks(i)%noMAFsLowerOverlap, &
+        & before='  1st non-overlapped MAF: ' )
       call output ( chunks(i)%lastMAFIndex - chunks(i)%noMAFsUpperOverlap, &
-        & advance='yes' )
-      call output ( '  chunk size: ' )
-      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex + 1 )
-      call output ( '  non-overlapped chunk size: ' )
+        & before='  last non-overlapped MAF: ', advance='yes' )
+      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex + 1, &
+        & before='  chunk size: ' )
       call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex &
         & - chunks(i)%noMAFsUpperOverlap - chunks(i)%noMAFsLowerOverlap + 1, &
-        & advance='yes' )
+        & before='  non-overlapped chunk size: ', advance='yes' )
     end do
   end subroutine DUMP_CHUNKS
 
@@ -105,8 +98,7 @@ contains ! =====     Private Procedures     ============================
     use HGridsDatabase, only: HGRID_T
     type(hGrid_T), intent(in) :: HGRIDS(:)
     integer :: I
-    call output ( 'HGRIDS: SIZE = ' )
-    call output ( size(hgrids), advance='yes' )
+    call output ( size(hgrids), before='HGRIDS: SIZE = ', advance='yes' )
     do i = 1, size(hgrids)
       call output ( i, 4, after=': ' )
       call dump ( hgrids(i) )
@@ -120,6 +112,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.21  2004/05/18 01:07:33  vsnyder
+! Repair broken Dump_a_HGrid and Dump_HGrids routines
+!
 ! Revision 2.20  2004/05/01 04:03:47  vsnyder
 ! Get Dump_Quantity_Templates from QuantityTemplates instead of duplicating it
 !
