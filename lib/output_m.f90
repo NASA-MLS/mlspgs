@@ -144,6 +144,7 @@ contains
         my_chars = the_chars
       end if
       if ( my_adv == 'no' ) n_chars = n_chars+1
+      n_chars = min(n_chars, len(my_chars))
       if ( present(from_where)  ) then
         call MLSMessage ( MLSMSG_Level, from_where, my_chars(1:n_chars), &
           & advance=my_adv )
@@ -280,6 +281,7 @@ contains
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
 
+    line = ' '
     if ( .not. present(Format)  ) then
    ! No optional formats: use default char-by-char accretion
       write ( line, * ) value
@@ -440,6 +442,7 @@ contains
     integer :: I, J, K
     character(len=30) :: LINE, LOG_CHARS
 
+    line = ' '
     if ( .not. present(Format)  ) then
    ! No optional formats: use default char-by-char accretion
       write ( line, * ) value
@@ -728,6 +731,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.39  2005/01/20 23:17:51  pwagner
+! Prevent n_char being gt len(my_chars)
+!
 ! Revision 2.38  2005/01/19 01:09:49  pwagner
 ! New timeStamp interface to certain output procedures
 !
