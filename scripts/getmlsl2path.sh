@@ -41,7 +41,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
 	    if [ $YEAR == "1996" ]; then
 		echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
@@ -52,49 +52,49 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--output" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
-	    echo "/bigdata/$USER/$VERSION"
+	    echo "/bigdata/$MYUSER/$VERSION"
 	fi
     fi
     if [ $1 == "--l2pc" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER/"
+	    echo "/research1/$MYUSER/"
 	else
-	    echo "/bigdata/$USER/$VERSION"
+	    echo "/bigdata/$MYUSER/$VERSION"
 	fi
     fi
     if [ $1 == "--truthl2gp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
 	    echo "/data/emls/l2gp/$SIMULATION--t/$YEAR"
 	fi
     fi
     if [ $1 == "--corel2gp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
-	    echo "/bigdata/$USER/$VERSION"
+	    echo "/bigdata/$MYUSER/$VERSION"
 	fi
     fi
     if [ $1 == "--l1boa" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
 	    echo "/data/emls/l1boa/$SIMULATION--t/$YEAR"
 	fi
     fi
     if [ $1 == "--l1brad" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
 	    echo "/data/emls/l1brad/$SIMULATION/$FWMVERSION"
 	fi
     fi
     if [ $1 == "--l2cal" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
 	    echo "/data/emls/l2cal"
 	fi
@@ -104,22 +104,25 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--tmp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
-	    echo "/bigdata/$USER/$VERSION"
+	    echo "/bigdata/$MYUSER/$VERSION"
 	fi
     fi
     if [ $1 == "--sidsrad" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/research1/$USER"
+	    echo "/research1/$MYUSER"
 	else
-	    echo "/bigdata/$USER/$VERSION"
+	    echo "/bigdata/$MYUSER/$VERSION"
 	fi
     fi
     shift
 done
 
 # $Log$
+# Revision 1.21  2004/01/22 21:15:18  livesey
+# Added ability to overwrite user.
+#
 # Revision 1.20  2003/11/27 01:28:22  livesey
 # Bug fix
 #
