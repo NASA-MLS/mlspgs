@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -131,7 +131,12 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
    & List2Array, LowerCase, NumStringElements, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, &
    & Reverse, ReverseList, SortArray, SortList, SplitWords, strings2Ints, &
-   & StringElementNum, unquote
+   & StringElementNum, unquote, utc_to_yyyymmdd
+
+  interface utc_to_yyyymmdd
+    module procedure utc_to_yyyymmdd_strs, utc_to_yyyymmdd_ints
+  end interface
+
   ! Error return values from:
   ! GetIntHashElement
 !  public :: KEYNOTFOUND, KEYBEYONDHASHSIZE
@@ -139,6 +144,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   integer, public, parameter :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
   ! hhmmss_value
   integer, public, parameter :: INVALIDHHMMSSSTRING = 1
+  ! utc_to_yyyymmdd
+  integer, public, parameter :: INVALIDUTCSTRING = 1
   ! strings2Ints
   integer, public, parameter :: LENORSIZETOOSMALL=-999
 
@@ -2031,6 +2038,200 @@ CONTAINS
       
   end Function unquote
 
+  ! ---------------------------------------------  utc_to_yyyymmdd_ints  -----
+  subroutine utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, strict)
+    ! Routine that returns the year, month, and day from a string of the form
+    ! (A) yyyy-mm-ddThh:mm:ss.sss
+    ! (B) yyyy-dddThh:mm:ss.sss
+    ! where the field separator 'T' divides the string into two
+    ! sub-strings encoding the date and time
+    ! The date substring in subdivided by the separator '-'
+    ! into either two or three fileds
+    ! In case (A), the 3 fields are year, month, and day of month
+    ! in case (B) the two fileds are year and day of year
+    
+    ! For case (A) returns year, month, and day=day of month
+    ! For case (B) returns year, month=-1, and day=day of year
+    ! Useful to decode utc inputs into attribute values
+    
+    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    integer, intent(out) :: ErrTyp
+    integer, intent(out) :: year
+    integer, intent(out) :: month
+    integer, intent(out) :: day
+    logical,intent(in), optional :: strict
+    !----------Local vars----------!
+    character(len=1), parameter :: dash='-'
+    character(len=NameLen) :: date
+    character(len=NameLen) :: yyyy
+    character(len=NameLen) :: mm
+    character(len=NameLen) :: dd
+    character(LEN=*), parameter :: time_conversion='(I4)'
+    logical :: mystrict
+    character(len=1) :: utc_format        ! 'a' or 'b'
+    integer, parameter :: YEARMAX = 4999  ! Conversion invalid after 4999 AD
+    ! The following arrys contains the maximum permissible day for each month
+    ! where month=-1 means the whole year, month=1..12 means Jan, .., Dec
+    integer, dimension(-1:12), parameter :: DAYMAX = (/ &
+      & 366, 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 &
+      & /)
+    !----------Executable part----------!
+
+   year = -1
+   month = -1
+   day = -1
+   mm = ' '
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   if(len_trim(str) <= 0) then
+      if(mystrict) then
+         ErrTyp=INVALIDUTCSTRING
+      else
+         ErrTyp=0
+      endif
+      return
+   endif
+   
+   ErrTyp=INVALIDUTCSTRING
+   ! Snip off time fields from date fields
+   call GetStringElement(lowercase(str), date, 1, &
+     & countEmpty=.true., inDelim='t')
+   if ( date == ' ' ) then
+     if ( .not. mystrict) Errtyp = 0
+     return
+   endif
+   call GetStringElement(trim(date), yyyy, 1, countEmpty=.true., inDelim=dash)
+   if ( &
+     & NumStringElements(trim(date), countEmpty=.true., inDelim=dash) == 2) then
+     call GetStringElement(trim(date), dd, 2, countEmpty=.true., inDelim=dash)
+     utc_format = 'b'
+   else
+     call GetStringElement(trim(date), mm, 2, countEmpty=.true., inDelim=dash)
+     call GetStringElement(trim(date), dd, 3, countEmpty=.true., inDelim=dash)
+     utc_format = 'a'
+   endif
+   
+   ErrTyp=0
+   
+   ! Convert to value
+   if(yyyy /= ' ') then
+      read(yyyy, time_conversion, iostat=ErrTyp) year
+   endif
+   
+   if(ErrTyp /= 0) then
+      return
+   elseif(year < 0 .or. year > YEARMAX) then
+      ErrTyp=INVALIDUTCSTRING
+      return
+   endif
+
+   if(mm /= ' ') then
+      read(mm, time_conversion, iostat=ErrTyp) month
+   endif
+
+   if(utc_format == 'b') then
+     ErrTyp = 0
+     month = -1
+   elseif(ErrTyp /= 0) then
+      return
+   elseif(month < 1 .or. month > 12) then
+      ErrTyp=INVALIDUTCSTRING
+      return
+   endif
+   ! Coming out of the above, month should be in the interval [-1, 12]
+
+   if(dd /= ' ') then
+      read(dd, time_conversion, iostat=ErrTyp) day
+   endif
+
+   if(ErrTyp /= 0) then
+      return
+   elseif(day < 1 .or. day > DAYMAX(month)) then
+      ErrTyp=INVALIDUTCSTRING
+      return
+   endif
+  end subroutine utc_to_yyyymmdd_ints
+
+  ! ---------------------------------------------  utc_to_yyyymmdd_strs  -----
+  subroutine utc_to_yyyymmdd_strs(str, ErrTyp, year, month, day, strict)
+    ! Routine that returns the year, month, and day from a string of the form
+    ! (A) yyyy-mm-ddThh:mm:ss.sss
+    ! (B) yyyy-dddThh:mm:ss.sss
+    ! where the field separator 'T' divides the string into two
+    ! sub-strings encoding the date and time
+    ! The date substring in subdivided by the separator '-'
+    ! into either two or three fields
+    ! In case (A), the 3 fields are year, month, and day of month
+    ! in case (B) the two fields are year and day of year
+    
+    ! For case (A) returns year, month, and day=day of month
+    ! For case (B) returns year, month=-1, and day=day of year
+    ! Useful to decode utc inputs into attribute values
+    
+    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
+    !--------Argument--------!
+    character(len=*),intent(in)   :: str
+    integer, intent(out)          :: ErrTyp
+    character(len=*), intent(out) :: year
+    character(len=*), intent(out) :: month
+    character(len=*), intent(out) :: day
+    logical,intent(in), optional  :: strict
+    !----------Local vars----------!
+    character(len=1), parameter :: dash='-'
+    character(len=NameLen) :: date
+    logical :: mystrict
+    character(len=1) :: utc_format        ! 'a' or 'b'
+    !----------Executable part----------!
+
+   year = ' '
+   month = ' '
+   day = ' '
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   if(len_trim(str) <= 0) then
+      if(mystrict) then
+         ErrTyp=INVALIDUTCSTRING
+      else
+         ErrTyp=0
+      endif
+      return
+   endif
+   
+   ErrTyp=INVALIDUTCSTRING
+   ! Snip off time fields from date fields
+   call GetStringElement(lowercase(str), date, 1, &
+     & countEmpty=.true., inDelim='t')
+   if ( date == ' ' ) then
+     if ( .not. mystrict) Errtyp = 0
+     return
+   endif
+   call GetStringElement(trim(date), year, 1, countEmpty=.true., inDelim=dash)
+   if ( &
+     & NumStringElements(trim(date), countEmpty=.true., inDelim=dash) == 2) then
+     call GetStringElement(trim(date), day, 2, countEmpty=.true., inDelim=dash)
+     utc_format = 'b'
+   else
+     call GetStringElement(trim(date), month, 2, countEmpty=.true., inDelim=dash)
+     call GetStringElement(trim(date), day, 3, countEmpty=.true., inDelim=dash)
+     utc_format = 'a'
+   endif
+   
+   ErrTyp=0
+   
+  end subroutine utc_to_yyyymmdd_strs
+
 !=============================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -2040,6 +2241,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.27  2003/02/01 00:28:32  pwagner
+! Added utc_to_yyyymmdd
+!
 ! Revision 2.26  2003/01/15 21:20:00  pwagner
 ! Added readIntsFromChars
 !
