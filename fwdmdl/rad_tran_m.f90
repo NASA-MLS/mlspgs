@@ -111,8 +111,7 @@ contains
     & Tau_LBL, Tau_PFA, T_Script_LBL, T_Script_PFA, &
     & RadV )
 
-    use D_Hunt_m, only: Hunt
-    use MLSCommon, only: RP, R8
+    use MLSCommon, only: RP
     use Tau_M, only: Tau_T
 
     integer, intent(in) :: KLo, KHi             ! Frequency indices for Tau_LBL
@@ -1036,6 +1035,9 @@ contains
 end module RAD_TRAN_M
 
 ! $Log$
+! Revision 2.41  2004/11/01 20:25:44  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA may be broken for now
+!
 ! Revision 2.40  2004/10/06 21:18:24  vsnyder
 ! Add rad_tran_PFA
 !
