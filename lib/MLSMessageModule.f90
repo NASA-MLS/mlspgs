@@ -5,43 +5,44 @@
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use SDPToolkit
+  use Machine, only: Exit_with_status
+  use SDPToolkit, only: PGS_SMF_GenerateStatusReport
 
   implicit none
-  
-  private :: Id,ModuleName
-! ------------------------------- RCS Ident Info ------------------------------
-  character (len=130) :: Id = &
-     & "$Id$"
-  character (len=*), parameter :: ModuleName = &
-     & "$RCSfile$"
-! -----------------------------------------------------------------------------
 
-! This module provides low level messaging for the MLSPGS suite.  The main
-! routine is MLSMessage, which generates log messages as directed by the user.
-! The MLSMessage routine logs a message using the SDPToolkit routine
-! PGS_SMF_GenerateStatusReport.  This writes a string to the `LogReport'
-! file (PCF# 10101) in the toolkit.  In the Toolkit `substitute' it just does
-! a simple print.
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
-! The user can also choose to log the messages to a seperate file when running
-! under the toolkit.  This is setup by MLSMessageSetup and closed by
-! MLSMessageClose.  The cataloging of such a file is left up to the calling
-! code.
+  ! This module provides low level messaging for the MLSPGS suite.  The main
+  ! routine is MLSMessage, which generates log messages as directed by the
+  ! user. The MLSMessage routine logs a message using the SDPToolkit routine
+  ! PGS_SMF_GenerateStatusReport.  This writes a string to the `LogReport'
+  ! file (PCF# 10101) in the toolkit.  In the Toolkit `substitute' it just
+  ! does a simple print.
 
-! ---------------------------------------------------------------------------
+  ! The user can also choose to log the messages to a seperate file when
+  ! running under the toolkit.  This is setup by MLSMessageSetup and closed
+  ! by MLSMessageClose.  The cataloging of such a file is left up to the
+  ! calling code.
 
-! Define some low level parameters.  These are used by the calling code to
-! indicate the severity or otherwise of the messages.
+  ! ---------------------------------------------------------------------------
+
+  ! Define some low level parameters.  These are used by the calling code to
+  ! indicate the severity or otherwise of the messages.
 
   integer, parameter :: MLSMSG_Debug=1
   integer, parameter :: MLSMSG_Info=2
   integer, parameter :: MLSMSG_Warning=3
   integer, parameter :: MLSMSG_Error=4
 
-! MLSMSG_Severity_to_quit can be reset in a main program to cause us
-! to become more lenient (set it higher) or strict (set it lower)
-  integer            :: MLSMSG_Severity_to_quit=MLSMSG_Error
+  ! MLSMSG_Severity_to_quit can be reset in a main program to cause us
+  ! to become more lenient (set it higher) or strict (set it lower)
+  integer            :: MLSMSG_Severity_to_quit = MLSMSG_Error
 
   private :: SeverityNames
   character (len=*), dimension(4), parameter :: SeverityNames = &
@@ -63,22 +64,22 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
      & "Deallocation failed: "
   ! This datatype describes the configuration of the messaging suite
 
-  integer, private, parameter :: MLSMSG_PrefixLen=32
+  integer, private, parameter :: MLSMSG_PrefixLen = 32
 
   type MLSMessageConfig_T
-    logical :: suppressDebugs
-    integer :: logFileUnit
-    character (len=MLSMSG_PrefixLen) :: prefix
+    integer :: logFileUnit                     = -1
+    character (len=MLSMSG_PrefixLen) :: prefix = ''
+    logical :: suppressDebugs                  = .false.
+    logical :: useToolkit                      = .true.
   end type MLSMessageConfig_T
 
-  ! This private variable describes this configuration
+  ! This variable describes the configuration
 
-  type (MLSMessageConfig_T), private :: MLSMessageConfig = &
-    & MLSMessageConfig_T(.FALSE.,-1,"")
+  type (MLSMessageConfig_T), public, save :: MLSMessageConfig
 
 contains
 
-  ! -------------------------------------------------------------------------
+  ! -------------------------------------------------  MLSMessage  -----
 
   ! This first routine is the main `messaging' code.
 
@@ -131,13 +132,18 @@ contains
        ! Log the message using the toolkit routine
 
        if ( my_adv ) then
-         dummy=PGS_SMF_GenerateStatusReport(TRIM(MLSMessageConfig%prefix)// &
+         dummy = PGS_SMF_GenerateStatusReport(TRIM(MLSMessageConfig%prefix)// &
               & TRIM(line))
 
          ! Now, if we're also logging to a file then write to that too.
 
-         if (MLSMessageConfig%logFileUnit /= -1) &
-              & write (UNIT=MLSMessageConfig%logFileUnit,FMT=*) TRIM(line)
+         select case ( MLSMessageConfig%logFileUnit )
+         case ( 0 : )
+           write ( UNIT=MLSMessageConfig%logFileUnit, FMT=* ) TRIM(line)
+         case ( -1 )
+           write ( UNIT=*, FMT=* ) TRIM(line)
+         case default
+         end select
 
          line_len = 0
        end if
@@ -150,11 +156,11 @@ contains
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
       if ( MLSMessageConfig%logFileUnit /= -1 ) &
         & close ( MLSMessageConfig%logFileUnit )
-      stop
+      call exit_with_status ( 1 )
     end if
   end subroutine MLSMessage
 
-  ! ----------------------------------------------------------------------
+  ! --------------------------------------------  MLSMessageSetup  -----
 
   ! This routine sets up the MLSMessage suite.  The defaults are of course
   ! sensible, but the user may wish to change things.
@@ -183,7 +189,7 @@ contains
     end if
   end subroutine MLSMessageSetup
 
-  ! ----------------------------------------------------------------------
+  ! --------------------------------------------  MLSMessageClose  -----
 
   ! This routine simply closes the MLSMessage log file if there is one.
 
@@ -192,12 +198,15 @@ contains
     MLSMessageConfig%logFileUnit=-1
   end subroutine MLSMessageClose
 
-!===========================================================================
+!=======================================================================
 end module MLSMessageModule
-!===========================================================================
+!=======================================================================
 
 !
 ! $Log$
+! Revision 2.7  2001/05/04 23:26:01  vsnyder
+! Call Exit_with_status with nonzero status to terminate
+!
 ! Revision 2.6  2001/04/20 20:43:15  pwagner
 ! Check severity against MLSMSG_Severity_to_quit
 !
