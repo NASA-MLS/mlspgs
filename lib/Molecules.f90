@@ -54,11 +54,13 @@ module Molecules
   integer, parameter :: L_HOCL =         l_ho2 + 1
   integer, parameter :: L_HOCL_37 =      l_hocl + 1
   integer, parameter :: L_LIQ_H2O =      l_hocl_37 + 1
-  integer, parameter :: L_N2O =          l_liq_h2o + 1
+  integer, parameter :: L_N2 =           l_liq_h2o + 1
+  integer, parameter :: L_N2O =          l_n2 + 1
   integer, parameter :: L_NO =           l_n2o + 1
   integer, parameter :: L_NO2 =          l_no + 1
   integer, parameter :: L_O2 =           l_no2 + 1
-  integer, parameter :: L_O3 =           l_o2 + 1
+  integer, parameter :: L_O2_V1 =        l_o2 + 1
+  integer, parameter :: L_O3 =           l_o2_v1 + 1
   integer, parameter :: L_O3_2V2 =       l_o3 + 1
   integer, parameter :: L_O3_A_O18_V2 =  l_o3_2v2 + 1
   integer, parameter :: L_O3_ASYM_O_17 = l_o3_a_o18_v2 + 1
@@ -112,10 +114,12 @@ module Molecules
   data spec_tags(l_hocl)         / 00052006 /
   data spec_tags(l_hocl_37)      / 00054005 /
   data spec_tags(l_liq_h2o)      / 00018999 /
+  data spec_tags(l_n2)           / 00028964 /
   data spec_tags(l_n2o)          / 00044004 /
   data spec_tags(l_no)           / 00030008 /
   data spec_tags(l_no2)          / 00046006 /
   data spec_tags(l_o2)           / 00032001 /
+  data spec_tags(l_o2_v1)        / 00032002 /
   data spec_tags(l_o3)           / 00048004 /
   data spec_tags(l_o3_2v2)       / 00048007 /
   data spec_tags(l_o3_a_o18_v2)  / 00050006 /
@@ -174,10 +178,12 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_hocl) =         add_ident ( 'hocl' )
     lit_indices(l_hocl_37) =      add_ident ( 'hocl_37' )
     lit_indices(l_liq_h2o) =      add_ident ( 'liq_h2o' )
+    lit_indices(l_n2) =           add_ident ( 'n2' )
     lit_indices(l_n2o) =          add_ident ( 'n2o' )
     lit_indices(l_no) =           add_ident ( 'no' )
     lit_indices(l_no2) =          add_ident ( 'no2' )
     lit_indices(l_o2) =           add_ident ( 'o2' )
+    lit_indices(l_o2_v1) =        add_ident ( 'o2_v1' )
     lit_indices(l_o3) =           add_ident ( 'o3' )
     lit_indices(l_o3_2v2) =       add_ident ( 'o3_2v2' )
     lit_indices(l_o3_a_o18_v2) =  add_ident ( 'o3_a_o18_v2' )
