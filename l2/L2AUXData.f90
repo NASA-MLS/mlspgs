@@ -225,6 +225,7 @@ contains ! =====     Public Procedures     =============================
     endif
     if ( present(sdList) ) then
       mysdList = sdList
+      call dump(mysdList, 'DS names')
     else
       call GetAllHDF5DSNames (trim(File1), '/', mysdList)
       call output ( '============ DS names in ', advance='no' )
@@ -266,7 +267,7 @@ contains ! =====     Public Procedures     =============================
     noSds = NumStringElements(trim(mysdList), countEmpty)
     if ( noSds < 1 ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'No sdNames cp to file--unable to count sdNames in ' // trim(sdList) )
+        & 'No sdNames cp to file--unable to count sdNames in ' // trim(mysdList) )
     endif
     ! Loop over sdNames in file 1
     do i = 1, noSds
@@ -277,8 +278,8 @@ contains ! =====     Public Procedures     =============================
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Unable to open sd to read attribute in l2aux file' )
       endif
-      ! Get QuantityType attribute
-      if ( .not. IsHDF5AttributePresent(sd_id, 'QuantityType') ) then
+      ! Get QuantityType attribute--unfortunately they're all 0; what gives?
+      if ( .not. IsHDF5AttributePresent(sd_id, 'QuantityType') .or. .true.) then
         QuantityType = GetQuantityTypeFromName(trim(sdName)) ! l_radiance
       else
         call GetHDF5Attribute ( sd_id, 'QuantityType', QuantityType )
@@ -288,10 +289,18 @@ contains ! =====     Public Procedures     =============================
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Unable to close sd to read attribute in l2aux file' )
       endif
-      if ( QuantityType < 1 ) cycle
+      if ( QuantityType < 1 ) then
+        call output('Quantity type: ', advance='no')
+        call output(QuantityType, advance='yes')
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Unrecognized quantity type for sd:' // trim(sdName) )
+        cycle
+      endif
+      ! print *, 'About to read ', trim(sdName)
       call ReadL2AUXData ( sdfid1, trim(sdName), QuantityType, l2aux, &
            & checkDimNames=.false., hdfVersion=hdfVersion )
       ! Write the filled l2aux to file2
+      ! print *, 'About to write ', trim(sdName)
       call WriteL2AUXData(l2aux, sdfid2, status, trim(sdName), &
         & hdfVersion=hdfVersion)
       ! Deallocate memory used by the l2aux
@@ -300,7 +309,7 @@ contains ! =====     Public Procedures     =============================
 	 call h5gClose_f (grpID, status)
     if ( status /= 0 ) then
 	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Unable to close group to read attribute in l2aux file' )
+       & 'Unable to close group in l2aux file: ' // trim(File1) // ' after cping' )
     endif
 	 status = mls_sfend(sdfid1, hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
@@ -1721,6 +1730,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.61  2004/03/08 22:33:29  pwagner
+! Bypass reading QuantityType attribute (why always 0)
+!
 ! Revision 2.60  2004/02/26 22:05:06  pwagner
 ! Can copy l2aux file w/o knowing ds names; acts more gracefully if no attributes
 !
