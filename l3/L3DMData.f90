@@ -15,6 +15,7 @@ MODULE L3DMData
    USE MLSPCF3
    USE MLSStrings
    USE OpenInit
+   USE PCFHdr
    USE PCFModule
    USE SDPToolkit
    IMPLICIT NONE
@@ -45,12 +46,8 @@ MODULE L3DMData
 
 ! Parameters
 
-   CHARACTER (LEN=*), PARAMETER :: DIMX_NAME = 'XDim'
-   CHARACTER (LEN=*), PARAMETER :: DIMY_NAME = 'YDim'
-   CHARACTER (LEN=*), PARAMETER :: DIMZ_NAME = 'ZDim'
    CHARACTER (LEN=*), PARAMETER :: DATA_FIELDV = 'L3dmValue'
    CHARACTER (LEN=*), PARAMETER :: DATA_FIELDP = 'L3dmPrecision'
-   CHARACTER (LEN=*), PARAMETER :: GD_ERR = 'Failed to detach from grid '
 
 ! This data type is used to store the l3 daily map data.
 
@@ -168,10 +165,6 @@ CONTAINS
       TYPE (L3DMFiles_T), INTENT(INOUT) :: l3dmFiles
    
 ! Parameters
-
-      CHARACTER (LEN=*), PARAMETER :: DIMXYZ_NAME = 'ZDim,YDim,XDim'
-
-      INTEGER, PARAMETER :: GCTP_GEO = 0
 
 ! Functions
 
@@ -670,8 +663,6 @@ CONTAINS
          attrName = 'LocalGranuleID'
          indx = INDEX(files%name(i), '/', .TRUE.)
          sval = files%name(i)(indx+1:)
-         indx = INDEX(sval, '.', .TRUE.)
-         sval = sval(:indx-1)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -686,8 +677,7 @@ CONTAINS
          ENDIF
 
          attrName = 'LocalVersionID'
-         CALL ExpandFileTemplate('$version-$cycle', sval, &
-                                 version=pcf%outputVersion, cycle=pcf%cycle)
+         CALL ExpandFileTemplate('$cycle', sval, cycle=pcf%cycle)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -741,7 +731,7 @@ CONTAINS
 
             attrName = 'AutomaticQualityFlagExplanation' // '.' // cNum
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                       'TBD')
+                                       'pending algorithm update')
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -757,7 +747,7 @@ CONTAINS
 
             attrName = 'OperationalQualityFlagExplanation' // '.' // cNum
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                                              'TBD')
+                                              'Not Investigated')
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1084,39 +1074,48 @@ CONTAINS
 
 ! Horizontal geolocation fields
 
-      IF ( ASSOCIATED(l3dm%latitude) ) DEALLOCATE (l3dm%latitude, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dm latitude pointer'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dm%latitude) ) THEN
+         DEALLOCATE (l3dm%latitude, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dm latitude pointer'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
-      IF ( ASSOCIATED(l3dm%longitude) ) DEALLOCATE (l3dm%longitude, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dm longitude pointer'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dm%longitude) ) THEN
+         DEALLOCATE (l3dm%longitude, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dm longitude pointer'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 ! Vertical geolocation field
 
-      IF ( ASSOCIATED(l3dm%pressure) ) DEALLOCATE (l3dm%pressure, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dm pressure pointer'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dm%pressure) ) THEN
+         DEALLOCATE (l3dm%pressure, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dm pressure pointer'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 ! Data fields
 
-      IF ( ASSOCIATED(l3dm%l3dmValue) ) DEALLOCATE (l3dm%l3dmValue, STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dmValue pointer'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dm%l3dmValue) ) THEN
+         DEALLOCATE (l3dm%l3dmValue, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dmValue pointer'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
-      IF ( ASSOCIATED(l3dm%l3dmPrecision) ) DEALLOCATE (l3dm%l3dmPrecision, &
-                                                        STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_DeAllocate // '  l3dmPrecision'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF ( ASSOCIATED(l3dm%l3dmPrecision) ) THEN
+         DEALLOCATE (l3dm%l3dmPrecision, STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_DeAllocate // '  l3dmPrecision'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
       ENDIF
 
 !-------------------------------
@@ -1175,6 +1174,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.9  2001/02/21 20:57:12  nakamura
+!# Changed MLSPCF to MLSPCF3; made some parameters global; added ReadL3DMData; changed InputPointer.
+!#
 !# Revision 1.8  2001/02/09 19:18:05  nakamura
 !# Moved DIMT to MLSL3Common; changed LocalGranuleID to file - .dat
 !#
