@@ -1829,7 +1829,7 @@ contains ! ================================ FullForwardModel routine ======
 
           do j = 1, size(antennaPatterns)
             superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
-              & fwdModelConf%signals, sideband=thisSideband, &
+              & fwdModelConf%signals( (/sigInd/) ), sideband=thisSideband, &
               & channel=channel )
           end do
 
@@ -2089,6 +2089,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.32  2002/02/14 19:05:01  bill
+! Fixed no spectral avg bug--wgr
+!
 ! Revision 2.31  2002/02/13 20:35:47  livesey
 ! Added some nullifies
 !
