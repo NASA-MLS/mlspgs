@@ -24,7 +24,7 @@ contains
 !
     Real(r8) :: rxf(nfp), tmpary(nfp), df
 !
-    df = F_grid_fltr(2) - F_grid_fltr(1)
+    df = abs(F_grid_fltr(2) - F_grid_fltr(1))
     Call Cspline(F_grid, F_grid_fltr, Rad, tmpary, n, nfp)
     rxf(1:nfp) = tmpary(1:nfp) * Fltr_func(1:nfp)
     Call Simps (rxf, df, nfp, Avg)
@@ -35,6 +35,9 @@ contains
 
 end module FREQ_AVG_M
 ! $Log$
+! Revision 1.3  2001/02/19 22:20:40  zvi
+! Latest modification: Conv/NoConv
+!
 ! Revision 1.2  2001/02/19 22:14:21  zvi
 !
 ! Initial conversion to Fortran 90
