@@ -208,21 +208,23 @@ Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
 
   refcor(1:N2lvl) = 1.0
 
-  k = n_lvls
-  x1 = ngrid(n_lvls-1)
-  x2 = ngrid(n_lvls)
-  DO WHILE(k < N2lvl .AND. x1 > 1.0d-13)
-    k = k + 1
-    xm = x2 * (x2 / x1)
-    IF(xm >= 1.0D-13) THEN
-      x1 = x2
-      x2 = xm
-    ELSE
-      x1 = x2
-      xm = x2
-    END IF
-    ngrid(k) = xm
-  END DO
+  if ( n_lvls > 1) then
+    k = n_lvls
+    x1 = ngrid(n_lvls-1)
+    x2 = ngrid(n_lvls)
+    DO WHILE(k < N2lvl .AND. x1 > 1.0d-13)
+      k = k + 1
+      xm = x2 * (x2 / x1)
+      IF(xm >= 1.0D-13) THEN
+        x1 = x2
+        x2 = xm
+      ELSE
+        x1 = x2
+        xm = x2
+      END IF
+      ngrid(k) = xm
+    END DO
+  end if
 
 !  First approximation:
 
@@ -254,7 +256,7 @@ Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
     refcor(k) = 1.0_r8 + r
   END DO
 
-  q = refcor(n_lvls-1)
+  q = refcor(max(n_lvls-1,1))
   refcor(n_lvls:N2lvl) = q
 
   if(ht < 0.0) Return
@@ -342,7 +344,7 @@ Real(r8) :: hn, pr, hneg, hpos, q, r, hsk, hsk1, an1, an2, dndh, n1, n2, &
 
   END DO
 
-  q = refcor(n_lvls-1)
+  q = refcor(max(n_lvls-1,1))
   refcor(n_lvls:N2lvl) = q
 
   RETURN
@@ -459,6 +461,9 @@ END SUBROUTINE solve_hn
 
 end module REFRACTION_M
 ! $Log$
+! Revision 1.3  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.2  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !
