@@ -158,16 +158,22 @@ program MLSL2
       'A syntax error occurred -- there is no abstract syntax tree', &
       advance='yes' )
   else
-    if ( dump_tree ) call print_subtree ( root, 0 )
+    if ( dump_tree ) then
+      call output ( 'Begin un-type-checked abstract syntax tree:', &
+        & advance='yes' )
+      call print_subtree ( root, 0 )
+      call output ( 'End un-type-checked abstract syntax tree:', &
+        & advance='yes' )
+    end if
 
     ! Check that supra-syntactic conditions are met, e.g. correct
     ! types for fields of commands, correct command order, etc.
     call check_tree ( root, error, first_section )
     if ( do_dump ) call dump_decl
     if ( toggle(syn) ) then
-      call output ( 'Begin abstract syntax tree:', advance='yes' )
+      call output ( 'Begin type-checked abstract syntax tree:', advance='yes' )
       call print_subtree ( root, 0 )
-      call output ( 'End abstract syntax tree', advance='yes' )
+      call output ( 'End type-checked abstract syntax tree', advance='yes' )
     end if
     if ( error == 0 .and. first_section /= 0 ) then
       ! Now do the L2 processing.
@@ -177,6 +183,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.9  2001/02/28 02:44:24  vsnyder
+! Identify abstract syntax tree dumps, show default --[n]pcf in usage
+!
 ! Revision 2.8  2001/02/28 01:59:29  vsnyder
 ! Access Open_MLSCF and Close_MLSCF from Obtain_MLSCF instead of Open_Init
 !
