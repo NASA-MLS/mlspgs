@@ -789,7 +789,8 @@ contains
       do j = 1, size(Config%molecules)
         call output ( '    ' )
         if ( j == config%firstPFA ) call output ( 'PFA: ' )
-        call display_string(lit_indices(Config%molecules(j)))
+        if ( Config%molecules(j) < 0 ) call output ( '-' )
+        call display_string(lit_indices(abs(Config%molecules(j))))
         if (Config%moleculeDerivatives(j)) then
           call output (' compute derivatives', advance='yes')
         else
@@ -840,6 +841,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.53  2004/07/08 02:35:29  vsnyder
+! Put all line-by-line molecules before PFA ones
+!
 ! Revision 2.52  2004/06/23 02:14:06  vsnyder
 ! Added PFA stuff, some cannonball polishing
 !
