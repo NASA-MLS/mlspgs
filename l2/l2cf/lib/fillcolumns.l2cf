@@ -1,59 +1,13 @@
-; ------------------------------------------------- Fill, tropopause -----
-
-begin Fill
-
-   ;; Fill the tropopause
-  !ifdef(tpPressure,{},{!define(tpPressure,100mb)})
-    Fill, quantity=state.tpPressure, method=explicit, $
-      explicitValues=!tpPressure, /spread
-  !define(TropoName, !tpPressure)
-
-end Fill
-
 ; ------------------------------------------------- Fill, column abundances -----
 
 begin Fill
 
-  !define(columnFill,{
-   Fill, quantity=$2.column_$1, method=special, vmrQuantity=$2.$1, $
-      boundaryPressure=$3!dnl
-})!dnl
-  !columnFill(bro,state,state.tpPressure)
-  !columnFill(ch3cn,state,state.tpPressure)
-  !columnFill(clo,state,state.tpPressure)
-  !columnFill(co,state,state.tpPressure)
-  !columnFill(h2o,state,state.tpPressure)
-  !ifdef(skipHiRes,{},{!columnFill(h2o_HR,state,state.tpPressure)})
-  !columnFill(hcl,state,state.tpPressure)
-  !columnFill(hcn,state,state.tpPressure)
-  !columnFill(hno3,state,state.tpPressure)
-  !columnFill(ho2,state,state.tpPressure)
-  !columnFill(hocl,state,state.tpPressure)
-  !columnFill(n2,state,state.tpPressure)
-  !columnFill(n2o,state,state.tpPressure)
-  !columnFill(o2,state,state.tpPressure)
-  !columnFill(o3,state,state.tpPressure)
-  !ifdef(skipHiRes,{},{!columnFill(o3_HR,state,state.tpPressure)})
-  !columnFill(oh,state,state.tpPressure)
-  !columnFill(so2,state,state.tpPressure)
+  !define(fillOneColumn,{!dnl
+  Fill, quantity=state.column_$1, method=special, vmrQuantity=state.$1, $
+    boundaryPressure=state.tpPressure
+  Fill, quantity=outputPrecision.column_$1, method=special, vmrQuantity=outputPrecision.$1, $
+    boundaryPressure=state.tpPressure!nl})
 
-  !columnFill(bro,outputPrecision,state.tpPressure)
-  !columnFill(ch3cn,outputPrecision,state.tpPressure)
-  !columnFill(clo,outputPrecision,state.tpPressure)
-  !columnFill(co,outputPrecision,state.tpPressure)
-  !columnFill(h2o,outputPrecision,state.tpPressure)
-  !ifdef(skipHiRes,{},{!columnFill(h2o_HR,outputPrecision,state.tpPressure)})
-  !columnFill(hcl,outputPrecision,state.tpPressure)
-  !columnFill(hcn,outputPrecision,state.tpPressure)
-  !columnFill(hno3,outputPrecision,state.tpPressure)
-  !columnFill(ho2,outputPrecision,state.tpPressure)
-  !columnFill(hocl,outputPrecision,state.tpPressure)
-  !columnFill(n2,outputPrecision,state.tpPressure)
-  !columnFill(n2o,outputPrecision,state.tpPressure)
-  !columnFill(o2,outputPrecision,state.tpPressure)
-  !columnFill(o3,outputPrecision,state.tpPressure)
-  !ifdef(skipHiRes,{},{!columnFill(o3_HR,outputPrecision,state.tpPressure)})
-  !columnFill(oh,outputPrecision,state.tpPressure)
-  !columnFill(so2,outputPrecision,state.tpPressure)
+  !forall(fillOneColumn,BrO,CH3CN,CO,H2O,HCl,HCN,HNO3,HO2,HOCl,N2O,O3,OH,SO2)
 
 end Fill
