@@ -732,6 +732,7 @@ contains
     tau(1:kk) = dble(TFMI%ptg_press%lin_val(1:kk))
 
     klo = -1
+    Zeta = -1.666667
     Call Hunt(Zeta,tau,kk,klo,j)
     IF(ABS(Zeta-tau(j)) < ABS(Zeta-tau(klo))) klo=j
 !
@@ -804,6 +805,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.16  2001/03/13 00:43:12  zvi
+! *** empty log message ***
+!
 ! Revision 2.15  2001/03/13 00:23:41  zvi
 ! Correction to no_tan_hts for hydrostatic_model repeating calls
 !
