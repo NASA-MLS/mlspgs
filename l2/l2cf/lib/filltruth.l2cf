@@ -98,6 +98,10 @@ begin Fill
     maxIterations=20
   })
 
+  ;; Do the magnetic field
+  Fill, quantity=truth.magneticField, method=magneticModel, $
+    GPHquantity=truth.gph
+
 end Fill
 
 
