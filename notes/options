@@ -30,32 +30,23 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   -t: Trace declaration table construction.
   -v: List the configuration file.
   The above options can be concatenated after one hyphen,
-  except that -S takes the rest of the option as its 
-         "string"
-  --[n]cfpcf: Open the L2CF [without] using the Toolkit 
-        and the PCF.
-      --ncfpcf assumed if L2CF-name is present.  
-        Default: --cfpcf (SIPS) --ncfpcf (JPL)
+  except that -S takes the rest of the option as its "string"
   --check: Just check l2cf and quit
   --chunk[ ]<chunk index> Run just this chunk
   --[n]ckbk: Check the block calculations against full block algebra
   --[n]countChunks: Just print the number of chunks and quit
-  --[n]gcch: Do [not] force garbage collection after each chunk processed
-  --[n]gcdt: Do [not] force garbage collection after each deallocate_test
   --[n]kit: Output error messages [not] using the SDP Toolkit
      (in the next 3, n may be one of {4, 5, b} where b means both 4 and 5)
-  --l1b=n: Assume hdfn (n=4 or 5) when reading l1b files
-  --l2gpr=n: Assume hdfeosn (n=4 or 5) when reading l2gp files
-  --l2gpw=n: Assume hdfeosn (n=4 or 5) when writing l2gp files
-  --[n]meta: [Do not] Create metadata files.
+  --l1b=n:   Assume hdfn when reading l1b files
+  --l2gpr=n: Assume hdfeosn when reading l2gp files
+  --l2gpw=n: Assume hdfeosn when writing l2gp files
   --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.
-    (--npcf sets --nmeta and --ncfpcf.)
+    (--npcf means no metadata and the l2cf name must on the command line)
   --recl <number>: set the max record length size for l2cf to <number>
       (In case the default value, 10000, is too small for some l2cfs)
   --subblock <number>: Set the number of reals to consider when subblocking the
     matrix multiply
-  --[n]tk: [Do not] Use the panoply of the PGS_toolkit
-    (--ntk sets --npcf, --ncfpcf and --nmeta)
+  --[n]tk: [Do not] Use the panoply of the PGS_toolkit (--ntk sets --npcf)
   --version: Print current version number
   --[n]wall: Use wall clock instead of CPU_TIME
   --master <filename>[:a:b]: This is the master task in a PVM setup
@@ -95,6 +86,9 @@ by the equal-signs--stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.16  2002/10/03 23:00:04  pwagner
+ You can set l1b, l2gp hdfversions on command line
+
  Revision 1.15  2002/08/29 21:48:38  livesey
  Added the --subblock option
 
