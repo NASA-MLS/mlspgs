@@ -91,7 +91,7 @@ contains
       call output ( 'A' )
     end if
     call output ( 'llocated ' )
-    call DumpSize ( noWords*4 )
+    call DumpSize ( noWords*4.0 )
     call output ( ' for ' // trim ( name ) // ' in ' )
     if ( moduleName(1:1) == '$' ) then
       ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
@@ -100,7 +100,7 @@ contains
       call output ( moduleName )
     end if
     call output ( ' total ' )
-    call DumpSize ( noWordsAllocated*4, advance='yes' )
+    call DumpSize ( noWordsAllocated*4.0, advance='yes' )
   end subroutine ReportAllocateDeallocate
     
   ! =====     Private Procedures     ============================
@@ -347,21 +347,21 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1/4-1 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1/4-1 )
   end subroutine Deallocate_Test_Character_1d
   ! -------------------------------  Deallocate_Test_Character_2d  -----
   subroutine Deallocate_Test_Character_2d ( To_Deallocate, Its_Name, ModuleName )
@@ -369,22 +369,22 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2)/4-1 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2)/4-1 )
   end subroutine Deallocate_Test_Character_2d
   ! -------------------------------  Deallocate_Test_Character_3d  -----
   subroutine Deallocate_Test_Character_3d ( To_Deallocate, Its_Name, ModuleName )
@@ -392,23 +392,23 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2, DIM3
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-      dim3 = size ( to_deallocate, 3 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+        dim3 = size ( to_deallocate, 3 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2*dim3)/4-1 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2*dim3)/4-1 )
   end subroutine Deallocate_Test_Character_3d
   ! ----------------------------------  Deallocate_Test_RealR8_1d  -----
   subroutine Deallocate_Test_RealR8_1d ( To_Deallocate, Its_Name, ModuleName )
@@ -416,21 +416,21 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1 )
   end subroutine Deallocate_Test_RealR8_1d
   ! ----------------------------------  Deallocate_Test_RealR8_2d  -----
   subroutine Deallocate_Test_RealR8_2d ( To_Deallocate, Its_Name, ModuleName )
@@ -438,22 +438,22 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1*dim2 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1*dim2 )
   end subroutine Deallocate_Test_RealR8_2d
   ! ----------------------------------  Deallocate_Test_RealR8_3d  -----
   subroutine Deallocate_Test_RealR8_3d ( To_Deallocate, Its_Name, ModuleName )
@@ -461,23 +461,23 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2, DIM3
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-      dim3 = size ( to_deallocate, 3 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+        dim3 = size ( to_deallocate, 3 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1*dim2*dim3 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -2*dim1*dim2*dim3 )
   end subroutine Deallocate_Test_RealR8_3d
   ! ---------------------------------  Deallocate_Test_Integer_1d  -----
   subroutine Deallocate_Test_Integer_1d ( To_Deallocate, Its_Name, ModuleName )
@@ -485,21 +485,21 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1 )
   end subroutine Deallocate_Test_Integer_1d
   ! ---------------------------------  Deallocate_Test_Integer_2d  -----
   subroutine Deallocate_Test_Integer_2d ( To_Deallocate, Its_Name, ModuleName )
@@ -507,22 +507,22 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2 )
   end subroutine Deallocate_Test_Integer_2d
   ! ---------------------------------  Deallocate_Test_Integer_3d  -----
   subroutine Deallocate_Test_Integer_3d ( To_Deallocate, Its_Name, ModuleName )
@@ -530,23 +530,23 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2, DIM3
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-      dim3 = size ( to_deallocate, 3 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+        dim3 = size ( to_deallocate, 3 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2*dim3 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2*dim3 )
   end subroutine Deallocate_Test_Integer_3d
   ! ---------------------------------  Deallocate_Test_Logical_1d  -----
   subroutine Deallocate_Test_Logical_1d ( To_Deallocate, Its_Name, ModuleName )
@@ -554,21 +554,21 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1/4-1 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1/4-1 )
   end subroutine Deallocate_Test_Logical_1d
   ! ---------------------------------  Deallocate_Test_Logical_1d  -----
   subroutine Deallocate_Test_Logical_2d ( To_Deallocate, Its_Name, ModuleName )
@@ -576,22 +576,22 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2)/4-1 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -(dim1*dim2)/4-1 )
   end subroutine Deallocate_Test_Logical_2d
   ! ------------------------------------  Deallocate_Test_RealR4_1d  -----
   subroutine Deallocate_Test_RealR4_1d ( To_Deallocate, Its_Name, ModuleName )
@@ -599,21 +599,21 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1 )
   end subroutine Deallocate_Test_RealR4_1d
   ! ------------------------------------  Deallocate_Test_RealR4_2d  -----
   subroutine Deallocate_Test_RealR4_2d ( To_Deallocate, Its_Name, ModuleName )
@@ -621,22 +621,22 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2 )
   end subroutine Deallocate_Test_RealR4_2d
   ! ----------------------------------  Deallocate_Test_RealR4_3d  -----
   subroutine Deallocate_Test_RealR4_3d ( To_Deallocate, Its_Name, ModuleName )
@@ -644,23 +644,23 @@ contains
     character(len=*) :: Its_Name, ModuleName
     integer :: STATUS
     integer :: DIM1, DIM2, DIM3
-    if ( tracking ) then
-      dim1 = size ( to_deallocate, 1 )
-      dim2 = size ( to_deallocate, 2 )
-      dim3 = size ( to_deallocate, 3 )
-    endif
     if ( associated(To_Deallocate) ) then
+      if ( tracking ) then
+        dim1 = size ( to_deallocate, 1 )
+        dim2 = size ( to_deallocate, 2 )
+        dim3 = size ( to_deallocate, 3 )
+      endif
       deallocate ( To_Deallocate, stat=status )
       if ( status /= 0 ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & MLSMSG_DeAllocate // Its_Name )
+          & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
       else if ( collect_garbage_each_time ) then
         call mls_gc_now
       end if
       nullify ( to_Deallocate )
+      if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2*dim3 )
     end if
-    if ( tracking ) call ReportAllocateDeallocate ( its_name, moduleName, -dim1*dim2*dim3 )
   end subroutine Deallocate_Test_RealR4_3d
 
   ! ---------------------------------------  Set_garbage_collection  -----
@@ -695,6 +695,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.15  2004/04/05 17:47:56  livesey
+! Bug fix in the tracking stuff
+!
 ! Revision 2.14  2004/04/03 05:43:53  livesey
 ! First attempt at memory tracking
 !
