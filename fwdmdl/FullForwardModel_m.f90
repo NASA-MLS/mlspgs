@@ -97,6 +97,7 @@ contains ! ================================ FullForwardModel routine ======
 
     integer :: BRKPT                    ! Index of midpoint of path
     integer :: CHANNEL                  ! A Loop counter
+    integer :: DIRECTION                ! Direction of channel numbering
     integer :: FRQ_I                    ! Frequency loop index
     integer :: F_LEN                    ! Total number of f's
     integer :: P_LEN                    ! Partial number of f's (No freq.)
@@ -315,6 +316,8 @@ contains ! ================================ FullForwardModel routine ======
     type (VectorValue_T), pointer :: REFGPH ! Reference geopotential height
     type (VectorValue_T), pointer :: SCGEOCALT ! S/C geocentric altitude /m
     type (VectorValue_T), pointer :: SIDEBANDRATIO ! The sideband ratio to use
+    type (VectorValue_T), pointer :: LOWERSIDEBANDRATIO ! The split sideband ratio to use
+    type (VectorValue_T), pointer :: UPPERSIDEBANDRATIO ! The split sideband ratio to use
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
     type (VectorValue_T), pointer :: TEMP ! Temperature component of state vector
     type (VectorValue_T), pointer :: THISRADIANCE ! A radiance vector quantity
@@ -436,6 +439,12 @@ contains ! ================================ FullForwardModel routine ======
       & quantityType=l_scGeocAlt )
     sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.TRUE. )
+    lowerSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.TRUE., &
+      & sideband = -1 )
+    upperSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.TRUE., &
+      & sideband = 1 )
 
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
@@ -459,7 +468,8 @@ contains ! ================================ FullForwardModel routine ======
 
     ! Think about sidebands
     if ( fwdModelConf%signals(1)%sideband == 0 ) then
-      if (.not. associated (sidebandRatio) ) &
+      if (.not. associated (sidebandRatio) .and. .not. &
+        & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & "No sideband ratio supplied")
       sidebandStart = -1
@@ -1026,8 +1036,9 @@ contains ! ================================ FullForwardModel routine ======
         do channel = 1, noUsedchannels
           frequencies(channel) = &
             & fwdModelConf%signals(usedSignals(channel))%centerFrequency + &
-            & fwdModelConf%signals(usedSignals(channel))% &
-            & frequencies(usedChannels(channel))
+            & fwdModelConf%signals(usedSignals(channel))%direction * &
+            &   fwdModelConf%signals(usedSignals(channel))% &
+            &     frequencies(usedChannels(channel))
         end do
         select case ( thisSideband )
         case ( -1 )
@@ -1533,15 +1544,16 @@ contains ! ================================ FullForwardModel routine ======
             channel = usedChannels(i)
             centerFreq = firstSignal%lo + &
               & thisSideband * fwdModelConf%signals(sigInd)%centerFrequency
+            direction = fwdModelConf%signals(sigInd)%direction
             shapeInd = MatchSignal ( filterShapes%signal, &
               & fwdModelConf%signals(sigInd), sideband = thisSideband )
             if ( shapeInd == 0 ) &
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
               &    "No matching channel shape information" )
             call Freq_Avg ( frequencies, &
-              & centerFreq+thisSideband * &
-              & FilterShapes(shapeInd)%FilterGrid(channel,:), &
-              & FilterShapes(shapeInd)%FilterShape(channel,:),&
+              & centerFreq+thisSideband * direction * &
+              &   FilterShapes(shapeInd)%FilterGrid(channel,:), &
+              &   FilterShapes(shapeInd)%FilterShape(channel,:),&
               & RadV, noFreqs,  &
               & size(FilterShapes(shapeInd)%FilterGrid(channel,:)), &
               & Radiances(ptg_i,i) )
@@ -1563,6 +1575,7 @@ contains ! ================================ FullForwardModel routine ======
               channel = usedChannels(i)
               centerFreq = firstSignal%lo + thisSideband * &
                 & fwdModelConf%signals(sigInd)%centerFrequency
+              direction = fwdModelConf%signals(sigInd)%direction
               shapeInd = MatchSignal ( filterShapes%signal, &
                 & fwdModelConf%signals(sigInd), &
                 & sideband = thisSideband, channel=channel )
@@ -1570,7 +1583,7 @@ contains ! ================================ FullForwardModel routine ======
               do instance = WindowStart, WindowFinish
                 do surface = 1, n_t_zeta
                   call Freq_Avg ( frequencies,                      &
-                    & centerFreq+thisSideband* &
+                    & centerFreq+thisSideband*direction* &
                     & FilterShapes(shapeInd)%FilterGrid(channel,:), &
                     & FilterShapes(shapeInd)%FilterShape(channel,:),&
                     & k_temp_frq(:,sv_i), noFreqs, &
@@ -1612,6 +1625,7 @@ contains ! ================================ FullForwardModel routine ======
                   j = Size(FilterShapes(shapeInd)%FilterGrid(channel,:))
                   centerFreq = firstSignal%lo + thisSideband * &
                     & fwdModelConf%signals(sigInd)%centerFrequency
+                  direction = fwdModelConf%signals(sigInd)%direction
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
@@ -1619,7 +1633,7 @@ contains ! ================================ FullForwardModel routine ======
                     do surface = 1, Grids_f%no_z(k)
                       do jf = 1, Grids_f%no_f(k)
                         call Freq_Avg ( frequencies,                      &
-                          & centerFreq+thisSideband * &
+                          & centerFreq+thisSideband * direction * &
                           & FilterShapes(shapeInd)%FilterGrid(channel,:), &
                           & FilterShapes(shapeInd)%FilterShape(channel,:),&
                           & k_atmos_frq(1:noFreqs,sv_i), noFreqs, j, r )
@@ -1668,6 +1682,7 @@ contains ! ================================ FullForwardModel routine ======
                   j = Size(FilterShapes(shapeInd)%FilterGrid(channel,:))
                   centerFreq = firstSignal%lo + thisSideband * &
                     & fwdModelConf%signals(sigInd)%centerFrequency
+                  direction = fwdModelConf%signals(sigInd)%direction
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
@@ -1676,7 +1691,7 @@ contains ! ================================ FullForwardModel routine ======
                     do surface = 1, Grids_dw%no_z(k)
                       do jf = 1, Grids_dw%no_f(k)
                         call Freq_Avg ( frequencies,                      &
-                          & centerFreq+thisSideband * &
+                          & centerFreq+thisSideband * direction * &
                           & FilterShapes(shapeInd)%FilterGrid(channel,:), &
                           & FilterShapes(shapeInd)%FilterShape(channel,:),&
                           & k_spect_dw_frq(:,sv_i), noFreqs, j, r )
@@ -1716,6 +1731,7 @@ contains ! ================================ FullForwardModel routine ======
                   j = Size(FilterShapes(shapeInd)%FilterGrid(channel,:))
                   centerFreq = firstSignal%lo + thisSideband * &
                     & fwdModelConf%signals(sigInd)%centerFrequency
+                  direction = fwdModelConf%signals(sigInd)%direction
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
@@ -1724,7 +1740,7 @@ contains ! ================================ FullForwardModel routine ======
                     do surface = 1, Grids_dn%no_z(k)
                       do jf = 1, Grids_dn%no_f(k)
                         call Freq_Avg ( frequencies,                      &
-                          & centerFreq+thisSideband * &
+                          & centerFreq+thisSideband * direction * &
                           & FilterShapes(shapeInd)%FilterGrid(channel,:), &
                           & FilterShapes(shapeInd)%FilterShape(channel,:),&
                           & k_spect_dn_frq(:,sv_i), noFreqs, j, r )
@@ -1764,6 +1780,7 @@ contains ! ================================ FullForwardModel routine ======
                   j = Size(FilterShapes(shapeInd)%FilterGrid(channel,:))
                   centerFreq = firstSignal%lo + thisSideband * &
                     & fwdModelConf%signals(sigInd)%centerFrequency
+                  direction = fwdModelConf%signals(sigInd)%direction
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
@@ -1772,7 +1789,7 @@ contains ! ================================ FullForwardModel routine ======
                     do surface = 1, Grids_dv%no_z(k)
                       do jf = 1, Grids_dv%no_f(k)
                         call Freq_Avg ( frequencies,                      &
-                          & centerFreq+thisSideband * &
+                          & centerFreq+thisSideband * direction * &
                           & FilterShapes(shapeInd)%FilterGrid(channel,:), &
                           & FilterShapes(shapeInd)%FilterShape(channel,:),&
                           & k_spect_dv_frq(:,sv_i), noFreqs, j, r )
@@ -1837,8 +1854,16 @@ contains ! ================================ FullForwardModel routine ======
           & sideband=firstSignal%sideband )
 
         if ( sidebandStart /= sidebandStop ) then   ! We're folding
-          thisRatio = sidebandRatio%values(channel,1)
-          if ( thisSideband == 1 ) thisRatio = 1.0 - thisRatio
+          if ( associated ( sidebandRatio ) ) then
+            thisRatio = sidebandRatio%values(channel,1)
+            if ( thisSideband == 1 ) thisRatio = 1.0 - thisRatio
+          else
+            if ( thisSideband == -1 ) then
+              thisRatio = lowerSidebandRatio%values(channel,1)
+            else
+              thisRatio = upperSidebandRatio%values(channel,1)
+            end if
+          end if
         else                  ! Otherwise, want just unfolded signal
           thisRatio = 1.0
         end if
@@ -2109,6 +2134,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.38  2002/02/22 00:52:06  bill
+! fixed units error for light speed--wgr
+!
 ! Revision 2.37  2002/02/20 22:19:45  zvi
 ! Reversing the subset logic ..
 !
