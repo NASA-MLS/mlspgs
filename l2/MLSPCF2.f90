@@ -69,7 +69,8 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2clim_end = 22299
    !
    INTEGER, PARAMETER :: mlspcf_l2gp_start = 30000
-   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 30029   ! Otherwise more toolkit msgs
+   ! INTEGER, PARAMETER :: mlspcf_l2gp_end = 30569 ! warning "id not found"
    !
    INTEGER, PARAMETER :: mlspcf_l2dgg_start = 30570
    INTEGER, PARAMETER :: mlspcf_l2dgg_end = 30599
@@ -103,6 +104,9 @@ contains
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.14  2003/08/01 20:05:09  pwagner
+! Lowered mlspcf_l2gp_end to limit toolkit warnings
+!
 ! Revision 2.13  2003/07/16 21:50:53  pwagner
 ! Added mlspcf_dacsfltsh_start, _end
 !
