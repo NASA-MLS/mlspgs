@@ -14,7 +14,7 @@ module L2FWMParallel
   private
 
   public :: LaunchFWMSlaves, L2FWMSlaveTask, SetupFWMSlaves, TriggerSlaveRun
-  public :: RequestSlavesOutput, ReceiveSlavesOutput, GetNoSlaves
+  public :: RequestSlavesOutput, ReceiveSlavesOutput
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -47,7 +47,7 @@ contains
     use Machine, only: SHELL_COMMAND
     use MLSCommon, only: MLSChunk_T
     use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
-      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, NOTIFYTAG
+      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, NOTIFYTAG, GETNICETIDSTRING
     use MLSCommon, only: FINDFIRST
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Toggles, only: SWITCHES
@@ -62,9 +62,11 @@ contains
     integer :: BYTES                    ! Used for call to bufinfo
     integer :: INFO                     ! Flag from PVM
     integer :: MAF                      ! Loop counter
+    integer :: MACHINEIND                  ! Loop counter
     integer :: MSGTAG                   ! Message tag
     integer :: NOMACHINES               ! Number of machines
     integer :: NOMAFS                   ! Number of MAFs to process
+    integer :: NOTASKS                  ! min ( noMachines, noMAFs )
     integer :: SIGNAL                   ! Flag from slave
     integer :: SLAVETID                 ! ID of one slave
 
@@ -78,52 +80,44 @@ contains
 
     ! Executable code
     usingSubmit = trim ( parallel%submit ) /= ''
+    if ( usingSubmit ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Cannot use submit in fwmParallel mode' )
     noMAFs = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
 
     ! Work out the information on our virtual machine
-    if ( .not. usingSubmit ) then
-      nullify ( machineNames )
-      call GetMachineNames ( machineNames )
-      noMachines = size(machineNames)
-    else
-      noMachines = 0
-    end if
-    call Allocate_test ( slaveTids, noMAFS, 'slaveTids', ModuleName )
-    nullify ( heardFromSlave )
-    call Allocate_test ( heardFromSlave, noMAFS, 'heardFromSlave', ModuleName )
+    nullify ( machineNames )
+    call GetMachineNames ( machineNames )
+    noMachines = size(machineNames)
+    nullify ( slaveTids, heardFromSlave )
+    noTasks = min ( noMAFs, noMachines )
+    parallel%noFWMSlaves = noTasks
+    call Allocate_test ( slaveTids, noMAFs, 'slaveTids', ModuleName )
+    call Allocate_test ( heardFromSlave, noTasks, 'heardFromSlave', ModuleName )
     
     if ( index ( switches, 'mas' ) /= 0 ) &
       & call output ( 'Launching forward model slaves', advance='yes' )
     ! Now we're going to launch the slaves
-    if ( usingSubmit ) then ! --------------------- Using a batch system
-      commandLine = &
-        & trim(parallel%submit) // ' ' // &
-        & trim(parallel%executable) // ' ' // &
-        & trim(slaveArguments)
-      do maf = 1, noMAFs
-        call shell_command ( trim(commandLine) )
-      end do
-    else ! ----------------------------------------- Start job using pvmspawn
-      commandLine = 'mlsl2'
-      if ( index(switches,'slv') /= 0 ) then
-        call PVMFCatchOut ( 1, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
-      end if
-      do maf = 1, noMAFs
-        info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
-          trim(machineNames(maf)), 1, tid1 )
-        slaveTids(maf) = tid1(1)
-        ! Did this launch work
-        if ( info /= 1 ) then
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Unable to launch fwmSlave on '//trim(machineNames(maf)) )
-        end if
-      end do
+    commandLine = 'mlsl2'
+    if ( index(switches,'slv') /= 0 ) then
+      call PVMFCatchOut ( 1, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
     end if
-
+    do machineInd = 1, noTasks
+      info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
+        trim(machineNames(machineInd)), 1, tid1 )
+      ! Did this launch work
+      if ( info /= 1 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to launch fwmSlave on '//trim(machineNames(machineInd)) )
+      end if
+      slaveTids ( machineInd ) = tid1(1)
+    end do
+    do maf = noTasks+1, noMAFs
+      slaveTids ( maf ) = slaveTids ( mod ( maf-1, noTasks ) + 1 )
+    end do
+    
     ! Now wait for them to get in touch, we behave differntly in the different
     ! modes (using submit or not)
-    if ( usingSubmit ) maf = 1
     heardFromSlave = .false.
     if ( index ( switches, 'mas' ) /= 0 ) &
       & call output ( 'Waiting to hear from slaves', advance='yes' )
@@ -139,14 +133,19 @@ contains
       endif
       if ( signal /= sig_register ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, 'Expected registration message from fwmSlave' )
-      if ( usingSubmit ) then
-        slaveTids ( maf ) = slaveTid
-        maf = maf + 1
-      else
-        maf = FindFirst ( slaveTids == slaveTid )
+      machineInd = FindFirst ( slaveTids == slaveTid )
+      if ( machineInd == 0 ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, 'Heard from an unknown forward model slave' )
+      heardFromSlave ( machineInd ) = .true.
+      if ( index ( switches, 'mas' ) /= 0 ) then
+        call output ( 'Heard from ' )
+        call output ( trim ( GetNiceTidString ( slaveTid ) ) )
+        call output ( ', now heard from ' )
+        call output ( count ( heardFromSlave ) )
+        call output ( ' / ' )
+        call output ( noTasks, advance='yes' )
       end if
-      heardFromSlave ( maf ) = .true.
-      call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ slaveTids(maf) /), info )
+      call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ slaveTids(machineInd) /), info )
       if ( all ( heardFromSlave ) ) exit contactLoop
     end do contactLoop
 
@@ -161,6 +160,7 @@ contains
   ! ------------------------------------------------ L2FWMSlaveTask -----
   subroutine L2FWMSlaveTask ( mifGeolocation )
     ! This is the core routine for the 'slave mode' of the L2Fwm parallel stuff
+    use Dump_0, only: Dump
     use Allocate_Deallocate, only: ALLOCATE_TEST
     use QuantityTemplates, only: QUANTITYTEMPLATE_T, DESTROYQUANTITYTEMPLATEDATABASE, &
       & INFLATEQUANTITYTEMPLATEDATABASE
@@ -330,8 +330,6 @@ contains
       case ( SIG_RunMAF )
         ! Get the state vector for this iteration
         do j = 1, size ( vectors(fwmIn)%quantities )
-          call output ( "Getting values for state quantity " )
-          call output ( j, advance='yes' )
           call PVMIDLUnpack ( vectors(fwmIn)%quantities(j)%values, info )
           if ( info /= 0 ) call PVMErrorMessage ( info, 'state vector values' )
           call PVMIDLUnpack ( flag, info )
@@ -361,6 +359,12 @@ contains
         do i = 1, jacobian%row%nb
           ! Send corresponding values of fwmOut
           if ( fmStat%rows ( i ) ) then
+            call dump ( vectors(fwmOut)%quantities ( &
+              & jacobian%row%quant(i) ) % values, 'value' )
+            call output ( 'Packing total radiances:' )
+            call output ( sum ( vectors(fwmOut)%quantities ( &
+              & jacobian%row%quant(i) ) % values ( :, &
+              & jacobian%row%inst(i) ) ), advance='yes' )
             call PVMIDLPack ( vectors(fwmOut)%quantities ( &
               & jacobian%row%quant(i) ) % values ( :, &
               & jacobian%row%inst(i) ), info )
@@ -380,6 +384,8 @@ contains
               end if
               if ( b%kind /= M_Absent ) then
                 call PVMIDLPack ( b%values, info )
+                call output ( 'Packing block total:' )
+                call output ( sum (b%values), advance='yes' ) 
                 if ( info /= 0 ) call PVMErrorMessage ( info, 'b%values' )
               end if
             end do
@@ -403,6 +409,8 @@ contains
           if ( bufferID <= 0 ) &
             & call PVMErrorMessage ( bufferID, 'Clearing out results buffer' )
         else
+          call output ( 'Signal: ' )
+          call output ( signal, advance='yes' )
           call MLSMessage ( MLSMSG_Error, ModuleName, 'Got unexpected message from master' )
         end if
 
@@ -413,11 +421,6 @@ contains
     end do mainLoop
   end subroutine L2FWMSlaveTask
 
-  ! ------------------------------------------------ GetNoSlaves
-  integer function GetNoSlaves ()
-    GetNoSlaves = size ( slaveTids )
-  end function GetNoSlaves
-
   ! ------------------------------------------------ ReceiveSlavesOutput ---
   subroutine ReceiveSlavesOutput ( outVector, fmStat, jacobian )
     ! The master uses this routine to get the output from each forward model
@@ -427,7 +430,7 @@ contains
     use MatrixModule_1, only: MATRIX_T
     use PVM, only: PVMERRORMESSAGE
     use PVMIDL, only: PVMIDLUNPACK
-    use L2ParInfo, only: INFOTAG
+    use L2ParInfo, only: INFOTAG, GETNICETIDSTRING
     use MatrixModule_1, only: CREATEBLOCK
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, MATRIXELEMENT_T
     use Toggles, only: SWITCHES
@@ -445,7 +448,9 @@ contains
 
     ! Executable code
     if ( index ( switches, 'mas' ) /= 0 ) then
-      call output ( 'Recieving results packet from slave ' )
+      call output ( 'Recieving results packet from ' )
+      call output ( trim ( GetNiceTidString ( slaveTids(fmStat%maf) ) ) )
+      call output ( ' MAF ' )
       call output ( fmStat%maf )
       call output ( ' ...' )
     end if
@@ -495,7 +500,7 @@ contains
     ! The master uses this routine to ask a slave to pack its output up
     use PVM, only: PVMFINITSEND, PVMF90PACK, PVMFSEND, &
       & PVMERRORMESSAGE, PVMRAW
-    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, INFOTAG
+    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, INFOTAG, GETNICETIDSTRING
     use Toggles, only: SWITCHES
     use Output_m, only: OUTPUT
     integer, intent(in) :: MAF
@@ -504,7 +509,9 @@ contains
     integer :: BUFFERID
     ! Executable code
     if ( index ( switches, 'mas' ) /= 0 ) then 
-      call output ( 'Requesting output from slave ' )
+      call output ( 'Requesting output from ' )
+      call output ( trim(GetNiceTidString ( slaveTids(maf) ) ) )
+      call output ( ' MAF ' )
       call output ( maf, advance='yes' )
     end if
     call PVMFInitSend ( PVMRAW, bufferID )
@@ -664,7 +671,7 @@ contains
     use PVM, only: PVMFINITSEND, PVMFSEND, PVMRAW, PVMF90PACK, &
       & PVMErrorMessage
     use PVMIDL, only: PVMIDLPACK
-    use L2ParInfo, only: SIG_RUNMAF, INFOTAG
+    use L2ParInfo, only: SIG_RUNMAF, INFOTAG, GETNICETIDSTRING
     use Toggles, only: SWITCHES
     use Output_m, only: OUTPUT
     type (Vector_T), intent(in) :: STATE
@@ -700,6 +707,12 @@ contains
     if ( info /= 0 ) call PVMErrorMessage ( info, 'packing maf' )
     ! OK, send this off
     task = mod ( maf-1, size(slaveTids) ) + 1
+    if ( index ( switches, 'mas' ) /= 0 ) then
+      call output ( 'Triggering ' // trim ( GetNiceTidString(slaveTids(task)) ) )
+      call output ( ' to do MAF ' )
+      call output ( task, advance='yes' )
+    end if
+      
     call PVMFSend ( slaveTids ( task ), InfoTag, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending trigger packet' )
   end subroutine TriggerSlaveRun
@@ -737,6 +750,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.11  2002/12/11 01:59:27  livesey
+! Slightly new approach, also some extra diagnostics that will have to go soon
+!
 ! Revision 2.10  2002/12/06 18:43:26  livesey
 ! New approach to sharing out the work load.  Doesn't require there to be
 ! a full complement of 'machines' one for each MAF
