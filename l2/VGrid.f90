@@ -311,7 +311,6 @@ contains ! =====     Public Procedures     =============================
 
     include "addItemToDatabase.f9h"
 
-    database(newSize) = item
     AddVGridToDatabase = newSize
   end function AddVGridToDatabase
 
@@ -465,6 +464,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.1  2000/12/04 23:34:38  vsnyder
+! Move more of addItemToDatabase into the include.
+!
 ! Revision 2.0  2000/09/05 18:57:05  ahanzel
 ! Changing file revision to 2.0.
 !
