@@ -1,0 +1,107 @@
+; This file describes the mapping of PCF numbers to filenames.  This
+; is necessary because the toolkit does not allow PGE's to define
+; their own input/output filenames except through PCFs.
+;
+; So we have a database, this has entries for each type of file used
+; by the software.  These entries define the number range, and
+; construction of the filename, as well as a textual label used in the
+; construction of a f90 PARAMETER in the source code.
+;
+; Reading the file itself should make this clearer
+;
+; It is used as input for two scripts:
+;
+; makemlspcfdatamodule - a script that produces a f90 module defining the 
+;                        file numbers.
+;
+; makemlspcf - a script that creates a pcf for a given day/build
+;              number
+; 
+; Text on any line following a semicolon such as this is ignored.
+;
+; ---------------------------------------------------------------------------
+; 
+; This next line defines the starting number.  The files specified
+; below start using numbers from here.  The baseIndex can be redefined
+; at any point.
+;
+baseIndex=20000                 ; This sets a new base index
+;
+; Now the files are defined as follows:
+;  <identifier>: <filename> <number of files needed>
+;
+; The <identifier> is optional, see the later examples.  Let's look at
+; the first file:
+;
+l1b_oa: mls_l1b_os_v${VERSION}_c${CYCLE}.${DATE}   40
+;
+; This is the l1b orbit attitude file.  We need 40 of these because of
+; the monthly processing of noisy data.
+;
+; This entry will create two lines in the mlspcfdata.f90 module like this
+;
+; INTEGER, PARAMETER :: mlspcf_l1b_oa_start  = 20000
+; INTEGER, PARAMETER :: mlspcf_l1b_oa_end    = 20039
+;
+; When the makemlspcf script was run, say for a single day 23035, we
+; would get a line in the pcf looking like:
+;
+; 20000|mls_l1b_oa_v100_c01.23035|~/runtime||||1
+;
+; If day 23036 was required too we'd get a line
+;
+; 20001|mls_l1b_oa_v100_c01.23036|~/runtime||||1
+;
+; Of course the line needs to be in the right section (i.e. input
+; files or output files).  That decision is made by the script based
+; on the first part of the identifier (e.g. l1b or l2gp) and a user
+; input to the script 
+;   (e.g. makemlspcf --input=l1b --output=l2  --day=23035)
+;
+; Lets do some more like this
+;
+l1b_rad: mls_l1b_rad_v${VERSION}_${CYCLE}.${DATE}  40
+;
+; We'll only need one set of log and engineering files, as they're
+; output from Level 1B and not read by any monthly jobs.
+;
+l1b_log: mls_l1b_log_v${VERSION}_${CYCLE}.${DATE}  1
+l1b_eng: mls_l1b_eng_v${VERSION}_${CYCLE}.${DATE}  1
+;
+; ----------------------------------------------------------------------------
+;
+; Now we move onto Level 2 files, start with a new base index here
+;
+baseIndex=21000                 ; Start a new base index here
+;
+l2gp: mls_l2gp_temp_v${VERSION}_${CYCLE}.${DATE}   40
+      mls_l2gp_gph_v${VERSION}_${CYCLE}.${DATE}    40
+      mls_l2gp_h2o_v${VERSION}_${CYCLE}.${DATE}    40
+      mls_l2gp_hno3_v${VERSION}_${CYCLE}.${DATE}   40
+      mls_l2gp_o3_v${VERSION}_${CYCLE}.${DATE}     40
+      mls_l2gp_hcl_v${VERSION}_${CYCLE}.${DATE}    40
+      mls_l2gp_clo_v${VERSION}_${CYCLE}.${DATE}    40
+      mls_l2gp_n2o_v${VERSION}_${CYCLE}.${DATE}    40
+      mls_l2gp_co_v${VERSION}_${CYCLE}.${DATE}     40
+      mls_l2gp_oh_v${VERSION}_${CYCLE}.${DATE}     40
+      mls_l2gp_others_v${VERSION}_${CYCLE}.${DATE} 40
+;
+; Now this one would generate the lines in the PCF as before, the
+; fortran code however would simply contain the lines
+;
+; INTEGER, PARAMETER :: mlspcf_l2gp_start = 21000
+; INTEGER, PARAMETER :: mlspcf_l2gp_end   = 21439
+;
+; as the total of used files there is 440.
+;
+l2aux: mls_l2aux_full_v${VERSION}_${CYCLE}.${DATE} 40
+;
+; Now some simply daily output files not needed in the monthly
+; processing.
+;
+l2fwm: mls_l2fwm_full_v${VERSION}_${CYCLE}.${DATE} 1
+l2log: mls_l2_log_v${VERSION}_${CYCLE}.${DATE}     1
+;
+; I won't consider Level 3 files for the moment, as that is somewhat
+; less defined.
+;
