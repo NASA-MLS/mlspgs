@@ -18,9 +18,13 @@
 #
 #
 #    O p t i o n s
-# -d file_name  exclude file_name
+# -d file_name  ignore file_name (from current directory)
+#                in effect, acting as though it is already dead
+#                (this would be more useful if we could ignore
+#                 files from each of the source directories)
 # -h[elp]       print brief help message; exit
-# -lib   if this flag is present, executes "rm -f *.a" if any ghosts found
+# -lib          if this flag is present, 
+#                executes "rm -f *.a" if any ghosts found
 #Note:
 #The option(s) marked with "-", if present,
 #must precede the extra search directories on the command line
@@ -74,6 +78,13 @@ extant_files()
 #                                                               *
 #	The entry point where control is given to the script         *
 #****************************************************************
+# Bug: -d file_name only ignores files in current directory
+#         instead of every directory searched for sources
+# Fix: Form list of bad files from reading command-line args
+# then loop over extra search directories, mv-ing files as necessary
+# then bust ghosts
+# then loop again over extra search directories, cleaning up this time
+
 #
 
 DEBUG=0
@@ -89,13 +100,6 @@ PRINT_TOO_MUCH=0
 
 #
 #----------------------- Implementation -----------------------
-#
-#if [ "$1" = "-lib" ] ; then
-#   rm_any_libs="yes"
-#   shift
-#else
-#   rm_any_libs="no"
-#fi
 
 TRY_CLEANUP=1
 #           ^  -- set this to 1 to try cleaning up from a prior faulty run
@@ -270,18 +274,18 @@ done
 # renamed or hidden files
 if [ -w "$dsuffix" ]
 then
-	moved_files_list="$dsuffix"/*
-	moved_files=`echo $moved_files_list`
-#	the above will expand the wild card * if dsuffix is non-empty
-	if [ "$moved_files" != "$dsuffix/*" ]
+         extant_files "$dsuffix"/*
+   if [ "$extant_files_result" != "" ]
 	then
         	mv "$dsuffix"/* .
 	fi
    rmdir "$dsuffix"
 fi
 exit
-exit
 # $Log$
+# Revision 1.4  2001/11/14 19:42:08  pwagner
+# Added the stuff left out: extant_files code and -lib implementation
+#
 # Revision 1.3  2001/11/13 23:21:44  pwagner
 # option -d bad_file_name added
 #
