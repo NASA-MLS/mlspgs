@@ -40,11 +40,12 @@ include ../Makefile.dep
 include $(srclib)/Makefile.dep
 
 # Add them to L2OBJS
-ALLOBJS = $(OBJS) $(srclib_objs) $(RETRIEVAL_OBJS)
+#ALLOBJS = $(OBJS) $(srclib_objs) $(RETRIEVAL_OBJS)
+ALLOBJS = $(OBJS) $(srclib_objs)
 
 #Dependency rules for RETRIEVAL_OBJS (if we need them)
-ForwardModelInterface.o: ForwardModelInterface.f90 ${OBJS} $(srclib_objs)
-RetrievalModule.o: RetrievalModule.f90 ForwardModelInterface.o ${OBJS} $(srclib_objs)
+#ForwardModelInterface.o: ForwardModelInterface.f90 ${OBJS} $(srclib_objs)
+#RetrievalModule.o: RetrievalModule.f90 ForwardModelInterface.o ${OBJS} $(srclib_objs)
 
 #                  PVM v. non-PVM options
 # If we implement an option to allow non-PVM-dependent installations
@@ -80,7 +81,7 @@ else
 endif
 
 # ========================================================================
-mlsl2: $(ALLOBJS) $(RETRIEVAL_OBJS) $(PVM_OBJS) $(libdir)/libmls.a
+mlsl2: $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) $(PVM_OBJS) \
@@ -107,6 +108,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2001/02/08 23:22:14  pwagner
+# variable_linker_line tied to PVM and BLAS
+#
 # Revision 1.7  2001/02/05 19:37:37  pwagner
 # LDOPTS added to load statements
 #
