@@ -6,7 +6,8 @@ MODULE OutputL1B_HDF5
   ! This module contains the subroutines needed to write L1B data to HDF files.
   USE OutputL1B_DataTypes, only: LENG, LENT, LENUTC, LENCOORD, & 
        L1BOAINDEX_T, L1BOASC_T, L1BOATP_T
-  USE MLSAuxData, only:DataProducts_T, Build_MLSAuxData, CreateGroup_MLSAuxData
+  USE MLS_DataProducts, only: DataProducts_T, Deallocate_DataProducts
+  USE MLSAuxData, only: Build_MLSAuxData, CreateGroup_MLSAuxData
   USE HDF5, only: HID_T
   USE MLSCommon
   USE MLSL1Common, only: L1BFileInfo_T
@@ -15,99 +16,24 @@ MODULE OutputL1B_HDF5
   USE MLSSignalNomenclature, only:GetFullMLSSignalName
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, OUTPUTL1B_SC_HDF5, OUTPUTL1B_GHZ_HDF5, & 
-    & OUTPUTL1B_THZ_HDF5, OUTPUTL1B_RAD_HDF5
+  PUBLIC :: OUTPUTL1B_CREATE_HDF5, OUTPUTL1B_INDEX_HDF5, OUTPUTL1B_SC_HDF5, &
+       OUTPUTL1B_GHZ_HDF5, OUTPUTL1B_THZ_HDF5, OUTPUTL1B_RAD_HDF5
   !------------------- RCS Ident Info -----------------------------------------
   CHARACTER(LEN=130) :: Id = &                                                 
     "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !----------------------------------------------------------------------------
-  TYPE( DataProducts_T ), DIMENSION(4), PUBLIC, PARAMETER :: sds_datasets=(/&
-       DataProducts_T('MAFStartTimeUTC   ','character         '), & 
-       DataProducts_T('MAFStartTimeTAI   ','double            '), & 
-       DataProducts_T('noMIFs            ','integer           '), & 
-       DataProducts_T('counterMAF        ','integer           ') /)
-  TYPE( DataProducts_T ), DIMENSION(13), PUBLIC, PARAMETER::sc_sds_datasets=(/&
-       DataProducts_T('sc/ECI            ','double            '), & 
-       DataProducts_T('sc/ECR            ','double            '), & 
-       DataProducts_T('sc/GeocAlt        ','double            '), & 
-       DataProducts_T('sc/GeocLat        ','real              '), & 
-       DataProducts_T('sc/GeodAlt        ','double            '), & 
-       DataProducts_T('sc/GeodLat        ','real              '), & 
-       DataProducts_T('sc/Lon            ','real              '), & 
-       DataProducts_T('sc/GeodAngle      ','real              '), & 
-       DataProducts_T('sc/VelECI         ','double            '), & 
-       DataProducts_T('sc/ypr            ','double            '), & 
-       DataProducts_T('sc/yprRate        ','double            '), & 
-       DataProducts_T('sc/VelECR         ','double            '), & 
-       DataProducts_T('sc/OrbIncl        ','real              ') /)
-  TYPE( DataProducts_T ), DIMENSION(18),PUBLIC,PARAMETER::GHz_sds_datasets=(/&
-       DataProducts_T('GHz/encoderAngle  ','double            '), & 
-       DataProducts_T('GHz/scAngle       ','double            '), & 
-       DataProducts_T('GHz/scanAngle     ','double            '), & 
-       DataProducts_T('GHz/scanRate      ','real              '), & 
-       DataProducts_T('GHz/tp/ECI        ','double            '), & 
-       DataProducts_T('GHz/tp/ECR        ','double            '), & 
-       DataProducts_T('GHz/tp/OrbY       ','real              '), & 
-       DataProducts_T('GHz/tp/GeocAlt    ','double            '), & 
-       DataProducts_T('GHz/tp/GeocLat    ','real              '), & 
-       DataProducts_T('GHz/tp/GeocAltRate','real              '), & 
-       DataProducts_T('GHz/tp/GeodAlt    ','double            '), & 
-       DataProducts_T('GHz/tp/GeodLat    ','real              '), & 
-       DataProducts_T('GHz/tp/GeodAltRate','real              '), & 
-       DataProducts_T('GHz/tp/Lon        ','real              '), & 
-       DataProducts_T('GHz/tp/GeodAngle  ','real              '), & 
-       DataProducts_T('GHz/tp/SolarTime  ','real              '), & 
-       DataProducts_T('GHz/tp/SolarZenith','real              '), & 
-       DataProducts_T('GHz/tp/LosAngle   ','real              ') /)
-  TYPE( DataProducts_T ), DIMENSION(18),PUBLIC,PARAMETER::THz_sds_datasets=(/&
-       DataProducts_T('THz/encoderAngle  ','double            '), & 
-       DataProducts_T('THz/scAngle       ','double            '), & 
-       DataProducts_T('THz/scanAngle     ','double            '), & 
-       DataProducts_T('THz/scanRate      ','real              '), & 
-       DataProducts_T('THz/tp/ECI        ','double            '), & 
-       DataProducts_T('THz/tp/ECR        ','double            '), & 
-       DataProducts_T('THz/tp/OrbY       ','real              '), & 
-       DataProducts_T('THz/tp/GeocAlt    ','double            '), & 
-       DataProducts_T('THz/tp/GeocLat    ','real              '), & 
-       DataProducts_T('THz/tp/GeocAltRate','real              '), & 
-       DataProducts_T('THz/tp/GeodAlt    ','double            '), & 
-       DataProducts_T('THz/tp/GeodLat    ','real              '), & 
-       DataProducts_T('THz/tp/GeodAltRate','real              '), & 
-       DataProducts_T('THz/tp/Lon        ','real              '), & 
-       DataProducts_T('THz/tp/GeodAngle  ','real              '), & 
-       DataProducts_T('THz/tp/SolarTime  ','real              '), & 
-       DataProducts_T('THz/tp/SolarZenith','real              '), & 
-       DataProducts_T('THz/tp/LosAngle   ','real              ') /)
 !---------------------------------------------------------Names of Dimensions:
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM1_NAME  = 'MAF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM2_NAME  = 'MIF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM3_NAME  = 'GHz/MIF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM4_NAME  = 'THz/MIF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM5_NAME  = 'xyz'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM6_NAME  = 'charUTC'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM7_NAME  = 'chanFB'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM8_NAME  = 'chanMB'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM9_NAME  = 'chanWF'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: DIM10_NAME = 'chanDACS'
-!---------------------------------------------------------Names of HDF5 Groups:
-  CHARACTER(len=*), PUBLIC, PARAMETER :: SC_GROUP_NAME    = 'sc'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: GHZ_GROUP_NAME   = 'GHz'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: THZ_GROUP_NAME   = 'THz'
-  CHARACTER(len=*), PUBLIC, PARAMETER :: TP_SUBGROUP_NAME = 'tp'
 CONTAINS
   !----------------------------------------------------------- OutputL1B_Create
   SUBROUTINE OutputL1B_create_HDF5(sdId)
-    ! This subroutine creates the structure of the output files, 
-    ! and names the arrays and dimensions contained within them.
-    ! Assumes HDF5 FORTRAN APIs have been invoked by l1/OpenInit to open files.
+    ! This routine assigns the groups and subgroups in the orbit and attitude 
+    ! file handle, sdId%OAId
     ! Arguments
     TYPE( L1BFileInfo_T ), INTENT(IN) :: sdId
-    call CreateGroup_MLSAuxData( sdId%OAId, SC_GROUP_NAME )
-    call CreateGroup_MLSAuxData( sdId%OAId, GHZ_GROUP_NAME )
-    call CreateGroup_MLSAuxData( sdId%OAId, GHZ_GROUP_NAME, TP_SUBGROUP_NAME )
-    call CreateGroup_MLSAuxData( sdId%OAId, THZ_GROUP_NAME )
-    call CreateGroup_MLSAuxData( sdId%OAId, THZ_GROUP_NAME, TP_SUBGROUP_NAME )
+    call CreateGroup_MLSAuxData( sdId%OAId, 'sc')
+    call CreateGroup_MLSAuxData( sdId%OAId, 'GHz')
+    call CreateGroup_MLSAuxData( sdId%OAId, 'THz')
   END SUBROUTINE OutputL1B_create_HDF5
   !------------------------------------------------------------ OutputL1B_index
   SUBROUTINE OutputL1B_index_HDF5(noMAF, sd_id, index)
@@ -117,12 +43,36 @@ CONTAINS
     TYPE( L1BOAindex_T), INTENT(IN) :: index
     INTEGER, INTENT(IN) :: noMAF
     INTEGER(HID_T), INTENT(IN) :: sd_id
+! Variables
+    TYPE( DataProducts_T ) :: dataset
+    integer :: status
 !------------------------------------------------------------------------------
-     call Build_MLSAuxData(sd_id,sds_datasets(1),index%MAFStartTimeUTC, & 
-          noMAF, lenUTC)
-     call Build_MLSAuxData(sd_id,sds_datasets(2),index%MAFStartTimeTAI,noMAF)
-     call Build_MLSAuxData(sd_id,sds_datasets(3),index%noMIFs,noMAF)
-     call Build_MLSAuxData(sd_id,sds_datasets(4),index%counterMAF, noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'MAFStartTimeUTC   '
+     dataset%data_type = 'character         '
+     allocate(dataset%Dimensions(1), stat=status)
+     dataset%Dimensions(1) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,index%MAFStartTimeUTC, & 
+          char_length=lenUTC, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'MAFStartTimeTAI   '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(1), stat=status)
+     dataset%Dimensions(1) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,index%MAFStartTimeTAI,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'noMIFs            '
+     dataset%data_type = 'integer           '
+     allocate(dataset%Dimensions(1), stat=status)
+     dataset%Dimensions(1) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,index%noMIFs,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'counterMAF        '
+     dataset%data_type = 'integer           '
+     allocate(dataset%Dimensions(1), stat=status)
+     dataset%Dimensions(1) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,index%counterMAF, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
 !------------------------------------------------------------------------------
   END SUBROUTINE OutputL1B_index_HDF5
 !----------------------------------------------------------------- OutputL1B_sc
@@ -134,20 +84,107 @@ CONTAINS
     INTEGER, INTENT(IN) :: noMAF
     INTEGER(HID_T), INTENT(IN) :: sd_id
     ! Variables
+    TYPE( DataProducts_T ) :: dataset
+    integer :: status
 !------------------------------------------------------------------------------
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(1),  sc%scECI, noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(2),  sc%scECR, noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(3),  sc%scGeocAlt, noMAF) 
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(4),  sc%scGeocLat, noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(5),  sc%scGeodAlt, noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(6),  sc%scGeodLat, noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(7),  sc%scLon, noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(8),  sc%scGeodAngle,noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(9),  sc%scVelECI,noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(10), sc%ypr, noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(11), sc%yprRate, noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(12), sc%scVelECR,noMAF)
-     call Build_MLSAuxData(sd_id, sc_sds_datasets(13), sc%scOrbIncl,noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/ECI            '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz                 '
+     dataset%Dimensions(2) = 'MIF                 '
+     dataset%Dimensions(3) = 'MAF                 '
+     call Build_MLSAuxData(sd_id, dataset, sc%scECI, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/ECR            '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz                 '
+     dataset%Dimensions(2) = 'MIF                 '
+     dataset%Dimensions(3) = 'MAF                 '
+     call Build_MLSAuxData(sd_id, dataset, sc%scECR, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/GeocAlt        '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                '
+     dataset%Dimensions(2) = 'MAF                '
+     call Build_MLSAuxData(sd_id, dataset, sc%scGeocAlt, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/GeocLat        '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                '
+     dataset%Dimensions(2) = 'MAF                '
+     call Build_MLSAuxData(sd_id, dataset, sc%scGeocLat, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/GeodAlt        '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id, dataset, sc%scGeodAlt, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/GeodLat        '
+     dataset%data_type = 'real              '    
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '          
+     call Build_MLSAuxData(sd_id, dataset, sc%scGeodLat, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/Lon            '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '          
+     call Build_MLSAuxData(sd_id, dataset, sc%scLon, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/GeodAngle      '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '          
+     call Build_MLSAuxData(sd_id, dataset, sc%scGeodAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/VelECI         '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz                 '
+     dataset%Dimensions(2) = 'MIF                 '
+     dataset%Dimensions(3) = 'MAF                 '
+     call Build_MLSAuxData(sd_id, dataset, sc%scVelECI,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/ypr            '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz                 '
+     dataset%Dimensions(2) = 'MIF                 '
+     dataset%Dimensions(3) = 'MAF                 '
+     call Build_MLSAuxData(sd_id, dataset, sc%ypr, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/yprRate        '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz                 '
+     dataset%Dimensions(2) = 'MIF                 '
+     dataset%Dimensions(3) = 'MAF                 '
+     call Build_MLSAuxData(sd_id, dataset, sc%yprRate, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/VelECR         '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz                 '
+     dataset%Dimensions(2) = 'MIF                 '
+     dataset%Dimensions(3) = 'MAF                 '
+     call Build_MLSAuxData(sd_id, dataset, sc%scVelECR,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'sc/OrbIncl        '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id, dataset, sc%scOrbIncl,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
 !------------------------------------------------------------------------------
   END SUBROUTINE OutputL1B_sc_HDF5
   !-------------------------------------------------------------- OutputL1B_GHz
@@ -159,25 +196,139 @@ CONTAINS
     TYPE( L1BOAtp_T ), INTENT(IN) :: tp
     INTEGER, INTENT(IN) :: noMAF
     INTEGER(HID_T), INTENT(IN) :: sd_id
+    ! Variables
+    TYPE( DataProducts_T ) :: dataset
+    integer :: status
 !------------------------------------------------------------------------------
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(1) ,tp%encoderAngle,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(2) ,tp%scAngle,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(3) ,tp%scanAngle,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(4) ,tp%scanRate,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(5) ,tp%tpECI,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(6) ,tp%tpECR,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(7) ,tp%tpOrbY,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(8) ,tp%tpGeocAlt,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(9) ,tp%tpGeocLat,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(10),tp%tpGeocAltRate,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(11),tp%tpGeodAlt,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(12),tp%tpGeodLat,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(13),tp%tpGeodAltRate,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(14),tp%tpLon,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(15),tp%tpGeodAngle,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(16),tp%tpSolarTime,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(17),tp%tpSolarZenith,noMAF)
-     call Build_MLSAuxData(sd_id,GHz_sds_datasets(18),tp%tpLosAngle,noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/encoderAngle  '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%encoderAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/scAngle       '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%scAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/scanAngle     '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%scanAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/scanRate      '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF                 '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%scanRate,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/ECI           '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz                 '
+     dataset%Dimensions(2) = 'GHz.MIF             '
+     dataset%Dimensions(3) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpECI,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/ECR           '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz                 '
+     dataset%Dimensions(2) = 'GHz.MIF             '
+     dataset%Dimensions(3) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpECR,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/OrbY          '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF              '
+     dataset%Dimensions(2) = 'MAF                  '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpOrbY,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/GeocAlt       '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF              '
+     dataset%Dimensions(2) = 'MAF                  '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpGeocAlt,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/GeocLat       '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF             '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpGeocLat,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/GeocAltRate   '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF             '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpGeocAltRate,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/GeodAlt       '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF             '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpGeodAlt,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/GeodLat       '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF             '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpGeodLat,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/GeodAltRate   '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF             '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpGeodAltRate,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/Lon           '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF             '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpLon,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/GeodAngle     '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF             '
+     dataset%Dimensions(2) = 'MAF                 '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpGeodAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/SolarTime     '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF            '
+     dataset%Dimensions(2) = 'MAF                '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpSolarTime,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/SolarZenith   '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF            '
+     dataset%Dimensions(2) = 'MAF                '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpSolarZenith,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'GHz/LosAngle      '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'GHz.MIF            '
+     dataset%Dimensions(2) = 'MAF                '
+     call Build_MLSAuxData(sd_id,dataset,tp%tpLosAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
 !------------------------------------------------------------------------------
   END SUBROUTINE OutputL1B_GHz_HDF5
 !---------------------------------------------------------------- OutputL1B_THz
@@ -190,25 +341,139 @@ CONTAINS
     TYPE( L1BOAtp_T ), INTENT(IN) :: tp
     INTEGER, INTENT(IN) :: noMAF
     INTEGER(HID_T), INTENT(IN) :: sd_id
+    ! Variables
+    TYPE( DataProducts_T ) :: dataset
+    integer :: status
 !------------------------------------------------------------------------------
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(1) ,tp%encoderAngle,noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(2) ,tp%scAngle,noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(3) ,tp%scanAngle,noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(4) ,tp%scanRate, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(5) ,tp%tpECI, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(6) ,tp%tpECR, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(7) ,tp%tpOrbY, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(8) ,tp%tpGeocAlt, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(9) ,tp%tpGeocLat, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(10),tp%tpGeocAltRate,noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(11),tp%tpGeodAlt, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(12),tp%tpGeodLat, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(13),tp%tpGeodAltRate,noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(14),tp%tpLon, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(15),tp%tpGeodAngle, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(16),tp%tpSolarTime, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(17),tp%tpSolarZenith, noMAF)
-     call Build_MLSAuxData(sd_id, THz_sds_datasets(18),tp%tpLosAngle, noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/encoderAngle  '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%encoderAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/scAngle       '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%scAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/scanAngle     '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%scanAngle,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/scanRate      '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%scanRate, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/ECI           '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz'
+     dataset%Dimensions(2) = 'THz.MIF'
+     dataset%Dimensions(3) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpECI, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/ECR           '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(3), stat=status)
+     dataset%Dimensions(1) = 'xyz'
+     dataset%Dimensions(2) = 'THz.MIF'
+     dataset%Dimensions(3) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpECR, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/OrbY          '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpOrbY, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/GeocAlt       '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpGeocAlt, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/GeocLat       '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpGeocLat, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/GeocAltRate   '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpGeocAltRate,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/GeodAlt       '
+     dataset%data_type = 'double            '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpGeodAlt, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/GeodLat       '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpGeodLat, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/GeodAltRate   '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpGeodAltRate,lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/Lon           '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpLon, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/GeodAngle     '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpGeodAngle, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/SolarTime     '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpSolarTime, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/SolarZenith   '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpSolarZenith, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'THz/LosAngle      '
+     dataset%data_type = 'real              '
+     allocate(dataset%Dimensions(2), stat=status)
+     dataset%Dimensions(1) = 'THz.MIF'
+     dataset%Dimensions(2) = 'MAF' 
+     call Build_MLSAuxData(sd_id, dataset,tp%tpLosAngle, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
 !------------------------------------------------------------------------------
   END SUBROUTINE OutputL1B_THz_HDF5
 !---------------------------------------------------------------- OutputL1B_rad
@@ -225,12 +490,18 @@ CONTAINS
     CHARACTER (LEN=64) :: dim_chan, dim_mif, name, prec
     INTEGER, DIMENSION(3) :: dims
     INTEGER(HID_T) :: sd_id
-    INTEGER :: i
+    INTEGER :: i, status
 ! Find the sds_id number for counterMAF in the file RADF, write the data to it,
 ! terminate access to the data set
 !------------------------------------------------------------------------------
-     call Build_MLSAuxData(sdId%RADDID, sds_datasets(4), counterMAF, noMAF)
-     call Build_MLSAuxData(sdId%RADFID, sds_datasets(4), counterMAF, noMAF)
+     call Deallocate_DataProducts(dataset)
+     dataset%name      = 'counterMAF        '
+     dataset%data_type = 'integer           '
+     allocate(dataset%Dimensions(1), stat=status)
+     dataset%Dimensions(1) = 'MAF'
+     call Build_MLSAuxData(sdId%RADDID, dataset, counterMAF, lastIndex=noMAF)
+     call Build_MLSAuxData(sdId%RADFID, dataset, counterMAF, lastIndex=noMAF)
+     call Deallocate_DataProducts(dataset)
 !------------------------------------------------------------------------------
     do i = 1, size(rad) ! Loop on number of SDs per MAF
       call GetFullMLSSignalName(rad(i)%signal, name) ! Concatenate SD names
@@ -238,16 +509,16 @@ CONTAINS
       ! Set parameters based on input data dimensions
       ! Based on the SD name, set dim name for channel, get Id of output file
       IF ( INDEX(name,'FB') /= 0 ) THEN
-        dim_chan = DIM7_NAME
+        dim_chan = 'chanFB              '
         sd_id = sdId%RADFID
       ELSE IF ( INDEX(name,'MB') /= 0 ) THEN
-        dim_chan = DIM8_NAME
+        dim_chan = 'chanMB              '
         sd_id = sdId%RADFID
       ELSE IF ( INDEX(name,'WF') /= 0 ) THEN
-        dim_chan = DIM9_NAME
+        dim_chan = 'chanWF              '
         sd_id = sdId%RADFID
       ELSE IF ( INDEX(name,'DACS') /= 0 ) THEN
-        dim_chan = DIM10_NAME
+        dim_chan = 'chanDACS            '
         sd_id = sdId%RADDID
       ELSE
         dim_chan = ''
@@ -260,20 +531,34 @@ CONTAINS
       dims(2) = SIZE(rad(i)%value,2)
       dims(3) = 1
       IF ( INDEX(name,'R5') /= 0 ) THEN
-        dim_mif = DIM4_NAME
+        dim_mif = 'THz.MIF              '
         dims(2) = MIFsTHz      !! lenT
       ELSE
-        dim_mif = DIM3_NAME
+        dim_mif = 'GHz.MIF              '
         dims(2) = MIFsGHz      !! lenG
       ENDIF
 !------------------------------------------------Create/Open the value datasets
+      call Deallocate_DataProducts(dataset)
       dataset%name = trim(name)
-      dataset%data_type = 'real' 
-      call Build_MLSAuxData(sd_id, dataset, rad(i)%value, noMAF, dims)
+      dataset%data_type = 'real'
+      allocate(dataset%Dimensions(3), stat=status)
+      dataset%Dimensions(1) = dim_chan
+      dataset%Dimensions(2) = dim_mif
+      dataset%Dimensions(3) = 'MAF                 '
+      call Build_MLSAuxData(sd_id, dataset, rad(i)%value, lastIndex=noMAF,&
+           dims=dims)
+      call Deallocate_DataProducts(dataset)
 !------------------------------------------- Create/Open the precision datasets
+      call Deallocate_DataProducts(dataset)
       dataset%name = trim(prec)
       dataset%data_type = 'real' 
-      call Build_MLSAuxData(sd_id, dataset, rad(i)%precision, noMAF, dims)
+      allocate(dataset%Dimensions(3), stat=status)
+      dataset%Dimensions(1) = dim_chan
+      dataset%Dimensions(2) = dim_mif
+      dataset%Dimensions(3) = 'MAF                 '
+      call Build_MLSAuxData(sd_id, dataset, rad(i)%precision, lastIndex=noMAF,&
+           dims=dims)
+      call Deallocate_DataProducts(dataset)
 !-----------------------------------------------------------------------------
      endif
    enddo
@@ -281,6 +566,9 @@ CONTAINS
 END MODULE OutputL1B_HDF5
 
 ! $Log$
+! Revision 2.3  2002/11/25 05:34:30  jdone
+! Added dimension names.
+!
 ! Revision 2.2  2002/11/18 21:21:30  jdone
 ! Used trim for names of radiance and supporting precision files.
 !
