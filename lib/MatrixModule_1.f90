@@ -25,7 +25,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: AddMatrices, AddMatrixToDatabase, AddToMatrix
+  public :: AddMatrices, AddToMatrixDatabase, AddToMatrix
   public :: Assignment(=), CholeskyFactor, CholeskyFactor_1
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateEmptyMatrix
@@ -483,9 +483,9 @@ contains ! =====     Public Procedures     =============================
     &,                           Extra_Row, Extra_Col )
     type(Matrix_T), intent(out) :: Z    ! The matrix to create
     integer, intent(in) :: Name         ! Sub-rosa index of its name, or zero
-    type(Vector_T), pointer :: Row      ! Vector used to define the row
+    type(Vector_T), target :: Row       ! Vector used to define the row
       !                                   space of the matrix.
-    type(Vector_T), pointer :: Col      ! Vector used to define the column
+    type(Vector_T), target :: Col       ! Vector used to define the column
       !                                   space of the matrix.
     logical, intent(in), optional :: Row_Quan_First    ! True (default false)
       ! means the quantity is the major order of the rows of blocks and the
@@ -510,7 +510,7 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine DefineInfo ( RC, Vec, QuanFirst, extra )
       type(RC_Info), intent(out) :: RC
-      type(Vector_T), pointer :: Vec ! intent(in)
+      type(Vector_T), target :: Vec ! intent(in)
       logical, intent(in), optional :: QuanFirst
       logical, intent(in), optional :: Extra
 
@@ -1318,6 +1318,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.11  2001/04/09 23:56:17  vsnyder
+! Change some pointer arguments to targets
+!
 ! Revision 2.10  2001/04/09 23:32:19  vsnyder
 ! Correct typo
 !
