@@ -67,7 +67,6 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   private
   public :: ConstructMinorFrameQuantity, CreateQtyTemplateFromMLSCFInfo
   public :: ForgeMinorFrames
-  public :: GetQuantityAttributes
 
 ! -----     Private declarations     -----------------------------------
 
@@ -957,156 +956,6 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine ForgeMinorFrames
 
-  ! ----------------------------------  GetQuantityAttributes  -----
-  subroutine GetQuantityAttributes ( quantityType, framing, dim_names)
-
-  ! Given a quantity type, e.g. l_vmr,
-  ! returns major/minor/neither framing disgnation
-  ! and the 3 dimension names, e.g. (/l_channel, l_MIF, l_MAF/)
-
-    ! Dummy arguments
-    integer, intent(in)                :: quantityType
-    character(len=*), intent(out)      :: framing
-    integer, dimension(3), intent(out) :: dim_names
-
-    ! Executable code
-    select case (quantityType)                                       
-    case ( l_chisqchan )  
-      framing = 'major'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_chisqmmaf )  
-      framing = 'major'
-      dim_names = (/ l_none, l_none, l_MAF /)                  
-    case ( l_chisqmmif )  
-      framing = 'minor'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_cloudInducedRadiance )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_cloudExtinction )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_cloudRadSensitivity )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_cloudWater )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_dnwt_ajn )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_dnwt_axmax )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_dnwt_cait, l_dnwt_chiSqMinNorm, l_dnwt_chiSqNorm, l_dnwt_diag, &
-      & l_dnwt_dxdx, l_dnwt_dxdxl, l_dnwt_dxn, l_dnwt_dxnl, l_dnwt_flag, &
-      & l_dnwt_fnmin, l_dnwt_fnorm, l_dnwt_gdx, l_dnwt_gfac, l_dnwt_gradn, &
-      & l_dnwt_sq, l_dnwt_sqt )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_effectiveOpticalDepth )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_elevOffset )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_heightOffset )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_jacobian_cols )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_jacobian_rows )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_losTransFunc )  
-      framing = 'neither'
-      dim_names = (/ l_frequency, l_MIF, l_MAF /)                  
-    case ( l_losVel )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_massMeanDiameterIce )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_massMeanDiameterWater )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_noiseBandwidth )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_numJ )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_iteration, l_chunk /)                  
-    case ( l_opticalDepth )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_orbitInclination )  
-      framing = 'minor'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_phiTan )  
-      framing = 'minor'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_ptan )  
-      framing = 'minor'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_radiance )  
-      framing = 'minor'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_sizedistribution )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    case ( l_scanResidual )  
-      framing = 'minor'
-      dim_names = (/ l_none, l_MIF, l_MAF /)                  
-    case ( l_scECI )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_scVel )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_scVelECI )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_scVelECR )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_scGeocAlt )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_sidebandRatio )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_spaceRadiance )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_surfacetype )  
-      framing = 'neither'
-      dim_names = (/ l_none, l_none, l_none /)                  
-    case ( l_systemTemperature )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_none /)                  
-    case ( l_tngtECI )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_tngtGeodAlt )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_tngtGeocAlt )  
-      framing = 'minor'
-      dim_names = (/ l_xyz, l_MIF, l_MAF /)                  
-    case ( l_totalExtinction )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case ( l_vmr )  
-      framing = 'neither'
-      dim_names = (/ l_channel, l_none, l_MAF /)                  
-    case default                                                     
-      framing = 'neither'
-      dim_names = (/ l_channel, l_MIF, l_MAF /)                  
-    end select                                                       
-
-  end subroutine GetQuantityAttributes
-
   ! ----------------------------------  CopyHGridInfoIntoQuantity  -----
   subroutine CopyHGridInfoIntoQuantity ( hGrid, qty )
 
@@ -1170,6 +1019,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.82  2003/01/14 00:40:29  pwagner
+! Moved GetQuantityAttributes to L2AUXData
+!
 ! Revision 2.81  2003/01/09 00:09:15  pwagner
 ! routine GetQuantityAttributes added
 !
