@@ -363,10 +363,10 @@ contains ! =====     Public Procedures     =============================
 
     use GL6P, only: NG
     use MLSCommon, only: I4, R4, R8
-    use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT
+!    use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT
     use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
-    use L2PCdim, only: NSPS, Nptg, MNP => max_no_phi, &
-      MNM => max_no_mmaf
+!    use L2PCdim, only: NSPS, Nptg, MNP => max_no_phi, &
+!      MNM => max_no_mmaf
     use ELLIPSE_M, only: ELLIPSE
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
     use GET_PATH_SPSFUNC_NGRID_M, only: GET_PATH_SPSFUNC_NGRID
@@ -407,8 +407,7 @@ contains ! =====     Public Procedures     =============================
       mid, ilo, ihi, k_info_count, ld, &
       max_phi_dim, max_zeta_dim
 
-    real(r8) :: I_STAR_ALL(25,Nptg)
-    real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
+!    real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
     type(k_matrix_info) :: K_star_info(20)
 
 
@@ -455,6 +454,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NOUSEDCHANNELS           ! Number of channels to output
     integer :: NOFREQS                  ! Number of frequencies for a pointing
     integer :: NOMAFS                   ! Number of major frames
+    integer :: NOMIFS                   ! Number of minor frames
     integer :: NOSPECIES                ! Number of molecules we're considering
     integer :: NAMELEN                  ! Length of string
     integer :: PHIWINDOW                ! Copy of forward model config%phiWindow
@@ -497,7 +497,8 @@ contains ! =====     Public Procedures     =============================
 
     real(r4), dimension(:,:,:,:), pointer :: K_TEMP    ! (channel,Nptg,mxco,mnp)
     real(r4), dimension(:,:,:,:,:), pointer :: K_ATMOS ! (channel,Nptg,mxco,mnp,Nsps)
-    real(r8), dimension(:,:), pointer :: Radiances     ! (Nptg,25)
+    real(r8), dimension(:,:), pointer :: RADIANCES     ! (Nptg,noChans)
+    real(r8), dimension(:,:), pointer :: I_STAR_ALL    ! (noMIFs,noChans)
 
     integer, pointer, dimension(:) :: GRIDS            ! Frq grid for each tan_press
 
@@ -521,7 +522,7 @@ contains ! =====     Public Procedures     =============================
     nullify ( radV, channelIndex, usedChannels, frequencies, dh_dt_path, &
       & dx_dt, d2x_dxdt, t_script, ref_corr, tau, ptg_angles, k_temp, &
       & k_atmos, radiances, grids, my_Catalog, beta_path, allMatch, thisMatch,&
-      & signalsGrid )
+      & signalsGrid, i_star_all )
 
     ! Identify the vector quantities we're going to need.
     ! The key is to identify the signal we'll be working with first
@@ -604,7 +605,7 @@ contains ! =====     Public Procedures     =============================
         end if
       end do
     end do
-!
+
     ! Get the max. dimension in zeta coeff. space and phi coeff. space
     ! (To be used later in rad_tran_wd, for automatic arrays asignement)
     max_phi_dim = 1
@@ -613,7 +614,7 @@ contains ! =====     Public Procedures     =============================
       max_zeta_dim = temp%template%noSurfs
       max_phi_dim = temp%template%noInstances
     end if
-!
+
     if ( forwardModelConfig%atmos_der ) then
       do k = 1, noSpecies
         if ( forwardModelConfig%moleculeDerivatives(k) ) then
@@ -626,12 +627,18 @@ contains ! =====     Public Procedures     =============================
         end if
       end do
     end if
-!
+
+    ! Deal with fmStat%rows
+    if ( present(Jacobian) .and. ( .not. associated (fmStat%rows) ) ) &
+      & call Allocate_test ( fmStat%rows, Jacobian%row%nb, 'fmStat%rows', &
+      & ModuleName)
+
     ! Work out what signal we're after
     signal = forwardModelConfig%signals(1)
 
     ! Get some dimensions which we'll use a lot
     noMAFs = radiance%template%noInstances
+    noMIFs = radiance%template%noSurfs
     no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
     maxPath = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
     nlvl=size(ForwardModelConfig%integrationGrid%surfs)
@@ -772,6 +779,8 @@ contains ! =====     Public Procedures     =============================
 
     call allocate_test ( radiances, no_tan_hts, noUsedChannels, &
       & 'Radiances', ModuleName )
+    call allocate_test ( i_star_all, noUsedChannels, noMIFs, &
+      & 'i_star_all', ModuleName )
 
     ! Now work out what sideband(s) we're going to be doing
     if (any ( forwardModelConfig%signals%sideband .ne. &
@@ -1171,27 +1180,22 @@ contains ! =====     Public Procedures     =============================
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
-          call convolve_all ( forwardModelConfig, fwdModelIn, &
-            &     ptan%values(:,maf), noSpecies, &
+          call convolve_all ( forwardModelConfig, fwdModelIn, maf, &
+            &     windowStart, windowFinish, temp, ptan, radiance, &
             &     ForwardModelConfig%tangentGrid%surfs, ptg_angles, &
             &     ifm%tan_temp(:,maf), dx_dt, d2x_dxdt,si, center_angle, &
             &     Radiances(:,ch), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
-            &     no_tan_hts, k_info_count, i_star_all(i,:), &
-            &     k_star_all(i,:,:,:,:), k_star_info, &
-            &     temp%template%noSurfs, temp%template%noInstances, &
-            &     temp%template%surfs(:,1), antennaPatterns(1), ier )
+            &     i_star_all(i,:),Jacobian, &
+            &     antennaPatterns(1), ier )
           !??? Need to choose some index other than 1 for AntennaPatterns ???
           if ( ier /= 0 ) goto 99
         else
 
-          call no_conv_at_all ( forwardModelConfig, fwdModelIn, &
-            &     ptan%values(:,maf), noSpecies,  &
+          call no_conv_at_all ( forwardModelConfig, fwdModelIn, maf, &
+            &     windowStart, windowFinish, temp, ptan, radiance, &
             &     ForwardModelConfig%tangentGrid%surfs, &
             &     Radiances(:,ch), k_temp(i,:,:,:), k_atmos(i,:,:,:,:), &
-            &     no_tan_hts, k_info_count, i_star_all(i,:), &
-            &     k_star_all(i,:,:,:,:), k_star_info, &
-            &     temp%template%noSurfs, temp%template%noInstances, &
-            &     temp%template%surfs(:,1) )
+            &     i_star_all(i,:),Jacobian )
 
         end if
 
@@ -1310,7 +1314,7 @@ contains ! =====     Public Procedures     =============================
         &   Name(nameLen-1:nameLen) == '_N' .or.  &
         &   Name(nameLen-1:nameLen) == '_V' ) then
         print *,Name
-        r = sum(k_star_all(ch,kz,1:mnz,1:ht_i,klo))
+!        r = sum(k_star_all(ch,kz,1:mnz,1:ht_i,klo))
         print *,'  Sum over all zeta & phi coeff:',sngl(r)
       else
         if ( Name == 'TEMP' ) then
@@ -1322,7 +1326,7 @@ contains ! =====     Public Procedures     =============================
         tau(1:mnz) = k_star_info(i)%zeta_basis(1:mnz)
         call Hunt_zvi ( Zeta, tau, mnz, m, j )
         if ( abs(Zeta-tau(j)) < abs(Zeta-tau(m))) m=j
-        print *,(k_star_all(ch,kz,m,j,klo),j=1,ht_i)
+!        print *,(k_star_all(ch,kz,m,j,klo),j=1,ht_i)
       end if
     end do
 
@@ -1371,6 +1375,7 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate//'My_catalog' )
 
     call deallocate_test ( radiances, 'Radiances', ModuleName )
+    call deallocate_test ( i_star_all, 'i_star_all', ModuleName )
 
     if ( fmStat%Finished ) then
 
@@ -1434,6 +1439,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.100  2001/04/19 23:55:04  livesey
+! Interim version, new convolve etc. but no derivatives
+!
 ! Revision 2.99  2001/04/19 22:24:09  livesey
 ! More moving window stuff sorted out, now uses FindClosestInstance
 !
