@@ -51,3 +51,6 @@ c      DO WHILE(1)
       RETURN
       END
 
+! $Log: setup_spectra.f,v      
+
+

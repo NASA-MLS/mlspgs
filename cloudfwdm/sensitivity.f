@@ -1,7 +1,7 @@
 
       SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,
      >                       delTAU,delTAUc,DTAUt,DTAUc,TAUeff,SS,
-     >                       DDm,Dm,DDZ,DZ,N,NF,IRF,ISWI)
+     >                       DDm,Dm,N,NF,IRF,ISWI,RE)
 C----------------------------------------------------------------
 
       INTEGER NH,NZ
@@ -12,7 +12,7 @@ C----------------------------------------------------------------
       REAL PRESSURE(NZ)                        ! L2 PRESSURE LEVEL
       REAL DTcir(NT+1,NF)                      ! CLOUD-INDUCED RADIANCE
       REAL SS(NT+1,NF)                         ! CLOUD RADIANCE SENSITIVITY
-      REAL TAUeff(NT,NF)                       ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL TAUeff(NT+1,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
 
       REAL delTAU(NH-1)                        ! CLEAR-SKY  
       REAL delTAUc(NH-1)                       ! CLOUDY-SKY EXTINCTION
@@ -21,19 +21,16 @@ C----------------------------------------------------------------
 
       REAL DDm(N,NH-1)                         ! MASS-MEAN-DIAMETER
       REAL Dm(N,NZ-1)                          ! MASS-MEAN-DIAMETER
-      REAL DDZ(NH-1)                           ! MODEL LEYER THICKNESS
-      REAL DZ(NZ-1)                            ! L2 LAYER THICKNESS
 
-      REAL RE,HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
+      REAL*8 RE
+      REAL HT,C_EXT,A_EXT,TGT,DS,DTAU,A_COL
       REAL ZH(2000),ZA(2000)
-      INTEGER I,K,J
+      INTEGER I,K,J,iflag
 C-----------------------------------------------------------------------------
 
 C===============================================================
 C     INTERPOLATE PARAMETERS FROM MODEL LEVEL NH TO L2 LEVEL NZ
 C===============================================================
-
-      RE = 6400.
 
       DO I=1,NH-1
          ZH(I)=-ALOG10( (YP(I+1)+YP(I))/2. )
@@ -59,28 +56,33 @@ C===============================================================
          Dm(2,J)=((ZH(JM+1)-ZA(J))*DDm(2,JM)+(ZA(J)-ZH(JM))*
      >                DDm(2,JM+1))/(ZH(JM+1)-ZH(JM))             
 
-         DZ(J)=((ZH(JM+1)-ZA(J))*DDz(JM)+(ZA(J)-ZH(JM))*
-     >                DDz(JM+1))/(ZH(JM+1)-ZH(JM))             
-
       ENDDO
 
 C==========================================================================
 C     RADIANCE SENSITIVITY CALCULATIONS
 C==========================================================================
 
-      IWSI = 0
-
-      IF (IWSI .EQ. 1) THEN
+      IF (ISWI .EQ. 0) THEN
 
          DO I=1,NT
 
-            HT = ZT(I)         
+            HT = ZT(I)   
+
             IF (HT .GE. 0.) THEN
+
+               do j=1,nh
+                  if (yz(j) .ge. ht) then
+                     iflag=j
+                     goto 100
+                  endif
+               enddo
+
+ 100           continue
 
                C_EXT = 0.
                A_EXT = 0.
             
-               DO K=NH-1,1,-1
+               DO K=NH-1,iflag+1,-1
 
                   IF (YZ(K) .GT. HT) THEN
                      TGT=YZ(K-1) 
@@ -98,7 +100,7 @@ C==========================================================================
 
                ENDDO
 
-               DO K=1,NH-1
+               DO K=iflag+1,NH-1
 
                   IF (YZ(K) .LT. HT) THEN
                      TGT=YZ(K-1)
@@ -110,12 +112,12 @@ C==========================================================================
                      DTAU = DS * delTAU(K)/(YZ(K)-YZ(K-1))
                      A_COL = A_EXT + DTAU/2.
                      C_EXT=C_EXT + delTAUc(K)*EXP(-A_COL)*
-     >                    DS/(YZ(K)-YZ(K-1))
+     >                     DS/(YZ(K)-YZ(K-1))
                      A_EXT = A_EXT + DTAU
                   ENDIF
 
                ENDDO
-            
+
                TAUeff(I,IRF)=C_EXT
                SS(I,IRF)=DTcir(I,IRF)/TAUeff(I,IRF)
 
@@ -127,6 +129,8 @@ C==========================================================================
 C--------------------------------------------------------------------------
       RETURN
       END
+
+! $Log: sensitivity.f,v      
 
 
 

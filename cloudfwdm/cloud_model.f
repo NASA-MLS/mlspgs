@@ -1,4 +1,5 @@
-      SUBROUTINE CLOUD_MODEL(ITYPE,CHT,WC,CHK_CLD,YZ,NH)
+
+      SUBROUTINE CLOUD_MODEL(ITYPE,CHT,YZ,NH,IWC,LWC,WCscale)
 
 C=========================================================================C
 C  DEFINE VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                    C
@@ -7,14 +8,14 @@ C=========================================================================C
 
       INTEGER ITYPE,NH
 
-      REAL WC(2,NH)     ! CLOUD WATER CONTENT (g/m3)
-      REAL CHK_CLD(NH)  ! CLOUD CHECKER
       REAL YZ(NH)
+      REAL IWC(NH)
+      REAL LWC(NH)
       REAL CLD_TOP
       REAL CLD_BASE
       REAL UPPER_LAG
       REAL LOWER_LAG
-      REAL HT,CHT
+      REAL HT,CHT,WCscale
 C--------------------------------------------------------------------
 
       HT = 16000. + CHT*1000.
@@ -34,15 +35,15 @@ C                                ======================
 
          DO I=1,NH
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
-               WC(1,I) = 0.0
+               IWC(I) = 0.0
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
-               WC(1,I) = 1.0
+               IWC(I) = 1.0
             ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
-               WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/5000.)
+               IWC(I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/5000.)
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
-               WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
+               IWC(I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
             ENDIF
-            WC(2,I) = 0.0
+            LWC(I) = 0.0
          ENDDO
 
       ELSE IF (ITYPE .EQ. 2) THEN
@@ -56,15 +57,15 @@ C                                ==============
 
          DO I=1,NH
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
-               WC(1,I) = 0.0
+               IWC(I) = 0.0
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
-               WC(1,I) = 1.0
+               IWC(I) = 1.0
             ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
-               WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/500.)
+               IWC(I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/500.)
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
-               WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
+               IWC(I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/500.)
             ENDIF
-            WC(2,I) = 0.0
+            LWC(I) = 0.0
          ENDDO
 
       ELSE IF (ITYPE .EQ. 3) THEN
@@ -78,15 +79,15 @@ C                                ======
 
          DO I=1,NH
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
-               WC(1,I) = 0.0
+               IWC(I) = 0.0
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
-               WC(1,I) = 1.0
+               IWC(I) = 1.0
             ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
-               WC(1,I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/500.)
+               IWC(I) = 1.0*EXP(-(YZ(I)-UPPER_LAG)/500.)
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
-               WC(1,I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/600.)
+               IWC(I) = 1.0*EXP(-(LOWER_LAG-YZ(I))/600.)
             ENDIF
-            WC(2,I) = 0.0
+            LWC(I) = 0.0
          ENDDO
 
       ELSE 
@@ -100,30 +101,39 @@ C                                =================
 
          DO I=1,NH
             IF (YZ(I) .GT. CLD_TOP .OR. YZ(I) .LT. CLD_BASE) THEN
-               WC(1,I) = 0.0
+               IWC(I) = 0.0
             ELSE IF (YZ(I).LE.UPPER_LAG .AND. YZ(I).GE.LOWER_LAG) THEN
-               WC(1,I) = 1.0
+               IWC(I) = 1.0
             ELSE IF (YZ(I).GT.UPPER_LAG .AND. YZ(I).LE.CLD_TOP) THEN
-               WC(1,I) = 1.0*EXP(-(YZ(I)-HT)/500.)
+               IWC(I) = 1.0*EXP(-(YZ(I)-HT)/500.)
             ELSE IF (YZ(I).LT.LOWER_LAG .AND. YZ(I).GE.CLD_BASE) THEN
-               WC(1,I) = 1.0*EXP(-(HT-YZ(I))/500.)
+               IWC(I) = 1.0*EXP(-(HT-YZ(I))/500.)
             ENDIF
-            WC(2,I)=0.0
+            LWC(I)=0.0
          ENDDO
       ENDIF
+
+
+      DO I=1,NH
+            IWC(I)=WCscale*IWC(I)
+            LWC(I)=WCscale*LWC(I)
+      ENDDO
 
       GOTO 200
 
  100  DO I=1,NH
-            WC(2,I)=0.
-            WC(1,I)=0.
+            IWC(I)=0.
+            LWC(I)=0.
       ENDDO
 
- 200  DO I=1,NH
-         CHK_CLD(I)=WC(1,I)+WC(2,I)
-      ENDDO
+ 200  CONTINUE
+
+C------------------------------------------------------
+
       RETURN
       END
+
+! $Log: cloud_model.f,v      
 
 
 

@@ -12,3 +12,5 @@ c... Use Planck function to brightness temperature
 
 	return 
 	end
+
+! $Log: planck.f,v      

@@ -101,14 +101,11 @@ C ... determine cutoff no. for higher order terms
  11	bc(2,j)=bc(2,j)*2/x/x
 	bc(3,j)=bc(3,j)*2/x/x
  12    continue
-c	if (ispi .eq. 1) then
-c	do j=1,nr
-c	write(*,*)r(j),nabr(j),bc(2,j),bc(3,j)
-c	enddo
-c	endif
 
        RETURN
        END
+
+! $Log: miecoeff.f,v      
 
 
 

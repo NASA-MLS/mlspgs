@@ -3,6 +3,7 @@
 
 C========================================================================C
 C     PRODUCE SIZE DISTRIBUTIONS FOR ICE PARTICLES AND WATER DROPLETS    C
+C     J.JIANG, MAY 1, 2001
 C========================================================================C
 
       IMPLICIT NONE
@@ -216,6 +217,7 @@ C... COMPUTE MASS-MEAN-DIAMETER
 
       END
 
+! $Log: drp_size.f,v      
 
 
 

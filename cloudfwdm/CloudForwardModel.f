@@ -246,18 +246,18 @@ C----------------------------------
          MY_NIWC=1                ! SKIP FULL SENSITIVITY CALCULATION
       ELSE
           MY_NIWC=NIWC
-      endif
+      ENDIF
 
 C------------------------------------------
 C     PERFORM FULL SENSITIVITY CALCULATION
 C------------------------------------------
 
-      DO 3000 IIWC=1, MY_NIWC
-         if (ISWI .EQ. 0) THEN
-            ratio=1.
-         else
-      RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9
-      endif
+      DO 3000 IIWC=1, MY_NIWC    ! START OF IWC LOOP
+         IF (ISWI .EQ. 0) THEN
+            RATIO=1.
+         ELSE
+            RATIO = 10.*(IIWC-1)**2*0.004+1.0E-9
+         ENDIF
 C=========================================================================
 C                   >>>>>>> CLEAR-SKY MODULE <<<<<<<<
 C-------------------------------------------------------------------------
@@ -396,14 +396,9 @@ C====================================
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
 
-c      IF (ISWI .EQ. 0) THEN
-c         GOTO 200
-c      ENDIF
-
- 3000 CONTINUE
+ 3000 CONTINUE                               ! END OF IWC LOOP
 
       CALL HEADER(5)
-
 
 C-----------------------<<<<<<<<<<<<< END >>>>>>>>>>>>------------------------C
 

@@ -61,3 +61,6 @@ c... relative to ice
           EV=RH*ES
           RETURN
           END
+
+! $Log: water.f,v      
+

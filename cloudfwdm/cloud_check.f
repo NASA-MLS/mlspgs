@@ -2,7 +2,7 @@
       SUBROUTINE CLOUD_CHECK(PRESSURE,IWC,LWC,NZ,WC,CHK_CLD,NH)
 
 C=========================================================================C
-C  DEFINE VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                    C
+C  CHECK VERTICAL PROFILES OF CLOUD ICE-WATER-CONTENT                    C
 C  - J.JIANG (05/18/2001)                                                 C
 C=========================================================================C
 
@@ -66,5 +66,6 @@ C---------------------------------------------------------------------------
       RETURN
       END
 
+! $Log: cloud_check.f,v      
 
 

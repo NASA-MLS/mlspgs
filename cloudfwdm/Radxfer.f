@@ -1,8 +1,9 @@
 
+      SUBROUTINE RADXFER(L,NU,NUA,U,DU,PHH,NT,ZT,W0,TAU,RS,TS,FREQ,
+     >           YZ,TEMP_AIR,N,THETA,THETAI,PHI,UI,UA,TT,MNT,ICON,RE)
+
 C===================================================================
 C     >>>>>>ITERATIVE RADIATIVE TRANSFER CALCULATION<<<<<<
-C
-C LAST UPDATE: 18/05/2001, J.JIANG
 C
 C METHOD: 1. GET SCATTERING TB IN A PARALLEL PLANE ASSUMING THAT
 C            SCATTERING IS LOCALIZED AND PARALLEL PLANE APPROXI-
@@ -11,15 +12,14 @@ C         2. EACH ITERATION INVOLVES INTERPOLATIONS OF TB BETWEEN
 C            NT-TANGENT HEIGHT GRIDS ON THE SPHERICAL PLANE AND
 C            N-STREAMS ON THE PARALLEL PLANE;
 C         3. OUTPUT TB FOR ALL TANGENT HEIGHTS
+C
+C LAST UPDATE: 18/05/2001, J.JIANG
 C===================================================================
-
-      SUBROUTINE RADXFER(L,NU,NUA,U,DU,PHH,NT,ZT,W0,TAU,RS,TS,FREQ,
-     >             YZ,TEMP_AIR,N,THETA,THETAI,PHI,UI,UA,TT,MNT,ICON)
 
       IMPLICIT NONE
       REAL PI
       REAL*8 RE
-      PARAMETER (PI=3.1415926,RE=6370.d3)
+      PARAMETER (PI=3.1415926)
 
       INTEGER L,NT,NU,NU0,NUA,N0,N,MNT
       INTEGER NZ                       ! MAXIMUM NO. OF INTEGRAL LAYERS
@@ -33,7 +33,7 @@ C===================================================================
       REAL TEMP_AIR(L)                 ! MEAN AIR TEMPERATURE AT L
       REAL YZ(L+1)                     ! PRESSURE HEIGHT (km)
       REAL ZT(NT)                      ! TANGENT HEIGHT (m)
-      REAL TT(MNT+1,L+1)               ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
+      REAL TT(MNT,L+1)                ! TB AT ZT, LAST INDEX IS ZENITH LOOKING
       REAL FREQ                        ! FREQUENCY (GHz)
       REAL TSPACE                      ! COSMIC BACKGROUND RADIANCE
       REAL TS                          ! SURFACE TEMPERATURE (K)
@@ -293,7 +293,7 @@ C-----------------------------------------------------------
 
          tsource=(((1-WW0)*TEMP(K1)+WK)+((1-www0)*TEMP(K1+1)+wwk))/2.
 
-         IF (ICON .gt. 100) THEN
+         IF (ICON .eq. 0) THEN
             tsource=( TEMP(K1)+TEMP(K1+1) )/2. ! NO CLOUD AFTER TANGENT POINT
          ENDIF
 
@@ -361,25 +361,10 @@ C---------------------------------------------------------------------
       ENDDO
 C---------------------------------------------------------------------
  
-
-c      write(22,*)(u(i),i=1,nu)
-
-
-c      write(10,*)(tscat(1,i,27),i=1,nu)  ! 6km
-c      write(11,*)(tb(i,27),i=1,nu)       ! 6km
-
-
-c      write(8,*)(tscat(1,i,35),i=1,nu)   ! 8km
-c      write(93,*)(tb(i,35),i=1,nu)       ! 8km
-
-c      write(7,*)(tscat(1,i,43),i=1,nu)  ! 10km
-c      write(92,*)(tb(i,43),i=1,nu)       ! 10km     
-
-c      write(9,*)(tscat(1,i,67),i=1,nu)   ! 16km
-c      write(94,*)(tb(i,67),i=1,nu)       ! 16km
-
       RETURN
       END
+
+! $Log: Radxfer.f,v      
 
 
 

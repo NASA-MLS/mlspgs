@@ -1,8 +1,10 @@
-C==========================================================
-C     SETUP SCATTERING ANGLES U, UA AND INCIDENT ANGLES UI
-C==========================================================
 
       SUBROUTINE ANGLE(THETA,U,DU,NU,PHI,UA,NUA,UI,THETAI)
+
+C==========================================================
+C     SETUP SCATTERING ANGLES U, UA AND INCIDENT ANGLES UI
+C     -J.JIANG, JAN 1, 2001
+C==========================================================
 
       INTEGER NU                         ! NO. OF SCATTERING ANGLES
       INTEGER NUA                        ! NO. OF SCATTERING AZIMUTH ANGLES
@@ -58,6 +60,9 @@ C--------------------------------------------------
 
       RETURN
       END
+
+! $Log: angle.f,v      
+
 
 
 

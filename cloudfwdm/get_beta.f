@@ -4,6 +4,7 @@
 
 C==============================================================
 C      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
+C      LATEST UPDATE: J.JIANG, MAY 18, 2001
 C==============================================================
 
       IMPLICIT NONE
@@ -197,6 +198,8 @@ c... Van Vleck-Weisskopf
 c...
 	return
 	end
+
+! $Log: get_beta.f,v      
 
 
 
