@@ -59,7 +59,7 @@ contains
       & L_CLEAR, L_BOUNDARYPRESSURE
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
       & Load_Sps_Data, Modify_values_for_supersat                    ! JJ
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
                                 &  DESTROYCOMPLETESLABS
     use ManipulateVectorQuantities, only: DoHGridsMatch
     use MatrixModule_1, only: MATRIX_T
@@ -140,7 +140,6 @@ contains
     integer :: MIF                      ! MIF number for tan_press(ptg_i)
     integer :: MINSUPERSET              ! Min. value of superset > 0
     integer :: NGL                      ! Total # of GL points = Size(gl_inds)
-    integer :: NL                       ! Number of lines
     integer :: Nlvl                     ! Size of integration grid
     integer :: NO_ELE                   ! Length of a gl path
     integer :: NOFREQS                  ! Number of frequencies for a pointing
@@ -813,29 +812,11 @@ contains
 
     ! First, Allocate gl_slab arrays....
 
-    allocate ( gl_slabs(no_ele, noSpecies), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//"gl_slabs" )
-
-    do i = 1, noSpecies
-      do j = 1, no_ele
-        call AllocateOneSlabs ( gl_slabs(j,i), size(My_Catalog(i)%Lines) )
-      end do
-    end do
+    call allocateSlabs ( gl_slabs, no_ele, my_catalog, moduleName )
 
     if ( temp_der ) then
-      allocate ( gl_slabs_p(no_ele, noSpecies), &
-        &        gl_slabs_m(no_ele, noSpecies), STAT=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//"gl_slabs_[pm]" )
-
-      do i = 1, noSpecies
-        nl = size(My_Catalog(i)%Lines)
-        do j = 1, no_ele
-          call AllocateOneSlabs ( gl_slabs_p(j,i), nl )
-          call AllocateOneSlabs ( gl_slabs_m(j,i), nl )
-        end do
-      end do
+      call allocateSlabs ( gl_slabs_p, no_ele, my_catalog, moduleName )
+      call allocateSlabs ( gl_slabs_m, no_ele, my_catalog, moduleName )
     end if
 
     ! Now allocate all path related... with maximum length..
@@ -2615,6 +2596,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.159  2003/07/09 22:27:42  vsnyder
+! More futzing
+!
 ! Revision 2.158  2003/07/09 20:23:50  vsnyder
 ! Futzing
 !
