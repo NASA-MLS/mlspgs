@@ -302,7 +302,7 @@ contains
 
     use MLSCommon, only: IP, R8, Rk => RP
     use Physics, only: Bohr, G_e
-    use SLabs_SW_M, only: Simple_Voigt
+    use Voigt_m, only: Simple_Voigt
 
     integer, intent(in) :: N    ! rotational quantum number, sign indicates delta J
     real(r8), intent(in) :: Nu  ! transmission frequency in MHz
@@ -592,7 +592,7 @@ contains
 
     use MLSCommon, only: IP, R8, Rk => RP
     use Physics, only: Bohr, G_e
-    use SLabs_SW_M, only: D_Simple_Voigt
+    use Voigt_m, only: D_Simple_Voigt
 
     integer, intent(in) :: N     ! rotational quantum number, sign indicates delta J
     real(r8), intent(in) :: Nu   ! transmission frequency in MHz
@@ -914,6 +914,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.12  2004/04/24 02:26:54  vsnyder
+! Move Voigt stuff to its own module
+!
 ! Revision 2.11  2004/04/17 00:37:00  vsnyder
 ! Analytic temperature derivatives
 !
