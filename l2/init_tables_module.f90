@@ -21,15 +21,8 @@ module INIT_TABLES_MODULE
 ! Another solution would be to insert some time-wasting computations
 ! ahead of deallocate_test, but that would be an awkward hack
 
-! There is a parameter declared, ID_LAST_MAX, that limits
-! how many args you can accumulate by acorn between calls to
-! make_tree (see below for usage of acorn)
-! If the program quits with the message "Accumulated too many ids in acorn;"
-! hunt down its definition below and try doubling its current value
-
 ! Declaring the definitions is handled by the tree walker.
 
-  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Init_MLSSignals_m ! Everything. Init_MLSSignals, Field_First,
     ! Last_Signal_Field, Spec_First, Last_Signal_Spec, Numerous S_....
   use Init_Spectroscopy_m ! Everything.
@@ -47,37 +40,6 @@ module INIT_TABLES_MODULE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
   private :: ADD_IDENT, INIT_INTRINSIC, INIT_MOLECULES, INIT_SPECTROSCOPY
-
-  ! The following will be used by subroutine acorn to build an array 
-  ! id_cum(1:id_last) that can be passed directly to make_tree
-  ! The advantage is that successive calls to acorn extend id_cum
-  ! eliminating the (too) many continuation statements a single call to
-  ! make_tree would require
-  ! To exploit this, replace a many-line-spanning statement such as:
-  !   call make_tree ( (/ &
-  !      begin, stuff, .. &
-  !      begin, morestuff, .. &
-  !        ..
-  !      begin, laststuff, .. &
-  !      / ) )  
-  ! with the following:
-  !   id_last = 0
-  !   call acorn ( (/begin, stuff, ../) )
-  !   call acorn ( (/begin, morestuff, ../) )
-  !        ..
-  !   call acorn ( (/begin, laststuff, ../) )
-  !   call make_tree ( id_cum(1:id_last) )
-  !   ! remember to re-initialize id_last to zero before next call to acorn
-  !
-  ! In fact, you can split the original args in the call to make_tree
-  ! into however many pieces you like. In other words, 
-  ! you can do it line-by-line or once each occurrence of the token "begin"
-  ! or according to some other sytem that makes sense to you.
-  
-  private :: ID_CUM, ID_LAST, ID_LAST_MAX, ACORN
-  integer :: ID_LAST
-  integer, parameter :: ID_LAST_MAX = 500     ! You will be told if too small
-  integer, pointer, dimension(:) :: ID_CUM => null()
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -231,9 +193,6 @@ contains ! =====     Public procedures     =============================
     use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
     use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
-
-    call allocate_test(id_cum, id_last_max, &
-      & 'id_cum', ModuleName)
 
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_Spectroscopy ( t_last, field_last, last_lit, &
@@ -583,95 +542,99 @@ contains ! =====     Public procedures     =============================
              begin, f+f_columns, s+s_vector, nr+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
              ndp+n_spec_def /) )
-     call make_tree ( (/ &
+    call make_tree ( (/ &
       begin, s+s_dump, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              nadp+n_spec_def/) )
 
-     id_last = 0
-     call acorn((/begin, s+s_fill/))    ! Must be AFTER s_vector, s_matrix and s_climatology
-     call acorn((/begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))           
-     call acorn((/begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_dontMask, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
-     call acorn((/begin, f+f_explicitValues, t+t_numeric, n+n_field_type/))
-     call acorn((/begin, f+f_extinction, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
-     call acorn((/begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_ignoreZero, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_integrationTime, t+t_numeric, n+n_field_type/))
-     call acorn((/begin, f+f_interpolate, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_intrinsic, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_isPrecision, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_losQty, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_lsb, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_lsbFraction, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_maxIterations, t+t_numeric, n+n_field_type/))
-     call acorn((/begin, f+f_measurements, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_method, t+t_fillmethod, nr+n_field_type/))
-     call acorn((/begin, f+f_model, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_multiplier, t+t_numeric, n+n_field_type/))
-     call acorn((/begin, f+f_noFineGrid, t+t_numeric, n+n_field_type/))
-     call acorn((/begin, f+f_noise, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_noiseBandwidth, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_orbitInclination, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_precision, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_precisionFactor, t+t_numeric, n+n_field_type/))
-     call acorn((/begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
-     call acorn((/begin, f+f_phitan, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
-     call acorn((/begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
-            nr+n_dot/))
-     call acorn((/begin, f+f_ratioQuantity, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
-     call acorn((/begin, f+f_radianceQuantity, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_refract, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
-     call acorn((/begin, f+f_resetSeed, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_rhiQuantity, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
-     call acorn((/begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_scVelECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_scVelECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_seed, t+t_numeric, n+n_field_type/))
-     call acorn((/begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot/))
-     call acorn((/begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec/))
-     call acorn((/begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec/))
-     call acorn((/begin, f+f_sourceGrid, s+s_gridded, s+s_merge, n+n_field_spec/))
-     call acorn((/begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec/))
-     call acorn((/begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec/))
-     call acorn((/begin, f+f_spread, t+t_boolean, n+n_field_type/))
-     call acorn((/begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_systemTemperature, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_usb, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_usbFraction, s+s_vector, f+f_template, &
-            f+f_quantities, n+n_dot/))
-     call acorn((/begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
-            n+n_dot, ndp+n_spec_def /) )
-     call make_tree ( id_cum(1:id_last) )
+    call make_tree( (/ &
+      begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
+             begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
+             begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
+             begin, f+f_extinction, t+t_boolean, n+n_field_type, &
+             begin, f+f_geocAltitudeQuantity, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_h2oQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_ignoreNegative, t+t_boolean, n+n_field_type, &
+             begin, f+f_ignoreZero, t+t_boolean, n+n_field_type, &
+             begin, f+f_integrationTime, t+t_numeric, n+n_field_type, &
+             begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
+             begin, f+f_intrinsic, t+t_boolean, n+n_field_type, &
+             begin, f+f_isPrecision, t+t_boolean, n+n_field_type, &
+             begin, f+f_losQty, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_lsb, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_lsbFraction, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
+             begin, f+f_measurements, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot /) )
+    call make_tree ( (/ & ! Continuing for s_fill...
+             begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
+             begin, f+f_model, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_multiplier, t+t_numeric, n+n_field_type, &
+             begin, f+f_noFineGrid, t+t_numeric, n+n_field_type, &
+             begin, f+f_noise, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_noiseBandwidth, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_orbitInclination, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_precision, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_precisionFactor, t+t_numeric, n+n_field_type, &
+             begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_phitan, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
+                    nr+n_dot, &
+             begin, f+f_ratioQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_radianceQuantity, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_refract, t+t_boolean, n+n_field_type, &
+             begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_resetSeed, t+t_boolean, n+n_field_type, &
+             begin, f+f_rhiQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot /), &
+             continue = .true. )
+    call make_tree ( (/ & ! STILL Continuing for s_fill...
+             begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_scVelECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_scVelECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_seed, t+t_numeric, n+n_field_type, &
+             begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
+             begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
+             begin, f+f_sourceGrid, s+s_gridded, s+s_merge, n+n_field_spec, &
+             begin, f+f_sourceSGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_sourceVGrid, s+s_vGrid, n+n_field_spec, &
+             begin, f+f_spread, t+t_boolean, n+n_field_type, &
+             begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot, &
+             begin, f+f_systemTemperature, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_temperatureQuantity, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_usb, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_usbFraction, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_vmrQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, ndp+n_spec_def /), &
+             continue = .true. ) ! WHEW! Finally done for s_fill
 
     call make_tree( (/ &
       begin, s+s_destroy, &
@@ -889,8 +852,6 @@ contains ! =====     Public procedures     =============================
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, s+s_directWrite, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
-    call deallocate_test(id_cum, &
-      & 'id_cum', ModuleName)
   contains
 
     ! ------------------------------------------------  MAKE_TREE  -----
@@ -898,32 +859,12 @@ contains ! =====     Public procedures     =============================
 
   end subroutine INIT_TABLES
 
-  subroutine ACORN ( IDS )
-    ! Build a tree specified by the "ids" array.
-    ! Global use made of id_last, id_last_max and id_cum
-    integer, intent(in) :: IDS(:)
-    
-    integer :: id_next
-    
-    id_next = id_last + size(ids)
-
-    ! Note that we have to use print statements here, not MLSMessage, as
-    ! we haven't yet decided how MLSMessage is going to work (Toolkit etc.)
-    if ( size(ids) < 1 ) then
-      print*,'Illegal num of args to acorn'
-    else if ( id_next > id_last_max ) then
-      print*,'Accumulated too many ids in acorn;' // &
-        &' increase id_last_max in l2/init_tables_module.f90'
-    else
-      id_cum(id_last+1:id_next) = ids
-    endif
-    id_last = id_next
-      
-  end subroutine acorn
-
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.229  2002/07/18 22:02:56  vsnyder
+! Exploit new CONTINUE argument of MAKE_TREE to get rid of ACORN
+!
 ! Revision 2.228  2002/07/17 06:02:36  livesey
 ! New HDF5 l2pc stuff
 !
