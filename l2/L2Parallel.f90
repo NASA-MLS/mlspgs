@@ -311,8 +311,10 @@ contains ! ================================ Procedures ======================
     integer :: COMPLETEDFILE            ! String index from slave
     logical :: CREATEFILE               ! Flag for direct writes
     integer :: DEADCHUNK                ! A chunk from a dead task
+    integer :: DEADFILE                 ! ID of file writen by dead task
     integer :: DEADMACHINE              ! A machine for a dead task
     integer :: DEADTID                  ! A task that's died
+    integer :: FILEINDEX                ! Index for a direct write
     integer :: HDFNAMEINDEX             ! String index
     integer :: INFO                     ! From PVM
     integer :: MACHINE                  ! Index
@@ -336,6 +338,7 @@ contains ! ================================ Procedures ======================
 
     integer, dimension(size(chunks)) :: DIRECTWRITESTATUS
     integer, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILES
+    integer, dimension(maxDirectWriteFiles) :: NODIRECTWRITECHUNKS
 
     logical, dimension(:), pointer :: MACHINEFREE ! Is this machine busy
     logical, dimension(:), pointer :: MACHINEOK ! Is this machine working?
@@ -371,6 +374,7 @@ contains ! ================================ Procedures ======================
     nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
       & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled )
     directWriteFiles = 0
+    noDirectWriteChunks = 0
     directWriteStatus = 0
     noDirectWriteFiles = 0
 
@@ -524,14 +528,22 @@ contains ! ================================ Procedures ======================
             if ( info /= 0 )  call PVMErrorMessage ( info, &
               & "unpacking direct write request" )
             ! Is this a new file?
-            createFile = .not. any ( directWriteFiles == requestedFile )
-            if ( createFile ) then
+            fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == requestedFile )
+            if ( fileIndex == 0 ) then
+              ! Clearly, if we don't know about this file it's new
+              createFile = .true.
               noDirectWriteFiles = noDirectWriteFiles + 1
               if ( noDirectWriteFiles > maxDirectWriteFiles ) &
                 & call MLSMessage ( MLSMSG_Error, ModuleName, &
                 & 'Too many direct write files, increase limit' )
-              directWriteFiles ( noDirectWriteFiles ) = requestedFile
+              fileIndex = noDirectWriteFiles
+              directWriteFiles ( fileIndex ) = requestedFile
+            else
+              ! On the other hand, if the first task that tried to write to it died
+              ! we'll know about it, but we might want to recreate it anyway.
+              createFile = noDirectWriteChunks ( fileIndex ) == 0
             end if
+
             if ( index ( switches, 'mas' ) /= 0 ) then
               call output ( 'Direct write request for file ' )
               call output ( requestedFile )
@@ -550,6 +562,7 @@ contains ! ================================ Procedures ======================
                   & advance='yes' )
               end if
               directWriteStatus(chunk) = -requestedFile
+              ! At this point, create file, true or otherwise, becomes irrelevant.
             else
               ! Otherwise, go ahead
               if ( index ( switches, 'mas' ) /= 0 ) then
@@ -567,6 +580,9 @@ contains ! ================================ Procedures ======================
           case ( sig_DirectWriteFinished ) ! - Finished with direct write -
             ! Record that the chunk has finished direct write
             completedFile = directWriteStatus(chunk)
+            fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == requestedFile )
+            noDirectWriteChunks ( fileIndex ) = &
+              & noDirectWriteChunks ( fileIndex ) + 1
             directWriteStatus(chunk) = 0
             if ( index ( switches, 'mas' ) /= 0 ) then
               call output ( 'Direct write finished on file ' )
@@ -580,13 +596,14 @@ contains ! ================================ Procedures ======================
             ! Is anyone else waiting for this file?
             pendingChunk = FindFirst ( directWriteStatus == -completedFile )
             if ( pendingChunk /= 0 ) then
-              ! We know createFile is false here.
               if ( index ( switches, 'mas' ) /= 0 ) then
                 call output ( 'Permission granted to ' // &
                   & trim(GetNiceTidString(chunkTids(pendingChunk))) // &
                   & ' chunk ' )
                 call output ( pendingChunk, advance='yes' )
               end if
+              ! We know createFile is false here because someone else just
+              ! wrote to the file sucessfully!
               call GrantDirectWrite ( chunkTids(pendingChunk), .false. )
               directWriteStatus ( pendingChunk ) = completedFile
             end if
@@ -677,6 +694,30 @@ contains ! ================================ Procedures ======================
             where ( machineNames(deadMachine) == machineNames )
               jobsMachineKilled = jobsMachineKilled + 1
             end where
+
+            ! If the chunk posesses any direct writes, free them up
+            ! and tell any other chunks wanting to write that they can do so.
+            if ( directWriteStatus(deadChunk) > 0 ) then
+              ! If this file has not had the first chunk written sucessfully (i.e.
+              ! it was deadChunk's task to do so).  Tell the next person who wants
+              ! to write it to create it again.
+              deadFile = directWriteStatus ( deadChunk )
+              fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == deadFile )
+              createFile = noDirectWriteChunks ( fileIndex ) == 0
+              pendingChunk = FindFirst ( directWriteStatus == -deadFile )
+              if ( pendingChunk /= 0 ) then
+                ! Was the dead chunk the first to write the file?
+                if ( index ( switches, 'mas' ) /= 0 ) then
+                  call output ( 'Permission granted to ' // &
+                    & trim(GetNiceTidString(chunkTids(pendingChunk))) // &
+                    & ' chunk ' )
+                  call output ( pendingChunk, advance='yes' )
+                end if
+                call GrantDirectWrite ( chunkTids(pendingChunk), createFile )
+                directWriteStatus ( pendingChunk ) = deadFile
+              end if
+            end if
+            directWriteStatus ( deadChunk ) = 0
             
             ! Does this chunk keep failing, if so, give up.
             if ( chunkFailures(deadChunk) > &
@@ -1062,6 +1103,10 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.37  2002/08/20 04:31:39  livesey
+! Obscure limitation fixed.  Used to hang if chunk died while doing direct
+! write.
+!
 ! Revision 2.36  2002/07/18 02:15:29  livesey
 ! Bug fix, uninitialised variable
 !
