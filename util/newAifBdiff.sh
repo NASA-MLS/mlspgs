@@ -43,6 +43,12 @@
 #(3) Unless you specify otherwise, using the -x n option,
 #    the script will attempt to pass the exit status of command back to
 #    whoever called it
+#  * * *  s p e c i a l   u s e   * * *
+#(4) If option -a is set and command is the shell script mark_as_uptodate.sh,
+#    then the following will be done
+#    (a) old_A will be touched
+#    (b) command will be summoned with its arguments
+#    (c) newAifBdiff.sh will exit w/o worrying about diffing or a record file
 #
 #Record file
 #file name: newAifBdiff.out
@@ -57,10 +63,33 @@
 #(2) Why such a lousy name?
 #(3) How about optionally using a user-supplied program instead of diff?
 #      that way we could get rid of relying on octal dump routine
+
 # Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
+
+# Purpose: A detailed explanation
+# (main usage)
+# make calls me
+# First, in order to forestall triggering
+# cascades of recompilation when modules are linked in an intricate
+# tree of "USE"-based interdependencies, object files may be rebuilt
+# without rebuilding .mod files. That's my job. I stand between make
+# and the compiler as the following pair of lines from Makefile.dep show
+#   mod_name.mod: source_name.f90
+#  	$(UTILDIR)/newAifBdiff.sh -a mod_name.mod \
+#        $(FC) -c $(FOPTS) $(INC_PATHS) source_name.f90
+
+# (special usage)
+# mark_as_uptodate.sh calls make which calls me
+# After the partial builds, mark_as_uptodate goes into action
+# It calls make with FC=mark_as_uptodate.sh
+# so when I intercept the build line above it no longer contains
+# a real compiler FC, but a pretend one: mark_as_uptodate.sh itself!
+# When I recognize this special case I and mark_as_uptodate.sh
+# cooperate to assure that both mod_name.mod and source_name.o
+# are brought up to date
 
 #---------------------------- get_unique_name
 #
@@ -213,6 +242,12 @@ keepUnchangedB="no"
 keepRecords="yes"
 me="$0"
 my_name=newAifBdiff.sh
+# Special use (4) is signaled by $the_command being $marker_name
+marker_name=mark_as_uptodate.sh
+# $the_marker is $marker_name with me's path prepended
+the_marker="`echo $0 | sed 's/newAifBdiff/mark_as_uptodate/'`"
+# $the_splitter is split_path with me's path prepended
+the_splitter="`echo $0 | sed 's/newAifBdiff/split_path/'`"
 record_file=newAifBdiff.out
 the_status="undefined"
 DEEBUG="no"
@@ -283,9 +318,29 @@ if [ "$DEEBUG" = "yes" ]; then
   echo "oldBExists: $oldBExists"
 fi
 
+# First check for special use (4)
+command_name=`$the_splitter -f $the_command`
+if [ "$command_name" = "$marker_name" ]; then
+#  echo "  special use (4)"
+#  echo "  old_A is $old_A"
+#  echo "  the_marker is $the_marker"
+#  echo "  the_args is $@"
+  touch $old_A
+  $the_marker "$@"
+  return_status=`expr $?`
+  if [ "$MUST_EXIT_STATUS" != "" ]; then    
+     exit "$MUST_EXIT_STATUS"
+  elif [ "$return_status" != "$NORMAL_STATUS" ]; then
+     exit 1
+  else
+     exit 0
+  fi
+fi
+
 if [ "$keepRecords" = "yes" -a ! -f "$record_file" ]; then    
   echo "#filename   status" > "$record_file"
 fi
+
 if [ "$oldBExists" = "no" ]; then
 # There's no old B => automatically new and old B differ, so need new A
     message="There is no old B => automatically need new A"
@@ -367,6 +422,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.7  2002/07/22 22:08:44  pwagner
+# Uses get_unique_name for temp file names
+#
 # Revision 1.6  2002/07/10 23:44:26  pwagner
 # Exits with status 1 when LF95 should but does not
 #
