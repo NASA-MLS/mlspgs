@@ -423,7 +423,7 @@ h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ \
       -i "-I $(HDF5)/../include" \
-      $(MLSBIN)/$@.c
+      $(MLSBIN)/$@.c \
 		;; \
 	esac 
 
@@ -661,6 +661,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.47  2001/08/16 00:11:34  pwagner
+# Added hl to list of new targets
+#
 # Revision 1.46  2001/08/15 20:59:27  pwagner
 # util programs now installed in INSTALLDIR
 #
