@@ -9,8 +9,8 @@ module INIT_TABLES_MODULE
 
 ! Declaring the definitions is handled by the tree walker.
 
-  use INTRINSIC ! Everything. FIRST_LIT, INIT_INTRINSIC,
-    ! L_FALSE, L_TRUE, LAST_INTRINSIC_LIT, T_BOOLEAN, T_FIRST,
+  use INTRINSIC ! Everything. FIRST_LIT, FIRST_MOLECULE, INIT_INTRINSIC,
+    ! L_<several>, LAST_INTRINSIC_LIT, LAST_MOLECULE, T_BOOLEAN, T_FIRST,
     ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
     ! here, but everything is included so that it can be gotten by
     ! USE INIT_TABLES_MODULE.
@@ -128,32 +128,25 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_BOTH 	        = l_apriori + 1
   integer, public, parameter :: L_CHOLESKY      = l_both + 1
   integer, public, parameter :: L_CLIMATOLOGY   = l_cholesky+1
-  integer, public, parameter :: L_CLO           = l_climatology + 1
-  integer, public, parameter :: L_CO            = l_clo + 1
-  integer, public, parameter :: L_COVARIANCE    = l_co + 1
+  integer, public, parameter :: L_COVARIANCE    = l_climatology + 1
   integer, public, parameter :: L_DAO 	        = l_covariance + 1
   integer, public, parameter :: L_DIRECT        = l_dao + 1
   integer, public, parameter :: L_EITHER        = l_direct + 1
   integer, public, parameter :: L_EXPLICIT      = l_either + 1
   integer, public, parameter :: L_FIXED         = l_explicit + 1
   integer, public, parameter :: L_FRACTIONAL    = l_fixed + 1
-  integer, public, parameter :: L_H2O           = l_fractional + 1
-  integer, public, parameter :: L_HCL           = l_h2o + 1
-  integer, public, parameter :: L_HEIGHT        = l_hcl + 1
-  integer, public, parameter :: L_HNO3          = l_height + 1
-  integer, public, parameter :: L_KRONECKER     = l_hno3 + 1
+  integer, public, parameter :: L_HEIGHT        = l_fractional + 1
+  integer, public, parameter :: L_KRONECKER     = l_height + 1
   integer, public, parameter :: L_L2AUX         = l_kronecker + 1
   integer, public, parameter :: L_L2GP 	        = l_l2aux + 1
   integer, public, parameter :: L_LINEAR        = l_l2gp + 1
   integer, public, parameter :: L_LOGARITHMIC   = l_linear + 1
-  integer, public, parameter :: L_N2O           = l_logarithmic + 1
-  integer, public, parameter :: L_NCEP 	        = l_n2o + 1
+  integer, public, parameter :: L_NCEP 	        = l_logarithmic + 1
   integer, public, parameter :: L_NEITHER       = l_ncep + 1
   integer, public, parameter :: L_NEWTONIAN     = l_neither + 1
   integer, public, parameter :: L_NONE 	        = l_newtonian + 1
   integer, public, parameter :: L_NORM          = l_none + 1
-  integer, public, parameter :: L_O3            = l_norm + 1
-  integer, public, parameter :: L_PLAIN         = l_o3 + 1
+  integer, public, parameter :: L_PLAIN         = l_norm + 1
   integer, public, parameter :: L_PRESSURE      = l_plain + 1
   integer, public, parameter :: L_R1A           = l_pressure + 1
   integer, public, parameter :: L_R1B           = l_r1a + 1
@@ -252,6 +245,8 @@ module INIT_TABLES_MODULE
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
+    integer :: I ! used only in an array constructor as a DO index
+
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_intrinsic ( data_type_indices, lit_indices )
 
@@ -281,8 +276,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_both) =                  add_ident ( 'both' )
     lit_indices(l_cholesky) =              add_ident ( 'cholesky' )
     lit_indices(l_climatology) =           add_ident ( 'climatology' )
-    lit_indices(l_clo) =                   add_ident ( 'clo' )
-    lit_indices(l_co) =                    add_ident ( 'co' )
     lit_indices(l_covariance) =            add_ident ( 'covariance' )
     lit_indices(l_dao) =                   add_ident ( 'DAO' )
     lit_indices(l_direct) =                add_ident ( 'direct' )
@@ -290,22 +283,17 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_explicit) =              add_ident ( 'explicit' )
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
     lit_indices(l_fractional) =            add_ident ( 'fractional' )
-    lit_indices(l_h2o) =                   add_ident ( 'h2o' )
-    lit_indices(l_hcl) =                   add_ident ( 'hcl' )
     lit_indices(l_height) =                add_ident ( 'height' )
-    lit_indices(l_hno3) =                  add_ident ( 'hno3' )
     lit_indices(l_kronecker) =             add_ident ( 'kronecker' )
     lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
     lit_indices(l_l2gp) =                  add_ident ( 'l2gp' )
     lit_indices(l_linear) =                add_ident ( 'linear' )
     lit_indices(l_logarithmic) =           add_ident ( 'logarithmic' )
-    lit_indices(l_n2o) =                   add_ident ( 'n2o' )
     lit_indices(l_ncep) =                  add_ident ( 'NCEP' )
     lit_indices(l_neither) =               add_ident ( 'neither' )
     lit_indices(l_newtonian) =             add_ident ( 'newtonian' )
     lit_indices(l_none) =                  add_ident ( 'none' )
     lit_indices(l_norm) =                  add_ident ( 'norm' )
-    lit_indices(l_o3) =                    add_ident ( 'o3' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
     lit_indices(l_r1a) =                   add_ident ( 'r1a' )
@@ -463,8 +451,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_mergeMethod, l+l_direct, l+l_weighted, n+n_dt_def, &
       begin, t+t_mergeSource, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_module, l+l_ghz, l+l_thz, n+n_dt_def, &
-      begin, t+t_molecule, l+l_clo, l+l_co, l+l_gph, l+l_h2o, &
-             l+l_hcl, l+l_hno3, l+l_n2o, l+l_o3, n+n_dt_def, &
+      begin, t+t_molecule, l+(/ (i,i=first_molecule, last_molecule) /), &
+             l+l_gph, n+n_dt_def, &
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, n+n_dt_def, &
       begin, t+t_quantityType, l+l_baseline, l+l_extinction, l+l_gph, &
              l+l_ptan, l+l_radiance, l+l_temperature, l+l_vmr, n+n_dt_def, &
@@ -743,6 +731,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.11  2001/02/01 01:23:36  vsnyder
+! Account for the Molecules module
+!
 ! Revision 2.10  2001/01/31 23:32:00  vsnyder
 ! Moved l_temperature l_temperature_prec l_ptan l_tangentheight l_sidebandratio
 ! l_scvel l_orbitinclination l_geodaltitude l_radiance l_scanresidual l_gph
