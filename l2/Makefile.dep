@@ -1,16 +1,16 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
-Construct.o  			MLSSignals_m.o       init_tables_module.o  \
-ConstructQuantityTemplates.o  	OutputAndClose.o     obtain_mlscf.o  \
-ConstructVectorTemplates.o  	RetrievalModule.o    obtainclimatology.o  \
-Fill.o  			ScanDivide.o  	     obtaindao.o  \
-ForwardModelInterface.o  	VGrid.o  	     obtainncep.o  \
-HGrid.o  			dnwt_module.o        open_init.o  \
-Join.o  			dnwt_type.o  	     tree_walker.o  \
-L2AUXData.o  			dumper.o  	     write_meta.o  \
-MLSL2.o  			ermsg_m.o  \
-MLSL2Common.o  			global_settings.o  \
+Construct.o  			MLSPCF2.o  	     global_settings.o  \
+ConstructQuantityTemplates.o  	MLSSignals_m.o       init_tables_module.o  \
+ConstructVectorTemplates.o  	OutputAndClose.o     obtain_mlscf.o  \
+Fill.o  			RetrievalModule.o    obtainclimatology.o  \
+ForwardModelInterface.o  	ScanDivide.o  	     obtaindao.o  \
+HGrid.o  			VGrid.o  	     obtainncep.o  \
+Join.o  			dnwt_module.o        open_init.o  \
+L2AUXData.o  			dnwt_type.o  	     tree_walker.o  \
+MLSL2.o  			dumper.o  	     write_meta.o  \
+MLSL2Common.o  			ermsg_m.o  \
  
 # using f90makedep.pl to calculate dependencies 
 Construct.o: Construct.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
@@ -58,9 +58,9 @@ init_tables_module.o: init_tables_module.f90 $(dir1)intrinsic.o \
 Join.o: Join.f90 $(dir1)L2GPData.o $(dir1)MLSCommon.o \
 	$(dir1)MLSMessageModule.o $(dir1)QuantityTemplates.o \
 	$(dir1)SDPToolkit.o $(dir1)VectorsModule.o $(dir1)intrinsic.o \
-	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)toggles_core.o \
-	$(dir1)trace_m.o $(dir1)tree.o $(dir1)tree_types.o L2AUXData.o \
-	init_tables_module.o
+	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)string_table.o \
+	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
+	$(dir1)tree_types.o L2AUXData.o init_tables_module.o
 L2AUXData.o: L2AUXData.f90 $(dir1)Allocate_Deallocate.o $(dir1)Hdf.o \
 	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSStrings.o \
 	addItemToDatabase.f9h
@@ -77,24 +77,24 @@ MLSSignals_m.o: MLSSignals_m.f90 $(dir1)Allocate_Deallocate.o \
 	addItemToDatabase.f9h
 obtainclimatology.o: obtainclimatology.f90 $(dir1)Allocate_Deallocate.o \
 	$(dir1)GriddedData.o $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
-	$(dir1)MLSPCF.o $(dir1)MLSStrings.o $(dir1)SDPToolkit.o \
-	$(dir1)dates_module.o
+	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o $(dir1)dates_module.o \
+	MLSPCF2.o
 obtaindao.o: obtaindao.f90 $(dir1)GriddedData.o $(dir1)Hdf.o \
-	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)SDPToolkit.o
-obtain_mlscf.o: obtain_mlscf.f90 $(dir1)MLSMessageModule.o $(dir1)MLSPCF.o \
-	$(dir1)SDPToolkit.o
+	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o MLSPCF2.o
+obtain_mlscf.o: obtain_mlscf.f90 $(dir1)MLSMessageModule.o \
+	$(dir1)SDPToolkit.o MLSPCF2.o
 obtainncep.o: obtainncep.f90 $(dir1)GriddedData.o $(dir1)Hdf.o \
-	$(dir1)MLSMessageModule.o $(dir1)MLSPCF.o $(dir1)SDPToolkit.o
+	$(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o MLSPCF2.o
 open_init.o: open_init.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o $(dir1)L2GPData.o \
-	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSPCF.o \
+	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
 	$(dir1)MLSSignalNomenclature.o $(dir1)SDPToolkit.o \
 	$(dir1)VectorsModule.o $(dir1)string_table.o $(dir1)tree.o \
-	$(dir1)tree_types.o L2AUXData.o init_tables_module.o
+	$(dir1)tree_types.o L2AUXData.o MLSPCF2.o init_tables_module.o
 OutputAndClose.o: OutputAndClose.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o \
 	$(dir1)L2GPData.o $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
-	$(dir1)MLSPCF.o $(dir1)SDPToolkit.o $(dir1)lexer_core.o \
-	$(dir1)output_m.o $(dir1)string_table.o $(dir1)tree.o \
-	$(dir1)tree_types.o L2AUXData.o init_tables_module.o
+	$(dir1)SDPToolkit.o $(dir1)lexer_core.o $(dir1)output_m.o \
+	$(dir1)string_table.o $(dir1)tree.o $(dir1)tree_types.o L2AUXData.o \
+	MLSPCF2.o init_tables_module.o
 RetrievalModule.o: RetrievalModule.f90 $(dir1)MLSCommon.o \
 	$(dir1)MatrixModule_1.o $(dir1)VectorsModule.o \
 	$(dir1)declaration_table.o $(dir1)expr_m.o $(dir1)lexer_core.o \
@@ -103,8 +103,9 @@ RetrievalModule.o: RetrievalModule.f90 $(dir1)MLSCommon.o \
 	ForwardModelInterface.o dnwt_module.o init_tables_module.o
 ScanDivide.o: ScanDivide.f90 $(dir1)L1BData.o $(dir1)MLSCommon.o \
 	$(dir1)MLSMessageModule.o $(dir1)MLSNumerics.o $(dir1)MLSStrings.o \
-	$(dir1)SDPToolkit.o $(dir1)expr_m.o $(dir1)string_table.o \
-	$(dir1)tree.o init_tables_module.o
+	$(dir1)SDPToolkit.o $(dir1)expr_m.o $(dir1)lexer_core.o \
+	$(dir1)output_m.o $(dir1)string_table.o $(dir1)tree.o \
+	init_tables_module.o
 tree_walker.o: tree_walker.f90 $(dir1)GriddedData.o $(dir1)L2GPData.o \
 	$(dir1)MLSCommon.o $(dir1)MatrixModule_1.o $(dir1)QuantityTemplates.o \
 	$(dir1)VectorsModule.o $(dir1)toggles_core.o $(dir1)trace_m.o \
@@ -118,7 +119,7 @@ VGrid.o: VGrid.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
 	$(dir1)tree.o init_tables_module.o addItemToDatabase.f9h
 write_meta.o: write_meta.f90 $(dir1)HDF-EOS.o $(dir1)Hdf.o $(dir1)L2GPData.o \
 	$(dir1)MLSCF.o $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o \
-	$(dir1)MLSPCF.o $(dir1)MLSStrings.o $(dir1)SDPToolkit.o L2AUXData.o
+	$(dir1)MLSStrings.o $(dir1)SDPToolkit.o L2AUXData.o MLSPCF2.o
  
 #End of Makefile.dep
  
