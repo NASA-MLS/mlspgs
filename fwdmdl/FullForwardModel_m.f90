@@ -1920,7 +1920,7 @@ contains
 
           ! Needed by both rad_tran and rad_tran_pol
           call two_d_t_script ( t_path_c(1:npc), tt_path_c(1:npc),  &  
-            & w0_path_c, spaceRadiance%values(1,1), frq,            &
+            & w0_path_c(1:npc), spaceRadiance%values(1,1), frq,            &
             & t_script(1:npc) )
 
           if ( .not. FwdModelConf%polarized ) then
@@ -3074,6 +3074,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.201  2004/03/30 02:00:36  vsnyder
+! Remove USE for unreferenced symbol.  Don't try to fill tpath_m and
+! tpath_p if they're not allocated.
+!
 ! Revision 2.200  2004/03/27 03:35:27  vsnyder
 ! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
 ! line centers and line widths around.  Write slabs_lines and slabswint_lines
