@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -92,7 +92,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
     use MoreTree, only: Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
-    use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, dump, &
       & QuantityTemplate_T
     use String_Table, only: get_string
     use Time_M, only: Time_Now
@@ -250,6 +250,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.44  2004/05/03 16:37:11  pwagner
+! Get dump from QuantityTemplates module
+!
 ! Revision 2.43  2004/05/01 04:05:26  vsnyder
 ! Add Dump command
 !
