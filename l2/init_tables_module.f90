@@ -122,7 +122,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_QUANTITIES          = f_prefixSignal + 1
   integer, parameter :: F_QUANTITY            = f_quantities + 1
   integer, parameter :: F_RANGE               = f_quantity + 1
-  integer, parameter :: F_REFGPHQUANTITY      = f_range + 1
+  integer, parameter :: F_RATIOQUANTITY       = f_range + 1
+  integer, parameter :: F_REFGPHQUANTITY      = f_ratioQuantity + 1
   integer, parameter :: F_ROWCHANNELS         = f_refGPHQuantity + 1
   integer, parameter :: F_ROWINSTANCES        = f_rowChannels + 1 
   integer, parameter :: F_ROWQUANTITY         = f_rowInstances + 1
@@ -183,7 +184,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_GRIDDED       = l_full + 1
   integer, parameter :: L_HEIGHT        = l_gridded + 1
   integer, parameter :: L_HYDROSTATIC   = l_height + 1
-  integer, parameter :: L_KRONECKER     = l_hydrostatic + 1
+  integer, parameter :: L_ISOTOPE       = l_hydrostatic + 1
+  integer, parameter :: L_KRONECKER     = l_isotope + 1
   integer, parameter :: L_L1B           = l_kronecker + 1
   integer, parameter :: L_L2AUX         = l_l1b + 1
   integer, parameter :: L_L2DGG 	        = l_l2aux + 1
@@ -355,6 +357,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_gridded) =               add_ident ( 'gridded' )
     lit_indices(l_height) =                add_ident ( 'height' )
     lit_indices(l_hydrostatic) =           add_ident ( 'hydrostatic' )
+    lit_indices(l_isotope) =               add_ident ( 'isotope' )
     lit_indices(l_kronecker) =             add_ident ( 'kronecker' )
     lit_indices(l_l1b) =                   add_ident ( 'l1b' )
     lit_indices(l_l2aux) =                 add_ident ( 'l2aux' )
@@ -450,6 +453,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_quantities) =          add_ident ( 'quantities' )
     field_indices(f_quantity) =            add_ident ( 'quantity' )
     field_indices(f_range) =               add_ident ( 'range' )
+    field_indices(f_ratioQuantity) =       add_ident ( 'ratioQuantity' )
     field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_rowChannels) =         add_ident ( 'rowChannels' )
     field_indices(f_rowInstances) =        add_ident ( 'rowInstances' )
@@ -584,7 +588,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_gridded, l+l_explicit, l+l_hydrostatic, &
-             l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
+             l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
              l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
@@ -597,7 +601,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_outputType, l+l_l2aux, l+l_l2gp, l+l_l2dgg, l+l_l2pc, n+n_dt_def /) )
     call make_tree ( (/ &
       begin, t+t_quantityType, l+l_baseline, l+l_earthRefl, l+l_elevOffset, &
-             l+l_extinction, l+l_gph, l+l_heightOffset, l+l_losVel, &
+             l+l_extinction, l+l_gph, l+l_heightOffset, l+l_isotopeRatio, l+l_losVel, &
              l+l_orbitIncline, l+l_ptan, l+l_radiance, l+l_refGPH, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
              l+l_sidebandRatio, l+l_spaceRadiance, l+l_temperature,&
@@ -746,6 +750,8 @@ contains ! =====     Public procedures     =============================
 !            begin, f+f_matrix, s+s_matrix, n+n_field_spec, & !??? Not in fill yet ???
              begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
              begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_ratioQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -926,6 +932,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.100  2001/05/10 23:26:05  livesey
+! Added isotope scaling stuff to fill, and isotope ratio vector quantities.
+!
 ! Revision 2.99  2001/05/10 16:31:14  livesey
 ! Added the prefixSignal option to joins
 !
