@@ -227,12 +227,15 @@ contains
   subroutine SayTime ( What )
     character(len=*), intent(in) :: What
     call cpu_time ( t2 )
-    call output ( "Timing for " // what // " =" )
+    call output ( "Timing for " // what // " = " )
     call output ( dble(t2 - t1), advance = 'yes' )
   end subroutine SayTime
 end program MLSL2
 
 ! $Log$
+! Revision 2.23  2001/04/21 01:44:05  vsnyder
+! Make the timing message prettier
+!
 ! Revision 2.22  2001/04/21 01:42:21  vsnyder
 ! Add -T option for timing
 !
