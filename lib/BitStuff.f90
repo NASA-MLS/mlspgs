@@ -10,9 +10,11 @@ module BitStuff
   implicit NONE
   private
   public :: CountBits, CountBits_0, CountBits_1, CountBits_2
+  public :: CountCharBits_0, CountCharBits_1, CountCharBits_2
 
   interface CountBits
     module procedure countBits_0, countBits_1, countBits_2
+    module procedure countCharBits_0, countCharBits_1, countCharBits_2
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -76,9 +78,42 @@ contains
       countBits_2 = countBits_2 + countBits(array(:,i))
     end do
   end function CountBits_2
+
+  ! --------------------------------------------  CountCharBits_0  -----
+  integer function CountCharBits_0 ( Char )
+    character(len=1), intent(in) :: Char
+    ! Count the number of nonzero bits in all of the elements of Word.
+    countCharBits_0 = countBits(ichar(char))
+  end function CountCharBits_0
+
+  ! --------------------------------------------  CountCharBits_1  -----
+  integer function CountCharBits_1 ( Array )
+    character(len=1), intent(in) :: Array(:)
+    ! Count the number of nonzero bits in all of the elements of Word.
+    integer :: I
+    countCharBits_1 = countBits(array(1))
+    do i = 2, size(array)
+      countCharBits_1 = countCharBits_1 + countBits(array(i))
+    end do
+  end function CountCharBits_1
+
+  ! --------------------------------------------  CountCharBits_2  -----
+  integer function CountCharBits_2 ( Array )
+    character, intent(in) :: Array(:,:)
+    ! Count the number of nonzero bits in all of the elements of Word.
+    integer :: I
+    countCharBits_2 = countBits(array(:,1))
+    do i = 2, size(array,2)
+      countCharBits_2 = countCharBits_2 + countBits(array(:,i))
+    end do
+  end function CountCharBits_2
+
 end module BitStuff
 
 ! $Log$
+! Revision 2.2  2002/02/05 02:39:59  vsnyder
+! Change mask from 1-bit per to 8-bits per (using character)
+!
 ! Revision 2.1  2001/10/03 17:36:15  vsnyder
 ! Initial commit
 !
