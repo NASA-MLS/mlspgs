@@ -100,6 +100,7 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_DobsonUnits, 1.0d0, phyq_DobsonUnits )
 
     call declare_unit ( l_pctrhi, 1.0d0, phyq_pctrhi )
+    call declare_unit ( l_gauss, 1.0d0, phyq_gauss )
 
   contains
     subroutine DECLARE_UNIT ( NAME, VALUE, PHYS_UNIT )
@@ -121,6 +122,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.18  2003/01/07 23:43:44  livesey
+! Added Gauss
+!
 ! Revision 2.17  2002/12/02 23:00:19  vsnyder
 ! Add Sqrt Pi
 !
