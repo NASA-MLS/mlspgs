@@ -7,10 +7,12 @@ module Join                     ! Join together chunk based data.
 
   ! This module performs the 'join' task in the MLS level 2 software.
 
-  use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
+  use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, &
+    & F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
     & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
-  use INIT_TABLES_MODULE, only: L_PRESSURE, &
+  use INIT_TABLES_MODULE, only: L_BOUNDARYPRESSURE, L_COLUMNABUNDANCE, &
+    & L_PRESSURE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
   use Intrinsic, ONLY: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
     & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY
@@ -20,6 +22,7 @@ module Join                     ! Join together chunk based data.
     & L2GPData_T, SetupNewL2GPRecord
   use L2ParInfo, only: PARALLEL, SLAVEJOIN
   use LEXER_CORE, only: PRINT_SOURCE
+  use ManipulateVectorQuantities, only: DOHGRIDSMATCH
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
     & MLSMSG_Allocate, MLSMSG_Deallocate
@@ -96,6 +99,8 @@ contains ! =====     Public Procedures     =============================
     logical :: PREFIXSIGNAL             ! Prefix (i.e. make) the sd name the signal
     integer :: PRECVECTORINDEX          ! Index for precision vector
     integer :: PRECQTYINDEX             ! Index for precision qty (in database not vector)
+    integer :: BPVECTORINDEX            ! Index for bnd. pr. vector
+    integer :: BPQTYINDEX               ! Index for bnd. pr. qty (in database not vector)
     logical :: TIMING
 
     real :: T1, T2     ! for timing
@@ -104,6 +109,7 @@ contains ! =====     Public Procedures     =============================
     logical :: GOT_FIELD(field_first:field_last)
     type (VectorValue_T), pointer :: Quantity
     type (VectorValue_T), pointer :: PrecisionQuantity
+    type (VectorValue_T), pointer :: BPQuantity
 
     ! Executable code
     timing = .false.
@@ -169,6 +175,10 @@ contains ! =====     Public Procedures     =============================
           source = subtree(2,gson) ! required to be an n_dot vertex
           precVectorIndex = decoration(decoration(subtree(1,source)))
           precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
+        case ( f_boundaryPressure )
+          source = subtree(2,gson) ! required to be an n_dot vertex
+          BPVectorIndex = decoration(decoration(subtree(1,source)))
+          BPQtyIndex = decoration(decoration(decoration(subtree(2,source))))
         case ( f_prefixSignal )
           prefixSignal= value == l_true
         case ( f_compareoverlaps )
@@ -195,10 +205,36 @@ contains ! =====     Public Procedures     =============================
           precisionQuantity => &
             & GetVectorQtyByTemplateIndex(vectors(precVectorIndex),precQtyIndex)
           if ( quantity%template%id /= precisionQuantity%template%id ) &
-            & call MLSMessage(MLSMSG_Error,ModuleName, &
+            & call announce_error(key, NO_ERROR_CODE, &
             & 'Quantity and precision quantity do not match')
         else
           precisionQuantity => NULL()
+        endif
+
+        if ( got_field ( f_boundaryPressure ) ) then
+          BPQuantity => &
+            & GetVectorQtyByTemplateIndex(vectors(BPVectorIndex),BPQtyIndex)
+          if ( BPQuantity%template%quantityType /= l_boundaryPressure ) then
+            call announce_error(key, NO_ERROR_CODE, &
+            & 'boundaryPressure field type appears not to be bnd. pr.')
+          elseif ( Quantity%template%quantityType /= l_columnAbundance ) then
+            call announce_error(key, NO_ERROR_CODE, &
+            & 'swath field type appears not to be colm. abund.')
+          elseif ( .not. DoHgridsMatch( quantity, BPQuantity ) ) then
+            call announce_error(key, NO_ERROR_CODE, &
+            & 'boundaryPressure on different HGrid')
+!            print *, 'quantity: nInstances ', quantity%template%noInstances
+!            print *, 'BP: nInstances ', BPQuantity%template%noInstances
+!            print *, 'quantity: noSurfs ', quantity%template%noSurfs
+!            print *, 'BP: noSurfs ', BPQuantity%template%noSurfs
+!            print *, 'quantity: phi ', quantity%template%phi
+!            print *, 'BP: phi ', BPQuantity%template%phi
+          elseif ( get_spec_id(key) /= s_l2gp ) then
+            call announce_error(key, NO_ERROR_CODE, &
+            & 'boundaryPressure field appropriate only for l2gp')
+          endif
+        else
+          BPQuantity => NULL()
         endif
 
         hdfName = ''
@@ -211,7 +247,7 @@ contains ! =====     Public Procedures     =============================
         ! For slave tasks in a PVM system, simply ship this vector off
         ! Otherwise, do a join.
         if ( parallel%slave ) then
-          call SlaveJoin ( quantity, precisionQuantity, &
+          call SlaveJoin ( quantity, precisionQuantity, BPQuantity, &
             & hdfName, key )
         else
           ! Now, depending on the properties of the source we deal with the
@@ -223,7 +259,7 @@ contains ! =====     Public Procedures     =============================
             if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
               & ModuleName, 'This quantity should be joined as an l2gp')
             call JoinL2GPQuantities ( key, hdfNameIndex, quantity, &
-              & precisionQuantity, l2gpDatabase, chunkNo )
+              & precisionQuantity, BPQuantity, l2gpDatabase, chunkNo )
           else
             ! All others go in l2aux files.
             if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
@@ -294,7 +330,7 @@ contains ! =====     Public Procedures     =============================
   ! defaults to the non overlapped region.
 
   subroutine JoinL2GPQuantities ( key, name, quantity, &
-    & precision, l2gpDatabase, chunkNo, &
+    & precision, BPressure, l2gpDatabase, chunkNo, &
     & firstInstance, lastInstance )
 
     ! Dummy arguments
@@ -302,6 +338,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: NAME         ! For the swath
     type (VectorValue_T), intent(in) :: QUANTITY ! Vector quantity
     type (VectorValue_T), pointer :: PRECISION ! Optional vector quantity
+    type (VectorValue_T), pointer :: BPRESSURE ! Optional vector quantity
     type (L2GPData_T), dimension(:), pointer :: L2GPDATABASE
     integer, intent(in) :: CHUNKNO
     integer, intent(in), optional :: FIRSTINSTANCE, LASTINSTANCE
@@ -352,7 +389,9 @@ contains ! =====     Public Procedures     =============================
     if ( l2gpDataIsNew ) then
       ! Now create an empty L2GP record with this dimension
 
-      if (any(quantity%template%verticalCoordinate == (/l_Pressure, l_Zeta /) )) then
+      if ( associated(BPressure) ) then
+        noSurfsInL2GP = 1
+      elseif (any(quantity%template%verticalCoordinate == (/l_Pressure, l_Zeta /) )) then
         noSurfsInL2GP = quantity%template%noSurfs
       else
         noSurfsInL2GP = 0
@@ -366,10 +405,14 @@ contains ! =====     Public Procedures     =============================
 
       call SetupNewL2GPRecord ( newL2GP, noFreqsInL2GP, noSurfsInL2GP )
       ! Setup the standard stuff, only pressure as it turns out.
-      if ( quantity%template%verticalCoordinate == l_Pressure ) &
-        & newL2GP%pressures = quantity%template%surfs(:,1)
-      if ( quantity%template%verticalCoordinate == l_Zeta ) &
-        & newL2GP%pressures = 10.0**(-quantity%template%surfs(:,1))
+      if ( associated(BPressure) ) then
+        newL2GP%pressures = BPressure%values(1, 1)
+      else
+        if ( quantity%template%verticalCoordinate == l_Pressure ) &
+          & newL2GP%pressures = quantity%template%surfs(:,1)
+        if ( quantity%template%verticalCoordinate == l_Zeta ) &
+          & newL2GP%pressures = 10.0**(-quantity%template%surfs(:,1))
+      endif
 
       ! ??? In later versions we'll need to think about frequency stuff (NJL)
 
@@ -658,6 +701,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.48  2001/09/08 00:21:44  pwagner
+! Revised to work for new column Abundance in lone swaths
+!
 ! Revision 2.47  2001/09/05 20:34:56  pwagner
 ! Reverted to pre-columnAbundance state
 !
