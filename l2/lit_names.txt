@@ -104,6 +104,7 @@ refract
 regular
 
 scan
+scan2d
 # spaceRadiance -- in lib/lit_names
 spd
 special
@@ -114,6 +115,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.15  2002/06/24 18:27:23  livesey
+# Added 2D scan model
+#
 # Revision 2.14  2002/06/04 22:41:22  livesey
 # Added phiTan refract fill stuff
 #
