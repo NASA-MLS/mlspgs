@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 ! $Id$
 
     real(rk) :: C, C1, S
@@ -21,4 +24,8 @@
 
     crrexp = ( conjg(z) * ( cmplx(c,s) * rexp(x) + cmplx(-c1,s) ) ) / zabs
 
-! 
+! $Log$
+! Revision 2.2  2003/02/04 01:31:24  vsnyder
+! Add copyright notice
+!
+
