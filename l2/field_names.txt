@@ -14,6 +14,7 @@
 
 # $Id$
 
+allLinesForRadiometer
 antennaPatterns
 apriori
 aprioriPrecision
@@ -260,6 +261,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.60  2002/11/15 01:33:47  livesey
+# Added allLinesForRadiometer
+#
 # Revision 2.59  2002/10/25 23:55:56  livesey
 # Added offsetAmount
 #
