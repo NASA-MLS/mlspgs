@@ -1413,7 +1413,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  GetVectorQuantityByType  -----
   function GetVectorQuantityByType ( vector, otherVector, quantityType, &
-    & molecule, instrumentModule, radiometer, signal, &
+    & molecule, instrumentModule, radiometer, reflector, signal, &
     & sideband, foundInFirst, noError )
 
     ! Given a quantity type index (l_...), this function returns the first
@@ -1430,6 +1430,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in),  optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in),  optional :: INSTRUMENTMODULE ! Instrument module index
     integer, intent(in),  optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in),  optional :: REFLECTOR   ! Reflector literal
     integer, intent(in),  optional :: SIGNAL       ! Signal index
     integer, intent(in),  optional :: SIDEBAND ! -1, 0, +1
     logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
@@ -1448,7 +1449,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Look in the first vector
     index = GetVectorQuantityIndexByType ( vector, &
-      & quantityType, molecule, instrumentModule, radiometer, signal, &
+      & quantityType, molecule, instrumentModule, radiometer, reflector, signal, &
       &   sideband, noError = present(otherVector) .or. myNoError)
     if ( index /= 0 ) then
       if ( present (foundInFirst) ) foundInFirst = .true.
@@ -1458,7 +1459,7 @@ contains ! =====     Public Procedures     =============================
       ! vector
       if ( present (otherVector) ) then
         index = GetVectorQuantityIndexByType ( otherVector, &
-          &  quantityType, molecule, instrumentModule, radiometer, signal, &
+          &  quantityType, molecule, instrumentModule, radiometer, reflector, signal, &
           &  sideband, noError=myNoError )
         if ( present (foundInFirst) ) foundInFirst = .false.
         if ( index /= 0 ) &
@@ -1526,7 +1527,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------  GetVectorQuantityIndexByType  -----
   integer function GetVectorQuantityIndexByType ( vector, quantityType, &
-    & molecule, instrumentModule, radiometer, signal, sideband, noError )
+    & molecule, instrumentModule, radiometer, reflector, signal, sideband, noError )
 
   ! Given a quantity type index (l_...), this function returns the index
   ! of the first quantity within the vector that has that type.  If
@@ -1540,6 +1541,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: MOLECULE     ! Molecule index (l_...)
     integer, intent(in), optional :: INSTRUMENTMODULE ! Module index
     integer, intent(in), optional :: RADIOMETER   ! Radiometer index
+    integer, intent(in), optional :: REFLECTOR   ! Reflector literal
     integer, intent(in), optional :: SIGNAL       ! Signal Index
     integer, intent(in), optional :: SIDEBAND ! -1, 0, +1
     logical, intent(in), optional :: NOERROR ! Don't give error if not found
@@ -1573,6 +1575,9 @@ contains ! =====     Public Procedures     =============================
             if ( radiometer /= qt%radiometer ) cycle
           end if
         end if
+        if ( present(reflector) ) then
+          if ( qt%reflector /= reflector ) cycle
+        end if
         if ( present(signal) ) then
           if ( qt%signal /= signal ) cycle
         end if
@@ -1605,6 +1610,11 @@ contains ! =====     Public Procedures     =============================
       if ( present ( radiometer ) ) then
         msg = trim(msg) // ' for radiometer'
         call get_string ( lit_indices(radiometer), msg(len_trim(msg)+2:))
+      end if
+
+      if ( present ( reflector ) ) then
+        msg = trim(msg) // ' for reflector'
+        call get_string ( lit_indices(reflector), msg(len_trim(msg)+2:))
       end if
 
       if ( present ( instrumentModule ) ) then
@@ -2156,6 +2166,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.98  2003/05/13 04:47:18  livesey
+! Added noValues argument to CreateVector
+!
 ! Revision 2.97  2003/05/12 02:05:27  livesey
 ! Added InflateVectorTemplateDatabase and InflateVectorDatabase
 !
