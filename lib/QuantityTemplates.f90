@@ -205,28 +205,45 @@ contains ! =====     Public Procedures     =============================
       call output(qty%minorFrame, advance='no')
       call output('   major frame? ', advance='no')
       call output(qty%majorFrame, advance='no')
-      call output('   template  name', advance='no')
-      call get_string(qty%name, quantityNameStr, strip=.true.)
-      call output(trim(quantityNameStr), advance='yes')
+      call output('   template  name ', advance='no')
+      if ( qty%name < 1 ) then
+        call output('   (unnamed) ', advance='yes')
+      else
+        call get_string(qty%name, quantityNameStr, strip=.true., noerror=.true.)
+        call output(trim(quantityNameStr), advance='yes')
+      endif
     endif
+    if ( DEEBUG ) call output('Deallocating qty%surfs', advance='no')
     call deallocate_test ( qty%surfs, "qty%surfs", ModuleName )
+    if ( DEEBUG ) call output('  qty%phi', advance='no')
     call deallocate_test ( qty%phi, "qty%phi", ModuleName )
+    if ( DEEBUG ) call output('  qty%geodLat', advance='no')
     call deallocate_test ( qty%geodLat, "qty%geodLat", ModuleName )
+    if ( DEEBUG ) call output('  qty%lon', advance='no')
     call deallocate_test ( qty%lon, "qty%lon", ModuleName )
+    if ( DEEBUG ) call output('  qty%time', advance='no')
     call deallocate_test ( qty%time, "qty%time", ModuleName )
+    if ( DEEBUG ) call output('  qty%solartime', advance='no')
     call deallocate_test ( qty%solarTime, "qty%solarTime", ModuleName )
+    if ( DEEBUG ) call output('  qty%solarzenith', advance='no')
     call deallocate_test ( qty%solarZenith, "qty%solarZenith", ModuleName )
+    if ( DEEBUG ) call output('  qty%losAngle', advance='no')
     call deallocate_test ( qty%losAngle, "qty%losAngle", ModuleName )
+    if ( DEEBUG ) call output('  qty%frequencies', advance='yes')
     call deallocate_test ( qty%frequencies, "qty%frequencies", ModuleName )
 
 !    if (qty%minorFrame .or. qty%majorFrame) then
     if ( qty%minorFrame ) then
+      if ( DEEBUG ) call output('Deallocating qty%MAFIndex', advance='no')
       call deallocate_test ( qty%MAFIndex, "qty%MAFIndex", ModuleName )
+      if ( DEEBUG ) call output('  qty%MAFCounter', advance='yes')
       call deallocate_test ( qty%MAFCounter, "qty%MAFCounter", ModuleName )
     end if
     
     if (.NOT. qty%regular) then
+      if ( DEEBUG ) call output('Deallocating qty%surfIndex', advance='no')
       call deallocate_test ( qty%surfIndex, "qty%surfIndex", ModuleName )
+      if ( DEEBUG ) call output('  qty%chanIndex', advance='yes')
       call deallocate_test ( qty%chanIndex, "qty%chanIndex", ModuleName )
     end if
 
@@ -429,6 +446,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.21  2001/10/03 17:42:27  pwagner
+! reset DEEBUG to FALSE
+!
 ! Revision 2.20  2001/10/02 23:12:50  pwagner
 ! More chi^2 fixes
 !
