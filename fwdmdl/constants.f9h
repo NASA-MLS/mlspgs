@@ -1,9 +1,12 @@
 	! THESE WILL BE PUT INTO BILL'S L2CF LATER
 
-	INTEGER :: N, NU, NUA, NAB, NR, IPSD
-        parameter (N=2, NU=16, NUA=8, NAB=50, NR=40, IPSD=1000)
+	INTEGER :: NC, NU, NUA, NAB, NR, IPSD
+!        parameter (N=2, NU=16, NUA=8, NAB=50, NR=40, IPSD=1000)
 
 ! $Log$
+! Revision 2.2  2003/02/06 00:26:32  jonathan
+! minor
+!
 ! Revision 2.1  2003/01/31 20:16:22  jonathan
 ! some temperatory cloud parameters
 !
