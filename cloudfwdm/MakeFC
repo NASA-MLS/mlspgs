@@ -204,7 +204,7 @@ $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
 
 .PHONY: clean configure depends depends--mod ghostbuster mostlyclean \
-  tar targ tarz
+  tar targ tarz update
 
 tar:
 
@@ -239,6 +239,10 @@ depends--mod:
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
           $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+update:
+	@cd .. ; \
+   $(MAKE) update SUBDIRS="blas lib fwdmdl cloudfwdm" tests_sub_dirs=
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -276,6 +280,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.22  2003/02/24 21:16:01  pwagner
+# Fixed bug where changes to .f9h were not triggering recompiles
+#
 # Revision 1.21  2002/07/18 18:00:01  pwagner
 # NOHUNTING default when .mod-mediated dependency
 #

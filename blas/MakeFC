@@ -145,7 +145,7 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	esac 
 
 .PHONY: configure depends clean tar tarz targ mostlyclean \
-	all libmlspack.a ghostbuster
+	all libmlspack.a ghostbuster update
 
 tar:
 
@@ -178,6 +178,25 @@ depends:
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
       $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+internalsaymake:
+	@echo "Copying or linking MakeFC to Makefile in `pwd`"; \
+	if [ -f Makefile ] ; then \
+		rm -f Makefile.old ;\
+		mv Makefile Makefile.old ;\
+	fi ; \
+	cp MakeFC Makefile
+
+internalupdate:
+	@echo "Updating the Makefile in `pwd`/$(MLSCONFG)"; \
+	  PLATFORMS=$(PLATFORMS) ; \
+     m_option="" ; \
+	  $(MLSBIN)/updatemf.sh -pc $$PLATFORMS \
+     -cf "$(CONFDIR)/$(MLSCFILE)" $$m_option; \
+
+update:
+	@cd .. ; \
+   $(MAKE) update SUBDIRS=blas tests_sub_dirs=
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -215,6 +234,9 @@ targ:
 	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
 
 # $Log$
+# Revision 1.6  2002/09/24 18:12:00  pwagner
+# Uses unique names for temp files
+#
 # Revision 1.5  2002/09/06 22:57:54  pwagner
 # sdot.f and cdot.f no longer excluded from libmlspack
 #

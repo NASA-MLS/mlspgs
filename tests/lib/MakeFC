@@ -98,7 +98,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ test ghostbuster
+.PHONY: configure depends clean tar mostlyclean tarz targ test ghostbuster update
 
 tar:
 
@@ -122,6 +122,10 @@ depends:
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+update:
+	@cd ../.. ; \
+   $(MAKE) update SUBDIRS= tests_sub_dirs=tests/lib
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -159,6 +163,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.8  2002/09/25 23:25:43  pwagner
+# Uses unique names for temp files
+#
 # Revision 1.7  2002/07/24 20:32:48  pwagner
 # Changes to support hdf5/hdfeos5
 #

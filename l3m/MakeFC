@@ -231,7 +231,7 @@ $(INSTALLDIR)/libutctotai.a:
 
 .PHONY: clean configure depends depends--mod ghostbuster install \
   internalsaymake internalupdate mostlyclean \
-  tar targ tarz
+  tar targ tarz update
 
 tar:
 
@@ -267,6 +267,10 @@ ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(OMIT_PREFXD) \
        $(PLATFORMS)/$(MLSCONFG) ./
 #       $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+update:
+	@cd .. ; \
+   $(MAKE) update SUBDIRS="blas lib l3 l3m" tests_sub_dirs=
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -336,6 +340,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.21  2003/03/06 19:45:58  pwagner
+# Added libutctotai as explicit prerequisite
+#
 # Revision 1.20  2003/02/24 21:16:01  pwagner
 # Fixed bug where changes to .f9h were not triggering recompiles
 #

@@ -173,7 +173,7 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
    MARK_ALL_AS_UPTODATE=no
 
 .PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a \
- l2_test ghostbuster
+ l2_test ghostbuster update
 
 tar:
 
@@ -208,6 +208,10 @@ depends--mod:
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
            $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+update:
+	@cd .. ; \
+   $(MAKE) update SUBDIRS="blas lib fwdmdl" tests_sub_dirs=
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -245,6 +249,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.16  2003/02/24 21:16:01  pwagner
+# Fixed bug where changes to .f9h were not triggering recompiles
+#
 # Revision 2.15  2002/10/01 22:05:25  pwagner
 # errmsg.f90 part of OMIT_SRCS
 #

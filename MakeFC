@@ -914,7 +914,10 @@ ghostbuster:
 	done
 
 internaldepends:
-	@echo "Making dependencies for $(SUBDIRS)"; \
+	@if [ "$(SUBDIRS)" = "" ] ; then \
+     exit 0 ; \
+   fi ; \
+   echo "Making dependencies for $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir $(SUBDIRS_UPDATE); \
 	done; \
@@ -928,7 +931,10 @@ internaldepends:
         mv $$temp_name_2 Makefile.dep
 
 internalsaymake:
-	@echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
+	@if [ "$(SUBDIRS)" = "" ] ; then \
+     exit 0 ; \
+   fi ; \
+   echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
 	if [ -f Makefile ] ; then \
 		rm -f Makefile.old ;\
 		mv Makefile Makefile.old ;\
@@ -945,7 +951,10 @@ internalsaymake:
 	done
 
 internalupdate: internalsaymake
-	@echo "Updating the Makefile in $(SUBDIRS)"; \
+	@if [ "$(SUBDIRS)" = "" ] ; then \
+     exit 0 ; \
+   fi ; \
+   echo "Updating the Makefile in $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	 case "$$dir" in \
 	 "he5lib") \
@@ -976,7 +985,10 @@ internalreset_copy:
 	@echo "MakeFC copy number reset from $(COPY_NUMBER) to 0"
 
 internalmftests:
-	@echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
+	@if [ "$(tests_sub_dirs)" = "" ] ; then \
+     exit 0 ; \
+   fi ; \
+   echo "Copying or linking MakeFC to Makefile in $(tests_sub_dirs)"; \
 	echo "(and updating the Makefile in each $(MLSCONFG) )"; \
 	 for dir in $(tests_sub_dirs); do \
 	 	if [ -d $$dir ] ; then \
@@ -1044,6 +1056,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.80  2003/02/03 23:56:09  pwagner
+# New install for l1; separate installs available for each level
+#
 # Revision 1.79  2002/10/11 23:01:42  pwagner
 # Added doc--api and doc--toc targets
 #

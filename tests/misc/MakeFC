@@ -71,7 +71,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG)
 lib:
 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmisc.a
 
-.PHONY: configure depends clean ghostbuster lib mostlyclean tar tarz targ test
+.PHONY: configure depends clean ghostbuster lib mostlyclean tar tarz targ test update
 
 tar:
 
@@ -94,6 +94,10 @@ depends:
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./
+
+update:
+	@cd ../.. ; \
+   $(MAKE) update SUBDIRS= tests_sub_dirs=tests/misc
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -131,6 +135,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.3  2002/09/25 23:25:43  pwagner
+# Uses unique names for temp files
+#
 # Revision 1.2  2002/04/26 23:37:47  pwagner
 # Changes to allow building libs, too
 #
