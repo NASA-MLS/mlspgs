@@ -37,7 +37,7 @@ contains
   ! ---------------------------------  GetQuantityForForwardModel  -----
   function GetQuantityForForwardModel ( vector, otherVector, quantityType, &
     & molecule, instrumentModule, radiometer, reflector, signal, sideband, &
-    & molIndex, config, foundInFirst, noError )
+    & molIndex, config, foundInFirst, wasSpecific, noError )
 
     ! This function is in many senses like GetVectorQuantityByType, (to
     ! which it can revert), except that given a forwardModelConfig_T in
@@ -69,6 +69,7 @@ contains
     type (ForwardModelConfig_T), intent(in), optional :: CONFIG ! fwmConfig
     integer, intent(in),  optional :: MOLINDEX     ! Index into the molecules array
     logical, intent(out), optional :: FOUNDINFIRST ! Set if found in first vector
+    logical, intent(out), optional :: WASSPECIFIC ! Set if listed as specific quantity
     logical, intent(in),  optional :: NOERROR ! Don't give error if not found
     ! Result
     type (VectorValue_T), pointer :: GetQuantityForForwardModel
@@ -97,6 +98,7 @@ contains
       & "Cannot have molIndex in GetQuantityForForwardModel without config" )
     myNoError = .false.
     if ( present ( noError ) ) myNoError = noError
+    if ( present ( wasSpecific ) ) wasSpecific = .false.
     nullify ( GetQuantityForForwardModel )
 
     ! First see if we can simply revert to the simpler GetVectorQuantityByType
@@ -205,6 +207,7 @@ contains
             if ( molEntry == 0 .or. molEntry == noFound ) then
               GetQuantityForForwardModel => v%quantities(quantity)
               if ( present ( foundInFirst ) ) foundInFirst = ( vectorIndex == 1 )
+              if ( present ( wasSpecific ) ) wasSpecific = .true.
               exit specificVectorLoop
             end if
           end if
@@ -302,6 +305,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.12  2004/10/16 17:28:28  livesey
+! Added wasSpecific argument
+!
 ! Revision 2.11  2004/10/07 23:25:50  vsnyder
 ! Move Dump_Qty_Stuff here from Get_Species_Data
 !
