@@ -16,7 +16,8 @@ module OUTPUT_M
   public :: BLANKS, OUTPUT
   interface OUTPUT
     module procedure output_char, output_char_array, output_double
-    module procedure output_integer, output_logical, output_integer_array
+    module procedure output_integer, output_integer_array, output_logical
+    module procedure output_single
   end interface
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
@@ -311,6 +312,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.12  2001/05/24 22:22:48  vsnyder
+! Add Output_Single to the generic Output interface
+!
 ! Revision 2.11  2001/05/10 22:52:03  vsnyder
 ! Increase maximum integer width
 !
