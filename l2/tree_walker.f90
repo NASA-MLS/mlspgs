@@ -16,7 +16,7 @@ module TREE_WALKER
   use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase
   use HGrid, only: HGrid_T
   use Init_Tables_Module, only: L_CHISQCHAN, &
-    & L_CHISQMMAF, L_CHISQMMIF, L_REFGPH, L_PTAN, &
+    & L_CHISQMMAF, L_CHISQMMIF, L_RADIANCE, L_PTAN, &
     & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
     & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
     & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
@@ -31,7 +31,7 @@ module TREE_WALKER
   use MLSSignals_M, only: Bands, DestroyBandDatabase, DestroyModuleDatabase, &
     & DestroyRadiometerDatabase, DestroySignalDatabase, &
     & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
-    & Signals, SpectrometerTypes
+    & Signals, SpectrometerTypes, GetSignalIndex
   use MLSL2Timings, only: add_to_section_timing
   use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
   use Output_m, only: Output
@@ -89,7 +89,8 @@ contains ! ====     Public Procedures     ==============================
     type (Matrix_Database_T), dimension(:), &
       & pointer ::                               Matrices
     type (TAI93_Range_T) ::                      ProcessingRange  ! Data processing range
-    integer ::                                   SON                      ! Son of Root
+    integer ::                                   signal_index
+    integer ::                                   SON              ! Son of Root
     real    ::                                   t1
     type (Vector_T), dimension(:), pointer ::    Vectors
     type (VGrid_T), dimension(:), pointer ::     VGrids
@@ -192,9 +193,14 @@ subtrees:   do while ( j <= howmany )
               call output('Here is a minor frame example', advance='yes')
               call dump_vectors( vectors, details=1, &
               & quantityTypes = (/l_Ptan/) )
+              call GetSignalIndex('R2:190.B3F:N2O', signal_index)
               call output('Here is one that is not minor frame', advance='yes')
+              call output('R2:190.B3F:N2O index: ', advance='no')
+              call output(signal_index, advance='yes')
               call dump_vectors( vectors, details=1, &
-              & quantityTypes = (/l_refgph/) )
+              & quantityTypes = (/l_radiance/), signal_ids = (/signal_index/), &
+              & thenditchafterdump=.true. )
+              call output('Here are our diagnostics', advance='yes')
               call dump_vectors( vectors, details=1, &
               & quantityTypes = (/l_chisqchan, l_chisqmmaf, l_chisqmmif/) )
             endif
@@ -266,6 +272,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.64  2001/10/09 23:43:42  pwagner
+! Some further improvements in dumping vectors
+!
 ! Revision 2.63  2001/10/02 16:49:56  livesey
 ! Removed fmStat%finished and change loop ordering in forward models
 !
