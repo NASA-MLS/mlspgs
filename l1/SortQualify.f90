@@ -29,6 +29,8 @@ CONTAINS
   SUBROUTINE UpdateCalWindow (more_data, CalWinFull)
 !=============================================================================
 
+    USE MLSL1Config, ONLY : L1Config
+
     LOGICAL, INTENT (OUT) :: more_data
     LOGICAL, INTENT (OUT) :: CalWinFull
 
@@ -114,11 +116,14 @@ CONTAINS
 
 !! Determine if CalWin is full
 
-    IF (CalWin%current == CalWin%size) THEN
+    IF (CalWin%current == CalWin%size .AND. &
+         MAFinfo%startTAI >= L1Config%Input_TAI%startTime) THEN
        CalWinFull = .TRUE.
     ELSE
        CalWinFull = .FALSE.
     ENDIF
+
+    more_data =  MAFinfo%startTAI <= L1Config%Input_TAI%endTime
 
   END SUBROUTINE UpdateCalWindow
 
@@ -266,6 +271,9 @@ END MODULE SortQualify
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2001/03/05 19:54:41  perun
+! Check TAI against input TAI
+!
 ! Revision 2.1  2001/02/23 20:57:10  perun
 ! Version 0.5 commit
 !
