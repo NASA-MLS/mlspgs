@@ -5,7 +5,7 @@ module DO_DELTA_M
 
   implicit NONE
   private
-  public :: PATH_OPACITY, HYD_OPACITY
+  public :: PATH_OPACITY, HYD_OPACITY, POLARIZED_PATH_OPACITY
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -53,6 +53,47 @@ contains
     end do
 
   end subroutine PATH_OPACITY
+!--------------------------------------------------  PATH_OPACITY  -----
+
+  subroutine POLARIZED_PATH_OPACITY ( DEL_ZETA, SINGULARITY, FUNCT, DS_DH_GL, DH_DZ_GL, &
+                     &      INTEGRAL )
+    use GLNP, only: NG, GW
+    use MLSCommon, only: IP, RP
+
+! Inputs
+
+    real(rp), intent(in) :: del_zeta(:) ! difference in integration boundary
+!                                         in -log(p) units
+    complex(rp), intent(in) :: singularity(:,:) ! value of function at lower
+    complex(rp), intent(in) :: funct(:,:)    ! function evaluated on gl integration
+!                                         grid
+    real(rp), intent(in) :: ds_dh_gl(:) ! path length derivative wrt height on
+!                                         gl grid
+    real(rp), intent(in) :: dh_dz_gl(:) ! height derivative wrt zeta on gl grid
+
+! Output
+
+    complex(rp), intent(out) :: integral(:,:) ! result from integration
+
+! Internals
+
+    integer(ip) a, b, i, j
+
+! Start calculation
+
+    a = 1
+    b = ng
+    do i = 1, size(singularity)
+      do j=1, 3
+        integral(j,i) = 0.5_rp * del_zeta(i) * sum((funct(j,a:b) - singularity(j,i))  &
+               &  * ds_dh_gl(a:b) * dh_dz_gl(a:b) * gw)
+      end do 
+      a = a + ng
+      b = b + ng
+    end do
+
+  end subroutine POLARIZED_PATH_OPACITY
+
 
 !---------------------------------------------------  HYD_OPACITY  -----
 
@@ -113,6 +154,9 @@ contains
 end module DO_DELTA_M
 !---------------------------------------------------
 ! $Log$
+! Revision 2.2  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/10/02 20:08:16  vsnyder
 ! Insert copyright notice, other cosmetic changes
 !
