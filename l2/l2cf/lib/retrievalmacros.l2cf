@@ -454,6 +454,10 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardDiagnostics.status$1, method=vector, sourceQuantity=otherDiagnostics.status$1
   Fill, quantity=standardDiagnostics.quality$1, method=vector, sourceQuantity=otherDiagnostics.quality$1
 })
+!define(makeStandardProductNoDiag,{!dnl
+  Fill, quantity=standardProducts.$1, method=vector, sourceQuantity=state.$1
+  Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1
+})
 
 ; ---------------------------------------------------- Status flag bits
 
@@ -498,13 +502,11 @@ Fill, quantity=diag!MFradiometer.noRadsTmp, method=manipulate, manipulation='a+b
 !define(makeFlagsForOneProduct,{!dnl
 !undefine(MFproduct)!dnl
 !undefine(MFradiometer)!dnl
-!undefine(MFradiometername)!dnl
 !undefine(MFchisqscale)!dnl
 !undefine(MFminrads)!dnl
 !undefine(MFcloudmax)!dnl
 !undefine(MFcloudmin)!dnl
 !ProcessParVal(MF,$@)!dnl
-!ifdef(MFradiometername,{},{!define(MFradiometername,{!MFradiometer})})
 ;; Quality
 Fill, quantity=diag!MFradiometer.chisqTmp, method=explicit, explicitValues=0, /spread
 !forall(addInOneChisq,!flaggingBands)
@@ -532,16 +534,19 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, $
 !ifdef(MFcloudmax,{
 ;; Status - cloudy radiances - already had the box car run on it.
 Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometername, maxValue=!MFcloudmax, /additional
+  sourceQuantity=otherDiagnostics.highCloudSummary!MFradiometer, maxValue=!MFcloudmax, /additional
 })
 !ifdef(MFcloudmin,{
 ;; Status - cloudy radiances - already had the box car run on it.
 Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusHighCloud+!statusBeWary, $
-  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometername, minValue=!MFcloudmin, /additional
+  sourceQuantity=otherDiagnostics.lowCloudSummary!MFradiometer, minValue=!MFcloudmin, /additional
 })})
 
 
 ; $Log$
+; Revision 1.89  2004/04/14 23:07:22  livesey
+; Moved cloud output to L2AUX-Cloud
+;
 ; Revision 1.88  2004/04/08 22:42:23  livesey
 ; More agile flagging for R5 case.
 ;
