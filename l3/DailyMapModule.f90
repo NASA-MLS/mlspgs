@@ -615,8 +615,8 @@ Contains
 	   fNum(wIndex) = fNum(wIndex) + 1
 	   l3sp%waveNumber(iLv, iLt, wIndex+1) = wIndex 
 	   l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigmaa(j)
-	   l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikr(j))
-	   l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikr(j))
+	   l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikra(j))
+	   l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikra(j))
          end do
 
 
@@ -745,8 +745,8 @@ Contains
 	   fNum(wIndex) = fNum(wIndex) + 1
 	   l3sp%waveNumber(iLv, iLt, wIndex+1) = wIndex 
 	   l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigmad(j)
-	   l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikr(j))
-	   l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikr(j))
+	   l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikrd(j))
+	   l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikrd(j))
          end do
 
 
@@ -1247,6 +1247,9 @@ End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.2  2001/03/03 01:38:12  ybj
+! with selected pressure levels
+!
 ! Revision 1.1  2001/02/27 20:52:39  ybj
 ! FFSM Process
 !
