@@ -13,17 +13,17 @@ module TREE_CHECKER
 ! in table_generator.
 
   use DECLARATION_TABLE, only: DECLARATION, DECLARE, DECLARED, DECLS, &
-                               DUMP_1_DECL, ENUM_VALUE, FIELD, GET_DECL, &
-                               LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, &
-                               NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE, &
-                               SECTION, SPEC, STR_VALUE, UNDECLARED, &
-                               TYPE_MAP, TYPE_NAME, UNITS_NAME
+    &                          DUMP_1_DECL, ENUM_VALUE, FIELD, GET_DECL, &
+    &                          LABEL, LOG_VALUE, NAMED_VALUE, NULL_DECL, &
+    &                          NUM_VALUE, PRIOR_DECL, RANGE, REDECLARE, &
+    &                          SECTION, SPEC, STR_VALUE, UNDECLARED, &
+    &                          TYPE_MAP, TYPE_NAME, UNITS_NAME
   use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_FIRST, FIELD_INDICES, &
-                                FIELD_LAST, PHYQ_DIMENSIONLESS, &
-                                PHYQ_INVALID, SECTION_FIRST, &
-                                SECTION_INDICES, SECTION_LAST, &
-                                SECTION_ORDERING, T_BOOLEAN
-  use INTRINSIC, only: ALL_FIELDS, NO_DUP, NO_POSITIONAL, REQ_FLD
+    &                           FIELD_LAST, PHYQ_DIMENSIONLESS, &
+    &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
+    &                           SECTION_ORDERING, T_BOOLEAN
+  use INTRINSIC, only: ALL_FIELDS, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
+    &                  PHYQ_INVALID, REQ_FLD
   use LEXER_CORE, only: PRINT_SOURCE
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, FLOAT_VALUE
@@ -698,7 +698,7 @@ m:              do j = 3, nsons(field)
       else
         value = value * value2
       end if
-    case ( n_div )
+    case ( n_div, n_into )
       son1 = subtree(1,root) ; son2 = subtree(2,root)
       call expr ( son1, type, units, value )
       call expr ( son2, type2, units2, value2 )
@@ -706,8 +706,10 @@ m:              do j = 3, nsons(field)
            units2 /= phyq_dimensionless .and. &
            units /= units2 ) then
         call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
-      else
+      else if ( me == n_div ) then
         value = value / value2
+      else ! me == n_into
+        value = value2 / value
       end if
     case ( n_dot )
       call announce_error ( root, no_dot )
@@ -754,7 +756,7 @@ m:              do j = 3, nsons(field)
       select case ( node_id(sonn) )
       case ( n_equal )                ! x = expr
         call decorate ( sonn, son1 )  ! show equal the section name
-        call equal ( sonn )
+        if ( decoration(decl%tree) /= no_check_eq ) call equal ( sonn )
       case ( n_named )                ! label:x,(y[=expr])+
         gson1 = subtree(1,sonn)       ! Label
         gson2 = subtree(2,sonn)       ! spec_args tree
@@ -879,6 +881,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.16  2003/08/29 00:14:43  vsnyder
+! Correct out-of-bounds subscript
+!
 ! Revision 1.15  2002/10/02 00:43:41  vsnyder
 ! Remove check for consistent units
 !
