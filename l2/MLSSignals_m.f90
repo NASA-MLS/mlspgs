@@ -1,6 +1,7 @@
 module MLSSignals_M
 
-! Process the MLSSignals section of the L2 configuration file.
+  ! Process the MLSSignals section of the L2 configuration file and deal with
+  ! parsing signal request strings.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use Declaration_Table, only: Range
@@ -9,7 +10,7 @@ module MLSSignals_M
     & f_frequencies, f_frequency, f_last, f_lo, f_radiometer, &
     & f_spectrometer, f_start, f_step, f_suffix, &
     & f_switch, f_width, f_widths, field_first, field_indices, field_last, &
-    & s_band, s_channel,  s_radiometer,  s_signal, s_spectrometer
+    & s_band, s_channel,  s_radiometer,  s_signal, s_spectrometerType
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
              & MLSMSG_Error
@@ -21,38 +22,57 @@ module MLSSignals_M
     & Subtree
   use Tree_Types, only: N_named
 
+  ! This first type defines a radiometer.
+
+  type Radiometer_T
+    real(r8) :: LO              ! Local oscillator in MHz
+    integer :: Suffix           ! Sub_rosa index
+    integer :: InstrumentModule ! Literal value L_THz, L_GHz
+  end type Radiometer_T
+
+  ! The second type describes a band within that radiometer
+
   type Band_T
     real(r8) :: Frequency               ! Negative if not present (wide filter)
     integer :: Suffix                   ! Sub_rosa index
   end type Band_T
 
-  type Channel_T
-    real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
-  end type Channel_T
+  ! This type gives the information for specific spectrometer families.  For
+  ! all apart from the WF4 spectrometers, we list frequencies and widths. 
+  ! Otherwise, the arrays are empty.
 
-  type Radiometer_T
-    real(r8) :: LO
-    integer :: Suffix                   ! Sub_rosa index
-  end type Radiometer_T
+  type SpectrometerType_T
+    real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
+  end type SpectrometerType_T
+
+  ! This is the key type, it describes a complete signal (one band, or a
+  ! subset of the channels in one band).  We have to main variables of this
+  ! type flying around, see later.
 
   type Signal_T
     integer :: Band                     ! Index in Bands data base
-    integer :: Channel                  ! Just a channel number
     integer :: Radiometer               ! Index in Radiometers data base
-    integer :: Spectrometer             ! Index in Spectrometers data base
+    integer :: SideBand                 ! -1:lower, +1:upper, 0:folded
+    integer :: Spectrometer             ! Just a spectrometer number
+    integer :: SpectrometerType       ! Index in SpectrometerType data base
     integer :: Switch                   ! Just a switch number
+    real(r8), POINTER, DIMENSION(:) :: Frequencies=>NULL() ! Mainly a shallow copy
+    real(r8), POINTER, DIMENSION(:) :: Widths=>NULL() ! Mainly a shallow copy
+    logical, POINTER, DIMENSION(:) :: Selected ! A bit field, or absent==all.
   end type Signal_T
 
-  type Spectrometer_T
-    real(r8), pointer, dimension(:) :: Frequencies => NULL(), Widths => NULL()
-    integer, pointer, dimension(:) :: Channels => NULL()
-  end type Spectrometer_T
+  ! Now some databases, the first are fairly obvious.
 
   type(band_T), save, pointer, dimension(:) :: Bands => NULL()
-  type(channel_T), save, pointer, dimension(:) :: Channels => NULL()
   type(radiometer_T), save, pointer, dimension(:) :: Radiometers => NULL()
-  type(signal_T), save, pointer, dimension(:) :: Signals => NULL()
-  type(spectrometer_T), save, pointer, dimension(:) :: Spectrometers => NULL()
+  type(spectrometerType_T), save, pointer, dimension(:) ::&
+    & SpectrometerTypes => NULL()
+
+  ! The next two are important, the first describes all the `allowed' signals
+  ! in the instrument.  The second is signals defined in the l2cf for later use
+  ! in identifying bands or subsets of a band.
+
+  type(signal_T), save, pointer, dimension(:) :: ValidSignals => NULL()
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=130), private :: Id = &
@@ -68,7 +88,6 @@ contains
     integer, intent(in) :: ROOT         ! The "cf" vertex for the section
 
     type(band_T) :: Band                ! To be added to the database
-    type(channel_T) :: Channel          ! To be added to the database
     integer :: MyChannels               ! subtree index of field
     integer :: Error                    ! Error level seen so far
     integer :: Field                    ! Field index -- f_something
@@ -83,7 +102,7 @@ contains
     type(radiometer_T) :: Radiometer    ! To be added to the database
     integer :: Son                      ! Some subtree of root.
     type(signal_T) :: Signal            ! To be added to the database
-    type(spectrometer_T) :: Spectrometer ! To be added to the database
+    type(spectrometerType_T) :: SpectrometerType ! To be added to the database
     real(r8) :: Start                   ! "start" field of "spectrometer"
     real(r8) :: Step                    ! "step" field of "spectrometer"
     integer :: Units(2)                 ! of an expression
@@ -130,7 +149,7 @@ contains
           end select
         end do ! i = 2, nsons(key)
         call decorate ( key, addBandToDatabase ( bands, band ) )
-      case ( s_channel ) ! .............................  CHANNEL  .....
+      case ( s_spectrometerType ) ! ......................... SPECTROMETER TYPE  .....
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -147,18 +166,19 @@ contains
         if ( nsons(frequencies) /= nsons(widths) ) &
           call announceError ( sizes, f_frequency, (/ f_widths /) )
         if ( error == 0 ) then
-          call allocate_Test ( channel%frequencies, nsons(son)-1, &
-            & 'channel%frequencies', moduleName, lowBound = first )
-          call allocate_Test ( channel%widths, nsons(son)-1, &
-            & 'channel%widths', moduleName, lowBound = first )
+          call allocate_Test ( spectrometerType%frequencies, nsons(son)-1, &
+            & 'spectrometerType%frequencies', moduleName, lowBound = first )
+          call allocate_Test ( spectrometerType%widths, nsons(son)-1, &
+            & 'spectrometerType%widths', moduleName, lowBound = first )
           do k = 2, nsons(frequencies)
             call expr ( subtree(k,frequencies), units, value )
-            channel%frequencies(k-2+first) = value(1)
+            spectrometerType%frequencies(k-2+first) = value(1)
             call expr ( subtree(k,widths), units, value )
-            channel%widths(k-2+first) = value(1)
+            spectrometerType%widths(k-2+first) = value(1)
           end do
-          call decorate ( key, addChannelToDatabase ( channels, channel ) )
-          call destroyChannel ( Channel )
+          call decorate ( key, addSpectrometerTypeToDatabase (&
+            & spectrometerTypes, spectrometerType ) )
+          call destroySpectrometerType ( SpectrometerType )
         end if
       case ( s_radiometer ) ! .......................  RADIOMETER  .....
         do j = 2, nsons(key)
@@ -175,115 +195,115 @@ contains
           end select
         end do ! i = 2, nsons(key)
         call decorate ( key, addRadiometerToDatabase ( radiometers, radiometer ) )
-      case ( s_signal ) ! ...............................  SIGNAL  .....
-        do j = 2, nsons(key)
-          son = subtree(j,key)
-          field = decoration(subtree(1,son))
-          select case ( field )
-          case ( f_band )
-            signal%band = decoration(subtree(2,son))
-          case ( f_channel )
-            call expr ( subtree(2,son), units, value )
-            signal%channel = value(1)
-          case ( f_radiometer )
-            signal%radiometer = decoration(subtree(2,son))
-          case ( f_spectrometer )
-            signal%spectrometer = decoration(subtree(2,son))
-          case ( f_switch )
-            call expr ( subtree(2,son), units, value )
-            signal%switch = value(1)
-          case default
-            ! Shouldn't get here if the type checker worked
-          end select
-        end do ! i = 2, nsons(key)
-        call decorate ( key, addSignalToDatabase ( signals, signal ) )
-      case ( s_spectrometer ) ! ...................  SPECTROMETER  .....
-        first = 0
-        do j = 2, nsons(key)
-          son = subtree(j,key)
-          field = decoration(subtree(1,son))
-          got(field) = .true.
-          select case ( field )
-          case ( f_channels )
-            myChannels = son
-          case ( f_first, f_last, f_start, f_step, f_width )
-            call expr ( subtree(2,son), units, value )
-            select case ( field )
-            case ( f_first )
-              first = value(1)
-            case ( f_last )
-              last = value(1)
-            case ( f_start )
-              start = value(1)
-            case ( f_step )
-              step = value(1)
-            case ( f_width )
-              width = value(1)
-            end select
-          case ( f_frequencies )   ! Postpone processing until later, so that
-            frequencies = son      ! we can verify that Frequencies and
-          case ( f_widths )        ! Widths have the same number of values
-            widths = son
-          case default
-            ! Shouldn't get here if the type checker worked
-          end select
-        end do ! i = 2, nsons(key)
-        if ( got(f_frequencies) .neqv. got(f_widths) ) call announceError ( &
-          & allOrNone, f_frequencies, (/ f_widths /) )
-        if ( got(f_channels) ) then
-          if ( any(got( (/ f_frequencies, f_last, f_start, &
-            & f_step, f_width, f_widths /) )) ) call announceError ( badMix, &
-            & f_channels, (/ f_frequencies, f_last, f_start, f_step, f_width, &
-            &                f_widths /) )
-          if ( error == 0 ) then
-            call allocate_Test ( spectrometer%channels, nsons(myChannels)-1, &
-              & 'spectrometer%channels', moduleName, lowBound = first )
-            do k = first, nsons(myChannels)-2+first
-              spectrometer%channels(k) = decoration(subtree(k,myChannels))
-            end do
-          end if
-        end if
-        if ( got(f_frequencies) ) then
-          if ( any(got( (/ f_last, f_start, f_step, f_width /) )) ) &
-            & call announceError ( badMix, f_frequencies, &
-            & (/ f_last, f_start, f_step, f_width /) )
-          if ( nsons(frequencies) /= nsons(widths) ) &
-            call announceError ( sizes, f_frequency, (/ f_widths /) )
-          if ( error == 0 ) then
-            call allocate_Test ( spectrometer%frequencies, nsons(son)-1, &
-              & 'spectrometer%frequencies', moduleName, lowBound = first )
-            call allocate_Test ( spectrometer%widths, nsons(son)-1, &
-              & 'spectrometer%widths', moduleName, lowBound = first )
-            do k = 2, nsons(frequencies)
-              call expr ( subtree(k,frequencies), units, value )
-              spectrometer%frequencies(k-2+first) = value(1)
-              call expr ( subtree(k,widths), units, value )
-              spectrometer%frequencies(k-2+first) = value(1)
-            end do
-          end if
-        end if
-        if ( got(f_start) ) then
-          if ( .not. all( got((/ f_last, f_step, &
-          & f_width /)) ) ) call announceError ( allOrNone, f_start, &
-          & (/ f_last, f_step, f_width /) )
-          if ( error == 0 ) then
-            k = last - first + 1
-            call allocate_Test ( spectrometer%frequencies, k, &
-              & 'spectrometer%frequencies', moduleName, lowBound = first )
-            call allocate_Test ( spectrometer%widths, k, &
-              & 'spectrometer%widths', moduleName, lowBound = first )
-            spectrometer%widths = width
-            spectrometer%frequencies(first) = start
-            do k = first+1, last
-              spectrometer%frequencies(k) = start + (k-first) * step
-            end do ! k
-          end if
-        end if
-        if ( .not. any(got( (/ f_channels, f_frequencies, f_start /) )) ) &
-          & call announceError ( atLeastOne, f_frequencies, (/ f_start /) )
-        if ( error == 0 ) call decorate ( key, addSpectrometerToDatabase ( &
-          & spectrometers, spectrometer ) )
-        call destroySpectrometer ( spectrometer )
+!       case ( s_signal ) ! ...............................  SIGNAL  .....
+!         do j = 2, nsons(key)
+!           son = subtree(j,key)
+!           field = decoration(subtree(1,son))
+!           select case ( field )
+!           case ( f_band )
+!             signal%band = decoration(subtree(2,son))
+!           case ( f_spectrometerType )
+!             call expr ( subtree(2,son), units, value )
+!             signal%spectrometerType = value(1)
+!           case ( f_radiometer )
+!             signal%radiometer = decoration(subtree(2,son))
+!           case ( f_spectrometer )
+!             signal%spectrometer = decoration(subtree(2,son))
+!           case ( f_switch )
+!             call expr ( subtree(2,son), units, value )
+!             signal%switch = value(1)
+!           case default
+!             ! Shouldn't get here if the type checker worked
+!           end select
+!         end do ! i = 2, nsons(key)
+!         call decorate ( key, addSignalToDatabase ( signals, signal ) )
+!       case ( s_spectrometerType ) ! .............  SPECTROMETERTYPE .....
+!         first = 0
+!         do j = 2, nsons(key)
+!           son = subtree(j,key)
+!           field = decoration(subtree(1,son))
+!           got(field) = .true.
+!           select case ( field )
+!           case ( f_spectrometerTypes )
+!             mySpectrometerTypes = son
+!           case ( f_first, f_last, f_start, f_step, f_width )
+!             call expr ( subtree(2,son), units, value )
+!             select case ( field )
+!             case ( f_first )
+!               first = value(1)
+!             case ( f_last )
+!               last = value(1)
+!             case ( f_start )
+!               start = value(1)
+!             case ( f_step )
+!               step = value(1)
+!             case ( f_width )
+!               width = value(1)
+!             end select
+!           case ( f_frequencies )   ! Postpone processing until later, so that
+!             frequencies = son      ! we can verify that Frequencies and
+!           case ( f_widths )        ! Widths have the same number of values
+!             widths = son
+!           case default
+!             ! Shouldn't get here if the type checker worked
+!           end select
+!         end do ! i = 2, nsons(key)
+!         if ( got(f_frequencies) .neqv. got(f_widths) ) call announceError ( &
+!           & allOrNone, f_frequencies, (/ f_widths /) )
+!         if ( got(f_spectrometerTypes) ) then
+!           if ( any(got( (/ f_frequencies, f_last, f_start, &
+!             & f_step, f_width, f_widths /) )) ) call announceError ( badMix, &
+!             & f_spectrometerTypes, (/ f_frequencies, f_last, f_start, f_step, f_width, &
+!             &                f_widths /) )
+!           if ( error == 0 ) then
+!             call allocate_Test ( spectrometer%spectrometerTypes, nsons(mySpectrometerTypes)-1, &
+!               & 'spectrometer%spectrometerTypes', moduleName, lowBound = first )
+!             do k = first, nsons(mySpectrometerTypes)-2+first
+!               spectrometer%spectrometerTypes(k) = decoration(subtree(k,mySpectrometerTypes))
+!             end do
+!           end if
+!         end if
+!         if ( got(f_frequencies) ) then
+!           if ( any(got( (/ f_last, f_start, f_step, f_width /) )) ) &
+!             & call announceError ( badMix, f_frequencies, &
+!             & (/ f_last, f_start, f_step, f_width /) )
+!           if ( nsons(frequencies) /= nsons(widths) ) &
+!             call announceError ( sizes, f_frequency, (/ f_widths /) )
+!           if ( error == 0 ) then
+!             call allocate_Test ( spectrometer%frequencies, nsons(son)-1, &
+!               & 'spectrometer%frequencies', moduleName, lowBound = first )
+!             call allocate_Test ( spectrometer%widths, nsons(son)-1, &
+!               & 'spectrometer%widths', moduleName, lowBound = first )
+!             do k = 2, nsons(frequencies)
+!               call expr ( subtree(k,frequencies), units, value )
+!               spectrometer%frequencies(k-2+first) = value(1)
+!               call expr ( subtree(k,widths), units, value )
+!               spectrometer%frequencies(k-2+first) = value(1)
+!             end do
+!           end if
+!         end if
+!         if ( got(f_start) ) then
+!           if ( .not. all( got((/ f_last, f_step, &
+!           & f_width /)) ) ) call announceError ( allOrNone, f_start, &
+!           & (/ f_last, f_step, f_width /) )
+!           if ( error == 0 ) then
+!             k = last - first + 1
+!             call allocate_Test ( spectrometer%frequencies, k, &
+!               & 'spectrometer%frequencies', moduleName, lowBound = first )
+!             call allocate_Test ( spectrometer%widths, k, &
+!               & 'spectrometer%widths', moduleName, lowBound = first )
+!             spectrometer%widths = width
+!             spectrometer%frequencies(first) = start
+!             do k = first+1, last
+!               spectrometer%frequencies(k) = start + (k-first) * step
+!             end do ! k
+!           end if
+!         end if
+!         if ( .not. any(got( (/ f_spectrometerTypes, f_frequencies, f_start /) )) ) &
+!           & call announceError ( atLeastOne, f_frequencies, (/ f_start /) )
+!         if ( error == 0 ) call decorate ( key, addSpectrometerToDatabase ( &
+!           & spectrometers, spectrometer ) )
+!         call destroySpectrometer ( spectrometer )
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -376,19 +396,6 @@ contains
     AddBandToDatabase = newSize
   end function AddBandToDatabase
 
-  ! ----------------------------------  AddChannelToDatabase  -----
-  integer function AddChannelToDatabase ( Database, Item )
-    type(channel_T), dimension(:), pointer :: Database
-    type(channel_T), intent(in) :: Item
-
-    ! Local variables
-    type (Channel_T), dimension(:), pointer :: tempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddChannelToDatabase = newSize
-  end function AddChannelToDatabase
-
   ! ----------------------------------  AddRadiometerToDatabase  -----
   integer function AddRadiometerToDatabase ( Database, Item )
     type(radiometer_T), dimension(:), pointer :: Database
@@ -416,37 +423,17 @@ contains
   end function AddSignalToDatabase
 
   ! ----------------------------------  AddSpectrometerToDatabase  -----
-  integer function AddSpectrometerToDatabase ( Database, Item )
-    type(spectrometer_T), dimension(:), pointer :: Database
-    type(spectrometer_T), intent(in) :: Item
+  integer function AddSpectrometerTypeToDatabase ( Database, Item )
+    type(spectrometerType_T), dimension(:), pointer :: Database
+    type(spectrometerType_T), intent(in) :: Item
 
     ! Local variables
-    type (spectrometer_T), dimension(:), pointer :: tempDatabase
+    type (spectrometerType_T), dimension(:), pointer :: tempDatabase
 
     include "addItemToDatabase.f9h"
 
     AddSpectrometerToDatabase = newSize
-  end function AddSpectrometerToDatabase
-
-  ! ----------------------------------------  DestroyChannel  -----
-  subroutine DestroyChannel ( Channel )
-    type(channel_T) :: Channel
-    call deallocate_Test ( channel%frequencies, &
-      & 'Channel%frequencies', moduleName )
-    call deallocate_Test ( channel%widths, 'Channel%widths', &
-      &  moduleName )
-  end subroutine DestroyChannel
-
-  ! ----------------------------------------  DestroySpectrometer  -----
-  subroutine DestroySpectrometer ( Spectrometer )
-    type(spectrometer_T) :: Spectrometer
-    call deallocate_Test ( Spectrometer%channels, 'Spectrometer%channels', &
-      &  moduleName )
-    call deallocate_Test ( Spectrometer%frequencies, &
-      & 'Spectrometer%frequencies', moduleName )
-    call deallocate_Test ( Spectrometer%widths, 'Spectrometer%widths', &
-      &  moduleName )
-  end subroutine DestroySpectrometer
+  end function AddSpectrometerTypeToDatabase
 
   ! --------------------------------  DestroyBandDatabase  -----
   subroutine DestroyBandDatabase ( Bands )
@@ -458,20 +445,6 @@ contains
         & MLSMSG_DeAllocate // 'Band database' )
     end if
   end subroutine DestroyBandDatabase
-
-  ! --------------------------------  DestroyChannelDatabase  -----
-  subroutine DestroyChannelDatabase ( Channels )
-    type(channel_T), dimension(:), pointer :: Channels
-    integer :: I, Status
-    if ( associated(Channels) ) then
-      do i = 1, size(Channels)
-        call destroyChannel ( Channels(i) )
-      end do
-      deallocate ( Channels, stat = status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_DeAllocate // 'Channel database' )
-    end if
-  end subroutine DestroyChannelDatabase
 
   ! --------------------------------  DestroyRadiometerDatabase  -----
   subroutine DestroyRadiometerDatabase ( Radiometers )
@@ -495,23 +468,36 @@ contains
     end if
   end subroutine DestroySignalDatabase
 
-  ! --------------------------------  DestroySpectrometerDatabase  -----
-  subroutine DestroySpectrometerDatabase ( Spectrometers )
-    type(spectrometer_T), dimension(:), pointer :: Spectrometers
+  ! ------------------------------------  DestroySpectrometerType  -----
+  subroutine DestroySpectrometerType ( SpectrometerType )
+    type(spectrometerType_T) :: SpectrometerType
+    call deallocate_Test ( spectrometerType%frequencies, &
+      & 'Spectrometer%frequencies', moduleName )
+    call deallocate_Test ( spectrometerType%widths, 'Spectrometer%widths', &
+      &  moduleName )
+  end subroutine DestroySpectrometerType
+
+  ! ----------------------------  DestroySpectrometerTypeDatabase  -----
+  subroutine DestroySpectrometerTypeDatabase ( SpectrometerTypes )
+    type(spectrometerType_T), dimension(:), pointer :: spectrometerTypes
     integer :: I, Status
-    if ( associated(spectrometers) ) then
-      do i = 1, size(spectrometers)
-        call destroySpectrometer ( spectrometers(i) )
+    if ( associated(spectrometerTypes) ) then
+      do i = 1, size(spectrometerTypes)
+        call destroySpectrometerType ( spectrometerTypes(i) )
       end do
-      deallocate ( spectrometers, stat = status )
+      deallocate ( spectrometerTypes, stat = status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
         & MLSMSG_DeAllocate // 'Spectrometer database' )
     end if
-  end subroutine DestroySpectrometerDatabase
+  end subroutine DestroySpectrometerTypeDatabase
+
 
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.4  2001/02/27 00:23:48  livesey
+! Very interim version
+!
 ! Revision 2.3  2001/02/15 22:03:00  vsnyder
 ! Remove checking for ranges -- the type checker does it
 !
