@@ -11,7 +11,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Allocate_Deallocate, only: Deallocate_Test
   use Expr_M, only: Expr
   use Hdf, only: DFACC_CREATE, DFACC_RDWR, SFN2INDEX, SFSELECT, SFCREATE, &
-    & SFENDACC, DFNT_FLOAT64, SFWDATA_F90
+    & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
   use INIT_TABLES_MODULE, only: F_ASCII, F_FILE, F_HDFVERSION, &
     & F_METANAME, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME, F_WRITECOUNTERMAF
@@ -778,7 +778,7 @@ contains ! =====     Public Procedures     =============================
       sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
       sizes(noDims-1) = quantity%template%noSurfs
       if ( noDims == 3 ) sizes(1) = quantity%template%noChans
-      sdId  = sfCreate ( fileID, trim(sdNameStr), DFNT_FLOAT64, &
+      sdId  = sfCreate ( fileID, trim(sdNameStr), DFNT_FLOAT32, &
         & noDims, sizes )
     else
       sdId = sfSelect ( fileID, sdIndex )
@@ -799,9 +799,11 @@ contains ! =====     Public Procedures     =============================
 
     ! Now write it out
     status = SFWDATA_F90(sdId, start(1:noDims), &
-      & stride(1:noDims), sizes(1:noDims), quantity%values ( :, &
-      & 1+quantity%template%noInstancesLowerOverlap : &
-      & quantity%template%noInstances - quantity%template%noInstancesUpperOverlap ) )
+      & stride(1:noDims), sizes(1:noDims), real ( &
+      &   quantity%values ( :, &
+      &   1+quantity%template%noInstancesLowerOverlap : &
+      &    quantity%template%noInstances - quantity%template%noInstancesUpperOverlap &
+      &  ) ) )
     if ( status /= 0 ) then
       call announce_error (0,&
         & "Error writing SDS data to l2aux file:  " )
@@ -888,6 +890,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.58  2002/08/21 01:05:06  livesey
+! Changed to single precision for direct write
+!
 ! Revision 2.57  2002/08/20 04:37:06  livesey
 ! Minor typo
 !
