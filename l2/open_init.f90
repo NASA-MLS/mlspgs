@@ -271,7 +271,7 @@ contains ! =====     Public Procedures     =============================
        sd_id = mls_io_gen_openF('hg', caseSensitive, ErrType, &
          & record_length, DFACC_READ, &
          & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
-        if ( sd_id == -1 ) then
+        if ( sd_id <= 0 ) then
           call announce_error ( 0, &
             & 'Error opening L1RAD file: ' //L1physicalFilename)
         elseif(ifl1 == MAXNUML1BRADIDS) then
@@ -313,7 +313,7 @@ contains ! =====     Public Procedures     =============================
          & record_length, DFACC_READ, &
          & L1physicalFilename, hdfVersion=LEVEL1_HDFVERSION)
 
-      if ( sd_id == -1 ) then
+      if ( sd_id <= 0 ) then
 
         call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
       else
@@ -556,6 +556,8 @@ contains ! =====     Public Procedures     =============================
 	      call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
          call output ( 'name:   ' )                                       
     	   call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
+         call output ( 'hdf version:   ' )                                       
+    	   call output ( hdfVersion, advance='yes' )
          if ( Details > -2 ) then
            l1bItemName = AssembleL1BQtyName ( l1b_quant_name, hdfVersion, .false. )
            call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1bItemname, L1bDataSet, &
@@ -700,6 +702,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.68  2002/12/11 22:18:48  pwagner
+! broadened error check on sd_id to any value lt 1
+!
 ! Revision 2.67  2002/11/13 01:10:40  pwagner
 ! Actually reads hdf5 radiances
 !
