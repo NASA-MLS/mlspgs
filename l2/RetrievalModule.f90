@@ -37,7 +37,8 @@ contains
     use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
-      & F_channels, F_columnScale, F_Comment, F_covariance, F_covSansReg, &
+      & F_channels, F_cloudRadiance, F_cloudRadianceCutOff, &
+      & F_columnScale, F_Comment, F_covariance, F_covSansReg, &
       & F_diagnostics, F_diagonal, &
       & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
       & F_height, f_highBound, f_hRegOrders, f_hRegQuants, f_hRegWeights, &
@@ -59,7 +60,7 @@ contains
       & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
       & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, &
       & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
-      & S_dumpBlocks, S_matrix, S_retrieve, S_sids, S_snoop, &
+      & S_dumpBlocks, S_flagCloud, S_matrix, S_retrieve, S_sids, S_snoop, &
       & S_subset, S_time
     use Intrinsic, only: PHYQ_Dimensionless
     use L2ParInfo, only: PARALLEL
@@ -229,6 +230,9 @@ contains
     integer, parameter :: RangeNotAppropriate = NotSPD + 1
     integer, parameter :: WrongUnits = RangeNotAppropriate + 1
     integer, parameter :: MustHaveOne = WrongUnits + 1
+    integer, parameter :: CannotFlagCloud = MustHaveOne + 1
+    integer, parameter :: BadQuantities = CannotFlagCloud + 1
+    integer, parameter :: BadRadianceSignal = BadQuantities + 1
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
@@ -290,6 +294,12 @@ contains
         call SetupSubset ( key, vectorDatabase )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Retrieve.subset" )
+      case ( s_flagCloud )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_begin ( "Retrieve.flagCloud", root )
+        call flagCloud ( key, vectorDatabase )
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "Retrieve.flagCloud" )
       case ( s_retrieve )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.retrieve", root )
         aprioriScale = 1.0
@@ -604,6 +614,13 @@ contains
       call print_source ( source_ref(son) )
       call output ( ', RetrievalModule complained: ' )
       select case ( code )
+      case ( cannotFlagCloud )
+        call output ( 'Cannot flag clouds, missing input quantities' )
+      case ( badQuantities )
+        call output ( 'Bad quantity type for radiance or cloud radiance' )
+      case ( badRadianceSignal )
+        call output ( 'Mismatch in signal/sideband for radiance and cloud radiance', &
+          & advance='yes' )
       case ( badOpticalDepthSignal )
         call output ( 'Mismatch in signal/sideband for radiance and optical depth', &
           & advance='yes' )
@@ -3399,6 +3416,178 @@ contains
         end if
       end if
     end subroutine SetupSubset
+
+    ! -------------------------------------------------- FlagCloud ---
+    subroutine FlagCloud ( key, vectors )
+
+      use Declaration_table, only: NUM_VALUE
+      use Intrinsic, only: PHYQ_PRESSURE, PHYQ_TEMPERATURE
+      use VectorsModule, only: ClearMask, CreateMask, &
+        & GetVectorQtyByTemplateIndex, SetMask, VectorValue_T
+
+      integer, intent(in) :: KEY        ! Tree node
+      type (Vector_T), dimension(:) :: VECTORS
+
+      ! Local variables
+      integer :: CHANNEL                ! Loop index
+      integer :: CHANNELSNODE           ! Tree node for channels values
+      integer :: COORDINATE             ! Vertical coordinate type
+      integer :: FIELD                  ! Field type from tree
+      integer :: GSON                   ! Tree node
+      integer :: HEIGHT                 ! Loop counter
+      integer :: HEIGHTNODE             ! Tree node for height values
+      integer :: HEIGHTUNIT             ! Unit for heights command
+      integer :: IND                    ! An array index
+      integer :: INSTANCE               ! Loop counter
+      integer :: MaskBit                ! Bits corresponding to Mask
+      integer :: QUANTITYINDEX          ! Index
+      integer :: RANGEID                ! nodeID of a range
+      integer :: SON                    ! Tree node
+      integer :: STATUS                 ! Flag
+      integer :: TYPE                   ! Type of value returned by expr
+      integer :: UNITS(2)               ! Units returned by expr
+      integer :: VECTORINDEX            ! Index
+
+      real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
+      real(r8) :: VALUE(2)              ! Value returned by expr
+      real(r8) :: cloudRadianceCutOff              ! threshold for flagging cloud
+      type (VectorValue_T), pointer :: QTY ! The quantity to mask
+      type (VectorValue_T), pointer :: PTAN ! The ptan quantity if needed
+      type (VectorValue_T), pointer :: cloudRadiance ! cloud radiances
+
+      logical :: Got(field_first:field_last)   ! "Got this field already"
+      logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
+      logical :: DOTHISCHANNEL          ! Flag
+      logical :: DOTHISHEIGHT           ! Flag
+      logical :: ISCLOUD                ! Flag
+
+      integer, parameter ::                      MAXCOLUMNS = 127
+
+      ! Executable code
+      nullify ( channels, qty, ptan, cloudRadiance )
+      got = .false.
+      maskBit = m_linalg   ! default mask bit
+
+      do j = 2, nsons(key) ! fields of the "subset" specification
+        son = subtree(j, key)
+        field = get_field_id(son)   ! tree_checker prevents duplicates
+        if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
+        select case ( field )
+        case ( f_quantity )
+          vectorIndex = decoration(decoration(subtree(1,gson)))
+          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          qty => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+        case ( f_ptanquantity )
+          vectorIndex = decoration(decoration(subtree(1,gson)))
+          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          ptan => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+        case ( f_height )
+          heightNode = son
+        case ( f_channels )
+          channelsNode = son
+        case ( f_cloudRadiance )
+          vectorIndex = decoration(decoration(subtree(1,gson)))
+          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          cloudRadiance => GetVectorQtyByTemplateIndex(vectors(vectorIndeX), quantityIndex)
+        case ( f_cloudRadianceCutoff )
+          call expr ( subtree (2, son), units, value, type )
+          if ( type /= num_value ) call announceError ( &
+            & rangeNotAppropriate, f_cloudRadianceCutoff )
+          if ( units(1) /= phyq_TEMPERATURE ) &
+            & call announceError ( wrongUnits, f_cloudRadianceCutoff, string='no' )
+          cloudRadianceCutoff = value(1)
+        case default
+          ! Shouldn't get here if the type checker worked
+        end select
+        got(field) = .true.
+      end do ! j = 2, nsons(key)
+
+      ! Check if got the cloud radiance and threshold
+      if ( .not. all(got((/ f_cloudRadiance, f_cloudRadianceCutoff, &
+         & f_height, f_ptanQuantity /))) ) &
+         & call AnnounceError ( cannotFlagCloud, key )
+      ! Quantity must be radiance
+      if ( qty%template%quantityType /= l_radiance &
+         & .or. cloudRadiance%template%quantityType /= l_radiance) &
+         & call AnnounceError ( badQuantities, key )
+      ! Output radiance and cloud radiance must be the same signal
+      if ( qty%template%signal /= cloudRadiance%template%signal .or. &
+          &  qty%template%sideband /= cloudRadiance%template%sideband ) &
+          & call AnnounceError ( badRadianceSignal, key )
+
+      ! Process the channels field.
+      if ( qty%template%frequencyCoordinate /= l_none ) then
+        call Allocate_test ( channels, qty%template%noChans, &
+          & 'channels', ModuleName )
+        if ( got(f_channels) ) then     ! This subset is only for some channels
+          call GetIndexFlagsFromList ( channelsNode, channels, status, &
+            & lower=lbound(channels,1) )
+          if ( status /= 0 ) call announceError ( wrongUnits, f_channels, string='no' )
+        else
+          channels = .true.             ! Apply this to all channels
+        end if
+      end if
+
+      ! ----- finish checking ------
+      ! Create the mask if it doesn't exist
+      if ( .not. associated( qty%mask ) ) call CreateMask ( qty )
+
+      ! Now loop over the instances
+      do instance = 1, qty%template%noInstances
+          theseHeights => ptan%values(:,instance)
+          coordinate = l_zeta
+
+          do j = 2, nsons(heightNode)
+            ! Get values for this ragne
+            son = subtree ( j, heightNode )
+            rangeId = node_id ( son )
+            call expr ( son, units, value, type )
+            ! Now maybe do something nasty to value to get in right units.
+            if ( coordinate == l_zeta .and. heightUnit == phyq_pressure ) then
+              value = -log10(value)
+            else
+              if ( coordinate /= qty%template%verticalCoordinate ) &
+                & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Inappropriate units for height in subset' )
+            end if
+
+            do channel = 1, qty%template%noChans
+              doThisChannel = .true.
+              if ( associated(channels) ) doThisChannel = channels(channel)
+              if ( doThisChannel ) then
+                  ind = qty%template%noChans + channel
+                  do height = 1, qty%template%noSurfs
+                    ind = channel + qty%template%noChans*(height-1)
+                    doThisHeight = .true.
+                    if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
+                      doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
+                    else
+                      doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
+                    end if
+                    if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
+                      doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
+                    else
+                      doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
+                    end if
+
+                    isCloud = .false.
+                    if ( cloudRadiance%values ( ind, instance ) > cloudRadianceCutoff) &
+                  &     isCloud = .true.
+                    if ( doThisHeight .and. isCloud )  &
+                  &     call SetMask ( qty%mask(:,instance), &
+                  &     (/ channel+qty%template%noChans*(height-1) /), &
+                  &     what=maskBit )
+                  end do                ! Height loop
+              end if                    ! Do this channel
+            end do                      ! Channel loop
+          end do                        ! Height entries in l2cf
+      end do                            ! Instance loop
+
+      ! Tidy up
+      call Deallocate_test ( channels, 'channels', ModuleName )
+
+    end subroutine FlagCloud
+
   end subroutine Retrieve
 
   logical function NOT_USED_HERE()
@@ -3408,6 +3597,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.213  2003/01/11 08:08:01  dwu
+! add flagCloud
+!
 ! Revision 2.212  2003/01/11 02:14:55  livesey
 ! Bug fix in max/min value subset
 !
