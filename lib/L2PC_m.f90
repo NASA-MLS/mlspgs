@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -10,7 +10,6 @@ module L2PC_m
   ! must be HDF5.
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL, DUMP_DECL
   use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
     & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY
   use machine, only: io_error
@@ -32,13 +31,12 @@ module L2PC_m
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSignals_m, only: GETSIGNALNAME
   use Molecules, only: L_EXTINCTION
+  use MoreTree, only: GetStringIndexFromString, GetLitIndexFromString
   use Output_m, only: output
   use Parse_Signal_m, only: Parse_Signal
   use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T, &
     & SETUPNEWQUANTITYTEMPLATE, INFLATEQUANTITYTEMPLATEDATABASE
   use String_Table, only: GET_STRING
-  use Symbol_Table, only: ENTER_TERMINAL, DUMP_SYMBOL_CLASS
-  use Symbol_Types, only: T_IDENTIFIER
   use TOGGLES, only: TAB, TOGGLE, SWITCHES
   use Tree, only: DECORATION, NSONS, SUBTREE
 
@@ -827,7 +825,6 @@ contains ! ============= Public Procedures ==========================
     type (QuantityTemplate_T) :: QT     ! Temporary quantity template
     type (VectorTemplate_T) :: VT       ! Temporary template for vector
     type (Vector_T) :: V                ! Temporary vector
-    type (Decls) :: Decl                ! From tree
     
     ! Executable code
     
@@ -861,10 +858,7 @@ contains ! ============= Public Procedures ==========================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'An io-error occured' )
       end if
-      stringIndex = enter_terminal ( trim(line), t_identifier )
-      decl = get_decl ( stringIndex, type=enum_value )
-      qt%quantityType = decl%units
-      qt%name = stringIndex
+      qt%quantityType = GetLitIndexFromString ( line, qt%name )
 
       ! Set defaults for coordinates, radiance is the later exception
       qt%verticalCoordinate = l_zeta
@@ -883,10 +877,7 @@ contains ! ============= Public Procedures ==========================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'An io-error occured' )
         end if
-        stringIndex = enter_terminal ( trim(line), t_identifier )
-        decl = get_decl ( stringIndex, type=enum_value )
-        qt%molecule = decl%units
-        qt%name = stringIndex
+        qt%molecule = GetLitIndexFromString ( line, qt%name )
       case (l_radiance)
         read (unit,*, IOSTAT=status) line
         if (status /= 0 ) then
@@ -1086,7 +1077,6 @@ contains ! ============= Public Procedures ==========================
     type (MatrixElement_T), pointer :: M0 ! A Matrix0 within kStar
     character ( len=64 ) :: MATRIXNAME  ! Name for matrix
     character ( len=64 ) :: NAME        ! Name for block group
-    type (Decls) :: Decl                ! From tree
 
 
     ! Executable code
@@ -1115,8 +1105,7 @@ contains ! ============= Public Procedures ==========================
     call GetHDF5Attribute ( blocksID, 'rowInstanceFirst', rowInstanceFirst )
     call GetHDF5Attribute ( blocksID, 'colInstanceFirst', colInstanceFirst )
 
-    stringIndex = enter_terminal ( trim(matrixName), t_identifier )
-    decl = get_decl ( stringIndex, type=enum_value )
+    stringIndex = GetStringIndexFromString ( matrixName )
 
     ! Create the matrix
     call CreateEmptyMatrix ( l2pc, stringIndex, l2pcVs(yStar), l2pcVs(xStar), &
@@ -1229,7 +1218,6 @@ contains ! ============= Public Procedures ==========================
     type ( QuantityTemplate_T), pointer :: QT    ! Template for the quantity
     type ( VectorTemplate_T) :: VT    ! Template for the vector
     type ( Vector_T ) :: V              ! The vector
-    type ( Decls ) :: DECL              ! From tree
 
     ! Executable code
     nullify ( sigInds, qtInds )
@@ -1288,14 +1276,12 @@ contains ! ============= Public Procedures ==========================
         & ' in vector '//trim(name) )
 
       ! Store the name
-      stringIndex = enter_terminal ( trim(quantityNames(quantity)), t_identifier ) 
+      stringIndex = GetStringIndexFromString ( quantityNames(quantity) )
       nameIndex = stringIndex
 
       ! Get the quantity type
       call GetHDF5Attribute ( qId, 'type', word )
-      stringIndex = enter_terminal ( trim(word), t_identifier ) 
-      decl = get_decl ( stringIndex, type=enum_value )
-      quantityType = decl%units
+      quantityType = GetLitIndexFromString ( word )
 
       ! Get other info as appropriate
       signal = 0
@@ -1306,12 +1292,10 @@ contains ! ============= Public Procedures ==========================
       select case ( quantityType )
       case ( l_vmr )
         call GetHDF5Attribute ( qID, 'molecule', word )
-        stringIndex = enter_terminal ( trim(word), t_identifier ) 
-        decl = get_decl ( stringIndex, type=enum_value )
-        molecule = decl%units
+        molecule = GetLitIndexFromString ( word )
         if ( molecule == l_extinction ) then
           call GetHDF5Attribute ( qID, 'radiometer', word )
-          stringIndex = enter_terminal ( trim(word), t_identifier ) 
+          stringIndex = GetStringIndexFromString ( word )
           radiometer = FindFirst ( stringIndex == Radiometers%prefix )
           frequencyCoordinate = l_intermediateFrequency
         else
@@ -1332,16 +1316,12 @@ contains ! ============= Public Procedures ==========================
       call GetHDF5Attribute ( qID, 'noSurfs', noSurfs )
       call GetHDF5Attribute ( qID, 'noChans', noChans )
       call GetHDF5Attribute ( qId, 'verticalCoordinate', word )
-      stringIndex = enter_terminal ( trim(word), t_identifier ) 
-      decl = get_decl ( stringIndex, type=enum_value )
-      verticalCoordinate = decl%units
+      verticalCoordinate = GetLitIndexFromString ( word )
       ! Look for frequency coordinate (optional for backwards compatability with
       ! older l2pc files.
       if ( IsHDF5AttributePresent ( qID, 'frequencyCoordinate' ) ) then
         call GetHDF5Attribute ( qId, 'frequencyCoordinate', word )
-        stringIndex = enter_terminal ( trim(word), t_identifier ) 
-        decl = get_decl ( stringIndex, type=enum_value )
-        frequencyCoordinate = decl%units
+        frequencyCoordinate = GetLitIndexFromString ( word )
       end if
       call GetHDF5Attribute ( qId, 'logBasis', logBasis )
       call GetHDF5Attribute ( qId, 'coherent', coherent )
@@ -1517,6 +1497,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.50  2002/10/05 00:42:31  livesey
+! Modified to use new pack/unpack literals/strings
+!
 ! Revision 2.49  2002/10/02 23:20:19  livesey
 ! Added radiometer and saving as single precision
 !
