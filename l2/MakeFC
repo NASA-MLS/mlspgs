@@ -1,0 +1,81 @@
+#	Makefile
+#	targets: configure and depends and clean
+#	true targets: $(MLSCONFG)/Makefile and $(MLSCONFG)/mlsl2
+#
+#special case:
+#the 1st time through, before .configure exists yet,
+#execute $(MLSBIN)/configure to create .configure
+
+#i.e., if you call are building this mls
+#by calling make with a different Makefile name,
+#say: make -f MakeFC
+#then rename the Makefiles in /l2 and /lib also MakeFC
+
+# "$Id$"
+
+MakeFName = MakeFC
+
+# where to store .configure
+CONFDIR=..
+
+# where configure and makemakedep.sh are stored
+MLSBIN=../util
+
+# where the platforms directory is
+PLATFORMS = .
+
+# This will set our MLS platfor, compiler. etc.
+# w/o complaining if it does nor exist yet
+-include $(CONFDIR)/.configure
+
+SHELL = /bin/sh
+
+PROG=mlsl2
+
+$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+	exit
+
+.PHONY: configure depends clean
+
+configure:
+#	echo "Target: configure"
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(CONFDIR)/.configure:
+#$(CONFDIR)/.configure: $(MakeFName)
+#	echo "Target: $(CONFDIR)/.configure"
+#	echo "Target because of $?"
+#	ls -tl $(CONFDIR)/.configure $?
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)"
+
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+#	echo "Target: $(PLATFORMS)/$(MLSCONFG)"
+#	echo "Target because of $?"
+	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
+
+depends:
+	$(MLSBIN)/makemakedep.sh
+
+clean:
+	@echo "Cleaning directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		echo "Deleting $(MLSCONFG) files" ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+	fi ; \
+	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
+		echo "Deleting $(MLSCONFG) directory" ; \
+		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
+	fi
+# $Log$
+# Revision 2.1  2000/10/18 21:58:16  pwagner
+# First commit
+#
+
+

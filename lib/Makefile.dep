@@ -1,0 +1,74 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+Allocate_Deallocate.o      Units.o  		    output_m.o  \
+GriddedData.o  		   VectorsModule.o  	    parser.o  \
+HDF-EOS.o  		   VerticalCoordinate.o     string_table.o  \
+Hdf.o  			   dates_module.o  	    swapi.o  \
+L1BData.o  		   declaration_table.o      swapi_character_array.o  \
+L2GPData.o  		   dump_0.o  		    swapi_character_scalar.o  \
+MLSCF.o  		   error_handler.o  	    swapi_double.o  \
+MLSCommon.o  		   expr_m.o  		    swapi_integer.o  \
+MLSMessageModule.o  	   gridded_data_module.o    swapi_real.o  \
+MLSNumerics.o  		   hash.o  		    symbol_table.o  \
+MLSPCF.o  		   heights_module.o  	    symbol_types.o  \
+MLSSignalNomenclature.o    init_tables_module.o     toggles_core.o  \
+MLSStrings.o  		   intrinsic.o  	    trace_m.o  \
+MatrixModule_0.o  	   io_stuff.o  		    tree.o  \
+QuantityTemplates.o  	   lexer_core.o  	    tree_checker.o  \
+SDPToolkit.o  		   lexer_m.o  		    tree_types.o  \
+SDPToolkitSubstitute.o     machine.o  		    units.o  \
+ 
+Allocate_Deallocate.o : Allocate_Deallocate.f90 MLSMessageModule.o 
+GriddedData.o : GriddedData.f90 MLSCommon.o MLSMessageModule.o MLSStrings.o 
+HDF-EOS.o : HDF-EOS.f90 
+Hdf.o : Hdf.f90 MLSCommon.o 
+L1BData.o : L1BData.f90 MLSCommon.o MLSMessageModule.o 
+L2GPData.o : addItemToDatabase.f9h L2GPData.f90 Allocate_Deallocate.o MLSMessageModule.o MLSCommon.o Hdf.o HDF-EOS.o swapi.o 
+MLSCF.o : MLSCF.f90 SDPToolkit.o Hdf.o MLSMessageModule.o MLSStrings.o MLSCommon.o 
+MLSCommon.o : MLSCommon.f90 
+MLSMessageModule.o : MLSMessageModule.f90 SDPToolkit.o 
+MLSNumerics.o : MLSNumerics.f90 MLSCommon.o MLSMessageModule.o MLSStrings.o 
+MLSPCF.o : MLSPCF.f90 
+MLSSignalNomenclature.o : MLSSignalNomenclature.f90 MLSCommon.o MLSStrings.o MLSMessageModule.o 
+MLSStrings.o : MLSStrings.f90 MLSMessageModule.o 
+MatrixModule_0.o : MatrixModule_0.f90 Allocate_Deallocate.o dump_0.o MLSCommon.o MLSMessageModule.o output_m.o 
+QuantityTemplates.o : addItemToDatabase.f9h QuantityTemplates.f90 Allocate_Deallocate.o MLSCommon.o MLSMessageModule.o MLSSignalNomenclature.o 
+SDPToolkit.o : SDPToolkit.f90 MLSCommon.o 
+SDPToolkitSubstitute.o : SDPToolkitSubstitute.f90 
+Units.o : Units.f90 MLSCommon.o MLSStrings.o MLSMessageModule.o 
+VectorsModule.o : addItemToDatabase.f9h VectorsModule.f90 Allocate_Deallocate.o dump_0.o MLSCommon.o MLSMessageModule.o output_m.o QuantityTemplates.o string_table.o 
+VerticalCoordinate.o : VerticalCoordinate.f90 MLSCommon.o MLSStrings.o Units.o 
+dates_module.o : dates_module.f90 MLSStrings.o MLSMessageModule.o 
+declaration_table.o : declaration_table.f90 intrinsic.o machine.o output_m.o string_table.o toggles_core.o 
+dump_0.o : dump_0.f90 output_m.o 
+error_handler.o : error_handler.f90 machine.o output_m.o 
+expr_m.o : expr_m.f90 declaration_table.o intrinsic.o string_table.o toggles_core.o trace_m.o tree.o tree_types.o 
+gridded_data_module.o : gridded_data_module.f90 MLSCommon.o MLSStrings.o MLSMessageModule.o dates_module.o 
+hash.o hash.o : hash.f90 
+heights_module.o : heights_module.f90 MLSCommon.o MLSMessageModule.o 
+init_tables_module.o : init_tables_module.f90 intrinsic.o symbol_table.o symbol_types.o tree.o tree_types.o 
+intrinsic.o : intrinsic.f90 symbol_table.o symbol_types.o 
+io_stuff.o : io_stuff.f90 
+lexer_core.o : lexer_core.f90 output_m.o string_table.o symbol_table.o toggles_core.o 
+lexer_m.o : lexer_m.f90 error_handler.o lexer_core.o output_m.o string_table.o symbol_table.o symbol_types.o toggles_core.o 
+machine.o : machine.f90 
+output_m.o : output_m.f90 MLSMessageModule.o 
+parser.o : parser.f90 lexer_core.o lexer_m.o output_m.o symbol_table.o symbol_types.o toggles_core.o tree.o tree_types.o 
+string_table.o : string_table.f90 hash.o io_stuff.o machine.o output_m.o 
+swapi.o : swapi.f90 swapi_character_scalar.o swapi_character_array.o swapi_double.o swapi_integer.o swapi_real.o 
+swapi_character_array.o : swapi_character_array.f90 
+swapi_character_scalar.o : swapi_character_scalar.f90 
+swapi_double.o : swapi_double.f90 
+swapi_integer.o : swapi_integer.f90 
+swapi_real.o : swapi_real.f90 
+symbol_table.o : symbol_table.f90 machine.o string_table.o symbol_types.o output_m.o toggles_core.o 
+symbol_types.o : symbol_types.f90 string_table.o 
+toggles_core.o : toggles_core.f90 
+trace_m.o : trace_m.f90 lexer_core.o output_m.o tree.o 
+tree.o : tree.f90 error_handler.o machine.o output_m.o string_table.o symbol_table.o symbol_types.o toggles_core.o tree_types.o 
+tree_checker.o : tree_checker.f90 declaration_table.o init_tables_module.o lexer_core.o output_m.o string_table.o toggles_core.o trace_m.o tree.o tree_types.o 
+tree_types.o : tree_types.f90 string_table.o symbol_types.o 
+ 
+#End of Makefile.dep
+ 

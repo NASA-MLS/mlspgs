@@ -1,0 +1,41 @@
+#Makefile.dep -- a file to be included by a Makefile
+#to compile a Fortran 9x program or library
+OBJS = \
+Construct.o  			MatrixModule.o  	obtain_mlscf.o  \
+ConstructQuantityTemplates.o  	OutputAndClose.o  	obtainclimatology.o  \
+ConstructVectorTemplates.o  	ScanDivide.o  		obtaindao.o  \
+Fill.o  			VGrid.o  		obtainncep.o  \
+HGrid.o  			VectorsModule.o  	open_init.o  \
+Join.o  			dumper.o  		tree_walker.o  \
+L2AUXData.o  			get_3d_view.o  		write_meta.o  \
+MLSL2.o  			global_settings.o  \
+MLSL2Common.o  			init_tables_module.o  \
+ 
+Construct.o : Construct.f90 ConstructQuantityTemplates.o ConstructVectorTemplates.o dumper.o HGrid.o init_tables_module.o VectorsModule.o VGrid.o 
+ConstructQuantityTemplates.o : ConstructQuantityTemplates.f90 HGrid.o init_tables_module.o VGrid.o 
+ConstructVectorTemplates.o : ConstructVectorTemplates.f90 init_tables_module.o VectorsModule.o 
+Fill.o : Fill.f90 init_tables_module.o VectorsModule.o 
+HGrid.o : addItemToDatabase.f9h HGrid.f90 init_tables_module.o 
+Join.o : Join.f90 init_tables_module.o L2AUXData.o VectorsModule.o 
+L2AUXData.o : addItemToDatabase.f9h L2AUXData.f90 
+MLSL2.o : MLSL2.f90 init_tables_module.o tree_walker.o 
+MLSL2Common.o : MLSL2Common.f90 
+MatrixModule.o : addItemToDatabase.f9h MatrixModule.f90 dumper.o VectorsModule.o 
+OutputAndClose.o : OutputAndClose.f90 init_tables_module.o L2AUXData.o 
+ScanDivide.o : ScanDivide.f90 init_tables_module.o 
+VGrid.o : addItemToDatabase.f9h VGrid.f90 init_tables_module.o 
+VectorsModule.o : addItemToDatabase.f9h VectorsModule.f90 dumper.o 
+dumper.o : dumper.f90 HGrid.o init_tables_module.o VGrid.o 
+get_3d_view.o : get_3d_view.f90 
+global_settings.o : global_settings.f90 init_tables_module.o 
+init_tables_module.o : init_tables_module.f90 
+obtain_mlscf.o : obtain_mlscf.f90 
+obtainclimatology.o : obtainclimatology.f90 
+obtaindao.o : obtaindao.f90 
+obtainncep.o : obtainncep.f90 
+open_init.o : open_init.f90 
+tree_walker.o : tree_walker.f90 Construct.o dumper.o Fill.o global_settings.o init_tables_module.o Join.o L2AUXData.o obtainclimatology.o obtaindao.o obtainncep.o open_init.o OutputAndClose.o ScanDivide.o VectorsModule.o 
+write_meta.o : write_meta.f90 L2AUXData.o 
+ 
+#End of Makefile.dep
+ 
