@@ -194,7 +194,7 @@ else
 #	l1
 
 EngTbls.o: $(S)/EngTbls.f90
-	$(FC) -c $(DUSTY) -maxcontin=100 $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
+	$(FC) -c $(DUSTY) -maxcontin=100 $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
 OutputL1B.o: $(S)/OutputL1B.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
@@ -329,6 +329,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.11  2003/05/21 17:46:02  pwagner
+# Commands to build mol_...f9h now formatted correctly
+#
 # Revision 1.10  2003/05/17 00:04:52  pwagner
 # Now create mol_.. files in lib to be used by Molecules.f90 there
 #
