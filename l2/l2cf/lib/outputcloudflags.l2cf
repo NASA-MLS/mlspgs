@@ -19,6 +19,9 @@ begin Join
   !define(outputR2CloudRad,{!directWriteCloud(cloudOutput.DTband$1,' DT', /prefixSignal)!nl})
   !forall(outputR2CloudRad,2,3,4,5,6)
 
+  !define(outputPolCloudRad,{!directWriteCloud(cloudOutput.DTband$1,' DT', /prefixSignal)!nl})
+  !forall(outputPolCloudRad,18,34)
+
   !define(writeOneCloudRadBin,{!ifdef(flagAvoidDirectWrite,{!dnl
   joined_cloudRadMinR$1: l2gp, source=cloudOutput.cloudRadMinR$1, $
      /prefixSignal, swath='.C!cloudChannelForRadNo($1) cloudMin'
