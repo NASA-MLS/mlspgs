@@ -7,12 +7,12 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
 
   use Allocate_Deallocate, only: Deallocate_test
   use ConstructQuantityTemplates, only: ConstructMinorFrameQuantity, &
-    & CreateQtyTemplateFromMLSCfInfo
+    & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
   use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
   use Dumper, only: Dump
   use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
     & DestroyHGridDatabase, HGrid_T
-  use INIT_TABLES_MODULE, only: S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
+  use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use MLSSignals_m, only: Modules
@@ -93,10 +93,17 @@ contains ! =====     Public Procedures     =============================
     allocate ( mifGeolocation(size(modules)), STAT=status )
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//"mifGeolocation" )
-    do instrumentModuleIndex = 1, size(modules)
-      call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
-        & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
-    end do
+    
+    ! Now try to fill it if we have any L1BFiles
+    if (l1bInfo%l1boaID /= 0 ) then
+      do instrumentModuleIndex = 1, size(modules)
+        call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+          & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
+      end do
+    else
+      mifGeolocation%noSurfs = 0
+      mifGeolocation%noInstances = 0
+    endif
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
     ! instructions and hand them off to people
@@ -114,13 +121,15 @@ contains ! =====     Public Procedures     =============================
       ! Node_id(key) is now n_spec_args.
       
       select case( get_spec_id(key) )
+      case ( s_forge )
+        call ForgeMinorFrames ( key, mifGeolocation )
       case( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, chunk ) ) )
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
-            & hGrids, vGrids, l1bInfo, chunk ) ) )
+            & hGrids, vGrids, l1bInfo, chunk, mifGeolocation ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplates ) ) )
@@ -177,6 +186,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.16  2001/04/20 23:11:26  livesey
+! Added `Forge' stuff
+!
 ! Revision 2.15  2001/04/10 23:44:44  vsnyder
 ! Improve 'dump'
 !
