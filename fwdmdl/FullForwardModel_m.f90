@@ -652,13 +652,9 @@ contains
       call FindClosestInstances ( temp, thisRadiance, closestInstances )
       inst = closestInstances(MAF)
 
-      !??? Shouldn't size(FwdModelConf%molecules) be no_lbl ???
-      if ( size(FwdModelConf%molecules) < 2 ) & ! do we have enough molecules?
-        & call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
-
       ! now checking spectroscopy
       got = .false.
-      nspec = size(FwdModelConf%molecules)
+      nspec = no_lbl
       noSurf  = temp%template%noSurfs
       call allocate_test ( vmrArray, nspec, n_t_zeta, 'vmrArray', ModuleName )
       vmrarray = 0.0_r8
@@ -696,10 +692,9 @@ contains
         end select
       end do ! End of Loop over species
 
-      if ( .not. got(l_h2o) .or. .not. got(l_o3) ) then
-      !make sure we have at least two molecules h2o and o3.
-        call MLSMessage(MLSMSG_Error, ModuleName,'Missing molecules H2O or O3 in cloud FM')
-      end if
+      ! make sure we have at least two molecules h2o and o3.
+      if ( .not. got(l_h2o) .or. .not. got(l_o3) ) &
+        & call MLSMessage(MLSMSG_Error, ModuleName, 'Missing molecules H2O or O3 in cloud FM' )
 
     end if ! end of cloud block
 
@@ -1446,7 +1441,7 @@ contains
         call frequency_average ! or not
 
         ! Handle PFA molecules
-        if ( FwdModelConf%firstPFA <= size(FwdModelConf%molecules) ) then
+        if ( FwdModelConf%firstPFA < size(FwdModelConf%molecules) ) then
           if ( .not. FwdModelConf%do_freq_avg ) then
             channelCenters => frequencies
           else
@@ -1648,17 +1643,14 @@ contains
     call deallocate_test ( dx_dh_out,        'dx_dh_out',        moduleName )
     call deallocate_test ( dhdz_out,         'dhdz_out',         moduleName )
 
-    if ( FwdModelConf%incl_cld ) &
-      & call deallocate_test ( scat_src%values, 'scat_src%values', &
+    if ( FwdModelConf%incl_cld ) then
+      call deallocate_test ( scat_src%values, 'scat_src%values', &
         &                      moduleName )
-
-    if ( FwdModelConf%incl_cld ) &
-      & call deallocate_test ( scat_alb%values, 'scat_alb%values', &
+      call deallocate_test ( scat_alb%values, 'scat_alb%values', &
         &                      moduleName )
-
-    if ( FwdModelConf%incl_cld ) &
-      & call deallocate_test ( cld_ext%values, 'cld_ext%values', &
+      call deallocate_test ( cld_ext%values, 'cld_ext%values', &
         &                      moduleName )
+    end if
 
     if ( temp_der ) then
       deallocate ( k_temp, STAT=i )
@@ -2348,7 +2340,7 @@ contains
           ! angles U for each temperature layer assuming a plane parallel
           ! atmosphere.
 
-          if (ptg_i == 1) then
+          if ( ptg_i == 1 ) then
           ! ??? Can this work?  On all pointings after the first one, ???
           ! ??? it uses the result for the last frequency.            ???
           ! ??? We have a different frequency grid for each pointing, ???
@@ -3090,6 +3082,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.215  2004/08/05 20:24:00  livesey
+! Added ptg switch to dump ptg_angles
+!
 ! Revision 2.214  2004/08/03 22:07:10  vsnyder
 ! Inching further toward PFA
 !
