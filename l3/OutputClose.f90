@@ -6,16 +6,19 @@
 MODULE OutputClose
 !===============================================================================
 
-   USE MLSCommon
-   USE SDPToolkit
-   USE MLSMessageModule
-   USE L3DMData
+   USE L2GPData
+   USE L2Interface
    USE L3CF
-   USE MLSStrings
+   USE L3DMData
+   USE L3SPData
+   USE MLSCommon
+   USE MLSL3Common
+   USE MLSMessageModule
    USE MLSPCF
+   USE MLSStrings
    USE OpenInit
-   USE MLSCF
    USE PCFModule
+   USE SDPToolkit
    IMPLICIT NONE
    PUBLIC
 
@@ -29,9 +32,8 @@ MODULE OutputClose
 
 ! Contents:
 
-! Subroutines -- CheckOutputDate
-!                FindDatabaseIndex
-!                WriteMetaLog
+! Definitions -- OutputFlags_T
+! Subroutines -- WriteMetaLog
 !                OutputAndClose
 
 ! Remarks:  This is a prototype module for the routines needed for the L3 Daily
@@ -40,133 +42,25 @@ MODULE OutputClose
 ! Parameters
 
    CHARACTER (LEN=*), PARAMETER :: NOOUT_ERR = ' data expected but not found &
-                                               &for output.'
+                                                &for output.'
+
+! This data type is used to store the flags indicating whether the product
+! databases are suitable for output
+
+   TYPE OutputFlags_T
+
+     LOGICAL :: writel3dmCom, writel3dmAsc, writel3dmDes
+	! daily map databases (for all output days)
+
+     LOGICAL :: writel3rCom, writel3rAsc, writel3rDes
+	! L3Residual databases (for all output days)
+
+     LOGICAL :: writel3sp
+	! L3SP database (for asc/des/com)
+
+   END TYPE OutputFlags_T
 
 CONTAINS
-
-!---------------------------------------------
-   SUBROUTINE CheckOutputDate (dataTAI, timeA)
-!---------------------------------------------
-
-! Brief description of subroutine
-! This subroutine checks the dates within a database for consistency and
-! returns the last date/time in CCSDS A format.
-
-! Arguments
-
-      REAL(r8), INTENT(IN) :: dataTAI(:)
-
-      CHARACTER (LEN=CCSDS_LEN), INTENT(OUT) :: timeA
-
-! Parameters
-
-! Functions
-
-! Variables
-
-      CHARACTER (LEN=CCSDS_LEN) :: cmpTime
-
-      INTEGER :: i, returnStatus
-
-! Check that dates within the l3dm database are consistent
-
-      returnStatus = Pgs_td_taiToUTC(dataTAI(1), cmpTime)
-      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                                                         ModuleName, TAI2A_ERR)
-
-      DO i = 2, SIZE(dataTAI)
-
-         returnStatus = Pgs_td_taiToUTC(dataTAI(i), timeA)
-         IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                                                     ModuleName, TAI2A_ERR)
-
-         IF (timeA(1:10) /= cmpTime(1:10)) CALL MLSMessage(MLSMSG_Error, &
-                  ModuleName,'Inconsistent dates within the output database.')
-
-      ENDDO
-
-!--------------------------------
-   END SUBROUTINE CheckOutputDate
-!--------------------------------
-
-!-----------------------------------------------------------
-   SUBROUTINE FindDatabaseIndex (l3dm, l3cf, indx, numGrids)
-!-----------------------------------------------------------
-
-! Brief description of subroutine
-! This subroutine checks for the existence of data in the database and returns
-! the number of structures found, and their database indices.
-
-! Arguments
-
-      TYPE( L3DMData_T ), INTENT(IN) :: l3dm(:)
-
-      TYPE( L3CFProd_T ), INTENT(IN) :: l3cf
-
-      INTEGER, INTENT(OUT) :: indx(:)
-
-      INTEGER, INTENT(OUT) :: numGrids
-
-! Parameters
-
-! Functions
-
-! Variables
-
-      CHARACTER (LEN=480) :: msr
-
-      INTEGER :: i, idm
-
-! Loop through all possible grids for the product
-
-      DO i = 1, l3cf%nGrids
-
-! Check for a corresponding name in the l3dm database
-
-         idm = LinearSearchStringArray( l3dm%name,TRIM(l3cf%quantities(i)) )
-
-! If some grid is missing, check the processing mode requested, and issue a
-! message, if necessary
-
-         IF (idm == 0) THEN
- 
-            IF ( INDEX(l3cf%quantities(i),'Ascending') /= 0 ) THEN
-
-               IF ( (l3cf%mode == 'asc') .OR. (l3cf%mode == 'all') ) THEN
-                  msr = 'Ascending ' // TRIM(l3cf%l3prodNameD) // NOOUT_ERR
-                  CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-               ENDIF
-
-            ELSE IF ( INDEX(l3cf%quantities(i),'Descending') /= 0 ) THEN
-
-                 IF ( (l3cf%mode == 'des') .OR. (l3cf%mode == 'all') ) THEN
-                    msr = 'Descending ' // TRIM(l3cf%l3prodNameD) // NOOUT_ERR
-                    CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-                 ENDIF
-
-            ELSE IF ( l3cf%quantities(i) == l3cf%l3prodNameD ) THEN
-
-                 IF ( (l3cf%mode == 'com') .OR. (l3cf%mode == 'all') ) THEN
-                    msr = TRIM(l3cf%l3prodNameD) // NOOUT_ERR
-                    CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-                 ENDIF
-
-            ENDIF
-
-         ELSE
-
-! Calculate the number of grids found; save their indices
-
-            numGrids = numGrids + 1
-            indx(numGrids) = idm
-
-         ENDIF
-
-      ENDDO
-
-!----------------------------------
-   END SUBROUTINE FindDatabaseIndex
-!----------------------------------
 
 !-------------------------------
    SUBROUTINE WriteMetaLog (pcf)
@@ -250,143 +144,145 @@ CONTAINS
    END SUBROUTINE WriteMetaLog
 !-----------------------------
 
-!-------------------------------------------------
-   SUBROUTINE OutputAndClose (pcf, cf, l3cf, l3dm)
-!-------------------------------------------------
+!-----------------------------------------------------------------------
+   SUBROUTINE OutputAndClose (l3cf, l3sp, l3dm, dmA, dmD, l3r, residA, &
+                              residD, flags)
+!-----------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Output/Close task in the MLSL3 program.
 
 ! Arguments
 
-      TYPE( PCFData_T ), INTENT(IN) :: pcf
+      TYPE( L3CFProd_T ), INTENT(IN) :: l3cf
 
-      TYPE( Mlscf_T ), INTENT(INOUT) :: cf
+      TYPE( OutputFlags_T ), INTENT(IN) :: flags
 
-      TYPE( L3CFProd_T ), POINTER :: l3cf(:)
+      TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
 
-      TYPE( L3DMData_T ), POINTER :: l3dm(:)
+      TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
+
+      TYPE( L3SPData_T ), POINTER :: l3sp(:)
 
 ! Parameters
 
 ! Functions
 
-      INTEGER, EXTERNAL :: Pgs_td_asciiTime_aToB
-
 ! Variables
 
-      CHARACTER (LEN=8) :: procDay
-      CHARACTER (LEN=CCSDS_LEN) :: dataDT
-      CHARACTER (LEN=CCSDSB_LEN) :: timeB
-      CHARACTER (LEN=FileNameLen) :: l3File, match
+      TYPE( L3DMFiles_T ) :: files
+
+      CHARACTER (LEN=FileNameLen) :: type
       CHARACTER (LEN=480) :: msr
 
-      INTEGER :: err, i, mlspcf_l3dm, numGrids, numProds
-      INTEGER :: returnStatus
-      INTEGER :: indx(maxNumGrids)
+! L3SP -- if data exist, create & write a file for this product
 
-! Check that dates within the l3dm database are consistent
-
-      CALL CheckOutputDate(l3dm%time, dataDT)
-
-! Convert to CCSDS B format, for comparison to file name
-
-      returnStatus = Pgs_td_asciiTime_aToB(dataDT,timeB)
-      IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                 ModuleName,'Error converting data time from CCSDS A to B.')
-
-      procDay = timeB(1:8)
-
-! Check that date falls within the output data range
-
-      IF ( LLT(procDay,pcf%l3StartDay) .OR. LGT(procDay,pcf%l3EndDay) ) THEN
-         msr = 'Data produced for day ' // procDay // ' is not in the &
-                                                      &specified output range.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      IF (flags%writel3sp) THEN
+         CALL OutputL3SP (l3cf, l3sp)
+      ELSE
+         msr = TRIM(l3cf%l3prodNameD) // ' L3SP' // NOOUT_ERR
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
       ENDIF
 
-! For each product in the DailyMap section of the l3cf,
+! L3DM -- check that daily map data exist in some form for the product
 
-      numProds = SIZE(l3cf)
+      IF ( .NOT.(flags%writel3dmCom) .AND. .NOT.(flags%writel3dmAsc) .AND. &
+           .NOT.(flags%writel3dmDes) ) THEN
 
-      DO i = 1, numProds
+         msr = 'No l3dm data found, no file produced for ' // l3cf%l3prodNameD
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
 
-         numGrids = 0
-         indx = 0
+      ELSE
 
-         CALL FindDatabaseIndex(l3dm, l3cf(i), indx, numGrids)
+! Expand the level in the file template
 
-! If all grids are missing, issue a warning for the product
+         CALL ExpandFileTemplate(l3cf%fileTemplate, type, 'L3DM')
 
-         IF (numGrids == 0) THEN
-            msr = 'No l3dm data found, no file produced for ' // &
-                  l3cf(i)%l3prodNameD
-            CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-            CYCLE
-         ENDIF
+! If combined l3dm data exist, write them to l3dm files; save the names of any
+! files created
 
-! Expand any fields in the given output file name
+         files%nFiles = 0
+         files%name = ''
 
-         CALL ExpandFileTemplate(l3cf(i)%fileTemplate, l3File, 'l3dm', &
-                                 pcf%outputVersion, pcf%cycle, procDay)
-
-! Check that the expanded name appears in the PCF. 
-
-         CALL SearchPCFNames(l3File, mlspcf_l3dm_start, mlspcf_l3dm_end, &
-                                mlspcf_l3dm, match)
-
-! If no match was found,
-
-         IF (mlspcf_l3dm == -1) THEN
-
-! Check the bypass flag is set.  If set, issue a message to that effect, giving
-! the file name to be used
-
-            IF (l3cf(i)%bpFlag == 1) THEN
-
-               msr = 'Bypassing PCF:  using file name ' // match
-               CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
-
-            ELSE
-
-! If not set, exit with an error.
-
-               msr = 'No match in the PCF for file ' // l3File
-               CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-
+         IF (flags%writel3dmCom) THEN
+            CALL OutputGrids(type, l3dm, files)
+         ELSE
+            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
+               msr = TRIM(l3cf%l3prodNameD) // NOOUT_ERR
+               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
             ENDIF
-     
          ENDIF
 
-! Create & write to structures in the file
+! If ascending l3dm data exist, write/append them to l3dm files; add the names
+! of any new files created to the files array
 
-         CALL OutputGrids(match, numGrids, indx, l3dm)
+         IF (flags%writel3dmAsc) THEN
+            CALL OutputGrids(type, dmA, files)
+         ELSE
+            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
+               msr = TRIM(l3cf%l3prodNameD) // 'Ascending' // NOOUT_ERR
+               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+            ENDIF
+         ENDIF
+
+! If descending l3dm data exist, write/append them to l3dm files, adding any
+! new names to the files array
+
+         IF (flags%writel3dmDes) THEN
+            CALL OutputGrids(type, dmD, files)
+         ELSE
+            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
+               msr = TRIM(l3cf%l3prodNameD) // 'Descending' // NOOUT_ERR
+               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+            ENDIF
+         ENDIF
+
+! L3Residual -- if any residual data exist, append swaths to the l3dm files
+
+         IF (flags%writel3rCom) THEN
+            CALL ResidualOutput(type, l3r)
+         ELSE
+            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'com') ) THEN
+               msr = TRIM(l3cf%l3prodNameD) // 'Residuals' // NOOUT_ERR
+               CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+            ENDIF
+         ENDIF
+
+         IF (flags%writel3rAsc) THEN
+            CALL ResidualOutput(type, residA)
+         ELSE
+            IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'asc') ) THEN
+              msr = TRIM(l3cf%l3prodNameD) // 'AscendingResiduals' // NOOUT_ERR
+              CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+            ENDIF
+         ENDIF
+
+         IF (flags%writel3rDes) THEN
+           CALL ResidualOutput(type, residD)
+         ELSE
+           IF ( (l3cf%mode == 'all') .OR. (l3cf%mode == 'des') ) THEN
+             msr = TRIM(l3cf%l3prodNameD) // 'DescendingResiduals' // NOOUT_ERR
+             CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+           ENDIF
+         ENDIF
 
 ! Write the L3DM metadata
 
-         CALL WriteMetaL3DM(match, l3cf(i)%mcf, numGrids, indx, l3dm, dataDT)
+         CALL WriteMetaL3DM(files, l3cf%mcf)
 
-      ENDDO
+      ENDIF
 
-! Write the log file metadata
+! Deallocate the databases
 
-      CALL WriteMetaLog(pcf)
-
-! Deallocate the l3dm database
+      CALL DestroyL2GPDatabase(l3r)
+      CALL DestroyL2GPDatabase(residA)
+      CALL DestroyL2GPDatabase(residD)
 
       CALL DestroyL3DMDatabase(l3dm)
+      CALL DestroyL3DMDatabase(dmA)
+      CALL DestroyL3DMDatabase(dmD)
 
-! Deallocate the l3cf pointer
-
-      DEALLOCATE(l3cf, STAT=err)
-      IF ( err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed &
-                               &deallocation of l3dm input data structures.')
-
-! Deallocate the section pointer of the CF structure
-
-      DEALLOCATE (cf%Sections, STAT=err)
-      IF ( err /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-                                         &deallocate l3cf section pointers.')
+      CALL DestroyL3SPDatabase(l3sp)
 
 !-------------------------------
    END SUBROUTINE OutputAndClose
@@ -397,6 +293,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.4  2000/12/07 21:20:43  nakamura
+!Changed search/bypass PCF logic, so that the SearchPCFNames subroutine always returns a file name with a path.
+!
 !Revision 1.3  2000/12/07 19:40:37  nakamura
 !Updated for modified ExpandFileTemplate.
 !
