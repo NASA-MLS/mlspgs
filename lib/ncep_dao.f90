@@ -86,7 +86,7 @@ contains
 
     ! Local Variables
     character ( len=NameLen) :: my_description   ! In case mixed case
-    logical, parameter :: DEEBUG = .true.
+    logical, parameter :: DEEBUG = .false.
     ! Executable code
     my_description = lowercase(description)
     if ( DEEBUG ) print *, 'Reading ' // trim(my_description) // ' data'
@@ -308,17 +308,17 @@ contains
     the_g_data%noHeights = nlev
     the_g_data%noLsts = ntime
     the_g_data%units = 'K'
-    print *, 'our quantity name ', the_g_data%quantityName
-    print *, 'our description ', the_g_data%description
-    print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, 'our quantity name ', the_g_data%quantityName
+    if(DEEBUG) print *, 'our description ', the_g_data%description
+    if(DEEBUG) print *, 'our units ', the_g_data%units
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     ! Setup the grid
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
       & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1 )
-    print *, '(Again) our quantity name ', the_g_data%quantityName
-    print *, 'our description ', the_g_data%description
-    print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
+    if(DEEBUG) print *, 'our description ', the_g_data%description
+    if(DEEBUG) print *, 'our units ', the_g_data%units
     allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
     all_the_fields = UNDEFINED_VALUE
     if ( status /= 0 ) &
@@ -646,9 +646,9 @@ contains
     enddo
     the_g_data%noLsts = 0
     the_g_data%units = 'K'
-    print *, 'our quantity name ', the_g_data%quantityName
-    print *, 'our description ', the_g_data%description
-    print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, 'our quantity name ', the_g_data%quantityName
+    if(DEEBUG) print *, 'our description ', the_g_data%description
+    if(DEEBUG) print *, 'our units ', the_g_data%units
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     ! Setup the grid
@@ -658,9 +658,9 @@ contains
     if(DEEBUG) print *, 'NoLats   : ', nLat
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
       & noLons=nlon, noLsts=1, noSzas=1, noDates=1 )
-    print *, '(Again) our quantity name ', the_g_data%quantityName
-    print *, 'our description ', the_g_data%description
-    print *, 'our units ', the_g_data%units
+    if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
+    if(DEEBUG) print *, 'our description ', the_g_data%description
+    if(DEEBUG) print *, 'our units ', the_g_data%units
     ! The dimlist as stacked up is this             Height,XDim,YDim                                                                                                              
     ! Need to reshape it so that the order becomes: Height,YDim,XDim
     if(DEEBUG) then
@@ -1553,6 +1553,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.26  2003/02/27 21:51:02  pwagner
+! Commented out the last prints
+!
 ! Revision 2.25  2003/02/27 18:38:49  pwagner
 ! Removed some intent(out); Lahey takes perverse delight in resetting such to undefined
 !
