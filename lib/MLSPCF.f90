@@ -17,12 +17,31 @@ MODULE MLSPCF
    INTEGER, PARAMETER :: mlspcf_l1b_eng_end = 20081
    !
    INTEGER, PARAMETER :: mlspcf_l2gp_start = 21000                 
-   INTEGER, PARAMETER :: mlspcf_l2gp_end = 21439
+   INTEGER, PARAMETER :: mlspcf_l2gp_end = 21050
+   !
+   INTEGER, PARAMETER :: mlspcf_MCF_start = 40260 
+   INTEGER, PARAMETER :: mlspcf_MCF_end = 40276
    !
    INTEGER, PARAMETER :: mlspcf_l2aux_start = 21440
-   INTEGER, PARAMETER :: mlspcf_l2aux_end = 21479
+   INTEGER, PARAMETER :: mlspcf_l2aux_end = 21440
    !
    INTEGER, PARAMETER :: mlspcf_l2fwm_start = 21480
    INTEGER, PARAMETER :: mlspcf_l2fwm_end = 21480
    !
+   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 21500
+   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 21500
+
+   INTEGER, PARAMETER :: mlspcf_l2dao_start = 21600
+   INTEGER, PARAMETER :: mlspcf_l2dao_end = 21600
+
+   INTEGER, PARAMETER :: mlspcf_l2clim_start = 21700
+   INTEGER, PARAMETER :: mlspcf_l2clim_end = 21700
+
+   INTEGER, PARAMETER :: mlspcf_l2cf_start = 21482
+   INTEGER, PARAMETER :: mlspcf_l2cf_end = 21482
+   !
+   INTEGER, PARAMETER :: mlspcf_nomen_start = 23000
+   INTEGER, PARAMETER :: mlspcf_nomen_end = 23000
 END MODULE MLSPCF
+
+!$Log $
