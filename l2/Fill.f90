@@ -47,7 +47,7 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
     use DumpCommand_m, only: DumpCommand
-    use Expr_M, only: EXPR
+    use Expr_M, only: EXPR, GetIndexFlagsFromList
     use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
@@ -137,7 +137,7 @@ contains ! =====     Public Procedures     =============================
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
     use Molecules, only: L_H2O
-    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID, GetIndexFlagsFromList
+    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
     use QuantityTemplates, only: Epoch, QuantityTemplate_T
     use RHIFromH2O, only: RHIFromH2O_Factor, RHIPrecFromH2O
@@ -6854,6 +6854,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.273  2004/05/28 00:57:49  vsnyder
+! Move GetIndexFlagsFromList from MoreTree to Expr_m
+!
 ! Revision 2.272  2004/05/19 20:38:04  vsnyder
 ! Remove unreferenced symbols, polish some cannonballs
 !
