@@ -41,12 +41,12 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
    TYPE( CreateFlags_T ) :: flag
    TYPE( L3CFMDef_T ) :: cfDef
    TYPE( L3MMData_T ) :: mm, mmA, mmD
-   TYPE( L3MZData_T ) :: mz, mzA, mzD
+   TYPE( L3MZData_T ) :: mzA, mzD
    TYPE( Mlscf_T ) :: cf
    TYPE( PCFMData_T ) :: pcf
    TYPE( L2GPData_T ), POINTER :: l2gp(:)
    TYPE( L3CFMProd_T ), POINTER :: cfStd(:), cfDg(:)
-   TYPE( L3DZData_T ), POINTER :: dz(:), dzA(:), dzD(:)
+   TYPE( L3DZData_T ), POINTER :: dzA(:), dzD(:)
    TYPE( OutputFiles_T ) :: dFiles, sFiles
 
    CHARACTER (LEN=480) :: msr
@@ -101,8 +101,8 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 ! Core processing for Standard products
 
       CALL MonthlyCoreProcessing(cfStd(i), pcf, cfDef, l2Days, l2gp, mm, mmA, mmD, &
-                                 mz, mzA, mzD, dz, dzA, dzD)
-      
+                                 mzA, mzD, dzA, dzD)
+
       msr = 'CORE processing completed for ' // TRIM(cfStd(i)%l3prodName) &
             // '; starting Output task ...'
       CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
@@ -110,9 +110,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 ! Deallocate the L2GP database
 
       CALL DestroyL2GPDatabase(l2gp)
-
-      CALL DestroyL3DZDatabase(dz)
-      CALL DeallocateL3MZ(mz)
 
 ! Output and Close for the product
 
@@ -164,7 +161,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 ! Monthly Core processing
 
          CALL MonthlyCoreProcessing(cfDg(i), pcf, cfDef, l2Days, l2gp, &
-                                    mm, mmA, mmD, mz, mzA, mzD, dz, dzA, dzD)
+                                    mm, mmA, mmD, mzA, mzD, dzA, dzD)
 
          msr = 'CORE processing completed for ' // TRIM(cfDg(i)%l3prodName) &
                // '; starting Output task ...'
@@ -173,9 +170,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 ! Deallocate the L2GP database
 
          CALL DestroyL2GPDatabase(l2gp)
-
-         CALL DestroyL3DZDatabase(dz)
-         CALL DeallocateL3MZ(mz)
 
 ! Output and Close for the product
 
@@ -204,6 +198,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.7  2001/09/26 19:48:28  nakamura
+! Removed com ZM output; added cfDg deallocate.
+!
 ! Revision 1.6  2001/09/06 18:48:39  nakamura
 ! Modified so that dg products are processed with the same Core as std prods.
 !
