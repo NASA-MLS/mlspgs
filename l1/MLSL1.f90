@@ -11,9 +11,7 @@
   USE Radiances, ONLY : CalcLimbRads
   USE L1BOutUtils, ONLY : OutputL1Bdata
   USE Close_Files, ONLY: CloseFiles
-  USE MACHINE, only: GETARG, HP
-  USE MLSMessageModule, ONLY: MLSMSG_Info, MLSMSG_Error, MLSMSG_Warning, MLSMessage, &
-       MLSMessageExit
+  USE MLSMessageModule, ONLY: MLSMSG_Info, MLSMessage, MLSMessageExit
   IMPLICIT NONE
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -21,14 +19,15 @@
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
-  character(len=10) :: char_argument
   integer, parameter :: NORMAL_EXIT_STATUS = 2
   logical :: more_data, do_calib
+
+  CALL MLSMessage (MLSMSG_Info, ModuleName, &
+       & "Start EOS MLS Level 1 data processing.")
 
   CALL OpenAndInitialize
 
   DO
-
      CALL SortAndQualify (more_data, do_calib)
 
      IF (do_calib) THEN
@@ -55,6 +54,9 @@
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2002/11/12 21:50:03  jdone
+! Remove obsolete variables from previous.
+!
 ! Revision 2.3  2002/11/07 21:35:33  jdone
 ! Added HDF4/HDF5 switch.
 !
