@@ -2,7 +2,7 @@ module SLABS_SW_M
 
   use MLSCommon, only: R8, RP, IP
   use SpectroscopyCatalog_m, only: CATALOG_T, Lines
-  use Units, only: SqrtPi
+  use Units, only: Pi, SqrtPi
 
   implicit NONE
 
@@ -252,8 +252,68 @@ contains
 
 ! internals
 
-    real(rp), parameter :: xl=5.2_rp, yl=0.05_rp, yh=0.6_rp, dydx=(yh-yl)/xl
-    real(rp) :: xa
+    integer :: I, J, MAXJ, N
+    real :: DELY, DX, F, FD, IS, IT, Q(5), R(5), RS, RT, W, XA, Y2
+
+    !   Note that the dimensions of R and Q are 2 less than the a and b
+    !   coefficients because we start the r and q coeffients at 2.
+
+    ! For Hui
+    real(rp), parameter :: a(7) = (/ &
+       &     122.607931777104326_rp, 214.382388694706425_rp, &
+       &     181.928533092181549_rp,  93.155580458138441_rp, &
+       &      30.180142196210589_rp,   5.912626209773153_rp, &
+       &       0.564189583562615_rp /)
+
+    real(rp), parameter :: b(7) = (/ &
+       &     122.607931773875350_rp, 352.730625110963558_rp, &
+       &     457.334478783897737_rp, 348.703917719495792_rp, &
+       &     170.354001821091472_rp,  53.992906912940207_rp, &
+       &      10.479857114260399_rp /)
+
+    ! For Drayson
+    real(rp), parameter :: TwoOvSPi = 2.0_rp * oneOvSPi  ! 2.0/Sqrt(Pi)
+
+    real(rp), parameter :: H = 0.2_rp
+    real(rp), parameter :: HN(26) = (/(h*(i-1),i=1,26)/)
+    real(rp), parameter :: RI(15) = (/(-i/2.0_rp,i=1,15)/)
+
+    real(rp), parameter :: Dawson(26) = (/  &
+       &   0.000000000000000000000_rp, 0.194751033368028049654_rp, &
+       &   0.359943481934888104273_rp, 0.474763203662977930602_rp, &
+       &   0.532101707056365429017_rp, 0.538079506912768419134_rp, &
+       &   0.507273496407739614173_rp, 0.456507237526897257242_rp, &
+       &   0.399939894323081412623_rp, 0.346772769114872245155_rp, &
+       &   0.301340388923791966033_rp, 0.264510759950831957658_rp, &
+       &   0.235313055663842576224_rp, 0.212165124242499004111_rp, &
+       &   0.193550723859366792343_rp, 0.178271030610558287342_rp, &
+       &   0.165461999878675203167_rp, 0.154524057736963452532_rp, &
+       &   0.145041773054088859351_rp, 0.136721221674636496320_rp, &
+       &   0.129348001236005115591_rp, 0.122760816006522922545_rp, &
+       &   0.116835039953297254075_rp, 0.111472268532125307267_rp, &
+       &   0.106593431283281074400_rp, 0.102134074424276835438_rp /)
+
+    real(rp), parameter :: FDer1(26) = 1.0_rp-2.0_rp*hn*dawson
+    real(rp), parameter :: FDer2(26) = (hn*FDer1+Dawson)/ri(2)
+    real(rp), parameter :: FDer3(26) = (hn*FDer2+FDer1)/ri(3)
+    real(rp), parameter :: FDer4(26) = (hn*FDer3+FDer2)/ri(4)
+    real(rp), parameter :: FDer5(26) = (hn*FDer4+FDer3)/ri(5)
+    real(rp), parameter :: FDer6(26) = (hn*FDer5+FDer4)/ri(6)
+
+    ! For 2-pt Gauss-Hermite
+    real(rp), parameter :: gx = 0.70710678118655_rp ! 1.0/sqrt(2.0)
+    real(rp), parameter :: gw = 0.88622692545277_rp / Pi
+
+    ! For 6-pt Gauss-Hermite
+    real(rp), parameter :: gx6(3) = (/ 4.36077411927616508271e-1_rp, &
+                                       1.33584907401369694957_rp,    &
+                                       2.35060497367449222280_rp /)
+    real(rp), parameter :: gw6(3) = (/ 7.24629595224392524608e-1_rp, &
+                                       1.57067320322856644036e-1_rp, &
+                                       4.53000990550884564224e-3_rp /) / Pi
+
+    real(rp), parameter :: TwoThirds = 2.0_rp / 3.0_rp
+    real(rp), parameter :: XL=5.2_rp, YL=0.05_rp, YH=0.6_rp, DYDX=(yh-yl)/xl
 
 ! This is sorted in likely occurance of each case
 
@@ -262,33 +322,95 @@ contains
 ! I am assuming that the OR are evaluated sequentially until the first
 ! true is found. Also routines are ordered according to speed
 
-    if ( y + 0.666666*xa > 100.0_rp ) then
+    if ( y + TwoThirds*xa > 100.0_rp ) then
 
-      u = rlorentz(xa,y)
+      ! Here x is sqrt(ln2)*delnu / wd and y is sqrt(ln2)*wc / wd
+      ! u = rlorentz ( x, y )
+      u = OneOvSPi * y / (y*y + x*x)
 
     else if ( y + 0.6875_rp * xa > 11.0_rp ) then
 
 ! Drayson's quick 2pt hermite integral (essentially a lorentz)
 
-      u = rvoigth2(xa,y)
+      ! u = rvoigth2(xa,y)
+      y2 = y**2
+      u = gw * y * (1.0_rp/(y2 + (xa-gx)**2) + &
+        &           1.0_rp/(y2 + (xa+gx)**2))
 
     else if ( y > 0.6_rp .OR. y > yl + dydx*xa ) then
 
 ! Intermediate region
 
-      u = rhui6(xa,y)
+      ! u = rhui6(xa,y)
+
+      !   Fill the r, q coefficients with the recursion
+      !   r(0)=1.0, r(1) = y q(0) = 0.0, q(1) = -x
+
+      r(1) = y**2 - xa**2
+      q(1) = -2.0_rp*xa*y
+      do i = 2, 5
+        r(i) = xa * q(i-1) +  y * r(i-1)
+        q(i) = y  * q(i-1) - xa * r(i-1)
+      end do
+      rs = a(1) + a(2)*y  + dot_product(a(3:),r)
+      rt = b(1) + b(2)*y  + dot_product(b(3:),r) + xa * q(5) +  y * r(5)
+      is =      - a(2)*xa + dot_product(a(3:),q)
+      it =      - b(2)*xa + dot_product(b(3:),q) +  y * q(5) - xa * r(5)
+
+      u = (rs*rt + is*it) / (rt*rt + it*it)
 
     else if ( xa > 5.2_rp ) then
 
 ! small y large x limit
 
-      u = rvoigth6(xa,y)
+      ! u = rvoigth6(xa,y)
 
+      ! Real Voigt region IV 6pt GH integration
+
+      y2 = y**2
+
+      u = y * ( gw6(1) * (1.0_rp/(y2 + (xa-gx6(1))**2) + &
+                     &    1.0_rp/(y2 + (xa+gx6(1))**2)) + &
+                gw6(2) * (1.0_rp/(y2 + (xa-gx6(2))**2) + &
+                     &    1.0_rp/(y2 + (xa+gx6(2))**2)) + &
+                gw6(3) * (1.0_rp/(y2 + (xa-gx6(3))**2) + &
+                     &    1.0_rp/(y2 + (xa+gx6(3))**2)) )
     else
 
 ! Near line center where Doppler dominates Pressure broadening
 
-      u = rdrayson(xa,y)
+      ! u = rdrayson(xa,y)
+
+      !******** Region I. Compute Dawson's function at x from Taylor series
+
+      if ( y <= 1.0e-12_rp ) then
+        u = exp(-xa*xa)
+      else
+
+        !  Taylor series expansion about y = 0.0
+
+        y2 = y*y
+        j = xa / h
+        n = 1 + min(j, 25)
+        dx = xa - hn(n)
+        f = 0.0_rp
+        if ( xa > 0.05*h) &
+           f = (((((fDer6(n)*dx + fDer5(n))*dx + fDer4(n))*dx  + &
+                 &  fDer3(n))*dx + fDer2(n))*dx + fDer1(n))*dx + Dawson(n)
+        dely = -y
+        fd = 1.0_rp - 2.0_rp * xa * f
+        w = fd * dely
+        j = 5.0_rp + (12.5_rp - xa) * 0.8_rp * y
+        maxj = min(j, 14)
+        do j = 2, maxj, 2
+          f  = (xa*fd + f) / ri(j)
+          fd  = (xa*f + fd) / ri(j+1)
+          dely = -y2 * dely
+          w = w + fd * dely
+        end do
+
+        u = exp(y2-xa*xa)*cos(2.0_rp*xa*y) + TwoOvSpi*w
+      end if
 
     end if
 
@@ -311,9 +433,13 @@ contains
 
 ! internals
 
-    real(rp), parameter :: xl=5.2_rp, yl=0.05_rp, yh=0.6_rp, dydx=(yh-yl)/xl
-    real(rp) :: xa
-    complex(rp) :: uv
+    ! For 2-pt Gauss-Hermite
+    real(rp), parameter :: GX = 0.70710678118655_rp ! 1.0/sqrt(2.0)
+    real(rp), parameter :: GW = 0.88622692545277_rp / Pi
+
+    real(rp), parameter :: XL=5.2_rp, YL=0.05_rp, YH=0.6_rp, DYDX=(yh-yl)/xl
+    real(rp) :: DENOM1, DENOM2, XA, XM, XP, Y2
+    complex(rp) :: UV
 
 ! This is sorted in likely occurance of each case
 
@@ -333,9 +459,15 @@ contains
 
     if ( y + 0.6875_rp * xa > 11.0_rp ) then
 
-! Drayson's quick 2pt hermite integral (essentially a lorentz)
+      ! Drayson's quick 2pt hermite integral (essentially a lorentz)
 
-      uv = cvoigth2(xa,y)
+      ! uv = cvoigth2(xa,y)
+      xm = xa - gx
+      xp = xa + gx
+      y2 = y**2
+      denom1 = gw/(y2 + xm**2)
+      denom2 = gw/(y2 + xp**2)
+      uv = CMPLX(y*(denom1+denom2), xm*denom1 + xp*denom2, KIND=rp)
 
     else if ( y > 0.6_rp .OR. y > yl + dydx*xa ) then
 
@@ -363,14 +495,14 @@ contains
   end subroutine Simple_Voigt
 
   ! ---------------------------------------------------  RLorentz  -----
-  real(rp) elemental function RLorentz ( x, y )
+    real(rp) pure function RLorentz ( x, y )
 
-! Real Lorentz
+  ! Real Lorentz
 
     real(rp), intent(in) :: x ! sqrt(ln2)*delnu / wd
     real(rp), intent(in) :: y ! sqrt(ln2)*wc / wd
 
-! Internals
+  ! Internals
 
     rlorentz = OneOvSPi * y / (y*y + x*x)
 
@@ -402,7 +534,7 @@ contains
 !   Internals
 
     real(rp), parameter :: gx = 0.70710678118655_rp ! 1.0/sqrt(2.0)
-    real(rp), parameter :: gw = 0.28209479177388_rp
+    real(rp), parameter :: gw = 0.88622692545277_rp / Pi
     real(rp) :: y2
 
     y2 = y**2
@@ -422,7 +554,7 @@ contains
 !   Internals
 
     real(rp), parameter :: gx = 0.70710678118655_rp ! 1.0/sqrt(2.0)
-    real(rp), parameter :: gw = 0.28209479177388_rp
+    real(rp), parameter :: gw = 0.88622692545277_rp / Pi
     real(rp) :: denom1,denom2,xm,xp,y2
 
     xm = x-gx
@@ -445,7 +577,6 @@ contains
 !   Internals
 
     integer, parameter :: n = 3
-    real(rp), parameter :: Pi = 3.1415926535897932385_rp
     real(rp), parameter :: gx(n) = (/ 4.36077411927616508271e-1_rp, &
                                       1.33584907401369694957_rp,    &
                                       2.35060497367449222280_rp /)
@@ -630,17 +761,9 @@ contains
 ! internal stuff
 
     real(rp) :: Y2, DX, F, FD, W, dely
-    y2 = y*y
 
 !******** Region I. Compute Dawson's function at x from Taylor series
 
-    j = x / h
-    n = 1 + min(j, 25)
-    dx = x - hn(n)
-    f = 0.0_rp
-    if ( x > 0.05*h) &
-       f = (((((fDer6(n)*dx + fDer5(n))*dx + fDer4(n))*dx  + &
-             &  fDer3(n))*dx + fDer2(n))*dx + fDer1(n))*dx + Dawson(n)
     if ( y <= 1.0e-12_rp ) then
       rdrayson = exp(-X*X)
       return
@@ -648,6 +771,14 @@ contains
 
 !  Taylor series expansion about y = 0.0
 
+    y2 = y*y
+    j = x / h
+    n = 1 + min(j, 25)
+    dx = x - hn(n)
+    f = 0.0_rp
+    if ( x > 0.05*h) &
+       f = (((((fDer6(n)*dx + fDer5(n))*dx + fDer4(n))*dx  + &
+             &  fDer3(n))*dx + fDer2(n))*dx + fDer1(n))*dx + Dawson(n)
     dely = -y
     fd = 1.0_rp - 2.0_rp * x * f
     w = fd * dely
@@ -1095,6 +1226,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.22  2003/07/04 02:49:03  vsnyder
+! Simplify interface to Get_GL_Slabs_Arrays
+!
 ! Revision 2.21  2003/06/18 14:45:00  bill
 ! added subsetting feature for T-ders
 !
