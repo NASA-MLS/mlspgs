@@ -32,7 +32,10 @@ module FullForwardModel_m
   use AntennaPatterns_m, only: ANTENNAPATTERNS
   use FilterShapes_m, only: FILTERSHAPES
   use PointingGrid_m, only: POINTINGGRIDS
-  use Load_sps_data_m, only: LOAD_SPS_DATA, Grids_T
+
+! use Load_sps_data_m, only: LOAD_SPS_DATA, Grids_T
+  use Load_sps_data_m, only: LOAD_SPS_DATA, LOAD_DERIV_FLAG, Grids_T ! ** ZEBUG
+
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
   use Molecules, only: L_EXTINCTION, spec_tags
@@ -153,6 +156,10 @@ contains ! ================================ FullForwardModel routine ======
     logical :: DOTHIS                   ! Flag for lines
     character (len=32) :: molName       ! Name of a molecule
 
+    logical :: dummy(2) = (/.false.,.false./)  ! dummy Flag array
+
+    character (len=78) :: ErrMsg        ! Error Message
+
     integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
 
@@ -173,13 +180,16 @@ contains ! ================================ FullForwardModel routine ======
 
     logical, dimension(:), pointer :: SKIP_ETA_FRQ  ! 'Avoid non-freq. mol.'
 
-    logical, dimension(:,:), pointer :: DO_CALC_ZP  ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_FZP ! 'Avoid zeros' indicator
-    logical, dimension(:,:), pointer :: DO_CALC_DN ! 'Avoid zeros'
-    logical, dimension(:,:), pointer :: DO_CALC_DV ! 'Avoid zeros'
-    logical, dimension(:,:), pointer :: DO_CALC_DW ! 'Avoid zeros'
-    logical, dimension(:,:), pointer :: DO_CALC_HYD ! 'Avoid zeros'
-    logical, dimension(:,:), pointer :: DO_CALC_T ! 'Avoid zeros'
+    logical, dimension(:,:), pointer :: DO_CALC_ZP    ! 'Avoid zeros' indicator
+    logical, dimension(:,:), pointer :: DO_CALC_FZP   ! 'Avoid zeros' indicator
+    logical, dimension(:,:), pointer :: DO_CALC_DN    ! 'Avoid zeros'
+    logical, dimension(:,:), pointer :: DO_CALC_DV    ! 'Avoid zeros'
+    logical, dimension(:,:), pointer :: DO_CALC_DW    ! 'Avoid zeros'
+    logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
+    logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
+
+    logical, dimension(:), pointer :: T_DERIV_FLAG  ! Array of Flags indicating which 
+                                                    ! Temp. coefficient to process
 
     real(r8) :: FRQ                     ! Frequency
     real(r8) :: CENTERFREQ              ! Of band
@@ -194,6 +204,7 @@ contains ! ================================ FullForwardModel routine ======
     real(rp) :: RAD                     ! Radiance
     real(rp) :: REQ                     ! Equivalent Earth Radius
     real(rp) :: THISRATIO               ! A sideband ratio
+    real(rp) :: ORB_INC                 ! orbital incline angle, Radians
 
     real(rp), dimension(1) :: ONE_TAN_HT ! ***
     real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
@@ -332,7 +343,7 @@ contains ! ================================ FullForwardModel routine ======
     nullify ( gl_ndx, gl_indgen )
     nullify ( do_gl, lin_log )
     nullify ( do_calc_zp, do_calc_dn, do_calc_dv, do_calc_dw, &
-      & do_calc_hyd, do_calc_t, do_calc_fzp )
+           &  do_calc_hyd, do_calc_t, do_calc_fzp, t_deriv_flag )
     nullify ( k_temp, k_atmos, k_spect_dw, k_spect_dn, k_spect_dv )
     nullify ( frequencies )
     nullify ( alpha_path_c, del_s, dhdz_path, drad_df, drad_dn, &
@@ -385,6 +396,7 @@ contains ! ================================ FullForwardModel routine ======
       & quantityType=l_elevOffset, radiometer=firstSignal%radiometer )
     orbIncline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_orbitInclination )
+    ORB_INC = orbIncline%values(1,1)*Deg2Rad
     spaceRadiance => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_spaceRadiance )
     earthRefl => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -701,14 +713,11 @@ contains ! ================================ FullForwardModel routine ======
 
     if ( toggle(emit) .and. levels(emit) > 0 ) &
       & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
-    call two_d_hydrostatic(temp%template%surfs(:,1), &
-      &  temp%template%phi(1,:)*Deg2Rad,  &
-      &  temp%values, &
+    call two_d_hydrostatic(temp%template%surfs(:,1),  &
+      &  temp%template%phi(1,:)*Deg2Rad,temp%values,  &
       &  spread(refGPH%template%surfs(1,1),1,n_t_phi),&
-      &  0.001*refGPH%values(1,:),  &
-      &  z_glgrid,orbIncline%values(1,1)*Deg2Rad,    &
-      &  t_glgrid, h_glgrid, dhdz_glgrid, &
-      &  dh_dt_glgrid )
+      &  0.001*refGPH%values(1,:),z_glgrid,ORB_INC,   &
+      &  t_glgrid, h_glgrid, dhdz_glgrid,dh_dt_glgrid )
 
     call allocate_test ( tan_inds, no_tan_hts, 'tan_inds', ModuleName )
     call Hunt ( z_glgrid-0.0001_rp, &
@@ -793,6 +802,20 @@ contains ! ================================ FullForwardModel routine ======
       ! Allocation for metrics routine when Temp. derivative is needed:
 
       sv_t_len = n_t_zeta*(windowFinish-windowStart+1)
+
+      call Allocate_test ( t_deriv_flag, sv_t_len, 't_deriv_flag', ModuleName )
+
+      t_deriv_flag(1:sv_t_len) = .true.   ! ** initialize values to .TRUE.
+
+! ** ZEBUG *** Loading the Temp. derivative coeff. flag from file ***
+      Spectag = 10000     ! Temperature's 'Spectag'
+      j = WindowFinish - WindowStart + 1
+      Call load_deriv_flag(Spectag,j,n_t_zeta,1,t_deriv_flag,ErrMsg,k)
+      if(k < 0) then
+        Print *,ErrMsg(1:Len_Trim(ErrMsg))
+        Print *,'** Setting all t_deriv_flag = .TRUE.'
+      endif
+! ** END ZEBUG ***
 
       call Allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', ModuleName )
       call Allocate_test ( dbeta_dt_path_c, npc, no_mol, 'dbeta_dt_path_c', ModuleName )
@@ -989,13 +1012,12 @@ contains ! ================================ FullForwardModel routine ======
               &  z_glgrid,h_glgrid(:,windowStart:windowFinish),              &
               &  t_glgrid(:,windowStart:windowFinish),                       &
               &  dhdz_glgrid(:,windowStart:windowFinish),                    &
-              &  orbIncline%values(1,1)*Deg2Rad,h_path(1:no_ele),            &
-              &  phi_path(1:no_ele),t_path(1:no_ele),dhdz_path(1:no_ele),    &
-              &  Req,TAN_PHI_H_GRID=one_tan_ht,                              &
-              &  TAN_PHI_T_GRID=one_tan_temp,                                &
+              &  ORB_INC,t_deriv_flag,h_path(1:no_ele),phi_path(1:no_ele),   &
+              &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
+              &  TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,      &
               &  NEG_H_TAN = (/neg_tan_ht/),DHTDTL0=tan_dh_dt,               &
-              &  DHIDTLM=dh_dt_glgrid(:,windowStart:windowFinish,:), &
-              &  DHITDTLM=dh_dt_path(1:no_ele,:),      &
+              &  DHIDTLM=dh_dt_glgrid(:,windowStart:windowFinish,:),         &
+              &  DHITDTLM=dh_dt_path(1:no_ele,:),                            &
               &  Z_BASIS = temp%template%surfs(:,1),                         &
               &  ETA_ZXP=eta_zxp_t(1:no_ele,:),                              &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
@@ -1005,10 +1027,10 @@ contains ! ================================ FullForwardModel routine ======
               &  temp%template%geodLat(1,windowStart:windowFinish)*Deg2Rad,  &
               &  z_glgrid,h_glgrid(:,windowStart:windowFinish),              &
               &  t_glgrid(:,windowStart:windowFinish),                       &
-              &  dhdz_glgrid(:,windowStart:windowFinish),                    &
-              &  orbIncline%values(1,1)*Deg2Rad,h_path(1:no_ele),            &
-              &  phi_path(1:no_ele),t_path(1:no_ele),dhdz_path(1:no_ele),    &
-              &  Req,TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,  &
+              &  dhdz_glgrid(:,windowStart:windowFinish),ORB_INC,            &
+              &  dummy,h_path(1:no_ele),phi_path(1:no_ele),                  &
+              &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
+              &  TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,      &
               &  NEG_H_TAN = (/neg_tan_ht/))
           endif
 
@@ -1021,10 +1043,10 @@ contains ! ================================ FullForwardModel routine ======
               &  temp%template%geodLat(1,windowStart:windowFinish)*Deg2Rad,  &
               &  z_glgrid,h_glgrid(:,windowStart:windowFinish),              &
               &  t_glgrid(:,windowStart:windowFinish),                       &
-              &  dhdz_glgrid(:,windowStart:windowFinish),                    &
-              &  orbIncline%values(1,1)*Deg2Rad,h_path(1:no_ele),            &
-              &  phi_path(1:no_ele),t_path(1:no_ele),dhdz_path(1:no_ele),    &
-              &  Req,TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,  &
+              &  dhdz_glgrid(:,windowStart:windowFinish),ORB_INC,            &
+              &  t_deriv_flag,h_path(1:no_ele),phi_path(1:no_ele),           &
+              &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
+              &  TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,      &
               &  DHTDTL0=tan_dh_dt,                                          &
               &  DHIDTLM=dh_dt_glgrid(:,windowStart:windowFinish,:),         &
               &  DHITDTLM=dh_dt_path(1:no_ele,:),                            &
@@ -1037,10 +1059,10 @@ contains ! ================================ FullForwardModel routine ======
               &  temp%template%geodLat(1,windowStart:windowFinish)*Deg2Rad,  &
               &  z_glgrid,h_glgrid(:,windowStart:windowFinish),              &
               &  t_glgrid(:,windowStart:windowFinish),                       &
-              &  dhdz_glgrid(:,windowStart:windowFinish),                    &
-              &  orbIncline%values(1,1)*Deg2Rad,h_path(1:no_ele),            &
-              &  phi_path(1:no_ele),t_path(1:no_ele),dhdz_path(1:no_ele),    &
-              &  Req,TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp)
+              &  dhdz_glgrid(:,windowStart:windowFinish),ORB_INC,            &
+              &  dummy,h_path(1:no_ele),phi_path(1:no_ele),                  &
+              &  t_path(1:no_ele),dhdz_path(1:no_ele),Req,                   &
+              &  TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp)
           endif
         endif
 
@@ -1936,6 +1958,7 @@ contains ! ================================ FullForwardModel routine ======
       call Deallocate_test ( do_calc_t, 'do_calc_t', ModuleName )
       call Deallocate_test ( eta_zxp_t, 'eta_zxp_t', ModuleName )
       call Deallocate_test ( tan_dh_dt, 'tan_dh_dt', ModuleName )
+      call Deallocate_test ( t_deriv_flag, 't_deriv_flag', ModuleName )
     endif
 
     if ( FwdModelConf%atmos_der ) then
@@ -1978,6 +2001,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.24  2002/01/27 08:37:45  zvi
+! Adding Users selected coefficients for derivatives
+!
 ! Revision 2.22  2002/01/08 01:01:19  livesey
 ! Some changes to my_catalog and one_tan_height and one_tan_temp
 !

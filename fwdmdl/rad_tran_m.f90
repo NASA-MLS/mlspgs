@@ -240,15 +240,15 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
   n_path = SIZE(tau)
   mid = n_path / 2
 !
-  ALLOCATE(d_delta_df(1:n_path))
   ALLOCATE(do_calc(1:n_path))
-
+  ALLOCATE(d_delta_df(1:n_path))
+!
   sv_i = 0
   drad_df(:) = 0.0_rp
 !
   DO sps_i = 1 , n_sps
 !
-    n_tot = Grids_f%no_f(sps_i)*Grids_f%no_p(sps_i)*Grids_f%no_p(sps_i)
+    n_tot = Grids_f%no_f(sps_i)*Grids_f%no_z(sps_i)*Grids_f%no_p(sps_i)
     DO sv_j = 1 , n_tot
 !
       sv_i = sv_i + 1
@@ -912,6 +912,9 @@ END SUBROUTINE drad_tran_dt
 !----------------------------------------------------------------------
 End module RAD_TRAN_M
 ! $Log$
+! Revision 2.1  2002/01/27 08:37:51  zvi
+! Adding Users selected coefficients for derivatives
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !

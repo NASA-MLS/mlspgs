@@ -16,7 +16,8 @@ module LOAD_SPS_DATA_M
   implicit none
 
   Private
-  Public :: load_sps_data
+! Public :: load_sps_data
+  Public :: load_sps_data, load_deriv_flag    ! ** ZEBUG
 
   type, public :: Grids_T             ! Fit all Gridding categories
     integer,  pointer :: no_f(:)      ! No. of entries in frq. grid per sps
@@ -37,10 +38,10 @@ module LOAD_SPS_DATA_M
 contains
 !-------------------------------------------------------------------
 
-  subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, &
-        &    mol_cat_index, p_len, f_len, h2o_ind, ext_ind, lin_log, &
-        &    sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, temp, &
-        &    MyCatalog,skip_eta_frq)
+ subroutine load_sps_data(fwdModelIn, fwdModelExtra, molecules, radiometer, &
+       &    mol_cat_index, p_len, f_len, h2o_ind, ext_ind, lin_log, &
+       &    sps_values, Grids_f, Grids_dw, Grids_dn, Grids_dv, temp, &
+       &    MyCatalog,skip_eta_frq)
 
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
 
@@ -83,7 +84,8 @@ contains
 
     type (VectorValue_T), pointer :: F             ! An arbitrary species
 
-    Integer, allocatable :: dum_phi(:),dum_zet(:),dum_frq(:)
+    Character(len=78) :: ErrMsg
+    Logical, allocatable :: deriv_flag(:)
 
     Integer :: mp, mz, ii, jj, kk
     Real(r8) :: Tmp, Frq, P, w, v
@@ -239,29 +241,13 @@ contains
 !
     f_len = f_len - 1
 
-    if(f_len > -100) return    ! ** By-pass the tempoprary code below ..
+!   if(f_len > -100) return    ! ** By-pass the tempoprary code below ..
 !
 ! *** ZEBUG: Temporary code to load the derivatives flags for each species
 !
-    Close(31,iostat=j)
-    Open(31,file='der_flags.dat',status='OLD',action='READ',iostat=j)
+    allocate (deriv_flag(f_len), stat=j )
     if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Could not open der_flags.dat file' )
-!
-    n = Maxval(Grids_f%no_p(:))
-    allocate ( dum_phi(n), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'dum_phi' )
-
-    n = Maxval(Grids_f%no_z(:))
-    allocate ( dum_zet(n), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'dum_zet' )
-
-    n = Maxval(Grids_f%no_f(:))
-    allocate ( dum_frq(n), stat=j )
-    if ( j /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'dum_frq' )
+                                  & MLSMSG_Allocate//'deriv_flag array' )
 
     m = 0
     do ii = 1, no_mol
@@ -269,60 +255,20 @@ contains
       kk = abs(molecules(i))
       if ( kk == l_extinction ) CYCLE
       Spectag = spec_tags(kk)
-      Rewind(31,iostat=j)
-      do
-        Read(31,*,iostat=j) n
-        if(j == 0) then
-          if(Spectag == n) EXIT
-        else if(j < 0) then
-          Print *,'** Spectag:',Spectag
-          Print *,'   Not found in in der_flags.dat file'
-          Call MLSMessage ( MLSMSG_Error, ModuleName, ' ')
-        else
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
-         &                  'Error reading der_flags.dat file' )
-        endif
-      end do
       kp = Grids_f%no_p(ii)
       kz = Grids_f%no_z(ii)
       kf = Grids_f%no_f(ii)
-      dum_phi = 0
-      read(31,*,iostat=j) k,dum_phi(1:k)
-      if(k /= kp) then
-        Print *,'** Spectag:',Spectag,' Inputs: phi deriv. flags ..'
-        Print *,'   Incosistent number of entries in der_flags.dat file'
-        Call MLSMessage ( MLSMSG_Error, ModuleName, ' ')
+      Call load_deriv_flag(Spectag,kp,kz,kf,deriv_flag,ErrMsg,j)
+      if(j < 0) then
+        Print *,ErrMsg(1:Len_Trim(ErrMsg))
+        Print *,'** Setting all Grids_f%deriv_flags = .TRUE.'
+        EXIT
       endif
-      dum_zet = 0
-      read(31,*,iostat=j) k,dum_zet(1:k)
-      if(k /= kz) then
-        Print *,'** Spectag:',Spectag,' Inputs: zet deriv. flags ..'
-        Print *,'   Incosistent number of entries in der_flags.dat file'
-        Call MLSMessage ( MLSMSG_Error, ModuleName, ' ')
-      endif
-      dum_frq = 0
-      read(31,*,iostat=j) k,dum_frq(1:k)
-      if(k /= kf) then
-        Print *,'** Spectag:',Spectag,' Inputs: frq deriv. flags ..'
-        Print *,'   Incosistent number of entries in der_flags.dat file'
-        Call MLSMessage ( MLSMSG_Error, ModuleName, ' ')
-      endif
-      do i = 1, kp
-        if(dum_phi(i) < 1) then
-          m = m + kz * kf
-        else
-          do j = 1, kz
-            if(dum_zet(j) > 0) then
-              Grids_f%deriv_flags(m+1:m+kf) =  (dum_frq(1:kf) > 0)
-            endif
-            m = m + kf
-          end do
-        endif
-      end do
+      Grids_f%deriv_flags(m+1:m+j) = deriv_flag(1:j)
+      m = m + j
     end do
 
-    Close(31,iostat=j)
-    deallocate ( dum_phi, dum_zet, dum_frq, stat=j )
+    deallocate (deriv_flag, stat=j )
 !   Print *,' f_len, m = ',f_len,m
 !   Print *,' Grids_f%deriv_flags(1...m):'
 !   Print 932,Grids_f%deriv_flags(1:m)
@@ -540,10 +486,178 @@ contains
       end select
     end do
 !
-  end subroutine load_sps_data
+ end subroutine load_sps_data
+
+! *********************  ZEBUG  ******************
+! A temporary routine to load data from ASCII file into the deriv_flag array
+!
+ Subroutine load_deriv_flag(Spectag,kp,kz,kf,deriv_flag,ErrMsg,ier)
+!
+  Integer, intent(in) :: Spectag, kp,kz,kf
+
+  Logical, intent(out) :: deriv_flag(:)
+
+  Integer, intent(out) :: ier
+  Character(LEN=*), intent(out) :: ErrMsg
+!
+! ** Local variables
+!
+  Integer :: j,k,m
+  Integer, allocatable :: dum_phi(:),dum_zet(:),dum_frq(:)
+!
+! ** Begin executable code
+!
+    ier = 0
+    ErrMsg(1:) = ' '
+    deriv_flag = .false.
+
+    Close(31,iostat=j)
+    Open(31,file='der_flags.dat',status='OLD',action='READ',iostat=j)
+    if ( j /= 0 ) then
+      ier = -1
+      ErrMsg = 'Could not open der_flags.dat file'
+      Return
+    endif
+
+    Allocate(dum_phi(1:kp),STAT=j)
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Could not allocate dum_phi array'
+      goto 99
+    endif
+
+    Allocate(dum_zet(1:kz),STAT=j)
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Could not allocate dum_zet array'
+      goto 99
+    endif
+
+    Allocate(dum_frq(1:kf),STAT=j)
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Could not allocate dum_frq array'
+      goto 99
+    endif
+!
+    do
+      Read(31,*,iostat=j) m
+      if(j == 0) then
+        if(Spectag == m) EXIT
+      else if(j < 0) then
+        j = -1
+        ErrMsg = 'Requeted Spectag not found in in der_flags.dat file'
+        goto 99
+      else
+        j = -1
+        ErrMsg = 'Error reading der_flags.dat file'
+        goto 99
+      endif
+    end do
+
+    read(31,*,iostat=j) k
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Error reading der_flags.dat file'
+      goto 99
+    endif
+
+    if(k /= kp) then
+      j = -1
+      Print *,'** Spectag:',Spectag,' Inputs: phi deriv. flags ..'
+      ErrMsg = 'Incosistent number of entries in der_flags.dat file'
+      goto 99
+    endif
+
+    dum_phi = 0
+    Backspace(31,iostat=m)
+    read(31,*,iostat=j) k,dum_phi(1:k)
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Error reading der_flags.dat file'
+      goto 99
+    endif
+
+    read(31,*,iostat=j) k
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Error reading der_flags.dat file'
+      goto 99
+    endif
+
+    if(k /= kz) then
+      j = -1
+      Print *,'** Spectag:',Spectag,' Inputs: phi deriv. flags ..'
+      ErrMsg = 'Incosistent number of entries in der_flags.dat file'
+      goto 99
+    endif
+
+    dum_zet = 0
+    Backspace(31,iostat=m)
+    read(31,*,iostat=j) k,dum_zet(1:k)
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Error reading der_flags.dat file'
+      goto 99
+    endif
+
+    read(31,*,iostat=j) k
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Error reading der_flags.dat file'
+      goto 99
+    endif
+
+    if(k /= kf) then
+      j = -1
+      Print *,'** Spectag:',Spectag,' Inputs: phi deriv. flags ..'
+      ErrMsg = 'Incosistent number of entries in der_flags.dat file'
+      goto 99
+    endif
+
+    dum_frq = 0
+    Backspace(31,iostat=m)
+    read(31,*,iostat=j) k,dum_frq(1:k)
+    if ( j /= 0 ) then
+      j = -1
+      ErrMsg = 'Error reading der_flags.dat file'
+      goto 99
+    endif
+
+    m = 0
+    do k = 1, kp
+      if(dum_phi(k) < 1) then
+        m = m + kz * kf
+      else
+        do j = 1, kz
+          if(dum_zet(j) > 0) then
+            deriv_flag(m+1:m+kf) =  (dum_frq(1:kf) > 0)
+          endif
+          m = m + kf
+        end do
+      endif
+    end do
+    j = m
+
+!   Print *,'** Spectag:',Spectag
+!   Print *,' m =',m,' deriv_flag(1...m):'
+!   Print 934,deriv_flag(1:m)
+934 format(37(1x,l1))
+!   if (m > 0) call MLSMessage (MLSMSG_Error,ModuleName,'DEBUG Stop' )
+
+ 99 ier = j
+    Close(31,iostat=j)
+    deallocate ( dum_phi, dum_zet, dum_frq, stat=j )
+!
+ End Subroutine load_deriv_flag
+
+! *********************  END ZEBUG  ******************
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.9  2002/01/27 08:37:49  zvi
+! Adding Users selected coefficients for derivatives
+!
 ! Revision 2.8  2002/01/09 00:30:48  zvi
 ! Fix a bug with skip_eta_frq
 !

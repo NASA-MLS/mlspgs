@@ -1,14 +1,16 @@
 ! The goal of this program is to return a matrix of h_grids
 ! and t_grids which define 2 d integration paths
 
-module metrics_m
-  use MLSCommon, only: RP, IP
-  use Geometry, only: earthrada,earthradb,pi
-  use get_eta_matrix_m, only: get_eta_sparse
-  use Allocate_deallocate, only: Allocate_test, Deallocate_test
+Module metrics_m
 
-  use dump_0, only: dump
-  implicit none
+  USE MLSCommon, only: RP, IP
+  USE Geometry, only: earthrada,earthradb,pi
+  USE get_eta_matrix_m, only: get_eta_sparse
+  USE Allocate_deallocate, only: Allocate_test, Deallocate_test
+
+  USE dump_0, only: dump
+
+  IMPLICIT NONE
   private
 
   public :: metrics
@@ -20,16 +22,17 @@ module metrics_m
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
-  integer, save :: CALLEDTIMES = 0
+  Integer, save :: CALLEDTIMES = 0
 
 contains
 
   ! ------------------------------------------------ Metrics --------------
 
   subroutine metrics(phi_t,tan_inds,p_basis,z_grid,h_ref,t_ref,dhidzij, &
-    beta,h_grid,p_grid,t_grid,dhitdzi,req,dhidtlm,ddhidhidtl0, &
-    dhitdtlm,eta_zxp,tan_phi_h_grid,tan_phi_t_grid,dhtdzt,dhtdtl0, &
-    ddhtdhtdtl0,neg_h_tan,z_basis,do_calc_t,do_calc_hyd)
+          &  beta,t_deriv_flag,h_grid,p_grid,t_grid,dhitdzi,req,dhidtlm,&
+          &  ddhidhidtl0,dhitdtlm,eta_zxp,tan_phi_h_grid,tan_phi_t_grid,&
+          &  dhtdzt,dhtdtl0,ddhtdhtdtl0,neg_h_tan,z_basis,do_calc_t,    &
+          &  do_calc_hyd)
 
     ! The main change in this routine is to interchange the z_coeffs and
     ! p_coeffs so as to make it consistent with the radiative transfer program.
@@ -46,6 +49,7 @@ contains
     real(rp), intent(in) :: t_ref(:,:)! temperatures by t_phi_basis
     real(rp), intent(in) :: dhidzij(:,:)! vertical derivative by t_phi_basis
     real(rp), intent(in) :: beta       !orbital incline angle (Radians)
+    logical,  intent(in) :: t_deriv_flag(:)  ! User's deriv. flags for Temp.
     ! outputs:
     real(rp), intent(out) :: h_grid(:)!computed heights
     real(rp), intent(out) :: p_grid(:)!computed phi's
@@ -251,10 +255,10 @@ contains
     call Allocate_test ( near_inds, n_cvf/2, 'near_inds', ModuleName )
     call Allocate_test ( cvf_inds, n_cvf, 'cvf_inds', ModuleName )
 
-    cvf_inds = PACK((/(i,i=1,2*n_vert*n_tan)/), &
-      RESHAPE(SPREAD((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/),2,n_tan), &
-      (/2*n_vert*n_tan/)) &
-      - RESHAPE(SPREAD(tan_inds,1,2*n_vert),(/2*n_vert*n_tan/)) >= 0)
+    cvf_inds = PACK((/(i,i=1,2*n_vert*n_tan)/),                     &
+    & RESHAPE(SPREAD((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/),2,n_tan), &
+    &             (/2*n_vert*n_tan/)) -                             &
+    & RESHAPE(SPREAD(tan_inds,1,2*n_vert),(/2*n_vert*n_tan/)) >= 0)
 
     ! sign of phi matrix
     cvf_sign = (-1.0_rp)**((modulo(cvf_inds-1,2*n_vert)/n_vert)+1)
@@ -279,6 +283,7 @@ contains
       2,n_tan),RESHAPE(mask,(/2*n_vert,n_tan/)))
     cvf_h_tan = PACK(h_tans,RESHAPE(mask,(/2*n_vert,n_tan/)))
     cvf_z_grid = PACK(m_z_grid,RESHAPE(mask,(/2*n_vert,n_tan/)))
+
     call Deallocate_test ( m_z_grid, 'm_z_grid', ModuleName )
     call Deallocate_test ( h_tans, 'h_tans', ModuleName )
     call Deallocate_test ( phi_tans, 'phi_tans', ModuleName )
@@ -344,12 +349,15 @@ contains
     where(h_grid < cvf_h_tan) 
       h_grid = cvf_h_tan
     endwhere
-    iter = 0
 
     ! this construct is considered more desireable than a do while
     ! according to the fortran explained book
+
+    iter = 0
     do
-      if (no_of_bad_fits == 0 .or. iter == 20) exit
+
+      iter = iter + 1
+      if (no_of_bad_fits == 0 .or. iter == 20) EXIT
       old_hts = h_grid
 
       ! recompute phi_s - phi_t because we have to iterate on phi_s - phi_t
@@ -387,12 +395,13 @@ contains
       call Deallocate_test ( junk, 'junk', ModuleName )
       call Allocate_test ( junk, no_of_bad_fits, 'junk', ModuleName )
       junk = PACK((/(i,i=1,n_cvf)/),mask)
-      iter = iter + 1
+
     end do
 
     call deallocate_test ( mask, 'mask', ModuleName )
 
     if (no_of_bad_fits > 0) then
+
       print *,'Warning: full convergence not acheived on:'
       print *,'implementing an improved approximation patch'
       print *,'path index, tangent index, error'
@@ -414,11 +423,14 @@ contains
       end do
 
       do
-        if(end_ind > no_of_bad_fits) exit
+
+        if(end_ind > no_of_bad_fits) EXIT
+
         do
           if(tan_ind(end_ind) > tan_ind(st_ind)) exit
           end_ind = end_ind + 1
         end do
+
         end_ind = end_ind - 1
 
         ! find which side of the tangent we are on
@@ -441,9 +453,12 @@ contains
         end_ind = st_ind
 
       end do
+
       print *,'completed re-estimation of bad points'
+
       call Deallocate_test ( path_ind, 'path_ind', ModuleName )
       call Deallocate_test ( tan_ind, 'tan_ind', ModuleName )
+
     endif
 
     ! deallocate the loop iteration stuff
@@ -475,7 +490,9 @@ contains
     dhitdzi = sum(dhidzij(vert_inds,:) * eta_p,dim=2)
 
     ! compute the temperature derivative grid
+
     if (PRESENT(dhitdtlm)) then
+
       nullify ( inds, eta_t, not_zero_t )
       call Allocate_test ( inds, n_cvf, 'inds', ModuleName )
       call Allocate_test ( eta_t, n_cvf, z_coeffs, 'eta_t', ModuleName )
@@ -487,30 +504,35 @@ contains
       inds = abs(inds)
       ! compute the path temperature noting where the zeros are
       call get_eta_sparse(z_basis,cvf_z_grid,eta_t,NOT_ZERO = not_zero_t)
-      sv_t = 1
+!
+! Initialize all ..
+!
+      do_calc_t = .false.
+      do_calc_hyd = .false.
+
+      eta_zxp = 0.0_rp
+      dhitdtlm = 0.0_rp
+
+      sv_t = 0
       do sv_p = 1 , p_coeffs
         do sv_z = 1 , z_coeffs
+          sv_t = sv_t + 1
+          if(.NOT. t_deriv_flag(sv_t)) CYCLE
           where (not_zero_p(:,sv_p) .and. not_zero_t(:,sv_z))
             do_calc_t(:,sv_t) = .true.
             eta_zxp(:,sv_t) = eta_t(:,sv_z) * eta_p(:,sv_p)
-          elsewhere
-            do_calc_t(:,sv_t) = .false.
-            eta_zxp(:,sv_t) = 0.0_rp
           endwhere
-          
           where (not_zero_p(:,sv_p) .and. dhidtlm(inds(:),sv_p,sv_z) > 0.0_rp)
             do_calc_hyd(:,sv_t) = .true.
             dhitdtlm(:,sv_t) = dhidtlm(inds(:),sv_p,sv_z) * eta_p(:,sv_p)
-          elsewhere
-            do_calc_hyd(:,sv_t) = .false.
-            dhitdtlm(:,sv_t) = 0.0_rp
           endwhere
-          sv_t = sv_t + 1
-        enddo
-      enddo
+        end do
+      end do
+
       call Deallocate_test ( inds, 'inds', ModuleName )
       call Deallocate_test ( eta_t, 'eta_t', ModuleName )
       call Deallocate_test ( not_zero_t, 'not_zero_t', ModuleName )
+
     endif
     
     call Deallocate_test ( eta_p, 'eta_p', ModuleName )
@@ -521,11 +543,14 @@ contains
     call Deallocate_test ( cvf_inds, 'cvf_inds', ModuleName )
     call Deallocate_test ( vert_inds, 'vert_inds', ModuleName )
     call Deallocate_test ( not_zero_p, 'not_zero_p', ModuleName )
+
   end subroutine metrics
+
 end module metrics_m
-
-
 ! $Log$
+! Revision 2.1  2001/11/20 01:19:30  zvi
+! Some clarification of code
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
