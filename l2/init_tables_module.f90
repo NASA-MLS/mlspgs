@@ -1003,6 +1003,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_rowQuantity, s+s_quantity, nr+n_field_spec, &
              begin, f+f_colQuantity, s+s_quantity, nr+n_field_spec, &
+             begin, f+f_noAbsent, t+t_boolean, n+n_field_type, &
              begin, f+f_rowSurfaces, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
              begin, f+f_colSurfaces, t+t_numeric, t+t_numeric_range, &
@@ -1086,6 +1087,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.335  2003/10/07 01:14:13  vsnyder
+! Add noAbsent field to dumpBlocks
+!
 ! Revision 2.334  2003/10/06 13:16:09  cvuu
 ! add new description=strat to handle reading the ncep data file
 !
