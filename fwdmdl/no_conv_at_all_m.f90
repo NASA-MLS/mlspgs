@@ -21,7 +21,7 @@ contains
   ! convolution grid to the users specified points. This module uses
   ! cubic spline interpolation to do the job.
 
-  Subroutine no_conv_at_all ( FwmConf, ForwardModelIn, maf, &
+  Subroutine no_conv_at_all ( FwmConf, ForwardModelIn, ForwardModelExtra, maf, &
            & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, update, &
            & t_deriv_flag,ptg_angles,chi_out,dhdz_out,dx_dh_out,Grids_f,&
            & I_raw,sbRatio,mol_cat_indx, rowFlags, Jacobian, di_dt, di_df, &
@@ -44,6 +44,7 @@ contains
 
     type (ForwardModelConfig_T) :: FWMCONF
     type (Vector_T), intent(in) :: FORWARDMODELIN
+    type (Vector_T), intent(in) :: FORWARDMODELEXTRA
 
     integer, intent(in) :: maf
     integer, intent(in) :: CHANNEL
@@ -91,6 +92,7 @@ contains
     real(r8) :: di_dx(ptan%template%noSurfs)
     real(r8) :: I_star_all(ptan%template%noSurfs)
     logical :: my_ptan_der
+    logical :: foundInFirst
 
     ! -----  Begin the code  -------------------------------------------
 
@@ -242,12 +244,12 @@ contains
       do is = 1, no_mol
 
         jz = mol_cat_indx(is)
-        f => GetQuantityForForwardModel(forwardModelIn, &
+        f => GetQuantityForForwardModel(forwardModelIn, forwardModelExtra, &
           & quantityType=l_vmr, molIndex=jz, &
           & radiometer = radiance%template%radiometer, &
-          & noError=.true., config=fwmConf )
+          & noError=.true., config=fwmConf, foundInFirst=foundInFirst )
         
-        if ( .not. associated(f) ) then
+        if ( .not. associated(f) .or. .not. foundInFirst ) then
           jf = Grids_f%windowfinish(is)-Grids_f%windowStart(is)+1
           k = Grids_f%no_f(is) * Grids_f%no_z(is)
           sv_f = sv_f + jf * k
@@ -306,6 +308,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.18  2002/10/08 17:08:05  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.17  2002/10/04 23:46:21  vsnyder
 ! Cosmetic changes
 !
