@@ -4445,14 +4445,12 @@ contains ! =====     Public Procedures     =============================
       ! Check that this operation makes sense
       if ( a%template%name /= quantity%template%name ) then
         call Announce_Error ( key, 0, &
-          & 'The a quantity is not of the same type as the result quantity' )
-        return
+          & 'Warning:  The a quantity is not of the same type as the result quantity' )
       end if
       if ( associated ( b ) ) then
         if ( b%template%name /= quantity%template%name ) then
           call Announce_Error ( key, 0, &
-            & 'The a quantity is not of the same type as the result quantity' )
-          return
+            & 'Warning:  The a quantity is not of the same type as the result quantity' )
         end if
       else
         ! Later we'll be more tolerant of this
@@ -4681,6 +4679,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.166  2002/11/27 22:18:10  dwu
+! Change the error handling in the new manipulation feature. Instead of quitting, just send off a warning
+!
 ! Revision 2.165  2002/11/27 19:25:45  livesey
 ! Added manipulate method and bug fix in snooper when no matrices
 !
