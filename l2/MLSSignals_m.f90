@@ -149,7 +149,7 @@ contains
           end select
         end do ! i = 2, nsons(key)
         call decorate ( key, addBandToDatabase ( bands, band ) )
-      case ( s_spectrometerType ) ! ......................... SPECTROMETER TYPE  .....
+      case ( s_spectrometerType ) ! ........... SPECTROMETER TYPE  .....
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -495,6 +495,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.5  2001/02/27 01:28:34  vsnyder
+! Rearranged a comment
+!
 ! Revision 2.4  2001/02/27 00:23:48  livesey
 ! Very interim version
 !
