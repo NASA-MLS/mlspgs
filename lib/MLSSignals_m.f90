@@ -62,6 +62,7 @@ module MLSSignals_M
 
   type, public :: Band_T
     real(r8) :: CenterFrequency         ! Negative if not present (wide filter)
+    integer :: PointingGrid = 0         ! Database index -- see PointingGrid_m
     integer :: Prefix                   ! Sub_rosa index of declaration's label
     integer :: Radiometer               ! Index in Radiometers database
     integer :: SpectrometerType         ! Index in SpectrometerTypes database
@@ -90,6 +91,7 @@ module MLSSignals_M
     integer :: Band                     ! Index in Bands database
     integer :: InstrumentModule         ! Index in Modules database
     integer :: Name                     ! Sub_rosa index of declaration's label
+    integer :: PointingGrid = 0         ! Database index -- see PointingGrid_m
     integer :: Radiometer               ! Index in Radiometers database
     integer :: SideBand                 ! -1:lower, +1:upper, 0:folded
     integer :: Spectrometer             ! Just a spectrometer number
@@ -939,6 +941,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.6  2001/03/16 00:30:49  vsnyder
+! Make way for the pointing grid
+!
 ! Revision 2.5  2001/03/15 21:02:07  vsnyder
 ! Cross-references between databases are by database index, not tree index
 !
