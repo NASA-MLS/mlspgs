@@ -67,7 +67,7 @@ ifdef STATIC_LINK
    l_specials=-lz -L${gcc_libloc} -lgcc \
      ${static_object}
 else
-   l_specials=-lz -L/usr/lib/gcc/i386-redhat-linux/${gcc_version} -lgcc
+   l_specials=-lz -L${gcc_libloc} -lgcc
 endif
 endif
 ifeq ($(MLSF95),IFC)
@@ -92,3 +92,6 @@ endif
 
 fftw_linker_line = $(shell ${UTILDIR}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # $Log$
+# Revision 1.1  2005/03/04 19:00:19  pwagner
+# First commit
+#
