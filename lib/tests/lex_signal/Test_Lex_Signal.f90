@@ -29,3 +29,5 @@ program Test_Lex_Signal
   end do
 99 stop
 end program Test_Lex_Signal
+
+! $Log$
