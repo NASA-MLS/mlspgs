@@ -33,8 +33,6 @@ MODULE MLSStringLists               ! Module to treat string lists
 !     (parameters)
 ! KEYNOTFOUND        key not found among keyList
 ! KEYBEYONDHASHSIZE  index of key in keyList > size(hash array)
-! INVALIDHHMMSSSTRING
-!                    (if strict) str not in format '00:00:00.0000000'
 ! LENORSIZETOOSMALL  Either charsize of strs or size(ints) too small
 
 !     (subroutines and functions)
@@ -48,8 +46,6 @@ MODULE MLSStringLists               ! Module to treat string lists
 !                    Returns string from hash list corresponding to key string
 ! GetUniqueList      Returns str list of only unique entries from input list
 ! GetUniqueStrings   Returns array of only unique entries from input array
-! hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
-!                    (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
 ! List2Array         Converts a single string list to an array of strings
 ! NumStringElements  Returns number of elements in string list
 ! RemoveElemFromList removes occurrence(s) of elem in a string list
@@ -79,7 +75,6 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! GetUniqueList (char* str, char* outstr(:), int noUnique, &
 !   & log countEmpty, [char inseparator], [log IgnoreLeadingSpaces]) 
 ! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique) 
-! r8 hhmmss_value (char* str, int ErrTyp, [char separator], [log strict])
 ! List2Array (strlist inList, char* outArray(:), log countEmpty, [char inseparator],
 !    [log IgnoreLeadingSpaces])
 ! int NumStringElements(strlist inList, log countEmpty, &
@@ -121,7 +116,6 @@ MODULE MLSStringLists               ! Module to treat string lists
   public :: catLists, Array2List, ExpandStringRange, ExtractSubString, &
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueStrings, GetUniqueList, &
-   & hhmmss_value, &
    & List2Array, NumStringElements, &
    & RemoveElemFromList, ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElementNum, &
@@ -152,8 +146,6 @@ MODULE MLSStringLists               ! Module to treat string lists
   ! GetIntHashElement
   integer, public, parameter :: KEYNOTFOUND=-1
   integer, public, parameter :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
-  ! hhmmss_value
-  integer, public, parameter :: INVALIDHHMMSSSTRING = 1
   ! utc_to_yyyymmdd
   integer, public, parameter :: INVALIDUTCSTRING = 1
   ! strings2Ints
@@ -1045,178 +1037,8 @@ CONTAINS
       END DO UniqueLoop
     endif
 
-    DEALLOCATE(duplicate)
-  END SUBROUTINE GetUniqueStrings
-
-  ! ------------------------------------------------  hhmmss_value  -----
-  Function hhmmss_value(str, ErrTyp, separator, strict) result (value)
-    ! Function that returns the value in seconds of a string 'hh:mm:ss'
-    ! where the field separator ':' divides the string into two
-    ! integer-like strings 'hh' and 'mm', as well as one float-like
-    ! string 'ss' which may have a decimal point plus fractional part
-    ! E.g., ss=59.9999
-    
-    ! Requires 0 <= hh <= 24
-    ! Requires 0 <= mm < 60
-    ! Requires 0. <= ss < 60.
-
-    ! Returns ErrTyp=0 unless an error occurs
-
-    ! Lenient wrt utc and non-compliant formats:
-    ! ignores chars in front of 'hh' and a terminal,
-    ! non-numerical char: e.g., '2000-01-01T00:00:00.000000Z'
-    ! will be treated the same as '00:00:00.0000000'
-
-    ! If given optional arg strict, not lenient
-    ! i.e., non-compliant str always returns non-zero ErrTyp
-    
-    ! If given optional arg separator, uses separator as field separator
-    
-    ! Useful to allow an added way to input time
-    
-    ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
-    !--------Argument--------!
-    character(len=*),intent(in) :: str
-    real(r8) :: value
-    integer, intent(out) :: ErrTyp
-    character(len=1),intent(in), optional :: separator
-    logical,intent(in), optional :: strict
-    !----------Local vars----------!
-    character(len=1), parameter :: colon=':'
-    character(len=1) :: myColon
-    character(len=2) :: mm
-    character(len=NameLen) :: ss
-    character(len=NameLen) :: hh
-    character(len=10), parameter :: digits='0123456789'
-    character(LEN=*), parameter :: time_conversion='(I2)'
-    character(LEN=*), parameter :: real_conversion='(F32.0)'
-    integer :: i
-    logical :: mystrict
-    integer :: hvalue, mvalue
-    !----------Executable part----------!
-
-   if(present(separator)) then
-      myColon=separator
-   else
-      myColon=colon
-   endif
-         
-   if(present(strict)) then
-      mystrict=strict
-   else
-      mystrict=.false.
-   endif
-         
-   if(len_trim(str) <= 0) then
-      value=0.
-      if(mystrict) then
-         ErrTyp=INVALIDHHMMSSSTRING
-      else
-         ErrTyp=0
-      endif
-      return
-   endif
-   
-   ErrTyp=INVALIDHHMMSSSTRING
-   value=0.
-   
-   call GetStringElement(str, hh, 1, countEmpty=.true., inseparator=myColon)
-   call GetStringElement(str, mm, 2, countEmpty=.true., inseparator=myColon)
-   call GetStringElement(str, ss, 3, countEmpty=.true., inseparator=myColon)
-   
-   ! Check if ss terminates in a non-digit
-   ss=Reverse(trim(ss))
-   
-   if(len_trim(ss) <= 0) then
-      if(mystrict) then
-         return
-      endif      
-   elseif( .not. (index(digits, ss(1:1)) > 0) ) then
-      if(mystrict) then
-         return
-      else
-         ss=Reverse(trim(ss(2:)))
-      endif
-   else
-      ss=Reverse(trim(ss))
-   endif
-
-   do i=1, len_trim(ss)
-      if( .not. (index(digits, ss(i:i)) > 0 .or. ss(i:i) == '.') ) return
-   enddo
-
-   ! Check if mm complies
-   if(len_trim(mm) <= 0) then
-      if(mystrict) then
-         return
-      endif      
-   else
-      do i=1, len_trim(mm)
-        if( .not. (index(digits, mm(i:i)) > 0) ) return
-      enddo
-   endif      
-
-   ! Check if hh complies
-   hh=Reverse(trim(hh))
-   
-   if(len_trim(hh) <= 0) then
-      if(mystrict) then
-         return
-      endif      
-   elseif(mystrict) then
-      do i=1, len_trim(hh)
-        if( .not. (index(digits, hh(i:i)) > 0) ) return
-      enddo
-   endif
-
-   hh=Reverse(hh(:2))
-   
-   ErrTyp=0
-   
-   ! Convert to value
-   if(hh == ' ') then
-      hvalue=0
-   else
-      read(hh(1:2), time_conversion, iostat=ErrTyp) hvalue
-   endif
-   
-   if(ErrTyp /= 0) then
-      return
-   elseif(hvalue < 0 .or. hvalue > 24) then
-      ErrTyp=INVALIDHHMMSSSTRING
-      return
-   endif
-
-   if(mm == ' ') then
-      mvalue=0
-   else
-      read(mm, time_conversion, iostat=ErrTyp) mvalue
-   endif
-
-   if(ErrTyp /= 0) then
-      return
-   elseif(mvalue < 0 .or. mvalue > 59) then
-      ErrTyp=INVALIDHHMMSSSTRING
-      return
-   endif
-
-   ! Convert to value
-   if(ss == ' ') then
-      value=0
-   else
-      read(ss, real_conversion, iostat=ErrTyp) value
-   endif
-   
-   if(ErrTyp /= 0) then
-      return
-   elseif(value < 0. .or. value > 60.) then
-      ErrTyp=INVALIDHHMMSSSTRING
-      return
-   endif
-   
-   value = value + 60*(mvalue + 60*hvalue)
-
-  end Function hhmmss_value
+    deallocate ( duplicate )
+  end subroutine GetUniqueStrings
 
   ! ---------------------------------------------  List2Array  -----
 
@@ -2673,6 +2495,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.4  2004/10/13 00:51:09  vsnyder
+! Move HHMMSS_value to MLSStrings
+!
 ! Revision 2.3  2004/09/16 00:16:46  pwagner
 ! catLists may cat integers onto end of stringLists
 !
