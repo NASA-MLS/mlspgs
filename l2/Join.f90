@@ -47,6 +47,7 @@ contains ! =====     Public Procedures     =============================
     use L2AUXData, only: L2AUXDATA_T
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use MLSCommon, only: MLSCHUNK_T
+    use MLSL2Options, only: CHECKPATHS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & add_to_directwrite_timing, add_to_section_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -145,13 +146,13 @@ contains ! =====     Public Procedures     =============================
           end if
         case ( s_l2gp, s_l2aux )
           ! Only do these the first time round
-          if ( pass == 1 ) then
+          if ( pass == 1 .and. .not. checkpaths ) then
             call JoinQuantities ( son, vectors, l2gpDatabase, l2auxDatabase, &
               & chunkNo, chunks )
           end if
         case ( s_label )
           ! Only do these the first time round
-          if ( pass == 1 ) then
+          if ( pass == 1 .and. .not. checkpaths ) then
             call LabelVectorQuantity ( son, vectors )
           end if
         case ( s_directWrite )
@@ -243,7 +244,7 @@ contains ! =====     Public Procedures     =============================
       & MLS_EXISTS, split_path_name, GetPCFromRef, &
       & mls_io_gen_openF, mls_io_gen_closeF, mls_sfstart, mls_sfend
     use MLSHDFEOS, only: mls_swath_in_file
-    use MLSL2Options, only: TOOLKIT, DEFAULT_HDFVERSION_WRITE
+    use MLSL2Options, only: CHECKPATHS, TOOLKIT, DEFAULT_HDFVERSION_WRITE
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
@@ -391,19 +392,20 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
+    if ( .not. checkpaths ) then
     ! Now go through and do some sanity checking
     do source = 1, noSources
       qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
-        & sourceQuantities(source) )
+      & sourceQuantities(source) )
       if ( qty%label == 0 ) call Announce_Error ( son, no_error_code, &
-        & "Quantity does not have a label" )
+      & "Quantity does not have a label" )
       if ( precisionVectors(source) /= 0 ) then
-        precQty => GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
-          & precisionQuantities(source) )
-        ! Check that this is compatible with it's value quantitiy
-        if ( qty%template%name /= precQty%template%name ) &
-          & call Announce_Error ( son, no_error_code, &
-          & "Precision and quantity do not match" )
+      precQty => GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
+        & precisionQuantities(source) )
+      ! Check that this is compatible with it's value quantitiy
+      if ( qty%template%name /= precQty%template%name ) &
+        & call Announce_Error ( son, no_error_code, &
+        & "Precision and quantity do not match" )
       else
         precQty => NULL()
       end if
@@ -426,6 +428,7 @@ contains ! =====     Public Procedures     =============================
           & "Inappropriate quantity for this file type in direct write" )
       end if
     end do
+    end if
     
     ! Bail out at this stage if there is some kind of error.
     if ( error /= 0 ) return
@@ -489,6 +492,9 @@ contains ! =====     Public Procedures     =============================
          & MLSMSG_Error, ModuleName, &
          & 'Failed in GetPCFromRef for ' // trim(filename) )
 
+      ! Done what we wished to do if just checking paths
+      if ( checkPaths ) return
+      
       if ( createFileFlag ) then
         fileaccess = DFACC_CREATE
       else
@@ -1372,6 +1378,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.96  2003/11/07 00:46:51  pwagner
+! New quicker preflight option: --checkPaths
+!
 ! Revision 2.95  2003/10/20 18:21:45  pwagner
 ! Timings breakdown added for directWrite
 !
