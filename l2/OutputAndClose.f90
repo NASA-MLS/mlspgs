@@ -792,7 +792,7 @@ contains ! =====     Public Procedures     =============================
     use Intrinsic, only: L_None
     use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, &
       & FINISHEDDIRECTWRITE
-    use MLSCommon, only: MLSCHUNK_T
+    use MLSCommon, only: MLSCHUNK_T, R4, R8
     use MLSFiles, only: HDFVERSION_4, MLS_SFSTART, MLS_SFEND
     use VectorsModule, only: VectorValue_T
 
@@ -824,8 +824,10 @@ contains ! =====     Public Procedures     =============================
     integer :: SIZES(3)                 ! HDF array sizes
     integer :: NODIMS                   ! Also index of maf dimension
     type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
+    real (r8) :: HUGER4
 
     ! executable code
+    hugeR4 = real ( huge(0.0_r4), r8 )
 
     ! Setup information, sanity checks etc.
     ! call get_string ( file, filename, strip=.true. )
@@ -885,11 +887,12 @@ contains ! =====     Public Procedures     =============================
 
     ! Now write it out
     status = SFWDATA_F90(sdId, start(1:noDims), &
-      & stride(1:noDims), sizes(1:noDims), real ( &
+      & stride(1:noDims), sizes(1:noDims), &
+      & real ( max ( -hugeR4, min ( hugeR4, &
       &   quantity%values ( :, &
       &   1+quantity%template%noInstancesLowerOverlap : &
       &    quantity%template%noInstances - quantity%template%noInstancesUpperOverlap &
-      &  ) ) )
+      &  ) ) ) ) )
     if ( status /= 0 ) then
       call announce_error (0,&
         & "Error writing SDS data to l2aux file:  " )
@@ -1144,6 +1147,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.71  2003/05/12 02:07:06  livesey
+! Bound r8->r4 conversion in direct write
+!
 ! Revision 2.70  2003/04/03 22:59:23  pwagner
 ! setAlias no longer an arg to write_meta
 !
