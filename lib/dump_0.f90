@@ -347,18 +347,22 @@ contains
   end subroutine DUMP_1D_DOUBLE
 
   ! --------------------------------------------  DUMP_1D_INTEGER  -----
-  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT )
+  subroutine DUMP_1D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT, WIDTH )
     integer, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
 
     integer :: J, K
     logical :: MyClean
+    integer :: MyWidth
     integer :: NumZeroRows
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myWidth = 10
+    if ( present(width) ) myWidth = width
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -383,9 +387,9 @@ contains
         end if
         call output ( '', advance='yes' )
       end if
-      do j = 1, size(array), 10
+      do j = 1, size(array), myWidth
         if (.not. myClean) then
-          if ( any(array(j:min(j+9, size(array))) /= 0) ) then
+          if ( any(array(j:min(j+myWidth-1, size(array))) /= 0) ) then
             if ( numZeroRows /= 0 ) then
               call output ( j-1, places=max(4,ilog10(size(array))+1) )
               call output ( afterSub )
@@ -400,8 +404,8 @@ contains
             numZeroRows = numZeroRows + 1
           end if
         end if
-        if ( myClean .or. any(array(j:min(j+9, size(array))) /= 0) ) then
-          do k = j, min(j+9, size(array))
+        if ( myClean .or. any(array(j:min(j+myWidth-1, size(array))) /= 0) ) then
+          do k = j, min(j+myWidth-1, size(array))
             if ( present(format) ) then
               call output ( array(k), format=format )
             else
@@ -607,18 +611,22 @@ contains
   end subroutine DUMP_2D_DOUBLE
 
   ! --------------------------------------------  DUMP_2D_INTEGER  -----
-  subroutine DUMP_2D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT )
+  subroutine DUMP_2D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT, WIDTH )
     integer, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
 
     integer :: I, J, K
     logical :: MyClean
+    integer :: MyWidth
     integer :: NumZeroRows
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myWidth = 10
+    if ( present(width) ) myWidth = width
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -635,7 +643,7 @@ contains
       end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, clean=clean, format=format )
+      call dump ( array(:,1), name, clean=clean, format=format, width=width )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -646,9 +654,9 @@ contains
         call output ( '', advance='yes' )
       end if
       do i = 1, size(array,1)
-        do j = 1, size(array,2), 10
+        do j = 1, size(array,2), myWidth
           if (.not. myClean) then
-            if ( any(array(i,j:min(j+9, size(array,2))) /= 0) ) then
+            if ( any(array(i,j:min(j+myWidth-1, size(array,2))) /= 0) ) then
               if ( numZeroRows /= 0 ) then
                 call output ( i, places=max(4,ilog10(size(array,1))+1) )
                 call output ( j-1, places=max(4,ilog10(size(array))+1) )
@@ -665,8 +673,8 @@ contains
               numZeroRows = numZeroRows + 1
             end if
           end if
-          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= 0) ) then
-            do k = j, min(j+9, size(array,2))
+          if ( myClean .or. any(array(i,j:min(j+myWidth-1, size(array,2))) /= 0) ) then
+            do k = j, min(j+myWidth-1, size(array,2))
               if ( present(format) ) then
                 call output ( array(i,k), format=format )
               else
@@ -787,20 +795,24 @@ contains
   end subroutine DUMP_3D_DOUBLE
 
   ! ---------------------------------------------  DUMP_3D_INTEGER  -----
-  subroutine DUMP_3D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT )
+  subroutine DUMP_3D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT, WIDTH )
     integer, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
     character(len=*), intent(in), optional :: FORMAT
+    integer, intent(in), optional :: WIDTH ! How many numbers per line (10)?
 
-    logical :: myClean
     integer :: I, J, K, L
+    logical :: myClean
+    integer :: MyWidth
     integer :: NumZeroRows
     integer, dimension(3) :: which, re_mainder
     integer :: how_many
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myWidth = 10
+    if ( present(width) ) myWidth = width
     call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
       & 1, which, how_many, re_mainder=re_mainder)
 
@@ -835,9 +847,9 @@ contains
       end if
       do i = 1, size(array,1)
         do j = 1, size(array,2)
-          do k = 1, size(array,3), 10
+          do k = 1, size(array,3), myWidth
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+9, size(array,3))) /= 0) ) then
+              if ( any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= 0) ) then
                 if ( numZeroRows /= 0 ) then
                   call output ( i, places=max(4,ilog10(size(array,1))+1) )
                   call output ( j, places=max(4,ilog10(size(array,2))+1) )
@@ -856,8 +868,8 @@ contains
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= 0) ) then
-              do l = k, min(k+9, size(array,3))
+            if ( myClean .or. any(array(i,j,k:min(k+myWidth-1, size(array,3))) /= 0) ) then
+              do l = k, min(k+myWidth-1, size(array,3))
                 if ( present(format) ) then
                   call output ( array(i,j,l), format=format )
                 else
@@ -1016,6 +1028,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.17  2002/02/14 23:21:18  vsnyder
+! Work on dumping masks
+!
 ! Revision 2.16  2001/12/08 00:47:51  pwagner
 ! Added dump_1d_real for s.p. arrays
 !
