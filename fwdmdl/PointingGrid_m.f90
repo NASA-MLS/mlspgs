@@ -259,32 +259,40 @@ outer2: do
   end subroutine Destroy_Pointing_Grid_Database
 
   ! --------------------------------  Dump_Pointing_Grid_Database  -----
-  subroutine Dump_Pointing_Grid_Database
+  subroutine Dump_Pointing_Grid_Database ( where )
     use Dump_0, only: Dump
+    use MoreTree, only: StartErrorMessage
     use Output_m, only: Blanks, Output
+
+    integer, intent(in), optional :: Where   ! Tree node index
 
     integer :: I, J                     ! Subscripts, loop inductors
     character(len=MaxSigLen) :: SigName ! From GetSignalName
-    call output ( 'Pointing Grids: SIZE = ' )
-    call output ( size(pointingGrids), advance='yes' )
-    do i = 1, size(pointingGrids)
-      call output ( i, 4 )
-      call output ( ':    Signals =', advance='yes' )
-      do j = 1, size(pointingGrids(i)%signals)
-        call blanks ( 6 )
-        call getNameOfSignal ( pointingGrids(i)%signals(j), sigName )
-        call output ( trim(sigName), advance='yes' )
-      end do ! j = 1, size(pointingGrids(i)%signals)
-      call output ( ' Center Frequency = ' )
-      call output ( pointingGrids(i)%centerFrequency, advance='yes' )
-      do j = 1, size(pointingGrids(i)%oneGrid)
-        call output ( j, 4 )
-        call output ( ':: Zeta = ' )
-        call output ( pointingGrids(i)%oneGrid(j)%height )
-        call dump ( pointingGrids(i)%oneGrid(j)%frequencies, &
-          & '    Frequencies =' )
-      end do ! j = 1, size(pointingGrids(i)%oneGrid)
-    end do ! i
+    if ( associated(pointingGrids) ) then
+      call output ( 'Pointing Grids: SIZE = ' )
+      call output ( size(pointingGrids), advance='yes' )
+      do i = 1, size(pointingGrids)
+        call output ( i, 4 )
+        call output ( ':    Signals =', advance='yes' )
+        do j = 1, size(pointingGrids(i)%signals)
+          call blanks ( 6 )
+          call getNameOfSignal ( pointingGrids(i)%signals(j), sigName )
+          call output ( trim(sigName), advance='yes' )
+        end do ! j = 1, size(pointingGrids(i)%signals)
+        call output ( ' Center Frequency = ' )
+        call output ( pointingGrids(i)%centerFrequency, advance='yes' )
+        do j = 1, size(pointingGrids(i)%oneGrid)
+          call output ( j, 4 )
+          call output ( ':: Zeta = ' )
+          call output ( pointingGrids(i)%oneGrid(j)%height )
+          call dump ( pointingGrids(i)%oneGrid(j)%frequencies, &
+            & '    Frequencies =' )
+        end do ! j = 1, size(pointingGrids(i)%oneGrid)
+      end do ! i
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No pointing grids database to dump.', advance='yes' )
+    end if
   end subroutine Dump_Pointing_Grid_Database
 
   logical function not_used_here()
@@ -294,6 +302,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.5  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.4  2003/05/10 22:20:57  livesey
 ! Tried to calm down -g1..
 !

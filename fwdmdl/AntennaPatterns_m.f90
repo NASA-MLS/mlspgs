@@ -28,7 +28,7 @@ module AntennaPatterns_m
     type (Signal_T), pointer, dimension(:) :: Signals => NULL()
   end type AntennaPattern_T
 
-  ! The antanna pattern database:
+  ! The antenna pattern database:
   type(AntennaPattern_T), dimension(:), pointer, save, public :: &
     & AntennaPatterns => NULL()
 
@@ -260,27 +260,35 @@ outer1: do
   end subroutine Destroy_Ant_Patterns_Database
 
   ! --------------------------------  Dump_Antenna_Patterns_Database  -----
-  subroutine Dump_Antenna_Patterns_Database
+  subroutine Dump_Antenna_Patterns_Database ( where )
     use Dump_0, only: Dump
+    use MoreTree, only: StartErrorMessage
     use Output_m, only: Output
+
+    integer, intent(in), optional :: Where   ! Tree node index
 
     integer :: I, J                ! Subscripts, loop inductors
     character(len=MaxSigLen) :: SIGNAME ! Signal name
-    call output ( 'Antenna Patterns: SIZE = ' )
-    call output ( size(AntennaPatterns), advance='yes' )
-    do i = 1, size(AntennaPatterns)
-      call output ( i, 4 )
-      call output ( ':    Signal = ' )
-      do j = 1, size(antennaPatterns(i)%signals)
-        call GetNameOfSignal ( antennaPatterns(i)%signals(j), SigName )
-        call output ( trim(sigName), advance='yes' )
-      end do
-      call output ( ' Lambda = ' )
-      call output ( antennaPatterns(i)%lambda, advance='yes' )
-      call dump ( antennaPatterns(i)%aaap, name='Aaap' )
-      call dump ( antennaPatterns(i)%d1aap, name='D1aap' )
-      call dump ( antennaPatterns(i)%d2aap, name='D2aap' )
-    end do ! i
+    if ( associated(antennaPatterns) ) then
+      call output ( 'Antenna Patterns: SIZE = ' )
+      call output ( size(antennaPatterns), advance='yes' )
+      do i = 1, size(AntennaPatterns)
+        call output ( i, 4 )
+        call output ( ':    Signal = ' )
+        do j = 1, size(antennaPatterns(i)%signals)
+          call GetNameOfSignal ( antennaPatterns(i)%signals(j), SigName )
+          call output ( trim(sigName), advance='yes' )
+        end do
+        call output ( ' Lambda = ' )
+        call output ( antennaPatterns(i)%lambda, advance='yes' )
+        call dump ( antennaPatterns(i)%aaap, name='Aaap' )
+        call dump ( antennaPatterns(i)%d1aap, name='D1aap' )
+        call dump ( antennaPatterns(i)%d2aap, name='D2aap' )
+      end do ! i
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No antenna patterns database to dump.', advance='yes' )
+    end if
   end subroutine Dump_Antenna_Patterns_Database
 
   logical function not_used_here()
@@ -290,6 +298,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.7  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.6  2003/05/10 22:20:57  livesey
 ! Tried to calm down -g1..
 !

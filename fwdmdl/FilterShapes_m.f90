@@ -17,10 +17,10 @@ module FilterShapes_m
   private
   ! Public procedures:
   public :: Open_Filter_Shapes_File
-  public :: Read_Filter_Shapes_File, Read_DACS_Filter_Shapes_File
+  public :: Read_DACS_Filter_Shapes_File, Read_Filter_Shapes_File
   public :: Close_Filter_Shapes_File
-  public :: Destroy_Filter_Shapes_Database, Destroy_DACS_Filter_Database
-  public :: Dump_Filter_Shapes_Database, Dump_DACS_Filter_Database
+  public :: Destroy_DACS_Filter_Database, Destroy_Filter_Shapes_Database
+  public :: Dump_DACS_Filter_Database, Dump_Filter_Shapes_Database
 
   public :: Dump
   interface Dump
@@ -429,23 +429,31 @@ contains
   end subroutine Destroy_DACS_Filter_Database
 
   ! --------------------------------  Dump_Filter_Shapes_Database  -----
-  subroutine Dump_Filter_Shapes_Database
+  subroutine Dump_Filter_Shapes_Database ( where )
     use Dump_0, only: Dump
+    use MoreTree, only: StartErrorMessage
     use Output_m, only: Output
+
+    integer, intent(in), optional :: Where   ! Tree node index
 
     integer :: I                   ! Subscripts, loop inductors
     character(len=MaxSigLen) :: sigName
-    call output ( 'Filter Shapes: SIZE = ' )
-    call output ( size(filterShapes), advance='yes' )
-    do i = 1, size(filterShapes)
-      call output ( i, 4 )
-      call output ( ':    Signal = ' )
-      call GetNameOfSignal ( filterShapes(i)%signal, sigName )
-      call output ( sigName, advance='yes' )
-      call dump ( filterShapes(i)%filterShape, name='FilterShape' )
-      call dump ( filterShapes(i)%filterGrid, name='FilterGrid', &
-        & width=4, format='(1x,1pg18.11)' )
-    end do ! i
+    if ( associated(filterShapes) ) then
+      call output ( 'Filter Shapes: SIZE = ' )
+      call output ( size(filterShapes), advance='yes' )
+      do i = 1, size(filterShapes)
+        call output ( i, 4 )
+        call output ( ':    Signal = ' )
+        call GetNameOfSignal ( filterShapes(i)%signal, sigName )
+        call output ( sigName, advance='yes' )
+        call dump ( filterShapes(i)%filterShape, name='FilterShape' )
+        call dump ( filterShapes(i)%filterGrid, name='FilterGrid', &
+          & width=4, format='(1x,1pg18.11)' )
+      end do ! i
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No filter shapes database to dump.', advance='yes' )
+    end if
   end subroutine Dump_Filter_Shapes_Database
 
   ! -------------------------------------------  Dump_DACS_Filter  -----
@@ -465,17 +473,25 @@ contains
   end subroutine Dump_DACS_Filter
 
   ! ----------------------------------  Dump_DACS_Filter_Database  -----
-  subroutine Dump_DACS_Filter_Database
+  subroutine Dump_DACS_Filter_Database ( where )
+    use MoreTree, only: StartErrorMessage
     use Output_m, only: Output
 
+    integer, intent(in), optional :: Where   ! Tree node index
+
     integer :: I                   ! Subscripts, loop inductors
-    call output ( 'DACS Filter Shapes: SIZE = ' )
-    call output ( size(DACSfilterShapes), advance='yes' )
-    do i = 1, size(DACSfilterShapes)
-      call output ( i, 4 )
-      call output ( ':    ' )
-      call dump_DACS_filter ( DACSfilterShapes(i) )
-    end do ! i
+    if ( associated(DACSfilterShapes) ) then
+      call output ( 'DACS Filter Shapes: SIZE = ' )
+      call output ( size(DACSfilterShapes), advance='yes' )
+      do i = 1, size(DACSfilterShapes)
+        call output ( i, 4 )
+        call output ( ':    ' )
+        call dump_DACS_filter ( DACSfilterShapes(i) )
+      end do ! i
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No DACS filter shapes database to dump.', advance='yes' )
+    end if
   end subroutine Dump_DACS_Filter_Database
 
   ! ------------------------------------------------  Read_A_Line  -----
@@ -506,6 +522,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.16  2004/05/22 02:27:50  vsnyder
+! Use Get_Lun from io_stuff instead of repeating it here
+!
 ! Revision 2.15  2004/03/30 00:45:31  vsnyder
 ! Remove USE for unreferenced symbol
 !

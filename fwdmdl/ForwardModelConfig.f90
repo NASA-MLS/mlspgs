@@ -546,9 +546,13 @@ contains
   end subroutine DestroyOneForwardModelConfig
 
   ! ----------------------------  Dump_ForwardModelConfigDatabase  -----
-  subroutine Dump_ForwardModelConfigDatabase ( Database )
+  subroutine Dump_ForwardModelConfigDatabase ( Database, Where )
+
+    use MoreTree, only: StartErrorMessage
+    use Output_M, only: Output
 
     type (ForwardModelConfig_T), pointer, dimension(:) :: Database
+    integer, optional, intent(in) :: Where ! Tree node index
 
     ! Local variables
     integer :: I                         ! Loop counters
@@ -558,6 +562,9 @@ contains
       do i = 1, size(database)
         call Dump_ForwardModelConfig( database(i) )
       end do
+    else
+      if ( present(where) ) call startErrorMessage ( where )
+      call output ( 'No forward model database to dump.', advance='yes' )
     end if
   end subroutine Dump_ForwardModelConfigDatabase
 
@@ -635,6 +642,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.48  2004/05/01 04:00:59  vsnyder
+! Added pfaMolecules field
+!
 ! Revision 2.47  2004/03/24 13:50:56  hcp
 ! Made array LS 17 elements instead of 16. 17 things are taken out of it,
 ! so presumably it should be that long. NAG f95 flagged this as an error.
