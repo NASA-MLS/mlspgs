@@ -25,7 +25,7 @@ module L2ParInfo
   public :: NotifyTag, GetNiceTidString, GiveUpTag, SlaveArguments
   public :: AccumulateSlaveArguments, RequestDirectWritePermission
   public :: FinishedDirectWrite, MachineNameLen, GetMachineNames
-  public :: FWMSlaveGroup
+  public :: FWMSlaveGroup, MachineFixedTag
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -41,6 +41,7 @@ module L2ParInfo
   integer, parameter :: CHUNKTAG   = 10
   integer, parameter :: INFOTAG    = ChunkTag + 1
   integer, parameter :: NOTIFYTAG  = InfoTag + 1
+  integer, parameter :: MACHINEFIXEDTAG = 800
   integer, parameter :: GIVEUPTAG  = 999
 
   integer, parameter :: SIG_TOJOIN = 1
@@ -401,6 +402,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.26  2003/01/17 21:54:21  livesey
+! Added the machineFixed stuff
+!
 ! Revision 2.25  2002/12/11 01:58:33  livesey
 ! Added noFWMSlaves
 !
