@@ -62,7 +62,10 @@
 
     ! Try to work out the direction, also skip if there's only one value
 
-    if ( size(list) == 1 ) then
+    if ( size(list) == 0 ) then
+      indices = 0
+      return
+    else if ( size(list) == 1 ) then
       indices = 1
       if ( useAllowBelowValue ) then
         where ( values < list(1) )
@@ -177,6 +180,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.2  2002/10/04 00:46:12  vsnyder
+! Move declarations of local variables here
+!
 ! Revision 1.1  2002/09/13 18:01:33  pwagner
 ! First commit
 !
