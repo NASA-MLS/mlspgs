@@ -20,7 +20,7 @@ module MLSHDF5
     & H5FOPEN_F, H5FCLOSE_F, &
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SCLOSE_F, &
     & H5SGET_SIMPLE_EXTENT_NDIMS_F, H5SGET_SIMPLE_EXTENT_DIMS_F, &
-    & H5TCLOSE_F, H5TCOPY_F, H5TGET_SIZE_F, H5TSET_SIZE_F, &
+    & H5TCLOSE_F, H5TCOPY_F, H5TGET_SIZE_F, H5TSET_SIZE_F, H5TEQUAL_F, &
     & H5ESET_AUTO_F
   use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
@@ -66,6 +66,11 @@ module MLSHDF5
       & GetHDF5Attribute_string
   end interface
 
+  interface IsHDF5AttributePresent
+    module procedure IsHDF5AttributePresent_in_fID, &
+      & IsHDF5AttributePresent_in_DSID
+  end interface
+
   interface SaveAsHDF5DS
     module procedure SaveAsHDF5DS_intarr1, &
       SaveAsHDF5DS_dblarr1, SaveAsHDF5DS_dblarr2, &
@@ -74,8 +79,8 @@ module MLSHDF5
 
   interface LoadFromHDF5DS
     module procedure LoadFromHDF5DS_intarr1, &
-      LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, &
-      LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2
+      LoadFromHDF5DS_dblarr1, LoadFromHDF5DS_dblarr2, LoadFromHDF5DS_dblarr3, &
+      LoadFromHDF5DS_snglarr1, LoadFromHDF5DS_snglarr2, LoadFromHDF5DS_snglarr3
   end interface
 
   ! Local parameters
@@ -332,27 +337,17 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages off before getting rank '//trim(name) )
     call h5dOpen_f ( FileID, trim(name), setID, status ) 
     call h5dget_type_f(setID,type_id,status)
-  ! While case select seemed most natural here, these H5T_..
-  ! unfortunately are not initialization expressions; therefore
-  ! must use clunky old if elseif blocks
-  !  select case (type_id)                   
-  !  case (H5T_STD_I32LE, H5T_NATIVE_INTEGER)
-    if ( type_id == H5T_STD_I32LE .or. type_id == H5T_STD_I32LE ) then
+    if ( AreThe2TypesEqual(type_id, H5T_STD_I32LE) .or. &
+      &  AreThe2TypesEqual(type_id, H5T_STD_I32LE) ) then
       Qtype = 'integer'                                        
-  !  case (H5T_NATIVE_CHARACTER)
-    elseif ( type_id == H5T_NATIVE_CHARACTER ) then
+    elseif ( AreThe2TypesEqual(type_id, H5T_NATIVE_CHARACTER) ) then
       Qtype = 'character'                                      
-  !  case (H5T_NATIVE_REAL, H5T_IEEE_F32LE)
-    elseif ( type_id == H5T_NATIVE_REAL .or. type_id == H5T_IEEE_F32LE ) then
+    elseif ( AreThe2TypesEqual(type_id, H5T_NATIVE_REAL) .or. &
+      &      AreThe2TypesEqual(type_id, H5T_IEEE_F32LE) ) then
       Qtype = 'real'                                           
-  !  case (H5T_NATIVE_DOUBLE, H5T_IEEE_F64LE)
-    elseif ( type_id == H5T_NATIVE_DOUBLE .or. type_id == H5T_IEEE_F64LE ) then
+    elseif ( AreThe2TypesEqual(type_id, H5T_NATIVE_DOUBLE) .or. &
+      &      AreThe2TypesEqual(type_id, H5T_IEEE_F64LE) ) then
       Qtype = 'double'                                         
-  !  case default
-  !  else      
-  !    error = 1
-  !    return   
-  !  end select 
     endif                                                               
     call h5dClose_f ( setID, status )
     call h5eSet_auto_f ( 1, status )
@@ -424,10 +419,10 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to turn error messages back on after looking for DS '//trim(name) )
   end function IsHDF5DSInFile
 
-  ! --------------------------------------------- IsHDF5AttributePresent ---
-  logical function IsHDF5AttributePresent ( locID, name )
+  ! -------------------------------- IsHDF5AttributePresent_in_DSID ---
+  logical function IsHDF5AttributePresent_in_DSID ( SETID, name )
     ! This routine returns true if the given HDF5 attribute is present
-    integer, intent(in) :: LOCID        ! Where to look
+    integer, intent(in) :: SETID        ! Dataset ID--Where to look
     character (len=*), intent(in) :: NAME ! Name for the attribute
     ! Local variables
     integer :: ATTRID                   ! ID for attribute if present
@@ -437,17 +432,49 @@ contains ! ======================= Public Procedures =========================
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute '//trim(name) )
-    call h5aOpen_name_f ( locID, name, attrID, status ) 
+    call h5aOpen_name_f ( SETID, name, attrID, status ) 
     if ( status /= 0 ) then
-      IsHDF5AttributePresent = .false.
+      IsHDF5AttributePresent_in_DSID = .false.
     else
-      IsHDF5AttributePresent = .true.
+      IsHDF5AttributePresent_in_DSID = .true.
       call h5aClose_f ( attrID, status )
     end if
     call h5eSet_auto_f ( 1, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute '//trim(name) )
-  end function IsHDF5AttributePresent
+  end function IsHDF5AttributePresent_in_DSID
+
+  ! -------------------------------- IsHDF5AttributePresent_in_fID ---
+  logical function IsHDF5AttributePresent_in_fID ( fileID, DSname, name )
+    ! This routine returns true if the given HDF5 attribute is present
+    integer, intent(in) :: fileID        ! file ID--Where to look
+    character (len=*), intent(in) :: DSNAME ! Name for the dataset
+    character (len=*), intent(in) :: NAME ! Name for the attribute
+    integer :: SETID                    ! ID for attribute if present
+    integer :: ATTRID                   ! ID for attribute if present
+    integer :: STATUS                   ! Flag
+    
+    ! Executable code
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for attribute '//trim(name) )
+    call h5dOpen_f ( fileid, trim(DSname), setID, status )
+    if ( status /= 0 ) then
+      IsHDF5AttributePresent_in_fID = .false.
+    else
+      call h5aOpen_name_f ( SETID, name, attrID, status )
+      if ( status /= 0 ) then
+        IsHDF5AttributePresent_in_fID = .false.
+      else
+        IsHDF5AttributePresent_in_fID = .true.
+        call h5aClose_f ( attrID, status )
+      end if
+      call h5dClose_f ( setID, status )
+    endif
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for attribute '//trim(name) )
+  end function IsHDF5AttributePresent_in_fID
 
   ! --------------------------------------------- IsHDF5DSPresent ---
   logical function IsHDF5DSPresent ( locID, name )
@@ -820,6 +847,58 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dataset '//trim(name) )
   end subroutine LoadFromHDF5DS_dblarr2
 
+  ! ----------------------------------- LoadFromHDF5DS_dblarr3
+  subroutine LoadFromHDF5DS_dblarr3 ( locID, name, value )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real(r8), intent(out) :: VALUE(:,:,:) ! The array itself
+
+    ! Local parameters
+    integer, parameter :: MAXDIMENSIONS = 7
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(3) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: RANK                     ! Rank in file
+    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset '//trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset '//trim(name) )
+    ! Check that dimensions are all ok.
+    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get rank for dataset '//trim(name) )
+    if ( rank /= 3 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Inconsistant rank for dataset '//trim(name) )
+    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get dimension information for dataset '//trim(name) )
+    if ( any ( dims(1:rank) > shape(value) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Dataspace too large for destination value of '//trim(name) )
+    ! Now, (at last!) read the data
+    call h5dread_f ( setID, H5T_NATIVE_DOUBLE, value, &
+      & (/ shape(value), ones(1:4) /), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dataset '//trim(name) )
+    ! Close up
+    call h5sClose_f ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for dataset '//trim(name) )
+    call h5dClose_f ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset '//trim(name) )
+  end subroutine LoadFromHDF5DS_dblarr3
+
   ! ----------------------------------- LoadFromHDF5DS_snglarr1
   subroutine LoadFromHDF5DS_snglarr1 ( locID, name, value )
     ! This routine loads a predefined array with values from a DS
@@ -924,9 +1003,77 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dataset '//trim(name) )
   end subroutine LoadFromHDF5DS_snglarr2
 
+  ! ----------------------------------- LoadFromHDF5DS_snglarr3
+  subroutine LoadFromHDF5DS_snglarr3 ( locID, name, value )
+    ! This routine loads a predefined array with values from a DS
+    integer, intent(in) :: LOCID          ! Where to place it (group/file)
+    character (len=*), intent(in) :: NAME ! Name for this dataset
+    real(r4), intent(out) :: VALUE(:,:,:) ! The array itself
+
+    ! Local parameters
+    integer, parameter :: MAXDIMENSIONS = 7
+
+    ! Local variables
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(3) :: SHP        ! Shape of value
+    integer :: SPACEID                  ! ID of dataspace
+    integer :: SETID                    ! ID of dataset
+    integer :: RANK                     ! Rank in file
+    integer (kind=hSize_t) , dimension(maxDimensions) :: DIMS, MAXDIMS ! Dimensions in file
+
+    ! Executable code
+    shp = shape ( value )
+    call h5dOpen_f ( locID, name, setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataset '//trim(name) )
+    call h5dget_space_f ( setID, spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to open dataspace for dataset '//trim(name) )
+    ! Check that dimensions are all ok.
+    call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get rank for dataset '//trim(name) )
+    if ( rank /= 3 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Inconsistant rank for dataset '//trim(name) )
+    call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), status )
+    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get dimension information for dataset '//trim(name) )
+    if ( any ( dims(1:rank) > shape(value) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Dataspace too large for destination value of '//trim(name) )
+    ! Now, (at last!) read the data
+    call h5dread_f ( setID, H5T_NATIVE_REAL, value, &
+      & (/ shape(value), ones(1:4) /), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to read dataset '//trim(name) )
+    ! Close up
+    call h5sClose_f ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataspace for dataset '//trim(name) )
+    call h5dClose_f ( setID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close dataset '//trim(name) )
+  end subroutine LoadFromHDF5DS_snglarr3
+
+! ======================= Private Procedures =========================  
+! --------------------------------------------- AreThe2TypesEqual ---
+  logical function AreThe2TypesEqual ( type1, type2 )
+    ! This routine returns true if the two datatypes are "the same"
+    integer, intent(in) :: type1
+    integer, intent(in) :: type2
+    ! Local variables
+    integer :: status
+    ! Initialize in case something goes wrong with hdf5 routine
+    AreThe2TypesEqual = .false.
+    call h5tEqual_f(type1, type2, AreThe2TypesEqual, status)
+    if (status /= 0 ) AreThe2TypesEqual = .false.
+  end function AreThe2TypesEqual
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.9  2002/10/04 22:22:52  pwagner
+! Fixed bug in GetHDF5DSQType; can retrieve rank3 datasets
+!
 ! Revision 2.8  2002/10/02 23:20:07  livesey
 ! Bug fix in single precision stuff
 !
