@@ -7,9 +7,11 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   USE MLSCommon, ONLY: TAI93_Range_T
   USE MLSL1Common, ONLY: MaxMIFs, BandSwitch
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
-       MLSMSG_Warning
-  USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
+  USE Init_tables_module, ONLY: First_Parm, Last_Parm
+  USE Intrinsic, ONLY: parm_indices
+  USE Output_m, ONLY: prunit, Output
+  USE STRING_TABLE, ONLY: Get_string
 
   IMPLICIT NONE
 
@@ -19,8 +21,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
        GHz_seq_use, THz_seq, THz_seq_use, MIFsGHz, MIFsTHz
   PUBLIC :: GetL1Config
 
-  INTEGER :: MIFsGHz   ! Length (MIFs) of GHz module data
-  INTEGER :: MIFsTHz   ! Length (MIFs) of THz module data
+  INTEGER, PARAMETER :: MIFsGHz = 125   ! Length (MIFs) of GHz module data
+  INTEGER, PARAMETER :: MIFsTHz = 125   ! Length (MIFs) of THz module data
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -40,6 +42,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
      INTEGER :: MIFsPerMAF
      REAL :: GHzSpaceTemp, GHzTargetTemp
      REAL :: THzSpaceTemp, THzTargetTemp
+     REAL :: THzSpaceAngle, THzMaxBias
      REAL :: MIF_duration, MIF_DeadTime
      LOGICAL :: UseDefaultGains = .FALSE.
      LOGICAL :: CalibDACS = .TRUE.
@@ -48,8 +51,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
   END TYPE Calib_T
 
   TYPE Output_T
-     CHARACTER(LEN=80) :: HDFVersionString = 'hdf4'
-     INTEGER :: HDFversion = HDFVERSION_4           ! "version 4" for now
+     LOGICAL :: RemoveBaseline = .TRUE.             ! For GHz Baseline removal
   END TYPE Output_T
 
   TYPE L1Config_T
@@ -64,6 +66,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
   CHARACTER(LEN=1), POINTER, DIMENSION(:) :: GHz_seq, THz_seq
   CHARACTER(LEN=1), POINTER :: GHz_seq_use, THz_seq_use
 
+  LOGICAL :: GotParm(First_Parm:Last_Parm) = .FALSE.
+  CHARACTER(LEN=32) :: ParmName
+
   CONTAINS
 
 !=============================================================================
@@ -71,11 +76,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
 !=============================================================================
 
       USE Declaration_Table, ONLY: Allocate_Decl
-      USE Init_tables_module, ONLY: Init_tables, lit_indices, &
-           z_globalsettings, z_calibration, z_output
+      USE Init_tables_module, ONLY: Init_tables, z_globalsettings, &
+           z_calibration, z_output
       USE Lexer_Core, ONLY: Init_Lexer
       USE MLSPCF1, ONLY: mlspcf_l1cf_start
-      USE Output_m, ONLY: prunit
       USE Parser, ONLY: Configuration
       USE SDPToolkit, ONLY: PGS_PC_GetReference, PGS_S_SUCCESS, &
            PGSd_IO_Gen_RSeqFrm, PGS_IO_Gen_openF, PGS_IO_Gen_closeF
@@ -178,10 +182,22 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       ENDDO
 
-!! Will get the User Inputs from the L1CF file here
 
-      MIFsGHz = 125
-      MIFsTHz = 125
+! Check for any missing required parameters:
+
+      IF (ANY (.NOT. (GotParm))) THEN  ! All parameters are required!
+
+         DO i = First_Parm, Last_Parm
+            IF (.NOT. GotParm(i)) THEN
+               CALL Get_String (Parm_indices(i), ParmName)
+               CALL Output ('Missing L1CF parameter: '//TRIM(ParmName), &
+                    advance='yes')
+            ENDIF
+         ENDDO
+
+         CALL MLSMessage (MLSMSG_Error, ModuleName, 'Missing L1CF parameter(s)')
+
+      ENDIF
 
     END SUBROUTINE GetL1Config
 
@@ -191,7 +207,6 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
       USE INIT_TABLES_MODULE, ONLY: p_output_version_string, &
            p_version_comment, p_produce_l1boa, p_simoa
-      USE STRING_TABLE, ONLY: Get_string
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
       USE MoreTree, ONLY: Get_Boolean
 
@@ -202,6 +217,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
       DO i = 2, Nsons (root) - 1
 
          son = Subtree (i, root)
+
+         GotParm(Decoration (Subtree (1,son))) = .TRUE.
 
          SELECT CASE (Decoration (Subtree (1,son)))
 
@@ -233,10 +250,10 @@ MODULE MLSL1Config  ! Level 1 Configuration
    SUBROUTINE Set_output (root)
 !=============================================================================
 
-      USE INIT_TABLES_MODULE, ONLY: p_hdf_version_string
-      USE STRING_TABLE, ONLY: Get_string
+      USE INIT_TABLES_MODULE, ONLY: p_removebaseline
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
       USE MLSStrings, ONLY: lowercase
+      USE MoreTree, ONLY: Get_Boolean
 
       INTEGER :: root, i, son
 
@@ -244,24 +261,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
          son = Subtree (i, root)
 
+         GotParm(Decoration (Subtree (1,son))) = .TRUE.
+
          SELECT CASE (Decoration (Subtree (1,son)))
 
-         CASE (p_hdf_version_string)
+         CASE (p_removebaseline)
 
-            CALL Get_string (Sub_rosa (Subtree(2,son)), &
-                 L1Config%Output%HDFVersionString, strip=.TRUE.)
-
-            SELECT CASE (lowercase(TRIM(L1Config%Output%HDFVersionString))) 
-            CASE ('hdf4')
-               L1Config%Output%HDFversion = HDFVERSION_4
-            CASE ('hdf5')
-               L1Config%Output%HDFversion = HDFVERSION_5
-            CASE default
-               CALL MLSMessage (MLSMSG_Error, ModuleName, &
-                    'HDFVersionString '//&
-                    '"'//TRIM(L1Config%Output%HDFVersionString)//'"'// &
-                    ' is not a correct input')
-            END SELECT
+            L1Config%Output%RemoveBaseline = Get_Boolean (son)
 
          END SELECT
 
@@ -278,13 +284,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
            s_limbMIFs, s_discardMIFs, f_mifs, f_use, l_match, l_override, &
            f_module, f_secondary, p_usedefaultgains, p_GHzSpaceTemp, &
            p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
-           p_mif_dead_time, p_mifspermaf, p_calibDACS, s_switch, f_s, f_bandno
+           p_mif_dead_time, p_mifspermaf, p_calibDACS, p_THzMaxBias, s_switch, &
+           p_thzspaceangle, f_s, f_bandno
       USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
-           phyq_mifs, phyq_time
+           phyq_mifs, phyq_time, phyq_angle
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
       USE TREE_TYPES
       USE MoreTree, ONLY: Get_Boolean
-      USE STRING_TABLE, ONLY: Get_string
 
       INTEGER :: root
 
@@ -314,10 +320,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
       L1Config%Calib%THz_seq = unknown
       L1Config%Calib%THz_seq_use = ignore
 
-! Initialize Target Temp to not input
+! Initialize Target Temp to not input (and not required!)
 
       L1Config%Calib%GHzTargetTemp = -1.0
       L1Config%Calib%THzTargetTemp = -1.0
+
+      GotParm(p_GHzTargetTemp) = .TRUE.
+      GotParm(p_THzTargetTemp) = .TRUE.
 
       DO i = 2, Nsons (root) - 1
 
@@ -326,6 +335,8 @@ MODULE MLSL1Config  ! Level 1 Configuration
          SELECT CASE (node_id (son))
 
          CASE (n_equal)
+
+            GotParm(Decoration (Subtree (1,son))) = .TRUE.
 
             SELECT CASE (decoration (subtree (1,son)))
 
@@ -379,7 +390,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
                        TRIM (identifier)//' is not input as K')
                ENDIF
 
-              CASE (p_THzTargetTemp)
+            CASE (p_THzTargetTemp)
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
                L1Config%Calib%THzTargetTemp = expr_value(1)
@@ -389,7 +400,27 @@ MODULE MLSL1Config  ! Level 1 Configuration
                        TRIM (identifier)//' is not input as K')
                ENDIF
 
-          CASE (p_mif_duration)
+            CASE (p_THzSpaceAngle)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%THzSpaceAngle = expr_value(1)
+               IF (expr_units(1) /= phyq_angle) THEN
+                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                       TRIM (identifier)//' is not input as deg[rees]')
+               ENDIF
+
+            CASE (p_THzMaxBias)
+
+               CALL Expr (subtree (2, son), expr_units, expr_value)
+               L1Config%Calib%THzMaxBias = expr_value(1)
+!!$               IF (expr_units(1) /= phyq_temperature) THEN ! Add Volts later?
+!!$                  CALL Get_string (Sub_rosa (Subtree(1,son)), identifier)
+!!$                  CALL MLSMessage (MLSMSG_Error, ModuleName, &
+!!$                       TRIM (identifier)//' is not input as K')
+!!$               ENDIF
+
+            CASE (p_mif_duration)
 
                CALL Expr (subtree (2, son), expr_units, expr_value)
                L1Config%Calib%MIF_duration = expr_value(1)
@@ -594,6 +625,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.12  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.11  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
