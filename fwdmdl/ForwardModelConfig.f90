@@ -8,9 +8,10 @@ module ForwardModelConfig
 ! Set up the forward model configuration, except for actually processing
 ! the command.
 
-
   use MLSCommon, only: R8, RP
   use MLSSignals_M, only: Signal_T
+  use SpectroscopyCatalog_m, only: Catalog_t
+  use VectorsModule, only: VectorValue_T
   use VGridsDatabase, only: VGrid_T, DestroyVGridContents
 
   implicit NONE
@@ -18,20 +19,55 @@ module ForwardModelConfig
 
   ! Public procedures:
   interface Dump
-    module procedure Dump_ForwardModelConfig, Dump_ForwardModelConfigDatabase
+    module procedure Dump_Beta_Group, Dump_ForwardModelConfig
+    module procedure Dump_ForwardModelConfigDatabase, Dump_Qty_Stuff
   end interface Dump
 
   public :: AddForwardModelConfigToDatabase, DeriveFromForwardModelConfig
-  public :: DestroyFWMConfigDatabase, DestroyForwardModelDerived, Dump
-  public :: NullifyForwardModelConfig
+  public :: Destroy_Beta_Group, DestroyFWMConfigDatabase, DestroyForwardModelDerived
+  public :: Dump, NullifyForwardModelConfig
   public :: StripForwardModelConfigDatabase, PVMPackFWMConfig, PVMUnpackFWMConfig
  
   ! Public Types:
 
   ! Quantities derived from forward models, but not carted around by
-  ! PVMPackFWMConfig and PVMUnpackFWMConfig.  Rather, they are computed
-  ! by ForwardModelDerive when a ForwardModelConfig_T is created, or
-  ! when arrives by way of PVMUnpackFWMConfig
+  ! PVMPackFWMConfig and PVMUnpackFWMConfig.  Rather, they are computed by
+  ! DeriveFromForwardModelConfig, either when a ForwardModelConfig_T is
+  ! created or when one arrives by way of PVMUnpackFWMConfig.
+
+  type, public :: QtyStuff_T ! So we can have an array of pointers to QTY's
+    type (VectorValue_T), pointer :: QTY => NULL()
+    logical :: FoundInFirst
+  end type QtyStuff_T
+
+  ! Beta group type declaration.  Each entry in the Molecules list of the form
+  ! "m" has one of these with n_elements == 1, referring to "m".  Each entry
+  ! of the form "[m,m1,...,mn]" has one of these with n_elements == n, referring
+  ! to m1,...mn (but not m).  The Cat_Index, Qty and Ratio components are
+  ! filled in Get_Species_Data.
+  type, public :: Beta_Group_T
+    integer, pointer  :: Cat_Index(:) => NULL() ! 1:size(LBL_Molecules).  Indices
+                                      ! for config%catalog and gl_slabs.
+                                      ! Allocated and filled in Get_Species_Data.
+    logical :: Derivatives = .false.  ! "Compute derivatives w.r.t. mixing ratio"
+    logical :: Group = .false.        ! "Molecule group", i.e., [m,m1,...,mn]
+    integer, pointer :: LBL_Molecules(:) => NULL() ! LBL molecules in the group
+                                      ! if a group, i.e., "m1...mn", else "m" if
+                                      ! "m" is LBL, else zero size.
+    integer :: Molecule               ! Group name, i.e., "m".
+    integer, pointer :: PFA_Indices(:,:,:) => NULL() ! Sidebands x size(Channels)
+                                      ! x 1:size(PFA_Molecules).  Indices in
+                                      ! PFADataBase%PFAData.  Allocated and filled
+                                      ! in Get_Species_Data.
+    integer, pointer :: PFA_Molecules(:) => NULL() ! PFA molecules in the group
+                                      ! if a group, i.e., "m1...mn", else "m" if
+                                      ! "m" is PFA, else zero size.
+    type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst
+    real(rp), pointer :: Ratio(:) => NULL() ! 1:size(LBL_Molecules).  Isotope
+                                      ! ratio. Allocated with size == 1 and
+                                      ! value == 1.0 if not a group.  Allocated
+                                      ! and filled in Get_Species_Data.
+  end type Beta_Group_T
 
   ! Channel information from the signals database
   type, public :: Channels_T
@@ -57,8 +93,8 @@ module ForwardModelConfig
                                          ! of signals for our dacs
     type(channels_T), pointer, dimension(:) :: Channels => NULL()
   end type ForwardModelDerived_T
-  
-  ! These components are sorted in the order they are to make the packing
+
+  ! The scalar components are sorted in the order they are to make the packing
   ! and unpacking for PVM as easy as possible to maintain
   type, public :: ForwardModelConfig_T
     ! First the lit_indices
@@ -77,7 +113,6 @@ module ForwardModelConfig
     integer :: InstrumentModule       ! Module for scan model (actually a spec index)
     integer :: LinearSideband         ! For hybrid model, which SB is linear?
     ! Now the other integers
-    integer :: FirstPFA               ! Index of first PFA in Molecules
     integer :: No_cloud_species       ! No of Cloud Species '2'
     integer :: No_model_surfs         ! No of Model surfaces '640'
     integer :: Ntimes = 0	      ! Number of times calling FullForwardModel
@@ -93,6 +128,7 @@ module ForwardModelConfig
     ! Now the logicals
     logical :: AllLinesForRadiometer  ! As opposed to just using lines designated for band.
     logical :: AllLinesInCatalog      ! Use all the lines
+    logical :: AnyPFA                 ! Set if there are any PFA molecules
     logical :: Atmos_der              ! Do atmospheric derivatives
     logical :: Default_spectroscopy   ! Using Bill's spectroscopy data
     logical :: DifferentialScan       ! Differential scan model
@@ -123,10 +159,20 @@ module ForwardModelConfig
     logical, dimension(:), pointer :: MoleculeDerivatives=>NULL() ! Want Jacobians
     integer, dimension(:), pointer :: SpecificQuantities=>NULL() ! Specific quantities to use
     ! Now the derived types
+    type (beta_group_t), dimension(:), pointer :: Beta_Group => NULL() ! q.v. above
+      ! Some of this is filled in each time the forward model is invoked.  Those
+      ! parts aren't dragged around by PVM.
     type (Signal_T), dimension(:), pointer :: Signals=>NULL()
     type (vGrid_T), pointer :: IntegrationGrid=>NULL() ! Zeta grid for integration
     type (vGrid_T), pointer :: TangentGrid=>NULL()     ! Zeta grid for integration
     ! Finally stuff that PVMPackFWMConfig and PVMUnpackFWMConfig don't cart around
+    ! This stuff is filled in each time the forward model is invoked, partly by
+    ! DeriveFromForwardModel and partly by Get_Species_Data.
+    type (catalog_t), pointer :: Catalog(:,:) => NULL()     ! sidebands,1:noNonPFA
+      ! Catalog's second subscript comes from Beta_Group%Cat_Index for each
+      ! element of the beta group.  We do this indirectly so that the whole
+      ! catalog can be turned into gl_slabs data at once, and then the gl_slabs
+      ! can be indexed by Beta_Group%Cat_Index as well.
     type (forwardModelDerived_T) :: ForwardModelDerived
   end type ForwardModelConfig_T
 
@@ -275,129 +321,129 @@ contains
       end do
     end do
 
-    if ( associated(pfaData) ) then
-
-      call allocate_test ( PFAWork, s2, size(fwdModelConf%molecules), &
-        & 'PFAWork', moduleName, lowBound_1=s1, lowBound_2=fwdModelConf%firstPFA )
-
-      ! Work out which PFA data are germane to fwdModelConf%Molecules
-      ! We do this because there are thousands of PFA data, but maybe only
-      ! a few that are germane to this fwdModelConf
-      howManyPFA = 0
-      do i = 1, size(pfaData)
-        hit = .false.
-        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
-          if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
-            if ( matchSignal(fwdModelConf%signals, PFAData(i)%theSignal, &
-              & DSBSSB=.true.) /= 0 ) then
-              if ( hit ) then
-                error = .true.
-                call MLSMessage ( MLSMSG_Warning, moduleName, &
-                  & 'Two molecules in same PFA Datum selected' )
-                call dump ( PFAData(whichPFA(j)), details=0 )
-              end if
-              hit = .true.
-            end if
-          end if
-        end do
-        if ( hit ) howManyPFA = howManyPFA + 1
-      end do
-      call allocate_test ( whichPFA, howManyPFA, 'whichPFA', moduleName )
-      call allocate_test ( whichMolecule, howManyPFA, 'whichMolecule', moduleName )
-      howManyPFA = 0
-      do i = 1, size(pfaData)
-        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
-          if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
-            if ( matchSignal(fwdModelConf%signals, PFAData(i)%theSignal, &
-              & DSBSSB=.true.) /= 0 ) then
-              howManyPFA = howManyPFA + 1
-              whichPFA(howManyPFA) = i
-              whichMolecule(howManyPFA) = j
-            end if
-          end if
-        end do
-      end do
-      ! Work out PFA abstracts for each channel
-      if ( .not. error ) then
-        do i = 1, size(channels)
-          PFAWork = 0
-          nullify ( t1, channels(i)%PFAMolecules, channels(i)%betaIndex )
-          call allocate_test ( channels(i)%PFAMolecules, 0, &
-            & 'channels(i)%PFAMolecules', moduleName ) ! so we can do unions
-          ! Where there is a signal and a molecule, make whichPFA negative.
-          ! Make sure that only one molecule is selected from each PFA Datum
-          do j = 1, howManyPFA
-            if ( channels(i)%used < lbound(PFAData(whichPFA(j))%theSignal%channels,1) .or. &
-                 channels(i)%used > ubound(PFAData(whichPFA(j))%theSignal%channels,1) ) cycle
-            if ( .not. PFAData(whichPFA(j))%theSignal%channels(channels(i)%used) ) cycle
-            if ( matchSignal ( fwdModelConf%signals(channels(i)%signal), &
-              &  PFAData(whichPFA(j))%theSignal, DSBSSB=.true. ) == 0 ) cycle
-            t2 => intersection(fwdModelConf%molecules(fwdModelConf%firstPFA:), &
-              &                PFAData(whichPFA(j))%molecules)
-            if ( size(t2) == 0 ) cycle
-            whichPFA(j) = -whichPFA(j) ! Indicate above tests succeeded
-            t1 => union(channels(i)%PFAMolecules,t2)
-            call deallocate_test ( t2, 't2', moduleName )
-            call deallocate_test ( channels(i)%PFAMolecules, &
-              & 'channels(i)%PFAMolecules', moduleName )
-            channels(i)%PFAMolecules => t1
-          end do ! j = 1, howManyPFA
-          numPFA = size(channels(i)%PFAMolecules)
-          call allocate_test ( channels(i)%PFAIndex, s2, numPFA, &
-            & 'channels(i)%PFAIndex', moduleName, lowBound_1=s1 )
-          call allocate_test ( channels(i)%betaIndex, numPFA, &
-            & 'channels(i)%BetaIndex', moduleName )
-          channels(i)%betaIndex = 0 ! in case a dump is requested
-          ! Arrange the PFAData indices by sideband and molecule in PFAWork
-          do sb = s1, s2, 2
-            do j = 1, howManyPFA
-              if ( whichPFA(j) > 0 ) cycle ! some test in previous loop failed
-              if ( matchSignal ( PFAData(-whichPFA(j))%theSignal, &
-                &  fwdModelConf%signals(channels(i)%signal), sideband=sb, &
-                &  channel=channels(i)%used ) > 0 ) &
-                  & PFAWork(sb,whichMolecule(j)) = -whichPFA(j)
-            end do ! j = 1, howManyPFA
-          end do ! sb = s1, s2
-          ! Copy nonzero columns of PFAWork to channels(i)%PFAIndex, which
-          ! has exactly the same number of columns as the number of PFAWork's
-          ! nonzero columns
-          k = 0
-          do j = lbound(pfawork,2), ubound(pfawork,2)
-            if ( pfawork(-1,j)+pfawork(+1,j) /= 0 ) then
-              k = k + 1
-              channels(i)%PFAIndex(s1:s2:2,k) = pfawork(s1:s2:2,j)
-            end if
-          end do
-          ! Check whether we have PFA data for both sidebands if LBL is DSB
-          if ( s1 /= s2 ) then
-            do j = 1, numPFA
-              if ( channels(i)%PFAIndex(s1,j) * channels(i)%PFAIndex(s2,j) == 0 ) then
-  !             error = .true.
-                call MLSMessage ( MLSMSG_warning, moduleName, &
-                  & 'LBL signal is DSB but both PFAs are not available' )
-                call output ( channels(i)%used, before=' Channel ' )
-                call output ( ', LBL signal: ' )
-                call displaySignalName ( fwdModelConf%signals(channels(i)%signal), &
-                  & advance='yes' )
-                call output ( ' Available ' )
-                if ( channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j) == 0 ) then
-                  call output ( 'PFA Datum: None', advance='yes' )
-                else
-                  call dump ( PFAData( &
-                    & channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j)), &
-                    & index=channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j), &
-                    & details=0 )
-                end if
-              end if
-            end do ! j = 1, numPFA
-          end if
-          whichPFA = abs(whichPFA)
-        end do ! i = 1, size(channels)
-      end if
-      call deallocate_test ( PFAWork, 'PFAWork', moduleName )
-      call deallocate_test ( whichPFA, 'whichPFA', moduleName )
-      call deallocate_test ( whichMolecule, 'whichMolecule', moduleName )
-    end if ! associated(pfaData)
+!    if ( associated(pfaData) ) then
+!
+!      call allocate_test ( PFAWork, s2, size(fwdModelConf%molecules), &
+!        & 'PFAWork', moduleName, lowBound_1=s1, lowBound_2=fwdModelConf%firstPFA )
+!
+!      ! Work out which PFA data are germane to fwdModelConf%Molecules
+!      ! We do this because there are thousands of PFA data, but maybe only
+!      ! a few that are germane to this fwdModelConf
+!      howManyPFA = 0
+!      do i = 1, size(pfaData)
+!        hit = .false.
+!        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
+!          if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
+!            if ( matchSignal(fwdModelConf%signals, PFAData(i)%theSignal, &
+!              & DSBSSB=.true.) /= 0 ) then
+!              if ( hit ) then
+!                error = .true.
+!                call MLSMessage ( MLSMSG_Warning, moduleName, &
+!                  & 'Two molecules in same PFA Datum selected' )
+!                call dump ( PFAData(whichPFA(j)), details=0 )
+!              end if
+!              hit = .true.
+!            end if
+!          end if
+!        end do
+!        if ( hit ) howManyPFA = howManyPFA + 1
+!      end do
+!      call allocate_test ( whichPFA, howManyPFA, 'whichPFA', moduleName )
+!      call allocate_test ( whichMolecule, howManyPFA, 'whichMolecule', moduleName )
+!      howManyPFA = 0
+!      do i = 1, size(pfaData)
+!        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
+!          if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
+!            if ( matchSignal(fwdModelConf%signals, PFAData(i)%theSignal, &
+!              & DSBSSB=.true.) /= 0 ) then
+!              howManyPFA = howManyPFA + 1
+!              whichPFA(howManyPFA) = i
+!              whichMolecule(howManyPFA) = j
+!            end if
+!          end if
+!        end do
+!      end do
+!      ! Work out PFA abstracts for each channel
+!      if ( .not. error ) then
+!        do i = 1, size(channels)
+!          PFAWork = 0
+!          nullify ( t1, channels(i)%PFAMolecules, channels(i)%betaIndex )
+!          call allocate_test ( channels(i)%PFAMolecules, 0, &
+!            & 'channels(i)%PFAMolecules', moduleName ) ! so we can do unions
+!          ! Where there is a signal and a molecule, make whichPFA negative.
+!          ! Make sure that only one molecule is selected from each PFA Datum
+!          do j = 1, howManyPFA
+!            if ( channels(i)%used < lbound(PFAData(whichPFA(j))%theSignal%channels,1) .or. &
+!                 channels(i)%used > ubound(PFAData(whichPFA(j))%theSignal%channels,1) ) cycle
+!            if ( .not. PFAData(whichPFA(j))%theSignal%channels(channels(i)%used) ) cycle
+!            if ( matchSignal ( fwdModelConf%signals(channels(i)%signal), &
+!              &  PFAData(whichPFA(j))%theSignal, DSBSSB=.true. ) == 0 ) cycle
+!            t2 => intersection(fwdModelConf%molecules(fwdModelConf%firstPFA:), &
+!              &                PFAData(whichPFA(j))%molecules)
+!            if ( size(t2) == 0 ) cycle
+!            whichPFA(j) = -whichPFA(j) ! Indicate above tests succeeded
+!            t1 => union(channels(i)%PFAMolecules,t2)
+!            call deallocate_test ( t2, 't2', moduleName )
+!            call deallocate_test ( channels(i)%PFAMolecules, &
+!              & 'channels(i)%PFAMolecules', moduleName )
+!            channels(i)%PFAMolecules => t1
+!          end do ! j = 1, howManyPFA
+!          numPFA = size(channels(i)%PFAMolecules)
+!          call allocate_test ( channels(i)%PFAIndex, s2, numPFA, &
+!            & 'channels(i)%PFAIndex', moduleName, lowBound_1=s1 )
+!          call allocate_test ( channels(i)%betaIndex, numPFA, &
+!            & 'channels(i)%BetaIndex', moduleName )
+!          channels(i)%betaIndex = 0 ! in case a dump is requested
+!          ! Arrange the PFAData indices by sideband and molecule in PFAWork
+!          do sb = s1, s2, 2
+!            do j = 1, howManyPFA
+!              if ( whichPFA(j) > 0 ) cycle ! some test in previous loop failed
+!              if ( matchSignal ( PFAData(-whichPFA(j))%theSignal, &
+!                &  fwdModelConf%signals(channels(i)%signal), sideband=sb, &
+!                &  channel=channels(i)%used ) > 0 ) &
+!                  & PFAWork(sb,whichMolecule(j)) = -whichPFA(j)
+!            end do ! j = 1, howManyPFA
+!          end do ! sb = s1, s2
+!          ! Copy nonzero columns of PFAWork to channels(i)%PFAIndex, which
+!          ! has exactly the same number of columns as the number of PFAWork's
+!          ! nonzero columns
+!          k = 0
+!          do j = lbound(pfawork,2), ubound(pfawork,2)
+!            if ( pfawork(-1,j)+pfawork(+1,j) /= 0 ) then
+!              k = k + 1
+!              channels(i)%PFAIndex(s1:s2:2,k) = pfawork(s1:s2:2,j)
+!            end if
+!          end do
+!          ! Check whether we have PFA data for both sidebands if LBL is DSB
+!          if ( s1 /= s2 ) then
+!            do j = 1, numPFA
+!              if ( channels(i)%PFAIndex(s1,j) * channels(i)%PFAIndex(s2,j) == 0 ) then
+!  !             error = .true.
+!                call MLSMessage ( MLSMSG_warning, moduleName, &
+!                  & 'LBL signal is DSB but both PFAs are not available' )
+!                call output ( channels(i)%used, before=' Channel ' )
+!                call output ( ', LBL signal: ' )
+!                call displaySignalName ( fwdModelConf%signals(channels(i)%signal), &
+!                  & advance='yes' )
+!                call output ( ' Available ' )
+!                if ( channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j) == 0 ) then
+!                  call output ( 'PFA Datum: None', advance='yes' )
+!                else
+!                  call dump ( PFAData( &
+!                    & channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j)), &
+!                    & index=channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j), &
+!                    & details=0 )
+!                end if
+!              end if
+!            end do ! j = 1, numPFA
+!          end if
+!          whichPFA = abs(whichPFA)
+!        end do ! i = 1, size(channels)
+!      end if
+!      call deallocate_test ( PFAWork, 'PFAWork', moduleName )
+!      call deallocate_test ( whichPFA, 'whichPFA', moduleName )
+!      call deallocate_test ( whichMolecule, 'whichMolecule', moduleName )
+!    end if ! associated(pfaData)
 
     ! Hook the shortcuts into the structure
     fwdModelConf%forwardModelDerived%channels => channels
@@ -414,6 +460,39 @@ contains
         & 'Unrecoverable errors in forward model configuration' )
 
   end subroutine DeriveFromForwardModelConfig
+
+  ! -----------------------------------------  Destroy_Beta_Group  -----
+  subroutine Destroy_Beta_Group ( Beta_Group )
+
+  ! Destroy the catalog extract prepared by Get_Species_Data
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+
+    type(beta_group_t), pointer :: Beta_Group(:)
+
+    integer :: I
+
+    if ( .not. associated(beta_group) ) return
+
+    do i = 1, size(beta_group)
+      call deallocate_test ( beta_group(i)%cat_index, 'beta_group(i)%cat_index', &
+        & moduleName )
+      call deallocate_test ( beta_group(i)%lbl_molecules, 'beta_group(i)%LBL_molecules', &
+        & moduleName )
+      call deallocate_test ( beta_group(i)%PFA_indices, 'beta_group(i)%PFA_indices', &
+        & moduleName )
+      call deallocate_test ( beta_group(i)%pfa_molecules, 'beta_group(i)%PFA_molecules', &
+        & moduleName )
+      call deallocate_test ( beta_group(i)%ratio, 'beta_group(i)%ratio', &
+        & moduleName )
+    end do
+
+    deallocate ( beta_group, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'beta_group' )
+
+  end subroutine Destroy_Beta_Group
 
   ! --------------------------  DestroyForwardModelConfigDatabase  -----
   subroutine DestroyFWMConfigDatabase ( Database, Deep )
@@ -487,30 +566,22 @@ contains
   ! --------------------------------------------- PVMPackFwmConfig -----
   subroutine PVMPackFWMConfig ( config )
     use PVMIDL, only: PVMIDLPack
-    use PVM, only: PVMErrorMessage
     use MorePVM, only: PVMPackLitIndex, PVMPackStringIndex
     use MLSSignals_m, only: PVMPackSignal
     use VGridsDatabase, only: PVMPackVGrid
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(in) :: CONFIG
     ! Local variables
-    integer :: INFO                     ! Flag from PVM
     integer :: I                        ! Loop counter
 
     ! Executable code
     ! First pack the lit indices
-    call PVMPackStringIndex ( config%name, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig name" )
-    call PVMPackLitIndex ( config%cloud_der, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig cloud_der" )
-    call PVMPackLitIndex ( config%fwmType, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig fwmType" )
-    call PVMPackLitIndex ( config%i_saturation, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig i_saturation" )
-    call PVMPackLitIndex ( config%instrumentModule, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig instrumentModule" )
-    call PVMPackLitIndex ( config%windowUnits, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig windowUnits" )
+    call PVMPackStringIndex ( config%name, msg = "Packing fwmConfig name" )
+    call PVMPackLitIndex ( config%cloud_der, msg = "Packing fwmConfig cloud_der" )
+    call PVMPackLitIndex ( config%fwmType, msg = "Packing fwmConfig fwmType" )
+    call PVMPackLitIndex ( config%i_saturation, msg = "Packing fwmConfig i_saturation" )
+    call PVMPackLitIndex ( config%instrumentModule, msg = "Packing fwmConfig instrumentModule" )
+    call PVMPackLitIndex ( config%windowUnits, msg = "Packing fwmConfig windowUnits" )
 
     ! Now pack the integer scalars
     call PVMIDLPack ( (/ &
@@ -519,84 +590,68 @@ contains
       & config%num_ab_terms, config%num_azimuth_angles, &
       & config%num_scattering_angles, config%num_size_bins, &
       & config%sidebandStart, config%sidebandStop, &
-      & config%surfaceTangentIndex /), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig integers" )
+      & config%surfaceTangentIndex /), msg = "Packing fwmConfig integers" )
 
     ! Now the logical scalars
     call PVMIDLPack ( (/ &
-      & config%allLinesForRadiometer, config%atmos_der, &
-      & config%default_spectroscopy, config%differentialScan,&
-      & config%do_1d, config%do_baseline, config%do_conv, &
-      & config%do_freq_avg, config%forceFoldedOutput, config%forceSidebandFraction, &
-      & config%globalConfig, config%incl_cld, &
-      & config%lockBins, config%polarized, config%skipOverlaps, &
-      & config%spect_Der, config%temp_Der /), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
+      & config%allLinesForRadiometer, config%allLinesInCatalog, config%anyPFA, &
+      & config%atmos_der, config%default_spectroscopy, config%differentialScan,&
+      & config%do_1d, config%do_baseline, config%do_conv, config%do_freq_avg, &
+      & config%forceFoldedOutput, config%forceSidebandFraction, &
+      & config%globalConfig, config%incl_cld, config%lockBins, config%polarized, &
+      & config%skipOverlaps, config%spect_Der, config%switchingMirror, &
+      & config%temp_Der /), msg = "Packing fwmConfig logicals" )
 
     ! Now pack the reals
-    call PVMIDLPack ( (/ config%phiWindow, config%tolerance /), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig reals" )
+    call PVMIDLPack ( (/ config%phiWindow, config%tolerance /), &
+      & msg = "Packing fwmConfig reals" )
 
     ! ------------- The rest are arrays and/or types
     ! Bin selectors
     if ( associated ( config%binSelectors ) ) then
-      call PVMIDLPack ( size ( config%binSelectors ), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of binSelectors" )
-      call PVMIDLPack ( config%binSelectors, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing binSelectors" )
+      call PVMIDLPack ( size ( config%binSelectors ), msg = "Packing number of binSelectors" )
+      call PVMIDLPack ( config%binSelectors, msg = "Packing binSelectors" )
     else
-      call PVMIDLPack ( 0, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 binSelectors" )
+      call PVMIDLPack ( 0, msg = "Packing 0 binSelectors" )
     end if
 
     ! Molecules / derivatives
     if ( associated ( config%molecules ) ) then
-      call PVMIDLPack ( size ( config%molecules ), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of molecules" )
-      call PVMIDLPack ( config%firstPFA, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing index of first PFA molecule" )
+      call PVMIDLPack ( size ( config%molecules ), msg = "Packing number of molecules" )
       if ( size ( config%molecules ) > 0 ) then
         do i = 1, size(config%molecules) - 1
-          call PVMPackLitIndex ( abs ( config%molecules(i) ), info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a molecule" )
-          call PVMIDLPack ( (config%molecules(i) .gt. 0.0), info )
-          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing molecule sign" )
+          call PVMPackLitIndex ( abs ( config%molecules(i) ), &
+            & msg = "Packing a molecule" )
+          call PVMIDLPack ( (config%molecules(i) > 0.0), msg = "Packing molecule sign" )
         end do
-        call PVMIDLPack ( config%moleculeDerivatives, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "Packing molecule derivatives" )
+        call PVMIDLPack ( config%moleculeDerivatives, msg = "Packing molecule derivatives" )
       end if
     else
-      call PVMIDLPack ( 0, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 molecules" )
+      call PVMIDLPack ( 0, msg = "Packing 0 molecules" )
     end if
 
     ! Specific quantities
     if ( associated ( config%specificQuantities ) ) then
-      call PVMIDLPack ( size ( config%specificQuantities ), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of specificQuantities" )
-      call PVMIDLPack ( config%specificQuantities, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing specificQuantities" )
+      call PVMIDLPack ( size ( config%specificQuantities ), &
+        & msg = "Packing number of specificQuantities" )
+      call PVMIDLPack ( config%specificQuantities, msg = "Packing specificQuantities" )
     else
-      call PVMIDLPack ( 0, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 specificQuantities" )
+      call PVMIDLPack ( 0, msg = "Packing 0 specificQuantities" )
     end if
 
     ! Pack the other structures - signals
     if ( associated ( config%signals ) ) then
-      call PVMIDLPack ( size ( config%signals ), info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of signals" )
+      call PVMIDLPack ( size ( config%signals ), msg = "Packing number of signals" )
       do i = 1, size ( config%signals )
         call PVMPackSignal ( config%signals(i) )
       end do
     else
-      call PVMIDLPack ( 0, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Packing 0 signals" )
+      call PVMIDLPack ( 0, msg = "Packing 0 signals" )
     end if
 
     ! Vgrids
     call PVMIDLPack ( (/ associated ( config%integrationGrid ), &
-      & associated ( config%tangentGrid ) /), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing vGrid flags" )
+      & associated ( config%tangentGrid ) /), msg = "Packing vGrid flags" )
     if ( associated ( config%integrationGrid ) ) &
       & call PVMPackVGrid ( config%integrationGrid )
     if ( associated ( config%tangentGrid ) ) &
@@ -607,7 +662,6 @@ contains
   ! ----------------------------------------- PVMUnpackFWMConfig ---------
   subroutine PVMUnpackFWMConfig ( CONFIG )
     use PVMIDL, only: PVMIDLUnpack
-    use PVM, only: PVMErrorMessage
     use MorePVM, only: PVMUnpackLitIndex, PVMUnpackStringIndex
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
     use Allocate_Deallocate, only: Allocate_test
@@ -618,30 +672,24 @@ contains
     ! Local variables
     integer :: INFO                     ! Flag from PVM
     logical :: FLAG                     ! A flag from the sender
-    logical, dimension(17) :: LS        ! Temporary array
-    integer, dimension(10) :: IS         ! Temporary array
-    real(r8), dimension(2) :: RS        ! Temporary array
+    logical, dimension(20) :: LS        ! Temporary array, for logical scalars
+    integer, dimension(10) :: IS        ! Temporary array, for integer scalars
+    real(r8), dimension(2) :: RS        ! Temporary array, for real scalars
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
 
     ! Executable code
     ! First unpack the lit indices
-    call PVMUnpackStringIndex ( config%name, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig name" )
-    call PVMUnpackLitIndex ( config%cloud_der, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig cloud_der" )
-    call PVMUnpackLitIndex ( config%fwmType, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig fwmType" )
-    call PVMUnpackLitIndex ( config%i_saturation, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig i_saturation" )
-    call PVMUnpackLitIndex ( config%instrumentModule, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig instrumentModule" )
-    call PVMUnpackLitIndex ( config%windowUnits, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig windowUnits" )
+    call PVMUnpackStringIndex ( config%name, msg = "Unpacking fwmConfig name" )
+    call PVMUnpackLitIndex ( config%cloud_der, msg = "Unpacking fwmConfig cloud_der" )
+    call PVMUnpackLitIndex ( config%fwmType, msg = "Unpacking fwmConfig fwmType" )
+    call PVMUnpackLitIndex ( config%i_saturation, msg = "Unpacking fwmConfig i_saturation" )
+    call PVMUnpackLitIndex ( config%instrumentModule, &
+      msg = "Unpacking fwmConfig instrumentModule" )
+    call PVMUnpackLitIndex ( config%windowUnits, msg = "Unpacking fwmConfig windowUnits" )
 
     ! Now the integer scalars
-    call PVMIDLUnpack ( is, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig integers" )
+    call PVMIDLUnpack ( is, msg = "Unpacking fwmConfig integers" )
     i = 1
     config%linearsideband        = is(i) ; i = i + 1
     config%no_cloud_species      = is(i) ; i = i + 1
@@ -657,10 +705,11 @@ contains
     ! Now the logical scalars. Array LS has to be long enough for this.
     ! If you add any items here, don't forget to make LS longer at the top
     ! of the program unit.
-    call PVMIDLUnpack ( ls, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig logicals" )
+    call PVMIDLUnpack ( ls, msg = "Unpacking fwmConfig logicals" )
     i = 1
     config%allLinesForRadiometer = ls(i) ; i = i + 1
+    config%allLinesInCatalog     = ls(i) ; i = i + 1
+    config%anyPFA                = ls(i) ; i = i + 1
     config%atmos_der             = ls(i) ; i = i + 1
     config%default_spectroscopy  = ls(i) ; i = i + 1
     config%differentialScan      = ls(i) ; i = i + 1
@@ -676,60 +725,49 @@ contains
     config%polarized             = ls(i) ; i = i + 1
     config%skipOverlaps          = ls(i) ; i = i + 1
     config%spect_der             = ls(i) ; i = i + 1
+    config%switchingMirror       = ls(i) ; i = i + 1
     config%temp_der              = ls(i) ; i = i + 1
 
     ! Now the real scalars
-    call PVMIDLUnpack ( rs, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig reals" )
+    call PVMIDLUnpack ( rs, msg = "Unpacking fwmConfig reals" )
     i = 1
     config%phiWindow = rs(i) ; i = i + 1
     config%tolerance = rs(i) ; i = i + 1
 
     ! ------- The rest are arrays and/or types
     ! Bin selectors
-    call PVMIDLUnpack ( n, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
+    call PVMIDLUnpack ( n, msg = "Unpacking number of specific quantities" )
     if ( n > 0 ) then
       call Allocate_test ( config%binSelectors, n, &
         & 'config%binSelectors', ModuleName )
-      call PVMIDLUnpack ( config%binSelectors, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking binSelectors" )
+      call PVMIDLUnpack ( config%binSelectors, msg = "Unpacking binSelectors" )
     end if
 
     ! Molecules / derivatives
-    call PVMIDLUnpack ( n, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of molecules" )
-    call PVMIDLUnpack ( config%firstPFA, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking index of PFA molecule" )
+    call PVMIDLUnpack ( n, msg = "Unpacking number of molecules" )
     if ( n > 0 ) then
       call Allocate_test ( config%molecules, n, 'config%molecules', ModuleName )
       call Allocate_test ( config%moleculeDerivatives, &
         & n, 'config%moleculeDerivatives', ModuleName )
       do i = 1, n - 1
-        call PVMUnpackLitIndex ( config%molecules(i), info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a molecule" )
-        call PVMIDLUnpack ( flag, info )
-        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a molecule sign flag" )
+        call PVMUnpackLitIndex ( config%molecules(i), msg = "Unpacking a molecule" )
+        call PVMIDLUnpack ( flag, msg = "Unpacking a molecule sign flag" )
         if ( .not. flag ) config%molecules(i) = - config%molecules(i)
       end do
       config%molecules(n) = huge(config%molecules(n)) ! Sentinel
-      call PVMIDLUnpack ( config%moleculeDerivatives, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivatives" )
+      call PVMIDLUnpack ( config%moleculeDerivatives, msg = "Unpacking moleculeDerivatives" )
     end if
 
     ! Specific quantities
-    call PVMIDLUnpack ( n, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
+    call PVMIDLUnpack ( n, msg = "Unpacking number of specific quantities" )
     if ( n > 0 ) then
       call Allocate_test ( config%specificQuantities, n, &
         & 'config%specificQuantities', ModuleName )
-      call PVMIDLUnpack ( config%specificQuantities, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking specific quantities" )
+      call PVMIDLUnpack ( config%specificQuantities, msg = "Unpacking specific quantities" )
     end if
 
     ! Unpack other structures - signals
-    call PVMIDLUnpack ( n, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of signals" )
+    call PVMIDLUnpack ( n, msg = "Unpacking number of signals" )
     if ( n > 0 ) then
       allocate ( config%signals(n), STAT=info )
       if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -740,8 +778,7 @@ contains
     end if
 
     ! Vgrids
-    call PVMIDLUnpack ( ls(1:2), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking vGrid flags" )
+    call PVMIDLUnpack ( ls(1:2), msg = "Unpacking vGrid flags" )
     if ( ls(1) ) then
       allocate ( config%integrationGrid, STAT=info )
       if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -831,14 +868,53 @@ contains
     ! be (or already are) destroyed by destroyVGridDatabase.
     call deallocate_test ( config%molecules, &
       & "config%molecules", moduleName )
-    call deallocate_test ( config%moleculeDerivatives, &
-      & "config%moleculeDerivatives", moduleName )
     call Deallocate_test ( config%specificQuantities, &
       & "config%specificQuantities", ModuleName )
     call Deallocate_test ( config%binSelectors, &
       & "config%binSelectors", ModuleName )
     call destroyForwardModelDerived ( config )
   end subroutine DestroyOneForwardModelConfig
+
+  ! --------------------------------------------  Dump_Beta_Group  -----
+  subroutine Dump_Beta_Group ( Beta_Group, Name )
+
+    use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
+    use Output_m, only: Blanks, NewLine, Output
+    use String_Table, only: Display_String
+
+    type(beta_group_t), intent(in) :: Beta_Group(:)
+    character(len=*), intent(in), optional :: Name
+
+    integer :: I, J
+
+    call output ( '  Beta groups' )
+    if ( present(name) ) call output ( ' ' // trim(name) )
+    call output ( size(beta_group), before=', SIZE = ', advance='yes' )
+    do i = 1, size(beta_group)
+      call output ( i, before='  Beta group ', after=': ' )
+      call display_string ( lit_indices(beta_group(i)%molecule) )
+      if ( beta_group(i)%derivatives ) call output ( ' with derivative' )
+      if ( size(beta_group(i)%lbl_molecules) > 0 ) call display_string ( &
+          & lit_indices(beta_group(i)%lbl_molecules), before=', LBL:' )
+      if ( size(beta_group(i)%pfa_molecules) > 0 ) call display_string ( &
+          & lit_indices(beta_group(i)%pfa_molecules), before=', PFA:' )
+      call newLine
+      if ( size(beta_group(i)%lbl_molecules) > 0 ) then
+        if ( associated ( beta_group(i)%qty%qty ) ) call dump ( beta_group(i)%qty )
+        call dump ( beta_group(i)%ratio, name='   Ratio' )
+        if ( associated ( beta_group(i)%cat_index ) ) &
+          & call dump ( beta_group(i)%cat_index, name='   Cat_Index' )
+      end if
+      if ( associated(beta_group(i)%PFA_indices) ) then
+        do j = lbound(beta_group(i)%PFA_indices,1), &
+               ubound(beta_group(i)%PFA_indices,1), 2
+          call output ( j, before='   PFA Indices for sideband ', advance='yes' )
+          call dump ( beta_group(i)%PFA_indices(j,:,:) )
+        end do
+      end if
+    end do
+  end subroutine Dump_Beta_Group
 
   ! ----------------------------  Dump_ForwardModelConfigDatabase  -----
   subroutine Dump_ForwardModelConfigDatabase ( Database, Where )
@@ -908,12 +984,12 @@ contains
     call output ( Config%spect_der, advance='yes' )
     call output ( '  Temp_der:' )
     call output ( Config%temp_der, advance='yes' )
+    if ( associated(Config%Beta_group) ) call dump ( Config%Beta_group )
     call output ( '  Molecules: ', advance='yes' )
     if ( associated(Config%molecules) ) then
       i = 0
       do j = 1, size(Config%molecules) - 1
         call output ( '    ' )
-        if ( j == config%firstPFA ) call output ( 'PFA: ' )
         if ( Config%molecules(j) < 0 ) call output ( '-' )
         call display_string(lit_indices(abs(Config%molecules(j))))
         if ( Config%molecules(j) > 0 ) then
@@ -969,6 +1045,17 @@ contains
     end if
   end subroutine Dump_ForwardModelConfig
 
+  ! ---------------------------------------------  Dump_Qty_Stuff  -----
+  subroutine Dump_Qty_Stuff ( Qty )
+    use Output_m, only: NewLine, Output
+    use String_Table, only: Display_String
+    use VectorsModule, only: Dump
+    type(qtyStuff_t), intent(in) :: Qty
+    call dump ( qty%qty, details=-2 )
+    if ( qty%foundInFirst ) call output ( ', Found in first' )
+    call newLine
+  end subroutine Dump_Qty_Stuff
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -976,6 +1063,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.59  2004/10/06 21:23:50  vsnyder
+! More work on PFA data structures
+!
 ! Revision 2.58  2004/09/01 00:32:40  vsnyder
 ! Add PFAIndex field, polish up the dump routines
 !
