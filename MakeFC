@@ -70,6 +70,8 @@ endif
 # where the following utility scripts 
 # (necessary to build the mls software) are stored
 #   Script                        Function
+#   add_idents.sh          (1) Adds $id, $rcs lines to source files
+#                          (2) Prints toc/api for source files
 #   batch_hcnvrt.sh        Convert a group of hdfeos2 files to hdfeos5
 #                            using heconvert
 #   build_f90_in_misc.sh   Build a c or Fortran program
@@ -78,8 +80,10 @@ endif
 #   ghostbuster.sh         Deletes orphaned .o, .mod files from deceased sources
 #   l2cfmaker.sh           "Compiler" for building l2cf
 #   makemakedep.sh         Calculates dependencies   
-#   mkdir_cascade.sh       Creates a directory, and any yet uncreated parents
 #   mark_as_uptodate.sh    Marks files uptodate to forestall recompilations
+#   missing_ident.sh       (1) Prints files missing $id, $rcs lines
+#                          (2) Those not appearing in executable's ident id/rcs
+#   mkdir_cascade.sh       Creates a directory, and any yet uncreated parents
 #   mlsconfigure           Configures Makefiles for building mlks software
 #   mlsprog.sh             sh wrapper to assure exit condition is "1" if probs
 #   newAifBdiff.sh         Precompiler to forestall recompilations
@@ -170,6 +174,8 @@ SHELL = /bin/sh
 #                   where *.o, *.mod, lib*.a, mlsl*, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
 # disthelp       -- prints README.MakeFC--a long file
+# doc--api       -- prints every available api
+# doc--toc       -- prints every available toc
 # firsthelp      -- prints BEFORE.mls--lists prerequisites for mls software
 # ghostbuster    -- removes orphaned .o, .mod files from uniquely-named ssds
 #                   also deletes haunted library files
@@ -507,6 +513,24 @@ depends:
 		$(MAKE) -f $(MakeFName) internalcleanup ; \
 	fi
 	@$(MAKE) -f $(MakeFName) internaldepends
+
+doc--api:
+	@echo "api for each of $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+   	echo " "; echo '           * * * ' "api for $$dir" ' * * *'; \
+	  $(MLSBIN)/add_idents.sh -api -id -n -d $$dir -suf .f90 -suf .f -suf .c; \
+	done; \
+	echo " "; echo '           * * * ' "api for srclib" ' * * *'; \
+	  $(MLSBIN)/add_idents.sh -api -id -n -d srclib -suf .f9h -suf .f90
+
+doc--toc:
+	@echo "toc for each of $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+   	echo " "; echo '           * * * ' "toc for $$dir" ' * * *'; \
+	  $(MLSBIN)/add_idents.sh -toc -id -n -d $$dir -suf .f90 -suf .f -suf .c; \
+	done; \
+   	echo " "; echo '           * * * ' "toc for srclib" ' * * *'; \
+	  $(MLSBIN)/add_idents.sh -toc -id -n -d srclib -suf .f9h -suf .f90
 
 help--Makefile:
 	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(CONFDIR)/MakeFC \
@@ -969,7 +993,7 @@ update:
 
 .PHONY: all configure clean clean_config\
   configure_pvm configure_fopts configure_full configure_help configure_subdirs\
-  depends distclean disttar distarz distarg disthelp\
+  depends distclean disttar distarz distarg disthelp doc--api doc--toc \
   firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
   help help--ghostbuster help--mlsconfigure help--Makefile help--platform\
   help--pvm help--reecho help--scripts help--toolkit install\
@@ -983,6 +1007,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.78  2002/09/24 18:12:32  pwagner
+# Uses unique names for temp files
+#
 # Revision 1.77  2002/08/29 17:57:34  pwagner
 # Added build of MLS_h5ls; HDF5 is now requisite for all so cases removed for some only
 #
