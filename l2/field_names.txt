@@ -103,6 +103,7 @@ lambda
 length
 lengthScale
 level
+lockBins
 logBasis
 losqty
 lsb
@@ -126,6 +127,7 @@ molecules
 multiplier
 
 nabterms
+nameFragment
 nazimuthangles
 ncloudspecies
 nmodelsurfs
@@ -237,6 +239,9 @@ vmrQuantity
 writeCounterMAF
 
 # $Log$
+# Revision 2.41  2002/07/17 06:02:36  livesey
+# New HDF5 l2pc stuff
+#
 # Revision 2.40  2002/06/26 01:26:30  livesey
 # Added 2D pressure guessing stuff
 #
