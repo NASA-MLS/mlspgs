@@ -54,9 +54,9 @@ module RetrievalModule
   use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
     & N_less_colon_less, N_named
   use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
-    & CloneVector, CopyVector, DestroyVectorInfo, DestroyVectorDatabase, &
-    & DumpMask, GetVectorQuantityByType, IsVectorQtyMasked, &
-    & M_FullDerivatives, M_LinAlg, &
+    & CloneVector, CopyVector, CopyVectorMask, DestroyVectorInfo, &
+    & DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
+    &IsVectorQtyMasked, M_FullDerivatives, M_LinAlg, &
     & Vector_T, VectorValue_T
 
   implicit NONE
@@ -439,6 +439,7 @@ contains
         if ( got(f_fwdModelOut) ) then
           call copyVector ( fwdModelOut, v(f) )
           call addToVector ( fwdModelOut, measurements )
+          call copyVectorMask ( fwdModelOut, measurements )
         end if
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
@@ -2583,6 +2584,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.131  2002/02/08 22:51:59  livesey
+! Added call to CopyVectorMask to transfer mask from measurements to forward
+! model.
+!
 ! Revision 2.130  2002/02/07 02:55:02  vsnyder
 ! Add a 'mask' field to the 'setup' spec
 !
