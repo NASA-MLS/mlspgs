@@ -66,7 +66,7 @@ contains
       & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
       & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, &
       & Sparsify, MultiplyMatrix_XTY
-    use MatrixTools, only: DumpBlock
+    use MatrixTools, only: DumpBlocks
     use MLSCommon, only: MLSCHUNK_T, R8, RV
     use MLSL2Options, only: SKIPRETRIEVAL
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, Add_To_Retrieval_Timing
@@ -268,7 +268,7 @@ contains
       select case ( spec )
       
       case ( s_dumpblocks )
-        call DumpBlock ( key, matrixDatabase )
+        call DumpBlocks ( key, matrixDatabase )
       case ( s_matrix )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.matrix/vector", root )
         if ( nsons(key) /= 1 ) call announceError ( noFields, spec )
@@ -2241,6 +2241,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.252  2003/10/07 01:17:52  vsnyder
+! Change spelling of dumpBlock to dumpBlocks
+!
 ! Revision 2.251  2003/09/11 23:16:11  livesey
 ! Now hands vector database onto forward model to support xStar/yStar in
 ! linearized forward model.
