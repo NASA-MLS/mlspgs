@@ -2124,7 +2124,7 @@ CONTAINS
         thisRadiance =>  &
           GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
           & signal=fwdModelConf%signals(sigInd)%index, &
-          & sideband=thisSideband )
+          & sideband=fwdModelConf%signals(sigInd)%sideband )
         if ( sidebandStart /= sidebandStop ) then   ! We're folding
           sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_sidebandRatio, signal=fwdModelConf%signals(sigInd)%index, &
@@ -2477,6 +2477,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.77  2002/07/30 20:03:59  livesey
+! More sideband fixes
+!
 ! Revision 2.76  2002/07/30 20:03:19  livesey
 ! Fixed bug which had it using the wrong sideband ratio
 !
