@@ -29,12 +29,10 @@ contains
       use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
                                         & MLSMSG_Warning, MLSMSG_Deallocate
       use MLSCommon, only: MLSCHUNK_T, R8, RM, RV
-      use Intrinsic, only: L_PTAN, L_RADIANCE,                           &
-                     & L_CLOUDINDUCEDRADIANCE,                           &
-                     & L_CLOUDEXTINCTION,                                &
-                     & L_CLOUDRADSENSITIVITY
+      use Intrinsic, only: L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION,&
+                     & L_CLOUDRADSENSITIVITY, L_PTAN, L_RADIANCE
       use Init_Tables_Module, only: L_highcloud, L_lowcloud, l_lostransfunc, &
-         & l_clear, l_earthradius
+         & l_clear, l_cloudy_110RH_below_top, l_earthradius
       use MatrixModule_0, only: MatrixInversion, MATRIXELEMENT_T
       use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, ClearMatrix,&
       & DestroyMatrix, FINDBLOCK, GetDiagonal, GetFromMatrixDatabase, Matrix_T, &
@@ -48,8 +46,8 @@ contains
       use VectorsModule, only: ClearMask, ClearUnderMask, &
        & ClearVector, CloneVector, CopyVector, CopyVectorMask, CreateMask, &
        & DestroyVectorInfo, DumpMask, GetVectorQuantityByType, &
-       & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, M_Cloud, &
-       & M_Tikhonov, Vector_T, VectorValue_T
+       & IsVectorQtyMasked, M_Fill, M_Cloud, &
+       & Vector_T, VectorValue_T
 
       ! IO variables
       type(vector_T), pointer :: Apriori  ! A priori estimate of state
@@ -166,7 +164,6 @@ contains
         end do
 
       !memorize the initial model configuration
-!        cloudysky = configDatabase(configIndices(1))%cloud_width
         cloudysky = configDatabase(configIndices(1))%i_saturation
 
       ! create covarianceDiag array
@@ -223,9 +220,7 @@ contains
           doMaf = .false.
           if(sum(ConstrainTcir%values(:,maf)) .ne. 0._r8) doMaf = .true.
           
-!          configDatabase(configIndices(1))%cloud_width=0
-!          if(doMaf) configDatabase(configIndices(1))%cloud_width=cloudysky
-          configDatabase(configIndices(1))%i_saturation=0
+          configDatabase(configIndices(1))%i_saturation=l_clear
           if(doMaf) configDatabase(configIndices(1))%i_saturation=cloudysky
 
       print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs,'type=',doMaf
@@ -475,7 +470,9 @@ contains
                & quantityType=l_cloudInducedRadiance,             &
                & signal=signal%index, sideband=signal%sideband)
               ! determine MAF flag (i.e., whether to call Forward Model for the MAF)
-              if(any(iand(ichar(Tcir%mask(:, maf)), m_cloud) == 1)) doMaf(maf) = .true.
+              do maf=1,nMAFs
+              if(any(iand(ichar(Tcir%mask(:, maf)), m_cloud) == 16)) doMaf(maf) = .true.
+              end do
 
         end do ! band signals
         end do ! configIndices or models
@@ -507,7 +504,7 @@ contains
       ! Loop over MAFs
         do maf =1,nMAFs
         fmStat%maf = maf
-        print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs, 'type= ',&
+        print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs, 'i_saturation= ',&
           & configDatabase(configIndices(1))%i_saturation
                         
           A = 0._rm
@@ -522,8 +519,9 @@ contains
             nSignal = size(configDatabase(configIndices(imodel))%signals)
             ! to save time, skip cloud sensitivity calculation if there is no cloud
             ! overwrite model configuration
-            configDatabase(configIndices(imodel))%i_saturation=l_clear
-            if(doMaf(maf)) configDatabase(configIndices(imodel))%i_saturation=cloudysky(imodel)
+
+!            configDatabase(configIndices(imodel))%i_saturation=l_clear
+!            if(doMaf(maf)) configDatabase(configIndices(imodel))%i_saturation=cloudysky(imodel)
                        
             ! use the cloud radiance in last signal for cloud top indicator 
             signal = configDatabase(configIndices(imodel))%signals(nSignal)
@@ -624,7 +622,7 @@ contains
                      ! solve the relation one more time to refine teff and sensitivity
                      sensitivity = slope%values(k+nFreqs*(mif-1),maf)* &
                            & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
-                    end if ! when sensitivity is calculated
+                    end if ! doMaf when sensitivity is calculated
 
                      ! in case we have small sensitivity or no cloud
                      if(abs(sensitivity) < 1._r8) sensitivity = -105._r8
@@ -722,7 +720,7 @@ contains
                trans = 0._r8
                do i=nSgrid,2,-1
                  trans = trans + x(i)
-                 ! protect from blowing up
+                 ! to protect the retrieval from becoming unstable
                  if(1._r8-trans > 0.004) then
                   scale = (1._r8-trans)*(slevel(i)-slevel(i-1))      ! see ATBD
                                  xext(i)=x(i)/scale
@@ -734,7 +732,7 @@ contains
                  end if
                end do
                
-               ! output los extinction to state vector
+               ! output LOS extinction to state vector
                if(associated(xLosPtr)) then
                 do i=1,nSgrid
                  xLosPtr%values(i+(mif-1)*nSgrid,maf) = xext(i)
@@ -743,7 +741,7 @@ contains
                
             end if
            end do  ! mif
-      call clearMatrix ( jacobian )           ! free the space
+      call clearMatrix ( jacobian )           ! free memory
       
       end do ! end of mafs
       
@@ -796,7 +794,8 @@ contains
     use UNITS
     use MLSNumerics, only: InterpolateValues
     use VectorsModule, only: VectorValue_T
-
+    use ManipulateVectorQuantities, only: FindClosestInstances
+    
     ! Dummy arguments
     type (VectorValue_T), intent(in) :: LOS ! LOS quantity
     type (VectorValue_T), intent(in) :: vLOS ! variance of LOS
@@ -811,6 +810,8 @@ contains
     integer :: i, j, maf, mif                ! Loop counter
     integer :: maxZ, minZ                    ! pressure range indices of sGrid
     integer :: noMAFs,noMIFs,noDepths
+    integer, dimension(:), pointer :: closestInstances 
+
     real (r8) :: pcut
     real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: cnta
     real (r8), dimension(qty%template%noSurfs,qty%template%noInstances) :: cnt
@@ -819,6 +820,8 @@ contains
     real (r8), dimension(los%template%noChans) :: x_in, y_in, sLevel
     real (r8), dimension(los%template%noSurfs) :: zt
 
+    nullify( closestInstances )
+             
     if ( qty%template%verticalCoordinate == l_pressure ) then
         outZeta = -log10 ( qty%template%surfs(:,1) )
     else
@@ -827,25 +830,31 @@ contains
 
     noMAFs=los%template%noInstances
     noMIFs=los%template%noSurfs
+    
+    call Allocate_test ( closestInstances, noMAFs, 'closestInstances', ModuleName )      
+
 ! Now, we use frequency coordinate as sGrid along the path
     noDepths=los%template%noChans
     sLevel = los%template%frequencies
    
 ! initialize quantity
-   Qty%values=Qty%template%badValue
-   vQty%values = vQty%template%badValue
-   vQtyApr%values = vQtyApr%template%badValue
-   cnta=0._r8
-   cnt=0._r8
-   out=0._r8
+    Qty%values=Qty%template%badValue
+    vQty%values = vQty%template%badValue
+    vQtyApr%values = vQtyApr%template%badValue
+    cnta=0._r8
+    cnt=0._r8
+    out=0._r8
+    
+!  find closest instance match between Re and LosQty
+    call FindClosestInstances ( Re, los, closestInstances )
    
     do maf=1,noMAFs  
       zt = ptan%values(:,maf)   ! noChans=1 for ptan
       zt = (zt+3.)*16.                      ! converted to height in km
       do mif=1,noMIFs
-      if (ptan%values(mif,maf) .gt. pcut) cycle
+      if (ptan%values(mif,maf) > pcut) cycle
       ! find altitude of each s grid
-      x_in = sLevel**2/2./(re%values(1,maf)*0.001_r8 + zt(mif))
+      x_in = sLevel**2/2./(re%values(1,closestInstances(maf))*0.001_r8 + zt(mif))
       ! converted to zeta
       x_in = x_in/16. + ptan%values(mif,maf)
       ! find minimum and maximum pressures indices in sGrid
@@ -867,7 +876,7 @@ contains
 
       ! get phi along path for each mif (phi is in degree)
       y_in = los%template%phi(mif,maf) &
-        & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
+        & - atan(sLevel/(re%values(1,closestInstances(maf))*0.001_r8 + zt(mif)))*180._r8/Pi
        ! interpolate phi onto standard vertical grids     
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
            & method='Linear')
@@ -911,11 +920,15 @@ contains
     where (cnt > 0._r8) vQty%values = cnt
 !    where (cnt > 0._r8 .and. cnt > 0.5_r8*cnta) vQty%values = -cnt  ! assign negative
 
+    call Deallocate_test ( closestInstances, 'closestInstances', ModuleName )      
   end subroutine LOS2Grid    
 
  end subroutine CloudRetrieval
 end module CloudRetrievalModule
 ! $Log$
+! Revision 2.5  2003/05/16 18:55:10  dwu
+! a working version
+!
 ! Revision 2.4  2003/05/14 03:55:25  dwu
 ! tidy up
 !
