@@ -10,6 +10,10 @@ module L2_LOAD_M
   use PATH_ENTITIES_M, only: PATH_VECTOR
   use D_HUNT_M, only: HUNT          ! ** DEBUG
   implicit NONE
+
+  integer, public, parameter :: AAAP_UNIT = 51
+  integer, public, parameter :: FILTER_UNIT = 52
+
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
     "$Id$"
@@ -17,11 +21,15 @@ module L2_LOAD_M
 !---------------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------------
-! ===========================================     L2_LOAD =====
+! ====================================================     L2_LOAD =====
 ! This subprogram loads all the needed inputs for the l2_test run
-!
+
   SUBROUTINE L2_LOAD(FMC, FMI, T_FMI, Ier)
 !---------------------------------------------------------------------------
+
+! Process FMC if and only if FMI is not present.
+! Process FMI and T_FMI if and only if they are present (duh).  If FMI
+! is present, T_FMI must be present (it isn't checked).
 
 Type(fwd_mdl_config), INTENT(IN OUT) :: FMC
 
@@ -50,151 +58,145 @@ Character (LEN=40) :: Ax
 Character (LEN=80) :: Fnd, Line
 
 !  ----------------------
+!??? The following are now gotten from the forwardModelGlobal command
+!??? in the L2CF
 ! Read convolution & freq. averaging data from file: tmp.dat
 !
-  Line = 'tmp.dat'
-  CLOSE(13,iostat=i)
-  OPEN(13,file=Line,status='OLD',action='READ',iostat=io)
-  if(io /= 0) goto 99
+! Line = 'tmp.dat'
+! CLOSE(13,iostat=i)
+! OPEN(13,file=Line,status='OLD',action='READ',iostat=io)
+! if(io /= 0) goto 99
 !
-  FMC%Zfrq = -1.0
-  read(13,*,iostat=io) FMC%do_conv
-  if(io /= 0) goto 99
-  read(13,*,iostat=io) FMC%do_frqavg
-  if(io /= 0) goto 99
-  if(.not. FMC%do_frqavg) then
-    read(13,*,iostat=io) FMC%Zfrq
-    if(io /= 0) goto 99
-  endif
-  CLOSE(13,iostat=io)
+! FMC%Zfrq = -1.0
+! FMC%temp_der = .true.
+! read(13,*,iostat=io) FMC%do_conv
+! if(io /= 0) goto 99
+! read(13,*,iostat=io) FMC%do_frqavg
+! if(io /= 0) goto 99
+! if(.not. FMC%do_frqavg) then
+!   read(13,*,iostat=io) FMC%Zfrq
+!   if(io /= 0) goto 99
+! endif
+! CLOSE(13,iostat=io)
+
 !  ----------------------
 ! Read the rest of the inputs from a file...
 !
   ier = 0
-  Fnd(1:) = ' '
-  Fnd = FMC%Z
-  Line = Fnd
 
-  CLOSE(11,iostat=io)
-  OPEN(11,file=Fnd,status='OLD',action='READ',iostat=io)
-  if(io /= 0) goto 99
+  if ( .not. present(fmi) ) then
+    CLOSE(11,iostat=io)
+    OPEN(11,file=FMC%Z,status='OLD',action='READ',iostat=io)
+    if(io /= 0) goto 99
 !
 ! *** Begining the FMC Section
 !
-  do
-    Ax(1:) = ' '
+    do
+      read(11,'(A)',iostat=io) Ax
+      if(io /= 0) goto 99
+      if (Index(Ax,'No_Mmaf') > 0) EXIT
+    end do
+
+    read(11,*,iostat=io) j
+    if(io /= 0) goto 99
+
+    FMC%no_mmaf = min(j,100)   ! Assuming mmaf chunk of no more than 100
+    no_mmaf = FMC%no_mmaf
+
     read(11,'(A)',iostat=io) Ax
     if(io /= 0) goto 99
-    if (Index(Ax,'No_Mmaf') > 0) EXIT
-  end do
 
-  read(11,*,iostat=io) j
-  if(io /= 0) goto 99
+    dummy(1:no_mmaf) = 0.0
+    read(11,*,iostat=io) (dummy(i),i=1,no_mmaf)
+    if(io /= 0) goto 99
 
-  FMC%no_mmaf = min(j,100)   ! Assuming mmaf chunk of no more then 100
-  no_mmaf = FMC%no_mmaf
+    DEALLOCATE(FMC%phi_tan_mmaf,STAT=i)
+    ALLOCATE(FMC%phi_tan_mmaf(no_mmaf),STAT=i)
+    if(i /= 0) goto 99
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    FMC%phi_tan_mmaf(1:no_mmaf) = dummy(1:no_mmaf) * deg2rad
 
-  dummy(1:no_mmaf) = 0.0
-  read(11,*,iostat=io) (dummy(i),i=1,no_mmaf)
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
 
-  DEALLOCATE(FMC%phi_tan_mmaf,STAT=i)
-  ALLOCATE(FMC%phi_tan_mmaf(no_mmaf),STAT=i)
-  if(i /= 0) goto 99
+    read(11,*,iostat=io) ch1, ch2
+    if(io /= 0) goto 99
 
-  FMC%phi_tan_mmaf(1:no_mmaf) = dummy(1:no_mmaf) * deg2rad
+    no_pfa_ch = min(2,ch2-ch1+1)
+    do i = 1, no_pfa_ch
+      ch2 = ch1 + i - 1
+      pfa_ch(i) = ch2
+    end do
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    FMC%Channels_range(1) = ch1
+    FMC%Channels_range(2) = ch2
 
-  read(11,*,iostat=io) ch1, ch2
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
 
-  no_pfa_ch = min(2,ch2-ch1+1)
-  do i = 1, no_pfa_ch
-    ch2 = ch1 + i - 1
-    pfa_ch(i) = ch2
-  end do
+    read(11,*,iostat=io) FMC%Sideband
+    if(io /= 0) goto 99
+  !
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
 
-  FMC%Channels_range(1) = ch1
-  FMC%Channels_range(2) = ch2
+    read(11,*,iostat=io) k, j
+    if(io /= 0) goto 99
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    FMC%n_lvls = k
+    FMC%no_tan_hts = j
 
-  read(11,*,iostat=io) FMC%Sideband
-  if(io /= 0) goto 99
-!
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    DEALLOCATE(FMC%p_Indx,FMC%t_Indx,STAT=i)
+    ALLOCATE(FMC%p_Indx(k),FMC%t_Indx(j),STAT=i)
+    if(i /= 0) goto 99
 
-  read(11,*,iostat=io) FMC%temp_der, FMC%atmos_der, FMC%spect_der
-  if(io /= 0) goto 99
-!
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
 
-  read(11,*,iostat=io) k, j
-  if(io /= 0) goto 99
+    read(11,*,iostat=io) (FMC%p_indx(i),i=1,k)
+    if(io /= 0) goto 99
 
-  FMC%n_lvls = k
-  FMC%no_tan_hts = j
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
 
-  DEALLOCATE(FMC%p_Indx,FMC%t_Indx,STAT=i)
-  ALLOCATE(FMC%p_Indx(k),FMC%t_Indx(j),STAT=i)
-  if(i /= 0) goto 99
+    read(11,*,iostat=io) (FMC%t_indx(i),i=1,FMC%no_tan_hts)
+    if(io /= 0) goto 99
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
 
-  read(11,*,iostat=io) (FMC%p_indx(i),i=1,k)
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Fnd
+    if(io /= 0) goto 99
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    Fnd = AdjustL(Fnd)
+    i = LEN_TRIM(Fnd)
+    if(Fnd(i:i) /= '/') then
+      i = i + 1
+      Fnd(i:i) = '/'
+    endif
 
-  read(11,*,iostat=io) (FMC%t_indx(i),i=1,FMC%no_tan_hts)
-  if(io /= 0) goto 99
+    FMC%InDir = Fnd
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
 
-  Fnd(1:)=' '
-  read(11,'(A)',iostat=io) Fnd
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Fnd
+    if(io /= 0) goto 99
 
-  Fnd = AdjustL(Fnd)
-  i = LEN_TRIM(Fnd)
-  if(Fnd(i:i) /= '/') then
-    i = i + 1
-    Fnd(i:i) = '/'
-  endif
+!   FMC%B = AdjustL(Fnd) !??? Now Filled from forwardModelGlobal command
 
-  FMC%InDir = Fnd
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Fnd
+    if(io /= 0) goto 99
 
-  Fnd(1:)=' '
-  read(11,'(A)',iostat=io) Fnd
-  if(io /= 0) goto 99
+    FMC%aaap_file = AdjustL(Fnd)
 
-  FMC%B = AdjustL(Fnd)
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
-  Fnd(1:)=' '
-  read(11,'(A)',iostat=io) Fnd
-  if(io /= 0) goto 99
-
-  FMC%aaap_file = AdjustL(Fnd)
-
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
+    read(11,'(A)',iostat=io) Ax
+    if(io /= 0) goto 99
+    return
+  end if
 !
 ! *** Begining the FMI Section
 !
@@ -307,7 +309,6 @@ Character (LEN=80) :: Fnd, Line
       EXIT
     endif
 
-    Line = ' '
     Name = ' '
     read(11,'(A)',iostat=io) Line
     if(io /= 0) goto 99
@@ -373,11 +374,9 @@ Character (LEN=80) :: Fnd, Line
 
   Line(1:) = ' '
   do j = 1, FMI%no_spectro
-    Ax(1:)=' '
     read(11,'(A)',iostat=io) Ax
     if(io /= 0) goto 99
     FMI%spectroscopic(j)%TYPE = AdjustL(Ax)
-    Ax(1:)=' '
     read(11,'(A)',iostat=io) Ax
     if(io /= 0) goto 99
     FMI%spectroscopic(j)%NAME = AdjustL(Ax)
@@ -454,7 +453,6 @@ Character (LEN=80) :: Fnd, Line
   kk = mxco
   do k = 1, n_sps
     j = -1
-    Ax(1:)=' '
     read(11,'(A)',iostat=io) Ax
     if(io /= 0) goto 99
     Name = AdjustL(Ax)
@@ -752,7 +750,7 @@ END SUBROUTINE radiometry
 !
   Subroutine ANTENNA (Fn, M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IER)
 
-    use GET_LUN, only: AAAP_UNIT
+!   use units, only: AAAP_UNIT
     use MACHINE, only: IO_ERROR
 
     Integer(i4), parameter :: MaxV= 2048
@@ -866,7 +864,7 @@ SUBROUTINE get_filters(no_pfa_ch,no_filt_pts,pfa_ch,f_grid_filter, &
                &       freqs,filter_func,InDir,ier)
 
   use MLSCommon, only: I4, R8
-  use GET_LUN, only: filter_unit
+! use units, only: filter_unit
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_filters
@@ -903,7 +901,6 @@ NAMELIST/IN/Channel,Nfp,Xlhs,Xrhs,N_Filter
   ier = 0
 
   pch = -1
-  Fn(1:)=' '
   ld = LEN_TRIM(InDir)
   Fn = InDir(1:ld)//'normalized_filter_banks.dat'
 !
@@ -982,5 +979,8 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.4  2001/03/07 23:45:14  zvi
+! Adding logical flags fro Temp, Atmos & Spect. derivatives
+!
 ! Revision 1.1  2001/02/22 18:12:05  ZShippony
 ! Initial conversion to Fortran 90

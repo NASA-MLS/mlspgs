@@ -23,10 +23,10 @@ module L2_TEST_STRUCTURES_M
     Integer(i4) :: No_t
     Integer(i4) :: No_phi_t
     Integer(i4) :: No_Geometric
-    Integer(i4), DIMENSION(:), POINTER :: No_phi_f
-    Integer(i4), DIMENSION(:), POINTER :: No_coeffs_f
+    Integer(i4), DIMENSION(:), POINTER :: No_phi_f => NULL()
+    Integer(i4), DIMENSION(:), POINTER :: No_coeffs_f => NULL()
     Type(LIMB_PRESS) :: Ptg_Press
-    Type(ATMOS_COMP), DIMENSION(:), POINTER :: Atmospheric
+    Type(ATMOS_COMP), DIMENSION(:), POINTER :: Atmospheric => NULL()
     Real(r8) :: Zref
     Real(r8) :: beta_inc
     Real(r8) :: elev_183
@@ -34,41 +34,41 @@ module L2_TEST_STRUCTURES_M
     Real(r8) :: earth_ref
     Real(r8) :: s_temp
     Real(r8) :: h_obs
-    Real(r8), DIMENSION(:), POINTER :: Href
-    Real(r8), DIMENSION(:), POINTER :: t_zeta_basis
-    Real(r8), DIMENSION(:), POINTER :: t_phi_basis
-    Real(r8), DIMENSION(:), POINTER :: t_phi_basis_copy
-    Logical , DIMENSION(:), POINTER :: is_f_log
-    Real(r8), DIMENSION(:,:), POINTER :: t_coeff
-    Real(r8), DIMENSION(:,:), POINTER :: f_zeta_basis
-    Real(r8), DIMENSION(:,:), POINTER :: f_phi_basis
-    Real(r8), DIMENSION(:,:), POINTER :: f_phi_basis_copy
-    Real(r8), DIMENSION(:,:), POINTER :: s_phi_basis_copy
-    Real(r8), DIMENSION(:,:,:), POINTER :: mr_f
+    Real(r8), DIMENSION(:), POINTER :: Href => NULL()
+    Real(r8), DIMENSION(:), POINTER :: t_zeta_basis => NULL()
+    Real(r8), DIMENSION(:), POINTER :: t_phi_basis => NULL()
+    Real(r8), DIMENSION(:), POINTER :: t_phi_basis_copy => NULL()
+    Logical , DIMENSION(:), POINTER :: is_f_log => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: t_coeff => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: f_zeta_basis => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: f_phi_basis => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: f_phi_basis_copy => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: s_phi_basis_copy => NULL()
+    Real(r8), DIMENSION(:,:,:), POINTER :: mr_f => NULL()
   end type TEMPORARY_FWD_MDL_INFO
 
 !------------------------------------------------------------
 ! This structure contains the "FMI Config", containing various flags
 ! and parameters
   type FWD_MDL_CONFIG
-    Logical :: do_conv
-    Logical :: temp_der
-    Logical :: atmos_der
-    Logical :: spect_der
-    Logical :: do_frqavg
+    Logical :: Atmos_Der
+    Logical :: Do_conv
+    Logical :: Do_frqavg
+    Logical :: Spect_Der
+    Logical :: Temp_der
     Real(r8) :: Zfrq
+    Integer(i4) :: Channels_range(2)
     Integer(i4) :: N_lvls
     Integer(i4) :: No_tan_hts
     Integer(i4) :: No_mmaf
-    Integer(i4) :: Channels_range(2)
     Integer(i4) :: Sideband
-    Integer(i4), DIMENSION(:), POINTER :: P_indx
-    Integer(i4), DIMENSION(:), POINTER :: T_indx
+    Integer(i4), DIMENSION(:), POINTER :: P_indx => NULL()
+    Integer(i4), DIMENSION(:), POINTER :: T_indx => NULL()
     Character(LEN=80) :: Z
     Character(LEN=80) :: B
     Character(LEN=80) :: Indir
     Character(LEN=80) :: Aaap_file
-    Real(r8), DIMENSION(:), POINTER :: Phi_tan_mmaf
+    Real(r8), DIMENSION(:), POINTER :: Phi_tan_mmaf => NULL()
   end type FWD_MDL_CONFIG
 
 !------------------------------------------------------------
@@ -87,22 +87,25 @@ module L2_TEST_STRUCTURES_M
     Integer(i4) :: Surface_index
     Integer(i4) :: No_filt_pts
     Integer(i4) :: no_ptg_frq(Nptg)
-    Integer(i4), DIMENSION(:), POINTER :: Spect_atmos
+    Integer(i4), DIMENSION(:), POINTER :: Spect_atmos => NULL()
     Real(r8) :: Xlamda
-    Real(r8), DIMENSION(:), POINTER :: z_grid
-    Real(r8), DIMENSION(:), POINTER :: tan_press
-    Real(r8), DIMENSION(:), POINTER :: Tan_hts_below_surface
-    Real(r8), DIMENSION(:,:), POINTER :: Filter_func
-    Real(r8), DIMENSION(:,:), POINTER :: F_grid_filter
-    Real(r8), DIMENSION(:,:), POINTER :: Aaap         ! (maxfft,3)
-    Real(r8), DIMENSION(:,:), POINTER :: D1Aaap       ! (maxfft,3)
-    Character(LEN=8), DIMENSION(:), POINTER :: Species
-    Real(r8), DIMENSION(:,:), POINTER :: D2Aaap       ! (maxfft,3)
+    Real(r8), DIMENSION(:), POINTER :: z_grid => NULL()
+    Real(r8), DIMENSION(:), POINTER :: tan_press => NULL()
+    Real(r8), DIMENSION(:), POINTER :: Tan_hts_below_surface => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: Filter_func => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: F_grid_filter => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: Aaap => NULL()         ! (maxfft,3)
+    Real(r8), DIMENSION(:,:), POINTER :: D1Aaap => NULL()       ! (maxfft,3)
+    Character(LEN=8), DIMENSION(:), POINTER :: Species => NULL()
+    Real(r8), DIMENSION(:,:), POINTER :: D2Aaap => NULL()       ! (maxfft,3)
     Type(PATH_VECTOR) :: Ptg_frq_grid(Nptg)
-    Type(PFA_SLAB), DIMENSION(:), POINTER :: Pfa_spectrum
-    Type(SPECTRO_PARAM), DIMENSION(:), POINTER :: Spectroscopic
+    Type(PFA_SLAB), DIMENSION(:), POINTER :: Pfa_spectrum => NULL()
+    Type(SPECTRO_PARAM), DIMENSION(:), POINTER :: Spectroscopic => NULL()
   end type FWD_MDL_INFO
 !
 end module L2_TEST_STRUCTURES_M
 ! $Log$
+! Revision 1.3  2001/03/07 23:45:15  zvi
+! Adding logical flags fro Temp, Atmos & Spect. derivatives
+!
 ! Revision 1.0  2001/02/21 21:56:15  zvi
