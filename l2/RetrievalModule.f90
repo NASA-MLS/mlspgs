@@ -26,7 +26,7 @@ module RetrievalModule
     & L_apriori, L_covariance, &
     & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, &
     & L_dnwt_diag,  L_dnwt_dxdx,  L_dnwt_dxdxl, &
-    & L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_fnmin, &
+    & L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
     & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, &
     & L_dnwt_gradn,  L_dnwt_sq,  L_dnwt_sq,  L_dnwt_sqt,&
     & L_Jacobian_Cols, L_Jacobian_Rows, L_lowcloud, &
@@ -205,6 +205,7 @@ contains
       case ( s_snoop )
         snoopKey = key
         do j = 2, nsons(key)
+          son = subtree(j, key)
           field = get_field_id(son)  ! tree_checker prevents duplicates
           select case ( field )
           case ( f_comment )
@@ -1209,6 +1210,7 @@ contains
           call fillDiagVec ( l_dnwt_dxdxl, aj%dxdxl )
           call fillDiagVec ( l_dnwt_dxn, aj%dxn )
           call fillDiagVec ( l_dnwt_dxnl, aj%dxnl )
+          call fillDiagVec ( l_dnwt_flag, real(nwt_flag,r8) )
           call fillDiagVec ( l_dnwt_fnmin, aj%fnmin )
           call fillDiagVec ( l_dnwt_fnorm, aj%fnorm )
           call fillDiagVec ( l_dnwt_gdx, aj%gdx )
@@ -1217,8 +1219,10 @@ contains
           call fillDiagVec ( l_dnwt_sq, aj%sq )
           call fillDiagVec ( l_dnwt_sqt, aj%sqt )
         end if
-        if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) &
-          & call snoop ( key, vectorDatabase, myVectors )
+        if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
+          call FlagName ( nwt_flag, theFlagName )
+          call snoop ( snoopKey, vectorDatabase, myVectors, theFlagName )
+        end if
       end do ! Newton iteration
       if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
         if ( got(f_diagnostics) ) then
@@ -1773,6 +1777,9 @@ print*,'start inversion'
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.87  2001/10/05 20:20:16  vsnyder
+! Put Nwt_Flag into Snoop's comment; add Dnwt_Flag to diagnostics vector
+!
 ! Revision 2.86  2001/10/05 05:02:27  dwu
 ! temporarily set p_lowcut in LowCloud Retrieval
 !
