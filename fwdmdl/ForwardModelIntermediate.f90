@@ -10,7 +10,7 @@ module ForwardModelIntermediate
   ! calling code.
 
   use MLSCommon, only: R8
-  use Path_entities_m, only: PATH_VECTOR, PATH_VECTOR_2D
+  use Path_entities_m, only: PATH_VECTOR, PATH_VECTOR_2D, PATH_INDEX
   use Ellipse_m, only: ELLIPSE
 
   implicit none
@@ -18,26 +18,29 @@ module ForwardModelIntermediate
 
   type, public :: ForwardModelIntermediate_T
 
-    real (r8), dimension(:,:),             pointer :: H_GLGRID
-    real (r8), dimension(:,:),             pointer :: T_GLGRID
-    real (r8), dimension(:),               pointer :: z_glgrid
+    real (r8), dimension(:,:),             pointer :: H_GLGRID=>NULL()
+    real (r8), dimension(:,:),             pointer :: T_GLGRID=>NULL()
+    real (r8), dimension(:),               pointer :: z_glgrid=>NULL()
 
-    real (r8), dimension(:,:,:),           pointer :: dh_dt_glgrid
-    real (r8), dimension(:,:),             pointer :: dhdz_glgrid
+    real (r8), dimension(:,:,:),           pointer :: dh_dt_glgrid=>NULL()
+    real (r8), dimension(:,:),             pointer :: dhdz_glgrid=>NULL()
+    integer                                        :: gl_count
 
-    real (r8), dimension(:,:),             pointer :: tan_hts
-    real (r8), dimension(:,:),             pointer :: tan_temp
-    real (r8), dimension(:,:,:),           pointer :: tan_dh_dt
+    real (r8), dimension(:,:),             pointer :: tan_hts=>NULL()
+    real (r8), dimension(:,:),             pointer :: tan_temp=>NULL()
+    real (r8), dimension(:,:,:),           pointer :: tan_dh_dt=>NULL()
+    real (r8), dimension(:),               pointer :: GEOC_LAT=>NULL()
+    real (r8), dimension(:),               pointer :: E_RAD=>NULL()
 
-    type (path_vector), dimension(:,:),    pointer :: z_path
-    type (path_vector), dimension(:,:),    pointer :: h_path
-    type (path_vector), dimension(:,:),    pointer :: t_path
+    type (path_vector), dimension(:,:),    pointer :: z_path=>NULL()
+    type (path_vector), dimension(:,:),    pointer :: h_path=>NULL()
+    type (path_vector), dimension(:,:),    pointer :: t_path=>NULL()
 
-    type (path_vector), dimension(:,:),    pointer :: phi_path
-    type (path_vector), dimension(:,:),    pointer :: dhdz_path
-    type (path_Vector_2d), dimension(:,:), pointer :: eta_phi
-    type (path_index),  dimension(:,:),    pointer :: NDX_PATH
-    type (ellipse), dimension(:,:),        pointer :: elvar
+    type (path_vector), dimension(:,:),    pointer :: phi_path=>NULL()
+    type (path_vector), dimension(:,:),    pointer :: dhdz_path=>NULL()
+    type (path_Vector_2d), dimension(:,:), pointer :: eta_phi=>NULL()
+    type (path_index),  dimension(:,:),    pointer :: NDX_PATH=>NULL()
+    type (ellipse), dimension(:),          pointer :: elvar=>NULL()
 
   end type ForwardModelIntermediate_T
 
@@ -58,6 +61,9 @@ module ForwardModelIntermediate
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 1.1  2001/04/10 22:17:05  livesey
+! Renamed module
+!
 ! Revision 1.1  2001/04/10 22:06:26  livesey
 ! Very first version.  Bare bones only.
 !
