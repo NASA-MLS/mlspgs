@@ -2901,7 +2901,7 @@ contains ! ======================= Public Procedures =========================
     lb = 1
     if ( present(lowBound) ) lb = lowBound
     ub = lb - 1 + size(myValue)
-    call allocate_test ( value, size(myValue), 'Value', moduleName, lowBound=lb )
+    call allocate_test ( value, ub, 'Value', moduleName, lowBound=lb )
     value = myValue == 'T'
     call deallocate_test ( myValue, 'myValue', moduleName )
   end subroutine LoadPtrFromHDF5DS_logarr1
@@ -4117,6 +4117,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.50  2005/01/07 01:14:26  vsnyder
+! Allocate the correct upper bound in LoadPtrFromHDF5DS_logarr1
+!
 ! Revision 2.49  2005/01/07 01:04:37  vsnyder
 ! Use generics for some internal references
 !
