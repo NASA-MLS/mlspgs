@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -34,9 +34,11 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, &
     PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA, &
-    & FindL1BData, PRECISIONSUFFIX
+    & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
+  use MLSFiles, only: mls_hdf_version
+  use MLSL2Options, only: LEVEL1_HDFVERSION
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
   use MLSSignals_m, only:  IsModuleSpacecraft, &
     & GetModuleFromRadiometer, GetModuleFromSignal, GetModuleName, &
@@ -602,7 +604,7 @@ contains ! =====     Public Procedures     =============================
     ! print *, 'From Fileid ', fileID
       call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
         & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-        & NeverFail= .true. )
+        & NeverFail= .true., hdfVersion=LEVEL1_HDFVERSION )
       if (flag == 0) then
         answer = .not. all (l1bData%DpField < 0._r8)
         call deallocate_test(l1bData%DpField, trim(nameString), ModuleName)
@@ -650,15 +652,19 @@ contains ! =====     Public Procedures     =============================
 
     type (L1BData_T) :: l1bField
     character (len=NameLen) :: l1bItemName
-    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex
+    integer :: noMAFs, l1bFlag, l1bItem, mafIndex, mifIndex, hdfVersion
 
     ! Executable code. There are basically two cases here. If we have a
     ! MIFGeolocation argument this conveys all the geolocation for this
     ! quantity.  Otherwise, we have to read it all from the l1boa file
     ! ourselves.
 
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
     if ( present(mifGeolocation) ) then
       ! -------------------------------------- Got mifGeolocation ------------
+      if ( .not. (present(noChans)) ) &
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'You must supply NoChans to reuse geolocation information' )
       ! We have geolocation information, setup the quantity as a clone of that.
       qty = mifGeolocation(instrumentModule)
       qty%noChans = noChans
@@ -679,13 +685,23 @@ contains ! =====     Public Procedures     =============================
         call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
       endif
+      l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
 
       call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+        & hdfVersion=hdfVersion )
       if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//l1bItemName )
       
       ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
+      !print *, 'About to SetupNewQuantityTemplate'
+      !print *, 'noInstances ', noMAFs
+      !print *, 'noSurfs ', l1bField%maxMIFs
+      !if ( present(noChans) ) then
+      !  print *, 'noChans ', noChans
+      !else
+      !  print *, 'noChans not present'
+      !endif
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
         & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
         & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
@@ -697,8 +713,10 @@ contains ! =====     Public Procedures     =============================
         call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
         
+        l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
         call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
+          & hdfVersion=hdfVersion )
         if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
         
@@ -735,9 +753,10 @@ contains ! =====     Public Procedures     =============================
           end if
           
           ! Read it from the l1boa file
+          l1bItemName = AssembleL1BQtyName ( l1bItemName, hdfVersion, .false. )
           call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
             & l1bFlag, firstMAF=chunk%firstMafIndex, &
-            & lastMAF=chunk%lastMafIndex )
+            & lastMAF=chunk%lastMafIndex, hdfVersion=hdfVersion )
           if ( l1bFlag == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & MLSMSG_L1BRead//l1bItemName )
           
@@ -946,6 +965,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.75  2002/11/13 01:05:03  pwagner
+! Actually reads hdf5 radiances
+!
 ! Revision 2.74  2002/10/08 17:36:19  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
