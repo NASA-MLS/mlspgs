@@ -73,7 +73,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   integer, parameter :: L2GPDEFAULT_HDFVERSION = HDFVERSION_4
 
   ! r4 corresponds to sing. prec. :: same as stored in files
-  integer, parameter :: rgp = r4
+  integer, public, parameter :: rgp = r4
 
   integer, parameter :: CHARATTRLEN = GA_VALUE_LENGTH
   real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
@@ -2825,6 +2825,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.51  2003/02/06 00:24:48  pwagner
+! Squashed a (last?) bug in hdfeos2 stuff
+!
 ! Revision 2.50  2003/02/04 22:43:29  pwagner
 ! Fixed another serious bug
 !
