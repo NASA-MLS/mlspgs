@@ -505,6 +505,7 @@ contains ! =====  Public Procedures  ===================================
 
   ! ----------------------------------------  Dump_Lines_Database  -----
   subroutine Dump_Lines_Database ( Start, End, Number )
+    use Dump_0, only: Dump
     use Output_m, only: Blanks, Output
     use String_Table, only: Display_String
     integer, intent(in), optional :: Start, End
@@ -559,10 +560,18 @@ contains ! =====  Public Procedures  ===================================
       call output ( lines(i)%gamma )
       call output ( ', N2 = ' )
       call output ( lines(i)%n2, advance='yes' )
+      if ( associated(lines(i)%qn) ) call dump ( lines(i)%qn, '      QN' )
+      if ( associated(lines(i)%signals) ) &
+        & call dump ( lines(i)%signals, '      Signals' )
+      if ( associated(lines(i)%sidebands) ) &
+        & call dump ( lines(i)%sidebands, '      Sidebands' )
+      if ( associated(lines(i)%polarized) ) &
+        & call dump ( lines(i)%polarized, '      Polarized' )
     end do
   end subroutine Dump_Lines_Database
   ! -------------------------------------  Dump_SpectCat_Database  -----
   subroutine Dump_SpectCat_Database ( Catalog, Name )
+    use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
     use Output_m, only: Blanks, Output
     use String_Table, only: Display_String
@@ -593,13 +602,16 @@ contains ! =====  Public Procedures  ===================================
         if ( j < 3 ) call output ( ', ' )
       end do
       call output ( ' ]', advance='yes' )
-      call output ( '  continuum = [ ' )
+      call blanks ( 6 )
+      call output ( 'continuum = [ ' )
       do j = 1, MaxContinuum
         call output ( catalog(i)%continuum(j) )
         if ( j < MaxContinuum ) call output ( ', ' )
       end do
       call output ( ' ]', advance='yes' )
-      call blanks ( 6 + int(log10(i+0.0)) )
+      if ( associated(catalog(i)%polarized) ) &
+        & call dump ( catalog(i)%polarized, '      Polarized:' )
+      call blanks ( 6 )
       call output ( 'Lines:', advance='yes' )
       if ( associated(catalog(i)%lines ) ) then
         do j = 1, size(catalog(i)%lines)
@@ -650,6 +662,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.17  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.16  2003/05/16 23:50:42  livesey
 ! Removed spec_tag, added mass.
 !
