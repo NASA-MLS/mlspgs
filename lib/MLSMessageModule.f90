@@ -140,12 +140,13 @@ contains
 
     end if
 
-    ! Now if it's an error, then try to close log file if any and quit
+    ! Now if it's an error, and the message is complete, then try to close
+    ! log file if any and quit
 
-    if ( severity == MLSMSG_Error ) then
-       if ( MLSMessageConfig%logFileUnit /= -1 ) &
-            & close ( MLSMessageConfig%logFileUnit )
-       stop
+    if ( my_adv .and. severity == MLSMSG_Error ) then
+      if ( MLSMessageConfig%logFileUnit /= -1 ) &
+        & close ( MLSMessageConfig%logFileUnit )
+      stop
     end if
   end subroutine MLSMessage
 
@@ -193,6 +194,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.5  2001/03/16 19:44:18  vsnyder
+! Don't stop until advance='yes' -- i.e. not before the message is complete
+!
 ! Revision 2.4  2001/02/23 00:14:54  vsnyder
 ! Maybe the coordination of output_m and MLSMessageModule is OK now...
 !
