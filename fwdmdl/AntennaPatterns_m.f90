@@ -9,7 +9,7 @@ module AntennaPatterns_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSSignals_m, only: MaxSigLen, Signals
+  use MLSSignals_m, only: MaxSigLen, Signals, signal_T, GetNameOfSignal
 
   implicit none
 
@@ -26,7 +26,7 @@ module AntennaPatterns_m
     real(r8), dimension(:), pointer :: Aaap => NULL()
     real(r8), dimension(:), pointer :: D1aap => NULL()
     real(r8), dimension(:), pointer :: D2aap => NULL()
-    character(len=MaxSigLen), pointer, dimension(:) :: Signals => NULL()
+    type (Signal_T), pointer, dimension(:) :: Signals => NULL()
   end type AntennaPattern_T
 
   ! The antanna pattern database:
@@ -76,15 +76,19 @@ contains
 
     real(r8), parameter :: Pi2 = 2.0_r8 * Pi
 
+    logical, dimension(:), pointer :: CHANNELS ! From Parse Signal
     integer :: DataBaseSize                  ! How many antenna patterns?
-    integer :: HowManyPoints(size(signals))  ! for each pattern
-    integer :: HowManySignals(size(signals)) ! for each pattern
-    integer :: I, J, K                       ! Loop inductors, subscripts
+    integer :: HowManyPoints(3*size(signals))  ! for each pattern
+    integer :: HowManySignals(3*size(signals)) ! for each pattern
+    integer :: HowManySignalLines(3*size(signals)) ! for each pattern
+    integer :: I, J, K, L                    ! Loop inductors, subscripts
     real(r8) :: Lambda
     real(r8) :: LambdaX2Pi                   ! 2 * Pi * Lambda
     real(r8) :: Q                            ! Factor used to scale derivatives
     character(len=MaxSigLen) :: SigName      ! Signal Name
+    integer :: SIDEBAND                      ! From parse_signal
     integer :: Status                        ! From read or allocate
+    integer, dimension(:), pointer :: SIGINDS ! From parseSignal
     integer :: SignalCount
     integer, pointer, dimension(:) :: Signal_Indices => NULL() ! From Parse_Signal, q.v.
     !                                          It's never allocated because of
@@ -103,8 +107,9 @@ outer1: do
       dataBaseSize = dataBaseSize + 1
       if ( dataBaseSize > size(howManySignals) ) &
         & call MLSMessage ( MLSMSG_Error, moduleName, &
-          & "More patterns in the file than signals in the database" )
+          & "More patterns in the file than I have space for" )
       howManySignals(dataBaseSize) = 0
+      howManySignalLines(dataBaseSize) = 0
       do ! Count how many signals there are
         sigName = adjustl(sigName)
         if ( verify(sigName(1:1), '0123456789.+-') == 0 ) exit ! a number
@@ -112,7 +117,8 @@ outer1: do
           & onlyCountEm=signalCount )
         if ( signalCount == 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
             & trim(sigName) // " is not a valid signal." )
-        howManySignals(dataBaseSize) = howManySignals(dataBaseSize) + 1
+        howManySignalLines(dataBaseSize) = howManySignalLines(dataBaseSize) + 1
+        howManySignals(dataBaseSize) = howManySignals(dataBaseSize) + signalCount
         read ( lun, '(a)', end=98, err=99, iostat=status ) sigName
       end do
       read ( sigName, *, err=99, iostat=status ) lambda
@@ -133,16 +139,36 @@ outer1: do
       & MLSMSG_Allocate // "AntennaPatterns" )
     rewind ( lun )
     do i = 1, dataBaseSize
-      call Allocate_Test ( antennaPatterns(i)%signals, howManySignals(i), &
-        & "AntennaPatterns(?)%Signals", moduleName )
+      allocate  ( antennaPatterns(i)%signals(howManySignals(i)), stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate // "antennaPatterns(?)%signals" )
       call Allocate_Test ( antennaPatterns(i)%aaap, 2*howManyPoints(i), &
         & "AntennaPatterns(?)%Aaap", moduleName )
       call Allocate_Test ( antennaPatterns(i)%d1aap, 2*howManyPoints(i), &
         & "AntennaPatterns(?)%D1aap", moduleName )
       call Allocate_Test ( antennaPatterns(i)%d2aap, 2*howManyPoints(i), &
         & "AntennaPatterns(?)%D2aap", moduleName )
-      do j = 1, howManySignals(i)
-        read ( lun, '(a)', err=99, iostat=status ) antennaPatterns(i)%signals(j)
+      k = 1
+      do j = 1, howManySignalLines(i)
+        read ( lun, '(a)', err=99, iostat=status ) SigName
+        nullify ( channels, sigInds )
+        call Parse_Signal ( SigName, sigInds, sideband=sideband, channels=channels )
+        antennaPatterns(i)%signals(k:k+size(sigInds)-1) = &
+          & signals(sigInds)
+        antennaPatterns(i)%signals(k:k+size(sigInds)-1)%sideband = sideband
+        if (associated(channels)) then
+          do l = 1, size(sigInds)
+            ! Now nullify the channels we have.  Don't hose the main database!
+            nullify ( antennaPatterns(i)%signals(k+l-1)%channels )
+            call allocate_test ( antennaPatterns(i)%signals(k+l-1)%channels, &
+              & size(channels), 'antennaPatterns(?)%signals(?)%channels', &
+              & moduleName )
+            antennaPatterns(i)%signals(k+l-1)%channels = channels
+          end do
+        end if
+        k = k + size(sigInds)
+        call deallocate_test ( sigInds, 'sigInds', ModuleName )
+        call deallocate_test ( channels, 'channels', ModuleName )
       end do ! j
       read ( lun, *, err=99, iostat=status ) lambda
       antennaPatterns(i)%lambda = lambda
@@ -185,11 +211,18 @@ outer1: do
 
   ! ---------------------------------  Destroy_Ant_Patterns_Database  -----
   subroutine Destroy_Ant_Patterns_Database
-    integer :: I, Status
+    integer :: I, J, Status
     if (.not. associated(AntennaPatterns) ) return
     do i = 1, size(AntennaPatterns)
-      call deallocate_test ( AntennaPatterns(i)%signals, &
-        & "AntennaPatterns(?)%Signals", moduleName )
+      do j = 1, size(AntennaPatterns(i)%signals)
+        if (associated(AntennaPatterns(i)%signals(j)%channels)) then
+          call deallocate_test ( AntennaPatterns(i)%signals(j)%channels, &
+            & "AntennaPatterns(?)%signals(?)%channels", ModuleName )
+        endif
+      end do
+      deallocate ( AntennaPatterns(i)%signals, STAT=status )
+      if ( status /= 0 ) call MLSMessage( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Deallocate//'AntennaPatterns(?)%signals' )
       call deallocate_test ( AntennaPatterns(i)%aaap, &
         & "AntennaPatterns(?)%aaap", moduleName )
       call deallocate_test ( AntennaPatterns(i)%d1aap, &
@@ -208,15 +241,15 @@ outer1: do
   use Output_m, only: Blanks, Output
 
     integer :: I, J                ! Subscripts, loop inductors
+    character(len=MaxSigLen) :: SIGNAME ! Signal name
     call output ( 'Antenna Patterns: SIZE = ' )
     call output ( size(AntennaPatterns), advance='yes' )
     do i = 1, size(AntennaPatterns)
       call output ( i, 4 )
       call output ( ':    Signal = ' )
-      call output ( trim(antennaPatterns(i)%signals(1)), advance='yes' )
-      do j = 2, size(antennaPatterns(i)%signals)
-        call blanks ( 18 )
-        call output ( trim(antennaPatterns(i)%signals(i)), advance='yes' )
+      do j = 1, size(antennaPatterns(i)%signals)
+        call GetNameOfSignal ( antennaPatterns(i)%signals(j), SigName )
+        call output ( trim(sigName), advance='yes' )
       end do
       call output ( ' Lambda = ' )
       call output ( antennaPatterns(i)%lambda, advance='yes' )
@@ -229,6 +262,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.15  2001/05/04 00:48:48  livesey
+! Let Destroy database quit if nothing to destroy
+!
 ! Revision 1.14  2001/05/03 22:02:47  vsnyder
 ! Insert copyright notice and some comments
 !
