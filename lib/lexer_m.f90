@@ -129,7 +129,12 @@ contains
     do
       if ( need ) then; call get_char ( ch ); need = .false.; end if
       ! Classify next character
-      class = classes(iachar(ch))
+      class = iachar(ch)
+      if ( class >= lbound(classes,1) .and. class <= ubound(classes,1) ) then
+        class = classes(class)
+      else
+        class = more
+      end if
 
 !     Recognize a token according to the following DFA.  Column labels are
 !     Classes, row labels are DFA states.  Table elements are DFA states or
@@ -603,6 +608,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.16  2002/02/13 23:39:05  vsnyder
+! Handle characters outside 0..127 range sensibly
+!
 ! Revision 2.15  2001/06/21 20:08:10  vsnyder
 ! Remove obsolete comments, allow blank continuations
 !
