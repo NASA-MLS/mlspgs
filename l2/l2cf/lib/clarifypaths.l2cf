@@ -11,7 +11,7 @@
 !ifdef(inpathl1boa,{},{!define(inpathl1boa,!inpath)})
 !ifdef(inpathl1brad,{},{!define(inpathl1brad,!inpath)})
 ; ------------------------------------------ Level 2 files
-!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,{/data/emls/l2gp/s5--t/1996})}
+!ifdef(inpathtruthl2gp,{},{!define(inpathtruthl2gp,{/data/emls/l2gp/s5--t/1996})})
 !ifdef(inpathl2gp,{},{!define(inpathl2gp,!inpath)})
 !ifdef(inpathl2aux,{},{!define(inpathl2aux,!inpath)})
 !ifdef(outpathl2gp,{},{!define(outpathl2gp,!outpath)})
