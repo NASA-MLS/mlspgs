@@ -55,7 +55,7 @@ C----------------------------------------------------
       INTEGER I,JM,J
 C--------------------------------------------------------------------------
 
-      PTOP = 40./16.-3.            ! TOP OF THE MODEL
+      PTOP = 80./16.-3.            ! TOP OF THE MODEL 
       PBOTTOM=-ALOG10(PRESSURE(1)) ! BOTTOM OF THE MODEL
       DP=(PTOP-PBOTTOM)/NH         ! LAYER THICKNESS
 
@@ -99,9 +99,10 @@ C==========================================
             VMR1(1,J)=((ZA(JM+1)-ZH(J))*VMR(2,JM)+(ZH(J)-ZA(JM))*
      >                VMR(2,JM+1))/(ZA(JM+1)-ZA(JM))
          
-            IPSD(J)=((ZA(JM+1)-ZH(J))*IPSDin(JM)+(ZH(J)-ZA(JM))*
-     >            IPSDin(JM+1))/(ZA(JM+1)-ZA(JM))
+c            IPSD(J)=((ZA(JM+1)-ZH(J))*IPSDin(JM)+(ZH(J)-ZA(JM))*
+c     >            IPSDin(JM+1))/(ZA(JM+1)-ZA(JM))
 
+            IPSD(J) = 1000
             CHK_CLD(J) = WC(1,J) + WC(2,J)
 
          ENDDO
