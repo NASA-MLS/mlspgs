@@ -1,114 +1,119 @@
-module COMP_PATH_ENTITIES_M
-  use MLSCommon, only: I4, R8
+module Comp_Path_Entities_M
+  use MLSCommon, only: R8
   use GL6P, only: NG
   use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_VECTOR_2D
   use VERT_TO_PATH_M, only: VERT_TO_PATH
+
   implicit NONE
+  private
+  public :: Comp_Path_Entities
 
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-  "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-  "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
+    & "$RCSfile$"
 !---------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------
 
-SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,    &
-           t_glgrid, h_glgrid, dhdz_glgrid, tan_hts, no_tan_hts, z_path, &
-           h_path,t_path,phi_path,dhdz_path,eta_phi,no_phi_t,t_phi_basis,&
-           no_mmaf,phiWindow,elvar,Ier)
+  subroutine Comp_Path_Entities ( N_lvls, No_t, Gl_count, Ndx_path, Z_glgrid, &
+    &        T_glgrid, H_glgrid, Dhdz_glgrid, Tan_hts, No_tan_hts, Z_path, &
+    &        H_path, T_path, Phi_path, Dhdz_path, Eta_phi, No_phi_t, &
+    &        T_phi_basis, No_mmaf, PhiWindow, Elvar, Ier )
 
-!  ===============================================================
-!  Declaration of variables for sub-program: comp_path_entities
-!  ===============================================================
+  !  ===============================================================
+  !  Declaration of variables for sub-program: comp_path_entities
+  !  ===============================================================
 
-!  ---------------------------
-!  Calling sequence variables:
-!  ---------------------------
-Integer(i4), INTENT(IN) :: no_t,n_lvls,gl_count,phiWindow,no_mmaf,no_phi_t
-!
-Integer(i4), INTENT(IN OUT) :: no_tan_hts
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  integer, intent(in) :: No_t, N_lvls, Gl_count, PhiWindow, No_mmaf, No_phi_t
+  !
+  integer, intent(in out) :: No_tan_hts
 
-Type(ELLIPSE), INTENT(IN OUT) :: elvar(:)
+  type(ellipse), intent(in out) :: Elvar(:)
 
-Integer(i4), INTENT(OUT) :: ier
-!
-Real(r8), INTENT(IN) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:)
-Real(r8), INTENT(IN) :: dhdz_glgrid(:,:)
+  integer, intent(out) :: Ier
+  !
+  real(r8), intent(in) :: Z_glgrid(:), H_glgrid(:,:), T_glgrid(:,:)
+  real(r8), intent(in) :: Dhdz_glgrid(:,:)
 
-Real(r8), INTENT(IN) :: t_phi_basis(:)
-Real(r8), INTENT(IN) :: tan_hts(:,:)
+  real(r8), intent(in) :: T_phi_basis(:)
+  real(r8), intent(in) :: Tan_hts(:,:)
 
-Type(path_index) , INTENT(OUT) :: ndx_path(:,:)
-Type(path_vector), INTENT(OUT) :: z_path(:,:),t_path(:,:),h_path(:,:), &
-                                  phi_path(:,:),dhdz_path(:,:)
+  type(path_index) , intent(out) :: Ndx_path(:,:)
+  type(path_vector), intent(out) :: Z_path(:,:), T_path(:,:), H_path(:,:), &
+                                    Phi_path(:,:), Dhdz_path(:,:)
 
-Type(path_vector_2d), INTENT(OUT) :: eta_phi(:,:)
-!
-!  ----------------------
-!  Local variables:
-!  ----------------
+  type(path_vector_2d), intent(out) :: Eta_phi(:,:)
+  !
+  !  ----------------------
+  !  Local variables:
+  !  ----------------
 
-Integer(i4) :: i, j, k, l, jj, kk, lmin, lmax, klo, khi, ngt
+  Integer :: i, j, k, l, jj, kk, lmin, lmax, klo, khi, ngt
 
-Real(r8) :: h, q, r, zeta, phi
+  Real(r8) :: h, q, r, zeta, phi
 
-Real(r8), DIMENSION(:)  , ALLOCATABLE :: zpath,tpath,hpath,ppath,dhdzp
-Real(r8), DIMENSION(:,:), ALLOCATABLE :: phi_eta
+  Real(r8), dimension(:)  , allocatable :: zpath, tpath, hpath, ppath, dhdzp
+  Real(r8), dimension(:,:), allocatable :: phi_eta
 
   ier = 0
   ngt = 2 * (Ng+1) * (N_lvls+1)
 
-! Compute all the various integration paths according to tanget heights.
+! Compute all the various integration paths according to tangent heights.
 ! Get the z, t, h, phi, dhdz & dh_dt arrays on these paths.
 
-  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,phi_eta,STAT=i)
-  ALLOCATE(zpath(ngt),hpath(ngt),tpath(ngt),ppath(ngt),dhdzp(ngt), &
- &         phi_eta(ngt,no_phi_t),STAT=ier)
-  IF(ier /= 0) THEN
-    Print *,'** Allocation Error in comp_path_entities: ?path ...'
-    PRINT *,'** Error: ALLOCATION error in MAIN ..'
-    PRINT *,'   STAT =',ier
-    Return
-  ENDIF
+!??? The following isn't needed so long as the entities are allocatable --
+!??? Allocatable entities spring into existence unallocated.
+! deallocate ( zpath, hpath, tpath, ppath, dhdzp, phi_eta, stat=i )
+  allocate ( zpath(ngt), hpath(ngt), tpath(ngt), ppath(ngt), dhdzp(ngt), &
+ &         phi_eta(ngt,no_phi_t), stat=ier )
+  if(ier /= 0) then
+    print *,'** Allocation Error in comp_path_entities: ?path ...'
+    print *,'** Error: ALLOCATION error in MAIN ..'
+    print *,'   STAT =',ier
+    return
+  end if
 
-  DO l = 1, no_mmaf
+  do l = 1, no_mmaf
     lmin = max(1,l-phiWindow/2)
     lmax = min(l+phiWindow/2,no_mmaf)
-    print*,'Window:',lmin,lmax
-    DO k = 1, no_tan_hts
+    print*,'Window:', lmin, lmax
+    do k = 1, no_tan_hts
       h = tan_hts(k,l)
 ! Zvi's original version
-!       CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,&
-!            z_glgrid,t_glgrid(1:,lmin:lmax),h_glgrid(1:,lmin:lmax),  &
-!            dhdz_glgrid(1:,lmin:lmax),t_phi_basis,zpath,hpath,tpath, &
-!            ppath,dhdzp,phi_eta,klo,khi,Ier)
+!       call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, no_phi_t, &
+!         &  no_t, h, z_glgrid, t_glgrid(1:, lmin:lmax), h_glgrid(1:, lmin:lmax), &
+!         &  dhdz_glgrid(1:, lmin:lmax), t_phi_basis, zpath, hpath, &
+!         &  tpath, ppath, dhdzp, phi_eta, klo, khi, ier )
 ! Nathaniels attempt to fix...
-      CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,lmax-lmin+1,no_t,h,&
-           z_glgrid,t_glgrid(1:,lmin:lmax),h_glgrid(1:,lmin:lmax),  &
-           dhdz_glgrid(1:,lmin:lmax),t_phi_basis(lmin:lmax),zpath,hpath,tpath, &
-           ppath,dhdzp,phi_eta(:,lmin:lmax),klo,khi,Ier)
-! OK, what I'm not sure about Zvi is why phi_eta is dimensioned noTanHts,noMAFs and yet
-! needs the lmin:lmax for the second dimension 
-! (it crashes on line 224 of vert to path if it doesn't have the
+      call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
+        & no_t, h, z_glgrid, t_glgrid(1:,lmin:lmax), h_glgrid(1:,lmin:lmax), &
+        & dhdz_glgrid(1:,lmin:lmax), t_phi_basis(lmin:lmax), zpath, hpath, &
+        & tpath, ppath, dhdzp, phi_eta(:,lmin:lmax), klo, khi, ier )
+! OK, what I'm not sure about Zvi is why phi_eta is dimensioned noTanHts,noMAFs
+! and yet needs the lmin:lmax for the second dimension 
+! (it crashes on line 224 of vert_to_path if it doesn't have the
 ! same size as h_a). Is phi_eta really dimensioned no_phi_t?
-      IF(ier /= 0) RETURN
-      DEALLOCATE(z_path(k,l)%values, h_path(k,l)%values,   &
-                 t_path(k,l)%values, phi_path(k,l)%values, &
-                 dhdz_path(k,l)%values, eta_phi(k,l)%values,STAT=i)
-      ALLOCATE(z_path(k,l)%values(khi), h_path(k,l)%values(khi),   &
-               t_path(k,l)%values(khi), phi_path(k,l)%values(khi), &
-               dhdz_path(k,l)%values(khi), STAT=j)
-      IF(j == 0) &
-     &    ALLOCATE(eta_phi(k,l)%values(khi,no_phi_t),STAT=j)
-      IF(j /= 0) THEN
+      if(ier /= 0) return
+      deallocate ( z_path(k,l)%values, h_path(k,l)%values,   &
+        &          t_path(k,l)%values, phi_path(k,l)%values, &
+        &          dhdz_path(k,l)%values, eta_phi(k,l)%values, stat=i )
+      allocate ( z_path(k,l)%values(khi), h_path(k,l)%values(khi),   &
+        &        t_path(k,l)%values(khi), phi_path(k,l)%values(khi), &
+        &        dhdz_path(k,l)%values(khi), stat=j )
+      if ( j == 0 ) allocate ( eta_phi(k,l)%values(khi,no_phi_t), stat=j )
+      if ( j /= 0 ) then
         ier = j
-        PRINT *,'** Error: ALLOCATION error in routine: comp_path_entities ..'
-        PRINT *,'   STAT =',ier
-        RETURN
-      ENDIF
+        print *,'** Error: ALLOCATION error in routine: comp_path_entities ..'
+        print *,'   STAT =',ier
+        return
+      endif
       ndx_path(k,l)%break_point_index = klo
       ndx_path(k,l)%total_number_of_elements = khi
       z_path(k,l)%values(1:khi) = zpath(1:khi)
@@ -116,18 +121,26 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: phi_eta
       h_path(k,l)%values(1:khi) = hpath(1:khi)
       phi_path(k,l)%values(1:khi) = ppath(1:khi)
       dhdz_path(k,l)%values(1:khi) = dhdzp(1:khi)
-      eta_phi(k,l)%values(1:khi,1:no_phi_t) = phi_eta(1:khi,1:no_phi_t)
-    END DO
-  END DO
+!??? Zvi: At this point, phi_eta(:,lmin:lmax) has been computed by
+!??? vert_to_path.  When lmin>1 or lmax<no_phi_t, the following assignent
+!??? has undefined elements.
+!     eta_phi(k,l)%values(1:khi,1:no_phi_t) = phi_eta(1:khi,1:no_phi_t)
+!??? Van's attempt to repair:
+      eta_phi(k,l)%values(1:khi,lmin:lmax) = phi_eta(1:khi,lmin:lmax)
+    end do
+  end do
 
- 99  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,phi_eta,STAT=i)
+ 99  deallocate ( zpath, hpath, tpath, ppath, dhdzp, phi_eta, stat=i )
 
-  Return
+  return
 
-END SUBROUTINE comp_path_entities
+end subroutine Comp_Path_Entities
 
-end module COMP_PATH_ENTITIES_M
+end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.20  2001/04/12 21:43:50  livesey
+! Some attempts to fix array bounds in vert_to_path call
+!
 ! Revision 1.19  2001/04/12 01:02:11  zvi
 ! Adding phiwindow to calling seq.
 !
