@@ -6,7 +6,7 @@ module GetCF_M
 !==============================================================================
 
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DUMP_DECL
-  use INIT_TABLES_MODULE, only: INIT_TABLES, LIT_INDICES
+  use INIT_TABLES_MODULE, only: INIT_TABLES
   use LEXER_CORE, only: INIT_LEXER
   use MLSCF, only: MLSCF_T
   use OUTPUT_M, only: OUTPUT
@@ -17,12 +17,12 @@ module GetCF_M
   use TOGGLES, only: SYN, TOGGLE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE, only: ALLOCATE_TREE, PRINT_SUBTREE
-  use UNITS, only: INIT_UNITS
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256) :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=*), parameter :: ModuleName= &
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
@@ -55,7 +55,6 @@ contains ! =====     Public Procedures     =============================
     call allocate_decl ( n_decls )
     call allocate_tree ( n_tree )
     call init_tables
-    call init_units ( lit_indices )
   end subroutine InitGetCF
 
   ! ------------------------------------------------------  GetCF  -----
@@ -126,6 +125,9 @@ contains ! =====     Public Procedures     =============================
 end module GetCF_M
 
 ! $Log$
+! Revision 1.1  2000/11/02 21:36:45  vsnyder
+! Initial entry into CVS
+!
 ! Revision 2.1  2000/10/11 18:58:37  vsnyder
 ! Move from lib/cf_parser to lib
 !
