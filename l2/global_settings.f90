@@ -12,7 +12,7 @@ module GLOBAL_SETTINGS
   use INIT_TABLES_MODULE, only: L_TRUE, P_ALLOW_CLIMATOLOGY_OVERLOADS, &
     & P_INPUT_VERSION_STRING, P_OUTPUT_VERSION_STRING, P_VERSION_COMMENT, &
     & S_FGRID, S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
-    & P_CYCLE, P_STARTTIME, P_ENDTIME, &
+    & P_CYCLE, P_STARTTIME, P_ENDTIME, P_LEAPSECFILE, &
     & S_L1BRAD, S_L1BOA, P_INSTRUMENT, S_EMPIRICALGEOMETRY, &
     & S_BINSELECTOR
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
@@ -99,6 +99,7 @@ contains
     logical :: startTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2       ! For S_Time
     real(r8) :: start_time_from_1stMAF, end_time_from_1stMAF
+    logical ::  itExists
 
 
     character(LEN=NameLen) :: name_string
@@ -159,6 +160,7 @@ contains
           if ( index(name_string, ':') > 0 ) then
             start_time_from_1stMAF = hhmmss_value(name_string, error)
             startTimeIsAbsolute = .false.
+            l2pcf%startutc = start_time_string
           else
 !             call expr ( subtree(2,son), units, value )
 !             start_time_from_1stMAF = value(1)
@@ -176,6 +178,7 @@ contains
           if ( index(name_string, ':') > 0 ) then
             end_time_from_1stMAF = hhmmss_value(name_string, error)
             stopTimeIsAbsolute = .false.
+            l2pcf%endutc = end_time_string
           else
 !             call expr ( subtree(2,son), units, value )
 !             end_time_from_1stMAF = value(1)
@@ -186,6 +189,19 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for end time ***', &
             & just_a_warning = .true.)
+        case ( p_leapsecfile )
+          call get_string ( sub_rosa_index, LeapSecFileName, strip=.true. )
+          inquire(file=trim(LeapSecFileName), exist=itExists)
+          if ( .not. itExists ) then
+            call announce_error(0, &
+            & '*** Leap Second File ' // trim(LeapSecFileName) // &
+            & ' not found', &
+            & just_a_warning = .false.)
+          elseif ( pcf ) then
+            call announce_error(0, &
+            & '*** Leap Second File supplied global settings despite pcf ***', &
+            & just_a_warning = .true.)
+          endif
         case default
           call announce_error(son, 'unrecognized global settings parameter')
         end select
@@ -241,6 +257,7 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
             & just_a_warning = .true.)
+!        Not a spec but a parameter
 !        case ( s_leapsecfile )
 !          if ( .not. pcf ) then  
 !            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
@@ -268,9 +285,13 @@ contains
     end do
 
     ! add maf offsets to start, end times
+    ! or convert them to tai93
     ! This is optional way to define processingRange if using PCF
     ! It becomes mandatory if not using PCF
-    if(got(1) .or. got(2) .or. .not. PCF) then
+    if ( LeapSecFileName == '' &
+     & .and. &
+     & (got(1) .or. got(2) .or. .not. PCF) &
+     & ) then
 
       ! 1st--check that have L1BOA
       if(l1bInfo%L1BOAID == ILLEGALL1BRADID) then
@@ -339,7 +360,8 @@ contains
     endif
     if( levels(gen) > 0 .or. &
       & index(switches, 'glo') /= 0 ) &
-      & call dump_global_settings( l2pcf, processingRange, l1bInfo, details )
+      & call dump_global_settings( l2pcf, processingRange, l1bInfo, &
+      & LeapSecFileName, details )
 
     if ( error /= 0 ) &
       & call MLSMessage(MLSMSG_Error,ModuleName, &
@@ -394,7 +416,7 @@ contains
 
   ! ------------------------------------------  dump_global_settings  -----
   subroutine dump_global_settings ( l2pcf, processingRange, l1bInfo, &
-    & dumpL1BDetails )
+    & LeapSecFileName, dumpL1BDetails )
   
     ! Dump info obtained during OpenAndInitialize and global_settings:
     ! L1B databse
@@ -416,7 +438,7 @@ contains
     ! -2 Skip all but name (default)
     ! >0 Dump even multi-dim arrays
     integer, optional, intent(in) :: dumpL1BDetails
-!    character(len=CCSDSlen) CCSDSEndTime
+    character(len=*) LeapSecFileName
 !    character(len=CCSDSlen) CCSDSStartTime
 	
     ! Local
@@ -516,6 +538,11 @@ contains
 
     call output ( 'Processing Range:     ' )
     call output ( processingrange%endtime-processingrange%starttime, advance='yes' )
+
+    if ( LeapSecFileName /= '' ) then
+      call output ( 'Leap Seconds File:   ' )
+      call output ( LeapSecFileName, advance='yes' )
+    endif
 
     call output ( 'PGE version:   ' )
     call output ( l2pcf%PGEVersion, advance='yes' )
@@ -627,6 +654,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.54  2002/05/01 16:14:13  pwagner
+! Dropped S_LEAPSECFILE
+!
 ! Revision 2.53  2002/04/29 17:42:16  pwagner
 ! Can convert starttime, endtime to tai w/o pcf
 !
