@@ -18,7 +18,6 @@ module Fill                     ! Create vectors and fill them.
     & L2AUXDim_IntermediateFrequency, L2AUXDim_USBFrequency, L2AUXDim_LSBFrequency, &
     & L2AUXDim_MIF, L2AUXDim_MAF, L2AUXDim_GeodAngle
   use LEXER_CORE, only: PRINT_SOURCE
-  use ManipulateVectorQuantities, only: ValidateVectorQuantity
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   !  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
   !  use MLSStrings, only: lowercase
@@ -30,8 +29,8 @@ module Fill                     ! Create vectors and fill them.
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_DOT, N_SET_ONE
-  use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, Vector_T, &
-    & VectorTemplate_T
+  use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, &
+    & ValidateVectorQuantity, Vector_T, VectorTemplate_T
   use ScanModelModule
   use Intrinsic, only: PHYQ_Dimensionless
 
@@ -1006,6 +1005,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.20  2001/02/27 17:39:03  livesey
+! Tidied stuff up a bit.
+!
 ! Revision 2.19  2001/02/27 01:25:15  livesey
 ! Used new ValidateVectorQuantity routine
 !
