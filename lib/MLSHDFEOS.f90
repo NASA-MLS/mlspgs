@@ -161,22 +161,31 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_GDCREATE
 
-  integer function MLS_SWATTACH ( FILEID, SWATHNAME, FileName, hdfVersion )
+  integer function MLS_SWATTACH ( FILEID, SWATHNAME, FileName, &
+    &  hdfVersion, DONTFAIL )
     integer, intent(in) :: FILEID      ! ID returned by mls_swopen
     character(len=*), intent(in) :: SWATHNAME       ! Swath name
     character(len=*), optional, intent(in) :: FILENAME  ! File name
     integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
     ! Internal variables
+    logical :: myDontFail
     integer :: myHdfVersion
     logical :: needsFileName
     MLS_SWATTACH = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
     ! All necessary input supplied?
     needsFileName = (.not. present(hdfVersion))
     if ( present(hdfVersion) ) &
       & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
     if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        MLS_SWATTACH = -1
+      else
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Missing needed arg FILENAME from call to MLS_SWATTACH' )
+      endif
       return
     endif
     if ( needsFileName ) then
@@ -192,7 +201,7 @@ contains ! ======================= Public Procedures =========================
     case default
       MLS_SWATTACH = -1
     end select
-    if ( MLS_SWATTACH /= -1 ) return
+    if ( myDontFail .or. MLS_SWATTACH /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to attach swath name ' // trim(swathname) )
 
@@ -1566,6 +1575,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.8  2003/06/26 00:05:40  pwagner
+! Added optional DONTFAIL arg to MLS_SWATTACH
+!
 ! Revision 2.7  2003/06/20 19:31:39  pwagner
 ! Changes to allow direct writing of products
 !
