@@ -86,6 +86,8 @@ contains
       cld_ext = 0.0
       cld_w0  = 0.0
       cld_phh = 0.0
+      phh = 0.0
+      p11 = 0.0
 
       RC_TMP = 0._r8
       RC_TOT = 0._r8
@@ -132,6 +134,9 @@ contains
 end module Cloud_Extinction
 
 ! $Log$
+! Revision 2.5  2003/11/19 22:12:24  jonathan
+! some bug fix
+!
 ! Revision 2.4  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
