@@ -189,6 +189,7 @@ contains
 !------------------------------------------------
 !     COMPUTING TSCAT FOR EACH ANGLE AND LAYER
 !------------------------------------------------
+      U1 = 0.0
       IF(ICON .gt. 0) then
       DO ISPI=1,N                         
          DO 1009 IP=1,NU
@@ -387,6 +388,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.14  2003/05/07 23:11:32  jonathan
+! some clean-up and cosmetic changes
+!
 ! Revision 1.13  2003/04/24 23:21:03  jonathan
 ! currect a comment typo
 !
