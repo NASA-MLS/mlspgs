@@ -559,7 +559,7 @@ contains ! =====  Public Procedures  ===================================
       call blanks ( 6 )
       call output ( 'Ns = ' )
       call output ( lines(i)%ns )
-      call output ( 'Ps = ' )
+      call output ( ', Ps = ' )
       call output ( lines(i)%ps )
       call output ( ', N = ' )
       call output ( lines(i)%n )
@@ -583,37 +583,39 @@ contains ! =====  Public Procedures  ===================================
   end subroutine Dump_Lines_Database
   ! ----------------------------------  Dump_SpectCat_Database_2D  -----
   subroutine Dump_SpectCat_Database_2d ( Catalog, Name )
-    use Output_m, only: Output
-    type(catalog_T), intent(in) :: Catalog(:,:)
-    character(len=*), intent(in), optional :: NAME
-    integer :: SIDEBAND
+    type(catalog_T), intent(in) :: Catalog(-1:,:)
+    character(len=*), intent(in), optional :: Name
+    integer :: Sideband
     ! Executable code
-    call output ( 'Spectroscopy catalog' )
-    if ( present(name) ) call output ( ' '//trim(name) )
     do sideband = -1, 1, 2
-      call output ( 'Sideband: ' )
-      call output ( sideband, advance='yes' )
-      call Dump ( catalog(sideband,:) )
+      call Dump ( catalog(sideband,:), name, sideband )
     end do
   end subroutine Dump_SpectCat_Database_2d
 
   ! -------------------------------------  Dump_SpectCat_Database  -----
-  subroutine Dump_SpectCat_Database ( Catalog, Name )
+  subroutine Dump_SpectCat_Database ( Catalog, Name, Sideband )
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_indices
-    use Output_m, only: Blanks, Output
+    use Output_m, only: Blanks, NewLine, Output
     use String_Table, only: Display_String
 
     type(catalog_T), intent(in) :: Catalog(:)
     character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Sideband
 
     integer :: I, J                ! Subscript, loop inductor
+    character(len=15) :: Print
 
     call output ( 'Spectroscopy catalog' )
     if ( present(name) ) call output ( ' '//trim(name) )
+    if ( present(sideband) ) call output ( sideband, before=' for sideband ' )
     call output ( ': SIZE = ' )
     call output ( size(catalog), advance='yes' )
     do i = 1, size(catalog)
+      if ( catalog(i)%molecule == l_none ) then
+        if ( .not. associated(catalog(i)%lines) ) cycle
+        if ( size(catalog(i)%lines) == 0 ) cycle
+      end if
       call output ( i, 4 )
       call output ( ': ' )
       if ( catalog(i)%species_name /= 0 ) then
@@ -622,30 +624,38 @@ contains ! =====  Public Procedures  ===================================
       end if
       call output ( 'Species = ' )
       call display_string ( lit_indices(catalog(i)%molecule) )
-      call output ( ' Mass = ' )
-      call output ( catalog(i)%mass )
-      call output ( ', Qlog = [ ' )
+      write ( print, '(f10.3)' ) catalog(i)%mass
+      call output ( ' Mass = ' // trim(adjustl(print)) // ', Qlog = [ ' )
       do j = 1, 3
-        call output ( catalog(i)%qlog(j) )
+        write ( print, '(f10.4)' ) catalog(i)%qlog(j)
+        call output ( trim(adjustl(print)) )
         if ( j < 3 ) call output ( ', ' )
       end do
       call output ( ' ]', advance='yes' )
       call blanks ( 6 )
       call output ( 'continuum = [ ' )
       do j = 1, MaxContinuum
-        call output ( catalog(i)%continuum(j) )
+        write ( print, '(g15.3)' ) catalog(i)%continuum(j)
+        call output ( trim(adjustl(print)) )
         if ( j < MaxContinuum ) call output ( ', ' )
       end do
       call output ( ' ]', advance='yes' )
       if ( associated(catalog(i)%polarized) ) &
         & call dump ( catalog(i)%polarized, '      Polarized:' )
       call blanks ( 6 )
-      call output ( 'Lines:', advance='yes' )
-      if ( associated(catalog(i)%lines ) ) then
-        do j = 1, size(catalog(i)%lines)
-          call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
-            & .false. )
-        end do
+      call output ( 'Lines:' )
+      if ( associated(catalog(i)%lines) ) then
+        if ( size(catalog(i)%lines) > 0 ) then
+          call newLine
+          do j = 1, size(catalog(i)%lines)
+            call dump_lines_database ( catalog(i)%lines(j), catalog(i)%lines(j), &
+              & .false. )
+          end do
+        else
+          call output ( ' none', advance='yes' )
+        end if
+      else
+        call output ( ' none', advance='yes' )
       end if
     end do ! i
   end subroutine Dump_SpectCat_Database
@@ -690,6 +700,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.22  2004/04/02 23:58:33  vsnyder
+! Require a MASS field in SPECTRA if a LINE field appears
+!
 ! Revision 2.21  2004/04/02 01:00:01  vsnyder
 ! Cosmetic change
 !
