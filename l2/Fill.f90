@@ -165,7 +165,7 @@ contains ! =====     Public Procedures     =============================
     type (VGrid_T), dimension(:), intent(in) :: vGrids
     type (l2GPData_T), dimension(:), pointer :: L2GPDatabase
     type (l2AUXData_T), dimension(:), pointer :: L2AUXDatabase
-    type (mlSChunk_T), dimension(:), intent(in) :: Chunks
+    type (mlSChunk_T), dimension(:), pointer :: Chunks
     integer, intent(in) :: ChunkNo
 
     ! Local variables
@@ -1301,6 +1301,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.53  2001/05/23 04:38:16  livesey
+! Changes chunks to pointer rather than intent(in), so it gets the right indices
+!
 ! Revision 2.52  2001/05/19 00:15:39  livesey
 ! OK, that should have been square!!! (fool!)
 !
