@@ -49,7 +49,7 @@ MODULE hydrostatic_m
 ! moved to a separate module (preferably Geometry.f90)
 !
   REAL(rp), PARAMETER :: gm = 3.986005e14_rp ! m^3/sec^2
-  REAL(rp), PARAMETER :: j2 = 0.00108263_rp
+  REAL(rp), PARAMETER :: j2 = 0.0010826256_rp
   REAL(rp), PARAMETER :: j4 = -.0000023709122_rp
 !
 ! earth rotational velocity
@@ -60,7 +60,7 @@ MODULE hydrostatic_m
 !
   REAL(rp) :: sl,cl,p2,p4,dp2,dp4,g_ref,r_eff,boltz,r_e,z_surf
   REAL(rp) :: z_new,h_calc,dh_dz_s
-  REAL(rp), ALLOCATABLE :: eta(:,:),piq(:,:),piqa(:,:),piqb(:,:)
+  REAL(rp), ALLOCATABLE :: eta(:,:),piq(:,:),piqa(:,:),piqb(:,:),mass_corr(:)
 !
 ! begin the code
 !
@@ -68,6 +68,10 @@ MODULE hydrostatic_m
   n_coeffs = SIZE(t_basis)
   ALLOCATE(eta(1:n_lvls,1:n_coeffs))
   ALLOCATE(piq(1:n_lvls,1:n_coeffs))
+  ALLOCATE(mass_corr(1:n_lvls))
+  mass_corr = 1.0_rp
+  WHERE(z_grid > 2.5) mass_corr = 1.0_rp &
+  & / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
 !
 ! compute t_grid
 !
@@ -150,9 +154,10 @@ MODULE hydrostatic_m
 !
 ! compute the height vector
 !
-  h_grid = boltz * MATMUL(piq,t_coeffs) ! geopotential height * g_ref
+! geopotential height * g_ref
+  h_grid = boltz * mass_corr * MATMUL(piq,t_coeffs)
   h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
-  dhidzi = (h_grid+r_eff)**2 * boltz / (g_ref * r_eff**2)
+  dhidzi = (h_grid+r_eff)**2 * boltz * mass_corr / (g_ref * r_eff**2)
   dhidtq = SPREAD(dhidzi,2,n_coeffs) * piq
   dhidzi = dhidzi * t_grid
 !
@@ -164,12 +169,16 @@ MODULE hydrostatic_m
 
   DEALLOCATE(piq)
   DEALLOCATE(eta)
+  DEALLOCATE(mass_corr)
 !
  END SUBROUTINE hydrostatic
 !
 END MODULE hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.1  2002/02/02 11:20:08  zvi
+! Some cosmetic changes
+!
 ! Revision 2.0  2001/09/17 20:26:27  livesey
 ! New forward model
 !
