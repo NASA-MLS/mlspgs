@@ -100,8 +100,7 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: Source_not_in_db = unknownQuantityName + 1
   integer, parameter :: ZeroProfilesFound = source_not_in_db + 1
   integer, parameter :: ZeroGeodSpan = zeroProfilesFound + 1
-  integer, parameter :: VectorWontMatchL2GP = zeroGeodSpan + 1
-  integer, parameter :: CantFillFromL2AUX = vectorWontMatchL2GP + 1
+  integer, parameter :: CantFillFromL2AUX = ZeroGeodSpan + 1
   integer, parameter :: VectorWontMatchPDef = cantFillFromL2AUX + 1
   integer, parameter :: CantFillFromL1B = vectorWontMatchPDef + 1
 
@@ -1442,7 +1441,9 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: errorCode ! Error code
 
     ! Local parameters
-    real(r8), parameter:: TOLERANCE=0.05 ! Tolerence for angles
+    real(r8), parameter :: TOLERANCE=0.05 ! Tolerence for angles
+    real(r8), parameter :: TIMETOL=5.0  ! Tolerence for time (not sure why this
+    ! needs to be so big !????????? NJL)
 
     ! Local variables
     integer ::    FIRSTPROFILE, LASTPROFILE
@@ -1454,35 +1455,30 @@ contains ! =====     Public Procedures     =============================
     errorCode=0
     ! Make sure this quantity is appropriate
     if (.not. ValidateVectorQuantity(quantity, coherent=.TRUE., stacked=.TRUE., &
-      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) then
-      errorCode=vectorWontMatchL2GP
-      return
-    end if
+      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Quantity to fill is not on pressure or zeta coordinates' )
 
     if ( (quantity%template%noChans/=l2gp%nFreqs) .and. &
-      &  ((quantity%template%noChans/=1) .or. (l2gp%nFreqs/=0)) ) then
-      errorCode=vectorWontMatchL2GP
-      return
-    end if
+      &  ((quantity%template%noChans/=1) .or. (l2gp%nFreqs/=0)) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Quantity and l2gp have different number of channels' )
 
-    if ( quantity%template%noSurfs /= l2gp%nLevels .and. (.not. interpolate) ) then
-      errorCode=vectorWontMatchL2GP
-      return
-    end if
+    if ( quantity%template%noSurfs /= l2gp%nLevels .and. (.not. interpolate) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Quantity and l2gp have different number of surfaces (set interpolate?)' )
 
     if (.not. interpolate) then 
       if ( quantity%template%verticalCoordinate == l_pressure ) then
         if ( any(ABS(-LOG10(quantity%template%surfs(:,1))+ &
-          & LOG10(l2gp%pressures)) > TOLERANCE) ) then
-          errorCode=vectorWontMatchL2GP
-          return
-        end if
+          & LOG10(l2gp%pressures)) > TOLERANCE) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Quantity and l2gp are on different surfaces (set interpolate?)' )
       else                                ! Must be l_zeta
         if ( any(ABS(quantity%template%surfs(:,1)+ &
-          & LOG10(l2gp%pressures)) > TOLERANCE) ) then
-          errorCode=vectorWontMatchL2GP
-          return
-        end if
+          & LOG10(l2gp%pressures)) > TOLERANCE) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Quantity and l2gp are on different surfaces (set interpolate?)' )
       end if
     end if
 
@@ -1492,23 +1488,20 @@ contains ! =====     Public Procedures     =============================
 
     ! Well, the last profile has to be noInstances later, check this would be OK
     lastProfile=firstProfile+quantity%template%noInstances-1
-    if (lastProfile > l2gp%nTimes ) then
-      errorCode=vectorWontMatchL2GP
-      return
-    end if
+    if (lastProfile > l2gp%nTimes ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Quantity has profiles beyond the end of the l2gp' )
 
     ! Now check that geodAngle's are a sufficient match
     if (any(abs(l2gp%geodAngle(firstProfile:lastProfile)-&
-      &         quantity%template%phi(1,:)) > tolerance) ) then
-      errorCode=vectorWontMatchL2GP
-      return
-    end if
+      &         quantity%template%phi(1,:)) > tolerance) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Quantity has profiles that mismatch in geodetic angle' )
 
     if (any(abs(l2gp%time(firstProfile:lastProfile)- &
-      &         quantity%template%time(1,:)) > tolerance) ) then
-      errorCode=vectorWontMatchL2GP
-      return
-    end if
+      &         quantity%template%time(1,:)) > timeTol) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Quantity has profiles that mismatch in time' )
 
     if (interpolate .and. quantity%template%noChans /= 1) then
       errorCode=cantInterpolate3D
@@ -3344,9 +3337,6 @@ contains ! =====     Public Procedures     =============================
       call output ( " quantity was not found in the vector", advance='yes' )
     case ( vectorWontMatchPDef )
       call output ( " command found new and prev. vectors unmatched.", advance='yes' )
-    case ( vectorWontMatchL2GP )
-      call output ( " command found no match of vetor and L2GP (set interpolate?).",&
-        & advance='yes' )
     case ( wrong_number )
       call output ( " command does not have exactly one field.", advance='yes' )
     case ( zeroGeodSpan )
@@ -3367,6 +3357,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.122  2002/05/06 22:30:51  livesey
+! Tidied up l2gp fill.
+!
 ! Revision 2.121  2002/04/25 20:47:02  livesey
 ! Added channel dependent system temperature, and removed
 ! embarassing bug whereby radiance noise was sqrt(10) too small!
