@@ -5,7 +5,8 @@ module Init_MLSSignals_m
 
   use INTRINSIC, only: Add_Ident, Begin, D, F, Field_First, L, &
     & Last_Intrinsic_Lit, Last_Intrinsic_Spec, N, NADP, NDP, NP, NR, P, S, &
-    & Spec_First, T, T_Boolean, T_Numeric, T_Numeric_Range, T_String, Z
+    & Spec_First, T, T_Boolean, T_Numeric, T_Numeric_Range, T_Polarization, &
+    & T_String, Z
 
   use INTRINSIC, only: DATA_TYPE_INDICES, FIELD_INDICES, &
     & LIT_INDICES, PARM_INDICES, SECTION_INDICES, SPEC_INDICES
@@ -40,7 +41,8 @@ module Init_MLSSignals_m
   integer, parameter :: F_last              = f_frequency + 1
   integer, parameter :: F_lo                = f_last + 1
   integer, parameter :: F_module            = f_lo + 1
-  integer, parameter :: F_radiometer        = f_module + 1
+  integer, parameter :: F_polarization      = f_module + 1
+  integer, parameter :: F_radiometer        = f_polarization + 1
   integer, parameter :: F_singleSideband    = f_radiometer + 1
   integer, parameter :: F_spacecraft        = f_singleSideband + 1
   integer, parameter :: F_spectrometer      = f_spacecraft + 1
@@ -100,6 +102,7 @@ contains
     field_indices(f_last) =                add_ident ( 'last' )
     field_indices(f_lo) =                  add_ident ( 'lo' )
     field_indices(f_module) =              add_ident ( 'module' )
+    field_indices(f_polarization) =        add_ident ( 'polarization' )
     field_indices(f_radiometer) =          add_ident ( 'radiometer' )
     field_indices(f_singleSideband) =      add_ident ( 'singleSideband' )
     field_indices(f_spacecraft) =          add_ident ( 'spacecraft' )
@@ -158,11 +161,12 @@ contains
              begin, f+f_spacecraft, t+t_boolean, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_radiometer, &          ! Must be after module
-             begin, f+f_lo, t+t_numeric, n+n_field_type, &
-             begin, f+f_suffix, t+t_string, n+n_field_type, &
-             begin, f+f_module, s+s_module, n+n_field_spec, &
-             begin, f+f_singleSideband, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def, &
+             begin, f+f_lo, t+t_numeric, nr+n_field_type, &
+             begin, f+f_suffix, t+t_string, nr+n_field_type, &
+             begin, f+f_module, s+s_module, nr+n_field_spec, &
+             begin, f+f_polarization, t+t_polarization, n+n_field_type, &
+             begin, f+f_singleSideband, t+t_numeric, nr+n_field_type, &
+             ndp+n_spec_def, &
       begin, s+s_spectrometerType, &
              begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
              begin, f+f_dacs, t+t_boolean, n+n_field_type, &
@@ -200,6 +204,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.23  2003/08/16 01:14:03  vsnyder
+! Add optional 'polarization' field to 'radiometer' spec
+!
 ! Revision 2.22  2003/07/23 18:02:30  livesey
 ! Reverted DACS back to lower case
 !
