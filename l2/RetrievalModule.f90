@@ -46,6 +46,7 @@ module RetrievalModule
   use SidsModule, only: SIDS
   use SnoopMLSL2, only: SNOOP
   use String_Table, only: DISPLAY_STRING, Get_String
+  use Time_M, only: Time_Now
   use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
@@ -208,7 +209,7 @@ contains
       nullify ( v(j)%quantities, v(j)%template%quantities )
       v(j)%name = 0 ! so Snoop won't use it
     end do
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
     do i = 2, nsons(root) - 1           ! skip names at begin/end of section
@@ -421,7 +422,7 @@ contains
             call newtonianSolver
           case ( l_lowcloud )
         !    call add_to_retrieval_timing( 'low_cloud', t1 )
-        !    call cpu_time ( t1 )
+        !    call time_now ( t1 )
             call LowCloudRetrieval
           case ( l_highcloud )
             call HighCloudRetrieval
@@ -441,13 +442,13 @@ contains
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
         ! call add_to_retrieval_timing( 'sids', t1 )
-        call cpu_time ( t1 )
+        call time_now ( t1 )
         call sids ( key, VectorDatabase, MatrixDatabase, configDatabase, chunk)
       case ( s_time )
         if ( timing ) then
           call sayTime
         else
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           timing = .true.
         end if
       end select
@@ -591,7 +592,7 @@ contains
       real :: T1
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
 
-      call cpu_time ( t1 )
+      call time_now ( t1 )
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
       ! Set options for NWT
@@ -666,7 +667,7 @@ contains
         end if;
 
       call add_to_retrieval_timing( 'newton_solver', t1 )
-      call cpu_time ( t1 )
+      call time_now ( t1 )
       do ! Newtonian iteration
         if ( nwt_flag /= nf_start .and. index(switches,'ndb') /= 0 ) &
             & call nwtdb
@@ -745,7 +746,7 @@ contains
           fmStat%maf = 0
 
           call add_to_retrieval_timing( 'newton_solver', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           call clearVector ( v(f) )
           ! Loop over MAFs
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
@@ -756,7 +757,7 @@ contains
             end do ! k
           end do ! MAFs
           call add_to_retrieval_timing( 'forward_model', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           call subtractFromVector ( v(f), measurements )
           if ( got(f_measurementSD) ) call multiply ( v(f), v(weight) )
           aj%fnorm = sqrt ( aprioriNorm + ( v(f) .dot. v(f) ) )
@@ -913,7 +914,7 @@ contains
           call clearVector ( v(f) )
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             call add_to_retrieval_timing( 'newton_solver', t1 )
-            call cpu_time ( t1 )
+            call time_now ( t1 )
             ! What if one config set finished but others still had more
             ! to do? Ermmm, think of this next time.
             fmStat%maf = fmStat%maf + 1
@@ -923,7 +924,7 @@ contains
                 & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
             end do ! k
             call add_to_retrieval_timing( 'forward_model', t1 )
-            call cpu_time ( t1 )
+            call time_now ( t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                 call subtractFromVector ( v(f_rowScaled), measurements, &
@@ -1017,11 +1018,11 @@ contains
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
           call add_to_retrieval_timing( 'newton_solver', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           ! Factor the normal equations
           call choleskyFactor ( factored, normalEquations )
           call add_to_retrieval_timing( 'cholesky_factor', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
             if ( index(switches,'diag') /= 0 ) then
               call getDiagonal ( factored%m, v(dxUnscaled) )
               call dump ( v(dxUnscaled), &
@@ -1038,11 +1039,11 @@ contains
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
           !       column in upper triangle after triangularization
           call add_to_retrieval_timing( 'newton_solver', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true. )
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
 
           !{AJ\%FNMIN = L2 norm of residual, $||\mathbf{J \delta x + f}||$
           ! where $\mathbf{\delta x}$ is the "Candidate DX" that may not
@@ -1094,10 +1095,10 @@ contains
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
           call add_to_retrieval_timing( 'newton_solver', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           call choleskyFactor ( factored, normalEquations )
           call add_to_retrieval_timing( 'cholesky_factor', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
             if ( index(switches,'fac') /= 0 ) &
               call dump_Linf ( factored%m, &
                 & 'L1 norms of blocks of factor after Marquardt:', &
@@ -1112,11 +1113,11 @@ contains
           ! NF\_EVALJ, but taking account of Levenberg-Marquardt
           ! stabilization
           call add_to_retrieval_timing( 'newton_solver', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true. )
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           aj%fnmin = sqrt(aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX)) )
           call solveCholesky ( factored, v(candidateDX) )
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
@@ -1312,13 +1313,13 @@ contains
         !??? remove them, maybe the normal equations are singular?
         ! Re-factor normal equations
         call add_to_retrieval_timing( 'newton_solver', t1 )
-        call cpu_time ( t1 )
+        call time_now ( t1 )
         call choleskyFactor ( factored, normalEquations )
         call add_to_retrieval_timing( 'cholesky_factor', t1 )
-        call cpu_time ( t1 )
+        call time_now ( t1 )
         call invertCholesky ( factored, outputCovariance%m )
         call add_to_retrieval_timing( 'cholesky_invert', t1 )
-        call cpu_time ( t1 )
+        call time_now ( t1 )
         !??? Don't forget to scale the covariance
         if ( associated(outputSD) ) then !???
           call GetDiagonal ( outputCovariance%m, outputSD )
@@ -1338,7 +1339,7 @@ contains
       call destroyMatrix ( factored%m )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
       call add_to_retrieval_timing( 'newton_solver', t1 )
-      call cpu_time ( t1 )
+      call time_now ( t1 )
     end subroutine NewtonianSolver
     ! ------------------------------------------  HighCloudRetrieval  -----
     subroutine HighCloudRetrieval
@@ -2174,7 +2175,7 @@ contains
     
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
@@ -2463,6 +2464,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.115  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.114  2001/11/08 01:21:45  vsnyder
 ! Make sure phaseName has a value
 !
