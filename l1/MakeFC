@@ -53,8 +53,8 @@ SHELL = /bin/sh
 #                  also (re)creates uniquely-named sub-sub-directories
 #                  with custom Makefiles where *.o, *.mod, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
-# clean          -- deletes uniquely-named sub-sub-directories
-# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
 # tar            -- creates a directory archive suitable for distribution
 #
 
@@ -71,9 +71,9 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar clean_objs
+.PHONY: configure depends clean tar mostlyclean tarz targ
 
-tar: clean
+tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -90,7 +90,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 depends:
 	$(MLSBIN)/makemakedep.sh $(libmls_sources) $(srclib)
 
-clean:
+mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
@@ -100,19 +100,35 @@ clean:
 		echo "Deleting $(MLSCONFG) directory" ; \
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
+	rm -f Make.dep.*
 
-clean_objs:
+clean:
 	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
 	fi
+	rm -f Make.dep.*
 
 tar:
+	rm -f ../$(PROG).tar
+	@echo "tar-ing l1"; \
+	rm -f ../$(PROG).tar
+	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f $(PROG).tgz; gzip $(PROG).tar; mv $(PROG).tar.gz $(PROG).tgz
+
+targ:
 	rm -f ../$(PROG).tgz
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.8  2001/03/12 22:46:57  pwagner
+# Revised clean, tar; automatic symlink to Makefile
+#
 # Revision 2.7  2001/03/09 19:36:06  pwagner
 # Added TAR=... option
 #
