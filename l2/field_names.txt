@@ -15,6 +15,7 @@
 # $Id$
 
 a
+additional
 allLinesForRadiometer
 antennaPatterns
 apriori
@@ -288,6 +289,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.79  2003/02/14 01:56:36  livesey
+# Added the 'additional' capability in subset
+#
 # Revision 2.78  2003/02/13 21:41:58  livesey
 # Added profile
 #
