@@ -368,6 +368,13 @@ contains ! =====     Public Procedures     =============================
 
       CALL WriteMetaLog(l2pcf)
 
+! Done with text of PCF file at last
+
+      DEALLOCATE(anText, STAT=returnStatus)
+		if(returnStatus /= 0) then
+			call announce_error(0, &
+			& 'Failed to deallocate anText of PCF file')
+		endif
 
   contains
     subroutine SayTime
@@ -411,6 +418,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.16  2001/04/04 23:44:52  pwagner
+! Now deallocates anText of PCF file at last
+!
 ! Revision 2.15  2001/04/03 23:51:28  pwagner
 ! Many changes; some may be right
 !
