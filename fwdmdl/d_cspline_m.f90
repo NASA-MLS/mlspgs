@@ -2,30 +2,39 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module D_CSPLINE_M
-  use D_HUNT_M, only: HUNT
-  use D_PCSPL_M, only: PCSPL
+
   implicit NONE
+
   private
   public D_CSPLINE, CSPLINE
+
   interface CSPLINE; module procedure D_CSPLINE; end interface
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-       "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-  private :: not_used_here 
+  character (len=*), parameter :: IdParm = &
+    & "$id: d_cspline_m.f90,v 2.2 2002/10/08 17:08:02 pwagner exp $"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName = "$rcsfile: d_cspline_m.f90,v $"
 !---------------------------------------------------------------------------
-  integer, private, parameter :: RK = kind(0.0d0)
+
 contains
 !
   subroutine D_CSPLINE (XIN, XOUT, YIN, YOUT, NIN, NOUT, YMIN, YMAX)
+    use D_HUNT_M, only: HUNT
+    use D_PCSPL_M, only: PCSPL
+    integer, parameter :: RK = kind(0.0d0)
     include 'cspline.f9h'
   end subroutine D_CSPLINE
-  logical function not_used_here()
+
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module D_CSPLINE_M
 ! $Log$
+! Revision 2.2  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/04/18 10:46:24  zvi
 ! Adding optional limits
 !
