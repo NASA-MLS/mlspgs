@@ -41,7 +41,7 @@
 
 ;; These macros define our standard output filenames
 !define(l2gpFileName, !dnl
-{!ifdef(flagUsingPCF,{$1},!dnl
+{!ifdef(flagUsingPCF,{L2GP-$1},!dnl
 {!outpathl2gp/MLS-Aura_L2GP-$1_!l2version_!day.he!hdfVersion})})
 !define(DGGFileName, !dnl
 {!ifdef(flagUsingPCF,{DGG},!dnl
@@ -545,6 +545,9 @@ Fill, quantity=otherDiagnostics.status!MFproduct, method=status, status=!statusH
 
 
 ; $Log$
+; Revision 1.91  2004/04/19 19:24:23  livesey
+; Slight changes to L2AUX handling.
+;
 ; Revision 1.90  2004/04/16 00:45:55  livesey
 ; New approach to cloud flagging etc.
 ;
