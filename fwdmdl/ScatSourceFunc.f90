@@ -22,7 +22,7 @@ module ScatSourceFunc
       
 contains
 
-   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, VMRin, NS, NU, NUA, NAB, NR, NC, TSCAT )  
+   subroutine T_SCAT ( TEMP_AIR, FREQ, Z, Pres, VMRin, NS, NU, NUA, NAB, NR, NC, TSCAT )  
 
       use Cloud_extinction,    only: Get_beta_cloud
       use CRREXP_m,            only: RREXP    ! ( exp(x)-1 ) / x, for Planck fn.
@@ -31,12 +31,13 @@ contains
       use Physics,             only: H_OVER_K ! h/k in Kelvin/MHz
       use ScatteringAngle,     only: Angle
       use Units,               only: Pi
+      use Non_scat_ext,        only: GET_BETA_CLEAR
 
     ! Arguments
       real(rk), intent(in) :: Temp_Air(:) ! MEAN AIR TEMPERATURES, Kelvin
       real(rk), intent(in) :: Freq        ! FREQUENCY, MHz
       real(rk), intent(in) :: Z(:)        ! Model height (meters)
-
+      real(rk), intent(in) :: Pres(size(Z))     ! Pressure (hPa)
       integer, intent(in) :: NU           ! Number of scattering angles
       integer, intent(in) :: NUA          ! Number of azimuth angles
       integer, intent(in) :: NAB          ! Number of AB terms
@@ -95,6 +96,9 @@ contains
       real(rk) :: X2
       real(rk) :: XTB(size(TEMP_AIR))
 
+      real(rk) :: mid_Z(size(Z)-1)
+      real(rk) :: D_mid_Z(size(Z)-2)
+
       integer :: I
       integer :: ICON                     ! CONTROL SWITCH
                                           ! 3 = NEAR SIDE CLOUD ONLY
@@ -130,19 +134,37 @@ contains
       WC(1,11) = 0.01   !test only
       dtau =0.0
 
-!         under construction
-!         CALL CLEAR_SKY(L-1,NU,TS,S,LORS,SWIND,                         &
-!              &         YZ,YP,YT,YQ,VMR,NS,                             &
-!              &         FREQUENCY(IFR),RS,U,TEMP,Z,TAU0,tau_wetAll,     &
-!              &         tau_dry,Catalog, Bill_data, LosVel, i_saturation ) 
+!      print*, NS
+!      print*, TEMP_AIR, VMRin(1,:), VMRin(2,:), VMRin(3,:)
 
-      do K=1,L-1
-        call get_beta_cloud ( FREQ, TEMP_AIR(K), WC(:,K), 1000,        &
+!      print*, TEMP_AIR
+
+!      print*, Pres
+!      stop
+
+      CALL get_beta_clear ( L, FREQ, TEMP_AIR, Pres, VMRin, NU, NS, dtau )
+
+      do I=1, L-1
+        mid_Z(I) = Z(I) +(Z(I+1)-Z(I))/2.
+!        print*, Z(I), mid_Z(I)
+      enddo
+
+
+      do I=1, L-2
+        D_mid_Z(I) = (Z(I+1)-Z(I))
+!        print*, Z(I), mid_Z(I), D_mid_Z(I)
+      enddo
+!      stop
+
+
+      do K=2,L-1
+        call get_beta_cloud ( FREQ, TEMP_AIR(K), WC(:,K), 1000,         &
      &                 NC, NU, NUA, NAB, NR, cld_ext, W0(K), PHH(:,K) )      
-!        print*, FREQ, TEMP_AIR(K), WC(1,K), cld_ext, W0(K)
-        dtau(k)=(Z(K+1)-Z(K))*cld_ext
+        dtau(k)= D_mid_Z(K-1) *cld_ext
+!        print*, dtau(k), D_mid_Z(K-1), cld_ext, TEMP_AIR(K), WC(1,K), W0(K)
       end do
-
+      dtau(1)=dtau(2)
+      dtau(L)=dtau(L-1)
 !      STOP
 
 !----------------------------------------------------
@@ -220,8 +242,9 @@ contains
 
             TB(I,K)=TB(I,K+1)*EXP(-dTAU(K)/UEFF)+           &
      &              (1._rk-EXP(-dTAU(K)/UEFF))*tsource
-
+!            print*, TB(I,K), I, K
  1100 CONTINUE
+!            stop
 
 !-----------------------------------------------------------------------
 !     DETERMINE SURFACE REFLECTION 
@@ -251,9 +274,9 @@ contains
 
            TB(I,K+1)=TB(I,K)*EXP(-dTAU(K)/UEFF)+      &
      &               (1._rk-EXP(-dTAU(K)/UEFF))*tsource
-
+!           print*, TB(I,K), I,K
  1200 CONTINUE
-
+!           stop
 !------------------------------------
 !     CHECK CONVERGENCE
 !------------------------------------
@@ -272,7 +295,7 @@ contains
          ITS=ITS+1
          GOTO 1000
       ENDIF
-
+      
    end subroutine T_SCAT
 
   logical function not_used_here()
