@@ -1,4 +1,7 @@
 #	Makefile
+# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 #	targets: configure, clean, clean_objs, depends, tar, and SUBDIRS
 #	true targets: the same make commands in $(SUBDIRS)
 #	special treatment is reserved for srclib which contains
@@ -37,12 +40,38 @@ PLATFORMS = .
 
 SHELL = /bin/sh
 
+#--------------- Target definitions
+#            (code sub-directories of mlspgs excluding util, sandbox)
+# $LEVELS        -- automatic; built when target is not specified
+# $OTHER_SUBDIRS -- not automatic
+# all            -- all the sub-directories
+# subdirs        -- same as all
+# lib            -- libmls.a, a prerequisite for all the others
+
+#                           (functional)
+# configure      -- runs mlsconfigure to (re)set compiler, platform, paths
+#                  also (re)creates uniquely-named sub-sub-directories
+#                  within mlspgs sub-directories with custom Makefiles
+#                  where *.o, *.mod, lib*.a, mlsl*, etc. built
+# depends        -- runs makemakedep.sh to calculate dependencies
+# clean          -- deletes uniquely-named sub-sub-directories
+# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# tar            -- creates an archive of whole mlspgs suitable for distribution
+# tar_subs       -- creates archives of sub-directories suitable for distribution
+#
+
 #----------------------------------------------------------
+# LEVELS is the list of automatic targets; i.e.
+# they will be built when no target is specified
+# by entering
+
+# make -f MakeFC
+#
 #          Default levels
 #You may choose whether "make -f MakeFC' defaults to making
 #only l2 or all of l1 l2 and l3
 #by commenting out exactly one of the following assignments
-#(the prerequisite lib will always be made)
+#(the prerequisite lib will always be made if necessary, however)
 
 #comment out the following to make only l2
 LEVELS = l1 l2 l3
@@ -52,14 +81,21 @@ LEVELS = l1 l2 l3
 #----------------------------------------------------------
 
 #-----------------------
+
+# OTHER_SUBDIRS are *not* built automatically:
+# you must either name them individually, or use the "all" target
+OTHER_SUBDIRS = l2pc fwdmdl
 #         All the subdirectories
-#You may build all the subdirectories
+
+#You may build all the subdirectories via the "all" target; i.e.,
 #by entering
+
 # make -f MakeFC all
-SUBDIRS = lib $(LEVELS) l2pc fwdmdl
+
+SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 
 all: $(SUBDIRS)
-#-----------------------
+#----------------------- Build instructions
 
 subdirs: $(SUBDIRS)
 
@@ -68,12 +104,14 @@ $(LEVELS):
 
 $(LEVELS): lib
 
-$(SUBDIRS):
+$(OTHER_SUBDIRS):
 	$(MAKE) -f $(MakeFName) -C $@
 
-tar: clean
+$(OTHER_SUBDIRS): lib
 
-.PHONY: configure depends subdirs $(SUBDIRS) clean clean_objs tar all
+tar tar_subs: clean
+
+.PHONY: configure depends subdirs clean clean_objs tar tar_subs all
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -120,15 +158,26 @@ clean_objs:
 	done
 
 tar:
+	@echo "tar-ing mlspgs"; \
+        rm -f ../mlspgs.tgz; \
+	tar hcvzf ../mlspgs.tgz *
+
+tar_subs:
 	@echo "tar-ing $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir tar; \
 	done; \
 	echo "tar-ing srclib"; \
         rm -f srclib.tgz; \
-	tar hcvzf srclib.tgz srclib
+	tar hcvzf srclib.tgz srclib; \
+	echo "tar-ing util"; \
+        rm -f util.tgz; \
+	tar hcvzf util.tgz util
 
 # $Log$
+# Revision 1.8  2001/01/05 22:55:15  pwagner
+# Added all option to build all
+#
 # Revision 1.7  2000/11/28 00:49:59  pwagner
 # configure now configures subdirs
 #
