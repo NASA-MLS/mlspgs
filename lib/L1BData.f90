@@ -7,15 +7,18 @@ module L1BData
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: DUMP
-  use Hdf, only: DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, SFRDATA_f90, &
+  use Hdf, only: DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, &
+    & SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
+  use HDF5, only: HSIZE_T
   use Lexer_Core, only: PRINT_SOURCE
   use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData
   use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
     & MLS_IO_GEN_OPENF
-  use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS
+  use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS, &
+    & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
   use MoreTree, only: Get_Field_ID
@@ -25,6 +28,7 @@ module L1BData
 
   implicit NONE
 
+! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
 
@@ -40,6 +44,7 @@ module L1BData
 ! L1BOASetup                      From l2cf, open, and save l1boa file info
 ! L1BRadSetup                     From l2cf, open, and save l1brad file info
 ! ReadL1BData                     Read all info concerning a l1brad quantity
+! === (end of toc) ===
 
   private
 
@@ -62,7 +67,7 @@ module L1BData
   integer, parameter :: NAME_LEN = 64  ! Max len of SDS array name
   ! suffix of sd precision; check against 'grep -i precision l1/OutputL1B.f90'
   character  (len=*), parameter :: PRECISIONSUFFIX = ' precision'
-
+  real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as l2/templates, Fill
   ! If TRUE, treats l1brad and l2aux files the same
   ! Among other things, this means forgiving absence of counterMAF
   ! so we may read l2aux and l1brad files alike
@@ -657,14 +662,15 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: N_ATTRS
     integer :: NUMMAFS
     integer :: RANK
+    character(len=16) :: QTYPE
     integer :: SDS1_ID
     integer :: SDS2_ID
     integer :: SDS_INDEX
     integer :: STATUS
 
     integer, dimension(:), pointer :: COUNTERMAF_PTR
-    integer, dimension(:), pointer :: START
-    integer, dimension(:), pointer :: STRIDE
+    integer(kind=hSize_t), dimension(:), pointer :: DIMS
+    integer(kind=hSize_t), dimension(:), pointer :: MAXDIMS
 
     real(r4), pointer, dimension(:,:,:) :: tmpR4Field
 
@@ -707,8 +713,28 @@ contains ! ============================ MODULE PROCEDURES ======================
         & '" data set.'
       call MLSMessage ( MLSMSG_Error, ModuleName, dummy )
     end if
+    
+    ! Find Qtype, rank and dimensions of QuantityName
+    call GetHDF5DSRank(L1FileHandle, QuantityName, rank)
+    allocate(dims(rank), maxDims(rank))
+    call GetHDF5DSDims(L1FileHandle, QuantityName, dims, maxDims)
+    call GetHDF5DSQType ( L1FileHandle, QuantityName, Qtype )
+    select case (trim(Qtype))
+    case ('real')
+      allocate( MLSAuxData%RealField(dims(1),dims(2),dims(3)),stat=status)
+      MLSAuxData%RealField = UNDEFINED_VALUE
+    case ('double')    
+      allocate( MLSAuxData%DpField(dims(1),dims(2),dims(3)),stat=status)
+      MLSAuxData%DpField = UNDEFINED_VALUE
+    case ('integer')  
+      allocate( MLSAuxData%IntField(dims(1),dims(2),dims(3)),stat=status)
+      MLSAuxData%IntField = int(UNDEFINED_VALUE)
+    case ('character') 
+      allocate( MLSAuxData%CharField(dims(1),dims(2),dims(3)),stat=status)
+      MLSAuxData%CharField = '(undefined)'
+    end select
     call Read_MLSAuxData(L1FileHandle, QuantityName, 'unknown', & 
-       MLSAuxData, error, FirstMAF, LastMAF, read_attributes=.false.)
+      & MLSAuxData, error, FirstMAF, LastMAF, read_attributes=.false.)
   end subroutine ReadL1BData_hdf5
 
   ! ---------------------------------------------  announce_error  -----
@@ -775,6 +801,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.21  2002/09/27 23:37:54  pwagner
+! More progress toward hdf5-capable l1b files
+!
 ! Revision 2.20  2002/09/27 00:00:39  pwagner
 ! Began addings hdf5 functionality; incomplete
 !
