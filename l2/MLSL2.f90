@@ -251,6 +251,11 @@ program MLSL2
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
         call AccumulateSlaveArguments(word)
+      else if ( line(3+n:5+n) == 'pge ' ) then
+        i = i + 1
+        call getarg ( i, line )
+        parallel%pgeName = trim(line)
+        command_line = trim(command_line) // ' ' // trim(adjustl(line))
       else if ( line(3+n:6+n) == 'recl' ) then
         if ( line(7+n:) /= ' ' ) then
           line(:6+n) = ' '
@@ -700,6 +705,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.98  2003/08/01 20:26:01  pwagner
+! gets slave pge name from command line
+!
 ! Revision 2.97  2003/06/13 20:02:50  vsnyder
 ! Put snoopMAF before snoop, so it can be found, futzing
 !
