@@ -997,6 +997,7 @@ contains
   subroutine Get_GL_Slabs_Arrays ( Catalog,p_path,t_path,vel_z,gl_slabs, &
                              &     no_ele,dt )
 
+    use Geometry, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
 
     type(Catalog_T), dimension(:), intent(in) :: Catalog
@@ -1014,7 +1015,7 @@ contains
 !  Local variables:
 !  ----------------
 
-    real(rp), parameter :: c = 299792.4583_rp     ! Speed of Light Km./Sec.
+    real(rp), parameter :: c = speedOfLight/1000.0_rp ! Speed of Light Km./Sec.
 
     integer :: nl,i,j,n_sps,spectag
 
@@ -1053,13 +1054,16 @@ contains
 
     return
 
-  end subroutine get_gl_slabs_arrays
+  end subroutine Get_GL_Slabs_Arrays
 !
 !=====================================================================
 
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.6  2002/09/12 23:00:04  vsnyder
+! Cosmetic changes, move USEs from module scope to procedure scope
+!
 ! Revision 2.5  2002/08/05 17:51:15  jonathan
 ! debug
 !
