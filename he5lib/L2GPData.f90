@@ -10,8 +10,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 !  use HDF5_params
   use HDFEOS!, only: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
-  use HDFEOS5
-  use HE5_SWAPI 
+!  use HDFEOS5
+!  use HE5_SWAPI 
   use MLSCommon, only: R8
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
@@ -801,6 +801,8 @@ contains ! =====     Public Procedures     =============================
 
   subroutine ReadL2GPData_hdf5(L2FileHandle, swathname, l2gp, numProfs, &
        firstProf, lastProf)
+  use HDFEOS5
+  use HE5_SWAPI 
     !------------------------------------------------------------------------
 
     ! This routine reads an L2GP file, returning a filled data structure and the !
@@ -1713,6 +1715,8 @@ contains ! =====     Public Procedures     =============================
   ! --------------------------------------  OutputL2GP_createFile_hdf5  -----
   subroutine OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, swathName,nLevels)
 
+  use HDFEOS5
+  use HE5_SWAPI 
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -2006,6 +2010,8 @@ contains ! =====     Public Procedures     =============================
   !-----------------------------------------  OutputL2GP_writeGeo_hdf5  -----
   subroutine OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName,offset)
 
+  use HDFEOS5
+  use HE5_SWAPI 
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
 
@@ -2150,6 +2156,8 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------  OutputL2GP_writeData_hdf5  -----
   subroutine OutputL2GP_writeData_hdf5(l2gp, l2FileHandle, swathName,offset)
 
+  use HDFEOS5
+  use HE5_SWAPI 
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
     ! For now, you have to write all of l2gp, but you can choose to write
@@ -2501,6 +2509,11 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.23  2002/10/25 15:21:05  hcp
+! Nasty hack for unlimited swaths removed. Local requirement for this worked
+! around in a different way. HDF-EOS5 team admit that problem is really
+! caused by a bug in HDF-EOS5 so it should get fixed sometime anyway.
+!
 ! Revision 1.22  2002/10/23 16:59:14  hcp
 ! Added _VERY_ cheesy work-around for reading files where the time
 ! dimension is unlimited.  This should not have any effect on files where
