@@ -27,7 +27,7 @@ module MLSHDF5
     & HID_T, HSIZE_T, HSSIZE_T
   ! Now routines
   use HDF5, only: H5ACLOSE_F, H5ACREATE_F, H5AGET_TYPE_F, H5AOPEN_NAME_F, &
-    & H5AREAD_F, H5AWRITE_F, &
+    & H5AREAD_F, H5AWRITE_F, H5ADELETE_F, &
     & H5DCREATE_F, H5DEXTEND_F, H5DGET_SPACE_F, H5DGET_TYPE_F, H5DOPEN_F, &
     & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, &
     & H5ESET_AUTO_F, &
@@ -361,13 +361,14 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag from HDF5
     integer :: STRINGTYPE               ! Type for string
     logical :: my_skip
-
+    logical :: is_present
+    character (len=2000) :: value1
+ 
     ! Executable code
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
-    if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
-    endif
+    is_present = IsHDF5AttributePresent_in_DSID(itemID, name) 
+    if ( my_skip .and. is_present) return
     ! Setup
     ! Create a data type for this string
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
@@ -377,18 +378,26 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype '//trim(name) )
     ! Create dataspace and attribute
-    call h5sCreate_F ( h5s_scalar_f, dsID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create dataspace for attribute '//trim(name) )
+    !call h5sCreate_F ( h5s_scalar_f, dsID, status )
+    !if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    !  & 'Unable to create dataspace for attribute '//trim(name) )
     ! print *, 'itemID: ', itemID
     ! print *, 'stringtype: ', stringtype
     ! print *, 'dsID: ', dsID
     ! print *, 'name: ', trim(name)
+    if ( is_present ) then
+        call h5adelete_f(itemID, trim(name), status)
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to delete ' )
+    endif
+    call h5sCreate_F ( h5s_scalar_f, dsID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create dataspace for attribute '//trim(name) )
     call h5aCreate_f ( itemID, trim(name), stringtype, dsID, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to create attribute '//trim(name) )
     ! print *, 'attrID: ', attrID
     ! print *, 'status: ', status
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to create attribute '//trim(name) )
     ! Write
     call h5aWrite_f ( attrID, stringtype, value, &
       & ones, status )
@@ -398,12 +407,14 @@ contains ! ======================= Public Procedures =========================
     call h5aClose_f ( attrID, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close attribute '//trim(name) )
-    call h5sClose_f ( dsID, status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close attribute dataspace '//trim(name) )
+    if (.not. is_present) then 
+        call h5sClose_f ( dsID, status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & 'Unable to close attribute dataspace '//trim(name) )
+    endif
     call h5tClose_f ( stringtype, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to close stringtype '//trim(name) )
+         & 'Unable to close stringtype '//trim(name) )
   end subroutine MakeHDF5Attribute_string
 
   ! ------------------------------------- MakeHDF5Attribute_string_arr1
@@ -426,7 +437,7 @@ contains ! ======================= Public Procedures =========================
     my_skip = .false.
     if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
     if ( my_skip ) then
-      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+       if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
     endif
     ! Setup
     shp = shape(value)
@@ -3352,6 +3363,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.42  2004/07/22 20:37:11  cvuu
+! Change in MakeHDF5Attribute_string to allow re-write the char string in the file attribute
+!
 ! Revision 2.41  2004/06/29 00:07:00  pwagner
 ! Exploit catlist function
 !
