@@ -1,0 +1,61 @@
+#--------------------- on linux ------------------------
+../l3:62% setenv PATH $HOME/TOOLKIT/bin/linux:$PATH
+
+../l3:89% PGS_PC_Shell.sh ring 0111 pw.daily 20 -v
+PGS_PC_Shell.sh:
+
+    Running PGE file: ring
+
+    Shared memory is DISABLED
+    Shared memory continue is ENABLED
+    Log files are ENABLED
+    Log file continue is ENABLED
+
+    SMF Message cache size set to 20 records
+
+PGS_PC_Shell.sh: running PGS_PC_InitCom
+
+PGS_PC_Shell.sh: return from PGS_PC_InitCom = 0
+
+PGS_PC_Shell.sh: running ring
+
+ 
+PGS_PC_Shell.sh: return from PGE file:  ring = 0
+
+PGS_PC_Shell.sh: running PGS_PC_TermCom
+
+PGS_PC_Shell.sh: return from PGS_PC_TermCom = 0
+
+#--------------------- on sun ------------------------
+
+[pwagner@riverrun ~]$ telnet pencil
+Trying 137.79.7.31...
+Connected to pencil.jpl.nasa.gov (137.79.7.31).
+
+../l3:57% setenv PATH /software/SRC/TOOLKIT-5.2.6v1.00.NAG/bin/sun5:$PATH
+
+../l3:61% PGS_PC_Shell.sh ring 1111 PCF.daily 20 -v
+PGS_PC_Shell.sh:
+
+    Running PGE file: ring
+
+    Shared memory is ENABLED
+    Shared memory continue is ENABLED
+    Log files are ENABLED
+    Log file continue is ENABLED
+
+    SMF Message cache size set to 20 records
+
+PGS_PC_Shell.sh: running PGS_PC_InitCom
+
+PGS_PC_Shell.sh: return from PGS_PC_InitCom = 252
+
+PGS_PC_Shell.sh: running ring
+
+ 
+PGS_PC_Shell.sh: return from PGE file:  ring = 0
+
+PGS_PC_Shell.sh: running PGS_PC_TermCom
+
+PGS_PC_Shell.sh: return from PGS_PC_TermCom = 0
+
