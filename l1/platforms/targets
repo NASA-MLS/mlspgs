@@ -1,0 +1,39 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+#       The objects for the shared source files (in srclib)
+# Include their dependencies
+include $(srclib)/Makefile.dep
+
+# Add them to L1OBJS
+ALLOBJS = $(OBJS) $(srclib_objs)
+
+# ========================================================================
+mlsl1: $(ALLOBJS) $(libdir)/libmls.a
+	$(FC) -o mlsl1 $(ALLOBJS) \
+                      -L$(libdir) -lmls \
+	-L$(PGSTK) -lPGSTK -L$(HDFEOS) -lhdfeos \
+	-L$(HDF) -ldf -ljpeg -lmfhdf -lz \
+	-L$(GCTP) -lGctp \
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod mlsl1
+
+tar:
+	rm -f l1.tgz
+	tar hcvzf l1.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
+
+# ========================================================================
+
+#	special options for compiling some modules--override .f90 rules
+
+OutputL1B.o:
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/OutputL1B.f90
+
+# ========================================================================
+# $Log$
+#
