@@ -106,4 +106,111 @@ BEGIN Construct
     !define(AllUpper, {!forloop({i}, 1, 33, {band!i{}U, })band34U})
     !define(AllSidebands, {!AllLower, !AllUpper} )
 
+    ;; ------------------------------------------
+    ;; ------------------------------------------ Optical depths
+
+    ;; ------------------------------------------ Lower sidebands
+    ;; First the 25 channel filterbanks
+    depthBand1L:  Quantity, type=opticalDepth, signal='R1A:118.B1LF:PT'
+
+    depthBand2L:  Quantity, type=opticalDepth, signal='R2:190.B2LF:H2O'
+    depthBand3L:  Quantity, type=opticalDepth, signal='R2:190.B3LF:N2O'
+    depthBand4L:  Quantity, type=opticalDepth, signal='R2:190.B4LF:HNO3'
+    depthBand5L:  Quantity, type=opticalDepth, signal='R2:190.B5LF:ClO'
+    depthBand6L:  Quantity, type=opticalDepth, signal='R2:190.B6LF:O3'
+
+    depthBand7L:  Quantity, type=opticalDepth, signal='R3:240.B7LF:O3'
+    depthBand8L:  Quantity, type=opticalDepth, signal='R3:240.B8LF:PT'
+    depthBand9L:  Quantity, type=opticalDepth, signal='R3:240.B9LF:CO'
+
+    depthBand10L: Quantity, type=opticalDepth, signal='R4:640.B10LF:ClO'
+    depthBand11L: Quantity, type=opticalDepth, signal='R4:640.B11LF:BrO'
+    depthBand12L: Quantity, type=opticalDepth, signal='R4:640.B12LF:N2O'
+    depthBand13L: Quantity, type=opticalDepth, signal='R4:640.B13LF:HCl'
+    depthBand14L: Quantity, type=opticalDepth, signal='R4:640.B14LF:O3'
+
+    depthBand15L: Quantity, type=opticalDepth, signal='R5H:2T5.B15LF:OH'
+    depthBand16L: Quantity, type=opticalDepth, signal='R5H:2T5.B16LF:OH'
+    depthBand17L: Quantity, type=opticalDepth, signal='R5H:2T5.B17LF:PT'
+
+    depthBand18L: Quantity, type=opticalDepth, signal='R5V:2T5.B18LF:OH'
+    depthBand19L: Quantity, type=opticalDepth, signal='R5V:2T5.B19LF:OH'
+    depthBand20L: Quantity, type=opticalDepth, signal='R5V:2T5.B20LF:PT'
+
+    depthBand21L: Quantity, type=opticalDepth, signal='R1B:118.B21LF:PT'
+
+    ;; Now the DACs
+    depthBand22L: Quantity, type=opticalDepth, signal='R1A:118.B22LD:PT'
+    depthBand23L: Quantity, type=opticalDepth, signal='R2:190.B23LD:H2O'
+    depthBand24L: Quantity, type=opticalDepth, signal='R3:240.B24LD:O3'
+    depthBand25L: Quantity, type=opticalDepth, signal='R3:240.B25LD:CO'
+    depthBand26L: Quantity, type=opticalDepth, signal='R1B:118.B26LD:PT'
+
+    ;; Now the 11 channel filter banks
+    depthBand27L: Quantity, type=opticalDepth, signal='R2:190.B27LM:HCN'
+    depthBand28L: Quantity, type=opticalDepth, signal='R4:640.B28LM:HO2'
+    depthBand29L: Quantity, type=opticalDepth, signal='R4:640.B29LM:HOCl'
+    depthBand30L: Quantity, type=opticalDepth, signal='R4:640.B30LM:HO2'
+    depthBand31L: Quantity, type=opticalDepth, signal='R4:640.B31LM:BrO'
+
+    ;; Finally the wide filters
+    depthBand32L: Quantity, type=opticalDepth, signal='R1A:118.B32LW:PT'
+    depthBand33L: Quantity, type=opticalDepth, signal='R3:240.B33LW:O3'
+    depthBand34L: Quantity, type=opticalDepth, signal='R1B:118.B34LW:PT'
+
+    ;; ------------------------------------------ Upper sidedepthBands
+    ;; First the 25 channel filterbanks
+    depthBand1U:  Quantity, type=opticalDepth, signal='R1A:118.B1UF:PT'
+
+    depthBand2U:  Quantity, type=opticalDepth, signal='R2:190.B2UF:H2O'
+    depthBand3U:  Quantity, type=opticalDepth, signal='R2:190.B3UF:N2O'
+    depthBand4U:  Quantity, type=opticalDepth, signal='R2:190.B4UF:HNO3'
+    depthBand5U:  Quantity, type=opticalDepth, signal='R2:190.B5UF:ClO'
+    depthBand6U:  Quantity, type=opticalDepth, signal='R2:190.B6UF:O3'
+
+    depthBand7U:  Quantity, type=opticalDepth, signal='R3:240.B7UF:O3'
+    depthBand8U:  Quantity, type=opticalDepth, signal='R3:240.B8UF:PT'
+    depthBand9U:  Quantity, type=opticalDepth, signal='R3:240.B9UF:CO'
+
+    depthBand10U: Quantity, type=opticalDepth, signal='R4:640.B10UF:ClO'
+    depthBand11U: Quantity, type=opticalDepth, signal='R4:640.B11UF:BrO'
+    depthBand12U: Quantity, type=opticalDepth, signal='R4:640.B12UF:N2O'
+    depthBand13U: Quantity, type=opticalDepth, signal='R4:640.B13UF:HCl'
+    depthBand14U: Quantity, type=opticalDepth, signal='R4:640.B14UF:O3'
+
+    depthBand15U: Quantity, type=opticalDepth, signal='R5H:2T5.B15UF:OH'
+    depthBand16U: Quantity, type=opticalDepth, signal='R5H:2T5.B16UF:OH'
+    depthBand17U: Quantity, type=opticalDepth, signal='R5H:2T5.B17UF:PT'
+
+    depthBand18U: Quantity, type=opticalDepth, signal='R5V:2T5.B18UF:OH'
+    depthBand19U: Quantity, type=opticalDepth, signal='R5V:2T5.B19UF:OH'
+    depthBand20U: Quantity, type=opticalDepth, signal='R5V:2T5.B20UF:PT'
+
+    depthBand21U: Quantity, type=opticalDepth, signal='R1B:118.B21UF:PT'
+
+    ;; Now the DACs
+    depthBand22U: Quantity, type=opticalDepth, signal='R1A:118.B22UD:PT'
+    depthBand23U: Quantity, type=opticalDepth, signal='R2:190.B23UD:H2O'
+    depthBand24U: Quantity, type=opticalDepth, signal='R3:240.B24UD:O3'
+    depthBand25U: Quantity, type=opticalDepth, signal='R3:240.B25UD:CO'
+    depthBand26U: Quantity, type=opticalDepth, signal='R1B:118.B26UD:PT'
+
+    ;; Now the 11 channel filter banks
+    depthBand27U: Quantity, type=opticalDepth, signal='R2:190.B27UM:HCN'
+    depthBand28U: Quantity, type=opticalDepth, signal='R4:640.B28UM:HO2'
+    depthBand29U: Quantity, type=opticalDepth, signal='R4:640.B29UM:HOCl'
+    depthBand30U: Quantity, type=opticalDepth, signal='R4:640.B30UM:HO2'
+    depthBand31U: Quantity, type=opticalDepth, signal='R4:640.B31UM:BrO'
+
+    ;; Finally the wide filters
+    depthBand32U: Quantity, type=opticalDepth, signal='R1A:118.B32UW:PT'
+    depthBand33U: Quantity, type=opticalDepth, signal='R3:240.B33UW:O3'
+    depthBand34U: Quantity, type=opticalDepth, signal='R1B:118.B34UW:PT'
+
+    ;; ---------------------------------------------- Now macros
+
+    !define(AllLowerOpticalDepths, {!forloop({i}, 1, 33, {depthBand!i{}L, })depthBand34L})
+    !define(AllUpperOpticalDepths, {!forloop({i}, 1, 33, {depthBand!i{}U, })depthBand34U})
+    !define(AllSplitOpticalDepths, {!AllLowerOpticalDepths, !AllUpperOpticalDepths} )
+
 END Construct
