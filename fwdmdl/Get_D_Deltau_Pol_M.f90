@@ -313,7 +313,7 @@ use toggles, only: Switches
       call opacity ( ct, stcp, stsp, d_alpha_dT_eta, d_incoptdepth_dT )
 
       do p_i = 1, i_stop             ! along the path
-        if ( eta_zxp(p_i,sv_i) /= 0.0 .or. &! d_delta_dT(p_i,sv_i) /= 0.0 .or. &
+        if ( eta_zxp(p_i,sv_i) /= 0.0 .or. d_delta_dT(p_i,sv_i) /= 0.0 .or. &
           & do_calc(p_i) ) then
           call dExdT ( incoptdepth(:,:,p_i), -d_incoptdepth_dT(:,:,p_i), &
                      & d_deltau_pol_dT(:,:,p_i,sv_i) ) ! d exp(incoptdepth) / dT
@@ -333,7 +333,7 @@ use toggles, only: Switches
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
-! Revision 2.7  2003/06/13 23:50:22  vsnyder
+! Revision 2.8  2003/06/13 23:54:41  vsnyder
 ! Include nonpolarized d_delta_dT even if there's no polarized stuff
 !
 ! Revision 2.6  2003/06/13 00:00:09  vsnyder
