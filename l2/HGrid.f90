@@ -84,8 +84,7 @@ contains ! =====     Public Procedures     =============================
       & F_INTERPOLATIONFACTOR, F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
       & F_MODULE, F_ORIGIN, F_SOLARTIME, F_SOLARZENITH, F_SOURCEL2GP, &
       & F_SPACING, F_TYPE, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, &
-      & L_L2GP, L_REGULAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_LENGTH, &
-      & PHYQ_TIME
+      & L_L2GP, L_REGULAR, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_LENGTH
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use L2GPData, only: L2GPDATA_T
@@ -706,6 +705,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: HUNT, InterpolateValues
     use OUTPUT_M, only: OUTPUT
+    use String_Table, only: Display_String
     use TOGGLES, only: SWITCHES
     use UNITS, only: DEG2RAD, RAD2DEG
 
@@ -844,7 +844,9 @@ contains ! =====     Public Procedures     =============================
     end do
 
     if ( index ( switches, 'hgrid' ) /= 0 .or. DEEBUG ) then
-      call output ( 'Constructing regular hGrid', advance='yes' )
+      call output ( 'Constructing regular hGrid ' )
+      if ( hgrid%name /= 0 ) call display_string ( hgrid%name )
+      call output ( '', advance='yes' )
       call output ( 'minAngle: ' )
       call output ( minAngle, format='(F7.2)' )
       call output ( ' maxAngle: ' )
@@ -1408,8 +1410,20 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.49  2003/05/05 23:00:34  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 2.48  2003/03/07 00:41:24  pwagner
 ! DeeBug is turned on by switch
+!
+! Revision 2.47  2003/02/13 19:05:39  vsnyder
+! Move USEs from module to procedure scope, cosmetic changes
+!
+! Revision 2.46.2.2  2003/03/06 19:26:17  vsnyder
+! Delete unreferenced USEd name, show hGrid's label on debugging output
+!
+! Revision 2.46.2.1  2003/02/13 20:36:06  livesey
+! Changes merged in from HEAD
 !
 ! Revision 2.47  2003/02/13 19:05:39  vsnyder
 ! Move USEs from module to procedure scope, cosmetic changes
