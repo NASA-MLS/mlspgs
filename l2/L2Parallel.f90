@@ -15,25 +15,27 @@ module L2Parallel
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
-    & MYPVMSPAWN, PVMFCATCHOUT
+    & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
   use MLSCommon, only: R8, MLSCHUNK_T
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, ADDVECTORTODATABASE, &
-    & CREATEVECTOR
+    & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_Deallocate
   use L2GPData, only: L2GPDATA_T
   use L2AUXData, only: L2AUXDATA_T
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, &
-    & SIG_TOJOIN, SIG_FINISHED
-  use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE
+    & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, NOTIFYTAG
+  use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
+    & DESTROYQUANTITYTEMPLATECONTENTS
   use MLSCommon, only: MLSCHUNK_T
   use Toggles, only: Gen, Switches, Toggle
   use Output_m, only: Output
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_STRING
+  use String_table, only: Display_String
   use Init_Tables_Module, only: S_L2GP, S_L2AUX
   use MoreTree, only: Get_Spec_ID
 
@@ -92,12 +94,10 @@ contains ! ================================ Procedures ======================
       &    chunk%noMAFsUpperOverlap, &
       &    chunk%accumulatedMAFs /), info )
     if ( info /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to pack chunk' )
+      & call PVMErrorMessage ( info, 'packing chunk' )
     call PVMFSend ( slaveTid, ChunkTag, info )
     if ( info /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to send chunk' )
+      & call PVMErrorMessage ( info, 'sending chunk' )
   end subroutine SendChunkToSlave
 
   ! ----------------------------------------------- GetChunkFromMaster ------
@@ -123,12 +123,10 @@ contains ! ================================ Procedures ======================
 
     call PVMFrecv ( parallel%masterTid, ChunkTAG, bufferID )
     if ( bufferID <= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to receive chunk' )
+      & call PVMErrorMessage ( info, 'receiving chunk' )
     call PVMF90Unpack ( values, info )
     if ( info /= 0 ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to unpack chunk')
+      & call PVMErrorMessage ( info, 'unpacking chunk')
     
     allocate ( chunks ( values(1):values(1) ), STAT=status)
     if ( status /= 0 ) &
@@ -225,28 +223,40 @@ contains ! ================================ Procedures ======================
     ! Local variables
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     character(len=132) :: COMMANDLINE
+    character(len=132) :: WORD
 
     integer :: BUFFERID                 ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     integer :: CHUNK                    ! Loop counter
+    integer :: DEADCHUNK                ! A chunk from a dead task
+    integer :: DEADMACHINE              ! A machine for a dead task
+    integer :: DEADTID                  ! A task that's died
     integer :: HDFNAMEINDEX             ! String index
     integer :: INFO                     ! From PVM
     integer :: LUN                      ! File handle
     integer :: MACHINE                  ! Index
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
-    integer :: NEXTCHUNK                ! Which chunk is next to be done
+    integer :: NEXTCHUNK                ! A chunk number
     integer :: NOCHUNKS                 ! Number of chunks
     integer :: NOMACHINES               ! Number of slaves
+    integer :: PRECIND                  ! Array index
     integer :: RESIND                   ! Loop counter
     integer :: SIGNAL                   ! From slave
     integer :: SLAVETID                 ! One slave
+    integer :: STATUS                   ! From deallocate
     integer :: TIDARR(1)                ! One tid
+    integer :: VALIND                   ! Array index
 
     integer, dimension(:), pointer :: SLAVECHUNKS ! Chunks for machines
     integer, dimension(:), pointer :: SLAVETIDS ! Taks ids for machines
 
     logical, dimension(:), pointer :: MACHINEFREE ! Is this machine busy
-    logical, dimension(size(chunks)) :: COMPLETED
+    logical, dimension(:), pointer :: MACHINEOK ! Is this machine working?
+    integer, dimension(:), pointer :: JOBSMACHINEKILLED ! Counts failures per machine.
+    logical, dimension(size(chunks)) :: CHUNKSCOMPLETED ! Chunks completed
+    logical, dimension(size(chunks)) :: CHUNKSSTARTED ! Chunks being processed
+    logical, dimension(size(chunks)) :: CHUNKSABANDONED ! Chunks kept failing
+    integer, dimension(size(chunks)) :: CHUNKFAILURES ! Failure count
 
     logical, save :: FINISHED = .false. ! This will be called multiple times
     
@@ -270,7 +280,8 @@ contains ! ================================ Procedures ======================
     ! Setup some stuff
     noChunks = size(chunks)
     nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
-      & machineNames, slaveTids, slaveChunks, machineFree, storedResults )
+      & machineNames, slaveTids, slaveChunks, &
+      & machineFree, storedResults, machineOK, jobsMachineKilled )
 
     ! Work out the information on our virtual machine
     call GetMachineNames ( machineNames )
@@ -278,18 +289,27 @@ contains ! ================================ Procedures ======================
     call Allocate_test ( slaveTids, noMachines, 'slaveTids', ModuleName )
     call Allocate_test ( slaveChunks, noMachines, 'slaveChunks', ModuleName )
     call Allocate_test ( machineFree, noMachines, 'machineFree', ModuleName )
+    call Allocate_test ( machineOK, noMachines, 'machineOK', ModuleName )
+    call Allocate_test ( jobsMachineKilled, noMachines, 'jobsMachineKilled', ModuleName )
     machineFree = .true.
+    machineOK = .true.
+    jobsMachineKilled = 0
 
     ! Loop until all chunks are done
-    completed = .false.
-    nextChunk = 1
-    masterLoop: do
+    chunksCompleted = .false.
+    chunksStarted = .false.
+    chunksAbandoned = .false.
+    chunkFailures = 0
+
+    masterLoop: do ! --------------------------- Master loop -----------------------
       ! This loop is in two main parts.
 
       ! In the first part, we look to see if there are any chunks still to be
-      ! done, and any vacant machines to do them.
-      if ( nextChunk <= noChunks .and. any(machineFree) ) then 
-        machine = FindFirst(machineFree)
+      ! started done, and any vacant machines to do them.
+      if ( (.not. all(chunksStarted .or. chunksAbandoned)) .and. &
+        & any(machineFree .and. machineOK) ) then
+        nextChunk = FindFirst ( (.not. chunksStarted) .and. (.not. chunksAbandoned) )
+        machine = FindFirst(machineFree .and. machineOK)
         commandLine = 'mlsl2'
 
         if ( index(switches,'slv') /= 0 ) then
@@ -305,21 +325,40 @@ contains ! ================================ Procedures ======================
         info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
           & trim(machineNames(machine)), &
           & 1, tidarr )
-        slaveTids(machine) = tidArr(1)
-        if ( info < 0 ) call PVMErrorMessage ( info, "launching slave" )
-        if ( info == 0 ) call PVMErrorMessage ( slaveTids(machine), "launching slave" )
-        call SendChunkToSlave ( chunks(nextChunk), nextChunk, &
-          & slaveTids(machine) )
-        machineFree(machine) = .false.
-        slaveChunks(machine) = nextChunk
-        nextChunk = nextChunk + 1
-      endif
+
+        ! Did this launch work
+        if ( info == 1) then
+          machineFree(machine) = .false.
+          slaveChunks(machine) = nextChunk
+          slaveTids(machine) = tidArr(1)
+          chunksStarted(nextChunk) = .true.
+          call SendChunkToSlave ( chunks(nextChunk), nextChunk, &
+            & slaveTids(machine) )
+          ! Now ask to be notified when this task exits
+          call PVMFNotify ( PVMTaskExit, NotifyTag, 1, &
+            & (/ slaveTids(machine) /), info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'setting up notify' )
+        else
+          ! Couldn't start this job, mark this machine as unreliable
+          if ( index(switches,'mas') /= 0 ) then
+            call output ( 'Unable to start slave task on ' // &
+              & trim(machineNames(machine)) // ' info=' )
+            if ( info < 0 ) then
+              call output ( info, advance='yes' )
+            else
+              call output ( tidArr(1), advance='yes' )
+            end if
+            call output ( 'Marking this machine as not usable', advance='yes')
+          end if
+          machineOK(machine) = .false.
+        end if
+      end if
 
       ! In this next part, we listen out for communication from the slaves and
       ! process it accordingly.
-      receiveLoop: do
+      receiveInfoLoop: do
         call PVMFNRecv( -1, InfoTag, bufferID )
-        if ( bufferID == 0 ) exit receiveLoop
+        if ( bufferID == 0 ) exit receiveInfoLoop
         if ( bufferID < 0 ) then
           call PVMErrorMessage ( info, "checking for Info message" )
         else if ( bufferID > 0 ) then
@@ -355,12 +394,28 @@ contains ! ================================ Procedures ======================
                 call output ( ' processing chunk ' )
                 call output ( slaveChunks(machine), advance='yes')
               endif
-              completed(slaveChunks(machine)) = .true.
+
+              ! Send an acknowledgement
+              call PVMFInitSend ( PVMDataDefault, bufferID )
+              if ( bufferId < 0 ) &
+                & call PVMErrorMessage ( bufferID, 'setting up finish ack.' )
+              call PVMF90Pack ( SIG_AckFinish, info )
+              if ( info /= 0 ) &
+                & call PVMErrorMessage ( info, 'packing finish ack.' )
+              call PVMFSend ( slaveTid, InfoTag, info )
+              if ( info /= 0 ) &
+                & call PVMErrorMessage ( info, 'sending finish ack.' )
+
+              ! Now update our information
+              chunksCompleted(slaveChunks(machine)) = .true.
               machineFree(machine) = .true.
+              slaveChunks(machine) = 0
+              slaveTids(machine) = 0
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Master status:', advance='yes' )
-                call dump ( completed, name='Chunks completed')
+                call dump ( chunksCompleted, name='Chunks completed')
                 call dump ( machineFree, name='Machines free' )
+                call dump ( machineOK, name='Machines ok' )
               endif
 
             case default
@@ -369,44 +424,139 @@ contains ! ================================ Procedures ======================
             end select
           end if
         end if
-      end do receiveLoop
+      end do receiveInfoLoop
+
+      ! Listen out for any message that a slave task has died
+      call PVMFNRecv ( -1, NotifyTAG, bufferID )
+      if ( bufferID > 0 ) then
+        ! Get the TID for the dead task
+        call PVMF90Unpack ( deadTid, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking deadTid' )
+        ! Now this may well be a legitimate exit, in which case, we won't
+        ! know about this tid any more.  Otherwise we need to tidy up.
+        if ( any ( slaveTids == deadTid ) ) then
+          deadMachine = FindFirst ( slaveTids == deadTid )
+          machineFree(deadMachine) = .true.
+          deadChunk = slaveChunks ( deadMachine )
+          if ( index(switches,'mas') /= 0 ) then
+            call output ( 'The run of chunk ' )
+            call output ( deadChunk )
+            call output ( ' on ' // trim(machineNames(deadMachine)) // &
+              & ' seems to have died.  Being requeued.', advance='yes' )
+          end if
+          chunksStarted(deadChunk) = .false.
+          chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
+          jobsMachineKilled(deadMachine) = jobsMachineKilled(deadMachine) + 1
+
+          ! Does this chunk keep failing, if so, give up.
+          if ( chunkFailures(deadChunk) > &
+            & parallel%maxFailuresPerChunk ) then
+            if ( index(switches,'mas') /= 0 ) &
+              & call output ('This chunk keeps dying.  Giving up on it.', &
+              & advance='yes' )
+            chunksAbandoned(deadChunk) = .true.
+          end if
+
+          ! Does this machine have a habit of killing jobs.  If so
+          ! mark it as not OK
+          if ( jobsMachineKilled(deadMachine) > &
+            & parallel%maxFailuresPerMachine ) then
+            if ( index(switches,'mas') /= 0 ) &
+              & call output ('This machine keeps killing things, marking it bad', &
+              & advance='yes' )
+            machineOK(deadMachine) = .false.
+          end if
+        end if
+      else if ( bufferID < 0 ) then
+        call PVMErrorMessage ( info, "checking for Notify message" )
+      end if
 
       ! If we're done then exit
-      if (all(completed)) exit masterLoop
+      if (all(chunksCompleted .or. chunksAbandoned)) exit masterLoop
+
+      ! If we're just going to have to give up then exit too.
+
+
+      ! If all the machines are dead, and there is still work to be done
+      ! what can we do!
+      if ( (.not. any(machineOK)) .and. (.not. all(chunksStarted) ) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'None of the slave machines are reliable!' )
 
       ! Now, rather than chew up cpu time on the master process, we'll wait a
       ! bit here.
       call usleep ( delay )
 
-    end do masterLoop
+    end do masterLoop ! --------------------- End of master loop -----------------
 
+    if ( index(switches,'mas') /= 0 ) then
+      call output ( 'All chunks processed, starting join task', advance='yes' )
+    endif
     ! Now we join up all our results into l2gp and l2aux quantities
     do resInd = 1, size ( storedResults )
       hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
       do chunk = 1, noChunks
 
-        ! Setup for this quantity
-        qty => joinedVectors(storedResults(resInd)%valInds(chunk))%quantities(1)
-        if ( storedResults(resInd)%gotPrecision ) then
-          precQty => joinedVectors(storedResults(resInd)%precInds(chunk))%quantities(1)
-        else
-          nullify ( precQty )
-        endif
+        if (.not. chunksAbandoned(chunk) ) then
+          ! Setup for this quantity
+          valInd = storedResults(resInd)%valInds(chunk)
+          qty => joinedVectors(valInd)%quantities(1)
+          
+          if ( storedResults(resInd)%gotPrecision ) then
+            precInd = storedResults(resInd)%precInds(chunk)
+            precQty => joinedVectors(precInd)%quantities(1)
+          else
+            nullify ( precQty )
+          endif
+          
+          if ( index(switches,'mas') /= 0 .and. chunk==1 ) then
+            call output ( 'Joining ' )
+            call display_string ( qty%template%name, advance='yes' )
+          endif
+          
+          select case ( get_spec_id ( storedResults(resInd)%key ) )
+          case ( s_l2gp )
+            call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
+              & qty, precQty, l2gpDatabase, chunk )
+          case ( s_l2aux )
+            call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
+              & qty, l2auxDatabase, chunk, chunks )
+          end select
+          
+          ! Now destroy this vector.  We'll do this as we go along to make
+          ! life easier for the computer.
+          call DestroyVectorInfo ( joinedVectors(valInd) )
+          call DestroyVectorTemplateInfo ( joinedVectorTemplates(valInd) )
+          call DestroyQuantityTemplateContents ( joinedQuantities(valInd) )
 
-        select case ( get_spec_id ( storedResults(resInd)%key ) )
-        case ( s_l2gp )
-          call JoinL2GPQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-            & qty, precQty, l2gpDatabase, chunk )
-        case ( s_l2aux )
-          call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
-            & qty, l2auxDatabase, chunk, chunks )
-        end select
+          if ( storedResults(resInd)%gotPrecision ) then
+            call DestroyVectorInfo ( joinedVectors(precInd) )
+            call DestroyVectorTemplateInfo ( joinedVectorTemplates(precInd) )
+            call DestroyQuantityTemplateContents ( joinedQuantities(precInd) )
+          end if
+        end if                          ! Didn't give up on this chunk
       end do
     end do
     
     ! Now clean up and quit
     call DestroyStoredResultsDatabase ( storedResults )
+
+    deallocate ( joinedQuantities, STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'joinedQuantities' )
+
+    deallocate ( joinedVectorTemplates, STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'joinedVectorTemplates' )
+
+    deallocate ( joinedVectors, STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'joinedVectors' )
     finished = .true.
+
+    if ( index(switches,'mas') /= 0 ) then
+      call output ( 'All chunks joined', advance='yes' )
+    endif
 
   end subroutine L2MasterTask
 

@@ -207,7 +207,7 @@ module PVM ! Interface to the f77 pvm library.
      end subroutine pvmfinitsend
 
      subroutine pvmfbcast(group, msgtag, info)
-       character (LEN=*), intent(in) :: group
+       character (len=*), intent(in) :: group
        integer, intent(in) :: msgtag
        integer, intent(out) :: info
      end subroutine pvmfbcast
@@ -271,14 +271,22 @@ module PVM ! Interface to the f77 pvm library.
      end function pvm_upkdouble
 
      subroutine pvmfgsize(group, gsize)
-       character (LEN=*), intent(in) :: group
+       character (len=*), intent(in) :: group
        integer, intent(out) :: gsize
      end subroutine pvmfgsize
 
      subroutine pvmfjoingroup(group, inum)
-       character (LEN=*), intent(in) :: group
+       character (len=*), intent(in) :: group
        integer, intent(out) :: inum
      end subroutine pvmfjoingroup
+
+     subroutine pvmfnotify(what, msgtag, cnt, tids, info)
+       integer, intent(in) :: what
+       integer, intent(in) :: msgtag
+       integer, intent(in) :: cnt
+       integer, intent(in),dimension(cnt) :: tids
+       integer, intent(out) :: info
+     end subroutine pvmfnotify
 
      ! These ones are to get around the irritating inability of pvmfspawn
      ! to pass arguments
@@ -468,6 +476,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.6  2001/05/25 01:05:14  livesey
+! Added pvmfnotify
+!
 ! Revision 2.5  2001/05/24 19:37:47  livesey
 ! Embarassing bug fix in unpack arrays!
 !
