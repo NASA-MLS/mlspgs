@@ -214,6 +214,9 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
      real (rgp)                        :: MissingValue = UNDEFINED_VALUE
   end type L2GPData_T
 
+  ! Print debugging stuff?
+  logical, parameter :: DEEBUG = .true.  
+
 contains ! =====     Public Procedures     =============================
 
   !------------------------------------------  SetupNewL2GPRecord  -----
@@ -1228,6 +1231,12 @@ contains ! =====     Public Procedures     =============================
        name=l2gp%name
     end if
 
+    if ( DEEBUG ) then
+      print *, 'Creating a swath named ', TRIM(name)
+      print *, 'nTimes ', l2gp%nTimes
+      print *, 'nLevels ', l2gp%nLevels
+      print *, 'nFreqs ', l2gp%nFreqs
+    endif
     ! Create the swath within the file
 
     swid = mls_swcreate(L2FileHandle, TRIM(name), hdfVersion=HDFVERSION_4)
@@ -1512,9 +1521,16 @@ contains ! =====     Public Procedures     =============================
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
     swid = swattach (l2FileHandle, name)
+    if(DEEBUG) print *, 'swath name: ', trim(name)
+    if(DEEBUG) print *, 'swath id: ', swid
+    if(DEEBUG) print *, 'shape(L2gpValue): ', shape(l2gp%l2gpValue)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
 
+       if(DEEBUG) print *, 'about to write 3-d real field: L2gpValue'
+       if(DEEBUG) print *, 'start: ', start
+       if(DEEBUG) print *, 'stride: ', stride
+       if(DEEBUG) print *, 'edge: ', edge
        status = mls_swwrfld(swid, 'L2gpValue', start, stride, edge, &
             & RESHAPE(real(l2gp%l2gpValue), (/SIZE(l2gp%l2gpValue)/)), &
             & hdfVersion=HDFVERSION_4 )
@@ -1525,6 +1541,10 @@ contains ! =====     Public Procedures     =============================
     else if ( l2gp%nLevels > 0 ) then
        ! Value and Precision are 2-D fields
 
+       if(DEEBUG) print *, 'about to write 2-d real field: L2gpValue'
+       if(DEEBUG) print *, 'start: ', start(2:3)
+       if(DEEBUG) print *, 'stride: ', stride(2:3)
+       if(DEEBUG) print *, 'edge: ', edge(2:3)
        status = mls_swwrfld( swid, 'L2gpValue', start(2:3), stride(2:3), &
             edge(2:3), real(l2gp%l2gpValue(1,:,:)), hdfVersion=HDFVERSION_4 )
 
@@ -1532,6 +1552,10 @@ contains ! =====     Public Procedures     =============================
             edge(2:3), real(l2gp%l2gpPrecision(1,:,:) ), hdfVersion=HDFVERSION_4)
     else
 
+       if(DEEBUG) print *, 'about to write 1-d real field: L2gpValue'
+       if(DEEBUG) print *, 'start: ', start(3:3)
+       if(DEEBUG) print *, 'stride: ', stride(3:3)
+       if(DEEBUG) print *, 'edge: ', edge(3:3)
        ! Value and Precision are 1-D fields
        status = mls_swwrfld( swid, 'L2gpValue', start(3:3), stride(3:3), edge(3:3), &
             real(l2gp%l2gpValue(1,1,:) ), hdfVersion=HDFVERSION_4)
@@ -1992,9 +2016,12 @@ contains ! =====     Public Procedures     =============================
     !     Detach from the swath interface.
 
     status = HE5_SWdetach(swid)
+    if(DEEBUG) print *, 'Detached from swid ', swid
+    if(DEEBUG) print *, 'file handle ', l2FileHandle
+    if(DEEBUG) print *, 'status ', status
     if ( status == -1 ) then
        call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'Failed to detach  from swath interface' )
+            & 'Failed to detach from swath interface' )
     end if
 
 
@@ -2093,13 +2120,13 @@ contains ! =====     Public Procedures     =============================
     !        & 'Failed to write swath attribute' )
     !     Detach from the swath interface.
     ! call sw_writeglobalattr(swid)
-    ! print *, 'Writing global attributes'
+    ! if(DEEBUG) print *, 'Writing global attributes'
     call he5_writeglobalattr(l2FileHandle)
 
     swid = HE5_SWattach (l2FileHandle, name)
     
     !   - -   S w a t h   A t t r i b u t e s   - -
-    ! print *, 'Writing swath attributes'
+    ! if(DEEBUG) print *, 'Writing swath attributes'
     status = he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
       & l2gp%pressures)
     field_name = 'Pressure'
@@ -2109,7 +2136,7 @@ contains ! =====     Public Procedures     =============================
       & (/ real(l2gp%MissingValue, rgp) /) )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
-    ! print *, 'Writing geolocation attributes'
+    ! if(DEEBUG) print *, 'Writing geolocation attributes'
     do field=1, NumGeolocFields
       ! Take care not to write attributes to "missing fields"
       if ( trim(theTitles(field)) == 'Frequency' &
@@ -2119,9 +2146,9 @@ contains ! =====     Public Procedures     =============================
         & .and. l2gp%nLevels < 1 ) then
         field_name = ''
       else
-        ! print *, 'field ', field
-        ! print *, 'title ', trim(theTitles(field))
-        ! print *, 'units ', trim(theUnits(field))
+        ! if(DEEBUG) print *, 'field ', field
+        ! if(DEEBUG) print *, 'title ', trim(theTitles(field))
+        ! if(DEEBUG) print *, 'units ', trim(theUnits(field))
         call GetStringHashElement (GeolocationTitles, &
           & GeoUniqueFieldDefinition, trim(theTitles(field)), &
           & abbr_uniq_fdef, .false.)
@@ -2177,9 +2204,9 @@ contains ! =====     Public Procedures     =============================
       units_name = 'vmr'
     end select
     if ( isColumnAmt ) units_name = 'DU'
-    ! print *, 'Writing data attributes'
-    ! print *, 'title ', trim(field_name)
-    ! print *, 'units ', trim(units_name)
+    ! if(DEEBUG) print *, 'Writing data attributes'
+    ! if(DEEBUG) print *, 'title ', trim(field_name)
+    ! if(DEEBUG) print *, 'units ', trim(units_name)
     status = he5_swwrlattr(swid, 'L2gpValue', 'Title', &
       & HE5T_NATIVE_SCHAR, 1, field_name)
     status = he5_swwrlattr(swid, 'L2gpValue', 'Units', &
@@ -2314,13 +2341,13 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Unrecognized hdfVersion passed to WriteL2GPData" )
     else
-      ! print *, 'Creating hdfeos5 file'
+      ! if(DEEBUG) print *, 'Creating hdfeos5 file'
       call OutputL2GP_createFile_hdf5 (l2gp, l2FileHandle, swathName)
-      ! print *, 'Writing geolocation data'
+      ! if(DEEBUG) print *, 'Writing geolocation data'
       call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName)
-      ! print *, 'Writing values, precision'
+      ! if(DEEBUG) print *, 'Writing values, precision'
       call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName)
-      ! print *, 'Writing attributes'
+      ! if(DEEBUG) print *, 'Writing attributes'
       call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
       call SetL2GP_aliases (l2gp, l2FileHandle, swathName)
     endif
@@ -2363,25 +2390,33 @@ contains ! =====     Public Procedures     =============================
       & hdfVersion=myhdfVersion, DONTFAIL=.true.)
     swath_exists = ( swathid > 0 )
     if ( swath_exists ) then
-      status = mls_swdetach(swathid)
+      if(DEEBUG) print *, 'OK, swath already exists'
+      status = mls_swdetach(swathid, hdfVersion=myhdfVersion)
     else
       ! Must create swath in file w/o disturbing other swaths
+      if(DEEBUG) print *, 'Must create swath'
+      if(DEEBUG) print *, 'Will have ', TotNumProfs, ' profiles'
+      if(DEEBUG) print *, 'instead of ', l2gp%nTimes, ' profiles'
       actual_ntimes = l2gp%nTimes
-      if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
+      ! if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
       select case (myhdfVersion)
       case (HDFVERSION_4)
+        if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
         call OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, myswathName)
+        l2gp%nTimes = actual_ntimes
       case (HDFVERSION_5)
         call OutputL2GP_createFile_hdf5 (l2gp, L2FileHandle, myswathName)
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Illegal hdf version in AppendL2GPData_fileName')
       end select
-      l2gp%nTimes = actual_ntimes
+      ! l2gp%nTimes = actual_ntimes
     endif
 
     if (myhdfVersion == HDFVERSION_4) then
+      if(DEEBUG) print *, 'Writing geolocation data'
       call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, myswathName, offset)
+      if(DEEBUG) print *, 'Writing swath data'
       call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, myswathName, offset)
     elseif (myhdfVersion /= HDFVERSION_5) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2632,6 +2667,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.67  2003/06/26 00:04:46  pwagner
+! Added optional DONTFAIL arg to MLS_SWATTACH
+!
 ! Revision 2.66  2003/06/20 19:31:39  pwagner
 ! Changes to allow direct writing of products
 !
