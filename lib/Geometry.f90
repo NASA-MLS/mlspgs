@@ -10,6 +10,12 @@ module Geometry
 
   implicit none
   private
+  !---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  !---------------------------------------------------------------------------
+
 
   public :: EarthRadA, EarthRadB, PI, LN10, GeodToGeocLat
 
@@ -48,3 +54,8 @@ contains ! ------------------------------- Subroutines and functions ----
   end function GeodToGeocLat
   
 end module Geometry
+
+! $Log$
+! Revision 2.2  2001/03/26 13:23:34  livesey
+! Added CVS stuff
+!
