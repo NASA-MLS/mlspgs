@@ -78,7 +78,6 @@ contains ! =====     Public Procedures     =============================
       & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
     use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
     use DumpCommand_m, only: DumpCommand
-    use Dumper, only: Dump
     use FGrid, only: FGrid_T
     use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
       & ForwardModelConfig_T
@@ -92,17 +91,15 @@ contains ! =====     Public Procedures     =============================
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
     use MoreTree, only: Get_Spec_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
-    ! It shouldn't be necessary to get Dump from QuantityTemplates, since
-    ! Dumper already does, but NAG f95 v5.0(322) needs it.
-    use QuantityTemplates, only: AddQuantityTemplateToDatabase, Dump, &
+    use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
       & QuantityTemplate_T
     use String_Table, only: get_string
     use Time_M, only: Time_Now
-    use TOGGLES, only: GEN, LEVELS, TOGGLE
+    use TOGGLES, only: GEN, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES, only: N_NAMED
-    use VectorsModule, only: AddVectorTemplateToDatabase, Dump, &
+    use VectorsModule, only: AddVectorTemplateToDatabase, &
       & VectorTemplate_T
 
     use VGridsDatabase, only: VGrid_T
@@ -191,17 +188,7 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    if ( toggle(gen) ) then
-      if (  levels(gen) > 0 ) then
-        if (associated(hGrids) ) &
-          & call dump ( hgrids )
-        if (associated(quantityTemplatesBase) ) &
-          & call dump ( quantityTemplatesBase, details=levels(gen)-1 )
-        if (associated(vectorTemplates) ) &
-          & call dump ( vectorTemplates, details=levels(gen)-1 )
-      end if
-      call trace_end ( "MLSL2Construct" )
-    end if
+    if ( toggle(gen) ) call trace_end ( "MLSL2Construct" )
 
     if ( timing ) call sayTIme
 
@@ -251,6 +238,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.48  2004/05/20 19:47:55  vsnyder
+! Do all dumping by way of DumpCommand
+!
 ! Revision 2.47  2004/05/19 19:16:09  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
