@@ -546,6 +546,7 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_ignoreZero, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_integrationTime, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_interpolate, t+t_boolean, n+n_field_type/))
+     call acorn((/begin, f+f_intrinsic, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_losQty, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_maxIterations, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_measurements, s+s_vector, f+f_template, &
@@ -566,8 +567,10 @@ contains ! =====     Public procedures     =============================
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
+     call acorn((/begin, f+f_resetSeed, t+t_boolean, n+n_field_type/))
      call acorn((/begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_seed, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec/))
@@ -802,6 +805,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.172  2001/10/16 23:34:05  pwagner
+! intrinsic, resetseed, seed fields added to addnoise method
+!
 ! Revision 2.171  2001/10/15 22:10:54  livesey
 ! Added smoothing stuff to fillCovariance
 !
