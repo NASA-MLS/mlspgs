@@ -76,7 +76,7 @@ module MLSSignals_M
   public :: DestroyRadiometerDatabase, DestroySignal, DestroySignalDatabase
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
   public :: Dump_Bands, Dump_Radiometers, Dump_Signals, Dump_Spectrometertypes
-  public :: GetAllModules, GetBandName, GetModuleFromRadiometer
+  public :: GetAllModules, GetBandName, GetFirstChannel, GetModuleFromRadiometer
   public :: GetModuleIndex, GetSidebandLoop, GetSignalIndex
   public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
   public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
@@ -1012,6 +1012,12 @@ contains
 
   end subroutine GetBandName
 
+  ! ------------------------------------  GetFirstChannel --------------
+  integer function GetFirstChannel ( signal )
+    integer, intent(in) :: SIGNAL
+    GetFirstchannel = lbound ( signals(signal)%frequencies, 1 )
+  end function GetFirstChannel
+
   ! ------------------------------------  GetModuleFromRadiometer  -----
   integer function GetModuleFromRadiometer(radiometer)
     ! Returns module field from given radiometer given as database index
@@ -1586,6 +1592,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.69  2004/04/16 00:44:24  livesey
+! Added GetFirstChannel
+!
 ! Revision 2.68  2004/03/24 23:08:58  livesey
 ! Bug fix in getBandName
 !
