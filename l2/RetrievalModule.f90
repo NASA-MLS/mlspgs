@@ -363,8 +363,7 @@ contains
           case ( l_lowcloud )
             call add_to_retrieval_timing( 'low_cloud', t1 )
             call cpu_time ( t1 )
-          ! call LowCloudRetrieval
-            print*,'to be added'
+            call LowCloudRetrieval
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -1714,6 +1713,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.80  2001/10/03 21:49:54  dwu
+! some quick remedies for LowcloudRetrieval
+!
 ! Revision 2.79  2001/10/03 21:30:16  dwu
 ! add LowCloudRetrieval
 !
