@@ -6,7 +6,7 @@
 MODULE OutputClose
 !===============================================================================
 
-   USE L2GPData
+   USE L2GPData, ONLY: L2GPData_T
    USE L2Interface
    USE L3CF
    USE L3DMData
@@ -395,6 +395,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.10  2001/04/11 18:51:38  nakamura
+!Moved deallocations for pointers passed between CORE & I/O up to main program.
+!
 !Revision 1.9  2001/03/27 19:36:43  nakamura
 !Moved a parameter to MLSL3Common; updated metadata.
 !

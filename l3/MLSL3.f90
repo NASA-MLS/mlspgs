@@ -6,7 +6,7 @@
 PROGRAM MLSL3 ! MLS Level 3 software
 !===================================
 
-   USE L2GPData
+   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
    USE L2Interface
    USE L3CF
    USE L3DMData
@@ -144,6 +144,9 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.11  2001/04/11 18:50:45  nakamura
+! Moved deallocations for pointers passed between CORE & I/O up to this level.
+!
 ! Revision 1.10  2001/02/28 18:00:07  nakamura
 ! Fixed line-break in log comment.
 !
