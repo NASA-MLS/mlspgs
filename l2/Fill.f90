@@ -4548,74 +4548,53 @@ contains ! =====     Public Procedures     =============================
       integer, DIMENSION(2) :: unitAsArray ! Unit for value given
       real (r8), DIMENSION(2) :: valueAsArray ! Value given
       integer :: TestUnit                 ! Unit to use
+      integer :: noValues
+      real (r8), pointer, dimension(:) :: VALUES
 
       ! Executable code
       testUnit = quantity%template%unit
       if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
+      noValues = nsons(valuesNode) - 1
 
-      if (spreadFlag) then ! 1 instance/value given, spread to all instances
-
-        ! Check we have the right number of values
-        if ( ( (nsons(valuesNode)-1 /= quantity%template%instanceLen) .and. &
-          &    (nsons(valuesNode)-1 /= 1) ) .or. &
-          &  (.not. quantity%template%regular)) &
-          & call Announce_error ( valuesNode, invalidExplicitFill )
-
-        ! Loop over the values
-        do k=1,nsons(valuesNode)-1
-          ! Get value from tree
-          call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
-          ! Check unit OK
-          if ( (unitAsArray(1) /= testUnit) .and. &
-            &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-            & call Announce_error ( valuesNode, badUnitsForExplicit )
-          ! Store value
-          if ( .not. dontMask .and. associated ( quantity%mask ) ) then
-            if ( nsons(valuesNode)-1 == 1 ) then
-              where ( iand ( ichar(quantity%mask), m_Fill ) == 0 )
-                quantity%values=valueAsArray(1)
-              end where
-            else
-              where ( iand ( ichar(quantity%mask(k,:)), m_Fill ) == 0 )
-                quantity%values(k,:)=valueAsArray(1)
-              end where
-            end if
-          else
-            ! No mask to worry about
-            if (nsons(valuesNode)-1 == 1) then
-              quantity%values=valueAsArray(1)
-            else
-              quantity%values(k,:)=valueAsArray(1)
-            end if
-          end if
-        end do
-
-      else                              ! Not spread, fill all values
-
-        ! Check we have the right number of values
-        if (nsons(valuesNode)-1 /= &
-          & quantity%template%noInstances*quantity%template%instanceLen) &
-          & call Announce_error ( valuesNode, invalidExplicitFill )
-
-        ! Loop over values
-        do k=1,nsons(valuesNode)-1
-          ! Get value from tree
-          call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
-          ! Check unit OK
-          if ( (unitAsArray(1) /= testUnit) .and. &
-            &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
-            & call Announce_error ( valuesNode, badUnitsForExplicit )
-          ! Store value
-          i = mod(k-1,quantity%template%instanceLen) + 1
-          j = (k-1) / quantity%template%instanceLen + 1
-          if ( .not. dontMask .and. associated ( quantity%mask ) ) then
-            if ( iand ( ichar(quantity%mask(i,j)), m_Fill ) == 0 ) &
-              & quantity%values(i,j) = valueAsArray(1)
-          else
-            quantity%values(i,j) = valueAsArray(1)
-          end if
-        end do
+      ! Check the dimensions work out OK
+      if ( spreadFlag ) then
+        if ( noValues /= quantity%template%instanceLen .and. &
+          & noValues /= quantity%template%noChans .and. &
+          & noValues /= 1 ) &
+          & call Announce_Error ( valuesNode, invalidExplicitFill )
+      else
+        if ( noValues /= &
+          & quantity%template%instanceLen * quantity%template%noInstances ) &
+          & call Announce_Error ( valuesNode, invalidExplicitFill )
       end if
+
+      ! Get the values the user asked for, checking their units
+      nullify ( values )
+      call Allocate_test ( values, noValues, 'values', ModuleName )
+      do k = 1, noValues
+        call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
+        ! Check unit OK
+        if ( (unitAsArray(1) /= testUnit) .and. &
+          &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
+          & call Announce_error ( valuesNode, badUnitsForExplicit )
+        values ( k ) = valueAsArray(1)
+      end do
+
+      ! Now loop through the quantity
+      k = 0
+      do i = 1, quantity%template%noInstances
+        do j = 1, quantity%template%instanceLen
+          k = k + 1
+          if ( .not. dontMask .and. associated ( quantity%mask ) ) then
+            if ( iand ( ichar(quantity%mask(j,i)), m_Fill ) /= 0 ) cycle
+          end if
+          quantity%values(j,i) = values ( mod ( k-1, noValues ) + 1 )
+        end do
+      end do
+
+      ! Tidy up
+      call Deallocate_test ( values, 'values', ModuleName )
+
     end subroutine ExplicitFillVectorQuantity
 
     ! ----------------------------------------- FillVectorQuantityFromL1B ----
@@ -5788,6 +5767,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.223  2003/05/22 02:23:15  livesey
+! Rewrite of explicit fill to make spread option more flexible.
+!
 ! Revision 2.222  2003/05/22 00:26:33  dwu
 ! fix a problem in iwcfromextinction
 !
