@@ -24,7 +24,7 @@ module L1BData
   private
 
   public :: L1BData_T, L1BRadSetup, L1BOASetup, ReadL1BData, DeallocateL1BData, &
-    & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX, DumpL1BData
+    & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX, Dump
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -33,6 +33,10 @@ module L1BData
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
   !---------------------------------------------------------------------------
+
+  interface DUMP
+    module procedure DumpL1BData
+  end interface
 
   ! Parameters
   integer, parameter :: NAME_LEN = 64  ! Max len of SDS array name
@@ -591,6 +595,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.14  2001/10/26 23:11:10  pwagner
+! Provides a single dump module interface
+!
 ! Revision 2.13  2001/10/25 23:31:28  pwagner
 ! Fixed dump; readl1bData takes neverfail option
 !
