@@ -161,7 +161,7 @@ module Hydrostatic_m
     h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
     dhidzi = (h_grid+r_eff)**2 * boltz / (g_ref * r_eff**2)
     dhidtq = spread(dhidzi,2,n_coeffs) * piq
-    dhidzi = dhidzi * MATMUL(eta * SPREAD(mass_corr,2,n_coeffs),t_coeffs)
+    dhidzi = dhidzi * t_grid * mass_corr
 
 ! this derivative is useful for antenna derivatives
 
@@ -178,6 +178,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.7  2003/02/08 00:59:16  bill
+! uses latest piq int
+!
 ! Revision 2.6  2003/02/07 00:04:54  bill
 ! mass function bug fix
 !
