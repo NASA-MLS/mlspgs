@@ -8,7 +8,7 @@
 # SDPToolkit will not be included from libmls.a
 
 SRCS =	Allocate_Deallocate.f90 GriddedData.f90 HDF-EOS.f90 Hdf.f90 \
-        L1BData.f90 MLSCF.f90 MLSCommon.f90 MLSMessageModule.f90 \
+        L1BData.f90 L2GPData.f90 MLSCF.f90 MLSCommon.f90 MLSMessageModule.f90 \
         MLSNumerics.f90 MLSPCF.f90 MLSSignalNomenclature.f90 MLSStrings.f90 \
         MatrixModule_0.f90 SDPToolkit.f90 Units.f90 \
         VerticalCoordinate.f90 dates_module.f90 dump_0.f90 \
@@ -16,9 +16,8 @@ SRCS =	Allocate_Deallocate.f90 GriddedData.f90 HDF-EOS.f90 Hdf.f90 \
         swapi_character_array.f90 swapi_character_scalar.f90 \
         swapi_double.f90 swapi_integer.f90 swapi_real.f90
 
-
 OBJS =	Allocate_Deallocate.o GriddedData.o HDF-EOS.o Hdf.o \
-        L1BData.o MLSCF.o MLSCommon.o MLSMessageModule.o \
+        L1BData.o L2GPData.o MLSCF.o MLSCommon.o MLSMessageModule.o \
         MLSNumerics.o MLSPCF.o MLSSignalNomenclature.o MLSStrings.o \
         MatrixModule_0.o SDPToolkit.o Units.o \
         VerticalCoordinate.o dates_module.o dump_0.o \
@@ -41,28 +40,49 @@ clean:
 
 #.f90.o:
 %.o: %.f90
-	$(F90) $(F90FLAGS) -c $I$S $I$C $I$T $<
+	$(F90) $(FOPTS) -c $I$S $I$(CF) $I$(TOOLKIT) $<
+
+# The following files have special build requirements.  If you regenerate
+# the dependencies using an automatic tool, make sure you re-create these
+# actions:
+
+L1BData.o: MLSCommon.o MLSMessageModule.o
+	$(F90) $(FOPTS) -c $I$S $I$(CF) $(DUSTY) $S/L1BData.f90
+L2GPData.o: Allocate_Deallocate.o Hdf.o HDF-EOS.o MLSMessageModule.o \
+          MLSCommon.o swapi.o
+	$(F90) $(FOPTS) -c $I$S $I$(CF) $(DUSTY) $S/L2GPData.f90
+dump_0.o: $(CF)/output_m.o
+	$(F90) $(FOPTS) -c $I$S $I$(CF) $S/dump_0.f90
+
+
+# SDPToolkit needs several "include" files that aren't here.  If you
+# regenerate the dependencies using an automatic tool, make sure you
+# re-create these:
+
+T = $(TOOLKIT)/include
+SDPToolkit.o: MLSCommon.o $T/PGS_CBP.f $T/PGS_CBP_6.f $T/PGS_CSC_4.f \
+        $T/PGS_EPH_5.f $T/PGS_IO.f $T/PGS_IO_1.f $T/PGS_MEM_7.f \
+	$T/PGS_MET.f $T/PGS_MET_13.f $T/PGS_PC.f $T/PGS_PC_9.f \
+	$T/PGS_SMF.f $T/PGS_TD.f $T/PGS_TD_3.f
+	$(F90) $(FOPTS) -c $I$T $S/SDPToolkit.f90
+
+# None of the following dependencies are special, and none of them have
+# special build requirements.  It should be OK to replace them with
+# automatically generated ones:
 
 Allocate_Deallocate.o: MLSMessageModule.o
 GriddedData.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 Hdf.o: MLSCommon.o
-L1BData.o: MLSCommon.o MLSMessageModule.o
-	$(F90) $(F90FLAGS) -c $I$S $I$C $I$T $(DUSTY) $S/L1BData.f90
 MatrixModule_0.o: Allocate_Deallocate.o dump_0.o \
-          MLSCommon.o MLSMessageModule.o $C/output_m.o
+          MLSCommon.o MLSMessageModule.o $(CF)/output_m.o
 MLSCF.o: Hdf.o MLSCommon.o MLSMessageModule.o MLSStrings.o SDPToolkit.o
 MLSMessageModule.o: SDPToolkit.o
 MLSNumerics.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 MLSSignalNomenclature.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 MLSStrings.o: MLSMessageModule.o
-SDPToolkit.o: MLSCommon.o $T/PGS_CBP.f $T/PGS_CBP_6.f $T/PGS_CSC_4.f \
-        $T/PGS_EPH_5.f $T/PGS_IO.f $T/PGS_IO_1.f $T/PGS_MEM_7.f \
-	$T/PGS_MET.f $T/PGS_MET_13.f $T/PGS_PC.f $T/PGS_PC_9.f \
-	$T/PGS_SMF.f $T/PGS_TD.f $T/PGS_TD_3.f
 Units.o: MLSCommon.o MLSMessageModule.o MLSStrings.o
 VerticalCoordinate.o: MLSCommon.o MLSStrings.o Units.o
 dates_module.o: MLSMessageModule.o MLSStrings.o
-dump_0.o: 
 gridded_data_module.o: MLSCommon.o MLSMessageModule.o MLSStrings.o \
 	dates_module.o
 heights_module.o: MLSCommon.o MLSMessageModule.o
@@ -73,22 +93,27 @@ swapi.o: swapi_character_array.o swapi_character_scalar.o swapi_double.o \
 # Test harnesses
 
 test_multiply.o: $S/test_multiply.f90 MatrixModule_0.o
-	$(F90) -c $(FOPTS) $I$C $S/test_multiply.f90
+	$(F90) -c $(FOPTS) $I$(CF) $S/test_multiply.f90
 
 test_multiply: test_multiply.o
-	$(F90) -o test_multiply test_multiply.o -L. -lmls -L$C -lCF \
+	$(F90) $(LDOPTS) -o test_multiply test_multiply.o -L. -lmls -L$(CF) -lCF \
                  -L$(HOME)/mlspgs/SDPToolkit -lPGSTK \
 
 test_sparsify.o: $S/test_sparsify.f90 MatrixModule_0.o
-	$(F90) -c $(FOPTS) $I$C $S/test_sparsify.f90
+	$(F90) -c $(FOPTS) $I$(CF) $S/test_sparsify.f90
 
 test_sparsify: test_sparsify.o
-	$(F90) -o test_sparsify test_sparsify.o -L. -lmls -L$C -lCF \
+	$(F90) $(LDOPTS) -o test_sparsify test_sparsify.o -L. -lmls -L$(CF) -lCF \
                  -L$(HOME)/mlspgs/SDPToolkit -lPGSTK \
 
 # ========================================================================
 
 # $Log$
+# Revision 2.7  2000/10/09 22:18:35  vsnyder
+# Added machine.f90 to SRCS and machine.o to OBJS.  machine.f90 is in
+# the next-layer-down of machine/compiler/OS directories.  If you
+# automatically re-make the make file, ensure that machine is still here.
+#
 # Revision 2.6  2000/10/05 01:35:34  vsnyder
 # Revised to account for moving test_multiply from mlspgs/l2.  Also,
 # mlslib.a was deleted, because libraries are required to begin with
