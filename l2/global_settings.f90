@@ -111,7 +111,7 @@ contains
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
-      call output ( "Timing for MLSSignals = " )
+      call output ( "Timing for GlobalSettings = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
@@ -121,6 +121,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.16  2001/04/23 23:42:00  vsnyder
+! Add 'time' command
+!
 ! Revision 2.15  2001/04/21 01:25:54  livesey
 ! Now passes l2gpdatabase to more people who need it.
 !
