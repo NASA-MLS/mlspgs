@@ -298,69 +298,53 @@ CONTAINS
 
     LOGICAL, INTENT (OUT) :: more_data
 
-    LOGICAL :: OK, GMAB_ON(4)
+    LOGICAL :: data_OK, GMAB_ON(4)
     INTEGER :: maskbit3, maskbit7
     DATA maskbit3 / z'8' /
     DATA maskbit7 / z'80' /
 
-    more_data = .TRUE.
+    CALL ReadL0Eng (EngPkt, EngMAF%MAFno, EngMAF%TotalMAF, &
+         EngMAF%MIFsPerMAF, EngMAF%secTAI, data_OK, more_data)
 
-    CALL ReadL0Eng (EngPkt, EngMAF%MAFno, EngMAF%TotalMAF, EngMAF%MIFsPerMAF, &
-         EngMAF%secTAI, OK)
+    IF (.NOT. more_data) RETURN   ! nothing more to do
 
-    IF (OK) THEN
+    EngMAF%secTAI = EngMAF%secTAI - 0.25   ! actual time to line up with SCI
 
-       ! Determine GM01 to GM04 A/B ON/OFF states:
+    ! Determine GM01 to GM04 A/B ON/OFF states:
 
-       GMAB_ON(1) =(IAND (ICHAR (EngPkt(6)(103:103)), maskbit7) == maskbit7)
-       GMAB_ON(2) =(IAND (ICHAR (EngPkt(6)(103:103)), maskbit3) == maskbit3)
-       GMAB_ON(3) =(IAND (ICHAR (EngPkt(6)(109:109)), maskbit3) == maskbit3)
-       GMAB_ON(4) =(IAND (ICHAR (EngPkt(6)(110:110)), maskbit7) == maskbit7)
+    GMAB_ON(1) =(IAND (ICHAR (EngPkt(6)(103:103)), maskbit7) == maskbit7)
+    GMAB_ON(2) =(IAND (ICHAR (EngPkt(6)(103:103)), maskbit3) == maskbit3)
+    GMAB_ON(3) =(IAND (ICHAR (EngPkt(6)(109:109)), maskbit3) == maskbit3)
+    GMAB_ON(4) =(IAND (ICHAR (EngPkt(6)(110:110)), maskbit7) == maskbit7)
 
-       ! Determine which side ASE (GM01/GM02) is on:
+    ! Determine which side ASE (GM01/GM02) is on:
 
-       IF (GMAB_ON(1) .AND. .NOT. GMAB_ON(2)) THEN
-          EngMAF%ASE_Side = "A"
-       ELSE IF (.NOT. GMAB_ON(1) .AND. GMAB_ON(2)) THEN
-          EngMAF%ASE_Side = "B"
-       ELSE
-          EngMAF%ASE_Side = "U"
-       ENDIF
-
-       ! Determine which side GSM (GM03/GM04) is on:
-
-       IF (GMAB_ON(3) .AND. .NOT. GMAB_ON(4)) THEN
-          EngMAF%GSM_Side = "A"
-       ELSE IF (.NOT. GMAB_ON(3) .AND. GMAB_ON(4)) THEN
-          EngMAF%GSM_Side = "B"
-       ELSE
-          EngMAF%GSM_Side = "U"
-       ENDIF
-
-       ! Convert engineering counts
-
-       CALL ConvertEngCounts (GMAB_ON)
-
-       !! Write eng data to file:
-
-!!$       WRITE (L1BFileInfo%EngId, iostat=ios) EngPkt
-!!$       WRITE (L1BFileInfo%EngId, iostat=ios) eng_tbl%value
-
-       !! Save the required data for later use:
-
-       EngMAF%Eng%value = Eng_tbl%value
-       EngMAF%Eng%mnemonic = Eng_tbl%mnemonic
-
-       !! Already have the current MIFsPerMAF
-
-       !! EngMAF%MIFsPerMAF = L1Config%Calib%MIFsPerMAF
-
+    IF (GMAB_ON(1) .AND. .NOT. GMAB_ON(2)) THEN
+       EngMAF%ASE_Side = "A"
+    ELSE IF (.NOT. GMAB_ON(1) .AND. GMAB_ON(2)) THEN
+       EngMAF%ASE_Side = "B"
     ELSE
-
-       more_data = .FALSE.
-
+       EngMAF%ASE_Side = "U"
     ENDIF
 
+    ! Determine which side GSM (GM03/GM04) is on:
+
+    IF (GMAB_ON(3) .AND. .NOT. GMAB_ON(4)) THEN
+       EngMAF%GSM_Side = "A"
+    ELSE IF (.NOT. GMAB_ON(3) .AND. GMAB_ON(4)) THEN
+       EngMAF%GSM_Side = "B"
+    ELSE
+       EngMAF%GSM_Side = "U"
+    ENDIF
+
+    ! Convert engineering counts
+
+    CALL ConvertEngCounts (GMAB_ON)
+
+    !! Save the required data for later use:
+
+    EngMAF%Eng%value = Eng_tbl%value
+    EngMAF%Eng%mnemonic = Eng_tbl%mnemonic
 
   END SUBROUTINE NextEngMAF
 
@@ -369,6 +353,9 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2004/11/10 15:33:40  perun
+! Adjust TAI time by -0.25 secs; change call to ReadL0Eng with additional flag
+!
 ! Revision 2.8  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !

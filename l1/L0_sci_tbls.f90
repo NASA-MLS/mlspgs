@@ -287,6 +287,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      REAL :: APE_theta, ASA_theta, GSM_theta, TSSM_theta
      REAL :: scAngleG                  ! Boresight wrt. spc +x (GHz)
      REAL :: scAngleT                  ! Boresight wrt. spc +x (THz)
+     REAL :: altG, latG                ! Geod alt and lat for GHz tangent point
      CHARACTER(len=1) :: GHz_sw_pos
      CHARACTER(len=1) :: THz_sw_pos
      CHARACTER(len=80) :: LLO_DN       ! Laser LO DN data
@@ -586,6 +587,9 @@ CONTAINS
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.9  2004/11/10 15:37:31  perun
+! Add altG and latG for GHz tangent point
+!
 ! Revision 2.8  2004/08/12 13:51:49  perun
 ! Version 1.44 commit
 !
