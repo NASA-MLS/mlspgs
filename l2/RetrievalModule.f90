@@ -575,7 +575,7 @@ contains
           if ( got(f_lowBound) ) call getInBounds ( state, lowBound, 'low' )
           if ( got(f_highBound) ) call getInBounds ( state, highBound, 'high' )
           
-	  select case (method)
+          select case (method)
           case( l_lowcloud, l_highcloud) 
             ! use this for testing
             if(.not. got(f_maxJ)) maxJacobians = 5
@@ -583,7 +583,7 @@ contains
             call CloudRetrieval(Method, ConfigDatabase,configIndices,fwdModelExtra,&
                & measurements,MeasurementSD, state, OutputSD, Covariance, &
                & jacobian, chunk,maxJacobians,initlambda)
-            call add_to_retrieval_timing( 'cloud_retrieval', t1 )
+            call add_to_retrieval_timing( 'low_retrieval', t1 )
           case ( l_newtonian ) 
             call newtonianSolver
           case default
@@ -2175,6 +2175,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.245  2003/05/14 23:38:15  dwu
+! change in cloud retrieval
+!
 ! Revision 2.244  2003/05/14 03:55:10  dwu
 ! tidy up
 !
