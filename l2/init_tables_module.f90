@@ -9,6 +9,7 @@ module INIT_TABLES_MODULE
 
 ! Declaring the definitions is handled by the tree walker.
 
+  use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Init_MLSSignals_m ! Everything. Init_MLSSignals, Field_First,
     ! Last_Signal_Field, Spec_First, Last_Signal_Spec, Numerous S_....
   use Init_Spectroscopy_m ! Everything.
@@ -49,7 +50,7 @@ module INIT_TABLES_MODULE
   private :: ID_CUM, ID_LAST, ID_LAST_MAX, ACORN
   integer :: ID_LAST
   integer, parameter :: ID_LAST_MAX = 200     ! More or less
-  integer, allocatable, dimension(:) :: ID_CUM
+  integer, pointer, dimension(:) :: ID_CUM => null()
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -374,11 +375,13 @@ contains ! =====     Public procedures     =============================
                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
   ! This belongs somewhere before first call to acorn
-    allocate(id_cum(1:id_last_max), stat=id_last)
-    if(id_last /= 0) then
-            call MLSMessage ( MLSMSG_Error, ModuleName,&
-            &   'Unable to allocate id_cum' )
-    endif
+  !    allocate(id_cum(1:id_last_max), stat=id_last)
+  !  if(id_last /= 0) then
+  !          call MLSMessage ( MLSMSG_Error, ModuleName,&
+  !          &   'Unable to allocate id_cum' )
+  !  endif
+    call allocate_test(id_cum, id_last_max, &
+      & 'id_cum', ModuleName)
 
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_Spectroscopy ( t_last, field_last, last_lit, &
@@ -1068,11 +1071,13 @@ contains ! =====     Public procedures     =============================
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
-    deallocate(id_cum, stat=id_last)
-    if(id_last /= 0) then
-            call MLSMessage ( MLSMSG_Error, ModuleName,&
-            &   'Unable to deallocate id_cum' )
-    endif
+!    deallocate(id_cum, stat=id_last)
+!    if(id_last /= 0) then
+!            call MLSMessage ( MLSMSG_Error, ModuleName,&
+!            &   'Unable to deallocate id_cum' )
+!    endif
+    call deallocate_test(id_cum, &
+      & 'id_cum', ModuleName)
   contains
 
     ! ------------------------------------------------  MAKE_TREE  -----
@@ -1105,6 +1110,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.153  2001/08/08 23:49:25  pwagner
+! Changed id_cum from allocatable to pointer; still dumps core if -gc option set
+!
 ! Revision 2.152  2001/08/07 23:48:20  pwagner
 ! Added acorn routine to get around excessive continuations
 !
