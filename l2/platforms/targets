@@ -162,7 +162,7 @@ $(S)/field_parm.f9h $(S)/field_add.f9h: $(S)/field_names.txt $(INSTALLDIR)/init_
           -f"last_Spectroscopy_Field + 1" -l field_last -pF_ \
           $(S)/field_parm.f9h $(S)/field_add.f9h field_indices
 
-#init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h
+init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h
 
 # This keeps switch_usage up-to-date with notes/switches
 # (and similarly for options)
@@ -190,6 +190,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.26  2001/07/27 23:02:51  pwagner
+# Almost implemented init_gen build of init_tables_module.f90--only a comment away
+#
 # Revision 1.25  2001/07/18 00:12:55  pwagner
 # No longer makes libfwdmdl directly
 #
