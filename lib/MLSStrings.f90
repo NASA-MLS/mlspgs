@@ -26,6 +26,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 
 !     (subroutines and functions)
 ! Capitalize         tr[a-z] -> [A-Z]
+! CatStrings         Concatenate strings with a specified separator
 ! CompressString     Removes all leading and embedded blanks
 ! Count_words        Counts the number of space-separated words in a string
 ! Depunctuate        Replaces punctuation with blanks
@@ -78,7 +79,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 ! to avoid operating on undefined array elements
 ! === (end of api) ===
 
-  public :: Capitalize, CompressString, count_words, &
+  public :: Capitalize, CatStrings, CompressString, count_words, &
    & depunctuate, hhmmss_value, &
    & ints2Strings, LinearSearchStringArray, &
    & LowerCase, &
@@ -129,6 +130,25 @@ contains
     end do
 
   end function Capitalize
+
+  ! -------------------------------------------------  CatStrings  -----
+  subroutine CatStrings ( Strings, Sep, StringsCat, L )
+  ! Concatenate Strings with Sep between them, giving StringsCat(:L-1)
+    character(len=*), intent(in) :: Strings(:)
+    character(len=*), intent(in) :: Sep
+    character(len=*), intent(out) :: StringsCat
+    integer, intent(out) :: L
+    integer :: I, N, T, W
+    w = len(sep)
+    l = len_trim(strings(1)) + 1
+    stringsCat(:l-1) = strings(1)(:l-1)
+    do i = 2, size(strings)
+      t = len_trim(strings(i))
+      n = l + t + w
+      stringsCat(l:n-1) = sep // strings(i)(:t)
+      l = n
+    end do
+  end subroutine CatStrings
 
   ! ---------------------------------------------  CompressString  -----
   FUNCTION CompressString (str) RESULT (outstr)
@@ -1140,6 +1160,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.52  2005/01/20 01:29:42  vsnyder
+! Add CatStrings
+!
 ! Revision 2.51  2004/10/13 20:25:45  pwagner
 ! In reFormatDate allow day of year w/o letter d; e.g. 2004-274
 !
