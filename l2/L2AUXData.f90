@@ -129,7 +129,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
   integer, parameter :: L2AUXRANK=3     ! Dimensionality of L2AUXData_T%values
-
+  logical, parameter :: DEEBUG = .false.
   ! This datatype describes a dimension for an L2AUX quantity
 
   type L2AUX_Dimension_T
@@ -275,9 +275,15 @@ contains ! =====     Public Procedures     =============================
       & dimStarts(1):dimEnds(1), &
       & dimStarts(2):dimEnds(2), &
       & dimStarts(3):dimEnds(3)), STAT=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    if ( status/=0 .or. DEEBUG ) then
+      print *, 'status: ', status
+      print *, 'dimStarts: ', dimStarts
+      print *, 'dimEnds: ', dimEnds
+    endif
+    if ( status/=0 ) then
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate// "l2aux values" )
-
+    endif
   end subroutine SetupNewL2AUXRecord
     
   !----------------------------------------  DestroyL2AUXContents  -----
@@ -1516,6 +1522,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.56  2003/07/15 23:39:47  pwagner
+! Disabled most printing
+!
 ! Revision 2.55  2003/05/30 00:10:02  livesey
 ! Bug fix with reflTemp
 !
