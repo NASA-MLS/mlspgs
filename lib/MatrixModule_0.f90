@@ -24,7 +24,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   private
   public :: Add_Matrix_Blocks, CheckBlocks, CheckIntegrity, CheckForSimpleBandedLayout
   public :: Assignment(=), CholeskyFactor
-  public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
+  public :: CholeskyFactor_0, ClearLower, ClearLower_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
   public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0, CyclicJacobi
   public :: DenseCholesky, DenseCyclicJacobi, Densify, DestroyBlock, DestroyBlock_0, Dump
   public :: FrobeniusNorm, GetDiagonal, GetMatrixElement, GetMatrixElement_0
@@ -61,6 +61,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface CyclicJacobi
     module procedure CyclicJacobi_0
+  end interface
+
+  interface ClearLower
+    module procedure ClearLower_0
   end interface
 
   interface ClearRows
@@ -894,6 +898,27 @@ contains ! =====     Public Procedures     =============================
       call Deallocate_test ( tst2, 'tst2', ModuleName )
     end if
   end subroutine CholeskyFactor_0
+
+  ! ------------------------------------------------  ClearLower_0 -----
+  subroutine ClearLower_0 ( X )
+    ! Clear the loewr triangle of X
+    type ( MatrixElement_T ), intent(inout) :: X
+    ! Local variables
+    integer :: I,J                      ! Subscripts
+    integer :: KIND                     ! Original matrix kind
+    ! Executable code
+    kind = x%kind
+    ! For sparse matrices, simplest just to densify and then resparsify
+    if ( kind == m_Banded .or. kind == m_Column_sparse ) &
+      & call Densify ( X )
+    do i = 2, x%nRows
+      do j = 1, i - 1
+        x%values ( i, j ) = 0.0_rm
+      end do
+    end do
+    if ( kind == m_Banded .or. kind == m_column_sparse ) &
+      & call Sparsify ( X )
+  end subroutine ClearLower_0
 
   ! ------------------------------------------------  ClearRows_0  -----
   subroutine ClearRows_0 ( X, MASK )
@@ -3400,6 +3425,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.104  2004/10/14 04:54:06  livesey
+! Added ClearLower_0
+!
 ! Revision 2.103  2004/07/07 19:34:30  vsnyder
 ! Add Init argument to CreateBlock
 !
