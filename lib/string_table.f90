@@ -60,6 +60,7 @@ module STRING_TABLE
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -795,9 +796,16 @@ contains
     if ( present(ierr) ) ierr=0
     return
   end subroutine TEST_STRING
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.15  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.14  2002/08/21 20:38:00  vsnyder
 ! Add Create_String
 !
