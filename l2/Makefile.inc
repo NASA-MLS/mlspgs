@@ -1,4 +1,4 @@
-L2OBJS = Allocate_Deallocate.o Construct.o ConstructQuantityTemplates.o \
+L2OBJS = Construct.o ConstructQuantityTemplates.o \
        ConstructVectorTemplates.o dumper.o Fill.o get_3d_view.o \
        global_settings.o HGrid.o init_tables_module.o Join.o L2AUXData.o \
        L2GPData.o MLSL2.o obtainclimatology.o obtaindao.o obtain_mlscf.o \
@@ -6,9 +6,6 @@ L2OBJS = Allocate_Deallocate.o Construct.o ConstructQuantityTemplates.o \
        QuantityTemplates.o ScanDivide.o tree_walker.o VGrid.o VectorsModule.o
 
 all: mlsl2
-
-Allocate_Deallocate.o: $S/Allocate_Deallocate.f90 $M/MLSMessageModule.o
-	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/Allocate_Deallocate.f90
 
 Construct.o: $S/Construct.f90 ConstructQuantityTemplates.o \
           ConstructVectorTemplates.o dumper.o HGrid.o init_tables_module.o \
@@ -25,13 +22,13 @@ ConstructQuantityTemplates.o: $S/ConstructQuantityTemplates.f90 \
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/ConstructQuantityTemplates.f90
 
 ConstructVectorTemplates.o: $S/ConstructVectorTemplates.f90 \
-          Allocate_Deallocate.o init_tables_module.o $M/MLSMessageModule.o \
+          $M/Allocate_Deallocate.o init_tables_module.o $M/MLSMessageModule.o \
           QuantityTemplates.o $C/toggles_core.o $C/trace_m.o $C/tree.o \
           VectorsModule.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/ConstructVectorTemplates.f90
 
-dumper.o: $S/dumper.f90 HGrid.o init_tables_module.o $C/output_m.o \
-          QuantityTemplates.o $C/string_table.o VGrid.o
+dumper.o: $S/dumper.f90 $M/dump_0.o HGrid.o init_tables_module.o \
+          $C/output_m.o QuantityTemplates.o $C/string_table.o VGrid.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/dumper.f90
 
 Fill.o: $S/Fill.f90 dumper.o init_tables_module.o $C/lexer_core.o \
@@ -60,17 +57,17 @@ Join.o: $S/Join.f90 init_tables_module.o L2AUXData.o L2GPData.o \
           QuantityTemplates.o $C/tree.o $C/tree_types.o VectorsModule.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/Join.f90
 
-L2AUXData.o: $S/L2AUXData.f90 $S/addItemToDatabase.f9h Allocate_Deallocate.o \
-          $M/MLSMessageModule.o
+L2AUXData.o: $S/L2AUXData.f90 $S/addItemToDatabase.f9h \
+          $M/Allocate_Deallocate.o $M/MLSMessageModule.o
 	$(FC) -c $(FOPTS) $I$S $I$M $S/L2AUXData.f90
 
-L2GPData.o: $S/L2GPData.f90 $S/addItemToDatabase.f9h Allocate_Deallocate.o \
+L2GPData.o: $S/L2GPData.f90 $S/addItemToDatabase.f9h $M/Allocate_Deallocate.o \
           $M/MLSMessageModule.o
 	$(FC) -c $(FOPTS) $I$S $I$M $S/L2GPData.f90
 
 MatrixModule.o: $S/MatrixModule.f90 $S/addItemToDatabase.f9h \
-          Allocate_Deallocate.o dumper.o $M/MLSMessageModule.o $C/output_m.o \
-          $C/string_table.o
+          $M/Allocate_Deallocate.o dump_0.o $M/MLSMessageModule.o \
+          $C/output_m.o $C/string_table.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/MatrixModule.f90
 
 MLSL2.o: $S/MLSL2.f90 $C/declaration_table.o init_tables_module.o \
@@ -78,7 +75,7 @@ MLSL2.o: $S/MLSL2.f90 $C/declaration_table.o init_tables_module.o \
           $C/toggles_core.o $C/tree.o $C/ tree_walker.o $C/units.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/MLSL2.f90
 
-obtainclimatology.o: Allocate_Deallocate.o $S/obtainclimatology.f90 \
+obtainclimatology.o: $M/Allocate_Deallocate.o $S/obtainclimatology.f90 \
           $M/MLSMessageModule.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/obtainclimatology.f90
 
@@ -101,12 +98,13 @@ OutputAndClose.o: $S/OutputAndClose.f90 $C/init_tables_module.o \
           $C/tree_types.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/OutputAndClose.f90
 
-OutputL2GP.o: $S/OutputL2GP.f90 $M/HDF-EOS.o Allocate_Deallocate.o L2GPData.o \
-          $M/MLSMessageModule.o $M/swapi.o
+OutputL2GP.o: $S/OutputL2GP.f90 $M/HDF-EOS.o $M/Allocate_Deallocate.o \
+          L2GPData.o $M/MLSMessageModule.o $M/swapi.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/OutputL2GP.f90
 
 QuantityTemplates.o: $S/QuantityTemplates.f90 $S/addItemToDatabase.f9h \
-          Allocate_Deallocate.o $M/MLSMessageModule.o $M/MLSSignalNomenclature.o
+          $M/Allocate_Deallocate.o $M/MLSMessageModule.o \
+          $M/MLSSignalNomenclature.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/QuantityTemplates.f90
 
 ScanDivide.o: $S/ScanDivide.f90 dumper.o $C/expr_m.o init_tables_module.o \
@@ -124,8 +122,9 @@ tree_walker.o: $S/tree_walker.f90 Construct.o $C/declaration_table.o dumper.o \
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/tree_walker.f90
 
 VectorsModule.o: $S/VectorsModule.f90 $S/addItemToDatabase.f9h \
-          Allocate_Deallocate.o dumper.o get_3d_view.o $M/MLSMessageModule.o \
-          $M/MLSSignalNomenclature.o $C/output_m.o QuantityTemplates.o
+          $M/Allocate_Deallocate.o dumper.o get_3d_view.o \
+          $M/MLSMessageModule.o $M/MLSSignalNomenclature.o $C/output_m.o \
+          QuantityTemplates.o
 	$(FC) -c $(FOPTS) $I$C $I$S $I$M $S/VectorsModule.f90
 
 VGrid.o: $S/VGrid.f90 $S/addItemToDatabase.f9h $C/expr_m.o \
@@ -162,6 +161,8 @@ mlsl2: $(L2OBJS) $(GD) $(PG) $(SDP) $C/libCF.a $M/libmls.a
 		      -L$E/hdfeos/lib/$P -lhdfeos \
                       -L$(HOME)/mlspgs/l2new/GCT -lGCT \
                       -L$L/hdf/$P/HDF4.1r3/lib -lmfhdf -ldf -ljpeg -lz
+
+# ========================================================================
 
 clean:
 	rm -f *.o *.mod test
