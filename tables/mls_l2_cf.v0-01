@@ -1,0 +1,52 @@
+
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+; This section of the l2cf describes the criteria for dividing the Level 1B
+; data into chunks for the processing.
+;
+BEGIN ChunkDivide
+   ;;
+   ;; The items in this section may occur in any order.
+   ;;
+   ;; Desirable length of a chunk, specified as a given fraction of an orbit
+   ;;
+   chunk,IdealLength=0.25 orbits
+   ;;
+   ;; How many MAFs of overlap are desirable
+   ;;
+   chunk,Overlap =5 MAFs
+   ;;
+   ;; Home Geodetic Angle (phi) to try to start at least one chunk at
+   ;;
+   chunk,HomeGeodAngle=0.0 degrees
+   ;;
+   ;; Home Module upon whose scans the chunk division will be based (default =
+   ;; GHz)
+   ;;
+   chunk,HomeModule= "GHz"
+   ;;
+   ;; Minimum criteria for a valid scan
+   ;;
+   chunk,ScanLowerLimit= -10.0 .. 25.0 km
+   chunk,ScanUpperLimit= 40.0 .. 100.0 km
+   ;;
+   chunk,CriticalScanningModules= "Both"
+   ;;
+   ;; Alternatives to 'both' are 'THz', 'GHz', 'either', or 'none'
+   ;;
+   ;; Bands that must be on for data to be considered useful
+   ;;
+   chunk,CriticalBands="R1A.B1F/R1B.B21F, R5H:B17F/R5V:B20F"
+   ;;
+   ;; How long a data gap (i.e., one of the above criteria not being met) is
+   ;; allowed before a chunk division is forced -- this may be specified in
+   ;; minutes, seconds, orbits, degress (of phi), or MAFs.
+   ;;
+   chunk,MaxGap= 3.0 minutes
+   ;;
+END ChunkDivide
+
+!
+! $Log$
+!
