@@ -111,7 +111,7 @@ contains
     character(len=*), intent(out) :: BUFFER(:)       ! Buffer for read
 
     integer, external :: HE5_SWRDATTR
-
+    buffer = ''
     HE5_SWRDATTR_CHARACTER_ARRAY = he5_swrdattr(swathid, &
          & attrname, buffer )
   end function HE5_SWRDATTR_CHARACTER_ARRAY
@@ -124,7 +124,7 @@ contains
     character(len=*), intent(out) :: BUFFER(:)       ! Buffer for read
 
     integer, external :: HE5_SWRDLATTR
-
+    buffer = ''
     HE5_SWRDLATTR_CHARACTER_ARRAY = he5_swrdlattr(swathid, fieldname, &
          & attrname, buffer )
   end function HE5_SWRDLATTR_CHARACTER_ARRAY
