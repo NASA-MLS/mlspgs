@@ -165,7 +165,8 @@ contains
     ! Error message codes
     integer, parameter :: AllOrNone = 1 ! All of a set of fields, or none
     integer, parameter :: AtLeastOne = allOrNone + 1   ! At least one
-    integer, parameter :: BadMix = atLeastone + 1 ! Disallowed mixture of
+    integer, parameter :: DeferredChannels = atLeastone + 1 ! Deferred .neqv channels
+    integer, parameter :: BadMix = deferredChannels + 1 ! Disallowed mixture of
     !                                     fields.
     integer, parameter :: WrongUnits = badMix + 1 ! Field has wrong units
 
@@ -175,7 +176,7 @@ contains
     do i = 2, nsons(root)-1 ! skip "MLSSignals" at "begin" and "end"
       son = subtree(i,root) ! A spec_args vertex now
       if ( node_id(son) == n_named ) then
-        name = subtree(1, son)
+        name = sub_rosa(subtree(1, son))
         key = subtree(2, son)
       else
         name = 0
@@ -188,7 +189,7 @@ contains
 
 
       case ( s_band ) ! ...................................  BAND  .....
-        band%prefix = sub_rosa(name)
+        band%prefix = name
         band%centerFrequency = -1.0_r8 ! "The 'frequency' field is absent"
         do j = 2, nsons(key)
           son = subtree(j,key)
@@ -213,7 +214,7 @@ contains
 
 
       case ( s_module ) ! ............................  MODULE  ........
-        thisModule%name = sub_rosa(name)
+        thisModule%name = name
         thisModule%spaceCraft = .false.
         thisModule%node = decoration(name)
         do j = 2,nsons(key)
@@ -236,7 +237,7 @@ contains
 
 
       case ( s_radiometer ) ! .......................  RADIOMETER  .....
-        radiometer%prefix = sub_rosa(name)
+        radiometer%prefix = name
         do j = 2, nsons(key)
           son = subtree(j,key)
           field = decoration(subtree(1,son))
@@ -278,6 +279,7 @@ contains
             ! Shouldn't get here if the type checker worked
           end select
         end do ! i = 2, nsons(key)
+        signal%name = name
         ! Set default values for remaining parameters
         signal%radiometer = bands(signal%band)%radiometer
         signal%lo = radiometers(signal%radiometer)%lo
@@ -285,6 +287,8 @@ contains
         signal%spectrometerType = bands(signal%band)%spectrometerType
         signal%centerFrequency = bands(signal%band)%centerFrequency
         signal%deferred = spectrometerTypes(signal%spectrometerType)%deferred
+        if ( signal%deferred .neqv. got(f_channels) ) &
+          & call announceError ( deferredChannels )
         ! For the wide filters, we specify frequency etc. here.
         if ( got(f_channels) ) then
           if ( error == 0 ) then
@@ -311,13 +315,14 @@ contains
         end if
         call decorate ( key, addSignalToDatabase ( signals, signal ) )
         signals(size(signals))%index = size(signals)
-        ! Now nullify pointers so they don't get hosed later
+        ! Now nullify pointers so they don't get hosed later by allocate_test
+        nullify ( signal%channels )
         nullify ( signal%frequencies )
         nullify ( signal%widths )
 
 
       case ( s_spectrometerType ) ! ...........  SPECTROMETERTYPE  .....
-        spectrometerType%name = sub_rosa(name)
+        spectrometerType%name = name
         deferred = .false.
         first = 0
         do j = 2, nsons(key)
@@ -493,6 +498,9 @@ contains
           call display_string ( field_indices(moreFields(i)) )
         end do ! i
         call output ( ' shall appear.', advance='yes' )
+      case ( deferredChannels )
+        call output ( "Channels shall be specified if and only if the band's" )
+        call output ( ' radiometer has deferred channels', advance='yes' )
       case ( wrongUnits )
         call output ( 'The values of the ' )
         call display_string ( field_indices(fieldIndex) )
@@ -724,53 +732,90 @@ contains
     end do
   end subroutine DUMP_RADIOMETERS
 
-  ! --------------------------------------  DumpSpectrometerTypes  -----
-  subroutine DUMP_SIGNALS ( SIGNALS )
+  ! ------------------------------------------------  DumpSignals  -----
+  subroutine DUMP_SIGNALS ( SIGNALS, DETAILS )
     type (signal_T), intent(in) :: SIGNALS(:)
-    integer :: i
-    character (len=80) :: str
+    logical, intent(in), optional :: Details ! false => don't dump frequencies
+    integer :: I
+    logical :: My_Details
+    character (len=80) :: Str
+    my_details = .true.
+    if ( present(details) ) my_details = details
     call output ( 'SIGNALS: SIZE = ')
     call output ( size(signals), advance='yes' )
     do i = 1, size(signals)
-      call output ( i, advance='yes' )
+      call output ( 'Signal ' )
+      call output ( i )
+      if ( signals(i)%name > 0 ) then
+        call output ( ': ' )
+        call display_string ( signals(i)%name, advance='yes' )
+      else
+        call output ( '', advance='yes' )
+      end if
       call output ( '   Module: ')
       call output ( signals(i)%instrumentModule )
       call output ( ' - ' )
-      call display_string ( modules(signals(i)%instrumentModule)%name, &
-        & advance='yes' )
+      if ( associated(modules) ) then
+        call display_string ( modules(signals(i)%instrumentModule)%name, &
+          & advance='yes' )
+      else
+        call output ( 'Cannot get module name', advance='yes' )
+      end if
       call output ( '   Radiometer: ')
       call output ( signals(i)%radiometer )
       call output ( ' - ' )
-      call getRadiometerName ( signals(i)%radiometer, str )
-      call output ( TRIM(str) )
+      if ( associated(radiometers) ) then
+        call getRadiometerName ( signals(i)%radiometer, str )
+        call output ( TRIM(str) )
+      else
+        call output ( 'Cannot get radiometer name', advance='yes' )
+      end if
       call output ( '   First LO: ')
       call output ( signals(i)%lo, advance='yes')
       call output ( '   Band: ')
       call output ( signals(i)%band )
       call output (' - ')
-      call getBandName ( signals(i)%band, str )
-      call output ( TRIM(str) )
+      if ( associated(bands) ) then
+        call getBandName ( signals(i)%band, str )
+        call output ( TRIM(str) )
+      else
+        call output ( 'Cannot get band name', advance='yes' )
+      end if
       call output ( '   Band center frequency: ')
       call output ( signals(i)%centerFrequency, advance='yes')
       call output ( '   SpectrometerType: ')
       call output ( signals(i)%spectrometerType )
       call output ( ' - ' )
-      call display_string ( spectrometerTypes(signals(i)%spectrometerType)%name )
+      if ( associated(spectrometerTypes) ) then
+        call display_string ( spectrometerTypes(signals(i)%spectrometerType)%name )
+      else
+        call output ( 'Cannot get spectrometer type name', advance='yes' )
+      end if
       call output ( '   Channels: ' )
       call output ( lbound(signals(i)%frequencies,1), 3 )
       call output ( ':' )
       call output ( ubound(signals(i)%frequencies,1), 3, advance='yes' )
-      call output ( 'Sideband: ' )
+      call output ( '   Sideband: ' )
       call output ( signals(i)%sideband, advance='yes')
-      call output ( '   Frequencies:', advance='yes' )
-      call dump ( signals(i)%frequencies )
-      call output ( '   Widths:', advance='yes' )
-      call dump ( signals(i)%widths )
+      if ( my_details ) then
+        call output ( '   Frequencies' )
+        if ( signals(i)%deferred ) call output ( '(deferred)' )
+        call output ( ':', advance='yes' )
+        call dump ( signals(i)%frequencies )
+        call output ( '   Widths:' )
+        if ( signals(i)%deferred ) call output ( '(deferred)' )
+        call output ( ':', advance='yes' )
+        call dump ( signals(i)%widths )
+      else
+        call output ( '   Frequencies and widths are' )
+        if ( .not. signals(i)%deferred ) call output ( ' not' )
+        call output ( ' deferred', advance='yes' )
+      end if ! my_details
       if (associated(signals(i)%channels)) then
-        call output ( '    Channel Flags:', advance='yes' )
+        call output ( '   Channel Flags:', advance='yes' )
         call dump( signals(i)%channels )
       else
-        call output ( 'All channels selected', advance='yes' )
+        call output ( '   All channels selected', advance='yes' )
       end if
     end do
   end subroutine DUMP_SIGNALS
@@ -1128,6 +1173,11 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.35  2001/05/02 19:12:11  vsnyder
+! Nullify signal%channels so it won't get hosed by subsequent allocate_test
+! Spiffify dump_signals and make it work if modules etc. are already gone
+! Get label into name field of signals.
+!
 ! Revision 2.34  2001/04/26 19:33:25  livesey
 ! Add sideband field to getSignalName etc.
 !
