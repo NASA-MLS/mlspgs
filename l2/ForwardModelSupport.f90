@@ -356,10 +356,8 @@ contains ! =====     Public Procedures     =============================
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: GSON                     ! Son of son
     integer :: I, J, K                  ! Subscript and loop inductor.
-    integer :: MoleculeSign             ! in the info%molecules array.
     integer :: MoleculeTree             ! Tree index of f_molecules
     integer :: NELTS                    ! Number of elements of an array tree
-    integer :: NoCat                    ! Number of catalog elements
     integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
     integer :: PFATree                  ! Tree index of f_PFAMolecules
     integer :: SIDEBAND                 ! Returned from Parse_Signal
@@ -790,7 +788,6 @@ op:   do j = 2, nsons(pfaTree)
       use Molecules, only: L_H2O, L_H2O_18, L_N2, L_N2O, L_O2, L_O3, L_O_18_O
       integer :: J
       logical :: GotH2O, GotO3
-      character(len=127) :: MolName
       gotH2O = .false.; gotO3 = .false.
       do j = 1, size(info%molecules) - 1
         select case ( info%molecules(j) )
@@ -1098,6 +1095,9 @@ op:   do j = 2, nsons(pfaTree)
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.106  2004/12/28 00:22:34  vsnyder
+! Remove unused declarations
+!
 ! Revision 2.105  2004/12/13 20:15:40  vsnyder
 ! Add filter file names to string table
 !
