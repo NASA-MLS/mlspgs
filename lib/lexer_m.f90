@@ -148,8 +148,8 @@ contains
 !  op        4     4      4      4     4     4     4    4     4     4
 !  pun       5     5      5      5     5     5     5    5     5     5
 !  cmt      cmt   cmt    cmt    cmt   cmt   cmt  start  1    cmt   cmt
-!  cont      7     7      7      7     7    cmt  start  1   cont    7
-!  cont2   start start  start  start start cont2 cont2  1  cont2  cont2
+!  cont      7     7      7      7     7   cont2 cont2  1   cont    7
+!  cont2   start start  start  start start cont2 cont2  1  cont2  cont
 !  sq1      sq1   sq1    sq1    sq1   sq1   sq1    9    9    sq1   sq1
 !  sq2       8     8      8      8     8     8     8    8     8     8
 !  sa1      sa1   sa1    sa1    sa1   sa1   sa1    9    9    sa1   sa1
@@ -208,8 +208,8 @@ contains
         case ( cmt )
           call new_line
           state = start
-          need = .false.           ! This doesn't allow comments between
-          ch = EOL                 ! continuation lines
+          need = .false.
+          ch = EOL
         case ( spaces );           need = .true.
         case ( cont );             state = contin; need = .true.
         case ( eof_in )
@@ -382,8 +382,8 @@ contains
         select case ( class )
         case ( cmt )
           call new_line
-!         state = start
           need = .true.
+        case ( cont );             state = contin; need = .true.
         case ( eol_in, spaces );   need = .true.
         case default;              state = start
         end select ! class
@@ -603,6 +603,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.15  2001/06/21 20:08:10  vsnyder
+! Remove obsolete comments, allow blank continuations
+!
 ! Revision 2.14  2001/06/21 18:46:57  vsnyder
 ! Allow multiple comments and blank lines between continuations
 !
