@@ -24,6 +24,7 @@ module OutputAndClose ! outputs all data from the Join module to the
   character(len=len(idParm)) :: Id = idParm
   character(len=*), parameter :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   ! -----     Private declarations     ---------------------------------
@@ -895,9 +896,16 @@ contains ! =====     Public Procedures     =============================
     end  if
   end subroutine ANNOUNCE_ERROR
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.60  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.59  2002/08/21 02:35:18  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
