@@ -63,7 +63,8 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc 
 
 depends:
-	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 -d test_sparsify.f90
+	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 \
+        -d test_sparsify.f90 -d MatrixModule_0.f90 -d MatrixModule_1.f90 
 
 clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -73,6 +74,8 @@ clean:
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.f90 ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/core ; \
 	fi ; \
 	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
 		echo "Deleting $(MLSCONFG) directory" ; \
@@ -102,6 +105,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.8  2000/11/22 21:48:20  pwagner
+# Omitting MatrixModule_n from lib
+#
 # Revision 2.7  2000/11/21 00:40:05  pwagner
 # machine.f90 out of lib/*.f90
 #
