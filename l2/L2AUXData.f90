@@ -38,12 +38,13 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 !    & L_MAF, L_MIF, L_NONE
   use L1BData, only: L1BDATA_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8, R4
+  use MLSCommon, only: R8, R4, DEFAULTUNDEFINEDVALUE
   use MLSL2Options, only: DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
-  use MLSStrings, only: Array2List, GetStringElement, List2Array, LowerCase, &
+  use MLSStrings, only: LowerCase
+  use MLSStringLists, only: Array2List, GetStringElement, List2Array, &
     & NumStringElements
   use Output_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
@@ -130,7 +131,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   ! For Announce_Error
     integer :: ERROR
 
-  real, parameter    :: UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
+  real, parameter    :: UNDEFINED_VALUE = DEFAULTUNDEFINEDVALUE ! -999.99 
   integer, parameter :: L2AUXRANK=3     ! Dimensionality of L2AUXData_T%values
   logical, parameter :: DEEBUG = .false.
   ! Write phase and section names as file-level attributes? (only for hdf5)
@@ -1753,6 +1754,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.64  2004/08/04 23:19:57  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.63  2004/06/29 18:05:26  pwagner
 ! May write phase, section names as file-level attributes
 !
