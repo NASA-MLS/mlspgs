@@ -441,7 +441,8 @@ program MLSL2
       call output ( 'End type-checked abstract syntax tree', advance='yes' )
     end if
 
-    call add_to_section_timing( 'main', t0 )
+    t2 = t0
+    call add_to_section_timing( 'main', t2 )
 
     if(error /= 0) then
        call MLSMessage(MLSMSG_Error, ModuleName, &
@@ -606,6 +607,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.81  2002/09/24 18:17:20  pwagner
+! Consistent with add_to_section_timing now calling time_now at its end
+!
 ! Revision 2.80  2002/08/29 21:47:51  livesey
 ! Added subblock option
 !
