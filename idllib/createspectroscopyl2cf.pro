@@ -76,6 +76,7 @@ for mol = 0, noMols - 1 do begin
     'H$_{2}^{18}$O'   : thisMolName = 'H2O_18 H2O'
     'H$_{2}$O$_{2}$'  : thisMolName = 'H2O2'
     'HNO$_{3}$'       : thisMolName = 'HNO3'
+    'HNO$_{3}$-v5'    : thisMolName = 'HNO3_v5 HNO3'
     'HNO$_{3}$-v6'    : thisMolName = 'HNO3_v6 HNO3'
     'HNO$_{3}$-v7'    : thisMolName = 'HNO3_v7 HNO3'
     'HNO$_{3}$-v8'    : thisMolName = 'HNO3_v8 HNO3'
