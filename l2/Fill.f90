@@ -2473,7 +2473,8 @@ contains ! =====     Public Procedures     =============================
     fileID=l1bInfo%l1bOAID
     select case ( quantity%template%quantityType )
     case ( l_radiance )
-      call GetSignalName ( quantity%template%signal, nameString, noChannels=.TRUE. )
+      call GetSignalName ( quantity%template%signal, nameString, &
+        & sideband=quantity%template%sideband, noChannels=.TRUE. )
       fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString )
     case ( l_tngtECI )
       call GetModuleName( quantity%template%instrumentModule,nameString )
@@ -2875,6 +2876,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.103  2002/01/18 00:24:21  livesey
+! Added sideband argument to call to GetSignalName when reading
+! L1B radiances (so can now read split signals).
+!
 ! Revision 2.102  2002/01/16 18:06:31  livesey
 ! Changed neverFail flag in ReadL1B to false.  I want to see
 ! the error message.
