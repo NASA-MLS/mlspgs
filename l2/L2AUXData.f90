@@ -5,14 +5,14 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Dump_0, only: DUMP
-  use Hdf, only: DFACC_READ, DFNT_FLOAT64, DFNT_INT8, SFCREATE, SFDIMID, &
+  use Hdf, only: DFACC_READ, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT8, SFCREATE, SFDIMID, &
     & SFSDSCALE, SFEND, &
     & SFENDACC, SFSTART, SFRDATA_F90, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA_F90
   use intrinsic, only: LIT_INDICES, L_CHANNEL, L_GEODANGLE, L_LSBFREQUENCY, &
     & L_MAF, L_MIF, L_NONE, L_TIME, L_USBFREQUENCY
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, R4
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
@@ -391,6 +391,7 @@ contains ! =====     Public Procedures     =============================
     integer :: start(3), stride(3), edge(3), dims(3)
 
     logical :: firstCheck, lastCheck
+    real (r4), dimension(:,:,:), pointer :: TMPVALUES
 
     ! Attach to the file for reading
 
@@ -458,9 +459,16 @@ contains ! =====     Public Procedures     =============================
     ! Read the SD
     start = 0
     stride = 1
-    status = sfrdata_f90(sds_id, start, stride, dim_sizes, l2aux%values)
-    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-         & write SD.')
+    nullify ( tmpValues )
+    call Allocate_test ( tmpValues, dim_sizes(1), dim_sizes(2), dim_sizes(3), &
+      & 'tmpValues', ModuleName )
+
+    status = sfrdata_f90(sds_id, start, stride, dim_sizes, tmpValues )
+    if (status == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & 'Failed to read SD.')
+    l2aux%values = tmpValues
+
+    call Deallocate_test ( tmpValues, 'tmpValues', ModuleName )
 
     ! Deallocate local variables
 
@@ -533,7 +541,7 @@ contains ! =====     Public Procedures     =============================
     dimSizes=PACK(l2aux%dimensions%noValues, goodDim)
 
     ! Create the sd within the file
-    sdId= SFcreate ( l2FileHandle, nameString, DFNT_FLOAT64, &
+    sdId= SFcreate ( l2FileHandle, nameString, DFNT_FLOAT32, &
       & noDimensionsUsed, dimSizes)
 
     ! Now define the dimensions
@@ -582,7 +590,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Now write the data
     status= SFWDATA_F90(sdId, start(1:noDimensionsUsed), &
-      & stride(1:noDimensionsUsed), dimSizes, l2aux%values)
+      & stride(1:noDimensionsUsed), dimSizes, real(l2aux%values))
     if ( status /= 0 ) then
 	   call announce_error (0,&
       & "Error writing SDS data to  l2aux file:  " )
@@ -665,6 +673,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.24  2002/08/21 01:04:53  livesey
+! Changed to single precision for data
+!
 ! Revision 2.23  2002/08/15 21:47:04  pwagner
 ! WriteL2AuxData now returns non-zero status if it fails
 !
