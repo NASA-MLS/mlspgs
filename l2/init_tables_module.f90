@@ -720,6 +720,7 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_snoop, &
              begin, f+f_comment, t+t_string, n+n_field_type, &
+             begin, f+f_phaseName, t+t_string, n+n_field_type, &
              begin, f+f_level, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_dumpblocks, &
@@ -823,6 +824,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.184  2001/10/31 22:00:18  livesey
+! Added phaseName to snooper
+!
 ! Revision 2.183  2001/10/31 19:07:35  livesey
 ! Hooked fGrids into quantity templates
 !
