@@ -14,15 +14,18 @@ begin Fill
 
   ;; ------------------------------------- Temperature-CorePlusR5
   !define(flaggingBands,{1,17,22})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
   ;; ------------------------------------- GPH-CorePlusR5
   !define(flaggingBands,{1,17,22})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800)
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=5K,cloudMin= -10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.6  2004/04/28 23:06:57  livesey
+; Changes to cloud flags.
+;
 ; Revision 1.5  2004/04/28 00:32:19  livesey
 ; Bug fix
 ;
