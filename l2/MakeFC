@@ -358,7 +358,7 @@ internalupdate: internalsaymake
 install: $(PROG)
 	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
 	if [ ! -d $(INSTALLDIR) ] ; then \
-	   $(MLSBIN)/mkdir_cascade.sh $(INSTALLDIR) ; \
+	   $(MLSBIN)/mkpath.sh $(INSTALLDIR) ; \
 	fi ; \
 	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl2 ] ; then \
      mv $(PLATFORMS)/$(MLSCONFG)/mlsl2 $(INSTALLDIR) ; \
@@ -384,6 +384,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.61  2003/06/03 20:38:24  pwagner
+# Renamed mkdir_cascade mkpath
+#
 # Revision 2.60  2003/05/21 20:52:13  pwagner
 # Added PROG to .PHONY list as appropriate
 #
