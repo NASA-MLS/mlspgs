@@ -697,12 +697,12 @@ contains ! =====     Public Procedures     =============================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'eta_phi' )
 
-      allocate ( ifm%elvar(noMAFs), stat=status )
+      allocate ( ifm%elvar(no_phi_t), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'elvar' )
 
-      call allocate_test ( ifm%geoc_lat, noMAFs, 'geoc_lat', ModuleName )
-      call allocate_test ( ifm%e_rad, noMAFs, 'e_rad', ModuleName )
+      call allocate_test ( ifm%geoc_lat, no_phi_t, 'geoc_lat', ModuleName )
+      call allocate_test ( ifm%e_rad, no_phi_t, 'e_rad', ModuleName )
 
       call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', ModuleName )
       call allocate_test ( ifm%h_glgrid, maxPath, no_phi_t, 'h_glgrid', &
@@ -1376,6 +1376,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.109  2001/04/23 22:22:50  livesey
+! Working version.  Can now have no_phi_t /= noMAFs
+!
 ! Revision 2.108  2001/04/23 22:09:54  zvi
 ! Re-Introducing no_phi_t etc.
 !
