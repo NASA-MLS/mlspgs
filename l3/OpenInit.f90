@@ -11,7 +11,7 @@ MODULE OpenInit
    USE MLSCommon
    USE MLSL3Common
    USE MLSMessageModule
-   USE MLSPCF
+   USE MLSPCF3
    USE PCFModule
    USE SDPToolkit
    USE dates_module
@@ -49,9 +49,8 @@ MODULE OpenInit
 
      CHARACTER (LEN=4) :: cycle
 
-     ! version string in PCF file names
+     ! version string in PCF output file names
 
-     CHARACTER (LEN=15) :: inputVersion		! input files
      CHARACTER (LEN=15) :: outputVersion	! output files
 
      ! first & last days of input & output windows
@@ -99,13 +98,6 @@ CONTAINS
       INTEGER ::  indx, mlspcf_log, returnStatus, version
 
 ! Retrieve values set in PCF & assign them to variables.
-
-      returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_InputVersion, &
-                                          l3pcf%inputVersion)
-      IF (returnStatus /= PGS_S_SUCCESS) THEN
-         msr = UDRP_ERR // 'InputVersion'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
 
       returnStatus = pgs_pc_getConfigData(mlspcf_l3_param_OutputVersion, &
                                           l3pcf%outputVersion)
@@ -310,11 +302,10 @@ CONTAINS
 
 ! Check the parser output; fill L3CFProd_T
 
-      CALL FillL3CF(cf, l3pcf%inputVersion, l3pcf%outputVersion, dates, &
-                    numDays, l3cf, cfDef)
+      CALL FillL3CF(cf, l3pcf%outputVersion, dates, numDays, l3cf, cfDef)
 
 !----------------------------------
-   END Subroutine OpenAndInitialize
+   END SUBROUTINE OpenAndInitialize
 !----------------------------------
 
 !----------------------------------------------------
@@ -431,6 +422,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.6  2001/01/18 16:52:28  nakamura
+! Added type L3CFDef_T; moved minDays from PCF to cf.
+!
 ! Revision 1.5  2001/01/16 17:48:09  nakamura
 ! Added code for annotating and for retrieving a name template for the log in the cf.
 !
