@@ -90,7 +90,7 @@ CONTAINS
   ! This routine constructs a minor frame based quantity.
 
   SUBROUTINE ConstructMinorFrameQuantity(l1bInfo,chunk,instrumentModule,qty,&
-       & noChans,regular,subVectorLen,storeByChannel,mifGeolocation)
+       & noChans,regular,subVectorLen,firstIndexChannel,mifGeolocation)
 
     ! Dummy arguments
     TYPE (L1BInfo_T), INTENT(IN) :: l1bInfo ! File handles for l1bdata
@@ -100,7 +100,7 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: noChans
     LOGICAL, INTENT(IN), OPTIONAL :: regular
     INTEGER, INTENT(IN), OPTIONAL :: subVectorLen
-    LOGICAL, INTENT(IN), OPTIONAL :: storeByChannel
+    LOGICAL, INTENT(IN), OPTIONAL :: firstIndexChannel
     TYPE (QuantityTemplate_T), INTENT(IN), DIMENSION(:), OPTIONAL :: &
          & mifGeolocation
 
@@ -139,7 +139,7 @@ CONTAINS
        CALL SetupNewQuantityTemplate(qty,&
             & source=mifGeolocation(instrumentModule), &
             & noChans=noChans, regular=regular,subVectorLen=subVectorLen,&
-            & storeByChannel=storeByChannel)
+            & firstIndexChannel=firstIndexChannel)
 
        ! Now we're going to deal with a VGrid for this quantity
 
@@ -177,7 +177,7 @@ CONTAINS
        CALL SetupNewQuantityTemplate(qty,noSubVectors=noMAFs, &
             & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE.,&
             & stacked=.FALSE.,regular=regular,subVectorLen=subVectorLen,&
-            & storeByChannel=storeByChannel,minorFrame=.TRUE.)
+            & firstIndexChannel=firstIndexChannel,minorFrame=.TRUE.)
 
        qty%noSubVectorsLowerOverlap=chunk%noMAFsLowerOverlap
        qty%noSubVectorsUpperOverlap=chunk%noMAFsUpperOverlap
@@ -271,7 +271,7 @@ CONTAINS
     TYPE(MLSSignal_T), DIMENSION(:), POINTER :: signals
     INTEGER :: instrumentModule
     INTEGER :: noChans=1
-    LOGICAL :: storeByChannel=.FALSE.
+    LOGICAL :: firstIndexChannel=.FALSE.
 
     ! Executable code
 
@@ -308,8 +308,8 @@ CONTAINS
           molecule=cell%charValue
        CASE("BAND")
           band=cell%charValue
-       CASE("STOREBYCHANNEL")
-          storeByChannel=(cell%intValue==1)
+       CASE("FIRSTINDEXCHANNEL")
+          firstIndexChannel=(cell%intValue==1)
        END SELECT
     END DO
 
@@ -394,7 +394,7 @@ CONTAINS
        ! Construct an empty quantity
 
        CALL ConstructMinorFrameQuantity(l1bInfo,chunk,instrumentModule,qty, &
-            & noChans=noChans,storeByChannel=storeByChannel, &
+            & noChans=noChans,firstIndexChannel=firstIndexChannel, &
             & mifGeolocation=mifGeolocation)
 
        ! Fill what information we can
@@ -421,6 +421,10 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.7  2000/01/18 21:34:23  livesey
+! Removed reference to obsolete hGrid%profileIndices.
+! Other typo fixes.
+!
 ! Revision 1.6  2000/01/18 21:30:57  livesey
 ! Made sure that noSubVectors(Upper/Lower)Overlap are filled
 ! appropriately.  This is done right for l2gp and minor frame
