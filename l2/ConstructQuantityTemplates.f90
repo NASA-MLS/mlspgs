@@ -15,9 +15,10 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     & F_LOGBASIS, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
     & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
   use INIT_TABLES_MODULE, only: FIELD_FIRST, FIELD_LAST, &
-    FIRST_LIT, LAST_LIT, L_BASELINE, L_CHANNEL, L_CloudIce,  L_CLOUDWATER,&
+    FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
+    L_CHANNEL, L_CloudIce,  L_CLOUDWATER,&
     L_CLOUDEXTINCTION, L_CLOUDINDUCEDRADIANCE, L_CLOUDRADSENSITIVITY, &
-    L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
+    L_COLUMNABUNDANCE, L_EARTHREFL, L_EFFECTIVEOPTICALDEPTH, &
     L_EARTHRADIUS, L_ELEVOFFSET, L_EXTINCTION, L_GEODALTITUDE, L_GPH, &
     L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, L_MASSMEANDIAMETERICE, &
     L_MASSMEANDIAMETERWATER, L_NONE, L_ORBITINCLINATION, &
@@ -27,7 +28,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
     L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TOTALEXTINCTION, L_TRUE,&
     L_VMR, L_XYZ, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_EXTINCTION, &
-    PHYQ_IceDensity, PHYQ_LENGTH, &
+    PHYQ_DOBSONUNITS, PHYQ_IceDensity, PHYQ_LENGTH, PHYQ_PRESSURE, &
     PHYQ_TEMPERATURE, PHYQ_VELOCITY, PHYQ_VMR, PHYQ_ZETA
   use L1BData, only: L1BData_T, READL1BDATA, DEALLOCATEL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
@@ -59,12 +60,13 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   integer :: ERROR
 
 ! Error codes for "announce_error"
-  integer, parameter :: BadUnitMessage = 1
-  integer, parameter :: InappropriateQuantity = 2
-  integer, parameter :: NeedGrid = 3
-  integer, parameter :: NoQuantityType = 4
-  integer, parameter :: UnnecessaryGrid = 5
-  integer, parameter :: noModule=6
+  integer, parameter :: No_Error_Code = 0
+  integer, parameter :: BadUnitMessage =         No_Error_Code+1
+  integer, parameter :: InappropriateQuantity =  BadUnitMessage+1
+  integer, parameter :: NeedGrid =               InappropriateQuantity+1
+  integer, parameter :: NoQuantityType =         NeedGrid+1
+  integer, parameter :: UnnecessaryGrid =        NoQuantityType+1
+  integer, parameter :: noModule=                UnnecessaryGrid+1
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -141,31 +143,33 @@ contains ! =====     Public Procedures     =============================
     molecule = 0
 
     natural_units = 0
-    natural_units(l_baseline) =       PHYQ_Temperature
-    natural_units(l_cloudice) =       PHYQ_IceDensity
-    natural_units(l_earthRefl) =      PHYQ_Dimensionless
-    natural_units(l_elevOffset) =     PHYQ_Angle
-    natural_units(l_extinction) =     PHYQ_Extinction
-    natural_units(l_gph) =            PHYQ_Length
-    natural_units(l_heightOffset ) =  PHYQ_Length
-    natural_units(l_losTransFunc) =   PHYQ_Dimensionless
-    natural_units(l_losVel) =         PHYQ_Velocity
-    natural_units(l_orbitInclination) =   PHYQ_Angle
-    natural_units(l_ptan) =           PHYQ_Zeta
-    natural_units(l_radiance) =       PHYQ_Temperature
-    natural_units(l_cloudinducedradiance) =       PHYQ_Temperature
-    natural_units(l_cloudradsensitivity) =       PHYQ_Temperature
-    natural_units(l_effectiveopticaldepth) =       PHYQ_Dimensionless
-    natural_units(l_earthradius) =    PHYQ_Length
-    natural_units(l_refGPH) =         PHYQ_Length
-    natural_units(l_scGeocAlt ) =     PHYQ_Length
-    natural_units(l_scVel) =          PHYQ_Velocity
-    natural_units(l_scanResidual ) =  PHYQ_Length
-    natural_units(l_spaceRadiance) =  PHYQ_Temperature
-    natural_units(l_temperature) =    PHYQ_Temperature
-    natural_units(l_tngtGeocAlt) =    PHYQ_Length
-    natural_units(l_tngtGeodAlt) =    PHYQ_Length
-    natural_units(l_vmr) =            PHYQ_Vmr
+    natural_units(l_baseline) =                PHYQ_Temperature
+    natural_units(l_boundaryPressure) =        PHYQ_Pressure
+    natural_units(l_columnAbundance) =         PHYQ_DobsonUnits
+    natural_units(l_cloudice) =                PHYQ_IceDensity
+    natural_units(l_earthRefl) =               PHYQ_Dimensionless
+    natural_units(l_elevOffset) =              PHYQ_Angle
+    natural_units(l_extinction) =              PHYQ_Extinction
+    natural_units(l_gph) =                     PHYQ_Length
+    natural_units(l_heightOffset ) =           PHYQ_Length
+    natural_units(l_losTransFunc) =            PHYQ_Dimensionless
+    natural_units(l_losVel) =                  PHYQ_Velocity
+    natural_units(l_orbitInclination) =        PHYQ_Angle
+    natural_units(l_ptan) =                    PHYQ_Zeta
+    natural_units(l_radiance) =                PHYQ_Temperature
+    natural_units(l_cloudinducedradiance) =    PHYQ_Temperature
+    natural_units(l_cloudradsensitivity) =     PHYQ_Temperature
+    natural_units(l_effectiveopticaldepth) =   PHYQ_Dimensionless
+    natural_units(l_earthradius) =             PHYQ_Length
+    natural_units(l_refGPH) =                  PHYQ_Length
+    natural_units(l_scGeocAlt ) =              PHYQ_Length
+    natural_units(l_scVel) =                   PHYQ_Velocity
+    natural_units(l_scanResidual ) =           PHYQ_Length
+    natural_units(l_spaceRadiance) =           PHYQ_Temperature
+    natural_units(l_temperature) =             PHYQ_Temperature
+    natural_units(l_tngtGeocAlt) =             PHYQ_Length
+    natural_units(l_tngtGeodAlt) =             PHYQ_Length
+    natural_units(l_vmr) =                     PHYQ_Vmr
 
     noChans = 1
     quantitytype = 0
@@ -327,7 +331,17 @@ contains ! =====     Public Procedures     =============================
         qty%losAngle = 0.0
       end if
 
-      if ( vGridIndex /= 0 ) then
+      if ( quantityType == l_columnAbundance &
+      & .or. &
+      &   quantityType == l_boundaryPressure) then
+        if ( vGridIndex/=0 ) then
+          call announce_error( root, no_error_code, &
+          & 'No vGrid should be specified for column abundance ' &
+          & // 'boundary pressure')
+        endif
+        frequencyCoordinate = L_None
+        qty%verticalCoordinate = L_None
+      elseif ( vGridIndex /= 0 ) then
         call CopyVGridInfoIntoQuantity ( vGrids(vGridIndex), qty )
       else
         qty%surfs = 0.0
@@ -358,13 +372,18 @@ contains ! =====     Public Procedures     =============================
 ! =====     Private Procedures     =====================================
 
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
-  subroutine ANNOUNCE_ERROR ( WHERE, CODE )
+  subroutine ANNOUNCE_ERROR ( WHERE, CODE, ExtraMessage )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
+    character (LEN=*), intent(in), optional :: ExtraMessage
 
     error = max(error,1)
     call output ( '***** At ' )
-    call print_source ( source_ref(where) )
+    if ( where > 0 ) then
+      call print_source ( source_ref(where) )
+    else
+      call output ( '(no lcf tree available)' )
+    end if
     call output ( ': ' )
     select case ( code )
     case ( badUnitMessage )
@@ -380,7 +399,12 @@ contains ! =====     Public Procedures     =============================
       call output ( "Quantity has an unnecessary vGrid or hGrid.", advance='yes' )
     case ( noModule )
       call output ( "No module given or deducible.", advance='yes' )
+    case default
+      call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
+    if ( present(ExtraMessage) ) then
+      call output(ExtraMessage, advance='yes')
+    end if
   end subroutine ANNOUNCE_ERROR
 
   ! --------------------------------  ConstructMinorFrameQuantity  -----
@@ -714,6 +738,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.50  2001/07/30 23:28:38  pwagner
+! Added columnAbundances scaffolding--needs fleshing out
+!
 ! Revision 2.49  2001/07/26 17:34:25  jonathan
 ! add DTcir, etc, jonathan
 !
