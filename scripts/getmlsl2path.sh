@@ -15,71 +15,84 @@ case "$MACHINE" in
 	DESKTOP=0 ;;
 esac
 
+VERSION=v1.0.1
+SIMULATION=s5
+
 # Now work out what we have been asked for.
 while [ -n "$(echo $1)" ]; do
+    # First the 'global' arguments
+    if [ -z "${1##--version=*}" ]; then
+	VERSION=${1#--version=}
+    fi
+    if [ -z "${1##--simulation=*}" ]; then
+	VERSION=${1#--simulation=}
+    fi
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.1.9"
+	    echo "$HOME/$VERSION"
 	else
 	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
 	fi
     fi
     if [ $1 == "--output" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.1.9"
+	    echo "$HOME/$VERSION"
 	else
-	    echo "/bigdata/livesey/v1.1.9"
+	    echo "/bigdata/livesey/$VERSION"
 	fi
     fi
     if [ $1 == "--l2pc" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "/work3/livesey/"
 	else
-	    echo "/bigdata/livesey/v1.1.9"
+	    echo "/bigdata/livesey/$VERSION"
 	fi
     fi
     if [ $1 == "--truthl2gp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.1.9"
+	    echo "$HOME/$VERSION"
 	else
-	    echo "/data/emls/l2gp/s6--t/1996"
+	    echo "/data/emls/l2gp/$SIMULATION--t/1996"
 	fi
     fi
     if [ $1 == "--corel2gp" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.1.9"
+	    echo "$HOME/$VERSION"
 	else
-	    echo "/bigdata/livesey/v1.1.9"
+	    echo "/bigdata/livesey/$VERSION"
 	fi
     fi
     if [ $1 == "--l1boa" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.1.9"
+	    echo "$HOME/$VERSION"
 	else
-	    echo "/data/emls/l1boa/s6--t/1996"
+	    echo "/data/emls/l1boa/$SIMULATION--t/1996"
 	fi
     fi
     if [ $1 == "--l1brad" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.1.9"
+	    echo "$HOME/$VERSION"
 	else
-	    echo "/bigdata/livesey/v1.1.9"
+	    echo "/bigdata/livesey/$VERSION"
 	fi
     fi
     if [ $1 == "--l2cal" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "$HOME/v1.1.9"
+	    echo "$HOME/$VERSION"
 	else
 	    echo "/data/emls/l2cal"
 	fi
     fi
     if [ $1 == "--leapsec" ]; then
-	echo "$HOME/emls/v1.1.9"
+	echo "$HOME/emls/$VERSION"
     fi
     shift
 done
 
 # $Log$
+# Revision 1.8  2003/05/08 01:03:20  livesey
+# Changed to s5--t
+#
 # Revision 1.7  2003/05/07 20:54:53  livesey
 # Moved to v1.1.9
 #
