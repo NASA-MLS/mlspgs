@@ -236,6 +236,7 @@ contains ! ======================= Public Procedures =========================
     endif
     if ( needsFileName ) then
       myHdfVersion = mls_hdf_version ( trim(FileName) )
+      if ( myHdfVersion < 0 ) print *, 'uh-oh, mls_hdf_version: ', myhdfVersion
     else
       myHdfVersion = hdfVersion
     endif
@@ -251,9 +252,15 @@ contains ! ======================= Public Procedures =========================
     if ( MLS_SWATTACH /= -1 ) then
       return
     elseif ( myDontFail ) then
+      if ( present(hdfVersion) ) print *, 'hdfVersion: ', hdfVersion
+      print *, 'myhdfVersion: ', myhdfVersion
+      if ( present(FileName) ) print *, 'FileName: ', trim(FileName)
       CALL MLSMessage ( MLSMSG_Warning, moduleName,  &
           & 'Failed to attach swath name ' // trim(swathname) )
     else
+      if ( present(hdfVersion) ) print *, 'hdfVersion: ', hdfVersion
+      print *, 'myhdfVersion: ', myhdfVersion
+      if ( present(FileName) ) print *, 'FileName: ', trim(FileName)
       CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to attach swath name ' // trim(swathname) )
     endif
@@ -1789,6 +1796,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.17  2004/02/05 23:31:05  pwagner
+! Extra debugging when appropriate
+!
 ! Revision 2.16  2004/01/23 01:12:28  pwagner
 ! Some care taken in handling ...inq.. functions
 !
