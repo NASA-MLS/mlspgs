@@ -19,7 +19,7 @@ module L2PC_m
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
     & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
-    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK
+    & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
@@ -40,6 +40,7 @@ module L2PC_m
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
   public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
+  public :: OutputHDF5L2PC
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -425,6 +426,17 @@ contains ! ============= Public Procedures ==========================
     end do
   end subroutine MakeMatrixPackMap
 
+  ! --------------------------------------------- OutputHDF5L2PC
+  subroutine OutputHDF5L2PC ( filename, matrices, quantitiesNode, packed )
+    character (len=*), intent(in) :: FILENAME
+    type (Matrix_Database_T), dimension(:), pointer :: MATRICES
+    integer, intent(in) :: QUANTITIESNODE
+    logical, intent(in) :: PACKED
+
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Wrong version of L2PC_m used, no HDF5 support here' )
+  end subroutine OutputHDF5L2PC
+
   ! --------------------------------------- WriteL2PC ---------------
   subroutine ReadOneL2PC ( L2pc, Unit, Eof )
     ! This subroutine writes an l2pc to a file
@@ -713,6 +725,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.33  2002/06/12 18:00:12  livesey
+! Stubs for HDF5 stuff
+!
 ! Revision 2.32  2002/05/21 01:13:24  livesey
 ! New file format includes name for reading into IDL
 !
