@@ -7,7 +7,7 @@ module MLSSignals_M
   use DUMP_0, only: DUMP
   use Expr_M, only: Expr
   use Init_MLSSignals_m ! Everything
-  use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices
+  use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Frequency, PHYQ_Indices, S_Time
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
@@ -156,6 +156,8 @@ contains
     real(r8) :: Start                   ! "start" field of "spectrometer"
     real(r8) :: Step                    ! "step" field of "spectrometer"
     type(module_T) :: thisModule        ! To be added to database
+    logical :: TIMING                   ! For S_Time
+    real :: T1, T2                      ! For S_Time
     integer :: Units(2)                 ! of an expression
     double precision :: Value(2)        ! of an expression
     real(r8) :: Width                   ! "width" field of "spectrometer"
@@ -209,7 +211,7 @@ contains
         call decorate ( key, addBandToDatabase ( bands, band ) )
 
 
-      case ( s_module ) ! .............................. MODULE ........
+      case ( s_module ) ! ............................  MODULE  ........
         thisModule%name = sub_rosa(name)
         thisModule%spaceCraft = .false.
         thisModule%node = decoration(name)
@@ -313,7 +315,7 @@ contains
         nullify ( signal%widths )
 
 
-      case ( s_spectrometerType ) ! .............  SPECTROMETERTYPE .....
+      case ( s_spectrometerType ) ! ...........  SPECTROMETERTYPE  .....
         spectrometerType%name = sub_rosa(name)
         deferred = .false.
         first = 0
@@ -409,6 +411,14 @@ contains
         ! Nullify pointers to temporary stuff so it doesn't get hosed later
         nullify ( spectrometerType%frequencies )
         nullify ( spectrometerType%widths )
+
+      case ( s_time ) ! ...................................  TIME  .....
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
       case default
         ! Shouldn't get here if the type checker worked
       end select
@@ -427,6 +437,7 @@ contains
       end if
       call trace_end ( "MLSSignals" )
     end if
+    if ( timing ) call sayTime
 
     contains
     ! --------------------------------------------  AnnounceError  -----
@@ -500,6 +511,14 @@ contains
       if ( units(1) /= neededUnits ) &
         & call announceError ( wrongUnits, field, (/ neededUnits /) )
     end subroutine Expr_Check
+
+    ! --------------------------------------------------  SayTime  -----
+    subroutine SayTime
+      call cpu_time ( t2 )
+      call output ( "Timing for MLSSignals = " )
+      call output ( dble(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
 
   end subroutine MLSSignals
 
@@ -1103,6 +1122,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.30  2001/04/23 23:10:37  vsnyder
+! Add 'time' command
+!
 ! Revision 2.29  2001/04/21 01:06:37  vsnyder
 ! Make Signal%Deferred initially false
 !
