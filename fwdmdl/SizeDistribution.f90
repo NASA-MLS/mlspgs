@@ -183,7 +183,7 @@ contains
          end select
           ! ENDIF
 
-	      rn(i)=rn(i)+rn0
+	      rn(i)=rn(i)+rn0*2*dr0
 	      sum=sum+raoi*rn0*diam**3*3.1416/6*1e-12*2*dr0
 
        end do diameter_loop
@@ -242,7 +242,7 @@ contains
 
       bin_loop_water: do i=1, nr
        ! do 2300 i=1,nr
-
+         
 
         j1=1
 
@@ -255,10 +255,9 @@ contains
         do j=j1,j2
           diam=2.*j*dr0
           rn0=A*diam**c1*exp(-b*diam**c2)
-	       rn(i)=rn(i)+rn0
-	     enddo
-
-	     sum=sum+rn0*diam**3*3.1416/6*1e-12*2*dr0
+	       rn(i)=rn(i)+rn0*2*dr0
+               sum=sum+rn0*diam**3*3.1416/6*1e-12*2*dr0
+	 enddo
 
       enddo bin_loop_water
       !2300	continue
@@ -292,6 +291,9 @@ contains
 end module SizeDistribution
 
 ! $Log$
+! Revision 2.3  2004/04/15 23:11:56  jonathan
+! fix a bug..Note make affect DTcir at 100mb by a factor of ~2
+!
 ! Revision 2.2  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
