@@ -3,10 +3,10 @@
 ; mlspgs/idllib/createspectroscopyl2cf.pro do NOT edit it by hand.
 ;
 ; Source file information:
-; mol_data_table.tex,v 1.6 2001/11/01 00:48:51 bill Exp
+; mol_data_table.tex,v 1.7 2001/11/16 22:45:20 bill Exp
 ; line_data_table.tex,v 1.9 2001/11/02 18:41:17 bill Exp
 ; read_spect_dbase.pro,v 1.3 2001/10/15 17:48:16 livesey Exp
-; createspectroscopyl2cf.pro,v 1.6 2001/11/03 01:34:21 livesey Exp
+; createspectroscopyl2cf.pro,v 1.7 2001/11/08 00:13:21 livesey Exp
 
 begin spectroscopy
 
@@ -1139,7 +1139,7 @@ begin spectroscopy
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B13UF', $
     'B14UF' ]
 
-  spectra, molecule= HNO3, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+  spectra, molecule= HNO3, Qlog=[ 4.5641, 4.3054, 4.0029 ], $
     lines=[ HNO3_L1, HNO3_L2, HNO3_L3, HNO3_L4, HNO3_L5, HNO3_L6, $
     HNO3_L7, HNO3_L8, HNO3_L9, HNO3_L10, HNO3_L11, HNO3_L12, HNO3_L13, $
     HNO3_L14, HNO3_L15, HNO3_L16, HNO3_L17, HNO3_L18, HNO3_L19, $
@@ -1162,7 +1162,7 @@ begin spectroscopy
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
 
-  spectra, molecule= HNO3_v6, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+  spectra, molecule= HNO3_v6, Qlog=[ 4.5641, 4.3054, 4.0029 ], $
     lines=[ HNO3_v6_L1, HNO3_v6_L2 ]
 
   ;; ----------------------------------- HNO3_v7
@@ -1200,7 +1200,7 @@ begin spectroscopy
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
 
-  spectra, molecule= HNO3_v7, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+  spectra, molecule= HNO3_v7, Qlog=[ 4.5641, 4.3054, 4.0029 ], $
     lines=[ HNO3_v7_L1, HNO3_v7_L2, HNO3_v7_L3, HNO3_v7_L4, HNO3_v7_L5, $
     HNO3_v7_L6, HNO3_v7_L7, HNO3_v7_L8 ]
 
@@ -1215,7 +1215,7 @@ begin spectroscopy
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
 
-  spectra, molecule= HNO3_v8, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+  spectra, molecule= HNO3_v8, Qlog=[ 4.5641, 4.3054, 4.0029 ], $
     lines=[ HNO3_v8_L1, HNO3_v8_L2 ]
 
   ;; ----------------------------------- HNO3_v9
@@ -1249,7 +1249,7 @@ begin spectroscopy
     n1= 0.000, gamma= 0.0000, n2= 0.000, emlsSignals=[ 'B6UF', 'B27UM' ]$
     , umlsSignals=[ 'B4UF' ]
 
-  spectra, molecule= HNO3_v9, Qlog=[ 4.4462, 4.2589, 3.9947 ], $
+  spectra, molecule= HNO3_v9, Qlog=[ 4.5641, 4.3054, 4.0029 ], $
     lines=[ HNO3_v9_L1, HNO3_v9_L2, HNO3_v9_L3, HNO3_v9_L4, HNO3_v9_L5, $
     HNO3_v9_L6, HNO3_v9_L7 ]
 
