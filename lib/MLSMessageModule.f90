@@ -68,7 +68,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 
    ! May get some of these from MLSLibOptions? 
   type MLSMessageConfig_T
-    integer :: logFileUnit                     = -1
+    integer :: logFileUnit                     = -2
     character (len=MLSMSG_PrefixLen) :: prefix = ''
     logical :: suppressDebugs                  = .false.
     logical :: useToolkit                      = .true.
@@ -151,7 +151,7 @@ contains
 
          select case ( MLSMessageConfig%logFileUnit )
          case ( 0 : )
-           write ( UNIT=MLSMessageConfig%logFileUnit, FMT=* ) TRIM(line)
+           write ( UNIT=max(MLSMessageConfig%logFileUnit,1), FMT=* ) TRIM(line)
          case ( -1 )
            write ( UNIT=*, FMT=* ) TRIM(line)
          case default
@@ -167,7 +167,7 @@ contains
     ! log file if any and quit
 
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
-      if ( MLSMessageConfig%logFileUnit /= -1 ) &
+      if ( MLSMessageConfig%logFileUnit > 0 ) &
         & close ( MLSMessageConfig%logFileUnit )
       call exit_with_status ( 1 )
     end if
@@ -222,6 +222,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.11  2001/05/15 20:32:35  pwagner
+! Fix wrong unit nums in write and close; reset default
+!
 ! Revision 2.10  2001/05/14 23:43:59  pwagner
 ! Added severity for reason to write to log
 !
