@@ -87,6 +87,11 @@ L3DMData.o: l3dmdata.mod
    -T L3DMData.o l3dmdata.mod 
 #tree_checker.mod: init_tables_module.mod
 #	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+getcf_m.mod: init_tables_module.mod tree_checker.mod
+	$(UTILDIR)/newAifBdiff.sh -a getcf_m.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/getCF_m.f90 $(FAFTER)
+getCF_m.o: getcf_m.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T getCF_m.o getcf_m.mod 
 
 #  l3m
 l3dzdata.mod:
@@ -291,6 +296,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.4  2002/07/12 20:33:47  pwagner
+# l2/init_tables_module does not require custom build
+#
 # Revision 1.3  2002/07/03 00:22:39  pwagner
 # Added line to build l2/init_tables_module.mod
 #
