@@ -22,6 +22,7 @@ module DNWT_CLONE
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -62,9 +63,16 @@ contains
 
   subroutine DNWTDB
   end subroutine DNWTDB
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DNWT_CLONE
 
 ! $Log$
+! Revision 2.3  2002/10/07 23:43:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.2  2001/06/01 21:28:21  livesey
 ! Added some more USE's to make it compile
 !
