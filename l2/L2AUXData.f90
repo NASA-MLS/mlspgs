@@ -42,7 +42,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
-  use MLSStrings, only: Array2List, GetStringElement, List2Array, &
+  use MLSStrings, only: Array2List, GetStringElement, List2Array, LowerCase, &
     & NumStringElements
   use Output_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
@@ -173,7 +173,8 @@ contains ! =====     Public Procedures     =============================
     use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5DOPEN_F, H5DCLOSE_F
     use MLSFILES, only: FILENOTFOUND, WILDCARDHDFVERSION, &
       & mls_exists, mls_hdf_version, mls_sfstart, mls_sfend
-    use MLSHDF5, only: GetHDF5Attribute
+    use MLSHDF5, only: GetAllHDF5DSNames, GetHDF5Attribute, &
+      & IsHDF5AttributePresent
     !------------------------------------------------------------------------
 
     ! Given file names file1 and file2,
@@ -225,9 +226,16 @@ contains ! =====     Public Procedures     =============================
     if ( present(sdList) ) then
       mysdList = sdList
     else
-      call MLSMessage ( MLSMSG_Warning, ModuleName, &
-        & 'No way yet to find sdList in ' // trim(File1) )
-      return
+      call GetAllHDF5DSNames (trim(File1), '/', mysdList)
+      call output ( '============ DS names in ', advance='no' )
+      call output ( trim(file1) //' ============', advance='yes' )
+      if ( mysdList == ' ' ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'No way yet to find sdList in ' // trim(File1) )
+        return
+      else
+        call dump(mysdList, 'DS names')
+      endif
     endif
 
     file_exists = ( mls_exists(trim(File2)) == 0 )
@@ -270,12 +278,17 @@ contains ! =====     Public Procedures     =============================
               & 'Unable to open sd to read attribute in l2aux file' )
       endif
       ! Get QuantityType attribute
-      call GetHDF5Attribute ( sd_id, 'QuantityType', QuantityType )
+      if ( .not. IsHDF5AttributePresent(sd_id, 'QuantityType') ) then
+        QuantityType = GetQuantityTypeFromName(trim(sdName)) ! l_radiance
+      else
+        call GetHDF5Attribute ( sd_id, 'QuantityType', QuantityType )
+      endif
 	   call h5dClose_f (sd_ID, status)
       if ( status /= 0 ) then
 	     call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'Unable to close sd to read attribute in l2aux file' )
       endif
+      if ( QuantityType < 1 ) cycle
       call ReadL2AUXData ( sdfid1, trim(sdName), QuantityType, l2aux, &
            & checkDimNames=.false., hdfVersion=hdfVersion )
       ! Write the filled l2aux to file2
@@ -1630,6 +1643,47 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine GetQuantityAttributes
 
+  ! ----------------------------------  GetQuantityTypeFromName  -----
+  function GetQuantityTypeFromName (name)  result(quantityType)
+
+  ! Given quantity name, e.g. '/R4:640.B29M:HOCL.S0.MB11-3 chisqMMIF CorePlusR4'
+  ! return a quantity type, e.g. l_chisqmmif
+
+    ! Dummy arguments
+    integer                :: quantityType
+    character(len=*), intent(in)       :: name
+    ! Local variables
+    character(len=len(name)) :: myName
+    ! Executable code
+    quantityType = -999
+    if ( name == '' ) return
+    myName = lowerCase(name)
+    if ( index(trim(myName), 'chisq') > 0 ) then
+      if ( index(trim(myName), 'mmaf') > 0 ) then
+        quantityType = l_chisqmmaf
+      elseif ( index(trim(myName), 'mmif') > 0 ) then
+        quantityType = l_chisqmmif
+      elseif ( index(trim(myName), 'chan') > 0 ) then
+        quantityType = l_chisqchan
+      else
+        ! This is binned chi^2
+        ! unlike the others, it is neither major nor minor frame
+        ! we'll say it is most like dnwt_chisqnorm
+        quantityType = l_dnwt_chiSqNorm
+      endif
+    elseif ( index(trim(myName), 'noradspermif') > 0 ) then
+      ! Just like chisqmmif
+      quantityType = l_chisqmmif
+    elseif ( index(trim(myName), 'pcf') > 0 ) then
+      quantityType = -999
+    elseif ( index(trim(myName), 'coremetadata') > 0 ) then
+      quantityType = -999
+    else
+      quantityType = l_radiance
+    endif                      
+                      
+  end function GetQuantityTypeFromName
+
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, full_message, CODE )
     integer, intent(in) :: WHERE   ! Tree node where error was noticed
@@ -1667,6 +1721,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.60  2004/02/26 22:05:06  pwagner
+! Can copy l2aux file w/o knowing ds names; acts more gracefully if no attributes
+!
 ! Revision 2.59  2004/02/05 23:36:41  pwagner
 ! WriteL2AUXAttributes now public
 !
