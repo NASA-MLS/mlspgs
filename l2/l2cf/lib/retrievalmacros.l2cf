@@ -386,7 +386,13 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    Fill, quantity=mappedChisqMax.chisqBinned$1, method=binmax, $
      sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
      ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=otherDiagnostics.chisqProfile$1, method=binmax, $
+     sourceQuantity=minorFrameDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
    Fill, quantity=otherDiagnostics.noRadsBinned$1, method=binTotal, $
+     sourceQuantity=minorFrameDiagnostics.noRadsPerMIF$1, $
+     ptanQuantity=state.ptan!moduleForBand($1)
+   Fill, quantity=otherDiagnostics.noRadsProfile$1, method=binTotal, $
      sourceQuantity=minorFrameDiagnostics.noRadsPerMIF$1, $
      ptanQuantity=state.ptan!moduleForBand($1)!nl})
 
@@ -449,7 +455,42 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardDiagnostics.quality$1, method=vector, sourceQuantity=otherDiagnostics.quality$1
 })
 
+; ---------------------------------------------------- Status flag bits
+
+;; Bit 0 - Do not use this profile
+  !define(statusDoNotUse,1)
+;; Bit 1 - Be careful with this profile                            
+  !define(statusBeWary,2)
+;; Bit 2 - Empty for now
+;; Bit 3 - Empty for now
+;; Bit 4 - This profile may have been affected by high altitude clouds
+  !define(statusHighCloud,16)
+;; Bit 5 - This profile may have been affected by low altitude clouds
+  !define(statusLowCloud,32)
+;; Bit 6 - Empty for now
+;; Bit 7 - Empty for now
+;; Bit 8 - This profile is based on too few radiances
+  !define(statusTooFewRadiances,256)
+
+; --------------------------------------------- Cloud specific stuff
+
+!define(computeDT,{!dnl
+Fill, quantity=cloudOutput.DTband$1, method=manipulate, $
+  a=measurement.band$1, b=cloudOutput.band$1, manipulation='a-b'!nl})
+
+!define(flagBand32Clouds,{!dnl
+  FlagCloud, quantity=y!phase.band32, ptanQuantity=state.ptanGHz, $ 
+    height = [ 4000mb : 150mb ], cloudChannels=[ 1 ], cloudHeight=[ 1000mb : 700mb ],$
+    cloudRadiance=cloudOutput.DTband5, cloudRadianceCutoff= -10K, mask=[ cloud, linAlg ]
+  FlagCloud, quantity=y!phase.band32, ptanQuantity=state.ptanGHz, $
+    height = [ 150mb : 46mb ], cloudChannels=[ 1 ], mask=[ cloud, linAlg ], $
+    cloudRadiance=cloudOutput.DTband5, cloudRadianceCutoff=2K
+})
+
 ; $Log$
+; Revision 1.83  2004/03/12 00:18:27  livesey
+; Now defaults to hdf 5
+;
 ; Revision 1.82  2004/03/10 23:00:29  pwagner
 ; Exclude file field from dgg/dgm directwrites if flagAutoSplitSources
 ;
