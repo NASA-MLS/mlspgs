@@ -283,7 +283,9 @@ contains ! ======================= Public Procedures =========================
       & quantity%template%noInstancesLowerOverlap - &
       & quantity%template%noInstancesUpperOverlap) &
       & > &
-      & quantity%template%grandTotalInstances) then
+      & quantity%template%grandTotalInstances &
+      & .and. &
+      & quantity%template%grandTotalInstances > 0 ) then
       lastProfTooBigWarns = lastProfTooBigWarns + 1
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'last profile > grandTotalInstances for ' // trim(sdName))
@@ -741,6 +743,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.11  2003/08/01 20:39:34  pwagner
+! Skip warning mesg about grandTotalInstances when 0
+!
 ! Revision 2.10  2003/07/18 16:05:26  pwagner
 ! Stops printing warnings after 40 times
 !
