@@ -42,7 +42,6 @@ contains
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
       & MLSMSG_Warning
     use MLSSignals_m, only: GetRadiometerFromSignal
-    use Molecules, only: SPEC_TAGS ! , L_EXTINCTION
     use SpectroscopyCatalog_m, only: Catalog_t, Line_t, Lines, Catalog, Empty_Cat, DUMP
     use String_table, only: GET_STRING
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T
@@ -169,7 +168,7 @@ contains
         end if
       end if
       l = abs(theMolecules(j))
-      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spec_tags(l) ) )
+      thisCatalogEntry => Catalog(FindFirst(catalog%molecule == l ) )
       My_Catalog(j) = thisCatalogEntry
       ! Don't deallocate them by mistake -- my_catalog is a shallow copy
       nullify ( my_catalog(j)%lines, my_catalog(j)%polarized )
@@ -331,6 +330,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.1  2003/05/05 23:00:25  livesey
+! Merged in feb03 newfwm branch
+!
 ! Revision 1.1.2.9  2003/05/01 23:53:03  livesey
 ! Bug fix was being overzelous with setting my_catalog(j)=empty_cat
 !
