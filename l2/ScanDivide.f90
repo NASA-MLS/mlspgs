@@ -16,9 +16,9 @@ module ScanDivide
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    & MLSMSG_Error, MLSMSG_Warning
+    & MLSMSG_Error, MLSMSG_Warning, MLSMSG_L1BRead
   use MLSNumerics, only: HUNT, R8
-  use MLSStrings, only: MLSMSG_L1BRead
+!  use MLSStrings, only: MLSMSG_L1BRead
   use Output_M, only: Output
   use SDPToolkit, only: MAX_ORBITS
   use STRING_TABLE, only: Display_String
@@ -1347,6 +1347,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.5  2001/03/02 19:32:06  pwagner
+!# Gets MLSMSG_L1BRead from MLSMessageModule, not MLSStrings
+!#
 !# Revision 2.4  2001/02/13 00:09:02  vsnyder
 !# Simplify and improve MLSCF error messages
 !#

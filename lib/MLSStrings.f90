@@ -2,7 +2,8 @@
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
 
-  USE MLSMessageModule
+  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+  USE MLSCommon, only: i4
 
   IMPLICIT NONE
   PUBLIC
@@ -120,6 +121,68 @@ CONTAINS
 
   end Function depunctuate
 
+  ! ---------------------------------------------  GetIntHashElement  -----
+
+  ! This function takes one (usually) comma-delimited string list, interprets it
+  ! it as a list of elements, and an array of ints
+  ! treating the list as keys and the array as
+  ! a hash table, associative array or dictionary
+  ! It returns the int from the hash table corresponding to the key
+  ! If the key is not found in the array of keys, it sets ErrType=KEYNOTFOUND
+  ! otherwise ErrType=0
+  
+  ! This is useful because many of the hdfeos routines *inq*() return
+  ! comma-delimited lists
+
+  ! If countEmpty is TRUE, consecutive delimiters, with no chars in between,
+  ! are treated as enclosing an empty element
+  ! Otherwise, they are treated the same as a single delimiter
+  ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE
+  ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
+
+  ! As an optional arg the delimiter may supplied, in case it isn't comma
+
+  ! Basic premise: Use StringElementNum on key in keyList to find index
+  ! Use this index for the array of ints
+  
+  FUNCTION GetIntHashElement(keyList, hashArray, key, ErrType, &
+  & countEmpty, inDelim) RESULT (hashInt)
+    ! Dummy arguments
+    CHARACTER (LEN=*), INTENT(IN)   :: keyList
+    INTEGER(i4), DIMENSION(:), INTENT(IN)   :: hashArray
+    INTEGER(i4)                             :: hashInt
+    CHARACTER (LEN=*), INTENT(IN)   :: key
+    INTEGER, INTENT(OUT)  :: ErrType
+    LOGICAL, INTENT(IN)   :: countEmpty
+    CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+
+    ! Local variables
+	INTEGER, PARAMETER :: KEYNOTFOUND=-1
+	INTEGER, PARAMETER :: KEYBEYONDHASHSIZE=KEYNOTFOUND-1
+	INTEGER :: elem
+    CHARACTER (LEN=1)                          :: Delim
+    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
+
+    ! Executable code
+
+    IF(PRESENT(inDelim)) THEN
+	     Delim = inDelim
+	 ELSE
+	     Delim = COMMA
+	 ENDIF
+
+	elem = StringElementNum(keyList, key, countEmpty, inDelim)
+	hashInt = elem
+	IF(elem <= 0) THEN
+		ErrType = KEYNOTFOUND
+	ELSEIF(elem > SIZE(hashArray)) THEN
+		ErrType = KEYBEYONDHASHSIZE
+	ELSE
+		hashInt = hashArray(elem)
+	ENDIF
+
+  END FUNCTION GetIntHashElement
+
   ! ---------------------------------------------  GetStringElement  -----
 
   ! This subroutine takes a (usually) comma-delimited string list, interprets it
@@ -142,13 +205,13 @@ CONTAINS
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: inList
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
-    INTEGER, INTENT(IN)             :: nElement ! Number of unique entries
+    INTEGER(i4), INTENT(IN)         :: nElement 	! Entry number to return
     LOGICAL, INTENT(IN)   :: countEmpty
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
 
     ! Local variables
-    INTEGER :: i           ! Loop counters
-    INTEGER :: elem, nextDelim
+    INTEGER(i4) :: i           ! Loop counters
+    INTEGER(i4) :: elem, nextDelim
 
     CHARACTER (LEN=1)               :: Delim
     CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '   ! Returned if element empty
@@ -216,7 +279,7 @@ CONTAINS
 
   ! This subroutine takes two (usually) comma-delimited string lists, interprets it
   ! each as a list of elements, treating the first as keys and the second as
-  ! a hash table or associative array or dictionary
+  ! a hash table, associative array or dictionary
   ! It returns the sub-string from the hash table corresponding to the key
   ! If the key is not found in the array of keys, it returns the delimiter
   
@@ -248,7 +311,7 @@ CONTAINS
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
 
     ! Local variables
-	INTEGER :: elem
+	INTEGER(i4) :: elem
     CHARACTER (LEN=1)                          :: Delim
     CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
 
@@ -678,7 +741,7 @@ CONTAINS
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
 
     !----------Local vars----------!
-    INTEGER :: i, istr, irev, elem, iBuf
+    INTEGER(i4) :: i, istr, irev, elem, iBuf
     INTEGER, PARAMETER :: MAXWORDLENGTH=80
     CHARACTER (LEN=1)               :: Delim
     CHARACTER (LEN=1), PARAMETER    :: COMMA = ','
@@ -904,6 +967,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2001/03/02 19:33:14  pwagner
+! Added GetIntHashElement
+!
 ! Revision 2.4  2001/02/24 01:02:45  pwagner
 ! Added GetStringHashElement; alphabetized entries
 !
