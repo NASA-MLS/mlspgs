@@ -56,12 +56,16 @@ SHELL = /bin/sh
 #----------------------------------------------------------
 libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
 
-PROG=l2_test
+#PROG=l2_test
+PROG=libfwdmdl.a
 
 #----------------------- Build instructions
 
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+
+l2_test: libfwdmdl.a
+	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
 
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
@@ -90,12 +94,7 @@ clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.f90 ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/core ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
 	fi ; \
 	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
 		echo "Deleting $(MLSCONFG) directory" ; \
@@ -114,6 +113,9 @@ tar:
 	tar hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.5  2001/02/01 00:47:02  pwagner
+# Making libfwdmdl.a and l2_test
+#
 # Revision 1.4  2001/01/31 23:58:24  pwagner
 # cConsistent with zvi's latest changes
 #
