@@ -447,6 +447,9 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
     
+    deallocate ( defaultIndex, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "defaultIndex" )
     deallocate ( defaultMIFs, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // "defaultMIFs" )
@@ -456,6 +459,9 @@ contains ! =====     Public Procedures     =============================
     deallocate ( interpolatedField, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // "interpolatedField" )
+    deallocate ( interpolatedIndex, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "interpolatedIndex" )
     
     ! ??? This calculation may need attention! ***
     hGrid%noProfsLowerOverlap = &
@@ -561,6 +567,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.18  2001/07/06 21:33:23  dwu
+! forgot to deallocate variables
+!
 ! Revision 2.17  2001/07/06 18:48:16  dwu
 ! Add codes to make interpolationFactor functioning
 !
