@@ -91,7 +91,7 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8, RM, RV
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues
@@ -1451,7 +1451,7 @@ contains ! =====     Public Procedures     =============================
       integer :: K                        ! Loop index
       integer :: N                        ! Size of matrix block
       integer :: Q                        ! Quantity index
-      real (r8), dimension(:,:), pointer :: M ! The matrix being filled
+      real (rm), dimension(:,:), pointer :: M ! The matrix being filled
       real (r8), dimension(:), pointer :: SURFS ! The vertical coordinate
       real (r8) :: distance               ! Distance between two points
       real (r8) :: meanLength             ! Geometric mean length scale
@@ -1520,7 +1520,7 @@ contains ! =====     Public Procedures     =============================
             if ( .not. qt%coherent ) surfs => qt%surfs(:,i)
 
             ! Clear the working matrix and load the diagonal
-            m = 0.0
+            m = 0.0_rm
             do j = 1, n
               m(j,j) = d%values(j,i) ** 2.0
             end do
@@ -1553,13 +1553,13 @@ contains ! =====     Public Procedures     =============================
             ! Now we may need to invert this, if so we need to be clever.
             if ( invert ) then
               call Allocate_test ( condition, n, 'condition', ModuleName )
-              condition = d%values(:,i) <= 0.0
+              condition = d%values(:,i) <= 0.0_rv
               do j = 1, n
-                if ( condition(j) ) M(j,j) = 1.0
+                if ( condition(j) ) M(j,j) = 1.0_rm
               end do
               call MatrixInversion(M, upper=.true.)
               do j = 1, n
-                if ( condition(j) ) M(j,j) = 0.0
+                if ( condition(j) ) M(j,j) = 0.0_rm
               end do
               call Deallocate_test ( condition, 'condition', ModuleName )
             end if
@@ -3890,6 +3890,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.147  2002/09/13 18:10:10  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.146  2002/09/12 22:07:05  livesey
 ! Added masking to interpolated vector fill
 !
