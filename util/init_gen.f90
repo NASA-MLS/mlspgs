@@ -1,3 +1,6 @@
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 program INIT_GEN
 
   ! Generate the parameter statements and references to add_ident
@@ -11,10 +14,10 @@ program INIT_GEN
 
   ! Blank lines don't count.
 
-  ! The command line control everything else.  See the PRINT statements
+  ! The command line controls everything else.  See the PRINT statements
   ! that explain the usage.
 
-  use MACHINE
+  use MACHINE ! to get at least HP and IO_ERROR, and maybe GETARG
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -269,3 +272,6 @@ contains
 end program INIT_GEN
 
 ! $Log$
+! Revision 1.1  2001/07/25 02:07:02  vsnyder
+! Initial commit
+!
