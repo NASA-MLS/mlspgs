@@ -148,68 +148,6 @@ machine.o: machine.mod
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-ifeq ($(FC_NAME),mark_as_uptodate.sh)
-
-# No custom builds if we're just marking targets as up to date
-l2gpdata.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l2gpdata.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
-L2GPData.o:
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L2GPData.o l2gpdata.mod 
-
-l2pc_m.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l2pc_m.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
-L2PC_m.o:
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T L2PC_m.o l2pc_m.mod 
-
-mlsfiles.mod:
-	$(UTILDIR)/newAifBdiff.sh -a mlsfiles.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
-MLSFiles.o:
-	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
-   -T MLSFiles.o mlsfiles.mod 
-
-else
-# Custom builds for some modules needed to fool LF95 compiler
-# (for now anyway) so it won't take forever to finish
-# Use the obsolete directory to find hdf5-agnostic versions
-hdf4dir = $(CONFDIR)/lib/obsolete
-
-l2gpdata.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l2gpdata.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2GPData.f90 $(FAFTER)
-	mv l2gpdata.mod l2gpdata.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
-	mv l2gpdata.mod-hdf4 l2gpdata.mod
-L2GPData.o:
-#	$(MAKE) l2gpdata.mod 
-	mv l2gpdata.mod l2gpdata.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
-	mv l2gpdata.mod-hdf4 l2gpdata.mod
-
-l2pc_m.mod:
-	$(UTILDIR)/newAifBdiff.sh -a l2pc_m.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2PC_m.f90 $(FAFTER)
-	mv l2pc_m.mod l2pc_m.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
-	mv l2pc_m.mod-hdf4 l2pc_m.mod
-L2PC_m.o:
-#	$(MAKE) l2gpdata.mod 
-	mv l2pc_m.mod l2pc_m.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
-	mv l2pc_m.mod-hdf4 l2pc_m.mod
-
-mlsfiles.mod:
-	$(UTILDIR)/newAifBdiff.sh -a mlsfiles.mod $(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/MLSFiles.f90 $(FAFTER)
-	mv mlsfiles.mod mlsfiles.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
-	mv mlsfiles.mod-hdf4 mlsfiles.mod
-MLSFiles.o:
-#	$(MAKE) l2gpdata.mod 
-	mv mlsfiles.mod mlsfiles.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
-	mv mlsfiles.mod-hdf4 mlsfiles.mod
-
-endif
-
 endif
 
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
@@ -358,49 +296,6 @@ machine.o: $(MACH_DIR)/machine.f90
 
 intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
 
-ifeq ($(FC_NAME),mark_as_uptodate.sh)
-
-# No custom builds if we're just marking targets as up to date
-# (though actually we should never get here anyway--why
-# mark as up to date if CASCADE=yes? But just in case ...)
-L2GPData.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
-
-L2PC_m.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
-
-MLSFiles.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
-
-else
-# Custom builds for some modules needed to fool LF95 compiler
-# (for now anyway) so it won't take forever to finish
-# Use the obsolete directory to find hdf5-agnostic versions
-hdf4dir = $(CONFDIR)/lib/obsolete
-
-L2GPData.o:
-#	$(MAKE) l2gpdata.mod 
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2GPData.f90 $(FAFTER)
-	mv l2gpdata.mod l2gpdata.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
-	mv l2gpdata.mod-hdf4 l2gpdata.mod
-
-L2PC_m.o:
-#	$(MAKE) l2gpdata.mod 
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/L2PC_m.f90 $(FAFTER)
-	mv l2pc_m.mod l2pc_m.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/L2PC_m.f90 $(FAFTER)
-	mv l2pc_m.mod-hdf4 l2pc_m.mod
-
-MLSFiles.o:
-#	$(MAKE) l2gpdata.mod 
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(hdf4dir)/MLSFiles.f90 $(FAFTER)
-	mv mlsfiles.mod mlsfiles.mod-hdf4
-	$(FC) -c $(FOPTS) $(INC_PATHS) $(S)/MLSFiles.f90 $(FAFTER)
-	mv mlsfiles.mod-hdf4 mlsfiles.mod
-
-endif
-
 endif
 
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
@@ -428,6 +323,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.9  2002/07/25 20:58:57  pwagner
+# No custom builds for Lahey-specific 3 lib modules if marking uptodate
+#
 # Revision 1.8  2002/07/22 22:07:49  pwagner
 # Removed custom builds for Lahey and LinearizedForwardModel
 #
