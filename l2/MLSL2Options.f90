@@ -27,17 +27,29 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! --------------------------------------------------------------------------
 
-  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! Set each of the following to TRUE before delivering level 2 to sips
-  logical, parameter :: PUNISH_FOR_INVALID_PCF=.false.  ! set to true
-  logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false.  ! set to true
-  logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.  ! set to true
-  logical :: PCF = .false.                         ! Open L2CF using PCF ?
-  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  logical            :: PUNISH_FOR_INVALID_PCF=.false. 
+  logical, parameter :: PUNISH_FOR_NO_L1BRAD=.false. 
+  logical, parameter :: PUNISH_FOR_NO_L1BOA=.false.
+  logical            :: PCF_FOR_INPUT = .false.      ! Open L2CF using PCF ?
+  logical            :: PCF = .false.            ! Use PCF ?
+  logical            :: CREATEMETADATA = .false. ! Create .met files ?
+  logical            :: TOOLKIT = .false.        ! Use PGS_... routines?
+  ! PCF controls whether the input and output file names are obtained
+  ! from the PCF or the l2cf; if .false., the l2cf must supply every
+  ! file name (L1B..) plus all the global settings (start, end times, ..)
+  ! Note the following cascade of automatic negations:
+  ! TOOLKIT=.false. => PCF=.false.
+  ! PCF=.false.     =>  PCF_FOR_INPUT=.false.
+  ! PCF=.false.     =>  PUNISH_FOR_INVALID_PCF=.false.
+  ! PCF=.false.     =>  CREATEMETADATA=.false.
+  ! PCF=.false.     =>  PENALTY_FOR_NO_METADATA=0
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
    ! Set the following to 1 before delivering to sips;
    ! when set to 0, it allows program to run w/o creating metadata
-   integer, parameter :: PENALTY_FOR_NO_METADATA = 0
+   integer            :: PENALTY_FOR_NO_METADATA = 0
 
    ! Set the following to -2 before delivering to sips;
    ! (its possible values and their effects on normal output:
@@ -45,7 +57,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
    ! -2          sent to Log file (via MLSMessage)
    ! < -2        both stdout and Log file
    ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')
-   integer, parameter :: OUTPUT_PRINT_UNIT = -1
+   integer, parameter :: OUTPUT_PRINT_UNIT = -2
 
    ! Set the following to MLSMSG_Error before delivering to sips;
    ! when set higher, it allows program keep going despite errors
@@ -58,6 +70,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.4  2001/05/04 22:54:31  pwagner
+! Added TOOLKIT, CREATEMETADATA, PCF_FOR_INPUT
+!
 ! Revision 2.3  2001/04/20 20:41:52  pwagner
 ! Added QUIT_ERROR_THRESHOLD
 !
