@@ -938,7 +938,7 @@ ii_l:      do
     integer :: I, I1, I2, J, JJ, K, L, L1, LL
     real(rk) :: THETA
     mt = logSize
-    needst = .true.
+    needst = .false.
     nt = 2**mt
     if (mt > 0) then
 !                       Set for L = 1
@@ -979,6 +979,9 @@ ii_l:      do
 end module DFFT_M
 
 ! $Log$
+! Revision 2.10  2004/11/18 00:26:12  vsnyder
+! Say sine table is computed instead of needed when it's computed
+!
 ! Revision 2.9  2004/02/12 02:19:12  vsnyder
 ! Move DInitSineTable out of DFFT into a separate procedure, more f90-isms
 !
