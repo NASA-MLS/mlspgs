@@ -28,10 +28,10 @@ contains
 
 SUBROUTINE comp_path_entities(fwdModelIn, fwdModelExtra, molecules, &
            n_lvls,no_t,gl_count,ndx_path,z_glgrid,t_glgrid,h_glgrid,&
-           dhdz_glgrid,atmospheric,f_basis,mr_f,no_coeffs_f,tan_hts,&
-           no_tan_hts,n_sps,no_phi_f,f_phi_basis,z_path,h_path,     &
+           dhdz_glgrid,tan_hts,&
+           no_tan_hts,n_sps,z_path,h_path,     &
            t_path,phi_path,n_path,dhdz_path,eta_phi,no_phi_t,       &
-           t_phi_basis,spsfunc_path,is_f_log,no_mmaf,Ier)
+           t_phi_basis,spsfunc_path,no_mmaf,Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: comp_path_entities
@@ -46,7 +46,7 @@ Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 !  Calling sequence variables:
 !  ---------------------------
 Integer(i4), INTENT(IN) :: no_t, n_sps, n_lvls, gl_count, &
-             no_mmaf, no_phi_t, no_coeffs_f(:), no_phi_f(:)
+             no_mmaf, no_phi_t
 !
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
@@ -55,16 +55,12 @@ Integer(i4), INTENT(OUT) :: ier
 Real(r8), INTENT(IN) :: z_glgrid(:), h_glgrid(:,:), t_glgrid(:,:)
 Real(r8), INTENT(IN) :: dhdz_glgrid(:,:)
 
-Real(r8), INTENT(IN) :: mr_f(:,:,:), f_basis(:,:)
-
 Real(r8), INTENT(IN) :: t_phi_basis(:)
-Real(r8), INTENT(IN) :: f_phi_basis(:,:), tan_hts(:,:)
+Real(r8), INTENT(IN) :: tan_hts(:,:)
 
 Type(path_index) , INTENT(OUT) :: ndx_path(:,:)
 Type(path_vector), INTENT(OUT) :: z_path(:,:),t_path(:,:),h_path(:,:), &
            n_path(:,:),phi_path(:,:),dhdz_path(:,:), spsfunc_path(:,:,:)
-
-Logical, INTENT(IN) :: is_f_log(:)
 
 Type(path_vector_2d), INTENT(OUT) :: eta_phi(:,:)
 !
@@ -84,8 +80,6 @@ type (VectorValue_T), pointer :: f, h2o
 
 !  PFA variables:
 
-type (atmos_comp), intent(inout) :: ATMOSPHERIC(:)
-!
   ier = 0
 
 ! Compute all the various integration paths according to tanget heights.
@@ -107,8 +101,9 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(:)
     lmax = lmin + 2 * jp
     if(lmax > no_mmaf) then
       lmax = no_mmaf
-      lmin = lmax - 2 * jp
+      lmin = max(1,lmax - 2 * jp)
     endif
+    print*,'Hello there:',jp,l,no_mmaf,lmin,lmax,shape(t_glgrid),lbound(t_glgrid,2)
     DO k = 1, no_tan_hts
       h = tan_hts(k,l)
       CALL vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,   &
@@ -207,6 +202,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.12  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.11  2001/03/26 21:06:31  zvi
 ! *** empty log message ***
 !
