@@ -8,10 +8,11 @@ module Fill                     ! Create vectors and fill them.
   use Expr_M, only: EXPR
   use GriddedData, only: GriddedData_T
   use INIT_TABLES_MODULE, only: F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, &
-    & F_H2OQUANTITY, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, F_SOURCE, &
+    & F_H2OQUANTITY, F_MAXITERATIONS, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, F_SOURCE, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SPREAD, F_TEMPERATUREQUANTITY, &
-    & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_HYDROSTATIC, L_L1B, L_L2GP, &
-    & L_L2AUX, L_PRESSURE, L_RADIANCE, L_SCGEOCALT, L_TRUE, L_VECTOR, &
+    & FIELD_FIRST, FIELD_LAST, L_EXPLICIT, L_GPH, L_HYDROSTATIC, L_L1B, L_L2GP, &
+    & L_L2AUX, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
+    & L_TEMPERATURE, L_TNGTGEODALT, L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VMR, &
     & L_ZETA, S_TIME, S_VECTOR, S_FILL
   ! will be added
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
@@ -22,8 +23,8 @@ module Fill                     ! Create vectors and fill them.
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSSignals_m, only: GetSignalName, GetModuleName
-  !  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
-  !  use MLSStrings, only: lowercase
+  use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+  use Molecules, only: L_H2O
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use string_table, only: get_string
@@ -33,8 +34,9 @@ module Fill                     ! Create vectors and fill them.
     & SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_DOT, N_SET_ONE
   use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, &
-    & GetVectorQtyByTemplateIndex, ValidateVectorQuantity, Vector_T, VectorTemplate_T
-  use ScanModelModule
+    & GetVectorQtyByTemplateIndex, ValidateVectorQuantity, Vector_T, &
+    & VectorTemplate_T, VectorValue_T
+  use ScanModelModule, only: GetBasisGPH, GetHydrostaticTangentPressure
   use Intrinsic, only: PHYQ_Dimensionless
 
   implicit none
@@ -82,10 +84,13 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: miscellaneous_err = deallocation_err+1
   integer, parameter :: errorReadingL1B = miscellaneous_err+1
   integer, parameter :: needTempREFGPH = errorReadingL1B+1
-  integer, parameter :: needGeocAltitude = needTempRefGPH+1
+  integer, parameter :: needH2O = needTempRefGPH+1
+  integer, parameter :: needGeocAltitude = needH2O+1
   integer, parameter :: badGeocAltitudeQuantity = needGeocAltitude+1
   integer, parameter :: badTemperatureQuantity = badGeocAltitudeQuantity+1
   integer, parameter :: badREFGPHQuantity = badTemperatureQuantity+1
+  integer, parameter :: nonConformingHydrostatic = badREFGPHQuantity+1
+  integer, parameter :: badUnitsForMaxIterations = nonConformingHydrostatic+1
 
   !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
   !---------------------------- RCS Ident Info -------------------------------
@@ -123,6 +128,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), POINTER :: QUANTITY ! Quantity to be filled
     type (VectorValue_T), POINTER :: TEMPERATUREQUANTITY ! Source quantity
     type (VectorValue_T), POINTER :: REFGPHQUANTITY ! Source quantity
+    type (VectorValue_T), POINTER :: H2OQUANTITY ! Source quantity
     type (VectorValue_T), POINTER :: GEOCALTITUDEQUANTITY ! Source quantity
     type (Vector_T) :: newVector ! A vector we've created
     character (LEN=LineLen) ::              msr
@@ -142,6 +148,7 @@ contains ! =====     Public Procedures     =============================
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
     integer :: L2INDEX                  ! Where source is among l2gp or l2aux database
+    integer :: MAXITERATIONS            ! For hydrostatic fill
     integer :: PREVDEFDQT               !
     integer :: QUANTITYINDEX            ! Within the vector
     integer :: REFGPHQUANTITYINDEX      ! In the source vector
@@ -152,6 +159,8 @@ contains ! =====     Public Procedures     =============================
     integer :: TEMPERATUREQUANTITYINDEX ! In the source vector
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
     integer :: TEMPLATEINDEX            ! In the template database
+    integer, DIMENSION(2) :: UNITASARRAY ! From expr
+    real(r8), DIMENSION(2) :: VALUEASARRAY ! From expr
     integer :: VALUESNODE               ! For the parser
     integer :: VECTORINDEX              ! In the vector database
     integer :: VECTORNAME               ! Name of vector to create
@@ -180,6 +189,7 @@ contains ! =====     Public Procedures     =============================
     templateIndex = -1
     vectorIndex = -1
     spread=.FALSE.
+    maxIterations = 0
 
     ! Loop over the lines in the configuration file
 
@@ -244,6 +254,11 @@ contains ! =====     Public Procedures     =============================
             refGPHQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
           case (f_explicitValues) ! For explicit fill
             valuesNode=subtree(j,key)
+          case (f_maxIterations)      ! For hydrostatic fill
+            call expr(subtree(2,key), unitAsArray,valueAsArray)
+            if (unitAsArray(1) /= PHYQ_Dimensionless) &
+              & call Announce_error( key, badUnitsForMaxIterations)
+            maxIterations=valueAsArray(1)
           case (f_spread) ! For explicit fill, note that gson here is not same as others
             if (node_id(gson) == n_set_one) then
               spread=.TRUE.
@@ -260,14 +275,17 @@ contains ! =====     Public Procedures     =============================
           ! Need a temperature and a refgph quantity
           if (.not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /)))) &
             call Announce_Error(key,needTempREFGPH)
+
           temperatureQuantity => GetVectorQtyByTemplateIndex( &
             &  vectors(temperatureVectorIndex), temperatureQuantityIndex)
           if (temperatureQuantity%template%quantityType /= l_Temperature) &
             & call Announce_Error (key, badTemperatureQuantity)
-          if (refGPHQuantity%template%quantityType /= l_refGPH) &
-            & call Announce_Error (key, badrefGPHQuantity)
+
           refGPHQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(refGPHVectorIndex), refGPHQuantityIndex)
+          if (refGPHQuantity%template%quantityType /= l_refGPH) &
+            & call Announce_Error (key, badrefGPHQuantity)
+
           if (quantity%template%quantityType==l_ptan) then
             if (.not. got(f_geocAltitudeQuantity)) &
               & call Announce_Error( key, needGeocAltitude )
@@ -275,11 +293,19 @@ contains ! =====     Public Procedures     =============================
               & vectors(geocAltitudeVectorIndex), geocAltitudeQuantityIndex)
             if (geocAltitudeQuantity%template%quantityType /= l_tngtgeocAlt) &
               & call Announce_Error( key, badGeocAltitudeQuantity )
+            if (.not. got(f_h2oQuantity)) &
+              & call Announce_Error( key, needH2O )
+            h2oQuantity => GetVectorQtyByTemplateIndex( &
+              & vectors(h2oVectorIndex), h2oQuantityIndex)
+            if (.not. ValidateVectorQuantity(h2oQuantity, &
+              & quantityType=(/l_vmr/), molecule=(/l_h2o/)))&
+              & call Announce_Error( key, badGeocAltitudeQuantity )
           else
             geocAltitudeQuantity=>NULL()
+            h2oQuantity=>NULL()
           endif
-          call FillVectorQtyHydrostatically(quantity, temperatureQuantity, &
-            & refGPHQuantity, geocAltitudeQuantity)          
+          call FillVectorQtyHydrostatically(key, quantity, temperatureQuantity, &
+            & refGPHQuantity, h2oQuantity, geocAltitudeQuantity)          
         case (l_l2gp)
           if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
           call FillVectorQuantityFromL2GP(quantity,l2gpDatabase(l2gpIndex),errorCode)
@@ -515,17 +541,67 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillVectorQuantityFromL2GP
 
   ! ------------------------------------- FillVectorHydrostatically ----
-  subroutine FillVectorQtyHydrostatically(quantity, &
-    & temperatureQuantity, refGPHQuantity, geocAltitudeQuantity)
+  subroutine FillVectorQtyHydrostatically(key, quantity, &
+    & temperatureQuantity, refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations)
     ! Various hydrostatic fill operations
-    type (VectorValue_T), intent(inout) :: QUANTITY
+    integer, intent(in) :: key          ! For messages
+    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
     type (VectorValue_T), intent(in) :: TEMPERATUREQUANTITY
     type (VectorValue_T), intent(in) :: REFGPHQUANTITY
+    type (VectorValue_T), intent(in) :: H2OQUANTITY
     type (VectorValue_T), intent(in) :: GEOCALTITUDEQUANTITY
+    integer, intent(in), optional :: MAXITERATIONS
 
     ! Local variables
 
     ! Executable code
+    select case (quantity%template%quantityType)
+    case (l_gph)
+      if ( (temperatureQuantity%template%noSurfs /= &
+        &   quantity%template%noSurfs) .or. &
+        &  (refGPHQuantity%template%noInstances /= &
+        &   quantity%template%noInstances) .or. &
+        &  (temperatureQuantity%template%noInstances /= &
+        &   quantity%template%noInstances) ) then
+        call Announce_Error ( key, nonConformingHydrostatic )
+        return
+      endif
+      if ((any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
+        & (any(quantity%template%phi /= temperatureQuantity%template%phi)) .or. &
+        & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
+        call Announce_Error ( key, nonConformingHydrostatic )
+        return
+      endif
+      call GetBasisGPH(temperatureQuantity, refGPHQuantity, quantity%values)
+    case (l_ptan)
+      if ( (quantity%template%noInstances /= &
+        &   temperatureQuantity%template%noInstances) .or. &
+        &  (quantity%template%noInstances /= &
+        &   refGPHquantity%template%noInstances) .or. &
+        &  (quantity%template%noInstances /= &
+        &   h2oQuantity%template%noInstances) ) then
+        call Announce_Error ( key, nonConformingHydrostatic )
+        return
+      endif
+      if ((any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
+        & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
+        call Announce_Error ( key, nonConformingHydrostatic )
+        return
+      endif
+      if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
+        &  (.not. ValidateVectorQuantity(geocAltitudeQuantity, minorFrame=.true.) ) .or. &
+        &  (decoration(quantity%template%instrumentModule) /= &
+        &   decoration(geocAltitudeQuantity%template%instrumentModule) ) ) then
+        call Announce_Error (key, nonConformingHydrostatic )
+        return
+      end if
+      call GetHydrostaticTangentPressure(quantity, temperatureQuantity,&
+        & refGPHQuantity, h2oQuantity, geocAltitudeQuantity, maxIterations=maxIterations)
+!      call output ("Resulting ptan")
+!      call dump(quantity%values)
+    case default
+      call MLSMessage(MLSMSG_Error, ModuleName, 'No such fill yet')
+    end select
 
   end subroutine FillVectorQtyHydrostatically
 
@@ -1099,6 +1175,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " has inappropriate dimensionality for explicit fill.", advance='yes' )
     case ( needTempREFGPH )
       call output ( " needs temperatureQuantity and refGPHquantity.", advance='yes' )
+    case ( needH2O )
+      call output ( " needs H2OQuantity.", advance='yes' )
     case ( needGeocAltitude )
       call output ( " needs geocAltitudeQuantity.", advance='yes' )
     case ( badTemperatureQuantity )
@@ -1107,6 +1185,10 @@ contains ! =====     Public Procedures     =============================
       call output ( " refGPHQuantity is not refGPH", advance='yes' )
     case ( badGeocAltitudeQuantity )
       call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
+    case ( nonConformingHydrostatic )
+      call output ( " quantities needed for hydrostatic fill do not conform", advance='yes' )
+    case ( badUnitsForMaxIterations )
+      call output ( " maxIterations should be dimensionless", advance='yes' )
     case default
       call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
@@ -1121,6 +1203,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.24  2001/03/05 01:20:14  livesey
+! Regular commit, hydrostatic stuff in place.
+!
 ! Revision 2.23  2001/03/03 05:54:29  livesey
 ! Started hydrostic stuff
 !
