@@ -7,7 +7,7 @@ module EXPR_M
 
   implicit NONE
   private
-  public :: EXPR
+  public :: EXPR, GetIndexFlagsFromList
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -27,13 +27,12 @@ contains ! ====     Public Procedures     ==============================
                                  NUM_VALUE, RANGE, STR_RANGE, STR_VALUE, &
                                  UNDECLARED, UNITS_NAME
     use INTRINSIC, only: PHYQ_DIMENSIONLESS, PHYQ_INVALID
-    use LEXER_CORE, only: PRINT_SOURCE
+    use MORETREE, only: StartErrorMessage
     use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: FLOAT_VALUE
     use TOGGLES, only: CON, TOGGLE
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
-    use TREE, only: DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, &
-      & SUBTREE
+    use TREE, only: DUMP_TREE_NODE, NODE_ID, NSONS, SUB_ROSA, SUBTREE
     use TREE_TYPES ! Everything, especially everything beginning with N_
 
     integer, intent(in) :: ROOT         ! Root of expression subtree
@@ -118,9 +117,7 @@ contains ! ====     Public Procedures     ==============================
         case ( n_into )
           value = value2 / value
         case default
-          call output ( '***** At ', from_where = "Expr_M" )
-          call print_source ( source_ref(root) )
-          call output ( ': ' )
+          call startErrorMessage ( root )
           call dump_tree_node ( root, 0 )
           call output ( ' is not supported.', advance='yes' )
           ! There's no way to return an error, so return something
@@ -132,6 +129,72 @@ contains ! ====     Public Procedures     ==============================
     end select
     if ( toggle(con) ) call trace_end ( 'EXPR' )
   end subroutine EXPR
+
+  ! --------------------------------------  GetIndexFlagsFromList  -----
+
+  subroutine GetIndexFlagsFromList ( root, flags, status, lower, noError )
+    ! Given the root of a numeric/numeric range array
+    ! Set the flags array appropriately
+    use Declaration_table, only: NUM_VALUE
+    use Intrinsic, only: PHYQ_DIMENSIONLESS
+    use MLSCommon, only: R8
+    use Tree, only: Node_ID, Subtree, nsons
+    use Tree_Types, only: N_colon_less, N_less_colon, N_less_colon_less
+    integer, intent(in) :: ROOT         ! Tree node
+    logical, dimension(:), intent(inout) :: FLAGS ! Result
+    integer, intent(out) :: STATUS      ! Error flag, 0=success
+    integer, intent(in), optional :: LOWER ! Lower bound for result
+    logical, intent(in), optional :: NOERROR ! If set don't give bounds errors
+
+    ! Local variables
+    integer :: I,J                      ! Loop counters
+    real(r8), dimension(2) :: VALUE     ! From expr
+    integer, dimension(2) :: UNITS      ! From expr
+    integer :: TYPE                     ! From expr
+    integer :: RANGE_LOW, RANGE_HI      ! Range for flags
+    logical :: MYNOERROR                ! Copy of noError
+    integer :: MYLOWER                  ! Copy of lower
+    integer :: SON                      ! Tree node
+
+    ! Executable code
+    flags = .false.
+    status = 0
+    myNoError = .false.
+    if ( present ( noError ) ) myNoError = noError
+    mylower = 1
+    if ( present ( lower ) ) myLower = lower
+
+    do j = 2, nsons(root)
+      son = subtree ( j, root )
+      call expr ( son, units, value, type )
+      do i = 1, merge(1,2,type==num_value)
+        if ( units(i) /= phyq_dimensionless ) then
+          status = 1
+          return
+        end if
+      end do
+      range_low = nint(value(1))
+      range_hi = nint(value(merge(1,2,type==num_value)))
+      select case ( node_id(son) )
+      case ( n_colon_less )
+        range_hi = range_hi - 1
+      case ( n_less_colon )
+        range_low = range_low + 1
+      case ( n_less_colon_less )
+        range_low = range_low + 1
+        range_hi = range_hi - 1
+      end select
+      if ( .not. myNoError .and. &
+        & ( range_low < myLower .or. range_hi > myLower+size(flags)-1 ) ) then
+        status = 1
+        return
+      end if
+      range_low = max ( range_low, myLower )
+      range_hi = min ( range_hi, myLower+size(flags)-1 )
+      flags ( range_low-myLower+1 : range_hi-myLower+1 ) = .true.
+    end do
+  end subroutine GetIndexFlagsFromList
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -139,6 +202,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.8  2004/05/28 00:57:25  vsnyder
+! Move GetIndexFlagsFromList from MoreTree to Expr_m
+!
 ! Revision 2.7  2004/01/17 03:04:48  vsnyder
 ! Provide for functions in expressions
 !
