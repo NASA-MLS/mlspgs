@@ -22,7 +22,16 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 
   implicit none
 
-  ! Externals
+  private
+  public :: L2AUX_Dimension_T, L2AUXData_T, L2AUXRANK
+  public :: AddL2AUXToDatabase, DestroyL2AUXDatabase, Dump
+  public :: SetupNewL2AUXRecord, DestroyL2AUXContents, ExpandL2AUXDataInPlace
+  public :: ReadL2AUXData, WriteL2AUXData
+
+  interface DUMP
+    module procedure Dump_L2AUX
+    module procedure Dump_L2AUX_Database
+  end interface
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -237,49 +246,87 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyL2AUXDatabase
 
-  ! ------------------------------------------ Dump_L2AUX ------------
+  ! ------------------------------------------ Dump_L2AUX_DataBase ------------
 
-  subroutine Dump_L2AUX ( L2aux, Name )
+  subroutine Dump_L2AUX_DataBase ( L2aux, Name, Details )
 
     ! Dummy arguments
     type (l2auxData_T), intent(in) ::          L2AUX(:)
     character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: DETAILS
 
     ! Local variables
     integer :: i, dim
     
-    if ( present(name) ) call output ( name, advance='yes' )
+    call output ( '============ L2AUX Data Base ============', advance='yes' )
+    call output ( ' ', advance='yes' )
+    if ( present(name) ) then
+      call output ( 'L2AUX Database name: ', advance='no' )
+      call output ( name, advance='yes' )
+    endif
+    if ( size(l2aux) < 1 ) then
+      call output ( '**** L2AUX Database empty ****', advance='yes' )
+      return
+    endif
     do i = 1, size(l2aux)
+      call dump(l2aux(i), Details)
+    end do
+      
+  end subroutine Dump_L2AUX_DATABASE
+
+  ! ------------------------------------------ Dump_L2AUX ------------
+
+  subroutine Dump_L2AUX ( L2aux, Details )
+
+    ! Dummy arguments
+    type (l2auxData_T), intent(in) ::          L2AUX
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 1
+
+    ! Local variables
+    integer :: dim, ierr
+    integer :: MYDETAILS
+
+    ! Executable code
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+    
       call output ( 'L2AUX Data: ')
-      call display_string ( l2aux(i)%name )
+      call display_string ( l2aux%name, ierr=ierr )
+      if ( ierr /= 0 ) call output ( '(not found in string table)')
+      if ( myDetails < -1 ) return
       call output ( '    instrumentmodule: ')
-!      call display_string ( l2aux(i)%instrumentmodule )
-      call display_string ( modules(l2aux(i)%instrumentmodule)%name, advance='yes' ) 
+      call display_string ( modules(l2aux%instrumentmodule)%name, advance='yes', ierr=ierr ) 
+      if ( ierr /= 0 ) call output ( '(not found in string table)', advance='yes')
       call output ( '    (its index): ')
-      call output ( l2aux(i)%instrumentmodule, advance='no')
+      call output ( l2aux%instrumentmodule, advance='no')
       call output ( ' ', advance='yes')
       call output ( '  Minor Frame? (t/f): ')
-      call output ( l2aux(i)%minorframe, advance='no')
+      call output ( l2aux%minorframe, advance='no')
       call output ( '  Major Frame? (t/f): ')
-      call output ( l2aux(i)%majorframe, advance='yes')
+      call output ( l2aux%majorframe, advance='yes')
+      if ( myDetails < 0 ) return
       do dim=1, l2auxrank
         call output ( '  dimension: ')
         call output ( dim )
         call output ( '           ')
-        if ( associated(l2aux(i)%dimensions(dim)%values) ) then
+        if ( associated(l2aux%dimensions(dim)%values) ) then
           call output ( '  nValues: ')
-          call output ( l2aux(i)%dimensions(dim)%novalues, 3, advance='no')
+          call output ( l2aux%dimensions(dim)%novalues, 3, advance='no')
           call output ( '           ')
           call output ( '  dimension family: ')
-          call output ( l2aux(i)%dimensions(dim)%dimensionfamily, 3, advance='yes')
-          call dump ( l2aux(i)%dimensions(dim)%values, 'dim values:' )
+          call output ( l2aux%dimensions(dim)%dimensionfamily, 3, advance='yes')
+          call dump ( l2aux%dimensions(dim)%values, 'dim values:' )
          else
-        call output ( ' is not associated', advance='yes')
+          call output ( ' is not associated', advance='yes')
          endif
       enddo
-      call dump ( l2aux(i)%values, 'values:' )
+      if ( myDetails < 1 ) return
+      call dump ( l2aux%values, 'values:' )
  
-    end do
   end subroutine Dump_L2AUX
     
   !------------------------------------------------ ReadL2AUXData ------------
@@ -546,6 +593,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.21  2001/10/26 23:13:18  pwagner
+! Provides a single dump module interface and details
+!
 ! Revision 2.20  2001/10/08 23:41:27  pwagner
 ! Improved dump routines
 !
