@@ -219,7 +219,7 @@ MODULE EngTbls   ! Level 1 engineering tables
        Riu_tbl_t (5,  95, 0, 0, 0, 0), &
        Riu_tbl_t (5, 113, 0, 0, 0, 0), &
        Riu_tbl_t (5, 123, 0, 0, 0, 0), &
-       Riu_tbl_t (6,  15, 0, 0, 0, 0), &
+       Riu_tbl_t (6,  19, 0, 0, 0, 0), &
        Riu_tbl_t (6,  37, 0, 0, 0, 0), &
        Riu_tbl_t (6,  55, 0, 0, 0, 0), &
        Riu_tbl_t (6,  65, 0, 0, 0, 0), &
@@ -362,6 +362,9 @@ CONTAINS
 END MODULE EngTbls
 
 ! $Log$
+! Revision 2.10  2005/01/21 19:39:04  perun
+! Corrected first byte value for SM11 entry in riu_tbl
+!
 ! Revision 2.9  2004/08/12 13:51:49  perun
 ! Version 1.44 commit
 !
