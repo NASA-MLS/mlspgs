@@ -290,7 +290,7 @@ contains ! ========================================= Module procedures =======
   ! -------------------------------------------- ReadVectorFromHDF5
   subroutine ReadVectorFromHDF5 ( location, name, vector, &
     & quantities, noQuantityTemplates )
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Allocate_Deallocate, only: ALLOCATE_TEST
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
     use VectorsModule, only: VECTOR_T, VECTORTEMPLATE_T, CREATEVECTOR, CREATEMASK
     use MoreTree, only: GETSTRINGINDEXFROMSTRING
@@ -316,7 +316,6 @@ contains ! ========================================= Module procedures =======
     integer :: GID                      ! A subgroup id
     integer :: QID                      ! A quantity template id
     integer :: STATUS                   ! Flag from HDF
-    integer :: NOQUANTITIES             ! Number of vector quantities
     integer :: OBJTYPE                  ! From HDF5
     integer :: MYNOQUANTITYTEMPLATES    ! Number of quantity templates
     integer :: Q                        ! Loop counter
@@ -452,6 +451,9 @@ contains ! ========================================= Module procedures =======
 end module VectorHDF5
 
 ! $Log$
+! Revision 2.5  2004/12/28 00:23:48  vsnyder
+! Remove unused declarations and use names
+!
 ! Revision 2.4  2003/07/07 20:21:45  livesey
 ! New stuff in quantity templates written
 !
