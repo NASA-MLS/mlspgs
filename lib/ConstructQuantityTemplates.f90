@@ -55,7 +55,6 @@ CONTAINS
     qty%solarTime(1,:)=hGrid%solarTime
     qty%solarZenith(1,:)=hGrid%solarZenith
     qty%losAngle(1,:)=hGrid%losAngle
-    qty%subVectorIndex=0
     qty%noSubVectorsLowerOverlap=hGrid%noProfsLowerOverlap
     qty%noSubVectorsUpperOverlap=hGrid%noProfsUpperOverlap
 
@@ -155,7 +154,8 @@ CONTAINS
        qty%solarZenith=>MIFGeolocation(instrumentModule)%solarZenith
        qty%solarTime=>  MIFGeolocation(instrumentModule)%solarTime
        qty%losAngle=>   MIFGeolocation(instrumentModule)%losAngle
-       qty%subVectorIndex=> MIFGeolocation(instrumentModule)%subVectorIndex
+       qty%MAFCounter=> MIFGeolocation(instrumentModule)%mafCounter
+       qty%mafIndex=>   MIFGeolocation(instrumentModule)%mafIndex
        qty%noSubVectorsLowerOverlap= &
             & MIFGeolocation(instrumentModule)%noSubVectorsLowerOverlap
        qty%noSubVectorsUpperOverlap= &
@@ -186,8 +186,9 @@ CONTAINS
 
        qty%verticalCoordinate=VC_Altitude
        qty%surfs=l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
+       qty%mafCounter=l1bField%counterMAF
        DO mafIndex=chunk%firstMAFIndex,chunk%lastMAFIndex
-          qty%subVectorIndex(mafIndex-chunk%firstMAFIndex+1)=mafIndex
+          qty%mafIndex(mafIndex-chunk%firstMAFIndex+1)=mafIndex
        END DO
 
        ! Now we're going to fill in the hGrid information
@@ -421,6 +422,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.8  2000/01/20 01:29:03  livesey
+! Replaced storeByChannel with firstIndexChannel, removed stride stuff.
+!
 ! Revision 1.7  2000/01/18 21:34:23  livesey
 ! Removed reference to obsolete hGrid%profileIndices.
 ! Other typo fixes.
