@@ -644,7 +644,9 @@ contains ! =====     Public procedures     =============================
     call make_tree ( (/ &
       begin, s+s_dump, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             nadp+n_spec_def/) )
+             begin, f+f_quantity, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             ndp+n_spec_def/) )
 
     call make_tree( (/ &
       begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
@@ -1105,6 +1107,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.341  2003/11/05 01:04:30  pwagner
+! May dump either entire vector or single quantity in Fill
+!
 ! Revision 2.340  2003/11/01 18:45:00  livesey
 ! Made f_cost an optional argument to binSelector
 !
