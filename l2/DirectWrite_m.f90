@@ -19,7 +19,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
   use Allocate_Deallocate, only: Allocate_test, DeAllocate_test
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA, &
     & L_L2GP, L_L2AUX, L_L2DGG, L_L2FWM
-  use MLSCommon, only: RV
+  use MLSCommon, only: RV, DEFAULTUNDEFINEDVALUE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use MLSSets, only: FindFirst
@@ -482,7 +482,8 @@ contains ! ======================= Public Procedures =========================
       call SaveAsHDF5DS( fileID, trim(sdName), &
         & real( &
         &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:3)) &
-        & ), start, sizes, may_add_to=.true., adding_to=already_there )
+        & ), start, sizes, may_add_to=.true., adding_to=already_there, &
+        & fillValue=DEFAULTUNDEFINEDVALUE )
     else
       total_DS_size = sizes(1)*sizes(2)
       if ( DEEBUG ) then
@@ -495,7 +496,8 @@ contains ! ======================= Public Procedures =========================
       call SaveAsHDF5DS( fileID, trim(sdName), &
         & real( &
         &   reshape(quantity%values(:,first_maf:last_maf), sizes(1:2)) &
-        & ), start, sizes, may_add_to=.true., adding_to=already_there)
+        & ), start, sizes, may_add_to=.true., adding_to=already_there, &
+        & fillValue=DEFAULTUNDEFINEDVALUE)
     endif
 
     ! Now some attribute stuff
@@ -922,6 +924,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.28  2004/08/03 18:02:01  pwagner
+! Sets fillValue for l2aux type
+!
 ! Revision 2.27  2004/07/22 20:42:57  cvuu
 ! May write ForwardModel Names as file-level attributes and fix the phase names
 !
