@@ -89,8 +89,10 @@ contains
           allow_climatology_overloads = decoration(subtree(2,son)) == l_true
         case ( p_input_version_string )
           input_version_string = sub_rosa(subtree(2,son))
+          call get_string ( input_version_string, l2pcf%inputVersion )
         case ( p_output_version_string )
           output_version_string = sub_rosa(subtree(2,son))
+          call get_string ( output_version_string, l2pcf%PGEVersion )
         case ( p_version_comment )
           version_comment = sub_rosa(subtree(2,son))
         case ( p_cycle )
@@ -185,17 +187,19 @@ contains
 
     character (LEN=FileNameLen) :: physicalFilename
     integer :: i, returnStatus, version
+    character (len=*), parameter :: time_format='(1pD18.12)'
 
     ! Begin
     version = 1
 
+    call output ( '============ Global Settings ============', advance='yes' )
+    call output ( ' ', advance='yes' )
+  
     call output ( 'L1B database:', advance='yes' )
   
    if(associated(l1bInfo%L1BRADIDs)) then
     if ( num_l1b_files > 0 ) then
       do i = 1, num_l1b_files
-!        returnStatus = Pgs_pc_getReference(l1bInfo%L1BRADIDs(i), version, &
-!        & physicalFilename)
       if(l1bInfo%L1BRADIDs(i) /= ILLEGALL1BRADID) then
   	    call output ( 'fileid:   ' )
 	    call output ( l1bInfo%L1BRADIDs(i), advance='yes' )
@@ -213,30 +217,30 @@ contains
 
    endif
 
+    call output ( ' ', advance='yes' )
     call output ( 'L1OA file:', advance='yes' )
   
-!    returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
-!      & physicalFilename)
-!    if ( returnStatus == PGS_S_SUCCESS ) then
+      if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
       call output ( 'fileid:   ' )
       call output ( l1bInfo%L1BOAID, advance='yes' )
       call output ( 'name:   ' )
       call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
-!    else
-!      call output ( '(file unknown)', advance='yes' )
-!    end if
+    else
+      call output ( '(file unknown)', advance='yes' )
+    end if
 
+    call output ( ' ', advance='yes' )
     call output ( 'Start Time:   ' )
     call output ( l2pcf%startutc, advance='yes' )
 
-    call output ( 'End Time:   ' )
+    call output ( 'End Time:     ' )
     call output ( l2pcf%endutc, advance='yes' )
 
     call output ( 'Start Time (tai):   ' )
-    call output ( processingrange%starttime, advance='yes' )
+    call output ( processingrange%starttime, format=time_format, advance='yes' )
 
-    call output ( 'End Time:   ' )
-    call output ( processingrange%endtime, advance='yes' )
+    call output ( 'End Time (tai):     ' )
+    call output ( processingrange%endtime, format=time_format, advance='yes' )
 
     call output ( 'PGE version:   ' )
     call output ( l2pcf%PGEVersion, advance='yes' )
@@ -256,11 +260,20 @@ contains
     call output ( 'corresponding mcf hash:   ' )
     call output ( TRIM(l2pcf%spec_hash), advance='yes' )
 
+    call output ( 'Allow climatology overloads?:   ' )
+    call output ( allow_climatology_overloads, advance='yes' )
+
+    call output ( ' ', advance='yes' )
+    call output ( '============ End Global Settings ============', advance='yes' )
+
   end subroutine dump_global_settings
 
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.24  2001/05/09 23:35:04  pwagner
+! Added dump_global_settings
+!
 ! Revision 2.23  2001/05/04 17:15:36  pwagner
 ! Many added settings, esp. L1B files, so level2 can run w/o PCF
 !
