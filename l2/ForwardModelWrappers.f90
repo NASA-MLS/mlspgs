@@ -17,6 +17,7 @@ module ForwardModelWrappers
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
   
 contains ! ============= Public Procedures ==========================
@@ -76,9 +77,16 @@ contains ! ============= Public Procedures ==========================
     end select
   end subroutine ForwardModel
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.15  2002/10/08 17:36:20  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.14  2002/08/21 23:43:33  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
