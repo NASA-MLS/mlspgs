@@ -1927,7 +1927,7 @@ contains
 
             ! Get the corrections to integrals for layers that need GL for
             ! the polarized species.
-            call get_beta_path_polarized ( frq, h, beta_group, &
+            call get_beta_path_polarized ( frq, h, beta_group,   &
               & gl_slabs, gl_inds(:ngl), beta_path_polarized_f,  &
               & dBeta_dT_polarized_path_f )
 
@@ -1974,29 +1974,29 @@ contains
 
           if ( atmos_der ) then
 
-            call drad_tran_df ( c_inds(1:npc), gl_inds(1:ngl), del_zeta, Grids_f, &
-              &  beta_path_c(1:npc,:), eta_fzp, sps_path, do_calc_fzp(1:no_ele,:), &
-              &  beta_path_f, do_gl(1:npc), del_s(1:npc), ref_corr(1:npc), &
-              &  dsdz_gw_path, t_script(1:npc), tau(1:npc), &
-              &  i_stop, d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
+            call drad_tran_df ( c_inds(1:npc), gl_inds(1:ngl), del_zeta,       &
+              &  Grids_f, beta_path_c(1:npc,:), eta_fzp, sps_path,             &
+              &  do_calc_fzp(1:no_ele,:), beta_path_f, do_gl(1:npc),           &
+              &  del_s(1:npc), ref_corr(1:npc), dsdz_gw_path, t_script(1:npc), &
+              &  tau(1:npc), i_stop, d_delta_df(1:npc,:), k_atmos_frq(frq_i,:) )
 
             if ( FwdModelConf%polarized ) then
 
               ! VMR derivatives for polarized radiance.
               ! Compute DE / Df from D Incoptdepth_pol / Df and put
               ! into DE_DF.
-              call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, c_inds(1:p_stop), &
-                &  del_zeta, Grids_f, beta_path_polarized(:,1:p_stop,:),      &
-                &  eta_fzp, do_calc_fzp(1:no_ele,:), sps_path, del_s(1:npc),  &
-                &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),         &
+              call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, c_inds(1:p_stop),   &
+                &  del_zeta, Grids_f, beta_path_polarized(:,1:p_stop,:),     &
+                &  eta_fzp, do_calc_fzp(1:no_ele,:), sps_path, del_s(1:npc), &
+                &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),        &
                 &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
 
               ! Compute D radiance / Df from Tau, Prod, T_Script
               ! and DE / Df.
 
-              call mcrt_der ( t_script(1:npc), sqrt(e_rflty),            &
-                & deltau_pol(:,:,1:npc), de_df(:,:,1:npc,:),             &
-                & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop,       &
+              call mcrt_der ( t_script(1:npc), sqrt(e_rflty),      &
+                & deltau_pol(:,:,1:npc), de_df(:,:,1:npc,:),       &
+                & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop, &
                 & d_rad_pol_df )
 
               if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
@@ -2019,7 +2019,7 @@ contains
             do_calc_t_f(:ngl,:) = do_calc_t(gl_inds(:ngl),:)
             eta_zxp_t_f(:ngl,:) = eta_zxp_t(gl_inds(:ngl),:)
             h_path_f(:ngl) = h_path(gl_inds(:ngl))
-            dAlpha_dT_path_c(:npc) = sum( sps_path(c_inds(1:npc),:) * &
+            dAlpha_dT_path_c(:npc) = sum( sps_path(c_inds(1:npc),:) *  &
                                           dBeta_dT_path_c(1:npc,:),dim=2 )
             dAlpha_dT_path_f(:ngl) = sum( sps_path(gl_inds(1:ngl),:) * &
                                           dBeta_dT_path_f(1:ngl,:),dim=2 )
@@ -2028,12 +2028,11 @@ contains
 
               call drad_tran_dt ( del_zeta(1:npc ), h_path_c(1:npc),          &
                 & dh_dt_path_c(1:npc,:),alpha_path_c(1:npc),                  &
-                & dAlpha_dT_path_c(:npc), &
-                & eta_zxp_t_c(1:npc,:), do_calc_t_c(1:npc,:),                 &
-                & do_calc_hyd_c(1:npc,:), del_s(1:npc), ref_corr(1:npc),      &
-                & Req + one_tan_ht(1), dh_dt_path(brkpt,:), do_gl(1:npc),     &
-                & gl_inds(1:ngl), h_path_f(:ngl), t_path_f(:ngl),             &
-                & dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),                  &
+                & dAlpha_dT_path_c(:npc), eta_zxp_t_c(1:npc,:),               &
+                & do_calc_t_c(1:npc,:), do_calc_hyd_c(1:npc,:), del_s(1:npc), &
+                & ref_corr(1:npc), Req + one_tan_ht(1), dh_dt_path(brkpt,:),  &
+                & do_gl(1:npc), gl_inds(1:ngl), h_path_f(:ngl),               &
+                & t_path_f(:ngl), dh_dt_path_f(:ngl,:), alpha_path_f(1:ngl),  &
                 & dAlpha_dT_path_f(:ngl), eta_zxp_t_f(:ngl,:),                &
                 & do_calc_t_f(:ngl,:), path_dsdh, dhdz_gw_path, dsdz_gw_path, &
                 & t_script(1:npc), d_t_scr_dt(1:npc,:), tau(1:npc), i_stop,   &
@@ -2052,11 +2051,11 @@ contains
                 do l = -1, 1
                   dAlpha_dT_polarized_path_c(l,1:npc) = &
                 & dAlpha_dT_polarized_path_c(l,1:npc) + &
-                    & sps_path(c_inds(1:npc),j) * &
+                    & sps_path(c_inds(1:npc),j) *       &
                     & dBeta_dT_polarized_path_c(l,1:npc,j)
                   dAlpha_dT_polarized_path_f(l,1:ngl) = &
                 & dAlpha_dT_polarized_path_f(l,1:ngl) + &
-                    & sps_path(gl_inds(1:ngl),j) * &
+                    & sps_path(gl_inds(1:ngl),j) *      &
                     & dBeta_dT_polarized_path_f(l,1:ngl,j)
                 end do ! l
               end do ! j
@@ -2069,19 +2068,18 @@ contains
                   & alpha_path_polarized_f(l,:ngl) * dTanh_dT_f(:ngl)
               end do
 
-              call get_d_deltau_pol_dT ( ct, stcp, stsp,              &
-                & t_path_f(:ngl),                 &
-                & alpha_path_polarized(:,1:p_stop), &
-                & alpha_path_polarized_f(:,1:ngl), &
-                & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl), &
-                & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f, &
+              call get_d_deltau_pol_dT ( ct, stcp, stsp, t_path_f(:ngl),      &
+                & alpha_path_polarized(:,1:p_stop),                           &
+                & alpha_path_polarized_f(:,1:ngl),                            &
+                & dAlpha_dT_path_c(:npc), dAlpha_dT_path_f(:ngl),             &
+                & dAlpha_dT_polarized_path_c, dAlpha_dT_polarized_path_f,     &
                 & eta_zxp_t_c(1:p_stop,:), eta_zxp_t_f(:ngl,:), del_s(1:npc), &
-                & gl_inds(:ngl), del_zeta(1:npc),           &
-                & do_calc_t_c(1:p_stop,:), do_calc_t_f(:ngl,:), do_gl(1:p_stop), &
-                & path_dsdh, dhdz_gw_path, dsdz_gw_path,                      &
-                & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),          &
-                & h_path_c(1:npc), h_path_f(:ngl), dh_dt_path_c(1:p_stop,:),  &
-                & dh_dt_path_f(:ngl,:), Req + one_tan_ht(1), dh_dt_path(brkpt,:), &
+                & gl_inds(:ngl), del_zeta(1:npc), do_calc_t_c(1:p_stop,:),    &
+                & do_calc_t_f(:ngl,:), do_gl(1:p_stop), path_dsdh,            &
+                & dhdz_gw_path, dsdz_gw_path, incoptdepth_pol(:,:,1:p_stop),  &
+                & ref_corr(1:p_stop), h_path_c(1:npc), h_path_f(:ngl),        &
+                & dh_dt_path_c(1:p_stop,:),dh_dt_path_f(:ngl,:),              &
+                & Req + one_tan_ht(1), dh_dt_path(brkpt,:),                   &
                 & do_calc_hyd_c(1:p_stop,:), grids_tmp%deriv_flags,           &
                 & de_dt(:,:,1:p_stop,:) )
 
@@ -3056,6 +3054,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.207  2004/04/19 21:01:37  vsnyder
+! Put size of gl_slabs in call to get_gl_slabs_arrays
+!
 ! Revision 2.206  2004/04/17 00:37:00  vsnyder
 ! Analytic temperature derivatives
 !
