@@ -253,6 +253,7 @@ contains
         do i_p = 2, p_stop                 ! path elements
         ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
         ! dTauDx = dTauDx + conjg(transpose(dTauDx))
+        if ( i_p /= i_tan + 1 ) then
           dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
                       &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
                       &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
@@ -277,6 +278,9 @@ contains
                       &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
                       &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
                       &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
+        else
+          dTauDx = sqrt_earth_ref * sqrt_earth_ref * dTauDx
+        endif
         ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
         !                          & dTauDx * t_script(i_p) + &
         !                          & tau(1:2,1:2,i_p) * d_t_script(i_p,i_sv)
@@ -290,6 +294,7 @@ contains
           d_radiance(2,2,i_sv) = d_radiance(2,2,i_sv) + &
                                & dTauDx(2,2) * t_script(i_p) + &
                                & tau(2,2,i_p) * d_t_script(i_p,i_sv)
+
           if ( i_p < p_stop ) then
             if ( i_p /= i_tan + 1 ) then
               i_pp = i_pp + 1
@@ -317,6 +322,7 @@ contains
         i_pp = 2
         dPdx = d_e(1:2,1:2,2,i_sv)         ! D (P_2) / D (x) = D (E_2) / D (x)
         do i_p = 2, p_stop                 ! path elements
+        if ( i_p /= i_tan + 1 ) then
         ! dTauDx = matmul(dPdx,conjg(transpose(prod(1:2,1:2,i_p))))
         ! dTauDx = dTauDx + conjg(transpose(dTauDx))
           dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
@@ -343,6 +349,9 @@ contains
                       &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
                       &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
                       &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
+        else
+          dTauDx = sqrt_earth_ref * sqrt_earth_ref * dTauDx
+        endif
         ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
         !                          & dTauDx * t_script(i_p)
           d_radiance(1,1,i_sv) = d_radiance(1,1,i_sv) + &
@@ -384,6 +393,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.16  2004/02/23 23:20:48  vsnyder
+! Fix some subscript errors
+!
 ! Revision 2.15  2003/12/17 03:03:40  vsnyder
 ! Beautify some comments
 !
