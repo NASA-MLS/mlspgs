@@ -42,7 +42,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   interface operator (*)
     module procedure MultiplyVectors ! element-by-element
-    module procedure ScaleVector     ! by a scalar on the left
+    module procedure ConstantXVector ! by a scalar on the left
   end interface
 
   interface operator ( .DOT. )
@@ -79,7 +79,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   type VectorValue_T
     type (QuantityTemplate_T), pointer :: TEMPLATE ! Template for this quantity
     ! The dimensions of VALUES are Frequencies (or 1) * Vertical Coordinates
-    ! (or 1), and Horizontal Instances (scan or profile or 1).
+    ! (or 1), and Horizontal Instances (scan or profile or 1).  These are
+    ! taken from (template%noChans * template%noSurfs, template%noInstances).
     real(r8), dimension(:,:), pointer :: VALUES => NULL()
     ! MASK is used to control whether elements of vectors are of interest.
     ! If MASK is not associated, every element is of interest.  Otherwise,the
@@ -110,7 +111,24 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   integer, parameter, private :: B_sizer = 0
   integer, parameter, private :: B = bit_size(b_sizer) ! can't use bit_size(b)
 
+  private :: CreateValues
+
 contains ! =====     Public Procedures     =============================
+
+  !-------------------------------------------------  AddToVector  -----
+  subroutine AddToVector ( X, Y )  ! X = X + Y
+    ! Dummy arguments:
+    type(Vector_T), intent(inout) :: X
+    type(Vector_T), intent(in) :: Y
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
+    ! Executable statements:
+    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Cannot add vectors having different templates" )
+    do i = 1, size(x%quantities)
+      x%quantities(i)%values = x%quantities(i)%values + y%quantities(i)%values
+    end do
+  end subroutine AddToVector
 
   !--------------------------------------------------  AddVectors  -----
   type (Vector_T) function AddVectors ( X, Y ) result (Z)
@@ -239,9 +257,9 @@ contains ! =====     Public Procedures     =============================
   ! filled.  Z's mask is allocated if X's is allocated, but it is not filled.
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyVectorInfo using the result of this
-  ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.  Also see AssignVector.
+  ! It is important to invoke DestroyVectorInfo using Z after it is no
+  ! longer needed. Otherwise, a memory leak will result.  Also see
+  ! AssignVector.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     ! Dummy arguments:
@@ -264,6 +282,29 @@ contains ! =====     Public Procedures     =============================
         & call createMask ( z%quantities(i) )
     end do
   end subroutine  CloneVector
+
+  !---------------------------------------------  ConstantXVector  -----
+  type (Vector_T) function ConstantXVector ( A, X ) result (Z)
+  ! Multiply the vector X by A, producing one having the same template
+  ! (but no name, of course).
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyVectorInfo using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignVector.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    ! Dummy arguments:
+    real(r8), intent(in) :: A
+    type(Vector_T), intent(in) :: X
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
+    ! Executable statements:
+    call CloneVector ( z, x )
+    do i = 1, size(x%quantities)
+      z%quantities(i)%values = a * x%quantities(i)%values
+    end do
+  end function ConstantXVector
 
   !-------------------------------------  ConstructVectorTemplate  -----
   subroutine ConstructVectorTemplate ( name, quantities, selected, &
@@ -306,12 +347,23 @@ contains ! =====     Public Procedures     =============================
   end subroutine ConstructVectorTemplate
 
   ! -------------------------------------------------  CopyVector  -----
-  subroutine CopyVector ( Z, X )   ! Destroy Z, deep Z = X, except the name
-  !                                  of Z is not changed
+  subroutine CopyVector ( Z, X, CLONE ) ! If CLONE is present and .true.,
+  ! Destroy Z, deep Z = X, except the name of Z is not changed.  Otherwise,
+  ! copy only the values and mask of X to Z
+
     type(Vector_T), intent(inout) :: Z
     type(Vector_T), intent(in) :: X
+    logical, intent(in), optional :: CLONE
     integer :: I
-    call cloneVector ( Z, X )
+    logical MyClone
+    myclone = .false.
+    if ( present(clone) ) myclone = clone
+    if ( myclone ) then
+      call cloneVector ( Z, X )
+    else
+      if ( x%template%id /= z%template%id ) call MLSMessage &
+        & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
+    end if
     do i = 1, size(x%quantities)
       z%quantities(i)%values = x%quantities(i)%values
       if ( associated (x%quantities(i)%mask ) ) &
@@ -554,6 +606,27 @@ contains ! =====     Public Procedures     =============================
 
   end function GetVectorQuantity
 
+  ! ------------------------------------  GetVectorQuantityByName  -----
+  function GetVectorQuantityByType ( vector, quantityType, &
+    & molecule, radiometer )
+
+  ! Given a quantity type index (l_...), this function returns the first
+  ! quantity within the vector that has that type.  If molecule and/or
+  ! radiometer are supplied, the quantity that has the specified type, as
+  ! well as the specified molecule and/or radiometer index, is returned.
+
+    ! Dummy arguments
+    type (Vector_T), intent(in) :: Vector
+    integer, intent(in) :: QuantityType ! Quantity type index (l_...)
+    integer, intent(in), optional :: Molecule     ! Molecule index (l_...)
+    integer, intent(in), optional :: Radiometer   ! Radiometer index
+    ! Result
+    type (VectorValue_T), pointer :: GetVectorQuantityByType
+
+    GetVectorQuantityByType => vector%quantities( getVectorQuantityIndexByType &
+      & ( vector, quantityType, molecule, radiometer ) )
+  end function GetVectorQuantityByType
+
   ! -------------------------------  GetVectorQuantityIndexByName  -----
   integer function GetVectorQuantityIndexByName ( vector, quantityName )
 
@@ -648,27 +721,27 @@ contains ! =====     Public Procedures     =============================
   end function MultiplyVectors
 
   !-------------------------------------------------  ScaleVector  -----
-  type (Vector_T) function ScaleVector ( A, X ) result (Z)
-  ! Multiply the vector X by A, producing one having the same template
-  ! (but no name, of course).
-
-  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyVectorInfo using the result of this
-  ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.  Also see AssignVector.
-  ! !!!!! ===== END NOTE ===== !!!!! 
+  subroutine ScaleVector ( X, A, Y )
+  ! Y = A*X if Y is present, else X = A*X.
 
     ! Dummy arguments:
+    type(Vector_T), intent(inout), target :: X
     real(r8), intent(in) :: A
-    type(Vector_T), intent(in) :: X
+    type(Vector_T), intent(out), optional, target :: Y
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
+    type(Vector_T), pointer :: Z
     ! Executable statements:
-    call CloneVector ( z, x )
+    z => x
+    if ( present(y) ) then
+      if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, 'Scaled vector has different template from original' )
+      z => y
+    end if
     do i = 1, size(x%quantities)
       z%quantities(i)%values = a * x%quantities(i)%values
     end do
-  end function ScaleVector
+  end subroutine ScaleVector
 
   !-----------------------------------------------------  SetMask  -----
   subroutine SetMask ( MASK, TO_SET )
@@ -688,6 +761,22 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine SetMask
 
+  !------------------------------------------  SubtractFromVector  -----
+  subroutine SubtractFromVector ( X, Y ) ! X = X - Y.
+
+    ! Dummy arguments:
+    type(Vector_T), intent(inout) :: X
+    type(Vector_T), intent(in) :: Y
+    ! Local Variables:
+    integer :: I              ! Subscript and loop inductor
+    ! Executable statements:
+    if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & ModuleName, "Cannot subtract vectors having different templates" )
+    do i = 1, size(x%quantities)
+      x%quantities(i)%values = x%quantities(i)%values - y%quantities(i)%values
+    end do
+  end subroutine SubtractFromVector
+
   !---------------------------------------------  SubtractVectors  -----
   type (Vector_T) function SubtractVectors ( X, Y ) result (Z)
   ! Subtract Y from X, producing one having the same template (but no name,
@@ -705,7 +794,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Cannot add vectors having different templates" )
+        & ModuleName, "Cannot subtract vectors having different templates" )
     call CloneVector ( z, x )
     do i = 1, size(x%quantities)
       z%quantities(i)%values = x%quantities(i)%values - y%quantities(i)%values
@@ -731,6 +820,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.6  2001/01/03 02:01:30  vsnyder
+! Add molecule/radiometer functionality to GetVectorQuantityIndexByType
+!
 ! Revision 2.5  2000/12/04 23:43:59  vsnyder
 ! Move more of addItemToDatabase into the include
 !
