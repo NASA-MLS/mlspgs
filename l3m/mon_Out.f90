@@ -18,6 +18,7 @@ MODULE mon_Out
    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_DeAllocate, &
         & MLSMSG_Warning
    USE mon_Open, ONLY: PCFMData_T
+
    IMPLICIT NONE
    private
    PUBLIC :: CreateFlags_T, &
@@ -361,7 +362,7 @@ CONTAINS
 
       IF (flags%createZS) THEN
          CALL WriteMetaL3MZ (pcf%zsName, mlspcf_mcf_l3mzs_start, pcf, anText,&
-              & hdfVersion=MyHDFVersion)
+              & sFiles%nFiles, hdfVersion=MyHDFVersion)
       ELSE
          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
               & 'No monthly zonal mean std file was produced.')
@@ -371,7 +372,7 @@ CONTAINS
 
       IF (flags%createZD) THEN
          CALL WriteMetaL3MZ (pcf%zdName, mlspcf_mcf_l3mzd_start, pcf, anText,&
-              & hdfVersion=MyHDFVersion)
+              & dFiles%nFiles, hdfVersion=MyHDFVersion)
       ELSE
          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
               & 'No monthly zonal mean dg file was produced.')
@@ -381,7 +382,7 @@ CONTAINS
 
       IF (flags%createMS) THEN
          CALL WriteMetaL3MM (pcf%msName, mlspcf_mcf_l3mms_start, pcf, anText, &
-              & hdfVersion=MyHDFVersion)
+              & sFiles%nFiles, hdfVersion=MyHDFVersion)
       ELSE
          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
               & 'No monthly map std file was produced.')
@@ -391,7 +392,7 @@ CONTAINS
 
       IF (flags%createMD) THEN
          CALL WriteMetaL3MM (pcf%mdName, mlspcf_mcf_l3mmd_start, pcf, anText,&
-              & hdfVersion=MyHDFVersion)
+              & dFiles%nFiles, hdfVersion=MyHDFVersion)
       ELSE
          CALL MLSMessage(MLSMSG_Warning, ModuleName, &
               & 'No monthly map dg file was produced.')
@@ -436,6 +437,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.8  2003/04/30 18:16:29  pwagner
+!Work-around for LF95 infinite compile-time bug
+!
 !Revision 1.7  2003/04/06 02:31:09  jdone
 !added hdfVersion
 !
