@@ -10,6 +10,7 @@ MODULE L1BData
    USE MLSCommon, only: R8, L1BInfo_T, FileNameLen
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
      & MLSMSG_L1Bread, MLSMSG_Warning
+   use Lexer_Core, only: PRINT_SOURCE
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
   use String_Table, only: Get_String
@@ -622,6 +623,9 @@ END MODULE L1BData
 !=================
 
 ! $Log$
+! Revision 2.4  2001/05/03 23:16:57  livesey
+! Added use statement for lexer_core
+!
 ! Revision 2.3  2001/05/03 22:32:25  pwagner
 ! Added L1B..Setup for Rad and OA
 !
