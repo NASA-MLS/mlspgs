@@ -48,7 +48,7 @@ contains ! =====     Public Procedures     =============================
     use L2AUXData, only: L2AUXDATA_T
     use L2ParInfo, only: PARALLEL, WAITFORDIRECTWRITEPERMISSION
     use LEXER_CORE, only: PRINT_SOURCE
-    use MLSL2Options, only: CHECKPATHS
+    use MLSL2Options, only: CHECKPATHS, SKIPDIRECTWRITES
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & add_to_directwrite_timing, add_to_section_timing
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -174,6 +174,7 @@ contains ! =====     Public Procedures     =============================
             call LabelVectorQuantity ( son, vectors )
           end if
         case ( s_directWrite )
+          if ( SKIPDIRECTWRITES ) exit
           call time_now ( dwt1 )
           if ( pass == 1 ) then
             ! On the first pass just count the number of direct writes
@@ -208,7 +209,7 @@ contains ! =====     Public Procedures     =============================
             if(DEEBUG)print*,'Calling direct write to do a setup'
             call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
               & chunkNo, chunks, FWModelConfig, makeRequest=.true., &
-	      & NoExtraWrites=noExtraWrites)
+	           & NoExtraWrites=noExtraWrites)
             noDirectWrites = noDirectWrites + noExtraWrites
           else
             ! On the later passes we do the actual direct write we've been
@@ -220,7 +221,7 @@ contains ! =====     Public Procedures     =============================
               if(DEEBUG)print*,'Calling direct write to do the write'
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
                 & chunkNo, chunks, FWModelConfig, create=createFile, &
-		& theFile=theFile )
+		          & theFile=theFile )
               call add_to_directwrite_timing ( 'writing', dwt2)
               noDirectWritesCompleted = noDirectWritesCompleted + 1
               ! If that was the last one then bail out
@@ -238,7 +239,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Bail out of pass loop if there are no direct writes, or there was
       ! an error.
-      if ( noDirectWrites == 0 .or. error /= 0 ) exit passLoop
+      if ( noDirectWrites == 0 .or. SKIPDIRECTWRITES .or. error /= 0 ) exit passLoop
       pass = pass + 1
       ! Did we receive permission to write to a "ghost node"
       if ( .not. didTheWrite ) then
@@ -1818,6 +1819,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.116  2004/12/14 22:51:35  pwagner
+! Changes related to stopping early
+!
 ! Revision 2.115  2004/07/22 20:49:58  cvuu
 ! Add forwardModelConfigDatabase to the call MLSL2Join and MLSL2Fill
 !
