@@ -38,7 +38,6 @@ copy
 covariance
 criteria
 
-decay
 destination
 destroyJacobian
 diagnostics
@@ -87,6 +86,7 @@ jacobian
 l2pc
 lambda
 length
+lengthScale
 level
 logBasis
 losqty
@@ -189,6 +189,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.10  2001/10/15 22:06:12  livesey
+# Added fields for smoothing
+#
 # Revision 2.9  2001/10/05 01:18:48  vsnyder
 # Added 'level' field for use in Snoop spec
 #
