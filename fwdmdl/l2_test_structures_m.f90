@@ -53,6 +53,8 @@ module L2_TEST_STRUCTURES_M
   type FWD_MDL_CONFIG
     Logical :: do_conv
     Logical :: temp_der
+    Logical :: atmos_der
+    Logical :: spect_der
     Logical :: do_frqavg
     Real(r8) :: Zfrq
     Integer(i4) :: N_lvls

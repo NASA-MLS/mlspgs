@@ -21,12 +21,13 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,i_raw, k_temp, &
-           k_atmos, k_spect_dw, k_spect_dn,k_spect_dnu, spect_atmos,      &
-           no_tan_hts, k_info_count, i_star_all,k_star_all, k_star_info,  &
-           temp_der,no_t,no_phi_t,no_phi_f,t_z_basis,atmospheric,spectroscopic)
+Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,temp_der,atmos_der,&
+           spect_der,i_raw,k_temp,k_atmos, k_spect_dw, k_spect_dn,           &
+           k_spect_dnu, spect_atmos,no_tan_hts,k_info_count,i_star_all,      &
+           k_star_all, k_star_info,no_t,no_phi_t,no_phi_f,t_z_basis,         &
+           atmospheric,spectroscopic)
 !
-    Logical, intent(IN) :: temp_der
+    Logical, intent(IN) :: temp_der,atmos_der,spect_der
 !
     integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,band,no_phi_t
     integer(i4), intent(IN) :: no_phi_f(*), spect_atmos(*)
@@ -66,6 +67,7 @@ Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,i_raw, k_temp, &
 !
 ! This subroutine is called by channel
 !
+    ki = 0
     kc = 0
     K_INFO_COUNT = 0
 !
@@ -73,6 +75,8 @@ Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,i_raw, k_temp, &
     j = ptg_press%no_lin_values
     PtP(1:j) = dble(ptg_press%lin_val(1:j))
     Call Cspline(tan_press,PtP,i_raw,i_star_all,k,j)
+!
+    if(.not. ANY((/temp_der,atmos_der,spect_der/))) Return
 !
 ! Now transfer the other fwd_mdl derivatives to the output pointing
 ! values
@@ -85,7 +89,7 @@ Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,i_raw, k_temp, &
 !
 ! Derivatives needed continue to process
 !
-      ki = 2
+      ki = ki + 1
       kc = kc + 1
       k_star_info(kc)%name = 'TEMP'
       k_star_info(kc)%first_dim_index = ki
@@ -108,96 +112,103 @@ Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,i_raw, k_temp, &
 !
     endif
 !
+    if(atmos_der) then
+!
 ! ****************** atmospheric derivatives ******************
 !
-    ki = 2
-    do is = 1, n_sps
+      do is = 1, n_sps
 !
-      if (atmospheric(is)%der_calc(band)) then
+        if (atmospheric(is)%der_calc(band)) then
 !
-        ki = ki + 1
-        kc = kc + 1
-        nz = atmospheric(is)%no_lin_values
-        k_star_info(kc)%name = atmospheric(is)%name
-        k_star_info(kc)%first_dim_index = ki
-        k_star_info(kc)%no_phi_basis = no_phi_f(is)
-        k_star_info(kc)%no_zeta_basis = nz
-        k_star_info(kc)%zeta_basis(1:nz) = &
-                &  atmospheric(is)%basis_peaks(1:nz)
+          ki = ki + 1
+          kc = kc + 1
+          nz = atmospheric(is)%no_lin_values
+          k_star_info(kc)%name = atmospheric(is)%name
+          k_star_info(kc)%first_dim_index = ki
+          k_star_info(kc)%no_phi_basis = no_phi_f(is)
+          k_star_info(kc)%no_zeta_basis = nz
+          k_star_info(kc)%zeta_basis(1:nz) = &
+                  &  atmospheric(is)%basis_peaks(1:nz)
 !
 ! Derivatives needed continue to process
 !
-        Rad(1:) = 0.0
-        do nf = 1, no_phi_f(is)
+          Rad(1:) = 0.0
+          do nf = 1, no_phi_f(is)
 !
-          do sv_i = 1, nz
+            do sv_i = 1, nz
 !
-            Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
-            Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
-            k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+              Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
+              Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
+              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+!
+            end do
 !
           end do
 !
-        end do
+        endif
 !
-      endif
+      end do
 !
-    end do
+    endif
+!
+    if(spect_der) then
 !
 ! ****************** Spectroscopic derivatives ******************
 !
-    do is = 1, n_sps
+      do is = 1, n_sps
 !
-      i = spect_atmos(is)
-      if(i < 1) CYCLE
-      if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+        i = spect_atmos(is)
+        if(i < 1) CYCLE
+        if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
 !
 ! Derivatives needed continue to process
 !
-      Spectag = atmospheric(is)%spectag
+        Spectag = atmospheric(is)%spectag
 !
-      DO
+        DO
 !
-        if(spectroscopic(i)%Spectag /= Spectag) EXIT
-        n = spectroscopic(i)%no_phi_values
-        nz = spectroscopic(i)%no_zeta_values
-        CA = spectroscopic(i)%type
-        ki = ki + 1
-        kc = kc + 1
-        k_star_info(kc)%name = spectroscopic(i)%NAME
-        k_star_info(kc)%first_dim_index = ki
-        k_star_info(kc)%no_phi_basis = n
-        k_star_info(kc)%no_zeta_basis = nz
-        k_star_info(kc)%zeta_basis(1:nz) = &
-                &  spectroscopic(i)%zeta_basis(1:nz)
+          if(spectroscopic(i)%Spectag /= Spectag) EXIT
+          n = spectroscopic(i)%no_phi_values
+          nz = spectroscopic(i)%no_zeta_values
+          CA = spectroscopic(i)%type
+          ki = ki + 1
+          kc = kc + 1
+          k_star_info(kc)%name = spectroscopic(i)%NAME
+          k_star_info(kc)%first_dim_index = ki
+          k_star_info(kc)%no_phi_basis = n
+          k_star_info(kc)%no_zeta_basis = nz
+          k_star_info(kc)%zeta_basis(1:nz) = &
+                  &  spectroscopic(i)%zeta_basis(1:nz)
 !
-        Rad(1:) = 0.0
-        do nf = 1, n
+          Rad(1:) = 0.0
+          do nf = 1, n
 !
-          do sv_i = 1, nz
+            do sv_i = 1, nz
 !
-            select case ( CA )
-              case ( 'W' )
-                Rad(1:k) = k_spect_dw(1:k,sv_i,nf,i)
-              case ( 'N' )
-                Rad(1:k) = k_spect_dn(1:k,sv_i,nf,i)
-              case ( 'V' )
-                Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
-            end select
+              select case ( CA )
+                case ( 'W' )
+                  Rad(1:k) = k_spect_dw(1:k,sv_i,nf,i)
+                case ( 'N' )
+                  Rad(1:k) = k_spect_dn(1:k,sv_i,nf,i)
+                case ( 'V' )
+                  Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
+              end select
 !
-            Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
-            k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
+              Call Lintrp(tan_press,PtP,Rad,Sc1,k,j)
+              k_star_all(ki,sv_i,nf,1:j) = Sc1(1:j)
 !
-          end do        ! sv_i loop
+            end do        ! sv_i loop
 !
-        end do          ! nf loop
+          end do          ! nf loop
 !
-        i = i + 1
-        if(i > 3 * n_sps) EXIT
+          i = i + 1
+          if(i > 3 * n_sps) EXIT
 !
-      END DO
+        END DO
 !
-    end do
+      end do
+!
+    endif
 !
     K_INFO_COUNT = kc
     Return

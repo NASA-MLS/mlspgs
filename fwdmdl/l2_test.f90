@@ -341,13 +341,12 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
           Radiances(ptg_i,ch) = RadV(1)
         endif
       end do
-
-!     if(i > -3) goto 77           ! ** DEBUG, Bypass derivatives avg.
+!
+      if(FMC%temp_der) then
 !
 ! Frequency Average the temperature derivatives with the appropriate
 ! filter shapes
 !
-      if(FMC%temp_der) then
         RadV(1:kk) = 0.0
         do i = 1, no_pfa_ch
 !         ch = pfa_ch(i)
@@ -366,86 +365,89 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
             end do
           end do
         end do
+!
       endif
 
-!     if(i > -3) goto 77           ! ** DEBUG, Bypass derivatives avg.
+      if(FMC%atmos_der) then
 !
 ! Frequency Average the atmospheric derivatives with the appropriate
 ! filter shapes
 !
-      do i = 1, no_pfa_ch
-!       ch = pfa_ch(i)
-        ch = i                 ! ** DEBUG, memory limitations on MLSGATE
-        do j = 1, FMI%n_sps
-          if(T_FMI%atmospheric(j)%der_calc(FMI%band)) THEN
-            RadV(1:kk) = 0.0
-            do k = 1, T_FMI%no_phi_f(j)
-              do n = 1, T_FMI%no_coeffs_f(j)
-                if(FMC%do_frqavg) then
-                  RadV(1:kk) = k_atmos_frq(j)%values(1:kk,n,k)
-                  Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i), &
-                 &              FMI%Filter_func(1:,i),          &
-                 &              RadV,kk,FMI%no_filt_pts,r)
-                else
-                  r = k_atmos_frq(j)%values(1,n,k)
-                endif
-                k_atmos(ch,ptg_i,n,k,j) = r
+        do i = 1, no_pfa_ch
+!         ch = pfa_ch(i)
+          ch = i                 ! ** DEBUG, memory limitations on MLSGATE
+          do j = 1, FMI%n_sps
+            if(T_FMI%atmospheric(j)%der_calc(FMI%band)) THEN
+              RadV(1:kk) = 0.0
+              do k = 1, T_FMI%no_phi_f(j)
+                do n = 1, T_FMI%no_coeffs_f(j)
+                  if(FMC%do_frqavg) then
+                    RadV(1:kk) = k_atmos_frq(j)%values(1:kk,n,k)
+                    Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i), &
+                   &              FMI%Filter_func(1:,i),          &
+                   &              RadV,kk,FMI%no_filt_pts,r)
+                  else
+                    r = k_atmos_frq(j)%values(1,n,k)
+                  endif
+                  k_atmos(ch,ptg_i,n,k,j) = r
+                end do
               end do
-            end do
-          endif
+            endif
+          end do
         end do
-      end do
+!
+      endif
 
-!     if(i > -3) goto 77           ! ** DEBUG, Bypass derivatives avg.
+      if(FMC%spect_der) then
 !
 ! Frequency Average the spectroscopic derivatives with the appropriate
 ! filter shapes
 !
-      do i = 1, no_pfa_ch
-!       ch = pfa_ch(i)
-        ch = i                 ! ** DEBUG, memory limitations on MLSGATE
-        do m = 1, FMI%n_sps
-          j = FMI%spect_atmos(m)
-          if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) CYCLE
-          Spectag = FMI%spectroscopic(j)%Spectag
-          DO
-            if(FMI%spectroscopic(j)%Spectag /= Spectag) EXIT
-            RadV(1:kk) = 0.0
-            CA = FMI%spectroscopic(j)%type
-            do k = 1, FMI%spectroscopic(j)%no_phi_values
-              do n = 1, FMI%spectroscopic(j)%no_zeta_values
-                select case ( CA )
-                  case ( 'W' )
-                    RadV(1:kk) = k_spect_dw_frq(m)%values(1:kk,n,k)
-                  case ( 'N' )
-                    RadV(1:kk) = k_spect_dn_frq(m)%values(1:kk,n,k)
-                  case ( 'V' )
-                    RadV(1:kk) = k_spect_dnu_frq(m)%values(1:kk,n,k)
-                end select
-                if(FMC%do_frqavg) then
-                  Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i), &
-                 &              FMI%Filter_func(1:,i),&
-                 &              RadV,kk,FMI%no_filt_pts,r)
-                else
-                  r = RadV(1)
-                endif
-                select case ( CA )
-                  case ( 'W' )
-                    k_spect_dw(ch,ptg_i,n,k,j) = r
-                  case ( 'N' )
-                    k_spect_dn(ch,ptg_i,n,k,j) = r
-                  case ( 'V' )
-                    k_spect_dnu(ch,ptg_i,n,k,j) = r
-                end select
+        do i = 1, no_pfa_ch
+!         ch = pfa_ch(i)
+          ch = i                 ! ** DEBUG, memory limitations on MLSGATE
+          do m = 1, FMI%n_sps
+            j = FMI%spect_atmos(m)
+            if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) CYCLE
+            Spectag = FMI%spectroscopic(j)%Spectag
+            DO
+              if(FMI%spectroscopic(j)%Spectag /= Spectag) EXIT
+              RadV(1:kk) = 0.0
+              CA = FMI%spectroscopic(j)%type
+              do k = 1, FMI%spectroscopic(j)%no_phi_values
+                do n = 1, FMI%spectroscopic(j)%no_zeta_values
+                  select case ( CA )
+                    case ( 'W' )
+                      RadV(1:kk) = k_spect_dw_frq(m)%values(1:kk,n,k)
+                    case ( 'N' )
+                      RadV(1:kk) = k_spect_dn_frq(m)%values(1:kk,n,k)
+                    case ( 'V' )
+                      RadV(1:kk) = k_spect_dnu_frq(m)%values(1:kk,n,k)
+                  end select
+                  if(FMC%do_frqavg) then
+                      Call Freq_Avg(F_grid,FMI%F_grid_filter(1:,i), &
+                   &              FMI%Filter_func(1:,i),&
+                   &              RadV,kk,FMI%no_filt_pts,r)
+                  else
+                    r = RadV(1)
+                  endif
+                  select case ( CA )
+                    case ( 'W' )
+                      k_spect_dw(ch,ptg_i,n,k,j) = r
+                    case ( 'N' )
+                      k_spect_dn(ch,ptg_i,n,k,j) = r
+                    case ( 'V' )
+                      k_spect_dnu(ch,ptg_i,n,k,j) = r
+                  end select
+                end do
               end do
-            end do
-            j = j + 1
-            if(j > 3 * FMI%n_sps) EXIT
-          END DO
+              j = j + 1
+              if(j > 3 * FMI%n_sps) EXIT
+            END DO
+          end do
         end do
-      end do
 !
- 77   j = 0             ! ** DEBUG
+      endif
 !
     END DO              ! Pointing Loop
 !
@@ -456,30 +458,36 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
     do i = 1, no_pfa_ch
       ch = pfa_ch(i)
       Radiances(kk,ch) = Radiances(kk-1,ch)
-      k_temp(i,kk,1:T_FMI%no_t,1:T_FMI%no_phi_t) = &
-     &            k_temp(i,kk-1,1:T_FMI%no_t,1:T_FMI%no_phi_t)
-      do m = 1, FMI%n_sps
-        if(T_FMI%atmospheric(m)%der_calc(FMI%band)) then
-          k = T_FMI%no_phi_f(m)
-          n = T_FMI%no_coeffs_f(m)
-          k_atmos(i,kk,1:n,1:k,m)=k_atmos(i,kk-1,1:n,1:k,m)
-        endif
-      end do
-      do m = 1, FMI%n_sps
-        j = FMI%spect_atmos(m)
-        if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) CYCLE
-        Spectag =  FMI%spectroscopic(j)%Spectag
-        DO
-          if(FMI%spectroscopic(j)%Spectag /= Spectag) EXIT
-          k = FMI%spectroscopic(j)%no_phi_values
-          n = FMI%spectroscopic(j)%no_zeta_values
-          k_spect_dw(i,kk,1:n,1:k,j)=k_spect_dw(i,kk-1,1:n,1:k,j)
-          k_spect_dn(i,kk,1:n,1:k,j)=k_spect_dn(i,kk-1,1:n,1:k,j)
-          k_spect_dnu(i,kk,1:n,1:k,j)=k_spect_dnu(i,kk-1,1:n,1:k,j)
-          j = j + 1
-          if(j > 3 * FMI%n_sps) EXIT
-        END DO
-      end do
+      if(FMC%temp_der) then
+        k_temp(i,kk,1:T_FMI%no_t,1:T_FMI%no_phi_t) = &
+     &              k_temp(i,kk-1,1:T_FMI%no_t,1:T_FMI%no_phi_t)
+      endif
+      if(FMC%atmos_der) then
+        do m = 1, FMI%n_sps
+          if(T_FMI%atmospheric(m)%der_calc(FMI%band)) then
+            k = T_FMI%no_phi_f(m)
+            n = T_FMI%no_coeffs_f(m)
+            k_atmos(i,kk,1:n,1:k,m)=k_atmos(i,kk-1,1:n,1:k,m)
+          endif
+        end do
+      endif
+      if(FMC%spect_der) then
+        do m = 1, FMI%n_sps
+          j = FMI%spect_atmos(m)
+          if(.not.  FMI%spectroscopic(j)%DER_CALC(FMI%band)) CYCLE
+          Spectag =  FMI%spectroscopic(j)%Spectag
+          DO
+            if(FMI%spectroscopic(j)%Spectag /= Spectag) EXIT
+            k = FMI%spectroscopic(j)%no_phi_values
+            n = FMI%spectroscopic(j)%no_zeta_values
+            k_spect_dw(i,kk,1:n,1:k,j)=k_spect_dw(i,kk-1,1:n,1:k,j)
+            k_spect_dn(i,kk,1:n,1:k,j)=k_spect_dn(i,kk-1,1:n,1:k,j)
+            k_spect_dnu(i,kk,1:n,1:k,j)=k_spect_dnu(i,kk-1,1:n,1:k,j)
+            j = j + 1
+            if(j > 3 * FMI%n_sps) EXIT
+          END DO
+        end do
+      endif
     end do
 !
 !  Here comes the Convolution code
@@ -491,7 +499,8 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
       if(FMC%do_conv) then
 !
         Call convolve_all(T_FMI%ptg_press,T_FMI%atmospheric,FMI%n_sps,   &
-       &     FMC%temp_der,FMI%tan_press,ptg_angles(1:,l),tan_temp(1:,l), &
+       &     FMC%temp_der,FMC%atmos_der,FMC%spect_der,                   &
+       &     FMI%tan_press,ptg_angles(1:,l),tan_temp(1:,l), &
        &     dx_dt, d2x_dxdt,FMI%band,center_angle,FMI%fft_pts,          &
        &     Radiances(1:,ch),k_temp(i,1:,1:,1:),k_atmos(i,1:,1:,1:,1:), &
        &     k_spect_dw(i,1:,1:,1:,1:),k_spect_dn(i,1:,1:,1:,1:),    &
@@ -505,12 +514,13 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
       else
 !
         Call no_conv_at_all(T_FMI%ptg_press,FMI%n_sps,FMI%tan_press, &
-       &     FMI%band,Radiances(1:,ch),k_temp(i,1:,1:,1:),           &
+       &     FMI%band,FMC%temp_der,FMC%atmos_der,FMC%spect_der,      &
+       &     Radiances(1:,ch),k_temp(i,1:,1:,1:),                    &
        &     k_atmos(i,1:,1:,1:,1:),k_spect_dw(i,1:,1:,1:,1:),       &
        &     k_spect_dn(i,1:,1:,1:,1:),k_spect_dnu(i,1:,1:,1:,1:),   &
        &     FMI%spect_atmos, no_tan_hts,k_info_count,               &
        &     i_star_all(i,1:), k_star_all(i,1:,1:,1:,1:),            &
-       &     k_star_info,FMC%temp_der,T_FMI%no_t,T_FMI%no_phi_t,     &
+       &     k_star_info,T_FMI%no_t,T_FMI%no_phi_t,                  &
        &     T_FMI%no_phi_f,T_FMI%t_zeta_basis,T_FMI%atmospheric,    &
        &     FMI%spectroscopic)
 !
@@ -520,12 +530,14 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
 
   END DO                ! Mmaf Loop
 !
-  DEALLOCATE(k_temp_frq%values,STAT=i)
+  if(FMC%temp_der) DEALLOCATE(k_temp_frq%values,STAT=i)
   do j = 1, FMI%n_sps
-    DEALLOCATE(k_atmos_frq(j)%values,STAT=i)
-    DEALLOCATE(k_spect_dw_frq(j)%values,STAT=i)
-    DEALLOCATE(k_spect_dn_frq(j)%values,STAT=i)
-    DEALLOCATE(k_spect_dnu_frq(j)%values,STAT=i)
+    if(FMC%atmos_der) DEALLOCATE(k_atmos_frq(j)%values,STAT=i)
+    if(FMC%spect_der) then
+      DEALLOCATE(k_spect_dw_frq(j)%values,STAT=i)
+      DEALLOCATE(k_spect_dn_frq(j)%values,STAT=i)
+      DEALLOCATE(k_spect_dnu_frq(j)%values,STAT=i)
+    endif
   end do
 !
 ! *** DEBUG Print
@@ -559,6 +571,8 @@ Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
     end do
 903 format('ch',i2.2,'_avg_conv_pfa_rad',a1,i2.2)
 905 format(4(2x,1pg15.8))
+!
+    if(.not. ANY((/FMC%temp_der,FMC%atmos_der,FMC%spect_der/))) goto 99
 !
     ch = 1
     tau(1:) = 0.0

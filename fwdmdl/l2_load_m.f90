@@ -58,7 +58,6 @@ Character (LEN=80) :: Fnd, Line
   if(io /= 0) goto 99
 !
   FMC%Zfrq = -1.0
-  FMC%temp_der = .true.
   read(13,*,iostat=io) FMC%do_conv
   if(io /= 0) goto 99
   read(13,*,iostat=io) FMC%do_frqavg
@@ -127,6 +126,12 @@ Character (LEN=80) :: Fnd, Line
   if(io /= 0) goto 99
 
   read(11,*,iostat=io) FMC%Sideband
+  if(io /= 0) goto 99
+!
+  read(11,'(A)',iostat=io) Ax
+  if(io /= 0) goto 99
+
+  read(11,*,iostat=io) FMC%temp_der, FMC%atmos_der, FMC%spect_der
   if(io /= 0) goto 99
 !
   read(11,'(A)',iostat=io) Ax
@@ -747,7 +752,7 @@ END SUBROUTINE radiometry
 !
   Subroutine ANTENNA (Fn, M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IER)
 
-    use get_lun, only: AAAP_UNIT
+    use GET_LUN, only: AAAP_UNIT
     use MACHINE, only: IO_ERROR
 
     Integer(i4), parameter :: MaxV= 2048
@@ -861,7 +866,7 @@ SUBROUTINE get_filters(no_pfa_ch,no_filt_pts,pfa_ch,f_grid_filter, &
                &       freqs,filter_func,InDir,ier)
 
   use MLSCommon, only: I4, R8
-  use get_lun, only: filter_unit
+  use GET_LUN, only: filter_unit
 
 !  ===============================================================
 !  Declaration of variables for sub-program: get_filters
@@ -977,8 +982,5 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
-! Revision 1.2  2001/03/06 09:28:28  zvi
-! *** empty log message ***
-!
 ! Revision 1.1  2001/02/22 18:12:05  ZShippony
 ! Initial conversion to Fortran 90
