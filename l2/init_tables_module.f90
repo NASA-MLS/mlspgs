@@ -1095,6 +1095,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_filterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
              begin, f+f_lines, s+s_line, n+n_field_spec, &
+             begin, f+f_mark, t+t_boolean, n+n_field_type, &
              begin, f+f_pfaData, s+s_makePFA, s+s_pfaData, s+s_readPFA, &
                     n+n_field_spec, &
              begin, f+f_pointingGrids, t+t_boolean, n+n_field_type, &
@@ -1104,6 +1105,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_spectroscopy, t+t_molecule, n+n_field_type, &
              begin, f+f_stop, t+t_boolean, n+n_field_type, &
              begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
+             begin, f+f_text, t+t_string, n+n_field_type, &
              begin, f+f_tGrid, s+s_tGrid, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
              begin, f+f_vGrid, s+s_vGrid, n+n_field_spec, &
@@ -1329,6 +1331,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.397  2005/04/01 20:48:28  vsnyder
+! Add mark and text fields to dump command
+!
 ! Revision 2.396  2005/03/16 23:59:42  vsnyder
 ! Add allLinesForRadiometer and allLinesInCatalog to makePFA
 !
