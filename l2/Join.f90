@@ -9,7 +9,7 @@ module Join                     ! Join together chunk based data.
 
   use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, F_SOURCE, &
     & F_UNPACKOUTPUT, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, L_PRESSURE, L_NONE, &
-    & L_TRUE, S_L2AUX, S_L2GP, S_TIME
+    & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
   use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
     & L2AUXData_T, L2AUXDim_Channel, L2AUXDim_geodAngle, &
     & L2AUXDim_IntermediateFrequency, L2AUXDim_LSBFrequency, L2AUXDim_MAF, &
@@ -174,7 +174,8 @@ contains ! =====     Public Procedures     =============================
       if ( quantity%coherent .AND. &
         &  quantity%stacked .AND. &
         & ( (quantity%verticalCoordinate == l_Pressure) &
-        &  .OR. (quantity%verticalCoordinate == l_None) ) ) then
+        &  .OR. (quantity%verticalCoordinate == l_None) &
+        &  .OR. (quantity%verticalCoordinate == l_Zeta) ) ) then
         ! Coherent, stacked, regular quantities on pressure surfaces, or
         ! with no vertical coordinate system go in l2gp files.
         call JoinL2GPQuantities ( key, name, vectors(vectorIndex), quantityIndex, &
@@ -310,6 +311,8 @@ contains ! =====     Public Procedures     =============================
       ! Setup the standard stuff, only pressure as it turns out.
       if ( quantity%verticalCoordinate == l_Pressure ) &
         & newL2GP%pressures = quantity%surfs(:,1)
+      if ( quantity%verticalCoordinate == l_Zeta ) &
+        & newL2GP%pressures = 10.0**(-quantity%surfs(:,1))
 
       ! ??? In later versions we'll need to think about frequency stuff (NJL)
 
@@ -688,6 +691,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.11  2001/02/27 00:50:31  livesey
+! Added ability to Join verticalCoordinate=l_zeta quantities into l2gp entities.
+!
 ! Revision 2.10  2001/02/16 00:50:17  livesey
 ! Added error to avoid confusion with L2GP in ReadApriori section
 !
