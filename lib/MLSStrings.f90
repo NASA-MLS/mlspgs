@@ -122,11 +122,11 @@ CONTAINS
   end Function depunctuate
 
   ! ------------------------------------------------  DEPUNCTUATE  -----
-  Function unquote(str, quote, strict) result (outstr)
+  Function unquote(str, quotes, cquotes, strict) result (outstr)
     ! Function that removes a single pair of surrounding quotes from string
 
     ! E.g., given "Let me see." or 'Let me see.' returns
-    ! Let me see.
+    !    Let me see.
     ! If no surrounding quotes are found, returns string unchanged; unless
     ! (1) mismatched quotes, e.g. 'Let me see." will:
     !     remove leading quote but leave trailing quote
@@ -134,89 +134,130 @@ CONTAINS
     !  (a) remove it if the resulting string is non-empty; or
     !  (b) return the single unpaired quote if that was the entire str
     
-    ! If given optional arg quote, removes only surrounding pair of quotes
-    
     ! If given optional arg strict, options (1) and (2) above disregarded
     ! i.e., surrounding quotes must match, else returns string unchanged
     
+    ! If given optional arg quotes, removes only surrounding pair:
+    ! quotes[i:i] for each i=1..len[quotes]
+    ! E.g., given /a\ regexp/ with quotes='/' returns
+    !    a\ regexp
+    
+    ! If given optional args quotes & cquotes, removes only surrounding pair:
+    ! quotes[i:i] on the left, cquotes[i:i] on the right, i=1..len[quotes]
+    ! E.g., given [a particle] with quotes='[' cquotes=']' returns
+    !    a particle
+    ! (For this case, strict matching is always on)
+    
     ! Useful because the parser will return quote-delimited strings if that's
     ! how they appear in the lcf
+    
+    ! Calling get_string with "strip=.true." renders this unnecessary.
+    ! However, you might find another use for it, especially with
+    ! feature of being able to trim other, user-supplied detritus:
+    ! e.g., braces, parentheses, extraneous delimiters
     !--------Argument--------!
     character(len=*),intent(in) :: str
     character(len=len(str)) :: outstr
-    character(len=1),intent(in), optional :: quote
+    character(len=*),intent(in), optional :: quotes
+    character(len=*),intent(in), optional :: cquotes
     logical,intent(in), optional :: strict
     !----------Local vars----------!
     character(len=1), parameter :: sq=''''
     character(len=1), parameter :: dq='"'
-    integer :: first, last, ult
+    integer :: first, last, ult, prim
+    character(len=1) :: quote, cquote
+    integer :: i
+    logical :: mystrict
     !----------Executable part----------!
 
-   ult = LEN(TRIM(str))
+   ult = len_trim(str)    ! Position of last non-blank char
+   prim = ult - len_trim(adjustl(str)) + 1    ! Position of 1st non-blank char
       
-   if(ult <= 1) then
+   ! length of non-blank portion of string to be trimmed must be at least 2
+   if(ult-prim+1 <= 1) then
       outstr=str
       return
    endif
 
-   if(present(quote)) then
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+   
+   ! These are initialized so that if no matching quotes found
+   ! we will return    outstr = adjustl(str)
+   first = prim
+   last = ult
 
-      if(present(strict)) then
-         if(str(1:1) == quote .and. str(ult:ult) == quote) then
-            outstr=str(2:ult-1)
-         else
-            outstr=str
-         endif
-         return
+   ! trim surrounding user-supplied marks?
+
+   if(present(quotes)) then
+      if(len_trim(quotes) <= 0) then
+       outstr=str
+       return
       endif
       
-      if(str(1:1) == quote) then
-         first=2
-      else
-         first=1
-      endif
+      ! Loop over char class in string quotes
+      do i=1, len_trim(quotes)
+      
+         quote = quotes(i:i)
 
-      if(str(ult:ult) == quote) then
-         last=ult-1
-      else
-         last=ult
-      endif
+         ! Supplied with paired left and right quotes?
+         if(present(cquotes)) then
+            cquote=cquotes(i:i)
+            mystrict=.true.
+         else
+            cquote=quote
+         endif
 
-   if(present(strict)) then
+         if(mystrict) then
+           if(str(prim:prim) == quote .and. str(ult:ult) == cquote) then
+               outstr=str(prim+1:ult-1)
+               return
+          endif
+      
+        else
+         if(str(prim:prim) == quote) then
+           first=prim+1
+          endif
+
+          if(str(ult:ult) == cquote) then
+             last=ult-1
+           endif
+        endif
+
+      enddo
+
+   ! insist surrounding marks match?
+   elseif(present(strict)) then
       if( &
-      & str(1:1) == str(ult:ult) &
+      & str(prim:prim) == str(ult:ult) &
       & .and. &
-        & (str(1:1) == sq .or. str(1:1) == dq) &
+        & (str(prim:prim) == sq .or. str(prim:prim) == dq) &
         & ) then
-            outstr=str(2:ult-1)
+            outstr=str(prim+1:ult-1)
           else
             outstr=str
           endif
          return
-   endif
       
-   elseif(str(1:1) == sq) then
-      first=2
+   elseif(str(prim:prim) == sq) then
+      first=prim+1
       if(str(ult:ult) == sq) then
          last=ult-1
-      else
-         last=ult
       endif
       
-   elseif(str(1:1) == dq) then
-      first=2
+   elseif(str(prim:prim) == dq) then
+      first=prim+1
       if(str(ult:ult) == dq) then
          last=ult-1
-      else
-         last=ult
       endif
 
    else
-      first=1
+      first=prim
       if(str(ult:ult) == dq .or. str(ult:ult) == sq) then
          last=ult-1
-      else
-         last=ult
       endif
 
    endif
@@ -1061,6 +1102,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2001/05/11 23:41:31  pwagner
+! Improved unquote
+!
 ! Revision 2.7  2001/05/11 00:06:54  pwagner
 ! Added unquote
 !
