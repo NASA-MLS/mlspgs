@@ -253,8 +253,7 @@ contains ! ======================= Public Procedures =========================
     ! Closes file
     ! If slave, tells master it has finished
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
-    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, &
-      & FINISHEDDIRECTWRITE
+    use L2ParInfo, only: PARALLEL !, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T
     use MLSFiles, only: &
       & GetPCFromRef, split_path_name, mls_sfstart, mls_sfend
@@ -310,7 +309,7 @@ contains ! ======================= Public Procedures =========================
     ! Setup information, sanity checks etc.
     ! If we're a slave, we need to request permission from the master.
     if ( parallel%slave ) then
-      call RequestDirectWritePermission ( file, createFile, .true., you_may )
+!      call RequestDirectWritePermission ( file, createFile, .true., you_may )
     else
       createFile = .not. any ( createdFilenames == file )
       if ( createFile ) then
@@ -336,7 +335,7 @@ contains ! ======================= Public Procedures =========================
         & 'Error ending closing direct write l2aux file' )
 
     ! Tell master we're done
-    if ( parallel%slave ) call FinishedDirectWrite
+!    if ( parallel%slave ) call FinishedDirectWrite
   end subroutine DirectWrite_L2Aux_FileName
 
   ! ------------------------------------------- DirectWrite_L2Aux_FileName --------
@@ -815,6 +814,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.6  2003/07/07 17:32:30  livesey
+! New approach to DirectWrite
+!
 ! Revision 2.5  2003/07/02 00:55:27  pwagner
 ! Some improvements in DirectWrites of l2aux, l2gp
 !
