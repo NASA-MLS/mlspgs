@@ -50,8 +50,8 @@ SHELL = /bin/sh
 #                  also (re)creates uniquely-named sub-sub-directories
 #                  with custom Makefiles where *.o, *.mod, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
-# clean          -- deletes uniquely-named sub-sub-directories
-# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
 # tar            -- creates a directory archive suitable for distribution
 #
 
@@ -85,9 +85,9 @@ $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 	esac 
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-.PHONY: configure depends clean alltests tar clean_objs all
+.PHONY: configure depends clean alltests tar tarz targ mostlyclean all
 
-tar: clean
+tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -108,7 +108,7 @@ depends:
 	$(MLSBIN)/makemakedep.sh -d test_cholesky.f90 -d test_multiply.f90 \
         -d test_sparsify.f90 -d PVM.f90 -d PVMIDL.f90
 
-clean:
+mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
@@ -120,8 +120,9 @@ clean:
 	fi ; \
 	echo "Cleaning $(testdir)"; \
 	$(MAKE) -f $(MakeFName) -C $(testdir) clean
+	rm -f Make.dep.*
 
-clean_objs:
+clean:
 	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
@@ -130,9 +131,19 @@ clean_objs:
 	fi; \
 	echo "Cleaning objects from $(testdir)"; \
 	$(MAKE) -f $(MakeFName) -C $(testdir) clean_objs
-
+	rm -f Make.dep.*
 
 tar:
+	rm -f ../lib.tar
+	@echo "tar-ing lib"; \
+	$(TAR) hcvf ../lib.tar * --exclude CVS\
+	--exclude Make.dep\* --exclude lib/NAG.\* --exclude lib/LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f lib.tgz; gzip lib.tar; mv lib.tar.gz lib.tgz
+
+targ:
 	rm -f ../lib.tgz
 	$(TAR) hcvzf ../lib.tgz * --exclude \*.o --exclude \*.mod
 
@@ -145,6 +156,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.17  2001/03/12 22:46:57  pwagner
+# Revised clean, tar; automatic symlink to Makefile
+#
 # Revision 2.16  2001/03/09 19:36:06  pwagner
 # Added TAR=... option
 #
