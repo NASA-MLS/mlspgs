@@ -190,7 +190,8 @@ MODULE convolve_all_m
     SRad = 0.0_r8
     CALL ALLOCATE_TEST(drad_df_out,noPtan,f_len,'drad_df_out',ModuleName)
     CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
-                        & DI_DF=di_df, DRAD_DF_OUT=drad_df_out)
+                        & DI_DF=di_df, DI_DF_FLAG=grids_f%deriv_flags, &
+                        & DRAD_DF_OUT=drad_df_out)
 !
   ELSE IF (FwdMdlConfig%temp_der) THEN
 !
@@ -205,9 +206,9 @@ MODULE convolve_all_m
 !
       CALL ALLOCATE_TEST(drad_df_out,noPtan,f_len,'drad_df_out',ModuleName)
       CALL fov_convolve(antennaPattern,chi_in,Rad_in,chi_out,SRad, &
-         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt,&
+         & SURF_ANGLE=surf_angle,DI_DT=di_dt,DX_DT=dx_dt,DDX_DXDT=d2x_dxdt, &
          & DX_DT_OUT=temp_dxdt_tan,DRAD_DT_OUT=drad_dt_out,DI_DF=di_df, &
-         & DRAD_DF_OUT=drad_df_out)
+         & DI_DF_FLAG=grids_f%deriv_flags, DRAD_DF_OUT=drad_df_out)
 !
     ELSE
 !
@@ -329,6 +330,9 @@ MODULE convolve_all_m
 
 END MODULE convolve_all_m
 ! $Log$
+! Revision 2.18  2002/08/20 22:36:39  livesey
+! Moved uses inside routine
+!
 ! Revision 2.17  2002/07/23 22:26:38  livesey
 ! Added ptan_der handling
 !
