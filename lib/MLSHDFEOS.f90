@@ -11,12 +11,12 @@ module MLSHDFEOS
   use HDFEOS, only: gdattach, gdcreate, &
     & swattach, swcreate, swdefdfld, swdefgfld, swdefdim, swdetach, &
     & swdiminfo, swinqdflds, swinqswath
-  use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_SCHAR, &
+  use HDFEOS5, only: HE5T_NATIVE_FLOAT, HE5T_NATIVE_DOUBLE, &
     & HE5T_NATIVE_INT, HE5T_NATIVE_INT8, HE5T_NATIVE_INT16, HE5T_NATIVE_INT64
   use HDFEOS5, only: HE5_GDattach, HE5_GDcreate, &
     & HE5_SWattach, HE5_SWcreate, HE5_SWdefchunk, HE5_SWdetach, HE5_swdefdfld, &
     & HE5_SWdefgfld, HE5_swdefdim, HE5_swdiminfo, HE5_swinqdflds, &
-    & HE5_swinqswath
+    & HE5_swinqswath, MLS_charType
   use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
   use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY, &
     & HE5_EHRDGLATT_CHARACTER_ARRAY
@@ -129,7 +129,7 @@ contains ! ======================= Public Procedures =========================
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: FILEID      ! File ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
@@ -205,7 +205,7 @@ contains ! ======================= Public Procedures =========================
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: GRIDID      ! Grid ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     integer, external ::   he5_GDwrattr
@@ -540,7 +540,7 @@ contains ! ======================= Public Procedures =========================
 !>         if(DEEBUG) print *,' Hey, we just tried to set up a char-valued hdfeos5 field'
 !>         if(DEEBUG) print *,' Data type: ', Datatype
 !>         if(DEEBUG) print *,' he2he5_DataType(Datatype): ', he2he5_DataType(Datatype)
-!>         if(DEEBUG) print *,' HE5T_NATIVE_SCHAR: ', HE5T_NATIVE_SCHAR
+!>         if(DEEBUG) print *,' MLS_CHARTYPE: ', MLS_CHARTYPE
 !>       endif
     case default
       mls_dfldsetup = -1
@@ -763,7 +763,7 @@ contains ! ======================= Public Procedures =========================
         & start, stride, edge, values)
       if (myDontFail) then
         if (.not. is_swath_datatype_right(swathid, trim(fieldname), &
-          & HE5T_NATIVE_SCHAR, myHdfVersion) ) return
+          & MLS_CHARTYPE, myHdfVersion) ) return
       endif
     case default
       mls_swrdfld_CHAR_1D = -1
@@ -1149,7 +1149,7 @@ contains ! ======================= Public Procedures =========================
     & ATTRNAME, DATATYPE, COUNT, BUFFER )
     integer, intent(in) :: SWATHID      ! Swath ID
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     mls_swwrattr = HE5_SWWRATTR( SWATHID, &
@@ -1162,7 +1162,7 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: SWATHID      ! Swath ID
     character(len=*), intent(in) :: FIELDNAME     ! Field name
     character(len=*), intent(in) :: ATTRNAME     ! Attribute name
-    integer, intent(in) :: DATATYPE    ! E.g., HE5T_NATIVE_SCHAR
+    integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
     mls_swwrlattr = HE5_SWWRLATTR( SWATHID, FIELDNAME, &
@@ -1783,7 +1783,7 @@ contains ! ======================= Public Procedures =========================
     case(DFNT_FLOAT64)
       HE5_dataType = HE5T_NATIVE_DOUBLE
     case(DFNT_CHAR8)
-      HE5_dataType = HE5T_NATIVE_SCHAR
+      HE5_dataType = MLS_CHARTYPE
     case(DFNT_INT8)
       HE5_dataType = HE5T_NATIVE_INT8
     case(DFNT_INT16)
@@ -1804,6 +1804,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.19  2004/03/24 23:53:02  pwagner
+! Switched from HE5T_NATIVE_SCHAR to MLS_CHARTYPE
+!
 ! Revision 2.18  2004/02/13 00:16:39  pwagner
 ! New stuff for reading swath attributes
 !
