@@ -6,38 +6,6 @@ module LinearizedForwardModel_m
 
   ! Approximate a forward model with a first-order Taylor's series.
 
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Dump_0, only: DUMP
-  use ForwardModelConfig, only: FORWARDMODELCONFIG_T
-  use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
-    & FORWARDMODELINTERMEDIATE_T
-  use Intrinsic, only: LIT_INDICES
-  use Intrinsic, only: L_NONE, L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
-    & L_SIDEBANDRATIO, L_ZETA, L_OPTICALDEPTH, L_LATITUDE
-  use L2PC_m, only: L2PCDATABASE, BINSELECTORS, FLUSHL2PCBINS, POPULATEL2PCBIN
-  use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
-    & DOHGRIDSMATCH, DOVGRIDSMATCH
-  use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
-    & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY
-  use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
-    & FINDBLOCK, CREATEBLOCK
-  use MLSCommon, only: r8, rm
-  use MLSSignals_m, only: Signal_T, GetSidebandLoop
-  use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
-    & MLSMSG_Allocate, MLSMSG_Deallocate
-  use MLSNumerics, only: HUNT, INTERPOLATEVALUES
-  use Molecules, only: L_EXTINCTION
-  use Output_m, only: Output
-  use QuantityTemplates, only: QuantityTemplate_T
-  use String_Table, only: Display_String, Get_String
-  use Toggles, only: Emit, Levels, Toggle
-  use Trace_m, only: Trace_begin, Trace_end
-  use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
-    & CLONEVECTOR, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR,&
-    & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
-    & VECTORVALUE_T, VECTORTEMPLATE_T, DUMP, &
-    & VALIDATEVECTORQUANTITY
-
   implicit none
   private
   public :: FlushLockedBins, LinearizedForwardModel
@@ -55,25 +23,55 @@ module LinearizedForwardModel_m
 
 contains ! =====     Public Procedures     =============================
 
-  ! ------------------------------------ FlushLockedBins
+  ! --------------------------------------------  FlushLockedBins  -----
   subroutine FlushLockedBins
-    ! Local variables
-    integer :: STATUS ! Flag from allocate
-    ! Executable code
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use L2PC_m, only: FLUSHL2PCBINS
+
     ! This could set them to zero again, but I think I'll deallocate here, just
     ! because otherwise I'd have to write a separate deallocate routine.
-    deallocate ( lockedBins, STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//"lockedBins" )
-    lockedBins => NULL()
+    call deallocate_test ( lockedBins, 'lockedBins', moduleName )
     call FlushL2PCBins
   end subroutine FlushLockedBins
 
   ! -------------------------------------  LinearizedForwardModel  -----
-  subroutine LinearizedForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra,&
+  subroutine LinearizedForwardModel ( ForwardModelConfigData, FwdModelIn, FwdModelExtra,&
     & FwdModelOut, Ifm, fmStat, Jacobian )
+
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Dump_0, only: DUMP
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T, &
+      & FORWARDMODELINTERMEDIATE_T
+    use Intrinsic, only: LIT_INDICES
+    use Intrinsic, only: L_NONE, L_RADIANCE, L_TEMPERATURE, L_PTAN, L_VMR, &
+      & L_SIDEBANDRATIO, L_ZETA, L_OPTICALDEPTH, L_LATITUDE
+    use L2PC_m, only: L2PCDATABASE, BINSELECTORS, POPULATEL2PCBIN
+    use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE, &
+      & DOHGRIDSMATCH, DOVGRIDSMATCH
+    use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
+      & MATRIXELEMENT_T, CREATEBLOCK, DENSIFY
+    use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
+      & FINDBLOCK, CREATEBLOCK
+    use MLSCommon, only: r8, rm
+    use MLSSignals_m, only: Signal_T, GetSidebandLoop
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
+      & MLSMSG_Allocate, MLSMSG_Deallocate
+    use MLSNumerics, only: HUNT, INTERPOLATEVALUES
+    use Molecules, only: L_EXTINCTION
+    use Output_m, only: Output
+    use QuantityTemplates, only: QuantityTemplate_T
+    use String_Table, only: Display_String, Get_String
+    use Toggles, only: Emit, Levels, Toggle
+    use Trace_m, only: Trace_begin, Trace_end
+    use VectorsModule, only: assignment(=), OPERATOR(-), OPERATOR(+), &
+      & CLONEVECTOR, CONSTRUCTVECTORTEMPLATE, COPYVECTOR, CREATEVECTOR,&
+      & DESTROYVECTORINFO, GETVECTORQUANTITYBYTYPE, VECTOR_T, &
+      & VECTORVALUE_T, VECTORTEMPLATE_T, DUMP, &
+      & VALIDATEVECTORQUANTITY
+
     ! Dummy arguments
-    type(forwardModelConfig_T), intent(inout) :: FORWARDMODELCONFIG
+    type(forwardModelConfig_T), intent(inout) :: ForwardModelConfigData
     type(vector_T), intent(in) ::  FWDMODELIN
     type(vector_T), intent(in) ::  FWDMODELEXTRA
     type(vector_T), intent(inout) :: FWDMODELOUT  ! Radiances, etc.
@@ -112,7 +110,6 @@ contains ! =====     Public Procedures     =============================
     logical :: PTANINFIRST              ! PTan was found in the first vector
 
     integer, dimension(-1:1) :: L2PCBINS ! Which l2pc to use
-    integer, dimension(:), pointer :: closestInstances ! Of qty to radiance
     integer, dimension(:), pointer :: mifPointingsLower ! Result of a hunt
     integer, dimension(:), pointer :: mifPointingsUpper ! mifPointingsLower+1
 
@@ -161,7 +158,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     if ( toggle(emit) ) call trace_begin ( 'LinearizedForwardModel' )
 
-    nullify ( yPmapped, resultMapped, dyByDX, closestInstances )
+    nullify ( yPmapped, resultMapped, dyByDX )
     nullify ( dense, mifPointingsLower, mifPointingsUpper )
     nullify ( lowerWeight, upperWeight )
     nullify ( thisRatio, doChannel )
@@ -175,11 +172,11 @@ contains ! =====     Public Procedures     =============================
       call output ( 'Linear model doing maf: ' )
       call output ( maf, advance='yes' )
     end if
-    if ( size ( forwardModelConfig%signals ) /= 1 ) call MLSMessage ( &
+    if ( size ( forwardModelConfigData%signals ) /= 1 ) call MLSMessage ( &
       & MLSMSG_Error, ModuleName, &
       & 'Can only have one signal for linearized models')
 
-    signal = forwardModelConfig%signals(1)
+    signal = forwardModelConfigData%signals(1)
     radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
       & signal=signal%index, sideband=signal%sideband, noError=.true. )
 
@@ -209,7 +206,7 @@ contains ! =====     Public Procedures     =============================
     doChannel = .true.
     if ( associated ( signal%channels ) ) doChannel = signal%channels
 
-    call SelectL2PCBins ( radiance, maf, forwardModelConfig, l2pcBins, &
+    call SelectL2PCBins ( radiance, maf, forwardModelConfigData, l2pcBins, &
       & sidebandStart, sidebandStop, sidebandStep )
 
     ! If we're doing a split calculation then get the relevant
@@ -227,6 +224,18 @@ contains ! =====     Public Procedures     =============================
         & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
         & call MLSMessage(MLSMSG_Error,ModuleName, &
         & "No sideband ratio supplied")
+    end if
+
+    ! Now, if we need any derivatives, we need to setup some arrays
+    if ( present(jacobian) ) then
+      call allocate_test ( mifPointingsLower, noMIFs, &
+        & 'mifPointingsLower', ModuleName )
+      call allocate_test ( mifPointingsUpper, noMIFs, &
+        & 'mifPointingsUpper', ModuleName )
+      call allocate_test ( lowerWeight, noMIFs, &
+        & 'lowerWeight', ModuleName )
+      call allocate_test ( upperWeight, noMIFs, &
+        & 'upperWeight', ModuleName )
     end if
 
     ! --------- Loop over sidebands ------------------------------------------------
@@ -268,10 +277,7 @@ contains ! =====     Public Procedures     =============================
       call cloneVector ( deltaX, xP, vectorNameText='_deltaX' ) ! sets values to 0.0
 
       ! Set up some other stuff before main loop
-      call Allocate_test ( closestInstances, radiance%template%noInstances, &
-        & 'closestInstances', ModuleName )
-
-      ! Get the two ptans, we'll need these for interpolation
+      ! Get the two ptans; we'll need these for interpolation
       ptan => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra, &
         & quantityType = l_ptan, &
         & instrumentModule = radiance%template%instrumentModule,&
@@ -286,15 +292,6 @@ contains ! =====     Public Procedures     =============================
 
       ! Now, if we need any derivatives, we need to setup some arrays
       if ( present(jacobian) ) then
-        call allocate_test ( mifPointingsLower, noMIFs, &
-          & 'mifPointingsLower', ModuleName )
-        call allocate_test ( mifPointingsUpper, noMIFs, &
-          & 'mifPointingsUpper', ModuleName )
-        call allocate_test ( lowerWeight, noMIFs, &
-          & 'lowerWeight', ModuleName )
-        call allocate_test ( upperWeight, noMIFs, &
-          & 'upperWeight', ModuleName )
-
         call Hunt ( xStarPtan%values(:,1), ptan%values(:,maf), mifPointingsLower )
         mifPointingsUpper = mifPointingsLower + 1
         
@@ -316,9 +313,9 @@ contains ! =====     Public Procedures     =============================
         ! Now see if we are wanting to deal with this
         if ( l2pcQ%template%quantityType == l_ptan ) cycle ! Get this from interpolation
         if ( l2pcQ%template%quantityType == l_vmr ) then
-          if (.not. associated(forwardModelConfig%molecules) ) cycle
+          if (.not. associated(forwardModelConfigData%molecules) ) cycle
           if ( .not. any (l2pcQ%template%molecule == &
-            &   forwardModelConfig%molecules)) cycle
+            &   forwardModelConfigData%molecules)) cycle
         end if
 
         ! Identify this quantity in x
@@ -347,14 +344,14 @@ contains ! =====     Public Procedures     =============================
         ! Do we need derivatives for this?
         doDerivatives = present(jacobian) .and. foundInFirst
         if (doDerivatives .and. (l2pcQ%template%quantityType==l_temperature) ) &
-          & doDerivatives = forwardModelConfig%temp_der
+          & doDerivatives = forwardModelConfigData%temp_der
         if (doDerivatives .and. &
           & (l2pcQ%template%quantityType==l_vmr) .and. &
-          & associated(forwardModelConfig%molecules) ) then
-          doDerivatives = forwardModelConfig%atmos_der
+          & associated(forwardModelConfigData%molecules) ) then
+          doDerivatives = forwardModelConfigData%atmos_der
           if ( doDerivatives .and. .not. any (l2pcQ%template%molecule == &
-            & pack(ForwardModelConfig%molecules, &
-            &      ForwardModelConfig%moleculeDerivatives))) &
+            & pack(ForwardModelConfigData%molecules, &
+            &      ForwardModelConfigData%moleculeDerivatives))) &
             & doDerivatives = .false.
         end if
 
@@ -362,7 +359,7 @@ contains ! =====     Public Procedures     =============================
         center = l2pcQ%template%noInstances/2 + 1
         do xStarInstance = 1, l2pcQ%template%noInstances
           ! Identify this instance in state
-          if ( forwardModelConfig%phiWindow == 0.0 ) then
+          if ( forwardModelConfigData%phiWindow == 0.0 ) then
             ! If 0, user wants 1D, always choose the closest instance
             deltaInstance = 0
           else
@@ -371,9 +368,9 @@ contains ! =====     Public Procedures     =============================
             phiWindowLoop: do
               deltaPhi = l2pcQ%template%phi(1,center+deltaInstance) - &
                 & l2pcQ%template%phi(1,center)
-              if ( deltaPhi > forwardModelConfig%phiWindow ) then
+              if ( deltaPhi > forwardModelConfigData%phiWindow ) then
                 deltaInstance = deltaInstance - 1
-              else if ( deltaPhi < -forwardModelConfig%phiWindow ) then
+              else if ( deltaPhi < -forwardModelConfigData%phiWindow ) then
                 deltaInstance = deltaInstance + 1
               else
                 exit phiWindowLoop
@@ -413,7 +410,7 @@ contains ! =====     Public Procedures     =============================
                 kBit => dense
               else
                 kBit => l2pcBlock%values
-              endif
+              end if
 
               ! Indentify the block in the jacobian
               jBlock => jacobian%block(rowJblock,colJblock)
@@ -441,7 +438,7 @@ contains ! =====     Public Procedures     =============================
                         &   thisRatio(chan) * ( &
                         &     lowerWeight(mif) * kBit( lower, : ) + &
                         &     upperWeight(mif) * kBit( upper, : ) )
-                    endif
+                    end if
                     i = i + 1
                     lower = lower + 1
                     upper = upper + 1
@@ -461,17 +458,6 @@ contains ! =====     Public Procedures     =============================
           & l2pc%col%vec%quantities(qtyInd)%values
 
       end do                              ! End loop over quantities
-
-      if ( present (jacobian) ) then         ! Destroy working arrays
-        call deallocate_test ( mifPointingsLower, &
-          & 'mifPointingsLower', ModuleName )
-        call deallocate_test ( mifPointingsUpper, &
-          & 'mifPointingsUpper', ModuleName )
-        call deallocate_test ( lowerWeight, &
-          & 'lowerWeight', ModuleName )
-        call deallocate_test ( upperWeight, &
-          & 'upperWeight', ModuleName )
-      end if
 
       ! Now compute yP
       if ( toggle(emit) .and. levels(emit) > 8 ) then
@@ -525,8 +511,8 @@ contains ! =====     Public Procedures     =============================
                 radiance%values( chan + (mif-1)*noChans, maf ) = &
                   & thisRatio(chan)*resultMapped ( mif, chan )
               end do
-            endif
-          enddo
+            end if
+          end do
         else
           do chan = 1, noChans
             if ( doChannel ( chan ) ) then
@@ -535,8 +521,8 @@ contains ! =====     Public Procedures     =============================
                   & radiance%values( chan + (mif-1)*noChans, maf ) + &
                   &   thisRatio(chan)*resultMapped ( mif, chan )
               end do
-            endif
-          enddo
+            end if
+          end do
         end if
       end if                            ! Doing folded
         
@@ -562,8 +548,8 @@ contains ! =====     Public Procedures     =============================
                 jBlock%values( chan + (mif-1)*noChans, 1 ) = &
                   & dyByDx ( mif, chan )
               end do                  ! Minor frames
-            endif                     ! Doing this channel
-          enddo                       ! Channels
+            end if                     ! Doing this channel
+          end do                       ! Channels
         else
           ! Either place or add, make decision outside loop!
           if ( sideband == sidebandStart ) then
@@ -573,8 +559,8 @@ contains ! =====     Public Procedures     =============================
                   jBlock%values( chan + (mif-1)*noChans, 1 ) = &
                     & thisRatio(chan) * dyByDx ( mif, chan )
                 end do                  ! Minor frames
-              endif                     ! Doing this channel
-            enddo                       ! Channels
+              end if                     ! Doing this channel
+            end do                       ! Channels
           else                          ! Must be doing second sideband
             do chan = 1, noChans
               if ( doChannel ( chan ) ) then
@@ -583,8 +569,8 @@ contains ! =====     Public Procedures     =============================
                     & jBlock%values ( chan + (mif-1)*noChans, : ) + &
                     &   thisRatio(chan) * dyByDx ( mif, chan )
                 end do                  ! Minor frames
-              endif                     ! Doing this channel
-            enddo                       ! Channel
+              end if                     ! Doing this channel
+            end do                       ! Channel
           end if                        ! First/second sideband
         end if                          ! Folding
       end if                            ! Want ptan derivatives
@@ -617,222 +603,74 @@ contains ! =====     Public Procedures     =============================
       call DestroyVectorInfo ( xP )
       call DestroyVectorInfo ( deltaX )
       call DestroyVectorInfo ( yP )
-      call Deallocate_test ( closestInstances, 'closestInstances', ModuleName )
       call Deallocate_test ( dyByDx, 'dyByDx', ModuleName)
       call Deallocate_test ( resultMapped, 'resultMapped', ModuleName )
       call Deallocate_test ( ypMapped, 'ypMapped', ModuleName )
 
     end do                                ! End of sideband loop
 
+    if ( present (jacobian) ) then         ! Destroy working arrays
+      call deallocate_test ( mifPointingsLower, 'mifPointingsLower', ModuleName )
+      call deallocate_test ( mifPointingsUpper, 'mifPointingsUpper', ModuleName )
+      call deallocate_test ( lowerWeight, 'lowerWeight', ModuleName )
+      call deallocate_test ( upperWeight, 'upperWeight', ModuleName )
+    end if
+
     if ( toggle(emit) ) call trace_end ( 'LinearizedForwardModel' )
 
-  end subroutine LinearizedForwardModel
+    contains
+    ! ======================================== Internal procudures =====
 
-  ! ======================================= Private procudures
+    ! ------------------------------------------ FindMatchForL2PCQ ---
+    subroutine FindMatchForL2PCQ ( l2pcQ, FwdModelIn, FwdModelExtra, &
+      & stateQ, foundInFirst )
+      type (VectorValue_T), intent(in) :: L2PCQ ! Quantity to search for
+      type (Vector_T), intent(in) :: FWDMODELIN ! State vector
+      type (Vector_T), intent(in) :: FWDMODELEXTRA ! Extra state vector
+      type (VectorValue_T), pointer :: STATEQ ! Result
+      logical, intent(out) :: FOUNDINFIRST ! If set, found in first vector
+      ! This routine looks through the supplied state vectors and finds a match
+      ! for the supplied quantity from the l2pc state vector.  It then goes on to
+      ! test that the HGrids and VGrids for the two quantities match appropriately.
 
-  ! ------------------------------------ FindMatchForL2PCQ ---
-  subroutine FindMatchForL2PCQ ( l2pcQ, FwdModelIn, FwdModelExtra, &
-    & stateQ, foundInFirst )
-    type (VectorValue_T), intent(in) :: L2PCQ ! Quantity to search for
-    type (Vector_T), intent(in) :: FWDMODELIN ! State vector
-    type (Vector_T), intent(in) :: FWDMODELEXTRA ! Extra state vector
-    type (VectorValue_T), pointer :: STATEQ ! Result
-    logical, intent(out) :: FOUNDINFIRST ! If set, found in first vector
-    ! This routine looks through the supplied state vectors and finds a match
-    ! for the supplied quantity from the l2pc state vector.  It then goes on to
-    ! test that the HGrids and VGrids for the two quantities match appropriately.
+      ! Executable code
+      select case ( l2pcQ%template%quantityType )
+      case ( l_temperature )
+        stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
+          & quantityType = l_temperature, &
+          & foundInFirst = foundInFirst, noError=.true. )
+      case ( l_vmr )
+        stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
+          & quantityType = l_vmr, &
+          & molecule = l2pcQ%template%molecule, &
+          & foundInFirst = foundInFirst, noError=.true. )
+      case ( l_extinction )
+  !       stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
+  !         & quantityType = l_extinction, &
+  !         & radiometer = l2pcQ%template%radiometer, &
+  !         & foundInFirst = foundInFirst, noError=.true. )
+        stateQ => NULL() ! Temporary
+      case default
+        ! For the moment, just ignore things we don't understand.
+        stateQ => NULL()
+  !       stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
+  !         & quantityType = l2pcQ%template%quantityType, &
+  !         & foundInFirst = foundInFirst, noError=.true. )
+      end select
 
-    ! Executable code
-    select case ( l2pcQ%template%quantityType )
-    case ( l_temperature )
-      stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-        & quantityType = l_temperature, &
-        & foundInFirst = foundInFirst, noError=.true. )
-    case ( l_vmr )
-      stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-        & quantityType = l_vmr, &
-        & molecule = l2pcQ%template%molecule, &
-        & foundInFirst = foundInFirst, noError=.true. )
-    case ( l_extinction )
-!       stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-!         & quantityType = l_extinction, &
-!         & radiometer = l2pcQ%template%radiometer, &
-!         & foundInFirst = foundInFirst, noError=.true. )
-      stateQ => NULL() ! Temporary
-    case default
-      ! For the moment, just ignore things we don't understand.
-      stateQ => NULL()
-!       stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-!         & quantityType = l2pcQ%template%quantityType, &
-!         & foundInFirst = foundInFirst, noError=.true. )
-    end select
-
-    ! Now check that these match.
-    if ( associated ( stateQ ) ) then
-      if ( .not. DoVGridsMatch ( stateQ, l2pcQ ) ) stateQ => NULL()
-    end if
-    if ( associated ( stateQ ) ) then
-      if ( .not. DoHGridsMatch ( stateQ, l2pcQ, spacingOnly=.true. ) ) stateQ => NULL()
-    end if
-
-  end subroutine FindMatchForL2PCQ
-
-  ! ------------------------------------ SelectL2PCBins -----
-  subroutine SelectL2PCBins ( radiance, maf, fmConf, l2pcBins, &
-    & sidebandStart, sidebandStop, sidebandStep )
-    use MLSSignals_m, only: signals
-
-    type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
-    integer, intent(in) :: MAF                      ! MAF index
-    type (ForwardModelConfig_T), intent(in) :: FMCONF ! The forwardmodel configuration
-    integer, dimension(-1:1), intent(out) :: L2PCBINS ! Result
-    integer, intent(out) :: SIDEBANDSTART ! Resulting loop indices
-    integer, intent(out) :: SIDEBANDSTOP
-    integer, intent(out) :: SIDEBANDSTEP
-
-    ! Local variables
-    character (len=132) :: BINNAME      ! The name of the bin
-    character (len=132) :: NAMEFRAGMENT ! Fragment of name to try to match
-
-    integer :: BIN                      ! Loop counter
-    integer :: MAF1                     ! Subset limit
-    integer :: MAFN                     ! Subset limit
-    integer :: NOBINS                   ! Number of l2pc bins
-    integer :: SIDEBAND                 ! This sideband
-    integer :: SIGNAL                   ! Signal index
-    integer :: STATUS                   ! Flag
-    logical :: SPLIT                    ! Need a split calculation
-
-    logical, dimension(:), pointer :: NAMEMATCHES ! Flags for each bin
-    real(r8), dimension(:), pointer :: DELTAPHI ! How far are we away in phi
-    real(r8), dimension(-1:1) :: BESTCOST ! Best cost for this sideband
-    logical, dimension(:,:), pointer :: SIDEBANDSMATCH ! Flags for each bin/sideband
-    type (QuantityTemplate_T), pointer :: BINRAD ! Quantity template
-
-    ! Executable code
-
-    ! If we're in locked bins mode, then just return the locked bin
-    signal = radiance%template%signal
-    sideband = radiance%template%sideband
-    noBins = size ( l2pcDatabase )
-
-    ! Now special code for dealing with the locked bins case
-    if ( fmConf%lockBins ) then
-      if ( .not. associated ( lockedBins ) ) then
-        allocate ( lockedBins ( -1:1, size(signals) ), STAT=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_Allocate//'lockedBins' )
-        lockedBins = 0
+      ! Now check that these match.
+      if ( associated ( stateQ ) ) then
+        if ( .not. DoVGridsMatch ( stateQ, l2pcQ ) ) stateQ => NULL()
       end if
-      if ( any ( lockedBins ( :, signal ) /= 0 ) ) then
-        l2pcBins = lockedBins ( :, signal )
-        ! If got folded, use that by preference (3rd argument below).
-        ! Assert that sidebands are present if needed here.
-        call GetSidebandLoop ( signal, sideband, &
-          & (lockedBins(0,signal)==0), sidebandStart, sidebandStop, &
-          & sidebandStep )
-        return
-      end if
-    end if
-
-    ! Code will only get to here if the bins are unlocked, or are
-    ! locked but as yet not nailed down.
-
-    ! Setup the arrays we need
-    nullify ( deltaPhi, nameMatches )
-    call Allocate_test ( deltaPhi, noBins, 'deltaPhi', ModuleName )
-    call Allocate_test ( nameMatches, noBins, 'nameMatches', ModuleName )
-    allocate ( sidebandsMatch ( -1:1, nobins ), STAT=status )
-    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'sidebandsMatch' )
-    deltaPhi = huge ( 0.0_r8 )
-    nameMatches = .false.
-    sidebandsMatch = .false.
-    
-    do bin = 1, noBins
-      ! Get this radiance quantity
-      binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
-      
-      ! Do the sidebands match
-      sidebandsMatch ( binRad%sideband, bin ) = ( binRad%signal == signal )
-
-      ! Does the 'name' match
-      if ( fmConf%nameFragment /= 0 ) then
-        call get_string ( l2pcDatabase(bin)%name, binName, strip=.true. )
-        call get_string ( fmConf%nameFragment, nameFragment, strip=.true. )
-        if ( len_trim(nameFragment) /= 0 ) then
-          if ( index ( trim(binName), trim(nameFragment) ) /= 0 ) &
-            & nameMatches ( bin ) = .true.
-        else
-          nameMatches ( bin ) = .true.
-        end if
-      else
-        nameMatches ( bin ) = .true.
+      if ( associated ( stateQ ) ) then
+        if ( .not. DoHGridsMatch ( stateQ, l2pcQ, spacingOnly=.true. ) ) stateQ => NULL()
       end if
 
-      ! Does the phi match.  This one is more complicated as we may
-      ! have to consider it for all MAFs that are not overlapped, and
-      ! then take the most 'popular' match. We'll base this on the
-      ! first mif each maf.  That will probably be good enough
-      if ( fmConf%lockBins ) then
-        maf1 = 1 + radiance%template%noInstancesLowerOverlap
-        mafN = radiance%template%noInstances - &
-          & radiance%template%noInstancesUpperOverlap
-      else
-        maf1 = maf
-        mafN = maf
-      endif
-      deltaPhi(bin) = sum( (NormalizePhi(radiance%template%phi(1,maf1:mafN)) - &  
-        & NormalizePhi(binRad%phi(1,1)) )**2 ) / (mafN-maf1+1)
-    end do                              ! End loop over Bins
+    end subroutine FindMatchForL2PCQ
 
-    ! OK, now we've surveyed the bins, let's cut things down.
-    ! When computing folded radiances I'll always choose folded bins
-    ! over unfolded ones, even if that means the phi is way off.  I
-    ! think this is all a fairly unlikely circumstance anyway.
-    split = .false.
-    if ( sideband == 0 ) then
-      ! If we've got a match for the folded case, forget the others.
-      if ( any ( sidebandsMatch(0,:) ) ) then
-        where ( sidebandsMatch(0,:) ) 
-          sidebandsMatch(-1,:) = .false.
-          sidebandsMatch(1,:) = .false.
-        end where
-      else
-        split = .true.
-      end if
-    end if
-
-    ! Work out the range of the sideband loop
-    call GetSidebandLoop ( signal, sideband, split, &
-      & sidebandStart, sidebandStop, sidebandStep )
-
-    ! Choose the bin(s)
-    bestCost = huge ( deltaPhi(1) )
-    l2pcBins = (/ 0, 0, 0 /)
-    do bin = 1, noBins
-      ! Reuse the sideband variable here, we don't need it's old
-      ! definition anymore
-      do sideband = sidebandStart, sidebandStop
-        if ( sidebandsMatch(sideband,bin) .and. nameMatches(bin) .and. &
-          & deltaPhi(bin) < bestCost(sideband) ) then
-          bestCost(sideband) = deltaPhi(bin)
-          l2pcBins(sideband) = bin
-        end if
-      end do
-    end do
-    
-    ! Check that we've got the bins we need
-    if (any(l2pcBins ((/sidebandStart,sidebandStop/)) == 0 )) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to find l2pc bins to match request' )
-
-    ! Record this in the 'locked bins' information
-    if ( fmConf%lockBins ) lockedBins ( :, signal ) = l2pcBins
-
-  contains
-    ! This does an approximate phi to latitude conversion
+    ! ---------------------------------------------  NormalizePhi  -----
     elemental real (r8) function NormalizePhi ( phi ) result ( lat )
+      ! This does an approximate phi to latitude conversion
       real (r8), intent(in) :: PHI      ! Input geodetic angle
       ! Executable code
       lat = modulo ( phi, 360.0_r8 )
@@ -845,11 +683,169 @@ contains ! =====     Public Procedures     =============================
       end if
     end function NormalizePhi
 
-  end subroutine SelectL2PCBins
+    ! --------------------------------------------- SelectL2PCBins -----
+    subroutine SelectL2PCBins ( radiance, maf, fmConf, l2pcBins, &
+      & sidebandStart, sidebandStop, sidebandStep )
+      use MLSSignals_m, only: signals
+
+      type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
+      integer, intent(in) :: MAF                      ! MAF index
+      type (ForwardModelConfig_T), intent(in) :: FMCONF ! The forwardmodel configuration
+      integer, dimension(-1:1), intent(out) :: L2PCBINS ! Result
+      integer, intent(out) :: SIDEBANDSTART ! Resulting loop indices
+      integer, intent(out) :: SIDEBANDSTOP
+      integer, intent(out) :: SIDEBANDSTEP
+
+      ! Local variables
+      character (len=132) :: BINNAME      ! The name of the bin
+      character (len=132) :: NAMEFRAGMENT ! Fragment of name to try to match
+
+      integer :: BIN                      ! Loop counter
+      integer :: MAF1                     ! Subset limit
+      integer :: MAFN                     ! Subset limit
+      integer :: NOBINS                   ! Number of l2pc bins
+      integer :: SIDEBAND                 ! This sideband
+      integer :: SIGNAL                   ! Signal index
+      integer :: STATUS                   ! Flag
+      logical :: SPLIT                    ! Need a split calculation
+
+      logical, dimension(:), pointer :: NAMEMATCHES ! Flags for each bin
+      real(r8), dimension(:), pointer :: DELTAPHI ! How far are we away in phi
+      real(r8), dimension(-1:1) :: BESTCOST ! Best cost for this sideband
+      logical, dimension(:,:), pointer :: SIDEBANDSMATCH ! Flags for each bin/sideband
+      type (QuantityTemplate_T), pointer :: BINRAD ! Quantity template
+
+      ! Executable code
+
+      ! If we're in locked bins mode, then just return the locked bin
+      signal = radiance%template%signal
+      sideband = radiance%template%sideband
+      noBins = size ( l2pcDatabase )
+
+      ! Now special code for dealing with the locked bins case
+      if ( fmConf%lockBins ) then
+        if ( .not. associated ( lockedBins ) ) then
+          allocate ( lockedBins ( -1:1, size(signals) ), STAT=status )
+          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & MLSMSG_Allocate//'lockedBins' )
+          lockedBins = 0
+        end if
+        if ( any ( lockedBins ( :, signal ) /= 0 ) ) then
+          l2pcBins = lockedBins ( :, signal )
+          ! If got folded, use that by preference (3rd argument below).
+          ! Assert that sidebands are present if needed here.
+          call GetSidebandLoop ( signal, sideband, &
+            & (lockedBins(0,signal)==0), sidebandStart, sidebandStop, &
+            & sidebandStep )
+          return
+        end if
+      end if
+
+      ! Code will only get to here if the bins are unlocked, or are
+      ! locked but as yet not nailed down.
+
+      ! Setup the arrays we need
+      nullify ( deltaPhi, nameMatches )
+      call Allocate_test ( deltaPhi, noBins, 'deltaPhi', ModuleName )
+      call Allocate_test ( nameMatches, noBins, 'nameMatches', ModuleName )
+      allocate ( sidebandsMatch ( -1:1, nobins ), STAT=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'sidebandsMatch' )
+      deltaPhi = huge ( 0.0_r8 )
+      nameMatches = .false.
+      sidebandsMatch = .false.
+
+      do bin = 1, noBins
+        ! Get this radiance quantity
+        binRad => l2pcDatabase(bin)%row%vec%quantities(1)%template
+
+        ! Do the sidebands match
+        sidebandsMatch ( binRad%sideband, bin ) = ( binRad%signal == signal )
+
+        ! Does the 'name' match
+        if ( fmConf%nameFragment /= 0 ) then
+          call get_string ( l2pcDatabase(bin)%name, binName, strip=.true. )
+          call get_string ( fmConf%nameFragment, nameFragment, strip=.true. )
+          if ( len_trim(nameFragment) /= 0 ) then
+            if ( index ( trim(binName), trim(nameFragment) ) /= 0 ) &
+              & nameMatches ( bin ) = .true.
+          else
+            nameMatches ( bin ) = .true.
+          end if
+        else
+          nameMatches ( bin ) = .true.
+        end if
+
+        ! Does the phi match.  This one is more complicated as we may
+        ! have to consider it for all MAFs that are not overlapped, and
+        ! then take the most 'popular' match. We'll base this on the
+        ! first mif each maf.  That will probably be good enough
+        if ( fmConf%lockBins ) then
+          maf1 = 1 + radiance%template%noInstancesLowerOverlap
+          mafN = radiance%template%noInstances - &
+            & radiance%template%noInstancesUpperOverlap
+        else
+          maf1 = maf
+          mafN = maf
+        end if
+        deltaPhi(bin) = sum( (NormalizePhi(radiance%template%phi(1,maf1:mafN)) - &  
+          & NormalizePhi(binRad%phi(1,1)) )**2 ) / (mafN-maf1+1)
+      end do                              ! End loop over Bins
+
+      ! OK, now we've surveyed the bins, let's cut things down.
+      ! When computing folded radiances I'll always choose folded bins
+      ! over unfolded ones, even if that means the phi is way off.  I
+      ! think this is all a fairly unlikely circumstance anyway.
+      split = .false.
+      if ( sideband == 0 ) then
+        ! If we've got a match for the folded case, forget the others.
+        if ( any ( sidebandsMatch(0,:) ) ) then
+          where ( sidebandsMatch(0,:) ) 
+            sidebandsMatch(-1,:) = .false.
+            sidebandsMatch(1,:) = .false.
+          end where
+        else
+          split = .true.
+        end if
+      end if
+
+      ! Work out the range of the sideband loop
+      call GetSidebandLoop ( signal, sideband, split, &
+        & sidebandStart, sidebandStop, sidebandStep )
+
+      ! Choose the bin(s)
+      bestCost = huge ( deltaPhi(1) )
+      l2pcBins = (/ 0, 0, 0 /)
+      do bin = 1, noBins
+        ! Reuse the sideband variable here, we don't need it's old
+        ! definition anymore
+        do sideband = sidebandStart, sidebandStop
+          if ( sidebandsMatch(sideband,bin) .and. nameMatches(bin) .and. &
+            & deltaPhi(bin) < bestCost(sideband) ) then
+            bestCost(sideband) = deltaPhi(bin)
+            l2pcBins(sideband) = bin
+          end if
+        end do
+      end do
+
+      ! Check that we've got the bins we need
+      if (any(l2pcBins ((/sidebandStart,sidebandStop/)) == 0 )) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to find l2pc bins to match request' )
+
+      ! Record this in the 'locked bins' information
+      if ( fmConf%lockBins ) lockedBins ( :, signal ) = l2pcBins
+
+    end subroutine SelectL2PCBins
+
+  end subroutine LinearizedForwardModel
 
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.25  2002/09/13 18:09:09  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.24  2002/09/11 17:43:39  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !
