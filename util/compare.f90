@@ -175,7 +175,7 @@ program COMPARE
 
   end do
 
-  if ( rmaxg > 0.0 .or. zero ) then
+  if ( rmaxg > 0.0 .or. zero .or. anyNan(3) ) then
     print *, 'Maximum relative difference anywhere =', rmaxg, 'epsilons =', &
       & rmaxg*epsilon(rmaxg)
     print *, 'Maximum absolute difference anywhere =', amaxg
@@ -183,7 +183,6 @@ program COMPARE
 
   if ( anyNaN(1) ) print *, trim(file1), ' has a NaN somewhere'
   if ( anyNaN(2) ) print *, trim(file2), ' has a NaN somewhere'
-  if ( anyNaN(3) ) print *, 'A relative difference has a NaN'
 
 contains
 
@@ -228,6 +227,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.5  2003/10/07 02:01:00  vsnyder
+! Add option to print the version
+!
 ! Revision 1.4  2003/10/07 01:57:17  vsnyder
 ! Detect NaN in relative difference
 !
