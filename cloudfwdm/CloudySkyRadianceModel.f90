@@ -13,16 +13,16 @@ module CloudySkyRadianceModel
       use DCSPLINE_DER_M,          only: CSPLINE_DER
       use FOV_CONVOLVE_M,          only: FOV_CONVOLVE_OLD, FOV_CONVOLVE
       use HYDROSTATIC_INTRP,       only: GET_PRESSURES
-      use L2PC_FILE_PARAMETERS,    only: DEG2RAD
-      use ModelInput,              only: MODEL_ATMOS
-      use ModelOutput,             only: SENSITIVITY
       use MLSCommon,               only: r8
       use MLSNumerics,             only: INTERPOLATEVALUES
+      use ModelInput,              only: MODEL_ATMOS
+      use ModelOutput,             only: SENSITIVITY
       use PrtMsg,                  only: HEADER
       use RadiativeTransferModule, only: RADXFER
       use ScatteringAngle,         only: ANGLE
       use SpectroscopyCatalog_m,   only: CATALOG_T
       use Tmp,                     only: GET_TAN_PRESS
+      use Units,                   only: DEG2RAD
 
       IMPLICIT NONE
       private
@@ -760,6 +760,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.37  2002/09/27 22:41:09  jonathan
+! change old FOV to new FOV routine
+!
 ! Revision 1.36  2002/08/22 00:13:58  jonathan
 ! upgrade to include more molecules
 !
