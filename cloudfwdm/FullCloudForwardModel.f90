@@ -93,7 +93,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_TNGTGEOCALT,                                        &
                        & L_TOTALEXTINCTION,                                    &
                        & L_VMR,                                                &
-                       & LIT_INDICES
+                       & LIT_INDICES,                                          &
+                       & L_ORBITINCLINATION
+
+
 
     ! Dummy arguments
     type(forwardModelConfig_T),       intent(inout) :: FORWARDMODELCONFIG
@@ -129,12 +132,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: SCGEOCALT                  ! Geocentric spacecraft altitude
     type (VectorValue_T), pointer :: ELEVOFFSET                 ! Elevation offset quantity
     type (VectorValue_T), pointer :: LOSVEL                     ! Line of sight velocity
+    type (VectorValue_T), pointer :: ORBINCLINE                 ! Orbital inclination
     type (Signal_T)               :: signal                     ! A signal
     type(VectorValue_T),  pointer :: STATE_ext                  ! A state vector quantity
     type(VectorValue_T),  pointer :: STATE_los                  ! A state vector quantity
     type(VectorValue_T),  pointer :: SIDEBANDRATIO              ! The sideband ratio to use
-    type(VectorValue_T), pointer :: LOWERSIDEBANDRATIO ! From the state vector
-    type(VectorValue_T), pointer :: UPPERSIDEBANDRATIO ! From the state vector
+    type(VectorValue_T),  pointer :: LOWERSIDEBANDRATIO         ! From the state vector
+    type(VectorValue_T),  pointer :: UPPERSIDEBANDRATIO         ! From the state vector
 
     type (catalog_T), dimension(:), pointer :: MY_CATALOG 
     type (catalog_T), pointer :: thisCatalogEntry
@@ -431,7 +435,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         scGeocAlt => GetVectorQuantityByType ( fwdModelExtra,                &
           & quantityType=l_scGeocAlt )
         elevOffset => GetVectorQuantityByType ( fwdModelExtra,               &
-          & quantityType=l_elevOffset, radiometer=Signal%radiometer )	
+          & quantityType=l_elevOffset, radiometer=Signal%radiometer )
+        orbIncline => GetVectorQuantityByType ( fwdModelExtra, &
+          & quantityType=l_orbitInclination )	
         losVel => GetVectorQuantityByType ( fwdModelExtra,                   &
           & quantityType=l_losVel, instrumentModule=Signal%instrumentModule )
     !-----------------------------------------
@@ -761,7 +767,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS,                                    &
       & Slevl*1000._r8, noSgrid,                                             &
-      & My_Catalog, losVel%values(1,1) )   
+      & My_Catalog, losVel%values(1,1), orbIncline%values(1,1)*Deg2Rad )   
 
 !      & My_Catalog, losVel%values(1,maf) )                    
                                 
@@ -1059,6 +1065,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.100  2002/11/30 21:31:46  dwu
+! fix signal loop and move obsCloudRadiance inside jacobian loop
+!
 ! Revision 1.99  2002/10/08 17:08:07  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
