@@ -30,4 +30,4 @@ module Gemm_M
 
 end module Gemm_M
 
-!$Log: !
+! $Log$
