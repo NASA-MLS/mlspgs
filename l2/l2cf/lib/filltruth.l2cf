@@ -52,6 +52,8 @@ begin Fill
   ;; Now deduce a corresponding ptan for this using hydrostatic
   ;; balance.
 
+
+  !ifdef(skipHydrostatic,{},{
   Fill, quantity=truth.ptanGHz, method=hydrostatic, $
     h2oQuantity=truth.h2o, $
     temperatureQuantity=truth.temperature, $
@@ -69,7 +71,7 @@ begin Fill
     orbitInclination=truth.orbitInclination, $
     phiTan=truth.phiTanTHz, $
     maxIterations=20
-
+  })
 
 end Fill
 
