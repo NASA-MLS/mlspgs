@@ -24,6 +24,7 @@ module DirectWrite_m  ! alternative to Join/OutputAndClose methods
     & MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: blanks, OUTPUT
   use STRING_TABLE, only: GET_STRING
+  use TOGGLES, only: SWITCHES
   use VectorsModule, only: VectorValue_T
 
   implicit none
@@ -122,7 +123,7 @@ contains ! ======================= Public Procedures =========================
     ! are too big to keep all chunks stored in memory
     ! so instead write them out profile-by-profile
     use L2GPData, only: L2GPData_T, L2GPNameLen, &
-      & AppendL2GPData, DestroyL2GPContents
+      & AppendL2GPData, DestroyL2GPContents, DUMP
 
     integer, intent(in) :: L2gpFileHandle
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -169,6 +170,7 @@ contains ! ======================= Public Procedures =========================
     call AppendL2GPData(l2gp, l2gpFileHandle, &
       & sdName, filename, offset, lastprofile=lastInstance, &
       & TotNumProfs=TotalProfs, hdfVersion=hdfVersion, createSwath=createSwath)
+    if ( index(switches, 'l2gp') /= 0 ) call dump(l2gp)
     ! Clear up our temporary l2gp
     call DestroyL2GPContents(l2gp)
   end subroutine DirectWrite_L2GP
@@ -185,7 +187,7 @@ contains ! ======================= Public Procedures =========================
     ! Despite the name the routine takes vector quantities, not l2aux ones
     use MLSCommon, only: MLSCHUNK_T
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
-    use VectorsModule, only: VectorValue_T
+    use VectorsModule, only: VectorValue_T, Dump
 
     type (VectorValue_T), intent(in) :: QUANTITY
     type (VectorValue_T), pointer :: PRECISION
@@ -247,6 +249,9 @@ contains ! ======================= Public Procedures =========================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Unsupported hdfVersion for DirectWrite_L2Aux (currently only 4 or 5)' )
     end select
+    if ( index(switches, 'l2aux') == 0 ) return
+    call dump(quantity)
+    if ( associated(precision) ) call dump(precision)
   end subroutine DirectWrite_L2Aux
 
   ! ------------------------------------------ DirectWrite_L2Aux_hdf4 --------
@@ -872,6 +877,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.21  2004/02/19 23:54:26  pwagner
+! Dumps during directWrites if l2gp or l2aux switch set
+!
 ! Revision 2.20  2004/02/11 17:23:25  pwagner
 ! l2gp status an integer, not a char
 !
