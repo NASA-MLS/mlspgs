@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DUMP_0
@@ -13,11 +13,12 @@ module DUMP_0
   public :: AfterSub, DUMP, DUMP_NAME_V_PAIRS
 
   interface DUMP        ! dump n-d arrays of homogeneous type
-    module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_1D_LOGICAL
-    module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_3D_DOUBLE
-    module procedure DUMP_3D_INTEGER
-    module procedure DUMP_1D_CHAR, DUMP_2D_CHAR, DUMP_3D_CHAR
-    module procedure DUMP_1D_REAL, DUMP_2D_REAL, DUMP_3D_REAL
+    module procedure DUMP_1D_CHAR, DUMP_1D_DOUBLE
+    module procedure DUMP_1D_INTEGER, DUMP_1D_LOGICAL, DUMP_1D_REAL
+    module procedure DUMP_2D_CHAR, DUMP_2D_DOUBLE
+    module procedure DUMP_2D_INTEGER, DUMP_2D_LOGICAL, DUMP_2D_REAL
+    module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
+    module procedure DUMP_3D_REAL
   end interface
   interface DUMP_NAME_V_PAIRS   ! dump name-value pairs, names in string list
     module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
@@ -38,11 +39,11 @@ module DUMP_0
 
 contains
 
-  ! --------------------------------------------  DUMP_1D_CHAR  -----
-  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FillValue, CLEAN )
+  ! -----------------------------------------------  DUMP_1D_CHAR  -----
+  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN )
     character(len=*), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FillValue
+    character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
 
     integer :: J, K
@@ -118,204 +119,24 @@ contains
     end if
   end subroutine DUMP_1D_CHAR
 
-  ! --------------------------------------------  DUMP_2D_CHAR  -----
-  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FillValue, CLEAN )
-    character(len=*), intent(in) :: ARRAY(:,:)
-    character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FillValue
-    logical, intent(in), optional :: CLEAN
-
-    integer :: I, J, K
-    logical :: MyClean
-    integer :: NumZeroRows
-    character(len=len(array)) :: myFillValue
-
-    myFillValue = ' '
-    if ( present(FillValue) ) myFillValue = FillValue
-
-    myClean = .false.
-    if ( present(clean) ) myClean = clean
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
-    else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
-      end if
-      call output ( array(1,1), advance='yes' )
-    else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, FillValue=FillValue, clean=clean )
-    else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
-      do i = 1, size(array,1)
-        do j = 1, size(array,2), 10
-          if (.not. myClean) then
-            if ( any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
-              if ( numZeroRows /= 0 ) then
-                call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                call output ( j-1, places=max(4,ilog10(size(array))+1) )
-                call output ( afterSub )
-                call output ( ' ' )
-                call output ( numZeroRows )
-                call output ( ' rows of "', advance='no' )
-                call output ( trim(myFillValue), advance='no' )
-                call output ( '" not printed.', advance='yes' )
-                numZeroRows = 0
-              end if
-              call output ( i, places=max(4,ilog10(size(array,1))+1) )
-              call output ( j, places=max(4,ilog10(size(array,2))+1) )
-              call output ( afterSub )
-            else
-              numZeroRows = numZeroRows + 1
-            end if
-          end if
-          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
-            do k = j, min(j+9, size(array,2))
-                call output ( array(i,k) // ' ' )
-            end do
-            call output ( '', advance='yes' )
-          end if
-        end do ! j
-      end do ! i
-      if ( numZeroRows /= 0 ) then
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-        call output ( j-1, places=max(4,ilog10(size(array))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of "', advance='no' )           
-        call output ( trim(myFillValue), advance='no' )          
-        call output ( '" not printed.', advance='yes' )      
-        numZeroRows = 0
-      end if
-    end if
-  end subroutine DUMP_2D_CHAR
-
-  ! ---------------------------------------------  DUMP_3D_CHAR  -----
-  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FillValue, CLEAN )
-    character(len=*), intent(in) :: ARRAY(:,:,:)
-    character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: FillValue
-    logical, intent(in), optional :: CLEAN
-
-    logical :: myClean
-    integer :: I, J, K, L
-    integer :: NumZeroRows
-    integer, dimension(3) :: which, re_mainder
-    integer :: how_many
-    character(len=len(array)) :: myFillValue
-
-    myFillValue = ' '
-    if ( present(FillValue) ) myFillValue = FillValue
-
-    myClean = .false.
-    if ( present(clean) ) myClean = clean
-    call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
-      & 1, which, how_many, re_mainder=re_mainder)
-
-    numZeroRows = 0
-    if ( size(array) == 0 ) then
-      if ( present(name) ) then
-        call output ( name )
-        call output ( ' is ' )
-      end if
-      call output ( 'empty', advance='yes' )
-    else if ( size(array) == 1 ) then
-      if ( present(name) ) then
-        call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
-      end if
-      call output ( array(1,1,1), advance='yes' )
-    else if ( how_many == 2 ) then
-      call dump ( reshape(array, (/ re_mainder(1) /)), name, FillValue=FillValue, &
-        & clean=clean )
-    else if ( how_many == 1 ) then
-      call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
-        & name, FillValue=FillValue, clean=clean )
-    else
-      if ( present(name) ) then 
-        call output ( name )
-        if ( myClean ) then 
-          call output ( ' \ ' )
-          call output ( size(array) )
-        end if
-        call output ( '', advance='yes' )
-      end if
-      do i = 1, size(array,1)
-        do j = 1, size(array,2)
-          do k = 1, size(array,3), 10
-            if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
-                if ( numZeroRows /= 0 ) then
-                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
-                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
-                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-                  call output ( afterSub )
-                  call output ( ' ' )
-                  call output ( numZeroRows )
-                  call output ( ' rows of "', advance='no' )
-                  call output ( trim(myFillValue), advance='no' )
-                  call output ( '" not printed.', advance='yes' )
-                  numZeroRows = 0
-                end if
-                call output ( i, max(4,ilog10(size(array,1))+1) )
-                call output ( j, max(4,ilog10(size(array,2))+1) )
-                call output ( k, max(4,ilog10(size(array,3))+1) )
-                call output ( afterSub )
-              else
-                numZeroRows = numZeroRows + 1
-              end if
-            end if
-            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
-              do l = k, min(k+9, size(array,3))
-                  call output ( array(i,j,l) // ' ' )
-              end do
-              call output ( '', advance='yes' )
-            end if
-          end do
-        end do
-      end do
-      if ( numZeroRows /= 0 ) then
-        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
-        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
-        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
-        call output ( afterSub )
-        call output ( ' ' )
-        call output ( numZeroRows )
-        call output ( ' rows of "', advance='no' )           
-        call output ( trim(myFillValue), advance='no' )          
-        call output ( '" not printed.', advance='yes' )      
-        numZeroRows = 0
-      end if
-    end if
-  end subroutine DUMP_3D_CHAR
-
   ! ---------------------------------------------  DUMP_1D_DOUBLE  -----
-  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_1D_DOUBLE ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
     double precision, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
 
-    logical :: myClean
-    integer :: J, K
+    logical :: MyClean
+    integer :: J, K, MyWidth
+    character(len=64) :: MyFormat
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myWidth = 5
+    if ( present(width) ) myWidth = width
+    myFormat = '(1x,1pg13.6)'
+    if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
       if ( present(name) ) then
@@ -329,7 +150,7 @@ contains
         if ( myClean ) call output ( ' \ 1 ' )
         call output ( ' ' )
       end if
-      call output ( array(1), '(1x,1pg13.6)', advance='yes' )
+      call output ( array(1), myFormat, advance='yes' )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -339,13 +160,13 @@ contains
         end if
         call output ( '', advance='yes' )
       end if
-      do j = 1, size(array), 5
+      do j = 1, size(array), myWidth
         if (.not. myClean) then
-          call output ( j, max(4,ilog10(size(array))+1) )
+          call output ( j, max(myWidth-1,ilog10(size(array))+1) )
           call output ( afterSub )
         end if
-        do k = j, min(j+4, size(array))
-          call output ( array(k), '(1x,1pg13.6)' )
+        do k = j, min(j+myWidth-1, size(array))
+          call output ( array(k), myFormat )
         end do
         call output ( '', advance='yes' )
       end do
@@ -432,7 +253,7 @@ contains
     end if
   end subroutine DUMP_1D_INTEGER
 
-  ! --------------------------------------------  DUMP_1D_LOGICAL ----
+  ! ----------------------------------------------  DUMP_1D_LOGICAL ----
   subroutine DUMP_1D_LOGICAL ( ARRAY, NAME, CLEAN )
     logical, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
@@ -479,17 +300,24 @@ contains
     end if
   end subroutine DUMP_1D_LOGICAL
 
-  ! ---------------------------------------------  DUMP_1D_REAL  -----
-  subroutine DUMP_1D_REAL ( ARRAY, NAME, CLEAN )
+  ! -----------------------------------------------  DUMP_1D_REAL  -----
+  subroutine DUMP_1D_REAL ( ARRAY, NAME, CLEAN, WIDTH, FORMAT )
     real, intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
     logical, intent(in), optional :: CLEAN
+    integer, intent(in), optional :: WIDTH
+    character(len=*), intent(in), optional :: FORMAT
 
     logical :: myClean
-    integer :: J, K
+    integer :: J, K, MyWidth
+    character(len=64) :: MyFormat
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
+    myWidth = 5
+    if ( present(width) ) myWidth = width
+    myFormat = '(1x,1pg13.6)'
+    if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
       if ( present(name) ) then
@@ -503,7 +331,7 @@ contains
         if ( myClean ) call output ( ' \ 1 ' )
         call output ( ' ' )
       end if
-      call output ( array(1), '(1x,1pg13.6)', advance='yes' )
+      call output ( array(1), myFormat, advance='yes' )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -513,24 +341,111 @@ contains
         end if
         call output ( '', advance='yes' )
       end if
-      do j = 1, size(array), 5
+      do j = 1, size(array), myWidth
         if (.not. myClean) then
-          call output ( j, max(4,ilog10(size(array))+1) )
+          call output ( j, max(myWidth-1,ilog10(size(array))+1) )
           call output ( afterSub )
         end if
-        do k = j, min(j+4, size(array))
-          call output ( array(k), '(1x,1pg13.6)' )
+        do k = j, min(j+myWidth-1, size(array))
+          call output ( array(k), myFormat )
         end do
         call output ( '', advance='yes' )
       end do
     end if
   end subroutine DUMP_1D_REAL
 
+  ! -----------------------------------------------  DUMP_2D_CHAR  -----
+  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN )
+    character(len=*), intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+
+    integer :: I, J, K
+    logical :: MyClean
+    integer :: NumZeroRows
+    character(len=len(array)) :: myFillValue
+
+    myFillValue = ' '
+    if ( present(FillValue) ) myFillValue = FillValue
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1,1), advance='yes' )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1), name, fillValue=fillValue, clean=clean )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do i = 1, size(array,1)
+        do j = 1, size(array,2), 10
+          if (.not. myClean) then
+            if ( any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
+              if ( numZeroRows /= 0 ) then
+                call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                call output ( j-1, places=max(4,ilog10(size(array))+1) )
+                call output ( afterSub )
+                call output ( ' ' )
+                call output ( numZeroRows )
+                call output ( ' rows of "', advance='no' )
+                call output ( trim(myFillValue), advance='no' )
+                call output ( '" not printed.', advance='yes' )
+                numZeroRows = 0
+              end if
+              call output ( i, places=max(4,ilog10(size(array,1))+1) )
+              call output ( j, places=max(4,ilog10(size(array,2))+1) )
+              call output ( afterSub )
+            else
+              numZeroRows = numZeroRows + 1
+            end if
+          end if
+          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
+            do k = j, min(j+9, size(array,2))
+                call output ( array(i,k) // ' ' )
+            end do
+            call output ( '', advance='yes' )
+          end if
+        end do ! j
+      end do ! i
+      if ( numZeroRows /= 0 ) then
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+        call output ( j-1, places=max(4,ilog10(size(array))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of "', advance='no' )           
+        call output ( trim(myFillValue), advance='no' )          
+        call output ( '" not printed.', advance='yes' )      
+        numZeroRows = 0
+      end if
+    end if
+  end subroutine DUMP_2D_CHAR
+
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
-  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, FillValue, CLEAN )
+  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: FillValue
+    double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
@@ -567,7 +482,6 @@ contains
           call output ( ' \ ' )
           call output ( size(array) )
         end if
-        call output ( '', advance='yes' )
       end if
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
         call output ( '', advance='yes' )
@@ -601,7 +515,7 @@ contains
                 call output ( array(i,k), '(1x,1pg13.6)' )
               end do
               call output ( '', advance='yes' )
-            endif
+            end if
           end do
         end do
         if ( numZeroRows /= 0 ) then
@@ -616,7 +530,7 @@ contains
           numZeroRows = 0
         end if
       else ! Dump the transpose
-        call output ( ', transposed', advance='yes' )
+        call output ( ' (transposed)', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), 5
             !call output ( i, max(4,ilog10(size(array,1))+1) )
@@ -750,17 +664,70 @@ contains
     end if
   end subroutine DUMP_2D_INTEGER
 
-  ! ---------------------------------------------  DUMP_2D_REAL  -----
-  subroutine DUMP_2D_REAL ( ARRAY, NAME, FillValue, CLEAN )
+  ! --------------------------------------------  DUMP_2D_LOGICAL  -----
+  subroutine DUMP_2D_LOGICAL ( ARRAY, NAME, CLEAN )
+    logical, intent(in) :: ARRAY(:,:)
+    character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: CLEAN
+
+    integer :: I, J, K
+    logical :: MyClean
+    integer, parameter :: MyWidth = 34
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1,1), advance='yes' )
+    else if ( size(array,2) == 1 ) then
+      call dump ( array(:,1), name, clean=clean )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do i = 1, size(array,1)
+        do j = 1, size(array,2), myWidth
+          if (.not. myClean) then
+            call output ( i, places=max(4,ilog10(size(array,1))+1) )
+            call output ( j, places=max(4,ilog10(size(array,2))+1) )
+            call output ( afterSub )
+          end if
+          do k = j, min(j+myWidth-1, size(array,2))
+            call output ( array(i,k) )
+          end do
+          call output ( '', advance='yes' )
+        end do ! j
+      end do ! i
+    end if
+  end subroutine DUMP_2D_LOGICAL
+
+  ! -----------------------------------------------  DUMP_2D_REAL  -----
+  subroutine DUMP_2D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FillValue
+    real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
     integer :: I, J, K
     integer :: NumZeroRows
-    real :: myFillValue
+    double precision :: myFillValue
 
     myFillValue = 0.e0
     if ( present(FillValue) ) myFillValue = FillValue
@@ -791,7 +758,6 @@ contains
           call output ( ' \ ' )
           call output ( size(array) )
         end if
-        call output ( '', advance='yes' )
       end if
       if ( size(array,2) >= min(5,size(array,1)) .or. myClean ) then
         call output ( '', advance='yes' )
@@ -825,7 +791,7 @@ contains
                 call output ( array(i,k), '(1x,1pg13.6)' )
               end do
               call output ( '', advance='yes' )
-            endif
+            end if
           end do
         end do
         if ( numZeroRows /= 0 ) then
@@ -840,7 +806,7 @@ contains
           numZeroRows = 0
         end if
       else ! Dump the transpose
-        call output ( ', transposed', advance='yes' )
+        call output ( ' (transposed)', advance='yes' )
         do j = 1, size(array,2)
           do i = 1, size(array,1), 5
             !call output ( i, max(4,ilog10(size(array,1))+1) )
@@ -887,11 +853,111 @@ contains
     end if
   end subroutine DUMP_2D_REAL
 
+  ! -----------------------------------------------  DUMP_3D_CHAR  -----
+  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FILLVALUE, CLEAN )
+    character(len=*), intent(in) :: ARRAY(:,:,:)
+    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+
+    logical :: myClean
+    integer :: I, J, K, L
+    integer :: NumZeroRows
+    integer, dimension(3) :: which, re_mainder
+    integer :: how_many
+    character(len=len(array)) :: myFillValue
+
+    myFillValue = ' '
+    if ( present(FillValue) ) myFillValue = FillValue
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+    call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
+      & 1, which, how_many, re_mainder=re_mainder)
+
+    numZeroRows = 0
+    if ( size(array) == 0 ) then
+      if ( present(name) ) then
+        call output ( name )
+        call output ( ' is ' )
+      end if
+      call output ( 'empty', advance='yes' )
+    else if ( size(array) == 1 ) then
+      if ( present(name) ) then
+        call output ( name )
+        if ( myClean ) call output ( ' \ 1 ' )
+        call output ( ' ' )
+      end if
+      call output ( array(1,1,1), advance='yes' )
+    else if ( how_many == 2 ) then
+      call dump ( reshape(array, (/ re_mainder(1) /)), name, fillValue=fillValue, &
+        & clean=clean )
+    else if ( how_many == 1 ) then
+      call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
+        & name, fillValue=fillValue, clean=clean )
+    else
+      if ( present(name) ) then 
+        call output ( name )
+        if ( myClean ) then 
+          call output ( ' \ ' )
+          call output ( size(array) )
+        end if
+        call output ( '', advance='yes' )
+      end if
+      do i = 1, size(array,1)
+        do j = 1, size(array,2)
+          do k = 1, size(array,3), 10
+            if (.not. myClean) then
+              if ( any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
+                if ( numZeroRows /= 0 ) then
+                  call output ( i, places=max(4,ilog10(size(array,1))+1) )
+                  call output ( j, places=max(4,ilog10(size(array,2))+1) )
+                  call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+                  call output ( afterSub )
+                  call output ( ' ' )
+                  call output ( numZeroRows )
+                  call output ( ' rows of "', advance='no' )
+                  call output ( trim(myFillValue), advance='no' )
+                  call output ( '" not printed.', advance='yes' )
+                  numZeroRows = 0
+                end if
+                call output ( i, max(4,ilog10(size(array,1))+1) )
+                call output ( j, max(4,ilog10(size(array,2))+1) )
+                call output ( k, max(4,ilog10(size(array,3))+1) )
+                call output ( afterSub )
+              else
+                numZeroRows = numZeroRows + 1
+              end if
+            end if
+            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
+              do l = k, min(k+9, size(array,3))
+                  call output ( array(i,j,l) // ' ' )
+              end do
+              call output ( '', advance='yes' )
+            end if
+          end do
+        end do
+      end do
+      if ( numZeroRows /= 0 ) then
+        call output ( i-1, places=max(4,ilog10(size(array,1))+1) )
+        call output ( j-1, places=max(4,ilog10(size(array,2))+1) )
+        call output ( k-1, places=max(4,ilog10(size(array,3))+1) )
+        call output ( afterSub )
+        call output ( ' ' )
+        call output ( numZeroRows )
+        call output ( ' rows of "', advance='no' )           
+        call output ( trim(myFillValue), advance='no' )          
+        call output ( '" not printed.', advance='yes' )      
+        numZeroRows = 0
+      end if
+    end if
+  end subroutine DUMP_3D_CHAR
+
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
-  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, FillValue, CLEAN )
+  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, FILLVALUE, CLEAN )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: FillValue
+    double precision, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
@@ -921,7 +987,7 @@ contains
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, FillValue=FillValue, clean=clean )
+      call dump ( array(:,:,1), name, fillValue=fillValue, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -965,7 +1031,7 @@ contains
                 call output ( array(i,j,l), '(1x,1pg13.6)' )
               end do
               call output ( '', advance='yes' )
-            endif
+            end if
           end do
         end do
       end do
@@ -984,7 +1050,7 @@ contains
    end if
   end subroutine DUMP_3D_DOUBLE
 
-  ! ---------------------------------------------  DUMP_3D_INTEGER  -----
+  ! --------------------------------------------  DUMP_3D_INTEGER  -----
   subroutine DUMP_3D_INTEGER ( ARRAY, NAME, CLEAN, FORMAT, WIDTH )
     integer, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
@@ -1064,7 +1130,7 @@ contains
                   call output ( array(i,j,l), format=format )
                 else
                   call output ( array(i,j,l), places=6 )
-                endif
+                end if
               end do
               call output ( '', advance='yes' )
             end if
@@ -1085,10 +1151,10 @@ contains
   end subroutine DUMP_3D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
-  subroutine DUMP_3D_REAL ( ARRAY, NAME, FillValue, CLEAN )
+  subroutine DUMP_3D_REAL ( ARRAY, NAME, FILLVALUE, CLEAN )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: FillValue
+    real, intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
@@ -1118,7 +1184,7 @@ contains
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, FillValue=FillValue, clean=clean )
+      call dump ( array(:,:,1), name, fillValue=fillValue, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -1181,8 +1247,9 @@ contains
    end if
   end subroutine DUMP_3D_REAL
 
-  ! ---------------------------------------------  DUMP_NAME_V_PAIRS_DOUBLE  -----
-  subroutine DUMP_NAME_V_PAIRS_DOUBLE ( values, NAMES, CLEAN, FORMAT, WIDTH )
+
+  ! -----------------------------------  DUMP_NAME_V_PAIRS_DOUBLE  -----
+  subroutine DUMP_NAME_V_PAIRS_DOUBLE ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
     double precision, intent(in)                         :: values(:)
     character(len=*), intent(in), optional :: NAMES
     logical, intent(in), optional :: CLEAN
@@ -1209,19 +1276,19 @@ contains
             call GetStringElement(names, myName, l, .true.)
           else
             write(myName, *) 'double # ', l, ': '
-          endif
+          end if
           call output(myName,  advance='no')
           call blanks(3, advance='no')
           call output(values(l), format, advance='no')
-        endif
-      enddo
+        end if
+      end do
       call output(' ', advance='yes')
-    enddo
+    end do
 
   end subroutine DUMP_NAME_V_PAIRS_DOUBLE
 
-  ! ---------------------------------------------  DUMP_NAME_V_PAIRS_INTEGER  -----
-  subroutine DUMP_NAME_V_PAIRS_INTEGER ( values, NAMES, CLEAN, FORMAT, WIDTH )
+  ! ----------------------------------  DUMP_NAME_V_PAIRS_INTEGER  -----
+  subroutine DUMP_NAME_V_PAIRS_INTEGER ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
     integer, intent(in)                         :: values(:)
     character(len=*), intent(in), optional :: NAMES
     logical, intent(in), optional :: CLEAN
@@ -1248,19 +1315,19 @@ contains
             call GetStringElement(names, myName, l, .true.)
           else
             write(myName, *) 'integer # ', l, ': '
-          endif
+          end if
           call output(myName,  advance='no')
           call blanks(3, advance='no')
           call output(values(l), format=format, advance='no')
-        endif
-      enddo
+        end if
+      end do
       call output(' ', advance='yes')
-    enddo
+    end do
 
   end subroutine DUMP_NAME_V_PAIRS_INTEGER
 
-  ! ---------------------------------------------  DUMP_NAME_V_PAIRS_REAL  -----
-  subroutine DUMP_NAME_V_PAIRS_REAL ( values, NAMES, CLEAN, FORMAT, WIDTH )
+  ! -------------------------------------  DUMP_NAME_V_PAIRS_REAL  -----
+  subroutine DUMP_NAME_V_PAIRS_REAL ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
     real, intent(in)                         :: values(:)
     character(len=*), intent(in), optional :: NAMES
     logical, intent(in), optional :: CLEAN
@@ -1287,28 +1354,28 @@ contains
             call GetStringElement(names, myName, l, .true.)
           else
             write(myName, *) 'single # ', l, ': '
-          endif
+          end if
           call output(myName,  advance='no')
           call blanks(3, advance='no')
           call output(values(l), format, advance='no')
-        endif
-      enddo
+        end if
+      end do
       call output(' ', advance='yes')
-    enddo
+    end do
 
   end subroutine DUMP_NAME_V_PAIRS_REAL
 
-  ! ---------------------------------------------  ilog10  -----
-  integer function ilog10(int)
+  ! -----------------------------------------------------  ILOG10  -----
+  integer function ILOG10(int)
     integer, intent(in) :: int
     ilog10=nint(log10(real(int)))
-  end function ilog10
+  end function ILOG10
 
+  ! ------------------------------------------  WHICH_INTS_ARE_IT  -----
   ! Along with a (yet unwritten) fraternal subr. 'which_strings_are_it'
   ! this is possibly better aligned with MLSNumerics or MLSStrings
   ! themes; however, for now we leave it here
-  ! -------------------------  which_ints_are_it  -----
-  subroutine which_ints_are_it(ints, it, which, how_many, re_mainder, which_not)
+  subroutine WHICH_INTS_ARE_IT ( INTS, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
     ! Return which i of ints[i] = it
     ! optionally, return also how many of them do
     ! which_not of them (which don't)
@@ -1342,9 +1409,9 @@ contains
         call output(ints, advance='yes')
         call output('which: ')
         call output(which, advance='yes')
-      endif
+      end if
       return
-    endif
+    end if
     i_which = 0
     i_re_mainder = 0
     do i=1, size(ints)
@@ -1357,8 +1424,8 @@ contains
           & re_mainder(min(size(which_not), i_re_mainder)) = i
         if ( present(re_mainder) ) &
           & re_mainder(min(size(re_mainder), i_re_mainder)) = ints(i)
-      endif
-    enddo
+      end if
+    end do
     if ( present(how_many) ) how_many = i_which
     if ( DEEBUG ) then
         call output('ints: ')
@@ -1370,18 +1437,18 @@ contains
         if ( present(how_many) ) then
           call output('how_many: ')
           call output(how_many, advance='yes')
-        endif
+        end if
         if ( present(which_not) ) then
           call output('which_not: ')
           call output(which_not, advance='yes')
-        endif
+        end if
         if ( present(re_mainder) ) then
           call output('re_mainder: ')
           call output(re_mainder, advance='yes')
-        endif
-    endif
+        end if
+    end if
 
-  end subroutine which_ints_are_it
+  end subroutine WHICH_INTS_ARE_IT
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -1390,11 +1457,20 @@ contains
 end module DUMP_0
 
 ! $Log$
-! Revision 2.22  2003/04/17 23:05:44  pwagner
-! Renamed optional blase arg to FillValue
+! Revision 2.23  2003/05/06 00:15:03  pwagner
+! Fixed incompatibility with FilterShapes
 !
-! Revision 2.21  2003/02/19 18:33:38  pwagner
-! Can now dump 3d reals
+! Revision 2.20.2.4  2003/05/05 23:00:05  livesey
+! Merged in feb03 newfwm branch
+!
+! Revision 2.20.2.3  2003/04/18 20:26:05  vsnyder
+! Add WIDTH and FORMAT arguments to 1D_REAL and 1D_DOUBLE
+!
+! Revision 2.20.2.2  2003/03/27 23:18:33  vsnyder
+! Put new-lines in better places
+!
+! Revision 2.20.2.1  2003/03/14 00:25:47  vsnyder
+! Add Dump_2D_Logical, cosmetic changes
 !
 ! Revision 2.20  2002/12/02 23:34:14  pwagner
 ! Now can dump name/value pairs
@@ -1412,7 +1488,8 @@ end module DUMP_0
 ! Added dump_1d_real for s.p. arrays
 !
 ! Revision 2.15  2001/11/29 23:50:53  pwagner
-! Added optional FillValue arg to dump_nd_char; fixed bug where optional format not passed from dump_3d_int
+! Added optional blase arg to dump_nd_char; fixed bug where optional
+! format not passed from dump_3d_int
 !
 ! Revision 2.14  2001/11/28 23:32:01  livesey
 ! Fixed bug where dump_2d_integer didn't pass format to 1d dump.
