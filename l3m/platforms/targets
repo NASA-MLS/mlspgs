@@ -8,14 +8,27 @@ else
    MLSCFILE=.configure
 endif
 
+ifndef CASCADE
+the_file := $(shell ${REECHO} Makefile.dep)
+ifeq ($(strip $(the_file)),)
+CASCADE = "yes"
+endif
+endif
+
+ifndef CASCADE
+include Makefile.dep
+else
 ifdef NOCASCADE
 include ../Makefile.nodep
 else
 include ../Makefile.dep
 endif
+endif
 
 # where which_fftw.sh is stored
 MLSBIN=../../util
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
 
 # "$Id$"
 
@@ -70,16 +83,6 @@ MLSBIN=../../util
 #ALLOBJS = $(OBJS) $(srclib_objs)
 ALLOBJS = $(OBJS)
 
-CONFDIR=../..
-
-UTILDIR=../../util
-
-# reecho.sh can filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-# However we will be using it just to create lapack_linker_line 
-# where LIB_LAPACK may contain multiple libraries
-REECHO=$(UTILDIR)/reecho.sh
-
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 ifdef PVM_ROOT
@@ -105,7 +108,7 @@ endif
 mlsl3_linker_line=-L${libmlsl3dir} -lmlsl3
 mlsl3_message=Building mlsl3m with libmlsl3
 mlsl3m_prereqs=$(ALLOBJS) $(libdir)/libmls.a \
-	 $(libmlsl3dir)/libmlsl3.a $(CONFDIR)/$(MLSCFILE)
+	 $(libmlsl3dir)/libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES)
 
 ifdef LAPACK
 ifdef LIB_LAPACK
@@ -160,6 +163,9 @@ endif
 fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
 mlsl3m: $(mlsl3m_prereqs)
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -191,33 +197,42 @@ mlsl3m: $(mlsl3m_prereqs)
 clean:
 	rm -f *.o *.mod mlsl3m
 
+mark_all_as_uptodate:
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl3m -M $(MAKE) $(MARKING_ARG) \
+       $(libdir) $(libmlsl3dir) ; \
+		fi
+
 tar:
 	rm -f l2.tgz
 	tar hcvzf l2.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3m
 
 # ========================================================================
 
-L3DZData.o: $(S)/L3DZData.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
-
-L3MZData.o: $(S)/L3MZData.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
-
-L3MMData.o: $(S)/L3MMData.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
-
-L3DZDiag.o: $(S)/L3DZDiag.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
-
-L3MZDiag.o: $(S)/L3MZDiag.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
-
-L3MMDiag.o: $(S)/L3MMDiag.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
-
+# L3DZData.o: $(S)/L3DZData.f90
+# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+# 
+# L3MZData.o: $(S)/L3MZData.f90
+# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+# 
+# L3MMData.o: $(S)/L3MMData.f90
+# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+# 
+# L3DZDiag.o: $(S)/L3DZDiag.f90
+# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
+# 
+# L3MZDiag.o: $(S)/L3MZDiag.f90
+# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
+# 
+# L3MMDiag.o: $(S)/L3MMDiag.f90
+# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
+# 
 # ========================================================================
 
 # $Log$
+# Revision 1.8  2002/05/10 20:30:39  pwagner
+# Can build executable if HDFVERSIONS set
+#
 # Revision 1.7  2002/05/02 22:35:17  pwagner
 # NOCASCADE setting in place; forestalls unwanted recompilations
 #

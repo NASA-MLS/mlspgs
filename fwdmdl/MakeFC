@@ -95,6 +95,27 @@ PROG=libfwdmdl.a
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
+#CASCADE determines whether to create/use .mod dependencies:
+#if CASCADE, use older .o dependencies, which entail cascades
+#of massive recompilation
+#These are configurations for which I have tested CASCADE-avoidance
+#CAN_AVOID="NAG.Linux LF95.Linux"
+CAN_AVOID=""
+ifndef CASCADE
+  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+ifndef WE_CAN
+  CASCADE := yes
+endif
+endif
+#These modules require custom builds, so omit build commands from dependencies
+CUSTOM_BUILDS=
+CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
+ifeq ($(MLSF95),Abs)
+  UP_OR_LOW := -mod UPPER
+else
+  UP_OR_LOW := -mod lower
+endif
+
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
 #existing sub-directory, and thus recompiling every source file
@@ -109,9 +130,17 @@ endif
 $(PROG): $(CONFDIR)/$(MLSCFILE) \
    $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+	@if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
+           MARK_ALL_AS_UPTODATE= ;\
+         fi
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+	@if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
+           MARK_ALL_AS_UPTODATE= ;\
+         fi
 
 l2_test: $(PLATFORMS)/$(MLSCONFG)/$(PROG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
@@ -120,7 +149,8 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
+   MARK_ALL_AS_UPTODATE=no
 
 .PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a \
  l2_test ghostbuster
@@ -143,9 +173,17 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
-     mv Makefile.dep Makefile.nodep
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib)
+ifdef CASCADE
+	$(MLSBIN)/makemakedep.sh -p Makefile.dep -nodep $(OMIT_PREFXD)
+	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib) 
+else
+	$(MAKE) depends--mod
+endif
+
+depends--mod:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW) \
+   $(CUSTOM_PREFXD) $(libmls_sources) $(srclib) 
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
@@ -187,6 +225,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 2.6  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
 # Revision 2.5  2002/01/15 00:40:18  pwagner
 # Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
 #

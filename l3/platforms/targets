@@ -1,3 +1,11 @@
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
+
+mlsl3d: MLSL3D.o
+
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
 ifdef HOSTMLSCFILE
@@ -6,14 +14,27 @@ else
    MLSCFILE=.configure
 endif
 
+ifndef CASCADE
+the_file := $(shell ${REECHO} Makefile.dep)
+ifeq ($(strip $(the_file)),)
+CASCADE = "yes"
+endif
+endif
+
+ifndef CASCADE
+include Makefile.dep
+else
 ifdef NOCASCADE
 include ../Makefile.nodep
 else
 include ../Makefile.dep
 endif
+endif
 
 # where which_fftw.sh is stored
 MLSBIN=../../util
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
 
 # "$Id$"
 
@@ -63,15 +84,6 @@ include $(srclib)/Makefile.dep
 ALLOBJS = $(OBJS) $(srclib_objs)
 
 l3_driver = MLSL3D.o
-
-CONFDIR=../..
-UTILDIR=../../util
-
-# reecho.sh can filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-# However we will be using it just to create lapack_linker_line 
-# where LIB_LAPACK may contain multiple libraries
-REECHO=$(UTILDIR)/reecho.sh
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -150,10 +162,16 @@ endif
 fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
 libmlsl3.a: $(ALLOBJS) $(libdir)/libmls.a
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
 	ar ru $@ $?
 	ar d $@ $(l3_driver)
 
-mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE)
+mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES)
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -184,6 +202,12 @@ mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE)
 clean:
 	rm -f *.o *.mod mlsl3d
 
+mark_all_as_uptodate:
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl3d -M $(MAKE) $(MARKING_ARG) -v \
+       $(libdir) ; \
+		fi
+
 tar:
 	rm -f l3.tgz
 	tar hcvzf l3.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3d
@@ -192,15 +216,18 @@ tar:
 
 #	special options for compiling some modules--override .f90 rules
 
-L2Interface.o: $(S)/L2Interface.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
-L3DMData.o: $(S)/L3DMData.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
-L3DMDiag.o: $(S)/L3DMDiag.f90
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
+#L2Interface.o: $(S)/L2Interface.f90
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+#L3DMData.o: $(S)/L3DMData.f90
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+#L3DMDiag.o: $(S)/L3DMDiag.f90
+#	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
 
 # ========================================================================
 # $Log$
+# Revision 1.21  2002/05/10 20:30:39  pwagner
+# Can build executable if HDFVERSIONS set
+#
 # Revision 1.20  2002/05/02 22:35:17  pwagner
 # NOCASCADE setting in place; forestalls unwanted recompilations
 #

@@ -8,11 +8,26 @@ else
    MLSCFILE=.configure
 endif
 
+ifndef CASCADE
+the_file := $(shell ${REECHO} Makefile.dep)
+ifeq ($(strip $(the_file)),)
+CASCADE = "yes"
+endif
+endif
+
+ifndef CASCADE
+include Makefile.dep
+else
 ifdef NOCASCADE
 include ../Makefile.nodep
 else
 include ../Makefile.dep
 endif
+endif
+
+record_file=newAifBdiff.out
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
 
 # "$Id$"
 
@@ -66,10 +81,12 @@ include $(srclib)/Makefile.dep
 # Add them to L2OBJS
 ALLOBJS = $(OBJS) $(srclib_objs)
 
-CONFDIR=../..
-TESTSDIR=../../tests
+TESTSDIR=$(CONFDIR)/tests
 
-mlspack_dir=../../blas/$(MLSCONFG)
+mlspack_dir=$(CONFDIR)/blas/$(MLSCONFG)
+
+# Use the he5lib directory, he5libdir, if HDFVERSIONS != ''
+he5libdir = $(CONFDIR)/he5lib/$(MLSCONFG)
 
 ifdef MLSINSTALLDIR
    INSTALLDIR:=$(MLSINSTALLDIR)
@@ -124,10 +141,10 @@ cloud_linker_line=-L${clouddir} -lcloud
 cloud_message=Building mlsl2 with cloud forward model
 utctotai_linker_line=-L${INSTALLDIR} -lutctotai
 utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
-mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) \
+mlsl2_prereqs := $(ALLOBJS) $(PVM_OBJS) \
     $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a \
 	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a $(INSTALLDIR)/libutctotai.a\
-    $(CONFDIR)/$(MLSCFILE)
+    $(CONFDIR)/$(MLSCFILE) $(MODULES)
 
 ifdef PGSTK
    tk_message=Building mlslib with toolkit
@@ -152,8 +169,9 @@ else
    hdfeos5_linker_line=
 endif
 ifdef HDFVERSIONS
-   he5lib_linker_line=-L../../he5lib/$(MLSCONFG) -lhe5
+   he5lib_linker_line=-L$(CONFDIR)/he5lib/$(MLSCONFG) -lhe5
    he5lib_message=mlsl2 will support files with either hdf version
+   mlsl2_prereqs := $(mlsl2_prereqs) $(he5libdir)/libhe5.a
 endif
    hdf5_message=Building mlsl2 with hdf5
 else
@@ -164,6 +182,9 @@ endif
 
 # ========================================================================
 mlsl2: $(mlsl2_prereqs)
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -198,6 +219,12 @@ mlsl2: $(mlsl2_prereqs)
 clean:
 	rm -f *.o *.mod mlsl2
 
+mark_all_as_uptodate:
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl2 -M $(MAKE) $(MARKING_ARG) \
+       $(libdir) $(fwdmdldir) $(clouddir) ; \
+		fi
+
 tar:
 	rm -f l2.tgz
 	tar hcvzf l2.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
@@ -205,6 +232,7 @@ tar:
 # ========================================================================
 
 # Custom build commands for some modules
+# (See also Abs.Linux, LF95.Linux, etc.)
 
 # This uses the utility program init_gen to create two
 # up-to-date prereqs for init_tables_module
@@ -239,32 +267,10 @@ $(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
 init_tables_module.o: $(S)/field_parm.f9h $(S)/field_add.f9h \
    $(S)/lit_parm.f9h $(S)/lit_add.f9h $(S)/init_tables_module.f90
 
-# This keeps switch_usage up-to-date with notes/switches
-# (and similarly for options)
-MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options $(S)/MLSL2.f90
-	@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
-	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
-	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
-	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
-	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
-	mv MLSL2.f90 part_2 ; \
-	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
-	mv MLSL2.f90 part_2 ; \
-	cat part_1 part_2 part_3 > MLSL2.f90 ; \
-	rm -f part_1 part_2 part_3 ; \
-	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
-	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
-	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
-	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
-	mv MLSL2.f90 part_2 ; \
-	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
-	mv MLSL2.f90 part_2 ; \
-	cat part_1 part_2 part_3 > MLSL2.f90
-	$(FC) -c $(FOPTS) $(INC_PATHS) MLSL2.f90 $(FAFTER)
-	rm -f MLSL2.f90 part_1 part_2 part_3
-
-
 # $Log$
+# Revision 1.38  2002/05/02 22:35:16  pwagner
+# NOCASCADE setting in place; forestalls unwanted recompilations
+#
 # Revision 1.37  2002/04/29 17:40:40  pwagner
 # Links utctotai library
 #

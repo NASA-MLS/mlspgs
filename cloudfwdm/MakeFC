@@ -126,6 +126,27 @@ PROG=libcloud.a
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
 
+#CASCADE determines whether to create/use .mod dependencies:
+#if CASCADE, use older .o dependencies, which entail cascades
+#of massive recompilation
+#These are configurations for which I have tested CASCADE-avoidance
+#CAN_AVOID="NAG.Linux LF95.Linux"
+CAN_AVOID=""
+ifndef CASCADE
+  WE_CAN := $(shell echo $(CAN_AVOID) | grep $(MLSF95).$(MLSPLAT))
+ifndef WE_CAN
+  CASCADE := yes
+endif
+endif
+#These modules require custom builds, so omit build commands from dependencies
+CUSTOM_BUILDS=
+CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
+ifeq ($(MLSF95),Abs)
+  UP_OR_LOW := -mod UPPER
+else
+  UP_OR_LOW := -mod lower
+endif
+
 #NOCLEANING determines value of RECFG passed to mlsconfigure script
 #RECFG determines whether changing .configure triggers deleting
 #existing sub-directory, and thus recompiling every source file
@@ -140,28 +161,38 @@ endif
 $(PROG): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)"
+	@if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
+           MARK_ALL_AS_UPTODATE= ;\
+         fi
 
 $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
         UNPREFXDPTHS="$(ADD2PATHS)"
+	@if [ "$(WE_CAN)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		     cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) mark_all_as_uptodate \
+           MARK_ALL_AS_UPTODATE= ;\
+         fi
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
+    MARK_ALL_AS_UPTODATE=no
 
 $(libfwdmdl_objs)/libfwdmdl.a: $(FM_LIB_prereqs) $(libfwdmdl_objs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libfwdmdl_objs)/libfwdmdl.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
+	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources) \
+   MARK_ALL_AS_UPTODATE=no
 
 $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(he5lib_objs)/libhe5.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib)
+	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
 
 .PHONY: configure depends clean tar mostlyclean tarz targ ghostbuster
 
@@ -183,9 +214,17 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) $(depends_where) ; \
-     mv Makefile.dep Makefile.nodep
+ifdef CASCADE
+	$(MLSBIN)/makemakedep.sh -nodep -p Makefile.nodep $(OMIT_PREFXD)
 	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(depends_where) 
+else
+	$(MAKE) depends--mod
+endif
+
+depends--mod:
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW) \
+   $(CUSTOM_PREFXD) $(depends_where)
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
@@ -227,6 +266,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.15  2002/05/02 00:16:32  pwagner
+# depends now creates Makefile.nodep, too
+#
 # Revision 1.14  2002/01/31 00:34:33  pwagner
 # Tries to get .mod files from he5lib
 #

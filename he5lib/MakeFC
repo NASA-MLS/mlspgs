@@ -145,7 +145,8 @@ $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
 	   rm -f $(libmls_objs)/libmls.a ; \
 	fi ; \
-	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
+	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources) \
+   MARK_ALL_AS_UPTODATE=no
 
 hdfeos5.f9h: $(HDFEOS5)/../../include/hdfeos5.inc
 	@sed 's/^C/!/' $(HDFEOS5)/../../include/hdfeos5.inc > temp ; \
@@ -172,31 +173,18 @@ $(OBJ_DIR)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc \
           $(RECFG)
 
-#depends:
-#	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
-#     mv Makefile.dep Makefile.nodep
-#	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib)
 depends: $(OBJ_DIR)/$(MLSCONFG)
 ifdef CASCADE
-	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
-     mv Makefile.dep Makefile.nodep
+	$(MLSBIN)/makemakedep.sh -p Makefile.dep -nodep $(OMIT_PREFXD)
 	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(libmls_sources) $(srclib) 
 else
 	$(MAKE) depends--mod
 endif
 
 depends--mod:
-	@if [ -f Makefile.dep ] ; then \
-	  mv Makefile.dep Makefile.dep.old ; \
-	fi ; \
-	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
-     mv Makefile.dep Makefile.nodep
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD) $(UP_OR_LOW) $(CUSTOM_PREFXD) \
-	    $(libmls_sources) $(srclib) ; \
-     mv Makefile.dep MF.$(MLSF95).$(MLSPLAT).dep ; \
-	if [ -f Makefile.dep.old ] ; then \
-	  mv Makefile.dep.old Makefile.dep ; \
-	fi
+	$(MLSBIN)/makemakedep.sh -p $(PLATFORMS)/$(MLSCONFG)/Makefile.dep \
+   $(OMIT_PREFXD) $(UP_OR_LOW) \
+   $(CUSTOM_PREFXD) $(libmls_sources) $(srclib) 
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
@@ -238,6 +226,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.6  2002/05/28 23:08:47  pwagner
+# Crafts an f95-compatible hdfeos5.f9h
+#
 # Revision 1.5  2002/05/02 00:16:32  pwagner
 # depends now creates Makefile.nodep, too
 #

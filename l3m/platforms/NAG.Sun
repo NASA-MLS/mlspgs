@@ -7,10 +7,20 @@ SHELL = /bin/sh
 
 # Path to source files:
 S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+
+UTILDIR=../../util
+
+# reecho.sh can filter out globbed file expansions that fail
+# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
+# However we will be using it just to create lapack_linker_line 
+# where LIB_LAPACK may contain multiple libraries
+REECHO=$(UTILDIR)/reecho.sh
 
 # Use the libmls.a directory, libdir, for .mod files
 # dir1 is the path prepended to its .o files in dependency lists
-libdir = ../../lib/$(MLSCONFG)
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
@@ -22,12 +32,13 @@ dir1 = $(libdir)/
 # therefore we will tell make to add srclib to directories searched for .f90
 # while dir2, the path prepended to its .o files in dependency lists, is empty
 # so that its object files share the current working directory with those of l2
-srclib = ../../srclib
+srclib = $(CONFDIR)/srclib
 
 dir2 =
 
 # Set paths for finding source files (different from .o and .mod)
 
+vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
@@ -40,7 +51,7 @@ DUSTY = $(FOPTS) -dusty
 
 # Use the libmlsl3 directory, libmlsl3dir, for more .mod files
 # dir3 is the path prepended to its .o files in dependency lists
-libmlsl3dir = ../../l3/$(MLSCONFG)
+libmlsl3dir = $(CONFDIR)/l3/$(MLSCONFG)
 
 dir3 = $(libmlsl3dir)/
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
@@ -68,7 +79,28 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) \
 #Special load libraries
 l_specials = -lnsl -lsocket
 
+L3DZData.o: $(S)/L3DZData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZData.f90 $(FAFTER)
+
+L3MZData.o: $(S)/L3MZData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZData.f90 $(FAFTER)
+
+L3MMData.o: $(S)/L3MMData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMData.f90 $(FAFTER)
+
+L3DZDiag.o: $(S)/L3DZDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DZDiag.f90 $(FAFTER)
+
+L3MZDiag.o: $(S)/L3MZDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MZDiag.f90 $(FAFTER)
+
+L3MMDiag.o: $(S)/L3MMDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3MMDiag.f90 $(FAFTER)
+
 # $Log$
+# Revision 1.2  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.1  2001/07/19 23:59:48  pwagner
 # Fiest commit
 #

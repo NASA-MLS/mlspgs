@@ -1,8 +1,31 @@
+libcloud.a: FullCloudForwardModel.o
+
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
+ifndef CASCADE
+the_file := $(shell ${REECHO} Makefile.dep)
+ifeq ($(strip $(the_file)),)
+CASCADE = "yes"
+endif
+endif
+
+ifndef CASCADE
+include Makefile.dep
+else
 ifdef NOCASCADE
 include ../Makefile.nodep
 else
 include ../Makefile.dep
 endif
+endif
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
 
 # "$Id$"
 
@@ -50,14 +73,6 @@ l2_test.o: ${OBJS}
 # in case modules have been deleted or excluded since the last build
 # Nope--will need to think harder about what to do about excluded modules
 delete_lib_first = no
-
-UTILDIR=../../util
-
-# reecho.sh can filter out globbed file expansions that fail
-# e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
-# However we will be using it just to create lapack_linker_line 
-# where LIB_LAPACK may contain multiple libraries
-REECHO=$(UTILDIR)/reecho.sh
 
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
@@ -118,7 +133,10 @@ else
 endif
 
 # ========================================================================
-libcloud.a: ${OBJS} 
+libcloud.a: ${OBJS} ${MODULES}
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -152,6 +170,12 @@ l2_test: libcloud.a l2_test.o $(libdir)/libmls.a
 clean:
 	rm -f *.o *.mod l2_test
 
+mark_all_as_uptodate:
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T libcloud.a -M $(MAKE) $(MARKING_ARG) \
+       $(libdir) $(libfwdmdl) ; \
+		fi
+
 tar:
 	rm -f cloud.tgz
 	tar hcvzf cloud.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
@@ -162,6 +186,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2002/05/02 22:35:16  pwagner
+# NOCASCADE setting in place; forestalls unwanted recompilations
+#
 # Revision 1.5  2001/11/07 01:14:29  pwagner
 # lapack message refers to this case, not mlsl2
 #

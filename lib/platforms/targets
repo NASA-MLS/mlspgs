@@ -1,3 +1,5 @@
+libmls.a: L2PC_m.o
+
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
 ifdef HOSTMLSCFILE
@@ -6,14 +8,29 @@ else
    MLSCFILE=.configure
 endif
 
+ifndef CASCADE
+the_file := $(shell ${REECHO} Makefile.dep)
+ifeq ($(strip $(the_file)),)
+CASCADE = "yes"
+endif
+endif
+
+ifndef CASCADE
+include Makefile.dep
+else
 ifdef NOCASCADE
 include ../Makefile.nodep
 else
 include ../Makefile.dep
 endif
+endif
 
 machines_f90 := $(shell cd $(MACH_DIR); echo *.f90)
 MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
+record_file=newAifBdiff.out
+
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
+
 # "$Id$"
 # ========================================================================
 # An automatically constructed Makefile
@@ -69,18 +86,6 @@ all: libmls.a
 #--------------------- default name of GNU-compatible c compiler
 CC=cc
 
-CONFDIR=../..
-UTILDIR=../../util
-TESTSDIR=../../tests
-
-ifdef MLSINSTALLDIR
-   INSTALLDIR:=$(MLSINSTALLDIR)
-else
-ifndef INSTALLDIR
-   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
-endif
-endif
-
 # "yes" is safer--
 # in case modules have been deleted or excluded since the last build
 # Nope--will need to think harder about what to do about excluded modules
@@ -120,7 +125,10 @@ ifdef HDFVERSIONS
    he5lib_message=mlslib will support files with either hdf version
 endif
 
-libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS}
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} $(MODULES)
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
+		fi
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -136,6 +144,13 @@ endif
 clean:
 	rm -f *.o *.mod *.a
 
+mark_all_as_uptodate:
+		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
+       if [ -f $(record_file) -o "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
+		 $(UTILDIR)/mark_as_uptodate.sh -T libmls.a -M $(MAKE) -fyes ; \
+		fi; \
+       fi
+
 tar:
 	rm -f libmls.tgz
 	tar hcvzf libmls.tgz * --exclude \*.o --exclude \*.mod --exclude libmls.a
@@ -146,48 +161,51 @@ tar:
 
 # This uses the utility program init_gen to create two
 # up-to-date prereqs for intrinsic
-$(INSTALLDIR)/init_gen: $(UTILDIR)/init_gen.f90
-	$(UTILDIR)/build_f90_in_misc.sh -p init_gen \
-	-d $(INSTALLDIR) -t $(TESTSDIR) -M $(MAKE) \
-	-FC $(FC) -CC $(CC) -C $(MLSCFILE) \
-   $(UTILDIR)/init_gen.f90
-
-$(S)/lit_parm.f9h $(S)/lit_add.f9h: $(S)/lit_names.txt $(INSTALLDIR)/init_gen
-	sort -f $(S)/lit_names.txt | $(INSTALLDIR)/init_gen \
-          -l last_intrinsic_lit -pl_ \
-          -j lit_names.txt \
-          $(S)/lit_parm.f9h $(S)/lit_add.f9h lit_indices
+# $(INSTALLDIR)/init_gen:# $(UTILDIR)/init_gen.f90
+#    $(UTILDIR)/build_f90_in_misc.sh# -p# init_gen# \
+#    -d# $(INSTALLDIR)# -t# $(TESTSDIR)# -M# $(MAKE)# \
+#    -FC# $(FC)# -CC# $(CC)# -C# $(MLSCFILE)# \
+# # # # $(UTILDIR)/init_gen.f90
+# 
+# $(S)/lit_parm.f9h# $(S)/lit_add.f9h:# $(S)/lit_names.txt# $(INSTALLDIR)/init_gen
+#    sort# -f# $(S)/lit_names.txt# |# $(INSTALLDIR)/init_gen# \
+# # # # # # # # # # # -l# last_intrinsic_lit# -pl_# \
+# # # # # # # # # # # -j# lit_names.txt# \
+# # # # # # # # # # # $(S)/lit_parm.f9h# $(S)/lit_add.f9h# lit_indices
 #	rm -f temp
 #	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_add.f9h > temp
 #	mv temp $(S)/lit_add.f9h
 #	sed 's/<file_name_here>/lit_names.txt/' $(S)/lit_parm.f9h > temp
 #	mv temp $(S)/lit_parm.f9h
 
-machine.o: $(MACH_DIR)/machine.f90
-	rm -f machine.f90 ; \
-	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
-     > machine.f90
-	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
-	rm -f machine.f90
-
-intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
-
-BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
-NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
-
-DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
-
-Hdf.o:
-	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
-string_table.o:
-	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
-
-# ncep_dao module doesn't play well with the lf95 undefined variable
-# runtime checker because of endian swapping
-ncep_dao.o:
-	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
+# machine.o: $(MACH_DIR)/machine.f90
+# 	rm -f machine.f90 ; \
+# 	sed '/Start $(BAD_MATCH)/,/End $(BAD_MATCH)/ d' $(MACH_DIR)/machine.f90 \
+#      # machine.f90
+# 	$(FC) -c $(FOPTS) $(INC_PATHS) machine.f90 $(FAFTER)
+# 	rm -f machine.f90
+# 
+# intrinsic.o: $(S)/lit_parm.f9h $(S)/lit_add.f9h
+# 
+# BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
+# NOUNASS := $(shell echo ${FOPTS} | sed 's/\(--chk [aesx,]*\),u\([aesx,]*\)/\1\2/')
+# 
+# DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+# 
+# Hdf.o:
+# 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
+# string_table.o:
+# 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+# 
+# # ncep_dao module doesn't play well with the lf95 undefined variable
+# # runtime checker because of endian swapping
+# ncep_dao.o:
+# 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.45  2002/05/02 22:35:17  pwagner
+# NOCASCADE setting in place; forestalls unwanted recompilations
+#
 # Revision 1.44  2002/02/08 18:33:50  pwagner
 # Custom build for machine.o depends on whether collecting garbage
 #

@@ -28,7 +28,7 @@ endif
 # where which_fftw.sh is stored
 MLSBIN=../../util
 
-MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE)
+MARKING_ARG=-f$(MARK_ALL_AS_UPTODATE) -s$(SKIP_PREREQ_DIRS)
 
 # "$Id$"
 
@@ -144,7 +144,7 @@ fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CONFDIR)/$(MLSCFILE) \
      $(MODULES)
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
-		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes -v ; \
+		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
 		fi
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
@@ -177,7 +177,7 @@ clean:
 
 mark_all_as_uptodate:
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" != "no" ]; then \
-		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl1 -M $(MAKE) $(MARKING_ARG) -v \
+		 $(UTILDIR)/mark_as_uptodate.sh -T mlsl1 -M $(MAKE) $(MARKING_ARG) \
        $(libdir) ; \
 		fi
 
@@ -194,6 +194,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.20  2002/06/18 18:53:35  pwagner
+# Modified to correctly use he5lib modules
+#
 # Revision 1.19  2002/05/10 20:18:58  pwagner
 # Corrected he5lib message
 #

@@ -7,16 +7,18 @@ SHELL = /bin/sh
 
 # Path to source files:
 S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
 
 # Use the libmls.a directory, libdir, for .mod files
 # dir1 is the path prepended to its .o files in dependency lists
-libdir = ../../lib/$(MLSCONFG)
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
 # Use the libfwdmdl.a directory, libfwdmdl, for .mod files
 # dir3 is the path prepended to its .o files in dependency lists
-libfwdmdl = ../../fwdmdl/$(MLSCONFG)
+libfwdmdl = $(CONFDIR)/fwdmdl/$(MLSCONFG)
 
 dir3 = $(libfwdmdl)/
 
@@ -28,14 +30,14 @@ dir3 = $(libfwdmdl)/
 # therefore we will tell make to add srclib to directories searched for .f90
 # while dir2, the path prepended to its .o files in dependency lists, is empty
 # so that its object files share the current working directory with those of l2
-srclib = ../../srclib
+srclib = $(CONFDIR)/srclib
 
 dir2 =
 
 # Use the libmlspack.a directory, blaslib, for .mod files
-blaslib = ../../blas/$(MLSCONFG)
+blaslib = $(CONFDIR)/blas/$(MLSCONFG)
 
-UTILDIR=../../util
+UTILDIR=$(CONFDIR)/util
 
 # reecho.sh can filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
@@ -44,6 +46,7 @@ REECHO=$(UTILDIR)/reecho.sh
 
 # Set paths for finding source files (different from .o and .mod)
 
+vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib) $(libdir)/../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
@@ -81,6 +84,9 @@ INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.5  2002/01/31 00:33:13  pwagner
+# Prefixes preset paths just like forwaard model
+#
 # Revision 1.4  2001/11/15 00:07:57  pwagner
 # Now works with new libmlspack.a and .mod files in blas
 #

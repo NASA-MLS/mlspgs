@@ -7,10 +7,13 @@ SHELL = /bin/sh
 
 # Path to source files:
 S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+UTILDIR=$(CONFDIR)/util
 
 # Use the libmls.a directory, libdir, for .mod files
 # dir1 is the path prepended to its .o files in dependency lists
-libdir = ../../lib/$(MLSCONFG)
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
@@ -22,12 +25,13 @@ dir1 = $(libdir)/
 # therefore we will tell make to add srclib to directories searched for .f90
 # while dir2, the path prepended to its .o files in dependency lists, is empty
 # so that its object files share the current working directory with those of l2
-srclib = ../../srclib
+srclib = $(CONFDIR)/srclib
 
 dir2 =
 
 # Set paths for finding source files (different from .o and .mod)
 
+vpath %.mod ./
 vpath %.o ./
 vpath %.f90 ../ $(srclib)
 vpath %.f9h ../ $(srclib)
@@ -61,7 +65,23 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(libdir)
 #Special load libraries
 l_specials = 
 
+#	special options for compiling some modules--override .f90 rules
+
+l2interface.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L2Interface.o: $(S)/L2Interface.f90
+	$(UTILDIR)/newAifBdiff.sh -a l2interface.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+l3dmdata.mod:
+	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMData.o: $(S)/L3DMData.f90
+	$(UTILDIR)/newAifBdiff.sh -a l3dmdata.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+tree_checker.mod: init_tables_module.mod
+	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
+
 # $Log$
+# Revision 1.7  2001/08/15 21:03:28  pwagner
+# Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
+#
 # Revision 1.6  2001/03/12 23:57:47  pwagner
 # New FAFTER, LAFTER flags to postprocess compile & link steps
 #

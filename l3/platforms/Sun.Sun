@@ -5,10 +5,13 @@
 
 # Path to source files:
 S = ..
+# Path to root directory of l2, lib, etc.:
+CONFDIR=../..
+UTILDIR=$(CONFDIR)/util
 
 # Use the libmls.a directory, libdir, for .mod files
 # dir1 is the path prepended to its .o files in dependency lists
-libdir = ../../lib/$(MLSCONFG)
+libdir = $(CONFDIR)/lib/$(MLSCONFG)
 
 dir1 = $(libdir)/
 
@@ -20,7 +23,7 @@ dir1 = $(libdir)/
 # therefore we will tell make to add srclib to directories searched for .f90
 # while dir2, the path prepended to its .o files in dependency lists, is empty
 # so that its object files share the current working directory with those of l2
-srclib = ../../srclib
+srclib = $(CONFDIR)/srclib
 
 dir2 =
 
@@ -62,4 +65,16 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
 #Special load libraries
 l_specials = -lnsl
 
+#	special options for compiling some modules--override .f90 rules
+
+L2Interface.o: $(S)/L2Interface.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2Interface.f90 $(FAFTER)
+L3DMData.o: $(S)/L3DMData.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMData.f90 $(FAFTER)
+L3DMDiag.o: $(S)/L3DMDiag.f90
+	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L3DMDiag.f90 $(FAFTER)
+
 # $Log$
+# Revision 1.1  2001/09/10 18:39:07  pwagner
+# First commit
+#
