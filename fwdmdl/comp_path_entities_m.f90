@@ -13,8 +13,6 @@ module COMP_PATH_ENTITIES_M
   use Molecules, only: l_h2o
   use Intrinsic, only: l_vmr
   use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
-  use output_m, only: output
-  use dump_0, only: dump
   implicit NONE
 
   real (r8), parameter :: DegToRad=1.74532925e-2
@@ -151,12 +149,6 @@ type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
   do j = 1, size(molecules)
     f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_vmr, molecule=molecules(j))
-    print*,'For molecule ',j,' logBasis is:',f%template%logBasis
-    call output('mr_f is:')
-    call dump(mr_f)
-    call output('f%values is:')
-    call dump(f%values)
-    call output('difference is:')
     jp = f%template%noInstances
     kk = f%template%noSurfs
     DO l = 1, no_mmaf
@@ -218,6 +210,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.8  2001/03/21 18:39:43  livesey
+! Fixed degtorad bug
+!
 ! Revision 1.7  2001/03/21 06:30:10  livesey
 ! Minor change, still wrong
 !
