@@ -32,7 +32,8 @@ module Fill                     ! Create vectors and fill them.
     & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
     & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_HEIGHT, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
-    & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_LOSVEL, L_NONE, L_PLAIN, &
+    & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_ORBITINCLINATION, &
+    & L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PHITAN, L_PTAN, L_RADIANCE, L_RHI, &
     & L_REFGPH, L_REFRACT, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
     & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
@@ -3150,6 +3151,8 @@ contains ! =====     Public Procedures     =============================
       nameString='scVelECR'
     case ( l_scGeocAlt )
       nameString='scGeocAlt'
+    case ( l_orbitInclination )
+      nameString='scOrbIncl'
     case default
       call Announce_Error ( root, cantFillFromL1B )
     end select
@@ -3536,6 +3539,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.129  2002/06/14 16:40:00  livesey
+! Orbital inclination can now be filled from l1b
+!
 ! Revision 2.128  2002/06/04 23:22:36  livesey
 ! Bug fixes on phiTan fill, other cleanups
 !
