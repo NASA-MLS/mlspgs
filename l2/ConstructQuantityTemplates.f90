@@ -536,6 +536,14 @@ contains ! ============= Public procedures ===================================
       qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
       qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
 
+      ! Now we're going to fill in the hGrid information
+      qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
+      qty%grandTotalInstances = 0
+      if ( index(switches,'qtmp') /= 0 ) then
+        call output ( "Instance offset for minor frame quantity is:" )
+        call output ( qty%instanceOffset, advance='yes' )
+      endif
+
       if ( .not. IsModuleSpacecraft(instrumentModule) ) then
         call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
@@ -552,14 +560,6 @@ contains ! ============= Public procedures ===================================
         qty%surfs = l1bField%dpField(1,:,:)  ! Vert coord is tpGeodAlt read above.
 
         call DeallocateL1BData(l1bfield)
-
-        ! Now we're going to fill in the hGrid information
-        qty%instanceOffset = chunk%firstMAFIndex + chunk%noMAFsLowerOverlap
-        qty%grandTotalInstances = 0
-        if ( index(switches,'qtmp') /= 0 ) then
-          call output ( "Instance offset for minor frame quantity is:" )
-          call output ( qty%instanceOffset, advance='yes' )
-        endif
 
         do l1bItem = 1, NoL1BItemsToRead
           ! Get the name of the item to read
@@ -1179,6 +1179,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.104  2003/07/07 20:22:37  livesey
+! Minor bug fix in minor frame quantities
+!
 ! Revision 2.103  2003/07/01 23:18:04  livesey
 ! Added setting of grandTotalInstances for minor frame quantities.
 !
