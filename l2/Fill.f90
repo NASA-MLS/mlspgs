@@ -107,7 +107,7 @@ contains ! =====     Public Procedures     =============================
       & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
     use L2GPData, only: L2GPData_T
     use L2AUXData, only: L2AUXData_T
-    use L2PC_m, only: FLUSHL2PCBINS
+    use LinearizedForwardModel_m, only: FLUSHLOCKEDBINS
     use L3ASCII, only: L3ASCII_INTERP_FIELD
     use LEXER_CORE, only: PRINT_SOURCE
     use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
@@ -605,7 +605,7 @@ contains ! =====     Public Procedures     =============================
           & call trace_end ( "Fill.RestrictRange" )
 
       case ( s_flushL2PCBins )
-        call FlushL2PCBins
+        call FlushLockedBins
 
       case ( s_updateMask )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -6010,6 +6010,11 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.239  2003/08/21 16:07:17  livesey
+! Now calls FlushLockedBins (LinearizedForwardModel) rather than
+! FlushL2PCBins (which is called by the former), as we want it also to
+! forget which bin it chose.
+!
 ! Revision 2.238  2003/08/20 20:05:42  livesey
 ! Added the a*b possibility to the manipulation fill.
 !
