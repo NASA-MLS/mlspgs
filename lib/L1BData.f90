@@ -6,8 +6,9 @@
 MODULE L1BData
 !===============================================================================
 
-   USE MLSCommon
-   USE MLSMessageModule
+   USE MLSCommon, only: R8
+   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+     & MLSMSG_L1Bread, MLSMSG_Warning
    IMPLICIT NONE
    PUBLIC
 
@@ -212,8 +213,8 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = sfrdata(sds1_id, l1bData%firstMAF, stride, l1bData%noMAFs, &
-                       l1bData%counterMAF)
+      status = sfrdata(sds1_id,  l1bData%firstMAF , stride, &
+        & l1bData%noMAFs, l1bData%counterMAF )
       IF (status == -1) THEN
          msr = MLSMSG_L1BRead // 'counterMAF.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -400,6 +401,9 @@ END MODULE L1BData
 !=================
 
 ! $Log$
+! Revision 2.1  2000/10/04 01:27:34  vsnyder
+! Put ONLY clauses into the USE statements
+!
 ! Revision 2.0  2000/09/05 17:41:06  dcuddy
 ! Change revision to 2.0
 !
