@@ -148,7 +148,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
   integer, parameter :: F_WIDTH               = f_weight + 1
   integer, parameter :: F_WIDTHS              = f_width + 1
-  integer, parameter :: FIELD_FIRST = f_AltitudeQuantity, FIELD_LAST = f_widths
+  integer, parameter :: F_BILL                = f_widths + 1  !???
+  integer, parameter :: F_ZVI                 = f_bill + 1    !???
+! integer, parameter :: FIELD_FIRST = f_AltitudeQuantity, FIELD_LAST = f_widths
+  integer, parameter :: FIELD_FIRST = f_AltitudeQuantity, FIELD_LAST = f_zvi
   integer :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_intrinsic_lit + 1
@@ -255,7 +258,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VECTOR             = s_validSignal + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
-  integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_vGrid
+  integer, parameter :: S_L2LOAD             = s_vgrid + 1     !???
+  integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_l2load
+! integer, parameter :: SPEC_FIRST = last_parm + 1, SPEC_LAST = s_vGrid
   integer :: SPEC_INDICES(spec_first:spec_last)
 
 ! Table for section ordering:
@@ -450,6 +455,8 @@ contains ! =====     Public procedures     =============================
     field_indices(f_weight) =              add_ident ( 'weight' )
     field_indices(f_width) =               add_ident ( 'width' )
     field_indices(f_widths) =              add_ident ( 'widths' )
+    field_indices(f_bill) =                add_ident ( 'bill' ) !???
+    field_indices(f_zvi) =                 add_ident ( 'zvi' )  !???
     ! Put parameter names into the symbol table
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -504,6 +511,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
+    spec_indices(s_l2load) =               add_ident ( 'l2load' )   !???
 
   ! Definitions are represented by trees.  The notation in the comments
   ! for the trees is < root first_son ... last_son >.  This is sometimes
@@ -594,7 +602,7 @@ contains ! =====     Public procedures     =============================
     ! f_field_name ... of the specification named by the spec_name.
     call make_tree ( (/ &
       begin, s+s_module, &
-             f+f_spacecraft, t+t_boolean, n+n_field_type, &
+             begin, f+f_spacecraft, t+t_boolean, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_radiometer, &          ! Must be after module
              begin, f+f_lo, t+t_numeric, n+n_field_type, &
@@ -775,6 +783,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
              begin, f+f_weight, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree ( (/ &                                    !???
+      begin, s+s_l2load, &                                   !???
+             begin, f+f_bill, t+t_string, n+n_field_type, &  !???
+             begin, f+f_zvi, t+t_string, n+n_field_type, &   !???
+             nadp+n_spec_def /) )                            !???
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
     !  < n_section section_name
@@ -791,6 +804,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, &
                     n+n_name_def, &
+             s+s_l2load, &                                   !???
              n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_climatology, s+s_l2gp, &
              s+s_l2aux, n+n_section, &
@@ -841,38 +855,51 @@ contains ! =====     Public procedures     =============================
     do i = 1, n_ids
       if ( ids(i) == begin ) then
         m = m + 1
+        if ( m > ubound(stack,1) ) then
+          print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Stack overflow!'
+          print *, 'Your tree is taller than ', ubound(stack,1), &
+            &      '.  Detected while'
+          print *, 'processing element ', i, ' of the list for call ', callno
+          stop
+        end if
         stack(m) = 0
       else
         id = mod(ids(i), 1000)
         which = mod(ids(i) / 1000, 1000)
         decor = ids(i) / 1000000
-       select case ( which )
-       case ( f/1000 ) ! Fields
-         string = field_indices(id)
-       case ( l/1000 ) ! Enumeration literals
-         string = lit_indices(id)
-       case ( p/1000 ) ! Parameter names
-         string = parm_indices(id)
-       case ( s/1000 ) ! Specs
-         string = spec_indices(id)
-       case ( t/1000 ) ! Intrinsic data types
-         string = data_type_indices(id)
-       case ( z/1000 ) ! Sections
-         string = section_indices(id)
-       case ( n/1000 ) ! Tree nodes
-         call build_tree ( id, stack(m), decor )
-         m = m - 1
-         stack(m) = stack(m) + 1
+        select case ( which )
+        case ( f/1000 ) ! Fields
+          string = field_indices(id)
+        case ( l/1000 ) ! Enumeration literals
+          string = lit_indices(id)
+        case ( p/1000 ) ! Parameter names
+          string = parm_indices(id)
+        case ( s/1000 ) ! Specs
+          string = spec_indices(id)
+        case ( t/1000 ) ! Intrinsic data types
+          string = data_type_indices(id)
+        case ( z/1000 ) ! Sections
+          string = section_indices(id)
+        case ( n/1000 ) ! Tree nodes
+          call build_tree ( id, stack(m), decor )
+          m = m - 1
+          if ( m < lbound(stack,1) ) then
+            print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Stack underflow!'
+            print *, 'You probably forgot a "begin" somewhere.  Detected while'
+            print *, 'processing element ', i, ' of the list for call ', callno
+            stop
+          end if
+          stack(m) = stack(m) + 1
     cycle
-       end select
-       if ( string == 0 ) then
-         print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- The string for element ', &
-           & i, ' of a list'
-         print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
-         stop
-       end if
-       call push_pseudo_terminal ( string, 0, decor = id )
-       stack(m) = stack(m) + 1
+        end select
+        if ( string == 0 ) then
+          print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- The string for element ', &
+            & i, ' of a list'
+          print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
+          stop
+        end if
+        call push_pseudo_terminal ( string, 0, decor = id )
+        stack(m) = stack(m) + 1
       end if
     end do
   end subroutine MAKE_TREE
@@ -885,6 +912,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.32  2001/03/02 03:28:39  vsnyder
+! Added more error checking (stack over/under-flow).  Added temporary l2load.
+!
 ! Revision 2.31  2001/03/02 01:27:24  livesey
 ! Added more vector quantity types
 !
