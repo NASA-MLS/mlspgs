@@ -726,6 +726,7 @@ contains ! ======================= Public Procedures =========================
     !  & lastProfile-firstProfile+1 )
 
     ! Now copy the information from the quantity to the l2gpData
+    L2GP%nTimesTotal = quantity%template%grandTotalInstances
 
     ! name is an integer, but L2GP%name is Character data
     l2gp%nameIndex = 0
@@ -805,6 +806,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.14  2003/12/03 17:50:54  pwagner
+! L2GP tracks both nTimes (for this slave) and nTimesTotal (done by all)
+!
 ! Revision 2.13  2003/11/14 23:38:45  pwagner
 ! Uses DirectWrite databse in preference to repeated calls to toolkit
 !
