@@ -20,7 +20,7 @@
 !ifdef(outpathl2pc,{},{!define(outpathl2pc,!outpath)})
 ; ------------------------------------------ Define standard filenames
 ; The first are l2cfs for an include, so unquoted
-!define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-0-0_0000d000.l2cf})
+!define(signalsL2cf,{!calpath/MLS-Aura_L2Cal-Signals_v1-0-1_0000d000.l2cf})
 !define(spectroscopyL2cf,{!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-0-2_0000d000.l2cf})
 !define(sidebandL2cf,{!calpath/MLS-Aura_L2Cal-SBRatio_v1-0-0_0000d000.l2cf})
 !define(systempL2cf,{!calpath/MLS-Aura_L2Cal-Tsys_v1-0-0_0000d000.l2cf})
