@@ -5,38 +5,9 @@ module PFAData_m
 
   ! Read the PFA data file(s).  Build a database.  Provide for access to it.
 
-  use MLSCommon, only: R4
-  use MLSSignals_m, only: Signal_T
-  use VGridsDatabase, only: VGrid_t
-
   implicit NONE
   private
-  public :: PFAData_t, PFAData
   public :: Get_PFAdata_from_l2cf
-  public :: Destroy_PFADataBase, Dump_PFADataBase, Dump
-  public :: Write_PFADataBase, Read_PFADataBase
-
-  interface Dump
-    module procedure Dump_PFADatum
-  end interface Dump
-
-  type PFAData_t
-    integer :: Name                                ! of the pfaData spec
-    integer, pointer :: Molecules(:) => NULL()     ! Molecule indices
-    character(len=127) :: Signal                   ! The signal string
-    integer :: SignalIndex                         ! in Signals database
-    type(signal_t) :: TheSignal                    ! The signal, with channels
-                                                   ! and sidebands added
-    type(vGrid_t), pointer :: TGrid => NULL()      ! Log temperatures
-    type(vGrid_t), pointer :: VGrid => NULL()      ! vertical grid
-    real(r4) :: VelLin                             ! Velocity linearization, km/s
-    real(r4), pointer :: Absorption(:,:) => NULL() ! Ln Absorption data
-    real(r4), pointer :: dAbsDwc(:,:) => NULL()    ! d Ln Absorption / d wc data
-    real(r4), pointer :: dAbsDnc(:,:) => NULL()    ! d Ln Absorption / d nc data
-    real(r4), pointer :: dAbsDnu(:,:) => NULL()    ! d Ln Absorption / d nu data
-  end type PFAData_t
-
-  type(PFAData_t), pointer,save :: PFAData(:) => NULL()
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -64,9 +35,11 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: Capitalize
     use MoreTree, only: Get_Field_ID
     use Parse_Signal_m, only: Parse_Signal
+    use PFADataBase, only: AddPFADatumToDatabase, PFAData, PFAData_T
     use String_Table, only: Get_String
     use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
+    use VGridsDatabase, only: VGrid_t
 
     integer, intent(in) :: Root            ! of the pfaData subtree in the l2cf
     integer, intent(in) :: Name            ! of the pfaData spec, else zero
@@ -270,6 +243,8 @@ contains ! =====     Public Procedures     =============================
     subroutine Store_2d ( Where, What )
     ! Store data from Where in the L2CF into an nTemps X nPress
     ! array What
+
+      use MLSCommon, only: R4
       integer, intent(in) :: Where
       real(r4), pointer :: What(:,:)
       integer :: I, J, K
@@ -292,126 +267,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Get_PFAdata_from_l2cf
 
-  ! ----------------------------------------  Destroy_PFADataBase  -----
-  subroutine Destroy_PFADataBase
-    use Allocate_Deallocate, only: Deallocate_Test
-    integer :: I
-    if ( .not. associated(pfaData) ) return
-    do i = 1, size(pfaData)
-      call deallocate_test ( pfaData(i)%molecules, 'pfaData%molecules', moduleName )
-      call deallocate_test ( pfaData(i)%theSignal%channels, 'pfaData...Channels', &
-          & moduleName )
-      call deallocate_test ( pfaData(i)%absorption, 'pfaData%absorption', moduleName )
-      call deallocate_test ( pfaData(i)%dAbsDwc, 'pfaData%dAbsDwc', moduleName )
-      call deallocate_test ( pfaData(i)%dAbsDnc, 'pfaData%dAbsDnc', moduleName )
-      call deallocate_test ( pfaData(i)%dAbsDnu, 'pfaData%dAbsDnu', moduleName )
-    end do
-  end subroutine Destroy_PFADataBase
-
-  ! -------------------------------------------  Dump_PFADataBase  -----
-  subroutine Dump_PFADataBase
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    integer :: I
-    if ( .not. associated(pfaData) ) &
-      & call MLSMessage ( MLSMSG_Error, moduleName, &
-        & "Cannot dump unallocated PFA data base" )
-    do i = 1, size(pfaData)
-      call dump_PFADatum ( pfaData(i) )
-    end do
-  end subroutine Dump_PFADataBase
-
-  ! ----------------------------------------------  Dump_PFADatum  -----
-  subroutine Dump_PFADatum ( PFADatum )
-
-    use Dump_0, only: Dump
-    use Intrinsic, only: Lit_Indices
-    use MLSSignals_m, only: DisplaySignalName
-    use String_Table, only: Display_String, String_Length
-    use Output_m, only: Blanks, NewLine, Output
-
-    type(PFAData_t), intent(in) :: PFADatum
-
-    integer :: I, L, W
-    character(len=*), parameter :: Molecules = ' Molecules:'
-
-    if ( pfaDatum%name /= 0 ) then
-      call output ( ' ' )
-      call display_string ( pfaDatum%name )
-    end if
-    call newLine
-    call output ( Molecules )
-    w = len(Molecules)
-    do i = 1, size(pfaDatum%molecules)
-      l = string_length(lit_indices(pfaDatum%molecules(i)))
-      if ( w + l > 72 ) then
-        call newLine
-        w = len(molecules)
-        call blanks ( w )
-      end if
-      call blanks ( 1 )
-      call display_string ( lit_indices(pfaDatum%molecules(i)) )
-      w = w + l + 1
-    end do
-    call newline
-
-    call output ( ' Specified signal: ' )
-    call output ( trim(pfaDatum%signal), advance='yes' )
-    call output ( ' Actual signal: ' )
-    call output ( pfaDatum%signalIndex, after=': ' )
-    if ( pfaDatum%theSignal%name /= 0 ) then
-      call display_string ( pfaDatum%theSignal%name )
-      call output ( ': ' )
-    end if
-    call displaySignalName ( pfaDatum%theSignal, advance='yes' )
-
-
-    call output ( ' TGrid: ' )
-    call display_string ( pfaDatum%tGrid%name )
-
-    call output ( ', VGrid: ' )
-    call display_string ( pfaDatum%vGrid%name, advance='yes' )
-
-    call output ( pfaDatum%velLin, before=' Velocity Linearization: ', &
-      & advance='yes' )
-
-    call dump ( pfaDatum%absorption, name=' ln Absorption' )
-    call dump ( pfaDatum%dAbsDwc, name=' d ln Absorption / d wc' )
-    call dump ( pfaDatum%dAbsDnc, name=' d ln Absorption / d nc' )
-    call dump ( pfaDatum%dAbsDnu, name=' d ln Absorption / d nu' )
-
-  end subroutine Dump_PFADatum
-
-  ! ------------------------------------------  Write_PFADatabase  -----
-  subroutine Write_PFADatabase ( FileName )
-    character(len=*), intent(in) :: FileName
-  end subroutine Write_PFADatabase
-
-  ! -------------------------------------------  Read_PFADatabase  -----
-  subroutine Read_PFADatabase ( FileName )
-    character(len=*), intent(in) :: FileName
-  end subroutine Read_PFADatabase
-
 ! =====     Private Procedures     =====================================
-
-  ! --------------------------------------  AddPFADatumToDatabase  -----
-  integer function AddPFADatumToDatabase ( DATABASE, ITEM )
-
-  ! This routine adds a PFA Datum to a database of PFA Data, creating the
-  ! database if necessary.
-
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
-      & MLSMSG_Error
-    ! Dummy arguments
-    type (PFAData_T), dimension(:), pointer :: DATABASE
-    type (PFAData_T), intent(in) :: ITEM
-
-    ! Local variables
-    type (PFAData_T), dimension(:), pointer :: tempDatabase
-
-    include "addItemToDatabase.f9h"
-
-    AddPFADatumToDatabase = newSize
-  end function AddPFADatumToDatabase
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -420,6 +276,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.4  2004/06/09 17:47:10  vsnyder
+! Split off PFADataBase to fwdmdl
+!
 ! Revision 2.3  2004/06/08 19:29:27  vsnyder
 ! Add file field
 !
