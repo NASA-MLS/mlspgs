@@ -28,7 +28,8 @@ module Molecules
 ! Definitions of the literals:
   integer, parameter :: FIRST_MOLECULE = last_intrinsic_lit + 1
   integer, parameter :: L_AIR_CONT =     first_molecule
-  integer, parameter :: L_BR_79_O =      l_air_cont + 1
+  integer, parameter :: L_BRO =          l_air_cont + 1
+  integer, parameter :: L_BR_79_O =      l_bro + 1
   integer, parameter :: L_BR_81_O =      l_br_79_o + 1
   integer, parameter :: L_C_13_O =       l_br_81_o + 1
   integer, parameter :: L_CH3CL_35 =     l_c_13_o + 1
@@ -37,7 +38,8 @@ module Molecules
   integer, parameter :: L_CL_35_NO3 =    l_ch3cn + 1
   integer, parameter :: L_CL_37_NO3 =    l_cl_35_no3 + 1
   integer, parameter :: L_CL_37_O =      l_cl_37_no3 + 1
-  integer, parameter :: L_CLO =          l_cl_37_o + 1
+  integer, parameter :: L_CL_35_O =      l_cl_37_o + 1
+  integer, parameter :: L_CLO =          l_cl_35_o + 1
   integer, parameter :: L_CO =           l_clo + 1
   integer, parameter :: L_CO_18 =        l_co + 1
   integer, parameter :: L_COF2 =         l_co_18 + 1
@@ -89,6 +91,7 @@ module Molecules
 ! Mapping from the literals to the spec tags:
   integer, public :: SPEC_TAGS(FIRST_MOLECULE:LAST_MOLECULE)
   data spec_tags(l_air_cont)     / 00028964 /
+  data spec_tags(l_bro)          / 00095001 /
   data spec_tags(l_br_79_o)      / 00095001 /
   data spec_tags(l_br_81_o)      / 00097001 /
   data spec_tags(l_c_13_o)       / 00029001 /
@@ -97,6 +100,7 @@ module Molecules
   data spec_tags(l_ch3cn)        / 00041001 /
   data spec_tags(l_cl_35_no3)    / 00097002 /
   data spec_tags(l_cl_37_no3)    / 00099001 /
+  data spec_tags(l_cl_35_o)      / 00051002 /
   data spec_tags(l_cl_37_o)      / 00053002 /
   data spec_tags(l_clo)          / 00051002 /
   data spec_tags(l_co)           / 00028001 /
@@ -178,6 +182,7 @@ contains ! =====     Public procedures     =============================
     ! Put literals into the symbol table:
 
     lit_indices(l_air_cont) =     add_ident ( 'air_cont' )
+    lit_indices(l_bro) =          add_ident ( 'bro' )
     lit_indices(l_br_79_o) =      add_ident ( 'br_79_o' )
     lit_indices(l_br_81_o) =      add_ident ( 'br_81_o' )
     lit_indices(l_c_13_o) =       add_ident ( 'c_13_o' )
@@ -186,6 +191,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_ch3cn) =        add_ident ( 'ch3cn' )
     lit_indices(l_cl_35_no3) =    add_ident ( 'cl_35_no3' )
     lit_indices(l_cl_37_no3) =    add_ident ( 'cl_37_no3' )
+    lit_indices(l_cl_35_o) =      add_ident ( 'cl_35_o' )
     lit_indices(l_cl_37_o) =      add_ident ( 'cl_37_o' )
     lit_indices(l_clo) =          add_ident ( 'clo' )
     lit_indices(l_co) =           add_ident ( 'co' )
@@ -250,6 +256,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.9  2001/05/10 23:28:39  livesey
+! Added extra molecules for non-isotopes etc.
+!
 ! Revision 2.8  2001/04/26 02:33:03  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
