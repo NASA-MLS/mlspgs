@@ -133,6 +133,7 @@ module DNWT_MODULE
     real(rk) :: GFAC     ! Amount of best gradient to use for DX
     real(rk) :: GRADN    ! L2 norm of Gradient
     real(rk) :: SQ       ! Levenberg-Marquardt parameter -- intent(out)
+    real(rk) :: SQT      ! Total Levenberg-Marquardt stabilization -- intent(out)
     logical :: BIG       ! ANY( DX > 10.0 * epsilon(X) * X )
     logical :: STARTING  ! NWTA is still in "starting up" phase -- intent(out)
   end type NWT_T
@@ -655,6 +656,7 @@ contains
   520 sp = max(sp,sqmin/ajn)
       spl = sp
       sq = sp*ajn
+      aj%sqt = sq
       if (sp < spact) sq = sqmin
       gradnl = gradn
 
@@ -703,8 +705,9 @@ contains
       end if
       spinc = sp
       sp = c4*spl+min(condai+condai,min(cp125,condai)*(dxn-tp)/tp)
-      spl = sqrt(sp**2+spl**2)
       sq = sp*ajn
+      spl = sqrt(sp**2+spl**2)
+      aj%sqt = spl*ajn
       dxi = dxi*cp5
       go to 530
 
@@ -926,6 +929,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.4  2001/04/12 00:03:21  vsnyder
+! Put 'Total Levenberg-Marquart' in AJ
+!
 ! Revision 2.3  2001/02/16 00:19:34  vsnyder
 ! Corrected some comments; changed a dummy argument name.
 !
