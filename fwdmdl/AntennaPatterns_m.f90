@@ -186,6 +186,7 @@ outer1: do
   ! ---------------------------------  Destroy_Ant_Patterns_Database  -----
   subroutine Destroy_Ant_Patterns_Database
     integer :: I, Status
+    if (.not. associated(AntennaPatterns) ) return
     do i = 1, size(AntennaPatterns)
       call deallocate_test ( AntennaPatterns(i)%signals, &
         & "AntennaPatterns(?)%Signals", moduleName )
@@ -228,6 +229,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.14  2001/05/03 22:02:47  vsnyder
+! Insert copyright notice and some comments
+!
 ! Revision 1.13  2001/04/26 02:36:52  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
