@@ -70,6 +70,8 @@ endif
 # where the following utility scripts 
 # (necessary to build the mls software) are stored
 #   Script                        Function
+#   batch_hcnvrt.sh        Convert a group of hdfeos2 files to hdfeos5
+#                            using heconvert
 #   build_f90_in_misc.sh   Build a c or Fortran program
 #   f90GhostFiles.pl       Used by ghostbuster.sh   
 #   f90makedep.pl          Used ghostbuster.sh
@@ -83,6 +85,7 @@ endif
 #
 #  More info on some of these scripts is available via
 #  Command                      for help on 
+#  make help--convert           batch_hcnvrt.sh and heconvert
 #  make help--depends           makemakedep.sh
 #  make help--ghostbuster       ghostbuster.sh
 #  make help--mlsconfigure      mlsconfigure
@@ -152,6 +155,7 @@ SHELL = /bin/sh
 #                   also deletes haunted library files
 # help           -- prints some orientation on available help
 # help--brief    -- prints some brief info on how to build the mls software
+# help--convert  -- prints some info on converting from hdfeos2 to hdfeos5
 # help--depends  -- prints some info on the makemakedep.sh script
 # help--fopts    -- prints how to set compiler and linker options
 # help--ghostbuster
@@ -179,6 +183,7 @@ SHELL = /bin/sh
 # f90tex         -- build and install this prog
 # init_gen       -- build and install this prog
 # h5subset       -- build and install this prog
+# heconvert      -- build and install this prog
 # hl             -- build and install this prog
 #
 #    The following are useful if you stored multiple configurations
@@ -431,8 +436,11 @@ help--brief:
 	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -cf "$(MLSCFILE)" -p "$(MLSPLAT)" -help--brief
 
+help--convert:
+	@$(MLSBIN)/batch_hcnvrt.sh -help
+
 help--depends:
-	@$(MLSBIN)/makemakedep.sh.sh -help
+	@$(MLSBIN)/makemakedep.sh -help
 
 help--fopts:
 	@$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -487,6 +495,11 @@ install:
 	esac ; \
 	done
 
+# unshar the sources for the executables
+$(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h: $(MLSBIN)/heconvert.shar
+	@cd $(MLSBIN); \
+   /bin/sh heconvert.shar
+
 # build and install some of the executables out of util
 CondenseLeakLog: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/CondenseLeakLog.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -503,6 +516,25 @@ end_stmts: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/end_stmts.f90
 f90tex: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/f90tex.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ $(MLSBIN)/$@.f90
+
+heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
+	@case "$(HDF5)" in \
+	"") \
+		echo "Sorry--need to define HDF5 before building heconvert" ; \
+		echo "Try make configure" ; \
+		exit 2 ; \
+		;; \
+	*) \
+	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+      -c $(MLSCONFG) -p $@ $(MLSBIN)/convert.c \
+      -I $(MLSBIN) \
+      -I $(HDFEOS5)/../../include \
+      -I $(HDFEOS)/../../include \
+      -I $(HDF)/../include -I $(HDF5)/../include -I $(HDF5)/../src \
+		;; \
+	esac 
+   
+#EXTRA_PATHS="-I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos5.0/include/ -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdfeos/include -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf/linux/HDF4.1r3/include -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf5/linux/hdf5-1.4.1/include/ -I /software/SRC/TOOLKIT-5.2.7.3v1.00/hdf5/linux/hdf5-1.4.1/src"
 
 init_gen: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/init_gen.f90
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -773,9 +805,9 @@ update:
   tar substar disttar tarz substarz distarz targ substarg distarg substars\
   all install levels configure_subdirs makefile update\
   configure_pvm configure_fopts configure_full configure_help help disthelp\
-  firsthelp help--brief help--depends help--fopts help--ghostbuster\
-  help--mlsconfigure help--Makefile help--platform help--pvm help--reecho\
-  help--scripts help--toolkit \
+  firsthelp help--brief help--convert help--depends help--fopts\
+  help--ghostbuster help--mlsconfigure help--Makefile help--platform help--pvm\
+  help--reecho help--scripts help--toolkit \
   internalcleanup internaldepends internalmftests internalsaymake \
   internaladd_copy internalreset_copy internalupdate\
   show_copy ghostbuster\
@@ -783,6 +815,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.60  2002/01/10 01:25:08  pwagner
+# Added he5lib to OTHER_SUBDIRS
+#
 # Revision 1.59  2001/11/17 00:21:41  pwagner
 # Individual help now available on platform, toolkit, pvm, and fopts
 #
