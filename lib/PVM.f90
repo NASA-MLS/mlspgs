@@ -1,17 +1,17 @@
 ! Copyright (c 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-MODULE PVM ! Interface to the f77 pvm library.
+module PVM ! Interface to the f77 pvm library.
 
   ! This module is a low level interface between the f77 pvm library and the
   ! MLS code (mainly aimed at level 2
 
-  USE MLSCommon, ONLY: r8
+  use MLSCommon, only: r8
 
   !------------------------------- RCS Ident Info ------------------------------
-  CHARACTER(LEN=130), PRIVATE :: Id = & 
+  character(LEN=130), private :: Id = & 
        "$Id$"
-  CHARACTER(LEN=*), PRIVATE, PARAMETER :: ModuleName="$RCSfile$"
+  character(LEN=*), private, parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
   ! First we define constants as enumerated types effectively.  This is
@@ -21,366 +21,371 @@ MODULE PVM ! Interface to the f77 pvm library.
   ! --------------------
   ! spawn 'flag' options
   ! --------------------
-  INTEGER, PARAMETER :: PVMTASKDEFAULT    =  0
-  INTEGER, PARAMETER :: PVMTASKHOST       =  1
-  INTEGER, PARAMETER :: PVMTASKARCH       =  2
-  INTEGER, PARAMETER :: PVMTASKDEBUG      =  4
-  INTEGER, PARAMETER :: PVMTASKTRACE      =  8
-  INTEGER, PARAMETER :: PVMMPPFRONT       = 16
-  INTEGER, PARAMETER :: PVMHOSTCOMPL      = 32
-  INTEGER, PARAMETER :: PVMNOSPAWNPARENT  = 64
+  integer, parameter :: PVMTASKDEFAULT    =  0
+  integer, parameter :: PVMTASKHOST       =  1
+  integer, parameter :: PVMTASKARCH       =  2
+  integer, parameter :: PVMTASKDEBUG      =  4
+  integer, parameter :: PVMTASKTRACE      =  8
+  integer, parameter :: PVMMPPFRONT       = 16
+  integer, parameter :: PVMHOSTCOMPL      = 32
+  integer, parameter :: PVMNOSPAWNPARENT  = 64
 
   ! --------------------------------
   ! old option names still supported
   ! --------------------------------
-  INTEGER, PARAMETER :: PVMHOST  =  1
-  INTEGER, PARAMETER :: PVMARCH  =  2
-  INTEGER, PARAMETER :: PVMDEBUG =  4
-  INTEGER, PARAMETER :: PVMTRACE =  8
+  integer, parameter :: PVMHOST  =  1
+  integer, parameter :: PVMARCH  =  2
+  integer, parameter :: PVMDEBUG =  4
+  integer, parameter :: PVMTRACE =  8
 
   ! -------------------------
   ! buffer 'encoding' options
   ! -------------------------
-  INTEGER, PARAMETER ::  PVMDATADEFAULT = 0
-  INTEGER, PARAMETER ::  PVMDATARAW     = 1
-  INTEGER, PARAMETER ::  PVMDATAINPLACE = 2
-  INTEGER, PARAMETER ::  PVMDATATRACE   = 4
+  integer, parameter ::  PVMDATADEFAULT = 0
+  integer, parameter ::  PVMDATARAW     = 1
+  integer, parameter ::  PVMDATAINPLACE = 2
+  integer, parameter ::  PVMDATATRACE   = 4
 
   ! --------------------------------
   ! old option names still supported
   ! --------------------------------
-  INTEGER, PARAMETER :: PVMDEFAULT = 0
-  INTEGER, PARAMETER :: PVMRAW     = 1
-  INTEGER, PARAMETER :: PVMINPLACE = 2
+  integer, parameter :: PVMDEFAULT = 0
+  integer, parameter :: PVMRAW     = 1
+  integer, parameter :: PVMINPLACE = 2
 
   ! ----------------------
   ! notify 'about' options
   ! ----------------------
-  INTEGER, PARAMETER :: PVMTASKEXIT     = 1 
-  INTEGER, PARAMETER :: PVMHOSTDELETE   = 2 
-  INTEGER, PARAMETER :: PVMHOSTADD      = 3 
-  INTEGER, PARAMETER :: PVMROUTEADD     = 4 
-  INTEGER, PARAMETER :: PVMROUTEDELETE  = 5 
-  INTEGER, PARAMETER :: PVMNOTIFYCANCEL = 256 
+  integer, parameter :: PVMTASKEXIT     = 1 
+  integer, parameter :: PVMHOSTDELETE   = 2 
+  integer, parameter :: PVMHOSTADD      = 3 
+  integer, parameter :: PVMROUTEADD     = 4 
+  integer, parameter :: PVMROUTEDELETE  = 5 
+  integer, parameter :: PVMNOTIFYCANCEL = 256 
 
   ! --------------------------------
   ! packing/unpacking 'what' options
   ! --------------------------------
-  INTEGER, PARAMETER :: PVMSTRING   = 0
-  INTEGER, PARAMETER :: PVMBYTE1    = 1
-  INTEGER, PARAMETER :: PVMINTEGER2 = 2
-  INTEGER, PARAMETER :: PVMINTEGER4 = 3
-  INTEGER, PARAMETER :: PVMREAL4    = 4
-  INTEGER, PARAMETER :: PVMCOMPLEX8 = 5
-  INTEGER, PARAMETER :: PVMREAL8    = 6
-  INTEGER, PARAMETER :: PVMCOMPLEX16= 7
+  integer, parameter :: PVMSTRING   = 0
+  integer, parameter :: PVMBYTE1    = 1
+  integer, parameter :: PVMINTEGER2 = 2
+  integer, parameter :: PVMINTEGER4 = 3
+  integer, parameter :: PVMREAL4    = 4
+  integer, parameter :: PVMCOMPLEX8 = 5
+  integer, parameter :: PVMREAL8    = 6
+  integer, parameter :: PVMCOMPLEX16= 7
 
   ! --------------------------------
   ! setopt/getopt options for 'what'
   ! --------------------------------
-  INTEGER, PARAMETER :: VMROUTE          = 1
-  INTEGER, PARAMETER :: PVMDEBUGMASK     = 2
-  INTEGER, PARAMETER :: PVMAUTOERR       = 3
-  INTEGER, PARAMETER :: PVMOUTPUTTID     = 4
-  INTEGER, PARAMETER :: PVMOUTPUTCODE    = 5
-  INTEGER, PARAMETER :: PVMTRACETID      = 6
-  INTEGER, PARAMETER :: PVMTRACECODE     = 7
-  INTEGER, PARAMETER :: PVMTRACEBUFFER   = 8
-  INTEGER, PARAMETER :: PVMTRACEOPTIONS  = 9
-  INTEGER, PARAMETER :: PVMFRAGSIZE      = 10
-  INTEGER, PARAMETER :: PVMRESVTIDS      = 11
-  INTEGER, PARAMETER :: PVMSOUTPUTTID    = 12
-  INTEGER, PARAMETER :: PVMSOUTPUTCODE   = 13
-  INTEGER, PARAMETER :: PVMSTRACETID     = 14
-  INTEGER, PARAMETER :: PVMSTRACECODE    = 15
-  INTEGER, PARAMETER :: PVMSTRACEBUFFER  = 16
-  INTEGER, PARAMETER :: PVMSTRACEOPTIONS = 17
-  INTEGER, PARAMETER :: PVMSHOWTIDS      = 18
-  INTEGER, PARAMETER :: PVMPOLLTYPE      = 19
-  INTEGER, PARAMETER :: PVMPOLLTIME      = 20
-  INTEGER, PARAMETER :: PVMOUTPUTCTX     = 21
-  INTEGER, PARAMETER :: PVMTRACECTX      = 22
-  INTEGER, PARAMETER :: PVMSOUTPUTCTX    = 23
-  INTEGER, PARAMETER :: PVMSTRACECTX     = 24
-  INTEGER, PARAMETER :: PVMNORESET       = 25
+  integer, parameter :: VMROUTE          = 1
+  integer, parameter :: PVMDEBUGMASK     = 2
+  integer, parameter :: PVMAUTOERR       = 3
+  integer, parameter :: PVMOUTPUTTID     = 4
+  integer, parameter :: PVMOUTPUTCODE    = 5
+  integer, parameter :: PVMTRACETID      = 6
+  integer, parameter :: PVMTRACECODE     = 7
+  integer, parameter :: PVMTRACEBUFFER   = 8
+  integer, parameter :: PVMTRACEOPTIONS  = 9
+  integer, parameter :: PVMFRAGSIZE      = 10
+  integer, parameter :: PVMRESVTIDS      = 11
+  integer, parameter :: PVMSOUTPUTTID    = 12
+  integer, parameter :: PVMSOUTPUTCODE   = 13
+  integer, parameter :: PVMSTRACETID     = 14
+  integer, parameter :: PVMSTRACECODE    = 15
+  integer, parameter :: PVMSTRACEBUFFER  = 16
+  integer, parameter :: PVMSTRACEOPTIONS = 17
+  integer, parameter :: PVMSHOWTIDS      = 18
+  integer, parameter :: PVMPOLLTYPE      = 19
+  integer, parameter :: PVMPOLLTIME      = 20
+  integer, parameter :: PVMOUTPUTCTX     = 21
+  integer, parameter :: PVMTRACECTX      = 22
+  integer, parameter :: PVMSOUTPUTCTX    = 23
+  integer, parameter :: PVMSTRACECTX     = 24
+  integer, parameter :: PVMNORESET       = 25
 
   ! --------------------------------------------
   ! tracing option values for setopt function
   ! --------------------------------------------
-  INTEGER, PARAMETER :: PVMTRACEFULL     = 1
-  INTEGER, PARAMETER :: PVMTRACETIME     = 2
-  INTEGER, PARAMETER :: PVMTRACECOUNT    = 3
+  integer, parameter :: PVMTRACEFULL     = 1
+  integer, parameter :: PVMTRACETIME     = 2
+  integer, parameter :: PVMTRACECOUNT    = 3
 
   ! --------------------------------------------
   ! poll type options for 'how' in setopt function
   ! --------------------------------------------
-  INTEGER, PARAMETER :: PVMPOLLCONSTANT = 1
-  INTEGER, PARAMETER :: PVMPOLLSLEEP    = 2
+  integer, parameter :: PVMPOLLCONSTANT = 1
+  integer, parameter :: PVMPOLLSLEEP    = 2
 
   ! --------------------------------------------
   ! for message mailbox operations
   ! --------------------------------------------
-  INTEGER, PARAMETER :: PVMMBOXDEFAULT        =  0
-  INTEGER, PARAMETER :: PVMMBOXPERSISTENT     =  1
-  INTEGER, PARAMETER :: PVMMBOXMULTIINSTANCE  =  2
-  INTEGER, PARAMETER :: PVMMBOXOVERWRITABLE   =  4
-  INTEGER, PARAMETER :: PVMMBOXFIRSTAVAIL     =  8
-  INTEGER, PARAMETER :: PVMMBOXREADANDDELETE  = 16
-  INTEGER, PARAMETER :: PVMMBOXWAITFORINFO    = 32
+  integer, parameter :: PVMMBOXDEFAULT        =  0
+  integer, parameter :: PVMMBOXPERSISTENT     =  1
+  integer, parameter :: PVMMBOXMULTIINSTANCE  =  2
+  integer, parameter :: PVMMBOXOVERWRITABLE   =  4
+  integer, parameter :: PVMMBOXFIRSTAVAIL     =  8
+  integer, parameter :: PVMMBOXREADANDDELETE  = 16
+  integer, parameter :: PVMMBOXWAITFORINFO    = 32
 
   ! --------------------------------------------
   ! routing options for 'how' in setopt function
   ! --------------------------------------------
-  INTEGER, PARAMETER :: PVMDONTROUTE  = 1
-  INTEGER, PARAMETER :: PVMALLOWDIRECT= 2
-  INTEGER, PARAMETER :: PVMROUTEDIRECT= 3
+  integer, parameter :: PVMDONTROUTE  = 1
+  integer, parameter :: PVMALLOWDIRECT= 2
+  integer, parameter :: PVMROUTEDIRECT= 3
 
   ! --------------------------
   ! error 'info' return values
   ! --------------------------
-  INTEGER, PARAMETER :: PvmOk           =   0
-  INTEGER, PARAMETER :: PvmBadParam     =  -2
-  INTEGER, PARAMETER :: PvmMismatch     =  -3
-  INTEGER, PARAMETER :: PvmOverflow     =  -4
-  INTEGER, PARAMETER :: PvmNoData       =  -5
-  INTEGER, PARAMETER :: PvmNoHost       =  -6
-  INTEGER, PARAMETER :: PvmNoFile       =  -7
-  INTEGER, PARAMETER :: PvmDenied       =  -8
-  INTEGER, PARAMETER :: PvmNoMem        = -10
-  INTEGER, PARAMETER :: PvmBadMsg       = -12
-  INTEGER, PARAMETER :: PvmSysErr       = -14
-  INTEGER, PARAMETER :: PvmNoBuf        = -15
-  INTEGER, PARAMETER :: PvmNoSuchBuf    = -16
-  INTEGER, PARAMETER :: PvmNullGroup    = -17
-  INTEGER, PARAMETER :: PvmDupGroup     = -18
-  INTEGER, PARAMETER :: PvmNoGroup      = -19
-  INTEGER, PARAMETER :: PvmNotInGroup   = -20
-  INTEGER, PARAMETER :: PvmNoInst       = -21
-  INTEGER, PARAMETER :: PvmHostFail     = -22
-  INTEGER, PARAMETER :: PvmNoParent     = -23
-  INTEGER, PARAMETER :: PvmNotImpl      = -24
-  INTEGER, PARAMETER :: PvmDSysErr      = -25
-  INTEGER, PARAMETER :: PvmBadVersion   = -26
-  INTEGER, PARAMETER :: PvmOutOfRes     = -27
-  INTEGER, PARAMETER :: PvmDupHost      = -28
-  INTEGER, PARAMETER :: PvmCantStart    = -29
-  INTEGER, PARAMETER :: PvmAlready      = -30
-  INTEGER, PARAMETER :: PvmNoTask       = -31
-  INTEGER, PARAMETER :: PvmNotFound     = -32
-  INTEGER, PARAMETER :: PvmExists       = -33
-  INTEGER, PARAMETER :: PvmHostrNMstr   = -34
-  INTEGER, PARAMETER :: PvmParentNotSet = -35
+  integer, parameter :: PvmOk           =   0
+  integer, parameter :: PvmBadParam     =  -2
+  integer, parameter :: PvmMismatch     =  -3
+  integer, parameter :: PvmOverflow     =  -4
+  integer, parameter :: PvmNoData       =  -5
+  integer, parameter :: PvmNoHost       =  -6
+  integer, parameter :: PvmNoFile       =  -7
+  integer, parameter :: PvmDenied       =  -8
+  integer, parameter :: PvmNoMem        = -10
+  integer, parameter :: PvmBadMsg       = -12
+  integer, parameter :: PvmSysErr       = -14
+  integer, parameter :: PvmNoBuf        = -15
+  integer, parameter :: PvmNoSuchBuf    = -16
+  integer, parameter :: PvmNullGroup    = -17
+  integer, parameter :: PvmDupGroup     = -18
+  integer, parameter :: PvmNoGroup      = -19
+  integer, parameter :: PvmNotInGroup   = -20
+  integer, parameter :: PvmNoInst       = -21
+  integer, parameter :: PvmHostFail     = -22
+  integer, parameter :: PvmNoParent     = -23
+  integer, parameter :: PvmNotImpl      = -24
+  integer, parameter :: PvmDSysErr      = -25
+  integer, parameter :: PvmBadVersion   = -26
+  integer, parameter :: PvmOutOfRes     = -27
+  integer, parameter :: PvmDupHost      = -28
+  integer, parameter :: PvmCantStart    = -29
+  integer, parameter :: PvmAlready      = -30
+  integer, parameter :: PvmNoTask       = -31
+  integer, parameter :: PvmNotFound     = -32
+  integer, parameter :: PvmExists       = -33
+  integer, parameter :: PvmHostrNMstr   = -34
+  integer, parameter :: PvmParentNotSet = -35
 
   ! --------------------------
   ! these are going away in the next version.
   ! use the replacements
   ! --------------------------
-  INTEGER, PARAMETER :: PvmNoEntry    = -32
-  INTEGER, PARAMETER :: PvmDupEntry   = -33
+  integer, parameter :: PvmNoEntry    = -32
+  integer, parameter :: PvmDupEntry   = -33
 
-  INTERFACE
+  interface
 
-     SUBROUTINE pvmfmytid(tid)
-       INTEGER, INTENT(OUT) :: tid
-     END SUBROUTINE pvmfmytid
+     subroutine pvmfmytid(tid)
+       integer, intent(OUT) :: tid
+     end subroutine pvmfmytid
 
-     SUBROUTINE pvmfinitsend(encoding, bufid)
-       INTEGER, INTENT(IN) :: encoding
-       INTEGER, INTENT(OUT) :: bufid
-     END SUBROUTINE pvmfinitsend
+     subroutine pvmfinitsend(encoding, bufid)
+       integer, intent(IN) :: encoding
+       integer, intent(OUT) :: bufid
+     end subroutine pvmfinitsend
 
-     SUBROUTINE pvmfbcast(group, msgtag, info)
-       CHARACTER (LEN=*), INTENT(IN) :: group
-       INTEGER, INTENT(IN) :: msgtag
-       INTEGER, INTENT(OUT) :: info
-     END SUBROUTINE pvmfbcast
+     subroutine pvmfbcast(group, msgtag, info)
+       character (LEN=*), intent(IN) :: group
+       integer, intent(IN) :: msgtag
+       integer, intent(OUT) :: info
+     end subroutine pvmfbcast
 
-     SUBROUTINE pvmfsend(tid, msgtag, info)
-       INTEGER, INTENT(IN) :: tid
-       INTEGER, INTENT(IN) :: msgtag
-       INTEGER, INTENT(OUT) :: info
-     END SUBROUTINE pvmfsend
+     subroutine pvmfsend(tid, msgtag, info)
+       integer, intent(IN) :: tid
+       integer, intent(IN) :: msgtag
+       integer, intent(OUT) :: info
+     end subroutine pvmfsend
 
-     SUBROUTINE pvmfnrecv(tid, msgtag, bufid)
-       INTEGER, INTENT(IN) :: tid
-       INTEGER, INTENT(IN) :: msgtag
-       INTEGER, INTENT(OUT) :: bufid
-     END SUBROUTINE pvmfnrecv
+     subroutine pvmfnrecv(tid, msgtag, bufid)
+       integer, intent(IN) :: tid
+       integer, intent(IN) :: msgtag
+       integer, intent(OUT) :: bufid
+     end subroutine pvmfnrecv
      
-     INTEGER FUNCTION pvm_pkstr(line)
-       CHARACTER (LEN=*) :: line
-     END FUNCTION pvm_pkstr
+     integer function pvm_pkstr(line)
+       character (LEN=*) :: line
+     end function pvm_pkstr
 
-     INTEGER FUNCTION pvm_pkint(values,num,stride)
-       INTEGER :: values(*)
-       INTEGER :: num
-       INTEGER :: stride
-     END FUNCTION pvm_pkint
+     integer function pvm_pkint(values,num,stride)
+       integer :: values(*)
+       integer :: num
+       integer :: stride
+     end function pvm_pkint
 
-     INTEGER FUNCTION pvm_pkdouble(values,num,stride)
-       DOUBLE PRECISION :: values(*)
-       INTEGER :: num
-       INTEGER :: stride
-     END FUNCTION pvm_pkdouble
+     integer function pvm_pkdouble(values,num,stride)
+       double precision :: values(*)
+       integer :: num
+       integer :: stride
+     end function pvm_pkdouble
 
-     INTEGER FUNCTION pvm_upkstr(line)
-       CHARACTER (LEN=*) :: line
-     END FUNCTION pvm_upkstr
+     integer function pvm_upkstr(line)
+       character (LEN=*) :: line
+     end function pvm_upkstr
 
-     INTEGER FUNCTION pvm_upkint(values,num,stride)
-       INTEGER :: values(*)
-       INTEGER :: num
-       INTEGER :: stride
-     END FUNCTION pvm_upkint
+     integer function pvm_upkint(values,num,stride)
+       integer :: values(*)
+       integer :: num
+       integer :: stride
+     end function pvm_upkint
 
-     INTEGER FUNCTION pvm_upkdouble(values,num,stride)
-       DOUBLE PRECISION :: values(*)
-       INTEGER :: num
-       INTEGER :: stride
-     END FUNCTION pvm_upkdouble
+     integer function pvm_upkdouble(values,num,stride)
+       double precision :: values(*)
+       integer :: num
+       integer :: stride
+     end function pvm_upkdouble
 
-     SUBROUTINE pvmfgsize(group, gsize)
-       CHARACTER (LEN=*), INTENT(IN) :: group
-       INTEGER, INTENT(OUT) :: gsize
-     END SUBROUTINE pvmfgsize
+     subroutine pvmfgsize(group, gsize)
+       character (LEN=*), intent(IN) :: group
+       integer, intent(OUT) :: gsize
+     end subroutine pvmfgsize
 
-     SUBROUTINE pvmfjoingroup(group, inum)
-       CHARACTER (LEN=*), INTENT(IN) :: group
-       INTEGER, INTENT(OUT) :: inum
-     END SUBROUTINE pvmfjoingroup
+     subroutine pvmfjoingroup(group, inum)
+       character (LEN=*), intent(IN) :: group
+       integer, intent(OUT) :: inum
+     end subroutine pvmfjoingroup
 
-  END INTERFACE
+  end interface
 
-  INTERFACE pvmf90pack
-     MODULE PROCEDURE pvmf90packString, pvmf90packInteger, pvmf90packReal, &
+  interface pvmf90pack
+     module procedure pvmf90packString, pvmf90packInteger, pvmf90packReal, &
           & pvmf90packIntarr1, pvmf90packIntarr2, pvmf90packIntarr3, &
           & pvmf90packRealarr1, pvmf90packRealarr2, pvmf90packRealarr3
-  END INTERFACE
+  end interface
 
-  INTERFACE pvmf90unpack
-     MODULE PROCEDURE pvmf90unpackString, pvmf90unpackInteger, pvmf90unpackReal, &
+  interface pvmf90unpack
+     module procedure pvmf90unpackString, pvmf90unpackInteger, pvmf90unpackReal, &
           & pvmf90unpackIntarr1, pvmf90unpackIntarr2, pvmf90unpackIntarr3, &
           & pvmf90unpackRealarr1, pvmf90unpackRealarr2, pvmf90unpackRealarr3
-  END INTERFACE
+  end interface
 
-CONTAINS
+contains
 
-  SUBROUTINE pvmf90packString(line,info)
-    CHARACTER (LEN=*), INTENT(IN) :: line
-    INTEGER, INTENT(OUT) :: info
+  subroutine pvmf90packString(line,info)
+    character (LEN=*), intent(IN) :: line
+    integer, intent(OUT) :: info
     info=pvm_pkstr(line)
-  END SUBROUTINE pvmf90packString
+  end subroutine pvmf90packString
 
-  SUBROUTINE pvmf90packInteger(value,info)
-    INTEGER, INTENT(IN) :: value
-    INTEGER, INTENT(OUT) :: info
+  subroutine pvmf90packInteger(value,info)
+    integer, intent(IN) :: value
+    integer, intent(OUT) :: info
     info=pvm_pkint( (/value/) ,1,1)
-  END SUBROUTINE pvmf90packInteger
+  end subroutine pvmf90packInteger
 
-  SUBROUTINE pvmf90packIntarr1(values,info)
-    INTEGER, DIMENSION(:), INTENT(IN) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine pvmf90packIntarr1(values,info)
+    integer, dimension(:), intent(IN) :: values
+    integer, intent(OUT) :: info
     
-    info=pvm_pkint(values,SIZE(values),1)
-  END SUBROUTINE pvmf90packIntarr1
+    info=pvm_pkint(values,size(values),1)
+  end subroutine pvmf90packIntarr1
 
-  SUBROUTINE pvmf90packIntarr2(values,info)
-    INTEGER, DIMENSION(:,:), INTENT(IN) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_pkint(RESHAPE(values,(/SIZE(values)/)),SIZE(values),1)
-  END SUBROUTINE pvmf90packIntarr2
+  subroutine pvmf90packIntarr2(values,info)
+    integer, dimension(:,:), intent(IN) :: values
+    integer, intent(OUT) :: info
+    info=pvm_pkint(reshape(values,(/size(values)/)),size(values),1)
+  end subroutine pvmf90packIntarr2
 
-  SUBROUTINE pvmf90packIntarr3(values,info)
-    INTEGER, DIMENSION(:,:,:), INTENT(IN) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_pkint(RESHAPE(values,(/SIZE(values)/)),SIZE(values),1)
-  END SUBROUTINE pvmf90packIntarr3
+  subroutine pvmf90packIntarr3(values,info)
+    integer, dimension(:,:,:), intent(IN) :: values
+    integer, intent(OUT) :: info
+    info=pvm_pkint(reshape(values,(/size(values)/)),size(values),1)
+  end subroutine pvmf90packIntarr3
 
-  SUBROUTINE pvmf90packReal(value,info)
-    REAL (r8), INTENT(IN) :: value
-    INTEGER, INTENT(OUT) :: info
+  subroutine pvmf90packReal(value,info)
+    real (r8), intent(IN) :: value
+    integer, intent(OUT) :: info
     info=pvm_pkdouble((/value/),1,1)
-  END SUBROUTINE pvmf90packReal
+  end subroutine pvmf90packReal
 
-  SUBROUTINE pvmf90packRealarr1(values,info)
-    REAL (r8), DIMENSION(:), INTENT(IN) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_pkdouble(values,SIZE(values),1)
-  END SUBROUTINE pvmf90packRealarr1
+  subroutine pvmf90packRealarr1(values,info)
+    real (r8), dimension(:), intent(IN) :: values
+    integer, intent(OUT) :: info
+    info=pvm_pkdouble(values,size(values),1)
+  end subroutine pvmf90packRealarr1
 
-  SUBROUTINE pvmf90packRealarr2(values,info)
-    REAL (r8), DIMENSION(:,:), INTENT(IN) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_pkdouble(RESHAPE(values,(/SIZE(values)/)),SIZE(values),1)
-  END SUBROUTINE pvmf90packRealarr2
+  subroutine pvmf90packRealarr2(values,info)
+    real (r8), dimension(:,:), intent(IN) :: values
+    integer, intent(OUT) :: info
+    info=pvm_pkdouble(reshape(values,(/size(values)/)),size(values),1)
+  end subroutine pvmf90packRealarr2
 
-  SUBROUTINE pvmf90packRealarr3(values,info)
-    REAL (r8), DIMENSION(:,:,:), INTENT(IN) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_pkdouble(RESHAPE(values,(/SIZE(values)/)),SIZE(values),1)
-  END SUBROUTINE pvmf90packRealarr3
+  subroutine pvmf90packRealarr3(values,info)
+    real (r8), dimension(:,:,:), intent(IN) :: values
+    integer, intent(OUT) :: info
+    info=pvm_pkdouble(reshape(values,(/size(values)/)),size(values),1)
+  end subroutine pvmf90packRealarr3
 
   ! ---------------------------------------------------------------------------
 
-  SUBROUTINE pvmf90unpackString(line,info)
-    CHARACTER (LEN=*), INTENT(OUT) :: line
-    INTEGER, INTENT(OUT) :: info
+  subroutine pvmf90unpackString(line,info)
+    character (LEN=*), intent(OUT) :: line
+    integer, intent(OUT) :: info
     info=pvm_upkstr(line)
-  END SUBROUTINE pvmf90unpackString
+  end subroutine pvmf90unpackString
 
-  SUBROUTINE pvmf90unpackInteger(value,info)
-    INTEGER, INTENT(OUT) :: value
-    INTEGER, INTENT(OUT) :: info
+  subroutine pvmf90unpackInteger(value,info)
+    integer, intent(OUT) :: value
+    integer, intent(OUT) :: info
 
-    INTEGER, DIMENSION(1) :: tempValue
+    integer, dimension(1) :: tempValue
     info=pvm_upkint( tempValue ,1,1)
     value=tempValue(1)
-  END SUBROUTINE pvmf90unpackInteger
+  end subroutine pvmf90unpackInteger
 
-  SUBROUTINE pvmf90unpackIntarr1(values,info)
-    INTEGER, DIMENSION(:), INTENT(OUT) :: values
-    INTEGER, INTENT(OUT) :: info
+  subroutine pvmf90unpackIntarr1(values,info)
+    integer, dimension(:), intent(OUT) :: values
+    integer, intent(OUT) :: info
     
-    info=pvm_upkint(values,SIZE(values),1)
-  END SUBROUTINE pvmf90unpackIntarr1
+    info=pvm_upkint(values,size(values),1)
+  end subroutine pvmf90unpackIntarr1
 
-  SUBROUTINE pvmf90unpackIntarr2(values,info)
-    INTEGER, DIMENSION(:,:), INTENT(OUT) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_upkint(RESHAPE(values,(/SIZE(values)/)),SIZE(values),1)
-  END SUBROUTINE pvmf90unpackIntarr2
+  subroutine pvmf90unpackIntarr2(values,info)
+    integer, dimension(:,:), intent(OUT) :: values
+    integer, intent(OUT) :: info
+    info=pvm_upkint(reshape(values,(/size(values)/)),size(values),1)
+  end subroutine pvmf90unpackIntarr2
 
-  SUBROUTINE pvmf90unpackIntarr3(values,info)
-    INTEGER, DIMENSION(:,:,:), INTENT(OUT) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_upkint(RESHAPE(values,(/SIZE(values)/)),SIZE(values),1)
-  END SUBROUTINE pvmf90unpackIntarr3
+  subroutine pvmf90unpackIntarr3(values,info)
+    integer, dimension(:,:,:), intent(OUT) :: values
+    integer, intent(OUT) :: info
+    info=pvm_upkint(reshape(values,(/size(values)/)),size(values),1)
+  end subroutine pvmf90unpackIntarr3
 
-  SUBROUTINE pvmf90unpackReal(value,info)
-    REAL (r8), INTENT(OUT) :: value
-    INTEGER, INTENT(OUT) :: info
+  subroutine pvmf90unpackReal(value,info)
+    real (r8), intent(OUT) :: value
+    integer, intent(OUT) :: info
 
-    REAL (r8), DIMENSION(1) :: tempValue
+    real (r8), dimension(1) :: tempValue
     info=pvm_upkdouble(tempValue,1,1)
     value=tempValue(1)
-  END SUBROUTINE pvmf90unpackReal
+  end subroutine pvmf90unpackReal
 
-  SUBROUTINE pvmf90unpackRealarr1(values,info)
-    REAL (r8), DIMENSION(:), INTENT(OUT) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_upkdouble(values,SIZE(values),1)
-  END SUBROUTINE pvmf90unpackRealarr1
+  subroutine pvmf90unpackRealarr1(values,info)
+    real (r8), dimension(:), intent(OUT) :: values
+    integer, intent(OUT) :: info
+    info=pvm_upkdouble(values,size(values),1)
+  end subroutine pvmf90unpackRealarr1
 
-  SUBROUTINE pvmf90unpackRealarr2(values,info)
-    REAL (r8), DIMENSION(:,:), INTENT(OUT) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_upkdouble(RESHAPE(values,(/SIZE(values)/)),SIZE(values),1)
-  END SUBROUTINE pvmf90unpackRealarr2
+  subroutine pvmf90unpackRealarr2(values,info)
+    real (r8), dimension(:,:), intent(OUT) :: values
+    integer, intent(OUT) :: info
+    info=pvm_upkdouble(reshape(values,(/size(values)/)),size(values),1)
+  end subroutine pvmf90unpackRealarr2
 
-  SUBROUTINE pvmf90unpackRealarr3(values,info)
-    REAL (r8), DIMENSION(:,:,:), INTENT(OUT) :: values
-    INTEGER, INTENT(OUT) :: info
-    info=pvm_upkdouble(RESHAPE(values,(/SIZE(values)/)),SIZE(values),1)
-  END SUBROUTINE pvmf90unpackRealarr3
+  subroutine pvmf90unpackRealarr3(values,info)
+    real (r8), dimension(:,:,:), intent(OUT) :: values
+    integer, intent(OUT) :: info
+    info=pvm_upkdouble(reshape(values,(/size(values)/)),size(values),1)
+  end subroutine pvmf90unpackRealarr3
 
-END MODULE PVM
+end module PVM
+
+! $Log$
+! Revision 2.2  2001/03/08 21:51:33  livesey
+! Tidied stuff up
+!
