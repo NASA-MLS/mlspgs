@@ -10,17 +10,19 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   use Allocate_Deallocate, only: Deallocate_Test
   use Expr_M, only: Expr
-  use Hdf, only: DFACC_CREATE  !, SFEND, SFSTART
+  use Hdf, only: DFACC_CREATE, DFACC_RDWR, SFN2INDEX, SFSELECT, SFCREATE, &
+    & SFENDACC, DFNT_FLOAT64, SFWDATA_F90
   use INIT_TABLES_MODULE, only: F_FILE, F_HDFVERSION, &
     & F_METANAME, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME, F_WRITECOUNTERMAF
-  use Intrinsic, only: PHYQ_Dimensionless
+  use Intrinsic, only: PHYQ_Dimensionless, L_None
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
   use L2PC_m, only: WRITEONEL2PC
+  use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
-  use MLSCommon, only: I4
+  use MLSCommon, only: I4, MLSCHUNK_T
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & SPLIT_PATH_NAME, MLS_SFSTART, MLS_SFEND
@@ -41,12 +43,13 @@ module OutputAndClose ! outputs all data from the Join module to the
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, &
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
+  use VectorsModule, only: VectorValue_T
   use WriteMetadata, only: PCFData_T, Populate_metadata_std, &
     & Populate_metadata_oth, WriteMetaLog, Get_l2gp_mcf
 
   implicit none
   private
-  public :: Output_Close
+  public :: Output_Close, DirectWrite
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = &
@@ -671,6 +674,117 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Output_Close
 
+  ! ----------------------------------------------- DirectWrite --------
+  subroutine DirectWrite ( quantity, sdName, file, hdfVersion, &
+    & chunkNo, chunks )
+    type (VectorValue_T), intent(in) :: QUANTITY
+    integer, intent(in) :: SDNAME       ! Name of sd in output file
+    integer, intent(in) :: FILE         ! Name of output file
+    integer, intent(in) :: HDFVERSION   ! Version of HDF file to write out
+    integer, intent(in) :: CHUNKNO      ! Index into chunks
+    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+
+    ! Local parameters
+    integer, parameter :: MAXFILES = 100             ! Set for an internal array
+
+    ! Saved variable - used to work out file information.
+    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
+    integer, save :: NOCREATEDFILES=0   ! Number of files created
+
+    ! Local variables
+    character (len=1024) :: FILENAME    ! The actual filename
+    character (len=1024) :: SDNAMESTR   ! SDName as a string
+    logical :: CREATEFILE               ! Set if file needs to be created
+    integer :: FILEID                   ! File handle
+    integer :: SDINDEX                  ! Index of sd
+    integer :: SDID                     ! Handle for sd
+    integer :: STATUS                   ! Status flag
+    integer :: START(3)                 ! HDF array starting position
+    integer :: STRIDE(3)                ! HDF array stride
+    integer :: SIZES(3)                 ! HDF array sizes
+    integer :: NODIMS                   ! Also index of maf dimension
+    type ( MLSChunk_T ) :: LASTCHUNK    ! The last chunk in the file
+
+    ! executable code
+
+    ! Setup information, sanity checks etc.
+    if ( hdfVersion /= 4 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unsupported hdfVersion for directWrite' )
+    call get_string ( file, filename, strip=.true. )
+    call get_string ( sdName, sdNameStr, strip=.true. )
+    if ( quantity%template%frequencyCoordinate == L_None ) then
+      noDims = 2
+    else
+      noDims = 3
+    end if
+
+    ! If we're a slave, we need to request permission from the master.
+    if ( parallel%slave ) then
+      call RequestDirectWritePermission ( file, createFile )
+    else
+      createFile = .not. any ( createdFilenames == file )
+      if ( createFile ) then
+        noCreatedFiles = noCreatedFiles + 1
+        if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, 'Too many direct write files' )
+        createdFilenames ( noCreatedFiles ) = file
+      end if
+    end if
+
+    ! Create or open the file
+    if ( createFile ) then
+      fileID = mls_sfstart ( trim(filename), DFACC_CREATE, hdfVersion=hdfVersion )
+    else
+      fileID = mls_sfstart ( trim(filename), DFACC_RDWR, hdfVersion=hdfVersion )
+    end if
+
+    ! Create or access the SD
+    sdIndex = sfn2index ( fileID, trim(sdNameStr) )
+    if ( sdIndex == -1 ) then
+      lastChunk = chunks(size(chunks))
+      sizes(noDims) = lastChunk%lastMAFIndex - lastChunk%noMAFSUpperOverlap + 1
+      sizes(noDims-1) = quantity%template%noSurfs
+      if ( noDims == 3 ) sizes(1) = quantity%template%noChans
+      sdId  = sfCreate ( fileID, trim(sdNameStr), DFNT_FLOAT64, &
+        & noDims, sizes )
+    else
+      sdId = sfSelect ( fileID, sdIndex )
+    end if
+
+    ! What exactly will be our contribution
+    stride = 1
+    start = 0
+    sizes(noDims) = quantity%template%noInstances - &
+      & quantity%template%noInstancesLowerOverlap - &
+      & quantity%template%noInstancesUpperOverlap
+    sizes(noDims-1) = quantity%template%noSurfs
+    if ( noDims == 3 ) sizes(1) = quantity%template%noChans
+    start(noDims) = quantity%template%mafIndex ( &
+      & 1+quantity%template%noInstancesLowerOverlap )
+
+    ! Now write it out
+    status = SFWDATA_F90(sdId, start(1:noDims), &
+      & stride(1:noDims), sizes(1:noDims), quantity%values ( :, &
+      & 1+quantity%template%noInstancesLowerOverlap : &
+      & quantity%template%noInstances - quantity%template%noInstancesLowerOverlap ) )
+    if ( status /= 0 ) then
+      call announce_error (0,&
+        & "Error writing SDS data to l2aux file:  " )
+    endif
+
+    ! End access to the SD and close the file
+    status = sfEndAcc ( sdId )
+    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Error ending access to direct write sd' )
+    status = mls_sfend( fileID, hdfVersion=hdfVersion)
+    if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Error ending closing direct write file' )
+
+    ! Tell master we're done
+    if ( parallel%slave ) call FinishedDirectWrite
+
+  end subroutine DirectWrite
+
 ! =====     Private Procedures     =====================================
 
   ! ---------------------------------------------  announce_success  -----
@@ -739,6 +853,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.52  2002/05/22 00:49:01  livesey
+! Added direct write stuff
+!
 ! Revision 2.51  2002/05/07 20:26:15  livesey
 ! Added writeCounterMAF option for l2aux
 !
