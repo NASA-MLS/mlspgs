@@ -5,6 +5,7 @@
 
 program TEST_MULTIPLY
 
+  use Machine ! at least HP and GETARG
   use MatrixModule_0, only: Densify, Dump, MatrixElement_T, &
     & operator(.XT.), Sparsify
   use MLSCommon, only: R8
@@ -20,7 +21,7 @@ program TEST_MULTIPLY
 
   integer :: NRA, NCA, NCB
 
-  i = 0
+  i = hp
   do
     i = i + 1
     call getarg ( i, line )
@@ -77,6 +78,9 @@ program TEST_MULTIPLY
 end program TEST_MULTIPLY
 
 ! $Log$
+! Revision 2.3  2000/10/12 22:32:27  vsnyder
+! Add "use machine" to get NAG's getarg
+!
 ! Revision 2.2  2000/10/12 20:10:36  vsnyder
 ! Get R8 from MLSCommon instead of MatrixMultiply_0
 !
