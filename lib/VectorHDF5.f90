@@ -47,7 +47,6 @@ contains ! ========================================= Module procedures =======
 
     ! Write the low level stuff as attributes
     call WriteStringIndexAsHDF5Attribute ( qID, 'name',qt%name )
-    call MakeHDF5Attribute ( qID, 'id', qt%id )
     call MakeHDF5Attribute ( qID, 'index', index )
     call WriteLitIndexAsHDF5Attribute ( qID, 'quantityType', qt%quantityType )
     call MakeHDF5Attribute ( qID, 'noChans', qt%noChans )
@@ -66,7 +65,6 @@ contains ! ========================================= Module procedures =======
     call WriteLitIndexAsHDF5Attribute ( qID, 'verticalCoordinate', qt%verticalCoordinate )
     call MakeHDF5Attribute ( qID, 'badValue', qt%badValue )
     call WriteLitIndexAsHDF5Attribute ( qID, 'unit', qt%unit )
-    call MakeHDF5Attribute ( qID, 'scaleFactor', qt%scaleFactor )
 
     call WriteLitIndexAsHDF5Attribute ( qID, 'frequencyCoordinate', qt%frequencyCoordinate )
     call MakeHDF5Attribute ( qID, 'lo', qt%lo )
@@ -87,10 +85,6 @@ contains ! ========================================= Module procedures =======
     call SaveAsHDF5DS ( qID, 'losAngle', qt%losAngle )
 
     ! These may or may not be present
-    if ( associated ( qt%mafIndex ) ) &
-      & call SaveAsHDF5DS ( qID, 'mafIndex', qt%mafIndex )
-    if ( associated ( qt%mafCounter ) ) &
-      & call SaveAsHDF5DS ( qID, 'mafCounter', qt%mafCounter )
     if ( associated ( qt%frequencies ) ) &
       & call SaveAsHDF5DS ( qID, 'frequencies', qt%frequencies )
     if ( associated ( qt%surfIndex ) ) &
@@ -132,7 +126,6 @@ contains ! ========================================= Module procedures =======
 
     ! Annotate it
     call MakeHDF5Attribute ( vID, 'noQuantities', size(vector%quantities) )
-    call MakeHDF5Attribute ( vID, 'id', vector%template%id )
     call MakeHDF5Attribute ( vID, 'totalInstances', vector%template%totalInstances )
     call MakeHDF5Attribute ( vID, 'totalElements', vector%template%totalElements )
     call WriteStringIndexAsHDF5Attribute ( vID, 'templateName', vector%template%name )
@@ -239,7 +232,6 @@ contains ! ========================================= Module procedures =======
     ! Get the remaining stuff
     ! Write the low level stuff as attributes
     call ReadStringIndexFromHDF5Attr ( qID, 'name', qt%name )
-    call GetHDF5Attribute ( qID, 'id', qt%id )
     call ReadLitIndexFromHDF5Attr ( qID, 'quantityType', qt%quantityType )
     call GetHDF5Attribute ( qID, 'noChans', qt%noChans )
     call GetHDF5Attribute ( qID, 'noSurfs', qt%noSurfs )
@@ -257,7 +249,6 @@ contains ! ========================================= Module procedures =======
     call ReadLitIndexFromHDF5Attr ( qID, 'verticalCoordinate', qt%verticalCoordinate )
     call GetHDF5Attribute ( qID, 'badValue', qt%badValue )
     call ReadLitIndexFromHDF5Attr ( qID, 'unit', qt%unit )
-    call GetHDF5Attribute ( qID, 'scaleFactor', qt%scaleFactor )
     call ReadLitIndexFromHDF5Attr ( qID, 'frequencyCoordinate', qt%frequencyCoordinate )
     call GetHDF5Attribute ( qID, 'lo', qt%lo )
     call GetHDF5Attribute ( qID, 'signal', qt%signal )
@@ -277,10 +268,6 @@ contains ! ========================================= Module procedures =======
     call LoadFromHDF5DS ( qID, 'losAngle', qt%losAngle )
 
     ! These may or may not be present
-    if ( associated ( qt%mafIndex ) ) &
-      & call LoadFromHDF5DS ( qID, 'mafIndex', qt%mafIndex )
-    if ( associated ( qt%mafCounter ) ) &
-      & call LoadFromHDF5DS ( qID, 'mafCounter', qt%mafCounter )
     if ( associated ( qt%frequencies ) ) &
       & call LoadFromHDF5DS ( qID, 'frequencies', qt%frequencies )
     if ( associated ( qt%surfIndex ) ) &
@@ -350,7 +337,6 @@ contains ! ========================================= Module procedures =======
 
     ! Get the information we need.
     call GetHDF5Attribute ( vID, 'noQuantities', vt%noQuantities )
-    call GetHDF5Attribute ( vID, 'id', vt%id )
     call GetHDF5Attribute ( vID, 'totalInstances', vt%totalInstances )
     call GetHDF5Attribute ( vID, 'totalElements', vt%totalElements )
     call ReadStringIndexFromHDF5Attr ( vID, 'templateName', vt%name )
@@ -460,6 +446,9 @@ contains ! ========================================= Module procedures =======
 end module VectorHDF5
 
 ! $Log$
+! Revision 2.3  2003/06/20 19:33:53  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.2  2003/05/19 22:06:31  pwagner
 ! Shortened names to Read..IndexFromHDF5Attr to comply with namelength standard
 !

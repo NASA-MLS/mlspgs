@@ -91,13 +91,13 @@ contains
 
     ! Add the original Integration Grid:
     z_all_size = z_all_prev + Size(FwdModelConf%integrationGrid%surfs)
-    z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs
+    z_all(z_all_prev+1:z_all_size) = FwdModelConf%integrationGrid%surfs(:,1)
     z_all_prev = z_all_size
 
     if ( associated(FwdModelConf%tangentGrid) ) then
       ! if pointing grid is associated concatenate it to the state vector
       z_all_size = z_all_prev + FwdModelConf%tangentGrid%nosurfs
-      z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs
+      z_all(z_all_prev+1:z_all_size) = FwdModelConf%tangentGrid%surfs(:,1)
       z_all_prev = z_all_size
     end if
 
@@ -153,7 +153,7 @@ contains
 
 ! Compute tan_press from fwdModelConf%tangentGrid%surfs and z_glgrid
 
-    tan_press(1:j) = fwdModelConf%tangentGrid%surfs(1:j)
+    tan_press(1:j) = fwdModelConf%tangentGrid%surfs(1:j,1)
     tan_press(j+1:no_tan_hts) = z_glgrid(tan_inds(j+1:no_tan_hts))
 
   end subroutine Compute_GL_Grid
@@ -165,6 +165,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.3  2003/06/20 19:35:17  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.2  2003/05/20 00:06:23  vsnyder
 ! Remove stuff not used by FullForwardModel
 !
