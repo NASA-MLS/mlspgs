@@ -1745,27 +1745,39 @@ contains
 !-----------------------------------------------
 
   subroutine mls_openFile(filename, access, file_id, hdfVersion)
+! Opens vanilla hdf 4 or 5 filename for various types of access:
+! 'create', 'update', or 'readonly'
+! Returns file_id
+! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
+! which version to open the filename under
 !
 ! External Variables
 !
     character(len=*), intent(in) :: filename, access
-    integer, intent(in) :: hdfVersion
+    integer, intent(in), optional :: hdfVersion
     integer(i4), intent(out) :: file_id
 !
 ! Internal Variables
 !
     integer :: error
     logical :: is_hdf5
+    integer :: actual_hdfVersion
 
-    error = 0
-   select case (hdfVersion)
+   ! Executable
+   actual_hdfVersion = WILDCARDHDFVERSION
+   if ( present(hdfVersion) ) actual_hdfVersion = hdfVersion
+   if ( actual_hdfVersion == WILDCARDHDFVERSION ) then
+     actual_hdfVersion = mls_hdf_version(filename)
+   endif
+   error = 0
+   select case (actual_hdfVersion)
     case (HDFVERSION_4) 
      if (lowercase(trim(access)) == 'create') then
-       file_id = mls_sfstart(trim(filename),DFACC_CREATE,hdfVersion)
+       file_id = mls_sfstart(trim(filename),DFACC_CREATE,actual_hdfVersion)
      elseif (lowercase(trim(access)) == 'update') then
-       file_id = mls_sfstart(trim(filename),DFACC_RDWR,hdfVersion)
+       file_id = mls_sfstart(trim(filename),DFACC_RDWR,actual_hdfVersion)
      elseif (lowercase(trim(access)) == 'readonly') then
-       file_id = mls_sfstart(trim(filename),DFACC_RDONLY,hdfVersion)
+       file_id = mls_sfstart(trim(filename),DFACC_RDONLY,actual_hdfVersion)
      endif
      if (file_id .eq. -1) error = file_id 
     case (HDFVERSION_5)
@@ -1809,18 +1821,35 @@ contains
   end subroutine mls_openFile
 
 !-----------------------------------------------
-  subroutine mls_closeFile(file_id,hdfVersion)
+  subroutine mls_closeFile(file_id, filename, hdfVersion)
+! Closes vanilla hdf 4 or 5 filename
+! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
+! which version to close the filename under
+! so unless you supply hdfVersion, you'd better supply filename
 !
 ! External Variables
 !
     integer(i4), intent(in) :: file_id
-    integer, intent(in) :: hdfVersion
+    character(len=*), intent(in), optional :: filename
+    integer, intent(in), optional :: hdfVersion
 !
 ! Internal Variables
 !
     integer :: error
+    integer :: actual_hdfVersion
 
-    select case (hdfVersion)
+    ! Executable
+    actual_hdfVersion = WILDCARDHDFVERSION
+    if ( present(hdfVersion) ) actual_hdfVersion = hdfVersion
+    if ( actual_hdfVersion == WILDCARDHDFVERSION ) then
+      if( present(filename) ) then
+        actual_hdfVersion = mls_hdf_version(filename)
+      else
+        call MLSMessage (MLSMSG_Error, ModuleName, & 
+         & "You must supply a filename to close a file with wildcardhdfversion")
+      endif
+    endif
+    select case (actual_hdfVersion)
     case (HDFVERSION_4) 
        error = sfend(file_id)
     case (HDFVERSION_5) 
@@ -1846,6 +1875,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.49  2003/02/28 00:46:32  pwagner
+! Improved apis for mls_open(close)file to exploit WILDCARDHDFVERSION
+!
 ! Revision 2.48  2003/02/26 17:34:39  pwagner
 ! mls_inqswath, mls_sfstart, and mls_sfend act sensibly when passed WILDCARDHDFVERSION
 !
