@@ -786,6 +786,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
+             begin, f+f_polarized, t+t_boolean, n+n_field_type, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
@@ -953,6 +954,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.287  2003/02/27 17:58:34  bill
+! Added polarized
+!
 ! Revision 2.286  2003/02/20 21:26:21  pwagner
 ! Lets you read field dimList=x,y,.. w/ griddeddata
 !
