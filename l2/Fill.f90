@@ -55,7 +55,7 @@ contains ! =====     Public Procedures     =============================
     use GriddedData, only: GriddedData_T, WrapGriddedData
     ! We need many things from Init_Tables_Module.  First the fields:
     use INIT_TABLES_MODULE, only: F_A, F_ADDITIONAL, F_ALLOWMISSING, &
-      & F_APRIORIPRECISION, F_B, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
+      & F_APRIORIPRECISION, F_B, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
       & F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
       & F_EXTINCTION, F_FIELDECR, F_FORCE, &
@@ -70,18 +70,18 @@ contains ! =====     Public Procedures     =============================
       & F_OFFSETAMOUNT, F_ORBITINCLINATION, F_PHITAN, &
       & F_PHIWINDOW, F_PHIZERO, F_PRECISION, F_PRECISIONFACTOR, &
       & F_PROFILE, F_PROFILEVALUES, F_PTANQUANTITY, &
-      & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
+      & F_QUADRATURE, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
       & F_REFRACT, F_REFGPHQUANTITY, F_REFGPHPRECISIONQUANTITY, F_RESETSEED, &
       & F_RHIQUANTITY, F_ROWS, F_SCALE, &
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
-      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUPERDIAGONAL, &
+      & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_STATUS, F_SUFFIX, F_SUPERDIAGONAL, &
       & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPPRECISIONQUANTITY, &
       & F_TEMPLATE, F_TNGTECI, F_TERMS, &
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
-    use INIT_TABLES_MODULE, only: L_ADDNOISE, &
+    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, &
       & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
       & L_CHANNEL, L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
@@ -92,7 +92,7 @@ contains ! =====     Public Procedures     =============================
       & L_GPH, L_GPHPRECISION, L_GRIDDED, L_H2OFROMRHI, &
       & L_HEIGHT, L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, &
       & L_IWCFROMEXTINCTION, L_KRONECKER, &
-      & L_L1B, L_L2GP, L_L2AUX, L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
+      & L_L1B, L_L1BMAFBASELINE, L_L2GP, L_L2AUX, L_LIMBSIDEBANDFRACTION, L_LOSVEL, &
       & L_MAGAZEL, L_MAGNETICFIELD, L_MAGNETICMODEL, &
       & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_NEGATIVEPRECISION, &
       & L_NOISEBANDWIDTH, L_NONE, &
@@ -274,6 +274,7 @@ contains ! =====     Public Procedures     =============================
 
     type (vectorValue_T), pointer :: APRIORIPRECISION
     type (vectorValue_T), pointer :: AQUANTITY
+    type (vectorValue_T), pointer :: BASELINEQUANTITY
     type (vectorValue_T), pointer :: BNDPRESSQTY
     type (vectorValue_T), pointer :: BQUANTITY
     type (vectorValue_T), pointer :: EARTHRADIUSQTY
@@ -319,6 +320,8 @@ contains ! =====     Public Procedures     =============================
     integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
     integer :: AQTYINDEX                ! Index of a quantity in vector
     integer :: AVECINDEX                ! Index of a vector
+    integer :: BASELINEQTYINDEX
+    integer :: BASELINEVCTRINDEX
     integer :: BINNAME                  ! Name of an l2pc bin
     integer :: BNDPRESSQTYINDEX
     integer :: BNDPRESSVCTRINDEX
@@ -421,6 +424,7 @@ contains ! =====     Public Procedures     =============================
     integer :: PROFILE                  ! A single profile
     integer :: PTANVECTORINDEX          ! In the vector database
     integer :: PTANQUANTITYINDEX        ! In the quantities database
+    logical :: QUADRATURE               ! Apply baseline in quadarture
     integer :: QUANTITYINDEX            ! Within the vector
     integer :: RADIANCEQUANTITYINDEX    ! For radiance quantity
     integer :: RADIANCEVECTORINDEX      ! For radiance quantity
@@ -454,6 +458,7 @@ contains ! =====     Public Procedures     =============================
     real :: T1, T2                      ! for timing 
     integer :: SYSTEMPQUANTITYINDEX     ! in the quantities database
     integer :: SYSTEMPVECTORINDEX       ! in the vector database
+    integer :: SUFFIX                   ! Possible suffix in reading L1BData
     integer :: TEMPERATUREQUANTITYINDEX ! in the quantities database
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
     integer :: TEMPPRECISIONQUANTITYINDEX ! in the quantities database
@@ -534,6 +539,7 @@ contains ! =====     Public Procedures     =============================
       scale = 0.0
       spreadFlag = .false.
       switch2intrinsic = .false.
+      suffix = 0
       seed = 0
       noFineGrid = 1
       precisionFactor = 0.5
@@ -542,6 +548,7 @@ contains ! =====     Public Procedures     =============================
       phiWindow = 4
       phiWindowUnits = phyq_angle
       phiZero = 0.0
+      quadrature = .false.
       statusValue = 0
       heightNode = 0
 
@@ -733,6 +740,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_b )
             bVecIndex = decoration(decoration(subtree(1,gson)))
             bQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_baselineQuantity )
+            baselineVctrIndex = decoration(decoration(subtree(1,gson)))
+            baselineQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_boxCarMethod )
             boxCarMethod = decoration(gson)
           case ( f_boundaryPressure )     ! For special fill of columnAbundance
@@ -895,6 +905,8 @@ contains ! =====     Public Procedures     =============================
             phiZero = valueAsArray(1)
             if ( all ( unitAsArray(1) /= (/ PHYQ_Angle /) ) ) &
               call Announce_Error ( key, 0, 'Bad units for phiZero' )
+          case ( f_quadrature )
+            quadrature = get_boolean ( gson )
           case ( f_quantity )   ! What quantity are we filling quantity=vector.quantity
             vectorIndex = decoration(decoration(subtree(1,gson)))
             quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -954,6 +966,8 @@ contains ! =====     Public Procedures     =============================
             if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
               call Announce_error ( key, badUnitsForStatus )
             statusValue = nint ( valueAsArray(1) )
+          case ( f_suffix )
+            suffix = sub_rosa ( gson )
           case ( f_systemTemperature )
             sysTempVectorIndex = decoration(decoration(subtree(1,gson)))
             sysTempQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -1059,6 +1073,14 @@ contains ! =====     Public Procedures     =============================
           end if
           call addGaussianNoise ( key, quantity, sourceQuantity, &
             & noiseQty, multiplier )
+
+        case ( l_applyBaseline )
+          if ( .not. got ( f_baselineQuantity ) ) &
+            & call Announce_Error ( key, 0, &
+            & 'Need baselineQuantity for applyBaseline fill' )
+          baselineQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(baselineVctrIndex), baselineQtyIndex )
+          call ApplyBaseline ( key, quantity, baselineQuantity, quadrature )
 
         case ( l_binMax, l_binMean, l_binMin, l_binTotal )
           if ( .not. got ( f_sourceQuantity ) ) &
@@ -1185,12 +1207,13 @@ contains ! =====     Public Procedures     =============================
         case ( l_l1b ) ! --------------------  Fill from L1B data  -----
           if ( got(f_precision) ) then
             precisionQuantity => GetVectorQtyByTemplateIndex( &
-            & vectors(precisionVectorIndex), precisionQuantityIndex )
+              & vectors(precisionVectorIndex), precisionQuantityIndex )
             call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
-              & l1bInfo, isPrecision, precisionQuantity )
+              & l1bInfo, isPrecision, suffix=suffix, &
+              & precisionQuantity=precisionQuantity )
           else
             call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), &
-              & l1bInfo, isPrecision )
+              & l1bInfo, isPrecision, suffix=suffix )
           end if
 
         case ( l_l2gp ) ! --------------  Fill from L2GP quantity  -----
@@ -2112,6 +2135,47 @@ contains ! =====     Public Procedures     =============================
       end do
 
     end subroutine addGaussianNoise
+
+    ! ------------------------------------------- ApplyBaseline ----------
+    subroutine ApplyBaseline ( key, quantity, baselineQuantity, quadrature )
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Radiance quantity to modify
+      type (VectorValue_T), intent(in) :: BASELINEQUANTITY ! L1B MAF baseline to use
+      logical, intent(in) :: QUADRATURE ! If set add in quadrature (for noise)
+      ! Local variables
+      integer :: MIF
+      integer :: CHAN
+      integer :: IND                    ! Combined MIF/CHAN
+      ! Executable code
+      if ( quantity%template%quantityType /= l_radiance ) &
+        & call Announce_Error ( key, 0, &
+        &   'Quantity to fill must be a radiance' )
+      if ( baselineQuantity%template%quantityType /= l_l1bMAFBaseline ) &
+        & call Announce_Error ( key, 0, &
+        &   'Quantity to fill must be a L1BMAFBaseline' )
+      if ( baselineQuantity%template%signal /= quantity%template%signal .or. &
+        &  baselineQuantity%template%sideband /= quantity%template%sideband ) &
+        & call Announce_Error ( key, 0, &
+        &   'Quantity and baselineQuantity must have matching signal/sideband' )
+      ind = 1
+      if ( quadrature ) then 
+        do mif = 1, quantity%template%noSurfs
+          do chan = 1, quantity%template%noChans
+            quantity%values ( ind, : ) = quantity%values ( ind, : ) + &
+              & baselineQuantity%values ( chan, : )
+            ind = ind + 1
+          end do
+        end do
+      else
+        do mif = 1, quantity%template%noSurfs
+          do chan = 1, quantity%template%noChans
+            quantity%values ( ind, : ) = sqrt ( quantity%values ( ind, : )**2 + &
+              & baselineQuantity%values ( chan, : )**2 )
+            ind = ind + 1
+          end do
+        end do
+      end if
+    end subroutine ApplyBaseline
 
     ! ------------------------------------------- ExtractSingleChannel ---
     subroutine ExtractSingleChannel ( key, quantity, sourceQuantity, channel )
@@ -5310,16 +5374,17 @@ contains ! =====     Public Procedures     =============================
 
     ! ----------------------------------------- FillVectorQuantityFromL1B ----
     subroutine FillVectorQuantityFromL1B ( root, quantity, chunk, l1bInfo, &
-      & isPrecision, PrecisionQuantity )
+      & isPrecision, suffix, PrecisionQuantity )
       integer, intent(in) :: root
       type (VectorValue_T), INTENT(INOUT) ::        QUANTITY
       type (MLSChunk_T), INTENT(IN) ::              CHUNK
       type (l1bInfo_T), INTENT(IN) ::               L1BINFO
       logical, intent(in)               ::          ISPRECISION
+      integer, intent(in), optional :: SUFFIX
       type (VectorValue_T), INTENT(IN), optional :: PRECISIONQUANTITY
 
       ! Local variables
-      character (len=80) :: NAMESTRING
+      character (len=132) :: NAMESTRING
       character (len=FileNameLen) :: FILENAMESTRING
       integer :: fileID, FLAG, NOMAFS
       type (l1bData_T) :: L1BDATA
@@ -5350,6 +5415,10 @@ contains ! =====     Public Procedures     =============================
         call GetModuleName( quantity%template%instrumentModule, nameString )
         nameString = AssembleL1BQtyName('ECRtoFOV', this_hdfVersion, .TRUE., &
           & trim(nameString))
+      case ( l_L1BMAFBaseline )
+        call GetSignalName ( quantity%template%signal, nameString, &
+          & sideband=quantity%template%sideband, noChannels=.TRUE. )
+        nameString = AssembleL1BQtyName(nameString, this_hdfVersion, .FALSE.)
       case ( l_ptan )
         call GetModuleName( quantity%template%instrumentModule,nameString )
         nameString = AssembleL1BQtyName('ptan', this_hdfVersion, .FALSE., &
@@ -5394,6 +5463,18 @@ contains ! =====     Public Procedures     =============================
       case default
         call Announce_Error ( root, cantFillFromL1B )
       end select
+
+      if ( present ( suffix ) ) then
+        if ( suffix /= 0 ) then
+          call Get_String ( suffix, &
+            & nameString(len_trim(nameString)+1:), strip=.true. )
+          ! Look for the field again
+          fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, this_hdfVersion )
+          ! Note we won't find it if it's in the OA file, I'm going to ignore that
+          ! possibility for the moment.
+
+        end if
+      end if
 
       ! If the quantity exists (or it doesn't exist but it's not a radiance)
       if ( fileId /= 0 .or. quantity%template%quantityType /= l_radiance ) then
@@ -6833,6 +6914,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.288  2004/09/27 20:11:29  livesey
+! Added stuff for reading and applying L1BMAFBaseline.  This includes new
+! suffix argument to L1B reading.
+!
 ! Revision 2.287  2004/09/25 00:16:31  livesey
 ! Removed 'key' argument in CombineChannels call
 !
