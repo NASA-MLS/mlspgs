@@ -13,7 +13,7 @@ module Fill                     ! Create vectors and fill them.
     & F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, F_NOISE, &
     & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
     & F_EXTINCTION, F_H2OQUANTITY, F_LOSQTY,&
-    & F_IGNOREMASK, F_IGNORENEGATIVE, F_IGNOREZERO, &
+    & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MATRIX, F_MAXITERATIONS, &
     & F_METHOD,F_MEASUREMENTS, F_MODEL, F_NOFINEGRID, F_PTANQUANTITY, &
     & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
@@ -52,8 +52,8 @@ module Fill                     ! Create vectors and fill them.
     & Matrix_T, UpdateDiagonal
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSNumerics, only: InterpolateValues, drang
   use MLSSignals_m, only: GetSignalName, GetModuleName
-  use MLSNumerics, only: InterpolateValues
   use Molecules, only: L_H2O
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
@@ -227,7 +227,10 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: I, J, K                  ! Loop indices for section, spec, expr
-    logical :: ignoreMask, ignoreZero, ignoreNegative
+  !  The next three are FALSE by default
+    logical :: DONTMASK                 ! Use even masked values if TRUE
+    logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
+    logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
     integer :: IND                      ! Temoprary index
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
@@ -295,7 +298,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = .false.
-    ignoreMask = .false.
+    dontMask = .false.
     ignoreZero = .false.
     ignoreNegative = .false.
 
@@ -420,8 +423,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_h2oQuantity ) ! For hydrostatic
             h2oVectorIndex = decoration(decoration(subtree(1,gson)))
             h2oQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_ignoreMask )
-            ignoreMask = get_boolean ( gson )
+          case ( f_dontMask )
+            dontMask = get_boolean ( gson )
           case ( f_ignoreZero )
             ignoreZero = get_boolean ( gson )
           case ( f_ignoreNegative )
@@ -630,7 +633,7 @@ contains ! =====     Public Procedures     =============================
                 & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqChan ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
-                & ignoreMask, ignoreZero, ignoreNegative )
+                & dontMask, ignoreZero, ignoreNegative )
             endif
           case ( l_chiSQMMaf )
             if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -645,7 +648,7 @@ contains ! =====     Public Procedures     =============================
                 & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqMMaf ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
-                & ignoreMask, ignoreZero, ignoreNegative )
+                & dontMask, ignoreZero, ignoreNegative )
             endif
           case ( l_chiSQMMif )
             if ( .not. any(got( (/f_measurements, f_model, f_noise/) )) ) then
@@ -660,7 +663,7 @@ contains ! =====     Public Procedures     =============================
                 & vectors(noiseVectorIndex), noiseQtyIndex)
               call FillChiSqMMif ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
-                & ignoreMask, ignoreZero, ignoreNegative )
+                & dontMask, ignoreZero, ignoreNegative )
             endif
           case default
             call Announce_error ( key, noSpecialFill )
@@ -836,21 +839,33 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------------- addGaussianNoise ---
   subroutine addGaussianNoise ( key, quantity, sourceQuantity, &
             & noiseQty )
-    ! A special fill of chi squared 
-    ! broken out according to channels
+    ! A special fill: quantity = sourceQuantity + g() noiseQty
+    ! where g() is a random number generator with mean 0 and std. dev. 1
     ! Formal arguments
     integer, intent(in) :: KEY
-    type (VectorValue_T), intent(out) :: quantity
+    type (VectorValue_T), intent(out) ::   quantity
     type (VectorValue_T), intent(in) ::    sourceQuantity
     type (VectorValue_T), intent(in) ::    noiseQty
-    ! The last two are set if only part (e.g. overlap regions) of the quantity
-    ! is to be stored in qty
 
     ! Local variables
-    real(r8), dimension(:), pointer  ::    VALUES => NULL()
+    integer                          ::    ROW, COLUMN
 
     ! Executable code
     ! First check that things are OK.
+    if (.not. FillableChiSq ( quantity, &
+      & sourceQuantity, noiseQty ) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'Incompatibility among vector quantities adding noise'  )
+      return
+    endif
+    
+    do column=1, size(quantity%values(1, :))
+      do row=1, size(quantity%values(:, 1))
+        quantity%values(row, column) = sourceQuantity%values(row, column) &
+          & + &
+          & drang() * noiseQty%values(row, column)
+      enddo
+    enddo
 
   end subroutine addGaussianNoise
 
@@ -1074,18 +1089,24 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- FillableChiSq ---
   function FillableChiSq ( qty, measQty, modelQty, noiseQty ) result ( aok )
-    ! Check whether we may proceed with special fill of chi squared 
-    type (VectorValue_T), intent(in) :: QTY
-    type (VectorValue_T), intent(in) ::    modelQty
-    type (VectorValue_T), intent(in) ::    measQty
-    type (VectorValue_T), intent(in) ::    noiseQty
-    LOGICAL ::                             AOK
+    ! Purpose (A)
+    !   Check whether we may proceed with special fill of chi squared
+    !   case where all args present
+    ! Purpose (B)
+    !   Check whether we may proceed with special fill of addNoise
+    !   case where missing noiseQty arg
+    type (VectorValue_T), intent(in) ::              QTY
+    type (VectorValue_T), intent(in) ::              modelQty
+    type (VectorValue_T), intent(in) ::              measQty
+    type (VectorValue_T), optional, intent(in) ::    noiseQty
+    LOGICAL ::                                       AOK
     
-    ! What we will check is that:
+    ! What we will check is that (for the args we have been given):
     ! (1) all quantities have same molecule
     ! (2) all quantities have same signal
     ! (3) all quantities have same HGrid
-    ! (4) all but qty (chiSq) have same VGrid
+    ! (4A) all but qty (chiSq) have same VGrid
+    ! (4B) all have same VGrid
     
     aok = .true.
 
@@ -1093,7 +1114,8 @@ contains ! =====     Public Procedures     =============================
     aok = aok .and. &
       & (qty%template%molecule == measQty%template%molecule) &
       & .and. &
-      & (qty%template%molecule == modelQty%template%molecule) &
+      & (qty%template%molecule == modelQty%template%molecule)
+    if ( present(noiseQty) ) aok = aok &
       & .and. &
       & (qty%template%molecule == noiseQty%template%molecule)
 
@@ -1101,30 +1123,39 @@ contains ! =====     Public Procedures     =============================
     aok = aok .and. &
       & (qty%template%signal == measQty%template%signal) &
       & .and. &
-      & (qty%template%signal == modelQty%template%signal) &
+      & (qty%template%signal == modelQty%template%signal)
+    if ( present(noiseQty) ) aok = aok &
       & .and. &
       & (qty%template%signal == noiseQty%template%signal)
 
     ! (3)
     aok = aok .and. &
-    & DoHgridsMatch( qty, measQty ) &
-    & .and. &
-    & DoHgridsMatch( qty, modelQty ) &
-    & .and. &
-    & DoHgridsMatch( qty, noiseQty )
+      & DoHgridsMatch( qty, measQty ) &
+      & .and. &
+      & DoHgridsMatch( qty, modelQty )
+    if ( present(noiseQty) ) aok = aok &
+      & .and. &
+      & DoHgridsMatch( qty, noiseQty )
 
     ! (4)
     aok = aok .and. &
-    & DoVgridsMatch( measqty, modelQty ) &
-    & .and. &
-    & DoVgridsMatch( measqty, noiseQty )
+      & DoVgridsMatch( measqty, modelQty )
+    if ( present(noiseQty) ) then
+      aok = aok &
+      & .and. &
+      & DoVgridsMatch( measqty, noiseQty )
+    else
+      aok = aok &
+      & .and. &
+      & DoVgridsMatch( measqty, Qty )
+    endif
     
     return
   end function FillableChiSq
 
   ! ------------------------------------------- FillChiSqChan ---
   subroutine FillChiSqChan ( key, qty, measQty, modelQty, noiseQty, &
-  & ignoreMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
+  & dontMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to channels
     ! Formal arguments
@@ -1133,7 +1164,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) ::    modelQty
     type (VectorValue_T), intent(in) ::    measQty
     type (VectorValue_T), intent(in) ::    noiseQty
-    logical, intent(in)           ::       ignoreMask  ! Ignore any masked values
+    logical, intent(in)           ::       dontMask    ! Use even masked values
     logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
     logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
     integer, intent(in), optional ::       firstInstance, lastInstance
@@ -1164,7 +1195,7 @@ contains ! =====     Public Procedures     =============================
       & 'Incompatibility among vector quantities filling chi^2 channelwise'  )
       return
     elseif (any ( noiseQty%values == 0.0) .and. &
-      & .not. (ignoreZero .or. ignoreMask) ) then
+      & .not. (ignoreZero .or. .not. dontMask) ) then
       call Announce_error ( key, No_Error_code, &
       & 'A vanishing error filling chi^2 channelwise'  )
       return
@@ -1197,7 +1228,7 @@ contains ! =====     Public Procedures     =============================
         do s=1, measQty%template%noSurfs
           qIndex = c + (s-1)*nochans
           skipMe = &
-          & ignoreMask .and. ( &
+          & .not. dontMask .and. ( &
           &   isVectorQtyMasked(measQty, qIndex, i) .or. &
           &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
           &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
@@ -1225,7 +1256,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- FillChiSqMMaf ---
   subroutine FillChiSqMMaf ( key, qty, measQty, modelQty, noiseQty, &
-  & ignoreMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
+  & dontMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to major frames
     ! Formal arguments
@@ -1234,7 +1265,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) ::    modelQty
     type (VectorValue_T), intent(in) ::    measQty
     type (VectorValue_T), intent(in) ::    noiseQty
-    logical, intent(in)           ::       ignoreMask  ! Ignore any masked values
+    logical, intent(in)           ::       dontMask    ! Use even masked values
     logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
     logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
     integer, intent(in), optional ::       firstInstance, lastInstance
@@ -1263,7 +1294,7 @@ contains ! =====     Public Procedures     =============================
       & 'Incompatibility among vector quantities filling chi^2 MMAFwise'  )
       return
     elseif (any ( noiseQty%values == 0.0) .and. &
-      & .not. (ignoreZero .or. ignoreMask) ) then
+      & .not. (ignoreZero .or. .not. dontMask) ) then
       call Announce_error ( key, No_Error_code, &
       & 'A vanishing noise filling chi^2 MMAFwise'  )
       return
@@ -1290,7 +1321,7 @@ contains ! =====     Public Procedures     =============================
     call allocate_test(values, instanceLen, &
       & 'chi^2 unsummed', ModuleName)
     do i=useFirstInstance, useLastInstance
-      if( .not. (ignoreMask .or. ignoreNegative .or. ignoreZero )) then
+      if( .not. (.not. dontMask .or. ignoreNegative .or. ignoreZero )) then
           values = ( &
           & (measQty%values(:, i) - modelQty%values(:, i)) &
           & / &
@@ -1302,7 +1333,7 @@ contains ! =====     Public Procedures     =============================
         values = 0.0
         do row = 1, instanceLen
           skipMe = &
-          & ignoreMask .and. ( &
+          & .not. dontMask .and. ( &
           &   isVectorQtyMasked(measQty, row, i) .or. &
           &   isVectorQtyMasked(modelQty, row, i) .or. &
           &   isVectorQtyMasked(noiseQty, row, i) ) &
@@ -1330,7 +1361,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------- FillChiSqMMif ---
   subroutine FillChiSqMMif ( key, qty, measQty, modelQty, noiseQty, &
-  & ignoreMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
+  & dontMask, ignoreZero, ignoreNegative, firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to Mifs
     ! Formal arguments
@@ -1339,7 +1370,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(in) ::    modelQty
     type (VectorValue_T), intent(in) ::    measQty
     type (VectorValue_T), intent(in) ::    noiseQty
-    logical, intent(in)           ::       ignoreMask  ! Ignore any masked values
+    logical, intent(in)           ::       dontMask    ! Use even masked values
     logical, intent(in)           ::       ignoreZero  ! Ignore 0 values of noiseQty
     logical, intent(in)           ::       ignoreNegative  ! Ignore <0 values of noiseQty
     integer, intent(in), optional ::       firstInstance, lastInstance
@@ -1370,7 +1401,7 @@ contains ! =====     Public Procedures     =============================
       & 'Incompatibility among vector quantities filling chi^2 MMIFwise'  )
       return
     elseif (any ( noiseQty%values == 0.0) .and. &
-      & .not. (ignoreZero .or. ignoreMask) ) then
+      & .not. (ignoreZero .or. .not. dontMask) ) then
       call Announce_error ( key, No_Error_code, &
       & 'A vanishing noise filling chi^2 MMIFwise'  )
       return
@@ -1403,7 +1434,7 @@ contains ! =====     Public Procedures     =============================
         do c=1, measQty%template%noChans
           qIndex = c + (s-1)*measQty%template%noChans
           skipMe = &
-          & ignoreMask .and. ( &
+          & .not. dontMask .and. ( &
           &   isVectorQtyMasked(measQty, qIndex, i) .or. &
           &   isVectorQtyMasked(modelQty, qIndex, i) .or. &
           &   isVectorQtyMasked(noiseQty, qIndex, i) ) &
@@ -2253,6 +2284,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.75  2001/09/20 20:57:25  pwagner
+! Fleshed out adding noise thing
+!
 ! Revision 2.74  2001/09/19 23:42:29  pwagner
 ! New Remove command, ignore() fields
 !
