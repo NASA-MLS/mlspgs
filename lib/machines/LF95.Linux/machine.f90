@@ -60,12 +60,15 @@ contains
     return
   end subroutine IO_ERROR_
 
-  subroutine SHELL_COMMAND ( Command, Status )
+  subroutine SHELL_COMMAND ( Command, Status, Error )
   ! Submit a character variable to the system as a shell command.
 
     character(len=*), intent(in) :: Command  ! The command
     integer, intent(out), optional :: Status ! Its status, if the system
                                         !  has such a concept, else zero
+    integer, intent(out), optional :: Error  ! Status of the routine to submit
+                                        ! the command, if the system has
+                                        ! such a concept, else zero
 
     integer :: MyStatus
 
@@ -76,12 +79,16 @@ contains
     end interface
 
     myStatus = system(command)
+    if ( present(error) ) error = 0
     if ( present(status) ) status = myStatus
   end subroutine SHELL_COMMAND
 
 end module MACHINE
 
 ! $Log$
+! Revision 1.4  2002/01/30 00:23:31  vsnyder
+! Add Shell_Command subroutine
+!
 ! Revision 1.3  2001/07/25 19:36:18  vsnyder
 ! Added an interface for GETARG
 !
