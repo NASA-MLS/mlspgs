@@ -2,13 +2,13 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
-MODULE ConstructQuantityTemplates ! Construct templates from l2cf info
+MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 !=============================================================================
 
   USE MLSCommon
   USE MLSMessageModule
   USE QuantityTemplates
-  USE Temporary_Types
+  USE MLSCF
   USE VGrid
   USE HGrid
   USE VerticalCoordinate
@@ -224,19 +224,21 @@ CONTAINS
   ! --------------------------------------------------------------------------
 
   ! This routine constructs a vector quantity template based on instructions
-  ! passed in an l2cf line.
+  ! passed in an mlscf line.
   
   SUBROUTINE CreateQtyTemplateFromMLSCFInfo(qty,cfInfo,hGrids,vGrids, &
-       & l1bInfo,chunk,mlsSignalsDatabase)
+       & l1bInfo,chunk,mlsSignalsDatabase,mifGeolocation)
 
     ! Dummy arguments
     TYPE (QuantityTemplate_T), INTENT(OUT) :: qty
-    TYPE (L2CFEntry), INTENT(IN) :: cfInfo
+    TYPE (MLSCFEntry_T), INTENT(IN) :: cfInfo
     TYPE (HGrid_T), DIMENSION(:), INTENT(IN) :: hGrids
     TYPE (VGrid_T), DIMENSION(:), INTENT(IN) :: vGrids
     TYPE (l1bInfo_T), INTENT(IN) :: l1bInfo
     TYPE (MLSChunk_T), INTENT(IN) :: chunk
     TYPE (MLSSignalsDatabase_T), INTENT(IN) :: mlsSignalsDatabase
+    TYPE (QuantityTemplate_T), DIMENSION(:), INTENT(IN), OPTIONAL :: &
+         & mifGeolocation
 
     ! Local parameters
     CHARACTER (LEN=*), PARAMETER :: BadUnitMessage = &
@@ -250,7 +252,7 @@ CONTAINS
     REAL(r8) :: scaleFactor
     INTEGER :: hGridIndex=0,vGridIndex=0
     CHARACTER (LEN=NameLen) :: molecule="",radiometer="", band=""
-    TYPE (L2CFCell) :: cell
+    TYPE (MLSCFCell_T) :: cell
     INTEGER :: keyNo            ! Loop counter
     LOGICAL :: needVHGrids, badUnit
     TYPE(MLSSignal_T), DIMENSION(:), POINTER :: signals
@@ -260,9 +262,9 @@ CONTAINS
 
     ! Executable code
 
-    ! First we'll loop over the l2cf keys and parse them.
+    ! First we'll loop over the mlscf keys and parse them.
 
-    DO keyNo=1,cfInfo%l2cfEntryNoKeys
+    DO keyNo=1,cfInfo%mlscfEntryNoKeys
        cell=cfInfo%cells(keyNo)
        SELECT CASE(TRIM(cell%keyword))
        CASE ("NAME")
@@ -378,8 +380,9 @@ CONTAINS
        
        ! Construct an empty quantity
 
-       CALL ConstructMinorFrameQuantity(l1bInfo,chunk,instrumentModule,qty,&
-            & noChans=noChans,storeByChannel=storeByChannel)
+       CALL ConstructMinorFrameQuantity(l1bInfo,chunk,instrumentModule,qty, &
+            & noChans=noChans,storeByChannel=storeByChannel, &
+            & mifGeolocation=mifGeolocation)
 
        ! Fill what information we can
 
@@ -405,6 +408,9 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.2  1999/12/18 01:07:00  livesey
+! Change vGrids and hGrids from pointer to intent(in)
+!
 ! Revision 1.1  1999/12/18 00:35:40  livesey
 ! First version
 !

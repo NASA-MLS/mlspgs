@@ -6,7 +6,7 @@ MODULE HGrid                    ! Horizontal grid information
 !=============================================================================
 
   USE MLSCommon
-  USE ReadParseL2CF
+  USE MLSCF
   USE MLSMessageModule
   USE MLSStrings
   USE L1BData
@@ -78,7 +78,7 @@ MODULE HGrid                    ! Horizontal grid information
 
     ! Dummy arguments
     TYPE (hGrid_T), INTENT(OUT) :: hGrid ! HGrid to create
-    TYPE (L2CFEntry), INTENT(IN) :: cfInfo ! Instructions for its creation
+    TYPE (MLSCFEntry_T), INTENT(IN) :: cfInfo ! Instructions for its creation
     TYPE (L1BInfo_T), INTENT(IN) :: l1bInfo ! File handles for l1b data
     TYPE (MLSChunk_T), INTENT(IN) :: chunk ! This chunk
 
@@ -108,8 +108,8 @@ MODULE HGrid                    ! Horizontal grid information
     INTEGER :: instrumentModule=MLSInstrumentModule_Invalid
     REAL(r8) :: fraction= -1e10, height= -1e10
 
-    INTEGER :: keyNo            ! Entry in the l2cf line
-    TYPE (L2CFCell) :: cell     ! Part of the l2cf information
+    INTEGER :: keyNo            ! Entry in the mlscf line
+    TYPE (MLSCFCell_T) :: cell  ! Part of the mlscf information
 
     TYPE (L1BData_T) :: l1bField ! L1B data
     REAL(r8), DIMENSION(:,:,:), POINTER :: tpGeodAngle,tpGeodAlt
@@ -130,7 +130,7 @@ MODULE HGrid                    ! Horizontal grid information
 
     ! Executable code
 
-    DO keyNo=1,cfInfo%l2cfEntryNoKeys
+    DO keyNo=1,cfInfo%mlscfEntryNoKeys
        cell=cfInfo%cells(keyNo)
        SELECT CASE(TRIM(cell%keyword))
        CASE("NAME")
@@ -156,11 +156,11 @@ MODULE HGrid                    ! Horizontal grid information
                   & "Unrecognised instrument module: "//TRIM(cell%charValue))
           END SELECT
        CASE("HEIGHT")
-          ! Code needed here when l2cf finalized ***
+          ! Code needed here when mlscf finalized ***
        CASE("FRACTION")
-          ! Code needed here when l2cf finalized ***
+          ! Code needed here when mlscf finalized ***
        CASE("INTERPOLATIONFACTOR")
-          ! Code needed here when l2cf finalized ***
+          ! Code needed here when mlscf finalized ***
        CASE DEFAULT
           CALL MLSMessage(MLSMSG_Error,ModuleName,&
                & MLSMSG_Keyword//TRIM(cell%keyword))
@@ -404,6 +404,9 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.4  2000/01/07 23:53:34  livesey
+! Nearly integrated, just a few tweaks.
+!
 ! Revision 1.3  1999/12/17 21:39:34  livesey
 ! Added check for duplicate name in database.
 !

@@ -10,7 +10,7 @@ OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
 	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o\
 	Temporary_types.o ConstructVectorTemplates.o gridded_data_module.o \
-	dates_module.o read_parse_l2cf.o MLSPCF.o
+	dates_module.o MLSPCF.o MLSCF.o
 
 OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		VerticalCoordinate.o_debug QuantityTemplates.o_debug \
@@ -20,7 +20,7 @@ OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug \
 		Temporary_types.o_debug ConstructVectorTemplates.o_debug \
 		gridded_data_module.o_debug dates_module.o_debug \
-		read_parse_l2cf.o MLSPCF.o_debug
+		MLSPCF.o_debug MLSCF.o_debug
 
 LIBPATH=.
 MODULEPATH=.
@@ -46,24 +46,24 @@ clean:
 # Later on we may try to adapt Hugh's script to deal with these
 #
 
-read_parse_l2cf.o: SDPToolkit.o Hdf.o MLSMessageModule.o
+MLSCF.o: SDPToolkit.o Hdf.o MLSMessageModule.o
 gridded_data_module.o: MLSCommon.o MLSStrings.o MLSMessageModule.o \
 	dates_module.o
 MLSMessageModule.o: SDPToolkit.o
 MLSStrings.o: MLSMessageModule.o
 MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o MLSCommon.o
 QuantityTemplates.o: MLSSignalNomenclature.o MLSStrings.o MLSMessageModule.o \
-	VGrid.o Temporary_types.o read_parse_l2cf.o
+	VGrid.o Temporary_types.o MLSCF.o
 MLSNumerics.o: MLSMessageModule.o 
 L1BData.o: Hdf.o SDPToolkit.o MLSCommon.o
-HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o read_parse_l2cf.o
-VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o read_parse_l2cf.o
+HGrid.o: MLSCommon.o MLSMessageModule.o MLSStrings.o L1BData.o MLSNumerics.o MLSCF.o
+VGrid.o: MLSCommon.o VerticalCoordinate.o MLSStrings.o MLSCF.o
 ConstructQuantityTemplates.o: MLSCommon.o MLSMessageModule.o \
 	QuantityTemplates.o VGrid.o HGrid.o VerticalCoordinate.o \
-	Units.o MLSSignalNomenclature.o read_parse_l2cf.o
+	Units.o MLSSignalNomenclature.o MLSCF.o
 VerticalCoordinate.o: MLSCommon.o MLSStrings.o Units.o
 ConstructVectorTemplates.o: MLSCommon.o MLSMessageModule.o VectorsModule.o \
-	QuantityTemplates.o read_parse_l2cf.o
+	QuantityTemplates.o MLSCF.o
 
 #
 # Now the debug dependencies
@@ -88,6 +88,9 @@ ConstructVectorTemplates.o_debug: MLSCommon.o_debug MLSMessageModule.o_debug Vec
 	QuantityTemplates.o_debug Temporary_types.o_debug
 
 # $Log$
+# Revision 1.22  2000/01/07 23:53:35  livesey
+# Nearly integrated, just a few tweaks.
+#
 # Revision 1.21  1999/12/20 14:50:23  pumphrey
 # Added gridded_data_module to Makefile
 #

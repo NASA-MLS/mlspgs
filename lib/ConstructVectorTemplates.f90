@@ -9,7 +9,7 @@ MODULE ConstructVectorTemplates ! Construct a template for a vector
   USE MLSMessageModule
   USE VectorsModule
   USE QuantityTemplates
-  USE Temporary_Types
+  USE MLSCF
 
   IMPLICIT NONE
   PUBLIC
@@ -31,7 +31,7 @@ CONTAINS
        & quantityTemplates)
 
     ! Dummy arguments
-    TYPE(l2cfEntry), INTENT(IN) :: cfInfo
+    TYPE(mlscfEntry_T), INTENT(IN) :: cfInfo
     TYPE (VectorTemplate_T), INTENT(OUT) :: vectorTemplate
     TYPE (QuantityTemplate_T), DIMENSION(:) :: quantityTemplates
 
@@ -39,7 +39,7 @@ CONTAINS
     INTEGER :: keyNo,status,quantityNo
     CHARACTER (LEN=NameLen) :: name=""
     LOGICAL, DIMENSION(:), ALLOCATABLE :: selected
-    TYPE (L2CFCell) :: cell
+    TYPE (MLSCFCell_T) :: cell
 
     ! Executable code
 
@@ -48,11 +48,11 @@ CONTAINS
          & "selected")
     selected=.FALSE.
 
-    ! Simply loop through the l2cf information supplied.
+    ! Simply loop through the mlscf information supplied.
     !  If it's a NAME= then copy it to name, else it's a
     ! quantityTemplate name.
 
-    DO keyNo=1,cfInfo%l2cfEntryNoKeys
+    DO keyNo=1,cfInfo%mlscfEntryNoKeys
        cell=cfInfo%cells(keyNo)
        IF (TRIM(cell%keyword)=="NAME") THEN
           name=cell%charValue
@@ -83,4 +83,7 @@ END MODULE ConstructVectorTemplates
 
 !
 ! $Log$
+! Revision 1.1  1999/12/18 03:00:45  livesey
+! First version
+!
 !

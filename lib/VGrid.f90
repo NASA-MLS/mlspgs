@@ -6,7 +6,7 @@ MODULE vGrid                    ! Definitions for vGrids in vector quantities
 !=============================================================================
 
   USE MLSCommon                 ! General constants etc.
-  USE ReadParseL2CF             ! L2CF info etc.
+  USE MLSCF                     ! L2CF info
   USE VerticalCoordinate        ! The various vertical coorindate systems.
   USE MLSStrings                ! String handling routines
   USE MLSMessageModule          ! Message logging
@@ -44,7 +44,7 @@ CONTAINS
 
     ! Dummy arguments
     TYPE(vGrid_T),    INTENT(OUT) :: vGrid ! Returned vGrid
-    TYPE(L2CfEntry), INTENT(IN)  :: cfInfo ! Input info. from l2cf
+    TYPE(MLSCfEntry_T), INTENT(IN)  :: cfInfo ! Input info. from l2cf
 
     ! Local parameters
     CHARACTER (LEN=*), PARAMETER :: UnitsMessage= &
@@ -53,7 +53,7 @@ CONTAINS
     ! Local variables
     INTEGER :: keyNo            ! Entry in the l2cf line
     INTEGER :: family           ! Physical quantity family
-    TYPE (L2CFCell) :: cell     ! Part of the l2cf information
+    TYPE (MLSCFCell_T) :: cell  ! Part of the l2cf information
 
     ! Executable code
 
@@ -66,7 +66,7 @@ CONTAINS
     IF (ASSOCIATED(vGrid%surfs)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
          & "vGrid%surfs already associated")
 
-    DO keyNo=1,cfInfo%l2cfEntryNoKeys
+    DO keyNo=1,cfInfo%mlscfEntryNoKeys
        cell=cfInfo%cells(keyNo)
        SELECT CASE(TRIM(cell%keyword))
        CASE ("NAME")
@@ -200,6 +200,9 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.8  2000/01/07 23:53:35  livesey
+! Nearly integrated, just a few tweaks.
+!
 ! Revision 1.7  1999/12/17 21:40:12  livesey
 ! Added check for duplicate name in database
 !
