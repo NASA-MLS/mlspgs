@@ -75,7 +75,6 @@ contains ! =====     Public Procedures     =============================
     logical :: BADUNIT
     integer :: BAND           ! String index of BAND= value
     integer :: FAMILY
-    logical :: FIRSTINDEXCHANNEL
     integer :: HGRIDINDEX
     integer :: I              ! Loop counter
     integer :: INSTRUMENTMODULE
@@ -531,6 +530,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.5  2001/02/22 23:37:24  livesey
+! Really removed all references to firstIndexChannel
+!
 ! Revision 2.4  2001/02/21 01:09:00  livesey
 ! Allowed for quantities with no h/v grid
 !
