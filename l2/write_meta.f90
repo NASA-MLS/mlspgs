@@ -137,8 +137,8 @@ module WriteMetadata ! Populate metadata and write it out
 
   integer, public, parameter :: INVENTORYMETADATA = 2
   logical, public, parameter :: MCFCASESENSITIVE = .FALSE.
-  logical, public, parameter :: ANNOTATEWITHPCF = .FALSE.
-  logical, public, parameter :: SETINPUTPOINTER = .TRUE.
+  logical, public, parameter :: ANNOTATEWITHPCF = .TRUE.
+  logical, public, parameter :: SETINPUTPOINTER = .not. ANNOTATEWITHPCF
   logical, public, parameter :: SFINBETWEENSTARTEND = .FALSE.
   integer, public, parameter :: MCFFORL2GPOPTION = 3     ! 1, public, 2 or 3
   integer, private :: Module_error
@@ -601,9 +601,15 @@ contains
 ! >            inpt(i+1) = sval                     
 ! >         ENDIF                                   
 ! >       ENDDO
+      ! print *, 'Forming input pointer with ids: ', &
+      !  & L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:)
       call InputInputPointer(inpt, &
         & (/ L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:) /) )
       ! returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, inpt)
+      ! print *, 'Writing input pointer with : '
+      ! do i=1, size(inpt)
+      !   if ( inpt(i) /= ' ' ) print *, trim(inpt(i))
+      ! enddo
       returnStatus = WriteInputPointer(groups(INVENTORY), attrName, inpt)
     else
       returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
@@ -1579,6 +1585,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.38  2003/02/27 21:54:28  pwagner
+! Now annotates with PCF; does not set inputPointer
+!
 ! Revision 2.37  2003/02/10 22:02:41  pwagner
 ! Passes isHDFEOS to PCFHdr
 !
