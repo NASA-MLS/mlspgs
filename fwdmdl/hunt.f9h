@@ -4,7 +4,7 @@
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
     & "$Id$"
-  character (len=len(idParm)) :: Id = idParm
+! character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = "$RCSfile$"
 !---------------------------------------------------------------------------
 
@@ -72,6 +72,9 @@
 
 ! end subroutine ?_HUNT
 ! $Log$
+! Revision 2.3  2004/06/25 01:21:44  vsnyder
+! JHI is really intent(out)
+!
 ! Revision 2.2  2002/10/04 01:49:04  vsnyder
 ! Cosmetic changes
 !

@@ -30,7 +30,7 @@ contains
 !---------------------------------------------------------------------------
 
   ! --------------------------------------------  dVoigt_spectral  -----
-  subroutine dVoigt_spectral ( dNu, Nu0, x1, yi, y, w, t, tanh1, slabs1, SwI, &
+  elemental subroutine dVoigt_spectral ( dNu, Nu0, x1, yi, y, w, t, tanh1, slabs1, SwI, &
                          &  dslabs1_dNu0, dSwI_dw, dSwI_dn, dSwI_dNu0 )
 
 ! Compute the Voigt function and its first derivatives with respect
@@ -105,7 +105,7 @@ contains
   end subroutine dVoigt_spectral
 
   ! --------------------------------------  dVoigt_spectral_Lines  -----
-  subroutine dVoigt_spectral_Lines ( dNu, Slabs, t, tanh1, &
+  elemental subroutine dVoigt_spectral_Lines ( dNu, Slabs, t, tanh1, &
                                   &  SwI, dSwI_dw, dSwI_dn, dSwI_dNu0 )
 
 ! Compute the sums of the Voigt function and its first derivatives with respect
@@ -128,7 +128,6 @@ contains
 
     real(rp), intent(out) :: SwI, dSwI_dw, dSwI_dn, dSwI_dNu0               
 
-    integer, pointer :: CatLines(:)  ! slabs%catalog%lines
     integer :: L  ! Line index
 
     real(r8) :: Nu0
@@ -139,18 +138,17 @@ contains
 
     real(rp) :: dx_dv0, du_dv0, dv_dv0, vvw, slabs2
 
-    catLines => slabs%catalog%lines
     SwI = 0.0_rp
     dSwI_dw = 0.0_rp
     dSwI_dn = 0.0_rp
     dSwI_dNu0 = 0.0_rp     
-    do l = 1, size(catLines)
+    do l = 1, size(slabs%catalog%lines)
 
       nu0 = slabs%v0s(l)
       x1 = slabs%x1(l)
       yi = slabs%yi(l)
       y = slabs%y(l)
-      w = lines(catLines(l))%w
+      w = lines(slabs%catalog%lines(l))%w
       slabs1 = slabs%slabs1(l)
       dslabs1_dNu0 = slabs%dslabs1_dv0(l)
 
@@ -209,7 +207,7 @@ contains
   end subroutine dVoigt_spectral_Lines
 
   ! ------------------------------------------------------  Slabs  -----
-  real(rp) function Slabs ( Nu, v0, v0s, x1, tanh1, slabs1, y )
+  real(rp) elemental function Slabs ( Nu, v0, v0s, x1, tanh1, slabs1, y )
 
     use Voigt_m, only: Real_Simple_Voigt
 
@@ -248,7 +246,7 @@ contains
   end function Slabs
 
   ! ----------------------------------------------------  Slabs_dT  -----
-  subroutine Slabs_dT ( Nu, v0, v0s, x1, tanh1, slabs1, y, &
+  elemental subroutine Slabs_dT ( Nu, v0, v0s, x1, tanh1, slabs1, y, &
     &                           dv0s_dT, dx1_dT, dtanh_dT, dslabs1_dT, dy_dT, &
     &                   Slabs, dSlabs_dT )
 
@@ -339,7 +337,7 @@ contains
   end subroutine Slabs_dT
 
   ! ------------------------------------------------  Slabs_Lines  -----
-  function Slabs_Lines ( Nu, Slabs, tanh1, NoPolarized ) result ( Beta )
+  elemental function Slabs_Lines ( Nu, Slabs, tanh1, NoPolarized ) result ( Beta )
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
@@ -356,7 +354,6 @@ contains
 ! If the molecular transition and temperature have not changed but
 ! frequency has, enter here to calculate sum of Beta for all lines in SLABS.
 
-    integer, pointer :: CatLines(:)  ! slabs%catalog%lines
     integer :: L      ! Line Index
     real(rp) :: U     ! Voigt = real part of Fadeeva
     real(r8) :: V0S   ! Pressure-shifted line center
@@ -370,16 +367,15 @@ contains
 !    \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
 
     beta = 0.0_rp
-    catLines => slabs%catalog%lines
     if ( .not. noPolarized ) then
-      do l = 1, size(catLines)
+      do l = 1, size(slabs%catalog%lines)
         v0s = slabs%v0s(l)
         x1 = slabs%x1(l)
         y = slabs%y(l)
         call real_simple_voigt ( x1*real(nu-v0s,rp), y, u )
 
         beta = beta + slabs%slabs1(l) * &
-          &           real(nu / lines(catLines(l))%v0, rp) * tanh1 * &
+          &           real(nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
           & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
 
       end do
@@ -392,7 +388,7 @@ contains
         call real_simple_voigt ( x1*real(nu-v0s,rp), y, u )
 
         beta = beta + slabs%slabs1(l) * &
-          &           real(nu / lines(catLines(l))%v0, rp) * tanh1 * &
+          &           real(nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
           & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
 
       end do
@@ -401,7 +397,7 @@ contains
   end function Slabs_Lines
 
   ! ---------------------------------------------  Slabs_Lines_dT  -----
-  subroutine Slabs_Lines_dT ( Nu, Slabs, Tanh1, dTanh_dT, &
+  elemental subroutine Slabs_Lines_dT ( Nu, Slabs, Tanh1, dTanh_dT, &
     &                         Beta, dBeta_dT, NoPolarized )
 
   ! Compute single-line absorption and its derivative w.r.t. temperature
@@ -421,7 +417,6 @@ contains
     ! "Don't do line(L) if slabs%catalog%polarized(L)"
     logical, intent(in) :: NoPolarized
 
-    integer, pointer :: CatLines(:)  ! slabs%catalog%lines
     real(rp) :: C       ! Terms common to the two parts of dSlabs_dT
     real(rp) :: D       ! 1 / (SigmaX1**2 + y**2)
     real(rp) :: Delta   ! Nu-v0s
@@ -441,11 +436,10 @@ contains
 
 ! See Slabs_dT for TeXnicalities
 
-    catLines => slabs%catalog%lines
     Beta = 0.0_rp
     dBeta_dT = 0.0_rp
 
-    do l = 1, size(catLines)
+    do l = 1, size(slabs%catalog%lines)
 
       if ( noPolarized ) then
         if ( slabs%catalog%polarized(l) ) cycle
@@ -464,7 +458,7 @@ contains
       sigmaX1 = sigma * x1
       y2 = y * y
       d = 1.0_rp / ( sigmaX1**2 + y2 )
-      sb = slabs%slabs1(l) * real(nu / lines(catLines(l))%v0,rp) * tanh1
+      sb = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * tanh1
       sa = sb * u
       sb = sb * OneOvSPi * y * d
       beta = beta + sa + sb
@@ -481,7 +475,7 @@ contains
   end subroutine Slabs_Lines_dT
 
   ! --------------------------------------------------  Slabswint  -----
-  real(rp) function Slabswint ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi )
+  real(rp) elemental function Slabswint ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi )
 
     use Voigt_m, only: Real_Simple_Voigt
 
@@ -523,7 +517,7 @@ contains
   end function Slabswint
 
   ! -----------------------------------------------  Slabswint_dT  -----
-  subroutine Slabswint_dT ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi, &
+  elemental subroutine Slabswint_dT ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi, &
     &                              dv0s_dT, dx1_dT, dtanh_dT, dslabs1_dT, &
     &                              dy_dT, dyi_dT, &
     &                              Slabswint, dSlabs_dT )
@@ -661,7 +655,7 @@ contains
   end subroutine Slabswint_dT
 
   ! --------------------------------------------  Slabswint_Lines  -----
-  function Slabswint_Lines ( Nu, Slabs, tanh1, NoPolarized ) result ( Beta )
+  elemental function Slabswint_Lines ( Nu, Slabs, tanh1, NoPolarized ) result ( Beta )
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: Lines
@@ -679,7 +673,6 @@ contains
 ! frequency has, enter here to calculate sum of Beta for all lines in SLABS.
 
     real(rp) :: A        ! First argument for real_simple_voigt
-    integer, pointer :: CatLines(:)  ! slabs%catalog%lines
     integer :: L         ! Line Index
     real(rp) :: SigmaX1  ! (nu + nu0s) * x1
     real(rp) :: U        ! Voigt = real part of Fadeeva
@@ -697,7 +690,6 @@ contains
 !     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
 
     beta = 0.0_rp
-    catLines => slabs%catalog%lines
     do l = 1, size(slabs%v0s)
       if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
       v0s = slabs%v0s(l)
@@ -711,11 +703,11 @@ contains
       y2 = y*y
       if ( abs(yi) > 1.0e-6_rp ) then ! Include interference effect
         beta = beta + slabs%slabs1(l) * &
-          &           real(Nu / lines(catLines(l))%v0, rp) * tanh1 * &
+          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
           & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
       else
         beta = beta + slabs%slabs1(l) * &
-          &           real(Nu / lines(catLines(l))%v0, rp) * tanh1 * &
+          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
           & (u + OneOvSPi*(y/(sigmaX1*sigmaX1 + y2)))
       end if
     end do
@@ -723,7 +715,7 @@ contains
   end function Slabswint_Lines
 
   ! -----------------------------------------  Slabswint_Lines_dT  -----
-  subroutine Slabswint_Lines_dT ( Nu, Slabs, tanh1, dTanh_dT, &
+  elemental subroutine Slabswint_Lines_dT ( Nu, Slabs, tanh1, dTanh_dT, &
     &                             Beta, dBeta_dT, NoPolarized )
 
   ! Compute single-line absorption and its derivative w.r.t. temperature,
@@ -748,7 +740,6 @@ contains
 
     real(rp) :: A               ! x1 * delta
     real(rp) :: C1, C2          ! Common terms
-    integer, pointer :: CatLines(:)  ! slabs%catalog%lines
     real(rp) :: D1              ! 1 / (SigmaX1**2 + y**2)
     real(rp) :: D2              ! 1 / (a**2 + y**2)
     real(rp) :: DD1, DD2        ! 1/D1 d(D1)/dT, 1/D2 d(D2)/dT, 
@@ -771,10 +762,9 @@ contains
 
     ! See Slabswint_dT for TeXnicalities.
 
-    catLines => slabs%catalog%lines
     beta = 0.0_rp
     dBeta_dT = 0.0_rp
-    do l = 1, size(catLines)
+    do l = 1, size(slabs%catalog%lines)
 
       if ( noPolarized .and. slabs%catalog%polarized(l) ) cycle
 
@@ -796,7 +786,7 @@ contains
       y2 = y * y
       d1 = 1.0_rp / ( sigmaX1**2 + y2 )
       d2 = 1.0_rp / ( a * a + y2 )
-      c1 = slabs%slabs1(l) * real(nu / lines(catLines(l))%v0,rp) * &
+      c1 = slabs%slabs1(l) * real(nu / lines(slabs%catalog%lines(l))%v0,rp) * &
         & tanh1
       sa = c1 * u
       c1 = c1 * OneOvSPi
@@ -826,7 +816,7 @@ contains
 
   ! ----------------------------------------------  Voigt_Lorentz  -----
 
-  subroutine Voigt_Lorentz ( dNu,  Nu0,  x1,  yi,  y,  w,  t,  tanh1, slabs1,  &
+  elemental subroutine Voigt_Lorentz ( dNu,  Nu0,  x1,  yi,  y,  w,  t,  tanh1, slabs1,  &
                          &   VL, dslabs1_dNu0,  dVL_dw,  dVL_dn,  dVL_dNu0 )
 
 ! Compute the Voigt/Lorentz function and its first derivatives with respect
@@ -904,7 +894,7 @@ contains
   end subroutine Voigt_Lorentz
 
   ! -------------------------------------------------  Slabs_prep  -----
-  subroutine Slabs_prep ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
+  pure subroutine Slabs_prep ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
                       &   n1, n2, velCor, useYi, &
                       &   v0s, x1, y, yi, slabs1, dslabs1 )
 
@@ -1058,7 +1048,7 @@ contains
   end subroutine Slabs_prep
 
   ! ------------------------------------------  Slabs_prep_struct  -----
-  subroutine Slabs_prep_struct ( T, P, Catalog, VelCor, Derivs, Slabs )
+  elemental subroutine Slabs_prep_struct ( T, P, Catalog, VelCor, Derivs, Slabs )
   ! Fill all the fields of the Slabs structure
 
     use L2PC_PFA_STRUCTURES, only: Slabs_Struct
@@ -1082,6 +1072,8 @@ contains
     integer :: L ! Index in the Lines array
 
     slabs%useYi = .false.
+    !ocl independent
+    !ocl temp(l)
     do i = 1, size(catalog%lines)
       slabs%dx1_dv0(i) = 0.0
       slabs%dy_dv0(i) = 0.0
@@ -1114,7 +1106,7 @@ contains
   end subroutine Slabs_prep_struct
 
   ! ----------------------------------------------  Slabs_prep_DT  -----
-  subroutine Slabs_prep_dT ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
+  pure subroutine Slabs_prep_dT ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
                          &   n1, n2, velCor, useYi, &
                          &   v0s, x1, y, yi, slabs1, dslabs1_dv0, &
                          &   dv0s_dT, dx1_dT, dy_dT, dyi_dT, dslabs1_dT )
@@ -1337,7 +1329,8 @@ contains
 !{\newpage
 
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
-  subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
+  !ocl disjoint
+  pure subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
                              &     Do_1D, t_der_flags )
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
@@ -1395,6 +1388,7 @@ contains
 
       if ( Do_1D ) then
         ! fill in grid points on other side with above value
+        !ocl temp(k)
         do j = no_ele, no_ele/2+1, -1
           k = no_ele - j + 1
           gl_slabs(j,i)%v0s         = gl_slabs(k,i)%v0s
@@ -1408,6 +1402,7 @@ contains
         end do ! j = no_ele, no_ele/2+1, -1
 
         if ( present(t_der_flags) ) then
+          !ocl temp(k)
           do j = no_ele, no_ele/2+1, -1
             if ( t_der_flags(j) ) then ! do derivative stuff
               k = no_ele - j + 1
@@ -1434,6 +1429,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.42  2004/12/28 00:26:40  vsnyder
+! Remove unreferenced declaration
+!
 ! Revision 2.41  2004/12/13 20:55:36  vsnyder
 ! Make Slabs_Prep and Slabs_Prep_dT public.  Add Slabs_Prep_Struct.  Polish
 ! some TeXnicalities.  Revise Slabswint_dT and Slabswint_Lines_dT not to

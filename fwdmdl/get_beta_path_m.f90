@@ -555,7 +555,7 @@ contains
 
 ! -----------------------------------------  Create_beta_path  ---------
 
-  subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio, &
+  pure subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio, &
          &   Slabs_0, Tanh1, NoPolarized, Beta_value, dTanh_dT,        &
          &   Path_flags, dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv )
 
@@ -606,7 +606,6 @@ contains
 
 ! -----     Local variables     ----------------------------------------
 
-    real(rp), pointer :: Cont(:) ! continuum parameters
     integer :: J, K              ! Subscript, loop inductor
     integer :: LN_I              ! Line index
     integer :: NL                ! no of lines
@@ -627,12 +626,12 @@ contains
     spect_der = associated(dBeta_dw) .or. associated(dBeta_dn) .or. &
               & associated(dBeta_dv)
 
+    !ocl temp(k,temp_der,bv,dBdT)
     do j = 1, size(path_inds)
       k = path_inds(j)
       temp_der = associated(dBeta_dT)
       if ( temp_der .and. associated(path_flags) ) temp_der = path_flags(k)
 
-      cont => slabs_0(k)%catalog%continuum
       select case ( slabs_0(k)%catalog%molecule )
       case ( l_n2 ) ! ...........................................  Dry Air
 
@@ -640,11 +639,13 @@ contains
         ! function is for all isotopic forms of N2 hence the ratio is one.
 
         if ( temp_der ) then
-          call abs_cs_n2_cont_dT ( cont, temp(j), pressure(k), fgr, bv, dBdT )
+          call abs_cs_n2_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
+            & pressure(k), fgr, bv, dBdT )
           beta_value(j) = beta_value(j) + bv
           dBeta_dT(j) = dBeta_dT(j) + dBdT
         else
-          beta_value(j) = beta_value(j) + abs_cs_n2_cont(cont,Temp(j),Pressure(k),Fgr)
+          beta_value(j) = beta_value(j) + &
+            & abs_cs_n2_cont(slabs_0(k)%catalog%continuum,Temp(j),Pressure(k),Fgr)
         end if
 
       case ( l_extinction ) ! ................................  Extinction
@@ -656,21 +657,25 @@ contains
       case ( l_o2 ) ! ................................................  O2
 
         if ( temp_der ) then
-          call abs_cs_o2_cont_dT ( cont, temp(j), pressure(k), fgr, bv, dBdT )
+          call abs_cs_o2_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
+            & pressure(k), fgr, bv, dBdT )
           beta_value(j) = beta_value(j) + ratio * bv
           dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
         else
-          beta_value(j) = beta_value(j) + ratio * abs_cs_o2_cont(cont,Temp(j),Pressure(k),Fgr)
+          beta_value(j) = beta_value(j) + ratio * &
+            & abs_cs_o2_cont(slabs_0(k)%catalog%continuum,Temp(j),Pressure(k),Fgr)
         end if
 
       case default ! ..............................................  Other
 
         if ( temp_der ) then
-          call abs_cs_cont_dT ( cont, temp(j), pressure(k), fgr, bv, dBdT )
+          call abs_cs_cont_dT ( slabs_0(k)%catalog%continuum, temp(j), &
+            & pressure(k), fgr, bv, dBdT )
           beta_value(j) = beta_value(j) + ratio * bv
           dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
         else
-          beta_value(j) = beta_value(j) + ratio * abs_cs_cont(cont,Temp(j),Pressure(k),Fgr)
+          beta_value(j) = beta_value(j) + ratio * &
+            & abs_cs_cont(slabs_0(k)%catalog%continuum,Temp(j),Pressure(k),Fgr)
         end if
 
       end select
@@ -712,6 +717,7 @@ contains
         if ( spect_der ) then ! Spectroscopy derivatives required
                               ! Will recompute Beta but not use it if temp_der
 
+          !ocl temp(dNu,dw,dn,dv)
           do ln_i = 1, nl
 
             if ( noPolarized ) then
@@ -755,7 +761,7 @@ contains
   end Subroutine Create_beta_path
 
   ! ---------------------------------------  Create_Beta_Path_PFA  -----
-  subroutine Create_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, Vel_Rel, &
+  pure subroutine Create_Beta_Path_PFA ( Frq, P_Path, Path_Inds, T_Path, Vel_Rel, &
     & PFAD, Ratio, Beta_Path, T_Der_Path, dBdT, dBdw, dBdn, dBdv )
 
     use D_Hunt_m, only: Hunt
@@ -787,7 +793,6 @@ contains
 
 ! -----     Local variables     ----------------------------------------
 
-    real(rk), pointer :: A(:,:)  ! Absorption from PFAD
     real(kind(beta_path)) :: BP  ! Temp for one cell of beta_path
     real(r8), parameter :: C = speedOfLight / 1000.0_r8 ! km/s
     real(rp) :: dBdNu            ! d log Beta / d nu, for Doppler correction
@@ -801,8 +806,6 @@ contains
     integer :: T_I1, T_I2        ! Indices in PFAData%tGrid%surfs
     real(rp) :: T_Fac            ! Interpolating factor for Temperature
 
-    a => PFAD%absorption
-
     !{ Doppler correction = $\nu_0 \left[ \left( 1 - \frac{v}c \right) -
     !                                     \left( 1 - \frac{v_l}c \right) \right] =
     !                        \nu_0 \left[ \frac{v_l}c - \frac{v}c \right] $
@@ -812,6 +815,8 @@ contains
     p_i1 = 0 ! Initialize for Hunt
     t_i1 = 0
 
+    !ocl independent
+    !ocl temp
     do j = 1, size(path_inds)
 
       k = path_inds(j)
@@ -840,10 +845,10 @@ contains
       ! Interpolate to get log Beta at the linearization velocity, then
       ! exponentiate to get Beta
       bp = ratio * ( 1.0 + doppler * dBdNu ) * exp( &
-        & a(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
-        & a(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
-        & a(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
-        & a(t_i1+1,p_i1+1) * t_fac * p_fac )
+        & PFAD%absorption(t_i1  ,p_i1  ) * (1.0-t_fac) * (1.0-p_fac) + &
+        & PFAD%absorption(t_i1+1,p_i1  ) * t_fac       * (1.0-p_fac) + &
+        & PFAD%absorption(t_i1  ,p_i1+1) * (1.0-t_fac) * p_fac       + &
+        & PFAD%absorption(t_i1+1,p_i1+1) * t_fac * p_fac )
       beta_path(j) = beta_path(j) + bp
 
       !{ \raggedright 
@@ -892,8 +897,10 @@ contains
         ! Interpolate to get d log Beta / d log T, then Doppler correct
         ! and multiply by Beta / T to get dBeta / dT
         dBdT(j) = dBdT(j) + bp / (del_t * t_path(j)) * ( &
-          & ( a(t_i1+1,p_i1  ) - a(t_i1,  p_i1  ) ) * (1.0-p_fac) + &
-          & ( a(t_i1+1,p_i1+1) - a(t_i1,  p_i1+1) ) * p_fac + &
+          & ( PFAD%absorption(t_i1+1,p_i1  ) - &
+          &   PFAD%absorption(t_i1,  p_i1  ) ) * (1.0-p_fac) + &
+          & ( PFAD%absorption(t_i1+1,p_i1+1) - &
+          &   PFAD%absorption(t_i1,  p_i1+1) ) * p_fac + &
           & doppler * ( ( PFAD%dAbsDnu(t_i1+1,p_i1  ) - &
           &               PFAD%dAbsDnu(t_i1,  p_i1  ) ) * (1.0-p_fac) + &
           &             ( PFAD%dAbsDnu(t_i1+1,p_i1+1) - &
@@ -945,7 +952,7 @@ contains
   ! -------------------------------------------  Abs_CS_Cont_dT  -----
 
   ! Compute the general continuum contribution and its temperature derivative
-  subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+  pure subroutine Abs_CS_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
     use MLSCommon, only: RP
 
@@ -999,7 +1006,7 @@ contains
   ! ----------------------------------------  Abs_CS_N2_Cont_dT  -----
 
   ! Compute the N2 continuum contribution and its temperature derivative
-  subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+  pure subroutine Abs_CS_N2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
     & Beta, dBeta_dT )
 
     use MLSCommon, only: RP
@@ -1061,7 +1068,7 @@ contains
   ! ----------------------------------------  Abs_CS_O2_Cont_dT  -----
 
   ! Compute the O2 continuum contribution
-  subroutine Abs_CS_O2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
+  pure subroutine Abs_CS_O2_Cont_dT ( Cont, Temperature, Pressure, Frequency, &
       & Beta, dBeta_dT )
 
     use MLSCommon, only: RP
@@ -1101,6 +1108,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.74  2005/03/26 01:26:29  vsnyder
+! Make sure dBeta_dw etc get a value even if there are no lines
+!
 ! Revision 2.73  2005/03/25 21:04:57  vsnyder
 ! Don't clobber continuum in Create_Beat if there are lines
 !

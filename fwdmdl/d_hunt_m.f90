@@ -16,7 +16,7 @@ module D_HUNT_M
 contains
 ! A binary search routine with a hunt procedure, to start from last known
 ! location (if 0 < JLO < N) or from the begining otherwise.
-  subroutine D_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
+  pure subroutine D_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
     use MLSCommon, only: I4, R8
     integer, parameter :: RK = r8
     include 'hunt.f9h'
@@ -27,6 +27,9 @@ contains
 
 end module D_HUNT_M
 ! $Log$
+! Revision 2.2  2002/10/08 17:08:02  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.1  2002/10/04 01:24:44  vsnyder
 ! Move stuff from module scopt to procedure scope, cosmetic changes
 !
