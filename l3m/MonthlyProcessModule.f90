@@ -491,9 +491,9 @@ CONTAINS
 	  iP = 0
 	  DO kP = pStartIndex, pEndIndex 
 	    iP = iP + 1
-	    l3dz(iD)%pressure(iP) = cfProd%l3presLvl(iP) 
-	    dzA(iD)%pressure(iP)  = cfProd%l3presLvl(iP) 
-	    dzD(iD)%pressure(iP)  = cfProd%l3presLvl(iP) 
+	    l3dz(iD)%pressure(iP) = l2gp(1)%pressures(kP) 
+	    dzA(iD)%pressure(iP)  = l2gp(1)%pressures(kP) 
+	    dzD(iD)%pressure(iP)  = l2gp(1)%pressures(kP) 
           ENDDO
 
           DO J = 1, cfDef%nNom 
@@ -615,9 +615,9 @@ CONTAINS
 	iP = 0
 	DO kP = pStartIndex, pEndIndex 
 	  iP = iP + 1
-	  l3mz%pressure(iP) = cfProd%l3presLvl(iP) 
-	  mzA%pressure(iP)  = cfProd%l3presLvl(iP) 
-	  mzD%pressure(iP)  = cfProd%l3presLvl(iP) 
+	  l3mz%pressure(iP) = l2gp(1)%pressures(kP) 
+	  mzA%pressure(iP)  = l2gp(1)%pressures(kP) 
+	  mzD%pressure(iP)  = l2gp(1)%pressures(kP) 
         ENDDO
 
         DO J = 1, cfDef%nNom 
@@ -719,9 +719,9 @@ CONTAINS
         iP = 0
         DO kP = pStartIndex, pStartIndex
           iP = iP + 1
-	  l3mm%pressure(iP) = cfProd%l3presLvl(iP) 
-	  mmA%pressure(iP)  = cfProd%l3presLvl(iP) 
-	  mmD%pressure(iP)  = cfProd%l3presLvl(iP) 
+	  l3mm%pressure(iP) = l2gp(1)%pressures(kP) 
+	  mmA%pressure(iP)  = l2gp(1)%pressures(kP) 
+	  mmD%pressure(iP)  = l2gp(1)%pressures(kP) 
 	END DO
 
         DO J = 1, cfProd%nLats
