@@ -130,6 +130,7 @@ module QuantityTemplates         ! Quantities within vectors
     real(r8) :: lo     ! Local oscillator (optional)
 
     integer :: signal                   ! Index into signals database
+    integer :: sideband                 ! Associated sideband -1, 0, +1
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Some families of quantities require special additional information.
@@ -386,6 +387,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.10  2001/04/10 22:37:49  vsnyder
+! Fix a type
+!
 ! Revision 2.9  2001/03/24 00:31:12  pwagner
 ! USEs output in case we replace MLSMessage with output in additem..
 !
