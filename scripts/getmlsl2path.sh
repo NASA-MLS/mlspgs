@@ -21,7 +21,7 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/v1.0.1"
 	else
-	    echo "/bigdata/livesey/v1.0.1"
+	    echo "/data/dao/tsyn3d_mis_p/geos4/1996"
 	fi
     fi
     if [ $1 == "--output" ]; then
@@ -80,6 +80,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.5  2003/05/03 22:01:11  livesey
+# Added DAO
+#
 # Revision 1.4  2003/02/19 21:58:01  livesey
 # Moved l2pc files on soundbarrier
 #
