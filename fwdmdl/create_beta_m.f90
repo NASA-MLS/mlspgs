@@ -136,9 +136,9 @@ contains
 
       if(Frq_Gap > 0.0  .and. abs(dNu) >= Frq_Gap) CYCLE
 !
-      tp = abs(y(ln_i))/SqrtLn2                ! Wc/Wd
+      s = abs(y(ln_i))/SqrtLn2                 ! Wc/Wd
       ra = abs(x1(ln_i)*dNu)/SqrtLn2           ! abs(dNU)/Wd
-      do_Lorentz = (ra > 15.0 .or. tp > 3.0)
+      do_Lorentz = (ra > 15.0 .or. s > 3.0)
 !
       if(do_Lorentz) then
         Call Lorentz_spectral(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
@@ -176,8 +176,13 @@ contains
 !
 ! Prepare the temperature weighted coefficients:
 !
+      ds = Fgr - v0s(ln_i)
+      if(Frq_Gap > 0.0  .and. abs(ds) >= Frq_Gap) CYCLE
+!
       dNu = Fgr - v0sp(ln_i)
-      if(Frq_Gap > 0.0  .and. abs(dNu) >= Frq_Gap) CYCLE
+      s = abs(y(ln_i))/SqrtLn2              ! Wc/Wd
+      ra = abs(x1(ln_i)*dNu)/SqrtLn2        ! abs(dNU)/Wd
+      do_Lorentz = (ra > 15.0 .or. s > 3.0)
 
       if(do_Lorentz) then
         Call Lorentz_spectral(dNu,v0sp(ln_i),x1p(ln_i),yip(ln_i), &
@@ -190,6 +195,11 @@ contains
       bp = bp + bb
 !
       dNu = Fgr - v0sm(ln_i)
+      if(s <= 3.0) then
+        ra = abs(x1(ln_i)*dNu)/SqrtLn2      ! abs(dNU)/Wd
+        do_Lorentz = (ra > 15.0)
+      endif
+
       if(do_Lorentz) then
         Call Lorentz_spectral(dNu,v0sm(ln_i),x1m(ln_i),yim(ln_i), &
        &     ym(ln_i),w,tm,slabs1m(ln_i),dslabs1_dv0(ln_i),bb,    &
@@ -213,6 +223,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 1.13  2001/06/21 13:07:08  zvi
+! Speed enhancement MAJOR update
+!
 ! Revision 1.12  2001/06/07 23:30:33  pwagner
 ! Added Copyright statement
 !
