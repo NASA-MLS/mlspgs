@@ -325,7 +325,7 @@ CONTAINS
   SUBROUTINE DestroyVectorDatabase(database)
 
     ! Dummy argument
-    TYPE (Vector_T), DIMENSION(:), POINTER :: database
+    TYPE (Vector_T), INTENT(INOUT), DIMENSION(:), POINTER :: database
 
     ! Local variables
     INTEGER :: l2gpIndex
@@ -471,6 +471,10 @@ END MODULE VectorsModule
 
 !
 ! $Log$
+! Revision 1.7  2000/04/13 23:45:33  vsnyder
+! Removed INTENT(IN) for the argument "vector" of DestroyVectorInfo, for
+! which a component was deallocated
+!
 ! Revision 1.6  2000/01/20 01:29:59  livesey
 ! Added GetSubVectorAs2DArray
 !
