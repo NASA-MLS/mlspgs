@@ -9,7 +9,10 @@
 begin Fill
   apriori: Vector, template=stateTemplate
   aprioriPrecision: Vector, template=stateTemplate
-  length: Vector, template=stateTemplate, /lengthScale
+  hReg: Vector, template=stateTemplate
+  vReg: Vector, template=stateTemplate
+  ;; The low/high bound options here make sure it defaults to
+  ;; +/- huge, instead of the usual default of zero
   lowBound: Vector, template=stateTemplate, /lowBound
   highBound: Vector, template=stateTemplate, /highBound
 end Fill
@@ -45,7 +48,7 @@ begin Fill
   ;; Get RHI from H2O
   Fill, quantity=apriori.rhi, h2oQuantity=apriori.h2o, $
     temperatureQuantity=apriori.temperature, method=RHIFromH2O, /dontMask
-  })
+  }) ;; End if gotClimatology
 
   ;; --------------------------------------------- trop H2O
 
@@ -68,7 +71,7 @@ begin Fill
     ;; Get RHI_HR from RHI.  Not sure if this should really be from
     ;; H2O_HR and temperature_HR
     !fillHiRes(apriori.RHI_HR)
-  })
+  }) ;; End if not skipHiRes
 end Fill
 
 ;; ----------------------------------- Lesser state
@@ -88,7 +91,7 @@ begin Fill
   },{
     Fill, quantity=apriori.refGPH, method=explicit, $
       explicitvalues=16 km,/spread
-  })
+  }) ;; End if precision estimates
 
   ;; Compute non refracted phitans for apriori
   Fill, quantity=apriori.phiTanGHz, method=refract, $
@@ -108,7 +111,7 @@ begin Fill
   Fill, quantity=apriori.gph_HR, method=hydrostatic, $
     temperatureQuantity=apriori.temperature_HR, $
     refGPHquantity=apriori.refGPH
-  })
+  }) ;; End if not skipHiRes
 
   !ifdef(skipHydrostatic,{},{
   ;; Now compute the tangent presssures for apriori
@@ -130,16 +133,16 @@ begin Fill
     phiTan=apriori.phiTanTHz, $
     maxIterations=20, $
     !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
-  })
+  }) ;; End if not skipHydrostatic
 
-})
+}) ;; End if gotClimatology
 
 Fill, quantity=apriori.magneticField, method=magneticModel, $
   GPHquantity=apriori.gph
 
 end Fill
 
-;; -------------------------------- Apriori precisions and length scales
+;; -------------------------------- Apriori precisions
 
 begin Fill
   ;; Now we're going to fill the apriori errors up
@@ -177,45 +180,10 @@ begin Fill
   Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
   Fill, quantity=aprioriPrecision.gph, method=explicit, /spread, explicitValues= 5 km
 
-  ;; Now we're going to fill the a priori length scales up
-  !ifdef(standardLength,{},{!define(standardLength, 0 km)})
-
-  Fill, quantity=length.bro,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.ch3cn,   method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.clo,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.co,      method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.h2o,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hcl,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hcn,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hno3,    method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.ho2,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.hocl,    method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.n2o,     method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.o3,      method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.oh,      method=explicit, /spread, explicitValues= !standardLength
-  Fill, quantity=length.so2,     method=explicit, /spread, explicitValues= !standardLength
-
-  Fill, quantity=length.temperature, method=explicit, /spread, $
-    explicitValues= !standardLength
-
-  !ifdef(skipHiRes,{},{
-    !fillHiRes(length.temperature_HR)
-    !forall(fillHiRes,!makelist(length.,{},!allHiResMolecules))
-    !fillHiRes(length.tropH2O_HR)
-  })
-
   !define(fillExtinctionApriori,{
   Fill, quantity=aprioriPrecision.extinctionConstant$1, $
     method=explicit, /spread, explicitValues=1.0e-3
   Fill, quantity=aprioriPrecision.extinctionShaped$1, $
-    method=explicit, /spread, explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstantLinear$1, $
-    method=explicit, /spread, explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShapedLinear$1, $
-    method=explicit, /spread, explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstantFull$1, $
-    method=explicit, /spread, explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShapedFull$1, $
     method=explicit, /spread, explicitValues=1.0e-3})
   !forall({fillExtinctionApriori},!allRadiometers)
 
@@ -254,7 +222,7 @@ begin Fill
     ;; Get gph_HR from gph.  Not sure if this should really be from
     ;; temperature_HR
     !fillHiRes(aprioriPrecision.gph_HR)
-  })
+  }) ;; End if not skipHiRes
 
   ;; Setup the low and high bounds for stuff that needs them.
   Fill, quantity=lowBound.temperature, method=explicit, explicitValues=50K, /spread
@@ -272,6 +240,73 @@ begin Fill
     !fillHiRes(highBound.tropH2O_HR)
     !forall(fillHiRes,!makelist(lowBound.,{},!allHiResMolecules))
     !forall(fillHiRes,!makelist(highBound.,{},!allHiResMolecules))
-  })
+  }) ;; End if not skipHiRes
+
+  ;; Now set the smoothing weights - we'll use a profile fill, even if
+  ;; it's only one value.
+  ;; Vertical
+  Fill, quantity=vReg.temperature, method=explicit, explicitValues= 1 K, /spread
+
+  Fill, quantity=vReg.bro,   method=profile, profileValues=[ 100mb:0.1ppbv ]
+  Fill, quantity=vReg.ch3cn, method=profile, profileValues=[ 100mb:30pptv ]
+  Fill, quantity=vReg.clo,   method=profile, profileValues=[ 100mb:0.3ppbv ]
+  Fill, quantity=hReg.co,    method=profile, profileValues=[ 316mb:5ppbv, $
+    146mb:5ppbv, 1mb:100ppbv, 0.01mb:10ppmv ]
+  Fill, quantity=vReg.h2o,   method=profile, profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv ]
+  Fill, quantity=vReg.hcl,   method=profile, profileValues=[ 100mb:0.3ppbv ]
+  Fill, quantity=vReg.hcn,   method=profile, profileValues=[ 100mb:100pptv ]
+  Fill, quantity=vReg.hno3,  method=profile, profileValues=[ 100mb:10ppbv ]
+  Fill, quantity=vReg.ho2,   method=profile, profileValues=[ 100mb:10ppbv ]
+  Fill, quantity=vReg.hocl,  method=profile, profileValues=[ 100mb:0.3ppbv ]
+  Fill, quantity=vReg.n2o,   method=profile, profileValues=[ 100mb:30ppbv ]
+  Fill, quantity=vReg.o3,    method=profile, profileValues=[ 316mb:50ppbv, $
+    146mb:50ppbv, 100mb:1ppmv ]
+  Fill, quantity=vReg.oh,    method=profile, profileValues=[ 10mb:30pptv, 1mb:300pptv ]
+
+  Fill, quantity=vReg.extinctionShapedR1A, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=vReg.extinctionShapedR2, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=vReg.extinctionShapedR3, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=vReg.extinctionShapedR4, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=vReg.extinctionShapedR5H, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=vReg.extinctionShapedR5V, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+
+  ;; Horizontal
+  Fill, quantity=hReg.temperature, method=explicit, explicitValues=1K, /spread
+  Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
+
+  Fill, quantity=hReg.bro,   method=profile, profileValues=[ 100mb:0.1ppbv ]
+  Fill, quantity=hReg.ch3cn, method=profile, profileValues=[ 100mb:30pptv ]
+  Fill, quantity=hReg.clo,   method=profile, profileValues=[ 100mb:0.1ppbv ]
+  Fill, quantity=hReg.co,    method=profile, profileValues=[ 316mb:5ppbv, $
+    146mb:5ppbv, 1mb:100ppbv, 0.01mb:10ppmv ]
+  Fill, quantity=hReg.h2o,   method=profile, profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv ]
+  Fill, quantity=hReg.hcl,   method=profile, profileValues=[ 100mb:0.3ppbv ]
+  Fill, quantity=hReg.hcn,   method=profile, profileValues=[ 100mb:100pptv ]
+  Fill, quantity=hReg.hno3,  method=profile, profileValues=[ 100mb:0.3ppbv ]
+  Fill, quantity=hReg.ho2,   method=profile, profileValues=[ 100mb:10ppbv ]
+  Fill, quantity=hReg.hocl,  method=profile, profileValues=[ 100mb:0.3ppbv ]
+  Fill, quantity=hReg.n2o,   method=profile, profileValues=[ 100mb:10ppbv ]
+  Fill, quantity=hReg.o3,    method=profile, profileValues=[ 316mb:10ppbv, $
+    146mb:10ppbv, 100mb:0.3ppmv ]
+  Fill, quantity=hReg.oh,    method=profile, profileValues=[ 10mb:30pptv, 1mb:300pptv ]
+
+  Fill, quantity=hReg.extinctionShapedR1A, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=hReg.extinctionShapedR2, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=hReg.extinctionShapedR3, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=hReg.extinctionShapedR4, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=hReg.extinctionShapedR5H, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
+  Fill, quantity=hReg.extinctionShapedR5V, method=profile, $
+    profileValues=[ 100mb:1.0e-5 ]
 
 end Fill

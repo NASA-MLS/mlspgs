@@ -17,7 +17,6 @@ begin Fill
   x$1: Vector, template=x$1Template
   a$1: Vector, template=x$1Template
   t$1: Vector, template=x$1Template
-  l$1: Vector, template=x$1Template
   vr$1: Vector, template=x$1Template
   hr$1: Vector, template=x$1Template
   sdIn$1: Vector, template=x$1Template
@@ -36,14 +35,13 @@ begin Fill
   Transfer, source=state, destination=x$1
   Transfer, source=apriori, destination=a$1
   Transfer, source=aprioriPrecision, destination=sdIn$1
-  Transfer, source=length, destination=l$1
   Transfer, source=vReg, destination=vr$1
   Transfer, source=hReg, destination=hr$1
   Transfer, source=lowBound, destination=lb$1
   Transfer, source=highBound, destination=hb$1
   ;; Construct and fill state covariance
   myCovariance$1: matrix, columns=a$1, type=spd
-  FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert, lengthScale=l$1
+  FillCovariance, matrix=myCovariance$1, diagonal=sdIn$1, /invert
   ;; Construct averaging kernel matrix
   !ifdef(gotAK,{!dnl
   akOut$1: Matrix, columns=x$1, rows=x$1
@@ -104,16 +102,6 @@ end Fill
     !forall(joinOneDiagDGG,!allRetrievalDiagnostics)
   end Join})
 })
-
-;; This macro deals with the state subsetting for quantity $1
-!define(subsetSpecies,{!dnl
-!ifdef($1Range,{
-Subset, quantity=state.$1, height=!$1Range
-Subset, quantity=state.$1, height=!$1Range, mask=Tikhonov
-Subset, quantity=length.$1, height=!$1Range})!nl})
-!define(subsetState,{!dnl
-!forall({subsetSpecies},!allMolecules)
-!subsetSpecies(Temperature)!nl})
 
 ;; This macro deals with the radiance subsetting in an easy manner.
 ;; $1 is the phase name, $2 the band, $3 the height range and $4 the depth limit
@@ -231,6 +219,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 !define(nbw,{!nbw$1})
 
 ; $Log$
+; Revision 1.39  2002/12/16 16:24:51  mjf
+; HiRes and columns
+;
 ; Revision 1.38  2002/11/26 23:38:20  livesey
 ; Added radiance diagnostics
 ;
