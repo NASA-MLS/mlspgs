@@ -1,12 +1,14 @@
 # $Id$
 #
-# This is a Makefile for my test programs
+# This is a makefile for the utils section of the mlspgs suite
+#
+include make_${OSTYPE}.inc
 
-OBJ=mlsstrings.o signalsfile.o
+OBJS=mlsstrings.o signalsfile.o
 
 all: util.a
 
-util.a: ${OBJ}
+util.a: ${OBJS}
 	ar ru util.a $?
 
 clean:
