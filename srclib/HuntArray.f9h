@@ -7,13 +7,14 @@
 !    & nearest )
     ! Local variables
     real(rk) :: thisValue
+    real(rk) :: logThisValue
     integer :: listLen, valuesLen       ! Array sizes
     integer :: valueIndex               ! Loop counters
     integer :: index                    ! Temporary result
     integer :: alternativeIndex         ! Used in 'nearest' case
     integer :: originalIndex            ! Used in 'nearest' case
 
-    logical :: useAllowTopValue, useAllowBelowValue, useNearest
+    logical :: useAllowTopValue, useAllowBelowValue, useNearest, useLogSpace
     logical :: wentUp, wentDown         ! Flags
     integer :: useStart
     integer :: upperLimit       ! Highest value that can be returned
@@ -46,6 +47,12 @@
       useNearest = nearest
     else
       useNearest = .false.
+    end if
+
+    if ( present(logSpace) ) then
+      useLogSpace = logSpace
+    else
+      useLogSpace = .false.
     end if
 
     if ( present(start) ) then
@@ -172,10 +179,22 @@
           alternativeIndex = alternativeIndex + 1
           if ( list(alternativeIndex) > list(index) ) exit nearestLoop
         end do nearestLoop
-        ! If this is higher, use it
-        if ( abs ( list(alternativeIndex) - thisValue ) < &
-          &  abs ( list(index) - thisValue ) ) then
-          index = alternativeIndex
+        ! If this is closer, use it
+        if ( useLogSpace ) then
+          ! Check for errors in log space case
+          if ( any ( (/ list(index), list(alternativeIndex), thisValue /) <= 0.0 ) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Non positive value in logSpace nearest hunt' )
+          logThisValue = log ( thisValue )
+          if ( abs ( log ( list(alternativeIndex) ) - logThisValue ) < &
+            &  abs ( log ( list(index) ) - logThisValue ) ) then
+            index = alternativeIndex
+          end if
+        else
+          if ( abs ( list(alternativeIndex) - thisValue ) < &
+            &  abs ( list(index) - thisValue ) ) then
+            index = alternativeIndex
+          end if
         end if
       end if
 
@@ -194,6 +213,9 @@
 ! end subroutine HuntArray_r*
 
 ! $Log$
+! Revision 1.4  2004/07/31 19:22:53  livesey
+! Some checking against infiniate looping.
+!
 ! Revision 1.3  2003/07/07 20:29:22  livesey
 ! Now handles zero length arrays
 !
