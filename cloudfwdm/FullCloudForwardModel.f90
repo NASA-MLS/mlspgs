@@ -762,10 +762,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     end where
     whichPatternAsArray = minloc ( superset )
     whichPattern = whichPatternAsArray(1)
-    if ( toggle(emit) .and. levels(emit) > 2 ) then
-       call output ( 'Using antenna pattern: ' )
-       call output ( whichPattern, advance='yes' )
-    end if
+!    if ( toggle(emit) .and. levels(emit) > 2 ) then
+!       call output ( 'Using antenna pattern: ' )
+!       call output ( whichPattern, advance='yes' )
+!    end if
 
     !---------------------------------------------
     ! Now call the Full CloudForwardModel routine
@@ -1115,6 +1115,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.124  2004/01/08 00:24:32  jonathan
+! add tracing signals
+!
 ! Revision 1.123  2003/11/21 19:17:40  dwu
 ! fix a bug from the last modification
 !
