@@ -94,7 +94,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------  CreateHGridFromMLSCFInfo  -----
   type(hGrid_T) function CreateHGridFromMLSCFInfo &
-    & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunk ) result ( hGrid )
+    & ( name, root, l1bInfo, l2gpDatabase, processingRange, chunks, chunkNo ) result ( hGrid )
 
   ! This routine creates an hGrid based on the user requests.
 
@@ -104,7 +104,8 @@ contains ! =====     Public Procedures     =============================
     type (L1BInfo_T), intent(in) :: L1BINFO   ! File handles for l1b data
     type (L2GPData_T), pointer, dimension(:) :: L2GPDATABASE
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-    type (MLSChunk_T), intent(in) :: CHUNK    ! This chunk
+    type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS ! The chunks
+    integer, intent(in) :: CHUNKNO
 
     ! Local variables
     integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
@@ -207,7 +208,7 @@ contains ! =====     Public Procedures     =============================
       if (.not. got_field(f_module) ) then
         call announce_error ( root, NoModule )
       else
-        call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunk, &
+        call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunks(chunkNo), &
           & got_field, root, height, fraction, interpolationFactor, &
           & instrumentModuleName, mif, hGrid )
       end if
@@ -236,15 +237,17 @@ contains ! =====     Public Procedures     =============================
       else if ( .not. all(got_field((/f_spacing, f_origin/)))) then
         call announce_error ( root, NoSpacingOrigin )
       else
-        call CreateRegularHGrid ( l1bInfo, processingRange, chunk, spacing, origin, &
-          & trim(instrumentModuleName), hGrid )
+        call CreateRegularHGrid ( l1bInfo, processingRange, chunks, chunkNo, &
+          & spacing, origin, trim(instrumentModuleName), hGrid )
       end if
 
     case ( l_l2gp) ! -------------------- L2GP ------------------------
       
       ! Get the time from the l1b file
       call ReadL1BData ( l1bInfo%l1boaID, "MAFStartTimeTAI", l1bField, noMAFs, &
-        & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex)
+        & l1bFlag, &
+        & firstMAF=chunks(chunkNo)%firstMAFIndex, &
+        & lastMAF=chunks(chunkNo)%lastMAFIndex)
       if ( l1bFlag==-1) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_L1BRead//"MAFStartTimeTAI" )
       
@@ -509,11 +512,12 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateMIFBasedHGrids
 
   ! ----------------------------------- CreateRegularHGrid ------------
-  subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunk, &
+  subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunks, chunkNo, &
     & spacing, origin, instrumentModuleName, hGrid )
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
-    type (MLSChunk_T), intent(in) :: CHUNK
+    type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS
+    integer, intent(in) :: CHUNKNO
     real(r8), intent(in) :: SPACING
     real(r8), intent(in) :: ORIGIN
     character (len=*), intent(in) :: INSTRUMENTMODULENAME
@@ -537,8 +541,10 @@ contains ! =====     Public Procedures     =============================
     real(r8) :: NEXTANGLE               ! First non ovl. MAF for next chunk
 
     type (L1BData_T) :: L1BFIELD        ! A field read from L1 file
+    type (MLSChunk_T) :: CHUNK
 
     ! Executable code
+    chunk = chunks ( chunkNo )
 
     ! Setup the empircal geometry estimate of lon0
     ! (it makes sure it's not done twice)
@@ -604,7 +610,8 @@ contains ! =====     Public Procedures     =============================
     ! Get orbital inclination
     call ReadL1BData ( l1bInfo%l1bOAID, "scOrbIncl", &
       & l1bField, noMAFs, flag, &
-      & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+      & firstMAF=chunk%firstMAFIndex, &
+      & lastMAF=chunk%lastMAFIndex )
     ! Use the average of all the first MIFs to get inclination for chunk
     incline = sum ( l1bField%dpField(1,1,:) ) / noMAFs
     call DeallocateL1BData ( l1bField )
@@ -655,19 +662,30 @@ contains ! =====     Public Procedures     =============================
 
     ! Now work out how much of this HGrid is overlap
     ! The deal will be the first legitimate profile is the first one who's phi
-    ! is above the first non overlapped MAF
-    call Hunt ( hGrid%phi, mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
-      & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
-    ! So the hunt returns the index of the last overlapped, which is
-    ! the number we want to be in the overlap.
-    call Hunt ( hGrid%phi, nextAngle, &
-      & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
-    ! Here the hunt returns the index of the last non overlapped profile
-    ! So we do a subtraction to get the number in the overlap.
-    hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
+    ! is above the first non overlapped MAF.
+    ! The exceptions are for the first and last chunks, where the later test
+    ! for the processing time range is the limiting factor
+    if ( chunkNo > 1 ) then
+      call Hunt ( hGrid%phi, mif1GeodAngle(chunk%noMAFsLowerOverlap+1), &
+        & hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+      ! So the hunt returns the index of the last overlapped, which is
+      ! the number we want to be in the overlap.
+    else
+      hGrid%noProfsLowerOverlap = 0
+    end if
+
+    if ( chunkNo < size(chunks) ) then
+      call Hunt ( hGrid%phi, nextAngle, &
+        & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
+      ! Here the hunt returns the index of the last non overlapped profile
+      ! So we do a subtraction to get the number in the overlap.
+      hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
+    else
+      hGrid%noProfsUpperOverlap = 0
+    end if
 
     ! Now, we want to ensure we don't spill beyond the processing time range
-    if ( hGrid%time(hGrid%noProfsLowerOverlap) < processingRange%startTime ) &
+    if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) &
       & call Hunt ( hGrid%time, processingRange%startTime, &
       &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
     if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
@@ -788,6 +806,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.22  2001/12/16 00:58:24  livesey
+! Working version. Deals with first and last chunks in day properly.
+!
 ! Revision 2.21  2001/12/14 01:43:02  livesey
 ! Various bug fixes
 !
