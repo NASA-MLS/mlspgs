@@ -945,24 +945,42 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillLOSVelocity
 
   ! ------------------------------------------- FillColAbundance ---
-  subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty)
+  subroutine FillColAbundance ( key, qty, bndPressQty, vmrQty, &
+  & firstInstance, lastInstance )
     ! A special fill according to Appendix A of EOS MLS ATBD
     ! JPL D-16159
     ! EOS MLS DRL 601 (part 3)
     ! ATBD-MLS-03
     ! (Livesey and Wu)
+    
+    ! Assumptions:
+    ! (1)This fill operation is triggered by a command
+    !    such as the following in the lcf
+    !      Fill, state.columnO3, method=special, vmrQuantity=state.o3, $
+    !      boundaryPressure=state.tpPressure
+    ! (2)the vmr is in units of PHYQ_VMR and not, say, ppmv;
+    !    it is in fact identical to the coefficients of the mls basis functions
+    ! (3)The pressure surfaces are in hPa, but not all necessarily at the
+    !    same logarithmic distance from one another
+    ! (4)The tropospheric boundary pressure is somewhere in between the surfs
+    ! (5)Unless first,last instances are args, fill all instances
+    !    (unlike join which has to worry about chunks and overlaps)
     integer, intent(in) :: KEY
     type (VectorValue_T), intent(inout) :: QTY
-    type (VectorValue_T), intent(in) :: bndPressQty
-    type (VectorValue_T), intent(in) :: vmrQty
-
+    type (VectorValue_T), intent(in) ::    bndPressQty
+    type (VectorValue_T), intent(in) ::    vmrQty
+    integer, intent(in), optional ::       firstInstance, lastInstance
+    ! The last two are set if only part (e.g. overlap regions) of the quantity
+    ! is to be stored in the column data.
 
     ! Local variables
     real (r8) :: AoverMg         ! A/(M g) from Appendix A
-    integer :: surface
-    integer :: instance
-    integer :: surfaceInstance
-    integer :: firstSurface
+    integer ::   surface
+    integer ::   instance
+    integer ::   surfaceInstance
+    integer ::   firstSurface
+    integer ::   UseFirstInstance, UseLastInstance, &
+    &            NoOutputInstances
     real (r8) :: columnSum
     real (r8) :: Delta_p_plus    ! p[j+1] - p[j]
     real (r8) :: Delta_p_minus   ! p[j-1] - p[j]
@@ -999,12 +1017,29 @@ contains ! =====     Public Procedures     =============================
       return
     end if
 
+    ! Work out what to do with the first and last Instance information
+    
+    if ( PRESENT(firstInstance) ) then
+      useFirstInstance = firstInstance
+    else
+      useFirstInstance = 1
+    end if
+
+    if ( PRESENT(lastInstance) ) then
+      useLastInstance = lastInstance
+    else
+      useLastInstance = qty%template%noInstances
+    end if
+    noOutputInstances = useLastInstance-useFirstInstance+1
+    ! If we've not been asked to output anything then don't carry on
+    if ( noOutputInstances < 1 ) return
    !    AoverMg = 4.12e25 / (2.687e20 * 0.192)
    !    This assumes that
    ! (1) p is in hPa
    ! (2) f is in PHYQ_vmr (*not* ppmv)
    AoverMg = 4.12e5 / (2.687 * 0.192)
-   do instance=1, vmrQty%template%noInstances
+!   do instance=1, vmrQty%template%noInstances
+   do instance=useFirstInstance, useLastInstance
       if(vmrQty%template%coherent) then
          surfaceInstance=1
       else
@@ -1035,6 +1070,7 @@ contains ! =====     Public Procedures     =============================
       & vmrQty%template%surfs(firstSurface, surfaceInstance)
       Delta_log_plus = log(vmrQty%template%surfs(firstSurface+1, surfaceInstance)) - &
       & log(vmrQty%template%surfs(firstSurface, surfaceInstance))
+   ! Loop over surfaces from tropoause+1 to uppermost-1
       do surface = firstSurface+1, vmrQty%template%noSurfs-1
          Delta_p_minus = - Delta_p_plus
          Delta_log_minus = - Delta_log_plus
@@ -1704,6 +1740,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.69  2001/08/02 00:17:06  pwagner
+! Mostly done with column fill; untested
+!
 ! Revision 2.68  2001/08/01 00:05:25  dwu
 ! remove f_sourceSGrid
 !
