@@ -67,7 +67,7 @@ ALLOBJS = $(OBJS)
 
 PROG_NAME=test
 
-PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
+include $(srclib)/targets.h
 
 libl3_sources = ../../../$(init_m_dir)/
 
@@ -82,81 +82,8 @@ l3_driver = MLSL3D.o
 # Nope--will need to think harder about what to do about excluded modules
 delete_lib_first = no
 
-ifdef PVM_ROOT
-   pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
-   pvm_message=Building $(PROG_NAME) with PVM support
-   PVM_OBJS=
-else
-   pvm_linker_line=
-   pvm_message=Building $(PROG_NAME) without PVM support
-   PVM_OBJS=
-endif
-
-ifdef BLAS
-ifdef LIB_BLAS
-    blas_linker_line := $(shell ${REECHO} -dir ${BLAS} -prefixn=-l -lib ${LIB_BLAS})
-    blas_linker_line := -L${BLAS} ${blas_linker_line}
-else
-   blas_linker_line=-L${BLAS} -lblas
-endif
-   blas_message=Building $(PROG_NAME) with externally-supplied BLAS
-else
-   blas_linker_line=
-   blas_message=Building $(PROG_NAME) with internally-supplied BLAS
-endif
-
-ifdef LAPACK
-ifdef LIB_LAPACK
-    lapack_linker_line := $(shell ${REECHO} -dir ${LAPACK} -prefixn=-l -lib ${LIB_LAPACK})
-    lapack_linker_line := -L${LAPACK} ${lapack_linker_line}
-else
-   lapack_linker_line=-L${LAPACK} -llapack
-endif
-   lapack_message=Building $(PROG_NAME) with externally-supplied LAPACK
-else
-   lapack_linker_line=
-   lapack_message=Building $(PROG_NAME) with internally-supplied LAPACK
-endif
-
 utctotai_linker_line=-L${INSTALLDIR} -lutctotai
 utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
-
-ifdef HDF5
-ifeq ($(MLSPLAT),Sun)
-   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
-else
-#   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5} \
-#    -lssl -lz
-   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 
-   l_specials := $(l_specials) -lz
-endif
-ifdef HDFEOS5
-   hdfeos5_linker_line=-L${HDFEOS5} -lhe5_hdfeos
-ifeq ($(MLSF95),LF95)
-   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
-   static_object=$(shell ${UTILDIR}/which_fftw.sh -static)
-ifdef STATIC_LINK
-   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc \
-     ${static_object}
-else
-   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
-endif
-endif
-ifeq ($(MLSF95),IFC)
-   gcc_version=$(shell ${UTILDIR}/which_fftw.sh -gcc)
-   l_specials=-lz -L/usr/lib/gcc-lib/i386-redhat-linux/${gcc_version} -lgcc
-endif
-else
-   hdfeos5_linker_line=
-endif
-   hdf5_message=Building test of mlsl3 with hdf5
-else
-   hdf5_linker_line=
-   hdfeos5_linker_line=
-   hdf5_message=Building test of mlsl3 without hdf5
-endif
-
-fftw_linker_line = $(shell ${UTILDIR}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 
 # ========================================================================
 # Now that we build libmlsl3.a for use by l3 and l3m, the following is outmoded
@@ -205,6 +132,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.22  2004/03/17 19:06:45  pwagner
+# Extra static object to fix building static Lahey executables when Red Hat>8
+#
 # Revision 1.21  2003/03/03 22:59:32  pwagner
 # Removed troublesome customblds includes
 #
