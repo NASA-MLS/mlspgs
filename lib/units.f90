@@ -91,7 +91,9 @@ contains ! =====     Public procedures     =============================
     call declare_unit ( l_zeta, 1.0d0, phyq_zeta )
     call declare_unit ( l_logp, 1.0d0, phyq_zeta )
 !   this is = 1/meters 
-    call declare_unit ( l_extinction, 1.0d0, phyq_extinction )
+    call declare_unit ( l_invm, 1.0d-3, phyq_extinction )
+    call declare_unit ( l_invkm, 1.0d0, phyq_extinction )
+!    call declare_unit ( l_extinction, 1.0d0, phyq_extinction )
 !   this is = 1Pa*1000*1sec^2/1meter^4
     call declare_unit ( l_icedensity, 1.0d1, phyq_icedensity )
 !   this is 1DU ( = 2.687e20 molecules/m^2)
@@ -111,6 +113,10 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.11  2001/11/08 00:12:31  livesey
+! Commented out extinction as it's now a molecule, and so not known yet.
+! Perhaps we'll sort this out later.
+!
 ! Revision 2.10  2001/07/30 23:28:38  pwagner
 ! Added columnAbundances scaffolding--needs fleshing out
 !
