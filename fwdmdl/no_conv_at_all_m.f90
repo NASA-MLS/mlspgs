@@ -12,25 +12,29 @@ module NO_CONV_AT_ALL_M
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
   use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
   use MLSMessageModule, only: MLSMSG_Error, MLSMessage
+
   implicit NONE
   private
+
   public :: NO_CONV_AT_ALL
+
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
-  "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
-  "$RCSfile$"
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
-!---------------------------------------------------------------------------
-! This subroutine transfers the derivatives over from the internal
-! convolution grid to the users specified points. This module uses
-! cubic spline interpolation to do the job.
-!
-  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, maf, channel, &
-    & windowStart, windowFinish, temp, ptan, radiance, &
-    & tan_press,i_raw,k_temp,k_atmos, sbRatio, Jacobian )
-!
+  !-------------------------------------------------------------------------
+  ! This subroutine transfers the derivatives over from the internal
+  ! convolution grid to the users specified points. This module uses
+  ! cubic spline interpolation to do the job.
+
+  Subroutine no_conv_at_all ( ForwardModelConfig, ForwardModelIn, MAF, &
+    & Channel, WindowStart, WindowFinish, Temp, Ptan, Radiance, &
+    & Tan_press, I_raw, K_temp, K_atmos, SbRatio, Jacobian )
+
     type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     type (Vector_T), intent(in) :: FORWARDMODELIN
     integer, intent(in) :: MAF
@@ -48,38 +52,38 @@ contains
     Real(r4) :: k_atmos(:,:,:,:)                 ! (Nptg,mxco,mnp,Nsps)
 
     type (Matrix_T), intent(inout), optional :: Jacobian
-!
-! -----     Local Variables     ----------------------------------------
-!
-    integer:: no_t,no_tan_hts,no_phi_t
+
+    ! -----     Local Variables     ------------------------------------
+
+    integer:: No_t, No_tan_hts, No_phi_t
     type (VectorValue_T), pointer :: F  ! vmr quantity
-    integer :: nz, lk, uk
+    integer :: Nz, Lk, Uk
     integer :: N, I, IS, J, K, NF, SV_I, Spectag
-    integer :: phiWindow
-    integer :: row, col                 ! Indices
-    integer :: ptg                      ! Index
-    integer :: ind                      ! Index
-!
+    integer :: PhiWindow
+    integer :: Row, col                 ! Indices
+    integer :: Ptg                      ! Index
+    integer :: Ind                      ! Index
+
     real(r8) :: RAD( size(tan_press))
     real(r8) :: SRad(ptan%template%noSurfs)
-    real(r8) :: der_all(ptan%template%noSurfs)
-    real(r8) :: i_star_all(ptan%template%noSurfs)
-!
-    Character(LEN=01) :: CA
+    real(r8) :: Der_all(ptan%template%noSurfs)
+    real(r8) :: I_star_all(ptan%template%noSurfs)
 
-! -----  Begin the code  -----------------------------------------
-!
+    Character :: CA
+
+    ! -----  Begin the code  -------------------------------------------
+
     no_t = temp%template%noSurfs
     no_phi_t = temp%template%noInstances
     no_tan_hts = size(tan_press)
-!
-! Compute the ratio of the strengths
-!
-! This subroutine is called by channel
-!
+
+    ! Compute the ratio of the strengths
+
+    ! This subroutine is called by channel
+
     k = no_tan_hts
     j = ptan%template%noSurfs
-    if (present(Jacobian)) then
+    if ( present(Jacobian) ) then
       Call Cspline_der(tan_press,Ptan%values(:,maf),i_raw,i_star_all,der_all,k,j)
 
       row = FindBlock ( Jacobian%row, radiance%index, maf )
@@ -107,30 +111,31 @@ contains
       end do
     else
       Call Cspline(tan_press,Ptan%values(:,maf),i_raw,i_star_all,k,j)
-    endif
+    end if
     do ptg = 1, j
       ind = channel + radiance%template%noChans*(ptg-1)
       radiance%values( ind, maf ) = &
         & radiance%values ( ind, maf ) + sbRatio*i_star_all(ptg)
     end do
       
-!
-    if(.not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der,&
-      & forwardModelConfig%spect_der/))) Return
+
+    if ( .not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der, &
+      & forwardModelConfig%spect_der/)) ) Return
+    if ( .not. present(jacobian) ) return
     row = FindBlock ( Jacobian%row, radiance%index, maf ) ! Tidy up conditions later !???
 
-!
-! Now transfer the other fwd_mdl derivatives to the output pointing
-! values
-!
-! ********************* Temperature derivatives ******************
-!
-! check to determine if derivative is desired for this parameter
-!
-    if (forwardModelConfig%temp_der) then
-!
-! Derivatives needed continue to process
-!
+
+    ! Now transfer the other fwd_mdl derivatives to the output pointing
+    ! values
+
+    ! ********************* Temperature derivatives ******************
+
+    ! check to determine if derivative is desired for this parameter
+
+    if ( forwardModelConfig%temp_der ) then
+
+    ! Derivatives needed continue to process
+
       Rad(1:) = 0.0
       phiWindow = windowFinish-windowStart+1
       do nf = 1, phiWindow
@@ -158,9 +163,9 @@ contains
       end do
 
 
-    endif
+    end if
 
-    if(forwardModelConfig%atmos_der) then
+    if ( forwardModelConfig%atmos_der ) then
 
       ! ****************** atmospheric derivatives ******************
 
@@ -171,7 +176,7 @@ contains
          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
           & molecule=forwardModelConfig%molecules(is), noError=.true. )
 
-        if (associated(f)) then
+        if ( associated(f) ) then
 
           nz = f%template%noSurfs
           Rad(1:) = 0.0
@@ -179,7 +184,7 @@ contains
           ! Derivatives needed continue to process
 
           do nf = 1, f%template%noInstances
-            if(nf+lk-1 > uk) EXIT
+            if ( nf+lk-1 > uk) exit
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
             select case ( Jacobian%block(row,col)%kind ) 
             case ( m_absent )
@@ -194,7 +199,7 @@ contains
             do sv_i = 1, f%template%noSurfs
               Rad(1:k) = k_atmos(1:k,sv_i,nf+lk-1,is)
               Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
-              do ptg = 1,j
+              do ptg = 1, j
                 ind = channel+ radiance%template%noChans*(ptg-1)
                 jacobian%block(row,col)%values( ind, sv_i) = &
                   & jacobian%block(row,col)%values( ind, sv_i) + sbRatio*Srad(ptg)
@@ -202,22 +207,22 @@ contains
             end do
 
           end do
-!
-        endif
-!
+
+        end if
+
       end do
-!
-    endif
-!
-!     if(spect_der) then
-!
+
+    end if
+
+!     if ( spect_der ) then
+
 ! ! ****************** Spectroscopic derivatives ******************
 ! !
 !       do is = 1, n_sps
 ! !
 !         i = spect_atmos(is)
-!         if(i < 1) CYCLE
-!         if(.not.spectroscopic(i)%DER_CALC(band)) CYCLE
+!         if ( i < 1) CYCLE
+!         if ( .not.spectroscopic(i)%DER_CALC(band)) CYCLE
 ! !
 ! ! Derivatives needed continue to process
 ! !
@@ -225,7 +230,7 @@ contains
 ! !
 !         DO
 ! !
-!           if(spectroscopic(i)%Spectag /= Spectag) EXIT
+!           if ( spectroscopic(i)%Spectag /= Spectag) EXIT
 !           n = spectroscopic(i)%no_phi_values
 !           nz = spectroscopic(i)%no_zeta_values
 !           CA = spectroscopic(i)%type
@@ -260,21 +265,24 @@ contains
 !           end do          ! nf loop
 ! !
 !           i = i + 1
-!           if(i > 3 * n_sps) EXIT
+!           if ( i > 3 * n_sps) EXIT
 ! !
 !         END DO
 ! !
 !       end do
 ! !
-!     endif
-!
+!     end if
+
 
     Return
-!
+
   End Subroutine NO_CONV_AT_ALL
-!
+
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.15  2001/04/27 00:13:29  zvi
+! Fixing some phiwindow bug
+!
 ! Revision 1.14  2001/04/26 22:54:41  zvi
 ! Fixing some phiwindow bug
 !
