@@ -7,7 +7,6 @@ module Geometry
   ! forward model and the scan model.
 
   use MLSCommon, only: R8, RP
-  use Units, only: Deg2Rad, PI
 
   implicit NONE
   private
@@ -25,7 +24,7 @@ module Geometry
 
   ! Gravity-related terms.
 
-  real (r8), parameter :: G0 = 9.80665         ! Nominal little g ms-2
+  real(r8), parameter :: G0 = 9.80665          ! Nominal little g ms-2
   real(rp), parameter :: GM = 3.98600436e14_rp ! m^3/sec^2
 
   ! These are the 1980 reference geoid values.
@@ -35,11 +34,16 @@ module Geometry
 
   ! earth rotational velocity.
 
-  real(rp), parameter :: W = 7.292115e-05_rp ! rad/sec
+  real(rp), parameter :: W = 7.292115e-05_rp   ! rad/sec
 
   ! Earth surface geopotential height.
 
-  real (r8), parameter :: EarthSurfaceGPH = 6387182.265_r8 ! meters
+  real(r8), parameter :: EarthSurfaceGPH = 6387182.265_r8 ! meters
+
+  ! Seconds per tropical year, 1994-1998, based on orbital elements by
+  ! Laskar.  See http://scienceworld.wolfram.com/astronomy/TropicalYear.html
+
+  real(r8), parameter :: SecPerYear = 365.242190_r8 * 86400.0_r8
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -55,6 +59,8 @@ contains ! ------------------------------- Subroutines and functions ----
   ! one (IN RADIANS!)
   
   real(r8) elemental function GeodToGeocLat ( geodLat )
+
+    use Units, only: Deg2Rad, PI
 
     ! Arguments
     real (r8), intent(IN) :: geodLat
@@ -78,6 +84,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.11  2003/01/15 02:35:08  vsnyder
+! Add SecPerYear, move a USE to procedure scope
+!
 ! Revision 2.10  2003/01/10 21:55:12  vsnyder
 ! Move SpeedOfLight from Geometry ot Units
 !
