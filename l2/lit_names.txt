@@ -50,7 +50,7 @@ dnwt_sq
 dnwt_sqt
 # End of quantities to report progress of DNWT
 
-earthRefl
+# earthRefl -- in lib/lit_names.txt
 either
 explicit
 estimatedNoise
@@ -91,7 +91,7 @@ pressure
 rectanglefromlos
 
 scan
-spaceRadiance
+# spaceRadiance -- in lib/lit_names
 spd
 special
 
@@ -101,6 +101,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.2  2001/10/05 01:09:53  vsnyder
+# Moved names for snooping DNWT to here from l2/lit_names
+#
 # Revision 2.1  2001/10/05 00:42:05  vsnyder
 # Initial commit
 #
