@@ -155,7 +155,6 @@ contains ! =====     Public Procedures     =============================
     !                                     "spec_args" vertex. Local variables
     type (vGrid_T), dimension(:), target :: vGrids ! vGrid database
 
-    type (signal_T) :: thisSignal ! A signal
     integer :: COMMONSIZE               ! Dimension
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
@@ -223,30 +222,6 @@ contains ! =====     Public Procedures     =============================
         info%do_conv = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
-      case ( f_frequency )
-        call expr ( subtree(2,son), units, value, type )
-        info%the_freq = value(1)
-        !       case ( f_channels )
-        !         if ( .not. associated( info%signals ) ) then
-        !           call AnnounceError(DefineSignalsFirst, key)
-        !         else
-        !           noChannelsSpecs=noChannelsSpecs+1
-        !           thisSignal => info%signals(noChannelsSpecs)
-        !           ! Now default to none included
-        !           thisSignal%channels = .false.
-        !           do j = 2, nsons(son)
-        !             call expr ( subtree(j,son), units, value, type )
-        !             select case (type)
-        !             case (num_value)
-        !               thisFWMSignal%channelIncluded(int(value(1))) = .true.
-        !             case (range)
-        !               thisFWMSignal%channelIncluded(int(value(1)):int(value(2))) =&
-        !                 & .true.
-        !             case default
-        !               ! Shouldn't get here if parser worked
-        !             end select
-        !           end do
-        !         end if
       case ( f_molecules )
         call allocate_test ( info%molecules, nsons(son)-1, "info%molecules", &
           & ModuleName )
@@ -400,8 +375,8 @@ contains ! =====     Public Procedures     =============================
     ! Local variables ----------------------------------------------------------
 
     ! First the old stuff which we hope to get rid of or redefine
-    integer(i4) :: i, j, k, m, n, ht_i, mnz, no_tan_hts, ch, Spectag, ier, &
-                   maf, si, ptg_i, frq_i, klo, brkpt, no_ele, mid, ilo, ihi, &
+    integer(i4) :: i, j, k, m, n, no_tan_hts, ch, Spectag, ier, &
+                   maf, si, ptg_i, frq_i, brkpt, no_ele, mid, ilo, ihi, &
                    lmax, max_phi_dim, max_zeta_dim
 
 !    real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
@@ -413,15 +388,9 @@ contains ! =====     Public Procedures     =============================
 
     type(path_beta), dimension(:,:), pointer :: Beta_path
 
-    real(r8) :: Zeta, Frq, H_tan, Rad, Geod_lat, Phi_tan, R
+    real(r8) :: Frq, H_tan, Rad, Geod_lat, Phi_tan, R
 
     Real(r8), dimension(:), allocatable :: dum
-
-    character (len=01) :: CA
-    character (len=08) :: Name
-    character (len=16) :: Vname
-    character (len=80) :: Line
-    character (len=40) :: Ax, Dtm1, Dtm2
 
     real(r8), dimension(:), pointer :: RadV
 
@@ -446,9 +415,7 @@ contains ! =====     Public Procedures     =============================
     integer :: MAXNOFREQS               ! Used for sizing arrays
     integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
     integer :: MAXVERT                  ! Number of points in gl grid
-    integer :: MIF                      ! Loop counter
     integer :: N2LVL                    ! Twice size of tangent grid
-    integer :: NAMELEN                  ! Length of string
     integer :: NLVL                     ! Size of tangent grid
     integer :: NOFREQS                  ! Number of frequencies for a pointing
     integer :: NOMAFS                   ! Number of major frames
@@ -474,7 +441,6 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: CENTERFREQ             ! Of band
     real (r8) :: CENTER_ANGLE           ! For angles
     real (r8) :: THISRATIO              ! A sideband ratio
-    real (r8) :: SENSE                  ! Multiplier (+/-1)
 
     integer, dimension(:), pointer :: CHANNELINDEX ! E.g. 1..25
     integer, dimension(:), pointer :: SIGNALSGRID ! Used in ptg grid hunt
@@ -1438,6 +1404,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.124  2001/05/02 20:28:35  livesey
+! Removed some dead variables.
+!
 ! Revision 2.123  2001/04/28 17:47:42  livesey
 ! Passes row flags to convolve and no convolve
 !
