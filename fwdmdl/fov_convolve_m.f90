@@ -16,7 +16,7 @@ module Fov_Convolve_m
 !---------------------------------------------------------------------------
  contains
 ! =================================================  Fov_Convolve  =====
-! This subprogram adds the effects of antenna smearing to the radiance.
+! Add the effects of antenna smearing to the radiance.
 
     subroutine Fov_Convolve ( AntennaPattern, chi_in, rad_in, chi_out, rad_out, &
              & req, rsc, earth_frac, surf_angle, di_dt, dx_dt, ddx_dxdt,        &
@@ -87,7 +87,7 @@ module Fov_Convolve_m
     real(r8), dimension(no_fft) :: p, dp, angles, rad_fft, rad_fft1
 
 
-    real(r8) :: drad_dt_temp(SIZE(chi_out))
+    real(r8) :: drad_dt_temp(size(chi_out))
 
     r_eq = 6371.0_rp
     r_sc = r_eq + 705.0_rp
@@ -102,7 +102,7 @@ module Fov_Convolve_m
     dp = 0.0_r8
     aaap_step = antennaPattern%lambda
     ang_step = 1.0_r8 / (no_fft * aaap_step)
-    j = MIN(no_fft,SIZE(antennaPattern%aaap))
+    j = min(no_fft,size(antennaPattern%aaap))
     p(1:j) = antennaPattern%aaap(1:j)
     dp(1:j) = antennaPattern%d1aap(1:j)
 
@@ -113,7 +113,7 @@ module Fov_Convolve_m
     ffth = no_fft / 2
     angles = (/(i*ang_step,i=1,no_fft)/)
     angles = angles - angles(ffth+1)
-    init_angle = ASIN((r_eq - e_frac*SQRT(r_sc**2-r_eq**2)/aaap_step)/r_sc)
+    init_angle = asin((r_eq - e_frac*sqrt(r_sc**2-r_eq**2)/aaap_step)/r_sc)
 
 ! set up the radiance array
 
@@ -122,7 +122,7 @@ module Fov_Convolve_m
 
 ! mirror reflect this
 
-    rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i = 1, ffth-1)/)
+    rad_fft(1:ffth-1) = rad_fft(no_fft-1:no_fft-ffth+1:-1)
 
 ! I don't know if this step is truly necessary but it rephases the radiances
 ! identically to the prototype code
@@ -163,7 +163,7 @@ module Fov_Convolve_m
 ! temperature derivatives calculation
 ! compute the antenna derivative function
 
-      n_coeffs = SIZE(di_dt,dim=2)
+      n_coeffs = size(di_dt,dim=2)
 
 ! find the surface dimension
 
@@ -212,7 +212,7 @@ module Fov_Convolve_m
 
 ! resymetrize
 
-        rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i = 1, ffth-1)/)
+        rad_fft(1:ffth-1) = rad_fft(no_fft-1:no_fft-ffth+1:-1)
 
 ! I don't know if this step is truly necessary but it rephases the radiances
 ! identically to the prototype code
@@ -235,7 +235,7 @@ module Fov_Convolve_m
 
 ! resymetrize
 
-        rad_fft1(1:ffth-1) = (/(rad_fft1(no_fft-i),i=1,ffth-1)/)
+        rad_fft1(1:ffth-1) = rad_fft1(no_fft-1:no_fft-ffth+1:-1)
 
 ! I don't know if this step is truly necessary but it rephases the radiances
 ! identically to the prototype code
@@ -275,7 +275,7 @@ module Fov_Convolve_m
 ! nominally the mixing ratio derivatives but can be used for any
 ! quantity requiring a simple convolution.
 
-      n_coeffs = SIZE(di_df,dim=2)
+      n_coeffs = size(di_df,dim=2)
 
       do i = 1, n_coeffs
         if ( .not. di_df_flag(i) ) cycle
@@ -285,7 +285,7 @@ module Fov_Convolve_m
 
 ! mirror reflect this
 
-        rad_fft(1:ffth-1) = (/(rad_fft(no_fft-i),i=1, ffth-1)/)
+        rad_fft(1:ffth-1) = rad_fft(no_fft-1:no_fft-ffth+1:-1)
 
 ! I don't know if this step is truly necessary but it rephases the radiances
 ! identically to the prototype code
@@ -334,7 +334,7 @@ module Fov_Convolve_m
   end subroutine Fov_Convolve
 
 ! ===========================================     FOV_CONVOLVE_OLD  =====
-! This subprogram adds the effects of antenna smearing to the radiance.
+! Add the effects of antenna smearing to the radiance.
 
   subroutine FOV_CONVOLVE_OLD ( EIL_ANGLE, RADIANCE, DELTA0, ITYPE, NP, &
     &                           M, AntennaPattern, IER )
@@ -505,6 +505,11 @@ module Fov_Convolve_m
 
 end module Fov_Convolve_m
 ! $Log$
+! Revision 2.8  2002/09/07 00:53:25  vsnyder
+! Move FFT code to dfft_m.  Move convolve and ftgrid inside of fov_convolve_old.
+! Move USEs from module scope to procedure scope.  Cosmetic changes.
+! Copyright notice.
+!
 ! Revision 2.7  2002/09/05 20:48:29  livesey
 ! Fixed (i.e. added) handling of vmr derivative flags.
 !
