@@ -88,7 +88,7 @@ contains
 !   0       1       2       3       4       5       6       7
     digit,  digit,  digit,  digit,  digit,  digit,  digit,  digit,  & ! 060
 !   8       9       :       ;       <       =       >       ?
-    digit,  digit,  op_char,cmt,    more,   op_char,more,   more,   & ! 070
+    digit,  digit,  op_char,cmt,    op_char,op_char,more,   more,   & ! 070
 !   @       A       B       C       D       E       F       G
     tog_ch, letter, letter, letter, letter, letter, letter, letter, & ! 100
 !   H       I       J       K       L       M       N       O
@@ -489,6 +489,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.7  2000/11/30 20:18:47  vsnyder
+! Added <: :< and <:< operators.
+!
 ! Revision 2.6  2000/11/30 20:03:57  vsnyder
 ! Correct handling of end-of-comment; improve error messages.
 !
