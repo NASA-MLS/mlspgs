@@ -279,7 +279,6 @@ contains ! ====     Public Procedures     ==============================
       integer :: FIELD_REF ! The value of a field -- a ref to a n_spec_arg
       integer :: FIELD_TEST ! A son of Field_Ref
       integer :: GSON      ! Son of Son
-      integer :: I         ! subtree index and loop inductor        
       integer :: J         ! Index of son of "field"                
       integer :: K         ! Index of a son of a n_spec_args
       integer :: TEST_TYPE ! Used to test the tree-node for a type reference
@@ -596,7 +595,6 @@ m:              do j = 3, nsons(field)
     double precision, intent(out) :: VALUE   ! Expression value, if any
 
     type(decls) :: DECL            ! Declaration record for "root"
-    integer :: I                   ! Subtree index, loop inductor
     integer :: ME                  ! node_id(root)
     integer :: SON1, SON2          ! Sons of "root"
     integer :: STRING              ! sub_rosa(root)
@@ -878,6 +876,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.12  2001/11/28 23:48:30  vsnyder
+! Correct blunders in arrays-of-arrays
+!
 ! Revision 1.11  2001/11/28 03:15:37  vsnyder
 ! Implement arrays of arrays
 !
