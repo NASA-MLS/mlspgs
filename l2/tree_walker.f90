@@ -118,7 +118,7 @@ subtrees: do while ( j <= howmany )
                 & qtyTemplates, vectorTemplates, vGrids, mifGeolocation )
             case ( z_fill )
               call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
-                & vectors, qtyTemplates, matrices, l2gpDatabase , &
+                & vectors, qtyTemplates, matrices, vGrids, l2gpDatabase , &
                 & l2auxDatabase, chunks, chunkNo)
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo, chunks )
@@ -158,6 +158,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.34  2001/04/19 23:51:40  pwagner
+! Moved anText to become component of PCFData_T
+!
 ! Revision 2.33  2001/04/11 17:47:47  pwagner
 ! presets anText to null
 !
