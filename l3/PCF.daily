@@ -97,7 +97,7 @@
 #----------------------
 # L3 configuration file
 #----------------------
-30000|l3d_cf.v0-05|/duke/nakamura/L1BOA||||1
+30000|l3d_cf.v0-05|/duke/nakamura/mlspgs/l3||||1
 #
 # -----------------------------------------------------------------------
 # These are actual ancillary data set files - supplied by ECS or the
@@ -181,18 +181,17 @@
 10250|MCF|/duke/nakamura/L1BOA||||1
 10252|GetAttr.temp|/duke/nakamura/L1BOA||||1
 10254|MCFWrite.temp|/duke/nakamura/L1BOA||||1
-50001|MCF.log|/duke/nakamura/L1BOA/META||||1
-50100|MCF.clo|/duke/nakamura/L1BOA/META||||1
-#50100|mls_l3dm_clo.mcf|/duke/nakamura/L1BOA/META||||1
-50101|MCF.z|/duke/nakamura/L1BOA/META||||1
-50102|MCF.h2o|/duke/nakamura/L1BOA/META||||1
-50103|MCF.hcl|/duke/nakamura/L1BOA/META||||1
-50104|MCF.hcn|/duke/nakamura/L1BOA/META||||1
-50105|MCF.hno3|/duke/nakamura/L1BOA/META||||1
-50106|MCF.n2o|/duke/nakamura/L1BOA/META||||1
-50107|MCF.o3|/duke/nakamura/L1BOA/META||||1
-50108|MCF.oh|/duke/nakamura/L1BOA/META||||1
-50109|MCF.t|/duke/nakamura/L1BOA/META||||1
+50001|mls_l3_log.mcf|/duke/nakamura/L1BOA/META||||1
+50100|mls_l3dm_clo.mcf|/duke/nakamura/L1BOA/META||||1
+50101|mls_l3dm_z.mcf|/duke/nakamura/L1BOA/META||||1
+50102|mls_l3dm_h2o.mcf|/duke/nakamura/L1BOA/META||||1
+50103|mls_l3dm_hcl.mcf|/duke/nakamura/L1BOA/META||||1
+50104|mls_l3dm_hcn.mcf|/duke/nakamura/L1BOA/META||||1
+50105|mls_l3dm_hno3.mcf|/duke/nakamura/L1BOA/META||||1
+50106|mls_l3dm_n2o.mcf|/duke/nakamura/L1BOA/META||||1
+50107|mls_l3dm_o3.mcf|/duke/nakamura/L1BOA/META||||1
+50108|mls_l3dm_oh.mcf|/duke/nakamura/L1BOA/META||||1
+50109|mls_l3dm_t.mcf|/duke/nakamura/L1BOA/META||||1
 #
 #
 # -----------------------------------------------------------------------
@@ -247,7 +246,7 @@
 #------------------
 # Test output files
 #------------------
-100|mls_l3d_log_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
+100|mls_l3_log_v0-05-c1_1996-051:1996-060.dat|/duke/nakamura/L1BOA||||1
 30100|mls_l3dm_clo_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
 30110|mls_l3dm_z_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
 30111|mls_l3dm_h2o_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
@@ -439,8 +438,7 @@
 # the same batch of log files. (DO NOT REMOVE THESE ENTRIES)
 # -----------------------------------------------------------------------
 10100|LogStatus|/duke/nakamura/L1BOA||||1
-#10101|LogReport|/duke/nakamura/L1BOA||||1
-10101|mls_l3d_log_v0-05-c1_1996-051.dat|/duke/nakamura/L1BOA||||1
+10101|mls_l3_log_v0-05-c1_1996-051:1996-060.dat|/duke/nakamura/L1BOA||||1
 10102|LogUser|/duke/nakamura/L1BOA||||1
 10103|TmpStatus|||||1
 10104|TmpReport|||||1
