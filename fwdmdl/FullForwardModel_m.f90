@@ -1562,6 +1562,8 @@ contains
             &  t_path_c(1:npc), n_path(1:npc) )
         end if
 
+        n_path(1:npc) = min ( n_path(1:npc), MaxRefraction )
+
         if ( temp_der ) then
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path(npc/2),&
              & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                &
@@ -1573,7 +1575,7 @@ contains
              & ptg_angles(ptg_i), r, 1.0_rp )
         end if
 
-        n_path(1:npc) = min ( n_path(1:npc), MaxRefraction ) + 1.0_rp
+        n_path(1:npc) = n_path(1:npc) + 1.0_rp
 
         call comp_refcor ( h_path_c(1:npc), n_path(1:npc), &
                       &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc) )
@@ -2296,7 +2298,10 @@ contains
               else                      ! Else not frequency averaging
                 do sv_i = grids_f%l_v(k-1)+1, grids_f%l_v(k)
                   if ( grids_f%deriv_flags(sv_i) ) then
-                    k_atmos(1:noUsedChannels,ptg_i,sv_i) = k_atmos_frq(1:noUsedChannels,sv_i)
+                    k_atmos(1:noUsedChannels,ptg_i,sv_i) = &
+                      & min ( max ( k_atmos_frq(1:noUsedChannels,sv_i), &
+                      &   real(-huge(0.0_r4), rp ) ), &
+                      &   real( huge(0.0_r4), rp ) )
                   else
                     k_atmos(1:noUsedChannels,ptg_i,sv_i) = 0.0
                   end if
@@ -3054,6 +3059,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.208  2004/04/24 02:27:05  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.207  2004/04/19 21:01:37  vsnyder
 ! Put size of gl_slabs in call to get_gl_slabs_arrays
 !
