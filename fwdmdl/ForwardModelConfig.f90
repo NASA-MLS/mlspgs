@@ -39,14 +39,15 @@ module ForwardModelConfig
     integer :: Origin     ! Index of first channel (zero or one)
     integer :: Signal     ! Signal index for the channel
     integer :: DACS       ! DACS index if any, else zero
-    integer, pointer :: PFAData(:)       ! Indices in PFADataBase%PFAData
-    integer, pointer :: PFAMolecules(:)  ! L_... from PFAData for this channel
+    integer, pointer :: PFAData(:) => NULL()      ! Indices in PFADataBase%PFAData
+    integer, pointer :: PFAMolecules(:) => NULL() ! L_... from PFAData for this channel
   end type Channels_T
 
   ! Now all of the derived stuff
   type, public :: ForwardModelDerived_T
-    real(rp), dimension(:,:), pointer :: DACsStaging  ! Temporary space for DACS radiances
-    integer, dimension(:), pointer :: USEDDACSSIGNALS ! Indices in
+    real(rp), dimension(:,:), pointer :: DACsStaging => NULL() ! Temporary
+                                         ! space for DACS radiances
+    integer, dimension(:), pointer :: USEDDACSSIGNALS => NULL() ! Indices in
                                          ! FwdModelConf_T%Signals
                                          ! of signals for our dacs
     type(channels_T), pointer, dimension(:) :: Channels => NULL()
@@ -788,6 +789,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.50  2004/06/10 00:59:55  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.49  2004/05/26 23:54:14  vsnyder
 ! Don't dump the database if it's not allocated
 !
