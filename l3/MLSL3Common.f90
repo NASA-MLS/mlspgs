@@ -25,6 +25,8 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: DIM_ERR = 'Failed to define dimension '
    CHARACTER (LEN=*), PARAMETER :: GEO_ERR = 'Failed to define geolocation &
                                              &field '
+   CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = 'Error writing metadata &
+                                                &attribute '
    CHARACTER (LEN=*), PARAMETER :: TAI2A_ERR = 'Error converting time from &
                                                &TAI to UTC.'
    CHARACTER (LEN=*), PARAMETER :: WR_ERR = 'Failed to write field '
@@ -40,4 +42,7 @@ END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.1  2000/12/29 20:52:48  nakamura
+!# Module for parameters common across L3 routines.
+!#
 !#
