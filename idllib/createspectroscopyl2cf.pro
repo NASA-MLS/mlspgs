@@ -178,7 +178,6 @@ for mol = 0, noMols - 1 do begin
   
   ;; Finish off
   if strtrim(text,2) ne '' then printf,unit,text
-  printf,unit,''
 endfor                          ; End loop over molecules
 
 printf, unit, ''
