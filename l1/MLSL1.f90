@@ -2,7 +2,7 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !============================================================================
-PROGRAM MLSL1       ! MLS Level 1 software
+  PROGRAM MLSL1       ! MLS Level 1 software
 !============================================================================
 
   USE OpenInit, ONLY : OpenAndInitialize
@@ -10,9 +10,10 @@ PROGRAM MLSL1       ! MLS Level 1 software
   USE Calibration, ONLY : Calibrate
   USE Radiances, ONLY : CalcLimbRads
   USE L1BOutUtils, ONLY : OutputL1Bdata
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Info, MLSMessageExit
   USE Close_Files, ONLY: CloseFiles
-
+  USE MACHINE, only: GETARG, HP
+  USE MLSMessageModule, ONLY: MLSMSG_Info, MLSMSG_Error, MLSMSG_Warning, MLSMessage, &
+       MLSMessageExit
   IMPLICIT NONE
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -20,12 +21,9 @@ PROGRAM MLSL1       ! MLS Level 1 software
        "$Id$"
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
-
-  LOGICAL :: more_data, do_calib
+  character(len=10) :: char_argument
   integer, parameter :: NORMAL_EXIT_STATUS = 2
-
-  CALL MLSMessage (MLSMSG_Info, ModuleName, &
-       & "Start EOS MLS Level 1 processing.")
+  logical :: more_data, do_calib
 
   CALL OpenAndInitialize
 
@@ -51,13 +49,15 @@ PROGRAM MLSL1       ! MLS Level 1 software
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & "EOS MLS Level 1 data processing successfully completed!")
-
   call MLSMessageExit(NORMAL_EXIT_STATUS)
 !=============================================================================
-END PROGRAM MLSL1
+ END PROGRAM MLSL1
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2002/11/07 21:35:33  jdone
+! Added HDF4/HDF5 switch.
+!
 ! Revision 2.2  2002/04/03 21:42:00  pwagner
 ! Sets status on normal exit to 2
 !
