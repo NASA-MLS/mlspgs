@@ -45,6 +45,9 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! PCF=.false.     =>  PUNISH_FOR_INVALID_PCF=.false.
   ! PCF=.false.     =>  CREATEMETADATA=.false.
   ! PCF=.false.     =>  PENALTY_FOR_NO_METADATA=0
+
+  ! Must files named in PCF have same case as short names used in l2cf?
+  logical, parameter :: PCFL2CFSAMECASE = .false.
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
    ! Set the following to 1 before delivering to sips;
@@ -70,6 +73,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.9  2001/05/30 22:56:48  pwagner
+! Moved PCFL2CFSAMECASE here from OutputAndClose
+!
 ! Revision 2.8  2001/05/15 23:46:08  pwagner
 ! Removed 2 settings from MLSL2Opts; now in switches
 !
