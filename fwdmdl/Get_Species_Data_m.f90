@@ -66,21 +66,6 @@ contains
       if ( index(switches,'fwmG') > 0 ) dumpFWM = 2 ! Dump and stop
     end if
 
-    ! Allocate the Cat_Index and PFA_Indices components in each Beta_Group
-    ! We could fuse this loop and the next one, but this is clearer and, with
-    ! these loop bodies, not measurably slower.
-    c = size(fwdModelConf%forwardModelDerived%channels)
-    do b = 1, size(fwdModelConf%beta_group)
-      m = size(fwdModelConf%beta_group(b)%lbl_molecules)
-      call allocate_test ( fwdModelConf%beta_group(b)%cat_index, m, &
-        & 'beta_group(b)%Cat_Index', moduleName )
-      m = size(fwdModelConf%beta_group(b)%pfa_molecules)
-      call allocate_test ( fwdModelConf%beta_group(b)%pfa_indices, &
-        & fwdModelConf%sidebandStop, c, m, 'Beta_group(b)%PFA_indices', &
-        & moduleName, lowBound_1=fwdModelConf%sidebandStart )
-      fwdModelConf%beta_group(b)%pfa_indices = 0 ! OK if some missing, but no junk
-    end do ! b
-
     ! Get isotope ratios for molecules in a beta group, else 1.0 if not a group
     do b = 1, size(fwdModelConf%beta_group)
       if ( fwdModelConf%beta_group(b)%group ) then ! A molecule group
@@ -252,8 +237,8 @@ contains
   ! -------------------------------------------  Destroy_Species_Data  -----
   subroutine Destroy_Species_Data ( FwdModelConf )
 
-  ! Destroy the stuff in Beta_Group that was allocated by Get_Species_Data.
-  ! Destroy the spectroscopy catalog extract.
+  ! Destroy the spectroscopy catalog extract that was allocated by
+  ! Get_Species_Data.
 
     use Allocate_Deallocate, only: Deallocate_Test
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -261,29 +246,21 @@ contains
 
     type(forwardModelConfig_t), intent(inout) :: FwdModelConf
 
-    integer :: B  ! Index for Beta_Group
-    integer :: I, J
+    integer :: S, C ! Sideband index or status, catalog index
 
-    do b = 1, size(fwdModelConf%beta_group)
-      call deallocate_test ( fwdModelConf%beta_group(b)%cat_index, &
-        'Beta_group(b)%Cat_index', moduleName )
-      call deallocate_test ( fwdModelConf%beta_group(b)%PFA_indices, &
-        'Beta_group(b)%PFA_indices', moduleName )
-    end do ! b
-
-    do j = lbound(fwdModelConf%catalog,1), ubound(fwdModelConf%catalog,1), 2
-      do i = 1, size(fwdModelConf%catalog,2)
+    do s = lbound(fwdModelConf%catalog,1), ubound(fwdModelConf%catalog,1), 2
+      do c = 1, size(fwdModelConf%catalog,2)
         ! Note that we don't deallocate the signals/sidebands stuff for each line
         ! as these are shallow copies of the main spectroscopy catalog stuff
-        call deallocate_test ( fwdModelConf%catalog(j,i)%lines, &
+        call deallocate_test ( fwdModelConf%catalog(s,c)%lines, &
           & 'fwdModelConf%catalog(?,?)%lines', moduleName )
-        call deallocate_test ( fwdModelConf%catalog(j,i)%polarized, &
+        call deallocate_test ( fwdModelConf%catalog(s,c)%polarized, &
           & 'fwdModelConf%catalog(?,?)%polarized', moduleName )
       end do
     end do
 
-    deallocate ( fwdModelConf%catalog, stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+    deallocate ( fwdModelConf%catalog, stat=s )
+    if ( s /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & MLSMSG_Deallocate // 'fwdModelConf%catalog' )
 
   end subroutine Destroy_Species_Data
@@ -295,6 +272,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.19  2004/11/04 03:40:54  vsnyder
+! Index spectroscopy catalog by molecule instead of searching
+!
 ! Revision 2.18  2004/11/01 20:26:35  vsnyder
 ! Reorganization of representation for molecules and beta groups; PFA may be broken for now
 !
