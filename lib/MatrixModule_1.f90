@@ -12,9 +12,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use DUMP_0, only: DUMP
   use MatrixModule_0, only: Assignment(=), CholeskyFactor, ClearRows, &
     & ColumnScale, Col_L1, CopyBlock, CreateBlock, DestroyBlock, Dump, &
-    & GetDiagonal, GetMatrixElement, GetVectorFromColumn, M_Absent, &
-    & M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, Multiply, &
-    & MultiplyMatrix_XY, MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, &
+    & GetDiagonal, GetMatrixElement, GetVectorFromColumn, InvertCholesky, &
+    & M_Absent, M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, &
+    & Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_T, &
+    & MultiplyMatrixVectorNoT, &
     & operator(+), operator(.TX.), RowScale, ScaleBlock, SolveCholesky, &
     & UpdateDiagonal
   use MLSCommon, only: R8
@@ -926,34 +927,81 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------  InvertCholesky_1  -----
   subroutine InvertCholesky_1 ( U, B )
-  ! Compute B = U^{-T} = L^{-1}, where U is the upper-triangular
-  ! Cholesky factor of some matrix, i.e. A = U^T U.
-    type(Matrix_Cholesky_T), intent(in) :: U
+! !{Compute $B = U^{-T} = L^{-1}$, where $U$ is the upper-triangular
+! ! Cholesky factor of some matrix, i.e. $A = U^T U$.  We do this by
+! ! solving $U^T B = I$.  In algorithmic form, we have $\left \{
+! ! \text{solve } u_{ii}^T b_{ik} = \left ( \delta_{ik} -
+! ! \sum_{j=k}^{i-1} u_{ji}^T b_{jk} \right ) \text{ for } b_{ik},~~ k =
+! ! 1 \dots i \right \},~~i = 1 \dots n$.
+
+    type(Matrix_Cholesky_T), intent(inout) :: U ! inout because invertCholesky's
+                                        ! U argument is inout to allow its UI
+                                        ! argument to be the same.  We don't
+                                        ! use that feature, so U isn't changed
+                                        ! here.
     type(Matrix_T), intent(inout) :: B  ! Assume B has been created
 
     integer :: I, J, K                  ! Subscripts and loop inductors
 
-    do i = 1, u%m%row%nb
-      do k = 1, i
-        if ( i == k ) then ! start with identity
-          call createBlock ( b%block(i,i), u%m%block(i,i)%nrows, &
-            & u%m%block(i,i)%nrows, m_banded, u%m%block(i,i)%nrows )
-          do j = 1, u%m%block(i,i)%nrows
-            b%block(i,k)%r1(j) = j
-            b%block(i,k)%r2(j) = j
-            b%block(i,k)%values(j,1) = 1.0_r8
-          end do ! j = 1, u%m%block(i,i)%nrows
-        else ! start with zero
-          call createBlock ( b%block(i,k), u%m%block(i,k)%nrows, &
-            & u%m%block(i,k)%ncols, m_absent )
-        end if
-        do j = k, i-1
-          call multiply ( b%block(i,k), u%m%block(j,i), &
-            & b%block(j,k), update=.true., subtract=.true. )
-        end do ! j = k, i-1
-        call solveCholesky ( u%m%block(i,i), b%block(i,k), transpose=.true. )
-      end do ! k = 1, i
-    end do ! i = 1, u%m%row%nb
+!   do i = 1, u%m%row%nb
+!     do k = 1, i
+!       if ( i == k ) then ! start with identity, i.e. \delta_{ik}
+!         call createBlock ( b%block(i,i), u%m%block(i,i)%nrows, &
+!           & u%m%block(i,i)%nrows, m_banded, u%m%block(i,i)%nrows )
+!         do j = 1, u%m%block(i,i)%nrows
+!           b%block(i,k)%r1(j) = j
+!           b%block(i,k)%r2(j) = j
+!           b%block(i,k)%values(j,1) = 1.0_r8
+!         end do ! j = 1, u%m%block(i,i)%nrows
+!       else ! start with zero
+!         call createBlock ( b%block(i,k), u%m%block(i,k)%nrows, &
+!           & u%m%block(i,k)%ncols, m_absent )
+!       end if
+!       do j = k, i-1
+!         call multiply ( u%m%block(j,i), b%block(j,k), &
+!           & b%block(i,k), update=.true., subtract=.true. )
+!       end do ! j = k, i-1
+!       call solveCholesky ( u%m%block(i,i), b%block(i,k), transpose=.true. )
+!     end do ! k = 1, i
+!   end do ! i = 1, u%m%row%nb
+
+  !{Let $u_{ij}$ be an element of $\bf U$ and $t_{ij}$ be an element of ${\bf
+  ! U}^{-1}$. To invert $\bf U$, solve $\sum_{l=i}^j t_{il} u_{lj} =
+  ! \delta_{ij}$ for $t_{ij}$, where $\delta_{ij} = \bf I$ for $i = j$ and zero
+  ! otherwise.  (The index of summation $l$ runs from $i$ to $j$ instead of
+  ! from $1$ to $n$ because we know that $\bf U$ and ${\bf U}^{-1}$ are
+  ! triangular.)  This gives $t_{ii} = u_{ii}^{-1}$ (for $i = j$) and  $t_{ij}
+  ! = - \left ( \sum_{l=i}^{j-1} t_{il} u_{lj} \right ) u_{jj}^{-1}$ (for $i <
+  ! j$).  We compute the diagonal elements of $U^{-1}$ first, giving the
+  ! following algorithm:
+  !
+  ! \hspace*{0.5in}$t_{ii} := u_{ii}^{-1}~~ i = 1,~ \dots,~ n$\\
+  ! \hspace*{0.5in}$\left \{ t_{ij} := -\left ( \sum_{l=i}^{j-1} t_{il} u_{lj}
+  !   \right ) t_{jj}~~ j = i+1,~ \dots,~ n \right \}~~ i = 1,~ \dots,~ n-1$
+
+    type(matrixElement_T) :: Temp       ! Because we can't do X := X * Y
+    logical :: Update
+
+    ! First invert the diagonal blocks
+    do j = 1, u%m%row%nb
+      call invertCholesky ( u%m%block(j,j), b%block(j,j) )
+    end do
+
+    ! Now compute the rest of the blocks of the inverse, a row at a time
+    do i = 1, u%m%row%nb-1
+      do j = i+1, u%m%row%nb
+        update = .false.
+        call DestroyBlock ( temp )
+        do k = i, j-1
+          print*,'IJK',i,j,k
+          call multiplyMatrix_XY ( b%block(i,k), u%m%block(k,j), temp, &
+            & update=update, subtract=.true. )
+          update = .true.
+        end do
+        call multiplyMatrix_XY ( temp, b%block(j,j), b%block(i,j) )
+      end do
+    end do
+    call destroyBlock ( temp )
   end subroutine InvertCholesky_1
 
   ! ------------------------------------  LevenbergUpdateCholesky  -----
@@ -1013,6 +1061,37 @@ contains ! =====     Public Procedures     =============================
     minDiag_SPD = minDiag_1 ( a%m )
   end function MinDiag_SPD
 
+  ! ---------------------------------------  MultiplyMatrix_XTY_1  -----
+  function MultiplyMatrix_XTY_1 ( X, Y ) result ( Z ) ! Z = X^T Y
+    type(Matrix_T), intent(in) :: X, Y
+    type(Matrix_T) :: Z
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyMatrix using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignMatrix.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    integer :: I, J, K             ! Subscripts for [XYZ]%Block
+
+    ! Check that matrices are compatible.  We don't need to check
+    ! Nelts or Nb, because these are deduced from Vec.
+    if ( (x%row%vec%template%id /= y%row%vec%template%id)  .or. &
+      & (x%row%instFirst .neqv. y%row%instFirst) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Incompatible arrays in MultiplyMatrix_XTY_1" )
+    call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
+    do j = 1, y%col%nb
+      do i = 1, x%col%nb
+        call multiply ( x%block(1,i), y%block(1,j), z%block(i,j) )
+        do k = 2, x%row%nb
+          call multiply ( x%block(k,i), y%block(k,j), z%block(i,j), &
+            & update=.true. )
+        end do ! k = 2, x%row%nb
+      end do ! i = 1, x%col%nb
+    end do ! j = 1, y%col%nb
+  end function MultiplyMatrix_XTY_1
+
   ! ----------------------------------------  MultiplyMatrix_XY_1  -----
   subroutine MultiplyMatrix_XY_1 ( X, Y, Z ) ! Z = X Y
     type(Matrix_T), intent(in) :: X, Y
@@ -1062,37 +1141,6 @@ contains ! =====     Public Procedures     =============================
       end do ! i = 1, x%row%nb
     end do ! j = 1, y%row%nb
   end subroutine MultiplyMatrix_XY_T_1
-
-  ! ---------------------------------------  MultiplyMatrix_XTY_1  -----
-  function MultiplyMatrix_XTY_1 ( X, Y ) result ( Z ) ! Z = X^T Y
-    type(Matrix_T), intent(in) :: X, Y
-    type(Matrix_T) :: Z
-
-  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyMatrix using the result of this
-  ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.  Also see AssignMatrix.
-  ! !!!!! ===== END NOTE ===== !!!!! 
-
-    integer :: I, J, K             ! Subscripts for [XYZ]%Block
-
-    ! Check that matrices are compatible.  We don't need to check
-    ! Nelts or Nb, because these are deduced from Vec.
-    if ( (x%row%vec%template%id /= y%row%vec%template%id)  .or. &
-      & (x%row%instFirst .neqv. y%row%instFirst) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Incompatible arrays in MultiplyMatrix_XTY_1" )
-    call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
-    do j = 1, y%col%nb
-      do i = 1, x%col%nb
-        call multiply ( x%block(1,i), y%block(1,j), z%block(i,j) )
-        do k = 2, x%row%nb
-          call multiply ( x%block(k,i), y%block(k,j), z%block(i,j), &
-            & update=.true. )
-        end do ! k = 2, x%row%nb
-      end do ! i = 1, x%col%nb
-    end do ! j = 1, y%col%nb
-  end function MultiplyMatrix_XTY_1
 
   ! -------------------------------------  MultiplyMatrixVector_1  -----
   subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE, UseMask, Clone )
@@ -1779,6 +1827,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.64  2002/03/05 23:17:03  livesey
+! Changes adopted from Van
+!
 ! Revision 2.63  2002/02/22 01:19:31  vsnyder
 ! Added MultiplyMatrix_XY_0, MultiplyMatrix_XY_T_1.  Changed the name of
 ! MultiplyMatrices to Multiply_Matrix_XTY_1.  Added generics.
