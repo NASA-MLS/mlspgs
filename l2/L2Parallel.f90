@@ -381,9 +381,9 @@ contains ! ================================ Procedures ======================
             call output ( ' on slave ' // trim(machineNames(machine)) // &
               & ' ' // trim(GetNiceTidString(slaveTids(machine))), &
               & advance='yes' )
-            call SendChunkInfoToSlave ( chunks, nextChunk, &
-              & slaveTids(machine) )
           end if
+          call SendChunkInfoToSlave ( chunks, nextChunk, &
+            & slaveTids(machine) )
           ! Now ask to be notified when this task exits
           call PVMFNotify ( PVMTaskExit, NotifyTag, 1, &
             & (/ slaveTids(machine) /), info )
@@ -847,6 +847,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.25  2002/01/09 23:16:34  livesey
+! Whoops, left the SendChunkInfoToSlave call in the wrong place!
+!
 ! Revision 2.24  2002/01/09 22:55:57  livesey
 ! Now sends slaves all the chunks as regular HGrids need them.
 !
