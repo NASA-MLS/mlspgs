@@ -341,30 +341,33 @@ contains ! ============= Public Procedures ==========================
     do blockRow = 1, l2pc%row%NB
       do blockCol = 1, l2pc%col%NB
         ! Print the type of the matrix
-        m0 => l2pc%block(blockRow, blockCol)
-        write (unit,*) blockRow, blockCol, m0%kind,&
-          & 'row, col, kind'
-        call get_string ( &
-          & l2pc%row%vec%quantities(&
-          &    l2pc%row%quant(blockRow))%template%name, word1 )
-        call get_string ( &
-          & l2pc%col%vec%quantities(&
-          &    l2pc%col%quant(blockCol))%template%name, word2 )
-        write (unit,*) trim(word1), l2pc%row%inst(blockRow), ' , ',&
-          &            trim(word2), l2pc%col%inst(blockCol)
-        select case (m0%kind)
-        case (M_Absent)
-        case (M_Banded, M_Column_sparse)
-          write (unit,*) size(m0%values), ' no values'
-          write (unit,*) 'R1'
-          write (unit,iFmt) m0%R1
-          write (unit,*) 'R2'
-          write (unit,iFmt) m0%R2
-          write (unit,*) 'values'
-          write (unit,rFmt) m0%values
-        case (M_Full)
-          write (unit,rFmt) m0%values
-        end select
+        if ( rowPack(l2pc%row%quant(blockRow)) .and. &
+          &  colPack(l2pc%col%quant(blockCol)) ) then
+          m0 => l2pc%block(blockRow, blockCol)
+          write (unit,*) blockRow, blockCol, m0%kind,&
+            & 'row, col, kind'
+          call get_string ( &
+            & l2pc%row%vec%quantities(&
+            &    l2pc%row%quant(blockRow))%template%name, word1 )
+          call get_string ( &
+            & l2pc%col%vec%quantities(&
+            &    l2pc%col%quant(blockCol))%template%name, word2 )
+          write (unit,*) trim(word1), l2pc%row%inst(blockRow), ' , ',&
+            &            trim(word2), l2pc%col%inst(blockCol)
+          select case (m0%kind)
+          case (M_Absent)
+          case (M_Banded, M_Column_sparse)
+            write (unit,*) size(m0%values), ' no values'
+            write (unit,*) 'R1'
+            write (unit,iFmt) m0%R1
+            write (unit,*) 'R2'
+            write (unit,iFmt) m0%R2
+            write (unit,*) 'values'
+            write (unit,rFmt) m0%values
+          case (M_Full)
+            write (unit,rFmt) m0%values
+          end select
+        end if
       end do
     end do
 
@@ -531,7 +534,6 @@ contains ! ============= Public Procedures ==========================
     eof = .false. 
     nullify ( sigInds, qtInds )
       toggle(tab) = DEBUG
-    
     read (unit,*, IOSTAT=status) line
     if (status == -1 ) then
       eof = .true.
@@ -722,6 +724,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.27  2002/02/05 04:14:26  livesey
+! Bug fix, still problems with packed write
+!
 ! Revision 2.26  2002/01/23 00:50:50  pwagner
 ! Initialize binselectors to null
 !
