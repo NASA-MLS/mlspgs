@@ -86,7 +86,7 @@ contains ! =====     Public Procedures     =============================
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_SCALEOVERLAPS, &
       & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
-      & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
+      & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_XYZ, L_ZETA
     ! Now the specifications:
@@ -264,6 +264,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: REFGPHPRECISIONQUANTITY
     type (vectorValue_T), pointer :: SCECIQUANTITY
     type (vectorValue_T), pointer :: SCVELQUANTITY
+    type (vectorValue_T), pointer :: SIDEBANDFRACTION
     type (vectorValue_T), pointer :: SOURCEQUANTITY
     type (vectorValue_T), pointer :: SYSTEMPQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
@@ -1321,6 +1322,22 @@ contains ! =====     Public Procedures     =============================
             & call Announce_Error ( key, noSourceL2AUXGiven )
           call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
+
+        case ( l_splitSideband ) ! --------------- Split the sidebands
+          if ( .not. got(f_sourceQuantity) ) &
+            & call Announce_Error ( key, No_Error_Code, &
+            & 'Missing a source field for vector fill' )
+          if ( .not. all(got( (/f_lsbFraction,f_usbFraction/) ))) &
+            & call Announce_Error ( key, No_Error_Code, &
+            & 'Missing a usb/lsb fraction field for vector fill' )
+          sourceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(sourceVectorIndex), sourceQuantityIndex )
+          lsbFraction => GetVectorQtyByTemplateIndex ( &
+            & vectors(lsbFractionVectorIndex), lsbFractionQuantityIndex )
+          usbFraction => GetVectorQtyByTemplateIndex ( &
+            & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
+          call FillFromSplitSideband ( quantity, sourceQuantity, &
+            & lsbFraction, usbFraction, key )
 
         case ( l_vector ) ! ---------------- Fill from another qty.
           ! This is VERY PRELIMINARY, A more fancy one needs to be written
@@ -3979,6 +3996,40 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillVectorQtyHydrostatically
 
+    ! ------------------------------------- FillFromSplitSideband ----
+    subroutine FillFromSplitSideband ( quantity, sourceQuantity, &
+      & lsbFraction, usbFraction, key )
+      type (VectorValue_T), intent(inout) :: QUANTITY
+      type (VectorValue_T), intent(in) :: SOURCEQUANTITY
+      type (VectorValue_T), intent(in) :: LSBFRACTION
+      type (VectorValue_T), intent(in) :: USBFRACTION
+      integer, intent(in) :: KEY
+      ! Local variables
+
+      ! Executable code
+      ! Do some checking first
+      if (.not. ValidateVectorQuantity ( quantity, quantityType=(/l_radiance/), &
+        & sideband=(/-1,1/), minorFrame=.true. )) &
+        & call Announce_Error ( key, 0, 'Inappropriate radiance quantity to fill' )
+      if (.not. ValidateVectorQuantity ( sourceQuantity, quantityType=(/l_radiance/), &
+        & sideband=(/0/), signal=(/quantity%template%signal/), minorFrame=.true. )) &
+        & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
+      if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
+        & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
+        & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
+      if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
+        & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
+        & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+
+      ! OK Dong, this is where you do your stuff
+      ! You're filling the lsb or usb radiance quantity 'quantity', using
+      ! the folded radiances in 'sourceQuantity' and the fractions in
+      ! 'usbFraction' and 'lsbFraction'.
+
+      ! NOTE, THINK ABOUT WHETHER YOU WANT THE FILL MASK TO BE OBEYED HERE.
+
+    end subroutine FillFromSplitSideband
+
     ! ------------------------------------- FillVectorHydrostatically ----
     subroutine FillGPHPrecision ( key, quantity, &
       & tempPrecisionQuantity, refGPHPrecisionQuantity )
@@ -4980,6 +5031,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.195  2003/04/04 23:53:57  livesey
+! Added skeleton for split sideband fill
+!
 ! Revision 2.194  2003/04/04 22:01:59  livesey
 ! Added call to updateMask
 !
