@@ -526,7 +526,7 @@ contains ! =====     Public Procedures     =============================
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file)
     type (L2AUXData_T), intent(in) :: L2AUX
-    integer, intent(in) :: L2FILEHANDLE
+    integer, intent(in) :: L2FILEHANDLE                 ! From h5fopen or sfstart
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
                                                         ! Otherwise automatic
@@ -561,8 +561,10 @@ contains ! =====     Public Procedures     =============================
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
   ! (Note that this bogus sd should only be written once for each file)
+  use MLSAuxData, only: BUILD_MLSAUXDATA, DATAPRODUCTS_T
+
     type (L2AUXData_T), intent(in) :: L2AUX
-    integer, intent(in) :: L2FILEHANDLE
+    integer, intent(in) :: L2FILEHANDLE                 ! From h5fopen
     character (len=*), optional, intent(in) :: SDNAME ! Defaults to l2aux%name
     character (len=*), optional, intent(in) :: DimNames ! Comma-separated list
                                                         ! Otherwise automatic
@@ -573,10 +575,69 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: returnStatus           ! 0 unless error
 
     ! Local variables
+    integer :: myNoMAFS, MAF
+    integer, dimension(3) :: dims
+    type(DataProducts_T) :: dataProduct
+    logical :: myWriteCounterMAF
+    logical :: myReuse_dimNames
+    integer, dimension(:), pointer :: CounterMAF ! bogus array
+
     ! Executable code
+    returnStatus = 0
+    myWriteCounterMAF = .false.
+    if ( present(WriteCounterMAF) ) myWriteCounterMAF = WriteCounterMAF
+    myReuse_dimNames = .false.
+    if ( present(Reuse_dimNames) ) myReuse_dimNames = Reuse_dimNames
+    myNoMAFS = 1
+    if ( any(l2aux%dimensions%dimensionFamily == L_MAF) ) &
+     & myNoMAFS = l2aux%dimensions(3)%noValues
+    if ( present(NoMAFS) ) myNoMAFS = NoMAFS
+    
+	 !  call announce_error (0,&
+    !  & "hdf5 version of WriteL2AUXData_hdf5 not ready yet " )
+    !  returnStatus = 1
+    if ( .not. associated ( l2aux%values ) ) then
 	   call announce_error (0,&
-      & "hdf5 version of WriteL2AUXData_hdf5 not ready yet " )
+        & "l2aux values not associated yet " )
       returnStatus = 1
+    else
+      if ( present(sdName) ) then
+        dataProduct%name = sdName
+      else
+        call get_string ( l2aux%name, dataProduct%name, strip=.true. )
+      endif
+      dataProduct%data_type = 'double'  ! Depends on type of L2AUXData_T%values
+      dims(1) = size(l2aux%values, 1)
+      dims(2) = size(l2aux%values, 2)
+      dims(3) = size(l2aux%values, 3)
+      call Dump_L2AUX(l2AUX)
+      call Build_MLSAuxData(l2FileHandle, dataProduct, l2aux%values, &
+      & dims )
+      if ( .not. myWriteCounterMAF ) return
+    
+      ! Now create and write bogus counterMAF array
+      if ( myNoMAFS < 1 ) then
+        call announce_error(0, &
+        & "Too few MAFs to fake CounterMAFs in l2aux file:  " )
+        return
+      endif
+      nullify (CounterMAF)
+      call allocate_test(CounterMAF,myNoMAFS,'counterMAF',ModuleName)
+      dims(1) = myNoMAFS
+      dataProduct%name = 'counterMAF'
+      dataProduct%data_type = 'integer'
+      ! sdId= SFcreate ( l2FileHandle, 'counterMAF', DFNT_INT8, &
+      !  & 1, dimSizes)
+      do MAF=0, myNoMAFS-1
+        counterMAF(MAF+1) = MAF
+      enddo
+      ! status= SFWDATA_F90(sdId, (/ 0 /), &
+      !  & (/ 1 /) , dimSizes, CounterMAF)
+      call Build_MLSAuxData(l2FileHandle, dataProduct, counterMAF, &
+      & myNoMAFS )
+      call Deallocate_Test(CounterMAF,"CounterMAF",ModuleName)
+    
+    endif
   end subroutine WriteL2AUXData_hdf5
 
   !----------------------------------------------------- WriteL2AUXData_hdf4 ------
@@ -753,6 +814,7 @@ contains ! =====     Public Procedures     =============================
       & "Error ending access to the sd  " )
     endif
     returnStatus = error
+    call Dump_L2AUX(l2AUX)
 
   end subroutine WriteL2AUXData_hdf4
 
@@ -793,6 +855,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.31  2002/11/22 21:48:02  pwagner
+! Fleshed out WriteL2AUXData_hdf5; untested yet
+!
 ! Revision 2.30  2002/11/13 01:09:47  pwagner
 ! Beginnings of attempt to write hdf5 L2AUX; incomplete
 !
