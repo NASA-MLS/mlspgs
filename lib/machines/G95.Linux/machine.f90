@@ -128,7 +128,9 @@ contains
       end function system
     end interface
 
-    myStatus = system(command)
+    print*,"system not done yet for IFC"
+    myStatus = 0
+    !myStatus = system(command)
     if ( present(error) ) error = 0
     if ( present(status) ) status = myStatus
   end subroutine SHELL_COMMAND
@@ -181,6 +183,9 @@ contains
 end module MACHINE
 
 ! $Log$
+! Revision 1.2  2004/08/19 00:13:12  pwagner
+! Added crash_burn to provoke crash with walkback
+!
 ! Revision 1.1  2003/04/25 23:00:49  pwagner
 ! FIest commit
 !
