@@ -75,7 +75,10 @@ module Hydrostatic_m
 
     where ( z_grid > 2.5_rp )
 !     mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
-! This is a second order Taylor series expansion about z_grid = 5/2 of the above
+!{A series expansion about z\_grid = 5/2 of
+! $\frac1{\frac78 + \frac1{10}z - \frac1{50}z^2}$ is
+! $\sum_{k=0}^{\infty} \left( \frac{(z-\frac52)^2}{50}\right)^k$.  Use the
+! first two terms.
       mass_corr = 1.0_rp + 0.02_rp*(z_grid - 2.5_rp)**2
     elsewhere
       mass_corr = 1.0_rp
@@ -178,6 +181,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.11  2003/09/16 18:31:02  vsnyder
+! Put in a better comment about an approximation
+!
 ! Revision 2.10  2003/09/16 00:21:32  vsnyder
 ! Remove unused arguments to get_eta
 !
