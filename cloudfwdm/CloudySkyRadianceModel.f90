@@ -431,7 +431,7 @@ contains
 !     TO TANGENT HEIGHT (km)
 !=========================================================================
 
-      if ( toggle(emit) .and. levels(emit) > 0 ) then
+      if ( toggle(emit) .and. levels(emit) > 4 ) then
            call trace_begin ( 'Build Internal Grids' )
       endif
 
@@ -514,7 +514,7 @@ contains
 !     COMPUTE CLEAR-SKY ABSORPTION COEFFICIENTS, INCLUDING DRY, WET 
 !     CONTINUMA AND LINE EMISSIONS.   
 !=========================================================================
-      if ( toggle(emit) .and. levels(emit) > 0 ) then
+      if ( toggle(emit) .and. levels(emit) > 4 ) then
          call Trace_End ( 'Internal Grids' )
       end if
 
@@ -523,7 +523,7 @@ contains
 
       IF ( doChannel(IFR) ) then
                
-         if ( toggle(emit) .and. levels(emit) > 0 ) then
+         if ( toggle(emit) .and. levels(emit) > 4 ) then
             call Trace_Begin ( 'ClearSky' )
          end if
 
@@ -562,7 +562,7 @@ contains
             W00      = 0._r8
             tau_clear = 0._r8
 
-            if ( toggle(emit) .and. levels(emit) > 0 ) then
+            if ( toggle(emit) .and. levels(emit) > 4 ) then
                call Trace_End ( 'ClearSky' )
             end if
 
@@ -591,7 +591,7 @@ contains
                CWC = RATIO*WC(ISPI,ILYR)
                IF(CWC .ge. 1.e-9_r8) then           
               
-               if ( toggle(emit) .and. levels(emit) > 0 ) then
+               if ( toggle(emit) .and. levels(emit) > 4 ) then
                   call Trace_Begin ( 'Clouds' )
                end if
 
@@ -604,7 +604,7 @@ contains
                   RC_TMP(ISPI,:)=RC11             ! VOLUME EXT/SCAT/ABS COEFFS
                   DDm(ISPI,ILYR)=DMA              ! MASS-MEAN-DIAMETER
 
-               if ( toggle(emit) .and. levels(emit) > 0 ) then
+               if ( toggle(emit) .and. levels(emit) > 4 ) then
                   call Trace_End ( 'Clouds' )
                end if
 
@@ -629,7 +629,7 @@ contains
 
 ! call radiative transfer calculations
       
-       if ( toggle(emit) .and. levels(emit) > 0 ) then
+       if ( toggle(emit) .and. levels(emit) > 4 ) then
             call Trace_Begin ( 'Radiative Transfer' )
        end if
 
@@ -714,7 +714,7 @@ contains
          call MLSMessage(MLSMSG_Error, ModuleName,'invalid i_saturation')
        end select
  
-       if ( toggle(emit) .and. levels(emit) > 0 ) then
+       if ( toggle(emit) .and. levels(emit) > 4 ) then
           call Trace_End ( 'Radiative Transfer' )
        end if
 
@@ -724,7 +724,7 @@ contains
 !========================================================================
        IF (IFOV) THEN       ! **** BEGIN FOV AVERAGING ****
 
-       if ( toggle(emit) .and. levels(emit) > 0 ) then
+       if ( toggle(emit) .and. levels(emit) > 4 ) then
           call Trace_Begin ( 'FOV Averaging' )
        end if
 
@@ -807,7 +807,7 @@ contains
          CALL INTERPOLATEVALUES(ZZT1,SRad(:)-SRad0(:),ZZT,DTcir(:,IFR), &
               &                 method='Linear')
 
-         if ( toggle(emit) .and. levels(emit) > 0 ) then
+         if ( toggle(emit) .and. levels(emit) > 4 ) then
               call Trace_End ( 'FOV Averaging' )
          end if
 
@@ -864,6 +864,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.64  2004/01/08 00:40:50  jonathan
+! fix bug
+!
 ! Revision 1.63  2004/01/08 00:36:57  livesey
 ! Fixed some of the tracing
 !
