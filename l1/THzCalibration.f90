@@ -6,7 +6,7 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
 !=============================================================================
 
   USE MLSCommon, ONLY: r8
-  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum
+  USE MLSL1Common, ONLY: MaxMIFs, THzChans, THzNum, LO1
   USE L0_sci_tbls, ONLY: THz_Sci_pkt_T
   USE EngTbls, ONLY : Eng_MAF_T
  
@@ -37,9 +37,10 @@ MODULE THzCalibration ! Calibration data and routines for the THz module
      TYPE (THz_Sci_pkt_T) :: SciMIF(0:(MaxMIFs-1))
      TYPE (Eng_MAF_T) :: EMAF
      TYPE (Chan_type_T) :: ChanType(0:(MaxMIFs-1))
-     REAL :: CalTgtTemp   ! Average Calibration Target Temperature (C)
+     REAL :: CalTgtTemp       ! Average Calibration Target Temperature (C)
+     REAL :: LimbCalTgtTemp   ! Average Limb Calibration Target Temperature (C)
      INTEGER :: last_MIF
-     INTEGER :: BandSwitch(5)   ! band switch positions
+     INTEGER :: BandSwitch(5) ! band switch positions
   END TYPE MAFdata_T
 
   TYPE CalBuf_T
@@ -70,17 +71,20 @@ CONTAINS
   SUBROUTINE BuildCalVectors
 !=============================================================================
 
-    USE THzUtils, ONLY: Bias_err, MaxBias
+    USE THzUtils, ONLY: Bias_err
     USE MLSL1Config, ONLY: L1Config
-    USE MLSL1Rad, ONLY: UpdateRadSignals
+    USE MLSL1Rad, ONLY: UpdateRadSignals, RadPwr
 
     INTEGER :: i, j, last_MIF, mindx, MIF0, MIFno
-    INTEGER :: nBank, numMIFs, nBounds, status, Switch5
+    INTEGER :: nBank, numMIFs, nMIFsM1, nBounds, status, Switch5
+    REAL :: MaxBias
     TYPE (MAFdata_T), POINTER :: CurMAFdata => NULL()
     LOGICAL, DIMENSION(:), ALLOCATABLE, SAVE :: Bounds
     INTEGER, PARAMETER :: Cal_size = 240   ! Nominal orbit
+    REAL, PARAMETER :: LO1R5 = LO1(5)  ! Radiometer 5 1st LO frequency
 
     SpaceTemp = L1Config%Calib%THzSpaceTemp
+    MaxBias = L1Config%Calib%THzMaxBias
 
     Cal_end = MIN ((Cal_start+Cal_size-1), CalBuf%MAFs)
     IF ((CalBuf%MAFs - Cal_end) < Cal_size) Cal_end = CalBuf%MAFs
@@ -91,6 +95,7 @@ CONTAINS
     DO i = Cal_start, Cal_end
        numMIFs = numMIFs + CalBuf%MAFdata(i)%last_MIF + 1
     ENDDO
+    nMIFsM1 = numMIFs - 1
 
 ! Allocate vectors:
 
@@ -98,34 +103,34 @@ CONTAINS
     ALLOCATE (CalMIF(0:numMIFs-1))
 
     DEALLOCATE (MIFx, stat=status)
-    ALLOCATE (MIFx(0:numMIFs-1))
-    DO i = 0, (numMIFs - 1)
+    ALLOCATE (MIFx(0:nMIFsM1))
+    DO i = 0, nMIFsM1
        MIFx(i) = i
     ENDDO
 
     DEALLOCATE (CalFlag, stat=status)  ! calibration = 1, otherwise = 0
-    ALLOCATE (CalFlag(0:numMIFs-1))
+    ALLOCATE (CalFlag(0:nMIFsM1))
     CalFlag = 0    ! Indicate not a calibration MIF (yet)
 
     DEALLOCATE (Bias, stat=status)
-    ALLOCATE (Bias(0:numMIFs-1))
+    ALLOCATE (Bias(0:nMIFsM1))
 
     DEALLOCATE (BiasGood, stat=status)
-    ALLOCATE (BiasGood(0:numMIFs-1))
+    ALLOCATE (BiasGood(0:nMIFsM1))
 
     DEALLOCATE (CalTemp, stat=status)
-    ALLOCATE (CalTemp(0:numMIFs-1))
+    ALLOCATE (CalTemp(0:nMIFsM1))
     CalTemp = 0.0
 
     DEALLOCATE (Bounds, stat=status)
-    ALLOCATE (Bounds(0:numMIFs-1))
+    ALLOCATE (Bounds(0:nMIFsM1))
 
     DEALLOCATE (Cnts, stat=status)
-    ALLOCATE (Cnts(THzChans,THzNum,0:numMIFs-1))
+    ALLOCATE (Cnts(THzChans,THzNum,0:nMIFsM1))
     DEALLOCATE (dCnts, stat=status)
-    ALLOCATE (dCnts(THzChans,THzNum,0:numMIFs-1))
+    ALLOCATE (dCnts(THzChans,THzNum,0:nMIFsM1))
     DEALLOCATE (VarCnts, stat=status)
-    ALLOCATE (VarCnts(THzChans,THzNum,0:numMIFs-1))
+    ALLOCATE (VarCnts(THzChans,THzNum,0:nMIFsM1))
     DEALLOCATE (VarGain, stat=status)
     ALLOCATE (VarGain(THzChans,THzNum))
     Cnts = 0.0
@@ -138,6 +143,7 @@ CONTAINS
 
     MIF0 = 0   ! index for MIFs
     DO i = Cal_start, Cal_end
+
        CurMAFdata => CalBuf%MAFdata(i)
        last_MIF = CurMAFdata%last_MIF
        CalMIF(MIF0:MIF0+last_MIF) = CurMAFdata%SciMIF(0:last_MIF)%MIFno
@@ -153,22 +159,27 @@ CONTAINS
              CalFlag(mindx) = 1
           ELSE IF (CurMAFdata%SciMIF(MIFno)%SwMirPos == "T" .AND. &
                Bias(mindx) < MaxBias) THEN
-             CalTemp(mindx) = -25  !CurMAFdata%CalTgtTemp - SpaceTemp
+             CalTemp(mindx) = CurMAFdata%CalTgtTemp
+             IF (SpaceTemp < 0.0) CalTemp(mindx) = CalTemp(mindx) - &
+                  CurMAFdata%LimbCalTgtTemp
+             IF (CalTemp(mindx) > 200.0) CalTemp(mindx) = &
+                  RadPwr (LO1R5, REAL(CalTemp(mindx))) !for in orbit space = 0
              CalFlag(mindx) = 1
           ENDIF
-      ENDDO
+       ENDDO
 
 ! Check if Band Switch 5 changes:
 
-      IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(5) /= Switch5)) &
-           CalBuf%BankGood(1) = .FALSE.  ! Filter Bank 15 not all good
+       IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(5) /= Switch5)) &
+            CalBuf%BankGood(1) = .FALSE.  ! Filter Bank 15 not all good
 
 ! Check if Band 20 is connected:
 
-      IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(4) /= 20)) &
-           CalBuf%BankGood(6) = .FALSE.  ! Filter Bank 12 (Band 20) not all good
+       IF (ANY (CurMAFdata%SciMIF(0:last_MIF)%BandSwitch(4) /= 20)) &
+            CalBuf%BankGood(6) = .FALSE. ! Filter Bank 12 (Band 20) not all good
 
-      MIF0 = MIF0 + last_MIF + 1
+       MIF0 = MIF0 + last_MIF + 1
+
     ENDDO
 
 ! Adjust LLO Bias V if 2 or more consecutive errs:
@@ -190,12 +201,12 @@ CONTAINS
        Bounds = .TRUE.
     END WHERE
     BiasGood = .NOT. Bounds      ! Good Bias values
-    Bounds(numMIFs-1) = .TRUE.   ! last always a bounds
+    Bounds(nMIFsM1) = .TRUE.   ! last always a bounds
     nBounds = COUNT (Bounds)
     DEALLOCATE (BoundsX, stat=status)
     ALLOCATE (BoundsX(nBounds))
     j = 1
-    DO i = 0, (numMIFs - 1)
+    DO i = 0, nMIFsM1
        IF (Bounds(i)) THEN
           BoundsX(j) = i
           j = j + 1
@@ -303,7 +314,7 @@ CONTAINS
              VarCnts(nChan,nBank,:) = Bias * Bias * tt + 1.0
           ENDWHERE
           Cnts(nChan,nBank,:) = Cnts(nChan,nBank,:) / &
-               MAX (dCal(nChan,nBank), 0.01d0)
+               MAX (ABS (dCal(nChan,nBank)), 0.01d0)
           yTsys(nChan,nBank) = SUM (Cnts(nChan,nBank,:)* CalFlag) / ntot - &
                AvgTemp
        ENDDO
@@ -443,8 +454,8 @@ CONTAINS
              mfit1 = tsqavg * mfit3
              mfit2 = mfit2 + tsqavg * mfit4
              mfit3 = 2.0 * mfit3
-             last_fit = .TRUE.
           ENDIF
+          last_fit = .TRUE.
 
        ENDIF
 
@@ -504,7 +515,7 @@ CONTAINS
     xavg = 0.0
     yavg = 0.0
 
-    DO i = 1, SIZE (CalFlag)
+    DO i = 0, (SIZE (CalFlag) - 1)
        IF (CalFlag(i) == 1) THEN
           xval = vnorm / VarCnts(:,:,i)
           xavg = xavg + xval
@@ -562,6 +573,9 @@ END MODULE THzCalibration
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.2  2003/02/05 21:31:55  perun
 ! Calculate variance and chi square
 !

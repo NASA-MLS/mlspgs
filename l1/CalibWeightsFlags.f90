@@ -21,7 +21,7 @@ MODULE CalibWeightsFlags
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  TYPE (WeightsFlags_T), DIMENSION(:), ALLOCATABLE :: WeightsFlags
+  TYPE (WeightsFlags_T), DIMENSION(:), POINTER :: WeightsFlags
 
   INTEGER :: nom_MIFs, TotalMAFs
 
@@ -215,6 +215,9 @@ print *, 'flags: ', WeightsFlags(i)
 END MODULE CalibWeightsFlags
 !=============================================================================
 ! $Log$
+! Revision 2.3  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.2  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !

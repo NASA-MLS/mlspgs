@@ -9,7 +9,7 @@ MODULE THzUtils
 
   PRIVATE
 
-  PUBLIC :: LLO_Bias, Bias_err, MaxBias, LLO_Label, ConvertLLO
+  PUBLIC :: LLO_Bias, Bias_err, LLO_Label, ConvertLLO
 
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
@@ -18,7 +18,6 @@ MODULE THzUtils
   !-----------------------------------------------------------------------------
 
   REAL, PARAMETER :: Bias_err = 10.0
-  REAL, PARAMETER :: MaxBias = 2.0
 
   CHARACTER (LEN=*), PARAMETER, DIMENSION(16) :: LLO_Label = (/ &
        "Pump MC PZT      ", "Pump CC PZT      ", "FIR IC PZT       ", &
@@ -119,6 +118,9 @@ CONTAINS
 END MODULE THzUtils
 
 ! $Log$
+! Revision 2.3  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.2  2003/09/15 17:15:54  perun
 ! Version 1.3 commit
 !
