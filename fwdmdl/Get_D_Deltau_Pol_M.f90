@@ -311,9 +311,9 @@ contains
     integer :: A, B                  ! Indices for GL points
     complex(rp) :: Alpha_Path_N(-1:1)       ! alpha_path_n * N at one path point
     complex(rp) :: Alpha_Path_N_F(-1:1,NG)  ! alpha_path_n * N at one set of GL points
-    complex(rp) :: Alpha_Path_N_T(-1:1,size(path_inds)) ! n/T * Alpha on the
+    complex(rp) :: Alpha_Path_N_T(-1:1,size(path_inds)) ! Alpha * n/T on the
                                      ! coarse path
-    complex(rp) :: Alpha_Path_N_T_F(-1:1,size(t_path_f)) ! n/T * Alpha on the
+    complex(rp) :: Alpha_Path_N_T_F(-1:1,size(t_path_f)) ! Alpha * n/T on the
                                      ! fine path
     complex(rp) :: Beta_0(-1:1), Beta_M(-1:1), Beta_P(-1:1) ! Single elements of
       ! Beta_Path, Beta_Path_M, Beta_Path_P multiplied by Tanh_Path,  Tanh_M, Tanh_P
@@ -324,7 +324,6 @@ contains
     complex(rp) :: D_Incoptdepth_dT(2,2,size(path_inds))
     logical :: Do_calc(1:size(path_inds)) ! do_calc_t_c .or. ( do_gl .and. any
                                      ! of the corresponding do_calc_t_f ).
-    real(rp) :: EtaDT(ng)            ! Eta_zxp_f / t_path_f for one GL panel
     real(rp) :: F(ng)                ! Factor in GL that doesn't depend on
                                      ! sigma +/- or pi.
     real(rp) :: Fa, Fb               ! Hydrostatic integrand at ends of
@@ -454,12 +453,11 @@ contains
         if ( do_gl(p_i) ) then
           b = a + ng
           if ( do_calc(p_i) ) then
-            etaDT = eta_zxp_f(a:b-1,sv_i) / t_path_f(a:b-1)
             f = ds_dz_gw(gl_inds(a:b-1))
             do l = -1, 1
               d_alpha_dT_eta(l,p_i) = d_alpha_dT_eta(l,p_i) + &
                  & del_zeta(p_i) * &
-                 & sum( ( alpha_path_n_t_f(l,a:b-1) * etaDT - &
+                 & sum( ( alpha_path_n_t_f(l,a:b-1) * eta_zxp_f(a:b-1,sv_i) - &
                  &        singularity(l,p_i) ) * f )
             end do ! l
           end if
@@ -598,6 +596,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.19  2003/11/24 22:08:30  vsnyder
+! Remove an unnecessary variable
+!
 ! Revision 2.18  2003/11/04 02:01:19  vsnyder
 ! Add 'FA = 0.0' in case n_path <= 4
 !
