@@ -76,14 +76,15 @@ contains
     REAL(r8) :: VMR_HNO3                     ! HNO3 VOLUME MIXING RATIO
     REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
 
-    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
+    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele, IPSD, NU, NUA, NAB, NR, NC
     Integer(ip) :: Spectag, status
-    REAL(rp) :: bb, del_temp, cld_ext
+    REAL(rp) :: bb, del_temp, cld_ext, WC(2) 
+    parameter (NC=2, NU=16, NUA=8, NAB=50, NR=40, IPSD=1000)
     REAL(rp), allocatable, dimension(:) :: PP, TT
     logical :: Do_1D, Incl_Cld
 
 !-----------------------------------------------------------------------------
-
+    WC= 0._r8
     IF (RH .NE. 100.0_r8) THEN
        VMR_H2O = RH                     ! PH HERE IS WATER VAPOR MIXING RATIO
        VP=VMR_H2O*PB                    ! VP IS VAPOR PRESSURE, PB IS TOTAL
@@ -146,7 +147,8 @@ contains
       Spectag = Catalog(i)%Spec_Tag
 
       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
-        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb, Incl_Cld, cld_ext )
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb, Incl_Cld, cld_ext,&
+        &  IPSD, WC, NU, NUA, NAB, NR, NC )
       
       select case (Spectag)
       case (SP_H2O)
@@ -206,6 +208,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.12  2003/01/31 17:24:12  jonathan
+! add Incl_Cld. cld_ext
+!
 ! Revision 1.11  2003/01/30 18:25:06  pwagner
 ! Cosmetic changes; fixed bug where losVel was being changed
 !
