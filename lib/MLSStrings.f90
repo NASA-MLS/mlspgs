@@ -23,15 +23,24 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !
 ! This module contains some low level string handling stuff for mls
 
+! === (start of toc) ===
 !     c o n t e n t s
 !     - - - - - - - -
 
+!     (parameters)
+! KEYNOTFOUND        key not found among keyList
+! KEYBEYONDHASHSIZE  index of key in keyList > size(hash array)
+! INVALIDHHMMSSSTRING
+!                    (if strict) str not in format '00:00:00.0000000'
+! LENORSIZETOOSMALL  Either charsize of strs or size(ints) too small
+
+!     (subroutines and functions)
 ! Array2List         Converts an array of strings to a single string list
 ! Capitalize         tr[a-z] -> [A-Z]
 ! CompressString     Removes all leading and embedded blanks
 ! count_words        Counts the number of space-delimited words in a string
 ! depunctuate        Replaces punctuation with blanks
-! GetIntHashElement  Returns int from array of hashes corresponding to key string
+! GetIntHashElement  Returns int from hash array corresponding to key string
 ! GetStringElement   Returns n'th element of string list
 ! GetStringHashElement   
 !                    Returns string from hash list corresponding to key string
@@ -54,6 +63,46 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! StringElementNum   Returns element number of test string in string list
 ! unquote            Removes surrounding [quotes]
+! === (end of toc) ===
+
+! === (start of api) ===
+! Array2List (char* inArray(:), char* outList(:), &
+!   & [char inDelim], [int ordering], [char leftRight]) 
+! char* Capitalize (char* str)
+! char* CompressString (char* str)
+! int count_words (char* str)
+! char* depunctuate (char* str)
+! GetIntHashElement (strlist keyList, hashArray(:), char* key, 
+!   int ErrType, log countEmpty, [char inDelim], [log part_match])
+! GetStringElement (strlist inList, char* outElement,
+!   i4 nElement, log countEmpty, [char inDelim])
+! GetStringHashElement (strlist keyList, strlist hashList, char* key, 
+!   char* outElement, log countEmpty, [char inDelim], [log part_match])
+! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique) 
+! r8 hhmmss_value (char* str, int ErrTyp, [char separator], [log strict])
+! ints2Strings (int ints(:,:), char* strs(:))
+! int LinearSearchStringArray (char* list(:), char* string, 
+!   [log caseInsensitive, [log testSubstring], [log listInString])
+! List2Array (strlist inList, char* outArray(:), log countEmpty, [char inDelim],
+!    [log IgnoreLeadingSpaces])
+! char* LowerCase (char* str)
+! int NumStringElements(strlist inList, log countEmpty, &
+!   & [char inDelim], [int LongestLen])
+! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
+!       & [char commentChar], [char continuationChar])
+! char* Reverse (char* str)
+! strlist ReverseList (strlist str, [char inDelim])
+! SortArray (char* inStrArray(:), int outIntArray(:), log CaseSensitive, &
+!   & [char* sortedArray(:)], [log shorterFirst], [char leftRight])
+! SortList (strlist inStrArray, int outIntArray(:), log CaseSensitive, &
+!   & log countEmpty, [char inDelim], [log IgnoreLeadingSpaces], 
+!     [strlist sortedList], [char leftRight])
+! SplitWords (char *line, char* first, char* rest, [char* last], &
+!       & [log threeWay], [char* delimiter])
+! strings2Ints (char* strs(:), int ints(:,:))
+! int StringElementNum(strlist inList, char* test_string, log countEmpty, &
+!    & [char inDelim], [log part_match])
+! char* unquote (char* str, [char* quotes], [char* cquotes], [log strict])
 
 ! in the above, a string list is a string of elements (usu. comma-delimited)
 ! e.g., units='cm,m,in,ft'
@@ -67,11 +116,12 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 
 ! Warning: in the routines LinearSearchStringArray, Array2List, and SortArray
 ! the input arguments include an array of strings;
-! it is assumed that this array is of assumed-size
+! This array is of assumed-size
 ! I.e., all elements from array(1:size(array)) are relevant
 ! Therefore in calling one of these you probably need to use the format
 !   call SortArray(myArray(1:mySize), ..
 ! to avoid operating on undefined array elements
+! === (end of api) ===
 
   public :: Array2List, Capitalize, CompressString, count_words, &
    & depunctuate, GetIntHashElement, GetStringElement, GetStringHashElement, &
@@ -282,27 +332,32 @@ CONTAINS
   ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! Another optional arg, part_match, returns a match for the 
+  ! first hash element merely found in the key; e.g.
+  ! 'won, to, tree' and key 'protocol.dat' matches 'to'
 
   ! Basic premise: Use StringElementNum on key in keyList to find index
   ! Use this index for the array of ints
   
   FUNCTION GetIntHashElement(keyList, hashArray, key, ErrType, &
-  & countEmpty, inDelim) RESULT (hashInt)
+  & countEmpty, inDelim, part_match) RESULT (hashInt)
     ! Dummy arguments
-    CHARACTER (LEN=*), INTENT(IN)   :: keyList
-    INTEGER(i4), DIMENSION(:), INTENT(IN)   :: hashArray
-    INTEGER(i4)                             :: hashInt
-    CHARACTER (LEN=*), INTENT(IN)   :: key
-    INTEGER, INTENT(OUT)  :: ErrType
-    LOGICAL, INTENT(IN)   :: countEmpty
+    CHARACTER (LEN=*), INTENT(IN)             :: keyList
+    INTEGER, DIMENSION(:), INTENT(IN)         :: hashArray
+    INTEGER                                   :: hashInt
+    CHARACTER (LEN=*), INTENT(IN)             :: key
+    INTEGER, INTENT(OUT)                      :: ErrType
+    LOGICAL, INTENT(IN)                       :: countEmpty
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
 	INTEGER :: elem
 
     ! Executable code
 
-	elem = StringElementNum(keyList, key, countEmpty, inDelim)
+   ErrType = 0
+	elem = StringElementNum(keyList, key, countEmpty, inDelim, part_match)
 	hashInt = elem
 	IF(elem <= 0) THEN
 		ErrType = KEYNOTFOUND
@@ -424,6 +479,9 @@ CONTAINS
   ! If TRUE, the elements would be {'a', 'b', ' ', 'd'}
 
   ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! Another optional arg, part_match, returns a match for the 
+  ! first hash element merely found in the key; e.g.
+  ! 'won, to, tree' and key 'protocol.dat' matches 'to'
 
   ! Basic premise: Use StringElementNum on key in keyList to find index
   ! Use this index to GetStringElement from HashList
@@ -432,7 +490,7 @@ CONTAINS
   ! strings
   
   SUBROUTINE GetStringHashElement(keyList, hashList, key, outElement, &
-  & countEmpty, inDelim)
+  & countEmpty, inDelim, part_match)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)   :: keyList
     CHARACTER (LEN=*), INTENT(IN)   :: hashList
@@ -440,6 +498,7 @@ CONTAINS
     CHARACTER (LEN=*), INTENT(OUT)  :: outElement
     LOGICAL, INTENT(IN)   :: countEmpty
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
 	INTEGER(i4) :: elem
@@ -454,11 +513,12 @@ CONTAINS
 	     Delim = COMMA
 	 ENDIF
 
-	elem = StringElementNum(keyList, key, countEmpty, inDelim)
+	elem = StringElementNum(keyList, key, countEmpty, inDelim, part_match)
 	IF(elem <= 0) THEN
 		outElement = Delim
 	ELSE
-		CALL GetStringElement(hashList, outElement, elem, countEmpty, inDelim)
+		CALL GetStringElement(hashList, outElement, elem, &
+        & countEmpty, inDelim)
 	ENDIF
 
   END SUBROUTINE GetStringHashElement
@@ -548,7 +608,7 @@ CONTAINS
     ! will be treated the same as '00:00:00.0000000'
 
     ! If given optional arg strict, not lenient
-    ! i.e., non-complient str always returns non-zero ErrTyp
+    ! i.e., non-compliant str always returns non-zero ErrTyp
     
     ! If given optional arg separator, uses separator as field separator
     
@@ -698,7 +758,7 @@ CONTAINS
 
   end Function hhmmss_value
 
-  ! --------------------------------------------------  int2String  -----
+  ! --------------------------------------------------  int2Strings  -----
   SUBROUTINE ints2Strings (ints, strs)
     ! takes an array of integers and returns string array
     ! using "char"
@@ -1720,22 +1780,28 @@ CONTAINS
   ! E.g., "a,b,,d" has 4 elements if countEmpty TRUE, 3 if FALSE  
 
   ! As an optional arg the delimiter may supplied, in case it isn't comma
+  ! Another optional arg, part_match, returns the number of the 
+  ! first element merely found in the test string; e.g.
+  ! 'won, to, tree' and test 'protocol.dat' returns 2
 
   ! See also GetStringElement, NumStringElements
 
-  FUNCTION StringElementNum(inList, element, countEmpty, inDelim) RESULT (elem)
+  FUNCTION StringElementNum(inList, test_string, countEmpty, &
+    & inDelim, part_match) RESULT (elem)
     ! Dummy arguments
     CHARACTER (LEN=*), INTENT(IN)             :: inList
-    CHARACTER (LEN=*), INTENT(IN)             :: element
+    CHARACTER (LEN=*), INTENT(IN)             :: test_string
     LOGICAL, INTENT(IN)                       :: countEmpty
 	 INTEGER                                   :: elem
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)   :: inDelim
+    LOGICAL, OPTIONAL, INTENT(IN)             :: part_match
 
     ! Local variables
     INTEGER :: nElements
     INTEGER , PARAMETER :: MAXELEMENTLENGTH = 80
 
     CHARACTER (LEN=MAXELEMENTLENGTH)           :: listElement
+    logical ::                                    match
 !    CHARACTER (LEN=1)                          :: Delim
 !    CHARACTER (LEN=1), PARAMETER               :: COMMA = ','
     ! Executable code
@@ -1746,11 +1812,18 @@ CONTAINS
 		elem = 0
 		RETURN
 	ENDIF
+   match = .false.
+   if ( present(part_match) ) match = part_match
 
 	! Check for matches--snipping off any leading blanks
 	DO elem=1, nElements
 		CALL GetStringElement(inList, listElement, elem, countEmpty, inDelim)
-		IF(adjustl(listElement) == adjustl(element)) RETURN
+      if ( part_match ) then
+        if (trim(listElement) /= ' ' .and. &
+          & index(trim(test_string), trim(listElement)) > 0) RETURN
+      else
+  	     IF(adjustl(listElement) == adjustl(test_string)) RETURN
+      endif
 	ENDDO
 	
 	elem = 0
@@ -1915,6 +1988,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.24  2002/10/29 01:00:05  pwagner
+! optional param part_match added to str element routines
+!
 ! Revision 2.23  2002/10/08 00:09:12  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
