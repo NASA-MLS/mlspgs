@@ -76,7 +76,7 @@ module INIT_TABLES_MODULE
   
   private :: ID_CUM, ID_LAST, ID_LAST_MAX, ACORN
   integer :: ID_LAST
-  integer, parameter :: ID_LAST_MAX = 200     ! You will be told if too small
+  integer, parameter :: ID_LAST_MAX = 500     ! You will be told if too small
   integer, pointer, dimension(:) :: ID_CUM => null()
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -780,21 +780,21 @@ contains ! =====     Public procedures     =============================
   end subroutine INIT_TABLES
 
   subroutine ACORN ( IDS )
-  ! Build a tree specified by the "ids" array.
-  ! Global use made of id_last, id_last_max and id_cum
+    ! Build a tree specified by the "ids" array.
+    ! Global use made of id_last, id_last_max and id_cum
     integer, intent(in) :: IDS(:)
     
     integer :: id_next
     
     id_next = id_last + size(ids)
 
+    ! Note that we have to use print statements here, not MLSMessage, as
+    ! we haven't yet decided how MLSMessage is going to work (Toolkit etc.)
     if ( size(ids) < 1 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName,&
-      &   'Illegal num of args to acorn' )
+      print*,'Illegal num of args to acorn' )
     else if ( id_next > id_last_max ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName,&
-      &   'Accumulated too many ids in acorn;' // &
-      &   ' increase id_last_max in l2/init_tables_module.f90')
+      print*,'Accumulated too many ids in acorn;' // &
+        &' increase id_last_max in l2/init_tables_module.f90'
     else
       id_cum(id_last+1:id_next) = ids
     endif
@@ -805,6 +805,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.175  2001/10/19 17:11:05  livesey
+! Bug fix, and tidy up of acorn
+!
 ! Revision 2.174  2001/10/18 23:59:55  pwagner
 ! Replaced remove with destroy; added multiplier to addnoise
 !
