@@ -89,7 +89,7 @@ program MLSL2
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
-  real :: T1, T2                   ! For timing
+  real :: T0, T1, T2               ! For timing
   logical :: Timing = .false.      ! -T option is set
   character(len=255) :: WORD       ! Some text
 
@@ -101,6 +101,8 @@ program MLSL2
   !-----------------------------------------------------------------------------
 
   !---------------- Task (1) ------------------
+
+  call cpu_time ( t0 )
 
 ! Where to send output, how severe an error to quit
    prunit = OUTPUT_PRINT_UNIT
@@ -353,6 +355,8 @@ program MLSL2
       call output ( 'End type-checked abstract syntax tree', advance='yes' )
     end if
 
+    call add_to_section_timing( 'main', t0 )
+
   !---------------- Task (7) ------------------
     if ( error == 0 .and. first_section /= 0 ) then
       ! Now do the L2 processing.
@@ -362,6 +366,8 @@ program MLSL2
     end if
   end if
 
+  call cpu_time ( t0 )
+  t1 = t0
   !---------------- Task (8) ------------------
   call destroy_char_table
   call destroy_hash_table
@@ -371,6 +377,7 @@ program MLSL2
   call deallocate_tree
   call FreePVMArgs
   if ( timing ) call sayTime ( 'Closing and deallocating' )
+  call add_to_section_timing( 'main', t0 )
   if ( index(switches, 'time') /= 0 ) call dump_section_timings
   if(error /= 0) then
      call MLSMessageExit(1)
@@ -420,6 +427,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.55  2001/09/28 23:59:20  pwagner
+! Fixed various timing problems
+!
 ! Revision 2.54  2001/09/28 17:50:30  pwagner
 ! MLSL2Timings module keeps timing info
 !
