@@ -3,7 +3,7 @@ MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
 
   USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
-  USE MLSCommon, only: i4
+  USE MLSCommon, only: i4, r8, NameLen
 
   IMPLICIT NONE
   PUBLIC
@@ -120,155 +120,6 @@ CONTAINS
     end do
 
   end Function depunctuate
-
-  ! ------------------------------------------------  DEPUNCTUATE  -----
-  Function unquote(str, quotes, cquotes, strict) result (outstr)
-    ! Function that removes a single pair of surrounding quotes from string
-
-    ! E.g., given "Let me see." or 'Let me see.' returns
-    !    Let me see.
-    ! If no surrounding quotes are found, returns string unchanged; unless
-    ! (1) mismatched quotes, e.g. 'Let me see." will:
-    !     remove leading quote but leave trailing quote
-    ! (2) a single unpaired quote found at beginning or end, will:
-    !  (a) remove it if the resulting string is non-empty; or
-    !  (b) return the single unpaired quote if that was the entire str
-    
-    ! If given optional arg strict, options (1) and (2) above disregarded
-    ! i.e., surrounding quotes must match, else returns string unchanged
-    
-    ! If given optional arg quotes, removes only surrounding pair:
-    ! quotes[i:i] for each i=1..len[quotes]
-    ! E.g., given /a\ regexp/ with quotes='/' returns
-    !    a\ regexp
-    
-    ! If given optional args quotes & cquotes, removes only surrounding pair:
-    ! quotes[i:i] on the left, cquotes[i:i] on the right, i=1..len[quotes]
-    ! E.g., given [a particle] with quotes='[' cquotes=']' returns
-    !    a particle
-    ! (For this case, strict matching is always on)
-    
-    ! Useful because the parser will return quote-delimited strings if that's
-    ! how they appear in the lcf
-    
-    ! Calling get_string with "strip=.true." renders this unnecessary.
-    ! However, you might find another use for it, especially with
-    ! feature of being able to trim other, user-supplied detritus:
-    ! e.g., braces, parentheses, extraneous delimiters
-    !--------Argument--------!
-    character(len=*),intent(in) :: str
-    character(len=len(str)) :: outstr
-    character(len=*),intent(in), optional :: quotes
-    character(len=*),intent(in), optional :: cquotes
-    logical,intent(in), optional :: strict
-    !----------Local vars----------!
-    character(len=1), parameter :: sq=''''
-    character(len=1), parameter :: dq='"'
-    integer :: first, last, ult, prim
-    character(len=1) :: quote, cquote
-    integer :: i
-    logical :: mystrict
-    !----------Executable part----------!
-
-   ult = len_trim(str)    ! Position of last non-blank char
-   prim = ult - len_trim(adjustl(str)) + 1    ! Position of 1st non-blank char
-      
-   ! length of non-blank portion of string to be trimmed must be at least 2
-   if(ult-prim+1 <= 1) then
-      outstr=str
-      return
-   endif
-
-   if(present(strict)) then
-      mystrict=strict
-   else
-      mystrict=.false.
-   endif
-   
-   ! These are initialized so that if no matching quotes found
-   ! we will return    outstr = adjustl(str)
-   first = prim
-   last = ult
-
-   ! trim surrounding user-supplied marks?
-
-   if(present(quotes)) then
-      if(len_trim(quotes) <= 0) then
-       outstr=str
-       return
-      endif
-      
-      ! Loop over char class in string quotes
-      do i=1, len_trim(quotes)
-      
-         quote = quotes(i:i)
-
-         ! Supplied with paired left and right quotes?
-         if(present(cquotes)) then
-            cquote=cquotes(i:i)
-            mystrict=.true.
-         else
-            cquote=quote
-         endif
-
-         if(mystrict) then
-           if(str(prim:prim) == quote .and. str(ult:ult) == cquote) then
-               outstr=str(prim+1:ult-1)
-               return
-          endif
-      
-        else
-         if(str(prim:prim) == quote) then
-           first=prim+1
-          endif
-
-          if(str(ult:ult) == cquote) then
-             last=ult-1
-           endif
-        endif
-
-      enddo
-
-   ! insist surrounding marks match?
-   elseif(present(strict)) then
-      if( &
-      & str(prim:prim) == str(ult:ult) &
-      & .and. &
-        & (str(prim:prim) == sq .or. str(prim:prim) == dq) &
-        & ) then
-            outstr=str(prim+1:ult-1)
-          else
-            outstr=str
-          endif
-         return
-      
-   elseif(str(prim:prim) == sq) then
-      first=prim+1
-      if(str(ult:ult) == sq) then
-         last=ult-1
-      endif
-      
-   elseif(str(prim:prim) == dq) then
-      first=prim+1
-      if(str(ult:ult) == dq) then
-         last=ult-1
-      endif
-
-   else
-      first=prim
-      if(str(ult:ult) == dq .or. str(ult:ult) == sq) then
-         last=ult-1
-      endif
-
-   endif
-
-   if(last >= first) then
-       outstr=str(first:last)
-   else
-       outstr=str
-   endif
-      
-  end Function unquote
 
   ! ---------------------------------------------  GetIntHashElement  -----
 
@@ -539,6 +390,174 @@ CONTAINS
 
     DEALLOCATE(duplicate)
   END SUBROUTINE GetUniqueStrings
+
+  ! ------------------------------------------------  hhmmss_value  -----
+  Function hhmmss_value(str, ErrTyp, separator, strict) result (value)
+    ! Function that returns the value in seconds of a string 'hh:mm:ss'
+    ! where the field separator ':' divides the string into two
+    ! integer-like strings 'hh' and 'mm', as well as one float-like
+    ! string 'ss' which may have a decimal point plus fractional part
+    ! E.g., ss=59.9999
+    
+    ! Requires 0 <= hh <= 24
+    ! Requires 0 <= mm < 60
+    ! Requires 0. <= ss < 60.
+
+    ! Returns ErrTyp=0 unless an error occurs
+
+    ! Lenient wrt non-compilant formats:
+    ! ignores chars in front of 'hh' and a terminal,
+    ! non-numerical char: e.g., '2000-01-01T00:00:00.000000Z'
+    ! will be treated the same as '00:00:00.0000000'
+
+    ! If given optional arg strict, not lenient
+    ! i.e., non-complient str always returns non-zero ErrTyp
+    
+    ! If given optional arg separator, uses separator as field separator
+    
+    ! Useful to allow an added way to input time
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    real(r8) :: value
+    integer, intent(out) :: ErrTyp
+    character(len=1),intent(in), optional :: separator
+    logical,intent(in), optional :: strict
+    !----------Local vars----------!
+    character(len=1), parameter :: colon=':'
+    integer, parameter :: INVALIDHHMMSSSTRING = 1
+    character(len=1) :: myColon
+    character(len=2) :: mm
+    character(len=NameLen) :: ss
+    character(len=NameLen) :: hh
+    character(len=10), parameter :: digits='0123456789'
+    character(LEN=*), parameter :: time_conversion='(I2)'
+    character(LEN=*), parameter :: real_conversion='(F32.0)'
+    integer :: i
+    logical :: mystrict
+    integer :: hvalue, mvalue
+    !----------Executable part----------!
+
+   if(present(separator)) then
+      myColon=separator
+   else
+      myColon=colon
+   endif
+         
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   if(len_trim(str) <= 0) then
+      value=0.
+      if(mystrict) then
+         ErrTyp=INVALIDHHMMSSSTRING
+      else
+         ErrTyp=0
+      endif
+      return
+   endif
+   
+   ErrTyp=INVALIDHHMMSSSTRING
+   value=0.
+   
+   call GetStringElement(str, hh, 1, countEmpty=.true., inDelim=myColon)
+   call GetStringElement(str, mm, 2, countEmpty=.true., inDelim=myColon)
+   call GetStringElement(str, ss, 3, countEmpty=.true., inDelim=myColon)
+   
+   ! Check if ss terminates in a non-digit
+   ss=Reverse(trim(ss))
+   
+   if(len_trim(ss) <= 0) then
+      if(mystrict) then
+         return
+      endif      
+   elseif( .not. (index(digits, ss(1:1)) > 0) ) then
+      if(mystrict) then
+         return
+      else
+         ss=Reverse(trim(ss(2:)))
+      endif
+   else
+      ss=Reverse(trim(ss))
+   endif
+   do i=1, len_trim(ss)
+      if( .not. (index(digits, ss(i:i)) > 0 .or. ss(i:i) == '.') ) return
+   enddo
+
+   ! Check if mm complies
+   if(len_trim(mm) <= 0) then
+      if(mystrict) then
+         return
+      endif      
+   else
+      do i=1, len_trim(ss)
+        if( .not. (index(digits, mm(i:i)) > 0 .or. mm(i:i) == '.') ) return
+      enddo
+   endif      
+
+   ! Check if hh complies
+   hh=Reverse(trim(hh))
+   
+   if(len_trim(hh) <= 0) then
+      if(mystrict) then
+         return
+      endif      
+   elseif(mystrict) then
+      do i=1, len_trim(hh)
+        if( .not. (index(digits, hh(i:i)) > 0) ) return
+      enddo
+   endif
+
+   hh=Reverse(hh(:2))
+   
+   ErrTyp=0
+   
+   ! Convert to value
+   if(hh == ' ') then
+      hvalue=0
+   else
+      read(hh(1:2), time_conversion, iostat=ErrTyp) hvalue
+   endif
+   
+   if(ErrTyp /= 0) then
+      return
+   elseif(hvalue < 0 .or. hvalue > 24) then
+      ErrTyp=INVALIDHHMMSSSTRING
+      return
+   endif
+
+   if(mm == ' ') then
+      mvalue=0
+   else
+      read(mm, time_conversion, iostat=ErrTyp) mvalue
+   endif
+
+   if(ErrTyp /= 0) then
+      return
+   elseif(mvalue < 0 .or. mvalue > 59) then
+      ErrTyp=INVALIDHHMMSSSTRING
+      return
+   endif
+
+   ! Convert to value
+   if(hh == ' ') then
+      hvalue=0
+   else
+      read(ss, real_conversion, iostat=ErrTyp) value
+   endif
+   
+   if(ErrTyp /= 0) then
+      return
+   elseif(value < 0. .or. value > 60.) then
+      ErrTyp=INVALIDHHMMSSSTRING
+      return
+   endif
+   
+   value = value + 60*(mvalue + 60*hvalue)
+
+  end Function hhmmss_value
 
   ! ------------------------------------  LinearSearchStringArray  -----
 
@@ -1097,11 +1116,163 @@ CONTAINS
 
   END FUNCTION StringElementNum
 
+  ! ------------------------------------------------  unquote  -----
+  Function unquote(str, quotes, cquotes, strict) result (outstr)
+    ! Function that removes a single pair of surrounding quotes from string
+
+    ! E.g., given "Let me see." or 'Let me see.' returns
+    !    Let me see.
+    ! If no surrounding quotes are found, returns string unchanged; unless
+    ! (1) mismatched quotes, e.g. 'Let me see." will:
+    !     remove leading quote but leave trailing quote
+    ! (2) a single unpaired quote found at beginning or end, will:
+    !  (a) remove it if the resulting string is non-empty; or
+    !  (b) return the single unpaired quote if that was the entire str
+    
+    ! If given optional arg strict, options (1) and (2) above disregarded
+    ! i.e., surrounding quotes must match, else returns string unchanged
+    
+    ! If given optional arg quotes, removes only surrounding pair:
+    ! quotes[i:i] for each i=1..len[quotes]
+    ! E.g., given /a\ regexp/ with quotes='/' returns
+    !    a\ regexp
+    
+    ! If given optional args quotes & cquotes, removes only surrounding pair:
+    ! quotes[i:i] on the left, cquotes[i:i] on the right, i=1..len[quotes]
+    ! E.g., given [a particle] with quotes='[' cquotes=']' returns
+    !    a particle
+    ! (For this case, strict matching is always on)
+    
+    ! Useful because the parser will return quote-delimited strings if that's
+    ! how they appear in the lcf
+    
+    ! Calling get_string with "strip=.true." renders this unnecessary.
+    ! However, you might find another use for it, especially with
+    ! feature of being able to trim other, user-supplied detritus:
+    ! e.g., braces, parentheses, extraneous delimiters
+    !--------Argument--------!
+    character(len=*),intent(in) :: str
+    character(len=len(str)) :: outstr
+    character(len=*),intent(in), optional :: quotes
+    character(len=*),intent(in), optional :: cquotes
+    logical,intent(in), optional :: strict
+    !----------Local vars----------!
+    character(len=1), parameter :: sq=''''
+    character(len=1), parameter :: dq='"'
+    integer :: first, last, ult, prim
+    character(len=1) :: quote, cquote
+    integer :: i
+    logical :: mystrict
+    !----------Executable part----------!
+
+   ult = len_trim(str)    ! Position of last non-blank char
+   prim = ult - len_trim(adjustl(str)) + 1    ! Position of 1st non-blank char
+      
+   ! length of non-blank portion of string to be trimmed must be at least 2
+   if(ult-prim+1 <= 1) then
+      outstr=str
+      return
+   endif
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+   
+   ! These are initialized so that if no matching quotes found
+   ! we will return    outstr = adjustl(str)
+   first = prim
+   last = ult
+
+   ! trim surrounding user-supplied marks?
+
+   if(present(quotes)) then
+      if(len_trim(quotes) <= 0) then
+       outstr=str
+       return
+      endif
+      
+      ! Loop over char class in string quotes
+      do i=1, len_trim(quotes)
+      
+         quote = quotes(i:i)
+
+         ! Supplied with paired left and right quotes?
+         if(present(cquotes)) then
+            cquote=cquotes(i:i)
+            mystrict=.true.
+         else
+            cquote=quote
+         endif
+
+         if(mystrict) then
+           if(str(prim:prim) == quote .and. str(ult:ult) == cquote) then
+               outstr=str(prim+1:ult-1)
+               return
+          endif
+      
+        else
+         if(str(prim:prim) == quote) then
+           first=prim+1
+          endif
+
+          if(str(ult:ult) == cquote) then
+             last=ult-1
+           endif
+        endif
+
+      enddo
+
+   ! insist surrounding marks match?
+   elseif(present(strict)) then
+      if( &
+      & str(prim:prim) == str(ult:ult) &
+      & .and. &
+        & (str(prim:prim) == sq .or. str(prim:prim) == dq) &
+        & ) then
+            outstr=str(prim+1:ult-1)
+          else
+            outstr=str
+          endif
+         return
+      
+   elseif(str(prim:prim) == sq) then
+      first=prim+1
+      if(str(ult:ult) == sq) then
+         last=ult-1
+      endif
+      
+   elseif(str(prim:prim) == dq) then
+      first=prim+1
+      if(str(ult:ult) == dq) then
+         last=ult-1
+      endif
+
+   else
+      first=prim
+      if(str(ult:ult) == dq .or. str(ult:ult) == sq) then
+         last=ult-1
+      endif
+
+   endif
+
+   if(last >= first) then
+       outstr=str(first:last)
+   else
+       outstr=str
+   endif
+      
+  end Function unquote
+
 !=============================================================================
 END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.9  2001/05/15 23:44:42  pwagner
+! Added hhmmss_value
+!
 ! Revision 2.8  2001/05/11 23:41:31  pwagner
 ! Improved unquote
 !
