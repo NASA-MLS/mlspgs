@@ -20,6 +20,8 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
   -M: Send output through MLSMessage (default).
   -m: Don't send output through MLSMessage.
   -p: Trace parsing.
+  -Rstring: blocks any switches set by string; undoes unwanted -Sstring settings
+           (which may be set automatically by script or sips_version)
   -Sstring: Set "switches" = "string".  Characters in
             "string" may control individual outputs.  If -S is
             specified several times, the strings are combined.
@@ -126,6 +128,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.37  2004/08/19 00:09:02  pwagner
+ Added crashing options, defaults
+
  Revision 1.36  2004/08/05 22:46:04  pwagner
  New --chunkRange option to run selected chunks in parallel mode
 
