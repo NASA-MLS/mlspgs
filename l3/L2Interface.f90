@@ -191,8 +191,11 @@ CONTAINS
       l2gpData%name = swathname
 
       swid = swattach(L2FileHandle, l2gpData%name)
-      IF (swid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
-                                     &attach to swath interface for reading.')
+
+      IF (swid == -1) THEN
+        CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+        'Failed to attach to swath interface for reading.')
+      ENDIF
 
 ! Get dimension information
 
@@ -377,8 +380,7 @@ CONTAINS
       ENDIF
       l2gpData%longitude = DBLE(realProf)
 
-      status = swrdfld(swid, GEO_FIELD3, start(3), stride(3), edge(3), &
-        l2gpData%time)
+      status = swrdfld(swid, GEO_FIELD3, start(3), stride(3), edge(3), l2gpData%time)
       IF (status == -1) THEN
          msr = MLSMSG_L2GPRead // GEO_FIELD3
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -412,8 +414,7 @@ CONTAINS
       ENDIF
       l2gpData%geodAngle = DBLE(realProf)
 
-      status = swrdfld(swid, GEO_FIELD8, start(3), stride(3), edge(3), &
-                       l2gpData%chunkNumber)
+      status = swrdfld(swid, GEO_FIELD8, start(3), stride(3), edge(3), l2gpData%chunkNumber)
       IF (status == -1) THEN
          msr = MLSMSG_L2GPRead // GEO_FIELD8
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
@@ -520,8 +521,7 @@ CONTAINS
 
       if (numProfs .gt. 0) then
 
-      status = swrdfld(swid, DATA_FIELD3, start(3), stride(3), edge(3), &
-                       l2gpData%status)
+      status = swrdfld(swid, DATA_FIELD3, start(3), stride(3), edge(3), l2gpData%status)
       IF (status == -1) THEN
          msr = MLSMSG_L2GPRead // DATA_FIELD3
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -637,6 +637,7 @@ CONTAINS
 ! Close the L2GP file
 
             status = swclose(l2id)
+
             IF (status == -1) THEN
                msr = 'Failed to close file ' // pcfNames(i)
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -875,57 +876,49 @@ CONTAINS
 
       if (l2gp%nTimes .gt. 0) then
 
-      status = swwrfld( swid, GEO_FIELD1, start(3), stride(3), edge(3), &
-                        REAL(l2gp%latitude) )
+      status = swwrfld( swid, GEO_FIELD1, start(3), stride(3), edge(3), real(l2gp%latitude) )
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD1
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swid, GEO_FIELD2, start(3), stride(3), edge(3), &
-                        REAL(l2gp%longitude) )
+      status = swwrfld( swid, GEO_FIELD2, start(3), stride(3), edge(3), real(l2gp%longitude) )
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD2
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld(swid, GEO_FIELD3, start(3), stride(3), edge(3), &
-                       l2gp%time)
+      status = swwrfld(swid, GEO_FIELD3, start(3), stride(3), edge(3), l2gp%time)
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD3
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swid, GEO_FIELD4, start(3), stride(3), edge(3), &
-                        REAL(l2gp%solarTime) )
+      status = swwrfld( swid, GEO_FIELD4, start(3), stride(3), edge(3), real(l2gp%solarTime) )
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD4
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swid, GEO_FIELD5, start(3), stride(3), edge(3), &
-                        REAL(l2gp%solarZenith) )
+      status = swwrfld( swid, GEO_FIELD5, start(3), stride(3), edge(3), real(l2gp%solarZenith) )
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD5
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swid, GEO_FIELD6, start(3), stride(3), edge(3), &
-                        REAL(l2gp%losAngle) )
+      status = swwrfld( swid, GEO_FIELD6, start(3), stride(3), edge(3), real(l2gp%losAngle) )
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD6
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swid, GEO_FIELD7, start(3), stride(3), edge(3), &
-                        REAL(l2gp%geodAngle) )
+      status = swwrfld( swid, GEO_FIELD7, start(3), stride(3), edge(3), real(l2gp%geodAngle) )
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD7
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld(swid, GEO_FIELD8, start(3), stride(3), edge(3), &
-                       l2gp%chunkNumber)
+      status = swwrfld(swid, GEO_FIELD8, start(3), stride(3), edge(3), l2gp%chunkNumber)
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD8
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -935,8 +928,7 @@ CONTAINS
 
       IF (l2gp%nLevels > 0) THEN
 
-         status = swwrfld( swid, GEO_FIELD9, start(2), stride(2), edge(2), &
-                           REAL(l2gp%pressures) )
+         status = swwrfld( swid, GEO_FIELD9, start(2), stride(2), edge(2), real(l2gp%pressures) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD9
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -946,8 +938,7 @@ CONTAINS
 
       IF (l2gp%nFreqs > 0) THEN
 
-         status = swwrfld( swid, GEO_FIELD10, start(1), stride(1), edge(1), &
-                           REAL(l2gp%frequency) )
+         status = swwrfld( swid, GEO_FIELD10, start(1), stride(1), edge(1), real(l2gp%frequency) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD10
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -961,8 +952,7 @@ CONTAINS
 
 ! L3Residual value is a 3-D field
 
-         status = swwrfld( swid, DATA_FIELD5, start, stride, edge, &
-                           REAL(l2gp%l2gpValue) )
+         status = swwrfld( swid, DATA_FIELD5, start, stride, edge, real(l2gp%l2gpValue) )
          IF (status == -1) THEN
             msr = WR_ERR // DATA_FIELD5
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -972,8 +962,7 @@ CONTAINS
 
 ! L3Residual is 2-D
 
-         status = swwrfld( swid, DATA_FIELD5, start(2:3), stride(2:3), &
-                           edge(2:3), REAL(l2gp%l2gpValue(1,:,:)) )
+         status = swwrfld( swid, DATA_FIELD5, start(2:3), stride(2:3), edge(2:3), real(l2gp%l2gpValue(1,:,:)) )
          IF (status == -1) THEN
             msr = WR_ERR // DATA_FIELD5
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -984,8 +973,7 @@ CONTAINS
 ! 1-D residual
       if (l2gp%nTimes .gt. 0) then
 
-         status = swwrfld( swid, DATA_FIELD5, start(3), stride(3), edge(3), &
-                           REAL(l2gp%l2gpValue(1,1,:)) )
+         status = swwrfld( swid, DATA_FIELD5, start(3), stride(3), edge(3), real(l2gp%l2gpValue(1,1,:)) )
          IF (status == -1) THEN
             msr = WR_ERR // DATA_FIELD5
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -997,15 +985,13 @@ CONTAINS
 
 ! 1-D status & quality fields
 
-      status = swwrfld(swid, DATA_FIELD3, start(3), stride(3), edge(3), &
-                       l2gp%status)
+      status = swwrfld( swid, DATA_FIELD3, start(3), stride(3), edge(3), l2gp%status)
       IF (status == -1) THEN
          msr = WR_ERR // DATA_FIELD3
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swid, DATA_FIELD4, start(3), stride(3), edge(3), &
-                        REAL(l2gp%quality) )
+      status = swwrfld( swid, DATA_FIELD4, start(3), stride(3), edge(3), real(l2gp%quality) )
       IF (status == -1) THEN
          msr = WR_ERR // DATA_FIELD4
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1073,7 +1059,7 @@ CONTAINS
 ! Re-attach to the swath for writing
 
          swid = swattach(l3id, l3r(i)%name)
-         IF (status == -1) THEN
+         IF (swid == -1) THEN
             msr = 'Failed to re-attach to swath interface for writing to ' // &
                    l3r(i)%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1231,6 +1217,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.9  2002/04/11 22:29:47  jdone
+!# swid checked
+!#
 !# Revision 1.8  2002/04/10 21:54:05  jdone
 !# error checking on allocated statements
 !#
