@@ -31,7 +31,7 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
   integer, parameter                 :: num_section_times = 12
   character*(*), parameter           :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
-    & 'full_fwm,fullcloud_fwm,scan_fwm,twoDscan_fwm,linear_fwm,' // &
+    & 'full_fwm,fullcloud_fwm,scan_fwm,twod_scan_fwm,linear_fwm,' // &
     & 'low_cloud,high_cloud,sids,form_normeq,tikh_reg'
   integer, parameter                 :: num_retrieval_times = 14
   real, dimension(num_section_times+num_retrieval_times), &
@@ -218,6 +218,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.8  2002/07/23 00:06:05  pwagner
+! No upper-case allowed in section names
+!
 ! Revision 2.7  2002/07/22 22:53:10  pwagner
 ! Added names of 2d scan model, form norm eq, and tikh reg to retrieval
 !
