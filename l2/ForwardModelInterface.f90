@@ -478,6 +478,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:),     pointer :: TAU         ! (n2lvl)
     
     integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
+    integer, dimension(1) :: WHICHPATTERNASARRAY ! Result of minloc
 
     type(path_vector), dimension(:), allocatable :: N_PATH    ! (No_tan_hts)
 
@@ -836,8 +837,8 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( superset, size(pointingGrids), &
           & 'superset', ModuleName )
         do i = 1, size(pointingGrids)
-          superset(i) = AreSignalsSuperset ( pointingGrids(i)%signals, &
-            & fwdModelConf%signals )
+         superset(i) = AreSignalsSuperset ( pointingGrids(i)%signals, &
+            & fwdModelConf%signals, sideband=thisSideband )
         end do
         if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "No matching pointing frequency grids." )
@@ -1238,6 +1239,8 @@ contains ! =====     Public Procedures     =============================
       !  Here comes the Convolution code
       if ( toggle(emit) .and. levels(emit) > 0 ) &
         & call trace_begin ( 'ForwardModel.Convolution' )
+      call allocate_test ( superset, size(antennaPatterns), &
+        & 'superset', ModuleName )
       do i = 1, noUsedChannels
 
         ch = usedChannels(i)
@@ -1255,10 +1258,19 @@ contains ! =====     Public Procedures     =============================
 
         if ( FwdModelConf%do_conv ) then
 
-!          whichPattern = MatchSignal ( antennaPatterns%signal, &
-!            & fwdModelConf%signals(sigInd), sideband=thisSideband, &
-!            & channel=ch )
-          whichPattern = 1
+          do j = 1, size(antennaPatterns)
+            superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
+              & fwdModelConf%signals, sideband=thisSideband, channel=ch )
+          end do
+          if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "No matching antenna patterns." )
+          
+          maxSuperset = maxval ( superset )
+          where ( superset < 0 )
+            superset = maxSuperset + 1
+          end where
+          whichPatternAsArray = minloc ( superset )
+          whichPattern = whichPatternAsArray(1)
 
           call convolve_all ( fwdModelConf, fwdModelIn, maf, ch, &
             &     windowStart, windowFinish, mafTInstance-windowStart+1, &
@@ -1280,6 +1292,7 @@ contains ! =====     Public Procedures     =============================
         end if
 
       end do                            ! Channel loop
+      call deallocate_test ( superset, 'superset', ModuleName )
       if ( toggle(emit) .and. levels(emit) > 0 ) &
         & call trace_end ( 'ForwardModel.Convolution' )
 
@@ -1441,6 +1454,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.132  2001/05/16 23:03:59  livesey
+! New version, now gets correct antenna pattern too.
+!
 ! Revision 2.131  2001/05/16 01:20:08  livesey
 ! Interim version.  Does pointing grids and channel shapes right, not
 ! yet antenna patterns.  Also can do forward model with multiple signals
