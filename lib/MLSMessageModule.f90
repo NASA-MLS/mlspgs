@@ -93,8 +93,8 @@ CONTAINS
 
     ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
 
-    IF ((.NOT. MLSMessageConfig%suppressDebugs).OR. &
-         & (severity/=MLSMSG_Debug)) THEN
+    IF ( (.NOT. MLSMessageConfig%suppressDebugs).OR. &
+         & (severity /= MLSMSG_Debug) ) THEN
        
        ! Assemble a full message line
 
@@ -112,21 +112,21 @@ CONTAINS
        IF (MLSMessageConfig%logFileUnit /= -1) &
             & WRITE (UNIT=MLSMessageConfig%logFileUnit,FMT=*) TRIM(line)
 
-    ENDIF
+    END IF
 
     ! Now if it's an error, then try to close log file if any and quit
 
-    IF (severity==MLSMSG_Error) THEN
-       IF (MLSMessageConfig%logFileUnit /= -1) &
-            & CLOSE(MLSMessageConfig%logFileUnit)
+    IF ( severity == MLSMSG_Error ) THEN
+       IF ( MLSMessageConfig%logFileUnit /= -1 ) &
+            & CLOSE ( MLSMessageConfig%logFileUnit )
        STOP
-    ENDIF
+    END IF
   END SUBROUTINE MLSMessage
 
   ! ----------------------------------------------------------------------
 
   ! This routine sets up the MLSMessage suite.  The defaults are of course
-  ! sensible, but the user may wish to chage things.
+  ! sensible, but the user may wish to change things.
 
   SUBROUTINE MLSMessageSetup ( suppressDebugs, logFileUnit, prefix )
 
@@ -146,8 +146,8 @@ CONTAINS
       & MLSMessageConfig%prefix=prefix
 
     IF ( PRESENT(logFileUnit) ) THEN
-      IF ( MLSMessageConfig%logFileUnit/=-1 ) CALL MLSMessage (MLSMSG_Error, &
-        & ModuleName,"Already writing to a log file")
+      IF ( MLSMessageConfig%logFileUnit /= -1 ) CALL MLSMessage ( &
+        & MLSMSG_Error, ModuleName,"Already writing to a log file")
       MLSMessageConfig%logFileUnit = logFileUnit
     END IF
   END SUBROUTINE MLSMessageSetup
@@ -158,8 +158,7 @@ CONTAINS
 
   SUBROUTINE MLSMessageClose
     ! Executable code
-    IF (MLSMessageConfig%logFileUnit/=-1) &
-         & MLSMessageConfig%logFileUnit=-1
+    MLSMessageConfig%logFileUnit=-1
   END SUBROUTINE MLSMessageClose
 
 !===========================================================================
@@ -168,6 +167,10 @@ END MODULE MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.1  2000/10/03 01:34:10  vsnyder
+! Corrected a spelling error, simplified MLSMessageClose, standardized
+! some spelling and spacing.
+!
 ! Revision 2.0  2000/09/05 17:41:06  dcuddy
 ! Change revision to 2.0
 !
