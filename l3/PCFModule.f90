@@ -30,9 +30,10 @@ MODULE PCFModule
 
 CONTAINS
 
-!-------------------------------------------------------------------------
-   SUBROUTINE ExpandFileTemplate (template, filename, version, cycle, day)
-!-------------------------------------------------------------------------
+!-----------------------------------------------------------------------------
+   SUBROUTINE ExpandFileTemplate (template, filename, level, version, cycle, &
+                                  day)
+!-----------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine expands the version, cycle, and day fields in a file name
@@ -42,7 +43,7 @@ CONTAINS
 
       CHARACTER (LEN=*), INTENT(IN) :: template
 
-      CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: cycle, day, version
+      CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: cycle, day, level, version
 
       CHARACTER (LEN=*), INTENT(OUT) :: fileName
 
@@ -58,7 +59,7 @@ CONTAINS
 
 ! Initializations
 
-      numFields = 3
+      numFields = 4
 
       fileName = template
 
@@ -78,7 +79,17 @@ CONTAINS
 
          field = fileName(indx:indx+3)
     
-         IF (field == '$ver') THEN
+         IF (field == '$lev') THEN
+
+            IF ( PRESENT(version) ) THEN
+               fileName = fileName(:(indx-1)) // TRIM(level) // &
+                          fileName((indx+6):)
+            ELSE
+               CALL MLSMessage(MLSMSG_Error, ModuleName, 'Input level &
+                                            &required to expand the template.')
+            ENDIF
+
+         ELSE IF (field == '$ver') THEN
 
             IF ( PRESENT(version) ) THEN
                fileName = fileName(:(indx-1)) // TRIM(version) // &
@@ -116,13 +127,16 @@ CONTAINS
    END SUBROUTINE ExpandFileTemplate
 !-----------------------------------
 
-!-----------------------------------------------------------------------------
-   SUBROUTINE SearchPCFNames (inName, mlspcf_start, mlspcf_end, mlspcf, match)
-!-----------------------------------------------------------------------------
+!------------------------------------------------------------------------
+   SUBROUTINE SearchPCFNames (inName, mlspcf_start, mlspcf_end, mlspcf, &
+                              outName)
+!------------------------------------------------------------------------
 
 ! Brief description of subroutine 
-! This subroutine searches the PCF for an entry matching the input name, which
-! includes the path.
+! This subroutine searches the PCF for an entry matching the input name.  If a
+! match is found, it returns the name (including the path) & number of the file
+! file in the PCF.  If no entry is found, outName is returned with the value
+! 'NONE.'
 
 ! Arguments
 
@@ -132,7 +146,7 @@ CONTAINS
 
       INTEGER, INTENT(OUT) :: mlspcf
 
-      INTEGER, INTENT(OUT) :: match
+      CHARACTER (LEN=FileNameLen), INTENT(OUT) :: outName
 
 ! Parameters
 
@@ -140,14 +154,14 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=FileNameLen) :: pcfName
+      CHARACTER (LEN=FileNameLen) :: path, pcfName
 
-      INTEGER :: i, returnStatus, version
+      INTEGER :: i, indx, returnStatus, version
 
 ! Initializations
 
       mlspcf = -1
-      match = 0
+      outName = 'NONE'
 
 ! Loop through all the files in this range of PCF numbers
 
@@ -159,14 +173,25 @@ CONTAINS
 
          returnStatus = Pgs_pc_getReference(i, version, pcfName)
 
-         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+         IF (returnStatus == PGS_S_SUCCESS) THEN
+
+! Extract the pathname
+
+            indx = INDEX(pcfName, '/', .TRUE.)
+            path = pcfName(:indx)
+
+! Concatenate the path with the input name
+
+            path = TRIM(path) // inName
 
 ! Check it against the given name
 
-         IF (inName == pcfName) THEN
-            mlspcf = i
-            match = 1
-            EXIT
+            IF (path == pcfName) THEN
+               mlspcf = i
+               outName = pcfName
+               EXIT
+            ENDIF
+
          ENDIF
 
       ENDDO
@@ -180,6 +205,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.2  2000/10/24 19:45:26  nakamura
+! Corrected subroutine name for SearchPCFNames in module Contents; changed version from a constant to a variable in getRef.
+!
 ! Revision 1.1  2000/10/17 20:31:58  nakamura
 ! Module for getting file names based on input in the PCF and CF.
 !
