@@ -25,7 +25,7 @@ contains
 
 ! ---------------------------------------  Get_Beta_Path_Scalar  -----
   subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
-        & beta_group, polarized, gl_slabs, path_inds,               &
+        & beta_group, NoPolarized, gl_slabs, path_inds,               &
         & beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p,    &
         & t_der_path_flags, dTanh_dT, dBeta_dt_path,                &
         & beta_n_path, dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
@@ -34,7 +34,6 @@ contains
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
     use Physics, only: H_OVER_K
-    use SpectroscopyCatalog_m, only: CATALOG_T, LINES
 
 ! Inputs:
 
@@ -45,9 +44,9 @@ contains
     type (slabs_struct), dimension(:,:) :: Gl_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
 
-    type (beta_group_T), dimension(:) :: beta_group
+    type (beta_group_T), intent(in), dimension(:) :: beta_group
 
-    logical, intent(in) :: Polarized     ! "Don't work on Zeeman-split lines"
+    logical, intent(in) :: NoPolarized   ! "Don't work on Zeeman-split lines"
 
 ! Optional inputs.  GL_SLABS_* are pointers because the caller need not
 ! allocate them if DBETA_D*_PATH aren't allocated.  They would be
@@ -98,10 +97,8 @@ contains
 
 ! Local variables.
 
-    type(catalog_t), pointer :: Catalog
-    real(rp), pointer :: dBdn(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
-    integer(ip) :: I, J, K, N, IB, No_of_lines, &
-              &    No_mol, N_path
+    real(rp), pointer :: dBdn(:), dBdT(:), dBdv(:), dBdw(:) ! slices of dBeta_d*_path
+    integer(ip) :: I, J, K, N, IB, No_mol, N_path
     real(rp) :: BB, BP, BM
     real(rp) :: T
     real(rp), dimension(size(path_inds)) :: betam, betap
@@ -113,16 +110,6 @@ contains
     n_path = size(path_inds)
 
     nullify ( dBdn, dBdv, dBdw )
-
-    ! Determine size of the LineWidths array.
-    no_of_lines = 0
-    do i = 1, no_mol
-      do n = 1, beta_group(i)%n_elements
-        ib = beta_group(i)%cat_index(n)
-        catalog => gl_slabs(1,ib)%catalog ! GL_slabs(:,ib) all have the same catalog
-        no_of_lines = max(no_of_lines,size(catalog%lines))
-      end do
-    end do
 
     do i = 1, no_mol
       if ( associated(dBeta_dn_path) ) then
@@ -140,22 +127,12 @@ contains
       beta_path(:,i) = 0.0_rp
       do n = 1, beta_group(i)%n_elements
         ib = beta_group(i)%cat_index(n)
-        catalog => gl_slabs(1,ib)%catalog ! GL_slabs(:,ib) all have the same catalog
-        no_of_lines = size(catalog%lines)
 
-        ! The polarized and nonpolarized calls are split so that Create_Beta_Path
-        ! can go to the "don't bother to test polarized" loop.  Create_Beta_Path
-        ! is the inner loop of the forward model.  It also avoids construction
-        ! of an array temp (polarized .and. catalog%polarized).
-        if ( polarized ) then
-          call create_beta_path ( path_inds, p_path, t_path, frq,                &
-            & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, beta_path(:,i), &
-            & catalog%polarized, dBeta_dw=dBdw, dBeta_dn=dBdn, dBeta_dv=dBdv )
-        else
-          call create_beta_path ( path_inds, p_path, t_path, frq,                &
-            & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, beta_path(:,i), &
-            & dBeta_dw=dBdw, dBeta_dn=dBdn, dBeta_dv=dBdv )
-        end if
+        dBdT => null()
+        if ( associated(dBeta_dt_path) ) dBdT => dBeta_dt_path(:,i)
+        call create_beta_path ( path_inds, p_path, t_path, frq,             &
+          & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
+          & beta_path(:,i), dTanh_dT, dBdT, dBdw, dBdn, dBdv )
       end do
     end do
 
@@ -173,27 +150,16 @@ contains
         betap = 0.0
         do n = 1, beta_group(i)%n_elements
           ib = beta_group(i)%cat_index(n)
-          catalog => gl_slabs(1,ib)%catalog ! GL_slabs(:,ib) all have the same catalog
-          no_of_lines = size(catalog%lines)
-          if ( polarized ) then
-            call create_beta_path ( path_inds, p_path, tm, frq,             &
-              & beta_group(i)%ratio(n), gl_slabs_m(:,ib), tanh1_m, betam,   &
-              & catalog%polarized, t_der_path_flags,                        &
-              & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
-            call create_beta_path ( path_inds, p_path, tp, frq,             &
-              & beta_group(i)%ratio(n), gl_slabs_p(:,ib), tanh1_p, betap,   &
-              & catalog%polarized, t_der_path_flags,                        &
-              & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() )
-          else
-            call create_beta_path ( path_inds, p_path, tm, frq,                &
-              & beta_group(i)%ratio(n), gl_slabs_m(:,ib), tanh1_m, betam,      &
-              & path_flags=t_der_path_flags, dBeta_dw=null(), dBeta_dn=null(), &
-              & dBeta_dv=null() )
-            call create_beta_path ( path_inds, p_path, tp, frq,                &
-              & beta_group(i)%ratio(n), gl_slabs_p(:,ib), tanh1_p, betap,      &
-              & path_flags=t_der_path_flags, dBeta_dw=null(), dBeta_dn=null(), &
-              & dBeta_dv=null() )
-          end if
+          call create_beta_path ( path_inds, p_path, tm, frq,                 &
+            & beta_group(i)%ratio(n), gl_slabs_m(:,ib), tanh1_m, noPolarized, &
+            & betam, dTanh_dT=null(), dBeta_dT=null(),                        &
+            & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null() ,             &
+            & path_flags=t_der_path_flags )
+          call create_beta_path ( path_inds, p_path, tp, frq,                 &
+            & beta_group(i)%ratio(n), gl_slabs_p(:,ib), tanh1_p, noPolarized, &
+            & betap, dTanh_dT=null(), dBeta_dT=null(),                        &
+            & dBeta_dw=null(), dBeta_dn=null(), dBeta_dv=null(),              &
+            & path_flags=t_der_path_flags )
         end do ! n
         do j = 1 , n_path
           k = path_inds(j)
@@ -227,21 +193,19 @@ contains
   end subroutine Get_Beta_Path_Scalar
 
   ! ------------------------------------  Get_Beta_Path_Polarized  -----
-  subroutine Get_Beta_Path_Polarized ( Frq, H, &
-        & Catalog, Beta_group, GL_slabs, Path_inds, Beta_path )
+  subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
+                                     & Path_inds, Beta_path )
 
     use Get_Species_Data_m, only: Beta_Group_T
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
     use O2_Abs_CS_m, only: O2_Abs_CS
-    use SpectroscopyCatalog_m, only: CATALOG_T
 
 ! Inputs:
 
     real(r8), intent(in) :: Frq ! frequency in MHz
     real(rp), intent(in) :: H(:)      ! Magnetic field component in instrument
                                       ! polarization on the path
-    type(catalog_t), intent(in) :: Catalog(:)
     type (slabs_struct), dimension(:,:), intent(in) :: GL_slabs
     integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
     type (beta_group_T), dimension(:), intent(in) :: Beta_group
@@ -277,10 +241,8 @@ contains
         do j = 1, n_path
           k = path_inds(j)
 
-          call o2_abs_cs ( frq, (/ ( -1, m=1,size(catalog(ib)%polarized) ) /), &
-            & h(k), gl_slabs(k,ib), catalog(ib)%polarized,        &
-            & catalog(ib)%continuum(1), catalog(ib)%continuum(3), &
-            & sigma_p, pi, sigma_m )
+          call o2_abs_cs ( frq, (/ ( -1, m=1,size(gl_slabs(k,ib)%catalog%lines) ) /),   &
+            & h(k), gl_slabs(k,ib), sigma_p, pi, sigma_m )
           beta_path(-1,j,i) = beta_path(-1,j,i) + ratio * sigma_m
           beta_path( 0,j,i) = beta_path( 0,j,i) + ratio * pi
           beta_path(+1,j,i) = beta_path(+1,j,i) + ratio * sigma_p
@@ -297,25 +259,25 @@ contains
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T
     use Cloud_extinction, only: get_beta_cloud
     use Get_Species_Data_m, only: Beta_Group_T
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: R8, RP, IP
 
 ! Inputs:
 
-    real(r8), intent(in) :: Frq ! frequency in MHz
-    real(rp), intent(in) :: T_path(:)   ! path temperatures
-    real(rp), intent(in) :: P_path(:)   ! path pressures in hPa!
-    real(rp), intent(in) :: tt_path(:,:)   ! scating source func on gl grids
+    real(r8), intent(in) :: Frq             ! frequency in MHz
+    real(rp), intent(in) :: T_path(:)       ! path temperatures
+    real(rp), intent(in) :: P_path(:)       ! path pressures in hPa!
+    real(rp), intent(in) :: tt_path(:,:)    ! scating source func on gl grids
 
-    integer(ip), intent(in) :: Path_inds(:) ! indicies for reading gl_slabs
+    type (beta_group_T), intent(in), dimension(:) :: beta_group
 
-    type (beta_group_T), dimension(:) :: beta_group
+    integer(ip), intent(in) :: Path_inds(:) ! indices for reading T_PATH
+
     type (ForwardModelConfig_T) ,intent(in) :: FWDMODELCONF
 
-    INTEGER, intent(in) :: IPSD(:)
-    REAL(rp), intent(in)  :: WC(:,:)
-    REAL(rp) :: W0       ! SINGLE SCATTERING ALBEDO
-    REAL(rp) :: PHH(fwdModelConf%num_scattering_angles)   ! PHASE FUNCTION
+    integer, intent(in) :: IPSD(:)
+    real(rp), intent(in)  :: WC(:,:)
+    real(rp) :: W0       ! SINGLE SCATTERING ALBEDO
+    real(rp) :: PHH(fwdModelConf%num_scattering_angles)   ! PHASE FUNCTION
 
 ! outputs
 
@@ -323,25 +285,21 @@ contains
     real(rp), intent(out) :: w0_path(:)         ! single scattering albedo
     real(rp), intent(out) :: tt_path_c(:)       ! scattering source func coarse grids
 
-! Optional outputs.  We use ASSOCIATED instead of PRESENT so that the
-! caller doesn't need multiple branches.  These would be INTENT(OUT) if
-! we could say so.
-
 ! Local variables..
 
-    INTEGER :: NC, NU, NUA, NAB, NR, N
+    integer :: NC, NU, NUA, NAB, NR, N
     logical :: Incl_Cld
-    integer(ip) :: i, j, k, n_path
-    real(rp) :: cld_ext, RHI
+    integer(ip) :: j, k, n_path
+    real(rp) :: cld_ext
 
 ! begin the code
 
-          Incl_Cld  = fwdModelConf%Incl_Cld
-          NU  = fwdModelConf%NUM_SCATTERING_ANGLES
-          NUA = fwdModelConf%NUM_AZIMUTH_ANGLES
-          NAB = fwdModelConf%NUM_AB_TERMS
-          NR  = fwdModelConf%NUM_SIZE_BINS
-          N   = fwdModelConf%no_cloud_species
+    Incl_Cld  = fwdModelConf%Incl_Cld
+    NU  = fwdModelConf%NUM_SCATTERING_ANGLES
+    NUA = fwdModelConf%NUM_AZIMUTH_ANGLES
+    NAB = fwdModelConf%NUM_AB_TERMS
+    NR  = fwdModelConf%NUM_SIZE_BINS
+    N   = fwdModelConf%no_cloud_species
 
     n_path = size(path_inds)
 
@@ -349,25 +307,25 @@ contains
     w0_path         = 0.0_rp
     tt_path_c       = 0.0_rp
 
-        do j = 1, n_path
-          k = path_inds(j)
+    do j = 1, n_path
+      k = path_inds(j)
 
-          call get_beta_cloud (Frq, t_path(k),                       &
-                          &  WC(:,k), IPSD(k), NC, NU, NUA, NAB, NR, &
-                          &  cld_ext, W0, PHH                )      
+      call get_beta_cloud ( Frq, t_path(k),                         &
+                        &   WC(:,k), IPSD(k), NC, NU, NUA, NAB, NR, &
+                        &   cld_ext, W0, PHH                )      
 
-            beta_path_cloud(j) = beta_path_cloud(j) + cld_ext 
-            w0_path(j)         = w0_path(j) + W0 
-            tt_path_c(j)       = tt_path_c(j)       + tt_path(k,1)            
+      beta_path_cloud(j) = beta_path_cloud(j) + cld_ext 
+      w0_path(j)         = w0_path(j)         + W0 
+      tt_path_c(j)       = tt_path_c(j)       + tt_path(k,1)            
 
-         end do
+    end do
 
   end subroutine Get_Beta_Path_Cloud
 
 ! ----------------------------------------------  Create_beta  ---------
 
   subroutine Create_beta ( pressure, Temp, Fgr, slabs_0, tanh1, &
-         &                 Beta_Value, Polarized, dTanh_dT,     &
+         &                 Beta_Value, NoPolarized, dTanh_dT,     &
          &                 dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv )
 
 !  For a given frequency and height, compute beta_value function.
@@ -385,7 +343,8 @@ contains
     use MLSCommon, only: RP, R8, IP
     use Molecules, only: L_N2, L_Extinction, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
-      & SLABS_DT, SLABS_LINES, SLABSWINT_DT, SLABSWINT_LINES
+      & SLABS_LINES, SLABS_LINES_DT, &
+      & SLABSWINT_LINES, SLABSWINT_LINES_DT
     use SpectroscopyCatalog_m, only: Catalog_T, Lines
 
 ! Inputs:
@@ -405,8 +364,8 @@ contains
 
     real(rp), intent(in) :: tanh1      ! tanh(frq*expa/2)
 
-    ! "Don't do this line" -- same size as slabs_0%catalog%lines
-    logical, intent(in), optional :: Polarized(:)
+    ! ! "Don't do line(L) if slabs%catalog%polarized(L)"
+    logical, intent(in) :: NoPolarized
 
 ! optional inputs for temperature derivatives
     ! (h frq) / (k T^2) ( tanh( (h frq) / (k T) ) - 1/tanh( (h frq) / (k T) ) ):
@@ -425,9 +384,8 @@ contains
     real(rp), pointer :: Cont(:)    ! Continuum parameters
     integer(ip) :: LN_I             ! Line index
     integer(ip) :: NL               ! no of lines
-    integer(ip) :: molecule         ! molecule id
 
-    real(rp) :: bv, dNu, dT, dw, dn, ds, dbdw, dbdn, dbdv
+    real(rp) :: bv, dNu, dw, dn, ds, dbdw, dbdn, dbdv
 
 !----------------------------------------------------------------------------
 
@@ -484,8 +442,8 @@ contains
 
       do ln_i = 1, nl
 
-        if ( present(polarized) ) then
-          if ( polarized(ln_i) ) cycle
+        if ( noPolarized ) then
+          if ( catalog%polarized(ln_i) ) cycle
         end if
 
         dNu = Fgr - slabs_0%v0s(ln_i)
@@ -514,75 +472,21 @@ contains
       if ( present(dBeta_dn)) dBeta_dn = dbdn
       if ( present(dBeta_dv)) dBeta_dv = dbdv
 
-    else if ( present(polarized) ) then  ! No spectroscopy derivatives required
-
-      ! This is split into polarized and unpolarized loops, to avoid
-      ! having "if ( present(polarized) )" inside the loop.  This is
-      ! the inner loop of the forward model.
+    else ! No spectroscopy derivatives required
 
       if ( .not. present(dBeta_dT) ) then
         if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
-          beta_value = slabs_lines ( Fgr, slabs_0, tanh1, polarized )
+          beta_value = slabs_lines ( Fgr, slabs_0, tanh1, noPolarized )
         else
-          beta_value = slabswint_lines ( Fgr, slabs_0, tanh1, polarized )
+          beta_value = slabswint_lines ( Fgr, slabs_0, tanh1, noPolarized )
         end if
       else ! Temperature derivatives needed
         if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
-          do ln_i = 1, nl
-            if ( polarized(ln_i) ) cycle
-            call slabs_dT ( &
-              & Fgr, lines(catalog%lines(ln_i))%v0, slabs_0%v0s(ln_i),          &
-              & slabs_0%x1(ln_i), tanh1, slabs_0%slabs1(ln_i), slabs_0%y(ln_i), &
-              & slabs_0%dv0s_dT(ln_i), slabs_0%dx1_dT(ln_i), dTanh_dT,          &
-              & slabs_0%dslabs1_dT(ln_i), slabs_0%dy_dT(ln_i), bv, dT )
-            beta_value = beta_value + bv
-            dBeta_dT = dBeta_dT + dT
-          end do
+          call slabs_lines_dT ( fgr, slabs_0, tanh1, dTanh_dT, &
+            & beta_value, dBeta_dT, noPolarized )
         else
-          do ln_i = 1, nl
-            if ( polarized(ln_i) ) cycle
-            call slabswint_dT ( &
-              & Fgr, lines(catalog%lines(ln_i))%v0, slabs_0%v0s(ln_i),          &
-              & slabs_0%x1(ln_i), tanh1, slabs_0%slabs1(ln_i), slabs_0%y(ln_i), &
-              & slabs_0%yi(ln_i), slabs_0%dv0s_dT(ln_i), slabs_0%dx1_dT(ln_i),  &
-              & dTanh_dT, slabs_0%dslabs1_dT(ln_i), slabs_0%dy_dT(ln_i),        &
-              & slabs_0%dyi_dT(ln_i), bv, dT )
-            beta_value = beta_value + bv
-            dBeta_dT = dBeta_dT + dT
-          end do
-        end if
-      end if
-
-    else ! Still no spectroscopy derivatives required
-
-      if ( .not. present(dBeta_dT) ) then
-        if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
-          beta_value = slabs_lines ( Fgr, slabs_0, tanh1 )
-        else
-          beta_value = slabswint_lines ( Fgr, slabs_0, tanh1 )
-        end if
-      else ! Temperature derivatives needed
-        if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
-          do ln_i = 1, nl
-            call slabs_dT ( &
-              & Fgr, lines(catalog%lines(ln_i))%v0, slabs_0%v0s(ln_i),          &
-              & slabs_0%x1(ln_i), tanh1, slabs_0%slabs1(ln_i), slabs_0%y(ln_i), &
-              & slabs_0%dv0s_dT(ln_i), slabs_0%dx1_dT(ln_i), dTanh_dT,          &
-              & slabs_0%dslabs1_dT(ln_i), slabs_0%dy_dT(ln_i), bv, dT )
-            beta_value = beta_value + bv
-            dBeta_dT = dBeta_dT + dT
-          end do
-        else
-          do ln_i = 1, nl
-            call slabswint_dT ( &
-              & Fgr, lines(catalog%lines(ln_i))%v0, slabs_0%v0s(ln_i),          &
-              & slabs_0%x1(ln_i), tanh1, slabs_0%slabs1(ln_i), slabs_0%y(ln_i), &
-              & slabs_0%yi(ln_i), slabs_0%dv0s_dT(ln_i), slabs_0%dx1_dT(ln_i),  &
-              & dTanh_dT, slabs_0%dslabs1_dT(ln_i), slabs_0%dy_dT(ln_i),        &
-              & slabs_0%dyi_dT(ln_i), bv, dT )
-            beta_value = beta_value + bv
-            dBeta_dT = dBeta_dT + dT
-          end do
+          call slabswint_lines_dT ( fgr, slabs_0, tanh1, dTanh_dT, &
+            & beta_value, dBeta_dT, noPolarized )
         end if
       end if
 
@@ -593,18 +497,19 @@ contains
 ! -----------------------------------------  Create_beta_path  ---------
 
   subroutine Create_beta_path ( Path_inds, Pressure, Temp, Fgr, Ratio, &
-         &   Slabs_0, Tanh1, Beta_value, Polarized, Path_flags,        &
-         &   Slabs_p, Tanh1_p, Slabs_m, Tanh1_m,                       &
-         &   dBeta_dw, dBeta_dn, dBeta_dv  )
+         &   Slabs_0, Tanh1, NoPolarized, Beta_value, dTanh_dT,        &
+         &   dBeta_dT, dBeta_dw, dBeta_dn, dBeta_dv, Path_flags  )
 
-!  For a given frequency and height, compute beta_value function.
-!  This routine should be called for primary and image separately.
+!  For a given frequency and height, compute beta_value function. This routine
+!  should be called for primary and image separately. Compute dBeta_dT if it's
+!  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
+!  We can't do both temperature and spectroscopy derivatives.
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-    use MLSCommon, only: RP, R8, IP
+    use MLSCommon, only: RP, R8
     use Molecules, only: L_N2, L_Extinction, L_O2
     use SLABS_SW_M, only: DVOIGT_SPECTRAL, VOIGT_LORENTZ, &
-      & SLABS_LINES, SLABSWINT_LINES
+      & SLABS_LINES, SLABS_LINES_DT, SLABSWINT_LINES, SLABSWINT_LINES_DT
     use SpectroscopyCatalog_m, only: LINES
 
 ! Inputs:
@@ -625,147 +530,159 @@ contains
 !    dslabs1_dv0(:) ! strength derivative wrt line position
 
     real(rp), intent(in) :: Tanh1(:)   ! tanh(frq*expa/2)
-    ! "Don't do this line" -- same size as slabs_0(k)%catalog%lines
-    logical, intent(in), optional :: Polarized(:)
-    logical, intent(in), optional :: Path_Flags(:) ! to do on fine path -- default true
+    ! "Don't do line L if slabs_0(k)%catalog%Polarized(L)"
+    logical, intent(in) :: NoPolarized
 
-! optional inputs for temperature derivatives
-    type(slabs_struct), intent(in), optional :: Slabs_p(:), Slabs_m(:)
-    real(rp), intent(in), optional :: Tanh1_p(:), Tanh1_m(:) ! tanh(frq*expa/2)
 ! outputs
     real(rp), intent(inout) :: Beta_value(:)
+
+! Optional input for temperature derivatives:
+    real(rp), pointer :: dTanh_dT(:) ! -h nu / (2 k T^2) 1/tanh(...) dTanh(...)/dT
+
 ! optional outputs
+    real(rp), pointer :: dBeta_dT(:) ! temperature derivative
     real(rp), pointer :: dBeta_dw(:) ! line width derivative
     real(rp), pointer :: dBeta_dn(:) ! temperature dependence deriv
     real(rp), pointer :: dBeta_dv(:) ! line position derivative
 
+! Optional inputs
+    logical, intent(in), optional :: Path_Flags(:) ! to do on fine path -- default true
+
 ! -----     Local variables     ----------------------------------------
 
     real(rp), pointer :: Cont(:) ! continuum parameters
-    integer :: J, K   ! Subscript, loop inductor
-    integer :: LN_I   ! Line index
-    integer :: NL     ! no of lines
+    integer :: J, K              ! Subscript, loop inductor
+    integer :: LN_I              ! Line index
+    integer :: NL                ! no of lines
+    logical :: Spect_Der         ! Spectroscopy derivatives required
+    logical :: Temp_Der          ! Temperature derivatives required
 
-    real(rp) :: dNu, tp, bp, tm, bm, bv, dw, dn, ds, dbdw, dbdn, dbdv
+    real(rp) :: dNu, bv, dw, dn, dv, dbdT, dbdw, dbdn, dbdv
 
 !----------------------------------------------------------------------------
 
-    nl = size(slabs_0(1)%v0s) ! All of the slabs have the same number of lines
+    nl = size(slabs_0(1)%catalog%lines) ! All of the slabs have the same catalog
+    spect_der = associated(dBeta_dw) .or. associated(dBeta_dn) .or. &
+              & associated(dBeta_dv)
 
     do j = 1, size(path_inds)
       k = path_inds(j)
-      if ( present(path_flags) ) then
-        if ( .not. path_flags(k) ) cycle
-      end if
-
-      tp = Temp(j) + 10.0_rp
-      tm = Temp(j) - 10.0_rp
-
-!  Setup absorption coefficients function
-!  Now get the beta_value:
+      temp_der = associated(dBeta_dT)
+      if ( temp_der .and. present(path_flags) ) temp_der = path_flags(k)
 
       cont => slabs_0(k)%catalog%continuum
       select case ( slabs_0(k)%catalog%molecule )
       case ( l_n2 ) ! ...........................................  Dry Air
-! This nominally gets multiplied by "ratio**2" but in practice this
-! function is for all isotopics forms of N2 hence the ratio is one.
 
-        beta_value(j) = beta_value(j) + abs_cs_n2_cont(cont,Temp(j),Pressure(k),Fgr)
+        ! This nominally gets multiplied by "ratio**2" but in practice this
+        ! function is for all isotopic forms of N2 hence the ratio is one.
+
+        if ( temp_der ) then
+          call abs_cs_n2_cont_dT ( cont, temp(j), pressure(k), fgr, bv, dBdT )
+          beta_value(j) = beta_value(j) + bv
+          dBeta_dT(j) = dBeta_dT(j) + dBdT
+        else
+          beta_value(j) = beta_value(j) + abs_cs_n2_cont(cont,Temp(j),Pressure(k),Fgr)
+        end if
 
       case ( l_extinction ) ! ................................  Extinction
 
         beta_value(j) = beta_value(j) + ratio
-        cycle
+!       if ( temp_der ) dBeta_dT(j) = dBeta_dT(j) + ratio * 0.0
+        cycle ! we know there are no spectral lines
 
       case ( l_o2 ) ! ................................................  O2
 
-        beta_value(j) = beta_value(j) + ratio * abs_cs_o2_cont(cont,Temp(j),Pressure(k),Fgr)
+        if ( temp_der ) then
+          call abs_cs_o2_cont_dT ( cont, temp(j), pressure(k), fgr, bv, dBdT )
+          beta_value(j) = beta_value(j) + ratio * bv
+          dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
+        else
+          beta_value(j) = beta_value(j) + ratio * abs_cs_o2_cont(cont,Temp(j),Pressure(k),Fgr)
+        end if
 
       case default ! ..............................................  Other
 
-        beta_value(j) = beta_value(j) + ratio * abs_cs_cont(cont,Temp(j),Pressure(k),Fgr)
+        if ( temp_der ) then
+          call abs_cs_cont_dT ( cont, temp(j), pressure(k), fgr, bv, dBdT )
+          beta_value(j) = beta_value(j) + ratio * bv
+          dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
+        else
+          beta_value(j) = beta_value(j) + ratio * abs_cs_cont(cont,Temp(j),Pressure(k),Fgr)
+        end if
 
       end select
 
       if ( nl < 1 ) cycle
 
-      if ( associated(dBeta_dw) .or. associated(dBeta_dn) .or. associated(dBeta_dv) ) then
-
-        if ( present(polarized) ) then
-          do ln_i = 1, nl
-
-            if ( polarized(ln_i) ) cycle
-
-            dNu = Fgr - slabs_0(k)%v0s(ln_i)
-
-            if ( abs(slabs_0(k)%y(ln_i))+0.666666_rp*abs(slabs_0(k)%x1(ln_i)*dNu) &
-            & > 100.0_rp ) then
-              call Voigt_Lorentz ( dNu, slabs_0(k)%v0s(ln_i), slabs_0(k)%x1(ln_i), &
-                &  slabs_0(k)%yi(ln_i), slabs_0(k)%y(ln_i), &
-                &  lines(slabs_0(k)%catalog%lines(ln_i))%w, temp(j), &
-                &  tanh1(j), slabs_0(k)%slabs1(ln_i), bv, slabs_0(k)%dslabs1_dv0(ln_i), &
-                &  dw, dn, ds )
-            else
-              call DVoigt_Spectral ( dNu, slabs_0(k)%v0s(ln_i), slabs_0(k)%x1(ln_i), &
-                &  slabs_0(k)%yi(ln_i), slabs_0(k)%y(ln_i), &
-                &  lines(slabs_0(k)%catalog%lines(ln_i))%w, temp(j), &
-                &  tanh1(j), slabs_0(k)%slabs1(ln_i), bv, slabs_0(k)%dslabs1_dv0(ln_i), &
-                &  dw, dn, ds )
-            end if
-
-            beta_value(j) = beta_value(j) + ratio * bv
-            dbdw = dbdw + dw
-            dbdn = dbdn + dn
-            dbdv = dbdv + ds
-
-          end do
-
-        else
-
-          do ln_i = 1, nl
-
-            dNu = Fgr - slabs_0(k)%v0s(ln_i)
-
-            if ( abs(slabs_0(k)%y(ln_i))+0.666666_rp*abs(slabs_0(k)%x1(ln_i)*dNu) &
-            & > 100.0_rp ) then
-              call Voigt_Lorentz ( dNu, slabs_0(k)%v0s(ln_i), slabs_0(k)%x1(ln_i), &
-                &  slabs_0(k)%yi(ln_i), slabs_0(k)%y(ln_i), &
-                &  lines(slabs_0(k)%catalog%lines(ln_i))%w, temp(j), &
-                &  tanh1(j), slabs_0(k)%slabs1(ln_i), bv, slabs_0(k)%dslabs1_dv0(ln_i), &
-                &  dw, dn, ds )
-            else
-              call DVoigt_Spectral ( dNu, slabs_0(k)%v0s(ln_i), slabs_0(k)%x1(ln_i), &
-                &  slabs_0(k)%yi(ln_i), slabs_0(k)%y(ln_i), &
-                &  lines(slabs_0(k)%catalog%lines(ln_i))%w, temp(j), &
-                &  tanh1(j), slabs_0(k)%slabs1(ln_i), bv, slabs_0(k)%dslabs1_dv0(ln_i), &
-                &  dw, dn, ds )
-            end if
-
-            beta_value(j) = beta_value(j) + ratio * bv
-            dbdw = dbdw + dw
-            dbdn = dbdn + dn
-            dbdv = dbdv + ds
-
-          end do
-
-        end if
-
-        if ( associated(dBeta_dw)) dBeta_dw(j) = ratio * dbdw
-        if ( associated(dBeta_dn)) dBeta_dn(j) = ratio * dbdn
-        if ( associated(dBeta_dv)) dBeta_dv(j) = ratio * dbdv
-
-      else                ! No derivatives required
+      if ( .not. temp_der .and. .not. spect_der ) then
 
         ! Add in sum of betas for all the lines
         if ( maxval(ABS(slabs_0(k)%yi)) < 1.0e-06_rp ) then
           beta_value(j) = beta_value(j) + &
-            & ratio * slabs_lines ( Fgr, slabs_0(k), tanh1(j), polarized )
+            & ratio * slabs_lines ( Fgr, slabs_0(k), tanh1(j), noPolarized )
         else
           beta_value(j) = beta_value(j) + &
-            & ratio * slabswint_lines ( Fgr, slabs_0(k), tanh1(j), polarized )
+            & ratio * slabswint_lines ( Fgr, slabs_0(k), tanh1(j), noPolarized )
         end if
 
-      end if
+      else
+
+        if ( temp_der ) then ! Temperature derivatives required
+
+          if ( maxval(ABS(slabs_0(k)%yi)) < 1.0e-06_rp ) then
+            call slabs_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
+              & bv, dBdT, noPolarized )
+          else
+            call slabswint_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
+              & bv, dBdT, noPolarized )
+          end if
+          beta_value(j) = beta_value(j) + ratio * bv
+          dBeta_dT(j) = dBeta_dT(j) + ratio * dBdT
+
+        end if
+
+        if ( spect_der ) then ! Spectroscopy derivatives required
+                              ! Will recompute Beta but not use it if temp_der
+
+          do ln_i = 1, nl
+
+            if ( noPolarized ) then
+              if ( slabs_0(k)%catalog%polarized(ln_i) ) cycle
+            end if
+
+            dNu = Fgr - slabs_0(k)%v0s(ln_i)
+
+            if ( abs(slabs_0(k)%y(ln_i))+0.666666_rp*abs(slabs_0(k)%x1(ln_i)*dNu) &
+            & > 100.0_rp ) then
+              call Voigt_Lorentz ( dNu, slabs_0(k)%v0s(ln_i), slabs_0(k)%x1(ln_i), &
+                &  slabs_0(k)%yi(ln_i), slabs_0(k)%y(ln_i), &
+                &  lines(slabs_0(k)%catalog%lines(ln_i))%w, temp(j), &
+                &  tanh1(j), slabs_0(k)%slabs1(ln_i), bv, slabs_0(k)%dslabs1_dv0(ln_i), &
+                &  dw, dn, dv )
+            else
+              call DVoigt_Spectral ( dNu, slabs_0(k)%v0s(ln_i), slabs_0(k)%x1(ln_i), &
+                &  slabs_0(k)%yi(ln_i), slabs_0(k)%y(ln_i), &
+                &  lines(slabs_0(k)%catalog%lines(ln_i))%w, temp(j), &
+                &  tanh1(j), slabs_0(k)%slabs1(ln_i), bv, slabs_0(k)%dslabs1_dv0(ln_i), &
+                &  dw, dn, dv )
+            end if
+
+            if ( .not. temp_der ) beta_value(j) = beta_value(j) + ratio * bv
+            dbdw = dbdw + dw
+            dbdn = dbdn + dn
+            dbdv = dbdv + dv
+
+          end do
+
+          if ( associated(dBeta_dw) ) dBeta_dw(j) = ratio * dbdw
+          if ( associated(dBeta_dn) ) dBeta_dn(j) = ratio * dbdn
+          if ( associated(dBeta_dv) ) dBeta_dv(j) = ratio * dbdv
+
+        end if ! spect_der
+
+      end if ! neither temp_der nor spect_der
+
     end do ! j = 1, size(path_inds)
 
   end Subroutine Create_beta_path
@@ -950,6 +867,12 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.55  2004/03/27 03:35:27  vsnyder
+! Add pointer to catalog in slabs_struct.  Use it so as not to need to drag
+! line centers and line widths around.  Write slabs_lines and slabswint_lines
+! to get sum of beta over all lines; put slabs_struct instead of its components
+! in the calling sequence.
+!
 ! Revision 2.54  2004/03/20 04:08:55  vsnyder
 ! Steps along the way to analytic temperature derivatives
 !

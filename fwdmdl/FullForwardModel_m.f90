@@ -558,9 +558,9 @@ contains
       & radiances, RadV, ref_corr, req_out, salb_path, scat_alb%values, &
       & scat_ang, scat_src%values, sps_beta_dbeta_c, sps_beta_dbeta_f, &
       & sps_path, tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tanh1_c, tanh1_f, &
-      & tan_phi, tan_temp, tau, tau_pol, temp_prof,t_der_path_flags, t_glgrid, t_path, &
-      & t_path_c, t_path_f, t_path_m, t_path_p, true_path_flags, tscat_path, &
-      & t_script, tt_path, tt_path_c, &
+      & tan_phi, tan_temp, tau, tau_pol, temp_prof, t_der_path_flags, t_glgrid, &
+      & t_path, t_path_c, t_path_f, t_path_m, t_path_p, true_path_flags, &
+      & tscat_path, t_script, tt_path, tt_path_c, &
       & usedDacsSignals, vmr, vmrarray, w0_path_c, wc, z_path )
 
     ! Extra DEBUG for Nathaniel and Bill
@@ -1840,7 +1840,7 @@ contains
 
             else ! extra stuff for polarized case
 
-              call get_beta_path_polarized ( frq, h, my_Catalog(thisSideband,:), beta_group, &
+              call get_beta_path_polarized ( frq, h, beta_group, &
                 & gl_slabs, c_inds(1:npc), beta_path_polarized )
 
               ! We put an explicit extent of -1:1 for the first dimension in
@@ -1939,7 +1939,7 @@ contains
 
           ! Needed by both rad_tran and rad_tran_pol
           call two_d_t_script ( t_path_c(1:npc), tt_path_c(1:npc),  &  
-            & w0_path_c(1:npc), spaceRadiance%values(1,1), frq,            &
+            & w0_path_c(1:npc), spaceRadiance%values(1,1), frq,     &
             & t_script(1:npc) )
 
           if ( .not. FwdModelConf%polarized ) then
@@ -1961,8 +1961,8 @@ contains
 
             ! get the corrections to integrals for layers that need gl for
             ! the polarized species
-            call get_beta_path_polarized ( frq, h, my_Catalog(thisSideband,:), &
-              & beta_group, gl_slabs, gl_inds(:ngl), beta_path_polarized_f )
+            call get_beta_path_polarized ( frq, h, beta_group, &
+              & gl_slabs, gl_inds(:ngl), beta_path_polarized_f )
 
             ! The explicit -1:1 is written in the hope that a clever compiler
             ! can exploit it to optimize.
@@ -2091,7 +2091,7 @@ contains
               ! into DE_DT.
 
               call get_d_deltau_pol_dT ( frq, h, ct, stcp, stsp,              &
-                & my_catalog(thisSideband,:), beta_group, gl_slabs_m, gl_slabs_p, &
+                & beta_group, gl_slabs_m, gl_slabs_p,                         &
                 & t_path_c(1:p_stop), t_path_m(1:no_ele), t_path_p(1:no_ele), &
                 & t_path_f(:ngl), beta_path_polarized(:,1:p_stop,:),          &
                 & beta_path_polarized_f(:,1:ngl,:), sps_path,                 &
@@ -3078,6 +3078,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.203  2004/03/31 20:35:26  jonathan
+! bug fix in handling clouds
+!
 ! Revision 2.202  2004/03/30 02:26:17  livesey
 ! Bug fix in Jonathan's w0 handling
 !
