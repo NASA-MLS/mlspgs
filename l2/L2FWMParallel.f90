@@ -47,13 +47,13 @@ contains
     use Machine, only: SHELL_COMMAND
     use MLSCommon, only: MLSChunk_T
     use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
-      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG
+      & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, NOTIFYTAG
     use MLSCommon, only: FINDFIRST
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Toggles, only: SWITCHES
     use PVM, only: PVMDATADEFAULT, MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
-      & PVMFRECV, PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
-      & PVMTASKHOST
+      & PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
+      & PVMTASKHOST, PVMTASKEXIT
     ! Dummy arguments
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
 
@@ -130,7 +130,7 @@ contains
     if ( index ( switches, 'mas' ) /= 0 ) &
       & call output ( 'Waiting to hear from slaves', advance='yes' )
     contactLoop: do
-      call PVMFRecv ( -1, InfoTag, bufferID )
+      call IntelligentPVMFRecv ( -1, InfoTag, bufferID )
       ! Got a message who sent this
       call PVMFBufInfo ( bufferID, bytes, msgTag, slaveTid, info )
       if ( info /= 0 ) &
@@ -148,6 +148,7 @@ contains
         maf = FindFirst ( slaveTids == slaveTid )
       end if
       heardFromSlave ( maf ) = .true.
+      call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ slaveTids(maf) /), info )
       if ( all ( heardFromSlave ) ) exit contactLoop
     end do contactLoop
 
@@ -172,9 +173,9 @@ contains
       & PVMUNPACKFWMCONFIG
     use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
     use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, INFOTAG, &
-      & SIG_SENDRESULTS
+      & SIG_SENDRESULTS, NOTIFYTAG
     use MorePVM, only: PVMUNPACKSTRINGINDEX
-    use PVM, only: PVMFRECV, PVMERRORMESSAGE, PVMDATADEFAULT, PVMFINITSEND, &
+    use PVM, only: PVMERRORMESSAGE, PVMDATADEFAULT, PVMFINITSEND, &
       & PVMF90UNPACK
     use PVMIDL, only: PVMIDLUNPACK, PVMIDLPACK
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
@@ -184,6 +185,7 @@ contains
     use ForwardModelWrappers, only: FORWARDMODEL
     use String_table, only: DISPLAY_STRING
     use Output_M, only: OUTPUT
+
     ! Dummy argument
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
 
@@ -220,11 +222,10 @@ contains
     nullify ( quantities, vectorTemplates, vectors, fwmConfigs, qtInds )
 
     mainLoop: do
+      ! We'll actually do a non-blocking check here to listen out for
+      ! dead masters
+      call IntelligentPVMFrecv ( parallel%masterTid, InfoTag, bufferId )
 
-      ! We basically wait for some communication from the master task.
-      call PVMFrecv ( parallel%masterTid, InfoTag, bufferID )
-      if ( bufferID <= 0 ) &
-        & call PVMErrorMessage ( bufferID, 'Receiveing information from master' )
       ! We get from this just an integer (at least at first), based on which we do
       ! various tasks
       call PVMF90Unpack ( signal, info )
@@ -354,7 +355,7 @@ contains
         end do
 
         ! Now we sit patiently and wait for an instruction to 'dump' our results
-        call PVMFrecv ( parallel%masterTid, infoTag, bufferID )
+        call IntelligentPVMFrecv ( parallel%masterTid, infoTag, bufferID )
         if ( bufferID <= 0 ) &
           & call PVMErrorMessage ( bufferID, 'Receiveing go-ahead from master' )
         call PVMF90Unpack ( signal, info )
@@ -415,7 +416,7 @@ contains
     use VectorsModule, only: VECTOR_T
     use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
     use MatrixModule_1, only: MATRIX_T
-    use PVM, only: PVMFRECV, PVMERRORMESSAGE
+    use PVM, only: PVMERRORMESSAGE
     use PVMIDL, only: PVMIDLUNPACK
     use L2ParInfo, only: INFOTAG
     use MatrixModule_1, only: CREATEBLOCK
@@ -439,7 +440,7 @@ contains
       call output ( fmStat%maf )
       call output ( ' ...' )
     end if
-    call PVMFrecv ( slaveTids ( fmStat%maf ), infoTag, bufferID )
+    call IntelligentPVMFrecv ( slaveTids ( fmStat%maf ), infoTag, bufferID )
     if ( bufferID <= 0 ) &
       & call PVMErrorMessage ( bufferID, 'Receiveing results from slave' )
     if ( index ( switches, 'mas' ) /= 0 ) &
@@ -692,6 +693,32 @@ contains
     if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending trigger packet' )
   end subroutine TriggerSlaveRun
 
+  ! ================================================ Private procedures
+
+  subroutine IntelligentPVMFRecv ( tid, tag, bufferID )
+    use PVM, only: PVMFRECV, PVMERRORMESSAGE
+    use L2PARINFO, only: NOTIFYTAG
+    use MLSMessageModule, only: MLSMSG_ERROR, MLSMESSAGE
+    ! Dummy arguments
+    integer, intent(in) :: TID
+    integer, intent(in) :: TAG
+    integer, intent(out) :: BUFFERID
+    ! Parameters etc.
+    integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
+    external :: USLEEP
+
+    ! Local variables
+    listenLoop: do
+      call PVMFNRecv ( -1, NotifyTag, bufferID )
+      if ( bufferID > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'A task in the pvm system died' )
+      call PVMFNRecv ( tid, tag, bufferID )
+      if ( bufferID > 0 ) exit listenLoop
+      if ( bufferID < 0 ) call PVMErrorMessage ( bufferID, 'Listening for message' )
+      call usleep ( delay )
+    end do listenLoop
+  end subroutine IntelligentPVMFRecv
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -699,6 +726,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.8  2002/10/08 20:34:02  livesey
+! Added notify stuff for fwm parallel
+!
 ! Revision 2.7  2002/10/08 17:40:35  livesey
 ! Lots of debugging
 !
