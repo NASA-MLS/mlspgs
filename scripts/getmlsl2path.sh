@@ -61,19 +61,19 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l2pc" ]; then
 	case $MACHINE in
 	    soundbarrier )
-		echo "/data1/$MYUSER/";;
+		echo "/data1/$MYUSER";;
 	    scramjet )
-		echo "/state/partition1/livesey/";;
+		echo "/state/partition1/livesey";;
 	    lightspeed )
-		echo "/science/l2cal/";;
+		echo "/science/l2cal";;
 	    desktop )
-		echo "/testing/workspace/$MYUSER/l2pc/";;
+		echo "/testing/workspace/$MYUSER/l2pc";;
 	esac
     fi
     if [ $1 == "--truthl2gp" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/data1/$MYUSER/";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -83,7 +83,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--corel2gp" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/data1/$MYUSER/";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -93,7 +93,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l1boa" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/data1/$MYUSER/";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -103,17 +103,27 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--l1brad" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/data1/$MYUSER/";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
 		echo "/testing/emls/l1brad/$SIMULATION/$FWMVERSION";;
 	esac
     fi
+    if [ $1 == "--l1breal" ]; then
+	case $MACHINE in
+	    soundbarrier | scramjet)
+		echo "/data1/$MYUSER";;
+	    lightspeed )
+		echo "$HOME/$VERSION";;
+	    desktop )
+		echo "/testing/workspace/perun";;
+	esac
+    fi
     if [ $1 == "--l2cal" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/data1/$MYUSER/";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -126,7 +136,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--tmp" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/data1/$MYUSER/";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -136,7 +146,7 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--sidsrad" ]; then
 	case $MACHINE in
 	    soundbarrier | scramjet)
-		echo "/data1/$MYUSER/";;
+		echo "/data1/$MYUSER";;
 	    lightspeed )
 		echo "$HOME/$VERSION";;
 	    desktop )
@@ -147,6 +157,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.35  2004/07/30 19:55:35  livesey
+# Moved the output data location.
+#
 # Revision 1.34  2004/06/18 00:02:31  livesey
 # Moved research1 to data1
 #
