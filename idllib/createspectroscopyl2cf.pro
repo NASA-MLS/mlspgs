@@ -177,7 +177,7 @@ for mol = 0, noMols - 1 do begin
           thisBand="'"+thisBand+"'"
           if j lt n_elements(bands)-1 $
             then thisBand=thisBand+', ' $
-            else thisBand=thisBand+' ]'
+          else thisBand=thisBand+' ]'
           AddWordToLine,text,unit,4,thisBand
           ;; Keep track of the molecule by molecule usage
           case i of
@@ -185,11 +185,11 @@ for mol = 0, noMols - 1 do begin
             1 : umlsMolecules ( sideband+1, bandNo-1, mol ) = 1
           endcase
         endfor
-      endif                     ; Any bands
-    endfor                      ; Loop over instruments
+      endif                             ; Any bands
+    endfor                              ; Loop over instruments
     
     if strtrim(text,2) ne '' then printf,unit,text
-  endfor                        ; Loop over lines
+  endfor                                ; Loop over lines
 
   ;; Now print out the molecule information
   printf, unit, ''
@@ -221,19 +221,19 @@ for mol = 0, noMols - 1 do begin
   noNonZero = max(where(data(mol).cont ne 0.0))+1
   if noNonZero ne 0 then begin
     text = text + ', '
-      AddWordToLine, text, unit, 4, $
-        'continuum=[ '
+    AddWordToLine, text, unit, 4, $
+      'continuum=[ '
     for i=0,noNonZero-2 do begin
       AddWordToLine, text, unit, 4, $
         strtrim(string(data(mol).cont(i)),2)+', '
     endfor
-      AddWordToLine, text, unit, 4, $
-        strtrim(string(data(mol).cont(noNonZero-1)),2)+' ]'
+    AddWordToLine, text, unit, 4, $
+      strtrim(string(data(mol).cont(noNonZero-1)),2)+' ]'
   endif
   
   ;; Finish off the line
   if strtrim(text,2) ne '' then printf,unit,text
-endfor                          ; End loop over molecules
+endfor                                  ; End loop over molecules
 
 printf, unit, ''
 printf, unit, 'end spectroscopy'
@@ -274,67 +274,79 @@ for radiometer = 0, database.noRadiometers-1 do begin
   newArray(*,noBands+radiometer,*) = collapsed gt 0
 endfor
 array=newArray
-  
 
-for band = 0, noBands + database.noRadiometers - 1 do begin
-  for sideband = 0, 2 do begin
-    ;; Which molecules does it use
-    usedMols = where ( reform ( array(sideband, band, *) ) )
-    ;; What parents do they have, get a unique list
-    usedParents = parentNames ( usedMols )
-    usedParents = usedParents ( sort ( usedParents ) )
-    usedParents = usedParents ( uniq ( usedParents ) )
-    if band lt noBands then $
-      outName = string ( band+1, format='(i0)' ) $
-    else outName = database.radiometers(band-noBands).prefix
+for noExtinctions = 1, 2 do begin
+  if noExtinctions eq 1 then extraName='' else extraName='2X'
+  for band = 0, noBands + database.noRadiometers - 1 do begin
+    for sideband = 0, 2 do begin
+      ;; Which molecules does it use
+      usedMols = where ( reform ( array(sideband, band, *) ) )
+      ;; What parents do they have, get a unique list
+      usedParents = parentNames ( usedMols )
+      usedParents = usedParents ( sort ( usedParents ) )
+      usedParents = usedParents ( uniq ( usedParents ) )
+      if band lt noBands then $
+        outName = string ( band+1, format='(i0)' ) $
+      else outName = database.radiometers(band-noBands).prefix
 
-    ;; First do the comprehensive lists for full forward models.
-    line = '!define(moleculesFor' + outName + $
-      sidebandStrings(sideband)+',{[ '
-    for p = 0, n_elements(usedParents)-1 do begin
-      if p ne 0 then line = line +', '
-      thisParent = usedParents(p)
-      if thisParent ne 'EXTINCTION' then begin
+      ;; First do the comprehensive lists for full forward models.
+      line = '!define(molecules' + extraName + 'For' + outName + $
+        sidebandStrings(sideband)+',{[ '
+      for p = 0, n_elements(usedParents)-1 do begin
+        if p ne 0 then line = line +', '
+        thisParent = usedParents(p)
+        if thisParent ne 'EXTINCTION' then begin
+          children = where ( parentNames eq thisParent and $
+            reform ( array(sideband, band, *) ) )
+          AddWordToLine, line, unit, 2, '[ '+thisParent
+          ;; Format is [ parent, <children> ]
+          ;; Note, having the only child be the same as the parent is fine
+          ;; (e.g. [ H2O, H2O ])
+          for c = 0, n_elements(children) - 1 do begin
+            line = line + ', '
+            AddWordToLine, line, unit, 4, niceNames(children(c))
+          endfor
+          line = line + ' ]'
+        endif else begin
+          ;; For extinction just use extinction alone, no isotope
+          if noExtinctions eq 1 then begin
+            AddWordToLine, line, unit, 2, thisParent
+          endif else begin
+            AddWordToLine, line, unit, 2, thisParent + ', ' + thisParent
+          endelse
+        endelse
+      endfor
+      line = line + ' ]})'
+      printf, unit, line
+
+      ;; Now do just the parents for l2pc line forward models
+      ;; First do the comprehensive lists for full forward models.
+      line = '!define(moleculeFamilies' + extraName + 'For' + outName + $
+        sidebandStrings(sideband)+',{[ '
+      for p = 0, n_elements(usedParents)-1 do begin
+        if p ne 0 then line = line + ', '
+        thisParent = usedParents(p)
         children = where ( parentNames eq thisParent and $
           reform ( array(sideband, band, *) ) )
-        AddWordToLine, line, unit, 2, '[ '+thisParent
-        ;; Format is [ parent, <children> ]
-        ;; Note, having the only child be the same as the parent is fine
-        ;; (e.g. [ H2O, H2O ])
-        for c = 0, n_elements(children) - 1 do begin
-          line = line + ', '
-          AddWordToLine, line, unit, 4, niceNames(children(c))
-        endfor
-        line = line + ' ]'
-      endif else begin
-        ;; For extinction just use extinction alone, no isotope
-        AddWordToLine, line, unit, 2, thisParent
-      endelse
-    endfor
-    line = line + ' ]})'
-    printf, unit, line
+        if thisParent ne 'EXTINCTION' or noExtinctions eq 1 then begin
+          AddWordToLine, line, unit, 2, thisParent
+        endif else begin
+          AddWordToLine, line, unit, 2, thisParent + ', ' + thisParent
+        endelse
+      endfor
+      line = line +' ]})'
+      printf, unit, line
 
-    ;; Now do just the parents for l2pc line forward models
-    ;; First do the comprehensive lists for full forward models.
-    line = '!define(moleculeFamiliesFor' + outName + $
-      sidebandStrings(sideband)+',{[ '
-    for p = 0, n_elements(usedParents)-1 do begin
-      if p ne 0 then line = line + ', '
-      thisParent = usedParents(p)
-      children = where ( parentNames eq thisParent and $
-        reform ( array(sideband, band, *) ) )
-      AddWordToLine, line, unit, 2, thisParent
-    endfor
-    line = line +' ]})'
-    printf, unit, line
-
-  endfor                        ; Loop over sidebands
-  printf, unit, ''
-endfor                          ; Loop over bands
+    endfor                              ; Loop over sidebands
+    printf, unit, ''
+  endfor                                ; Loop over bands
+endfor
 
 ;; Print out a few more macro definitions
 printf,unit,'!define(molecules,{!moleculesFor$1})'
 printf,unit,'!define(moleculeFamilies,{!moleculeFamiliesFor$1})'
+printf,unit,'!define(molecules2X,{!molecules2XFor$1})'
+printf,unit,'!define(moleculeFamilies2X,{!moleculeFamilies2XFor$1})'
 
 isotopicMolecules = niceNames ( where ( nicenames ne 'EXTINCTION' ) )
 
