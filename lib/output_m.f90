@@ -86,16 +86,24 @@ contains
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
     character(len=3) :: MY_ADV
+    character(len=len(chars)+1) :: my_chars
+    integer :: n_chars
+    !
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
+    my_chars = chars // ' '
+    n_chars = max(len(chars), 1)
+    if ( my_adv == 'no' ) n_chars = len(chars)+1
     if ( prunit == -1 .or. prunit < -2 ) &
       & write ( *, '(a)', advance=my_adv ) chars
     if ( prunit < -1 ) then
       if ( present(from_where) ) then
-        call MLSMessage ( MLSMSG_Level, from_where, chars, advance=my_adv )
+        call MLSMessage ( MLSMSG_Level, from_where, my_chars(1:n_chars), &
+          & advance=my_adv )
       else
-        call MLSMessage ( MLSMSG_Level, ModuleName, chars, advance=my_adv )
+        call MLSMessage ( MLSMSG_Level, ModuleName, my_chars(1:n_chars), &
+          & advance=my_adv )
       end if
     end if
     if ( prunit >= 0 ) &
@@ -182,12 +190,14 @@ contains
 
     if ( present(LogFormat) ) then
       write ( line, LogFormat ) value
+    end if
+    if ( my_adv == 'yes' ) then
       call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
         & advance=my_adv )
     else
-      call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
+      call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)) // ' ', &
         & advance=my_adv )
-    end if
+    endif
 
   end subroutine OUTPUT_DOUBLE
 
@@ -359,12 +369,14 @@ contains
 
     if ( present(LogFormat) ) then
       write ( line, LogFormat ) value
+    end if
+    if ( my_adv == 'yes' ) then
       call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
         & advance=my_adv )
     else
-      call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
+      call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)) // ' ', &
         & advance=my_adv )
-    end if
+    endif
   end subroutine OUTPUT_SINGLE
 
   subroutine OUTPUT_SINGLE_ARRAY ( values, FORMAT, LogFormat, ADVANCE )
@@ -399,6 +411,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.18  2003/02/27 18:35:30  pwagner
+! Appends trailing spaces to improve appearance with MLSMessage
+!
 ! Revision 2.17  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
