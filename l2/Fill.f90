@@ -82,7 +82,7 @@ module Fill                     ! Create vectors and fill them.
   ! -----     Private declarations     ---------------------------------
 
   integer, private :: ERROR
-  logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
+  logical, parameter :: DEEBUG = .TRUE.                 ! Usually FALSE
 
   ! Error codes for "announce_error"  
   integer, parameter :: No_Error_code = 0
@@ -335,7 +335,6 @@ contains ! =====     Public Procedures     =============================
 
       select case( get_spec_id(key) )
       case ( s_vector ) ! ===============================  Vector  =====
-        if (DEEBUG) call output('vector spec', advance='yes')
         if ( nsons(key) /= 2 ) call announce_error ( son, wrong_number )
         templateIndex = decoration(decoration(subtree(2,subtree(2,key))))
 
@@ -348,7 +347,6 @@ contains ! =====     Public Procedures     =============================
         ! That's the end of the create operation
 
       case ( s_matrix ) ! ===============================  Matrix  =====
-        if (DEEBUG) call output('matrix spec', advance='yes')
         got = .false.
         matrixType = l_plain
         do j = 2, nsons(key)
@@ -394,7 +392,6 @@ contains ! =====     Public Procedures     =============================
         ! Now we're on actual Fill instructions.
         ! Loop over the instructions to the Fill command
 
-        if (DEEBUG) call output('Fill instruction', advance='yes')
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
           fieldIndex = get_field_id(gson)
@@ -408,7 +405,6 @@ contains ! =====     Public Procedures     =============================
             earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
             earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_noise )   ! Only used for chi^2 special fills or addnoise
-            if (DEEBUG) call output('noise field', advance='yes')
             noiseVectorIndex = decoration(decoration(subtree(1,gson)))
             noiseQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_explicitValues ) ! For explicit fill
@@ -451,14 +447,11 @@ contains ! =====     Public Procedures     =============================
               & call Announce_error ( key, badUnitsForMaxIterations )
             maxIterations = valueAsArray(1)
           case ( f_measurements )   ! Only used for diagnostic special fills
-            if (DEEBUG) call output('measurements field', advance='yes')
             measVectorIndex = decoration(decoration(subtree(1,gson)))
             measQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_method )   ! How are we going to fill it?
-            if (DEEBUG) call output('method field', advance='yes')
             fillMethod = decoration(gson)
           case ( f_model )   ! Only used for diagnostic special fills
-            if (DEEBUG) call output('model field', advance='yes')
             modelVectorIndex = decoration(decoration(subtree(1,gson)))
             modelQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_noFineGrid )      ! For cloud extinction fill
@@ -531,8 +524,8 @@ contains ! =====     Public Procedures     =============================
           if (.not. all(got( (/f_Quantity, f_sourceQuantity, f_noise/) ) ) ) &
             call Announce_error ( key, No_Error_code, &
              'Missing a required field to add noise'  )
-          ! Quantity => GetVectorQtyByTemplateIndex( &
-          !  & vectors(VectorIndex), QuantityIndex )
+          Quantity => GetVectorQtyByTemplateIndex( &
+            & vectors(VectorIndex), QuantityIndex )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           noiseQty => GetVectorQtyByTemplateIndex( &
@@ -541,7 +534,6 @@ contains ! =====     Public Procedures     =============================
             & noiseQty )
 
         case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
-          if (DEEBUG) call output('hydrostatic method', advance='yes')
           ! Need a temperature and a refgph quantity
           if ( .not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /))) ) &
             call Announce_Error ( key,needTempREFGPH )
@@ -600,7 +592,6 @@ contains ! =====     Public Procedures     =============================
             & noFineGrid, extinction, errorCode )
 
         case ( l_special ) ! -  Special fills for some quantities  -----
-          if (DEEBUG) call output('special method', advance='yes')
           select case ( quantity%template%quantityType )
           case ( l_losVel )
             if ( .not. any(got( (/f_tngtECI, f_scECI, f_scVel/) )) ) then
@@ -733,7 +724,6 @@ contains ! =====     Public Procedures     =============================
         end select
 
       case ( s_FillCovariance ) ! ===============  FillCovariance  =====
-        if (DEEBUG) call output('Fill covariance instruction', advance='yes')
         invert = .false. ! Default if the field isn't present
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
@@ -787,7 +777,6 @@ contains ! =====     Public Procedures     =============================
         vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
 
       case ( s_transfer ) ! ===============================  Transfer ==
-        if (DEEBUG) call output('Transfer vector instruction', advance='yes')
         ! Here we're on a transfer instruction
         ! Loop over the instructions
         do j = 2, nsons(key)
@@ -858,9 +847,9 @@ contains ! =====     Public Procedures     =============================
     ! where g() is a random number generator with mean 0 and std. dev. 1
     ! Formal arguments
     integer, intent(in) :: KEY
-    type (VectorValue_T), intent(out) ::   quantity
-    type (VectorValue_T), intent(in) ::    sourceQuantity
-    type (VectorValue_T), intent(in) ::    noiseQty
+    type (VectorValue_T), intent(inout) ::   quantity
+    type (VectorValue_T), intent(in) ::      sourceQuantity
+    type (VectorValue_T), intent(in) ::      noiseQty
 
     ! Local variables
     integer                          ::    ROW, COLUMN
@@ -1245,6 +1234,14 @@ contains ! =====     Public Procedures     =============================
       & quantityType=(/l_chiSqChan/), majorFrame=.true.) ) then
       call Announce_error ( key, No_Error_code, &
       & 'Attempting to fill wrong quantity with chi^2 channelwise'  )
+      if ( DEEBUG ) then
+        call output('major frame? ', advance = 'no')
+        call output(qty%template%majorFrame, advance = 'no')
+        call output('   quantity type ', advance = 'no')
+        call output(qty%template%quantityType, advance = 'no')
+        call output('   compared with ', advance = 'no')
+        call output(l_chiSqChan, advance = 'yes')
+      endif
       return
     elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
       call Announce_error ( key, No_Error_code, &
@@ -1344,6 +1341,14 @@ contains ! =====     Public Procedures     =============================
       & quantityType=(/l_chiSqMMaf/), majorFrame=.true.) ) then
       call Announce_error ( key, No_Error_code, &
       & 'Attempting to fill wrong quantity with chi^2 MMAFwise'  )
+      if ( DEEBUG ) then
+        call output('major frame? ', advance = 'no')
+        call output(qty%template%majorFrame, advance = 'no')
+        call output('   quantity type ', advance = 'no')
+        call output(qty%template%quantityType, advance = 'no')
+        call output('   compared with ', advance = 'no')
+        call output(l_chiSqMMaf, advance = 'yes')
+      endif
       return
     elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
       call Announce_error ( key, No_Error_code, &
@@ -1451,6 +1456,14 @@ contains ! =====     Public Procedures     =============================
       & quantityType=(/l_chiSqMMif/), minorFrame=.true.) ) then
       call Announce_error ( key, No_Error_code, &
       & 'Attempting to fill wrong quantity with chi^2 MMIFwise'  )
+      if ( DEEBUG ) then
+        call output('minor frame? ', advance = 'no')
+        call output(qty%template%minorFrame, advance = 'no')
+        call output('   quantity type ', advance = 'no')
+        call output(qty%template%quantityType, advance = 'no')
+        call output('   compared with ', advance = 'no')
+        call output(l_chiSqMMif, advance = 'yes')
+      endif
       return
     elseif (.not. FillableChiSq ( qty, measQty, modelQty, noiseQty ) ) then
       call Announce_error ( key, No_Error_code, &
@@ -1723,6 +1736,10 @@ contains ! =====     Public Procedures     =============================
     if ( radiance%template%signal /= quantity%template%signal ) &
       & call MLSMEssage ( MLSMSG_Error, ModuleName, &
       & "Quantity and radiances not same signal for estimated noise fill.")
+
+    if ( DEEBUG .and. .not. associated(quantity%values) ) &
+      & call announce_error( 0, No_Error_code, &
+      & 'quantity values unassociated in FillVectorQtyWithEstNoise')
 
     width => signals(radiance%template%signal)%widths
 
@@ -2332,6 +2349,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.80  2001/10/02 23:12:50  pwagner
+! More chi^2 fixes
+!
 ! Revision 2.79  2001/09/28 23:59:20  pwagner
 ! Fixed various timing problems
 !
