@@ -13,7 +13,8 @@ module L2FWMParallel
   implicit none
   private
 
-  public :: LaunchFWMSlaves, L2FWMSlaveTask
+  public :: LaunchFWMSlaves, L2FWMSlaveTask, SetupFWMSlaves, TriggerSlaveRun
+  public :: RequestSlavesOutput, ReceiveSlavesOutput
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -173,7 +174,8 @@ contains
     use QuantityTemplates, only: QUANTITYTEMPLATE_T, DESTROYQUANTITYTEMPLATEDATABASE, &
       & INFLATEQUANTITYTEMPLATEDATABASE
     use VectorsModule, only: VECTORTEMPLATE_T, VECTOR_T, DESTROYVECTORDATABASE, &
-      & DESTROYVECTORTEMPLATEDATABASE, CREATEVECTOR, CREATEMASK
+      & DESTROYVECTORTEMPLATEDATABASE, CREATEVECTOR, CREATEMASK, &
+      & CONSTRUCTVECTORTEMPLATE
     use ForwardModelConfig, only: FORWARDMODELCONFIG_T, DESTROYFWMCONFIGDATABASE, &
       & PVMUNPACKFWMCONFIG
     use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
@@ -395,6 +397,9 @@ contains
               end do
             end if                      ! Any rows here?
           end do
+          ! OK, now send the results off
+          call PVMFSend ( parallel%masterTid, InfoTag, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'Sending results' )
         else if ( signal == SIG_Finished ) then
           finished = .true.
         else
@@ -403,17 +408,68 @@ contains
 
         ! OK, we've run our forward models and sent our results
         call ClearMatrix ( jacobian )
-
       end select
-
       if ( finished ) exit mainLoop
     end do mainLoop
-    
   end subroutine L2FWMSlaveTask
+
+  ! ------------------------------------------------ ReceiveSlavesOutput ---
+  subroutine ReceiveSlavesOutput ( outVector, fmStat, jacobian )
+    ! The master uses this routine to get the output from each forward model
+    ! slave.
+    use VectorsModule, only: VECTOR_T
+    use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+    use MatrixModule_1, only: MATRIX_T
+    type (Vector_T), intent(inout) :: OUTVECTOR
+    type (ForwardModelStatus_T), intent(inout) :: FMSTAT
+    type (Matrix_T), intent(inout) :: JACOBIAN
+  end subroutine ReceiveSlavesOutput
+
+  ! ----------------------------------------------- RequestSlavesOutput ---
+  subroutine RequestSlavesOutput ( maf )
+    ! The master uses this routine to ask a slave to pack its output up
+    use PVM, only: PVMFINITSEND, PVMF90PACK, PVMFSEND, PVMDATADEFAULT, &
+      & PVMERRORMESSAGE
+    use L2ParInfo, only: PARALLEL, SIG_SENDRESULTS, INFOTAG
+    integer, intent(in) :: MAF
+    ! Local variables
+    integer :: INFO
+    integer :: BUFFERID
+    ! Executable code
+    call PVMFInitSend ( PVMDataDefault, bufferID )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Setting up output request' )
+    call PVMF90Pack ( SIG_SendResults, info )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Packing output request signal' )
+    call PVMFSend ( slaveTIDs ( maf ), InfoTag, info )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( info, 'Sending output request' )
+  end subroutine RequestSlavesOutput
+
+  ! ------------------------------------------------ SetupFWMSlaves ----
+  subroutine SetupFWMSlaves ( configs, inVector, extraVector, outVector )
+    ! The master uses this routine to send the core information on the
+    ! state vector layout etc. to each forward model slave.
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use VectorsModule, only: Vector_T
+    type (ForwardModelConfig_T), dimension(:), intent(in) :: CONFIGS
+    type (Vector_T), intent(in) :: INVECTOR
+    type (Vector_T), intent(in) :: EXTRAVECTOR
+    type (Vector_T), intent(in) :: OUTVECTOR
+  end subroutine SetupFWMSlaves
+
+  ! ------------------------------------------------ TriggerSlaveRun ---
+  subroutine TriggerSlaveRun ( state, maf )
+    ! This routine is used by the master to launch one run
+    use VectorsModule, only: Vector_T
+    type (Vector_T), intent(in) :: STATE
+    integer, intent(in) :: MAF
+  end subroutine TriggerSlaveRun
 
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.3  2002/10/06 02:04:31  livesey
+! More progress all routines at least stubbed out.
+!
 ! Revision 2.2  2002/10/06 01:10:31  livesey
 ! More code added, still not complete.
 !
