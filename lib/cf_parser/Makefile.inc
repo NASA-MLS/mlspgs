@@ -115,7 +115,7 @@ tar:
 
 OBJS = init_tables_module.o test.o
 
-test.o: $S/test.f90 getCF_m.o machine.o MLSCF.o toggles_core.o
+test.o: $S/test.f90 getCF_m.o machine.o MLSCF.o output_m.o toggles_core.o
 	$(FC) -c $(FOPTS) $I$S $S/test.f90
 
 test: $(OBJS) libCF.a
@@ -125,6 +125,10 @@ out.test: test $S/in.test
 	./test -a $S/in.test out.test
 
 # $Log$
+# Revision 2.3  2000/10/03 01:10:00  vsnyder
+# Change command line for "test" to put files as command line arguments
+# instead of using redirection.
+#
 # Revision 2.2  2000/10/03 00:54:44  vsnyder
 # Revised to account for changing getL2CF_m.f90 to getCF_m.f90
 #
