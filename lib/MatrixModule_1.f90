@@ -347,6 +347,8 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J, K                  ! Subscripts and loop inductors
     type(MatrixElement_T) :: S          ! Sum, to accumulate "inner product"
+    integer :: STATUS                   ! Status flag
+    character (len=132) :: LINE         ! Message
 
     ! Check that the matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
@@ -384,7 +386,13 @@ contains ! =====     Public Procedures     =============================
 
     ! Handle the first row specially, to avoid a copy followed by no-dot-product
     !{ $Z_{11}^T Z_{11} = X_{11}$
-    call choleskyFactor ( z%m%block(1,1), x%m%block(1,1) )
+    call choleskyFactor ( z%m%block(1,1), x%m%block(1,1), status )
+    if ( status /= 0 ) then
+      write ( line, '(a, i0, a)') &
+        & 'Block (1,1) of matrix is not positive definite (element ', &
+        & status, ')'
+      call MLSMessage ( MLSMSG_Error, ModuleName, line )
+    endif
     do j = 2, x%m%row%nb
       !{ Solve $Z_{11}^T Z_{1j} = X_{1j}$ for $Z_{1j}$
       call solveCholesky ( z%m%block(1,1), z%m%block(1,j), x%m%block(1,j), &
@@ -398,7 +406,14 @@ contains ! =====     Public Procedures     =============================
           & update=.true., subtract=.true. )
       end do ! k = 1, i-1
       !{ $Z_{ii}^T Z_{ii} = S$
-      call choleskyFactor ( z%m%block(i,i), s )   ! z%m%block(i,i) = factor of s
+      call choleskyFactor ( z%m%block(i,i), s, status )   ! z%m%block(i,i) = factor of s
+      if ( status /= 0 ) then
+        call dump ( z%m%block(i,i)%values, name='Guilty party:' )
+        write ( line, '(a, i0, a, i0, a, i0, a)') &
+          & 'Block (',i,',',i,') of matrix is not positive definite (element ', &
+          & status, ')'
+        call MLSMessage ( MLSMSG_Error, ModuleName, line )
+      endif
       do j = i+1, x%m%row%nb
         if ( i == 1 ) then                        ! Avoid a copy
         else
@@ -1662,6 +1677,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.57  2001/10/04 23:49:57  livesey
+! Added checking code, and temporarily suppressed sparse
+!
 ! Revision 2.56  2001/10/01 23:57:51  livesey
 ! Removed clone vector call in GetDiagonal_1 to avoid problems with
 ! snooping.

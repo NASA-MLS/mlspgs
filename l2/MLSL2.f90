@@ -31,6 +31,7 @@ program MLSL2
   use TREE, only: ALLOCATE_TREE, DEALLOCATE_TREE, PRINT_SUBTREE
   use TREE_CHECKER, only: CHECK_TREE
   use TREE_WALKER, only: WALK_TREE_TO_DO_MLS_L2
+  use MATRIXMODULE_0, only :CHECKBLOCKS
 
   ! Main program for level 2 processing
   ! (It is assumed that mlsl1 has already been run successfully)
@@ -151,6 +152,8 @@ program MLSL2
         pcf = switch
       else if ( line(3+n:5+n) == 'tk ' ) then
         toolkit = switch
+      else if ( line(3+n:7+n) == 'ckbk ' ) then
+        checkBlocks = .true.
       else if ( line(3+n:9+n) == 'master ' ) then
         copyArg = .false.
         parallel%master = .true.
@@ -428,6 +431,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.57  2001/10/04 23:50:25  livesey
+! Added the ckbk option
+!
 ! Revision 2.56  2001/10/04 00:16:45  pwagner
 ! Increased hash table size; added note that size(s) may need to grow
 !
