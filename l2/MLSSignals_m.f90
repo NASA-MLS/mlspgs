@@ -86,7 +86,6 @@ contains
     type(spectrometer_T) :: Spectrometer ! To be added to the database
     real(r8) :: Start                   ! "start" field of "spectrometer"
     real(r8) :: Step                    ! "step" field of "spectrometer"
-    integer :: Type                     ! of an expression
     integer :: Units(2)                 ! of an expression
     double precision :: Value(2)        ! of an expression
     real(r8) :: Width                   ! "width" field of "spectrometer"
@@ -97,9 +96,7 @@ contains
     integer, parameter :: AtLeastOne = allOrNone + 1   ! At least one
     integer, parameter :: BadMix = atLeastone + 1 ! Disallowed mixture of
     !                                     fields.
-    integer, parameter :: NotRange = badMix  + 1  ! A value is a range but
-    !                                     shouldn't be
-    integer, parameter :: Sizes = notRange + 1    ! Fields don't have same sizes
+    integer, parameter :: Sizes = badMix + 1 ! Fields don't have same sizes
 
     error = 0
     if ( toggle(gen) ) call trace_begin ( "MLSSignals", root )
@@ -124,8 +121,7 @@ contains
           got(field) = .true.
           select case ( field )
           case ( f_frequency )
-            call expr ( subtree(2,son), units, value, type )
-            if ( type == range ) call announceError ( notRange, f_frequency )
+            call expr ( subtree(2,son), units, value )
             band%frequency = value(1)
           case ( f_suffix )
             band%suffix = sub_rosa(son)
@@ -156,12 +152,10 @@ contains
           call allocate_Test ( channel%widths, nsons(son)-1, &
             & 'channel%widths', moduleName, lowBound = first )
           do k = 2, nsons(frequencies)
-            call expr ( subtree(k,frequencies), units, value, type )
-            if ( type == range ) call announceError ( notRange, f_frequencies )
+            call expr ( subtree(k,frequencies), units, value )
             channel%frequencies(k-2+first) = value(1)
-            call expr ( subtree(k,widths), units, value, type )
-            if ( type == range ) call announceError ( notRange, f_widths )
-            channel%frequencies(k-2+first) = value(1)
+            call expr ( subtree(k,widths), units, value )
+            channel%widths(k-2+first) = value(1)
           end do
           call decorate ( key, addChannelToDatabase ( channels, channel ) )
           call destroyChannel ( Channel )
@@ -172,8 +166,7 @@ contains
           field = decoration(subtree(1,son))
           select case ( field )
           case ( f_lo )
-            call expr ( subtree(2,son), units, value, type )
-            if ( type == range ) call announceError ( notRange, f_lo )
+            call expr ( subtree(2,son), units, value )
             radiometer%lo = value(1)
           case ( f_suffix )
             radiometer%suffix = sub_rosa(son)
@@ -190,16 +183,14 @@ contains
           case ( f_band )
             signal%band = decoration(subtree(2,son))
           case ( f_channel )
-            call expr ( subtree(2,son), units, value, type )
-            if ( type == range ) call announceError ( notRange, f_channel )
+            call expr ( subtree(2,son), units, value )
             signal%channel = value(1)
           case ( f_radiometer )
             signal%radiometer = decoration(subtree(2,son))
           case ( f_spectrometer )
             signal%spectrometer = decoration(subtree(2,son))
           case ( f_switch )
-            call expr ( subtree(2,son), units, value, type )
-            if ( type == range ) call announceError ( notRange, f_switch )
+            call expr ( subtree(2,son), units, value )
             signal%switch = value(1)
           case default
             ! Shouldn't get here if the type checker worked
@@ -216,7 +207,7 @@ contains
           case ( f_channels )
             myChannels = son
           case ( f_first, f_last, f_start, f_step, f_width )
-            call expr ( subtree(2,son), units, value, type )
+            call expr ( subtree(2,son), units, value )
             select case ( field )
             case ( f_first )
               first = value(1)
@@ -264,11 +255,9 @@ contains
             call allocate_Test ( spectrometer%widths, nsons(son)-1, &
               & 'spectrometer%widths', moduleName, lowBound = first )
             do k = 2, nsons(frequencies)
-              call expr ( subtree(k,frequencies), units, value, type )
-              if ( type == range ) call announceError ( notRange, f_frequencies )
+              call expr ( subtree(k,frequencies), units, value )
               spectrometer%frequencies(k-2+first) = value(1)
-              call expr ( subtree(k,widths), units, value, type )
-              if ( type == range ) call announceError ( notRange, f_widths )
+              call expr ( subtree(k,widths), units, value )
               spectrometer%frequencies(k-2+first) = value(1)
             end do
           end if
@@ -358,10 +347,6 @@ contains
           CALL display_string ( field_indices(moreFields(i)) )
         end do ! i
         call output ( ' shall appear.', advance='yes' )
-      case ( notRange )
-        call output ( 'The field ' )
-        call display_string ( field_indices(fieldIndex) )
-        call output ( ' shall not have a value that is a range.', advance='yes' )
       case ( sizes )
         call output ( 'The fields ' )
         do i = 1, size(moreFields)
@@ -525,3 +510,8 @@ contains
   end subroutine DestroySpectrometerDatabase
 
 end module MLSSignals_M
+
+! $Log$
+! Revision 2.3  2001/02/15 22:03:00  vsnyder
+! Remove checking for ranges -- the type checker does it
+!
