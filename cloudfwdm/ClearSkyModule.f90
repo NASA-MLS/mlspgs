@@ -58,7 +58,7 @@ contains
       REAL(r8):: X(NU)                    ! SCATTERING ANGLES
 
 !------------------------------------------------------------------------
-      CALL HEADER(2)
+!      CALL HEADER(2)
       
       CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,   &
                   &      GAMMA,N2,MOL,NMOL,NCNT)
@@ -113,4 +113,7 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.6  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
 

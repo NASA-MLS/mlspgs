@@ -659,9 +659,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !------------------------------------------
     ! Now call the full CloudForwardModel code
     !------------------------------------------
-    print*, ' '
-    print*,'No. of Frequencies:', noFreqs 
-    print*, frequencies/1e3_r8
+!    print*, ' '
+!    print*,'No. of Frequencies:', noFreqs 
+!    print*, frequencies/1e3_r8
 
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
@@ -700,9 +700,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & forwardModelConfig%NUM_AB_TERMS,                                     &
       & forwardModelConfig%NUM_SIZE_BINS )
 
-    print*, 'Successfully done with Full Cloud Foward Model ! '
+!    print*, 'Successfully done with Full Cloud Foward Model ! '
 
-    print*, 'about to deallocate'
+!    print*, 'about to deallocate'
     deallocate (WC, stat=status)
      
     !------------------------------------------------------------------------
@@ -998,12 +998,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     !--------------------------------------------
     enddo
 
-    print*, ' '
-    print*, 'Time Instance: ', instance
+!    print*, ' '
+!    print*, 'Time Instance: ', instance
 
     if ( toggle(emit) ) call trace_end ( 'FullCloudForwardModel' )
 
-    print*, 'Successful done with full cloud forward wapper !'
+!    print*, 'Successful done with full cloud forward wapper !'
 
   end subroutine FullCloudForwardModelWrapper
 
@@ -1044,6 +1044,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.38  2001/10/04 16:27:12  jonathan
+! added framework for double sideband calculation, unfinished
+!
 ! Revision 1.37  2001/10/04 00:29:36  dwu
 ! fix coljBlock
 !

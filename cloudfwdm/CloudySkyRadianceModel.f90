@@ -373,7 +373,7 @@ contains
 
 !---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
 
-      CALL HEADER(1)
+!      CALL HEADER(1)
 
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
@@ -478,7 +478,7 @@ contains
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100) 
 
-         CALL HEADER(3)
+!         CALL HEADER(3)
 
 !-----------------------------------------------------------------------------
 !        ASSUME 100% SATURATION IN CLOUD LAYER
@@ -593,7 +593,7 @@ contains
 !    >>>>>>> RADIATIVE TRANSFER MODULE <<<<<<<<<<
 !==================================================
 
-         CALL HEADER(4)
+!         CALL HEADER(4)
 
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
@@ -794,7 +794,7 @@ contains
 
  3000 CONTINUE                               ! END OF IWC LOOP
 
-      CALL HEADER(5)
+!      CALL HEADER(5)
 
 !-----------------------<<<<<<<<<<<<< END >>>>>>>>>>>>------------------------C
 
@@ -806,6 +806,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.13  2001/09/27 15:52:06  jonathan
+! minor changes
+!
 ! Revision 1.12  2001/09/26 17:04:37  jonathan
 ! added Air Refraction Correction, Jonathan
 !
