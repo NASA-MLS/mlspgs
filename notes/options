@@ -22,7 +22,11 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
             "string" may control individual outputs.  If -S is
             specified several times, the strings are concatenated.
      (For specific strings and their effects, use -S"?")
-  -T: Time parsing, type checking and processing separately.
+  -T[digit]: Time some processes depending on digit
+     0: Time parsing, type checking and processing separately.
+     1: like 0, and summarize times within Fill, Retrieve, etc. at end of run
+     2: like 1, and show times within each section, too, as they happen
+     3: like 2, and show cumulative times, too
   -t: Trace declaration table construction.
   -v: List the configuration file.
   The above options can be concatenated after one hyphen,
@@ -69,6 +73,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.2  2001/09/19 23:44:22  livesey
+ Added --snoop
+
  Revision 1.1  2001/05/23 23:05:40  pwagner
  First commit
 
