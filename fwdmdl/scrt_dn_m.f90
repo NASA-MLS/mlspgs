@@ -69,17 +69,17 @@ contains
     end do
 
 !{ Account for earth reflectivity at the tangent to the surface:
-!  $\tau_{2N - t + 1} = \Upsilon \tau_t$.  i\_stop is half\_path + 1 here.
+!  $\tau_{2N - t + 1} = \Upsilon \tau_t$.
 
-    tau(i_stop) = e_rflty * tau(i_stop-1)
-    radiance = radiance + t_script(i_stop) * tau(i_stop)
+    tau(half_path+1) = e_rflty * tau(half_path)
+    radiance = radiance + t_script(half_path+1) * tau(half_path+1)
 
 !{ Compute $\tau_i$ for $i > 2 N - t + 1$, where $t$ is given by half\_path.\\
 !  $\tau_i = \tau_{2N - t + 1} \exp \left \{ - \sum_{j=2N - t + 1}^i
 !    \Delta \delta_{j-1 \rightarrow j} \right \}$.
 
 ! We don't reset total_opacity, so we compute e_rflty * exp(total_opacity)
-! instead of tau(half_path) * exp(total_opacity).
+! instead of tau(half_path) * exp(total_opacity).  i_stop is half_path + 1 here.
 
     do while ( total_opacity >= black_out .and. i_stop < n_path )
       total_opacity = total_opacity - incoptdepth(i_stop)
@@ -139,7 +139,7 @@ contains
 
 ! Bounce off the earth's surface
 
-    drad_dx = drad_dx + t_script(half_path+1) * w * tau(half_path)
+    drad_dx = drad_dx + t_script(half_path+1) * w * tau(half_path+1)
 
 ! Same as above, but don't add in the zero-emission layer at the earth's surface
 
@@ -190,7 +190,7 @@ contains
 ! Bounce off the earth's surface
 
     drad_dx = drad_dx + (dt_script_dx(half_path+1)  &
-            + t_script(half_path+1) * w) * tau(half_path)
+            + t_script(half_path+1) * w) * tau(half_path+1)
 
 ! Same as above, but don't add in the zero-emission layer at the earth's surface
 
@@ -207,6 +207,9 @@ contains
 
 end module SCRT_DN_M
 ! $Log$
+! Revision 2.6  2003/06/03 23:58:19  vsnyder
+! Correct a comment
+!
 ! Revision 2.5  2002/10/10 19:50:50  vsnyder
 ! Mostly cosmetic changes, including adding LaTeX equations
 !
