@@ -16,7 +16,8 @@ module ForwardModelInterface
   use Expr_M, only: EXPR
   use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, F_DO_FREQ_AVG, &
     F_FREQUENCY, F_MOLECULES, F_MOLECULEDERIVATIVES, F_SIGNALS, &
-    F_SPECT_DER, F_TEMP_DER
+    F_SPECT_DER, F_TEMP_DER, F_TYPE
+  use Init_Tables_Module, only: L_FULL, L_LINEAR, L_SCAN
   use Init_Tables_Module, only: F_POINTINGGRIDS, F_ZVI, field_indices, &
     & field_first, field_last, lit_indices, spec_indices
   use Lexer_Core, only: Print_Source
@@ -64,6 +65,7 @@ module ForwardModelInterface
   end type ForwardModelSignal_T
 
   type ForwardModelConfig_T
+    integer :: fwmType        ! l_linear, l_full or l_scan
     logical :: Atmos_Der      ! Do atmospheric derivatives
     logical :: Do_Conv        ! Do convolution
     logical :: Do_Freq_Avg    ! Do Frequency averaging
@@ -82,6 +84,9 @@ module ForwardModelInterface
   integer, parameter :: DefineSignalsFirst   = BadMolecule + 1  
   integer, parameter :: DefineMoleculesFirst = DefineSignalsFirst + 1
   integer, parameter :: DuplicateField       = DefineMoleculesFirst + 1
+  integer, parameter :: IncompleteFullFwm    = DuplicateField + 1
+  integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
+  integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -180,6 +185,8 @@ contains
         &  call AnnounceError( DuplicateField, key, field)
       got(field) = .true.
       select case ( field )
+      case (f_type)
+        info%fwmType = decoration(subtree(2,son))
       case ( f_atmos_der )
         info%atmos_der = get_boolean(son)
       case ( f_do_conv )
@@ -256,6 +263,27 @@ contains
         info%temp_der = get_boolean(son)
       case default
         ! Shouldn't get here if the type checker worked
+      end select
+
+
+      ! Now some more error checking
+      select case (info%fwmType)
+      case (l_full)
+        if (.not. all(got( (/f_molecules, f_signals/) ))) &
+          & call AnnounceError (IncompleteFullFwm, root)
+        ! Check parameters needed only for linear/scan are not included
+        !????
+      case (l_scan)
+        ! Add 1d/2d method later probably !??? NJL
+        if (any(got( (/f_atmos_der, f_channels, f_do_conv, &
+          & f_do_freq_avg, f_frequency, f_molecules, f_moleculeDerivatives, &
+          & f_signals, f_spect_der, f_temp_der /) ))) &
+          & call AnnounceError (IrrelevantFwmParameter, root)
+      case (l_linear)
+        if (.not. all(got( (/f_molecules, f_signals/) ))) & ! Maybe others later
+          & call AnnounceError (IncompleteLinearFwm, root)
+        if (any(got( (/f_atmos_der, f_do_conv, f_do_freq_avg, f_frequency /) ))) &
+          & call AnnounceError (IrrelevantFwmParameter, root)
       end select
       if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, 'An error occured')
     end do ! i = 2, nsons(key)
@@ -1046,12 +1074,21 @@ contains
       case (DuplicateField) 
         call output ( 'duplicate field specified:' )
         call display_string(field_indices(FieldIndex), advance='yes')
+      case (IncompleteFullFwm)
+        call output ( 'incomplete full foward model specification' )
+      case (IncompleteLinearFwm)
+        call output ( 'incomplete linear foward model specification' )
+      case (IrrelevantFwmParameter)
+        call output ( 'irrelevant parameter for this forward model type' )
     end select
   end subroutine AnnounceError
 
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.23  2001/03/17 21:08:01  livesey
+! Added forward model type stuff to ForwardModelConfig_T and parser thereof
+!
 ! Revision 2.22  2001/03/17 03:24:23  vsnyder
 ! Work on forwardModelGlobalSetup
 !
