@@ -140,7 +140,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_RATIOQUANTITY       = f_radianceQuantity + 1
   integer, parameter :: F_REFGPHQUANTITY      = f_ratioQuantity + 1
   integer, parameter :: F_REGORDERS           = f_refGPHQuantity + 1
-  integer, parameter :: F_REGWEIGHT           = f_regOrders + 1
+  integer, parameter :: F_REGQUANTS           = f_regOrders + 1
+  integer, parameter :: F_REGWEIGHT           = f_regQuants + 1
   integer, parameter :: F_ROWCHANNELS         = f_regWeight + 1
   integer, parameter :: F_ROWINSTANCES        = f_rowChannels + 1 
   integer, parameter :: F_ROWQUANTITY         = f_rowInstances + 1
@@ -484,6 +485,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_radianceQuantity ) =   add_ident ( 'radianceQuantity' )
     field_indices(f_ratioQuantity) =       add_ident ( 'ratioQuantity' )
     field_indices(f_regOrders) =           add_ident ( 'regOrders' )
+    field_indices(f_regQuants) =           add_ident ( 'regQuants' )
     field_indices(f_regWeight) =           add_ident ( 'regWeight' )
     field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_rowChannels) =         add_ident ( 'rowChannels' )
@@ -903,6 +905,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_outputSD, s+s_vector, n+n_field_spec, &
              begin, f+f_regOrders, t+t_numeric, n+n_field_type, &
+             begin, f+f_regQuants, t+t_quantityType, n+n_field_type, &
              begin, f+f_regWeight, t+t_numeric, n+n_field_type, &
              begin, f+f_state, s+s_vector, nr+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
@@ -995,6 +998,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.123  2001/06/26 00:08:38  vsnyder
+! Add RegQuants field to Retrieve
+!
 ! Revision 2.122  2001/06/25 23:26:52  livesey
 ! Added new stuff for subset command
 !
