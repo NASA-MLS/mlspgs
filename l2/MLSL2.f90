@@ -14,7 +14,7 @@ program MLSL2
   use MLSCOMMON, only: FILENAMELEN, MLSFile_T
   USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
     & MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
-  use MLSL2Options, only: CHECKPATHS, CURRENT_VERSION_ID, &
+  use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, &
@@ -199,7 +199,9 @@ program MLSL2
         switch = .false.
         n = 1
       end if
-      if ( line(3+n:7+n) == 'check ' ) then
+      if ( lowercase(line(3+n:5+n)) == 'cat' ) then
+        catenateSplits = switch
+      else if ( line(3+n:7+n) == 'check ' ) then
         checkl2cf = switch
       ! Using lowercase so either --checkPaths or --checkpaths work
       ! Perhaps we should do this for all multiletter options
@@ -547,7 +549,7 @@ program MLSL2
   ! If doing a range of chunks, the avoidance of unlimited dimensions
   ! in directwrites of l2gp files currently fails 
   ! (when will this be fixed?)
-  if ( lastChunk /= 0 ) avoidUnlimitedDims = .false.
+  if ( max(singleChunk, lastChunk) /= 0 ) avoidUnlimitedDims = .false.
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
   if ( parallel%master .and. parallel%myTid <= 0 ) &
@@ -806,6 +808,9 @@ contains
       call output(' Avoiding unlimited dimensions in directwrites?: ', advance='no')
       call blanks(4, advance='no')
       call output(avoidUnlimitedDims, advance='yes')
+      call output(' Catenate split dgg/dgm after run completes?:    ', advance='no')
+      call blanks(4, advance='no')
+      call output(catenateSplits, advance='yes')
       call output(' Is this run in forward model parallel?:         ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%fwmParallel, advance='yes')
@@ -896,6 +901,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.113  2004/02/05 23:26:22  pwagner
+! Added --cat option
+!
 ! Revision 2.112  2004/01/09 00:22:12  pwagner
 ! Unsets avoidUnlimitedDims to bypass bug directWriting range of chunks
 !
