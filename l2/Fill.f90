@@ -90,7 +90,8 @@ contains ! =====     Public Procedures     =============================
       & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_XYZ, L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
-      & S_FILLDIAGONAL, S_MATRIX,  S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
+      & S_FILLDIAGONAL, S_MATRIX,  S_NEGATIVEPRECISION, S_SNOOP, S_TIME, &
+      & S_TRANSFER, S_VECTOR
     ! Now some arrays
     use Intrinsic, only: Field_Indices
     use Intrinsic, only: &
@@ -268,11 +269,11 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_T), dimension(:), pointer :: SNOOPMATRICES
     type (Matrix_T), pointer :: ONEMATRIX
 
-    integer :: aprPrecVctrIndex         ! Index of apriori precision vector
-    integer :: aprPrecQtyIndex          ! Index of apriori precision quantity    
-    integer :: bndPressQtyIndex
-    integer :: bndPressVctrIndex
-    integer :: ColVector                ! Vector defining columns of Matrix
+    integer :: APRPRECVCTRINDEX         ! Index of apriori precision vector
+    integer :: APRPRECQTYINDEX          ! Index of apriori precision quantity    
+    integer :: BNDPRESSQTYINDEX
+    integer :: BNDPRESSVCTRINDEX
+    integer :: COLVECTOR                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
     integer :: DESTINATIONVECTORINDEX   ! For transfer commands
     !                                     -- for FillCovariance
@@ -337,12 +338,12 @@ contains ! =====     Public Procedures     =============================
     integer :: ORBITINCLINATIONQUANTITYINDEX ! In the quantities database
     integer :: PHITANVECTORINDEX        ! In the vector database
     integer :: PHITANQUANTITYINDEX      ! In the quantities database
+    real(r8) :: PRECISIONFACTOR         ! For setting -ve error bars
+    integer :: PRECISIONQUANTITYINDEX   ! For precision quantity
+    integer :: PRECISIONVECTORINDEX     ! In the vector database
     integer :: PTANVECTORINDEX          ! In the vector database
     integer :: PTANQUANTITYINDEX        ! In the quantities database
     integer :: QUANTITYINDEX            ! Within the vector
-    real(r8) :: PRECISIONFACTOR         ! For setting -ve error bars
-    integer :: PRECISIONQUANTITYINDEX   ! For precision quantity
-    integer :: PRECISIONVECTORINDEX     ! For precision quantity
     integer :: RADIANCEQUANTITYINDEX    ! For radiance quantity
     integer :: RADIANCEVECTORINDEX      ! For radiance quantity
     integer :: RATIOQUANTITYINDEX       ! in the quantities database
@@ -1387,6 +1388,47 @@ contains ! =====     Public Procedures     =============================
           call DestroyMatrix ( matrices(matrixToKill) )
         end if
 
+      case ( s_negativePrecision ) ! ===============================  Transfer ==
+        ! Here we're on a setNegative instruction
+        ! Loop over the instructions
+        skipMask = .false.
+        do j = 2, nsons(key)
+          gson = subtree(j,key)  ! The argument
+          fieldIndex = get_field_id(gson)
+          if ( nsons(gson) > 1 ) then
+            gson = subtree(2,gson) ! Now the value of said argument
+            fieldValue = decoration(gson) ! The field's value
+          else
+            fieldValue = gson
+          end if
+          select case ( fieldIndex )
+          case ( f_precision )
+            precisionVectorIndex = decoration(fieldValue)
+          case ( f_aprioriPrecision )
+            aprPrecVctrIndex =  decoration(fieldValue)
+          case ( f_precisionFactor )
+            call expr ( gson, unitAsArray, valueAsArray )
+            if ( unitAsArray(1) /= PHYQ_Dimensionless ) &
+              & call Announce_error ( key, No_Error_code, &
+              & 'Bad units for precisionFactor' )
+            precisionFactor = valueAsArray(1)
+          case default ! Can't get here if type checker worked
+          end select
+        end do
+        if ( vectors(precisionVectorIndex)%template%name /= &
+          & vectors(aprPrecVctrIndex)%template%name ) then
+          call Announce_error ( key, no_error_code, &
+            & 'Incompatible vectors in negativePrecision statement' )
+        else
+          do j = 1, vectors(precisionVectorIndex)%template%noQuantities
+            where ( vectors(precisionVectorIndex)%quantities(j)%values > &
+              & vectors(aprPrecVctrIndex)%quantities(j)%values * precisionFactor )
+              vectors(precisionVectorIndex)%quantities(j)%values = &
+                & - vectors(precisionVectorIndex)%quantities(j)%values
+            end where
+          end do
+        end if
+      
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
         ! Loop over the instructions
@@ -4557,6 +4599,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.164  2002/11/21 01:18:11  livesey
+! Added negativePrecision command (as distinct from fill method of same
+! name).
+!
 ! Revision 2.163  2002/11/14 17:28:01  livesey
 ! Made the profile fill do a 'nearest' on the input heights in the case of
 ! coherent quantities.
