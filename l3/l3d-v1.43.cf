@@ -140,55 +140,55 @@ BEGIN Standard
     std,l3prodName="ClO",timeD="12:00:00",mode=ado,label="CLOL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=1.0:100.0,ascPresLvl=1.0:100.0,desPresLvl=1.0:100.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="CO",timeD="12:00:00",mode=com,label="COL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="GPH",timeD="12:00:00",mode=com,label="GPHL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="H2O",timeD="12:00:00",mode=com,label="H2OL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="HCl",timeD="12:00:00",mode=com,label="HCLL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.1:100.0,ascPresLvl=0.1:100.0,desPresLvl=0.1:100.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="HCN",timeD="12:00:00",mode=com,label="HCNL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=22.0:215.0,ascPresLvl=22.0:215.0,desPresLvl=22.0:215.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="HNO3",timeD="12:00:00",mode=com,label="HNO3L3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=1.0:100.0,ascPresLvl=1.0:100.0,desPresLvl=1.0:100.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="IWC",timeD="12:00:00",mode=com,label="IWCL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="N2O",timeD="12:00:00",mode=com,label="N2OL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=1.0:215.0,ascPresLvl=1.0:215.0,desPresLvl=1.0:215.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="O3",timeD="12:00:00",mode=all,label="O3L3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.316:316.0,ascPresLvl=0.01:3.16,desPresLvl=0.01:3.16, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="OH",timeD="12:00:00",mode=ado,label="OHL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.1:10.0,ascPresLvl=0.1:10.0,desPresLvl=0.1:10.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="RHI",timeD="12:00:00",mode=com,label="RHIL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     std,l3prodName="Temperature",timeD="12:00:00",mode=com,label="TL3DM", $
         longGrid= -180.0:176.0,dLon=4.0, $
         l3presLvl=0.01:464.0,ascPresLvl=0.01:464.0,desPresLvl=0.01:464.0, $
-        rangFrequency= -1.0:6.0,rangWavenumber=1:8
+	nWave = 500
     ;;;
 END Standard
 ;
