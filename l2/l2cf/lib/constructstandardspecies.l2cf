@@ -142,10 +142,18 @@ begin Construct
     fGrid=fGridExtinction$1
   extinctionConstant$1: Quantity, type=vmr, molecule=extinction, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinction, $
+    fGrid=fGridExtinctionConstant
+  extinctionShaped$1_HR: Quantity, type=vmr, molecule=extinction, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinctionHiRes, $
+    fGrid=fGridExtinction$1
+  extinctionConstant$1_HR: Quantity, type=vmr, molecule=extinction, $
+    radiometer=$1, hGrid=hGridStandard, vGrid=vGridExtinctionHiRes, $
     fGrid=fGridExtinctionConstant!nl})
-  !forall(constructExtinction, !allRadiometers )
-  !define(allShapedExtinctions, {!makelist({extinctionShaped},{},!allRadiometers)})
-  !define(allConstantExtinctions, {!makelist({extinctionConstant},{},!allRadiometers)})
+  !forall(constructExtinction, !allRadiometers)
+  !define(allShapedExtinctions, {!makelist({extinctionShaped},{},!allRadiometers),$
+    !makelist({extinctionShaped},{_HR},!allRadiometers)})
+  !define(allConstantExtinctions, {!makelist({extinctionConstant},{},!allRadiometers),$
+    !makelist({extinctionConstant},{_HR},!allRadiometers)})
     
   !define(allExtinctions, {!allShapedExtinctions,!allConstantExtinctions})
 
