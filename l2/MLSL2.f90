@@ -97,6 +97,7 @@ program MLSL2
           print *, '  -t: Trace declaration table construction.'
           print *, '  -v: List the configuration file.'
           print *, '  The above options can be concatenated after one hyphen.'
+          print *, '  --pcf: Open the L2CF using the Toolkit and the PCF.'
           print *, '  Options a, c, g1, l, p and t can be toggled in the ', &
           &          'configuration file by'
           print *, '  @A, @C, @G, @L, @P and @S respectively.  @T in the ', &
@@ -166,6 +167,9 @@ program MLSL2
 end program MLSL2
 
 ! $Log$
+! Revision 2.7  2001/02/23 02:39:56  vsnyder
+! Add description of --pcf option to usage instructions.
+!
 ! Revision 2.6  2001/02/23 02:38:34  vsnyder
 ! Open L2CF either by PCF or by Fortran OPEN or expect it on stdin
 !
