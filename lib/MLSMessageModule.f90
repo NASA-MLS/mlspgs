@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !==============================================================================
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
@@ -9,6 +9,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   use SDPToolkit, only: PGS_SMF_GenerateStatusReport, UseSDPToolkit
 
   implicit none
+  private
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -36,18 +37,18 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! Define some low level parameters.  These are used by the calling code to
   ! indicate the severity or otherwise of the messages.
 
-  integer, parameter :: MLSMSG_Debug=1
-  integer, parameter :: MLSMSG_Info=2
-  integer, parameter :: MLSMSG_Warning=3
-  integer, parameter :: MLSMSG_Error=4
+  integer, public, parameter :: MLSMSG_Debug=1
+  integer, public, parameter :: MLSMSG_Info=2
+  integer, public, parameter :: MLSMSG_Warning=3
+  integer, public, parameter :: MLSMSG_Error=4
   ! Warning--a Crash may not properly close files opened by your run
   ! Use it only for specific debugging where you need a walkback
   ! See also MLSMessageConfig%crashOnAnyError
-  integer, parameter :: MLSMSG_Crash=5
+  integer, public, parameter :: MLSMSG_Crash=5
 
   ! MLSMSG_Severity_to_quit can be reset in a main program to cause us
   ! to become more lenient (set it higher) or strict (set it lower)
-  integer            :: MLSMSG_Severity_to_quit = MLSMSG_Error
+  integer, public            :: MLSMSG_Severity_to_quit = MLSMSG_Error
 
   private :: SeverityNames
   character (len=*), dimension(5), parameter :: SeverityNames = (/&
@@ -58,27 +59,36 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
      & "Crash  " &
      /)
 
+  ! So that we may limit the number of times warnings printed, messagewise
+  character(len=*), parameter :: WARNINGSSUPPRESSED = '(No more warnings of this)'
+  integer, parameter :: MAXNUMWARNINGS = 80
+  integer, parameter :: WARNINGMESSLENGTH = 80
+  character(len=WARNINGMESSLENGTH), dimension(MAXNUMWARNINGS), save :: &
+    &                   warningmessages = ' '
+  integer, dimension(MAXNUMWARNINGS), save :: timeswarned = 0
+  integer, save :: numwarnings = 0
   ! This set of parameters are simple prefixes for common messages
 
-  character (len=*), parameter :: MLSMSG_Allocate = &
+  character (len=*), public, parameter :: MLSMSG_Allocate = &
      & "Allocation failed: "
-  character (len=*), parameter :: MLSMSG_Fileopen = &
+  character (len=*), public, parameter :: MLSMSG_Fileopen = &
      & "Failed to open file: "
-  character (len=*), parameter :: MLSMSG_Keyword = &
+  character (len=*), public, parameter :: MLSMSG_Keyword = &
      & "Unrecognized configuration file keyword: "
-  character (len=*), parameter :: MLSMSG_L1BRead = &
+  character (len=*), public, parameter :: MLSMSG_L1BRead = &
      & "Unable to read L1B data item: "
-  character (len=*), parameter :: MLSMSG_Duplicate = &
+  character (len=*), public, parameter :: MLSMSG_Duplicate = &
      & "There is already an entry with the name "
-  character (len=*), parameter :: MLSMSG_DeAllocate = &
+  character (len=*), public, parameter :: MLSMSG_DeAllocate = &
      & "Deallocation failed: "
   ! This datatype describes the configuration of the messaging suite
 
   integer, private, parameter :: MLSMSG_PrefixLen = 32
 
    ! May get some of these from MLSLibOptions? 
-  type MLSMessageConfig_T
+  type, public :: MLSMessageConfig_T
     integer :: logFileUnit                     = -2
+    integer :: limitWarnings                   = 1000 ! Max number each warning
     character (len=MLSMSG_PrefixLen) :: prefix = ''
     logical :: suppressDebugs                  = .false.
     logical :: useToolkit                      = .true.
@@ -88,6 +98,10 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   ! This variable describes the configuration
 
   type (MLSMessageConfig_T), public, save :: MLSMessageConfig
+  
+  ! Public procedures
+  public :: MLSMessage, MLSMessageSetup, MLSMessageClose, MLSMessageExit, &
+    & MLSMessageReset
 
 contains
 
@@ -112,6 +126,9 @@ contains
     !                                     If nonzero, do not insert prefix.
     logical :: log_it
     logical :: My_adv
+    logical :: nosubsequentwarnings
+    logical :: newwarning
+    integer :: warning_index
 
     ! Executable code
 
@@ -119,6 +136,30 @@ contains
     if ( present(advance) ) &
       & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
 
+    ! Here's where we suppress warning messages beyond a limit for each
+    nosubsequentwarnings = .false.
+    if ( severity == MLSMSG_Warning .and. MLSMessageConfig%limitWarnings > 0 &
+      & .and. numwarnings <= MAXNUMWARNINGS .and. message /= ' ' ) then
+      ! See if have seen this message before
+      newwarning = .not. any(warningmessages == trim(message))
+      if ( newwarning .and. numwarnings >= MAXNUMWARNINGS ) then
+      elseif ( newwarning .or. &
+        & numwarnings < 1 ) then
+        numwarnings = numwarnings + 1
+        warningmessages(numwarnings) = message
+        timeswarned(numwarnings) = 1
+      else
+        do warning_index=1, numwarnings
+          if ( warningmessages(warning_index) == message ) exit
+        enddo
+        if ( warning_index > numwarnings ) return
+        if ( timeswarned(warning_index) > MLSMessageConfig%limitWarnings ) return
+        nosubsequentwarnings = &
+          & (timeswarned(warning_index) == MLSMessageConfig%limitWarnings)
+        timeswarned(warning_index) = timeswarned(warning_index) + 1
+      endif
+    endif
+      
     if ( (.not. MLSMessageConfig%suppressDebugs).OR. &
          & (severity /= MLSMSG_Debug) ) then
        
@@ -141,10 +182,15 @@ contains
          line_len = len_trim(line) + 3
          line(line_len-2:line_len-1) = '):'
        end if
-       line(line_len+1:) = message
-       line_len = line_len + len(message) ! Not len-trim, so we can get
-       ! trailing blanks into a part of a message.  If there are trailing
-       ! blanks remaining when my_adv is true, they'll be trimmed off.
+       if ( nosubsequentwarnings ) then
+         line(line_len+1:) = WARNINGSSUPPRESSED // message
+         line_len = line_len + len(WARNINGSSUPPRESSED) + len_trim(message)
+       else
+         line(line_len+1:) = message
+         line_len = line_len + len(message) ! Not len-trim, so we can get
+         ! trailing blanks into a part of a message.  If there are trailing
+         ! blanks remaining when my_adv is true, they'll be trimmed off.
+       endif
 
        ! Log the message using the toolkit routine
        ! (or its substitute)
@@ -281,6 +327,37 @@ contains
     endif
   end subroutine MLSMessageExit
 
+  ! --------------------------------------------  MLSMessageReset  -----
+
+  ! This routine allows you to reset flags, counters, etc. during runtime
+
+  subroutine MLSMessageReset(logFileUnit, CrashOnAnyError, Warnings)
+    ! Args
+    integer, intent(in), optional :: logFileUnit
+    logical, intent(in), optional :: CrashOnAnyError
+    logical, intent(in), optional :: Warnings
+    character(len=6) :: logname
+    ! Executable code
+    if ( present(logFileUnit) ) then
+      if ( logFileUnit /= MLSMessageConfig%logFileUnit ) then
+        write(logname, '(i6)') MLSMessageConfig%logFileUnit
+        call MLSMessage(MLSMSG_Info, ModuleName, &
+          & 'Closing output on' // logname)
+        call MLSMessageClose
+        MLSMessageConfig%logFileUnit = logFileUnit
+        write(logname, '(i6)') MLSMessageConfig%logFileUnit
+        call MLSMessage(MLSMSG_Info, ModuleName, &
+          & 'Opening output on' // logname)
+      endif
+    endif
+    if ( present(CrashOnAnyError) ) MLSMessageConfig%CrashOnAnyError = CrashOnAnyError
+    if ( present(Warnings) ) then
+      numwarnings = 0
+      timeswarned = 0
+      warningmessages = ' '
+    endif
+  end subroutine MLSMessageReset
+
 !=======================================================================
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -291,6 +368,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.16  2005/03/10 00:29:20  pwagner
+! Limits Warnings to 1st 1000 each message
+!
 ! Revision 2.15  2004/08/19 00:18:16  pwagner
 ! New way to respond to severe errors-kaBOOM
 !
