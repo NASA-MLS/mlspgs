@@ -90,6 +90,8 @@ linear
 logarithmic
 lowcloud
 
+manipulate
+
 ncep
 negativeprecision
 newtonian
@@ -123,6 +125,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.25  2002/11/27 19:26:11  livesey
+# Added stuff for manipulate fill
+#
 # Revision 2.24  2002/10/23 01:14:57  livesey
 # Added chiSq stuff
 #
