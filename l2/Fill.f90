@@ -10,17 +10,17 @@ module Fill                     ! Create vectors and fill them.
   use GriddedData, only: GriddedData_T
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_BOUNDARYPRESSURE, &
-    & F_COLUMNS, F_DECAY, F_DESTINATION, F_DIAGONAL, F_NOISE, &
+    & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_NOISE, &
     & F_GEOCALTITUDEQUANTITY, F_EARTHRADIUS, F_EXPLICITVALUES, &
-    & F_EXTINCTION, F_H2OQUANTITY, F_LOSQTY,&
+    & F_EXTINCTION, F_FRACTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
-    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_MATRIX, F_MAXITERATIONS, &
-    & F_METHOD,F_MEASUREMENTS, F_MODEL, F_NOFINEGRID, F_PTANQUANTITY, &
+    & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_LENGTHSCALE, F_MATRIX, &
+    & F_MAXITERATIONS, F_METHOD,F_MEASUREMENTS, F_MODEL, F_NOFINEGRID, F_PTANQUANTITY, &
     & F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
     & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
-    & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, &
+    & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, F_TYPE, &
     & F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
@@ -39,7 +39,7 @@ module Fill                     ! Create vectors and fill them.
   use Intrinsic, only: Field_Indices
   use Intrinsic, only: &
     & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
-    & PHYQ_Time
+    & PHYQ_Time, PHYQ_Length
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T
@@ -121,9 +121,10 @@ module Fill                     ! Create vectors and fill them.
   ! Error codes resulting from FillCovariance
   integer, parameter :: NotSPD = CantInterpolate3D + 1
   integer, parameter :: NotImplemented = notSPD + 1
+  integer, parameter :: BothFractionAndLength = NotImplemented + 1
 
   ! Error codes resulting from squeeze
-  integer, parameter :: N1_is_zero = notImplemented + 1
+  integer, parameter :: N1_is_zero = BothFractionAndLength + 1
   integer, parameter :: N2_is_zero = n1_is_zero + 1
   integer, parameter :: N3_is_zero = n2_is_zero + 1
   integer, parameter :: M1_too_small = n3_is_zero + 1
@@ -209,7 +210,6 @@ contains ! =====     Public Procedures     =============================
     integer :: bndPressVctrIndex
     integer :: ColVector                ! Vector defining columns of Matrix
     type(matrix_SPD_T), pointer :: Covariance
-    integer :: Decay                    ! Index of decay-rate vector in database
     integer :: DESTINATIONVECTORINDEX   ! For transfer commands
     !                                     -- for FillCovariance
     integer :: EARTHRADIUSQTYINDEX
@@ -221,6 +221,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FieldValue               ! Value of a field in the L2CF
     integer :: FILLMETHOD               ! How will we fill this quantity
+    integer :: FRACTION                 ! Index of fraction vector in database
     integer :: GEOCALTITUDEQUANTITYINDEX    ! In the source vector
     integer :: GEOCALTITUDEVECTORINDEX      ! In the vector database
     logical, dimension(field_first:field_last) :: GOT
@@ -231,6 +232,7 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J                     ! Loop indices for section, spec, expr
   !  The next three are FALSE by default
     logical :: DONTMASK                 ! Use even masked values if TRUE
+    integer :: GLOBALUNIT               ! To go into the vector
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
@@ -240,6 +242,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                      ! Definitely n_named
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
     integer :: L2GPINDEX                ! Index into L2GPDatabase
+    integer :: LENGTHSCALE              ! Index of lengthscale vector in database
     integer :: LOSVECTORINDEX           ! index in vector database
     integer :: LOSQTYINDEX              ! index in QUANTITY database
     type(matrix_Cholesky_T) :: MatrixCholesky
@@ -335,14 +338,33 @@ contains ! =====     Public Procedures     =============================
 
       select case( get_spec_id(key) )
       case ( s_vector ) ! ===============================  Vector  =====
-        if ( nsons(key) /= 2 ) call announce_error ( son, wrong_number )
-        templateIndex = decoration(decoration(subtree(2,subtree(2,key))))
+        got = .false.
+        globalUnit = PHYQ_Invalid
+        do j = 2, nsons(key)
+          son = subtree(j,key)              ! The field
+          fieldIndex = get_field_id(son)
+          got(fieldIndex) = .true.
+          if ( nsons(son) > 1 ) then
+            fieldValue = decoration(subtree(2,son)) ! The field's value
+          else
+            fieldValue = son
+          end if
+          select case ( fieldIndex )
+          case ( f_template )
+            templateIndex = decoration(decoration(subtree(2,son)))
+          case ( f_lengthScale )
+            if ( get_boolean(fieldValue) ) globalUnit = phyq_length
+          case ( f_fraction )
+            if ( get_boolean(fieldValue) ) globalUnit = phyq_dimensionless
+          end select
+        end do
 
+        if ( all(got((/f_lengthScale,f_fraction/))) ) &
+          & call Announce_Error ( key, bothFractionAndLength )
         ! Create the vector, and add it to the database.
-
         call decorate ( key, AddVectorToDatabase ( vectors, &
           & CreateVector ( vectorName, vectorTemplates(templateIndex), &
-          & qtyTemplates ) ) )
+          & qtyTemplates, globalUnit=globalUnit ) ) )
 
         ! That's the end of the create operation
 
@@ -714,7 +736,8 @@ contains ! =====     Public Procedures     =============================
         case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
           if ( .not. got(f_explicitValues) ) &
             & call Announce_Error ( key, noExplicitValuesGiven )
-          call ExplicitFillVectorQuantity ( quantity, valuesNode, spread )
+          call ExplicitFillVectorQuantity ( quantity, valuesNode, spread, &
+            & vectors(vectorIndex)%globalUnit )
 
         case ( l_l1b ) ! --------------------  Fill from L1B data  -----
           call FillVectorQuantityFromL1B ( key, quantity, chunks(chunkNo), l1bInfo )
@@ -725,6 +748,8 @@ contains ! =====     Public Procedures     =============================
 
       case ( s_FillCovariance ) ! ===============  FillCovariance  =====
         invert = .false. ! Default if the field isn't present
+        lengthScale = 0
+        fraction = 0
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
           fieldIndex = get_field_id(gson)
@@ -738,8 +763,10 @@ contains ! =====     Public Procedures     =============================
               call announce_error ( key, notSPD )
           case ( f_diagonal )
             diagonal = gson
-          case ( f_decay )
-            decay = gson
+          case ( f_lengthScale )
+            lengthScale = gson
+          case ( f_fraction )
+            fraction = gson
             call announce_error ( key, notImplemented, "Decay" ) !???
           case ( f_invert )
             invert = get_boolean ( subtree(j,key) )
@@ -749,12 +776,9 @@ contains ! =====     Public Procedures     =============================
           end select
         end do
 
-        ! All the fields are collected.  Now fill the matrix.
-        !??? This will need a lot more work when f_decay ???
-        !??? and f_superDiagonal are implemented.        ???
         call getFromMatrixDatabase ( matrices(matrixToFill), covariance )
-        call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
-          & invert=invert )
+        call FillCovariance ( covariance, vectors, diagonal, lengthScale, fraction, &
+          & invert )
 
       ! End of fill operations
 
@@ -873,6 +897,21 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine addGaussianNoise
 
+  !------------------------------------- FillCovariance ------------
+
+  subroutine FillCovariance ( covariance, vectors, diagonal, &
+    & lengthScale, fraction, invert )
+    ! This routine fills a covariance matrix from a given set of vectors
+    type (Matrix_SPD_T), intent(inout) :: COVARIANCE ! The matrix to fill
+    type (Vector_T), dimension(:), intent(in) :: VECTORS ! The vector database
+    integer, intent(in) :: DIAGONAL     ! Index of vector describing diagonal
+    integer, intent(in) :: LENGTHSCALE  ! Index of vector describing length scale
+    integer, intent(in) :: FRACTION     ! Index of vector describing fraction
+    logical, intent(in) :: INVERT       ! We actually want the inverse
+
+    call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
+      & invert=invert )
+  end subroutine FillCovariance
 
   !=============================== FillVectorQuantityFromGrid ============
   subroutine FillVectorQuantityFromGrid(quantity,grid, errorCode)
@@ -1900,7 +1939,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine FillVectorQtyFromIsotope
   
   !=============================================== ExplicitFillVectorQuantity ==
-  subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread)
+  subroutine ExplicitFillVectorQuantity(quantity, valuesNode, spread, globalUnit)
 
     ! This routine is called from MLSL2Fill to fill values from an explicit
     ! fill command line
@@ -1909,13 +1948,17 @@ contains ! =====     Public Procedures     =============================
     type (VectorValue_T), intent(inout) :: QUANTITY ! The quantity to fill
     integer, intent(in) :: VALUESNODE ! Tree node
     logical, intent(in) :: SPREAD ! One instance given, spread to all
+    integer, intent(in) :: GLOBALUNIT   ! From parent vector
 
     ! Local variables
     integer :: K                ! Loop counter
     integer, DIMENSION(2) :: unitAsArray ! Unit for value given
     real (r8), DIMENSION(2) :: valueAsArray ! Value given
+    integer :: TestUnit                 ! Unit to use
     
     ! Executable code
+    testUnit = quantity%template%unit
+    if ( globalUnit /= phyq_Invalid ) testUnit = globalUnit
 
     if (spread) then      ! 1 instance/value given, spread to all instances
 
@@ -1930,7 +1973,7 @@ contains ! =====     Public Procedures     =============================
         ! Get value from tree
         call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
         ! Check unit OK
-       if ( (unitAsArray(1) /= quantity%template%unit) .and. &
+       if ( (unitAsArray(1) /= testUnit) .and. &
           &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
           & call Announce_error ( valuesNode, badUnitsForExplicit )
         ! Store value
@@ -1953,7 +1996,7 @@ contains ! =====     Public Procedures     =============================
         ! Get value from tree
         call expr(subtree(k+1,valuesNode),unitAsArray,valueAsArray)
         ! Check unit OK
-        if ( (unitAsArray(1) /= quantity%template%unit) .and. &
+        if ( (unitAsArray(1) /= testUnit) .and. &
           &  (unitAsArray(1) /= PHYQ_Dimensionless) ) &
           & call Announce_error ( valuesNode, badUnitsForExplicit )
         ! Store value
@@ -2245,13 +2288,16 @@ contains ! =====     Public Procedures     =============================
     case ( badTemperatureQuantity )
       call output ( " temperatureQuantity is not temperature", advance='yes' )
     case ( badUnitsForExplicit )
-      call output ( " has inappropriate units for Fill instruction.", advance='yes' )
+      call output ( " explitictValues field has inappropriate " // &
+        & "units for Fill instruction.", advance='yes' )
     case ( badUnitsForIntegrationTime )
       call output ( " has inappropriate units for integration time.", advance='yes' )
     case ( badUnitsForSystemTemperature )
       call output ( " has inappropriate units for system temperature.", advance='yes' )
     case ( badUnitsForMaxIterations )
       call output ( " maxIterations should be dimensionless", advance='yes' )
+    case ( bothFractionAndLength )
+      call output ( " specified both fraction and lengthScale", advance='yes' )
     case ( cantFillFromL1B )
       call output ( " command could not be filled from L1B.", advance='yes' )
     case ( cantFillFromL2AUX )
@@ -2349,6 +2395,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.81  2001/10/15 22:10:42  livesey
+! Interim version with smoothing stubbed
+!
 ! Revision 2.80  2001/10/02 23:12:50  pwagner
 ! More chi^2 fixes
 !
