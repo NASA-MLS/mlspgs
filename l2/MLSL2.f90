@@ -109,6 +109,7 @@ program MLSL2
   integer :: RECL = 10000          ! Record length for l2cf
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: SINGLECHUNK = 0       ! Just run one chunk
+  integer :: SLAVEMAF = 0          ! Slave MAF for fwmParallel mode
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
   real :: T0, T1, T2               ! For timing
@@ -194,6 +195,8 @@ program MLSL2
         checkBlocks = switch
       else if ( line(3+n:14+n) == 'countChunks ' ) then
         countChunks = switch
+      else if ( line(3+n:14+n) == 'fwmParallel ' ) then
+        parallel%fwmParallel = .true.
       else if ( line(3+n:7+n) == 'gcch ' ) then
         garbage_collection_by_chunk = switch
       else if ( line(3+n:7+n) == 'gcdt ' ) then
@@ -236,7 +239,7 @@ program MLSL2
         i = i + 1
         call getarg ( i, line )
         parallel%slaveFilename = trim ( line )
-        call InitParallel ( 0 )
+        call InitParallel ( 0, 0 )
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
         call AccumulateSlaveArguments(word)
@@ -264,6 +267,19 @@ program MLSL2
         read ( line, *, iostat=status ) parallel%masterTid
         if ( status /= 0 ) then
           call io_error ( "After --slave option", status, line )
+          stop
+        end if
+      else if ( line(3+n:10+n) == 'slaveMAF' ) then
+        copyArg=.false.
+        if ( line(8+n:) /= ' ' ) then
+          line(:7+n) = ' '
+        else
+          i = i + 1
+          call getarg ( i, line )
+        end if
+        read ( line, *, iostat=status ) slaveMAF
+        if ( status /= 0 ) then
+          call io_error ( "After --slaveMAF option", status, line )
           stop
         end if
       else if ( line(3+n:8+n) == 'snoop ' ) then
@@ -396,7 +412,10 @@ program MLSL2
 
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
-  if ( parallel%slave ) call InitParallel ( singleChunk )
+  if ( parallel%fwmParallel .and. parallel%master .and. singleChunk == 0 ) &
+    & call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & 'fwmParallel mode can only be run for a single chunk' )
+  if ( parallel%slave ) call InitParallel ( singleChunk, slaveMAF )
 
   !---------------- Task (4) ------------------
   ! Open the L2CF
@@ -492,7 +511,8 @@ program MLSL2
       ! Now do the L2 processing.
       call time_now ( t1 )
       if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
-      call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, singleChunk )
+      call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, &
+        & singleChunk )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call sayTime ( 'Processing' )
@@ -645,6 +665,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.83  2002/10/05 00:44:14  livesey
+! Included the FMWParallel stuff
+!
 ! Revision 2.82  2002/10/03 23:00:03  pwagner
 ! You can set l1b, l2gp hdfversions on command line
 !
