@@ -115,7 +115,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_SIGNALS             = f_signal + 1
   integer, parameter :: F_SOURCE              = f_signals + 1
   integer, parameter :: F_SOURCEAPRIORI       = f_source + 1
-  integer, parameter :: F_SOURCEL2AUX         = f_sourceApriori + 1
+  integer, parameter :: F_SOURCEGRID          = f_sourceApriori + 1
+  integer, parameter :: F_SOURCEL2AUX         = f_sourceGrid + 1
   integer, parameter :: F_SOURCEL2GP          = f_sourcel2aux + 1
   integer, parameter :: F_SOURCEQUANTITY      = f_sourcel2gp + 1
   integer, parameter :: F_SPECIES             = f_sourcequantity + 1
@@ -160,7 +161,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_FIXED         = l_explicit + 1
   integer, parameter :: L_FRACTIONAL    = l_fixed + 1
   integer, parameter :: L_FULL          = l_fractional + 1
-  integer, parameter :: L_HEIGHT        = l_full + 1
+  integer, parameter :: L_GRIDDED       = l_full + 1
+  integer, parameter :: L_HEIGHT        = l_gridded + 1
   integer, parameter :: L_HYDROSTATIC   = l_height + 1
   integer, parameter :: L_KRONECKER     = l_hydrostatic + 1
   integer, parameter :: L_L1B           = l_kronecker + 1
@@ -320,6 +322,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
     lit_indices(l_fractional) =            add_ident ( 'fractional' )
     lit_indices(l_full) =                  add_ident ( 'full' )
+    lit_indices(l_gridded) =               add_ident ( 'gridded' )
     lit_indices(l_height) =                add_ident ( 'height' )
     lit_indices(l_hydrostatic) =           add_ident ( 'hydrostatic' )
     lit_indices(l_kronecker) =             add_ident ( 'kronecker' )
@@ -406,6 +409,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_signals) =             add_ident ( 'signals' )
     field_indices(f_source) =              add_ident ( 'source' )
     field_indices(f_sourceapriori) =       add_ident ( 'sourceApriori' )
+    field_indices(f_sourcegrid) =          add_ident ( 'sourceGrid' )
     field_indices(f_sourcel2aux) =         add_ident ( 'sourceL2AUX' )
     field_indices(f_sourcel2gp) =          add_ident ( 'sourceL2GP' )
     field_indices(f_sourcequantity) =      add_ident ( 'sourceQuantity' )
@@ -507,7 +511,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
-      begin, t+t_fillMethod, l+l_apriori, l+l_explicit, l+l_hydrostatic, &
+      begin, t+t_fillMethod, l+l_gridded, l+l_explicit, l+l_hydrostatic, &
              l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
@@ -673,7 +677,7 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_sourceL2GP, s+s_l2gp, n+n_field_spec, &
              begin, f+f_sourceL2AUX, s+s_l2aux, n+n_field_spec, &
-             begin, f+f_sourceApriori, s+s_apriori, n+n_field_spec, &
+             begin, f+f_sourceGrid, s+s_gridded, n+n_field_spec, &
              begin, f+f_spread, t+t_boolean, n+n_field_type, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
              begin, f+f_explicitValues, t+t_numeric, n+n_field_type, &
@@ -801,6 +805,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.59  2001/03/29 19:13:14  livesey
+! Added stuff for gridded data fill.
+!
 ! Revision 2.58  2001/03/28 23:43:49  livesey
 ! Added stuff for forward models
 !
