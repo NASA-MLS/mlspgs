@@ -29,8 +29,7 @@ MODULE L3DMData
 
 ! Contents:
 
-! Definitions -- L3DMData_T
-!                L3DMDiag_T
+! Definition -- L3DMData_T
 ! Subroutines -- ConvertDeg2DMS
 !                OutputGrids
 !                ReadL3DMData
@@ -75,42 +74,6 @@ MODULE L3DMData
 	! dimensioned as (nLevels, nLats, nLons)
 
    END TYPE L3DMData_T
-
-! This data type is used to store the l3 daily map diagnostics.
-
-   TYPE L3DMDiag_T
-
-     CHARACTER (LEN=GridNameLen) :: name        ! name for the output quantity
-
-     INTEGER :: N		! number for "largest differences" diagnostics
-     INTEGER :: nLevels		! Total number of surfaces
-     INTEGER :: nLats		! Total number of latitudes
-
-     ! Now we store the geolocation fields.  First, the vertical one:
-
-     REAL(r8), DIMENSION(:), POINTER :: pressure	! dimensioned (nLevels)
-
-     ! Now the horizontal geolocation information:
-
-     REAL(r8), DIMENSION(:), POINTER :: latitude	! dimensioned (nLats)
-
-     ! Global Root-Sum_Square, dimensioned (nLevels)
-
-     REAL(r8), DIMENSION(:), POINTER :: gRss
-
-     ! Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
-
-     REAL(r8), DIMENSION(:,:), POINTER :: latRss
-
-     ! Maximum difference, dimensioned (N, nLevels)
-
-     REAL(r8), DIMENSION(:,:), POINTER :: maxDiff
-
-     ! Missing points (percentage), dimensioned (nLevels)
-
-     INTEGER, DIMENSION(:), POINTER :: perMisPoints
-
-   END TYPE L3DMDiag_T
 
 CONTAINS
 
@@ -1199,6 +1162,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.15  2001/11/12 20:22:05  nakamura
+!# Added pressure & lat to L3DMDiag_T.
+!#
 !# Revision 1.14  2001/10/05 20:16:25  nakamura
 !# Added L3DMDiag_T.
 !#
