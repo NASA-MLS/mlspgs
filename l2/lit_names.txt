@@ -22,6 +22,7 @@ binMean
 binMin
 binTotal
 both
+boxcar
 
 chisqbinned
 chisqchan
@@ -145,6 +146,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.45  2004/02/06 01:01:29  livesey
+# Added boxcar
+#
 # Revision 2.44  2004/01/20 20:25:53  livesey
 # Added binMean
 #
