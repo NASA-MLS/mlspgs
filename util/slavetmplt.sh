@@ -99,20 +99,27 @@ then
 fi
 
 SLVPROG=mlsl2.ssllaavvee
+# echo "All the opts to mlsl2.slave: $@"
 # It's possible that $1 is the command name--in which case we
 # need to do a shift to get the actual args
 if [ "$1" = "$SLVPROG" ]
 then
   shift
-  echo "Need to shift because 1st arg is command name" 2>&1 | tee -a "$LOGFILE"
+  # echo "Need to shift because 1st arg is command name" 2>&1 | tee -a "$LOGFILE"
 fi
 
+masterIdent="none"
 otheropts="-g -S'slv,opt1,log,pro,time'"
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
     --chunk )
+       shift
+       shift
+       ;;
+    --idents )
+       masterIdent="$2"
        shift
        shift
        ;;
@@ -123,6 +130,10 @@ while [ "$more_opts" = "yes" ] ; do
     --slave )
        masterTid="$2"
        shift
+       shift
+       ;;
+    --wall )
+       otheropts="--wall $otheropts"
        shift
        ;;
     --* )
@@ -139,6 +150,7 @@ done
 
 echo "PGS_PC_INFO_FILE: $PGS_PC_INFO_FILE" 2>&1 | tee -a "$LOGFILE"
 echo "masterTid: $masterTid" 2>&1 | tee -a "$LOGFILE"
+echo "masterIdent file: $masterIdent" 2>&1 | tee -a "$LOGFILE"
 echo "executable: $PVM_BIN/mlsl2" 2>&1 | tee -a "$LOGFILE"
 
 export PGSMEM_USESHM
@@ -158,8 +170,21 @@ then
   exit 1
 fi
 
+# Compare master task's ident with this slave's
+# If different, quit with error message
+if [ -f "$masterIdent" ]
+then
+  the_diff=`ident $PVM_BIN/mlsl2 | diff - "$masterIdent"`
+  if [ ! "$the_diff" = "" ]
+  then
+     echo "master task ident differs from slave"
+     echo "Possibly an error in paths; please check PVM_BIN, PVM_EP, ~/bin"
+     exit 1
+  fi
+fi
+
+# echo "otheropts: $otheropts"
 $PVM_BIN/mlsl2 --tk -m --slave $masterTid $otheropts  2>&1 | tee -a "$LOGFILE"
-# $PVM_BIN/mlsl2 --tk -m --slave $masterTid -g -S'slv,opt1,log,pro,time'  2>&1 | tee -a "$LOGFILE"
 
 }
       
@@ -181,6 +206,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.6  2003/10/22 23:01:51  pwagner
+# Changed each slaves temp log file name to bzzz.host.log
+#
 # Revision 1.5  2003/10/20 22:22:00  pwagner
 # Use tee to let slaves output to stdout--which pvm reechoes to master
 #

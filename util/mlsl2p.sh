@@ -19,9 +19,12 @@
 # usage: see (1) above
 
 CHECKPATHS="yes"
-#           ^^^---- "yes" if extra prefilght non-retrieval run to check paths
+#           ^^^---- "yes" if extra preflight non-retrieval run to check paths
 
-otheropts="$OTHEROPTS -g -S'slv,mas,chu,opt1,log,pro,time'"
+CHECKIDENTS="yes"
+#            ^^^---- "yes" if each slave to check its ident against master
+
+otheropts="$OTHEROPTS -g --wall -S'slv,mas,chu,opt1,log,pro,time'"
 
 # Check that assumptions are valid
 if [ "$PGS_PC_INFO_FILE" = "" ]
@@ -78,9 +81,20 @@ then
   fi
 fi
 
+# Next, create a fresh ident based on master task's binary executable
+if [ "$CHECKIDENTS" = "yes" ]
+then
+  IDENTFILE="$PVM_EP/master.ident"
+  rm -f "$IDENTFILE"
+  ident $PVM_EP/mlsl2 > "$IDENTFILE"
+else
+  IDENTFILE="none"
+fi
+
 # Now we launch the master task itself to set everything in motion
 #$PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO -g -S'mas,chu,pro,log,opt1,pcf,time'
-$PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO $otheropts
+$PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO \
+  --idents "$IDENTFILE" $otheropts
 
 # Save return status
 return_status=`expr $?`
@@ -105,6 +119,9 @@ else
 fi
 
 # $Log$
+# Revision 1.5  2003/11/15 00:45:08  pwagner
+# Uses --checkPaths to perform extra preflight checks
+#
 # Revision 1.4  2003/10/22 23:00:17  pwagner
 # Catenates each slaves log file to mlsl2.log at end
 #
