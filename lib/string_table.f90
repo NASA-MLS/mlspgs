@@ -212,6 +212,7 @@ contains
   end function COMPARE_STRINGS
   ! ===================================     DESTROY_CHAR_TABLE     =====
   subroutine DESTROY_CHAR_TABLE ( STATUS )
+    integer, intent(out), optional :: STATUS ! From deallocate
     if ( allocated(char_table) ) then
       if ( present(status) ) then
         deallocate ( char_table, stat=status )
@@ -234,11 +235,11 @@ contains
   ! =================================     DESTROY_STRING_TABLE     =====
   subroutine DESTROY_STRING_TABLE ( STATUS )
     integer, intent(out), optional :: STATUS ! From deallocate
-    if ( allocated(string_table) ) then
+    if ( allocated(strings) ) then
       if ( present(status) ) then
-        deallocate ( string_table, stat=status )
+        deallocate ( strings, stat=status )
       else
-        deallocate ( string_table )
+        deallocate ( strings )
       end if
     end if
   end subroutine DESTROY_STRING_TABLE
@@ -645,6 +646,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.7  2001/04/20 17:43:35  vsnyder
+! OOPS -- previous commit was premature -- forgot to declare a variable
+!
 ! Revision 2.6  2001/04/20 17:40:49  vsnyder
 ! Add 'Destroy...' subroutines
 !
