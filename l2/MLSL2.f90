@@ -2,7 +2,7 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 program MLSL2
-  use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION
+  use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION, TRACKING
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
   use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS, LIT_INDICES
@@ -334,7 +334,9 @@ program MLSL2
           call io_error ( "After --maxFailuresPerMachine option", status, line )
           stop
         end if
-      else if ( line(3+n:14+n) == 'patch ' ) then
+      else if ( line(3+n:11+n) == 'memTrack ' ) then
+        tracking = switch
+      else if ( line(3+n:8+n) == 'patch ' ) then
         patch = switch
       else if ( line(3+n:5+n) == 'pge ' ) then
         i = i + 1
@@ -902,6 +904,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.116  2004/04/03 05:44:16  livesey
+! Added memTrack option
+!
 ! Revision 2.115  2004/03/24 23:54:06  pwagner
 ! Switched from h5_open/close_f to mls_open/close
 !
