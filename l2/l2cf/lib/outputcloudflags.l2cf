@@ -24,6 +24,12 @@ begin Join
   !writeOneCloudRadBin(32,1)
   !writeOneCloudRadBin(33,3)
 
+  ;; Write the IWC products
+  !directWriteDGGNoDiag(iwcR1A,IWC-118)
+  !directWriteDGGNoDiag(iwcR2,IWC-190)
+  !directWriteDGGNoDiag(iwcR3,IWC-240)
+  !directWriteDGGNoDiag(iwcR4,IWC-640)
+
   !flushDGGDGMFiles
 end Join
 
