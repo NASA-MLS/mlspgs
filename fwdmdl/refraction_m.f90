@@ -186,11 +186,33 @@ Contains
     Real(rp), intent(in) :: NH
 
     Integer :: iter
-    Real(rp) :: v1,v2,f1,f2,df,pdf
+    Logical :: bound
+    Real(rp) :: v1,v2,f1,f2,df,fpos,fneg,hpos,hneg
 
+    Integer,  PARAMETER :: Max_Iter = 20
+    Real(rp), PARAMETER :: Tiny = 1.0e-8_rp
+
+     bound = .FALSE.
      f1 = h1 * (1.0 + n1) - NH
      f2 = h2 * (1.0 + n2) - NH
      df = (f2 - f1) / (h2 - h1)
+
+     if(f1*f2 < 0.0_rp) then
+       bound = .TRUE.
+       if(f1 < 0.0_rp) then
+         fneg = f1
+         hneg = h1
+         fpos = f2
+         hpos = h2
+       else
+         fpos = f1
+         hpos = h1
+         fneg = f2
+         hneg = h2
+       endif
+     else
+       Print *,'** Warning from Solve_Hn: ROOT is NOT bound ..'
+     endif
 
      iter = 1
      v2 = (h1*abs(f2)+h2*abs(f1))/(abs(f1)+abs(f2))
@@ -202,24 +224,37 @@ Contains
        f1 = f2
 
        v2 = v1 - f1 / df
+
+       if(bound) then
+         if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) v2 = 0.5_rp*(hneg + hpos)
+       endif
+
        f2 = v2*(1.0+n1*Exp(eps*(v2-h1)))-NH
 
-       if(abs(f2) < 1.0e-8_rp) EXIT
-       if(abs(v2-v1) < 1.0e-8_rp) EXIT
+       if(abs(f2) < Tiny .OR. abs(v2-v1) < Tiny) EXIT
+
+       if(Iter == Max_Iter) EXIT
 
        iter = iter + 1
-       if(Iter > 10) EXIT
-
-       pdf = df
        df = (f2 - f1) / (v2 - v1)
 
-! If the derivative became too small relative to previous one, keep 
-! the previous derivative value (Otherwise the next step-size will be 
-! too large ..)
-
-       if(abs(df/pdf).lt.0.1) df = pdf
+       if(bound) then
+         if(f2 < 0.0_rp) then
+           fneg = f2
+           hneg = v2
+         else
+           fpos = f2
+           hpos = v2
+         endif
+         df = (fpos - fneg) / (hpos - hneg)
+       endif
 
      END DO
+
+     if(abs(f2) >= Tiny .AND. abs(v2-v1) >= Tiny) then
+       Print *,'** Warning from Solve_Hn: DID NOT converged within ',Max_Iter, &
+             & ' iterations ..'
+     endif
 
      H = v2
      df = n1 * Exp(eps*(H-h1))
@@ -251,6 +286,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.3  2002/02/16 10:32:18  zvi
+! Make sure iteration in Solve_HN do not diverge
+!
 ! Revision 2.2  2002/02/14 21:36:13  zvi
 ! Fix Sqrt() problem..
 !
