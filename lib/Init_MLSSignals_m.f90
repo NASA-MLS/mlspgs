@@ -73,8 +73,8 @@ contains
 
     ! This really belongs in make_tree, but "make depends" can't see it there
     ! (because of the "include"):
-    use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
-    use TREE_TYPES, only: N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
+    use TREE, only:
+    use TREE_TYPES, only: N_FIELD_SPEC, N_FIELD_TYPE, N_SPEC_DEF
 
     integer, intent(in) :: N_DATA_TYPE_INDICES
     integer, intent(in) :: N_FIELD_INDICES
@@ -197,6 +197,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.19  2003/05/16 02:44:18  vsnyder
+! Removed USE's for unreferenced symbols
+!
 ! Revision 2.18  2002/10/08 00:09:10  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
