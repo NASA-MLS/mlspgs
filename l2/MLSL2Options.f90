@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -91,6 +91,8 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   logical            :: SKIPRETRIEVAL = .false.         
   ! Whether to do only a pre-flight checkout of paths
   logical            :: CHECKPATHS = .false.         
+  ! Whether to catenate split autoDirectWrites
+  logical            :: CATENATESPLITS = .false.         
 
   logical            :: TOOLKIT =                SIPS_VERSION 
   ! --------------------------------------------------------------------------
@@ -106,6 +108,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.26  2004/01/23 01:06:39  pwagner
+! Added CATENATESPLITS
+!
 ! Revision 2.25  2003/12/05 00:39:35  pwagner
 ! Added patch option, section timing units
 !
