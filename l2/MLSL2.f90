@@ -441,7 +441,7 @@ program MLSL2
   if ( .not. toolkit ) then
      prunit = max(-1, prunit)   ! stdout or Fortran unit
   elseif (parallel%slave .or. parallel%master) then
-     prunit = -3          ! output both logged and sent to stdout
+     prunit = -2          ! output both logged and sent to stdout
   end if
 
   if( index(switches, 'log') /= 0 .or. .not. toolkit ) then
@@ -779,6 +779,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.103  2003/10/21 00:02:32  pwagner
+! Revert to writing just once if toolkit and parallel
+!
 ! Revision 2.102  2003/10/14 18:17:02  pwagner
 ! Fixed problem with reducing switches to unique list
 !
