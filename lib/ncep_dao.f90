@@ -1,20 +1,17 @@
 ! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!=============================================================================
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
-  !=============================================================================
-
 
   use GriddedData, only: GriddedData_T, v_is_pressure, &
-    & AddGriddedDataToDatabase, Dump
+    & AddGriddedDataToDatabase, Dump, SetupNewGriddedData
   use HDFEOS, only: HDFE_NENTDIM, &
     & gdopen, gdattach, gdfldinfo, &
     & gdinqgrid, gdnentries, gdinqdims, gdinqflds
   use Hdf, only: DFACC_RDONLY
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: LineLen, NameLen, FileNameLen
+  use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, I4
   use MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF, &
     &                split_path_name
   use MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
@@ -24,6 +21,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
     & PGS_IO_GEN_CLOSEF, PGS_IO_GEN_OPENF, PGSD_IO_GEN_RSEQFRM, &
     & UseSDPToolkit
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
   implicit none
   private
@@ -35,24 +33,13 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character(LEN=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-!     c o n t e n t s
-!     - - - - - - - -
-
-! source_file_already_read   Is source file among those already read?
-! obtain_clim                An atavism--should be removed
-! read_climatology           Reads a l3ascii file for the data_array
-! obtain_dao                 An atavism--should be removed
-! obtain_ncep                An atavism--should be removed
-! ReadGriddedData            Reads a Gridded Data file appropriate for 'ncep' or 'dao'
-
   public:: source_file_already_read
   public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
-  public::ReadGriddedData
+  public::ReadGriddedData, ReadGloriaFile
 
   integer :: ERROR
 
   ! First we'll define some global parameters and data types.
-
   character (len=*), parameter :: DEFAULTFIELDNAME = 'TMPU'
   character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
   character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
@@ -63,23 +50,14 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character (len=*), parameter :: lit_ncep = 'ncep'
   character (len=*), parameter :: lit_clim = 'clim'
 
-  ! This datatype stores a single gridded atmospheric quantity.  For example
-  ! temperature, if an uncertainty field is also required, this is stored in a
-  ! separate quantity.
-
-
-  ! --------------------------------------------------------------------------
-
 contains
-  !----------------- Beginning of Paul's code ------------------
 
-  !---------------------------- ReadGriddedData ---------------------
+  ! ----------------------------------------------- ReadGriddedData
   subroutine ReadGriddedData(FileName, lcf_where, description, v_type, &
     & the_g_data, GeoDimList, fieldName)
-    !------------------------------------------------------------------------
 
-    ! This routine reads a Gridded Data file, returning a filled data structure and the !
-    ! appropriate for 'ncep' or 'dao'
+    ! This routine reads a Gridded Data file, returning a filled data
+    ! structure and the  appropriate for 'ncep' or 'dao'
 
     ! FileName and the_g_data are required args
     ! GeoDimList, if present, should be the Dimensions' short names
@@ -90,9 +68,8 @@ contains
     ! like temperature
 
     ! Arguments
-
     character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
-    integer, intent(IN) :: lcf_where			! node of the lcf that provoked me
+    integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
     character (LEN=*), intent(IN) :: description ! e.g., 'dao'
@@ -100,14 +77,10 @@ contains
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
 
     ! Local Variables
-
     integer :: file_id, gd_id
     integer :: inq_success
     integer :: nentries, ngrids, ndims, nfields
     integer :: strbufsize
-    !  character (len=80) :: msg, mnemonic
-    !  integer :: status
-
     logical,  parameter       :: CASESENSITIVE = .false.
     integer, parameter :: GRIDORDER=1   ! What order grid written to file
     integer, parameter :: MAXLISTLENGTH=Linelen ! Max length list of grid names
@@ -120,23 +93,20 @@ contains
     character (len=MAXNAMELENGTH) :: gridname, actual_field_name
     integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
     integer                        :: our_rank, numberType
+
     !                                  These start out initialized to one
     integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
     integer, parameter             :: i_longitude=1
     integer, parameter             :: i_latitude=i_longitude+1
     integer, parameter             :: i_vertical=i_latitude+1
     integer, parameter             :: i_time=i_vertical+1
-    ! External functions
-    !  integer, external :: gdopen, gdattach, gdrdfld, gddetach, gdclose
-    !  integer, external :: gdinqgrid, gdnentries, gdinqdims, gdinqflds
     integer, external :: GDRDFLD
     logical, parameter :: COUNTEMPTY=.true.
     logical            :: descrpt_is_legal
     logical            :: descrpt_is_misplcd
 
-    ! - - - begin - - -
+    ! Executable code
 
-    ! Check if description is legal
     descrpt_is_legal = (lowercase(description(:len(lit_dao))) == lit_dao) &
       & .or. &
       & (lowercase(description(:len(lit_ncep))) == lit_ncep) &
@@ -231,7 +201,6 @@ contains
     endif
 
     ! Now find the rank of our field
-
     inq_success = gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
       & numbertype, dimlists(1))
 
@@ -251,15 +220,143 @@ contains
     the_g_data%noHeights = nlev
     the_g_data%noLsts = ntime
 
-    !-----------------------------
   end subroutine ReadGriddedData
-  !-----------------------------
 
-  ! ------------------------------------------------  OBTAIN_CLIM  -----
-  !=====================================================================
+  ! --------------------------------------------- ReadGloriaFile -------
+  type ( GriddedData_T) function ReadGloriaFile ( filename ) result ( grid )
+    character (len=*), intent(in) :: FILENAME
+    ! This function reads data in Gloria's gridded data format into memory
+    ! Note that Gloria has a very specific format for her gridded data
+
+    ! Local parameters
+    integer, parameter :: NOLATS = 45   ! Number of latitudes
+    integer, parameter :: NOLONS = 72   ! Number of longitudes
+    integer, parameter :: NOHEIGHTS = 22  ! Number of surfaces
+    real(r8), parameter :: DLAT = 4.0   ! Latitude spacing
+    integer, parameter :: HEADERLEN = 61
+    integer, parameter :: OFFSET = 4    ! Extra 4 byte word in file
+    integer, parameter :: BUFFERLEN = &
+      & headerLen + offset + noHeights*noLats*noLons*4 ! Size of file
+
+    ! Local variables
+    integer :: UARSDAY                  ! UARS day for data
+    integer :: I                        ! Loop counter
+    integer :: LAT                      ! Loop counter
+    integer :: LON                      ! Loop counter
+    integer :: SURF                     ! Loop counter
+    integer :: LUN                      ! Unit number
+    integer :: STATUS                   ! Flag
+    integer(i4) :: DUMMY                ! For record length words
+    character (len=headerLen) :: COMMENT
+    logical :: EXIST                    ! Flag
+    logical :: OPENED                   ! Flag
+    real (r4) :: ONEVALUE               ! One element of the grid
+    character (len=1), dimension(4) :: TESTCHAR ! For finding our Endian
+    integer(i4) :: TESTINT              ! For finding our Endian
+    character (len=1), dimension(bufferLen) :: BUFFER
+    logical :: NEEDSWAP                 ! Flag for endian
+        
+    ! Executable code
+
+    ! Setup the grid
+    call SetupNewGriddedData ( grid, noHeights=noHeights, noLats=noLats, &
+      & noLons=noLons, noLsts=1, noSzas=1, noDates=1 )
+
+    ! Now fill the coordinates
+    grid%verticalCoordinate = v_is_pressure
+    do i = 1, noHeights
+      grid%heights = 10.0**(3.0-(i-1)/6.0)
+    end do
+    do i = 1, noLats
+      grid%lats(i) = dLat * ( i - 2.0*noLats/dLat ) - dLat/2.0
+    end do
+    do i = 1, noLons
+      grid%lons(i) = (i-1)*360.0 / noLons
+    end do
+    grid%lsts(1) = 0.0
+    grid%szas(1) = 0.0
+
+    ! Now read Gloria's data file
+    ! Perhaps Paul could make this use MLSFiles later? !?????????
+    do lun = 20, 99
+      inquire ( unit=lun, exist=exist, opened=opened )
+      if ( exist .and. .not. opened ) exit
+    end do
+    open ( unit=lun, file=filename, status='old', form='unformatted', &
+      & access='direct', iostat=status, recl=bufferLen )
+    if ( status /= 0 ) then
+      call output ( 'IOSTAT value is:' )
+      call output ( status, advance='yes' )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Problem opening Gloria format datafile' )
+    end if
+    ! Read the data
+    read ( lun, rec=1 ) buffer
+    ! Done with the file
+    close ( lun ) 
+
+    ! Get the comment field to work out the day
+    write ( comment, '(61A1)' ) buffer ( 1 : headerLen )
+    ! Now work out the uars day
+    i = index ( comment, 'DAY ' )
+    read ( comment(i+4:i+8), * ) uarsDay
+
+    ! Now convert this into TAI time, choose midday for the day
+    ! Also ignore leapseconds. uarsDay 1 was 12 Sep 1991.  From
+    ! 1 Jan 1993 to 11 Sep 1991 is 478 days, 477.5 puts it at midday
+    grid%dateStarts = (uarsDay-477.5) * 60.0 * 60.0 * 24.0
+    grid%dateEnds = grid%dateStarts
+    ! Now read the field, into a character array first to deal with endian
+    ! issues.
+
+    ! Now, what's our endian
+    testInt = 1
+    testChar = transfer ( testInt, testChar )
+    if ( ( ichar(testChar(1)) == 1 ) .and. &
+      &  ( ichar(testChar(2)) == 0 ) .and. &
+      &  ( ichar(testChar(3)) == 0 ) .and. &
+      &  ( ichar(testChar(4)) == 0 ) ) then
+      needSwap = .true.
+    else if ( ( ichar(testChar(1)) == 0 ) .and. &
+      &       ( ichar(testChar(2)) == 0 ) .and. &
+      &       ( ichar(testChar(3)) == 0 ) .and. &
+      &       ( ichar(testChar(4)) == 1 ) ) then
+      needSwap = .false.
+    else
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "I'm very confused about the endian of this machine" )
+    end if
+
+    ! Put the if statement on the outside to avoid if's in loops
+    i = headerLen + offset + 1
+    if ( needSwap ) then
+      do lat = 1, noLats
+        do lon = 1, noLons
+          do surf = 1, noHeights
+            grid%field ( surf, lat, lon, 1, 1, 1 ) = &
+              & transfer ( buffer(i+3:i:-1), oneValue )
+            i = i + 4
+          end do
+        end do
+      end do
+    else
+      ! No byte swapping required, just store it
+      do lat = 1, noLats
+        do lon = 1, noLons
+          do surf = 1, noHeights
+            grid%field ( surf, lat, lon, 1, 1, 1 ) = &
+              & transfer ( buffer(i:i+3), oneValue )
+            i = i + 4
+          end do
+        end do
+      end do
+    end if
+
+  end function ReadGloriaFile
+
+  ! --------------------------------------------- Obtain_Clim ----------
   subroutine OBTAIN_CLIM ( aprioriData, root, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end )
-    !=====================================================================
 
     ! An atavism--
     ! a throwback to when ncep files were opened
@@ -318,21 +415,17 @@ contains
     end do ! CliUnit = mlspcf_l2clim_start, mlspcf_l2clim_end
 
     return
-    !============================
+
   end subroutine OBTAIN_CLIM
-  !============================
 
-
-  ! --------------------------------------------------  READ_CLIMATOLOGY  -----
+  ! --------------------------------------------------  Read_Climatology
   subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, echo_data, dump_data )
-    ! --------------------------------------------------
     ! Brief description of program
     ! This subroutine reads a l3ascii file and returns
     ! the data_array to the caller
 
     ! Arguments
-
     character*(*), intent(in) :: input_fname			! Physical file name
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
@@ -380,10 +473,8 @@ contains
 
     if ( use_PCF ) then
       call split_path_name(input_fname, path, fname)
-
       processCli = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
         & .true., ErrType, version, debugOption=debug)
-
       if(ErrType /= 0) then
         !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
         !              &"Climatology file name unmatched in PCF")
@@ -392,19 +483,14 @@ contains
           & error_number=ErrType)
         return
       endif
-
       ErrType = Pgs_io_gen_openF ( processCli, PGSd_IO_Gen_RSeqFrm, 0, &
         cliUnit, version )
-
     else
       fname = input_fname
       ! use Fortran open
-
       if(debug) call output('opening ' // fname, advance = 'yes')
-
       CliUnit = mls_io_gen_openF ( 'open', .true., ErrType, &
 	& record_length, PGSd_IO_Gen_RSeqFrm, FileName=fname)
-
     endif
 
     if(debug) then
@@ -417,13 +503,9 @@ contains
 
 
     if ( ErrType == PGS_S_SUCCESS ) then
-
       do while (.not. end_of_file)
-
         if(debug) call output('reading l3ascii file', advance = 'yes')
-
         call l3ascii_read_field ( CliUnit, gddata, end_of_file, ErrType)
-
         if(ErrType == 0) then
           if(debug) then
             call output('adding to grid database', advance='yes')
@@ -449,39 +531,29 @@ contains
           nullify (gddata%dateStarts)
           nullify (gddata%dateEnds)
           nullify (gddata%field)
-
           if(debug) call output('Destroying our grid template', advance='yes')
-
         endif
-
       end do !(.not. end_of_file)
-
       ! ok, done with this file and unit number
       if( use_PCF ) then
         ErrType = Pgs_io_gen_CloseF ( CliUnit )
-
 	! use Fortran close
       else
-
         if(debug) call output('closing ' // fname, advance = 'yes')
         ErrType = mls_io_gen_CloseF ('close', CliUnit )
-
       endif
-
       if(ErrType /= 0) then
         call announce_error (ROOT, &
           &"Error closing " // fname, error_number=ErrType)
       endif
-
     else
-
       call announce_error (ROOT, &
         &"Error opening " // fname, error_number=ErrType)
     endif
 
   end subroutine READ_CLIMATOLOGY
 
-  ! -------------------------------------------------  OBTAIN_DAO  -----
+  ! -------------------------------------------------  Obtain_DAO
   subroutine OBTAIN_DAO ( aprioriData, root, &
     & mlspcf_l2dao_start, mlspcf_l2dao_end )
 
@@ -517,41 +589,28 @@ contains
     DAO_Version = 1
     vname = "TMPU" ! for now
 
-
     ! Get the DAO file name from the PCF
-
     do DAOFileHandle = mlspcf_l2dao_start, mlspcf_l2dao_end
-
       returnStatus = Pgs_pc_getReference ( DAOFileHandle, DAO_Version, &
         DAOphysicalFilename )
-
       if ( returnStatus == PGS_S_SUCCESS ) then
-
         ! Open the HDF-EOS file and read gridded data
         returnStatus = AddGriddedDataToDatabase(aprioriData, qty)
-
         !        call read_dao ( DAOphysicalFilename, vname, data_array )
         if(returnStatus > 0) then
           call ReadGriddedData ( DAOphysicalFilename, root, &
             & 'dao', v_is_pressure, aprioriData(returnStatus) )
         endif
-
       end if
-
     end do ! DAOFileHandle = mlspcf_l2_dao_start, mlspcf_l2_dao_end
-
-    !===========================
   end subroutine Obtain_DAO
-  !===========================
 
   ! ------------------------------------------------  Obtain_NCEP  -----
   subroutine Obtain_NCEP ( aprioriData, root, &
     & mlspcf_l2ncep_start, mlspcf_l2ncep_end )
-
     ! An atavism--
     ! a throwback to when ncep files were opened
     ! independently of being required by the lcf
-
     ! Arguments
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     ! Input a priori database
@@ -559,14 +618,10 @@ contains
     integer, intent(IN) :: mlspcf_l2ncep_start, mlspcf_l2ncep_end
 
     ! Local Variables
-    !    character (len=80) :: MSG, MNEMONIC
     integer :: NCEPFileHandle, NCEP_Version
     character (len=132) :: NCEPphysicalFilename
     type (GriddedData_T):: QTY
     integer :: RETURNSTATUS
-    !    character (len=80) :: VNAME
-
-    !   allocate ( data_array(XDIM, YDIM, ZDIM), stat=returnStatus )
 
    error = 0
    
@@ -600,13 +655,11 @@ contains
       end if
 
     end do ! NCEPFileHandle = mlspcf_l2_ncep_start, mlspcf_l2_ncep_end
-    !===========================
   end subroutine Obtain_NCEP
-  !===========================
 
   ! --------------------------------  source_file_already_read  -----
-  function source_file_already_read(GriddedDataBase, source_file, field_name &
-    & ) result (already)
+  function source_file_already_read(GriddedDataBase, source_file, &
+    & field_name ) result (already)
     ! check if source file among those already read to form database
     ! returns .TRUE. if already read, .FALSE. if not or if database is empty
 
@@ -633,46 +686,37 @@ contains
     elseif(size(GriddedDataBase) == 0) then
       return
     endif
-
-!    print*,'Database, filenames:',GriddedDatabase%sourceFilename
-!    print*,'Database, fieldNames:',GriddedDatabase%quantityName
-!    print*,'Source file:',source_file
-!    print*,'field_name:',field_name
-     call output('Database, filenames:', advance='no')
-     call blanks(3)
-     call output(GriddedDatabase%sourceFilename, advance='yes')
-
-     call output('Database, fieldNames:', advance='no')
-     call blanks(3)
-     call output(GriddedDatabase%quantityName, advance='yes')
-
-     call output('Source file:', advance='no')
-     call blanks(3)
-     call output(source_file, advance='yes')
-
-     call output('field_name:', advance='no')
-     call blanks(3)
-     call output(field_name, advance='yes')
-
+    
+    call output('Database, filenames:', advance='no')
+    call blanks(3)
+    call output(GriddedDatabase%sourceFilename, advance='yes')
+    
+    call output('Database, fieldNames:', advance='no')
+    call blanks(3)
+    call output(GriddedDatabase%quantityName, advance='yes')
+    
+    call output('Source file:', advance='no')
+    call blanks(3)
+    call output(source_file, advance='yes')
+    
+    call output('field_name:', advance='no')
+    call blanks(3)
+    call output(field_name, advance='yes')
+    
     do i=1, size(GriddedDataBase)
-
       if(trim(adjustl(source_file)) == trim(adjustl(GriddedDataBase(i)%sourceFileName))) then
         already = .true.
         exit
       endif
-
     enddo
 
     if(present(field_name) .and. already) then
-
       if(trim(adjustl(field_name)) == trim(adjustl(GriddedDataBase(i)%quantityName))) then
         already = .true.
       else
         already = .false.
       endif
-
     endif
-
   end function source_file_already_read
 
   ! ------------------------------------------------  announce_error  -----
@@ -680,14 +724,12 @@ contains
     & error_number )
 
     ! Arguments
-
     integer, intent(in)    :: lcf_where
     character(LEN=*), intent(in)    :: full_message
     logical, intent(in), optional :: use_toolkit
     integer, intent(in), optional    :: error_number
-    ! Local
-    !  character (len=80) :: msg, mnemonic
-    !  integer :: status
+
+    ! Local variables
     logical :: just_print_it
     logical, parameter :: default_output_by_toolkit = .true.
 
@@ -700,9 +742,6 @@ contains
     endif
 
     if(.not. just_print_it) then
-      !    CALL Pgs_smf_getMsg(status, mnemonic, msg)
-      !    CALL MLSMessage (level, ModuleName, &
-      !              &trim(full_message)//" "//mnemonic//" "//msg)
       error = max(error,1)
       call output ( '***** At ' )
 
@@ -738,16 +777,14 @@ contains
       end if
     end if
 
-    !===========================
   end subroutine announce_error
-  !===========================
 
-  !=============================================================================
 end module ncep_dao
-!=============================================================================
 
-!
 ! $Log$
+! Revision 2.18  2002/01/23 22:34:37  livesey
+! Added ReadGloriaFile functionality
+!
 ! Revision 2.17  2002/01/09 23:48:40  pwagner
 ! Added toc; each print became call output
 !
