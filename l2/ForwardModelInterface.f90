@@ -28,7 +28,7 @@ module ForwardModelInterface
   ! Now fields
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, &
-    & F_INTEGRATIONGRID, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
+    & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
   ! Now literals
   use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, &
@@ -37,6 +37,7 @@ module ForwardModelInterface
     & L_TEMPERATURE, L_VMR
   ! That's it for Init_Tables_Module
   use Lexer_Core, only: Print_Source
+  use L2PC_M, only: L2PC_T, OPEN_L2PC_FILE, READ_L2PC_FILE, CLOSE_L2PC_FILE
   use ManipulateVectorQuantities, only: FindClosestInstances
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
   use MLSCommon, only: R8
@@ -96,11 +97,12 @@ module ForwardModelInterface
 contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  ForwardModelGlobalSetup  -----
-  subroutine ForwardModelGlobalSetup ( Root )
+  subroutine ForwardModelGlobalSetup ( Root, l2pcDatabase )
     ! Process the forwardModel specification to produce ForwardModelInfo.
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
+    type (L2PC_T), pointer, dimension(:) :: l2pcDatabase
 
     integer :: I                        ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
@@ -134,6 +136,11 @@ contains ! =====     Public Procedures     =============================
         call open_pointing_grid_file ( fileName, lun )
         call read_pointing_grid_file ( lun, spec_indices )
         call close_pointing_grid_file ( lun )
+      case ( f_l2pc )
+        call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
+        call open_l2pc_file (fileName, lun)
+        call read_l2pc_file (lun, lit_indices, l2pcDatabase )
+        call close_l2pc_file ( lun )
       case default
         ! Can't get here if the type checker worked
       end select
@@ -1438,6 +1445,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.115  2001/04/26 00:06:58  livesey
+! Added l2pc reading to global setup
+!
 ! Revision 2.114  2001/04/25 00:50:33  livesey
 ! Changed maxPath to maxVert, better name
 !
