@@ -3,8 +3,8 @@
 
 module GET_BETA_PATH_M
 
-  use MLSCommon, only: RP
-
+  use MLSCommon, only: RP, R8
+  
   implicit NONE
   private
   public :: get_beta_path
@@ -31,12 +31,13 @@ contains
   ! ----------------------------------------------  Get_Beta_Path  -----
   subroutine Get_Beta_Path ( frq, p_path, t_path, Catalog, beta_group, gl_slabs, &
         & path_inds, beta_path, gl_slabs_m, t_path_m, gl_slabs_p, t_path_p, &
-        & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path )
+        & dbeta_dt_path, dbeta_dw_path, dbeta_dn_path, dbeta_dv_path, ICON )
 
     use MLSCommon, only: R8, RP, IP
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use SpectroscopyCatalog_m, only: CATALOG_T, LINES
     use CREATE_BETA_M, only: CREATE_BETA
+    use Molecules, only: SP_H2O
 
 ! Inputs:
 
@@ -81,6 +82,9 @@ contains
     real(rp), allocatable, dimension(:) :: LineWidth
     real(rp), dimension(size(path_inds)) :: betam, betap
 
+    integer  :: ICON
+    real(rp) :: P, Vapor_P
+
 ! begin the code
 
     no_mol = size(beta_group)
@@ -96,8 +100,18 @@ contains
         ratio = beta_group(i)%ratio(n)
         ib = beta_group(i)%cat_index(n)
         Spectag = Catalog(ib)%Spec_Tag
+         
         do j = 1, n_path
           k = path_inds(j)
+
+          ! mask 100%RH below 100mb
+          IF(Spectag .EQ. SP_H2O .AND. ICON .EQ.-1 .and. p_path(k).GE. 100.)THEN
+             CALL RHtoEV(t_path(k),100._r8,Vapor_P)
+             P = p_path(k)-Vapor_P
+             ratio = Vapor_P/(max(1.e-9_r8, P)) ! define new mixing ratio for 
+                                                ! water vapor saturated below 100mb
+          ENDIF                                 
+
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
             &  Frq, Lines(Catalog(ib)%Lines)%W, gl_slabs(k,ib), bb,     &
             &  DBETA_DW=v0, DBETA_DN=vp, DBETA_DV=vm )
@@ -177,6 +191,26 @@ contains
 
   end subroutine Get_Beta_Path
 
+
+          SUBROUTINE RHtoEV(t,RH,EV) 
+!         p ---- mb
+!         t,td ---- K
+!         RH --- %
+!         SD --- g/m3                 
+
+          REAL(rp) :: es, t, RH, EV, isat, t0
+
+  	  t0 = 273.16_r8
+	  isat = -9.09718*(t0/t-1.0) + 0.78583503 - 3.56654*LOG10(t0/t) &
+            &     		     + 0.876793 * (1.0-t/t0)
+
+          es=10**isat
+
+          if (ES.lt.0._r8) ES=0._r8
+          EV=ES*0.01*RH
+          
+          END SUBROUTINE RHtoEV
+
 !----------------------------------------------------------------------
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -185,6 +219,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.11  2003/01/08 00:17:29  vsnyder
+! Use "associated" instead of "present" to control optional computations
+!
 ! Revision 2.10  2002/12/13 02:06:51  vsnyder
 ! Use a SLABS structure for the slabs quantities
 !
