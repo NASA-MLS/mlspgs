@@ -214,7 +214,7 @@ contains
 
     do i = 1, size(catalog)
       do j = 1, no_ele
-        call AllocateOneSlabs ( slabs(j,i), size(catalog(i)%lines) )
+        call AllocateOneSlabs ( slabs(j,i), size(catalog(i)%lines), TempDer )
       end do
     end do
 
@@ -346,6 +346,9 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.10  2004/03/20 04:08:55  vsnyder
+! Steps along the way to analytic temperature derivatives
+!
 ! Revision 2.9  2003/07/09 23:39:56  vsnyder
 ! Add AllocateSlabs
 !
