@@ -98,7 +98,14 @@ contains ! =====     Public Procedures     =============================
 
     ! Get stuff from various vectors
     radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
-      & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband )
+      & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband, noError=.true. )
+    ! Now, it's possible we're really being asked to deal with optical depth, not
+    ! radiance.
+    if ( .not. associated ( radiance ) ) then
+      radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
+        & signal=signal%index, sideband=signal%sideband, noError=.true. )
+    end if
+
     phi => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_fieldAzimuth, config=fmConf )
     instance = FindOneClosestInstance ( phi, radiance, maf )
