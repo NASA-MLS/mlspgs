@@ -108,9 +108,10 @@ module INIT_TABLES_MODULE
 ! The NAG compiler will generate code that has memory problems
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
   integer, parameter :: S_BINSELECTOR        = s_apriori + 1
-  integer, parameter :: S_CHUNKDIVIDE        = s_binselector + 1
+  integer, parameter :: S_CHUNKDIVIDE        = s_binSelector + 1
   integer, parameter :: S_CONCATENATE        = s_chunkDivide + 1
-  integer, parameter :: S_DELETE             = s_concatenate + 1
+  integer, parameter :: S_CYCLICJACOBI       = s_concatenate + 1
+  integer, parameter :: S_DELETE             = s_cyclicJacobi + 1
   integer, parameter :: S_DESTROY            = s_delete + 1
   integer, parameter :: S_DIRECTWRITE        = s_destroy + 1
   integer, parameter :: S_DIRECTWRITEFILE    = s_directWrite + 1
@@ -143,7 +144,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_PHASE              = s_output + 1
   integer, parameter :: S_POPULATEL2PCBIN    = s_phase + 1
   integer, parameter :: S_QUANTITY           = s_populateL2pcBin + 1
-  integer, parameter :: S_RESTRICTRANGE      = s_quantity + 1
+  integer, parameter :: S_REFLECT            = s_quantity + 1
+  integer, parameter :: S_RESTRICTRANGE      = s_reflect + 1
   integer, parameter :: S_RETRIEVE           = s_restrictRange + 1
   integer, parameter :: S_SIDS               = s_retrieve + 1
   integer, parameter :: S_SNOOP              = s_sids + 1
@@ -302,6 +304,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_binSelector) =          add_ident ( 'binSelector' )
     spec_indices(s_chunkDivide) =          add_ident ( 'chunkDivide' )
     spec_indices(s_concatenate) =          add_ident ( 'concatenate' )
+    spec_indices(s_cyclicJacobi) =         add_ident ( 'cyclicJacobi' )
     spec_indices(s_empiricalGeometry) =    add_ident ( 'EmpiricalGeometry' )
     spec_indices(s_delete) =               add_ident ( 'delete' )
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
@@ -335,6 +338,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_phase) =                add_ident ( 'phase' )
     spec_indices(s_populateL2PCBin) =      add_ident ( 'populateL2PCBin' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
+    spec_indices(s_reflect) =              add_ident ( 'reflect' )
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
@@ -838,6 +842,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
              ndp+n_spec_def /) )
+    call make_tree( (/ &
+      begin, s+s_reflect, & ! Must be AFTER s_matrix
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             nadp+n_spec_def /) )
+    call make_tree( (/ &
+      begin, s+s_cyclicJacobi, & ! Must be AFTER s_matrix
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
+             begin, f+f_eigenVectors, s+s_matrix, n+n_field_spec, &
+             nadp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_directWrite, &
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
@@ -1121,7 +1134,7 @@ contains ! =====     Public procedures     =============================
                            s+s_restrictRange, s+s_updateMask, n+n_section, &
       begin, z+z_join, s+s_time, s+s_label, s+s_l2gp, s+s_l2aux, &
                        s+s_directWrite, n+n_section, &
-      begin, z+z_algebra, n+n_section+d*no_check_eq, &
+      begin, z+z_algebra, s+s_reflect, s+s_cyclicJacobi, n+n_section+d*no_check_eq, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
   contains
@@ -1138,6 +1151,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.352  2004/01/29 03:33:16  livesey
+! Added reflect and cyclicJacobi for z_algebra
+!
 ! Revision 2.351  2004/01/24 01:04:38  livesey
 ! Added the adopted quantity type.
 !
