@@ -246,6 +246,7 @@ o2: do j = mid+1, no_ele-1
       real(rp), intent(in) :: NH
 
       integer :: iter
+      real(rp) :: E ! exp(eps * (v2-h1))
       real(rp) :: v1, v2, f1, f2, df, hpos, hneg
 
       integer,  parameter :: Max_Iter = 20
@@ -257,7 +258,6 @@ o2: do j = mid+1, no_ele-1
 
        f1 = h1 * (1.0_rp + n1) - NH
        f2 = h2 * (1.0_rp + n2) - NH
-       df = (f2 - f1) / (h2 - h1)
 
        if ( f1*f2 > 0.0_rp ) then
          H = -1.0_rp
@@ -275,7 +275,9 @@ o2: do j = mid+1, no_ele-1
 
        iter = 1
        v2 = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
-       f2 = v2 * (1.0_rp + n1 * exp(eps*(v2-h1)) ) - NH
+       e = n1 * exp(eps*(v2-h1))
+       f2 = v2 * (1.0_rp + e ) - NH
+       df = 1.0_rp + e * ( 1.0_rp + eps * v2 )
 
        do
 
@@ -287,7 +289,8 @@ o2: do j = mid+1, no_ele-1
          if ( v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg) ) &
              &  v2 = 0.5_rp * (hneg + hpos)
 
-         f2 = v2 * (1.0_rp + n1 * exp(eps*(v2-h1)) ) - NH
+         e = n1 * exp(eps*(v2-h1))
+         f2 = v2 * (1.0_rp + e ) - NH
 
          if ( abs(f2) < tiny .or. abs(v2-v1) < tiny ) exit
 
@@ -300,7 +303,7 @@ o2: do j = mid+1, no_ele-1
          end if
 
          iter = iter + 1
-         df = (f2 - f1) / (v2 - v1)
+         df = 1.0_rp + e * ( 1.0_rp + eps * v2 )
 
        end do
 
@@ -308,7 +311,7 @@ o2: do j = mid+1, no_ele-1
            & call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
 
        H = v2
-       df = n1 * exp(eps*(H-h1))
+       df = e
        dndh = eps * df
        N = 1.0_rp + df
 
@@ -341,6 +344,9 @@ o2: do j = mid+1, no_ele-1
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.13  2002/10/08 17:08:06  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.12  2002/09/26 21:03:02  vsnyder
 ! Publish two constants, make Refractive_Index generic
 !
