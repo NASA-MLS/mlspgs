@@ -1,5 +1,5 @@
-! The goal of this program is to return a matrix of h_grids
-! and t_grids which define 2 d integration paths
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module Metrics_m
 
@@ -27,11 +27,14 @@ contains
           &  dhtdzt, dhtdtl0, ddhtdhtdtl0, neg_h_tan, z_basis, do_calc_t,      &
           &  do_calc_hyd )
 
+    ! The goal of this program is to return a matrix of h_grids
+    ! and t_grids which define 2 d integration paths
+
     ! The main change in this routine is to interchange the z_coeffs and
     ! p_coeffs so as to make it consistent with the radiative transfer program.
 
     use Allocate_deallocate, only: Allocate_test, Deallocate_test
-    use dump_0, only: dump
+    use Dump_0, only: dump
     use Geometry, only: EarthRadA, EarthRadB, Pi
     use Get_Eta_Matrix_m, only: Get_Eta_Sparse
     use MLSCommon, only: RP, IP
@@ -116,7 +119,7 @@ contains
     integer :: LOW_PT
     integer :: HI_PT
 
-    Real(rp) :: C
+    Real(rp) :: CSQ
     Real(rp) :: CP2
     Real(rp) :: SP2
     Real(rp) :: H_SURF
@@ -161,8 +164,8 @@ contains
     n_vert = size(z_grid)
     n_tan = size(tan_inds)
 
-    c = earthrada * earthradb / &
-         sqrt(earthrada**2*sin(beta)**2 + earthradb**2*cos(beta)**2)
+    csq = (earthrada * earthradb)**2 / &
+          &  ((earthrada**2-earthradb**2)*sin(beta)**2 + earthradb**2)
 
     nullify ( eta_t )
     call Allocate_test ( eta_t, n_tan, p_coeffs, 'eta_t', ModuleName )
@@ -175,8 +178,8 @@ contains
     ! compute equivalent earth radius at phi_t(1), nearest surface
     cp2 = cos(phi_t(1))**2
     sp2 = 1.0_rp - cp2
-    req = 0.001_rp*sqrt((earthrada**4*sp2 + c**4*cp2) / &
-                      & (earthrada**2*cp2 + c**2*sp2))
+    req = 0.001_rp*sqrt((earthrada**4*sp2 + csq**2*cp2) / &
+                      & (earthrada**2*cp2 + csq*sp2))
 
     ! now for the path quantities, for simplicity, we are going to set the
     ! surface reference at the input z_grid(1) and adjust the req and the
@@ -197,6 +200,7 @@ contains
       call Allocate_test ( dhtdtl, z_coeffs, 'dhtdtl', ModuleName )
       dhtdtl = sum(RESHAPE(dhidtlm(1,:,:),(/z_coeffs,p_coeffs/)) &
         * SPREAD(RESHAPE(eta_t(1,:),(/p_coeffs/)),1,z_coeffs),dim=2)
+!?    dhtdtl = sum(dhidtlm(1,:,:) * SPREAD(eta_t(1,:),1,z_coeffs),dim=2)
 
       ! adjust the 2d hydrostatic relative to the surface
       dhidtlm = dhidtlm - SPREAD(SPREAD(dhtdtl,1,n_vert),3,p_coeffs)
@@ -561,6 +565,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.10  2002/09/06 18:16:41  vsnyder
+! Cosmetic changes, move USEs from module scope to procedure scope
+!
 ! Revision 2.9  2002/08/10 00:13:33  livesey
 ! Tiny bug fix to Bill's bug fix
 !
