@@ -16,8 +16,10 @@ module Functions
 
   integer, parameter :: F_Cholesky        = 1
   integer, parameter :: F_GetDiagonal     = F_Cholesky + 1
-  integer, parameter :: F_SQRT            = F_GetDiagonal + 1
+  integer, parameter :: F_Invert          = F_GetDiagonal + 1
+  integer, parameter :: F_SQRT            = F_Invert + 1
   integer, parameter :: F_Transpose       = F_SQRT + 1
+  integer, parameter :: F_XTX             = F_Transpose + 1
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -34,8 +36,10 @@ contains
 
     call declare_func ( 'cholesky',        f_cholesky )
     call declare_func ( 'getDiagonal',     f_getDiagonal )
+    call declare_func ( 'invert',          f_invert )
     call declare_func ( 'sqrt',            f_sqrt )
     call declare_func ( 'transpose',       f_transpose )
+    call declare_func ( 'xtx',             f_xtx )
 
   contains
     subroutine Declare_Func ( String, Index )
@@ -57,6 +61,9 @@ contains
 end module Functions
 
 ! $Log$
+! Revision 2.3  2004/04/29 01:26:09  livesey
+! Added xtx
+!
 ! Revision 2.2  2004/01/30 23:25:31  livesey
 ! Added GetDiagonal and sqrt
 !
