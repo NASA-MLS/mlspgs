@@ -75,6 +75,10 @@ begin Fill
   Sa$1: matrix, columns=a$1, type=spd
   FillCovariance, matrix=Sa$1, diagonal=sdIn$1, /invert
 
+  ;; Other matrices
+  !ifdef(flagComputeAvks,{avk$1: matrix, columns=x$1, rows=x$1})
+  !ifdef(flagComputeSout,{Sout$1: matrix, columns=x$1, type=spd})
+
   ;; Fill radiance related vectors
   Transfer, source=measurement, destination=y$1
   Transfer, source=measurementNoise, destination=yNoise$1
@@ -126,12 +130,14 @@ begin Fill
   NegativePrecision, precision=outputPrecision, aprioriPrecision=aprioriPrecision
 end Fill
 
+!ifdef(flagSuppressRegularOutput,{},{
 !ifdef(flagPrecisionEstimates,{},{
   begin Join
     !ifdef(flagAvoidDirectWrite,
     {!forall(joinOneDiagDGG,!outputRetrievalDiagnostics)},
     {!forall(directWriteOneDiagDGG,!outputRetrievalDiagnostics)})
-  end Join})
+  end Join
+})})
 })
 
 ;; This macro initialises the _HR species with interpolations of their
@@ -204,7 +210,10 @@ Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !noteDirectCloud({source=$1})})
 
 ;; This macro is used to spit out all the accumulated DGM/DGGs
-!define(flushDGGDGMFiles,{!dnl
+!ifdef(flagSuppressRegularOutput,
+{!define(flushDGGDGMFiles,{!dnl
+  !clearDivert(!directDGGDivert,!directDGMDivert,!directCloudDivert)})},
+{!define(flushDGGDGMFiles,{!dnl
 ;; First do the DGGs
 !ifdef(flagGotDirectDGGs,{!dnl
 DirectWrite, file='!DGGFileName', hdfVersion=!hdfVersion, $
@@ -218,20 +227,24 @@ DirectWrite, file='!DGMFileName', hdfVersion=!hdfVersion, $
 DirectWrite, file='!CloudFilename', hdfVersion=!hdfVersion, $
   type=l2aux, !undivert(!directCloudDivert)})
 ;; Clear our macros
-!undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)!undefine(flagGotDirectClouds)})
+!undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)!undefine(flagGotDirectClouds)})})
 
 ;; These macros are associated with the direct write code.  It writes a
 ;; set of radiances $2... into the L2FWM-$1 file.
 !define(l2fwmFileName, !dnl
 {!ifdef(usingPCF,{$1},!dnl
 {!outpathl2gp/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion})})
+
 !define(labelOneFwmRad,{label, quantity=fwm.band$1, /prefixSignal, label=' !phase'!nl})
 !define(oneFwmRadTerm,{source=fwm.band$1,})
-!define(directWriteFwmRad,{!ifdef(l2version,{!dnl
+
+!ifdef(flagSuppressRegularOutput,
+{!define(directWriteFwmRad,{})},
+{!define(directWriteFwmRad,{!ifdef(l2version,{!dnl
 !forall(labelOneFwmRad,!tidyList(!shift($*)))!dnl
   DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2fwm, $
   file='!l2fwmFileName($1)', $
-  hdfVersion=!hdfVersion})})
+  hdfVersion=!hdfVersion})})})
 
 ;; These macros are used to note the joined DGM/DGGs
 !define(storeJoinedDGG,{!ifdef(flagAvoidDirectWrite,{},{!dnl
@@ -356,6 +369,8 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   apriori=a$1, covariance=Sa$1, $
   outputSD=sdOut$1, fwdModelOut=f$1, $
   vRegWeightVec=vr$1, hRegWeightVec=hr$1, $
+  !ifdef(flagComputeAvks,{average=Avk$1,!noteMatrix(Avk$1)})!dnl
+  !ifdef(flagComputeSout,{outputCovariance=Sout$1,!noteMatrix(Sout$1)})!dnl
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ;; This macro is used to transfer a product into the 'standard products'
@@ -365,6 +380,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.73  2003/10/15 23:33:24  pwagner
+; Made l2fwm file name sensitive to usingPCF
+;
 ; Revision 1.72  2003/09/05 23:26:28  pwagner
 ; Switched fwoward model radiance DirectWrite type from l2aux to l2fwm
 ;
