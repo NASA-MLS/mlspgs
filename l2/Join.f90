@@ -635,6 +635,7 @@ contains ! =====     Public Procedures     =============================
 !     newL2AUX%minorFrame=quantity%template%minorFrame
 !     newL2AUX%majorFrame=quantity%template%majorFrame
       newL2AUX%instrumentModule=quantity%template%instrumentModule
+      newL2AUX%quantityType=quantity%template%quantityType
 
       ! Setup the standard `vertical' and `channel' dimensions
 
@@ -818,6 +819,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.68  2003/01/30 01:03:24  pwagner
+! Stores quantity type taken from source vector in l2aux
+!
 ! Revision 2.67  2003/01/17 23:11:26  pwagner
 ! Moved most ops out of LoinL2AUXData to SetupL2AUXData
 !
