@@ -118,8 +118,12 @@ fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
 fwdmdl_message=Building mlsl2 with forward model
 cloud_linker_line=-L${clouddir} -lcloud
 cloud_message=Building mlsl2 with cloud forward model
-mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a \
-	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a $(CONFDIR)/$(MLSCFILE)
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) \
+    $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a \
+	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a $(INSTALLDIR)/libutctotai.a\
+    $(CONFDIR)/$(MLSCFILE)
 
 ifdef PGSTK
    tk_message=Building mlslib with toolkit
@@ -163,11 +167,13 @@ mlsl2: $(mlsl2_prereqs)
 		@echo "$(he5lib_message)"
 		@echo "$(fwdmdl_message)"
 		@echo "$(cloud_message)"
+		@echo "$(utctotai_message)"
 		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) \
         $(cloud_linker_line) \
         $(fwdmdl_linker_line) \
         $(he5lib_linker_line) \
                       -L${libdir} -lmls \
+        $(utctotai_linker_line) \
 		$(tk_linker_line) \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
@@ -255,6 +261,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.36  2002/04/18 20:56:07  pwagner
+# .configure now a prerequisite for executable
+#
 # Revision 1.35  2002/01/31 00:33:13  pwagner
 # Prefixes preset paths just like forwaard model
 #
