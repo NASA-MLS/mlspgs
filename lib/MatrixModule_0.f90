@@ -166,7 +166,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface Sparsify
-    module procedure Sparsify_r4, Sparsify_r8
+    module procedure Sparsify_r4, Sparsify_r8, Sparsify_0
   end interface
 
   interface Spill
@@ -2577,6 +2577,20 @@ contains ! =====     Public Procedures     =============================
     include "sparsify.f9h"
   end subroutine Sparsify_r8
 
+  ! ----------------------------------------------- Sparsify_0 ---------
+  subroutine Sparsify_0 ( B )
+    ! Sparsify a block in place
+    type (MatrixElement_T), intent(inout) :: B
+    ! Local variable
+    real(rm), dimension(:,:), pointer :: Z
+    ! Executable code
+    if ( b%kind /= M_Full ) return
+    nullify ( z )
+    call Allocate_test ( z, b%nRows, b%nCols, 'z', ModuleName )
+    z = b%values
+    call Sparsify ( z, b, 'z', ModuleName )
+  end subroutine Sparsify_0
+
   ! ----------------------------------------------------  Spill_0  -----
   subroutine Spill_0 ( A, Unit )
   ! Spill the matrix block A to Fortran Unit, which is presumed to be
@@ -2914,6 +2928,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.88  2003/01/08 23:51:12  livesey
+! Added sparsify_0
+!
 ! Revision 2.87  2003/01/08 21:32:29  livesey
 ! Split off _r4, _r8 routines into generic includes where sensible
 !
