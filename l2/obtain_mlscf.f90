@@ -5,7 +5,7 @@ module OBTAIN_MLSCF
 
 ! Open and close the MLSCF
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSPCF, only: MLSPCF_L2CF_START
+  use MLSPCF2, only: MLSPCF_L2CF_START
   use SDPToolkit, only: Pgs_io_gen_closeF, Pgs_io_gen_openF, PGS_S_SUCCESS, &
     & PGSd_IO_Gen_RSeqFrm
   implicit NONE
