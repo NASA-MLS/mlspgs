@@ -132,7 +132,7 @@ module HDFEOS               ! F90 interface to HDF-EOS.
 
     integer function SWINQSWATH (FILENAME,SWATHLIST,STRBUFSIZE)
       character (len=*), intent(in) :: FILENAME
-      character (len=*), intent(out) :: SWATHLIST
+      character (len=*), intent(inout) :: SWATHLIST
       integer, intent(out):: STRBUFSIZE
     end function SWINQSWATH
 
@@ -170,6 +170,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.11  2001/05/12 00:24:44  livesey
+! Changed intent out to inout for SWInqSwath
+!
 ! Revision 2.10  2001/03/15 00:36:03  pwagner
 ! Added gdfldinfo
 !
