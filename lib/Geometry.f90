@@ -11,9 +11,10 @@ module Geometry
   implicit none
   private
   !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
+  character (len=*), parameter :: IdParm = &
        "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile$"
   !---------------------------------------------------------------------------
 
 
@@ -56,6 +57,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.3  2001/03/27 18:09:11  vsnyder
+! Revised CVS stuff to use CHARACTER(len=*) parameter
+!
 ! Revision 2.2  2001/03/26 13:23:34  livesey
 ! Added CVS stuff
 !
