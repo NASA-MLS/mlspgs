@@ -228,7 +228,7 @@ contains
       if ( present(advance) ) my_adv = advance
     endif
     call date_and_time ( date=dateString, time=timeString )
-    dateString = reFormatDate(trim(dateString), dateFormat)
+    dateString = reFormatDate(trim(dateString), toForm=dateFormat)
     timeString = reFormatTime(trim(timeString), timeFormat)
     if ( myDate .and. myTime  ) then
       call output ( trim(dateString), from_where=from_where, advance='no' )
@@ -731,6 +731,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.40  2005/03/19 01:14:41  pwagner
+! Fixed error in formatting output_date_and_time
+!
 ! Revision 2.39  2005/01/20 23:17:51  pwagner
 ! Prevent n_char being gt len(my_chars)
 !
