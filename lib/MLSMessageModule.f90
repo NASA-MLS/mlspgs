@@ -78,18 +78,28 @@ CONTAINS
 
   ! This first routine is the main `messaging' code.
 
-  SUBROUTINE MLSMessage(severity,moduleNameIn,message)
+  SUBROUTINE MLSMessage(severity,moduleNameIn,message,advance)
 
     ! Dummy arguments
     INTEGER, INTENT(IN) :: severity ! e.g. MLSMSG_Error
     CHARACTER (LEN=*), INTENT(IN) :: moduleNameIn ! Name of module (see below)
     CHARACTER (LEN=*), INTENT(IN) :: message ! Line of text
+    CHARACTER (LEN=*), INTENT(IN), optional :: advance ! Do not advance
+    !                                 if present and the first character is 'N'
+    !                                 or 'n'
 
     ! Local variables
     INTEGER :: dummy
     CHARACTER (LEN=512) :: line ! Line to output, should be long enough
+    INTEGER, SAVE :: line_len=0 ! Number of saved characters in line.
+    !                             If nonzero, do not insert prefix.
+    LOGICAL :: MY_ADV
 
     ! Executable code
+
+    my_adv = .true.
+    if ( present(advance) ) &
+      & my_adv = advance(1:1) /= 'n' .and. advance(1:1) /= 'N'
 
     ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
 
@@ -98,19 +108,30 @@ CONTAINS
        
        ! Assemble a full message line
 
-       line=TRIM(SeverityNames(severity))// &
-            & " ("//moduleNameIn(11:(LEN_TRIM(moduleNameIn)-8)) &
-            &  //"): "//message
+       IF ( line_len == 0 ) THEN
+         line=TRIM(SeverityNames(severity))// &
+              & " ("//moduleNameIn(11:(LEN_TRIM(moduleNameIn)-8)) &
+              &  //"): "//message
+       ELSE
+         line(line_len+1:) = message
+         line_len = line_len + len(message) ! Not len-trim, so we can get
+         ! trailing blanks into a part of a message.  If there are trailing
+         ! blanks remaining when my_adv is true, they'll be trimmed off.
+       END IF
 
        ! Log the message using the toolkit routine
 
-       dummy=PGS_SMF_GenerateStatusReport(TRIM(MLSMessageConfig%prefix)// &
-            & TRIM(line))
+       IF ( my_adv ) THEN
+         dummy=PGS_SMF_GenerateStatusReport(TRIM(MLSMessageConfig%prefix)// &
+              & TRIM(line))
 
-       ! Now, if we're also logging to a file then write to that too.
+         ! Now, if we're also logging to a file then write to that too.
 
-       IF (MLSMessageConfig%logFileUnit /= -1) &
-            & WRITE (UNIT=MLSMessageConfig%logFileUnit,FMT=*) TRIM(line)
+         IF (MLSMessageConfig%logFileUnit /= -1) &
+              & WRITE (UNIT=MLSMessageConfig%logFileUnit,FMT=*) TRIM(line)
+
+         line_len = 0
+       END IF
 
     END IF
 
@@ -167,6 +188,9 @@ END MODULE MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.2  2000/10/04 18:06:39  vsnyder
+! Added an optional "advance" argument to MLSMessage
+!
 ! Revision 2.1  2000/10/03 01:34:10  vsnyder
 ! Corrected a spelling error, simplified MLSMessageClose, standardized
 ! some spelling and spacing.
