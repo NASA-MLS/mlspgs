@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 module Join                     ! Join together chunk based data.
@@ -23,6 +23,7 @@ module Join                     ! Join together chunk based data.
   ! logical, parameter, private :: DEEBUG = .true.           ! Usually FALSE
   logical, parameter, private :: FORCEDIRWRITEREOPEN = .false. ! Usually FALSE
   logical, parameter, private :: SKIPMETADATA = .false. ! Usually FALSE
+  real, parameter             :: timeReasonable = 500.
 
   ! Parameters for Announce_Error
 
@@ -82,6 +83,7 @@ contains ! =====     Public Procedures     =============================
     integer :: DIRECTWRITENODEGRANTED   ! Which request was granted
     real :: DWT1                        ! Time we started
     real :: DWT2                        ! Time we finished
+    real :: DWT22                       ! Time we finished, too
     integer :: KEY                      ! Tree node
     integer :: MLSCFLINE                ! Line number in l2cf
     integer :: NODIRECTWRITES           ! Array size
@@ -132,6 +134,10 @@ contains ! =====     Public Procedures     =============================
         call time_now ( dwt2 )
         call WaitForDirectWritePermission ( directWriteNodeGranted, ticket, &
           & theFile, createFile )
+        call time_now ( dwt22 )
+        if ( dwt22-dwt2 > timeReasonable ) then
+          call output('Unreasonable time waiting for permission', advance='yes')
+        endif
         call output ( "Got permission for ticket " )
         call output ( ticket )
         call output ( " node " )
@@ -222,6 +228,14 @@ contains ! =====     Public Procedures     =============================
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
                 & chunkNo, chunks, FWModelConfig, create=createFile, &
 		          & theFile=theFile )
+              call time_now(dwt22)
+              if ( dwt22-dwt2 > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+                call output('Unreasonable time for directwritecommand', advance='yes')
+                call output('Chunk: ', advance='no')
+                call output(ChunkNo, advance='yes')
+                call output('File: ', advance='no')
+                call output(trim(theFile), advance='yes')
+              endif
               call add_to_directwrite_timing ( 'writing', dwt2)
               noDirectWritesCompleted = noDirectWritesCompleted + 1
               ! If that was the last one then bail out
@@ -312,7 +326,9 @@ contains ! =====     Public Procedures     =============================
     use Output_m, only: Blanks, OUTPUT
     use OutputAndClose, only: add_metadata
     use String_Table, only: DISPLAY_STRING, GET_STRING
-    use TOGGLES, only: SWITCHES
+    use Time_M, only: Time_Now
+    use TOGGLES, only: GEN, TOGGLE, SWITCHES
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
       & GETVECTORQTYBYTEMPLATEINDEX
@@ -396,20 +412,27 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: QUALITYQTY ! The quantities quality
     type(VectorValue_T), pointer :: STATUSQTY ! The quantities status
     type(DirectData_T), pointer :: thisDirect ! => null()
-
+    real :: TimeIn, TimeSetUp, TimeWriting, timeToClose, TimeOut
     ! Executable code
     DEEBUG = (index(switches, 'direct') /= 0)
     SKIPDGG = (index(switches, 'skipdgg') /= 0)
     SKIPDGM = (index(switches, 'skipdgm') /= 0)
     nullify(thisDirect)
 
+    if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+      & call trace_begin ( "DirectWriteCommand", node )
+    call time_now ( timeIn )
+    TimeSetUp = TimeIn
+    TimeWriting = TimeIn
+    timeToClose = TimeIn
+    timeOut = TimeIn
     myMakeRequest = .false.
     if ( present ( makeRequest ) ) myMakeRequest = makeRequest
     myTheFile = 'undefined'   ! 0
     if ( present ( theFile ) ) myTheFile = theFile
     if ( present(noExtraWrites) ) noExtraWrites = 0
 
-    ! Direct write is probably going to be come the predominant form
+    ! Direct write is probably going to become the predominant form
     ! of output in the software, as the other forms have become a
     ! little too intensive.
 
@@ -657,11 +680,15 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgg writes ' // trim(filename) )
       call DeallocateStuff
+      if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+        & call trace_end ( "DirectWriteCommand" )
       return
     else if ( skipdgm .and. any ( outputType == (/ l_l2fwm, l_l2aux /) ) ) then
       call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & 'DirectWriteCommand skipping all dgm/fwm writes ' // trim(filename) )
       call DeallocateStuff
+      if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+        & call trace_end ( "DirectWriteCommand" )
       return
     else
       ! OK, it's time to write this bit of the file
@@ -676,6 +703,8 @@ contains ! =====     Public Procedures     =============================
         else if ( outputType /= DirectDataBase(myFile)%type ) then
           call DeallocateStuff
           if ( DeeBUG ) print *, 'Short-circuiting ' // trim(filename)
+          if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+            & call trace_end ( "DirectWriteCommand" )
           return
         end if
         createFileFlag = .not. any ( createdFilenames == myFile )
@@ -761,7 +790,11 @@ contains ! =====     Public Procedures     =============================
       end if
       ! Done what we wished to do if just checking paths or SKIPDIRECTWRITES
       ! if ( checkPaths ) return
-      if ( SKIPDIRECTWRITES .or. checkPaths ) return
+      if ( SKIPDIRECTWRITES .or. checkPaths ) then
+        if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+        & call trace_end ( "DirectWriteCommand" )
+        return
+      endif
       
       if ( createFileFlag .and. .not. patch ) then
         fileaccess = DFACC_CREATE
@@ -893,7 +926,10 @@ contains ! =====     Public Procedures     =============================
           call output('sd name: ', advance='no')
           call output(trim(hdfname), advance='yes')
         end if
-        
+        call time_now ( timeSetup )
+        if ( timeSetup-timeIn > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+          call output('Unreasonable set up time for ' //trim(hdfname), advance='yes')
+        endif
         select case ( outputType )
         case ( l_l2gp, l_l2dgg )
           ! Call the l2gp swath write routine.  This should write the 
@@ -929,6 +965,10 @@ contains ! =====     Public Procedures     =============================
             & 'Unrecognized OutputType in ' // trim(filename) )
         end select
       end do ! End loop over swaths/sds
+      call time_now ( timeWriting )
+      if ( timeWriting-timeSetup > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+        call output('Unreasonable writing time for ' //trim(hdfname), advance='yes')
+      endif
       
       if ( DEEBUG ) then
         print *, 'Num permitted to ', trim(FileName), ' ', NumPermitted
@@ -970,6 +1010,10 @@ contains ! =====     Public Procedures     =============================
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Tried to close Unrecognized OutputType in ' // trim(filename) )
         end select
+        call time_now ( timeToClose )
+        if ( timeToClose-timeWriting > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+          call output('Unreasonable closing time for ' //trim(hdfname), advance='yes')
+        endif
         if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to close ' // trim(filename) )
         return
@@ -1005,6 +1049,10 @@ contains ! =====     Public Procedures     =============================
         ! Call the l2aux close routine
         errortype = mls_io_gen_closeF('hg', Handle, hdfVersion=hdfVersion)
       end select
+      call time_now ( timeToClose )
+      if ( timeToClose-timeWriting > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+        call output('Unreasonable closing time for ' //trim(hdfname), advance='yes')
+      endif
       if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'DirectWriteCommand unable to close ' // trim(filename) )
       if ( createFileFlag .and. TOOLKIT .and. .not. SKIPMETADATA .and. &
@@ -1018,8 +1066,14 @@ contains ! =====     Public Procedures     =============================
       
       ! Tell the master we're done
       if ( parallel%slave ) call FinishedDirectWrite ( ticket )
+      call time_now ( timeOut )
+      if ( timeOut-timeToClose > timeReasonable .and. index(switches,'dwreq') /= 0 ) then
+        call output('Unreasonable time out ' //trim(hdfname), advance='yes')
+      endif
     end if
 
+    if ( toggle(gen) .and. index(switches,'dwreq') /= 0) &
+      & call trace_end ( "DirectWriteCommand" )
     call DeallocateStuff
 
   contains
@@ -1819,6 +1873,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.117  2005/03/24 21:31:55  pwagner
+! May warn of unreasonable directWrite waiting, writing times
+!
 ! Revision 2.116  2004/12/14 22:51:35  pwagner
 ! Changes related to stopping early
 !
