@@ -420,7 +420,12 @@ CONTAINS
        IF (INDEX(name, 'FB') /= 0 ) THEN
           dim_chan = 'chanFB              '
           IF (sdId%RADGID /= 0) THEN
-             sd_id = sdId%RADGID
+             IF (INDEX(name,'R5') /= 0 ) THEN  ! Don't allow R5 in GHz file
+                dim_chan = ''
+                sd_id = -999
+             ELSE
+                sd_id = sdId%RADGID
+             ENDIF
           ELSE
              sd_id = sdId%RADTID
           ENDIF
@@ -529,6 +534,7 @@ CONTAINS
        dataset%name = 'AscDescIndx   '
        dataset%data_type = 'integer           '
        dataset%Dimensions(1) = 'GHz.MIF             '
+       dataset%Dimensions(2) = 'MAF                 '
        dims = 1
        dims(1) = SIZE (AscDescIndx)
        CALL Build_MLSAuxData (sd_id, dataset, AscDescIndx, lastIndex=noMAF, &
@@ -569,20 +575,41 @@ CONTAINS
   END SUBROUTINE OutputL1B_LatBinData
 
 !=============================================================================
-  SUBROUTINE OutputL1B_diags (noMAF, sd_Id, counterMAF, MAFStartTimeTAI)
+  SUBROUTINE OutputL1B_diags (sd_id, noMAF, counterMAF, MAFStartTimeTAI, Zeros)
 !=============================================================================
 
     ! This subroutine writes an MAF's worth of diagnostic data
 
-    USE MLSL1Common, ONLY: FBchans, GHzNum, MBchans, MBnum, WFchans, WFnum
+    USE MLSL1Common, ONLY: FBchans, GHzNum, MBchans, MBnum, WFchans, WFnum, &
+         deflt_zero
     USE Calibration, ONLY: Chi2, Tsys, Cgain
+    USE MLSHDF5, ONLY: SaveAsHDF5DS, MakeHDF5Attribute
 
-    INTEGER, INTENT(IN) :: counterMAF, noMAF, sd_id
-    REAL(r8), INTENT (IN) :: MAFStartTimeTAI
+    INTEGER, INTENT(IN) :: sd_id
+    INTEGER, INTENT(IN), OPTIONAL :: counterMAF, noMAF
+    REAL(r8), INTENT(IN), OPTIONAL :: MAFStartTimeTAI
+    LOGICAL, INTENT(IN), OPTIONAL :: Zeros
 
+    CHARACTER(LEN=16) :: DimName(2)
     INTEGER :: dims(3), status
     TYPE (DataProducts_T) :: dataset
     REAL(r8) :: MAFStartTimeGIRD
+
+    IF (PRESENT (Zeros)) THEN
+       CALL SaveAsHDF5DS (sd_id, 'DefltZeros FB', INT(deflt_zero%FB))
+       DimName(1) = 'FBchan'
+       DimName(2) = 'FBbank'
+       CALL MakeHDF5Attribute (sd_id, 'DefltZeros FB', 'Dimensions', DimName)
+       CALL SaveAsHDF5DS (sd_id, 'DefltZeros MB', INT(deflt_zero%MB))
+       DimName(1) = 'MBchan'
+       DimName(2) = 'MBbank'
+       CALL MakeHDF5Attribute (sd_id, 'DefltZeros MB', 'Dimensions', DimName)
+       CALL SaveAsHDF5DS (sd_id, 'DefltZeros WF', INT(deflt_zero%WF))
+       DimName(1) = 'WFchan'
+       DimName(2) = 'WFbank'
+       CALL MakeHDF5Attribute (sd_id, 'DefltZeros WF', 'Dimensions', DimName)
+       RETURN
+    ENDIF
 
     ! Convert TAI time to GIRD time
 
@@ -702,11 +729,12 @@ CONTAINS
     IF (PRESENT (Chisq) .AND. PRESENT (OrbNo)) THEN
 
        DEALLOCATE (dataset%Dimensions, stat=status)
-       ALLOCATE (dataset%Dimensions(2), stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
        dataset%name      = 'Chisq             '
        dataset%data_type = 'double            '
        dataset%Dimensions(1) = 'THzChan'
        dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'OrbNo'
        CALL Build_MLSAuxData (sd_Id, dataset, Chisq, lastIndex=OrbNo, dims=dims)
 
     ENDIF
@@ -714,11 +742,12 @@ CONTAINS
     IF (PRESENT (dLlo) .AND. PRESENT (OrbNo)) THEN
 
        DEALLOCATE (dataset%Dimensions, stat=status)
-       ALLOCATE (dataset%Dimensions(2), stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
        dataset%name      = 'dLlo              '
        dataset%data_type = 'double            '
        dataset%Dimensions(1) = 'THzChan'
        dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'OrbNo'
        CALL Build_MLSAuxData (sd_Id, dataset, dLlo, lastIndex=OrbNo, dims=dims)
 
     ENDIF
@@ -727,11 +756,12 @@ CONTAINS
     IF (PRESENT (yTsys) .AND. PRESENT (OrbNo)) THEN
 
        DEALLOCATE (dataset%Dimensions, stat=status)
-       ALLOCATE (dataset%Dimensions(2), stat=status)
+       ALLOCATE (dataset%Dimensions(3), stat=status)
        dataset%name      = 'yTsys             '
        dataset%data_type = 'double            '
        dataset%Dimensions(1) = 'THzChan'
        dataset%Dimensions(2) = 'THzBand'
+       dataset%Dimensions(3) = 'OrbNo'
        CALL Build_MLSAuxData (sd_Id, dataset, yTsys, lastIndex=OrbNo, dims=dims)
 
     ENDIF
@@ -743,6 +773,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.13  2004/08/12 13:51:50  perun
+! Version 1.44 commit
+!
 ! Revision 2.12  2004/05/14 15:59:11  perun
 ! Version 1.43 commit
 !
