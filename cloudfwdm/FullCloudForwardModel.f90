@@ -241,29 +241,33 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! This will be updated soon
     !------------------------------------------------------------------------
 
-    if ( size ( forwardModelConfig%signals ) /= 1 )                          &
-       & call MLSMessage ( MLSMSG_Error, ModuleName,                         &
-       & 'Cannot call the full cloud forward model with multiple signals' )
+    do sigInd = 1, size(forwardModelConfig%signals)
+
+!    if ( size ( forwardModelConfig%signals ) /= 1 )                          &
+!       & call MLSMessage ( MLSMSG_Error, ModuleName,                         &
+!       & 'Cannot call the full cloud forward model with multiple signals' )
 
     ! -------------------------------------
     ! Identify the signal (band)
     ! -------------------------------------
 
-    signal = forwardModelConfig%signals(1)
-
+!    signal = forwardModelConfig%signals(1)
+      
+     signal = forwardModelConfig%signals(sigInd)
+     print*,signal%index
     ! -------------------------------------------------------------------------
     ! Make sure all the signals we're dealing with are same module, radiometer 
     ! and sideband. This will be used later in multi signal version
     !--------------------------------------------------------------------------
 
-    if ( any( forwardModelConfig%signals%sideband .ne. &
-      & signal%sideband ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &  "Can't have mixed sidebands in forward model config")
-    if ( any( forwardModelConfig%signals%radiometer .ne. &
-      & signal%radiometer ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      &  "Can't have mixed radiometers in forward model config")
+!    if ( any( forwardModelConfig%signals%sideband .ne. &
+!      & signal%sideband ) ) &
+!      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!      &  "Can't have mixed sidebands in forward model config")
+!    if ( any( forwardModelConfig%signals%radiometer .ne. &
+!      & signal%radiometer ) ) &
+!      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!      &  "Can't have mixed radiometers in forward model config")
 
     ! --------------------------------------------
     ! Get the quantities we need from the vectors
@@ -278,20 +282,20 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut,     &
           & quantityType=l_cloudInducedRadiance,                             &
           & signal=signal%index, sideband=signal%sideband )
-          cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          & 
-            & quantityType=l_cloudExtinction )
+        cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          & 
+            & quantityType=l_cloudExtinction, noerror=.true. )
         cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
-          & quantityType=l_cloudRADSensitivity,                              &
+          & quantityType=l_cloudRADSensitivity, noerror=.true.,   &
           & signal=signal%index, sideband=signal%sideband )
         totalExtinction => GetVectorQuantityByType ( fwdModelOut,          &
-          & quantityType=l_totalExtinction )
+          & quantityType=l_totalExtinction, noerror=.true. )
         effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,    &
-          & quantityType=l_effectiveOpticalDepth,                            &
+          & quantityType=l_effectiveOpticalDepth, noerror=.true.,   &
           & signal=signal%index, sideband=signal%sideband )
         massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut,      &
-          & quantityType=l_massMeanDiameterIce )
+          & quantityType=l_massMeanDiameterIce, noerror=.true. )
         massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut,    &
-          & quantityType=l_massMeanDiameterWater )
+          & quantityType=l_massMeanDiameterWater, noerror=.true. )
 
     ! -------
     ! Inputs:
@@ -505,9 +509,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
            & ForwardModelConfig%signals, sideband=signal%sideband , channel=1 )
         end do
 
-    if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & "No matching antenna patterns." )
+!    if ( all( superset < 0 ) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+!           & "No matching antenna patterns." )
 
+    whichPattern = 1
     maxSuperset = maxval ( superset )
     where ( superset < 0 )
           superset = maxSuperset + 1
@@ -887,6 +892,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !    print*, ' '
 !    print*, 'Time Instance: ', instance
 
+    end do  ! End of signals
+    
     if ( toggle(emit) ) call trace_end ( 'FullCloudForwardModel' )
 
 !    print*, 'Successful done with full cloud forward wapper !'
@@ -930,6 +937,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.41  2001/10/05 20:46:39  dwu
+! clean up input statements
+!
 ! Revision 1.40  2001/10/05 20:26:12  dwu
 ! make sure the model output fields are associated
 !
