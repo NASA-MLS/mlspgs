@@ -55,6 +55,7 @@ contains ! =====     Public Procedures     =============================
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, F_HIGHBOUND, F_H2OQUANTITY, &
       & F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
+      & F_INTERNALVGRID, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOGSPACE, F_LOSQTY, F_LOWBOUND, F_LSB, F_LSBFRACTION, &
       & F_MANIPULATION, F_MATRIX, F_MAXITERATIONS, F_MEASUREMENTS, F_METHOD, &
@@ -88,7 +89,8 @@ contains ! =====     Public Procedures     =============================
       & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
       & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
-      & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_XYZ, L_ZETA
+      & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
+      & L_XYZ, L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
       & S_FILLDIAGONAL, S_MATRIX,  S_NEGATIVEPRECISION, S_SNOOP, S_TIME, &
@@ -114,7 +116,7 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: FileNameLen, L1BInfo_T, MLSChunk_T, R8, RM, RV
+    use MLSCommon, only: FileNameLen, L1BInfo_T, MLSChunk_T, R8, RM, RV, FindFirst
     use MLSFiles, only: mls_hdf_version, HDFVERSION_5, &
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
     use MLSL2Options, only: LEVEL1_HDFVERSION
@@ -320,6 +322,7 @@ contains ! =====     Public Procedures     =============================
     integer :: GLOBALUNIT               ! To go into the vector
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
     logical :: IGNORENEGATIVE           ! Don't sum chi^2 at values of noise < 0
+    integer :: INTERNALVGRIDINDEX       ! Index for internal vgrid (wmoTrop)
     real(r8) :: INTEGRATIONTIME         ! For estimated noise
     logical :: INTERPOLATE              ! Flag for l2gp etc. fill
     integer :: INSTANCE                 ! Loop counter
@@ -661,6 +664,8 @@ contains ! =====     Public Procedures     =============================
             if ( all (unitAsArray /= (/PHYQ_Time, PHYQ_Invalid/) ) ) &
               call Announce_error ( key, badUnitsForIntegrationtime )
             integrationTime = valueAsArray(1)
+          case ( f_internalVGrid )
+            internalVGridIndex=decoration(decoration(gson))
           case ( f_interpolate ) ! For l2gp etc. fill
             if ( node_id(gson) == n_set_one ) then
               interpolate=.TRUE.
@@ -1292,6 +1297,45 @@ contains ! =====     Public Procedures     =============================
             &  'VGrid is not of the same size as the quantity' )
           quantity%values = spread ( vGrids(vGridIndex)%surfs, 2, &
             & quantity%template%noInstances )
+
+        case ( l_wmoTropopause ) ! ---------------- Fill with wmo tropopause --
+          if ( .not. all(got( (/ f_temperatureQuantity, f_refGPHquantity, &
+            & f_internalVGrid /) ))) &
+            & call Announce_Error ( key, no_error_code, &
+            & 'wmoTropopause fill needs temperatureQuantity, refGPHQuantity ' // &
+            & 'and internalVGrid' )
+          if ( vGrids(internalVGridIndex)%verticalCoordinate /= l_zeta ) &
+            & call Announce_Error ( key, No_Error_code, &
+            &  'Vertical coordinate in internal vGrid is not log pressure' )
+          if ( .not. ValidateVectorQuantity ( quantity, &
+            & quantityType = (/l_boundaryPressure/), verticalCoordinate=(/l_none/), &
+            & coherent=.true., stacked=.true. ) ) &
+            & call Announce_Error ( key, no_error_code, &
+            & 'Quantity is not a boundary pressure' )
+
+          temperatureQuantity => GetVectorQtyByTemplateIndex( &
+            &  vectors(temperatureVectorIndex), temperatureQuantityIndex)
+          if ( .not. ValidateVectorQuantity ( temperatureQuantity, &
+            & quantityType = (/l_temperature/), verticalCoordinate=(/l_zeta/), &
+            & coherent=.true., stacked=.true. ) ) &
+            & call Announce_Error ( key, badTemperatureQuantity )
+
+          refGPHQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(refGPHVectorIndex), refGPHQuantityIndex)
+          if ( .not. ValidateVectorQuantity ( refGPHQuantity, &
+            & quantityType = (/l_refGPH/), verticalCoordinate=(/l_zeta/), &
+            & coherent=.true., stacked=.true., noSurfs=(/1/) ) ) &
+            & call Announce_Error ( key, badrefGPHQuantity )
+
+          if ( .not. DoHGridsMatch ( quantity, temperatureQuantity ) .or. &
+            &  .not. DoHGridsMatch ( quantity, refGPHQuantity ) ) &
+            & call Announce_Error ( key, no_error_code, &
+            & 'Horizontal coordinates for temperature/refGPH and/or quanity disagree' )
+
+          ! OK, we must be ready to go
+          call FillQtyWithWMOTropopause ( quantity, &
+            & temperatureQuantity, refGPHQuantity, vGrids(internalVGridIndex) )
+
 
         case ( l_fold ) ! --------------- Fill by sideband folding -----
           lsb => GetVectorQtyByTemplateIndex ( &
@@ -4813,6 +4857,147 @@ contains ! =====     Public Procedures     =============================
       end if
     end subroutine FillQuantityByManipulation
 
+    ! ----------------------------------------- FillQtyWithWMOTropopause ------
+    subroutine FillQtyWithWMOTropopause ( tpPres, temperature, refGPH, grid )
+      use Hydrostatic_M, only: HYDROSTATIC
+      use Geometry, only: GEODTOGEOCLAT
+      use MLSNumerics, only: HUNT
+      
+      type (VectorValue_T), intent(inout) :: TPPRES ! Result
+      type (VectorValue_T), intent(in) :: TEMPERATURE
+      type (VectorValue_T), intent(in) :: REFGPH
+      type (VGrid_T), intent(in) :: GRID
+
+      ! Local variables
+      real(rv), dimension(grid%noSurfs) :: TFINE ! Temperature on fine grid
+      real(rv), dimension(grid%noSurfs) :: HFINE ! Temperature on fine grid
+      real(rv), dimension(grid%noSurfs) :: DTDH ! d(tFine)/d(hFine)
+      real(rv), dimension(grid%noSurfs) :: DUMMYT ! Extra arg. for hydrostatic
+      real(rv), dimension(grid%noSurfs) :: DUMMYDHDZ ! Extra arg. for hydrostatic
+      real(rv), dimension(grid%noSurfs,grid%noSurfs) :: DUMMYDHDT ! Extra arg. for hydrostatic
+      integer :: I                      ! Instance counter
+      integer :: S500                   ! 500mb surface?
+      integer :: LOWCANDIDATE           ! Possbile tb but below 500hPa
+      integer :: S                      ! Surface counter
+      integer :: S0                     ! Surface to start looking from
+      integer :: DS                     ! No. surfs less than 2km above s
+      logical :: VALIDTP                ! Flag
+
+      ! Now the rules for the WMO tropopause are:
+      
+      ! 1. The "first tropopause" is defined as the lowest height at which the
+      ! lapse rate decreases to 2K per kilometer or less, provided also that
+      ! the average lapse rate between this height and all higher altitudes
+      ! within 2 kilometers does not exceed 2K per kilometer.
+
+      ! 2. If, above the first tropopause, the average lapse rate between any
+      ! height and all higher altitudes within a 1-kilometer intend exceeds 3K
+      ! per kilometer, then another tropopause is defined by the same criteria
+      ! as under 1 above. This second tropopause may be within or above the
+      ! 1-kilometer layer.
+
+      ! There are also two qualifying remarks attached to the selection
+      ! criteria. They are as follows:
+      
+      ! 1. A height below the 500-mb level is not designated as a tropopause
+      ! unless the sounding reaches the 200-mb level and the height is the only
+      ! height satisfying the above definitions.
+      
+      ! 2. When the second or higher tropopauses are being determined, the
+      ! 1-kilometer interval with an average lapse rate of 3K per kilometer can
+      ! occur at any height above the conventional tropopause and not only at a
+      ! height more than 2 kilometers above the first tropopause.
+
+      ! Stricly melding the WMO tropopause definition with our own
+      ! 'linear interpolation between tie points' mantra is problematic.
+      ! If we are strict we'd only ever give the one of our basis points as 
+      ! the solution.  So we're going to interpolate to a higher resolution
+      ! using a spline which pop's out the derivatives too.
+
+      ! Note here we assume that the quantities supplied are all valid
+      ! (ie describe the right quantities, and all on the same horizontal
+      ! grid).
+
+      ! Loop over the instances
+      instanceLoop: do i = 1, temperature%template%noInstances
+        ! Perhaps think later about keeping track of the 'top'.
+        ! Currently we're going to assert that we have data extending to
+        ! pressures lower than 200mb.
+
+        ! Interpolate temperature onto 'finer' pressure grid
+        call InterpolateValues ( &
+          & temperature%template%surfs(:,1), temperature%values(:,i), &
+          & grid%surfs, tFine, method='Spline' )
+        ! Now get the height for this.
+        call Hydrostatic ( GeodToGeocLat ( temperature%template%geodLat(1,i) ), &
+          & grid%surfs, tFine, grid%surfs, &
+          & refGPH%template%surfs(1,1), refGPH%values(1,i), &
+          & dummyT, hFine, dummyDHDT, dummyDHDZ )
+        ! Note while much of the software thinks in meters.  The hydrostatic
+        ! routine works in km.
+        ! Now do another spline 'interpolation' to get dTdH
+        call InterpolateValues ( hFine, tFine, hFine, dummyT, &
+          & dYbyDx=dtdh, method='Spline' )
+        ! Negate dTdH to turn it into lapse rate
+        dTdH = - dTdH
+        
+        ! Locate the 500mb surface
+        call Hunt ( grid%surfs, -log10(500.0_r8), s500 )
+
+        ! Find the 'first' tropopause.  We're not going to bother
+        ! with the 'second'
+        tpPres%values(1,i) = 0.0
+        lowCandidate = 0
+        validTP = .false.
+        s0 = 1
+        tpHunt: do
+          ! Find first place where lapse rate less than 2K/km
+          s = FindFirst ( dtdh(s0:) < 2.0 ) + s0 - 1
+          ! If not found such a place give up looking
+          if ( s == s0 - 1 ) exit tpHunt
+          ! Find last surface within 2km of this one
+          ds = FindFirst ( hFine(s:) > hFine(s) + 2.0 ) - 1
+          ! If not got data 2km above s0 (FindFirst gave 0, so ds=-1), give up
+          ! Also, if data on such coarse resolution that the next point above
+          ! s0 is more than 2km away (FindFirst gave 1 so ds=0), also give up
+          if ( ds <= 0 ) exit tpHunt
+          ! Must have mean lapse rate less than 2K/km within 2km of s.
+          validTp = sum ( dTdH ( s : s + ds - 1 ) / ds ) < 2.0
+          ! If this is below 500mb, keep an eye on it and keep looking
+          if ( s < s500 .and. validTP ) then
+            validTP = .false.
+            lowCandidate = s
+          end if
+          if ( validTP ) exit tpHunt
+          ! Otherwise keep looking higher up
+          s0 = s + 1
+          if ( s0 > grid%noSurfs ) exit tpHunt
+        end do tpHunt
+
+        ! Now pick up the pieces of that complex logic
+        if ( .not. validTP .and. lowCandidate > 0 ) then
+          s = lowCandidate
+          validTP = .true.
+        end if
+
+        ! If we never found one, leave 0 in the result and move onto
+        ! the next instance
+        if ( .not. validTP ) cycle instanceLoop
+
+        ! OK, our tropopause is below surface s
+        ! Now we do some interpolation to get
+        ! the value we really want.
+        if ( s > 1 ) then
+          tpPres%values(1,i) = 10.0 ** ( -( &
+            & grid%surfs(s-1) + &
+            & ( grid%surfs(s) - grid%surfs(s-1) ) * ( dTdH(s-1) - 2.0 ) / &
+            & ( dTdH(s-1) - dTdH(s) ) ) )
+        else
+          tpPres%values(1,i) = 10.0 ** ( - grid%surfs(s) )
+        end if
+      end do instanceLoop
+    end subroutine FillQtyWithWMOTropopause
+
     ! ----------------------------------------------- OffsetRadianceQuantity ---
     subroutine OffsetRadianceQuantity ( quantity, radianceQuantity, amount )
       type (VectorValue_T), intent(inout) :: QUANTITY
@@ -5080,6 +5265,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.200  2003/04/11 21:56:40  livesey
+! Added wmo tropopause stuff
+!
 ! Revision 2.199  2003/04/08 23:13:01  dwu
 ! an update on splitsideband
 !
