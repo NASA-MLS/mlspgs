@@ -64,16 +64,20 @@ module INTRINSIC
   integer, parameter :: L_BASELINE      = first_lit
   integer, parameter :: L_C             = l_baseline + 1
   integer, parameter :: L_CHANNEL       = l_c + 1
-  integer, parameter :: L_CLOUDINDUCEDRADIANCE = l_channel + 1
+  integer, parameter :: L_CLOUDEXTINCTION      = l_channel + 1
+  integer, parameter :: L_CLOUDICE             = l_cloudExtinction + 1
+  integer, parameter :: L_CLOUDINDUCEDRADIANCE = l_cloudIce + 1
   integer, parameter :: L_CLOUDOPTICALDEPTH    = l_cloudInducedRadiance + 1
   integer, parameter :: L_CLOUDSENSITIVITY     = l_cloudOpticalDepth + 1
-  integer, parameter :: L_DAYS          = l_cloudSensitivity + 1
+  integer, parameter :: L_CLOUDWATER    = l_cloudSensitivity + 1
+  integer, parameter :: L_DAYS          = l_cloudWater + 1
   integer, parameter :: L_DEG           = l_days + 1
   integer, parameter :: L_DEGREES       = l_deg + 1
   integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
   integer, parameter :: L_DIMLESS       = l_dimensionless + 1
   integer, parameter :: L_DL            = l_dimless + 1
-  integer, parameter :: L_EARTHREFL     = l_dl + 1
+  integer, parameter :: L_EARTHRADIUS   = l_dl + 1
+  integer, parameter :: L_EARTHREFL     = l_earthRadius + 1
   integer, parameter :: L_EFFECTIVEOPTICALDEPTH = l_earthRefl + 1
   integer, parameter :: L_ELEVOFFSET    = l_effectiveOpticalDepth + 1
   integer, parameter :: L_EXTINCTION    = l_elevOffset + 1
@@ -127,8 +131,10 @@ module INTRINSIC
   integer, parameter :: L_SCVEL         = l_scGeocAlt + 1
   integer, parameter :: L_SECONDS       = l_scvel + 1
   integer, parameter :: L_SIDEBANDRATIO = l_seconds + 1
-  integer, parameter :: L_SPACERADIANCE = l_sidebandratio + 1
-  integer, parameter :: L_TEMPERATURE   = l_spaceRadiance + 1
+  integer, parameter :: L_SIZEDISTRIBUTION = l_sidebandratio + 1
+  integer, parameter :: L_SPACERADIANCE = l_sizeDistribution + 1
+  integer, parameter :: L_SURFACETYPE   = l_spaceRadiance + 1
+  integer, parameter :: L_TEMPERATURE   = l_surfaceType + 1
   integer, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
   integer, parameter :: L_THETA         = l_temperature_prec + 1
   integer, parameter :: L_THZ           = l_theta + 1
@@ -136,8 +142,8 @@ module INTRINSIC
   integer, parameter :: L_TNGTECI       = l_time + 1
   integer, parameter :: L_TNGTGEOCALT   = l_tngteci + 1
   integer, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
-  integer, parameter :: L_TOTALOPTICALDEPTH =  l_tngtgeodalt + 1
-  integer, parameter :: L_TRUE         =  l_totalOpticalDepth + 1
+  integer, parameter :: L_TOTALEXTINCTION =  l_tngtgeodalt + 1
+  integer, parameter :: L_TRUE         =  l_totalExtinction + 1
   integer, parameter :: L_USBFREQUENCY  = l_true + 1
   integer, parameter :: L_VMR           = l_usbfrequency + 1
   integer, parameter :: L_XYZ           = l_vmr + 1
@@ -218,15 +224,18 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_baseline) =              add_ident ( 'baseline' )
     lit_indices(l_c) =                     add_ident ( 'C' )
     lit_indices(l_channel) =               add_ident ( 'channel' )
+    lit_indices(l_cloudExtinction) =       add_ident ( 'cloudExtinction' )
+    lit_indices(l_cloudIce) =              add_ident ( 'cloudIce' )
     lit_indices(l_cloudInducedRadiance) =  add_ident ( 'cloudInducedRadiance' )
-    lit_indices(l_cloudOpticalDepth) =     add_ident ( 'cloudOpticalDepth' )
     lit_indices(l_cloudSensitivity) =      add_ident ( 'cloudSensitivity' )
+    lit_indices(l_cloudWater) =            add_ident ( 'cloudWater' )
     lit_indices(l_days) =                  add_ident ( 'days' )
     lit_indices(l_deg) =                   add_ident ( 'deg' )
     lit_indices(l_degrees) =               add_ident ( 'degrees' )
     lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
     lit_indices(l_dimless) =               add_ident ( 'dimless' )
     lit_indices(l_dl) =                    add_ident ( 'dl' )
+    lit_indices(l_earthRadius) =           add_ident ( 'earthRadius' )
     lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
     lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
     lit_indices(l_effectiveOpticalDepth) = add_ident ( 'effectiveOpticalDepth' )
@@ -281,7 +290,9 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_scvel) =                 add_ident ( 'scVel' )
     lit_indices(l_seconds) =               add_ident ( 'seconds' )
     lit_indices(l_sidebandratio) =         add_ident ( 'sidebandRatio' )
+    lit_indices(l_sizeDistribution) =      add_ident ( 'sizeDistribution' )
     lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
+    lit_indices(l_surfaceType) =           add_ident ( 'surfaceType' )
     lit_indices(l_temperature) =           add_ident ( 'temperature' )
     lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
     lit_indices(l_theta) =                 add_ident ( 'theta' )
@@ -290,7 +301,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_tngteci) =               add_ident ( 'tngteci' )
     lit_indices(l_tngtgeocalt) =           add_ident ( 'tngtgeocalt' )
     lit_indices(l_tngtgeodalt) =           add_ident ( 'tngtgeodalt' )
-    lit_indices(l_totalOpticalDepth) =     add_ident ( 'totalOpticalDepth' )
+    lit_indices(l_totalExtinction) =       add_ident ( 'totalExtinction' )
     lit_indices(l_true) =                  add_ident ( 'true' )
     lit_indices(l_usbfrequency) =          add_ident ( 'USBFrequency')
     lit_indices(l_vmr) =                   add_ident ( 'vmr' )
@@ -372,6 +383,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.28  2001/05/31 22:07:33  livesey
+! Updated cloud quantity types
+!
 ! Revision 2.27  2001/05/31 20:27:37  livesey
 ! New vector type associated with cloud quantities.
 !
