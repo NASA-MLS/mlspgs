@@ -140,7 +140,7 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 	@rm -f MLSL2.f90 part_1 part_2 part_3 ; \
 	sed -n '1,/=== (start of automatic usage lines) ===/ p' $(S)/MLSL2.f90 > part_1 ; \
 	sed -n '/=== (end of automatic usage lines) ===/,$$ p' $(S)/MLSL2.f90 > part_3 ; \
-	sed -n '/mlsl2 =========/, /mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/switches > part_2 ; \
 	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
 	mv MLSL2.f90 part_2 ; \
 	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
@@ -149,7 +149,7 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 	rm -f part_1 part_2 part_3 ; \
 	sed -n '1,/=== (start of automatic option lines) ===/ p' MLSL2.f90 > part_1 ; \
 	sed -n '/=== (end of automatic option lines) ===/,$$ p' MLSL2.f90 > part_3 ; \
-	sed -n '/mlsl2 =========/, /mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
+	sed -n '/mlsl2 =========/,/mlsl2 ========/p' $(CONFDIR)/notes/options > part_2 ; \
 	sed '1 d; $$ d' part_2 > MLSL2.f90 ; \
 	mv MLSL2.f90 part_2 ; \
 	sed -n -f $(CONFDIR)/notes/switch_usage.sed part_2 > MLSL2.f90 ; \
@@ -160,6 +160,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.21  2001/05/31 23:29:39  pwagner
+# added cloud_linker_line, message
+#
 # Revision 1.20  2001/05/25 22:29:10  pwagner
 # Conditionally links with hdf5
 #
