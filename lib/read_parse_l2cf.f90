@@ -3,19 +3,19 @@
 
 
 !===================================
-SUBROUTINE read_l2cf (l2cf_data, returnStatus) 
+SUBROUTINE read_parse_l2cf (L2cf_data, returnStatus) 
 !===================================
-
-
-
-IMPLICIT NONE
 
 USE l2cf
 USE MLSMessageModule
+
+IMPLICIT NONE
+
+
 !------------------- RCS Ident Info -----------------------
 CHARACTER(LEN=130) :: Id = &                                                    
 "$Id$"
-CHARACTER (LEN=*), PARAMETER :: ModuleName= 
+CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !----------------------------------------------------------
 
 ! Brief description of program
@@ -24,7 +24,7 @@ CHARACTER (LEN=*), PARAMETER :: ModuleName=
 
 ! Arguments
 
-TYPE (l2cf), INTENT = output :: L2cf_data
+TYPE (l2cf), INTENT (OUT) :: L2cf_data
 ! Parameters
 
 
@@ -39,9 +39,9 @@ INTEGER, EXTERNAL :: Pgs_io_gen_openF, Pgs_io_gen_closeF
 ! Variables
 
 
-CHARACTER (LEN=80) :: line
-CHARACTER (LEN=500) :: msg
-CHARACTER (LEN=1000) :: buff
+CHARACTER (LEN=256) :: line
+CHARACTER (LEN=256) :: msg
+CHARACTER (LEN=2048) :: buff
 
 
 
@@ -73,7 +73,7 @@ DO WHILE (.NOT. eof)
 
 ! strip leading, trailing and multiple blanks from line
  
-    CALL STRIP_BLANKS(line, nc, ncnb)
+    CALL Strip_Blanks(line, nc, ncnb)
 
     IF (INDEX(line, 'BEGIN') /= 0) THEN
        isection = isection + 1
@@ -84,13 +84,13 @@ DO WHILE (.NOT. eof)
     READ(UNIT=processL2CF, IOSTAT=ios, FMT=lineFmt) nc, line
     IF (ios /= 0) THEN
 
-      CALL STRIP_BLANKS(line, nc, ncnb)
+      CALL Strip_Blanks(line, nc, ncnb)
 
 ! ignore comment lines
 
-      IF(INDEX(line, ';' /= 1) THEN
+      IF(INDEX(line, ';' ) /= 1) THEN
 
-        IF(INDEX(line, 'END' /= 1) THEN
+        IF(INDEX(line, 'END') /= 1) THEN
 
           buff(ib:ib+ncnb-1) = line(1:ncnb)
           ib = ib + ncnb
@@ -103,7 +103,7 @@ DO WHILE (.NOT. eof)
             READ(UNIT=processL2CF, IOSTAT=ios, FMT=lineFmt) nc, line
             IF (ios /= 0) THEN
 
-              CALL STRIP_BLANKS(line, nc, ncnb)
+              CALL Strip_Blanks(line, nc, ncnb)
               buff(ib:ib+ncnb-1) = line(1:ncnb)
               ib = ib+ncnb
             ELSE
@@ -117,6 +117,11 @@ DO WHILE (.NOT. eof)
 
           AnEntry(1:L2cfEntryLen) =' '
           ib = INDEX(buff, ',')
+
+          IF (ib = 0) THEN
+            CALL MSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(1:ncb))
+          END IF          
+
           AnEntry(1:ib-1)=buff(1:ib-1)
           ib = ib + 1
           igs = igs + 1
@@ -127,18 +132,31 @@ DO WHILE (.NOT. eof)
 
           DO WHILE (ib < ncb)
             ie = INDEX(buff(ib:ncb), '=')
+
+            IF (ie = 0) THEN
+              CALL MSMessage (MLSMSG_Error, ModuleName, "= expected, : "//buff(1:ncb))
+            END IF
+ 
             key(1:maxKeyLen) = ' '
             Key = buff(ib, ie-1) 
             keyLen = ie-ib
             ib = ie + 1
             ie = INDEX(buff(ib:ncb), ',')
+
+            IF (ie = 0) THEN
+              CALL MSMessage (MLSMSG_Error, ModuleName, "Comma expected, : "//buff(ib:ncb))
+            END IF 
+
             Value (1:MaxCharValueLen) = ' '
             Value = buff(ib, ie-1)
             ValueLen = ie-ib
             ib = ie + 1
+
             found = .FALSE.
             i = 1
-            DO WHILE (.NOT. found .AND. i <= MaxNoL2cfKeys)
+
+            DO WHILE ((.NOT. found) .AND. (i <= MaxNoL2cfKeys))
+
               IF(key(1:KeyLen) .EQ. l2cfTable(i)%Keyword(1:l2cfTable(i)%Keylen))THEN
                 found = .TRUE.
               ELSE
@@ -152,34 +170,35 @@ DO WHILE (.NOT. eof)
                L2cf_data%Sections(isection)%Entries(igs)%L2cfEntryNoKeys = &
                L2cf_data%Section(isection)%Entries(igs)%L2cfEntryNoKeys + 1
                L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%Keyword= Key(1:Keylen)
-               IF(l2cfTable(i)%Type .EQ. "real")THEN
+
+               IF(l2cfTable(i)%Type = "real")THEN
                  j = 1     
-                 DO WHILE(j <= ValueLen .AND. Value(j:j) /= ' ')
+                 DO WHILE((j <= ValueLen) = (Value(j:j) /= ' '))
                    j = j + 1
                  END DO
                  READ (unit=Value(1:j-1), fmt='*') L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RealValue
                  L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(j:ValueLen)
-               ELSE IF(l2cfTable(i)%Type .EQ. "int")THEN
+               ELSE IF(l2cfTable(i)%Type = "int")THEN
                  j = 1     
-                 DO WHILE(j <= ValueLen .AND. Value(j:j) /= ' ')
+                 DO WHILE((j <= ValueLen) .AND. (Value(j:j) /= ' '))
                    j = j + 1
                  END DO
                  READ (unit=Value(1:j-1), fmt='*') L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%IntValue
                  L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(j:ValueLen)
-               ELSE IF(l2cfTable(i)%Type .EQ. "range")THEN
+               ELSE IF(l2cfTable(i)%Type = "range")THEN
                  j = INDEX(Value, '..')
                  IF (j > 0)THEN
                    READ (unit=Value(1:j-1), fmt='*') &
                    L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeLowerBound
                    k=j+2
-                   DO WHILE(k <= ValueLen .AND. Value(k:k) /= ' ')
-                    j = j + 1
+                   DO WHILE((k <= ValueLen) .AND. (Value(k:k) /= ' '))
+                    k = k + 1
                    END DO              
                    READ (unit=Value(1:j-1), fmt='*') &
                    L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound
                    L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%units=Value(k:ValueLen)
 
-                   IF(L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound .LT. &
+                   IF(L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound < &
                       L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound)THEN
 
                      tmp = L2cf_data%Sections(isection)%Entries(igs)%Cells(CellIndex)%RangeUpperBound
@@ -230,15 +249,15 @@ returnStatus = Pgs_io_gen_closeF (processL2CF)
 
 IF (returnStatus /= PGS_S_SUCCESS) THEN
   CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
-  PRINT *, 'Error closing L2CF:  ', mnemonic
-  PRINT *, msg
+  CALL MSMessage (MLSMSG_Error, ModuleName, 'Error closing L2CF:  ', mnemonic//' '//msg)
+ 
 ENDIF
 
 
 
 
 !===================
-END subroutine  read_l2cf
+END subroutine  read_parse_l2cf
 !===================
 
-
+! $Log$
