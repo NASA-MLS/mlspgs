@@ -82,6 +82,7 @@ contains
     ! the coefficients cannot be represented by integers.
     integer :: I, J                ! Subscripts, Loop inductors
     integer :: IB                  ! Which block is being regularized
+    integer :: MaxRow              ! Maximum row to be filled = ncol - ord
     integer :: NB                  ! Number of column blocks of A
     integer :: NCOL                ! Number of columns in a block of A
     integer :: NROW                ! Number of rows in first row block of A
@@ -113,8 +114,8 @@ contains
 
     if ( error == 0 ) then
       nrow = a%row%nelts(1)
-      rows = 1
-o:    do ib = 1, nb
+      rows = 0
+o:    do ib = 1, nb             ! Loop over matrix blocks = quantities
         ord = 0
         if ( quants == 0 ) then ! only one order and weight allowed
           call expr ( subtree(2,orders), units, value, type )
@@ -138,60 +139,64 @@ o:    do ib = 1, nb
         ncol = a%col%nelts(ib)
         if ( rows + ncol - ord - 1 > a%row%nelts(1) ) &
           & call announceError ( tooFewRows, orders )
-        if ( ord == 0 .or. wt <= 0.0_r8) then
+        if ( ncol < ord+1 ) call announceError ( tooFewCols, orders )
+        if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
+        if ( ord == 0 .or. wt <= 0.0_r8 .or. error /= 0 ) then
           call createBlock ( a%block(1,ib), nrow, ncol,  m_absent )
         else
-          if ( ncol < ord+1 ) call announceError ( tooFewCols, orders )
-          if ( ord > maxRegOrd ) call announceError ( orderTooBig, orders )
-          if ( error > 0 ) exit o
-          !{ Calculate binomial coefficients $C_i^n = \frac{n!}{i! (n-i)!}$
-          !  by the recursion
-          !  $C_0^n = 1\text{, } C_i^n = (n-i+1) C_{i-1}^n / i$.
-          ! Notice that $C_i^n = C_{n-i}^n$, so we only need
-          ! to go halfway through the array.
-          c(0) = 1
-          c(ord) = 1
-          do i = 1, ord / 2
-            c(i) = ( (ord-i+1) * c(i-1) ) / i
-            c(ord-i) = c(i)
-          end do
-          s = -1
-          do i = 0, ord ! Now alternate the signs
-            c(i) = s * c(i)
-            s = -s
-          end do
           call createBlock ( a%block(1,ib), nrow, ncol, m_banded, &
             & (ncol-ord)*(ord+1) )
+          rows = rows + 1
+
+          !{ Calculate binomial coefficients with alternating sign,
+          ! $(-1)^i C_i^n = (-1)^i \frac{n!}{i! (n-i)!}$
+          !  by the recursion
+          !  $C_0^n = 1\text{, } C_i^n = -(n-i+1) C_{i-1}^n / i$.
+          ! Notice that $C_i^n = C_{n-i}^n$, so we only need
+          ! to go halfway through the array.
+          s = 1 - 2*mod(ord,2) ! +1 for even order, -1 for odd order
+          c(0) = s
+          c(ord) = 1
+          do i = 1, ord / 2
+            c(i) = ( -(ord-i+1) * c(i-1) ) / i
+            c(ord-i) = s * c(i)
+          end do
 
           ! Each row has the binomial coefficients.  Therefore, each column
           ! has the binomial coefficients in reverse order (which wouldn't
-          ! matter if the signs didn't alternate).  Except the first and last
-          ! ord columns have 1, 2, ..., ord and ord, ord-1, ..., 1 elements.
+          ! matter if the signs didn't alternate).  Except the first and
+          ! last ord columns have 1, 2, ..., ord + 1 (or less if ncol-ord <
+          ! ord) and ord, ord-1, ..., 1 elements.
 
-          nv = 1
-          do i = 1, ord
+          maxRow = ncol - ord
+          ! Fill in coefficients from the end of Ord (but no more than
+          ! maxRow of them)
+          do i = 1, ord+1
+            nv = a%block(1,ib)%r2(i-1) + 1
+            j = min(i,maxRow) ! Number of coefficients
             a%block(1,ib)%r1(i) = rows
-            a%block(1,ib)%r2(i) = nv+i-1
-            a%block(1,ib)%values(nv:nv+i-1,1) = wt * c(ord-i+1:ord)
-            nv = nv + i
+            a%block(1,ib)%r2(i) = nv+j-1
+            a%block(1,ib)%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
           end do
-          do i = ord+1, ncol-ord
+          ! Fill in coefficients from all of Ord
+          do i = ord+2, maxRow
+            nv = a%block(1,ib)%r2(i-1) + 1
+            rows = rows + 1
             a%block(1,ib)%r1(i) = rows
             a%block(1,ib)%r2(i) = nv+ord
-            a%block(1,ib)%values(nv:nv+ord,1) = wt * c(0:ord)
-            nv = nv + ord + 1
-            rows = rows + 1
+            a%block(1,ib)%values(nv:nv+ord,1) = c(0:ord)
           end do
-          j = ord-1
-          do i = ncol-ord+1, ncol
-            a%block(1,ib)%r1(i) = a%block(1,ib)%r1(i-1)+1
+          ! Fill in coefficients from the beginning of Ord
+          j = min(maxrow-1,ord) - 1 ! Index of last coefficient
+          do i = max(ord+2,maxRow+1), ncol
+            nv = a%block(1,ib)%r2(i-1) + 1
+            rows = rows + 1
+            a%block(1,ib)%r1(i) = rows
             a%block(1,ib)%r2(i) = nv+j
-            a%block(1,ib)%values(nv:nv+j,1) = wt * c(0:j)
-            nv = nv + j + 1
+            a%block(1,ib)%values(nv:nv+j,1) = c(0:j)
             j = j - 1
           end do
         end if
-        rows = rows + ord
       end do o
     end if ! error == 0
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -231,6 +236,9 @@ o:    do ib = 1, nb
 end module Regularization
 
 ! $Log$
+! Revision 2.11  2002/05/11 01:10:16  vsnyder
+! Big revision... Maybe it's right this time.
+!
 ! Revision 2.10  2002/05/07 01:03:36  vsnyder
 ! Allow different weight for each quantity, or one weight for the whole
 ! shebang.  Don't regularize a block if its weight is <= zero.
