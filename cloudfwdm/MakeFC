@@ -206,7 +206,7 @@ $(he5lib_objs)/libhe5.a: $(HE5_LIB_prereqs)
      MARK_ALL_AS_UPTODATE=no DONTBUILDPREQS=TRUE
 
 .PHONY: clean configure depends depends--mod ghostbuster mostlyclean \
-  tar targ tarz update
+  tar targ tarz update libcloud.a
 
 tar:
 
@@ -282,6 +282,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 1.24  2003/05/20 18:39:21  pwagner
+# Uses DONTBUILDPREQS to stop some hunting
+#
 # Revision 1.23  2003/04/30 23:04:55  pwagner
 # Now lets you make update in each subdirectory
 #

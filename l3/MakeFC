@@ -226,7 +226,7 @@ $(INSTALLDIR)/libutctotai.a:
 	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
 
 .PHONY: clean configure depends depends--mod ghostbuster install \
-  internalsaymake internalupdate mostlyclean \
+  internalsaymake internalupdate mlsl3d mostlyclean \
   tar targ tarz update
 
 tar:
@@ -335,6 +335,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.44  2003/05/20 18:39:23  pwagner
+# Uses DONTBUILDPREQS to stop some hunting
+#
 # Revision 1.43  2003/05/19 23:43:06  pwagner
 # Defined MLSHOME used by install command
 #

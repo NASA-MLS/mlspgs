@@ -96,7 +96,6 @@ endif
 #OMIT_SRCS := $(OMIT) h5_griddeddata.f90
 OMIT_SRCS := $(OMIT)
 
-#PROG=l2_test
 PROG=libhe5.a
 
 OMIT_PREFXD := $(shell ${REECHO} -prefix=-d $(OMIT_SRCS))
@@ -155,7 +154,7 @@ hdfeos5.f9h: $(HDFEOS5)/../../include/hdfeos5.inc
 	mv temp hdfeos5.f9h
 
 
-.PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a \
+.PHONY: configure depends clean tar mostlyclean targ tarz libhe5.a \
  l2_test ghostbuster
 
 tar:
@@ -228,6 +227,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.8  2003/05/20 18:39:23  pwagner
+# Uses DONTBUILDPREQS to stop some hunting
+#
 # Revision 1.7  2002/06/21 00:15:27  pwagner
 # Enroute to ending cascading recompiles
 #
