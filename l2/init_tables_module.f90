@@ -222,8 +222,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_HGRID              = s_gridded + 1
   integer, parameter :: S_L2AUX              = s_hgrid + 1
   integer, parameter :: S_L2GP               = s_l2aux + 1
-  integer, parameter :: S_L2PC               = s_l2gp + 1
-  integer, parameter :: S_MATRIX             = s_l2pc + 1
+  integer, parameter :: S_MATRIX             = s_l2gp + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_OUTPUT             = s_merge + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
@@ -498,7 +497,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
-    spec_indices(s_l2pc) =                 add_ident ( 'l2pc' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_output) =               add_ident ( 'output' )
@@ -689,12 +687,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
              begin, f+f_columns, s+s_vector, n+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
-             ndp+n_spec_def, &
-      begin, s+s_l2pc, &    ! Must be after s_vector, s_matrix
-             begin, f+f_xStar, s+s_vector, n+n_field_spec, &
-             begin, f+f_yStar, s+s_vector, n+n_field_spec, &
-             begin, f+f_kStar, s+s_matrix, n+n_field_spec, &
-             nadp+n_spec_def /) )
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -728,7 +721,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, nr+n_field_type, &
              begin, f+f_file, t+t_string, nr+n_field_type, &
-             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_l2pc, n+n_field_spec, &
+             begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, n+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -838,7 +831,7 @@ contains ! =====     Public procedures     =============================
              n+n_section, &
       begin, z+z_retrieve, s+s_matrix, s+s_retrieve, &
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
-      begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, s+s_l2pc, n+n_section, &
+      begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
 
   contains
@@ -851,6 +844,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.86  2001/04/27 21:53:43  livesey
+! Removed the l2pc stuff
+!
 ! Revision 2.85  2001/04/26 23:43:23  vsnyder
 ! Remove forwardModelIn from retrieve spec
 !
