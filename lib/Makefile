@@ -9,7 +9,7 @@ OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	QuantityTemplates.o MLSNumerics.o MLSMessageModule.o \
 	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o \
 	VGrid.o HGrid.o L1BData.o ConstructQuantityTemplates.o\
-	Temporary_types.o ConstructVectorTemplates.o
+	Temporary_types.o ConstructVectorTemplates.o gridded_data_module.o
 
 OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		VerticalCoordinate.o_debug QuantityTemplates.o_debug \
@@ -17,7 +17,8 @@ OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		SDPToolkit.o_debug L2GPData.o_debug L2AUXData.o_debug \
 		VectorsModule.o_debug Units.o_debug VGrid.o_debug \
 		HGrid.o_debug L1BData.o ConstructQuantityTemplates.o_debug \
-		Temporary_types.o_debug ConstructVectorTemplates.o_debug
+		Temporary_types.o_debug ConstructVectorTemplates.o_debug \
+		gridded_data_module.o_debug
 
 LIBPATH=.
 MODULEPATH=.
@@ -43,6 +44,7 @@ clean:
 # Later on we may try to adapt Hugh's script to deal with these
 #
 
+gridded_data_module.o: MLSCommon.o MLSStrings.o MLSMessageModule.o
 MLSMessageModule.o: SDPToolkit.o
 MLSStrings.o: MLSMessageModule.o
 MLSSignalNomenclature.o: MLSStrings.o MLSMessageModule.o MLSCommon.o
@@ -61,6 +63,9 @@ ConstructVectorTemplates.o: MLSCommon.o MLSMessageModule.o VectorsModule.o \
 
 #
 # $Log$
+# Revision 1.20  1999/12/18 01:07:13  livesey
+# Regular commit
+#
 # Revision 1.19  1999/12/17 00:59:32  livesey
 # Nightly checkin
 #
