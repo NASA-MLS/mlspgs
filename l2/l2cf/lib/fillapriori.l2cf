@@ -267,7 +267,7 @@ begin Fill
   Fill, quantity=vReg.h2o, method=profile, profileValues= $
     [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr, method=profile, profileValues= $
-    [ 1000mb:80ppmv, 300:8ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
+    [ 10mb:0ppmv ], logSpace=false
 
   Fill, quantity=vReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
@@ -284,14 +284,14 @@ begin Fill
   Fill, quantity=vReg.o3, method=profile, $
     profileValues= [ 0.1mb:1ppmv, 0.068mb:0ppmv ]
   Fill, quantity=vReg.o3_HR, method=profile, $
-    profileValues=[ 147mb:0.1ppmv, 68mb:1ppmv, 0.68mb:0ppmv ]
+    profileValues=[ 10mb:0ppmv ]
 
   Fill, quantity=vReg.oh, method=profile, profileValues= [ 10mb:30pptv, 1mb:300pptv ]
 
   Fill, quantity=vReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=vReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:1K ]
+    profileValues=[ 10mb:0K ]
 
   ;; Horizontal
   Fill, quantity=hReg.baselineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
@@ -314,7 +314,7 @@ begin Fill
   Fill, quantity=hReg.h2o, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
   Fill, quantity=hReg.h2o_HR, method=profile, $
-    profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
+    profileValues=[ 10mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
@@ -331,14 +331,14 @@ begin Fill
   Fill, quantity=hReg.o3, method=profile, $
     profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ]
   Fill, quantity=hReg.o3_HR, method=profile, $
-    profileValues= [ 146mb:30ppbv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ]
+    profileValues= [ 10mb:0ppmv ]
 
   Fill, quantity=hReg.oh, method=profile, profileValues= [ 10mb:30pptv, 1mb:300pptv ]
 
   Fill, quantity=hReg.temperature, method=profile, $
     profileValues=[ 1mb:1K ]
   Fill, quantity=hReg.temperature_hr, method=profile, $
-    profileValues=[ 1mb:1K ]
+    profileValues=[ 10mb:0K ]
 
   Fill, quantity=hReg.refGPH, method=explicit, explicitValues=10m, /spread
 
