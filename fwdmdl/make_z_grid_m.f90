@@ -23,9 +23,9 @@ contains
 ! This routine automatically makes an appropriate z_grid for the
 ! users specified input
 
-    use MLSCommon, only: rp, r4, r8, ip
-    use Sort_m, only: Sort
     use Allocate_deallocate, only: Allocate_test, Deallocate_test
+    use MLSCommon, only: rp, ip
+    use Sort_m, only: Sort
 
 ! inputs:
 
@@ -67,8 +67,6 @@ contains
 
 ! BEGIN CODE
 
-    nullify ( frac, z1, del_z )
-    nullify ( z_grid, tan_inds )
 ! Sort the input
 
     n_ele = size(zetas)
@@ -83,10 +81,6 @@ contains
     mask = (cshift(z,1) - z) > thresh
     mask(n_ele) = .true.
     n = count(mask)
-    call allocate_test ( z1, n, 'z1', modulename )
-    call allocate_test ( del_z, n, 'del_z', modulename )
-    z1 = pack(z,mask)
-    del_z = cshift(z1,1) - z1
 
 ! compute total grid points including multiplicative factors
 
@@ -96,33 +90,53 @@ contains
       m = 1
     end if
     n_grid = m * (n - 1) + 1
-
-! Fill in sub interval points
-
-    call allocate_test ( frac, m, 'frac', ModuleName )
-    frac = (/(real(i,kind=rp) / m, i = 0,m-1)/)
-
-! Create and compute z_grid
-
+    nullify ( z_grid, tan_inds )
     call allocate_test ( z_grid, n_grid, 'z_grid', modulename )
-    z_grid(1:n_grid-1) = reshape(spread(z1(1:n-1),1,m) &
-                       +  spread(del_z(1:n-1),1,m) &
-                       *  spread(frac,2,n-1), (/n_grid - 1/))
-    z_grid(n_grid) = z1(n)
 
 ! Create a tangent pointing array index
 
     call allocate_test ( tan_inds, n_grid, 'tan_inds', modulename )
     tan_inds = (/(i,i = 1, n_grid)/)
-    call deallocate_test ( z1, 'z1', modulename )
-    call deallocate_test ( del_z, 'del_z', modulename )
+
+! Fill the grid
+
+    if ( m == 1 ) then ! not subgridding -- use the simple algorithm
+      z_grid = pack(z,mask)
+      return
+    end if
+
+! Fill in sub interval scale factors
+
+    nullify ( frac, z1, del_z )
+    call allocate_test ( z1, n, 'z1', modulename )
+    call allocate_test ( del_z, n, 'del_z', modulename )
+    call allocate_test ( frac, m, 'frac', ModuleName )
+
+    z1 = pack(z,mask)
+    del_z = cshift(z1,1) - z1
+    frac = (/(real(i,kind=rp) / m, i = 0,m-1)/)
+
+! Create and compute z_grid
+
+    z_grid(1:n_grid-1) = reshape(spread(z1(1:n-1),1,m) &
+                       +  spread(del_z(1:n-1),1,m) &
+                       *  spread(frac,2,n-1), (/n_grid - 1/))
+    z_grid(n_grid) = z1(n)
+
+! Clean up
+
     call deallocate_test ( frac, 'frac', modulename )
+    call deallocate_test ( del_z, 'del_z', modulename )
+    call deallocate_test ( z1, 'z1', modulename )
 
   end subroutine Make_Z_Grid
 
 end module Make_Z_Grid_m
 
 ! $Log$
+! Revision 2.4  2002/10/07 19:27:50  vsnyder
+! Use a simpler algorithm when not subgridding
+!
 ! Revision 2.3  2002/10/04 00:04:09  vsnyder
 ! Move USE statements from module scope to procedure scope.  Insert copyright
 ! notice.  Cosmetic changes.
