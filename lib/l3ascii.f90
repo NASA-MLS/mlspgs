@@ -64,8 +64,6 @@ contains
       unit = -1
       call announce_error ( 0,&
            "in subroutine l3ascii_open: No units left" )
-!      call MLSMessage ( MLSMSG_Error, ModuleName,&
-!           "in subroutine l3ascii_open: No units left" )
     end if
 
     !First line is not prefaced with ; nor is it of any use. 
@@ -110,9 +108,6 @@ contains
         call announce_error(0, &
        " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
        "is not connected to a file. Do call l3ascii_open(filename,unit) first")
-!        call MLSMessage(MLSMSG_Error,ModuleName,&
-!       " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
-!       "is not connected to a file. Do call l3ascii_open(filename,unit) first")
        return
     end if
     inquire(unit=unit,name=filename) ! find the file name connected to this
@@ -186,9 +181,6 @@ contains
       call announce_error ( 0, &
         & "in subroutine l3ascii_read_field, File "//trim(filename)// &
         &  "on unit"//trim(unitstring)//" contains no more Fields" )
-!      call MLSMessage(MLSMSG_Error,ModuleName,&
-!           "in subroutine l3ascii_read_field, File "//trim(filename)// &
-!           "on unit"//trim(unitstring)//" contains no more Fields")
 	     end_of_file=.true.
       return
     end if
@@ -197,9 +189,6 @@ contains
       call announce_error ( 0,&
         & "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
         & " on unit"//trim(unitstring))
-!       call MLSMessage(MLSMSG_Error,ModuleName,&
-!       "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
-!       " on unit"//trim(unitstring))
       return
     end if
 
@@ -235,11 +224,6 @@ axesloop:do
               " on unit"//trim(unitstring)//" contains coordinate"//&
               " of invalid type "//trim(axistype)//"for axis"//&
               trim(linetype))
-!         call MLSMessage(MLSMSG_Error,ModuleName,&
-!              "in subroutine l3ascii_read_field,File"//trim(filename)//&
-!              " on unit"//trim(unitstring)//" contains coordinate"//&
-!              " of invalid type "//trim(axistype)//"for axis"//&
-!              trim(linetype))
          return
       end if
 
@@ -318,10 +302,6 @@ datesloop: do idate = 1, maxNoDates
           & "in subroutine l3ascii_read_field: File"//trim(filename)//&
           & "on unit"//trim(unitstring)//" contains a line beginning"//&
           & trim(linetype)//"Date with too few words " )
-!         call MLSMessage(MLSMSG_Error,ModuleName,&
-!              "in subroutine l3ascii_read_field: File"//trim(filename)//&
-!              "on unit"//trim(unitstring)//" contains a line beginning"//&
-!              trim(linetype)//"Date with too few words ")
         end_of_file = .true.
         return
       end if
@@ -367,10 +347,6 @@ datesloop: do idate = 1, maxNoDates
           & "in subroutine l3ascii_read_field: File"//trim(filename)//&
           & "on unit"//trim(unitstring)//" contains a line beginning"//&
           & trim(linetype)//"where I expected a line beginning Date " )
-!         call MLSMessage(MLSMSG_Error,ModuleName,&
-!              "in subroutine l3ascii_read_field: File"//trim(filename)//&
-!              "on unit"//trim(unitstring)//" contains a line beginning"//&
-!              trim(linetype)//"where I expected a line beginning Date ")
         end_of_file = .true.
         return
       end if
@@ -679,8 +655,6 @@ binsearch: do
       end if
     end do
     nsections = (nwords-3)/2
-!    print*,"Inline=",inline
-!    print*,"Nwords=",nwords
 
     if ( nsections < 1 ) then
       call announce_error ( 0, "in make_log_axis: nsections < 1" )
@@ -689,8 +663,6 @@ binsearch: do
     allocate(n_levs_in_sec(1:nsections),n_levs_per_dec(1:nsections),&
       &  axints(1:nsections*2))
     read ( unit=inline, fmt=* ) linetype, axistype, basepressure, axints
-!    print*,"Linetype=",linetype," axistype=",axistype
-!    print*,"basepressure=",basepressure," Axints=",axints
     n_levs_in_sec = axints(1:nsections*2-1:2)
     n_levs_per_dec = axints(2:nsections*2:2)
 
@@ -700,16 +672,11 @@ binsearch: do
       call announce_error ( 0, "in make_log_axis: axis_len < 1" )
     end if
 	
-!    print*,"axis length=", axis_len
     allocate(axis(1:axis_len))
     axis(1) = -log10(basepressure)
     stind = 0
-!    print*,"nsections=", nsections
     do j = 1, nsections
       gridstep=1.0_r8/n_levs_per_dec(j)
-!    print*,"j=", j
-!    print*,"n_levs_per_dec(j)=", n_levs_per_dec(j)
-!    print*,"gridstep=", gridstep
       if ( gridstep <= 0.d0 ) then
         call announce_error ( 0, "in make_log_axis: gridstep <= 0" )
         stop
@@ -905,10 +872,6 @@ itemsloop:do
       multiplier = 1.0_r8
       return
     end if
-!    call MLSMessage(MLSMSG_Warning,ModuleName,&
-!         "in function l3ascii_get_multiplier: Units "//&
-!         trim(field%units)//" for field "//trim(field%quantityName)//&
-!         "not known. Guessing multiplier=1.0")
     call announce_error ( 0, &
       & "in function l3ascii_get_multiplier: Units "// &
       & trim(field%units)//" for field "//trim(field%quantityName)// &
@@ -923,6 +886,13 @@ itemsloop:do
   subroutine Announce_error ( lcf_where, full_message, use_toolkit, &
   & error_number )
   
+   ! Output an informative message about whatever error occurred
+   ! Don't be fooled by the word "toolkit" in use_toolkit
+   ! and in default_output_by_toolkit: all that happens is that
+   ! the output duty is given to the output module instead of the
+   ! print statement; by suitable choice of prunit
+   ! the output module knows when to use the toolkit and when not
+   
    ! Arguments
 	
     integer, intent(in)    :: lcf_where
@@ -930,13 +900,11 @@ itemsloop:do
     logical, intent(in), optional :: use_toolkit
     integer, intent(in), optional    :: error_number
     ! Local
-!    character (len=80) :: msg, mnemonic
-!    integer :: status
     logical :: just_print_it
     logical, parameter :: default_output_by_toolkit = .true.
  
     if ( present(use_toolkit) ) then
-      just_print_it = use_toolkit
+      just_print_it = .not. use_toolkit
     else if ( default_output_by_toolkit ) then
       just_print_it = .false.
     else
@@ -944,9 +912,6 @@ itemsloop:do
     end if
  
     if ( .not. just_print_it ) then
-!      CALL Pgs_smf_getMsg(status, mnemonic, msg)
-!      CALL MLSMessage (level, ModuleName, &
-!                &trim(full_message)//" "//mnemonic//" "//msg)
       error = max(error,1)
       call output ( '***** At ' )
 
@@ -990,6 +955,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.10  2001/05/07 23:24:16  pwagner
+! Removed unused prints; detached from toolkit
+!
 ! Revision 2.9  2001/04/27 07:48:54  pumphrey
 ! Many nested loops in l3ascii replaced with array ops. Small fixes
 ! (e.g. spelling mistakes) in other modules.
