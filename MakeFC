@@ -479,7 +479,7 @@ install:
 	         mv $$dir/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mlsl3d.sh ; \
 	         sed "s=mlsxxyyzz=mlsl3d=; s=mlsbbiinn=$(INSTALLDIR)=; \
-              s=mlshhoommee=$(MLSHOME)=" \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
               $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl3d.sh ; \
             chmod a+x $(INSTALLDIR)/mlsl3d.sh ; \
 			fi ; \
@@ -489,7 +489,7 @@ install:
       	  mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
             rm -f $(INSTALLDIR)/mls$$dir.sh ; \
 	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
-              s=mlshhoommee=$(MLSHOME)=" \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
               $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mls$$dir.sh ; \
             chmod a+x $(INSTALLDIR)/mls$$dir.sh ; \
 			fi ; \
@@ -847,6 +847,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.64  2002/02/12 18:37:24  pwagner
+# Repaired builds for util executables; added h5cat
+#
 # Revision 1.63  2002/02/06 00:47:43  pwagner
 # Adds check for up-to-date machine files during update
 #
