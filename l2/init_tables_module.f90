@@ -49,7 +49,8 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: T_OUTPUTTYPE     = t_molecule+1
   integer, public, parameter :: T_QUANTITYTYPE   = t_outputtype+1
   integer, public, parameter :: T_RADIOMETER     = t_quantitytype+1
-  integer, public, parameter :: T_SPECIES        = t_radiometer+1
+  integer, public, parameter :: T_SCALE          = t_radiometer+1
+  integer, public, parameter :: T_SPECIES        = t_scale+1
   integer, public, parameter :: T_UNITS          = t_species+1
   integer, public, parameter :: T_VGRIDCOORD     = t_units+1
   integer, public, parameter :: T_VGRIDTYPE      = t_vgridcoord+1
@@ -57,16 +58,19 @@ module INIT_TABLES_MODULE
   integer, public :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
   integer, public, parameter :: F_APRIORI             = 1
-  integer, public, parameter :: F_AUTOFILL            = f_apriori + 1
+  integer, public, parameter :: F_APRIORISCALE        = F_APRIORI + 1
+  integer, public, parameter :: F_AUTOFILL            = f_aprioriScale + 1
   integer, public, parameter :: F_BAND                = f_autofill + 1
   integer, public, parameter :: F_CHANNELS            = f_band + 1
   integer, public, parameter :: F_COLUMNS             = f_channels + 1
-  integer, public, parameter :: F_COMPAREOVERLAPS     = f_columns + 1
+  integer, public, parameter :: F_COLUMNSCALE         = f_columns + 1
+  integer, public, parameter :: F_COMPAREOVERLAPS     = f_columnscale + 1
   integer, public, parameter :: F_COORDINATE          = f_compareOverlaps + 1
   integer, public, parameter :: F_COPY                = f_coordinate + 1
   integer, public, parameter :: F_COVARIANCE          = f_copy + 1
   integer, public, parameter :: F_CRITERIA            = f_covariance + 1
-  integer, public, parameter :: F_FILE                = f_criteria + 1
+  integer, public, parameter :: F_DIAGONAL            = f_criteria + 1
+  integer, public, parameter :: F_FILE                = f_diagonal + 1
   integer, public, parameter :: F_FIRSTINDEXCHANNEL   = f_file + 1
   integer, public, parameter :: F_FRACTION            = f_firstIndexChannel + 1
   integer, public, parameter :: F_FWDMODELIN          = f_fraction + 1
@@ -76,7 +80,8 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_HEIGHT              = f_hdfname + 1
   integer, public, parameter :: F_HGRID               = f_height + 1
   integer, public, parameter :: F_INTERPOLATIONFACTOR = f_hGrid + 1
-  integer, public, parameter :: F_LENGTH              = f_interpolationFactor + 1
+  integer, public, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
+  integer, public, parameter :: F_LENGTH              = f_jacobian + 1
   integer, public, parameter :: F_MAXITERATIONS       = f_length + 1
   integer, public, parameter :: F_MATRIX              = f_maxIterations + 1
   integer, public, parameter :: F_MEASUREMENTS        = f_matrix + 1
@@ -118,13 +123,15 @@ module INIT_TABLES_MODULE
   integer, public :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals:
   integer, public, parameter :: L_ANGLE         = last_intrinsic_lit + 1
-  integer, public, parameter :: L_BASELINE      = l_angle + 1
+  integer, public, parameter :: L_APRIORI       = l_angle + 1
+  integer, public, parameter :: L_BASELINE      = l_apriori + 1
   integer, public, parameter :: L_BOTH 	        = l_baseline + 1
   integer, public, parameter :: L_CHOLESKY      = l_both + 1
   integer, public, parameter :: L_CLIMATOLOGY   = l_cholesky+1
   integer, public, parameter :: L_CLO           = l_climatology + 1
   integer, public, parameter :: L_CO            = l_clo + 1
-  integer, public, parameter :: L_DAO 	        = l_co + 1
+  integer, public, parameter :: L_COVARIANCE    = l_co + 1
+  integer, public, parameter :: L_DAO 	        = l_covariance + 1
   integer, public, parameter :: L_DIRECT        = l_dao + 1
   integer, public, parameter :: L_EITHER        = l_direct + 1
   integer, public, parameter :: L_EXPLICIT      = l_either + 1
@@ -148,7 +155,8 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_NEITHER       = l_ncep + 1
   integer, public, parameter :: L_NEWTONIAN     = l_neither + 1
   integer, public, parameter :: L_NONE 	        = l_newtonian + 1
-  integer, public, parameter :: L_O3            = l_none + 1
+  integer, public, parameter :: L_NORM          = l_none + 1
+  integer, public, parameter :: L_O3            = l_norm + 1
   integer, public, parameter :: L_PLAIN         = l_o3 + 1
   integer, public, parameter :: L_PRESSURE      = l_plain + 1
   integer, public, parameter :: L_PTAN 	        = l_pressure + 1
@@ -269,18 +277,21 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_outputtype) =      add_ident ( 'outputType' )
     data_type_indices(t_quantitytype) =    add_ident ( 'quantityType' )
     data_type_indices(t_radiometer) =      add_ident ( 'radiometer' )
+    data_type_indices(t_scale) =           add_ident ( 'scale' )
     data_type_indices(t_species) =         add_ident ( 'species' )
     data_type_indices(t_units) =           add_ident ( 'units' )
     data_type_indices(t_vgridcoord) =      add_ident ( 'vGridCoord' )
     data_type_indices(t_vgridtype) =       add_ident ( 'vGridType' )
     ! Put enumeration literals into the symbol table:
     lit_indices(l_angle) =                 add_ident ( 'angle' )
+    lit_indices(l_apriori) =               add_ident ( 'apriori' )
     lit_indices(l_baseline) =              add_ident ( 'baseline' )
     lit_indices(l_both) =                  add_ident ( 'both' )
     lit_indices(l_cholesky) =              add_ident ( 'cholesky' )
     lit_indices(l_climatology) =           add_ident ( 'climatology' )
     lit_indices(l_clo) =                   add_ident ( 'clo' )
     lit_indices(l_co) =                    add_ident ( 'co' )
+    lit_indices(l_covariance) =            add_ident ( 'covariance' )
     lit_indices(l_dao) =                   add_ident ( 'DAO' )
     lit_indices(l_direct) =                add_ident ( 'direct' )
     lit_indices(l_either) =                add_ident ( 'either' )
@@ -305,6 +316,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_neither) =               add_ident ( 'neither' )
     lit_indices(l_newtonian) =             add_ident ( 'newtonian' )
     lit_indices(l_none) =                  add_ident ( 'none' )
+    lit_indices(l_norm) =                  add_ident ( 'norm' )
     lit_indices(l_o3) =                    add_ident ( 'o3' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
@@ -324,15 +336,18 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table
     field_indices(f_apriori) =             add_ident ( 'apriori' )
+    field_indices(f_aprioriscale) =        add_ident ( 'aprioriscale' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
     field_indices(f_band) =                add_ident ( 'band' )
     field_indices(f_channels) =            add_ident ( 'channels' )
     field_indices(f_columns) =             add_ident ( 'columns' )
+    field_indices(f_columnscale) =         add_ident ( 'columnscale' )
     field_indices(f_compareOverlaps) =     add_ident ( 'compareoverlaps' )
     field_indices(f_coordinate) =          add_ident ( 'coordinate' )
     field_indices(f_copy) =                add_ident ( 'copy' )
     field_indices(f_covariance) =          add_ident ( 'covariance' )
     field_indices(f_criteria) =            add_ident ( 'criteria' )
+    field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_firstIndexChannel) =   add_ident ( 'f_firstindexchannel' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
@@ -343,6 +358,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationfactor' )
+    field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_length) =              add_ident ( 'length' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
     field_indices(f_maxIterations) =       add_ident ( 'maxiterations' )
@@ -469,6 +485,8 @@ contains ! =====     Public procedures     =============================
              l+l_ptan, l+l_radiance, l+l_temperature, l+l_vmr, n+n_dt_def, &
       begin, t+t_radiometer, l+l_r1a, l+l_r1b, l+l_r2, l+l_r3, l+l_r4, &
              l+l_r5h, l+l_r5v, n+n_dt_def, &
+      begin, t+t_scale, l+l_apriori, & ! l+l_covariance, & !??? Later !???
+             l+l_none, l+l_norm, n+n_dt_def, &
       begin, t+t_species, l+l_gph, l+l_gph_precision, l+l_temperature, &
              l+l_temperature_prec, n+n_dt_def, &
       begin, t+t_units, l+l_days, l+l_deg, l+l_degrees, &
@@ -615,20 +633,23 @@ contains ! =====     Public procedures     =============================
              begin, f+f_criteria, t+t_numeric, n+n_field_type, &
              n+n_spec_def, &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
-             begin, f+f_method, t+t_method, n+n_field_type, &
+             begin, f+f_apriori, s+s_vector, n+n_field_spec, &
+             begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
+             begin, f+f_columnScale, t+t_scale, n+n_field_type, &
+             begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
+             begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
+             begin, f+f_fwdModelIn, s+s_vector, n+n_field_spec, &
+             begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
+             begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
              begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
+             begin, f+f_measurements, s+s_vector, n+n_field_spec, &
+             begin, f+f_method, t+t_method, n+n_field_type, &
+             begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
+             begin, f+f_state, s+s_vector, n+n_field_spec, &
              begin, f+f_toleranceA, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
-             begin, f+f_state, s+s_vector, n+n_field_spec, &
-             begin, f+f_fwdModelIn, s+s_vector, n+n_field_spec, &
-             begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
-             begin, f+f_measurements, s+s_vector, n+n_field_spec, &
              begin, f+f_weight, s+s_vector, n+n_field_spec, &
-             begin, f+f_apriori, s+s_vector, n+n_field_spec, &
-             begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
-             begin, f+f_outputCovariance, s+s_vector, s+s_matrix, &
-                    n+n_field_spec, &
              n+n_spec_def /) )
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
@@ -663,7 +684,8 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, s+s_time, s+s_vector, s+s_tpfill, s+s_create, &
                        s+s_fill, s+s_matrix, &
              n+n_section, &
-      begin, z+z_retrieve, s+s_subset, s+s_retrieve, n+n_section, &
+      begin, z+z_retrieve, s+s_matrix, s+s_retrieve, s+s_subset, s+s_vector, &
+             n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
   end subroutine INIT_TABLES
@@ -734,6 +756,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.8  2001/01/26 19:02:24  vsnyder
+! Changes for "retrieve" section.
+!
 ! Revision 2.7  2001/01/18 02:00:35  vsnyder
 ! Define strings for more field names that were overlooked.  Type checking for
 ! "fill" is still wrong.
