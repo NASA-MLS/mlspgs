@@ -606,7 +606,7 @@ contains
       end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, clean=clean )
+      call dump ( array(:,1), name, clean=clean, format=format )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -939,6 +939,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.14  2001/11/28 23:32:01  livesey
+! Fixed bug where dump_2d_integer didn't pass format to 1d dump.
+!
 ! Revision 2.13  2001/10/25 23:30:39  pwagner
 ! Improved dump_nd_double to skip rows (e.g., of zeros)
 !
