@@ -51,22 +51,22 @@ contains ! =====     Private Procedures     ============================
     call output ( size(chunks), advance='yes' )
     do i = 1, size(chunks)
       call output ( i, 4 )
-      call output ( ': firstMAFIndex = ' )
+      call output ( ':  firstMAFIndex: ' )
       call output ( chunks(i)%firstMAFIndex )
-      call output ( ' lastMAFIndex = ' )
+      call output ( '  lastMAFIndex: ' )
       call output ( chunks(i)%lastMAFIndex, advance='yes' )
-      call output ( '      noMAFsLowerOverlap = ' )
+      call output ( '  noMAFsLowerOverlap: ' )
       call output ( chunks(i)%noMAFsLowerOverlap )
-      call output ( ' noMAFsUpperOverlap = ' )
+      call output ( '  noMAFsUpperOverlap: ' )
       call output ( chunks(i)%noMAFsUpperOverlap, advance='yes' )
-      call output ( '      1st non-overlap chunk = ' )
+      call output ( '  1st non-overlapped MAF: ' )
       call output ( chunks(i)%firstMAFIndex + chunks(i)%noMAFsLowerOverlap )
-      call output ( '      last non-overlap chunk = ' )
+      call output ( '  last non-overlapped MAF: ' )
       call output ( chunks(i)%lastMAFIndex - chunks(i)%noMAFsUpperOverlap, &
         & advance='yes' )
-      call output ( '      chunk size= ' )
-      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex )
-      call output ( '      non-overlap chunk size= ' )
+      call output ( '  chunk size: ' )
+      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex + 1 )
+      call output ( '  non-overlapped chunk size: ' )
       call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex &
         & - chunks(i)%noMAFsUpperOverlap - chunks(i)%noMAFsLowerOverlap + 1, &
         & advance='yes' )
@@ -231,6 +231,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.17  2003/06/20 19:37:06  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.16  2003/05/05 23:00:34  livesey
 ! Merged in feb03 newfwm branch
 !
