@@ -13,6 +13,9 @@ Switches (set by -S option in mlsl2's command line):
   cho =>    How good was the Cholesky decomposition?
   chu =>    Enslaved chunk processing
   col =>    Column scale vector for Newton iteration
+  colidl => Integrate column abundances using newer method ala WRead idl
+  colold => Integrate column abundances using older ATBD-based method
+  column => Extra diagnostics while integrating column abundances
   dacsfil => Dump DACS filter shapes after reading them
   diag =>   diagonal of factored normal equations
   dvec =>   'DX' vector during Newton iteration
@@ -56,6 +59,8 @@ Switches (set by -S option in mlsl2's command line):
   sca =>    Scalars of interest to the Newton method
   seez =>   Turn on some of Zvi's debugging output in FullForwardModel
   sig =>    MLS Signals
+  skipdgg => Don't direct write dgg files
+  skipdgm => Don't direct write dgm files
   slv =>    Show output of slaves using pvmfcatchout
   snoop =>  Show work done by fortran end of snooper
   spa =>    Sparsity structure of fac, jac, neq
@@ -101,6 +106,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.39  2004/01/27 23:45:22  vsnyder
+ Add 'dacsfil'
+
  Revision 1.38  2003/10/09 23:29:56  pwagner
  Changed grid to gridd; ,-separated switches recommended
 
