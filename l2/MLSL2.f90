@@ -9,6 +9,7 @@ program MLSL2
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
   use MACHINE ! At least HP for command lines, and maybe GETARG, too
+  use MLSCOMMON, only: FILENAMELEN
   use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
     & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, CURRENT_VERSION_ID, &
     & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS, &
@@ -51,6 +52,10 @@ program MLSL2
   !    E.g., mlsl2 -m -p --nmeta -S"glo jac"
   !    For a list of available options enter 'mlsl2 --help'
   !    For a list of available switches enter 'mlsl2 -S"?"'
+  ! In case the l2cf is named, say, "file_name" by (ii), we will try: 
+  ! First, to find file_name in the current directory
+  ! If that fails, we will try file_name.l2cf in the same directory
+  ! If that fails, woe is us and we exit with an error
 
   ! Overview
   ! Level 2 must accomplish some operational tasks (opening and reading files),
@@ -99,7 +104,9 @@ program MLSL2
   logical :: SWITCH                ! "First letter after -- was not n"
   real :: T0, T1, T2               ! For timing
   logical :: Timing = .false.      ! -T option is set
+  character(len=FILENAMELEN) :: L2CF_file       ! Some text
   character(len=255) :: WORD       ! Some text
+  character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=*), parameter :: IdParm = & 
@@ -324,9 +331,16 @@ program MLSL2
 
   !---------------- Task (4) ------------------
   status = 0
+  L2CF_file = '<STDIN>'
   if ( line /= ' ' ) then
+    L2CF_file = line
     open ( l2cf_unit, file=line, status='old', &
       & form='formatted', access='sequential', iostat=status )
+    if ( status /= 0 ) then
+      L2CF_file = trim(line) // L2CFNAMEEXTENSION
+      open ( l2cf_unit, file=trim(line) // L2CFNAMEEXTENSION, status='old', &
+        & form='formatted', access='sequential', iostat=status )
+    end if
     if ( status /= 0 ) then
       call io_error ( "While opening L2CF", status, line )
       call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -334,7 +348,7 @@ program MLSL2
     end if
     inunit = l2cf_unit
   else if ( pcf_for_input ) then
-    call open_MLSCF ( MLSPCF_L2CF_Start, inunit, status )
+    call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status )
     if(status /= 0) then
       call output( 'Non-zero status returned from open_MLSCF: ', &
       & advance='no')
@@ -480,6 +494,9 @@ contains
   ! command-line, MLSL2Options, etc.
     call output(' mlsl2 called with command line options: ', advance='no')
     call output(trim(command_line), advance='yes')
+    call output(' l2cf file:', advance='no')  
+    call blanks(4, advance='no')                                     
+    call output(trim(L2CF_file), advance='yes')                            
     if( index(switches, 'opt1') /= 0 ) then                                 
       call output(' -------------- Summary of run time options'      , advance='no')
       call output(' -------------- ', advance='yes')
@@ -542,6 +559,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.68  2002/02/20 00:29:04  pwagner
+! Retries FN+.l2cf; tracks successful l2cf file name
+!
 ! Revision 2.67  2002/02/12 00:25:00  pwagner
 ! New switch -opt[n] and new --version option
 !
