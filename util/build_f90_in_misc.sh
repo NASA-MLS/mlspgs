@@ -221,7 +221,7 @@ do
    pre_files=*.$source_suffix
    for file in $pre_files
    do
-      if [ -w $file ]
+      if [ -f $file ]
       then
          mv $file $hidden_dir_name
       fi
@@ -278,6 +278,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.5  2001/08/13 23:57:53  pwagner
+# Forgot ot turn DEEBUG off
+#
 # Revision 1.4  2001/08/13 23:25:25  pwagner
 # Added rules for compiling .c files, too
 #
