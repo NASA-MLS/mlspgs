@@ -1276,8 +1276,8 @@ contains
 
         ! Now one final check over all the things we've been asked to do.
         if ( heightUnit == phyq_pressure .and. qty%template%minorFrame .and. &
-          & .not. got(f_ptanQuantity) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'must supply ptan for this subset if using pressure' )
+          & .not. got(f_ptanQuantity) ) call MLSMessage ( MLSMSG_Error, &
+          & ModuleName, 'must supply ptan for this subset if using pressure' )
       end if
 
       if ( got(f_height) .and. ignore ) &
@@ -1312,7 +1312,7 @@ contains
                   & (/ channel+qty%template%noChans*(height-1) /) )
               end do
             end if
-          enddo
+          end do
         end if
 
         ! Now go and `unmask' the ones we want to consider
@@ -1346,11 +1346,10 @@ contains
             enddo
           end do
         end if
+     end do
 
-        ! Tidy up
-        if ( associated ( channels ) ) &
-          & call Deallocate_test ( channels, 'channels', ModuleName )
-      end do
+    ! Tidy up
+    call Deallocate_test ( channels, 'channels', ModuleName )
 
     end subroutine SetupSubset
   end subroutine Retrieve
@@ -1358,6 +1357,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.59  2001/09/20 00:31:06  vsnyder
+! Move deallocation of 'channels' out of loop
+!
 ! Revision 2.58  2001/07/19 22:00:41  vsnyder
 ! orrect problems with row scaling.
 !
