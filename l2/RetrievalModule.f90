@@ -73,8 +73,9 @@ module RetrievalModule
 contains
 
   ! ---------------------------------------------------  Retrieve  -----
-! subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase )
-  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, fmc, fmi, tfmi )
+! subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
+  subroutine Retrieve ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo, &
+    & fmc, fmi, tfmi ) !??? Last line temporary
   ! Process the "Retrieve" section of the L2 Configuration File.
   ! The "Retrieve" section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
@@ -84,6 +85,7 @@ contains
                                         ! Indexes an n_cf vertex
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
+    type(forwardModelInfo_T), intent(inout) :: FwdModelInfo ! From ForwardModelSetup
 
 !??? Begin temporary stuff to start up the forward model
   type(fwd_mdl_config) :: FMC
@@ -124,7 +126,6 @@ contains
     integer :: Field                    ! Field index -- f_something
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelIn
-    type(forwardModelInfo_T) :: FwdModelInfo
     type(vector_T), pointer :: FwdModelOut
     logical :: Got(field_first:field_last)   ! "Got this field already"
     type(vector_T) :: Gradient          ! for NWT
@@ -623,7 +624,8 @@ contains
         end do
         if ( toggle(gen) ) call trace_end ( "Retrieve.retrieve" )
       case ( s_sids )
-        call sids ( key, VectorDatabase, MatrixDatabase, fmc, fmi, tfmi )
+        call sids ( key, VectorDatabase, MatrixDatabase, fwdModelInfo, &
+          & fmc, fmi, tfmi ) !??? Last line is temporary
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -688,6 +690,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.8  2001/03/08 03:23:09  vsnyder
+! More stuff to work with L2_Load
+!
 ! Revision 2.7  2001/03/07 23:59:52  vsnyder
 ! Add stuff for SIDS.
 !
