@@ -27,7 +27,7 @@
 # might print foo.colossus.21455
 # if no arg, defaults to "temp" (very original name)
 # if two args present, assumes second is punctuation to
-# use in pace of "."
+# use in place of "."
 
 get_unique_name()
 {
@@ -60,6 +60,26 @@ get_unique_name()
       our_host_name=`echo $our_host_name | sed 's/\./,/g'`
       our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
       echo $temp${pt}$our_host_name${pt}$$
+}
+
+#---------------------------- my_dot
+#
+# Function first replaces the rhs in assignment statements like
+# a=b c d
+# with
+# a="b c d"
+# so that they can be safely "dot"ted
+# (otherwise the shell will complain: "c": command not found)
+# (if a line is already of the form a="b c d", it will be left unchanged)
+# use in place of "."
+
+my_dot()
+{
+   temp1=`get_unique_name updatemf`
+   sed 's/\(^[^ ][^ ]*\)=\(.*\)/\1="\2"/; s/\"\"\(.*\)\"\"/\"\1\"/' \
+      "$1" > $temp1
+   . "$temp1"
+   rm "$temp1"
 }
 
 #------------------------------- Main Program ------------
@@ -118,14 +138,16 @@ then
    exit 1
 fi
 
-# Delete lines such as FOPTS= or LDOPTS= becuase they may cause shell errors
+# The following fragile stuff was replaced by the more robust function my_dot
+# Delete lines such as FOPTS= or LDOPTS= because they may cause shell errors
 # (Why not create a new function to do this?)
-temp1=`get_unique_name updatemf`
-sed '/OPTS/d' "$confg_file" > $temp1
+#temp1=`get_unique_name updatemf`
+#sed '/OPTS/d' "$confg_file" > $temp1
 #echo ". $temp1"
-. "$temp1"
+#. "$temp1"
 #echo "Done with . $temp1"
-rm "$temp1"
+#rm "$temp1"
+my_dot "$confg_file"
 
 #Re-create object-file directory for this MLSCONFG
 #unless $del_exist_dir reset to false
@@ -212,3 +234,6 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.1  2002/07/29 22:59:53  pwagner
+# First commit
+#
