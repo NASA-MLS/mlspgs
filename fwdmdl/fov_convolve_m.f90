@@ -19,10 +19,10 @@ module Fov_Convolve_m
 ! =================================================  Fov_Convolve  =====
 ! Add the effects of antenna smearing to the radiance.
 
-    subroutine Fov_Convolve ( AntennaPattern, chi_in, rad_in, chi_out, rad_out, &
-             & req, rsc, earth_frac, surf_angle, di_dt, dx_dt, ddx_dxdt,        &
-             & dx_dt_out, drad_dt_out, di_df, di_df_flag, drad_df_out,          &
-             & drad_dx_out )
+    subroutine Fov_Convolve ( AntennaPattern, chi_in, rad_in, chi_out,   &     
+             & rad_out, req, rsc, earth_frac, surf_angle, di_dt, dx_dt,  &     
+             & ddx_dxdt, dx_dt_out, di_dt_flag, drad_dt_out, di_df,      &     
+             & di_df_flag,  drad_df_out, drad_dx_out )
 
     use AntennaPatterns_m, only: AntennaPattern_T
     use D_CSPLINE_M, only: CSPLINE
@@ -58,6 +58,8 @@ module Fov_Convolve_m
 !                                     temperature on chi_in
     real(rp), optional, intent(in) :: dx_dt_out(:,:) ! derivative of angle wrt
 !                                     temperature on chi_out
+    logical, optional, intent(in) :: di_dt_flag(:) ! Indicates whether to accumulate
+!                                     di_dt.  Assumed true if absent.
     real(rp), optional, intent(in) :: di_df(:,:) ! mixing ratio derivatives or
 !                                     any parameter where a simple convolution
 !                                     will suffice
@@ -188,6 +190,10 @@ module Fov_Convolve_m
          & METHOD='S', EXTRAPOLATE='C' )
 
       do i = 1, n_coeffs
+
+        if ( present(di_dt_flag) ) then
+          if ( .not. di_dt_flag(i) ) cycle
+        end if
 
 ! estimate the error compensation
 
@@ -510,6 +516,9 @@ module Fov_Convolve_m
 
 end module Fov_Convolve_m
 ! $Log$
+! Revision 2.10  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.9  2002/10/02 21:07:00  vsnyder
 ! Use subscript section notation to get rid of a few array constructors
 !

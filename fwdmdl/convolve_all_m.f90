@@ -225,15 +225,18 @@ module Convolve_All_m
 
         call allocate_test ( drad_df_out, noPtan, f_len, 'drad_df_out', ModuleName)
         call fov_convolve ( antennaPattern, chi_in, Rad_in, chi_out, SRad,  &
-           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt, DDX_DXDT=d2x_dxdt,  &
-           & DX_DT_OUT=temp_dxdt_tan, DRAD_DT_OUT=drad_dt_out, DI_DF=di_df,  &
-           & DI_DF_FLAG=grids_f%deriv_flags,  DRAD_DF_OUT=drad_df_out )
+           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt,               &
+           & DDX_DXDT=d2x_dxdt, DX_DT_OUT=temp_dxdt_tan,                    &
+           & DRAD_DT_OUT=drad_dt_out, DI_DF=di_df, DI_DT_FLAG=t_deriv_flag, &
+           & DI_DF_FLAG=grids_f%deriv_flags, DRAD_DF_OUT=drad_df_out )
+             
 
       else
 
         call fov_convolve ( antennaPattern, chi_in, Rad_in, chi_out, SRad,  &
-           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt, DDX_DXDT=d2x_dxdt, &
-           & DX_DT_OUT=temp_dxdt_tan, DRAD_DT_OUT=drad_dt_out )
+           & SURF_ANGLE=surf_angle, DI_DT=di_dt, DX_DT=dx_dt,               &
+           & DDX_DXDT=d2x_dxdt, DX_DT_OUT=temp_dxdt_tan,                    &
+           & DI_DT_FLAG=t_deriv_flag, DRAD_DT_OUT=drad_dt_out )
 
       end if
 
@@ -363,6 +366,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.26  2002/10/10 01:00:10  vsnyder
+! Delete unreferenced entities from USE list
+!
 ! Revision 2.25  2002/10/10 00:54:16  vsnyder
 ! Give Id a value, sort USEs, cosmetic changes
 !
