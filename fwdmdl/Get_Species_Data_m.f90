@@ -14,9 +14,8 @@ module Get_Species_Data_M
 
 ! Beta group type declaration:
   type, public :: Beta_Group_T
-    integer :: N_Elements
-    integer, pointer  :: Cat_Index(:) => NULL()
-    real(rp), pointer :: Ratio(:) => NULL()
+    integer, pointer  :: Cat_Index(:) => NULL() ! 1:n_Elements
+    real(rp), pointer :: Ratio(:) => NULL()     ! 1:n_Elements
   end type Beta_Group_T
 
 ! Species stuff
@@ -24,7 +23,7 @@ module Get_Species_Data_M
     integer :: No_Mol ! Size of several arrays == # molecule groups + # PFA
     integer :: No_LBL ! Number of Line-by-line molecule groups, <= no_mol
     type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_lbl
-    type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! sidebands,1:no_species
+    type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! sidebands,1:noNonPFA
     integer, pointer :: Mol_Cat_Index(:) => NULL()         ! 1:no_mol; indices
       ! of elements of FwdModelConf%molecules that are positive.
     type(qtyStuff_t), pointer :: Qtys(:) => NULL()         ! 1:no_mol
@@ -80,10 +79,10 @@ contains
     integer :: I, IER, J, K, L
     integer, dimension(:), pointer :: LINEFLAG ! /= 0 => Use this line
     ! (noLines per species)
-    integer, dimension(size(fwdModelConf%molecules,1)+1) :: Molecules_Temp
     character (len=32) :: molName       ! Name of a molecule
     integer :: NLines                   ! count(lineFlag)
-    integer :: NoMol                    ! size(fwdModelConf%molecules) -- includes
+    integer :: N_elements(size(fwdModelConf%molecules) - 1) ! in beta group
+    integer :: NoMol                    ! size(fwdModelConf%molecules) - 1; includes
       ! negative ones that indicate molecule grouping
     integer  :: NoNonPFA                ! No. of non-PFA Molecules under
       ! consideration --  includes negative ones that indicate molecule grouping
@@ -101,7 +100,7 @@ contains
 
     nullify ( lineFlag )
 
-    noMol = size(fwdModelConf%molecules)
+    noMol = size(fwdModelConf%molecules) - 1
     noNonPFA = fwdModelConf%firstPFA - 1
     sps%no_lbl = count(fwdModelConf%molecules(1:noNonPFA) > 0)
     sps%no_mol = sps%no_lbl + noMol - fwdModelConf%firstPFA + 1
@@ -114,15 +113,6 @@ contains
 
     call allocate_test ( sps%mol_cat_index, sps%no_mol, 'sps%mol_cat_index', moduleName )
 
-    k = max(1,noNonPFA-sps%no_lbl)
-    do i = 1, sps%no_lbl
-      call allocate_test ( sps%beta_group(i)%cat_index, k, 'beta_group%cat_index', moduleName )
-      call allocate_test ( sps%beta_group(i)%ratio, k, 'beta_group%ratio', moduleName )
-      sps%beta_group(i)%n_elements = 0
-      sps%beta_group(i)%ratio = 0.0
-      sps%beta_group(i)%cat_index = 0
-    end do
-
     if ( noNonPFA == sps%no_lbl ) then ! No grouping, .eqv. sps%no_mol == noMol
 
       ! Work out beta group etc for line-by-line
@@ -133,55 +123,81 @@ contains
         !        if ( l == l_extinction ) CYCLE
         sv_i = sv_i + 1
         sps%mol_cat_index(sv_i) = j
-        sps%beta_group(sv_i)%n_elements   = 1
+        call allocate_test ( sps%beta_group(sv_i)%cat_index, 1, 'beta_group%cat_index', moduleName )
+        call allocate_test ( sps%beta_group(sv_i)%ratio, 1, 'beta_group%ratio', moduleName )
         sps%beta_group(sv_i)%cat_index(1) = j
         sps%beta_group(sv_i)%ratio(1)     = beta_ratio
       end do
 
-      ! All that's needed for PFA is sps%mol_cat_index(sv_i), to get indices
-      ! for Beta_Path and dBetaD*
-      do j = 1, noNonPFA+1, noMol
-        l = fwdModelConf%molecules(j)
-        !        if ( l == l_extinction ) CYCLE
-        sv_i = sv_i + 1
-        sps%mol_cat_index(sv_i) = j
-      end do
-
     else
 
-      molecules_temp(1:noMol) = fwdModelConf%molecules(1:noMol)
-      molecules_temp(noMol+1) = noMol ! Anything positive will do
-
-      sps%mol_cat_index = PACK((/(i,i=1,noMol)/), fwdModelConf%molecules > 0)
-
-      ! Work out beta group etc for line-by-line
+      ! Work out sizes for beta groups
+      ! Beta groups of form "molecule" have size 1 and beta ratio = 1
+      ! Beta groups of form "[m,m1,m2,...mn]" have size n and beta ratio(i) is
+      !   from isotope ratio quantity for mi if it exists, else 1.
       sv_i = 0
       do j = 1, noNonPFA
-        k = molecules_temp(j)
+        k = fwdModelConf%molecules(j)
+        !        if ( abs(k) == l_extinction ) CYCLE
+        if ( k > 0 ) then
+          sv_i = sv_i + 1
+          sps%mol_cat_index(sv_i) = j
+          ! Last element is a huge sentinel, not a molecule
+          if ( fwdModelConf%molecules(j+1) > 0 ) then
+            ! Two consecutive positive ones => not a group
+            n_elements(sv_i) = 1
+          else
+            n_elements(sv_i) = 0
+          end if
+        else ! Negative one is group member
+          n_elements(sv_i) = n_elements(sv_i) + 1
+        end if
+      end do ! j
+
+      ! Allocate fields of beta_group
+      do sv_i = 1, sps%no_lbl
+        j = n_elements(sv_i)
+        call allocate_test ( sps%beta_group(sv_i)%cat_index, j, 'beta_group%cat_index', moduleName )
+        call allocate_test ( sps%beta_group(sv_i)%ratio, j, 'beta_group%ratio', moduleName )
+      end do
+
+      ! Fill beta_group fields for line-by-line
+      sv_i = 0
+      do j = 1, noNonPFA
+        k = fwdModelConf%molecules(j)
         l = abs(k)
         !        if ( l == l_extinction ) CYCLE
         beta_ratio = 1.0_rp
-        if ( k > 0 ) then
-          if ( molecules_temp(j+1) > 0 ) then
-            sv_i = sv_i + 1
-            sps%beta_group(sv_i)%n_elements   = 1
+        if ( k > 0 ) then ! Beginning of a group or lonesome molecule
+          i = 0
+          sv_i = sv_i + 1
+          ! Last element is a huge sentinel, not a molecule
+          if ( fwdModelConf%molecules(j+1) > 0 ) then
+            ! Two consecutive positive ones => first is lonesome molecule
             sps%beta_group(sv_i)%cat_index(1) = j
             sps%beta_group(sv_i)%ratio(1)     = beta_ratio
           end if
-        else
-          if ( molecules_temp(j-1) > 0) sv_i = sv_i + 1
+        else ! Negative one is group member
+          i = i + 1
           f => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_isotopeRatio, molecule=l, noError=.TRUE., &
             & config=fwdModelConf )
           if ( associated ( f ) ) beta_ratio = f%values(1,1)
-          i = sps%beta_group(sv_i)%n_elements + 1
-          sps%beta_group(sv_i)%n_elements   = i
           sps%beta_group(sv_i)%cat_index(i) = j
           sps%beta_group(sv_i)%ratio(i)     = beta_ratio
         end if
       end do
 
     end if
+
+    ! All that's needed for PFA is sps%mol_cat_index(sv_i), to get indices
+    ! for Beta_Path and dBetaD*
+    do j = noNonPFA+1, noMol
+      l = fwdModelConf%molecules(j)
+      !        if ( l == l_extinction ) CYCLE
+      sv_i = sv_i + 1
+      sps%mol_cat_index(sv_i) = j
+    end do
 
     ! Work out which spectroscopy we're going to need ------------------------
 
@@ -198,17 +214,16 @@ contains
         j = j + 1
         ! Skip if the next molecule is negative (indicates that this one is a
         ! parent)
-        if ( (sv_i < noNonPFA) .and. (fwdModelConf%molecules(sv_i) > 0) ) then
-          if (fwdModelConf%molecules(sv_i+1) < 0 ) then
-            ! sps%catalog springs into existence with %lines and %polarized null
-            call allocate_test ( sps%catalog(s,j)%lines, 0, &
-              & 'sps%catalog(?,?)%lines(0)', moduleName )
-            call allocate_test ( sps%catalog(s,j)%polarized, 0, &
-              & 'sps%catalog(?,?)%polarized(0)', moduleName )
-            cycle
-          end if
+        l = fwdModelConf%molecules(sv_i)
+        if ( l > 0 .and. fwdModelConf%molecules(sv_i+1) < 0 ) then
+          ! sps%catalog springs into existence with %lines and %polarized null
+          call allocate_test ( sps%catalog(s,j)%lines, 0, &
+            & 'sps%catalog(?,?)%lines(0)', moduleName )
+          call allocate_test ( sps%catalog(s,j)%polarized, 0, &
+            & 'sps%catalog(?,?)%polarized(0)', moduleName )
+          cycle
         end if
-        l = abs(fwdModelConf%molecules(sv_i))
+        l = abs(l)
         thisCatalogEntry => Catalog(FindFirst(catalog%molecule, l ) )
         sps%catalog(s,j) = thisCatalogEntry
         ! Don't deallocate them by mistake -- sps%catalog is a shallow copy
@@ -414,8 +429,8 @@ contains
     do i = 1, size(beta_group)
       call output ( 'Item ' )
       call output ( i, advance='yes' )
-      call dump ( beta_group(i)%cat_index(:beta_group(i)%n_elements), name='Cat_Index' )
-      call dump ( beta_group(i)%ratio(:beta_group(i)%n_elements), name='Ratio' )
+      call dump ( beta_group(i)%cat_index, name='Cat_Index' )
+      call dump ( beta_group(i)%ratio, name='Ratio' )
     end do
   end subroutine Dump_Beta_Group
 
@@ -461,6 +476,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.13  2004/08/03 22:46:30  vsnyder
+! Destroy my_catalog(start:end:2) instead of (-1:1:2)
+!
 ! Revision 2.12  2004/08/03 22:06:45  vsnyder
 ! Inching further toward PFA
 !
