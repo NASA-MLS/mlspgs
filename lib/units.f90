@@ -18,6 +18,7 @@ module UNITS
   real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197
   real(r8), parameter :: Deg2Rad = Pi/180.0_r8 ! Degrees-to-Radians
   real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
+  real(r8), parameter :: SqrtPi = 1.772453850905516027298167483341145182798
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -120,6 +121,9 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.17  2002/12/02 23:00:19  vsnyder
+! Add Sqrt Pi
+!
 ! Revision 2.16  2002/10/08 00:09:15  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
