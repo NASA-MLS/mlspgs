@@ -30,9 +30,9 @@ module ForwardModelInterface
     & F_INTEGRATIONGRID, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS,F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
   ! Now literals
-  use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, L_FOLDED, &
-    & L_LINEAR, L_LOSVEL, L_LOWER, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
-    & L_REFGPH, L_SCAN, L_SCGEOCALT, L_SPACERADIANCE, L_TEMPERATURE, L_UPPER,&
+  use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, &
+    & L_LINEAR, L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
+    & L_REFGPH, L_SCAN, L_SCGEOCALT, L_SPACERADIANCE, L_TEMPERATURE, &
     & L_VMR
   ! That's it for Init_Tables_Module
   use Lexer_Core, only: Print_Source
@@ -759,11 +759,11 @@ contains
         frequencies = pack ( signal%frequencies, &
           & forwardModelConfig%sigInfo(1)%channelIncluded )
         select case (signal%sideband)
-        case ( l_lower )
+        case ( -1 )
           frequencies = signal%lo - (signal%centerFrequency+frequencies)
-        case ( l_upper )
+        case ( +1 )
           frequencies = signal%lo + (signal%centerFrequency+frequencies)
-        case ( l_folded )
+        case ( 0 )
           call MLSMessage(MLSMSG_Error, ModuleName, &
             & 'Folded signal requested in forward model')
         case default
@@ -907,17 +907,13 @@ contains
         ! we just store what we have as we're using delta funciton channels
 
         if ( forwardModelConfig%do_freq_avg ) then
-          select case (signal%sideband)
-          case (l_lower)
-            centerFreq = signal%lo - signal%centerFrequency
-            sense = -1.0
-          case (l_upper)
-            centerFreq = signal%lo + signal%centerFrequency
-            sense = +1.0
-          case default              ! Put error message here later
+          if ( signal%sideband == 0 ) then
              call MLSMessage(MLSMSG_Error, ModuleName, &
               & 'Asked for folded in wrong place')
-          end select
+          else
+            sense = signal%sideband
+            centerFreq = signal%lo + sense * signal%centerFrequency
+          end if
           do i = 1, noUsedChannels
             ch = usedChannels(i)
             call Freq_Avg(frequencies,                           &
@@ -1307,6 +1303,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.78  2001/04/10 18:51:02  vsnyder
+! Finish removing sideband stuff
+!
 ! Revision 2.77  2001/04/10 10:15:48  zvi
 ! fixing bug conneced with convolve
 !
