@@ -52,6 +52,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     use MLSNumerics,                only: InterpolateValues
     use Molecules,                  only: L_H2O, L_O3, L_N2O, L_HNO3, L_N2, &
                                         & L_O2, spec_tags, FIRST_MOLECULE, &
+                                        & L_H2O_18, L_O_18_O, &
                                         & LAST_MOLECULE
     use Output_m,                   only: OUTPUT
 !   use PointingGrid_m,             only: POINTINGGRIDS
@@ -81,7 +82,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                        & L_LOSVEL,                                             &
                        & L_MASSMEANDIAMETERICE,                                & 
                        & L_MASSMEANDIAMETERWATER,                              &
-                       & L_NONE,                                               &
                        & L_NONE,                                               &
                        & L_PTAN,                                               &
                        & L_RADIANCE,                                           &
@@ -173,7 +173,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: THISSIDEBAND                        ! Loop counter for sidebands
     integer :: SIGIND                              ! Signal index, loop counter
     integer :: SPECTAG                             ! A single spectag
-    integer :: ispec                             ! species
+    integer :: nspec                               ! no of species in cloud fw model
+    integer :: ispec                               ! species index in cloud fw model
 
     integer :: iCloudHeight                        ! Index for Cloud Top Height
 
@@ -317,70 +318,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
  ! END of thinking sidebands
  !---------------------------
 
- !----------------------------------------------------------------------------------
- ! When using Bill's Spectral data, work out which spectroscopy we're going to need
- !----------------------------------------------------------------------------------
-    allocate ( My_Catalog(size(forwardModelConfig%molecules)), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-     & 'Unable to allocate my_catalog' )
-
-    do j = 1, size(forwardModelConfig%molecules)      ! Loop over species
-
-      ! Skip if the next molecule is negative (indicates that this one is a parent)
-      if ( (j < size(forwardModelConfig%molecules)) .and. (forwardModelConfig%molecules(j)>0)) then
-        if ( forwardModelConfig%molecules(j+1) < 0 ) then
-          nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
-          Call Allocate_test ( my_catalog(j)%lines, 0, &
-                            & 'my_catalog(?)%lines(0)', ModuleName )
-          CYCLE
-        end if
-      end if
-
-      Spectag = spec_tags( abs(forwardModelConfig%molecules(j)) )
-      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
-
-      if ( associated ( thisCatalogEntry%lines ) ) then
-        ! Now subset the lines according to the signal we're using
-        Call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
-                         &  'lineFlag', ModuleName )
-        lineFlag = .FALSE.
-        do k = 1, size ( thisCatalogEntry%lines )
-          thisLine => lines(thisCatalogEntry%lines(k))
-          if ( associated(thisLine%signals) ) then
-              doThis = any ( thisLine%signals == &
-                & signal%index )
-                ! If we're only doing one sideband, maybe we can remove some more lines
-                if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
-                & any( ( thisLine%sidebands == sidebandStart ) .or. &
-                & ( thisLine%sidebands == 0 ) )
-              lineFlag(k) = lineFlag(k) .or. doThis
-          end if
-        end do               ! End loop over lines
-
-        My_Catalog(j) = thisCatalogEntry
-        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake 
-
-        ! Check we have at least one line for this
-
-        if ( count(lineFlag) == 0 ) then
-          Call get_string ( lit_indices( abs(forwardModelConfig%molecules(j)) ), molName )
-          Call MLSMessage ( MLSMSG_Warning, ModuleName, &
-            & 'No relevant lines for '//trim(molName) )
-        endif
-        Call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
-          & 'my_catalog(?)%lines', ModuleName )
-        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
-        Call Deallocate_test ( lineFlag, 'lineFlag', ModuleName )
-      else
-        ! No lines for this species
-        my_catalog(j) = thisCatalogEntry
-        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
-        Call Allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
-          & ModuleName )
-      end if
-
-    enddo ! End of Loop over species
-
     ! --------------------------------------------
     ! Get the quantities we need from the vectors
     ! --------------------------------------------
@@ -486,10 +423,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !   make sure we have enough molecules
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
     endif
-    call allocate_test ( vmrArray,                                           &
-      & size(forwardModelConfig%molecules), noSurf,                          &
-      & 'vmrArray', ModuleName )
-    vmrarray = 0._r8
+    
     !---------------------------------------------------------
     ! Work out the closest instances from temperature
     !---------------------------------------------------------
@@ -497,57 +431,115 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     instance = closestInstances(maf)
     tLat = temp%template%geodLat(1,instance)    ! get latitude for each instance
 
+
+! now checking spectroscopy
     got = .false.
-    do i = 1, size(forwardModelConfig%molecules)
-      select case (forwardModelConfig%molecules(i))
-        case ( L_H2O ) 
-            ispec = 1
-            got(L_H2O) = .true.
-        case ( L_O3 )
-            ispec = 2
-            got(L_O3) = .true.
-        case ( L_N2O )
-            ispec = 3
-            got(L_N2O) = .true.
-        case ( L_HNO3 )
-            ispec = 4
-            got(L_HNO3) = .true.
-        case ( L_N2 )
-            ispec = 5
-            got(L_N2) = .true.
-        case ( L_O2 )
-            ispec = 6
-            got(L_O2) = .true.
+    nspec = size(forwardModelConfig%molecules)
+    call allocate_test ( vmrArray, nspec, noSurf, 'vmrArray', ModuleName )
+    vmrarray = 0._r8
+
+    allocate ( My_Catalog(size(forwardModelConfig%molecules)), stat=ier )
+    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+     & 'Unable to allocate my_catalog' )   
+     
+    do j = 1, nspec      ! Loop over species
+       Call get_string ( lit_indices( abs(forwardModelConfig%molecules(j)) ), molName )
+    
+    ! When using Bill's Spectral data, work out which spectroscopy we're going to need
+    if(forwardModelConfig%default_spectroscopy) then  !Bill's clear-sky spectroscopy
+    
+      ! Skip if the next molecule is negative (indicates that this one is a parent)
+      if ( (j < size(forwardModelConfig%molecules)) .and. (forwardModelConfig%molecules(j)>0)) then
+        if ( forwardModelConfig%molecules(j+1) < 0 ) then
+          nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+          Call Allocate_test ( my_catalog(j)%lines, 0, &
+                            & 'my_catalog(?)%lines(0)', ModuleName )
+          CYCLE
+        end if
+      end if
+
+      Spectag = spec_tags( abs(forwardModelConfig%molecules(j)) )
+      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
+
+      if ( associated ( thisCatalogEntry%lines ) ) then
+        ! Now subset the lines according to the signal we're using
+        Call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
+                         &  'lineFlag', ModuleName )
+        lineFlag = .FALSE.
+        do k = 1, size ( thisCatalogEntry%lines )
+          thisLine => lines(thisCatalogEntry%lines(k))
+          if ( associated(thisLine%signals) ) then
+              doThis = any ( thisLine%signals == &
+                & signal%index )
+                ! If we're only doing one sideband, maybe we can remove some more lines
+                if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
+                & any( ( thisLine%sidebands == sidebandStart ) .or. &
+                & ( thisLine%sidebands == 0 ) )
+              lineFlag(k) = lineFlag(k) .or. doThis
+          end if
+        end do               ! End loop over lines
+
+        My_Catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake 
+
+        ! Check we have at least one line for this
+
+        if ( count(lineFlag) == 0 ) then
+          Call MLSMessage ( MLSMSG_Warning, ModuleName, &
+            & 'No relevant lines for '//trim(molName) )
+        endif
+        Call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
+          & 'my_catalog(?)%lines', ModuleName )
+        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
+        Call Deallocate_test ( lineFlag, 'lineFlag', ModuleName )
+      else
+        ! No lines for this species
+        my_catalog(j) = thisCatalogEntry
+        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+        Call Allocate_test ( my_catalog(j)%lines, 0, 'my_catalog(?)%lines(0)', &
+          & ModuleName )
+      end if
+
+    else          ! cloudy-sky spectroscopy
+      select case (forwardModelConfig%molecules(j))
+        case ( L_H2O, L_O3, L_N2O ) 
+            ispec = 0
+            if(forwardModelConfig%molecules(j) == l_h2o) ispec = 1
+            if(forwardModelConfig%molecules(j) == l_o3) ispec = 2
+            if(forwardModelConfig%molecules(j) == l_n2o) ispec = 3
+            if(forwardModelConfig%molecules(j) == l_h2o) got(L_H2O) = .true.
+            if(forwardModelConfig%molecules(j) == l_o3) got(L_O3) = .true.
+
+         vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
+           & quantityType=l_vmr, molecule=forwardModelConfig%molecules(j) )
+         if (.not.ValidateVectorQuantity( vmr, stacked=.true., coherent=.true., &
+            & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,  &
+            & ModuleName, InvalidQuantity//'vmr' )
+
+            novmrSurf = vmr%template%nosurfs
+
+            call InterpolateValues ( &
+            & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
+            & reshape(vmr%values(:,instance),(/novmrSurf/)),  &    ! Old Y
+            & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
+            & vmrArray(ispec,:),                                  &    ! New Y
+            & 'Linear', extrapolate='Clamp' )
+
+        case ( L_N2, L_O2, L_H2O_18, L_O_18_O)
+          call MLSMessage(MLSMSG_Warning, ModuleName, &
+          &'cloud fwd model internally has this molecule: '//trim(molName))
         case default
-            print*,'cloud fwd model does not allow this molecule:', forwardModelConfig%molecules(i)
-          stop
+          call MLSMessage(MLSMSG_Error, ModuleName, &
+          &'cloud fwd model currently cannot accept this molecule: '//trim(molName))
       end select
+      
+    endif
+    enddo ! End of Loop over species
 
-      vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
-        & quantityType=l_vmr, molecule=forwardModelConfig%molecules(i) )
-      if (.not.ValidateVectorQuantity( vmr, stacked=.true., coherent=.true., &
-        & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,  &
-        & ModuleName, InvalidQuantity//'vmr' )
-
-       novmrSurf = vmr%template%nosurfs
-
-      call InterpolateValues ( &
-        & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
-        & reshape(vmr%values(:,instance),(/novmrSurf/)),  &    ! Old Y
-        & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
-        & vmrArray(ispec,:),                                  &    ! New Y
-        & 'Linear', extrapolate='Clamp' )
-
-    end do
-
-    if ( .not. got(l_n2o)) vmrArray(3,:) = 0._r8
-    if ( .not. got(l_hno3)) vmrArray(4,:) = 0._r8
-    if ( .not. got(l_n2)) vmrArray(5,:) = 0.805_r8
-    if ( .not. got(l_o2)) vmrArray(6,:) = 0.2095_r8
 
     if ( .not. got(l_h2o) .or. .not. got(l_o3) ) then
     !make sure we have at least two molecules h2o and o3. 
-      call MLSMessage(MLSMSG_Error, ModuleName,'Missing the required molecules')
+      call MLSMessage(MLSMSG_Error, ModuleName,'Missing molecules H2O or O3 in cloud FM')
     endif
      
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
@@ -748,7 +740,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & noFreqs,                                                             &
       & noSurf,                                                              & 
       & noMifs,                                                              &
-      & size(ForwardModelConfig%molecules),                                  &
+      & nspec,                                  &
       & ForwardModelConfig%no_cloud_species,                                 &
       & ForwardModelConfig%no_model_surfs,                                   &
       & frequencies/1e3_r8,                                                  &
@@ -1080,6 +1072,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.111  2003/04/03 01:18:41  dwu
+! allow molecules in random order
+!
 ! Revision 1.110  2003/04/03 01:15:51  dwu
 ! allow molecules in random order
 !
