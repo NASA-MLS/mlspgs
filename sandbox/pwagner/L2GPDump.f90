@@ -17,7 +17,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Warning, &
      & MLSMessage
-   use MLSStrings, only: GetStringElement, NumStringElements
+   use MLSStringLists, only: GetStringElement, NumStringElements
    use PCFHdr, only: GlobalAttributes
    
    IMPLICIT NONE
@@ -190,6 +190,9 @@ END PROGRAM L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.4  2004/07/20 22:42:40  pwagner
+! Works with newer toolkit 5.2.11
+!
 ! Revision 1.3  2004/03/03 19:10:38  pwagner
 ! Knows to write error messages to stdout
 !
