@@ -40,6 +40,7 @@ contains ! =====     Public Procedures     =============================
       & F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask, F_EARTHRADIUS, &
       & F_EXPLICITVALUES, F_EXTINCTION, &
       & F_FRACTION, F_GEOCALTITUDEQUANTITY, F_H2OQUANTITY, &
+      & F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREZERO, F_INSTANCES, F_INTEGRATIONTIME, &
       & F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
       & F_LENGTHSCALE, F_LOSQTY, F_LSB, F_LSBFRACTION, &
@@ -52,7 +53,8 @@ contains ! =====     Public Procedures     =============================
       & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, F_SKIPMASK, &
       & F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
       & F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
-      & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, &
+      & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPERATUREPRECISIONQUANTITY, &
+      & F_TEMPLATE, F_TNGTECI, &
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
@@ -214,6 +216,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: EARTHRADIUSQTY
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     type (vectorValue_T), pointer :: H2OQUANTITY
+    type (vectorValue_T), pointer :: H2OPRECISIONQUANTITY
     type (vectorValue_T), pointer :: LOSQTY
     type (vectorValue_T), pointer :: LSB
     type (vectorValue_T), pointer :: LSBFRACTION
@@ -232,6 +235,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: SOURCEQUANTITY
     type (vectorValue_T), pointer :: SYSTEMPQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
+    type (vectorValue_T), pointer :: TEMPERATUREPRECISIONQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
     type (vectorValue_T), pointer :: PHITANQUANTITY
     type (vectorValue_T), pointer :: PTANQUANTITY
@@ -268,6 +272,8 @@ contains ! =====     Public Procedures     =============================
     integer :: GSON                     ! Descendant of Son
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
+    integer :: H2OPRECISIONQUANTITYINDEX         ! in the quantities database
+    integer :: H2OPRECISIONVECTORINDEX           ! In the vector database
     integer :: I, J                     ! Loop indices for section, spec, expr
     integer :: GLOBALUNIT               ! To go into the vector
     logical :: IGNOREZERO               ! Don't sum chi^2 at values of noise = 0
@@ -341,6 +347,8 @@ contains ! =====     Public Procedures     =============================
     integer :: SYSTEMPVECTORINDEX       ! in the vector database
     integer :: TEMPERATUREQUANTITYINDEX ! in the quantities database
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
+    integer :: TEMPERATUREPRECISIONQUANTITYINDEX ! in the quantities database
+    integer :: TEMPERATUREPRECISIONVECTORINDEX   ! In the vector database
     integer :: TEMPLATEINDEX            ! In the template database
     logical :: TIMING
     integer :: TNGTECIQUANTITYINDEX     ! In the quantities database
@@ -535,6 +543,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_h2oQuantity ) ! For hydrostatic or rhi
             h2oVectorIndex = decoration(decoration(subtree(1,gson)))
             h2oQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_h2oPrecisionQuantity ) ! For rhi precision
+            h2oPrecisionVectorIndex = decoration(decoration(subtree(1,gson)))
+            h2oPrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_dontMask )
             dontMask = get_boolean ( gson )
           case ( f_ignoreZero )
@@ -673,6 +684,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_temperatureQuantity ) ! For hydrostatic or rhi
             temperatureVectorIndex = decoration(decoration(subtree(1,gson)))
             temperatureQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_temperaturePrecisionQuantity ) ! For rhi precision
+            temperaturePrecisionVectorIndex = decoration(decoration(subtree(1,gson)))
+            temperaturePrecisionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_usb ) ! For folding
             usbVectorIndex = decoration(decoration(subtree(1,gson)))
             usbQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -964,35 +978,89 @@ contains ! =====     Public Procedures     =============================
               call Announce_error ( key, No_Error_code, &
               & 'Missing a required field to fill rhi'  )
             else
-              h2oQuantity => GetVectorQtyByTemplateIndex( &
-                & vectors(h2oVectorIndex), h2oQuantityIndex)
-              temperatureQuantity => GetVectorQtyByTemplateIndex( &
-                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
-              if ( .not. ValidateVectorQuantity(h2oQuantity, &
-                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                & 'The h2oQuantity is not a vmr for the H2O molecule'  )
-              else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
-                & quantityType=(/l_temperature/)) ) then
-                call Announce_Error ( key, No_Error_code, &
-                & 'The temperatureQuantity is not a temperature'  )
-              ! This is not the right way to do an invert fill
-              ! The first quantity named on the fill line must
-              ! _always_ be the one getting filled according to
-              ! the pattern '[verb] [direct-object] [modifier(s)]'
-              ! see case l_vmr below for how to do this
-              !else if ( invert ) then
-              !  call FillRHIFromH2O ( key, h2oquantity, &
-              !  & Quantity, temperatureQuantity, &
-              !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
-              !  & .true., &   ! Mark Undefined values?
-              !  & invert )    ! invert rather than convert?
-              else
-                call FillRHIFromH2O ( key, quantity, &
-                & h2oQuantity, temperatureQuantity, &
-                & dontMask, ignoreZero, ignoreNegative, interpolate, &
-                & .true., &   ! Mark Undefined values?
-                & invert )    ! invert rather than convert?
+              if ( any(got( &
+                & (/f_h2oPrecisionquantity, f_temperaturePrecisionQuantity/) &
+                & )) ) then ! precision
+                if ( .not. any(got( &
+                  & (/f_h2oPrecisionquantity, f_temperaturePrecisionQuantity/) &
+                  & )) ) then
+                  call Announce_error ( key, No_Error_code, &
+                    & 'Missing a required field to fill rhi precision'  )
+                else
+                  h2oQuantity => GetVectorQtyByTemplateIndex( &
+                    & vectors(h2oVectorIndex), h2oQuantityIndex)
+                  temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                    & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+                  h2oPrecisionQuantity => GetVectorQtyByTemplateIndex( &
+                    & vectors(h2oPrecisionVectorIndex), h2oPrecisionQuantityIndex)
+                  temperaturePrecisionQuantity => GetVectorQtyByTemplateIndex( &
+                    & vectors(temperaturePrecisionVectorIndex), temperaturePrecisionQuantityIndex)
+                  if ( .not. ValidateVectorQuantity(h2oQuantity, &
+                    & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                    call Announce_Error ( key, No_Error_code, &
+                      & 'The h2oQuantity is not a vmr for the H2O molecule'  )
+                  else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                    & quantityType=(/l_temperature/)) ) then
+                    call Announce_Error ( key, No_Error_code, &
+                      & 'The temperatureQuantity is not a temperature'  )
+                  else if ( .not. ValidateVectorQuantity(h2oPrecisionQuantity, &
+                    & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                    call Announce_Error ( key, No_Error_code, &
+                      & 'The h2oPrecisionQuantity is not a vmr for the H2O molecule'  )
+                  else if ( .not. ValidateVectorQuantity(temperaturePrecisionQuantity, &
+                    & quantityType=(/l_temperature/)) ) then
+                    call Announce_Error ( key, No_Error_code, &
+                      & 'The temperaturePrecisionQuantity is not a temperature'  )
+                    ! This is not the right way to do an invert fill
+                    ! The first quantity named on the fill line must
+                    ! _always_ be the one getting filled according to
+                    ! the pattern '[verb] [direct-object] [modifier(s)]'
+                    ! see case l_vmr below for how to do this
+                    !else if ( invert ) then
+                    !  call FillRHIFromH2O ( key, h2oquantity, &
+                    !  & Quantity, temperatureQuantity, &
+                    !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                    !  & .true., &   ! Mark Undefined values?
+                    !  & invert )    ! invert rather than convert?
+                  else
+                    call FillRHIPrecisionFromH2O ( key, quantity, &
+                      & h2oPrecisionQuantity, temperaturePrecisionQuantity, h2oQuantity, temperatureQuantity, &
+                      & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                      & .true., &   ! Mark Undefined values?
+                      & invert )    ! invert rather than convert?
+                  end if
+                end if
+              else ! value
+                h2oQuantity => GetVectorQtyByTemplateIndex( &
+                  & vectors(h2oVectorIndex), h2oQuantityIndex)
+                temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                  & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+                if ( .not. ValidateVectorQuantity(h2oQuantity, &
+                  & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                  call Announce_Error ( key, No_Error_code, &
+                    & 'The h2oQuantity is not a vmr for the H2O molecule'  )
+                else if ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                  & quantityType=(/l_temperature/)) ) then
+                  call Announce_Error ( key, No_Error_code, &
+                    & 'The temperatureQuantity is not a temperature'  )
+                  ! This is not the right way to do an invert fill
+                  ! The first quantity named on the fill line must
+                  ! _always_ be the one getting filled according to
+                  ! the pattern '[verb] [direct-object] [modifier(s)]'
+                  ! see case l_vmr below for how to do this
+                  !else if ( invert ) then
+                  !  call FillRHIFromH2O ( key, h2oquantity, &
+                  !  & Quantity, temperatureQuantity, &
+                  !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                  !  & .true., &   ! Mark Undefined values?
+                  !  & invert )    ! invert rather than convert?
+                else
+                  call FillRHIFromH2O ( key, quantity, &
+                    & h2oQuantity, temperatureQuantity, &
+                    & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                    & .true., &   ! Mark Undefined values?
+                    & invert )    ! invert rather than convert?
+                end if
               end if
             end if
           case ( l_vmr )
@@ -2993,6 +3061,422 @@ contains ! =====     Public Procedures     =============================
         end if
       end function C
 
+!MJF
+      ! ------------------------------------- FillRHIPrecisionFromH2O ----
+    subroutine FillRHIPrecisionFromH2O ( key, quantity, &
+     & sourcePrecisionQuantity, temperaturePrecisionQuantity, sourceQuantity, temperatureQuantity, &
+     & dontMask, ignoreZero, ignoreNegative, interpolate, &
+     & markUndefinedValues, invert )
+      ! For precisions:
+      ! Convert h2o vmr to %RHI for all instances, channels, surfaces
+      ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
+      !  humidity measurement: Method and validation" Read et. al. 
+      !  J. Geoph. Res. Dec. 2001 (106) D23)
+
+      !  Method:
+      ! (1) straight convert--all quantities must have the same shape
+      !     (strictly we assume they have _all_ the same geolocations)
+      ! (2) interpolate--all quantities may have different shapes
+      !     (the interpolation will be along the vertical coordinate only)
+      !     I.e., for xQuantity (where x can be h2o or temperature)
+      !     if NoChans(xQuantity) /= NoChans(Quantity)
+      !        => use only xQuantity(channel==1)
+      !     if NoInstances(xQuantity) /= NoInstances(Quantity)
+      !        => use only xQuantity(instance==1)
+      !
+      ! (3) Don't know how to invert precisions
+      integer, intent(in) :: key          ! For messages
+      ! Actually, the meaning of the next two is reversed if invert is TRUE)
+      type (VectorValue_T), intent(inout) :: QUANTITY ! (rhi) Quantity to fill
+      type (VectorValue_T), intent(in) :: sourcePrecisionQuantity ! vmr (unless invert)
+      type (VectorValue_T), intent(in) :: temperaturePrecisionQuantity ! T(zeta)
+      type (VectorValue_T), intent(in) :: sourceQuantity ! vmr (unless invert)
+      type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
+  !   type (VectorValue_T), intent(in) :: refGPHQuantity ! zeta
+      logical, intent(in)           ::    dontMask    ! Use even masked values
+      logical, intent(in)           ::    ignoreZero  ! Ignore 0 values of h2o
+      logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
+      logical, intent(in)           ::    interpolate ! If VGrids or HGrids differ
+      logical, intent(in)           ::    markUndefinedValues ! as UNDEFINED_VALUE
+      logical, intent(in)           ::    invert      ! %RHI -> vmr if TRUE
+
+      ! Local variables
+      integer ::                          Channel     ! Channel loop counter    
+      integer ::                          Chan_h2oPrecision    ! Channel loop counter    
+      integer ::                          Chan_TPrecision      ! Channel loop counter    
+      integer ::                          Chan_h2o    ! Channel loop counter    
+      integer ::                          Chan_T      ! Channel loop counter    
+      logical, parameter ::               DEEBUG_RHI = .false.
+      integer                          :: dim
+      integer ::                          I           ! Instances
+      integer ::                          I_H2OPrecision       ! Instance num for values
+      integer ::                          I_TPrecision         ! Instance num for values
+      integer ::                          I_H2O       ! Instance num for values
+      integer ::                          I_T         ! Instance num for values
+      integer ::                          invs        ! 1 if invert, else -1
+      integer ::                          QINDEX                                
+      integer ::                          N           ! Num. of summed values   
+      logical                          :: matched_h2oPrecision_channels
+      logical                          :: matched_h2oPrecision_instances
+      logical                          :: matched_h2o_channels
+      logical                          :: matched_h2o_instances
+      logical                          :: matched_sizes
+      logical                          :: matched_surfs
+      logical                          :: matched_TPrecision_channels
+      logical                          :: matched_TPrecision_instances
+      logical                          :: matched_T_channels
+      logical                          :: matched_T_instances
+      integer ::                          S           ! Surface loop counter    
+      integer ::                          S_H2OPrecision       ! Instance num for surfs
+      integer ::                          S_H2O       ! Instance num for surfs
+      integer ::                          S_RHI       ! Instance num for surfs
+      integer ::                          S_TPrecision         ! Instance num for surfs
+      integer ::                          S_T         ! Instance num for surfs
+      logical ::                          skipMe                                
+      real (r8) ::                        TPrecision
+      real (r8) ::                        T
+      character(len=*), parameter ::      VMR_UNITS = 'vmr'
+      integer ::                          VMR_UNIT_CNV
+      logical ::                          wereAnySkipped
+      real (r8) ::                        df_db       ! RHi deriv wrt H2O
+      real (r8) ::                        df_dT       ! RHi deriv wrt T
+      ! These automatic arrays could cause trouble later
+      ! You may consider declaring them as pointers and
+      ! calling allocate_test and deallocate_test
+      real (r8), dimension(quantity%template%noSurfs) :: &
+       &                                  zeta, TPrecisionofZeta, H2OPrecisionofZeta, TofZeta, H2OofZeta
+      real (r8), dimension(TemperaturePrecisionquantity%template%noSurfs) :: &
+       &                                  zetaTemperaturePrecision, oldTemperaturePrecision
+      real (r8), dimension(sourcePrecisionQuantity%template%noSurfs) :: &
+       &                                  zetaH2oPrecision, oldH2oPrecision
+      real (r8), dimension(Temperaturequantity%template%noSurfs) :: &
+       &                                  zetaTemperature, oldTemperature
+      real (r8), dimension(sourceQuantity%template%noSurfs) :: &
+       &                                  zetaH2o, oldH2o
+      ! Executable statements
+      ! Let any undefined values be so marked (but not necessarily masked)
+      if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
+      ! Will we convert %RHI to vmr?
+      if ( invert ) then
+       call Announce_Error ( key, No_Error_code, &
+        & ' FillRHIPrecisionFromH2O unable to invert' )
+       return
+      end if
+!!$      if ( invert ) then
+!!$        invs = 1
+!!$      else
+        invs = -1
+!!$      end if
+      ! Do we need to internally convert the vmr units?
+      if ( VMR_UNITS == 'ppmv' ) then
+        vmr_unit_cnv = 6
+      else if ( VMR_UNITS == 'ppbv' ) then
+        vmr_unit_cnv = 9
+      else
+        vmr_unit_cnv = 0
+      end if
+      ! Check that all is well
+      if ( invert .and. interpolate ) then
+       call Announce_Error ( key, No_Error_code, &
+        & ' FillRHIPrecisionFromH2O unable to invert and interpolate simultaneously' )
+       return
+      end if
+      matched_sizes = .true.
+      do dim=1, 2
+        matched_sizes = matched_sizes .and. &
+        & .not. any( size(Quantity%values,dim) /= &
+        &(/ size(sourcePrecisionQuantity%values,dim), &
+        & size(temperaturePrecisionQuantity%values,dim), &
+        & size(sourceQuantity%values,dim), &
+        & size(temperatureQuantity%values,dim) /)&
+        & )
+      end do
+      if ( .not. (matched_sizes .or. interpolate) ) then
+       call Announce_Error ( key, No_Error_code, &
+        & 'Incompatible quantities in FillRHIPrecisionFromH2O--' //&
+        & '(unless interpolating, all must have same shape)' )
+       return
+      end if
+      matched_surfs = .true.
+      matched_surfs = matched_surfs .and. &
+       & .not. any( Quantity%template%noSurfs /= &
+       &(/ sourcePrecisionQuantity%template%noSurfs, &
+       & temperaturePrecisionQuantity%template%noSurfs, &
+       & sourceQuantity%template%noSurfs, &
+       & temperatureQuantity%template%noSurfs /)&
+       & )
+      if ( .not. (matched_surfs .or. interpolate) ) then
+       call Announce_Error ( key, No_Error_code, &
+        & 'Different vertical coords in FillRHIPrecisionFromH2O--' //&
+        & '(unless interpolating, all must be on the same VGrid)' )
+       return
+      end if
+      matched_h2oPrecision_channels = &
+       &   (sourcePrecisionQuantity%template%noChans == Quantity%template%noChans)
+      matched_h2oPrecision_instances = &
+       &   (sourcePrecisionQuantity%template%noInstances == Quantity%template%noInstances)
+      matched_TPrecision_channels = &
+       &   (TemperaturePrecisionQuantity%template%noChans == Quantity%template%noChans)
+      matched_TPrecision_instances = &
+       &   (TemperaturePrecisionQuantity%template%noInstances == Quantity%template%noInstances)
+      matched_h2o_channels = &
+       &   (sourceQuantity%template%noChans == Quantity%template%noChans)
+      matched_h2o_instances = &
+       &   (sourceQuantity%template%noInstances == Quantity%template%noInstances)
+      matched_T_channels = &
+       &   (TemperatureQuantity%template%noChans == Quantity%template%noChans)
+      matched_T_instances = &
+       &   (TemperatureQuantity%template%noInstances == Quantity%template%noInstances)
+      wereAnySkipped = .false.
+      ! Now let's do the actual conversion
+      do i=1, quantity%template%noInstances
+        if ( quantity%template%coherent ) then
+          s_rhi = 1
+        else
+          s_rhi = i
+        end if
+        if ( sourcePrecisionQuantity%template%coherent ) then
+          s_h2oPrecision = 1
+        else
+          s_h2oPrecision = i
+        end if
+        if ( temperaturePrecisionquantity%template%coherent ) then
+          s_tPrecision = 1
+        else
+          s_tPrecision = i
+        end if
+        if ( sourceQuantity%template%coherent ) then
+          s_h2o = 1
+        else
+          s_h2o = i
+        end if
+        if ( temperaturequantity%template%coherent ) then
+          s_t = 1
+        else
+          s_t = i
+        end if
+        ! zeta must be in log(hPa) units
+        if ( quantity%template%verticalCoordinate == l_pressure ) then 
+          zeta = -log10 ( quantity%template%surfs(:,s_rhi) )             
+        else
+          zeta = quantity%template%surfs(:,s_rhi)                        
+        end if
+        if ( interpolate .and. .not. matched_h2oPrecision_instances ) then
+          i_h2oPrecision = 1
+        else
+          i_h2oPrecision = i
+        end if
+        if ( interpolate .and. .not. matched_TPrecision_instances ) then
+          i_TPrecision = 1
+        else
+          i_TPrecision = i
+        end if
+        if ( interpolate .and. .not. matched_h2o_instances ) then
+          i_h2o = 1
+        else
+          i_h2o = i
+        end if
+        if ( interpolate .and. .not. matched_T_instances ) then
+          i_T = 1
+        else
+          i_T = i
+        end if
+        if ( sourcePrecisionQuantity%template%verticalCoordinate == l_pressure ) then 
+          zetah2oPrecision = -log10 ( sourcePrecisionQuantity%template%surfs(:,s_h2o) )             
+        else                                                           
+          zetah2oPrecision = sourcePrecisionQuantity%template%surfs(:,s_h2o)            
+        end if
+        if ( TemperaturePrecisionquantity%template%verticalCoordinate == l_pressure ) then 
+          zetaTemperaturePrecision = -log10 ( TemperaturePrecisionquantity%template%surfs(:,s_T) )             
+        else                                                           
+          zetaTemperaturePrecision = TemperaturePrecisionquantity%template%surfs(:,s_T)            
+        end if
+        if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
+          zetah2o = -log10 ( sourceQuantity%template%surfs(:,s_h2o) )             
+        else                                                           
+          zetah2o = sourceQuantity%template%surfs(:,s_h2o)            
+        end if
+        if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
+          zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )             
+        else                                                           
+          zetaTemperature = Temperaturequantity%template%surfs(:,s_T)            
+        end if
+        N = 0
+        do Channel=1, quantity%template%noChans
+          if ( interpolate .and. .not. matched_h2oPrecision_channels ) then
+            Chan_h2oPrecision = 1
+          else
+            Chan_h2oPrecision = Channel
+          end if
+          if ( interpolate .and. .not. matched_TPrecision_channels ) then
+            Chan_TPrecision = 1
+          else
+            Chan_TPrecision = Channel
+          end if
+          if ( interpolate .and. .not. matched_h2o_channels ) then
+            Chan_h2o = 1
+          else
+            Chan_h2o = Channel
+          end if
+          if ( interpolate .and. .not. matched_T_channels ) then
+            Chan_T = 1
+          else
+            Chan_T = Channel
+          end if
+          if ( interpolate ) then
+            do s=1, sourcePrecisionQuantity%template%noSurfs
+              qIndex = Chan_h2oPrecision + (s-1)*sourcePrecisionQuantity%template%noChans
+              oldH2oPrecision(s) = sourcePrecisionQuantity%values(qIndex, i_h2oPrecision)
+            end do
+            ! Know the following about the procedure we will call:
+            ! First pair of args are old(X,Y), next pair are new(X,Y)
+            ! We want newY(newX) via linear interp. w/o extrapolating
+            ! and mark undefined values among oldY with UNDEFINED_VALUE
+            call InterpolateValues( zetah2oPrecision, oldH2oPrecision, &
+             & zeta, H2OPrecisionofZeta, &
+             & 'Linear', extrapolate='Constant', &
+             & badValue=real(UNDEFINED_VALUE, r8), &
+             & missingRegions=.TRUE. )
+            do s=1, TemperaturePrecisionquantity%template%noSurfs
+              qIndex = Chan_TPrecision + (s-1)*TemperaturePrecisionquantity%template%noChans
+              oldTemperaturePrecision(s) = TemperaturePrecisionQuantity%values(qIndex, i_TPrecision)
+            end do
+            call InterpolateValues( zetaTemperaturePrecision, oldTemperaturePrecision, &
+             & zeta, TPrecisionofZeta, &
+             & 'Linear', extrapolate='Constant', &
+             & badValue=real(UNDEFINED_VALUE, r8), &
+             & missingRegions=.TRUE. )
+            do s=1, sourceQuantity%template%noSurfs
+              qIndex = Chan_h2o + (s-1)*sourceQuantity%template%noChans
+              oldH2o(s) = sourceQuantity%values(qIndex, i_h2o)
+            end do
+            ! Know the following about the procedure we will call:
+            ! First pair of args are old(X,Y), next pair are new(X,Y)
+            ! We want newY(newX) via linear interp. w/o extrapolating
+            ! and mark undefined values among oldY with UNDEFINED_VALUE
+            call InterpolateValues( zetah2o, oldH2o, &
+             & zeta, H2OofZeta, &
+             & 'Linear', extrapolate='Constant', &
+             & badValue=real(UNDEFINED_VALUE, r8), &
+             & missingRegions=.TRUE. )
+            do s=1, Temperaturequantity%template%noSurfs
+              qIndex = Chan_T + (s-1)*Temperaturequantity%template%noChans
+              oldTemperature(s) = TemperatureQuantity%values(qIndex, i_T)
+            end do
+            call InterpolateValues( zetaTemperature, oldTemperature, &
+             & zeta, TofZeta, &
+             & 'Linear', extrapolate='Constant', &
+             & badValue=real(UNDEFINED_VALUE, r8), &
+             & missingRegions=.TRUE. )
+          else
+            do s=1, quantity%template%noSurfs
+              N = N + 1
+              qIndex = Channel + (s-1)*quantity%template%noChans
+              H2OPrecisionofZeta(s) = sourcePrecisionQuantity%values(qIndex, i)
+              TPrecisionofZeta(s) = TemperaturePrecisionQuantity%values(qIndex, i)
+              H2OofZeta(s) = sourceQuantity%values(qIndex, i)
+              TofZeta(s) = TemperatureQuantity%values(qIndex, i)
+            end do
+          end if
+          do s=1, quantity%template%noSurfs
+            N = N + 1
+            qIndex = Channel + (s-1)*quantity%template%noChans
+            skipMe = .false.
+            if ( .not. interpolate) then
+             skipMe = skipMe .or. &
+             & .not. dontMask .and. ( &
+             &   isVectorQtyMasked(sourcePrecisionQuantity, qIndex, i) .or. &
+             &   isVectorQtyMasked(temperaturePrecisionQuantity, qIndex, i) .or. &
+             &   isVectorQtyMasked(sourceQuantity, qIndex, i) .or. &
+             &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
+             & )
+            end if
+            skipMe = skipMe .or. &
+            & .not. dontMask .and. ( &
+            & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
+            & .or. (ignoreZero .and. H2OofZeta(s) == 0.0 ) &
+            & )
+!!$            skipMe = skipMe .or. &
+!!$            & .not. dontMask .and. ( &
+!!$            & (ignoreNegative .and. H2OPrecisionofZeta(s) < 0.0 ) &
+!!$            & .or. (ignoreZero .and. H2OPrecisionofZeta(s) == 0.0 ) &
+!!$            & .or. (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
+!!$            & .or. (ignoreZero .and. H2OofZeta(s) == 0.0 ) &
+!!$            & )
+            ! But skip no matter what else if temperature illegal
+            skipMe = skipMe .or. TofZeta(s) <= 0.0
+            if ( .not. skipMe ) then
+              T = TofZeta(s)
+              df_db = exp(invs*( &
+               & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
+               & + &
+               & 3.56654*log(T/273.16) &
+               & ))
+              df_dT = H2OofZeta(s) * exp(invs*( &
+               & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
+               & + &
+               & 3.56654*log(T/273.16) &
+               & )) &
+               & * invs * ( dC_dT(T) * log(10.) + 3.56654 / T )
+              Quantity%values(qIndex, i) = sqrt (&
+               & ( H2OPrecisionofZeta(s) * df_db )**2 &
+               & + ( TPrecisionofZeta(s) * df_dT )**2 &
+               & )
+            end if
+            wereAnySkipped = wereAnySkipped .or. skipMe
+          end do
+        end do
+      end do
+      if ( DEEBUG_RHI ) then
+        call output('rhi Num. instances: ', advance='no')
+        if ( invert ) then
+          call output(sourceQuantity%template%noInstances, advance='yes')
+        else
+          call output(quantity%template%noInstances, advance='yes')
+        end if
+        call output('  size(surfs,2) ', advance='no')
+        call output(size(quantity%template%surfs,2), advance='yes')
+        call output('Were any rhi left undefined? ', advance='no')
+        call output(wereAnySkipped, advance='yes')
+        call dump(zeta, 'zeta(-log hPa)')
+        do s=1, quantity%template%noSurfs
+          if ( invert ) then
+            zeta(s) = 1000000*Quantity%values(s,1)
+          else
+            zeta(s) = 1000000*sourceQuantity%values(s,1)
+          end if
+        end do
+        call dump(zeta, 'H2O(ppmv)')
+        call dump(TemperatureQuantity%values(:,1), 'Temperature(K)')
+        if ( invert ) then
+          call dump(sourceQuantity%values(:,1), 'RHI(%)')
+        else
+          call dump(Quantity%values(:,1), 'RHI(%)')
+        end if
+      end if
+    end subroutine FillRHIPrecisionFromH2O
+
+      ! Properly belongs in FillRHIPrecisionFromH2O, but that would make two levels
+      function dC_dT ( T )
+        ! As found in ref.
+        real(r8), intent(in)   :: T
+        real(r8)               :: dC_dT
+        ! Local
+        real(r8), parameter    :: a0 = -1.2141649d0
+        real(r8), parameter    :: a1 = 9.09718d0
+        real(r8), parameter    :: a2 = 0.876793d0
+        real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
+        !
+        if ( T > 0.d0 ) then
+          dC_dT = a1*(273.16/T**2) - a2/273.16
+!!$          C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
+        else
+          dC_dT = ILLEGALTEMP
+!!$          C = ILLEGALTEMP
+        end if
+      end function dC_dT
+
+!MJF
     ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
     subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
       & sysTemp, nbw, integrationTime )
@@ -3900,6 +4384,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.150  2002/10/01 18:28:04  mjf
+! New Fill for RHi precision including T error.
+!
 ! Revision 2.149  2002/09/26 20:41:04  vsnyder
 ! Get Omega from Geometry instead of Units -- that's where it really belongs
 !
