@@ -153,6 +153,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: MinInst                  ! lower bound of instance
     integer :: MaxInst                  ! upper bound of instance
     integer :: nfine                    ! no of fine resolution grids
+    integer :: nNear                    ! no of nearest profiles
     integer :: status                   ! allocation status 
     integer :: SIDEBAND                 ! Loop index
     integer :: SIDEBANDSTART            ! For sideband loop
@@ -728,17 +729,25 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       !-------------------------------------------------------------------
       ! we use 100 times better resolution to compute weighting functions
       !-------------------------------------------------------------------
-      nfine=100
-      allocate( phi_fine(nfine*noInstances), stat=status )
-      allocate( z_fine(nfine*noInstances), stat=status )
-      allocate( zp_fine(nfine*noInstances), stat=status )
-      allocate( s_fine(nfine*noInstances), stat=status )
-      allocate( w_fine(nfine*noInstances), stat=status )
-      allocate( ds_fine(nfine*noInstances), stat=status )
+      nfine = 100
+      nNear = 5
+      ! only nearest instances are mattered
+        minInst = instance - (nNear-1)/2
+        maxInst = instance + (nNear-1)/2
+         if(minInst < 1) minInst = 1
+         if(maxInst > noInstances) maxInst = noInstances
+         
+      allocate( phi_fine(nfine*nNear), stat=status )
+      allocate( z_fine(nfine*nNear), stat=status )
+      allocate( zp_fine(nfine*nNear), stat=status )
+      allocate( s_fine(nfine*nNear), stat=status )
+      allocate( w_fine(nfine*nNear), stat=status )
+      allocate( ds_fine(nfine*nNear), stat=status )
       
-      do i=1,noInstances*nfine
-       phi_fine(i) = minval(state_ext%template%phi(1,:)) + (i-1._r8)/nfine/noInstances* &
-         & (maxval(state_ext%template%phi(1,:)) - minval(state_ext%template%phi(1,:)))
+      do i=1,nNear*nfine
+       phi_fine(i) = minval(state_ext%template%phi(1,minInst:maxInst)) + &
+         & (i-1._r8)/nfine/nNear*(maxval(state_ext%template%phi(1,minInst:maxInst)) - &
+         & minval(state_ext%template%phi(1,minInst:maxInst)))
       end do
 
       !----------------------------------
@@ -791,12 +800,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         ! determine weights by the length inside each state domain
         !----------------------------------------------------------
         
-        ! only nearest instances are mattered
-        minInst = instance - 2
-        maxInst = instance + 2
-         if(minInst < 1) minInst = 1
-         if(maxInst > noInstances) maxInst = noInstances
-         
          do i = minInst,maxInst             ! loop over closer profiles
          do j = 1,noCldSurf               ! loop over cloudQty surface
          do k = 1,nfine*noInstances       ! sum up all the lengths
@@ -891,6 +894,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.78  2001/11/06 19:52:42  dwu
+! speed up Jacobian calculation for high tangent heights
+!
 ! Revision 1.77  2001/11/06 18:28:06  dwu
 ! some cleanups
 !
