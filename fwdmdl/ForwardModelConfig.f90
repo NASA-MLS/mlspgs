@@ -39,7 +39,6 @@ module ForwardModelConfig
     logical :: Do_Freq_Avg    ! Do Frequency averaging
     integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
-    real(r8) :: The_Freq      ! Frequency to use if .not. do_freq_avg
     type (Signal_T), dimension(:), pointer :: signals=>NULL()
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
@@ -135,8 +134,6 @@ contains
         call output ( database(i)%spect_der, advance='yes' )
         call output ( '  Temp_der:' )
         call output ( database(i)%temp_der, advance='yes' )
-        call output ( '  The_freq:' )
-        call output ( database(i)%the_freq, advance='yes' )
         call output ( '  Molecules: ', advance='yes' )
         do j = 1, size(database(i)%molecules)
           call output ( '    ' )
@@ -162,6 +159,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.5  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 1.4  2001/04/21 01:08:57  vsnyder
 ! Deallocate Molecules and MoleculeDerivatives in DestroyFWMConfigDatabase
 !
