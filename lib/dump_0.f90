@@ -9,8 +9,8 @@ private
 public :: AfterSub, DUMP
 
 interface DUMP
-  module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_2D_DOUBLE
-  module procedure DUMP_2D_INTEGER, DUMP_3D_DOUBLE
+  module procedure DUMP_1D_DOUBLE, DUMP_1D_INTEGER, DUMP_1D_LOGICAL
+  module procedure DUMP_2D_DOUBLE, DUMP_2D_INTEGER, DUMP_3D_DOUBLE
 end interface
 
 !---------------------------- RCS Ident Info ---------------------------
@@ -63,6 +63,26 @@ contains
       end do
     end if
   end subroutine DUMP_1D_INTEGER
+
+  ! --------------------------------------------  DUMP_1D_LOGICAL ----
+  subroutine DUMP_1D_LOGICAL ( ARRAY, NAME )
+    logical, intent(in) :: ARRAY(:)
+    character(len=*), intent(in), optional :: NAME
+    integer :: J, K
+    if ( size(array) == 1 ) then
+      if ( present(name) ) call output ( name )
+      call output ( array(1), advance='yes' )
+    else
+      if ( present(name) ) call output ( name, advance='yes' )
+      do j = 1, size(array), 34
+        call output ( j, 4 ); call output ( afterSub )
+        do k = j, min(j+33, size(array))
+          call output ( array(k) )
+        end do
+        call output ( '', advance='yes' )
+      end do
+    end if
+  end subroutine DUMP_1D_LOGICAL
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
   subroutine DUMP_2D_DOUBLE ( ARRAY, NAME )
@@ -146,6 +166,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.2  2001/02/28 21:35:27  livesey
+! Added dump logical 1d
+!
 ! Revision 2.1  2000/09/13 20:38:50  vsnyder
 ! Initial code
 !
