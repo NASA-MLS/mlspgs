@@ -12,7 +12,20 @@ MODULE Sd
      & DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT32, DFNT_FLOAT64
   ! Note: sfsflmd, sfwcdata missing from Hdf
    USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
-   USE OutputL1B
+   USE OutputL1B, only: L1BOAsc_T, L1BOAtp_T, L1BOAINDEX_T, &
+     & SDS1_NAME, SDS2_NAME, SDS3_NAME, SDS4_NAME, SDS5_NAME, &
+     & SDS6_NAME, SDS7_NAME, SDS8_NAME, SDS9_NAME, SDS10_NAME, &
+     & SDS11_NAME, SDS12_NAME, SDS13_NAME, SDS14_NAME, SDS15_NAME, &
+     & SDS16_NAME, SDS17_NAME, SDS18_NAME, SDS19_NAME, SDS20_NAME, &
+     & SDS21_NAME, SDS22_NAME, SDS23_NAME, SDS24_NAME, SDS25_NAME, &
+     & SDS26_NAME, SDS27_NAME, SDS28_NAME, SDS29_NAME, SDS30_NAME, &
+     & SDS31_NAME, SDS32_NAME, SDS33_NAME, SDS34_NAME, SDS35_NAME, &
+     & SDS36_NAME, SDS37_NAME, SDS38_NAME, SDS39_NAME, SDS40_NAME, &
+     & SDS41_NAME, SDS42_NAME, SDS43_NAME, SDS44_NAME, SDS45_NAME, &
+     & SDS46_NAME, SDS47_NAME, SDS48_NAME, SDS49_NAME, SDS50_NAME, &
+     & SDS51_NAME, &
+     & DIM1_NAME, DIM2_NAME, DIM3_NAME, DIM4_NAME, DIM5_NAME, DIM6_NAME, &
+     & LENUTC, LENCOORD, FILL_DP, FILL_REAL
    IMPLICIT NONE
    PUBLIC
 
@@ -1090,6 +1103,9 @@ END MODULE Sd
 !===============================================================================
 
 !# $Log$
+!# Revision 1.2  2001/12/04 00:26:16  pwagner
+!# sc%scvelECI is new name of scvel; added only .. to use statements
+!#
 !# Revision 1.1  2000/11/30 16:30:07  nakamura
 !# Module with subroutines to write SIDS L1BOA data as an SDS-HDF file.
 !#
