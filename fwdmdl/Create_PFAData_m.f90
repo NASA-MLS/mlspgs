@@ -19,8 +19,8 @@ module Create_PFAData_m
 contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  Create_PFAData  -----
-  integer function Create_PFAData ( Molecules, Signals, Temperatures, Pressures, &
-    & LosVel, Where )
+  integer function Create_PFAData ( Molecules, Signals, Temperatures, &
+    & Pressures, LosVel, Where )
 
     ! Create PFAData tables for the specified molecules, signals, temperatures
     ! and pressures.  Add them to PFADataBase%PFAData.  Sort PFAData.  Return
@@ -48,8 +48,8 @@ contains ! =====     Public Procedures     =============================
 
     integer, intent(in) :: Molecules(:)
     type(signal_t), intent(in), target :: Signals(:) ! Derived signals, not from database
-    type(vGrid_t), intent(in), target :: Temperatures
-    type(vGrid_t), intent(in), target :: Pressures
+    type(vGrid_t), intent(in) :: Temperatures
+    type(vGrid_t), intent(in) :: Pressures
     real(rp), intent(in) :: LosVel ! Line-of-sight velocity
     integer, intent(in) :: Where   ! In the parse tree, for error messages
     
@@ -57,7 +57,6 @@ contains ! =====     Public Procedures     =============================
     integer :: C, Chan  ! Indices for channels
     integer, pointer :: Channel(:)  ! Index of channel for signal/channel pair
     real(r8) :: DF      ! Spacing in filter bank's frequency grid
-    integer :: Error    ! /= 0 => An error occurred
     integer :: I        ! Index for signals associated with a line, or lines in catalog
     integer :: L        ! Index for lines in catalog
     logical, pointer :: LINEFLAG(:) ! Use this line
@@ -96,8 +95,6 @@ contains ! =====     Public Procedures     =============================
     ! Opposite sign convention here from ATBD
     velRel = losVel / speedOfLight ! losVel & speedOfLight both M/s
     velCor = 1.0_rp - velRel
-
-    error = 0
 
     ! Work out the signal/channel combinations.  Flatten the represenation.
     numChannels = 0
@@ -145,11 +142,15 @@ contains ! =====     Public Procedures     =============================
         nullify ( pfaDatum%molecules )
         call allocate_test ( pfaDatum%molecules, 1, 'PFADatum%molecules', moduleName )
         pfaDatum%molecules = n
-        call getNameOfSignal ( signal, pfaDatum%signal )
+        call getNameOfSignal ( signal, pfaDatum%signal, channel=channel(c) )
         pfaDatum%signalIndex = signal%index
         pfaDatum%theSignal = signal
-        pfaDatum%tGrid => temperatures
-        pfaDatum%vGrid => pressures
+        nullify ( pfaDatum%theSignal%channels )
+        call allocate_test ( pfaDatum%theSignal%channels, channel(c), &
+          & 'PFADatum%theSignal%channels', moduleName, lowBound=channel(c) )
+        pfaDatum%theSignal%channels = .true.
+        pfaDatum%tGrid = temperatures
+        pfaDatum%vGrid = pressures
         pfaDatum%vel_Rel = velRel
 
         px = pfaDatum%vGrid%noSurfs
@@ -224,7 +225,6 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: What              ! Error index
       character(len=*), intent(in), optional :: String
       integer, intent(in), optional :: More
-      error = 1
       call startErrorMessage ( where )
       select case ( what )
       case ( noCat )
@@ -327,6 +327,9 @@ contains ! =====     Public Procedures     =============================
 end module Create_PFAData_m
 
 ! $Log$
+! Revision 2.3  2005/01/12 03:17:26  vsnyder
+! Set the channel correctly
+!
 ! Revision 2.2  2004/12/31 02:41:01  vsnyder
 ! Create PFA data
 !
