@@ -784,24 +784,28 @@ contains ! =====     Public Procedures     =============================
 
     ! Now a 'softer' limit that applies to all cases, this just moves the
     ! overlap regions around if necessary to deal with overspill.
-    if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
-      if ( index ( switches, 'hgrid' ) /= 0 ) &
-        & call output ( &
-        & 'Non overlapped part of hGrid starts before run, extending overlap.', &
-        & advance='yes' )
-      call Hunt ( hGrid%time, processingRange%startTime, &
-        &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+    if ( hGrid%noProfsLowerOverlap+1 <= hGrid%noProfs ) then
+      if ( hGrid%time(hGrid%noProfsLowerOverlap+1) < processingRange%startTime ) then
+        if ( index ( switches, 'hgrid' ) /= 0 ) &
+          & call output ( &
+          & 'Non overlapped part of hGrid starts before run, extending overlap.', &
+          & advance='yes' )
+        call Hunt ( hGrid%time, processingRange%startTime, &
+          &   hGrid%noProfsLowerOverlap, allowTopValue=.true., allowBelowValue=.true. )
+      end if
     end if
 
-    if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
-      & processingRange%endTime ) then
-      if ( index ( switches, 'hgrid' ) /= 0 ) &
-        & call output ( &
-        & 'Non overlapped part of hGrid end after run, extending overlap.', &
-        & advance='yes' )
-      call Hunt ( hGrid%time, processingRange%endTime, &
-        & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
-      hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
+    if ( hGrid%noProfs-hGrid%noProfsUpperOverlap >= 1 ) then
+      if ( hGrid%time(hGrid%noProfs-hGrid%noProfsUpperOverlap) > &
+        & processingRange%endTime ) then
+        if ( index ( switches, 'hgrid' ) /= 0 ) &
+          & call output ( &
+          & 'Non overlapped part of hGrid end after run, extending overlap.', &
+          & advance='yes' )
+        call Hunt ( hGrid%time, processingRange%endTime, &
+          & hGrid%noProfsUpperOverlap, allowTopValue=.true., allowBelowValue=.true. )
+        hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
+      end if
     end if
 
     ! Finally we're done.
@@ -1110,6 +1114,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.37  2002/09/11 17:40:38  livesey
+! Bug fix
+!
 ! Revision 2.36  2002/08/09 16:56:37  livesey
 ! Modified the edge handling to avoid having 'orphaned' profiles beyond
 ! the edges of the scan range.
