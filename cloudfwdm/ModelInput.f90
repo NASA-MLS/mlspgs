@@ -45,7 +45,7 @@ contains
 !----------------------------------------------
 
       INTEGER :: NZ                            ! NO. OF L2 ATMOSPHERIC LEVELS
-      INTEGER :: NS
+      INTEGER :: NS                            ! NO. OF CHEMICAL SPECIES
       INTEGER :: N
       REAL(r8) :: PRESSURE(NZ)                 ! PRESSURE LEVEL
       REAL(r8) :: HEIGHT(NZ)                   ! PRESSURE HEIGHT
@@ -67,7 +67,7 @@ contains
       REAL(r8) :: YP(NH)                       ! PRESSURE (hPa)
       REAL(r8) :: YT(NH)                       ! TEMPERATURE PROFILE
       REAL(r8) :: YQ(NH)                       ! RELATIVE HUMIDITY (%)
-      REAL(r8) :: VMR1(NS,NH)                  ! 1=O3 VOLUME MIXING RATIO
+      REAL(r8) :: VMR1(NS-1,NH)                  ! 1=O3 VOLUME MIXING RATIO
       REAL(r8) :: WC(N,NH)
       INTEGER :: IPSD(NH)
       REAL(r8) :: CHK_CLD(NH)                  ! CLOUD CHECKER      
@@ -134,41 +134,21 @@ contains
 
             YQ(J) =10**YQ(J)
           
-            DO K=1,1
+            DO K=1,NS-1
             VMR1(K,J)=((HEIGHT(JM+1)-ZH(J))*VMR(K+1,JM)+(ZH(J)-HEIGHT(JM))*  &
      &            VMR(K+1,JM+1))/(HEIGHT(JM+1)-HEIGHT(JM))             
             ENDDO
        
          ENDDO
 
-
-!----------------------------------------------------------------------
-! now we don't need this because tangent heights are given along with tangent pressure
-!==========================================
-!     PRODUCE TANGENT HEIGHTS (KM)
-!==========================================
-
-!      DO I=1,NT
-!        print*, ZT(I)
-!         ZZ(I)=-LOG10( max(1.e-9_r8, ZT(I)) )
-!      END DO
-
-!      stop
-
-!      DO J=1,NT      
-!         CALL LOCATE (ZA,NZ,NH,ZZ(J),JM)
-!         ZZT(J)=((ZA(JM+1)-ZZ(J))*HEIGHT(JM)+(ZZ(J)-ZA(JM))*    &
-!     &                HEIGHT(JM+1))/(ZA(JM+1)-ZA(JM))             
-!      ENDDO
-
-!----------------------------------------------------------------------
-
-!      RETURN
       END SUBROUTINE MODEL_ATMOS
 
 end module ModelInput
 
 ! $Log$
+! Revision 1.5  2002/08/19 22:22:04  jonathan
+! debug stuff
+!
 ! Revision 1.4  2001/10/22 15:42:58  jonathan
 ! pretect vmr to be non-zero valus
 !
