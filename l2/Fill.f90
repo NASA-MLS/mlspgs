@@ -3091,7 +3091,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Executable code
 
-      if ( toggle(gen) ) call trace_begin ( "FillVectorQtyHydrostatically", key )
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+        & call trace_begin ( "FillVectorQtyHydrostatically", key )
 
       select case ( quantity%template%quantityType )
       case ( l_gph )
@@ -3103,7 +3104,8 @@ contains ! =====     Public Procedures     =============================
           &   quantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_gph failed first test" )
-	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+            & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
         if ( (any(quantity%template%surfs /= temperatureQuantity%template%surfs)) .or. &
@@ -3111,7 +3113,8 @@ contains ! =====     Public Procedures     =============================
           & (any(quantity%template%phi /= refGPHQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             &  "case l_gph failed second test" )
-	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+            & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
         call GetBasisGPH ( temperatureQuantity, refGPHQuantity, quantity%values )
@@ -3122,14 +3125,16 @@ contains ! =====     Public Procedures     =============================
           &   h2oQuantity%template%noInstances) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed first test" )
-	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+            & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
         if ( (any(refGPHquantity%template%phi /= temperatureQuantity%template%phi)) .or. &
           & (any(h2oQuantity%template%phi /= temperatureQuantity%template%phi)) ) then
           call Announce_Error ( key, nonConformingHydrostatic, &
             & "case l_ptan failed second test" )
-	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+	  if ( toggle(gen) .and. levels(gen) > 0 )&
+            &  call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
         if ( (.not. ValidateVectorQuantity(quantity, minorFrame=.true.) ) .or. &
@@ -3169,7 +3174,8 @@ contains ! =====     Public Procedures     =============================
            call output( &
            & geocAltitudeQuantity%template%instrumentModule, &
            & advance='yes')
-	  if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically")
+	  if ( toggle(gen) .and. levels(gen) > 0 ) &
+            & call trace_end ( "FillVectorQtyHydrostatically")
           return
         end if
         call Get2DHydrostaticTangentPressure ( quantity, temperatureQuantity,&
@@ -3179,7 +3185,8 @@ contains ! =====     Public Procedures     =============================
         call Announce_error ( 0, 0, 'No such fill yet' )
       end select
 
-      if ( toggle(gen) ) call trace_end ( "FillVectorQtyHydrostatically" )
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+        & call trace_end ( "FillVectorQtyHydrostatically" )
 
     end subroutine FillVectorQtyHydrostatically
 
@@ -3349,7 +3356,8 @@ contains ! =====     Public Procedures     =============================
 
       ! Executable code
 
-      if ( toggle(gen) ) call trace_begin ("FillVectorQuantityFromL1B",root)
+      if ( toggle(gen) .and. levels(gen) > 0 ) &
+        & call trace_begin ("FillVectorQuantityFromL1B",root)
 
       fileID=l1bInfo%l1bOAID
       select case ( quantity%template%quantityType )
@@ -3393,7 +3401,8 @@ contains ! =====     Public Procedures     =============================
       ! We'll have to think about `bad' values here .....
       if ( flag /= 0 ) then
         call Announce_Error ( root, errorReadingL1B )
-        if ( toggle(gen) ) call trace_end ( "FillVectorQuantityFromL1B")
+        if ( toggle(gen) .and. levels(gen) > 0 ) &
+          & call trace_end ( "FillVectorQuantityFromL1B")
         return
       end if
       quantity%values = RESHAPE(l1bData%dpField, &
@@ -3418,7 +3427,7 @@ contains ! =====     Public Procedures     =============================
         & call Dump( l1bData )
       call DeallocateL1BData(l1bData)
 
-      if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
+      if (toggle(gen) .and. levels(gen) > 0 ) call trace_end( "FillVectorQuantityFromL1B" )
     end subroutine FillVectorQuantityFromL1B
 
     ! ------------------------------------------- FillQtyFromInterpolatedQty
@@ -3890,6 +3899,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.148  2002/09/25 20:08:14  livesey
+! Made -g less verbose
+!
 ! Revision 2.147  2002/09/13 18:10:10  pwagner
 ! May change matrix precision rm from r8
 !
