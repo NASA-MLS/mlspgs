@@ -18,7 +18,6 @@ module Open_Init
   use MLSPCF2, only: MLSPCF_L1B_OA_START, MLSPCF_L1B_RAD_END, &
     &                MLSPCF_L1B_RAD_START, MLSPCF_NOMEN_START!, &
 !   &                MLSPCF_L2CF_START
-  use MLSSignalNomenclature, only: ReadSignalsDatabase
   use MoreTree, only: Get_Spec_ID
   use SDPToolkit, only: PGS_IO_Gen_closeF, PGS_IO_Gen_openF, &
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
@@ -174,20 +173,6 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, "Could not find L1BOA file" )
 
     end if
-
-    ! Open and Read nomenclature file
-
-    Nomen_Version = 1
-    returnStatus = PGS_IO_Gen_openF (mlspcf_nomen_start, PGSd_IO_Gen_RSeqFrm, &
-      & 0, NomenUnit, Nomen_Version)
-    if ( returnStatus /= PGS_S_SUCCESS ) call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Could not open nomenclature file" )
-
-    call ReadSignalsDatabase ( Nomenunit )
-
-    returnStatus = PGS_IO_Gen_closeF (Nomenunit)  ! close unit
-    if ( returnstatus /= PGS_S_SUCCESS )  call MLSMessage ( MLSMSG_Error, &
-      & ModuleName, "Could not close nomenclature file" )
 
     ! Get the Start and End Times from PCF
 
@@ -380,6 +365,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.23  2001/03/28 19:07:08  vsnyder
+! Remove use of MLSSignalNomenclature
+!
 ! Revision 2.22  2001/03/15 21:18:57  vsnyder
 ! Use Get_Spec_ID instead of decoration(subtree...
 !
