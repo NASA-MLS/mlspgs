@@ -623,14 +623,14 @@ contains
 !                                               temperature(km/K) on main grid.
     real(rp), intent(in) :: alpha_path_c(:) ! path absorption(km^-1)
 !                                             on main grid.
-    real(rp), intent(in) :: alphaxn_path_c(:) ! path absorption times
-!                            temperature power(km^-1) on main grid.
+    real(rp), intent(in) :: alphaxn_path_c(:) ! path absorption * temperature
+!                                             exponent (km^-1) on main grid.
     real(rp), intent(in) :: eta_zxp_c(:,:)  ! representation basis function
 !                                              main grid.
     logical, intent(in) :: do_calc_t_c(:,:) ! Indicates where the
 !                    representation basis function is not zero on main grid.
-    logical, intent(in) :: do_calc_hyd_c(:,:) ! Indicates where the dh_dt
-!                    function is not zero on main grid.
+    logical, intent(in) :: do_calc_hyd_c(:,:) ! Indicates where dh_dt is not
+!                                             zero on main grid.
     real(rp), intent(in) :: del_s(:)        ! unrefracted path length.
     real(rp), intent(in) :: ref_cor(:)      ! refracted to unrefracted path
 !                                             length ratios.
@@ -644,8 +644,8 @@ contains
     real(rp), intent(in) :: dh_dt_path_f(:,:) ! derivative of path height wrt
 !                                               temperature(km/K) on gl grid.
     real(rp), intent(in) :: alpha_path_f(:) ! path absorption(km^-1) on gl grid.
-    real(rp), intent(in) :: alphaxn_path_f(:) ! path absorption times
-!                            temperature power(km^-1) on gl grid.
+    real(rp), intent(in) :: alphaxn_path_f(:) ! path absorption * temperature
+!                                             exponent (km^-1) on gl grid.
     real(rp), intent(in) :: eta_zxp_f(:,:)  ! representation basis function
 !                                             gl grid.
     logical, intent(in) :: do_calc_t_f(:,:) ! Indicates where the
@@ -1050,6 +1050,11 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.26  2003/10/15 02:04:08  vsnyder
+! Simplifications possible after inlining path_opacity.  Cosmetic changes.
+! Make Get_Del_Zeta_All public.  Don't bother checking do_calc(1) and
+! do_calc(n_path) because we know it's false there.
+!
 ! Revision 2.25  2003/10/09 21:04:38  vsnyder
 ! Fix typos generated while inlining path_opacity
 !
