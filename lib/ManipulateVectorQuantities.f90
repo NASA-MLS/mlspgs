@@ -98,7 +98,7 @@ contains
     end do
 
     ! Now, again don't fall off the ends.
-    referenceIndices=min(max(referenceIndices,1),&
+    referenceIndices(first:last)=min(max(referenceIndices(first:last),1),&
       referenceQuantity%template%noInstances)
 
   end subroutine FindClosestInstances
@@ -117,7 +117,7 @@ contains
     ! Executable code
     call FindClosestInstances ( referenceQuantity, soughtQuantity, &
       & tempResult, soughtInstance=instance)
-    FindOneClosestInstance = tempResult(1)
+    FindOneClosestInstance = tempResult(instance)
 
   end function FindOneClosestInstance
 
@@ -171,6 +171,10 @@ contains
 end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.10  2001/09/14 18:02:52  livesey
+! Bug fix in FindOneClosestInstance and FindClosestInstances.
+! Will probably come back to these and rewrite them some time.
+!
 ! Revision 2.9  2001/09/11 01:27:27  livesey
 ! Bug fixes
 !
