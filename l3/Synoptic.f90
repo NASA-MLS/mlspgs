@@ -23,7 +23,7 @@ MODULE Synoptic
 
    Implicit none
 
-   PRIVATE :: ID, ModuleName
+   PRIVATE :: ID, ModuleName, my_sortp
 
 !------------------- RCS Ident Info -----------------------
    CHARACTER(LEN=130) :: Id = &
@@ -39,6 +39,10 @@ MODULE Synoptic
 !
 ! Remarks:  This module contains subroutines related to MLS L3 Daily Map Processing 
 !
+  interface my_sortp !Becuase we sometimes call with r4, other times with r8
+    module procedure my_sortp_r4
+    module procedure my_sortp_r8
+  end interface
 
 CONTAINS
 
@@ -1010,7 +1014,7 @@ CONTAINS
                         pt(i) = 0
                         sortTemp(i) = 0.0
                       ENDDO
-                      CALL DSORTP(l3r_temp(iD)%time, 1, nc(iD), pt)
+                      CALL my_sortp(l3r_temp(iD)%time, 1, nc(iD), pt)
                       !** do time
                       CALL DSORT(l3r_temp(iD)%time, 1, nc(iD))
                       !** do latitude
@@ -1066,7 +1070,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(l3r_temp(iD)%l2gpValue(1, iP, 1:nc(iD))), 1, nc(iD), pt)
+                      CALL my_sortp(-abs(l3r_temp(iD)%l2gpValue(1, iP, 1:nc(iD))), 1, nc(iD), pt)
                       DO i = 1, cfDef%N
                         l3dm(iD)%maxDiff(i, iP) = l3r_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
@@ -1122,7 +1126,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residA_temp(iD)%time, 1, nc(iD), pt)
+                      CALL my_sortp(residA_temp(iD)%time, 1, nc(iD), pt)
                       !** do time
                       CALL DSORT(residA_temp(iD)%time, 1, nc(iD))
                       !** do latitude
@@ -1178,7 +1182,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
+                      CALL my_sortp(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
                       DO i = 1,cfDef%N
                         dmA(iD)%maxDiff(i, iP) = residA_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
@@ -1234,7 +1238,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residD_temp(iD)%time, 1, nc(iD), pt)
+                      CALL my_sortp(residD_temp(iD)%time, 1, nc(iD), pt)
                       !** do time
                       CALL DSORT(residD_temp(iD)%time, 1, nc(iD))
                       !** do latitude
@@ -1290,7 +1294,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
+                      CALL my_sortp(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
                       DO i = 1,cfDef%N
                         dmD(iD)%maxDiff(i, iP) = residD_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
@@ -1345,7 +1349,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residA_temp(iD)%time, 1, nca(iD), pt)
+                      CALL my_sortp(residA_temp(iD)%time, 1, nca(iD), pt)
                       !** do time
                       CALL DSORT(residA_temp(iD)%time, 1, nca(iD))
                       !** do latitude
@@ -1400,7 +1404,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
+                      CALL my_sortp(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
                       DO i = 1,cfDef%N
                         dmA(iD)%maxDiff(i, iP) = residA_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
@@ -1460,7 +1464,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residD_temp(iD)%time, 1, ncd(iD), pt)
+                      CALL my_sortp(residD_temp(iD)%time, 1, ncd(iD), pt)
                       !** do time
                       CALL DSORT(residD_temp(iD)%time, 1, ncd(iD))
                       !** do latitude
@@ -1515,7 +1519,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
+                      CALL my_sortp(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
                       DO i = 1,cfDef%N
                         dmD(iD)%maxDiff(i, iP) = residD_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
@@ -1571,7 +1575,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residA_temp(iD)%time, 1, nca(iD), pt)
+                      CALL my_sortp(residA_temp(iD)%time, 1, nca(iD), pt)
                       !** do time
                       CALL DSORT(residA_temp(iD)%time, 1, nca(iD))
                       !** do latitude
@@ -1631,7 +1635,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
+                      CALL my_sortp(-abs(residA_temp(iD)%l2gpValue(1, iP, :)), 1, nca(iD), pt)
                       DO i = 1,cfDef%N
                         dmA(iD)%maxDiff(i, iP) = residA_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
@@ -1687,7 +1691,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(residD_temp(iD)%time, 1, ncd(iD), pt)
+                      CALL my_sortp(residD_temp(iD)%time, 1, ncd(iD), pt)
                       !** do time
                       CALL DSORT(residD_temp(iD)%time, 1, ncd(iD))
                       !** do latitude
@@ -1742,7 +1746,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
+                      CALL my_sortp(-abs(residD_temp(iD)%l2gpValue(1, iP, :)), 1, ncd(iD), pt)
                       DO i = 1,cfDef%N
                         dmD(iD)%maxDiff(i, iP) = residD_temp(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
@@ -1797,7 +1801,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(l3r(iD)%time, 1, nc(iD), pt)
+                      CALL my_sortp(l3r(iD)%time, 1, nc(iD), pt)
                       !** do time
                       CALL DSORT(l3r(iD)%time, 1, nc(iD))
                       !** do latitude
@@ -1850,7 +1854,7 @@ CONTAINS
                         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
                       ENDIF
 
-                      CALL DSORTP(-abs(l3r(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
+                      CALL my_sortp(-abs(l3r(iD)%l2gpValue(1, iP, :)), 1, nc(iD), pt)
                       DO i = 1,cfDef%N
                         l3dm(iD)%maxDiff(i, iP) = l3r(iD)%l2gpValue(1, iP, pt(i))
                       ENDDO
@@ -2819,12 +2823,30 @@ CONTAINS
    END SUBROUTINE Residual2L2Grid
 !-----------------------------------
 
+subroutine my_sortp_r4(sngl_array, n, m, pt_array)
+  real(r4), dimension(*), intent(in) :: sngl_array
+  integer, intent(in)                :: n
+  integer, intent(in)                :: m
+  integer, dimension(*), intent(out) :: pt_array
+  call ssortp(sngl_array, n, m, pt_array)
+end subroutine my_sortp_r4
+
+subroutine my_sortp_r8(dbl_array, n, m, pt_array)
+  real(r8), dimension(*), intent(in) :: dbl_array
+  integer, intent(in)                :: n
+  integer, intent(in)                :: m
+  integer, dimension(*), intent(out) :: pt_array
+  call dsortp(dbl_array, n, m, pt_array)
+end subroutine my_sortp_r8
 
 !===================
 END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.27  2002/05/08 16:23:47  ybj
+! Fix residual problem in order to interpolate to L2GP grid
+!
 ! Revision 1.26  2002/04/30 20:05:21  jdone
 ! indexing issues related to nc* arrays
 !
