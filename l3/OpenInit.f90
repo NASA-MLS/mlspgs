@@ -1,5 +1,4 @@
-
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !==============================================================================
@@ -15,7 +14,8 @@ MODULE OpenInit
   USE MLSPCF3, ONLY: mlspcf_l3_param_OutputVersion, mlspcf_l3_param_Cycle, &
        & mlspcf_l3_param_L2DayRange, mlspcf_l3_param_RangDays, & 
        & mlspcf_pcf_start,mlspcf_l3cf_start
-  USE PCFHdr, ONLY: CreatePCFAnnotation
+  use MLSStrings, only: utc_to_yyyymmdd
+  USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, pgs_pc_getConfigData, & 
        & Pgs_td_utcToTAI, max_orbits, spacecraftId, PGS_IO_Gen_CloseF, &
        & Pgs_io_gen_openF, PGSd_IO_Gen_RSeqFrm, Pgs_pc_getReference
@@ -145,6 +145,18 @@ CONTAINS
     indx = INDEX(name, '/', .TRUE.)
     l3pcf%logGranID = name(indx+1:)
 
+    ! Store appropriate user input as global attributes
+    GlobalAttributes%InputVersion = l3pcf%outputVersion
+    GlobalAttributes%StartUTC = l3pcf%l2StartDay // &
+      & 'T00:00:00.000000Z'
+    GlobalAttributes%EndUTC = l3pcf%l2EndDay // &
+      & 'T23:59:59.999999Z'
+    GlobalAttributes%PGEVersion = 'v1.2'   ! l3pcf%PGEVersion
+    call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+      & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+      & GlobalAttributes%GranuleDay) 
+    call FillTAI93Attribute
+    
   !---------------------------------
   END SUBROUTINE GetPCFParameters
   !---------------------------------
@@ -470,6 +482,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.11  2003/04/30 18:15:48  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.10  2003/03/22 02:51:22  jdone
 ! average orbit retrieved from cf or calculated
 !
