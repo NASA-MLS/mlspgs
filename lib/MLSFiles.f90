@@ -53,14 +53,37 @@ module MLSFiles               ! Utility file routines
 !     c o n t e n t s
 !     - - - - - - - -
 
+!     (parameters)
+! HDFVERSION_4       integer corresponding to hdf4
+! HDFVERSION_5       integer corresponding to hdf5
+! WILDCARDHDFVERSION integer corresponding to autorecognize hdf4/hdf5
+! NAMENOTFOUND       GetPCFromRef unable to find named file
+! INVALIDPCRANGE     GetPCFromRef given invalid pc range
+! CANTALLOCATENAMEARRAY
+!                    GetPCFromRef unable to allocate memory needed
+! UNKNOWNFILEACCESSTYPE
+!                    mls_io_gen_openF given invalid file access type
+! UNKNOWNTOOLBOXMODE mls_io_gen_openF given invalid toolbox mode
+! NOFREEUNITS        mls_io_gen_openF ran out of free units
+! MUSTSUPPLYFILENAMEORPC
+!                    mls_io_gen_openF given neither required argument
+! NOPCIFNOTOOLKIT    mls_io_gen_openF must be given filename if toolkitless
+! NOSUCHHDFVERSION   mls_io_gen_openF given invalid hdf version
+! MUSTSUPPLYFILENAME Required filename arg missing
+! ERRORINH5FFUNCTION Internal hdf5 library function error
+! WRONGHDFVERSION    Supplied hdf version differs from actual file version
+
+!     (subroutines and functions)
 ! GetPCFromRef       Turns a FileName into the corresponding PC
 ! get_free_lun       Gets a free logical unit number
+! mls_closeFile      Closes a file opened by mls_openFile
 ! mls_hdf_version    Returns one of 'hdf4', 'hdf5', or '????'
 ! mls_inqswath       A wrapper for doing swingswath for versions 4 and 5
 ! mls_io_gen_openF   Opens a generic file using the toolbox or Fortran OPEN
 ! mls_io_gen_closeF  Closes a generic file using the toolbox or Fortran CLOSE
-! mls_sfstart        Opens an hdf file for writing metadata
+! mls_openFile       Opens an hdf5 file
 ! mls_sfend          Closes a file opened by mls_sfstart
+! mls_sfstart        Opens an hdf file for writing metadata
 ! split_path_name    splits the input path/name into path and name
 ! === (end of toc) ===
 
@@ -70,11 +93,31 @@ module MLSFiles               ! Utility file routines
 ! he2he5_fileaccess
 !                    Translates version 4 hdfeos access codes to version 5
 
+! === (start of api) ===
+! i4 GetPCFromRef (char* FileName, i4 PCBottom, i4 PCTop,
+!     log caseSensitive, i4 ErrType, [i4 versionNum], [log debugOption],
+!     [char* path], [char* ExactName])
+! i4 mls_io_gen_openF (char* toolbox_mode, log caseSensitive, i4 ErrType, 
+!     i4 record_length, i4 FileAccessType, 
+!     [char* FileName], [i4 PCBottom], [i4 PCTop], [i4 versionNum],
+!     [log unknown], [i4 thePC], [int hdfVersion], [log debugOption])
+! i4 mls_io_gen_closeF (char* toolbox_mode, i4 theFileHandle, 
+!     [char* FileName], [int hdfVersion])
+! split_path_name (char* full_file_name, char* path, char* name, [char slash])
+! int mls_inqswath (char* FileName, char* swathList, int strBufSize,
+!     [int hdfVersion])
+! int mls_sfstart (char* FileName, i4 FileAccess, [int hdfVersion])
+! int mls_sfend (int sdid, [int hdfVersion])
+! i4 mls_hdf_version (char* FileName, [i4 preferred_version], [i4 AccessType])
+! mls_openFile (char* filename, char* access, hid_t file_id)
+! mls_closeFile (hid_t file_id)
+! === (end of api) ===
+
    ! Assume hdf files w/o explicit hdfVersion field are this
    ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.
    integer, parameter, public :: HDFVERSION_4 = 4
    integer, parameter, public :: HDFVERSION_5 = 5
-   integer, parameter         :: DEFAULT_HDFVERSION = HDFVERSION_5
+   integer, parameter         :: DEFAULT_HDFVERSION = HDFVERSION_4
    
   ! Given this hdfVersion, try to autorecognize hdfversion
   ! then perform appropriate version of open/close; i.e., forgiving
@@ -1297,6 +1340,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.40  2002/10/29 01:02:26  pwagner
+! Reverted DEFAULT_HDFVERSION to 4; added api
+!
 ! Revision 2.39  2002/10/08 23:46:03  pwagner
 ! Separate he2he5_fileaccess and hdf2hdf5_fileaccess functions
 !
