@@ -10,12 +10,15 @@ module GLOBAL_SETTINGS
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
-  use VGrid, only: AddVGridToDatabase, CreateVGridFromMLSCFInfo, Dump, VGrid_T
+  use VGrid, only: CreateVGridFromMLSCFInfo, Dump
+  use VGridsDatabase, only: AddVGridToDatabase, VGrid_T
   use TREE_TYPES, only: N_EQUAL, N_NAMED
 
 !??? Begin temporary stuff to start up the forward model
-  use ForwardModelInterface, only: AddForwardModelConfigToDatabase, &
-    ConstructForwardModelConfig, ForwardModelGlobalSetup, ForwardModelConfig_T
+  use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
+    & ForwardModelConfig_T
+  use ForwardModelInterface, only: ConstructForwardModelConfig, &
+    & ForwardModelGlobalSetup
   use INIT_TABLES_MODULE, only: F_ZVI, S_ForwardModelGlobal, S_L2LOAD
   use L2_Load_M, only: L2_Load
   use L2_test_structures_m, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -124,6 +127,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.11  2001/03/28 22:00:33  livesey
+! Interim version, now handles vGrids as part of forwardModelConfig
+!
 ! Revision 2.10  2001/03/28 01:24:55  vsnyder
 ! Move vGrid from construct section to global settings section
 !
