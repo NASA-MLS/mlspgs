@@ -929,14 +929,17 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.89  2001/11/16 00:47:13  jonathan
+! change ptan from radiance%template%instrumentModule to Signal%instrumentModule
+!
 ! Revision 1.88  2001/11/16 00:41:00  jonathan
 ! add losVel
 !
 ! Revision 1.87  2001/11/15 23:52:12  jonathan
-! add default_spectroscopy
+! rename DF_spectroscopy to default_spectroscopy
 !
 ! Revision 1.86  2001/11/15 23:50:21  jonathan
-! rename DF_spectroscopy to default_spectroscopy
+! add DF_spectroscopy
 !
 ! Revision 1.85  2001/11/09 18:12:13  jonathan
 ! add deallocate my_catalog
