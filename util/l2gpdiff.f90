@@ -41,6 +41,8 @@ program l2gpdiff ! show diffs between swaths in two different files
     logical     :: verbose = .false.
     integer     :: Details = 1
     logical     :: stats = .false.
+    logical     :: rms = .false.
+    logical     :: ignoreBadChunks = .false.
     logical     :: showMissing = .false.
   end type options_T
   
@@ -113,6 +115,7 @@ program l2gpdiff ! show diffs between swaths in two different files
     endif
     call diff(trim(filenames(i-1)), &
       & trim(filenames(i)), details=options%Details, stats=options%stats, &
+      & rms=options%rms, ignoreBadChunks=options%ignoreBadChunks, &
       & showMissing=options%showMissing)
     call sayTime('diff these files: ' // trim(filenames(i-1)) // &
       & ' and ' // trim(filenames(i)), tFile)
@@ -154,6 +157,12 @@ contains
         read(detailChars, *) options%Details
         i = i + 1
         exit
+      else if ( filename(1:4) == '-ign' ) then
+        options%ignorebadchunks = .true.
+        exit
+      else if ( filename(1:5) == '-rms ' ) then
+        options%rms = .true.
+        exit
       else if ( filename(1:3) == '-s ' ) then
         options%stats = .true.
         exit
@@ -182,6 +191,8 @@ contains
       write (*,*) '                         (can do the same w/o the -f)'
       write (*,*) '          -d details  => level of details to show'
       write (*,*) '          -v          => switch on verbose mode'
+      write (*,*) '          -ignore     => ignore bad chunks'
+      write (*,*) '          -rms        => just print mean, rms'
       write (*,*) '          -s          => just show statistics'
       write (*,*) '          -miss       => just show which swaths are missing'
       write (*,*) '          -h          => print brief help'
@@ -207,3 +218,6 @@ end program l2gpdiff
 !==================
 
 ! $Log$
+! Revision 1.1  2004/06/16 17:55:06  pwagner
+! First commit
+!
