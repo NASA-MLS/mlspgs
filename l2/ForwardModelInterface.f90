@@ -348,7 +348,7 @@ contains
     use MLSCommon, only: I4, R4, R8
     use L2PC_FILE_PARAMETERS, only: mxco => MAX_NO_ELMNTS_PER_SV_COMPONENT
     use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
-    use L2PCdim, only: Nlvl, N2lvl, NSPS, Nptg, MNP => max_no_phi, &
+    use L2PCdim, only: NSPS, Nptg, MNP => max_no_phi, &
       MNM => max_no_mmaf
     use ELLIPSE_M, only: ELLIPSE
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
@@ -385,16 +385,10 @@ contains
     ! Local variables ----------------------------------------------------------
 
     ! First the old stuff which we hope to get rid of or redefine
-    integer(i4), parameter :: NGT = (Ng+1) * N2lvl
-
     integer(i4) :: i, j, k, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
       m, ier, maf, si, ptg_i, frq_i, klo, n, brkpt, no_ele, &
       mid, ilo, ihi, k_info_count, ld, &
       max_phi_dim, max_zeta_dim
-
-    real(r8) :: t_script(N2lvl),ref_corr(N2lvl,Nptg),tau(N2lvl)
-
-    real(r8) :: ptg_angles(Nptg), center_angle
 
     real(r4) :: K_TEMP(25,Nptg,mxco,mnp)
     real(r4) :: K_ATMOS(25,Nptg,mxco,mnp,Nsps)
@@ -404,7 +398,8 @@ contains
     real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
     type(k_matrix_info) :: k_star_info(20)
 
-    type(path_derivative) :: k_temp_frq, k_atmos_frq(Nsps)
+    type(path_derivative) :: k_temp_frq
+    type(path_derivative), allocatable, dimension(:) :: k_atmos_frq
 
     type(path_beta), dimension(:,:), pointer :: beta_path => null()
 
@@ -440,6 +435,8 @@ contains
     integer :: CHANNEL                  ! Loop counter
     integer :: MAXNOFREQS               ! Used for sizing arrays
     integer :: MAXPATH                  ! Number of points on longest path
+    integer :: NLVL                     ! Size of tangent grid
+    integer :: N2LVL                    ! Twice size of tangent grid
     integer :: NOUSEDCHANNELS           ! Number of channels to output
     integer :: NOFREQS                  ! Number of frequencies for a pointing
     integer :: NOMAFS                   ! Number of major frames
@@ -451,24 +448,29 @@ contains
     integer :: INSTANCE                 ! Loop counter
 
     real (r8) :: CENTERFREQ             ! Of band
+    real (r8) :: CENTER_ANGLE            ! For angles
     real (r8) :: SENSE                  ! Multiplier (+/-1)
 
     integer, dimension(:), pointer :: CHANNELINDEX=>NULL() ! E.g. 1..25
     integer, dimension(:), pointer :: USEDCHANNELS=>NULL() ! Array of indices used
 
-    real(r4), dimension(:), pointer :: TOAVG=>NULL()   ! Stuff to be passed to frq.avg.
-    real(r8), dimension(:), pointer :: FREQUENCIES=>NULL() ! Frequency points
+    real(r4), dimension(:),     pointer :: TOAVG=>NULL()   ! Stuff to be passed to frq.avg.
+    real(r8), dimension(:),     pointer :: FREQUENCIES=>NULL() ! Frequency points
     real(r8), dimension(:,:,:), pointer :: DH_DT_PATH=>NULL()  ! (pathSize, Tsurfs, Tinstance)
-    real(r8), dimension(:,:), pointer :: DX_DT=>NULL() ! (Nptg, Tsurfs)
-    real(r8), dimension(:,:), pointer :: D2X_DXDT=>NULL() ! (Nptg, Tsurfs)
+    real(r8), dimension(:,:),   pointer :: DX_DT=>NULL() ! (No_tan_hts, Tsurfs)
+    real(r8), dimension(:,:),   pointer :: D2X_DXDT=>NULL() ! (No_tan_hts, Tsurfs)
+    real(r8), dimension(:),     pointer :: T_SCRIPT=>NULL() ! (n2lvl)
+    real(r8), dimension(:,:),   pointer :: REF_CORR=>NULL() ! (n2lvl, no_tan_hts)
+    real(r8), dimension(:),     pointer :: TAU=>NULL() ! (n2lvl)
+    real(r8), dimension(:),     pointer :: PTG_ANGLES=>NULL() ! (no_tan_hts)
 
     integer, pointer, dimension(:) :: GRIDS=>NULL()    ! Frq grid for each tan_press
 
     logical :: FOUNDINFIRST             ! Flag to indicate derivatives
 
-    type(path_vector), allocatable, dimension(:) :: N_PATH    ! (Nptg)
+    type(path_vector), allocatable, dimension(:) :: N_PATH    ! (No_tan_hts)
 
-    ! dimensions of SPSFUNC_PATH are: (Nsps,Nptg)
+    ! dimensions of SPSFUNC_PATH are: (Nsps,No_tan_hts)
     type(path_vector), allocatable, dimension(:,:) :: SPSFUNC_PATH
     type(signal_t) :: Signal
     type(Catalog_T), pointer, dimension(:) :: My_Catalog => NULL()
@@ -596,33 +598,36 @@ contains
     usedChannels = pack ( channelIndex, signal%channels )
     call deallocate_test(channelIndex,'channelIndex',ModuleName)
 
-    !    Nptg = forwardModelConfig%tangentGrid%noSurfs
+    ! Setup various array dimensions
     no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
+    maxPath = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
+    nlvl=size(ForwardModelConfig%integrationGrid%surfs)
+    n2lvl=2*nlvl
 
     if (fmStat%newHydros) then
 
       print*,'(re)computing hydrostatic stuff.'
       ! Now we're going to create the many temporary arrays we need
-      allocate (ifm%ndx_path(Nptg,noMAFs), STAT=status)
+      allocate (ifm%ndx_path(No_tan_hts,noMAFs), STAT=status)
       if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'ndx_path')
-      allocate (ifm%dhdz_path(Nptg,noMAFs), STAT=status)
+      allocate (ifm%dhdz_path(No_tan_hts,noMAFs), STAT=status)
       if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'dhdz_path')
-      allocate (ifm%h_path(Nptg,noMAFs), STAT=status)
+      allocate (ifm%h_path(No_tan_hts,noMAFs), STAT=status)
       if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'h_path')
-      allocate (ifm%phi_path(Nptg,noMAFs), STAT=status)
+      allocate (ifm%phi_path(No_tan_hts,noMAFs), STAT=status)
       if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'phi_path')
-      allocate (ifm%t_path(Nptg,noMAFs), STAT=status)
+      allocate (ifm%t_path(No_tan_hts,noMAFs), STAT=status)
       if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'t_path')
-      allocate (ifm%z_path(Nptg,noMAFs), STAT=status)
+      allocate (ifm%z_path(No_tan_hts,noMAFs), STAT=status)
       if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'z_path')
 
-      allocate (ifm%eta_phi(Nptg,noMAFs), STAT=status)
+      allocate (ifm%eta_phi(No_tan_hts,noMAFs), STAT=status)
       if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'eta_phi')
 
@@ -633,7 +638,6 @@ contains
       call allocate_test(ifm%geoc_lat, noMAFs, 'geoc_lat', ModuleName)
       call allocate_test(ifm%e_rad, noMAFs, 'e_rad', ModuleName)
 
-      maxPath = 2 * (NG+1) * size(ForwardModelConfig%integrationGrid%surfs)
       call allocate_test(ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', ModuleName)
       call allocate_test(ifm%t_glgrid, maxPath, noMAFs, 'h_glgrid', ModuleName)
       call allocate_test(ifm%z_glgrid, maxPath/2, 'z_glgrid', ModuleName)
@@ -644,10 +648,12 @@ contains
         & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', ModuleName)
       call allocate_test(ifm%tan_temp, &
         & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', ModuleName)
-      call allocate_test(ifm%tan_dh_dt, size(ForwardModelConfig%integrationGrid%surfs), &
-        & noMAFs, temp%template%noSurfs,'tan_dh_dt',ModuleName)
+      call allocate_test(ifm%tan_dh_dt, nlvl, noMAFs, temp%template%noSurfs,&
+        & 'tan_dh_dt', ModuleName)
+
       ! Setup for hydrostatic calculation
       ! Assert radiance%template%noInstances=temp%template%noInstances
+
       if (temp%template%noInstances /= noMAFs) &
         & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
       do maf = 1, noMAFs
@@ -685,15 +691,25 @@ contains
       fmStat%newHydros = .false.
     endif
 
-    allocate (n_path(Nptg), STAT=status)
+    ! Now allocate other stuff
+    call allocate_test(t_script, n2lvl, 't_srcipt', ModuleName)
+    call allocate_test(ref_corr, n2lvl, no_tan_hts, 'ref_corr', ModuleName)
+    call allocate_test(tau, n2lvl, 'tau', ModuleName)
+    call allocate_test(ptg_angles, no_tan_hts, 'ptg_angles', ModuleName)
+
+    allocate(k_atmos_frq(noSpecies),STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Allocate//'k_atmos_frq')
+
+    allocate (n_path(No_tan_hts), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'n_path')
-    allocate (spsfunc_path(noSpecies,Nptg), STAT=status)
+    allocate (spsfunc_path(noSpecies,No_tan_hts), STAT=status)
     if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'spsfunc_path')
-    call allocate_test(dx_dt, Nptg, temp%template%noSurfs, &
+    call allocate_test(dx_dt, No_tan_hts, temp%template%noSurfs, &
       & 'dx_dt', ModuleName)
-    call allocate_test(d2x_dxdt, Nptg, temp%template%noSurfs, &
+    call allocate_test(d2x_dxdt, No_tan_hts, temp%template%noSurfs, &
       & 'd2x_dxdt', ModuleName)
 
     ! The first part of the forward model dealt with the chunks as a whole.
@@ -1169,6 +1185,15 @@ contains
     call deallocate_test(d2x_dxdt, 'd2x_dxdt', ModuleName)
     !     call deallocate_test(geoc_lat, 'geoc_lat', ModuleName)
     !     call deallocate_test(e_rad, 'e_rad', ModuleName)
+    call deallocate_test(t_script, 't_srcipt', ModuleName)
+    call deallocate_test(ref_corr, 'ref_corr', ModuleName)
+    call deallocate_test(tau, 'tau', ModuleName)
+    call deallocate_test(ptg_angles, 'ptg_angles', ModuleName)
+
+    deallocate(k_atmos_frq,STAT=status)
+    if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+      & MLSMSG_Deallocate//'k_atmos_frq')
+
 
     ! ** DEBUG, Zvi
     !    if(i > -22) Stop
@@ -1220,6 +1245,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.81  2001/04/10 23:51:18  livesey
+! Another working version.  More temporary arrays now alloctable/pointer
+!
 ! Revision 2.80  2001/04/10 23:15:55  livesey
 ! Reverse communication seems to be working. Needs a bit more tidying up though.
 !
