@@ -45,8 +45,13 @@ module HGrid                    ! Horizontal grid information
     integer :: noProfsUpperOverlap  ! Number of profiles in the upper overlap
 
     ! Now the various coordinates in the HGrid, all dimensioned (noProfs)
-    real(r8), dimension(:), pointer :: phi, geodLat, lon, time, &
-      & solarTime, solarZenith, losAngle
+    real(r8), dimension(:), pointer :: phi => NULL()
+    real(r8), dimension(:), pointer :: geodLat => NULL()
+    real(r8), dimension(:), pointer :: lon => NULL()
+    real(r8), dimension(:), pointer :: time => NULL()
+    real(r8), dimension(:), pointer :: solarTime => NULL()
+    real(r8), dimension(:), pointer :: solarZenith => NULL()
+    real(r8), dimension(:), pointer :: logAngle => NULL()
   end type HGrid_T
 
 ! -----     Private declarations     ---------------------------------
@@ -439,6 +444,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.6  2001/02/22 23:43:26  livesey
+! Nullified pointer elements of HGrid_T
+!
 ! Revision 2.5  2001/02/21 01:09:24  livesey
 ! Tidied stuff up a bit
 !
