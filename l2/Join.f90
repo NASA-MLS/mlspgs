@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -6,16 +6,6 @@ module Join                     ! Join together chunk based data.
 !=============================================================================
 
   ! This module performs the 'join' task in the MLS level 2 software.
-  use intrinsic, only: FIELD_INDICES, L_NONE, L_GEODANGLE, &
-    & L_MAF, PHYQ_DIMENSIONLESS
-  use MLSCommon, only: MLSChunk_T, R4, R8, RV
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use String_Table, only: DISPLAY_STRING, GET_STRING
-  use TOGGLES, only: GEN, TOGGLE, LEVELS
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
-    & SUB_ROSA, SUBTREE
 
   implicit none
   private
@@ -30,7 +20,7 @@ module Join                     ! Join together chunk based data.
   private :: not_used_here 
 !---------------------------------------------------------------------------
 
-  logical, parameter, private :: DEEBUG = .false.           ! Usually FALSE
+  ! logical, parameter, private :: DEEBUG = .true.           ! Usually FALSE
 
   ! Parameters for Announce_Error
 
@@ -42,35 +32,27 @@ contains ! =====     Public Procedures     =============================
 
   ! --------------------------------------------------  MLSL2Join  -----
 
-  ! This is the main routine for join.  Most of the time it is fairly simple.
-  ! However, for the first time round a little more has to be done as the
-  ! routine has to create the l2gp and l2aux structures with the correct size
-  ! in order to be able to store all the chunks.
+  ! This is the main routine for the Join block.  This one just goes
+  ! through the tree and dispatches work to other routines.
 
   subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, &
     & chunkNo, chunks )
-
-    use Expr_m, only: EXPR
-    use INIT_TABLES_MODULE, only: &
-      & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
-      & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
-      & FIELD_LAST
-    use INIT_TABLES_MODULE, only: L_PRESSURE, &
-      & L_TRUE, L_ZETA, S_DIRECTWRITE, S_L2AUX, S_L2GP, S_TIME
-    use L2AUXData, only: L2AUXData_T
-    use L2GPData, only: L2GPData_T
-    use L2ParInfo, only: PARALLEL, SLAVEJOIN
+    ! Imports
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Init_Tables_Module, only: S_L2GP, S_L2AUX, S_TIME, S_DIRECTWRITE, S_LABEL
+    use L2GPData, only: L2GPDATA_T
+    use L2AUXData, only: L2AUXDATA_T
+    use MLSCommon, only: MLSCHUNK_T
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSSignals_M, only: GetSignalName
-    use MoreTree, only: Get_Spec_ID
-    use OutputAndClose, only: DIRECTWRITE
-    use Symbol_Table, only: ENTER_TERMINAL
-    use Symbol_Types, only: T_STRING
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MoreTree, only: GET_SPEC_ID
+    use Output_m, only: OUTPUT, BLANKS
+    use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
+    use Tree, only: SUBTREE, NSONS, NODE_ID
+    use TREE_TYPES, only: N_NAMED
     use Time_M, only: Time_Now
-    use TREE_TYPES, only: N_NAMED, N_SET_ONE
-    use VectorsModule, only: GetVectorQtyByTemplateIndex, &
-      & ValidateVectorQuantity, Vector_T, VectorValue_T
-
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use VectorsModule, only: VECTOR_T
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
     type (Vector_T), dimension(:), pointer :: vectors
@@ -79,12 +61,508 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
+    ! Local parameters
+    integer, parameter :: DELAY = 500000  ! For Usleep, no. microsecs
+    ! External (C) function
+    external :: Usleep
+    ! Local variables
+    real :: T1                          ! Time we started
+    real :: T2                          ! Time we finished
+    integer :: PASS                     ! Loop counter
+    integer :: NODIRECTWRITES           ! Array size
+    integer :: DWINDEX                  ! Direct Write index
+    integer :: KEY                      ! Tree node
+    integer :: SON                      ! Tree node
+    integer :: MLSCFLINE                ! Line number in l2cf
+    integer :: SPECID                   ! Type of l2cf line this is
+    logical :: TIMING                   ! Flag
+
+    logical, dimension(:), pointer :: DWCOMPLETED
+    
+    ! Executable code
+    if ( toggle(gen) ) call trace_end ( "MLSL2Join" )
+    timing = section_times
+    if ( timing ) call time_now ( t1 )
+
+    ! This is going to be somewhat atypical, as the code may run in 'passes'
+    ! This is to allow us to try to write the direct write files in an arbitrary
+    ! order as they become free.
+
+    error = 0
+    pass = 0
+    noDirectWrites = 0
+    passLoop: do
+      dwIndex = 1
+      ! Simply loop over lines in the l2cf
+      do mlscfLine = 2, nsons(root) - 1 ! Skip begin/end section
+        son = subtree(mlscfLine,root)
+        if ( node_id(son) == n_named ) then ! Is spec labeled?
+          key = subtree(2,son)
+        else
+          key = son
+        end if
+        specId = get_spec_id ( key )
+        select case ( specId )
+        case ( s_time )
+          ! Only say the time the first time round
+          if ( pass == 0 ) then
+            if ( timing ) then
+              call sayTime
+            else
+              call time_now ( t1 )
+              timing = .true.
+            end if
+          end if
+        case ( s_l2gp, s_l2aux )
+          ! Only do these the first time round
+          if ( pass == 0 ) then
+            call JoinQuantities ( son, vectors, l2gpDatabase, l2auxDatabase, &
+              & chunkNo, chunks )
+          end if
+        case ( s_label )
+          ! Need to keep changing the label each pass so that the directWrites 
+          ! have the correct output name
+          call LabelVectorQuantity ( son, vectors )
+        case ( s_directWrite )
+          if ( pass == 0 ) then
+            ! On the first pass just count the number of direct writes
+            noDirectWrites = noDirectWrites + 1
+          else
+            ! On the later passes deal with them if they are still pending.
+            if ( .not. dwCompleted(dwIndex) ) then
+              ! Have it be patient if it's the only one left, other wise
+              ! we'll try the next one.
+              call DirectWriteCommand ( son, vectors, chunkNo, chunks, &
+                & count(.not. dwCompleted)==1, dwCompleted(dwIndex) )
+            end if
+            dwIndex = dwIndex + 1
+            ! If we've now completed all the direct writes, it's time to move on.
+            if ( all ( dwCompleted ) ) exit passLoop
+          end if
+        end select
+      end do                            ! End loop over l2cf lines
+
+      ! On first pass setup dwCompleted, later passes, wait a moment.
+      if ( pass == 0 ) then
+        nullify ( dwCompleted )
+        call Allocate_test ( dwCompleted, noDirectWrites, 'dwCompleted', ModuleName )
+        dwCompleted = .false.
+      else
+        ! Once we've done a complete pass through the direct writes
+        ! let's wait a while, to avoid pestering the master with 
+        ! direct write requests too often
+        call usleep ( delay )
+      end if
+
+      ! Bail out of pass loop if there are no direct writes, or there was
+      ! an error.
+      if ( noDirectWrites == 0 .or. error /= 0 ) exit passLoop
+      pass = pass + 1
+    end do passLoop                     ! End loop over passes
+
+    ! Check for errors
+    if ( error /= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, 'Error in Join section' )
+
+    call Deallocate_test ( dwCompleted, 'dwCompleted', ModuleName )
+
+    if ( toggle(gen) ) call trace_end ( "MLSL2Join" )
+    if ( timing ) call sayTime
+
+  contains
+    ! Private procedure
+    subroutine SayTime
+      call time_now ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      end if
+      call output ( "Timing for MLSL2Join =" )
+      call output ( dble(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
+
+  end subroutine MLSL2Join
+
+  ! ------------------------------------------------ DirectWriteCommand -----
+  subroutine DirectWriteCommand ( node, vectors, chunkNo, chunks, waitItOut, completed )
+    ! Imports
+    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use DirectWrite_m, only: DirectWrite_l2GP, DirectWrite_l2aux
+    use Hdf, only: DFACC_CREATE, DFACC_RDWR
+    use intrinsic, only: L_NONE, L_GEODANGLE, &
+      & L_MAF, PHYQ_DIMENSIONLESS
+    use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
+      & GETVECTORQTYBYTEMPLATEINDEX
+    use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
+    use MLSFiles, only: MLS_EXISTS, split_path_name, GetPCFromRef, &
+      & mls_io_gen_openF, mls_io_gen_closeF
+    use MLSL2Options, only: TOOLKIT
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSPCF2, only: mlspcf_l2gp_start, mlspcf_l2gp_end, &
+      & mlspcf_l2dgm_start, mlspcf_l2dgm_end
+    use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
+    use Init_tables_module, only: L_L2GP, L_L2AUX, L_PRESSURE, L_ZETA
+    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
+    use Expr_m, only: EXPR
+    use MoreTree, only: GET_FIELD_ID
+    use String_Table, only: DISPLAY_STRING, GET_STRING
+    use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
+      & SUB_ROSA, SUBTREE
+    ! Dummy arguments
+    integer, intent(in) :: NODE    ! Of the JOIN section in the AST
+    type (Vector_T), dimension(:), pointer :: VECTORS
+    integer, intent(in) :: CHUNKNO
+    type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+    logical, intent(in) :: WAITITOUT    ! If set, wait patiently for the ability to write
+    logical, intent(out) :: COMPLETED    ! True if we sucessfully wrote the file
+    ! Local parameters
+    integer, parameter :: MAXFILES = 1000 ! Set for an internal array
+    ! Saved variable - used to work out file information.
+    integer, dimension(maxFiles), save :: CREATEDFILENAMES = 0
+    integer, save :: NOCREATEDFILES=0   ! Number of files created
+    ! Local variables
+    integer :: fileaccess               ! DFACC_CREATE or DFACC_RDWR
+    integer :: ERRORTYPE
+    integer :: EXPECTEDTYPE             ! l2gp/l2aux
+    integer :: FIELDINDEX               ! Type of field in l2cf line
+    integer :: FILE                     ! File name string index
+    integer :: GSON                     ! Son of son
+    integer :: HANDLE                   ! File handle from hdf/hdf-eos
+    integer :: HDFNAMEINDEX             ! String index for output name
+    integer :: HDFVERSION               ! 4 or 5
+    integer :: KEYNO                    ! Loop counter, field in l2cf line
+    integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
+    integer :: NOSOURCES                ! No. things to output
+    integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux
+    integer :: SON                      ! A tree node
+    integer :: SOURCE                   ! Loop counter
+    integer :: RETURNSTATUS
+    logical :: CREATEFILE               ! Flag
+    integer :: record_length
+    integer :: l2gp_Version
+
+    integer :: EXPRUNITS(2)             ! From expr
+    real (r8) :: EXPRVALUE(2)           ! From expr
+    integer, dimension(:), pointer :: SOURCEVECTORS ! Indicies
+    integer, dimension(:), pointer :: SOURCEQUANTITIES ! Indicies
+    integer, dimension(:), pointer :: PRECISIONVECTORS ! Indicies
+    integer, dimension(:), pointer :: PRECISIONQUANTITIES ! Indicies
+    character(len=1024) :: FILENAME     ! Output full filename
+    character(len=1024) :: FILE_base    ! made up of
+    character(len=1024) :: path         ! path/file_base
+    character(len=1024) :: HDFNAME      ! Output swath/sd name
+    type(VectorValue_T), pointer :: QTY ! The quantity
+    type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
+    logical :: DEEBUG
+
+    ! Executable code
+    DEEBUG = (index(switches, 'direct') /= 0)
+
+    ! Direct write is probably going to be come the predominant form
+    ! of output in the software, as the other forms have become a
+    ! little too intensive.  The key is to make the actual writing part
+    ! as efficient as possible, so we 'hold the flag' for the minimum
+    ! time.  Otherwise we'll start to clog up the sytem with direct
+    ! writes
+
+    ! The time critical section is marked in the comments below.
+    ! First, let's go through the l2cf command and work out what
+    ! we've been asked to do
+    
+    ! Take a first pass through, count the number of things we're outputing
+    ! Also pick upthe hdfVersion and the filename
+    lastFieldIndex = 0
+    noSources = 0
+    do keyNo = 2, nsons(node)           ! Skip DirectWrite command
+      son = subtree ( keyNo, node )
+      if ( keyNo > 2 ) lastFieldIndex = fieldIndex
+      fieldIndex = get_field_id ( son )
+      select case ( fieldIndex )
+      case ( f_source )
+        noSources = noSources + 1
+      case ( f_precision )
+        if ( lastFieldIndex /= f_source ) call Announce_Error ( son, no_error_code, &
+            & 'A precision can only be given immediately following a source' )
+      case ( f_hdfVersion )
+        call expr ( subtree(2,son), exprUnits, exprValue )
+        if ( exprUnits(1) /= phyq_dimensionless ) &
+          & call Announce_error ( son, NO_ERROR_CODE, &
+          & 'No units allowed for hdfVersion: just integer 4 or 5')
+        hdfVersion = exprValue(1)
+      case ( f_file )
+        file = sub_rosa(subtree(2,son))
+      case ( f_type )
+        outputType = decoration(subtree(2,son))
+      end select
+    end do
+
+    call get_string ( file, filename, strip=.true. )
+    
+    ! Now identify the quantities we're after
+    nullify ( sourceVectors, sourceQuantities, precisionVectors, precisionQuantities )
+    call Allocate_test ( sourceVectors, noSources, 'sourceVectors', ModuleName )
+    call Allocate_test ( sourceQuantities, noSources, 'sourceQuantities', ModuleName )
+    call Allocate_test ( precisionVectors, noSources, 'precisionVectors', ModuleName )
+    call Allocate_test ( precisionQuantities, noSources, 'precisionQuantities', ModuleName )
+    ! Go round again and identify each quantity, work out what kind of file
+    ! we're talking about
+    precisionVectors = 0
+    precisionQuantities = 0
+    source = 0
+    do keyNo = 2, nsons(node)
+      son = subtree ( keyNo, node )
+      fieldIndex = get_field_id ( son )
+      select case ( fieldIndex )
+      case ( f_source )
+        source = source + 1
+        gson = subtree(2,son)
+        sourceVectors(source) = decoration(decoration(subtree(1,gson)))
+        sourceQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
+      case ( f_precision )
+        if ( outputType /= l_l2gp ) call Announce_Error ( son, no_error_code, &
+          & "Precision only appropriate for l2gp files" )
+        gson = subtree(2,son)
+        precisionVectors(source) = decoration(decoration(subtree(1,gson)))
+        precisionQuantities(source) = decoration(decoration(decoration(subtree(2,gson))))
+      case default
+      end select
+    end do
+
+    ! Now go through and do some sanity checking
+    do source = 1, noSources
+      qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+        & sourceQuantities(source) )
+      if ( qty%label == 0 ) call Announce_Error ( son, no_error_code, &
+        & "Quantity does not have a label" )
+      if ( precisionVectors(source) /= 0 ) then
+        precQty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+          & sourceQuantities(source) )
+        ! Check that this is compatible with it's value quantitiy
+        if ( qty%template%name /= precQty%template%name ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Precision and quantity do not match" )
+      else
+        precQty => NULL()
+      end if
+      ! Now check that things make sense
+      if ( ValidateVectorQuantity ( qty, &
+        & coherent=.true., stacked=.true., regular=.true., &
+        & verticalCoordinate = (/ l_pressure, l_zeta, l_none/) ) ) then
+        expectedType = l_l2gp
+      else
+        expectedType = l_l2aux
+      end if
+      if ( outputType /= expectedType ) call Announce_Error ( son, no_error_code, &
+        & "Inappropriate quantity for this file type in direct write" )
+    end do
+
+    ! If we're a slave, we need to request permission from the master.
+    if ( parallel%slave ) then
+      call RequestDirectWritePermission ( file, createFile, waitItOut, completed )
+      ! If we weren't prepared to wait then return to the calling code.
+      if ( .not. completed ) return
+      ! From this point on we have exclusive access to the output file, so let's
+      ! be quick about what we do so as not to block others.
+    else
+      ! In serial mode there is no doubt that we will write file now.
+      completed = .true.
+      createFile = .not. any ( createdFilenames == file )
+      if ( createFile ) then
+        noCreatedFiles = noCreatedFiles + 1
+        if ( noCreatedFiles > maxFiles ) call MLSMessage ( &
+          & MLSMSG_Error, ModuleName, 'Too many direct write files' )
+        createdFilenames ( noCreatedFiles ) = file
+      end if
+    end if
+
+    ! Bail out at this stage if there is some kind of error.
+    if ( error /= 0 ) return
+
+    ! vvvvvvvvvv ------ Speed is of the essence in this section ----- vvvvvvvvvv
+    ! --------------------------------------------------------------------------
+
+    ! Open/create the file of interest
+    call split_path_name(filename, path, file_base)
+    if ( .not. TOOLKIT ) then
+      handle = 0
+    elseif ( outputType == l_l2gp ) then
+      Handle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+      & mlspcf_l2gp_end, &
+      & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+      & exactName=Filename)
+    else
+      Handle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
+      & mlspcf_l2dgm_end, &
+      & TOOLKIT, returnStatus, l2gp_Version, DEEBUG, &
+      & exactName=Filename)
+    end if
+    if ( mls_exists(trim(Filename)) == 0 ) then
+      fileaccess = DFACC_RDWR
+    else
+      fileaccess = DFACC_CREATE
+    endif
+    select case ( outputType )
+    case ( l_l2gp )
+      ! Call the l2gp open/create routine.  Filename is 'filename'
+      ! file id should go into 'handle'
+      handle = mls_io_gen_openF('sw', .true., ErrorType, &
+        & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
+    case ( l_l2aux )
+      ! Call the l2aux open/create routine.  Filename is 'filename'
+      ! file id should go into 'handle'
+      handle = mls_io_gen_openF('hg', .true., ErrorType, &
+        & record_length, FileAccess, FileName, hdfVersion=hdfVersion)
+    end select
+
+    ! Loop over the quantities to output
+    do source = 1, noSources
+      qty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+        & sourceQuantities(source) )
+      hdfNameIndex = qty%label
+      call get_string ( hdfNameIndex, hdfName, strip=.true. )
+      if ( precisionVectors(source) /= 0 ) then
+        precQty => GetVectorQtyByTemplateIndex ( vectors(sourceVectors(source)), &
+          & sourceQuantities(source) )
+        ! Check that this is compatible with it's value quantitiy
+        if ( qty%template%name /= precQty%template%name ) &
+          & call Announce_Error ( son, no_error_code, &
+          & "Precision and quantity do not match" )
+      else
+        precQty => NULL()
+      end if
+
+      select case ( outputType )
+      case ( l_l2gp )
+        ! Call the l2gp swath write routine.  This should write the 
+        ! non-overlapped portion of qty (with possibly precision in precQty)
+        ! into the l2gp swath named 'hdfName' starting at profile 
+        ! qty%template%instanceOffset + 1
+        call DirectWrite_l2GP( Handle, &
+          & qty, precQty, hdfName, chunkNo, &
+          & hdfVersion )   ! May optionally supply first, last profiles
+      case ( l_l2aux )
+        ! Call the l2aux sd write routine.  This should write the 
+        ! non-overlapped portion of qty (with possibly precision in precQty)
+        ! into the l2aux sd named 'hdfName' starting at profile 
+        ! qty%template%instanceOffset ( + 1 ? )
+        ! Note sure about the +1 in this case, probably depends whether it's a
+        ! minor frame quantity or not.  This mixed zero/one indexing is beomming
+        ! a real pain.  I wish I never want down that road!
+        call DirectWrite_L2Aux(Handle, qty, precQty, hdfName, hdfVersion, &
+          & chunkNo, chunks )
+      end select
+    end do ! End loop over swaths/sds
+
+    ! Close the output file of interest (does this need to be split like this?)
+    select case ( outputType )
+    case ( l_l2gp )
+      ! Call the l2gp close routine
+      errortype = mls_io_gen_closeF('swclose', Handle, FileName=FileName, &
+      & hdfVersion=hdfVersion)
+    case ( l_l2aux )
+      ! Call the l2aux close routine
+      errortype = mls_io_gen_closeF('hg', Handle, FileName=FileName, &
+      & hdfVersion=hdfVersion)
+    end select
+
+    ! Tell the master we're done
+    if ( parallel%slave ) call FinishedDirectWrite
+    ! --------------------------------------------------------------------------
+    ! ^^^^^^^^^^ ------------ End of time critical section ---------- ^^^^^^^^^^
+
+    call Deallocate_test ( sourceVectors, 'sourceVectors', ModuleName )
+    call Deallocate_test ( sourceQuantities, 'sourceQuantities', ModuleName )
+    call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
+    call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
+
+  end subroutine DirectWriteCommand
+
+  ! ------------------------------------------------ LabelVectorQuantity -----
+  subroutine LabelVectorQuantity ( node, vectors )
+    use VectorsModule, only: VECTOR_T
+    use MoreTree, only: GET_FIELD_ID, GET_BOOLEAN
+    use Init_tables_module, only: F_QUANTITY, F_PREFIXSIGNAL, F_LABEL
+    use Tree, only: NSONS, SUBTREE, SUB_ROSA, DECORATION
+    ! Dummy arguments
+    integer, intent(in) :: NODE          ! Tree node for l2cf line
+    type (Vector_T), dimension(:), pointer :: VECTORS ! Vectors database
+    ! Local variables
+    integer :: FIELDINDEX               ! Type of field
+    integer :: KEYNO                    ! Field index
+    integer :: LABEL                    ! String index
+    integer :: QUANTITYINDEX            ! Index into quantities database
+    integer :: SON                      ! Tree node
+    integer :: SOURCE                   ! Tree node
+    integer :: VECTORINDEX              ! Index into database
+    logical :: PREFIXSIGNAL             ! From l2cf
+    ! Executable code
+
+    ! Loop over the fields of the mlscf line
+    do keyNo = 2, nsons(node) ! Skip spec name
+      son = subtree(keyNo,node)
+      fieldIndex = get_field_id(son)
+      select case ( fieldIndex )
+      case ( f_quantity )
+        source = subtree(2,son) ! required to be an n_dot vertex
+        vectorIndex = decoration(decoration(subtree(1,source)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,source))))
+      case ( f_prefixSignal )
+        prefixSignal = get_boolean ( son )
+      case ( f_label )
+        label = sub_rosa(subtree(2,son))
+      case default ! Can't get here if tree_checker worked properly
+      end select
+    end do
+  end subroutine LabelVectorQuantity
+
+  ! --------------------------------------------------  JoinQuantities  -----
+  ! This routine parses a line of the l2cf that is designed to join
+  ! quantities together into l2gp/l2aux files
+  subroutine JoinQuantities ( node, vectors, l2gpDatabase, l2auxDatabase, &
+    & chunkNo, chunks )
+
+    use Expr_m, only: EXPR
+    use INIT_TABLES_MODULE, only: &
+      & F_COMPAREOVERLAPS, F_FILE, F_HDFVERSION, F_OUTPUTOVERLAPS, &
+      & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
+      & FIELD_LAST
+    use INIT_TABLES_MODULE, only: L_PRESSURE, &
+      & L_TRUE, L_ZETA, S_DIRECTWRITE, S_L2AUX, S_L2GP, S_TIME, S_LABEL
+    use intrinsic, only: L_NONE, L_GEODANGLE, &
+      & L_MAF, PHYQ_DIMENSIONLESS
+    use L2AUXData, only: L2AUXData_T
+    use L2GPData, only: L2GPData_T
+    use L2ParInfo, only: PARALLEL, SLAVEJOIN
+    use MLSCommon, only: MLSCHUNK_T, R8
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_M, only: GetSignalName
+    use MoreTree, only: GET_BOOLEAN, GET_FIELD_ID, GET_SPEC_ID
+    use String_Table, only: DISPLAY_STRING, GET_STRING
+    use Symbol_Table, only: ENTER_TERMINAL
+    use Symbol_Types, only: T_STRING
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
+      & SUB_ROSA, SUBTREE
+    use TREE_TYPES, only: N_NAMED, N_SET_ONE
+    use VectorsModule, only: GetVectorQtyByTemplateIndex, &
+      & ValidateVectorQuantity, Vector_T, VectorValue_T
+
+    ! Dummy arguments
+    integer, intent(in) :: NODE         ! The start of the l2cf line
+    type (Vector_T), dimension(:), pointer :: vectors
+    type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
+    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
+    integer, intent(in) :: chunkNo
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
+
     ! Local variables
     logical :: COMPAREOVERLAPS
-    integer :: FIELD                    ! Subtree index of "field" node
-    integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
+    integer :: FIELDINDEX              ! F_..., see Init_Tables_Module
     integer :: FILE                 ! Name of output file for direct write
-    integer :: GSON                     ! Son of Key
+    integer :: SON                      ! Son of Key
     integer :: HDFVERSION               ! Version of hdf for directwrite
     integer :: HDFNAMEINDEX             ! Name of swath/sd
     integer :: KEY                      ! Index of an L2GP or L2AUX tree
@@ -92,7 +570,6 @@ contains ! =====     Public Procedures     =============================
     integer :: MLSCFLine
     logical :: OutputOverlaps
     integer :: NAME                     ! Sub-rosa index of name of L2GP or L2AUX
-    integer :: SON                      ! A son of ROOT
     integer :: SOURCE                   ! Index in AST
     integer :: VALUE                    ! Value of a field
     integer :: VECTORINDEX              ! Index for vector to join
@@ -107,189 +584,114 @@ contains ! =====     Public Procedures     =============================
     real :: T1, T2     ! for timing
 
     character(len=132) :: HDFNAME          ! Name for swath/sd
-    logical :: GOT_FIELD(field_first:field_last)
+    logical :: GOT(field_first:field_last)
     type (VectorValue_T), pointer :: Quantity
     type (VectorValue_T), pointer :: PrecisionQuantity
 
-    ! Executable code
-    timing = section_times
-    if ( timing ) call time_now ( t1 )
+    ! We know this node is named
+    key = subtree(2,node)
+    name = sub_rosa(subtree(1,node))
 
-    if ( toggle(gen) ) call trace_begin ( "MLSL2Join", root )
+    got = .false.
+    source = null_tree
+    compareOverlaps = .false.
+    outputOverlaps = .false.
+    hdfNameIndex=name
+    prefixSignal = .false.
+    hdfVersion = 4
 
-    error = 0
-
-    ! We simply loop over the lines in the mlscf
-
-    do mlscfLine = 2, nsons(root)-1     ! Skip name at begin and end of section
-      ! Each line represents a different join operation; clear various
-      ! flags etc.
-      son = subtree(mlscfLine,root)
-      if ( node_id(son) == n_named ) then ! Is spec labeled?
-        key = subtree(2,son)
-        name = sub_rosa(subtree(1,son))
-      else
-        key = son
-        name = 0
-      end if
-
-      ! Node_id(key) is now n_spec_args.
-
-      ! ??? Does this need to do anything somewhere ???
-      if ( get_spec_id(key) == s_time ) then
-        if ( timing ) then
-          call sayTime
-        else
-          call time_now ( t1 )
-          timing = .true.
-        end if
-      end if
-
-      got_field = .false.
-      source = null_tree
-      compareOverlaps = .false.
-      outputOverlaps = .false.
-      hdfNameIndex=name
-      prefixSignal = .false.
-      hdfVersion = 4
-
-      ! Loop over the fields of the mlscf line
-
-      do keyNo = 2, nsons(key) ! Skip spec name
-        gson = subtree(keyNo,key)
-        field = subtree(1,gson)
-        if ( node_id(gson) == n_set_one ) then
-          value = l_true
-        else
-          value = decoration(subtree(2,gson))
-        end if
-        field_index = decoration(field)
-        got_field(field_index) = .true.
-        select case ( field_index )
-        case ( f_source )
-          source = subtree(2,gson) ! required to be an n_dot vertex
-          vectorIndex = decoration(decoration(subtree(1,source)))
-          quantityIndex = decoration(decoration(decoration(subtree(2,source))))
-        case ( f_precision )
-          source = subtree(2,gson) ! required to be an n_dot vertex
-          precVectorIndex = decoration(decoration(subtree(1,source)))
-          precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
-        case ( f_hdfVersion )
-          call expr ( subtree(2,gson), exprUnits, exprValue )
-          if ( exprUnits(1) /= phyq_dimensionless ) &
-            & call Announce_error ( gson, NO_ERROR_CODE, &
-            & 'No units allowed for hdfVersion: just integer 4 or 5')
-          hdfVersion = exprValue(1)
-        case ( f_prefixSignal )
-          prefixSignal= value == l_true
-        case ( f_compareoverlaps )
-          compareOverlaps = value == l_true
-        case ( f_outputoverlaps )
-          outputOverlaps = value == l_true 
-        case ( f_swath )
-          hdfNameIndex = sub_rosa(subtree(2,gson))
-        case ( f_sdName )
-          hdfNameIndex = sub_rosa(subtree(2,gson))
-        case ( f_file )
-          file = sub_rosa(subtree(2,gson))
-        case default ! Can't get here if tree_checker worked properly
-        end select
-      end do
-
-      ! Some final checks
-      if ( any ( get_spec_id(key) == (/ s_l2gp, s_l2aux /) ) ) then
-        if ( any ( got_field ( (/ f_file, f_hdfVersion /) ) ) ) &
-          & call Announce_Error ( key, NO_ERROR_CODE, &
-          & 'File or hdfVersion not appropriate arguments for l2aux/l2gp' )
-      end if
-
-      if ( error > 0 ) call MLSMessage ( MLSMSG_Error, &
-        & ModuleName, "Errors in configuration prevent proceeding" )
-
-      ! Now, for commands other than timing, do more complicated stuff.
-      if ( get_spec_id(key) /= s_time ) then
-        ! Identify the quantity
-        quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
-        ! Get the precision quantity too perhaps
-        if ( got_field ( f_precision ) ) then
-          precisionQuantity => &
-            & GetVectorQtyByTemplateIndex(vectors(precVectorIndex),precQtyIndex)
-          if ( quantity%template%id /= precisionQuantity%template%id ) &
-            & call announce_error(key, NO_ERROR_CODE, &
-            & 'Quantity and precision quantity do not match')
-        else
-          precisionQuantity => NULL()
-        end if
-
-        ! Establish a swath/sd name for this quantity.
-        hdfName = ''
-        if ( prefixSignal ) &
-          & call GetSignalName ( quantity%template%signal, hdfName, &
-          &   sideband=quantity%template%sideband )
-        call Get_String( hdfNameIndex, hdfName(len_trim(hdfName)+1:), strip=.true. )
-
-        ! Now get an index for this possibly new name which may include the signal
-        hdfNameIndex = enter_terminal ( trim(hdfName), t_string, caseSensitive=.true. )
-
-        ! Now three possible cases, a direct write (either parallel or not), a
-        ! parallel slave join, or a manual join
-        if ( get_spec_id(key) == s_directWrite ) then
-          ! For the direct write command, call some special code
-          if ( .not. any ( (/ quantity%template%minorFrame, &
-            &                 quantity%template%majorFrame /) ) ) &
-            & call Announce_Error ( key, NO_ERROR_CODE, &
-            & 'Invalid quantity for direct write, must be minor or major frame' )
-          call DirectWrite ( quantity, hdfNameIndex, file, hdfVersion, &
-            & chunkNo, chunks )
-        else if ( parallel%slave ) then
-          ! For slave tasks in a PVM system, simply ship this vector off
-          ! Otherwise, do a join.
-          call SlaveJoin ( quantity, precisionQuantity, &
-            & hdfName, key )
-        else
-          ! Now, depending on the properties of the source we deal with the
-          ! vector quantity appropriately.
-          if (ValidateVectorQuantity(quantity,coherent=.true.,stacked=.true.,regular=.true.,&
-            & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/),&
-            & minorFrame=.false.,majorFrame=.false.)) then
-            ! Coherent, stacked, regular quantities on pressure surfaces, or
-            ! with no vertical coordinate system go in l2gp files.
-            if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
-              & ModuleName, 'This quantity should be joined as an l2gp')
-            call JoinL2GPQuantities ( key, hdfNameIndex, quantity, &
-              & precisionQuantity, l2gpDatabase, chunkNo )
-          else
-            ! All others go in l2aux files.
-            if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
-              & ModuleName, 'This quantity should be joined as an l2aux')
-            call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
-             & l2auxDatabase, chunkNo, chunks )
-          end if
-        end if
-      end if
+    ! Loop over the fields of the mlscf line
+    do keyNo = 2, nsons(key) ! Skip spec name
+      son = subtree(keyNo,key)
+      fieldIndex = get_field_id(son)
+      got(fieldIndex) = .true.
+      select case ( fieldIndex )
+      case ( f_source )
+        source = subtree(2,son) ! required to be an n_dot vertex
+        vectorIndex = decoration(decoration(subtree(1,source)))
+        quantityIndex = decoration(decoration(decoration(subtree(2,source))))
+      case ( f_precision )
+        source = subtree(2,son) ! required to be an n_dot vertex
+        precVectorIndex = decoration(decoration(subtree(1,source)))
+        precQtyIndex = decoration(decoration(decoration(subtree(2,source))))
+      case ( f_hdfVersion )
+        call expr ( subtree(2,son), exprUnits, exprValue )
+        if ( exprUnits(1) /= phyq_dimensionless ) &
+          & call Announce_error ( son, NO_ERROR_CODE, &
+          & 'No units allowed for hdfVersion: just integer 4 or 5')
+        hdfVersion = exprValue(1)
+      case ( f_prefixSignal )
+        prefixSignal = get_boolean(son)
+      case ( f_compareoverlaps )
+        compareOverlaps = get_boolean(son)
+      case ( f_outputoverlaps )
+        outputOverlaps = get_boolean(son)
+      case ( f_swath )
+        hdfNameIndex = sub_rosa(subtree(2,son))
+      case ( f_sdName )
+        hdfNameIndex = sub_rosa(subtree(2,son))
+      case ( f_file )
+        file = sub_rosa(subtree(2,son))
+      case default ! Can't get here if tree_checker worked properly
+      end select
     end do
+    
+      ! Some final checks
+    if ( any ( got ( (/ f_file, f_hdfVersion /) ) ) ) &
+      & call Announce_Error ( key, NO_ERROR_CODE, &
+      & 'File or hdfVersion not appropriate arguments for output l2aux/l2gp' )
 
-   if ( ERROR /= 0 ) then
-     call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Join section' )
-   end if
+    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Errors in configuration prevent proceeding" )
 
-    if ( toggle(gen) ) call trace_end ( "MLSL2Join" )
-    if ( timing ) call sayTime
-
-  contains
-    subroutine SayTime
-      call time_now ( t2 )
-      if ( total_times ) then
-        call output ( "Total time = " )
-        call output ( dble(t2), advance = 'no' )
-        call blanks ( 4, advance = 'no' )
+    ! Identify the quantity
+    quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
+    ! Get the precision quantity too perhaps
+    if ( got ( f_precision ) ) then
+      precisionQuantity => &
+        & GetVectorQtyByTemplateIndex(vectors(precVectorIndex),precQtyIndex)
+      if ( quantity%template%name /= precisionQuantity%template%name ) &
+        & call announce_error(key, NO_ERROR_CODE, &
+        & 'Quantity and precision quantity do not match')
+    else
+      precisionQuantity => NULL()
+    end if
+    
+    ! Establish a swath/sd name for this quantity.
+    hdfName = ''
+    if ( prefixSignal ) &
+      & call GetSignalName ( quantity%template%signal, hdfName, &
+      &   sideband=quantity%template%sideband )
+    call Get_String( hdfNameIndex, hdfName(len_trim(hdfName)+1:), strip=.true. )
+    ! Now get an index for this possibly new name which may include the signal
+    hdfNameIndex = enter_terminal ( trim(hdfName), t_string, caseSensitive=.true. )
+    
+    ! Now do the join, perhaps as a parallel slave, perhaps more directly.
+    if ( parallel%slave ) then
+      ! For slave tasks in a PVM system, simply ship this vector off to the master
+      call SlaveJoin ( quantity, precisionQuantity, hdfName, key )
+    else
+      ! Now, depending on the properties of the source we deal with the
+      ! vector quantity appropriately.
+      if ( ValidateVectorQuantity ( quantity, &
+        & coherent=.true., stacked=.true., regular=.true., &
+        & verticalCoordinate = (/ l_pressure, l_zeta, l_none/) ) ) then 
+        ! Coherent, stacked, regular quantities on pressure surfaces, or
+        ! with no vertical coordinate system go in l2gp files.
+        if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
+          & ModuleName, 'This quantity should be joined as an l2gp')
+        call JoinL2GPQuantities ( key, hdfNameIndex, quantity, &
+          & precisionQuantity, l2gpDatabase, chunkNo )
+      else
+        ! All others go in l2aux files.
+        if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
+          & ModuleName, 'This quantity should be joined as an l2aux')
+        call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
+          & l2auxDatabase, chunkNo, chunks )
       end if
-      call output ( "Timing for MLSL2Join =" )
-      call output ( dble(t2 - t1), advance = 'yes' )
-      timing = .false.
-    end subroutine SayTime
+    end if
 
-  end subroutine MLSL2Join
+  end subroutine JoinQuantities
 
   ! -----------------------------------------  JoinL2GPQuantities  -----
 
@@ -305,8 +707,15 @@ contains ! =====     Public Procedures     =============================
     & firstInstance, lastInstance, nameString )
 
     use INIT_TABLES_MODULE, only: L_PRESSURE, L_ZETA
+    use intrinsic, only: L_NONE
     use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
       & L2GPData_T, SetupNewL2GPRecord, RGP
+    use MLSCommon, only: R4, R8, RV
+    use String_Table, only: DISPLAY_STRING, GET_STRING
+    use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
+      & SUB_ROSA, SUBTREE
     use VectorsModule, only: VectorValue_T
 
     ! Dummy arguments
@@ -321,9 +730,7 @@ contains ! =====     Public Procedures     =============================
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the l2gp data.
 
-
     ! Local variables
-
     type (L2GPData_T) :: NewL2GP
     type (L2GPData_T), pointer :: ThisL2GP
     integer :: Index
@@ -471,15 +878,24 @@ contains ! =====     Public Procedures     =============================
   subroutine JoinL2AUXQuantities ( key, name, quantity, l2auxDatabase, &
    & chunkNo, chunks, firstInstance, lastInstance )
 
+    use intrinsic, only: L_NONE, L_GEODANGLE, &
+      & L_MAF, PHYQ_DIMENSIONLESS
     use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
       & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
+    use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use OUTPUT_M, only: BLANKS, OUTPUT
+    use String_Table, only: DISPLAY_STRING, GET_STRING
+    use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
+      & SUB_ROSA, SUBTREE
     use VectorsModule, only: VectorValue_T
 
     ! Dummy arguments
     integer, intent(in) :: KEY     ! spec_args to decorate with the L2AUX index
     integer, intent(in) :: NAME    ! for the sd
     type (VectorValue_T), intent(in) :: quantity
-!   integer, intent(in) :: quantityNo
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
     integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
@@ -488,24 +904,27 @@ contains ! =====     Public Procedures     =============================
     ! is to be stored in the l2aux data.
 
     ! Local variables
-    integer :: FIRSTMAF                 ! Index
-    integer :: LASTMAF                  ! Index
-    integer ::                           UseFirstInstance, UseLastInstance, &
-    &                                    NoOutputInstances
-    type (L2AUXData_T) ::                NewL2AUX
-    type (L2AUXData_T), pointer ::       ThisL2AUX
-    logical ::                           L2auxDataIsNew
-!   integer, dimension(3) ::             DimensionFamilies, DimensionSizes, DimensionStarts
-    integer ::                           AuxFamily     ! Channel or Frequency
-!    integer ::                           DimensionIndex, Channel, Surf
-    integer   ::                         NoMAFs, index
-    integer ::                           FirstProfile, LastProfile
-!   real(r8), dimension(:,:), pointer :: values !??? Not used ???
-    character (LEN=32) :: quantityNameStr
+    logical :: DEEBUG
+    integer :: FIRSTMAF
+    integer :: FIRSTPROFILE
+    integer :: DB_INDEX
+    integer :: LASTMAF
+    integer :: LASTPROFILE
+    integer :: MAF
+    integer :: NOMAFS
+    integer :: NOOUTPUTINSTANCES
+    integer :: USEFIRSTINSTANCE
+    integer :: USELASTINSTANCE
+    logical :: L2AUXDATAISNEW
+
+    character (LEN=32) :: QUANTITYNAMESTR
     real(r8) :: HUGER4
+    type (L2AUXData_T) :: NEWL2AUX
+    type (L2AUXData_T), pointer :: THISL2AUX
 
     ! Executable code
 
+    DEEBUG = (index(switches, 'direct') /= 0)
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_begin ( "JoinL2AUXQuantities", key )
 
@@ -528,180 +947,92 @@ contains ! =====     Public Procedures     =============================
 
     ! If this is the first chunk, we have to setup the l2aux quantity from
     ! scratch.  Otherwise, we expand it and fill up our part of it.
-
     l2auxDataIsNew = (.not. associated(l2auxDatabase))
     if ( .not. l2auxDataIsNew ) then
-      index = decoration(key)
-      l2auxDataIsNew = (index>=0)
+      db_index = decoration(key)
+      l2auxDataIsNew = (db_index>=0)
     end if
+
     ! Work out what to do with the first and last Instance information
-    
     if ( present(firstInstance) ) then
       useFirstInstance = firstInstance
     else
       useFirstInstance = quantity%template%noInstancesLowerOverlap+1
     end if
-
     if ( present(lastInstance) ) then
       useLastInstance = lastInstance
     else
       useLastInstance = quantity%template%noInstances- &
         & quantity%template%noInstancesUpperOverlap
     end if
-    noOutputInstances = useLastInstance-useFirstInstance+1
+    noOutputInstances = useLastInstance - useFirstInstance + 1
+
     ! If we've not been asked to output anything then don't carry on
     if ( noOutputInstances < 1 ) return
 
     if ( DEEBUG ) then
       call output('Joining L2Aux quantity with ', advance='no')
       call output(noOutputInstances, advance='no')
-      call output(' instances ', advance='no')
+      call output(' instances ', advance='yes')
     end if
 
     ! Now if this is a new l2aux quantity, we need to setup an l2aux data type
     ! for it.
-
     if ( l2auxDataIsNew ) then
-
-      ! If the quantity is a minor frame quantity, then we deal with it 
-      ! as such.  Otherwise we output it as a geodAngle based quantity
-
-      if ( (quantity%template%noChans/=1) .and. &
-        & (quantity%template%frequencyCoordinate == L_None) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Quantity has multiple channels but no frequency coordinate" )
-
-      auxFamily=quantity%template%frequencyCoordinate
-
-      ! if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
-        ! For minor frame quantities, the dimensions are:
-        ! ([frequency or channel],MIF,MAF)
-        !
-        ! For minor frame quantities, we're going to allocate them to the full
-        ! size from the start, rather than expand them, as this will be more
-        ! efficient
+      ! We need to setup the quantity.  In some cases (minor/major frame)
+      ! we can tell how big it is going to be.  Otherwise, create it empty
+      if ( any ((/ quantity%template%minorFrame, quantity%template%majorFrame /)) ) then
         firstMAF = minval ( chunks%firstMAFIndex )
         lastMAF = maxval ( chunks%lastMAFIndex )
         noMAFs = lastMAF - firstMAF + 1
-        ! THINK HERE ABOT RUNS THAT DON'T START AT THE BEGINNING !???????
-        ! MAY NEED TO CHANGE ALLOCATE
-! >         if ( quantity%template%frequencyCoordinate==L_None ) then
-! >           dimensionFamilies = (/L_None, L_MIF, L_MAF/)
-! >           dimensionSizes = (/1, quantity%template%noSurfs, noMAFs/)
-! >           dimensionStarts = (/1, 1, firstMAF /)
-! >         else
-! >           dimensionFamilies = (/auxFamily, L_MIF, L_MAF/)
-! >           dimensionSizes = (/quantity%template%noChans, quantity%template%noSurfs, &
-! >             & noMAFs/)
-! >           dimensionStarts = (/1, 1, firstMAF /)
-! >         end if
-! >       else
-! >         ! Not a minor frame quantity; for non minor frame l2aux quantities
-! >         ! our ability to output them will probably increase, but at the
-! >         ! moment, I can't really forsee what form they may take.
-! > 
-! >         ! For the moment (ie. v0.1) I'm going to be restrictive and only
-! >         ! allow quantities with no vertical coordinate.  This may and
-! >         ! probably will change in later versions, leading to more L2AUXDim
-! >         ! paramters etc., to parallel those from type t_verticalCoordinate
-! >         ! in Init_Tables_Module.
-! > 
-! >         if ( quantity%template%verticalCoordinate /= l_None ) &
-! >           & call MLSMessage ( MLSMSG_Error, ModuleName, &
-! >           & "Cannot currently output L2AUX quantities with obscure "// &
-! >           & "vertical coordinates, sorry!" )
-! > 
-! >         if ( quantity%template%frequencyCoordinate==L_None ) then
-! >           dimensionFamilies = (/L_geodAngle, L_None, &
-! >             & L_None/)
-! >           dimensionSizes = (/quantity%template%noInstances, 1, 1/)
-! >           dimensionStarts = (/1, 1, 1/)
-! >         else
-! >           dimensionFamilies = (/auxFamily, L_geodAngle, &
-! >             & L_None/)
-! >           dimensionSizes = (/quantity%template%noChans, quantity%template%noInstances, 1/)
-! >           dimensionStarts = (/1, 1, 1/)
-! >         end if
-! >       end if
-
-      ! Now we setup the new quantity
-!     call SetupNewL2AUXRecord ( dimensionFamilies, dimensionSizes, &
-!       & dimensionStarts, newL2AUX )
-      if ( DEEBUG ) then
-        call output('  firstMAF ', advance='no')
-        call output(firstMAF, advance='no')
-        call output('  noMAFs ', advance='no')
-        call output(noMAFs, advance='yes')
-      endif
+        if ( DEEBUG ) then
+          call output('  firstMAF ', advance='no')
+          call output(firstMAF, advance='no')
+          call output('  noMAFs ', advance='no')
+          call output(noMAFs, advance='yes')
+        endif
+      else
+        ! Otherwise, we don't know how big it will be (at least in the Join
+        ! scenario), so create it empty to begin with.
+        firstMAF = 1
+        noMAFs = 0
+      end if
+      ! Create the record accordingly
       call SetupNewL2AUXRecord ( newL2AUX, quantity%template, firstMAF, noMAFs )
-!     newL2AUX%minorFrame=quantity%template%minorFrame
-!     newL2AUX%majorFrame=quantity%template%majorFrame
       newL2AUX%instrumentModule=quantity%template%instrumentModule
       newL2AUX%quantityType=quantity%template%quantityType
 
-      ! Setup the standard `vertical' and `channel' dimensions
-
-! >       do dimensionIndex = 1, L2AUXRank
-! >         select case ( newL2AUX%dimensions(dimensionIndex)%dimensionFamily )
-! >         case ( L_None )          ! Do nothing
-! >         case ( L_Channel )
-! >           do channel = 1,quantity%template%noChans
-! >             newL2AUX%dimensions(dimensionIndex)%values(channel) = channel
-! >           end do
-! >         case ( L_IntermediateFrequency, l_USBFrequency, L_LSBFrequency )
-! >           newL2AUX%dimensions(dimensionIndex)%values = quantity%template%frequencies
-! >         case ( L_MIF )
-! >           do surf = 1, quantity%template%noSurfs
-! >             newL2AUX%dimensions(dimensionIndex)%values(surf) = surf
-! >           end do
-! >         case default                    ! Ignore horizontal dimensions
-! >         end select
-! >         ! The error message here is rather vague.  The issue is that
-! >         ! both MAF and geodAngle should only occur for the `last' dimension
-! >         ! which our loop is explicity avoiding.
-! >       end do ! The `last' dimension is dealt with later on.
-
       ! Add this l2aux to the database
-      index = AddL2AUXToDatabase ( l2auxDatabase, newL2AUX )
+      db_index = AddL2AUXToDatabase ( l2auxDatabase, newL2AUX )
 
       ! Setup the pointer and the index to be used later
-      call decorate ( key, -index ) ! Remember where it is
-      thisL2AUX => l2auxDatabase(index)
-
+      call decorate ( key, -db_index ) ! Remember where it is
+      thisL2AUX => l2auxDatabase(db_index)
+      thisL2AUX%name = name
     else
-      ! Setup the index and pointer
-      thisL2AUX => l2auxDatabase(-index)
-
-      ! Expand this l2aux along the `last' dimension to take up the new
-      ! information.
-
-      ! ??? The noMAFs computation isn't consistent with the initial case ???
-      noMAFs = quantity%template%mafCounter( &
-        & quantity%template%noInstances-quantity%template%noInstancesUpperOverlap)
-
-      ! ??? WVS would like to make this work as in the L2GP case:  The
-      ! "setup..." routine allocates zero size in the MAF's direction,
-      ! Then "expand..." is called in either case (but does no copying when
-      ! called immediately after the initial one).
-      ! For minor frame quantities we don't need to expand, as they're created
-      ! at full size from the start.
-      if ( .not. &
-        & (quantity%template%minorFrame .or. quantity%template%majorFrame) ) then
-        call ExpandL2AUXDataInPlace ( thisL2AUX, noMAFs )
-      end if
+      ! Not a new l2aux, so just point ourselves to the old one.
+      thisL2AUX => l2auxDatabase(-db_index)
     end if
 
-    ! Now we are ready to fill up the l2aux quantity with the new data.
-    thisL2AUX%name = name
+    ! OK, now thisL2AUX points to an appropriate l2aux to fill, be it newly created,
+    ! or old, and be it big enough or not.
+    ! First, do we need to expand this?
+    if ( .not. any ((/ quantity%template%minorFrame, quantity%template%majorFrame /)) ) then
+      ! We need to expand this L2AUX to fit in the latest data.
+      call ExpandL2AUXDataInPlace ( thisL2AUX, noOutputInstances )
+    end if
 
     if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
-      lastProfile = quantity%template%mafIndex(quantity%template%noInstances - &
-        & quantity%template%noInstancesUpperOverlap)
+      ! Don't forget instanceOffset is for the first non-overlapped instance (ie MAF)
+      ! Also remember the L2AUX data is already indexed from zero! Great!
+      lastProfile = quantity%template%instanceOffset + quantity%template%noInstances - &
+        & quantity%template%noInstancesUpperOverlap - &
+        & quantity%template%noInstancesLowerOverlap - 1
     else
       lastProfile = thisL2AUX%dimensions(L2AUXRank)%noValues
     end if
-    firstProfile = lastProfile-noOutputInstances+1
-    
+    firstProfile = lastProfile - noOutputInstances + 1
+
     if ( DEEBUG ) then
       call output('  firstProfile ', advance='no')
       call output(firstProfile, advance='no')
@@ -725,7 +1056,7 @@ contains ! =====     Public Procedures     =============================
       call output(thisL2AUX%dimensions(3)%noValues, advance='yes')
       call output('shape(l2aux values) ', advance='no')
       call output(shape(thisL2AUX%values), advance='yes')
-      if ( any( thisL2AUX%dimensions(L2AUXRank)%dimensionFamily &
+      if ( any ( thisL2AUX%dimensions(L2AUXRank)%dimensionFamily &
         & == (/ L_GeodAngle, L_MAF /) ) ) then
         call output('   dimensions ', advance='no')
         call output(size(thisL2AUX%dimensions(L2AUXRank)%values), advance='no')
@@ -741,8 +1072,9 @@ contains ! =====     Public Procedures     =============================
       thisL2AUX%dimensions(L2AUXRank)%values(firstProfile:lastProfile)=&
         & quantity%template%phi(1,useFirstInstance:useLastInstance)
     case ( L_MAF )
-      thisL2AUX%dimensions(L2AUXRank)%values(firstProfile:lastProfile)=&
-        & quantity%template%mafCounter(useFirstInstance:useLastInstance)
+      do maf = firstProfile, lastProfile
+        thisL2AUX%dimensions(L2AUXRank)%values(maf) = maf
+      end do
     case default
     end select
     
@@ -786,7 +1118,12 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------------------------------  Announce_Error  -----
   subroutine ANNOUNCE_ERROR ( where, CODE, ExtraMessage, FIELDINDEX )
 
+    use intrinsic, only: FIELD_INDICES
     use LEXER_CORE, only: PRINT_SOURCE
+    use OUTPUT_M, only: BLANKS, OUTPUT
+    use String_Table, only: DISPLAY_STRING
+    use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
+      & SUB_ROSA, SUBTREE
 
     integer, intent(in) :: where   ! Tree node where error was noticed
     integer, intent(in) :: CODE    ! Code for error message
@@ -822,6 +1159,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.72  2003/06/20 19:38:25  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.71  2003/05/30 00:09:27  livesey
 ! Can now directWrite major frame quantities
 !
