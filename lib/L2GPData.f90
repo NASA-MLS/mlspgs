@@ -23,7 +23,7 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
   ! manipulating L2GP data.
 
   INTEGER, PARAMETER :: L2GPNameLen=80
-  INTEGER, PARAMETER, PRIVATE :: CCSDSLen=27
+  INTEGER, PARAMETER, PRIVATE :: CCSDSLen=32
 
   ! This datatype is the main one, it simply defines one l2gp swath
 
@@ -36,29 +36,29 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
     INTEGER :: noFreqs           ! Number of frequencies in breakdown
 
     ! Now we store the geolocation fields, first the vertical one:
-    REAL(r8), POINTER, DIMENSION(:) :: pressures ! Vertical coords (noSurfs)
+    DOUBLE PRECISION, POINTER, DIMENSION(:) :: pressures ! Vertical coords (noSurfs)
 
     ! Now the horizontal geolocation information. Dimensioned (noProfs)
-    REAL(r8), POINTER, DIMENSION(:) :: latitude,longitude,solarTime, &
+    DOUBLE PRECISION, POINTER, DIMENSION(:) :: latitude,longitude,solarTime, &
          & solarZenith, losAngle, geodAngle
-    REAL(r8), POINTER, DIMENSION(:) :: time
+    DOUBLE PRECISION, POINTER, DIMENSION(:) :: time
     INTEGER, POINTER, DIMENSION(:) :: chunkNumber
     CHARACTER (LEN=CCSDSLen), POINTER, DIMENSION(:) :: ccsdsTime
 
     ! Now we store the `frequency' geolocation field
 
-    REAL(r8), POINTER, DIMENSION(:) :: frequency
+    DOUBLE PRECISION, POINTER, DIMENSION(:) :: frequency
     !        dimensioned (noFreqs)
 
     ! Finally we store the data fields
 
-    REAL(r8), POINTER, DIMENSION(:,:,:) :: l2gpValue
-    REAL(r8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision
+    DOUBLE PRECISION, POINTER, DIMENSION(:,:,:) :: l2gpValue
+    DOUBLE PRECISION, POINTER, DIMENSION(:,:,:) :: l2gpPrecision
     ! dimensioned (noFreqs, noSurfs, noProfs)
 
     CHARACTER (LEN=1), POINTER, DIMENSION(:) :: l2gpStatus
     !                (status is a reserved word in F90)
-    REAL(r8), POINTER, DIMENSION(:) :: quality
+    DOUBLE PRECISION, POINTER, DIMENSION(:) :: quality
     ! Both the above dimensioned (noProfs)
 
   END TYPE L2GPData_T
@@ -91,7 +91,7 @@ CONTAINS
          & l2gp%solarTime(noProfs), l2gp%solarZenith(noProfs), &
          & l2gp%losAngle(noProfs), l2gp%geodAngle(noProfs), &
          & l2gp%chunkNumber(noProfs), l2gp%ccsdsTime(noProfs), &
-         & STAT=status)
+         & l2gp%time(noProfs), STAT=status)
     IF (status /=0) CALL MLSMessage(MLSMSG_error,ModuleName, &
          & MLSMSG_Allocate//"l2gp horizontal coordinates")
 
@@ -124,16 +124,58 @@ CONTAINS
 
     ! Dummy arguments
     TYPE (L2GPData_T), INTENT(INOUT) :: l2gp
+    ! Local variables
+
+    integer status
 
     ! Executable code
 
-    IF (ASSOCIATED(l2gp%pressures)) DEALLOCATE(l2gp%pressures)
-    DEALLOCATE(l2gp%latitude, l2gp%longitude, l2gp%solarTime, &
-         & l2gp%solarZenith, l2gp%losAngle, l2gp%geodAngle, &
-         & l2gp%chunkNumber, l2gp%ccsdsTime)
-    DEALLOCATE(l2gp%frequency)
-    DEALLOCATE(l2gp%l2gpValue,l2gp%l2gpPrecision)
-    DEALLOCATE(l2gp%l2gpStatus,l2gp%quality)
+    IF (ASSOCIATED(l2gp%pressures)) DEALLOCATE(l2gp%pressures, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /pressures")
+
+    IF (ASSOCIATED(l2gp%latitude))DEALLOCATE(l2gp%latitude, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /latitude")
+    IF (ASSOCIATED(l2gp%longitude))DEALLOCATE( l2gp%longitude, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /longitude") 
+    IF (ASSOCIATED(l2gp%solarTime))DEALLOCATE(l2gp%solarTime, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /solarTime")
+    IF (ASSOCIATED(l2gp%solarZenith))DEALLOCATE(l2gp%solarZenith, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /solarZenith") 
+    IF (ASSOCIATED(l2gp%losAngle))DEALLOCATE(l2gp%losAngle, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /pressures")
+    IF (ASSOCIATED(l2gp%geodAngle))DEALLOCATE(l2gp%geodAngle, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /geodAngle")
+    IF (ASSOCIATED(l2gp%chunkNumber))DEALLOCATE(l2gp%chunkNumber, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /chunkNumber") 
+    IF (ASSOCIATED(l2gp%ccsdsTime))DEALLOCATE(l2gp%ccsdsTime, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /ccsdsTime")
+    IF (ASSOCIATED(l2gp%time))DEALLOCATE(l2gp%time, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /time")
+    IF (ASSOCIATED(l2gp%frequency))DEALLOCATE(l2gp%frequency, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /frequency")
+    IF (ASSOCIATED(l2gp%l2gpValue))DEALLOCATE(l2gp%l2gpValue, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /l2gpValue")
+    IF (ASSOCIATED(l2gp%l2gpPrecision))DEALLOCATE(l2gp%l2gpPrecision, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /l2gpPrecision")
+    IF (ASSOCIATED(l2gp%l2gpStatus))DEALLOCATE(l2gp%l2gpStatus, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /l2gpStatus")
+    IF (ASSOCIATED(l2gp%quality))DEALLOCATE(l2gp%quality, STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2gp /quality")
     l2gp%noProfs=0
     l2gp%noSurfs=0
     l2gp%noFreqs=0
@@ -158,7 +200,7 @@ CONTAINS
     INTEGER, DIMENSION(:), POINTER :: tempInt1D
     CHARACTER (LEN=1), DIMENSION(:), POINTER :: tempChar1D
     CHARACTER (LEN=CCSDSLen), DIMENSION(:), POINTER :: tempCCSDS
-
+!    print *, 'newNoProfs ', newNoProfs
     ! Executable code
 
     ! First do a sanity check
@@ -174,56 +216,72 @@ CONTAINS
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%latitude")
     l2gp%latitude(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     temp1D=>l2gp%longitude
     ALLOCATE(l2gp%longitude(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%longitude")
     l2gp%longitude(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     temp1D=>l2gp%solarTime
     ALLOCATE(l2gp%solarTime(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%solarTime")
     l2gp%solarTime(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     temp1D=>l2gp%solarZenith
     ALLOCATE(l2gp%solarZenith(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%solarZenith")
     l2gp%solarZenith(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     temp1D=>l2gp%losAngle
     ALLOCATE(l2gp%losAngle(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%losAngle")
     l2gp%losAngle(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     temp1D=>l2gp%geodAngle
     ALLOCATE(l2gp%geodAngle(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%geodAngle")
     l2gp%geodAngle(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     temp1D=>l2gp%time
     ALLOCATE(l2gp%time(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%time")
     l2gp%time(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     temp1D=>l2gp%time
     ALLOCATE(l2gp%time(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%time")
     l2gp%time(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -232,55 +290,72 @@ CONTAINS
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%chunkNumber")
     l2gp%chunkNumber(1:l2gp%noProfs)=tempInt1D
-    DEALLOCATE(tempInt1D)
+    DEALLOCATE(tempInt1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"tempInt1D")
 
     tempInt1D=>l2gp%chunkNumber
     ALLOCATE(l2gp%chunkNumber(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%chunkNumber")
     l2gp%chunkNumber(1:l2gp%noProfs)=tempInt1D
-    DEALLOCATE(tempInt1D)
+    DEALLOCATE(tempInt1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"tempInt1D")
     
     tempCCSDS=>l2gp%ccsdsTime
     ALLOCATE(l2gp%ccsdsTime(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%ccsdsTime")
     l2gp%ccsdsTime(1:l2gp%noProfs)=tempCCSDS
-    DEALLOCATE(tempCCSDS)
+    DEALLOCATE(tempCCSDS, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"tempCCSDS")
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
     temp3D=>l2gp%l2gpValue
-    ALLOCATE(l2gp%l2gpValue(newNoProfs,l2gp%noSurfs,l2gp%noFreqs),STAT=status)
+
+  
+ 
+    ALLOCATE(l2gp%l2gpValue(l2gp%noFreqs,l2gp%noSurfs,newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%l2gpValue")
-    l2gp%l2gpValue(1:l2gp%noProfs,:,:)=temp3D
-    DEALLOCATE(temp3D)
+    l2gp%l2gpValue(:,:,1:l2gp%noProfs)=temp3D
+    DEALLOCATE(temp3D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp3D")
 
     temp3D=>l2gp%l2gpPrecision
-    ALLOCATE(l2gp%l2gpPrecision(newNoProfs,l2gp%noSurfs,l2gp%noFreqs), &
+    ALLOCATE(l2gp%l2gpPrecision(l2gp%noFreqs,l2gp%noSurfs,newNoProfs), &
          & STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%l2gpPrecision")
-    l2gp%l2gpPrecision(1:l2gp%noProfs,:,:)=temp3D
-    DEALLOCATE(temp3D)
+    l2gp%l2gpPrecision(:,:,1:l2gp%noProfs)=temp3D
+    DEALLOCATE(temp3D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp3D")
 
     tempChar1D=>l2gp%l2gpStatus
     ALLOCATE(l2gp%l2gpStatus(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%l2gpStatus")
     l2gp%l2gpStatus(1:l2gp%noProfs)=tempChar1D
-    DEALLOCATE(tempChar1D)
+    DEALLOCATE(tempChar1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp3D")
 
     temp1D=>l2gp%quality
     ALLOCATE(l2gp%quality(newNoProfs),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
          & "l2gp%quality")
     l2gp%quality(1:l2gp%noProfs)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     l2gp%noProfs=newNoProfs
-
+!    print *, ' l2gp%noProfs ', l2gp%noProfs
   END SUBROUTINE ExpandL2GPDataInPlace
 
   !---------------------------------------------------------------------------
@@ -316,7 +391,9 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=l2gp
-    IF (ASSOCIATED(database))DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"database")
     database=>tempDatabase
   END SUBROUTINE AddL2GPToDatabase
 
@@ -330,13 +407,15 @@ CONTAINS
     TYPE (L2GPData_T), DIMENSION(:), POINTER :: database
 
     ! Local variables
-    INTEGER :: l2gpIndex
+    INTEGER :: l2gpIndex, status
 
     IF (ASSOCIATED(database)) THEN
        DO l2gpIndex=1,SIZE(database)
           CALL DestroyL2GPContents(database(l2gpIndex))
        ENDDO
-       DEALLOCATE(database)
+       DEALLOCATE(database, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"database")
     ENDIF
   END SUBROUTINE DestroyL2GPDatabase
 
@@ -347,6 +426,10 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.11  2000/05/17 23:38:14  lungu
+! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)" so it doesn't chrash trying to dealocate
+! an "empty" database.
+!
 ! Revision 1.10  2000/01/17 21:18:06  livesey
 ! Added the ExpandL2GPDataInPlace routine and removed accumulated profiles
 !
