@@ -6,7 +6,7 @@ module ObtainNCEP !provides subroutines to access NCEP files
 !===========================================================
 
 ! use DATES_MODULE
-  use GriddedData, only: GriddedData_T
+  use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase
   use Hdf, only: DFACC_RDONLY
 ! use MLSCommon
   use MLSPCF2, only: MLSPCF_L2NCEP_END, MLSPCF_L2NCEP_START
@@ -52,7 +52,7 @@ contains ! =====     Public Procedures     =============================
     character (len=80) :: MSG, MNEMONIC
     integer :: NCEPFileHandle, NCEP_Version
     character (len=132) :: NCEPphysicalFilename
-!   type (GriddedData_T):: QTY
+    type (GriddedData_T):: QTY
     integer :: RETURNSTATUS
     character (len=80) :: VNAME
 
@@ -92,7 +92,7 @@ contains ! =====     Public Procedures     =============================
 !        qty%field(:,:,:,1,1,1) = data_array(:,:,:)
 !       DEALLOCATE (data_array, stat=returnStatus)
  
-!        CALL AddGridTemplateToDatabase(aprioriData, qty)
+        returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
       else
 
         call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
@@ -208,6 +208,9 @@ contains ! =====     Public Procedures     =============================
 END MODULE ObtainNCEP
 
 ! $Log$
+! Revision 2.3  2001/02/21 00:37:51  pwagner
+! Uses more of GriddedData
+!
 ! Revision 2.2  2001/02/13 22:59:36  pwagner
 ! l2 modules can only use MLSPCF2
 !

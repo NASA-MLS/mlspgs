@@ -7,7 +7,7 @@ module ObtainDAO !provides subroutines to access DAO files
 
 ! use DATES_MODULE
   use HDF, only: DFACC_RDONLY
-  use GriddedData, only: GriddedData_T
+  use GriddedData, only: GriddedData_T, AddGridTemplateToDatabase
 ! use MLSCommon
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DAO_END, MLSPCF_L2DAO_START
@@ -46,7 +46,7 @@ contains ! =====     Public Procedures     =============================
     integer :: DAOFileHandle, DAO_Version
     character (LEN=132) :: DAOphysicalFilename
     character (len=256) :: mnemonic, msg
-!   type (GriddedData_T):: qty
+    type (GriddedData_T):: qty
     integer :: returnStatus
 !   integer :: sd_id
     character (LEN=80) :: vname
@@ -87,7 +87,7 @@ contains ! =====     Public Procedures     =============================
 
 !        qty%field(:,:,:,1,1,1) = data_array(:,:,:)
 !        DEALLOCATE (data_array, stat=returnStatus)
-!        CALL AddGridTemplateToDatabase(aprioriData, qty)
+        returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
 
       else
 
@@ -216,6 +216,9 @@ contains ! =====     Public Procedures     =============================
 END MODULE ObtainDAO
 
 ! $Log$
+! Revision 2.3  2001/02/21 00:37:51  pwagner
+! Uses more of GriddedData
+!
 ! Revision 2.2  2001/02/13 22:59:36  pwagner
 ! l2 modules can only use MLSPCF2
 !
