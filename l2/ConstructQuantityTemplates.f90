@@ -79,8 +79,8 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: NAME              ! Sub-rosa index of name
     integer, intent(in) :: ROOT              ! Root of QuantityTemplate subtree
-    type (HGrid_T), dimension(:), intent(in) :: HGrids
-    type (VGrid_T), dimension(:), intent(in) :: VGrids
+    type (HGrid_T), dimension(:), pointer :: HGrids
+    type (VGrid_T), dimension(:), pointer :: VGrids
     type (l1bInfo_T), intent(in) :: L1bInfo
     type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
@@ -697,6 +697,10 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.31  2001/05/10 01:08:53  livesey
+! Changed hGrids and vGrids to pointers, rather than intent(in)
+! to allow them to be empty.
+!
 ! Revision 2.30  2001/05/03 23:08:36  livesey
 ! Added stuff to support scan model items.
 !
