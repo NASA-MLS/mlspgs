@@ -87,6 +87,15 @@ program MLSL2
         case ( 'c' ); toggle(con) = .true.
         case ( 'd' ); do_dump = .true.
         case ( 'e' ); toggle(emit) = .true.
+        case ( 'f' )
+          toggle(emit) = .true.
+          levels(emit) = 0
+          if ( j < len(line) ) then
+            if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
+              j = j + 1
+              levels(emit) = ichar(line(j:j)) - ichar('0')
+            end if
+          end if
         case ( 'g' )
           toggle(gen) = .true.
           levels(gen) = 0
@@ -109,6 +118,8 @@ program MLSL2
           print *, '  -c: Trace expression evaluation and tree decoration.'
           print *, '  -d: Dump the declaration table after type checking'
           print *, '  -e: Turn on the "emit" toggle'
+          print *, '  -f[digit]: Trace Forward model.  Bigger digit means ', &
+            &                    'more output.'
           print *, '  -g[digit]: Trace "generation".  Bigger digit means ', &
             &                    'more output.'
           print *, '  -Gstring: Trace "generation".  Characters in "string" '
@@ -233,6 +244,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.24  2001/04/24 23:04:42  vsnyder
+! Add -f[digit] to set toggle(emit) and levels(emit)
+!
 ! Revision 2.23  2001/04/21 01:44:05  vsnyder
 ! Make the timing message prettier
 !
