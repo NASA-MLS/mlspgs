@@ -118,7 +118,7 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
       q = (h_path(j)*n_path(j))**2 - Nt2Ht2
       if(abs(q) < Tiny) q = 0.0_rp
 
-      if(q < 0.0_rp) then
+      if(q < 0.0_rp .OR. n1*n2 <= 0.0_rp) then
         ref_corr(j) = ref_corr(j-1)
         CYCLE
       endif
@@ -170,7 +170,7 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
       q = (h_path(j+1)*n_path(j+1))**2 - Nt2Ht2
       if(abs(q) < Tiny) q = 0.0_rp
 
-      if(q < 0.0_rp) then
+      if(q < 0.0_rp .OR. n1*n2 <= 0.0_rp) then
         ref_corr(j) = ref_corr(j-1)
         CYCLE
       endif
@@ -304,6 +304,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.7  2002/03/14 20:31:14  zvi
+! Make comp_refcor more robust
+!
 ! Revision 2.6  2002/02/18 06:58:04  zvi
 ! Trimming some unused code..
 !
