@@ -711,7 +711,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------------  CopyVector  -----
   subroutine CopyVector ( Z, X, CLONE, Quant, Inst, NoValues, NoMask, &
-    & VectorNameText, Database )
+    & VectorNameText, Database, AllowNameMismatch )
   ! If CLONE is present and .true., Destroy Z, deep Z = X, except the
   ! name of Z is not changed.  Otherwise, copy only the values and mask
   ! of X to Z.  If NoValues or NoMask is present and true, don't copy
@@ -729,19 +729,23 @@ contains ! =====     Public Procedures     =============================
     !  don't copy the values/mask
     character(len=*), intent(in), optional :: VectorNameText
     type(Vector_T), dimension(:), pointer, optional :: Database
+    logical, intent(in), optional :: AllowNameMismatch ! Trust that vectors are compatible
     logical :: DoMask, DoValues
     integer :: I
     logical MyClone
+    logical MyAllow
     myclone = .false.
     if ( present(clone) ) myclone = clone
     doMask = .true.
     if ( present(noMask) ) doMask = .not. noMask
     doValues = .true.
     if ( present(noValues) ) doValues = .not. noValues
+    myAllow = .false.
+    if ( present(allowNameMismatch) ) myAllow = allowNameMismatch
     if ( myclone ) then
       call cloneVector ( Z, X, vectorNameText=vectorNameText, database=database )
     else
-      if ( x%template%name /= z%template%name ) call MLSMessage &
+      if ( x%template%name /= z%template%name .and. .not. myAllow ) call MLSMessage &
         & ( MLSMSG_Error, ModuleName, 'Incompatible vectors in CopyVector' )
     end if
     if ( present(quant) ) then
@@ -2155,6 +2159,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.106  2004/01/23 05:36:51  livesey
+! Added DoVectors/QuantitiesMatch
+!
 ! Revision 2.105  2003/09/15 23:28:50  vsnyder
 ! Remove unused private module variable
 !
