@@ -311,7 +311,7 @@ contains ! =====     Public Procedures     =============================
 
             call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
 
-	    if ( l2gp_mcf <= -999 ) then
+	         if ( l2gp_mcf <= -999 ) then
               call MLSMessage ( MLSMSG_Warning, ModuleName, &
                 &  "no mcf for this l2gp species in" // trim(file_base) )
 		
@@ -734,7 +734,11 @@ contains ! =====     Public Procedures     =============================
 
             call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
 
-            if ( l2gp_mcf <= 0 ) then
+	         if ( l2gp_mcf <= -999 ) then
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                &  "no mcf for this l2gp species in" // trim(file_base) )
+		
+            else if ( l2gp_mcf <= 0 ) then
 
               ! Error in finding mcf number
               call announce_error ( son, &
@@ -1116,6 +1120,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.84  2003/09/19 23:29:27  pwagner
+! Should not be a metadata error when DirectWrite-ing CH3CN
+!
 ! Revision 2.83  2003/09/04 22:42:47  pwagner
 ! Some tweaks relating to DirectWrite; may not matter
 !
