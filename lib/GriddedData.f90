@@ -11,20 +11,20 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Trace_M, only: TRACE_BEGIN, TRACE_END
 
-  implicit none
-  public
+  implicit NONE
+  private
 
-  private :: Id,ModuleName
   !------------------------------- RCS Ident Info ------------------------------
-  character(LEN=130) :: id = & 
+  character(LEN=*), parameter :: IdParm = & 
     "$Id$"
+  character(len=len(idParm)), private :: Id = idParm
   character(LEN=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  public::GriddedData_T, SetupNewGriddedData, DestroyGriddedData, &
-    & AddGriddedDataToDatabase, DestroyGriddedDataDatabase, Dump
+  public :: AddGriddedDataToDatabase, Dump, DestroyGriddedData, &
+    & DestroyGriddedDataDatabase, GriddedData_T, SetupNewGriddedData
 
-    logical, private, parameter :: MAYDUMPFIELDVALUES = .false.
+  logical, private, parameter :: MAYDUMPFIELDVALUES = .false.
 
   interface DUMP
     module procedure DumpGriddedData
@@ -33,12 +33,12 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
   ! These are 'enumerated types' consistent with hph's
   ! work in l3ascii_read_field
-  public::v_is_pressure,v_is_altitude,v_is_gph,v_is_theta
+  public :: V_is_pressure, V_is_altitude, V_is_GPH, V_is_theta
 
-  integer, parameter :: v_is_pressure = 1
-  integer, parameter :: v_is_altitude = v_is_pressure+1
-  integer, parameter :: v_is_gph = v_is_altitude+1
-  integer, parameter :: v_is_theta = v_is_gph+1
+  integer, parameter :: V_is_pressure = 1
+  integer, parameter :: V_is_altitude = v_is_pressure+1
+  integer, parameter :: V_is_GPH = v_is_altitude+1
+  integer, parameter :: V_is_theta = v_is_gph+1
 
   ! This type reflects the format of the Level 3 ASCII files, though note that
   ! these files can store multiple quantities such as these.
@@ -63,17 +63,17 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
     ! Now the latitudinal coordinate
     logical :: equivalentLatitude       ! If set, coordinate is equivalent latitude
     integer :: noLats                   ! Number of latitudes
-    real (rp), pointer, dimension(:) :: lats => NULL() ! Latitudes [noLats]
+    real (rp), pointer, dimension(:) :: Lats => NULL() ! Latitudes [noLats]
     integer :: noLons                   ! Number of longitudes
-    real (rp), pointer, dimension(:) :: lons => NULL() ! Longitudes [noLons]
+    real (rp), pointer, dimension(:) :: Lons => NULL() ! Longitudes [noLons]
     integer noLsts                      ! Number of local times
-    real (rp), pointer, dimension(:) :: lsts => NULL() ! Local times [noLsts]
+    real (rp), pointer, dimension(:) :: Lsts => NULL() ! Local times [noLsts]
     integer noSzas                      ! Number of solar zenith angles
-    real (rp), pointer, dimension(:) :: szas => NULL() ! Zenith angles [noSzas]
+    real (rp), pointer, dimension(:) :: Szas => NULL() ! Zenith angles [noSzas]
     integer noDates                     ! Number of dates in data
-    real (rp), pointer, dimension(:) :: dateStarts => NULL()
+    real (rp), pointer, dimension(:) :: DateStarts => NULL()
     ! Starting dates in SDP toolkit format
-    real (rp), pointer, dimension(:) :: dateEnds => NULL()
+    real (rp), pointer, dimension(:) :: DateEnds => NULL()
     ! Ending dates in SDP toolkit format
 
     ! The data itself.  This is stored as
@@ -82,17 +82,17 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
 
   end type GriddedData_T
 
-! ============================================================================
+! ======================================================================
 contains
 
-  ! ---------------------------------------------------AddGridTemplateToDatabase --
-  integer function AddGriddedDataToDatabase(database,item)
+  ! -----------------------------------  AddGriddedDataToDatabase  -----
+  integer function AddGriddedDataToDatabase ( Database, Item )
   ! This subroutine adds a quantity template to a database, or creates the
   ! database if it doesn't yet exist
 
     ! Dummy arguments
-    type (GriddedData_T), dimension(:), pointer :: database
-    type (GriddedData_T), intent(in) :: item
+    type (GriddedData_T), dimension(:), pointer :: Database
+    type (GriddedData_T), intent(in) :: Item
 
     ! Local variables
     type (GriddedData_T), dimension(:), pointer :: tempDatabase
@@ -104,13 +104,13 @@ contains
 
   end function AddGriddedDataToDatabase
 
-  ! ------------------------------------------------ DestroyGriddedData ------
+  ! -----------------------------------------  DestroyGriddedData  -----
 
-  subroutine DestroyGriddedData(qty)
+  subroutine DestroyGriddedData ( Qty )
     ! This subroutine destroys a quantity template
 
     ! Dummy argument
-    type (GriddedData_T), intent(INOUT) :: qty
+    type (GriddedData_T), intent(INOUT) :: Qty
 
     ! Local variables
     integer :: STATUS
@@ -134,12 +134,12 @@ contains
 
   end subroutine DestroyGriddedData
 
-  ! ------------------------------------------- DestroyGridTemplateDatabase --
-  subroutine DestroyGriddedDataDatabase(database)
+  ! ----------------------------------  DestroyGriddedDataDatabase -----
+  subroutine DestroyGriddedDataDatabase ( Database )
   ! This subroutine destroys a quantity template database
 
     ! Dummy argument
-    type (GriddedData_T), dimension(:), pointer :: database
+    type (GriddedData_T), dimension(:), pointer :: Database
 
     ! Local variables
     integer :: qtyIndex, status
@@ -159,8 +159,8 @@ contains
     end if
   end subroutine DestroyGriddedDataDatabase
 
-  ! --------------------------------  DumpGriddedDatabase  -----
-  subroutine DumpGriddedDatabase(GriddedData, Details)
+  ! ----------------------------------------  DumpGriddedDatabase  -----
+  subroutine DumpGriddedDatabase ( GriddedData, Details )
     use Dump_0, only: Dump
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
@@ -189,8 +189,8 @@ contains
     end do ! i
   end subroutine DumpGriddedDatabase
 
-  ! --------------------------------  DumpGriddedData  -----
-  subroutine DumpGriddedData(GriddedData, Details)
+  ! --------------------------------------------  DumpGriddedData  -----
+  subroutine DumpGriddedData ( GriddedData, Details )
     use Dump_0, only: Dump
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
@@ -263,9 +263,9 @@ contains
 
   end subroutine DumpGriddedData
 
-  ! ------------------------------------------- SetupNewGriddedData ---------
-  subroutine SetupNewGriddedData(qty, source, noHeights, noLats, &
-    & noLons, noLsts, noSzas, noDates)
+  ! ----------------------------------------  SetupNewGriddedData  -----
+  subroutine SetupNewGriddedData ( Qty, Source, NoHeights, NoLats, &
+    & NoLons, NoLsts, NoSzas, NoDates )
   ! This first routine sets up a new quantity template according to the user
   ! input.  This may be based on a previously supplied template (with possible
   ! modifications), or created from scratch.
@@ -327,6 +327,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.14  2002/06/26 22:03:31  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.13  2001/10/26 23:17:14  pwagner
 ! Provides a single dump module interface and details
 !
