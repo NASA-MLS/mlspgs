@@ -26,7 +26,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     & MultiplyMatrixVectorNoT, MultiplyMatrixVector_0, operator(+), &
     & operator(.TX.), RowScale, RowScale_0, ScaleBlock, SolveCholesky, &
     & SolveCholeskyM_0, SolveCholeskyV_0, Sparsify, UpdateDiagonal, &
-    & UpdateDiagonal_0
+    & UpdateDiagonal_0, UpdateDiagonalVec_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -95,7 +95,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface UpdateDiagonal
-    module procedure UpdateDiagonal_0
+    module procedure UpdateDiagonal_0, UpdateDiagonalVec_0
   end interface
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -754,26 +754,34 @@ contains ! =====     Public Procedures     =============================
   end function MinDiag_0
 
   ! ---------------------------------------  MultiplyMatrixBlocks  -----
-  subroutine MultiplyMatrixBlocks ( XB, YB, ZB, UPDATE, XMASK, YMASK )
-  ! ZB = XB^T YB if UPDATE is absent or false;
-  ! ZB = ZB + XB^T YB if UPDATE is present and true.
+  subroutine MultiplyMatrixBlocks ( XB, YB, ZB, UPDATE, SUBTRACT, XMASK, YMASK )
+  ! ZB = XB^T YB if UPDATE is absent or false and SUBTRACT is absent or false;
+  ! ZB = -XB^T YB if UPDATE is absent or false and SUBTRACT is present and
+  !      true;
+  ! ZB = ZB + XB^T YB if UPDATE is present and true and  SUBTRACT is absent
+  !      or false;
+  ! ZB = ZB - XB^T YB if UPDATE is present and true and  SUBTRACT is present
+  !      and true;
   ! If XMASK (resp. YMASK) is present, ignore columns of XB (resp. YB)
   ! that correspond to nonzero bits of XMASK (resp. YMASK).
     type(MatrixElement_T), intent(in) :: XB, YB
     type(MatrixElement_T), intent(inout) :: ZB
     logical, intent(in), optional :: UPDATE
+    logical, intent(in), optional :: SUBTRACT
     integer, intent(in), optional, dimension(0:) :: XMASK, YMASK
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! If UPDATE is absent or false, it is important to invoke DestroyBlock
-  ! using the result of this function after it is no longer needed.
-  ! Otherwise, a memory leak will result.  Also see AssignBlock.
+  ! for ZB after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K, L, M, N, P, R
-    logical :: MY_UPD
+    logical :: MY_SUB, MY_UPD
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
 
+    my_sub = .false.
+    if ( present(subtract) ) my_sub = my_sub
     my_upd = .false.
     if ( present(update) ) my_upd = update
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
@@ -784,12 +792,12 @@ contains ! =====     Public Procedures     =============================
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "XB and YB Matrix sizes incompatible in Multiply_Matrix_Blocks" )
     if ( my_upd ) then
-      zb%nrows = xb%ncols
-      zb%ncols = yb%ncols
-    else
       if ( xb%ncols /= zb%nrows .or. yb%ncols /= zb%ncols ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "ZB Matrix size incompatible in Multiply_Matrix_Blocks" )
+    else
+      zb%nrows = xb%ncols
+      zb%ncols = yb%ncols
     end if
     select case ( xb%kind )
     case ( M_Banded )
@@ -821,10 +829,17 @@ contains ! =====     Public Procedures     =============================
             r = xb%r2(i-1)+1-m
             m = max(k,m)      ! m,n = row indices of intersection of XB and YB
             n = min(l,xb%r2(i)-r)
-!           z(i,j) = z(i,j) + &
-!                    & dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
-            z(i,j) = z(i,j) + &
-                     & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
+            if ( .not. my_sub ) then
+!             z(i,j) = z(i,j) + &
+!                      & dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
+              z(i,j) = z(i,j) + &
+                       & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
+            else
+            end if
+!             z(i,j) = z(i,j) - &
+!                      & dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
+              z(i,j) = z(i,j) - &
+                       & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
           end do ! i
         end do ! j
         call sparsify ( z, zb )
@@ -861,7 +876,11 @@ contains ! =====     Public Procedures     =============================
                 if ( n > yb%r1(j) ) exit
                 m = yb%r2(n)
               else
-                z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
+                if ( .not. my_sub ) then
+                  z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
+                else
+                  z(i,j) = z(i,j) - xb%values(l,1) * yb%values(n,1)
+                end if
                 l = l + 1
                 k = k + 1
                 n = n + 1
@@ -891,10 +910,17 @@ contains ! =====     Public Procedures     =============================
               if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-!           zb%values(i,j) = zb%values(i,j) + dot_product( &
-!             & xb%values(k:l,1), yb%values(m:m+l-k,j) )
-            zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
-              & xb%values(k,1), 1, yb%values(m,j), 1 )
+            if ( .not. my_sub ) then
+!             zb%values(i,j) = zb%values(i,j) + dot_product( &
+!               & xb%values(k:l,1), yb%values(m:m+l-k,j) )
+              zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
+                & xb%values(k,1), 1, yb%values(m,j), 1 )
+            else
+!             zb%values(i,j) = zb%values(i,j) - dot_product( &
+!               & xb%values(k:l,1), yb%values(m:m+l-k,j) )
+              zb%values(i,j) = zb%values(i,j) - dot( l-k+1, &
+                & xb%values(k,1), 1, yb%values(m,j), 1 )
+            end if
           end do ! j
         end do ! i
       end select
@@ -931,7 +957,11 @@ contains ! =====     Public Procedures     =============================
                 n = n + 1
                 m = m + 1
               else
-                z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
+                if ( .not. my_sub ) then
+                  z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
+                else
+                  z(i,j) = z(i,j) - xb%values(l,1) * yb%values(n,1)
+                end if
                 l = l + 1
                 if ( l > xb%r1(i) ) exit
                 k = xb%r2(l)
@@ -977,7 +1007,11 @@ contains ! =====     Public Procedures     =============================
                 if ( n > yb%r1(j) ) exit
                 m = yb%r2(n)
               else
-                z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
+                if ( .not. my_sub ) then
+                  z(i,j) = z(i,j) + xb%values(l,1) * yb%values(n,1)
+                else
+                  z(i,j) = z(i,j) - xb%values(l,1) * yb%values(n,1)
+                end if
                 l = l + 1
                 if ( l > xb%r1(i) ) exit
                 k = xb%r2(l)
@@ -1007,10 +1041,17 @@ contains ! =====     Public Procedures     =============================
             k = xb%r1(i-1)+1
             l = xb%r1(i)
             ! Inner product of column I of XB with column J of YB
-!           zb%values(i,j) = zb%values(i,j) + dot_product( &
-!             & xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
-            zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
-              & xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
+            if ( .not. my_sub ) then
+!             zb%values(i,j) = zb%values(i,j) + dot_product( &
+!               & xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
+              zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
+                & xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
+            else
+!             zb%values(i,j) = zb%values(i,j) - dot_product( &
+!               & xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
+              zb%values(i,j) = zb%values(i,j) - dot( l-k+1, &
+                & xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
+            end if
           end do ! i
         end do ! j
       end select
@@ -1033,10 +1074,17 @@ contains ! =====     Public Procedures     =============================
               if ( btest(xmask(i/b),mod(i,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-!           zb%values(i,j) = zb%values(i,j) + dot_product( &
-!             & xb%values(m:m+l-k,i), yb%values(k:l,1))
-            zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
-              & xb%values(m,i), 1, yb%values(k,1), 1 )
+            if ( .not. my_sub ) then
+!             zb%values(i,j) = zb%values(i,j) + dot_product( &
+!               & xb%values(m:m+l-k,i), yb%values(k:l,1))
+              zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
+                & xb%values(m,i), 1, yb%values(k,1), 1 )
+            else
+!             zb%values(i,j) = zb%values(i,j) - dot_product( &
+!               & xb%values(m:m+l-k,i), yb%values(k:l,1))
+              zb%values(i,j) = zb%values(i,j) - dot( l-k+1, &
+                & xb%values(m,i), 1, yb%values(k,1), 1 )
+            end if
           end do ! i
         end do ! j
       case ( M_Column_sparse ) ! XB full, YB column-sparse
@@ -1051,8 +1099,13 @@ contains ! =====     Public Procedures     =============================
               if ( btest(xmask(i/b),mod(i,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
-            zb%values(i,j) = zb%values(i,j) + dot_product( &
-              & xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
+            if ( .not. my_sub ) then
+              zb%values(i,j) = zb%values(i,j) + dot_product( &
+                & xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
+            else
+              zb%values(i,j) = zb%values(i,j) - dot_product( &
+                & xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
+            end if
           end do ! i
         end do ! j
       case ( M_Full )         ! XB full, YB full
@@ -1065,8 +1118,13 @@ contains ! =====     Public Procedures     =============================
               if ( present(xmask) ) then
                 if ( btest(xmask(i/b),mod(i,b)) ) cycle
               end if
-              zb%values(i,j) = zb%values(i,j) + dot( xb%nrows, xb%values(1,i), &
-                               & 1, yb%values(1,j), 1 )
+              if ( .not. my_sub ) then
+                zb%values(i,j) = zb%values(i,j) + dot( xb%nrows, &
+                                 & xb%values(1,i), 1, yb%values(1,j), 1 )
+              else
+                zb%values(i,j) = zb%values(i,j) - dot( xb%nrows, &
+                                 & xb%values(1,i), 1, yb%values(1,j), 1 )
+              end if
             end do ! i = 1, xb%ncols
           end do ! j = 1, yb%ncols
         else
@@ -1200,7 +1258,7 @@ contains ! =====     Public Procedures     =============================
   ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
-    call MultiplyMatrixBlocks ( x, y, z, .false. )
+    call MultiplyMatrixBlocks ( x, y, z )
   end function NewMultiplyMatrixBlocks
 
   ! -----------------------------------  NewMultiplyMatrixVector_0  ----
@@ -1618,6 +1676,79 @@ contains ! =====     Public Procedures     =============================
     end subroutine UpdateDenseDiagonal
   end subroutine UpdateDiagonal_0
 
+  ! ----------------------------------------  UpdateDiagonalVec_0  -----
+  subroutine UpdateDiagonalVec_0 ( A, X, SUBTRACT )
+  ! Add X to the diagonal of A if SUBTRACT is absent or false.
+  ! Subtract X from the diatonal of A if SUBTRACT is present and true.
+    type(MatrixElement_T), intent(inout) :: A
+    real(r8), intent(in) :: X(:)
+    logical, intent(in), optional :: SUBTRACT
+
+    integer :: I, J                          ! Subscripts and loop inductors
+    integer :: N                             ! min(a%ncols,a%nrows)
+    real(r8) :: S                            ! Sign to use for X, +1 or -1
+    real(r8), dimension(:,:), pointer :: T   ! A temporary dense matrix
+
+    s = 1.0_r8
+    if ( present(subtract) ) then
+      if ( subtract ) s = -1.0_r8
+    end if
+    n = min(a%ncols,a%nrows)
+    select case ( a%kind )
+    case ( m_absent )
+      call createBlock ( a, a%nRows, a%nCols, m_banded, n )
+      do i = 1, n
+        a%r1(i) = i
+        a%r2(i) = i
+        a%values(i,1) = s*x(i)
+      end do
+    case ( m_banded )
+      do i = 1, n
+        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
+          ! No diagonal element.  Make room for one by densify-update-sparsify
+          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+            & ModuleName )
+          call densify ( t, a )
+          call updateDenseDiagonal ( t, x, s, i )
+          call sparsify ( t, a )
+          return
+        end if
+        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
+          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + s*x(i)
+      end do
+    case ( m_column_sparse )
+      do i = 1, n
+        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
+          if ( a%r2(j) == i ) then
+            a%values(j,1) = a%values(j,1) + s*x(i)
+          else if ( a%r2(j) > i ) then
+            ! No diagonal element.  Make room for one by densify-update-sparsify
+            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+              & ModuleName )
+            call densify ( t, a )
+            call updateDenseDiagonal ( t, x, s, i )
+            call sparsify ( t, a )
+            return
+          end if
+        end do
+      end do
+    case ( m_full )
+      call updateDenseDiagonal ( a%values, x, s, 1 )
+    end select
+
+  contains
+    subroutine UpdateDenseDiagonal ( T, X, S, START )
+      real(r8), intent(inout) :: T(:,:) ! Matrix element to update
+      real(r8), intent(in) :: X(:)      ! Vector update diagonal
+      real(r8), intent(in) :: S         ! Sign for X, +1 or -1.
+      integer, intent(in) :: START      ! Where to start
+      integer :: I
+      do i = start, n
+        t(i,i) = t(i,i) + s*x(i)
+      end do
+    end subroutine UpdateDenseDiagonal
+  end subroutine UpdateDiagonalVec_0
+
 ! =====     Private Procedures     =====================================
 
   ! -------------------------------------------  CreateEmptyBlock  -----
@@ -1682,6 +1813,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.12  2001/02/22 01:55:06  vsnyder
+! Add code to invert a Cholesky factor
+!
 ! Revision 2.11  2001/02/09 18:37:16  pwagner
 ! Commented-out statements that offended NAG v4.0
 !
