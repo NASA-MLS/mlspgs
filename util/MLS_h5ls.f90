@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !
@@ -7,9 +7,11 @@
 !
      PROGRAM MLS_h5ls
 
-     use HDF5, only: HID_T, H5F_ACC_RDONLY_F, h5fopen_f, h5fclose_f, h5fis_hdf5_f   
-     use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
      use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
+     use MLSHDF5, only: mls_h5close, mls_h5open
+     use HDF5, only: HID_T, H5F_ACC_RDONLY_F, h5fopen_f, h5fclose_f, &
+       & h5fis_hdf5_f   
+     use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
 
      IMPLICIT NONE
 
@@ -32,7 +34,7 @@
      
      ! print *, 'Your file name: ', filename
 
-     CALL h5open_f(error)
+     CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
      call get_filename(filename, n_filenames)
@@ -86,7 +88,7 @@
 
   enddo        ! Loop over filenames
 
-     CALL h5close_f(error)
+     CALL mls_h5close(error)
 !-------------------------------------------------------------
      STOP
   contains
@@ -146,6 +148,9 @@
 END PROGRAM MLS_h5ls
 
 ! $Log$
+! Revision 1.3  2002/10/03 23:25:41  pwagner
+! Less likely to snip part of path/filename in printing
+!
 ! Revision 1.2  2002/08/29 17:53:55  pwagner
 ! Now takes filenames on command line; Lahey has another internal error while compiling
 !
