@@ -29,6 +29,7 @@ module Parse_Signal_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -439,9 +440,16 @@ o:  do
 
   end subroutine Parse_Signal
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.12  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.11  2001/06/07 21:59:41  pwagner
 ! Added Copyright statement
 !

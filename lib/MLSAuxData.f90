@@ -67,6 +67,7 @@ module MLSAuxData
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
   ! Parameters
@@ -1497,9 +1498,16 @@ contains ! ============================ MODULE PROCEDURES ====================
 
   end subroutine Write_MLSAuxData
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.12  2002/10/08 00:09:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.11  2002/10/05 01:03:08  jdone
 ! Create_MLSAuxData updated to reduce memory.
 !

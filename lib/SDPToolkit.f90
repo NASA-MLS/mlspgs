@@ -13,6 +13,7 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 ! Contents:
@@ -190,11 +191,19 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
    LOGICAL :: UseSDPToolkit = .TRUE.
 
 !====================
-END MODULE SDPToolkit
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
+end module SDPToolkit
 !====================
 
 !
 ! $Log$
+! Revision 2.12  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.11  2002/10/01 22:03:55  pwagner
 ! Fixed RCS Ident Block
 !
