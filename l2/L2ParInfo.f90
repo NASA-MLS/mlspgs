@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L2ParInfo
@@ -115,6 +115,10 @@ module L2ParInfo
 
   interface dump
     module procedure DumpDirectWriteRequest, DumpAllDirectWriteRequests
+  end interface
+
+  interface LogDirectWriteRequest
+    module procedure LogDirectWriteRequest_int, LogDirectWriteRequest_str
   end interface
 
 contains ! ==================================================================
@@ -425,8 +429,8 @@ contains ! ==================================================================
     InflateDirectWriteRequestDB = firstNewItem
   end function InflateDirectWriteRequestDB
 
-  ! ---------------------------------------- LogDirectWriteRequest --
-  subroutine LogDirectWriteRequest ( filename, node )
+  ! ---------------------------------------- LogDirectWriteRequest_int --
+  subroutine LogDirectWriteRequest_int ( filename, node )
     integer, intent(in) :: FILENAME     ! String index of filename
     integer, intent(in) :: NODE         ! Node for directWrite line
 
@@ -453,13 +457,45 @@ contains ! ==================================================================
     if ( info /= 0 ) &
       & call PVMErrorMessage ( info, "sending direct write request packet" )
 
-  end subroutine LogDirectWriteRequest
+  end subroutine LogDirectWriteRequest_int
+
+  ! ---------------------------------------- LogDirectWriteRequest_str --
+  subroutine LogDirectWriteRequest_str ( filename, node )
+    character(len=*), intent(in) :: FILENAME     ! String filename
+    integer, intent(in) :: NODE         ! Node for directWrite line
+
+    ! Local variables
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    integer :: SIGNAL                   ! From Master
+
+    ! Executable code
+
+    ! Pack and dispatch
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_RequestDirectWrite, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "packing direct write request flag" )
+    ! call PVMPackStringIndex ( filename, info )
+    call PVMIDLPack ( trim(filename), info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "packing direct write request filename" )
+    call PVMF90Pack ( node, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "packing direct write request node" )
+
+    call PVMFSend ( parallel%masterTid, InfoTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "sending direct write request packet" )
+
+  end subroutine LogDirectWriteRequest_str
 
   ! -------------------------------------------- WaitForDirectWritePermission --
   subroutine WaitForDirectWritePermission ( node, ticket, theFile, createFile )
     integer, intent(out) :: NODE        ! Which line was granted
     integer, intent(out) :: TICKET      ! What is the ticket number
-    integer, intent(out) :: THEFILE     ! What is the file name
+    ! integer, intent(out) :: THEFILE   ! What is the file name
+    character(len=*), intent(out), optional :: THEFILE  ! file name
     logical, intent(out) :: CREATEFILE  ! Do we have to create the file?
     ! Local variables
     integer :: BUFFERID                 ! From PVM
@@ -481,10 +517,13 @@ contains ! ==================================================================
       call PVMF90Unpack ( I4, info )
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'unpacking direct write permission information')
+      call PVMUnpackStringIndex ( I4(4), info, outWord=theFile )
+      if ( info /= 0 )  call PVMErrorMessage ( info, &
+        & "unpacking direct write request filename" )
       node = I4(1)
       ticket = I4(2)
       createFile = I4(3) /= 0
-      theFile = I4(4)
+      ! theFile = I4(4)
 
     else
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -561,6 +600,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.36  2004/01/22 00:56:35  pwagner
+! Fixed many bugs in auto-distribution of DirectWrites
+!
 ! Revision 2.35  2004/01/02 23:36:00  pwagner
 ! DirectWrites may choose files automatically from db
 !
