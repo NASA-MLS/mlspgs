@@ -105,7 +105,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 
 	INTEGER, PARAMETER :: INVENTORYMETADATA=2
 
-    integer, parameter :: MCFFORL2GPOPTION=1		! Either 1 or 2
+    integer, parameter :: MCFFORL2GPOPTION=3		! 1, 2 or 3
 
 CONTAINS
 
@@ -236,7 +236,7 @@ END SUBROUTINE first_grouping
 
 !--------------------------- measured_parameter -------------------
 
-  SUBROUTINE measured_parameter (HDF_FILE, field_name, groups)
+  SUBROUTINE measured_parameter (HDF_FILE, field_name, groups, class_num)
 
 ! This writes the attributes corresponding to the measured parameter container:
 !
@@ -258,10 +258,12 @@ END SUBROUTINE first_grouping
 
     INTEGER :: HDF_FILE
 	 character (LEN=*) :: field_name
+    integer, intent (in) :: class_num
 
     !Local Variables
  
     INTEGER :: returnStatus
+    character (LEN=2) :: class
 
     INTEGER, PARAMETER :: INVENTORY=2, ARCHIVE=1
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
@@ -309,12 +311,21 @@ END SUBROUTINE first_grouping
 !       sval = "MLS Instrument Engineering"
 !    ENDIF
 
+   if(class_num <= 0) then
+      class(:2)='0 '
+   elseif(class_num < 10) then
+      write(class(:1), '(I1)') class_num
+      class(2:2)=' '
+   else
+      write(class(:2), '(I2)') class_num
+   endif
+
 	if(field_name /= ' ') then
 		sval = adjustl(field_name)
 	else
 		sval = 'Miscellaneous'
 	endif
-    attrName = 'ParameterName' // '.1'
+    attrName = 'ParameterName' // '.' // class
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
@@ -325,7 +336,7 @@ END SUBROUTINE first_grouping
 
     ! QAFlags Group
 
-    attrName = 'AutomaticQualityFlag' // '.1'
+    attrName = 'AutomaticQualityFlag' // '.' // class
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'Passed')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
@@ -335,7 +346,7 @@ END SUBROUTINE first_grouping
       & "Error in writing AutomaticQualityFlag attribute.") 
     ENDIF
 
-    attrName = 'AutomaticQualityFlagExplanation' // '.1'
+    attrName = 'AutomaticQualityFlagExplanation' // '.' // class
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'pending algorithm update')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
@@ -345,7 +356,7 @@ END SUBROUTINE first_grouping
       & "Error in writing AutomaticQualityFlagExplanation attribute.") 
     ENDIF
 
-    attrName = 'OperationalQualityFlag' // '.1'
+    attrName = 'OperationalQualityFlag' // '.' // class
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'Not Investigated')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
@@ -355,7 +366,7 @@ END SUBROUTINE first_grouping
       & "Error in writing OperationalQualityFlag attribute.") 
     ENDIF
 
-    attrName = 'OperationalQualityFlagExplanation' // '.1'
+    attrName = 'OperationalQualityFlagExplanation' // '.' // class
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'Not Investigated')
     IF (returnStatus /= PGS_S_SUCCESS) THEN
@@ -367,7 +378,7 @@ END SUBROUTINE first_grouping
 
     ! QAStats Group
     
-    attrName = 'QAPercentInterpolatedData' // '.1'
+    attrName = 'QAPercentInterpolatedData' // '.' // class
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
@@ -376,7 +387,7 @@ END SUBROUTINE first_grouping
       & "Error in writing QAPercentInterpolatedData attribute.") 
     ENDIF
 
-    attrName = 'QAPercentMissingData' // '.1'
+    attrName = 'QAPercentMissingData' // '.' // class
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
@@ -385,7 +396,7 @@ END SUBROUTINE first_grouping
       & "Error in writing QAPercentMissingData attribute.") 
     ENDIF
 
-    attrName = 'QAPercentOutofBoundsData' // '.1'
+    attrName = 'QAPercentOutofBoundsData' // '.' // class
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
@@ -805,7 +816,7 @@ END SUBROUTINE measured_parameter
     ENDIF
 		
 	call first_grouping(HDF_FILE, MCF_FILE, l2pcf, groups)
-	call measured_parameter (HDF_FILE, field_name, groups)
+	call measured_parameter (HDF_FILE, field_name, groups, 1)
 	call third_grouping (HDF_FILE, l2pcf, groups)
 
     sdid = sfstart (physical_fileName, DFACC_RDWR) 
@@ -934,7 +945,7 @@ END SUBROUTINE measured_parameter
 	do indx=1, numquantitiesperfile
 
 		call measured_parameter (HDF_FILE, &
-		& QuantityNames(indx), groups)
+		& QuantityNames(indx), groups, indx)
 
 	enddo
 
@@ -1014,6 +1025,7 @@ END SUBROUTINE measured_parameter
 
 	character (len=1), parameter :: species_delimiter = '_'
 	character (len=4), parameter :: l2gp = 'l2gp'
+   logical, parameter :: DEBUG = .false.
 	
 ! Begin
 
@@ -1023,6 +1035,12 @@ END SUBROUTINE measured_parameter
    endif
 
 !	if(sdid <= 0) then
+
+   if(DEBUG) then
+      call output('file_base: ', advance='no')
+      call output(trim(file_base), advance='yes')
+   endif
+
 	if(len(TRIM(file_base)) <= 0) then
 		mcf=0
 		return
@@ -1060,6 +1078,11 @@ END SUBROUTINE measured_parameter
 		
 	enddo
 
+   if(DEBUG) then
+      call output('returnStatus: ', advance='no')
+      call output(returnStatus, advance='yes')
+   endif
+
 	if (returnStatus /= PGS_S_SUCCESS) then 
 		mcf = 0
 		return
@@ -1073,6 +1096,15 @@ END SUBROUTINE measured_parameter
 	sd_full = LowerCase(file_base)
 	mcf_name = LowerCase(mcf_name)
 	
+   if(DEBUG) then
+      call output('mcf_full: ', advance='no')
+      call output(trim(mcf_full), advance='yes')
+      call output('mcf_path: ', advance='no')
+      call output(trim(mcf_path), advance='yes')
+      call output('mcf_name: ', advance='no')
+      call output(trim(mcf_name), advance='yes')
+   endif
+
 !	i=index(mcf_name, l2gp)
 
 !	if(i <= 0) then
@@ -1083,6 +1115,15 @@ END SUBROUTINE measured_parameter
 	! Get species name assuming e.g. '*l2gp_h2o'
 	call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
 	
+   if(DEBUG) then
+      call output('sd_full: ', advance='no')
+      call output(trim(sd_full), advance='yes')
+      call output('sd_path: ', advance='no')
+      call output(trim(sd_path), advance='yes')
+      call output('sd_name: ', advance='no')
+      call output(trim(sd_name), advance='yes')
+   endif
+
 	if(len(trim(sd_name)) <= 0) then
 		mcf=0
 		return
@@ -1094,6 +1135,15 @@ END SUBROUTINE measured_parameter
    ! if the species name not found in spec_keys, it will return ','
       call GetStringHashElement(l2pcf%spec_keys, l2pcf%spec_hash, &
       & trim(sd_name), sd_full, .TRUE.)
+
+     if(DEBUG) then
+       call output('keys: ', advance='no')
+       call output(trim(l2pcf%spec_keys), advance='yes')
+       call output('hash: ', advance='no')
+       call output(trim(l2pcf%spec_hash), advance='yes')
+       call output('hash for species name: ', advance='no')
+       call output(trim(sd_full), advance='yes')
+    endif
 
       if(trim(sd_full) == COMMA) then
          mcf=0
@@ -1107,6 +1157,10 @@ END SUBROUTINE measured_parameter
 	! Now try to find mcf file corresponding to species name
 	! assuming, e.g. '*h2o.*'
 
+     if(DEBUG) then
+       call output('loop over mcf files', advance='yes')
+   endif
+   
 	do i=mlspcf_mcf_l2gp_start, mlspcf_mcf_l2gp_end
 	
 		if(present(version)) then
@@ -1127,11 +1181,15 @@ END SUBROUTINE measured_parameter
 			! So reverse it to make h2o
 			mcf_pattern = adjustl(Reverse(mcf_pattern))
 			
+     if(DEBUG) then
+       call output('mcf_pattern: ', advance='no')
+       call output(trim(mcf_pattern), advance='yes')
+      endif
 			! Check that pattern matches species name
          ! Warning--this could give a false matching
          ! if the species name matches more than one mcf_pattern
          ! May wish to check for multiple matches later
-			if(index(mcf_pattern, sd_name) > 0) then
+			if(index(trim(mcf_pattern), trim(sd_name)) > 0) then
 				mcf = i
 				return
 			endif
@@ -1479,6 +1537,9 @@ END SUBROUTINE measured_parameter
 
 END MODULE WriteMetadata 
 ! $Log$
+! Revision 2.9  2001/04/13 23:47:26  pwagner
+! Writes multiple measuredcontainers properly
+!
 ! Revision 2.8  2001/04/13 00:28:03  pwagner
 ! Turned get_l2gp_mcf into a subroutine
 !
