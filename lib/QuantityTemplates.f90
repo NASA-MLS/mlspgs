@@ -197,6 +197,7 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( qty%solarTime, "qty%solarTime", ModuleName )
     call deallocate_test ( qty%solarZenith, "qty%solarZenith", ModuleName )
     call deallocate_test ( qty%losAngle, "qty%losAngle", ModuleName )
+    call deallocate_test ( qty%frequencies, "qty%frequencies", ModuleName )
 
     if (qty%minorFrame) then
       call deallocate_test ( qty%MAFIndex, "qty%MAFIndex", ModuleName )
@@ -362,6 +363,9 @@ contains ! =====     Public Procedures     =============================
     call allocate_test ( qty%losAngle, noSurfsToAllocate, qty%noInstances, &
       & "qty%losAngle", ModuleName )
 
+    call allocate_test ( qty%frequencies, qty%noChans, &
+        & "qty%frequencies", ModuleName )
+
     ! Now some other stuff to allocate
 
     if ( qty%minorFrame ) then
@@ -393,6 +397,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.16  2001/07/11 21:41:16  livesey
+! Made quantityTemplateCounter public
+!
 ! Revision 2.15  2001/07/02 17:25:30  livesey
 ! Some changes to comments, following walk through
 !
