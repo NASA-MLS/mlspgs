@@ -242,6 +242,29 @@ contains ! =====     Public Procedures     =============================
       if ( present (jacobian) ) rowJBlock = &
         & FindBlock ( jacobian%row, radiance%index, maf )
 
+      ! Now, if we need any derivatives, we need to setup some arrays
+      if ( present(jacobian) ) then
+        call allocate_test ( mifPointingsLower, noMIFs, &
+          & 'mifPointingsLower', ModuleName )
+        call allocate_test ( mifPointingsUpper, noMIFs, &
+          & 'mifPointingsUpper', ModuleName )
+        call allocate_test ( lowerWeight, noMIFs, &
+          & 'lowerWeight', ModuleName )
+        call allocate_test ( upperWeight, noMIFs, &
+          & 'upperWeight', ModuleName )
+
+        call Hunt ( xStarPtan%values(:,1), ptan%values(:,maf), mifPointingsLower )
+        mifPointingsUpper = mifPointingsLower + 1
+        
+        upperWeight = &
+          & ( ptan%values(:,maf) - xStarPtan%values(mifPointingsLower,1) ) / &
+          & ( xStarPtan%values(mifPointingsUpper,1) - &
+          &   xStarPtan%values(mifPointingsLower,1) )
+        lowerWeight = 1.0 - upperWeight
+        upperWeight = min ( 1.0_r8, max (upperWeight, 0.0_r8 ) )
+        lowerWeight = min ( 1.0_r8, max (lowerWeight, 0.0_r8 ) )
+      end if
+
       ! -------- Main loop over xStar quantities -------------------------------
       do qtyInd = 1, size ( l2pc%col%vec%quantities )
 
@@ -310,35 +333,6 @@ contains ! =====     Public Procedures     =============================
             & pack(ForwardModelConfig%molecules, &
             &      ForwardModelConfig%moleculeDerivatives))) &
             & doDerivatives = .false.
-        end if
-
-        ! If so, set up some arrays
-        if (doDerivatives) then
-          call allocate_test ( mifPointingsLower, noMIFs, &
-            & 'mifPointingsLower', ModuleName )
-          call allocate_test ( mifPointingsUpper, noMIFs, &
-            & 'mifPointingsUpper', ModuleName )
-          call allocate_test ( lowerWeight, noMIFs, &
-            & 'lowerWeight', ModuleName )
-          call allocate_test ( upperWeight, noMIFs, &
-            & 'upperWeight', ModuleName )
-          if ( l2pcQ%template%noSurfs /= 1 ) then
-            call Hunt ( l2pcQ%template%surfs(:,1), ptan%values(:,maf), mifPointingsLower )
-            mifPointingsUpper = mifPointingsLower + 1
-
-            upperWeight = &
-              & ( ptan%values(:,maf) - l2pcQ%template%surfs(mifPointingsLower,1) ) / &
-              & ( l2pcQ%template%surfs(mifPointingsUpper,1) - &
-              &   l2pcQ%template%surfs(mifPointingsLower,1) )
-            lowerWeight = 1.0 - upperWeight
-            upperWeight = min ( 1.0_r8, max (upperWeight, 0.0_r8 ) )
-            lowerWeight = min ( 1.0_r8, max (lowerWeight, 0.0_r8 ) )
-          else
-            mifPointingsLower = 1
-            mifPointingsUpper = 1
-            lowerWeight = 1.0
-            upperWeight = 0.0
-          end if
         end if
 
         ! Loop over profiles
@@ -421,7 +415,7 @@ contains ! =====     Public Procedures     =============================
                     endif
                     i = i + 1
                     lower = lower + 1
-                    upper = upper
+                    upper = upper + 1
                   end do
               end do
 
@@ -432,16 +426,6 @@ contains ! =====     Public Procedures     =============================
           end if                          ! do derivatives?
         end do                            ! End loop over xStar Profiles
 
-        if ( doDerivatives ) then         ! Destroy working arrays
-          call deallocate_test ( mifPointingsLower, &
-            & 'mifPointingsLower', ModuleName )
-          call deallocate_test ( mifPointingsUpper, &
-            & 'mifPointingsUpper', ModuleName )
-          call deallocate_test ( lowerWeight, &
-            & 'lowerWeight', ModuleName )
-          call deallocate_test ( upperWeight, &
-            & 'upperWeight', ModuleName )
-        end if
         ! Compute this instance of deltaX
         deltaX%quantities(qtyInd)%values = &
           & xP%quantities(qtyInd)%values - &
@@ -454,6 +438,17 @@ contains ! =====     Public Procedures     =============================
         ! I think not as Van's code skips them already.
 
       end do                              ! End loop over quantities
+
+      if ( present (jacobian) ) then         ! Destroy working arrays
+        call deallocate_test ( mifPointingsLower, &
+          & 'mifPointingsLower', ModuleName )
+        call deallocate_test ( mifPointingsUpper, &
+          & 'mifPointingsUpper', ModuleName )
+        call deallocate_test ( lowerWeight, &
+          & 'lowerWeight', ModuleName )
+        call deallocate_test ( upperWeight, &
+          & 'upperWeight', ModuleName )
+      end if
 
       ! Now compute yP
 
@@ -569,6 +564,7 @@ contains ! =====     Public Procedures     =============================
       
       call DestroyVectorInfo ( xP )
       call DestroyVectorInfo ( deltaX )
+      call DestroyVectorInfo ( yP )
       call Deallocate_test ( closestInstances, 'closestInstances', ModuleName )
       call Deallocate_test ( dyByDx, 'dyByDx', ModuleName)
       call Deallocate_test ( resultMapped, 'resultMapped', ModuleName )
@@ -584,6 +580,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.18  2001/05/19 01:21:33  livesey
+! Bug fix, was only storing derivatives for second sideband.
+!
 ! Revision 1.17  2001/05/09 19:46:49  vsnyder
 ! Use new bandHeight argument of createBlock
 !
