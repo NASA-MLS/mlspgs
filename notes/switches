@@ -4,7 +4,6 @@ Switches (set by -S option in mlsl2's command line):
   A => AntennaPatterns
   C => SpectroscopyCatalog
   F => FilterShapes
-  O => Open_init
   P => PointingGrids
   S => MLSSignals
   V => VGrids (in globalSettings)
@@ -32,6 +31,8 @@ Switches (set by -S option in mlsl2's command line):
   neq =>    Normal equations during retriever iterations                 
   ndb =>    Dump the Newton method's internal variables before every step
   nwt =>    Action flag at each return from Newton solver                
+  pcf[n] => open init params obtained from pcf,
+            info on l1b files [higher the n, more the info]                     
   pro =>    Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta   
   qtmp =>   Quantity templates being constructed                         
   rad =>    Radiances in ForwardModelInterface                           
@@ -70,6 +71,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.13  2001/10/26 23:03:36  pwagner
+ glo[bal] now glo[n]; add apr[n] and grid
+
  Revision 1.12  2001/10/25 23:29:21  pwagner
  Added global and l1b
 
