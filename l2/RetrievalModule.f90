@@ -156,7 +156,7 @@ contains
     integer :: SnoopLevel               ! From level field of S_Snoop spec.
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve
     type(vector_T), pointer :: State    ! The state vector
-    real :: T1, T2                      ! for timing
+    real :: T0, T1, T2, T3              ! for timing
     logical :: Timing
     double precision :: ToleranceA      ! convergence tolerance for NWT,
                                         ! norm of move
@@ -710,6 +710,7 @@ contains
       numF = 0
       numJ = 0
       aj%axmax = 0.0
+      call time_now ( t0 ) ! time base for Newtonian iteration
       do k = 1, size(v(x)%quantities)
         aj%axmax = max(aj%axmax, maxval(abs(v(x)%quantities(k)%values)))
       end do
@@ -742,7 +743,10 @@ contains
             call output ( ', numF = ' )
             call output ( numF )
             call output ( ', numJ = ' )
-            call output ( numJ, advance='yes' )
+            call output ( numJ )
+            call output ( ' at ' )
+            call time_now ( t3 )
+            call output ( t3-t0, advance='yes' )
           end if
         select case ( nwt_flag )
         case ( nf_evalf ) ! ..............................  EVALF  .....
@@ -1399,10 +1403,12 @@ contains
           ! Convergence to desired solution.  Do whatever you want to
           ! with the solution.
           if ( .not. got(f_apriori) .or. .not. diagonal ) then
-              if ( index(switches,'nwt') /= 0 )&
-                & call output ( &
-                  & 'Newton iteration terminated because of convergence', &
-                  & advance='yes' )
+              if ( index(switches,'nwt') /= 0 ) then
+                call output ( &
+                  & 'Newton iteration terminated because of convergence at ' )
+                call time_now ( t3 )
+                call output ( t3-t0, advance='yes' )
+              end if
             if ( got(f_outputCovariance) .or. got(f_outputSD) .or. &
               &  got(f_average) ) then
               nwt_flag = nf_getJ
@@ -1465,6 +1471,11 @@ contains
           print *, 'BUG in Retrieval module -- should need to getJ to quit'
           stop
         end if
+          if ( index(switches,'cov') /= 0 ) then
+            call output ( 'Begin covariance calculation at ' )
+            call time_now ( t3 )
+            call output ( t3-t0, advance='yes' )
+          end if
         if ( got(f_diagnostics) ) then
           ! Compute number of rows of Jacobian actually used.  Don't count
           ! rows due to Levenberg-Marquardt stabilization.  Do count rows
@@ -1484,11 +1495,31 @@ contains
             & jacobian_rows = jacobian_rows + tikhonovRows
           call fillDiagVec ( l_jacobian_cols, real(jacobian_cols,r8) )
           call fillDiagVec ( l_jacobian_cols, real(jacobian_rows,r8) )
+            if ( index(switches,'cov') /= 0 ) then
+              call output ( 'Counted ' )
+              call output ( jacobian_rows )
+              call output ( ' rows and ' )
+              call output ( jacobian_cols )
+              call output ( ' in the Jacobian matrix at ' )
+              call time_now ( t3 )
+              call output ( t3-t0, advance='yes' )
+            end if
         end if
         call time_now ( t1 )
         call createEmptyMatrix ( temp, 0, state, state )
         call invertCholesky ( factored, temp ) ! U^{-1}
+          if ( index(switches,'cov') /= 0 ) then
+            call output ( &
+              & 'Inverted the Cholesky factor of the normal equations at ' )
+            call time_now ( t3 )
+            call output ( t3-t0, advance='yes' )
+          end if
         call multiplyMatrix_XY_T ( temp, temp, outputCovariance%m ) ! U^{-1} U^{-T}
+          if ( index(switches,'cov') /= 0 ) then
+            call output ( 'Computed U^{-1} U^{-T} at ' )
+            call time_now ( t3 )
+            call output ( t3-t0, advance='yes' )
+          end if
         call destroyMatrix ( temp )
         call add_to_retrieval_timing( 'cholesky_invert', t1 )
         call time_now ( t1 )
@@ -1496,6 +1527,11 @@ contains
         if ( columnScaling /= l_none ) then
           call columnScale ( outputCovariance%m, v(columnScaleVector) )
           call rowScale ( v(columnScaleVector), outputCovariance%m )
+            if ( index(switches,'cov') /= 0 ) then
+              call output ( 'Scaled the Covariance matrix at ' )
+              call time_now ( t3 )
+              call output ( t3-t0, advance='yes' )
+            end if
         end if
         if ( associated(outputSD) ) &
           & call GetDiagonal ( outputCovariance%m, outputSD, squareRoot=.true. )
@@ -1504,6 +1540,8 @@ contains
       ! Compute the averaging kernel
       if ( got(f_average) ) then
         outputAverage = outputCovariance%m .tx. kTk%m
+          if ( index(switches,'cov') /= 0 ) call output ( &
+            & 'Computed the Averaging Kernel from the Covariance', advance='yes' )
         call destroyMatrix ( kTk%m )
       end if
 
@@ -2828,6 +2866,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.156  2002/07/31 22:43:30  vsnyder
+! Add some timers in the Newtonian iteration
+!
 ! Revision 2.155  2002/07/26 22:47:56  vsnyder
 ! Only do DNWT internal output after NF_SOLVE and at the end.
 ! Finish commenting-out FNMIN calculation when NWT_FLAG = NF_SOLVE
