@@ -400,10 +400,9 @@ contains ! =====     Public Procedures     =============================
     ! Local variables ----------------------------------------------------------
 
     ! First the old stuff which we hope to get rid of or redefine
-    integer(i4) :: i, j, k, ht_i, mnz, no_tan_hts, ch, Spectag, &
-      m, ier, maf, si, ptg_i, frq_i, klo, n, brkpt, no_ele, &
-      mid, ilo, ihi, k_info_count, ld, &
-      max_phi_dim, max_zeta_dim
+    integer(i4) :: i, j, k, m, n, ht_i, mnz, no_tan_hts, ch, Spectag, ier, &
+                   maf, si, ptg_i, frq_i, klo, brkpt, no_ele, mid, ilo, ihi, &
+                   lmax, max_phi_dim, max_zeta_dim
 
 !    real(r4) :: K_STAR_ALL(25,20,mxco,mnp,Nptg)
 !    type(k_matrix_info) :: K_star_info(20)
@@ -660,6 +659,7 @@ contains ! =====     Public Procedures     =============================
     print*,'noSpecies:',noSpecies
     print*,'maxNoFSurfs:',maxNoFSurfs
     print*,'MAF:',fmStat%maf
+
 
     ! Work out which channels are used
     call allocate_test ( channelIndex, size(signal%frequencies), &
@@ -933,9 +933,15 @@ contains ! =====     Public Procedures     =============================
       ! Now work out what `window' we're inside.  This will need to be changed
       ! a bit in later versions to avoid the noMAFS==noTemp/f instances
       ! assertion
-      windowStart = max(1,ifm%closestInstances(maf)-phiWindow/2)
-      windowFinish = min(ifm%closestInstances(maf)+phiWindow/2, temp%template%noInstances)
+
       mafTInstance = ifm%closestInstances(maf)
+
+      windowStart  = max(1, mafTInstance - phiWindow/2)
+      windowFinish = min(mafTInstance + phiWindow/2, no_phi_t)
+
+      Print *,'mafTInstance:',mafTInstance
+      print*,'WindowStart:',WindowStart
+      print*,'WindowFinish:',WindowFinish
 
       allocate ( k_temp(noUsedChannels, no_tan_hts, temp%template%noSurfs, &
         & windowStart:windowFinish), stat=status )
@@ -1044,8 +1050,9 @@ contains ! =====     Public Procedures     =============================
         end if
         k = ptg_i
         h_tan = ifm%tan_hts(k,mafTInstance)
+        lmax = ubound(ifm%eta_phi(ptg_i,maf)%values,2)
 
-        ! Compute the beta's along the path, for this tanget hight and this mmaf:
+   ! Compute the beta's along the path, for this tanget hight and this mmaf:
 
         no_ele = ifm%ndx_path(ptg_i,maf)%total_number_of_elements
 
@@ -1074,12 +1081,12 @@ contains ! =====     Public Procedures     =============================
             Print *,'** ALLOCATE Error: dum or dh_dt_path, stat =',ier
             goto 99
           else
-            do j = 1,  temp%template%noSurfs
+            do j = 1, temp%template%noSurfs
               do i = 1, phiWindow
-                m = i + windowStart - 1
+                m = min(lmax,i+windowStart-1)
                 call Lintrp ( ifm%z_glgrid, ifm%z_path(ptg_i,maf)%values,&
-                  &           ifm%dh_dt_glgrid(:,m,j), dum, &
-                  &           ifm%gl_count, no_ele )
+                  &           ifm%dh_dt_glgrid(:,m,j), dum, ifm%gl_count,&
+                  &           no_ele )
                 dh_dt_path(:,i,j) = dum(:) * ifm%eta_phi(ptg_i,maf)%values(:,m)
               end do
             end do
@@ -1220,8 +1227,7 @@ contains ! =====     Public Procedures     =============================
         Radiances(no_tan_hts,i) = Radiances(no_tan_hts-1,i)
         if ( ForwardModelConfig%temp_der ) then
           n = temp%template%noSurfs
-          k_temp(i,no_tan_hts,1:n,1:phiWindow) = &
-            & k_temp(i,no_tan_hts-1,1:n,1:phiWindow)
+          k_temp(i,no_tan_hts,1:n,:) = k_temp(i,no_tan_hts-1,1:n,:)
         end if
         if ( ForwardModelConfig%atmos_der ) then
           do m = 1, noSpecies
@@ -1229,10 +1235,8 @@ contains ! =====     Public Procedures     =============================
               & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m),&
               & foundInFirst=foundInFirst )
             if ( foundInFirst ) then
-              k = f%template%noInstances
               n = f%template%noSurfs
-              k_atmos(i,no_tan_hts,1:n,1:phiWindow,m)= &
-                & k_atmos(i,no_tan_hts-1,1:n,1:phiWindow,m)
+              k_atmos(i,no_tan_hts,1:n,:,m)= k_atmos(i,no_tan_hts-1,1:n,:,m)
             end if
           end do
         end if
@@ -1433,6 +1437,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.121  2001/04/26 22:53:37  zvi
+! Fixing some phiwindow bug
+!
 ! Revision 2.120  2001/04/26 20:02:09  livesey
 ! Made l2pc database a saved array in L2PC_m
 !
