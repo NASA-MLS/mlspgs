@@ -21,6 +21,9 @@ myID='$Id$'
 n2= (where(data.name eq 'N$_{2}$') )(0)
 data(n2).q=1.0
 
+; Remove extinction
+data = data(where(data.name ne 'EXTINCTION'))
+
 ; Open the output file
 Openw, unit, outName, /get_lun
 
@@ -54,6 +57,10 @@ for mol = 0, noMols - 1 do begin
     'H$_{2}^{18}$O'   : thisMolName = 'H2O_18'
     'H$_{2}$O$_{2}$'  : thisMolName = 'H2O2'
     'HNO$_{3}$'       : thisMolName = 'HNO3'
+    'HNO$_{3}$-v6'    : thisMolName = 'HNO3_v6'
+    'HNO$_{3}$-v7'    : thisMolName = 'HNO3_v7'
+    'HNO$_{3}$-v8'    : thisMolName = 'HNO3_v8'
+    'HNO$_{3}$-v9'    : thisMolName = 'HNO3_v9'
     'HO$^{35}$Cl'     : thisMolName = 'HOCl_35'
     'HO$^{37}$Cl'     : thisMolName = 'HOCl_37'
     'HO$_{2}$'        : thisMolName = 'HO2'
