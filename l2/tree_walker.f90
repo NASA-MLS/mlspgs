@@ -245,6 +245,16 @@ contains ! ====     Public Procedures     ==============================
 	  ! if fmt1 or fmt2 is true
           if ( index(switches, 'fmt') /= 0 .and. &
 	     & associated(forwardModelConfigDatabase)) then
+	       call output ("======= printForwardModelTiming =========", &
+		  & advance = 'yes')
+	       call output ( " ", advance = 'yes')
+	       call output ( "Name", advance='no')
+	       call blanks (18, advance ='no')
+	       call output ("| Invocation ", advance = 'no')
+	       call output ( "| Mean_time / s ", advance='no') 
+	       call output ("| St. dev. / s", advance='yes') 
+	       call output ("-------------------------------------------&
+	              &-----------------------------", advance= 'yes')    
                do fwmIndex =1, size(forwardModelConfigDatabase)
                   call printForwardModelTiming ( forwardModelConfigDatabase &
                         & (fwmIndex))
@@ -316,6 +326,16 @@ subtrees:   do while ( j <= howmany )
             ! print the timing for FullForwardModel
             ! fmt2: at each chunk, fmt1: at last chunk
             if ( index(switches, 'fmt2') /= 0 ) then
+	       call output ( "======= printForwardModelTiming =========", &
+		  & advance = 'yes')
+	       call output ( " ", advance = 'yes')
+	       call output ( "Name", advance='no')
+	       call blanks (18, advance ='no')
+	       call output ("| Invocation ", advance = 'no')
+	       call output ( "| Mean_time / s ", advance='no') 
+	       call output ("| St. dev. / s", advance='yes') 
+	       call output ("-------------------------------------------&
+	              &-----------------------------", advance= 'yes')    
                do fwmIndex =1, size(forwardModelConfigDatabase)
                   call printForwardModelTiming ( forwardModelConfigDatabase &
                         & (fwmIndex))
@@ -324,6 +344,16 @@ subtrees:   do while ( j <= howmany )
                end do
             end if  !--------- End of if fmt2
             if ( index(switches, 'fmt1') /= 0 .and. chunkNo == lastChunk) then
+	       call output ("======= printForwardModelTiming =========", &
+		  & advance = 'yes')
+	       call output ( " ", advance = 'yes')
+	       call output ( "Name", advance='no')
+	       call blanks (18, advance ='no')
+	       call output ("| Invocation ", advance = 'no')
+	       call output ( "| Mean_time / s ", advance='no') 
+	       call output ("| St. dev. / s", advance='yes') 
+	       call output ("-------------------------------------------&
+	              &-----------------------------", advance= 'yes')    
                do fwmIndex =1, size(forwardModelConfigDatabase)
                   call printForwardModelTiming ( &
                    & forwardModelConfigDatabase(fwmIndex))
@@ -436,6 +466,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.113  2003/08/21 16:07:34  livesey
+! Now calls FlushLockedBins automatically at the end of each chunk.
+!
 ! Revision 2.112  2003/08/11 23:24:02  pwagner
 ! Stores ChunkNo as component of L2ParallelInfo_T
 !
