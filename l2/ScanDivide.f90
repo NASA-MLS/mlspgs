@@ -12,8 +12,9 @@ module ScanDivide
   use INIT_TABLES_MODULE, only: P_CRITICAL_BANDS, P_CRITICAL_SCANNING_MODULES, &
     P_HOME_GEOD_ANGLE, P_HOME_MODULE, P_IDEAL_LENGTH, P_IGNOREL1B, P_MAX_GAP, &
     P_NOCHUNKS, P_OVERLAP, P_SCAN_LOWER_LIMIT, P_SCAN_UPPER_LIMIT, S_TIME
-  use INIT_TABLES_MODULE, only: PARM_INDICES, PHYQ_ANGLE, &
-    PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
+  use INIT_TABLES_MODULE, only: PHYQ_ANGLE, PHYQ_INVALID, PHYQ_LENGTH, &
+    PHYQ_MAFS, PHYQ_TIME
+  use Intrinsic, only: PARM_INDICES
   use L1BData, only: deallocateL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
   use Lexer_Core, only: Print_Source
   use MLSCommon, only: L1BINFO_T, MLSCHUNK_T, TAI93_Range_T
@@ -29,6 +30,7 @@ module ScanDivide
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, Node_ID, NSONS, Source_Ref, SUBTREE
   use Tree_Types, only: N_Equal, N_Named
+
   implicit none
 
   private
@@ -1399,6 +1401,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.12  2001/04/26 02:44:17  vsnyder
+!# Moved *_indices declarations from init_tables_module to intrinsic
+!#
 !# Revision 2.11  2001/04/24 23:12:12  vsnyder
 !# Add timing
 !#

@@ -4,34 +4,34 @@
 module L2AUXData                 ! Data types for storing L2AUX data internally
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+  use Dump_0, only: DUMP
   use Hdf, only: DFACC_READ, DFNT_FLOAT64, SFCREATE, SFDIMID, SFSDSCALE, SFEND, &
     & SFENDACC, SFSTART, SFRDATA, SFN2INDEX, SFSELECT, SFGINFO, &
     & SFGDINFO, SFSDMNAME, SFWDATA
+  use intrinsic, only: LIT_INDICES, L_CHANNEL, L_GEODANGLE, L_LSBFREQUENCY, &
+    & L_MAF, L_MIF, L_NONE, L_TIME, L_USBFREQUENCY
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME
   use MLSStrings, only: LINEARSEARCHSTRINGARRAY
+  use Output_M, only: OUTPUT
   use SDPToolkit, only: PGS_S_SUCCESS
   use STRING_TABLE, only: GET_STRING
-  use tree, only: DUMP_TREE_NODE, SOURCE_REF
-  use Output_M, only: OUTPUT
-  use Dump_0, only: DUMP
-  use intrinsic, only: L_NONE, L_CHANNEL, L_USBFREQUENCY, &
-    & L_LSBFREQUENCY, L_MIF, L_MAF, L_GEODANGLE, L_TIME
-  use INIT_TABLES_MODULE, only: LIT_INDICES
+  use Tree, only: DUMP_TREE_NODE, SOURCE_REF
 
   implicit none
 
   ! Externals
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character(len=256), private :: Id = &
-    & "$Id$"
-  character(len=*), private, parameter :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
   ! This module defines datatypes and gives basic routines for storing and
   ! manipulating L2AUX data.
@@ -498,6 +498,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.12  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.11  2001/04/12 22:19:33  vsnyder
 ! Improved an error message
 !
