@@ -3,38 +3,35 @@
 ; M4 stuff.  The band number to do is passed in as _band, the date as
 ; _day.
 
-
-ifdef(_band, ,define(_band,{1L}))
-define(_outpath,/bigdata/livesey/misc/)
-define(_ver,test4)
-define(_day,1996-051)
-define(_year,1996)
-define(_signal,_sigBand$1)
-define(_molecules,_mol$1)
-define(_systemp, _systemp$1)
-
 ; First some m4 directives.
 include(m4defs.l2cf)
+!define(outpath,{/bigdata/livesey/misc/})
+!define(ver,test4)
+!define(day,1996-051)
+!define(year,1996)
+!define(signal,!sigBand$1)
+!define(molecules,!mol$1)
+!define(systemp,!systemp$1)
 
 ; Now include the valid signals database
-l2cfinc(validsignals-emls.l2cf)
+!include(validsignals-emls.l2cf)
 
 ; Now define the signals for each band
-l2cfinc(signalsforband.l2cf)
+!include(signalsforband.l2cf)
 
 ; Now the spectroscopy database
-l2cfinc(spectroscopy.l2cf)
+!include(spectroscopy.l2cf)
 
 ; Now the list of which lines apply for which bands
-l2cfinc(moleculesperband.l2cf)
+!include(moleculesperband.l2cf)
 
 ; Now read the l2gp files for each specie
-l2cfinc(readl2gpfiles.l2cf)
+!include(readl2gpfiles.l2cf)
 
 ; -------------------------------------------- Global settings ----
 BEGIN GlobalSettings
 
-    l1Boa, file='/data/emls/l1boa/truth/{}_year{}/MLS-Aura_L1BOA_Full_s4-t_{}_day{}.dat'
+    l1Boa, file='/data/emls/l1boa/truth/{}!year{}/MLS-Aura_L1BOA_Full_s4-t_{}!day{}.dat'
     startTime = "00:00:00"
     endTime = "23:59:59"
 
@@ -56,8 +53,8 @@ BEGIN GlobalSettings
       pointingGrids='/user1/livesey/mlspgs/l2/grid_file_mdb.dat'
 
     sidsFwm: forwardModel, type=full,  $
-      signals = _signal(_band), $
-      molecules = _molecules(_band), $
+      signals = !signal(!band), $
+      molecules = !molecules(!band), $
       integrationGrid=fwmIntegrationGrid, $
       phiWindow=5, $
       frqGap=2 GHz, $
@@ -90,12 +87,12 @@ l2cfinc(constructunfoldedradiances.l2cf)
 
 BEGIN Construct
     stateTemplate: VectorTemplate, quantities=  $
-      [temp, refGPH, ptanGHz, ptanTHz, _AllMolecules ]
+      [temp, refGPH, ptanGHz, ptanTHz, !AllMolecules ]
     extraStateTemplate: VectorTemplate, quantities =  $
-      [ _AllElevs, _AllSBRatios, _LesserState, _AllISORatios ]
+      [ !AllElevs, !AllSBRatios, !LesserState, !AllISORatios ]
 
     measTemplate: VectorTemplate, quantities= $
-      [ {band}_band ]
+      [ {band}!band ]
 END Construct
 
 ; ------------------------------------------- Fill -----------------
@@ -127,7 +124,6 @@ BEGIN Fill
     Fill, quantity=x.N2O,    method=l2gp, sourceL2GP=l2gpN2OInput
     Fill, quantity=x.O3,     method=l2gp, sourceL2GP=l2gpO3Input
     Fill, quantity=x.OH,     method=l2gp, sourceL2GP=l2gpOHInput
-
 
 END Fill
 
@@ -174,8 +170,8 @@ l2cfinc(definesystemp.l2cf)
 
 BEGIN Fill
 
-    Fill, quantity={yNoise.band}_band, radianceQuantity={y.band}_band,  $
-      systemTemperature= _systemp(_band), integrationTime=0.16 s,  $
+    Fill, quantity={yNoise.band}!band, radianceQuantity={y.band}!band,  $
+      systemTemperature= !systemp(!band), integrationTime=0.16 s,  $
       method = estimatedNoise
 
 END Fill
@@ -188,8 +184,8 @@ BEGIN Join
     l2gpN2O:  l2gp, source=x.n2o,  swath = 'N2O'
     l2gpHCl:  l2gp, source=x.hcl,  swath = 'HCl'
 
-    radL2AUX: l2aux, source=y.band{}_band, /prefixSignal, sdName=''
-    noiseL2AUX: l2aux, source=yNoise.band{}_band, /prefixSignal, sdName=' precision'
+    radL2AUX: l2aux, source=y.band{}!band, /prefixSignal, sdName=''
+    noiseL2AUX: l2aux, source=yNoise.band{}!band, /prefixSignal, sdName=' precision'
     ptanGHzL2AUX: l2aux, source=x.ptanGHz
     ptanTHzL2AUX: l2aux, source=x.ptanTHz
 END Join
@@ -198,10 +194,12 @@ END Join
 ; ---------------------------------------------------------  Output  -----
 BEGIN Output
 
-    output, file='{}_outpath{temp_}_ver{.dat}', type=l2gp,  $
+    output, file='{}_outpath{temp_}!ver{.dat}', type=l2gp,  $
       quantities=l2gpTemp
-    output, file='{}_outpath{rad_band}_band{_}_ver{_}_day{.dat}',  $
+    output, file='{}_outpath{rad_band}!band{_}!ver{_}!day{.dat}',  $
       quantities=  $
       [ ptanGHzL2AUX, ptanTHzL2AUX, radL2AUX, noiseL2AUX ], type=l2aux
 
 END Output
+
+

@@ -1,6 +1,6 @@
 ; This l2cf segment is useful for constructing `standard' species.
 
-BEGIN Construct
+begin Construct
     
     ;; ----------------------------------------- Temperature / refgph
 
@@ -68,11 +68,30 @@ BEGIN Construct
     oh:           Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=vmr, $
       molecule=oh
 
-    define(_AllMolecules, {bro, br_79_o,br_81_o, clo, cl_35_o, cl_37_o, co,  $
+    !define(AllMolecules, {bro, br_79_o,br_81_o, clo, cl_35_o, cl_37_o, co,  $
                            h2o, h2o_18, hcl, hcl_35,  $
                            hcl_37, hcn, hno3, ho2, hocl, hocl_35, hocl_37, n2,  $
                            n2o, o2, o2_v1, o3, o3_asym_o_18, o3_sym_o_18, $
                            o3_v1_3, o3_v2, o_18_o, oh } )
+
+    ;; ----------------------------------------- Baselines
+    baselineR1A: Quantity, type=baseline, radiometer=R1A, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR1B: Quantity, type=baseline, radiometer=R1B, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR2:  Quantity, type=baseline, radiometer=R2, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR3:  Quantity, type=baseline, radiometer=R3, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR4:  Quantity, type=baseline, radiometer=R4, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR5H: Quantity, type=baseline, radiometer=R5H, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+    baselineR5V: Quantity, type=baseline, radiometer=R5V, hGrid=hGridStandard, $
+      vGrid=vGridBaseline
+
+    !define(AllRadiometerBaselines, {baselineR1A, baselineR1B, baselineR2, $
+      baselineR3, baselineR4, baselineR5H, baselineR5V })
 
     ;; ----------------------------------------- Isotope ratios
 
@@ -92,7 +111,7 @@ BEGIN Construct
     hcl_35_ratio:       Quantity, type=isotopeRatio, molecule=hcl_35
     hcl_37_ratio:       Quantity, type=isotopeRatio, molecule=hcl_37
 
-    define(_AllISORatios,
+    !define(AllISORatios,
     { br_79_o_ratio, br_81_o_ratio, cl_35_o_ratio, cl_37_o_ratio, $
       h2o_18_ratio, hocl_35_ratio,hocl_37_ratio, o2_v1_ratio, o3_asym_o_18_ratio, $
       o3_sym_o_18_ratio, o3_v1_3_ratio, o3_v2_ratio, o_18_o_ratio, hcl_35_ratio, $
@@ -153,7 +172,7 @@ BEGIN Construct
     band33: Quantity, type=radiance, signal='R3:240.B33W:O3'
     band34: Quantity, type=radiance, signal='R1B:118.B34W:PT'
 
-    define(_AllBands, {forloop({i}, 1, 33, {{band}i, })band34})
+    !define(AllBands, {!forloop({i}, 1, 33, {{band}i, })band34})
 
   ;; ----------------------------------------- Scan residuals
 
@@ -170,7 +189,7 @@ BEGIN Construct
     r5hElev: Quantity, type=elevOffset, radiometer=R5H
     r5vElev: Quantity, type=elevOffset, radiometer=R5V
 
-    define(_AllElevs, {r1aElev, r1bElev, r2Elev, r3Elev, r4Elev, r5hElev, r5vElev})
+    !define(AllElevs, {r1aElev, r1bElev, r2Elev, r3Elev, r4Elev, r5hElev, r5vElev})
 
     ;; ----------------------------------------- Sideband ratios
 
@@ -222,7 +241,7 @@ BEGIN Construct
     band33ratio: Quantity, type=sidebandRatio, signal='R3:240.B33W:O3'
     band34ratio: Quantity, type=sidebandRatio, signal='R1B:118.B34W:PT'
 
-    define(_AllSBRatios, {forloop({i}, 1, 33, {{band}i{ratio}, })band34ratio})
+    !define(AllSBRatios, {!forloop({i}, 1, 33, {{band}i{ratio}, })band34ratio})
 
     ;; ----------------------------------------- Other minor stuff
 
@@ -242,12 +261,12 @@ BEGIN Construct
     losVelGHz: quantity, type=losVel, module=GHz
     losVelTHz: quantity, type=losVel, module=THz
 
-    define(_LesserState, 
+    !define(LesserState, 
     {earthReflectivity, orbitInclination, spaceRadiance, $
      scGeocAlt, tngtGeocAltGHz, tngtGeocAltTHz, scECI, tngtECIGHz, tngtECITHz, $
      scVel, losVelGHz, losVelTHz})
     
-END Construct
+end Construct
 
 
 
