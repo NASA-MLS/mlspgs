@@ -61,6 +61,9 @@ character (len=*), parameter, private :: ModuleName= &
   REAL(rp), DIMENSION(:), POINTER :: del_z
 !
 ! BEGIN CODE
+
+  nullify ( mask, z, frac, z1, del_z )
+  nullify ( z_grid, tan_inds )
 ! Sort the input
 !
   n_ele = SIZE(zetas)
