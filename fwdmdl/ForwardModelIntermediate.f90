@@ -44,6 +44,8 @@ module ForwardModelIntermediate
     type (path_index),  dimension(:,:),    pointer :: NDX_PATH=>NULL()
     type (ellipse), dimension(:),          pointer :: elvar=>NULL()
 
+    integer, dimension(:),                 pointer :: closestInstances=>NULL()
+
   end type ForwardModelIntermediate_T
 
   type, public :: ForwardModelStatus_T
@@ -140,12 +142,17 @@ contains
     call deallocate_test ( ifm%tan_hts,'tan_hts', ModuleName )
     call deallocate_test ( ifm%tan_temp,'tan_temp', ModuleName )
     call deallocate_test ( ifm%tan_dh_dt, 'tan_dh_dt', ModuleName )
+
+    call deallocate_test ( ifm%closestInstances, 'closestInstances', ModuleName )
     
   end subroutine DestroyForwardModelIntermediate
 
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 1.5  2001/04/19 23:57:00  livesey
+! New fmStat
+!
 ! Revision 1.4  2001/04/19 21:04:42  livesey
 ! Bug fix, sized arrays wrongly
 !
