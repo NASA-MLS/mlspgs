@@ -1033,7 +1033,7 @@ contains
     character(len=*), intent(in), optional :: FILLVALUE
     logical, intent(in), optional :: CLEAN
 
-    integer :: J, K
+    integer :: J
     logical :: MyClean
     integer :: NumElements
     character(len=len(string)) :: myFillValue
@@ -1387,6 +1387,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.33  2004/03/30 00:44:10  vsnyder
+! Remove unused variable declaration
+!
 ! Revision 2.32  2004/02/26 21:53:31  pwagner
 ! Can dump ,-separated string list
 !
