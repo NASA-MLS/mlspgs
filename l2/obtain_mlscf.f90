@@ -46,11 +46,12 @@ contains ! =====     Public Procedures     =============================
   end subroutine CLOSE_MLSCF
 
   ! -------------------------------------------------  OPEN_MLSCF  -----
-  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, return_status )
+  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, return_status, debugOption )
 
     integer, intent(in) :: MLSPCF_Start
     integer, intent(out) :: CF_Unit
     integer, intent(out) :: return_status
+    logical, optional, intent(in) :: debugOption
 
     integer :: record_length
 
@@ -60,7 +61,7 @@ contains ! =====     Public Procedures     =============================
 
     CF_Unit = Mls_io_gen_openF ( 'pg', .true., return_Status, record_length, &
       & PGSd_IO_Gen_RSeqFrm, &
-      & thePC=MLSPCF_Start)
+      & thePC=MLSPCF_Start, debugOption=debugOption)
 
     if ( return_Status /= PGS_S_SUCCESS ) then
 		call announce_error(0, "Error opening MLSCF", &
@@ -133,6 +134,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.10  2002/01/11 00:43:22  pwagner
+! Removed some unused stuff; simplified error msg
+!
 ! Revision 2.9  2002/01/09 00:00:04  pwagner
 ! Replaced write or print statements with calls to output
 !
