@@ -179,6 +179,7 @@ contains ! ====     Public Procedures     ==============================
           call GetChunkInfoFromMaster ( chunks, chunkNo )
           firstChunk = chunkNo
           lastChunk = chunkNo
+          parallel%ChunkNo = chunkNo
         else
           call ChunkDivide ( son, processingRange, l1bInfo, chunks )
           call ComputeAllHGridOffsets ( root, i+1, chunks, l1bInfo, l2gpDatabase, &
@@ -432,6 +433,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.111  2003/07/07 23:51:06  pwagner
+! Need not pass around l2pc as L2pcf now a saved variable in WriteMetaData
+!
 ! Revision 2.110  2003/06/30 22:56:16  cvuu
 ! Print mean, std dev for fullForwardModel timing
 !
