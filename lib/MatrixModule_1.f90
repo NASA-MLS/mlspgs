@@ -1667,7 +1667,7 @@ contains ! =====     Public Procedures     =============================
       call output ( i, 3 )
       call output ( ':' )
       do j = 1, matrix%col%nb
-        call output ( ' ' )
+        if ( matrix%col%nb < 36 ) call output ( ' ' )
         if ( myUpper .and. j < i ) then
           call output ( ' ' )
         else
@@ -1692,6 +1692,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.59  2001/10/18 23:48:23  livesey
+! Made dump_struct take up less space in the case of large matrices
+!
 ! Revision 2.58  2001/10/15 23:22:45  vsnyder
 ! Make Z-cloning during MultiplyMatrixVector* optional
 !
