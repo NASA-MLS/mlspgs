@@ -21,7 +21,7 @@ module LOAD_SPS_DATA_M
     integer,  pointer :: windowstart(:) => null()! horizontal starting index
 !                                                  from l2gp
     integer,  pointer :: windowfinish(:) => null()! horizontal ending index
-!                                                   from l2gp
+!                                                  from l2gp
     logical,  pointer :: lin_log(:) => null()   ! type of representation basis
     real(r8), pointer :: min_val(:) => null()   ! Minimum value
     real(r8), pointer :: frq_basis(:) => null() ! frq grid entries for all
@@ -119,7 +119,7 @@ contains
         & foundInFirst=qtyStuff(ii)%foundInFirst )
 
       call fill_grids_1 ( grids_x, ii, qtyStuff(ii)%qty, phitan, fmStat%maf, &
-        &                 fwdModelConf, .false. )
+        &                 fwdModelConf )
 
     end do
 
@@ -152,6 +152,7 @@ contains
 
     use ForwardModelConfig, only: ForwardModelConfig_t
     use VectorsModule, only: VectorValue_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel, QtyStuff_T
 
     type(grids_t), intent(out) :: Grids_X
     type(vectorValue_t), intent(in) :: Qty, Phitan
@@ -160,10 +161,44 @@ contains
     logical, intent(in) :: SetDerivFlags
     logical, intent(in), optional :: SetTscatFlag 
 
-    call create_grids_1 ( grids_x, 1 )
-    call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf, SetTscatFlag )
-    call create_grids_2 ( grids_x )
-    call fill_grids_2 ( grids_x, 1, qty, setDerivFlags )
+    type(vectorValue_t) :: QtyStuff
+    logical :: MyFlag
+    integer :: ii, no_ang, max_ele
+
+    
+    myFlag = .false.
+    if ( present(SetTscatFlag) ) myFlag = SetTscatFlag
+    
+    if ( myFlag ) then
+       max_ele = size (Qty%values,1)
+       no_ang=FwdModelConf%num_scattering_angles
+
+       qtyStuff%template = qty%template     ! having same template as temp
+
+       call create_grids_1 ( grids_x, no_ang )
+       grids_x%min_val = -huge(0.0_r8)
+       grids_x%p_len = 0
+       
+       do ii=1, no_ang
+          qtyStuff%values => qty%values(1:max_ele,ii:ii)
+          call fill_grids_1 ( grids_x, ii, qtyStuff, phitan, maf, fwdModelConf )
+       end do
+
+       call create_grids_2 ( grids_x )
+
+       do ii=1, no_ang
+          qtyStuff%values => qty%values(1:max_ele,ii:ii)
+         call fill_grids_2 ( grids_x, ii, qtyStuff, setDerivFlags )
+       enddo
+
+    else
+
+       call create_grids_1 ( grids_x, 1 )
+       call fill_grids_1 ( grids_x, 1, qty, phitan, maf, fwdModelConf )
+       call create_grids_2 ( grids_x )
+       call fill_grids_2 ( grids_x, 1, qty, setDerivFlags )
+
+    endif
 
   end subroutine Load_One_Item_Grid
 
@@ -327,10 +362,11 @@ contains
                        & ModuleName )
     call allocate_test ( Grids_x%deriv_flags, Grids_x%l_v(n), 'Grids_x%deriv_flags', &
                        & ModuleName )
+
   end subroutine Create_Grids_2
 
   ! -----------------------------------------------  Fill_Grids_1  -----
-  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Phitan, Maf, FwdModelConf, ScatFlag )
+  subroutine Fill_Grids_1 ( Grids_x, II, Qty, Phitan, Maf, FwdModelConf )
   ! Fill in the size information for the II'th element of Grids_x
 
     use ForwardModelConfig, only: ForwardModelConfig_t
@@ -343,29 +379,14 @@ contains
     type (vectorValue_T), intent(in) :: PHITAN  ! Tangent geodAngle component of
     integer, intent(in) :: MAF
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
-    logical, intent(in), optional :: ScatFlag 
 
     integer :: KF, KP, KZ
-    logical :: MyScatFlag
-
-    myScatFlag = .false.
-    if ( present(scatFlag) ) myScatFlag = scatFlag
-
-    if ( myScatFlag) then
-
-      kp=FwdModelConf%num_scattering_angles
-      grids_x%windowStart(ii) = 1
-      grids_x%windowFinish(ii)= kp
-
-    else
 
       kf = qty%template%noChans ! == 1 if qty%template%frequencyCoordinate == l_none
       call FindInstanceWindow ( qty, phitan, maf, fwdModelConf%phiWindow, &
         & fwdModelConf%windowUnits, grids_x%windowStart(ii), grids_x%windowFinish(ii) )
 
       kp = grids_x%windowFinish(ii) - grids_x%windowStart(ii) + 1
-
-    end if
 
     kz = qty%template%noSurfs
     grids_x%l_f(ii) = grids_x%l_f(ii-1) + kf
@@ -499,6 +520,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.55  2004/02/03 02:46:39  vsnyder
+! Make ScatFlag argument optional
+!
 ! Revision 2.54  2004/01/23 19:13:10  jonathan
 ! add SetTscatFlag and related changes
 !
