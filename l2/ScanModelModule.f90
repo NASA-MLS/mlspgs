@@ -1550,28 +1550,26 @@ contains ! =============== Subroutines and functions ==========================
       DO sv_p = windowstart_t, windowfinish_t
         col = FindBlock ( jacobian%col, refGPH%index, sv_p )
         block => jacobian%block(row,col)
-        if ( fmConf%differentialScan ) then
+        if ( block%kind /= M_Absent ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Found a prexisting d(residual)/d(refGPH), removing' )
           call DestroyBlock ( block )
-        else
-          if ( block%kind /= M_Absent ) then
-            call MLSMessage ( MLSMSG_Warning, ModuleName, &
-              & 'Found a prexisting d(residual)/d(refGPH), removing' )
-            call DestroyBlock ( block )
-          end if
+        end if
+        IF(ANY(not_zero_p_t(:,sv_p-windowstart_t+1))) THEN
           call CreateBlock ( jacobian, row, col, M_Full )
           block%values(:,1) = (GM * (1.0_rp - 3.0_rp*j2*p2*ratio2_gph &
           & - 5.0_rp*j4*p4*ratio4_gph) / l1refalt**2 &
           & + omega**2*l1refalt*coslat2) * (l1refalt+eff_earth_radius &
           & - earth_radius) * eta_p_t(:,sv_p - windowstart_t + 1) &
           & / refgeomalt_denom
-        end if
-        if ( fmConf%differentialScan ) then
+          if ( fmConf%differentialScan ) then
 ! ------------- Differential model
-          block%values = EOSHIFT(block%values, &
-          & SPREAD(1,1,ptan%template%nosurfs), &
-          & RESHAPE(block%values(ptan%template%nosurfs,:), &
-          & (/temp%template%nosurfs/)),dim=2) - block%values
-        end if
+            block%values = EOSHIFT(block%values, &
+            & SPREAD(1,1,ptan%template%nosurfs), &
+            & RESHAPE(block%values(ptan%template%nosurfs,:), &
+            & (/temp%template%nosurfs/)),dim=2) - block%values
+          end if
+        ENDIF
       ENDDO
     end if
 ! Now the temperature derivatives
@@ -1584,21 +1582,23 @@ contains ! =============== Subroutines and functions ==========================
             & 'Found a prexisting d(residual)/d(temp), removing' )
           call DestroyBlock ( block )
         end if
-        call CreateBlock ( jacobian, row, col, M_Full )
-        block%values = SPREAD(dgphdr*l1altrefr*tan_refr_indx &
-        & / ((1.0_rp + tan_refr_indx)*tan_temp),2,temp%template%nosurfs) &
-        & * eta_zxp_t(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
-        & (sv_p-windowstart_t+1)*temp%template%nosurfs) &
-        & + boltz*SPREAD(mass_corr,2,temp%template%nosurfs) &
-        & * eta_piqxp(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
-        & (sv_p-windowstart_t+1)*temp%template%nosurfs) / g0
-        if ( fmConf%differentialScan ) then
+        IF(ANY(not_zero_p_t(:,sv_p-windowstart_t+1))) THEN
+          call CreateBlock ( jacobian, row, col, M_Full )
+          block%values = SPREAD(dgphdr*l1altrefr*tan_refr_indx &
+          & / ((1.0_rp + tan_refr_indx)*tan_temp),2,temp%template%nosurfs) &
+          & * eta_zxp_t(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
+          & (sv_p-windowstart_t+1)*temp%template%nosurfs) &
+          & + boltz*SPREAD(mass_corr,2,temp%template%nosurfs) &
+          & * eta_piqxp(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
+          & (sv_p-windowstart_t+1)*temp%template%nosurfs) / g0
+          if ( fmConf%differentialScan ) then
 ! ------------- Differential model
-          block%values = EOSHIFT(block%values, &
-          & SPREAD(1,1,ptan%template%nosurfs), &
-          & RESHAPE(block%values(ptan%template%nosurfs,:), &
-          & (/temp%template%nosurfs/)),dim=2) - block%values
-        end if
+            block%values = EOSHIFT(block%values, &
+            & SPREAD(1,1,ptan%template%nosurfs), &
+            & RESHAPE(block%values(ptan%template%nosurfs,:), &
+            & (/temp%template%nosurfs/)),dim=2) - block%values
+          end if
+        ENDIF
       ENDDO
     end if
     CALL DEALLOCATE_TEST(dgphdr,'dgphdr',modulename)
@@ -1631,6 +1631,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.36  2002/06/25 22:17:09  bill
+! doesn't store blocks of zeros--wgr
+!
 ! Revision 2.35  2002/06/25 21:55:49  bill
 ! first debugged? version of 2d scan module--wgr
 !
