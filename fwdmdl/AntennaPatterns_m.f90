@@ -153,6 +153,8 @@ outer1: do
         power2 = nint(log2)
       endif
       power2 = 2**power2
+! billsdebug
+      power2 = 2**11
 
       call Allocate_Test ( antennaPatterns(i)%aaap, 2*power2, &
         & "AntennaPatterns(?)%Aaap", moduleName )
@@ -283,6 +285,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.1  2002/02/14 18:39:03  livesey
+! Fixed bug with single channel antenna patterns
+!
 ! Revision 2.0  2001/09/17 20:26:25  livesey
 ! New forward model
 !
