@@ -630,7 +630,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_dAbsDnu, t+t_numeric, n+n_field_type, &
              begin, f+f_dAbsDwc, t+t_numeric, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
-             begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
              begin, f+f_signal, t+t_string, nr+n_field_type, &
              begin, f+f_temperatures, s+s_tGrid, nr+n_field_spec, &
              begin, f+f_velLin, t+t_numeric, n+n_field_type, &
@@ -1272,6 +1272,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.376  2004/06/16 23:42:44  vsnyder
+! Make molecules field of pfaData optional
+!
 ! Revision 2.375  2004/06/16 01:23:28  vsnyder
 ! Make VelLin field of PFAData optional
 !
