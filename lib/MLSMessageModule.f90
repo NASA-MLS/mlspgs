@@ -1,11 +1,11 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !==============================================================================
 module MLSMessageModule         ! Basic messaging for the MLSPGS suite
 !==============================================================================
 
-  use Machine, only: Exit_with_status
+  use Machine, only: CRASH_BURN, Exit_with_status
   use SDPToolkit, only: PGS_SMF_GenerateStatusReport, UseSDPToolkit
 
   implicit none
@@ -40,14 +40,23 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
   integer, parameter :: MLSMSG_Info=2
   integer, parameter :: MLSMSG_Warning=3
   integer, parameter :: MLSMSG_Error=4
+  ! Warning--a Crash may not properly close files opened by your run
+  ! Use it only for specific debugging where you need a walkback
+  ! See also MLSMessageConfig%crashOnAnyError
+  integer, parameter :: MLSMSG_Crash=5
 
   ! MLSMSG_Severity_to_quit can be reset in a main program to cause us
   ! to become more lenient (set it higher) or strict (set it lower)
   integer            :: MLSMSG_Severity_to_quit = MLSMSG_Error
 
   private :: SeverityNames
-  character (len=*), dimension(4), parameter :: SeverityNames = &
-     & (/"Debug  ","Info   ","Warning","Error  "/)
+  character (len=*), dimension(5), parameter :: SeverityNames = (/&
+     & "Debug  ", &
+     & "Info   ", &
+     & "Warning", &
+     & "Error  ", &
+     & "Crash  " &
+     /)
 
   ! This set of parameters are simple prefixes for common messages
 
@@ -73,6 +82,7 @@ module MLSMessageModule         ! Basic messaging for the MLSPGS suite
     character (len=MLSMSG_PrefixLen) :: prefix = ''
     logical :: suppressDebugs                  = .false.
     logical :: useToolkit                      = .true.
+    logical :: CrashOnAnyError                 = .false. ! See crash warning
   end type MLSMessageConfig_T
 
   ! This variable describes the configuration
@@ -115,8 +125,12 @@ contains
        ! Assemble a full message line
 
        if ( line_len == 0 ) then
-         line_len = len_trim(SeverityNames(severity))
-         line = SeverityNames(severity)
+         if ( severity > 0 .and. severity < MLSMSG_Crash+1 ) then
+           line = SeverityNames(severity)
+         else
+           line = 'Unknown'
+         endif
+         line_len = len_trim(line)
          line(line_len+1:line_len+2) = ' ('
          if ( moduleNameIn(1:1) == '$' ) then
          ! The moduleNameIn is <dollar>RCSFile: <filename>,v <dollar>
@@ -170,6 +184,8 @@ contains
     if ( my_adv .and. severity >= MLSMSG_Severity_to_quit ) then
       if ( MLSMessageConfig%logFileUnit > 0 ) &
         & close ( MLSMessageConfig%logFileUnit )
+      if ( severity >= MLSMSG_Crash .or. MLSMessageConfig%CrashOnAnyError ) &
+        & call crash_burn
       call exit_with_status ( 1 )
     end if
   end subroutine MLSMessage
@@ -179,13 +195,15 @@ contains
   ! This routine sets up the MLSMessage suite.  The defaults are of course
   ! sensible, but the user may wish to change things.
 
-  subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix, useToolkit )
+  subroutine MLSMessageSetup ( SuppressDebugs, LogFileUnit, Prefix, useToolkit, &
+    & CrashOnAnyError )
 
     ! Dummy arguments
     logical, optional, intent(in) :: SuppressDebugs
     integer, optional, intent(in) :: LogFileUnit
     character (len=*), optional, intent(in) :: Prefix
     logical, optional, intent(in) :: useToolkit
+    logical, optional, intent(in) :: CrashOnAnyError
 
     ! Local variables
 
@@ -205,6 +223,8 @@ contains
 
     if ( present(useToolkit) ) &
       & MLSMessageConfig%useToolkit=useToolkit
+    if ( present(CrashOnAnyError) ) &
+      & MLSMessageConfig%CrashOnAnyError=CrashOnAnyError
 
   end subroutine MLSMessageSetup
 
@@ -271,6 +291,9 @@ end module MLSMessageModule
 
 !
 ! $Log$
+! Revision 2.15  2004/08/19 00:18:16  pwagner
+! New way to respond to severe errors-kaBOOM
+!
 ! Revision 2.14  2002/10/08 00:09:12  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
