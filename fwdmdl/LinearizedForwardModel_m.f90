@@ -24,6 +24,7 @@ module LinearizedForwardModel_m
   use MLSSignals_m, only: Signal_T
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
   use MLSNumerics, only: HUNT, INTERPOLATEVALUES
+  use Molecules, only: L_EXTINCTION
   use Output_m, only: Output
   use QuantityTemplates, only: QuantityTemplate_T
   use String_Table, only: Display_String
@@ -291,10 +292,20 @@ contains ! =====     Public Procedures     =============================
             & quantityType = l_vmr, &
             & molecule = l2pcQ%template%molecule, &
             & foundInFirst = foundInFirst, noError=.true. )
+        case ( l_extinction )
+!           stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
+!             & quantityType = l_extinction, &
+!             & radiometer = l2pcQ%template%radiometer, &
+!             & foundInFirst = foundInFirst, noError=.true. )
+
+          ! Temporary
+          stateQ => NULL()
         case default
-          stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-            & quantityType = l2pcQ%template%quantityType, &
-            & foundInFirst = foundInFirst, noError=.true. )
+          ! For the moment, just ignore things we don't understand.
+          stateQ => NULL()
+!           stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
+!             & quantityType = l2pcQ%template%quantityType, &
+!             & foundInFirst = foundInFirst, noError=.true. )
         end select
 
         ! If it's not in the state vector, perhaps make a fuss
@@ -303,6 +314,7 @@ contains ! =====     Public Procedures     =============================
             & (/ l_temperature, l_vmr /))) &
             &   call MLSMessage ( MLSMSG_Error, ModuleName, &
             &  "Temperature or vmr quantity absent from state")
+          cycle                         ! Go to next l2pc quantity
         end if
 
         ! Now check that surfaces are the same
@@ -583,6 +595,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.3  2001/10/22 16:51:40  livesey
+! Allow radiance extrapolation (at least for now).
+!
 ! Revision 2.2  2001/10/07 00:23:50  livesey
 ! Fixed minor bug with dyByDx
 !
