@@ -22,6 +22,13 @@ MODULE VectorsModule            ! Vectors in the MLS PGS suite
 
   !---------------------------------------------------------------------------
 
+  ! This datatype describes how the subVectors of a quantity are laid out
+  ! within a vector
+
+  TYPE QuantityLayout_T
+     INTEGER, DIMENSION(:), POINTER :: entry ! (quantityTemplate%noSubVectors)
+  END TYPE QuantityLayout_T
+
   ! This datatype describes a vector template
 
   INTEGER, PARAMETER :: VectorNameLen=80
@@ -41,9 +48,13 @@ MODULE VectorsModule            ! Vectors in the MLS PGS suite
      ! Now we describe the ordering of the subvectors in the vector
 
      INTEGER, DIMENSION(:), POINTER :: subVectorNoElements ! (noSubVectors)
-     INTEGER, DIMENSION(:), POINTER :: subVectorFirstElements ! (noSubVectors)
+     INTEGER, DIMENSION(:), POINTER :: subVectorFirstElement ! (noSubVectors)
      INTEGER, DIMENSION(:), POINTER :: subVectorQuantityNo ! (noSubVectors)
      INTEGER, DIMENSION(:), POINTER :: subVectorProfileNo ! (noSubVectors)
+
+     ! Now a `reverse' form of this information for each quantity
+
+     TYPE (QuantityLayout_T), DIMENSION(:), POINTER :: layout ! (noQuantities)
 
      ! Now point to the quantity templates themselves
 
@@ -67,6 +78,8 @@ CONTAINS
   !---------------------------------------------------------------------------
 
   ! This subroutine creates a vectorTemplate from a list of quantities.
+  ! The default ordering is currently by quantity. Later versions may
+  ! have optional parameters to request other orderings.
 
   SUBROUTINE ConstructVectorTemplate(name,quantities,vectorTemplate)
 
@@ -76,7 +89,8 @@ CONTAINS
     TYPE (VectorTemplate_T), INTENT(OUT) :: vectorTemplate
 
     ! Local variables
-    INTEGER :: status
+    INTEGER :: status,qty,subVector,startSubVector
+    INTEGER :: accumulatedElements,qtySubVector,subVectorLen
 
     ! Executable code
 
@@ -90,22 +104,52 @@ CONTAINS
 
     ALLOCATE(&
          & vectorTemplate%subVectorNoElements(vectorTemplate%noSubVectors), &
-         & vectorTemplate%subVectorFirstElements(vectorTemplate%noSubVectors), &
+         & vectorTemplate%subVectorFirstElement(vectorTemplate%noSubVectors), &
          & vectorTemplate%subVectorQuantityNo(vectorTemplate%noSubVectors), &
          & vectorTemplate%subVectorProfileNo(vectorTemplate%noSubVectors), &
+         & vectorTemplate%layout(vectorTemplate%noQuantities), &
          & STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-         & "Vector information")
+         & MLSMSG_Allocate//"Vector information")
+
+    DO qty=1,vectorTemplate%noQuantities
+       ALLOCATE(vectorTemplate%layout(qty)%entry(quantities(qty)%noSubVectors),&
+            & STAT=status)
+       IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+            & MLSMSG_Allocate//"Quantity layout information")
+    END DO
 
     ALLOCATE (vectorTemplate%quantities(vectorTemplate%noQuantities), &
          & STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
-         & "Vector quantities")
+         & MLSMSG_Allocate//"Vector quantities")
+
+    ! Copy quantities over
 
     vectorTemplate%quantities=quantities
 
     vectorTemplate%id=vectorTemplateCounter
     vectorTemplateCounter=vectorTemplateCounter+1
+
+    ! Fill up the mapping information, store by quantity for this version
+
+    startSubVector=0
+    accumulatedElements=0
+    DO qty=1,vectorTemplate%noQuantities
+       subVectorLen=vectorTemplate%quantities(qty)%subVectorLen
+       DO qtySubVector=1,vectorTemplate%quantities(qty)%noSubVectors-1
+          subVector=qtySubVector+startSubVector
+
+          vectorTemplate%layout(qty)%entry(qtySubVector)=subVector
+
+          vectorTemplate%subVectorNoElements(subVector)=subVectorLen
+          vectorTemplate%subVectorFirstElement(subVector)=accumulatedElements
+          vectorTemplate%subVectorQuantityNo(subVector)=qty
+          vectorTemplate%subVectorProfileNo(subVector)=qtySubVector
+
+          accumulatedElements=accumulatedElements+subVectorLen
+       END DO
+    END DO
     
   END SUBROUTINE ConstructVectorTemplate
 
@@ -118,14 +162,28 @@ CONTAINS
     ! Dummy arguments
     TYPE (VectorTemplate_T), INTENT(INOUT) :: vectorTemplate
 
+    ! Local variables
+    INTEGER :: qty
+
     ! Executable code
 
     DEALLOCATE (&
          & vectorTemplate%subVectorNoElements, &
-         & vectorTemplate%subVectorFirstElements, &
+         & vectorTemplate%subVectorFirstElement, &
          & vectorTemplate%subVectorQuantityNo, &
          & vectorTemplate%subVectorProfileNo)
+
+    DO qty=1,vectorTemplate%noQuantities
+       DEALLOCATE(vectorTemplate%layout(qty)%entry)
+    END DO
+    DEALLOCATE(vectorTemplate%layout)
     DEALLOCATE(vectorTemplate%quantities)
+    
+    vectorTemplate%noQuantities=0
+    vectorTemplate%noSubVectors=0
+    vectorTemplate%totalElements=0
+    vectorTemplate%name=''
+    vectorTemplate%id=0
   END SUBROUTINE DestroyVectorTemplateInfo
 
   !---------------------------------------------------------------------------
@@ -280,12 +338,66 @@ CONTAINS
     ENDIF
   END SUBROUTINE DestroyVectorDatabase
 
+  ! --------------------------------------------------------------------------
+
+  ! This subroutine returns a pointer to a subVector within a vector
+
+  FUNCTION GetSubVectorPointer(vector,quantity,profile,quantityName)
+
+    ! Dummy arguments
+    TYPE (Vector_T), INTENT(IN) :: vector
+    INTEGER, INTENT(IN), OPTIONAL :: quantity
+    INTEGER, INTENT(IN), OPTIONAL :: profile
+    CHARACTER (LEN=*), INTENT(IN), OPTIONAL :: quantityName
+
+    ! Result
+    REAL(r8), DIMENSION(:), POINTER :: GetSubVectorPointer
+
+    ! Local variables
+    INTEGER :: useQuantity,useProfile,subVector
+
+    ! Executable code
+    IF (PRESENT(quantityName)) THEN
+       IF (PRESENT(quantity)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+         & "Cannot use both quantity and quantityName in GetSubVectorPointer")
+       useQuantity=LinearSearchStringArray(vector%template%quantities%name,&
+            & quantityName,caseInsensitive=.TRUE.)
+    ELSE
+       IF (.NOT. PRESENT(quantity)) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+        & "Must supply either quantity or quantityName in GetSubVectorPointer")
+       useQuantity=quantity
+    END IF
+
+    IF (PRESENT(profile)) THEN
+       useProfile=profile
+    ELSE
+       useProfile=1
+    ENDIF
+
+    IF ((useQuantity<1).OR.(useQuantity>vector%template%noQuantities)) &
+         & CALL MLSMessage(MLSMSG_Error,ModuleName,"Invalid quantity request")
+
+    IF ((useProfile<1).OR.&
+         & (useProfile>vector%template%quantities(useQuantity)%noSubVectors)) &
+         & CALL MLSMessage(MLSMSG_Error,ModuleName,"Invalid profile request")
+
+    subVector=vector%template%layout(useQuantity)%entry(useProfile)
+    GetSubVectorPointer=> &
+         & vector%values(vector%template%subVectorFirstElement(subVector): &
+         &   vector%template%subVectorFirstElement(subVector)+ &
+         &   vector%template%subVectorNoElements(subVector)-1)
+    
+  END FUNCTION GetSubVectorPointer
+
 !=============================================================================
 END MODULE VectorsModule
 !=============================================================================
 
 !
 ! $Log$
+! Revision 1.4  1999/12/17 21:43:17  livesey
+! Added check for duplicate name
+!
 ! Revision 1.3  1999/12/16 18:32:26  livesey
 ! Changed do to name change from VectorQuantities to QuantityTemplates
 !
