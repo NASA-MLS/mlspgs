@@ -127,6 +127,11 @@ EOF_1
 	compiler=Unknown
     fi
 
+#Check if changed compiler
+   if [ "$compiler" != "$current_compiler" ] ; then
+		chngd_confg="true"
+	fi
+
  UserPrompt "Platform (Linux, Sun, SGI) [$current_platform]"
    if [ "$user_response" != "" ] ; then
 	case  "$user_response" in
@@ -154,6 +159,11 @@ EOF_1
 	echo "No platform selected."
 	platform=None
    fi
+
+#Check if changed platform
+   if [ "$platform" != "$current_platform" ] ; then
+		chngd_confg="true"
+	fi
 
 export platform
 export compiler
@@ -500,17 +510,49 @@ debugging="off"
 
 #Default compiler and linker options
 MLS_default_FOPTS_NAG="-w"
+MLS_default_FOPTS_NAG_SGI="-w -abi=n32"
 MLS_default_FOPTS_LF95=
 MLS_default_FOPTS_Abs="-w"
 MLS_default_LDOPTS=
 
+#---------------------- variables controlling mlsconfigure
+
 #conf_dir   the directory where the .configure file is to be stored
 #plat_dir   the directory to keep the platforms subdirectories
-#get_confg  true if user queried about configuration; false if use input values
+#get_confg  true if need to query for configuration; false if use input values
+#write_confg  true if need to (re)write .configure file
+#chngd_confg  true if user changed MLSF95 or MLSPLAT; else false
+#add_PVM_PATH  true if need to query for PVM and FFTW paths; else false
+#add_FOPTS  true if need to query for FOPTS and LDOPTS; else false
+#del_exist_dir  true if need to delete existing uniquely-named sub-dir
+#made_new_dir  true if created new uniquely-named sub-dir; else false
+
+#---------------------- Settings written to .configure file
+
+#MLSF95     name of the compiler: LF95, NAG, or Abs
+#MLSPLAT    name of the platform: Sun, SGI, or Linux
+#MLSCONFG   MLSF95.MLSPLAT
+#PGSINC     path to the toolbox include files
+#PGSTK      path to the toolbox library libPGSTK.a
+#HDFEOS     path to the hdfeos library libhdfeos.a
+#HDF        path to the hdf library libmfhdf.a, etc.
+#GCTP       path to the hdfeos library libGctp.a
+#PGSLIB     PGSTK
+#HDFEOS_LIB HDFEOS
+#HDFLIB     HDF
+#PVM_ROOT   root of path to the pvm library lib/PVM_ARCH/libpvm3.a, etc.
+#PVM_ARCH   OS & platform type: LINUX, SGI6, SGI64, SUN4SOL2
+#FFTW_ROOT  path to the fftw library libfftw.a, etc.
+#FOPTS      options used in all .o build commands (except the custom ones)
+#LDOPTS     options used in all executable build commands
+
+#---------------------- 
+
 conf_dir="./"
 plat_dir="./"
 get_confg="true"
 del_exist_dir="true"
+chngd_confg="false"
 
 current_compiler=$MLSF95
 current_platform=$MLSPLAT
@@ -613,7 +655,17 @@ if [ $get_confg = "true" ] ; then
 else
         compiler=$current_compiler
         platform=$current_platform
- fi
+fi
+
+#If user changed the compiler or platform, automatically query
+#for new pvm path, etc. and FOPTS, etc.
+#also blank out existing settings for FOPTS and LDOPTS
+if [ $chngd_confg = "true" ] ; then
+	add_PVM_PATH="true"
+	add_FOPTS="true"
+	current_FOPTS=""
+	current_LDOPTS=""
+fi
 
 if [ $add_PVM_PATH = "true" ] ; then
 	GetPVM
@@ -627,7 +679,11 @@ fi
 
 if [ "$current_FOPTS" = "" ] ; then
 		if [ "$compiler" = "NAG" ] ; then
-			FOPTS="$MLS_default_FOPTS_NAG"
+			if [ "$platform" = "SGI" ] ; then
+				FOPTS="$MLS_default_FOPTS_NAG_SGI"
+			else
+				FOPTS="$MLS_default_FOPTS_NAG"
+			fi
 		elif [ "$compiler" = "Abs" ] ; then
 			FOPTS="$MLS_default_FOPTS_Abs"
 		else
@@ -685,10 +741,16 @@ if [ $write_confg = "true" ] ; then
 		rm -f $conf_dir/.configure
 	fi
 
+#	Because MakeFC checks on whether MLSCONFG is empty, not whether it is "."
+	MLSCONFG=$compiler.$platform
+	if [ "MLSCONFG" = "." ] ; then
+		MLSCONFG=
+	fi
+	
 	echo "#	.configure for mls" > $conf_dir/.configure
 	echo "MLSF95=$compiler" >> $conf_dir/.configure
 	echo "MLSPLAT=$platform" >> $conf_dir/.configure
-	echo "MLSCONFG=$compiler.$platform" >> $conf_dir/.configure
+	echo "MLSCONFG=$MLSCONFG" >> $conf_dir/.configure
 	echo "PGSINC=$PGSINC" >> $conf_dir/.configure
 	echo "PGSTK=$PGSTK" >> $conf_dir/.configure
 	echo "HDFEOS=$HDFEOS" >> $conf_dir/.configure
@@ -802,6 +864,9 @@ fi
 
 exit
 # $Log$
+# Revision 1.9  2001/03/06 00:16:14  pwagner
+# Added Absoft compiler
+#
 # Revision 1.8  2001/02/27 18:10:44  pwagner
 # exports FOPTS and LDOPTS; better Help
 #
