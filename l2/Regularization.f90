@@ -46,7 +46,7 @@ module Regularization
 contains
 
   ! -------------------------------------------------  Regularize  -----
-  subroutine Regularize ( A, Orders, Quants, Weights )
+  subroutine Regularize ( A, Orders, Quants, Weights, Rows )
 
   !{Apply Tikhonov regularization conditions of the form $\Delta^k \delta
   ! \bf{x} \simeq 0$ to the blocks of A, where $\Delta^k$ is the central
@@ -76,6 +76,7 @@ contains
     integer, intent(in) :: Orders
     integer, intent(in) :: Quants
     integer, intent(in) :: Weights
+    integer, intent(out) :: Rows   ! Last row used; ultimately, number of rows
 
     integer, dimension(0:maxRegOrd) :: C ! Binomial regularization coefficients
     ! The regularization order is never going to be so large that
@@ -88,7 +89,6 @@ contains
     integer :: NROW                ! Number of rows in first row block of A
     integer :: NV                  ! Next element in VALUES component
     integer :: Ord                 ! Order for the current block
-    integer :: Rows                ! Next row to use
     integer :: S                   ! Sign of regularization coefficient.
     integer :: Type                ! Type of value returned by EXPR
     integer :: Units(2)            ! Units of value returned by EXPR
@@ -111,11 +111,11 @@ contains
         call announceError ( fieldSizes, weights )
       end if
     end if
+    rows = 0
 
     if ( error == 0 ) then
       nrow = a%row%nelts(1)
-      rows = 0
-o:    do ib = 1, nb             ! Loop over matrix blocks = quantities
+      do ib = 1, nb             ! Loop over matrix blocks = quantities
         ord = 0
         if ( quants == 0 ) then ! only one order and weight allowed
           call expr ( subtree(2,orders), units, value, type )
@@ -197,7 +197,7 @@ o:    do ib = 1, nb             ! Loop over matrix blocks = quantities
             j = j - 1
           end do
         end if
-      end do o
+      end do  
     end if ! error == 0
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & "Regularization failed." )
@@ -236,6 +236,9 @@ o:    do ib = 1, nb             ! Loop over matrix blocks = quantities
 end module Regularization
 
 ! $Log$
+! Revision 2.12  2002/05/22 19:15:06  vsnyder
+! Output the number of rows used for regularization conditions
+!
 ! Revision 2.11  2002/05/11 01:10:16  vsnyder
 ! Big revision... Maybe it's right this time.
 !
