@@ -39,7 +39,9 @@ module MLSHDF5
   public :: MakeHDF5Attribute, SaveAsHDF5DS, IsHDF5AttributePresent, &
     & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS, &
     & IsHDF5DSInFile, IsHDF5AttributeInFile, &
-    & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
+    & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType, &
+    & ReadLitIndexFromHDF5Attribute, ReadStringIndexFromHDF5Attribute, &
+    & WriteLitIndexAsHDF5Attribute, WriteStringIndexAsHDF5Attribute
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -2125,6 +2127,73 @@ contains ! ======================= Public Procedures =========================
       & 'Unable to close dataset '//trim(name) )
   end subroutine LoadFromHDF5DS_snglarr4
 
+  ! ------------------------------------------ ReadLitIndexFromHDF5Attribute ---
+  subroutine ReadLitIndexFromHDF5Attribute ( itemID, name, index )
+    use MoreTree, only: GetLitIndexFromString
+    ! Dummy arguments
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr. for
+    character(len=*), intent(in) :: NAME ! Name of attribute
+    integer, intent(out) :: INDEX        ! String index
+    ! Local variables
+    character (len=1024) :: LINE
+    ! Executable code
+    call GetHDF5Attribute ( itemID, name, line )
+    if ( len_trim ( line ) > 0 ) then
+      index = GetLitIndexFromString ( trim(line) )
+    else
+      index = 0
+    end if
+  end subroutine ReadLitIndexFromHDF5Attribute
+
+  ! ------------------------------------------ ReadStringIndexFromHDF5Attribute ---
+  subroutine ReadStringIndexFromHDF5Attribute ( itemID, name, index )
+    use MoreTree, only: GetStringIndexFromString
+    ! Dummy arguments
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr. for
+    character(len=*), intent(in) :: NAME ! Name of attribute
+    integer, intent(out) :: INDEX        ! String index
+    ! Local variables
+    character (len=1024) :: LINE
+    ! Executable code
+    call GetHDF5Attribute ( itemID, name, line )
+    if ( len_trim ( line ) > 0 ) then
+      index = GetStringIndexFromString ( trim(line) )
+    else
+      index = 0
+    end if
+  end subroutine ReadStringIndexFromHDF5Attribute
+
+  ! --------------------------------------- WriteStringIndexAsHDF5Attribute
+  subroutine WriteLitIndexAsHDF5Attribute ( itemID, name, index )
+    use Intrinsic, only: LIT_INDICES
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr. for
+    character(len=*), intent(in) :: NAME ! Name of attribute
+    integer, intent(in) :: INDEX        ! String index
+    ! Executable code
+    if ( index == 0 ) then
+      call MakeHDF5Attribute ( itemID, name, '' )
+    else
+      call WriteStringIndexAsHDF5Attribute ( itemID, name, lit_indices ( index ) )
+    end if
+  end subroutine WriteLitIndexAsHDF5Attribute
+
+  ! --------------------------------------- WriteStringIndexAsHDF5Attribute
+  subroutine WriteStringIndexAsHDF5Attribute ( itemID, name, index )
+    use String_table, only: GET_STRING
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr. for
+    character(len=*), intent(in) :: NAME ! Name of attribute
+    integer, intent(in) :: INDEX        ! String index
+    ! Local variables
+    character(len=1024) :: LINE
+    ! Executable code
+    if ( index == 0 ) then
+      call MakeHDF5Attribute ( itemID, name, '' )
+    else
+      call get_string ( index, line, strip=.true., noError=.true. )
+      call MakeHDF5Attribute ( itemID, name, trim(line) )
+    end if
+  end subroutine WriteStringIndexAsHDF5Attribute
+
 ! ======================= Private Procedures =========================  
 ! --------------------------------------------- AreThe2TypesEqual ---
   logical function AreThe2TypesEqual ( type1, type2 )
@@ -2347,6 +2416,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.23  2003/05/12 16:51:20  livesey
+! Added the lit and string index stuff
+!
 ! Revision 2.22  2003/04/28 23:08:20  pwagner
 ! Added ability to Load, Save rank4 s.p. arrays
 !
