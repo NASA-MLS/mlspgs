@@ -53,7 +53,7 @@ end Retrieve
 begin Construct
   !define(makeAdvancedL2PCModel,{!dnl
   !ifdef(flagSkipHR,{},{!dnl
-  advancedL2PCFwmHR$1: ForwardModel, type=linear, signals=!signal($1), $
+  advancedHRL2PCFwm$1: ForwardModel, type=linear, signals=!signal($1), $
     molecules=!moleculeFamilies(!radiometerForBand($1)), $
     moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
     /atmos_der, /temp_der, /do_baseline, $
