@@ -1001,8 +1001,8 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_dumpblocks, &
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
-             begin, f+f_rowQuantity, s+s_quantity, nr+n_field_spec, &
-             begin, f+f_colQuantity, s+s_quantity, nr+n_field_spec, &
+             begin, f+f_rowQuantity, s+s_quantity, n+n_field_spec, &
+             begin, f+f_colQuantity, s+s_quantity, n+n_field_spec, &
              begin, f+f_noAbsent, t+t_boolean, n+n_field_type, &
              begin, f+f_rowSurfaces, t+t_numeric, t+t_numeric_range, &
                     n+n_field_type, &
@@ -1087,6 +1087,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.336  2003/10/10 23:28:19  vsnyder
+! Allow rowQuantity and colQuantity to be optional in dumpBlocks
+!
 ! Revision 2.335  2003/10/07 01:14:13  vsnyder
 ! Add noAbsent field to dumpBlocks
 !
