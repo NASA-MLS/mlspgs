@@ -26,6 +26,8 @@ contains ! ====     Public Procedures     ==============================
     integer :: I              ! Loop inductor
     if ( present(root) ) then
       call output ( root, 4 ); call output ( ': ' )
+    else
+      call output ( '      ' )
     end if
     do i = 1, depth
       call output ( '.' )
@@ -56,6 +58,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.4  2001/04/24 20:12:47  vsnyder
+! Emit blanks before 'Enter' if no tree node supplied
+!
 ! Revision 2.3  2001/04/17 20:56:10  vsnyder
 ! Emit 'depth' dots in trace_begin even if 'root' is absent
 !
