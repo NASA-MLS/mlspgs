@@ -59,6 +59,7 @@ module ForwardModelConfig
     integer :: NUM_SIZE_BINS        ! No of size bins '40'
     integer :: cloud_der            ! Compute cloud sensitivity in cloud models.
     integer :: cloud_width          ! Flag for cloud horizontal extend.
+    integer :: cloud_fov            ! Flag for cloud model field-of-view averaging.
   end type ForwardModelConfig_T
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -176,6 +177,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 1.14  2001/07/17 22:38:05  jonathan
+! add cloud_width, jonathan/paul
+!
 ! Revision 1.13  2001/07/16 22:07:57  jonathan
 ! change cloud_der to integer-type, jonathan
 !

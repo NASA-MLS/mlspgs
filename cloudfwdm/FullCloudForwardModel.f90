@@ -552,6 +552,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & int(surfaceType%values(1, instance)),                                &
       & forwardModelConfig%cloud_der,                                        &
       & forwardModelConfig%cloud_width,                                      &
+      & forwardModelConfig%cloud_fov,                                        &
       & phi_tan,                                                             &
       & scGeocAlt%values(1,1),                                               &
       & elevOffset%values(1,1),                                              &
@@ -777,6 +778,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.24  2001/08/17 21:48:41  jonathan
+! Added FOV average, Jonathan
+!
 ! Revision 1.23  2001/08/07 17:17:50  jonathan
 ! add radiance%template%instrumentModule to ptan
 !
