@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 MODULE INIT_TABLES_MODULE
@@ -92,10 +92,12 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: P_MIF_DEAD_TIME = p_mif_duration + 1
   INTEGER, PUBLIC, PARAMETER :: P_MIFsPerMAF = p_mif_dead_time + 1
   INTEGER, PUBLIC, PARAMETER :: P_THzMaxBias = p_MIFsPerMAF + 1
+  INTEGER, PUBLIC, PARAMETER :: P_MoonToSpaceAngle = p_THzMaxBias + 1
+  INTEGER, PUBLIC, PARAMETER :: P_MoonToLimbAngle = p_MoonToSpaceAngle + 1
 
   ! In Output section:
 
-  INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_THzMaxBias + 1
+  INTEGER, PUBLIC, PARAMETER :: P_REMOVEBASELINE = P_MoonToLimbAngle + 1
 
   INTEGER, PUBLIC, PARAMETER :: FIRST_PARM = P_OUTPUT_VERSION_STRING
   INTEGER, PUBLIC, PARAMETER :: LAST_PARM = P_REMOVEBASELINE
@@ -168,6 +170,8 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_produce_l1boa)=          add_ident ( 'ProduceL1BOA' )
     parm_indices(p_simoa)=                  add_ident ( 'SimOA' )
     parm_indices(p_removebaseline)=         add_ident ( 'RemoveBaseline' )
+    parm_indices(p_MoonToSpaceAngle)=       add_ident ( 'MoonToSpaceAngle' )
+    parm_indices(p_MoonToLimbAngle)=        add_ident ( 'MoonToLimbAngle' )
 
     ! Put section names into the symbol table
 
@@ -288,6 +292,8 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_THzTargetTemp, t+t_numeric, n+n_name_def, &
              begin, p+p_THzSpaceAngle, t+t_numeric, n+n_name_def, &
              begin, p+p_THzMaxBias, t+t_numeric, n+n_name_def, &
+             begin, p+p_MoonToSpaceAngle, t+t_numeric, n+n_name_def, &
+             begin, p+p_MoonToLimbAngle, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_duration, t+t_numeric, n+n_name_def, &
              begin, p+p_mif_dead_time, t+t_numeric, n+n_name_def, &
              begin, p+p_mifspermaf, t+t_numeric, n+n_name_def, &
@@ -307,6 +313,9 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
+! Revision 2.16  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.15  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !
@@ -314,8 +323,8 @@ END MODULE INIT_TABLES_MODULE
 ! Version 1.2 commit
 !
 ! $Log$
-! Revision 2.15  2004/01/09 17:46:23  perun
-! Version 1.4 commit
+! Revision 2.16  2004/05/14 15:59:11  perun
+! Version 1.43 commit
 !
 ! Revision 2.14  2003/08/15 14:25:04  perun
 ! Version 1.2 commit

@@ -38,7 +38,7 @@ CONTAINS
          mlspcf_pcf_start, mlspcf_l1cf_start, mlspcf_MAF_data_start, &
          mlspcf_defltzeros_start, mlspcf_defltzeros_end, &
          mlspcf_defltgains_start, mlspcf_sidebandfrac_start, &
-         mlspcf_spilloverloss_start
+         mlspcf_spilloverloss_start, mlspcf_l1b_log_start
     USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
     USE MLSStrings, ONLY: utc_to_yyyymmdd
     USE L0_sci_tbls, ONLY: InitSciPointers
@@ -67,6 +67,45 @@ CONTAINS
     TYPE (TAI93_Range_T) :: procRange
 
     THz = L1ProgType .EQ. THzType
+
+!! Open log file:
+
+    WRITE (PhysicalFilename, "(I5.5)") mlspcf_l1b_log_start
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_l1b_log_start, version, &
+          & PhysicalFilename)
+    IF (returnstatus /= PGS_S_SUCCESS) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not find file entry for pcf_log_start: " // &
+            PhysicalFilename)
+    ENDIF
+
+    returnStatus = PGS_IO_Gen_Track_LUN (L1BFileInfo%LogId, 0)
+
+    OPEN (unit=L1BFileInfo%LogId, file=PhysicalFilename, &
+         status="OLD", FORM="FORMATTED", ACCESS="SEQUENTIAL", &
+         POSITION="APPEND", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open L1B Log file: " // PhysicalFilename)
+    ENDIF
+
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened L1B log file: " // PhysicalFilename)
+
+    L1BFileInfo%LogFilename = PhysicalFilename
+
+    WRITE (L1BFileInfo%LogId, *) ''
+    IF (.NOT. THz) THEN
+       WRITE (L1BFileInfo%LogId, *) &
+            '#################### Begin MLSL1G ###################'
+    ELSE
+       WRITE (L1BFileInfo%LogId, *) &
+            '#################### Begin MLSL1T ###################'
+    ENDIF
+    WRITE (L1BFileInfo%LogId, *) ''
+
 
 !! Get PCF and CF filenames:
 
@@ -217,6 +256,7 @@ CONTAINS
     returnStatus = PGS_PC_getReference (lid, version, PhysicalFilename)
     INQUIRE (file=PhysicalFilename, exist=exists)
     IF (.NOT. exists) THEN
+       version = 1
        lid = mlspcf_defltzeros_start
        returnStatus = PGS_PC_getReference (lid, version, PhysicalFilename)
     ENDIF
@@ -585,11 +625,11 @@ CONTAINS
 !=============================================================================
 
     USE MLSPCF1, ONLY: mlspcf_l1b_radf_start, mlspcf_l1b_radd_start, &
-         mlspcf_l1b_oa_start, mlspcf_l1b_diag_start, mlspcf_l1b_radt_start
+         mlspcf_l1b_oa_start, mlspcf_l1b_diag_start, mlspcf_l1b_radt_start, &
+         mlspcf_l1b_diagT_start
     USE MLSL1Common, ONLY: L1BFileInfo, HDFversion
     USE MLSFiles, ONLY: MLS_openFile
-    use MLSHDF5, only: mls_h5open
-!    USE H5LIB
+    USE MLSHDF5, ONLY: MLS_h5open
 
     LOGICAL :: THz
 
@@ -601,7 +641,7 @@ CONTAINS
  !! Open the HDF 5 Fortran Interface based on CF file
 
     error = 0
-    CALL mls_h5open (error)
+    CALL MLS_h5open (error)
     IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
          "Fortran HDF 5 API error on opening.")
 
@@ -612,6 +652,7 @@ CONTAINS
     L1BFileInfo%RADTID = 0
     L1BFileInfo%OAID = 0
     L1BFileInfo%DIAGID = 0
+    L1BFileInfo%DIAGTID = 0
     L1BFileInfo%ENGID = -1    ! Non-HDF unit
 
     ! Open L1BRADT File
@@ -635,6 +676,31 @@ CONTAINS
 
           CALL MLSMessage (MLSMSG_Error, ModuleName, &
                & "Could not find L1BRADT file entry")
+
+       ENDIF
+
+    ! Open L1BDIAG THz File
+
+       version = 1
+       returnStatus = PGS_PC_getReference (mlspcf_l1b_diagT_start, version, &
+            PhysicalFilename)
+
+       IF (returnStatus == PGS_S_SUCCESS) THEN
+
+          ! Open the HDF file and initialize the SD interface
+
+          CALL MLS_openFile (PhysicalFilename, 'create', sd_id, hdfVersion)
+
+          CALL MLSMessage (MLSMSG_Info, ModuleName, &
+               & "Opened L1B THz diagnostics file: " // PhysicalFilename)
+
+          L1BFileInfo%DiagTFileName = PhysicalFilename
+          L1BFileInfo%DiagTID = sd_id
+
+       ELSE
+
+          CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               & "Could not find L1BDIAG THz file entry")
 
        ENDIF
 
@@ -807,6 +873,9 @@ END MODULE OpenInit
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.15  2004/05/06 21:59:23  pwagner
 ! Uses mls_h5open/close
 !

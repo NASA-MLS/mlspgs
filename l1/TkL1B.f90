@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 MODULE TkL1B
@@ -15,6 +15,7 @@ MODULE TkL1B
        OUTPUTL1B_GHZ
   USE Scan, ONLY : Scan_guess, Scan_start
   USE SDPToolkit
+  USE MLSL1Utils, ONLY: Finite
 
   IMPLICIT NONE
 
@@ -97,7 +98,8 @@ CONTAINS
   END SUBROUTINE Init_L1BOAtp
 
   !------------------------------------------ TkL1B_sc ---------
-  SUBROUTINE TkL1B_sc (numValues, offsets, asciiUTC, mafTAI, sc, ecrtosc)
+  SUBROUTINE TkL1B_sc (numValues, offsets, asciiUTC, mafTAI, sc, ecrtosc, &
+       oastat)
     ! This subroutine contains prototype code for creating the desired s/c
     ! record from the EPHEMATTIT output.
 
@@ -107,6 +109,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: numValues
     REAL(r8), INTENT(IN) :: offsets(numValues), mafTAI
     REAL, INTENT(OUT) :: ecrtosc(3,3,numValues)
+    INTEGER, INTENT(OUT) :: oastat
 
     ! Functions
     INTEGER :: Pgs_csc_eciToECR, Pgs_csc_ecrToGEO, Pgs_eph_ephemAttit
@@ -114,7 +117,7 @@ CONTAINS
     ! Variables
     CHARACTER (LEN=32) :: mnemonic
     CHARACTER (LEN=480) :: msg, msr
-    INTEGER :: i, returnStatus
+    INTEGER :: i, j, returnStatus
     INTEGER :: qualityFlags(2, numValues)
     REAL(r8) :: ecrVec(3)
     REAL(r8) :: radC(numValues), radD(numValues), radL(numValues)
@@ -134,6 +137,22 @@ CONTAINS
     returnStatus = Pgs_eph_ephemAttit (spacecraftId, numValues, asciiUTC,  &
          offsets, pgs_true, pgs_true, qualityFlags, sc%scECI, sc%scVelECI, &
          sc%ypr, sc%yprRate, attitQuat)
+
+! Trap any bad attitQuat data
+
+    IF (returnStatus == PGS_S_SUCCESS) THEN
+       outer: DO j = 1, numValues
+          DO i = 1, 4
+             IF (.NOT. Finite (REAL(attitQuat(i,j)))) THEN
+                returnStatus = PGSEPH_W_BAD_EPHEM_VALUE
+                EXIT outer
+             ENDIF
+          ENDDO
+       ENDDO outer
+    ENDIF
+
+    oastat = returnStatus
+
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        CALL Pgs_smf_getMsg (returnStatus, mnemonic, msg)
        msr = 'Routine ephemAttit, ' // mnemonic // ':  ' // msg
@@ -188,8 +207,8 @@ CONTAINS
 
     ! Calculate geocentric/geodetic altitude, latitude & longitude from scECR
     DO i = 1, numValues
-       sc%scGeocAlt(i) = SQRT( ecrV(1,i)**2 + ecrV(2,i)**2 + ecrV(3,i)**2 )
-       radC(i) = ATAN( ecrV(3,i) / SQRT(ecrV(1,i)**2 + ecrV(2,i)**2) )
+       sc%scGeocAlt(i) = SQRT (ecrV(1,i)**2 + ecrV(2,i)**2 + ecrV(3,i)**2)
+       radC(i) = ATAN (ecrV(3,i) / SQRT (ecrV(1,i)**2 + ecrV(2,i)**2))
        sc%scGeocLat(i) = Rad2Deg * radC(i)
        ecrVec = ecrV(1:3,i)
        returnStatus = Pgs_csc_ecrToGEO (ecrVec, earthModel, radL(i), &
@@ -312,19 +331,19 @@ CONTAINS
 
       ! Calculate tangent point (geodetic & ECR)
       returnStatus = Pgs_csc_grazingRay (earthModel, posECR(:,i), ecr(:,i), &
-        latD(i), lon(i), tp%tpGeodAlt(i), &
-        slantRange(i), tp%tpECR(:,i), posSurf(:,i))
+           latD(i), lon(i), tp%tpGeodAlt(i), &
+           slantRange(i), tp%tpECR(:,i), posSurf(:,i))
 
       ! Create ECR unit vector quantities -- lat=1, lon=2, alt=3
       flagQ = 2
       CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLon, &
-        unitLon(:,i), flag)
+           unitLon(:,i), flag)
       flagQ = 1
       CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaLat, &
-        unitLat(:,i), flag)
+           unitLat(:,i), flag)
       flagQ = 3
       CALL Tp_unit (flagQ, lon(i), latD(i), tp%tpGeodAlt(i), deltaAlt, &
-        unitAlt(:,i), flag)
+           unitAlt(:,i), flag)
 
       ! Get local mean solar time from Toolkit
       tai = asciiTAI + (i-1)*offsets(2)
@@ -354,8 +373,8 @@ CONTAINS
     ENDDO
     tp_sun = sc_sun - sc_tp
     DO i = 1, lenG
-       nts(:,i) = tp_sun(:,i) / SQRT( tp_sun(1,i)**2 + tp_sun(2,i)**2 + &
-            tp_sun(3,i)**2 )
+       nts(:,i) = tp_sun(:,i) / SQRT (tp_sun(1,i)**2 + tp_sun(2,i)**2 + &
+            tp_sun(3,i)**2)
     ENDDO
     dot = nts(1,:)*unitAlt(1,:) + nts(2,:)*unitAlt(2,:) + &
          nts(3,:)*unitAlt(3,:)
@@ -395,24 +414,24 @@ CONTAINS
 
     ! Convert tpECI to tpOrb
     returnStatus = Pgs_csc_eciToOrb (spacecraftId, lenG, asciiUTC, &
-      offsets(1:lenG), tp%tpECI, tpOrb)
+         offsets(1:lenG), tp%tpECI, tpOrb)
     tp%tpOrbY = tpOrb(2,:)
 
     ! Calculate tp geocentric coordinates
     DO i = 1, lenG
       tp%tpGeocAlt(i) = SQRT( tp%tpECR(1,i)**2 + tp%tpECR(2,i)**2 + &
-        &tp%tpECR(3,i)**2 )
-      tp%tpGeocLat(i) = Rad2Deg * ATAN( tp%tpECR(3,i) &
-        &/ SQRT( tp%tpECR(1,i)**2 + tp%tpECR(2,i)**2 ) )
+           tp%tpECR(3,i)**2 )
+      tp%tpGeocLat(i) = Rad2Deg * ATAN (tp%tpECR(3,i) &
+           / SQRT( tp%tpECR(1,i)**2 + tp%tpECR(2,i)**2))
     ENDDO
 
     ! Calculate dummy values
     tp%encoderAngle = tp%scAngle
     DO i = 2, lenG
-      tp%tpGeocAltRate(i-1) = ( tp%tpGeocAlt(i) - tp%tpGeocAlt(i-1) )&
-        &/offsets(2)
-      tp%tpGeodAltRate(i-1) = ( tp%tpGeodAlt(i) - tp%tpGeodAlt(i-1) )&
-        &/offsets(2)
+      tp%tpGeocAltRate(i-1) = (tp%tpGeocAlt(i) - tp%tpGeocAlt(i-1)) &
+           / offsets(2)
+      tp%tpGeodAltRate(i-1) = (tp%tpGeodAlt(i) - tp%tpGeodAlt(i-1)) &
+           / offsets(2)
     ENDDO
     tp%tpGeocAltRate(lenG) = tp%tpGeocAltRate(lenG-1)
     tp%tpGeodAltRate(lenG) = tp%tpGeodAltRate(lenG-1)
@@ -423,6 +442,7 @@ CONTAINS
   SUBROUTINE Tp_unit (flagQ, lon, lat, alt, delta, unitQ, flag)
     ! This subroutine creates unit ECR vector quantities used by TkL1B_tp to
     ! calculate solarZenith and losAngle.
+
     ! Arguments
     INTEGER, INTENT(IN) :: flagQ
     REAL(r8), INTENT(IN) :: alt, delta, lat, lon
@@ -452,37 +472,37 @@ CONTAINS
       IF (geoPlus  >  PI) geoPlus  = geoPlus  - 2*PI
       IF (geoMinus < -PI) geoMinus = geoMinus + 2*PI
       returnStatus = Pgs_csc_geoToECR (geoPlus, lat, alt, earthModel, &
-        ecrPlus)
+           ecrPlus)
       returnStatus = Pgs_csc_geoToECR (geoMinus, lat, alt, earthModel, &
-        ecrMinus)
+           ecrMinus)
     ELSE IF (flagQ == 1) THEN
       ! latitude
       del = delta * Deg2Rad
       geoPlus  = (lat + del/2)
       geoMinus = (lat - del/2)
       returnStatus = Pgs_csc_geoToECR (lon, geoPlus, alt, earthModel, &
-        ecrPlus)
+           ecrPlus)
       returnStatus = Pgs_csc_geoToECR (lon, geoMinus, alt, earthModel, &
-        ecrMinus)
+           ecrMinus)
     ELSE
       geoPlus  = (alt + delta/2)
       geoMinus = (alt - delta/2)
       returnStatus = Pgs_csc_geoToECR (lon, lat, geoPlus, earthModel, &
-        ecrPlus)
+           ecrPlus)
       returnStatus = Pgs_csc_geoToECR (lon, lat, geoMinus, earthModel, &
-        ecrMinus)
+           ecrMinus)
     ENDIF
 
     IF (returnStatus /= PGS_S_SUCCESS) THEN
-      CALL Pgs_smf_getMsg (returnStatus, mnemonic, msg)
-      msr = mnemonic // ':  ' // msg
-      CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
-      flag = -1
+       CALL Pgs_smf_getMsg (returnStatus, mnemonic, msg)
+       msr = mnemonic // ':  ' // msg
+       CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+       flag = -1
     ENDIF
 
     vec = ecrPlus - ecrMinus
     IF (SUM (vec) > 0.0) THEN
-       unitQ = vec / SQRT( vec(1)**2 + vec(2)**2 + vec(3)**2 )
+       unitQ = vec / SQRT (vec(1)**2 + vec(2)**2 + vec(3)**2)
     ELSE
        unitQ = 0.0
     ENDIF
@@ -514,7 +534,7 @@ CONTAINS
     TYPE( L1BOAtp_T ) :: tp
     CHARACTER (LEN=27) :: mafTime
     CHARACTER (LEN=480) :: msr
-    INTEGER :: error, i, nV, returnStatus
+    INTEGER :: error, i, nV, returnStatus, oastat
     REAL(r8) :: mafTAI
     REAL(r8) :: initRay(3), q(3,MAFinfo%MIFsPerMAF)
     REAL(r8) :: offsets(MAFinfo%MIFsPerMAF)
@@ -687,21 +707,22 @@ CONTAINS
 
     ! Get oa data
 
-    CALL TkL1B_sc (nV, offsets, mafTime, mafTAI, sc, ecrtosc)
+    CALL TkL1B_sc (nV, offsets, mafTime, mafTAI, sc, ecrtosc, oastat)
+
+    IF (oastat == PGS_S_SUCCESS) THEN
 
     ! Get s/c master coordinate
 
-    CALL Mc_aux (mafTime, offsets, sc%scECR, q )
+       CALL Mc_aux (mafTime, offsets, sc%scECR, q)
 
-    CALL TkL1B_mc (ascTAI, dscTAI, sc%scECR, nV, numOrb, &
-      & q, mafTAI, offsets, sc%scGeodAngle, sc%scOrbIncl)
+       CALL TkL1B_mc (ascTAI, dscTAI, sc%scECR, nV, numOrb, &
+            q, mafTAI, offsets, sc%scGeodAngle, sc%scOrbIncl)
+
+    ENDIF
 
     ! Write s/c information
 
     CALL OutputL1B_sc (noMAF, L1FileHandle, sc)
-
-    ! Calculate initial guess for look vector in ECR
-    CALL Scan_guess (mafTime, initRay)
 
     ! Allocate the output structure
 
@@ -833,6 +854,12 @@ CONTAINS
        ENDIF
     ENDIF
 
+    IF (oastat == PGS_S_SUCCESS) THEN
+
+    ! Calculate initial guess for look vector in ECR
+
+    CALL Scan_guess (mafTime, initRay)
+
     ! Find angle, tan pt for start of GHZ scan
 
     CALL Scan_start (altG, sc%scECR(:,1), mafTime, initRay, tp%scAngle(1) )
@@ -840,12 +867,12 @@ CONTAINS
     ! Calculate GHZ tan pt record
 
     CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-      sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp) !, ecrtosc)
+         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
-            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp) !, ecrtosc)
+            sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleG, tp)
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleG = scAngleG + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenG), &
@@ -855,7 +882,7 @@ CONTAINS
     ! Compute GHz master coordinate
 
     CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenG, numOrb, &
-      & q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, sc%scOrbIncl)
+         q, mafTAI, offsets(1:lenG), tp%tpGeodAngle, sc%scOrbIncl)
 
     ! Save info for baseline corrections
 
@@ -863,9 +890,17 @@ CONTAINS
     GHz_GeodLat = tp%tpGeodLat
     GHz_GeodAngle = tp%tpGeodAngle
 
+    ELSE
+
+       CALL Init_L1BOAtp (tp)
+
+    ENDIF
+
     ! Write GHz information
 
     CALL OutputL1B_GHz (noMAF, L1FileHandle, tp)
+
+    IF (oastat == PGS_S_SUCCESS) THEN
 
     ! Find angle, tan pt for start of THz scan
 
@@ -874,13 +909,13 @@ CONTAINS
     ! Calculate THz tan pt record
 
     CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
-      sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, tp)
+         sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, tp)
     IF (L1Config%Globals%SimOA) THEN   ! correct nominal scan angles for sim
        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleT = scAngleT + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenT, nV, offsets, sc%scECR(:,1:lenT), &
             sc%scECI(:,1:lenG), sc%scVelECI(:,1:lenG), scAngleT, tp)
-        angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
+       angle_del = tp%tpGeodAlt(1) / 5200.0 * 0.1
        scAngleT = scAngleT + angle_del
        CALL TkL1B_tp (mafTAI, mafTime, lenG, nV, offsets, sc%scECR(:,1:lenT), &
             sc%scECI(:,1:lenT), sc%scVelECI(:,1:lenT), scAngleT, tp)
@@ -889,9 +924,15 @@ CONTAINS
     ! Compute THz master coordinate
 
     CALL TkL1B_mc (ascTAI, dscTAI, tp%tpECR, lenT, numOrb, &
-      & q, mafTAI, offsets(1:lenT), tp%tpGeodAngle, sc%scOrbIncl)
+         q, mafTAI, offsets(1:lenT), tp%tpGeodAngle, sc%scOrbIncl)
 
     ! Write THZ information
+
+    ELSE
+
+       CALL Init_L1BOAtp (tp)
+
+    ENDIF
 
     CALL OutputL1B_THz (noMAF, L1FileHandle, tp)
 
@@ -952,20 +993,18 @@ CONTAINS
     ! Transform again to ECI coordinates
     aux1ECI(4:6,:) = 0.0_r8
     aux2ECI(4:6,:) = 0.0_r8
-    returnStatus = Pgs_csc_ECItoECR (nV, asciiUTC, offsets, &
-      & aux1ECI, aux1ECR )
-    returnStatus = Pgs_csc_ECItoECR (nV, asciiUTC, offsets, &
-      & aux2ECI, aux2ECR )
+    returnStatus = Pgs_csc_ECItoECR (nV, asciiUTC, offsets, aux1ECI, aux1ECR)
+    returnStatus = Pgs_csc_ECItoECR (nV, asciiUTC, offsets, aux2ECI, aux2ECR)
 
     ! Define l & a, where l is the distance to the equator along the direction
     ! of one of the auxilliary vectors from the s/c, and a is the auxilliary
     ! vector for which l was defined.
 
-    small1 = ABS(aux1ECR(3,:)) < SQRT( TINY(0.0_r8) )
-    small2 = ABS(aux2ECR(3,:)) < SQRT( TINY(0.0_r8) )
-    IF (ANY ( small1 .AND. small2 )) THEN
-      CALL MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'Problem computing auxilliary vector for master coordinate' )
+    small1 = ABS (aux1ECR(3,:)) < SQRT (TINY(0.0_r8))
+    small2 = ABS (aux2ECR(3,:)) < SQRT (TINY(0.0_r8))
+    IF (ANY (small1 .AND. small2)) THEN
+      CALL MLSMessage (MLSMSG_Error, ModuleName, &
+           'Problem computing auxilliary vector for master coordinate')
     END IF
 
     WHERE ( small1 )
@@ -1005,14 +1044,14 @@ CONTAINS
     q(3,:) = 0.0
 
     ! Modify q, depending on which hemisphere the s/c is in, and the sign of l
-    WHERE ( ( (scECR(3,:) < 0.0) .AND. (l < 0.0) ) .OR. &
-      &     ( (scECR(3,:) >= 0.0) .AND. (l >= 0.0) ) )
+    WHERE (((scECR(3,:) < 0.0) .AND. (l < 0.0)) .OR. &
+         ((scECR(3,:) >= 0.0) .AND. (l >= 0.0)))
       q(1,:) = -q(1,:)
       q(2,:) = -q(2,:)
     END WHERE 
 
     ! Normalize q
-    qSize = SQRT( q(1,:)**2 + q(2,:)**2 ) 
+    qSize = SQRT (q(1,:)**2 + q(2,:)**2) 
 
     q(1,:) = q(1,:) / qSize(:)
     q(2,:) = q(2,:) / qSize(:)
@@ -1054,8 +1093,8 @@ CONTAINS
     lamRad = (Pi/180)*lambda
     muRad = (Pi/180)*mu
     IF (v == 0.d0) THEN
-      orbInclineCalculated = UNDEFINED_VALUE
-      RETURN
+       orbInclineCalculated = UNDEFINED_VALUE
+       RETURN
     ENDIF
     orbInclineCalculated = (180/Pi) * ASIN( &
         COS(lamRad) * (vUnrotated(2)*COS(muRad) - vUnrotated(1)*SIN(muRad)) / v)
@@ -1084,10 +1123,8 @@ CONTAINS
       CALL output ('orbital inclination ', advance='no')
       CALL blanks (3, advance='no')
       CALL output ((180/Pi) * ASIN( &
-       & COS(lamRad) * (vUnrotated(2)*COS(muRad) - vUnrotated(1)*SIN(muRad)) &
-       & / &
-       & v &
-       & ), advance='no')
+           COS(lamRad) * (vUnrotated(2)*COS(muRad) - vUnrotated(1)*SIN(muRad)) &
+           / v), advance='no')
       CALL blanks (3, advance='no')
       CALL output (orbInclineCalculated, advance='yes')
       IF (HOWMANYSOFAR > 40 ) STOP
@@ -1123,38 +1160,39 @@ CONTAINS
     orbMoment(1) = scECI(2)*scVelECI(3) - scECI(3)*scVelECI(2)
     orbMoment(2) = scECI(3)*scVelECI(1) - scECI(1)*scVelECI(3)
     orbMoment(3) = scECI(1)*scVelECI(2) - scECI(2)*scVelECI(1)
-    OMagnitude = SQRT( orbMoment(1)**2 + orbMoment(2)**2 + orbMoment(3)**2 )
+    OMagnitude = SQRT (orbMoment(1)**2 + orbMoment(2)**2 + orbMoment(3)**2)
     IF (OMagnitude == 0.d0) THEN
-      orbInclineCrossProd = UNDEFINED_VALUE
-      RETURN
+       orbInclineCrossProd = UNDEFINED_VALUE
+       RETURN
     ENDIF
-    orbInclineCrossProd = (180/Pi) * ACOS( orbMoment(3) / OMagnitude )
+    orbInclineCrossProd = (180/Pi) * ACOS (orbMoment(3) / OMagnitude)
 
     ! Now added contraints: 90 < beta < 180
     orbInclineCrossProd = ABS(orbInclineCrossProd)
     IF (orbInclineCrossProd < 90.d0) THEN
-      orbInclineCrossProd = 180. - orbInclineCrossProd
+       orbInclineCrossProd = 180. - orbInclineCrossProd
     ELSEIF (orbInclineCrossProd > 180.d0) THEN
-      orbInclineCrossProd = 360. - orbInclineCrossProd
+       orbInclineCrossProd = 360. - orbInclineCrossProd
     ENDIF
     
     IF (DEBUG) THEN
-      CALL output ('rx, ry, rz ', advance='no')
-      CALL blanks (3, advance='no')
-      CALL output (scECI, advance='yes')
-      CALL output ('vx, vy, vz ', advance='no')
-      CALL blanks (3, advance='no')
-      CALL output (scVelECI, advance='yes')
-      CALL output ('px, py, pz ', advance='no')
-      CALL blanks (3, advance='no')
-      CALL output (orbMoment, advance='yes')
-      CALL output ('orbital inclination ', advance='no')
-      CALL blanks (3, advance='no')
-      CALL output ((180/Pi) * ACOS( orbMoment(3) / OMagnitude ), advance='no')
-      CALL blanks (3, advance='no')
-      CALL output (orbInclineCrossProd, advance='yes')
-      IF (HOWMANYSOFAR > 40 ) STOP
+       CALL output ('rx, ry, rz ', advance='no')
+       CALL blanks (3, advance='no')
+       CALL output (scECI, advance='yes')
+       CALL output ('vx, vy, vz ', advance='no')
+       CALL blanks (3, advance='no')
+       CALL output (scVelECI, advance='yes')
+       CALL output ('px, py, pz ', advance='no')
+       CALL blanks (3, advance='no')
+       CALL output (orbMoment, advance='yes')
+       CALL output ('orbital inclination ', advance='no')
+       CALL blanks (3, advance='no')
+       CALL output ((180/Pi) * ACOS( orbMoment(3) / OMagnitude ), advance='no')
+       CALL blanks (3, advance='no')
+       CALL output (orbInclineCrossProd, advance='yes')
+       IF (HOWMANYSOFAR > 40 ) STOP
     ENDIF
+
   END FUNCTION orbInclineCrossProd
 
   !---------------------------------------------------TkL1B_mc -----------------
@@ -1195,74 +1233,74 @@ CONTAINS
     ! Set s = normalized dotVec
     DO i = 1, nV
 
-      orbInclineNow = scOrbIncl(i)
-      IF (orbInclineNow == UNDEFINED_VALUE) THEN
-        CALL MLSMessage (MLSMSG_Error, ModuleName, &
-          & 'Error in calculating orbital inclination angle')
-      ENDIF
+       orbInclineNow = scOrbIncl(i)
+       IF (orbInclineNow == UNDEFINED_VALUE) THEN
+          CALL MLSMessage (MLSMSG_Error, ModuleName, &
+               'Error in calculating orbital inclination angle')
+       ENDIF
 
-      ! Get a unit ECR vector to the point.
-      s(:,i) = dotVec(:,i) / SQRT(dotVec(1,i)**2 + dotVec(2,i)**2 + &
-        & dotVec(3,i)**2)
-      
-      ! Calculate the geocentric angle as a number of radians between 0 and PI
-      gamma(i) = ACOS( q(1,i)*s(1,i) + q(2,i)*s(2,i) )
-      
-      ! Place angle between PI and 2*PI, if in Southern Hemisphere
-      IF (dotVec(3,i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
+       ! Get a unit ECR vector to the point.
+       s(:,i) = dotVec(:,i) / SQRT(dotVec(1,i)**2 + dotVec(2,i)**2 + &
+            dotVec(3,i)**2)
 
-      ! Going to convert this to geodetic, calculate som parameters.
-      orbRad= Deg2Rad * (orbInclineNow - 90)
-      cSq = (1 + (TAN(orbRad)**2)) * (a**2)*(b**2) / &
-        & ( a**2 + (b**2)*(TAN(orbRad)**2) )
+       ! Calculate the geocentric angle as a number of radians between 0 and PI
+       gamma(i) = ACOS( q(1,i)*s(1,i) + q(2,i)*s(2,i) )
 
-      ! If |gamma| <= 45 deg of the equator, calculate phi using the SIN !
-      ! equation
-      IF ((gamma(i) <= PI/4 ) .OR. ( (gamma(i) >= 3*PI/4) .AND. &
-        & (gamma(i) <= 5*PI/4) ) .OR. (gamma(i) >= 7*PI/4)) THEN
-        sinPhi(i) = SQRT( (a**4)*(SIN(gamma(i))**2)/( (cSq**2)*&
-          &(COS(gamma(i))**2) + (a**4)*(SIN(gamma(i))**2) ) )
-        phi(i) = ASIN(sinPhi(i))
-      ELSE
-        ! If gamma is within 45 deg of a pole, calculate phi using the COS 
-        ! equation
-        cosPhi(i) = SQRT( (cSq**2)*(COS(gamma(i))**2)/( (cSq**2)*&
-          &COS(gamma(i))**2 + (a**4)*(SIN(gamma(i))**2) ) )
-        phi(i) = ACOS(cosPhi(i))
-      ENDIF
+       ! Place angle between PI and 2*PI, if in Southern Hemisphere
+       IF (dotVec(3,i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
 
-      ! Place phi in same quadrant as gamma
-      IF ((gamma(i) > PI/2) .AND. (gamma(i) <= PI) ) phi(i) = PI - phi(i)
-      IF ((gamma(i) > PI) .AND. (gamma(i) <= 3*PI/2) ) phi(i) = phi(i) + PI
-      IF (gamma(i) > 3*PI/2 ) phi(i) = 2*PI - phi(i)
+       ! Going to convert this to geodetic, calculate som parameters.
+       orbRad= Deg2Rad * (orbInclineNow - 90)
+       cSq = (1 + (TAN(orbRad)**2)) * (a**2)*(b**2) / &
+            (a**2 + (b**2)*(TAN(orbRad)**2))
 
-      ! Make phi cumulative over orbits
-      ! First what is the time?
-      asciiTAI = timeTAI + time_offset(i)
-      scOrb = 0
+       ! If |gamma| <= 45 deg of the equator, calculate phi using the SIN !
+       ! equation
+       IF ((gamma(i) <= PI/4 ) .OR. ( (gamma(i) >= 3*PI/4) .AND. &
+            (gamma(i) <= 5*PI/4) ) .OR. (gamma(i) >= 7*PI/4)) THEN
+          sinPhi(i) = SQRT( (a**4)*(SIN(gamma(i))**2)/( (cSq**2)* &
+               (COS(gamma(i))**2) + (a**4)*(SIN(gamma(i))**2) ) )
+          phi(i) = ASIN(sinPhi(i))
+       ELSE
+          ! If gamma is within 45 deg of a pole, calculate phi using the COS 
+          ! equation
+          cosPhi(i) = SQRT( (cSq**2)*(COS(gamma(i))**2)/( (cSq**2)* &
+               COS(gamma(i))**2 + (a**4)*(SIN(gamma(i))**2) ) )
+          phi(i) = ACOS(cosPhi(i))
+       ENDIF
 
-      ! Now always make our calculation based on some threshold way back in
-      ! time, to avoid any ambiguity
-      IF (( phi(i) < pi/2 ) .OR. ( phi(i) >= 3*pi/2 )) THEN
-        ! If in the ascending part of the orbit, base correction
-        ! on time of last descending node
-        ! MAKE THIS USE HUNT LATER!
-        DO j = 1, numOrb
-          IF (asciiTAI > dscTAI(j) ) scOrb = j
-        ENDDO
+       ! Place phi in same quadrant as gamma
+       IF ((gamma(i) > PI/2) .AND. (gamma(i) <= PI)) phi(i) = PI - phi(i)
+       IF ((gamma(i) > PI) .AND. (gamma(i) <= 3*PI/2)) phi(i) = phi(i) + PI
+       IF (gamma(i) > 3*PI/2) phi(i) = 2*PI - phi(i)
 
-        ! If we're in the NH we've begun a new orbit, so add one
-        IF (phi(i) < pi ) scOrb = scOrb + 1
-      ELSE
-        ! If in descending part of the orbit, base it on the time
-        ! of the last ascending node
-        ! MAKE THIS USE HUNT LATER!
-        DO j = 1, numOrb
-          IF (asciiTAI > ascTAI(j) ) scOrb = j
-        ENDDO
+       ! Make phi cumulative over orbits
+       ! First what is the time?
+       asciiTAI = timeTAI + time_offset(i)
+       scOrb = 0
 
-      END IF
-      phi(i) = (scOrb-2)*2*PI + phi(i)
+       ! Now always make our calculation based on some threshold way back in
+       ! time, to avoid any ambiguity
+       IF ((phi(i) < pi/2) .OR. (phi(i) >= 3*pi/2)) THEN
+          ! If in the ascending part of the orbit, base correction
+          ! on time of last descending node
+          ! MAKE THIS USE HUNT LATER!
+          DO j = 1, numOrb
+             IF (asciiTAI > dscTAI(j)) scOrb = j
+          ENDDO
+
+          ! If we're in the NH we've begun a new orbit, so add one
+          IF (phi(i) < pi) scOrb = scOrb + 1
+       ELSE
+          ! If in descending part of the orbit, base it on the time
+          ! of the last ascending node
+          ! MAKE THIS USE HUNT LATER!
+          DO j = 1, numOrb
+             IF (asciiTAI > ascTAI(j)) scOrb = j
+          ENDDO
+
+       END IF
+       phi(i) = (scOrb-2)*2*PI + phi(i)
 
     ENDDO
 
@@ -1272,10 +1310,13 @@ CONTAINS
   END SUBROUTINE TkL1B_mc
 
 !=============================================================================
-  SUBROUTINE Flag_Bright_Objects (TAI, SpaceView, LimbView)
+  SUBROUTINE Flag_Bright_Objects (TAI, ScAngle, SpaceView, LimbView)
 !=============================================================================
 
+    USE MLSL1Config, ONLY: L1Config
+
     REAL(r8) :: TAI(:)
+    REAL :: ScAngle(0:)
     TYPE (LOG_ARR1_PTR_T) :: SpaceView(:), LimbView(:)
 
     CHARACTER (LEN=27) :: asciiUTC
@@ -1286,11 +1327,19 @@ CONTAINS
     REAL(r8) :: sc_unit_vector(3)
 
     INTEGER, PARAMETER :: BO_defs(2) = (/ PGSd_Moon, PGSd_Venus /)
-    REAL, PARAMETER :: space_tol = 10.0   ! tolerance for space port
+    REAL, PARAMETER :: VenusInSpace = 1.0
+    REAL, PARAMETER :: VenusInLimb = 1.0
+    REAL :: space_tol(2) = (/ 0.0, VenusInSpace /) ! tolerance for space port
+    REAL :: limb_tol(2) = (/ 0.0, VenusInLimb /)   ! tolerance for limb port
 
     ! Functions
 
     INTEGER, EXTERNAL :: PGS_TD_taiToUTC, PGS_CBP_Sat_CB_Vector
+
+! Get Moon tolerances from CF inputs:
+
+    space_tol(1) = L1Config%Calib%MoonToSpaceAngle
+    limb_tol(1) = L1Config%Calib%MoonToLimbAngle
 
     returnStatus = PGS_TD_taiToUTC (TAI(1), asciiUTC)
     offset = TAI - TAI(1)   ! offset (secs) from start TAI
@@ -1307,10 +1356,18 @@ CONTAINS
                SQRT (sc_frame_vector(1,MIF)**2 + sc_frame_vector(2,MIF)**2 + &
                sc_frame_vector(3,MIF)**2)
 
-          space_angle = ACOS (sc_unit_vector(2)) * Rad2Deg  ! Y vector
-          SpaceView(i)%ptr(MIF) = (space_angle < space_tol)
+! Space port angle check
 
-! Need to add limb port angle check here
+          space_angle = ACOS (sc_unit_vector(2)) * Rad2Deg  ! Y vector
+          SpaceView(i)%ptr(MIF) = (space_angle < space_tol(i))
+
+! Limb port angle check
+
+          limb_angle = ACOS ( DOT_PRODUCT( &
+               (/ COS (scAngle(MIF) * Deg2Rad), 0.0, &
+               SIN (scAngle(MIF) * Deg2Rad) /), &
+               sc_unit_vector) ) * Rad2Deg
+          LimbView(i)%ptr(MIF) = (limb_angle < limb_tol(i))
 
        ENDDO
 
@@ -1321,6 +1378,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.16  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.15  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !
