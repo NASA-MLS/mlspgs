@@ -586,7 +586,8 @@ contains ! =====     Public Procedures     =============================
         call ExpandDirectDB ( DirectDatabase, file_base, thisDirect, &
         & isnewdirect )
         if ( DeeBUG ) then
-          call output('Did we need to expand DB for ' // trim(file_base), advance='yes')
+          call output('Did we need to expand DB for ' // trim(file_base), &
+            & advance='yes')
           call output(isnewdirect, advance='yes')
         endif
         if ( .not. associated(thisDirect) ) then
@@ -691,11 +692,6 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'DirectWriteCommand unable to open ' // trim(filename) )
       endif
-      ! call SetUpNewDirect(newDirect, noSources)
-      ! Add it to the database of directly writeable quantities
-      ! dbindex = AddDirectToDatabase ( DirectDatabase, newDirect )
-      ! call decorate ( node, -dbindex ) ! So we can find it later
-      ! thisDirect => DirectDatabase(dbindex)
       ! Loop over the quantities to output
       NumPermitted = 0
       do source = 1, noSources
@@ -715,8 +711,8 @@ contains ! =====     Public Procedures     =============================
         call get_string ( hdfNameIndex, hdfName, strip=.true. )
         if ( TOOLKIT ) call ExpandSDNames(thisDirect, trim(hdfName))
         if ( precisionVectors(source) /= 0 ) then
-          precQty => GetVectorQtyByTemplateIndex ( vectors(precisionVectors(source)), &
-            & precisionQuantities(source) )
+          precQty => GetVectorQtyByTemplateIndex &
+            & ( vectors(precisionVectors(source)), precisionQuantities(source) )
           ! Check that this is compatible with its value quantitiy
           if ( qty%template%name /= precQty%template%name ) &
             & call Announce_Error ( son, no_error_code, &
@@ -785,7 +781,7 @@ contains ! =====     Public Procedures     =============================
         call Deallocate_test ( directFiles, 'directFiles', ModuleName )
         return
       endif
-      if ( TOOLKIT ) then
+      if ( isnewdirect .and. TOOLKIT ) then
         thisDirect%type = outputType
         thisDirect%fileNameBase = file_base
       endif
@@ -851,17 +847,25 @@ contains ! =====     Public Procedures     =============================
         & 'No files in directDatabase to distribute sources among' )
       NumSuitablesFiles = 0
       do afile = 1, size(DirectDataBase)
-        if ( outputType == DirectDataBase(afile)%type ) &
+        if ( outputType == DirectDataBase(afile)%autoType ) &
           & NumSuitablesFiles = NumSuitablesFiles + 1
       enddo
-      if ( NumSuitablesFiles < 1 ) call MLSMessage ( &
+      if ( NumSuitablesFiles < 1 ) then
+        call Announce_Error ( son, NO_ERROR_CODE, &
+              & 'No suitable files in directDatabaset' )
+        call output('outputType: ')
+        call output(outputType, advance='yes')
+        call output(DirectDataBase%autoType)
+        call MLSMessage ( &
         & MLSMSG_Error, ModuleName, &
         & 'No suitable files in directDatabase to distribute sources among' )
-      nextfile = FindFirst(outputType == DirectDataBase%type)
+      endif
+      nextfile = FindFirst(outputType == DirectDataBase%autoType)
       do source = 1, noSources
         afile = nextFile
         directfiles(source) = afile
-        nextFile = FindNext(outputType == DirectDataBase%type, afile, wrap=.true.)
+        nextFile = FindNext(outputType == DirectDataBase%autoType, afile, &
+          & wrap=.true.)
       enddo
       if ( DeeBug ) then
        call output ( "NumSources = " )
@@ -1605,6 +1609,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.102  2004/01/23 01:09:48  pwagner
+! Only directwrite files entered in global settings eligible to be auto-sourced
+!
 ! Revision 2.101  2004/01/22 00:56:35  pwagner
 ! Fixed many bugs in auto-distribution of DirectWrites
 !
