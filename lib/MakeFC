@@ -34,7 +34,11 @@ blaslib=../blas
 
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
-MLSCFILE=.configure
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
 
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
@@ -178,6 +182,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.24  2001/05/14 23:58:43  pwagner
+# default .configure name now set by environment
+#
 # Revision 2.23  2001/05/14 17:37:14  pwagner
 # .configure now a variable file name
 #
