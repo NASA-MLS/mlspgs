@@ -50,6 +50,7 @@ module ForwardModelIntermediate
     real (r8), dimension(:,:),             pointer :: basisGph=>NULL()
     real (r8), dimension(:,:),             pointer :: RT=>NULL()
     real (r8), dimension(:),               pointer :: R=>NULL()
+    integer :: belowRef                 ! T. basis at or below refGPH
 
   end type ForwardModelIntermediate_T
 
@@ -159,6 +160,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 1.9  2001/05/03 23:07:12  livesey
+! Added scan model stuff
+!
 ! Revision 1.8  2001/05/01 00:23:00  livesey
 ! Nullified fmStat%rows by default
 !
