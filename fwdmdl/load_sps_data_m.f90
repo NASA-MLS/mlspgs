@@ -4,8 +4,6 @@
 module LOAD_SPS_DATA_M
 
   use MLSCommon, only: R8, RP
-  use MLSNumerics, only: HUNT
-  use RHIFromH2O, only: RHIFromH2O_Factor
 
   implicit NONE
 
@@ -124,7 +122,9 @@ contains
     use Intrinsic, only: L_IntermediateFrequency, L_None, L_Phitan
     use ManipulateVectorQuantities, only: FindInstanceWindow
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSNumerics, only: HUNT
     use Molecules, only: Spec_tags, SP_H2O
+    use RHIFromH2O, only: RHIFromH2O_Factor
     use Units, only: Deg2Rad
     use VectorsModule, only: Vector_T, VectorValue_T, M_FullDerivatives
 
@@ -373,6 +373,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.33  2003/02/07 01:07:53  jonathan
+! add in option to compute dry and super-saturation case in load_sps
+!
 ! Revision 2.32  2003/02/06 20:00:06  vsnyder
 ! Make Load_One_Grid a public module procedure instead of internal
 !
