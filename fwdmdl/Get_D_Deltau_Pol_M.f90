@@ -83,7 +83,7 @@ contains
 
     i_stop = size(indices_c)
 
-    do sps_i = 1, grids_f%lastNonPFA
+    do sps_i = 1, size(grids_f%l_v)
 
       do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
 
@@ -497,6 +497,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.28  2004/11/01 20:24:32  vsnyder
+! Reorganization of representation for molecules and beta groups
+!
 ! Revision 2.27  2004/07/29 02:31:17  vsnyder
 ! Simplify by avoiding PFA-related data structures
 !
