@@ -5,7 +5,8 @@
 MODULE MLSStrings               ! Some low level string handling stuff
 !=============================================================================
 
-  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+   & MLSMSG_Allocate, MLSMSG_DeAllocate
   USE MLSCommon, only: i4, r8, NameLen, BareFNLen
 
   IMPLICIT NONE
@@ -1242,24 +1243,27 @@ CONTAINS
 
     ! Local variables
     INTEGER(i4) :: elem, nElems
-    integer, parameter              :: MAXCHARVALUE = 256
-    integer, parameter              :: MAXELEM = BareFNLen
-    integer, dimension(MAXELEM)     :: chValue, cvInvBN
-    integer, dimension(MAXELEM)     :: binNumber, invBinNumber 
-    integer, dimension(MAXELEM)     :: jsort, inTheBin
-    integer                         :: numBins, oldNumBins
-    integer                         :: i, bin, ck, strPos
-    integer                         :: status
-    integer                         :: maxStrPos
-    logical                         :: allTheSameInThisBin
-    logical                         :: myShorterFirst
-    CHARACTER (LEN=1)               :: theChar  
-    CHARACTER (LEN=1), PARAMETER    :: BLANK = ' '
+    integer, parameter                     :: MAXCHARVALUE = 256
+    integer, parameter                     :: MAXELEM = BareFNLen
+!    integer, dimension(MAXELEM)           :: chValue, cvInvBN
+!    integer, dimension(MAXELEM)           :: binNumber, invBinNumber
+!    integer, dimension(MAXELEM)           :: jsort, inTheBin
+    integer, dimension(:), allocatable     :: chValue, cvInvBN
+    integer, dimension(:), allocatable     :: binNumber, invBinNumber 
+    integer, dimension(:), allocatable     :: jsort, inTheBin
+    integer                                :: numBins, oldNumBins
+    integer                                :: i, bin, ck, strPos
+    integer                                :: status
+    integer                                :: maxStrPos
+    logical                                :: allTheSameInThisBin
+    logical                                :: myShorterFirst
+    CHARACTER (LEN=1)                      :: theChar  
+    CHARACTER (LEN=1), PARAMETER           :: BLANK = ' '
     CHARACTER (LEN=BareFNLen), DIMENSION(:), ALLOCATABLE    &
-      &                             :: stringArray
-    CHARACTER (LEN=BareFNLen)         :: theString  
-    CHARACTER (LEN=1)               :: myLeftRight
-    logical, parameter              :: DeeBUG = .false.
+      &                                    :: stringArray
+    CHARACTER (LEN=BareFNLen)              :: theString  
+    CHARACTER (LEN=1)                      :: myLeftRight
+    logical, parameter                     :: DeeBUG = .false.
 
     ! Executable code
     IF(PRESENT(shorterFirst)) THEN
@@ -1276,14 +1280,18 @@ CONTAINS
     nElems = size(inStrArray)
     if ( size(outIntArray) <= 0 .or. nElems <= 0 ) then
       return
-    elseif ( nElems > MAXELEM ) then
-       CALL MLSMessage(MLSMSG_Error, ModuleName, &
-         & 'Too many elements in inStrArray in SortArray')
-       return
+!    elseif ( nElems > MAXELEM ) then
+!       CALL MLSMessage(MLSMSG_Error, ModuleName, &
+!         & 'Too many elements in inStrArray in SortArray')
+!       return
     endif
-    ALLOCATE (stringArray(nElems), STAT=status)
-    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
-         & MLSMSG_Allocate//"stringArray in SortArray")
+!    ALLOCATE (stringArray(nElems), STAT=status)
+    ALLOCATE (stringArray(nElems), chValue(nElems), cvInvBN(nElems), &
+     & binNumber(nElems), invBinNumber(nElems), &
+     & jsort(nElems), inTheBin(nElems), &
+     & STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & MLSMSG_Allocate//"stringArray, etc. in SortArray")
     outIntArray = 0
     numBins = 1
     maxStrPos = 1                ! This will hold max string length needed
@@ -1388,7 +1396,6 @@ CONTAINS
         endif
       enddo
     endif
-    DEALLOCATE(stringArray)
     if ( myLeftRight == 'R' ) then
       ! Need to 'invert' outIntArray
       do elem=1, nElems
@@ -1400,6 +1407,10 @@ CONTAINS
         outIntArray(elem) = invBinNumber(elem)
       enddo
     endif
+    DEALLOCATE(stringArray, chValue, cvInvBN, binNumber, invBinNumber, &
+     & jsort, inTheBin, STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error, ModuleName, &
+         & MLSMSG_DeAllocate//"stringArray, etc. in SortArray")
 
    contains
      subroutine warm_up(theBin)
@@ -1884,6 +1895,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.20  2002/02/22 01:19:57  pwagner
+! SortArray not limited to array sizes lt MAXELEM
+!
 ! Revision 2.19  2002/02/19 23:12:03  pwagner
 ! New optional args to Sorting routines
 !
