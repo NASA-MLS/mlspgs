@@ -81,7 +81,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_DO_FREQ_AVG         = f_do_conv + 1
   integer, parameter :: F_EARTHRADIUS         = f_do_freq_avg + 1
   integer, parameter :: F_EXPLICITVALUES      = f_earthradius + 1
-  integer, parameter :: F_EXTRA               = f_explicitValues + 1
+  integer, parameter :: F_EXTINCTION          = f_explicitValues + 1
+  integer, parameter :: F_EXTRA               = f_extinction + 1
   integer, parameter :: F_FIELD               = f_extra + 1
   integer, parameter :: F_FILE                = f_field + 1
   integer, parameter :: F_FILTERSHAPES        = f_file + 1
@@ -439,6 +440,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_do_freq_avg) =         add_ident ( 'do_freq_avg' )
     field_indices(f_earthRadius) =         add_ident ( 'earthRadius' )
     field_indices(f_explicitValues) =      add_ident ( 'explicitValues' )
+    field_indices(f_extinction) =          add_ident ( 'extinction' )
     field_indices(f_extra) =               add_ident ( 'extra' )
     field_indices(f_field) =               add_ident ( 'field' )
     field_indices(f_file) =                add_ident ( 'file' )
@@ -816,6 +818,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     nr+n_dot, &
+             begin, f+f_extinction, t+t_boolean, n+n_field_type, &
              begin, f+f_interpolate, t+t_boolean, n+n_field_type, &
 !            begin, f+f_matrix, s+s_matrix, n+n_field_spec, & !??? Not in fill yet ???
              begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
@@ -1032,6 +1035,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.145  2001/07/20 17:06:45  dwu
+! add f_extinction field for Fill cloud extinction calculation
+!
 ! Revision 2.144  2001/07/19 18:05:57  dwu
 ! add sourceSGRID
 !
