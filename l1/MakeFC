@@ -76,11 +76,12 @@ libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(
 
 ifdef BLAS
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(REECHO)
 else
    LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
    $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
-   $(blaslib_f)
+   $(blaslib_f) $(REECHO)
 endif
 
 #Any sources to explicitly exclude from dependency list?
@@ -155,6 +156,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.21  2001/08/22 22:46:13  pwagner
+# Made reecho.sh a prerequisite where appropriate
+#
 # Revision 2.20  2001/08/15 21:01:04  pwagner
 # Now excludes OMIT_SRCS from dependencies
 #
