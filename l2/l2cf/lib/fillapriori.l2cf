@@ -120,7 +120,8 @@ begin Fill
   Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 10 ppbv ; 1 ppbv is too small.  Better with a profile?
   Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 100 ppbv ; 100pptv is far too small
 
-  Fill, quantity=aprioriPrecision.temperature, method=explicit, /spread, explicitValues= 20 K
+  Fill, quantity=aprioriPrecision.temperature, method=profile, $
+    profileValues= [ 1000mb:5K, 220mb:10K, 68mb:20K ]
   Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
   ;; Now we're going to fill the a priori length scales up
   !ifdef(standardLength,{},{!define(standardLength, 0 km)})
