@@ -21,7 +21,7 @@ module ObtainClimatology
 
   implicit none
   private
-  public :: OBTAIN_CLIM
+  public :: OBTAIN_CLIM, READ_CLIMATOLOGY
 
   private :: Id, moduleName
   !------------------------------- RCS Ident Info ------------------------------
@@ -79,11 +79,29 @@ contains ! =====     Public Procedures     =============================
   end subroutine OBTAIN_CLIM
   !============================
 
+  ! --------------------------------------------------  READ_NCEP  -----
+  SUBROUTINE READ_CLIMATOLOGY ( fname, data_array )
+  ! --------------------------------------------------
+  ! Brief description of program
+  ! This subroutine reads a NCEP correlative file and returns
+  ! the data_array to the caller
+
+  ! Arguments
+
+  character*(*), intent(in) :: fname			! Physical file name
+  real(R8) ::  data_array(:,:,:)
+
+	END SUBROUTINE READ_CLIMATOLOGY
+
 ! =====     Private Procedures     =====================================
+
 !============================
 end module ObtainClimatology
 !============================
 ! $Log$
+! Revision 2.3  2001/03/03 00:11:29  pwagner
+! Began transformations to act like L2GPData module for Gridded data
+!
 ! Revision 2.2  2001/02/21 00:37:51  pwagner
 ! Uses more of GriddedData
 !
