@@ -61,6 +61,7 @@ begin Fill
 
   ;; --------------------------------------------------- Antenna loss
 
+  ;; First the 'constant' terms
   !define(fillAntennaTerms,{!dnl
   Fill, quantity=apriori.reflReflPrimary$1, method=explicit, explicitValues=!OhmicPri$1
   Fill, quantity=apriori.reflTransPrimary$1, method=explicit, explicitValues=!EffPri$1
@@ -70,6 +71,45 @@ begin Fill
   Fill, quantity=apriori.reflTransTertiary$1, method=explicit, explicitValues=!EffTer$1
   Fill, quantity=apriori.reflTransComplete$1, method=explicit, explicitValues=!EffAA$1!nl})
   !forall(fillAntennaTerms,!allBandLSBs,!allBandUSBs)
+
+  ;; Next the time varying ones.  We can get these from L1B or fake them
+  !ifdef(flagFakeAntennaLoss,{!dnl
+  ;; Read them from L1B
+  !M4Error({Reading antenna loss terms from L1B not yet supported})
+  },{!dnl
+  ;; Fake them
+  !define(fillOneStrayRadiance,{!dnl
+  Fill, quantity=apriori.strayRadiance$1, method=explicit, $
+    explicitValues=150 K, /spread!nl})
+  !forall(fillOneStrayRadiance,!allBandLSBs,!allBandUSBs)
+
+  !define(fillOneSetOfReflSpills,{!dnl
+  Fill, quantity=apriori.reflSpillPrimary$1, method=explicit, $
+    explicitValues=100 K, /spread
+  Fill, quantity=apriori.reflSpillSecondary$1, method=explicit, $
+    explicitValues=140 K, /spread
+  Fill, quantity=apriori.reflSpillTertiary$1, method=explicit, $
+    explicitValues=120 K, /spread!nl})
+  !forall(fillOneSetOfReflSpills,!allBandLSBs,!allBandUSBs)
+
+  Fill, quantity=apriori.reflTempPrimary, method=reflectorTempModel, $
+    phiZero=240.297 degrees, terms = [ $
+    273.15 K + 26.0625 K, -6.94899 K, -7.8007 K, -4.0625 K, -1.375 K, $
+    -2.17601 K, 0.199301 K ]
+  Fill, quantity=apriori.reflTempSecondary, method=reflectorTempModel, $
+    phiZero=240.297 degrees, terms = [ $
+    273.15 K+ 51.3125 K, -2.05308 K, 1.14775 K, 0.125 K, $
+    0.0625 K, -0.196922 K -0.352252 K ]
+  Fill, quantity=apriori.reflTempTertiary, method=reflectorTempModel, $
+    phiZero=240.297 degrees, terms = [ $
+    273.15 K + 39.3725 K, -1.39889 K, -1.73351 K, -0.625 K, $
+    -0.2775 K,  -0.476113 K,  -0.108506 K ]
+  })
+  ;; Original terms from Rick's Email
+  ;; t0 = 3960s, T=5932.659
+  ;; PM 26.0625 -6.94899 -7.8007  -4.0625 -1.375  -2.17601   0.199301
+  ;; SM 51.3125 -2.05308  1.14775  0.125   0.0625 -0.196922 -0.352252
+  ;; TM 39.3725 -1.39889 -1.73351 -0.625 -0.2775  -0.476113 -0.108506
 
   ;; --------------------------------------------------- Minor terms
 
