@@ -40,20 +40,20 @@ module L2FWMParallel
 
 contains
   
-  ! ------------------------------------------- LaunchFwmSlaves ----
-  subroutine LaunchFWMSlaves ( chunk )
-    use Chunks_m, only: MLSChunk_T
-    use Output_m, only: Output
+  ! --------------------------------------------  LaunchFwmSlaves  -----
+  subroutine LaunchFWMSlaves ( Chunk )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_test
-    use Machine, only: SHELL_COMMAND
+    use Chunks_m, only: MLSChunk_T
     use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
       & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, NOTIFYTAG, GETNICETIDSTRING
-    use MLSCommon, only: FINDFIRST
+    use Machine, only: SHELL_COMMAND
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Toggles, only: SWITCHES
+    use MLSSets, only: FINDFIRST
+    use Output_m, only: Output
     use PVM, only: MYPVMSPAWN, PVMFCATCHOUT, PVMERRORMESSAGE, &
       & PVMFBUFINFO, PVMF90UNPACK, PVMFINITSEND, PVMFSEND, PVMF90PACK, &
       & PVMTASKHOST, PVMTASKEXIT, PVMRAW
+    use Toggles, only: SWITCHES
     ! Dummy arguments
     type (MLSChunk_T), intent(in) :: CHUNK ! The chunk we're processing
 
@@ -133,7 +133,7 @@ contains
       endif
       if ( signal /= sig_register ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, 'Expected registration message from fwmSlave' )
-      machineInd = FindFirst ( slaveTids == slaveTid )
+      machineInd = FindFirst ( slaveTids, slaveTid )
       if ( machineInd == 0 ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, 'Heard from an unknown forward model slave' )
       heardFromSlave ( machineInd ) = .true.
@@ -763,6 +763,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.18  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.17  2004/05/19 19:16:11  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
