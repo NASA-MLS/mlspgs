@@ -16,8 +16,9 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use Hdf, only: SUCCEED, DFACC_RDONLY
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8, LineLen, NameLen
-  use MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF
+  use MLSCommon, only: R8, LineLen, NameLen, FileNameLen
+  use MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF, &
+    &                split_path_name
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
     & MLSMSG_Deallocate, MLSMSG_Warning
   use MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
@@ -548,7 +549,7 @@ contains
 
 
   ! --------------------------------------------------  READ_CLIMATOLOGY  -----
-  subroutine READ_CLIMATOLOGY ( fname, root, aprioriData, &
+  subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, echo_data, dump_data )
     ! --------------------------------------------------
     ! Brief description of program
@@ -557,7 +558,7 @@ contains
 
     ! Arguments
 
-    character*(*), intent(in) :: fname			! Physical file name
+    character*(*), intent(in) :: input_fname			! Physical file name
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
     integer, optional, intent(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
@@ -566,6 +567,8 @@ contains
 
     ! Local
     integer, parameter :: version=1
+    character (LEN=FileNameLen)            :: fname   ! Physical file name
+    character (LEN=FileNameLen)            :: path	   ! Physical path
 
     ! These determine how much extra to output
     logical, parameter :: debug=.false.
@@ -601,15 +604,17 @@ contains
     ! use PCF
 
     if ( use_PCF ) then
+      call split_path_name(input_fname, path, fname)
 
       processCli = GetPCFromRef(fname, mlspcf_l2clim_start, mlspcf_l2clim_end, &
-        & .true., ErrType, version)
+        & .true., ErrType, version, debugOption=debug)
 
       if(ErrType /= 0) then
         !    CALL MLSMessage (MLSMSG_Error, ModuleName, &
         !              &"Climatology file name unmatched in PCF")
         call announce_error (ROOT, &
-          &"Climatology file name " // trim(fname) // " unmatched in PCF")
+          &"Climatology file name " // trim(fname) // " unmatched in PCF", &
+          & error_number=ErrType)
         return
       endif
 
@@ -617,6 +622,7 @@ contains
         cliUnit, version )
 
     else
+      fname = input_fname
       ! use Fortran open
 
       if(debug) call output('opening ' // fname, advance = 'yes')
@@ -1048,6 +1054,9 @@ end module ncep_dao
 
 !
 ! $Log$
+! Revision 2.13  2001/06/04 23:57:40  pwagner
+! Splits path from l2cf-defined file name before getPCfromRef
+!
 ! Revision 2.12  2001/05/09 23:30:13  pwagner
 ! Detachable from toolkit
 !
