@@ -1475,7 +1475,7 @@ contains
               ! Otherwise, we call the forward model as ususal
               do k = 1, size(configIndices)
                 call forwardModel ( configDatabase(configIndices(k)), &
-                  & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
+                  & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian, vectorDatabase )
               end do ! k
               ! Forward model calls add_to_retrieval_timing
             end if
@@ -2241,6 +2241,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.251  2003/09/11 23:16:11  livesey
+! Now hands vector database onto forward model to support xStar/yStar in
+! linearized forward model.
+!
 ! Revision 2.250  2003/09/05 23:24:09  pwagner
 ! Skips calls to Retrieve, SIDS if SKIPRETRIEVAL
 !
