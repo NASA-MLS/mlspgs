@@ -32,7 +32,8 @@ module Molecules
   integer, parameter :: L_BR_79_O =      l_bro + 1
   integer, parameter :: L_BR_81_O =      l_br_79_o + 1
   integer, parameter :: L_C_13_O =       l_br_81_o + 1
-  integer, parameter :: L_CH3CL_35 =     l_c_13_o + 1
+  integer, parameter :: L_CH3CL =        l_c_13_o + 1
+  integer, parameter :: L_CH3CL_35 =     l_ch3cl + 1
   integer, parameter :: L_CH3CL_37 =     l_ch3cl_35 + 1
   integer, parameter :: L_CH3CN =        l_ch3cl_37 + 1
   integer, parameter :: L_CL_35_NO3 =    l_ch3cn + 1
@@ -48,7 +49,14 @@ module Molecules
   integer, parameter :: L_H2CO =         l_h2c_13_o + 1
   integer, parameter :: L_H2CO_18 =      l_h2co + 1
   integer, parameter :: L_H2O =          l_h2co_18 + 1
-  integer, parameter :: L_H2O2 =         l_h2o + 1
+  integer, parameter :: L_H2O_R1A =      l_h2o + 1
+  integer, parameter :: L_H2O_R1B =      l_h2o_r1a + 1
+  integer, parameter :: L_H2O_R2 =       l_h2o_r1b + 1
+  integer, parameter :: L_H2O_R3 =       l_h2o_r2 + 1
+  integer, parameter :: L_H2O_R4 =       l_h2o_r3 + 1
+  integer, parameter :: L_H2O_R5H =      l_h2o_r4 + 1
+  integer, parameter :: L_H2O_R5V =      l_h2o_r5h + 1
+  integer, parameter :: L_H2O2 =         l_h2o_r5v + 1
   integer, parameter :: L_H2O_18 =       l_h2o2 + 1
   integer, parameter :: L_H2O_V2 =       l_h2o_18 + 1
   integer, parameter :: L_HC_13_N =      l_h2o_v2 + 1
@@ -103,6 +111,7 @@ module Molecules
   data spec_tags(l_br_79_o)      / 00095001 /
   data spec_tags(l_br_81_o)      / 00097001 /
   data spec_tags(l_c_13_o)       / 00029001 /
+  data spec_tags(l_ch3cl)        / 00050007 /
   data spec_tags(l_ch3cl_35)     / 00050007 /
   data spec_tags(l_ch3cl_37)     / 00052009 /
   data spec_tags(l_ch3cn)        / 00041001 /
@@ -119,6 +128,13 @@ module Molecules
   data spec_tags(l_h2co)         / 00030004 /
   data spec_tags(l_h2co_18)      / 00032004 /
   data spec_tags(l_h2o)          / 00018003 /
+  data spec_tags(l_h2o_r1a)      / 00018003 /
+  data spec_tags(l_h2o_r1b)      / 00018003 /
+  data spec_tags(l_h2o_r2)       / 00018003 /
+  data spec_tags(l_h2o_r3)       / 00018003 /
+  data spec_tags(l_h2o_r4)       / 00018003 /
+  data spec_tags(l_h2o_r5h)      / 00018003 /
+  data spec_tags(l_h2o_r5v)      / 00018003 /
   data spec_tags(l_h2o2)         / 00034004 /
   data spec_tags(l_h2o_18)       / 00020003 /
   data spec_tags(l_h2o_v2)       / 00018005 /
@@ -202,6 +218,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_br_79_o) =      add_ident ( 'br_79_o' )
     lit_indices(l_br_81_o) =      add_ident ( 'br_81_o' )
     lit_indices(l_c_13_o) =       add_ident ( 'c_13_o' )
+    lit_indices(l_ch3cl) =        add_ident ( 'ch3cl' )
     lit_indices(l_ch3cl_35) =     add_ident ( 'ch3cl_35' )
     lit_indices(l_ch3cl_37) =     add_ident ( 'ch3cl_37' )
     lit_indices(l_ch3cn) =        add_ident ( 'ch3cn' )
@@ -218,6 +235,13 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_h2co) =         add_ident ( 'h2co' )
     lit_indices(l_h2co_18) =      add_ident ( 'h2co_18' )
     lit_indices(l_h2o) =          add_ident ( 'h2o' )
+    lit_indices(l_h2o_r1a) =      add_ident ( 'h2o_r1a' )
+    lit_indices(l_h2o_r1b) =      add_ident ( 'h2o_r1b' )
+    lit_indices(l_h2o_r2) =       add_ident ( 'h2o_r2' )
+    lit_indices(l_h2o_r3) =       add_ident ( 'h2o_r3' )
+    lit_indices(l_h2o_r4) =       add_ident ( 'h2o_r4' )
+    lit_indices(l_h2o_r5h) =      add_ident ( 'h2o_r5h' )
+    lit_indices(l_h2o_r5v) =      add_ident ( 'h2o_r5v' )
     lit_indices(l_h2o2) =         add_ident ( 'h2o2' )
     lit_indices(l_h2o_18) =       add_ident ( 'h2o_18' )
     lit_indices(l_h2o_v2) =       add_ident ( 'h2o_v2' )
@@ -280,6 +304,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.15  2002/07/24 22:26:45  livesey
+! Added the radiometer specific H2O's and a definitive CH3Cl
+!
 ! Revision 2.14  2002/07/18 22:05:26  vsnyder
 ! Alphabetize L_CL_35, L_CL_37
 !
