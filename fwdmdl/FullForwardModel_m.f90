@@ -141,6 +141,7 @@ contains
     integer :: MID                      ! NPC / 2
     integer :: MIF                      ! MIF number for tan_press(ptg_i)
     integer :: MINSUPERSET              ! Min. value of superset > 0
+    integer :: NCG                      ! Number of panels needing GL = Size(cg_inds)
     integer :: NGL                      ! Total # of GL points = Size(gl_inds)
     integer :: NGLMAX                   ! NGL if all panels need GL
     integer :: Nlvl                     ! Size of integration grid
@@ -179,6 +180,7 @@ contains
 
     integer, dimension(:), pointer :: C_INDS  ! Indices on coarse grid
     integer, dimension(:), pointer :: CHANNELORIGINS ! Does this band start at 0 or 1
+    integer, dimension(:), pointer :: CG_INDS ! Indices on coarse grid where GL needed
     integer, dimension(:), pointer :: F_INDS  ! Indices on fine grid
     integer, dimension(:), pointer :: GL_INDS ! Index of GL points -- subset of f_inds
     integer, dimension(:), pointer :: GRIDS ! Heights in ptgGrid for each tangent
@@ -471,8 +473,8 @@ contains
     nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
       & alpha_path_polarized_f, beta_path_c, beta_path_cloud_c, &
       & beta_path_phh_c, beta_path_w0_c, beta_path_f, beta_path_polarized, &
-      & c_inds, channelOrigins, d_rad_pol_df, d_rad_pol_dt, d_delta_df, d_delta_dt, &
-      & d_t_scr_dt, d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
+      & c_inds, channelOrigins, cg_inds, d_rad_pol_df, d_rad_pol_dt, &
+      & d_delta_df, d_delta_dt, d_t_scr_dt, d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
       & ddhidhidtl0, de_df, de_dt, del_s, del_zeta, deltau_pol, &
@@ -821,6 +823,7 @@ contains
     call allocate_test ( beta_path_cloud_c,   npc, 'beta_path_cloud_c', moduleName ) !JJ
     call allocate_test ( beta_path_w0_c,      npc, 'beta_path_w0_c',   moduleName ) !JJ
     call allocate_test ( c_inds,              npc, 'c_inds',           moduleName )
+    call allocate_test ( cg_inds,             npc, 'cg_inds',          moduleName )
     call allocate_test ( del_s,               npc, 'del_s',            moduleName )
     call allocate_test ( del_zeta,            npc, 'del_zeta',         moduleName )
     call allocate_test ( dhdz_path,       max_ele, 'dhdz_path',        moduleName )
@@ -1199,7 +1202,7 @@ contains
         c_inds(npc+1:) = 0
         ! And some fine grid extraction indices
         do_gl(:npc) = (/ .false., (.true., i=2,npc-1), .false. /)
-        call get_gl_inds ( do_gl(:npc), f_inds, nglMax )
+        call get_gl_inds ( do_gl(:npc), f_inds, cg_inds, nglMax, ncg )
 
         ! Compute z_path & p_path
         z_path(1:no_ele) = (/z_glgrid(MaxVert:tan_inds(ptg_i):-1), &
@@ -1631,7 +1634,7 @@ contains
                 & 0.5 * ( alpha_path_c(j) + alpha_path_c(j+1) ) * del_s(j)
           end do
 
-          call get_GL_inds ( do_gl(1:npc), gl_inds, ngl )
+          call get_GL_inds ( do_gl(1:npc), gl_inds, cg_inds, ngl, ncg )
           ! ngl is ng * count(do_gl)
 
           t_path_f(:ngl) = t_path(gl_inds(:ngl))
@@ -1677,9 +1680,9 @@ contains
 
           ! Compute radiative transfer ---------------------------------------
 
-            call rad_tran ( gl_inds(1:ngl), e_rflty, del_zeta(1:npc), &
-              & alpha_path_c(1:npc), ref_corr(1:npc), do_gl(1:npc),   &
-              & incoptdepth(1:npc), alpha_path_f(1:ngl),              &
+            call rad_tran ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty,     &
+              & del_zeta(1:npc), alpha_path_c(1:npc), ref_corr(1:npc),   &
+              & do_gl(1:npc), incoptdepth(1:npc), alpha_path_f(1:ngl),   &
               & dsdz_gw_path, t_script(1:npc),  &
               & tau(1:npc), RadV(frq_i), i_stop )
 
@@ -1702,11 +1705,11 @@ contains
                 & 0.25 * alpha_path_f(j)
             end do
 
-            call rad_tran_pol ( gl_inds(1:ngl), e_rflty, del_zeta(1:npc),     &
-              & alpha_path_polarized(:,1:npc), ref_corr(1:npc), do_gl(1:npc), &
-              & incoptdepth_pol(:,:,1:npc), deltau_pol(:,:,1:npc),            &
-              & alpha_path_polarized_f(:,1:ngl), dsdz_gw_path,                &
-              & ct, stcp, stsp, t_script(1:npc),  prod_pol(:,:,1:npc),        &
+            call rad_tran_pol ( gl_inds(1:ngl), cg_inds(1:ncg), e_rflty,         &
+              & del_zeta(1:npc), alpha_path_polarized(:,1:npc), ref_corr(1:npc), &
+              & do_gl(1:npc), incoptdepth_pol(:,:,1:npc), deltau_pol(:,:,1:npc), &
+              & alpha_path_polarized_f(:,1:ngl), dsdz_gw_path,                   &
+              & ct, stcp, stsp, t_script(1:npc),  prod_pol(:,:,1:npc),           &
               & tau_pol(:,:,1:npc), rad_pol, p_stop )
 
             if ( p_stop < 0 ) then ! exp(incoptdepth_pol(:,:,-p_stop)) failed
@@ -2354,6 +2357,7 @@ contains
     call deallocate_test ( beta_path_phh_c,  'beta_path_phh_c',  moduleName )   
     call deallocate_test ( beta_path_w0_c,   'beta_path_w0_c',   moduleName )   
     call deallocate_test ( c_inds,           'c_inds',           moduleName )
+    call deallocate_test ( cg_inds,          'cg_inds',          moduleName )
     call deallocate_test ( del_s,            'del_s',            moduleName )
     call deallocate_test ( do_gl,            'do_gl',            moduleName )
     call deallocate_test ( f_inds,           'f_inds',           moduleName )
@@ -2681,6 +2685,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.178  2003/11/04 01:57:15  vsnyder
+! Move trapezoid correction to a better place, cosmetics
+!
 ! Revision 2.177  2003/11/03 23:15:16  vsnyder
 ! Get rid of path_ds_dh procedure -- a one-liner used in one place
 !

@@ -170,8 +170,8 @@ contains
   end subroutine Path_Contrib_Polarized
 
   ! ------------------------------------------------  Get_GL_inds  -----
-  subroutine Get_GL_inds ( Do_GL, GL_Inds, NGL )
-  ! Fill the array that controls application of GL
+  subroutine Get_GL_inds ( Do_GL, GL_Inds, CG_Inds, NGL, NCG )
+  ! Fill the arrays that control application of GL
 
     use GLnp, only: NG
     use MLSCommon, only: IP
@@ -180,7 +180,10 @@ contains
                                                ! gl computation.  First and
                                                ! last are set false here.
     integer(ip), intent(out) :: GL_INDS(:)     ! Indices of where to do GL
+    integer(ip), intent(out) :: CG_INDS(:)     ! Indices on coarse path of
+                                               ! where to do GL
     integer(ip), intent(out) :: NGL            ! How much of GL_INDS to use
+    integer(ip), intent(out) :: NCG            ! How much of CG_INDS to use
 
     integer :: I, N_PATH
 
@@ -195,6 +198,7 @@ contains
     do_gl((/1,n_path/)) = .FALSE.
 
     ngl = 0
+    ncg = 0
     do i = 2, n_path-1 ! first and last elements of do_gl are false
       if ( do_gl(i) ) then
         ngl = ngl + ng
@@ -203,6 +207,8 @@ contains
         else
           gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glil
         end if
+        ncg = ncg + 1
+        cg_inds(ncg) = i
       end if
     end do
 
@@ -216,6 +222,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.16  2003/10/30 20:32:28  vsnyder
+! Simplify gl_inds computation
+!
 ! Revision 2.15  2003/10/09 19:30:36  vsnyder
 ! Simplify computation of gl_inds
 !
