@@ -105,6 +105,7 @@ contains
 
     ! Local variables.  CAN WE GET SOME COMMENTS FOR EACH OF THESE?
     integer :: END_IND
+    integer :: END_IND1
     integer :: HI_PT
     integer :: I
     integer :: ITER
@@ -122,6 +123,7 @@ contains
     integer :: SV_T
     integer :: SV_Z
     integer :: Z_COEFFS
+    integer :: TAN_PTR
 
     real(rp) :: CP2
     real(rp) :: CSQ
@@ -413,17 +415,56 @@ contains
         ! find which side of the tangent we are on
         if ( path_ind < n_vert + 1 ) then ! near observer side
           low_pt = jun(end_ind) + 1
-          hi_pt  = jun(st_ind) - 1
+          hi_pt  = MAX(jun(st_ind) - 1,1)
         else                              ! far observer side
           low_pt = jun(st_ind) - 1
-          hi_pt  = jun(end_ind) + 1
+          hi_pt  = MIN(jun(end_ind) + 1,n_cvf)
         end if
+        tan_ptr = 2 * n_vert * ((cvf_inds(low_pt)-1) / (2*n_vert) + 1)
+        IF (cvf_inds(jun(st_ind)) == tan_ptr - 2*n_vert + 1) THEN
+          CALL mlsmessage(mlsmsg_warning,modulename,'resorting to 1d option in metrics')
+! resort to 1 d equvalent
+          CALL allocate_test(eta_p,1,p_coeffs,'eta_p',modulename)
+          CALL get_eta_sparse(p_basis,(/phi_t((cvf_inds(low_pt)-1) &
+               & / (2*n_vert) + 1)/), eta_p)
+! this should be eta_p(1,p_coeffs)
+          DO i = st_ind, end_ind
+            h_grid(jun(i)) = SUM(h_ref(n_vert - MODULO(cvf_inds(jun(i))-1, &
+            & 2*n_vert),:)*eta_p(1,:)) - h_surf
+          enddo
+          call deallocate_test ( eta_p, 'eta_p', ModuleName )
+        ELSE IF (cvf_inds(jun(end_ind)) > tan_ptr - 1) THEN
+! calculate the path ending index.
+          CALL mlsmessage(mlsmsg_warning,modulename,'resorting to 1d option in metrics')
+          end_ind1 = st_ind + tan_ptr - cvf_inds(jun(st_ind))
+! resort to 1 d equvalent
+          CALL allocate_test(eta_p,1,p_coeffs,'eta_p',modulename)
+          CALL get_eta_sparse(p_basis,(/phi_t((cvf_inds(low_pt) - 1) &
+          & / (2*n_vert) + 1)/), eta_p)
+          DO i = st_ind, end_ind1
+            h_grid(jun(i)) = SUM(h_ref(MODULO(cvf_inds(jun(i))-1,2*n_vert) &
+                          & + 1 - n_vert,:)*eta_p(1,:)) - h_surf
+          enddo
+! This is in case the anomaly wraps to the next higher tangent level.
+          IF (end_ind1 < end_ind) THEN
+! resort to 1 d equvalent
+            CALL get_eta_sparse(p_basis,(/phi_t((cvf_inds(low_pt)-1) &
+                 & / (2*n_vert) + 2)/), eta_p)
+! this should be eta_p(1,p_coeffs)
+            DO i = end_ind1+1, end_ind
+              h_grid(jun(i)) = SUM(h_ref(n_vert - MODULO(cvf_inds(jun(i))-1, &
+              & 2*n_vert),:)*eta_p(1,:)) - h_surf
+            enddo
+          endif
+          call deallocate_test ( eta_p, 'eta_p', ModuleName )
+        else
 
-        ! Correct
-        h_grid(jun(st_ind):jun(end_ind)) = h_grid(low_pt) + &
+          ! Correct
+          h_grid(jun(st_ind):jun(end_ind)) = h_grid(low_pt) + &
              & (h_grid(hi_pt) - h_grid(low_pt)) * &
              & (cvf_z_grid(jun(st_ind):jun(end_ind))-cvf_z_grid(low_pt)) / &
              & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
+        endif
         st_ind = end_ind + 1
         if ( st_ind < no_of_bad_fits ) &
           & path_ind = modulo(cvf_inds(jun(st_ind))-1,2*n_vert) + 1
@@ -522,6 +563,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.20  2003/11/14 21:22:46  livesey
+! Bug fix and output tidy up
+!
 ! Revision 2.19  2003/06/27 23:43:34  vsnyder
 ! Remove unreferenced USE names
 !
