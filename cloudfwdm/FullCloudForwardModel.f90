@@ -15,7 +15,7 @@ module FullCloudForwardModel
 
   use Allocate_deallocate, only: Allocate_test, Deallocate_test
   use AntennaPatterns_m, only: ANTENNAPATTERNS
-  use CloudSkyModule, only: CLOUD_MODEL
+  use CloudySkyModule, only: CLOUD_MODEL
   use CloudySkyRadianceModel, only: CloudForwardModel
   use Hdf, only: DFACC_READ, DFACC_CREATE
   use HDFEOS, only: SWOPEN,     SWCLOSE
@@ -981,6 +981,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.50  2001/10/08 21:42:29  dwu
+! *** empty log message ***
+!
 ! Revision 1.49  2001/10/08 21:35:33  dwu
 ! *** empty log message ***
 !
