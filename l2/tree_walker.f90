@@ -146,18 +146,21 @@ contains ! ====     Public Procedures     ==============================
         if ( toggle(gen) .and. levels(gen) > 0 ) call dump ( chunks )
         call add_to_section_timing ( 'scan_divide', t1)
       case ( z_construct, z_fill, z_join, z_retrieve )
-        if ( parallel%master ) then 
-          call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
-            select case ( decoration(subtree(1,son)) ) ! section index
-            case ( z_construct )
-              call add_to_section_timing ( 'construct', t1)
-            case ( z_fill )
-              call add_to_section_timing ( 'fill', t1)
-            case ( z_join )
-              call add_to_section_timing ( 'join', t1)
-            case ( z_retrieve )
-              call add_to_section_timing ( 'retrieve', t1)
-            end select
+        ! In case where there are no chunks or we're a master do special stuff
+        if ( parallel%master .or. &
+          & lbound(chunks,1) > ubound(chunks,1) ) then 
+          if ( parallel%master ) &
+            & call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
+          select case ( decoration(subtree(1,son)) ) ! section index
+          case ( z_construct )
+            call add_to_section_timing ( 'construct', t1)
+          case ( z_fill )
+            call add_to_section_timing ( 'fill', t1)
+          case ( z_join )
+            call add_to_section_timing ( 'join', t1)
+          case ( z_retrieve )
+            call add_to_section_timing ( 'retrieve', t1)
+          end select
         else
           do chunkNo = lbound(chunks,1), ubound(chunks,1)
             if ( index(switches,'chu') /= 0 ) then
@@ -282,6 +285,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.70  2001/11/16 17:24:13  livesey
+! Now calls new ChunkDivide routine.
+!
 ! Revision 2.69  2001/11/09 23:17:22  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
