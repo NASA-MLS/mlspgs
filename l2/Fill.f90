@@ -3839,7 +3839,7 @@ contains ! =====     Public Procedures     =============================
         & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
       if ( .not. ValidateVectorQuantity ( usbFraction, &
         & quantityType=(/l_limbSidebandFraction/), &
-        & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
+        & signal=(/radiance%template%signal/), sideband=(/1/) ) ) &
         & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
 
       ! Now do the work
@@ -6977,6 +6977,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.294  2004/11/24 22:51:37  livesey
+! Bug fix in off line sideband folding
+!
 ! Revision 2.293  2004/11/08 21:57:00  livesey
 ! Added handling of 'badRange' in ASCII fill
 !
