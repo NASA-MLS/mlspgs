@@ -128,7 +128,7 @@ contains ! =====     Public Procedures     =============================
     use L3ASCII, only: L3ASCII_INTERP_FIELD
     use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
       & DOVGRIDSMATCH, DOQTYSDESCRIBESAMETHING
-    use MatrixModule_0, only: Sparsify, MatrixInversion
+    use MatrixModule_0, only: Sparsify, MatrixInversion, MatrixElement_T, M_Full, CreateBlock 
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
       & DestroyMatrix, Dump, GetActualMatrixFromDatabase, GetDiagonal, &
       & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_Plain, K_SPD, &
@@ -6494,16 +6494,18 @@ contains ! =====     Public Procedures     =============================
     end subroutine FillQualityFromChisq
 
     ! -------------------------------------- FillWithCombinedChannels ----------
-    subroutine FillWithCombinedChannels ( key, quantity, sourceQuantity )
+    subroutine FillWithCombinedChannels ( key, quantity, sourceQuantity, mapping )
       ! This routine takes a (typically radiance) quantity on one set of channels
       ! and combines the channels together appropriately to make them representative
       ! of the data in another (presumably at a finer resolution.
       integer, intent(in) :: KEY        ! Tree node
       type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
       type (VectorValue_T), intent(in) :: SOURCEQUANTITY ! Quantitiy on finer(?) channel grid
+      type (MatrixElement_T), intent(inout), optional :: MAPPING ! A matrix_0 mapping
       ! Local variables
       type (Signal_T) :: signal, sourceSignal
       integer :: COUT, CIN              ! Channel counters
+      integer :: IOUT, IIN              ! Indices
       integer :: SURF                   ! Loop counter
       real(r8) :: CENTER, HALFWIDTH     ! Channel locations
       integer, dimension(:), pointer :: NOINSIDE ! Number of channels that were caught
@@ -6529,6 +6531,13 @@ contains ! =====     Public Procedures     =============================
 
       nullify ( noInside )
       call Allocate_test ( noInside, quantity%template%noChans, 'noInside', ModuleName )
+
+      ! Possibly setup a mapping matrix
+      if ( present ( mapping ) ) then
+        call CreateBlock ( mapping, &
+          & quantity%template%instanceLen, sourceQuantity%template%instanceLen, &
+          & kind=m_full )
+      end if
 
       ! Do a quick first pass to get the numbers in each output channel
       do cOut = 1, quantity%template%noChans
@@ -6556,10 +6565,14 @@ contains ! =====     Public Procedures     =============================
           if ( ( sourceSignal%frequencies(cIn) >= ( center - halfWidth ) ) .and. &
             &  (  sourceSignal%frequencies(cIn) < ( center + halfWidth ) ) ) then
             do surf = 0, quantity%template%noSurfs - 1 ! 0..n-1 makes indexing easier
-              quantity%values ( cOut + surf * quantity%template%noChans, : ) = &
-                & quantity%values ( cOut +  surf * quantity%template%noChans, : ) + &
-                & sourceQuantity%values ( cIn + surf * sourceQuantity%template%noChans, : ) / &
-                &   noInside(cOut)
+              iOut = cOut + surf * quantity%template%noChans
+              iIn = cIn + surf * sourceQuantity%template%noChans
+              quantity%values ( iOut, : ) = quantity%values ( iOut, : ) + &
+                & sourceQuantity%values ( iIn, : ) / noInside(cOut)
+              ! Possibly fill mapping matrix
+              if ( present ( mapping ) ) then
+                mapping%values ( iOut, iIn ) = 1.0 / noInside(cOut)
+              end if
             end do
           end if
         end do
@@ -6907,6 +6920,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.285  2004/09/24 03:38:26  livesey
+! Added optional mapping matrix output to combine channels fill
+!
 ! Revision 2.284  2004/09/21 22:59:18  livesey
 ! Another change to the chi-squared to quality conversion.
 !
