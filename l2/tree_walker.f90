@@ -24,7 +24,7 @@ module TREE_WALKER
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
   subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, &
-    & COUNTCHUNKS, SINGLECHUNK, FILEDATABASE )
+    & COUNTCHUNKS, SINGLECHUNK, LASTCHUNKIN, FILEDATABASE )
 
     use AntennaPatterns_m, only: Destroy_Ant_Patterns_Database
     use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase, &
@@ -93,6 +93,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
     logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
     integer, intent(in) ::     SINGLECHUNK ! Just run this one chunk (0 if all)
+    integer, intent(in) ::     LASTCHUNKIN ! Just run range [single,last]
     type (MLSFile_T), dimension(:), pointer ::     FILEDATABASE
 
     integer ::                                  chunkNo                  ! Index of Chunks
@@ -204,6 +205,8 @@ contains ! ====     Public Procedures     ==============================
             endif
             firstChunk = singleChunk
             lastChunk = singleChunk
+            if ( lastChunkIn > firstChunk ) &
+              & lastChunk = min(lastChunkIn, size(chunks))
           else
             firstChunk = 1
             lastChunk = size(chunks)
@@ -227,7 +230,7 @@ contains ! ====     Public Procedures     ==============================
           & ( parallel%slave .and. parallel%fwmParallel ) ) then
           if ( parallel%master .and. .not. parallel%fwmParallel ) then
             if ( singleChunk /= 0 ) then
-              call ReduceChunkDatabase(chunks, singleChunk, singleChunk )
+              call ReduceChunkDatabase(chunks, singleChunk, lastChunk )
             endif
             call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
           end if
@@ -304,7 +307,8 @@ subtrees:   do while ( j <= howmany )
 
             ! Now, if we're dealing with more than one chunk destroy stuff
             ! Otherwise, we'll save them as we may need to output them as l2pc files.
-            if ( size(chunks) > 1 .and. singleChunk == 0 ) then
+            if ( size(chunks) > 1 .and. &
+              & ( singleChunk == 0 .or. lastChunkIn /= 0 ) ) then
               call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
                 & mifGeolocation, hGrids )
               call DestroyVectorDatabase ( vectors )
@@ -338,7 +342,8 @@ subtrees:   do while ( j <= howmany )
 
         ! For case where there was one chunk, destroy vectors etc.
         ! This is to guard against destroying stuff needed by l2pc writing
-        if ( size(chunks) == 1 .or. singleChunk /= 0 ) then
+        if ( size(chunks) == 1 .or. &
+          & (singleChunk /= 0 .and. lastChunk == 0) ) then
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation, hGrids )
           call DestroyVectorDatabase ( vectors )
@@ -429,6 +434,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.117  2003/10/09 23:31:26  pwagner
+! Changed grid switch to gridd
+!
 ! Revision 2.116  2003/09/03 15:56:18  cvuu
 ! Move the do loop over the forwardModel inside subroutine PrintForwardModelTiming
 !
