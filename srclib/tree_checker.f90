@@ -19,7 +19,7 @@ module TREE_CHECKER
     &                          RANGE, REDECLARE, SECTION, SPEC, STR_VALUE, &
     &                          UNDECLARED, TYPE_MAP, TYPE_NAME, UNITS_NAME
   use INIT_TABLES_MODULE, only: DATA_TYPE_INDICES, FIELD_FIRST, FIELD_INDICES, &
-    &                           FIELD_LAST, PHYQ_DIMENSIONLESS, &
+    &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
     &                           SECTION_ORDERING, T_BOOLEAN
   use INTRINSIC, only: ALL_FIELDS, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
@@ -37,7 +37,7 @@ module TREE_CHECKER
   implicit NONE
   private
 
-  public :: CHECK_TREE
+  public :: CHECK_TREE, CHECK_TYPE
 
 ! -----     Private declarations     -----------------------------------
   integer, private :: ERROR   ! 0 => No errors
@@ -55,7 +55,8 @@ module TREE_CHECKER
   integer, private, parameter :: NO_SUCH_REFERENCE = NO_SUCH_FIELD + 1
   integer, private, parameter :: NOT_FIELD_OF = NO_SUCH_REFERENCE + 1
   integer, private, parameter :: NOT_FUNC = NOT_FIELD_OF + 1
-  integer, private, parameter :: NOT_NAME = NOT_FUNC + 1
+  integer, private, parameter :: NOT_LIT_OF_TYPE = NOT_FUNC + 1
+  integer, private, parameter :: NOT_NAME = NOT_LIT_OF_TYPE + 1
   integer, private, parameter :: NOT_NAME_OR_STRING = NOT_NAME + 1
   integer, private, parameter :: NOT_NUMERIC = NOT_NAME_OR_STRING + 1
   integer, private, parameter :: NOT_SECTION = NOT_NUMERIC + 1
@@ -74,13 +75,16 @@ module TREE_CHECKER
   logical, private :: NO_DUP_FLAG       ! Duplicate named fields prohibited
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
+
 ! ---------------------------------------------------  CHECK_TREE  -----
   subroutine CHECK_TREE ( ROOT, ERROR_FLAG, FIRST_SECTION, HOW_MANY_SECTIONS )
   ! Traverse the abstract syntax tree starting at ROOT, which should
@@ -117,6 +121,33 @@ contains ! ====     Public Procedures     ==============================
     if ( present(how_many_sections) ) how_many_sections = num_sections
     if ( toggle(con) ) call trace_end ( 'CHECK_TREE' )
   end subroutine CHECK_TREE
+
+  ! -------------------------------------------------  Check_Type  -----
+  logical function Check_Type ( Type_Index, Lit_Index )
+  ! Return answer to "Is Lit_Index a literal of type Type_Index?"
+  ! This function is not used by other procedures in this module.
+  ! It is here instead of in declaration_table because this module has
+  ! access to data_type_indices and lit_indices from init_tables_module,
+  ! no matter which init_tables_module is used.
+
+    integer, intent(in) :: Type_Index
+    integer, intent(in) :: Lit_Index
+
+    type(decls) :: Lit_Decl, Type_Decl
+
+    ! This presumably succeeds:
+    type_decl = get_decl(data_type_indices(type_index), type_name)
+    ! This presumably also succeeds:
+    lit_decl = get_decl(lit_indices(lit_index), enum_value)
+    check_type = .true.
+    do
+      if ( lit_decl%tree == type_decl%tree ) return
+      if ( lit_decl%prior == null_decl ) exit
+      lit_decl = prior_decl(lit_decl, enum_value)
+    end do
+    check_type = .false.
+  end function Check_Type
+
 ! =====     Private Procedures     =====================================
 ! -----------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( WHERE, CODE, SONS, FIELDS )
@@ -922,7 +953,7 @@ m:              do j = 3, nsons(field)
       call announce_error ( son, out_of_place, (/ sect /) )
     else
       spec_decl = get_decl( sub_rosa(son), spec ) ! Decl of son of type "spec"
-      if ( spec_decl%type == null_decl ) then
+      if ( spec_decl%type == empty ) then
         call announce_error ( son, not_spec )
       else
         call decorate ( son, spec_decl%tree )
@@ -963,9 +994,17 @@ m:              do j = 3, nsons(field)
     end if
     if ( toggle(con) ) call trace_end ( 'SPEC_ARGS' )
   end subroutine SPEC_ARGS
+
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.22  2004/05/29 02:42:16  vsnyder
+! Rearrange function definition stuff
+!
 ! Revision 1.21  2004/05/29 00:54:46  vsnyder
 ! Improve some error checking and handling
 !
