@@ -45,6 +45,7 @@ module TABLE_GENERATOR
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
@@ -332,9 +333,16 @@ contains ! ====     Public Procedures     ==============================
   end subroutine SPEC_ARGS
 
   end subroutine GENERATE_TABLE
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module TABLE_GENERATOR
 
 ! $Log$
+! Revision 2.6  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.5  2002/06/26 22:02:19  vsnyder
 ! Change 'cell' to intent(inout) in 'fillCell'
 !

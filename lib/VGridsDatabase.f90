@@ -41,6 +41,7 @@ module VGridsDatabase
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 contains
@@ -222,9 +223,16 @@ contains
     
   end subroutine PVMUnpackVgrid
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.6  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.5  2002/10/05 00:41:12  livesey
 ! Added pvm pack and unpack stuff
 !

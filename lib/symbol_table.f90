@@ -29,6 +29,7 @@ module SYMBOL_TABLE
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -223,9 +224,16 @@ contains
     return
   end subroutine INCREASE_SYMBOLS
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.6  2002/10/08 00:09:14  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.5  2002/08/21 20:37:48  vsnyder
 ! Cosmetic changes
 !
