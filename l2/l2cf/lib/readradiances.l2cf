@@ -25,7 +25,7 @@ begin Fill
     explicitValues = !scanModelPrecision, /spread
   Fill, quantity=measurementNoise.scanResidualTHz, method=explicit, $
     explicitValues = !scanModelPrecision, /spread
-  !ifelse(!substr(!cleannoisy,0,5),noisy,{
+  !ifelse(!substr(!cleanNoisy,0,5),noisy,{
      Fill, quantity=measurement.scanResidualGHz, method=addNoise, $
        sourceQuantity=cleanMeasurement.scanResidualGHz, $
        noise=measurementNoise.scanResidualGHz, seed = [ 0, 10000 ]
@@ -36,6 +36,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.6  2004/06/24 21:57:59  livesey
+; Fix bug to have it add noise on scan residual for noisy and noisy-cld.
+;
 ; Revision 1.5  2004/02/03 21:43:56  livesey
 ; Updated handling of chisqBinned stuff
 ;
