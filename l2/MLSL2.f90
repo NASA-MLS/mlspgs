@@ -78,7 +78,7 @@ program MLSL2
     call getarg ( i, line )
     if ( line(1:4) == '-Wl,' ) then     ! skip Lahey/Fujitsu run-time options
       i = i + 1
-      call NextPVMArg(trim(line))
+      call NextPVMArg(trim(line)//' ')
       cycle
     end if
     if ( line(1:2) == '--' ) then       ! "word" options
@@ -111,7 +111,7 @@ program MLSL2
         call InitParallel
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
-        call NextPVMArg(trim(word))
+        call NextPVMArg(trim(word)//' ')
       else if ( line(3+n:7+n) == 'slave' ) then
         copyArg=.false.
         parallel%slave = .true.
@@ -130,7 +130,7 @@ program MLSL2
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
-        call NextPVMArg(trim(line))
+        call NextPVMArg(trim(line)//' ')
         exit
       else
         print *, 'unrecognized option ', trim(line), ' ignored.'
@@ -185,11 +185,11 @@ program MLSL2
         end select
       end do
     else    
-      call NextPVMArg(trim(line))
+      call NextPVMArg(trim(line)//' ')
       exit ! This must be the l2cf filename
     end if
     i = i + 1
-    if ( copyArg ) call NextPVMArg(trim(line))
+    if ( copyArg ) call NextPVMArg(trim(line)//' ')
   end do
 
   if( index(switches, '?') /= 0 .or. index(switches, 'hel') /= 0 ) then
@@ -315,6 +315,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.48  2001/05/25 01:03:47  livesey
+! Working parallel version
+!
 ! Revision 2.47  2001/05/23 23:21:51  pwagner
 ! Did the same for options, switches
 !
