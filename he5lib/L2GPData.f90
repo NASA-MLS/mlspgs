@@ -51,7 +51,7 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
    CHARACTER (len=*), PARAMETER :: GEO_FIELD5 = 'SolarZenithAngle'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD6 = 'LineOfSightAngle'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD7 = 'OrbitGeodeticAngle'
-   CHARACTER (len=*), PARAMETER :: GEO_FIELD8 = 'chunkNumber'
+   CHARACTER (len=*), PARAMETER :: GEO_FIELD8 = 'ChunkNumber'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD9 = 'Pressure'
    CHARACTER (len=*), PARAMETER :: GEO_FIELD10= 'frequency'
 
@@ -1351,6 +1351,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.7  2001/07/11 19:01:16  pumphrey
+! quality->Quality, status->Status.
+!
 ! Revision 1.6  2001/04/27 07:48:54  pumphrey
 ! Many nested loops in l3ascii replaced with array ops. Small fixes
 ! (e.g. spelling mistakes) in other modules.
