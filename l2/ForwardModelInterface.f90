@@ -636,7 +636,7 @@ contains ! =====     Public Procedures     =============================
     print*,'phiWindow:',phiWindow
     print*,'noSpecies:',noSpecies
     print*,'maxNoFSurfs:',maxNoFSurfs
-!   fmStat%maf = 3                      ! DEBUG, Zvi
+    fmStat%maf = 3                      ! DEBUG, Zvi
     print*,'MAF:',fmStat%maf
 
     ! Work out which channels are used
@@ -1382,12 +1382,16 @@ contains ! =====     Public Procedures     =============================
       call deallocate_test ( ifm%dh_dt_glgrid, 'dh_dt_glgrid', ModuleName )
       call deallocate_test ( ifm%dhdz_glgrid, 'dhdz_glgrid', ModuleName )
       call deallocate_test ( ifm%tan_hts,'tan_hts', ModuleName )
+      call deallocate_test ( ifm%tan_temp,'tan_temp', ModuleName )
       call deallocate_test ( ifm%tan_dh_dt, 'tan_dh_dt', ModuleName )
+
+      call deallocate_test ( grids, 'grids',  ModuleName )
+      call deallocate_test ( radV, 'radV', ModuleName )
 
     end if
 
     ! ** DEBUG, Zvi
-    !    if ( i > -22) Stop
+         if ( i > -22) Stop
     ! ** END DEBUG
 
     Return
@@ -1441,8 +1445,8 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
-! Revision 2.93  2001/04/19 06:46:35  zvi
-! Fixing Memory leaks ..
+! Revision 2.94  2001/04/19 08:13:06  zvi
+! Some more leaks..
 !
 ! Revision 2.92  2001/04/17 09:16:12  zvi
 ! Taking care of a whole buch of deallocation statements ..
