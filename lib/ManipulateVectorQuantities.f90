@@ -24,7 +24,7 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
 
     ! ------------------------------ FindClosestInstances -----------------
     subroutine FindClosestInstances(referenceQuantity,soughtQuantity,&
-         referenceIndices)
+         referenceIndices, soughtInstance)
       ! This subroutine finds the instance (i.e. profile) in a stacked
       ! quantity that is closest to an instance of another quantity which is
       ! typically unstacked or incoherent (e.g. a minor frame quantity such as
@@ -38,16 +38,17 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
       ! interpolation will be performed.
 
       ! Dummy arguments
-      type (VectorValue_T), intent(IN) :: referenceQuantity ! e.g. temperature
-      type (VectorValue_T), intent(IN) :: soughtQuantity ! e.g. ptan, radiance
-      integer, dimension(soughtQuantity%template%noInstances), &
-           intent(OUT) :: referenceIndices ! Result
+      type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
+      type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+      integer, dimension(:), intent(out) :: referenceIndices ! Result
+      integer, optional, intent(in) :: soughtInstance ! One instance to find
       
       ! Local variables
       real (r8), dimension(-1:1) :: costs
-      integer :: soughtInstance ! Loop counter
+      integer :: soughtInstanceIndex ! Loop counter
       integer :: instanceOffset ! Loop counter
       integer :: referenceIndex ! Index into reference quantity
+      integer :: first, last    ! Loop limits
 
       integer, dimension(1) :: minlocResult
 
@@ -57,33 +58,41 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
       if (.not. referenceQuantity%template%stacked) &
            call MLSMessage(MLSMSG_Error,ModuleName,&
            'Reference quantity must be stacked')
+
+      if ( present ( soughtInstance ) ) then
+        first = soughtInstance
+        last = soughtInstance
+      else
+        first = 1
+        last = soughtQuantity%template%noInstances
+      end if
       
       ! First we're going to look for the instance within the reference
       ! quantity that starts below the current one.
 
       call Hunt(referenceQuantity%template%phi(1,:), &
-        & soughtQuantity%template%phi(1,:), referenceIndices, &
+        & soughtQuantity%template%phi(1,first:last), referenceIndices, &
         & allowTopValue=.true.)
 
       ! Now we refine these by looking at the instances found above and the
       ! ones above and below, and choosing the one that is closest over the
       ! entire vertical range.
 
-      do soughtInstance=1,soughtQuantity%template%noInstances
+      do soughtInstanceIndex = first, last
          do instanceOffset= -1,1 ! Look below, at and above
             ! Look into reference quantity, make sure we don't fall off end
-            referenceIndex=referenceIndices(soughtInstance)+instanceOffset
+            referenceIndex=referenceIndices(soughtInstanceIndex)+instanceOffset
             referenceIndex=min(max(referenceIndex,1),&
                  referenceQuantity%template%noInstances)
 
             ! Assess cost for these
             costs(instanceOffset)=sum(abs(&
                  referenceQuantity%template%phi(1,referenceIndex)-&
-                 soughtQuantity%template%phi(:,soughtInstance)))
+                 soughtQuantity%template%phi(:,soughtInstanceIndex)))
          end do
          minLocResult=minloc(costs)
          ! Choose best
-         referenceIndices(soughtInstance)=referenceIndices(soughtInstance)+&
+         referenceIndices(soughtInstanceIndex)=referenceIndices(soughtInstanceIndex)+&
               minlocResult(1)-2 ! Correct for the -1:1 indexing
       end do
 
@@ -92,6 +101,24 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
            referenceQuantity%template%noInstances)
 
     end subroutine FindClosestInstances
+
+    ! ---------------------------------------- FindOneClosestInstance -----
+    integer function FindOneClosestInstance ( referenceQuantity, &
+      soughtQuantity, instance )
+      ! This call FindClosestInstances, but for a single instance only
+      type (VectorValue_T), intent(in) :: referenceQuantity ! e.g. temperature
+      type (VectorValue_T), intent(in) :: soughtQuantity ! e.g. ptan, radiance
+      integer, intent(in) :: instance
+
+      ! Local variables
+      integer, dimension(1) :: tempResult
+      
+      ! Executable code
+      call FindClosestInstances ( referenceQuantity, soughtQuantity, &
+        & tempResult, soughtInstance=instance)
+      FindOneClosestInstance = tempResult(1)
+
+    end function FindOneClosestInstance
 
      ! --------------------------------------- DoHGridsMatch --------------
     logical function DoHGridsMatch ( a, b )
@@ -143,6 +170,12 @@ module ManipulateVectorQuantities ! Various routines for manipulating vectors
   end module ManipulateVectorQuantities
   
 ! $Log$
+! Revision 2.8  2001/09/09 21:17:30  livesey
+! Imported FindOneClosestInstance from branch
+!
+! Revision 2.7.2.1  2001/09/08 23:46:40  livesey
+! Added FindOneClosestInstance
+!
 ! Revision 2.7  2001/05/11 00:03:41  livesey
 ! Fixed but with DoVGridsMatch
 !
