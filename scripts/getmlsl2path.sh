@@ -10,7 +10,7 @@ case "$MACHINE" in
     headnode | sum* )
 	SUMS=1
 	DESKTOP=0 ;;
-    mach* )
+    mach* | soundbarrier )
 	SOUNDBARRIER=1
 	DESKTOP=0 ;;
 esac
@@ -73,6 +73,10 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.2  2002/11/27 18:26:48  livesey
+# Got rid of the distinction between sums and the rest of the scf.
+# Probably don't need to worry about the l2pcs as much any more.
+#
 # Revision 1.1  2002/11/21 17:30:53  livesey
 # First version
 #
