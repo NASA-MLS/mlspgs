@@ -75,7 +75,7 @@ begin Fill
   ;; ----------------- Avoiding l1boa
 
   Fill, quantity=apriori.orbitInclination, $
-    method=explicit, explicitValues=98.145 degrees
+    method=explicit, explicitValues=98.145 degrees, /spread
 
   ;; Get an approximate line of sight velocity
   Fill, quantity = apriori.losVelGHz, method = explicit, $
@@ -91,6 +91,8 @@ begin Fill
   ;; The presumption is that we don't need them for an l2pc calculation.
   },{
   ;; ----------------- Using l1boa
+  Fill, quantity=apriori.orbitInclination, method=l1b
+
   ;; Geocentric altitudes
   Fill, quantity=apriori.scGeocAlt, method=l1b
   Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
