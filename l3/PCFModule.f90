@@ -23,7 +23,7 @@ MODULE PCFModule
 ! Contents:
 
 ! Subroutines -- ExpandFileTemplate
-!                GetFileFromPCF
+!                SearchPCFNames
 
 ! Remarks:  This module contains subroutines related to getting file names from
 !           the PCF.
@@ -142,7 +142,7 @@ CONTAINS
 
       CHARACTER (LEN=FileNameLen) :: pcfName
 
-      INTEGER :: i, returnStatus
+      INTEGER :: i, returnStatus, version
 
 ! Initializations
 
@@ -155,7 +155,9 @@ CONTAINS
 
 ! Retrieve the PCF name
 
-         returnStatus = Pgs_pc_getReference(i, 1, pcfName)
+         version = 1
+
+         returnStatus = Pgs_pc_getReference(i, version, pcfName)
 
          IF (returnStatus /= PGS_S_SUCCESS) CYCLE
 
@@ -178,3 +180,6 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.1  2000/10/17 20:31:58  nakamura
+! Module for getting file names based on input in the PCF and CF.
+!
