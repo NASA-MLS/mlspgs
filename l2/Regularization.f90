@@ -395,8 +395,7 @@ contains
           ni = a%col%vec%quantities(a%col%quant(ib))%template%noInstances
           j = 0
           do i = ib, nb            ! Enumerate the blocks for this quantity
-            if ( a%col%vec%quantities(a%col%quant(ib))%template%quantityType == &
-               & a%col%vec%quantities(a%col%quant(i))%template%quantityType ) then
+            if ( a%col%quant(ib) == a%col%quant(i) ) then
               j = j + 1
               insts(j) = i
             end if
@@ -602,6 +601,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.25  2002/08/29 16:18:39  livesey
+! Bug fix in horizontal regularization
+!
 ! Revision 2.24  2002/08/28 01:31:23  vsnyder
 ! Yet more blunders in horizontal Tikhonov regularization
 !
