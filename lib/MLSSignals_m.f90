@@ -32,7 +32,7 @@ module MLSSignals_M
   public :: Dump_Bands, Dump_Radiometers, Dump_Signals, Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetModuleFromRadiometer
   public :: GetModuleFromSignal, GetModuleIndex, GetModuleName
-  public :: GetRadiometerFromSignal, GetRadiometerName, GetSignalName
+  public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MLSSignals
 
   ! =====     Defined Operators and Generic Identifiers     ==============
@@ -856,6 +856,14 @@ contains
 
   end subroutine GetRadiometerName
 
+  ! --------------------------------------------------- GetSignal ------
+  type (Signal_T) function GetSignal(signal)
+    ! This routine simply returns the signal data structure
+    integer, intent(in) :: SIGNAL       ! Requested signal
+    
+    GetSignal=signals(decoration(decoration(signal)))
+  end function GetSignal    
+
   ! ----------------------------------------------  GetSignalName  -----
   subroutine GetSignalName(signal, string_text, noRadiometer, noBand, &
     & noSwitch, noSpectrometer, noChannels, noSuffix)
@@ -950,6 +958,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.4  2001/03/15 18:42:58  livesey
+! Added GetSignal
+!
 ! Revision 2.3  2001/03/15 18:39:42  vsnyder
 ! Periodic commit
 !
