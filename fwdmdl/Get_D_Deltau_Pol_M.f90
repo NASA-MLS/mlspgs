@@ -266,11 +266,14 @@ contains
     logical, intent(in) :: do_gl(:)         ! Indicates where on the coarse path
       !                                       to do gl integrations.
     real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
-      !                                       on entire grid.
+      !                                       on entire grid.  Only the
+      !                                       gl_inds part is used.
     real(rp), intent(in) :: dh_dz_gw(:)     ! path height wrt zeta derivative * gw.
-      !                                       on entire grid.
+      !                                       on entire grid.  Only the
+      !                                       gl_inds part is used.
     real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative * gw.
-      !                                       on entire grid.
+      !                                       on entire grid.  Only the
+      !                                       gl_inds part is used.
     complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
       !                                       optical depth.  2 x 2 x path
     real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
@@ -594,6 +597,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.17  2003/11/04 01:56:19  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.16  2003/11/01 03:03:46  vsnyder
 ! Use ds_dz_gw instead of ds_dh, dh_dz and gw; use del_zeta from FullForwardModel
 !
