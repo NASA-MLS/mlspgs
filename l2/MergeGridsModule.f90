@@ -6,11 +6,6 @@ module MergeGridsModule
   ! This module contains code for merging operational gridded data with apriori
   ! information.
 
-  ! Moving this into MergeGrids causes lf95 v6.10c to have a SIGSEGV,
-  ! as of 20 Aug 02.  Move it when the compiler is repaired.
-  use GriddedData, only: GRIDDEDDATA_T, SETUPNEWGRIDDEDDATA, &
-    & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE
-
   implicit none
   private
 
@@ -28,9 +23,11 @@ contains ! =================================== Public procedures
 
   ! ----------------------------------------- MergeGrid
 
-  subroutine MergeGrids ( root, griddedData )
+  subroutine MergeGrids ( root, griddedDataBase )
 
     use Expr_m, only: EXPR
+    use GriddedData, only: GRIDDEDDATA_T, SETUPNEWGRIDDEDDATA, &
+      & ADDGRIDDEDDATATODATABASE, V_IS_PRESSURE
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
       & F_SCALE, S_MERGE
     use L3ASCII, only: L3ASCII_INTERP_FIELD
@@ -44,7 +41,7 @@ contains ! =================================== Public procedures
     use Units, only: PHYQ_Length, PHYQ_Pressure
 
     integer, intent(in) :: ROOT         ! Tree root
-    type (GriddedData_T), dimension(:), pointer :: griddedData ! Database
+    type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
     
     ! Local variables
     integer :: I                        ! Loop counter
@@ -66,8 +63,8 @@ contains ! =================================== Public procedures
       end if
 
       if ( get_spec_id(key) == s_merge ) then
-        call decorate ( key, AddGriddedDataToDatabase ( griddedData, &
-          & MergeOneGrid ( key, griddedData ) ) )
+        call decorate ( key, AddgriddedDataToDatabase ( griddedDataBase, &
+          & MergeOneGrid ( key, griddedDataBase ) ) )
       else
         ! Shouldn't get here is parser worked?
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -78,10 +75,10 @@ contains ! =================================== Public procedures
   contains
 
     ! ----------------------------------------- MergeOneGrid
-    type (GriddedData_T) function MergeOneGrid ( root, griddedData ) &
+    type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
       & result ( newGrid )
       integer, intent(in) :: ROOT         ! Tree node
-      type (GriddedData_T), dimension(:), pointer :: GRIDDEDDATA ! Database
+      type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
 
       ! This routine creates a new grid being a merge of two others.
       ! The operational grid forms the bottom of the dataset
@@ -124,8 +121,8 @@ contains ! =================================== Public procedures
       real (r8) :: Z                      ! One 'height'
       real (r8) :: Z1, Z2                 ! Range of transition region
 
-      type (GriddedData_T), pointer :: OPERATIONAL
-      type (GriddedData_T), pointer :: CLIMATOLOGY
+      type (griddedData_T), pointer :: OPERATIONAL
+      type (griddedData_T), pointer :: CLIMATOLOGY
 
       ! Executable code
 
@@ -141,9 +138,9 @@ contains ! =================================== Public procedures
         field_index = decoration(field)
         select case ( field_index )
         case ( f_operational ) 
-          operational => griddedData ( decoration ( decoration ( value ) ) )
+          operational => griddedDataBase ( decoration ( decoration ( value ) ) )
         case ( f_climatology )
-          climatology => griddedData ( decoration ( decoration ( value ) ) )
+          climatology => griddedDataBase ( decoration ( decoration ( value ) ) )
         case ( f_height )
           call expr ( value, units, values )
           if ( units(1) /= phyq_pressure ) call MLSMessage ( &
@@ -254,6 +251,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.4  2002/08/22 20:26:09  vsnyder
+! Move another USE from module scope to procedure scope
+!
 ! Revision 2.3  2002/08/21 02:23:39  vsnyder
 ! Move USE statements from module scope to procedure scope
 !
