@@ -47,8 +47,8 @@ contains
 ! \end{equation*}
 !
 ! $\mathbf{E}_1$ is the incremental transmissivity from the spacecraft to
-! the top of the atmosphere, which is obviously zero.  That's why we start
-! with $\mathbf{E}_2$.
+! the top of the atmosphere, which is obviously identity, being the exponential
+! of zero.  That's why we start with $\mathbf{E}_2$.
 
     use MLSCommon, only: Rk => Rp
 
@@ -255,26 +255,26 @@ contains
         ! dTauDx = dTauDx + conjg(transpose(dTauDx))
           dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
                       &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
-                      &           real(dPdx(1,2)) *  real(prod(2,1,i_p)) + &
-                      &          aimag(dPdx(1,2)) * aimag(prod(2,1,i_p)) )
-          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
+                      &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
+                      &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
+          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
                       &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
                       &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
                       &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
                       &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) *  real(prod(2,1,i_p))  &
-                      &        + aimag(dPdx(2,2)) * aimag(prod(2,1,i_p)), &
-                      &        -  real(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(1,1)) *  real(prod(1,2,i_p))  &
+                      &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
+                      &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
+                      &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
                       &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
                       &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
                       &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
                       &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) * aimag(prod(2,1,i_p))  &
-                      &        - aimag(dPdx(2,2)) *  real(prod(2,1,i_p)) )
-          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(1,2,i_p)) + &
-                      &          aimag(dPdx(2,1)) * aimag(prod(1,2,i_p)) + &
+                      &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
+                      &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
+                      &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
                       &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
                       &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
         ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
@@ -321,26 +321,26 @@ contains
         ! dTauDx = dTauDx + conjg(transpose(dTauDx))
           dTauDx(1,1) = 2.0_rk * (real(dPdx(1,1)) *  real(prod(1,1,i_p)) + &
                       &          aimag(dPdx(1,1)) * aimag(prod(1,1,i_p)) + &
-                      &           real(dPdx(1,2)) *  real(prod(2,1,i_p)) + &
-                      &          aimag(dPdx(1,2)) * aimag(prod(2,1,i_p)) )
-          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
+                      &           real(dPdx(1,2)) *  real(prod(1,2,i_p)) + &
+                      &          aimag(dPdx(1,2)) * aimag(prod(1,2,i_p)) )
+          dTauDx(1,2) =   cmplx(  real(dPdx(1,1)) *  real(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
                       &        +  real(dPdx(1,2)) *  real(prod(2,2,i_p))  &
                       &        + aimag(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
                       &        +  real(dPdx(2,1)) *  real(prod(1,1,i_p))  &
                       &        + aimag(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) *  real(prod(2,1,i_p))  &
-                      &        + aimag(dPdx(2,2)) * aimag(prod(2,1,i_p)), &
-                      &        -  real(dPdx(1,1)) * aimag(prod(1,2,i_p))  &
-                      &        + aimag(dPdx(1,1)) *  real(prod(1,2,i_p))  &
+                      &        +  real(dPdx(2,2)) *  real(prod(1,2,i_p))  &
+                      &        + aimag(dPdx(2,2)) * aimag(prod(1,2,i_p)), &
+                      &        -  real(dPdx(1,1)) * aimag(prod(2,1,i_p))  &
+                      &        + aimag(dPdx(1,1)) *  real(prod(2,1,i_p))  &
                       &        -  real(dPdx(1,2)) * aimag(prod(2,2,i_p))  &
                       &        + aimag(dPdx(1,2)) *  real(prod(2,2,i_p))  &
                       &        +  real(dPdx(2,1)) * aimag(prod(1,1,i_p))  &
                       &        - aimag(dPdx(2,1)) *  real(prod(1,1,i_p))  &
-                      &        +  real(dPdx(2,2)) * aimag(prod(2,1,i_p))  &
-                      &        - aimag(dPdx(2,2)) *  real(prod(2,1,i_p)) )
-          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(1,2,i_p)) + &
-                      &          aimag(dPdx(2,1)) * aimag(prod(1,2,i_p)) + &
+                      &        +  real(dPdx(2,2)) * aimag(prod(1,2,i_p))  &
+                      &        - aimag(dPdx(2,2)) *  real(prod(1,2,i_p)) )
+          dTauDx(2,2) = 2.0_rk * (real(dPdx(2,1)) *  real(prod(2,1,i_p)) + &
+                      &          aimag(dPdx(2,1)) * aimag(prod(2,1,i_p)) + &
                       &           real(dPdx(2,2)) *  real(prod(2,2,i_p)) + &
                       &          aimag(dPdx(2,2)) * aimag(prod(2,2,i_p)) )
         ! d_radiance(1:2,1:2,i_sv) = d_radiance(1:2,1:2,i_sv) + &
@@ -384,6 +384,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.15  2003/12/17 03:03:40  vsnyder
+! Beautify some comments
+!
 ! Revision 2.14  2003/09/11 23:22:45  vsnyder
 ! Write out MATMULs explicitly -- saves 80% of multiplies
 !
