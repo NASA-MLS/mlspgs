@@ -37,7 +37,7 @@ lexer_m.o: $S/lexer_m.f90 error_handler.o lexer_core.o output_m.o \
 	$(FC) -c $(FOPTS) $I$S $S/lexer_m.f90
 
 MLSCF.o: $S/MLSCF.f90
-	$(FC) -c $(FOPTS) $I$S $I$M $S/MLSCF.f90
+	$(FC) -c $(FOPTS) $I$S $S/MLSCF.f90
 
 output_m.o: $S/output_m.f90
 	$(FC) -c $(FOPTS) $I$S $S/output_m.f90
@@ -83,11 +83,13 @@ libCF.a: $(OBJLIB)
 	ar ru libCF.a $(OBJLIB)
 
 clean:
-	rm -f *.o *.mod test
+	rm -f *.o *.a *.mod *.g90 $S/*.g90 test
 
 tar:
 	rm -f parser.tgz
-	tar hcvzf parser.tgz * --exclude \*.o --exclude \*.mod --exclude test
+	tar hcvzf parser.tgz * --exclude \*.o --exclude \*.mod \
+                               --exclude \*.g90 --exclude CVS \
+                               --exclude \*.a --exclude test --exclude out.test
 
 # =====     For test harness     =========================================
 
@@ -96,23 +98,29 @@ OBJS = init_tables_module.o MLSCF.o table_dumper.o \
 
 table_dumper.o: $S/table_dumper.f90 declaration_table.o init_tables_module.o \
                 MLSCF.o output_m.o string_table.o
-	$(FC) -c $(FOPTS) $I$S $I$M $S/table_dumper.f90
+	$(FC) -c $(FOPTS) $I$S $S/table_dumper.f90
 
 table_generator.o: $S/table_generator.f90 declaration_table.o expr_m.o \
                    init_tables_module.o lexer_core.o MLSCF.o output_m.o \
                    string_table.o toggles_core.o trace_m.o tree.o tree_types.o
-	$(FC) -c $(FOPTS) $I$S $I$M $S/table_generator.f90
+	$(FC) -c $(FOPTS) $I$S $S/table_generator.f90
 
 test.o: $S/test.f90 declaration_table.o init_tables_module.o lexer_core.o \
         machine.o MLSCF.o parser.o string_table.o tree_checker.o \
         table_generator.o toggles_core.o tree.o units.o \
         table_dumper.o
-	$(FC) -c $(FOPTS) $I$S $I$M $S/test.f90
+	$(FC) -c $(FOPTS) $I$S $S/test.f90
 
 test: $(OBJS) libCF.a
-	$(FC) $(LDOPTS) -o test $(OBJS) -L. -lCF -L$(HOME)/mlspgs/SDPToolkit -lPGSTK
+	$(FC) $(LDOPTS) -o test $(OBJS) -L. -lCF
 
 out.test: test $S/in.test
 	./test -a <$S/in.test >out.test
 
 # $Log$
+# Revision 1.2  2000/07/06 18:03:17  vsnyder
+# Clean up -- remove unused options and library searches
+#
+# Revision 1.1  2000/07/06 01:43:12  vsnyder
+# Initial check-in
+#
