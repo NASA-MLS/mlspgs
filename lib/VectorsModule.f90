@@ -808,7 +808,8 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  CreateVector  -----
   type(Vector_T) function CreateVector &
-    & ( vectorName, vectorTemplate, quantities, VectorNameText, globalUnit ) &
+    & ( vectorName, vectorTemplate, quantities, VectorNameText, globalUnit, &
+    & highBound, lowBound ) &
     & result ( vector )
 
   ! This routine creates an empty vector according to a given template
@@ -820,6 +821,8 @@ contains ! =====     Public Procedures     =============================
     type (QuantityTemplate_T), dimension(:), intent(in), target :: Quantities
     character(len=*), intent(in), optional :: VectorNameText
     integer, intent(in), optional :: globalUnit
+    logical, intent(in), optional :: highBound
+    logical, intent(in), optional :: lowBound
 
     ! Local variables
     integer :: QUANTITY                 ! Loop index
@@ -840,7 +843,7 @@ contains ! =====     Public Procedures     =============================
       vector%quantities(quantity)%template = &
         & quantities(vectorTemplate%quantities(quantity))
     end do
-    call createValues ( vector )
+    call createValues ( vector, highBound, lowBound )
   end function CreateVector
 
   ! --------------------------------------  DestroyVectorDatabase  -----
@@ -2013,17 +2016,30 @@ contains ! =====     Public Procedures     =============================
   end function ValidateVectorQuantity
 
 ! =====     Private Procedures     =====================================
-  subroutine CreateValues ( Vector )
+  subroutine CreateValues ( Vector, highBound, lowBound )
   ! Allocate space for the values of a vector.
     type(Vector_T), intent(inout) :: Vector
+    logical, intent(in), optional :: HIGHBOUND
+    logical, intent(in), optional :: LOWBOUND
     integer :: QTY
+    logical :: MYHIGHBOUND, MYLOWBOUND
+    myHighBound = .false.
+    myLowBound = .false.
+    if ( present ( highBound ) ) myHighBound = highBound
+    if ( present ( lowBound ) ) myLowBound = lowBound
     do qty = 1, size(vector%quantities)
       call allocate_test ( vector%quantities(qty)%values, &
         & vector%quantities(qty)%template%noChans * &
         & vector%quantities(qty)%template%noSurfs, &
         & vector%quantities(qty)%template%noInstances, &
         & "Vector%quantities(qty)%values", ModuleName )
-      vector%quantities(qty)%values=0.0_rv
+      if ( myHighBound ) then
+        vector%quantities(qty)%values = huge ( 0.0_rv )
+      else if ( myLowBound ) then
+        vector%quantities(qty)%values = - huge ( 0.0_rv )
+      else
+        vector%quantities(qty)%values = 0.0_rv
+      end if
     end do
   end subroutine
 !=======================================================================
@@ -2036,6 +2052,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.91  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.90  2002/09/26 18:01:08  livesey
 ! Made GetVectorQuantity... more forgiving in the case of l_vmr (can have
 ! radiometer wrong if molecule is extinction).
