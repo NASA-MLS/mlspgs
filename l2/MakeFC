@@ -21,6 +21,9 @@ CONFDIR=..
 # where configure and makemakedep.sh are stored
 MLSBIN=../util
 
+# where sources for libmls.a are stored
+libmls_sources=../lib
+
 # where the platforms directory is
 PLATFORMS = .
 
@@ -60,7 +63,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh
+	$(MLSBIN)/makemakedep.sh $(libmls_sources)
 
 clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -76,11 +79,21 @@ clean:
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
 
+clean_objs:
+	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
+	if [ "$(MLSCONFG)" != "" ] ; then  \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+	fi
+
 tar:
 	rm -f ../$(PROG).tgz
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.3  2000/11/02 23:26:09  pwagner
+# clean_objs option now available
+#
 # Revision 2.2  2000/10/24 21:07:43  pwagner
 # Added tar option
 #

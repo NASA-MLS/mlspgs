@@ -10,7 +10,7 @@ L2GPData.o  		   getCF_m.o  		    swapi_real.o  \
 MLSCF.o  		   gridded_data_module.o    symbol_table.o  \
 MLSCommon.o  		   hash.o  		    symbol_types.o  \
 MLSMessageModule.o  	   heights_module.o  	    table_dumper.o  \
-MLSNumerics.o  		   init_tables_module.o     table_generator.o  \
+MLSNumerics.o  		   init_tables_stub.o       table_generator.o  \
 MLSPCF.o  		   intrinsic.o  	    toggles_core.o  \
 MLSSignalNomenclature.o    io_stuff.o  		    trace_m.o  \
 MLSStrings.o  		   lexer_core.o  	    tree.o  \
@@ -29,7 +29,7 @@ dump_0.o: dump_0.f90 output_m.o
 error_handler.o: error_handler.f90 machine.o output_m.o
 expr_m.o: expr_m.f90 declaration_table.o intrinsic.o string_table.o \
 	toggles_core.o trace_m.o tree.o tree_types.o
-getCF_m.o: getCF_m.f90 MLSCF.o declaration_table.o init_tables_module.o \
+getCF_m.o: getCF_m.f90 MLSCF.o declaration_table.o init_tables_stub.o \
 	lexer_core.o output_m.o parser.o string_table.o table_dumper.o \
 	table_generator.o toggles_core.o tree.o tree_checker.o units.o
 GriddedData.o: GriddedData.f90 MLSCommon.o MLSMessageModule.o MLSStrings.o
@@ -37,7 +37,7 @@ gridded_data_module.o: gridded_data_module.f90 MLSCommon.o MLSMessageModule.o \
 	MLSStrings.o dates_module.o
 Hdf.o: Hdf.f90 MLSCommon.o
 heights_module.o: heights_module.f90 MLSCommon.o MLSMessageModule.o
-init_tables_module.o: init_tables_module.f90 intrinsic.o symbol_table.o \
+init_tables_stub.o: init_tables_stub.f90 intrinsic.o symbol_table.o \
 	symbol_types.o tree.o tree_types.o
 intrinsic.o: intrinsic.f90 symbol_table.o symbol_types.o
 L1BData.o: L1BData.f90 MLSCommon.o MLSMessageModule.o
@@ -75,7 +75,7 @@ table_generator.o: table_generator.f90 MLSCF.o declaration_table.o expr_m.o \
 	intrinsic.o lexer_core.o output_m.o string_table.o toggles_core.o \
 	trace_m.o tree.o tree_types.o
 trace_m.o: trace_m.f90 lexer_core.o output_m.o tree.o
-tree_checker.o: tree_checker.f90 declaration_table.o init_tables_module.o \
+tree_checker.o: tree_checker.f90 declaration_table.o init_tables_stub.o \
 	lexer_core.o output_m.o string_table.o toggles_core.o trace_m.o \
 	tree.o tree_types.o
 tree.o: tree.f90 error_handler.o machine.o output_m.o string_table.o \
