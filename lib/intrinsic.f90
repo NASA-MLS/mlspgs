@@ -125,8 +125,8 @@ module INTRINSIC
   integer, parameter :: L_RAD           = l_ptan + 1
   integer, parameter :: L_RADIANCE      = l_rad + 1
   integer, parameter :: L_RADIANS       = l_radiance + 1
-  integer, parameter :: L_RADIUSOFEARTH = l_radians + 1
-  integer, parameter :: L_REFGPH        = l_radiusofearth + 1
+  integer, parameter :: L_EARTHRADIUS   = l_radians + 1
+  integer, parameter :: L_REFGPH        = l_earthradius + 1
   integer, parameter :: L_S             = l_refgph + 1
   integer, parameter :: L_SCANRESIDUAL  = l_s + 1
   integer, parameter :: L_SCECI         = l_scanresidual + 1
@@ -286,7 +286,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_rad) =                   add_ident ( 'rad' )
     lit_indices(l_radiance) =              add_ident ( 'radiance' )
     lit_indices(l_radians) =               add_ident ( 'radians' )
-    lit_indices(l_radiusofearth) =         add_ident ( 'radiusofearth' )
+    lit_indices(l_earthradius) =           add_ident ( 'earthradius' )
     lit_indices(l_refgph) =                add_ident ( 'refGPH' )
     lit_indices(l_s) =                     add_ident ( 's' )
     lit_indices(l_scanresidual) =          add_ident ( 'scanResidual' )
@@ -390,6 +390,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.34  2001/07/18 23:15:31  dwu
+! rename l_radiusofearth as l_earthradius
+!
 ! Revision 2.33  2001/07/17 18:53:31  jonathan
 ! remove earthradius (redundant quantity),jonathan/wu
 !
