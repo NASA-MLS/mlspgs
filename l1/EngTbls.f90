@@ -5,7 +5,7 @@
 MODULE EngTbls   ! Level 1 engineering tables
 !=============================================================================
 
-  USE MLSStrings, ONLY: LinearSearchStringArray
+  USE MLSL1Strings, ONLY: LinearSearchStringArray
 
   IMPLICIT NONE
 
@@ -291,6 +291,9 @@ CONTAINS
 END MODULE EngTbls
 
 ! $Log$
+! Revision 2.4  2002/08/07 18:54:22  jdone
+! Changes due to l1/MLSL1Strings.f90
+!
 ! Revision 2.3  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
