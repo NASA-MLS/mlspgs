@@ -1270,16 +1270,16 @@ CONTAINS
   END SUBROUTINE List2Array
 
   ! --------------------------------------------------  LowerCase  -----
-  FUNCTION LowerCase (str) RESULT (outstr)
+  elemental function LowerCase (str) result (outstr)
     ! takes A-Z  and replaces with a-z
     ! leaving other chars alone
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(IN) :: str
-    CHARACTER (LEN=LEN(str)) :: outstr
+    character (len=*), intent(in) :: STR
+    character (len=len(str))      :: OUTSTR
 
     !----------Local vars----------!
-    INTEGER :: i, icode
-    INTEGER, parameter :: offset=IACHAR("a")-IACHAR("A")
+    integer            :: i, icode
+    integer, parameter :: offset=IACHAR("a")-IACHAR("A")
     !----------Executable part----------!
     outstr=str
 
@@ -2997,6 +2997,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.43  2004/06/16 22:15:28  pwagner
+! Make lowerCase elemental
+!
 ! Revision 2.42  2004/06/16 01:25:08  vsnyder
 ! Make Capitalize elemental
 !
