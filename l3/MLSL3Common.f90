@@ -33,6 +33,7 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD9 = 'Pressure'
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD10 = 'Frequency'
    CHARACTER (LEN=*), PARAMETER :: GEO_FIELD11 = 'Date'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELD12 = 'LocalSolarZenithAngle'
 
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME1 = 'nTimes'
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME2 = 'nLevels'
@@ -41,11 +42,13 @@ MODULE MLSL3Common
    CHARACTER (LEN=*), PARAMETER :: DIM_NAME123 = 'nFreqs,nLevels,nTimes'
 
    CHARACTER (LEN=*), PARAMETER :: DIML_NAME = 'nLats'
+   CHARACTER (LEN=*), PARAMETER :: DIMR_NAME = 'RDim'
    CHARACTER (LEN=*), PARAMETER :: DIMT_NAME = 'TDim'
    CHARACTER (LEN=*), PARAMETER :: DIMX_NAME = 'XDim'
    CHARACTER (LEN=*), PARAMETER :: DIMY_NAME = 'YDim'
    CHARACTER (LEN=*), PARAMETER :: DIMZ_NAME = 'ZDim'
    CHARACTER (LEN=*), PARAMETER :: DIMLL_NAME = 'nLevels,nLats'
+   CHARACTER (LEN=*), PARAMETER :: DIMRLL_NAME = 'RDim,nLevels,nLats'
    CHARACTER (LEN=*), PARAMETER :: DIMXYZ_NAME = 'ZDim,YDim,XDim'
 
    CHARACTER (LEN=*), PARAMETER :: DAT_ERR = 'Failed to define data field '
@@ -71,6 +74,7 @@ MODULE MLSL3Common
    INTEGER, PARAMETER :: maxDgProds = 42
    INTEGER, PARAMETER :: maxGridPoints = 500
    INTEGER, PARAMETER :: maxWindow = 31
+   INTEGER, PARAMETER :: MIN_MAX = 2
 
 ! This data type is used to store the names/dates of output files actually created.
 
@@ -85,12 +89,14 @@ MODULE MLSL3Common
 
    END TYPE OutputFiles_T
 
-
 !=====================
 END MODULE MLSL3Common
 !=====================
 
 !# $Log$
+!# Revision 1.8  2001/07/18 15:56:29  nakamura
+!# Added a dg parameter; expanded maxWindow for calendar month.
+!#
 !# Revision 1.7  2001/05/04 18:37:51  nakamura
 !# Added date-related params, OutputFiles_T.
 !#
