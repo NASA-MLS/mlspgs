@@ -46,8 +46,8 @@ CONTAINS
     MIFsPerMAF = L1Config%Calib%MIFsPerMAF
     MIF_dur = L1Config%Calib%MIF_duration
     MAF_dur = MIF_dur * MIFsPerMAF   !Nominal duration of MAF
-    calMAFs = (L1Config%Expanded_TAI%endTime - &
-         L1Config%Expanded_TAI%startTime) / MAF_dur
+    calMAFs = NINT ((L1Config%Expanded_TAI%endTime - &
+         L1Config%Expanded_TAI%startTime) / MAF_dur) + 10
 
     ALLOCATE (CalBuf%MAFdata(calMAFs))
 
@@ -193,6 +193,9 @@ END MODULE SortQualifyTHz
 !=============================================================================
 
 ! $Log$
+! Revision 2.2  2003/02/10 20:32:45  perun
+! Increase calbuf size.
+!
 ! Revision 2.1  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
