@@ -35,7 +35,7 @@ contains ! =====     Public Procedures     =============================
     use MLSStrings, only: Capitalize
     use MoreTree, only: Get_Field_ID
     use Parse_Signal_m, only: Parse_Signal
-    use PFADataBase, only: AddPFADatumToDatabase, PFAData, PFAData_T
+    use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T
     use String_Table, only: Get_String
     use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
@@ -276,6 +276,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.5  2004/06/09 19:58:55  pwagner
+! Corrected module name to PFADataBase_m
+!
 ! Revision 2.4  2004/06/09 17:47:10  vsnyder
 ! Split off PFADataBase to fwdmdl
 !
