@@ -2,7 +2,10 @@
 
 ;; This l2cf fragment outputs the species joined by joinstate.l2cf
 
+
+;; Only do the output if the output version has been defined
 begin Output
+!ifdef(ver,{
 
   !define(stdprod, {Output, quantities=joined_$1, type=l2gp, $
     file='!outpath/MLS-Aura_L2GP_$2_!ver_!day.dat'})
@@ -36,5 +39,5 @@ begin Output
     joined_losVelGHz, joined_losVelTHz, $
     joined_losVelGHz_precision, joined_losVelTHz_precision ], $
     file='!outpath/MLS-Aura_L2GP_DGM_!ver_!day.dat'
-  
+})
 end Output
