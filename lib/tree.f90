@@ -473,7 +473,7 @@ contains
       call tree_error ( is_pseudo, where )
     end if
     if ( which == 0 ) then
-      subtree = which
+      subtree = where
       return
     end if
     if ( which < 0 .or. which > the_tree(where) % nsons ) then
@@ -616,6 +616,9 @@ contains
 end module TREE
 
 ! $Log$
+! Revision 2.6  2003/05/12 20:54:16  vsnyder
+! Correct a subtle bug in SUBTREE that probably doesn't affect us
+!
 ! Revision 2.5  2002/10/08 00:09:15  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
