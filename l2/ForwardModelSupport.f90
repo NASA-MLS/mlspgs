@@ -22,20 +22,27 @@ module ForwardModelSupport
 
   ! Error codes
 
-  integer, parameter :: AllocateError          = 1                    
-  integer, parameter :: BadBinSelectors        = AllocateError + 1    
-  integer, parameter :: BadHeightUnit          = BadBinSelectors + 1  
-  integer, parameter :: BadQuantityType        = BadHeightUnit + 1    
-  integer, parameter :: DerivSansMolecules     = BadQuantityType  + 1 
+  integer, parameter :: AllocateError          = 1
+  integer, parameter :: BadBinSelectors        = AllocateError + 1
+  integer, parameter :: BadHeightUnit          = BadBinSelectors + 1
+  integer, parameter :: BadMoleculeGroup       = BadHeightUnit + 1
+  integer, parameter :: BadQuantityType        = BadMoleculeGroup + 1
+  integer, parameter :: CloudHas               = BadQuantityType  + 1
+  integer, parameter :: CloudNeeds             = CloudHas + 1
+  integer, parameter :: CloudNot               = CloudNeeds + 1
+  integer, parameter :: DerivSansMolecules     = CloudNot  + 1
   integer, parameter :: IncompleteBinSelectors = DerivSansMolecules + 1
-  integer, parameter :: IncompleteFullFwm      = IncompleteBinSelectors + 1  
-  integer, parameter :: IncompleteLinearFwm    = IncompleteFullFwm + 1       
+  integer, parameter :: IncompleteFullFwm      = IncompleteBinSelectors + 1
+  integer, parameter :: IncompleteLinearFwm    = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
   integer, parameter :: NeedBothXYStar         = LinearSidebandHasUnits + 1
-  integer, parameter :: NoMolecule             = NeedBothXYStar + 1
+  integer, parameter :: Nested                 = NeedBothXYStar + 1
+  integer, parameter :: NoBetaGroup            = Nested + 1
+  integer, parameter :: NoMolecule             = NoBetaGroup + 1
   integer, parameter :: PFAAndNotPFA           = NoMolecule + 1
-  integer, parameter :: PFATwice               = PFAAndNotPFA + 1
+  integer, parameter :: PFANotMolecule         = PFAAndNotPFA + 1
+  integer, parameter :: PFATwice               = PFANotMolecule + 1
   integer, parameter :: PolarizedAndAllLines   = PFATwice + 1
   integer, parameter :: TangentNotSubset       = PolarizedAndAllLines + 1
   integer, parameter :: ToleranceNotK          = TangentNotSubset + 1
@@ -61,17 +68,12 @@ contains ! =====     Public Procedures     =============================
     use L2ParInfo, only: PARALLEL
     use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, &
       & READCOMPLETEHDF5L2PCFILE
-    use MLSFiles, only: GetPCFromRef, split_path_name
-    use MLSL2Options, only: TOOLKIT
     use MLSPCF2, only: MLSPCF_antpats_start, MLSPCF_filtshps_start, &
       &          mlspcf_dacsfltsh_start, MLSPCF_ptggrids_start, &
       &          mlspcf_l2pc_start, mlspcf_l2pc_end
     use MoreTree, only: Get_Field_ID
     use PointingGrid_m, only: Close_Pointing_Grid_File, &
       & Open_Pointing_Grid_File, Read_Pointing_Grid_File
-    use SDPToolkit, only: &
-      & Pgs_pc_getReference
-    use String_Table, only: Get_String
     use Toggles, only: Gen, Levels, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Nsons, Sub_Rosa, Subtree
@@ -164,6 +166,10 @@ contains ! =====     Public Procedures     =============================
 
     ! ............................................  Get_File_Name  .....
     subroutine Get_File_Name ( pcfCode, MSG, pcfEndCode )
+      use MLSFiles, only: GetPCFromRef, split_path_name
+      use MLSL2Options, only: TOOLKIT
+      use SDPToolkit, only: Pgs_pc_getReference
+      use String_Table, only: Get_String
       integer, intent(in) :: pcfCode
       character(len=*), intent(in) :: MSG ! in case of error
       integer, intent(in), optional :: pcfEndCode
@@ -180,9 +186,9 @@ contains ! =====     Public Procedures     =============================
           returnStatus = Pgs_pc_getReference(pcfCode, version, &
             & fileName)
           return
-        endif
+        end if
         PCFFileName = fileName
-        call split_path_name(PCFFileName, path, fileName)
+        call split_path_name ( PCFFileName, path, fileName )
         lun = GetPCFromRef(fileName, pcfCode, &
           & mypcfEndCode, &
           & TOOLKIT, returnStatus, Version, DEBUG, &
@@ -267,7 +273,7 @@ contains ! =====     Public Procedures     =============================
         if ( nsons(son) > 2 ) call AnnounceError ( TooManyCosts, son )
         call expr ( gson, expr_units, value, type )
         if ( type == t_numeric_range ) call AnnounceError ( 0, son, &
-          & extraMessage='Cost must not be a range' ) 
+          & extraMessage='Cost must not be a range' )
         ! Some units checking should probably go here in the long run !???? NJL
         binSelector%cost = value(1)
         costUnit = expr_units(1)
@@ -304,7 +310,7 @@ contains ! =====     Public Procedures     =============================
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_M, only: EXPR
-    use ForwardModelConfig, only: ForwardModelConfig_T, NullifyForwardModelConfig
+    use ForwardModelConfig, only: Dump, ForwardModelConfig_T, NullifyForwardModelConfig
     use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
     use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, L_HYBRID, &
       & L_POLARLINEAR
@@ -328,7 +334,7 @@ contains ! =====     Public Procedures     =============================
     use MoreTree, only: Get_Boolean, Get_Field_ID
     use Parse_Signal_m, only: PARSE_SIGNAL
     use String_Table, only: Get_String
-    use Toggles, only: Gen, Levels, Toggle
+    use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
     use Tree, only: Decoration, Node_ID, Nsons, Sub_Rosa, Subtree
     use Tree_Types, only: N_Array
@@ -343,13 +349,17 @@ contains ! =====     Public Procedures     =============================
 
     logical, dimension(:), pointer :: Channels   ! From Parse_Signal
     integer :: DerivTree                ! Tree index of f_MoleculeDerivatives
+    integer :: DumpFwm = -1             ! -1 = not called yet, 0 = no dumps,
+                                        ! 1 = dump, 2 = dump and stop
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
-    integer :: I                        ! Subscript and loop inductor.
-    integer :: J                        ! Subscript and loop inductor.
+    integer :: GSON                     ! Son of son
+    integer :: I, J, K                  ! Subscript and loop inductor.
     integer :: MoleculeSign             ! in the info%molecules array.
     integer :: MoleculeTree             ! Tree index of f_molecules
     integer :: NELTS                    ! Number of elements of an array tree
+    integer :: NoCat                    ! Number of catalog elements
+    integer :: NumPFA, NumLBL           ! Numbers of such molecules in a beta group
     integer :: PFATree                  ! Tree index of f_PFAMolecules
     integer :: SIDEBAND                 ! Returned from Parse_Signal
     integer, dimension(:), pointer :: SIGNALINDS ! From Parse_Signal
@@ -357,13 +367,18 @@ contains ! =====     Public Procedures     =============================
     integer :: Son                      ! Some subtree of root.
     integer :: STATUS                   ! From allocates etc.
     integer :: TANGENT                  ! Loop counter
+    integer, pointer :: TempLBL(:), TempPFA(:) ! Used to separate LBL and PFA
     integer :: THISMOLECULE             ! Tree index.
     integer :: type                     ! Type of value returned by EXPR
     integer :: Expr_Units(2)            ! Units of value returned by EXPR
     real (r8) :: Value(2)               ! Value returned by EXPR
     integer :: WANTED                   ! Which signal do we want?
 
-    ! Error message codes
+    if ( dumpFwm < 0 ) then ! done only once
+      dumpFwm = 0
+      if ( index(switches,'fwmd') /= 0 )  dumpFwm = 1
+      if ( index(switches,'fwmD') /= 0 )  dumpFwm = 2
+    end if
 
     ! Nullify some pointers so allocate_test doesn't try to deallocate them.
     ! Don't initialize them with =>NULL() because that makes them SAVEd.
@@ -378,6 +393,7 @@ contains ! =====     Public Procedures     =============================
     ! Set sensible defaults
     info%allLinesForRadiometer = .false.
     info%allLinesInCatalog = .false.
+    info%anyPFA = .false.
     info%atmos_der = .false.
     info%cloud_der = l_none
     info%DEFAULT_spectroscopy = .false.
@@ -486,6 +502,7 @@ contains ! =====     Public Procedures     =============================
         info%NUM_SIZE_BINS = nint( value(1) )
       case ( f_pfaMolecules )
         pfaTree = son
+        info%anyPFA = .true.
       case ( f_phiWindow )
         call expr ( subtree(2,son), expr_units, value, type )
         info%phiWindow = value(1)
@@ -512,7 +529,7 @@ contains ! =====     Public Procedures     =============================
           info%signals(j) = signals(signalInds(wanted))
           info%signals(j)%sideband = sideband
           ! Don't hose channels in database, though shouldn't be an issue
-          nullify ( info%signals(j)%channels ) 
+          nullify ( info%signals(j)%channels )
 
           call allocate_Test ( info%signals(j)%channels, &
             & size(info%signals(j)%frequencies), 'info%signals%channels', &
@@ -562,42 +579,117 @@ contains ! =====     Public Procedures     =============================
     end do ! i = 2, nsons(root)
 
     ! Now the molecule lists.
-    nelts = 0
+    nelts = 0    ! Total number of molecules, not counting group names
     if ( got(f_molecules) ) then
-      do j = 2, nsons(moleculeTree)
-        call countElements ( subtree(j,moleculeTree), nelts )
+      ! Create the Beta_Group structure.  Temporarily assume all the
+      ! molecules are LBL.  We'll separate them later, when processing
+      ! the pfaMolecules tree.
+      allocate ( info%beta_group(nsons(moleculeTree)-1), stat = status )
+      if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
+      do i = 1, nsons(moleculeTree) - 1
+        son = subtree(i+1,moleculeTree)
+        info%beta_group(i)%group = node_id(son) == n_array
+        if ( info%beta_group(i)%group ) then
+          if ( info%fwmType /= l_full ) &
+            & call announceError ( noBetaGroup, son )
+          call allocate_test ( info%beta_group(i)%lbl_molecules, nsons(son)-1, &
+            & 'info%beta_group(i)%lbl_molecules', moduleName )
+          call allocate_test ( info%beta_group(i)%ratio, nsons(son)-1, &
+            & 'info%beta_group(i)%ratio', moduleName )
+          info%beta_group(i)%molecule = decoration(subtree(1,son)) ! group name
+          info%beta_group(i)%ratio = 0.0
+          j = nsons(son)
+          if ( j < 2 ) call announceError ( badMoleculeGroup, son )
+          nelts = nelts + j - 1
+          do j = 2, j
+            gson = subtree(j,son)
+            if ( node_id(gson) == n_array ) then
+              call announceError ( nested, gson )
+            else
+              info%beta_group(i)%lbl_molecules(j-1) = decoration(gson)
+            end if
+          end do
+        else ! type checker guarantees a molecule name here
+          nelts = nelts + 1
+          info%beta_group(i)%molecule = decoration(son)
+          call allocate_test ( info%beta_group(i)%lbl_molecules, 1, &
+            & 'info%beta_group(i)%lbl_molecules', moduleName )
+          info%beta_group(i)%lbl_molecules(1) = info%beta_group(i)%molecule
+          call allocate_test ( info%beta_group(i)%ratio, 1, &
+            & 'info%beta_group(i)%ratio', moduleName )
+          info%beta_group(i)%ratio(1) = 1.0
+        end if
+        if ( got(f_pfaMolecules) ) then
+          ! Allocate PFA_Molecules temporarily for a "this is a PFA molecule" flag
+          call allocate_test ( info%beta_group(i)%PFA_Molecules, &
+            & size(info%beta_group(i)%lbl_molecules), 'PFA_Molecules', moduleName )
+          info%beta_group(i)%PFA_Molecules = 0
+        else
+          call allocate_test ( info%beta_group(i)%PFA_Molecules, 0, &
+            & 'PFA_Molecules', moduleName )
+        end if
       end do
+    else
+      allocate ( info%beta_group(0), stat = status )
+      if ( status /= 0 ) call announceError( AllocateError, moleculeTree )
     end if
-    info%firstPFA = nelts + 1
-    if ( got(f_pfaMolecules) ) nelts = nelts + nsons(pfaTree) - 1
-    if ( nelts > 0 ) then
-      ! Last element of info%molecules is a huge sentinel used in Get_Species_Data,
-      ! not a molecule
-      call allocate_test ( info%molecules, nelts+1, "info%molecules", &
-        & ModuleName )
-      info%molecules(nelts+1) = huge(info%molecules(nelts+1))
-      call allocate_test ( info%moleculeDerivatives, nelts, &
-        & "info%moleculeDerivatives", ModuleName )
-      info%moleculeDerivatives = .false.
-    end if
-    nelts = 0
-    if ( got(f_molecules) ) then
-      do j = 2, nsons(moleculeTree)
-        moleculeSign = +1 ! Indicate "root of a tree of molecules"
-        call fillElements ( subtree(j,moleculeTree), nelts, 0, info%molecules )
-      end do
-    end if
+    info%molecules => info%beta_group%molecule
+
+    ! Now the PFAMolecules list
     if ( got(f_pfaMolecules) ) then
-      i = nelts
-      do j = 2, nsons(pfaTree)
-        i = i + 1
-        info%molecules(i) = decoration( subtree( j, pfaTree ) )
-        if ( any(abs(info%molecules(:nelts)) == info%molecules(i)) ) &
-          & call announceError ( PFAAndNotPFA, subtree(j,pfaTree) )
-        if ( any(info%molecules(nelts+1:i-1) == info%molecules(i)) ) &
-          & call announceError ( PFATwice, subtree(j,pfaTree) )
-      end do
+      ! Verify that the PFA molecules are all listed molecules.  Mark the
+      ! ones that are PFA.
+op:   do j = 2, nsons(pfaTree)
+        son = subtree( j, pfaTree )
+        thisMolecule = decoration( son )
+        do i = 1, size(info%beta_group)
+          do k = 1, size(info%beta_group(i)%LBL_Molecules)
+            if ( thisMolecule == info%beta_group(i)%LBL_Molecules(k) ) then
+              if ( info%beta_group(i)%PFA_Molecules(k) /= 0 ) &
+                & call announceError ( PFATwice, son )
+              info%beta_group(i)%PFA_Molecules(k) = 1
+              cycle op
+            end if
+          end do ! k
+        end do ! i
+        call announceError ( PFANotMolecule, son )
+      end do op ! j
+      ! Divide the LBL and PFA molecules into separate lists
+      do i = 1, size(info%beta_group)
+        numLBL = 0
+        numPFA = 0
+        tempLBL => info%beta_group(i)%LBL_Molecules
+        tempPFA => info%beta_group(i)%PFA_Molecules
+        nullify ( info%beta_group(i)%LBL_Molecules, info%beta_group(i)%PFA_Molecules )
+        do k = 1, size(tempLBL)
+          if ( tempPFA(k) == 0 ) then
+            numLBL = numLBL + 1
+          else
+            numPFA = numPFA + 1
+          end if
+        end do ! k
+        call allocate_test ( info%beta_group(i)%LBL_Molecules, numLBL, &
+          & 'LBL_Molecules', moduleName )
+        call allocate_test ( info%beta_group(i)%PFA_Molecules, numPFA, &
+          & 'PFA_Molecules', moduleName )
+        numLBL = 0
+        numPFA = 0
+        do k = 1, size(tempLBL)
+          if ( tempPFA(k) == 0 ) then
+            numLBL = numLBL + 1
+            info%beta_group(i)%LBL_Molecules(numLBL) = tempLBL(k)
+          else
+            numPFA = numPFA + 1
+            info%beta_group(i)%PFA_Molecules(numPFA) = tempLBL(k)
+          end if
+        end do ! k
+        call deallocate_test ( tempLBL, 'TempLBL', moduleName )
+        call deallocate_test ( tempPFA, 'TempPFA', moduleName )
+      end do ! i
     end if
+
+    info%moleculeDerivatives => info%beta_group%derivatives
+    info%moleculeDerivatives = .false.
 
     ! Now some more error checking
     if ( got(f_moleculeDerivatives) ) then
@@ -639,13 +731,16 @@ contains ! =====     Public Procedures     =============================
       ! Cannot specify allLinesInCatalog and polarized
       if ( info%allLinesInCatalog .and. info%polarized ) &
         & call AnnounceError ( PolarizedAndAllLines, root )
-    case ( l_cloudfull )
 
-      ! full cloud forward model
+      if ( info%incl_cld ) call checkCloud
+
+    case ( l_cloudfull ) ! full cloud forward model
+
+      if ( .not. info%default_spectroscopy ) call checkCloud
 
     case ( l_scan )
       ! Add 1d/2d method later probably !??? NJL
-      if ( any(got( (/f_atmos_der,f_channels,f_do_conv,f_do_baseline,f_do_freq_avg,&
+      if ( any(got( (/f_atmos_der,f_channels,f_do_conv,f_do_baseline,f_do_freq_avg, &
         & f_do_1d, f_incl_cld, f_frequency, f_molecules, f_moleculeDerivatives, &
         & f_signals, f_spect_der, f_temp_der /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
@@ -667,85 +762,65 @@ contains ! =====     Public Procedures     =============================
       end if
     end if
 
+    if ( dumpFwm > 0 .or. error /= 0 ) then
+      call dump ( info, 'DeriveFromForwardModelConfig' )
+      if ( dumpFwm > 1 .and. error == 0 ) stop ! error message will stop later
+    end if
+
     if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'An error occured' )
     if ( toggle(gen) .and. levels(gen) > 0 ) &
       & call trace_end ( "ConstructForwardModelConfig" )
 
   contains
-    ! ............................................  CountElements  .....
-    recursive subroutine CountElements ( root, count )
-      integer, intent(in) :: ROOT       ! of a subtree
-      integer, intent(inout) :: COUNT   ! Number of array elements
-      integer :: I                      ! Subtree index, loop inductor
-      if ( node_id(root) == n_array ) then
-        do i = 1, nsons(root)
-          call countElements ( subtree(i,root), count )
-        end do
-      else
-        count = count + 1
-      end if
-    end subroutine CountElements
-
-    ! .............................................  FillElements  .....
-    recursive subroutine FillElements ( root, count, depth, molecules )
-      integer, intent(in) :: ROOT       ! of a subtree
-      integer, intent(inout) :: COUNT   ! of array elements processed
-      integer, intent(in) :: DEPTH      ! in the array tree
-      integer, intent(inout) :: MOLECULES(:)      ! The array to be filled
-      integer :: I                      ! Subtree index, loop inductor
-      if ( node_id(root) == n_array ) then
-        do i = 1, nsons(root)
-          call fillElements ( subtree(i,root), count, depth+1, molecules )
-        end do
-      else
-        count = count + 1
-        molecules(count) = moleculeSign * decoration(root)
-        moleculeSign = -1 ! Indicate "Part of a tree of molecules"
-      end if
-    end subroutine FillElements
+    ! ...............................................  CheckCloud  .....
+    subroutine CheckCloud
+      use Intrinsic, only: Lit_Indices
+      use Molecules, only: L_H2O, L_H2O_18, L_N2, L_N2O, L_O2, L_O3, L_O_18_O
+      integer :: J
+      logical :: GotH2O, GotO3
+      character(len=127) :: MolName
+      gotH2O = .false.; gotO3 = .false.
+      do j = 1, size(info%molecules) - 1
+        select case ( info%molecules(j) )
+        case ( l_h2o )
+          gotH2O = .true.
+        case ( l_o3 )
+          gotO3 = .true.
+        case ( l_n2o )
+        case default
+          select case ( info%molecules(j) )
+          case ( l_n2, l_o2, l_h2o_18, l_o_18_o)
+            call announceError ( cloudHas, root, &
+              & what=lit_indices( info%molecules(j) ), warn=.true. )
+          case default
+            call announceError ( cloudNot, root, &
+              & what=lit_indices( info%molecules(j) ) )
+          end select
+        end select
+      end do
+      if ( .not. GotH2O .or. .not. GotO3 ) &
+        & call announceError ( cloudNeeds, root )
+    end subroutine CheckCloud
 
     ! ..........................................  ValidateSignals  .....
     subroutine ValidateSignals
-      use MLSSignals_m, only: Signal_t
+      use MLSSignals_m, only: GetSidebandStartStop
       use MLSNumerics, only: EssentiallyEqual
-      type (Signal_T), pointer :: FirstSignal
-
-      firstSignal => info%signals(1)
 
       ! Make sure all the signals we're dealing with are same module,
       ! radiometer and sideband.
-      if ( any( info%signals%sideband /= firstSignal%sideband ) ) &
+      if ( any( info%signals%sideband /= info%signals(1)%sideband ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         &  "Can't have mixed sidebands in forward model config" )
-      if ( .not. all ( EssentiallyEqual ( info%signals%lo, firstSignal%lo ) ) ) &
+      if ( .not. all ( EssentiallyEqual ( info%signals%lo, info%signals(1)%lo ) ) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         &  "Can't have mixed radiometers in forward model config" )
 
       ! Think about sidebands
-      if ( ( firstSignal%sideband == 0 ) .and.&
-        &  ( firstSignal%singleSideband == 0 ) ) then
-        ! Do a folded measurement
-        info%sidebandStart = -1
-        info%sidebandStop = 1
-      else
-        ! It's either a single sideband radiometer, or the user requested a
-        ! specific sideband.
-        ! Check sanity, if they are both non zero they should be the same.
-        if ( ( firstSignal%singleSideband /= 0 ) .and. &
-          &  ( firstSignal%sideband /= 0 ) .and. &
-          &  ( firstSignal%singleSideband /= &
-          &    firstSignal%sideband ) ) call MLSMessage ( &
-          &      MLSMSG_Error, ModuleName, &
-          &      "User requested a sideband that doesn't exist" )
-        ! OK, use whichever one is given
-        if ( firstSignal%singleSideband /= 0 ) then
-          info%sidebandStart = firstSignal%singleSideband
-        else
-          info%sidebandStart = firstSignal%sideband
-        end if
-        info%sidebandStop = info%sidebandStart
-      end if
+      call getSidebandStartStop ( &
+        & info%signals(1), info%sidebandStart, info%sidebandStop )
+
     end subroutine ValidateSignals
 
   end function ConstructForwardModelConfig
@@ -753,21 +828,21 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------FillFwdModelTimings  -----
   subroutine FillFwdModelTimings ( timings, FWModelConfig, which )
   !  Fill and return an array of time, mean, std_dev for timing FullforwardModel
-    
+
     use ForwardModelConfig, only: ForwardModelConfig_T
-                                                                                
+
     ! Dummy argument
     !real, pointer :: timings(:)
     double precision, dimension(:) :: timings
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
-    character(len=*), intent(in) :: which    ! 'fwdTiming', 'mean, or 'stdDev' 
+    character(len=*), intent(in) :: which    ! 'fwdTiming', 'mean, or 'stdDev'
 
     ! Local variables
     real :: mean_sqDelta, meanTimes, tmp_mean
     integer :: i, timingSize
 
     timingSize = size(FWModelconfig)
- 
+
     if (which == 'fwdTiming') then
         do i =1, size(FWModelConfig)
            timings(i) = FWModelConfig(i)%sum_DeltaTime
@@ -794,10 +869,10 @@ contains ! =====     Public Procedures     =============================
             else
                 meanTimes = FWModelConfig(i)%Ntimes / (FWModelConfig(i)%Ntimes - 1)
             end if
-            if (FWModelConfig(i)%sum_DeltaTime == 0.0 .AND. & 
-                  & FWModelConfig(i)%sum_squareDeltaTime == 0.0 ) then 
+            if (FWModelConfig(i)%sum_DeltaTime == 0.0 .AND. &
+                  & FWModelConfig(i)%sum_squareDeltaTime == 0.0 ) then
 		timings(i) = 0.0
-            else 
+            else
             	timings(i) = sqrt(abs(meanTimes * (mean_sqDelta - (tmp_mean * tmp_mean))))
 	    endif
         enddo
@@ -807,9 +882,9 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------ShowFwdModelNames  -----
   function ShowFwdModelNames ( FWModelConfig ) result (fwdNames)
-     
-  !  Fill and return an array of forward Model Names  
-                                                                                
+
+  !  Fill and return an array of forward Model Names
+
     use ForwardModelConfig, only: ForwardModelConfig_T
     use MLSStringLists, only: catLists
     use String_Table, only: GET_STRING
@@ -832,11 +907,11 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------  PrintForwardModelTiming  -----
   subroutine PrintForwardModelTiming ( FWModelConfig )
   !  Print mean, std_dev for timing FullforwardModel
-                                                                                
+
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Output_m, only: BLANKS, Output
     use String_Table, only: GET_STRING
-                                                                                
+
     ! Dummy argument
     type(ForwardModelConfig_T), dimension(:), pointer :: FWModelConfig
 
@@ -880,25 +955,25 @@ contains ! =====     Public Procedures     =============================
        call resetForwardModelTiming ( FWModelConfig(i))
      end do
   end subroutine PrintForwardModelTiming
-                                                                                
+
   ! ------------------------------------  ResetForwardModelTiming  -----
   subroutine ResetForwardModelTiming ( FWModelConfig )
   ! reset the values for timing FullforwardModel
-                                                                                
+
     use ForwardModelConfig, only: ForwardModelConfig_T
-                                                                                
+
     ! Dummy argument
     type(ForwardModelConfig_T), intent(inout) :: FWModelConfig
-                                                                                
+
     FWModelConfig%Ntimes = 0
     FWModelConfig%sum_DeltaTime = 0.0
     FWModelConfig%sum_squareDeltaTime = 0.0
-                                                                                
+
   end subroutine ResetForwardModelTiming
 
   ! =====     Private Procedures     ===================================
   ! ----------------------------------------------  AnnounceError  -----
-  subroutine AnnounceError ( Code, where, extraMessage )
+  subroutine AnnounceError ( Code, where, extraMessage, what, warn )
 
     use Intrinsic, only: Lit_Indices
     use Lexer_Core, only: PRINT_SOURCE
@@ -908,9 +983,11 @@ contains ! =====     Public Procedures     =============================
 
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: where      ! Where in the tree did the error occur?
-    character (LEN=*), optional :: extraMessage
+    character (LEN=*), optional, intent(in) :: extraMessage
+    integer, intent(in), optional :: What ! Optional extra, usually string index
+    logical, optional, intent(in) :: Warn ! Warning if present, no matter what value
 
-    error = max(error,1)
+    if ( .not. present(warn) ) error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref ( where ) )
     call output ( ' ForwardModelSupport complained: ' )
@@ -921,11 +998,25 @@ contains ! =====     Public Procedures     =============================
       call output ('cannot have a fieldAzimuth binSelector for polarlinear model', &
         & advance='yes' )
     case ( BadHeightUnit )
-      call output ( 'Inappropriate units for height in binSelector',&
+      call output ( 'Inappropriate units for height in binSelector', &
+        & advance='yes' )
+    case ( BadMoleculeGroup )
+      call output ( 'A molecule group has to have a name and a molecule', &
         & advance='yes' )
     case ( BadQuantityType )
-      call output ( 'Bin Selectors cannot apply to this quantity type',&
+      call output ( 'Bin Selectors cannot apply to this quantity type', &
         & advance='yes' )
+    case ( CloudHas )
+      call output ( 'Cloud forward model internally has the ' )
+      call display_string ( what )
+      call output ( ' molecule', advance='yes' )
+    case ( CloudNeeds )
+      call output ( 'Cloud forward model needs both H2O and O3 molecules', &
+        & advance='yes' )
+    case ( CloudNot )
+      call output ( 'Cloud formard model cannot accept the ' )
+      call display_string ( what )
+      call output ( ' molecule', advance='yes' )
     case ( DerivSansMolecules )
       call output ( 'Derivative(s) requested for molecule(s) not specified.', &
         & advance='yes')
@@ -945,13 +1036,22 @@ contains ! =====     Public Procedures     =============================
     case ( NeedBothXYStar )
       call output ( 'x/yStar must either be both present or both absent', &
         & advance='yes' )
+    case ( Nested )
+      call output ( 'Group within group is not allowed', advance='yes' )
+    case ( NoBetaGroup )
+      call output ( 'Beta grouping allowed only for full clear-sky model', &
+        & advance='yes' )
     case ( NoMolecule )
-      call output ( 'A bin selector of type vmr must have a molecule',&
+      call output ( 'A bin selector of type vmr must have a molecule', &
         & advance='yes' )
     case ( PFAAndNotPFA )
       call output ( 'Molecule ' )
       call display_string ( lit_indices(decoration(where)) )
       call output ( ' listed for both PFA and non-PFA', advance='yes' )
+    case ( PFANotMolecule )
+      call output ( 'PFA requested for ' )
+      call display_string ( lit_indices(decoration(where)) )
+      call output ( ' but it is not in the molecule list', advance='yes' )
     case ( PFATwice )
       call output ( 'Molecule ' )
       call display_string ( lit_indices(decoration(where)) )
@@ -963,13 +1063,13 @@ contains ! =====     Public Procedures     =============================
       call output ('non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
     case ( ToleranceNotK )
-      call output ( 'tolerance does not have dimensions of temperature/radiance',&
+      call output ( 'tolerance does not have dimensions of temperature/radiance', &
         & advance='yes' )
     case ( TooManyHeights )
-      call output ( 'Bin Selectors can only refer to one height range',&
+      call output ( 'Bin Selectors can only refer to one height range', &
         & advance='yes' )
     case ( TooManyCosts )
-      call output ( 'Bin Selectors can only have one cost',&
+      call output ( 'Bin Selectors can only have one cost', &
         & advance='yes' )
     case ( WrongUnitsForWindow )
       call output ( 'phiWindow must be in degrees or profiles', &
@@ -987,6 +1087,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.101  2004/11/01 20:27:55  vsnyder
+! Reorganization of representation for molecules and beta groups
+!
 ! Revision 2.100  2004/10/13 02:24:56  livesey
 ! Bug fix, vGrids now pointer in case none defined
 !
