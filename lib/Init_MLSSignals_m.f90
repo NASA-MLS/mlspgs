@@ -7,6 +7,14 @@ module Init_MLSSignals_m
   public
   private :: Make_Tree
 
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
   ! Types used in signal specifications:
   integer, parameter :: t_sideband = t_last_intrinsic + 1
   integer, parameter :: t_last_signal = t_sideband
@@ -247,3 +255,5 @@ contains
   end subroutine Init_MLSSignals
 
 end module Init_MLSSignals_m
+
+! $Log $
