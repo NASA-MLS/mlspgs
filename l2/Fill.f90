@@ -4442,15 +4442,29 @@ contains ! =====     Public Procedures     =============================
           & 'Only a+b allowed for manipulation at the moment' )
         return
       end if
-      ! Check that this operation makes sense
-      if ( a%template%name /= quantity%template%name ) then
+      ! Check that this operation makes sense. Most of the time this means that
+      ! the quantities have the same template. In some cases however, we can be
+      ! a little more lenient
+      if ( a%template%name /= quantity%template%name .and. .not. ( &
+          &  ( a%template%minorFrame .and. quantity%template%minorFrame ) .and. &
+          &  ( a%template%signal == quantity%template%signal ) .and. &
+          &  ( a%template%sideband == quantity%template%sideband ) .and. &
+          &  ( a%template%frequencyCoordinate == &
+          &      quantity%template%frequencyCoordinate ) ) ) then
         call Announce_Error ( key, 0, &
-          & 'Warning:  The a quantity is not of the same type as the result quantity' )
+          & 'a is not of the same (or close enough) type as quantity' )
+        return
       end if
       if ( associated ( b ) ) then
-        if ( b%template%name /= quantity%template%name ) then
+        if ( b%template%name /= quantity%template%name .and. .not. ( &
+          &  ( b%template%minorFrame .and. quantity%template%minorFrame ) .and. &
+          &  ( b%template%signal == quantity%template%signal ) .and. &
+          &  ( b%template%sideband == quantity%template%sideband ) .and. &
+          &  ( b%template%frequencyCoordinate == &
+          &      quantity%template%frequencyCoordinate ) ) ) then
           call Announce_Error ( key, 0, &
-            & 'Warning:  The a quantity is not of the same type as the result quantity' )
+            & 'b is not of the same (or close enough) type as quantity' )
+          return
         end if
       else
         ! Later we'll be more tolerant of this
@@ -4679,6 +4693,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.167  2002/11/27 22:59:21  livesey
+! Made the checking in FillQuantityByManipulation a little more lenient
+!
 ! Revision 2.166  2002/11/27 22:18:10  dwu
 ! Change the error handling in the new manipulation feature. Instead of quitting, just send off a warning
 !
