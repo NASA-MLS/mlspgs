@@ -11,14 +11,12 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL
-  use Intrinsic, only: Lit_Indices, l_zeta, l_none
+  use Intrinsic, only: Lit_Indices, L_ZETA, L_NONE, L_VMR, L_RADIANCE, L_PTAN
   use MLSCommon, only: R8
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, VECTOR_T, VECTORVALUE_T
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T
-  use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, DESTROYMATRIX, MATRIX_T
-  use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSignals_m, only: GETSIGNALNAME
@@ -28,7 +26,6 @@ module L2PC_m
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_IDENTIFIER
   use Tree, only: DECORATION
-  use VectorsModule, only: DESTROYVECTORINFO, VECTOR_T, VECTORVALUE_T
 
   implicit NONE
   private
@@ -494,6 +491,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.12  2001/04/27 07:05:28  livesey
+! Not sure what happened, needed to restore the use statements.
+!
 ! Revision 2.11  2001/04/26 23:55:17  livesey
 ! Interim version
 !
