@@ -332,7 +332,7 @@ contains
 
     return
  98 call MLSMessage ( MLSMSG_Error, moduleName, "Unexpected end-of-file" )
- 99 call io_error ( "While reading the filter shape file", status )
+ 99 call io_error ( "While reading the DACS filter shape file", status )
     call MLSMessage ( MLSMSG_Error, moduleName, "Input error" )
 
   end subroutine Read_DACS_Filter_Shapes_File
@@ -498,6 +498,10 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 2.12  2004/02/06 00:45:27  vsnyder
+! Allow more general relation between sizes of filter shape and
+! apodization arrays.
+!
 ! Revision 2.11  2004/01/21 22:01:37  vsnyder
 ! Trim signal name before printing, cosmetics
 !
