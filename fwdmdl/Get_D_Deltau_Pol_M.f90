@@ -18,7 +18,7 @@ module Get_D_Deltau_Pol_M
 contains
 
 ! ------------------------------------------  Get_D_Deltau_Pol_DF  -----
-  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, z_path_c, Grids_f, &
+  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, del_zeta, Grids_f, &
                &  beta_path_pol, eta_zxp_f, do_calc_f, sps_path, Del_S, &
                &  incoptdepth, ref_cor, &
                &  d_delta_df, D_Deltau_Pol_DF  )
@@ -39,7 +39,9 @@ contains
       ! (IFOVPP) X axis.
     real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
     integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    real(rp), intent(in) :: z_path_c(:)      ! -log(P) on main grid.
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
     complex(rp), intent(in) :: beta_path_pol(:,:,:) ! -1:1 x path x species.
 !                                              cross section for each species
@@ -589,6 +591,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.15  2003/10/30 20:45:51  vsnyder
+! Finish removing z_path_c in favor of del_zeta
+!
 ! Revision 2.14  2003/10/30 20:38:16  vsnyder
 ! Get del_zeta from FullForwardModel.  Code for GL for derivatives.
 ! Still something wrong -- zero-field run doesn't agree with nonpolarized model
