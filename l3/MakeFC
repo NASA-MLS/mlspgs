@@ -104,6 +104,9 @@ depends:
         -d synoptic_prog.f90 \
         $(libmls_sources) $(srclib)
 
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
@@ -140,6 +143,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.15  2001/04/12 22:03:08  pwagner
+# Changes to lib or fwdmdl trigger rebuilds even on suns
+#
 # Revision 1.14  2001/04/05 17:15:54  pwagner
 # Added PROG to .PHONY list
 #

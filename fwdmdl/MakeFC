@@ -96,6 +96,9 @@ depends:
 	$(MLSBIN)/makemakedep.sh -d l2_test.f90 -d l2_numder.f90 -d l2_numder_dbg.f90 \
 		   $(libmls_sources) $(srclib)
 
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
@@ -132,6 +135,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.11  2001/04/12 22:03:08  pwagner
+# Changes to lib or fwdmdl trigger rebuilds even on suns
+#
 # Revision 1.10  2001/04/05 17:15:54  pwagner
 # Added PROG to .PHONY list
 #
