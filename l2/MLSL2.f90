@@ -29,7 +29,7 @@ program MLSL2
   use PARSER, only: CONFIGURATION
   use PVM, only: ClearPVMArgs, FreePVMArgs
   use SDPToolkit, only: UseSDPToolkit, PGSD_IO_GEN_RSEQFRM
-  use SnoopMLSL2, only: SNOOPINGACTIVE
+  use SnoopMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
     & DESTROY_STRING_TABLE, DO_LISTING, INUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
@@ -292,6 +292,11 @@ program MLSL2
         end if
       else if ( line(3+n:8+n) == 'snoop ' ) then
         snoopingActive = .true.
+      else if ( line(3+n:12+n) == 'snoopname' ) then
+        call AccumulateSlaveArguments ( line )
+        i = i + 1
+        call getarg ( i, line )
+        snoopName = line
       else if ( line(3+n:11+n) == 'subblock ' ) then
         call AccumulateSlaveArguments ( line )
         i = i + 1
@@ -686,6 +691,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.89  2002/12/06 22:33:41  livesey
+! Added the snoop name stuff
+!
 ! Revision 2.88  2002/12/05 19:45:20  pwagner
 ! Moved MLSFile_T from MLSFiles to MLSCommon
 !
