@@ -360,7 +360,7 @@ contains
           call Get_PFAdata_from_l2cf ( son, name, vGrids, returnStatus )
           error = max(error, returnStatus)
         case ( s_readPFA )
-          call read_PFAdata ( son )
+          call read_PFAdata ( son, vGrids )
         case ( s_writePFA )
           call write_PFAdata ( son, returnStatus )
           error = max(error, returnStatus)
@@ -861,6 +861,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.93  2004/12/31 02:43:05  vsnyder
+! Working on read/write PFA database
+!
 ! Revision 2.92  2004/12/14 22:52:38  pwagner
 ! Changes related to stopping early
 !
