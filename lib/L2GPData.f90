@@ -1485,8 +1485,7 @@ contains ! =====     Public Procedures     =============================
   subroutine OutputL2GP_attributes_hdf5(l2gp, l2FileHandle, swathName)
 
   use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
-    & HE5T_NATIVE_SCHAR, &
-    & HE5_SWattach, HE5_SWdetach
+    & HE5_SWattach, HE5_SWdetach, MLS_charType
   use he5_swapi, only: he5_swwrattr, he5_swwrlattr
   use MLSHDFEOS, only: mls_swwrattr, mls_swwrlattr
   use PCFHdr, only:  he5_writeglobalattr
@@ -1572,7 +1571,7 @@ contains ! =====     Public Procedures     =============================
     status = he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
       & l2gp%pressures)
     field_name = 'Pressure'
-    status = mls_swwrattr(swid, 'VerticalCoordinate', HE5T_NATIVE_SCHAR, 1, &
+    status = mls_swwrattr(swid, 'VerticalCoordinate', MLS_CHARTYPE, 1, &
       & field_name)
     if ( SWATHLEVELMISSINGVALUE ) &
       & status = he5_swwrattr(swid, 'MissingValue', rgp_type, 1, &
@@ -1595,9 +1594,9 @@ contains ! =====     Public Procedures     =============================
           & UniqueFieldDefValues, trim(abbr_uniq_fdef), &
           & expnd_uniq_fdef, .false.)
         status = mls_swwrlattr(swid, trim(theTitles(field)), 'Title', &
-          & HE5T_NATIVE_SCHAR, 1, theTitles(field))
+          & MLS_CHARTYPE, 1, theTitles(field))
         status = mls_swwrlattr(swid, trim(theTitles(field)), 'Units', &
-          & HE5T_NATIVE_SCHAR, 1, theUnits(field))
+          & MLS_CHARTYPE, 1, theUnits(field))
 
         if ( trim(theTitles(field)) == 'Time' ) then
           status = he5_swwrlattr(swid, trim(theTitles(field)), &
@@ -1614,7 +1613,7 @@ contains ! =====     Public Procedures     =============================
         endif
         status = mls_swwrlattr(swid, trim(theTitles(field)), &
           & 'UniqueFieldDefinition', &
-          & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
+          & MLS_CHARTYPE, 1, trim(expnd_uniq_fdef))
       endif
     enddo
     !   - -   D a t a   A t t r i b u t e s   - -
@@ -1646,46 +1645,46 @@ contains ! =====     Public Procedures     =============================
     end select
     if ( isColumnAmt ) units_name = 'DU'
     status = mls_swwrlattr(swid, 'L2gpValue', 'Title', &
-      & HE5T_NATIVE_SCHAR, 1, field_name)
+      & MLS_CHARTYPE, 1, field_name)
     status = mls_swwrlattr(swid, 'L2gpValue', 'Units', &
-      & HE5T_NATIVE_SCHAR, 1, units_name)
+      & MLS_CHARTYPE, 1, units_name)
     status = he5_swwrlattr(swid, 'L2gpValue', 'MissingValue', &
       & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
     status = mls_swwrlattr(swid, 'L2gpValue', &
       & 'UniqueFieldDefinition', &
-      & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
+      & MLS_CHARTYPE, 1, trim(expnd_uniq_fdef))
     status = mls_swwrlattr(swid, 'L2gpPrecision', 'Title', &
-      & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Precision')
+      & MLS_CHARTYPE, 1, trim(field_name)//'Precision')
     status = mls_swwrlattr(swid, 'L2gpPrecision', 'Units', &
-      & HE5T_NATIVE_SCHAR, 1, units_name)
+      & MLS_CHARTYPE, 1, units_name)
     status = he5_swwrlattr(swid, 'L2gpPrecision', 'MissingValue', &
       & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
     status = mls_swwrlattr(swid, 'L2gpPrecision', &
       & 'UniqueFieldDefinition', &
-      & HE5T_NATIVE_SCHAR, 1, trim(expnd_uniq_fdef))
+      & MLS_CHARTYPE, 1, trim(expnd_uniq_fdef))
 
     ! ('Status' data field newly written)
     status = mls_swwrlattr(swid, 'Status', 'Title', &
-      & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Status')
+      & MLS_CHARTYPE, 1, trim(field_name)//'Status')
     status = mls_swwrlattr(swid, 'Status', 'Units', &
-      & HE5T_NATIVE_SCHAR, 1, 'NoUnits')
+      & MLS_CHARTYPE, 1, 'NoUnits')
     status = he5_swwrlattr(swid, 'Status', 'MissingValue', &
       & HE5T_NATIVE_INT, 1, (/ int(l2gp%MissingValue) /) )
     ! status = mls_swwrlattr(swid, 'Status', 'MissingValue', &
-    !   & HE5T_NATIVE_SCHAR, 1, ' ' )
+    !   & MLS_CHARTYPE, 1, ' ' )
     status = mls_swwrlattr(swid, 'Status', &
       & 'UniqueFieldDefinition', &
-      & HE5T_NATIVE_SCHAR, 1, 'MLS-Specific')
+      & MLS_CHARTYPE, 1, 'MLS-Specific')
     
     status = mls_swwrlattr(swid, 'Quality', 'Title', &
-      & HE5T_NATIVE_SCHAR, 1, trim(field_name)//'Quality')
+      & MLS_CHARTYPE, 1, trim(field_name)//'Quality')
     status = mls_swwrlattr(swid, 'Quality', 'Units', &
-      & HE5T_NATIVE_SCHAR, 1, units_name)
+      & MLS_CHARTYPE, 1, units_name)
     status = he5_swwrlattr(swid, 'Quality', 'MissingValue', &
       & rgp_type, 1, (/ real(l2gp%MissingValue, rgp) /) )
     status = mls_swwrlattr(swid, 'Quality', &
       & 'UniqueFieldDefinition', &
-      & HE5T_NATIVE_SCHAR, 1, 'MLS-Specific')
+      & MLS_CHARTYPE, 1, 'MLS-Specific')
     
     status = mls_SWdetach(swid, hdfVersion=HDFVERSION_5)
     if ( status == -1 ) then
@@ -2342,10 +2341,8 @@ contains ! =====     Public Procedures     =============================
   subroutine DumpL2GP_attributes_hdf5(l2FileHandle, l2gp, swathName)
 
   use HDFEOS5, only: HE5T_NATIVE_INT, HE5T_NATIVE_REAL, HE5T_NATIVE_DOUBLE, &
-    & HE5T_NATIVE_SCHAR, &
-    & HE5_SWattach, HE5_SWdetach
+    & HE5_SWattach, HE5_SWdetach, MLS_charType
   use he5_swapi, only: he5_swrdattr, he5_swrdlattr
-  ! use MLSHDFEOS, only: he5_swwrattr, he5_swwrlattr
   use PCFHdr, only:  GlobalAttributes_T, he5_readglobalattr
     ! Brief description of subroutine
     ! This subroutine dumps the attributes for an l2gp
@@ -2629,6 +2626,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.97  2004/03/12 00:38:19  pwagner
+! cpL2GPData can convert hdfVersions; hdf version default increased to 5
+!
 ! Revision 2.96  2004/02/26 22:02:36  pwagner
 ! Acts more gracefully if l2gp file lacks global attributes
 !
