@@ -12,8 +12,9 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   use l3ascii, only: l3ascii_read_field
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: LineLen, NameLen, FileNameLen, R8, R4, I4
-  use MLSFiles, only: GetPCFromRef, mls_io_gen_closeF, mls_io_gen_openF, &
-    &                split_path_name
+  use MLSFiles, only: FILENOTFOUND, &
+    & GetPCFromRef, MLS_HDF_VERSION, mls_io_gen_closeF, mls_io_gen_openF, &
+    & split_path_name
   use MLSStrings, only: GetStringElement, NumStringElements, Capitalize, &
     & List2Array, LowerCase, ReplaceSubString
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -61,7 +62,8 @@ contains
 
   ! ----------------------------------------------- ReadGriddedData
   subroutine ReadGriddedData(FileName, lcf_where, description, v_type, &
-    & the_g_data, GeoDimList, fieldName, missingValue)
+    & the_g_data, returnStatus, &
+    & GeoDimList, fieldName, missingValue)
 
     ! This routine reads a Gridded Data file, returning a filled data
     ! structure and the  appropriate for 'ncep' or 'dao'
@@ -80,6 +82,7 @@ contains
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
     type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), intent(IN) :: description ! e.g., 'dao'
+    integer, intent(out) :: returnStatus ! E.g., FILENOTFOUND
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
     real(rgr), optional, intent(IN) :: missingValue
@@ -91,24 +94,13 @@ contains
     my_description = lowercase(description)
     if ( DEEBUG ) print *, 'Reading ' // trim(my_description) // ' data'
 
-! >     descrpt_is_legal = (my_description(:len(lit_dao)) == lit_dao) &
-! >       & .or. &
-! >       & (my_description(:len(lit_ncep)) == lit_ncep) &
-! >       & .or. &
-! >       & (my_description(:len(lit_clim)) == lit_clim)
-! > 
-! >     descrpt_is_misplcd = my_description(:len(lit_clim)) == lit_clim
-! > 
-! >     if(descrpt_is_misplcd) then
-! >       call announce_error(lcf_where, 'READGriddedData called with climatology' &
-! >         & // ' description')
-! >       return
-! >     elseif(.not. descrpt_is_legal) then
-! >       call announce_error(lcf_where, 'READGriddedData called with unknown' &
-! >         & // ' description: ' // description)
-! >       return
-! >     endif
-
+    returnStatus = mls_hdf_version(FileName)
+    if ( returnStatus == FILENOTFOUND ) then
+      call SetupNewGriddedData ( the_g_data, empty=.true. )
+      return
+    else
+      returnStatus = 0
+    endif
     ! According to the kinds of gridded data files we can read
     select case ( trim(my_description) )
     case ('clim')
@@ -1312,7 +1304,7 @@ contains
         !        call read_dao ( DAOphysicalFilename, vname, data_array )
         if(returnStatus > 0) then
           call ReadGriddedData ( DAOphysicalFilename, root, &
-            & 'dao', v_is_pressure, aprioriData(returnStatus) )
+            & 'dao', v_is_pressure, aprioriData(returnStatus), returnStatus )
         endif
       end if
     end do ! DAOFileHandle = mlspcf_l2_dao_start, mlspcf_l2_dao_end
@@ -1362,7 +1354,7 @@ contains
         !        call read_ncep ( NCEPphysicalFilename, data_array )
         if(returnStatus > 0) then
           call ReadGriddedData ( NCEPphysicalFilename, root, &
-            & 'ncep', v_is_pressure, aprioriData(returnStatus) )
+            & 'ncep', v_is_pressure, aprioriData(returnStatus), returnStatus )
         endif
 
       end if
@@ -1536,6 +1528,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.30  2003/04/04 18:34:22  pwagner
+! Sets empty field if FILENOTFOUND
+!
 ! Revision 2.29  2003/04/02 00:14:25  pwagner
 ! The 4th index is now noDates instead of ntime
 !
