@@ -91,6 +91,9 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 depends:
 	$(MLSBIN)/makemakedep.sh $(libmls_sources) $(srclib)
 
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
@@ -128,6 +131,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.12  2001/05/01 17:07:43  pwagner
+# Now runs ghostbuster when updating
+#
 # Revision 2.11  2001/04/12 22:03:08  pwagner
 # Changes to lib or fwdmdl trigger rebuilds even on suns
 #
