@@ -582,8 +582,8 @@ contains
     c = c * OneOvSPi
     sb = c * y * d1
     sc = c * sigmaX1 * yi * d1
-    sd = c * a * yi * d2
-    Slabswint = sa + sb - sc + sd
+    sd = c * yi * d2
+    Slabswint = sa + sb - sc + sd * a
 
 !{ The Fadeeva function $w(z)$, where $z = a + i y$, can be written as $V(a,y) +
 !  i L(a,y)$, where $V(a,y)$ is the Voigt function ({\tt u} above) and $L(a,y)$
@@ -650,7 +650,7 @@ contains
     dSlabs_dT = sa * ( c + du / u ) &
       &       + sb * ( c + dd1 + dy_dT ) &
       &       - sc * ( c + dd1 + dyi_dT + dx1_dT + dv0s_dT / sigma ) &
-      &       + sd * ( c + dd2 + dyi_dT + da / a )
+      &       + sd * ( a * ( c + dd2 + dyi_dT ) + da )
 
   end subroutine Slabswint_dT
 
@@ -1383,6 +1383,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.38  2004/09/16 20:24:23  vsnyder
+! Avoid dividing by zero in Slabswing_Lines_dT
+!
 ! Revision 2.37  2004/09/01 01:14:48  vsnyder
 ! Correct 'not_used_here' routine
 !
