@@ -761,8 +761,8 @@ contains ! =====     Public Procedures     =============================
       type (QuantityTemplate_T), pointer :: BINRAD ! Quantity template
 
       ! Executable code
-
-      ! If we're in locked bins mode, then just return the locked bin
+      
+      ! Firstly, if we're in locked bins mode, then just return the locked bin
       signal = radiance%template%signal
       sideband = radiance%template%sideband
       noBins = size ( l2pcDatabase )
@@ -808,18 +808,14 @@ contains ! =====     Public Procedures     =============================
         sidebandsMatch ( binRad%sideband, bin ) = ( binRad%signal == signal )
 
         ! Does the 'name' match
-        if ( fmConf%nameFragment /= 0 ) then
-          call get_string ( l2pcDatabase(bin)%name, binName, strip=.true. )
-          call get_string ( fmConf%nameFragment, nameFragment, strip=.true. )
-          if ( len_trim(nameFragment) /= 0 ) then
-            if ( index ( trim(binName), trim(nameFragment) ) /= 0 ) &
-              & nameMatches ( bin ) = .true.
-          else
-            nameMatches ( bin ) = .true.
-          end if
-        else
-          nameMatches ( bin ) = .true.
-        end if
+        nameMatches ( bin ) = .true.
+!         if ( fmConf%nameFragment /= 0 ) then
+!           call get_string ( l2pcDatabase(bin)%name, binName, strip=.true. )
+!           call get_string ( fmConf%nameFragment, nameFragment, strip=.true. )
+!           if ( len_trim(nameFragment) /= 0 ) then
+!             nameMatches ( bin ) = index ( trim(binName), trim(nameFragment) ) /= 0
+!           end if
+!         end if
 
         ! Does the phi match.  This one is more complicated as we may
         ! have to consider it for all MAFs that are not overlapped, and
@@ -892,6 +888,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.34  2003/01/29 22:43:25  livesey
+! More intelligent setting of rows flags.
+!
 ! Revision 2.33  2003/01/08 23:50:15  livesey
 ! Now doesn't bother to create derivatives for masked radiances
 !
