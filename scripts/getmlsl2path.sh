@@ -37,7 +37,7 @@ while [ -n "$(echo $1)" ]; do
     fi
     if [ $1 == "--dao" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work3/livesey"
+	    echo "/work3/$USER"
 	else
 	    echo "/data/dao/tsyn3d_mis_p/geos4/$YEAR"
 	fi
@@ -46,14 +46,14 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/$VERSION"
 	else
-	    echo "/bigdata/livesey/$VERSION"
+	    echo "/bigdata/$USER/$VERSION"
 	fi
     fi
     if [ $1 == "--l2pc" ]; then
 	if [ $SOUNDBARRIER == 1 ]; then
-	    echo "/work3/livesey/"
+	    echo "/work3/$USER/"
 	else
-	    echo "/bigdata/livesey/$VERSION"
+	    echo "/bigdata/$USER/$VERSION"
 	fi
     fi
     if [ $1 == "--truthl2gp" ]; then
@@ -67,7 +67,7 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/$VERSION"
 	else
-	    echo "/bigdata/livesey/$VERSION"
+	    echo "/bigdata/$USER/$VERSION"
 	fi
     fi
     if [ $1 == "--l1boa" ]; then
@@ -94,10 +94,20 @@ while [ -n "$(echo $1)" ]; do
     if [ $1 == "--leapsec" ]; then
 	echo "$HOME/emls/$VERSION"
     fi
+    if [ $1 == "--tmp" ]; then
+	if [ $SOUNDBARRIER == 1 ]; then
+	    echo "/work3/$USER"
+	else
+	    echo "/bigdata/$USER/$VERSION"
+	fi
+    fi
     shift
 done
 
 # $Log$
+# Revision 1.13  2003/05/10 22:23:44  livesey
+# Tidied up year related issues
+#
 # Revision 1.12  2003/05/10 20:39:34  livesey
 # Bug fix for dao
 #
