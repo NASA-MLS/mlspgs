@@ -11,6 +11,7 @@ MODULE MLSPCF2
   character(len=len(idparm)), private :: Id = idParm
   character(len=*), private, parameter :: ModuleName = &
        & "$RCSfile$"
+  private :: not_used_here 
   !---------------------------------------------------------------------------
 
    INTEGER, PARAMETER :: mlspcf_l2_param_InputVersion = 2000
@@ -79,9 +80,17 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_start = 4023
    INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_end = 4023
    !
+contains 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 END MODULE MLSPCF2
 
 ! $Log$
+! Revision 2.11  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.10  2002/10/01 22:25:16  pwagner
 ! Fixed RCS Ident Block
 !
