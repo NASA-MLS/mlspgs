@@ -381,7 +381,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  CreateVector  -----
   type(Vector_T) function CreateVector &
-    & ( vectorName, vectorTemplate, quantities ) result (vector )
+    & ( vectorName, vectorTemplate, quantities ) result ( vector )
 
   ! This routine creates an empty vector according to a given template
   ! Its mask is not allocated.  Use CreateMask if one is needed.
@@ -445,6 +445,7 @@ contains ! =====     Public Procedures     =============================
 
     vector%name = 0
     nullify ( vector%template )
+    if ( .not. associated(vector%quantities) ) return
     call destroyVectorValue ( vector )
     deallocate ( vector%quantities, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -700,7 +701,11 @@ contains ! =====     Public Procedures     =============================
       end if
     end do
     msg = 'There is no quantity in vector '
-    call get_string ( vector%name, msg(len_trim(msg)+2:) )
+    if ( vector%name /= 0 ) then
+      call get_string ( vector%name, msg(len_trim(msg)+2:) )
+    else
+      msg(len_trim(msg)+2:) = '[unnamed]'
+    end if
     msg = trim(msg) // ' that has the required type'
     call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
 
@@ -850,6 +855,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.9  2001/01/26 19:00:02  vsnyder
+! Periodic commit
+!
 ! Revision 2.8  2001/01/19 23:49:59  vsnyder
 ! Periodic commit
 !
