@@ -11,6 +11,7 @@ MODULE HGrid                    ! Horizontal grid information
   USE MLSStrings
   USE L1BData
   USE MLSNumerics
+  USE Units
 
   IMPLICIT NONE
 
@@ -116,6 +117,8 @@ MODULE HGrid                    ! Horizontal grid information
     INTEGER :: noMAFs           ! Number of MAFs of L1B data read
     INTEGER :: noProfs          ! Number of profiles in output hGrid
     INTEGER :: maf,l1bItem,prof ! Loop counters
+    INTEGER :: family           ! For parsing `height'
+    REAL(r8) :: scale           ! For putting `height' into the right units
     INTEGER, DIMENSION(:), ALLOCATABLE :: defaultMIFs
     ! MIFs it would choose in the non over/undersampled case
     REAL(r8), DIMENSION(:), ALLOCATABLE :: defaultField,interpolatedField
@@ -153,11 +156,15 @@ MODULE HGrid                    ! Horizontal grid information
                   & "Unrecognised instrument module: "//TRIM(cell%charValue))
           END SELECT
        CASE("HEIGHT")
-          ! Code needed here when mlscf finalized ***
+          height=cell%realValue
+          CALL ParseUnitName(cell%units,family,scale)
+          IF (family /= PHYQ_Length) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+               & "height must be specified as a length (e.g. km)")
+          height=height*scale
        CASE("FRACTION")
-          ! Code needed here when mlscf finalized ***
+          fraction=cell%realValue
        CASE("INTERPOLATIONFACTOR")
-          ! Code needed here when mlscf finalized ***
+          interpolationFactor=cell%realValue
        CASE DEFAULT
           CALL MLSMessage(MLSMSG_Error,ModuleName,&
                & MLSMSG_Keyword//TRIM(cell%keyword))
@@ -400,6 +407,9 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.7  2000/05/16 19:59:37  livesey
+! Added stuff to deal with `time' correctly.
+!
 ! Revision 1.6  2000/01/18 00:14:51  livesey
 ! Removed profileIndices etc. No longer relevant, as Join deals with this stuff
 ! for l2gp quantities.
