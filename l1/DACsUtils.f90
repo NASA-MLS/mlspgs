@@ -90,7 +90,8 @@ CONTAINS
 !=============================================================================
 
     CHARACTER (LEN=*), DIMENSION(:), INTENT(IN) :: rawdata
-    INTEGER, INTENT(OUT) :: C(*), D(4), TP, DIO, Zlag, LO
+    INTEGER, DIMENSION(:), INTENT(OUT) :: C
+    INTEGER, INTENT(OUT) :: D(4), TP, DIO, Zlag, LO
 
     INTEGER :: i, i12, i8, rindx
 
@@ -291,17 +292,6 @@ CONTAINS
                    ENDIF
                 ENDIF
 
-!!$                write (66, *) 'DACSno, mifno, e, ebitvntot, median: ', &
-!!$                     DACSno, MIFno, E, EbitVal, Ntot(MIFno), median
-!!$                write (66, *) "D(curr): ", DACS_MAF(MIFno)%D(:,DACSno)
-!!$                write (66, *) "D(prev): ", DACS_MAF(MIFno-1)%D(:,DACSno)
-!!$                write (66, *) "D(next): ", DACS_MAF(MIFno+1)%D(:,DACSno)
-!!$                write (66, "(i6, ':', B20)") (DACS_MAF(MIFno)%D(i,DACSno), &
-!!$                     DACS_MAF(MIFno)%D(i,DACSno),i=1,4)
-!!$                write (66, *) "IntBit1: ", IntBit1
-!!$                write (66, *) "Zmatch: ", Zmatch
-!!$                write (66, *) "NumZmatch: ", NumZmatch
-
              ENDIF
           ENDIF
        ENDDO
@@ -315,9 +305,10 @@ CONTAINS
   SUBROUTINE UnpackDACSdata (C_K, D, Compressed, nchans, R2a)
 !=============================================================================
 
-    INTEGER :: C_K(*), D(4), nchans
+    INTEGER, DIMENSION(:) :: C_K
+    INTEGER :: D(4), nchans
     LOGICAL :: Compressed
-    REAL :: R2a(*)
+    REAL, DIMENSION(:) :: R2a
 
     REAL :: Ntot3
 
@@ -336,8 +327,8 @@ CONTAINS
 
     USE MLSL1Common, ONLY: DACS_const
 
-    INTEGER :: C(*)
-    REAL :: R2a(*)
+    INTEGER, DIMENSION(:) :: C
+    REAL, DIMENSION(:) :: R2a
 
     INTEGER :: i
     REAL :: L
@@ -355,8 +346,10 @@ CONTAINS
   SUBROUTINE UnpackUncompDACS (K, Ntot3, nchans, R2a)
 !=============================================================================
 
-    INTEGER :: K(*), nchans
-    REAL :: R2a(*), Ntot3
+    INTEGER, DIMENSION(:) :: K
+    INTEGER :: nchans
+    REAL, DIMENSION(:) :: R2a
+    REAL :: Ntot3
 
     INTEGER :: i
 
@@ -433,6 +426,9 @@ CONTAINS
 END MODULE DACsUtils
 
 ! $Log$
+! Revision 2.5  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.4  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !

@@ -6,7 +6,7 @@ MODULE L1LogUtils
 !=============================================================================
 
   USE MLSCommon, ONLY: TAI93_Range_T
-  USE MLSL1Common, ONLY: L1BFileInfo, R8
+  USE MLSL1Common, ONLY: L1BFileInfo, R8, Chan_R_T
   USE MLSL1Config, ONLY: L1Config
   USE SDPToolkit, ONLY: PGS_TD_TAItoUTC
 
@@ -40,6 +40,9 @@ MODULE L1LogUtils
   REAL(R8) :: last_TAI
   REAL :: MAF_dur
   TYPE (TAI93_Range_T) :: TAI_range
+
+  TYPE (Chan_R_T) :: Atten_cnts = &  ! FB, MB, WF, DACS
+       Chan_R_T (HUGE(1.0), HUGE(1.0), HUGE(1.0), HUGE(1.0))
   
 CONTAINS
 
@@ -129,6 +132,7 @@ CONTAINS
 
     LOGICAL :: first = .TRUE.
     LOGICAL :: more_data = .TRUE.
+    LOGICAL :: doneAttens = .FALSE.
 
     PRINT *, 'Examining sci data...'
     WRITE (unit, *) ''
@@ -178,6 +182,11 @@ CONTAINS
        BeginEnd%SciMAFno(2) = SciMAF(0)%MAFno
        BeginEnd%SciTAI(2) = SciMAF(0)%secTAI
 
+       IF (ANY (SciMAF%AttenMaxed)) THEN
+          CALL StoreMinAttenCnts (SciMAF)
+          doneAttens = .TRUE.
+       ENDIF
+
     ENDDO
 
     ENDFILE L1BFileInfo%SciMAF_unit
@@ -185,7 +194,137 @@ CONTAINS
     IF (Sci_Warns == 0 .AND. Sci_Errs == 0) &
          WRITE (unit, *) '##### No Warnings and no Errors ###'
 
+    IF (doneAttens) CALL SaveDefaultZeroCnts   ! Save to file, if any done
+
   END SUBROUTINE ExamineSciData
+
+!=============================================================================
+  SUBROUTINE StoreMinAttenCnts (SciMAF)
+!=============================================================================
+
+    USE MLSL1Common, ONLY: MaxMIFs, FBnum, FBchans, MBnum, MBchans, WFnum, &
+         WFchans
+    USE L0_sci_tbls, ONLY: Sci_pkt_T
+
+    TYPE (Sci_pkt_T), DIMENSION(0:), INTENT (IN) :: SciMAF
+
+    INTEGER :: i, chan, MIFno
+    INTEGER, PARAMETER :: lastMIF = (MaxMIFs - 1)
+
+    DO MIFno = 0, lastMIF
+       DO i = 1, FBnum   ! FB
+          IF (SciMAF(MIFno)%MaxAtten%FB(i)) THEN
+             DO chan = 1, FBchans
+                Atten_cnts%FB(chan,i) = &
+                     MIN (Atten_cnts%FB(chan,i), REAL(SciMAF(MIFno)%FB(chan,i)))
+             ENDDO
+          ENDIF
+       ENDDO
+       DO i = 1, MBnum   ! MB
+          IF (SciMAF(MIFno)%MaxAtten%MB(i)) THEN
+             DO chan = 1, MBchans
+                Atten_cnts%MB(chan,i) = &
+                     MIN (Atten_cnts%MB(chan,i), REAL(SciMAF(MIFno)%MB(chan,i)))
+             ENDDO
+          ENDIF
+       ENDDO
+       DO i = 1, WFnum   ! WF
+          IF (SciMAF(MIFno)%MaxAtten%WF(i)) THEN
+             DO chan = 1, WFchans
+                Atten_cnts%WF(chan,i) = &
+                     MIN (Atten_cnts%WF(chan,i), REAL(SciMAF(MIFno)%WF(chan,i)))
+             ENDDO
+          ENDIF
+       ENDDO
+    ENDDO
+
+  END SUBROUTINE StoreMinAttenCnts
+
+!=============================================================================
+  SUBROUTINE SaveDefaultZeroCnts
+!=============================================================================
+
+    USE MLSL1Common, ONLY: FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, &
+         deflt_zero
+    USE MLSPCF1, ONLY : mlspcf_defltzeros_end
+    USE SDPToolkit, ONLY: PGS_PC_GetReference
+    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
+
+    CHARACTER (LEN=132) :: PhysicalFilename
+    INTEGER :: bank, chan, i, ios, returnStatus, unit, version
+    REAL(R8) :: mid_TAI
+    CHARACTER (LEN=*), DIMENSION(10), PARAMETER :: Header = (/ &
+"                                                                            ",&
+"This section is the header comments section for the default zeros file.     ",&
+"                                                                            ",&
+"Use a #DATA (starting in column 1) to indicate the beginning of the data.   ",&
+"                                                                            ",&
+"All lines before the #DATA are comments.                                    ",&
+"                                                                            ",&
+"Data begins after 1 comment line (beginning with a '#').  Data is free form.",&
+"The data order is FB 1-19, MB 1-5 followed by WF 1-3.                       ",&
+"                                                                            " &
+    /)
+    REAL, PARAMETER :: HUGE_F = HUGE(1.0)
+
+    INTEGER, EXTERNAL :: PGS_IO_Gen_Track_LUN
+
+! Open output default zeros file:
+
+    version = 1
+    returnStatus = PGS_PC_getReference (mlspcf_defltzeros_end, version, &
+          & PhysicalFilename)
+    returnStatus = PGS_IO_Gen_Track_LUN (unit, 0)
+    OPEN (unit=unit, file=PhysicalFilename, status="REPLACE", &
+         FORM="FORMATTED", ACCESS="SEQUENTIAL", iostat=ios)
+
+    IF (ios /= 0) THEN
+       CALL MLSMessage (MLSMSG_Error, ModuleName, &
+            & "Could not open Output Default Zeros file: " // PhysicalFilename)
+    ENDIF
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Opened Output Default Zeros file: " // PhysicalFilename)
+
+    mid_TAI = TAI_range%StartTime + (TAI_range%EndTime - TAI_range%StartTime)/2
+    returnStatus = PGS_TD_TAItoUTC (mid_TAI, asciiUTC(1))
+
+    WRITE (unit, '(A)') (TRIM(Header(i)),i=1,SIZE(Header))
+    WRITE (unit, '(A)') 'Produced for data of '//asciiUTC(1)(3:4)//'/'// &
+         asciiUTC(1)(6:7)//'/'//asciiUTC(1)(9:10)
+    WRITE (unit, '(/,A)') '#DATA'
+
+    DO bank = 1, FBnum
+       DO chan = 1, FBchans
+          IF (Atten_cnts%FB(chan,bank) == HUGE_F) Atten_cnts%FB(chan,bank) = &
+               deflt_zero%FB(chan,bank)
+       ENDDO
+       WRITE (unit, "(/,'# FB ', i2,/)") bank
+       WRITE (unit, "(13I5)") NINT(Atten_cnts%FB(:,bank))
+    ENDDO
+
+    DO bank = 1, MBnum
+       DO chan = 1, MBchans
+          IF (Atten_cnts%MB(chan,bank) == HUGE_F) Atten_cnts%MB(chan,bank) = &
+               deflt_zero%MB(chan,bank)
+       ENDDO
+       WRITE (unit, "(/,'# MB ', i1,/)") bank
+       WRITE (unit, "(11I5)") NINT(Atten_cnts%MB(:,bank))
+    ENDDO
+
+    DO bank = 1, WFnum
+       DO chan = 1, WFchans
+          IF (Atten_cnts%WF(chan,bank) == HUGE_F) Atten_cnts%WF(chan,bank) = &
+               deflt_zero%WF(chan,bank)
+       ENDDO
+       WRITE (unit, "(/,'# WF ', i1,/)") bank
+       WRITE (unit, "(4I5)") NINT(Atten_cnts%WF(:,bank))
+    ENDDO
+
+    CLOSE (unit)
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & "Closed Output Default Zeros file: " // PhysicalFilename)
+
+  END SUBROUTINE SaveDefaultZeroCnts
 
 !=============================================================================
   SUBROUTINE OutputLogSummary
@@ -281,7 +420,7 @@ CONTAINS
   SUBROUTINE LogStatus
 
     USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-    USE Machine, ONLY: Shell_Command
+!    USE Machine, ONLY: Shell_Command
 
     IF (eng_warns > 0 .OR. sci_warns > 0) THEN
        CALL MLSMessage (MLSMSG_Warning, ModuleName, &
@@ -291,7 +430,7 @@ CONTAINS
 
     IF (eng_errs > 0 .OR. sci_errs > 0) THEN
 
-! send email on failure (next version!):
+! send email on failure (next version?!):
 
        !CALL Shell_Command ("/usr/lib/sendmail -t <mail.vsp")
 
@@ -307,6 +446,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.4  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !
