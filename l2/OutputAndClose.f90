@@ -8,44 +8,11 @@ module OutputAndClose ! outputs all data from the Join module to the
 
 !=======================================================================================
 
-  use Allocate_Deallocate, only: Deallocate_Test
-  use Expr_M, only: Expr
   use Hdf, only: DFACC_CREATE, DFACC_RDWR, SFN2INDEX, SFSELECT, SFCREATE, &
     & SFENDACC, DFNT_FLOAT32, SFWDATA_F90
-  use INIT_TABLES_MODULE, only: F_ASCII, F_FILE, F_HDFVERSION, &
-    & F_METANAME, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
-    & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME, F_WRITECOUNTERMAF
-  use Intrinsic, only: PHYQ_Dimensionless, L_None
-  use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
-  use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
-  use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
-  use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
-  use LEXER_CORE, only: PRINT_SOURCE
-  use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
-  use MLSCommon, only: I4, MLSCHUNK_T
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-    & SPLIT_PATH_NAME, MLS_SFSTART, MLS_SFEND
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
-    & PCFL2CFSAMECASE, DEFAULT_HDFVERSION_WRITE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
-    & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
-    & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
-    & Mlspcf_mcf_l2dgg_start
-  use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
   use OUTPUT_M, only: blanks, OUTPUT
-  use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
-  use Time_M, only: Time_Now
-  use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TOGGLES, only: GEN, TOGGLE, switches
-  use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, &
-    & SUBTREE, SUB_ROSA
-  use TREE_TYPES, only: N_NAMED
-  use VectorsModule, only: VectorValue_T
-  use WriteMetadata, only: PCFData_T, Populate_metadata_std, &
-    & Populate_metadata_oth, WriteMetaLog, Get_l2gp_mcf
 
   implicit none
   private
@@ -81,6 +48,36 @@ contains ! =====     Public Procedures     =============================
     ! The correspondence between MCF and l2gp files is determined by
     ! the value of        MCFFORL2GPOPTION
     ! (see write_metadata module for fuller explanation)
+
+    use Allocate_Deallocate, only: Deallocate_Test
+    use Expr_M, only: Expr
+    use INIT_TABLES_MODULE, only: F_ASCII, F_FILE, F_HDFVERSION, &
+      & F_METANAME, F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
+      & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME, F_WRITECOUNTERMAF
+    use Intrinsic, only: PHYQ_Dimensionless
+    use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
+    use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
+    use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
+    use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
+    use MLSCommon, only: I4
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+      & SPLIT_PATH_NAME, MLS_SFSTART, MLS_SFEND
+    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
+      & PCFL2CFSAMECASE, DEFAULT_HDFVERSION_WRITE
+    use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
+      & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
+      & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
+      & Mlspcf_mcf_l2dgg_start
+    use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
+    use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
+    use Time_M, only: Time_Now
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
+    use TOGGLES, only: GEN, TOGGLE, Switches
+    use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
+    use TREE_TYPES, only: N_NAMED
+    use WriteMetadata, only: PCFData_T, Populate_metadata_std, &
+      & Populate_metadata_oth, WriteMetaLog, Get_l2gp_mcf
 
     ! Arguments
     integer, intent(in) :: ROOT   ! Of the output section's AST
@@ -144,10 +141,10 @@ contains ! =====     Public Procedures     =============================
 
     error = 0
 
-   if(index(switches, 'pro') /= 0) then
+   if (index(switches, 'pro') /= 0) then
     call output ( '============ Level 2 Products ============', advance='yes' )
     call output ( ' ', advance='yes' )
-   endif
+   end if
 
     ! l2gp_mcf will be incremented in get_l2gp_mcf (if MCFFORL2GPOPTION == 1)
     l2gp_mcf = mlspcf_mcf_l2gp_start - 1   
@@ -237,7 +234,7 @@ contains ! =====     Public Procedures     =============================
           else
             l2gpPhysicalFilename = file_base
             returnStatus = 0
-          endif
+          end if
 
           if ( returnStatus == 0 ) then
             if ( DEBUG ) call output(&
@@ -268,7 +265,7 @@ contains ! =====     Public Procedures     =============================
                         & 'Attempt to write too many l2gp quantities to a file', &
                         & numquantitiesperfile )
                       numquantitiesperfile = MAXQUANTITIESPERFILE
-                    endif
+                    end if
                     quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
                   else
                     call MLSMessage ( MLSMSG_Warning, ModuleName, &
@@ -288,7 +285,7 @@ contains ! =====     Public Procedures     =============================
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error closing  l2gp file:  "//mnemonic//" "//msg )
-            elseif(index(switches, 'pro') /= 0) then
+            else if (index(switches, 'pro') /= 0) then
                call announce_success(l2gpPhysicalFilename, 'l2gp', &
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
@@ -371,7 +368,7 @@ contains ! =====     Public Procedures     =============================
           else
             l2auxPhysicalFilename = file_base
             returnStatus = 0
-          endif
+          end if
 
           if ( returnStatus == 0 ) then
 
@@ -407,7 +404,7 @@ contains ! =====     Public Procedures     =============================
                         & 'Attempt to write too many l2aux quantities to a file', &
                         & numquantitiesperfile )
                       numquantitiesperfile = MAXQUANTITIESPERFILE
-                    endif
+                    end if
                     call get_string &
                       & ( l2auxDatabase(db_index)%name, &
                       &     QuantityNames(numquantitiesperfile) )
@@ -430,7 +427,7 @@ contains ! =====     Public Procedures     =============================
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call announce_error ( root, &
                 &  "Error closing l2aux file:  "//l2auxPhysicalFilename, returnStatus)
-            elseif(index(switches, 'pro') /= 0) then
+            else if (index(switches, 'pro') /= 0) then
                call announce_success(l2auxPhysicalFilename, 'l2aux', &
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
@@ -516,7 +513,7 @@ contains ! =====     Public Procedures     =============================
             else if ( index(switches, 'pro') /= 0) then
               call announce_success(file_base, 'l2pc', &
                 & 0, quantityNames)
-            endif
+            end if
           else
             ! For the moment call a routine
             call OutputHDF5L2PC ( trim(file_base), matrices, quantitiesNode, packed )
@@ -551,7 +548,7 @@ contains ! =====     Public Procedures     =============================
           else
             l2gpPhysicalFilename = file_base
             returnStatus = 0
-          endif
+          end if
 
           if ( returnStatus == 0 ) then
             if ( DEBUG ) call output(&
@@ -581,7 +578,7 @@ contains ! =====     Public Procedures     =============================
                       & 'Attempt to write too many l2dgg quantities to a file', &
                       & numquantitiesperfile )
                     numquantitiesperfile = MAXQUANTITIESPERFILE
-                  endif
+                  end if
                   quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
                 end do ! in_field_no = 2, nsons(gson)
               case ( f_overlaps )
@@ -597,7 +594,7 @@ contains ! =====     Public Procedures     =============================
               call Pgs_smf_getMsg ( returnStatus, mnemonic, msg )
               call MLSMessage ( MLSMSG_Error, ModuleName, &
                 &  "Error closing  l2dgg file:  "//mnemonic//" "//msg )
-            elseif(index(switches, 'pro') /= 0) then
+            else if (index(switches, 'pro') /= 0) then
                call announce_success(l2gpPhysicalFilename, 'l2dgg', &
                & numquantitiesperfile, quantityNames, hdfVersion=hdfVersion)
             end if
@@ -669,7 +666,7 @@ contains ! =====     Public Procedures     =============================
     if (CREATEMETADATA ) then
       call writeMetaLog ( l2pcf, metadata_error )
       error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-    endif
+    end if
 
 ! Done with text of PCF file at last
 
@@ -678,10 +675,10 @@ contains ! =====     Public Procedures     =============================
 
     call deallocate_test ( l2pcf%anText, 'anText of PCF file', moduleName )
 
-   if(index(switches, 'pro') /= 0) then
+   if (index(switches, 'pro') /= 0) then
     call output ( '============ End Level 2 Products ============', advance='yes' )
     call output ( ' ', advance='yes' )
-   endif
+   end if
 
 
     if ( error /= 0 ) then
@@ -699,7 +696,7 @@ contains ! =====     Public Procedures     =============================
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
         call blanks ( 4, advance = 'no' )
-      endif
+      end if
       call output ( "Timing for Output_Close =" )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -710,6 +707,13 @@ contains ! =====     Public Procedures     =============================
   ! ----------------------------------------------- DirectWrite --------
   subroutine DirectWrite ( quantity, sdName, file, hdfVersion, &
     & chunkNo, chunks )
+
+    use Intrinsic, only: L_None
+    use L2ParInfo, only: PARALLEL, REQUESTDIRECTWRITEPERMISSION, FINISHEDDIRECTWRITE
+    use MLSCommon, only: MLSCHUNK_T
+    use MLSFiles, only: MLS_SFSTART, MLS_SFEND
+    use VectorsModule, only: VectorValue_T
+
     type (VectorValue_T), intent(in) :: QUANTITY
     integer, intent(in) :: SDNAME       ! Name of sd in output file
     integer, intent(in) :: FILE         ! Name of output file
@@ -807,7 +811,7 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) then
       call announce_error (0,&
         & "Error writing SDS data to l2aux file:  " )
-    endif
+    end if
 
     ! End access to the SD and close the file
     status = sfEndAcc ( sdId )
@@ -841,7 +845,7 @@ contains ! =====     Public Procedures     =============================
       call output ( hdfVersion, advance='yes')
     else
       call output ( ' ', advance='yes')
-    endif
+    end if
     call blanks(15)
     call output ( 'name : ' )
     call blanks(8)
@@ -855,12 +859,16 @@ contains ! =====     Public Procedures     =============================
           call output ( i )
           call blanks(5)
           call output ( trim(quantities(i)), advance='yes')
-      enddo
+      end do
     end  if
   end subroutine announce_success
 
   ! ---------------------------------------------  ANNOUNCE_ERROR  -----
   subroutine ANNOUNCE_ERROR ( Where, Full_message, Code, Penalty )
+
+    use LEXER_CORE, only: PRINT_SOURCE
+    use TREE, only: SOURCE_REF
+
     integer, intent(in) :: Where   ! Tree node where error was noticed
     character(LEN=*), intent(in) :: Full_Message
     integer, intent(in), optional :: Code    ! Code for error message
@@ -890,6 +898,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.59  2002/08/21 02:35:18  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.58  2002/08/21 01:05:06  livesey
 ! Changed to single precision for direct write
 !
