@@ -5,6 +5,7 @@ module TRACE_M
 
   use LEXER_CORE, only: PRINT_SOURCE
   use OUTPUT_M, only: OUTPUT
+  use TIME_M, only: TIME_NOW
   use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   private
@@ -31,7 +32,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(in), optional :: ROOT
     integer, intent(in), optional :: INDEX
     integer :: I              ! Loop inductor
-    integer :: Values(8)      ! For Date_and_time
+    character(len=10) :: Now  ! For Date_and_time
     if ( present(root) ) then
       call output ( root, 4 ); call output ( ': ' )
     else
@@ -42,12 +43,8 @@ contains ! ====     Public Procedures     ==============================
     end do
     call output ( 'Enter ' ); call output ( name )
     if ( present(index) ) call output( index )
-    call date_and_time ( values=values )
-    call output ( ' at ' )
-    call output ( values(5) ); call output ( ':' )     ! The hour
-    call output ( values(6) ); call output ( ':' )     ! The minute
-    call output ( values(7) ); call output ( '.' )     ! The second
-    call output ( values(8), places=3, fill=.true. )   ! The milliseconds
+    call date_and_time ( time=now )
+    call output ( ' at ' // now(1:2) // ':' // now(3:4) // ':' // now(5:) )
     if ( present(root) ) then
       call output ( ' with ' );
       call dump_tree_node ( root, 0 )
@@ -57,7 +54,7 @@ contains ! ====     Public Procedures     ==============================
       call output ( '', advance='yes' )
     end if
     if ( depth >= 0 .and. depth < clockStackMax ) then
-      call cpu_time ( clockStack(depth) )
+      call time_now ( clockStack(depth) )
       clockStack(depth+1) = 0.0
     end if
     depth = depth + 1
@@ -68,6 +65,7 @@ contains ! ====     Public Procedures     ==============================
     character(len=*), intent(in) :: NAME
     integer, intent(in), optional :: INDEX
     integer :: I              ! Loop inductor
+    character(len=10) :: Now  ! For Date_and_time
     integer :: Values(8)      ! For Date_and_time
     real :: T                 ! For timing
     depth = depth - 1
@@ -77,26 +75,24 @@ contains ! ====     Public Procedures     ==============================
     end do
     call output ( 'Exit ' ); call output ( name )
     if ( present(index) ) call output( index )
-    call date_and_time ( values=values )
-    call output ( ' at ' )
-    call output ( values(5) ); call output ( ':' ) ! hour
-    call output ( values(6) ); call output ( ':' ) ! minute
-    call output ( values(7) ); call output ( '.' ) ! second
+    call date_and_time ( time=now, values=values )
+    call output ( ' at ' // now(1:2) // ':' // now(3:4) // ':' // now(5:) )
     if ( depth >= 0 .and. depth < clockStackMax ) then
-      call cpu_time ( t )
+      call time_now ( t )
       clockStack(depth) = t - clockStack(depth)
-      call output ( values(8) )        ! milliseconds
       call output ( ' used ' )
 !     call output ( dble(clockStack(depth) - clockStack(depth+1)), &
-!       & format='(g10.3)', advance='yes' )
-      call output ( dble(clockStack(depth)), format='(g10.3)', advance='yes' )
-    else
-      call output ( values(8), advance='yes' )        ! milliseconds
+!       & format='(g10.3)' )
+      call output ( dble(clockStack(depth)), format='(g10.3)' )
     end if
+    call output ( '', advance='yes' )
   end subroutine TRACE_END
 end module TRACE_M
 
 ! $Log$
+! Revision 2.10  2001/11/09 23:14:08  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.9  2001/09/13 19:36:50  livesey
 ! Added optional index arguments
 !
