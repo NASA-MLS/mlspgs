@@ -9,7 +9,9 @@ module FilterShapes_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSSignals_m, only: MaxSigLen, Signals
+  use MLSSignals_m, only: GetSignalName, MaxSigLen, Signals, Signal_T
+  
+  implicit none
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -20,10 +22,9 @@ module FilterShapes_m
   public :: Dump_Filter_Shapes_Database
 
   type, public :: FilterShape_T
-    real(r8) :: LHS, RHS
-    real(r8), dimension(:), pointer :: FilterGrid => NULL()      ! Abscissae
-    real(r8), dimension(:), pointer :: FilterShape => NULL()     ! Ordinates
-    character(len=MaxSigLen) :: Signal
+    real(r8), dimension(:,:), pointer :: FilterGrid => NULL()      ! Abscissae
+    real(r8), dimension(:,:), pointer :: FilterShape => NULL()     ! Ordinates
+    type (Signal_T) :: Signal
   end type FilterShape_T
 
   ! The filter shape database:
@@ -68,70 +69,63 @@ contains
     use Toggles, only: Gen, Levels, Switches, Toggle
     use Trace_M, only: Trace_begin, Trace_end
 
-    integer, intent(in) :: Lun               ! Logical unit number to read it
+    integer, intent(in) :: Lun          ! Logical unit number to read it
 
-    integer :: DataBaseSize                  ! How many filter shapes?
-    real(r8) :: DX                           ! To compute FilterGrid
-    integer :: I, J                          ! Loop inductors, subscripts
-    integer :: NumChannels                   ! For the signal
-    integer :: NumFilterPts                  ! How many points in each filter
+    integer :: DataBaseSize             ! How many filter shapes?
+    real(r8) :: DX                      ! To compute FilterGrid
+    real(r8) :: LHS, RHS                ! For computing grid
+    integer :: I, J                     ! Loop inductors, subscripts
+    integer :: NumChannels              ! For the signal
+    integer :: NumFilterPts             ! How many points in each filter
+    integer :: Sideband                 ! From parse signal
     !                                          shape array -- all the same
     !                                          for each signal.
     character(len=MaxSigLen) :: SigName      ! Signal Name
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
-    type(filterShape_T), dimension(:), pointer :: TempFilterShapes
+    type(filterShape_T) :: thisShape
 
     if ( toggle(gen) ) call trace_begin ( "Read_Filter_Shapes_File" )
 
     nullify ( signal_indices )
-    if ( associated(filterShapes) ) call destroy_filter_shapes_database
+    ! if ( associated(filterShapes) ) call destroy_filter_shapes_database
 
-    do
+    do ! Loop over filter shapes
       read ( lun, *, iostat=status ) numFilterPts, sigName
       if ( status > 0 ) go to 99
       if ( status < 0 ) exit
-      call parse_signal ( sigName, signal_indices )
+      call parse_signal ( sigName, signal_indices, sideband=sideband )
       if ( .not. associated(signal_indices) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & trim(sigName) // " is not a valid signal." )
-      numChannels = size(signals(signal_indices(1))%frequencies)
-      do i = 1, size(signal_indices)
-        if ( size(signals(signal_indices(i))%frequencies) /= numChannels ) &
-          call MLSMessage ( MLSMSG_Error, moduleName, &
-            & "The signals implied by " // trim(sigName) // &
-            & " do not all have the same number of frequencies" )
-      end do
+      if ( size ( signal_indices ) /= 1 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & trim(sigName) // " is ambiguous." )
+
+      thisShape%signal = signals(signal_indices(1))
+      thisShape%signal%sideband = sideband
+      numChannels = size(thisShape%signal%frequencies)
       call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
-      dataBaseSize = 0
-      if ( associated(filterShapes) ) dataBaseSize = size(filterShapes)
-      tempFilterShapes => filterShapes
-      allocate ( filterShapes(dataBaseSize + numChannels), stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-        & MLSMSG_Allocate // 'FilterShapes' )
-      if ( dataBaseSize > 0 ) then
-        filterShapes(:dataBaseSize) = tempFilterShapes
-        deallocate ( tempFilterShapes, stat=status )
-        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-          & MLSMSG_DeAllocate // 'TempFilterShapes' )
-      end if
-      do i = dataBaseSize + 1, dataBaseSize + numChannels
-        filterShapes(i)%signal = sigName
-        call allocate_test ( filterShapes(i)%filterGrid, numFilterPts, &
-          & "filterShapes(i)%filterGrid", moduleName )
-        call allocate_test ( filterShapes(i)%filterShape, numFilterPts, &
-          & "filterShapes(i)%filterShape", moduleName )
-        call read_one_filter ( filterShapes(i)%lhs, filterShapes(i)%rhs, &
-          filterShapes(i)%filterShape )
+      
+      call allocate_test ( thisShape%filterGrid,&
+        & numChannels, numFilterPts, &
+        & 'thisShape%filterGrid', ModuleName )
+      call allocate_test ( thisShape%filterShape,&
+        & numChannels, numFilterPts, &
+        & 'thisShape%filterShape', ModuleName )
+
+      do i = 1, numChannels
+        call read_one_filter ( lhs, rhs, thisShape%filterShape(i,:) )
         if ( status < 0 ) go to 99
         if ( status > 0 ) go to 98
-        dx = (filterShapes(i)%rhs - filterShapes(i)%lhs) / (numFilterPts - 1)
+        dx = ( rhs - lhs ) / (numFilterPts - 1)
         do j = 1, numFilterPts
-          filterShapes(i)%filterGrid(j) = filterShapes(i)%lhs + (j-1) * dx
+          thisShape%filterGrid(i,j) = lhs + (j-1) * dx
         end do ! j
       end do ! i
-    end do
 
+      call AddFilterShapeToDatabase ( filterShapes, thisShape )
+    end do
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'F') /= 0 ) &
@@ -160,8 +154,27 @@ contains
 
   ! -----------------------------------  Close_Filter_Shapes_File  -----
   subroutine Close_Filter_Shapes_File ( Lun )
+    integer, intent(in) :: lun
     close ( lun )
   end subroutine Close_Filter_Shapes_File
+
+  ! ----------------------------------- AddFilterShapeToDatabase -------
+  integer function AddFilterShapeToDatabase ( database, item )
+
+    ! Add a quantity template to a database, or create the database if it
+    ! doesn't yet exist
+    
+    ! Dummy arguments
+    type (FilterShape_T), dimension(:), pointer :: database
+    type (FilterShape_T), intent(in) :: item
+
+    ! Local variables
+    type (FilterShape_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddFilterShapeToDatabase = newSize
+  end function AddFilterShapeToDatabase
 
   ! -----------------------------  Destroy_Filter_Shapes_Database  -----
   subroutine Destroy_Filter_Shapes_Database
@@ -184,23 +197,25 @@ contains
     use Output_m, only: Output
 
     integer :: I                   ! Subscripts, loop inductors
+    character(len=MaxSigLen) :: sigName
     call output ( 'Filter Shapes: SIZE = ' )
     call output ( size(filterShapes), advance='yes' )
     do i = 1, size(filterShapes)
       call output ( i, 4 )
       call output ( ':    Signal = ' )
-      call output ( trim(filterShapes(i)%signal), advance='yes' )
-      call output ( ' LHS = ' )
-      call output ( filterShapes(i)%lhs )
-      call output ( '  RHS = ' )
-      call output ( filterShapes(i)%rhs, advance='yes' )
+      call GetSignalName ( filterShapes(i)%signal%index, sigName )
+      call output ( sigName, advance='yes' )
       call dump ( filterShapes(i)%filterShape, name='FilterShape' )
+      call dump ( filterShapes(i)%filterGrid, name='FilterGrid' )
     end do ! i
   end subroutine Dump_Filter_Shapes_Database
 
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.12  2001/05/04 00:49:06  livesey
+! Let destroy quit if nothing to destroy
+!
 ! Revision 1.11  2001/05/03 22:05:22  vsnyder
 ! Add a nullify, make database SAVE,
 !
