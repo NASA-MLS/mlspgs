@@ -63,7 +63,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
-  use Intrinsic, only: Lit_Indices
+  use Intrinsic, only: LIT_INDICES, PHYQ_INVALID
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -174,6 +174,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
   type Vector_T
     integer :: Name = 0        ! Sub-rosa index of the vector name
+    integer :: GlobalUnit = PHYQ_Invalid ! Alternative units for whole vector
     type (VectorTemplate_T) :: TEMPLATE ! Template for this vector
     type (VectorValue_T), dimension(:), pointer :: QUANTITIES => NULL() ! The
     ! dimension of QUANTITIES is the same as for the QUANTITIES field of the
@@ -278,6 +279,7 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(in) :: X
     call destroyVectorInfo ( z )
     z%name = x%name
+    z%globalUnit = x%globalUnit
     z%template = x%template
     z%quantities => x%quantities
   end subroutine AssignVector
@@ -401,6 +403,7 @@ contains ! =====     Public Procedures     =============================
     call destroyVectorInfo ( z )
     if ( present(vectorNameText) ) &
       & z%name = enter_terminal ( vectorNameText, t_identifier )
+    z%globalUnit = x%globalUnit
     z%template = x%template
     allocate ( z%quantities(size(x%quantities)), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -557,7 +560,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  CreateVector  -----
   type(Vector_T) function CreateVector &
-    & ( vectorName, vectorTemplate, quantities, VectorNameText ) &
+    & ( vectorName, vectorTemplate, quantities, VectorNameText, globalUnit ) &
     & result ( vector )
 
   ! This routine creates an empty vector according to a given template
@@ -568,6 +571,7 @@ contains ! =====     Public Procedures     =============================
     type (VectorTemplate_T), intent(in), target :: VectorTemplate ! For vector
     type (QuantityTemplate_T), dimension(:), intent(in), target :: Quantities
     character(len=*), intent(in), optional :: VectorNameText
+    integer, intent(in), optional :: globalUnit
 
     ! Local variables
     integer :: QUANTITY                 ! Loop index
@@ -576,6 +580,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
 
     vector%name = vectorName
+    if ( present(globalUnit) ) vector%globalUnit = globalUnit
     if ( present(vectorNameText) ) &
       & vector%name = enter_terminal ( vectorNameText, t_identifier )
     vector%template = vectorTemplate
@@ -1618,6 +1623,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.68  2001/10/12 23:10:18  pwagner
+! Better dumps, fewer bumps
+!
 ! Revision 2.67  2001/10/09 23:43:42  pwagner
 ! Some further improvements in dumping vectors
 !
