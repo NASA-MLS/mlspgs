@@ -2,147 +2,147 @@
 
 BEGIN Fill
 
-    Fill, quantity = !b.band1Ratio, method=explicit,  $
+    Fill, quantity = apriori.band1Ratio, method=explicit,  $
       explicitValues = [ 1.0, 1.0, 1.0, 1.0, 1.0, $
                          1.0, 1.0, 1.0, 1.0, 1.0, $
                          1.0, 1.0, 1.0, 1.0, 1.0, $
                          1.0, 1.0, 1.0, 1.0, 1.0, $
                          1.0, 1.0, 1.0, 1.0, 1.0] 
 
-    Fill, quantity = !b.band2Ratio, method=explicit,  $
+    Fill, quantity = apriori.band2Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band3Ratio, method=explicit,  $
+    Fill, quantity = apriori.band3Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band4Ratio, method=explicit,  $
+    Fill, quantity = apriori.band4Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band5Ratio, method=explicit,  $
+    Fill, quantity = apriori.band5Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band6Ratio, method=explicit,  $
+    Fill, quantity = apriori.band6Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band7Ratio, method=explicit,  $
+    Fill, quantity = apriori.band7Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band8Ratio, method=explicit,  $
+    Fill, quantity = apriori.band8Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band9Ratio, method=explicit,  $
+    Fill, quantity = apriori.band9Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band10Ratio, method=explicit,  $
+    Fill, quantity = apriori.band10Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band11Ratio, method=explicit,  $
+    Fill, quantity = apriori.band11Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band12Ratio, method=explicit,  $
+    Fill, quantity = apriori.band12Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band13Ratio, method=explicit,  $
+    Fill, quantity = apriori.band13Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band14Ratio, method=explicit,  $
+    Fill, quantity = apriori.band14Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band15Ratio, method=explicit,  $
+    Fill, quantity = apriori.band15Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band16Ratio, method=explicit,  $
+    Fill, quantity = apriori.band16Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band17Ratio, method=explicit,  $
+    Fill, quantity = apriori.band17Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band18Ratio, method=explicit,  $
+    Fill, quantity = apriori.band18Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band19Ratio, method=explicit,  $
+    Fill, quantity = apriori.band19Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band20Ratio, method=explicit,  $
+    Fill, quantity = apriori.band20Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5] 
 
-    Fill, quantity = !b.band21Ratio, method=explicit,  $
+    Fill, quantity = apriori.band21Ratio, method=explicit,  $
       explicitValues = [ 0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
                          0.5, 0.5, 0.5, 0.5, 0.5, $
