@@ -17,14 +17,16 @@ module MLSHDF5
     & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, &
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SCLOSE_F, &
     & H5SGET_SIMPLE_EXTENT_NDIMS_F, H5SGET_SIMPLE_EXTENT_DIMS_F, &
-    & H5TCLOSE_F, H5TCOPY_F, H5TGET_SIZE_F, H5TSET_SIZE_F
+    & H5TCLOSE_F, H5TCOPY_F, H5TGET_SIZE_F, H5TSET_SIZE_F, &
+    & H5ESET_AUTO_F
   use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR
 
   implicit NONE
   private
 
-  public :: MakeHDF5Attribute, SaveAsHDF5DS, GetHDF5Attribute, LoadFromHDF5DS
+  public :: MakeHDF5Attribute, SaveAsHDF5DS, IsHDF5AttributePresent, &
+    & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -226,6 +228,58 @@ contains ! ======================= Public Procedures =========================
     call GetHDF5Attribute ( itemID, name, iValue )
     value = ( iValue == 1 )
   end subroutine GetHDF5Attribute_logical
+
+  ! --------------------------------------------- IsHDF5AttributePresent ---
+  logical function IsHDF5AttributePresent ( locID, name )
+    ! This routine returns true if the given HDF5 DS is present
+    integer, intent(in) :: LOCID        ! Where to look
+    character (len=*), intent(in) :: NAME ! Name for the dataset
+    ! Local variables
+    integer :: ATTRID                   ! ID for DS if present
+    integer :: STATUS                   ! Flag
+    
+    ! Executable code
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for DS '//trim(name) )
+    call h5aOpen_name_f ( locID, name, attrID, status ) 
+    if ( status /= 0 ) then
+      IsHDF5AttributePresent = .false.
+    else
+      IsHDF5AttributePresent = .true.
+      call h5aClose_f ( attrID, status )
+    end if
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for DS '//trim(name) )
+  end function IsHDF5AttributePresent
+
+  ! --------------------------------------------- IsHDF5DSPresent ---
+  logical function IsHDF5DSPresent ( locID, name )
+    ! This routine returns true if the given HDF5 DS is present
+    integer, intent(in) :: LOCID        ! Where to look
+    character (len=*), intent(in) :: NAME ! Name for the dataset
+    ! Local variables
+    integer :: SETID                    ! ID for DS if present
+    integer :: STATUS                   ! Flag
+    
+    ! Executable code
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for attribute '//trim(name) )
+    call h5dOpen_f ( locID, name, setID, status ) 
+    if ( status /= 0 ) then
+      IsHDF5DSPresent = .false.
+      return
+    else
+      IsHDF5DSPresent = .true.
+      call h5dClose_f ( setID, status )
+      return
+    end if
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for attribute '//trim(name) )
+  end function IsHDF5DSPresent
 
   ! --------------------------------------------- SaveAsHDF5DS_intarr1
   subroutine SaveAsHDF5DS_intarr1 ( locID, name, value )
@@ -500,6 +554,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.3  2002/08/23 01:23:21  livesey
+! Added IsHDF5DSPresent and IsHDF5AttributePresent
+!
 ! Revision 2.2  2002/07/17 06:00:21  livesey
 ! Got hdf5 l2pc reading stuff working
 !
@@ -509,3 +566,4 @@ end module MLSHDF5
 ! Revision 1.1  2002/06/18 21:57:09  livesey
 ! First version
 !
+ 
