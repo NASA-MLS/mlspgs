@@ -769,21 +769,12 @@ contains
 
       ! Calculate the geocentric angle as a number of radians between 0 and PI
       gamma(i) = acos( q(1)*s(1,i) + q(2)*s(2,i) )
-      ! There is a really nasty ambiguity in the case where gamma==0.0, and
-      ! believe it it or not, it does actually seem to occur from time to time.
-      ! We'll get the information from and adjacent mif
-      ! Not sure why, but 1e-6 is too small to catch the case of interest.
-      if ( abs(gamma(i)) < 1e-3 ) then 
-        if ( i /= 1 ) then
-          j = i - 1
-        else
-          j = i + 2
-        end if
-        if ( geocLat(j) < 0.0 ) gamma(i) = PI
-      else
-        ! Place angle between PI and 2*PI, if lat indicates Southern Hemisphere
-        if ( geocLat(i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
+      if ( i == 1 ) then
+        print*,'Dot product: ',q(1)*s(1,i) + q(2)*s(2,i)
+        print*,'Gamma: ', gamma(i)
       end if
+      ! Place angle between PI and 2*PI, if lat indicates Southern Hemisphere
+      if ( geocLat(i) < 0.0 ) gamma(i) = 2*PI - gamma(i)
 
       ! If |gamma| <= 45 deg of the equator, calculate phi using the SIN equation
       if ( (gamma(i) <= PI/4 ) .or. ( (gamma(i) >= 3*PI/4) .and. &
@@ -825,6 +816,9 @@ contains
 end module TkL1B
 
 ! $Log$
+! Revision 2.6  2001/12/12 03:07:32  livesey
+! Interim version needs debugging more
+!
 ! Revision 2.5  2001/12/11 00:55:51  livesey
 ! Slightly kludgy fix for problem where occasionally gets
 ! phi 180 degrees out.
