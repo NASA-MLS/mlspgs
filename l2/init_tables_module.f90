@@ -338,7 +338,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_hydrostatic, l+l_addnoise, l+l_refract, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_negativePrecision, &
-             l+l_vector, l+l_special, l+l_fold, &
+             l+l_profile, l+l_vector, l+l_special, l+l_fold, &
              l+l_rectanglefromlos, l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_scan2d, &
              l+l_cloudFull, n+n_dt_def, &
@@ -593,6 +593,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_precision, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
              begin, f+f_precisionFactor, t+t_numeric, n+n_field_type, &
+             begin, f+f_profileValues, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_phitan, s+s_vector, f+f_template, f+f_quantities, &
@@ -865,6 +866,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.233  2002/08/15 03:52:40  livesey
+! Added stuff for profile fill
+!
 ! Revision 2.232  2002/08/08 22:04:16  vsnyder
 ! Add tikhonov to mask type
 !
