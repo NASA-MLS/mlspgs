@@ -11,19 +11,19 @@ module Join                     ! Join together chunk based data.
     & F_SOURCE, F_SDNAME, F_SWATH, F_XSTAR, F_YSTAR, F_KSTAR, FIELD_FIRST, &
     & FIELD_LAST
   use INIT_TABLES_MODULE, only: L_PRESSURE, L_NONE, &
-    & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_L2PC, S_TIME
+    & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
   use Intrinsic, ONLY: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
     & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY
   use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
     & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
-  use L2PC_M, only: L2PC_T, AddL2PCToDatabase, l2pcDatabase
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: CopyMatrix, Matrix_Database_T, &
     & Dump, GetFromMatrixDatabase, Matrix_T
   use MLSCommon, only: MLSChunk_T, R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
+    & MLSMSG_Allocate, MLSMSG_Deallocate
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
@@ -64,7 +64,7 @@ contains ! =====     Public Procedures     =============================
   ! in order to be able to store all the chunks.
 
   subroutine MLSL2Join ( root, vectors, matrices, l2gpDatabase, l2auxDatabase, &
-    & canDoL2PC, chunkNo, chunks )
+    & chunkNo, chunks )
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
@@ -72,7 +72,6 @@ contains ! =====     Public Procedures     =============================
     type (Matrix_Database_T), dimension(:), pointer :: matrices
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
-    logical, intent(in) :: canDoL2PC
     integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
@@ -90,6 +89,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SDNAME                   ! Name index
     integer :: SON                      ! A son of ROOT
     integer :: SOURCE                   ! Index in AST
+    integer :: STATUS                   ! Flag
     integer :: VALUE                    ! Value of a field
     integer :: VECTORINDEX, QUANTITYINDEX
     integer :: XSTARINDEX               ! Vector index
@@ -98,9 +98,6 @@ contains ! =====     Public Procedures     =============================
     logical :: compareOverlaps, outputOverlaps
     REAL :: T1, T2     ! for timing
     logical :: TIMING
-
-    type (Matrix_T), pointer :: tmpKStar
-    type (L2PC_T) :: thisL2PC
 
     ! Executable code
     timing = .false.
@@ -129,7 +126,6 @@ contains ! =====     Public Procedures     =============================
       select case( get_spec_id(key) )
       case ( s_l2aux )
       case ( s_l2gp )
-      case ( s_l2pc )
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -209,15 +205,6 @@ contains ! =====     Public Procedures     =============================
           call JoinL2AUXQuantities ( key, sdName, quantity, l2auxDatabase, chunkNo, chunks )
         endif
 
-      case ( s_l2pc ) ! ------------------- L2PC Bins ------------------------
-        if (.not. canDoL2PC) call MLSMessage(MLSMSG_Error,ModuleName,&
-          & "Cannot join l2pcs in multi chunk l2cfs")
-        thisL2PC%xStar = vectors(xStarIndex)
-        thisL2PC%yStar = vectors(yStarIndex)
-        call GetFromMatrixDatabase ( matrices(kStarIndex), tmpKStar )
-        thisL2PC%kStar=tmpKStar
-        call decorate ( key, AddL2PCToDatabase ( l2pcDatabase, thisL2PC ) )
-        
       case default ! Timing
       end select
 
@@ -614,6 +601,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.30  2001/04/27 21:52:39  livesey
+! Removed l2pc stuff
+!
 ! Revision 2.29  2001/04/26 20:02:09  livesey
 ! Made l2pc database a saved array in L2PC_m
 !
