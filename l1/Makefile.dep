@@ -1,9 +1,10 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
-MLSL1.o  	 Orbit.o  	TkL1B.o  	 init_tables_module.o  \
-MLSL1Common.o    OutputL1B.o  	calib.o  	 open_init.o  \
-MLSL1Rad.o  	 Scan.o  	close_files.o    sort_qualify.o  \
+MLSL1.o  	 OutputL1B.o  	close_files.o  		sort_qualify.o  \
+MLSL1Common.o    Scan.o  	init_tables_module.o  \
+MLSL1Rad.o  	 TkL1B.o  	open_init.o  \
+Orbit.o  	 calib.o  	outrad.o  \
  
 # using f90makedep.pl to calculate dependencies 
 calib.o: calib.f90 $(dir1)MLSCommon.o $(dir1)MLSMessageModule.o MLSL1Common.o \
@@ -13,10 +14,10 @@ close_files.o: close_files.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
 init_tables_module.o: init_tables_module.f90 $(dir1)intrinsic.o \
 	$(dir1)symbol_table.o $(dir1)symbol_types.o $(dir1)tree.o \
 	$(dir1)tree_types.o
-MLSL1Common.o: MLSL1Common.f90 $(dir1)MLSCommon.o
 MLSL1.o: MLSL1.f90 $(dir1)MLSMessageModule.o $(dir1)SDPToolkit.o \
 	MLSL1Common.o MLSL1Rad.o Orbit.o OutputL1B.o TkL1B.o calib.o \
 	close_files.o open_init.o sort_qualify.o
+MLSL1Common.o: MLSL1Common.f90 $(dir1)MLSCommon.o
 MLSL1Rad.o: MLSL1Rad.f90 $(dir1)MLSMessageModule.o \
 	$(dir1)MLSSignalNomenclature.o $(dir1)MLSStrings.o MLSL1Common.o
 open_init.o: open_init.f90 $(dir1)Hdf.o $(dir1)MLSCommon.o \
