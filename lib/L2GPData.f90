@@ -239,20 +239,20 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
 
-    call deallocate_test ( l2gp%pressures,         "l2gp%pressures",         ModuleName )
-    call deallocate_test ( l2gp%latitude,          "l2gp%latitude",          ModuleName )
-    call deallocate_test ( l2gp%longitude,         "l2gp%longitude",         ModuleName )
-    call deallocate_test ( l2gp%solarTime,         "l2gp%solarTime",         ModuleName )
-    call deallocate_test ( l2gp%solarZenith,       "l2gp%solarZenith",       ModuleName )
-    call deallocate_test ( l2gp%losAngle,          "l2gp%losAngle",          ModuleName )
-    call deallocate_test ( l2gp%geodAngle,         "l2gp%geodAngle",         ModuleName )
-    call deallocate_test ( l2gp%chunkNumber,       "l2gp%chunkNumber",       ModuleName )
-    call deallocate_test ( l2gp%time,              "l2gp%time",              ModuleName )
-    call deallocate_test ( l2gp%frequency,         "l2gp%frequency",         ModuleName )
-    call deallocate_test ( l2gp%l2gpValue,         "l2gp%l2gpValue",         ModuleName )
-    call deallocate_test ( l2gp%l2gpPrecision,     "l2gp%l2gpPrecision",     ModuleName )
-    call deallocate_test ( l2gp%status,            "l2gp%status",            ModuleName )
-    call deallocate_test ( l2gp%quality,           "l2gp%quality",           ModuleName )
+    call deallocate_test ( l2gp%pressures,     "l2gp%pressures",     ModuleName )
+    call deallocate_test ( l2gp%latitude,      "l2gp%latitude",      ModuleName )
+    call deallocate_test ( l2gp%longitude,     "l2gp%longitude",     ModuleName )
+    call deallocate_test ( l2gp%solarTime,     "l2gp%solarTime",     ModuleName )
+    call deallocate_test ( l2gp%solarZenith,   "l2gp%solarZenith",   ModuleName )
+    call deallocate_test ( l2gp%losAngle,      "l2gp%losAngle",      ModuleName )
+    call deallocate_test ( l2gp%geodAngle,     "l2gp%geodAngle",     ModuleName )
+    call deallocate_test ( l2gp%chunkNumber,   "l2gp%chunkNumber",   ModuleName )
+    call deallocate_test ( l2gp%time,          "l2gp%time",          ModuleName )
+    call deallocate_test ( l2gp%frequency,     "l2gp%frequency",     ModuleName )
+    call deallocate_test ( l2gp%l2gpValue,     "l2gp%l2gpValue",     ModuleName )
+    call deallocate_test ( l2gp%l2gpPrecision, "l2gp%l2gpPrecision", ModuleName )
+    call deallocate_test ( l2gp%status,        "l2gp%status",        ModuleName )
+    call deallocate_test ( l2gp%quality,       "l2gp%quality",       ModuleName )
     l2gp%nTimes = 0
     l2gp%nLevels = 0
     l2gp%nFreqs = 0
@@ -324,7 +324,7 @@ contains ! =====     Public Procedures     =============================
     l2gp%quality(1:templ2gp%nTimes) = templ2gp%quality(1:templ2gp%nTimes)
     
     ! Deallocate the old arrays
-    call DestroyL2GPContents(templ2gp)
+    call DestroyL2GPContents ( templ2gp )
 
   end subroutine ExpandL2GPDataInPlace
 
@@ -382,17 +382,21 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
 
-    character (len=*), intent(in) :: swathname ! Name of swath
+    character (len=*), intent(in) :: SwathName ! Name of swath
     integer, intent(in) :: L2FileHandle ! Returned by swopen
-    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
-    type( l2GPData_T ), intent(out) :: l2gp ! Result
-    integer, intent(out), optional :: numProfs ! Number actually read
-    integer, optional, intent(in) :: hdfVersion
+    integer, intent(in), optional :: FirstProf, LastProf ! Defaults to first and last
+    type( l2GPData_T ), intent(out) :: L2gp ! Result
+    integer, intent(out), optional :: NumProfs ! Number actually read
+    integer, optional, intent(in) :: HDFVersion
 
     ! Local
     integer :: myhdfVersion
 
     ! Executable code
+!   Don't do the following, as callers put the result into a database using
+!   a shallow copy.  Destroying the argument will destroy a database item.    
+!   call destroyL2GPContents ( l2gp ) ! Avoid memory leaks
+
     if (present(hdfVersion)) then
       myhdfVersion = hdfVersion
     else
@@ -424,11 +428,11 @@ contains ! =====     Public Procedures     =============================
 
     ! Arguments
 
-    character (len=*), intent(in) :: swathname ! Name of swath
+    character (len=*), intent(in) :: SwathName ! Name of swath
     integer, intent(in) :: L2FileHandle ! Returned by swopen
-    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
-    type( l2GPData_T ), intent(out) :: l2gp ! Result
-    integer, intent(out), optional :: numProfs ! Number actually read
+    integer, intent(in), optional :: FirstProf, LastProf ! Defaults to first and last
+    type( l2GPData_T ), intent(out) :: L2gp ! Result
+    integer, intent(out), optional :: NumProfs ! Number actually read
 
     ! Local Parameters
     character (len=*), parameter :: SZ_ERR = 'Failed to get size of &
@@ -452,6 +456,10 @@ contains ! =====     Public Procedures     =============================
 !    character (LEN=8), allocatable :: the_status_buffer(:)
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
     integer, allocatable, dimension(:,:) :: string_buffer
+
+!   Don't do the following, as callers put the result into a database using
+!   a shallow copy.  Destroying the argument will destroy a database item.    
+!   call destroyL2GPContents ( l2gp ) ! Avoid memory leaks
 
     ! Attach to the swath for reading
 
@@ -1428,6 +1436,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.40  2002/03/15 23:02:49  pwagner
+! Gets HDFVERSION_4 and 5 from MLSFiles; checks for illegal hdfversions
+!
 ! Revision 2.39  2002/01/23 21:47:12  pwagner
 ! Begun to make hdf5-capable; not yet, though
 !
