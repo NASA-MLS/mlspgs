@@ -41,7 +41,7 @@ module TREE_WALKER
   use QuantityTemplates, only: QuantityTemplate_T
   use ReadAPriori, only: read_apriori
   use RetrievalModule, only: Retrieve
-  use ScanDivide, only: DestroyChunkDatabase, ScanAndDivide
+  use ChunkDivide_m, only: ChunkDivide, DestroyChunkDatabase
   use SpectroscopyCatalog_m, only: Destroy_Line_Database, &
     & Destroy_SpectCat_Database, Spectroscopy
   use Test_Parse_Signals_m, only: Test_Parse_Signals
@@ -137,7 +137,9 @@ contains ! ====     Public Procedures     ==============================
         ! Merge apriori here
       case ( z_chunkdivide )
         if ( .not. parallel%slave ) then
-          call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
+          ! This is the old routine, which will be going away shortly
+          ! call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
+          call ChunkDivide ( son, processingRange, l1bInfo, chunks )
         else
           call GetChunkFromMaster ( chunks )
         endif
@@ -280,6 +282,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.69  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.68  2001/10/31 19:07:52  livesey
 ! Hooked fGrids into quantity templates
 !
