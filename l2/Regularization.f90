@@ -46,37 +46,36 @@ module Regularization
 contains
 
   ! -------------------------------------------------  Regularize  -----
-  subroutine Regularize ( A, Orders, Quants, Weight )
+  subroutine Regularize ( A, Orders, Quants, Weights )
 
   !{Apply Tikhonov regularization conditions of the form $\Delta^k \delta
   ! \bf{x} \simeq 0$ to the blocks of A, where $\Delta^k$ is the central
   ! difference operator of order $k$.  $\Delta^k$ has binomial
   ! coefficients with alternating sign.
   !
-  ! $k$ is given by the {\tt Orders} argument, which is the index in the
-  ! tree of the {\tt regOrders} field of the {\tt retrieve} specification.
-  ! The {\tt Quants} argument is the index in the tree of the {\tt
-  ! regQuants} field. The values of the {\tt regQuants} field are quantity
-  ! type names, to which the corresponding order applies.   The number of
-  ! values of {\tt regOrders} shall be one (in which case it applies to
-  ! all quants), or the same as the number of {\tt regQuants}.  If a
-  ! column block of the A matrix is of a quantity type that is not
-  ! represented in the {\tt regQuants} field, no regularization is applied
-  ! to that block.
+  ! $k$ is given by the {\tt Orders} argument, which is the index in the tree
+  ! of the {\tt regOrders} field of the {\tt retrieve} specification. The
+  ! {\tt Weights} argument is the index in the tree of the {\tt regWeights}
+  ! field.  It gives a weight for the regularization. The {\tt Quants}
+  ! argument is the index in the tree of the {\tt regQuants} field. The
+  ! values of the {\tt regQuants} field are quantity type names.   The number
+  ! of values of {\tt regOrders} and {\tt regWeights} shall be one (in which
+  ! case they apply to all quants), or the same as the number of {\tt
+  ! regQuants}, in which case the corresponding order or weight applies to
+  ! the corresponding quantity.  If a column block of the A matrix is of a
+  ! quantity type that is not represented in the {\tt regQuants} field, no
+  ! regularization is applied to that block.
   !
   ! It is necessary that the total number of rows in the first row block of
   ! A be large enough to accomodate the regularization~-- roughly at least
-  ! (number of columns of a)~- min(order).  The number of columns of each
+  ! (number of columns of a)~- min(order)).  The number of columns of each
   ! block shall be at least one more than the regularization order for that
   ! block.
-  !
-  ! The {\tt Weight} argument is a scalar that multiplies the regularization
-  ! matrix.  It is taken from the {\tt regWeight} field.
 
     type(Matrix_T), intent(inout) :: A
     integer, intent(in) :: Orders
     integer, intent(in) :: Quants
-    real(r8), intent(in) :: Weight
+    integer, intent(in) :: Weights
 
     integer, dimension(0:maxRegOrd) :: C ! Binomial regularization coefficients
     ! The regularization order is never going to be so large that
@@ -93,6 +92,7 @@ contains
     integer :: Type                ! Type of value returned by EXPR
     integer :: Units(2)            ! Units of value returned by EXPR
     double precision :: Value(2)   ! Value returned by EXPR
+    real(r8) :: Wt                 ! The weight for the current block
 
     error = 0
     nb = a%col%nb
@@ -103,21 +103,34 @@ contains
         call announceError ( fieldSizes, orders )
       end if
     end if
+    if ( nsons(weights) /= 2 ) then
+      if ( quants == 0 ) then
+        call announceError ( regQuantsReq, weights )
+      else if ( nsons(weights) /= nsons(quants) ) then
+        call announceError ( fieldSizes, weights )
+      end if
+    end if
 
     if ( error == 0 ) then
       nrow = a%row%nelts(1)
       rows = 1
 o:    do ib = 1, nb
         ord = 0
-        if ( nsons(orders) == 2 ) then
+        if ( quants == 0 ) then ! only one order and weight allowed
           call expr ( subtree(2,orders), units, value, type )
           ord = value(1)
+          call expr ( subtree(2,weights), units, value, type )
+          wt = value(1)
         else
           do i = 2, nsons(quants)
             if ( decoration(subtree(i,quants)) == &
-              & a%col%vec%quantities(a%col%quant(i))%template%quantityType ) then
-              call expr ( subtree(i,orders), units, value, type )
+              & a%col%vec%quantities(a%col%quant(ib))%template%quantityType ) then
+              j = min(i,nsons(orders))
+              call expr ( subtree(j,orders), units, value, type )
               ord = value(1)
+              j = min(i,nsons(weights))
+              call expr ( subtree(j,weights), units, value, type )
+              wt = value(1)
               exit
             end if
           end do
@@ -125,7 +138,7 @@ o:    do ib = 1, nb
         ncol = a%col%nelts(ib)
         if ( rows + ncol - ord - 1 > a%row%nelts(1) ) &
           & call announceError ( tooFewRows, orders )
-        if ( ord == 0 ) then
+        if ( ord == 0 .or. wt <= 0.0_r8) then
           call createBlock ( a%block(1,ib), nrow, ncol,  m_absent )
         else
           if ( ncol < ord+1 ) call announceError ( tooFewCols, orders )
@@ -159,13 +172,13 @@ o:    do ib = 1, nb
           do i = 1, ord
             a%block(1,ib)%r1(i) = rows
             a%block(1,ib)%r2(i) = nv+i-1
-            a%block(1,ib)%values(nv:nv+i-1,1) = weight * c(ord-i+1:ord)
+            a%block(1,ib)%values(nv:nv+i-1,1) = wt * c(ord-i+1:ord)
             nv = nv + i
           end do
           do i = ord+1, ncol-ord
             a%block(1,ib)%r1(i) = rows
             a%block(1,ib)%r2(i) = nv+ord
-            a%block(1,ib)%values(nv:nv+ord,1) = weight * c(0:ord)
+            a%block(1,ib)%values(nv:nv+ord,1) = wt * c(0:ord)
             nv = nv + ord + 1
             rows = rows + 1
           end do
@@ -173,7 +186,7 @@ o:    do ib = 1, nb
           do i = ncol-ord+1, ncol
             a%block(1,ib)%r1(i) = a%block(1,ib)%r1(i-1)+1
             a%block(1,ib)%r2(i) = nv+j
-            a%block(1,ib)%values(nv:nv+j,1) = weight * c(0:j)
+            a%block(1,ib)%values(nv:nv+j,1) = wt * c(0:j)
             nv = nv + j + 1
             j = j - 1
           end do
@@ -195,8 +208,8 @@ o:    do ib = 1, nb
     call output ( ' RetrievalModule complained: ' )
     select case ( code )
     case ( fieldSizes )       ! size(regOrders) /= size(regQuants)
-      call output ( "Number of values of regOrders shall be 1 or the same as " )
-      call output ( "for regQuants.", advance="yes" )
+      call output ( "Number of values of regOrders or regWeights shall be 1 " )
+      call output ( "or the same as for regQuants.", advance="yes" )
     case ( orderTooBig )
       call output ( "Regularization order exceeds " )
       call output ( maxRegOrd, advance="yes" )
@@ -218,6 +231,10 @@ o:    do ib = 1, nb
 end module Regularization
 
 ! $Log$
+! Revision 2.10  2002/05/07 01:03:36  vsnyder
+! Allow different weight for each quantity, or one weight for the whole
+! shebang.  Don't regularize a block if its weight is <= zero.
+!
 ! Revision 2.9  2002/02/01 00:48:26  vsnyder
 ! Get rid of 'extra' field of RC_Info
 !
