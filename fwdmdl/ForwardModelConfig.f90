@@ -50,7 +50,6 @@ module ForwardModelConfig
     type(vGrid_T), pointer :: tangentGrid=>NULL()     ! Zeta grid for integration
     integer :: surfaceTangentIndex  ! Index in Tangentgrid of Earth's surface
     integer :: phiWindow            ! Window size for examining stuff
-    real (r8) :: frqGap             ! Lines further than this are ignored (MHz)
     real (r8) :: tolerance          ! Accuracy desired when choosing approximations
     ! CloudForwardModel
     logical :: Default_spectroscopy      !
@@ -152,8 +151,6 @@ contains
         call output ( database(i)%Default_spectroscopy, advance='yes' )
         call output ( '  Default_spectroscopy:' )
         call output ( database(i)%do_freq_avg, advance='yes' )
-        call output ( '  frqGap:' )
-        call output ( database(i)%frqGap, advance='yes' )
         call output ( '  Spect_der:' )
         call output ( database(i)%spect_der, advance='yes' )
         call output ( '  Temp_der:' )
@@ -185,6 +182,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.5  2002/02/14 23:01:35  livesey
+! Added justChannels in call to destroySignal
+!
 ! Revision 2.4  2002/02/13 00:09:24  livesey
 ! Added differential Scan model
 !
