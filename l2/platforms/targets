@@ -87,10 +87,19 @@ else
    tk_linker_line=
 endif
 
+ifdef HDF5
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5
+   hdf5_message=Building mlsl2 with hdf5
+else
+   hdf5_linker_line=
+   hdf5_message=Building mlsl2 without hdf5
+endif
+
 # ========================================================================
 mlsl2: $(mlsl2_prereqs)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(hdf5_message)"
 		@echo "$(fwdmdl_message)"
 		$(FC) $(LDOPTS) -o mlsl2 $(ALLOBJS) \
         $(fwdmdl_linker_line) \
@@ -104,6 +113,7 @@ mlsl2: $(mlsl2_prereqs)
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
+        $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 		  
 # ========================================================================
@@ -144,6 +154,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.19  2001/05/23 23:22:20  pwagner
+# Did the same for options, switches
+#
 # Revision 1.18  2001/05/23 22:32:48  pwagner
 # Automatically updates MLSL2 based on notes/switches
 #

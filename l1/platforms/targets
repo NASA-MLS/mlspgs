@@ -67,10 +67,19 @@ else
    blas_message=Building mlsl1 with internally-supplied BLAS
 endif
 
+ifdef HDF5
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5
+   hdf5_message=Building mlsl1 with hdf5
+else
+   hdf5_linker_line=
+   hdf5_message=Building mlsl1 without hdf5
+endif
+
 # ========================================================================
 mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(hdf5_message)"
 	$(FC) $(LDOPTS) -o mlsl1 $(ALLOBJS) $(PVM_OBJS) \
                       -L${libdir} -lmls \
 	-L${PGSTK} -lPGSTK \
@@ -82,6 +91,7 @@ mlsl1: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
 	-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
+        $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
 # ========================================================================
@@ -102,6 +112,9 @@ OutputL1B.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.8  2001/03/12 23:57:46  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
 # Revision 1.7  2001/02/23 18:53:38  pwagner
 # srclib back in play
 #
