@@ -6,11 +6,12 @@ module ForwardModelVectorTools          ! Tools for vectors in forward models
   ! This module contains routines needed to help a forward model get
   ! hold of the quantities it needs.
 
-  implicit none
+  implicit NONE
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (LEN=256), private :: Id = &
+  character (len=*), private :: IdParm = &
     & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
   character (LEN=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
@@ -266,6 +267,9 @@ contains
 end module ForwardModelVectorTools
 
 ! $Log$
+! Revision 2.4  2002/10/02 22:49:13  vsnyder
+! Cosmetic change to RCS stuff
+!
 ! Revision 2.3  2002/09/26 21:41:23  livesey
 ! Moved error checking
 !
