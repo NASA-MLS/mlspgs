@@ -7,7 +7,7 @@ module TREE_WALKER
   use Construct, only: MLSL2Construct, MLSL2DeConstruct
   use DUMPER, only: DUMP
   use FILL, only: MLSL2Fill
-  use ForwardModelInterface, only: ForwardModelInfo_T
+  use ForwardModelInterface, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
   use GLOBAL_SETTINGS, only: SET_GLOBAL_SETTINGS
   use GriddedData, only: GriddedData_T
   use INIT_TABLES_MODULE, only: Field_Indices, Spec_Indices, Z_CHUNKDIVIDE, &
@@ -58,7 +58,6 @@ contains ! ====     Public Procedures     ==============================
     type (GriddedData_T), dimension(:), pointer :: aprioriData => NULL() 
     integer :: chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS => NULL() ! of data
-    type(forwardModelInfo_T) :: FwdModelInfo ! From ForwardModelSetup
     integer :: HOWMANY                  ! Nsons(Root)
     integer :: I, J                     ! Loop inductors
     type (L1BInfo_T) :: L1BInfo         ! File handles etc. for L1B dataset
@@ -68,6 +67,10 @@ contains ! ====     Public Procedures     ==============================
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
     type (Vector_T), dimension(:), pointer :: Vectors => NULL()
+
+    ! Forward model configurations
+    type (ForwardModelConfig_T), dimension(:), &
+      & pointer :: ForwardModelConfigDatabase => NULL()
 
     ! Arguments for Construct not declared above:
     type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates => NULL()
@@ -91,8 +94,8 @@ contains ! ====     Public Procedures     ==============================
       son = subtree(i,root)
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
-!       call set_global_settings ( son, fwdModelInfo ) !??? Restore when l2load isn't needed
-        call set_global_settings ( son, fwdModelInfo, &
+!       call set_global_settings ( son, forwardModelConfigDatabase ) !??? Restore when l2load isn't needed
+        call set_global_settings ( son, forwardModelConfigDatabase, &
           & fmc, fmi, tfmi ) !??? This line is temporary for l2load
       case ( z_mlsSignals )
         call MLSSignals ( son, field_indices )
@@ -121,8 +124,8 @@ subtrees: do while ( j <= howmany )
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo, chunks )
             case ( z_retrieve )
-!             call retrieve ( son, vectors, matrices, fwdModelInfo ) !??? Restore when l2load isn't needed
-              call retrieve ( son, vectors, matrices, fwdModelInfo, &
+!             call retrieve ( son, vectors, matrices, forwardModelInfo ) !??? Restore when l2load isn't needed
+              call retrieve ( son, vectors, matrices, forwardModelConfigDatabase, &
                 & fmc, fmi, tfmi ) !??? This line is temporary for l2load
             case default
           exit subtrees
@@ -142,10 +145,11 @@ subtrees: do while ( j <= howmany )
         call DestroyL1BInfo ( l1bInfo )
         call DestroyGridTemplateDatabase ( aprioriData )
         call DestroyChunkDatabase (chunks )
-        ! vectors, vectorTemplates and qtyTemplates destroyed at the
-        ! end of each chunk
         call DestroyL2GPDatabase ( l2gpDatabase )
         call DestroyL2AUXDatabase ( l2auxDatabase )
+        call DestroyFWMConfigDatabase ( forwardModelConfigDatabase )
+        ! vectors, vectorTemplates and qtyTemplates destroyed at the
+        ! end of each chunk
 
       end select
       i = i + 1
@@ -156,6 +160,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.19  2001/03/15 23:26:09  livesey
+! Added chunks to call to MLSL2Join
+!
 ! Revision 2.18  2001/03/15 21:20:54  pwagner
 ! Split between GriddedData and ncep_dao modules
 !
