@@ -16,7 +16,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & M_Absent, M_Banded, M_Full, MatrixElement_T, MaxAbsVal, MinDiag, &
     & Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_T, &
     & MultiplyMatrixVectorNoT, &
-    & operator(+), operator(.TX.), RowScale, ScaleBlock, SolveCholesky, &
+    & operator(+), &
+    & operator(.TX.), RowScale, ScaleBlock, SolveCholesky, &
     & UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
@@ -27,7 +28,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: AddMatrices, AddToMatrixDatabase, AddToMatrix
+  public :: AddToMatrixDatabase, AddToMatrix
   public :: Assignment(=), CholeskyFactor, CholeskyFactor_1
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
@@ -149,10 +150,6 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface Negate
     module procedure Negate_1
-  end interface
-
-  interface operator (+)
-    module procedure AddMatrices
   end interface
 
   interface operator ( .TX. )      ! A^T B
@@ -322,9 +319,10 @@ contains ! =====     Public Procedures     =============================
   end function AddSPDToDatabase
 
   ! ------------------------------------------------  AddToMatrix  -----
-  subroutine AddToMatrix ( X, Y ) ! X = X + Y
+  subroutine AddToMatrix ( X, Y, Scale ) ! X = X + [Scale*] Y
     type(Matrix_T), intent(inout) :: X
     type(Matrix_T), intent(in) :: Y
+    real(r8), intent(in), optional :: Scale
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
@@ -335,11 +333,19 @@ contains ! =====     Public Procedures     =============================
       & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in AddMatrices" )
-    do j = 1, x%col%nb
-      do i = 1, x%row%nb
-        x%block(i,j) = x%block(i,j) + y%block(i,j) ! Defined =, +
-      end do ! i = 1, x%row%nb
-    end do ! j = 1, x%col%nb
+    if ( present(scale) ) then
+      do j = 1, x%col%nb
+        do i = 1, x%row%nb
+          x%block(i,j) = x%block(i,j) + y%block(i,j) ! Defined =, +
+        end do ! i = 1, x%row%nb
+      end do ! j = 1, x%col%nb
+    else
+      do j = 1, x%col%nb
+        do i = 1, x%row%nb
+          x%block(i,j) = x%block(i,j) + y%block(i,j) ! Defined =, +
+        end do ! i = 1, x%row%nb
+      end do ! j = 1, x%col%nb
+    end if
   end subroutine AddToMatrix
 
   ! -----------------------------------------------  AssignMatrix  -----
@@ -1826,6 +1832,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.66  2002/04/22 20:53:58  vsnyder
+! Add a 'scale' argument to AddToMatrix
+!
 ! Revision 2.65  2002/03/05 23:31:07  livesey
 ! Removed a diagnostic print that got left behind
 !
