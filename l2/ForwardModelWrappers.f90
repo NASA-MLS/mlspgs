@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module ForwardModelWrappers
@@ -6,19 +6,18 @@ module ForwardModelWrappers
   ! This module contains a wrapper routine for calling the various forward
   ! models we have.
   
+  use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
   use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
     & FORWARDMODELSTATUS_T
   use FullCloudForwardModel, only: FULLCLOUDFORWARDMODELWRAPPER
-  use VectorsModule, only: VECTOR_T
-  use MatrixModule_1, only: MATRIX_T
+  use FullForwardModel_m, only: FULLFORWARDMODEL
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
   use Init_tables_module, only: L_LINEAR, L_SCAN, L_FULL, L_CLOUDFULL
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-
-  use FullForwardModel_m, only: FULLFORWARDMODEL
   use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
+  use MatrixModule_1, only: MATRIX_T
+  use MLSL2Timings, only: add_to_retrieval_timing
   use ScanModelModule, only: SCANFORWARDMODEL
-  use BaselineForwardModel_m, only: BASELINEFORWARDMODEL
+  use VectorsModule, only: VECTOR_T
 
   implicit none
   private
@@ -54,17 +53,21 @@ contains ! ============= Public Procedures ==========================
         FwdModelOut, Ifm, fmStat, Jacobian )
       call BaselineForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'full_fwm' )
     case ( l_linear )
       call LinearizedForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
       call BaselineForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'linear_fwm' )
     case ( l_scan )
       call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'scan_fwm' )
     case ( l_cloudFull )
       call FullCloudForwardModelWrapper ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
+      call add_to_retrieval_timing( 'fullcloud_fwm' )
     case default ! Shouldn't get here if parser etc. worked
     end select
   end subroutine ForwardModel
@@ -72,6 +75,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.9  2001/11/27 23:34:49  pwagner
+! Split forward model timings into four types
+!
 ! Revision 2.8  2001/10/02 16:55:10  livesey
 ! Bug fix, forgot use statement
 !
