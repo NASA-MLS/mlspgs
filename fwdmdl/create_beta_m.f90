@@ -145,11 +145,6 @@ contains
 !
         dNu = Fgr - v0s(ln_i)
 !
-! If too far from line center, skip it (to fit /mlspgs/ code).
-! Use criterion of 5000.0 so the l2_gridding program works !!
-!
-        if(abs(dNu) > 5000.0_rp) CYCLE             ! To fit /mlspgs/ code
-!
         w = pfaw(ln_i)
         IF(abs(y(ln_i))+0.666666_rp*abs(x1(ln_i)*dNu) > 100.0_rp) THEN
           Call Voigt_Lorentz(dNu,v0s(ln_i),x1(ln_i),yi(ln_i), &
@@ -175,17 +170,15 @@ contains
       IF(MAXVAL(ABS(yi)) < 1.0e-06_rp) THEN
         do ln_i = 1, nl
           dNu = Fgr - v0s(ln_i)
-! To fit /mlspgs/ code
-          if(abs(dNu) <= 5000.0_rp) beta_value = beta_value &
-            + Slabs(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i))
+          beta_value = beta_value  + &
+            &  Slabs(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i))
         end do
       ELSE
         do ln_i = 1, nl
           dNu = Fgr - v0s(ln_i)
-! To fit /mlspgs/ code
-          if(abs(dNu) <= 5000.0_rp) beta_value = beta_value &
-             + Slabswint(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i),yi(ln_i))
-        enddo
+          beta_value = beta_value + &
+            &  Slabswint(dNu,v0s(ln_i),x1(ln_i),slabs1(ln_i),y(ln_i),yi(ln_i))
+        end do
       ENDIF
 !
     ENDIF
@@ -229,6 +222,9 @@ contains
   End Subroutine Create_beta
 end module CREATE_BETA_M
 ! $Log$
+! Revision 2.8  2002/02/27 07:04:10  zvi
+! Fixing limit on large dNu
+!
 ! Revision 2.7  2001/11/15 01:22:00  zvi
 ! Remove Extiction debug
 !
