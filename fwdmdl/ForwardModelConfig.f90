@@ -181,6 +181,8 @@ contains
       & config%num_ab_terms, config%num_size_bins, config%cloud_der, &
       & config%cloud_width, config%cloud_fov /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig integers" )
+    call PVMIDLPack ( (/ config%phiWindow, config%tolerance /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig reals" )
     call PVMPackLitIndex ( config%fwmType, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig%fwmType" )
 
@@ -190,8 +192,10 @@ contains
       if ( info /= 0 ) call PVMErrorMessage ( info, "Packing number of molecules" )
       if ( size ( config%molecules ) > 0 ) then
         do i = 1, size(config%molecules)
-          call PVMPackLitIndex ( config%molecules(i), info )
+          call PVMPackLitIndex ( abs ( config%molecules(i) ), info )
           if ( info /= 0 ) call PVMErrorMessage ( info, "Packing a molecule" )
+          call PVMIDLPack ( (config%molecules(i) .gt. 0.0), info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, "Packing molecule sign" )
         end do
         call PVMIDLPack ( config%moleculeDerivatives, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, "Packing molecule derivatives" )
@@ -243,13 +247,16 @@ contains
     use Allocate_Deallocate, only: Allocate_test
     use MLSSignals_m, only: PVMUnpackSignal
     use VGridsDatabase, only: PVMUnpackVGrid
+    use Output_M, only: OUTPUT
     ! Dummy arguments
     type ( ForwardModelConfig_T ), intent(out) :: CONFIG
     ! Local variables
     integer :: INFO                     ! Flag from PVM
+    logical :: FLAG                     ! A flag from the sender
     logical, dimension(11) :: l11       ! Temporary array
-    logical, dimension(11) :: l2        ! Temporary array
+    logical, dimension(2) :: l2         ! Temporary array
     integer, dimension(11) :: i11       ! Temporary array
+    real(r8), dimension(2) :: r2        ! Temporary array
     integer :: I                        ! Loop counter
     integer :: N                        ! Array size
 
@@ -281,6 +288,10 @@ contains
     config%cloud_der = i11(9)
     config%cloud_width = i11(10)
     config%cloud_fov = i11(11)
+    call PVMIDLUnpack ( r2, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmConfig reals" )
+    config%phiWindow = r2(1)
+    config%tolerance = r2(2)
     call PVMUnpackLitIndex ( config%fwmType, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking fwmType" )
 
@@ -289,16 +300,24 @@ contains
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of molecules" )
     if ( n > 0 ) then
       call Allocate_test ( config%molecules, n, 'config%molecules', ModuleName )
+      call Allocate_test ( config%moleculeDerivatives, &
+        & n, 'config%moleculeDerivatives', ModuleName )
       do i = 1, n
         call PVMUnpackLitIndex ( config%molecules(i), info )
         if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a molecule" )
+        call PVMIDLUnpack ( flag, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking a molecule sign flag" )
+        if ( .not. flag ) config%molecules(i) = - config%molecules(i)
       end do
+      call PVMIDLUnpack ( config%moleculeDerivatives, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking moleculeDerivatives" )
     end if
     ! Specific quantiites
     call PVMIDLUnpack ( n, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking number of specific quantities" )
     if ( n > 0 ) then
-      call Allocate_test ( config%molecules, n, 'config%specificQuantities', ModuleName )
+      call Allocate_test ( config%specificQuantities, n, &
+        & 'config%specificQuantities', ModuleName )
       call PVMIDLUnpack ( config%specificQuantities, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "Unpacking specificQuantities" )
     end if
@@ -450,6 +469,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.13  2002/10/08 17:08:03  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.12  2002/10/06 01:09:22  livesey
 ! Made the pvm routines public
 !
