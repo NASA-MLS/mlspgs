@@ -575,6 +575,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
              begin, f+f_swath, t+t_string, n+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
+             begin, f+f_AuraInstrument, t+t_string, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
@@ -1012,6 +1013,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.302  2003/04/17 23:08:29  pwagner
+! Added optional AuraInstrument field to l2gp apriori reads
+!
 ! Revision 2.301  2003/04/11 23:14:31  livesey
 ! Added spreadChannel method and force option for fill.
 !
