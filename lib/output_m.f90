@@ -59,17 +59,23 @@ contains
     return
   end subroutine BLANKS
 
-  subroutine OUTPUT_CHAR ( CHARS, ADVANCE )
+  subroutine OUTPUT_CHAR ( CHARS, ADVANCE, FROM_WHERE )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: FROM_WHERE
     character(len=3) :: MY_ADV
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     if ( prunit == -1 .or. prunit < -2 ) &
       & write ( *, '(a)', advance=my_adv ) chars
-    if ( prunit < -1 ) &
-      & call MLSMessage ( MLSMSG_Level, ModuleName, chars, advance=my_adv )
+    if ( prunit < -1 ) then
+      if ( present(from_where) ) then
+        call MLSMessage ( MLSMSG_Level, from_where, chars, advance=my_adv )
+      else
+        call MLSMessage ( MLSMSG_Level, ModuleName, chars, advance=my_adv )
+      end if
+    end if
     if ( prunit >= 0 ) &
       & write ( prunit, '(a)', advance=my_adv ) chars
   end subroutine OUTPUT_CHAR
@@ -218,6 +224,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.3  2001/02/22 23:54:27  vsnyder
+! Added optional "from_where" argument to "output_char"
+!
 ! Revision 2.2  2001/02/22 23:27:16  vsnyder
 ! Correct routing of output through MLSMessage
 !
