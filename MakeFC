@@ -85,6 +85,7 @@ endif
 #   newAifBdiff.sh         Precompiler to forestall recompilations
 #   reecho.sh              Filter list of args to remove bogus ones
 #   split_path.sh          Splits path/name into "path name"
+#   unique_name.sh         Make a unique name
 #   updatemf.sh            Updates Makefile in object file directory
 #   uptodate.make          Ensure that custom machine files are up-to-date
 #   which_fftw.sh          Construct correct fftw link lines for levels 1, 3
@@ -319,6 +320,7 @@ TAR=tar
 # Instead of hard-coding, as customized name are now possible for MLSCONFG
 # we will let reecho.sh find the ones we'll use
 REECHO=$(MLSBIN)/reecho.sh
+UNIQUE_NAME=$(MLSBIN)/unique_name.sh
 EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS -excl NAG.nogc)
 
 # These shouldn't be tarred up as part of EVERYTHING (or ever)
@@ -858,10 +860,12 @@ internaldepends:
 	done; \
 	echo "Making dependencies for srclib"; \
         cd srclib; \
-        ../$(MLSBIN)/makemakedep.sh ../lib ../l2; \
-        temp_name=temp.dep.${MLSCONFG} ;\
-        sed 's/OBJS =/srclib_objs =/' Makefile.dep > $$temp_name; \
-        mv $$temp_name Makefile.dep
+        temp_name_1=`../${UNIQUE_NAME} 1` ;\
+        temp_name_2=`../${UNIQUE_NAME} 2` ;\
+        ../$(MLSBIN)/makemakedep.sh -p $$temp_name_1 ../lib ../l2; \
+        sed 's/OBJS =/srclib_objs =/' $$temp_name_1 > $$temp_name_2; \
+        rm -f $$temp_name_1 ; \
+        mv $$temp_name_2 Makefile.dep
 
 internalsaymake:
 	@echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
@@ -979,6 +983,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.77  2002/08/29 17:57:34  pwagner
+# Added build of MLS_h5ls; HDF5 is now requisite for all so cases removed for some only
+#
 # Revision 1.76  2002/08/23 20:34:25  pwagner
 # Uses temp_name instead of temp.dep
 #

@@ -51,6 +51,7 @@ endif
 # This will filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 REECHO=$(MLSBIN)/reecho.sh
+UNIQUE_NAME=$(MLSBIN)/unique_name.sh
 
 # This is in case tar doesn't summon GNU tar, you may still use it via
 # something like
@@ -164,9 +165,15 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           $(RECFG)
 
 depends:
-	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
-     mv Makefile.dep Makefile.nodep
-	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD)
+#	$(MLSBIN)/makemakedep.sh -nodep $(OMIT_PREFXD) ; \
+#     mv Makefile.dep Makefile.nodep
+	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	$(MLSBIN)/makemakedep.sh -nodep -p $$temp_name_1 $(OMIT_PREFXD) ; \
+     mv $$temp_name_1 Makefile.nodep
+#	$(MLSBIN)/makemakedep.sh $(OMIT_PREFXD)
+	temp_name_1=`${UNIQUE_NAME} 1` ;\
+	$(MLSBIN)/makemakedep.sh -p $$temp_name_1 $(OMIT_PREFXD) ; \
+     mv $$temp_name_1 Makefile.dep
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh -lib $(OMIT_PREFXD) \
@@ -208,6 +215,9 @@ targ:
 	$(TAR) hcvzf ../libmlspack.tgz * --exclude \*.o --exclude \*.mod
 
 # $Log$
+# Revision 1.5  2002/09/06 22:57:54  pwagner
+# sdot.f and cdot.f no longer excluded from libmlspack
+#
 # Revision 1.4  2002/05/02 00:16:32  pwagner
 # depends now creates Makefile.nodep, too
 #
