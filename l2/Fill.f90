@@ -125,7 +125,7 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: FileNameLen, L1BInfo_T, R4, R8, RM, RV, FindFirst
+    use MLSCommon, only: FileNameLen, L1BInfo_T, R4, R8, RM, RV
     use MLSFiles, only: mls_hdf_version, &
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
     use MLSL2Options, only: LEVEL1_HDFVERSION
@@ -134,6 +134,7 @@ contains ! =====     Public Procedures     =============================
       & MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
+    use MLSSets, only: FindFirst
     use MLSSignals_m, only: GetFirstChannel, GetSignalName, GetModuleName, IsModuleSpacecraft, &
       & GetSignal, Signal_T
     use Molecules, only: L_H2O
@@ -6854,6 +6855,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.274  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.273  2004/05/28 00:57:49  vsnyder
 ! Move GetIndexFlagsFromList from MoreTree to Expr_m
 !
