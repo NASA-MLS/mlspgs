@@ -317,8 +317,6 @@ contains
 
       REAL(r8) :: DMA
       REAL(r8) :: RATIO
-      REAL(r8) :: PH0(N,NU,NZmodel-1)
-      REAL(r8) :: W00(N,NZmodel-1)  
       REAL(r8) :: P11(NU)
       REAL(r8) :: RC11(3)
       REAL(r8) :: RC_TMP(N,3)
@@ -527,6 +525,9 @@ contains
          ENDDO                                ! 100MB or cloud top
          endif
 !----------------------------------------------------------------------------------
+            PHH      = 0._r8     ! phase function
+            DDm      = 0._r8     ! mass-mean diameter
+            W0       = 0._r8     ! single scattering albedo
 
          DO 1000 ILYR=1, NZmodel-1            ! START OF MODEL LAYER LOOP:   
  
@@ -534,51 +535,33 @@ contains
             RC0(2)=0._r8
             RC0(3)=RC0(1)                     ! CLEAR-SKY EXTINCTION COEFFICIENT
 
-            DO J=1,3
-               RC_TOT(J) = 0._r8           ! total extinction
-               RC11(J)=0._r8
-            ENDDO
-
-            RC_TMP=0._r8    ! cloud extinction
-
-            DO ISPI=1,2
-               CDEPTH(ISPI) = 0._r8
-               DO K=1,NU
-                  PHH(ISPI,K,ILYR) = 0._r8
-                  PH0(ISPI,K,ILYR)=0._r8
-               ENDDO
-               DDm(ISPI,ILYR)=0._r8
-               W0(ISPI,ILYR)=0._r8
-               W00(ISPI,ILYR)=0._r8
-            ENDDO
+            RC_TOT   = 0._r8     ! total extinction
+            RC11     = 0._r8     ! cloud abs. scat. ext. coefficients
+            RC_TMP   = 0._r8     ! cloud abs. scat. ext. coefficients (for ice/water)
+            CDEPTH   = 0._r8     ! cloud optical depth
 
             DEPTH  = 0._r8
-            CWC = 1.E-9_r8
 
-            IF(CHK_CLD(ILYR) .NE. 0. .and. ICON .ne. 0) THEN 
 
-               DO ISPI=1,N
-                  CWC = RATIO*WC(ISPI,ILYR) 
-                  CWC = MAX(1.E-9_r8,CWC)
+            DO ISPI=1,N
+            CWC = RATIO*WC(ISPI,ILYR)
+               IF(CWC .EQ. 0._r8 .and. ICON .ne. 0) cycle      !Don't compute this cloud info
+                  
+               CWC = MAX(1.E-9_r8,CWC)
               
 !=================================================
 !    >>>>>>>>> CLOUDY-SKY MODULE <<<<<<<<<<<
 !=================================================
 
-                  CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
+               CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
                        &          NU,U,DU,P11,RC11,IPSD(ILYR),DMA,       &
                        &          PH1,NAB,P,DP,NR,R,RN,BC,A,B,NABR)
 
-                  DO K=1,NU
-                     PHH(ISPI,K,ILYR)=P11(K)      ! INTERGRATED PHASE FUNCTION
-                  ENDDO
-                  CDEPTH(ISPI)=RC11(3)*Z(ILYR)
-                  
-                  DO J=1,3
-                     RC_TMP(ISPI,J)=RC11(J)       ! VOLUME EXT/SCAT/ABS COEFFS
-                  ENDDO
-               ENDDO
-            ENDIF  ! cloud phase function
+               PHH(ISPI,:,ILYR)=P11          ! INTERGRATED PHASE FUNCTION
+               CDEPTH(ISPI)=RC11(3)*Z(ILYR)
+               RC_TMP(ISPI,:)=RC11        ! VOLUME EXT/SCAT/ABS COEFFS
+               DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
+            ENDDO
                               
             DO J=1,3                               ! ADD all COEFFICIENTS
                RC_TOT(J)=RC0(J)+RC_TMP(1,J)+RC_TMP(2,J)
@@ -589,7 +572,6 @@ contains
                IF(W0(ISPI,ILYR) .GT. 1.) THEN         
                   W0(ISPI,ILYR)=1.
                ENDIF
-               DDm(ISPI,ILYR)=DMA                     ! MASS-MEAN-DIAMETER
             ENDDO
 
             TAU(ILYR)=RC_TOT(3)*Z(ILYR)
@@ -606,7 +588,7 @@ contains
 
 !         CALL HEADER(4)
 
-         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,TAU0,RS,TS,&
+         CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PHH*0._r8,MULTI,ZZT1,W0*0._r8,TAU0,RS,TS,&
               &     FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
               &     UI,UA,TT0,0,RE)                          !CLEAR-SKY
 
@@ -805,6 +787,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.22  2001/10/24 17:30:49  jonathan
+! some minor changes
+!
 ! Revision 1.21  2001/10/19 19:33:47  dwu
 ! change DDm dimension from NH to NH-1
 !
