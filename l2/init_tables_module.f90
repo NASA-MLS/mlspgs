@@ -600,9 +600,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_values, t+t_numeric, n+n_field_type, &
              nadp+n_spec_def, &
       begin, s+s_tGrid, &
-             begin, f+f_number, t+t_numeric, nr+n_field_type, &
+             begin, f+f_formula, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_number, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, nr+n_field_type, &
-             begin, f+f_step, t+t_numeric, nr+n_field_type, &
+             begin, f+f_step, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_vgrid, &
              begin, f+f_type, t+t_vGridType, nr+n_field_type, &
@@ -1271,6 +1272,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.374  2004/06/12 00:40:48  vsnyder
+! Allow formula field in tGrid, don't require step and number
+!
 ! Revision 2.373  2004/06/08 19:26:20  vsnyder
 ! Add tGrid
 !
