@@ -1417,15 +1417,15 @@ contains
     ! Now do each vector
     if ( associated ( signal%frequencies ) ) then
       call PVMIDLPack ( size(signal%frequencies), info )
-      if ( info /= 0 ) call PVMIDLPack ( signal%frequencies, info )
+      if ( info == 0 ) call PVMIDLPack ( signal%frequencies, info )
     else
       call PVMIDLPack ( 0, info )
     end if
-    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal frequencies' )
+    if ( info /= 0 ) call PVMErrorMessage ( info, 'Packing signal frequencies/size' )
 
     if ( associated ( signal%widths ) ) then
       call PVMIDLPack ( size(signal%widths), info )
-      if ( info /= 0 ) call PVMIDLPack ( signal%widths, info )
+      if ( info == 0 ) call PVMIDLPack ( signal%widths, info )
     else
       call PVMIDLPack ( 0, info )
     end if
@@ -1433,7 +1433,7 @@ contains
 
     if ( associated ( signal%channels ) ) then
       call PVMIDLPack ( size(signal%channels), info )
-      if ( info /= 0 ) call PVMIDLPack ( signal%channels, info )
+      if ( info == 0 ) call PVMIDLPack ( signal%channels, info )
     else
       call PVMIDLPack ( 0, info )
     end if
@@ -1513,6 +1513,9 @@ contains
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.54  2002/10/08 17:42:10  livesey
+! Bug fixes in pack/unpack
+!
 ! Revision 2.53  2002/10/08 00:09:12  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
