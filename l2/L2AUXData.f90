@@ -574,7 +574,7 @@ contains ! =====     Public Procedures     =============================
     ! find SD data set identifier
     sds_index = sfn2index(sd_id, quantityname)
     if (sds_index == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Failed to get sds_index.' )
+      & 'Failed to get sds_index for '//trim(quantityName) )
 
     sds_id = sfselect(sd_id, sds_index)
     if (sds_id == -1) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1503,6 +1503,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.51  2003/04/25 19:55:09  livesey
+! Added more useful error message
+!
 ! Revision 2.50  2003/03/07 00:42:13  pwagner
 ! Abbreviated Units names; removed spaces from attribute names
 !
