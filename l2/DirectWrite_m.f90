@@ -158,10 +158,12 @@ contains ! ======================= Public Procedures =========================
     totalProfs = quantity%template%grandTotalInstances
 
     ! Check sanity
-    if ( offset + noToWrite - 1 > totalProfs .and. totalProfs > 0 ) &
-      & call MLSMessage ( MLSMSG_Warning, ModuleName, &
-      'last profile > grandTotalInstances for ' // trim(sdName) )
-
+    if ( offset + noToWrite - 1 > totalProfs .and. totalProfs > 0 ) then
+      call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'last profile > grandTotalInstances for ' // trim(sdName) )
+      ! Last-ditch effort resets offset
+      offset = max(0, min(offset, totalProfs - noToWrite))
+    endif
     ! Convert vector quantity to l2gp
     call vectorValue_to_l2gp(quantity, precision, quality, status, l2gp, &
       & sdname, chunkNo, offset=0, &
@@ -562,7 +564,7 @@ contains ! ======================= Public Procedures =========================
     else
       call output ( '(Is', advance='no')
     endif
-    call output ('( eligible to be auto-filled)', advance='yes' )
+    call output (' eligible to be auto-filled)', advance='yes' )
     call output ( 'Handle  : ')
     call output ( directWrite%Handle, advance='yes' )
     call output ( 'Num sci. datasets  : ')
@@ -692,7 +694,11 @@ contains ! ======================= Public Procedures =========================
 
     ! Allocate the sdNames
     directData%autoType = 0
+    directData%Handle = 0
+    directData%Type = 0
     directData%NSDNames = NSDNames
+    directData%FileNameBase = ' '
+    directData%FileName = ' '
     nullify(directData%sdNames)
     if ( NSDNames <= 0 ) return
     call allocate_test ( directData%sdNames, NsdNames, "directData%sdNames", &
@@ -877,6 +883,9 @@ contains ! ======================= Public Procedures =========================
 end module DirectWrite_m
 
 ! $Log$
+! Revision 2.22  2004/03/03 19:25:45  pwagner
+! Fixed poorly understood prob with single chunks; more initializing in setup
+!
 ! Revision 2.21  2004/02/19 23:54:26  pwagner
 ! Dumps during directWrites if l2gp or l2aux switch set
 !
