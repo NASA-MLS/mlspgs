@@ -26,7 +26,7 @@ module QuantityTemplates         ! Quantities within vectors
     & "$RCSfile$"
   !-----------------------------------------------------------------------------
 
-  logical, parameter, private :: DEEBUG = .TRUE.           ! Usually FALSE
+  logical, parameter, private :: DEEBUG = .FALSE.           ! Usually FALSE
 
   ! Define some global parameters and data types.
 
@@ -429,6 +429,9 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.20  2001/10/02 23:12:50  pwagner
+! More chi^2 fixes
+!
 ! Revision 2.19  2001/09/17 21:59:26  livesey
 ! Removed allocate of frequencies, it's deferred to later in the code
 !
