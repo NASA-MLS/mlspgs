@@ -668,6 +668,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
+             begin, f+f_metaName, t+t_string, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
@@ -870,6 +871,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.203  2002/02/22 01:07:58  pwagner
+! Added metaName
+!
 ! Revision 2.202  2002/02/20 02:12:59  livesey
 ! Added height to Fill
 !
