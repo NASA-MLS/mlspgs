@@ -32,6 +32,14 @@ begin Fill
   !define(flaggingBands,{31})
   !makeFlagsForOneProduct(product=HO2,radiometer=R4,chisqScale=10.0,minRads=200,cloudMax=10K,cloudMin= -10K)
 
+  ;; ------------------------------------ HNO3-640
+  !define(flaggingBands,{10,11,12,13,14,28,29,30,31})
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R4,chisqScale=10.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+
+  ;; ------------------------------------ CH3CN-640
+  !define(flaggingBands,{10,11,12,13,14,28,29,30,31})
+  !makeFlagsForOneProduct(product=CH3CN,radiometer=R4,chisqScale=10.0,minRads=4000,cloudMax=10K,cloudMin= -10K)
+
   ;; ------------------------------------- Temperature-CorePlusR4
   !define(flaggingBands,{1,22,32})
   !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=5K,cloudMin= -10K)
@@ -43,6 +51,9 @@ begin Fill
 end Fill
 
 ; $Log$
+; Revision 1.6  2004/04/28 23:06:50  livesey
+; Changes to cloud flags.
+;
 ; Revision 1.5  2004/04/28 00:32:11  livesey
 ; Bug fix
 ;
