@@ -370,7 +370,8 @@ contains ! =============== Subroutines and functions ==========================
 
   ! ---------------------------------- Get2DHydroStaticTangentPressure ----------
   subroutine Get2DHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, &
-    & orbIncl, phiTan, geocAlt, maxIterations, phiWindow, phiWindowUnits )
+    & orbIncl, phiTan, geocAlt, maxIterations, phiWindow, phiWindowUnits, &
+    & chunkNo )
     ! This is a new pressure guesser routine which works by simply running the
     ! new 2D scan model 'backwards'
     ! Dummy arguments
@@ -389,6 +390,7 @@ contains ! =============== Subroutines and functions ==========================
     integer, intent(IN) :: MAXITERATIONS ! Number of iterations to use
     real(r8), intent(in) :: PHIWINDOW   ! For 2D or not
     integer, intent(in) :: PHIWINDOWUNITS
+    integer, intent(in), optional :: chunkNo
 
     ! Local parameters
     integer, parameter :: NoQtys = 8
@@ -480,11 +482,11 @@ contains ! =============== Subroutines and functions ==========================
       ! Get residual for all mafs
       do maf = 1, ptan%template%noInstances
         fmStat%maf = maf
-        call TwoDScanForwardModel ( fmConf, state, extra, residual, ifm, &
-          & fmStat, jacobian )
-        state%quantities(1)%values(:,maf) = state%quantities(1)%values(:,maf) - &
-          & residual%quantities(1)%values(:,maf) / &
-          &   jacobian%block(maf,maf)%values(:,1)
+       call TwoDScanForwardModel ( fmConf, state, extra, residual, ifm, &
+         & fmStat, jacobian, chunkNo )
+       state%quantities(1)%values(:,maf) = state%quantities(1)%values(:,maf) - &
+         & residual%quantities(1)%values(:,maf) / &
+         &   jacobian%block(maf,maf)%values(:,1)
         call ClearMatrix ( jacobian )
       end do
       if ( index ( switches, 'pguess' ) /= 0 ) then
@@ -1507,10 +1509,12 @@ contains ! =============== Subroutines and functions ==========================
   end subroutine ScanForwardModel
   ! ---------------------------------------- twodScanForwardModel -----------
   subroutine TwoDScanForwardModel ( fmConf, state, extra, fwmOut, ifm, &
-  & fmStat, jacobian )
+  & fmStat, jacobian, chunkNo )
 
     use Get_eta_matrix_m, only: Get_eta_sparse
+    use OUTPUT_M, only: BLANKS, OUTPUT
     use Piq_int_m, only: Piq_int
+    use Time_M, only: Time_Now
     use Units, only: Boltz
 
 ! This is a two D version of ScanForwardModel
@@ -1523,6 +1527,7 @@ contains ! =============== Subroutines and functions ==========================
   type (ForwardModelIntermediate_T), intent(inout) :: IFM ! Workspace type stuff
   type (ForwardModelStatus_T), intent(inout) :: FMSTAT ! Which maf etc.
   type (Matrix_T), intent(inout), optional :: JACOBIAN ! The derivative matrix
+  integer, intent(in), optional :: chunkNo
 ! local variables
   type (VectorValue_T), pointer :: ORBINCLINE ! Orbital inclination
   type (VectorValue_T), pointer :: TEMP ! Temperature component of state
@@ -1595,6 +1600,21 @@ contains ! =============== Subroutines and functions ==========================
   LOGICAL, POINTER :: not_zero_p_h2o(:,:)
   LOGICAL, POINTER :: not_zero_t(:,:)
   LOGICAL, POINTER :: not_zero_h2o(:,:)
+  real :: T0, T1, T2                     ! For timing
+  logical, parameter :: always_timing = .false.  ! if worried about NAG taking so long
+  logical :: Timing  ! if worried about NAG taking so long
+  logical, parameter :: total_times = .true.
+  integer :: isurf
+! Time this
+  call time_now ( t0 )
+  call time_now ( t1 )
+  Timing = always_timing
+!  if ( present(chunkNo) ) &
+!    & Timing = always_timing .or. &
+!    & chunkNo == 4 .or. chunkNo == 12 .or. chunkNo == 25 .or.  &
+!    & chunkNo == 50 .or. chunkNo == 167
+  if ( timing ) &
+    & call output('beginning timing for 2d scan forward model', advance='yes')
 ! nullify all pointers
   NULLIFY ( coslat2, cosphi2, dgphdr, dscandz, earthradc, earth_radius,      &
     & eff_earth_radius, eta_at_one_phi, eta_at_one_zeta, eta_p_h2o,          &
@@ -1626,11 +1646,17 @@ contains ! =============== Subroutines and functions ==========================
   residual => getQuantityForForwardModel ( fwmOut, &
       & quantityType=l_scanResidual, instrumentModule=fmConf%instrumentModule, &
     & config=fmConf)
+  if ( timing ) call sayTime ( 'Getting vector quantities' )
+  call time_now ( t1 )
 ! get window
   CALL FindInstanceWindow(temp,phitan,fmStat%maf,FMConf%phiWindow, &
     & FMConf%windowUnits, windowstart_t, windowfinish_t)
   CALL FindInstanceWindow(h2o,phitan,fmStat%maf,FMConf%phiWindow, &
     & FMConf%windowUnits, windowstart_h2o, windowfinish_h2o)
+   ! if( timing ) print *, 'T window  : ', windowstart_t, windowfinish_t
+   ! if( timing ) print *, 'H2O window: ', windowstart_h2o, windowfinish_h2o
+  if ( timing ) call sayTime ( 'Finding instance windows' )
+  call time_now ( t1 )
 ! convert phitan into geocentric latitude
   CALL ALLOCATE_TEST(earthradc,ptan%template%nosurfs,'earthradc',modulename)
   CALL ALLOCATE_TEST(earth_radius,ptan%template%nosurfs,'earth_radius', &
@@ -1662,6 +1688,8 @@ contains ! =============== Subroutines and functions ==========================
   ELSEWHERE(red_phi_t > 1.5_rp*Pi)
     red_phi_t = red_phi_t - 2.0_rp*Pi
   ENDWHERE
+  if ( timing ) call sayTime ( 'rephasing phi' )
+  call time_now ( t1 )
 ! compute sin^2(phi) and cos^2(phi)
   sinphi2 = sin(red_phi_t)**2
   cosphi2 = 1.0_rp - sinphi2
@@ -1712,11 +1740,15 @@ contains ! =============== Subroutines and functions ==========================
     & phitan%values(:,fmStat%maf), eta_p_t, not_zero_p_t)
   CALL get_eta_sparse(temp%template%surfs(:,1),ptan%values(:,fmStat%maf), &
     & eta_z, not_zero_z)
+  if ( timing ) call sayTime ( 'getting etas functions' )
+  call time_now ( t1 )
 ! construct piq integral
   CALL ALLOCATE_TEST(piq,ptan%template%nosurfs,temp%template%nosurfs, &
   & 'tan_refr_indx', modulename)
   CALL piq_int(ptan%values(:,fmStat%maf),temp%template%surfs(:,1), &
   & refGPH%template%surfs(1,1), piq, Z_MASS = 2.5_rp, C_MASS = 0.02_rp)
+  if ( timing ) call sayTime ( 'constructing piq integral' )
+  call time_now ( t1 )
 ! convert level 1 reference geopotential height into geometric altitude
 ! This assumes that the reference ellipsoid is equivalent to a reference
 ! geopotential height of 0 meters.
@@ -1732,18 +1764,34 @@ contains ! =============== Subroutines and functions ==========================
   not_zero_t = .false.
   DO sv_z = 1, temp%template%nosurfs
     DO sv_p = 1, windowfinish_t - windowstart_t + 1
-      WHERE(not_zero_p_t(:,sv_p) .AND. not_zero_z(:,sv_z))
-        eta_zxp_t(:,sv_z + temp%template%nosurfs*(sv_p-1)) = &
-        & eta_z(:,sv_z) * eta_p_t(:,sv_p)
-        not_zero_t(:,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
-        tan_temp = tan_temp + eta_zxp_t(:,sv_z+temp%template%nosurfs*(sv_p-1)) &
-        & * temp%values(sv_z,windowstart_t+sv_p-1)
-      END WHERE
-      WHERE(not_zero_p_t(:,sv_p)) &
-        & eta_piqxp(:,sv_z + temp%template%nosurfs*(sv_p-1)) &
-        & = piq(:,sv_z) * eta_p_t(:,sv_p)
+!      WHERE(not_zero_p_t(:,sv_p) .AND. not_zero_z(:,sv_z))
+!        eta_zxp_t(:,sv_z + temp%template%nosurfs*(sv_p-1)) = &
+!        & eta_z(:,sv_z) * eta_p_t(:,sv_p)
+!        not_zero_t(:,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
+!        tan_temp = tan_temp + eta_zxp_t(:,sv_z+temp%template%nosurfs*(sv_p-1)) &
+!        & * temp%values(sv_z,windowstart_t+sv_p-1)
+!      END WHERE
+!      WHERE(not_zero_p_t(:,sv_p)) &
+!        & eta_piqxp(:,sv_z + temp%template%nosurfs*(sv_p-1)) &
+!        & = piq(:,sv_z) * eta_p_t(:,sv_p)
+      do isurf=1, ptan%template%nosurfs
+        if ( not_zero_p_t(isurf,sv_p) .AND. not_zero_z(isurf,sv_z) ) then
+          eta_zxp_t(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) = &
+            & eta_z(isurf,sv_z) * eta_p_t(isurf,sv_p)
+          not_zero_t(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
+          tan_temp(isurf) = tan_temp(isurf) + &
+            & eta_zxp_t(isurf,sv_z+temp%template%nosurfs*(sv_p-1)) &
+            & * temp%values(sv_z,windowstart_t+sv_p-1)
+        endif
+        if ( not_zero_p_t(isurf,sv_p) ) then
+          eta_piqxp(isurf,sv_z + temp%template%nosurfs*(sv_p-1)) &
+            & = piq(isurf,sv_z) * eta_p_t(isurf,sv_p)
+        endif
+      enddo
     ENDDO
   ENDDO
+  if ( timing ) call sayTime ( 'constructing geometric altitude' )
+  call time_now ( t1 )
   CALL deallocate_test(piq, 'piq',ModuleName)
   CALL deallocate_test(eta_z, 'eta_z',ModuleName)
   CALL deallocate_test(not_zero_z,'not_zero_z',ModuleName)
@@ -1772,13 +1820,23 @@ contains ! =============== Subroutines and functions ==========================
   not_zero_h2o = .false.
   DO sv_p = 1, windowfinish_h2o - windowstart_h2o + 1
     DO sv_z = 1, h2o%template%nosurfs
-      WHERE(not_zero_p_h2o(:,sv_p) .AND. not_zero_z(:,sv_z))
-        eta_zxp_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = &
-        & eta_z(:,sv_z) * eta_p_h2o(:,sv_p)
-        not_zero_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = .TRUE.
-        tan_h2o = tan_h2o + eta_zxp_h2o(:,sv_z+h2o%template%nosurfs*(sv_p-1)) &
-        & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
-      END WHERE
+!      WHERE(not_zero_p_h2o(:,sv_p) .AND. not_zero_z(:,sv_z))
+!        eta_zxp_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = &
+!        & eta_z(:,sv_z) * eta_p_h2o(:,sv_p)
+!        not_zero_h2o(:,sv_z + h2o%template%nosurfs*(sv_p-1)) = .TRUE.
+!        tan_h2o = tan_h2o + eta_zxp_h2o(:,sv_z+h2o%template%nosurfs*(sv_p-1)) &
+!        & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
+!      END WHERE
+      do isurf=1, ptan%template%nosurfs
+        if ( not_zero_p_h2o(isurf,sv_p) .AND. not_zero_z(isurf,sv_z) ) then
+          eta_zxp_h2o(isurf,sv_z + h2o%template%nosurfs*(sv_p-1)) = &
+            & eta_z(isurf,sv_z) * eta_p_h2o(isurf,sv_p)
+          not_zero_h2o(isurf,sv_z + h2o%template%nosurfs*(sv_p-1)) = .TRUE.
+          tan_h2o(isurf) = tan_h2o(isurf) + &
+            & eta_zxp_h2o(isurf,sv_z+h2o%template%nosurfs*(sv_p-1)) &
+            & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
+        endif
+      enddo
     ENDDO
   ENDDO
   tan_h2o = EXP(tan_h2o)
@@ -1786,6 +1844,8 @@ contains ! =============== Subroutines and functions ==========================
   CALL deallocate_test(eta_z, 'eta_z',ModuleName)
   CALL deallocate_test(not_zero_p_h2o,'not_zero_p_h2o',ModuleName)
   CALL deallocate_test(not_zero_z,'not_zero_z',ModuleName)
+  if ( timing ) call sayTime ( 'computing water vapor functions' )
+  call time_now ( t1 )
 ! compute refractive index
   CALL ALLOCATE_TEST(tan_refr_indx,ptan%template%nosurfs,'tan_refr_indx', &
   & modulename)
@@ -1852,6 +1912,8 @@ contains ! =============== Subroutines and functions ==========================
 ! This is a reasonable approximation to the above.
   WHERE(ptan%values(:,fmStat%maf) > 2.5) mass_corr = 1.0_rp &
      & + 0.02_rp*(ptan%values(:,fmStat%maf) - 2.5)**2
+  if ( timing ) call sayTime ( 'refractive index, l1 geopotential' )
+  call time_now ( t1 )
 ! forward model calculation
   residual%values(:,fmStat%maf) = (GM*((1.0_rp - j2*p2*ratio2 - j4*p4*ratio4) &
   & / l1altrefr - (1.0_rp - j2*p2*ratio2_gph - j4*p4*ratio4_gph) / l1refalt) &
@@ -1860,6 +1922,8 @@ contains ! =============== Subroutines and functions ==========================
   & windowfinish_t),1,ptan%template%nosurfs), (/ptan%template%nosurfs, &
   & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
   & * eta_piqxp,dim=2)) / g0
+  if ( timing ) call sayTime ( 'forward model calculation' )
+  call time_now ( t1 )
   IF ( fmConf%differentialScan ) residual%values(:,fmStat%maf) = &
     & EOSHIFT(residual%values(:,fmStat%maf),1, &
     & residual%values(ptan%template%nosurfs,fmStat%maf)) &
@@ -1925,6 +1989,8 @@ contains ! =============== Subroutines and functions ==========================
           end if
         ENDIF
       ENDDO
+      if ( timing ) call sayTime ( 'differential model' )
+      call time_now ( t1 )
     end if
 ! Now the temperature derivatives
     if ( tempInState ) then
@@ -1953,6 +2019,8 @@ contains ! =============== Subroutines and functions ==========================
           end if
         ENDIF
       ENDDO
+      if ( timing ) call sayTime ( 'temperature derivatives' )
+      call time_now ( t1 )
     end if
     CALL DEALLOCATE_TEST(dgphdr,'dgphdr',modulename)
   ENDIF
@@ -1981,8 +2049,25 @@ contains ! =============== Subroutines and functions ==========================
   CALL deallocate_test(not_zero_h2o,'not_zero_h2o',ModuleName)
   CALL deallocate_test(tan_h2o,'tan_h2o',ModuleName)
   CALL DEALLOCATE_TEST(tan_refr_indx,'tan_refr_indx', modulename)
+  if ( timing ) call sayTime ( 'deallocating the rest' )
+  if ( timing ) then
+    t1 = t0
+    call sayTime ( 'all of 2d scan forward model' )
+  endif
 
   contains
+    subroutine SayTime ( What )
+      character(len=*), intent(in) :: What
+      call time_now ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
+      call output ( "Timing for " // what // " = " )
+      call output ( dble(t2 - t1), advance = 'yes' )
+    end subroutine SayTime
+
     real(rp) function Z_surface ( z_basis, t_values, g_ref, h_ref, z_ref, boltz, &
     & threshold, maxiterations )
 ! finds the surface pressure
@@ -2030,6 +2115,8 @@ contains ! =============== Subroutines and functions ==========================
         if ( abs(z_surface - z_old) < thresh .or. iter >= maxiter ) exit
         z_old = z_surface
       end do
+      if (Timing) call output( 'Num iterations in z_surface: ', advance='no')
+      if (Timing) call output( iter, advance='yes')
     end function Z_surface
   end subroutine TwoDScanForwardModel
   logical function not_used_here()
@@ -2039,6 +2126,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.59  2003/03/19 19:24:10  pwagner
+! Prints timing info when necessary; speedup of TwoDScanForwardModel despite terrible NAG memory management
+!
 ! Revision 2.58  2003/02/18 23:59:28  livesey
 ! Added phiWindow stuff for hydrostatic fill
 !
