@@ -207,7 +207,7 @@ contains
                 & Del_Zeta, Do_Calc_T_c, Do_Calc_T_f, Do_GL, &
                 & ds_dh, dh_dz_gw, ds_dz_gw, Incoptdepth, Ref_cor, &
                 & H_path_c, H_path_f, dH_dt_path_c, dH_dt_path_f, H_tan, dH_dt_tan, &
-                & Do_calc_hyd_c, Deriv_Flags, D_Delta_dT, D_Deltau_Pol_DT )
+                & Do_calc_hyd_c, Deriv_Flags, D_Deltau_Pol_DT )
 
     use DExdT_m, only: dExdT
     use Get_Beta_Path_m, only: Get_Beta_Path_Polarized
@@ -300,10 +300,6 @@ contains
     logical, intent(in) :: deriv_flags(:)   ! Indicates which temperature
 !                                             derivatives to do
 
-    ! From nonpolarized model
-    real(rp), intent(in) :: D_Delta_DT(:,:) ! Incremental opacity derivatives
-    !                                         schlep from drad_tran_dt.  Path x SVE
-
 ! Outputs
 
     complex(rp), intent(out) :: D_Deltau_Pol_DT(:,:,:,:) ! 2 x 2 x path x sve.
@@ -334,20 +330,16 @@ contains
                                      ! path segment
     real(r8) :: FrqHK                ! 0.5 * Frq * H_Over_K
     integer :: H_Stop                ! Stop point for hydrostatic parts
-    integer :: I_start               ! Start point, not necessarily 1.
     integer :: I_stop                ! Stop point, which may be before N_Path
     integer :: J, K, L
     real(rp) :: L_TTM, L_TPTM, L_TPT ! Logarithms of temperature ratios
     integer :: Mid                   ! tangent index along the path = N_Path/2
-    complex(rp) :: N(-1:1)           ! Exponent of (T/T_0) in
-               ! approximation to beta.  One each for Sigma_-, Pi and Sigma_+.
     integer :: N_Path                ! Total coarse path length.
     integer :: N_Sps                 ! Number of species
     logical :: NeedFA                ! Need FA in hydrostatic calculation
-    real(rp) :: NI(-1:1), NR(-1:1)   ! Real and imaginary exponents of (T/T_0)
-               ! in approximation to beta.  One each for Sigma_-, Pi and Sigma_+.
+    real(rp) :: NI(-1:1), NR(-1:1)   ! Exponents of (T/T_0) in real and imaginary
+               ! parts of approximation to beta.  One each for Sigma_-, Pi and Sigma_+.
     integer :: P_i                   ! Index on the path
-    complex(rp) :: R0M(-1:1), RPM(-1:1), RP0(-1:1)  ! Beta ratios
     real(rp) :: RR0M(-1:1), RRPM(-1:1), RRP0(-1:1)  ! Beta ratios
     real(rp) :: S_Del_S              ! Sum of Del_S
     complex(rp) :: Singularity(-1:1,size(path_inds)) ! n/T * Alpha * Eta on the
@@ -390,22 +382,6 @@ contains
         beta_0 = beta_path_c(:,p_i,j) ! * tanh1(p_i) done by caller
         beta_m = beta_path_m(:,p_i,j) * tanh_m
         beta_p = beta_path_p(:,p_i,j) * tanh_p
-        where ( beta_m /= 0.0 .and. beta_p /= 0.0 )
-          rpm = log(beta_p/beta_m) / l_tptm
-          where ( beta_0 /= 0.0 )
-            r0m = log(beta_0/beta_m) / l_ttm
-            rp0 = log(beta_p/beta_0) / l_tpt
-            n = 0.25 * ( r0m + 2.0 * rpm + rp0 )
-          elsewhere
-            n = rpm
-          end where
-        elsewhere ( beta_m /= 0.0 .and. beta_0 /= 0.0 )
-          n = log(beta_0/beta_m) / l_ttm
-        elsewhere ( beta_0 /= 0.0 .and. beta_p /= 0.0 )
-          n = log(beta_p/beta_0) / l_tpt
-        elsewhere
-          n = 0.0
-        end where
 
         where ( real(beta_m) > 0.0 .and. real(beta_p) > 0.0 )
           rrpm = log(real(beta_p)/real(beta_m)) / l_tptm
@@ -466,7 +442,7 @@ contains
       !{ Now we divide by $T$ to get $\frac{\partial\alpha}{\partial T}$.
       ! We wait until now because it's the same $T$ for every $\beta$.
 
-      alpha_path_n = alpha_path_n + (/ 0.25, 0.50, 0.25 /) * alpha_xn_path_c(p_i)
+      alpha_path_n = alpha_path_n + (/ 0.25, 0.50, 0.25 /) * alpha_xn_path_c(p_i) !?
       alpha_path_n_t(:,p_i) = alpha_path_n / t_path_c(p_i)
       if ( do_gl(p_i) ) then
         do l = -1, 1
@@ -484,7 +460,6 @@ contains
         d_deltau_pol_dT(:,:,:,sv_i) = 0.0_rp
         cycle
       end if
-      i_start = 1
 
 ! do the absorption part
 ! combine non zeros flags for both the main and gl parts
@@ -626,7 +601,7 @@ contains
           a = b
         end if
 
-        d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) * ref_cor(p_i) !? + &
+        d_alpha_dT_eta(:,p_i) = d_alpha_dT_eta(:,p_i) * ref_cor(p_i)
 
       end do ! p_i
 
@@ -642,8 +617,7 @@ contains
       !           \frac{\partial \, \exp(-{\int \bf G}\, \text{d}s)}{\partial T}$
       ! where {\bf G} is the incremental optical depth matrix.
       do p_i = 1, i_stop             ! along the path
-        if ( eta_zxp(p_i,sv_i) /= 0.0 .or. d_delta_dT(p_i,sv_i) /= 0.0 .or. &
-          & do_calc(p_i) ) then
+        if ( any( d_alpha_dT_eta(:,p_i) /= 0.0_rp ) ) then
           call dExdT ( incoptdepth(:,:,p_i), -d_incoptdepth_dT(:,:,p_i), &
                      & d_deltau_pol_dT(:,:,p_i,sv_i) ) ! d exp(incoptdepth) / dT
         else
@@ -662,6 +636,11 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.23  2004/03/08 22:56:41  vsnyder
+! Remove calculation of complex exponent for T/T0 for beta.  Remove
+! D_Delta_DT, which had been gotten from drad_tran_dt but is no longer
+! needed (we use alpha_xn_path_? instead).
+!
 ! Revision 2.22  2004/02/04 01:18:45  vsnyder
 ! Remove accidentally-checked-in test/debug stuff
 !
