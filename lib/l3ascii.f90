@@ -456,7 +456,7 @@ contains
     if ( field%noYear ) then
       ! Subtract the year information from indate.
       ! Note this (temporarily!?) brushes over issues to do with leap years.
-      inDate = modulo ( inDate, 60.0*60.0*24.0*365.25 )
+      inDate = modulo ( inDate, 60.0_r8*60.0*24.0*365.25 )
     end if
     tmpalt = -log10(field%heights)
     inalt = -log10(inpressure)
@@ -964,6 +964,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.16  2002/07/02 19:55:49  livesey
+! Fixed trivial problem caught by NAG
+!
 ! Revision 2.15  2002/07/01 23:56:37  livesey
 ! Added code to deal better with 'noYear' quantities
 !
