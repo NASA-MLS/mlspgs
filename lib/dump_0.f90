@@ -1,11 +1,11 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DUMP_0
 
 ! Low-level dump routines -- for some arrays of intrinsic type.
 
-  use MLSStrings, only: GetStringElement
+  use MLSStrings, only: GetStringElement, NumStringElements
   use OUTPUT_M, only: BLANKS, OUTPUT
 
   implicit NONE
@@ -21,6 +21,7 @@ module DUMP_0
     module procedure DUMP_2D_LOGICAL, DUMP_2D_REAL
     module procedure DUMP_3D_CHAR, DUMP_3D_DOUBLE, DUMP_3D_INTEGER
     module procedure DUMP_3D_REAL
+    module procedure DUMP_STRING
   end interface
   interface DUMP_NAME_V_PAIRS   ! dump name-value pairs, names in string list
     module procedure DUMP_NAME_V_PAIRS_DOUBLE, DUMP_NAME_V_PAIRS_INTEGER
@@ -1025,6 +1026,42 @@ contains
    end if
   end subroutine DUMP_3D_REAL
 
+  ! -----------------------------------------------  DUMP_STRING  -----
+  subroutine DUMP_STRING ( STRING, NAME, FILLVALUE, CLEAN )
+    character(len=*), intent(in) :: STRING
+    character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: FILLVALUE
+    logical, intent(in), optional :: CLEAN
+
+    integer :: J, K
+    logical :: MyClean
+    integer :: NumElements
+    character(len=len(string)) :: myFillValue
+    character(len=*), parameter :: SEPARATOR = ','
+    logical, parameter :: COUNTEMPTY = .true.
+
+    myFillValue = ' '
+    if ( present(FillValue) ) myFillValue = FillValue
+
+    myClean = .false.
+    if ( present(clean) ) myClean = clean
+
+    NumElements = NumStringElements(string, countEmpty, &
+     & separator)
+    if ( NumElements == 0 ) then
+      call empty ( name )
+    else if ( NumElements == 1 ) then
+      call name_and_size ( name, myClean, 1 )
+      call output ( trim(string), advance='yes' )
+    else
+      call name_and_size ( name, myClean, NumElements )
+      if ( present(name) ) call output ( '', advance='yes' )
+      do j = 1, NumElements
+        call GetStringElement(string, myFillValue, j, countEmpty, separator)
+        call output ( trim(myFillValue), advance='yes' )
+      end do ! j
+    end if
+  end subroutine DUMP_STRING
 
   ! -----------------------------------  DUMP_NAME_V_PAIRS_DOUBLE  -----
   subroutine DUMP_NAME_V_PAIRS_DOUBLE ( VALUES, NAMES, CLEAN, FORMAT, WIDTH )
@@ -1350,6 +1387,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.32  2004/02/26 21:53:31  pwagner
+! Can dump ,-separated string list
+!
 ! Revision 2.31  2004/01/21 22:02:19  vsnyder
 ! Don't use number of entities per line as default width for counter
 !
