@@ -1,3 +1,6 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module MLSSignals_M
 
   ! Process the MLSSignals section of the L2 configuration file and deal with
@@ -1173,6 +1176,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.37  2001/05/03 02:06:07  vsnyder
+! Insert copyright notice
+!
 ! Revision 2.36  2001/05/02 21:50:26  livesey
 ! Added initialization to deferred
 !
