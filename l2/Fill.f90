@@ -2209,12 +2209,12 @@ contains ! =====     Public Procedures     =============================
 
   !=============================== FillQuantityFromLosGrid ====
   subroutine FillQuantityFromLosGrid ( key, Qty, LOS, &
-   & Ptan, Re, noFineGrid, extinction, errorCode )
+    & Ptan, Re, noFineGrid, extinction, errorCode )
 
     ! This is to fill a l2gp type of quantity with a los grid type of quantity.
     ! The los quantity is a vector quantity that has dimension of (s, mif, maf),
     ! where s is the path along los.
-    !
+
     ! Linear interpolation is used to fill l2gp grids and unfilled grids are
     ! marked with the baddata flag (-999.)
 
@@ -2238,7 +2238,8 @@ contains ! =====     Public Procedures     =============================
     real (r8), dimension(los%template%noChans) :: x_in, y_in, sLevel
     real (r8), dimension(los%template%noSurfs) :: zt
     real (r8), dimension(los%template%noChans*noFineGrid) :: betaFine, TransFine, SFine
-    real (r8), dimension(los%template%noChans,los%template%noSurfs,los%template%noInstances) :: beta
+    real (r8), dimension(los%template%noChans, &
+      & los%template%noSurfs,los%template%noInstances) :: beta
     real (r8) :: ds, ColTrans
 
     if ( toggle(gen) ) call trace_begin ( "FillQuantityFromLosGrid", key )
@@ -2246,129 +2247,131 @@ contains ! =====     Public Procedures     =============================
     errorCode=0
 
     ! Make sure this quantity is appropriate
-!    if (.not. ValidateVectorQuantity(qty, coherent=.TRUE., stacked=.TRUE., &
-!      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) then
-!      call output ( " quantity vertical grid in FillQuantityFromLOSgrid is not valid")
-!    end if
+    !    if (.not. ValidateVectorQuantity(qty, coherent=.TRUE., stacked=.TRUE., &
+    !      & verticalCoordinate= (/ l_pressure, l_zeta /) ) ) then
+    !      call output ( " quantity vertical grid in FillQuantityFromLOSgrid is not valid")
+    !    end if
 
     if ( qty%template%verticalCoordinate == l_pressure ) then
-        outZeta = -log10 ( qty%template%surfs(:,1) )
+      outZeta = -log10 ( qty%template%surfs(:,1) )
     else
-        outZeta = qty%template%surfs(:,1)
+      outZeta = qty%template%surfs(:,1)
     end if
 
     noMAFs=los%template%noInstances
     noMIFs=los%template%noSurfs
-! Now, we use frequency coordinate as sGrid along the path
+    ! Now, we use frequency coordinate as sGrid along the path
     noDepths=los%template%noChans
     sLevel = los%template%frequencies
-          
-! the input losQty is the increment of cloud transmission function by default.
-! it is converted to cloud extinction if extinction flag is on.
-   if(extinction) then
-   ! both sGrid and sFineGrid are expected to be evenly spaced at present
-   ds = sLevel(2)-sLevel(1)  
-   do i=1,noDepths
-   do j=1,noFineGrid
-      Sfine(j+(i-1)*noFineGrid) = sLevel(i)+(j-1._r8)*ds/noFineGrid
-   end do
-   end do
-   
-   do maf=1,noMafs
-   do mif=1,noMifs
-      do i=1,noDepths
-        y_in(i) = los%values(i+(mif-1)*noDepths,maf)/ds  ! convert increments to derivatives
-      end do
-      call InterpolateValues(sLevel,y_in,sFine,TransFine,method='Linear')  
-      ! calculate column transmission function by integrating the derivatives on fine grid
-      do i=1,noFineGrid*noDepths
-      betaFine(i) = 0._r8
-        colTrans=0._r8
-        do j=1,i
-          colTrans=colTrans + transFine(j)*ds/noFineGrid
-        end do
-        colTrans = 1._r8 - colTrans
-      if(colTrans > 0.02_r8) betaFine(i)= transFine(i)/colTrans
-      end do
-      ! interpolate betaFine back to the coarser sGrid
-      call InterpolateValues(sFine,betaFine,sLevel,beta(:,mif,maf),method='Linear')
 
-   end do
-   end do
-   
-   else
-   
-   do maf=1,noMafs
-   do mif=1,noMifs
+    ! the input losQty is the increment of cloud transmission function by default.
+    ! it is converted to cloud extinction if extinction flag is on.
+    if(extinction) then
+      ! both sGrid and sFineGrid are expected to be evenly spaced at present
+      ds = sLevel(2)-sLevel(1)  
       do i=1,noDepths
-         beta(i,mif,maf)=los%values(i+(mif-1)*noDepths,maf)
+        do j=1,noFineGrid
+          Sfine(j+(i-1)*noFineGrid) = sLevel(i)+(j-1._r8)*ds/noFineGrid
+        end do
       end do
-   end do
-   end do
-   
-   end if
-      
-! initialize quantity
-   do j = 1, qty%template%noInstances
-   do i = 1, qty%template%noSurfs
-   qty%values(i,j)=qty%template%badValue
-   cnt(i,j)=0
-   out(i,j)=0._r8
-   end do 
-   end do
-   
+
+      do maf=1,noMafs
+        do mif=1,noMifs
+          do i=1,noDepths
+            ! convert increments to derivatives
+            y_in(i) = los%values(i+(mif-1)*noDepths,maf)/ds
+          end do
+          call InterpolateValues(sLevel,y_in,sFine,TransFine,method='Linear')  
+          ! calculate column transmission function by integrating
+          ! the derivatives on fine grid
+          do i=1,noFineGrid*noDepths
+            betaFine(i) = 0._r8
+            colTrans=0._r8
+            do j=1,i
+              colTrans=colTrans + transFine(j)*ds/noFineGrid
+            end do
+            colTrans = 1._r8 - colTrans
+            if(colTrans > 0.02_r8) betaFine(i)= transFine(i)/colTrans
+          end do
+          ! interpolate betaFine back to the coarser sGrid
+          call InterpolateValues(sFine,betaFine,sLevel,beta(:,mif,maf),method='Linear')
+
+        end do
+      end do
+
+    else
+
+      do maf=1,noMafs
+        do mif=1,noMifs
+          do i=1,noDepths
+            beta(i,mif,maf)=los%values(i+(mif-1)*noDepths,maf)
+          end do
+        end do
+      end do
+
+    end if
+
+    ! initialize quantity
+    do j = 1, qty%template%noInstances
+      do i = 1, qty%template%noSurfs
+        qty%values(i,j)=qty%template%badValue
+        cnt(i,j)=0
+        out(i,j)=0._r8
+      end do
+    end do
+
     do maf=1,noMAFs  
       zt = ptan%values(:,maf)   ! noChans=1 for ptan
       zt = (zt+3.)*16.                      ! converted to height in km
       do mif=1,noMIFs
-      if (ptan%values(mif,maf) .gt. -2.5) cycle ! for testing
-      ! find altitude of each s grid
-      x_in = sLevel**2/2./(re%values(1,maf)*0.001_r8 + zt(mif))
-      ! converted to zeta
-      x_in = x_in/16. + ptan%values(mif,maf)
-      ! find minimum and maximum pressures indices in sGrid
+        if (ptan%values(mif,maf) .gt. -2.5) cycle ! for testing
+        ! find altitude of each s grid
+        x_in = sLevel**2/2./(re%values(1,maf)*0.001_r8 + zt(mif))
+        ! converted to zeta
+        x_in = x_in/16. + ptan%values(mif,maf)
+        ! find minimum and maximum pressures indices in sGrid
         do i = 2,qty%template%noSurfs-1
-        if (ptan%values(mif,maf) < (outZeta(i)+outZeta(i+1))/2. .and. &
-          & ptan%values(mif,maf) > (outZeta(i)+outZeta(i-1))/2.) &
-          & minZ = i
+          if (ptan%values(mif,maf) < (outZeta(i)+outZeta(i+1))/2. .and. &
+            & ptan%values(mif,maf) > (outZeta(i)+outZeta(i-1))/2.) &
+            & minZ = i
         end do
         if (ptan%values(mif,maf) < (outZeta(1)+outZeta(2))/2.) minZ=1
         if (ptan%values(mif,maf) > outZeta(qty%template%noSurfs)) cycle ! goto next mif
-        
+
         do i = 2,qty%template%noSurfs-1
-        if (x_in(noDepths) < (outZeta(i)+outZeta(i+1))/2. .and. &
-          & x_in(noDepths) > (outZeta(i)+outZeta(i-1))/2.) &
-          & maxZ = i
+          if (x_in(noDepths) < (outZeta(i)+outZeta(i+1))/2. .and. &
+            & x_in(noDepths) > (outZeta(i)+outZeta(i-1))/2.) &
+            & maxZ = i
         end do
         if (x_in(noDepths) < (outZeta(1)+outZeta(2))/2.) cycle    ! goto next mif
         if (x_in(noDepths) > outZeta(qty%template%noSurfs)) maxZ=qty%template%noSurfs
 
-      ! get phi along path for each mif (phi is in degree)
-      y_in = los%template%phi(mif,maf) &
-        & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
+        ! get phi along path for each mif (phi is in degree)
+        y_in = los%template%phi(mif,maf) &
+          & - atan(sLevel/(re%values(1,maf)*0.001_r8 + zt(mif)))*180._r8/Pi
         ! interpolate phi onto standard vertical grids     
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),phi_out(minZ:maxZ), &
-           & method='Linear')
+          & method='Linear')
         ! interpolate quantity to standard vertical grids      
         y_in = beta(:,mif,maf)
         call InterpolateValues(x_in,y_in,outZeta(minZ:maxZ),beta_out(minZ:maxZ), &
-           & method='Linear')
+          & method='Linear')
         ! interpolate quantity to standard phi grids
         do i=minZ,maxZ  
           do j = 2, qty%template%noInstances-1
-          if(phi_out(i) .lt. &     
-            & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2. &
-            & .and. phi_out(i) .ge. &  
-            & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
-            out(i,j)=out(i,j) + beta_out(i)
-            cnt(i,j)=cnt(i,j)+1       !  counter
-          end if
+            if(phi_out(i) .lt. &     
+              & (qty%template%phi(1,j)+qty%template%phi(1,j+1))/2. &
+              & .and. phi_out(i) .ge. &  
+              & (qty%template%phi(1,j-1)+qty%template%phi(1,j))/2. ) then
+              out(i,j)=out(i,j) + beta_out(i)
+              cnt(i,j)=cnt(i,j)+1       !  counter
+            end if
           end do
         end do
       end do                            ! End surface loop
     end do                              ! End instance loop
     ! average all non-zero bins
-     where (cnt > 0) qty%values = out/cnt
+    where (cnt > 0) qty%values = out/cnt
 
   end subroutine FillQuantityFromLosGrid
 
@@ -2541,6 +2544,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.86  2001/10/18 03:51:46  livesey
+! Just some tidying up.
+!
 ! Revision 2.85  2001/10/18 00:46:32  livesey
 ! Bug fixes in Transfer
 !
