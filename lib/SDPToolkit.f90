@@ -196,6 +196,13 @@ MODULE SDPToolkit               ! F90 interface to SDP Toolkit.
    REAL, PARAMETER :: PI = 3.141592654
    REAL, PARAMETER :: Rad2Deg = 57.295780
    
+! Warn if non-zero return from pgs_met_remove; toolkit currently (5.2.8.2)
+! implements this in c as a void fun
+! and fortran as an int fun with 0 args
+! (see $PGSHOME/src/MET/tools/PGS_MET_Remove.c and 
+!  $PGSHOME/src/MET/tools/PGS_METbindFORTRAN.c)
+   LOGICAL, PARAMETER :: WARNIFCANTPGSMETREMOVE = .TRUE.  
+   
 ! Use the SDP Toolkit for the above functions
 ! (else must use a substitute or bypass calls)
 ! (may be reset by main program)
@@ -212,6 +219,9 @@ end module SDPToolkit
 
 !
 ! $Log$
+! Revision 2.15  2003/03/15 00:14:15  pwagner
+! Added WARNIFCANTPGSMETREMOVE and explanation
+!
 ! Revision 2.14  2003/03/06 19:48:08  pwagner
 ! Added pgs_td_asciitime_ functions
 !
