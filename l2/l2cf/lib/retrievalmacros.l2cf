@@ -22,7 +22,7 @@
 ;; These macros define our standard output filenames
 !define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
 !define(DGMFilename,{'!outpathl2aux/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
-!define(CloudFilename,{'!outpathl2aux/MLS-Aura_L2AUX_Cloud_!l2version_!day.h!hdfVersion'})
+!define(CloudFilename,{'!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion'})
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -299,6 +299,9 @@ DirectWrite, file=!CloudFilename, hdfVersion=!hdfVersion, $
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.60  2003/07/09 17:58:01  livesey
+; Added cloud file.
+;
 ; Revision 1.59  2003/07/08 20:03:56  livesey
 ; New handling of hdf version stuff
 ;
