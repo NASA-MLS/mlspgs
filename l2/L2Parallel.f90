@@ -448,47 +448,57 @@ contains ! ================================ Procedures ======================
         ! know about this tid any more.  Otherwise we need to tidy up.
         if ( any ( slaveTids == deadTid ) ) then
           deadMachine = FindFirst ( slaveTids == deadTid )
-          machineFree(deadMachine) = .true.
-          deadChunk = slaveChunks ( deadMachine )
-          if ( index(switches,'mas') /= 0 ) then
-            call output ( 'The run of chunk ' )
-            call output ( deadChunk )
-            call output ( ' on ' // trim(machineNames(deadMachine)) // &
-              & ' ' // trim(GetNiceTidString(deadTid)) // &
-              & ' died, try again.', advance='yes' )
-          end if
-          call CleanUpDeadChunksOutput ( deadChunk, joinedQuantities, &
-            & joinedVectorTemplates, joinedVectors, storedResults )
-          chunksStarted(deadChunk) = .false.
-          chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
-          where ( machineNames(deadMachine) == machineNames )
-            jobsMachineKilled = jobsMachineKilled + 1
-          end where
 
-          ! Does this chunk keep failing, if so, give up.
-          if ( chunkFailures(deadChunk) > &
-            & parallel%maxFailuresPerChunk ) then
+          ! Now, to get round a memory management bug, we'll ignore this
+          ! if, as far as we're concerned, the task was finished anyway.
+          if ( deadMachine /= 0 ) then
+            machineFree(deadMachine) = .true.
+            deadChunk = slaveChunks ( deadMachine )
             if ( index(switches,'mas') /= 0 ) then
-              call output ( 'Chunk ' )
+              call output ( 'The run of chunk ' )
               call output ( deadChunk )
-              call output ( ' keeps dying.  Giving up on it.', &
-                & advance='yes' )
+              call output ( ' on ' // trim(machineNames(deadMachine)) // &
+                & ' ' // trim(GetNiceTidString(deadTid)) // &
+                & ' died, try again.', advance='yes' )
             end if
-            chunksAbandoned(deadChunk) = .true.
-          end if
-
-          ! Does this machine have a habit of killing jobs.  If so
-          ! mark it as not OK
-          if ( jobsMachineKilled(deadMachine) > &
-            & parallel%maxFailuresPerMachine ) then
-            if ( index(switches,'mas') /= 0 ) &
-              & call output ('The machine ' // &
-              & trim(machineNames(deadMachine)) // &
-              & ' keeps killing things, marking it bad', &
-              & advance='yes' )
+            call CleanUpDeadChunksOutput ( deadChunk, joinedQuantities, &
+              & joinedVectorTemplates, joinedVectors, storedResults )
+            chunksStarted(deadChunk) = .false.
+            chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
             where ( machineNames(deadMachine) == machineNames )
-              machineOK = .false.
+              jobsMachineKilled = jobsMachineKilled + 1
             end where
+            
+            ! Does this chunk keep failing, if so, give up.
+            if ( chunkFailures(deadChunk) > &
+              & parallel%maxFailuresPerChunk ) then
+              if ( index(switches,'mas') /= 0 ) then
+                call output ( 'Chunk ' )
+                call output ( deadChunk )
+                call output ( ' keeps dying.  Giving up on it.', &
+                  & advance='yes' )
+              end if
+              chunksAbandoned(deadChunk) = .true.
+            end if
+            
+            ! Does this machine have a habit of killing jobs.  If so
+            ! mark it as not OK
+            if ( jobsMachineKilled(deadMachine) > &
+              & parallel%maxFailuresPerMachine ) then
+              if ( index(switches,'mas') /= 0 ) &
+                & call output ('The machine ' // &
+                & trim(machineNames(deadMachine)) // &
+                & ' keeps killing things, marking it bad', &
+                & advance='yes' )
+              where ( machineNames(deadMachine) == machineNames )
+                machineOK = .false.
+              end where
+            end if
+          else
+            if ( index(switches,'mas') /= 0 ) call output ( &
+              & "A slave task died after giving results, " // &
+              & "we won't worry about it.", &
+              & advance='yes' )
           end if
         end if
       else if ( bufferID < 0 ) then
