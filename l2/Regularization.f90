@@ -424,7 +424,7 @@ contains
             c2 = 1
 o:          do while ( c2 <= ni )
               c1 = c2
-              do
+              do ! look for a zero to start
                 iq = a%col%quant(insts(c1))
                 if ( .not. associated(a%col%vec%quantities(iq)%mask) ) exit
                 ii = a%col%inst(insts(c1))
@@ -433,15 +433,15 @@ o:          do while ( c2 <= ni )
                 if ( c1 >= ni ) exit o
                 c1 = c1 + 1
               end do
-              c2 = c1 + 1
-              do
+              c2 = c1
+              do ! look for a one (or the end) to end
+                c2 = c2 + 1
+                if ( c2 > ni ) exit
                 iq = a%col%quant(insts(c2))
                 if ( .not. associated(a%col%vec%quantities(iq)%mask) ) exit
                 ii = a%col%inst(insts(c2))
                 if ( iand(ichar(a%col%vec%quantities(iq)%mask(h,ii)),M_Tikhonov) &
                   & /= 0 ) exit
-                c2 = c2 + 1
-                if ( c2 > ni ) exit
               end do
 
               ! Compute regularization operator
@@ -602,6 +602,9 @@ o:          do while ( c2 <= a%block(ib,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.24  2002/08/28 01:31:23  vsnyder
+! Yet more blunders in horizontal Tikhonov regularization
+!
 ! Revision 2.23  2002/08/28 00:51:04  vsnyder
 ! Correct more blunders in Tikhonov regularization
 !
