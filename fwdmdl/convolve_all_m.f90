@@ -48,22 +48,17 @@ contains
     type (VectorValue_T), intent(in) :: TEMP
     type (VectorValue_T), intent(in) :: PTAN
     type (VectorValue_T), intent(inout) :: RADIANCE
-    type (Matrix_T), intent(inout), optional :: Jacobian
-
+    real(r8), intent(IN) :: TAN_PRESS(:), PTG_ANGLES(:), TAN_TEMP(:)
+    real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
     integer, intent(IN) :: si
     real(r8), intent(IN) :: CENTER_ANGLE
     real(r8), intent(IN) :: I_RAW(:)
-    real(r8), intent(IN) :: TAN_PRESS(:), PTG_ANGLES(:), TAN_TEMP(:)
-    real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
-    real(r8), intent(in) :: SBRATIO
-    type(antennaPattern_T), intent(in) :: AntennaPattern
-!
     Real(r4), intent(in) :: k_temp(:,:,WindowStart:)   ! (Nptg,mxco,mnp)
     Real(r4), intent(in) :: k_atmos(:,:,WindowStart:,:) ! (Nptg,mxco,mnp,Nsps)
-
-    real(r8) :: k_star_tmp(ptan%template%noSurfs)
+    real(r8), intent(in) :: SBRATIO
+    type (Matrix_T), intent(inout), optional :: Jacobian
     logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
-
+    type(antennaPattern_T), intent(in) :: AntennaPattern
     integer, intent(out) :: ier         ! Flag
 
     ! -----     Local Variables     ----------------------------------------
@@ -72,11 +67,12 @@ contains
 
     integer :: FFT_INDEX(size(antennaPattern%aaap))
     integer :: Ind                      ! Index
-    integer :: N, I, J, Is, Ktr, Nf, Ntr, Ptg_i, Sv_i, Spectag, Ki, Kc, FFT_pts
+    integer :: FFT_pts, I, Is, J, Kc, Ki, Ktr, N, Nf, Ntr, Ptg_i, Spectag, Sv_i
     integer :: Row, Col                 ! Matrix entries
-    integer :: No_t, No_tan_hts, No_phi_t, Lk, Uk
+    integer :: No_phi_t, No_t, No_tan_hts, Lk, Uk
     logical :: Want_Deriv
 
+    real(r8) :: K_star_tmp(ptan%template%noSurfs)
     Real(r8) :: Q, R
     Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
     Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
@@ -451,6 +447,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.23  2001/05/01 00:42:54  zvi
+! Fixing phi window bug
+!
 ! Revision 1.22  2001/04/28 17:48:08  livesey
 ! Now accepts and sets rowFlags
 !
