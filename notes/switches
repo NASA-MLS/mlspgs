@@ -42,6 +42,7 @@ Switches (set by -S option in mlsl2's command line):
               and each file l2gp, l1brad, ncep, dao input
   qtmp =>   Quantity templates being constructed
   rad =>    Radiances in ForwardModelInterface
+  reg =>    Dump regularization matrix
   sca =>    Scalars of interest to the Newton method
   slv =>    Show output of slaves using pvmfcatchout
   spa =>    Sparsity structure of fac, jac, neq
@@ -78,6 +79,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.23  2002/06/29 05:56:20  livesey
+ Added geom and pGuess
+
  Revision 1.22  2002/06/12 17:57:37  livesey
  Added hGrid
 
