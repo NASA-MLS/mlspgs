@@ -53,6 +53,15 @@ begin Fill
     refGPHquantity=state.refGPH, temperatureQuantity=state.temperature
 end Fill})
 
+;; This macro deals with the radiance subsetting in an easy manner.
+;; $1 is the phase name, $2 the band, $3 the height range and $4 the depth limit
+!define(subsetGHzRadiance,{!dnl
+Subset, quantity=y$1.band$2, height=$3, ptanQuantity=state.ptanGHz, $
+  opticalDepth=od$1.depth$2, opticalDepthCutoff=$4!nl})
+!define(subsetTHzRadiance,{!dnl
+Subset, quantity=y$1.band$2, height=$3, ptanQuantity=state.ptanTHz, $
+  opticalDepth=od$1.depth$2, opticalDepthCutoff=$4!nl})
+
 ;; These macros are used to accumulate quantities destined for the DGM
 ;; or DGG file.  $1 is the quantity within state, $2 is the name to
 ;; give the internal l2gp item (to avoid confusion with the 'main'
@@ -102,6 +111,9 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
   outputSD=sdOut$1, fwdModelOut=f$1})
 
 ; $Log$
+; Revision 1.9  2002/07/17 19:30:10  livesey
+; Fill GPH
+;
 ; Revision 1.8  2002/07/06 21:18:48  livesey
 ; Made sure the direct writes for forward model radiances are only done if
 ; l2version is defined.
