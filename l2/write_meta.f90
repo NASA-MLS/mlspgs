@@ -5,7 +5,7 @@
 module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
-  use Hdf, only: DFACC_RDWR, Sfend, Sfstart
+  use Hdf, only: DFACC_RDWR   ! , Sfend, Sfstart
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, NameLen, R8
   use MLSFiles, only: Split_path_name, mls_sfstart, mls_sfend
@@ -18,13 +18,13 @@ module WriteMetadata ! Populate metadata and write it out
   use PCFHdr, only: WritePCF2Hdr
   use SDPToolkit, only: PGSd_MET_GROUP_NAME_L, &
     & PGSd_MET_NUM_OF_GROUPS, PGSd_PC_FILE_PATH_MAX, PGS_PC_GetReference, &
-    & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET, &
-   & PGS_PC_getconfigdata!, &
+    & PGSPC_W_NO_REFERENCE_FOUND, PGS_S_SUCCESS, PGSMET_W_METADATA_NOT_SET !, &
+!    & PGS_PC_getconfigdata, &
 !    & PGS_MET_init, PGS_MET_setattr_d, &
 !      &  PGS_MET_setAttr_s, PGS_MET_setattr_i, &
 !      &  PGS_MET_write, PGS_MET_remove
   use TOGGLES, only: switches
-  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
+  use TREE, only: SOURCE_REF
 
   implicit none
 
@@ -161,7 +161,7 @@ contains
     !Local Variables
 
     integer, parameter :: ARCHIVE=1, INVENTORY=2
-    character (len=132) :: Attrname, Errmsg
+    character (len=132) :: Attrname
     integer :: Indx, Version
     character (len=PGSd_PC_FILE_PATH_MAX) :: Physical_filename
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sval
@@ -172,8 +172,8 @@ contains
     ! Externals
 
     integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_setattr_i, &
-      &  PGS_MET_write, PGS_MET_remove
+      &  PGS_MET_setAttr_s, &
+      &  PGS_MET_write
 
     ! Executable code
 
@@ -274,7 +274,7 @@ contains
     ! Local Variables
 
     integer, parameter :: ARCHIVE=1, INVENTORY=2
-    character (len=132) :: Attrname, Errmsg
+    character (len=132) :: Attrname
     character (len=2) :: Class
     character (len=*), parameter :: METAWR_ERR = &
       &  'Error writing metadata attribute '
@@ -285,9 +285,9 @@ contains
 
     ! Externals
 
-    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
-      &  PGS_MET_write, PGS_MET_remove
+    integer, external :: PGS_MET_setattr_d, &
+      &  PGS_MET_setAttr_s, PGS_MET_SETATTR_I, &
+      &  PGS_MET_write
 
     !Executable code
 
@@ -438,7 +438,7 @@ contains
     integer, parameter :: INVENTORY=2, ARCHIVE=1
     character (len=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     character (len=PGSd_PC_FILE_PATH_MAX) :: sval
-    character (len=132) :: attrname, errmsg
+    character (len=132) :: attrname
     integer :: version, indx
     character (len=*), parameter :: METAWR_ERR = &
       & 'Error writing metadata attribute '
@@ -446,8 +446,8 @@ contains
 
     ! Externals
 
-    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-         PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
+    integer, external :: PGS_MET_setattr_d, &
+         PGS_MET_setAttr_s, PGS_MET_SETATTR_I, &
          PGS_MET_write, PGS_MET_remove
 
     !Executable code
@@ -711,8 +711,8 @@ contains
 
     ! Externals
 
-    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
+    integer, external :: PGS_MET_setattr_d, &
+      &  PGS_MET_setAttr_s, &
       &  PGS_MET_write, PGS_MET_remove
 
     !Executable code
@@ -770,10 +770,6 @@ contains
         call MLSMessage (MLSMSG_WARNING, ModuleName, &
              "Metadata write failed in populate_metadata_std " &
              & //trim(attrname)//trim(errmsg))
-!       call announce_error ( 0, &
-!       & "Error: metadata write failed in populate_metadata_std.", &
-!       & error_number=returnStatus)
-!       return
       end if
     end if
 
@@ -789,7 +785,7 @@ contains
     if ( present(metadata_error)) metadata_error=module_error
 
    if(index(switches, 'pro') /= 0) then
-       call proclaim(physical_filename, 'standard')
+       call announce_success(physical_filename, 'standard')
    end if
 
   end subroutine Populate_metadata_std
@@ -836,8 +832,8 @@ contains
 
     ! Externals
 
-    integer, external :: PGS_MET_init, PGS_MET_setattr_d, &
-      &  PGS_MET_setAttr_s, PGS_MET_getsetattr_d, PGS_MET_SETATTR_I, &
+    integer, external :: PGS_MET_setattr_d, &
+      &  PGS_MET_setAttr_s, &
       &  PGS_MET_write, PGS_MET_remove
 
     !Executable code
@@ -893,20 +889,13 @@ contains
     if ( returnStatus /= PGS_S_SUCCESS .AND. &
          returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
       if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
-!       CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
-!         & "Some of the mandatory parameters were not set" )
         call announce_error ( 0, &
         & "Error: Some of the mandatory parameters were not set in populate_metadata_oth.")
-!       return
       else
         call Pgs_smf_getMsg (returnStatus, attrname, errmsg)
         call MLSMessage (MLSMSG_WARNING, ModuleName, &
              "Metadata write failed in populate_metadata_oth " &
              & //trim(attrname)//trim(errmsg))
-!       call announce_error ( 0, &
-!       & "Error: metdata write failed in populate_metadata_oth.", &
-!       & error_number=returnStatus)
-!       return
       end if
     end if
 
@@ -922,7 +911,7 @@ contains
     if ( present(metadata_error)) metadata_error=module_error
 
    if(index(switches, 'pro') /= 0) then
-       call proclaim(physical_filename, 'others')
+       call announce_success(physical_filename, 'others')
    end if
 
   end subroutine Populate_metadata_oth
@@ -1170,8 +1159,6 @@ contains
       & physical_filename)
 
     if ( result /= PGS_S_SUCCESS ) then
-!       CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-!         & "Failed to find the PCF reference for the Log mcf in WriteMetaLog" ) 
       call announce_error ( 0, &
         & "Error: failed to find PCF ref for Log mcf in WriteMetaLog.") 
       return
@@ -1179,13 +1166,9 @@ contains
 
     ! Check that the PCF file contains the entries for the ASCII file
     ! and for the log file itself
-!    version = 1
-!    result = PGS_PC_GetReference (ASCII_FILE, version , physical_filename)
     result = pgs_pc_getconfigdata (ASCII_FILE, physical_filename)
 
     if ( result /= PGS_S_SUCCESS ) then
-!     CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-!       & "Failed to find the PCF reference for the ASCII in WriteMetaLog" ) 
       call announce_error ( 0, &
         & "Error: failed to find PCF ref for the ASCII in WriteMetaLog.") 
       return
@@ -1195,8 +1178,6 @@ contains
     result = PGS_PC_GetReference (THE_LOG_FILE, version , physical_filename)
 
     if ( result /= PGS_S_SUCCESS ) then
-!     CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-!       & "Failed to find the PCF reference for the LOG in WriteMetaLog" ) 
       call announce_error ( 0, &
         & "Error: failed to find PCF ref for the Log in WriteMetaLog.") 
       return
@@ -1210,8 +1191,6 @@ contains
 
     result = pgs_met_init(mlspcf_mcf_l2log_start, groups)
     if ( result /= PGS_S_SUCCESS ) then
-!     CALL MLSMessage(MLSMSG_Error, ModuleName, &
-!       & 'Initialization error.  See LogStatus for details.')
       call announce_error ( 0, &
       & "metadata initialization error in WriteMetaLog.") 
       return
@@ -1243,9 +1222,6 @@ contains
                                pcf%PGEVersion)
 
     if ( result /= PGS_S_SUCCESS ) then
-!         call Pgs_smf_getMsg(result, mnemonic, msg)
-!         msr = mnemonic // ':  ' // msg
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       call announce_error ( 0, &
       & "Error in setting PGEVersion attribute in WriteMetaLog.", &
       &  error_number=result)
@@ -1266,10 +1242,6 @@ contains
        msr = "Error: failed to write metadata in WriteMetaLog." &
        & // trim(mnemonic) // ':  ' // trim(msg)
        CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-!    call announce_error ( 0, &
-!    & "Error: failed to write metadata in WriteMetaLog.", &
-!    & error_number=result)
-!                     return
     end if
 
     result = pgs_met_remove()
@@ -1277,7 +1249,7 @@ contains
     if ( present(metadata_error)) metadata_error=module_error
 
    if(index(switches, 'pro') /= 0) then
-       call proclaim(physical_filename, 'Log')
+       call announce_success(physical_filename, 'Log')
    end if
 
    end subroutine WriteMetaLog
@@ -1393,8 +1365,8 @@ contains
 
    end subroutine ExpandFileTemplate
 
-  ! ---------------------------------------------  proclaim  -----
-  subroutine proclaim ( Name, l2_type )
+  ! ---------------------------------------------  announce_success  -----
+  subroutine announce_success ( Name, l2_type )
     character(LEN=*), intent(in) :: Name
     character(LEN=*), intent(in) :: l2_type
 
@@ -1405,7 +1377,7 @@ contains
     call blanks(8)
     call output ( trim(Name), advance='yes')
 
-  end subroutine proclaim
+  end subroutine announce_success
 
   ! ------------------------------------------------  Announce_Error  -----
   subroutine Announce_Error ( lcf_where, full_message, use_toolkit, &
@@ -1465,6 +1437,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.23  2002/01/26 00:08:20  pwagner
+! Housekeeping; changed proclaim to announce_success
+!
 ! Revision 2.22  2002/01/23 21:50:04  pwagner
 ! Uses hdfVersion optional parameter
 !
