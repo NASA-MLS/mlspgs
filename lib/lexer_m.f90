@@ -95,7 +95,7 @@ contains
 !   P       Q       R       S       T       U       V       W
     letter, letter, letter, letter, letter, letter, letter, letter, & ! 120
 !   X       Y       Z       [       \       ]       ^       _
-    letter, letter, letter, op_char,more,   op_char,more,   under,  & ! 130
+    letter, letter, letter, punct,  more,   punct,  more,   under,  & ! 130
 !   `       a       b       c       d       e       f       g
     more,   letter, letter, letter, letter, letter, letter, letter, & ! 140
 !   h       i       j       k       l       m       n       o
@@ -483,6 +483,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.5  2000/11/30 00:31:12  vsnyder
+! Make [] punctuators instead of operators.
+!
 ! Revision 2.4  2000/11/30 00:23:10  vsnyder
 ! Implement [] syntax for arrays
 !
