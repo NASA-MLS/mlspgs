@@ -136,9 +136,13 @@ module MLSFiles               ! Utility file routines
   ! This isn't NameLen because it may have a path prefixed
   integer, parameter :: MAXFILENAMELENGTH=PGSd_PC_FILE_PATH_MAX
 
+  ! This error code may be returned from almost any routine or function
+
+  integer, parameter, public :: FILENOTFOUND=-1
+
   ! These are error codes that may be returned by GetPCFromRef
 
-  integer, parameter, public :: NAMENOTFOUND=-1
+  integer, parameter, public :: NAMENOTFOUND=FILENOTFOUND-1
   integer, parameter, public :: INVALIDPCRANGE=NAMENOTFOUND-1
   integer, parameter, public :: CANTALLOCATENAMEARRAY=INVALIDPCRANGE-1
 
@@ -1466,6 +1470,11 @@ contains
     integer :: myhdfVersion
 
     ! Executable code
+    if ( mls_exists(trim(FileName)) /= 0 ) then
+      mls_inqswath = FILENOTFOUND
+      strbufsize = FILENOTFOUND
+      return
+    endif
     if (present(hdfVersion)) then
       myhdfVersion = hdfVersion
     else
@@ -1720,7 +1729,12 @@ contains
       hdf_version = myPreferred_Version
       return
     endif
-    
+
+    ! Does the file really, really exist?
+    if ( mls_exists(trim(FileName)) /= 0 ) then
+      hdf_version = FILENOTFOUND
+      return
+    endif
     returnStatus = 0
     is_hdf5 = (DEFAULT_HDFVERSION == HDFVERSION_5) ! was ... == 5
     call h5fis_hdf5_f(trim(FileName), is_hdf5, returnStatus)
@@ -1864,6 +1878,22 @@ contains
 
   end subroutine mls_closeFile
 !-----------------------------------------------
+!       Private routines
+!------------------------
+!----------------------- mls_exists
+  integer function mls_exists(filename)
+  ! returns 0 if file exists, FILENOTFOUND if not
+  ! Argument
+  character (len=*) :: filename
+  ! Internal variables
+  logical :: exist
+  inquire(file=filename, exist=exist)
+  if (exist) then
+    mls_exists = 0
+  else
+    mls_exists = FILENOTFOUND
+  endif
+  end function mls_exists
 
 !====================
   logical function not_used_here()
@@ -1875,6 +1905,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.50  2003/04/02 23:53:18  pwagner
+! Added mls_exists; Checks for FILENOTFOUND
+!
 ! Revision 2.49  2003/02/28 00:46:32  pwagner
 ! Improved apis for mls_open(close)file to exploit WILDCARDHDFVERSION
 !
