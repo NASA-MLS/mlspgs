@@ -107,13 +107,8 @@ contains
 
           ! mask 100%RH below 100mb
           IF(Spectag .EQ. SP_H2O .AND. ICON .EQ.-1 .and. p_path(k).GE. 100.)THEN
-
-!             CALL RHtoEV(t_path(k),100._r8,Vapor_P)
-!             P = p_path(k)-Vapor_P
-!             ratio = Vapor_P/(max(1.e-9_r8, P)) ! define new mixing ratio for 
-!                                                ! water vapor saturated below 100mb
             ratio = RHIFromH2O_Factor (t_path(k), z_path(k), 0, .true.)*100._r8
-
+            ! optional 0 will return ratio as parts per 1, as Bill uses here.
           ENDIF                                 
 
           call create_beta ( Spectag, Catalog(ib)%continuum, p_path(k), t_path(k), &
@@ -195,26 +190,6 @@ contains
 
   end subroutine Get_Beta_Path
 
-
-          SUBROUTINE RHtoEV(t,RH,EV) 
-!         p ---- mb
-!         t,td ---- K
-!         RH --- %
-!         SD --- g/m3                 
-
-          REAL(rp) :: es, t, RH, EV, isat, t0
-
-  	  t0 = 273.16_r8
-	  isat = -9.09718*(t0/t-1.0) + 0.78583503 - 3.56654*LOG10(t0/t) &
-            &     		     + 0.876793 * (1.0-t/t0)
-
-          es=10**isat
-
-          if (ES.lt.0._r8) ES=0._r8
-          EV=ES*0.01*RH
-          
-          END SUBROUTINE RHtoEV
-
 !----------------------------------------------------------------------
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -223,6 +198,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.13  2003/01/30 00:17:42  jonathan
+! add z_path to get_beta_path & use Paul's RHIFromH2O to compute VMR from RHi
+!
 ! Revision 2.12  2003/01/14 21:49:33  jonathan
 ! option for saturation below 100mb
 !
