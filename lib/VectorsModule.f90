@@ -556,7 +556,7 @@ contains ! =====     Public Procedures     =============================
     call output ( size(vectors), advance='yes' )
     do i = 1, size(vectors)
       call output ( i, 4 )
-      call output ( ': ' )
+      call output ( ':' )
       if ( vectors(i)%name /= 0 ) then
         call output ( ' Name = ' )
         call display_string ( vectors(i)%name )
@@ -571,13 +571,19 @@ contains ! =====     Public Procedures     =============================
         call output ( j, 4 )
         call output ( "~" )
         if ( vectors(i)%quantities(j)%template%name /= 0 ) then
-          call output ( ' Quantity_Template_Name = ' )
+          call output ( ' Qty_Template_Name = ' )
           call display_string ( vectors(i)%quantities(j)%template%name )
         end if
-        call output ( ' Quantity_Template_ID = ' )
-        call output ( vectors(i)%quantities(j)%template%id, advance='yes' )
-        if ( details > 0 ) &
-          & call dump ( vectors(i)%quantities(j)%values, '      Elements = ' )
+        call output ( ' Qty_Template_ID = ' )
+        call output ( vectors(i)%quantities(j)%template%id )
+        if ( details > 0 ) then
+          call dump ( vectors(i)%quantities(j)%values, ', Elements = ' )
+        else
+          call output ( ', with' )
+          if ( .not. associated(vectors(i)%quantities(j)%values) ) &
+            call output ( 'out' )
+          call output ( ' values', advance='yes' )
+        end if
       end do ! j
     end do ! i
   end subroutine DUMP_VECTORS
@@ -1106,6 +1112,10 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.30  2001/04/28 01:27:38  livesey
+! Quite an important change here.  Contents of VectorTemplate_T, VectorValue_T
+! are now copies of their original entries from databases, not pointers.
+!
 ! Revision 2.29  2001/04/25 21:57:07  livesey
 ! Removed insulate vector (that didn't last very long :-( )
 !
