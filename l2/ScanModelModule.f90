@@ -1696,7 +1696,7 @@ contains ! =============== Subroutines and functions ==========================
   CALL ALLOCATE_TEST(piq,ptan%template%nosurfs,temp%template%nosurfs, &
   & 'tan_refr_indx', modulename)
   CALL piq_int(ptan%values(:,fmStat%maf),temp%template%surfs(:,1), &
-  & refGPH%template%surfs(1,1), piq)
+  & refGPH%template%surfs(1,1), piq, Z_MASS = 2.5_rp, C_MASS = 0.02_rp)
 ! convert level 1 reference geopotential height into geometric altitude
 ! This assumes that the reference ellipsoid is equivalent to a reference
 ! geopotential height of 0 meters.
@@ -1826,14 +1826,17 @@ contains ! =============== Subroutines and functions ==========================
 ! do a simple mass correction
   CALL ALLOCATE_TEST(mass_corr,ptan%template%nosurfs,'mass_corr',modulename)
   mass_corr = 1.0_rp
+!  WHERE(ptan%values(:,fmStat%maf) > 2.5) mass_corr = 1.0_rp &
+!    & / (0.875_rp + 0.1_rp*ptan%values(:,fmStat%maf) &
+!    & - 0.02_rp*ptan%values(:,fmStat%maf)**2)
+! This is a reasonable approximation to the above.
   WHERE(ptan%values(:,fmStat%maf) > 2.5) mass_corr = 1.0_rp &
-    & / (0.875_rp + 0.1_rp*ptan%values(:,fmStat%maf) &
-    & - 0.02_rp*ptan%values(:,fmStat%maf)**2)
+     & + 0.02_rp*(ptan%values(:,fmStat%maf) - 2.5)**2
 ! forward model calculation
   residual%values(:,fmStat%maf) = (GM*((1.0_rp - j2*p2*ratio2 - j4*p4*ratio4) &
   & / l1altrefr - (1.0_rp - j2*p2*ratio2_gph - j4*p4*ratio4_gph) / l1refalt) &
   & + 0.5_rp*omega**2*coslat2*(l1altrefr - l1refalt)*(l1altrefr + l1refalt) &
-  & + mass_corr*boltz*SUM(RESHAPE(SPREAD(temp%values(:,windowstart_t: &
+  & + boltz*SUM(RESHAPE(SPREAD(temp%values(:,windowstart_t: &
   & windowfinish_t),1,ptan%template%nosurfs), (/ptan%template%nosurfs, &
   & temp%template%nosurfs*(windowfinish_t-windowstart_t+1)/)) &
   & * eta_piqxp,dim=2)) / g0
@@ -1919,8 +1922,7 @@ contains ! =============== Subroutines and functions ==========================
           & / ((1.0_rp + tan_refr_indx)*tan_temp),2,temp%template%nosurfs) &
           & * eta_zxp_t(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
           & (sv_p-windowstart_t+1)*temp%template%nosurfs) &
-          & + boltz*SPREAD(mass_corr,2,temp%template%nosurfs) &
-          & * eta_piqxp(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
+          & + boltz*eta_piqxp(:,1+(sv_p-windowstart_t)*temp%template%nosurfs: &
           & (sv_p-windowstart_t+1)*temp%template%nosurfs) / g0
           if ( fmConf%differentialScan ) then
 ! ------------- Differential model
@@ -2017,6 +2019,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.56  2003/02/12 22:46:49  bill
+! fixed mass correction integrations
+!
 ! Revision 2.55  2003/01/31 22:30:56  livesey
 ! Got rid of a print statement
 !
