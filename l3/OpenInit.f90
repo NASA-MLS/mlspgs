@@ -12,7 +12,7 @@ MODULE OpenInit
    USE MLSL3Common
    USE MLSMessageModule
    USE MLSPCF3
-   USE PCFModule
+   USE PCFHdr
    USE SDPToolkit
    USE dates_module
    use GETCF_M, only: GetCF, InitGetCF
@@ -60,7 +60,7 @@ MODULE OpenInit
      CHARACTER (LEN=8) :: l3EndDay		! last day of l3 to write
      CHARACTER (LEN=8) :: l3StartDay		! first day of l3 to write
 
-     ! granule ID of the log file (file name, without path or .dat)
+     ! name of the log file (without the path)
 
      CHARACTER (LEN=FileNameLen) :: logGranID
 
@@ -82,8 +82,8 @@ CONTAINS
 
 ! Parameters
 
-      CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = 'Failed to get runtime &
-                                              &parameter from PCF:  '
+      CHARACTER (LEN=*), PARAMETER :: UDRP_ERR = 'Failed to get PCF runtime &
+                                                 &parameter :  '
 
 ! Functions
 
@@ -139,13 +139,7 @@ CONTAINS
       IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
                         ModuleName, 'Error retrieving log file name from PCF.')
       indx = INDEX(name, '/', .TRUE.)
-      name = name(indx+1:)
-
-      indx = INDEX(name, '.')
-      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'No file type &
-                                    &specified in log name.')
-
-      l3pcf%logGranID = name(:indx-1)
+      l3pcf%logGranID = name(indx+1:)
 
 !---------------------------------
    END SUBROUTINE GetPCFParameters
@@ -185,7 +179,7 @@ CONTAINS
       READ( start(6:8), '(I3)' ) iDOY
       READ( end(6:8), '(I3)' ) iEnd
 
-      DO i = 2, maxWindow
+      DO i = 1, maxWindow
 
 ! Increment DOY
 
@@ -200,7 +194,7 @@ CONTAINS
 
 ! Check that the incrementation hasn't crossed the window boundary
 
-         IF (iDOY >= iEnd) EXIT
+         IF (iDOY > iEnd) EXIT
 
 ! Convert Yr back to CHARACTER
 
@@ -218,7 +212,7 @@ CONTAINS
 
 ! Concatenate them into a date
 
-        dates(i) = cYr // '-' // cDOY
+        dates(i+1) = cYr // '-' // cDOY
 
       ENDDO
 
@@ -264,7 +258,7 @@ CONTAINS
 
 ! Read the PCF into an annotation for file headers
 
-      CALL CreatePCFAnnotation(anText)
+      CALL CreatePCFAnnotation(mlspcf_pcf_start, anText)
 
 ! Retrieve values set in PCF & assign them to variables.
 
@@ -422,6 +416,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.7  2001/02/21 21:11:59  nakamura
+! Changed MLSPCF to MLSPCF3; removed inputVersion.
+!
 ! Revision 1.6  2001/01/18 16:52:28  nakamura
 ! Added type L3CFDef_T; moved minDays from PCF to cf.
 !
