@@ -49,20 +49,21 @@ int main(int argc , char *argv[] ){
 
   /*--------Local vars--------------------------*/
   char infile[80], outfile[80];
-  hid_t file_id,outfile_id,dset_id,dspace_id;
-  int error, nmembers,*idx,*aidx,obj_type, stringlen, i;
-  char obj_name[80],rootname[80];
+  hid_t file_id,outfile_id;
+  int error, *idx,*aidx, stringlen, i;
+  char rootname[80];
   char *varstring, *dummy,*groupstring;
   char *invarstring,*ingroupstring;
   
-  void *operator_data;
+  /*void *operator_data;*/
   void *aopdata;
   opdat_t opdat; 
-  hid_t *newloc_idp,newloc_id,rg_id,nrg_id,*nrg_idp;
+  hid_t rg_id,nrg_id,*nrg_idp;
   /* Stuff for getopt */
   char optstring[]="vd:g:a:";
   int optval;
   char optvalc;
+  unsigned majnum, minnum,relnum;
   extern char *optarg;
   extern int optind,opterr,optopt;
 
@@ -90,6 +91,8 @@ int main(int argc , char *argv[] ){
     if(optvalc=='v'){
       verbose=1;
       printf("Ohhh! Verbosity on! Now I can spout lots of rubbish at you\n");
+
+	
     }
     else if(optvalc=='d'){
       stringlen=strlen(optarg);
@@ -110,6 +113,18 @@ int main(int argc , char *argv[] ){
 	printf("Doing %d attrs for each dataset \n",global_nattrs);
     }
   }/* End of getopt loop */
+
+  /* use of H5open() is belt-and-braces stuff -- whatever it does should
+     be done when you use any H5_* call */
+  error=H5open();
+  /* print the HDF5 version that we were linked against. This needs
+     to be as new as the one our file was mae with or Bad Stuff happens */
+ 
+  if(verbose){
+    error= H5get_libversion(&majnum, &minnum, &relnum);
+    printf("HDF5 Version %u.%u.%u \n",majnum, minnum, relnum);
+  }
+
   
   strcpy(infile,argv[argc-2]);
   strcpy(outfile,argv[argc-1]);
@@ -199,7 +214,7 @@ int main(int argc , char *argv[] ){
   }
   error=H5Fclose(file_id ) ;
   error=H5Fclose(outfile_id ) ;
-  
+  return 0;
 } /* End of main() */
 
 /*---End-of-Main------End-of-Main------End-of-Main------End-of-Main---*/
@@ -211,9 +226,9 @@ herr_t operator(hid_t group_id, const char *member_name, void
   /* Local variables */
   H5G_stat_t statbuf, *statbufp; 
   hbool_t follow_link;
-  hid_t *newloc_idp, newloc_id;
+  hid_t  newloc_id;
   int error, is_wanted,i;
-  opdat_t opdat, *opdatp, newopdat;
+  opdat_t  *opdatp, newopdat;
   /* executable */
   opdatp= (opdat_t *) operator_data;
  
@@ -253,7 +268,7 @@ herr_t operator(hid_t group_id, const char *member_name, void
   
     /* Main if block  to process each of the possible item types */
     if(statbuf.type ==  H5G_GROUP){
-      hid_t oldsubgroup_id, newsubgroup_id, *newsubgroup_idp;
+      /*hid_t oldsubgroup_id, newsubgroup_id, *newsubgroup_idp;*/
       int *idx;
       opdat_t newsubgroup;
       size_t size_hint;
@@ -339,7 +354,7 @@ herr_t operator(hid_t group_id, const char *member_name, void
 herr_t attr_op(hid_t loc_id, const char *attr_name, void *operator_data){
 
   hid_t attr_id, new_attr_id,new_dset_id, *new_dset_idp;
-  hid_t type_id, dspace_id,new_space,space_id,new_dspace;
+  hid_t type_id, space_id,new_dspace;
   int error,n_elements;
   void *databuf;
   new_dset_idp=(hid_t *) operator_data;
