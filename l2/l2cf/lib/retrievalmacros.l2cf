@@ -82,8 +82,8 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
 ;; radiances.  The band is $1, and a suffix for the sd name is given
 ;; in $2
 !define(directWriteFwmRad,{
-  directWrite, source=fwm.band$1, /prefixSignal, $
-  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'
+  !ifdef(l2version,{directWrite, source=fwm.band$1, /prefixSignal, $
+  sdName=' model $2', file='!outpathl2fwm/MLS-Aura_L2FWM-Full_!l2version_!day.h4'})
 {
 ; --ConfigInfo-- FWM: band $1 model $2
 }
@@ -97,6 +97,9 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
   outputSD=sdOut$1, fwdModelOut=f$1})
 
 ; $Log$
+; Revision 1.7  2002/07/05 21:46:36  livesey
+; Put in the configInfo information
+;
 ; Revision 1.6  2002/07/05 21:37:02  livesey
 ; New (working) DGM/DGG handling
 ;
