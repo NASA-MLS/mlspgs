@@ -7,19 +7,15 @@ module QuantityPVM                      ! Send and receive vector quantities usi
   ! through a pvm connection.
 
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-  use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFSEND, PVMERRORMESSAGE, &
     & PVMFRECV
   use PVMIDL, only: PVMIDLPACK, PVMIDLUNPACK
-  use String_Table, only: GET_STRING
+  use String_Table, only: GET_STRING, DISPLAY_STRING
   use VectorsModule, only: VECTORVALUE_T
   use MLSCommon, only: R8
   use Intrinsic, only: LIT_INDICES
   use MLSSignals_m, only: GETSIGNALNAME
-  use Symbol_Table, only: ENTER_TERMINAL
-  use Symbol_Types, only: T_IDENTIFIER
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, SETUPNEWQUANTITYTEMPLATE
-  use Parse_Signal_m, only: PARSE_SIGNAL
 
   implicit none
   private
@@ -66,7 +62,11 @@ contains ! ================================== Module procedures ============
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing quantity flags" )
 
     call PVMIDLPack ( (/ q%template%noInstancesLowerOverlap, &
-      & q%template%noInstancesUpperOverlap, q%template%sideband /), info )
+      & q%template%noInstancesUpperOverlap, q%template%sideband, &
+      & q%template%instrumentModule, q%template%radiometer, &
+      & q%template%quantityType, q%template%unit, q%template%frequencyCoordinate, &
+      & q%template%molecule, q%template%verticalCoordinate,&
+      & q%template%signal /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing misc quantity stuff" )
 
     ! Now pack some strings
@@ -87,6 +87,8 @@ contains ! ================================== Module procedures ============
     call PVMIDLPack ( trim(word), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing frequencyCoordinate" )
 
+    ! Pack signal as a string
+    
     if ( q%template%signal /= 0 ) then
       call GetSignalName( q%template%signal, &
         & word, sideband=q%template%sideband )
@@ -95,24 +97,6 @@ contains ! ================================== Module procedures ============
     endif
     call PVMIDLPack ( trim(word), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "packing signal" )
-
-    if ( q%template%instrumentModule >= lbound(lit_indices,1) .and. &
-      &  q%template%instrumentModule <= ubound(lit_indices,1) ) then
-      call Get_String( lit_indices(q%template%instrumentModule), word, noError=.true. )
-    else
-      word = ''
-    endif
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing instrumentModule" )
-
-    if ( q%template%radiometer >= lbound(lit_indices,1) .and. &
-      &  q%template%radiometer <= ubound(lit_indices,1) ) then
-      call Get_String( lit_indices(q%template%radiometer), word, noError=.true. )
-    else
-      word = ''
-    endif
-    call PVMIDLPack ( trim(word), info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "packing radiometer" )
 
     if ( q%template%molecule >= lbound(lit_indices,1) .and. &
       &  q%template%molecule <= ubound(lit_indices,1) ) then
@@ -215,14 +199,11 @@ contains ! ================================== Module procedures ============
     ! Local variables
     integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
-    integer :: STRINGINDEX              ! For unpacking strings
-    integer, dimension(:), pointer :: SIGINDS ! Result of parse signal
-    integer :: I3(4)                    ! Unpacked stuff
     integer :: I4(4)                    ! Unpacked stuff
+    integer :: I11(11)                  ! Unpacked stuff
     logical :: L5(5)                    ! Unpacked stuff
     logical :: FLAG(1)                  ! To unpack
     character(len=132) :: WORD          ! Result of get_string etc.
-    type (Decls) :: Decl                ! Declaration
 
     ! Executable code
     ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
@@ -251,69 +232,51 @@ contains ! ================================== Module procedures ============
       & minorFrame   = l5(4) )
     qt%logBasis = l5(5)
 
-    call PVMIDLUnPack ( i3, info )
+    call PVMIDLUnPack ( i11, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking misc quantity stuff" )
-    qt%noInstancesLowerOverlap = i3(1)
-    qt%noInstancesUpperOverlap = i3(2)
-    qt%sideband                = i3(3)
+    qt%noInstancesLowerOverlap = i11(1)
+    qt%noInstancesUpperOverlap = i11(2)
+    qt%sideband                = i11(3)
+    qt%instrumentModule        = i11(4)
+    qt%radiometer              = i11(5)
+    qt%quantityType            = i11(6)
+    qt%unit                    = i11(7)
+    qt%frequencyCoordinate     = i11(8)
+    qt%molecule                = i11(9)
+    qt%verticalCoordinate      = i11(10)
+    qt%signal                  = i11(11)
 
     ! Now unpack some strings
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking quantityType" )
-    stringIndex = enter_terminal ( trim(word), t_identifier )
-    decl = get_decl ( stringIndex, type=enum_value )
-    qt%quantityType = decl%units
+    ! Just ignore it, we got it as an integer already
     
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking verticalCoordinate" )
-    stringIndex = enter_terminal ( trim(word), t_identifier )
-    decl = get_decl ( stringIndex, type=enum_value )
-    qt%verticalCoordinate = decl%units
+    ! Just ignore it, we got it as an integer already
 
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking unit" )
-    stringIndex = enter_terminal ( trim(word), t_identifier )
-    decl = get_decl ( stringIndex, type=enum_value )
-    qt%unit = decl%units
+    ! Just ignore it, we got it as an integer already
 
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking frequencyCoordiante" )
-    stringIndex = enter_terminal ( trim(word), t_identifier )
-    decl = get_decl ( stringIndex, type=enum_value )
-    qt%frequencyCoordinate = decl%units
+    ! Just ignore it, we got it as an integer already
 
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking signal" )
-    call Parse_Signal ( word, sigInds )
-    qt%signal = sigInds(1)
-    call deallocate_test( sigInds, 'sigInds', ModuleName )
-
-    call PVMIDLUnpack ( word, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, &
-      & "unpacking instrumentModule" )
-    stringIndex = enter_terminal ( trim(word), t_identifier )
-    decl = get_decl ( stringIndex, type=enum_value )
-    qt%instrumentModule = decl%units
-
-    call PVMIDLUnpack ( word, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, &
-      & "unpacking radiometer" )
-    stringIndex = enter_terminal ( trim(word), t_identifier )
-    decl = get_decl ( stringIndex, type=enum_value )
-    qt%radiometer = decl%units
+    ! Just ignore it, we got it as an integer already
 
     call PVMIDLUnpack ( word, info )
     if ( info /= 0 ) call PVMErrorMessage ( info, &
       & "unpacking molecule" )
-    stringIndex = enter_terminal ( trim(word), t_identifier )
-    decl = get_decl ( stringIndex, type=enum_value )
-    qt%molecule = decl%units
+    ! Juest ignore it, we got it as an integer already
 
     ! Now unpack the arrays
 
