@@ -2,14 +2,12 @@ module COMP_PATH_ENTITIES_M
   use MLSCommon, only: I4, R4, R8
   use L2PCDIM, only: N2lvl, MNP => max_no_phi
   use GL6P, only: NG
-  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM, PFA_SLAB
+  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM
   use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
   use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, CPS, SPS, CPTS, SPTS, HT, &
       HT2, RR, PHI_TAN, NPHI_TAN, PHI_S, NPHI_S, PS, ROC, XOC, YOC, EARTHX
-  use PATH_ENTITIES_M, only: PATH_BETA, PATH_INDEX, PATH_VECTOR, &
-                             PATH_DERIVATIVE
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_DERIVATIVE
   use REFRACTION_M, only: REFRACTIVE_INDEX
-  use PFA_PREP_M, only: PFA_PREP
   use VERT_TO_PATH_M, only: VERT_TO_PATH
   use TWO_D_POLATE_M, only: TWO_D_POLATE
   implicit NONE
@@ -22,14 +20,12 @@ module COMP_PATH_ENTITIES_M
 contains
 !---------------------------------------------------------------------
 
-SUBROUTINE comp_path_entities(primag,n_lvls,no_t,gl_count,ndx_path,z_glgrid,&
-           t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,no_atmos, &
-           f_basis,mr_f,no_coeffs_f,freq,tan_hts,no_tan_hts,n_sps,no_pfa_ch,&
-           no_filt_pts,pfa_ch,pfa_spectrum,f_grid_fltr,fltr_func,InDir,     &
-           ld,band,no_phi_f,f_phi_basis,z_path,h_path,t_path,phi_path,      &
-           n_path,dhdz_path,dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,   &
-           no_ptg_frq,ptg_frq_grid,is_f_log,beta_path,no_mmaf,phi_tan_mmaf, &
-           ier)
+SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
+           t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,     &
+           no_atmos,f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps, &
+           no_phi_f,f_phi_basis,z_path,h_path,t_path,phi_path,n_path,  &
+           dhdz_path,dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,     &
+           is_f_log,no_mmaf,phi_tan_mmaf, Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: comp_path_entities
@@ -41,12 +37,11 @@ Integer(i4), PARAMETER :: ngt = (Ng+1) * N2lvl
 !  Calling sequence variables:
 !  ---------------------------
 Integer(i4), INTENT(IN) :: no_atmos, no_t, n_sps, n_lvls, gl_count, &
-             no_mmaf, no_phi_t, no_coeffs_f(*), no_phi_f(:), band, &
-             no_pfa_ch, no_filt_pts, pfa_ch(*)
+             no_mmaf, no_phi_t, no_coeffs_f(*), no_phi_f(:)
 !
-Integer(i4), INTENT(IN OUT) :: no_tan_hts, ld
+Integer(i4), INTENT(IN OUT) :: no_tan_hts
 
-Integer(i4), INTENT(OUT) :: no_ptg_frq(*),ier
+Integer(i4), INTENT(OUT) :: ier
 !
 Real(r8), INTENT(IN) :: phi_tan_mmaf(*)
 
@@ -58,23 +53,14 @@ Real(r8), INTENT(IN) :: mr_f(:,:,:), f_basis(:,:)
 Real(r8), INTENT(IN) :: t_phi_basis(:)
 Real(r8), INTENT(IN) :: f_phi_basis(:,:), tan_hts(:,:)
 
-Type(path_beta), INTENT(OUT) :: beta_path(:,:,:,:)
-
 Type(path_index) , INTENT(OUT) :: ndx_path(:,:)
 Type(path_vector), INTENT(OUT) :: z_path(:,:),t_path(:,:),h_path(:,:), &
-                   n_path(:,:),phi_path(:,:),dhdz_path(:,:),ptg_frq_grid(:),&
-                   spsfunc_path(:,:,:)
+           n_path(:,:),phi_path(:,:),dhdz_path(:,:), spsfunc_path(:,:,:)
 
 Type(path_derivative), INTENT(OUT) :: dh_dt_path(:,:)
 
-Real(r8), INTENT(OUT) :: freq(*)
-
-Real(r8), INTENT(OUT) :: fltr_func(:,:),f_grid_fltr(:,:)
-
 Logical, INTENT(IN) :: is_f_log(*)
 !
-Character (LEN=*), INTENT(IN) :: InDir
-Character (LEN=*), INTENT(IN) :: primag
 !  ----------------------
 !  Local variables:
 !  ----------------
@@ -95,7 +81,6 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: f_phi_tan
 !  PFA variables:
 
 type (atmos_comp), intent(inout) :: ATMOSPHERIC(*)
-type (pfa_slab)  , intent(inout) :: PFA_SPECTRUM(6,*)
 !
   ier = 0
 
@@ -235,16 +220,6 @@ type (pfa_slab)  , intent(inout) :: PFA_SPECTRUM(6,*)
   &                 kk,jp,ndx_path(1:,l),z_path(1:,l),t_path(1:,l),    &
   &                 phi_path(1:,l),n_path(1:,l),wet,no_tan_hts)
   END DO
-
-! Create filter grids & functions for PFA calculations
-
-  IF(no_pfa_ch > 0) THEN
-    CALL pfa_prep(atmospheric,band,no_atmos,no_pfa_ch,no_filt_pts,pfa_ch, &
-         pfa_spectrum,f_grid_fltr,freq,fltr_func,no_tan_hts,ndx_path,     &
-         no_ptg_frq,ptg_frq_grid,z_path,t_path,beta_path,InDir,ld,primag, &
-         no_mmaf,ier)
-    IF(ier /= 0) goto 99
-  ENDIF
 
  99  DEALLOCATE(f_phi_tan,t_phi_tan,STAT=i)
      DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)

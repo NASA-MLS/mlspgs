@@ -16,6 +16,8 @@ Program l2_Test
                              PATH_DERIVATIVE
   use HYDROSTATIC_MODEL_M, only: HYDROSTATIC_MODEL
   use GET_CHI_ANGLES_M, only: GET_CHI_ANGLES
+  use GET_FILTERS_M, only: GET_FILTERS
+  use GET_BETA_PATH_M, only: GET_BETA_PATH
   use GEOC_GEOD_CONV_M, only: GEOC_GEOD_CONV
   use RAD_TRAN_M, only: RAD_TRAN
   use RAD_TRAN_WD_M, only: RAD_TRAN_WD
@@ -35,23 +37,24 @@ Integer(i4) :: p_indx(Nlvl), SPECT_ATMOS(Nsps), no_ptg_frq(Nptg), &
                no_coeffs_f(Nsps), no_phi_f(Nsps), SPECT_INDEX(Nsps), &
                no_spectro, pfa_ch(MAXPFACH), t_indx(Nptg)
 
-Integer(i4) :: i, j, k, kk, ht_i, no_t, mnz, no_geom, no_tan_hts, kz, ld, ch, &
-               no_atmos, ch1, ch2, n_lvls, si, mfi, jp, band, n_sps, Spectag, &
-               no_freqs, ptg_i, frq_i, io, klo, khi, m, l, n, brkpt, no_ele, &
-               mid, ilo, ihi, no_pfa_ch, n_obs, ier, no_filt_pts, no_phi_t,&
-               k_info_count, prev_npf, no_mmaf, gl_count, fft_pts
+Integer(i4) :: i, j, k, kk, ht_i, no_t, mnz, no_geom, no_tan_hts, kz, &
+               ld, ch, Spectag, no_freqs, no_pfa_ch, prev_npf, n_obs, &
+               no_atmos, ch1, ch2, n_lvls, si, mfi, jp, band, n_sps,  &
+               ptg_i, frq_i, io, klo, khi, l, n, brkpt, no_ele, nl,   &
+               m, mid, ilo, ihi, ier, no_filt_pts, no_phi_t, fft_pts, &
+               k_info_count,  no_mmaf, gl_count
 
 Type(path_index)  :: ndx_path(Nptg,mnm)
 Type(path_vector) :: z_path(Nptg,mnm),t_path(Nptg,mnm),h_path(Nptg,mnm),  &
-                     n_path(Nptg,mnm),phi_path(Nptg,mnm),dhdz_path(Nptg,mnm),&
-                     spsfunc_path(Nsps,Nptg,mnm)
+                     dhdz_path(Nptg,mnm), spsfunc_path(Nsps,Nptg,mnm),    &
+                     n_path(Nptg,mnm),phi_path(Nptg,mnm)
 Type(path_vector) :: ptg_frq_grid(Nptg)
 
 Type(path_derivative) :: dh_dt_path(Nptg,mnm)
 
 Real(r8) :: z_gnlv(400),thbs(10),phi_tan_mmaf(mnm),elev_offset
 Real(r8) :: href(Nlvl),zref(Nlvl),t_z_basis(mxco),t_script(N2lvl),  &
-            t_coeff(mxco,mnm),ref_corr(N2lvl,Nptg),tau(N2lvl),  &
+            t_coeff(mxco,mnm),ref_corr(N2lvl,Nptg),tau(N2lvl),Qlog(3), &
             tan_dh_dt(Nlvl,mnm,mxco),t_phi_basis(mnp),t_phi_basis_copy(mnp)
 
 Real(r8) :: dx_dt(Nptg,mxco), d2x_dxdt(Nptg,mxco)
@@ -64,7 +67,7 @@ Real(r8) :: tan_press(Nptg), tan_hts(Nptg,mnm), tan_temp(Nptg,mnm)
 
 Logical :: IS_F_LOG(Nsps)
 
-real(r8) :: freq_grid(mnf),freq(Nch)
+real(r8) :: freq_grid(mnf),freqs(Nch)
 
 real(r8) :: MR_F(mxco,mnp,Nsps), F_BASIS(mxco,Nsps)
 real(r8) :: F_PHI_BASIS(mnp,Nsps), F_PHI_BASIS_COPY(mnp,Nsps)
@@ -96,7 +99,7 @@ Type(path_derivative) :: k_temp_frq, k_atmos_frq(Nsps), &
                          k_spect_dw_frq(Nsps), k_spect_dn_frq(Nsps), &
                          k_spect_dnu_frq(Nsps)
 !
-Type(path_beta) :: beta_path(Nsps,mnf,Nptg,mnm)
+Type(path_beta) :: beta_path(Nsps,mnf)
 
 Real(r8) :: Radiances(Nptg,Nch)
 Real(r8) :: RadV(mnf), f_grid(mnf)
@@ -106,14 +109,15 @@ Real(r8) :: s_temp, h_obs, earth_ref, e_rad, zeta, Frq, h_tan, Rad, &
 Real(r4) :: elev_183, elev_205
 !
 Character (LEN=01) :: CA, Primag
+Character (LEN=08) :: Name
 Character (LEN=16) :: Vname
-Character (LEN=80) :: InDir, Aaap, Fnd
+Character (LEN=80) :: InDir, Aaap, Fnd, Line
 Character (LEN=40) :: Ax, Dtm1, Dtm2
 
 Type(limb_press)       :: PTG_PRESS
 Type (atmos_comp)      :: ATMOSPHERIC(Nsps)
 Type (geom_param)      :: GEOMETRIC(maxgeom)
-Type (pfa_slab)        :: PFA_SPECTRUM(6,Nsps)
+Type (pfa_slab)        :: PFA_SPECTRUM(Nsps)
 Type (spectro_param)   :: SPECTROSCOPIC(3*Nsps)
 
 Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
@@ -123,8 +127,7 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
 !
   ier = 0
   Fnd(1:) = ' '
-  Fnd = '/user5/zvi/new_seez'     ! SUN, MLSGATE, VANPC
-! Fnd = '/home/zvi/new_seez'      ! HOME PC
+  Fnd = '/user5/zvi/mod_seez'
   CLOSE(11,iostat=io)
   OPEN(11,file=Fnd,status='OLD',action='READ',iostat=io)
   if(io /= 0) goto 99
@@ -149,6 +152,7 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
   read(11,*,iostat=io) j
   if(io /= 0) goto 99
 
+  Primag = 'p'
   no_mmaf = min(j,mnm)
 
   read(11,'(A)',iostat=io) Ax
@@ -183,13 +187,13 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
   if(io /= 0) goto 99
 !
   primag = 'p'
-  freq(1:Nch) = 0.0D0
+  freqs(1:Nch) = 0.0D0
   DO i = ch1, ch2
-    CALL radiometry(i,q,r,zeta,kk)    ! DEBUG, Added Jan/23/2000, Z.S
-    IF(primag == 'p') freq(i) = q     ! DEBUG, Added Jan/23/2000, Z.S
-    IF(primag == 'i') freq(i) = r     ! DEBUG, Added Jan/23/2000, Z.S
+    CALL radiometry(i,q,r,zeta,kk)     ! DEBUG, Added Jan/23/2000, Z.S
+    IF(primag == 'p') freqs(i) = q     ! DEBUG, Added Jan/23/2000, Z.S
+    IF(primag == 'i') freqs(i) = r     ! DEBUG, Added Jan/23/2000, Z.S
   END DO
-
+!
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
@@ -295,17 +299,69 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
     goto 99
   endif
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-  do i = 1, n_sps
-    read(11,*,iostat=io) pfa_spectrum(band,i)%NO_SPS
-    if(io /= 0) goto 99
-    read(11,*,iostat=io) pfa_spectrum(band,i)%NO_LINES
-    if(io /= 0) goto 99
-    read(11,*,iostat=io) pfa_spectrum(band,i)%SPS_SPECTAG
-    if(io /= 0) goto 99
-  end do
+  m = 0
+  pfa_spectrum(1)%NO_SPS = n_sps     ! Make sure we have this
 
+  read(11,'(A)',iostat=io) Ax    ! pfa_spectrum(s)
+  if(io /= 0) goto 99
+
+  DO
+
+    if(m == n_sps) then
+      do
+        read(11,'(A)',iostat=io) Ax
+        if(io /= 0) goto 99
+        if(Index(Ax,'END_CAT') > 0) EXIT
+      end do
+      EXIT
+    endif
+
+    Line = ' '
+    Name = ' '
+    read(11,'(A)',iostat=io) Line
+    if(io /= 0) goto 99
+    if(Index(Line,'END_CAT').gt.0) EXIT
+    read(Line,*,iostat=io) Name, Spectag, nl, (Qlog(i),i=1,3)
+    if(io /= 0) goto 99
+
+    j = 0
+    DO i = 1, n_sps
+      if(Name == atmospheric(i)%NAME) then
+        j = i
+        EXIT
+      endif
+    END DO
+
+    if(j < 1) then
+      do i = 1, nl
+        read(11,'(A)',iostat=io) Ax
+        if(io /= 0) goto 99
+      end do
+    else
+      m = m + 1
+      pfa_spectrum(j)%SPS_NAME = Name
+      pfa_spectrum(j)%NO_SPS = n_sps
+      pfa_spectrum(j)%NO_LINES = nl
+      pfa_spectrum(j)%SPS_SPECTAG = Spectag
+      pfa_spectrum(j)%SPS_QLOG(1:3) = Qlog(1:3)
+      do i = 1, nl
+        read(11,*,iostat=io) (thbs(k),k=1,10)
+        if(io /= 0) goto 99
+        pfa_spectrum(j)%SPS_V0(i) = thbs(1)
+        pfa_spectrum(j)%SPS_EL(i) = thbs(2)
+        pfa_spectrum(j)%SPS_STR(i) = thbs(3)
+        pfa_spectrum(j)%SPS_W(i) = thbs(4)
+        pfa_spectrum(j)%SPS_PS(i) = thbs(5)
+        pfa_spectrum(j)%SPS_N(i) = thbs(6)
+        pfa_spectrum(j)%SPS_DELTA(i) = thbs(7)
+        pfa_spectrum(j)%SPS_N1(i) = thbs(8)
+        pfa_spectrum(j)%SPS_GAMMA(i) = thbs(9)
+        pfa_spectrum(j)%SPS_N2(i) = thbs(10)
+      end do
+    endif
+!
+  END DO
+!
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
@@ -426,6 +482,7 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
 
+  thbs(1:) = 0.0
   read(11,*,iostat=io) (thbs(i),i=1,si-1)   ! tan_hts_below_surface
   if(io /= 0) goto 99
 
@@ -542,7 +599,12 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
   temp_der = .true.
 ! temp_der = .false.
 !
-
+! Get all the filter's loaded & define:
+!
+  Call get_filters(no_pfa_ch,no_filt_pts,pfa_ch,f_grid_filter, &
+ &                 freqs,filter_func,InDir,ld,primag,ier)
+  if(ier /= 0) goto 99
+!
 ! Get the selected integration grid pressures. Also, define the GL
 ! pressure grid:
 
@@ -649,19 +711,15 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
 !
 ! Compute all path entities for all mmafs and tanget pointings
 !
-  Primag = 'p'
-  Call comp_path_entities(primag,n_lvls,no_t,gl_count,ndx_path,z_glgrid, &
-       t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,no_atmos,  &
-       f_basis,mr_f,no_coeffs_f,freq,tan_hts,no_tan_hts,n_sps,no_pfa_ch, &
-       no_filt_pts,pfa_ch,pfa_spectrum,f_grid_filter,filter_func,InDir,  &
-       ld,band,no_phi_f,f_phi_basis,z_path,h_path,t_path,phi_path,       &
-       n_path,dhdz_path,dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,    &
-       no_ptg_frq,ptg_frq_grid,is_f_log,beta_path,no_mmaf,phi_tan_mmaf,ier)
+  Call comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,  &
+       t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,atmospheric,     &
+       no_atmos,f_basis,mr_f,no_coeffs_f,tan_hts,no_tan_hts,n_sps, &
+       no_phi_f,f_phi_basis,z_path,h_path,t_path,phi_path,n_path,  &
+       dhdz_path,dh_dt_path,no_phi_t,t_phi_basis,spsfunc_path,     &
+       is_f_log,no_mmaf,phi_tan_mmaf,Ier)
   IF(ier /= 0) goto 99
 !
 ! **********************  MAIN Mmaf Loop *******************
-
-  jp = no_phi_t/2
 
 ! DO l = 1, no_mmaf
   DO l = 1, 1                 ! ** DEBUG, only one mmaf
@@ -776,7 +834,14 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
         end do
 
       endif            ! On DEALLOCATE/ALLOCATE cycle
-
+!
+! Compute the beta's along the path, for this tanget hight and this mmaf:
+!
+      khi = ndx_path(ptg_i,l)%total_number_of_elements
+      Call get_beta_path(ptg_i,pfa_spectrum,khi,no_ptg_frq, &
+     &     ptg_frq_grid,z_path(ptg_i,l),t_path(ptg_i,l),beta_path,ier)
+      IF(ier /= 0) goto 99
+!
       k_temp_frq%values = 0.0
       do j = 1, n_sps
         k_atmos_frq(j)%values = 0.0
@@ -790,11 +855,11 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
 
       do frq_i = 1, kk
 !
-        Frq = ptg_frq_grid(k)%values(frq_i)
+        Frq = f_grid(frq_i)
 !
         Call Rad_Tran(Frq, N_lvls, h_tan, n_sps, ndx_path(k,l),  &
        &    z_path(k,l), h_path(k,l), t_path(k,l), phi_path(k,l),&
-       &    dHdz_path(k,l), earth_ref, beta_path(1:,frq_i,k,l),  &
+       &    dHdz_path(k,l), earth_ref, beta_path(1:,frq_i),      &
        &    spsfunc_path(1:,k,l), ref_corr(1:,k), s_temp, brkpt, &
        &    no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
         IF(ier /= 0) goto 99
@@ -805,7 +870,7 @@ Real(r8), DIMENSION(:,:), ALLOCATABLE :: s_phi_basis_copy
 !
         CALL Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,z_path(k,l),       &
        &     h_path(k,l),t_path(k,l),phi_path(k,l),dHdz_path(k,l),      &
-       &     atmospheric,beta_path(1:,frq_i,k,l),spsfunc_path(1:,k,l),  &
+       &     atmospheric,beta_path(1:,frq_i),spsfunc_path(1:,k,l),      &
        &     t_z_basis,f_basis,no_coeffs_f,mr_f,no_t,ref_corr(1:,k),    &
        &     no_phi_f,f_phi_basis,temp_der,no_phi_t,t_phi_basis,        &
        &     dh_dt_path(k,l),spect_atmos,spectroscopic,k_temp_frq,      &

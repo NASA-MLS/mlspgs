@@ -99,10 +99,22 @@ module L2PC_PFA_STRUCTURES
   Integer(i4), parameter :: MAXFILTPTS = 161
   Integer(i4), parameter :: MAXLINES = 35
 
-  type PFA_SLAB
+  type :: PFA_SLAB
     Integer(i4) :: NO_SPS
     Integer(i4) :: NO_LINES
     Integer(i4) :: SPS_SPECTAG
+    Character(len=8) :: SPS_NAME
+    Real(r8) :: SPS_QLOG(3)
+    Real(r8) :: SPS_V0(maxlines)
+    Real(r8) :: SPS_EL(maxlines)
+    Real(r8) :: SPS_STR(maxlines)
+    Real(r8) :: SPS_W(maxlines)
+    Real(r8) :: SPS_PS(maxlines)
+    Real(r8) :: SPS_N(maxlines)
+    Real(r8) :: SPS_N1(maxlines)
+    Real(r8) :: SPS_N2(maxlines)
+    Real(r8) :: SPS_GAMMA(maxlines)
+    Real(r8) :: SPS_DELTA(maxlines)
   end type PFA_SLAB
 
 end module L2PC_PFA_STRUCTURES
