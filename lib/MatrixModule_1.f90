@@ -1139,7 +1139,8 @@ contains ! =====     Public Procedures     =============================
   end function NewMultiplyMatrixVector
 
   ! --------------------------------------------  NormalEquations  -----
-  subroutine NormalEquations ( A, Z, RHS_IN, RHS_OUT, UPDATE, ROW_BLOCK )
+  subroutine NormalEquations ( A, Z, RHS_IN, RHS_OUT, UPDATE, ROW_BLOCK, &
+    & UseMask )
   ! If UPDATE is absent, or present but false, form normal equations of the
   ! least-squares problem A X = RHS_IN. Z = A^T A and RHS_OUT = A^T RHS_IN.
   ! If UPDATE is present and true, update normal equations of the least-
@@ -1147,6 +1148,10 @@ contains ! =====     Public Procedures     =============================
   ! RHS_IN. If ROW_BLOCK is present, it specifies that only that row of
   ! blocks of A is to be accumulated.
   ! Only the upper triangle of A^T A is formed or updated.
+  
+  ! If UseMask is present and false, the column mask is not used to
+  ! suppress columns of the normal equations.
+
     type(Matrix_T), intent(inout) :: A       ! inout only to allow
     !                                          clearing masked rows
     type(Matrix_SPD_T), intent(inout) :: Z
@@ -1156,6 +1161,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: UPDATE  ! True (default false) means
     !                                          to update Z and RHS_OUT
     integer, intent(in), optional :: ROW_BLOCK
+    logical, intent(in), optional :: UseMask
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! If this subroutine is invoked with UPDATE absent, or present and false,
@@ -1167,6 +1173,7 @@ contains ! =====     Public Procedures     =============================
     logical :: DO_UPDATE
     integer :: I, J, K             ! Subscripts for [AZ]%Block
     integer, dimension(:), pointer :: MI, MJ ! Masks for columns I, J if any
+    logical :: My_Mask
     logical :: MY_UPDATE
     integer :: R1, R2              ! Rows upon which to operate
 
@@ -1175,19 +1182,21 @@ contains ! =====     Public Procedures     =============================
     if ( present(update) ) my_update = update
     if ( .not. my_update ) &
       & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec )
-    call copyVector ( rhs_in, a%row%vec, noValues=.true.)
+    call copyVector ( rhs_in, a%row%vec, noValues=.true.) ! Copy the row mask
     call clearRows ( a, row_block, rhs_in )
     r1 = 1
     if ( present(row_block) ) r1 = row_block
+    my_Mask = .true.
+    if ( present(useMask) ) my_Mask = useMask
     do j = 1, a%col%nb
       nullify ( mj )
-      if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) ) &
+      if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) .and. my_Mask) &
         mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
       r2 = j
       if ( present(row_block) ) r2 = min(j,row_block)
       do i = r1, r2
         nullify ( mi )
-        if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) ) &
+        if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) .and. my_Mask ) &
           mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%row%inst(i))
         do_update = my_update
         do k = 1, a%row%nb
@@ -1640,6 +1649,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.53  2001/09/27 00:51:33  vsnyder
+! Add UseMask argument to NormalEquations
+!
 ! Revision 2.52  2001/09/25 17:49:24  livesey
 ! Added call to copyvector for row mask in clearrows_1
 !
