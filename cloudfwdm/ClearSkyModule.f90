@@ -49,7 +49,7 @@ contains
 
       REAL(r8) :: RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
       REAL(r8) :: XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
-      REAL(r8) :: VMR(NS,L+1),VMR1(NS)
+      REAL(r8) :: VMR(NS-1,L+1),VMR1(NS-1)
       REAL(r8) :: DQ, P, DR, TS, S, WIND, F, LosVel
 
 !-------------------------------------------------
@@ -114,7 +114,7 @@ contains
          &         LOG10( max(1.e-39_r8, XQ(I)) ) )*0.5
          DQ= 10**DQ
 
-         DO J=1,NS
+         DO J=1,NS-1
             VMR1(J)=(LOG10( max(1.e-29_r8, VMR(J,I+1)) )+ &
                    & LOG10( max(1.e-29_r8, VMR(J,I))  )  )*0.5   !vmr cannot be zero
             VMR1(J)=10**VMR1(J)
@@ -138,11 +138,11 @@ contains
            !--------------------------------
            ! Using bill's spectroscopy data
            !--------------------------------
-           call get_beta_bill (T(I), P, F, DQ, VMR1(1), DR, Catalog, LosVel)
+           call get_beta_bill (T(I), P, F, DQ, VMR1, NS, DR, Catalog, LosVel)
            
            TAU(I)=DR*Z(I)
 
-           call get_beta_bill (T(I), P, F, 100._r8, VMR1(1), DR, Catalog, LosVel)
+           call get_beta_bill (T(I), P, F, 100._r8, VMR1, NS, DR, Catalog, LosVel)
 
            TAU100(I)=DR*Z(I)
 
@@ -155,6 +155,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.16  2002/08/08 22:45:57  jonathan
+! newly improved version
+!
 ! Revision 1.15  2001/11/20 19:36:46  jonathan
 ! some changes to save CPU
 !

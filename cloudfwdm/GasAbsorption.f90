@@ -43,7 +43,7 @@ contains
       REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
       REAL(r8) :: PB                          ! TOTAL AIR PRESSURE (hPa)
       REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
-      REAL(r8) :: VMR(NS)                      ! MINOR SPECIES 1-O3
+      REAL(r8) :: VMR(NS-1)                      ! MINOR SPECIES 1-O3
       REAL(r8) :: VMR_H2O                     ! H2O VOLUME MIXING RATIO
       REAL(r8) :: VMR_O2                      ! O2 VOLUME MIXING RATIO
       REAL(r8) :: B                           ! BETA (1/m/ppv)
@@ -297,6 +297,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.9  2002/08/19 22:22:03  jonathan
+! debug stuff
+!
 ! Revision 1.8  2002/08/08 22:46:44  jonathan
 ! newly improved version
 !

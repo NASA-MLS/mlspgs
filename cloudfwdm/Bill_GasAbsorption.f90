@@ -22,7 +22,7 @@ Module Bill_GasAbsorption
 !---------------------------------------------------------------------------
 contains
 
-  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR_O3, ABSC, Catalog, LosVel )
+  SUBROUTINE get_beta_bill (T, PB, F, RH, VMR_in, NS, ABSC, Catalog, LosVel )
 
 !==============================================================
 !      CALCULATE CLEAR-SKY ABSORPTION COEFFICIENT AT F AND T
@@ -34,16 +34,17 @@ contains
     ! INPUTS
     !-----------------
 
+    INTEGER :: NS
     REAL(r8), INTENT(IN) :: F               ! FREQUENCY IN GHz
     REAL(r8) :: FF                          ! FREQUENCY IN MHz
     REAL(r8), INTENT(IN) :: T               ! TEMPERATURE (K)
     REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
     REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
     REAL(r8), INTENT(IN) :: PB              ! TOTAL AIR PRESSURE (hPa)
-    REAL(r8) :: VMR_O3                      ! MINOR SPECIES 1-O3
+    REAL(r8) :: VMR_in(NS-1)                ! VMR OF SPECIES 
     REAL(r8), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO OR RELATIVE HUMIDITY
     REAL(rp) :: LosVel
-
+    
     Type(Catalog_T), INTENT(IN) :: Catalog(:)
     Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
 
@@ -59,10 +60,13 @@ contains
     REAL(r8) :: B                            ! BETA (1/m/ppv)
     REAL(r8) :: VMR                          ! VOLUME MIXING RATIO
     REAL(r8) :: VMR_H2O                      ! H2O VOLUME MIXING RATIO
+    REAL(r8) :: VMR_O3                       ! H2O VOLUME MIXING RATIO
     REAL(r8) :: VMR_O2                       ! O2    VOLUME MIXING RATIO
     REAL(r8) :: VMR_O_18_O                   ! O18O  VOLUME MIXING RATIO
     REAL(r8) :: VMR_H2O_18                   ! H2O18 VOLUME MIXING RATIO
     REAL(r8) :: VMR_N2                       ! N2 VOLUME MIXING RATIO
+    REAL(r8) :: VMR_N2O                      ! N2O VOLUME MIXING RATIO
+    REAL(r8) :: VMR_HNO3                     ! HNO3 VOLUME MIXING RATIO
 
     Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele, maxvert
     Integer(ip) :: Spectag, status
@@ -81,13 +85,13 @@ contains
        VMR_H2O = VP/(max(1.e-19_r8, P))
     END IF
 
-!    VMR_H2O    = MAX(1.e-29_r8, VMR_H2O)
-!    VMR_O3     = MAX(1.e-29_r8, VMR_O3)
-
     VMR_O2     = 0.2095_r8
     VMR_N2     = 0.805_r8
     VMR_O_18_O = VMR_O2*0.00409524_r8 
     VMR_H2O_18 = VMR_H2O*0.00204_r8
+    VMR_O3     = VMR_in(1)
+    VMR_N2O    = VMR_in(2)
+    VMR_HNO3   = VMR_in(3)
 
     B=0._r8
     FF = F*1000._r8
@@ -114,8 +118,6 @@ contains
     pp(1) = p
     tt(1) = t
     del_temp = 0.0_rp
-
-
 
     losVel=losVel*0.00_rp   ! Bill use km/sec ! The Doppler correction already been done 
                                               ! in the FullCloudForwardModel, so set it 0
@@ -148,6 +150,12 @@ contains
         VMR = VMR_H2O_18
       ELSE IF (Spectag .EQ. 48004) THEN
         VMR = VMR_O3
+      ELSE IF (Spectag .EQ. 44004) THEN
+        VMR = VMR_N2O
+      ELSE IF (Spectag .EQ. 63001) THEN
+        VMR = VMR_HNO3
+      ELSE
+        VMR=0._r8
       ENDIF
 
       B = B + VMR*bb
@@ -169,6 +177,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.6  2002/08/08 22:45:37  jonathan
+! newly improved version
+!
 ! Revision 1.5  2002/06/05 18:17:14  jonathan
 !  fix bug
 !

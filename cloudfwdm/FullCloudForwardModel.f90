@@ -22,7 +22,8 @@ module FullCloudForwardModel
   use MatrixModule_1,               only: MATRIX_T, FINDBLOCK
   use ManipulateVectorQuantities,   only: FindClosestInstances
   use MLSNumerics,                  only: InterpolateValues
-  use Molecules,                    only: L_H2O, L_O3, spec_tags
+  use Molecules,                    only: L_H2O, L_O3, L_N2O, L_HNO3, L_N2, L_O2, spec_tags, FIRST_MOLECULE, &
+                                        & LAST_MOLECULE
   use Output_m,                     only: OUTPUT
   use PointingGrid_m,               only: POINTINGGRIDS
   use String_table,                 only: GET_STRING, DISPLAY_STRING
@@ -207,7 +208,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     logical, dimension(:), pointer :: doChannel    ! Do this channel?
     logical :: DoHighZt                            ! Flag
     logical :: DoLowZt                             ! Flag
-    logical :: Got(2)  = .false.  
+    logical :: Got( LAST_MOLECULE - FIRST_MOLECULE + 1 ) = .false.  
     logical :: dee_bug = .true.  
     logical :: prt_log = .false.
     logical :: FOUNDINFIRST                        ! Flag to indicate derivatives
@@ -489,7 +490,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Assemble the vmr array
     !------------------------
     if ( size(forwardModelConfig%molecules) .lt. 2 ) then
-!    if ( size(forwardModelConfig%molecules) .lt. 1 ) then
+!   make sure we have enough molecules
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
     endif
     call allocate_test ( vmrArray,                                           &
@@ -510,6 +511,14 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           ivmr=1
         case(L_O3)
           ivmr=2
+        case(L_N2O)
+          ivmr=3
+        case(L_HNO3)
+          ivmr=4
+        case(L_N2)
+          ivmr=5
+        case(L_O2)
+          ivmr=6
         case default
           ivmr=0
       end select
@@ -523,7 +532,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,  &
         & ModuleName, InvalidQuantity//'vmr' )
 
-
        novmrSurf = vmr%template%nosurfs
 
       call InterpolateValues ( &
@@ -536,7 +544,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     end do
 
     if ( .not. got(1) .or. .not. got(2) ) then
-!    if ( .not. got(1) ) then
+!   make sure we have at least two molecules h2o and o3. 
       call MLSMessage( MLSMSG_Error, ModuleName,          &
                       'Missing the required molecules' )
     endif
@@ -1059,6 +1067,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.94  2002/08/19 22:22:03  jonathan
+! debug stuff
+!
 ! Revision 1.93  2002/08/08 22:46:30  jonathan
 ! newly improved version
 !

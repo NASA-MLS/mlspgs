@@ -279,7 +279,7 @@ contains
       REAL(r8) :: YZ (NZmodel)
       REAL(r8) :: YT (NZmodel)
       REAL(r8) :: YQ (NZmodel)                 ! H2O VOLUME MIXING RATIO
-      REAL(r8) :: VMR(NS,NZmodel)              ! 1=O3 VOLUME MIXING RATIO
+      REAL(r8) :: VMR(NS-1,NZmodel)            ! 1=O3 VOLUME MIXING RATIO
       REAL(r8) :: DDm(N,NZmodel-1)                         
 
 !----------------------------
@@ -327,11 +327,11 @@ contains
                                                ! (a subset OF YZ)
                                                ! THE RESULT WILL BE INTERPOLATED TO ZZT
 
-      REAL(r8) :: ZPT1(NZmodel/8-1+Nsub)            ! TANGENT PRESSURE (mb) FOR CALCULATION 
+      REAL(r8) :: ZPT1(NZmodel/8-1+Nsub)       ! TANGENT PRESSURE (mb) FOR CALCULATION 
                                                ! (a subset OF YP)
                                                ! THIS IS ASSOCIATED WITH ZZT1
 
-      REAL(r8) :: ZTT1(NZmodel/8-1+Nsub)            ! TEMPERATURE CORRESPONDING TO TANGENT PRESSURE 
+      REAL(r8) :: ZTT1(NZmodel/8-1+Nsub)       ! TEMPERATURE CORRESPONDING TO TANGENT PRESSURE 
                                                ! (a subset OF YT)
                                                ! THIS IS ASSOCIATED WITH ZZT1
 
@@ -836,6 +836,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.35  2002/08/19 22:22:03  jonathan
+! debug stuff
+!
 ! Revision 1.34  2002/08/09 22:21:42  jonathan
 ! new internal tangent heights
 !
