@@ -1,0 +1,106 @@
+# You can put one or two names on a line, separated by spaces.
+
+# The first name is the parameter name WITHOUT ITS PREFIX.  The
+# prefix comes from the command line.
+
+# The second name is the entity's text -- e.g. a field name.  If
+# it's not present, the first name is used for the entity's text.
+
+# The intent is that you can sort the file, and it will produce the
+# statements in parameter-name order.
+
+# Blank lines don't count.
+
+# $Id$
+
+addnoise
+angle
+apriori
+
+both
+boundarypressure
+
+chisqchan
+chisqmmaf
+chisqmmif
+cholesky
+climatology
+cloudFull
+columnabundance
+covariance
+
+dao
+direct
+# Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
+dnwt_ajn
+dnwt_axmax
+dnwt_cait
+dnwt_diag
+dnwt_dxdx
+dnwt_dxdxl
+dnwt_dxn
+dnwt_dxnl
+dnwt_flag
+dnwt_fnmin
+dnwt_fnorm
+dnwt_gdx
+dnwt_gfac
+dnwt_gradn
+dnwt_sq
+dnwt_sqt
+# End of quantities to report progress of DNWT
+
+earthRefl
+either
+explicit
+estimatedNoise
+
+fixed
+fractional
+full
+
+gridded
+
+height
+hydrostatic
+
+isotope
+
+jacobian_cols
+jacobian_rows
+
+kronecker
+
+l1b
+l2aux
+l2dgg
+l2gp
+l2pc
+linear
+logarithmic
+lowcloud
+
+ncep
+neither
+newtonian
+norm
+
+plain
+pressure
+
+rectanglefromlos
+
+scan
+spaceRadiance
+spd
+special
+
+vector
+vGrid
+
+weighted
+
+# $Log$
+# Revision 2.1  2001/10/05 00:42:05  vsnyder
+# Initial commit
+#
