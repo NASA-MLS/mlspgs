@@ -80,6 +80,7 @@ module Fill                     ! Create vectors and fill them.
   ! -----     Private declarations     ---------------------------------
 
   integer, private :: ERROR
+  logical, parameter :: DEEBUG = .FALSE.                 ! Usually FALSE
 
   ! Error codes for "announce_error"  
   integer, parameter :: No_Error_code = 0
@@ -337,6 +338,7 @@ contains ! =====     Public Procedures     =============================
 
       select case( get_spec_id(key) )
       case ( s_vector ) ! ===============================  Vector  =====
+        if (DEEBUG) call output('vector spec', advance='yes')
         if ( nsons(key) /= 2 ) call announce_error ( son, wrong_number )
         templateIndex = decoration(decoration(subtree(2,subtree(2,key))))
 
@@ -349,6 +351,7 @@ contains ! =====     Public Procedures     =============================
         ! That's the end of the create operation
 
       case ( s_matrix ) ! ===============================  Matrix  =====
+        if (DEEBUG) call output('matrix spec', advance='yes')
         got = .false.
         matrixType = l_plain
         do j = 2, nsons(key)
@@ -394,6 +397,7 @@ contains ! =====     Public Procedures     =============================
         ! Now we're on actual Fill instructions.
         ! Loop over the instructions to the Fill command
 
+        if (DEEBUG) call output('Fill instruction', advance='yes')
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
           fieldIndex = get_field_id(gson)
@@ -407,6 +411,7 @@ contains ! =====     Public Procedures     =============================
             earthRadiusVectorIndex = decoration(decoration(subtree(1,gson)))
             earthRadiusQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_noise )   ! Only used for chi^2 special fills or addnoise
+            if (DEEBUG) call output('noise field', advance='yes')
             noiseVectorIndex = decoration(decoration(subtree(1,gson)))
             noiseQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_explicitValues ) ! For explicit fill
@@ -449,13 +454,14 @@ contains ! =====     Public Procedures     =============================
               & call Announce_error ( key, badUnitsForMaxIterations )
             maxIterations = valueAsArray(1)
           case ( f_measurements )   ! Only used for diagnostic special fills
-            fillMethod = l_special
+            if (DEEBUG) call output('measurements field', advance='yes')
             measVectorIndex = decoration(decoration(subtree(1,gson)))
             measQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_method )   ! How are we going to fill it?
+            if (DEEBUG) call output('method field', advance='yes')
             fillMethod = decoration(gson)
           case ( f_model )   ! Only used for diagnostic special fills
-            fillMethod = l_special
+            if (DEEBUG) call output('model field', advance='yes')
             modelVectorIndex = decoration(decoration(subtree(1,gson)))
             modelQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_noFineGrid )      ! For cloud extinction fill
@@ -519,15 +525,17 @@ contains ! =====     Public Procedures     =============================
         end do                  ! Loop over arguments to fill instruction
 
         ! Now call various routines to do the filling
-        quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
+        quantity => GetVectorQtyByTemplateIndex( &
+          & vectors(vectorIndex), quantityIndex )
 
         select case ( fillMethod )
         case ( l_addNoise ) ! ----- Add random noise to source Quantity -------
+          if (DEEBUG) call output('add noise method', advance='yes')
           if (.not. all(got( (/f_Quantity, f_sourceQuantity, f_noise/) ) ) ) &
             call Announce_error ( key, No_Error_code, &
              'Missing a required field to add noise'  )
-          Quantity => GetVectorQtyByTemplateIndex( &
-            & vectors(VectorIndex), QuantityIndex )
+          ! Quantity => GetVectorQtyByTemplateIndex( &
+          !  & vectors(VectorIndex), QuantityIndex )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           noiseQty => GetVectorQtyByTemplateIndex( &
@@ -536,6 +544,7 @@ contains ! =====     Public Procedures     =============================
             & noiseQty )
 
         case ( l_hydrostatic ) ! -------------  Hydrostatic fills  -----
+          if (DEEBUG) call output('hydrostatic method', advance='yes')
           ! Need a temperature and a refgph quantity
           if ( .not.all(got( (/ f_refGPHQuantity, f_temperatureQuantity /))) ) &
             call Announce_Error ( key,needTempREFGPH )
@@ -594,6 +603,7 @@ contains ! =====     Public Procedures     =============================
             & noFineGrid, extinction, errorCode )
 
         case ( l_special ) ! -  Special fills for some quantities  -----
+          if (DEEBUG) call output('special method', advance='yes')
           select case ( quantity%template%quantityType )
           case ( l_losVel )
             if ( .not. any(got( (/f_tngtECI, f_scECI, f_scVel/) )) ) then
@@ -726,6 +736,7 @@ contains ! =====     Public Procedures     =============================
         end select
 
       case ( s_FillCovariance ) ! ===============  FillCovariance  =====
+        if (DEEBUG) call output('Fill covariance instruction', advance='yes')
         invert = .false. ! Default if the field isn't present
         do j = 2, nsons(key)
           gson = subtree(j,key) ! The argument
@@ -761,6 +772,7 @@ contains ! =====     Public Procedures     =============================
       ! End of fill operations
 
       case ( s_remove ) ! ===============================  Remove ==
+        if (DEEBUG) call output('Remove vector instruction', advance='yes')
         ! Here we're to try to shrink the vector database by removing a vector
         ! Loop over the instructions
         ! (Shall we allow multiple rms on a single line? Maybe later)
@@ -778,6 +790,7 @@ contains ! =====     Public Procedures     =============================
         vectorindex = rmVectorFromDatabase ( vectors, vectors(sourceVectorIndex) )
 
       case ( s_transfer ) ! ===============================  Transfer ==
+        if (DEEBUG) call output('Transfer vector instruction', advance='yes')
         ! Here we're on a transfer instruction
         ! Loop over the instructions
         do j = 2, nsons(key)
@@ -1091,7 +1104,7 @@ contains ! =====     Public Procedures     =============================
   function FillableChiSq ( qty, measQty, modelQty, noiseQty ) result ( aok )
     ! Purpose (A)
     !   Check whether we may proceed with special fill of chi squared
-    !   case where all args present
+    !   case where all VectorValue_T args present
     ! Purpose (B)
     !   Check whether we may proceed with special fill of addNoise
     !   case where missing noiseQty arg
@@ -1102,52 +1115,93 @@ contains ! =====     Public Procedures     =============================
     LOGICAL ::                                       AOK
     
     ! What we will check is that (for the args we have been given):
+    ! (0) all quantities have associated values
     ! (1) all quantities have same molecule
     ! (2) all quantities have same signal
     ! (3) all quantities have same HGrid
     ! (4A) all but qty (chiSq) have same VGrid
     ! (4B) all have same VGrid
-    
-    aok = .true.
+    ! Ah, but radiances have no VGrid or HGrid,
+    ! and molecule should be part of signal, so
+    ! if radiances need only check on signal
+    ! if vmr, check on others
 
-    ! (1)
+   ! Local variables
+    LOGICAL ::       minorFrame   ! TRUE if radiances, FALSE if vmr
+
+    aok = .true.
+    
+    ! (0)
+    if ( present(noiseQty) ) then
+      aok = associated(noiseQty%values)
+      if ( DEEBUG .and. .not. associated(noiseQty%values) ) &
+        & call announce_error( 0, No_Error_code, &
+        & 'Noise values unassociated in FillableChiSq')
+    endif
     aok = aok .and. &
-      & (qty%template%molecule == measQty%template%molecule) &
-      & .and. &
-      & (qty%template%molecule == modelQty%template%molecule)
-    if ( present(noiseQty) ) aok = aok &
-      & .and. &
-      & (qty%template%molecule == noiseQty%template%molecule)
+      & associated(qty%values) .and. &
+      & associated(measQty%values) .and. &
+      & associated(modelQty%values)
+
+    if ( DEEBUG ) then
+      if ( .not. associated(qty%values) ) &
+        & call announce_error( 0, No_Error_code, &
+        & 'Quantity values unassociated in FillableChiSq')
+      if ( .not. associated(measQty%values) ) &
+        & call announce_error( 0, No_Error_code, &
+        & 'Measurements values unassociated in FillableChiSq')
+      if ( .not. associated(modelQty%values) ) &
+        & call announce_error( 0, No_Error_code, &
+        & 'Model values unassociated in FillableChiSq')
+    endif
+
+    if ( .not. aok ) return
+
+    minorFrame = qty%template%minorFrame .or. qty%template%majorFrame
+    ! (1)
+    if (.not. minorFrame ) then
+      aok = aok .and. &
+        & (qty%template%molecule == measQty%template%molecule) &
+        & .and. &
+        & (qty%template%molecule == modelQty%template%molecule)
+      if ( present(noiseQty) ) aok = aok &
+        & .and. &
+        & (qty%template%molecule == noiseQty%template%molecule)
+    endif
 
     ! (2)
-    aok = aok .and. &
-      & (qty%template%signal == measQty%template%signal) &
-      & .and. &
-      & (qty%template%signal == modelQty%template%signal)
-    if ( present(noiseQty) ) aok = aok &
-      & .and. &
-      & (qty%template%signal == noiseQty%template%signal)
+    if (minorFrame ) then
+      aok = aok .and. &
+        & (qty%template%signal == measQty%template%signal) &
+        & .and. &
+        & (qty%template%signal == modelQty%template%signal)
+      if ( present(noiseQty) ) aok = aok &
+        & .and. &
+        & (qty%template%signal == noiseQty%template%signal)
+    endif
 
     ! (3)
-    aok = aok .and. &
-      & DoHgridsMatch( qty, measQty ) &
-      & .and. &
-      & DoHgridsMatch( qty, modelQty )
-    if ( present(noiseQty) ) aok = aok &
-      & .and. &
-      & DoHgridsMatch( qty, noiseQty )
+    if (.not. minorFrame ) then
+      aok = aok .and. &
+        & DoHgridsMatch( qty, measQty ) &
+        & .and. &
+        & DoHgridsMatch( qty, modelQty )
+      if ( present(noiseQty) ) aok = aok &
+        & .and. &
+        & DoHgridsMatch( qty, noiseQty )
 
-    ! (4)
-    aok = aok .and. &
-      & DoVgridsMatch( measqty, modelQty )
-    if ( present(noiseQty) ) then
-      aok = aok &
-      & .and. &
-      & DoVgridsMatch( measqty, noiseQty )
-    else
-      aok = aok &
-      & .and. &
-      & DoVgridsMatch( measqty, Qty )
+      ! (4)
+      aok = aok .and. &
+        & DoVgridsMatch( measqty, modelQty )
+      if ( present(noiseQty) ) then
+        aok = aok &
+        & .and. &
+        & DoVgridsMatch( measqty, noiseQty )
+      else
+        aok = aok &
+        & .and. &
+        & DoVgridsMatch( measqty, Qty )
+      endif
     endif
     
     return
@@ -2284,6 +2338,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.76  2001/09/21 23:23:35  pwagner
+! Stiff fails to add noise properly
+!
 ! Revision 2.75  2001/09/20 20:57:25  pwagner
 ! Fleshed out adding noise thing
 !
