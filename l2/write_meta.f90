@@ -141,6 +141,10 @@ module WriteMetadata ! Populate metadata and write it out
   logical, public, parameter :: SETINPUTPOINTER = .not. ANNOTATEWITHPCF
   logical, public, parameter :: SFINBETWEENSTARTEND = .FALSE.
   integer, public, parameter :: MCFFORL2GPOPTION = 3     ! 1, public, 2 or 3
+  ! What gets written if ANNOTATEWITHPCF instead of InputPointer
+  character(len=*), private, parameter :: INPUTPOINTERMESG = &
+    & '/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF'  ! path to PCF attribute
+  !  & 'See the PCF annotation to this file.'
   integer, private :: Module_error
 
 contains
@@ -586,34 +590,12 @@ contains
 
     attrName = 'InputPointer'
     if ( SETINPUTPOINTER ) then
-! >       inpt = ' '
-! >       DO i = 0, size(L2pcf%L1BRADPCFIds)
-! >         version = 1
-! >         if ( i == 0 ) then
-! >          returnStatus = pgs_pc_getUniversalRef(L2pcf%L1BOAPCFId, version, sval)
-! >         elseif ( L2pcf%L1BRADPCFIds(i) /= ILLEGALL1BRADID ) then
-! >          returnStatus = pgs_pc_getUniversalRef(L2pcf%L1BRADPCFIds(i), &
-! >            & version, sval)
-! >         else
-! >          returnStatus = PGS_S_SUCCESS + 1
-! >         endif
-! >         IF (returnStatus == PGS_S_SUCCESS) THEN 
-! >            inpt(i+1) = sval                     
-! >         ENDIF                                   
-! >       ENDDO
-      ! print *, 'Forming input pointer with ids: ', &
-      !  & L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:)
       call InputInputPointer(inpt, &
         & (/ L2pcf%L1BOAPCFId, L2pcf%L1BRADPCFIds(:) /) )
-      ! returnStatus = pgs_met_setAttr_s(groups(INVENTORY), attrName, inpt)
-      ! print *, 'Writing input pointer with : '
-      ! do i=1, size(inpt)
-      !   if ( inpt(i) /= ' ' ) print *, trim(inpt(i))
-      ! enddo
       returnStatus = WriteInputPointer(groups(INVENTORY), attrName, inpt)
     else
       returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-           'See the PCF annotation to this file.')
+           INPUTPOINTERMESG)
     endif
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
@@ -1585,6 +1567,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.39  2003/03/07 00:55:38  pwagner
+! Set INPUTPOINTERMESG when annotating with PCF as a private param /HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF
+!
 ! Revision 2.38  2003/02/27 21:54:28  pwagner
 ! Now annotates with PCF; does not set inputPointer
 !
