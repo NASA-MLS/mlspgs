@@ -672,7 +672,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, RK => R8, TAI93_RANGE_T
     use MLSFiles, only: MLS_HDF_Version       
     use MLSL2Options, only: LEVEL1_HDFVERSION  
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
     use MLSNumerics, only: HUNT, InterpolateValues
     use OUTPUT_M, only: OUTPUT
     use String_Table, only: Display_String
@@ -1041,7 +1041,7 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( hGrid%noProfs == 0 ) then
-      call MLSMessage ( MLSMSG_Error, ModuleName, 'No profiles in hGrid' )
+      call MLSMessage ( MLSMSG_Warning, ModuleName, 'No profiles in hGrid' )
     end if
 
     ! Finally we're done.
@@ -1404,6 +1404,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.56  2003/08/11 20:55:20  livesey
+! Changed 0 profiles error to warning
+!
 ! Revision 2.55  2003/08/11 18:08:27  livesey
 ! Added the single option for regular hGrids
 !
