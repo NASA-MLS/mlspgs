@@ -9,24 +9,17 @@ module INIT_TABLES_MODULE
 
 ! Declaring the definitions is handled by the tree walker.
 
-  use INTRINSIC ! Everything. FIRST_LIT, INIT_INTRINSIC,
+  use Init_MLSSignals_m ! Everything.
+  use INTRINSIC ! Everything. ADD_IDENT, FIRST_LIT, INIT_INTRINSIC,
     ! L_FALSE, L_TRUE, LAST_INTRINSIC_LIT, T_BOOLEAN, T_FIRST,
     ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
     ! here, but everything is included so that it can be gotten by
     ! USE INIT_TABLES_MODULE.
-  use SYMBOL_TABLE, only: ENTER_TERMINAL
-  use SYMBOL_TYPES, only: T_IDENTIFIER
-  use TREE, only: BUILD_TREE, PUSH_PSEUDO_TERMINAL
-  use TREE_TYPES, only: N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE, &
-                        N_NAME_DEF, N_SECTION, N_SPEC_DEF
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
   !        names below.
-  private :: ADD_IDENT, BUILD_TREE, ENTER_TERMINAL, INIT_INTRINSIC
-  private :: MAKE_TREE, N_DOT, N_DT_DEF, N_FIELD_SPEC, N_FIELD_TYPE
-  private :: N_NAME_DEF, N_SECTION, N_SPEC_DEF, PUSH_PSEUDO_TERMINAL
-  private :: T_IDENTIFIER
+  private :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=256), private :: Id = &
@@ -36,31 +29,31 @@ module INIT_TABLES_MODULE
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
-  integer, public, parameter :: T_METHOD         = t_last_intrinsic+1
+  integer, public, parameter :: T_METHOD         = t_last_signal+1
   integer, public, parameter :: T_PMODE          = t_method+1
   integer, public, parameter :: T_UNITS          = t_pmode+1
   integer, public, parameter :: T_LAST           = t_units
   integer, public :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
-  integer, public, parameter :: F_DF = 1
-  integer, public, parameter :: F_DLAT = 2
-  integer, public, parameter :: F_DLON = 3
-  integer, public, parameter :: F_FILE = 4
-  integer, public, parameter :: F_IMETHOD = 5
-  integer, public, parameter :: F_LABEL = 6
-  integer, public, parameter :: F_LATGRID = 7
-  integer, public, parameter :: F_LONGRID = 8
-  integer, public, parameter :: F_MCF = 9
-  integer, public, parameter :: F_MODE = 10
-  integer, public, parameter :: F_PRESLVL = 11
-  integer, public, parameter :: F_PRODNAME = 12
-  integer, public, parameter :: F_RANGFREQ = 13
-  integer, public, parameter :: F_RANGWAVNUM = 14
-  integer, public, parameter :: F_TIME = 15
-  integer, public, parameter :: FIELD_FIRST = f_df, FIELD_LAST = f_time
+  integer, public, parameter :: F_DF = last_Signal_Field + 1
+  integer, public, parameter :: F_DLAT = f_df + 1
+  integer, public, parameter :: F_DLON = f_dlat + 1
+  integer, public, parameter :: F_FILE = f_dlon + 1
+  integer, public, parameter :: F_IMETHOD = f_file + 1
+  integer, public, parameter :: F_LABEL = f_imethod + 1
+  integer, public, parameter :: F_LATGRID = f_label + 1
+  integer, public, parameter :: F_LONGRID = f_latgrid + 1
+  integer, public, parameter :: F_MCF = f_longrid + 1
+  integer, public, parameter :: F_MODE = f_mcf + 1
+  integer, public, parameter :: F_PRESLVL = f_mode + 1
+  integer, public, parameter :: F_PRODNAME = f_preslvl + 1
+  integer, public, parameter :: F_RANGFREQ = f_prodname + 1
+  integer, public, parameter :: F_RANGWAVNUM = f_rangfreq + 1
+  integer, public, parameter :: F_TIME = f_rangwavnum + 1
+  integer, public, parameter :: FIELD_LAST = f_time
   integer, public :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals:
-  integer, public, parameter :: L_ALL   = last_intrinsic_lit + 1
+  integer, public, parameter :: L_ALL   = last_signal_lit+1
   integer, public, parameter :: L_ASC   = l_all + 1
   integer, public, parameter :: L_COM 	= l_asc + 1
   integer, public, parameter :: L_CSP   = l_com + 1
@@ -68,17 +61,6 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_LIN   = l_des + 1
   integer, public, parameter :: LAST_LIT = l_lin
   integer, public :: LIT_INDICES(first_lit:last_lit)
-! Parameter names:
-  ! In GlobalSettings section:
-  integer, public, parameter :: P_LOG_TYPE = 1
-  integer, public, parameter :: P_MAX_GAP = 2
-  integer, public, parameter :: P_MIN_DAYS = 3
-  integer, public, parameter :: P_N = 4
-  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 5
-  integer, public, parameter :: P_VERSION_COMMENT = 6
-  integer, public, parameter :: FIRST_PARM = P_LOG_TYPE
-  integer, public, parameter :: LAST_PARM = P_VERSION_COMMENT
-  integer, public :: PARM_INDICES(first_parm:last_parm)
 ! Section identities:
   integer, public, parameter :: Z_DAILYMAP = 2
   integer, public, parameter :: Z_GLOBALSETTINGS = 1
@@ -87,10 +69,21 @@ module INIT_TABLES_MODULE
                                 SECTION_LAST = z_Output
   integer, public :: SECTION_INDICES(section_first:section_last)
 ! Specification indices:
-  integer, public, parameter :: S_MAPSPEC = 1
-  integer, public, parameter :: S_OUTPUT = 2
-  integer, public, parameter :: SPEC_FIRST = s_mapSpec, SPEC_LAST = s_Output
+  integer, public, parameter :: S_MAPSPEC = last_Signal_Spec + 1
+  integer, public, parameter :: S_OUTPUT = s_mapspec + 1
+  integer, public, parameter :: SPEC_LAST = s_Output
   integer, public :: SPEC_INDICES(spec_first:spec_last)
+! Parameter names:
+  ! In GlobalSettings section:
+  integer, public, parameter :: P_LOG_TYPE = spec_last + 1
+  integer, public, parameter :: P_MAX_GAP = p_log_type + 1
+  integer, public, parameter :: P_MIN_DAYS = p_max_gap + 1
+  integer, public, parameter :: P_N = p_min_days + 1
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = p_n + 1
+  integer, public, parameter :: P_VERSION_COMMENT = p_output_version_string + 1
+  integer, public, parameter :: FIRST_PARM = P_LOG_TYPE
+  integer, public, parameter :: LAST_PARM = P_VERSION_COMMENT
+  integer, public :: PARM_INDICES(first_parm:last_parm)
 
 ! Table for section ordering:
   integer, public, parameter :: OK = 1, & ! NO = 0
@@ -107,15 +100,14 @@ module INIT_TABLES_MODULE
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
-  integer, private, parameter :: F = 1000, L = 2000, N = 0, P = 3000
-  integer, private, parameter :: S = 4000, T = 5000, Z = 6000
-  integer, private, parameter :: BEGIN = -1
-
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
+     use TREE_TYPES, only: N_DT_DEF, N_FIELD_TYPE, &
+                           N_NAME_DEF, N_SECTION, N_SPEC_DEF
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_intrinsic ( data_type_indices, lit_indices )
+    call init_MLSSignals ( data_type_indices, field_indices, lit_indices, spec_indices )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
@@ -175,12 +167,6 @@ contains ! =====     Public procedures     =============================
   ! the form  < n_dt_def t_type_name l_lit ... l_lit >
     ! Define the intrinsic data types
     call make_tree ( (/ &
-      begin, t+t_numeric, n+n_dt_def, &
-      begin, t+t_numeric_range, n+n_dt_def, &
-      begin, t+t_string, n+n_dt_def /) )
-    ! Define the enumerated types
-    call make_tree ( (/ &
-      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def, &
       begin, t+t_method, l+l_csp, l+l_lin, n+n_dt_def, &
       begin, t+t_pmode, l+l_all, l+l_asc, l+l_com, l+l_des, n+n_dt_def, &
       begin, t+t_units, l+l_days, l+l_deg, l+l_degrees, &
@@ -252,67 +238,14 @@ contains ! =====     Public procedures     =============================
 
 ! =====     Private procedures     =====================================
   ! --------------------------------------------------  MAKE_TREE  -----
-  subroutine MAKE_TREE ( IDS )
-  ! Build a tree specified by the "ids" array.  "begin" marks the
-  ! beginning of a tree.  A tree-node marks the end of the corresponding
-  ! tree.  Pseudo-terminals are decorated with their indices.
-    integer, intent(in) :: IDS(:)
-
-    integer :: I, ID, M, N_IDS, STACK(0:30), STRING, WHICH
-
-    n_ids = size(ids)
-    m = 0
-    stack(0) = 0 ! just so it's defined, in case it gets incremented
-                 ! after build_tree
-    if ( ids(1) >= 0 ) then
-      m = 1
-      stack(1) = 0
-    end if
-    do i = 1, n_ids
-      if ( ids(i) == begin ) then
-        m = m + 1
-        stack(m) = 0
-      else
-        id = mod(ids(i), 1000)
-        which = ids(i) / 1000
-       select case ( which )
-       case ( f/1000 ) ! Fields
-         string = field_indices(id)
-       case ( l/1000 ) ! Enumeration literals
-         string = lit_indices(id)
-       case ( p/1000 ) ! Parameter names
-         string = parm_indices(id)
-       case ( s/1000 ) ! Specs
-         string = spec_indices(id)
-       case ( t/1000 ) ! Intrinsic data types
-         string = data_type_indices(id)
-       case ( z/1000 ) ! Sections
-         string = section_indices(id)
-       case ( n/1000 ) ! Tree nodes
-         call build_tree ( id, stack(m) )
-         m = m - 1
-         stack(m) = stack(m) + 1
-    cycle
-       end select
-       if ( string == 0 ) then
-         print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Element ', i, &
-           & ' of a list is undefined'
-           stop
-         end if
-       call push_pseudo_terminal ( string, 0, decor = id )
-       stack(m) = stack(m) + 1
-      end if
-    end do
-  end subroutine MAKE_TREE
-
-  integer function ADD_IDENT ( TEXT )
-    character(len=*), intent(in) :: TEXT
-    add_ident = enter_terminal ( text, t_identifier )
-  end function ADD_IDENT
+  include "make_tree.f9h"
 
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.5  2001/02/21 21:19:40  nakamura
+! Removed l2Ver.
+!
 ! Revision 1.4  2001/01/18 16:53:25  nakamura
 ! Moved minDays from PCF to cf.
 !
