@@ -330,7 +330,7 @@ contains ! =====     Public Procedures     =============================
               call populate_metadata_std &
                 & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & setAlias=.true., isHDFEOS=.true. )
+                & setAlias=.true., filetype='sw' )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
             else
@@ -350,7 +350,7 @@ contains ! =====     Public Procedures     =============================
                 & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
                 & numquantitiesperfile, QuantityNames, &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & setAlias=.true., isHDFEOS=.true.  )
+                & setAlias=.true., filetype='sw'  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -468,7 +468,7 @@ contains ! =====     Public Procedures     =============================
                 & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
                 & numquantitiesperfile, QuantityNames,&
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & setAlias=.false., isHDFEOS=.false.  )
+                & setAlias=.false., filetype='hdf'  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -633,7 +633,7 @@ contains ! =====     Public Procedures     =============================
                 & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
                 & numquantitiesperfile, QuantityNames, &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & setAlias=.true., isHDFEOS=.true.  )
+                & setAlias=.true., filetype='sw'  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -1077,6 +1077,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.68  2003/03/11 00:21:36  pwagner
+! Interfaces fit new WritePCF2Hdr flixibility
+!
 ! Revision 2.67  2003/03/01 00:25:20  pwagner
 ! Disabled writing metadata to Log file (aka PH)
 !
