@@ -79,6 +79,3 @@
 
 ! $Log: Clear_sky.f90,v      
 
-
-
-
