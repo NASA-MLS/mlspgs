@@ -66,7 +66,8 @@ contains ! =====     Public Procedures     =============================
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
     use MLSCommon, only: I4
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-    use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
+    use MLSFiles, only: HDFVERSION_5, &
+      & GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
       & SPLIT_PATH_NAME, MLS_SFSTART, MLS_SFEND
     use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
       & DEFAULT_HDFVERSION_WRITE
@@ -318,7 +319,8 @@ contains ! =====     Public Procedures     =============================
 
               ! Error in finding mcf number
               call announce_error ( son, &
-                & 'No mcf numbers correspond to this l2gp file', l2gp_mcf, &
+                & 'No mcf numbers correspond to this l2gp file: ' &
+                & // trim(file_base), l2gp_mcf, &
                 & PENALTY_FOR_NO_METADATA )
 
             else if ( numquantitiesperfile <= 0 ) then
@@ -704,7 +706,9 @@ contains ! =====     Public Procedures     =============================
     ! Write metadata for any directdata files
     if ( associated ( directDatabase ) ) then
       if ( size(DirectDatabase) > 0 .and. TOOLKIT ) then
+        meta_name = ' '
         do DB_index=1, size(DirectDatabase)
+          hdfVersion = HDFVERSION_5      ! Because DirectWrite only allows 5
           l2gp_Version = 1
           l2aux_Version = 1
           file_base = DirectDatabase(DB_index)%fileNameBase
@@ -734,7 +738,8 @@ contains ! =====     Public Procedures     =============================
 
               ! Error in finding mcf number
               call announce_error ( son, &
-                & 'No mcf numbers correspond to this l2gp file', l2gp_mcf, &
+                & 'No mcf numbers correspond to this l2gp file: ' &
+                & // trim(file_base), l2gp_mcf, &
                 & PENALTY_FOR_NO_METADATA )
 
             else if ( numquantitiesperfile <= 0 ) then
@@ -947,13 +952,17 @@ contains ! =====     Public Procedures     =============================
   select case (filetype)
   case (l_swath, l_l2dgg)
      call split_path_name(fileName, path, file_base)
-     FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
-       & mlspcf_l2gp_end, &
-       & .true., returnStatus, Version, DEBUG, &
-       & exactName=PhysicalFilename)
      if ( filetype == l_l2dgg ) then
+       FileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
+         & mlspcf_l2dgg_end, &
+         & .true., returnStatus, Version, DEBUG, &
+         & exactName=PhysicalFilename)
        l2gp_mcf = l2dgg_mcf
      else
+       FileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
+         & mlspcf_l2gp_end, &
+         & .true., returnStatus, Version, DEBUG, &
+         & exactName=PhysicalFilename)
        call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
      endif
      if ( l2gp_mcf <= -999 ) then
@@ -1107,6 +1116,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.83  2003/09/04 22:42:47  pwagner
+! Some tweaks relating to DirectWrite; may not matter
+!
 ! Revision 2.82  2003/08/15 20:43:10  pwagner
 ! Downgraded to warning if directwrite output_type unkown, e.g. l_l2fwm
 !
