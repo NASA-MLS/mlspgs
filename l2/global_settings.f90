@@ -3,7 +3,7 @@
 
 module GLOBAL_SETTINGS
 
-  use MLSL2Options, only: PCF, MAXNUML1BRADIDS, ILLEGALL1BRADID, &
+  use MLSL2Options, only: TOOLKIT, MAXNUML1BRADIDS, ILLEGALL1BRADID, &
     & LEVEL1_HDFVERSION
   use MLSStrings, only: utc_to_yyyymmdd
   use PCFHdr, only: GlobalAttributes, FillTAI93Attribute
@@ -144,14 +144,14 @@ contains
         case ( p_input_version_string )
           input_version_string = sub_rosa_index
           call get_string ( input_version_string, l2pcf%inputVersion, strip=.true. )
-          if ( pcf ) &
+          if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for input version ***', &
             & just_a_warning = .true.)
         case ( p_output_version_string )
           output_version_string = sub_rosa_index
           call get_string ( output_version_string, l2pcf%PGEVersion, strip=.true. )
-          if ( pcf ) &
+          if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for PGE version ***', &
             & just_a_warning = .true.)
@@ -161,7 +161,7 @@ contains
           instrument = decoration(subtree(2,son))
         case ( p_cycle )
           call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
-          if ( pcf ) &
+          if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for cycle number ***', &
             & just_a_warning = .true.)
@@ -183,7 +183,7 @@ contains
             read ( name_string, * ) start_time_from_1stMAF
             startTimeIsAbsolute = .true.
           end if
-          if ( pcf ) &
+          if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for start time ***', &
             & just_a_warning = .true.)
@@ -201,7 +201,7 @@ contains
             read ( name_string, * ) end_time_from_1stMAF
             stopTimeIsAbsolute = .true.
           end if
-          if ( pcf ) &
+          if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for end time ***', &
             & just_a_warning = .true.)
@@ -215,7 +215,7 @@ contains
             & just_a_warning = .false.)
             call MLSMessage ( MLSMSG_Error, ModuleName, &                      
             & '(Please check file name and path)' )    
-          elseif ( pcf ) then
+          elseif ( TOOLKIT ) then
             call announce_error(0, &
             & '*** Leap Second File supplied global settings despite pcf ***', &
             & just_a_warning = .true.)
@@ -259,7 +259,7 @@ contains
             call proclaim(FilenameString, 'l1brad', &                   
             & hdfVersion=the_hdf_version) 
           end if
-          if ( pcf ) &
+          if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
             & just_a_warning = .true.)
@@ -274,7 +274,7 @@ contains
             call proclaim(FilenameString, 'l1boa', &                   
             & hdfVersion=the_hdf_version) 
           end if
-          if ( pcf ) &
+          if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
             & just_a_warning = .true.)
@@ -285,7 +285,7 @@ contains
           if(index(switches, 'pro') /= 0) then  
             call proclaim(FilenameString, 'l2 parallel staging file') 
           end if
-          if ( pcf ) &
+          if ( TOOLKIT ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L2 Parallel staging file ***', &
             & just_a_warning = .true.)
@@ -319,7 +319,7 @@ contains
     ! It becomes mandatory if not using PCF
     if ( LeapSecFileName == '' &
      & .and. &
-     & (got(1) .or. got(2) .or. .not. PCF) &
+     & (got(1) .or. got(2) .or. .not. TOOLKIT) &
      & ) then
 
       ! 1st--check that have L1BOA
@@ -356,7 +356,7 @@ contains
         end if
       elseif(got(1)) then
         processingrange%starttime = minTime + start_time_from_1stMAF
-      elseif(.not. PCF) then
+      elseif(.not. TOOLKIT) then
         processingrange%starttime = minTime
       end if
     end if
@@ -374,12 +374,12 @@ contains
         end if
       elseif(got(2)) then
         processingrange%endtime = minTime + end_time_from_1stMAF
-      elseif(.not. PCF) then
+      elseif(.not. TOOLKIT) then
         processingrange%endtime = maxTime + 1.0
       end if
     end if
 
-    if ( .not. PCF ) then
+    if ( .not. TOOLKIT ) then
       ! Store appropriate user input as global attributes
       GlobalAttributes%InputVersion = l2pcf%inputVersion
       GlobalAttributes%StartUTC = l2pcf%StartUTC
@@ -709,6 +709,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.69  2003/05/14 22:04:49  pwagner
+! Bad leapsecfile name now prints sensibly & stops
+!
 ! Revision 2.68  2003/05/12 20:57:21  pwagner
 ! Added L2ParSF spec to allow changing staging file name in global settings
 !
