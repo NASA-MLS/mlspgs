@@ -39,7 +39,8 @@ MODULE MLSCommon                ! Common definitions for the MLS software
 
   TYPE L1BInfo_T
     INTEGER :: L1BOAId     ! The HDF ID (handle) for the L1BOA file
-    INTEGER, DIMENSION(:), POINTER :: L1BRADIds ! Id(s) for the L1BRAD file(s)
+    ! Id(s) for the L1BRAD file(s)
+    INTEGER, DIMENSION(:), POINTER :: L1BRADIds=>NULL()
     CHARACTER (LEN=FileNameLen) :: L1BOAFileName  ! L1BOA file name
     CHARACTER (LEN=FileNameLen), DIMENSION(:), POINTER :: &
          & L1BRADFileNames=>NULL()
@@ -73,6 +74,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.5  2001/03/10 18:48:17  livesey
+! Really nullified the pointer!
+!
 ! Revision 2.4  2001/03/10 07:06:46  livesey
 ! Nullified L1BRadfileNames in L1BInfo
 !
