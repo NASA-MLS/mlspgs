@@ -58,6 +58,10 @@ changesyntax({@!})
 ; typically quotes.
 !define(TrimFirstLastChar, {!substr($1,1,!eval(!len($1)-2))})
 
+; This macro trims the first character (often a newline) off it's
+; argument
+!define(TrimFirstChar, {!substr($1,1,!eval(!len($1)-1))})
+
 ; This is just a newline. It is mainly used in macros that are destined
 ; to be called by forall macros.
 !define(nl,{
