@@ -12,7 +12,7 @@ begin Fill
   Fill, quantity=state.tpPressure, method=wmoTropopause, $
     temperatureQuantity=state.temperature, refGPHQuantity=state.refGPH, $
     internalVgrid=vGridWMO
-  }
+  })
 
   ;; --------------------------------------------- Now the columns
 
