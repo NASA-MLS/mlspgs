@@ -1362,7 +1362,7 @@ contains
       type (VectorValue_T), pointer :: xExtPtr        ! pointer of l_cloudExtinction quantity
       type (VectorValue_T), pointer :: xExtVar        ! variance of apriori
       type (VectorValue_T), pointer :: outExtSD        ! SD of output
-      type (VectorValue_T), pointer :: ModelTcir        ! for model cloud radiance
+      type (VectorValue_T), pointer :: ModelTcir        ! for model cloud top indicator
       type (VectorValue_T), pointer :: Tcir        ! cloud-induced radiance
       type (VectorValue_T), pointer :: Terr        ! cloud-induced radiance SD
       type (VectorValue_T), pointer :: PTAN        ! Tgt pressure
@@ -1378,7 +1378,9 @@ contains
       integer :: nMafs      ! number of MAFs
       integer :: nz        ! number of retrieval levels
       integer :: nInst     ! number of retrieval instances in the chunk
+      integer :: cloudysky   ! cloudysky index from Model Configuration
       real(r8) :: pcut    ! ptan threshold for high tangent heights
+      real(r8) :: badValue
                                         
       type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
       type(vector_T) :: CovarianceDiag  ! Diagonal of apriori Covariance  
@@ -1389,6 +1391,8 @@ contains
       real(r8) :: trans                                ! transmission function
       real(r8) :: y      ! measurement array
       real(r8) :: sy     ! variance of y
+      integer :: n1
+      logical :: doMaf      ! array for MAF flag
       real(r8), dimension(:), allocatable :: tmp1, tmp2      ! working array
       real(r8), dimension(:,:), allocatable :: A      ! working array
       real(r8), dimension(:), allocatable :: dx       ! working array for x
@@ -1402,11 +1406,11 @@ contains
                                                       ! first two are (chan, s)
 
       ! use this for testing
-      pcut = -2.4
+      pcut = -2.5
       
       if(size(configIndices) > 1 .or. &
         & size(configDatabase(configIndices(1))%signals) > 1) then
-        print*,'Only one forward model and one signal is allowed in high cloud retrieval'
+        print*,'Only one signal is allowed in high cloud retrieval'
         stop
       end if
       ! get signal information for this model. Note: allow only 1 signal 
@@ -1425,7 +1429,10 @@ contains
 
       ! find how many MAFs        
         nMAFs = chunk%lastMAFIndex-chunk%firstMAFIndex + 1
-               
+
+      !memorize the initial model configuration
+        cloudysky = configDatabase(configIndices(1))%cloud_width
+
       ! create covarianceDiag array
         call cloneVector ( covarianceDiag, state, vectorNameText='_covarianceDiag' )
       ! get the inverted diagnonal elements of covariance of apriori
@@ -1446,11 +1453,6 @@ contains
           sy = 0._r8
           dx = 0._r8
             
-          ! Loop over MAFs
-      do maf=1, nMAFs
-      fmStat%maf = maf
-      print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs
-                        
           ! get cloud radiance measurements for this signal
           Tcir => GetVectorQuantityByType ( Measurements,       &
                & quantityType=l_cloudInducedRadiance,             &
@@ -1463,11 +1465,11 @@ contains
 
           ! get pointers of x covariance for the retrieval
           xExtVar => GetVectorQuantityByType (covarianceDiag, &
-               & quantityType=l_cloudextinction,noerror=.true.)
+               & quantityType=l_cloudextinction)
       
           ! get pointers of output SD for the retrieval
           outExtSD => GetVectorQuantityByType (outputSD, &
-               & quantityType=l_cloudextinction,noerror=.true.)
+               & quantityType=l_cloudextinction)
       
           ! get cloud radiance measurements for this signal
           ModelTcir => GetVectorQuantityByType ( fwdModelExtra,     &
@@ -1476,6 +1478,19 @@ contains
           
           ModelTcir%values = Tcir%values
           
+      ! Loop over MAFs
+      do maf=1, nMAFs
+      fmStat%maf = maf
+                        
+          ! to save time, skip cloud sensitivity calculation if there is no cloud
+          ! overwrite model configuration
+          doMaf = .false.
+          if(sum(ModelTcir%values(:,maf)) .ne. 0._r8) doMaf = .true.
+          
+          configDatabase(configIndices(1))%cloud_width=0
+          if(doMaf) configDatabase(configIndices(1))%cloud_width=cloudysky
+
+      print*,'begin cloud retrieval maf= ',maf,' chunk size=',nMAFs,'type=',doMaf
           fmStat%rows = .false.
           call forwardModel ( configDatabase(configIndices(1)), &
             & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
@@ -1506,17 +1521,24 @@ contains
                
           do mif=1,ptan%template%noSurfs
           if(ptan%values(mif,maf) > pcut) then
-                     
+             
+             sensitivity = 0._r8
+             if(doMaf) then
                 ! find more accurate sensitivity
                 do j=1,nz
                   tmp1(j) = 1._r8/nz*(j-1._r8)
                   tmp2(j) = slope%values(ich+nFreqs*(mif-1),maf)* &
-                     & (1._r8 - 0.2_r8* teff**5) ! correction term (see ATBD)
+                     & (1._r8 - 0.2_r8* tmp1(j)**5) ! correction term (see ATBD)
+!		            if(j > 1) then
+!			            if(tmp2(j) > tmp2(j-1)) n1=j
+!		            end if
                 end do
+!		          if(n1 < nz/2) print*,'sensitivity too low for mif=',mif
                      
                 y = Tcir%values(ich+nFreqs*(mif-1),maf)
 
                 ! interpolate to get initial guess of teff
+                teff = 0._r8
                 if(y < tmp2(1)) teff=0._r8
                 if(y > tmp2(nz)) teff=1._r8
                 do j=1,nz-1
@@ -1529,8 +1551,10 @@ contains
                 ! solve the relation one more time to refine teff and sensitivity
                 sensitivity = slope%values(ich+nFreqs*(mif-1),maf)* &
                    & (1._r8 - 0.2_r8* teff**5) ! correction term (see ATBD)
+            end if  ! when sensitivity is calculated
 
-                ! in case we go into ambiguity altitudes with small sensitivity
+                ! in case we have small sensitivity or no cloud
+                if(sensitivity < 0._r8) cycle
                 if(abs(sensitivity) < 1._r8) sensitivity = 130._r8
                      
                 teff = y/sensitivity
@@ -1561,6 +1585,8 @@ contains
       call clearMatrix ( jacobian )           ! free the space
       end do ! end of mafs
       
+    ! give back the model config value
+      configDatabase(configIndices(1))%cloud_width=cloudysky
 
       ! start inversion
       x0 = 0._r8        ! A priori
@@ -1578,7 +1604,7 @@ contains
       ! output estimated SD 
       do i=1,nz
          do j=1,nInst
-            outExtSD%values(i,j) = sqrt(A(i+(j-1)*nz,i+(j-1)*nz))
+            outExtSD%values(i,j) = A(i+(j-1)*nz,i+(j-1)*nz)
          end do
       end do
 
@@ -1595,9 +1621,12 @@ contains
       ! deallocate arrays and free memory
       deallocate(A,C,tmp1,tmp2,dx,x,x0,sx0)
 
-      ! if the input variance is NOT reduced by half, it is given negative
-      where(outExtSD%values**2 > 0.5/xExtVar%values) &   ! xExtVar is inversed
-            & outExtSD%values = -outExtSD%values
+    ! ExtSD is defined as MLS contribution only
+	   badValue = outExtSD%template%badValue
+!      outExtSD%values = 1._r8/outExtSD%values - xExtVar%values !xExtVar is an inverted variance
+!       where(outExtSD%values > 0._r8) outExtSD%values = 1._r8/sqrt(outExtSD%values)
+!       where(outExtSD%values .le. 0._r8) outExtSD%values = badValue
+
    ! clean up
       call destroyVectorInfo ( FwdModelOut1 )
       call destroyVectorInfo ( CovarianceDiag )
@@ -1633,6 +1662,7 @@ contains
       type (VectorValue_T), pointer :: xExtVar        ! variance of apriori
       type (VectorValue_T), pointer :: outLosSD        ! SD of output
       type (VectorValue_T), pointer :: outExtSD        ! SD of output
+      type (VectorValue_T), pointer :: ModelTcir        ! for model cloud top indicator
       type (VectorValue_T), pointer :: Tcir        ! cloud-induced radiance
       type (VectorValue_T), pointer :: Terr        ! cloud-induced radiance SD
       type (VectorValue_T), pointer :: PTAN        ! Tgt pressure
@@ -1646,6 +1676,7 @@ contains
       integer :: coljBlock     ! Column index for jacobian
       integer :: rowjBlock     ! Row index for jacobian
       integer :: nFreqs      ! number of frequencies in each block
+      integer :: nSignal      ! number of signals in a band  
       integer :: nSgrid      ! number of S grids  
       integer :: nChans      ! total number of channels used in retrieval
       integer :: nMifs       ! number of total mifs
@@ -1770,15 +1801,29 @@ contains
           ich = 0
           do imodel = 1, size(configIndices)
             fmStat%rows = .false.
+            nSignal = size(configDatabase(configIndices(imodel))%signals)
             ! to save time, skip cloud sensitivity calculation if there is no cloud
             ! overwrite model configuration
             configDatabase(configIndices(imodel))%cloud_width=0
             if(doMaf(maf)) configDatabase(configIndices(imodel))%cloud_width=cloudysky(imodel)
             
-            call forwardModel ( configDatabase(configIndices(imodel)), &
+            ! use the cloud radiance in last signal for cloud top indicator 
+            signal = configDatabase(configIndices(imodel))%signals(nSignal)
+
+              Tcir => GetVectorQuantityByType ( Measurements,       &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+            
+              ModelTcir => GetVectorQuantityByType ( fwdModelExtra,     &
+               & quantityType=l_cloudInducedRadiance,             &
+               & signal=signal%index, sideband=signal%sideband )
+          
+              ModelTcir%values = Tcir%values
+              
+             call forwardModel ( configDatabase(configIndices(imodel)), &
                 & state, fwdModelExtra, FwdModelOut1, fmw, fmStat, jacobian )
             
-            do isignal = 1, size(configDatabase(configIndices(imodel))%signals)
+            do isignal = 1, nSignal
               ! get signal information for this model. Note: allow only 1 signal 
               signal = configDatabase(configIndices(imodel))%signals(isignal)
 
@@ -1823,19 +1868,22 @@ contains
                ich = ich + 1
                   do mif=1,nMifs
                   if(ptan%values(mif,maf) < p_lowcut) then
-                     
+                    
+                    sensitivity = 0._r8
+                    if(doMaf(maf)) then
                      ! find more accurate sensitivity. we first borrow 
                      ! x, x0 arrays to establish the Tcir-teff relation:
                      ! x-> Tcir; x0->teff;
                      do j=1,nSgrid
                      x0(j) = 1._r8/nSgrid*(j-1._r8)
                      x(j) = slope%values(k+nFreqs*(mif-1),maf)* &
-                        & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
+                        & (1._r8 + 0.46_r8* x0(j)**6) ! correction term (see ATBD)
                      end do
                      
                      y(ich,mif) = Tcir%values(k+nFreqs*(mif-1),maf)
 
                      ! interpolate to get initial guess of teff
+                     teff = 0._r8
                      if(y(ich,mif) < x(1)) teff=0._r8
                      if(y(ich,mif) > x(nSgrid)) teff=1._r8
                      do j=1,nSgrid-1
@@ -1848,8 +1896,9 @@ contains
                      ! solve the relation one more time to refine teff and sensitivity
                      sensitivity = slope%values(k+nFreqs*(mif-1),maf)* &
                            & (1._r8 + 0.46_r8* teff**6) ! correction term (see ATBD)
+                    end if ! when sensitivity is calculated
 
-                     ! in case we go into ambiguity altitudes with small sensitivity
+                     ! in case we have small sensitivity or no cloud
                      if(abs(sensitivity) < 1._r8) sensitivity = -105._r8
                      
                      teff = y(ich,mif)/sensitivity
@@ -1971,13 +2020,15 @@ contains
       
    	call LOS2Grid(xExtPtr,outExtSD,xExtvar,xLosPtr,outLosSD,xLosVar,Ptan,Re,p_lowcut)
 
-    ! output SD but keep the sign
+    ! output SD
       outLosSD%values = sqrt(outLosSD%values)
     ! ExtSD is defined as MLS contribution only
 	   badValue = outExtSD%template%badValue
       outExtSD%values = 1._r8/outExtSD%values - 1._r8/xExtVar%values
        where(outExtSD%values > 0._r8) outExtSD%values = 1._r8/sqrt(outExtSD%values)
        where(outExtSD%values .le. 0._r8) outExtSD%values = badValue
+    ! Output SD
+      xExtVar%values = sqrt(abs(xExtVar%values))
       
     ! overwrite input covariance
       call clearMatrix(covariance%m)     ! this will initialize it to M_Absent
@@ -2411,6 +2462,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.113  2001/11/07 23:55:43  dwu
+! added option to constain cloud top height
+!
 ! Revision 2.112  2001/11/06 18:04:11  dwu
 ! first working version of HighCloudRetrieval
 !
