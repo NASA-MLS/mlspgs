@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+ ! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module GLOBAL_SETTINGS
@@ -14,7 +14,7 @@ module GLOBAL_SETTINGS
     & P_CYCLE, P_STARTTIME, P_ENDTIME, &
     & S_L1BRAD, S_L1BOA, P_INSTRUMENT
   use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
-    & DeallocateL1BData, Dump, NAME_LEN
+    & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
   use L2GPData, only: L2GPDATA_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T
@@ -22,7 +22,7 @@ module GLOBAL_SETTINGS
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L1B_RAD_END, MLSPCF_L1B_RAD_START
-  use MLSStrings, only: unquote, hhmmss_value
+  use MLSStrings, only: hhmmss_value
   use MLSSignals_m, only: INSTRUMENT
   use MoreTree, only: GET_SPEC_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -151,12 +151,6 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for start time ***', &
             & just_a_warning = .true.)
- !         print *, 'starttime'
- !         print *, trim(name_string)
- !         print *, trim(unquote(name_string))
- !         name_string = unquote(name_string)
- !         read(name_string, time_conversion) &
- !         &           processingrange%starttime
         case ( p_endtime )
           got(2) = .true.
           call get_string ( sub_rosa_index, name_string, strip=.true. )
@@ -170,13 +164,6 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for end time ***', &
             & just_a_warning = .true.)
- !         call get_string ( sub_rosa_index, name_string, strip=.true. )
- !         print *, 'endtime'
- !         print *, trim(name_string)
- !         print *, trim(unquote(name_string))
- !         name_string = unquote(name_string)
- !         read(name_string, time_conversion) &
- !         &           processingrange%endtime
         case default
          call announce_error(son, 'unrecognized global settings parameter')
         end select
@@ -331,12 +318,14 @@ contains
     ! Local
 
     type (L1BData_T) :: l1bData   ! L1B dataset
-    integer :: i, version, NoMAFs, IERR
-    integer :: myL1BDetails
-    character (len=*), parameter :: time_format='(1pD18.12)'
-    character (len=*), parameter :: l1b_quant_name='R1A:118.B1F:PT.S0.FB25-1'
-
-    type (L1BData_T) :: l1bField ! L1B data
+    integer ::                              i, version, NoMAFs, IERR
+    integer ::                              myL1BDetails
+    character (len=*), parameter ::         TIME_FORMAT = '(1pD18.12)'
+    character (len=NAME_LEN), parameter ::  BASE_QUANT_NAME = &
+                                    &       'R2:190.B3F:N2O.S2.FB25-3'
+!                                    &       'R1A:118.B1F:PT.S0.FB25-1'
+    character (len=LEN(BASE_QUANT_NAME)) :: l1b_quant_name
+    logical, parameter ::                   DUMPPRECISIONTOO = .true.
 
     ! Begin
     myL1BDetails = -2
@@ -357,6 +346,7 @@ contains
        call output ( 'name:   ' )
     	 call output ( TRIM(l1bInfo%L1BRADFileNames(i)), advance='yes' )
        if ( myL1BDetails > -2 ) then
+         l1b_quant_name = BASE_QUANT_NAME
          call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
           & NoMAFs, IERR, NeverFail=.true. )
          if ( IERR == 0 ) then
@@ -366,7 +356,21 @@ contains
            call output ( 'Error number  ' )
            call output ( IERR )
            call output ( ' while reading quantity named  ' )
-           call output ( trim(l1b_quant_name) )
+           call output ( trim(l1b_quant_name), advance='yes' )
+         endif
+       endif
+       if ( myL1BDetails > -2 .and. DUMPPRECISIONTOO ) then
+         l1b_quant_name = trim(BASE_QUANT_NAME) // PRECISIONSUFFIX
+         call ReadL1BData ( l1bInfo%L1BRADIDs(i), l1b_quant_name, L1bData, &
+          & NoMAFs, IERR, NeverFail=.true. )
+         if ( IERR == 0 ) then
+           call Dump(l1bData, myL1BDetails )
+           call DeallocateL1BData ( l1bData )
+         else
+           call output ( 'Error number  ' )
+           call output ( IERR )
+           call output ( ' while reading quantity named  ' )
+           call output ( trim(l1b_quant_name), advance='yes' )
          endif
        endif
       endif
@@ -401,10 +405,10 @@ contains
     call output ( l2pcf%endutc, advance='yes' )
 
     call output ( 'Start Time (tai):   ' )
-    call output ( processingrange%starttime, format=time_format, advance='yes' )
+    call output ( processingrange%starttime, format=TIME_FORMAT, advance='yes' )
 
     call output ( 'End Time (tai):     ' )
-    call output ( processingrange%endtime, format=time_format, advance='yes' )
+    call output ( processingrange%endtime, format=TIME_FORMAT, advance='yes' )
 
     call output ( 'Processing Range:     ' )
     call output ( processingrange%endtime-processingrange%starttime, advance='yes' )
@@ -519,6 +523,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.45  2001/10/26 23:18:35  pwagner
+! Complies with l1b data dump
+!
 ! Revision 2.44  2001/10/25 23:35:52  pwagner
 ! Responds to global switch with bigger dump than glo switch
 !
