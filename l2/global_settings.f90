@@ -465,8 +465,14 @@ contains
       & call MLSMessage(MLSMSG_Error,ModuleName, &
       & 'Problem with global settings section')
 
+    if ( index(switches, 'vgrid2') /= 0 ) then
+      Details = 1
+    else
+      Details = 0
+    endif
     if ( index(switches, 'vgrid') /= 0 ) &
-      & call dump ( vgrids, details=levels(gen)-1+min(index(switches, 'V'),1) )
+      & call dump ( vgrids, details=Details )
+      ! & call dump ( vgrids, details=levels(gen)-1+min(index(switches, 'V'),1) )
     if ( toggle(gen) ) then
       call trace_end ( 'SET_GLOBAL_SETTINGS' )
     end if
@@ -834,6 +840,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.84  2004/06/17 00:39:02  vsnyder
+! Make output of 'finished readL1BAttribute...' conditional on 'glo' switch
+!
 ! Revision 2.83  2004/06/08 19:28:07  vsnyder
 ! Add tGrid, improve error detection and reporting
 !

@@ -69,7 +69,7 @@ Switches (set by -S option in mlsl2's command line):
   svec =>   Final state vector after Newton iteration
   time =>   Summarize time consumed by each code section
   tps =>    Test_Parse_Signals
-  vgrid =>  Dump vGrids
+  vgrid[n] =>  Dump vGrids [higher the n, more the info]
   vir =>    Dump 'virgin' matrix (before forming KTK)
   xvec =>   'X' vector during Newton iteration
 ========================= end mlsl2 =========================
@@ -107,6 +107,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.41  2004/05/06 20:43:29  pwagner
+ phase announced as each is begun
+
  Revision 1.40  2004/02/20 00:44:45  pwagner
  Column-abundance-related; also skipdgg/m
 
