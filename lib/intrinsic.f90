@@ -64,118 +64,9 @@ module INTRINSIC
 
 ! Enumeration literals:
   integer, parameter :: FIRST_LIT       = 1
-  integer, parameter :: L_BASELINE      = first_lit
-  integer, parameter :: L_C             = l_baseline + 1
-  integer, parameter :: L_CHANNEL       = l_c + 1
-  integer, parameter :: L_CLOUDEXTINCTION      = l_channel + 1
-  integer, parameter :: L_CLOUDICE             = l_cloudExtinction + 1
-  integer, parameter :: L_CLOUDINDUCEDRADIANCE = l_cloudIce + 1
-  integer, parameter :: L_CLOUDOPTICALDEPTH    = l_cloudInducedRadiance + 1
-  integer, parameter :: L_CLOUDRADSENSITIVITY  = l_cloudOpticalDepth + 1
-  integer, parameter :: L_CLOUDWATER    = l_cloudRadSensitivity + 1
-  integer, parameter :: L_DAYS          = l_cloudWater + 1
-  integer, parameter :: L_DEG           = l_days + 1
-  integer, parameter :: L_DEGREES       = l_deg + 1
-  integer, parameter :: L_DIMENSIONLESS = l_degrees + 1
-  integer, parameter :: L_DIMLESS       = l_dimensionless + 1
-  integer, parameter :: L_DL            = l_dimless + 1
-  ! Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
-  integer, parameter :: L_DNWT_AJN      = l_dl + 1
-  integer, parameter :: L_DNWT_AXMAX    = l_dnwt_ajn + 1
-  integer, parameter :: L_DNWT_CAIT     = l_dnwt_axmax + 1
-  integer, parameter :: L_DNWT_DIAG     = l_dnwt_cait + 1
-  integer, parameter :: L_DNWT_DXDX     = l_dnwt_diag + 1
-  integer, parameter :: L_DNWT_DXDXL    = l_dnwt_dxdx + 1
-  integer, parameter :: L_DNWT_DXN      = l_dnwt_dxdxl + 1
-  integer, parameter :: L_DNWT_DXNL     = l_dnwt_dxn + 1
-  integer, parameter :: L_DNWT_FNMIN    = l_dnwt_dxnl + 1
-  integer, parameter :: L_DNWT_FNORM    = l_dnwt_fnmin + 1
-  integer, parameter :: L_DNWT_GDX      = l_dnwt_fnorm + 1
-  integer, parameter :: L_DNWT_GFAC     = l_dnwt_gdx + 1
-  integer, parameter :: L_DNWT_GRADN    = l_dnwt_gfac + 1
-  integer, parameter :: L_DNWT_SQ       = l_dnwt_gradn + 1
-  integer, parameter :: L_DNWT_SQT      = l_dnwt_sq + 1
-  ! End of quantities to report progress of DNWT
-  integer, parameter :: L_DOBSONUNITS   = l_dnwt_sqt + 1
-  integer, parameter :: L_EARTHREFL     = l_dobsonunits + 1
-  integer, parameter :: L_EFFECTIVEOPTICALDEPTH = l_earthRefl + 1
-  integer, parameter :: L_ELEVOFFSET    = l_effectiveOpticalDepth + 1
-  integer, parameter :: L_EMLS          = l_elevOffset + 1
-  integer, parameter :: L_EXTINCTION    = l_emls + 1
-  integer, parameter :: L_FALSE         = l_extinction + 1
-  integer, parameter :: L_FREQUENCY     = l_false + 1
-  integer, parameter :: L_GEODALTITUDE  = l_frequency + 1
-  integer, parameter :: L_GEODANGLE     = l_geodaltitude + 1
-  integer, parameter :: L_GHZ           = l_geodangle + 1
-  integer, parameter :: L_GPH           = l_ghz + 1
-  integer, parameter :: L_GPH_PRECISION = l_gph + 1
-  integer, parameter :: L_HEIGHTOFFSET  = l_gph_precision + 1
-  integer, parameter :: L_HOURS         = l_heightOffset + 1
-  integer, parameter :: L_HPA           = l_hours + 1
-  integer, parameter :: L_HZ            = l_hpa + 1
-  integer, parameter :: L_ICEDENSITY    = l_hz + 1
-  integer, parameter :: L_INTERMEDIATEFREQUENCY= l_icedensity + 1
-  integer, parameter :: L_ISOTOPERATIO  = l_intermediatefrequency + 1
-  integer, parameter :: L_Jacobian_Cols = l_isotopeRatio + 1
-  integer, parameter :: L_Jacobian_Rows = l_jacobian_Cols + 1
-  integer, parameter :: L_K             = l_jacobian_Rows + 1
-  integer, parameter :: L_KHZ           = l_k  + 1
-  integer, parameter :: L_KM            = l_khz + 1
-  integer, parameter :: L_LINEWIDTH     = l_km + 1
-  integer, parameter :: L_LOGP          = l_linewidth + 1
-  integer, parameter :: L_LOSTRANSFUNC  = l_logp + 1
-  integer, parameter :: L_LOSVEL        = l_lostransfunc + 1
-  integer, parameter :: L_LSBFREQUENCY  = l_losvel + 1
-  integer, parameter :: L_M             = l_lsbfrequency + 1
-  integer, parameter :: L_MAF           = l_m + 1
-  integer, parameter :: L_MAFS          = l_maf + 1
-  integer, parameter :: L_MASSMEANDIAMETERICE   = l_mafs + 1
-  integer, parameter :: L_MASSMEANDIAMETERWATER = l_massMeanDiameterIce + 1
-  integer, parameter :: L_MB            = l_massMeanDiameterWater + 1
-  integer, parameter :: L_METERS        = l_mb + 1
-  integer, parameter :: L_MHZ           = l_meters  + 1
-  integer, parameter :: L_MIF           = l_mhz + 1
-  integer, parameter :: L_MIFS          = l_mif + 1
-  integer, parameter :: L_MINUTES       = l_mifs + 1
-  integer, parameter :: L_NONE          = l_minutes + 1
-  integer, parameter :: L_ORBITINCLINATION = l_none + 1
-  integer, parameter :: L_ORBITS        = l_orbitinclination + 1
-  integer, parameter :: L_PA            = l_orbits + 1
-  integer, parameter :: L_PPBV          = l_pa + 1
-  integer, parameter :: L_PPMV          = l_ppbv + 1
-  integer, parameter :: L_PPTV          = l_ppmv + 1
-  integer, parameter :: L_PTAN          = l_pptv + 1
-  integer, parameter :: L_RAD           = l_ptan + 1
-  integer, parameter :: L_RADIANCE      = l_rad + 1
-  integer, parameter :: L_RADIANS       = l_radiance + 1
-  integer, parameter :: L_EARTHRADIUS   = l_radians + 1
-  integer, parameter :: L_REFGPH        = l_earthradius + 1
-  integer, parameter :: L_S             = l_refgph + 1
-  integer, parameter :: L_SCANRESIDUAL  = l_s + 1
-  integer, parameter :: L_SCECI         = l_scanresidual + 1
-  integer, parameter :: L_SCGEOCALT     = l_scECI + 1
-  integer, parameter :: L_SCVEL         = l_scGeocAlt + 1
-  integer, parameter :: L_SECONDS       = l_scvel + 1
-  integer, parameter :: L_SIDEBANDRATIO = l_seconds + 1
-  integer, parameter :: L_SIZEDISTRIBUTION = l_sidebandratio + 1
-  integer, parameter :: L_SPACERADIANCE = l_sizeDistribution + 1
-  integer, parameter :: L_SURFACETYPE   = l_spaceRadiance + 1
-  integer, parameter :: L_TEMPERATURE   = l_surfaceType + 1
-  integer, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
-  integer, parameter :: L_THETA         = l_temperature_prec + 1
-  integer, parameter :: L_THZ           = l_theta + 1
-  integer, parameter :: L_TIME          = l_thz + 1
-  integer, parameter :: L_TNGTECI       = l_time + 1
-  integer, parameter :: L_TNGTGEOCALT   = l_tngteci + 1
-  integer, parameter :: L_TNGTGEODALT   = l_tngtgeocalt + 1
-  integer, parameter :: L_TOTALEXTINCTION =  l_tngtgeodalt + 1
-  integer, parameter :: L_TRUE          =  l_totalExtinction + 1
-  integer, parameter :: L_UMLS          = l_true + 1
-  integer, parameter :: L_USBFREQUENCY  = l_umls + 1
-  integer, parameter :: L_VMR           = l_usbfrequency + 1
-  integer, parameter :: L_XYZ           = l_vmr + 1
-  integer, parameter :: L_ZETA          = l_xyz + 1
-  integer, parameter :: LAST_INTRINSIC_LIT = l_zeta
+! Don't edit the following file directly--it is generated automatically
+! based on the file lit_names.txt
+  include 'lit_parm.f9h'
 
   ! Specifications
   integer, parameter :: Spec_First = 1
@@ -249,116 +140,9 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_boolean) =         add_ident ( 'boolean' )
     data_type_indices(t_instrument) =      add_ident ( 'instrument' )
     ! Put intrinsic enumeration literals into the symbol table:
-    lit_indices(l_baseline) =              add_ident ( 'baseline' )
-    lit_indices(l_c) =                     add_ident ( 'C' )
-    lit_indices(l_channel) =               add_ident ( 'channel' )
-    lit_indices(l_cloudExtinction) =       add_ident ( 'cloudExtinction' )
-    lit_indices(l_cloudIce) =              add_ident ( 'cloudIce' )
-    lit_indices(l_cloudInducedRadiance) =  add_ident ( 'cloudInducedRadiance' )
-    lit_indices(l_cloudRadSensitivity) =   add_ident ( 'cloudRadSensitivity' )
-    lit_indices(l_cloudWater) =            add_ident ( 'cloudWater' )
-    lit_indices(l_days) =                  add_ident ( 'days' )
-    lit_indices(l_deg) =                   add_ident ( 'deg' )
-    lit_indices(l_degrees) =               add_ident ( 'degrees' )
-    lit_indices(l_dimensionless) =         add_ident ( 'dimensionless' )
-    lit_indices(l_dimless) =               add_ident ( 'dimless' )
-    lit_indices(l_dl) =                    add_ident ( 'dl' )
-    ! Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
-    lit_indices(l_dnwt_ajn) =               add_ident ('dnwt_ajn' )
-    lit_indices(l_dnwt_axmax) =             add_ident ('dnwt_axmax' )
-    lit_indices(l_dnwt_cait) =              add_ident ('dnwt_cait' )
-    lit_indices(l_dnwt_diag) =              add_ident ('dnwt_diag' )
-    lit_indices(l_dnwt_dxdx) =              add_ident ('dnwt_dxdx' )
-    lit_indices(l_dnwt_dxdxl) =             add_ident ('dnwt_dxdxl' )
-    lit_indices(l_dnwt_dxn) =               add_ident ('dnwt_dxn' )
-    lit_indices(l_dnwt_dxnl) =              add_ident ('dnwt_dxnl' )
-    lit_indices(l_dnwt_fnmin) =             add_ident ('dnwt_fnmin' )
-    lit_indices(l_dnwt_fnorm) =             add_ident ('dnwt_fnorm' )
-    lit_indices(l_dnwt_gdx) =               add_ident ('dnwt_gdx' )
-    lit_indices(l_dnwt_gfac) =              add_ident ('dnwt_gfac' )
-    lit_indices(l_dnwt_gradn) =             add_ident ('dnwt_gradn' )
-    lit_indices(l_dnwt_sq) =                add_ident ('dnwt_sq' )
-    lit_indices(l_dnwt_sqt) =               add_ident ('dnwt_sqt' )
-    ! End of quantities to report progress of DNWT
-    lit_indices(l_dobsonunits) =           add_ident ( 'dobsonunits' )
-    lit_indices(l_earthRefl) =             add_ident ( 'earthRefl' )
-    lit_indices(l_elevOffset) =            add_ident ( 'elevOffset' )
-    lit_indices(l_effectiveOpticalDepth) = add_ident ( 'effectiveOpticalDepth' )
-    lit_indices(l_emls) =                  add_ident ( 'emls' )
-    lit_indices(l_extinction) =            add_ident ( 'extinction' )
-    lit_indices(l_false) =                 add_ident ( 'false' )
-    lit_indices(l_frequency) =             add_ident ( 'frequency' )
-    lit_indices(l_geodaltitude) =          add_ident ( 'geodAltitude' )
-    lit_indices(l_geodangle) =             add_ident ( 'geodAngle' )
-    lit_indices(l_ghz) =                   add_ident ( 'GHz' )
-    lit_indices(l_gph) =                   add_ident ( 'gph' )
-    lit_indices(l_gph_precision) =         add_ident ( 'gph_precision' )
-    lit_indices(l_heightOffset) =          add_ident ( 'heightOffset' )
-    lit_indices(l_hours) =                 add_ident ( 'hours' )
-    lit_indices(l_hpa) =                   add_ident ( 'hPa' )
-    lit_indices(l_hz) =                    add_ident ( 'Hz' )
-    lit_indices(l_icedensity) =            add_ident ( 'IceDensity' )
-    lit_indices(l_intermediatefrequency) = add_ident ( 'intermediatefrequency' )
-    lit_indices(l_isotopeRatio) =          add_ident ( 'isotopeRatio' )
-    lit_indices(l_jacobian_cols) =         add_ident ( 'jacobian_cols' )
-    lit_indices(l_jacobian_rows) =         add_ident ( 'jacobian_rows' )
-    lit_indices(l_k) =                     add_ident ( 'K' )
-    lit_indices(l_khz) =                   add_ident ( 'KHz' )
-    lit_indices(l_km) =                    add_ident ( 'km' )
-    lit_indices(l_linewidth) =             add_ident ( 'linewidth' )
-    lit_indices(l_logp) =                  add_ident ( 'logp' )
-    lit_indices(l_losTransFunc) =          add_ident ( 'LOSTransFunc' )
-    lit_indices(l_losVel) =                add_ident ( 'LOSVel' )
-    lit_indices(l_lsbfrequency) =          add_ident ( 'LSBFrequency' )
-    lit_indices(l_m) =                     add_ident ( 'm' )
-    lit_indices(l_maf) =                   add_ident ( 'maf' )
-    lit_indices(l_mafs) =                  add_ident ( 'mafs' )
-    lit_indices(l_massMeanDiameterIce) =   add_ident ( 'massMeanDiameterIce' )
-    lit_indices(l_massMeanDiameterWater) = add_ident ( 'massMeanDiameterWater' )
-    lit_indices(l_mb) =                    add_ident ( 'mb' )
-    lit_indices(l_meters) =                add_ident ( 'meters' )
-    lit_indices(l_mhz) =                   add_ident ( 'MHz' )
-    lit_indices(l_mif) =                   add_ident ( 'mif' )
-    lit_indices(l_mifs) =                  add_ident ( 'mifs' )
-    lit_indices(l_minutes) =               add_ident ( 'minutes' )
-    lit_indices(l_none) =                  add_ident ( 'none' )
-    lit_indices(l_orbitinclination) =      add_ident ( 'orbitInclination' )
-    lit_indices(l_orbits) =                add_ident ( 'orbits' )
-    lit_indices(l_pa) =                    add_ident ( 'pa' )
-    lit_indices(l_ptan) =                  add_ident ( 'ptan' )
-    lit_indices(l_ppbv) =                  add_ident ( 'ppbv' )
-    lit_indices(l_ppmv) =                  add_ident ( 'ppmv' )
-    lit_indices(l_pptv) =                  add_ident ( 'pptv' )
-    lit_indices(l_rad) =                   add_ident ( 'rad' )
-    lit_indices(l_radiance) =              add_ident ( 'radiance' )
-    lit_indices(l_radians) =               add_ident ( 'radians' )
-    lit_indices(l_earthradius) =           add_ident ( 'earthradius' )
-    lit_indices(l_refgph) =                add_ident ( 'refGPH' )
-    lit_indices(l_s) =                     add_ident ( 's' )
-    lit_indices(l_scanresidual) =          add_ident ( 'scanResidual' )
-    lit_indices(l_scECI) =                 add_ident ( 'scECI' )
-    lit_indices(l_scGeocAlt) =             add_ident ( 'scGeocAlt' )
-    lit_indices(l_scvel) =                 add_ident ( 'scVel' )
-    lit_indices(l_seconds) =               add_ident ( 'seconds' )
-    lit_indices(l_sidebandratio) =         add_ident ( 'sidebandRatio' )
-    lit_indices(l_sizeDistribution) =      add_ident ( 'sizeDistribution' )
-    lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
-    lit_indices(l_surfaceType) =           add_ident ( 'surfaceType' )
-    lit_indices(l_temperature) =           add_ident ( 'temperature' )
-    lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
-    lit_indices(l_theta) =                 add_ident ( 'theta' )
-    lit_indices(l_thz) =                   add_ident ( 'THz' )
-    lit_indices(l_time) =                  add_ident ( 'time' )
-    lit_indices(l_tngteci) =               add_ident ( 'tngteci' )
-    lit_indices(l_tngtgeocalt) =           add_ident ( 'tngtgeocalt' )
-    lit_indices(l_tngtgeodalt) =           add_ident ( 'tngtgeodalt' )
-    lit_indices(l_totalExtinction) =       add_ident ( 'totalExtinction' )
-    lit_indices(l_true) =                  add_ident ( 'true' )
-    lit_indices(l_umls) =                  add_ident ( 'UMLS')
-    lit_indices(l_usbfrequency) =          add_ident ( 'USBFrequency')
-    lit_indices(l_vmr) =                   add_ident ( 'vmr' )
-    lit_indices(l_xyz) =                   add_ident ( 'xyz' )
-    lit_indices(l_zeta) =                  add_ident ( 'zeta' )
+! Don't edit the following file directly--it is generated automatically
+! based on the file lit_names.txt
+    include 'lit_add.f9h'
 
     ! Put spec names into the symbol table
     spec_indices(s_time) =                 add_ident ( 'time' )
@@ -440,6 +224,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.42  2001/10/04 22:12:57  pwagner
+! Now includes files lit_add.f9h and lit_parm.f9h
+!
 ! Revision 2.41  2001/10/03 18:32:44  vsnyder
 ! OOPS, forgot some lit_indices(...) = add_ident(...)
 !
