@@ -294,7 +294,7 @@ contains ! =====     Public Procedures     =============================
       & F_MOLECULEDERIVATIVES, F_NABTERMS, &
       & F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, F_NSCATTERINGANGLES, &
       & F_NSIZEBINS, F_PHIWINDOW, F_POLARIZED, F_SIGNALS, F_SKIPOVERLAPS, &
-      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, &
+      & F_SPECIFICQUANTITIES, F_SPECT_DER, F_SWITCHINGMIRROR, F_TANGENTGRID, F_TEMP_DER, &
       & F_TOLERANCE, F_TYPE
     use Intrinsic, only: L_NONE, L_CLEAR
     use MLSCommon, only: R8
@@ -383,6 +383,7 @@ contains ! =====     Public Procedures     =============================
     info%polarized = .false.
     info%skipOverlaps = .false.
     info%spect_der = .false.
+    info%switchingMirror= .false.
     info%temp_der = .false.
     info%windowUnits = phyq_profiles
 
@@ -529,6 +530,8 @@ contains ! =====     Public Procedures     =============================
         end do
       case ( f_spect_der )
         info%spect_der = get_boolean(son)
+      case ( f_switchingMirror )
+        info%switchingMirror = get_boolean(son)
       case ( f_tangentGrid )
         info%tangentGrid => vGrids(decoration(decoration(subtree(2,son))))
       case ( f_temp_der )
@@ -693,6 +696,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.61  2003/05/29 16:42:19  livesey
+! New switchingMirror stuff
+!
 ! Revision 2.60  2003/05/05 23:00:34  livesey
 ! Merged in feb03 newfwm branch
 !
