@@ -15,6 +15,7 @@ module PVM ! Interface to the f77 pvm library.
   character(LEN=130), private :: Id = & 
        "$Id$"
   character(LEN=*), private, parameter :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
   ! First we define constants as enumerated types effectively.  This is
@@ -566,9 +567,16 @@ contains
     end do hostLoop
   end subroutine GetMachineNameFromTid
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module PVM
 
 ! $Log$
+! Revision 2.11  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.10  2002/04/24 20:20:23  livesey
 ! Added PVMFTidToHost and PVMFConfig and GetMachineNameFromTID
 !

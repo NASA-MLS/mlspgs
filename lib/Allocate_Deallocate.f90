@@ -64,6 +64,7 @@ module Allocate_Deallocate
        "$Id$"
   character(len=*), parameter, private :: ModuleName = &
     & "$RCSfile$"
+  private :: not_used_here 
   !-----------------------------------------------------------------------------
 
 contains ! =====     Private Procedures     ============================
@@ -494,9 +495,16 @@ contains ! =====     Private Procedures     ============================
     collect_garbage_each_time = setting
   end subroutine Set_garbage_collection
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.11  2002/10/08 00:09:08  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.10  2002/07/01 23:47:08  vsnyder
 ! Add [De]AllocateTest_3d, cosmetic changes
 !

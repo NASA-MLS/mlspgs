@@ -21,6 +21,7 @@ module TRACE_M
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
@@ -87,9 +88,16 @@ contains ! ====     Public Procedures     ==============================
     end if
     call output ( '', advance='yes' )
   end subroutine TRACE_END
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module TRACE_M
 
 ! $Log$
+! Revision 2.11  2002/10/08 00:09:15  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.10  2001/11/09 23:14:08  vsnyder
 ! Use Time_Now instead of CPU_TIME
 !
