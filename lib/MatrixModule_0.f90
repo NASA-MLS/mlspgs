@@ -890,7 +890,7 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(inout) :: ZB
     logical, intent(in), optional :: UPDATE
     logical, intent(in), optional :: SUBTRACT
-    integer, optional, pointer, dimension(:) :: XMASK, YMASK ! Intent(in)
+    integer, optional, pointer, dimension(0:) :: XMASK, YMASK ! Intent(in)
     logical, intent(in), optional :: UPPER
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
@@ -899,7 +899,7 @@ contains ! =====     Public Procedures     =============================
   ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
-    integer :: I, J, K, L, M, MZ, N, P, R
+    integer :: I, J, K, L, M, MZ, N
     integer :: XI_1, XI_N, XR_1, XR_N, YI_1, YI_N, YR_1, YR_N, CR_1, CR_N, C_N
     integer :: XD, YD
     logical :: MY_SUB, MY_UPD, MY_UPPER
@@ -1007,7 +1007,7 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym(j/b),mod(j,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
@@ -1064,7 +1064,7 @@ contains ! =====     Public Procedures     =============================
           if ( my_upper ) mz = i
           do j = mz, yb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+              if ( btest(ym(j/b),mod(j,b)) ) cycle
             end if
             ! Inner product of column I of XB with column J of YB
             if ( .not. my_sub ) then
@@ -1095,7 +1095,7 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym(j/b),mod(j,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
@@ -1144,7 +1144,7 @@ contains ! =====     Public Procedures     =============================
         end if
         do j = 1, zb%ncols    ! Columns of Z
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym(j/b),mod(j,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
@@ -1195,7 +1195,7 @@ contains ! =====     Public Procedures     =============================
         if ( .not. my_upd ) zb%values = 0.0_r8
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym(j/b),mod(j,b)) ) cycle
           end if
           mz = zb%nrows
           if ( my_upper ) mz = j
@@ -1233,7 +1233,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Banded )       ! XB full, YB banded
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym(j/b),mod(j,b)) ) cycle
           end if
           m = yb%r1(j)        ! Index of first row of YB with nonzero value
           k = yb%r2(j-1)+1    ! K and L are indices of YB
@@ -1261,7 +1261,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Column_sparse ) ! XB full, YB column-sparse
         do j = 1, zb%ncols    ! Columns of ZB
           if ( associated(ym) ) then
-            if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+            if ( btest(ym(j/b),mod(j,b)) ) cycle
           end if
           k = yb%r1(j-1)+1    ! K and L are indices of YB
           l = yb%r1(j)
@@ -1285,7 +1285,7 @@ contains ! =====     Public Procedures     =============================
         if ( associated(xm) .or. associated(ym) ) then
           do j = 1, zb%ncols  ! Columns of ZB
             if ( associated(ym) ) then
-              if ( btest(ym(j/b+1),mod(j,b)) ) cycle
+              if ( btest(ym(j/b),mod(j,b)) ) cycle
             end if
             mz = zb%nrows
             if ( my_upper ) mz = j
@@ -2093,6 +2093,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.38  2001/06/26 20:40:33  vsnyder
+! Simplify by using zero for lower bound for first dimension of mask
+!
 ! Revision 2.37  2001/06/04 22:41:37  livesey
 ! Various bug fixes associated with m_banded.  Some still remain to be
 ! solved though
