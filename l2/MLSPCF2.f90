@@ -9,6 +9,8 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_l2_param_Cycle = 2002
    INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSStartId = 2003
    INTEGER, PARAMETER :: mlspcf_l2_param_CCSDSEndId = 2004
+   INTEGER, PARAMETER :: mlspcf_l2_param_spec_keys = 2005
+   INTEGER, PARAMETER :: mlspcf_l2_param_spec_hash = 2006
    !
    INTEGER, PARAMETER :: mlspcf_pcf_start = 900
    INTEGER, PARAMETER :: mlspcf_pcf_end = 900
@@ -58,4 +60,8 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_start = 4019
    INTEGER, PARAMETER :: mlspcf_mcf_l2dgm_end = 4019
    !
+
+   ! Change the following to 1 before delivering to sids;
+   ! when set to 0, it allows program to run w/o creating metadata
+   integer, parameter :: PENALTY_FOR_NO_METADATA = 0
 END MODULE MLSPCF2
