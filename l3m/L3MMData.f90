@@ -29,7 +29,8 @@ MODULE L3MMData
 
 ! Contents:
 
-! Definition -- L3MMData_T
+! Definitions -- L3MMData_T
+!                L3MMDiag_T
 ! Subroutines -- OutputMMGrids
 !                WriteMetaL3MM
 !                AllocateL3MM
@@ -70,6 +71,34 @@ MODULE L3MMData
 	! dimensioned as (nLevels, nLats, nLons)
 
    END TYPE L3MMData_T
+
+! This data type is used to store the l3 monthly map diagnostics.
+
+   TYPE L3MMDiag_T
+
+     CHARACTER (LEN=GridNameLen) :: name        ! name for the output quantity
+
+     INTEGER :: nLevels         ! Total number of surfaces
+     INTEGER :: nOrbs		! Number of missing orbits in the month
+     INTEGER :: nDays		! Number of missing days in the month
+
+     ! Now we store the vertical geolocation field, dimensioned (nLevels)
+
+     REAL(r8), DIMENSION(:), POINTER :: pressure
+
+     ! Missing points (percentage), dimensioned (nLevels)
+
+     INTEGER, DIMENSION(:), POINTER :: perMisPoints
+
+     ! Missing orbit numbers, dimensioned (nOrbs)
+
+     INTEGER, DIMENSION(:), POINTER :: misOrbNum
+
+     ! Missing days, dimensioned (nDays)
+
+     INTEGER, DIMENSION(:), POINTER :: misDayNum
+
+   END TYPE L3MMDiag_T
 
 CONTAINS
 
@@ -958,4 +987,7 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.1  2001/07/18 15:41:57  nakamura
+!# Module for the L3MM data type.
+!#
 !#
