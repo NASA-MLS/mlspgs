@@ -67,7 +67,7 @@ contains
 
     integer :: Details
     integer :: FieldIndex
-    integer :: GSON, J, Look
+    integer :: GSON, I, J, Look
     integer :: QuantityIndex
     integer :: Son
     integer :: VectorIndex
@@ -150,67 +150,85 @@ contains
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
         if ( type /= num_value ) call announceError ( gson, numeric )
         details = nint(values(1))
-      case ( f_forwardModel ) ! Dump a forward model config
+      case ( f_forwardModel ) ! Dump forward model configs
         if ( present(forwardModelConfigs) ) then
-          what = decoration(decoration(gson))
-          call dump ( forwardModelConfigs(what) ) ! has no details switch
+          do i = 2, nsons(son)
+            call dump ( & ! has no details switch
+              & forwardModelConfigs(decoration(decoration(subtree(i,son)))) )
+          end do
         else
           call announceError ( gson, noFWM )
         end if
-      case ( f_hGrid )    ! Dump an HGrid
+      case ( f_hGrid )    ! Dump HGrids
         if ( present(hGrids) ) then
-          what = decoration(decoration(gson))
-          call output ( ' HGrid ' )
-          call dump ( hGrids(what) ) ! has no details switch
+          do i = 2, nsons(son)
+            call output ( ' HGrid ' )
+            call dump ( & ! has no details switch
+              & hGrids(decoration(decoration(subtree(i,son)))) )
+          end do
         else
           call announceError ( gson, noHGrid )
         end if
       case ( f_pfaData )
-        call output ( ' PFA Data' )
-        call dump ( pfaData(decoration(decoration(gson))) )
-      case ( f_quantity ) ! Dump a vector quantity
-        vectorIndex = decoration(decoration(subtree(1,gson)))
-        quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-        call dump ( GetVectorQtyByTemplateIndex( &
-          & vectors(vectorIndex), quantityIndex), details=details )
-      case ( f_template ) ! Dump a vector template or a quantity template
-        look = decoration(gson)
-        if ( node_id(look) /= n_spec_args ) call announceError ( gson, unknown )
-        what = decoration(look)
-        select case ( get_spec_id(look) )
-        case ( s_quantity )
-          if ( present(quantityTemplatesDB) ) then
-            call output ( ' Quantity template' )
-            call dump ( quantityTemplatesDB(what), details=details )
-          else
-            call announceError ( gson, noQT )
-          end if
-        case ( s_vectorTemplate )
-          if ( present(vectorTemplates) ) then
-            call output ( ' Vector template' )
-            call dump ( vectorTemplates(what), details=details, quantities=quantityTemplatesDB )
-          else
-            call announceError ( gson, noVT )
-          end if
-        end select
+        do i = 2, nsons(son)
+          call output ( ' PFA Data' )
+          call dump ( pfaData(decoration(decoration(subtree(i,son)))) )
+        end do
+      case ( f_quantity ) ! Dump vector quantities
+        do i = 2, nsons(son)
+          gson = subtree(i,son)
+          vectorIndex = decoration(decoration(subtree(1,gson)))
+          quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          call dump ( GetVectorQtyByTemplateIndex( &
+            & vectors(vectorIndex), quantityIndex), details=details )
+        end do
+      case ( f_template ) ! Dump vector templates or quantity templates
+        do i = 2, nsons(son)
+          gson = subtree(i,son)
+          look = decoration(gson)
+          if ( node_id(look) /= n_spec_args ) call announceError ( gson, unknown )
+          what = decoration(look)
+          select case ( get_spec_id(look) )
+          case ( s_quantity )
+            if ( present(quantityTemplatesDB) ) then
+              call output ( ' Quantity template' )
+              call dump ( quantityTemplatesDB(what), details=details )
+            else
+              call announceError ( gson, noQT )
+            end if
+          case ( s_vectorTemplate )
+            if ( present(vectorTemplates) ) then
+              call output ( ' Vector template' )
+              call dump ( vectorTemplates(what), details=details, quantities=quantityTemplatesDB )
+            else
+              call announceError ( gson, noVT )
+            end if
+          end select
+        end do
       case ( f_tGrid )
         if ( present(vGrids) ) then
-          call output ( ' TGrid ' )
-          call dump ( vGRids(decoration(decoration(gson))), details=details )
+          do i = 2, nsons(son)
+            call output ( ' TGrid ' )
+            call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
+          end do
         else
           call announceError ( gson, noTG )
         end if
-      case ( f_vector ) ! Dump an entire vector
+      case ( f_vector ) ! Dump entire vectors
         if ( present(vectors) ) then
-          call output ( ' Vector ' )
-          call dump ( vectors(decoration(decoration(gson))), details=details )
+          do i = 2, nsons(son)
+            call output ( ' Vector ' )
+            call dump ( vectors(decoration(decoration(subtree(i,son)))), details=details )
+          end do
         else
           call announceError ( gson, noVectors )
         end if
       case ( f_vGrid )
         if ( present(vGrids) ) then
-          call output ( ' VGrid ' )
-          call dump ( vGRids(decoration(decoration(gson))), details=details )
+          do i = 2, nsons(son)
+            call output ( ' VGrid ' )
+            call dump ( vGRids(decoration(decoration(subtree(i,son)))), details=details )
+          end do
         else
           call announceError ( gson, noVG )
         end if
@@ -255,6 +273,9 @@ contains
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.9  2004/06/12 00:41:30  vsnyder
+! Allow all fields except details to be arrays
+!
 ! Revision 2.8  2004/06/09 19:59:38  pwagner
 ! Gets PFAData type and dump method from PFADataBase_m
 !
