@@ -40,6 +40,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! CompressString     Removes all leading and embedded blanks
 ! count_words        Counts the number of space-delimited words in a string
 ! depunctuate        Replaces punctuation with blanks
+! ExtractSubString   Extracts portion of string sandwiched between sub1 and sub2
 ! GetIntHashElement  Returns int from hash array corresponding to key string
 ! GetStringElement   Returns n'th element of string list
 ! GetStringHashElement   
@@ -74,6 +75,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! char* CompressString (char* str)
 ! int count_words (char* str)
 ! char* depunctuate (char* str)
+! ExtractSubString (char* str, char* outstr, char* sub1, char* sub2, &
+!       & [char* how], [log no_trim])
 ! GetIntHashElement (strlist keyList, hashArray(:), char* key, 
 !   int ErrType, log countEmpty, [char inDelim], [log part_match])
 ! GetStringElement (strlist inList, char* outElement,
@@ -94,7 +97,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! ReadCompleteLineWithoutComments (int unit, char* fullLine, [log eof], &
 !       & [char commentChar], [char continuationChar])
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
-!       & [char* which])
+!       & [char* which], [log no_trim])
 ! char* Reverse (char* str)
 ! strlist ReverseList (strlist str, [char inDelim])
 ! SortArray (char* inStrArray(:), int outIntArray(:), log CaseSensitive, &
@@ -129,7 +132,8 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! === (end of api) ===
 
   public :: Array2List, Capitalize, CompressString, count_words, &
-   & depunctuate, GetIntHashElement, GetStringElement, GetStringHashElement, &
+   & depunctuate, ExtractSubString, &
+   & GetIntHashElement, GetStringElement, GetStringHashElement, &
    & GetUniqueStrings, hhmmss_value, ints2Strings, LinearSearchStringArray, &
    & List2Array, LowerCase, NumStringElements, &
    & ReadCompleteLineWithoutComments, readIntsFromChars, ReplaceSubString, &
@@ -324,6 +328,102 @@ CONTAINS
     end do
 
   end Function depunctuate
+
+  ! --------------------------------------------------  ExtractSubString  -----
+  SUBROUTINE ExtractSubString (str, outstr, sub1, sub2, how, no_trim)
+    ! Takes a string and extracts what is sandwiched between sub1 and sub2
+	 ! Defaults to choosing only the first occurrence of sub1 and sub2
+    ! But if how == 'greedy' chooses last occurrence of sub2
+    ! or if how == 'stingy' chooses last occurrence of sub1
+    ! Note that, depending on how, we extract:
+    !    (let sub1='abc' sub2='def' str='abcabc123defdef')
+    ! (a) if how == default => 'abc123'
+    ! (b) if how == greedy => 'abc123def'
+    ! (c) if how == stingy => '123'
+    ! If no_trim is TRUE, sub1 and sub2 may have trailing spaces
+    ! that will not be trimmed before attempting to match
+    ! Method:
+    ! Replace substrings sub1 and sub2 with separator character
+    ! and then use GetStringElement to get subelement number 2
+    !  
+    ! Will this still work if sub1 has leading or trailing blanks? 
+    ! How about sub2?
+    ! Do we need an optional arg, no_trim, say, that will leave them?
+    ! Tried coding it, but can't say for sure it works
+    ! What if sub1 is a substring of sub2, or vice versa?
+    !--------Argument--------!
+    CHARACTER (LEN=*), INTENT(IN) :: str
+    CHARACTER (LEN=*), INTENT(IN) :: sub1
+    CHARACTER (LEN=*), INTENT(IN) :: sub2
+    CHARACTER (LEN=LEN(str)) :: outstr
+    character (len=*), intent(in), optional :: how
+    logical, intent(in), optional :: no_trim
+
+    !----------Local vars----------!
+    integer, parameter         :: MAXREPLACEMENTS = 100
+    INTEGER :: i
+    character (len=7) :: my_how
+    character(len=1) :: separator
+    character(len=*), parameter :: separators =',.$%#{}()'
+    character (len=len(str)) :: tmpstr
+    logical :: my_no_trim
+    !----------Executable part----------!
+    my_how = 'first'
+    if ( present(how) ) my_how = lowercase(how)
+    my_no_trim = .false.
+    if ( present(no_trim) ) my_no_trim = no_trim
+    outstr = ' '
+    if ( .not. my_no_trim) then
+      if (LEN_trim(str) < 1 .or. len_trim(sub1) < 1 &
+        & .or. &
+        & len_trim(sub2) < 1 .or. index(str, trim(sub1)) == 0 &
+        & .or. &
+        & index(str, trim(sub2)) == 0 ) RETURN
+    else
+      if (index(str, sub1) == 0 &
+        & .or. &
+        & index(str, sub2) == 0 ) RETURN
+    endif
+    do i=1, len(separators)
+      if ( index(str, separators(i:i)) == 0 ) exit
+    enddo
+    if ( i > len(separators) ) return   ! This means our method will fail
+    separator = separators(i:i)
+    select case (trim(my_how))
+    case ('greedy')
+      if ( .not. my_no_trim) then
+        call ReplaceSubString (Reverse(trim(str)), tmpstr, &
+          & Reverse(trim(sub2)), separator)
+        outstr = Reverse(trim(tmpstr))
+        call ReplaceSubString (outstr, tmpstr, sub1, separator)
+      else
+        call ReplaceSubString (Reverse(str), tmpstr, &
+          & Reverse(sub2), separator, no_trim=.true.)
+        outstr = Reverse(tmpstr)
+        call ReplaceSubString (outstr, tmpstr, sub1, separator, no_trim=.true.)
+      endif
+    case ('stingy')
+      if ( .not. my_no_trim) then
+        call ReplaceSubString (Reverse(trim(str)), tmpstr, &
+          & Reverse(trim(sub1)), separator)
+        outstr = Reverse(trim(tmpstr))
+        call ReplaceSubString (outstr, tmpstr, sub2, separator)
+      else
+        call ReplaceSubString (Reverse(str), tmpstr, &
+          & Reverse(sub1), separator, no_trim=.true.)
+        outstr = Reverse(tmpstr)
+        call ReplaceSubString (outstr, tmpstr, sub2, separator, no_trim=.true.)
+      endif
+    case default
+      call ReplaceSubString (str, outstr, sub1, separator, &
+        & which='first', no_trim=no_trim)
+      call ReplaceSubString (outstr, tmpstr, sub2, separator, &
+        & which='first', no_trim=no_trim)
+    end select
+    call GetStringElement (tmpstr, outstr, 2, .true., &
+      & inDelim=separator )
+
+  END SUBROUTINE ExtractSubString
 
   ! ---------------------------------------------  GetIntHashElement  -----
 
@@ -1313,7 +1413,7 @@ CONTAINS
         logical, intent(in)           :: back
         ! Local variables
         integer :: istrt1, istrt2, ihead
-        if ( index(the_orig, sub1) == 0 ) then
+        if ( index(the_orig, trim(sub1)) == 0 ) then
           after_sub = the_orig
           return
         endif
@@ -2438,6 +2538,9 @@ end module MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.30  2003/04/11 23:29:30  pwagner
+! Fixed bug in ReplaceSubString; added ExtractSubString
+!
 ! Revision 2.29  2003/02/27 18:36:57  pwagner
 ! utc_to_yyyymmdd optionally returns yy-mm-ddT00:00:00Z
 !
