@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 module Fill                     ! Create vectors and fill them.
@@ -140,11 +140,11 @@ contains ! =====     Public Procedures     =============================
       & DEFAULTUNDEFINEDVALUE
     use MLSFiles, only: mls_hdf_version, &
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
-    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSL2Options, only: LEVEL1_HDFVERSION, RESTARTWARNINGS
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
       & add_to_phase_timing, fillTimings, finishTimings
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
-      & MLSMSG_Allocate, MLSMSG_Deallocate
+      & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMessageReset
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
     use MLSSets, only: FindFirst
@@ -2005,6 +2005,7 @@ contains ! =====     Public Procedures     =============================
         ! Set the name for this phase
         call get_string(vectorname, phaseString)
         call add_to_phase_timing(trim(phaseString))
+        if ( RESTARTWARNINGS ) call MLSMessageReset(Warnings=.true.)
       
       case ( s_transfer ) ! ===============================  Transfer ==
         ! Here we're on a transfer instruction
@@ -7017,6 +7018,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.298  2005/03/12 00:50:27  pwagner
+! May restart warnings counter at each phase
+!
 ! Revision 2.297  2004/12/01 01:24:44  livesey
 ! Handles missing L1BMAFBaselines in the same manner as missing radiances.
 !
