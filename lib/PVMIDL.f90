@@ -49,7 +49,7 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
 
   interface PVMIDLpack
      module procedure PVMIDLpackstring, PVMIDLpackInteger, PVMIDLpackReal, &
-          & PVMIDLPACKLogical, PVMIDLpackChararr1, PVMIDLpackChararr2, &
+          & PVMIDLpackLogical, PVMIDLpackChararr1, PVMIDLpackChararr2, &
           & PVMIDLpackIntarr1, PVMIDLpackIntarr2, PVMIDLpackIntarr3, &
           & PVMIDLpackRealarr1, PVMIDLpackRealarr2, PVMIDLpackRealarr3,&
           & PVMIDLpackLogArr1, PVMIDLpackSngl, &
@@ -58,7 +58,7 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
 
   interface PVMIDLunpack
      module procedure PVMIDLunpackstring, PVMIDLunpackInteger, PVMIDLunpackReal, &
-          & PVMIDLPACKLogical, PVMIDLunpackChararr1, PVMIDLunpackChararr2, &
+          & PVMIDLunpackLogical, PVMIDLunpackChararr1, PVMIDLunpackChararr2, &
           & PVMIDLunpackIntarr1, PVMIDLunpackIntarr2, PVMIDLunpackIntarr3, &
           & PVMIDLunpackRealarr1, PVMIDLunpackRealarr2, PVMIDLunpackRealarr3, &
           & PVMIDLunpackLogarr1, PVMIDLunpackSngl, &
@@ -462,7 +462,7 @@ contains
     integer, intent(out) :: info
 
     integer, dimension(2) :: details
-    integer, dimension(2) :: sentShape
+    integer, dimension(3) :: sentShape
 
     ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
     call pvmf90unpack( details, info)
@@ -472,7 +472,7 @@ contains
 
        ! Now output the dimensions themselves
        if (info==0) call pvmf90unpack( sentShape,info)
-       if (any(sentShape/=shape(values))) info= -201
+       if (any(sentShape(1:2)/=shape(values))) info= -201
        
        ! Now unpack the data itself
        if (info==0) call pvmf90unpack(values,info)
@@ -1141,6 +1141,9 @@ contains
 end module PVMIDL
 
 ! $Log$
+! Revision 2.9  2002/10/08 17:43:19  livesey
+! Bug fixes
+!
 ! Revision 2.8  2002/10/07 23:22:09  pwagner
 ! Added (un)packSngl routines
 !
