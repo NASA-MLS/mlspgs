@@ -1,9 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module HE5_SWAPI_CHARACTER_ARRAY
 
-  public
+  public :: HE5_EHWRGLATT_CHARACTER_ARRAY, HE5_EHRDGLATT_CHARACTER_ARRAY, &
+    & HE5_SWRDFLD_CHARACTER_ARRAY, HE5_SWWRFLD_CHARACTER_ARRAY, &
+    & HE5_SWWRATTR_CHARACTER_ARRAY, HE5_SWWRLATTR_CHARACTER_ARRAY, &
+    & HE5_SWRDATTR_CHARACTER_ARRAY, HE5_SWRDLATTR_CHARACTER_ARRAY
+  private
 
   !------------------------------- RCS Ident Info ----------------------------
   character(len=256), private :: Id = &
@@ -28,6 +32,18 @@ contains
     he5_ehwrglatt_character_ARRAY = he5_ehwrglatt(fileID, &
          & attrname, datatype, count, buffer )
   end function HE5_EHWRGLATT_CHARACTER_ARRAY
+
+  integer function HE5_EHRDGLATT_CHARACTER_ARRAY ( FILEID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER(:)   ! Buffer for read
+
+    integer, external :: HE5_EHRDGLATT
+
+    he5_ehrdglatt_CHARACTER_ARRAY = he5_ehrdglatt(fileID, &
+         & attrname, buffer )
+  end function HE5_EHRDGLATT_CHARACTER_ARRAY
 
   integer function HE5_SWRDFLD_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
     & STARTS, STRIDES, EDGES, BUFFER )
@@ -87,6 +103,31 @@ contains
     he5_swwrlattr_character_ARRAY = he5_swwrlattr(swathid, fieldname, &
          & attrname, datatype, count, buffer )
   end function HE5_SWWRLATTR_CHARACTER_ARRAY
+
+  integer function HE5_SWRDATTR_CHARACTER_ARRAY ( SWATHID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER(:)       ! Buffer for read
+
+    integer, external :: HE5_SWRDATTR
+
+    HE5_SWRDATTR_CHARACTER_ARRAY = he5_swrdattr(swathid, &
+         & attrname, buffer )
+  end function HE5_SWRDATTR_CHARACTER_ARRAY
+
+  integer function HE5_SWRDLATTR_CHARACTER_ARRAY ( SWATHID, FIELDNAME, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    character(len=*), intent(out) :: BUFFER(:)       ! Buffer for read
+
+    integer, external :: HE5_SWRDLATTR
+
+    HE5_SWRDLATTR_CHARACTER_ARRAY = he5_swrdlattr(swathid, fieldname, &
+         & attrname, buffer )
+  end function HE5_SWRDLATTR_CHARACTER_ARRAY
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))

@@ -1,11 +1,13 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module HE5_SWAPI_DOUBLE
 
   public :: HE5_SWRDFLD_DOUBLE, HE5_SWRDFLD_DOUBLE_2D, HE5_SWRDFLD_DOUBLE_3D, &
     & HE5_SWWRFLD_DOUBLE, HE5_SWWRFLD_DOUBLE_2D, HE5_SWWRFLD_DOUBLE_3D, &
-    & HE5_EHWRGLATT_DOUBLE, HE5_SWWRATTR_DOUBLE, HE5_SWWRLATTR_DOUBLE
+    & HE5_EHWRGLATT_DOUBLE, HE5_EHRDGLATT_DOUBLE, &
+    & HE5_SWWRATTR_DOUBLE, HE5_SWWRLATTR_DOUBLE, &
+    & HE5_SWRDATTR_DOUBLE, HE5_SWRDLATTR_DOUBLE
   public :: HE5_SWSETFILL_DOUBLE
   private
 
@@ -32,6 +34,18 @@ contains
     he5_ehwrglatt_DOUBLE = he5_ehwrglatt(fileID, &
          & attrname, datatype, count, buffer )
   end function HE5_EHWRGLATT_DOUBLE
+
+  integer function HE5_EHRDGLATT_DOUBLE ( FILEID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    double precision, intent(out) :: BUFFER(:)   ! Buffer for read
+
+    double precision, external :: HE5_EHRDGLATT
+
+    he5_ehrdglatt_DOUBLE = he5_ehrdglatt(fileID, &
+         & attrname, buffer )
+  end function HE5_EHRDGLATT_DOUBLE
 
   integer function HE5_SWSETFILL_DOUBLE (SWATHID, FIELDNAME, NUMBERTYPE, &
     & FILLVALUE)
@@ -163,12 +177,40 @@ contains
          & attrname, datatype, count, buffer )
   end function HE5_SWWRLATTR_DOUBLE
 
+  integer function HE5_SWRDATTR_DOUBLE ( SWATHID, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    double precision, intent(out) :: BUFFER(:)       ! Buffer for read
+
+    integer, external :: HE5_SWRDATTR
+
+    HE5_SWRDATTR_DOUBLE = he5_swrdattr(swathid, &
+         & attrname, buffer )
+  end function HE5_SWRDATTR_DOUBLE
+
+  integer function HE5_SWRDLATTR_DOUBLE ( SWATHID, FIELDNAME, &
+    & ATTRNAME, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    double precision, intent(out) :: BUFFER(:)       ! Buffer for read
+
+    integer, external :: HE5_SWRDLATTR
+
+    HE5_SWRDLATTR_DOUBLE = he5_swrdlattr(swathid, fieldname, &
+         & attrname, buffer )
+  end function HE5_SWRDLATTR_DOUBLE
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module HE5_SWAPI_DOUBLE
 ! $Log$
+! Revision 2.5  2004/02/13 00:16:02  pwagner
+! New stuff for reading swath attributes
+!
 ! Revision 2.4  2003/04/11 23:32:23  pwagner
 ! Moved he5_swsetfill he5_ehwrglatt interfaces
 !
