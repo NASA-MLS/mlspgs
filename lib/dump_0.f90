@@ -5,6 +5,7 @@ module DUMP_0
 
 ! Low-level dump routines -- for some arrays of intrinsic type.
 
+  use MLSSets, only: FindAll
   use MLSStrings, only: GetStringElement, NumStringElements
   use OUTPUT_M, only: BLANKS, OUTPUT
 
@@ -45,6 +46,7 @@ module DUMP_0
 !---------------------------------------------------------------------------
 
   character, parameter :: AfterSub = '#'
+  logical, public, save ::   STATSONONELINE = .true.
   logical, parameter ::   DEEBUG = .false.
 
   character(*), parameter :: MyFormatDefault = '(1pg14.6)'
@@ -206,26 +208,7 @@ contains
     if ( present(stats) ) myStats=stats
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
-    if ( myStats ) then
-      numNonFill = count(array /= myFillValue)
-      numFill = size(array) - numNonFill
-      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
-      pctFill = 100.0 - pctNonFill
-      if ( present(name) ) call output(trim(name) // ' ', advance='no')
-      call output('Statistics on elements = or != ', advance='no')
-      call output(myFillValue, advance='yes')
-      call output('"!=" ', advance='no')
-      call output(numNonFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctNonFill, advance='no')
-      call output('%)   ', advance='no')
-      call output(' "=" ', advance='no')
-      call output(numFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctFill, advance='no')
-      call output('%)   ', advance='yes')
-      return
-    endif
+    include 'dumpstats.f9h'
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myWidth = defaultWidth
@@ -292,26 +275,7 @@ contains
     if ( present(stats) ) myStats=stats
     myFillValue = 0
     if ( present(FillValue) ) myFillValue=FillValue
-    if ( myStats ) then
-      numNonFill = count(array /= myFillValue)
-      numFill = size(array) - numNonFill
-      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
-      pctFill = 100.0 - pctNonFill
-      if ( present(name) ) call output(trim(name) // ' ', advance='no')
-      call output('Statistics on elements = or != ', advance='no')
-      call output(myFillValue, advance='yes')
-      call output('"!=" ', advance='no')
-      call output(numNonFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctNonFill, advance='no')
-      call output('%)   ', advance='no')
-      call output(' "=" ', advance='no')
-      call output(numFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctFill, advance='no')
-      call output('%)   ', advance='yes')
-      return
-    endif
+    include 'dumpstats.f9h'
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myWidth = 10
@@ -407,26 +371,7 @@ contains
     if ( present(stats) ) myStats=stats
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
-    if ( myStats ) then
-      numNonFill = count(array /= myFillValue)
-      numFill = size(array) - numNonFill
-      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
-      pctFill = 100.0 - pctNonFill
-      if ( present(name) ) call output(trim(name) // ' ', advance='no')
-      call output('Statistics on elements = or != ', advance='no')
-      call output(myFillValue, advance='yes')
-      call output('"!=" ', advance='no')
-      call output(numNonFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctNonFill, advance='no')
-      call output('%)   ', advance='no')
-      call output(' "=" ', advance='no')
-      call output(numFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctFill, advance='no')
-      call output('%)   ', advance='yes')
-      return
-    endif
+    include 'dumpstats.f9h'
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -445,14 +390,6 @@ contains
       call name_and_size ( name, myClean, size(array) )
       if ( present(name) ) call output ( '', advance='yes' )
       do j = 1, size(array), myWidth
-!         if (.not. myClean) then
-!           call output ( j, max(defaultWidth-1,ilog10(size(array))+1) )
-!           call output ( afterSub )
-!         end if
-!         do k = j, min(j+myWidth-1, size(array))
-!           call output ( array(k), myFormat )
-!         end do
-!        call output ( '', advance='yes' )
         if (.not. myClean) then
           if ( any(array(j:min(j+myWidth-1, size(array))) /= myFillValue) ) then
             call say_fill ( (/ j-1, size(array) /), numZeroRows, myFillValue, inc=1 )
@@ -927,7 +864,7 @@ contains
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
-    call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
+    call FindAll( (/ size(array, 1), size(array, 2), size(array, 3)/), &
       & 1, which, how_many, re_mainder=re_mainder)
 
     numZeroRows = 0
@@ -993,26 +930,8 @@ contains
     if ( present(stats) ) myStats=stats
     myFillValue = 0.d0
     if ( present(FillValue) ) myFillValue=FillValue
-    if ( myStats ) then
-      numNonFill = count(array /= myFillValue)
-      numFill = size(array) - numNonFill
-      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
-      pctFill = 100.0 - pctNonFill
-      if ( present(name) ) call output(trim(name) // ' ', advance='no')
-      call output('Statistics on elements = or != ', advance='no')
-      call output(myFillValue, advance='yes')
-      call output('"!=" ', advance='no')
-      call output(numNonFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctNonFill, advance='no')
-      call output('%)   ', advance='no')
-      call output(' "=" ', advance='no')
-      call output(numFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctFill, advance='no')
-      call output('%)   ', advance='yes')
-      return
-    endif
+    include 'dumpstats.f9h'
+
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myFormat = MyFormatDefault
@@ -1075,7 +994,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = 10
     if ( present(width) ) myWidth = width
-    call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
+    call FindAll( (/ size(array, 1), size(array, 2), size(array, 3)/), &
       & 1, which, how_many, re_mainder=re_mainder)
 
     numZeroRows = 0
@@ -1144,26 +1063,6 @@ contains
     if ( present(stats) ) myStats=stats
     myFillValue = 0.
     if ( present(FillValue) ) myFillValue=FillValue
-    if ( myStats ) then
-      numNonFill = count(array /= myFillValue)
-      numFill = size(array) - numNonFill
-      pctNonFill = numNonFill / ( 0.01 * (numNonFill+numFill) )
-      pctFill = 100.0 - pctNonFill
-      if ( present(name) ) call output(trim(name) // ' ', advance='no')
-      call output('Statistics on elements = or != ', advance='no')
-      call output(myFillValue, advance='yes')
-      call output('"!=" ', advance='no')
-      call output(numNonFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctNonFill, advance='no')
-      call output('%)   ', advance='no')
-      call output(' "=" ', advance='no')
-      call output(numFill, advance='no')
-      call output('( ', advance='no')
-      call output(pctFill, advance='no')
-      call output('%)   ', advance='yes')
-      return
-    endif
     myClean = .false.
     if ( present(clean) ) myClean = clean
     myFormat = MyFormatDefault
@@ -1530,85 +1429,6 @@ contains
     call output ( afterSub )
   end subroutine Say_Subs_Only
 
-  ! ------------------------------------------  WHICH_INTS_ARE_IT  -----
-  ! Along with a (yet unwritten) fraternal subr. 'which_strings_are_it'
-  ! this is possibly better aligned with MLSNumerics or MLSStrings
-  ! themes; however, for now we leave it here
-  subroutine WHICH_INTS_ARE_IT ( INTS, IT, WHICH, HOW_MANY, RE_MAINDER, WHICH_NOT )
-    ! Return which i of ints[i] = it
-    ! optionally, return also how many of them do
-    ! which_not of them (which don't)
-    ! and the re_mainder of the ints != it
-    ! e.g. given ints = /(4, 3, 1, 2, 1, 3 )/ and it = 1
-    ! produces which = /(3, 5)/, 
-    !      which_not = /(1, 2, 4, 6)/, 
-    !       how_many = 2,
-    !     re_mainder = /(4, 3, 2, 3)/
-    
-    ! This may be useful in reshaping an array to suppress any dims 
-    ! that are identically 1
-
-    ! Formal arguments
-    integer, intent(in), dimension(:)  ::           ints
-    integer, intent(in)                ::           it
-    integer, intent(out), dimension(:) ::           which
-    integer, intent(out), optional ::               how_many
-    integer, intent(out), dimension(:), optional :: re_mainder
-    integer, intent(out), dimension(:), optional :: which_not
-
-    ! local variables
-    integer :: i, i_which, i_re_mainder
-    
-    if ( size(ints) < 1 .or. size(which) < 1 ) then
-      if ( present(how_many) ) how_many = 0
-      if ( present(re_mainder) ) re_mainder = 0
-      if ( DEEBUG ) then
-        call output('size of ints or which too small', advance='yes')
-        call output('ints: ')
-        call output(ints, advance='yes')
-        call output('which: ')
-        call output(which, advance='yes')
-      end if
-      return
-    end if
-    i_which = 0
-    i_re_mainder = 0
-    do i=1, size(ints)
-      if ( ints(i) == it ) then
-        i_which = i_which+1
-        which(min(size(which), i_which)) = i
-      else
-        i_re_mainder = i_re_mainder+1
-        if ( present(which_not) ) &
-          & re_mainder(min(size(which_not), i_re_mainder)) = i
-        if ( present(re_mainder) ) &
-          & re_mainder(min(size(re_mainder), i_re_mainder)) = ints(i)
-      end if
-    end do
-    if ( present(how_many) ) how_many = i_which
-    if ( DEEBUG ) then
-        call output('ints: ')
-        call output(ints, advance='yes')
-        call output('it: ')
-        call output(it, advance='yes')
-        call output('which: ')
-        call output(which, advance='yes')
-        if ( present(how_many) ) then
-          call output('how_many: ')
-          call output(how_many, advance='yes')
-        end if
-        if ( present(which_not) ) then
-          call output('which_not: ')
-          call output(which_not, advance='yes')
-        end if
-        if ( present(re_mainder) ) then
-          call output('re_mainder: ')
-          call output(re_mainder, advance='yes')
-        end if
-    end if
-
-  end subroutine WHICH_INTS_ARE_IT
-
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -1616,6 +1436,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.37  2004/06/11 19:04:29  pwagner
+! which_ints_are_it renamed findAll, moved MLSSets.f90
+!
 ! Revision 2.36  2004/05/27 23:25:33  pwagner
 ! Added stats parameter; also more 1-d get fillvalue
 !
