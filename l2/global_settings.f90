@@ -768,6 +768,7 @@ contains
       select case ( field )
       case ( f_type )
         Direct%Type = decoration(gson)
+        Direct%autoType = Direct%Type
       case ( f_file )
         file = sub_rosa(subtree(2,son))
         Direct%fileIndex = file
@@ -817,6 +818,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.78  2004/01/22 00:54:36  pwagner
+! Fixed mistaken impression that direct arg is a pointer
+!
 ! Revision 2.77  2003/12/11 22:59:08  pwagner
 ! May fill DirectWriteDatabase in global settings
 !
