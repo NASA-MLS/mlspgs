@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
@@ -1460,7 +1460,7 @@ contains
   end function ReadGloriaFile
 
   ! --------------------------------------------------  Read_Climatology
-  subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, &
+  subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, returnStatus, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, missingValue, echo_data, &
     & dump_data )
     ! Brief description of program
@@ -1471,6 +1471,7 @@ contains
     character*(*), intent(in) :: input_fname			! Physical file name
     type (GriddedData_T), dimension(:), pointer :: aprioriData 
     integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
+    integer, intent(out) :: returnStatus ! E.g., FILENOTFOUND
     integer, optional, intent(IN) :: mlspcf_l2clim_start, mlspcf_l2clim_end
     real, optional, intent(IN) :: missingValue
     logical, optional, intent(in) :: echo_data        ! echo climatology quantity name
@@ -1495,6 +1496,7 @@ contains
     logical :: use_PCF
 
     ! begin
+    returnStatus = FILENOTFOUND
     end_of_file=.false.
     if(present(echo_data)) then
       echo = echo_data
@@ -1594,6 +1596,7 @@ contains
           &"Error closing " // fname, &
           &'error number: ', extra_number=ErrType)
       endif
+      returnStatus = ErrType
     else
       call announce_error (ROOT, &
         &"Error opening " // fname, &
@@ -1768,6 +1771,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.35  2004/06/23 17:11:50  pwagner
+! read_climatology now returns status, e.g. FILENOTFOUND
+!
 ! Revision 2.34  2004/01/23 01:12:27  pwagner
 ! Some care taken in handling ...inq.. functions
 !
