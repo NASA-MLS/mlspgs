@@ -5,8 +5,6 @@
 module HGrid                    ! Horizontal grid information
 !=============================================================================
 
-  use MLSCommon, only: RK => R8
-
   implicit none
   private
   public :: CreateHGridFromMLSCFInfo, ComputeNextChunksHGridOffsets, &
@@ -45,8 +43,7 @@ contains ! =====     Public Procedures     =============================
 
     use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
-    use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID, &
-      & ADDHGRIDTODATABASE
+    use HGridsDatabase, only: HGRID_T, CREATEEMPTYHGRID, NULLIFYHGRID
     use INIT_TABLES_MODULE, only: F_DATE, F_FORBIDOVERSPILL, F_FRACTION, F_GEODANGLE, &
       & F_HEIGHT, FIELD_FIRST, FIELD_LAST, F_INCLINATION, F_INSETOVERLAPS, &
       & F_INTERPOLATIONFACTOR, F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP, F_MIF, &
@@ -62,8 +59,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
     use MLSNumerics, only: HUNT
     use MoreTree, only: GET_BOOLEAN
-    use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
-    use Output_M, only: OUTPUT
+    use STRING_TABLE, only: GET_STRING
     use TOGGLES, only: GEN, TOGGLE, SWITCHES
     use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NSONS, SUB_ROSA, SUBTREE
@@ -412,7 +408,7 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Chunks_m, only: MLSChunk_T
     use Dump_0, only: DUMP
-    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, NULLIFYHGRID, TRIMHGRID
+    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID
     use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, &
       & F_MIF, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_MIF
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
@@ -693,7 +689,7 @@ contains ! =====     Public Procedures     =============================
     use Chunks_m, only: MLSChunk_T
     use Dump_0, only: DUMP
     use EmpiricalGeometry, only: EmpiricalLongitude, ChooseOptimumLon0
-    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, NULLIFYHGRID, TRIMHGRID
+    use HGridsDatabase, only: CREATEEMPTYHGRID, HGRID_T, TRIMHGRID
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: L1BInfo_T, NameLen, RK => R8, TAI93_RANGE_T
@@ -1100,7 +1096,7 @@ contains ! =====     Public Procedures     =============================
     & instrumentModuleName, l1bInfo )
 
     use Chunks_m, only: MLSChunk_T
-    use HGridsDatabase, only: HGRID_T, NULLIFYHGRID, CREATEEMPTYHGRID
+    use HGridsDatabase, only: HGRID_T
     use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
       & AssembleL1BQtyName
     use MLSCommon, only: L1BInfo_T, NameLen, R8
@@ -1268,7 +1264,7 @@ contains ! =====     Public Procedures     =============================
   subroutine ComputeAllHGridOffsets ( root, index, chunks, l1bInfo, &
     & l2gpDatabase, processingRange )
     ! This routine goes through the L1 file and works out how big each HGrid is going to be
-    use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+    use Allocate_Deallocate, only: ALLOCATE_TEST
     use Chunks_m, only: MLSChunk_T
     use MLSCommon, only: L1BINFO_T, TAI93_RANGE_T
     use L2GPData, only: L2GPDATA_T
@@ -1467,6 +1463,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.67  2004/12/27 23:05:47  vsnyder
+! Remove unreferenced use names
+!
 ! Revision 2.66  2004/08/20 17:58:42  livesey
 ! Made dontpad=true on most calls.
 !
