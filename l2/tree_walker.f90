@@ -138,14 +138,28 @@ subtrees: do while ( j <= howmany )
             end select
             j = j + 1
           end do subtrees
+          ! Now, if we're dealing with more than one chunk destroy stuff
+          ! Otherwise, we'll save them as we may need to output them as l2pc files.
+          if ( size(chunks) > 1) then
+            call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
+              & mifGeolocation )
+            call DestroyVectorDatabase ( vectors )
+            call DestroyMatrixDatabase ( matrices )
+          end if
+        end do ! on chunkNo
+        i = j - 1 ! one gets added back in at the end of the outer loop
+      case ( z_output ) ! Write out the data
+        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcDatabase, l2pcf,&
+          & size(chunks)==1 )
+
+        ! For case where there was one chunk, destroy vectors etc.
+        ! This is to guard against destroying stuff needed by l2pc writing
+        if ( size(chunks) == 1) then
           call MLSL2DeConstruct ( qtyTemplates, vectorTemplates, &
             & mifGeolocation )
           call DestroyVectorDatabase ( vectors )
           call DestroyMatrixDatabase ( matrices )
-        end do ! on chunkNo
-        i = j - 1 ! one gets added back in at the end of the outer loop
-      case ( z_output ) ! Write out the data
-        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcDatabase, l2pcf )
+        end if
 
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
@@ -179,6 +193,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.42  2001/04/25 20:34:36  livesey
+! Now supports writing of l2pc files
+!
 ! Revision 2.41  2001/04/25 19:31:13  livesey
 ! Fixed bug, now nullifies l2pcDatabase
 !
