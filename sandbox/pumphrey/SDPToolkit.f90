@@ -2,16 +2,17 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
-MODULE SDPToolkit     ! Substitute for the essential toolkit routines
+module SDPToolkit     ! Substitute for the essential toolkit routines
 !=============================================================================
 
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE :: Id, ModuleName
+  public::PGS_SMF_GenerateStatusReport
   !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN = 256) :: Id = &
+  character (len = 256),parameter,private :: Id = &
        "$Id$"
-  CHARACTER ( LEN = *), PARAMETER :: ModuleName= "$RCSfile$"
+  character ( len = *), parameter,private :: &
+       ModuleName= "$RCSfile$"
   !---------------------------------------------------------------------------
   ! This module gives substitutes for the essential toolkit routines used by
   ! library code used in both the toolkit and non toolkit environment.
@@ -20,17 +21,17 @@ MODULE SDPToolkit     ! Substitute for the essential toolkit routines
   ! separate directory from mlspgs/lib, so one can tell the compiler to look
   ! there first for source files
 
-CONTAINS
+contains
 
-  FUNCTION PGS_SMF_GenerateStatusReport(message) result (GenerateStatusReport)
-    CHARACTER (LEN=*), INTENT(IN) :: message
-    INTEGER :: GenerateStatusReport
+  function PGS_SMF_GenerateStatusReport(message) result (GenerateStatusReport)
+    character (len=*), intent(in) :: message
+    integer :: GenerateStatusReport
 
-    PRINT*,message
+    print*,message
     GenerateStatusReport=0
-  END FUNCTION PGS_SMF_GenerateStatusReport
+  end function PGS_SMF_GenerateStatusReport
 
 !=============================================================================
-END MODULE SDPToolkit
+end module SDPToolkit
 !=============================================================================
 

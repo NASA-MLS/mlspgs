@@ -6,9 +6,9 @@ program test_l3ascii
   integer::unit,counter
   type(GriddedData_T)::field
   logical :: doleak
-  real(kind=r8)::outval!,pressure,lat
+  !real(kind=r8)::outval!,pressure,lat
   ! variables for plotting section
-  integer::ic,nperdec,nlevs,nlats,firstlat,lastlat,i,j
+  !integer::ic,nperdec,nlevs,nlats,firstlat,lastlat,i,j
 
   print*,"Enter l3ascii file name "
   read "(a)" ,filename
@@ -61,11 +61,11 @@ program test_l3ascii
      print*," then there is a memory leak in this program "
      print*," (or maybe your Fortran 90 compiler.......)"
      counter=0
-     leak:do counter=1,800
+     leak:do counter=1,80000
          call l3ascii_open(filename,unit)
          call l3ascii_read_field(unit,field)
 !         call l3ascii_read_field(unit,field)
-   call l3ascii_interp_field(field,outval,lat=30.0_r8,pressure=45.0_r8)
+   !call l3ascii_interp_field(field,outval,lat=30.0_r8,pressure=45.0_r8)
          close(unit=unit)
          if (modulo(counter,100) == 0) then
             print*,"Done ",counter," open/read/close cycles"
