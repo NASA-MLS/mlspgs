@@ -280,7 +280,10 @@ contains ! =====     Public Procedures     =============================
       else
         noSurfsInL2GP = 0
       end if
-      call SetupNewL2GPRecord ( noSurfsInL2GP, quantity%noChans, newL2GP )
+
+      !Reordered args in following routine
+!      call SetupNewL2GPRecord ( noSurfsInL2GP, quantity%noChans, newL2GP )
+      call SetupNewL2GPRecord ( newL2GP, quantity%noChans, noSurfsInL2GP )
 
       ! Setup the standard stuff, only pressure as it turns out.
       if ( quantity%verticalCoordinate == l_Pressure ) &
@@ -305,12 +308,14 @@ contains ! =====     Public Procedures     =============================
 
     ! Expand l2gp (initially all zero-size arrays) to take the new information
     call ExpandL2GPDataInPlace ( thisL2GP, &
-      & thisL2GP%noInstances+noOutputInstances )
+      & thisL2GP%nTimes+noOutputInstances )
 
     ! Now copy the information from the quantity to the l2gpData
 
-    thisL2GP%name = name
-    lastProfile=thisL2GP%noInstances
+    ! name is an integer, but L2GP%name is Character data
+!    thisL2GP%name = name
+    thisL2GP%nameIndex = name
+    lastProfile=thisL2GP%nTimes
     firstProfile=lastProfile-noOutputInstances+1
 
     ! Now fill the data, first the geolocation
@@ -329,15 +334,16 @@ contains ! =====     Public Procedures     =============================
     thisL2GP%time(firstProfile:lastProfile) = &
       & quantity%time(1,useFirstInstance:useLastInstance)
     ! Convert the time to CCSDS format too.
-    do profNo = firstProfile, lastProfile
+    ! Nope, dropped the CCSDS format from our L2GP Data type
+!    do profNo = firstProfile, lastProfile
 !<<<<<<< Join.f90
-      status = PGS_TD_TAItoUTC ( &
-        & quantity%time(1,useFirstInstance+profNo-firstProfile), &
-        & thisL2GP%ccsdsTime(profNo) )
-      if ( status /= PGS_S_SUCCESS .and. status /= PGSTD_E_NO_LEAP_SECS ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Unable to convert time in l2gp to CCSDS format" )
-    end do
+!      status = PGS_TD_TAItoUTC ( &
+!        & quantity%time(1,useFirstInstance+profNo-firstProfile), &
+!        & thisL2GP%ccsdsTime(profNo) )
+!      if ( status /= PGS_S_SUCCESS .and. status /= PGSTD_E_NO_LEAP_SECS ) &
+!        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+!        & "Unable to convert time in l2gp to CCSDS format" )
+!    end do
 
 !=======
 !      TAItime = quantity%time(1,useFirstInstance+profNo-firstProfile)
@@ -628,6 +634,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.3  2000/10/05 16:37:19  pwagner
+! Now compiles with new L2GPData module
+!
 ! Revision 2.2  2000/09/11 19:34:35  ahanzel
 ! Removed old log entries in file.
 !
