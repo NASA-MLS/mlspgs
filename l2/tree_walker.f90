@@ -56,7 +56,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) :: FIRST_SECTION! Index of son of root of first n_cf
 
-    type (GriddedData_T), dimension(:), pointer :: aprioriData => NULL() 
+    type (GriddedData_T), dimension(:), pointer :: griddedData => NULL() 
     integer :: chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: CHUNKS => NULL() ! of data
     integer :: HOWMANY                  ! Nsons(Root)
@@ -104,7 +104,7 @@ contains ! ====     Public Procedures     ==============================
 !       call test_parse_signals  ! Uncomment this to test Parse_Signals
       case ( z_readapriori )
         ! Read apriori here
-      	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase, aprioriData)
+      	CALL read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedData)
       case ( z_mergeapriori )
         ! Merge apriori here
       case ( z_chunkdivide )
@@ -120,7 +120,7 @@ subtrees: do while ( j <= howmany )
               call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
                 & qtyTemplates, vectorTemplates, vGrids, mifGeolocation )
             case ( z_fill )
-              call MLSL2Fill ( son, l1bInfo, aprioriData, vectorTemplates, &
+              call MLSL2Fill ( son, l1bInfo, griddedData, vectorTemplates, &
                 & vectors, qtyTemplates, l2gpDatabase , l2auxDatabase, &
                 & chunks, chunkNo)
             case ( z_join )
@@ -145,7 +145,7 @@ subtrees: do while ( j <= howmany )
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
         call DestroyL1BInfo ( l1bInfo )
-        call DestroyGridTemplateDatabase ( aprioriData )
+        call DestroyGridTemplateDatabase ( griddedData )
         call DestroyChunkDatabase (chunks )
         call DestroyL2GPDatabase ( l2gpDatabase )
         call DestroyL2AUXDatabase ( l2auxDatabase )
@@ -163,6 +163,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.23  2001/03/28 23:47:48  livesey
+! Added arguments to sids etc.
+!
 ! Revision 2.22  2001/03/28 01:24:55  vsnyder
 ! Move vGrid from construct section to global settings section
 !
