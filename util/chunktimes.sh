@@ -23,6 +23,8 @@
 # -s2h          convert timings from seconds to hours
 # -h2s          convert timings from hours to seconds
 # -node         include node numbers on each line
+# -perl program  
+#               use program instead of perl to run chunktimes.pl
 # -h[elp]       print brief help message; exit
 #
 #Note:
@@ -99,6 +101,7 @@ PRINT_TOO_MUCH=0
 me="$0"
 my_name=chunktimes.sh
 I=chunktimes
+PERL=perl
 # $reecho is reecho with me's path prepended
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 # $the_perl_script is me but 'sh' -> 'pl'
@@ -120,6 +123,11 @@ while [ "$more_opts" = "yes" ] ; do
        ;;
     -head )
 	    list="$2"
+       shift
+	    shift
+       ;;
+    -perl )
+       PERL="$2"
        shift
 	    shift
        ;;
@@ -200,12 +208,12 @@ fi
 rm -f $temp_file1 $temp_file2
 if [ "$sort" = "no" ]
 then
-  # echo $the_perl_script $extra_args
-  $the_perl_script $extra_args > $temp_file1
-  # $the_perl_script $extra_args | head
+  # echo $PERL $the_perl_script $extra_args
+  $PERL $the_perl_script $extra_args > $temp_file1
+  # $PERL $the_perl_script $extra_args | head
 else
-  $the_perl_script -headonly $extra_args > $temp_file1
-  $the_perl_script -nohead $extra_args > $temp_file2
+  $PERL $the_perl_script -headonly $extra_args > $temp_file1
+  $PERL $the_perl_script -nohead $extra_args > $temp_file2
   if [ "$s_column" = "final" ]
   then
     s_column=`cat $temp_file1 | wc -w`
@@ -232,6 +240,9 @@ cat $temp_file1
 rm -f $temp_file1 $temp_file2
 exit
 # $Log$
+# Revision 1.3  2004/07/28 00:15:25  pwagner
+# Added -node option
+#
 # Revision 1.2  2004/07/13 21:23:22  pwagner
 # Fixed bugs; added -s2h and -h2s options
 #

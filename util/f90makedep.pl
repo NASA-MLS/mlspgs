@@ -1,5 +1,3 @@
-#!/usr/local/bin/perl
-#
 # Usage: f90makedep.pl
 #
 # It has become a multipurpose tool, exploiting some of perl's
@@ -673,6 +671,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.12  2004/03/18 17:58:09  pwagner
+# Ended foolish use of temp file to learn cwd
+#
 # Revision 1.11  2003/09/24 19:18:42  pwagner
 # Restored to proper functioning despite new perl
 #

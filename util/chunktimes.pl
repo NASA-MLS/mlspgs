@@ -1,5 +1,3 @@
-#!/usr/local/bin/perl
-# chunktimes.pl
 # Usage:
 # chunktimes.pl mlsl2.log
 # where mlsl2.log is the catenation of all the chunks' logs from a run
@@ -196,6 +194,9 @@ sub PrintTime {
    }
 }
 # $Log$
+# Revision 1.3  2004/07/28 00:15:25  pwagner
+# Added -node option
+#
 # Revision 1.2  2004/07/13 21:23:22  pwagner
 # Fixed bugs; added -s2h and -h2s options
 #

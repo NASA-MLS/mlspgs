@@ -25,6 +25,8 @@
 # -h[elp]       print brief help message; exit
 # -lib          if this flag is present, 
 #                executes "rm -f *.a" if any ghosts found
+# -perl program  
+#               use program instead of perl to run f90GhostFiles.pl
 #Note:
 #The option(s) marked with "-", if present,
 #must precede the extra search directories on the command line
@@ -150,11 +152,6 @@ PRINT_TOO_MUCH=0
 
 TRY_CLEANUP=1
 #           ^  -- set this to 1 to try cleaning up from a prior faulty run
-MAY_EDIT_PERL=1
-#             ^  -- set this to 1 to permit correcting perl path
-AUTO_REPLY=1
-#          ^  -- set this to 1 to automate user responses to 'y'
-#                (in this case automate correcting perl path)
 #
 #           How to rename or hide excluded files so they !~= %.f90
 #dsuffix=".xug"
@@ -190,6 +187,7 @@ fi
 
 me="$0"
 my_name=ghostbuster.sh
+PERL=perl
 
 wrong_list=""
 rm_any_libs="no"
@@ -215,12 +213,17 @@ while [ "$more_opts" = "yes" ] ; do
     -lib )
        rm_any_libs="yes"
        shift
-	;;
+	    ;;
+    -perl )
+       PERL="$2"
+       shift
+	    shift
+       ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
-	;;
+	    ;;
 
     * )
        more_opts="no"
@@ -249,63 +252,15 @@ done
 	the_GHOSTFINDER="`echo $0 | sed 's/ghostbuster.sh/f90GhostFiles.pl/'`"
 	if [ $PRINT_TOO_MUCH = "1" ]
 	then
-		echo " Your perl is `which perl` "
-		echo " f90GhostFiles.pl is looking for it at `sed -n '1 p' $the_GHOSTFINDER`"
+		echo " Your perl is $PERL "
 	fi
 
-# Check whether script is looking for perl in right place
-# && give user a chance to redirect it if it is not
-	script_perl=`sed -n '1 p' $the_GHOSTFINDER`
-	your_perl='#!'`which perl` 
-   if [ "$script_perl" != "$your_perl" -a "$MAY_EDIT_PERL" = 1 ]
-        then
-		#Warn user that perl script may need to be changed
-
-		echo " *** Warning: f90GhostFiles.pl may need to be changed"
-		echo " ***          to point to where your perl actually is"
-		echo " ***          "
-		echo " ***  (unless you know of a compelling reason to do otherwise"
-		echo " ***  you probably want to answer 'yes' to the following)"
-		echo " ***          "
- 		UserPrompt "Change f90GhostFiles.pl to look in [$your_perl](yes) or no?"
-   		if [ "$user_response" != "" ] ; then
-			case  "$user_response" in
-	    		n* | N* )
-				echo "Continuing to use $script_perl"
-              		  	change_perl=
-	   		 ;;
-	    		y* | Y* )
-				echo "Changing to use $your_perl"
-                		change_perl="$your_perl"
-	    		;;
-	   		 * )
-				echo "Changing to use $user_response"
-                		change_perl="$user_response"
-	    		;;
-			esac
-			else
-				echo "Changing to use $your_perl"
-                		change_perl="$your_perl"
-			fi
-   		if [ "$change_perl" != "" ] ; then
-            temp_name=`get_unique_name pl`
-            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > $temp_name
-            return_status=`expr $?`
-            if [ $return_status = 0 ]
-            then
-				  chmod u+w "$the_GHOSTFINDER"
-         	  mv $temp_name "$the_GHOSTFINDER"
-				  chmod a+x "$the_GHOSTFINDER"
-				  echo "*** You have fixed f90GhostFiles.pl to look for $your_perl"
-            fi
-         fi
-       fi
 	if [ "$DEBUG" = "1" ]
 	then
       echo "About to call $the_GHOSTFINDER $@"
       echo "from directory `pwd`"
    fi
-	the_ghosts=`$the_GHOSTFINDER "$@"`
+	the_ghosts=`$PERL $the_GHOSTFINDER "$@"`
 
    from_here=`pwd`
 	if [ "$DEBUG" = "1" ]
@@ -348,6 +303,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.10  2004/10/27 22:34:08  pwagner
+# Set AUTO_REPLY=1 to automate pointing to wherever perl relocates
+#
 # Revision 1.9  2003/06/21 00:34:17  pwagner
 # Added fail-safe measures and MAY_EDIT_PERL flag
 #

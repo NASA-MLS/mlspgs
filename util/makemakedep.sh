@@ -34,6 +34,8 @@
 #               exclude file_name from OBJS=.. list, but allow in dependencies
 # -p file_name  
 #               name dependency file file_name instead of Makefile.dep
+# -perl program  
+#               use program instead of perl to run f90makedep.pl
 # -s pattern    match source file suffixes against "%.pattern"
 # -o pattern    match object file suffixes against "%.pattern"
 # -mod case     .mod-style of dependencies where case is one of {lower, UPPER}
@@ -198,12 +200,6 @@ extant_files()
 DEPMAKER=1
 #        ^  -- set this to 0 for none, 1 for f90makedep.pl
 #
-#if you use f90makedep.pl, you may have a problem if the path where you keep
-#your copy of perl is different from the one in its 1st line
-#compare 'which perl' with 'sed -n "1 p" f90makedep.pl
-#The script will attempt to anticipate this problem and ask you if it
-#should fix f90makedep.pl
-#
 #makemakedep.sh may act courteously in the following sense:
 #if makemakedep.sh finds there is already a file named Makefile.dep
 #it will attempt to rename the older file rather than deleting it
@@ -217,15 +213,6 @@ TRY_CLEANUP=1
 PRINT_TOO_MUCH=0
 #              ^  -- set this to 1 if willing to try patience of users
 #
-EDIT_GB_PERL_PATH=1
-#                 ^  -- set this to 1 to change path to perl in ghostbuster.sh
-#
-MAY_EDIT_PERL=1
-#             ^  -- set this to 1 to permit correcting perl path
-#
-AUTO_REPLY=1
-#          ^  -- set this to 1 to automate user responses to 'y'
-#                (in this case automate correcting perl path)
 #           How to rename or hide excluded files so they !~= %.f90
 #dsuffix=".xui"
 #          ^^^----- this is the suffix stuck onto any excluded files
@@ -268,6 +255,7 @@ dep_file="Makefile.dep"
 me="$0"
 my_name=makemakedep.sh
 I=makemakedep
+PERL=perl
 # $reecho is reecho with me's path prepended
 reecho="`echo $0 | sed 's/'$I'/reecho/'`"
 
@@ -334,6 +322,11 @@ while [ "$more_opts" = "yes" ] ; do
        shift
 	    shift
        ;;
+    -perl )
+       PERL="$2"
+       shift
+	    shift
+       ;;
     -s )
 	    s_pattern="$2"
        shift
@@ -381,7 +374,6 @@ then
    echo " ACT_COURTEOUS: $ACT_COURTEOUS "  
    echo " TRY_CLEANUP: $TRY_CLEANUP "  
    echo " DEPMAKER: $DEPMAKER "  
-   echo " EDIT_GB_PERL_PATH: $EDIT_GB_PERL_PATH "  
    echo " dsuffix: $dsuffix "  
 fi                                                      
 
@@ -480,75 +472,9 @@ else
 	the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
 	if [ $PRINT_TOO_MUCH = "1" ]
 	then
-		echo " Your perl is `which perl` "
-		echo " f90makedep.pl is looking for it at `sed -n '1 p' $the_DEPMAKER`"
+		echo " Your perl is $PERL "
 	fi
 
-# Check whether script is looking for perl in right place
-# && give user a chance to redirect it if it is not
-	script_perl=`sed -n '1 p' $the_DEPMAKER`
-	your_perl='#!'`which perl` 
-   if [ "$script_perl" != "$your_perl" -a "$MAY_EDIT_PERL" = 1 ]
-        then
-		#Warn user that perl script may need to be changed
-
-		echo " *** Warning: f90makedep.pl may need to be changed"
-		echo " ***          to point to where your perl actually is"
-		echo " ***          "
-		echo " ***  (unless you know of a compelling reason to do otherwise"
-		echo " ***  you probably want to answer 'yes' to the following)"
-		echo " ***          "
- 		UserPrompt "Change f90makedep.pl to look in [$your_perl](yes) or no?"
-   		if [ "$user_response" != "" ] ; then
-			case  "$user_response" in
-	    		n* | N* )
-				echo "Continuing to use $script_perl"
-              		  	change_perl=
-	   		 ;;
-	    		y* | Y* )
-				echo "Changing to use $your_perl"
-                		change_perl="$your_perl"
-	    		;;
-	   		 * )
-				echo "Changing to use $user_response"
-                		change_perl="$user_response"
-	    		;;
-			esac
-			else
-				echo "Changing to use $your_perl"
-                		change_perl="$your_perl"
-			fi
-   		if [ "$change_perl" != "" ] ; then
-            temp_name=`get_unique_name pl`
-            sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > $temp_name
-            return_status=`expr $?`
-            if [ $return_status = 0 ]
-            then
-				  chmod u+w "$the_DEPMAKER"
-         	  mv $temp_name "$the_DEPMAKER"
-				  chmod a+x "$the_DEPMAKER"
-				  echo "*** You have fixed f90makedep.pl to look for $your_perl"
-            fi
-   		   if [ "$EDIT_GB_PERL_PATH" = "1" -a "$MAY_EDIT_PERL" = 1 ] ; then
-	            #
-	            # Prefix f90GhostFiles.pl with the path to util
-               # this assumes f90GhostFiles.pl is in same dir as this script
-	            the_GHOSTFINDER="`echo $0 | sed 's/makemakedep.sh/f90GhostFiles.pl/'`"
-            	script_perl=`sed -n '1 p' $the_GHOSTFINDER`
-               if [ "$script_perl" != "$your_perl" ] ; then
-                  sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > $temp_name
-                  return_status=`expr $?`
-                  if [ $return_status = 0 ]
-                  then
-		      		  chmod u+w "$the_GHOSTFINDER"
-         	        mv $temp_name "$the_GHOSTFINDER"
-		      		  chmod a+x "$the_GHOSTFINDER"
-				        echo "*** You have also fixed f90GhostFiles.pl to look for $your_perl"
-                  fi
-               fi
-            fi
-         fi
-       fi
 #	f90makedep.pl >> Makefile.dep
 #  tack on the dont_build_list if non-empty
    if [ "$dont_build_list" != "" ] ; then
@@ -558,16 +484,16 @@ else
    then
 	   if [ $PRINT_TOO_MUCH = "1" ]
 	   then
-         $the_DEPMAKER "$@"
+         $PERL $the_DEPMAKER "$@"
       fi
-      $the_DEPMAKER "$@" >> $dep_file
+      $PERL $the_DEPMAKER "$@" >> $dep_file
    else
-      echo $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+      echo $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
 	   if [ $PRINT_TOO_MUCH = "1" ]
 	   then
-         $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+         $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
       fi
-      $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> $dep_file
+      $PERL $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> $dep_file
    fi
 fi
 echo " "  >> $dep_file
@@ -589,6 +515,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.25  2004/10/27 22:34:08  pwagner
+# Set AUTO_REPLY=1 to automate pointing to wherever perl relocates
+#
 # Revision 1.24  2004/03/18 17:56:49  pwagner
 # Removed any mention of outmoded makedepf90
 #

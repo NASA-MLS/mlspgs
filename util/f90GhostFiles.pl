@@ -1,5 +1,3 @@
-#!/usr/local/bin/perl
-#
 # Usage: f90GhostFiles.pl 'b_dir' 's_dir1' 's_dir2' ..
 #
 # Generate a list of files with .o and .mod suffixes in
@@ -265,6 +263,9 @@ print STDERR "modules: @modules \n \n" unless !($debug);
    }
   }
 # $Log$
+# Revision 1.4  2004/03/18 17:58:09  pwagner
+# Ended foolish use of temp file to learn cwd
+#
 # Revision 1.3  2003/09/24 19:18:42  pwagner
 # Restored to proper functioning despite new perl
 #
