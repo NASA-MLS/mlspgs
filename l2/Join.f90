@@ -235,9 +235,10 @@ contains ! =====     Public Procedures     =============================
         ! parallel slave join, or a manual join
         if ( get_spec_id(key) == s_directWrite ) then
           ! For the direct write command, call some special code
-          if ( .not. ValidateVectorQuantity ( quantity, minorFrame=.true. ) ) &
+          if ( .not. any ( (/ quantity%template%minorFrame, &
+            &                 quantity%template%majorFrame /) ) ) &
             & call Announce_Error ( key, NO_ERROR_CODE, &
-            & 'Invalid quantity for direct write, must be minor frame' )
+            & 'Invalid quantity for direct write, must be minor or major frame' )
           call DirectWrite ( quantity, hdfNameIndex, file, hdfVersion, &
             & chunkNo, chunks )
         else if ( parallel%slave ) then
@@ -821,6 +822,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.71  2003/05/30 00:09:27  livesey
+! Can now directWrite major frame quantities
+!
 ! Revision 2.70  2003/05/12 02:06:23  livesey
 ! Bug fix for prefixSignal L2GPs and also bound r8->r4 conversion
 !
