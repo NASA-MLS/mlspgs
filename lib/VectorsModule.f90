@@ -70,7 +70,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MLSSignals_m, only: MODULES, SIGNALS
+  use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
   use STRING_TABLE, only: DISPLAY_STRING, GET_STRING, STRING_LENGTH
@@ -1360,6 +1360,27 @@ contains ! =====     Public Procedures     =============================
       end if
       msg = trim(msg) // ' that has type'
       call get_string ( lit_indices(quantityType), msg(len_trim(msg)+2:) )
+
+      if ( present ( molecule ) ) then
+        msg = trim(msg) // ' for molecule'
+        call get_string ( lit_indices(molecule), msg(len_trim(msg)+2:))
+      end if
+
+      if ( present ( radiometer ) ) then
+        msg = trim(msg) // ' for radiometer'
+        call get_string ( lit_indices(radiometer), msg(len_trim(msg)+2:))
+      end if
+
+      if ( present ( instrumentModule ) ) then
+        msg = trim(msg) // ' for instrument module'
+        call get_string ( lit_indices(instrumentModule), msg(len_trim(msg)+2:))
+      end if
+
+      if ( present ( signal ) ) then
+        msg = trim(msg) // ' for signal'
+        call GetSignalName ( signal, msg(len_trim(msg)+2:), sideband=sideband )
+      end if
+
       call MLSMessage ( MLSMSG_Error, ModuleName, msg(:len_trim(msg)) )
     end if
 
@@ -1783,6 +1804,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.81  2002/04/22 20:54:29  vsnyder
+! Add a 'scale' argument to AddToVector
+!
 ! Revision 2.80  2002/03/13 22:00:16  livesey
 ! Changed m_explicitFill to m_fill
 !
