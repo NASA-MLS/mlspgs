@@ -180,6 +180,7 @@ nsizebins
 number
 
 offsetAmount
+operation
 operational
 opticalDepth
 opticalDepthCutoff
@@ -248,6 +249,7 @@ sourceApriori
 sourceGrid
 sourceL2AUX
 sourceL2GP
+sourceMask
 sourceQuantity
 sourcesGrid
 sourcevGrid
@@ -295,6 +297,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.87  2003/04/04 22:02:22  livesey
+# Added stuff for updateMask
+#
 # Revision 2.86  2003/04/02 21:47:52  jonathan
 # remove cloud_fov
 #
