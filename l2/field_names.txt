@@ -201,6 +201,7 @@ perturbation
 phaseName
 phiWindow
 phiTan
+phiZero
 pointingGrids
 precision
 precisionFactor
@@ -303,6 +304,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.95  2003/05/29 20:02:05  livesey
+# Added phiZero
+#
 # Revision 2.94  2003/05/29 16:44:06  livesey
 # Added reflector and switchingMirror
 #
