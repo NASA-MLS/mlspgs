@@ -108,7 +108,6 @@ contains
                                         ! thing and iterate until it converges
                                         ! again (hopefully only once).
     integer :: Error
-    type(vector_T) :: F                 ! Residual -- Model - Measurements
     integer :: Field                    ! Field index -- f_something
     real(r8) :: Fuzz                    ! For testing only.  Amount of "fuzz"
                                         ! to add to state vector before
@@ -161,6 +160,28 @@ contains
     logical :: Update                   ! "We are updating normal equations"
     double precision :: Value(2)        ! Value returned by EXPR
 
+    ! Indexes in the private vectors database
+    integer, parameter :: FirstVec = 1
+    integer, parameter :: AprioriMinusX = firstVec ! Apriori - X
+    integer, parameter :: ATb = aprioriMinusX + 1  ! A^T b -- the RHS of the normal eqns    integer, parameter :: 
+    integer, parameter :: BestGradient = aTb + 1   ! for NWT
+    integer, parameter :: BestX = bestGradient + 1 ! for NWT
+    integer, parameter :: CandidateDX = bestX + 1  ! for NWT
+    integer, parameter :: ColumnScaleVector = candidateDX + 1 ! For column scaling by column norms
+    integer, parameter :: CovarianceDiag = columnScaleVector + 1
+    integer, parameter :: CovarianceXApriori = covarianceDiag + 1
+    integer, parameter :: DX = covarianceXApriori + 1  ! for NWT
+    integer, parameter :: DXUnScaled = dX + 1      ! for NWT
+    integer, parameter :: F = dXUnscaled + 1       ! Residual -- Model - Measurements
+    integer, parameter :: F_rowScaled = f + 1      ! Either a copy of f, or f row-scaled
+    integer, parameter :: Gradient = f_rowScaled + 1   ! for NWT
+    integer, parameter :: Reg_X_x = gradient + 1   ! Regularization * X_n
+    integer, parameter :: Weight = reg_X_x + 1     ! Scaling vector for rows, 1/measurementSD
+    integer, parameter :: X = weight + 1  ! for NWT
+    integer, parameter :: LastVec = X
+ 
+    type(vector_T), dimension(firstVec:lastVec) :: V   ! Database for snoop
+
     ! Error message codes
     integer, parameter :: BothOrNeither = 1       ! Only one of two required
                                                   !    fields supplied
@@ -180,6 +201,10 @@ contains
     snoopKey = 0
     snoopLevel = 1
     timing = section_times
+    do j = firstVec, lastVec ! Make the vectors in the database initially empty
+      nullify ( v(j)%quantities, v(j)%template%quantities )
+      v(j)%name = 0 ! so Snoop won't use it
+    end do
     if ( timing ) call cpu_time ( t1 )
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
@@ -270,8 +295,7 @@ contains
             ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
           case ( f_measurements )
             measurements => vectorDatabase(decoration(decoration(subtree(2,son))))
-            call cloneVector ( f, measurements, vectorNameText='_f', &
-              & database=myVectors )
+            call cloneVector ( v(f), measurements, vectorNameText='_f' )
           case ( f_measurementSD )
             measurementSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_method )
@@ -403,7 +427,7 @@ contains
             & call destroyMatrix ( outputCovariance%m )
         end if
         if ( got(f_fwdModelOut) ) then
-          call copyVector ( fwdModelOut, f )
+          call copyVector ( fwdModelOut, v(f) )
           call addToVector ( fwdModelOut, measurements )
         end if
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
@@ -421,7 +445,9 @@ contains
         end if
       end select
 
-    call destroyVectorDatabase ( myVectors )
+      do j = firstVec, lastVec
+        call destroyVectorInfo ( v(j) )
+      end do
 
     end do ! i = 2, nsons(root) - 1
     if ( toggle(gen) ) call trace_end ( "Retrieve" )
@@ -504,7 +530,7 @@ contains
       type(vectorValue_T), pointer :: Diag_Qty    ! A quantity in the
                                         ! Diagnostics vector
       diag_qty => GetVectorQuantityByType ( diagnostics, &
-        & quantityType=l_dnwt_ajn, noError=.true. )
+        & quantityType=QuantityIndex, noError=.true. )
       if ( associated(diag_qty) ) diag_qty%values(1,1) = value
     end subroutine FillDiagVec
     ! 
@@ -533,24 +559,12 @@ contains
 
       ! Local Variables
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
-      type(vector_T) :: AprioriMinusX   ! Apriori - X
       real(r8) :: AprioriNorm           ! apriori .dot. apriori
-      type(vector_T) :: ATb             ! A^T b -- the RHS of the normal eqns.
-      type(vector_T) :: BestGradient    ! for NWT
-      type(vector_T) :: BestX           ! for NWT
-      type(vector_T) :: CandidateDX     ! for NWT
-      type(vector_T) :: ColumnScaleVector ! For column scaling by column norms
       real(r8) :: Cosine                ! Of an angle between two vectors
-      type(vector_T) :: CovarianceDiag  ! Diagonal of apriori Covariance
-      type(vector_T) :: CovarianceXApriori ! Covariance \times Apriori
-      type(vector_T) :: DX              ! for NWT
-      type(vector_T) :: DXUnScaled      ! for NWT
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
       type (ForwardModelIntermediate_T) :: Fmw ! Work space for forward model
-      type(vector_T) :: F_rowScaled     ! Either a copy of f, or f row-scaled
       type(vector_T) :: FuzzState       ! Random numbers to fuzz the state
-      type(vector_T) :: Gradient        ! for NWT
       integer :: J, K                   ! Loop inductors and subscripts
       type(matrix_SPD_T) :: NormalEquations  ! Jacobian**T * Jacobian
       integer :: NumF, NumJ             ! Number of Function, Jacobian evaluations
@@ -558,7 +572,6 @@ contains
                                         ! the action to take.
       integer :: NWT_Opt(20)            ! Options for NWT, q.v.
       real(rk) :: NWT_Xopt(20)          ! Real parameters for NWT options, q.v.
-      type(vector_T) :: Reg_X_X         ! Regularization * X_n
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
       integer, parameter :: SnoopLevels(NF_DX_AITKEN:NF_FANDJ) = (/ &
@@ -568,8 +581,6 @@ contains
         &  9,   2,        2,   2,        3,    9  /)
       real :: T1
       character(len=10) :: TheFlagName  ! Name of NWTA's flag argument
-      type(vector_T) :: Weight          ! Scaling vector for rows, 1/measurementSD
-      type(vector_T) :: X               ! for NWT
 
       call cpu_time ( t1 )
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
@@ -583,49 +594,46 @@ contains
       ! Create the normal equations matrix
       call createEmptyMatrix ( normalEquations%m, 0, state, state )
       ! Create the vectors we need.
-      call copyVector ( x, state, vectorNameText='_x', clone=.true., &
-        database=myVectors ) ! x := state
-      call cloneVector ( atb, x, vectorNameText='_ATb', database=myVectors )
-      call cloneVector ( bestGradient, x, vectorNameText='_bestGradient', database=myVectors )
-      call cloneVector ( bestX, x, vectorNameText='_bestX', database=myVectors )
-      call cloneVector ( candidateDX, x, vectorNameText='_candidateDX', database=myVectors )
-      call cloneVector ( covarianceDiag, x, vectorNameText='_covarianceDiag', database=myVectors )
-      call cloneVector ( dx, x, vectorNameText='_DX', database=myVectors )
-      call cloneVector ( dxUnScaled, x, vectorNameText='_DX Unscaled', database=myVectors )
-      call copyVector ( f_rowScaled, measurements, clone=.true., & ! mask only
-        & noValues=.true., vectorNameText='_f_rowScaled', database=myVectors )
-      call cloneVector ( gradient, x, vectorNameText='_gradient', database=myVectors )
-      call cloneVector ( reg_X_x, measurements, vectorNameText='_reg_X_x', database=myVectors )
+      call copyVector ( v(x), state, vectorNameText='_x', clone=.true. ) ! x := state
+      call cloneVector ( v(atb), v(x), vectorNameText='_ATb' )
+      call cloneVector ( v(bestGradient), v(x), vectorNameText='_bestGradient' )
+      call cloneVector ( v(bestX), v(x), vectorNameText='_bestX' )
+      call cloneVector ( v(candidateDX), v(x), vectorNameText='_candidateDX' )
+      call cloneVector ( v(covarianceDiag), v(x), vectorNameText='_covarianceDiag' )
+      call cloneVector ( v(dx), v(x), vectorNameText='_DX' )
+      call cloneVector ( v(dxUnScaled), v(x), vectorNameText='_DxUnscaled' )
+      call copyVector ( v(f_rowScaled), measurements, clone=.true., & ! mask only
+        & noValues=.true., vectorNameText='_f_rowScaled' )
+      call cloneVector ( v(gradient), v(x), vectorNameText='_gradient' )
+      call cloneVector ( v(reg_X_x), measurements, vectorNameText='_reg_X_x' )
       if ( got(f_measurementSD) ) then
-        call cloneVector ( weight, measurementSD, vectorNameText='_weight', &
-          & database=myVectors )
+        call cloneVector ( v(weight), measurementSD, vectorNameText='_weight' )
         do j = 1, measurementSD%template%noQuantities
           where ( measurementSD%quantities(j)%values <= 0.0 )
-            weight%quantities(j)%values = 1.0
+            v(weight)%quantities(j)%values = 1.0
           elsewhere
-            weight%quantities(j)%values = 1.0 / &
+            v(weight)%quantities(j)%values = 1.0 / &
               & measurementSD%quantities(j)%values
           end where
         end do
       end if
       if ( columnScaling /= l_none ) &
-        call cloneVector ( columnScaleVector, x, vectorNameText='_ColumnScale', &
-          & database=myVectors )
+        call cloneVector ( v(columnScaleVector), v(x), vectorNameText='_ColumnScale' )
       if ( got(f_fuzz) ) then
         ! Add some fuzz to the state vector (for testing purposes):
-        call cloneVector ( fuzzState, x )
-        do j = 1, x%template%noQuantities
+        call cloneVector ( fuzzState, v(x) )
+        do j = 1, v(x)%template%noQuantities
           call random_number(fuzzState%quantities(j)%values)
-          x%quantities(j)%values = x%quantities(j)%values * &
+          v(x)%quantities(j)%values = v(x)%quantities(j)%values * &
             & ( 1.0_r8 + fuzz * ( fuzzState%quantities(j)%values - 0.5 ) )
         end do
       end if
-        if ( index(switches,'xvec') /= 0 ) call dump ( x, name='Original X' )
+        if ( index(switches,'xvec') /= 0 ) call dump ( v(x), name='Original X' )
       numF = 0
       numJ = 0
       aj%axmax = 0.0
-      do k = 1, size(x%quantities)
-        aj%axmax = max(aj%axmax, maxval(abs(x%quantities(k)%values)))
+      do k = 1, size(v(x)%quantities)
+        aj%axmax = max(aj%axmax, maxval(abs(v(x)%quantities(k)%values)))
       end do
 
         if ( index(switches,'sca') /= 0 ) then
@@ -684,11 +692,11 @@ contains
             ! Destroy (i.e. clean up) the previous contents of
             ! AprioriMinusX (if any), so as not to have a memory
             ! leak.  Then make it look like apriori.
-            call cloneVector ( aprioriMinusX, apriori, &
+            call cloneVector ( v(aprioriMinusX), apriori, &
               & vectorNameText='_aprioriMinusX' )
-            aprioriMinusX = apriori - x
+            v(aprioriMinusX) = apriori - v(x)
             if ( got(f_aprioriScale) ) &
-              & call scaleVector ( aprioriMinusX, aprioriScale )
+              & call scaleVector ( v(aprioriMinusX), aprioriScale )
             !{Let the covariance of the apriori be $\mathbf{S_a}$, let
             ! $\mathbf{C = S_a^{-1}}$, and let $\mathbf{F^T F = C}$. In
             ! the least-squares problem we have extra rows of the form
@@ -698,21 +706,21 @@ contains
             ! right-hand side of the normal equations is $\mathbf{F^T F
             ! ( a - x_n ) = C ( a - x_n )}$.
             if ( diagonal ) then
-              call cloneVector ( covarianceDiag, state, &
+              call cloneVector ( v(covarianceDiag), state, &
                &  vectorNameText='_covarianceDiag' )
-              call getDiagonal ( covariance%m, covarianceDiag )
+              call getDiagonal ( covariance%m, v(covarianceDiag) )
               ! covarianceXApriori := covarianceDiag # apriori:
-              call multiply ( covarianceDiag, aprioriMinusX, &
-                & covarianceXApriori )
+              call multiply ( v(covarianceDiag), v(aprioriMinusX), &
+                & v(covarianceXApriori) )
             else ! covarianceXApriori := covariance X apriori:
-              call multiply ( covariance, aprioriMinusX, &
-                & covarianceXApriori )
+              call multiply ( covariance, v(aprioriMinusX), &
+                & v(covarianceXApriori) )
             end if
             !{The contribution to the norm of the residual of the
             ! right-hand side of the part of the least-squares problem
             ! that is due to apriori is $\mathbf{
             ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T C ( a - x_n )}$
-            aprioriNorm = aprioriMinusX .dot. covarianceXapriori
+            aprioriNorm = v(aprioriMinusX) .dot. v(covarianceXapriori)
           else
             aprioriNorm = 0.0_r8
           end if
@@ -724,22 +732,22 @@ contains
 
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call cpu_time ( t1 )
-          call clearVector ( f )
+          call clearVector ( v(f) )
           ! Loop over MAFs
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             fmStat%maf = fmStat%maf + 1
             do k = 1, size(configIndices)
               call forwardModel ( configDatabase(configIndices(k)), &
-                & x, fwdModelExtra, f, fmw, fmStat )
+                & v(x), fwdModelExtra, v(f), fmw, fmStat )
             end do ! k
           end do ! MAFs
           call add_to_retrieval_timing( 'forward_model', t1 )
           call cpu_time ( t1 )
-          call subtractFromVector ( f, measurements )
-          if ( got(f_measurementSD) ) call multiply ( f, weight )
-          aj%fnorm = sqrt ( aprioriNorm + ( f .dot. f ) )
+          call subtractFromVector ( v(f), measurements )
+          if ( got(f_measurementSD) ) call multiply ( v(f), v(weight) )
+          aj%fnorm = sqrt ( aprioriNorm + ( v(f) .dot. v(f) ) )
             if ( index(switches,'fvec') /= 0 ) &
-              & call dump ( f, name='Residual' )
+              & call dump ( v(f), name='Residual' )
             if ( index(switches,'sca') /= 0 ) then
                 call output ( ' | F | = ' )
                 call output ( aj%fnorm, format='(1pe14.7)', advance='yes' )
@@ -835,16 +843,16 @@ contains
             ! use the full apriori covariance (one hopes only for one
             ! more iteration). This improves sparsity during iteration.
               call clearMatrix ( normalEquations%m )
-              call updateDiagonal ( normalEquations, covarianceDiag )
+              call updateDiagonal ( normalEquations, v(covarianceDiag) )
             else
               call copyMatrixValue ( normalEquations%m, covariance%m )
             end if
-            call copyVector ( atb, covarianceXApriori ) ! A^T b := C (a-x_n)
+            call copyVector ( v(atb), v(covarianceXApriori) ) ! A^T b := C (a-x_n)
             if ( got(f_aprioriScale) ) &
               & call scaleMatrix ( normalEquations%m, aprioriScale )
           else
             call clearMatrix ( normalEquations%m ) ! start with zero
-            call destroyVectorValue ( atb ) ! Clear the RHS vector
+            call destroyVectorValue ( v(atb) ) ! Clear the RHS vector
           end if
           ! aprioriNorm was computed when nwt_flag was NF_EVALF
           aj%fnorm = aprioriNorm
@@ -852,14 +860,14 @@ contains
           ! Add Tikhonov regularization if requested
           if ( got(f_regOrders) ) then
             call regularize ( jacobian, regOrders, regQuants, regWeight )
-            call multiplyMatrixVectorNoT ( jacobian, x, reg_X_x ) ! regularization * x_n
-            call scaleVector ( reg_X_x, -regWeight )   ! -R x_n
+            call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
+            call scaleVector ( v(reg_X_x), -regWeight )   ! -R x_n
             call formNormalEquations ( jacobian, normalEquations, &
-              & reg_X_x, atb, update=update, useMask=.false. )
+              & v(reg_X_x), v(atb), update=update, useMask=.false. )
             update = .true.
-            call clearMatrix ( jacobian )        ! free the space
-            aj%fnorm = aj%fnorm + ( reg_X_x .dot. reg_X_x )
-            call destroyVectorValue ( reg_X_x )  ! free the space
+            call clearMatrix ( jacobian )           ! free the space
+            aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
+            call destroyVectorValue ( v(reg_X_x) )  ! free the space
           end if
 
           ! Add some early stabilization
@@ -874,7 +882,7 @@ contains
           fmStat%newScanHydros = .true.
 
           ! Loop over MAFs
-          call clearVector ( f )
+          call clearVector ( v(f) )
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             call add_to_retrieval_timing( 'newton_solver', t1 )
             call cpu_time ( t1 )
@@ -884,13 +892,13 @@ contains
             fmstat%rows = .false.
             do k = 1, size(configIndices)
               call forwardModel ( configDatabase(configIndices(k)), &
-                & x, fwdModelExtra, f_rowScaled, fmw, fmStat, jacobian )
+                & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
             end do ! k
             call add_to_retrieval_timing( 'forward_model', t1 )
             call cpu_time ( t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
-                call subtractFromVector ( f_rowScaled, measurements, &
+                call subtractFromVector ( v(f_rowScaled), measurements, &
                   & quant=jacobian%row%quant(rowBlock), &
                   & inst=jacobian%row%inst(rowBlock) ) ! f - y
                 !{Let ${\bf J}$ be the Jacobian matrix and ${\bf f}$ be the
@@ -902,20 +910,21 @@ contains
                 ! (actually, we only row scale ${\bf f}$ here, and scale
                 ! ${\bf J}$ below).
                 if ( got(f_measurementSD) ) then
-                  call multiply ( f_rowScaled, weight, &
+                  call multiply ( v(f_rowScaled), v(weight), &
                     & quant=jacobian%row%quant(rowBlock), &
                     & inst=jacobian%row%inst(rowBlock) )
                 end if
               end if
             end do
-            call scaleVector ( f_rowScaled, -1.0_r8 ) ! y - f
+            call scaleVector ( v(f_rowScaled), -1.0_r8 ) ! y - f
 
-            if ( got(f_measurementSD) ) call rowScale ( weight, jacobian )
+            if ( got(f_measurementSD) ) call rowScale ( v(weight), jacobian )
 
             !{Form normal equations:
             ! $\mathbf{J^T W^T W J \delta \hat x = J^T W^T W f}$:
             call formNormalEquations ( jacobian, normalEquations, &
-              & rhs_in=f_rowScaled, rhs_out=atb, update=update, useMask=.true. )
+              & rhs_in=v(f_rowScaled), rhs_out=v(atb), update=update, &
+              & useMask=.true. )
             update = .true.
               if ( index(switches,'jac') /= 0 ) &
                 call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
@@ -925,7 +934,7 @@ contains
             call clearMatrix ( jacobian )  ! free the space
           end do ! mafs
 
-          aj%fnorm = aj%fnorm + ( f_rowScaled .dot. f_rowScaled )
+          aj%fnorm = aj%fnorm + ( v(f_rowScaled) .dot. v(f_rowScaled) )
 
           !{Column Scale $\mathbf{J}$ (row and column scale $\mathbf{J^T
           ! J}$).  Let $\mathbf{\Sigma}$ be a column-scaling matrix for the
@@ -934,27 +943,27 @@ contains
           ! \delta \hat x = -J^T W^T f}$.
           select case ( columnScaling )
           case ( l_apriori )
-            call copyVector ( columnScaleVector, apriori )
+            call copyVector ( v(columnScaleVector), apriori )
           case ( l_covariance )
             !??? Can't get here until allowed by init_tables
           case ( l_norm )
-            call getDiagonal ( normalEquations%m, columnScaleVector )
+            call getDiagonal ( normalEquations%m, v(columnScaleVector) )
           end select
           if ( columnScaling /= l_none ) then ! Compute $\Sigma$
-            forall (j = 1: columnScaleVector%template%noQuantities)
-              where ( columnScaleVector%quantities(j)%values <= 0.0 )
-                columnScaleVector%quantities(j)%values = 1.0
+            forall (j = 1: v(columnScaleVector)%template%noQuantities)
+              where ( v(columnScaleVector)%quantities(j)%values <= 0.0 )
+                v(columnScaleVector)%quantities(j)%values = 1.0
               elsewhere
-                columnScaleVector%quantities(j)%values = 1.0 / &
-                  & sqrt( columnScaleVector%quantities(j)%values )
+                v(columnScaleVector)%quantities(j)%values = 1.0 / &
+                  & sqrt( v(columnScaleVector)%quantities(j)%values )
               end where
             end forall
               if ( index(switches,'col') /= 0 ) &
-                & call dump ( columnScaleVector, name='Column scale vector' )
+                & call dump ( v(columnScaleVector), name='Column scale vector' )
             !{Scale: $\mathbf{\Sigma^T J^T J \Sigma = -\Sigma^T J^T f}$
-            call columnScale ( normalEquations%m, columnScaleVector )
-            call rowScale ( columnScaleVector, normalEquations%m )
-            call multiply ( atb, columnScaleVector )
+            call columnScale ( normalEquations%m, v(columnScaleVector) )
+            call rowScale ( v(columnScaleVector), normalEquations%m )
+            call multiply ( v(atb), v(columnScaleVector) )
   
           end if
           !{Compute the (negative of the) gradient $= -\mathbf{J^T f}$.
@@ -962,9 +971,9 @@ contains
           ! $\mathbf{J^T J \delta \hat x = -J^T f}$ where $\mathbf{\delta
           ! \hat x}$ is the "Candidate $\mathbf{\delta x}$" that may or
           ! may not get used.
-          call copyVector ( gradient, atb ) ! gradient := atb
+          call copyVector ( v(gradient), v(atb) ) ! gradient := atb
             if ( index(switches,'gvec') /= 0 ) &
-              & call dump ( gradient, name='gradient' )
+              & call dump ( v(gradient), name='gradient' )
 
           ! Factor J^T J:
 !         factored%m%block => normalEquations%m%block ! to save space
@@ -986,8 +995,8 @@ contains
           call add_to_retrieval_timing( 'cholesky_factor', t1 )
           call cpu_time ( t1 )
             if ( index(switches,'diag') /= 0 ) then
-              call getDiagonal ( factored%m, dxUnscaled )
-              call dump ( dxUnscaled, &
+              call getDiagonal ( factored%m, v(dxUnscaled) )
+              call dump ( v(dxUnscaled), &
                 & name='Diagonal of factored normal equations:' )
             end if
             if ( index(switches,'fac') /= 0 ) &
@@ -1002,7 +1011,7 @@ contains
           !       column in upper triangle after triangularization
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call cpu_time ( t1 )
-          call solveCholesky ( factored, candidateDX, atb, &
+          call solveCholesky ( factored, v(candidateDX), v(atb), &
             & transpose=.true. )
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call cpu_time ( t1 )
@@ -1013,7 +1022,7 @@ contains
           ! $\mathbf{f^T f - y^T y}$ where $\mathbf{y = U^{-T} \delta x}$
           ! ($\mathbf{U}$ is the Cholesky factor of $\mathbf{J^T J}$).
           ! The variable {\tt candidateDX} is a temp here = $\bf y$.
-          aj%fnmin = aj%fnorm - (candidateDX .dot. candidateDX)
+          aj%fnmin = aj%fnorm - (v(candidateDX) .dot. v(candidateDX))
           if ( aj%fnmin < 0.0 ) then
             call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
             call output ( aj%fnmin, advance='yes' )
@@ -1022,7 +1031,7 @@ contains
           end if
           aj%fnmin = sqrt(aj%fnmin)
           aj%fnorm = sqrt(aj%fnorm)
-          aj%gradn = sqrt(gradient .dot. gradient) ! L2Norm(gradient)
+          aj%gradn = sqrt(v(gradient) .dot. v(gradient)) ! L2Norm(gradient)
             if ( index(switches,'sca') /= 0 ) then
               call dump ( (/ aj%ajn, aj%diag, aj%fnmin, aj%gradn /), &
                 & ' L1| FAC |       aj%diag      aj%fnmin         | G |', &
@@ -1072,17 +1081,17 @@ contains
           ! stabilization
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call cpu_time ( t1 )
-          call solveCholesky ( factored, candidateDX, atb, &
+          call solveCholesky ( factored, v(candidateDX), v(atb), &
             & transpose=.true. )
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call cpu_time ( t1 )
-          aj%fnmin = sqrt(aj%fnorm**2 - (candidateDX .dot. candidateDX) )
-          call solveCholesky ( factored, candidateDX )
-          aj%dxn = sqrt(candidateDX .dot. candidateDX) ! L2Norm(dx)
-          aj%gdx = gradient .dot. candidateDX
-          if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
+          aj%fnmin = sqrt(aj%fnorm**2 - (v(candidateDX) .dot. v(candidateDX)) )
+          call solveCholesky ( factored, v(candidateDX) )
+          aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
+          aj%gdx = v(gradient) .dot. v(candidateDX)
+          if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
             if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( candidateDX, name='CandidateDX' )
+              & call dump ( v(candidateDX), name='CandidateDX' )
             if ( index(switches,'sca') /= 0 ) then
               cosine = -2.0_r8
               if ( aj%dxn > 0.0_r8 .and. aj%gradn > 0.0_r8 ) &
@@ -1104,26 +1113,26 @@ contains
         ! Set X = X + DX
         !     AJ%AXMAX = MAXVAL(ABS(X)),
         !     AJ%BIG = ANY ( DX > 10.0 * epsilon(X) * X )
-          if ( .not. aj%starting ) aj%dxdxl = dx .dot. candidateDX
+          if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
           !{Account for column scaling.  We solved for $\mathbf{\Sigma^{-1}
           ! \delta x}$ above, so multiply by $\Sigma$ (which is our
           ! variable {\tt columnScaleVector}):
-          call copyVector ( dxUnScaled, dx )
+          call copyVector ( v(dxUnScaled), v(dx) )
           if ( columnScaling /= l_none ) then
             ! dxUnScaled = dxUnScaled # columnScaleVector:
-            call multiply ( dxUnScaled, columnScaleVector )
+            call multiply ( v(dxUnScaled), v(columnScaleVector) )
           end if
-          call addToVector ( x, dxUnScaled ) ! x = x + dxUnScaled
+          call addToVector ( v(x), v(dxUnScaled) ) ! x = x + dxUnScaled
             if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( dxUnScaled, name='dX Unscaled' )
+              & call dump ( v(dxUnScaled), name='dX Unscaled' )
             if ( index(switches,'xvec') /= 0 ) &
-              & call dump ( x, name='New X' )
+              & call dump ( v(x), name='New X' )
           aj%axmax = 0.0
           aj%big = .false.
-          do j = 1, size(x%quantities)
-            aj%axmax = max(aj%axmax, maxval(abs(x%quantities(j)%values)))
-            aj%big = aj%big .or. any( abs(dx%quantities(j)%values) > &
-              & 10.0 * epsilon(aj%axmax) * abs(x%quantities(j)%values) )
+          do j = 1, size(v(x)%quantities)
+            aj%axmax = max(aj%axmax, maxval(abs(v(x)%quantities(j)%values)))
+            aj%big = aj%big .or. any( abs(v(dx)%quantities(j)%values) > &
+              & 10.0 * epsilon(aj%axmax) * abs(v(x)%quantities(j)%values) )
           end do
             if ( index(switches,'sca') /= 0 ) then
               call output ( ' aj%axmax = ' )
@@ -1143,29 +1152,29 @@ contains
         case ( nf_gmove ) ! ..............................  GMOVE  .....
         ! Set X = "Best X"
         !     DX = AJ%GFAC * "Best Gradient"
-          call copyVector ( x, bestX ) ! x = bestX
+          call copyVector ( v(x), v(bestX) ) ! x = bestX
           ! dx = aj%gfac * "Best Gradient":
-          call scaleVector ( bestGradient, aj%gfac, dx )
+          call scaleVector ( v(bestGradient), aj%gfac, v(dx) )
             if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( dx, name='Gradient move from best X' )
+              & call dump ( v(dx), name='Gradient move from best X' )
             if ( index(switches,'sca') /= 0 ) then
               call output ( ' aj%gfac = ' )
               call output ( aj%gfac, format='(1pe14.7)', advance='yes' )
             end if
         case ( nf_best ) ! ................................  BEST  .....
         ! Set "Best X" = X, "Best Gradient" = Gradient
-          call copyVector ( bestX, x ) ! bestX = x
-          call copyVector ( bestGradient, gradient ) ! bestGradient = gradient
+          call copyVector ( v(bestX), v(x) ) ! bestX = x
+          call copyVector ( v(bestGradient), v(gradient) ) ! bestGradient = gradient
         case ( nf_aitken ) ! ............................  AITKEN  .....
         ! Set DX = DX - "Candidate DX",
         !     AJ%DXDX = dot_product( DX, DX )
         ! IF ( AJ%DXDX /= 0.0 ) &
         !   Set AJ%DXDXL = dot_product( DX, "Candidate DX" )
-          call subtractFromVector ( dx, candidateDX ) ! dx = dx - candidateDX
-          aj%dxdx = dx .dot. dx
-          if ( aj%dxdx > 0.0 ) aj%dxdxl = dx .dot. candidateDX
+          call subtractFromVector ( v(dx), v(candidateDX) ) ! dx = dx - candidateDX
+          aj%dxdx = v(dx) .dot. v(dx)
+          if ( aj%dxdx > 0.0 ) aj%dxdxl = v(dx) .dot. v(candidateDX)
             if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( dx, name='dx after Aitken' )
+              & call dump ( v(dx), name='dx after Aitken' )
             if ( index(switches,'sca') /= 0 ) then
               call output ( ' aj%dxdx = ' )
               call output ( aj%dxdx, format='(1pe14.7)' )
@@ -1176,12 +1185,12 @@ contains
               call output ( cosine, format='(1pe14.7)', advance='yes' )
             end if
         case ( nf_dx ) ! ....................................  DX  .....
-          call copyVector ( dx, candidateDX ) ! dx = candidateDX
+          call copyVector ( v(dx), v(candidateDX) ) ! dx = candidateDX
         case ( nf_dx_aitken ) ! ......................  DX_AITKEN  .....
           ! dx = aj%cait * candidateDX:
-          call scaleVector ( candidateDX, aj%cait, dx )
+          call scaleVector ( v(candidateDX), aj%cait, v(dx) )
             if ( index(switches,'dvec') /= 0 ) &
-              & call dump ( dx, name='dx after dx Aitken' )
+              & call dump ( v(dx), name='dx after dx Aitken' )
             if ( index(switches,'sca') /= 0 ) then
               call output ( ' aj%cait = ' )
               call output ( aj%cait, format='(1pe14.7)', advance='yes' )
@@ -1190,7 +1199,7 @@ contains
           ! IF ( NWT_FLAG == NF_TOO_SMALL ) THEN
           !   Take special action if requested accuracy is critical
           ! END IF
-          if ( nwt_flag == nf_tolx_best ) call copyVector ( x, bestX )
+          if ( nwt_flag == nf_tolx_best ) call copyVector ( v(x), v(bestX) )
           ! Convergence to desired solution.  Do whatever you want to
           ! with the solution.
           if ( .not. got(f_apriori) .or. .not. diagonal ) then
@@ -1229,7 +1238,7 @@ contains
         end if
         if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
           call FlagName ( nwt_flag, theFlagName )
-          call snoop ( snoopKey, vectorDatabase, myVectors, &
+          call snoop ( snoopKey, vectorDatabase, v, &
             & trim(snoopComment) // ': ' // trim(theFlagName) )
         end if
       end do ! Newton iteration
@@ -1278,18 +1287,16 @@ contains
         if ( associated(outputSD) ) then !???
           call GetDiagonal ( outputCovariance%m, outputSD )
           if ( columnScaling /= l_none ) then
-            call multiply ( outputSD, columnScaleVector )
+            call multiply ( outputSD, v(columnScaleVector) )
           end if
         end if
       end if
-      call copyVector ( state, x )
+      call copyVector ( state, v(x) )
         if ( index(switches,'svec') /= 0 ) &
           & call dump ( state, name='Final state' )
       ! Clean up the temporaries, so we don't have a memory leak.
       ! Most of them are in the myVectors database, which is destroyed
       ! upon exit from Retrieve.
-      call destroyVectorInfo ( aprioriMinusX )
-      if ( got(f_apriori) ) call destroyVectorInfo ( covarianceXApriori )
       if ( got(f_fuzz) ) call destroyVectorInfo ( fuzzState )
       call destroyMatrix ( normalEquations%m )
       call destroyMatrix ( factored%m )
@@ -1360,7 +1367,6 @@ contains
       real(r8), dimension(:,:,:), allocatable :: C    ! for problem y=Kx, c=K^t#Sy^-1#K
                                                       ! last dimension is for mif
                                                       ! first two are (chan, s)
-
       ! use this for testing
       p_lowcut = -2.5
       nIterations = 4
@@ -1368,7 +1374,7 @@ contains
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
       ! create FwdModelOut1 vector by cloning measurements
-        call cloneVector ( FwdModelOut1, measurements, vectorNameText='_covarianceDiag' )
+        call cloneVector ( FwdModelOut1, measurements, vectorNameText='_FwdModelOut1' )
                
       ! Measurements are cloud radiances and will be converted to
       ! the effective cloud optical depth after the forward model
@@ -1939,6 +1945,11 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.92  2001/10/15 22:41:11  vsnyder
+! Put the local (non-l2cf) vectors into a private database of fixed size,
+! for snooping.  We can't copy them in, because it's a shallow copy, and
+! we change some pointers later.
+!
 ! Revision 2.91  2001/10/11 16:28:25  dwu
 ! Add cloudretrieval method for low tangent height radiances
 !
