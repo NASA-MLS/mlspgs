@@ -77,9 +77,9 @@ module L2PC_m
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
-contains ! ============= Public Procedures ==========================
+contains ! ============= Public Procedures =============================
 
-  ! ------------------------------------ AddBinSelectorToDatabase --
+  ! -----------------------------------  AddBinSelectorToDatabase  -----
   integer function AddBinSelectorToDatabase ( database, item )
     type (BinSelector_T), dimension(:), pointer :: DATABASE
     type (BinSelector_T) :: item
@@ -90,7 +90,7 @@ contains ! ============= Public Procedures ==========================
     AddBinSelectorToDatabase = newSize
   end function AddBinSelectorToDatabase
 
-  ! ------------------------------------  Add l2pc  to database ----
+  ! ---------------------------------------  Add l2pc to database  -----
   integer function AddL2PCToDatabase ( Database, Item )
     
     ! This function simply adds an l2pc  to a database of said l2pc s.
@@ -105,13 +105,13 @@ contains ! ============= Public Procedures ==========================
     AddL2PCToDatabase = newSize
   end function AddL2PCToDatabase
 
-  ! -----------------------------------  Close_L2PC_File  -----
+  ! --------------------------------------------  Close_L2PC_File  -----
   subroutine Close_L2PC_File ( Lun )
     integer, intent(in) :: lun
     close ( lun )
   end subroutine Close_L2PC_File
 
-  ! -------------------------------------- DestroyBinSelectorDatabase
+  ! ---------------------------------  DestroyBinSelectorDatabase  -----
   subroutine DestroyBinSelectorDatabase 
     ! Local variables
     integer :: I                        ! Loop counter
@@ -129,7 +129,7 @@ contains ! ============= Public Procedures ==========================
       & MLSMSG_Deallocate//"bin selectors binSelectors" )
   end subroutine DestroyBinSelectorDatabase
 
-  ! ----------------------------------------------- DestroyL2PC ----
+  ! ------------------------------------------------  DestroyL2PC  -----
   subroutine DestroyL2PC ( l2pc )
     ! Dummy arguments
     type (Matrix_T), intent(inout), target :: L2PC
@@ -163,7 +163,7 @@ contains ! ============= Public Procedures ==========================
     
   end subroutine DestroyL2PC
 
-  ! ------------------------------------------- DestroyL2PCDatabase ---
+  ! ----------------------------------------  DestroyL2PCDatabase  -----
   subroutine DestroyL2PCDatabase
 
     ! Local variables
@@ -179,7 +179,7 @@ contains ! ============= Public Procedures ==========================
     end if
   end subroutine DestroyL2PCDatabase
 
-  ! ------------------------------------ open_l2pc_file ------------
+  ! ---------------------------------------------  Open_L2PC_File  -----
   subroutine Open_L2PC_File ( Filename, Lun )
 
     character(len=*), intent(in) :: Filename ! Name of the antenna pattern file
@@ -200,7 +200,7 @@ contains ! ============= Public Procedures ==========================
       & "Unable to open l2pc file " // Filename )
   end subroutine Open_L2PC_File
 
-  ! ------------------------------------- Read_l2pc_file ------
+  ! ---------------------------------------------- Read_l2pc_file  -----
   subroutine Read_l2pc_file ( Lun )
     use Trace_M, only: Trace_begin, Trace_end
     use Toggles, only: Toggle, gen
@@ -232,7 +232,7 @@ contains ! ============= Public Procedures ==========================
     if ( toggle (gen) ) call trace_end ( "Read_l2pc_file" )
   end subroutine Read_l2pc_file
 
-  ! --------------------------------------- WriteOneL2PC ---------------
+  ! -----------------------------------------------  WriteOneL2PC  -----
   subroutine WriteOneL2PC ( L2pc, Unit, packed )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
@@ -385,7 +385,7 @@ contains ! ============= Public Procedures ==========================
 
   ! ======================================= PRIVATE PROCEDURES ====================
 
-  ! ----------------------------------- MakeMatrixPackMap -----------
+  ! ------------------------------------------  MakeMatrixPackMap  -----
   subroutine MakeMatrixPackMap ( m, rowPack, colPack )
     ! This subroutine fills the boolean arrays rowPack, colPack
     ! (each length row/col%noQuantities) with a flag set true
@@ -428,7 +428,7 @@ contains ! ============= Public Procedures ==========================
     end do
   end subroutine MakeMatrixPackMap
 
-  ! --------------------------------------------- OutputHDF5L2PC
+  ! ---------------------------------------------  OutputHDF5L2PC  -----
   subroutine OutputHDF5L2PC ( filename, matrices, quantitiesNode, packed )
     character (len=*), intent(in) :: FILENAME
     type (Matrix_Database_T), dimension(:), pointer :: MATRICES
@@ -439,7 +439,7 @@ contains ! ============= Public Procedures ==========================
       & 'Wrong version of L2PC_m used, no HDF5 support here' )
   end subroutine OutputHDF5L2PC
 
-  ! --------------------------------------- WriteL2PC ---------------
+  ! ------------------------------------------------  ReadOneL2PC  -----
   subroutine ReadOneL2PC ( L2pc, Unit, Eof )
     ! This subroutine writes an l2pc to a file
     ! Currently this file is ascii, later it will be
@@ -468,6 +468,10 @@ contains ! ============= Public Procedures ==========================
     integer :: YSTAR                    ! Radiances for xStar vector index
 
     ! executable code
+!   Don't do the following.  The caller puts the associated actual argument
+!   into a database using a shallow copy.  Destroying l2pc would clobber a
+!   database item's fields.
+!   call destroyMatrix ( l2pc ) ! Avoid memory leaks
 
     ! First read the xStar and yStar
     call ReadOneVector ( unit, xStar, eof )
@@ -515,7 +519,7 @@ contains ! ============= Public Procedures ==========================
     end do
   end subroutine ReadOneL2PC
 
-  ! ------------------------------------------ ReadOneVector ----------------
+  ! ----------------------------------------------  ReadOneVector  -----
   subroutine ReadOneVector ( unit, vector, eof )
     ! Reads a vector from l2pc file and adds it to internal databases. This
     ! is internal as having it inside the above routine screws up databases.
@@ -727,6 +731,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.35  2002/07/01 23:48:56  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.34  2002/06/22 23:12:07  livesey
 ! Added sparsity dump
 !
