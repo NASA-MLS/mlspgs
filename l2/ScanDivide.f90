@@ -668,6 +668,7 @@ contains ! =====     Public Procedures     =============================
     chunks(2:numChunks)%noMAFsLowerOverlap = overlap
 
     chunks(1)%noMAFsLowerOverlap = bdryMAF(1) - chunks(1)%firstMAFIndex
+    ! Think there is a problem here, get 1 when would expect 0, NJL.
 
 ! Set upper overlap to MLSCF input; consider last MAF separately
 
@@ -1331,6 +1332,9 @@ end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.3  2001/02/12 20:29:34  livesey
+!# Flagged a possible error region
+!#
 !# Revision 2.2  2000/09/11 20:00:20  ahanzel
 !# Removed old log entries in file.
 !#
