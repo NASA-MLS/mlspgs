@@ -21,10 +21,15 @@ module Open_Init
   use String_Table, only: L2CFUnit => INUNIT
   use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
     & SOURCE_REF, SUB_ROSA, SUBTREE
+  use TREE_TYPES, only: N_NAMED, N_DOT
+  use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, Vector_T, &
+    & VectorTemplate_T
 
   implicit none
   private
-  public :: CloseMLSCF, DestroyL1BInfo, OpenAndInitialize, OpenMLSCF
+  public :: CloseMLSCF, DestroyL1BInfo, OpenAndInitialize, OpenMLSCF, read_apriori
+
+  ! -----     Private declarations     ---------------------------------
 
   private :: Id, ModuleName
   !------------------------------- RCS Ident Info ------------------------------
@@ -32,6 +37,9 @@ module Open_Init
      "$id: open_init.f90,v 1.11 2000/06/19 22:40:51 lungu Exp $"
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
+
+  integer, parameter :: s_l2gp = 0   ! to be replaced by entry in init_tables_module
+  integer, parameter :: s_l2aux = s_l2gp+1   ! to be replaced by entry in init_tables_module
 
 contains ! =====     Public Procedures     =============================
 
@@ -278,6 +286,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.5  2000/11/29 17:35:30  pwagner
+! Compiles now
+!
 ! Revision 2.4  2000/11/29 00:27:54  pwagner
 ! Began changes to open old l2gp
 !
