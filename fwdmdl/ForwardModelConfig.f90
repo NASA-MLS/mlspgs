@@ -213,49 +213,21 @@ contains
   subroutine DeriveFromForwardModelConfig ( FwdModelConf )
 
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-    use FilterShapes_m, only: DACSFilterShapes
     use MLSMessageModule, only: MLSMessage,  MLSMSG_Allocate, MLSMSG_Error, &
       & MLSMSG_Warning
-    use MLSSets, only: FindFirst, Intersection, Union
-    use MLSSignals_m, only: DisplaySignalName, MatchSignal
-    use Output_m, only: Output
+    use MLSSets, only: FindFirst
+    use MLSSignals_m, only: MatchSignal
+!   use Output_m, only: Output
     use PFADataBase_m, only: Dump, PFAData, PFA_By_Molecule, SortPFAData, &
       & Sort_PFADataBase
     use Toggles, only: Switches
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
 
-    integer :: B                           ! Index for beta groups
-    integer :: Channel
     integer :: DumpFwm = -1                ! -1 = not called yet, 0 = no dumps,
                                            ! 1 = dump, 2 = dump and stop
     logical :: Error
-    logical :: Hit                         ! Hit a molecule to be used
-    integer :: HowManyPFA                  ! How many PFA data records are for the
-                                           ! molecules in fwdModelConf%Molecules?
-    integer :: I, Ier, J, K
-    integer :: LBoundDACs, UBoundDACs      ! How many channels in a DAC
-    integer :: M1, M2                      ! Matched signal indices
-    integer :: NoUsedChannels, NoUsedDACS
-    integer :: NumPFA                      ! Like HowManyPFA, but for one channel
-    integer :: P                           ! Index for PFA molecules in a beta group
-!   integer, pointer :: PFAWork(:,:)       ! PFA Indices for a channel.
-!                                          ! Sideband X Molecules.
-    integer :: SB                          ! Sideband index
-    integer :: SigInd
-    logical :: SignalFlag(size(fwdModelConf%signals))
     integer :: S1, S2                      ! SidebandStart, SidebandStop
-    integer, pointer :: T1(:), T2(:)       ! Temps for set operations
-!   integer, pointer :: WhichMolecule(:)   ! To which element of config%molecules
-!                                          ! does WhichPfa(i) correspond?
-!   integer, pointer :: WhichPFA(:)        ! Which PFA data records are for the
-!                                          ! molecules in fwdModelConf%Molecules?
-
-    ! Shorthand pointers into fwdModelConf
-    real(rp), dimension(:,:), pointer :: DACsStaging  ! Temporary space for DACS radiances
-    integer, pointer :: USEDDACSSIGNALS(:) ! Indices in FwdModelConf_T%Signals
-                                           ! of signals for our dacs
-    type(channels_T), pointer :: Channels(:)
 
     if ( dumpFwm < 0 ) then ! done only once
       dumpFwm = 0
@@ -271,220 +243,18 @@ contains
     s2 = fwdModelConf%sidebandStop
 
     ! Identify which of our signals are DACS and how many unique DACS are involved
-    ! Compute NoUsedDACs
     ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
-
-    nullify ( DACsStaging, usedDACSSignals )!, whichPFA )
-    signalFlag = .false.
-    lBoundDACs = 0; uBoundDACs = 0
-    noUsedDACs = 0
-    do sigInd = 1, size(fwdModelConf%signals)
-      if ( fwdModelConf%signals(sigInd)%dacs .and. &
-        & .not. signalFlag(sigind) ) then
-        signalFlag(sigind) = .true.
-        noUsedDACs = noUsedDACs + 1
-        if ( noUsedDACs == 1 ) then
-          lBoundDACs = lbound(fwdModelConf%signals(sigInd)%frequencies,1 )
-          uBoundDACs = ubound(fwdModelConf%signals(sigInd)%frequencies,1 )
-        else
-          if ( lBoundDACs /= lbound ( fwdModelConf%signals(sigInd)%frequencies,1 ) .or. &
-            &  uBoundDACs /= ubound ( fwdModelConf%signals(sigInd)%frequencies,1 ) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & 'Two DACS have different number of channels' )
-        end if
-      end if
-    end do
-    if ( noUsedDACs > 0 .and. .not. associated(DACsFilterShapes) ) &
-      call MLSMessage ( MLSMSG_Error, moduleName, &
-        & 'DACS in use but no filter shapes provided.' )
-    call allocate_test ( usedDACSSignals, noUsedDACs, 'usedDACSSignals', ModuleName )
-    usedDACSSignals = pack ( (/ (i, i=1, size(signalFlag)) /), signalFlag )
-    call allocate_test ( DACsStaging, uBoundDACs, noUsedDACs, &
-      & 'DACsStaging', moduleName, low1 = lBoundDACs )
+    call DACS_Stuff ( fwdModelConf%DACsStaging, &
+                    & fwdModelConf%usedDACSSignals ) ! Below
 
     ! Work out which channels are used.
-    noUsedChannels = 0
-    do sigInd = 1, size(fwdModelConf%signals)
-      noUsedChannels = noUsedChannels + &
-        & count( fwdModelConf%signals(sigInd)%channels )
-    end do
-    allocate ( channels(noUsedChannels), stat=ier )
-    if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'fwdModelConf%channels' )
+    call channel_stuff ( fwdModelConf%channels, fwdModelConf%usedDACSSignals ) ! Below
 
-    ! Collect channel information from signals database.
-    channel = 0
-    do sigInd = 1, size(fwdModelConf%signals)
-      do i = 1, size(fwdModelConf%signals(sigInd)%frequencies)
-        if ( fwdModelConf%signals(sigInd)%channels(i) ) then
-          channel = channel + 1
-          channels(channel)%origin = &
-            & lbound ( fwdModelConf%signals(sigInd)%frequencies, 1 )
-          channels(channel)%used = i + channels(channel)%origin - 1
-          channels(channel)%signal = sigInd
-          channels(channel)%dacs = FindFirst ( usedDACSSignals, sigind )
-        end if
-      end do
-    end do
+    ! Work out the spectroscopy we're going to need.
+    call SpectroscopyCatalogExtract ! Below
 
-    ! Hook the shortcuts into the structure
-    fwdModelConf%channels => channels
-    fwdModelConf%DACsStaging => DACsStaging
-    fwdModelConf%usedDACSSignals => usedDACSSignals
-
-    if ( associated(pfaData) ) then
-      do b = 1, size(fwdModelConf%beta_group)
-        call allocate_test ( fwdModelConf%beta_group(b)%pfa_indices, &
-          & fwdModelConf%sidebandStop, &
-          & size(fwdModelConf%channels), &
-          & size(fwdModelConf%beta_group(b)%pfa_molecules), &
-          & 'Beta_group(b)%PFA_indices', moduleName, &
-          & lowBound_1=fwdModelConf%sidebandStart )
-        fwdModelConf%beta_group(b)%pfa_indices = 0 ! OK if some missing, but no junk
-        do p = 1, size(fwdModelConf%beta_group(b)%PFA_Molecules)
-          do i = PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p)-1)+1, &
-            &    PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p))
-            do sb = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
-              do channel = 1, size(channels)
-                if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
-                  &  fwdModelConf%signals(channels(channel)%signal), sideband=sb, &
-                  &  channel=channels(channel)%used ) > 0 ) &
-                    & fwdModelConf%beta_group(b)%pfa_indices(sb,channel,p) = &
-                      & sortPFAdata(i)
-              end do ! channel
-            end do ! sb
-          end do ! i (molecules)
-        end do ! p
-      end do ! b
-    else
-      do b = 1, size(fwdModelConf%beta_group)
-        nullify ( fwdModelConf%beta_group(b)%pfa_indices ) ! Why is this needed?
-      end do
-    end if ! associated(pfaData)
-
-!    if ( associated(pfaData) ) then
-!
-!      call allocate_test ( PFAWork, s2, size(fwdModelConf%molecules), &
-!        & 'PFAWork', moduleName, lowBound_1=s1, lowBound_2=fwdModelConf%firstPFA )
-!
-!      ! Work out which PFA data are germane to fwdModelConf%Molecules
-!      ! We do this because there are thousands of PFA data, but maybe only
-!      ! a few that are germane to this fwdModelConf
-!      howManyPFA = 0
-!      do i = 1, size(pfaData)
-!        hit = .false.
-!        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
-!          if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
-!            if ( matchSignal(fwdModelConf%signals, PFAData(i)%theSignal, &
-!              & DSBSSB=.true.) /= 0 ) then
-!              if ( hit ) then
-!                error = .true.
-!                call MLSMessage ( MLSMSG_Warning, moduleName, &
-!                  & 'Two molecules in same PFA Datum selected' )
-!                call dump ( PFAData(whichPFA(j)), details=0 )
-!              end if
-!              hit = .true.
-!            end if
-!          end if
-!        end do
-!        if ( hit ) howManyPFA = howManyPFA + 1
-!      end do
-!      call allocate_test ( whichPFA, howManyPFA, 'whichPFA', moduleName )
-!      call allocate_test ( whichMolecule, howManyPFA, 'whichMolecule', moduleName )
-!      howManyPFA = 0
-!      do i = 1, size(pfaData)
-!        do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
-!          if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
-!            if ( matchSignal(fwdModelConf%signals, PFAData(i)%theSignal, &
-!              & DSBSSB=.true.) /= 0 ) then
-!              howManyPFA = howManyPFA + 1
-!              whichPFA(howManyPFA) = i
-!              whichMolecule(howManyPFA) = j
-!            end if
-!          end if
-!        end do
-!      end do
-!      ! Work out PFA abstracts for each channel
-!      if ( .not. error ) then
-!        do i = 1, size(channels)
-!          PFAWork = 0
-!          nullify ( t1, channels(i)%PFAMolecules, channels(i)%betaIndex )
-!          call allocate_test ( channels(i)%PFAMolecules, 0, &
-!            & 'channels(i)%PFAMolecules', moduleName ) ! so we can do unions
-!          ! Where there is a signal and a molecule, make whichPFA negative.
-!          ! Make sure that only one molecule is selected from each PFA Datum
-!          do j = 1, howManyPFA
-!            if ( channels(i)%used < lbound(PFAData(whichPFA(j))%theSignal%channels,1) .or. &
-!                 channels(i)%used > ubound(PFAData(whichPFA(j))%theSignal%channels,1) ) cycle
-!            if ( .not. PFAData(whichPFA(j))%theSignal%channels(channels(i)%used) ) cycle
-!            if ( matchSignal ( fwdModelConf%signals(channels(i)%signal), &
-!              &  PFAData(whichPFA(j))%theSignal, DSBSSB=.true. ) == 0 ) cycle
-!            t2 => intersection(fwdModelConf%molecules(fwdModelConf%firstPFA:), &
-!              &                PFAData(whichPFA(j))%molecules)
-!            if ( size(t2) == 0 ) cycle
-!            whichPFA(j) = -whichPFA(j) ! Indicate above tests succeeded
-!            t1 => union(channels(i)%PFAMolecules,t2)
-!            call deallocate_test ( t2, 't2', moduleName )
-!            call deallocate_test ( channels(i)%PFAMolecules, &
-!              & 'channels(i)%PFAMolecules', moduleName )
-!            channels(i)%PFAMolecules => t1
-!          end do ! j = 1, howManyPFA
-!          numPFA = size(channels(i)%PFAMolecules)
-!          call allocate_test ( channels(i)%PFAIndex, s2, numPFA, &
-!            & 'channels(i)%PFAIndex', moduleName, lowBound_1=s1 )
-!          call allocate_test ( channels(i)%betaIndex, numPFA, &
-!            & 'channels(i)%BetaIndex', moduleName )
-!          channels(i)%betaIndex = 0 ! in case a dump is requested
-!          ! Arrange the PFAData indices by sideband and molecule in PFAWork
-!          do sb = s1, s2, 2
-!            do j = 1, howManyPFA
-!              if ( whichPFA(j) > 0 ) cycle ! some test in previous loop failed
-!              if ( matchSignal ( PFAData(-whichPFA(j))%theSignal, &
-!                &  fwdModelConf%signals(channels(i)%signal), sideband=sb, &
-!                &  channel=channels(i)%used ) > 0 ) &
-!                  & PFAWork(sb,whichMolecule(j)) = -whichPFA(j)
-!            end do ! j = 1, howManyPFA
-!          end do ! sb = s1, s2
-!          ! Copy nonzero columns of PFAWork to channels(i)%PFAIndex, which
-!          ! has exactly the same number of columns as the number of PFAWork's
-!          ! nonzero columns
-!          k = 0
-!          do j = lbound(pfawork,2), ubound(pfawork,2)
-!            if ( pfawork(-1,j)+pfawork(+1,j) /= 0 ) then
-!              k = k + 1
-!              channels(i)%PFAIndex(s1:s2:2,k) = pfawork(s1:s2:2,j)
-!            end if
-!          end do
-!          ! Check whether we have PFA data for both sidebands if LBL is DSB
-!          if ( s1 /= s2 ) then
-!            do j = 1, numPFA
-!              if ( channels(i)%PFAIndex(s1,j) * channels(i)%PFAIndex(s2,j) == 0 ) then
-!  !             error = .true.
-!                call MLSMessage ( MLSMSG_warning, moduleName, &
-!                  & 'LBL signal is DSB but both PFAs are not available' )
-!                call output ( channels(i)%used, before=' Channel ' )
-!                call output ( ', LBL signal: ' )
-!                call displaySignalName ( fwdModelConf%signals(channels(i)%signal), &
-!                  & advance='yes' )
-!                call output ( ' Available ' )
-!                if ( channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j) == 0 ) then
-!                  call output ( 'PFA Datum: None', advance='yes' )
-!                else
-!                  call dump ( PFAData( &
-!                    & channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j)), &
-!                    & index=channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j), &
-!                    & details=0 )
-!                end if
-!              end if
-!            end do ! j = 1, numPFA
-!          end if
-!          whichPFA = abs(whichPFA)
-!        end do ! i = 1, size(channels)
-!      end if
-!      call deallocate_test ( PFAWork, 'PFAWork', moduleName )
-!      call deallocate_test ( whichPFA, 'whichPFA', moduleName )
-!      call deallocate_test ( whichMolecule, 'whichMolecule', moduleName )
-!   end if ! associated(pfaData)
+    ! Work out the PFA stuff
+    call PFA_Stuff ! Below
 
     if ( dumpFwm > 0 .or. error ) then
       call dump ( fwdModelConf, 'DeriveFromForwardModelConfig' )
@@ -494,6 +264,427 @@ contains
     if ( error ) &
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unrecoverable errors in forward model configuration' )
+
+  contains
+
+    ! ............................................  Channel_Stuff  .....
+    subroutine Channel_Stuff ( Channels, UsedDACSSignals )
+
+      ! Work out which channels are used.
+
+      type(channels_T), pointer :: Channels(:)
+      integer :: UsedDACSSignals(:)          ! Indices in FwdModelConf_T%Signals
+                                             ! of signals for our dacs
+
+      integer :: Channel
+      integer :: I, Ier
+      integer :: NoUsedChannels
+      integer :: SigInd
+
+      noUsedChannels = 0
+      do sigInd = 1, size(fwdModelConf%signals)
+        noUsedChannels = noUsedChannels + &
+          & count( fwdModelConf%signals(sigInd)%channels )
+      end do
+      allocate ( channels(noUsedChannels), stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'fwdModelConf%channels' )
+
+      ! Collect channel information from signals database.
+      channel = 0
+      do sigInd = 1, size(fwdModelConf%signals)
+        do i = 1, size(fwdModelConf%signals(sigInd)%frequencies)
+          if ( fwdModelConf%signals(sigInd)%channels(i) ) then
+            channel = channel + 1
+            channels(channel)%origin = &
+              & lbound ( fwdModelConf%signals(sigInd)%frequencies, 1 )
+            channels(channel)%used = i + channels(channel)%origin - 1
+            channels(channel)%signal = sigInd
+            channels(channel)%dacs = FindFirst ( usedDACSSignals, sigind )
+          end if
+        end do
+      end do
+
+    end subroutine Channel_Stuff
+
+    ! ...............................................  DACS_Stuff  .....
+    subroutine DACS_Stuff ( DACsStaging, UsedDACSSignals )
+
+      use FilterShapes_m, only: DACSFilterShapes
+
+      ! Identify which of our signals are DACS and how many unique DACS are involved
+      ! Allocate and compute UsedDACSSignals and allocate DACsStaging.
+
+      real(rp), pointer :: DACsStaging(:,:)  ! DACS radiances
+      integer, pointer :: UsedDACSSignals(:) ! Indices in FwdModelConf_T%Signals
+                                             ! of signals for our dacs
+
+      integer :: I
+      integer :: LBoundDACs, UBoundDACs      ! How many channels in a DAC
+      integer :: NoUsedDACS
+      integer :: SigInd
+      logical :: SignalFlag(size(fwdModelConf%signals))
+
+      nullify ( DACsStaging, usedDACSSignals )
+      signalFlag = .false.
+      lBoundDACs = 0; uBoundDACs = 0
+      noUsedDACs = 0
+      do sigInd = 1, size(fwdModelConf%signals)
+        if ( fwdModelConf%signals(sigInd)%dacs .and. &
+          & .not. signalFlag(sigind) ) then
+          signalFlag(sigind) = .true.
+          noUsedDACs = noUsedDACs + 1
+          if ( noUsedDACs == 1 ) then
+            lBoundDACs = lbound(fwdModelConf%signals(sigInd)%frequencies,1 )
+            uBoundDACs = ubound(fwdModelConf%signals(sigInd)%frequencies,1 )
+          else
+            if ( lBoundDACs /= lbound ( fwdModelConf%signals(sigInd)%frequencies,1 ) .or. &
+              &  uBoundDACs /= ubound ( fwdModelConf%signals(sigInd)%frequencies,1 ) ) &
+              & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & 'Two DACS have different number of channels' )
+          end if
+        end if
+      end do
+      if ( noUsedDACs > 0 .and. .not. associated(DACsFilterShapes) ) &
+        call MLSMessage ( MLSMSG_Error, moduleName, &
+          & 'DACS in use but no filter shapes provided.' )
+      call allocate_test ( usedDACSSignals, noUsedDACs, 'usedDACSSignals', ModuleName )
+      usedDACSSignals = pack ( (/ (i, i=1, size(signalFlag)) /), signalFlag )
+      call allocate_test ( DACsStaging, uBoundDACs, noUsedDACs, &
+        & 'DACsStaging', moduleName, low1 = lBoundDACs )
+    end subroutine DACS_Stuff
+
+    ! ................................................  PFA_Stuff  .....
+    subroutine PFA_Stuff
+
+      integer :: B                           ! Index for beta groups
+      integer :: Channel
+!     logical :: Hit                         ! Hit a molecule to be used
+!     integer :: HowManyPFA                  ! How many PFA data records are for the
+                                             ! molecules in fwdModelConf%Molecules?
+      integer :: I
+!     integer :: J, K
+!     integer :: NumPFA                      ! Like HowManyPFA, but for one channel
+      integer :: P                           ! Index for PFA molecules in a beta group
+!     integer, pointer :: PFAWork(:,:)       ! PFA Indices for a channel.
+!                                            ! Sideband X Molecules.
+      integer :: SB                          ! Sideband index
+!     integer, pointer :: T1(:), T2(:)       ! Temps for set operations
+!     integer, pointer :: WhichMolecule(:)   ! To which element of config%molecules
+!                                            ! does WhichPfa(i) correspond?
+!     integer, pointer :: WhichPFA(:)        ! Which PFA data records are for the
+!                                            ! molecules in fwdModelConf%Molecules?
+
+      if ( associated(pfaData) ) then
+        do b = 1, size(fwdModelConf%beta_group)
+          call allocate_test ( fwdModelConf%beta_group(b)%pfa_indices, &
+            & fwdModelConf%sidebandStop, &
+            & size(fwdModelConf%channels), &
+            & size(fwdModelConf%beta_group(b)%pfa_molecules), &
+            & 'Beta_group(b)%PFA_indices', moduleName, &
+            & lowBound_1=fwdModelConf%sidebandStart )
+          fwdModelConf%beta_group(b)%pfa_indices = 0 ! OK if some missing, but no junk
+          do p = 1, size(fwdModelConf%beta_group(b)%PFA_Molecules)
+            do i = PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p)-1)+1, &
+              &    PFA_by_molecule(fwdModelConf%beta_group(b)%PFA_Molecules(p))
+              do sb = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
+                do channel = 1, size(fwdModelConf%channels)
+                  if ( matchSignal ( PFAData(sortPFAdata(i))%theSignal, &
+                    &  fwdModelConf%signals(fwdModelConf%channels(channel)%signal), sideband=sb, &
+                    &  channel=fwdModelConf%channels(channel)%used ) > 0 ) &
+                      & fwdModelConf%beta_group(b)%pfa_indices(sb,channel,p) = &
+                        & sortPFAdata(i)
+                end do ! channel
+              end do ! sb
+            end do ! i (molecules)
+          end do ! p
+        end do ! b
+      else
+        do b = 1, size(fwdModelConf%beta_group)
+          nullify ( fwdModelConf%beta_group(b)%pfa_indices ) ! Why is this needed?
+        end do
+      end if ! associated(pfaData)
+
+!      if ( associated(pfaData) ) then
+!
+!        call allocate_test ( PFAWork, s2, size(fwdModelConf%molecules), &
+!          & 'PFAWork', moduleName, lowBound_1=s1, lowBound_2=fwdModelConf%firstPFA )
+!
+!        ! Work out which PFA data are germane to fwdModelConf%Molecules
+!        ! We do this because there are thousands of PFA data, but maybe only
+!        ! a few that are germane to this fwdModelConf
+!        howManyPFA = 0
+!        do i = 1, size(pfaData)
+!          hit = .false.
+!          do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
+!            if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
+!              if ( matchSignal(fwdModelConf%signals, PFAData(i)%theSignal, &
+!                & DSBSSB=.true.) /= 0 ) then
+!                if ( hit ) then
+!                  error = .true.
+!                  call MLSMessage ( MLSMSG_Warning, moduleName, &
+!                    & 'Two molecules in same PFA Datum selected' )
+!                  call dump ( PFAData(whichPFA(j)), details=0 )
+!                end if
+!                hit = .true.
+!              end if
+!            end if
+!          end do
+!          if ( hit ) howManyPFA = howManyPFA + 1
+!        end do
+!        call allocate_test ( whichPFA, howManyPFA, 'whichPFA', moduleName )
+!        call allocate_test ( whichMolecule, howManyPFA, 'whichMolecule', moduleName )
+!        howManyPFA = 0
+!        do i = 1, size(pfaData)
+!          do j = fwdModelConf%firstPFA, size(fwdModelConf%molecules) - 1
+!            if ( any(fwdModelConf%molecules(j) == PFAData(i)%molecules) ) then
+!              if ( matchSignal(fwdModelConf%signals, PFAData(i)%theSignal, &
+!                & DSBSSB=.true.) /= 0 ) then
+!                howManyPFA = howManyPFA + 1
+!                whichPFA(howManyPFA) = i
+!                whichMolecule(howManyPFA) = j
+!              end if
+!            end if
+!          end do
+!        end do
+!        ! Work out PFA abstracts for each channel
+!        if ( .not. error ) then
+!          do i = 1, size(channels)
+!            PFAWork = 0
+!            nullify ( t1, channels(i)%PFAMolecules, channels(i)%betaIndex )
+!            call allocate_test ( channels(i)%PFAMolecules, 0, &
+!              & 'channels(i)%PFAMolecules', moduleName ) ! so we can do unions
+!            ! Where there is a signal and a molecule, make whichPFA negative.
+!            ! Make sure that only one molecule is selected from each PFA Datum
+!            do j = 1, howManyPFA
+!              if ( channels(i)%used < lbound(PFAData(whichPFA(j))%theSignal%channels,1) .or. &
+!                   channels(i)%used > ubound(PFAData(whichPFA(j))%theSignal%channels,1) ) cycle
+!              if ( .not. PFAData(whichPFA(j))%theSignal%channels(channels(i)%used) ) cycle
+!              if ( matchSignal ( fwdModelConf%signals(channels(i)%signal), &
+!                &  PFAData(whichPFA(j))%theSignal, DSBSSB=.true. ) == 0 ) cycle
+!              t2 => intersection(fwdModelConf%molecules(fwdModelConf%firstPFA:), &
+!                &                PFAData(whichPFA(j))%molecules)
+!              if ( size(t2) == 0 ) cycle
+!              whichPFA(j) = -whichPFA(j) ! Indicate above tests succeeded
+!              t1 => union(channels(i)%PFAMolecules,t2)
+!              call deallocate_test ( t2, 't2', moduleName )
+!              call deallocate_test ( channels(i)%PFAMolecules, &
+!                & 'channels(i)%PFAMolecules', moduleName )
+!              channels(i)%PFAMolecules => t1
+!            end do ! j = 1, howManyPFA
+!            numPFA = size(channels(i)%PFAMolecules)
+!            call allocate_test ( channels(i)%PFAIndex, s2, numPFA, &
+!              & 'channels(i)%PFAIndex', moduleName, lowBound_1=s1 )
+!            call allocate_test ( channels(i)%betaIndex, numPFA, &
+!              & 'channels(i)%BetaIndex', moduleName )
+!            channels(i)%betaIndex = 0 ! in case a dump is requested
+!            ! Arrange the PFAData indices by sideband and molecule in PFAWork
+!            do sb = s1, s2, 2
+!              do j = 1, howManyPFA
+!                if ( whichPFA(j) > 0 ) cycle ! some test in previous loop failed
+!                if ( matchSignal ( PFAData(-whichPFA(j))%theSignal, &
+!                  &  fwdModelConf%signals(channels(i)%signal), sideband=sb, &
+!                  &  channel=channels(i)%used ) > 0 ) &
+!                    & PFAWork(sb,whichMolecule(j)) = -whichPFA(j)
+!              end do ! j = 1, howManyPFA
+!            end do ! sb = s1, s2
+!            ! Copy nonzero columns of PFAWork to channels(i)%PFAIndex, which
+!            ! has exactly the same number of columns as the number of PFAWork's
+!            ! nonzero columns
+!            k = 0
+!            do j = lbound(pfawork,2), ubound(pfawork,2)
+!              if ( pfawork(-1,j)+pfawork(+1,j) /= 0 ) then
+!                k = k + 1
+!                channels(i)%PFAIndex(s1:s2:2,k) = pfawork(s1:s2:2,j)
+!              end if
+!            end do
+!            ! Check whether we have PFA data for both sidebands if LBL is DSB
+!            if ( s1 /= s2 ) then
+!              do j = 1, numPFA
+!                if ( channels(i)%PFAIndex(s1,j) * channels(i)%PFAIndex(s2,j) == 0 ) then
+!    !             error = .true.
+!                  call MLSMessage ( MLSMSG_warning, moduleName, &
+!                    & 'LBL signal is DSB but both PFAs are not available' )
+!                  call output ( channels(i)%used, before=' Channel ' )
+!                  call output ( ', LBL signal: ' )
+!                  call displaySignalName ( fwdModelConf%signals(channels(i)%signal), &
+!                    & advance='yes' )
+!                  call output ( ' Available ' )
+!                  if ( channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j) == 0 ) then
+!                    call output ( 'PFA Datum: None', advance='yes' )
+!                  else
+!                    call dump ( PFAData( &
+!                      & channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j)), &
+!                      & index=channels(i)%PFAIndex(s1,j) + channels(i)%PFAIndex(s2,j), &
+!                      & details=0 )
+!                  end if
+!                end if
+!              end do ! j = 1, numPFA
+!            end if
+!            whichPFA = abs(whichPFA)
+!          end do ! i = 1, size(channels)
+!        end if
+!        call deallocate_test ( PFAWork, 'PFAWork', moduleName )
+!        call deallocate_test ( whichPFA, 'whichPFA', moduleName )
+!        call deallocate_test ( whichMolecule, 'whichMolecule', moduleName )
+!     end if ! associated(pfaData)
+    end subroutine PFA_Stuff
+
+    ! ...............................  SpectroscopyCatalogExtract  .....
+    subroutine SpectroscopyCatalogExtract
+      use Allocate_Deallocate, only: Allocate_Test
+      use Intrinsic, only: LIT_INDICES, L_NONE
+      use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+        & MLSMSG_Warning
+      use MLSSignals_m, only: GetRadiometerFromSignal
+      use SpectroscopyCatalog_m, only: Catalog, Empty_Cat, Line_t, &
+        & Lines, MostLines
+      use String_table, only: GET_STRING
+      use Toggles, only: Switches
+
+      integer :: B         ! Beta_group index
+      integer :: C         ! Spectroscopy catalog extract size/index
+      logical :: DoThis    ! Flag for lines in catalog item
+      integer :: I
+      integer :: L         ! Index for lines, or number of lines
+      integer, pointer :: LINEFLAG(:) ! /= 0 => Use this line
+      integer :: M         ! Index for beta_group's molecule-size stuff
+      character(len=32) :: MolName ! For messages
+      integer :: N         ! Molecule index, L_... from Intrinsic
+      integer :: NoLinesMsg = -1 ! From switches
+      integer, target :: MaxLineFlag(mostLines)
+      integer :: Polarized ! -1 => One of the selected lines is Zeeman split
+                           ! +1 => None of the selected lines is Zeeman split
+      integer :: S         ! Index for sidebands                
+      integer :: STAT      ! Status from allocate or deallocate 
+      type (line_T), pointer :: ThisLine
+      integer :: Z         ! Index for fwdModelConf%Signals
+
+      if ( noLinesMsg < 0 ) noLinesMsg = index(switches, '0sl') ! Done once
+
+      ! Allocate the spectroscopy catalog extract
+      c = 0
+      do b = 1, size(fwdModelConf%beta_group) ! Get total catalog size
+        c = c + size(fwdModelConf%beta_group(b)%lbl_molecules)
+      end do
+
+      allocate ( fwdModelConf%catalog(fwdModelConf%sidebandStart:fwdModelConf%sidebandStop,c), &
+        & stat=stat )
+      if ( stat /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          & MLSMSG_Allocate//'fwdModelConf%catalog' )
+
+      ! Work out the spectroscopy we're going to need.
+      fwdModelConf%catalog = empty_cat
+
+      do s = s1, s2, 2
+        c = 0
+        do b = 1, size(fwdModelConf%beta_group)
+          do m = 1, size(fwdModelConf%beta_group(b)%lbl_molecules)
+            c = c + 1
+            fwdModelConf%beta_group(b)%cat_index(m) = c
+            n = fwdModelConf%beta_group(b)%lbl_molecules(m)
+            if ( catalog(n)%molecule == l_none ) then
+              call get_string ( lit_indices(n), molName )
+              call MLSMessage ( MLSMSG_Error, moduleName, &
+                & 'No spectroscopy catalog for ' // molName )
+            end if
+            fwdModelConf%catalog(s,c) = catalog(n)
+            ! Don't deallocate them by mistake -- fwdModelConf%catalog is a shallow copy
+            nullify ( fwdModelConf%catalog(s,c)%lines, fwdModelConf%catalog(s,c)%polarized )
+            if ( associated ( catalog(n)%lines ) ) then
+              ! Now subset the lines according to the signal we're using
+              lineFlag => MaxLineFlag(:size(catalog(n)%lines))
+              lineFlag = 0
+              if ( fwdModelConf%allLinesInCatalog ) then
+                ! NOTE: If allLinesInCatalog is set, then no lines can be polarized;
+                ! this is checked for in ForwardModelSupport.
+                lineFlag = 1
+              else
+                do l = 1, size ( catalog(n)%lines )
+                  thisLine => lines(catalog(n)%lines(l))
+                  if ( associated(thisLine%signals) ) then
+                    polarized = 1 ! not polarized
+                    ! Work out whether to do this line
+                    do z = 1, size(fwdModelConf%signals)
+                      if ( fwdModelConf%allLinesForRadiometer ) then
+                        doThis = .false.
+                        do i = 1, size(thisLine%signals)
+                          ! Tried to make GetRadiometerFromSignal elemental, but compile time
+                          ! in LF95 (optimized) for Construct.f90 went nuts! :-(
+                          if ( GetRadiometerFromSignal ( thisLine%signals(i) ) == &
+                            & fwdModelConf%signals(z)%radiometer ) then
+                            doThis = .true.
+                            if ( .not. fwdModelConf%polarized ) &
+                              exit   ! loop over signals for line -- no need to check for
+                            ! polarized lines
+                            if ( associated(thisLine%polarized) ) then
+                              if ( thisLine%polarized(i) ) then
+                                polarized = -1 ! polarized
+                                exit   ! loop over signals for line -- one signal
+                                ! that sees a polarized line is enough to turn on
+                                ! the polarized method
+                              end if
+                            end if
+                          end if
+                        end do ! End loop over signals for line
+                      else
+                        ! Not doing all lines for radiometer, be more selective
+                        doThis = any ( &
+                          & ( thisLine%signals == fwdModelConf%signals(z)%index ) .and. &
+                          & ( ( thisLine%sidebands == 0 ) .or. ( thisLine%sidebands == s ) ) )
+                        if ( fwdModelConf%polarized .and. doThis .and. &
+                          & associated(thisLine%polarized) ) then
+                          if ( any(thisLine%polarized) ) polarized = -1 ! polarized
+                        end if
+                      end if
+
+                      if ( fwdModelConf%sidebandStart == fwdModelConf%sidebandStop ) &
+                        & doThis = doThis .and. &
+                        & any( ( thisLine%sidebands == fwdModelConf%sidebandStart ) &
+                        & .or. ( thisLine%sidebands == 0 ) )
+                      if ( doThis ) then
+                        lineFlag(l) = polarized
+                        if ( polarized < 0 .or. .not. fwdModelConf%polarized ) &
+                          exit   ! loop over signals requested in fwm
+                      end if
+                    end do ! z End loop over signals requested in fwm
+                  end if
+                end do     ! l End loop over lines
+              end if       ! End case where allLinesInCatalog not set
+
+              ! Check we have at least one line for this specie
+
+              l = count(lineFlag /= 0)
+              if ( l == 0 .and. all ( fwdModelConf%catalog(s,c)%continuum == 0.0 ) &
+                & .and. noLinesMsg > 0 ) then
+                call get_string ( lit_indices(n), molName )
+                call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                  & 'No relevant lines or continuum for '//trim(molName) )
+              end if
+              call allocate_test ( fwdModelConf%catalog(s,c)%lines, l, &
+                & 'fwdModelConf%catalog(?,?)%lines', moduleName )
+              call allocate_test ( fwdModelConf%catalog(s,c)%polarized, l, &
+                & 'fwdModelConf%catalog(?,?)%polarized', moduleName )
+              fwdModelConf%catalog(s,c)%lines = pack ( catalog(n)%lines, lineFlag /= 0 )
+              fwdModelConf%catalog(s,c)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
+
+            else
+
+              ! No lines for this specie.  However, its continuum is still
+              ! valid so don't set it to empty.
+              ! Don't bother checking that continuum /= 0 as if it were then
+              ! presumably having no continuum and no lines it wouldn't be in
+              ! the catalog!
+              call allocate_test ( fwdModelConf%catalog(s,c)%lines, 0, &
+                & 'fwdModelConf%catalog(?,?)%lines(0)', moduleName )
+              call allocate_test ( fwdModelConf%catalog(s,c)%polarized, 0, &
+                & 'fwdModelConf%catalog(?,?)%polarized(0)', moduleName )
+            end if
+          end do ! m Molecules in fwdModelConf
+        end do ! b Beta groups
+      end do ! s Sidebands
+
+    end subroutine SpectroscopyCatalogExtract
 
   end subroutine DeriveFromForwardModelConfig
 
@@ -530,7 +721,7 @@ contains
 
     type ( ForwardModelConfig_T ), intent(inout) :: FwdModelConf
 
-    integer :: B, I, Ier
+    integer :: C, B, I, Ier, S
 
     if ( associated(fwdModelConf%channels) ) then
       do i = 1, size(fwdModelConf%channels)
@@ -547,6 +738,8 @@ contains
       deallocate ( fwdModelConf%channels, stat = ier )
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_DeAllocate//'fwdModelConf%channels' )
+  ! else
+  !   It was already deallocated at the end of FullForwardModel
     end if
 
     do b = 1, size(fwdModelConf%beta_group)
@@ -559,6 +752,25 @@ contains
 
     call deallocate_test ( fwdModelConf%usedDACSSignals, &
       & 'fwdModelConf%usedDACSSignals', moduleName )
+
+    if ( associated(fwdModelConf%catalog) ) then
+      do s = lbound(fwdModelConf%catalog,1), ubound(fwdModelConf%catalog,1), 2
+        do c = 1, size(fwdModelConf%catalog,2)
+          ! We don't deallocate the signals/sidebands stuff for each line because
+          ! they're shallow copies of the main spectroscopy catalog stuff
+          call deallocate_test ( fwdModelConf%catalog(s,c)%lines, &
+            & 'fwdModelConf%catalog(?,?)%lines', moduleName )
+          call deallocate_test ( fwdModelConf%catalog(s,c)%polarized, &
+            & 'fwdModelConf%catalog(?,?)%polarized', moduleName )
+        end do
+      end do
+
+      deallocate ( fwdModelConf%catalog, stat=s )
+      if ( s /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Deallocate // 'fwdModelConf%catalog' )
+  ! else
+  !   It was already deallocated at the end of FullForwardModel
+    end if
 
   end subroutine DestroyForwardModelDerived
 
@@ -924,14 +1136,15 @@ contains
         call dump ( beta_group(i)%lbl_ratio, name='   LBL Ratio' )
         call dump ( beta_group(i)%cat_index, name='   Cat_Index' )
       end if
-      if ( size(beta_group(i)%pfa_molecules) > 0 ) &
-        & call dump ( beta_group(i)%pfa_ratio, name='   PFA Ratio' )
-      if ( associated(beta_group(i)%PFA_indices) ) then
-        do j = lbound(beta_group(i)%PFA_indices,1), &
-               ubound(beta_group(i)%PFA_indices,1), 2
-          call output ( j, before='   PFA Indices for sideband ', advance='yes' )
-          call dump ( beta_group(i)%PFA_indices(j,:,:) )
-        end do
+      if ( size(beta_group(i)%pfa_molecules) > 0 ) then
+        call dump ( beta_group(i)%pfa_ratio, name='   PFA Ratio' )
+        if ( associated(beta_group(i)%PFA_indices) ) then
+          do j = lbound(beta_group(i)%PFA_indices,1), &
+                 ubound(beta_group(i)%PFA_indices,1), 2
+            call output ( j, before='   PFA Indices for sideband ', advance='yes' )
+            call dump ( beta_group(i)%PFA_indices(j,:,:) )
+          end do
+        end if
       end if
       if ( associated ( beta_group(i)%qty%qty ) ) call dump ( beta_group(i)%qty )
     end do
@@ -1083,6 +1296,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.63  2004/11/05 19:38:11  vsnyder
+! Moved some stuff here from Get_Species_Data, more work on PFA, some rearranging
+!
 ! Revision 2.62  2004/11/04 03:42:08  vsnyder
 ! Provide for both LBL_Ratio and PFA_Ratio in beta_group
 !
