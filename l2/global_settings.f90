@@ -1,5 +1,6 @@
 module GLOBAL_SETTINGS
 
+  use EXPR_M, only: EXPR   
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
     & ForwardModelConfig_T
   use ForwardModelInterface, only: ConstructForwardModelConfig, &
@@ -11,7 +12,7 @@ module GLOBAL_SETTINGS
     & S_FORWARDMODEL, S_ForwardModelGlobal, S_TIME, S_VGRID, F_FILE, &
     & P_CYCLE, P_CCSDSSTARTTIME, P_CCSDSENDTIME, P_STARTTIME, P_ENDTIME, &
     & S_L1BRAD, S_L1BOA
-  use L1BData, only: l1bradSetup, l1boaSetup
+  use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T
   use L2GPData, only: L2GPDATA_T
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T, FileNameLen
@@ -68,14 +69,24 @@ contains
     type ( l2gpData_T), dimension(:), pointer :: L2GPDATABASE
     type (TAI93_Range_T) :: processingRange ! Data processing range
     type (L1BInfo_T) :: l1bInfo   ! File handles etc. for L1B dataset
+    type (L1BData_T) :: l1bField ! L1B data
     type(PCFData_T) :: l2pcf
     
+    logical :: GOT(2) = .false.
     integer :: I         ! Index of son of root
+    integer :: KEY       ! A P_... parameter from Init_Tables_Module
+    integer :: L1BFLAG
+    real(r8) :: MINTIME, MAXTIME        ! Time Span in L1B file data
     integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
+    integer :: NOMAFS             ! Number of MAFs of L1B data read
     integer :: SON       ! Son of root
     integer :: sub_rosa_index
     logical :: TIMING    ! For S_Time
     real :: T1, T2       ! For S_Time
+    integer :: UNITS(2)  ! Units of expression
+    real(r8) :: VALUE(2)   ! Value of expression
+    real(r8) :: start_time_from_1stMAF, end_time_from_1stMAF
+
     character(LEN=NameLen) :: name_string
     character(LEN=*), parameter :: time_conversion='(F32.0)'
 ! Just until init_tables_module is updated
@@ -107,26 +118,32 @@ contains
           version_comment = sub_rosa_index
         case ( p_cycle )
           call get_string ( sub_rosa_index, l2pcf%cycle, strip=.true. )
-        case ( p_ccsdsstarttime )
-          call get_string ( sub_rosa_index, l2pcf%startutc, strip=.true. )
-        case ( p_ccsdsendtime )
-          call get_string ( sub_rosa_index, l2pcf%endutc, strip=.true. )
+!        case ( p_ccsdsstarttime )
+!          call get_string ( sub_rosa_index, l2pcf%startutc, strip=.true. )
+!        case ( p_ccsdsendtime )
+!          call get_string ( sub_rosa_index, l2pcf%endutc, strip=.true. )
         case ( p_starttime )
-          call get_string ( sub_rosa_index, name_string, strip=.true. )
+          got(1) = .true.
+          call expr ( subtree(2,son), units, value )
+            start_time_from_1stMAF = value(1)
+ !        call get_string ( sub_rosa_index, name_string, strip=.true. )
  !         print *, 'starttime'
  !         print *, trim(name_string)
  !         print *, trim(unquote(name_string))
  !         name_string = unquote(name_string)
-          read(name_string, time_conversion) &
-          &           processingrange%starttime
+ !         read(name_string, time_conversion) &
+ !         &           processingrange%starttime
         case ( p_endtime )
-          call get_string ( sub_rosa_index, name_string, strip=.true. )
+          got(2) = .true.
+          call expr ( subtree(2,son), units, value )
+            end_time_from_1stMAF = value(1)
+ !         call get_string ( sub_rosa_index, name_string, strip=.true. )
  !         print *, 'endtime'
  !         print *, trim(name_string)
  !         print *, trim(unquote(name_string))
  !         name_string = unquote(name_string)
-          read(name_string, time_conversion) &
-          &           processingrange%endtime
+ !         read(name_string, time_conversion) &
+ !         &           processingrange%endtime
         case default
          call announce_error(son, 'unrecognized global settings parameter')
         end select
@@ -151,6 +168,12 @@ contains
           & MAXNUML1BRADIDS, ILLEGALL1BRADID )
         case ( s_l1boa )
           call l1boaSetup ( son, l1bInfo, F_FILE )
+          call ReadL1BData ( l1bInfo%l1boaID, "MAFStartTimeTAI", l1bField, noMAFs, &
+          & l1bFlag)
+          if ( l1bFlag==-1) call announce_error(son, &
+          & 'unrecognized MAFStarttimeTAI in L1BOA file')
+           minTime = l1bField%dpField(1,1,1)
+           maxTime = l1bField%dpField(1,1,noMAFs)
 
         case ( s_time )
           if ( timing ) then
@@ -164,6 +187,15 @@ contains
         end select
       end if
     end do
+
+   ! add maf offsets to start, end times
+   if(got(1)) then
+      processingrange%starttime = minTime + start_time_from_1stMAF
+   endif
+
+   if(got(2)) then
+      processingrange%endtime = minTime + end_time_from_1stMAF
+   endif
 
    if( ECHO_GLOBAL_STNGS .or. levels(gen) > 0 .or. &
    & index(switches, 'glo') /= 0 ) &
@@ -357,6 +389,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.28  2001/05/11 23:44:43  pwagner
+! Better dump; uses strip=TRUE
+!
 ! Revision 2.27  2001/05/11 01:56:17  vsnyder
 ! Move the getting of sub_rosa_index
 !
