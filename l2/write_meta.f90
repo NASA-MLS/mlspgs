@@ -18,7 +18,7 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
-  use MLSStrings, only: LowerCase, GetStringHashElement
+  use MLSStrings, only: LowerCase, GetStringHashElement, ExtractSubString
   use Output_m, only: Output, blanks
   use PCFHdr, only: INPUTPTR_STRING_LENGTH, &
     & InputInputPointer, WriteInputPointer, WritePCF2Hdr
@@ -488,7 +488,9 @@ contains
     ! Orbit Calculated Spatial Domain Container
 
     attrName = 'OrbitNumber' // '.1'
-    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
+    ! This change to confirm James Johnson suggestion on 6/12/03
+    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 999)
     if ( returnStatus /= PGS_S_SUCCESS ) then
       call announce_error ( 0, &
       & "Error in writing OrbitNumber attribute.") 
@@ -496,21 +498,21 @@ contains
 
     ! Start, Stop orbit numbers: level one has actual calculated numbers
     ! but, for now at least, we'll not trouble
-    attrName = 'StartOrbitNumber' // '.1'
-    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
-         -1)
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error in writing StartOrbitNumber attribute.") 
-    end if
+    !attrName = 'StartOrbitNumber' // '.1'
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
+    !     -1)
+    !if ( returnStatus /= PGS_S_SUCCESS ) then
+    !  call announce_error ( 0, &
+    !  & "Error in writing StartOrbitNumber attribute.") 
+    !end if
 
-    attrName = 'StopOrbitNumber' // '.1'
-    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
-         -1)
-    if ( returnStatus /= PGS_S_SUCCESS ) then
-      call announce_error ( 0, &
-      & "Error in writing StopOrbitNumber attribute.") 
-    end if
+    !attrName = 'StopOrbitNumber' // '.1'
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
+    !     -1)
+    !if ( returnStatus /= PGS_S_SUCCESS ) then
+    !  call announce_error ( 0, &
+    !  & "Error in writing StopOrbitNumber attribute.") 
+    !end if
 
     attrName = 'EquatorCrossingLongitude' // '.1'
     dval = 0.0
@@ -576,8 +578,13 @@ contains
      end if
 
      attrName = 'VerticalSpatialDomainValue' // '.1'
+     !returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
+     !     'Brightness Temperature')
+     ! The following change bring level 2 into agreement level 3
+     ! Further change to confirm James Johnson suggestion 6/12/03
+     ! will await in the next delivery which it also unify all 3 levels
      returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-          'Brightness Temperature')
+          'Atmosphere Profile')
      if ( returnStatus /= PGS_S_SUCCESS ) then
        call announce_error ( 0, &
        & "Error in writing VerticalSpatialDomainValue attribute.")
@@ -1102,8 +1109,9 @@ contains
         call output(trim(mcf_name), advance='yes')
       end if
 
-      ! Get species name assuming e.g. '*l2gp_h2o'
-      call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
+      ! Get species name assuming e.g. 'mls-aura_l2gp-h2O_'
+      !call split_path_name(sd_full, sd_path, sd_name, species_delimiter)
+      call ExtractSubString(sd_full, sd_name, 'mls-aura_l2gp-', '_')
 
       if ( DEBUG ) then
         call output('sd_full: ', advance='no')
@@ -1112,6 +1120,15 @@ contains
         call output(trim(sd_path), advance='yes')
         call output('sd_name: ', advance='no')
         call output(trim(sd_name), advance='yes')
+      end if
+
+      ! quick and dirty fixed for certain l2gp species without mcf
+      ! Correct solution will require changes to l2/directWrite
+      ! lib/l2gpData and unknown fragment l2/l2cf/lib
+
+      if ( trim(sd_name) == 'ch3cn' ) then
+	mcf = -999
+	return
       end if
 
       if ( len(trim(sd_name)) <= 0 ) then
@@ -1414,7 +1431,7 @@ contains
             zCy = cycle
           end if
 
-          fileName = fileName(:(indx-1)) // 'C' // TRIM(zCy) // &
+          fileName = fileName(:(indx-1)) // 'c' // TRIM(zCy) // &
                             fileName((indx+6):)
 
         else
@@ -1521,6 +1538,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.46  2003/07/23 18:27:44  cvuu
+! brought closer to James Johnson want to; quick and dirty fixed for CH3CN
+!
 ! Revision 2.45  2003/07/07 23:48:18  pwagner
 ! Changed in interfaces to make filetype a lit_name; l2pcf a saved variable
 !
