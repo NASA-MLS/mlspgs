@@ -18,7 +18,7 @@ module HGrid                    ! Horizontal grid information
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
-  use MLSNumerics, only: HUNT
+  use MLSNumerics, only: HUNT, InterpolateValues
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
@@ -285,6 +285,8 @@ contains ! =====     Public Procedures     =============================
 
     type (L1BData_T) :: l1bField ! L1B data
     integer, dimension(:), allocatable :: defaultMIFs
+    real(r8), dimension(:), allocatable :: defaultIndex
+    real(r8), dimension(:), allocatable :: interpolatedIndex
     character (len=NameLen) :: L1BItemName
 
     ! Executable code
@@ -363,7 +365,8 @@ contains ! =====     Public Procedures     =============================
     
     ! Setup some arrays
     allocate ( defaultField(noMAFs), interpolatedField(hGrid%noProfs), &
-      & STAT=status )
+	defaultIndex(noMAFs), interpolatedIndex(hGrid%noProfs), STAT=status )
+
     if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_allocate//"defaultField and/or interpolatedField" )
     
@@ -393,20 +396,37 @@ contains ! =====     Public Procedures     =============================
         end do
       end IF
       
-      if ( interpolationFactor==1.0 ) then
+      if ( interpolationFactor == 1.0 ) then
         interpolatedField = defaultField
       else
-        ! ??? Some interpolation is wanted.  I'm going to hold off writing
-        ! this because we certaintly don't need it for 0.1 and probably
-        ! won't till 1.0.  For the sake of getting things down I'll state
-        ! here what I think would be implemented.  One would simply
-        ! interpolate from the defaultField to the interpolatedField, using
-        ! linear or spline I imagine.  However, there are issues with roll
-        ! overs for quantities such as longitude and solarTime.  This is
-        ! why I have chosen to defer this piece of code. NJL - 16 December
-        ! 1999
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Sorry -- interpolation of hGrids is not yet supported" )
+	! Interpolations are performed based on MAF index and periodic variables
+	! like lon, solartime, losAngle are handled specially so that it can cope
+	! with the period jump between two adjacent MAFs. The range of the periods
+	! of these variable must be specified, i.e., (lower, upper) bounds. 
+
+	! create index of the old and new hGrid indices
+	do maf=1,noMAFs
+		defaultIndex(maf)=maf*1.0_r8 
+	end do
+	do maf=1,hGrid%noProfs 
+		interpolatedIndex(maf)=maf/interpolationFactor
+	end do
+
+      	select case ( l1bItem )
+        case ( l1b_tpLon )
+	  call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
+		interpolatedField,method='Linear',rangeofPeriod=(/-180.0_r8,180.0_r8/))
+        case ( l1b_tpSolarTime )
+	  call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
+		interpolatedField,method='Linear',rangeofPeriod=(/0.0_r8,24.0_r8/))
+        case ( l1b_tpLosAngle )
+	  call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
+		interpolatedField,method='Linear',rangeofPeriod=(/0.0_r8,360.0_r8/))
+	case default
+	  call InterpolateValues(defaultIndex,defaultField,interpolatedIndex,&
+		interpolatedField,method='Linear')
+        end select
+
       end if
       
       select case ( l1bItem )
@@ -541,6 +561,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.17  2001/07/06 18:48:16  dwu
+! Add codes to make interpolationFactor functioning
+!
 ! Revision 2.16  2001/05/30 23:53:15  livesey
 ! For new version of L1BData
 !
