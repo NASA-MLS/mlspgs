@@ -101,14 +101,17 @@ contains
     call output ( '', advance='yes' )
   end subroutine NewLine
 
-  subroutine OUTPUT_CHAR ( CHARS, ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS )
+  subroutine OUTPUT_CHAR ( CHARS, &
+    & ADVANCE, FROM_WHERE, DONT_LOG, LOG_CHARS, INSTEADOFBLANK)
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS
     character(len=*), intent(in), optional :: ADVANCE
     character(len=*), intent(in), optional :: FROM_WHERE
     logical, intent(in), optional          :: DONT_LOG ! Prevent double-logging
     character(len=*), intent(in), optional :: LOG_CHARS
-    character(len=len(chars)+1) :: my_chars
+    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
+    character(len=max(16,len(chars)+1)) :: my_chars
+    character(len=max(16,len(chars)+1)) :: the_chars
     integer :: n_chars
     character(len=3) :: MY_ADV
     !
@@ -117,10 +120,16 @@ contains
     my_dont_log = SKIPMLSMSGLOGGING ! .false.
     if ( present(dont_log) ) my_dont_log = dont_log
     my_adv = Advance_is_yes_or_no(my_adv)
-    my_chars = chars // ' '
+    the_chars = chars // ' '
     if (present(log_chars)) my_chars = trim(log_chars) // ' '
     n_chars = max(len(chars), 1)
-    if ( my_adv == 'no' ) n_chars = len(chars)+1
+    if ( the_chars == ' ' .and. present(insteadofblank) ) then
+      my_chars = trim(insteadofblank) // ' '
+      n_chars = max(len(insteadofblank), 1)
+    else
+      my_chars = the_chars
+    endif
+    if ( my_adv == 'no' ) n_chars = n_chars+1
     if ( prunit == -1 .or. prunit < -2 ) &
       & write ( *, '(a)', advance=my_adv ) chars
     if ( prunit < -1 .and. .not. my_dont_log ) then
@@ -132,21 +141,28 @@ contains
           & advance=my_adv )
       end if
     end if
-    if ( prunit >= 0 ) &
-      & write ( prunit, '(a)', advance=my_adv ) chars
+    
+    if ( prunit < 0 ) then
+      ! Already logged; no output to stdout
+    elseif ( chars == ' ' .and. present(insteadofblank) ) then
+      write ( prunit, '(a)', advance=my_adv ) insteadofblank
+    else
+      write ( prunit, '(a)', advance=my_adv ) chars
+    endif
   end subroutine OUTPUT_CHAR
 
-  subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE )
+  subroutine OUTPUT_CHAR_ARRAY ( CHARS, ADVANCE, INSTEADOFBLANK )
   ! Output CHARS to PRUNIT.
     character(len=*), intent(in) :: CHARS(:)
     character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: INSTEADOFBLANK ! What to output
     character(len=3) :: MY_ADV
     integer :: I ! loop inductor
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
     do i = 1, size(chars)
-      call output ( chars(i) )
+      call output ( chars(i), insteadofblank=insteadofblank )
     end do
     if ( present(advance) ) then
       call output ( '', advance=my_adv )
@@ -587,6 +603,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.34  2004/12/14 00:00:50  pwagner
+! Optional arg insteadofblank added to char outputs
+!
 ! Revision 2.33  2004/12/13 20:30:19  vsnyder
 ! Cosmetic cannonball polishing
 !
