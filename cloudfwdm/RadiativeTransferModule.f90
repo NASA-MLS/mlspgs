@@ -95,6 +95,7 @@ contains
 
       TB=0.0_r8
       TT=0.0_r8
+      Tscat = 0.0_r8
 !------------------------------------------------
 !     FIND BRIGHTNESS TEMPERATURE AT EACH LAYER
 !------------------------------------------------
@@ -103,7 +104,6 @@ contains
          CALL PLANCK(TEMP_AIR(K),FREQ,TEMP(K))
       ENDDO
       CALL PLANCK(2.7_r8,FREQ,TSPACE)
-
 !------------------------------------------------
 !     DETERMINE NO. OF ITERATIONS
 !------------------------------------------------
@@ -189,7 +189,7 @@ contains
 !------------------------------------------------
 !     COMPUTING TSCAT FOR EACH ANGLE AND LAYER
 !------------------------------------------------
-
+      IF(ICON .gt. 0) then
       DO ISPI=1,N                         
          DO 1009 IP=1,NU
             U1(IP)=-U(IP)
@@ -218,6 +218,7 @@ contains
  1008       CONTINUE
  1009    CONTINUE
       ENDDO
+      ENDIF
 
 !------------------------------------
 !     COMPUTE TB AT ANGLES U
@@ -327,7 +328,7 @@ contains
      &        (1._r8-EXP(-dTAU(K1)/UU))*tsource - D2*(1._r8-WW0)
 
  2000 CONTINUE
-
+ 
 !---------------------------------------------
 !     DETERMINE SURFACE REFLECTION 
 !     IF TANGENT HEIGHT IS ABOVE THE SURFACE, 
@@ -368,7 +369,7 @@ contains
      &        (1._r8-EXP(-dTAU(K)/UU))*tsource - D2*(1._r8-WW0)
 
  3000 CONTINUE
-  
+
 !---------------------------------------------------------------------
       DO K=1,L
    	TT(NT+1,K)=TB(NU,K)              ! OUTPUT ZENITH LOOKING TB 
@@ -388,6 +389,9 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.10  2002/12/06 16:31:06  dwu
+! Add a correction term to account for integration in the presence of temperature gradient
+!
 ! Revision 1.9  2002/10/08 17:08:08  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
