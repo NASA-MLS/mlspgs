@@ -2287,6 +2287,7 @@ contains ! =====     Public Procedures     =============================
     case ( m_banded, m_column_sparse )
       nullify ( V )
       call Allocate_test ( V, m%nRows, m%nCols, 'V', ModuleName )
+      call Densify ( v, m )
     end select
 
     ! Do the reflection
@@ -3135,6 +3136,10 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.81  2002/09/06 15:45:54  mjf
+! In ReflectMatrix_0 need to Densify sparse matrices to do the
+! reflection.
+!
 ! Revision 2.80  2002/09/02 22:56:45  livesey
 ! Embarassing bug fix.
 !
