@@ -589,8 +589,9 @@ contains ! =====     Public procedures     =============================
 
     call make_tree( (/ &
       begin, s+s_destroy, &
+             begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             nadp+n_spec_def /) )
+             ndp+n_spec_def /) )
     call make_tree( (/ &
       begin, s+s_transfer, &
              begin, f+f_source, s+s_vector, n+n_field_spec, &
@@ -805,6 +806,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.177  2001/10/19 22:33:21  pwagner
+! Can destroy a vector or a matrix in Fill
+!
 ! Revision 2.176  2001/10/19 17:11:36  livesey
 ! Whoops! left a syntax error in.
 !
