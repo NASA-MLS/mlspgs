@@ -37,20 +37,24 @@ module QuantityPVM                      ! Send and receive vector quantities usi
 contains ! ================================== Module procedures ============
 
   ! ---------------------------------- PVMSendQuantity ---------------------
-  subroutine PVMSendQuantity ( Q, tid )
+  subroutine PVMSendQuantity ( Q, tid, justPack )
     type (VectorValue_T), intent(in) :: Q ! Quantity to send
-    integer, intent(in) :: TID          ! Task to send it to
+    integer, intent(in), optional :: TID ! Task to send it to
+    logical, intent(in), optional :: JUSTPACK ! Just pack it into an existing buffer
 
     ! Local variables
     integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
+    logical :: MYJUSTPACK               ! Copy of justPack
 
     character(len=132) :: WORD          ! Result of get_string etc.
 
     ! Executable code
+    myJustPack = .false.
+    if ( present(justPack) ) myJustPack = justPack
 
     ! Now we simply pack the quantity up and send it down the pvm spigot
-    call PVMFInitSend ( PvmDataDefault, bufferID )
+    if (.not. myJustPack) call PVMFInitSend ( PvmDataDefault, bufferID )
     
     call PVMIDLPack ( (/ q%template%noInstances, &
       & q%template%noSurfs, q%template%noChans, q%template%instanceLen /), &
@@ -172,11 +176,13 @@ contains ! ================================== Module procedures ============
 
     ! Now we're going to send this to the snooper.
 
-    call PVMFSend ( tid, QtyMsgTag, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector template" )
-
-    ! Now we're going to send the values in a separate message
-    call PVMFInitSend ( PVMDataDefault, bufferID)
+    if (.not. myJustPack) then
+      call PVMFSend ( tid, QtyMsgTag, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector template" )
+      
+      ! Now we're going to send the values in a separate message
+      call PVMFInitSend ( PVMDataDefault, bufferID)
+    end if
 
     ! Pack the values
     call PVMIDLPack ( q%values, info )
@@ -185,16 +191,19 @@ contains ! ================================== Module procedures ============
     ! Skip the mask for the moment.
 
     ! Send this buffer
-    call PVMFSend ( tid, QtyMsgTag, info )
-    if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
+    if (.not. myJustPack) then
+      call PVMFSend ( tid, QtyMsgTag, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending vector values" )
+    end if
       
   end subroutine PVMSendQuantity
 
   ! ---------------------------------- PVMReceiveQuantity ---------------------
-  subroutine PVMReceiveQuantity ( QT, values, tid )
+  subroutine PVMReceiveQuantity ( QT, values, tid, justUnpack )
     type (QuantityTemplate_T), intent(out) :: QT ! Template for quantity
     real (r8), dimension(:,:), pointer :: VALUES ! Values for quantity
-    integer, intent(in) :: TID          ! Task to get it from
+    integer, intent(in), optional :: TID ! Task to get it from
+    logical, intent(in), optional :: JUSTUNPACK ! Just unpack from existing buffer
 
     ! Local variables
     integer :: BUFFERID                 ! From pvm
@@ -204,11 +213,17 @@ contains ! ================================== Module procedures ============
     logical :: L5(5)                    ! Unpacked stuff
     logical :: FLAG(1)                  ! To unpack
     character(len=132) :: WORD          ! Result of get_string etc.
+    logical :: MYJUSTUNPACK
 
     ! Executable code
-    ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
 
-    call PVMFrecv ( tid, QtyMsgTag, bufferID )
+    myJustUnpack = .false.
+    if ( present (justUnpack) ) myJustUnPack = justUnpack
+
+    if ( .not. myJustUnpack ) then
+      ! Get buffer, we'll wait for it, assume the calling code knows it's coming.
+      call PVMFrecv ( tid, QtyMsgTag, bufferID )
+    end if
 
     ! Now we unpack the information
 
@@ -341,8 +356,10 @@ contains ! ================================== Module procedures ============
     call Allocate_Test ( values, qt%instanceLen, qt%noInstances, &
       & 'values', ModuleName )
 
-    ! Now we're going to receive the values in a separate message
-    call PVMFrecv ( tid, QtyMsgTag, bufferID )
+    if ( .not. myJustUnpack ) then
+      ! Now we're going to receive the values in a separate message
+      call PVMFrecv ( tid, QtyMsgTag, bufferID )
+    end if
 
     ! Unpack the values
     call PVMIDLUnpack ( values, info )
