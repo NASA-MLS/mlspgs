@@ -171,17 +171,11 @@ contains
     real(rp), dimension(:), pointer :: Grids_x_values
     real :: diff, pct_diff, max_value
 
-
-! Local variables
-    integer :: my_supersat
-
 ! Begin code:
-    my_supersat = 0
-    if ( present( i_supersat) ) my_supersat = i_supersat
-    if ( my_supersat /= 0 ) then
-      if ( .not. present(temp_supersat) ) &
+    if ( i_supersat /= 0 ) then
+      if ( size(temp_supersat) < 1 ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'temp_supersat must be supplied for supersaturation' )
+        & 'temp_supersat must be allocated for supersaturation' )
     endif
 
     !******************* LOAD SPECIES DATA ************
@@ -221,7 +215,7 @@ contains
         & quantityType=quantityType, molIndex=mol_cat_index(ii), &
         & radiometer=radiometer, config=fwdModelConf )
       kz = f%template%noSurfs
-      if ( present(temp_supersat) ) then
+      if ( i_supersat /= 0 ) then
         if ( kz /= size(temp_supersat) ) &
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & 'template for this molecule on different vertical grid' )
@@ -321,9 +315,9 @@ contains
         grids_x%deriv_flags(f_len:r-1) = .false.
       end if
 
-! modify h2o mixing ratio if a special supersaturation request is present
-      if ( my_supersat /= 0 .and. ii == h2o_ind ) then
-        select case ( my_supersat )
+! modify h2o mixing ratio if a special supersaturation /= 0
+      if ( i_supersat /= 0 .and. ii == h2o_ind ) then
+        select case ( i_supersat )
         case ( -1 )
           RHI=110.0_r8
         case ( -2 )
@@ -369,7 +363,7 @@ contains
           endif   ! linear or log basis
 
          end if      ! check supersat_index
-      end if      ! my_supersat
+      end if      ! i_supersat
 
       j = k
       l = n
@@ -409,6 +403,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.43  2003/02/13 01:26:55  dwu
+! another cleanup
+!
 ! Revision 2.42  2003/02/13 00:42:46  dwu
 ! fix bugs and add comments for i_saturation
 !
