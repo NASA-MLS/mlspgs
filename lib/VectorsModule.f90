@@ -8,6 +8,52 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! This module provides the simple functionality for vector quantities in the
   ! MLS Level 2 software, and related programs.
 
+!     c o n t e n t s
+!     - - - - - - - -
+
+!         Defined types
+! VectorTemplate_T   vector template (contains quantity templates)
+! VectorValue_T      values corresponding to a single quantity
+! Vector_T           a vector has 1 VectorTemplate_T, many VectorValue_Ts
+
+!         Functions, operations, routines
+! AddToVector                  X = X + Y
+! AddVectors                   result Z = X + Y
+! AddVectorTemplateToDatabase  Adds a vector template to a database of such templates
+! AddVectorToDatabase          Adds a vector to a database of such vectors
+! AssignVector                 Destroy 1st arg, then assign 2nd arg to it
+! AxPy                         result z = A x + y
+! ClearMask                    Clear bits of MASK according to TO_CLEAR
+! CloneVector                  Destroy 1st arg, then use 2nd arg for a template
+! ConstantXVector              result z = A x
+! ConstructVectorTemplate      creates a vectorTemplate from a list of quantities
+! CopyVector                   z = x
+! CreateMaskArray              Allocate a MASK array
+! CreateMask                   Allocate the MASK array for a vector quantity
+! CreateVector                 creates an empty vector according to a given template
+! DestroyVectorDatabase        destroys a vector database
+! DestroyVectorInfo            Destroy a vector
+! DestroyVectorMask            destroys the masks stored in the vector
+! DestroyVectorTemplateDatabase destroys a vector template database
+! DestroyVectorTemplateInfo    destroys a vector template
+! DestroyVectorValue           Destroy the "values" field in all of the quantities in a vector
+! DotVectors                   z = x . y
+! dump_vector                  display how a single vector is made up
+! dump_vectors                 display how vector database is made up
+! GetVectorQuantity            returns pointer to quantity by name in vector
+! GetVectorQuantityByType      returns pointer to quantity by type in vector
+! GetVectorQtyByTemplateIndex  returns pointer to quantity by template in vector
+! GetVectorQuantityIndexByName returns index to quantity by name in vector
+! GetVectorQuantityIndexByType returns index to quantity by type in vector
+! isVectorQtyMasked            Is the mask for VectorQty set for address
+! MultiplyVectors              Z = X # Y if Z present; else X = X # Y
+! rmVectorFromDatabase         Removes a vector from a database of such vectors
+! ScaleVector                  Y = A*X if Y is present, else X = A*X.
+! SetMask                      Set bits of MASK indexed by elements of TO_SET
+! SubtractFromVector           X = X - Y
+! SubtractVectors              returns Z = x - y
+! ValidateVectorQuantity       Test vector quantity for matching components
+
   !---------------------------------------------------------------------------
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
@@ -194,23 +240,6 @@ contains ! =====     Public Procedures     =============================
 
     AddVectorToDatabase = newSize
   end function AddVectorToDatabase
-
-  !-----------------------------------------  rmVectorFromDatabase  -----
-  integer function rmVectorFromDatabase ( DATABASE, ITEM )
-
-  ! This routine removes a vector from a database of such vectors, 
-  ! deallocating the database if necessary.
-
-    ! Dummy arguments
-    type (Vector_T), dimension(:), pointer :: DATABASE
-    type (Vector_T), intent(in) ::            ITEM
-
-    ! Local variables
-    type (Vector_T), dimension(:), pointer :: tempDatabase
-    include "rmItemFromDatabase.f9h"
-
-    rmVectorFromDatabase = newSize
-  end function rmVectorFromDatabase
 
   !------------------------------------------------  AssignVector  -----
   subroutine AssignVector ( Z, X )
@@ -972,6 +1001,24 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine MultiplyVectors
 
+  !-----------------------------------------  rmVectorFromDatabase  -----
+  integer function rmVectorFromDatabase ( DATABASE, ITEM )
+
+  ! This routine removes a vector from a database of such vectors, 
+  ! deallocating the database if necessary.
+
+    ! Dummy arguments
+    type (Vector_T), dimension(:), pointer :: DATABASE
+    type (Vector_T), intent(in) ::            ITEM
+
+    ! Local variables
+    type (Vector_T), dimension(:), pointer :: tempDatabase
+    logical, parameter                     :: okToDeallocEmptyDB = .FALSE.
+    include "rmItemFromDatabase.f9h"
+
+    rmVectorFromDatabase = newSize
+  end function rmVectorFromDatabase
+
   !-------------------------------------------------  ScaleVector  -----
   subroutine ScaleVector ( X, A, Y )
   ! Y = A*X if Y is present, else X = A*X.
@@ -1072,7 +1119,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------- ValidateVectorQuantity -------
   
-  ! This function performes a series of tests on a quantity to make sure it
+  ! This function performs a series of tests on a quantity to make sure it
   ! matches our requirements
   
   function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
@@ -1266,6 +1313,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.51  2001/09/19 23:40:53  pwagner
+! Added rmVectorFromDatabase, isVectorQtyMasked functions
+!
 ! Revision 2.50  2001/09/17 23:10:49  pwagner
 ! New optional arg majorFrame in Validate..
 !
