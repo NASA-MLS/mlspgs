@@ -7,10 +7,12 @@
 # A = Path to directory for application's source, to get init_tables_module.f90
 # F90 = Name of Fortran compiler
 # FOPTS = Options for Fortran compiler, other than -c
+# FWM = path to MLS forward model's .mod files and libfwdmdl.a
 # I = option to tell compiler path to includes and .mod files (usually -I)
 # M = path to MLS library's .mod files and libmls.a
 # MLS = path to MLS library's source files
 # S = path to source files
+# SRC = path to source library (as opposed to sources for object library)
 # SDP = "Substitute" or empty -- used as: SDPToolkit$(SDP).o
 # TOOLKIT = Beginning of path to HDFEOS's GCT library, and to HDF's libraries,
 #           e.g. /software/SRC/TOOLKIT-5.2.6v1.00.NAG
@@ -58,19 +60,19 @@ all: test
 init_tables_module.o: $A/init_tables_module.f90 $M/intrinsic.o \
                       $M/symbol_table.o $M/symbol_types.o $M/tree.o \
                       $M/tree_types.o
-	$(F90) -c $(FOPTS) $I$M $A/init_tables_module.f90
+	$(F90) -c $(FOPTS) $I$M $I$(FWM) $I$(SRC) $A/init_tables_module.f90
 
-tree_checker.o: $(MLS)/tree_checker.f90 $M/declaration_table.o \
+tree_checker.o: $(SRC)/tree_checker.f90 $M/declaration_table.o \
                 init_tables_module.o $M/lexer_core.o $M/output_m.o \
                 $M/string_table.o $M/toggles_core.o $M/trace_m.o $M/tree.o \
                 $M/tree_types.o
-	$(F90) -c $(FOPTS) $I$M $(MLS)/tree_checker.f90
+	$(F90) -c $(FOPTS) $I$M $I$(FWM) $I$(SRC) $(SRC)/tree_checker.f90
 
-getCF_m.o: $(MLS)/getCF_m.f90 $M/declaration_table.o init_tables_module.o \
+getCF_m.o: $(SRC)/getCF_m.f90 $M/declaration_table.o init_tables_module.o \
            $M/lexer_core.o $M/MLSCF.o $M/output_m.o $M/parser.o \
            $M/string_table.o $M/table_dumper.o $M/table_generator.o \
            $M/toggles_core.o tree_checker.o $M/tree.o $M/units.o
-	$(F90) -c $(FOPTS) $I$M $(MLS)/getCF_m.f90
+	$(F90) -c $(FOPTS) $I$M $I$(FWM) $I$(SRC) $(SRC)/getCF_m.f90
 
 $M/libmls.a:
 	cd $M; make libmls.a
@@ -81,11 +83,13 @@ OBJS = test.o $(OBJLIB) $(OBJ_L2) $(OBJ_SRC_LIB)
 
 test.o: $S/test.f90 getCF_m.o $M/machine.o $M/MLSCF.o $M/output_m.o \
         $M/toggles_core.o
-	$(F90) -c $(FOPTS) $I$S $I$M $S/test.f90
+	$(F90) -c $(FOPTS) $I$S $I$M $I$(FWM) $I$(SRC) $S/test.f90
 
 test: $(OBJS) $M/libmls.a
 	$(F90) $(LDOPTS) -o test $(OBJS) $M/SDPToolkit$(SDP).o \
               -L$(PGSTK) -lPGSTK \
+              -L$(FWM) -lfwdmdl \
+              -L$M -lmls
 
 out.test: test $S/in.test
 	./test -a $S/in.test out.test
@@ -102,6 +106,9 @@ tar:
           $(SRC_LIB) lib/test_cf_parser/*
 
 # $Log$
+# Revision 1.2  2000/11/30 20:50:58  vsnyder
+# Make sure init_tables_module gets compiled if necessary
+#
 # Revision 1.1  2000/10/20 23:36:54  pwagner
 # moved to test directory
 #
