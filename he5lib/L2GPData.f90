@@ -26,7 +26,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPData_T
   public :: L2GPNameLen
   public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
-    & Dump, ExpandL2GPDataInPlace,  &
+    & Dump, ExpandL2GPDataInPlace, AppendL2GPData, &
     & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData !, &
 !    & OutputL2GP_createFile, OutputL2GP_writeData,  OutputL2GP_writeGeo
   !INTEGER:: HE5_SWRDFLD
@@ -2283,7 +2283,7 @@ contains ! =====     Public Procedures     =============================
   !-------------------------------------------------------------
 
 
-  subroutine AppendL2GPData(l2gp,l2FileHandle,swathName,offset)
+  subroutine AppendL2GPData(l2gp,l2FileHandle,swathName,offset, hdfVersion)
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
     ! in the file has offset==0). If this runs off the end of the swath, 
@@ -2294,16 +2294,32 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), intent(INOUT) :: l2gp
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     integer,intent(IN),optional::offset
+    integer, optional, intent(in) :: hdfVersion
     !----Local variable
     integer::myOffset
+    ! Local
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L2GPDEFAULT_HDFVERSION
+    endif
+
     ! ----Executable code---
     if (present(offset)) then
        myOffset=offset
     else
        myOffset=0
     endif
-    call OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName,myOffset)
-    call OutputL2GP_writeData (l2gp, l2FileHandle, swathName,myOffset)
+    if (myhdfVersion == 4) then
+      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName)
+    else
+      call OutputL2GP_writeGeo_hdf5 (l2gp, l2FileHandle, swathName,myOffset)
+      call OutputL2GP_writeData_hdf5 (l2gp, l2FileHandle, swathName,myOffset)
+    endif
 
   end subroutine AppendL2GPData
 
@@ -2427,6 +2443,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 1.13  2002/01/29 00:48:43  pwagner
+! Now should handle both hdfVersions; not tested yet
+!
 ! Revision 1.12  2002/01/26 00:18:05  pwagner
 ! (Read)(Write)L2GPData accepts optional hdfVersion arg
 !
