@@ -320,7 +320,7 @@ CONTAINS
 
 ! Find/save the min & max of the pressure levels for the desired modes
 
-       IF ( (l3cf(i)%mode == 'com') .OR. (l3cf(i)%mode == 'all') ) THEN
+       IF ( (l3cf(i)%mode == 'com') .OR. (l3cf(i)%mode == 'all') .OR. (l3cf(i)%mode == 'ado') ) THEN
           indx = LinearSearchStringArray( &
                         cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'l3presLvl')
           IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Missing &
@@ -436,6 +436,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.16  2002/04/10 21:57:04  jdone
+! error checking on allocated statements
+!
 ! Revision 1.15  2001/10/05 20:12:02  nakamura
 ! Added N for diagnostics.
 !
