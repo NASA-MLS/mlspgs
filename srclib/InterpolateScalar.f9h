@@ -1,0 +1,63 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+!  subroutine InterpolateScalar_r* ( oldX, oldY, newX, newY, method, extrapolate, &
+!    & badValue, missingRegions, dyByDx, RangeOfPeriod )
+
+  ! local working space
+    real(rk), dimension(:,:), pointer :: tempDerivative
+    real(rk), dimension(size(newX), 1) :: tempResult
+    real(rk), dimension(size(oldY)) :: tempY
+    real(rk) period
+    integer jump, j
+
+    ! Executable code
+
+    tempY = oldY
+
+    if ( present(rangeofperiod) ) then
+	  period  = rangeofPeriod(2)-rangeofPeriod(1)
+	  jump = -1
+	  do j =1, size(oldY)-1
+		  if(abs(tempY(j+1)-tempY(j)) > period/2. ) jump = j 
+	  end do
+	  if(jump /= -1) then
+	     if(tempY(jump+1) > tempY(jump)) then
+		  tempY(jump+1:) = tempY(jump+1:) - period
+	     else 
+		  tempY(jump+1:) = tempY(jump+1:) + period
+	     end if
+	  end if
+    end if
+
+    nullify ( tempDerivative )
+
+    if ( present(dyByDx) ) then
+      call Allocate_Test ( tempDerivative, size(newX), 1, &
+        & "tempDerivative", ModuleName )
+
+      call InterpolateValues ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+        & extrapolate=extrapolate, badValue=badValue, &
+        & missingRegions=missingRegions, dyByDx=tempDerivative )
+      dyByDx = tempDerivative(:,1)
+
+      call Deallocate_Test ( tempDerivative, "tempDerivative", ModuleName )
+    else
+      call InterpolateValues ( oldX, spread(tempY,2,1), newX, tempResult, method, &
+        & extrapolate=extrapolate, badValue=badValue, &
+        & missingRegions=missingRegions )
+    end if
+    newY = tempResult(:,1)
+
+    if ( present(rangeofperiod) ) then
+	  period  = rangeofPeriod(2)-rangeofPeriod(1)
+	  where (newY > rangeofperiod(2)) 
+	    newY = newY - period
+	  elsewhere (newY < rangeofperiod(1)) 
+	    newY = newY + period
+	  end where
+    end if
+!  end subroutine InterpolateScalar_r*
+
+! $Log$
