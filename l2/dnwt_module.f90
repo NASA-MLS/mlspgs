@@ -107,7 +107,7 @@ module DNWT_MODULE
 !         IF ( you have confidence in F and J ) CYCLE
 !         STOP
 !       END SELECT
-!       IF ( you want to return to a previous best X ) NFLAG = 0
+!       IF ( you want to return to a previous best X ) NFLAG = NF_START
 !     END DO
 
   use ERMSG_M, only: ERMSG, ERVN
@@ -132,6 +132,7 @@ module DNWT_MODULE
     real(rk) :: DXDX     ! dot_product( DX, DX )
     real(rk) :: DXDXL    ! dot_product( "candidate DX", DX )
     real(rk) :: DXN      ! L2 Norm of candidate DX
+    real(rk) :: DXNL     ! L2 Norm of last candidate DX -- intent(out)
     real(rk) :: FNMIN    ! L2 Norm of F not in column space of the Jacobian
     real(rk) :: FNORM    ! L2 Norm of F at current X
     real(rk) :: GDX      ! dot_product( Gradient, "Candidate DX" )
@@ -143,6 +144,8 @@ module DNWT_MODULE
     logical :: STARTING  ! NWTA is still in "starting up" phase -- intent(out)
   end type NWT_T
 
+  ! Start or restart:
+  integer, parameter, public :: NF_START = 0
   ! Reasons for returning to user.  See description of usage above.
   ! Reasons to continue
   !      Evaluate F and AJ%FNORM:
@@ -301,7 +304,7 @@ contains
 
 !****************** END OF INITIAL COMMENTS ****************
 
-    nflag = 0
+    nflag = nf_start
     if ( present(nopt) ) call nwtop ( nopt, xopt )
     call nwtop ( ) ! default initialization
     return
@@ -471,7 +474,8 @@ contains
    10 if (ifl /= 0) go to 222 ! retreat to best X
       ajn = c0
       condai = c0
-      dxnl = c0
+      dxnl = c1
+      aj%dxnl = c0
       fnl = c0
       inc = -1
       iter = 0
@@ -480,7 +484,7 @@ contains
       spl = c0
       sq = c0
       axmax = aj%axmax
-      aj%dxdxl = 0.0 ! So it's not undefined, because the user isn't expected
+      aj%dxdxl = c0 ! So it's not undefined, because the user isn't expected
       ! to set it when starting.
    20 ifl = nf_evalf
       nflag = ifl
@@ -697,7 +701,7 @@ contains
         cdxdxl = aj%dxdxl/(dxn*dxnl)
         tp1 = min(cp5,dxi*((c1-cdxdxl)**2))
         if (tp*tp1 > dxnl) tp = dxnl/tp1
-        if (dxn <= tp .or. sp >= 1.0d12) then
+        if (dxn <= tp .or. sp >= 1.0e12_rk) then
           if ( inc == 0 ) go to 200
           cait = cbig
           go to 755
@@ -777,6 +781,7 @@ contains
 ! Re-enter here after DX = "Candidate DX" or DX = CAIT * "Candidate DX"
 
   770 dxnl = dxn
+      aj%dxnl = dxnl
       fnl = fn
       frzl = frz
       fnxe = cp25*fn**2+cp76*fnxe
@@ -979,6 +984,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.11  2001/05/24 18:16:11  vsnyder
+! Added NF_START parameter; initially define aj%dxdxl
+!
 ! Revision 2.10  2001/05/22 19:10:33  vsnyder
 ! Compute aj%starting; improve some comments
 !
