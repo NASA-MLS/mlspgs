@@ -63,7 +63,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 contains ! =====     Public Procedures     =============================
   ! -----------------------------  CreateQtyTemplateFromMLSCFInfo  -----
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-    & name, root, hGrids, vGrids, l1bInfo, chunk, mifGeolocation ) &
+    & Name, Root, HGrids, VGrids, L1bInfo, Chunk, MifGeolocation ) &
     result ( QTY )
 
   ! This routine constructs a vector quantity template based on instructions
@@ -72,13 +72,12 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: NAME              ! Sub-rosa index of name
     integer, intent(in) :: ROOT              ! Root of QuantityTemplate subtree
-    type (HGrid_T), dimension(:), intent(in) :: hGrids
-    type (VGrid_T), dimension(:), intent(in) :: vGrids
-    type (l1bInfo_T), intent(in) :: l1bInfo
-    type (MLSChunk_T), intent(in) :: chunk
+    type (HGrid_T), dimension(:), intent(in) :: HGrids
+    type (VGrid_T), dimension(:), intent(in) :: VGrids
+    type (l1bInfo_T), intent(in) :: L1bInfo
+    type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
-      & mifGeolocation
-    CHARACTER (LEN=80) :: str
+      & MifGeolocation
 
     ! Local variables
 
@@ -101,14 +100,15 @@ contains ! =====     Public Procedures     =============================
     integer :: QuantityType
     integer :: Radiometer               ! Database index
     real(r8) :: ScaleFactor
-    integer :: sideband
+    integer :: Sideband
     integer :: Signal                   ! Database index
     integer, dimension(:), pointer :: signalInds=>NULL() ! From parse signal
+    type (signal_T) :: SignalInfo       ! Details of the appropriate signal
     integer :: Son                      ! A Son of Root -- an n_assign node
+    character (len=80) :: Str
     integer :: Type_Field               ! Index in subtree of "type"
     integer :: Value                    ! Node index of value of field of spec
     integer :: VGridIndex
-    type (Signal_T) :: SignalInfo       ! Details of the appropriate signal
 
     ! Executable code
 
@@ -120,16 +120,17 @@ contains ! =====     Public Procedures     =============================
     error = 0
     family = 0
     hGridIndex = 0
-    vGridIndex = 0
+    instrumentModule = 0
+    logBasis = .false.
     molecule = 0
-    natural_units = 0
 
+    natural_units = 0
     natural_units(l_baseline) =       PHYQ_Temperature
     natural_units(l_earthRefl) =      PHYQ_Dimensionless
     natural_units(l_elevOffset) =     PHYQ_Angle
     natural_units(l_extinction) =     PHYQ_Extinction
     natural_units(l_gph) =            PHYQ_Length
-    natural_units(l_losVel) =          PHYQ_Velocity
+    natural_units(l_losVel) =         PHYQ_Velocity
     natural_units(l_orbitIncline) =   PHYQ_Angle
     natural_units(l_ptan) =           PHYQ_Zeta
     natural_units(l_radiance) =       PHYQ_Temperature
@@ -137,17 +138,17 @@ contains ! =====     Public Procedures     =============================
     natural_units(l_scVel) =          PHYQ_Velocity
     natural_units(l_spaceRadiance) =  PHYQ_Temperature
     natural_units(l_temperature) =    PHYQ_Temperature
-    natural_units(l_tngtGeodAlt) =    PHYQ_Length
     natural_units(l_tngtGeocAlt) =    PHYQ_Length
+    natural_units(l_tngtGeodAlt) =    PHYQ_Length
     natural_units(l_vmr) =            PHYQ_Vmr
 
     noChans = 1
     quantitytype = 0
     radiometer = 0
-    instrumentModule = 0
-    signal = 0
-    logBasis = .false.
     scaleFactor = 1.0
+    sideband = 0
+    signal = 0
+    vGridIndex = 0
 
     ! First we'll loop over the MLSCF keys.
 
@@ -163,36 +164,36 @@ contains ! =====     Public Procedures     =============================
       select case ( decoration(key) )
       case ( f_hgrid )
         hGridIndex = decoration(value) ! node_id(value) == n_spec_args
-      case ( f_vgrid )
-        vGridIndex = decoration(value) ! node_id(value) == n_spec_args
-      case ( f_type )
-        quantityType = value
-        type_field = son
       case ( f_logBasis )
         logBasis = (value == l_true)
-      case ( f_unit );              scaleFactor = value
+      case ( f_module)
+        instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_molecule );          molecule = value
       case ( f_radiometer )
         radiometer = decoration(decoration(subtree(2,son)))
         instrumentModule = GetModuleFromRadiometer(radiometer)
-      case ( f_module)
-        instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_signal )
-        ! For the moment it is simple, later we'll be more intelligent here
-        ! for example, letting the user choose either R1A or R1B.
+        !??? For the moment it is simple, later we'll be more intelligent here
+        !??? for example, letting the user choose either R1A or R1B.
         call get_string( sub_rosa(subtree(2,son)), signalString, strip=.true. )
-        ! Here we would do intelligent stuff to work out which bands
-        ! are present, for the moment choose the first
+        !??? Here we would do intelligent stuff to work out which bands
+        !??? are present, for the moment choose the first
         call parse_Signal ( signalString, signalInds, spec_indices, &
           & tree_index=son, sideband=sideband )
         if ( .not. associated(signalInds) ) then ! A parse error occurred
-          call MLSMessage(MLSMSG_Error,ModuleName,&
-            & 'Unable to parse signal string')
+          call MLSMessage ( MLSMSG_Error, ModuleName,&
+            & 'Unable to parse signal string' )
         end if
         signal = signalInds(1)
-        call deallocate_test(signalInds,'signalInds',ModuleName)
+        call deallocate_test ( signalInds, 'signalInds', ModuleName )
         instrumentModule = GetModuleFromSignal(signal)
         radiometer = GetRadiometerFromSignal(signal)
+      case ( f_type )
+        quantityType = value
+        type_field = son
+      case ( f_unit );              scaleFactor = value
+      case ( f_vgrid )
+        vGridIndex = decoration(value) ! node_id(value) == n_spec_args
       end select
     end do
 
@@ -205,7 +206,7 @@ contains ! =====     Public Procedures     =============================
     ! first order.
 
     if ( family == 0 ) family = natural_units(quantityType)
-    minorFrame=any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
+    minorFrame = any(quantityType == (/ l_Baseline, l_Ptan, l_Radiance, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
       & l_scVel, l_losVel/) )
 
@@ -219,7 +220,7 @@ contains ! =====     Public Procedures     =============================
     if ( minorFrame ) then
 
       ! This is a minor frame type quantity.
-      if ( (hGridIndex /= 0) .OR. (vGridIndex /= 0 )) then
+      if ( (hGridIndex /= 0) .OR. (vGridIndex /= 0 ) ) then
         call announce_error ( root, unnecessaryGrid )
       end if
       if ( instrumentModule == 0 ) then 
@@ -227,17 +228,17 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Work out the channel information
-      if (signal /= 0) then
+      if ( signal /= 0 ) then
         signalInfo = GetSignal(signal)
         noChans = size(signalInfo%frequencies)
         frequencyCoordinate = l_channel
-      endif
+      end if
       
       ! For some cases we know the quantity is an xyz vector
-      if ( any(quantityType == (/ l_tngtECI, l_scECI, l_scVel /))) then
+      if ( any(quantityType == (/ l_tngtECI, l_scECI, l_scVel /)) ) then
         noChans = 3
         frequencyCoordinate = l_xyz
-      endif
+      end if
 
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
@@ -251,19 +252,19 @@ contains ! =====     Public Procedures     =============================
         noInstances=hGrids(hGridIndex)%noProfs
       else
         noInstances=1
-      endif
+      end if
 
       if ( vGridIndex/=0 ) then
         noSurfs=vGrids(vGridIndex)%noSurfs
       else
         noSurfs=1
-      endif
+      end if
 
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
         & noSurfs=noSurfs, coherent=.TRUE., stacked=.TRUE., regular=.TRUE. )
       ! ??? Note in later versions we'll need to think about channels here
 
-      if (hGridIndex /=0 ) then
+      if ( hGridIndex /=0 ) then
         call CopyHGridInfoIntoQuantity ( hGrids(hGridIndex), qty )
       else                      ! Set `empty' values
         qty%phi = 0.0
@@ -273,14 +274,14 @@ contains ! =====     Public Procedures     =============================
         qty%solarTime = 0.0
         qty%solarZenith = 0.0
         qty%losAngle = 0.0
-      endif
+      end if
 
       if ( vGridIndex /= 0 ) then
         call CopyVGridInfoIntoQuantity ( vGrids(vGridIndex), qty )
       else
         qty%surfs = 0.0
         qty%verticalCoordinate = L_None
-      endif
+      end if
 
     end if
 
@@ -444,7 +445,7 @@ contains ! =====     Public Procedures     =============================
         call DeallocateL1BData(l1bfield, l1bFlag)
         
       else                                    ! For THz/GHz things
-        CALL GetModuleName ( instrumentModule, l1bItemName )
+        call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
         
         call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
@@ -482,7 +483,7 @@ contains ! =====     Public Procedures     =============================
             l1bItemName = trim(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
           else
             l1bItemName = l1bItemsToRead(l1bItem)
-          endif
+          end if
           
           ! Read it from the l1boa file
           call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
@@ -497,12 +498,12 @@ contains ! =====     Public Procedures     =============================
           ! L1BItemsToRead above for reference.
           
           select case(l1bItem)
-          case(1)
-            ! For time we have to do something a little more complicated.
-            ! This is a real kludge, and we have to find a way
-            ! to do it better in 0.5. Probably simply have time as a minor
-            ! frame quantity in L1, or MIF duration. !????
-            ! Also note that it fills in times even for non existant MIFs
+          case ( 1 )
+            !??? For time we have to do something a little more complicated.
+            !??? This is a real kludge, and we have to find a way
+            !??? to do it better in 0.5. Probably simply have time as a minor
+            !??? frame quantity in L1, or MIF duration. !???????
+            !??? Also note that it fills in times even for non existant MIFs
             do mafIndex = 1, noMAFs
               do mifIndex = 1, qty%noSurfs 
                 qty%time(mifIndex,mafIndex) = &
@@ -510,21 +511,21 @@ contains ! =====     Public Procedures     =============================
                   & (mifIndex-1) * sixth
               end do
             end do
-          case(2)
-            qty%geodLat=l1bField%dpField(1,:,:)
-          case(3)
-            qty%lon=l1bField%dpField(1,:,:)
-          case(4)
-            qty%phi=l1bField%dpField(1,:,:)
-          case(5)
-            qty%solarZenith=l1bField%dpField(1,:,:)
-          case(6)
-            qty%solarTime=l1bField%dpField(1,:,:)
-          case(7)
-            qty%losAngle=l1bField%dpField(1,:,:)
+          case ( 2 )
+            qty%geodLat = l1bField%dpField(1,:,:)
+          case ( 3 )
+            qty%lon = l1bField%dpField(1,:,:)
+          case ( 4 )
+            qty%phi = l1bField%dpField(1,:,:)
+          case ( 5 )
+            qty%solarZenith = l1bField%dpField(1,:,:)
+          case ( 6 )
+            qty%solarTime = l1bField%dpField(1,:,:)
+          case ( 7 )
+            qty%losAngle = l1bField%dpField(1,:,:)
           end select
 
-          call DeallocateL1BData(l1bField, l1bFlag)
+          call DeallocateL1BData ( l1bField, l1bFlag )
         end do                      ! Loop over l1b quantities
       end if
     end if
@@ -595,6 +596,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.19  2001/04/12 23:25:29  vsnyder
+! Give "Sideband" an initial value
+!
 ! Revision 2.18  2001/04/12 21:41:42  livesey
 ! Signal now a string.
 !
