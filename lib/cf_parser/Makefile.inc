@@ -51,7 +51,7 @@ MLSCF.o: $S/MLSCF.f90
 	$(FC) -c $(FOPTS) $I$S $S/MLSCF.f90
 
 output_m.o: $S/output_m.f90
-	$(FC) -c $(FOPTS) $I$S $S/output_m.f90
+	$(FC) -c $(FOPTS) $I$S $I$M $S/output_m.f90
 
 parser.o: $S/parser.f90 lexer_core.o lexer_m.o symbol_types.o tree.o \
           tree_types.o
@@ -119,12 +119,15 @@ test.o: $S/test.f90 getCF_m.o machine.o MLSCF.o output_m.o toggles_core.o
 	$(FC) -c $(FOPTS) $I$S $S/test.f90
 
 test: $(OBJS) libCF.a
-	$(FC) $(LDOPTS) -o test $(OBJS) -L. -lCF
+	$(FC) $(LDOPTS) -o test $(OBJS) -L. -lCF -L$M -lmls
 
 out.test: test $S/in.test
 	./test -a $S/in.test out.test
 
 # $Log$
+# Revision 2.4  2000/10/03 01:11:33  vsnyder
+# OOPS, I forgot to add a dependency on output_m.o for test.o
+#
 # Revision 2.3  2000/10/03 01:10:00  vsnyder
 # Change command line for "test" to put files as command line arguments
 # instead of using redirection.
