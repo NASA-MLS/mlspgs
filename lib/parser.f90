@@ -36,8 +36,7 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: ROOT   ! Root of the abstract syntax tree
     error = 0
     call get_token
-      do
-      if ( next%class == t_end_of_input ) exit
+    do while ( next%class /= t_end_of_input )
       call one_cf
     end do
     call build_tree ( n_cfs, n_tree_stack ) ! collect everything
@@ -204,7 +203,7 @@ o:  do
         call test_token ( t_end_of_stmt )
         do while ( next%class /= t_end )
           if ( error > 1 ) exit o
-          how_many = how_many +  spec()
+          how_many = how_many + spec()
           if ( next%class == t_end_of_input ) exit ! must have gotten an error
         end do
         call get_token        ! consume the t_end
@@ -285,10 +284,8 @@ o:  do
   subroutine SPEC_LIST
     integer :: HOW_MANY       ! sons of the n_asg node
     if ( toggle(par) ) call output ( 'Enter SPEC_LIST', advance='yes' )
-    how_many = 2
-    call get_token
-    call field_list
-    do while ( next%class == t_comma )
+    how_many = 1
+    do while ( next%class == t_comma )  ! spec_list -> ( ',', field_list ) *
       call get_token
       call field_list
       how_many = how_many + 1
@@ -312,18 +309,15 @@ o:  do
         call value ( how_many )
         call build_tree ( n_equal, how_many )
     exit
-      case ( t_comma )        ! spec_rest -> ( ',' spec_list ) +
+      case ( t_comma )        ! spec_rest -> ( ',' spec_list )
         call spec_list
     exit
-      case ( t_colon )        ! spec_rest -> : name ( ',' spec_list ) +
+      case ( t_colon )        ! spec_rest -> : name ( ',' spec_list )
         call get_token
         call test_token ( t_identifier )
-        if ( next%class == t_comma ) then
-          call spec_list
-          call build_tree ( n_named, 2 )
+        call spec_list
+        call build_tree ( n_named, 2 )
     exit
-        end if
-        call announce_error ( (/ t_comma /) )
       case default
         if ( error > 1 ) exit
         call announce_error ( (/ t_end_of_stmt, t_equal, t_comma /) )
@@ -386,6 +380,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.5  2001/02/28 02:37:11  vsnyder
+! Allow specification with no arguments to have a label
+!
 ! Revision 2.4  2000/11/30 00:23:10  vsnyder
 ! Implement [] syntax for arrays
 !
