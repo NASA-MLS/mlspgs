@@ -33,7 +33,8 @@ Switches (set by -S option in mlsl2's command line):
   nwt =>    Action flag at each return from Newton solver
   pcf[n] => open init params obtained from pcf,
             info on l1b files [higher the n, more the info]
-  pro =>    Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta
+  pro =>    Proclaim each product file l2gp, l2aux, l2dgg, l2pc, meta output
+              and each file l2gp, l1brad, ncep, dao input
   qtmp =>   Quantity templates being constructed
   rad =>    Radiances in ForwardModelInterface
   sca =>    Scalars of interest to the Newton method
@@ -72,6 +73,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.17  2001/12/01 01:01:41  livesey
+ Documented vir switch
+
  Revision 1.16  2001/11/09 23:40:27  vsnyder
  OOPS! --wall is an option, not a switch
 
