@@ -221,7 +221,6 @@ contains ! ============================ MODULE PROCEDURES ======================
       & 'Failed to find rank of data set.')
 
     ! allocate, based on above SD, dim info
-
     call allocate_test ( edge,   rank, 'edge',   ModuleName )
     call allocate_test ( start,  rank, 'start',  ModuleName )
     call allocate_test ( stride, rank, 'stride', ModuleName )
@@ -282,8 +281,8 @@ contains ! ============================ MODULE PROCEDURES ======================
     ! allocate, read counterMAF
     call Allocate_test ( l1bData%counterMaf, l1bData%noMAFs, &
       & 'counterMAF', ModuleName )
-    status = sfrdata_f90(sds1_id,  start , stride, &
-      & edge, l1bData%counterMAF )
+    status = sfrdata_f90(sds1_id,  (/ l1bData%firstMAF /) , (/1/), &
+      & (/l1bData%noMAFs/), l1bData%counterMAF )
     if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_L1BRead // 'counterMAF.' )
 
@@ -467,6 +466,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.9  2001/06/01 02:06:45  livesey
+! Bug fix with counterMAF
+!
 ! Revision 2.8  2001/05/30 23:51:48  livesey
 ! New version, uses new HDF, also cleaner
 !
