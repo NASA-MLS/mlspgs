@@ -23,6 +23,8 @@ module L2PC_m
 
   implicit NONE
   private
+  
+  public :: AddL2PCBinToDatabase, DestroyL2PCBin
 
   ! Public types
   type, public :: l2pcBin_T
@@ -234,4 +236,6 @@ contains ! ============= Public Procedures ==========================
   end subroutine DestroyL2PCBin
 
 end module L2PC_m
+
+
 
