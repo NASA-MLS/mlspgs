@@ -29,6 +29,7 @@
 # -[n]x         [don't] reecho args that exist and you have execute permission
 # -[n]glob      [don't] reecho any arg containing the glob character '*'
 # -dir "dir"    cd to "dir" before filtering
+# -dirn "dir"   ignore args; cd to "dir" then filter all files/directories there
 # -lib          filter each arg "x" based on the file "libx.a" exists or ...
 # -h[elp]       print brief help message; exit
 # -prefix=xxx   reecho xxx in front of each arg (separated by a space)
@@ -39,6 +40,8 @@
 #               e.g. 'a plop b plop c plop ...'
 # -suffixn=xxx  reecho xxx after each arg (without a separating space)
 #               e.g. 'Xshabam Yshabam Zshabam ..'
+# -excl "bad"   exclude any arg named "bad" (before any pre- or suffixes)
+#               may be repeated; e.g. -excl bad1 -excl bad2 excludes both
 # arg1          an arg that may or may not be reechoed
 #
 # Note:
@@ -94,6 +97,15 @@ extant_files()
    then
       for arg
       do
+         arg_not_bad="yes"
+         for file in $bad_args
+         do
+            if [ "$arg" = "$file" ]
+            then
+               arg_not_bad="no"
+            fi
+         done
+
          if [ "$as_lib" = "yes" ]
          then
             file="lib${arg}.a"
@@ -101,7 +113,11 @@ extant_files()
             file=$arg
          fi
          
-         if [ $the_opt = "-glob" ]
+         if [ "$arg_not_bad" != "yes" ]
+         then
+#           arg a bad one--automatically excluded--no operation needed
+            file=$file
+         elif [ $the_opt = "-glob" ]
          then
             check=`echo $file | grep -i '\*'`
             if [ $the_sense = "yes" -a "$check" != "" ]
@@ -135,6 +151,13 @@ extant_files()
 #                                                               *
 #	The entry point where control is given to the script         *
 #****************************************************************
+#
+#   Notes
+#  A logical improvement would be to allow multiple options
+# among the set {[n]f [n]d [n]w [n]r [n]x}
+# which should be doable by forming a list of the_opts and
+# looping over them with calls to extant_files
+# steadily narrowing down the files that survive being refiltered
 me="$0"
 my_name=reecho.sh
 DEEBUG=off
@@ -145,6 +168,7 @@ then
 fi
 
 new_dir=""
+new_list="no"
 as_lib="no"
 the_opt="-f"
 the_sense="yes"
@@ -153,6 +177,7 @@ the_prefix=""
 the_suffix=""
 separate_prefix="yes"
 separate_suffix="yes"
+bad_args=""
 while [ "$more_opts" = "yes" ] ; do
 
     case "$1" in
@@ -245,8 +270,19 @@ while [ "$more_opts" = "yes" ] ; do
        new_dir="$1"
        shift
        ;;
+    -dirn )
+       shift
+       new_dir="$1"
+       new_list="yes"
+       shift
+       ;;
     -lib )
        as_lib="yes"
+       shift
+       ;;
+    -excl )
+       shift
+       bad_args="$1 $bad_args"
        shift
        ;;
     * )
@@ -271,6 +307,14 @@ fi
 if [ "$new_dir" = "" ]
 then
    extant_files "$@"
+elif [ "$new_list" = "yes" ]
+then
+   old_dir=`pwd`
+   cd "$new_dir"
+   my_files=`echo *`
+   set `echo $my_files`
+   extant_files "$@"
+   cd "$old_dir"
 else
    old_dir=`pwd`
    cd "$new_dir"
@@ -335,6 +379,9 @@ else
 fi
 exit
 # $Log$
+# Revision 1.3  2001/11/07 00:20:40  pwagner
+# New -lib -dir and -suffix options
+#
 # Revision 1.2  2001/08/16 18:14:35  pwagner
 # Added -prefix=xxx stuff
 #
