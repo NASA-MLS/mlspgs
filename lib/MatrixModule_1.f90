@@ -23,19 +23,25 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: AddMatrices, AddToMatrix, Assignment(=), ClearRows, ClearRows_1
-  public :: CopyMatrix, CreateEmptyMatrix, CholeskyFactor, CholeskyFactor_1
-  public :: ColumnScale, ColumnScale_1, Dump, FindBlock
+  public :: AddMatrices, AddMatrixToDatabase, AddToMatrix, Assignment(=)
+  public :: ClearRows, ClearRows_1, CopyMatrix, CreateEmptyMatrix
+  public :: CholeskyFactor, CholeskyFactor_1, ColumnScale, ColumnScale_1
+  public :: DestroyMatrix, DestroyMatrixDatabase, Dump, FindBlock
 ! public :: LevenbergUpdateCholesky
-  public :: Matrix_T, Matrix_Cholesky_T, Matrix_Kronecker_T, Matrix_SPD_T
-  public :: MultiplyMatrices, MultiplyMatrixVector, MultiplyMatrixVector_1
-  public :: MultiplyMatrixVectorSPD_1
+  public :: Matrix_T, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T
+  public :: Matrix_SPD_T, MultiplyMatrices, MultiplyMatrixVector
+  public :: MultiplyMatrixVector_1, MultiplyMatrixVectorSPD_1
   public :: NewMultiplyMatrixVector, NormalEquations
   public :: operator(.TX.), operator(+), RC_Info, RowScale, RowScale_1
   public :: SolveCholesky, SolveCholesky_1
   public :: UpdateDiagonal, UpdateDiagonal_1
 
 ! =====     Defined Operators and Generic Identifiers     ==============
+
+  interface AddToMatrixDatabase
+    module procedure AddMatrixToDatabase, AddCholeskyToDatabase
+    module procedure AddKroneckerToDatabase, AddSPDToDatabase
+  end interface
 
   interface Assignment(=)
     module procedure AssignMatrix
@@ -55,6 +61,11 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface DUMP
     module procedure DUMP_MATRIX
+  end interface
+
+  interface GetFromMatrixDatabase
+    module procedure GetMatrixFromDatabase, GetCholeskyFromDatabase
+    module procedure GetKroneckerFromDatabase, GetSPDFromDatabase
   end interface
 
   interface MultiplyMatrixVector   ! A^T V
@@ -122,7 +133,47 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     type(matrix_T) :: M  ! upper triangle is stored.
   end type Matrix_SPD_T
 
+  type Matrix_Database_T
+    private
+    type(Matrix_T), pointer :: Matrix => NULL()
+    type(Matrix_Cholesky_T), pointer :: Cholesky => NULL()
+    type(Matrix_Kronecker_T), pointer :: Kronecker => NULL()
+    type(Matrix_SPD_T), pointer :: SPD => NULL()
+  end type Matrix_Database_T
+
 contains ! =====     Public Procedures     =============================
+
+  ! --------------------------------------  AddCholeskyToDatabase  -----
+  integer function AddCholeskyToDatabase ( Database, CholeskyItem )
+  ! Add a Cholesky factor matrix to the matrix database.
+    type(matrix_Database_T), dimension(:), pointer :: Database
+    type(matrix_cholesky_T), intent(in) :: CholeskyItem
+
+    type(matrix_Database_T) :: Item
+    integer :: Status
+
+    allocate ( item%cholesky, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Matrix database element" )
+    item%cholesky = choleskyItem
+    addCholeskyToDatabase = addItemToMatrixDatabase ( database, item )
+  end function AddCholeskyToDatabase
+
+  ! -------------------------------------  AddKroneckerToDatabase  -----
+  integer function AddKroneckerToDatabase ( Database, KroneckerItem )
+  ! Add a Kronecker product matrix to the matrix database.
+    type(matrix_Database_T), dimension(:), pointer :: Database
+    type(matrix_kronecker_T), intent(in) :: KroneckerItem
+
+    type(matrix_Database_T) :: Item
+    integer :: Status
+
+    allocate ( item%kronecker, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Matrix database element" )
+    item%kronecker = kroneckerItem
+    addKroneckerToDatabase = addItemToMatrixDatabase ( database, item )
+  end function AddKroneckerToDatabase
 
   ! ------------------------------------------------  AddMatrices  -----
   function AddMatrices ( X, Y ) result ( Z ) ! Z = X + Y
@@ -152,6 +203,38 @@ contains ! =====     Public Procedures     =============================
       end do ! i = 1, x%row%nb
     end do ! j = 1, x%col%nb
   end function AddMatrices
+
+  ! ----------------------------------------  AddMatrixToDatabase  -----
+  integer function AddMatrixToDatabase ( Database, MatrixItem )
+  ! Add a matrix of unspecified structure to the matrix database
+    type(matrix_Database_T), dimension(:), pointer :: Database
+    type(matrix_T), intent(in) :: MatrixItem
+
+    type(matrix_Database_T) :: Item
+    integer :: Status
+
+    allocate ( item%matrix, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Matrix database element" )
+    item%matrix = matrixItem
+    addMatrixToDatabase = addItemToMatrixDatabase ( database, item )
+  end function AddMatrixToDatabase
+
+  ! -------------------------------------------  AddSPDToDatabase  -----
+  integer function AddSPDToDatabase ( Database, SPDItem )
+  ! Add a symmetric-positive-definite matrix to the matrix database
+    type(matrix_Database_T), dimension(:), pointer :: Database
+    type(matrix_spd_T), intent(in) :: SPDItem
+
+    type(matrix_Database_T) :: Item
+    integer :: Status
+
+    allocate ( item%spd, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Matrix database element" )
+    item%spd = spdItem
+    addSPDToDatabase = addItemToMatrixDatabase ( database, item )
+  end function AddSPDToDatabase
 
   ! ------------------------------------------------  AddToMatrix  -----
   subroutine AddToMatrix ( X, Y ) ! X = X + Y
@@ -405,6 +488,25 @@ contains ! =====     Public Procedures     =============================
     call destroyRCInfo ( a%col )
   end subroutine DestroyMatrix
 
+  ! --------------------------------------  DestroyMatrixDatabase  -----
+  subroutine DestroyMatrixDatabase ( D )
+  ! Destroy every matrix in the database D, then destroy the database.
+    type(matrix_database_T), dimension(:), pointer :: D
+
+    integer :: I, Status
+
+    if ( .not. associated(d) ) return
+    do i = 1, size(d)
+      if ( associated(d(i)%matrix) ) call destroyMatrix ( d(i)%matrix )
+      if ( associated(d(i)%cholesky) ) call destroyMatrix ( d(i)%cholesky%m )
+      if ( associated(d(i)%kronecker) ) call destroyMatrix ( d(i)%kronecker%m )
+      if ( associated(d(i)%spd) ) call destroyMatrix ( d(i)%spd%m )
+    end do
+    deallocate ( d, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // "D in DestroyMatrixDatabase" )
+  end subroutine DestroyMatrixDatabase
+
   ! --------------------------------------------------  FindBlock  -----
   integer function FindBlock ( RC, Quantity, Instance )
   ! Given quantity and instance numbers, find a block index.
@@ -424,6 +526,38 @@ contains ! =====     Public Procedures     =============================
     end do
     findBlock = 0
   end function FindBlock
+
+  ! ------------------------------------  GetCholeskyFromDatabase  -----
+  subroutine GetCholeskyFromDatabase ( DatabaseElement, Cholesky )
+  ! Get a POINTER to a Cholesky object from DatabaseElement.
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    type(matrix_cholesky_T), pointer :: Cholesky
+    cholesky => databaseElement%cholesky
+  end subroutine GetCholeskyFromDatabase
+
+  ! -----------------------------------  GetKroneckerFromDatabase  -----
+  subroutine GetKroneckerFromDatabase ( DatabaseElement, Kronecker )
+  ! Get a POINTER to a Kronecker object from DatabaseElement.
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    type(matrix_kronecker_T), pointer :: Kronecker
+    kronecker => databaseElement%kronecker
+  end subroutine GetKroneckerFromDatabase
+
+  ! --------------------------------------  GetMatrixFromDatabase  -----
+  subroutine GetMatrixFromDatabase ( DatabaseElement, Matrix )
+  ! Get a POINTER to a matrix object from DatabaseElement.
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    type(matrix_T), pointer :: Matrix
+    matrix => databaseElement%matrix
+  end subroutine GetMatrixFromDatabase
+
+  ! -----------------------------------------  GetSPDFromDatabase  -----
+  subroutine GetSPDFromDatabase ( DatabaseElement, SPD )
+  ! Get a POINTER to a SPD object from DatabaseElement.
+    type(matrix_Database_T), intent(in) :: DatabaseElement
+    type(matrix_SPD_T), pointer :: SPD
+    SPD => databaseElement%SPD
+  end subroutine GetSPDFromDatabase
 
   ! ------------------------------------  LevenbergUpdateCholesky  -----
 ! subroutine LevenbergUpdateCholesky ( Z, LAMBDA )
@@ -719,6 +853,23 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
+  ! ------------------------------------  AddItemToMatrixDatabase  -----
+  integer function AddItemToMatrixDatabase ( Database, Item )
+
+  ! This routine adds a matrix data base item to the database.  These
+  ! items are constructed by AddMatrixToDatabase, AddCholeskyToDatabase,
+  ! AddKroneckerToDatabase or AddSPDToDatabase.
+
+    type(Matrix_Database_T), dimension(:), pointer :: Database
+    type(Matrix_Database_T) :: Item
+
+    type(Matrix_Database_T), dimension(:), pointer :: TempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddItemToMatrixDatabase = newSize
+  end function AddItemToMatrixDatabase
+
   ! -------------------------------------------------  CopyRCInfo  -----
   subroutine CopyRCInfo ( A, B )
     type(RC_info), intent(inout) :: A
@@ -813,6 +964,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.5  2001/01/10 21:03:14  vsnyder
+! Periodic commit
+!
 ! Revision 2.4  2000/11/23 01:09:46  vsnyder
 ! Add provision to ignore columns during matrix-matrix multiply, finish DUMP.
 !
