@@ -228,6 +228,7 @@ contains ! =====     Public procedures     =============================
     data_type_indices(t_string) =          add_ident ( 'string' )
     ! Put intrinsic enumeration type names into the symbol table
     data_type_indices(t_boolean) =         add_ident ( 'boolean' )
+    data_type_indices(t_instrument) =      add_ident ( 'instrument' )
     ! Put intrinsic enumeration literals into the symbol table:
     lit_indices(l_baseline) =              add_ident ( 'baseline' )
     lit_indices(l_c) =                     add_ident ( 'C' )
@@ -401,6 +402,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.37  2001/09/17 23:14:14  livesey
+! Bug fix, added name for t_instrument
+!
 ! Revision 2.36  2001/09/17 22:53:23  livesey
 ! Added t_instrument, l_emls and l_umls
 !
