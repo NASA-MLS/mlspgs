@@ -277,9 +277,9 @@ contains
          XTB(J)=TB(J,L)
       ENDDO
          IF (ITS .GT. 1) THEN
-            WRITE(*,*)'ITERATION=',ITS-1,'  EPS. AT TOP OF ATMOS=',X2
+!            WRITE(*,*)'ITERATION=',ITS-1,'  EPS. AT TOP OF ATMOS=',X2
          ELSE
-            WRITE(*,*)'ITERATION=',ITS-1 
+!            WRITE(*,*)'ITERATION=',ITS-1 
          ENDIF
          ITS=ITS+1
          GOTO 1000
@@ -370,3 +370,6 @@ contains
 end module RadiativeTransferModule
 
 ! $Log$
+! Revision 1.4  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
