@@ -43,10 +43,10 @@ MODULE L3SPData
 
 ! Parameters
 
-   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMW_NAME  = 'nWaveNum'
-   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMWD_NAME = 'nLevels,nLats,nWaveNum'
-   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMFD_NAME = 'nLevels,nLats,nFreqs'
-   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMSP_NAME = 'nLevels,nLats,nWaveNum,nFreqs'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMW_NAME  = 'nWave'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMWD_NAME = 'nLevels,nLats,nWave'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMFD_NAME = 'nLevels,nLats,nWave'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMSP_NAME = 'nLevels,nLats,nWave'
 
    CHARACTER (LEN=*), PARAMETER, PUBLIC :: GEO_FIELDWN  = 'waveNumber'
 
@@ -65,20 +65,20 @@ MODULE L3SPData
 
      ! dimensioned as (nLevels, nLats, nWaveNum, nFreqs):
 
-     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spRelValue     ! Real part
-     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spRelPrecision
+     REAL(r8), DIMENSION(:,:,:), POINTER :: l3spRelValue     ! Real part
+     REAL(r8), DIMENSION(:,:,:), POINTER :: l3spRelPrecision
 						! Real part precision
-     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spImgValue     ! Imaginary part
-     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spImgPrecision
+     REAL(r8), DIMENSION(:,:,:), POINTER :: l3spImgValue     ! Imaginary part
+     REAL(r8), DIMENSION(:,:,:), POINTER :: l3spImgPrecision
 						! Imaginary part precision
 
      ! Now we store the waveNumber and frequency fields:
 
      REAL(r8), DIMENSION(:,:,:), POINTER :: waveNumber
-	! dimensioned (nLevels, nLats, nWaveNum)
+	! dimensioned (nLevels, nLats, nWave)
 
      REAL(r8), DIMENSION(:,:,:), POINTER :: frequency
-	! dimensioned (nLevels, nLats, nFreqs):
+	! dimensioned (nLevels, nLats, nWave):
 
      ! Now we store the geolocation fields.  First, the vertical one:
 
@@ -94,15 +94,14 @@ MODULE L3SPData
 
      INTEGER :: nLevels				! Total number of surfaces
      INTEGER :: nLats				! Total number of latitudes
-     INTEGER :: nWaveNum			! Total number of waveNumbers
-     INTEGER :: nFreqs				! Total number of frequencies
+     INTEGER :: nWave				! Total number of components
 
    END TYPE L3SPData_T
 
 CONTAINS
 
 !--------------------------------------------------------
-   SUBROUTINE AllocateL3SP (nlev, nlat, nwv, nfreq, l3sp)
+   SUBROUTINE AllocateL3SP (nlev, nlat, nwv, l3sp)
 !--------------------------------------------------------
 
 ! Brief description of subroutine
@@ -111,7 +110,7 @@ CONTAINS
 
 ! Arguments
 
-      INTEGER, INTENT(IN) :: nlev, nlat, nwv, nfreq
+      INTEGER, INTENT(IN) :: nlev, nlat, nwv
 
       TYPE( L3SPData_T ), INTENT(INOUT) :: l3sp
 
@@ -129,8 +128,7 @@ CONTAINS
 
       l3sp%nLevels  = nlev
       l3sp%nLats    = nlat
-      l3sp%nWaveNum = nwv
-      l3sp%nFreqs   = nfreq
+      l3sp%nWave    = nwv
 
       ! Allocate the vertical geolocation field
 
@@ -159,8 +157,8 @@ CONTAINS
         ! Wavenumber & frequency
 
 	if ( (l3sp%nLevels .gt. 0).and. & 
-             & (l3sp%nLats .gt. 0).and.(l3sp%nWaveNum .gt. 0)) then
-      ALLOCATE(l3sp%waveNumber(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum), & 
+             & (l3sp%nLats .gt. 0).and.(l3sp%nWave .gt. 0)) then
+      ALLOCATE(l3sp%waveNumber(l3sp%nLevels,l3sp%nLats,l3sp%nWave), & 
            & STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T waveNumber pointer.'
@@ -168,9 +166,8 @@ CONTAINS
       ENDIF
 	endif
 
-	if ((l3sp%nLevels .gt. 0).and.(l3sp%nLats .gt. 0) & 
-             & .and.(l3sp%nFreqs .gt. 0)) then
-      ALLOCATE(l3sp%frequency(l3sp%nLevels,l3sp%nLats,l3sp%nFreqs), STAT=err)
+	if ((l3sp%nLevels .gt. 0).and.(l3sp%nLats .gt. 0)) then
+      ALLOCATE(l3sp%frequency(l3sp%nLevels,l3sp%nLats,l3sp%nWave), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T frequency pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -180,32 +177,28 @@ CONTAINS
 ! Spectra fields
 
 	if ((l3sp%nLevels .gt. 0).and.(l3sp%nLats .gt. 0).and. & 
-             & (l3sp%nWaveNum .gt. 0) .and. (l3sp%nFreqs.gt.0) ) then
+             & (l3sp%nWave .gt. 0) ) then
 
-      ALLOCATE(l3sp%l3spRelValue(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum,&
-              &l3sp%nFreqs), STAT=err)
+      ALLOCATE(l3sp%l3spRelValue(l3sp%nLevels,l3sp%nLats,l3sp%nWave), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T RelValue pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ALLOCATE(l3sp%l3spRelPrecision(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum,&
-              &l3sp%nFreqs), STAT=err)
+      ALLOCATE(l3sp%l3spRelPrecision(l3sp%nLevels,l3sp%nLats,l3sp%nWave), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T RelPrecision pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 
-      ALLOCATE(l3sp%l3spImgValue(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum,&
-              &l3sp%nFreqs), STAT=err)
+      ALLOCATE(l3sp%l3spImgValue(l3sp%nLevels,l3sp%nLats,l3sp%nWave), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T ImgValue pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ALLOCATE(l3sp%l3spImgPrecision(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum,&
-              &l3sp%nFreqs), STAT=err)
+      ALLOCATE(l3sp%l3spImgPrecision(l3sp%nLevels,l3sp%nLats,l3sp%nWave), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T ImgPrecision pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -270,7 +263,7 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=FileNameLen) :: spFile, type
  
-      INTEGER :: start(4), stride(4), edge(4)
+      INTEGER :: start(3), stride(3), edge(3)
       INTEGER :: i, match, numSwaths, status, swfID, swID
 
 ! Expand the template given in the CF
@@ -321,15 +314,9 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swdefdim(swID, DIMW_NAME, sp(i)%nWaveNum)
+         status = swdefdim(swID, DIMW_NAME, sp(i)%nWave)
          IF (status /= 0) THEN
             msr = DIM_ERR // DIMW_NAME
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         status = swdefdim(swID, DIM_NAME3, sp(i)%nFreqs)
-         IF (status /= 0) THEN
-            msr = DIM_ERR // DIM_NAME3
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -422,8 +409,7 @@ CONTAINS
          stride = 1
          edge(1) = sp(i)%nLevels
          edge(2) = sp(i)%nLats
-         edge(3) = sp(i)%nWaveNum
-         edge(4) = sp(i)%nFreqs
+         edge(3) = sp(i)%nWave
 
 ! Write the vertical geolocation data
 
@@ -453,11 +439,11 @@ CONTAINS
 
 ! Write the waveNumber data
 
-         if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+         if ((sp(i)%nWave.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
               & (sp(i)%nLats.gt.0)) then
 
-         status = swwrfld( swID, GEO_FIELDWN, start(1:3), stride(1:3), &
-              & edge(1:3), REAL(sp(i)%waveNumber) )
+         status = swwrfld( swID, GEO_FIELDWN, start, stride, &
+              & edge, REAL(sp(i)%waveNumber) )
          IF (status /= 0) THEN
             msr = WR_ERR // GEO_FIELDWN
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -466,15 +452,13 @@ CONTAINS
          endif
 
 ! Write the frequency data
-
-         edge(3) = sp(i)%nFreqs
          
-         if (sp(i)%nFreqs.gt.0) then 
+         if (sp(i)%nWave.gt.0) then 
 
          if ((sp(i)%nLevels.gt.0).and.(sp(i)%nLats.gt.0)) then
 
-         status = swwrfld( swID, GEO_FIELD10, start(1:3), stride(1:3), &
-              & edge(1:3), REAL(sp(i)%frequency) )
+         status = swwrfld( swID, GEO_FIELD10, start, stride, &
+              & edge, REAL(sp(i)%frequency) )
          IF (status /= 0) THEN
             msr = WR_ERR // GEO_FIELD10
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -486,11 +470,9 @@ CONTAINS
 
 ! Write the real part of the data
 
-         edge(3) = sp(i)%nWaveNum
+         if (sp(i)%nWave.gt.0) then 
 
-         if (sp(i)%nFreqs.gt.0) then 
-
-            if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+            if ((sp(i)%nWave.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
                  & (sp(i)%nLats.gt.0)) then
 
                status = swwrfld( swID, DATA_FIELDRV, start, stride, edge, &
@@ -513,9 +495,9 @@ CONTAINS
 
 ! Write the imaginary part of the data
 
-         if (sp(i)%nFreqs.gt.0) then 
+         if (sp(i)%nWave.gt.0) then 
 
-            if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+            if ((sp(i)%nWave.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
                  & (sp(i)%nLats.gt.0)) then
 
                status = swwrfld( swID, DATA_FIELDIV, start, stride, edge, &
@@ -603,7 +585,7 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=FileNameLen) :: spFile, type
  
-      INTEGER :: start(4), stride(4), edge(4)
+      INTEGER :: start(3), stride(3), edge(3)
       INTEGER :: i, match, numSwaths, status, swfID, swID
 
 ! Expand the template given in the CF
@@ -654,15 +636,9 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefdim(swID, DIMW_NAME, sp(i)%nWaveNum)
+         status = he5_swdefdim(swID, DIMW_NAME, sp(i)%nWave)
          IF (status /= 0) THEN
             msr = DIM_ERR // DIMW_NAME
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
-
-         status = he5_swdefdim(swID, DIM_NAME3, sp(i)%nFreqs)
-         IF (status /= 0) THEN
-            msr = DIM_ERR // DIM_NAME3
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -755,8 +731,7 @@ CONTAINS
          stride = 1
          edge(1) = sp(i)%nLevels
          edge(2) = sp(i)%nLats
-         edge(3) = sp(i)%nWaveNum
-         edge(4) = sp(i)%nFreqs
+         edge(3) = sp(i)%nWave
 
 ! Write the vertical geolocation data
 
@@ -786,11 +761,11 @@ CONTAINS
 
 ! Write the waveNumber data
 
-         if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+         if ((sp(i)%nWave.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
               & (sp(i)%nLats.gt.0)) then
 
-         status = he5_swwrfld( swID, GEO_FIELDWN, start(1:3), stride(1:3), &
-              & edge(1:3), REAL(sp(i)%waveNumber) )
+         status = he5_swwrfld( swID, GEO_FIELDWN, start, stride, &
+              & edge, REAL(sp(i)%waveNumber) )
          IF (status /= 0) THEN
             msr = WR_ERR // GEO_FIELDWN
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -799,15 +774,13 @@ CONTAINS
          endif
 
 ! Write the frequency data
-
-         edge(3) = sp(i)%nFreqs
          
-         if (sp(i)%nFreqs.gt.0) then 
+         if (sp(i)%nWave.gt.0) then 
 
             if ((sp(i)%nLevels.gt.0).and.(sp(i)%nLats.gt.0)) then
 
-               status = he5_swwrfld(swID,GEO_FIELD10,start(1:3),stride(1:3), &
-                    & edge(1:3), REAL(sp(i)%frequency) )
+               status = he5_swwrfld(swID,GEO_FIELD10,start,stride, &
+                    & edge, REAL(sp(i)%frequency) )
                IF (status /= 0) THEN
                   msr = WR_ERR // GEO_FIELD10
                   CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -819,11 +792,9 @@ CONTAINS
 
 ! Write the real part of the data
 
-         edge(3) = sp(i)%nWaveNum
+         if (sp(i)%nWave.gt.0) then 
 
-         if (sp(i)%nFreqs.gt.0) then 
-
-            if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+            if ((sp(i)%nWave.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
                  & (sp(i)%nLats.gt.0)) then
 
                status = he5_swwrfld( swID, DATA_FIELDRV, start, stride, edge, &
@@ -846,9 +817,9 @@ CONTAINS
 
 ! Write the imaginary part of the data
 
-         if (sp(i)%nFreqs.gt.0) then 
+         if (sp(i)%nWave.gt.0) then 
 
-            if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+            if ((sp(i)%nWave.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
                  & (sp(i)%nLats.gt.0)) then
 
                status = he5_swwrfld( swID, DATA_FIELDIV, start, stride, edge, &
@@ -1054,6 +1025,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.13  2003/07/08 00:18:09  pwagner
+! fileType now a lit_name instead of a char string
+!
 ! Revision 1.12  2003/05/30 23:51:59  pwagner
 ! Passes actual hdf version instead of relying on default being 4
 !

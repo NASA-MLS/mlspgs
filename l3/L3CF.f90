@@ -77,10 +77,8 @@ MODULE L3CF
 
      REAL(r8), DIMENSION(2) :: desPresLvl ! min, max descending pressure levels
 
-     REAL(r8), DIMENSION(2) :: rangFrequency	! min, max of frequency range
+     INTEGER :: nWave		! number of waves to be outputed 
 
-     INTEGER, DIMENSION(2) :: rangWavenumber	! min, max of wave # range
-     
      INTEGER :: nLons		! number of points in longitude grid
 
      INTEGER :: nLats 	        ! number of points in latitude grid
@@ -387,25 +385,14 @@ CONTAINS
         l3cf(i)%desPresLvl = 0.0
      ENDIF
 
-     ! Find/save the min & max for the ranges of frequencies, wavenumbers
-  
-     indx = LinearSearchStringArray( &
-          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangFrequency')
-     IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
-          & 'Missing keyword RANGFREQUENCY in Standard section of the l3cf.')
-     l3cf(i)%rangFrequency(1) = & 
-          & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-     l3cf(i)%rangFrequency(2) = &
-          & cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+     ! Find/save the number of waves
 
      indx = LinearSearchStringArray( &
-          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'rangWavenumber')
+          & cf%Sections(iMap)%Entries(i)%Cells%Keyword, 'nWave')
      IF (indx == 0) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
-          &'Missing keyword RANGWAVENUMBER in Standard section of the l3cf.')
-     l3cf(i)%rangWavenumber(1) = & 
-          & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
-     l3cf(i)%rangWavenumber(2) = & 
-          & cf%Sections(iMap)%Entries(i)%Cells(indx)%RangeUpperBound
+          & 'Missing keyword NWAVE in the Standard section of the l3cf.')
+     l3cf(i)%nWave = & 
+     	  & cf%Sections(iMap)%Entries(i)%Cells(indx)%RealValue
   
      ! Find the label in the Standard section
   
@@ -465,6 +452,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.20  2004/01/07 21:43:18  cvuu
+! version 1.4 commit
+!
 ! Revision 1.19  2003/04/30 18:15:48  pwagner
 ! Work-around for LF95 infinite compile-time bug
 !

@@ -15,7 +15,8 @@ Module DailyMapModule
   Implicit None
   private
   PUBLIC :: Init, ClearMemory, CordTransform, FindAD, &
-    & FFSM_Opt, FFSM, FFSMA, FFSMD, Reconstruct, Diagnostics, DataGenerate
+    & FFSM_Opt, FFSM, FFSMA, FFSMD, Reconstruct, Diagnostics, DataGenerate, &
+    & DataGeneratePrec, CopyPrec2Data
   
   PRIVATE :: ID, ModuleName
 
@@ -36,7 +37,8 @@ Module DailyMapModule
   !                Reconstruct
   !                Diagnostics
   !                DataGenerate
-  !                DataGenerate1
+  !                DataGeneratePrec
+  !                CopyPrec2Data
   ! Function -- 
   
   ! Remarks:  This is a prototype module for the main Core processing.
@@ -213,6 +215,18 @@ Contains
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
 
+    Allocate(DPrec(nt_d), STAT=err)
+    IF ( err /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' DPrec array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    Allocate(APrec(nt_a), STAT=err)
+    IF ( err /= 0 ) THEN
+       msr = MLSMSG_Allocate // ' APrec array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
     Allocate(wn(nt*2), STAT=err)
     IF ( err /= 0 ) THEN
        msr = MLSMSG_Allocate // ' wn array.'
@@ -342,6 +356,18 @@ Contains
     DeAllocate(Ascend, STAT=err)
     IF ( err /= 0 ) THEN
        msr = MLSMSG_Deallocate // ' Ascend array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DeAllocate(DPrec, STAT=err)
+    IF ( err /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' DPrec array.'
+       CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+    ENDIF
+
+    DeAllocate(APrec, STAT=err)
+    IF ( err /= 0 ) THEN
+       msr = MLSMSG_Deallocate // ' APrec array.'
        CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
     ENDIF
 
@@ -570,7 +596,6 @@ Contains
     
     real :: ks, kr, expa, expd, krmax_g
     
-    INTEGER :: fNum(0:nt)
     INTEGER :: plan, m, m1, i, j, flag, iLv, iLt, wIndex
     
     ! Fourier Transform of both descending & ascending series
@@ -649,7 +674,9 @@ Contains
           wn(mtotal) = float(m1)
           
           if (abs(float(nt)*ds).gt.0.00001) ks = 2.*PI*(-nt/2+i)/(float(nt)*ds)
-          if (abs(sina)        .gt.0.00001) kr = -ks*c0+float(m1)/sina
+          !ks = 2.*PI*(-nt/2+i)/(float(nt)*ds)
+          if (abs(sina) .gt.0.00001) kr = -ks*c0+float(m1)/sina
+          !kr = -ks*c0+float(m1)/sina
           
           sigma(mtotal) = -ks*sina + kr*cosa
           
@@ -700,15 +727,14 @@ Contains
        End Do
     End Do
 
-    fNum = 0 
     
     do j = 1, mtotal
-       wIndex = int(wn(j))
-       fNum(wIndex) = fNum(wIndex) + 1
-       l3sp%waveNumber(iLv, iLt, wIndex+1) = wIndex 
-       l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigma(j)
-       l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikr(j))
-       l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikr(j))
+       l3sp%waveNumber(iLv, iLt, j) =  int(wn(j))
+       l3sp%frequency(iLv, iLt, j) = sigma(j)
+       l3sp%l3spRelValue(iLv, iLt, j) = real(phikr(j))
+       l3sp%l3spRelPrecision(iLv, iLt, j) = real(phikr(j))
+       l3sp%l3spImgValue(iLv, iLt, j) = aimag(phikr(j))
+       l3sp%l3spImgPrecision(iLv, iLt, j) = aimag(phikr(j))
     end do
     
     
@@ -734,7 +760,6 @@ Contains
     
     REAL :: ks, kr, expda, krmax_g
     
-    INTEGER :: fNum(0:nt_a)
     INTEGER :: plan, m, m1, i, j, flag, iLv, iLt, wIndex
     
     ! Fourier Transform of one series
@@ -785,9 +810,10 @@ Contains
           
           !! floating point error
 
-          if (abs(float(nt_a)*ds) .gt. 0.0000001) & 
-               & ks = 2.0*PI*(-float(nt_a)/2+i)/(float(nt_a)*ds)
+          if (abs(float(nt_a)*ds) .gt. 0.0000001) ks = 2.0*PI*(-nt_a/2+i)/(float(nt_a)*ds)
+               !ks = 2.0*PI*(-nt_a/2+i)/(float(nt_a)*ds)
           if (abs(sina) .gt. 0.0000001) kr = -ks*c0+float(m1)/sina
+          !kr = -ks*c0+float(m1)/sina
           
           !! floating point error
 
@@ -832,15 +858,14 @@ Contains
        End Do
     End Do
     
-    fNum = 0 
     
     do j = 1, mtotala
-       wIndex = int(wna(j))
-       fNum(wIndex) = fNum(wIndex) + 1
-       l3sp%waveNumber(iLv, iLt, wIndex+1) = wIndex 
-       l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigmaa(j)
-       l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikra(j))
-       l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikra(j))
+       l3sp%waveNumber(iLv, iLt, j) = int(wna(j)) 
+       l3sp%frequency(iLv, iLt, j) = sigmaa(j)
+       l3sp%l3spRelValue(iLv, iLt, j) = real(phikra(j))
+       l3sp%l3spRelPrecision(iLv, iLt, j) = real(phikra(j))
+       l3sp%l3spImgValue(iLv, iLt, j) = aimag(phikra(j))
+       l3sp%l3spImgPrecision(iLv, iLt, j) = aimag(phikra(j))
     end do
     
     
@@ -867,7 +892,6 @@ Contains
     
     REAL :: ks, kr, expda, krmax_g
     
-    INTEGER :: fNum(0:nt_d)
     INTEGER ::  plan, m, m1, i, j, flag, iLv, iLt, wIndex
     
     ! Fourier Transform of one series
@@ -918,9 +942,10 @@ Contains
           
           wnd(mtotald) = float(m1)
           !! floating point 
-          if (abs(float(nt_d)*ds).gt.0.000001) & 
-               ks = 2.0*PI*(-0.5*float(nt_d)+i)/(float(nt_d)*ds)
+          if (abs(float(nt_d)*ds).gt.0.000001) ks = 2.0*PI*(-nt_d/2+i)/(float(nt_d)*ds)
+               !ks = 2.0*PI*(-nt_d/2+i)/(float(nt_d)*ds)
           if (abs(sina).gt.0.000001) kr = -ks*c0+float(m1)/sina
+          !kr = -ks*c0+float(m1)/sina
           !! floating point
           sigmad(mtotald) = -ks*sina + kr*cosa
 
@@ -963,15 +988,14 @@ Contains
        End Do
     End Do
     
-    fNum = 0 
     
     do j = 1, mtotald
-       wIndex = int(wnd(j))
-       fNum(wIndex) = fNum(wIndex) + 1
-       l3sp%waveNumber(iLv, iLt, wIndex+1) = wIndex 
-       l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigmad(j)
-       l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikrd(j))
-       l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikrd(j))
+       l3sp%waveNumber(iLv, iLt, j) =  int(wnd(j))
+       l3sp%frequency(iLv, iLt, j) = sigmad(j)
+       l3sp%l3spRelValue(iLv, iLt, j) = real(phikrd(j))
+       l3sp%l3spRelPrecision(iLv, iLt, j) = real(phikrd(j))
+       l3sp%l3spImgValue(iLv, iLt, j) = aimag(phikrd(j))
+       l3sp%l3spImgPrecision(iLv, iLt, j) = aimag(phikrd(j))
     end do
     
     
@@ -1346,12 +1370,41 @@ Contains
          End Do
 
   End Subroutine DataGenerate
+
+
+  Subroutine DataGeneratePrec(aField, dField)
+
+    ! Arguments
+
+    REAL (r8), DIMENSION(:) ::  aField, dField
+
+    ! Variables
+
+	 INTEGER :: i
+         
+	 Do i = 1, nt
+            DPrec(nt+1-i) = dField(i) 
+            APrec(nt+1-i) = aField(i) 
+         End Do
+
+  End Subroutine DataGeneratePrec
+
+
+  Subroutine CopyPrec2Data()
+         
+	Dscend = DPrec
+	Ascend = APrec
+
+  End Subroutine CopyPrec2Data
        
 !===================
 End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.11  2003/04/30 21:44:32  pwagner
+! Work-around for LF95 infinite compile-time bug
+!
 ! Revision 1.10  2003/03/22 03:42:55  jdone
 ! zero denominator check, individual allocate/deallocate, use only and indentation added
 !

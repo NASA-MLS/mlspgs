@@ -45,9 +45,8 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_MODE = f_mcf + 1
   integer, public, parameter :: F_PRESLVL = f_mode + 1
   integer, public, parameter :: F_PRODNAME = f_preslvl + 1
-  integer, public, parameter :: F_RANGFREQ = f_prodname + 1
-  integer, public, parameter :: F_RANGWAVNUM = f_rangfreq + 1
-  integer, public, parameter :: F_TIME = f_rangwavnum + 1
+  integer, public, parameter :: F_NWAVE = f_prodname + 1
+  integer, public, parameter :: F_TIME = f_nwave + 1
   integer, public, parameter :: FIELD_LAST = f_time
 ! Enumeration literals:
   integer, public, parameter :: L_ADO   = last_signal_lit+1
@@ -139,8 +138,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_mode) =                 add_ident ( 'mode' )
     field_indices(f_preslvl) =              add_ident ( 'l3presLvl' )
     field_indices(f_prodname) =             add_ident ( 'l3prodName' )
-    field_indices(f_rangfreq) =             add_ident ( 'rangFrequency' )
-    field_indices(f_rangwavnum) =           add_ident ( 'rangWavenumber' )
+    field_indices(f_nwave) =                add_ident ( 'nWave' )
     field_indices(f_time) =                 add_ident ( 'timeD' )
 
     ! Put parameter names into the symbol table
@@ -235,8 +233,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_preslvl, t+t_numeric_range, n+n_field_type, &
              begin, f+f_alvl, t+t_numeric_range, n+n_field_type, &
              begin, f+f_dlvl, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_rangfreq, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_rangwavnum, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_nwave, t+t_numeric, n+n_field_type, &
              n+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_dg, &
@@ -285,6 +282,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.14  2003/03/22 02:08:42  jdone
+! added average orbital period value and HDF output string
+!
 ! Revision 1.13  2001/07/19 15:55:49  nakamura
 ! Corrected l3prodName field.
 !
