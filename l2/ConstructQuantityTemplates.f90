@@ -16,7 +16,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use L1BData, only: L1BData_T, READL1BDATA
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: L1BInfo_T, MLSChunk_T, NameLen, R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_L1BRead
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Info, MLSMSG_L1BRead
   use MLSSignalNomenclature, only: DestroyMLSSignalsInfo, MLSSignal_T, &
     & ParseMLSSignalRequest
   use OUTPUT_M, only: OUTPUT
@@ -83,7 +83,9 @@ contains ! =====     Public Procedures     =============================
     character(len=127) :: LIT_TEXT
     integer :: MOLECULE
     integer :: NATURAL_UNITS(first_lit:last_lit)
-    logical :: NEEDVHGRIDS
+    integer :: NOINSTANCES
+    integer :: NOSURFS
+    logical :: minorFrame       ! Is a minor frame quantity
     integer :: NOCHANS
     integer :: QUANTITYTYPE
     integer :: RADIOMETER     ! String index of RADIOMETER= value
@@ -155,55 +157,33 @@ contains ! =====     Public Procedures     =============================
     ! Now, depending on the type, check out stuff and see if it's ok to
     ! first order.
 
-    badUnit = .FALSE.
     if ( family == 0 ) family = natural_units(quantityType)
     select case ( quantityType )
     case ( l_Baseline )
-      badUnit = family /= PHYQ_Temperature
-      needVHGrids=.FALSE.
+      minorFrame=.FALSE.
     case ( l_Extinction )
       ! ??? Need to think about a family here
-      needVHGrids=.TRUE.
+      minorFrame=.FALSE.
     case ( l_Gph )
       ! ??? Need to think about a family here
-      needVHGrids=.TRUE.
+      minorFrame=.FALSE.
     case ( l_Ptan )
-      badUnit = family /= PHYQ_Zeta
-      needVHGrids=.FALSE.
+      minorFrame=.TRUE.
     case ( l_Radiance )
-      needVHGrids=.FALSE.
-      badUnit = family /= PHYQ_Temperature
+      minorFrame=.TRUE.
     case ( l_Temperature )
-      needVHGrids=.TRUE.
-      badUnit = family /= PHYQ_Temperature
+      minorFrame=.FALSE.
     case ( l_Vmr )
-      needVHGrids=.TRUE.
-      badUnit = family /= PHYQ_vmr
+      minorFrame=.FALSE.
     case default ! Can't get here if tree_walker works correctly
     end select
 
-    if ( badUnit ) call announce_error ( root, badUnitMessage )
+    ! Here the code splits, for minor frame quantities, we take the information
+    ! from the previously constructed MIFGeolocation information.  Otherwise,
+    ! we'll probably need to use any supplied vGrid/hGrid information.
 
-    ! Here the code diverges.  In the case where vGrids and hGrids are
-    ! required we set them up.  Where they're not we assume it's a
-    ! minor frame quantity and work from there.
+    if ( minorFrame ) then
 
-    if ( needVHGrids ) then
-      ! This is not a minor frame quantity, set it up from VGrids and HGrids
-      if ( (hGridIndex==0) .OR. (vGridIndex==0) ) &
-        call announce_error ( root, needGrid )
-
-      call SetupNewQuantityTemplate ( qty, &
-        & noInstances=hGrids(hGridIndex)%noProfs, &
-        & noSurfs=vGrids(vGridIndex)%noSurfs, &
-        & coherent=.TRUE., stacked=.TRUE., regular=.TRUE. )
-      ! ??? Note in later versions we'll need to think about channels here
-
-      qty%frequencyCoordinate = L_None
-      call CopyHGridInfoIntoQuantity ( hGrids(hGridIndex), qty )
-      call CopyVGridInfoIntoQuantity ( vGrids(vGridIndex), qty )
-
-    else
       ! This is a minor frame type quantity.
       if ( (hGridIndex/=0) .OR. (vGridIndex/=0)) &
         &  call announce_error ( root, unnecessaryGrid )
@@ -226,7 +206,6 @@ contains ! =====     Public Procedures     =============================
       end select
 
       ! Construct an empty quantity
-
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans, mifGeolocation=mifGeolocation )
 
@@ -236,6 +215,47 @@ contains ! =====     Public Procedures     =============================
         qty%signal = signals(1)
         call DestroyMLSSignalsInfo ( signals )
       end if
+
+    else
+
+      ! This is not a minor frame quantity, set it up from VGrids and HGrids
+
+      if ( hGridIndex/=0 ) then
+        noInstances=hGrids(hGridIndex)%noProfs
+      else
+        noInstances=1
+      endif
+
+      if ( vGridIndex/=0 ) then
+        noSurfs=vGrids(vGridIndex)%noSurfs
+      else
+        noSurfs=1
+      endif
+
+      call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
+        & noSurfs=noSurfs, coherent=.TRUE., stacked=.TRUE., regular=.TRUE. )
+      ! ??? Note in later versions we'll need to think about channels here
+
+      qty%frequencyCoordinate = L_None
+
+      if (hGridIndex /=0 ) then
+        call CopyHGridInfoIntoQuantity ( hGrids(hGridIndex), qty )
+      else                      ! Set `empty' values
+        qty%phi=0.0
+        qty%geodLAt=0.0
+        qty%lon=0.0
+        qty%time=0.0
+        qty%solarTime=0.0
+        qty%solarZenith=0.0
+        qty%losAngle=0.0
+      endif
+
+      if (vGridIndex /=0 ) then
+        call CopyVGridInfoIntoQuantity ( vGrids(vGridIndex), qty )
+      else
+        qty%surfs=0.0
+        qty%verticalCoordinate=L_None
+      endif
 
     end if
 
@@ -396,12 +416,12 @@ contains ! =====     Public Procedures     =============================
       do l1bItem = 1, NoL1BItemsToRead
         ! Get the name of the item to read
         l1bItemName=l1bItemsToRead(l1bItem)
-        if ( l1bItem>=TransitionToModularItems ) THEN
-           CALL Get_String(lit_indices(instrumentModule),l1bItemName)
-           l1bItemName = TRIM(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
-        ELSE
+        if ( l1bItem>=TransitionToModularItems ) then
+           call Get_String(lit_indices(instrumentModule),l1bItemName)
+           l1bItemName = trim(l1bItemName)//'.'//l1bItemsToRead(l1bItem)
+        else
            l1bItemName=l1bItemsToRead(l1bItem)
-        ENDIF
+        endif
 
         ! Read it from the l1boa file
         call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
@@ -511,6 +531,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.4  2001/02/21 01:09:00  livesey
+! Allowed for quantities with no h/v grid
+!
 ! Revision 2.3  2001/02/20 18:43:50  livesey
 ! Removed all references to firstIndexChannel
 !
