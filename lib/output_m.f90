@@ -196,13 +196,14 @@ contains
 
   ! ---------------------------------------  OUTPUT_DATE_AND_TIME  -----
   subroutine OUTPUT_DATE_AND_TIME ( date, time, &
-    & from_where, msg, dateFormat, timeFormat )
+    & from_where, msg, dateFormat, timeFormat, advance )
     logical, intent(in), optional :: date ! output date as character string
     logical, intent(in), optional :: time ! output time as character string
     character(len=*), intent(in), optional :: FROM_WHERE
     character(len=*), intent(in), optional :: MSG
     character(len=*), intent(in), optional :: DATEFORMAT
     character(len=*), intent(in), optional :: TIMEFORMAT
+    character(len=*), intent(in), optional :: ADVANCE
     character(len=16) :: dateString
     character(len=16) :: timeString
     logical :: myDate
@@ -215,7 +216,10 @@ contains
     if ( present(time) ) myTime = time
     if ( .not. (myDate .or. myTime) ) return ! Why call if won't print?
     my_adv = 'no'
-    if ( .not. present(msg) ) my_adv = 'yes'
+    if ( .not. present(msg) ) then
+      my_adv = 'yes'
+      if ( present(advance) ) my_adv = advance
+    endif
     call date_and_time ( date=dateString, time=timeString )
     dateString = reFormatDate(trim(dateString), dateFormat)
     timeString = reFormatTime(trim(timeString), timeFormat)
@@ -229,8 +233,10 @@ contains
       call output ( trim(TimeString), from_where=from_where, advance=my_adv )
     end if
     if ( .not. present(msg) ) return
+    my_adv = 'yes'
+    if ( present(advance) ) my_adv = advance
     call blanks ( 3 )
-    call output ( trim(msg), from_where=from_where, advance='yes' )
+    call output ( trim(msg), from_where=from_where, advance=my_adv )
   end subroutine OUTPUT_DATE_AND_TIME
 
   ! --------------------------------------------  OUTPUT_DCOMPLEX  -----
@@ -623,6 +629,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.37  2005/01/07 01:26:04  pwagner
+! Advance now an optional arg to OUTPUT_DATE_AND_TIME so it can time-stamp
+!
 ! Revision 2.36  2004/12/31 02:39:51  vsnyder
 ! Simplified computing My_Adv, simplified Output_Char, added Before argument
 ! to Output_Logical, some cannonball-polishing.
