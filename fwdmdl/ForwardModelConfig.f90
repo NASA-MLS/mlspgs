@@ -21,8 +21,8 @@ module ForwardModelConfig
     module procedure Dump_ForwardModelConfigs
   end interface Dump
 
-  public :: AddForwardModelConfigToDatabase, DestroyFWMConfigDatabase, Dump, &
-    & StripForwardModelConfigDatabase
+  public :: AddForwardModelConfigToDatabase, DestroyFWMConfigDatabase, Dump
+  public :: StripForwardModelConfigDatabase, PVMPackFWMConfig, PVMUnpackFWMConfig
 
   ! Public Types:
 
@@ -445,6 +445,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.11  2002/10/05 00:41:01  livesey
+! Added pvm pack and unpack config and deep option on destroy
+!
 ! Revision 2.10  2002/09/25 20:06:42  livesey
 ! Added specificQuantities, which necessitated globalConfig to allow for
 ! some configs inside construct.  This in turn required
