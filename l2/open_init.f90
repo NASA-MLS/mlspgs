@@ -13,6 +13,7 @@ module Open_Init
     & DeallocateL1BData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen, L1BInfo_T, TAI93_Range_T
+!  use MLSFiles, only: mls_sfstart, mls_sfend
   use MLSL2Options, only: PUNISH_FOR_INVALID_PCF, PUNISH_FOR_NO_L1BRAD, &
   &                        PUNISH_FOR_NO_L1BOA, PENALTY_FOR_NO_METADATA, &
   &                        PCF, CREATEMETADATA
@@ -67,6 +68,7 @@ module Open_Init
   character(len=*), parameter :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
+  integer, parameter :: LEVEL1_HDFVERSION = 4  ! Until we convert level 1 to hdf5
   integer, parameter :: MLSPCF_LOG = 10101 ! This seems to be hard-wired into PCF
   integer, parameter :: CCSDSLen=27
   integer, private ::   ERROR
@@ -84,7 +86,11 @@ contains ! =====     Public Procedures     =============================
     if ( associated(l1bInfo%L1BRADIDs) ) then
       do id=1, SIZE(l1bInfo%L1BRADIDs)
          if(l1bInfo%L1BRADIDs(id) /= ILLEGALL1BRADID) then
+  ! ((( This will have to change if we wish to convert l1 files to hdf5
+  !          Maybe put another wrapper in MSLFiles
           STATUS = sfend(l1bInfo%L1BRADIDs(id))
+   !      STATUS = mls_sfend(l1bInfo%L1BRADIDs(id), hdfVersion=LEVEL1_HDFVERSION)
+
          endif
       enddo
       deallocate( l1bInfo%L1BRADIDs, l1bInfo%L1BRADFileNames, stat=status )
@@ -94,7 +100,10 @@ contains ! =====     Public Procedures     =============================
     end if
     
     if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
+  ! ((( This will have to change if we wish to convert l1 files to hdf5
+  !          Maybe put another wrapper in MSLFiles
       STATUS = sfend(l1bInfo%L1BOAID)
+  !   STATUS = mls_sfend(l1bInfo%L1BOAID, hdfVersion=LEVEL1_HDFVERSION)
     endif
 
     if ( error /= 0 ) &
@@ -230,7 +239,11 @@ contains ! =====     Public Procedures     =============================
         if ( status /= 0 ) &
           & call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
       endif
+  ! ((( This will have to change if we wish to convert l1 files to hdf5
+  !          Maybe put another wrapper in MSLFiles
         sd_id = sfstart(L1physicalFilename, DFACC_READ)
+  !     sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
+
         if ( sd_id == -1 ) then
           call announce_error ( 0, &
             & 'Error opening L1RAD file: ' //L1physicalFilename)
@@ -241,6 +254,10 @@ contains ! =====     Public Procedures     =============================
           ifl1 = ifl1 + 1
           l1bInfo%L1BRADIDs(ifl1) = sd_id
           l1bInfo%L1BRADFileNames(ifl1) = L1physicalFilename
+          if(index(switches, 'pro') /= 0) then  
+            call proclaim(L1physicalFilename, 'l1brad', &                   
+            & hdfVersion=LEVEL1_HDFVERSION)                    
+          endif
         end if
       end if
     end do ! L1FileHandle = mlspcf_l1b_rad_start, mlspcf_l1b_rad_end
@@ -259,13 +276,21 @@ contains ! =====     Public Procedures     =============================
 
       ! Open the HDF file and initialize the SD interface
 
+  ! ((( This will have to change if we wish to convert l1 files to hdf5
+  !          Maybe put another wrapper in MSLFiles
       sd_id = sfstart(L1physicalFilename, DFACC_READ)
+  !   sd_id = mls_sfstart(L1physicalFilename, DFACC_READ, hdfVersion=LEVEL1_HDFVERSION)
+
       if ( sd_id == -1 ) then
 
         call announce_error ( 0, "Error opening L1OA file "//L1physicalFilename )
       else
         l1bInfo%L1BOAID = sd_id
         l1bInfo%L1BOAFileName = L1physicalFilename
+        if(index(switches, 'pro') /= 0) then  
+          call proclaim(L1physicalFilename, 'l1brad', &                     
+          & hdfVersion=LEVEL1_HDFVERSION)                    
+        endif
       end if
 
     else if ( PUNISH_FOR_NO_L1BOA ) then
@@ -418,6 +443,29 @@ contains ! =====     Public Procedures     =============================
       timing = .false.
     end subroutine SayTime
   end subroutine OpenAndInitialize
+
+! =====     Private Procedures     =====================================
+
+  ! ---------------------------------------------  proclaim  -----
+  subroutine proclaim ( Name, l1_type, hdfVersion )
+    character(LEN=*), intent(in)   :: Name
+    character(LEN=*), intent(in)   :: l1_type
+    integer, optional,  intent(in) :: hdfVersion
+
+    call output ( 'Level 1 product type : ' )
+    call output ( trim(l1_type), advance='no')
+    if ( present(hdfVersion) ) then
+      call blanks(4)
+      call output ( 'hdf ' )
+      call output ( hdfVersion, advance='yes')
+    else
+      call output ( ' ', advance='yes')
+    endif
+    call blanks(15)
+    call output ( 'name : ' )
+    call blanks(8)
+    call output ( trim(Name), advance='yes')
+  end subroutine proclaim
 
   ! ------------------------------------------  Dump_open_init  -----
   subroutine Dump_open_init ( Num_l1b_files, L1binfo, L2pcf, &
@@ -596,6 +644,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.60  2002/01/24 00:14:26  pwagner
+! Proclaims level 1 files as input; comments concerning hdf5 conversion
+!
 ! Revision 2.59  2001/12/16 00:57:46  livesey
 ! Add warning about leap seconds
 !
