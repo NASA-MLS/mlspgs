@@ -79,15 +79,16 @@ module DECLARATION_TABLE
      t_string, 0, 0, 0, 0, 0 /)
 
 ! -----     Private declarations     -----------------------------------
-  type(decls), private, allocatable :: DECL_TABLE(:)
-  integer, private :: NUM_DECLS                   ! amount of decl_table used
-  integer, private, allocatable :: SYMBOL_DECL(:) ! indexed by string index,
-                                                  ! gives index in decl_table.
+  type(decls), save, allocatable :: DECL_TABLE(:)
+  integer, save :: NUM_DECLS            ! amount of decl_table used
+  integer, save, allocatable :: SYMBOL_DECL(:) ! indexed by string
+                                        ! index, gives index in decl_table.
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
-       "$Id$"
-  character (len=*), private, parameter :: ModuleName= &
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
@@ -345,6 +346,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.3  2001/04/16 23:05:29  vsnyder
+! SAVE some module variables
+!
 ! Revision 2.2  2001/04/05 01:28:06  vsnyder
 ! Add 'increase the symbol declaration table size' code
 !
