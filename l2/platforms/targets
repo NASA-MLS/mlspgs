@@ -11,7 +11,7 @@ ALLOBJS = $(OBJS) $(srclib_objs)
 
 # Assert their dependence on init_tables_module
 # (Note: we are ignoring their dependence on other modules--may fix this later)
-getCF_m.o: getCF_m.f90 init_tables_module.o
+getCF_m.o: getCF_m.f90 tree_checker.o init_tables_module.o
 tree_checker.o: tree_checker.f90 init_tables_module.o
 
 # ========================================================================
@@ -33,6 +33,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2000/11/03 18:18:41  pwagner
+# Shares sources in srclib
+#
 # Revision 1.1  2000/10/18 22:07:30  pwagner
 # First commit
 #
