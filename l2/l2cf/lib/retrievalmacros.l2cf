@@ -58,7 +58,7 @@ end Fill})
 !ifdef($1Range,{Subset, quantity=state.$1, height=!$1Range
 Subset, quantity=length.$1, height=!$1Range})!nl})
 !define(subsetState,{!dnl
-!forall( {subsetSpecies}, !allMolecules )
+!forall({subsetSpecies},!allMolecules)
 !subsetSpecies(Temperature)!nl})
 
 ;; This macro deals with the radiance subsetting in an easy manner.
@@ -119,6 +119,9 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
   outputSD=sdOut$1, fwdModelOut=f$1})
 
 ; $Log$
+; Revision 1.11  2002/07/20 00:54:56  livesey
+; Added more subsetting stuff
+;
 ; Revision 1.10  2002/07/18 06:30:55  livesey
 ; Added the radianceSubset stuff
 ;
