@@ -2,21 +2,19 @@
 # Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-#	targets: configure, clean, clean_objs, depends, tar, and SUBDIRS
-#	true targets: the same make commands in $(SUBDIRS)
-#	special treatment is reserved for srclib which contains
-#	shared sources, but no Makefile: see 'depends' below
-#
+# Details and a general explanation of how to use this file can be found
+# by entering
+#	README.*
+
 #special case:
 #the 1st time through, before .configure exists yet,
 #execute $(MLSBIN)/configure to create .configure
 
-#This file name is usu. named Makefile but may be different;
-#the same file names must be used in $(SUBDIRS)
-#i.e., if you call are building this mls
-#by calling make with a different Makefile name,
-#say: make -f MakeFC
-#then rename the Makefiles in /l2 and /lib also MakeFC
+#This file name may be named Makefile but may be $(MakeFName) ;
+#the same file name must be used in each of $(SUBDIRS)
+#i.e., if you are calling make with a different Makefile name,
+#        say: make -f MakeFC
+#then rename the Makefiles in /l2 /lib etc. also MakeFC
 
 # "$Id$"
 
@@ -25,13 +23,16 @@ MakeFName = MakeFC
 #To make mls with this file you must then use
 #make -f $(MakeFName)
 
-# where to store .configure
+# where to store .configure; also install programs
 CONFDIR=.
 
 # where configure and makemakedep.sh are stored
 MLSBIN=util
 
-# where the platforms directory is
+# where the platforms directory is w.r.t. each of SUBDIRS:
+# "." means for l2 it is l2/platforms
+# this also where each uniquely-named sub-sub will be created:
+# "." means for l2 it is l2/NAG.Linux
 PLATFORMS = .
 
 # This will set our MLS platform, compiler. etc.
@@ -46,18 +47,22 @@ SHELL = /bin/sh
 # $OTHER_SUBDIRS -- not automatic
 # all            -- all the sub-directories
 # subdirs        -- same as all
-# lib            -- libmls.a, a prerequisite for all the others
+# lib            -- libmls.a; a prerequisite for the others
 
 #                           (functional)
 # configure      -- runs mlsconfigure to (re)set compiler, platform, paths
 #                  also (re)creates uniquely-named sub-sub-directories
-#                  within mlspgs sub-directories with custom Makefiles
+#                  within mlspgs sub-directories with customized Makefiles
 #                  where *.o, *.mod, lib*.a, mlsl*, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
 # clean          -- deletes uniquely-named sub-sub-directories
 # clean_objs     -- deletes only *.o, *.mod from sub-subs
+# install        -- mv programs mlsl* from sub-subs to CONFDIR
+#
+# W a r n i n g :  The following automatically perform "clean"
 # tar            -- creates an archive of whole mlspgs suitable for distribution
 # tar_subs       -- creates archives of sub-directories suitable for distribution
+# tar_sips       -- creates archives of mlspgs suitable for SIPS
 #
 
 #----------------------------------------------------------
@@ -95,6 +100,14 @@ OTHER_SUBDIRS = l2pc fwdmdl
 SUBDIRS = lib $(LEVELS) $(OTHER_SUBDIRS)
 
 all: $(SUBDIRS)
+
+# This isn't really everything, just everything from mlspgs
+# the SIPS might need
+# so it will be bundled up by tar_sips
+# Note that it does *not* include the Toolkit nor PVM nor FFTW nor ...
+EVERYTHING = CVS $(SUBDIRS) util blas srclib pcf idllib sids tables\
+   $(MakeFName) README.$(MakeFName) PCF.v0-01
+     
 #----------------------- Build instructions
 
 subdirs: $(SUBDIRS)
@@ -109,9 +122,13 @@ $(OTHER_SUBDIRS):
 
 $(OTHER_SUBDIRS): lib
 
-tar tar_subs: clean
+# This requires rm-ing uniquely-named sub-dirs before archiving
+tar tar_subs tar_sips: clean
 
-.PHONY: configure depends subdirs clean clean_objs tar tar_subs all
+install: all
+
+.PHONY: configure depends subdirs clean clean_objs \
+  tar tar_subs tar_sips all install
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -157,10 +174,21 @@ clean_objs:
 	  $(MAKE) -f $(MakeFName) -C $$dir clean_objs; \
 	done
 
+install:
+	@echo "Installing programs from $(LEVELS) into $(CONFDIR)"; \
+	 for dir in $(LEVELS); do \
+	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
+	done
+
 tar:
 	@echo "tar-ing mlspgs"; \
         rm -f ../mlspgs.tgz; \
-	tar hcvzf ../mlspgs.tgz *
+	tar hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/.configure
+
+tar_sips:
+	@echo "tar-ing everything mlspgs for sips"; \
+        rm -f ../mlspgs.tgz; \
+	tar hcvzf ../mlspgs.tgz $(EVERYTHING)
 
 tar_subs:
 	@echo "tar-ing $(SUBDIRS)"; \
@@ -175,6 +203,9 @@ tar_subs:
 	tar hcvzf util.tgz util
 
 # $Log$
+# Revision 1.9  2001/01/10 23:45:33  pwagner
+# General housekeeping
+#
 # Revision 1.8  2001/01/05 22:55:15  pwagner
 # Added all option to build all
 #
