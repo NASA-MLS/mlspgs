@@ -14,7 +14,7 @@ module L2Parallel
   use Dump_0, only: DUMP
   use Dumper, only: DUMP
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
-  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFMYTID, &
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
     & GETMACHINENAMEFROMTID, PVMFFREEBUF
@@ -912,6 +912,15 @@ contains ! ================================ Procedures ======================
         & call usleep ( parallel%delay )
     end do masterLoop ! --------------------- End of master loop --------------
 
+    ! First kill any children still running (only if we got a give up message).
+    do chunk = 1, noChunks
+      if ( chunkTids(chunk) /= 0 ) then
+        call pvmfkill ( chunkTids(chunk), info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'killing slave' )
+      end if
+    end do
+
     ! Now, we have to tidy some stuff up here to ensure we can join things
     where ( .not. chunksCompleted )
       chunksAbandoned = .true.
@@ -1304,6 +1313,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.62  2004/04/16 00:47:54  livesey
+! Now kills slaves on finishing (probably only happens when told to quit).
+!
 ! Revision 2.61  2004/01/22 00:56:35  pwagner
 ! Fixed many bugs in auto-distribution of DirectWrites
 !

@@ -29,7 +29,8 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
     L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFLSPILL, L_REFLTEMP, &
     L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
-    L_SCVELECI, L_SCVELECR, L_LIMBSIDEBANDFRACTION, L_SIZEDISTRIBUTION, &
+    L_SCVELECI, L_SCVELECR, L_SINGLECHANNELRADIANCE, &
+    L_LIMBSIDEBANDFRACTION, L_SIZEDISTRIBUTION, &
     L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
     L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
@@ -1572,6 +1573,10 @@ contains ! =====     Public Procedures     =============================
       framing = 'minor'
       units_name = 'K'
       dim_names = (/ l_channel, l_MIF, l_MAF /)                  
+    case ( l_singleChannelRadiance )  
+      framing = 'minor'
+      units_name = 'K'
+      dim_names = (/ l_none, l_MIF, l_MAF /)                  
     case ( l_sizedistribution )  
       framing = 'neither'
       dim_names = (/ l_channel, l_MIF, l_MAF /)                  
@@ -1730,6 +1735,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.62  2004/04/16 00:48:13  livesey
+! Added singleChannelRadiance output
+!
 ! Revision 2.61  2004/03/08 22:33:29  pwagner
 ! Bypass reading QuantityType attribute (why always 0)
 !
