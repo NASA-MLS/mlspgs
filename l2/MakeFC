@@ -114,12 +114,19 @@ endif
 #   depends_where:=-d write_meta.f90 $(depends_where)
 #endif
 
+#Any sources to explicitly exclude from dependency list?
+#SnoopMLSL2 requires PVM
+ifdef PVM_ROOT
+   OMIT_SRCS := $(OMIT_SRCS) 
+else
+   OMIT_SRCS := $(OMIT_SRCS) -d SnoopMLSL2.f90
+endif
+
 PROG=mlsl2
 
 #----------------------- Build instructions
 
 $(PROG): $(PROG_prereqs)
-#	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 	@case "$(PVM_ROOT)" in \
 	"") \
 		echo "Sorry--PVM_ROOT must be defined to build mlsl2" ; \
@@ -158,17 +165,8 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
-#SnoopMLSL2 requires PVM
-ifdef PVM_ROOT
 depends:
-	$(MLSBIN)/makemakedep.sh \
-	$(depends_where) 
-else
-depends:
-	$(MLSBIN)/makemakedep.sh \
-	-d SnoopMLSL2.f90 \
-	$(depends_where) 
-endif
+	$(MLSBIN)/makemakedep.sh $(OMIT_SRCS) $(depends_where) 
 
 ghostbuster:
 	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
@@ -209,6 +207,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.35  2001/08/15 21:01:04  pwagner
+# Now excludes OMIT_SRCS from dependencies
+#
 # Revision 2.34  2001/08/13 18:09:08  pwagner
 # replaced shell echo -> shell {REECHO}
 #
