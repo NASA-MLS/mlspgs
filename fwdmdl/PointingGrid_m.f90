@@ -9,7 +9,7 @@ module PointingGrid_m
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Info
   use MLSSignals_m, only: Bands, Dump_Bands, Dump_Signals, GetSignalName, &
-    & Signals
+    & MaxSigLen, Signals
   use Output_m, only: Blanks, MLSMSG_Level, Output, PrUnit
 
   ! More USEs below in each procedure, if they're only used therein.
@@ -88,7 +88,7 @@ contains
     integer, dimension(size(signals)) :: HowManyGrids  ! per radiometer
     integer :: HowManyRadiometers            ! gotten by counting the file
     integer :: I, N                          ! Loop inductor, subscript, temp
-    character(len=80) :: Line                ! From the input file
+    character(len=MaxSigLen) :: Line         ! From the input file
     integer :: NumHeights                    ! Read from the input
     integer :: Status                        ! From read or allocate
     integer, pointer, dimension(:) :: Signal_Indices   ! From Parse_Signal, q.v.
@@ -227,8 +227,8 @@ outer2: do
   subroutine Dump_Pointing_Grid_Database
     use Dump_0, only: Dump
 
-    integer :: I, J                ! Subscripts, loop inductors
-    character(len=80) :: SigName   ! From GetSignalName
+    integer :: I, J                     ! Subscripts, loop inductors
+    character(len=MaxSigLen) :: SigName ! From GetSignalName
     call output ( 'Pointing Grids: SIZE = ' )
     call output ( size(pointingGrids), advance='yes' )
     do i = 1, size(pointingGrids)
@@ -254,6 +254,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.7  2001/03/28 00:42:37  livesey
+! Got rid of obsolete routines.
+!
 ! Revision 1.6  2001/03/20 02:31:32  livesey
 ! Modified so always returns at least lowest grid rather than 0
 !
