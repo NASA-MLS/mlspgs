@@ -61,7 +61,7 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   !     m                 Matrix            r8  (r4 to save memory)
   !     p                 Forward Model     r8
   !     v                 Vector            r8
-  INTEGER, PARAMETER:: rm=r8
+  INTEGER, PARAMETER:: rm=r4
   INTEGER, PARAMETER:: rp=r8
   INTEGER, PARAMETER:: ip=i4
   INTEGER, PARAMETER:: rv=r8
@@ -156,6 +156,9 @@ end module MLSCommon
 
 !
 ! $Log$
+! Revision 2.16  2003/02/17 03:52:49  livesey
+! Bit the bullet and changed rm to r4.
+!
 ! Revision 2.15  2002/12/05 19:44:24  pwagner
 ! Moved MLSFile_T from MLSFiles to MLSCommon
 !
