@@ -115,6 +115,7 @@ sidebandRatio
 sizeDistribution
 spaceRadiance
 surfaceType
+systemTemperature
 
 temperature
 temperature_prec temperature_precision
@@ -137,6 +138,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.11  2002/05/14 00:29:03  livesey
+# Added system temperature
+#
 # Revision 2.10  2002/05/07 20:02:46  livesey
 # Added noisebandwidth
 #
