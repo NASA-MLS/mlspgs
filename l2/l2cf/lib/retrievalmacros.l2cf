@@ -16,9 +16,12 @@
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
 
+;; These macros define the format of our output files
+!ifdef(hdfVersion,{},{!define(hdfVersion,4)})
+
 ;; These macros define our standard output filenames
-!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he4'})
-!define(DGMFilename,{'!outpathl2gp/MLS-Aura_L2AUX-DGM_!l2version_!day.h4'})
+!define(DGGFilename,{'!outpathl2gp/MLS-Aura_L2GP-DGG_!l2version_!day.he!hdfVersion'})
+!define(DGMFilename,{'!outpathl2gp/MLS-Aura_L2AUX-DGM_!l2version_!day.h!hdfVersion'})
 
 ;; This macro is used in sids runs to get the band number part of a band
 ;; specifier (i.e. strip off the sideband if it is present)
@@ -184,10 +187,12 @@ Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 !define(flushDGGDGMFiles,{!dnl
 ;; First do the DGGs
 !ifdef(flagGotDirectDGGs,{!dnl
-DirectWrite, file=!DGGFilename, hdfVersion=4, type=l2gp, !undivert(!directDGGDivert)})
+DirectWrite, file=!DGGFilename, hdfVersion=!hdfVersion, $
+  type=l2gp, !undivert(!directDGGDivert)})
 ;; Now the DGMs
 !ifdef(flagGotDirectDGMs,{!dnl
-DirectWrite, file=!DGMFilename, hdfVersion=4, type=l2aux, !undivert(!directDGMDivert)})
+DirectWrite, file=!DGMFilename, hdfVersion=!hdfVersion, $
+  type=l2aux, !undivert(!directDGMDivert)})
 ;; Clear our macros
 !undefine(flagGotDirectDGGs)!undefine(flagGotDirectDGMs)})
 
@@ -198,9 +203,8 @@ DirectWrite, file=!DGMFilename, hdfVersion=4, type=l2aux, !undivert(!directDGMDi
 !define(directWriteFwmRad,{!ifdef(l2version,{!dnl
 !forall(labelOneFwmRad,!tidyList(!shift($*)))!dnl
   DirectWrite, !forall(oneFwmRadTerm,!tidyList(!shift($*))) type=l2aux, $
-  file='!outpathl2fwm/MLS-Aura_L2FWM-$1_!l2version_!day.h4', $
-  hdfVersion=4})})
-
+  file='!outpathl2fwm/MLS-Aura_L2FWM-$1_!l2version_!day.h!hdfVersion', $
+  hdfVersion=!hdfVersion})})
 
 ;; This macro is used to fill radiance chi squares
 !define(fillRadianceDiagnostics,{!dnl
@@ -280,6 +284,9 @@ DirectWrite, file=!DGMFilename, hdfVersion=4, type=l2aux, !undivert(!directDGMDi
   Fill, quantity=standardPrecision.$1, method=vector, sourceQuantity=outputPrecision.$1!nl})
 
 ; $Log$
+; Revision 1.58  2003/07/08 00:50:43  livesey
+; Better handling of l2fwm files
+;
 ; Revision 1.57  2003/07/08 00:17:20  livesey
 ; New approach to output with directWrite being used most places
 ;
