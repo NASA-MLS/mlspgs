@@ -1,5 +1,5 @@
 
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -14,7 +14,7 @@ MODULE L3DZData
    USE MLSL3Common
    USE MLSMessageModule
    USE MLSStrings
-   USE MLSPCF
+   USE MLSPCF3
    USE OpenInit
    USE PCFModule
    IMPLICIT NONE
@@ -33,6 +33,7 @@ MODULE L3DZData
 ! Definition -- L3DZData_T
 !               L3DZFiles_T 
 ! Subroutines -- OutputL3DZ
+!                ReadL3DZData
 !                WriteMetaL3DZS
 !                WriteMetaL3DZD
 !                AllocateL3DZ
@@ -43,6 +44,9 @@ MODULE L3DZData
 !           as any routines pertaining to it.
 
 ! Parameters
+
+  CHARACTER (LEN=*), PARAMETER :: DATA_FIELDV = 'L3dzValue'
+  CHARACTER (LEN=*), PARAMETER :: DATA_FIELDP = 'L3dzPrecision'
 
 ! This data type is used to store the l3 daily zonal mean data.
 
@@ -82,7 +86,7 @@ MODULE L3DZData
      ! names of the files created
 
      CHARACTER (LEN=FileNameLen) :: stdNames(maxWindow)
-     CHARACTER (LEN=FileNameLen) :: DgNames(maxWindow)
+     CHARACTER (LEN=FileNameLen) :: dgNames(maxWindow)
 
      ! CCSDS B format dates of the created files
 
@@ -109,9 +113,6 @@ CONTAINS
       TYPE( L3DZFiles_T ), INTENT(OUT) :: zFiles
 
 ! Parameters
-
-      CHARACTER (LEN=*), PARAMETER :: DATA_FIELDV = 'L3dzValue'
-      CHARACTER (LEN=*), PARAMETER :: DATA_FIELDP = 'L3dzPrecision'
 
 ! Functions
 
@@ -225,14 +226,14 @@ CONTAINS
 
 ! Define the swath data fields using the above dimensions
 
-         status = swdefdfld(swID, DATA_FIELDV, DIMDZ_NAME, DFNT_FLOAT32, &
+         status = swdefdfld(swID, DATA_FIELDV, DIMLL_NAME, DFNT_FLOAT32, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
              msr = DAT_ERR // DATA_FIELDV
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = swdefdfld(swID, DATA_FIELDP, DIMDZ_NAME, DFNT_FLOAT32, &
+         status = swdefdfld(swID, DATA_FIELDP, DIMLL_NAME, DFNT_FLOAT32, &
                             HDFE_NOMERGE)
          IF (status == -1) THEN
              msr = DAT_ERR // DATA_FIELDP
@@ -326,6 +327,142 @@ CONTAINS
    END SUBROUTINE OutputL3DZ
 !---------------------------
 
+!------------------------------------------------
+   SUBROUTINE ReadL3DZData (swfid, swathName, dz)
+!------------------------------------------------
+
+! Brief description of subroutine
+! This subroutine a data swath from a file into the L3DZData structure.
+
+! Arguments
+
+      CHARACTER (LEN=*), INTENT(IN) :: swathName
+
+      INTEGER, INTENT(IN) :: swfid
+
+      TYPE( L3DZData_T ), INTENT(OUT) :: dz
+
+! Parameters
+
+      CHARACTER (LEN=*), PARAMETER :: RL3DZ_ERR = 'Failed to read L3DZ field:  '
+
+! Functions
+
+      INTEGER, EXTERNAL :: swattach, swdetach, swdiminfo, swrdfld
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: err, nlat, nlev, size, swid, status
+      INTEGER :: start(2), stride(2), edge(2)
+
+      REAL, ALLOCATABLE :: rl(:), rp(:)
+      REAL, ALLOCATABLE :: r2(:,:)
+
+! Attach to the swath for reading
+
+      swid = swattach(swfid, swathName)
+      IF (status == -1) THEN
+         msr = 'Failed to attach to swath interface for reading ' // &
+               swathName
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Get dimension information
+
+      size = swdiminfo(swid, DIM_NAME2)
+      IF (size == -1) THEN
+         msr = SZ_ERR // DIM_NAME2
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      nlev = size
+
+      size = swdiminfo(swid, DIML_NAME)
+      IF (size == -1) THEN
+         msr = SZ_ERR // DIML_NAME
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      nlat = size
+
+! Allocate the output structure and temporary variables
+
+      CALL AllocateL3DZ(nlev, nlat, dz)
+
+      ALLOCATE (rp(dz%nLevels), rl(dz%nLats), r2(dz%nLevels,dz%nLats), &
+                STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_Allocate // '  local REAL variables.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Read the geolocation fields
+
+      dz%name = swathName
+
+      start = 0
+      stride = 1
+      edge(1) = dz%nLevels
+      edge(2) = dz%nLats
+
+      status = swrdfld(swid, GEO_FIELD3, start(1), stride(1), stride(1), &
+                       dz%time)
+      IF (status == -1) THEN
+         msr = RL3DZ_ERR // GEO_FIELD3
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+      status = swrdfld(swid, GEO_FIELD9, start(1), stride(1), edge(1), rp)
+      IF (status == -1) THEN
+         msr = RL3DZ_ERR // GEO_FIELD9
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      dz%pressure = DBLE(rp)
+
+      status = swrdfld(swid, GEO_FIELD1, start(2), stride(2), edge(2), rl)
+      IF (status == -1) THEN
+         msr = RL3DZ_ERR // GEO_FIELD1
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      dz%latitude = DBLE(rl)
+
+! Read the data fields
+
+      status = swrdfld(swid, DATA_FIELDV, start, stride, edge, r2)
+      IF (status == -1) THEN
+         msr = RL3DZ_ERR // DATA_FIELDV
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      dz%l3dzValue = DBLE(r2)
+
+      status = swrdfld(swid, DATA_FIELDP, start, stride, edge, r2)
+      IF (status == -1) THEN
+         msr = RL3DZ_ERR // DATA_FIELDP
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+      dz%l3dzPrecision = DBLE(r2)
+
+!  After reading, detach from swath interface
+
+      status = swdetach(swid)
+      IF (status == -1) THEN
+         msr = 'Failed to detach from swath interface after reading ' // &
+               swathName
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! Deallocate local variables
+
+      DEALLOCATE(rp, rl, r2, STAT=err)
+      IF ( err /= 0 ) THEN
+         msr = MLSMSG_DeAllocate // '  local real variables.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!-----------------------------
+   END SUBROUTINE ReadL3DZData
+!-----------------------------
+
 !-------------------------------------------------------
    SUBROUTINE WriteMetaL3DZS (pcf, cfDef, files, anText)
 !-------------------------------------------------------
@@ -354,12 +491,11 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=1) :: cNum
-      CHARACTER (LEN=12) :: shortName
-      CHARACTER (LEN=45) :: attrName, lvid, sval
-      CHARACTER (LEN=80) :: identifier
-      CHARACTER (LEN=132) :: list
+      CHARACTER (LEN=3) :: cNum
+      CHARACTER (LEN=45) :: attrName, lvid
       CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=6000) :: list
+      CHARACTER (LEN=FileNameLen) :: sval
       CHARACTER (LEN=GridNameLen) :: swathName
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
@@ -402,10 +538,10 @@ CONTAINS
          ENDIF
 
          attrName = 'LocalGranuleID'
-         indx = INDEX(files%stdNames(i), '.', .TRUE.)
-         sval = files%stdNames(i)(:indx-1)
-         indx = INDEX(sval, '/', .TRUE.)
-         sval = sval(indx+1:)
+         indx = INDEX(files%stdNames(i), '/', .TRUE.)
+         sval = files%stdNames(i)(indx+1:)
+         indx = INDEX(sval, '.', .TRUE.)
+         sval = sval(:indx-1)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -453,9 +589,15 @@ CONTAINS
 
 ! Append a class suffix to ParameterName, and write the grid name as its value
 
-            WRITE( cNum, '(I1)' ) j
+            IF (j < 10) THEN
+               WRITE( cNum, '(I1)' ) j
+            ELSE IF ( (j >= 10) .AND. (j < 100) ) THEN
+               WRITE( cNum, '(I2)' ) j
+            ELSE
+               WRITE( cNum, '(I3)' ) j
+            ENDIF
 
-            attrName = 'ParameterName' // '.' // cNum
+            attrName = 'ParameterName' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                        swathName)
             IF (result /= PGS_S_SUCCESS) THEN
@@ -465,7 +607,7 @@ CONTAINS
 
 ! QAFlags Group
 
-            attrName = 'AutomaticQualityFlag' // '.' // cNum
+            attrName = 'AutomaticQualityFlag' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                        'Passed')
             IF (result /= PGS_S_SUCCESS) THEN
@@ -473,7 +615,7 @@ CONTAINS
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'AutomaticQualityFlagExplanation' // '.' // cNum
+            attrName = 'AutomaticQualityFlagExplanation' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                        'TBD')
             IF (result /= PGS_S_SUCCESS) THEN
@@ -481,7 +623,7 @@ CONTAINS
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'OperationalQualityFlag' // '.' // cNum
+            attrName = 'OperationalQualityFlag' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                        'Not Investigated')
             IF (result /= PGS_S_SUCCESS) THEN
@@ -489,7 +631,7 @@ CONTAINS
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'OperationalQualityFlagExplanation' // '.' // cNum
+            attrName = 'OperationalQualityFlagExplanation' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                               'TBD')
             IF (result /= PGS_S_SUCCESS) THEN
@@ -499,21 +641,21 @@ CONTAINS
 
 ! QAStats Group
 
-            attrName = 'QAPercentInterpolatedData' // '.' // cNum
+            attrName = 'QAPercentInterpolatedData' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'QAPercentMissingData' // '.' // cNum
+            attrName = 'QAPercentMissingData' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'QAPercentOutofBoundsData' // '.' // cNum
+            attrName = 'QAPercentOutofBoundsData' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
@@ -571,14 +713,9 @@ CONTAINS
 
 ! InputPointer
 
-         indx = INDEX(cfDef%stdMCFname, '.', .TRUE.)
-         shortName = cfDef%stdMCFname(:indx-1)
-         indx = INDEX(shortName, '.')
-         shortName = shortName(:indx-1) // ':' // shortName(indx+1:)
-         identifier = 'MLS-Aura_L2GP_' // files%stdDates(i)
-         sval = 'LGID:' // TRIM(shortName) // ':' // TRIM(identifier)
          attrName = 'InputPointer'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                   'See the PCF annotation to this file.')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -757,12 +894,11 @@ CONTAINS
 
 ! Variables
 
-      CHARACTER (LEN=1) :: cNum
-      CHARACTER (LEN=12) :: shortName
-      CHARACTER (LEN=45) :: attrName, lvid, sval
-      CHARACTER (LEN=80) :: identifier
-      CHARACTER (LEN=132) :: list
+      CHARACTER (LEN=3) :: cNum
+      CHARACTER (LEN=45) :: attrName, lvid
       CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=6000) :: list
+      CHARACTER (LEN=FileNameLen) :: sval
       CHARACTER (LEN=GridNameLen) :: swathName
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
 
@@ -808,10 +944,10 @@ CONTAINS
          ENDIF
 
          attrName = 'LocalGranuleID'
-         indx = INDEX(files%dgNames(i), '.', .TRUE.)
-         sval = files%dgNames(i)(:indx-1)
-         indx = INDEX(sval, '/', .TRUE.)
-         sval = sval(indx+1:)
+         indx = INDEX(files%dgNames(i), '/', .TRUE.)
+         sval = files%dgNames(i)(indx+1:)
+         indx = INDEX(sval, '.', .TRUE.)
+         sval = sval(:indx-1)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -857,9 +993,15 @@ CONTAINS
 
 ! Append a class suffix to ParameterName, and write the grid name as its value
 
-            WRITE( cNum, '(I1)' ) j
+            IF (j < 10) THEN
+               WRITE( cNum, '(I1)' ) j
+            ELSE IF ( (j >= 10) .AND. (j < 100) ) THEN
+               WRITE( cNum, '(I2)' ) j
+            ELSE
+               WRITE( cNum, '(I3)' ) j
+            ENDIF
 
-            attrName = 'ParameterName' // '.' // cNum
+            attrName = 'ParameterName' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                        swathName)
             IF (result /= PGS_S_SUCCESS) THEN
@@ -869,7 +1011,7 @@ CONTAINS
 
 ! QAFlags Group
 
-            attrName = 'AutomaticQualityFlag' // '.' // cNum
+            attrName = 'AutomaticQualityFlag' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                        'Passed')
             IF (result /= PGS_S_SUCCESS) THEN
@@ -877,7 +1019,7 @@ CONTAINS
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'AutomaticQualityFlagExplanation' // '.' // cNum
+            attrName = 'AutomaticQualityFlagExplanation' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                        'TBD')
             IF (result /= PGS_S_SUCCESS) THEN
@@ -885,7 +1027,7 @@ CONTAINS
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'OperationalQualityFlag' // '.' // cNum
+            attrName = 'OperationalQualityFlag' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                        'Not Investigated')
             IF (result /= PGS_S_SUCCESS) THEN
@@ -893,7 +1035,7 @@ CONTAINS
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'OperationalQualityFlagExplanation' // '.' // cNum
+            attrName = 'OperationalQualityFlagExplanation' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
                                               'TBD')
             IF (result /= PGS_S_SUCCESS) THEN
@@ -903,21 +1045,21 @@ CONTAINS
 
 ! QAStats Group
 
-            attrName = 'QAPercentInterpolatedData' // '.' // cNum
+            attrName = 'QAPercentInterpolatedData' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'QAPercentMissingData' // '.' // cNum
+            attrName = 'QAPercentMissingData' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
             ENDIF
 
-            attrName = 'QAPercentOutofBoundsData' // '.' // cNum
+            attrName = 'QAPercentOutofBoundsData' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_i(groups(INVENTORYMETADATA), attrName, 0)
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
@@ -975,14 +1117,9 @@ CONTAINS
 
 ! InputPointer
 
-         indx = INDEX(cfDef%dgMCFname, '.', .TRUE.)
-         shortName = cfDef%dgMCFname(:indx-1)
-         indx = INDEX(shortName, '.')
-         shortName = shortName(:indx-1) // ':' // shortName(indx+1:)
-         identifier = 'MLS-Aura_L2GP_' // files%dgDates(i)
-         sval = 'LGID:' // TRIM(shortName) // ':' // TRIM(identifier)
          attrName = 'InputPointer'
-         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
+         result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
+                                   'See the PCF annotation to this file.')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1304,7 +1441,6 @@ END MODULE L3DZData
 !==================
 
 !# $Log$
-!# Revision 1.2  2001/01/26 17:32:54  nakamura
-!# Added version of OutputL3DZ without files.
-!#
+!# Revision 1.1  2001/02/12 19:23:42  nakamura
+!# Module for the L3DZ data type.
 !#
