@@ -983,14 +983,22 @@ contains
       ! Now the channels in Probe all have to be present in Signals(i)
       if ( all( (probe%channels .and. &
         & signals(i)%channels(lbound(probe%channels,1):ubound(probe%channels,1)) ) &
-        & .eqv. probe%channels ) ) numChannelsMatch = count(signals(i)%channels)
-      if ( numChannelsMatch < bestMatch ) matchSignal = i
+        & .eqv. probe%channels ) ) then
+        numChannelsMatch = count(signals(i)%channels)
+        if ( numChannelsMatch < bestMatch ) then
+          matchSignal = i
+          bestMatch = numChannelsMatch
+        end if
+      end if
     end do
   end function MatchSignal
 
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.15  2001/04/09 20:30:46  vsnyder
+! More work on MatchSignal
+!
 ! Revision 2.14  2001/04/09 20:16:40  vsnyder
 ! Correct numChannelsMatch calculation
 !
