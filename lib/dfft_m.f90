@@ -1,17 +1,19 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!------------------------------- RCS Ident Info ------------------------------
-CHARACTER(LEN=130) :: id = & 
-   "$Id$"
-CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
-!-------------------------------------------------------------------------------
-
 module DFFT_M
 
   implicit NONE
   private
   public :: DRFT1, DFFT
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character(len=*), private, parameter :: IdParm = &
+    & "$Id$"
+  character(len=len(idparm)), private :: Id = idParm
+  character(len=*), private, parameter :: ModuleName = &
+       & "$RCSfile$"
+  !---------------------------------------------------------------------------
 
 contains
 
@@ -550,6 +552,9 @@ contains
 end module DFFT_M
 
 ! $Log$
+! Revision 2.3  2002/10/01 22:03:55  pwagner
+! Fixed RCS Ident Block
+!
 ! Revision 2.2  2002/10/01 20:06:00  bwknosp
 ! Added Id and RCS Info
 !
