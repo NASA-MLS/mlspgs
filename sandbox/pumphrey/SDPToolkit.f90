@@ -9,9 +9,9 @@ MODULE SDPToolkit     ! Substitute for the essential toolkit routines
 
   PRIVATE :: Id, ModuleName
   !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
+  CHARACTER (LEN = 256) :: Id = &
        "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+  CHARACTER ( LEN = *), PARAMETER :: ModuleName= "$RCSfile$"
   !---------------------------------------------------------------------------
   ! This module gives substitutes for the essential toolkit routines used by
   ! library code used in both the toolkit and non toolkit environment.
@@ -22,12 +22,12 @@ MODULE SDPToolkit     ! Substitute for the essential toolkit routines
 
 CONTAINS
 
-  FUNCTION PGS_SMF_GenerateStatusReport(message)
+  FUNCTION PGS_SMF_GenerateStatusReport(message) result (GenerateStatusReport)
     CHARACTER (LEN=*), INTENT(IN) :: message
-    INTEGER :: PGS_SMF_GenerateStatusReport
+    INTEGER :: GenerateStatusReport
 
     PRINT*,message
-    PGS_SMF_GenerateStatusReport=0
+    GenerateStatusReport=0
   END FUNCTION PGS_SMF_GenerateStatusReport
 
 !=============================================================================
