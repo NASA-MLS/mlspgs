@@ -1,3 +1,8 @@
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+! $Id$
+
 program TEST_SPARSIFY
 
   use MatrixModule_0, only: Dump, MatrixElement_T, R8, Sparsify
@@ -16,3 +21,8 @@ program TEST_SPARSIFY
   call sparsify ( z, b )
   call dump ( b )
 end program TEST_SPARSIFY
+
+! $Log$
+! Revision 2.2  2000/10/10 23:14:22  vsnyder
+! Added copyright, cvs Id and Log
+!

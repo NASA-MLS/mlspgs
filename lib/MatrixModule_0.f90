@@ -345,7 +345,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
 
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      call CopyBlock ( zb, emptyBlock )
+      call createBlock ( zb, xb%nCols, yb%nCols, M_Absent )
       return
     end if
     if ( xb%nrows /= yb%nrows ) &
@@ -667,6 +667,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.2  2000/10/10 23:11:34  vsnyder
+! Correct number of rows and columns for zero matrix.
+!
 ! Revision 2.1  2000/10/04 20:24:45  vsnyder
 ! Initial entry
 !
