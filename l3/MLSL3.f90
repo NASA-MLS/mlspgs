@@ -10,11 +10,13 @@ PROGRAM MLSL3 ! MLS Level 3 software
    USE L2Interface
    USE L3CF
    USE L3DMData
+   USE L3DZData
    USE L3SPData
    USE MLSCF
    USE MLSMessageModule
    USE OpenInit
    USE OutputClose
+   USE Synoptic
 
    IMPLICIT NONE
 
@@ -41,15 +43,25 @@ PROGRAM MLSL3 ! MLS Level 3 software
    TYPE( L2GPData_T ), POINTER :: l3r(:), residA(:), residD(:)
    TYPE( L3CFProd_T ), POINTER :: cfProd(:)
    TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
+   TYPE( L3DZData_T ), POINTER :: dzs(:), dza(:), dzd(:)
+   TYPE( L3DZFiles_T ) :: zFiles
    TYPE( L3SPData_T ), POINTER :: l3sp(:)
 
    CHARACTER (LEN=480) :: msr
    CHARACTER (LEN=1), POINTER :: anText(:)
 
-   INTEGER :: count, err, i, j, k, l, l2Days, nlev, nf, nwv, numDays, numSwaths
-   INTEGER :: rDays
+   INTEGER :: i, l2Days
 
    REAL(r8), POINTER :: avgPer(:)
+
+! Initializations
+
+   zFiles%nStd = 0
+   zFiles%nDg = 0
+   zFiles%stdNames = ''
+   zFiles%dgNames = ''
+   zFiles%stdDates = ''
+   zFiles%dgDates = ''
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
                                              &started')
@@ -71,162 +83,28 @@ PROGRAM MLSL3 ! MLS Level 3 software
       IF (l2Days < cfDef%minDays) THEN
          msr = 'Skipping CORE processing for ' // TRIM(cfProd(i)%l3prodNameD) &
             // ' and moving on to the next product.'
-         CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+         CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
          CYCLE
-      ENDIF
-
-! -----------------------------------------------------------------------------
-!
-! CORE processing --
-!
-! A example of a call to subroutine which performs this task could be:
-!
-!   CALL DailyCoreProcessing(pcf, cfProd, avgPer, l3sp, l3dm, dmA, dmD, l3r, &
-!                            residA, residD, flags)
-!
-! where the arguments are defined in the list of variables above.
-!
-! -----------------------------------------------------------------------------
-
-! Simulated CORE output for one product
-
-      nlev = 24
-      nwv = 10
-      nf = 15
-
-      IF (cfProd(i)%mode == 'all') THEN
-         numSwaths = 3
       ELSE
-         numSwaths = 1
+         msr = 'Input data successfully read for ' //  &
+                TRIM(cfProd(i)%l3prodNameD) // '; CORE processing started ...'
+         CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
       ENDIF
 
-      ALLOCATE( l3sp(numSwaths), STAT=err )
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' l3sp array.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      l3sp(1)%name = cfProd(i)%l3prodNameD
-      l3sp(2)%name = TRIM(cfProd(i)%l3prodNameD) // 'Ascending'
-      l3sp(3)%name = TRIM(cfProd(i)%l3prodNameD) // 'Descending'
-
-      l3sp%startTime = l2gp(1)%time(1)
-      l3sp%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
-
-      DO j = 1, numSwaths
-
-         CALL AllocateL3SP( nlev, cfProd(i)%nLats, nwv, nf, l3sp(j) )
-         l3sp(j)%pressure = l2gp(1)%pressures(:nlev)
-         l3sp(j)%latitude = cfProd(i)%latGridMap(:l3sp(j)%nLats)
-
-         DO k = 1, l3sp(j)%nWaveNum
-            l3sp(j)%waveNumber(k) = k * 1.0
-         ENDDO
-
-         DO k = 1, l3sp(j)%nFreqs
-            l3sp(j)%frequency(k) = k * 1.0
-         ENDDO
-
-         l3sp(j)%l3spRelValue = 0.0
-         l3sp(j)%l3spRelPrecision = -1.0
-         l3sp(j)%l3spImgValue = 0.0
-         l3sp(j)%l3spImgPrecision = -1.0
-
-      ENDDO
-
-      numDays = cfProd(i)%nDays
-      ALLOCATE( l3dm(numDays), dmA(numDays), dmD(numDays), l3r(numDays), &
-                residA(numDays), residD(numDays), STAT=err )
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' l3dm, l3r arrays.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-      l3dm%name = cfProd(i)%l3prodNameD
-      dmA%name = TRIM(cfProd(i)%l3prodNameD) // 'Ascending'
-      dmD%name = TRIM(cfProd(i)%l3prodNameD) // 'Descending'
-
-      DO j = 1, numDays
-
-         l3dm(j)%time = cfProd(i)%timeD(j)
-         dmA(j)%time = cfProd(i)%timeD(j)
-         dmD(j)%time = cfProd(i)%timeD(j)
-
-         CALL AllocateL3DM( nlev, cfProd(i)%nLats, cfProd(i)%nLons, l3dm(j) )
-         CALL AllocateL3DM( nlev, cfProd(i)%nLats, cfProd(i)%nLons, dmA(j) )
-         CALL AllocateL3DM( nlev, cfProd(i)%nLats, cfProd(i)%nLons, dmD(j) )
-
-         l3dm(j)%pressure = l2gp(1)%pressures(:nlev)
-         dmA(j)%pressure = l2gp(1)%pressures(:nlev)
-         dmD(j)%pressure = l2gp(1)%pressures(:nlev)
-
-         l3dm(j)%latitude = cfProd(i)%latGridMap(:l3dm(j)%nLats)
-         dmA(j)%latitude = cfProd(i)%latGridMap(:dmA(j)%nLats)
-         dmD(j)%latitude = cfProd(i)%latGridMap(:dmD(j)%nLats)
-     
-         l3dm(j)%longitude = cfProd(i)%longGrid(:l3dm(j)%nLons)
-         dmA(j)%longitude = cfProd(i)%longGrid(:dmA(j)%nLons)
-         dmD(j)%longitude = cfProd(i)%longGrid(:dmD(j)%nLons)
-
-         l3dm(j)%l3dmValue = 0.0
-         dmA(j)%l3dmValue = 0.0
-         dmD(j)%l3dmValue = 0.0
-
-         l3dm(j)%l3dmPrecision = -1.0
-         dmA(j)%l3dmPrecision = -1.0
-         dmD(j)%l3dmPrecision = -1.0
-
-      ENDDO
-
-!  DO i = 1, numDays
-
-!     DO j = 1, l3dm(i)%nLevels
-
-!        count = 1
-!        DO k = 1, l3dm(i)%nLons
-!           DO l = 1, l3dm(i)%nLats
-!              IF (count > SIZE(l2gp(20)%l2gpValue,3)) THEN
-!                 l3dm(i)%l3dmValue(j,l,k) = 0.0
-!              ELSE
-!                 l3dm(i)%l3dmValue(j,l,k) = l2gp(20)%l2gpValue(1,j,count)
-!              ENDIF
-!              count = l + 1
-!           ENDDO
-!        ENDDO
-
-!     ENDDO
-
-!  ENDDO
-
-      CALL ReadL2GPProd(cfProd(i), pcf%l3StartDay, pcf%l3EndDay, rDays, l3r)
-      CALL ReadL2GPProd(cfProd(i), pcf%l3StartDay, pcf%l3EndDay, rDays, residA)
-      CALL ReadL2GPProd(cfProd(i), pcf%l3StartDay, pcf%l3EndDay, rDays, residD)
-
-      l3r%name = TRIM(cfProd(i)%l3prodNameD) // 'Residuals'
-      residA%name = TRIM(cfProd(i)%l3prodNameD) // 'AscendingResiduals'
-      residD%name = TRIM(cfProd(i)%l3prodNameD) // 'DescendingResiduals'
-
-      DO j = 1, rDays
-         l3r(j)%l2gpValue = 1.0
-         residA(j)%l2gpValue = 2.0
-         residD(j)%l2gpValue = 3.0
-      ENDDO
-
-      flags%writel3sp    = .TRUE.
-      flags%writel3dmCom = .TRUE.
-      flags%writel3dmAsc = .TRUE.
-      flags%writel3dmDes = .TRUE.
-      flags%writel3rCom  = .TRUE.
-      flags%writel3rAsc  = .TRUE.
-      flags%writel3rDes  = .TRUE.
-
-!------------------------------------------------------------------------------
+! CORE processing
+ 
+      CALL DailyCoreProcessing(cfProd(i), pcf, l2Days, l2gp, avgPer, l3sp, &
+                     l3dm, dmA, dmD, dzs, dza, dzd, l3r, residA, residD, flags)
 
 ! Check the output data and place them into the appropriate files.  Write the
 ! l3dm metadata.  Perform any deallocations needed within the product loop.
 
-      CALL OutputAndClose(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, &
-                          residA, residD, flags)
+      msr = 'CORE processing completed for ' // TRIM(cfProd(i)%l3prodNameD) &
+            // '; starting Output task ...'
+      CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
+
+      CALL OutputProd(pcf, cfProd(i), cfDef, anText, l3sp, l3dm, dmA, dmD, &
+                      l3r, residA, residD, dzs, dza, dzd, flags, zFiles)
 
 ! Deallocate the l2gp database for the product
 
@@ -234,23 +112,12 @@ PROGRAM MLSL3 ! MLS Level 3 software
 
    ENDDO
 
-! Write the log file metadata
+   msr = 'Product loop processing completed; beginning Output/Close task ... '
+   CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
-   CALL WriteMetaLog(pcf, cfDef%logType)
+! Perform final Output & Close tasks outside of the product processing loop.
 
-! Final deallocations
- 
-   DEALLOCATE(cfProd, anText, avgPer, STAT=err)
-   IF ( err /= 0 ) THEN
-      msr = MLSMSG_DeAllocate // '  Open/Init quantities.'
-      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-   ENDIF
-
-   DEALLOCATE (cf%Sections, STAT=err)
-   IF ( err /= 0 ) THEN
-      msr = MLSMSG_DeAllocate // '  cf section pointers.'
-      CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-   ENDIF
+   CALL OutputAndClose(cf, pcf, cfProd, cfDef, avgPer, anText, zFiles)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing &
                                                      &successfully completed!')
@@ -263,11 +130,15 @@ END PROGRAM MLSL3
 !================
 
 ! $Log$
+! Revision 1.8  2001/01/18 16:51:50  nakamura
+! Moved minDays from PCF to cf.
+!
 ! Revision 1.7  2001/01/16 17:45:38  nakamura
 ! Updated for new MCFs and added annotation.
 !
 ! Revision 1.6  2000/12/29 21:40:52  nakamura
-! Added avgPer, more simulated data; revised argument list for ReadL2GPProd; switched to one-product/all-days paradigm.
+! Added avgPer, more simulated data; revised argument list for ReadL2GPProd; swi
+tched to one-product/all-days paradigm.
 !
 ! Revision 1.5  2000/11/28 17:33:06  nakamura
 ! Added code to put non-zero values in simulated L3DM output.
