@@ -28,7 +28,8 @@ MODULE L3DZData
 
 ! Contents:
 
-! Definition -- L3DZData_T
+! Definitions -- L3DZData_T
+!                L3DZDiag_T
 ! Subroutines -- OutputL3DZ
 !                ReadL3DZData
 !                WriteMetaL3DZ
@@ -61,7 +62,7 @@ MODULE L3DZData
 
      REAL(r8), DIMENSION(:), POINTER :: latitude	! dimensioned (nLats)
 
-     CHARACTER (LEN=DATE_LEN) :: date				! day processed
+     CHARACTER (LEN=DATE_LEN) :: date			! day processed
 
      ! Other ancillary data
 
@@ -76,6 +77,33 @@ MODULE L3DZData
         ! dimensioned as (nLevels, nLats)
 
    END TYPE L3DZData_T
+
+! This data type is used to store the l3 daily zonal mean diagnostics.
+
+   TYPE L3DZDiag_T
+
+     CHARACTER (LEN=GridNameLen) :: name        ! name for the output quantity
+
+     INTEGER :: nLevels         ! Total number of surfaces
+     INTEGER :: nLats           ! Total number of latitudes
+
+     ! Now we store the geolocation fields.  First, the vertical one:
+
+     REAL(r8), DIMENSION(:), POINTER :: pressure	! dimensioned (nLevels)
+
+     ! Now the horizontal geolocation information:
+
+     REAL(r8), DIMENSION(:), POINTER :: latitude	! dimensioned (nLats)
+
+     ! Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+
+     REAL(r8), DIMENSION(:,:), POINTER :: latRss
+
+     ! Missing points (percentage), dimensioned (nLevels, nLats)
+
+     INTEGER, DIMENSION(:,:), POINTER :: perMisPoints
+
+   END TYPE L3DZDiag_T
 
 CONTAINS
 
@@ -394,7 +422,7 @@ CONTAINS
 
       CALL AllocateL3DZ(nlev, nlat, dz)
 
-      ALLOCATE (rp(dz%nLevels), rl(dz%nLats), r2(dz%nLevels,dz%nLats),  STAT=err)
+      ALLOCATE (rp(dz%nLevels), rl(dz%nLats), r2(dz%nLevels,dz%nLats), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // '  local REAL variables.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1110,6 +1138,9 @@ END MODULE L3DZData
 !==================
 
 ! $Log$
+! Revision 1.3  2001/10/04 18:25:59  nakamura
+! Removed lev as dim for local solar fields.
+!
 ! Revision 1.2  2001/09/26 19:46:14  nakamura
 ! Added local solar ancillary fields.
 !
