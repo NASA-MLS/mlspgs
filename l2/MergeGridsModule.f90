@@ -174,19 +174,19 @@ contains ! =================================== Public procedures
   type (griddedData_T) function MergeOneGrid ( root, griddedDataBase ) &
     & result ( newGrid )
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
-    use Tree, only: NSONS, SUBTREE, DECORATION
-    use Units, only: PHYQ_Length, PHYQ_Pressure
+    use Expr_m, only: EXPR
     use GriddedData, only: GRIDDEDDATA_T, NULLIFYGRIDDEDDATA, COPYGRID, &
       & WRAPGRIDDEDDATA, SETUPNEWGRIDDEDDATA, RGR, V_IS_PRESSURE, SLICEGRIDDEDDATA
-    use MLSNumerics, only: ESSENTIALLYEQUAL
-    use L3ASCII, only: L3ASCII_INTERP_FIELD
-    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
-    use Trace_M, only: TRACE_BEGIN, TRACE_END
     use Init_tables_module, only: F_CLIMATOLOGY, F_HEIGHT, F_OPERATIONAL, &
       & F_SCALE
+    use Intrinsic, only: PHYQ_Length, PHYQ_Pressure
+    use L3ASCII, only: L3ASCII_INTERP_FIELD
     use MLSCommon, only: R8
+    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE
+    use MLSNumerics, only: ESSENTIALLYEQUAL
     use Toggles, only: GEN, TOGGLE
-    use Expr_m, only: EXPR
+    use Trace_M, only: TRACE_BEGIN, TRACE_END
+    use Tree, only: NSONS, SUBTREE, DECORATION
 
     integer, intent(in) :: ROOT         ! Tree node
     type (griddedData_T), dimension(:), pointer :: griddedDataBase ! Database
@@ -411,6 +411,9 @@ contains ! =================================== Public procedures
 end module MergeGridsModule
 
 ! $Log$
+! Revision 2.14  2003/08/15 23:58:20  vsnyder
+! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
+!
 ! Revision 2.13  2003/06/06 01:06:59  livesey
 ! Added DeleteGrids stuff
 !
