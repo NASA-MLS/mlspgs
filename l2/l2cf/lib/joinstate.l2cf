@@ -5,7 +5,7 @@ begin Join
 !ifdef(flagSuppressRegularOutput,{},{
   !ifdef(flagAvoidDirectWrite,{
   ;; Join the tropopause pressure
-  joined_tpPressure: l2gp, source=state.tpPressure, swath='tpPressure wmo'
+  joined_tpPressure: l2gp, source=state.tpPressure, swath='TPPressureWMO-DGG'
   !storeJoinedDGG(joined_tpPressure)
 
   !define(joinStandardProduct,{joined_$1: l2gp, source=state.$1, $
@@ -23,9 +23,6 @@ begin Join
   joined_iwcFine: l2gp, source=state.iwcFine, precision=outputPrecision.iwcFine, $
     swath='IWC-fine'
 },{
-
-  ;; Join the tropopause pressure
-  !directWriteDGGNoPrecisionNotState(state.tpPressure,'tpPressure wmo')
 
   ;; First the species with columns
   !define(writeStandardProductWithColumn,{
