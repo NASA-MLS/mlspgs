@@ -41,7 +41,6 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   end interface
 
   interface operator (*)
-    module procedure MultiplyVectors ! element-by-element
     module procedure ConstantXVector ! by a scalar on the left
   end interface
 
@@ -69,39 +68,39 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     integer :: NoQuantities    ! Number of quantities in the vector
     integer :: TotalInstances  ! Number of horizontal instances in the vector
     integer :: TotalElements   ! Total of numbers of elements in the vector
-    integer, dimension(:), pointer :: QUANTITIES  ! Indices of the quantity
-    !                            templates in the quantities database
+    integer, dimension(:), pointer :: QUANTITIES => NULL() ! Indices of the
+    !                            quantity templates in the quantities database
   end type VectorTemplate_T
 
   ! This type describes the subset of the values of a vector that
   ! correspond to a single quantity.
 
   type VectorValue_T
-    type (QuantityTemplate_T), pointer :: TEMPLATE ! Template for this quantity
-    ! The dimensions of VALUES are Frequencies (or 1) * Vertical Coordinates
-    ! (or 1), and Horizontal Instances (scan or profile or 1).  These are
-    ! taken from (template%noChans * template%noSurfs, template%noInstances).
-    real(r8), dimension(:,:), pointer :: VALUES => NULL()
-    ! MASK is used to control whether elements of vectors are of interest.
-    ! If MASK is not associated, every element is of interest.  Otherwise,the
-    ! dimensions of MASK are (size(values,1)+bit_size(mask)-1)/bit_size(mask)
-    ! and size(values,2).  Bits of MASK are used to determine what is not
+    type (QuantityTemplate_T), pointer :: TEMPLATE => NULL() ! Template for
+    ! this quantity.
+    real(r8), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
+    ! VALUES are Frequencies (or 1) * Vertical Coordinates (or 1), and
+    ! Horizontal Instances (scan or profile or 1).  These are taken from
+    ! (template%noChans * template%noSurfs, template%noInstances).
+    integer, dimension(:,:), pointer :: MASK => NULL() ! MASK is used to
+    ! control whether elements of vectors are of interest. If MASK is not
+    ! associated, every element is of interest.  Otherwise,the dimensions of
+    ! MASK are (size(values,1)+bit_size(mask)-1)/bit_size(mask) and
+    ! size(values,2).  Bits of MASK are used to determine what is not
     ! interesting.  Zero means the corresponding element of VALUES is
     ! interesting, and one means it is not.
-    integer, dimension(:,:), pointer :: MASK => NULL()
   end type VectorValue_T
 
   ! This type describes a vector.
 
   type Vector_T
     integer :: Name            ! Sub-rosa index of the vector name
-    type (VectorTemplate_T), pointer :: TEMPLATE ! In the template database
-
-    ! The dimension of QUANTITIES is the same as for the QUANTITIES field
-    ! of the vector template.  Each element of QUANTITIES here corresponds
-    ! to the one in the same position in the QUANTITIES field of the
-    ! vector template.
-    type (VectorValue_T), dimension(:), pointer :: QUANTITIES
+    type (VectorTemplate_T), pointer :: TEMPLATE => NULL() ! In the template
+    ! database
+    type (VectorValue_T), dimension(:), pointer :: QUANTITIES => NULL() ! The
+    ! dimension of QUANTITIES is the same as for the QUANTITIES field of the
+    ! vector template.  Each element of QUANTITIES here corresponds to the
+    ! one in the same position in the QUANTITIES field of the vector template.
   end type Vector_T
 
   ! This incrementing counter is used to set the id field for a vector template
@@ -440,16 +439,13 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T), intent(inout) :: VECTOR
 
     ! Local Variables:
-    integer :: I, STATUS
+    integer :: STATUS
 
     ! Executable code
 
     vector%name = 0
     nullify ( vector%template )
-    do i = 1, size(vector%quantities)
-      call deallocate_test ( vector%quantities(i)%values, &
-        & "vector%quantities(i)%values", ModuleName )
-    end do
+    call destroyVectorValue ( vector )
     deallocate ( vector%quantities, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Warning, ModuleName, &
       & MLSMSG_deallocate // "vector%quantities" )
@@ -493,7 +489,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyVectorTemplateDatabase
 
   !-----------------------------------  DestroyVectorTemplateInfo  -----
-  subroutine DestroyVectorTemplateInfo ( vectorTemplate )
+  subroutine DestroyVectorTemplateInfo ( VectorTemplate )
 
   ! This subroutine destroys a vector template created above
 
@@ -511,6 +507,20 @@ contains ! =====     Public Procedures     =============================
     vectorTemplate%id = 0
     vectorTemplate%name = 0
   end subroutine DestroyVectorTemplateInfo
+
+  !------------------------------------------  DestroyVectorValue  -----
+  subroutine DestroyVectorValue ( Vector )
+  ! Destroy the "values" field in all of the quantities in a vector.  This
+  ! is useful when forming normal equations little-by-little.
+    type(vector_T), intent(inout) :: Vector
+
+    integer :: I
+
+    do i = 1, size(vector%quantities)
+      call deallocate_test ( vector%quantities(i)%values, &
+        & "vector%quantities(i)%values", ModuleName )
+    end do
+  end subroutine DestroyVectorValue
 
   !--------------------------------------------------  DotVectors  -----
   real(r8) function DotVectors ( X, Y ) result (Z)
@@ -697,28 +707,31 @@ contains ! =====     Public Procedures     =============================
   end function GetVectorQuantityIndexByType
 
   !---------------------------------------------  MultiplyVectors  -----
-  type (Vector_T) function MultiplyVectors ( X, Y ) result (Z)
-  ! Multiply two vectors element-by-element, producing one having the
-  ! same template (but no name, of course).
-
-  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyVectorInfo using the result of this
-  ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.  Also see AssignVector.
-  ! !!!!! ===== END NOTE ===== !!!!! 
+  subroutine MultiplyVectors ( X, Y, Z )
+  ! If Z is present, destroy Z and clone a new one from X, then
+  ! Z = X # Y where # means "element-by-element"; otherwise X = X # Y
 
     ! Dummy arguments:
-    type(Vector_T), intent(in) :: X, Y
+    type(Vector_T), intent(inout), target :: X
+    type(Vector_T), intent(in) :: Y
+    type(Vector_T), intent(out), optional, target :: Z
     ! Local Variables:
-    integer :: I              ! Subscript and loop inductor
+    integer :: I                        ! Subscript and loop inductor
+    type(Vector_T), pointer :: Result   ! associated to either X or Z
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot multiply vectors having different templates" )
-    call CloneVector ( z, x )
+    if ( present(z) ) then
+      call CloneVector ( z, x )
+      result => z
+    else
+      result => x
+    end if
     do i = 1, size(x%quantities)
-      z%quantities(i)%values = x%quantities(i)%values * y%quantities(i)%values
+      result%quantities(i)%values = &
+        & x%quantities(i)%values * y%quantities(i)%values
     end do
-  end function MultiplyVectors
+  end subroutine MultiplyVectors
 
   !-------------------------------------------------  ScaleVector  -----
   subroutine ScaleVector ( X, A, Y )
@@ -762,19 +775,36 @@ contains ! =====     Public Procedures     =============================
   end subroutine SetMask
 
   !------------------------------------------  SubtractFromVector  -----
-  subroutine SubtractFromVector ( X, Y ) ! X = X - Y.
+  subroutine SubtractFromVector ( X, Y, Quant, Inst ) ! X = X - Y.
 
     ! Dummy arguments:
     type(Vector_T), intent(inout) :: X
     type(Vector_T), intent(in) :: Y
+    integer, intent(in), optional :: Quant, Inst  ! If Quant\ is present,
+    !  only that quantity is subtracted.  If furthermore Inst\ is present,
+    !  only that instance is subtracted.  If Inst\ is present but Quant\
+    !  is not, the entire vector is subtracted.
+
     ! Local Variables:
     integer :: I              ! Subscript and loop inductor
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot subtract vectors having different templates" )
-    do i = 1, size(x%quantities)
-      x%quantities(i)%values = x%quantities(i)%values - y%quantities(i)%values
-    end do
+    if ( present(quant) ) then
+      if ( present(inst) ) then
+        x%quantities(quant)%values(:,inst) = &
+          & x%quantities(quant)%values(:,inst) - &
+          & y%quantities(quant)%values(:,inst)
+      else
+        x%quantities(quant)%values = x%quantities(quant)%values - &
+          &                          y%quantities(quant)%values
+      end if
+    else
+      do i = 1, size(x%quantities)
+        x%quantities(i)%values = x%quantities(i)%values - &
+          &                      y%quantities(i)%values
+      end do
+    end if
   end subroutine SubtractFromVector
 
   !---------------------------------------------  SubtractVectors  -----
@@ -820,6 +850,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.8  2001/01/19 23:49:59  vsnyder
+! Periodic commit
+!
 ! Revision 2.7  2001/01/10 21:03:14  vsnyder
 ! Periodic commit
 !
