@@ -31,13 +31,12 @@ module Convolve_All_m
     use ForwardModelConfig, only: ForwardModelConfig_T
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Fov_Convolve_m, only: Fov_Convolve
-    use intrinsic, only: L_VMR
+    use Intrinsic, only: L_VMR
     use Load_sps_data_m, only: Grids_T
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
     use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
-    use MLSCommon, only: I4, r4, R8, rp, RM
+    use MLSCommon, only: I4, R8, RP, RM
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-    use Molecules, only: L_EXTINCTION
     use VectorsModule, only: Vector_T, VectorValue_T
 
 ! inputs
@@ -49,7 +48,7 @@ module Convolve_All_m
     integer, intent(in) :: CHANNEL
     integer, intent(in) :: WINSTART
     integer, intent(in) :: WINFINISH
-    integer, intent(IN) :: mol_cat_index(:)
+    integer, intent(in) :: Mol_Cat_Index(:)
 
     type (vectorvalue_t), intent(in) :: TEMP
     type (vectorvalue_t), intent(in) :: PTAN
@@ -364,6 +363,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.25  2002/10/10 00:54:16  vsnyder
+! Give Id a value, sort USEs, cosmetic changes
+!
 ! Revision 2.24  2002/10/08 17:08:01  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
