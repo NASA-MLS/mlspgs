@@ -146,7 +146,7 @@ endif
 #Any sources to explicitly exclude from dependency list?
 #SnoopMLSL2 requires PVM
 #ifdef PVM_ROOT
-   OMIT_SRCS := $(OMIT) 
+   OMIT_SRCS := $(OMIT) TestCholesky_m.f90 Test_Parse_Signals_m.f90
 #else
 #   OMIT_SRCS := $(OMIT) SnoopMLSL2.f90
 #endif
@@ -358,6 +358,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.55  2003/02/21 21:02:40  pwagner
+# Eliminated TestCholesky_m.f90 Test_Parse_Signals_m.f90 from srcs
+#
 # Revision 2.54  2002/07/18 18:00:01  pwagner
 # NOHUNTING default when .mod-mediated dependency
 #
