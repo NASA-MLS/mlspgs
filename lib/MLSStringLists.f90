@@ -7,7 +7,7 @@ MODULE MLSStringLists               ! Module to treat string lists
 
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
     & MLSMSG_Allocate, MLSMSG_DeAllocate
-  use MLSCommon, only: i4, r8, NameLen, BareFNLen
+  use MLSCommon, only: i4, NameLen, BareFNLen
   use MLSSets, only: FindFirst
   use MLSStrings, only: lowerCase, Capitalize, reverse, writeIntsToChars
 
@@ -670,7 +670,7 @@ CONTAINS
 
   ! Basic premise: Use StringElementNum on key in keyList to find index
   ! Use this index for the array of ints
-  
+
   FUNCTION GetIntHashElement(keyList, hashArray, key, ErrType, &
   & countEmpty, inseparator, part_match) RESULT (hashInt)
     ! Dummy arguments
@@ -2495,6 +2495,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.5  2004/10/19 22:59:08  vsnyder
+! Remove USE for unused R8
+!
 ! Revision 2.4  2004/10/13 00:51:09  vsnyder
 ! Move HHMMSS_value to MLSStrings
 !
