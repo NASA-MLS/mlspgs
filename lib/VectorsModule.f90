@@ -18,42 +18,42 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 
 !         Functions, operations, routines
 ! AddToVector                  X = X + Y
-! AddVectors                   result Z = X + Y
+! AddVectors                   Result Z = X + Y
 ! AddVectorTemplateToDatabase  Adds a vector template to a database of such templates
 ! AddVectorToDatabase          Adds a vector to a database of such vectors
 ! AssignVector                 Destroy 1st arg, then assign 2nd arg to it
-! AxPy                         result z = A x + y
+! AxPy                         Result z = A x + y
 ! ClearMask                    Clear bits of MASK according to TO_CLEAR
 ! CloneVector                  Destroy 1st arg, then use 2nd arg for a template
-! ConstantXVector              result z = A x
-! ConstructVectorTemplate      creates a vectorTemplate from a list of quantities
-! CopyVector                   z = x
+! ConstantXVector              Result z = A x
+! ConstructVectorTemplate      Creates a vectorTemplate from a list of quantities
+! CopyVector                   z = x, including copying values and mask
 ! CreateMaskArray              Allocate a MASK array
 ! CreateMask                   Allocate the MASK array for a vector quantity
-! CreateVector                 creates an empty vector according to a given template
-! DestroyVectorDatabase        destroys a vector database
+! CreateVector                 Creates an empty vector according to a given template
+! DestroyVectorDatabase        Destroys a vector database
 ! DestroyVectorInfo            Destroy a vector
-! DestroyVectorMask            destroys the masks stored in the vector
-! DestroyVectorTemplateDatabase destroys a vector template database
-! DestroyVectorTemplateInfo    destroys a vector template
+! DestroyVectorMask            Destroys the masks stored in the vector
+! DestroyVectorTemplateDatabase Destroys a vector template database
+! DestroyVectorTemplateInfo    Destroys a vector template
 ! DestroyVectorValue           Destroy the "values" field in all of the quantities in a vector
 ! DotVectors                   z = x . y
-! dump                         interface for next three
-! dump_vector                  display how a single vector is made up
-! dump_vectors                 display how vector database is made up
-! dump_vector_templates        display how vector template database is made up
-! GetVectorQuantity            returns pointer to quantity by name in vector
-! GetVectorQuantityByType      returns pointer to quantity by type in vector
-! GetVectorQtyByTemplateIndex  returns pointer to quantity by template in vector
-! GetVectorQuantityIndexByName returns index to quantity by name in vector
-! GetVectorQuantityIndexByType returns index to quantity by type in vector
+! dump                         Interface for next three
+! dump_vector                  Display how a single vector is made up
+! dump_vectors                 Display how vector database is made up
+! dump_vector_templates        Display how vector template database is made up
+! GetVectorQuantity            Returns pointer to quantity by name in vector
+! GetVectorQuantityByType      Returns pointer to quantity by type in vector
+! GetVectorQtyByTemplateIndex  Returns pointer to quantity by template in vector
+! GetVectorQuantityIndexByName Returns index to quantity by name in vector
+! GetVectorQuantityIndexByType Returns index to quantity by type in vector
 ! isVectorQtyMasked            Is the mask for VectorQty set for address
 ! MultiplyVectors              Z = X # Y if Z present; else X = X # Y
 ! rmVectorFromDatabase         Removes a vector from a database of such vectors
 ! ScaleVector                  Y = A*X if Y is present, else X = A*X.
 ! SetMask                      Set bits of MASK indexed by elements of TO_SET
-! SubtractFromVector           X = X - Y
-! SubtractVectors              returns Z = x - y
+! SubtractFromVector           x = x - y
+! SubtractVectors              Returns z = x - y
 ! ValidateVectorQuantity       Test vector quantity for matching components
 
   !---------------------------------------------------------------------------
@@ -459,10 +459,11 @@ contains ! =====     Public Procedures     =============================
   end subroutine ConstructVectorTemplate
 
   ! -------------------------------------------------  CopyVector  -----
-  subroutine CopyVector ( Z, X, CLONE, Quant, Inst )
+  subroutine CopyVector ( Z, X, CLONE, Quant, Inst, NoValues, NoMask )
   ! If CLONE is present and .true., Destroy Z, deep Z = X, except the
   ! name of Z is not changed.  Otherwise, copy only the values and mask
-  ! of X to Z.
+  ! of X to Z.  If NoValues or NoMask is present and true, don't copy
+  ! that part of the vector.
 
     type(Vector_T), intent(inout) :: Z
     type(Vector_T), intent(in) :: X
@@ -471,10 +472,17 @@ contains ! =====     Public Procedures     =============================
     !  only that quantity is copied.  If furthermore Inst is present,
     !  only that instance is copied.  If Inst is present but Quant
     !  is not, the entire vector is copied.
+    logical, intent(in), optional :: NoValues, NoMask  ! If present and true,
+    !  don't copy the values/mask
+    logical :: DoMask, DoValues
     integer :: I
     logical MyClone
     myclone = .false.
     if ( present(clone) ) myclone = clone
+    doMask = .true.
+    if ( present(noMask) ) doMask = .not. noMask
+    doValues = .true.
+    if ( present(noValues) ) doValues = .not. noValues
     if ( myclone ) then
       call cloneVector ( Z, X, vectorNameText='_Z' )
     else
@@ -483,18 +491,20 @@ contains ! =====     Public Procedures     =============================
     end if
     if ( present(quant) ) then
       if ( present(inst) ) then
-        z%quantities(quant)%values(:,inst) = x%quantities(quant)%values(:,inst)
-        if ( associated (x%quantities(quant)%mask ) ) &
+        if ( doValues ) z%quantities(quant)%values(:,inst) = &
+            & x%quantities(quant)%values(:,inst)
+        if ( doMask .and. associated (x%quantities(quant)%mask ) ) &
           z%quantities(quant)%mask(:,inst) = x%quantities(quant)%mask(:,inst)
       else
-        z%quantities(quant)%values = x%quantities(quant)%values
-        if ( associated (x%quantities(quant)%mask ) ) &
+        if ( doValues ) &
+          & z%quantities(quant)%values = x%quantities(quant)%values
+        if ( doMask .and. associated (x%quantities(quant)%mask ) ) &
         & z%quantities(quant)%mask = x%quantities(i)%mask
       end if
     else
       do i = 1, size(x%quantities)
-        z%quantities(i)%values = x%quantities(i)%values
-        if ( associated (x%quantities(i)%mask ) ) &
+        if ( doValues ) z%quantities(i)%values = x%quantities(i)%values
+        if ( doMask .and. associated (x%quantities(i)%mask ) ) &
           & z%quantities(i)%mask = x%quantities(i)%mask
       end do
     end if
@@ -1427,6 +1437,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.56  2001/09/25 00:18:23  livesey
+! Bug fix
+!
 ! Revision 2.55  2001/09/24 23:01:11  vsnyder
 ! Make consistent/correct lower bound calculation for MASK array
 !
