@@ -660,9 +660,9 @@ contains ! =====  Public Procedures  ===================================
     end do
     call output ( ' ]', advance='yes' )
     call blanks ( 6 )
-    call output ( catalog%defaultIsotopeRatio, before='Default Isotope Ratio = ', &
-      & advance='yes' )
+    call output ( catalog%defaultIsotopeRatio, before='Default Isotope Ratio = ' )
     if ( myDetails > 0 ) then
+      call newLine
       call blanks ( 6 )
       call output ( 'Lines:' )
       if ( associated(catalog%lines) ) then
@@ -695,6 +695,13 @@ contains ! =====  Public Procedures  ===================================
       end if
       if ( associated(catalog%polarized) ) &
         & call dump ( catalog%polarized, '      Polarized:' )
+    else
+      if ( associated(catalog%lines) ) then
+        call output ( size(catalog%lines), before=', ' )
+      else
+        call output ( ', no' )
+      end if
+      call output ( ' lines', advance='yes' )
     end if ! myDetails > 0
   end subroutine Dump_SpectCat_Item
 
@@ -1338,6 +1345,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.37  2005/03/03 02:02:47  vsnyder
+! Spiff up dump
+!
 ! Revision 2.36  2005/01/20 02:28:45  vsnyder
 ! Cannonball polishing
 !
