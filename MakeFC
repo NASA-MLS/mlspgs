@@ -313,7 +313,10 @@ TAR=tar
 # Instead of hard-coding, as customized name are now possible for MLSCONFG
 # we will let reecho.sh find the ones we'll use
 REECHO=$(MLSBIN)/reecho.sh
-EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS)
+EVERY_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -excl CVS -excl NAG.nogc)
+
+# These shouldn't be tarred up as part of EVERYTHING (or ever)
+EXCL_MLSCONFG = $(shell ${REECHO} -d -dirn lib/machines -prefix='--exclude' -suffixn='/\*' -excl CVS)
 
 # The next 2 may be commented out if you're absolutely sure you won't need them
 tests_sub_dirs := $(shell echo tests/*)
@@ -697,6 +700,13 @@ update:
 
 clean_config_test:
 	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
+    if [ "$(MLSCONFG)" = "" ] ; then \
+      echo "Empty configuration name" ; \
+      exit 2 ; \
+    elif [ ! -d "lib/machines/$(MLSCONFG)" ] ; then \
+      echo "Unrecognized configuration name" ; \
+      exit 2 ; \
+    fi ; \
 	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
 	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
 	 echo "$(MAKE) -f $(MakeFName) mostlyclean"; \
@@ -707,6 +717,13 @@ clean_config_test:
 
 clean_config:
 	@echo "Cleaning $(SUBDIRS) according to configuration $(MLSCONFG)"; \
+    if [ "$(MLSCONFG)" = "" ] ; then \
+      echo "Empty configuration name" ; \
+      exit 2 ; \
+    elif [ ! -d "lib/machines/$(MLSCONFG)" ] ; then \
+      echo "Unrecognized configuration name" ; \
+      exit 2 ; \
+    fi ; \
 	 mv $(CONFDIR)/$(MLSCFILE) $(CONFDIR)/temp.configure; \
 	 echo "MLSCONFG=$(MLSCONFG)" > $(CONFDIR)/$(MLSCFILE); \
 	 $(MAKE) -f $(MakeFName) mostlyclean; \
@@ -718,7 +735,7 @@ clean_config:
 distclean:
 	@echo "Cleaning configurations $(EVERY_MLSCONFG)"; \
 	 for dir in $(EVERY_MLSCONFG); do \
-	  $(MAKE) -f $(MakeFName) clean_config MLSCONFG=$$dir; \
+	  $(MAKE) -f $(MakeFName) clean_config_test MLSCONFG=$$dir; \
 	done
 	@$(MAKE) -f $(MakeFName) internalcleanup
 
@@ -726,12 +743,13 @@ distclean:
 
 disttar:
 	@echo "tar-ing the mlspgs distribution"; \
-        rm -f ../mlspgs.tar; \
+        rm -f ../mlspgs.tar machines.tar; \
 	$(TAR) hcvf ../mlspgs.tar * --exclude $(CONFDIR)/$(MLSCFILE)\
 	--exclude CVS\
-	--exclude Make.dep\* --exclude [cfl]\*/NAG.\* --exclude [cfl]\*/LF95.\* \
-	--exclude tests/[cflm]\*/NAG.\* --exclude tests/[cflm]\*/LF95.\* \
-	--exclude mlsl[0-9]
+	--exclude Make.dep\* $(EXCL_MLSCONFG) \
+	--exclude bin ; \
+	$(TAR) hcvf machines.tar lib/machines --exclude CVS; \
+	$(TAR) hAvf ../mlspgs.tar machines.tar
 
 disttarz: disttar ../mlspgs.tar
 	@echo "... then gzipping it"; \
@@ -739,19 +757,23 @@ disttarz: disttar ../mlspgs.tar
 
 disttarg:
 	@echo "tar-ing the mlspgs distribution with GNUtar -z option"; \
-        rm -f ../mlspgs.tgz; \
+        rm -f ../mlspgs.tgz machines.tgz; \
 	$(TAR) hcvzf ../mlspgs.tgz * --exclude $(CONFDIR)/$(MLSCFILE) \
 	--exclude CVS\
-	--exclude Make.dep\* --exclude [cfl]\*/NAG.\* --exclude [cfl]\*/LF95.\* \
-	--exclude tests/[cflm]\*/NAG.\* --exclude tests/[cflm]\*/LF95.\* \
-	--exclude mlsl[0-9]
+	--exclude Make.dep\* $(EXCL_MLSCONFG) \
+	--exclude bin ; \
+	$(TAR) hcvzf machines.tgz lib/machines --exclude CVS; \
+	$(TAR) hAvzf ../mlspgs.tgz machines.tgz
 
 tar:
 	@echo "tar-ing mlspgs for sips"; \
-        rm -f ../mlspgs_sips.tar; \
+        echo "EXCL_MLSCONFG: $(EXCL_MLSCONFG)" ; \
+        rm -f ../mlspgs_sips.tar machines.tar; \
 	$(TAR) hcvf ../mlspgs_sips.tar $(EVERYTHING) --exclude CVS\
-	--exclude Make.dep\* --exclude [cfl]\*/NAG.\* --exclude [cfl]\*/LF95.\* \
-	--exclude tests/[cflm]\*/NAG.\* --exclude tests/[cflm]\*/LF95.\* 
+	--exclude Make.dep\* $(EXCL_MLSCONFG) \
+	--exclude bin ; \
+	$(TAR) hcvf machines.tar lib/machines --exclude CVS; \
+	$(TAR) hAvf ../mlspgs_sips.tar machines.tar
 
 tarz: tar ../mlspgs_sips.tar
 	@echo "... then gzipping it"; cd ..; rm -f mlspgs_sips.tgz; \
@@ -759,10 +781,12 @@ tarz: tar ../mlspgs_sips.tar
 
 targ:
 	@echo "tar-ing mlspgs for sips"; \
-        rm -f ../mlspgs_sips.tgz; \
+        rm -f ../mlspgs_sips.tgz machines.tgz; \
 	$(TAR) hcvzf ../mlspgs_sips.tgz $(EVERYTHING) --exclude CVS \
-	--exclude Make.dep\* --exclude [cfl]\*/NAG.\* --exclude [cfl]\*/LF95.\* \
-	--exclude tests/[cflm]\*/NAG.\* --exclude tests/[cflm]\*/LF95.\* 
+	--exclude Make.dep\* $(EXCL_MLSCONFG) \
+	--exclude bin ; \
+	$(TAR) hcvzf machines.tgz lib/machines --exclude CVS; \
+	$(TAR) hAvzf ../mlspgs_sips.tgz machines.tgz
 
 substars:
 	@echo "tar-ing $(SUBDIRS)"; \
@@ -949,6 +973,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.71  2002/07/11 22:12:52  pwagner
+# Changes to support hdf5/hdfeos5
+#
 # Revision 1.70  2002/06/13 18:11:36  pwagner
 # Updates he5lib/CONFG/Makfile instead of rming it
 #
