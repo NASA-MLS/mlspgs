@@ -83,6 +83,7 @@ mlsl3: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS)
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(l_specials) \
+	-L${FFTW_ROOT} -lrfftw -lfftw \
 
 # ========================================================================
 
@@ -106,6 +107,9 @@ L3DZData.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2001/02/22 18:08:11  pwagner
+# Includes L3DZData.f90
+#
 # Revision 1.6  2001/02/08 23:22:14  pwagner
 # variable_linker_line tied to PVM and BLAS
 #
