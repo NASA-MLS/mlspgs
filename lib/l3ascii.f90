@@ -117,6 +117,8 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     inquire(unit=unit,name=filename) ! find the file name connected to this
     ! unit for use in error messages.
 
+	field%sourceFileName = filename
+
     ! Fix axis arrays: set to default values with length 1 and a sensible 
     ! value. These will be used if the file does not have variation 
     ! along that axis
@@ -1019,6 +1021,9 @@ END MODULE l3ascii
 
 !
 ! $Log$
+! Revision 2.6  2001/03/30 00:25:20  pwagner
+! Fills sourceFileName
+!
 ! Revision 2.5  2001/03/29 00:51:35  pwagner
 ! make_log_axis now always works
 !
