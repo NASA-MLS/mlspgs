@@ -29,8 +29,7 @@ MODULE L3DMData
 
 ! Contents:
 
-! Definitions -- L3DMData_T
-!                L3DMFiles_T 
+! Definition -- L3DMData_T
 ! Subroutines -- ConvertDeg2DMS
 !                OutputGrids
 !                ReadL3DMData
@@ -75,19 +74,6 @@ MODULE L3DMData
 	! dimensioned as (nLevels, nLats, nLons)
 
    END TYPE L3DMData_T
-
-! This data type is used to store the names of l3dm files actually created.
-
-   TYPE L3DMFiles_T
-
-     INTEGER :: nFiles		! number of distinct l3dm output files created
-
-     CHARACTER (LEN=FileNameLen) :: name(maxwindow)
-	! array of names of the created files
-
-     CHARACTER (LEN=8) :: date(maxWindow)	! CCSDS B format dates of files
-
-   END TYPE L3DMFiles_T
 
 CONTAINS
 
@@ -160,7 +146,7 @@ CONTAINS
 
       TYPE (L3DMData_T), INTENT(IN) :: l3dmData(:)
 
-      TYPE (L3DMFiles_T), INTENT(INOUT) :: l3dmFiles
+      TYPE (OutputFiles_T), INTENT(INOUT) :: l3dmFiles
    
 ! Parameters
 
@@ -197,7 +183,7 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-! Check whether the name is distinct; if so, save it in L3DMFiles_T
+! Check whether the name is distinct; if so, save it in l3dmFiles
 
          IF (LinearSearchStringArray(l3dmFiles%name,physicalFilename) == 0) THEN
             l3dmFiles%nFiles = l3dmFiles%nFiles+1
@@ -596,7 +582,7 @@ CONTAINS
 
       TYPE( L3CFProd_T ), INTENT(IN) :: l3cf
 
-      TYPE (L3DMFiles_T), INTENT(IN) :: files
+      TYPE (OutputFiles_T), INTENT(IN) :: files
 
       TYPE( PCFData_T ), INTENT(IN) :: pcf
 
@@ -1172,6 +1158,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.11  2001/04/24 19:38:23  nakamura
+!# Removed references to private L2 parameters.
+!#
 !# Revision 1.10  2001/03/27 19:28:15  nakamura
 !# Moved some parameters to MLSL3Common; updated metadata; fixed err checks on deallocate.
 !#
