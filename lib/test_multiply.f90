@@ -7,7 +7,7 @@ program TEST_MULTIPLY
 
   use Machine ! at least HP and GETARG
   use MatrixModule_0, only: Densify, Dump, MatrixElement_T, &
-    & operator(.XT.), Sparsify
+    & operator(.TX.), Sparsify
   use MLSCommon, only: R8
 
   implicit NONE
@@ -57,7 +57,7 @@ program TEST_MULTIPLY
       call dump ( b, name = "Input B =" )
     end if
   end if
-  zb = ab .xt. bb
+  zb = ab .tx. bb
   allocate ( z(zb%nrows,zb%ncols), zt(zb%nrows,zb%ncols) )
   call densify ( z, zb )
   zt = matmul(transpose(a),b)
@@ -78,6 +78,12 @@ program TEST_MULTIPLY
 end program TEST_MULTIPLY
 
 ! $Log$
+! Revision 2.4  2000/10/31 18:14:49  pwagner
+! changed .xt. -> .tx.
+!
+! Revision 1.1  2000/10/24 20:59:56  pwagner
+! first commit
+!
 ! Revision 2.3  2000/10/12 22:32:27  vsnyder
 ! Add "use machine" to get NAG's getarg
 !
