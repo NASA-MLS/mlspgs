@@ -24,8 +24,9 @@ module INIT_TABLES_MODULE
   private :: ADD_IDENT, INIT_INTRINSIC, MAKE_TREE
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
 !---------------------------------------------------------------------------
@@ -276,7 +277,7 @@ contains ! =====     Public procedures     =============================
 
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_intrinsic ( data_type_indices, lit_indices )
-    call init_MLSSignals ( field_Indices, spec_Indices, data_type_indices )
+    call init_MLSSignals ( field_indices, spec_indices, data_type_indices )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
@@ -782,6 +783,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.46  2001/03/14 02:47:26  vsnyder
+! Cosmetic improvements
+!
 ! Revision 2.45  2001/03/14 02:04:53  vsnyder
 ! Moved MLSSignals_m to mlspgs/lib
 !
