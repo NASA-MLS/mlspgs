@@ -37,6 +37,7 @@ module L2_TEST_STRUCTURES_M
     Real(r8), DIMENSION(:), POINTER :: Href => NULL()
     Real(r8), DIMENSION(:), POINTER :: t_zeta_basis => NULL()
     Real(r8), DIMENSION(:), POINTER :: t_phi_basis => NULL()
+    Real(r8), DIMENSION(:), POINTER :: t_geod_lat => NULL()
     Logical , DIMENSION(:), POINTER :: is_f_log => NULL()
     Real(r8), DIMENSION(:,:), POINTER :: t_coeff => NULL()
     Real(r8), DIMENSION(:,:), POINTER :: f_zeta_basis => NULL()
@@ -103,6 +104,9 @@ module L2_TEST_STRUCTURES_M
 !
 end module L2_TEST_STRUCTURES_M
 ! $Log$
+! Revision 1.6  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.5  2001/03/15 12:18:03  zvi
 ! Adding the Velocity effect on Line center frequency
 !

@@ -67,8 +67,8 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
   no_sps = pfs(1)%no_sps
   mnf =  size(frequencies)
 
-  call output('In get_beta_path_m',advance='yes')
-  call dump(frequencies)
+! call output('In get_beta_path_m',advance='yes')
+! call dump(frequencies)
 !
   Vel_z_correction = 1.0_r8 + vel_z / c
 !
@@ -208,6 +208,9 @@ Real(r8) :: v0sm(MAXLINES), x1m(MAXLINES), ym(MAXLINES), yim(MAXLINES), &
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.11  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.10  2001/03/20 02:29:26  livesey
 ! Interim version, gets same numbers as zvi
 !

@@ -505,15 +505,16 @@ Character (LEN=80) :: Fnd, Line
     goto 99
   endif
 
-  read(11,'(A)',iostat=io) Ax
-  if(io /= 0) goto 99
-
   no_t = T_FMI%no_t
   no_phi_t = T_FMI%no_phi_t
-  DEALLOCATE(T_FMI%t_zeta_basis,T_FMI%t_phi_basis,T_FMI%t_coeff,STAT=i)
+  DEALLOCATE(T_FMI%t_zeta_basis,T_FMI%t_phi_basis,T_FMI%t_geod_lat, &
+             T_FMI%t_coeff,STAT=i)
   ALLOCATE(T_FMI%t_zeta_basis(no_t),T_FMI%t_phi_basis(no_phi_t),   &
- &         T_FMI%t_coeff(no_t,no_mmaf),STAT=i)
+           T_FMI%t_geod_lat(no_phi_t),T_FMI%t_coeff(no_t,no_mmaf),STAT=i)
   if(i /= 0) goto 99
+
+  read(11,'(A)',iostat=io) Ax
+  if(io /= 0) goto 99
 
   read(11,*,iostat=io) (T_FMI%t_zeta_basis(i),i=1,no_t)
   if(io /= 0) goto 99
@@ -525,6 +526,14 @@ Character (LEN=80) :: Fnd, Line
   read(11,*,iostat=io) (dummy(i),i=1,no_phi_t)
   if(io /= 0) goto 99
   T_FMI%t_phi_basis(1:no_phi_t) = dummy(1:no_phi_t) * deg2rad
+
+  read(11,'(A)',iostat=io) Ax
+  if(io /= 0) goto 99
+
+  dummy(1:) = 0.0
+  read(11,*,iostat=io) (dummy(i),i=1,no_phi_t)
+  if(io /= 0) goto 99
+  T_FMI%t_geod_lat(1:no_phi_t) = dummy(1:no_phi_t)
 
   read(11,'(A)',iostat=io) Ax
   if(io /= 0) goto 99
@@ -957,6 +966,9 @@ END SUBROUTINE get_filters
 
 end module L2_LOAD_M
 ! $Log$
+! Revision 1.11  2001/03/20 11:03:16  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.10  2001/03/20 02:31:00  livesey
 ! Interim version, gets same numbers as zvi
 !

@@ -1,5 +1,6 @@
 module GEOC_GEOD_CONV_M
   use MLSCommon, only: R8
+  use Geometry  !  , only: GeodToGeocLat
   use STRINGS, only: STRLWR
   use L2PC_FILE_PARAMETERS, only: DEG2RAD
   use L2PC_PFA_STRUCTURES, only: EARTH_MAJOR, EARTH_MINOR
@@ -16,12 +17,13 @@ contains
 
 !---------------------------------------------------------------------
 
-SUBROUTINE geoc_geod_conv(beta_inc,phi_tan,geoc_lat,Rp)
+SUBROUTINE geoc_geod_conv(beta_inc,phi_tan,geod_lat,geoc_lat,Rp)
 
 Real(r8), INTENT(IN) :: beta_inc                ! In Degrees
 Real(r8), INTENT(IN) :: phi_tan                 ! In Radians
+Real(r8), INTENT(IN) :: geod_lat                ! In Radians
 
-Real(r8), INTENT(IN OUT) :: geoc_lat            ! In Degrees
+Real(r8), INTENT(OUT) :: geoc_lat               ! In Radians
 
 Real(r8), INTENT(OUT) :: rp
 
@@ -43,24 +45,14 @@ Real(r8) :: q,r,incl,cw,sw,b2
 
   c2oa2 = c2 / a2
 !
-! Get the Geocentric Lat. (geoc_lat) from the Tangent Phi
+! Get the Geocentric Lat. (geoc_lat) from the Geodetic Lat.
+
+  geoc_lat = GeodToGeocLat(geod_lat)
 !
   spt = SIN(Phi_tan)
   cpt = COS(Phi_tan)
   sw = spt * spt
   cw = 1.0d0 - sw
-  r = a2*a2*cw +b2*b2*sw
-
-! q = spt*b2/Sqrt(r)/COS(incl)
-  q = spt*b2/Sqrt(r)
-
-  if(q > 1.0) then
-    Print *,'** Error in geoc_geod_conv routine ...'
-    Print *,'   Trying to take ArcSin(arg) for arg > 1.0'
-    Stop
-  endif
-
-  geoc_lat = DASIN(q)                  ! In Radians
 
   nphi_tan = a2 / SQRT(c2-(c2-a2)*cw)
 
@@ -83,6 +75,9 @@ Real(r8) :: q,r,incl,cw,sw,b2
 
 End module GEOC_GEOD_CONV_M
 ! $Log$
+! Revision 1.2  2001/03/20 11:03:15  zvi
+! Fixing code for "real" data run, increase dim. etc.
+!
 ! Revision 1.1  2001/01/31 22:40:12  zvi
 ! Add new version
 !
