@@ -1241,10 +1241,7 @@ contains
             do_calc_hyd_c(1:npc,:) = do_calc_hyd(indices_c(1:npc),:)
             do_calc_t_c(1:npc,:) = do_calc_t(indices_c(1:npc),:)
             eta_zxp_t_c(1:npc,:) = eta_zxp_t(indices_c(1:npc),:)
-!
-            DO i = 1 , no_ele
-              t_der_path_flags(i) = ANY(do_calc_t(i,:))
-            ENDDO
+            t_der_path_flags(1:no_ele) = any(do_calc_t(1:no_ele,:),2)
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
@@ -1278,9 +1275,7 @@ contains
             do_calc_hyd_c(1:npc,:) = do_calc_hyd(indices_c(1:npc),:)
             do_calc_t_c(1:npc,:) = do_calc_t(indices_c(1:npc),:)
             eta_zxp_t_c(1:npc,:) = eta_zxp_t(indices_c(1:npc),:)
-            DO i = 1 , no_ele
-              t_der_path_flags(i) = ANY(do_calc_t(i,:))
-            ENDDO
+            t_der_path_flags(1:no_ele) = any(do_calc_t(1:no_ele,:),2)
           else
             call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
@@ -2606,6 +2601,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.150  2003/06/18 22:26:41  vsnyder
+! Restored the check to the wrong place at 2.149
+!
 ! Revision 2.149  2003/06/18 19:29:30  vsnyder
 ! Replace a check inadvertently deleted in rev 2.146
 !
