@@ -13,11 +13,11 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   USE Hdf, ONLY: DFNT_CHAR8, DFNT_FLOAT32, DFNT_INT32, DFNT_FLOAT64
   USE HDFEOS!, ONLY: SWATTACH, SWCREATE, SWDEFDFLD, SWDEFDIM, SWDEFGFLD, &
      !& SWDETACH
-  USE SWAPI, ONLY: SWWRFLD!,SWRDFLD
+  USE SWAPI, ONLY: SWWRFLD, SWRDFLD
   
   IMPLICIT NONE
-  INTEGER :: SWRDFLD
-  EXTERNAL SWRDFLD !Should USE SWAPI
+!  INTEGER :: SWRDFLD
+!  EXTERNAL SWRDFLD !Should USE SWAPI
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER(len=256), PRIVATE :: Id = &
        & "$Id$"
@@ -1141,6 +1141,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.11  2001/02/03 00:04:26  pwagner
+! Uncommented EXTERNAL SWRDFLD until swapi done
+!
 ! Revision 2.10  2001/02/02 17:15:02  livesey
 ! Changed order of DIM_NAME12 and DIM_NAME123, this should be right now!
 !
