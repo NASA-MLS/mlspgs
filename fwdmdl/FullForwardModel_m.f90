@@ -1085,11 +1085,12 @@ contains ! ================================ FullForwardModel routine ======
         if ( toggle(emit) .and. levels(emit) > 4 ) &
           & call Trace_Begin ( 'ForwardModel.MetricsEtc' )
 
+        phi_tan = firstRadiance%template%phi(1,MAF)*Deg2Rad
+
         if (ptg_i < surfaceTangentIndex) then
           neg_tan_ht = temp%values(1,mafTInstance) * &
             &  (tan_press(ptg_i) - z_glgrid(1)) / 14.8_rp
           e_rflty = earthRefl%values(1,1)
-          phi_tan = firstRadiance%template%phi(1,MAF)*Deg2Rad
 
           ! *** This is where we will interpolate Phi_tan
 
@@ -2087,6 +2088,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.28  2002/02/05 21:54:29  zvi
+! Fix a bug ..
+!
 ! Revision 2.27  2002/02/04 22:44:40  zvi
 ! Fixing some bugs in the automatic grid selection process
 !
