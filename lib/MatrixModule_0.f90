@@ -1546,8 +1546,8 @@ contains ! =====     Public Procedures     =============================
               & "U matrix in SolveCholeskyV_0 is singular" )
           ! dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
           ! &            b(u%r1(i):u%r1(i)+u%r2(i)-u%r2(i-1)-1) )
-          my_b(i) = my_b(i) - dot(u%r2(i)-u%r2(i-1), &
-            &                     u%values(u%r2(i-1)+1,1), 1, my_b(u%r1(i)), 1)
+          x(i) = my_b(i) - dot(u%r2(i)-u%r2(i-1), &
+            &                  u%values(u%r2(i-1)+1,1), 1, my_b(u%r1(i)), 1) / d
         end do ! i = 1, n
       case ( M_Column_Sparse )
         do i = 1, n
@@ -1559,8 +1559,9 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
           do h = u%r1(i-1)+1, u%r1(i)-1
-            my_b(i) = my_b(i) - u%values(h,1) * my_b(u%r2(h))
+            x(i) = my_b(i) - u%values(h,1) * my_b(u%r2(h))
           end do ! h = u%r1(i-1)+1, u%r1(i)-1
+          x(i) = x(i) / d
         end do ! i = 1, n
       case ( M_Full )
         do i = 1, n
@@ -1569,7 +1570,7 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
           ! dot_product( u%values(1:i-1,i), my_b(1:i-1) )
-          my_b(i) = my_b(i) - dot(i-1, u%values(1,i), 1, my_b(1), 1)
+          x(i) = my_b(i) - dot(i-1, u%values(1,i), 1, my_b(1), 1) / d
         end do ! i = 1, n
       end select
     else             ! solve U X = B for X
@@ -1586,7 +1587,7 @@ contains ! =====     Public Procedures     =============================
           & call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "U matrix in SolveCholeskyV_0 is singular" )
         ! dot_product( ud(i,i+1:n), my_b(i+1:n) )
-        my_b(i) = my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), my_b(i+1), 1)
+        x(i) = my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), my_b(i+1), 1) / d
       end do ! i = 1, n
       if ( u%kind /= M_Full ) &
         & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
@@ -1907,6 +1908,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.27  2001/05/11 22:02:06  vsnyder
+! Correct errors in SolveCholeskyV_0
+!
 ! Revision 2.26  2001/05/10 22:53:36  vsnyder
 ! Handle empty block creation differently.  Add Update and Subtact to
 ! MultiplyMatrixVector* where it wasn't before.  Get CholeskyFactor_1 to work.
