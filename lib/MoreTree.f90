@@ -5,10 +5,14 @@ module MoreTree
 
 ! Some routines for tree analysis that don't quite fit anywhere else.
 
-  use Tree, only: Decoration, Node_ID, Subtree, nsons
+  use Tree, only: Decoration, Node_ID, NSons, Subtree
   
   implicit NONE
   public
+
+  interface FillArray
+    module procedure FillIntegerArray, FillStringArray
+  end interface FillArray
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -20,6 +24,72 @@ module MoreTree
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
+
+  ! -------------------------------------------  FillIntegerArray  -----
+  integer function FillIntegerArray ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the decorations of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Allocate_Deallocate, only: Allocate_Test
+    use Output_m, only: Output
+    use String_Table, only: Display_String
+    use Tree, only: Node_Kind, Pseudo, Sub_Rosa
+
+    integer, intent(in) :: Where ! in the tree
+    integer, pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName
+    integer :: Gson, J, N
+
+    error = 0
+    n = nsons(where)
+    call allocate_test ( array, n-1, arrayName, moduleName )
+    do j = 2, n
+      gson = subtree(j,where)
+      if ( node_kind(gson) == pseudo ) then
+        array(j-1) = decoration(gson)
+      else
+        error = 1
+        call startErrorMessage ( where )
+        call output ( 'Range not allowed for ' )
+        call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
+      end if
+    end do
+  end function FillIntegerArray
+
+  ! --------------------------------------------  FillStringArray  -----
+  integer function FillStringArray ( Where, Array, ArrayName ) result(Error)
+    ! Fill Array with the sub-rosas of sons 2..n of Where.
+    ! Result > 0 => field had a range in it.
+    ! Array is allocated here with Allocate_Test, so don't send me an
+    ! undefined pointer!
+    use Allocate_Deallocate, only: Allocate_Test
+    use MLSStrings, only: Capitalize
+    use Output_m, only: Output
+    use String_Table, only: Display_String, Get_String
+    use Tree, only: Node_Kind, Pseudo, Sub_Rosa
+
+    integer, intent(in) :: Where ! in the tree
+    character(len=*), pointer :: Array(:)
+    character(len=*), intent(in) :: ArrayName
+    integer :: Gson, J, N
+
+    error = 0
+    n = nsons(where)
+    call allocate_test ( array, n-1, arrayName, moduleName )
+    do j = 2, n
+      gson = subtree(j,where)
+      if ( node_kind(gson) == pseudo ) then
+        call get_string ( sub_rosa(gson), array(j-1), strip=.true. )
+        array(j-1) = capitalize(array(j-1))
+      else
+        error = 1
+        call startErrorMessage ( where )
+        call output ( 'Range not allowed for ' )
+        call display_string ( sub_rosa(subtree(1,where)), advance='yes' )
+      end if
+    end do
+  end function FillStringArray
 
   ! ------------------------------------------------  Get_Boolean  -----
   logical function Get_Boolean ( Root )
@@ -67,18 +137,6 @@ contains ! ====     Public Procedures     ==============================
     get_spec_id = decoration(subtree(1,decoration(subtree(1,root))))
   end function Get_Spec_Id
 
-  ! -----------------------------------  GetStringIndexFromString  -----
-  integer function GetStringIndexFromString ( line, caseSensitive )
-    use Symbol_Types, only: T_IDENTIFIER
-    use Symbol_Table, only: ENTER_TERMINAL
-
-    character (len=*), intent(in) :: LINE
-    logical, optional, intent(in) :: CASESENSITIVE
-    ! Executable code
-    GetStringIndexFromString = enter_terminal ( trim(line), t_identifier, &
-      & caseSensitive=caseSensitive )
-  end function GetStringIndexFromString
-
   ! --------------------------------------  GetLitIndexFromString  -----
   integer function GetLitIndexFromString ( line, stringIndex )
     use Declaration_Table, only: GET_DECL, DECLS, ENUM_VALUE
@@ -96,6 +154,18 @@ contains ! ====     Public Procedures     ==============================
     getLitIndexFromString = decl%units
     if ( decl%type /= enum_value )  getLitIndexFromString = -huge(0)
   end function GetLitIndexFromString
+
+  ! -----------------------------------  GetStringIndexFromString  -----
+  integer function GetStringIndexFromString ( line, caseSensitive )
+    use Symbol_Types, only: T_IDENTIFIER
+    use Symbol_Table, only: ENTER_TERMINAL
+
+    character (len=*), intent(in) :: LINE
+    logical, optional, intent(in) :: CASESENSITIVE
+    ! Executable code
+    GetStringIndexFromString = enter_terminal ( trim(line), t_identifier, &
+      & caseSensitive=caseSensitive )
+  end function GetStringIndexFromString
 
   ! -----------------------------------------------------  Scalar  -----
   logical function Scalar ( Root )
@@ -133,6 +203,9 @@ contains ! ====     Public Procedures     ==============================
 end module MoreTree
 
 ! $Log$
+! Revision 2.13  2005/01/20 01:31:07  vsnyder
+! Add FillArray, FillIntegerArray, FillStringArray
+!
 ! Revision 2.12  2004/11/17 20:24:20  vsnyder
 ! Add SCALAR function to check for scalar field value
 !
