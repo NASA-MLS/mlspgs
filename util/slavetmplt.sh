@@ -16,6 +16,47 @@
 # It will attempt to set some toolkt-savvy environment variables
 # and then launch the regular mlsl2 binary
 
+get_unique_name()
+{
+
+      me="$0"
+      my_name=unique_name.sh
+   # How many args?
+      if [ $# -gt 1 ]
+      then
+        pt="$2"
+        temp="$1"
+      elif [ $# -gt 0 ]
+      then
+        mayday=`echo "$1" | grep '\-h'`
+        if [ "$mayday" != "" ]
+        then
+          sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
+              | sed -n 's/^.//p' | sed '1 d; $ d'
+          exit
+        fi
+        pt="."
+        temp="$1"
+      else
+        pt="."
+        temp="temp"
+      fi
+   # Is $HOST defined?
+      if [ "$HOST" != "" ]
+      then
+         our_host_name="$HOST"
+      elif [ "$HOSTNAME" != "" ]
+      then
+         our_host_name="$HOSTNAME"
+      else
+         our_host_name="host"
+      fi
+    #  echo $our_host_name
+   # if in form host.moon.planet.star.. extract host
+      our_host_name=`echo $our_host_name | sed 's/\./,/g'`
+      our_host_name=`perl -e '@parts=split(",","$ARGV[0]"); print $parts[0]' $our_host_name`
+      echo $temp${pt}$our_host_name${pt}$$
+}
 #---------------------------- do_the_call
 #
 # Put after a trip through the main program simply to
@@ -33,15 +74,15 @@ PGSMEM_USESHM=NO
 PGS_PC_INFO_FILE=ppccff
 
 # The following choice puts the outputs of all the slaves into a single file
-LOGFILE="$PVM_BIN/mlsl2.log"
+#LOGFILE="$PVM_BIN/mlsl2.log"
 
 # The next choice, in contrast, puts each slave's output into its own unique file
-#temp_file_name=`unique_name.sh mlsl2`
-#LOGFILE="$PVM_BIN/$temp_file_name"
+temp_file_name=`get_unique_name mlsl2`
+LOGFILE="$PVM_BIN/$temp_file_name"
 
 if [ ! -w "$LOGFILE" ]
 then
-  echo "#mlsl2.log" > "$LOGFILE"
+  echo "#$LOGFILE mlsl2.log" > "$LOGFILE"
 fi
 
 SLVPROG=mlsl2.ssllaavvee
@@ -127,6 +168,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.3  2003/09/11 20:17:13  pwagner
+# Passes --skipRetr[] option to mlsl2
+#
 # Revision 1.2  2003/09/05 23:45:51  pwagner
 # Made name of log file a variable: LOGFILE; tweaked initial comments
 #
