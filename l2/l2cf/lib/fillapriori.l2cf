@@ -335,8 +335,7 @@ begin Fill
   Fill, quantity=hReg.h2o, method=profile, $
     profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
   Fill, quantity=hReg.h2o_HR, method=profile, profileValues= $
-    [ 316mb:10ppmv, 215mb:1ppmv, 147mb:0.1ppmv, $
-    100mb:0.05ppmv, 10mb:0.05ppmv, 1mb:0.3ppmv ], logSpace=false
+    profileValues=[ 146mb:0ppmv, 100mb:0.3ppmv, 0.1mb:0.3ppmv, 0.068mb:0ppmv ], logSpace=false
 
   Fill, quantity=hReg.hcl, method=profile, $
     profileValues= [ 0.1mb:0.3ppbv, 0.068mb:0ppbv ]
