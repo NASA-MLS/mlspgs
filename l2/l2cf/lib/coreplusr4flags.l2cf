@@ -34,15 +34,18 @@ begin Fill
 
   ;; ------------------------------------- Temperature-CorePlusR4
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=10K,cloudMin=-10K)
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
 
   ;; ------------------------------------- GPH-CorePlusR4
   !define(flaggingBands,{1,22,32})
-  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=10K,cloudMin=-10K)
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=1000,cloudMax=10K,cloudMin= -10K)
 
 end Fill
 
 ; $Log$
+; Revision 1.4  2004/04/27 23:50:38  livesey
+; Added low cloud flagging for temperature/GPH
+;
 ; Revision 1.3  2004/04/27 23:46:26  livesey
 ; Added GPH
 ;
