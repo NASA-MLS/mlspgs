@@ -55,7 +55,13 @@ contains
 
     type (beta_group_T), dimension(:) :: beta_group
 
-    integer, intent(in)  :: ICON
+!    integer, intent(in)  :: ICON
+    integer :: ICON                 ! this will be changed with intent(in) option
+!-----------------------------------------------------------------------------
+! ICON indicates different clear and cloudy sky combinations:
+!		ICON=-1 is for clear-sky radiance limit assuming 110%RHi
+!		ICON=-2 is for clear-sky radiance limit assuming 0%RHi
+!-----------------------------------------------------------------------------
     logical, intent(in) :: Incl_Cld
 
 ! Optional inputs.  GL_SLABS_* are pointers because the caller need not
@@ -86,13 +92,15 @@ contains
 
     integer(ip) :: i, j, k, n, ib, Spectag, no_of_lines, &
               &    no_mol, n_path
-    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm, cld_ext
+    real(rp) :: ratio, bb, vp, v0, vm, t, tm, tp, bp, bm, cld_ext, RHI
     real(rp), allocatable, dimension(:) :: LineWidth
     real(rp), dimension(size(path_inds)) :: betam, betap
 
     real(rp) :: P, Vapor_P
 
 ! begin the code
+
+    ICON=0  ! this will be removed later
 
     no_mol = size(beta_group)
     n_path = size(path_inds)
@@ -111,9 +119,15 @@ contains
         do j = 1, n_path
           k = path_inds(j)
 
-          ! mask 100%RH below 100mb
-          if ( Spectag == SP_H2O .and. ICON == -1 .and. p_path(k) >= 100. ) then
-            ratio = RHIFromH2O_Factor (t_path(k), z_path_c(k), 0, .true.)*100.0_r8
+          ! do the following only if ICON not equal to 0
+          if ( Spectag == SP_H2O .and. p_path(k) >= 100. .and. ICON .ne. 0) then
+            select case ( ICON )
+            case ( -1 )
+              RHI=110.0_r8
+            case ( -2 )
+              RHI=1.0e-9_r8
+            end select  
+            ratio = RHIFromH2O_Factor (t_path(k), z_path_c(k), 0, .true.)*RHI
             ! optional 0 will return ratio as parts per 1, as Bill uses here.
           end if                                 
 
@@ -123,7 +137,7 @@ contains
           if ( .not. Incl_Cld ) then
              beta_path(j,i) = beta_path(j,i) + ratio * bb 
           else
-             beta_path(j,i) = beta_path(j,i) + ratio * bb + cld_ext   ! cld_ext = 0. for now 1/31
+             beta_path(j,i) = beta_path(j,i) + ratio * bb + cld_ext 
           end if
           if ( associated(dbeta_dw_path)) &
             &  dbeta_dw_path(j,i) = dbeta_dw_path(j,i) + ratio * v0
@@ -266,6 +280,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.18  2003/02/03 22:56:58  vsnyder
+! Add Get_bata_path_polarized
+!
 ! Revision 2.17  2003/01/31 18:45:09  jonathan
 ! use cld_ext only if Incl_Cld is ture
 !
