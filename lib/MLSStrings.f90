@@ -33,6 +33,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! GetStringHashElement   Returns string from hash list corresponding to key string
 ! GetUniqueStrings   Returns array of only unique entries from input array
 ! hhmmss_value       Converts 'hh:mm:ss' formatted string to a real r8
+! ints2Strings       Converts an array of integers to strings using "char" ftn
 ! LinearSearchStringArray     Finds string index of substring in array of strings
 ! LowerCase          tr[A-Z] -> [a-z]
 ! NumStringElements  Returns number of elements in list of strings
@@ -40,6 +41,7 @@ CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 ! Reverse            turns 'a string' -> 'gnirts a'
 ! ReverseList        turns 'abc, def, ghi' -> 'ghi, def, abc'
 ! SplitWords         Splits 'first, the, rest, last' -> 'first', 'the, rest', 'last'
+! strings2Ints       Converts an array of strings to ints using "ichar" ftn
 ! StringElementNum   Returns element number of test string in string list
 ! unquote            Removes surrounding [quotes]
 
@@ -612,6 +614,35 @@ CONTAINS
 
   end Function hhmmss_value
 
+  ! --------------------------------------------------  int2String  -----
+  SUBROUTINE ints2Strings (ints, strs)
+    ! takes an array of integers and returns string array
+    ! using "char"
+	 ! Useful due to bug in toolbox swrfld
+	 !
+	 ! See also strings2Ints
+    !--------Argument--------!
+    !    dimensions are (len(strs(1)), size(strs(:)))
+    integer, intent(in), dimension(:,:) ::          ints
+    CHARACTER (LEN=*), INTENT(OUT), dimension(:) :: strs
+
+    !----------Local vars----------!
+    INTEGER :: i, substr, strLen, arrSize
+    !----------Executable part----------!
+
+   ! Check that all is well (if not returns blanks)
+   strLen = MIN(len(strs(1)), size(ints, dim=1))
+   arrSize = MIN(size(strs), size(ints, dim=2))
+   strs = ' '
+   if(strLen <= 0 .or. arrSize <= 0) return
+   do i=1, arrSize
+      do substr=1, strLen
+         strs(i)(substr:substr) = achar(ints(substr, i))
+      enddo
+   enddo
+
+  END SUBROUTINE ints2Strings
+
   ! ------------------------------------  LinearSearchStringArray  -----
 
   ! This routine does a simple linear search for a string in a list.
@@ -1103,6 +1134,37 @@ CONTAINS
 
   END SUBROUTINE SplitWords
        
+  ! --------------------------------------------------  int2String  -----
+  SUBROUTINE strings2Ints (strs, ints)
+    ! takes an array of strings and returns integer array
+    ! using "ichar"
+	 ! Useful due to bug in toolbox swrfld
+	 !
+	 ! See also ints2Strings
+    !--------Argument--------!
+    !    dimensions are (len(strs(1)), size(strs(:)))
+    CHARACTER (LEN=*), INTENT(in), dimension(:) ::   strs
+    integer, intent(out), dimension(:,:) ::          ints
+
+    !----------Local vars----------!
+    integer, parameter :: LENORSIZETOOSMALL=-999
+    INTEGER :: i, substr, strLen, arrSize
+    !----------Executable part----------!
+
+   ! Check that all is well (if not returns blanks)
+   strLen = MIN(len(strs(1)), size(ints, dim=1))
+   arrSize = MIN(size(strs), size(ints, dim=2))
+   ints = LENORSIZETOOSMALL
+   if(strLen <= 0 .or. arrSize <= 0) return
+   ints=iachar(' ')
+   do i=1, arrSize
+      do substr=1, strLen
+         ints(substr, i) = iachar(strs(i)(substr:substr))
+      enddo
+   enddo
+
+  END SUBROUTINE strings2Ints
+
   ! ---------------------------------------------  StringElementNum  -----
 
   ! This function takes a (usually) comma-delimited string list, interprets it
@@ -1323,6 +1385,9 @@ END MODULE MLSStrings
 !=============================================================================
 
 ! $Log$
+! Revision 2.16  2001/08/03 00:03:08  pwagner
+! Added ints2Strings and strings2Ints
+!
 ! Revision 2.15  2001/06/20 23:23:39  vsnyder
 ! Same as last time, but for LowerCase instead of Capitalize.
 !
