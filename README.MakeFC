@@ -36,6 +36,20 @@ back later if you are curious or if something goes wrong.
 For more information on obtaining and installing the SDP Toolkit, PVM, and
 the FFTW libraries, enter BEFORE.mls
 
+CONTENTS
+I     SUMMARY
+II    CONTENTS
+III   INTRODUCTION
+IV    WHAT YOU NEED
+V     BUILDING THE SOFTWARE
+VI    BUILDING ONLY PARTS OF THE SOFTWARE
+VII   OTHER OPTIONS
+VIII  HOW IT WORKS
+IX    CALL TO ACTION
+X     ACTUAL BUGS
+XI    IMPERFECTIONS AND COMPLICATIONS
+XII   ADVANCED SETTINGS
+
 INTRODUCTION
 An attempt has been made to minimize the amount of editing and configuring each
 user must perform in building the mls software. "User" in this context means
@@ -124,10 +138,11 @@ HDFEOS_LIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/sgi
 HDFLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/sgi/HDF4.1r3/lib
 PGSLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/lib/sgi
 
-This explanation has been given with a great deal of detail (perhaps too
-much) because it is very important. It may seem overwhelming, and you
-may exclaim, "Wasn't this supposed to make things easier?" Fortunately,
-the configuration will have to done only this once.
+This explanation has been given with a great deal of detail (perhaps too much)
+because it is very important. E.g., an empty value for the toolkit path will
+even prevent successfully compiling any of the mls sources. It may seem
+overwhelming, and you may exclaim, "Wasn't this supposed to make things
+easier?" Fortunately, the configuration will have to done only this once.
 
 BUILDING ONLY PARTS OF THE SOFTWARE
 If you wish to build only lib, for example, you may specify that target,
@@ -195,7 +210,7 @@ export PGSLIB
 export HDFEOS_LIB
 export HDFLIB
 
-In addition, in lib, l1, l2, and l3 a new directory will be created with a
+In addition, inside lib, l1, l2, and l3 a new directory will be created with a
 unique name given by the value of MLSCONFG. In the example above that name
 would be NAG.Linux. In this directory mlsconfigure places a Makefile which is
 the catenation of .configure with two files found in the directory platforms:
@@ -286,7 +301,7 @@ Makefile created will therefore compile the routine only if you use Lahey.
 The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
 link properly. Sun and SGI versions seem correct. The solution is to build
 correct ones. See Hugh's page  http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt
-for instructions.
+for instructions. Hopefully this bug will disappear with the next release.
 
 IMPERFECTIONS AND COMPLICATIONS
 The only combinations of compiler.platform/OS provided for so far are
@@ -309,7 +324,13 @@ your configuration handy, copy it someplace, like ~/mls.configure, then copy it
 back whenever needed. As each MLSCONFG directory is uniquely named, you may
 build multiple versions of the mls software. For example, I built versions for
 both Sun and Linux platforms in my home directory. I can switch between versions
-by overwriting the current .configure with one saved for the other version.
+by overwriting the current .configure with one saved for the other platform.
+
+Sometimes after doing a cvs update, the next "make -f MakeFC" command will
+cause make to exit complaining about an illegal separator. This is usually
+the result of cvs "merging" your copy of Makefile.dep with one it has archived.
+The solution is to do a "make -f MakeFC depends" to create a fresh, unmerged
+copy.
 
 The sources currently must reside directly under lib, srclib, or l[1-3], and
 this fact is "hard-wired" into the Makefiles. It may become desirable to
@@ -323,20 +344,20 @@ Under the lib directory is a lib/tests subdirectory containing five
 test programs. They were used to test libmls.a during development. It
 is possible they may no longer work, nor even compile and link properly.
 
-Another wrinkle in the lib directory is the versions of machine.f90
-which lurk under platforms with names like NAG.Linux.machine. They are
-intended to contain machine/OS/compiler specific information the
-software can obtain at runtime. As a start, I simply copied NAG.Linux
-into NAG.*, which is probably incorrect.
+Another wrinkle in the lib directory is the versions of machine.f90 which lurk
+under machines with names like machines/NAG.Linux/machine.f90 They are intended
+to contain machine/OS/compiler specific information the software can obtain at
+runtime. As a start, I simply copied NAG.Linux into NAG.*, which is probably
+incorrect.
 
-Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
+Examining lib/platform/targets reveals yet another wrinkle in lib: one of the
 sources required special compiler flags to compile successfully under NAG. You
-will see them mentioned explicitly at the end with their custom build
-instructions. The method whereby machine.o is created is also concealed there.
+will see it mentioned explicitly at the end with its custom build
+instructions.
 
 At the cost of making configuration more complex, an option could be
 added that would allow extra settings, e.g. compiler flags could be set
-to suppress warning messages.
+to suppress warning messages. Until then, see the advanced settings below.
 
 The dependencies calculated by makedepf90 check only among files in the same
 directory as the source files. A consequence of this is that it does not show
@@ -349,10 +370,40 @@ If this ever seems to work well enough, similar MakeFC and platforms
 could be devised for the remaining parts of mls. By design it remains an
 optional way to build, coexisting in parallel with other ways.
 
+ADVANCED SETTINGS
+These include features which are otherwise given default values which may prove
+unacceptable for reasons of performance or because debugging flags need to be
+set for the compiler and loader. There may be more than one way to give a value
+to any of these settings. One way is to assign the value on the same line where
+make is invoked; e.g.
+	make -f MakeFC target FOPTS="-g90" LDOPTS="-g90"
+would compile and link for debugging by dbx90, assuming use of NAG f95.
+Alternatively, these settings might be put in .configure or set as enviroment
+variables.
+
+Setting            Use
+FOPTS              Override default compiler option; note that you must
+                   use only legal options
+LDOPTS             Override default (blank) loader option; note that you must
+                   use only legal options
+BLAS               Path to an external blas library; note that the library
+                   must then be named \$BLAS/libblas.a
+                   You would use this if you had a precompiled, highly-optimized
+                   library of the usual blas routines.
+PVM_ROOT           Path to the root of the pvm libraries; note that they
+                   must then be named \$PVM_ROOT/\$PVM_ARCH/lib*.a;
+                   You would use this if you could exploit multiple processors
+                   Warning: if PVM_ROOT is set, then so must PVM_ARCH
+PVM_ARCH           (see above)
+FFTW_ROOT          Path to the FFTW library; required for mlsl3
+
 -pw                           2000-Oct-24 to 2001-Jan-12
 EOF
 exit
 # $Log$
+# Revision 1.9  2001/01/16 21:31:19  pwagner
+# clean_all option added
+#
 # Revision 1.8  2001/01/13 00:42:09  pwagner
 # Mentions mlspgs_sips.tgz and mlspgs_subs.tar
 #
