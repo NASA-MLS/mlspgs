@@ -29,7 +29,7 @@ module FullCloudForwardModel
   use Output_m, only: OUTPUT
   use PointingGrid_m, only: POINTINGGRIDS
   use Toggles, only: Emit, Levels, Toggle
-  use Units, only: Deg2Rad
+  use Units
   use VectorsModule, only: GETVECTORQUANTITYBYTYPE,                          &
                          & VECTOR_T, VECTORVALUE_T,                          &
                          & VALIDATEVECTORQUANTITY
@@ -62,8 +62,8 @@ module FullCloudForwardModel
                      & L_CLOUDICE,                                           &
                      & L_CLOUDWATER,                                         &
                      & L_LOSTRANSFUNC,                                       &
-		     & L_SCGEOCALT,                                          &
-		     & L_ELEVOFFSET
+   		            & L_SCGEOCALT,                                          &
+		               & L_ELEVOFFSET
 
   implicit none
   private
@@ -127,30 +127,33 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: COLJBLOCK                ! Column index in jacobian
     integer :: ROWJBLOCK                ! Row index in jacobian
     integer :: XINSTANCE                ! Instance in x corresponding to xStarInstance
-    integer :: INSTANCELEN              ! For the state quantity
+    integer :: noInstances              ! no of instance
     integer :: noChans
     integer :: noMIFs
-    integer :: noSgrid
-    integer :: chan
+    integer :: noSgrid                  ! no of elements in S grid
+    integer :: noSurf                   ! Number of pressure levels
+    integer :: NQ1
+    integer :: NQ2                      ! no of quantities in extraModelIn
+    integer :: NOFREQS                  ! Number of frequencies
+    integer :: noNonZero                ! Number of nonzero values in Jacobian
 
+    integer :: chan
     integer :: i                        ! Loop counter
     integer :: j                        ! Loop counter
+    integer :: k
     integer :: ivmr
-    integer :: NQ1
-    integer :: NQ2
     integer :: mif
-    integer :: MAF                      ! The major frame 
+    integer :: MAF                      ! major frame counter
     integer :: VMRINST                  ! Instance index
     integer :: INSTANCE                 ! Relevant instance for temperature
     integer :: GPHINST                  ! Relevant instance for GPH
     integer :: NOLAYERS                 ! temp.noSurfs - 1
-    integer :: NOFREQS                  ! Number of frequencies
-    integer :: noSurf                   ! Number of pressure levels
-    integer :: noNonZero                ! Number of nonzero values in Jacobian
+    integer :: nfine                    ! no of fine resolution grids
     character :: reply
     integer :: status                   ! allocation status 
     
     integer :: quantity_type, L_quantity_type       ! added on Jul 13
+    integer :: L_stateQ_type
 
     integer, dimension(:), pointer :: closestInstances 
 
@@ -168,14 +171,21 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: A_TOTALEXTINCTION
     real(r8), dimension(:,:), pointer :: VMRARRAY               ! The VMRs
 
+    real(r8), dimension(:), pointer :: phi_fine  !fine resolution for phi 
+    real(r8), dimension(:), pointer :: z_fine  !fine resolution for z
+    real(r8), dimension(:), pointer :: ds_fine  !fine resolution for ds
+
     real(r8), dimension(:,:), pointer :: A_TRANS
     real(r8), dimension(:), pointer :: FREQUENCIES
     real(r8), dimension(:,:), allocatable :: WC
     real(r8), dimension(:,:), allocatable :: TransOnS
     real(r8) :: phi_tan
+    real(r8) :: dz                        ! thickness of state quantity
+    real(r8) :: dphi                      ! phi interval of state quantity
     
     logical, dimension(:), pointer :: doChannel ! Do this channel?
-    logical :: DODERIVATIVES                    ! Flag
+    logical :: DoHighZt                    ! Flag
+    logical :: DoLowZt                    ! Flag
     logical :: Got(2) = .false.  
     logical :: QGot(8) = .false.  
     logical :: dee_bug = .true.  
@@ -198,6 +208,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       & call MLSMessage ( MLSMSG_Error, ModuleName,                          &
       & 'Cannot call the full cloud forward model with multiple signals' )
     signal = forwardModelConfig%signals(1)
+!  find which maf is called at present
     maf = fmStat%maf
 !    print*, maf
 
@@ -307,11 +318,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! -------
     ! Inputs:
     ! -------
-    l_quantity_type = fwdModelIn%quantities(1)%template%quantityType
-
-        stateQ => GetVectorQuantityByType ( FwdModelIn, FwdModelExtra,&
-                  & quantityType = l_LosTransFunc )
-!                  & foundInFirst = foundInFirst, noError=.true. )
     
     NQ2 = fwdModelExtra%template%noQuantities
 
@@ -609,7 +615,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
 !     print*, 'about to zero cloud extinction'   
 
- ! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
+! For layer(noTempSurfs-1) stuff make sure all are zero to start, then do rest
     cloudExtinction%values(:,instance) =       0.0_r8
     massMeanDiameterIce%values(:,instance) =   0.0_r8
     massMeanDiameterWater%values(:,instance) = 0.0_r8
@@ -635,15 +641,90 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 ! ------------------
 ! output Jacobian
 ! ------------------
-    doDerivatives = present(jacobian) .and. &
-      (fwdModelIn%quantities(1)%template%quantityType == l_LosTransFunc)
+        
+! get state quantity type and determine which retrieval is to be used
+    l_stateQ_type = fwdModelIn%quantities(1)%template%quantityType
+    stateQ => GetVectorQuantityByType (FwdModelIn,quantityType = l_stateQ_type )
+! Get some dimensions that are common for both methods
+      noMIFs = radiance%template%noSurfs
+      noInstances = stateQ%template%noInstances
 
-    if (doDerivatives) then
+! Jacobian for high tangent height retrieval
+    doHighZt = present(jacobian) .and. (l_stateQ_type == l_cloudExtinction)
 
-    ! Set some dimensions
+    if (doHighZt) then
+    ! Get some dimensions
+      noSurf = stateQ%template%noSurfs
+      
+      rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
+      fmStat%rows(rowJBlock) = .true.
+      colJBlock = 0
+      do while (colJBlock <= jacobian%col%nb .and. &
+           jacobian%col%inst(colJBlock) /= maf)
+           colJBlock = colJBlock +1 
+      end do
 
+      jBlock => jacobian%block(rowJblock,colJblock)
+
+      select case ( jBlock%kind )
+      case ( M_Absent )
+        call CreateBlock ( jBlock, noMIFs, noSurf*noInstances, M_Full )
+        jBlock%values = 0.0_r8
+! we use 100 times better resolution to compute weighting functions
+      allocate( phi_fine(nfine*noInstances), stat=status )
+      allocate( z_fine(nfine*noInstances), stat=status )
+      allocate( ds_fine(nfine*noInstances), stat=status )
+      
+      do i=1,noInstances*nfine
+       phi_fine(i) = minval(stateQ%template%phi(1,:)) + &
+         & 1._r8*(i-1)/nfine/noInstances * &
+         & (maxval(stateQ%template%phi(1,:)) - minval(stateQ%template%phi(1,:)))
+      end do 
+      
+      do mif = 1, noMIFs
+        ! find intervals of stateQ at maf
+        dz = abs(stateQ%template%surfs(2,maf)-stateQ%template%surfs(1,maf))
+        dphi = abs(stateQ%template%phi(2,maf)-stateQ%template%phi(1,maf))
+        ! find z for given phi_fine
+        z_fine = (earthradius%values(1,maf)+ &
+         & (ptan%values(mif,maf)+3.)*16.) / &
+         & cos((phi_fine - radiance%template%phi(mif,maf))*pi/180._r8) - &
+         & earthradius%values(1,maf)
+        z_fine = z_fine/16._r8 - 3._r8    ! convert back to log pressure
+        ! fine ds for each (z,phi) pair
+        ds_fine = (earthradius%values(1,maf)+ &
+         & (ptan%values(mif,maf)+3.)*16.) / &
+         & cos((phi_fine - radiance%template%phi(mif,maf))*pi/180._r8)**2
+        ! determine weights by the length inside each state domain
+         do i = 1,noInstances  ! loop over profile
+         do j = 1,noSurf       ! loop over surface
+         do k = 1, nfine*noInstances
+           if(abs(z_fine(k) - stateQ%template%surfs(j,i)) < dz/2. &
+           & .AND. abs(phi_fine(k) - stateQ%template%phi(j,i)) < dphi/2.) &
+           & jBlock%values(mif,j+(i-1)*noInstances) = &
+           & jBlock%values(mif,j+(i-1)*noInstances) + ds_fine(k)
+         end do
+         end do
+         end do 
+      end do
+      
+      Deallocate( phi_fine, stat=status )
+      Deallocate( z_fine, stat=status )
+      Deallocate( ds_fine, stat=status )
+
+      case default
+         call MLSMessage(MLSMSG_Error, ModuleName, &
+                 & "Invalid matrix block kind in CreateBlock")              
+      end select
+    end if
+
+! Jacobian for low tangent height retrieval
+    doLowZt = present(jacobian) .and. (l_stateQ_type == l_LosTransFunc)
+
+    if (doLowZt) then
+
+    ! Get some dimensions
         noChans = radiance%template%noChans
-        noMIFs = radiance%template%noSurfs
         noSgrid=stateQ%template%noChans
 
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
@@ -656,13 +737,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
         jBlock => jacobian%block(rowJblock,colJblock)
 
-        instanceLen = noSurf*noMIFs
 
         select case ( jBlock%kind )
         case ( M_Absent )
-        call CreateBlock ( jBlock, &
-                         & noChans*noMIFs, noSgrid*noMIFs, &
-                         & M_Full )
+        call CreateBlock ( jBlock, noChans*noMIFs, &
+            & noSgrid*noMIFs*noInstances, M_Full )
         jBlock%values = 0.0_r8
 
         allocate( TransOnS(noSgrid, noMIFs), stat=status )
@@ -687,8 +766,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
                     do mif = 1, noMIFs
                     do i=1,noSgrid
-                     jBlock%values(chan+(mif-1)*noChans,i+(mif-1)*noSgrid) &
-                       & = TransOnS(i,mif)
+                     jBlock%values(chan+(mif-1)*noChans, & 
+                       & i+(mif-1)*noSgrid+(maf-1)*noInstances)= TransOnS(i,mif)
                     end do
                     end do
          end if
@@ -698,10 +777,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
         case ( M_Banded )
         
-        noNonZero = noSgrid*noMIFs
+        noNonZero = noSgrid*noMIFs*noInstances
         
-        call CreateBlock ( jBlock, &
-                         & noChans*noMIFs, noSgrid*noMIFs, &
+        call CreateBlock ( jBlock, noChans*noMIFs, &
+                         & noSgrid*noMIFs*noInstances, &
                          & M_Banded, noNonZero )
 
         allocate( TransOnS(noSgrid, noMIFs), stat=status )
@@ -730,7 +809,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
             do i=1,noSgrid
             do mif=1,noMIFs
             jBlock%r1(i+(mif-1)*noSgrid) = noChans*(mif-1)
-            jBlock%r2(i+(mif-1)*noSgrid) = noChans*(i+(mif-1)*noSgrid)
+            jBlock%r2(i+(mif-1)*noSgrid) = noChans* & 
+               & (i+(mif-1)*noSgrid+(maf-1)*noInstances)
             jBlock%values(i+(mif-1)*noSgrid,1) = TransOnS(i,mif)
             enddo
             enddo
@@ -821,6 +901,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.28  2001/09/21 15:51:37  jonathan
+! modified F95 version
+!
 ! Revision 1.27  2001/09/19 16:46:22  dwu
 ! some minor
 !
