@@ -66,7 +66,18 @@ else
    INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
 endif
 
-# where configure and makemakedep.sh are stored
+# where the following utility scripts 
+# (necessary to build the mls software) are stored
+#   amateur.sh
+#   build_f90_in_misc.sh
+#   f90GhostFiles.pl
+#   f90makedep.pl
+#   ghostbuster.sh
+#   makemakedep.sh
+#   mkdir_cascade.sh
+#   mlsconfigure*
+#   mlsprog.sh
+
 MLSBIN=util
 
 # where the platforms directory is w.r.t. each of SUBDIRS:
@@ -336,7 +347,7 @@ depends:
 
 help:
 	@sed -n '/'$(MakeFName)' help/,/End '$(MakeFName)' help/ p' $(CONFDIR)/MakeFC \
-		| sed -n 's/^..//p' | sed '$$ d'
+		| sed -n 's/^..//p' | sed '1 d; $$ d'
 
 disthelp:
 	$(CONFDIR)/README.MakeFC
@@ -598,11 +609,15 @@ update:
   all install levels configure_subdirs makefile update\
   configure_pvm configure_fopts configure_full configure_help help disthelp\
   internalcleanup internaldepends internalmftests internalsaymake \
+  internaladd_copy internalreset_copy internalupdate\
   show_copy ghostbuster\
   $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.42  2001/08/10 17:43:40  pwagner
+# Fixed -h(elp) option; general housekeeping
+#
 # Revision 1.41  2001/08/07 20:59:03  pwagner
 # install now creates script versions; defines MLSHOME
 #
