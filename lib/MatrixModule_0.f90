@@ -20,10 +20,11 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     & CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale, &
     & ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, Densify, &
     & DestroyBlock, Dump, M_Absent, M_Banded, M_Column_Sparse, M_Full, &
-    & MatrixElement_T, MultiplyMatrixBlocks, MultiplyMatrixVector, &
-    & MultiplyMatrixVectorNoT, MultiplyMatrixVector_0, operator(+), &
-    & operator(.TX.), RowScale, RowScale_0, SolveCholesky, SolveCholeskyM_0, &
-    & SolveCholeskyV_0, Sparsify, UpdateDiagonal, UpdateDiagonal_0
+    & MatrixElement_T, MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0, &
+    & MultiplyMatrixBlocks, MultiplyMatrixVector, MultiplyMatrixVectorNoT, &
+    & MultiplyMatrixVector_0, operator(+), operator(.TX.), RowScale, &
+    & RowScale_0, SolveCholesky, SolveCholeskyM_0, SolveCholeskyV_0, &
+    & Sparsify, UpdateDiagonal, UpdateDiagonal_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -49,6 +50,14 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface DUMP
     module procedure DUMP_MATRIX_BLOCK
+  end interface
+
+  interface MaxAbsVal
+    module procedure MaxAbsVal_0
+  end interface
+
+  interface MinDiag
+    module procedure MinDiag_0
   end interface
 
   interface MultiplyMatrixVector
@@ -621,6 +630,47 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( b%values, "b%values", ModuleName )
     b%kind = M_Absent
   end subroutine DestroyBlock
+
+  ! ------------------------------------------------  MaxAbsVal_0  -----
+  real(r8) function MaxAbsVal_0 ( B )
+  ! Return the magnitude of the element in B that has the largest magnitude.
+    type(MatrixElement_T), intent(in) :: B
+    maxAbsVal_0 = maxval(abs(b%values))
+  end function MaxAbsVal_0
+
+  ! --------------------------------------------------  MinDiag_0  -----
+  real(r8) function MinDiag_0 ( B )
+  ! Return the magnitude of the element on the diagonal of B that has the
+  ! smallest magnitude.
+    type(MatrixElement_T), intent(in) :: B
+    integer :: I, J
+    select case ( b%kind )
+    case ( M_Absent )
+      minDiag_0 = 0.0_r8
+    case ( M_Banded )
+      minDiag_0 = huge(0.0_r8)
+      do i = 1, min(b%nrows,b%ncols)
+        if ( b%r1(i) <= i .and. b%r1(i) + b%r2(i) - b%r2(i-1) > i ) &
+          & minDiag_0 = min(minDiag_0, abs(b%values(b%r2(i-1)+i-b%r1(i)+1,1)))
+      end do ! i
+    case ( M_Column_Sparse )
+      minDiag_0 = huge(0.0_r8)
+      do i = 1, min(b%nrows,b%ncols)
+        do j = b%r1(i-1)+1, b%r1(i)
+          if ( b%r2(j) == i ) then
+            minDiag_0 = min(minDiag_0, abs(b%values(j,1)))
+            exit ! j loop
+          end if
+          if ( b%r2(j) > i ) exit ! j loop
+        end do ! j
+      end do ! i
+    case ( M_Full )
+      minDiag_0 = abs(b%values(1,1))
+      do i = 2, min(b%nrows,b%ncols)
+        minDiag_0 = min(minDiag_0, abs(b%values(i,i)))
+      end do ! i
+    end select
+  end function MinDiag_0
 
   ! ---------------------------------------  MultiplyMatrixBlocks  -----
   subroutine MultiplyMatrixBlocks ( XB, YB, ZB, UPDATE, XMASK, YMASK )
@@ -1544,6 +1594,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.9  2001/01/19 23:50:45  vsnyder
+! Periodic commit
+!
 ! Revision 2.8  2000/11/23 01:09:19  vsnyder
 ! Add provision to ignore specified columns during matrix-matrix multiply
 !
