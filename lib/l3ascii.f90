@@ -100,7 +100,8 @@ contains
     logical :: opened
     character(len=LineLen) :: inline
     character(len=30) :: linetype, axistype, sdstring, edstring
-    character(len=80) :: filename, unitstring
+    character(len=LineLen) :: filename
+    character(len=80) :: unitstring
     real(kind=r8), pointer, dimension(:) :: tmpaxis
     real(kind=r8), pointer, dimension(:) :: dateStarts
     real(kind=r8), pointer, dimension(:) :: dateEnds
@@ -853,6 +854,9 @@ end module L3ascii
 
 !
 ! $Log$
+! Revision 2.25  2003/09/10 00:18:42  pwagner
+! Made filename length LineLen rather than 80
+!
 ! Revision 2.24  2003/04/04 00:09:55  livesey
 ! Added initialization for empty field
 !
