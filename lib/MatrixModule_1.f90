@@ -9,10 +9,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 ! quantities in MLS Level 2 software, and related programs.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use MatrixModule_0, only: CholeskyFactor, ColumnScale, CreateBlock, &
-    & DestroyBlock, M_Absent, MatrixElement_T, MultiplyMatrixVector, &
-    & MultiplyMatrixVectorNoT, operator(+), operator(.TX.), &
-    & RowScale, SolveCholesky, UpdateDiagonal
+  use MatrixModule_0, only: Assignment(=), CholeskyFactor, ColumnScale, &
+    & CreateBlock, DestroyBlock, M_Absent, MatrixElement_T, &
+    & MultiplyMatrixVector, MultiplyMatrixVectorNoT, operator(+), &
+    & operator(.TX.), RowScale, SolveCholesky, UpdateDiagonal
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
@@ -20,8 +20,9 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: AddMatrices, CreateEmptyMatrix, CholeskyFactor, CholeskyFactor_1
-  public :: ColumnScale, ColumnScale_1, Dump, FindBlock
+  public :: AddMatrices, AddToMatrix, Assignment(=), CopyMatrix
+  public :: CreateEmptyMatrix, CholeskyFactor, CholeskyFactor_1, ColumnScale
+  public :: ColumnScale_1, Dump, FindBlock
 ! public :: LevenbergUpdateCholesky
   public :: Matrix_T, Matrix_Cholesky_T, Matrix_Kronecker_T, Matrix_SPD_T
   public :: MultiplyMatrices, MultiplyMatrixVector, MultiplyMatrixVector_1
@@ -32,6 +33,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: UpdateDiagonal, UpdateDiagonal_1
 
 ! =====     Defined Operators and Generic Identifiers     ==============
+
+  interface Assignment(=)
+    module procedure AssignMatrix
+  end interface
 
   interface CholeskyFactor
     module procedure CholeskyFactor_1
@@ -93,7 +98,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end type RC_Info
 
   type Matrix_T
-    integer :: Name      ! Sub-rosa index of matrix name, if any, else zero
+    integer :: Name = 0  ! Sub-rosa index of matrix name, if any, else zero
     type(RC_Info) :: Col, Row  ! Column and row info
     type(matrixElement_T), dimension(:,:), pointer :: BLOCK => NULL()
   end type Matrix_T
@@ -120,7 +125,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyMatrix using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignMatrix.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J      ! Subscripts for [XYZ]%Block
@@ -131,15 +136,51 @@ contains ! =====     Public Procedures     =============================
       & .or. .not. associated(x%row%vec%template,y%row%vec%template) &
       & .or. (x%col%instFirst .neqv. y%col%instFirst) &
       & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
-        & call MLSMSG ( MLSMSG_Error, ModuleName, &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in AddMatrices" )
     call createEmptyMatrix ( z, 0, x%row%vec, x%col%vec )
     do j = 1, x%col%nb
       do i = 1, x%row%nb
         z%block(i,j) = x%block(i,j) + y%block(i,j)
-      end do ! i = 1, nr
-    end do ! j = 1, nc
+      end do ! i = 1, x%row%nb
+    end do ! j = 1, x%col%nb
   end function AddMatrices
+
+  ! ------------------------------------------------  AddToMatrix  -----
+  subroutine AddToMatrix ( X, Y ) ! X = X + Y
+    type(Matrix_T), intent(inout) :: X
+    type(Matrix_T), intent(in) :: Y
+
+    integer :: I, J      ! Subscripts for [XYZ]%Block
+
+    ! Check that the matrices are compatible.  We don't need to check
+    ! Nelts or Nb, because these are deduced from Vec.
+    if ( .not. associated(x%col%vec%template,y%col%vec%template) &
+      & .or. .not. associated(x%row%vec%template,y%row%vec%template) &
+      & .or. (x%col%instFirst .neqv. y%col%instFirst) &
+      & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Incompatible arrays in AddMatrices" )
+    do j = 1, x%col%nb
+      do i = 1, x%row%nb
+        x%block(i,j) = x%block(i,j) + y%block(i,j)
+      end do ! i = 1, x%row%nb
+    end do ! j = 1, x%col%nb
+  end subroutine AddToMatrix
+
+  ! -----------------------------------------------  AssignMatrix  -----
+  subroutine AssignMatrix ( Z, X )
+  ! Destroy Z and then assign X to it, using pointer assignment for pointer
+  ! components.  Notice that CopyMatrix does a deep copy.  If one has Z = X
+  ! inside a loop, it is only necessary to destroy Z after the loop.
+    type(Matrix_T), intent(inout) :: Z
+    type(Matrix_T), intent(in) :: X
+    call destroyMatrix ( z )
+    z%name = x%name
+    z%col = x%col
+    z%row = x%row
+    z%block => x%block
+  end subroutine AssignMatrix
 
   ! -------------------------------------------  CholeskyFactor_1  -----
   subroutine CholeskyFactor_1 ( X, Z )
@@ -159,7 +200,7 @@ contains ! =====     Public Procedures     =============================
       & .or. .not. associated(x%m%row%vec%template,z%m%row%vec%template) &
       & .or. (x%m%col%instFirst .neqv. z%m%col%instFirst) &
       & .or. (x%m%row%instFirst .neqv. z%m%row%instFirst) ) &
-        & call MLSMSG ( MLSMSG_Error, ModuleName, &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Matrices in CholeskyFactor are not compatible" )
     n = x%m%row%nb
     do i = 1, n
@@ -185,23 +226,50 @@ contains ! =====     Public Procedures     =============================
   end subroutine CholeskyFactor_1
 
   ! ----------------------------------------------  ColumnScale_1  -----
-  function ColumnScale_1 ( X, V ) result ( Z ) ! Z = X V where V is a
-  !                                diagonal matrix represented by a vector.
-    type (Matrix_T), intent(in) :: X
+  subroutine ColumnScale_1 ( X, V, NEWX ) ! Z = X V where V is a diagonal
+  !                                matrix represented by a vector and Z is X
+  !                                or NEWX.
+    type (Matrix_T), intent(inout), target :: X
     type (Vector_T), intent(in) :: V
-    type (Matrix_T) :: Z
+    type (Matrix_T), intent(out), target, optional :: NEWX 
 
     integer :: I, J      ! Subscripts for [XZ]%Block
 
-    call createEmptyMatrix ( z, 0, x%row%vec, x%col%vec, &
-      & x%row%instFirst, x%col%instFirst )
+    if ( present(newx) ) then
+      call createEmptyMatrix ( newx, 0, x%row%vec, x%col%vec, &
+        & x%row%instFirst, x%col%instFirst )
+      do j = 1, x%col%nb
+        do i = 1, x%row%nb
+        end do ! i = x%row%nb
+          call ColumnScale ( x%block(i,j), &
+            & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
+            & newx%block(i,j) )
+      end do ! j = x%col%nb
+    else
+      do j = 1, x%col%nb
+        do i = 1, x%row%nb
+        end do ! i = x%row%nb
+          call ColumnScale ( x%block(i,j), &
+            & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)) )
+      end do ! j = x%col%nb
+    end if
+  end subroutine ColumnScale_1
+
+  ! -------------------------------------------------  CopyMatrix  -----
+  subroutine CopyMatrix ( Z, X )        ! Destroy Z, then deep Z = X except
+  !                                       the name of Z isn't changed.
+    type(matrix_T), intent(inout) :: Z
+    type(matrix_T), intent(in) :: X
+    integer :: I, J ! Subscripts and loop inductors
+    call destroyMatrix ( z )
+    call copyRCInfo ( z%col, x%col )
+    call copyRCInfo ( z%row, x%row )
     do j = 1, x%col%nb
       do i = 1, x%row%nb
-      end do ! i = x%row%nb
-        z%block(i,j) = columnScale ( x%block(i,j), &
-          & v%quantities(x%col%quant(j))%values(:,x%col%inst(j)) )
-    end do ! j = x%col%nb
-  end function ColumnScale_1
+        z%block(i,j) = x%block(i,j)
+      end do ! i = 1, x%row%nb
+    end do ! j = 1, x%col%nb
+  end subroutine CopyMatrix
 
   ! ----------------------------------------------  CreateBlock_1  -----
   subroutine CreateBlock_1 ( Z, RowNum, ColNum, Kind, NumNonzeros )
@@ -239,8 +307,8 @@ contains ! =====     Public Procedures     =============================
     call defineInfo ( z%row, row, row_Quan_First )
     call defineInfo ( z%col, col, col_Quan_First )
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
-    if ( status /= 0 ) call MLSMSG ( MLSMSG_Allocate, ModuleName, &
-      & "Z%Block in CreateEmptyMatrix" )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
 
   contains
     subroutine DefineInfo ( RC, Vec, QuanFirst )
@@ -296,7 +364,8 @@ contains ! =====     Public Procedures     =============================
 
   ! ----------------------------------------------  DestroyMatrix  -----
   subroutine DestroyMatrix ( A )
-  ! Destroy a matrix -- deallocate its pointer components
+  ! Destroy a matrix -- deallocate its pointer components, don't change the
+  ! name
     type(matrix_T), intent(inout) :: A
 
     integer :: I, J                ! Subscripts and look inductors
@@ -310,19 +379,8 @@ contains ! =====     Public Procedures     =============================
     deallocate ( a%block, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // "A%Block in DestroyMatrix" )
-    call destroyInfo ( a%row )
-    call destroyInfo ( a%col )
-
-  contains
-    subroutine DestroyInfo ( RC )
-      type(RC_Info), intent(out) :: RC
-      call deallocate_test ( rc%nelts,  &
-        & "rc%nelts in DestroyMatrix", ModuleName )
-      call deallocate_test ( rc%inst, "rc%inst in DestroyMatrix", &
-        & ModuleName )
-      call deallocate_test ( rc%quant, "rc%quant in DestroyMatrix", &
-        & ModuleName )
-    end subroutine DestroyInfo
+    call destroyRCInfo ( a%row )
+    call destroyRCInfo ( a%col )
   end subroutine DestroyMatrix
 
   ! --------------------------------------------------  FindBlock  -----
@@ -362,7 +420,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyMatrix using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignMatrix.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K             ! Subscripts for [XYZ]%Block
@@ -373,7 +431,7 @@ contains ! =====     Public Procedures     =============================
     ! Nelts or Nb, because these are deduced from Vec.
     if ( .not. associated(x%row%vec%template,y%row%vec%template) .or. &
       & (x%row%instFirst .neqv. y%row%instFirst) ) &
-        & call MLSMSG ( MLSMSG_Error, ModuleName, &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in MultiplyMatrices" )
     call createEmptyMatrix ( z, 0, x%col%vec, y%col%vec )
     do j = 1, y%col%nb
@@ -480,7 +538,7 @@ contains ! =====     Public Procedures     =============================
   ! If this subroutine is invoked with UPDATE absent, or present and false,
   ! It is important to invoke DestroyMatrix using the Z argument of this
   ! subroutine after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignMatrix.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K             ! Subscripts for [AZ]%Block
@@ -509,24 +567,35 @@ contains ! =====     Public Procedures     =============================
   end subroutine NormalEquations
 
   ! -------------------------------------------------  RowScale_1  -----
-  function RowScale_1 ( V, X ) result ( Z ) ! Z = V X where V is a
-  !                                diagonal matrix represented by a vector.
+  subroutine RowScale_1 ( V, X, NEWX ) ! Z = V X where V is a diagonal
+  !                                matrix represented by a vector and Z is X
+  !                                or NEWX.
     type (Vector_T), intent(in) :: V
-    type (Matrix_T), intent(in) :: X
-    type (Matrix_T) :: Z
+    type (Matrix_T), intent(inout), target :: X
+    type (Matrix_T), intent(out), target, optional :: NEWX 
 
     integer :: I, J      ! Subscripts for [XZ]%Block
 
-    call createEmptyMatrix ( z, 0, x%row%vec, x%col%vec, &
-      & x%row%instFirst, x%col%instFirst )
-    do j = 1, x%col%nb
-      do i = 1, x%row%nb
-      end do ! i = x%row%nb
-        z%block(i,j) = &
-          & RowScale ( v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
-          & x%block(i,j) )
-    end do ! j = x%col%nb
-  end function RowScale_1
+    if ( present(newx) ) then
+      call createEmptyMatrix ( newx, 0, x%row%vec, x%col%vec, &
+        & x%row%instFirst, x%col%instFirst )
+      do j = 1, x%col%nb
+        do i = 1, x%row%nb
+        end do ! i = x%row%nb
+          call RowScale ( &
+            & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
+            & x%block(i,j), newx%block(i,j) )
+      end do ! j = x%col%nb
+    else
+      do j = 1, x%col%nb
+        do i = 1, x%row%nb
+        end do ! i = x%row%nb
+          call RowScale ( &
+            & v%quantities(x%row%quant(i))%values(:,x%row%inst(i)), &
+            & x%block(i,j) )
+      end do ! j = x%col%nb
+    end if
+  end subroutine RowScale_1
 
   ! --------------------------------------------  SolveCholesky_1  -----
   subroutine SolveCholesky_1 ( Z, X, RHS, TRANSPOSE )
@@ -551,12 +620,12 @@ contains ! =====     Public Procedures     =============================
     my_rhs => x
     if ( present(rhs) ) then
       if ( .not. associated( x%template, rhs%template ) ) &
-        & call MLSMSG ( MLSMSG_Error, ModuleName, &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "X and RHS not compatible in SolveCholesky_1" )
       my_rhs => rhs
     end if
     if ( .not. associated( z%m%col%vec%template, my_rhs%template ) ) &
-      & call MLSMSG ( MLSMSG_Error, ModuleName, &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Z and RHS not compatible in SolveCholesky_1" )
 
     if ( my_transpose ) then       ! Solve Z^T X = RHS for X
@@ -609,6 +678,32 @@ contains ! =====     Public Procedures     =============================
 
 ! =====     Private Procedures     =====================================
 
+  ! -------------------------------------------------  CopyRCInfo  -----
+  subroutine CopyRCInfo ( A, B )
+    type(RC_info), intent(inout) :: A
+    type(RC_info), intent(in) :: B
+    call destroyRCInfo ( a )
+    a%vec => b%vec
+    a%nb = b%nb
+    call allocate_test ( a%nelts, size(b%nelts), "a%nelts in CopyRCInfo", &
+      & moduleName )
+    a%nelts = b%nelts
+    call allocate_test ( a%inst, size(b%inst), "a%inst in CopyRCInfo", &
+      & moduleName )
+    a%inst = b%inst
+    call allocate_test ( a%quant, size(b%quant), "a%quant in CopyRCInfo", &
+      & moduleName )
+    a%quant = b%quant
+  end subroutine CopyRCInfo
+
+  ! ----------------------------------------------  DestroyRCInfo  -----
+  subroutine DestroyRCInfo ( RC )
+    type(RC_Info), intent(inout) :: RC
+    call deallocate_test ( rc%nelts, "rc%nelts in DestroyRCInfo", moduleName )
+    call deallocate_test ( rc%inst, "rc%inst in DestroyRCInfo", moduleName )
+    call deallocate_test ( rc%quant, "rc%quant in DestroyRCInfo", moduleName )
+  end subroutine DestroyRCInfo
+
   ! -------------------------------------------------  DumpMatrix  -----
   subroutine Dump_Matrix ( Matrix, Name, Details )
     type(Matrix_T), intent(in) :: Matrix
@@ -619,6 +714,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.3  2000/11/15 00:18:26  vsnyder
+! Added assignment(=) interface, row scale, column scale
+!
 ! Revision 2.2  2000/11/10 00:28:13  vsnyder
 ! Added multiply untransposed matrix * vector
 !
