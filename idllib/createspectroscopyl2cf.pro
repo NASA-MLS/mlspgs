@@ -4,9 +4,22 @@ pro CreateSpectroscopyL2CF, $
   molName=molName, $
   lineName=lineName, $
   crossRefName=crosRefName, $
-  uars=uars
+  instrument=instrument, $
+  retrieval=retrieval, $
+  maxExtinctions=maxExtinctions
 
-outName = 'spectroscopy.l2cf'
+if n_elements(maxExtinctions) eq 0 then maxExtinctions = 1
+if n_elements(instrument) eq 0 then instrument='emls'
+
+; instrumentPrefixes=['emlsSignals=[ ', 'umlsSignals=[ ', 'xptl1Signals=[ ']
+instrumentPrefixes = [ 'emlsSignals=[ ', 'umlsSignals=[ ' ]
+noInstruments = n_elements(instrumentPrefixes)
+
+if keyword_set(retrieval) then begin
+  outName = 'spectroscopy-rtvl.l2cf'
+endif else begin
+  outName = 'spectroscopy.l2cf'
+endelse
 
 if n_elements(molName) eq 0 then $
   molName = getenv('HOME') + '/mlspgs/tables/mol_data_table.tex'
@@ -18,6 +31,9 @@ if n_elements(crossRefName) eq 0 then $
 ; Call Bills code to read the files
 Read_Spect_Dbase, molName, lineName, '', data,  $
   molID=molID, lineID=lineID, readID=readID
+
+if keyword_set(retrieval) then TrimSpectroscopyForRetrieval, data
+
 myID='$Id$'
 
 ; Read the cross reference information
@@ -163,7 +179,7 @@ for mol = 0, noMols - 1 do begin
       AddWordToLine,text,unit,4, string(qns(q),format='(i0)')+', '
     AddWordToLine,text,unit,3, string(qns(2*noQNS),format='(i0)') + ' ]'
    
-    for i=0,1 do begin
+    for i=0, noInstruments - 1 do begin
       case i of
         0 : begin 
           prefix = 'emlsSignals=[ '
@@ -173,6 +189,10 @@ for mol = 0, noMols - 1 do begin
           prefix = 'umlsSignals=[ '
           bands = data(mol).uars_bands(line)
         end
+;         2 : begin
+;           prefix = 'xptl1Signals=[ '
+;           bands = data(mol).xptl1_bands(line)
+;         end
       endcase
       bands = strtrim(strsplit(bands,',',/extract),2)
       if bands(0) ne '' then begin
@@ -201,6 +221,7 @@ for mol = 0, noMols - 1 do begin
           case i of
             0 : emlsMolecules ( sideband+1, bandNo-1, mol ) = 1
             1 : umlsMolecules ( sideband+1, bandNo-1, mol ) = 1
+;           2 : xptl1Molecues ( sideband+1, bandNo-1, mol ) = 1
           endcase
         endfor
       endif                             ; Any bands
@@ -272,10 +293,12 @@ printf, unit, ''
 ;; ------------------------------------- End of the spectroscopy part
 
 ;; Now write out the molecules per band stuff
-
-if keyword_set(uars) $
-  then array = umlsMolecules $
-else array = emlsMolecules
+case strlowcase ( instrument ) of 
+  'umls' : array=umlsMolecules
+  'emls' : array=emlsMolecules
+; 'xptl1' : array=xptl1Molecules
+  else : MyMessage,/error,'Unknown instrument'
+endcase
 
 ;; Collapse the sidebands
 array(1,*,*) = array(0,*,*) or array(1,*,*) or array(2,*,*) 
@@ -306,7 +329,12 @@ for radiometer = 0, database.noRadiometers-1 do begin
 endfor
 array=newArray
 
-for noExtinctions = 1, 2 do begin
+if maxExtinctions ne 1 and maxExtinctions ne 2 then begin
+  print,'Illegal value of maxExtinctions'
+  stop
+endif
+
+for noExtinctions = 1, maxExtinctions do begin
   if noExtinctions eq 1 then extraName='' else extraName='2X'
   for band = 0, noBands + database.noRadiometers - 1 do begin
     for sideband = 0, 2 do begin
