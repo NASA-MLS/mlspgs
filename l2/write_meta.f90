@@ -18,7 +18,8 @@ module WriteMetadata ! Populate metadata and write it out
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
-  use MLSStrings, only: LowerCase, GetStringHashElement, ExtractSubString
+  use MLSStrings, only: LowerCase
+  use MLSStringLists, only: GetStringHashElement, ExtractSubString
   use Output_m, only: Output, blanks
   use PCFHdr, only: INPUTPTR_STRING_LENGTH, &
     & InputInputPointer, WriteInputPointer, WritePCF2Hdr, &
@@ -1573,6 +1574,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.53  2004/08/04 23:19:58  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.52  2004/01/30 00:31:10  pwagner
 ! Stops useless warnings about pgs_met_remove return value
 !
