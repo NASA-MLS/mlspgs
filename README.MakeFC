@@ -313,6 +313,9 @@ configure    change compiler, (less often) platform/OS, name,
              paths to Toolkit and other necessary libraries
 mark_all_as_uptodate
              mark all targets in the current directory as up to date
+install      moves the binary executable(s) to INSTALLDIR
+             also puts shell script versions of each binary executable there
+             with names composed of binary + '.sh'; e.g., mlsl1.sh
 
 (All the following apply only at the top mlspgs level)
 all          builds all the mlslevels
@@ -345,9 +348,6 @@ help--scripts
              prints some details on the scripts used by the Makefiles
 help--toolkit  
              how to set paths for the mandatory libraries
-install      moves the built programs from the mlslevels to INSTALLDIR
-             also puts shell script versions of each binary executable there
-             with names composed of binary + '.sh'; e.g., mlsl1.sh
 makefile     makes a new symbolic link from MakeFC to Makefile
              at the top level as well as each of the subdirectories;
              useful for older archives before the link became automatic
@@ -356,10 +356,6 @@ update       replaces Makefiles in subdirectories with latest versions;
              orphaned .o and .mod files left behind after sources removed;
              also useful after minor configuration changes to prevent 
              unnecessary recompilation
-l2--hdf5     builds mlsl2 with support for hdf5/hdfeos5 formats;
-             (similarly for l1--hdf5, l3--hdf5, and l3m--hdf5)
-all--hdf5    builds all the levels with support for hdf5/hdfeos5 formats
-lib--hdf4    restores to lib the modules stripped out by xxx--hdf5
 
   If the target is entered exactly as shown below, the
   resulting archive will be an uncompressed .tar file; but with:
@@ -457,11 +453,12 @@ it essentially amounts to creating/editing a text file you may prefer to edit
 your own. See the sample at the end of this file.
 
 ACTUAL BUGS
-The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
-link properly. Sun and SGI versions seem correct. The solution is to build
-correct ones. See Hugh Pumphrey's page 
-http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt for instructions. Hopefully this
-bug will disappear with the next release.
+The older Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be
+made to link properly. Sun and SGI versions seemed correct. The solution is to
+build correct ones. See Hugh Pumphrey's page 
+http://www.met.ed.ac.uk/~hcp/hdfeos_notes.txt for instructions. Thankfully this
+bug disappeared with the next release. However, Sun and SGI installations have
+become problem-plagued with recent releases of hdf4 and hdf5.
 
 IMPERFECTIONS AND COMPLICATIONS
 The only combinations of compiler.platform/OS provided for so far are
@@ -663,9 +660,11 @@ say what the solution to this problem is!)
 Because of the need of even the toolkit-free version of l2 to convert
 date-and-time info from utc to tai93, bleeding chunks were extracted and hacked
 into an "concealed library" utctotai. It is automatically built behind the
-scenes and then installed in INSTALLDIR. It may in time be moved out from
-behind the scenes into daylight where it may be generally examined and, if
-needed, improved.
+scenes and then installed in INSTALLDIR.
+
+Three different binary executables are built under l1: mlsl1log, mlsl1g, and
+mlsl1t. When you do a "make install", all three are moved to INSTALLDIR along
+with the wrapper script "mlsl1.sh" which runs them in sequence.
 
 Any of the variables assigned in the file .configure can be treated as an
 advanced setting. In other words, you may override any of these on the command
@@ -678,7 +677,7 @@ used with care, however.
 EVERYTHING         All the directories to be tarred up by "make tar"
 HDFVERSIONS        Build in support for both hdf4 and hdf5 versions of files
                     if non-blank (but see l1--hdf5, l2--hdf5, etc.)
-INSTALLDIR         Destination where install moves mlsl1, etc. 
+INSTALLDIR         Destination where install moves mlsl1log, etc. 
                     (see also MLSINSTALLDIR)
 LEVELS             A subset of l1 l2 l3 l3m; e.g. LEVELS="l1 l2" skips l3 l3m
 MLSCFILE           Overrides the name of the .configure file
@@ -741,10 +740,13 @@ export FFTW_ROOT
 export FOPTS
 export LDOPTS
 
--pw                           2000-Oct-24 to 2002-Jun-25
+-pw                           2000-Oct-24 to 2003-Mar-03
 EOF
 exit
 # $Log$
+# Revision 1.34  2002/06/25 20:04:11  pwagner
+# Some talk about new forestalling of cascades
+#
 # Revision 1.33  2002/05/13 17:59:45  pwagner
 # lib--hdf4 restores to lib stuff lost to l2--hdf5
 #
