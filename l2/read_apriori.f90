@@ -4,29 +4,29 @@
 !=============================================================================
 module ReadAPriori
 
-  use GriddedData, only: GriddedData_T, v_is_pressure, AddGriddedDataToDatabase
+  use GriddedData, only: GriddedData_T, v_is_pressure, &
+    & AddGriddedDataToDatabase, Dump
   use Hdf, only: DFACC_READ, SFSTART
   use Hdfeos, only: SWOPEN, SWCLOSE, SWINQSWATH
   use INIT_TABLES_MODULE, only: F_FIELD, F_FILE, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, S_L2AUX, &
     & S_L2GP
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
-    &                  ReadL2AUXData
-  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData
+    &                  ReadL2AUXData, Dump
+  use L2GPData, only: L2GPData_T, AddL2GPToDatabase, ReadL2GPData, Dump
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: FileNameLen
   use MLSFiles, only: SPLIT_PATH_NAME
   use MLSL2Options, only: PCF
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
-    &                         MLSMSG_Error, MLSMSG_FileOpen
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: mlspcf_l2clim_start, mlspcf_l2clim_end
   use MoreTree, only: Get_Spec_ID
   use ncep_dao, only: READ_CLIMATOLOGY, ReadGriddedData, source_file_already_read
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS
   use String_Table, only: GET_STRING
-  use TOGGLES, only: GEN, TOGGLE
+  use TOGGLES, only: GEN, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, &
     &             SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
@@ -64,6 +64,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Local Variables
     integer :: COMMAPOS                 ! For parsing string
+    integer :: Details             ! How much info about the files to dump
     integer :: FIELD               ! Son of KEY, must be n_assign
     integer :: FIELDINDEX          ! Literal
     integer :: FieldName        ! sub-rosa index of name in field='name'
@@ -105,6 +106,16 @@ contains ! =====     Public Procedures     =============================
     timing = section_times
     if ( timing ) call cpu_time ( t1 )
     error = 0
+
+    if ( index(switches, 'apr3') /= 0 ) then
+      Details = 1
+    elseif ( index(switches, 'apr2') /= 0 ) then
+      Details = 0
+    elseif ( index(switches, 'apr1') /= 0 ) then
+      Details = -1
+    else
+      Details = -2
+    endif
     version = 1
     allswathnames = ' '
     lastClimPCF = mlspcf_l2clim_start - 1
@@ -172,7 +183,7 @@ contains ! =====     Public Procedures     =============================
             swathNameString = allSwathNames ( 1:commaPos )
           else
             call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Failed to determinne swath names, string too long.' )
+              & 'Failed to determine swath names, string too long.' )
           end if
         endif
         
@@ -185,6 +196,9 @@ contains ! =====     Public Procedures     =============================
 
         ! Read the swath
         call ReadL2GPData ( fileHandle, swathNameString, l2gp )
+
+        if( index(switches, 'apr') /= 0 ) &
+        & call dump( l2gp, details=details )
 
         ! Close the file
         fileHandle = swclose(fileHandle)
@@ -231,6 +245,9 @@ contains ! =====     Public Procedures     =============================
         !   call ReadL2AUXData ( ... L2AUXDataBase(l2Index) ... )
         ! Need to add this routine to L2AUXData.f90 before uncommenting this line
         call ReadL2AUXData ( sd_id, sdNameString, L2AUXDatabase(l2Index) )
+
+        if( index(switches, 'apr') /= 0 ) &
+        & call dump( L2AUXDatabase(l2Index), details )
 
       case ( s_gridded )
 
@@ -298,9 +315,13 @@ contains ! =====     Public Procedures     =============================
               & ' not found in clim. file ' // trim(fileNameString) )
           end if
         case default ! Can't get here if tree_checker worked correctly
-        end select
+        end select   ! origins of gridded data
+
+        if( index(switches, 'apr') /= 0 ) &
+        & call dump( GriddedDatabase(gridIndex), details )
+
       case default
-      end select
+      end select     ! types of apriori data
       
     end do                              ! Lines in l2cf loop
     
@@ -396,6 +417,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.24  2001/10/26 23:20:10  pwagner
+! Optionally dumps apriori quantities as it reads them
+!
 ! Revision 2.23  2001/10/08 21:35:43  pwagner
 ! Initialize allswathnames
 !
