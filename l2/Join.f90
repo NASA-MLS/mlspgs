@@ -11,7 +11,7 @@ module Join                     ! Join together chunk based data.
     & F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, &
     & F_PRECISION, F_PREFIXSIGNAL, F_SOURCE, F_SDNAME, F_SWATH, FIELD_FIRST, &
     & FIELD_LAST
-  use INIT_TABLES_MODULE, only: L_PRESSURE, &
+  use INIT_TABLES_MODULE, only: L_COLUMNABUNDANCE, L_PRESSURE, &
     & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
   use Intrinsic, ONLY: FIELD_INDICES, L_NONE, L_CHANNEL, L_GEODANGLE, &
     & L_INTERMEDIATEFREQUENCY, L_LSBFREQUENCY, L_MAF, L_MIF, L_USBFREQUENCY
@@ -254,11 +254,19 @@ contains ! =====     Public Procedures     =============================
                & vectors(colmVectorIndex(columnindex)), &
                & colmQtyIndex(columnindex) &
                & )
-             if ( quantity%template%id /= &
-               & ColAbundQuantity%template%id ) &
-               & call MLSMessage(MLSMSG_Error,ModuleName, &
-               & 'Quantity and column abundance do not match')
-          enddo
+!              What features of quantity and ColAbundQuantity need to match?
+!             if ( quantity%template%id /= &
+!               & ColAbundQuantity%template%id ) then
+             if ( l_ColumnAbundance /= &
+               & ColAbundQuantity%template%QuantityType ) then
+               call announce_error(key,NO_ERROR_CODE, &
+               & 'Column abundance not of proper type')
+               call output(' l_columnAbundance type: ', advance='no')
+               call output(l_columnAbundance, advance='yes')
+               call output(' column abundance type: ', advance='no')
+               call output(ColAbundQuantity%template%QuantityType, advance='yes')
+             endif
+           enddo
         else
           ColAbundQuantity => NULL()
         endif
@@ -311,6 +319,10 @@ contains ! =====     Public Procedures     =============================
       end select
 
     end do
+
+   if ( ERROR /= 0 ) then
+     call MLSMessage ( MLSMSG_Error, ModuleName, 'Problem with Join section' )
+   end if
 
     if ( toggle(gen) ) call trace_end ( "MLSL2Join" )
     if ( timing ) call sayTime
@@ -759,6 +771,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.46  2001/08/03 23:13:52  pwagner
+! Began testing; at least now exits normally again
+!
 ! Revision 2.45  2001/08/02 23:58:31  pwagner
 ! More complete treatment of column abundance(s)
 !
