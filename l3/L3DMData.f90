@@ -1805,10 +1805,11 @@ CONTAINS
          ENDIF
          
          attrName = 'RangeBeginningTime'
-         returnStatus = pgs_td_taiToUTC(l3cf%timeD(1), timeA)
-         IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-              & ModuleName, TAI2A_ERR)
-         sval = timeA(12:26)
+         !returnStatus = pgs_td_taiToUTC(l3cf%timeD(1), timeA)
+         !IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
+         !     & ModuleName, TAI2A_ERR)
+         !sval = timeA(12:26)
+         sval = '00:00:00.000000'
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
@@ -2233,6 +2234,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.34  2004/01/08 21:25:44  cvuu
+!# Correct the day, month and doy in the global attribute
+!#
 !# Revision 1.33  2004/01/07 21:43:18  cvuu
 !# version 1.4 commit
 !#
