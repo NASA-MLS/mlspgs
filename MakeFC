@@ -42,8 +42,15 @@ endif
 NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
 
 # ---------------------- Paths to special directories
-# where to store .configure; also where to install mls programs
+# where to store .configure; 
+# also where to install mls programs by default
 CONFDIR=.
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR=$(MLSINSTALLDIR)
+else
+   INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
+endif
 
 # where configure and makemakedep.sh are stored
 MLSBIN=util
@@ -102,7 +109,7 @@ SHELL = /bin/sh
 #                   also deletes haunted library files
 # help           -- prints some info on how to build the mls software
 # disthelp       -- prints README.MakeFC--a long file
-# install        -- mv programs mlsl* from sub-subs to CONFDIR
+# install        -- mv programs mlsl* from sub-subs to INSTALLDIR
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than "make -f $(MakeFName)"
 # update         -- replaces customized Makefiles with latest versions
@@ -320,8 +327,11 @@ disthelp:
 
 install:
 #prog in l3 now named mlsl3d
-	@echo "Installing programs from $(LEVELS) into $(CONFDIR)"; \
-	 for dir in $(LEVELS); do \
+	@echo "Installing programs from $(LEVELS) into $(INSTALLDIR)"; \
+	if [ ! -d $(INSTALLDIR) ] ; then \
+	   $(MLSBIN)/mkdir_cascade $(INSTALLDIR) ; \
+	fi ; \
+	for dir in $(LEVELS); do \
 	case "$$dir" in \
 	"l3") \
 			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
@@ -571,6 +581,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.39  2001/07/25 22:48:20  pwagner
+# fixed install target; general housekeeping
+#
 # Revision 1.38  2001/07/20 00:03:17  pwagner
 # Added l3m to LEVELS
 #
