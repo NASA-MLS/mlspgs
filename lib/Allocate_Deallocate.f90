@@ -251,17 +251,20 @@ contains
   end subroutine Allocate_Test_Integer_2d
   ! -----------------------------------  Allocate_Test_Integer_3d  -----
   subroutine Allocate_Test_Integer_3d ( To_Allocate, Dim1, Dim2, Dim3, Its_Name, &
-    & ModuleName )
+    & ModuleName, LowBound_1 )
     integer, pointer, dimension(:,:,:) :: To_Allocate
     integer, intent(in) :: Dim1    ! First dimension of To_Allocate
     integer, intent(in) :: Dim2    ! Second dimension of To_Allocate
     integer, intent(in) :: Dim3    ! Third dimension of To_Allocate
     character(len=*), intent(in) :: Its_Name, ModuleName
-    integer :: STATUS
+    integer, intent(in), optional :: LowBound_1 ! default 1
+    integer :: MY_LOW_1, STATUS
     call deallocate_Test ( To_Allocate, Its_Name, ModuleName )
-    allocate ( To_Allocate(dim1,dim2,dim3), stat=status )
+    my_low_1 = 1
+    if ( present(lowBound_1) ) my_low_1 = lowBound_1
+    allocate ( To_Allocate(my_low_1:dim1,dim2,dim3), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate // Its_Name // trim(bounds(1,dim1,1,dim2,1,dim3)) )
+      & MLSMSG_Allocate // Its_Name // trim(bounds(my_low_1,dim1,1,dim2,1,dim3)) )
     if ( status == 0 .and. clearOnAllocate ) to_allocate = 0
     if ( trackAllocates ) call ReportAllocateDeallocate ( its_name, moduleName, dim1*dim2*dim3 )
   end subroutine Allocate_Test_Integer_3d
@@ -715,6 +718,9 @@ contains
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.18  2004/10/30 00:23:21  vsnyder
+! Add low_bound1 to Allocate_Test_Integer_3d
+!
 ! Revision 2.17  2004/10/02 02:42:35  vsnyder
 ! Add low bounds to Allocate_Test_Integer_2D
 !
