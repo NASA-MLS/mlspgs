@@ -39,13 +39,13 @@ module HDFEOS               ! F90 interface to HDF-EOS.
        character(len=*),intent(IN)::DIMNAME
     end function GDDIMINFO
 
-    integer function GDFIELDINFO (GRIDID,FIELDNAME,RANK,DIMS,NUMBERTYPE,DIMLIST)
+    integer function GDFLDINFO (GRIDID,FIELDNAME,RANK,DIMS,NUMBERTYPE,DIMLIST)
        integer,intent(in)::GRIDID
        character(len=*),intent(IN)::FIELDNAME
        integer,intent(out),dimension(*):: DIMS
        integer,intent(out)             :: RANK, NUMBERTYPE
        character(len=*),intent(OUT)::DIMLIST
-    end function GDFIELDINFO
+    end function GDFLDINFO
 
     integer function GDINQATTRS (GRIDID,ATTRLIST,STRINGBUFFERSIZE)
        integer,intent(in)::GRIDID
@@ -170,6 +170,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.10  2001/03/15 00:36:03  pwagner
+! Added gdfldinfo
+!
 ! Revision 2.9  2001/03/14 00:33:42  pwagner
 ! Added gdinqattrs
 !
