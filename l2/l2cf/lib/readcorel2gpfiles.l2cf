@@ -5,29 +5,30 @@
 
 begin ReadApriori
   !ifdef(CoreHDFVersion,{},{!define(CoreHDFVersion,4)})
-  
-  ;; This macro reads in the core l2gps for species $1 from swath name
-  ;; $1-Core
-  !define(readCoreL2GP,{l2gpCore$1Input: l2gp, $
-    file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!coreHDFVersion', $
-    swath='$1-Core', hdfVersion=!coreHDFVersion!nl})
+
   ;; These are the species for which we want to read Core data (no
   ;; continuations allowed).
   !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,O3})
-  !forall(readCoreL2GP,Temperature,H2O,RHI,refGPH)
-  l2gpCoreO3Input: l2gp,  file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!coreHDFVersion', $
-    swath='O3-UpdatePtan', hdfVersion=!coreHDFVersion
+
+  ;; The user might have requested specific versions for specific
+  ;; products
+  !define(initCoreSource,{!dnl
+  !ifelse(!defn(coreversion$1),{},{!define(coreversion$1,!coreversion)})
+  !ifelse(!defn(inpathcore$1),{},{!define(inpathcore$1,!inpathcore)})
+  !ifelse(!defn(corephase$1),{},{!define(corephase$1,{Core})})
+  })
+  !forall(initCoreSource,!coreL2GPSpecies,ptan)
+
+  ;; This macro reads in the core l2gps for species $1 from swath name
+  ;; $1-Core
+  !define(readCoreL2GP,{l2gpCore$1Input: l2gp, $
+    file='!inpathcore$1/MLS-Aura_L2GP-DGG_!coreversion$1_!day.he!coreHDFVersion', $
+    swath='$1-!corephase$1', hdfVersion=!coreHDFVersion!nl})
+  !forall(readCoreL2GP,!coreL2GPSpecies)
 
   ;; Ptan we have to get from an l2aux file, this could be fun!
   l2auxCorePtanInput: l2aux, $
-    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!coreHDFVersion', $
+    file='!inpathcoreptan/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!coreHDFVersion', $
     sdName='GHz.ptan-Core', quantityType=ptan, hdfVersion=!coreHDFVersion
-
-  b1CoreInput: l2aux, $
-    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!coreHDFVersion', $
-    sdName='R1A:118.B1F:PT.S0.FB25-1 UpdatePtan', quantityType=radiance, hdfVersion=!coreHDFVersion
-  b32CoreInput: l2aux, $
-    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!coreHDFVersion', $
-    sdName='R1A:118.B32W:PT.S0.WF4-1 UpdatePtan', quantityType=radiance, hdfVersion=!coreHDFVersion
 
 end ReadApriori
