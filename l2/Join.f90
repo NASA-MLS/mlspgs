@@ -281,9 +281,9 @@ contains ! =====     Public Procedures     =============================
     integer :: RETURNSTATUS
     logical :: CREATEFILEFLAG           ! Flag (often copy of create)
     logical :: MYMAKEREQUEST            ! Copy of makeRequest
-    logical :: ANOTHERLOG_VAR
-    logical, dimension(:), pointer :: logicalBuffer
-    character(len=256), dimension(:), pointer :: nameBuffer
+    logical :: DUMMY
+    logical, dimension(:), pointer :: CREATETHISSOURCE
+    character(len=256), dimension(:), pointer :: NAMEBUFFER
     integer :: record_length
     integer :: l2gp_Version
 
@@ -294,8 +294,8 @@ contains ! =====     Public Procedures     =============================
     integer, dimension(:), pointer :: PRECISIONVECTORS ! Indicies
     integer, dimension(:), pointer :: PRECISIONQUANTITIES ! Indicies
     character(len=1024) :: FILENAME     ! Output full filename
-    character(len=1024) :: FILE_base    ! made up of
-    character(len=1024) :: path         ! path/file_base
+    character(len=1024) :: FILE_BASE    ! made up of
+    character(len=1024) :: PATH         ! path/file_base
     character(len=1024) :: HDFNAME      ! Output swath/sd name
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
@@ -479,8 +479,8 @@ contains ! =====     Public Procedures     =============================
         ! Before opening file, see which swaths are already there
         ! and which ones need to be created
         if ( DeeBUG ) print *, 'Allocating ', noSources
-        nullify(logicalBuffer, nameBuffer)
-        call Allocate_test ( logicalBuffer, noSources, 'logicalBuffer', &
+        nullify(createThisSource, nameBuffer)
+        call Allocate_test ( createThisSource, noSources, 'createThisSource', &
           & ModuleName )
         call Allocate_test ( nameBuffer, noSources, 'nameBuffer', &
           & ModuleName )
@@ -494,11 +494,11 @@ contains ! =====     Public Procedures     =============================
             call get_string ( hdfNameIndex, nameBuffer(source), strip=.true. )
             if(DEEBUG)print*,'Done'
           enddo
-          ANOTHERLOG_VAR = MLS_SWATH_IN_FILE(trim(fileName), nameBuffer, HdfVersion, &
-            & logicalBuffer )
+          dummy = MLS_SWATH_IN_FILE(trim(fileName), nameBuffer, HdfVersion, &
+            & createThisSource )
           if(DEEBUG)print*,'Got out of MLS_SWATH_IN_FILE'
         else
-          logicalBuffer = .false.
+          createThisSource = .false.
         end if
         ! Call the l2gp open/create routine.  Filename is 'filename'
         ! file id should go into 'handle'
@@ -560,7 +560,7 @@ contains ! =====     Public Procedures     =============================
           ! May optionally supply first, last profiles
           call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
             & hdfVersion, filename=filename, &
-            & createSwath=(.not. logicalBuffer(source)) )
+            & createSwath=(.not. createThisSource(source)) )
           if ( outputType == l_l2dgg ) then
             filetype=l_l2dgg
           else
@@ -587,7 +587,7 @@ contains ! =====     Public Procedures     =============================
       select case ( outputType )
       case ( l_l2gp, l_l2dgg )
         if ( DeeBUG ) print *, 'Deallocating ', noSources
-        call Deallocate_test ( logicalBuffer, 'logicalBuffer', ModuleName )
+        call Deallocate_test ( createThisSource, 'createThisSource', ModuleName )
         call Deallocate_test ( nameBuffer, 'nameBuffer', ModuleName )
         ! Call the l2gp close routine
         errortype = mls_io_gen_closeF('sw', Handle, hdfVersion=hdfVersion)
@@ -1351,6 +1351,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.89  2003/08/28 23:51:58  livesey
+! Renamed some variables to make them more obvious
+!
 ! Revision 2.88  2003/08/14 20:11:30  pwagner
 ! DirectWrite may take l2fwm types for fwm radiances
 !
