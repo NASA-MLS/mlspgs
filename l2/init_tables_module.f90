@@ -659,7 +659,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_signals, t+t_string, n+n_field_type, &
              begin, f+f_skipOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
-             begin, f+f_cloud_width, t+t_numeric, n+n_field_type, &
+             begin, f+f_cloud_width, t+t_numeric, n+n_field_type, begin, f+f_cloud_fov, t+t_numeric, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
@@ -815,6 +815,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.155  2001/09/04 15:58:15  jonathan
+! add cloud_fov, jonathan
+!
 ! Revision 2.154  2001/08/23 16:25:01  pwagner
 ! Implemented init_gen build of init_tables_module.f90
 !
