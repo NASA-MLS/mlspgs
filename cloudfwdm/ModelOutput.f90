@@ -104,13 +104,13 @@ contains
 
 ! CONVERT DELTAU TO BETA
       DO I=1,NH-1
-         ZH(I)=-(LOG10(YP(I+1))+LOG10(YP(I)))/2.
+         ZH(I)=-(LOG10(YP(I+1))+LOG10(YP(I)))/2._r8
          delTAU(I) = delTAU(I)/DDZ(I)
          delTAUc(I) = delTAUc(I)/DDZ(I)
       END DO
 
       DO I=1,NZ-1
-         ZA(I)=-(LOG10(PRESSURE(I+1))+LOG10(PRESSURE(I)))/2.
+         ZA(I)=-(LOG10(PRESSURE(I+1))+LOG10(PRESSURE(I)))/2._r8
       END DO
 
       call INTERPOLATEVALUES(zh,deltau,za,beta,method='Linear')
@@ -129,10 +129,8 @@ contains
 
             HT = ZT(I)   
 
-            IF (HT .GE. 0.) THEN
-
-               do j=1,nh
-                  if (yz(j) .ge. ht) then
+               do j=nh,2,-1
+                  if (yz(j) .le. ht) then
                      iflag=j
                      goto 100
                   endif
@@ -140,14 +138,13 @@ contains
 
  100           continue
 
-               C_EXT = 0.
-               A_EXT = 0.
+               C_EXT = 0._r8
+               A_EXT = 0._r8
             
-               DO K=NH-1,iflag+1,-1
+               DO K=NH-1,iflag,-1
 
-                  IF (YZ(K) .GT. HT) THEN
-                     TGT=YZ(K-1) 
-                     IF(YZ(K).EQ.HT)THEN
+                     TGT=YZ(K-1)
+                     IF(TGT .LT. HT)THEN
                         TGT=HT
                      ENDIF
                      DS = SQRT((RE+YZ(K))**2-(RE+HT)**2)-    &
@@ -157,17 +154,15 @@ contains
                      C_EXT=C_EXT + delTAUc(K)*DDZ(k)*EXP(-A_COL)*   &
      &                     DS/(YZ(K)-YZ(K-1))
                      A_EXT = A_EXT + DTAU
-                  ENDIF
 
                ENDDO
 
-               DO K=iflag+1,NH-1
+               DO K=iflag,NH-1
 
-                  IF (YZ(K) .LT. HT) THEN
                      TGT=YZ(K-1)
-                     IF(YZ(K).EQ.HT)THEN
+                     IF(TGT .LT. HT)THEN
                         TGT=HT
-                     ENDIF 
+                     ENDIF
                      DS = SQRT((RE+YZ(K))**2-(RE+HT)**2)-    &
      &                    SQRT((RE+TGT)**2-(RE+HT)**2)
                      DTAU = DS * delTAU(K)*DDZ(k)/(YZ(K)-YZ(K-1))
@@ -175,18 +170,16 @@ contains
                      C_EXT=C_EXT + delTAUc(K)*DDZ(k)*EXP(-A_COL)*   &
      &                     DS/(YZ(K)-YZ(K-1))
                      A_EXT = A_EXT + DTAU
-                  ENDIF
 
                ENDDO
 
                
                TAUeff(I)=C_EXT
-               if (TAUeff(I) .gt. 0.) then
+               if (TAUeff(I) .gt. 0._r8) then
                   SS(I)=DTcir(I)/TAUeff(I)
                else
-                  SS(I)=0.
+                  SS(I)=0._r8
                endif
-            ENDIF
 
          ENDDO
       
@@ -198,6 +191,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.7  2001/10/12 22:38:24  dwu
+! rewrite transmission function calculation
+!
 ! Revision 1.6  2001/10/11 20:03:00  jonathan
 ! *** empty log message ***
 !
