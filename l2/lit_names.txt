@@ -15,6 +15,7 @@
 
 addnoise
 andMasks
+applyBaseline
 apriori
 
 binMax
@@ -156,6 +157,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.52  2004/09/27 20:10:28  livesey
+# Added applyBaseline
+#
 # Revision 2.51  2004/07/22 21:11:32  cvuu
 # Forget to add fwdModelMean and fwdModelStdDev
 #
