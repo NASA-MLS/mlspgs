@@ -12,7 +12,10 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use Dumper, only: Dump
   use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
     & DestroyHGridDatabase, HGrid_T
-  use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, S_VECTORTEMPLATE
+  use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, &
+    & S_VECTORTEMPLATE
+  use Intrinsic, ONLY: L_None
+  use L2GPData, only: L2GPDATA_T
   use MLSCommon, only: L1BInfo_T, MLSChunk_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use MLSSignals_m, only: Modules
@@ -20,6 +23,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
     & DestroyQuantityTemplateDatabase, QuantityTemplate_T
+  use String_Table, ONLY: GET_STRING
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, &
@@ -28,10 +32,6 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use VectorsModule, only: AddVectorTemplateToDatabase, &
     & DestroyVectorTemplateDatabase, Dump, VectorTemplate_T
   use VGridsDatabase, only: VGrid_T
-  use Intrinsic, ONLY: L_None
-  use String_Table, ONLY: GET_STRING
-  use Init_tables_module, ONLY: LIT_INDICES
-  use L2GPData, only: L2GPDATA_T
 
   implicit none
 
@@ -188,6 +188,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.21  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.20  2001/04/25 19:29:31  livesey
 ! Fixed bug with forge, now sets mafIndex and mafCounter appropriately
 !
