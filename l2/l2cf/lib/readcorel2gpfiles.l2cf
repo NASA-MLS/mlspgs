@@ -13,8 +13,10 @@ begin ReadApriori
     swath='$1-Core', hdfVersion=!coreHDFVersion!nl})
   ;; These are the species for which we want to read Core data (no
   ;; continuations allowed).
-  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH})
-  !forall(readCoreL2GP,!coreL2GPSpecies)
+  !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH,O3})
+  !forall(readCoreL2GP,Temperature,H2O,RHI,refGPH)
+  l2gpCoreO3Input: l2gp,  file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!coreHDFVersion', $
+    swath='O3-UpdatePtan', hdfVersion=!coreHDFVersion
 
   ;; Ptan we have to get from an l2aux file, this could be fun!
   l2auxCorePtanInput: l2aux, $
