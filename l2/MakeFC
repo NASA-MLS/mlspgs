@@ -81,23 +81,24 @@ $(CONFDIR)/.configure:
 $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
-	@case "$(PVM_ROOT)" in \
-		"") \
-		echo "Preparing mlsl2 without PVM support" ; \
-		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-		echo "#   PVM_OBJS.inc  (included in lib Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-		;; \
-		*) \
-		echo "Preparing mlsl2 with PVM support" ; \
-		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-		echo "#   PVM_OBJS.inc  (included in l2 Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-		echo "PVM_OBJS=SnoopMLSL2.o" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-		;; \
-	esac 
+#	@case "$(PVM_ROOT)" in \
+#		"") \
+#		echo "Preparing mlsl2 without PVM support" ; \
+#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
+#		echo "#   PVM_OBJS.inc  (included in lib Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
+#		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
+#		;; \
+#		*) \
+#		echo "Preparing mlsl2 with PVM support" ; \
+#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
+#		echo "#   PVM_OBJS.inc  (included in l2 Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
+#		echo "PVM_OBJS=SnoopMLSL2.o" >> $(PLATFORMS)/PVM_OBJS.inc ; \
+#		;; \
+#	esac 
 
 depends:
-	$(MLSBIN)/makemakedep.sh -d RetrievalModule.f90 -d SnoopMLSL2.f90 \
+	$(MLSBIN)/makemakedep.sh \
+	-d RetrievalModule.f90 -d SnoopMLSL2.f90 -d ForwardModelInterface.f90 \
 	$(libmls_sources) $(srclib) 
 
 clean:
@@ -126,6 +127,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.9  2001/02/08 23:16:46  pwagner
+# Without PVM_OBJS.inc file
+#
 # Revision 2.8  2001/01/23 19:06:25  pwagner
 # With optional PVM support
 #
