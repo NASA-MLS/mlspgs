@@ -19,8 +19,8 @@ I = -I
 M = $(HOME)/mlspgs/lib/NAG
 
 # SDPToolkit or SDPToolkitSubstitute?
-#SDP = $M/SDPToolkit.o
-SDP = $M/SDPToolkitSubstitute.o
+#SDP = 
+SDP = Substitute
 
 machine.o: machine.f90
 	$(FC) -c $(FOPTS) machine.f90
@@ -28,6 +28,9 @@ machine.o: machine.f90
 include ../Makefile.inc
 
 # $Log$
+# Revision 2.2  2000/10/09 23:25:07  vsnyder
+# Repair SDP variable
+#
 # Revision 2.1  2000/10/09 23:17:41  vsnyder
 # Search more paths for modules, because second-order USEs need to be
 # accomodated by specifying paths for them.
