@@ -91,7 +91,7 @@ begin Construct
   surfaceType: Quantity, hGrid=hGridStandard, type=surfaceType
 
   IWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
-  LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=CloudWater
+  LWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudWater
 
   iwcR2: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
   iwcR3: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
