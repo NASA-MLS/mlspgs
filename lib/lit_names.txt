@@ -88,6 +88,7 @@ Hz
 hybrid
 
 IceDensity
+integer
 intermediatefrequency
 invkm
 invm
@@ -203,6 +204,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.36  2004/06/17 22:33:41  pwagner
+# Added integer
+#
 # Revision 2.35  2004/06/03 22:58:05  vsnyder
 # Add ms and kms literals
 #
