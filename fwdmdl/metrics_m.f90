@@ -106,29 +106,29 @@ contains
     ! ===>> EVERYTHING comes out in cvf format <<===!
 
     ! Local variables.  CAN WE GET SOME COMMENTS FOR EACH OF THESE?
-    integer :: P_COEFFS
-    integer :: Z_COEFFS
-    integer :: N_VERT
-    integer :: N_TAN
-    integer :: SS_HTAN
-    integer :: SV_T
-    integer :: SV_P
-    integer :: SV_Z
-    integer :: I
-    integer :: J
-    integer :: N_CVF
-    integer :: ITER
-    integer :: NO_OF_BAD_FITS
-    integer :: ST_IND
     integer :: END_IND
-    integer :: LOW_PT
     integer :: HI_PT
-    INTEGER :: noos ! number out of sequence
+    integer :: I
+    integer :: ITER
+    integer :: J
+    integer :: LOW_PT
+    integer :: N_CVF
+    integer :: NO_OF_BAD_FITS
+    integer :: N_TAN
+    integer :: N_VERT
+    integer :: P_COEFFS
+    integer :: Path_Ind
+    integer :: SS_HTAN
+    integer :: ST_IND
+    integer :: SV_P
+    integer :: SV_T
+    integer :: SV_Z
+    integer :: Z_COEFFS
 
-    real(rp) :: CSQ
     real(rp) :: CP2
-    real(rp) :: SP2
+    real(rp) :: CSQ
     real(rp) :: H_SURF
+    real(rp) :: SP2
 
     logical, dimension(:), pointer :: MASK
     logical, dimension(:,:), pointer :: MASK2
@@ -136,16 +136,12 @@ contains
     logical, dimension(:,:), pointer :: NOT_ZERO_T
 
     integer, dimension(:), pointer :: CVF_INDS
-    integer, dimension(:), pointer :: PATH_INDS
-    integer, dimension(:), pointer :: VERT_INDS
-    integer, dimension(:), pointer :: NEAR_INDS
-    integer, dimension(:), pointer :: PATH_IND
-    integer, dimension(:), pointer :: JUNK, JUN ! JUN => some_of_JUNK
     integer, dimension(:), pointer :: FORCE_ZERO
     integer, dimension(:), pointer :: INDS
-    integer, dimension(:), pointer :: TAN_IND
-    INTEGER, DIMENSION(:), POINTER :: diff
-    INTEGER, DIMENSION(:), POINTER :: ind_bp
+    integer, dimension(:), pointer :: JUNK, JUN ! JUN => some_of_JUNK
+    integer, dimension(:), pointer :: NEAR_INDS
+    integer, dimension(:), pointer :: PATH_INDS
+    integer, dimension(:), pointer :: VERT_INDS
 
     real(rp), dimension(:), pointer :: CVF_ANG_OFFSET
     real(rp), dimension(:), pointer :: CVF_H_TAN
@@ -187,7 +183,7 @@ contains
     req = 0.001_rp*sqrt((earthrada**4*sp2 + csq**2*cp2) / &
                       & (earthrada**2*cp2 + csq*sp2))
 
-    ! now for the path quantities, for simplicity, we are going to set the
+    ! now for the path quantities. for simplicity, we are going to set the
     ! surface reference at the input z_grid(1) and adjust the req and the
     ! h_grid_t relative to this
     req = req + h_surf
@@ -203,7 +199,7 @@ contains
     if ( present(dhidtlm) ) then
       z_coeffs = size(z_basis)
       nullify ( dhtdtl )
-      call Allocate_test ( dhtdtl, z_coeffs, 'dhtdtl', ModuleName )
+      call allocate_test ( dhtdtl, z_coeffs, 'dhtdtl', ModuleName )
 !     dhtdtl = sum(RESHAPE(dhidtlm(1,:,:),(/z_coeffs,p_coeffs/)) &
 !       * SPREAD(RESHAPE(eta_t(1,:),(/p_coeffs/)),1,z_coeffs),dim=2)
       dhtdtl = sum(dhidtlm(1,:,:) * SPREAD(eta_t(1,:),1,z_coeffs),dim=2)
@@ -237,24 +233,24 @@ contains
     phi_tans = SPREAD(phi_t,1,2*n_vert)
 
     nullify ( eta_t, h_grid_tt )
-    call Allocate_test ( eta_t, n_vert, max (1,n_tan-ss_htan), 'n_vert', ModuleName )
-    call Allocate_test ( h_grid_tt, n_vert, 'h_grid_tt', ModuleName )
+    call allocate_test ( h_grid_tt, n_vert, 'h_grid_tt', ModuleName )
 
+    call allocate_test ( eta_t, n_vert, max (1,n_tan-ss_htan), 'n_vert', ModuleName )
     call get_eta_sparse ( z_grid(tan_inds(min(n_tan,ss_htan+1):n_tan)), z_grid, &
                         & eta_t )
     h_grid_tt = matmul(eta_t,h_grid_t(min(n_tan,ss_htan+1):n_tan))
+    call deallocate_test ( eta_t, 'eta_t', ModuleName )
 
     ! basic pressure grid
     m_z_grid = SPREAD(z_grid((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/)),2,n_tan)
 
     ! determine condensed vector format so we don't mess with a bunch
     ! of zeros
-    call Deallocate_test ( eta_t, 'eta_t', ModuleName )
 
     n_cvf = 2*sum(n_vert + 1 - tan_inds)
 
     nullify ( old_hts, cvf_h_tan, cvf_z_grid, cvf_ang_offset, cvf_sign )
-    nullify ( h_zf, path_inds, vert_inds, near_inds, cvf_inds )
+    nullify ( h_zf, cvf_inds )
 
     call allocate_test ( old_hts, n_cvf, 'old_hts', ModuleName )
     call allocate_test ( cvf_h_tan, n_cvf, 'cvf_h_tan', ModuleName )
@@ -262,9 +258,6 @@ contains
     call allocate_test ( cvf_ang_offset, n_cvf, 'cvf_ang_offset', ModuleName )
     call allocate_test ( cvf_sign, n_cvf, 'cvf_sign', ModuleName )
     call allocate_test ( h_zf, n_cvf, p_coeffs, 'h_zf', ModuleName )
-    call allocate_test ( path_inds, n_cvf, 'path_inds', ModuleName )
-    call allocate_test ( vert_inds, n_cvf, 'vert_inds', ModuleName )
-    call allocate_test ( near_inds, n_cvf/2, 'near_inds', ModuleName )
     call allocate_test ( cvf_inds, n_cvf, 'cvf_inds', ModuleName )
 
     cvf_inds = PACK((/(i,i=1,2*n_vert*n_tan)/),                     &
@@ -286,6 +279,9 @@ contains
         & = .true.
     end do
     cvf_ang_offset = PACK(phi_tans,mask2)
+    h_grid = PACK(SPREAD(h_grid_tt((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/)), &
+                      &  2,n_tan),mask2)
+    call deallocate_test ( h_grid_tt, 'h_grid_tt', ModuleName )
 
     ! compute phi_s - phi_t
     j = n_vert
@@ -294,12 +290,9 @@ contains
       h_tans(:,i) = neg_h_tan(i)
       j = j + n_vert + n_vert
     end do
-    h_grid = PACK(SPREAD(h_grid_tt((/(i,i=n_vert,1,-1),(i,i=1,n_vert)/)), &
-                      &  2,n_tan),mask2)
     cvf_h_tan = PACK(h_tans,mask2)
     cvf_z_grid = PACK(m_z_grid,mask2)
 
-    call deallocate_test ( h_grid_tt, 'h_grid_tt', ModuleName )
     call deallocate_test ( mask2, 'mask', ModuleName )
 
     ! These are the tangent indicies on a cvf array
@@ -333,10 +326,18 @@ contains
     ! and probably faster alternative
     ! convert the cvf indicies into path indicies
 
+    nullify ( path_inds, vert_inds, near_inds )
+    call allocate_test ( vert_inds, n_cvf, 'vert_inds', ModuleName )
+    call allocate_test ( path_inds, n_cvf, 'path_inds', ModuleName )
+    call allocate_test ( near_inds, n_cvf/2, 'near_inds', ModuleName )
+
     path_inds = modulo((cvf_inds - 1),2*n_vert) + 1
     vert_inds = path_inds - n_vert
     near_inds = PACK((/(i,i=1,n_cvf)/),path_inds <= n_vert)
     vert_inds(near_inds) = n_vert - path_inds(near_inds) + 1
+
+    call deallocate_test ( near_inds, 'near_inds', ModuleName )
+    call deallocate_test ( path_inds, 'path_inds', ModuleName )
 
     ! h_ref with surface adjustment
     h_zf = h_ref(vert_inds,:) - h_surf
@@ -378,7 +379,7 @@ contains
 
       call get_eta_sparse ( p_basis, cvf_ang_offset(jun) + cvf_sign(jun) &
         & * Acos((req + cvf_h_tan(jun))/ (req + old_hts(jun))), et_p )
-      h_grid(jun) = max ( cvf_h_tan(jun), sum(h_zf(jun,:) * et_p,dim=2) )
+      h_grid(jun) = max ( cvf_h_tan(jun), sum(h_zf(jun,:) * et_p, dim=2) )
 
     end do
 
@@ -390,92 +391,43 @@ contains
       if ( toggle(emit) ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Full convergence not, implementing an improved approximation patch' )
-        call output ( 'pth ind, tan ind, error', advance='yes' )
-
+        call output ( 'pth ind, error', advance='yes' )
       end if
 
       ! we are going to assume that the tangent value is good
       ! The following is an F90 specific design which is quite different
       ! from the IDL code
 
-      nullify ( path_ind, tan_ind )
-      call Allocate_test ( path_ind, no_of_bad_fits, 'path_ind', ModuleName )
-      call Allocate_test ( tan_ind, no_of_bad_fits, 'tan_ind', ModuleName )
-      path_ind = modulo(cvf_inds(jun)-1,2*n_vert) + 1
-      tan_ind = 1 + (cvf_inds(jun)-1) / (2*n_vert)
-      if ( toggle(emit) ) then
-        do i = 1, no_of_bad_fits
-          call output ( path_ind(i) )
-          call output ( tan_ind(i) )
-          call output ( old_hts(jun(i))-h_grid(jun(i)), advance='yes' )
-        end do
-      end if
-
-      if ( no_of_bad_fits == 1 ) then
-        ! find which side of the tangent we are on
-        if ( path_ind(1) < n_vert + 1 ) then
-          ! this is the near observer side
-          low_pt = jun(1) + 1
-          hi_pt  = jun(1) - 1
-        else
-          ! this is the far observer side
-          low_pt = jun(1) - 1
-          hi_pt  = jun(1) + 1
+      ! find ranges of contigous indicies
+      st_ind = 1
+      path_ind = modulo(cvf_inds(jun(st_ind))-1,2*n_vert) + 1
+      do end_ind = 1, no_of_bad_fits
+        if ( end_ind < no_of_bad_fits ) then
+          if ( jun(end_ind+1) - jun(end_ind) < 2 ) cycle
         end if
+
+        if ( toggle(emit) ) then
+          call output ( path_ind, places=7 )
+          call output ( old_hts(jun(st_ind))-h_grid(jun(st_ind)), advance='yes' )
+        end if
+
+        ! find which side of the tangent we are on
+        if ( path_ind < n_vert + 1 ) then ! near observer side
+          low_pt = jun(end_ind) + 1
+          hi_pt  = jun(st_ind) - 1
+        else                              ! far observer side
+          low_pt = jun(st_ind) - 1
+          hi_pt  = jun(end_ind) + 1
+        end if
+
         ! Correct
-        h_grid(jun(1)) = h_grid(low_pt) + &
+        h_grid(jun(st_ind):jun(end_ind)) = h_grid(low_pt) + &
              & (h_grid(hi_pt) - h_grid(low_pt)) * &
-             & (cvf_z_grid(jun(1))-cvf_z_grid(low_pt)) / &
+             & (cvf_z_grid(jun(st_ind):jun(end_ind))-cvf_z_grid(low_pt)) / &
              & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
-      else
-
-!        end_ind = 1
-!        st_ind = 1
-!        do while ( end_ind <= no_of_bad_fits )
-
-!          do while ( tan_ind(end_ind) <= tan_ind(st_ind) )
-!            end_ind = end_ind + 1
-!          end do
-
-!          end_ind = end_ind - 1
-! replacement code: find ranges of contigous indicies
-        NULLIFY(diff,ind_bp)
-        CALL ALLOCATE_TEST(diff, no_of_bad_fits, 'diff', modulename)
-        diff(1:no_of_bad_fits-1) = jun(2:no_of_bad_fits) &
-                               & - jun(1:no_of_bad_fits-1)
-        diff(no_of_bad_fits) = 2
-        noos = COUNT(diff > 1)
-        CALL ALLOCATE_TEST(ind_bp,noos,'ind_bp',modulename)
-        ind_bp = PACK((/(i,i=1,no_of_bad_fits)/),diff > 1)
-        st_ind = 1
-        DO i = 1 , noos
-          end_ind = ind_bp(i)
-
-          ! find which side of the tangent we are on
-          if ( path_ind(st_ind) < n_vert + 1 ) then
-            ! this is the near observer side
-            low_pt = jun(end_ind) + 1
-            hi_pt  = jun(st_ind) - 1
-          else
-            ! this is the far observer side
-            low_pt = jun(st_ind) - 1
-            hi_pt  = jun(end_ind) + 1
-          end if
-
-          ! Correct
-          h_grid(jun(st_ind):jun(end_ind)) = h_grid(low_pt) + &
-               & (h_grid(hi_pt) - h_grid(low_pt)) * &
-               & (cvf_z_grid(jun(st_ind):jun(end_ind))-cvf_z_grid(low_pt)) / &
-               & (cvf_z_grid(hi_pt) - cvf_z_grid(low_pt))
-          st_ind = end_ind + 1
-!          end_ind = st_ind
-        end do
-        CALL DEALLOCATE_TEST(diff,'diff',modulename)
-        CALL DEALLOCATE_TEST(ind_bp,'ind_bp',modulename)
-      end if
-
-      call deallocate_test ( path_ind, 'path_ind', ModuleName )
-      call deallocate_test ( tan_ind, 'tan_ind', ModuleName )
+        st_ind = end_ind + 1
+        path_ind = modulo(cvf_inds(jun(st_ind))-1,2*n_vert) + 1
+      end do
 
     end if
 
@@ -483,8 +435,6 @@ contains
     call deallocate_test ( junk, 'junk', ModuleName )
     call deallocate_test ( old_hts, 'old_hts', ModuleName )
     call deallocate_test ( h_zf, 'h_zf', ModuleName )
-    call deallocate_test ( path_inds, 'path_inds', ModuleName )
-    call deallocate_test ( near_inds, 'near_inds', ModuleName )
 
     nullify ( not_zero_p )
     call allocate_test ( not_zero_p, n_cvf, p_coeffs, 'not_zero_p', ModuleName )
@@ -570,6 +520,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.16  2002/10/25 22:24:08  livesey
+! Made the warning output optional
+!
 ! Revision 2.15  2002/10/08 17:08:05  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
