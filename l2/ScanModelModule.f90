@@ -73,7 +73,7 @@ contains ! =============== Subroutines and functions ==========================
   subroutine GetBasisGPH ( temp, refGPH, gph, R, RT, belowRef )
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height quantity, and returns
-    use Units, only: Boltz
+    use Physics, only: Boltz
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMP ! The temperature field
@@ -212,7 +212,7 @@ contains ! =============== Subroutines and functions ==========================
     ! This function takes a state vector, containing one and only one
     ! temperature and reference geopotential height precisions, and
     ! returns the GPH precision.
-    use Units, only: Boltz
+    use Physics, only: Boltz
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: TEMPPREC ! The temperature precision
@@ -1516,7 +1516,7 @@ contains ! =============== Subroutines and functions ==========================
     use OUTPUT_M, only: BLANKS, OUTPUT
     use Piq_int_m, only: Piq_int
     use Time_M, only: Time_Now
-    use Units, only: Boltz
+    use Physics, only: Boltz
 
 ! This is a two D version of ScanForwardModel
 ! inputs
@@ -2127,6 +2127,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.61  2004/03/20 04:05:23  vsnyder
+! Moved Boltz from units to physics
+!
 ! Revision 2.60  2003/08/15 23:58:20  vsnyder
 ! Get PHYQ_... directly from Intrinsic instead of indirectly via Units
 !
