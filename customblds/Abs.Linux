@@ -5,6 +5,12 @@
 ifndef CASCADE
 #	l1
 
+EngTbls.o: ENGTBLS.mod
+	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
+   -T EngTbls.o OUTPUTL1B.mod 
+ENGTBLS.mod:
+	$(UTILDIR)/newAifBdiff.sh -a ENGTBLS.mod $(FC) -c $(DUSTY) \
+   $(INC_PATHS) $(S)/EngTbls.f90 $(FAFTER)
 OutputL1B.o: OUTPUTL1B.mod
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T OutputL1B.o OUTPUTL1B.mod 
@@ -173,8 +179,10 @@ ncep_dao.o: NCEP_DAO.mod
    -T ncep_dao.o NCEP_DAO.mod 
 
 else
-#	special options for compiling some modules--override .f90 rules
+#	l1
 
+EngTbls.o: $(S)/EngTbls.f90
+	$(FC) -c $(DUSTY) -maxcontin=100 $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 OutputL1B.o: $(S)/OutputL1B.f90
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
 OutputL1B_HDF4.o: $(S)/OutputL1B_HDF4.f90
@@ -303,6 +311,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.7  2002/11/08 01:18:21  pwagner
+# Added l1/OutputL1B_HDF4.f90 which needs (DUSTY)
+#
 # Revision 1.6  2002/07/18 18:00:51  pwagner
 # .o now depends on file_name even if .mod mediated
 #
