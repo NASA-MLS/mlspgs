@@ -245,6 +245,19 @@ my_name=newAifBdiff.sh
 # Special use (4) is signaled by $the_command being $marker_name
 marker_name=mark_as_uptodate.sh
 CALL_MARKER="no"
+
+# Short-circuit all the option-checking if special use (4)
+ALLOW_SHORT_CIRCUIT="yes"
+is_special_use_4=`echo "$@" | grep 'mark_as_uptodate\.sh'`
+if [ "$is_special_use_4" != "" -a "$ALLOW_SHORT_CIRCUIT" = "yes" ]
+then
+# For this short-circuit to work, we assume the command looks like the following:
+# $me -a module_name.mod path/mark_as_uptodate.sh ...
+# $0  $1  $2                $3                    ...
+  touch "$2"
+  exit 0
+fi
+
 # $the_marker is $marker_name with me's path prepended
 the_marker="`echo $0 | sed 's/newAifBdiff/mark_as_uptodate/'`"
 # $the_splitter is split_path with me's path prepended
@@ -425,6 +438,9 @@ else
    exit 0
 fi
 # $Log$
+# Revision 1.9  2002/07/26 23:49:59  pwagner
+# Faster at marking files uptodate (but still slow)
+#
 # Revision 1.8  2002/07/25 20:58:08  pwagner
 # Improved marking up to date
 #
