@@ -17,7 +17,7 @@ module OUTPUT_M
   interface OUTPUT
     module procedure output_char, output_char_array, output_double
     module procedure output_integer, output_integer_array, output_logical
-    module procedure output_single
+    module procedure output_single, output_double_array, output_single_array
   end interface
 
   integer, save, public :: MLSMSG_Level = MLSMSG_Info
@@ -190,6 +190,31 @@ contains
 
   end subroutine OUTPUT_DOUBLE
 
+  subroutine OUTPUT_DOUBLE_ARRAY ( values, FORMAT, LogFormat, ADVANCE )
+  ! Output double-precision values to PRUNIT.
+    double precision, intent(in) :: values(:)
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
+    integer :: I ! loop inductor
+    character(len=3) :: MY_ADV
+    my_adv = 'no'
+    if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
+    do i = 1, size(values)
+      call output ( values(i), advance='no', format=format, logFormat=logFormat )
+      call blanks ( 3, advance='no' )
+    end do
+    if ( present(advance) ) then
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, '(a)', advance=my_adv )
+      if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=my_adv )
+      if ( prunit >= 0 ) &
+        & write ( prunit, '(a)', advance=my_adv )
+    end if
+  end subroutine OUTPUT_DOUBLE_ARRAY
+
   subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL, FORMAT )
   ! Output INT to PRUNIT using at most PLACES (default zero) places
   ! If 'fill' is present and true, fill leading blanks with zeroes (only
@@ -340,9 +365,38 @@ contains
         & advance=my_adv )
     end if
   end subroutine OUTPUT_SINGLE
+
+  subroutine OUTPUT_SINGLE_ARRAY ( values, FORMAT, LogFormat, ADVANCE )
+  ! Output single-precision values to PRUNIT.
+    real, intent(in) :: values(:)
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
+    integer :: I ! loop inductor
+    character(len=3) :: MY_ADV
+    my_adv = 'no'
+    if ( present(advance) ) then; my_adv = advance; end if
+    my_adv = Advance_is_yes_or_no(my_adv)
+    do i = 1, size(values)
+      call output ( values(i), advance='no', format=format, logFormat=logFormat )
+      call blanks ( 3, advance='no' )
+    end do
+    if ( present(advance) ) then
+      if ( prunit == -1 .or. prunit < -2 ) &
+        & write ( *, '(a)', advance=my_adv )
+      if ( prunit < -1 ) &
+        & call MLSMessage ( MLSMSG_Level, ModuleName, '', advance=my_adv )
+      if ( prunit >= 0 ) &
+        & write ( prunit, '(a)', advance=my_adv )
+    end if
+  end subroutine OUTPUT_SINGLE_ARRAY
+
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.16  2001/10/19 22:31:36  pwagner
+! Now can output (small-sized) s.p., d.p. arrays
+!
 ! Revision 2.15  2001/10/08 23:43:28  pwagner
 ! Allows wider range of advance(s); my_adv implemented uniforml
 !
