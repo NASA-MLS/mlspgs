@@ -11,7 +11,7 @@ module ReadAPriori
   use INIT_TABLES_MODULE, only: F_AURAINSTRUMENT, F_DIMLIST, F_FIELD, F_FILE, &
     & F_HDFVERSION, F_missingValue, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
-    & L_GLORIA, S_L2AUX, S_L2GP, F_QUANTITYTYPE
+    & L_GLORIA, L_STRAT, S_L2AUX, S_L2GP, F_QUANTITYTYPE
   use Intrinsic, only: PHYQ_Dimensionless
   use L2AUXData, only: L2AUXData_T, AddL2AUXToDatabase, &
     &                  ReadL2AUXData, Dump
@@ -127,6 +127,7 @@ contains ! =====     Public Procedures     =============================
     double precision :: Value(2)        ! Value returned by EXPR
 
     character(len=2048) :: ALLSWATHNAMES ! Buffer to get info back.
+    character(len=8) :: description
 
     if ( toggle (gen) ) call trace_begin ( "read_apriori", root )
 
@@ -351,7 +352,7 @@ contains ! =====     Public Procedures     =============================
         call get_string ( fieldName, fieldNameString, strip=.true. )
         
         select case ( griddedOrigin )
-        case ( l_ncep ) ! --------------------------- NCEP Data
+        case ( l_ncep, l_strat ) ! --------------------------- NCEP Data
           if ( TOOLKIT .and. got(f_file) ) then
             call split_path_name(FileNameString, path, SubString)
             LastNCEPPCF = GetPCFromRef(SubString, mlspcf_l2ncep_start, &
@@ -371,10 +372,15 @@ contains ! =====     Public Procedures     =============================
             end if
             LastNCEPPCF = pcf_indx
           endif
+          if (griddedOrigin == l_ncep) then
+             description = 'ncep'
+          else
+             description = 'strat'
+          end if
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
-          call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
-            & GriddedDatabase(gridIndex), returnStatus, &
+          call readGriddedData ( FileNameString, son, description, &
+	    & v_is_pressure, GriddedDatabase(gridIndex), returnStatus, &
             & dimListString, TRIM(fieldNameString), missingValue )
           if ( returnStatus == 0 ) then
             if(index(switches, 'pro') /= 0) &
@@ -637,6 +643,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.53  2003/10/06 13:16:09  cvuu
+! add new description=strat to handle reading the ncep data file
+!
 ! Revision 2.52  2003/06/09 22:49:34  pwagner
 ! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
 !
