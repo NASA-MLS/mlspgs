@@ -1,0 +1,154 @@
+# You can put one or two names on a line, separated by spaces.
+
+# The first name is the parameter name WITHOUT ITS PREFIX.  The
+# prefix comes from the command line.
+
+# The second name is the entity's text -- e.g. a field name.  If
+# it's not present, the first name is used for the entity's text.
+
+# Be careful of the case of names here.  L1BData uses these names
+# to open HDF thing-o's, and HDF is case sensitive.
+
+# The intent is that you can sort the file, and it will produce the
+# statements in parameter-name order.
+
+# Blank lines don't count.
+
+# $Id$
+
+baseline
+
+C
+channel
+cloudExtinction
+cloudIce
+cloudInducedRadiance
+cloudRadSensitivity
+cloudWater
+
+days
+deg
+degrees
+dimensionless
+dimless
+dl
+# Quantities to report on progress of DNWT.  See NWT_T in dnwt_module
+dnwt_ajn
+dnwt_axmax
+dnwt_cait
+dnwt_diag
+dnwt_dxdx
+dnwt_dxdxl
+dnwt_dxn
+dnwt_dxnl
+dnwt_fnmin
+dnwt_fnorm
+dnwt_gdx
+dnwt_gfac
+dnwt_gradn
+dnwt_sq
+dnwt_sqt
+# End of quantities to report progress of DNWT
+dobsonunits
+
+earthRefl
+elevOffset
+effectiveOpticalDepth
+emls
+extinction
+
+false
+frequency
+
+geodAltitude
+geodAngle
+GHz
+gph
+gph_precision
+
+heightOffset
+hours
+hPa
+Hz
+
+IceDensity
+intermediatefrequency
+isotopeRatio
+
+jacobian_cols
+jacobian_rows
+
+K
+KHz
+km
+
+linewidth
+logp
+LOSTransFunc
+LOSVel
+LSBFrequency
+
+m
+maf
+mafs
+massMeanDiameterIce
+massMeanDiameterWater
+mb
+meters
+MHz
+mif
+mifs
+minutes
+
+none
+
+orbitInclination
+orbits
+
+pa
+ptan
+ppbv
+ppmv
+pptv
+
+rad
+radiance
+radians
+earthradius
+refGPH
+
+s
+scanResidual
+scECI
+scGeocAlt
+scVel
+seconds
+sidebandRatio
+sizeDistribution
+spaceRadiance
+surfaceType
+
+temperature
+temperature_prec temperature_precision
+theta
+THz
+time
+tngteci
+tngtgeocalt
+tngtgeodalt
+totalExtinction
+true
+
+UMLS
+USBFrequency
+
+vmr
+
+xyz
+
+zeta
+
+# $Log$
+# Revision 2.1  2001/10/03 22:45:01  vsnyder
+# Initial commit
+#
