@@ -33,7 +33,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATION, NODE_ID, NSONS, SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_SET_ONE
-  use VGrid, only: VGrid_T
+  use VGridsDatabase, only: VGrid_T
   use init_tables_module, ONLY: LIT_INDICES
   use dumper, only: dump
   implicit none
@@ -580,6 +580,10 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.16  2001/04/07 01:50:48  vsnyder
+! Move some of VGrid to lib/VGridsDatabase.  Move ForwardModelConfig_T and
+! some related stuff to fwdmdl/ForwardModelConfig.
+!
 ! Revision 2.15  2001/03/28 23:48:13  livesey
 ! Bug fixes zero out some stuff.
 !
