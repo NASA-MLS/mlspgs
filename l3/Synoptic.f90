@@ -303,6 +303,7 @@ CONTAINS
 		   DeAllocate(l3Result)
 		   flags%writel3dmCom = .TRUE.
 		   flags%writel3dzCom = .TRUE.
+		   flags%writel3rCom  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'asc') THEN
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
@@ -321,6 +322,7 @@ CONTAINS
 		   DeAllocate(l3Result)
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3dzAsc = .TRUE.
+		   flags%writel3rAsc  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'des') THEN
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
@@ -339,6 +341,7 @@ CONTAINS
 		   DeAllocate(l3Result)
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3dzDes = .TRUE.
+		   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'all') THEN
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
@@ -358,6 +361,7 @@ CONTAINS
 
 		   flags%writel3dmCom = .TRUE.
 		   flags%writel3dzCom = .TRUE.
+		   flags%writel3rCom  = .TRUE.
 
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -376,6 +380,7 @@ CONTAINS
 
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3dzAsc = .TRUE.
+		   flags%writel3rAsc  = .TRUE.
 
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -394,6 +399,7 @@ CONTAINS
 
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3dzDes = .TRUE.
+		   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		END IF
 
@@ -763,6 +769,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.6  2001/03/03 00:45:44  ybj
+! with selected pressure levels
+!
 ! Revision 1.5  2001/03/03 00:20:07  ybj
 ! with selected pressure levels
 !

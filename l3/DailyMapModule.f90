@@ -84,7 +84,7 @@ Contains
 
           Integer :: nt_a_i, nt_d_i
 	  Real    :: c0_i, tau0_i
-	  Real (r8)    ::  lonD0_i, tD0_i, lonA0_i, tA0_i, lat_i, delTad_i
+	  Real (r8)   :: lonD0_i, tD0_i, lonA0_i, tA0_i, lat_i, delTad_i
 	 
           lat	    = lat_i
 	  nt_a      = nt_a_i
@@ -121,6 +121,8 @@ Contains
 	    Allocate(lonA(nt), tA(nt), sA(nt), rA(nt))
 	    Allocate(Dscend(nt), Ascend(nt))
 	    Allocate(wn(nt*2), sigma(nt*2))
+	    Allocate(wna(nt*2), sigmaa(nt*2))
+	    Allocate(wnd(nt*2), sigmad(nt*2))
 	    Allocate(phikr(nt*2))
 	    Allocate(phikra(nt*2))
 	    Allocate(phikrd(nt*2))
@@ -143,6 +145,8 @@ Contains
 	    DeAllocate(lonA, tA, sA, rA)
 	    DeAllocate(Dscend, Ascend)
 	    DeAllocate(wn, sigma)
+	    DeAllocate(wna, sigmaa)
+	    DeAllocate(wnd, sigmad)
 	    DeAllocate(phikr)
 	    DeAllocate(phikra)
 	    DeAllocate(phikrd)
@@ -547,22 +551,21 @@ Contains
    	     aimgP(i) = -imgPtemp(nt_a/2-i)
           End Do
 
- 	  mtotal = 0
+ 	  mtotala = 0
 
 	  krmax_g = krmax/2.0
 
  	  Do m = 1, nwave 
             m1 = m-1
    	    Do i = 1, nt_a
+     	       mtotala = mtotala + 1
 
-     	       mtotal = mtotal + 1
-
-      	       wn(mtotal) = float(m1)
+      	       wna(mtotala) = float(m1)
 
                ks = 2.0*PI*(-nt_a/2+i)/(nt_a*ds)
                kr = -ks*c0+float(m1)/sina
 
-               sigma(mtotal) = -ks*sina + kr*cosa
+               sigmaa(mtotala) = -ks*sina + kr*cosa
 
                if (kr < -krmax_g .or. kr > 0.0 .or. ks < 0.0) then 
                   flag = 0
@@ -575,10 +578,10 @@ Contains
 
      	       phida   = CMPLX(arealP(i), aimgP(i))*CMPLX(cos(expda), -sin(expda))
 
-     	       phikra(mtotal) = phida 
+     	       phikra(mtotala) = phida 
 
  
-      	       if( phikra(mtotal) /= CMPLX(0.0, 0.0) ) flag = 1
+      	       if( phikra(mtotala) /= CMPLX(0.0, 0.0) ) flag = 1
 
 
 101            continue 
@@ -586,7 +589,7 @@ Contains
 ! *** kr+
 
       	       if (kr > krmax_g .or. kr < 0.0 .or. ks < 0.0 ) then 
-                  if (flag == 0 .and. mtotal > 0) mtotal = mtotal-1
+                  if (flag == 0 .and. mtotala > 0) mtotala = mtotala-1
                   Goto 102
      	       endif
 
@@ -596,7 +599,7 @@ Contains
 
      	       phida   = CMPLX(arealP(i), aimgP(i))*CMPLX(cos(expda), -sin(expda))
 
-     	       phikra(mtotal) = phida 
+     	       phikra(mtotala) = phida 
 
 102            continue 
 
@@ -607,11 +610,11 @@ Contains
 	   fNum(j) = 0 
 	 end do
 
-	 do j = 1, mtotal
-	   wIndex = int(wn(j))
+	 do j = 1, mtotala
+	   wIndex = int(wna(j))
 	   fNum(wIndex) = fNum(wIndex) + 1
 	   l3sp%waveNumber(iLv, iLt, wIndex+1) = wIndex 
-	   l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigma(j)
+	   l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigmaa(j)
 	   l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikr(j))
 	   l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikr(j))
          end do
@@ -677,7 +680,7 @@ Contains
    	     dimgP(i) = -imgPtemp(nt_d/2-i)
           End Do
 
- 	  mtotal = 0
+ 	  mtotald = 0
 
 	  krmax_g = krmax/2.0
 
@@ -685,14 +688,14 @@ Contains
             m1 = m-1
    	    Do i = 1, nt_d
 
-     	       mtotal = mtotal + 1
+     	       mtotald = mtotald + 1
 
-      	       wn(mtotal) = float(m1)
+      	       wnd(mtotald) = float(m1)
 
                ks = 2.0*PI*(-nt_d/2+i)/(nt_d*ds)
                kr = -ks*c0+float(m1)/sina
 
-               sigma(mtotal) = -ks*sina + kr*cosa
+               sigmad(mtotald) = -ks*sina + kr*cosa
 
                if (kr < -krmax_g .or. kr > 0.0 .or. ks < 0.0) then 
                   flag = 0
@@ -705,10 +708,10 @@ Contains
 
      	       phida   = CMPLX(drealP(i), dimgP(i))*CMPLX(cos(expda), -sin(expda))
 
-     	       phikrd(mtotal) = phida 
+     	       phikrd(mtotald) = phida 
 
  
-      	       if( phikrd(mtotal) /= CMPLX(0.0, 0.0) ) flag = 1
+      	       if( phikrd(mtotald) /= CMPLX(0.0, 0.0) ) flag = 1
 
 
 101            continue 
@@ -716,7 +719,7 @@ Contains
 ! *** kr+
 
       	       if (kr > krmax_g .or. kr < 0.0 .or. ks < 0.0 ) then 
-                  if (flag == 0 .and. mtotal > 0) mtotal = mtotal-1
+                  if (flag == 0 .and. mtotald > 0) mtotald = mtotald-1
                   Goto 102
      	       endif
 
@@ -726,7 +729,7 @@ Contains
 
      	       phida   = CMPLX(drealP(i), dimgP(i))*CMPLX(cos(expda), -sin(expda))
 
-     	       phikrd(mtotal) = phida 
+     	       phikrd(mtotald) = phida 
 
 102            continue 
 
@@ -737,11 +740,11 @@ Contains
 	   fNum(j) = 0 
 	 end do
 
-	 do j = 1, mtotal
-	   wIndex = int(wn(j))
+	 do j = 1, mtotald
+	   wIndex = int(wnd(j))
 	   fNum(wIndex) = fNum(wIndex) + 1
 	   l3sp%waveNumber(iLv, iLt, wIndex+1) = wIndex 
-	   l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigma(j)
+	   l3sp%frequency(iLv, iLt, fNum(wIndex)) = sigmad(j)
 	   l3sp%l3spRelValue(iLv, iLt, wIndex+1, fNum(wIndex)) = real(phikr(j))
 	   l3sp%l3spImgValue(iLv, iLt, wIndex+1, fNum(wIndex)) = aimag(phikr(j))
          end do
@@ -860,13 +863,13 @@ Contains
   		rp = rpi 
   		rm = rmi 
 
-  		do j = 1, mtotal 
+  		do j = 1, mtotald 
 
-        	  kr     = wn(j)*sina+sigma(j)*cosa
-        	  ks     = wn(j)*cosa-sigma(j)*sina
+        	  kr     = wnd(j)*sina+sigmad(j)*cosa
+        	  ks     = wnd(j)*cosa-sigmad(j)*sina
 
-        	  argp = (wn(j)*ep + sigma(j)*xtime) + kr*(rda0-rp)
-        	  argm = (wn(j)*em + sigma(j)*xtime) + kr*(rda0-rm)
+        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rda0-rp)
+        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rda0-rm)
 
 		  sum = real( frp*phikrd(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikrd(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -891,13 +894,13 @@ Contains
   		rp = rpi 
   		rm = rmi 
 
-  		do j = 1, mtotal 
+  		do j = 1, mtotala 
 
-        	  kr     = wn(j)*sina+sigma(j)*cosa
-        	  ks     = wn(j)*cosa-sigma(j)*sina
+        	  kr     = wna(j)*sina+sigmaa(j)*cosa
+        	  ks     = wna(j)*cosa-sigmaa(j)*sina
 
-        	  argp = (wn(j)*ep + sigma(j)*xtime) + kr*(rda0-rp)
-        	  argm = (wn(j)*em + sigma(j)*xtime) + kr*(rda0-rm)
+        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(rda0-rp)
+        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(rda0-rm)
 
 		  sum = real( frp*phikra(j)*CMPLX(cos(argp), sin(argp)) ) + &
 	      	        real( frm*phikra(j)*CMPLX(cos(argm), sin(argm)) ) 
@@ -922,27 +925,156 @@ Contains
 ! |*** Diagnostics 
 ! \---------------------------------------------------------------/
 
-        Subroutine Diagnostics(ctype, xtime, nlons, xlon, result)
+        Subroutine Diagnostics(mode, xtime_in, xlon_in, result)
 
 ! Arguments
 
-	  integer ctype, nlons
+	  CHARACTER (LEN=3) :: mode                  ! asc/des/com/all
 
-	  real  xtime
-
-	  real(r8), Dimension(nlons) :: xlon, result
+	  real (r8) :: xtime_in, xlon_in
+	  real xtime, xlon, result
 
 ! Variables
 
 	  integer plan, m, m1, i, j, k
 
-	  real	kr, ks
+	  real  kr, ks
 
-	  real  xloni, eoff, rp, rm, argp, argm, ep, em, sum 
-	  real  argpa, argpd, argma, argmd
+	  real  xloni, eoff, rp, rm, ep, em, sum 
+	  real  argpa, argpd, argma, argmd, argp, argm
  	  real  epa, epd, ema, emd
  	  real  rma, rmd, rpa, rpd , rdp, ran, rdn
  	  real  frpa, frma, frpd, frmd, frp, frm, rpi, rmi
+
+!*** find offset in longitude necessary to get r value right
+
+	 xtime = xtime_in
+	 xlon = xlon_in
+
+ 	 eoff = c0*xtime - mod( (c0*xtime), (2.0*PI) )
+ 	 if (eoff < 0.0) eoff = 2.0*PI
+
+         result = 0.0
+
+         xloni = xlon - eoff
+
+         if (mode == 'com') then 
+
+!***find r value corresponding to this xlon & xtime
+
+  	    	epa = xloni
+  		ema = xloni
+  		epd = xloni
+  		emd = xloni
+
+  		rdp = xloni*sina + xtime*cosa
+
+  		call findad(sina, cosa, xtime, ra0, epa, ema, frpa, frma, rpi, rmi)
+  		call findad(sina, cosa, xtime, rd0, epd, emd, frpd, frmd, rpi, rmi)
+
+  		rpa = epa*sina + xtime*cosa
+  		rma = ema*sina + xtime*cosa
+  		rpd = epd*sina + xtime*cosa
+  		rmd = emd*sina + xtime*cosa
+
+  		if( (rpa-ra0)**2 >= (rma-ra0)**2 ) ran = (rma-ra0)**2
+  		if( (rpa-ra0)**2 <  (rma-ra0)**2 ) ran = (rpa-ra0)**2
+
+  		if( (rpd-rd0)**2 >= (rmd-rd0)**2 ) rdn = (rmd-rd0)**2
+  		if( (rpd-rd0)**2 <  (rmd-rd0)**2 ) rdn = (rpd-rd0)**2
+
+  		frpa = frpa*rdn/(rdn+ran)
+  		frma = frma*rdn/(rdn+ran)
+  		frpd = frpd*ran/(rdn+ran)
+  		frmd = frmd*ran/(rdn+ran)
+
+  		do j = 1, mtotal 
+
+        	  kr     = wn(j)*sina+sigma(j)*cosa
+        	  ks     = wn(j)*cosa-sigma(j)*sina
+
+        	  argpa = (wn(j)*epa + sigma(j)*xtime) + kr*(ra0-rpa)
+        	  argma = (wn(j)*ema + sigma(j)*xtime) + kr*(ra0-rma)
+        	  argpd = (wn(j)*epd + sigma(j)*xtime) + kr*(rd0-rpd)
+        	  argmd = (wn(j)*emd + sigma(j)*xtime) + kr*(rd0-rmd)
+
+		  sum = real( frpa*phikr(j)*CMPLX(cos(argpa), sin(argpa)) ) + &
+	      		real( frma*phikr(j)*CMPLX(cos(argma), sin(argma)) ) + &
+	      		real( frpd*phikr(j)*CMPLX(cos(argpd), sin(argpd)) ) + &
+	      		real( frmd*phikr(j)*CMPLX(cos(argmd), sin(argmd)) ) 
+
+        	  if( abs(ks) > 1.e-4) then 
+	   		sum = sum + real( conjg(frpa*phikr(j))*CMPLX(cos(argpa), -sin(argpa)) ) + &
+	               		    real( conjg(frma*phikr(j))*CMPLX(cos(argma), -sin(argma)) ) + &
+	               		    real( conjg(frpd*phikr(j))*CMPLX(cos(argpd), -sin(argpd)) ) + &
+	               		    real( conjg(frmd*phikr(j))*CMPLX(cos(argmd), -sin(argmd)) ) 
+        	  endif
+
+  		  result = result + sum
+
+  		end do
+
+ 	else if (mode == 'des') then 
+
+  		ep = xloni
+  		em = xloni
+
+  		call findad( sina, cosa, xtime, rda0, ep, em, frp, frm, rpi, rmi)
+
+  		rp = rpi 
+  		rm = rmi 
+
+  		do j = 1, mtotald 
+
+        	  kr     = wnd(j)*sina+sigmad(j)*cosa
+        	  ks     = wnd(j)*cosa-sigmad(j)*sina
+
+        	  argp = (wnd(j)*ep + sigmad(j)*xtime) + kr*(rda0-rp)
+        	  argm = (wnd(j)*em + sigmad(j)*xtime) + kr*(rda0-rm)
+
+		  sum = real( frp*phikrd(j)*CMPLX(cos(argp), sin(argp)) ) + &
+	      	        real( frm*phikrd(j)*CMPLX(cos(argm), sin(argm)) ) 
+
+        	  if( abs(ks) > 1.e-4) then 
+	   		sum = sum + real( conjg(frp*phikrd(j))*CMPLX(cos(argp), -sin(argp)) ) + &
+	               		    real( conjg(frm*phikrd(j))*CMPLX(cos(argm), -sin(argm)) ) 
+        	  endif
+
+  		  result = result + sum
+
+  		end do
+
+ 	else if (mode == 'asc') then 
+
+  		ep = xloni
+  		em = xloni
+
+  		call findad( sina, cosa, xtime, rda0, ep, em, frp, frm, rpi, rmi)
+
+  		rp = rpi 
+  		rm = rmi 
+
+  		do j = 1, mtotala 
+
+        	  kr     = wna(j)*sina+sigmaa(j)*cosa
+        	  ks     = wna(j)*cosa-sigmaa(j)*sina
+
+        	  argp = (wna(j)*ep + sigmaa(j)*xtime) + kr*(rda0-rp)
+        	  argm = (wna(j)*em + sigmaa(j)*xtime) + kr*(rda0-rm)
+
+		  sum = real( frp*phikra(j)*CMPLX(cos(argp), sin(argp)) ) + &
+	      	        real( frm*phikra(j)*CMPLX(cos(argm), sin(argm)) ) 
+
+        	  if( abs(ks) > 1.e-4) then 
+	   		sum = sum + real( conjg(frp*phikra(j))*CMPLX(cos(argp), -sin(argp)) ) + &
+	               		    real( conjg(frm*phikra(j))*CMPLX(cos(argm), -sin(argm)) ) 
+        	  endif
+
+  		  result = result + sum
+
+  		end do
+
+ 	end if
 
 
 	End Subroutine Diagnostics
@@ -1115,6 +1247,9 @@ End Module DailyMapModule
 !===================
 
 ! $Log$
+! Revision 1.1  2001/02/27 20:52:39  ybj
+! FFSM Process
+!
 ! Revision 1.1  2000/10/05 18:17:41  nakamura
 ! Module split from synoptic.f90 and modified to be more like the standard template.
 !
