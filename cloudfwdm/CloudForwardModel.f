@@ -157,7 +157,7 @@ C---------------------------------------
       REAL VMRin(NS,NZ)                        ! 1=H2O VOLUME MIXING RATIO
                                                ! 2=O3 VOLUME MIXING RATIO
 
-      REAL WCin(N,NZ)                            ! CLOUD WATER CONTENT
+      REAL WCin(N,NZ)                          ! CLOUD WATER CONTENT
                                                ! N=1: ICE; N=2: LIQUID
       REAL ZT(NT)                              ! TANGENT PRESSURE
       REAL*8 RE                                ! EARTH RADIUS
@@ -261,7 +261,7 @@ C---------------------------
       REAL PH0(N,NU,NZ-1),W00(N,NZ-1)  
       REAL P11(NU), RC11(3),RC_TMP(N,3)
       REAL CHK_CLD(NZmodel)                        
-      REAL ZZT(NT)
+      REAL ZZT(NT)                             ! TANGENT HEIGHT (km)
       REAL PH1(NU)                             ! SINGLE PARTICLE PHASE FUNCTION
       REAL P(NAB,NU)                           ! LEGENDRE POLYNOMIALS l=1
       REAL DP(NAB,NU)                          ! Delt LEGENDRE POLYNOMIALS l=1
@@ -273,25 +273,26 @@ C---------------------------
 
       COMPLEX A(NR,NAB),B(NR,NAB)              ! MIE COEFFICIENCIES
 
-C---------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>-------------------C
+C-----------------<<<<<<<<<<<<< START EXCUTION >>>>>>>>>>>>---------------------C
 
       CALL HEADER(1)
+      RE= 6370.D3                          !USE CONSTANT RADIUS AT PRESENT
 
 C=========================================================================
 C                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 C-------------------------------------------------------------------------
-C     CHECK IF THE INPUT PROFILE MATCHS THE MODEL INTERNAL GRID; 
+C     INTERPOLATE THE INPUT PROFILES TO THE MODEL INTERNAL GRID; 
 C     SET TANGENT PRESSURE (hPa) TO TANGENT HEIGHT (km)
 C=========================================================================
 
       CALL MODEL_ATMOS(PRESSURE,HEIGHT,TEMPERATURE,VMRin,NZ,NS,N,WCin,  
      >                  YP,YZ,YT,YQ,VMR,WC,NZmodel,CHK_CLD,ZT,ZZT,NT) 
 
-      DO I=1,NZmodel
-         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I)
-      ENDDO
+c      DO I=1,NZmodel
+c         WRITE(21,*) YZ(I),YP(I),YT(I),WC(1,I),CHK_CLD(I)
+c      ENDDO
 
-         WRITE(21,*)(ZZT(I),I=1,NT)
+c         WRITE(21,*)(ZZT(I),I=1,NT)
 
 C-----------------------------------------------
 C     INITIALIZE SCATTERING AND INCIDENT ANGLES 
@@ -443,7 +444,7 @@ C=================================================
                BETAc(ILYR,IFR)=0.
             ENDIF
 
-            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
+c            WRITE(21,*)delTAUc(ILYR),delTAU(ILYR),W0(1,ILYR)
 
 c           WRITE(21,*) BETAc(ILYR,IFR),BETA(ILYR,IFR),W0(1,ILYR)  
 
