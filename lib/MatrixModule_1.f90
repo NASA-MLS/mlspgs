@@ -1796,7 +1796,7 @@ contains ! =====     Public Procedures     =============================
     integer, parameter :: MB = KB * 1024
     integer, parameter :: GB = MB * 1024
     !                         Absent Banded Sparse   Full
-    character :: CHARS(0:3) = (/ '-',   'B',   'S',   'F' /)
+    character :: CHARS(0:4) = (/ '-',   'B',   'S',   'F',  '?' /)
     integer :: I, J, N
     logical :: MyUpper
 
@@ -1864,6 +1864,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.71  2002/07/17 06:01:10  livesey
+! Added trivial handling of M_Unknown
+!
 ! Revision 2.70  2002/07/01 23:50:03  vsnyder
 ! Plug memory leaks
 !
