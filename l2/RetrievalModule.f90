@@ -666,6 +666,9 @@ contains
       use VectorsModule, only: AddToVector, DestroyVectorInfo, &
         & DestroyVectorValue, Dump, Multiply, operator(.DOT.), &
         & operator(.MDOT.), operator(-), ScaleVector, SubtractFromVector
+      use L2ParInfo, only: PARALLEL
+      use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
+        & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
 
       ! Local Variables
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
@@ -708,6 +711,10 @@ contains
       call time_now ( t1 )
       call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
         & ModuleName )
+      ! Launch fwmParallel slaves
+      if ( parallel%master .and. parallel%fwmParallel ) &
+        & call SetupFWMSlaves ( configDatabase(configIndices), &
+        & state, fwdModelExtra, FwdModelOut )
       ! Set options for NWT
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
@@ -1016,6 +1023,15 @@ contains
             kTk => normalEquations
           end if
 
+          ! If in fwm parallel mode, get all slaves computing the forward models
+          if ( parallel%master .and. parallel%fwmParallel ) then
+            do t = 1, chunk%lastMAFIndex-chunk%firstMAFIndex+1
+              call TriggerSlaveRun ( v(x), t )
+            end do
+            ! Get the first one setup to send results as soon as possible
+            call RequestSlavesOutput ( 1 )
+          end if
+
           ! Loop over MAFs
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
               call add_to_retrieval_timing( 'newton_solver', t1 )
@@ -1023,12 +1039,21 @@ contains
             !??? to do? Ermmm, think of this next time.
             fmStat%maf = fmStat%maf + 1
             fmstat%rows = .false.
-            do k = 1, size(configIndices)
-              call forwardModel ( configDatabase(configIndices(k)), &
-                & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
-            end do ! k
+            if ( parallel%master .and. parallel%fwmParallel ) then
+              call ReceiveSlavesOutput ( v(f_rowScaled), fmStat, jacobian )
+              ! Set the next slave about packing up its output while we do
+              ! our normal equations stuff
+              if ( fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex ) &
+                & call RequestSlavesOutput ( fmStat%maf + 1 )
+            else
+              ! Otherwise, we call the forward model as ususal
+              do k = 1, size(configIndices)
+                call forwardModel ( configDatabase(configIndices(k)), &
+                  & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
+              end do ! k
               ! Forward model calls add_to_retrieval_timing
-              call time_now ( t1 )
+            end if
+            call time_now ( t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                  ! Store what we've just got in v(f) ie fwdModelOut
@@ -2952,6 +2977,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.187  2002/10/06 02:04:57  livesey
+! Put in fwmParallel functionality
+!
 ! Revision 2.186  2002/09/25 20:08:43  livesey
 ! Made subset -g less verbose
 !
