@@ -631,8 +631,6 @@ contains
         &     si,    &
         &     center_angle,ptg_angles(:,maf),dx_dt,d2x_dxdt,ier)
       if(ier /= 0) goto 99
-      print*,'After get_chi_angles ptg_angles is:'
-      call dump(ptg_angles(:,maf))
 
       ! Compute the refraction correction scaling matrix for this mmaf:
       call refraction_correction(no_tan_hts, tan_hts(:,maf), h_path(:,maf), &
@@ -1236,6 +1234,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.43  2001/03/28 01:31:39  livesey
+! Got rid of a dump statement
+!
 ! Revision 2.42  2001/03/28 01:31:16  livesey
 ! Got convolution working.
 !
