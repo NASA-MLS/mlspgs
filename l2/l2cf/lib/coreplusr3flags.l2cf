@@ -25,3 +25,5 @@ begin Fill
   !makeFlagsForOneProduct(product=GPH,radiometer=R3,chisqScale=10.0,minRads=1500,cloudMax=2K,cloudMin=-20K)
 
 end Fill
+
+; $Log$
