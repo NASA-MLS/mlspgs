@@ -317,28 +317,22 @@ CONTAINS ! =====     Public Procedures     =============================
     INTEGER, INTENT(IN) :: L2FileHandle ! Returned by swopen
     INTEGER, INTENT(IN), OPTIONAL :: firstProf, lastProf ! Defaults to first and last
     TYPE( L2GPData_T ), INTENT(OUT) :: l2gp ! Result
-    INTEGER, INTENT(OUT) :: numProfs ! Number actually read
+    INTEGER, INTENT(OUT), OPTIONAL :: numProfs ! Number actually read
 
-    ! Parameters
-
+    ! Local Parameters
     CHARACTER (LEN=*), PARAMETER :: SZ_ERR = 'Failed to get size of &
          &dimension '
     CHARACTER (LEN=*), PARAMETER :: MLSMSG_INPUT = 'Error in input argument '
     CHARACTER (LEN=*), PARAMETER :: MLSMSG_L2GPRead = 'Unable to read L2GP &
                                                      &field:'
 
-    ! Functions
-
-    !INTEGER, EXTERNAL :: swattach, swdetach, swdiminfo, swinqdims, swrdfld
-
-    ! Variables
-
+    ! Local Variables
     CHARACTER (LEN=80) :: list
     CHARACTER (LEN=480) :: msr
 
     INTEGER :: alloc_err, first, freq, lev, nDims, size, swid, status
     INTEGER :: start(3), stride(3), edge(3), dims(3)
-    INTEGER :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1
+    INTEGER :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1, myNumProfs
 
     LOGICAL :: firstCheck, lastCheck
 
@@ -421,28 +415,28 @@ CONTAINS ! =====     Public Procedures     =============================
        ENDIF
 
        IF (lastProf >= nTimes) THEN
-          numProfs = nTimes - first
+          myNumProfs = nTimes - first
        ELSE
-          numProfs = lastProf - first + 1
+          myNumProfs = lastProf - first + 1
        ENDIF
 
     ELSE
 
-       numProfs = nTimes - first
+       myNumProfs = nTimes - first
 
     ENDIF
 
     ! Allocate result
 
-    CALL SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, nTimes=numProfs)
+    CALL SetupNewL2GPRecord (l2gp, nFreqs=nFreqs, nLevels=nLevels, nTimes=myNumProfs)
 
     ! Allocate temporary arrays
 
     nFreqsOr1=MAX(nFreqs,1)
     nLevelsOr1=MAX(nLevels, 1)
-    ALLOCATE(realProf(numProfs), realSurf(l2gp%nLevels), &
+    ALLOCATE(realProf(myNumProfs), realSurf(l2gp%nLevels), &
          realFreq(l2gp%nFreqs), &
-         real3(nFreqsOr1,nLevelsOr1,numProfs), STAT=alloc_err)
+         real3(nFreqsOr1,nLevelsOr1,myNumProfs), STAT=alloc_err)
 
     ! Read the horizontal geolocation fields
 
@@ -452,7 +446,7 @@ CONTAINS ! =====     Public Procedures     =============================
     stride = 1
     edge(1) = nFreqsOr1
     edge(2) = nLevelsOr1
-    edge(3) = numProfs
+    edge(3) = myNumProfs
 
     status = swrdfld(swid, GEO_FIELD1, start(3:3), stride(3:3), edge(3:3), &
          realProf)
@@ -631,6 +625,9 @@ CONTAINS ! =====     Public Procedures     =============================
     status = swdetach(swid)
     IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &detach from swath interface after reading.')
+
+    ! Set numProfs if wanted
+    IF (PRESENT(numProfs)) numProfs=myNumProfs
 
     !-----------------------------
   END SUBROUTINE ReadL2GPData
@@ -1135,6 +1132,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.18  2001/02/13 00:55:35  livesey
+! Removed another print statement!
+!
 ! Revision 2.17  2001/02/13 00:51:31  livesey
 ! Fixed bug, copy pressure information in ExpandL2GPDataInPlace
 !
