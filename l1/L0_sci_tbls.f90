@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -272,15 +272,6 @@ MODULE L0_sci_tbls  ! Define L0 science tables
   INTEGER, PARAMETER :: Pkt1_T2_FB(10) = (/ 12, 1, 4, 2, 7, 3, 5, 13, 9, 8 /)
   INTEGER, PARAMETER :: Pkt2_T2_FB(9) = (/ 6, 10, 11, 15, 14, 17, 16, 19, 18 /)
 
-!! Attenuation setting read back structure:
-
-  TYPE Atten_T
-     INTEGER :: RIU
-     INTEGER :: Addr
-     INTEGER :: Mask
-     INTEGER :: Value
-  END TYPE Atten_T
-
 !! L0 science data packet for 1 MIF:
 
   TYPE Sci_pkt_T
@@ -304,6 +295,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      INTEGER :: THzSw                  ! THz Switch reading
      INTEGER :: BandSwitch(5)          ! band associated with each switch
      TYPE (BankLogical_T) :: MaxAtten  ! Whether in maximum attenuation
+     TYPE (BankLogical_T) :: DeltaAtten  ! Whether attenuation changed
      LOGICAL :: AttenMaxed             ! Some attenuation is maximum
      LOGICAL :: CRC_good
   END TYPE Sci_pkt_T
@@ -358,43 +350,51 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 
   TYPE (DACS_pkt_T) :: DACS_MAF(0:(MaxMIFs-1))
 
+!! Attenuation setting read-back structure:
+
+  TYPE Atten_T
+     INTEGER :: RIU
+     INTEGER :: Addr
+     INTEGER :: Mask
+     INTEGER :: Value
+     INTEGER :: Band, Link
+  END TYPE Atten_T
+
 !! Band attenuation table:
 
-  TYPE (Atten_T), PARAMETER :: BandAtten(NumBands) = (/ &
-       Atten_T ( 91, 49168, 255, 0), & ! 5B, C010, FF, 0   Band  1
-       Atten_T ( 95, 49170, 255, 0), & ! 5F, C012, FF, 0   Band  2
-       Atten_T ( 95, 49171, 255, 0), & ! 5F, C013, FF, 0   Band  3
-       Atten_T ( 95, 49172, 255, 0), & ! 5F, C014, FF, 0   Band  4
-       Atten_T ( 95, 49173, 255, 0), & ! 5F, C015, FF, 0   Band  5
-       Atten_T ( 95, 49174, 255, 0), & ! 5F, C016, FF, 0   Band  6
-       Atten_T ( 96, 49169, 255, 0), & ! 60, C011, FF, 0   Band  7
-       Atten_T ( 96, 49170, 255, 0), & ! 60, C012, FF, 0   Band  8
-       Atten_T ( 96, 49171, 255, 0), & ! 60, C013, FF, 0   Band  9
-       Atten_T (110, 49170, 255, 0), & ! 6E, C012, FF, 0   Band 10
-       Atten_T (110, 49171, 255, 0), & ! 6E, C013, FF, 0   Band 11
-       Atten_T (110, 49172, 255, 0), & ! 6E, C014, FF, 0   Band 12
-       Atten_T (110, 49173, 255, 0), & ! 6E, C015, FF, 0   Band 13
-       Atten_T (110, 49174, 255, 0), & ! 6E, C016, FF, 0   Band 14
-       Atten_T ( 84, 49170, 255, 0), & ! 54, C012, FF, 0   Band 15
-       Atten_T ( 84, 49169, 255, 0), & ! 54, C011, FF, 0   Band 16
-       Atten_T ( 84, 49168, 255, 0), & ! 54, C010, FF, 0   Band 17
-       Atten_T ( 84, 49173, 255, 0), & ! 54, C015, FF, 0   Band 18
-       Atten_T ( 84, 49172, 255, 0), & ! 54, C014, FF, 0   Band 19
-       Atten_T ( 84, 49171, 255, 0), & ! 54, C013, FF, 0   Band 20
-       Atten_T ( 92, 49168, 255, 0), & ! 5C, C010, FF, 0   Band 21
-       Atten_T (111, 49168, 255, 0), & ! 6F, C010, FF, 0   Band 22 ------|
-       Atten_T ( 97, 49168, 255, 0), & ! 61, C010, FF, 0   Band 23       |
-       Atten_T (111, 49169, 255, 0), & ! 6F, C011, FF, 0   Band 24  DACS |
-       Atten_T ( 97, 49169, 255, 0), & ! 61, C011, FF, 0   Band 25       |
-       Atten_T ( 97, 49169, 255, 0), & ! 61, C011, FF, 0   Band 26 ------|
-       Atten_T ( 95, 49174, 255, 0), & ! 5F, C016, FF, 0   Band 27 - B 6
-       Atten_T (110, 49171, 255, 0), & ! 6E, C013, FF, 0   Band 28 - B 11
-       Atten_T (110, 49170, 255, 0), & ! 6E, C012, FF, 0   Band 29 - B 10
-       Atten_T (110, 49175, 255, 0), & ! 6E, C017, FF, 0   Band 30 - MB 4
-       Atten_T (110, 49175, 255, 0), & ! 6E, C017, FF, 0   Band 31 - MB 5
-       Atten_T ( 91, 49169, 255, 0), & ! 5B, C011, FF, 0   Band 32 - R1A - WF 1
-       Atten_T ( 96, 49172, 255, 0), & ! 60, C014, FF, 0   Band 33 - R3  - WF 2
-       Atten_T ( 92, 49169, 255, 0)  & ! 5C, C011, FF, 0   Band 34 - R1B - WF 3
+  TYPE (Atten_T), PARAMETER :: BandAtten(NumBands-2) = (/ &
+       Atten_T ( 91, 49168, 255, 0,  1, 22), & ! 5B, C010, FF, 0   Band  1
+       Atten_T ( 95, 49170, 255, 0,  2, 23), & ! 5F, C012, FF, 0   Band  2
+       Atten_T ( 95, 49171, 255, 0,  3,  0), & ! 5F, C013, FF, 0   Band  3
+       Atten_T ( 95, 49172, 255, 0,  4,  0), & ! 5F, C014, FF, 0   Band  4
+       Atten_T ( 95, 49173, 255, 0,  5,  0), & ! 5F, C015, FF, 0   Band  5
+       Atten_T ( 95, 49174, 255, 0,  6, 27), & ! 5F, C016, FF, 0   Band  6
+       Atten_T ( 96, 49169, 255, 0,  7, 24), & ! 60, C011, FF, 0   Band  7
+       Atten_T ( 96, 49170, 255, 0,  8,  0), & ! 60, C012, FF, 0   Band  8
+       Atten_T ( 96, 49171, 255, 0,  9, 25), & ! 60, C013, FF, 0   Band  9
+       Atten_T (110, 49170, 255, 0, 10, 29), & ! 6E, C012, FF, 0   Band 10
+       Atten_T (110, 49171, 255, 0, 11, 28), & ! 6E, C013, FF, 0   Band 11
+       Atten_T (110, 49172, 255, 0, 12,  0), &  ! 6E, C014, FF, 0  Band 12
+       Atten_T (110, 49173, 255, 0, 13,  0), &  ! 6E, C015, FF, 0  Band 13
+       Atten_T (110, 49174, 255, 0, 14,  0), &  ! 6E, C016, FF, 0  Band 14
+       Atten_T ( 84, 49170, 255, 0, 15,  0), &  ! 54, C012, FF, 0  Band 15
+       Atten_T ( 84, 49169, 255, 0, 16,  0), &  ! 54, C011, FF, 0  Band 16
+       Atten_T ( 84, 49168, 255, 0, 17,  0), &  ! 54, C010, FF, 0  Band 17
+       Atten_T ( 84, 49173, 255, 0, 18,  0), &  ! 54, C015, FF, 0  Band 18
+       Atten_T ( 84, 49172, 255, 0, 19,  0), &  ! 54, C014, FF, 0  Band 19
+       Atten_T ( 84, 49171, 255, 0, 20,  0), &  ! 54, C013, FF, 0  Band 20
+       Atten_T ( 92, 49168, 255, 0, 21, 26), & ! 5C, C010, FF, 0   Band 21
+       Atten_T (111, 49168, 255, 0, 22,  1), & ! 6F, C010, FF, 0   Band 22
+       Atten_T ( 97, 49168, 255, 0, 23,  2), & ! 61, C010, FF, 0   Band 23
+       Atten_T (111, 49169, 255, 0, 24,  7), & ! 6F, C011, FF, 0   Band 24
+       Atten_T ( 97, 49169, 255, 0, 25,  9), & ! 61, C011, FF, 0   Band 25/26
+       Atten_T (110, 49175, 255, 0, 30, 31), & ! 6E, C017, FF, 0   Band 30/31
+       Atten_T ( 91, 49169, 255, 0, 32,  0), & ! 5B, C011, FF, 0   Band 32
+       Atten_T ( 91, 49170, 255, 0, 32,  0), & ! 5B, C012, FF, 0   Band 32
+       Atten_T ( 96, 49172, 255, 0, 33,  0), & ! 60, C014, FF, 0   Band 33
+       Atten_T ( 96, 49173, 255, 0, 33,  0), & ! 60, C0145, FF, 0  Band 33
+       Atten_T ( 92, 49169, 255, 0, 34,  0), & ! 5C, C011, FF, 0   Band 34
+       Atten_T ( 92, 49170, 255, 0, 34,  0) &  ! 5C, C012, FF, 0   Band 34
        /)
 
 !! Default APE pos2 values for use in simulations:
@@ -573,6 +573,9 @@ CONTAINS
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.7  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.6  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
