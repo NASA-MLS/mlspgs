@@ -19,7 +19,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use String_Table, only: Display_String
   use VectorsModule, only: CloneVector, Vector_T
 
@@ -30,9 +30,9 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
   public :: DestroyBlock, DestroyBlock_1, DestroyMatrix
-  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_Struct
-  public :: FillExtraCol, FillExtraRow, FindBlock, GetDiagonal, GetDiagonal_1
-  public :: GetFromMatrixDatabase, GetKindFromMatrixDatabase
+  public :: DestroyMatrixInDatabase, DestroyMatrixDatabase, Dump, Dump_L1
+  public :: Dump_Struct, FillExtraCol, FillExtraRow, FindBlock, GetDiagonal
+  public :: GetDiagonal_1, GetFromMatrixDatabase, GetKindFromMatrixDatabase
   public :: GetVectorFromColumn, GetVectorFromColumn_1, InvertCholesky
   public :: K_Cholesky, K_Empty, K_Kronecker, K_Plain, K_SPD
 ! public :: LevenbergUpdateCholesky
@@ -480,13 +480,18 @@ contains ! =====     Public Procedures     =============================
   !                                       the name of Z isn't changed.
     type(matrix_T), intent(inout) :: Z
     type(matrix_T), intent(in) :: X
-    integer :: I, J ! Subscripts and loop inductors
+    integer :: I, J      ! Subscripts and loop inductors
+    integer :: Status    ! From allocate
     call destroyMatrix ( z )
     call copyRCInfo ( z%col, x%col )
     call copyRCInfo ( z%row, x%row )
+    allocate ( z%block(z%row%nb,z%col%nb), stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
     do j = 1, x%col%nb
       do i = 1, x%row%nb
-        z%block(i,j) = x%block(i,j) ! Defined assignment, from MatrixModule_0
+        call createBlock ( z, i, j, m_absent ) ! Create block w/correct size
+        call copyBlock ( z%block(i,j), x%block(i,j) )
       end do ! i = 1, x%row%nb
     end do ! j = 1, x%col%nb
   end subroutine CopyMatrix
@@ -1317,9 +1322,10 @@ contains ! =====     Public Procedures     =============================
         do j = 1, i-1
           ir = z%m%row%inst(j)
           qr = z%m%row%quant(j)
-          my_rhs%quantities(qc)%values(:,ic) = &
-            & my_rhs%quantities(qc)%values(:,ic) - &
-            & ( z%m%block(j,i) .tx. x%quantities(qr)%values(:,ir) )
+          ! rhs := rhs - block^T * x
+          call multiplyMatrixVector ( z%m%block(j,i), &
+            & x%quantities(qr)%values(:,ir), my_rhs%quantities(qc)%values(:,ic), &
+            & update=.true., subtract=.true. )
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
@@ -1333,14 +1339,15 @@ contains ! =====     Public Procedures     =============================
         do j = i+1, n
           ir = z%m%col%inst(j)
           qr = z%m%col%quant(j)
-          my_rhs%quantities(qc)%values(:,ic) = &
-            & my_rhs%quantities(qc)%values(:,ic) - &
-            & ( z%m%block(i,j) .tx. x%quantities(qr)%values(:,ir) )
+          ! rhs := rhs - block * x
+          call multiplyMatrixVectorNoT ( z%m%block(i,j), &
+            & x%quantities(qr)%values(:,ir), my_rhs%quantities(qc)%values(:,ic), &
+            & update=.true., subtract=.true. )
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), &
-          & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
-        call solveCholesky ( z%m%block(i,i), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.false. )
+        call solveCholesky ( z%m%block(i,i), &
+          & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
       end do ! i = n, 1, -1
     end if
   end subroutine SolveCholesky_1
@@ -1401,12 +1408,14 @@ contains ! =====     Public Procedures     =============================
   end function AddItemToMatrixDatabase
 
   ! -------------------------------------------------  CopyRCInfo  -----
-  subroutine CopyRCInfo ( A, B )
+  subroutine CopyRCInfo ( A, B ) ! A := B
     type(RC_info), intent(inout) :: A
     type(RC_info), intent(in) :: B
     call destroyRCInfo ( a )
     a%vec = b%vec
     a%nb = b%nb
+    a%extra = b%extra
+    a%instFirst = b%instFirst
     call allocate_test ( a%nelts, size(b%nelts), "a%nelts in CopyRCInfo", &
       & moduleName )
     a%nelts = b%nelts
@@ -1425,6 +1434,52 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( rc%inst, "rc%inst in DestroyRCInfo", moduleName )
     call deallocate_test ( rc%quant, "rc%quant in DestroyRCInfo", moduleName )
   end subroutine DestroyRCInfo
+
+  ! ---------------------------------------------------  Dump_L1  -----
+  subroutine Dump_L1 ( Matrix, Name, Upper )
+    type(Matrix_T), intent(in) :: Matrix
+    character(len=*), intent(in), optional :: Name
+    logical, intent(in), optional :: Upper
+    ! Dump the L1 norms of the matrix blocks.  Only dump the upper triangle
+    ! if Upper is present and true.
+
+    integer :: I, J, K             ! Subscripts, loop inductors
+    logical :: My_upper
+
+    if ( present(name) ) call output ( name )
+    if ( matrix%name > 0 ) then
+      if ( present(name) ) call output ( ', ' )
+      call output ( 'Name = ' )
+      call display_string ( matrix%name, advance='yes' )
+    else
+      if ( present(name) ) call output ( '', advance='yes' )
+    end if
+    my_upper = .false.
+    if ( present(upper) ) my_upper = upper
+    do k = 1, matrix%col%nb, 7
+      if ( matrix%col%nb > 7 ) then
+        call output ( ' ' )
+        do i = k, min(matrix%col%nb,k+6)
+          call output ( i, places=10 )
+        end do
+        call output ( '', advance='yes' )
+      end if
+      do i = 1, matrix%row%nb
+        if ( .not. my_upper .or. i <= min(matrix%col%nb,k+6) ) then
+          call output ( i, places=4 )
+          call output ( ':' )
+          do j = k, min(matrix%col%nb,k+6)
+            if ( my_upper .and. i > j ) then
+              call blanks ( 10 )
+            else
+              call output ( maxAbsVal(matrix%block(i,j)), format='(1pe10.3)' )
+            end if
+          end do ! j
+          call output ( '', advance='yes' )
+        end if
+      end do ! i
+    end do ! k
+  end subroutine Dump_L1
 
   ! ------------------------------------------------  Dump_Matrix  -----
   subroutine Dump_Matrix ( Matrix, Name, Details )
@@ -1565,7 +1620,7 @@ contains ! =====     Public Procedures     =============================
     !                                          if present and true.
 
     !                         Absent Banded Sparse   Full
-    character :: CHARS(0:3) = (/ 'A',   'B',   'S',   'F' /)
+    character :: CHARS(0:3) = (/ '-',   'B',   'S',   'F' /)
     integer :: I, J
     logical :: MyUpper
 
@@ -1610,6 +1665,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.33  2001/05/10 22:54:34  vsnyder
+! Get CholeskyFactor_1 to work.  Add Dump_L1 and Dump_Struct.
+!
 ! Revision 2.32  2001/05/10 02:14:58  vsnyder
 ! Repair CholeskyFactor, MaxAbsVal; add Dump_Struct
 !
