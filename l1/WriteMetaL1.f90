@@ -14,9 +14,10 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
 
   IMPLICIT NONE
 
-  PUBLIC
+  PRIVATE
 
-  PRIVATE :: Id, ModuleName
+  PUBLIC :: WriteMetadata
+
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = &
        "$Id$"
@@ -131,6 +132,8 @@ CONTAINS
        sval = "Filter bank radiances"
     ELSE IF (hdf_file == mlspcf_l1b_radd_start) THEN
        sval = "DACS radiances"
+    ELSE IF (hdf_file == mlspcf_l1b_radt_start) THEN
+       sval = "THz radiances"
     ELSE IF (hdf_file == mlspcf_l1b_oa_start) THEN
        sval = "Orbit/attitude and tangent point"
     ELSE IF (hdf_file == mlspcf_l1b_eng_start) THEN
@@ -382,7 +385,8 @@ CONTAINS
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
     ENDIF
 
-    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion)
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .TRUE.)
+
     returnStatus = pgs_met_write (groups(INVENTORY), "coremetadata.0", sdid)
 
     IF (returnStatus /= PGS_S_SUCCESS .AND. &
@@ -398,7 +402,7 @@ CONTAINS
        ENDIF
     ENDIF
 
-    returnStatus = mls_sfend (sdid, hdfVersion)
+    returnStatus = mls_sfend (sdid, hdfVersion, .TRUE.)
     IF (returnStatus /= 0) THEN 
        CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
             "Calling mls_sfend failed for file "//physical_fileName ) 
@@ -412,7 +416,18 @@ CONTAINS
 
   END SUBROUTINE populate_metadata_l1
 
-  SUBROUTINE WriteMetaData
+  SUBROUTINE WriteMetaData (IsTHz)
+
+    LOGICAL, OPTIONAL :: IsTHz
+
+    IF (PRESENT (IsTHz)) THEN
+
+       CALL populate_metadata_l1 (mlspcf_l1b_radt_start, &
+            mlspcf_mcf_l1bradt_start)
+
+       RETURN
+
+    ENDIF
 
     CALL populate_metadata_l1 (mlspcf_l1b_radf_start, mlspcf_mcf_l1bradf_start)
 
@@ -425,6 +440,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.7  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.6  2002/11/19 21:46:38  perun
 ! Use HDFversion instead of HDFVersionString
 !
