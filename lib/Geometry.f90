@@ -13,7 +13,7 @@ module Geometry
   private
 
   public :: Earth_Axis_Ratio_Squared, EarthRadA, EarthRadB, EarthSurfaceGPH
-  public :: GM, G0, J2, J4, SpeedOfLight, W
+  public :: GM, G0, J2, J4, W
 
   public :: GeodToGeocLat
 
@@ -40,10 +40,6 @@ module Geometry
   ! Earth surface geopotential height.
 
   real (r8), parameter :: EarthSurfaceGPH = 6387182.265_r8 ! meters
-
-  ! Speed of Light.
-
-  real (rp), parameter :: SpeedOfLight = 299792458.3_rp ! Meters/Second
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -82,6 +78,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.10  2003/01/10 21:55:12  vsnyder
+! Move SpeedOfLight from Geometry ot Units
+!
 ! Revision 2.9  2002/10/08 00:09:09  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
