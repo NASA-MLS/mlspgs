@@ -644,19 +644,19 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     do i =1 , noFreqs
     if (doChannel(i)) then
     do mif=1, noMIFs
-    radiance%values (i+(mif-1)*noFreqs, maf) = a_clearSkyRadiance(i, mif) 
+    radiance%values (i+(mif-1)*noFreqs, maf) = a_clearSkyRadiance(mif,i) 
 
     if(associated(cloudInducedRadiance)) &
       & cloudInducedRadiance%values (i+(mif-1)*noFreqs, maf ) = &
-      & a_cloudInducedRadiance(i, mif)
+      & a_cloudInducedRadiance(mif,i)
 
     if(associated(effectiveOpticalDepth)) &
       & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) = &
-      & a_effectiveOpticalDepth(i, mif)
+      & a_effectiveOpticalDepth(mif,i)
 
     if(associated(cloudRADSensitivity)) &
       & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =   &
-      & a_cloudRADSensitivity(i, mif)
+      & a_cloudRADSensitivity(mif,i)
     enddo
     endif
     enddo
@@ -977,6 +977,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.54  2001/10/09 17:47:33  jonathan
+! some changes
+!
 ! Revision 1.53  2001/10/08 23:43:00  dwu
 ! fix jBlock%kind initialization
 !
