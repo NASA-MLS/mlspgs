@@ -48,15 +48,15 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------------  OPEN_MLSCF  -----
   subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit, L2CF_file, return_status, &
-   & debugOption )
+   & record_length, debugOption )
 
     integer, intent(in) :: MLSPCF_Start
     integer, intent(out) :: CF_Unit
     integer, intent(out) :: return_status
     character(len=*), intent(out) :: L2CF_file
+    integer, intent(in) :: record_length
     logical, optional, intent(in) :: debugOption
 
-    integer :: record_length
     integer :: version
 
     error = 0
@@ -144,6 +144,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.13  2002/10/08 17:36:22  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.12  2002/02/20 00:27:15  pwagner
 ! Now returns l2cf file name
 !
