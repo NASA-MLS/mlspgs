@@ -2618,7 +2618,7 @@ contains
 
       Print *
       do i = 1, noUsedChannels
-        channel = usedChannels(i)
+        channel = usedChannels(i) + channelOrigins(i) - 1
         print "(/, 'ch', i2.2, '_pfa_rad\ ', i3.3 )", channel, k
         j = thisRadiance%template%noChans
         print "( 4(2x, 1pg15.8) )", &
@@ -2845,6 +2845,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.128  2003/02/13 23:05:50  jonathan
+! changes dimension for beta_path_cloud also delocate it
+!
 ! Revision 2.127  2003/02/13 17:25:07  bill
 ! subscripted gl_inds to call in drad_df per Vans suggestion
 !
