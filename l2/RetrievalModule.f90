@@ -1306,7 +1306,7 @@ contains
           do channel = 1, qty%template%noChans
             doThis = .true.
             if ( associated(channels) ) doThis = channels(channel)
-            if ( doThis ) then
+            if ( .not. doThis ) then
               do height = 1, qty%template%noSurfs
                 call SetMask ( qty%mask(:,instance), &
                   & (/ channel+qty%template%noChans*(height-1) /) )
@@ -1357,6 +1357,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.60  2001/09/25 00:18:36  livesey
+! Bug fix in Subset
+!
 ! Revision 2.59  2001/09/20 00:31:06  vsnyder
 ! Move deallocation of 'channels' out of loop
 !
