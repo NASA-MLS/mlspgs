@@ -688,9 +688,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     call allocate_test ( thisFraction, noFreqs, 'thisFraction', ModuleName )
 
-    if ( sidebandStart /= sidebandStop ) then 
-      ! Change to this if statement later !????
-      ! if ( signal%sideband == 0 ) then
+    if ( signal%sideband == 0 .or. forwardModelConfig%forceSidebandFraction ) then
       sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
       lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -718,7 +716,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Setup a sideband ratio array
     !------------------------------
 
-      if ( sidebandStart /= sidebandStop ) then   ! We're folding
+      if ( signal%sideband == 0 .or. forwardModelConfig%forceSidebandFraction ) then
           if ( thisSideband == -1 ) then
             thisFraction = lowerSidebandFraction%values(:,1)
           else
@@ -1115,6 +1113,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.125  2004/01/08 00:52:43  jonathan
+! delet output Using antenna pattern: etc
+!
 ! Revision 1.124  2004/01/08 00:24:32  jonathan
 ! add tracing signals
 !
