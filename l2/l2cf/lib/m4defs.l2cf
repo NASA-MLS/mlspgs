@@ -64,4 +64,6 @@ changesyntax({@!})
   !ifelse($2,{},{},{!dnl
     !define($1!getpar($2),!getval($2))!dnl
     !processparval($1,!shift(!shift($@)))})})
+; A quick macro to trim _HR of strings
+!define(trimHR,{!substr($1,0,!eval(!len($1)-3))})
 
