@@ -1,7 +1,7 @@
 #!/bin/sh
 # missing_ident.sh
 
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -13,6 +13,12 @@
 #  *{$suffix} in supplied directory names
 #
 #Use(2)
+#Print list of files lacking lines containing a user-supplied string
+#List compiled from args on command-line
+#or else automatically computed to match pattern
+#  *{$suffix} in supplied directory names
+#
+#Use(3)
 #Print list of files whose names do not appear among idents actually
 #incorporated into executable
 #Usage:
@@ -22,7 +28,10 @@
 # -d path       path of directory if automatic
 # -suf suffix   file name suffix if automatic; e.g. ".f90"
 # -h[elp]       print brief help message; exit
-# -x executable the executable, switching to use(2)
+# -m string     the string, switching to use(2)
+# -c            enforce case sensitivity with use (2); default is not
+# -r            reverse sense of use (2); print list of files containing string
+# -x executable the executable, switching to use(3)
 #Notes:
 #(1)If option -suf present but -d absent, will search current working directory
 #(2)The options -suf and -d may be repeated; e.g.
@@ -113,12 +122,16 @@ get_unique_name()
 #****************************************************************
 id_list=
 RCS_list=
+string_list=
 # echo "All the args: $@"
 suffixes=""
 directories=""
 me="$0"
 my_name=missing_ident.sh
 ex_name=
+string=
+case_sens="no"
+reverse="no"
 # $the_splitter is split_path with me's path (if any) prepended
 the_splitter="`echo $0 | sed 's/missing_ident/split_path/'`"
 #
@@ -128,13 +141,12 @@ the_splitter="`echo $0 | sed 's/missing_ident/split_path/'`"
 more_opts="yes"
 while [ "$more_opts" = "yes" ] ; do
     case "$1" in
-	-d )
-	    directories="$directories $2"
-	    shift
+	-c )
+	    case_sens="yes"
        shift
 	;;
-	-suf )
-	    suffixes="$suffixes $2"
+	-d )
+	    directories="$directories $2"
 	    shift
        shift
 	;;
@@ -142,6 +154,20 @@ while [ "$more_opts" = "yes" ] ; do
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
+	;;
+	-m )
+	    string="$2"
+	    shift
+       shift
+	;;
+	-r )
+	    reverse="yes"
+       shift
+	;;
+	-suf )
+	    suffixes="$suffixes $2"
+	    shift
+       shift
 	;;
 	-x )
 	    ex_name="$2"
@@ -153,6 +179,10 @@ while [ "$more_opts" = "yes" ] ; do
 	;;
     esac
 done
+if [ "$string" = "" ]
+then
+  case_sens="none"
+fi
 extant_files "$@"
 arglist="$extant_files_result"
 if [ "$suffixes" != "" ]
@@ -194,7 +224,7 @@ fi
 
 for file in $arglist
 do
-   # echo file is $file
+   #echo file is $file
    file_name=`$the_splitter -f $file`
    if [ "$ex_name" != "" ]
    then
@@ -222,6 +252,33 @@ do
    then                            
       RCS_list="$RCS_list $file"   
    fi                              
+
+   case "$case_sens" in
+     yes)
+       test=`grep "$string" $file`
+       ;;
+     no)
+       test=`grep -i "$string" $file`
+       ;;
+     *)
+       test="none"
+       ;;
+   esac
+   #echo "string test"
+   #echo "file_name $file_name"
+   #echo "test $test"
+   if [ "$reverse" = "yes" ]             
+   then
+     if [ "$test" != "" ] 
+     then                          
+      string_list="$string_list $file"   
+     fi                              
+   else                              
+     if [ "$test" = "" ]             
+     then                            
+      string_list="$string_list $file"   
+     fi                              
+   fi                              
    
 done
 if [ "$ex_name" != "" ]   
@@ -231,6 +288,14 @@ then
   echo "These files do not appear as \$RCS lines in $ex_name"
   echo "$RCS_list"
   rm -f "$temp1" "$temp2"
+elif [ "$string" != "" -a "$reverse" = "no" ]   
+then
+  echo "These files lack a line with $string"
+  echo "$string_list"
+elif [ "$string" != "" -a "$reverse" = "yes" ]   
+then
+  echo "These files contain a line with $string"
+  echo "$string_list"
 else                      
   echo "These files lack a \$id line"
   echo "$id_list"
@@ -240,6 +305,9 @@ fi
 
 exit 0
 # $Log$
+# Revision 1.2  2002/10/11 19:39:50  pwagner
+# Added use(2): print files not appearing as id/rcs lines in executable idents
+#
 # Revision 1.1  2002/10/08 16:57:33  pwagner
 # First commit
 #
