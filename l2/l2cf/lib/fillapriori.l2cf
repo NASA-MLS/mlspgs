@@ -261,7 +261,7 @@ begin Fill
   Fill, quantity=vReg.h2o,   method=profile, profileValues= $
     [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv ], logSpace=false
   Fill, quantity=vReg.h2o_hr,   method=profile, profileValues= $
-    [ 1000mb:20ppmv, 300:2ppmv, 100mb:0.3ppmv ], logSpace=false
+    [ 1000mb:80ppmv, 300:8ppmv, 100mb:0.3ppmv ], logSpace=false
 
   Fill, quantity=vReg.hcl,   method=profile, profileValues= [ 100mb:0.3ppbv ]
   Fill, quantity=vReg.hcn,   method=profile, profileValues= [ 100mb:100pptv ]
