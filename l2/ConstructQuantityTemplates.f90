@@ -37,7 +37,8 @@ module ConstructQuantityTemplates
   integer, parameter :: P_VGRID              = P_SGRID + 1
   integer, parameter :: P_RADIOMETER         = P_VGRID + 1
   integer, parameter :: P_RADIOMETEROPTIONAL = P_RADIOMETER + 1
-  integer, parameter :: P_SCMODULE           = P_RADIOMETEROPTIONAL + 1
+  integer, parameter :: P_REFLECTOR          = P_RADIOMETEROPTIONAL + 1
+  integer, parameter :: P_SCMODULE           = P_REFLECTOR + 1
   integer, parameter :: P_SIGNAL             = P_SCMODULE + 1
   integer, parameter :: P_SUPPRESSCHANNELS   = P_SIGNAL + 1
   integer, parameter :: P_XYZ                = P_SUPPRESSCHANNELS + 1
@@ -63,25 +64,8 @@ contains ! ============= Public procedures ===================================
     use HGrid, only: hGrid_T
     use INIT_TABLES_MODULE, only:  F_FGRID, F_GEODANGLE, F_HGRID, F_IRREGULAR, &
       & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_RADIOMETER, F_SGRID, &
-      & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID
-    use INIT_TABLES_MODULE, only: FIRST_LIT, LAST_LIT, L_BASELINE, &
-      & L_BOUNDARYPRESSURE, L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, &
-      & L_CHISQMMIF, L_CLOUDEXTINCTION, L_CLOUDICE, L_CLOUDINDUCEDRADIANCE, &
-      & L_CLOUDRADSENSITIVITY, L_COLUMNABUNDANCE, L_EARTHRADIUS, &
-      & L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, L_ELEVOFFSET, L_EXTINCTION, &
-      & L_GEODALTITUDE, L_GPH, L_HEIGHTOFFSET, L_LOSTRANSFUNC, L_LOSVEL, &
-      & L_MAGNETICFIELD, L_MASSMEANDIAMETERICE, L_MATRIX3X3, L_NOISEBANDWIDTH, L_NONE, &
-      & L_NORADSPERMIF, L_OPTICALDEPTH, L_ORBITINCLINATION, &
-      & L_PHITAN, L_PTAN, L_RADIANCE, &
-      & L_REFGPH, L_RHI, L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
-      & L_SCVELECI, L_SCVELECR, L_SIDEBANDRATIO, L_SPACERADIANCE, &
-      & L_SYSTEMTEMPERATURE, L_TEMPERATURE, L_TNGTECI, L_TNGTGEOCALT, &
-      & L_TNGTGEODALT, L_TOTALEXTINCTION, L_TRUE, L_VMR, L_XYZ, L_ZETA, &
-      & PHYQ_ANGLE, PHYQ_DIMENSIONLESS, PHYQ_DOBSONUNITS, PHYQ_EXTINCTION, &
-      & PHYQ_FREQUENCY, PHYQ_GAUSS, PHYQ_IceDensity, PHYQ_LENGTH, &
-      & PHYQ_PCTRHI, PHYQ_PRESSURE, PHYQ_TEMPERATURE, PHYQ_VELOCITY, &
-      & PHYQ_VMR, PHYQ_ZETA, &
-      & FIELD_FIRST, FIELD_LAST
+      & F_SIGNAL, F_TYPE, F_UNIT, F_VGRID, F_REFLECTOR, FIELD_FIRST, FIELD_LAST, &
+      & L_TRUE, L_ZETA, L_XYZ, L_MATRIX3X3, L_CHANNEL, L_LOSTRANSFUNC, L_NONE
     use Intrinsic, only: LIT_INDICES
     use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -130,6 +114,7 @@ contains ! ============= Public procedures ===================================
     integer :: NOSURFS                  ! Quantity dimension
     integer :: QUANTITYTYPE             ! Literal
     integer :: RADIOMETER               ! Database index
+    integer :: REFLECTOR                ! Reflector literal
     integer :: SGRIDINDEX               ! Index for 'sGrid'
     integer :: SIDEBAND                 ! -1, 0, 1
     integer :: SIGNAL                   ! Database index
@@ -164,6 +149,7 @@ contains ! ============= Public procedures ===================================
     noChans = 1
     quantitytype = 0
     radiometer = 0
+    reflector = 0
     regular = .true.
     sGridIndex = 0
     scaleFactor = 1.0
@@ -232,6 +218,8 @@ contains ! ============= Public procedures ===================================
         call deallocate_test ( signalInds, 'signalInds', ModuleName )
         instrumentModule = GetModuleFromSignal(signal)
         radiometer = GetRadiometerFromSignal(signal)
+      case ( f_reflector )
+        reflector = value
       case ( f_sgrid )
         sGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_type )
@@ -266,6 +254,9 @@ contains ! ============= Public procedures ===================================
     if ( got ( f_Signal ) .neqv. properties ( p_Signal ) ) &
       & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
       & got(f_Signal) ) ) // ' signal for quantity type ', quantityType )
+    if ( got ( f_Reflector ) .neqv. properties ( p_Reflector ) ) &
+      & call Announce_error ( root, trim ( merge ( 'unexpected', 'need      ', &
+      & got(f_Reflector) ) ) // ' reflector for quantity type ', quantityType )
 
     ! These ones need a little more thought
     if ( .not. properties ( p_fGridOptional ) ) then
@@ -385,6 +376,7 @@ contains ! ============= Public procedures ===================================
     qty%name = name
     qty%quantityType = quantityType
     qty%radiometer = radiometer
+    qty%reflector = reflector
     qty%scaleFactor = scaleFactor
     qty%sideband = sideband
     qty%signal = signal
@@ -975,6 +967,7 @@ contains ! ============= Public procedures ===================================
     ! This routine initializes the quantity template properties
     ! This is the routine one needs to update when one introduces a new quantity type.
     use Init_Tables_Module, only:  L_BASELINE, L_BOUNDARYPRESSURE, &
+      L_CALSIDEBANDFRACTION, &
       L_CHISQBINNED, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, &
       L_CLOUDINDUCEDRADIANCE, L_CLOUDEXTINCTION, L_CLOUDRADSENSITIVITY, &
       L_CLOUDWATER, L_COLUMNABUNDANCE, &
@@ -987,15 +980,16 @@ contains ! ============= Public procedures ===================================
       L_EARTHREFL, L_ECRTOFOV, L_EFFECTIVEOPTICALDEPTH, &
       L_ELEVOFFSET, L_EXTINCTION, L_GPH, L_HEIGHTOFFSET, &
       L_ISOTOPERATIO, L_JACOBIAN_COLS, L_JACOBIAN_ROWS, &
-      L_LOSTRANSFUNC, L_LOSVEL, &
+      L_LIMBSIDEBANDFRACTION, L_LOSTRANSFUNC, L_LOSVEL, &
       L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MAGNETICFIELD, &
       L_NOISEBANDWIDTH, L_NORADSPERMIF, L_NORADSBINNED, &
       L_NUMJ, L_OPTICALDEPTH, &
       L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, L_EARTHRADIUS,&
-      L_REFGPH, L_RHI, L_SIZEDISTRIBUTION, &
+      L_REFGPH, L_REFLTEMP, L_REFLTRANS, L_REFLREFL, L_REFLSPILL, &
+      L_RHI, L_SIZEDISTRIBUTION, &
       L_SCANRESIDUAL, L_SCECI, L_SCVEL, L_SCVELECI, &
-      L_SCVELECR, L_SCGEOCALT, L_SIDEBANDRATIO, &
-      L_SPACERADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
+      L_SCVELECR, L_SCGEOCALT, &
+      L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
       L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, L_TNGTGEOCALT, &
       L_TOTALEXTINCTION, L_VMR
     use Init_Tables_Module, only: PHYQ_EXTINCTION, PHYQ_FREQUENCY,&
@@ -1023,6 +1017,7 @@ contains ! ============= Public procedures ===================================
       l_baseline, phyq_temperature, p_hGrid, p_vGrid, p_fGrid, p_radiometer, &
                   p_mustBeZeta, next, &
       l_boundaryPressure, phyq_pressure, p_hGrid, next, &
+      l_calSidebandFraction, phyq_dimensionless, p_signal, next, &
       l_chisqBinned, phyq_dimensionless, p_hGrid, p_vGrid, &
                      p_signal, p_suppressChannels, p_mustBeZeta, next, &
       l_chisqChan, phyq_dimensionless, p_majorFrame, p_signal, next, &
@@ -1068,6 +1063,7 @@ contains ! ============= Public procedures ===================================
       l_isotopeRatio, phyq_dimensionless, p_molecule, next, &
       l_jacobian_cols, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
       l_jacobian_rows, phyq_dimensionless, p_vGrid, p_hGrid, p_mustBeZeta, next, &
+      l_limbSidebandFraction, phyq_dimensionless, p_signal, next, &
       l_losTransFunc, phyq_dimensionless, p_minorFrame, p_sGrid, p_module, next, &
       l_losVel, phyq_dimensionless, p_minorFrame, p_module, next, &
       l_magneticField, phyq_gauss, p_vGrid, p_hGrid, p_xyz, p_mustBeZeta, next, &
@@ -1086,6 +1082,10 @@ contains ! ============= Public procedures ===================================
 
     call DefineQtyTypes ( (/ &
       l_radiance, phyq_temperature, p_minorFrame, p_signal, next, & 
+      l_refltemp, phyq_temperature, p_majorFrame, p_reflector, p_module, next, &
+      l_refltrans, phyq_dimensionless, p_signal, p_reflector, next, &
+      l_reflrefl, phyq_dimensionless, p_reflector, next, &
+      l_reflspill, phyq_temperature, p_signal, p_majorframe, p_reflector, next, &
       l_refGPH, phyq_length, p_hGrid, p_vGrid, p_mustBeZeta, next, &
       l_rhi, phyq_dimensionless, p_hGrid, p_vGrid, p_molecule, p_mustBeZeta, next, &
       l_scECI, phyq_length, p_minorFrame, p_scModule, p_xyz, next, &
@@ -1094,9 +1094,9 @@ contains ! ============= Public procedures ===================================
       l_scVelECI, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scVelECR, phyq_velocity, p_minorFrame, p_scModule, p_xyz, next, &
       l_scanResidual, phyq_length, p_minorFrame, p_module, next, &
-      l_sidebandratio, phyq_dimensionless, p_signal, next, & 
       l_sizeDistribution, phyq_dimensionless, p_hGrid, p_vGrid, p_mustBeZeta, next, & 
       l_spaceRadiance, phyq_temperature, none, next, &
+      l_strayRadiance, phyq_temperature, p_signal, p_majorFrame, next, &
       l_surfaceType, phyq_dimensionless, p_hGrid, next, & 
       l_systemTemperature, phyq_temperature, p_signal, next, &
       l_temperature, phyq_temperature, p_hGrid, p_vGrid, p_mustbezeta, next, &
