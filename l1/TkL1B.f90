@@ -1295,7 +1295,7 @@ CONTAINS
 
        DO MIF = 0, (lenG - 1)
           sc_unit_vector = sc_frame_vector(:,MIF) / &
-               SQRT (sc_frame_vector(1,MIF)**2 + & sc_frame_vector(2,MIF)**2 + &
+               SQRT (sc_frame_vector(1,MIF)**2 + sc_frame_vector(2,MIF)**2 + &
                sc_frame_vector(3,MIF)**2)
 
           space_angle = ACOS (sc_unit_vector(2)) * Rad2Deg  ! Y vector
@@ -1312,6 +1312,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.14  2003/09/15 21:50:04  pwagner
+! Removed illegal midline continuation--Lahey disapproves
+!
 ! Revision 2.13  2003/09/15 17:15:54  perun
 ! Version 1.3 commit
 !
