@@ -24,9 +24,6 @@ begin Join
   !l2gpJoin(so2,SO2)
   !l2gpJoin(rhi!res,RHI!swathRes)
 
-  !l2gpJoin(cldRadMin,cldRadMin)
-  !l2gpJoin(cldRadMax,cldRadMax)
-
   !include(joincolumns.l2cf)
 
 end Join
