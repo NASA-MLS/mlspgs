@@ -291,6 +291,65 @@ begin Construct
   !forall(constructElev,!allBandLSBs,!allBandUSBs)
   !define(allElevs, {!makelist({elev},{},!allBandLSBs,!allBandUSBs)})
 
+  ;; ----------------------------------------- Antenna terms
+
+  reflTempPrimary: Quantity, type=reflTemp, reflector=primary, module=GHz
+  reflTempSecondary: Quantity, type=reflTemp, reflector=secondary, module=GHz
+  reflTempTertiary: Quantity, type=reflTemp, reflector=tertiary, module=GHz
+
+  !define(constructAntennaTerms,{!dnl
+  ;; Primary
+  reflReflPrimary$1: Quantity, type=reflRefl, reflector=primary, signal=!signal($1)
+  reflTransPrimary$1: Quantity, type=reflTrans, reflector=primary, signal=!signal($1)
+  reflSpillPrimary$1: Quantity, type=reflSpill, reflector=primary, signal=!signal($1)
+  ;; Secondary
+  reflReflSecondary$1: Quantity, type=reflRefl, reflector=secondary, signal=!signal($1)
+  reflTransSecondary$1: Quantity, type=reflTrans, reflector=secondary, signal=!signal($1)
+  reflSpillSecondary$1: Quantity, type=reflSpill, reflector=secondary, signal=!signal($1)
+  ;; Tertiary
+  reflReflTertiary$1: Quantity, type=reflRefl, reflector=tertiary, signal=!signal($1)
+  reflTransTertiary$1: Quantity, type=reflTrans, reflector=tertiary, signal=!signal($1)
+  reflSpillTertiary$1: Quantity, type=reflSpill, reflector=tertiary, signal=!signal($1)
+  ;; Complete
+  reflTransComplete$1: Quantity, type=reflTrans, reflector=complete, signal=!signal($1)
+  ;; Strays
+  strayRadiance$1: Quantity, type=strayRadiance, signal=!signal($1)!nl})
+    
+  !forall(constructAntennaTerms,!allBandLSBs,!allBandUSBs)
+
+  ;; Now make the lists up, this is messy
+  !define(allReflTemps,{reflTempPrimary, reflTempSecondary, reflTempTertiary})
+  ;; Primary
+  !define(allReflReflPrimaries, {!makelist({reflReflPrimary},{},!allBandLSBs,!allBandUSBs)})
+  !define(allReflTransPrimaries, {!makelist({reflTransPrimary},{},!allBandLSBs,!allBandUSBs)})
+  !define(allReflSpillPrimaries, {!makelist({reflSpillPrimary},{},!allBandLSBs,!allBandUSBs)})
+  ;; Secondary
+  !define(allReflReflSecondaries, {!dnl
+    !makelist({reflReflSecondary},{},!allBandLSBs,!allBandUSBs)})
+  !define(allReflTransSecondaries, {!dnl
+    !makelist({reflTransSecondary},{},!allBandLSBs,!allBandUSBs)})
+  !define(allReflSpillSecondaries, {!dnl
+    !makelist({reflSpillSecondary},{},!allBandLSBs,!allBandUSBs)})
+  ;; Tertiary
+  !define(allReflReflTertiaries, {!dnl
+    !makelist({reflReflTertiary},{},!allBandLSBs,!allBandUSBs)})
+  !define(allReflTransTertiaries, {!dnl
+    !makelist({reflTransTertiary},{},!allBandLSBs,!allBandUSBs)})
+  !define(allReflSpillTertiaries, {!dnl
+    !makelist({reflSpillTertiary},{},!allBandLSBs,!allBandUSBs)})
+  ;; Complete
+  !define(allReflTransCompletes,{!dnl
+    !makelist({reflTransComplete},{},!allBandLSBs,!allBandUSBs)})
+  ;; Strays
+  !define(allStrayRadiances, {!makelist({strayRadiance},{},!allBandLSBs,!allBandUSBs)})
+
+  ;; Now the 'master list'
+  !define(allAntennaLossTerms,{!allReflTemps, $
+    !allReflReflPrimaries,!allReflTransPrimaries,!allReflSpillPrimaries, $
+    !allReflReflSecondaries,!allReflTransSecondaries,!allReflSpillSecondaries, $
+    !allReflReflTertiaries,!allReflTransTertiaries,!allReflSpillTertiaries, $
+    !allReflTransCompletes,!allStrayRadiances})
+  
   ;; ----------------------------------------- Retrieval diagnostics
   ;; Note no continuation lines allowed here, sorry!
   !define(allRetrievalDiagnostics,{dnwt_ajn, dnwt_axmax, dnwt_cait, dnwt_chiSqMinNorm, dnwt_chiSqNorm, dnwt_diag, dnwt_dxdx, dnwt_dxdxl, dnwt_dxn, dnwt_dxnl, dnwt_fnmin, dnwt_fnorm, dnwt_gdx, dnwt_gfac, dnwt_gradn, dnwt_sq, dnwt_sqt, numJ, dnwt_flag, jacobian_rows, jacobian_cols})
@@ -352,6 +411,7 @@ begin Construct
     !allFoldedNoiseBandwidths, $
     !allUnfoldedNoiseBandwidths, $
     !allElevs, $
+    !allAntennaLossTerms, $
     !lesserState ]
 
   measurementTemplate: VectorTemplate, quantities = [ $
