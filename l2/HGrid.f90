@@ -10,10 +10,11 @@ module HGrid                    ! Horizontal grid information
   use EXPR_M, only: EXPR
   use Dump_0, only: DUMP
   use INIT_TABLES_MODULE, only: F_FRACTION, F_HEIGHT, F_INCLINATION, &
-    & F_INTERPOLATIONFACTOR, F_MIF, F_MODULE, F_TYPE, F_VALUES, FIELD_FIRST,&
-    & F_SPACING, F_ORIGIN, F_FORBIDOVERSPILL, &
+    & F_INTERPOLATIONFACTOR, F_INSETOVERLAPS, F_MIF, F_MODULE, F_TYPE, F_VALUES, &
+    & FIELD_FIRST, F_SPACING, F_ORIGIN, F_FORBIDOVERSPILL, &
     & F_SOURCEL2GP, FIELD_LAST, L_EXPLICIT, L_FIXED, L_FRACTIONAL, L_HEIGHT, L_L2GP,&
-    & L_MIF, L_REGULAR, PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_ANGLE
+    & L_MIF, L_REGULAR, PHYQ_DIMENSIONLESS, PHYQ_LENGTH, PHYQ_ANGLE,&
+    & F_MAXLOWEROVERLAP, F_MAXUPPEROVERLAP
   use LEXER_CORE, only: PRINT_SOURCE
   use L1BData, only: DeallocateL1BData, L1BData_T, ReadL1BData, &
     & AssembleL1BQtyName
@@ -135,9 +136,12 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELD                    ! Subtree index of "field" node
     integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
     logical :: GOT_FIELD(field_first:field_last)
+    logical :: INSETOVERLAPS            ! Flag
     integer :: L1BFLAG
     integer :: L1BITEM                  ! Loop counter
     integer :: MAF                      ! Loop counters
+    integer :: MAXLOWEROVERLAP          ! For some hGrids
+    integer :: MAXUPPEROVERLAP          ! For some hGrids
     integer :: MIF                      ! For fixed hGrids
     integer :: NOMAFS                   ! Number of MAFs of L1B data read
     integer :: PROF                     ! Loop counter
@@ -166,6 +170,9 @@ contains ! =====     Public Procedures     =============================
     got_field = .false.
     interpolationFactor = 1.0
     forbidOverspill = .false.
+    maxLowerOverlap = -1
+    maxUpperOverlap = -1
+    insetOverlaps = .false.
 
     do keyNo = 2, nsons(root)
       son = subtree(keyNo,root)
@@ -197,11 +204,23 @@ contains ! =====     Public Procedures     =============================
         mif = expr_value(1)
         if ( expr_units(1) /= PHYQ_Dimensionless) &
           & call announce_error ( field, lengthUnitMessage )
+      case ( f_maxLowerOverlap )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        maxLowerOverlap = expr_value(1)
+        if ( expr_units(1) /= PHYQ_Dimensionless) &
+          & call announce_error ( field, unitlessMessage )
+      case ( f_maxUpperOverlap )
+        call expr ( subtree(2,son), expr_units, expr_value )
+        maxUpperOverlap = expr_value(1)
+        if ( expr_units(1) /= PHYQ_Dimensionless) &
+          & call announce_error ( field, unitlessMessage )
       case ( f_fraction )
         call expr ( subtree(2,son), expr_units, expr_value )
         fraction = expr_value(1)
         if ( expr_units(1) /= PHYQ_Dimensionless) &
           & call announce_error ( field, unitlessMessage )
+      case ( f_insetOverlaps )
+        insetOverlaps = get_boolean ( fieldValue )
       case ( f_interpolationFactor )
         call expr ( subtree(2,son), expr_units, expr_value )
         interpolationFactor = expr_value(1)
@@ -236,7 +255,7 @@ contains ! =====     Public Procedures     =============================
       else
         call CreateMIFBasedHGrids ( l1bInfo, hGridType, chunks(chunkNo), &
           & got_field, root, height, fraction, interpolationFactor, &
-          & instrumentModuleName, mif, hGrid )
+          & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
       end if
 
     case ( l_explicit ) ! ----------------- Explicit ------------------
@@ -265,7 +284,8 @@ contains ! =====     Public Procedures     =============================
         call announce_error ( root, NoSpacingOrigin )
       else
         call CreateRegularHGrid ( l1bInfo, processingRange, chunks, chunkNo, &
-          & spacing, origin, trim(instrumentModuleName), forbidOverspill, hGrid )
+          & spacing, origin, trim(instrumentModuleName), forbidOverspill, &
+          & maxLowerOverlap, maxUpperOverlap, insetOverlaps, hGrid )
       end if
 
     case ( l_l2gp) ! -------------------- L2GP ------------------------
@@ -311,7 +331,7 @@ contains ! =====     Public Procedures     =============================
   ! ------------------------------------- CreateMIFBasedHGrids -----------
   subroutine CreateMIFBasedHGrids ( l1bInfo, hGridType, &
     & chunk, got_field, root, height, fraction, interpolationFactor,&
-    & instrumentModuleName, mif, hGrid )
+    & instrumentModuleName, mif, maxLowerOverlap, maxUpperOverlap, hGrid )
     ! This is part of ConstructHGridFromMLSCFInfo
     type (L1BInfo_T), intent(in)      :: L1BINFO
     integer, intent(in)               :: HGRIDTYPE
@@ -323,6 +343,8 @@ contains ! =====     Public Procedures     =============================
     real(r8), intent(in)              :: FRACTION
     character (len=*), intent(in)     :: INSTRUMENTMODULENAME
     integer, intent(in)               :: MIF
+    integer, intent(in)               :: MAXLOWEROVERLAP
+    integer, intent(in)               :: MAXUPPEROVERLAP
     type (HGrid_T), intent(inout)     :: HGRID ! Needs inout as name set by caller
 
     ! Local variables / parameters
@@ -560,12 +582,21 @@ contains ! =====     Public Procedures     =============================
       & nint(chunk%noMAFsLowerOverlap*interpolationFactor)
     hGrid%noProfsUpperOverlap = &
       & nint(chunk%noMAFsUpperOverlap*interpolationFactor)
+
+    ! Now deal with the user requests
+    if ( maxLowerOverlap >= 0 .and. &
+      & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) &
+      call TrimHGrid ( hGrid, -1, hGrid%noProfsLowerOverlap - maxLowerOverlap )
+    if ( maxUpperOverlap >= 0 .and. &
+      & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) ) &
+      call TrimHGrid ( hGrid, -1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
     
   end subroutine CreateMIFBasedHGrids
 
   ! ----------------------------------- CreateRegularHGrid ------------
   subroutine CreateRegularHGrid ( l1bInfo, processingRange, chunks, chunkNo, &
-    & spacing, origin, instrumentModuleName, forbidOverspill, hGrid )
+    & spacing, origin, instrumentModuleName, forbidOverspill, &
+    & maxLowerOverlap, maxUpperOverlap, insetOverlaps, hGrid )
     type (L1BInfo_T), intent(in) :: L1BINFO
     type (TAI93_Range_T), intent(in) :: PROCESSINGRANGE
     type (MLSChunk_T), intent(in), dimension(:) :: CHUNKS
@@ -574,6 +605,9 @@ contains ! =====     Public Procedures     =============================
     real(r8), intent(in) :: ORIGIN
     character (len=*), intent(in) :: INSTRUMENTMODULENAME
     logical, intent(in) :: FORBIDOVERSPILL
+    integer, intent(in) :: MAXLOWEROVERLAP
+    integer, intent(in) :: MAXUPPEROVERLAP
+    logical, intent(in) :: INSETOVERLAPS
     type (HGrid_T), intent(inout) :: HGRID ! Needs inout as name set by caller
 
     ! Local variables/parameters
@@ -677,10 +711,8 @@ contains ! =====     Public Procedures     =============================
         if ( first > maxAngleFirstMAF ) exit setFirstLoop
         first = first + spacing
       end do setFirstLoop
-      ! I'm commenting this bit out for the moment, as I think I don't
-      ! want it.
-      ! else 
-      !   if ( first > minAngle ) first = first - spacing
+    else 
+      if ( .not. insetOverlaps .and. first > minAngle ) first = first - spacing
     end if
     if ( chunk%noMAFsUpperOverlap > 0 ) then
       setLastLoop: do
@@ -688,10 +720,8 @@ contains ! =====     Public Procedures     =============================
         if ( last < minAngleLastMAF ) exit setLastLoop
         last = last - spacing
       end do setLastLoop
-      ! I'm commenting this bit out for the moment, as I think I don't
-      ! want it.
-      ! else
-      !   if ( last < maxAngle ) last = last + spacing
+    else
+      if ( .not. insetOverlaps .and. last < maxAngle ) last = last + spacing
     end if
 
     ! Now work out how many profiles that is and lay them down
@@ -895,6 +925,14 @@ contains ! =====     Public Procedures     =============================
         hGrid%noProfsUpperOverlap = hGrid%noProfs - hGrid%noProfsUpperOverlap
       end if
     end if
+
+    ! Now deal with the user requests
+    if ( maxLowerOverlap >= 0 .and. &
+      & ( hGrid%noProfsLowerOverlap > maxLowerOverlap ) ) &
+      call TrimHGrid ( hGrid, -1, hGrid%noProfsLowerOverlap - maxLowerOverlap )
+    if ( maxUpperOverlap >= 0 .and. &
+      & ( hGrid%noProfsUpperOverlap > maxUpperOverlap ) ) &
+      call TrimHGrid ( hGrid, -1, hGrid%noProfsUpperOverlap - maxUpperOverlap )
 
     ! Finally we're done.
     if ( index ( switches, 'hgrid' ) /= 0  .or. DEEBUG ) then
@@ -1230,6 +1268,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.44  2003/01/06 20:13:46  livesey
+! New handling of overlaps
+!
 ! Revision 2.43  2002/12/11 22:17:05  pwagner
 ! Added error checks on hdf version
 !
