@@ -11,10 +11,10 @@ PROGRAM hdf5DStest ! tests MLSHDF5 routines
    USE MLSFILES, ONLY: MLS_SFSTART, MLS_SFEND, &
     &  HDFVERSION_4, HDFVERSION_5
    use MLSHDF5, only: SaveAsHDF5DS, LoadFromHDF5DS, MakeHDF5Attribute, &
-    &  GetHDF5Attribute
+    &  GetHDF5Attribute, IsHDF5AttributePresent
    use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMessageConfig
    use MLSStrings, only: GetStringElement, readIntsFromChars
-   use HDF5, only: h5gclose_f, h5gopen_f
+   use HDF5, only: h5gclose_f, h5gopen_f, h5dopen_f, h5dclose_f
    
    IMPLICIT NONE
 
@@ -52,13 +52,26 @@ PROGRAM hdf5DStest ! tests MLSHDF5 routines
    character(len=*), parameter  :: DSUnits = 'test units'
    character(len=*), parameter  :: DimName = 'test dimension'
    character(len=*), parameter  :: DimUnits = 'dimension units'
+   character(len=17), dimension(3)    :: myDimensions
+   character(len=*), dimension(3), parameter                :: Dimensions = (/&
+     &    '001 dimension 001', &
+     &    '002 dimension 002', &
+     &    '003 dimension 003' /)
    real(r4), dimension(nLevels) :: DimValues
+   character(len=*), parameter  :: Charname = 'character data'
    character(len=80)            :: inputString
    character(len=8), dimension(2) :: int_chars
    integer, dimension(2)        :: the_ints
+   integer                      :: dataId
    real(r4)                     :: diff
+   logical                      :: is_it
    real(r4), dimension(:,:), pointer   :: l2auxValue => NULL()
+   character(len=2), dimension(:,:), pointer :: CharField => NULL()
    logical, parameter           :: WRITEATTRIBUTESDURING = .TRUE.
+   character, dimension(nLevels), parameter :: UCAlphas = &
+     & (/'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J' /)
+   character, dimension(nLevels), parameter :: LCAlphas = &
+     & (/'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' /)
    ! Executable
    call h5open_f(returnStatus)
    MLSMessageConfig%useToolkit = .false.
@@ -93,18 +106,18 @@ PROGRAM hdf5DStest ! tests MLSHDF5 routines
      start_time = end_time + 1
      end_time = min(end_time + burst_length, nTimes)
      if ( end_time < start_time) exit
-     print *,'start_time    : ', start_time
-     print *,'end_time      : ', end_time
-     allocate(l2auxValue(nLevels, 1:end_time-start_time+1), stat=returnStatus)
-     if ( returnStatus /= 0 ) then
-       print *, 'Error allocating l2auxValue'
-       stop
-     endif
-     do time=start_time, end_time
-       do level=1, nLevels
-           l2auxValue(level, time-start_time+1) = time + 100*level
+       print *,'start_time    : ', start_time
+       print *,'end_time      : ', end_time
+       allocate(l2auxValue(nLevels, 1:end_time-start_time+1), stat=returnStatus)
+       if ( returnStatus /= 0 ) then
+         print *, 'Error allocating l2auxValue'
+         stop
+       endif
+       do time=start_time, end_time
+         do level=1, nLevels
+             l2auxValue(level, time-start_time+1) = time + 100*level
+         enddo
        enddo
-     enddo
      if ( burst == 1 ) then
        fileID = mls_sfstart ( trim(l2auxFilename), DFACC_CREATE, &
          &                                          hdfVersion=hdfVersion )
@@ -112,32 +125,63 @@ PROGRAM hdf5DStest ! tests MLSHDF5 routines
        fileID = mls_sfstart ( trim(l2auxFilename), DFACC_RDWR, &
          &                                          hdfVersion=hdfVersion )
      endif
-     call SaveAsHDF5DS ( fileID, DSname, l2auxValue, &
-      & (/0, start_time-1/), (/nLevels, end_time-start_time+1/), &
-      & may_add_to=.true., adding_to=(burst /= 1) )             
+       call SaveAsHDF5DS ( fileID, DSname, l2auxValue, &
+        & (/0, start_time-1/), (/nLevels, end_time-start_time+1/), &
+        & may_add_to=.true., adding_to=(burst /= 1) )             
 
-     if ( WRITEATTRIBUTESDURING ) then
-       call MakeHDF5Attribute ( fileID, DSName, 'Units', DSUnits, &
-        & skip_if_already_there=.true. )
-       call MakeHDF5Attribute ( fileID, DSName, 'Dimension', DimName, &
-        & skip_if_already_there=.true. )
-       call MakeHDF5Attribute ( fileID, DSName, 'DimesnionValues', DimValues, &
-        & skip_if_already_there=.true. )
-       call MakeHDF5Attribute ( fileID, DSName, 'DimesnionUnits', DimUnits, &
-        & skip_if_already_there=.true. )
-     endif
+       if ( WRITEATTRIBUTESDURING ) then
+         is_it = IsHDF5AttributePresent(fileID, DSName, 'Units')
+         print *, 'Units an attribute already:', is_it
+         call MakeHDF5Attribute ( fileID, DSName, 'Units', DSUnits, &
+          & skip_if_already_there=.true. )
+         call MakeHDF5Attribute ( fileID, DSName, 'Dimension', DimName, &
+          & skip_if_already_there=.true. )
+         call MakeHDF5Attribute ( fileID, DSName, 'DimensionValues', DimValues, &
+          & skip_if_already_there=.true. )
+         call MakeHDF5Attribute ( fileID, DSName, 'DimensionUnits', DimUnits, &
+          & skip_if_already_there=.true. )
+         call MakeHDF5Attribute ( fileID, DSName, 'Dimensions', Dimensions, &
+          & skip_if_already_there=.true. )
+       endif
+       deallocate(l2auxValue, stat=returnStatus)
+     !call SaveAsHDF5DS ( fileID, DSname, l2auxValue, &
+     ! & (/0, start_time-1/), (/nLevels, end_time-start_time+1/), &
+     ! & may_add_to=.true., adding_to=(burst /= 1) )             
 
      returnStatus = mls_sfend( fileID, hdfVersion=hdfVersion)
      if ( returnStatus /= 0 ) then
        print *, 'Error in ending hdf access to file'
        stop
      endif
-     deallocate(l2auxValue, stat=returnStatus)
      if ( returnStatus /= 0 ) then
        print *, 'Error deallocating l2auxValue'
        stop
      endif
+   enddo          ! End of Loop of bursts
+   allocate(CharField(nLevels, nTimes), stat=returnStatus)
+   if ( returnStatus /= 0 ) then
+     print *, 'Error allocating CharField'
+     stop
+   endif
+   do time=1, nTimes, 2
+     do level=1, nLevels
+         CharField(level, time) = UCAlphas(level)
+     enddo
+     if ( time < nTimes ) then
+       do level=1, nLevels
+           CharField(level, time+1) = UCAlphas(level) // LCAlphas(level)
+       enddo
+     endif
    enddo
+   fileID = mls_sfstart ( trim(l2auxFilename), DFACC_RDWR, &
+     &                                          hdfVersion=hdfVersion )
+   call SaveAsHDF5DS ( fileID, Charname, CharField )             
+   returnStatus = mls_sfend( fileID, hdfVersion=hdfVersion)
+   if ( returnStatus /= 0 ) then
+     print *, 'Error in ending hdf access to file'
+     stop
+   endif
+   deallocate(CharField, stat=returnStatus)
    ! Now read what we just wrote and see if it's the same
    fileID = mls_sfstart ( trim(l2auxFilename), DFACC_READ, &
          &                                          hdfVersion=hdfVersion )
@@ -147,10 +191,39 @@ PROGRAM hdf5DStest ! tests MLSHDF5 routines
      stop
    endif
    call LoadFromHDF5DS (fileID, DSname, l2auxValue)
+   allocate(CharField(nLevels, nTimes), stat=returnStatus)
+   if ( returnStatus /= 0 ) then
+     print *, 'Error allocating CharField'
+     stop
+   endif
+   call LoadFromHDF5DS (fileID, Charname, CharField)
+   ! And try to read some of the attributes
+   call h5dopen_f(fileID, DSName, dataID, returnStatus)
+   call GetHDF5Attribute(dataID, 'Dimensions', myDimensions)
+   call h5dclose_f(dataID, returnStatus)
    returnStatus = mls_sfend( fileID, hdfVersion=hdfVersion)
 
    ! Dump 2 l2auxs and accumulate differences
    call dump(l2auxValue, 'test data')
+   call dump(CharField, Charname)
+   call dump(myDimensions, 'Dimensions')
+   
+   ! Try to change values
+   l2auxValue = -l2auxValue
+   fileID = mls_sfstart ( trim(l2auxFilename), DFACC_RDWR, &
+     &                                          hdfVersion=hdfVersion )
+   call SaveAsHDF5DS ( fileID, DSName, l2auxValue, adding_to=.true. )             
+   returnStatus = mls_sfend( fileID, hdfVersion=hdfVersion)
+   
+   ! And read back
+   ! Now read what we just wrote and see if it's the same
+   fileID = mls_sfstart ( trim(l2auxFilename), DFACC_READ, &
+         &                                          hdfVersion=hdfVersion )
+   l2auxValue = 0.   ! Just to make sure we get it from the file
+   call LoadFromHDF5DS (fileID, DSname, l2auxValue)
+   call dump(l2auxValue, '(-)test data')
+   returnStatus = mls_sfend( fileID, hdfVersion=hdfVersion)
+   
    deallocate(l2auxValue, stat=returnStatus)
    if ( returnStatus /= 0 ) then
      print *, 'Error deallocating l2auxValue'
@@ -178,4 +251,7 @@ END PROGRAM hdf5DStest
 !==================
 
 ! $Log$
+! Revision 1.1  2003/01/29 21:32:38  pwagner
+! First commit
+!
 
