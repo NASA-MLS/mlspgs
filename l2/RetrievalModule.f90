@@ -509,11 +509,9 @@ contains
           case ( l_lowcloud )
             call LowCloudRetrieval
               call add_to_retrieval_timing( 'low_cloud', t1 )
-              call time_now ( t1 )
           case ( l_highcloud )
             call HighCloudRetrieval
               call add_to_retrieval_timing( 'high_cloud', t1 )
-              call time_now ( t1 )
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -765,7 +763,7 @@ contains
       numF = 0
       numJ = 0
       aj%axmax = 0.0
-      call time_now ( t0 ) ! time base for Newtonian iteration
+        call time_now ( t0 ) ! time base for Newtonian iteration
       do k = 1, size(v(x)%quantities)
         aj%axmax = max(aj%axmax, maxval(abs(v(x)%quantities(k)%values)))
       end do
@@ -781,15 +779,18 @@ contains
           end if
           call output ( ' initLambda = ' )
           call output ( initLambda, advance='yes' )
-        end if;
-
+        end if
         call add_to_retrieval_timing( 'newton_solver', t1 )
-        call time_now ( t1 )
+
       call copyVector ( v(bestX), v(x) ) ! bestX := x to start things off
       prev_nwt_flag = huge(0)
       do ! Newtonian iteration
         if ( nwt_flag /= nf_getJ ) then ! not taking a special iteration to get J
           call nwta ( nwt_flag, aj )
+          if ( nwt_flag == nf_evalj .and. prev_nwt_flag == nf_evalf ) then
+            prev_nwt_flag = nf_evalj
+            cycle
+          end if
         end if
           if ( index(switches,'nwt') /= 0 ) then
             call FlagName ( nwt_flag, theFlagName )
@@ -870,10 +871,6 @@ contains
         !           $||{\bf f + J \delta \hat x}||_2$,
         !   \item[AJ\%GRADN] = L2 norm of Gradient = $|| {\bf J^T f}||_2$.
         !   \end{description}
-          if ( nwt_flag == nf_evalj .and. prev_nwt_flag == nf_evalf ) then
-            prev_nwt_flag = nf_evalj
-            cycle
-          end if
           numJ = numJ + 1
           if ( numJ > maxJacobians .and. nwt_flag /= nf_getJ ) then
               if ( index(switches,'nwt') /= 0 ) then
@@ -899,9 +896,9 @@ contains
             ! AprioriMinusX (if any), so as not to have a memory
             ! leak.  Then make it look like apriori.
             call copyVector ( v(aprioriMinusX), apriori, clone=.true., &
-              & vectorNameText='_aprioriMinusX' )
-            v(aprioriMinusX) = apriori - v(x)
-            call subtractFromVector ( v(aprioriMinusX), v(x) )
+              & vectorNameText='_aprioriMinusX' ) ! a-x := a
+!           v(aprioriMinusX) = apriori - v(x)
+            call subtractFromVector ( v(aprioriMinusX), v(x) ) ! a-x := a - x
             if ( got(f_regApriori) ) &
               & call copyVector ( v(reg_RHS), v(aprioriMinusX), clone=.true., &
               & vectorNameText='_regRHS' )
@@ -967,7 +964,6 @@ contains
           ! Add Tikhonov regularization if requested.
           if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. tikhonovBefore ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
-              call time_now ( t1 )
 
             !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
             !  0}$ or ${\bf R x}_n \simeq {\bf a}$, where {\bf a} is the
@@ -976,7 +972,7 @@ contains
             !  to get ${\bf R \delta x} \simeq -{\bf R x}_{n-1}$ or ${\bf
             !  R \delta x} \simeq {\bf R} ( {\bf a - x}_{n-1})$.
 
-            do t = 1, 2
+            do t = 1, 2 ! Vertical, Horizontal regularization
               if ( t == 1 ) then
                 if ( .not. got(f_vRegOrders) ) cycle
                 call regularize ( tikhonov, vRegOrders, vRegQuants, vRegWeights, &
@@ -986,9 +982,9 @@ contains
                 call regularize ( tikhonov, hRegOrders, hRegQuants, hRegWeights, &
                   & hRegWeightVec, tikhonovRows, horiz=.true. )
               end if
-              if ( got(f_regApriori) ) then
+              if ( got(f_regApriori) ) then ! reg_*_x := R * (apriori - x)
                 call multiplyMatrixVectorNoT ( tikhonov, v(reg_RHS), v(reg_X_x) )
-              else
+              else                          ! reg_*_x := -R * x
                 call multiplyMatrixVectorNoT ( tikhonov, v(x), v(reg_X_x) )
                 call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
               end if
@@ -1006,7 +1002,6 @@ contains
               ! Don't destroy reg_X_x unless we move the 'clone' for it
               ! inside the loop.  Also, if we destroy it, we can't snoop it.
                 call add_to_retrieval_timing( 'tikh_reg', t1 )
-                call time_now ( t1 )
             end do ! t
           else
             tikhonovRows = 0
@@ -1030,7 +1025,6 @@ contains
           ! Loop over MAFs
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
               call add_to_retrieval_timing( 'newton_solver', t1 )
-              call time_now ( t1 )
             !??? What if one config set finished but others still had more
             !??? to do? Ermmm, think of this next time.
             fmStat%maf = fmStat%maf + 1
@@ -1039,13 +1033,11 @@ contains
               call forwardModel ( configDatabase(configIndices(k)), &
                 & v(x), fwdModelExtra, v(f_rowScaled), fmw, fmStat, jacobian )
             end do ! k
-            ! ForwardModel itself calls add_to_retrieval_timing
-            ! call add_to_retrieval_timing( 'forward_model', t1 )
-            call time_now ( t1 )
+              call add_to_retrieval_timing( 'forward_model', t1 )
             do rowBlock = 1, size(fmStat%rows)
               if ( fmStat%rows(rowBlock) ) then
                  ! Store what we've just got in v(f) ie fwdModelOut
-                call copyVector ( v(f), v(f_rowScaled), &
+                call copyVector ( v(f), v(f_rowScaled), & ! v(f) := v(f_rowScaled)
                   & quant=jacobian%row%quant(rowBlock), &
                   & inst=jacobian%row%inst(rowBlock), noMask=.true. )
                 call subtractFromVector ( v(f_rowScaled), measurements, &
@@ -1076,12 +1068,10 @@ contains
             ! {\bf J}^T {\bf W}^T {\bf W f} =
             ! {\bf J}^T {\bf S}_m^{-1} {\bf f}$:
               call add_to_retrieval_timing( 'newton_solver', t1 )
-              call time_now ( t1 )
             call formNormalEquations ( jacobian, kTk, rhs_in=v(f_rowScaled), &
               & rhs_out=v(aTb), update=update, useMask=.true. )
               if ( index ( switches, 'atb' ) /= 0 ) call dump ( v(aTb) )
               call add_to_retrieval_timing( 'form_normeq', t1 )
-              call time_now ( t1 )
             update = .true.
               if ( index(switches,'jac') /= 0 ) &
                 call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
@@ -1107,7 +1097,6 @@ contains
           ! all 1.0.
           if ( (got(f_hRegOrders) .or. got(f_vRegOrders)) .and. .not. tikhonovBefore ) then
               call add_to_retrieval_timing( 'newton_solver', t1 )
-              call time_now ( t1 )
 
             !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
             !  0}$. So that all of the parts of the problem are solving for
@@ -1170,7 +1159,6 @@ contains
               ! Don't destroy reg_X_x unless we move the 'clone' for it
               ! inside the loop.  Also, if we destroy it, we can't snoop it.
                 call add_to_retrieval_timing( 'tikh_reg', t1 )
-                call time_now ( t1 )
             end do ! t
           else
             tikhonovRows = 0
@@ -1262,10 +1250,8 @@ contains
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
             call add_to_retrieval_timing ( 'newton_solver', t1 )
-            call time_now ( t1 )
           call choleskyFactor ( factored, normalEquations )
             call add_to_retrieval_timing ( 'cholesky_factor', t1 )
-            call time_now ( t1 )
             if ( index(switches,'diag') /= 0 ) then
               call getDiagonal ( factored%m, v(dxUnscaled) )
               call dump ( v(dxUnscaled), &
@@ -1290,11 +1276,9 @@ contains
           aj%ajn = maxL1 ( factored%m ) ! maximum L1 norm of
           !       column in upper triangle after triangularization
             call add_to_retrieval_timing ( 'newton_solver', t1 )
-            call time_now ( t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true. )
             call add_to_retrieval_timing ( 'cholesky_solver', t1 )
-            call time_now ( t1 )
 
           !{AJ\%FNMIN = $L_2$ norm of residual, $||{\bf\Sigma}^T {\bf J}^T
           ! {\bf S}_m^{-1} {\bf J \Sigma \Sigma}^{-1} {\bf \delta \hat x} +
@@ -1352,10 +1336,8 @@ contains
                 & 'Sparseness structure of Normal equations blocks:', &
                 & upper=.true. )
             call add_to_retrieval_timing( 'newton_solver', t1 )
-            call time_now ( t1 )
           call choleskyFactor ( factored, normalEquations )
             call add_to_retrieval_timing( 'cholesky_factor', t1 )
-            call time_now ( t1 )
             if ( index(switches,'fac') /= 0 ) &
               call dump_Linf ( factored%m, &
                 & 'L1 norms of blocks of factor after Marquardt:', &
@@ -1373,11 +1355,9 @@ contains
           ! means ``not including Levenberg-Marquardt stabilization,'' which
           ! is how we did it at NF\_EVALF, so we don't need to do it now).
             call add_to_retrieval_timing( 'newton_solver', t1 )
-            call time_now ( t1 )
           call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true. )
             call add_to_retrieval_timing( 'cholesky_solver', t1 )
-            call time_now ( t1 )
           ! aj%fnorm is now the norm of f, not its square.
           ! The following calculation of fnmin was commented out, but on
           ! 11 September 2002 FTK told me it's the right thing to do
@@ -1623,7 +1603,7 @@ contains
               call output ( t3-t0, advance='yes' )
             end if
         end if
-        call time_now ( t1 )
+          call time_now ( t1 )
         call createEmptyMatrix ( temp, 0, state, state )
         call invertCholesky ( factored, temp ) ! U^{-1}
           if ( index(switches,'cov') /= 0 ) then
@@ -1645,7 +1625,6 @@ contains
           end if
         call destroyMatrix ( temp )
           call add_to_retrieval_timing( 'cholesky_invert', t1 )
-          call time_now ( t1 )
         ! Scale the covariance
         if ( columnScaling /= l_none ) then
           call columnScale ( outputCovariance%m, v(columnScaleVector) )
@@ -1684,7 +1663,6 @@ contains
       call destroyMatrix ( factored%m )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
         call add_to_retrieval_timing( 'newton_solver', t1 )
-        call time_now ( t1 )
     end subroutine NewtonianSolver
     ! ------------------------------------------  HighCloudRetrieval  -----
     subroutine HighCloudRetrieval
@@ -2978,6 +2956,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.180  2002/09/18 23:56:01  vsnyder
+! Call time_now at end of add_to_retrieval_timing
+!
 ! Revision 2.179  2002/09/14 02:46:30  vsnyder
 ! Add NDB switch to get DNWT output every return
 !
