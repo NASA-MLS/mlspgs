@@ -33,7 +33,7 @@ begin Fill
   !forall(fillWithClimatology,!allClimatologicalSpecies)
 
   ;; Possibly overwrite temperature with the merged product
-  !ifdef(usedMergedTemperature,{Fill, quantity=apriori.temperature, $
+  !ifdef(useMergedTemperature,{Fill, quantity=apriori.temperature, $
     method=gridded, sourceGrid=mergedTemperature})
 
   ;; Now for H2O make the bottom value extra large
