@@ -1012,9 +1012,9 @@ contains
     integer, intent(inout) ::        Mcf
     ! type(PCFData_T) :: l2pcf
 
-! Local
+    ! Local
     character (len=PGSd_PC_FILE_PATH_MAX) :: Sd_full
-    character (len=NameLen) :: Sd_path
+    !character (len=NameLen) :: Sd_path
     character (len=NameLen) :: Sd_name
 
     character (len=PGSd_PC_FILE_PATH_MAX) :: Mcf_full
@@ -1116,8 +1116,8 @@ contains
       if ( DEBUG ) then
         call output('sd_full: ', advance='no')
         call output(trim(sd_full), advance='yes')
-        call output('sd_path: ', advance='no')
-        call output(trim(sd_path), advance='yes')
+        ! call output('sd_path: ', advance='no')
+        ! call output(trim(sd_path), advance='yes')
         call output('sd_name: ', advance='no')
         call output(trim(sd_name), advance='yes')
       end if
@@ -1538,6 +1538,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.47  2003/08/01 20:25:08  pwagner
+! Removed ref to undefined sd_path
+!
 ! Revision 2.46  2003/07/23 18:27:44  cvuu
 ! brought closer to James Johnson want to; quick and dirty fixed for CH3CN
 !
