@@ -23,57 +23,61 @@ contains
 
 ! ------------------------------------------  Get_gl_delta_scalar  -----
 
-  subroutine Get_gl_delta_scalar ( indices_c, gl_inds, do_gl, z_path, &
+  subroutine Get_gl_delta_scalar ( gl_inds, do_gl, z_path_c, &
                         & alpha_path_c, alpha_path_gl, ds_dh_gl, dh_dz_gl,&
                         & gl_delta )
+
+  ! Compute the correction to the rectangle rule resulting from Gauss-
+  ! Legendre quadrature on the fine grid.
 
     use DO_DELTA_M, ONLY: PATH_OPACITY
     use GLNP, ONLY: Ng
     use MLSCommon, only: RP, IP
 
-    integer(ip), intent(in) :: Indices_c(:) ! coarse grid indicies
-    integer(ip), intent(in) :: Gl_inds(:)    ! Gauss-Legendre grid indices
-    logical, intent(in) :: Do_gl(:) ! path flag indicating where to do
-  !                                   gl integrations.
-    real(rp), intent(in) :: Z_path(:) ! path -log(P) on input grid.
+    integer(ip), intent(in) :: Gl_inds(:)   ! Gauss-Legendre grid indices
+    logical, intent(in) :: Do_gl(:)         ! path flag indicating where to do
+  !                                           GL integrations.
+    real(rp), intent(in) :: Z_path_c(:)     ! path -log(P) on coarse grid.
     real(rp), intent(in) :: Alpha_path_c(:) ! absorption coefficient
-    real(rp), intent(in) :: Alpha_path_gl(:) ! absorption coefficient on gl
-  !                                        grid.
-    real(rp), intent(in) :: Ds_dh_gl(:) ! path length wrt height derivative on
-  !                                        gl grid.
-    real(rp), intent(in) :: Dh_dz_gl(:) ! path height wrt zeta derivative on
-  !                                       gl grid.
+    real(rp), intent(in) :: Alpha_path_gl(:) ! absorption coefficient on GL
+  !                                           grid.
+    real(rp), intent(in) :: Ds_dh_gl(:)     ! path length wrt height derivative
+  !                                           on GL grid.
+    real(rp), intent(in) :: Dh_dz_gl(:)     ! path height wrt zeta derivative
+  !                                           on GL grid.
   ! outputs
-    real(rp), intent(out) :: Gl_delta(:) ! gl corrections to selected slabs
+    real(rp), intent(out) :: Gl_delta(:)    ! gl corrections to selected slabs
 
   ! local variables
-    real(rp) :: del_zeta( size(gl_inds)/NG ) 
-    integer(ip) :: more_inds( size(gl_inds)/NG ) 
+    real(rp) :: del_zeta( size(gl_inds)/NG )
+    logical :: Do_It                    ! Saw one do_gl true
+    integer(ip) :: more_inds( size(gl_inds)/NG )
     integer(ip) :: i, n_path, p_i
 
   ! see if anything needs to be gl-d
 
-    if ( any(do_gl) ) then
-      n_path = size(indices_c)
-      i = 1
-      do p_i = 1, n_path
-        if ( do_gl(p_i) ) then
-          more_inds(i) = p_i
-          if ( p_i > n_path/2 ) then
-            del_zeta(i) = z_path(indices_c(p_i+1)) - z_path(indices_c(p_i))
-          else
-            del_zeta(i) = z_path(indices_c(p_i-1)) - z_path(indices_c(p_i))
-          end if
-          i = i + 1
+    do_it = .false.
+    n_path = size(z_path_c)
+    i = 1
+    do p_i = 1, n_path
+      if ( do_gl(p_i) ) then
+        do_it = .true.
+        more_inds(i) = p_i
+        if ( p_i > n_path/2 ) then
+          del_zeta(i) = z_path_c(p_i+1) - z_path_c(p_i)
+        else
+          del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
         end if
-      end do
+        i = i + 1
+      end if
+    end do
 
-      call path_opacity ( del_zeta,  &
-                 &  alpha_path_c(more_inds), &
-                 &  alpha_path_gl, ds_dh_gl(gl_inds),  &
-                 &  dh_dz_gl(gl_inds), gl_delta )
+    if ( do_it ) &
+      & call path_opacity ( del_zeta,  &
+               &  alpha_path_c(more_inds), &
+               &  alpha_path_gl, ds_dh_gl(gl_inds),  &
+               &  dh_dz_gl(gl_inds), gl_delta )
 
-    end if
   end subroutine Get_gl_delta_scalar
 
 ! ---------------------------------------  Get_gl_delta_polarized  -----
@@ -138,6 +142,9 @@ contains
 end module GET_GL_DELTA_M
 
 !$Log$
+!Revision 2.4  2003/05/20 00:05:13  vsnyder
+!Cosmetic changes
+!
 !Revision 2.3  2003/05/05 23:00:25  livesey
 !Merged in feb03 newfwm branch
 !
