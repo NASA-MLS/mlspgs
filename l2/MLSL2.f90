@@ -468,7 +468,7 @@ program MLSL2
     end if
     inunit = l2cf_unit
   else if ( pcf_for_input ) then
-    call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status )
+    call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status, recl )
     if(status /= 0) then
       call output( 'Non-zero status returned from open_MLSCF: ', &
       & advance='no')
@@ -719,6 +719,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.93  2003/02/27 18:40:29  pwagner
+! recl passed to let NAG open l2cf with long lines
+!
 ! Revision 2.92  2003/02/08 00:30:57  pwagner
 ! Increased default RECL due to new l2cfs in lib
 !
