@@ -99,7 +99,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_REFGPHQUANTITY      = f_range + 1
   integer, parameter :: F_ROWS                = f_refGPHQuantity + 1
   integer, parameter :: F_SCALE               = f_rows + 1
-  integer, parameter :: F_SDNAME              = f_scale + 1
+  integer, parameter :: F_SCECI               = f_scale + 1
+  integer, parameter :: F_SCVEL               = f_scECI + 1
+  integer, parameter :: F_SDNAME              = f_scVEL + 1
   integer, parameter :: F_SIGNAL              = f_sdname + 1
   integer, parameter :: F_SIGNALS             = f_signal + 1
   integer, parameter :: F_SOURCE              = f_signals + 1
@@ -112,17 +114,17 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_STATE               = f_spread + 1
   integer, parameter :: F_STOP                = f_state + 1
   integer, parameter :: F_SWATH               = f_stop + 1
-  integer, parameter :: F_TEMPERATURE         = f_swath+1
-  integer, parameter :: F_TOLERANCEA          = f_temperature + 1
+  integer, parameter :: F_TEMPERATUREQUANTITY = f_swath + 1
+  integer, parameter :: F_TEMPLATE            = f_temperaturequantity + 1
+  integer, parameter :: F_TEST                = f_template + 1
+  integer, parameter :: F_TNGTECI             = f_test + 1
+  integer, parameter :: F_TOLERANCEA          = f_tngtECI + 1
   integer, parameter :: F_TOLERANCEF          = f_tolerancea + 1
   integer, parameter :: F_TOLERANCER          = f_tolerancef + 1
-  integer, parameter :: F_VERSIONRANGE        = f_tolerancer + 1
-  integer, parameter :: F_TEMPLATE            = f_versionRange + 1
-  integer, parameter :: F_TEMPERATUREQUANTITY = f_template + 1
-  integer, parameter :: F_TEST                = f_temperaturequantity + 1
-  integer, parameter :: F_TYPE                = f_test + 1
+  integer, parameter :: F_TYPE                = f_tolerancer + 1
   integer, parameter :: F_UNIT                = f_type + 1
-  integer, parameter :: F_VALUES              = f_unit + 1
+  integer, parameter :: F_VERSIONRANGE        = f_unit + 1
+  integer, parameter :: F_VALUES              = f_versionrange + 1
   integer, parameter :: F_VGRID               = f_values + 1
   integer, parameter :: F_WEIGHT              = f_vGrid + 1
 ! integer, parameter :: FIELD_LAST = f_weight
@@ -176,7 +178,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_SCGEOCALT     = l_r5v + 1
   integer, parameter :: L_SPACERADIANCE = l_scGeocAlt + 1
   integer, parameter :: L_SPD           = l_spaceRadiance + 1
-  integer, parameter :: L_VECTOR        = l_spd + 1
+  integer, parameter :: L_SPECIAL       = l_spd + 1
+  integer, parameter :: L_VECTOR        = l_special + 1
   integer, parameter :: L_WEIGHTED      = l_vector + 1
   integer, parameter :: LAST_LIT        = l_weighted
   integer :: LIT_INDICES(first_lit:last_lit)
@@ -217,8 +220,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
   integer, parameter :: S_TIME               = s_template + 1
-  integer, parameter :: S_TPFILL             = s_time + 1
-  integer, parameter :: S_VECTOR             = s_tpfill + 1
+  integer, parameter :: S_VECTOR             = s_time + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: S_L2LOAD             = s_vgrid + 1       !??? for Zvi
@@ -340,6 +342,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_scGeocAlt) =             add_ident ( 'scGeocAlt' )
     lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
+    lit_indices(l_special) =               add_ident ( 'special' )
     lit_indices(l_vector) =                add_ident ( 'vector' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table.  Don't add ones that are
@@ -390,6 +393,8 @@ contains ! =====     Public procedures     =============================
     field_indices(f_refGPHQuantity) =      add_ident ( 'refGPHquantity' )
     field_indices(f_rows) =                add_ident ( 'rows' )
     field_indices(f_scale) =               add_ident ( 'scale' )
+    field_indices(f_scECI) =               add_ident ( 'scECI' )
+    field_indices(f_scVel) =               add_ident ( 'scVel' )
     field_indices(f_sdname) =              add_ident ( 'sdname' )
     field_indices(f_signal) =              add_ident ( 'signal' )
     field_indices(f_signals) =             add_ident ( 'signals' )
@@ -403,8 +408,8 @@ contains ! =====     Public procedures     =============================
     field_indices(f_state) =               add_ident ( 'state' )
     field_indices(f_stop) =                add_ident ( 'stop' )
     field_indices(f_swath) =               add_ident ( 'swath' )
-    field_indices(f_temperature) =         add_ident ( 'temperature' )
     field_indices(f_temperaturequantity) = add_ident ( 'temperatureQuantity' )
+    field_indices(f_tngtECI) =             add_ident ( 'tngtECI' )
     field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
     field_indices(f_tolerancef) =          add_ident ( 'Ftolerance' )
     field_indices(f_tolerancer) =          add_ident ( 'Rtolerance' )
@@ -470,7 +475,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_time) =                 add_ident ( 'time' )
-    spec_indices(s_tpfill) =               add_ident ( 'tpfill' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
@@ -501,7 +505,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_apriori, l+l_explicit, l+l_hydrostatic, &
-             l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, n+n_dt_def, &
+             l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_linear, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
@@ -594,11 +598,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_apriori, n+n_field_type, &
              begin, f+f_autofill, n+n_field_type, &
              np+n_spec_def, &
-      begin, s+s_tpfill, &
-             begin, f+f_type, n+n_field_type, &
-             begin, f+f_temperature, n+n_field_type, &
-             begin, f+f_gph, n+n_field_type, &
-             np+n_spec_def, &
       begin, s+s_vgrid, &
              begin, f+f_type, t+t_vGridType, nr+n_field_type, &
              begin, f+f_coordinate, t+t_vGridCoord, nr+n_field_type, &
@@ -654,6 +653,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_method, t+t_fillmethod, nr+n_field_type, &
              begin, f+f_sourceQuantity, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_scECI, s+s_vector, f+f_template, f+f_quantities, &
+                    n+n_dot, &
+             begin, f+f_tngtECI, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_temperatureQuantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -768,7 +773,7 @@ contains ! =====     Public procedures     =============================
              n+n_section, &
       begin, z+z_construct, s+s_time, s+s_vgrid, s+s_hgrid, s+s_quantity, &
              s+s_vectortemplate, s+s_snoop, n+n_section, &
-      begin, z+z_fill, s+s_time, s+s_vector, s+s_tpfill, s+s_create, &
+      begin, z+z_fill, s+s_time, s+s_vector, s+s_create, &
                        s+s_fill, s+s_matrix, s+s_snoop, &
              n+n_section, &
       begin, z+z_retrieve, s+s_matrix, s+s_forwardModel, s+s_retrieve, &
@@ -783,6 +788,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.48  2001/03/15 20:35:57  livesey
+! Added new stuff for special fills
+!
 ! Revision 2.47  2001/03/15 18:40:21  livesey
 ! Added some stuff for velocity, eci coordinates etc.
 !
