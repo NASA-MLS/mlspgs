@@ -56,11 +56,6 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure AppendL2GPData_fileName
   end interface
 
-! interface my_swwrattr 
-!   module procedure my_swwrattr_snglarray
-!   module procedure my_swwrattr_char
-! end interface
-
   ! This module defines datatypes and gives basic routines for storing and
   ! manipulating L2GP data.
   ! It is prepared to handle io for both file versions: hdfeos2 and hdfeos5
@@ -219,7 +214,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   end type L2GPData_T
 
   ! Print debugging stuff?
-  logical, parameter :: DEEBUG = .true.  
+  logical, parameter :: DEEBUG = .false.  
   logical, parameter ::SWATHLEVELMISSINGVALUE = .false. ! Make it swath attr?
 
 contains ! =====     Public Procedures     =============================
@@ -823,6 +818,8 @@ contains ! =====     Public Procedures     =============================
       &    realProf, hdfVersion=hdfVersion)
     l2gp%solarZenith = realProf
 
+    ! These next 3 are MLS-specific
+    if ( HMOT == 'M' ) then
     status = mls_SWrdfld(swid, 'LineOfSightAngle', start(3:3), stride(3:3), edge(3:3),&
       &    realProf, hdfVersion=hdfVersion, dontfail=dontfail)
     l2gp%losAngle = realProf
@@ -834,6 +831,7 @@ contains ! =====     Public Procedures     =============================
     status = mls_SWrdfld(swid, 'ChunkNumber', start(3:3), stride(3:3), edge(3:3),&
       &    l2gp%chunkNumber, hdfVersion=hdfVersion, dontfail=dontfail)
 
+    endif
     ! Read the pressures vertical geolocation field, if it exists
 
     if (lev /= 0) then
@@ -897,9 +895,11 @@ contains ! =====     Public Procedures     =============================
       & status = mls_swrdfld( swid, 'Status',start(3:3),stride(3:3),edge(3:3),&
       & l2gp%status, hdfVersion=hdfVersion, dontfail=.true. )
 
-    status = mls_SWrdfld(swid, 'Quality', start(3:3), stride(3:3),&
-      edge(3:3),realProf, hdfVersion=hdfVersion, dontfail=dontfail)
-    l2gp%quality = realProf
+    if ( HMOT == 'M' ) then
+      status = mls_SWrdfld(swid, 'Quality', start(3:3), stride(3:3),&
+        edge(3:3),realProf, hdfVersion=hdfVersion, dontfail=dontfail)
+      l2gp%quality = realProf
+    endif
 
     ! Deallocate local variables
 
@@ -1475,14 +1475,11 @@ contains ! =====     Public Procedures     =============================
     call List2Array(GeolocationUnits, theUnits, .true.)
 
     ! - -   G l o b a l   A t t r i b u t e s   - -
-    ! if(DEEBUG) print *, 'Writing global attributes'
     call he5_writeglobalattr(l2FileHandle)
 
-    ! print *, 'Trying to he5_swattach to write attributes'
     swid = mls_SWattach (l2FileHandle, name, hdfVersion=HDFVERSION_5)
     
     !   - -   S w a t h   A t t r i b u t e s   - -
-    ! if(DEEBUG) print *, 'Writing swath attributes'
     status = he5_swwrattr(swid, 'Pressure', rgp_type, size(l2gp%pressures), &
       & l2gp%pressures)
     field_name = 'Pressure'
@@ -1493,7 +1490,6 @@ contains ! =====     Public Procedures     =============================
       & (/ real(l2gp%MissingValue, rgp) /) )
     
     !   - -   G e o l o c a t i o n   A t t r i b u t e s   - -
-    ! if(DEEBUG) print *, 'Writing geolocation attributes'
     do field=1, NumGeolocFields
       ! Take care not to write attributes to "missing fields"
       if ( trim(theTitles(field)) == 'Frequency' &
@@ -1503,9 +1499,6 @@ contains ! =====     Public Procedures     =============================
         & .and. l2gp%nLevels < 1 ) then
         field_name = ''
       else
-        ! if(DEEBUG) print *, 'field ', field
-        ! if(DEEBUG) print *, 'title ', trim(theTitles(field))
-        ! if(DEEBUG) print *, 'units ', trim(theUnits(field))
         call GetStringHashElement (GeolocationTitles, &
           & GeoUniqueFieldDefinition, trim(theTitles(field)), &
           & abbr_uniq_fdef, .false.)
@@ -1561,9 +1554,6 @@ contains ! =====     Public Procedures     =============================
       units_name = 'vmr'
     end select
     if ( isColumnAmt ) units_name = 'DU'
-    ! if(DEEBUG) print *, 'Writing data attributes'
-    ! if(DEEBUG) print *, 'title ', trim(field_name)
-    ! if(DEEBUG) print *, 'units ', trim(units_name)
     status = mls_swwrlattr(swid, 'L2gpValue', 'Title', &
       & HE5T_NATIVE_SCHAR, 1, field_name)
     status = mls_swwrlattr(swid, 'L2gpValue', 'Units', &
@@ -1699,7 +1689,6 @@ contains ! =====     Public Procedures     =============================
     call OutputL2GP_writeData_hdf (l2gp, l2FileHandle, myhdfVersion, &
       & swathName)
     if (myhdfVersion == HDFVERSION_5) then
-      ! if(DEEBUG) print *, 'Writing attributes'
       call OutputL2GP_attributes_hdf5 (l2gp, l2FileHandle, swathName)
       call SetL2GP_aliases (l2gp, l2FileHandle, swathName)
     endif
@@ -2077,6 +2066,10 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.83  2003/10/31 12:35:57  hcp
+! HCP made some small fixes to AppendL2GPData_fileID so that it doesn't
+! crash if optional arg TotNumProfs is not present
+!
 ! Revision 2.82  2003/10/28 21:41:06  pwagner
 ! Removed swath-level MissingValue attribute; renamed -Precision softlink
 !
