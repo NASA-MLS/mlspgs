@@ -17,12 +17,17 @@ module L2Parallel
   use Join, only: JOINL2GPQUANTITIES, JOINL2AUXQUANTITIES
   use L2AUXData, only: L2AUXDATA_T
   use L2GPData, only: L2GPDATA_T
-  use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, GIVEUPTAG, &
+  use L2ParInfo, only: L2PARALLELINFO_T, MACHINE_T, PARALLEL, &
+    & INFOTAG, CHUNKTAG, GIVEUPTAG, GRANTEDTAG, PETITIONTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
-    & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
-    & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES, &
-    & MACHINEFIXEDTAG, DIRECTWRITEREQUEST_T, DW_PENDING, DW_INPROGRESS, DW_COMPLETED, &
-    & INFLATEDIRECTWRITEREQUESTDB, COMPACTDIRECTWRITEREQUESTDB, DUMP
+    & SIG_REQUESTDIRECTWRITE, &
+    & SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
+    & SIG_HOSTDIED, SIG_RELEASEHOST, SIG_REQUESTHOST, SIG_THANKSHOST, &
+    & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINES, &
+    & MACHINEFIXEDTAG, DIRECTWRITEREQUEST_T, &
+    & DW_PENDING, DW_INPROGRESS, DW_COMPLETED, &
+    & INFLATEDIRECTWRITEREQUESTDB, COMPACTDIRECTWRITEREQUESTDB, DUMP, &
+    & ADDMACHINETODATABASE
   use Machine, only: SHELL_COMMAND
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
@@ -31,7 +36,7 @@ module L2Parallel
   use MLSStringLists, only: catLists, ExpandStringRange
   use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use MoreTree, only: Get_Spec_ID
-  use Output_m, only: Output
+  use Output_m, only: BLANKS, Output
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMF90PACK, PVMFKILL, PVMFMYTID, &
     & PVMF90UNPACK, PVMERRORMESSAGE, PVMTASKHOST, PVMFSPAWN, &
     & MYPVMSPAWN, PVMFCATCHOUT, PVMFSEND, PVMFNOTIFY, PVMTASKEXIT, &
@@ -45,6 +50,7 @@ module L2Parallel
   use Symbol_Table, only: ENTER_TERMINAL
   use Symbol_Types, only: T_STRING
   use Toggles, only: Gen, Switches, Toggle
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
     & CONSTRUCTVECTORTEMPLATE, &
     & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO, &
@@ -67,6 +73,7 @@ module L2Parallel
 
   ! Parameters
   integer, parameter :: HDFNAMELEN = 132 ! Max length of name of swath/sd
+  logical, parameter :: NOTFORGOTTEN = .false. ! Note the death of forgottens
 
   integer :: counterStart
   parameter ( counterStart = 2 * (huge (0) / 4 ) )
@@ -236,9 +243,13 @@ contains ! ================================ Procedures ======================
     external :: Usleep
 
     ! Local variables
-    logical :: USINGSUBMIT              ! Set if using the submit mechanism
+    logical :: MACHINEREQUESTQUEUED     ! Set if waiting for a free machine
     logical :: SKIPDELAY                ! Don't wait before doing the next go round
-    character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+    logical :: SKIPDEATHWATCH           ! Don't check for deaths
+    logical :: USINGOLDSUBMIT           ! Set if using the old submit mechanism
+    logical :: USINGSUBMIT              ! Set if using the submit or l2q
+    logical :: USINGL2Q                 ! Set if using the l2q queue manager
+    ! character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     character(len=MachineNameLen) :: THISNAME
     character(len=8) :: CHUNKNOSTR
     character(len=2048) :: COMMANDLINE
@@ -257,6 +268,7 @@ contains ! ================================ Procedures ======================
     integer :: FILEINDEX                ! Index for a direct write
     integer :: HDFNAMEINDEX             ! String index
     integer :: INFO                     ! From PVM
+    integer :: L2QTID                   ! TID of queue manager
     integer :: MACHINE                  ! Index
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
     integer :: NEXTCHUNK                ! A chunk number
@@ -282,14 +294,15 @@ contains ! ================================ Procedures ======================
 
     integer, dimension(size(chunks)) :: CHUNKMACHINES ! Machine indices for chunks
     integer, dimension(size(chunks)) :: CHUNKTIDS ! Tids for chunks
+    character(len=16), dimension(size(chunks)) :: CHUNKNICETIDS ! Tids for chunks
 
     integer, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILENAMES
     logical, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILEBUSY
     integer, dimension(maxDirectWriteFiles) :: NODIRECTWRITECHUNKS
 
-    logical, dimension(:), pointer :: MACHINEFREE ! Is this machine busy
-    logical, dimension(:), pointer :: MACHINEOK ! Is this machine working?
-    integer, dimension(:), pointer :: JOBSMACHINEKILLED ! Counts failures per machine.
+    ! logical, dimension(:), pointer :: MACHINEFREE ! Is this machine busy
+    ! logical, dimension(:), pointer :: MACHINEOK ! Is this machine working?
+    ! integer, dimension(:), pointer :: JOBSMACHINEKILLED ! Counts failures per machine.
     logical, dimension(size(chunks)) :: CHUNKSCOMPLETED ! Chunks completed
     logical, dimension(size(chunks)) :: CHUNKSSTARTED ! Chunks being processed
     logical, dimension(size(chunks)) :: CHUNKSABANDONED ! Chunks kept failing
@@ -299,6 +312,8 @@ contains ! ================================ Procedures ======================
     logical, save :: FINISHED = .false. ! This will be called multiple times
     logical :: INTEGRITY
 
+    type (Machine_T),dimension(:), pointer :: Machines
+    type (Machine_T)                       :: thisMachine
     type (QuantityTemplate_T),dimension(:), pointer :: joinedQuantities 
     ! Local quantity template database
     type (VectorTemplate_T), dimension(:), pointer  :: joinedVectorTemplates
@@ -320,13 +335,19 @@ contains ! ================================ Procedures ======================
     ! so if it's not then quit.
     if ( finished ) return
 
+    if ( toggle(gen) ) call trace_begin ( "L2MasterTask")
     usingSubmit = trim(parallel%submit) /= ''
+    usingL2Q = ( index(parallel%submit, 'l2q') > 0 )
+    USINGOLDSUBMIT = USINGSUBMIT .and. .not. usingL2Q
 
     ! Setup some stuff
     noChunks = size(chunks)
     nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
-      & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled, &
+      & machines, storedResults, &
       & directWriteRequests )
+    ! nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
+    !  & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled, &
+    !  & directWriteRequests )
     noDirectWriteRequests = 0
     directWriteFileNames = 0
     noDirectWriteChunks = 0
@@ -339,18 +360,31 @@ contains ! ================================ Procedures ======================
     dummy = InflateDirectWriteRequestDB ( directWriteRequests, DatabaseInflation )
 
     ! Work out the information on our virtual machine
-    if ( .not. usingSubmit ) then
-      call GetMachineNames ( machineNames )
-      noMachines = size(machineNames)
+    if ( usingL2Q ) then
+      call RegisterWithL2Q(noChunks, machines, L2QTID)
+      noMachines = size(machines)
+      if ( noMachines < 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'No machines available for master to assign to slave tasks' )
+      if ( .not. any(machines%OK) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'No machines OK for master to assign to slave tasks' )
+      if ( index(switches,'mach') /=0 ) call dump ( machines )
+    elseif ( .not. usingSubmit ) then
+      call GetMachines ( machines )
+      noMachines = size(machines)
+      if ( noMachines < 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'No machines available for master to assign to slave tasks' )
+      if ( .not. any(machines%OK) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'No machines OK for master to assign to slave tasks' )
+      if ( index(switches,'mach') /=0 ) call dump ( machines )
     else
       noMachines = 0
     end if
-    call Allocate_test ( machineFree, noMachines, 'machineFree', ModuleName )
-    call Allocate_test ( machineOK, noMachines, 'machineOK', ModuleName )
-    call Allocate_test ( jobsMachineKilled, noMachines, 'jobsMachineKilled', ModuleName )
-    machineFree = .true.
-    machineOK = .true.
-    jobsMachineKilled = 0
+    ! call Allocate_test ( machineFree, noMachines, 'machineFree', ModuleName )
+    ! call Allocate_test ( machineOK, noMachines, 'machineOK', ModuleName )
+    ! call Allocate_test ( jobsMachineKilled, noMachines, 'jobsMachineKilled', ModuleName )
+    ! machineFree = .true.
+    ! machineOK = .true.
+    ! jobsMachineKilled = 0
 
     ! Setup the staging file if we're using one
     if ( .not. parallel%stageInMemory ) then
@@ -366,6 +400,7 @@ contains ! ================================ Procedures ======================
     chunksWriting = .false.
     chunkFailures = 0
     chunkTids = 0
+    CHUNKNICETIDS = ' '
     chunkMachines = 0
     ! Special switches to control which chunks to process
     ! by pre-abandoning the others right off the bat
@@ -384,17 +419,24 @@ contains ! ================================ Procedures ======================
         & sense=.false.)
     endif    
 
+    machineRequestQueued = .false. ! Request one machine at a time from L2Q
     masterLoop: do ! --------------------------- Master loop -----------------------
       skipDelay = .false.               ! Assume we're going to delay
+      skipDeathWatch = .false.          ! Assume we'll listen for slave deaths
       ! This loop is in two main parts.
 
       ! In the first part, we look to see if there are any chunks still to be
       ! started done, and any vacant machines to do them.
       ! --------------------------------------------------------- Start new jobs? --
-      do while ( (.not. all(chunksStarted .or. chunksAbandoned)) .and. &
-        & ( any(machineFree .and. machineOK) .or. usingSubmit ) )
-        nextChunk = FindFirst ( (.not. chunksStarted) .and. (.not. chunksAbandoned) )
-        if ( usingSubmit ) then ! --------------------- Using a batch system
+      ! do while ( (.not. all(chunksStarted .or. chunksAbandoned)) .and. &
+      !  & ( any(machineFree .and. machineOK) .or. usingSubmit ) )
+      do while ( chunkAndMachineReady() ) ! (nextChunk, machine) )
+        ! nextChunk = FindFirst ( (.not. chunksStarted) .and. (.not. chunksAbandoned) )
+        if ( nextChunk < 1 ) then
+          ! Should have returned false
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'Illegal chunk number' )
+        elseif ( USINGOLDSUBMIT ) then ! -- Using a batch system
           write ( chunkNoStr, '(i0)' ) nextChunk
           commandLine = &
             & trim(parallel%submit) // ' ' // &
@@ -403,20 +445,24 @@ contains ! ================================ Procedures ======================
             & trim(slaveArguments)
           call shell_command ( trim(commandLine) )
           chunksStarted(nextChunk) = .true.
+          skipDeathWatch = .true.
           ! We'll have to wait for it to come one line later
           if ( index(switches,'mas') /= 0 ) then
             call output ( 'Submitted chunk ' )
             call output ( nextChunk, advance='yes' )
           end if
-        else ! ----------------------------------------- Start job using pvmspawn
-          machine = FindFirst(machineFree .and. machineOK)
+        elseif ( machine < 1 ) then
+          ! Just go on; should have returned .false. anyway
+          exit
+        else ! ------------------------------------- Start job using pvmspawn
+          ! machine = FindFirst(machineFree .and. machineOK)
           commandLine = trim(parallel%pgeName)   ! was 'mlsl2'
           if ( index(switches,'slv') /= 0 ) then
             call PVMFCatchOut ( 1, info )
             if ( info /= 0 ) call PVMErrorMessage ( info, "calling catchout" )
           end if
           info = myPVMSpawn ( trim(commandLine), PvmTaskHost, &
-            & trim(machineNames(machine)), &
+            & trim(machines(machine)%Name), &
             & 1, tidarr )
           if ( index(switches,'mas') /= 0 ) then
             call output ( 'Tried to spawn ' )
@@ -424,30 +470,40 @@ contains ! ================================ Procedures ======================
             call output ( 'PvmTaskHost ' )
             call output ( PvmTaskHost, advance='yes' )
             call output ( 'on machine ' )
-            call output ( trim(machineNames(machine)), advance='yes' )
+            call output ( trim(machines(machine)%Name), advance='yes' )
             call output ( 'result was ' )
             call output ( info, advance='yes' )
           end if
 
           ! Did this launch work
           if ( info == 1 ) then
-            machineFree(machine) = .false.
+            machines(machine)%free = .false.
+            machines(machine)%tid = tidArr(1)
+            machines(machine)%chunk = nextChunk
             chunkMachines(nextChunk) = machine
             chunkTids(nextChunk) = tidArr(1)
+            chunkNiceTids(nextChunk) = GetNiceTidString(chunkTids(nextChunk))
             chunksStarted(nextChunk) = .true.
             if ( index(switches,'mas') /= 0 ) then
+              if ( index(switches,'l2q') /= 0 ) then
+                call output ( tidArr(1) )
+                call output ( ' ' )
+              endif
               call output ( 'Launched chunk ' )
               call output ( nextChunk )
-              call output ( ' on slave ' // trim(machineNames(machine)) // &
-                & ' ' // trim(GetNiceTidString(chunkTids(nextChunk))), &
+              call output ( ' on slave ' // trim(machines(machine)%name) // &
+                & ' ' // trim(chunkNiceTids(nextChunk)), &
                 & advance='yes' )
             end if
             call WelcomeSlave ( nextChunk, chunkTids(nextChunk) )
+            ! if ( usingL2Q ) call ThankL2Q(chunkTids(nextChunk), L2Qtid)
+            if ( usingL2Q ) call ThankL2Q(machines(machine), L2Qtid)
+            skipDeathWatch = .true.
           else
             ! Couldn't start this job, mark this machine as unreliable
             if ( index(switches,'mas') /= 0 ) then
               call output ( 'Unable to start slave task on ' // &
-                & trim(machineNames(machine)) // ' info=' )
+                & trim(machines(machine)%Name) // ' info=' )
               if ( info < 0 ) then
                 call output ( info, advance='yes' )
               else
@@ -456,9 +512,13 @@ contains ! ================================ Procedures ======================
               call output ( 'Marking this machine as not usable', advance='yes')
             end if
             ! Mark all instances of this machine as not to be used.
-            where ( machineNames == machineNames(machine) )
-              machineOK = .false.
+            where ( machines%Name == machines(machine)%Name )
+              machines%OK = .false.
             end where
+            ! Send bad news back to l2 queue manager
+            if ( usingL2Q ) then
+              call TellL2QMachineDied( machines(machine), L2Qtid )
+            endif
           end if
         end if
       end do
@@ -473,6 +533,7 @@ contains ! ================================ Procedures ======================
         ! So we got a message.  There may be another one following on so don't delay
         ! before going round this loop again.
         skipDelay = .true.
+        skipDeathWatch = .true.
         ! Who sent this?
         call PVMFBufInfo ( bufferIDRcv, bytes, msgTag, slaveTid, info )
         if ( info /= 0 ) &
@@ -483,20 +544,29 @@ contains ! ================================ Procedures ======================
         endif
 
         ! Who did this come from
-        chunk = FindFirst ( chunkTids, slaveTid )
-        if ( chunk == 0 .and. &
-          &  (.not. usingSubmit .or. signal /= sig_register) ) then
+        ! chunk = FindFirst ( chunkTids, slaveTid )
+        machine = 0
+        if ( associated(machines) ) &
+          & machine = FindFirst ( machines%tid, slaveTid )
+        ! if ( chunk == 0 .and. &
+        if ( machine == 0 .and. &
+          &  (.not. USINGOLDSUBMIT .or. signal /= sig_register) ) then
           call output ( 'Signal is:' )
           call output ( signal )
           call output ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
             & advance='yes' )
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "Got a message from an unknown slave")
+          call dump(chunkNiceTids, 'chunkNiceTids', trim=.true.)
+          call output(slaveTid, advance='yes')
+          call dump(chunkTids, 'chunkTids')
+          call dump(machines%tid, 'machines%Tid')
           cycle masterLoop
         else
           ! Unpack the first integer in the buffer
-          if ( .not. usingSubmit .and. signal /= sig_register ) &
-            & machine = chunkMachines(chunk)
+          if ( .not. USINGOLDSUBMIT .and. signal /= sig_register ) &
+            & chunk = machines(machine)%chunk
+            ! & machine = chunkMachines(chunk)
         end if
 
         select case (signal) 
@@ -507,7 +577,7 @@ contains ! ================================ Procedures ======================
             call PVMErrorMessage ( info, "unpacking chunk number" )
           endif
           ! Note, we'll ignore the slave MAFNumber sent for fwmParallel stuff
-          if ( usingSubmit ) then
+          if ( USINGOLDSUBMIT ) then
             ! We only really care about this message if we're using submit
             chunkTids(chunk) = slaveTid
             call GetMachineNameFromTid ( slaveTid, thisName )
@@ -554,7 +624,7 @@ contains ! ================================ Procedures ======================
           request => directWriteRequests ( noDirectWriteRequests )
           ! Record this request, and have it 'take a ticket'
           request%chunk = chunk
-          if ( .not. usingSubmit ) request%machine = machine
+          if ( .not. USINGOLDSUBMIT ) request%machine = machine
           request%node = node
           request%fileIndex = fileIndex
           request%ticket = nextTicket
@@ -563,8 +633,8 @@ contains ! ================================ Procedures ======================
 
           if ( index ( switches, 'mas' ) /= 0 ) then
             call output ( 'Direct write request from ' )
-            if ( .not. usingSubmit ) &
-              & call output ( trim(machineNames(machine)) // ', ' )
+            if ( .not. USINGOLDSUBMIT ) &
+              & call output ( trim(machines(machine)%Name) // ', ' )
             call output ( trim(GetNiceTidString(slaveTid)) )
             call output ( ' chunk ' )
             call output ( chunk )
@@ -593,8 +663,8 @@ contains ! ================================ Procedures ======================
           noDirectWriteChunks ( fileIndex ) = noDirectWriteChunks ( fileIndex ) + 1
           if ( index ( switches, 'mas' ) /= 0 ) then
             call output ( 'Direct write finished from ' )
-            if ( .not. usingSubmit ) &
-              & call output ( trim(machineNames(machine)) // ', ' )
+            if ( .not. USINGOLDSUBMIT ) &
+              & call output ( trim(machines(machine)%Name) // ', ' )
             call output ( trim(GetNiceTidString(slaveTid)) )
             call output ( ' chunk ' )
             call output ( chunk )
@@ -607,8 +677,8 @@ contains ! ================================ Procedures ======================
         case ( sig_finished ) ! -------------- Got a finish message ----
           if ( index(switches,'mas') /= 0 ) then
             call output ( 'Got a finished message from ' )
-            if ( .not. usingSubmit ) &
-              & call output ( trim(machineNames(machine)) // ' ' )
+            if ( .not. USINGOLDSUBMIT ) &
+              & call output ( trim(machines(machine)%Name) // ' ' )
             call output ( trim(GetNiceTidString(slaveTid)) // &
               & ' processing chunk ' )
             call output ( chunk, advance='yes')
@@ -624,12 +694,18 @@ contains ! ================================ Procedures ======================
           call PVMFSend ( slaveTid, InfoTag, info )
           if ( info /= 0 ) &
             & call PVMErrorMessage ( info, 'sending finish ack.' )
+          if ( index(switches,'mas') /= 0 ) &
+            & call output ( 'Acknowledgment sent', advance='yes')
 
           ! Now update our information
           chunksCompleted(chunk) = .true.
           chunkTids(chunk) = 0
-          if ( .not. usingSubmit ) then
-            machineFree(machine) = .true.
+          if ( .not. USINGOLDSUBMIT ) then
+            machines(machine)%free = .true.
+            ! Must wait on updating the following--
+            ! pvm may tell us later this tid has quit
+            ! machines(machine)%tid = 0
+            ! machines(machine)%chunk = 0
             chunkMachines(chunk) = 0
           end if
           parallel%numCompletedChunks = parallel%numCompletedChunks + 1
@@ -646,22 +722,27 @@ contains ! ================================ Procedures ======================
             call output ( count(.not. &
               & (chunksStarted .or. chunksCompleted .or. chunksAbandoned ) ) )
             call output ( ' left. ', advance='yes' )
-            if ( .not. usingSubmit ) then
-              call output ( count ( .not. machineFree ) )
+            if ( .not. USINGOLDSUBMIT ) then
+              call output ( count ( .not. machines%Free ) )
               call output ( ' of ' )
               call output ( noMachines )
               call output ( ' machines busy, with ' )
-              call output ( count ( .not. machineOK ) )
+              call output ( count ( .not. machines%OK ) )
               call output ( ' being avoided.', advance='yes' )
             end if
           end if
+          ! Send news back to l2 queue manager
+          if ( usingL2Q ) then
+            call TellL2QMachineFinished( &
+              & trim(machines(machine)%name), machines(machine)%tid, L2Qtid )
+          endif
 
         case default
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & 'Unkown signal from slave' )
         end select
 
-        ! Free the recieve buffer
+        ! Free the receive buffer
         call PVMFFreeBuf ( bufferIDRcv, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'freeing receive buffer' )
@@ -687,7 +768,7 @@ contains ! ================================ Procedures ======================
         call PVMIDLUnpack ( thisName, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'unpacking machine fixed message' )
-        if ( usingSubmit ) then
+        if ( USINGOLDSUBMIT ) then
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & 'Got unexpected MachineFixed message but using submit method' )
         else
@@ -695,40 +776,68 @@ contains ! ================================ Procedures ======================
             call output ( 'Received an external message to trust ' // &
               & trim(thisName) // ' again.' , advance='yes' )
           end if
-          where ( machineNames == thisName )
-            machineOK = .true.
-            jobsMachineKilled = 0
+          where ( machines%Name == thisName )
+            machines%OK = .true.
+            machines%jobsKilled = 0
           end where
         end if
       end if
 
       ! Listen out for any message that a slave task has died
-      call PVMFNRecv ( -1, NotifyTAG, bufferIDRcv )
+      ! ( But only if we're sure there isn't a finished message from it
+      !   queued up and waiting for us to read )
+      if ( skipDeathWatch ) then
+        bufferIDRcv = 0
+      else
+        call PVMFNRecv ( -1, NotifyTAG, bufferIDRcv )
+      endif
       if ( bufferIDRcv > 0 ) then
-        ! So we got a message.  There may be another one following on so don't delay
-        ! before going round this loop again.
+        ! So we got a message.  There may be another one following on so don't
+        ! delay before going round this loop again.
         skipDelay = .true.
+        deadTid = 0
+        deadChunk = 0
+        deadMachine = 0
         ! Get the TID for the dead task
         call PVMF90Unpack ( deadTid, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking deadTid' )
-        ! Now this may well be a legitimate exit, in which case, we won't
-        ! know about this tid any more.  Otherwise we need to tidy up.
-        if ( any ( chunkTids == deadTid ) ) then
+        ! Now this may well be a legitimate exit, detectable by one of 2 cases
+        ! either
+        ! (1) we won't know about this tid any more
+        ! (2) the machine status was reset to free after a finished signal
+        ! Otherwise we need to tidy up.
+        ! if ( any ( chunkTids == deadTid ) ) then
+        !   deadChunk = FindFirst ( chunkTids, deadTid )
+        if ( .not. USINGOLDSUBMIT ) then
+          deadMachine = FindFirst ( machines%tid, deadTid )
+          if ( deadMachine > 0 ) then
+            ! On the other hand
+            if ( .not. USINGOLDSUBMIT .and. machines(deadMachine)%free ) &
+              & deadMachine = 0
+          endif
+        else
           deadChunk = FindFirst ( chunkTids, deadTid )
-
+          deadMachine = deadChunk ! A trick--only deadChunk matters
+        endif
+        if ( deadMachine > 0 ) then
           ! Now, to get round a memory management bug, we'll ignore this
           ! if, as far as we're concerned, the task was finished anyway.
-          if ( deadChunk /= 0 ) then
-            if ( .not. usingSubmit ) then
-              deadMachine = chunkMachines(deadChunk)
-              machineFree(deadMachine) = .true.
+          ! if ( deadMachine /= 0 ) then
+            if ( .not. USINGOLDSUBMIT ) then
+              ! deadMachine = chunkMachines(deadChunk)
+              deadChunk = machines(deadMachine)%chunk
+              machines(deadMachine)%free = .true.
             end if
             if ( index(switches,'mas') /= 0 ) then
+              if ( index(switches,'l2q') /= 0 ) then
+                call output ( deadTID )
+                call output ( ' ' )
+              endif
               call output ( 'The run of chunk ' )
               call output ( deadChunk )
               call output ( ' ' )
-              if ( .not. usingSubmit ) &
-                & call output ( 'on ' // trim(machineNames(deadMachine)) // ' ' )
+              if ( .not. USINGOLDSUBMIT ) &
+                & call output ( 'on ' // trim(machines(deadMachine)%Name) // ' ' )
               call output ( trim(GetNiceTidString(deadTid)) // &
                 & ' died, try again.', advance='yes' )
             end if
@@ -736,9 +845,9 @@ contains ! ================================ Procedures ======================
               & joinedVectorTemplates, joinedVectors, storedResults )
             chunksStarted(deadChunk) = .false.
             chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
-            if ( .not. usingSubmit ) then
-              where ( machineNames(deadMachine) == machineNames )
-                jobsMachineKilled = jobsMachineKilled + 1
+            if ( .not. USINGOLDSUBMIT ) then
+              where ( machines(deadMachine)%Name == machines%Name )
+                machines%jobsKilled = machines%jobsKilled + 1
               end where
             end if
 
@@ -752,8 +861,8 @@ contains ! ================================ Procedures ======================
               directWriteFileBusy ( request%fileIndex ) = .false.
               if ( index(switches,'mas') /= 0 ) then
                 call output ( 'Direct write died from ' )
-                if ( .not. usingSubmit ) &
-                  & call output ( trim(machineNames(deadMachine)) // ', ' )
+                if ( .not. USINGOLDSUBMIT ) &
+                  & call output ( trim(machines(deadMachine)%Name) // ', ' )
                 call output ( trim(GetNiceTidString(deadTid)) )
                 call output ( ' chunk ' )
                 call output ( deadChunk )
@@ -783,36 +892,69 @@ contains ! ================================ Procedures ======================
             ! Does this machine have a habit of killing jobs.  If so
             ! mark it as not OK.  We can't do much about it though if
             ! we're using submit.
-            if ( .not. usingSubmit ) then
-              if ( jobsMachineKilled(deadMachine) >= &
+            if ( .not. USINGOLDSUBMIT ) then
+              if ( machines(deadMachine)%jobsKilled >= &
                 & parallel%maxFailuresPerMachine ) then
                 if ( index(switches,'mas') /= 0 ) &
                   & call output ('The machine ' // &
-                  & trim(machineNames(deadMachine)) // &
+                  & trim(machines(deadMachine)%Name) // &
                   & ' keeps killing things, marking it bad', &
                   & advance='yes' )
-                where ( machineNames(deadMachine) == machineNames )
-                  machineOK = .false.
+                where ( machines(deadMachine)%Name == machines%Name )
+                  machines%OK = .false.
                 end where
               end if
             end if
             
             ! Save dead chunk number, increment casualty figure
             parallel%failedChunks = catLists(parallel%failedChunks, deadChunk)
-            if ( .not. usingSubmit ) &
+            if ( .not. USINGOLDSUBMIT ) &
             & parallel%failedMachs = &
-            & catLists(parallel%failedMachs, trim(machineNames(deadMachine)))
+            & catLists(parallel%failedMachs, trim(machines(deadMachine)%Name))
             parallel%numFailedChunks = parallel%numFailedChunks + 1
           else
             ! Otherwise we'd already forgotten about this slave, it told
             ! us it had finished.
-            if ( index(switches,'mas') /= 0 ) call output ( &
+            if ( index(switches,'mas') /= 0 .and. NOTFORGOTTEN ) call output ( &
               & "A slave task died after giving results, " // &
               & "we won't worry about it.", &
               & advance='yes' )
           end if
-        end if
-
+        ! end if
+        ! Send bad news back to l2 queue manager
+        if ( usingL2Q .and. deadChunk /= 0 ) then
+          ! call TellL2QMachineDied( trim(machines(machine)%name), L2Qtid )
+          if ( deadTid /= machines(deadMachine)%tid ) then
+            call output('deadChunk ', advance='no')
+            call output(deadChunk , advance='yes')
+            call output('deadTID ', advance='no')
+            call output(deadTID , advance='yes')
+            call output('machine%tid ', advance='no')
+            call output(machines(deadMachine)%tid , advance='yes')
+             call MLSMessage ( MLSMSG_Error, ModuleName, &
+               & 'Dead slave tid doesnt match machine tid' )
+          endif
+          call TellL2QMachineDied( machines(deadMachine), L2Qtid )
+          if ( index(switches,'l2q') /= 0 ) then
+            call output ( 'Bad news about chunk ' )
+            call output ( deadChunk )
+            call output ( ' on slave ' // trim(machines(deadMachine)%name) // &
+              & ' ' // trim(chunkNiceTids(deadChunk)), &
+              & advance='yes' )
+          end if
+        elseif ( usingL2Q ) then
+          if ( index(switches,'l2q') /= 0 ) then
+            call output ( 'tID ' )
+            call output ( deadTID )
+            call output ( ' finished normally ', advance='yes' )
+          end if
+        endif
+        ! Update info about dead machine
+        if ( deadMachine > 0 .and. .not. USINGOLDSUBMIT ) then
+          machines(deadMachine)%ok = .false.
+          machines(deadMachine)%tid = 0
+          machines(deadMachine)%chunk = 0
+        endif        
       else if ( bufferIDRcv < 0 ) then
         call PVMErrorMessage ( info, "checking for Notify message" )
       end if
@@ -861,8 +1003,8 @@ contains ! ================================ Procedures ======================
         end if
         if ( index(switches,'mas') /= 0 ) then
           call output ( 'Direct write granted to ' )
-          if ( .not. usingSubmit ) &
-            & call output ( trim(machineNames(request%machine)) // ' ' )
+          if ( .not. USINGOLDSUBMIT ) &
+            & call output ( trim(machines(request%machine)%Name) // ' ' )
           call output ( trim(GetNiceTidString(chunkTids(request%chunk))) )
           call output ( ' chunk ' )
           call output ( request%chunk )
@@ -921,8 +1063,8 @@ contains ! ================================ Procedures ======================
       ! Actually it is not a necessary condition as a machine could be listed more
       ! than one time (e.g. when it has multiple processors), and could
       ! have killed one too many jobs, but still have another job running.
-      if ( .not. usingSubmit ) then
-        if ( .not. any(machineOK) .and. &
+      if ( .not. USINGOLDSUBMIT ) then
+        if ( .not. any(machines%OK) .and. &
           &  all ( chunksStarted .eqv. chunksCompleted ) ) then
           if ( index(switches,'mas') /= 0 ) &
             & call output ( 'No machines left to do the remaining work', &
@@ -943,9 +1085,17 @@ contains ! ================================ Procedures ======================
         call pvmfkill ( chunkTids(chunk), info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'killing slave' )
+        if ( usingL2Q ) then
+          machine = chunkMachines(chunk)
+          call TellL2QMachineFinished( &
+            & trim(machines(machine)%name), machines(machine)%tid, L2Qtid )
+        endif
       end if
     end do
 
+    if ( usingL2Q ) then
+      call TellL2QMasterFinished(L2Qtid)
+    endif
     ! Now, we have to tidy some stuff up here to ensure we can join things
     where ( .not. chunksCompleted )
       chunksAbandoned = .true.
@@ -1073,12 +1223,70 @@ contains ! ================================ Procedures ======================
     if ( index(switches,'mas') /= 0 ) then
       call output ( 'All chunks joined', advance='yes' )
     endif
+    if ( toggle(gen) ) call trace_end ( "L2MasterTask")
 
-    call Deallocate_test ( machineFree, 'machineFree', ModuleName )
-    call Deallocate_test ( machineOK, 'machineOK', ModuleName )
-    call Deallocate_test ( jobsMachineKilled, 'jobsMachineKilled', ModuleName )
+    ! call Deallocate_test ( machineFree, 'machineFree', ModuleName )
+    ! call Deallocate_test ( machineOK, 'machineOK', ModuleName )
+    ! call Deallocate_test ( jobsMachineKilled, 'jobsMachineKilled', ModuleName )
 
   contains
+
+    logical function chunkAndMachineReady()  ! (nextChunk, machine, machineName)
+      ! Return .true. if next chunk remaining to be done
+      ! and a suitable machine can be found
+      ! Also set nextChunk, machineName values (which could be made arguments)
+      character(len=MACHINENAMELEN) :: machineName
+      nextChunk = 0
+      machine = 0
+      machineName = ' '
+      ! 1st check if any chunks remain
+      chunkAndMachineReady = .not. all(chunksStarted .or. chunksAbandoned)
+      if ( .not. chunkAndMachineReady ) return
+      ! Now divide into 3 cases
+      if ( .not. (USINGOLDSUBMIT .or. usingL2Q) ) then
+      ! Case (1): Not using submit, nor l2q: master controls choice of machine
+        chunkAndMachineReady = any(machines%Free .and. machines%OK)
+        if ( .not. chunkAndMachineReady ) return
+        nextChunk = FindFirst ( &
+          & (.not. chunksStarted) .and. (.not. chunksAbandoned) )
+        machine = FindFirst(machines%Free .and. machines%OK)
+      elseif ( usingL2Q ) then
+      ! Case (2): using l2q
+        nextChunk = FindFirst ( &
+          & (.not. chunksStarted) .and. (.not. chunksAbandoned) )
+        chunkAndMachineReady = .not. machineRequestQueued
+        if ( .not. chunkAndMachineReady ) then
+          call ReceiveMachineFromL2Q(L2Qtid, machineName)
+        else
+          call RequestMachineFromL2Q(L2Qtid, nextChunk, machineName)
+        endif
+        if ( len_trim(machineName) < 1 ) then
+          ! Sorry--no machine ready yet; but our request is/remains queued
+          chunkAndMachineReady = .false.
+          machineRequestQueued = .true.
+          ! if ( index(switches,'l2q') /=0 ) call output('Sorry, l2q scorns us', advance='yes')
+        else
+          ! Good news--a machine was/has become ready
+          chunkAndMachineReady = .true.
+          machineRequestQueued = .false.
+          ! What if the machine has been added after this master began?
+          ! Or, troubles other prevented machine from being added
+          machine = FindFirst( (trim(machineName) == machines%Name) &
+            & .and. machines%free )
+          if ( machine < 1 ) then
+            thisMachine%name = machineName
+            machine = AddMachineToDataBase(machines, thisMachine)
+            if ( index(switches,'l2q') /=0 ) call output('Added machine to db', advance='yes')
+            ! machine = AddMachineNameToDataBase(machines%Name, machineName)
+          endif
+          ! if ( index(switches,'l2q') /=0 ) call output('Good news, l2q likes us', advance='yes')
+        endif
+      else
+      ! Case (3): Using submit
+        nextChunk = FindFirst ( &
+          & (.not. chunksStarted) .and. (.not. chunksAbandoned) )
+      endif
+    end function chunkAndMachineReady
 
     subroutine WelcomeSlave ( chunk, tid )
       ! This routine welcomes a slave into the fold and tells it stuff
@@ -1329,6 +1537,214 @@ contains ! ================================ Procedures ======================
       end if
     end do
   end subroutine CleanUpDeadChunksOutput
+  
+  subroutine RegisterWithL2Q(noChunks, machines, L2Qtid)
+    integer, intent(in)                                  :: noChunks
+    type(machine_t), dimension(:), pointer :: MACHINES
+    ! character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
+    integer, intent(out)                                 :: L2Qtid
+    !
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    character(len=*), parameter :: GROUPNAME = "mlsl2"
+    !
+    call pvmfgettid(GROUPNAME, 0, L2Qtid)
+    if ( L2Qtid < 1 ) then
+      call MLSMessage( MLSMSG_Error, ModuleName, &
+        & 'l2q queue manager not running--dead or not started yet?' )
+    endif
+    call GetMachines ( machines )
+    ! Register ourselves with the l2 queue manager
+    ! Identify ourselves
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_Register, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing registration' )
+    call PVMF90Pack ( noChunks, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing number of chunks' )
+    call PVMFSend ( L2Qtid, petitionTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending finish packet' )
+  end subroutine RegisterWithL2Q
+
+  subroutine RequestMachineFromL2Q(L2Qtid, nextChunk, machineName)
+    !
+    ! request a free host from the l2 queue manager
+    integer, intent(in)                               :: L2Qtid
+    integer, intent(in)                               :: nextChunk
+    character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
+    !
+    integer :: BEAT
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    integer :: BUFFERIDRCV              ! From PVM
+    ! Identify ourselves
+    if ( index(switches,'l2q') /=0 ) call output('Requesting host from l2q', advance='yes')
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( sig_requestHost, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing registration' )
+    call PVMF90Pack ( nextChunk, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing number of chunk' )
+    call PVMFSend ( L2Qtid, petitionTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending finish packet' )
+    call ReceiveMachineFromL2Q(L2Qtid, machineName)
+  end subroutine requestMachineFromL2Q
+
+  subroutine ReceiveMachineFromL2Q(L2Qtid, machineName)
+    !
+    ! request a free host from the l2 queue manager
+    integer, intent(in)                               :: L2Qtid
+    character(len=MACHINENAMELEN), intent(out)        :: MACHINENAME
+    !
+    integer :: BEAT
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    integer :: BUFFERIDRCV              ! From PVM
+    ! How many times to listen for queue manager's granting of request
+    ! (Setting NBEATS=0 means merely register the request with queue manager;
+    ! subsequent trips through master event loop will pick up message
+    ! when and if queue manager grants our request)
+    integer, parameter :: NBEATS = 16   ! ~2x MAXNUMMASTERS  
+    ! Possibly a machine is free and the queue manager will
+    ! respond quickly
+    ! (This idea is tentative, however)
+    ! Now let's give queue manager a chance to receive our request
+    ! and deliberate a while (but not too long)
+    ! before giving up and going back to checking on our own slaves
+    machineName = ' '
+    do beat = 1, NBEATS
+      call PVMFNRecv( -1, GRANTEDTAG, bufferIDRcv )
+      if ( bufferIDRcv < 0 ) then
+        call PVMErrorMessage ( info, "checking for Granted message" )
+      else if ( bufferIDRcv > 0 ) then
+        if ( index(switches,'l2q') /=0 ) &
+          & call output('Weve been granted a host', advance='yes')
+        ! Granted us a machine
+        call PVMF90Unpack ( machineName, info )
+        if ( info /= 0 ) then
+          call PVMErrorMessage ( info, "unpacking machine name" )
+        endif
+        if ( len_trim(machineName) < 1 ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'granted blank host name' )
+        return
+      else
+        call usleep ( parallel%delay )
+      endif
+    enddo
+    if ( index(switches,'l2q') /=0 .and. len_trim(machineName) > 0 ) &
+      & call output('Received from l2q ' // trim(machineName), advance='yes')
+  end subroutine ReceiveMachineFromL2Q
+
+  ! subroutine TellL2QMachineDied(tid, L2Qtid)
+  subroutine TellL2QMachineDied(machine, L2Qtid)
+    ! character(len=MACHINENAMELEN)        :: MACHINENAME
+    ! integer, intent(in)                                 :: tid
+    type(machine_T), intent(in)                         :: machine
+    integer, intent(in)                                 :: L2Qtid
+    !
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    !
+    ! Identify ourselves
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_HostDied, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing registration' )
+    ! call PVMF90Pack ( machineName, info )
+    call PVMF90Pack ( machine%tid, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing dead machine tid' )
+    if ( len_trim(machine%name) < 1 ) then
+      call PVMF90Pack ( ' ', info )
+    else 
+      call PVMF90Pack ( trim(machine%name), info )
+    endif
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing dead machine name' )
+    call PVMFSend ( L2Qtid, petitionTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending finish packet' )
+    if ( index(switches, 'l2q') > 0 ) then
+      call output('Telling l2q host died ', advance='no')
+      call output(trim(machine%name), advance='no')
+      call blanks(2)
+      call output(machine%tid, advance='yes')
+    endif
+  end subroutine TellL2QMachineDied
+
+  subroutine TellL2QMachineFinished(machineName, tid, L2Qtid)
+    character(len=MACHINENAMELEN)        :: MACHINENAME
+    integer, intent(in)                                 :: tid
+    integer, intent(in)                                 :: L2Qtid
+    !
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    !
+    ! Identify ourselves
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_RELEASEHOST, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing registration' )
+    call PVMF90Pack ( tid, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing finished tid' )
+    call PVMF90Pack ( machineName, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing finished machine name' )
+    call PVMFSend ( L2Qtid, petitionTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending finish packet' )
+  end subroutine TellL2QMachineFinished
+
+  subroutine TellL2QMasterFinished(L2Qtid)
+    integer, intent(in)                                 :: L2Qtid
+    !
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    !
+    ! Identify ourselves
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_FINISHED, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing registration' )
+    call PVMFSend ( L2Qtid, petitionTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending finish packet' )
+  end subroutine TellL2QMasterFinished
+
+  subroutine ThankL2Q(machine, L2Qtid)
+  ! subroutine ThankL2Q(tid, L2Qtid)
+    ! integer, intent(in)                                 :: tid
+    type(machine_T), intent(in)                         :: machine
+    integer, intent(in)                                 :: L2Qtid
+    !
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    !
+    ! Identify ourselves
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_ThanksHost, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing registration' )
+    call PVMF90Pack ( machine%tid, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing tid' )
+    call PVMF90Pack ( machine%Name, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'packing machineName' )
+    call PVMFSend ( L2Qtid, petitionTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'sending finish packet' )
+    if ( index(switches, 'l2q') > 0 ) then
+      call output('Thanking l2q for host', advance='no')
+      call output(machine%tid, advance='yes')
+    endif
+  end subroutine ThankL2Q
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -1338,6 +1754,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.69  2004/12/14 21:54:23  pwagner
+! Changes related to l2q
+!
 ! Revision 2.68  2004/09/16 23:57:31  pwagner
 ! Now tracks machine names of failed chunks
 !
