@@ -7,67 +7,19 @@ begin Fill
   diagR3: Vector, template=diagTmp
 
   ;; ------------------------------------ O3-240
-  ;; Quality: Key bands are 7, 24, 33
-  ;; Get a composite chi squared for these
-  Fill, quantity=diagR3.chisqTmp, method=vector, sourceQuantity=otherDiagnostics.chisqProfile7, /force
-  Fill, quantity=diagR3.chisqTmp, method=manipulate, manipulation='a>b', $
-    a=diagR3.chisqTmp, b=otherDiagnostics.chisqProfile24, /force
-  Fill, quantity=diagR3.chisqTmp, method=manipulate, manipulation='a>b', $
-    a=diagR3.chisqTmp, b=otherDiagnostics.chisqProfile33, /force
-  ;; Run a boxcar over this
-  Fill, quantity=diagR3.chisqTmp, method=boxcar, sourceQuantity=diagR3.chisqTmp, $
-    boxCarMethod=max, width=3
-  ;; Now fill quality from this.
-  Fill, quantity=otherDiagnostics.qualityO3, method=quality, sourceQuantity=diagR3.chisqTmp, $
-    scale=7.0
-
-  ;; Status - too few radiances
-  Fill, quantity=diagR3.noRadsTmp, method=vector, sourceQuantity=otherDiagnostics.noRadsProfile7, /force
-  Fill, quantity=diagR3.noRadsTmp, method=manipulate, manipulation='a+b', $
-    a=diagR3.noRadsTmp, b=otherDiagnostics.noRadsProfile24, /force
-  Fill, quantity=diagR3.noRadsTmp, method=manipulate, manipulation='a+b', $
-    a=diagR3.noRadsTmp, b=otherDiagnostics.noRadsProfile33, /force
-  ;; Run a boxcar over this
-  Fill, quantity=diagR3.noRadsTmp, method=boxcar, sourceQuantity=diagR3.noRadsTmp, $
-    boxCarMethod=min, width=3
-  ;; Set status based on this
-  Fill, quantity=otherDiagnostics.statusO3, method=status, status=!statusTooFewRadiances+!statusDoNotUse, $
-    sourceQuantity=diagR3.noRadsTmp, minValue=2200
-
-  ;; Status - cloudy radiances - already had the box car run on it.
-  Fill, quantity=otherDiagnostics.statusO3, method=status, status=!statusHighCloud+!statusBeWary, $
-    sourceQuantity=otherDiagnostics.highCloudSummaryR3, maxValue=8K
+  !define(flaggingBands,{7,24,33})
+  !makeFlagsForOneProduct(product=O3,radiometer=R3,chisqScale=7.0,minRads=2200,cloudMax=8K)
 
   ;; ------------------------------------- CO-240
-  ;; Quality: Key bands are 9, 25 and 33
-  ;; Get a composite chi squared for these
-  Fill, quantity=diagR3.chisqTmp, method=vector, sourceQuantity=otherDiagnostics.chisqProfile9, /force
-  Fill, quantity=diagR3.chisqTmp, method=manipulate, manipulation='a>b', $
-    a=diagR3.chisqTmp, b=otherDiagnostics.chisqProfile25, /force
-  Fill, quantity=diagR3.chisqTmp, method=manipulate, manipulation='a>b', $
-    a=diagR3.chisqTmp, b=otherDiagnostics.chisqProfile33, /force
-  ;; Run a boxcar over this
-  Fill, quantity=diagR3.chisqTmp, method=boxcar, sourceQuantity=diagR3.chisqTmp, $
-    boxCarMethod=max, width=3
-  ;; Now fill quality from this.
-  Fill, quantity=otherDiagnostics.qualityCO, method=quality, sourceQuantity=diagR3.chisqTmp, $
-    scale=7.0
+  !define(flaggingBands,{9,25,33})
+  !makeFlagsForOneProduct(product=CO,radiometer=R3,chisqScale=7.0,minRads=2200,cloudMax=8K)
 
-  ;; Status - too few radiances
-  Fill, quantity=diagR3.noRadsTmp, method=vector, sourceQuantity=otherDiagnostics.noRadsProfile9, /force
-  Fill, quantity=diagR3.noRadsTmp, method=manipulate, manipulation='a+b', $
-    a=diagR3.noRadsTmp, b=otherDiagnostics.noRadsProfile25, /force
-  Fill, quantity=diagR3.noRadsTmp, method=manipulate, manipulation='a+b', $
-    a=diagR3.noRadsTmp, b=otherDiagnostics.noRadsProfile33, /force
-  ;; Run a boxcar over this
-  Fill, quantity=diagR3.noRadsTmp, method=boxcar, sourceQuantity=diagR3.noRadsTmp, $
-    boxCarMethod=min, width=3
-  ;; Set status based on this
-  Fill, quantity=otherDiagnostics.statusCO, method=status, status=!statusTooFewRadiances+!statusDoNotUse, $
-    sourceQuantity=diagR3.noRadsTmp, minValue=2200
+  ;; ------------------------------------- HNO3-240
+  !define(flaggingBands,{7,8,9,33})
+  !makeFlagsForOneProduct(product=HNO3,radiometer=R3,chisqScale=10.0,minRads=3500,cloudMax=10K)
 
-  ;; Status - cloudy radiances - already had the box car run on it.
-  Fill, quantity=otherDiagnostics.statusCO, method=status, status=!statusHighCloud+!statusBeWary, $
-    sourceQuantity=otherDiagnostics.highCloudSummaryR3, maxValue=8K
+  ;; ------------------------------------- Temperature-CorePlusR3
+  !define(flaggingBands,{1,8,22,32})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R3,chisqScale=10.0,minRads=2200,cloudMax=10K)
 
 end Fill
