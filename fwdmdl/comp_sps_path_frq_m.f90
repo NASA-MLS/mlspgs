@@ -21,12 +21,14 @@ MODULE comp_sps_path_frq_m
  CONTAINS
 !-----------------------------------------------------------------
 !
-  SUBROUTINE comp_sps_path_frq(Grids_x,Frq,eta_zp,do_calc_zp,sps_path, &
+  SUBROUTINE comp_sps_path_frq(Grids_x,lo,sideband,Frq,eta_zp,do_calc_zp,sps_path, &
   & do_calc_fzp,eta_fzp)
 !
 ! Input:
 !
   type (Grids_T), INTENT(in) :: Grids_x  ! All the needed coordinates
+  real(r8), intent(in) :: lo            ! Local oscillator freq
+  integer, intent(in) :: SIDEBAND       ! -1 or 1
 
   REAL(r8), INTENT(in) :: Frq  ! Frequency at which to compute the values
   REAL(rp), INTENT(in) :: eta_zp(:,:) ! Eta_z x Eta_phi for each state
@@ -103,7 +105,7 @@ MODULE comp_sps_path_frq_m
 !
 ! Compute eta:
 !
-    CALL get_eta_sparse(Grids_x%frq_basis(f_inda:f_indb-1),(/Frq/), &
+    CALL get_eta_sparse(lo+sideband*Grids_x%frq_basis(f_inda:f_indb-1),(/Frq/), &
                     &   eta_f,not_zero_f)
 !
     DO sv_i = 0 , nfzp - 1
@@ -141,6 +143,9 @@ MODULE comp_sps_path_frq_m
 END MODULE comp_sps_path_frq_m
 !
 ! $Log$
+! Revision 2.9  2002/08/22 23:13:20  livesey
+! New intermediate frequency based frq_bases
+!
 ! Revision 2.8  2002/06/13 22:39:42  bill
 ! some variable name changes--wgr
 !
