@@ -13,10 +13,19 @@ SHELL = /bin/sh
 # where a.sh is stored
 MLSBIN=.
 
+#
+FOPTS=-gline -gc
+
 # The program will be simply a file containing the value of a
 PROG=value
 
 .PHONY: configure depends clean tar clean_objs
+
+ifdef a
+   a_is_defined = true
+else
+   a_is_defined = false
+endif
 
 $(PROG): $(CONFDIR)/.configure
 	rm -f $(PROG)
@@ -29,6 +38,19 @@ $(PROG): $(CONFDIR)/.configure
 		echo "a is non-blank" ; \
 		;; \
 	esac 
+	@case "$(a_is_defined)" in \
+		"true") \
+		echo "a is defined" ; \
+		;; \
+		"false") \
+		echo "a is undefined" ; \
+		;; \
+		*) \
+		echo "a is neither" ; \
+		;; \
+	esac
+	@echo "FOPTS is ${FOPTS}"
+	@echo "Filtered becomes `echo ${FOPTS} | sed 's/-O[0-9]*//'`"
 
 configure:
 	echo "Currently, a is $$a"
