@@ -583,12 +583,12 @@ contains ! =====  Public Procedures  ===================================
   end subroutine Dump_Lines_Database
   ! ----------------------------------  Dump_SpectCat_Database_2D  -----
   subroutine Dump_SpectCat_Database_2d ( Catalog, Name, Details )
-    type(catalog_T), intent(in) :: Catalog(-1:,:)
+    type(catalog_T), pointer :: Catalog(:,:)
     character(len=*), intent(in), optional :: Name
     integer, optional, intent(in) :: Details ! <= 0 => Don't dump lines, default 0
     integer :: Sideband
     ! Executable code
-    do sideband = -1, 1, 2
+    do sideband = lbound(catalog,1), ubound(catalog,1), 2
       call Dump ( catalog(sideband,:), name, sideband )
     end do
   end subroutine Dump_SpectCat_Database_2d
@@ -707,6 +707,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.24  2004/08/03 02:27:05  vsnyder
+! Add 'Details' argument to dump
+!
 ! Revision 2.23  2004/07/08 02:47:44  vsnyder
 ! Fix up the dump routines
 !
