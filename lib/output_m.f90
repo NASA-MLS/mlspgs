@@ -15,7 +15,8 @@ module OUTPUT_M
 
   public :: BLANKS, OUTPUT
   interface OUTPUT
-    module procedure output_char, output_char_array, output_double
+    module procedure output_char, output_char_array, output_complex
+    module procedure output_dcomplex, output_double
     module procedure output_integer, output_integer_array, output_logical
     module procedure output_single, output_double_array, output_single_array
   end interface
@@ -32,26 +33,26 @@ module OUTPUT_M
 
 contains
 
-  FUNCTION Advance_is_yes_or_no (str) RESULT (outstr)
+  function Advance_is_yes_or_no (str) result (outstr)
     ! takes '[Yy]...' or '[Nn..] and returns 'yes' or 'no' respectively
     ! also does the same with '[Tt]..' and '[Ff]..'
     ! leaves all other patterns unchanged
     !--------Argument--------!
-    CHARACTER (LEN=*), INTENT(IN) :: str
-    CHARACTER (LEN=LEN(str)) :: outstr
+    character (len=*), intent(iN) :: Str
+    character (len=len(str)) :: Outstr
 
     !----------Local vars----------!
-    CHARACTER (LEN=*), parameter :: yeses = 'YyTt'
-    CHARACTER (LEN=*), parameter :: nose = 'NnFf'
+    character (len=*), parameter :: yeses = 'YyTt'
+    character (len=*), parameter :: nose = 'NnFf'
 
     outstr = adjustl(str)
     if ( index( yeses, outstr(:1)) > 0 ) then
       outstr = 'yes'
-    elseif ( index( nose, outstr(:1)) > 0 ) then
+    else if ( index( nose, outstr(:1)) > 0 ) then
       outstr = 'no'
     else
       outstr = str
-    endif
+    end if
     return
   end function Advance_is_yes_or_no
 
@@ -74,7 +75,7 @@ contains
       i = min(n,len(b))
       n = n - i
       if ( n == 0 ) adv = my_adv
-      call output ( b(:i), advance=my_adv )
+      call output ( b(:i), advance=adv )
       if ( n == 0 ) exit
     end do
     return
@@ -131,12 +132,41 @@ contains
     end if
   end subroutine OUTPUT_CHAR_ARRAY
 
+  subroutine OUTPUT_COMPLEX ( VALUE, Format, ADVANCE )
+    complex, intent(in) :: VALUE
+    character(len=*), intent(in), optional :: Format    ! How to print
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=60) :: LINE
+
+    if ( present(Format) ) then
+      write ( line, format ) value
+    else
+      write ( line, '("(",1pg15.7,",",1pg15.7,")")' ) value
+    end if
+    call output ( trim(line), advance=advance, dont_log = .true. )
+  end subroutine OUTPUT_COMPLEX
+
+  subroutine OUTPUT_DCOMPLEX ( VALUE, Format, ADVANCE )
+    integer, parameter :: RK = kind(0.0d0)
+    complex(rk), intent(in) :: VALUE
+    character(len=*), intent(in), optional :: Format    ! How to print
+    character(len=*), intent(in), optional :: ADVANCE
+    character(len=60) :: LINE
+
+    if ( present(Format) ) then
+      write ( line, format ) value
+    else
+      write ( line, '("(",1pg22.14,",",1pg22.14,")")' ) value
+    end if
+    call output ( trim(line), advance=advance, dont_log = .true. )
+  end subroutine OUTPUT_DCOMPLEX
+
   subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, ADVANCE )
   ! Output "double" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
     double precision, intent(in) :: VALUE
-    character(len=*), intent(in), optional :: Format  ! How to print
-    character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
+    character(len=*), intent(in), optional :: Format    ! How to print
+    character(len=*), intent(in), optional :: LogFormat ! How to post to Log
     character(len=*), intent(in), optional :: ADVANCE
     integer :: I, J, K
     character(len=30) :: LINE
@@ -416,6 +446,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.20  2003/07/02 01:07:27  vsnyder
+! Add complex output
+!
 ! Revision 2.19  2003/03/20 19:20:17  pwagner
 ! Changes to prevent double-logging when using MLSMessage
 !
