@@ -383,8 +383,10 @@ contains ! ================================ FullForwardModel routine ======
 
 !   Print *,'** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
 ! bills debug
-    lu_debug = get_free_lun()
-    OPEN(UNIT=lu_debug,FILE='debug.txt')
+    if ( index(switches,'billsdebug') /= 0 ) then
+      lu_debug = get_free_lun()
+      OPEN(UNIT=lu_debug,FILE='debug.txt')
+    endif
     if ( toggle(emit) ) &
       & call trace_begin ( 'ForwardModel, MAF=', index=fmstat%maf )
 
@@ -821,12 +823,14 @@ contains ! ================================ FullForwardModel routine ======
       & dxdt_tan = dxdt_tan, d2xdxdt_tan = d2xdxdt_tan)
     ENDIF
 ! bills debug
-    WRITE(lu_debug,'(a)') 'mmif based ptan, phitan, tan_chi_out'
-    DO i = 1 , ptan%template%nosurfs
-      WRITE(lu_debug,'(1x,f7.4,1x,f8.3,1x,f11.8)')  &
-       & ptan%values(i,maf),phitan%values(i,maf),tan_chi_out(i)
-    ENDDO
-    WRITE(lu_debug, '(a)') 'pressure, height, refractive, angle'
+    if ( index(switches,'billsdebug') /= 0 ) then
+      WRITE(lu_debug,'(a)') 'mmif based ptan, phitan, tan_chi_out'
+      DO i = 1 , ptan%template%nosurfs
+        WRITE(lu_debug,'(1x,f7.4,1x,f8.3,1x,f11.8)')  &
+         & ptan%values(i,maf),phitan%values(i,maf),tan_chi_out(i)
+      ENDDO
+      WRITE(lu_debug, '(a)') 'pressure, height, refractive, angle'
+    endif
   
 ! Compute Gauss Legendre (GL) grid ---------------------------------------
 !
@@ -1405,9 +1409,10 @@ contains ! ================================ FullForwardModel routine ======
           &    ptg_angles(ptg_i))
         endif
 ! bills debug
-        WRITE(lu_debug,'(1x,f7.4,1x,f8.3,1x,f14.11,1x,f11.8)')  &
-             tan_press(ptg_i),one_tan_ht(1),n_path(npc/2), &
-             ptg_angles(ptg_i)
+        if ( index(switches,'billsdebug') /= 0 ) &
+            WRITE(lu_debug,'(1x,f7.4,1x,f8.3,1x,f14.11,1x,f11.8)')  &
+               tan_press(ptg_i),one_tan_ht(1),n_path(npc/2), &
+               ptg_angles(ptg_i)
         call comp_refcor(Req+h_path(indices_c(1:npc)), 1.0_rp+n_path(1:npc), &
                       &  Req+one_tan_ht(1), del_s(1:npc), ref_corr(1:npc))
 
@@ -1992,7 +1997,6 @@ contains ! ================================ FullForwardModel routine ======
         if ( toggle(emit) .and. levels(emit) > 3 ) &
           & call trace_end ( 'ForwardModel.Pointing ', index=ptg_i )
 
-! BILLs DEBUG
         if ( FwdModelConf%do_freq_avg ) &
            & CALL DEALLOCATE_TEST(frequencies,'frequencies',ModuleName )
 
@@ -2058,16 +2062,18 @@ contains ! ================================ FullForwardModel routine ======
           whichPattern = whichPatternAsArray(1)
 
           center_angle = ptg_angles(surfaceTangentIndex)
+! bills debug
+          if ( index(switches,'billsdebug') /= 0 ) then
           CALL fov_convolve_v2(antennaPatterns(whichPattern)%aaap, &
             & antennaPatterns(whichPattern)%lambda,ptg_angles, &
             & Radiances(:,i),tan_chi_out, &
             & thisradiance%values(1:ptan%template%nosurfs,maf))
-! bills debug
-          WRITE(lu_debug,'(a)') 'angles_out, press_out, rad_out'
-          DO  j = 1 , ptan%template%nosurfs
-            WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') tan_chi_out(j), &
-          ptan%values(j,maf),thisradiance%values(j,maf)
-          ENDDO
+            WRITE(lu_debug,'(a)') 'angles_out, press_out, rad_out'
+            DO  j = 1 , ptan%template%nosurfs
+              WRITE(lu_debug,'(f11.8,1x,f10.5,1x,f9.4)') tan_chi_out(j), &
+            ptan%values(j,maf),thisradiance%values(j,maf)
+            ENDDO
+          endif
        WRITE(*,'(a)') 'WARNING Two d antenna code not properly implemented!'
        WRITE(*,'(a)') 'for general 2 d temperature coefficients'
           call convolve_all ( fwdModelConf, fwdModelIn, maf, channel, &
@@ -2330,12 +2336,15 @@ contains ! ================================ FullForwardModel routine ======
       call trace_end ( 'ForwardModel MAF=',fmStat%maf )
     end if
 ! bills debug
-  CLOSE(UNIT=lu_debug)
+  if ( index(switches,'billsdebug') /= 0 ) CLOSE(UNIT=lu_debug)
   end subroutine FullForwardModel
 
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.55  2002/06/07 23:01:25  bill
+! work in progress
+!
 ! Revision 2.54  2002/06/07 04:50:03  bill
 ! fixes and improvements--wgr
 !
