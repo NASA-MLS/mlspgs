@@ -7,11 +7,13 @@ module vGrid                    ! Definitions for vGrids in vector quantities
 
   use Allocate_Deallocate, only: Allocate_Test
   use EXPR_M, only: EXPR
-  use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, F_SOURCEL2GP, &
-    & F_START, F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
-    & L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_L2GP, L_LINEAR, L_LOGARITHMIC, &
-    & L_NONE, L_PRESSURE, L_THETA, L_ZETA, LIT_INDICES, PHYQ_Angle, &
-    & PHYQ_Dimensionless, PHYQ_Length, PHYQ_Pressure, PHYQ_Temperature
+  use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
+    & F_SOURCEL2GP, F_START, F_STOP, F_TYPE, F_VALUES, FIELD_FIRST, &
+    & FIELD_LAST, L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_L2GP, &
+    & L_LINEAR, L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
+    & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Length, PHYQ_Pressure, &
+    & PHYQ_Temperature
+  use Intrinsic, only: FIELD_INDICES, LIT_INDICES
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: R8       ! General constants etc.
   use MLSMessageModule, only: & ! Message logging
@@ -27,11 +29,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
   implicit none
   private
 
-  public :: CreateVGridFromMLSCFInfo, Dump
-
-  interface Dump
-    module procedure MyDump_VGrids
-  end interface Dump
+  public :: CreateVGridFromMLSCFInfo
 
   !------------------------------- RCS Ident Info ---------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -374,17 +372,13 @@ contains ! =====     Public Procedures     =============================
     end do
   end function CHECK_UNITS
 
-  ! ----------------------------------------------  MyDump_VGrids  -----
-  subroutine MyDump_VGrids ( VGrids, Details )
-    type(vGrid_T), intent(in), dimension(:) :: VGrids
-    integer, intent(in), optional :: Details
-    call dump ( vGrids, lit_indices, details )
-  end subroutine MyDump_VGrids
-
 end module vGrid
 
 !
 ! $Log$
+! Revision 2.11  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.10  2001/04/21 01:25:39  livesey
 ! Can now fill from l2gp
 !
