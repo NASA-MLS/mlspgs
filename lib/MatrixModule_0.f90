@@ -991,7 +991,7 @@ contains ! =====     Public Procedures     =============================
   ! from $1$ to $n$ because we know that $U$ and $U^{-1}$ are triangular.) 
   ! This gives $t_{ii} = u_{ii}^{-1}$ (for $i = j$) and  $t_{ij} = - \left (
   ! \sum_{l=i}^{j-1} t_{il} u_{lj} \right ) u_{jj}^{-1}$ (for $i < j$).  We
-  ! compute the diagonal elements of $t$ first, giving the following
+  ! compute the diagonal elements of $U^{-1}$ first, giving the following
   ! algorithm:
   !
   ! \hspace*{0.5in}$t_{ii} := u_{ii}^{-1}~~ i = 1,~ \dots,~ n$\\
@@ -1173,10 +1173,6 @@ contains ! =====     Public Procedures     =============================
     logical :: MyX, MyY                 ! Did X or Y result from densify?
     real(r8), pointer, dimension(:,:) :: X, Y, Z  ! Dense matrices
 
-    if ( xb%nCols /= yb%nRows ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_0" )
-
     beta = 0.0_r8
     if ( present(update) ) then
       if ( update ) beta = 1.0_r8
@@ -1186,9 +1182,13 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      if ( beta < 0.5_r8 ) call createBlock ( zb, xb%nRows, yb%nCols, M_Absent )
+      if ( abs(beta) < 0.5_r8 ) call createBlock ( zb, xb%nRows, yb%nCols, M_Absent )
       return
     end if
+
+    if ( xb%nCols /= yb%nRows ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_0" )
 
     call allocate_test ( z, xb%nRows, yb%nCols, 'Z in MultiplyMatrix_XY_0', &
       & moduleName )
@@ -1240,10 +1240,6 @@ contains ! =====     Public Procedures     =============================
     logical :: MyX, MyY                 ! Did X or Y result from densify?
     real(r8), pointer, dimension(:,:) :: X, Y, Z  ! Dense matrices
 
-    if ( xb%nCols /= yb%nCols ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_T_0" )
-
     beta = 0.0_r8
     if ( present(update) ) then
       if ( update ) beta = 1.0_r8
@@ -1253,9 +1249,13 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      if ( beta < 0.5_r8 ) call createBlock ( zb, xb%nRows, yb%nCols, M_Absent )
+      if ( abs(beta) < 0.5_r8 ) call createBlock ( zb, xb%nRows, yb%nCols, M_Absent )
       return
     end if
+
+    if ( xb%nCols /= yb%nCols ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "XB and YB Matrix sizes incompatible in MultiplyMatrix_XY_T_0" )
 
     call allocate_test ( z, xb%nRows, yb%nCols, 'Z in MultiplyMatrix_XY_T_0', &
       & moduleName )
@@ -2757,6 +2757,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.65  2002/02/23 02:13:16  vsnyder
+! Check for absent blocks before checking shapes
+!
 ! Revision 2.64  2002/02/22 20:11:45  vsnyder
 ! Fix the LaTeX in InvertDenseCholesky_0
 !
