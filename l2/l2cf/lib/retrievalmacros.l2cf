@@ -131,11 +131,19 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   !divert(!DGMDivert), joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert},{!dnl
   !divert(!DGMDivert)joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert})
 !define(gotDGMs,{Yes})
-{
-; --ConfigInfo-- DGM: $2
-; --ConfigInfo-- DGM: $2 precision
-}
+{;} --ConfigInfo-- DGM: $2
+{;} --ConfigInfo-- DGM: $2 precision
 })
+
+;; This macro is used to offset the forward model radiances
+;; It is called inside a Fill statement.  Note it takes !phase as a
+;; 'global' parameter.
+!define(offsetRadiance,{!dnl
+   Fill, quantity=f!phase.band$1, radianceQuantity=y!phase.band$1, method=offsetRadiance!nl})
+!define(offsetRadiances,{!dnl
+   begin Fill
+   !forall(offsetRadiance,$1)
+   end Fill})
 
 ;; This macro is used to invoke direct writes to store forward model
 ;; radiances.  The band is $1, and a suffix for the sd name is given
@@ -149,14 +157,13 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 ;; This macro uses the joinDGG (for the moment, will use DGM when we
 ;; got to hdf5) to join the diagnostics stuff
 !define(joinOneDiagDGG,{
-   joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, swath='$1-!phase'
+  joinedDGG_$1_!phase: l2gp, source=diag!phase.$1, precision=diag!phase.$1, $
+    swath='!translit($1,{_},{-})-!phase'
 !ifdef(gotDGGs,{!dnl
   !divert(!DGGDivert), joinedDGG_$1_!phase!divert},{!dnl
   !divert(!DGGDivert)joinedDGG_$1_!phase!divert})!dnl
 !define(gotDGGs,{Yes})!dnl
-{
-; --ConfigInfo-- DGG: $1-!phase
-}
+{;} --ConfigInfo-- DGG: !translit($1,{_},{-})-!phase
 })
 
 ;; This macro puts all the boring stuff in the Retrieve command line
@@ -319,6 +326,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
     /do_conv, /atmos_der, /do_baseline})
 
 ; $Log$
+; Revision 1.32  2002/10/25 22:25:59  livesey
+; Added the retrieval diagnostics stuff
+;
 ; Revision 1.31  2002/10/25 01:10:33  livesey
 ; Added the tropH2O option to completephase
 ;
