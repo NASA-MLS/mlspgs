@@ -1,0 +1,39 @@
+include ../Makefile.dep
+
+# "$Id$"
+
+# ========================================================================
+#       The objects for the shared source files (in srclib)
+# Include their dependencies
+include $(srclib)/Makefile.dep
+
+# Add them to L3OBJS
+ALLOBJS = $(OBJS) $(srclib_objs)
+
+# ========================================================================
+mlsl3: $(ALLOBJS) $(libdir)/libmls.a
+	$(FC) -o mlsl3 $(ALLOBJS) \
+                      -L$(libdir) -lmls \
+	-L$(PGSTK) -lPGSTK -L$(HDFEOS) -lhdfeos \
+	-L$(HDF) -ldf -ljpeg -lmfhdf -lz \
+	-L$(GCTP) -lGctp \
+
+# ========================================================================
+
+clean:
+	rm -f *.o *.mod mlsl3
+
+tar:
+	rm -f l3.tgz
+	tar hcvzf l3.tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
+
+# ========================================================================
+
+#	special options for compiling some modules--override .f90 rules
+
+L3DMData.o:
+	$(FC) -c $(DUSTY) -I $(PGSINC) -I $S -I $(libdir) $(S)/L3DMData.f90
+
+# ========================================================================
+# $Log$
+#

@@ -1,0 +1,95 @@
+#a file full of macros to be included by a Makefile
+#to compile a Fortran 9x program or library
+
+# "$Id$"
+
+SHELL = /bin/sh
+
+# Path to source files:
+S = ..
+
+# Use the libmls.a directory, libdir, for .mod files
+# dir1 is the path prepended to its .o files in dependency lists
+libdir = ../../lib/$(MLSCONFG)
+
+dir1 = $(libdir)/
+
+# sources shared by l2, l3 are in $(srclib)
+# these USE init_tables_module, which is different for l2 from the l3 version
+# while l2 and l3 use the same sources in srclib they do
+# require different objects--thus a source library instead of an object
+# library (such as libmls.a)
+# therefore we will tell make to add srclib to directories searched for .f90
+# while dir2, the path prepended to its .o files in dependency lists, is empty
+# so that its object files share the current working directory with those of l2
+srclib = ../../srclib
+
+dir2 =
+
+# Set paths for finding source files (different from .o and .mod)
+
+vpath %.o ./
+vpath %.f90 ../ $(srclib)
+vpath %.f9h ../
+
+FC = f95
+
+# Compiler options:
+FOPTS = -g -C=all -abi=n32
+
+DUSTY = -g -dusty -abi=n32
+
+#PGSINC = /software/SRC/TOOLKIT-5.2.6v1.00.NAG/include
+
+# Beginning of path to libraries:
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
+#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Beginning of path to HDFEOS  libraries:
+#E = /van1/opt/TOOLKIT
+
+# Define some suffix rules
+
+.SUFFIXES:
+.SUFFIXES: .o .dbg.o .f90
+.f90.o:
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $<
+
+.f90.dbg.o:
+	$(FC) -c $(FOPTS) -I $(PGSINC) -I $S -I $(libdir) $< -o $*.dbg.o
+
+#SDP =SDPToolkitSubstitute.o
+#GD=GDapi.o
+
+#These are the locations of the libraries
+#
+#  Name                 Default value
+#  PGSTK                 $(PGSLIB)
+# HDFEOS                 $(HDFEOS_LIB)
+#   HDF                  $(HDFLIB)
+#  GCTP                  $(HDEOS_LIB)
+#
+#PGSTK =$(PGSLIB)
+#HDFEOS =$(HDFEOS_LIB)
+#HDF =$(HDFLIB)
+#GCTP =$(HDFEOS_LIB)
+#The following can be uncommented to override the defaults
+
+#PGSTK =/software/SRC/TOOLKIT-5.2.5v1.00/lib/sgi/
+#HDFEOS =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
+#HDF =/software/SRC/TOOLKIT-5.2.5v1.00/hdf/sgi/HDF4.1r3/lib
+#GCTP =/software/SRC/TOOLKIT-5.2.5v1.00/hdfeos/lib/sgi
+
+# $Log$
+# Revision 1.3  2000/11/03 18:18:41  pwagner
+# Shares sources in srclib
+#
+# Revision 1.2  2000/11/02 23:27:37  pwagner
+# Dependencies may cross directories
+#
+# Revision 1.1  2000/10/21 00:22:12  pwagner
+# First commit
+#
+# Revision 1.1  2000/10/18 22:08:01  pwagner
+# First commit
+#
