@@ -22,8 +22,9 @@ module L2Parallel
   use QuantityPVM, only: PVMSENDQUANTITY, PVMRECEIVEQUANTITY
   use MLSCommon, only: R8, MLSCHUNK_T, FINDFIRST
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VECTORTEMPLATE_T, &
-    & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, ADDVECTORTODATABASE, &
-    & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO
+    & CONSTRUCTVECTORTEMPLATE, &
+    & CREATEVECTOR, DESTROYVECTORINFO, DESTROYVECTORTEMPLATEINFO, &
+    & INFLATEVECTORTEMPLATEDATABASE, INFLATEVECTORDATABASE
   use Machine, only: SHELL_COMMAND
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_ALLOCATE, &
     & MLSMSG_Deallocate, MLSMSG_WARNING
@@ -34,8 +35,8 @@ module L2Parallel
     & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
     & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES, &
     & MACHINEFIXEDTAG
-  use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
-    & DESTROYQUANTITYTEMPLATECONTENTS
+  use QuantityTemplates, only: QUANTITYTEMPLATE_T, &
+    & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE
   use Toggles, only: Gen, Switches, Toggle
   use Output_m, only: Output
   use Symbol_Table, only: ENTER_TERMINAL
@@ -162,7 +163,6 @@ contains ! ================================ Procedures ======================
 
   end subroutine GetChunkInfoFromMaster
 
-
   ! --------------------------------------------- L2MasterTask ----------
   subroutine L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
     ! This is a `master' task for the l2 software
@@ -203,6 +203,7 @@ contains ! ================================ Procedures ======================
     integer :: NOCHUNKS                 ! Number of chunks
     integer :: NODIRECTWRITEFILES       ! Need to keep track of filenames
     integer :: NOMACHINES               ! Number of slaves
+    integer :: NOQUANTITIESACCUMULATED  ! Running counter / index
     integer :: PRECIND                  ! Array index
     integer :: RESIND                   ! Loop counter
     integer :: REQUESTEDFILE            ! String index from slave
@@ -259,6 +260,7 @@ contains ! ================================ Procedures ======================
     noDirectWriteFiles = 0
     directWriteTicket = 0
     nextTicket = 1
+    noQuantitiesAccumulated = 0
 
     ! Work out the information on our virtual machine
     if ( .not. usingSubmit ) then
@@ -404,7 +406,7 @@ contains ! ================================ Procedures ======================
           case ( sig_tojoin ) ! --------------- Got a join request ---------
             call StoreSlaveQuantity( joinedQuantities, &
               & joinedVectorTemplates, joinedVectors, &
-              & storedResults, chunk, noChunks, slaveTid )
+              & storedResults, chunk, noChunks, slaveTid, noQuantitiesAccumulated )
 
           case ( sig_RequestDirectWrite ) ! ------- Direct write permission --
             ! What file did they ask for?
@@ -903,7 +905,7 @@ contains ! ================================ Procedures ======================
 
   ! -------------------------------------- StoreSlaveQuantity -------------------
   subroutine StoreSlaveQuantity ( joinedQuantities, joinedVectorTemplates, &
-    & joinedVectors, storedResults, chunk, noChunks, tid )
+    & joinedVectors, storedResults, chunk, noChunks, tid, noQuantitiesAccumulated )
     ! This routine reads a vector from a slave and stores it in
     ! an appropriate place.
 
@@ -914,7 +916,10 @@ contains ! ================================ Procedures ======================
     integer, intent(in) :: CHUNK        ! Index of chunk
     integer, intent(in) :: NOCHUNKS     ! Number of chunks
     integer, intent(in) :: TID          ! Slave tid
+    integer, intent(inout) :: NOQUANTITIESACCUMULATED ! Running counter /index
 
+    ! Local parameters
+    integer, parameter :: DATABASEINFLATION = 500
     ! Local saved variables
     integer, save      :: JOINEDQTCOUNTER = CounterStart ! To place in qt%id
     integer, save      :: JOINEDVTCOUNTER = CounterStart ! To place in vt%id
@@ -933,6 +938,7 @@ contains ! ================================ Procedures ======================
     integer :: I                                    ! Loop inductor
     integer :: NOSTOREDRESULTS                      ! Array size
     logical :: SEENTHISBEFORE                       ! Flag
+    logical :: NEEDTOINFLATE                        ! Flag
     real (r8), dimension(:,:), pointer :: VALUES    ! Values for this vector quantity
     type (QuantityTemplate_T) :: qt                 ! A quantity template
     type (VectorTemplate_T) :: vt                   ! A vector template
@@ -951,36 +957,52 @@ contains ! ================================ Procedures ======================
       & "unpacking hdf name from" )
     key = i2(1)
     gotPrecision = i2(2)
-    
+
     ! Now get the quantity itself, possibly the precision and tropopause
     do i = 1, gotPrecision+1
+      noQuantitiesAccumulated = noQuantitiesAccumulated + 1
+      ! Perhaps inflate our databases, some extra logic to avoig doing size on
+      ! unassociated pointer
+      needToInflate = noQuantitiesAccumulated == 1
+      if ( .not. needToInflate ) &
+        & needToInflate = noQuantitiesAccumulated > size ( joinedQuantities )
+      if ( needToInflate ) then
+        noQuantitiesAccumulated = &
+          & InflateQuantityTemplateDatabase ( joinedQuantities, databaseInflation )
+        noQuantitiesAccumulated = &
+          & InflateVectorTemplateDatabase ( joinedVectorTemplates, databaseInflation )
+        noQuantitiesAccumulated = &
+          & InflateVectorDatabase ( joinedVectors, databaseInflation )
+      end if
       call PVMReceiveQuantity ( qt, values, justUnpack=.true. )
-      
+        
       ! Now add its template to our template database
       qt%id = joinedQTCounter
       joinedQTCounter = joinedQTCounter + 1
-      qtInd = AddQuantityTemplateToDatabase ( joinedQuantities, qt )
+      qtInd = noQuantitiesAccumulated
+      joinedQuantities ( qtInd ) = qt
       
       ! Now make a vector template up for this
       call ConstructVectorTemplate ( 0, joinedQuantities, (/ qtInd /), vt )
       vt%id = joinedVTCounter
       joinedVTCounter = joinedVTCounter + 1
-      vtInd = AddVectorTemplateToDatabase ( joinedVectorTemplates, vt )
+      vtInd = noQuantitiesAccumulated
+      joinedVectorTemplates ( vtInd ) = vt
       
       ! Now make a vector up for this
       v = CreateVector ( 0, joinedVectorTemplates(vtInd), &
         & joinedQuantities, vectorNameText='joined' )
       v%quantities(1)%values => values
+      joinedVectors ( noQuantitiesAccumulated ) = v
       select case ( i )
       case ( 1 )
-        vInd = AddVectorToDatabase ( joinedVectors, v )
+        vInd = noQuantitiesAccumulated
       case ( 2 )
-        pvInd = AddVectorToDatabase ( joinedVectors, v )
+        pvInd = noQuantitiesAccumulated
       end select
     end do
 
     ! Now update our stored result stuff
-
     seenThisBefore = associated ( storedResults ) ! Perhaps, anyway
     if ( seenThisBefore ) seenThisBefore = any (storedResults%key == key )
 
@@ -1056,6 +1078,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.45  2003/05/12 02:06:48  livesey
+! Changed to use the inflation of vectors etc for efficiency.
+!
 ! Revision 2.44  2003/05/10 22:30:12  livesey
 ! Tidy up a message
 !
