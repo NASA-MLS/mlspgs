@@ -10,14 +10,21 @@ module ForwardModelInterface
 
 !??? Do we want a forward model database ???
 
+  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
+  use Declaration_Table, only: NUM_VALUE, RANGE
+  use Dump_0, only: DUMP
   use Expr_M, only: EXPR
-  use Init_Tables_Module, only: field_first, field_last
-  use Init_Tables_Module, only: F_ATMOS_DER, F_DO_CONV, F_DO_FREQ_AVG, &
-    & F_EXTRAHEIGHTS, F_FREQUENCY, F_POINTINGGRIDS, F_SPECT_DER, F_TEMP_DER, &
-    & SPEC_INDICES
+  use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, F_DO_FREQ_AVG, &
+    F_FREQUENCY, F_MOLECULES, F_MOLECULEDERIVATIVES, F_SIGNALS, &
+    F_SPECT_DER, F_TEMP_DER
+  use Init_Tables_Module, only: field_indices, field_first, field_last, lit_indices
+!  use Init_Tables_Module, only: F_ATMOS_DER, F_DO_CONV, F_DO_FREQ_AVG, &
+!    & F_EXTRAHEIGHTS, F_FREQUENCY, F_POINTINGGRIDS, F_SPECT_DER, F_TEMP_DER, &
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
   use MLSCommon, only: R8
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_Error
+  use MLSSignals_m, only: GetSignal, Signal_T, GetSignalName
   use MoreTree, only: Get_Boolean, Get_Field_ID
   use Output_M, only: Output
   use PointingGrid_m, only: Close_Pointing_Grid_File, &
@@ -26,7 +33,7 @@ module ForwardModelInterface
   use String_Table, only: Display_String, Get_String
   use Toggles, only: Gen, Toggle
   use Trace_M, only: Trace_begin, Trace_end
-  use Tree, only: Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
+  use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Tree_Types, only: N_named
   use VectorsModule, only: Vector_T
 
@@ -36,17 +43,46 @@ module ForwardModelInterface
 
   implicit NONE
   private
-  public :: ForwardModel, ForwardModelGlobalSetup, ForwardModelInfo_T, &
-    & ForwardModelSetup
+  public :: AddForwardModelConfigToDatabase, ConstructForwardModelConfig, &
+    Dump, DestroyFWMConfigDatabase, ForwardModel, ForwardModelGlobalSetup, &
+    ForwardModelConfig_T, ForwardModelSignal_T
 
-  type ForwardModelInfo_T
+  interface DUMP
+    module procedure DUMP_FORWARDMODELCONFIGS
+  end interface
+
+  !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), parameter, private :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = IdParm
+  character (len=*), parameter, private :: ModuleName= &
+    & "$RCSfile$"
+  !---------------------------------------------------------------------------
+
+  type ForwardModelSignal_T
+    integer :: signal                   ! The signal we're considering
+    logical, dimension(:), pointer :: channelIncluded ! Which channels to use
+  end type ForwardModelSignal_T
+
+  type ForwardModelConfig_T
     logical :: Atmos_Der      ! Do atmospheric derivatives
     logical :: Do_Conv        ! Do convolution
     logical :: Do_Freq_Avg    ! Do Frequency averaging
+    integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
+    logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
     real(r8) :: The_Freq      ! Frequency to use if .not. do_freq_avg
+    type (ForwardModelSignal_T), dimension(:), pointer :: signals=>NULL()
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
-  end type ForwardModelInfo_T
+  end type ForwardModelConfig_T
+
+  ! Error codes
+
+  integer, parameter :: AllocateError        = 1
+  integer, parameter :: BadMolecule          = AllocateError + 1  
+  integer, parameter :: DefineSignalsFirst   = BadMolecule + 1  
+  integer, parameter :: DefineMoleculesFirst = DefineSignalsFirst + 1
+  integer, parameter :: DuplicateField       = DefineMoleculesFirst + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -61,13 +97,13 @@ module ForwardModelInterface
 contains
 
   ! ------------------------------------  ForwardModelGlobalSetup  -----
-  subroutine ForwardModelGlobalSetup ( Root, ForwardModelInfo )
+  subroutine ForwardModelGlobalSetup ( Root, ForwardModelConfig )
   ! Process the forwardModel specification to produce ForwardModelInfo.
 
     integer :: Root                     ! of the forwardModel specification.
                                         ! Indexes either a "named" or
                                         ! "spec_args" vertex.
-    type(forwardModelInfo_T), intent(inout) :: ForwardModelInfo
+    type(forwardModelConfig_T), intent(inout) :: ForwardModelConfig
 
     integer :: Field                    ! Field index -- f_something
     integer :: I                        ! Subscript and loop inductor.
@@ -79,7 +115,7 @@ contains
     integer :: Son                      ! Some subtree of root.
     integer :: Type                     ! Type of value returned by EXPR
     integer :: Units(2)                 ! Units of value returned by EXPR
-    double precision :: Value(2)        ! Value returned by EXPR
+    real (r8) :: Value(2)               ! Value returned by EXPR
 
     ! Error message codes
 
@@ -101,26 +137,6 @@ contains
       son = subtree(i,key)
       field = get_field_id(son)
       select case ( field )
-      case ( f_atmos_der )
-        forwardModelInfo%atmos_der = get_boolean(son)
-      case ( f_do_conv )
-        forwardModelInfo%do_conv = get_boolean(son)
-      case ( f_do_freq_avg )
-        forwardModelInfo%do_freq_avg = get_boolean(son)
-      case ( f_extraHeights )
-        call expr ( subtree(2,son), units, value, type )
-        extraHeights = value(1)
-      case ( f_frequency )
-        call expr ( subtree(2,son), units, value, type )
-        forwardModelInfo%the_freq = value(1)
-      case ( f_pointingGrids )
-        call get_string ( sub_rosa(subtree(2,son)), pointingGridsFile, &
-          & strip=.true. )
-      case ( f_spect_der )
-        forwardModelInfo%spect_der = get_boolean(son)
-      case ( f_temp_der )
-        forwardModelInfo%temp_der = get_boolean(son)
-      case default
         ! Shouldn't get here if the type checker worked
       end select
     end do ! i = 2, nsons(key)
@@ -134,25 +150,32 @@ contains
     if ( toggle(gen) ) call trace_end ( "ForwardModelGlobalSetup" )
   end subroutine ForwardModelGlobalSetup
 
-  ! ------------------------------------------  ForwardModelSetup  -----
-  subroutine ForwardModelSetup ( Root, VectorDatabase, MatrixDatabase, &
-    &                            ForwardModelInfo )
-  ! Process the forwardModel specification to produce ForwardModelInfo.
+  ! ------------------------------------------  ConstructForwardModelConfig  -----
+  type (ForwardModelConfig_T) function ConstructForwardModelConfig ( ROOT ) result(info)
+    ! Process the forwardModel specification to produce ForwardModelConfig to add
+    ! to the database
 
-    integer :: Root                     ! of the forwardModel specification.
+    integer :: ROOT                     ! of the forwardModel specification.
                                         ! Indexes either a "named" or
                                         ! "spec_args" vertex.
-    type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
-    type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
-    type(forwardModelInfo_T), intent(inout) :: ForwardModelInfo
+    ! Local variables
 
+    type (Signal_T) :: thisSignal ! A signal
+    type (ForwardModelSignal_T), pointer :: thisFWMSignal ! A signal
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
+    integer :: J                        ! Subscript and loop inductor.
     integer :: Key                      ! Indexes the spec_args vertex.
     integer :: Name                     ! sub_rosa of label of specification,
                                         ! if any, else zero.
+    integer :: NoChannelsSpecs          ! Number of channel specs we've had
     integer :: Son                      ! Some subtree of root.
+    integer :: STATUS                   ! From allocates etc.
+    integer :: THISMOLECULE             ! Tree index.
+    integer :: Type                     ! Type of value returned by EXPR
+    integer :: Units(2)                 ! Units of value returned by EXPR
+    real (r8) :: Value(2)               ! Value returned by EXPR
 
     ! Error message codes
 
@@ -165,7 +188,17 @@ contains
       name = 0
       key = root
     end if
+    
+    ! Set sensible defaults
+    info%atmos_der = .false.
+    info%do_conv = .false.
+    info%do_freq_avg = .false.
+    info%the_freq = 0.0
+    info%spect_der = .false.
+    info%temp_der = .false.
 
+    noChannelsSpecs=0
+    
     ! "Key" now indexes an n_spec_args vertex.  See "Configuration file
     ! parser users' guide" for pictures of the trees being analyzed.
 
@@ -173,20 +206,96 @@ contains
     do i = 2, nsons(key)
       son = subtree(i,key)
       field = get_field_id(son)
+      if ( got(field) .and. (field /= f_channels) )&
+        &  call AnnounceError( DuplicateField, key, field)
       got(field) = .true.
       select case ( field )
+      case ( f_atmos_der )
+        info%atmos_der = get_boolean(son)
+      case ( f_do_conv )
+        info%do_conv = get_boolean(son)
+      case ( f_do_freq_avg )
+        info%do_freq_avg = get_boolean(son)
+      case ( f_frequency )
+        call expr ( subtree(2,son), units, value, type )
+        info%the_freq = value(1)
+      case ( f_channels )
+        if ( .not. associated( info%signals ) ) then
+          call AnnounceError(DefineSignalsFirst, key)
+        else
+          noChannelsSpecs=noChannelsSpecs+1
+          thisFWMSignal => info%signals(noChannelsSpecs)
+          ! Now default to none included
+          thisFWMSignal%channelIncluded = .false.
+          do j = 2, nsons(son)
+            call expr ( subtree(j,son), units, value, type )
+            select case (type)
+            case (num_value)
+              thisFWMSignal%channelIncluded(int(value(1))) = .true.
+            case (range)
+              thisFWMSignal%channelIncluded(int(value(1)):int(value(2))) =&
+                & .true.
+            case default
+              ! Shouldn't get here if parser worked
+            end select
+          end do
+        end if
+      case ( f_molecules )
+        allocate ( info%molecules(nsons(son)-1), stat = status)
+        if (status /= 0) call AnnounceError( AllocateError, key )
+        allocate ( info%moleculeDerivatives (nsons(son)-1), stat = status)
+        if (status /= 0) call AnnounceError( AllocateError, key )
+        info%moleculeDerivatives = .false.
+        do j = 1, nsons(son)-1
+          info%molecules(j) = decoration( subtree( j+1, son ) )
+        end do                          ! End loop over listed signals
+      case ( f_moleculeDerivatives )
+        if (.not. associated(info%molecules)) then
+          call AnnounceError( DefineMoleculesFirst, key)
+        else
+          do j = 1, nsons(son)-1
+            thisMolecule = decoration( subtree( j+1, son ) )
+            if (.not. any(info%molecules == thisMolecule ) ) &
+              & call AnnounceError( BadMolecule, key )
+            where (info%molecules == thisMolecule)
+              info%moleculeDerivatives = .true.
+            end where
+          end do                          ! End loop over listed signals
+        end if
+      case ( f_signals )
+        allocate ( info%signals (nsons(son)-1), stat = status)
+        if (status /= 0) call AnnounceError( AllocateError, key )
+        do j = 1, nsons(son)-1
+          info%signals(j)%signal = &
+            & decoration(decoration( subtree(j+1, son )))
+          ! Now allocate the channels information
+          thisSignal = GetSignal( info%signals(j)%signal )
+          allocate ( info%signals(j)%channelIncluded( &
+            & lbound(thisSignal%frequencies,1):ubound(thisSignal%frequencies,1)),&
+            & stat=status)
+          if (status /= 0) then
+            call AnnounceError ( AllocateError, key )
+            exit
+          end if
+          ! Default to include this channel
+          info%signals(j)%channelIncluded = .true.
+        end do                          ! End loop over listed signals
+      case ( f_spect_der )
+        info%spect_der = get_boolean(son)
+      case ( f_temp_der )
+        info%temp_der = get_boolean(son)
       case default
         ! Shouldn't get here if the type checker worked
       end select
+      if (error /= 0) call MLSMessage(MLSMSG_Error, ModuleName, 'An error occured')
     end do ! i = 2, nsons(key)
     if ( toggle(gen) ) call trace_end ( "ForwardModelSetup" )
-
-  end subroutine ForwardModelSetup
+  end function ConstructForwardModelConfig
 
   ! -----------------------------------------------  ForwardModel  -----
-! subroutine ForwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+! subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
 !   &                       Jacobian, RowBlock, FwdModelOut )
-  subroutine ForwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+  subroutine ForwardModel ( ForwardModelConfig, FwdModelExtra, FwdModelIn, &
     &                      Jacobian, RowBlock, FwdModelOut, FMC, FMI, TFMI )
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
@@ -218,7 +327,7 @@ contains
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
-    type(forwardModelInfo_T), intent(in) :: FwdModelInfo ! From ForwardModelSetup
+    type(forwardModelConfig_T), intent(in) :: forwardModelConfig ! From ForwardModelSetup
     type(vector_T), intent(in) :: FwdModelExtra, FwdModelIn ! ???
     type(matrix_T), intent(inout), optional :: Jacobian
     integer, intent(in), optional :: RowBlock          ! With which block of
@@ -302,6 +411,14 @@ contains
     Real(r8), DIMENSION(:), ALLOCATABLE :: RadV, F_grid
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+
+
+    fmc%atmos_der = forwardModelConfig%atmos_der
+    fmc%do_conv = forwardModelConfig%do_conv
+    fmc%do_frqavg = forwardModelConfig%do_Freq_Avg
+    fmc%spect_Der = forwardModelConfig%spect_Der
+    fmc%temp_Der = forwardModelConfig%temp_Der
+    fmc%zfrq = forwardModelConfig%the_Freq
 
     io = 0
     ch1 = FMC%Channels_range(1)
@@ -809,23 +926,134 @@ contains
 
   end subroutine ForwardModel
 
+  ! ------------------------------------------- AddForwardModelConfigToDatabase --
+  integer function AddForwardModelConfigToDatabase ( database, item )
+
+  ! Add a quantity template to a database, or create the database if it
+  ! doesn't yet exist
+
+    ! Dummy arguments
+    type (ForwardModelConfig_T), dimension(:), pointer :: database
+    type (ForwardModelConfig_T), intent(in) :: item
+
+    ! Local variables
+    type (ForwardModelConfig_T), dimension(:), pointer :: tempDatabase
+
+    include "addItemToDatabase.f9h"
+
+    AddForwardModelConfigToDatabase = newSize
+  end function AddForwardModelConfigToDatabase
+
+  ! ------------------------------------------ DestroyForwardModelConfigDatabase --
+  subroutine DestroyFWMConfigDatabase(database)
+    ! Dummy arguments
+    type (ForwardModelConfig_T), dimension(:), pointer :: DATABASE
+
+    ! Local variables
+    integer :: CONFIG                   ! Loop counter
+    integer :: SIGNAL                   ! Loop counter
+    integer :: STATUS                   ! Flag
+
+    if (associated(database)) then
+      do config = 1, size(database)
+        do signal = 1, size(database(config)%signals)
+          deallocate(database(config)%signals(signal)%channelIncluded,stat=status)
+          if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+            & MLSMSG_Deallocate//"database%signals%channelIncluded")
+        end do
+        deallocate (database(config)%signals, stat=status)
+        if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+          & MLSMSG_Deallocate//"database%signals")
+        deallocate (database(config)%molecules, stat=status)
+        if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+          & MLSMSG_Deallocate//"database%molecules")
+      end do
+      
+      deallocate (database, stat=status)
+      if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
+        & MLSMSG_Deallocate//"database")
+    end if
+  end subroutine DestroyFWMConfigDatabase
+
+
 ! =====     Private Procedures     =====================================
+  ! ------------------------------------------ DUMP_FOWARDMODELCONFIGS --
+  subroutine Dump_ForwardModelConfigs(database)
+    type (ForwardModelConfig_T), dimension(:), pointer :: database
+
+    ! Local variables
+    integer :: I,J                      ! Loop counters
+    character (len=80) :: signalName    ! A line of text
+
+    ! executable code
+    if (associated(database)) then
+      do i = 1, size(database)
+        call output ( 'FowardModelConfig: ' )
+        call output ( i, advance = 'yes' )
+        call output ( '  Atmos_der:' )
+        call output ( database(i)%atmos_der, advance='yes' )
+        call output ( '  Do_conv:' )
+        call output ( database(i)%do_conv, advance='yes' )
+        call output ( '  Do_freq_avg:' )
+        call output ( database(i)%do_freq_avg, advance='yes' )
+        call output ( '  Spect_der:' )
+        call output ( database(i)%spect_der, advance='yes' )
+        call output ( '  Temp_der:' )
+        call output ( database(i)%temp_der, advance='yes' )
+        call output ( '  The_freq:' )
+        call output ( database(i)%the_freq, advance='yes' )
+        call output ( '  Molecules: ', advance='yes' )
+        do j = 1, size(database(i)%molecules)
+          call output ( '    ' )
+          call display_string(lit_indices(database(i)%molecules(j)))
+          if (database(i)%moleculeDerivatives(j)) then
+            call output (' compute derivatives', advance='yes')
+          else
+            call output (' no derivatives', advance='yes')
+          end if
+        end do
+        call output ( '  Signals:', advance='yes')
+        do j = 1, size(database(i)%signals)
+          call output ( '    ' )
+          call GetSignalName( database(i)%signals(j)%signal, signalName)
+          call output ( signalName//' channelIncluded:', advance='yes')
+          call dump ( database(i)%signals(j)%channelIncluded )
+        end do
+      end do
+    end if
+  end subroutine Dump_ForwardModelConfigs
+
   ! ----------------------------------------------  AnnounceError  -----
   subroutine AnnounceError ( Code, Where, FieldIndex )
     integer, intent(in) :: Code       ! Index of error message
     integer, intent(in) :: Where      ! Where in the tree did the error occur?
-    integer, intent(in) :: FieldIndex ! f_...
+    integer, intent(in), optional :: FieldIndex ! f_...
 
     error = max(error,1)
     call output ( '***** At ' )
     call print_source ( source_ref ( where ) )
     call output ( ' ForwardModelSetup complained: ' )
     select case ( code )
+      case (AllocateError) 
+        call output ( 'allocation error.', advance='yes')
+      case (BadMolecule) 
+        call output ( 'asked for derivatives for an unlisted molecule.')
+      case (DefineMoleculesFirst) 
+        call output ( 'molecule must be defined before moleules derivatives.', advance='yes')
+      case (DefineSignalsFirst) 
+        call output ( 'signals must be defined before channels.', advance='yes')
+      case (DuplicateField) 
+        call output ( 'duplicate field specified:' )
+        call display_string(field_indices(FieldIndex), advance='yes')
     end select
   end subroutine AnnounceError
+
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.19  2001/03/17 00:50:57  livesey
+! New forwardModelConfig stuff and merge from Van
+!
 ! Revision 2.18  2001/03/16 21:05:22  vsnyder
 ! Move dumping of pointing grid database to PointingGrid_m
 !
