@@ -823,9 +823,9 @@ contains ! ================================ Procedures ======================
       deallocate ( joinedVectors, STAT=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & MLSMSG_Deallocate//'joinedVectors' )
-      finished = .true.
     end if
 
+    finished = .true.
     if ( index(switches,'mas') /= 0 ) then
       call output ( 'All chunks joined', advance='yes' )
     endif
@@ -1061,6 +1061,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.35  2002/05/29 22:43:22  livesey
+! Embarssing bug fix, finished=.true. was wrong side of if statement.
+!
 ! Revision 2.34  2002/05/29 21:55:11  livesey
 ! Bug fixes, diagnostic message emitted when not -Smas, and associated
 ! checks around some deallocates.
