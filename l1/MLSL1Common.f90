@@ -42,14 +42,14 @@ MODULE MLSL1Common              ! Common data types for the MLSL1 program
 
   TYPE L1BFileInfo_T
     INTEGER :: OAId            ! The HDF ID (handle) for the L1BOA file
-    INTEGER :: RADDId, RADFId, RADTId  ! Ids for the L1BRAD files
+    INTEGER :: RADDId, RADGId, RADTId  ! Ids for the L1BRAD files
     INTEGER :: EngId           ! The HDF ID (handle) for the L1BENG file
     INTEGER :: DiagId          ! The ID (non-HDF) (handle) for the L1BDIAG file
     INTEGER :: LogId           ! The ID (non-HDF) (handle) for the L1BLog file
     INTEGER :: EngMAF_unit, SciMAF_unit  ! units for EngMAF & SciMAF files
     INTEGER :: MAF_data_unit   ! unit for Eng/Sci MAF data merged
     CHARACTER (LEN=FileNameLen) :: OAFileName  ! L1BOA file name
-    CHARACTER (LEN=FileNameLen) :: RADDFileName, RADFFilename, RADTFileName
+    CHARACTER (LEN=FileNameLen) :: RADDFileName, RADGFilename, RADTFileName
     CHARACTER (LEN=FileNameLen) :: EngFileName   ! L1BENG file name
     CHARACTER (LEN=FileNameLen) :: DiagFileName  ! L1BDIAG file name
     CHARACTER (LEN=FileNameLen) :: LogFileName   ! L1BLOG file name
@@ -176,6 +176,9 @@ END MODULE MLSL1Common
 !=============================================================================
 
 ! $Log$
+! Revision 2.7  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.6  2003/01/31 18:13:34  perun
 ! Version 1.1 commit
 !
