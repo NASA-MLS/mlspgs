@@ -13,7 +13,7 @@ module TREE_WALKER
   use FilterShapes_m, only: Destroy_Filter_Shapes_Database
   use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
   use Global_Settings, only: Set_Global_Settings
-  use GriddedData, only: GriddedData_T
+  use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase
   use HGrid, only: HGrid_T
   use Init_Tables_Module, only: Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
     & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
@@ -30,7 +30,6 @@ module TREE_WALKER
     & DestroyRadiometerDatabase, DestroySignalDatabase, &
     & DestroySpectrometerTypeDatabase, MLSSignals, Modules, Radiometers, &
     & Signals, SpectrometerTypes
-  use NCEP_DAO, only: DestroyGridTemplateDatabase
   use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
   use Output_m, only: Output
   use OutputAndClose, only: Output_Close
@@ -186,7 +185,7 @@ subtrees:   do while ( j <= howmany )
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
         call DestroyL1BInfo ( l1bInfo )
-        call DestroyGridTemplateDatabase ( griddedData )
+        call DestroyGriddedDataDatabase ( griddedData )
         call DestroyChunkDatabase (chunks )
         if ( index(switches,'l2gp') /= 0 .and. .not. parallel%slave) then
           call Dump_L2GP(l2gpDatabase)
@@ -224,6 +223,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.58  2001/08/06 18:34:59  pwagner
+! Now dumps l2gp and l2aux databases when asked
+!
 ! Revision 2.57  2001/07/11 21:40:21  livesey
 ! Added -Schu option
 !
