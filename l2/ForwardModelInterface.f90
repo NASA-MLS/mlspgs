@@ -247,9 +247,9 @@ contains ! =====     Public Procedures     =============================
         !         end if
       case ( f_molecules )
         call allocate_test ( info%molecules, nsons(son)-1, "info%molecules", &
-          & moduleName )
+                             & ModuleName )
         call allocate_test ( info%moleculeDerivatives, nsons(son)-1, &
-          & "info%moleculeDerivatives", moduleName )
+          & "info%moleculeDerivatives", ModuleName )
         info%moleculeDerivatives = .false.
         do j = 1, nsons(son)-1
           info%molecules(j) = decoration( subtree( j+1, son ) )
@@ -641,14 +641,14 @@ contains ! =====     Public Procedures     =============================
 
     ! Work out which channels are used
     call allocate_test ( channelIndex, size(signal%frequencies), 'channelIndex', &
-      & moduleName )
+      & ModuleName )
     noUsedChannels = count ( signal%channels )
-    call allocate_test ( usedChannels, noUsedChannels, 'channelIndex', moduleName )
+    call allocate_test ( usedChannels, noUsedChannels, 'channelIndex', ModuleName )
     do channel = 1, size( signal%frequencies)
       channelIndex(channel) = channel
     end do
     usedChannels = pack ( channelIndex, signal%channels )
-    call deallocate_test ( channelIndex,'channelIndex',moduleName )
+    call deallocate_test ( channelIndex,'channelIndex',ModuleName )
 
     if ( fmStat%newHydros ) then
 
@@ -681,21 +681,21 @@ contains ! =====     Public Procedures     =============================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'elvar' )
 
-      call allocate_test ( ifm%geoc_lat, noMAFs, 'geoc_lat', moduleName )
-      call allocate_test ( ifm%e_rad, noMAFs, 'e_rad', moduleName )
+      call allocate_test ( ifm%geoc_lat, noMAFs, 'geoc_lat', ModuleName )
+      call allocate_test ( ifm%e_rad, noMAFs, 'e_rad', ModuleName )
 
-      call allocate_test ( ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', moduleName )
-      call allocate_test ( ifm%t_glgrid, maxPath, noMAFs, 't_glgrid', moduleName )
-      call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', moduleName )
+      call allocate_test ( ifm%h_glgrid, maxPath, noMAFs, 'h_glgrid', ModuleName )
+      call allocate_test ( ifm%t_glgrid, maxPath, noMAFs, 't_glgrid', ModuleName )
+      call allocate_test ( ifm%z_glgrid, maxPath/2, 'z_glgrid', ModuleName )
       call allocate_test ( ifm%dh_dt_glgrid, maxPath, noMAFs, &
-        & temp%template%noSurfs,'dh_dt_glgrid', moduleName )
-      call allocate_test ( ifm%dhdz_glgrid, maxPath, noMAFs, 'dhdz_glgrid', moduleName )
+        & temp%template%noSurfs,'dh_dt_glgrid', ModuleName )
+      call allocate_test ( ifm%dhdz_glgrid, maxPath, noMAFs, 'dhdz_glgrid', ModuleName )
       call allocate_test ( ifm%tan_hts, &
-        & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', moduleName )
+        & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', ModuleName )
       call allocate_test ( ifm%tan_temp, &
-        & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', moduleName )
+        & size(ForwardModelConfig%tangentGrid%surfs), noMAFs, 'tan_hts', ModuleName )
       call allocate_test ( ifm%tan_dh_dt, nlvl, noMAFs, &
-        & temp%template%noSurfs, 'tan_dh_dt', moduleName )
+        & temp%template%noSurfs, 'tan_dh_dt', ModuleName )
 
       ! Setup for hydrostatic calculation
       ! Assert radiance%template%noInstances=temp%template%noInstances
@@ -726,11 +726,10 @@ contains ! =====     Public Procedures     =============================
 
       ! Now compute stuff along the path given this hydrostatic grid.
       call comp_path_entities ( ForwardModelConfig%integrationGrid%noSurfs, &
-        &  temp%template%noSurfs, &
-        &  ifm%gl_count, ifm%ndx_path, ifm%z_glgrid, ifm%t_glgrid, &
-        &  ifm%h_glgrid, ifm%dhdz_glgrid, ifm%tan_hts, no_tan_hts, ifm%z_path, &
-        &  ifm%h_path, ifm%t_path, &
-        &  ifm%phi_path, ifm%dhdz_path, ifm%eta_phi, temp%template%noInstances, &
+        &  temp%template%noSurfs, ifm%gl_count, ifm%ndx_path, ifm%z_glgrid, &
+        &  ifm%t_glgrid, ifm%h_glgrid, ifm%dhdz_glgrid, ifm%tan_hts,        &
+        &  no_tan_hts, ifm%z_path, ifm%h_path, ifm%t_path, ifm%phi_path,    &
+        &  ifm%dhdz_path, ifm%eta_phi, temp%template%noInstances,           &
         &  temp%template%phi(1,:)*Deg2Rad, noMAFs, phiWindow, ifm%elvar, Ier )
       if ( ier /= 0 ) goto 99
 
@@ -754,12 +753,12 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
       & MLSMSG_Allocate//'spsfunc_path' )
     call allocate_test ( dx_dt, No_tan_hts, temp%template%noSurfs, &
-      & 'dx_dt', moduleName )
+      & 'dx_dt', ModuleName )
     call allocate_test ( d2x_dxdt, No_tan_hts, temp%template%noSurfs, &
-      & 'd2x_dxdt', moduleName )
+      & 'd2x_dxdt', ModuleName )
 
     call allocate_test ( radiances, no_tan_hts, noUsedChannels, &
-      & 'Radiances', moduleName )
+      & 'Radiances', ModuleName )
 
     ! The first part of the forward model dealt with the chunks as a whole.
     ! This next part is more complex, and is performed within a global outer
@@ -816,13 +815,13 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test(signalsGrid, 'signalsGrid', ModuleName)
 
     if ( whichPointingGrid <= 0 ) &
-      call MLSMessage ( MLSMSG_Error, moduleName, &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "There is no pointing grid for the desired signal" )
 
     ! Now we've identified the pointing grids.  Locate the tangent grid within
     ! it.
     call allocate_test ( grids, ForwardModelConfig%TangentGrid%nosurfs, &
-      "Grids", moduleName )
+      "Grids", ModuleName )
     call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
       & ForwardModelConfig%TangentGrid%surfs, grids, allowTopValue=.true. )
 
@@ -871,8 +870,9 @@ contains ! =====     Public Procedures     =============================
     if ( ier /= 0 ) goto 99
 
     ! Compute the refraction correction scaling matrix for this mmaf:
-    call refraction_correction(no_tan_hts, ifm%tan_hts(:,maf), ifm%h_path(:,maf), &
-      &                n_path, ifm%ndx_path(:,maf), ifm%E_rad(maf), ref_corr)
+    call refraction_correction(no_tan_hts, ifm%tan_hts(:,maf), &
+      &  ifm%h_path(:,maf), n_path, ifm%ndx_path(:,maf),      &
+      &  ifm%E_rad(maf), ref_corr)
 
     Radiances = 0.0
 
@@ -922,7 +922,7 @@ contains ! =====     Public Procedures     =============================
         & MLSMSG_Allocate//'k_temp_frq' )
     end if
 
-    call allocate_test ( radV,maxNoFreqs, 'radV', moduleName )
+    call allocate_test ( radV,maxNoFreqs, 'radV', ModuleName )
 
     do specie = 1, noSpecies
       f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -965,7 +965,7 @@ contains ! =====     Public Procedures     =============================
       ! Need to allocate this even if no derivatives as we pass it
 
       call allocate_test ( dh_dt_path, no_ele, temp%template%noInstances, &
-        & temp%template%noSurfs, "dh_dt_path", moduleName )
+        & temp%template%noSurfs, "dh_dt_path", ModuleName )
 
       if ( forwardModelConfig%temp_der ) then
         allocate ( dum(no_ele), stat=ier )
@@ -991,11 +991,11 @@ contains ! =====     Public Procedures     =============================
 
         Call Rad_Tran ( ifm%elvar(maf), Frq, &
           & forwardModelConfig%integrationGrid%noSurfs, h_tan, &
-          & noSpecies, ifm%ndx_path(k,maf), ifm%z_path(k,maf), ifm%h_path(k,maf), &
-          & ifm%t_path(k,maf), ifm%phi_path(k,maf), ifm%dHdz_path(k,maf), &
-          & earthRefl%values(1,1),beta_path(:,frq_i), spsfunc_path(:,k), &
-          & ref_corr(:,k), spaceRadiance%values(1,1), brkpt, no_ele, mid, &
-          & ilo, ihi, t_script, tau, Rad, Ier )
+          & noSpecies, ifm%ndx_path(k,maf), ifm%z_path(k,maf), &
+          & ifm%h_path(k,maf), ifm%t_path(k,maf), ifm%phi_path(k,maf), &
+          & ifm%dHdz_path(k,maf), earthRefl%values(1,1),beta_path(:,frq_i), &
+          & spsfunc_path(:,k), ref_corr(:,k), spaceRadiance%values(1,1), &
+          & brkpt, no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier )
         if ( ier /= 0 ) goto 99
 
         RadV(frq_i) = Rad
@@ -1098,7 +1098,7 @@ contains ! =====     Public Procedures     =============================
       end do                          ! Loop over species
 
 
-      call deallocate_test ( dh_dt_path, 'dh_dt_path', moduleName )
+      call deallocate_test ( dh_dt_path, 'dh_dt_path', ModuleName )
 
     end do                            ! Pointing Loop
     ! ---------------------------------- End of Pointing Loop ---------------
@@ -1176,12 +1176,24 @@ contains ! =====     Public Procedures     =============================
 
     if ( maf == noMAFs ) fmStat%finished = .true.
 
-    if ( ForwardModelConfig%temp_der) call deallocate_test ( k_temp_frq%values, &
-      & "k_temp_frq%values", moduleName )
+    if ( associated(beta_path) ) then
+      do i = 1, size(beta_path,1)
+        do j = 1, size(beta_path,2)
+          DEALLOCATE ( beta_path(i,j)%values, beta_path(i,j)%t_power, &
+            & beta_path(i,j)%dbeta_dw, beta_path(i,j)%dbeta_dn, &
+            & beta_path(i,j)%dbeta_dnu, STAT=k )
+        end do
+      end do
+    end if
+
+    deallocate(beta_path,STAT=k)
+
+    if(ForwardModelConfig%temp_der) call deallocate_test (k_temp_frq%values,&
+      & "k_temp_frq%values", ModuleName )
     if ( ForwardModelConfig%atmos_der ) then
       do j = 1, noSpecies
-        call deallocate_test ( k_atmos_frq(j)%values, "k_atmos_frq(j)%values", &
-          & moduleName )
+        call deallocate_test (k_atmos_frq(j)%values, "k_atmos_frq(j)%values",&
+          & ModuleName )
       end do
     end if
 
@@ -1203,7 +1215,7 @@ contains ! =====     Public Procedures     =============================
     print *
 
     if ( .not. forwardModelConfig%do_freq_avg) call deallocate_test ( &
-      & frequencies, "frequencies", moduleName )
+      & frequencies, "frequencies", ModuleName )
 
     do i = 1, noUsedChannels
       ch = usedChannels(i)
@@ -1213,7 +1225,7 @@ contains ! =====     Public Procedures     =============================
 903 format('ch',i2.2,'_pfa_rad',a1,i3.3)
 905 format(4(2x,1pg15.8))
 
-    call Deallocate_test ( usedChannels, 'usedChannels', moduleName )
+    call Deallocate_test ( usedChannels, 'usedChannels', ModuleName )
 
     ! ** DEBUG, Zvi
     !   if ( i > -22) Stop
@@ -1267,21 +1279,32 @@ contains ! =====     Public Procedures     =============================
 
 913 format(a,a1,i2.2)
 
+    do j = 1, No_tan_hts
+      deallocate ( n_path(j)%values, stat=status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+         & MLSMSG_Deallocate//'n_path%values' )
+      do i = 1, noSpecies
+        deallocate ( spsfunc_path(i,j)%values, stat=status )
+        if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+           & MLSMSG_Deallocate//'spsfunc_path%values' )
+      end do
+    end do
+
     deallocate ( n_path, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'n_path' )
+       & MLSMSG_Deallocate//'n_path' )
+
     deallocate ( spsfunc_path, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//'spsfunc_path' )
+       & MLSMSG_Deallocate//'spsfunc_path' )
 
-    call deallocate_test ( dx_dt, 'dx_dt', moduleName )
-    call deallocate_test ( d2x_dxdt, 'd2x_dxdt', moduleName )
-    !     call deallocate_test ( geoc_lat, 'geoc_lat', moduleName )
-    !     call deallocate_test ( e_rad, 'e_rad', moduleName )
-    call deallocate_test ( t_script, 't_srcipt', moduleName )
-    call deallocate_test ( ref_corr, 'ref_corr', moduleName )
-    call deallocate_test ( tau, 'tau', moduleName )
-    call deallocate_test ( ptg_angles, 'ptg_angles', moduleName )
+    call deallocate_test ( dx_dt, 'dx_dt', ModuleName )
+    call deallocate_test ( d2x_dxdt, 'd2x_dxdt', ModuleName )
+
+    call deallocate_test ( t_script, 't_srcipt', ModuleName )
+    call deallocate_test ( ref_corr, 'ref_corr', ModuleName )
+    call deallocate_test ( tau, 'tau', ModuleName )
+    call deallocate_test ( ptg_angles, 'ptg_angles', ModuleName )
 
     deallocate ( k_atmos_frq, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1296,29 +1319,52 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate//'My_catalog' )
 
-    call deallocate_test ( radiances, 'Radiances', moduleName )
+    call deallocate_test ( radiances, 'Radiances', ModuleName )
 
     if ( fmStat%Finished ) then
 
       deallocate (ifm%ndx_path, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'ndx_path' )
-      deallocate (ifm%dhdz_path, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-        & MLSMSG_Allocate//'dhdz_path' )
-      deallocate (ifm%h_path, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-        & MLSMSG_Allocate//'h_path' )
-      deallocate (ifm%phi_path, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-        & MLSMSG_Allocate//'phi_path' )
-      deallocate (ifm%t_path, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
-        & MLSMSG_Allocate//'t_path' )
+!
+      do j = 1, noMAFs
+        do i = 1, No_tan_hts
+          deallocate (ifm%z_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//'z_path%values' )
+          deallocate (ifm%h_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//'h_path%values' )
+          deallocate (ifm%t_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//'t_path%values' )
+          deallocate (ifm%phi_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//'phi_path%values' )
+          deallocate (ifm%dhdz_path(i,j)%values, stat=status )
+          if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//'dhdz_path%values' )
+          deallocate (ifm%eta_phi(i,j)%values, stat=status )
+          if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//'eta_phi%values' )
+        end do
+      end do
+!
       deallocate (ifm%z_path, stat=status )
-      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+      if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'z_path' )
-
+      deallocate (ifm%h_path, stat=status )
+      if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'h_path' )
+      deallocate (ifm%t_path, stat=status )
+      if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'t_path' )
+      deallocate (ifm%phi_path, stat=status )
+      if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'phi_path' )
+      deallocate (ifm%dhdz_path, stat=status )
+      if( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
+        & MLSMSG_Allocate//'dhdz_path' )
       deallocate (ifm%eta_phi, stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'eta_phi' )
@@ -1327,16 +1373,16 @@ contains ! =====     Public Procedures     =============================
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
         & MLSMSG_Allocate//'elvar' )
 
-      call deallocate_test ( ifm%geoc_lat, 'geoc_lat', moduleName )
-      call deallocate_test ( ifm%e_rad, 'e_rad', moduleName )
+      call deallocate_test ( ifm%geoc_lat, 'geoc_lat', ModuleName )
+      call deallocate_test ( ifm%e_rad, 'e_rad', ModuleName )
 
-      call deallocate_test ( ifm%h_glgrid, 'h_glgrid', moduleName )
-      call deallocate_test ( ifm%t_glgrid, 't_glgrid', moduleName )
-      call deallocate_test ( ifm%z_glgrid, 'z_glgrid', moduleName )
-      call deallocate_test ( ifm%dh_dt_glgrid, 'dh_dt_glgrid', moduleName )
-      call deallocate_test ( ifm%dhdz_glgrid, 'dhdz_glgrid', moduleName )
-      call deallocate_test ( ifm%tan_hts,'tan_hts', moduleName )
-      call deallocate_test ( ifm%tan_dh_dt, 'tan_dh_dt', moduleName )
+      call deallocate_test ( ifm%h_glgrid, 'h_glgrid', ModuleName )
+      call deallocate_test ( ifm%t_glgrid, 't_glgrid', ModuleName )
+      call deallocate_test ( ifm%z_glgrid, 'z_glgrid', ModuleName )
+      call deallocate_test ( ifm%dh_dt_glgrid, 'dh_dt_glgrid', ModuleName )
+      call deallocate_test ( ifm%dhdz_glgrid, 'dhdz_glgrid', ModuleName )
+      call deallocate_test ( ifm%tan_hts,'tan_hts', ModuleName )
+      call deallocate_test ( ifm%tan_dh_dt, 'tan_dh_dt', ModuleName )
 
     end if
 
@@ -1395,6 +1441,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.93  2001/04/19 06:46:35  zvi
+! Fixing Memory leaks ..
+!
 ! Revision 2.92  2001/04/17 09:16:12  zvi
 ! Taking care of a whole buch of deallocation statements ..
 !
