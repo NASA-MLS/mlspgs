@@ -28,7 +28,7 @@ module EXPR_M
 
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------------------------  EXPR  -----
-  recursive subroutine EXPR ( ROOT, UNITS, VALUE, TYPE )
+  recursive subroutine EXPR ( ROOT, UNITS, VALUE, TYPE, SCALE )
   ! Analyze an expression, return its type, units and value.
     integer, intent(in) :: ROOT         ! Root of expression subtree
     integer, intent(out) :: UNITS(2)    ! Units of expression value -- UNITS(2)
@@ -36,16 +36,19 @@ contains ! ====     Public Procedures     ==============================
                                         ! range (:) operator.
     double precision, intent(out) :: VALUE(2)! Expression value, if any
     integer, intent(out), optional :: TYPE        ! Expression type
+    double precision, optional, intent(out) :: SCALE(2)! Scale for units
 
     type(decls) :: DECL            ! Declaration record for "root"
     integer :: ME                  ! node_id(root)
     integer :: STRING              ! Sub_rosa(root)
     integer :: UNITS2(2)           ! Units of an expression
     double precision :: VALUE2(2)  ! Value of an expression
+    double precision :: SCALE2(2)  ! Units scale
 
     if ( toggle(con) ) call trace_begin ( 'EXPR', root )
     units = (/ phyq_dimensionless, phyq_invalid /)     ! default
-    value = 0.0d0                  ! default
+    value = 0.0d0                                      ! default
+    if ( present(scale) ) scale = 1.0d0                ! default
     me = node_id(root)
     select case ( me )
     case ( n_identifier )
@@ -71,7 +74,7 @@ contains ! ====     Public Procedures     ==============================
     case ( n_and, n_or )
       if ( present(type) ) type = exprn
     case default
-      call expr ( subtree(1,root), units, value, type )
+      call expr ( subtree(1,root), units, value, type, scale )
       if ( me == n_unit ) then
         decl = get_decl(sub_rosa(subtree(2,root)), units_name)
         units = decl%units
@@ -80,12 +83,14 @@ contains ! ====     Public Procedures     ==============================
         else
           value(1) = value(1) - decl%value
         end if
+        if ( present(scale) ) scale(1) = decl%value
       else
         if ( nsons(root) > 1 ) &
-          call expr ( subtree(2,root), units2, value2, type )
+          call expr ( subtree(2,root), units2, value2, type, scale2 )
         select case ( me )
         case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
           units(2) = units2(1); value(2) = value2(1)
+          if ( present(scale) ) scale(2) = scale2(1)
           if ( present(type) ) then
             if ( type == num_value ) type = range
             if ( type == str_value ) type = str_range
@@ -114,6 +119,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.4  2002/10/02 00:44:08  vsnyder
+! Add optional SCALE argument
+!
 ! Revision 2.3  2001/11/27 00:54:37  vsnyder
 ! Implement (partially) open ranges
 !
