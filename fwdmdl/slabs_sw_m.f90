@@ -747,7 +747,7 @@ CONTAINS
 !
 ! ** UPDATED: Jul/3/97  To include Hugh Pumphrey's Pressure Shift effects
 !
- Subroutine Slabs_prep(t,m,v0,el,w,ps,p,n,i,q,delta,gamma,n1,n2, &
+ Subroutine Slabs_prep(t,m,v0,el,w,ps,p,n,ns,i,q,delta,gamma,n1,n2, &
                     &  v0s,x1,y,yi,slabs1,dslabs1)
 !
   implicit none
@@ -763,6 +763,7 @@ CONTAINS
   Real(rp), INTENT(IN) :: ps       ! Pressure shift parameter in MHz/mbar
   Real(rp), INTENT(IN) :: p        ! Pressure mbar
   Real(rp), INTENT(IN) :: n        ! Temperature power dependence of w
+  Real(rp), INTENT(IN) :: ns       ! Temperature power dependence of ps
   Real(rp), INTENT(IN) :: i        ! Integrated spectral intensity
                                    ! Log(nm**2 MHz) at 300 K
   Real(rp), INTENT(IN) :: q(3)     ! Logarithm of the partition function
@@ -808,7 +809,7 @@ CONTAINS
 !
 ! Internal data:
 !
-  Real(rp) :: Wd, Q_Log, betae, betav, t3t, onedt, ns, r, e1, e2, de1, &
+  Real(rp) :: Wd, Q_Log, betae, betav, t3t, onedt, r, e1, e2, de1, &
               de2, g, s, ds
 !
 ! The action begins here
@@ -825,7 +826,6 @@ CONTAINS
     Q_Log = r*Log10(t/300.0_rp)
   endif
 !
-  ns = 0.25_rp + 1.5_rp * n
   v0s = v0 + ps * p * (t3t**ns)
 !
   betae = el / boltzcm
@@ -857,7 +857,7 @@ CONTAINS
 ! ** UPDATED: Jul/3/97  To include Hugh Pumphrey's Pressure Shift effects
 ! ** CHANGED: Jan/5/00  To Include derivatives of x1,y & slabs w.r.t. Nu0
 !
- Subroutine Slabs_prep_wder(t,m,v0,el,w,ps,p,n,i,q,delta,gamma,n1,n2, &
+ Subroutine Slabs_prep_wder(t,m,v0,el,w,ps,p,n,ns,i,q,delta,gamma,n1,n2, &
      &      v0s,x1,y,yi,slabs1,dx1_dv0,dy_dv0,dslabs1_dv0)
 !
 ! inputs:
@@ -871,6 +871,7 @@ CONTAINS
   Real(rp), INTENT(IN) :: ps      ! Pressure shift parameter in MHz/mbar
   Real(rp), INTENT(IN) :: p       ! Pressure mbar
   Real(rp), INTENT(IN) :: n       ! Temperature power dependence of w
+  Real(rp), INTENT(IN) :: ns       ! Temperature power dependence of ps
   Real(rp), INTENT(IN) :: i       ! Integrated spectral intensity
                                   ! Log(nm**2 MHz) at 300 K
   Real(rp), INTENT(IN) :: q(3)    ! Logarithm of the partition function
@@ -919,7 +920,7 @@ CONTAINS
 !
 ! Internal data:
 !
-  Real(r8) Wd, Q_Log, betae, betav, t3t, onedt, ns, r, e1, e2, &
+  Real(r8) Wd, Q_Log, betae, betav, t3t, onedt, r, e1, e2, &
      &     de1, de2, g, s, dWd_dv0, dr_dv0, ds_dv0
 !
 ! The action begins here
@@ -936,7 +937,6 @@ CONTAINS
     Q_Log = r*Log10(t/300.0_r8)
   endif
 !
-  ns = 0.25_r8 + 1.5_r8 * n
   v0s = v0 + ps * p * (t3t**ns)
 !
   betae = el / boltzcm
@@ -992,9 +992,9 @@ CONTAINS
 !
     k = Catalog%Lines(j)
     Call Slabs_prep(t,mass,Lines(k)%V0,Lines(k)%EL,Lines(k)%W,        &
-      &  Lines(k)%PS, p, Lines(k)%N,Lines(k)%STR,Qlog,Lines(k)%DELTA, &
-      &  Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,v0s(j),x1(j),y(j),    &
-      &  yi(j),slabs1(j),dslabs1_dv0(j))
+      &  Lines(k)%PS, p, Lines(k)%N,Lines(k)%NS,Lines(k)%STR,         &
+      &  Qlog,Lines(k)%DELTA,Lines(k)%GAMMA,Lines(k)%N1,Lines(k)%N2,  &
+      &  v0s(j),x1(j),y(j),yi(j),slabs1(j),dslabs1_dv0(j))
 !
   end do
 !
@@ -1065,6 +1065,9 @@ CONTAINS
 
 End module SLABS_SW_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.4.2.4  2001/09/12 21:38:54  zvi
 ! Added CVS stuff
 !
