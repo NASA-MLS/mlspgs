@@ -689,6 +689,7 @@ contains ! =====     Public Procedures     =============================
   !------------------------------------------------ ReadL2AUXData_hdf5 ------------
   subroutine ReadL2AUXData_hdf5(sd_id, quantityname, quantityType, l2aux, firstProf, lastProf, &
     & checkDimNames)
+    use MLSFiles, only: HDFVERSION_5
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
     ! number of profiles read.
@@ -718,7 +719,7 @@ contains ! =====     Public Procedures     =============================
     ! call MLSMessage ( MLSMSG_Error,ModuleName, &
     !      & 'Sorry--unable to read hdf5-formatted l2aux files yet' )
     CALL ReadL1BData(sd_id, QuantityName, L1bData, NoMAFs, status, &
-    & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL)
+    & FirstMAF=firstProf, LastMAF=lastProf, NEVERFAIL=NEVERFAIL, HDFVersion=HDFVERSION_5 )
     if ( status /= 0 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to read ' &
@@ -1522,6 +1523,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.57  2003/09/03 05:25:49  livesey
+! Bug fix in hdf5 readl2auxdata.
+!
 ! Revision 2.56  2003/07/15 23:39:47  pwagner
 ! Disabled most printing
 !
