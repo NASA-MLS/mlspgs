@@ -227,7 +227,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
-  real, parameter, private :: COL_SPARSITY = 0.0!0.5  ! If more than this
+  real, parameter, private :: COL_SPARSITY = 0.5  ! If more than this
     ! fraction of the elements between the first and last nonzero in a
     ! column are nonzero, use M_Banded, otherwise use M_Column_Sparse.
   real, parameter, private :: SPARSITY = 0.33     ! If a full matrix has
@@ -609,9 +609,67 @@ contains ! =====     Public Procedures     =============================
     end if
 
     if ( block%kind == m_column_sparse ) then
-      call MLSMessage ( messageType, ModuleName, &
-        & 'Block is column sparse.  I thought these were suppressed!' )
-      checkIntegrity_0 = .false.
+      ! Check lbound
+      if ( lbound ( block%r1,1 ) /= 0 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has bad lbound on R1' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( lbound ( block%r2,1 ) /= 1 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has bad lbound on R2' )
+        checkIntegrity_0 = .false.
+      end if
+      ! Check ubound
+      if ( ubound ( block%r1,1 ) /= block%nCols ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has bad ubound on R1' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( ubound ( block%r2,1 ) /= ubound(block%values,1) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has bad ubound on R2' )
+        checkIntegrity_0 = .false.
+      end if
+      ! Check values
+      if ( block%r1(0) /= 0 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has bad first value in R1' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( any ( (/ block%r1(1:), block%r2(:) /) < 1 ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has 0/-ve value(s) in R1/R2' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( any ( (/ block%r1(1:) /) > ubound(block%r2,1) ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has too large value(s) in R1' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( any ( (/ block%r2(:) /) > block%nRows ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has too large value(s) in R2' )
+        checkIntegrity_0 = .false.
+      end if
+      do i = 1, block%nCols
+        n =  block%r1(i) - block%r1(i-1) - 1
+        if ( n < 0 ) then
+          call MLSMessage ( messageType, ModuleName, &
+            & 'Column sparse block has too small a delta in R1' )
+          checkIntegrity_0 = .false.
+        end if
+        if ( block%r1(i) + n > ubound ( block%r2, 1 ) ) then
+          call MLSMessage ( messageType, ModuleName, &
+            & 'Column sparse block has too large a delta in R1' )
+          checkIntegrity_0 = .false.
+        end if
+      end do
+      if ( ubound(block%values,2) /= 1 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Column sparse block has bad ubound(2) for values' )
+        checkIntegrity_0 = .false.
+      end if
     end if
 
     if ( block%kind == m_full ) then 
@@ -1796,7 +1854,7 @@ contains ! =====     Public Procedures     =============================
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
             m = yb%r1(j)      ! Row subscript of first nonzero in YB's column J
             n = yb%r2(j-1)+1  ! Position in YB%VALUES of it
-            do while ( l <= xb%r2(i) .and. n <= yb%r1(j) )
+            do while ( l <= xb%r1(i) .and. n <= yb%r2(j) )
               if ( k < m ) then
                 l = l + 1
                 if ( l > xb%r1(i) ) exit
@@ -1847,7 +1905,7 @@ contains ! =====     Public Procedures     =============================
             if ( n > ubound(yb%r2,1) ) cycle
             m = yb%r2(n)      ! Row subscript of nonzero in YB's column J
             ! z(i,j) = 0.0_rm
-            do while ( l <= xb%r2(i) .and. n <= yb%r1(j) )
+            do while ( l <= xb%r1(i) .and. n <= yb%r1(j) )
               if ( k < m ) then
                 l = l + 1
                 if ( l > xb%r1(i) ) exit
@@ -1896,8 +1954,8 @@ contains ! =====     Public Procedures     =============================
             l = xb%r1(i)
             if ( l < k ) cycle
             ! Inner product of column I of XB with column J of YB
-            xy = dot( l-k+1, xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
-!           xy = dot_product( xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
+            ! Can't productively use DOT because there's a vector subscript
+            xy = dot_product( xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
             zb%values(i,j) = zb%values(i,j) + s * xy
           end do ! i
 !$OMP END PARALLEL DO
@@ -2585,9 +2643,8 @@ contains ! =====     Public Procedures     =============================
     real(rm), dimension(:,:), pointer :: Z
     ! Executable code
     if ( b%kind /= M_Full ) return
-    nullify ( z )
-    call Allocate_test ( z, b%nRows, b%nCols, 'z', ModuleName )
-    z = b%values
+    z => b%values
+    nullify ( b%values )
     call Sparsify ( z, b, 'z', ModuleName )
   end subroutine Sparsify_0
 
@@ -2928,6 +2985,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.89  2003/01/09 01:21:27  livesey
+! Fixed bugs in column sparse representation, turned it back on.
+!
 ! Revision 2.88  2003/01/08 23:51:12  livesey
 ! Added sparsify_0
 !
