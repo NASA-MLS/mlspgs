@@ -2201,14 +2201,14 @@ contains
 
           j = sv_t_len
           if ( .not. temp_der .AND. .not. atmos_der ) then
-            call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
+            call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
               &  Radiances(:,i), thisRatio, mol_cat_index, fmStat%rows,   &
               &  Jacobian, PTAN_DER=ptan_der)
           else if ( temp_der .AND. .not. atmos_der ) then
-            call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
+            call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
@@ -2217,7 +2217,7 @@ contains
               &  DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),   &
               &  PTAN_DER=ptan_der )
           else if ( atmos_der .AND. .not. temp_der ) then
-            call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
+            call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
@@ -2225,7 +2225,7 @@ contains
               &  Jacobian, DI_DF=DBLE(k_atmos(i,:,:)), PTAN_DER=ptan_der )
 !             &  DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           else
-            call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, chanInd, &
+            call no_conv_at_all ( fwdModelConf, fwdModelIn, fwdModelExtra, maf, chanInd, &
               &  windowStart, windowFinish, temp, ptan, thisRadiance, update, &
               &  Grids_tmp%deriv_flags, ptg_angles, tan_chi_out,          &
               &  dhdz_out, dx_dh_out, Grids_f,                            &
@@ -2471,6 +2471,10 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.98  2002/10/26 00:13:35  livesey
+! Made the warning about lines less common as it checks for continuum
+! aswell.
+!
 ! Revision 2.97  2002/10/25 01:12:43  livesey
 ! Added an array to accumulate the stuff such as one_tan_ht etc.
 ! Also put in but commented out some code to dump it.
