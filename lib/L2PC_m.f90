@@ -23,7 +23,8 @@ module L2PC_m
     & DUMP_STRUCT
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
-  use MLSHDF5, only: MakeHDF5Attribute, GetHDF5Attribute, SaveAsHDF5DS, LoadFromHDF5DS
+  use MLSHDF5, only: MakeHDF5Attribute, GetHDF5Attribute, &
+    & IsHDF5AttributePresent, IsHDF5DSPresent, SaveAsHDF5DS, LoadFromHDF5DS
   use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5F_ACC_TRUNC_F, H5F_ACC_RDONLY_F, &
     & H5FOPEN_F, H5GCLOSE_F, H5GCREATE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F, &
     & H5GN_MEMBERS_F
@@ -1269,19 +1270,19 @@ contains ! ============= Public Procedures ==========================
       signal = 0
       sideband = 0
       molecule = 0
-      frequencyCoordinate = l_none
       select case ( quantityType )
       case ( l_vmr )
         call GetHDF5Attribute ( qID, 'molecule', word )
         stringIndex = enter_terminal ( trim(word), t_identifier ) 
         decl = get_decl ( stringIndex, type=enum_value )
         molecule = decl%units
+        frequencyCoordinate = l_none
       case ( l_radiance )
         call GetHDF5Attribute ( qID, 'signal', word )
         call Parse_Signal ( word, sigInds, sideband=sideband)
         signal = sigInds(1)
-        frequencyCoordinate = l_channel
         verticalCoordinate = l_geodAltitude
+        frequencyCoordinate = l_channel
         call deallocate_test(sigInds,'sigInds',ModuleName)
       case default
       end select
@@ -1294,6 +1295,14 @@ contains ! ============= Public Procedures ==========================
       stringIndex = enter_terminal ( trim(word), t_identifier ) 
       decl = get_decl ( stringIndex, type=enum_value )
       verticalCoordinate = decl%units
+      ! Look for frequency coordinate (optional for backwards compatability with
+      ! older l2pc files.
+      if ( IsHDF5AttributePresent ( qID, 'frequencyCoordinate' ) ) then
+        call GetHDF5Attribute ( qId, 'frequencyCoordinate', word )
+        stringIndex = enter_terminal ( trim(word), t_identifier ) 
+        decl = get_decl ( stringIndex, type=enum_value )
+        frequencyCoordinate = decl%units
+      end if
       call GetHDF5Attribute ( qId, 'logBasis', logBasis )
       call GetHDF5Attribute ( qId, 'coherent', coherent )
       call GetHDF5Attribute ( qId, 'stacked', stacked )
@@ -1328,6 +1337,12 @@ contains ! ============= Public Procedures ==========================
       ! Get the surfaces and phis
       call LoadFromHDF5DS ( qId, 'surfs', qt%surfs )
       call LoadFromHDF5DS ( qId, 'phi', qt%phi )
+      ! Try to get the frequencies
+      if ( IsHDF5DSPresent ( qId, 'frequencies' ) ) then
+        call Allocate_test( qt%frequencies, qt%noChans, &
+          & 'qt%frequencies', ModuleName )
+        call LoadFromHDF5DS ( qId, 'frequencies', qt%frequencies )
+      end if
 
       ! Now add this template to our private database 
       qt%id = l2pcQTCounter
@@ -1426,12 +1441,16 @@ contains ! ============= Public Procedures ==========================
         call MakeHDF5Attribute ( qID, 'noInstances', qt%noInstances )
         call get_string ( lit_indices(qt%verticalCoordinate), line )
         call MakeHDF5Attribute ( qID, 'verticalCoordinate', trim(line) )
+        call get_string ( lit_indices(qt%frequencyCoordinate), line )
+        call MakeHDF5Attribute ( qID, 'frequencyCoordinate', trim(line) )
         call MakeHDF5Attribute ( qID, 'logBasis', qt%logBasis )
         call MakeHDF5Attribute ( qID, 'coherent', qt%coherent )
         call MakeHDF5Attribute ( qID, 'stacked', qt%stacked )
         ! Write out important coordinates
         call SaveAsHDF5DS ( qID, 'phi', qt%phi )
         call SaveAsHDF5DS ( qID, 'surfs', qt%surfs )
+        if ( associated ( qt%frequencies ) ) &
+          & call SaveAsHDF5DS ( qID, 'frequencies', qt%frequencies )
         ! Write out the values
         call SaveAsHDF5DS ( qID, 'values', vector%quantities(quantity)%values )
         ! Close the group
@@ -1451,6 +1470,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.44  2002/08/23 01:23:44  livesey
+! Now optionally reads frequency coordinate and frequencies
+!
 ! Revision 2.43  2002/08/21 23:10:11  livesey
 ! No longer scans each bin for blocks
 !
