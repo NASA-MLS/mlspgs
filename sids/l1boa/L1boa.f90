@@ -1,8 +1,6 @@
-
 ! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
 module L1boa
 
   use MLSCommon, only: R8
@@ -328,6 +326,9 @@ contains
 end module L1boa
 
 ! $Log$
+! Revision 1.2  2001/10/11 23:25:29  livesey
+! Tidied up a bit
+!
 ! Revision 1.1  2000/11/30 16:26:56  nakamura
 ! Module for writing SIDS L1BOA data without re-setting fill mode/values.
 !

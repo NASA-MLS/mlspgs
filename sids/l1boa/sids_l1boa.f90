@@ -1,5 +1,4 @@
-!===================================================
-program sids_l1boa ! End-to-end check on subroutines
+program sids_l1boa ! Generate simulated L1BOA data for MLS
 
   use L1boa, only: L1BOA_FILL, L1BOA_NOFILL
   use Orbit, only: ALTG, ALTT, ASCTAI, DSCTAI, ORBINCLINE, ORBITNUMBER, &
@@ -218,6 +217,9 @@ program sids_l1boa ! End-to-end check on subroutines
 end program sids_l1boa
 
 ! $Log$
+! Revision 1.5  2001/10/11 23:25:19  livesey
+! Tidied up a bit
+!
 ! Revision 1.4  2001/10/11 22:07:59  livesey
 ! Just tidied up a bit
 !
