@@ -232,7 +232,7 @@ contains
     integer, parameter :: MustHaveOne = WrongUnits + 1
     integer, parameter :: CannotFlagCloud = MustHaveOne + 1
     integer, parameter :: BadQuantities = CannotFlagCloud + 1
-    integer, parameter :: BadRadianceSignal = BadQuantities + 1
+    integer, parameter :: BadChannel = BadQuantities + 1
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
@@ -614,13 +614,12 @@ contains
       call print_source ( source_ref(son) )
       call output ( ', RetrievalModule complained: ' )
       select case ( code )
+      case ( badChannel)
+        call output ( 'Number of cloud channels must be 1')
       case ( cannotFlagCloud )
         call output ( 'Cannot flag clouds, missing input quantities' )
       case ( badQuantities )
         call output ( 'Bad quantity type for radiance or cloud radiance' )
-      case ( badRadianceSignal )
-        call output ( 'Mismatch in signal/sideband for radiance and cloud radiance', &
-          & advance='yes' )
       case ( badOpticalDepthSignal )
         call output ( 'Mismatch in signal/sideband for radiance and optical depth', &
           & advance='yes' )
@@ -3437,7 +3436,7 @@ contains
       integer :: HEIGHT                 ! Loop counter
       integer :: HEIGHTNODE             ! Tree node for height values
       integer :: HEIGHTUNIT             ! Unit for heights command
-      integer :: IND                    ! An array index
+      integer :: IND,IND1,J             ! Aarray indices
       integer :: INSTANCE               ! Loop counter
       integer :: MaskBit                ! Bits corresponding to Mask
       integer :: QUANTITYINDEX          ! Index
@@ -3447,6 +3446,7 @@ contains
       integer :: TYPE                   ! Type of value returned by expr
       integer :: UNITS(2)               ! Units returned by expr
       integer :: VECTORINDEX            ! Index
+      integer :: USETHISCHANNEL         ! cloud radiance channel
 
       real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
       real(r8) :: VALUE(2)              ! Value returned by expr
@@ -3457,7 +3457,6 @@ contains
 
       logical :: Got(field_first:field_last)   ! "Got this field already"
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
-      logical :: DOTHISCHANNEL          ! Flag
       logical :: DOTHISHEIGHT           ! Flag
       logical :: ISCLOUD                ! Flag
 
@@ -3468,7 +3467,7 @@ contains
       got = .false.
       maskBit = m_linalg   ! default mask bit
 
-      do j = 2, nsons(key) ! fields of the "subset" specification
+      do j = 2, nsons(key) ! fields of the "Flagcloud" specification
         son = subtree(j, key)
         field = get_field_id(son)   ! tree_checker prevents duplicates
         if (nsons(son) > 1 ) gson = subtree(2,son) ! Gson is value
@@ -3504,29 +3503,23 @@ contains
 
       ! Check if got the cloud radiance and threshold
       if ( .not. all(got((/ f_cloudRadiance, f_cloudRadianceCutoff, &
-         & f_height, f_ptanQuantity /))) ) &
+         & f_height, f_ptanQuantity, f_channels /))) ) &
          & call AnnounceError ( cannotFlagCloud, key )
       ! Quantity must be radiance
       if ( qty%template%quantityType /= l_radiance &
          & .or. cloudRadiance%template%quantityType /= l_radiance) &
          & call AnnounceError ( badQuantities, key )
-      ! Output radiance and cloud radiance must be the same signal
-      if ( qty%template%signal /= cloudRadiance%template%signal .or. &
-          &  qty%template%sideband /= cloudRadiance%template%sideband ) &
-          & call AnnounceError ( badRadianceSignal, key )
 
-      ! Process the channels field.
-      if ( qty%template%frequencyCoordinate /= l_none ) then
-        call Allocate_test ( channels, qty%template%noChans, &
+      ! Process the channels field used in cloudRadiance, must have 1 channel
+      call Allocate_test ( channels, cloudRadiance%template%noChans, &
           & 'channels', ModuleName )
-        if ( got(f_channels) ) then     ! This subset is only for some channels
-          call GetIndexFlagsFromList ( channelsNode, channels, status, &
-            & lower=lbound(channels,1) )
-          if ( status /= 0 ) call announceError ( wrongUnits, f_channels, string='no' )
-        else
-          channels = .true.             ! Apply this to all channels
-        end if
-      end if
+      call GetIndexFlagsFromList ( channelsNode, channels, status, &
+          & lower=lbound(channels,1) )
+      if(count(channels) .ne. 1) &
+         & call AnnounceError ( badChannel, key )
+      do channel = 1, cloudRadiance%template%noChans
+         if ( channels(channel) ) useThisChannel = channel
+      end do
 
       ! Preprocess the height stuff.
       heightUnit = phyq_dimensionless
@@ -3545,7 +3538,8 @@ contains
           do i = 1, 2
             if ( heightUnit == phyq_dimensionless ) then
               heightUnit = units(i)
-            else if ( units(i) /= phyq_dimensionless ) then
+            else if ( units(i) /= phyq_dimensionless .and. &
+              &       units(i) /= heightUnit ) then
               call announceError ( inconsistentUnits, f_height )
             end if
           end do
@@ -3575,36 +3569,33 @@ contains
                 & 'Inappropriate units for height in subset' )
             end if
 
-            do channel = 1, qty%template%noChans
-              doThisChannel = .true.
-              if ( associated(channels) ) doThisChannel = channels(channel)
-              if ( doThisChannel ) then
-                  ind = qty%template%noChans + channel
-                  do height = 1, qty%template%noSurfs
-                    ind = channel + qty%template%noChans*(height-1)
-                    doThisHeight = .true.
-                    if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
-                      doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
-                    else
-                      doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
-                    end if
-                    if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
-                      doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
-                    else
-                      doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
-                    end if
+            do height = 1, qty%template%noSurfs
+               doThisHeight = .true.
+               if (any(rangeID==(/ n_less_colon,n_less_colon_less /))) then
+                 doThisHeight = doThisHeight .and. theseHeights(height) > value(1)
+               else
+                 doThisHeight = doThisHeight .and. theseHeights(height) >= value(1)
+               end if
+               if (any(rangeID==(/ n_colon_less,n_less_colon_less /))) then
+                 doThisHeight = doThisHeight .and. theseHeights(height) < value(2)
+               else
+                 doThisHeight = doThisHeight .and. theseHeights(height) <= value(2)
+               end if
 
-                    isCloud = .false.
-                    if ( cloudRadiance%values ( ind, instance ) > cloudRadianceCutoff) &
-                  &     isCloud = .true.
-                    if ( doThisHeight .and. isCloud )  &
+               isCloud = .false.
+               ind1 = useThisChannel + cloudRadiance%template%noChans*(height-1)
+               if ( cloudRadiance%values ( ind1, instance ) > cloudRadianceCutoff) &
+                  & isCloud = .true.
+                  
+               do channel = 1, qty%template%noChans
+                  ind = channel + qty%template%noChans*(height-1)
+                  if ( doThisHeight .and. isCloud )  &
                   &     call SetMask ( qty%mask(:,instance), &
                   &     (/ channel+qty%template%noChans*(height-1) /), &
                   &     what=maskBit )
-                  end do                ! Height loop
-              end if                    ! Do this channel
-            end do                      ! Channel loop
-          end do                        ! Height entries in l2cf
+               end do                   ! Channel loop
+             end do                     ! Height loop
+          end do                        ! Height node entries in l2cf
       end do                            ! Instance loop
 
       ! Tidy up
@@ -3621,6 +3612,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.215  2003/01/12 07:33:42  dwu
+! with some fix in flagcloud
+!
 ! Revision 2.214  2003/01/11 15:51:34  dwu
 ! follow-up fix for FlagCloud
 !
