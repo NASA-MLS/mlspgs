@@ -17,7 +17,7 @@ module SidsModule
   use Init_Tables_Module, only: f_destroyjacobian, f_forwardModel, f_fwdModelIn, &
     f_fwdModelExtra, f_fwdModelOut, f_jacobian, f_perturbation
   use Lexer_Core, only: Print_Source
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, MLSCHUNK_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
   use MatrixModule_0, only: M_Absent, M_Full, M_Banded, M_Column_Sparse, &
     & MatrixElement_T
@@ -44,8 +44,7 @@ module SidsModule
 
 contains
 
-  ! subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, FwdModelInfo )
-  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase)
+  subroutine SIDS ( Root, VectorDatabase, MatrixDatabase, configDatabase, chunk)
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
@@ -53,6 +52,7 @@ contains
     type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
+    type(MLSChunk_T), intent(in) :: chunk
 
     integer :: Error                    ! >= indicates an error occurred
     integer :: Field                    ! Of the "sids" specification
@@ -71,6 +71,9 @@ contains
     integer :: Son                      ! Of ROOT
     integer :: QUANTITY                 ! Index
     integer :: INSTANCE                 ! Index
+    integer :: MAF                      ! Index
+    integer :: MAF1                     ! Loop limit
+    integer :: MAF2                     ! Loop limit
     integer :: ELEMENT                  ! Index
     integer :: STATUS                   ! Flag
     logical :: DESTROYJACOBIAN          ! Flag
@@ -181,26 +184,29 @@ contains
 
       ! Now loop over the MAFs / forward model configs and run the models
       if ( doThisOne ) then
-        fmStat%newHydros = .true.
         fmStat%newScanHydros = .true.
-        fmStat%maf = 0
-        fmStat%finished = .false.
         if ( ixJacobian > 0 ) then
           call allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', &
             & ModuleName )
         else ! because it's not optional in many places in the forward model
           call allocate_test ( fmStat%rows, 0, 'fmStat%rows', ModuleName )
         end if
-        
-        ! Loop over mafs
-        do while ( .not. fmStat%finished )
-          ! What if one config set finished but others still had more to do?
-          ! Ermmm, think of this next time.
-          fmStat%maf = fmStat%maf + 1
-          fmstat%rows = .false. ! Just so it's not undefined
-          call add_to_retrieval_timing( 'sids', t1 )
-          call cpu_time ( t1 )
-          do config = 1, size(configs)
+
+        ! Loop over forward model configs
+        do config = 1, size(configs)
+          ! Work out the loop limits
+          maf1 = 1
+          maf2 = chunk%lastMAFIndex - chunk%firstMAFIndex + 1
+          if (configDatabase(configs(config))%skipOverlaps) then
+            maf1 = maf1 + chunk%noMAFsLowerOverlap
+            maf2 = maf2 - chunk%noMAFsUpperOverlap
+          endif
+            
+          ! Loop over mafs
+          do maf = maf1, maf2
+            fmStat%maf = maf
+            call add_to_retrieval_timing( 'sids', t1 )
+            call cpu_time ( t1 )
             if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
@@ -210,7 +216,7 @@ contains
                 & FwdModelIn, FwdModelExtra, &
                 & FwdModelOut, ifm, fmStat )
             end if
-          end do
+          end do                        ! MAF loop
 
           call add_to_retrieval_timing( 'forward_model', t1 )
           call cpu_time ( t1 )
@@ -223,7 +229,7 @@ contains
             if ( status /= 0 ) call MLSMessage (MLSMSG_Error, ModuleName, &
               & MLSMSG_Allocate//'jacobian%block' )
           endif
-        end do
+        end do                          ! Forward model config loop
 
         ! Tidy up the intermediate/status stuff from the model
         call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
@@ -322,6 +328,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.35  2001/10/02 16:49:56  livesey
+! Removed fmStat%finished and change loop ordering in forward models
+!
 ! Revision 2.34  2001/10/01 22:54:22  pwagner
 ! Added subsection timings for Retrieval section
 !
