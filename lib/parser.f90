@@ -391,6 +391,10 @@ o:  do
         call get_token
         call factor
         call build_tree ( n_div, 2 )
+      else if ( next%class == t_backslash ) then
+        call get_token
+        call factor
+        call build_tree ( n_into, 2 )
       else
     exit
       end if
@@ -432,6 +436,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.11  2004/01/16 23:49:32  vsnyder
+! Add backslash for 'into' operator
+!
 ! Revision 2.10  2003/01/29 03:14:14  vsnyder
 ! Print the line and column in ENTER debugging output
 !
