@@ -78,6 +78,7 @@ contains
     real(r8) :: MINTIME, MAXTIME        ! Time Span in L1B file data
     integer :: NAME      ! Sub-rosa index of name of vGrid or hGrid
     integer :: NOMAFS             ! Number of MAFs of L1B data read
+    integer :: returnStatus             ! non-zero means trouble
     integer :: SON       ! Son of root
     integer :: sub_rosa_index
     logical :: TIMING    ! For S_Time
@@ -180,7 +181,8 @@ contains
         end if
         select case ( get_spec_id(son) )
         case ( s_forwardModelGlobal ) !??? Begin temporary stuff for l2load
-          call forwardModelGlobalSetup ( son )
+          call forwardModelGlobalSetup ( son, returnStatus )
+          error = max(error, returnStatus)
         case ( s_forwardModel )
           call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, ConstructForwardModelConfig ( son, vGrids ) ) )
@@ -469,6 +471,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.35  2001/05/29 23:21:07  livesey
+! Now uses ForwardModelSupport, not ForwardModelInterface
+!
 ! Revision 2.34  2001/05/26 00:06:49  livesey
 ! Added call to DealloteL1BData
 !
