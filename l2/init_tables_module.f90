@@ -143,7 +143,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L2PARSF            = s_l2gp + 1
   integer, parameter :: S_LABEL              = s_l2parsf + 1
   integer, parameter :: S_LOAD               = s_label + 1
-  integer, parameter :: S_MATRIX             = s_load + 1
+  integer, parameter :: S_MAKEPFA            = s_load + 1
+  integer, parameter :: S_MATRIX             = s_makepfa + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
   integer, parameter :: S_NORMALEQUATIONS    = s_negativePrecision + 1
@@ -167,7 +168,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_VECTOR             = s_updateMask + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
-  integer, parameter :: SPEC_LAST = s_vGrid
+  integer, parameter :: S_WRITEPFA           = s_vGrid + 1
+  integer, parameter :: SPEC_LAST = s_writePFA 
 
 ! Parameter names:
   ! In GlobalSettings section:
@@ -345,6 +347,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l2parsf) =              add_ident ( 'l2parsf' )
     spec_indices(s_label) =                add_ident ( 'label' )
     spec_indices(s_load) =                 add_ident ( 'load' )
+    spec_indices(s_makepfa) =              add_ident ( 'makePFA' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
@@ -359,6 +362,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_restrictRange) =        add_ident ( 'restrictRange' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
     spec_indices(s_rowScale) =             add_ident ( 'rowScale' )
+    spec_indices(s_sids) =                 add_ident ( 'sids' )
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
@@ -368,7 +372,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vGrid' )
-    spec_indices(s_sids) =                 add_ident ( 'sids' )
+    spec_indices(s_writePFA) =             add_ident ( 'writePFA' )
 
   ! Now initialize the units tables.  Init_Units depends on the lit tables
   ! having been initialized.
@@ -632,8 +636,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_geodAlt, s+s_vGrid, n+n_field_spec, &
              begin, f+f_noMIFs, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
-    call make_tree ( (/ & ! Must be AFTER s_vGrid
-      begin, s+s_pfaData, &
+    call make_tree ( (/ &
+      begin, s+s_makePFA, & ! Must be AFTER s_vGrid
+             begin, f+f_losvel, t+t_numeric, nrs+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
+             begin, f+f_signals, t+t_string, nr+n_field_type, &
+             begin, f+f_temperatures, s+s_tGrid, nrs+n_field_spec, &
+             begin, f+f_vGrid, s+s_vGrid, nrs+n_field_spec, &
+             ndp+n_spec_def, &
+      begin, s+s_pfaData, & ! Must be AFTER s_vGrid
              begin, f+f_absorption, t+t_numeric, n+n_field_type, &
              begin, f+f_dAbsDnc, t+t_numeric, n+n_field_type, &
              begin, f+f_dAbsDnu, t+t_numeric, n+n_field_type, &
@@ -644,6 +655,11 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temperatures, s+s_tGrid, nr+n_field_spec, &
              begin, f+f_velLin, t+t_numeric, n+n_field_type, &
              begin, f+f_vGrid, s+s_vGrid, nr+n_field_spec, &
+             ndp+n_spec_def, &
+      begin, s+s_writePFA, &
+             begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
+             begin, f+f_file, t+t_string, nr+n_field_type, &
+             begin, f+f_pfaData, s+s_pfaData, s+s_makePFA, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_phase, & ! Ignores rest of stuff
@@ -1051,12 +1067,15 @@ contains ! =====     Public procedures     =============================
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /), continue=.true. )
     call make_tree ( (/ & ! Must be AFTER s_forwardModel, s_hGrid, s_pfaData,
-                          ! s_vector, and s_vectorTemplate
+                          ! s_makePFA, s_vector, and s_vectorTemplate
       begin, s+s_dump, &
              begin, f+f_allForwardModels, t+t_boolean, n+n_field_type, &
              begin, f+f_allHGrids, t+t_boolean, n+n_field_type, &
+             begin, f+f_allLines, t+t_boolean, n+n_field_type, &
              begin, f+f_allPFA, t+t_boolean, n+n_field_type, &
              begin, f+f_allQuantityTemplates, t+t_boolean, n+n_field_type, &
+             begin, f+f_allSignals, t+t_boolean, n+n_field_type, &
+             begin, f+f_allSpectra, t+t_boolean, n+n_field_type, &
              begin, f+f_allVectors, t+t_boolean, n+n_field_type, &
              begin, f+f_allVectorTemplates, t+t_boolean, n+n_field_type, &
              begin, f+f_allVGrids, t+t_boolean, n+n_field_type, &
@@ -1066,11 +1085,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
              begin, f+f_filterShapes, t+t_boolean, n+n_field_type, &
              begin, f+f_hGrid, s+s_hgrid, n+n_field_spec, &
-             begin, f+f_pfaData, s+s_pfaData, n+n_field_spec, &
+             begin, f+f_lines, s+s_line, n+n_field_spec, &
+             begin, f+f_pfaData, s+s_pfaData, s+s_makePFA, n+n_field_spec, &
              begin, f+f_pointingGrids, t+t_boolean, n+n_field_type, &
              begin, f+f_quantity, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
-             begin, f+f_spectroscopy, t+t_boolean, n+n_field_type, &
+             begin, f+f_signals, s+s_signal, n+n_field_spec, &
+             begin, f+f_spectroscopy, t+t_molecule, n+n_field_type, &
+             begin, f+f_stop, t+t_boolean, n+n_field_type, &
              begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
              begin, f+f_tGrid, s+s_tGrid, n+n_field_spec, &
              begin, f+f_vector, s+s_vector, n+n_field_spec, &
@@ -1243,7 +1265,8 @@ contains ! =====     Public procedures     =============================
              s+s_binSelector, s+s_directWriteFile, s+s_dump, &
              s+s_empiricalGeometry, s+s_fGrid, s+s_forwardModel, &
              s+s_forwardModelGlobal, s+s_l1brad, s+s_l1boa, s+s_l2parsf, &
-             s+s_pfaData, s+s_tGrid, s+s_time, s+s_vGrid, n+n_section, &
+             s+s_makePFA, s+s_pfaData, s+s_tGrid, s+s_time, s+s_vGrid, &
+             s+s_writePFA, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergegrids, s+s_time, s+s_merge, s+s_concatenate, s+s_delete, &
@@ -1295,6 +1318,11 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.391  2004/12/13 20:23:00  vsnyder
+! Added MakePFA and WritePFA commands.  Put S_Sids into alphabetical order.
+! Added AllLines, AllSignals, AllSpectra, Lines, Signals, Spectroscopy and
+! Stop fields to Dump command.
+!
 ! Revision 2.390  2004/11/19 20:52:50  livesey
 ! File no longer required in direct write (how come we didn't have problem
 ! with this before?)
