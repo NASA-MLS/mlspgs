@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -33,7 +33,7 @@ MODULE Scan
 CONTAINS
 
 !------------------------------------------
-   SUBROUTINE Scan_guess(asciiUTC, viewECR)
+   SUBROUTINE Scan_guess (asciiUTC, viewECR)
 !------------------------------------------
 
 ! Brief description of subroutine
@@ -70,14 +70,14 @@ CONTAINS
       sc(2) = 0.0
       sc(3) = SIN(angle)
 
-      returnStatus = Pgs_csc_scToECI(spacecraftid, numValues, asciiUTC, &
-                                     time_offset, sc, eci)
+      returnStatus = Pgs_csc_scToECI (spacecraftid, numValues, asciiUTC, &
+           time_offset, sc, eci)
 
       eciV(1:3) = eci
       eciV(4:6) = 0.0
 
-      returnStatus = Pgs_csc_eciToECR(numValues, asciiUTC, time_offset, &
-                                      eciV, ecrV)
+      returnStatus = Pgs_csc_eciToECR (numValues, asciiUTC, time_offset, &
+           eciV, ecrV)
 
 ! Truncate velocity portion of ECR view vector
 
@@ -88,7 +88,7 @@ CONTAINS
 !---------------------------
 
 !-----------------------------------------------------------------------
-   SUBROUTINE Scan_start(initAlt, posECR, asciiUTC, initRay, startAngle)
+   SUBROUTINE Scan_start (initAlt, posECR, asciiUTC, initRay, startAngle)
 !-----------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -129,14 +129,14 @@ CONTAINS
 
 ! Initial guess tangent height
 
-      returnStatus = Pgs_csc_grazingRay(earthModel, posECR, initRay, &
-                                        latitude, longitude, missAltitude, &
-                                        slantRange, posNear, posSurf)
-      IF (returnStatus /= PGS_S_SUCCESS) THEN
-         CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
-         msr = mnemonic // ':  ' // msg
-         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
-      ENDIF
+      returnStatus = Pgs_csc_grazingRay (earthModel, posECR, initRay, &
+           latitude, longitude, missAltitude, slantRange, posNear, posSurf)
+
+!!$      IF (returnStatus /= PGS_S_SUCCESS) THEN
+!!$         CALL Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+!!$         msr = mnemonic // ':  ' // msg
+!!$         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+!!$      ENDIF
 
 ! Iterations on view vector to see given tangent height
 
@@ -149,36 +149,35 @@ CONTAINS
             EXIT
          ENDIF
 
-         returnStatus = Pgs_csc_geoToECR(longitude, latitude, initAlt, &
-                                         earthModel, ecr)
+         returnStatus = Pgs_csc_geoToECR (longitude, latitude, initAlt, &
+              earthModel, ecr)
 
          ray = ecr - posECR
 
          returnStatus = Pgs_csc_grazingRay(earthModel, posECR, ray, &
-                                       latitude, longitude, missAltitude, &
-                                       slantRange, posNear, posSurf)
+              latitude, longitude, missAltitude, slantRange, posNear, posSurf)
 
       ENDDO
 
 ! Check that exit caused by height convergence, rather than loop timing out
 
-      IF ( converge /= 1 ) CALL MLSMessage(MLSMSG_Warning, ModuleName, &
-                          'Iterations timed out before height converged.')
+      IF ( converge /= 1 ) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+           'Iterations timed out before height converged.')
 
 ! Convert final view vector from ECR (to ECI) to SC
 
       ecrV(1:3) = ray
       ecrV(4:6) = 0.0
 
-      returnStatus = Pgs_csc_ecrToECI(numValues, asciiUTC, time_offset, ecrV, &
-                                      eciV)
+      returnStatus = Pgs_csc_ecrToECI (numValues, asciiUTC, time_offset, ecrV, &
+           eciV)
 
       eci = eciV(1:3)
 
-      returnStatus = Pgs_csc_eciToSc(spacecraftid, numValues, asciiUTC, &
-                                     time_offset, eci, finalRay)
+      returnStatus = Pgs_csc_eciToSc (spacecraftid, numValues, asciiUTC, &
+           time_offset, eci, finalRay)
 
-      startAngle = Rad2Deg * ACOS( finalRay(1) )
+      startAngle = Rad2Deg * ACOS (finalRay(1))
 
 !---------------------------
    END SUBROUTINE Scan_start
@@ -190,6 +189,9 @@ END MODULE Scan
 !==============
 
 ! $Log$
+! Revision 2.1  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.0  2000/09/05 18:55:15  ahanzel
 ! Changing file revision to 2.0.
 !
