@@ -684,7 +684,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     do i=1, noFreqs
     if( doChannel(i) .and. FOUNDINFIRST ) then 
       FOUNDINFIRST = .false.
-      whichChannel = i
       if(associated(cloudExtinction)) &
         & cloudExtinction%values ( :, instance )    = a_cloudExtinction(:,i)
       if(associated(totalExtinction)) &
@@ -908,6 +907,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.64  2001/10/19 16:26:09  dwu
+! some minors
+!
 ! Revision 1.63  2001/10/18 22:17:02  dwu
 ! pretection for sensitivity=0
 !

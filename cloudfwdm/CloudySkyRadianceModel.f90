@@ -377,6 +377,16 @@ contains
 
 !      CALL HEADER(1)
 
+! initialization of TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS
+      Tb0 = 0._r8
+      DTcir = 0._r8
+      trans = 0._r8
+      Betac = 0._r8
+      Beta = 0._r8
+      Dm = 0._r8
+      Taueff = 0._r8
+      SS = 0._r8
+      
 !=========================================================================
 !                    >>>>>> CHECK MODEL-INPUT <<<<<<< 
 !-------------------------------------------------------------------------
@@ -779,18 +789,6 @@ contains
               &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, Z, DZ, &
               &            N,RE, noS, Slevl) ! COMPUTE SENSITIVITY
 
-      ELSE IF ( .NOT. doChannel(IFR) ) then
-         DO I = 1, NZ-1
-            BETA(I,IFR) = 0.0_r8
-            BETAc(I,IFR)= 0.0_r8
-            do j=1,N
-               Dm(J,I)  = 0.0_r8
-            end do  
-         END DO
-         DO K = 1, NT
-            TB0(K,IFR)  = 0.0_r8 
-            DTcir(K,IFR)= 0.0_r8 
-         END DO
       END IF                                 ! END OF DO CHANNEL
 
  2000 CONTINUE                               ! END OF FREQUENCY LOOP   
@@ -809,6 +807,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.19  2001/10/19 19:16:39  dwu
+! change Nz-1 to NZ
+!
 ! Revision 1.18  2001/10/12 22:40:07  dwu
 ! fix a bug in delTAU100
 !
