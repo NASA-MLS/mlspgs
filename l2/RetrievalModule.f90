@@ -1031,6 +1031,10 @@ contains
           if ( aj%fnmin < 0.0 ) then
             call output ( 'How can aj%fnmin be negative?  aj%fnmin = ' )
             call output ( aj%fnmin, advance='yes' )
+            call output ( 'aj%fnorm = ' )
+            call output ( aj%fnorm, advance='yes' )
+            call output ( 'norm(candidateDX) = ' )
+            call output ( v(candidateDX) .dot. v(candidateDX), advance='yes' )
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & 'Norm of residual is imaginary!' )
           end if
@@ -2074,6 +2078,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.100  2001/10/20 17:50:48  livesey
+! A little more information on aj%fnmin < 0.0
+!
 ! Revision 2.99  2001/10/19 17:42:36  dwu
 ! add protection for cloud sensitivity from going to zero
 !
