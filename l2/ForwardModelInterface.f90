@@ -37,7 +37,7 @@ module ForwardModelInterface
     & L_TEMPERATURE, L_VMR
   ! That's it for Init_Tables_Module
   use Lexer_Core, only: Print_Source
-  use L2PC_M, only: L2PC_T, OPEN_L2PC_FILE, READ_L2PC_FILE, CLOSE_L2PC_FILE
+  use L2PC_M, only: OPEN_L2PC_FILE, READ_L2PC_FILE, CLOSE_L2PC_FILE
   use ManipulateVectorQuantities, only: FindClosestInstances
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
   use MLSCommon, only: R8
@@ -92,12 +92,11 @@ module ForwardModelInterface
 contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  ForwardModelGlobalSetup  -----
-  subroutine ForwardModelGlobalSetup ( Root, l2pcDatabase )
+  subroutine ForwardModelGlobalSetup ( Root )
     ! Process the forwardModel specification to produce ForwardModelInfo.
 
     integer, intent(in) :: Root         ! of the forwardModel specification.
     !                                     Indexes a "spec_args" vertex.
-    type (L2PC_T), pointer, dimension(:) :: l2pcDatabase
 
     integer :: I                        ! Loop inductor, subscript
     integer :: Lun                      ! Unit number for reading a file
@@ -134,7 +133,7 @@ contains ! =====     Public Procedures     =============================
       case ( f_l2pc )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         call open_l2pc_file (fileName, lun)
-        call read_l2pc_file (lun, l2pcDatabase )
+        call read_l2pc_file ( lun )
         call close_l2pc_file ( lun )
       case default
         ! Can't get here if the type checker worked
@@ -1434,6 +1433,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.120  2001/04/26 20:02:09  livesey
+! Made l2pc database a saved array in L2PC_m
+!
 ! Revision 2.119  2001/04/26 19:47:53  livesey
 ! Renamed main routine to full forward model
 !
