@@ -130,7 +130,7 @@ contains ! ====     Public Procedures     ==============================
   subroutine FILL_CELL ( ROOT, CELL, IC, MSGNUM )
   ! Fill a cell from "name = expr", "/name" or "expr"
     integer, intent(in) :: ROOT              ! Root of subtree
-    type(MlscfCell_T), intent(out) :: CELL(:)  ! Cell array
+    type(MlscfCell_T), intent(inout) :: CELL(:)  ! Cell array
     integer, intent(inout) :: IC             ! Index of CELL, updated here
     integer, intent(in) :: MSGNUM            ! Message if IC > MAXIC
 
@@ -335,6 +335,9 @@ contains ! ====     Public Procedures     ==============================
 end module TABLE_GENERATOR
 
 ! $Log$
+! Revision 2.5  2002/06/26 22:02:19  vsnyder
+! Change 'cell' to intent(inout) in 'fillCell'
+!
 ! Revision 2.4  2001/02/02 20:50:39  vsnyder
 ! Moved from lib/tests/test_cf_parser to lib
 !
