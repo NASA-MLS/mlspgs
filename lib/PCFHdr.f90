@@ -21,9 +21,10 @@ MODULE PCFHdr
      & PGSD_IO_GEN_RDIRUNF
    IMPLICIT NONE
    PUBLIC :: GlobalAttributes_T, &
-     & CreatePCFAnnotation, gd_writeglobalattr, h5_writeglobalattr, &
+     & CreatePCFAnnotation,  &
+     & h5_writeglobalattr, he5_writeglobalattr, &
      & InputInputPointer, &
-     & sw_writeglobalattr, WritePCF2Hdr, WriteInputPointer
+     & WritePCF2Hdr, WriteInputPointer
    private
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -41,15 +42,15 @@ MODULE PCFHdr
 !                WritePCF2Hdr
 !                WriteInputPointer
 !                InputInputPointer
-!                gd_writeglobalattr
-!                sw_writeglobalattr
-
+!                h5_writeglobalattr
+!                he5_writeglobalattr
+!                sw_writeglobalatt
 ! Remarks:  This module contains subroutines for writing the PCF as an 
 ! annotation to HDF files. (obsolete)
 ! It also contains the two routines that prepare and write the input pointer
 ! to metadata
 ! and the routines for writing attributes to the various files requiring them
-! in particular swath, grid, and plain hdf5
+! in particular hdfeos5 and plain hdf5
   integer, parameter, public :: INPUTPTR_STRING_LENGTH = PGSd_PC_UREF_LENGTH_MAX
   integer, parameter, public :: GA_VALUE_LENGTH = 40
 
@@ -57,13 +58,16 @@ MODULE PCFHdr
   type GlobalAttributes_T
     character(len=GA_VALUE_LENGTH) :: InstrumentName = 'MLS Aura'
     character(len=GA_VALUE_LENGTH) :: ProcessLevel = ''
-    character(len=GA_VALUE_LENGTH) :: InputVersion = ''
+    character(len=GA_VALUE_LENGTH) :: InputVersion = ''  ! may drop eventually
     character(len=GA_VALUE_LENGTH) :: PGEVersion = ''
     character(len=GA_VALUE_LENGTH) :: StartUTC = ''
     character(len=GA_VALUE_LENGTH) :: EndUTC = ''
-    integer :: GranuleMonth                  = 0
-    integer :: GranuleDay                    = 0
-    integer :: GranuleYear                   = 0
+    character(len=GA_VALUE_LENGTH) :: GranuleMonth = ''
+    character(len=GA_VALUE_LENGTH) :: GranuleDay   = ''
+    character(len=GA_VALUE_LENGTH) :: GranuleYear  = ''
+    ! integer :: GranuleMonth                  = 0
+    ! integer :: GranuleDay                    = 0
+    ! integer :: GranuleYear                   = 0
   end type GlobalAttributes_T
 
   ! This variable describes the global attributes
@@ -161,9 +165,9 @@ CONTAINS
       status = he5_GDwrattr(gridID, &
        & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%ProcessLevel)
-      status = he5_GDwrattr(gridID, &
-       & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
-       &  GlobalAttributes%InputVersion)
+!     status = he5_GDwrattr(gridID, &
+!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+!      &  GlobalAttributes%InputVersion)
       status = he5_GDwrattr(gridID, &
        & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%PGEVersion)
@@ -199,15 +203,17 @@ CONTAINS
        & 'InstrumentName', GlobalAttributes%InstrumentName, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'ProcessLevel', GlobalAttributes%ProcessLevel, .true.)
-      call MakeHDF5Attribute(grp_id, &
-       & 'InputVersion', GlobalAttributes%InputVersion, .true.)
+!     call MakeHDF5Attribute(grp_id, &
+!      & 'InputVersion', GlobalAttributes%InputVersion, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'PGEVersion', GlobalAttributes%PGEVersion, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'StartUTC', GlobalAttributes%StartUTC, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'EndUTC', GlobalAttributes%EndUTC, .true.)
-      call MakeHDF5Attribute(grp_id, &
+      if ( GlobalAttributes%GranuleDay == ' ') return
+      if ( GlobalAttributes%GranuleMonth == ' ') &
+       & call MakeHDF5Attribute(grp_id, &
        & 'GranuleMonth', GlobalAttributes%GranuleMonth, .true.)
       call MakeHDF5Attribute(grp_id, &
        & 'GranuleDay', GlobalAttributes%GranuleDay, .true.)
@@ -217,6 +223,55 @@ CONTAINS
 
 !------------------------------------------------------------
    END SUBROUTINE h5_writeglobalattr
+!------------------------------------------------------------
+
+!------------------------------------------------------------
+   SUBROUTINE he5_writeglobalattr (fileID)
+!------------------------------------------------------------
+
+!     use HDF5, only: H5T_NATIVE_CHARACTER
+      use HDFEOS5, only: HE5T_NATIVE_SCHAR
+! Brief description of subroutine
+! This subroutine writes the global attributes for an hdf-eos5 file
+
+! Arguments
+
+      INTEGER, INTENT(IN) :: fileID
+      integer, external ::   he5_EHwrglatt
+! Internal variables
+      integer :: status
+! Executable
+      status = he5_EHwrglatt(fileID, &
+       & 'InstrumentName', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%InstrumentName)
+      status = he5_EHwrglatt(fileID, &
+       & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%ProcessLevel)
+!     status = he5_EHwrglatt(fileID, &
+!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+!      &  GlobalAttributes%InputVersion)
+      status = he5_EHwrglatt(fileID, &
+       & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%PGEVersion)
+      status = he5_EHwrglatt(fileID, &
+       & 'StartUTC', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%StartUTC)
+      status = he5_EHwrglatt(fileID, &
+       & 'EndUTC', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%EndUTC)
+      if ( GlobalAttributes%GranuleDay == ' ') return
+      if ( GlobalAttributes%GranuleMonth == ' ') &
+       & status = he5_EHwrglatt(fileID, &
+       & 'GranuleMonth', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%GranuleMonth)
+      status = he5_EHwrglatt(fileID, &
+       & 'GranuleDay', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%GranuleDay)
+      status = he5_EHwrglatt(fileID, &
+       & 'GranuleYear', HE5T_NATIVE_SCHAR, 1, &
+       &  GlobalAttributes%GranuleYear)
+!------------------------------------------------------------
+   END SUBROUTINE he5_writeglobalattr
 !------------------------------------------------------------
 
 !----------------------------------------
@@ -287,7 +342,6 @@ CONTAINS
    SUBROUTINE sw_writeglobalattr (swathID)
 !------------------------------------------------------------
 
-!     use HDF5, only: H5T_NATIVE_CHARACTER
       use HDFEOS5, only: HE5T_NATIVE_SCHAR
 ! Brief description of subroutine
 ! This subroutine writes the global attributes for an hdf-eos5 swath
@@ -305,9 +359,9 @@ CONTAINS
       status = he5_SWwrattr(swathID, &
        & 'ProcessLevel', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%ProcessLevel)
-      status = he5_SWwrattr(swathID, &
-       & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
-       &  GlobalAttributes%InputVersion)
+!     status = he5_SWwrattr(swathID, &
+!      & 'InputVersion', HE5T_NATIVE_SCHAR, 1, &
+!      &  GlobalAttributes%InputVersion)
       status = he5_SWwrattr(swathID, &
        & 'PGEVersion', HE5T_NATIVE_SCHAR, 1, &
        &  GlobalAttributes%PGEVersion)
@@ -518,6 +572,9 @@ end module PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.10  2003/02/06 00:30:19  pwagner
+!# Added h5_ and he5_writeglobalattr
+!#
 !# Revision 2.9  2003/01/30 00:57:24  pwagner
 !# Added much new stuff for global attributes with hdf5
 !#
