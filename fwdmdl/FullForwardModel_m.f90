@@ -1690,9 +1690,10 @@ contains
 
             call rad_tran_pol ( gl_inds(1:ngl), e_rflty, z_path_c(1:npc),     &
               & alpha_path_polarized(:,1:npc), ref_corr(1:npc), do_gl(1:npc), &
-              & incoptdepth_pol(:,:,1:npc), alpha_path_polarized_f(:,1:ngl),  &
-              & path_dsdh, dhdz_path, ct, stcp, stsp, t_script(1:npc),        &
-              & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), rad_pol, p_stop )
+              & incoptdepth_pol(:,:,1:npc), deltau_pol(:,:,1:npc),            &
+              & alpha_path_polarized_f(:,1:ngl), path_dsdh, dhdz_path,        &
+              & ct, stcp, stsp, t_script(1:npc),  prod_pol(:,:,1:npc),        &
+              & tau_pol(:,:,1:npc), rad_pol, p_stop )
 
             if ( p_stop < 0 ) then ! exp(incoptdepth_pol(:,:,-p_stop)) failed
               call output ( 'Exp(incoptdepth_pol(:,:,' )
@@ -1719,7 +1720,7 @@ contains
 
           if ( atmos_der ) then
 
-            call drad_tran_df ( indices_c(1:npc), gl_inds(1:ngl), z_path_c, Grids_f,  &
+            call drad_tran_df ( indices_c(1:npc), gl_inds(1:ngl), z_path_c, Grids_f, &
               &  beta_path_c(1:npc,:), eta_fzp, sps_path, do_calc_fzp(1:no_ele,:), &
               &  beta_path_f, do_gl(1:npc), del_s(1:npc), ref_corr(1:npc), &
               &  path_dsdh, dhdz_path, t_script(1:npc), tau(1:npc), &
@@ -1730,18 +1731,19 @@ contains
               ! VMR derivatives for polarized radiance.
               ! Compute DE / Df from D Incoptdepth_pol / Df and put
               ! into DE_DF.
-              call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, indices_c, z_path_c, &
-                &  Grids_f, beta_path_polarized(:,1:p_stop,:), eta_fzp, &
-                &  do_calc_zp(1:no_ele,:), sps_path, del_s(1:npc), &
-                &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop), &
+              call Get_D_Deltau_Pol_DF ( ct, stcp, stsp, indices_c(1:p_stop), &
+                &  z_path_c, Grids_f, beta_path_polarized(:,1:p_stop,:),      &
+                &  eta_fzp, do_calc_fzp(1:no_ele,:), sps_path, del_s(1:npc),  &
+                &  incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),         &
                 &  d_delta_df(1:npc,:), de_df(:,:,1:p_stop,:) )
          
               ! Compute D radiance / Df from Tau, Prod, T_Script
               ! and DE / Df.
 
-              call mcrt_der ( t_script(1:npc), de_dt(:,:,1:npc,:),      &
-                & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc),               &
-                & p_stop, d_rad_pol_df )
+              call mcrt_der ( t_script(1:npc), sqrt(e_rflty),            &
+                & deltau_pol(:,:,1:npc), de_df(:,:,1:npc,:),             &
+                & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop,       &
+                & d_rad_pol_df )
 
               if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
                 k_atmos_frq(frq_i,:) = real(d_rad_pol_df(1,1,:))
@@ -1804,7 +1806,7 @@ contains
                 & alpha_path_polarized(:,1:p_stop), eta_zxp_t_c(1:p_stop,:),  &
                 & del_s(1:npc), indices_c(1:p_stop),                          &
                 & incoptdepth_pol(:,:,1:p_stop), ref_corr(1:p_stop),          &
-                & h_path_c(1:p_stop), dh_dt_path_c(1:p_stop,:),               &
+                & h_path_c(1:npc), dh_dt_path_c(1:p_stop,:),                  &
                 & Req + one_tan_ht(1), dh_dt_path(brkpt,:),                   &
                 & do_calc_hyd_c(1:p_stop,:), d_delta_dt(1:npc,:),             &
                 & de_dt(:,:,1:p_stop,:) )
@@ -1812,9 +1814,10 @@ contains
               ! Compute D radiance / DT from Tau, Prod, T_Script, D_T_Scr_dT
               ! and DE / DT.
 
-              call mcrt_der ( t_script(1:npc), de_dt(:,:,1:npc,:),      &
-                & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc),               &
-                & p_stop, d_rad_pol_dt, d_t_scr_dt(1:npc,:) )
+              call mcrt_der ( t_script(1:npc), sqrt(e_rflty),            &
+                & deltau_pol(:,:,1:npc), de_dt(:,:,1:npc,:),             &
+                & prod_pol(:,:,1:npc), tau_pol(:,:,1:npc), p_stop,       &
+                & d_rad_pol_dt, d_t_scr_dt(1:npc,:) )
 
               if ( radiometers(firstSignal%radiometer)%polarization == l_a ) then
                 k_temp_frq(frq_i,:) = real(d_rad_pol_dt(1,1,:))
@@ -2662,6 +2665,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.169  2003/08/16 01:14:58  vsnyder
+! Use radiometers%polarization to choose 1,1 or 2,2 element
+!
 ! Revision 2.168  2003/08/15 20:29:26  vsnyder
 ! Implement polarized VMR derivatives
 !
