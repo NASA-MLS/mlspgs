@@ -7,10 +7,20 @@ module SLABS_SW_M
   implicit NONE
 
   private
-  public :: DVoigt_Spectral, Slabs, Slabswint, Voigt_Lorentz, &
-        &  Real_Simple_Voigt, Simple_Voigt, RLorentz, CLorentz, RVoigth2, &
-        &  CVoigth2, RVoigth6, CVoigth6, RHui6, CHui6, RDrayson, &
-        &  CDrayson, Slabs_Prep, Slabs_Prep_Arrays, Get_GL_Slabs_Arrays
+
+  ! Routines to compute Betas and their derivatives, and to get ready to do so:
+  public :: Get_GL_Slabs_Arrays, &
+         &  Slabs, Slabs_Lines, Slabs_dT, &
+         &  Slabswint, Slabswint_dT, Slabswint_Lines, &
+         &  Voigt_Lorentz, &
+         &  DVoigt_Spectral, DVoigt_Spectral_Lines
+
+  ! Routines to compute Fadeeva/Voigt/Lorentz:
+  public :: Real_Simple_Voigt, Simple_Voigt, RLorentz, CLorentz, RVoigth2, &
+         &  CVoigth2, RVoigth6, CVoigth6, RHui6, CHui6, RDrayson, &
+         &  CDrayson
+
+  private :: Slabs_Prep, Slabs_Prep_dT
 
   real(rp), parameter :: OneOvSPi = 1.0_rp / sqrtPi  ! 1.0/Sqrt(Pi)
 
@@ -36,7 +46,7 @@ contains
 !       routine to compute dslabs1_dNu0
 
 ! NOTE: In here and in all other routines in this module, 
-!       tanh1 = tanh(nu*expa / 2.0)
+!       tanh1 = tanh(h * nu / ( 2.0 * k * T ) )
 
     real(r8), intent(in) :: dnu, nu0
     real(rp), intent(in) :: x1, yi, y, w, t, tanh1, slabs1             
@@ -98,6 +108,107 @@ contains
 
   end subroutine dVoigt_spectral
 
+  ! --------------------------------------  dVoigt_spectral_Lines  -----
+  subroutine dVoigt_spectral_Lines ( dNu, Slabs, t, tanh1, &
+                                  &  SwI, dSwI_dw, dSwI_dn, dSwI_dNu0 )
+
+! Compute the sums of the Voigt function and its first derivatives with respect
+! to spectral parameters: w, n & Nu0 for all lines in Slabs.
+
+! NOTE: Before calling this routine, the user needs to call slabs_prep()
+!       routine to compute dslabs1_dNu0
+
+! NOTE: In here and in all other routines in this module, 
+!       tanh1 = tanh( h * nu / ( 2.0 * k * T ) )
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use SpectroscopyCatalog_m, only: Lines
+
+    real(r8), intent(in) :: dnu
+    type(slabs_struct), intent(in) :: Slabs
+    real(rp), intent(in) :: T
+    real(rp), intent(in) :: Tanh1
+
+    real(rp), intent(out) :: SwI, dSwI_dw, dSwI_dn, dSwI_dNu0               
+
+    integer :: L  ! Line index
+
+    real(r8) :: Nu0
+    real(rp) :: x1, yi, y, w, slabs1             
+    real(rp) :: dslabs1_dNu0                        
+
+    real(rp) :: x, u, v, SwI1, du_dx, du_dy, dv_dx, dv_dy, q, b, g, z, r    
+
+    real(rp) :: dx_dv0, du_dv0, dv_dv0, vvw, slabs2
+
+    SwI = 0.0_rp
+    dSwI_dw = 0.0_rp
+    dSwI_dn = 0.0_rp
+    dSwI_dNu0 = 0.0_rp     
+    do l = 1, size(slabs%catalog%lines)
+
+      nu0 = slabs%v0s(l)
+      x1 = slabs%x1(l)
+      yi = slabs%yi(l)
+      y = slabs%y(l)
+      w = lines(slabs%catalog%lines(l))%w
+      slabs1 = slabs%slabs1(l)
+      dslabs1_dNu0 = slabs%dslabs1_dv0(l)
+
+      x = x1 * dNu                                                          
+      call simple_voigt(x,y,u,v)  
+
+  !  Van Vleck - Wieskopf (VVW) line shape with Voigt
+
+      q = 1.0_rp + dNu / Nu0
+
+      b = x1 * (2.0_r8 * Nu0 + dNu)
+      g = b * b + y * y
+      z = (y - b * yi) / g
+      r = z * OneOvSPi + yi * v
+      vvw = (u + r) * q
+      slabs2 = slabs1 * tanh1
+      SwI1 = slabs2 * vvw
+
+      du_dx = 2.0_rp * (y * v - x * u)
+      du_dy = 2.0_rp * (y * u + x * v - OneOvSPi)
+
+      dv_dx = -du_dy         ! Cauchy-Riemann equation
+      dv_dy =  du_dx         ! Cauchy-Riemann equation
+
+  ! Compute the derivative of SwI w.r.t. w
+
+      dSwI_dw = dSwI_dw + q * slabs2* (y/w) * (du_dy + yi*du_dx + &
+                                  &   OneOvSPi*((1.0_rp-2.0_rp*z*y)/g))
+
+  ! Compute the derivative of SwI w.r.t. n
+
+      dSwI_dn = dSwI_dn + q * slabs2 * y * Log(3.0d2/t) * (du_dy + yi * dv_dy)
+
+  ! Finaly, compute the derivative of SwI w.r.t. Nu0
+
+  ! ***** Analytically *****
+
+  !    dq_dv0 = -(Nu0+dNu)/(Nu0*Nu0)
+      dx_dv0 = -x1
+      du_dv0 = du_dx * dx_dv0
+      dv_dv0 = dv_dx * dx_dv0
+  !    db_dv0 = x1
+  !    dg_dv0 = 2.0_rp * b*db_dv0
+  !    dz_dv0 = (-yi*db_dv0-z*dg_dv0)/g
+  !    dr_dv0 = dz_dv0*OneOvSPi+yi*dv_dv0
+  !    dvvw_dv0 = (du_dv0+dr_dv0)*q + dq_dv0*(u+r)
+  !    dvvw_dv0 = (du_dv0+dr_dv0)*q
+  !    dSwI_dNu0 = dslabs1_dNu0*vvw + slabs2*dvvw_dv0
+      dSwI_dNu0 = dSwI_dNu0 + swi1 * (dslabs1_dNu0/slabs1 &
+                     - 1.0_r8/Nu0) + slabs2*q*(du_dv0 + yi * dv_dv0)
+
+      SwI = SwI + SwI1
+
+    end do
+
+  end subroutine dVoigt_spectral_Lines
+
   ! ------------------------------------------------------  Slabs  -----
   real(rp) function Slabs ( Nu, v0, v0s, x1, tanh1, slabs1, y )
 
@@ -114,7 +225,7 @@ contains
 
     real(rp) :: u
 
-    call real_simple_voigt(x1*real(nu-v0s,rp),y,u)
+    call real_simple_voigt ( x1*real(nu-v0s,rp), y, u )
 
 !  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
@@ -145,7 +256,7 @@ contains
     real(rp), intent(in) :: slabs1, y
     real(rp), intent(in) :: dx1_dT     ! 1/x1 dx1 / dT
     real(rp), intent(in) :: dtanh_dT   ! 1/tanh(...) d tanh(h nu / 2 k T) / dT
-      ! = h nu / ( 2 k t ) (tanh(...) - 1/tanh(...) )
+      ! = h nu / ( 2 k t^2 ) (tanh(...) - 1/tanh(...) )
     real(rp), intent(in) :: dslabs1_dT ! 1/slabs1 dslabs1 / dT
     real(rp), intent(in) :: dy_dT      ! 1/y dy / dT
     real(rp), intent(out) :: Slabs, dSlabs_dT
@@ -218,6 +329,64 @@ contains
 
   end subroutine Slabs_dT
 
+  ! ------------------------------------------------  Slabs_Lines  -----
+  function Slabs_Lines ( Nu, Slabs, tanh1, Polarized ) result ( Beta )
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use SpectroscopyCatalog_m, only: Lines
+
+    real(r8), intent(in) :: Nu    ! Frequency
+    type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
+    real(rp), intent(in) :: tanh1 ! tanh( h nu / (2 k T) )
+    logical, optional, intent(in) :: Polarized(:) ! "Don't do this line;"
+                                  ! do them all if Polarized is not present.
+
+    real(rp) :: Beta ! Output
+
+! If the molecular transition and temperature have not changed but
+! frequency has, enter here to calculate sum of Beta for all lines in SLABS.
+
+    integer :: L      ! Line Index
+    real(rp) :: U     ! Voigt = real part of Fadeeva
+    real(r8) :: V0S   ! Pressure-shifted line center
+    real(rp) :: X1, Y ! Doppler width, ratio Pressure to Doppler widths
+
+!{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$, and
+!  $D = \frac1{\sigma^2 x_1^2 + y^2}$.
+!  Then {\tt Slabs = } $ S_1 \frac{\nu}{\nu_0}
+!   \tanh(\frac{h \nu}{2 k T}) \left( V(a,y) + \frac{y D}{\sqrt{\pi}} \right)$.
+
+    beta = 0.0_rp
+    if ( .not. present(polarized) ) then
+      do l = 1, size(slabs%catalog%lines)
+        v0s = slabs%v0s(l)
+        x1 = slabs%x1(l)
+        y = slabs%y(l)
+        call real_simple_voigt ( x1*real(nu-v0s,rp), y, u )
+
+        beta = beta + slabs%slabs1(l) * &
+          &           real(nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+          & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
+
+      end do
+    else
+      do l = 1, size(slabs%v0s)
+        if ( polarized(l) ) cycle
+        v0s = slabs%v0s(l)
+        x1 = slabs%x1(l)
+        y = slabs%y(l)
+        call real_simple_voigt ( x1*real(nu-v0s,rp), y, u )
+
+        beta = beta + slabs%slabs1(l) * &
+          &           real(nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+          & (u + OneOvSPi*y/((x1*(nu+v0s))**2 + y*y))
+
+      end do
+    end if
+
+  end function Slabs_Lines
+
   ! --------------------------------------------------  Slabswint  -----
   real(rp) function Slabswint ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi )
 
@@ -257,6 +426,75 @@ contains
 
   end function Slabswint
 
+  ! --------------------------------------------  Slabswint_Lines  -----
+  function Slabswint_Lines ( Nu, Slabs, tanh1, Polarized ) result ( Beta )
+
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
+    use SpectroscopyCatalog_m, only: Lines
+
+    real(r8), intent(in) :: Nu    ! Frequency
+    type(slabs_struct), intent(in) :: Slabs ! Frequency-independent stuff
+    real(rp), intent(in) :: tanh1 ! tanh( h nu / (2 k T) )
+    logical, optional, intent(in) :: Polarized(:) ! "Don't do this line;"
+                                  ! do them all if Polarized is not present.
+
+    real(rp) :: Beta ! Output
+
+! If the molecular transition and temperature have not changed but
+! frequency has, enter here to calculate sum of Beta for all lines in SLABS.
+
+    real(rp) :: A        ! First argument for real_simple_voigt
+    integer :: L         ! Line Index
+    real(rp) :: SigmaX1  ! (nu + nu0s) * x1
+    real(rp) :: U        ! Voigt = real part of Fadeeva
+    real(r8) :: V0S      ! Pressure-shifted line center
+    real(rp) :: X1, Y    ! Doppler width, ratio Pressure to Doppler widths
+    real(rp) :: Yi       ! Interference coefficient
+    real(rp) :: Y2       ! y**2
+
+!{ Let $V(a,y)$ be the Voigt function ({\tt u} above), $\delta = \nu-\nu_{0_s}$,
+!  $\sigma = \nu + \nu_{0_s}$, $a = x_1 \delta$,
+!  $D_1 = \frac1{\sigma^2 x_1^2 + y^2}$ and $D_2 = \frac1{a^2 + y^2}$.
+!  Then {\tt Slabswint = } $ S_1 \frac{\nu}{\nu_0} \tanh(\frac{h \nu}{2 k T})
+!   \left( V(a,y) + \frac{(y - \sigma x_1 y_i) D_1}{\sqrt{\pi}}
+!     + \frac{y_i a D_2}{\sqrt{\pi}} \right)$.
+
+    beta = 0.0_rp
+    if ( .not. present(polarized) ) then
+      do l = 1, size(slabs%catalog%lines)
+        v0s = slabs%v0s(l)
+        x1 = slabs%x1(l)
+        y = slabs%y(l)
+        yi = slabs%yi(l)
+        a = x1 * real(nu-v0s,rp)
+        call real_simple_voigt ( a, y, u )
+
+        sigmaX1 = x1 * (nu + v0s)
+        y2 = y*y
+        beta = beta + slabs%slabs1(l) * &
+          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+          & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
+      end do
+    else
+      do l = 1, size(slabs%v0s)
+        if ( polarized(l) ) cycle
+        v0s = slabs%v0s(l)
+        x1 = slabs%x1(l)
+        y = slabs%y(l)
+        yi = slabs%yi(l)
+        a = x1 * real(nu-v0s,rp)
+        call real_simple_voigt ( a, y, u )
+
+        sigmaX1 = x1 * (nu + v0s)
+        y2 = y*y
+        beta = beta + slabs%slabs1(l) * &
+          &           real(Nu / lines(slabs%catalog%lines(l))%v0, rp) * tanh1 * &
+          & (u + OneOvSPi*((y - sigmaX1*yi)/(sigmaX1*sigmaX1 + y2) + yi*a/(a*a+y2)))
+      end do
+    end if
+
+  end function Slabswint_Lines
+
   ! -----------------------------------------------  Slabswint_dT  -----
   subroutine Slabswint_dT ( Nu, v0, v0s, x1, tanh1, slabs1, y, yi, &
     &                              dv0s_dT, dx1_dT, dtanh_dT, dslabs1_dT, &
@@ -269,7 +507,7 @@ contains
     real(rp), intent(in) :: slabs1, y, yi
     real(rp), intent(in) :: dx1_dT     ! 1/x1 dx1 / dT
     real(rp), intent(in) :: dtanh_dT   ! 1/tanh(...) d tanh(h nu / 2 k T) / dT
-      ! = h nu / ( 2 k t ) (tanh(...) - 1/tanh(...) )
+      ! = h nu / ( 2 k t^2 ) (tanh(...) - 1/tanh(...) )
     real(rp), intent(in) :: dslabs1_dT ! 1/slabs1 dslabs1 / dT
     real(rp), intent(in) :: dy_dT      ! 1/y dy / dT
     real(rp), intent(in) :: dyi_dT     ! 1/yi dyi / dT
@@ -1125,8 +1363,8 @@ contains
 !  and Stegun (National Bureau of Standards Applied Math Series 55) we have
 !  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
 !  $\Re \, \frac{\partial w(z(t))}{\partial t} =
-!   2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial t} +
-!            \left( x L(x,y) + y V(x,y) -\frac1{\sqrt{\pi}} \right)
+!   2 \left[ \left( -a V(a,y) + y L(a,y) \right) \frac{\partial a}{\partial t} +
+!            \left( a L(a,y) + y V(a,y) -\frac1{\sqrt{\pi}} \right)
 !             \frac{\partial y}{\partial t} \right]$.
 
     real(rp), intent(in) :: x, y, dx, dy
@@ -1152,14 +1390,14 @@ contains
 !  $w^{\prime}(z) = \frac{2i}{\sqrt{\pi}} - 2 z w(z)$.\\
 !  \begin{equation*}\begin{split}
 !  \frac{\partial w(z(t))}{\partial t}
-!   =& 2 \left[ \left( -x V(x,y) + y L(x,y) \right) \frac{\partial x}{\partial t} +
-!            \left( x L(x,y) + y V(x,y) -\frac1{\sqrt{\pi}} \right)
+!   =& 2 \left[ \left( -a V(a,y) + y L(a,y) \right) \frac{\partial a}{\partial t} +
+!            \left( a L(a,y) + y V(a,y) -\frac1{\sqrt{\pi}} \right)
 !             \frac{\partial y}{\partial t} \right]\\
-!   +& 2 i \left [ - \left( x L(x,y) + y V(x,y) -\frac1{\sqrt{\pi}} \right)
-!             \frac{\partial x}{\partial t} +
-!            \left( - x V(x,y) + y L(x,y) \right) \frac{\partial y}{\partial t} \right]\\
-!   =& a \frac{\partial x}{\partial t} + b \frac{\partial y}{\partial t}
-!    + i \left( -b \frac{\partial x}{\partial t} + a \frac{\partial y}{\partial t} \right).
+!   +& 2 i \left [ - \left( a L(a,y) + y V(a,y) -\frac1{\sqrt{\pi}} \right)
+!             \frac{\partial a}{\partial t} +
+!            \left( - a V(a,y) + y L(a,y) \right) \frac{\partial y}{\partial t} \right]\\
+!   =& u \frac{\partial a}{\partial t} + v \frac{\partial y}{\partial t}
+!    + i \left( -v \frac{\partial a}{\partial t} + u \frac{\partial y}{\partial t} \right).
 !  \end{split}\end{equation*}
 
     real(rp), intent(in) :: x, y, dx, dy
@@ -1177,7 +1415,7 @@ contains
 
   ! -------------------------------------------------  Slabs_prep  -----
   subroutine Slabs_prep ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
-                      &   n1, n2, &
+                      &   n1, n2, velCor, &
                       &   v0s, x1, y, yi, slabs1, dslabs1 )
 
 ! This function computes a single line type absorption coefficient
@@ -1187,8 +1425,8 @@ contains
 ! >>2004-03-18 WV Snyder Use 1 - exp(-v0/300/Boltzmhz) in denominator instead
 !                        of 1 - exp(-v0s/300/Boltzmhz).
 
-    use Physics, only: H_OVER_K, SpeedOfLight
-    use Units, only: Ln10
+    use Physics, only: H_OVER_K, k, SpeedOfLight
+    use Units, only: Ln10, Sqrtln2, SqrtPi
 
 ! inputs:
 
@@ -1210,6 +1448,7 @@ contains
     real(rp), intent(in) :: Gamma    ! Gamma               "
     real(rp), intent(in) :: N1       ! Temperature dependency of delta
     real(rp), intent(in) :: N2       ! Temperature dependency of gamma
+    real(rp), intent(in) :: VelCor   ! Doppler velocity correction term
 
 ! outputs:
 
@@ -1233,11 +1472,13 @@ contains
 !  boltzmhz - boltzmann constant MHz/K
 !  sqrtln2  - sqrt(ln(2))
 
-    real(rp), parameter :: I2abs = 3.402136078e9_rp ! sqrt(ln(2)/pi)*1.0e-13/k
-    real(rp), parameter :: Dc = 3.58117369e-7_rp ! sqrt(1000 k ln 4 avogadro) / c
+    real(rp), parameter :: I2abs = sqrtln2 / ( sqrtPi * 1.0e13 * k )
+!   real(rp), parameter :: I2abs = 3.402155052e9_rp ! using above constants
+!   real(rp), parameter :: I2abs = 3.402136078e9_rp ! Zvi's original value
+    real(rp), parameter :: Dc = 3.58116514e-7_rp ! sqrt(1000 k ln 4 avogadro) / c
+!   real(rp), parameter :: Dc = 3.58117369e-7_rp ! Zvi's original value
     real(rp), parameter :: BoltzMHz = 1.0_rp / H_over_k
     real(rp), parameter :: Boltzcm = boltzMHz / SpeedOfLight * 1.0e6 / 100.0
-    real(rp), parameter :: Sqrtln2 = 8.32554611157698e-1_rp
     real(rp), parameter :: Oned300 = 1.0_rp/300.0_rp
 
     real(rp), parameter :: LT2 = 2.35218251811136_rp      ! Log10(225)
@@ -1262,17 +1503,17 @@ contains
 
     yi = p * (delta*exp(n1*t3t) + gamma*exp(n2*t3t))
 
-!{ $\nu_{0_s} = \nu_0 + p_s p \left( \frac{300}T \right) ^{n_s}$.
+!{ $\nu_{0_s} = v_c \left[ \nu_0 + p_s p \left( \frac{300}T \right) ^{n_s} \right]$.
 
-    v0s = v0 + ps * p * exp(ns*t3t)
+    v0s = velCor * ( v0 + ps * p * exp(ns*t3t) )
 
-!{ $\omega_d = \nu_0 d_c \sqrt{\frac{T}M}$.
+!{ $w_d = \nu_0 d_c \sqrt{\frac{T}M}$.
 
-    Wd = v0 * Sqrt(t/m) * dc
+    Wd = v0 * dc * Sqrt(t/m)
 
-!{ $x_1 = \frac{\sqrt{\ln 2}}{\omega_d}$.
+!{ $x_1 = \frac{\sqrt{\ln 2}}{w_d}$.
 
-    x1 = sqrtln2 / Wd
+    x1 = real(sqrtln2,rp) / Wd
 
 !{ $y = x_1 w p \left( \frac{300}T \right) ^n$.
 
@@ -1292,18 +1533,18 @@ contains
     end if
     q_log_b = -1.0 - q_log_b ! This is more useful below
 
-    expn = EXP(-betav*onedt)
-    z1 = 1.0 + expn
     expd = EXP(-v0*(oned300/boltzmhz))
-    z2 = 1.0 - expd
+    expn = EXP(-betav*onedt)
+    z1 = 1.0 + expn          ! 1 + G
+    z2 = 1.0 - expd          ! 1 - H
 
 !{ $S = \frac{I_2 \, p \, 10^{i - a - b \log_{10} T
 !   + \frac{\beta_e}{\ln 10}\left(\frac1{300}-\frac1T\right)}
 !      (1+e^{-\frac{\beta_v}T})}
-!   {T \omega_d \left(1 - e^{-\frac{h \nu_0}{300 k}}\right)} =
+!   {T w_d \left(1 - e^{-\frac{h \nu_0}{300 k}}\right)} =
 !  I_2 \, p \, e^{(i-a) \ln 10 -(b+1) \log T +
 !    \beta_e \left( \frac1{300} - \frac1T \right)}
-!  \frac{(1+G)} {\omega_d (1-H)}$, where
+!  \frac{(1+G)} {w_d (1-H)}$, where
 !  $G = e^{-\frac{\beta_v}T}$, $H = e^{-\frac{h \nu_0}{300 k}}$ and
 !  $S =$ {\tt slabs1}.
 
@@ -1322,7 +1563,7 @@ contains
 
   ! ----------------------------------------------  Slabs_prep_DT  -----
   subroutine Slabs_prep_dT ( t, m, v0, el, w, ps, p, n, ns, i, q, delta, gamma, &
-                         &   n1, n2, &
+                         &   n1, n2, velCor, &
                          &   v0s, x1, y, yi, slabs1, dslabs1_dv0, &
                          &   dv0s_dT, dx1_dT, dy_dT, dyi_dT, dslabs1_dT )
 
@@ -1332,8 +1573,8 @@ contains
 
 ! ** UPDATED: Jul/3/97  To include Hugh Pumphrey's Pressure Shift effects
 
-    use Physics, only: H_OVER_K, SpeedOfLight
-    use Units, only: Ln10
+    use Physics, only: H_OVER_K, k, SpeedOfLight
+    use Units, only: Ln10, Sqrtln2, SqrtPi
 
 ! inputs:
 
@@ -1355,6 +1596,7 @@ contains
     real(rp), intent(in) :: Gamma    ! Gamma               "
     real(rp), intent(in) :: N1       ! Temperature dependency of delta
     real(rp), intent(in) :: N2       ! Temperature dependency of gamma
+    real(rp), intent(in) :: VelCor   ! Doppler velocity correction term
 
 ! outputs:
 
@@ -1386,11 +1628,13 @@ contains
 !  boltzmhz - boltzmann constant MHz/K = k/h
 !  sqrtln2  - sqrt(ln(2))
 
-    real(rp), parameter :: I2abs = 3.402136078e9_rp ! sqrt(ln(2)/pi)*1.0e-13/k
-    real(rp), parameter :: Dc = 3.58117369e-7_rp
+    real(rp), parameter :: I2abs = sqrtln2 / ( sqrtPi * 1.0e13 * k )
+!   real(rp), parameter :: I2abs = 3.402155052e9_rp ! using above constants
+!   real(rp), parameter :: I2abs = 3.402136078e9_rp ! Zvi's original value
+    real(rp), parameter :: Dc = 3.58116514e-7_rp ! sqrt(1000 k ln 4 avogadro) / c
+!   real(rp), parameter :: Dc = 3.58117369e-7_rp ! Zvi's original value
     real(rp), parameter :: BoltzMHz = 1.0_rp / H_over_k
     real(rp), parameter :: Boltzcm = boltzMHz / SpeedOfLight * 1.0e6 / 100.0
-    real(rp), parameter :: Sqrtln2 = 8.32554611157698e-1_rp
     real(rp), parameter :: Oned300 = 1.0_rp/300.0_rp
 
     real(rp), parameter :: LT2 = 2.35218251811136_rp      ! Log10(225)
@@ -1426,30 +1670,34 @@ contains
     dyi_dT = -onedt * ( n1 * z1 + n2 * z2 ) / yi ! 1/yi dyi/dT
     yi = p * yi
 
-!{ $\nu_{0_s} = \nu_0 + p_s p \left( \frac{300}T \right)^{n_s}$.
-!  $\frac{\partial \nu_{0_s}}{\partial T} = \frac{-n_s}T ( \nu_{0_s} - \nu_0 )$.
+!{ $\nu_{0_s} = v_c \left[ \nu_0 + p_s p \left( \frac{300}T \right)^{n_s} \right]$.
+!  $\frac{\partial \nu_{0_s}}{\partial T} = \frac{-n_s}T ( \nu_{0_s} - v_c \nu_0 )$.
 
-    v0s = ps * p * exp(ns*t3t)
+    v0s = velCor * ps * p * exp(ns*t3t)
     dv0s_dT = -ns * v0s * onedt
-    v0s = v0 + v0s
+    v0s = velCor * v0 + v0s
 
-!{ $\omega_d = \nu_0 d_c \sqrt{\frac{T}M}$.  The $\nu_0$ term should
+!{ $w_d = \nu_0 d_c \sqrt{\frac{T}M}$.  The $\nu_0$ term should
 !  really be $\nu$.  We approximate $\nu$ by $\nu_0$ so that we can use
 !  this routine outside the frequency loop.  Thus
-!  $-\frac1{\omega_d}\frac{\partial \omega_d}{\partial T} = 
+!  $-\frac1{w_d}\frac{\partial w_d}{\partial T} = 
 !   - \frac1{2 T}$.
-!  $-\frac1{\omega_d}\frac{\partial \omega_d}{\partial T}$ is what's actually
+!  $-\frac1{w_d}\frac{\partial w_d}{\partial T}$ is what's actually
 !  useful later.
 
     Wd = v0 * dc * sqrt(t/m)
     dWd_dT = - 0.5 * onedt ! Actually -dWd_dT/Wd
 
-!{ $x_1 = \frac{\sqrt{\ln 2}}{\omega_d}$.
+!{ $x_1 = \frac{\sqrt{\ln 2}}{w_d}$.
 !  $\frac1{x_1}\frac{\partial x_1}{\partial T} =
-!   -\frac1{\omega_d} \frac{\partial \omega_d}{\partial T}
+!   -\frac1{w_d} \frac{\partial w_d}{\partial T}
 !   = -\frac1{2T}$.
+!  We don't calculate $x$ = $x_1 ( \nu - \nu_{0_s} )$ here because it
+!  depends on frequency.  Here's $\frac1x \frac{\partial x}{\partial T} =
+!  \frac1{x_1}\frac{\partial x_1}{\partial T} - \frac1{\nu - \nu_{0_s}}
+!  \frac{\partial \nu_{0_s}}{\partial T}$ anyway, for reference.
 
-    x1 = sqrtln2 / Wd
+    x1 = real(sqrtln2,rp) / Wd
     dx1_dT = dWd_dT ! 1/x1 dx1/dT
 
 !{ $y = x_1 w p \left( \frac{300}T \right)^n$.
@@ -1474,25 +1722,25 @@ contains
 !    \frac{h}k \frac{\partial \nu_{0_s}}{\partial T}$.
 
     betae = el / boltzcm
-    betav = v0s / boltzmhz
+    betav = v0s / boltzmhz ! should not be velocity corrected
     dBetav_dT = dv0s_dT / boltzmhz
 
 !{ Write {\tt slabs1} $= \frac{I_2 \, p \, 10^{i - a - b \log_{10} T
 !   + \frac{\beta_e}{\ln 10}\left(\frac1{300}-\frac1T\right)}
 !      (1+e^{-\frac{\beta_v}T})}
-!   {T \omega_d \left(1 - e^{\frac{\beta_v}{300}}\right)}$
+!   {T w_d \left(1 - e^{\frac{\beta_v}{300}}\right)}$
 !  as $S = f \frac{T^{-b-1} e^{-\frac{\beta_e}T} (1+G)}
-!                                    {\omega_d (1-H)}$, where
-!  $f = I_2 \, p \, e^{(i-a) \ln 10 + \frac{\beta_e}{300}}$,
-!  $G = e^{-\frac{\beta_v}T}$ and $H = e^{-\frac{\beta_v}{300}}$.  Then
+!                                    {w_d}$, where
+!  $f = \frac{I_2 \, p \, e^{(i-a) \ln 10 + \frac{\beta_e}{300}}}{1-H}$
+!  is independent of T,
+!  $H = e^{-\frac{h \nu_0}{300 k}}$ and $G = e^{-\frac{\beta_v}T}$.  Then
 !  $\frac1S \frac{\partial S}{\partial T} =
 !    \frac1T \left( -b -1 -G_1 \frac{\partial \beta_v}{\partial T} +
 !     \frac1T \left[ \beta_e + G_1 \beta_v \right ] \right )
-!    - \frac1{\omega_d}\frac{\partial \omega_d}{\partial T}
-!    - \frac{H_1}{300} \frac{\partial \beta_v}{\partial T}$, where
-!  $G_1 = \frac{G}{1+G}$ and $H_1 = \frac{H}{1-H}$.
+!    - \frac1{w_d}\frac{\partial w_d}{\partial T}$, where
+!  $G_1 = \frac{G}{1+G}$.
 
-    expd = EXP(-betav*oned300) ! H
+    expd = EXP(-v0*(oned300/boltzmhz)) ! H
     expn = EXP(-betav*onedt)   ! G
     z1 = 1.0 + expn            ! 1 + G
     z2 = 1.0 - expd            ! 1 - H
@@ -1502,14 +1750,14 @@ contains
       & exp((i-q_log_a)*ln10 + betae*(oned300 -onedt) + q_log_b * log_t )
 
     z1 = expn / z1             ! G1
-    z2 = oned300 * expd / z2   ! H1 / 300
     ! 1/slabs1 dslabs1/dT:
     dslabs1_dT = onedt * ( q_log_b - z1 * dBetav_dT + &
       & onedt * ( betae + z1 * betav ) ) + &
-      & dWd_dT - z2 * dbetav_dT ! Remember dWd_dT is really -dWd_dT/Wd
+      & dWd_dT ! Remember dWd_dT is really -dWd_dT/Wd
 
 !{ $\frac{\partial S}{\partial \nu_0} =
-!   -S \left( \frac{G_1}T + \frac{H_1}{300} \right) \frac{h}k$.
+!   -S \left( \frac{G_1}T + \frac{H_1}{300} \right) \frac{h}k$
+!   where $H_1 = \frac{H}{1-H}$.
 
     dslabs1_dv0 = -slabs1 * (z1 * onedt + z2) / boltzmhz
 
@@ -1517,116 +1765,90 @@ contains
 
 !{ \newpage
 
-  ! -----------------------------------------  Slabs_Prep_Arrays   -----
-  subroutine Slabs_Prep_Arrays ( molecule, nl, t, p, mass, Qlog, Catalog, &
-                               & v0s, x1, y, yi, slabs1, dslabs1_dv0 )
-
-    use Molecules, only: L_Extinction
-
-    type(catalog_T) :: Catalog
-
-    integer(ip), intent(in) :: molecule, nl
-
-    real(rp), intent(in) :: t, p, mass,Qlog(:)
-
-    real(r8), intent(out) :: v0s(:)
-    real(rp), intent(out) :: x1(:),y(:),yi(:),slabs1(:),dslabs1_dv0(:)
-
-    integer :: j, k
-
-    if ( any ( molecule == (/ l_extinction /) ) ) return
-
-! Check for anything but dry air or extinction:
-
-    do j = 1, nl
-
-! Prepare the temperature weighted coefficients:
-
-      k = Catalog%Lines(j)
-      call Slabs_prep ( t, mass, Lines(k)%V0, Lines(k)%EL, Lines(k)%W,      &
-        &  Lines(k)%PS, p, Lines(k)%N, Lines(k)%NS, Lines(k)%STR,           &
-        &  Qlog, Lines(k)%DELTA, Lines(k)%GAMMA, Lines(k)%N1, Lines(k)%N2,  &
-        &  v0s(j), x1(j), y(j), yi(j), slabs1(j), dslabs1_dv0(j) )
-
-    end do
-
-  end subroutine Slabs_Prep_Arrays
-
   ! ----------------------------------------  Get_GL_Slabs_Arrays  -----
-  subroutine Get_GL_Slabs_Arrays ( Catalog, P_path, T_path, Vel_z, GL_slabs, &
+  subroutine Get_GL_Slabs_Arrays ( P_path, T_path, Vel_z, GL_Slabs, &
                              &     Do_1D, t_der_flags )
 
     use Physics, only: SpeedOfLight
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
-
-    type(Catalog_T), dimension(:), intent(in) :: Catalog
+    use Molecules, only: L_Extinction
 
     real(rp), intent(in) :: p_path(:) ! Pressure in hPa or mbar
     real(rp), intent(in) :: t_path(:)
 
-    real(rp), intent(in) :: vel_z
-    logical, intent(in) :: Do_1D
-    logical, intent(in) :: t_der_flags(:)
+    real(rp), intent(in) :: vel_z     ! Meters per second
 
-    type (slabs_struct) :: gl_slabs(:,:)
+    ! GL_Slabs needs to have been created by L2PC_pfa_structures%AllocateSlabs
+    type (slabs_struct), intent(inout) :: GL_Slabs(:,:)
+
+    logical, intent(in) :: Do_1D
+    logical, intent(in), optional :: t_der_flags(:) ! do derivatives if present
 
 !  ----------------
 !  Local variables:
 !  ----------------
 
-    real(rp), parameter :: c = speedOfLight/1000.0_rp ! Speed of Light Km./Sec.
+    type(Catalog_T), pointer :: Catalog
+    integer :: i, j, k, l, n, n_sps, nl, no_ele
 
-    integer :: i, j, k, n_sps, nl, no_ele
-
-    real(rp) :: Qlog(3), vel_z_correction
+    real(rp) :: vel_z_correction
 
 ! Begin code:
 
     no_ele = size(p_path)
-    n_sps = Size(catalog)
+    n_sps = size(gl_slabs,2)
+    n = no_ele
+    if ( Do_1D ) n = n / 2
 
-    Vel_z_correction = 1.0_rp - vel_z / c
+    ! opposite sign convention here from ATBD
+    Vel_z_correction = 1.0_rp - vel_z / speedOfLight
 
     do i = 1, n_sps
 
-      nl = Size(Catalog(i)%Lines)
+      catalog => gl_slabs(1,i)%catalog ! gl_slabs(:,i)%catalog are all the same
 
-      Qlog(1:3) = Catalog(i)%QLOG(1:3)
+      if ( catalog%molecule == l_extinction ) cycle
 
-      if ( .not. Do_1D ) then
+      nl = Size(catalog%Lines)
 
-        do j = 1, no_ele
-          if (.not. t_der_flags(j)) cycle
-          call Slabs_Prep_Arrays ( catalog(i)%molecule, nl, t_path(j),&
-            &  p_path(j), catalog(i)%mass, Qlog, &
-            &  Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
-            &  gl_slabs(j,i)%yi,gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dslabs1_dv0 )
+      if ( .not. present(t_der_flags) ) then
+        do j = 1, n
+          do k = 1, nl
+            l = catalog%lines(k)
+            call slabs_prep ( t_path(j), catalog%mass, &
+              & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p_path(j), &
+              & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
+              & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
+              & Vel_z_correction, &
+              & gl_slabs(j,i)%v0s(k), gl_slabs(j,i)%x1(k), gl_slabs(j,i)%y(k), &
+              & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
+              & gl_slabs(j,i)%dslabs1_dv0(k) )
+          end do ! k = 1, nl
+        end do ! j = 1, n
+      else ! t_der_flags are present -- do temperature derivative stuff
+        do j = 1, n
+          if ( t_der_flags(j) ) then ! do temperature derivative stuff
+            do k = 1, nl
+              l = catalog%lines(k)
+              call slabs_prep_dT ( t_path(j), catalog%mass, &
+                & lines(l)%v0, lines(l)%el, lines(l)%w, lines(l)%ps, p_path(j), &
+                & lines(l)%n, lines(l)%ns, lines(l)%str, catalog%QLOG(1:3), &
+                & lines(l)%delta, lines(l)%gamma, lines(l)%n1, lines(l)%n2, &
+                & Vel_z_correction, &
+                & gl_slabs(j,i)%v0s(k), gl_slabs(j,i)%x1(k), gl_slabs(j,i)%y(k), &
+                & gl_slabs(j,i)%yi(k), gl_slabs(j,i)%slabs1(k), &
+                & gl_slabs(j,i)%dslabs1_dv0(k), &
+                & gl_slabs(j,i)%dv0s_dT(k), gl_slabs(j,i)%dx1_dT(k), &
+                & gl_slabs(j,i)%dy_dT(k), gl_slabs(j,i)%dyi_dT(k), &
+                & gl_slabs(j,i)%dslabs1_dT(k) )
+            end do ! k = 1, nl
+          end if ! t_der_flags(j)
+        end do ! j = 1, n
+      end if ! present(t_der_flags)
 
-!  Apply velocity corrections:
-
-          gl_slabs(j,i)%v0s = gl_slabs(j,i)%v0s * Vel_z_correction
-
-        end do
-
-      else
-
-        ! compute each element along the LOS path before tangent point
-
-        do j = 1, no_ele/2
-          if (.not. t_der_flags(j)) cycle
-          call Slabs_Prep_Arrays ( catalog(i)%molecule, nl, t_path(j), p_path(j), &
-            & catalog(i)%mass, Qlog, &
-            & Catalog(i), gl_slabs(j,i)%v0s, gl_slabs(j,i)%x1, gl_slabs(j,i)%y, &
-            & gl_slabs(j,i)%yi,gl_slabs(j,i)%slabs1,gl_slabs(j,i)%dslabs1_dv0 )
-
-          gl_slabs(j,i)%v0s = gl_slabs(j,i)%v0s * Vel_z_correction
-
-        end do
-        
+      if ( Do_1D ) then
         ! fill in grid points on other side with above value
-        
         do j = no_ele, no_ele/2+1, -1
-          if (.not. t_der_flags(j)) cycle          
           k = no_ele - j + 1
           gl_slabs(j,i)%v0s         = gl_slabs(k,i)%v0s
           gl_slabs(j,i)%x1          = gl_slabs(k,i)%x1
@@ -1634,12 +1856,23 @@ contains
           gl_slabs(j,i)%yi          = gl_slabs(k,i)%yi 
           gl_slabs(j,i)%slabs1      = gl_slabs(k,i)%slabs1 
           gl_slabs(j,i)%dslabs1_dv0 = gl_slabs(k,i)%dslabs1_dv0
-        
-        end do
-        
+        end do ! j = no_ele, no_ele/2+1, -1
+
+        if ( present(t_der_flags) ) then
+          do j = no_ele, no_ele/2+1, -1
+            if ( t_der_flags(j) ) then ! do derivative stuff
+              k = no_ele - j + 1
+              gl_slabs(j,i)%dv0s_dT    = gl_slabs(k,i)%dv0s_dT
+              gl_slabs(j,i)%dx1_dT     = gl_slabs(k,i)%dx1_dT
+              gl_slabs(j,i)%dy_dT      = gl_slabs(k,i)%dy_dT
+              gl_slabs(j,i)%dyi_dT     = gl_slabs(k,i)%dyi_dT
+              gl_slabs(j,i)%dslabs1_dT = gl_slabs(k,i)%dslabs1_dT
+            end if
+          end do ! j = no_ele, no_ele/2+1, -1
+        end if
       end if
 
-    end do              ! On i
+    end do              ! On i = 1, n_sps
 
   end subroutine Get_GL_Slabs_Arrays
 
@@ -1652,6 +1885,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.26  2004/03/20 03:17:44  vsnyder
+! Steps along the way toward analytic temperature derivatives
+!
 ! Revision 2.24  2003/07/09 22:46:24  vsnyder
 ! Futzing
 !

@@ -265,6 +265,8 @@ contains
     real(rp), dimension(:), pointer :: DRAD_DV      ! dI/dV
     real(rp), dimension(:), pointer :: DRAD_DW      ! dI/dW
     real(rp), dimension(:), pointer :: DSDZ_GW_PATH ! ds/dH * dH/dZ * GW on path
+    real(rp), dimension(:), pointer :: DTanh_DT_C   ! d/dT tanh1_c
+    real(rp), dimension(:), pointer :: DTanh_DT_F   ! d/dT tanh1_f
     real(r8), dimension(:), pointer :: FREQUENCIES  ! Frequencies to compute for
     real(rp), dimension(:), pointer :: H            ! Magnetic field on path, in
                                                     ! IFOVPP
@@ -300,27 +302,29 @@ contains
     real(rp), dimension(:), pointer :: T_PATH_M     ! T_PATH - del_temp
     real(rp), dimension(:), pointer :: T_PATH_P     ! T_PATH + del_temp
     real(rp), dimension(:), pointer :: T_SCRIPT     ! Delta_B in some notes
+    real(rp), dimension(:), pointer :: TT_PATH_C    ! tscat on path coarse
+    real(rp), dimension(:), pointer :: W0_PATH_C    ! w0 on path coarse
     real(rp), dimension(:), pointer :: Z_GLGRID     ! Zeta on glGrid surfs
     real(rp), dimension(:), pointer :: Z_PATH       ! Zeta on path
 
-    real(rp), dimension(:,:), pointer :: BETA_PATH_C ! Beta on path coarse
-    real(rp), dimension(:),   pointer :: W0_PATH_C   ! w0 on path coarse
-    real(rp), dimension(:),   pointer :: TT_PATH_C   ! tscat on path coarse
-    real(r8), dimension(:,:), pointer :: VMRARRAY          ! The VMRs
-    real(rp), dimension(:,:), pointer :: BETA_PATH_F ! Beta on path fine
-    real(rp), dimension(:,:), pointer :: D_DELTA_DF ! Incremental opacity derivative
+    real(rp), dimension(:,:), pointer :: BETA_N_PATH_C   ! n in beta = beta_0 (T/T_0)**n
+                                           ! to compute dBeta_dt on coarse grid
+    real(rp), dimension(:,:), pointer :: BETA_N_PATH_F ! n in beta = beta_0 (T/T_0)**n
+                                           ! to compute dBeta_dt on fine grid
+    real(rp), dimension(:,:), pointer :: BETA_PATH_C  ! Beta on path coarse
+    real(rp), dimension(:,:), pointer :: BETA_PATH_F  ! Beta on path fine
+    real(rp), dimension(:,:), pointer :: Cext_PATH    ! Cloud extinction on path
+    real(rp), dimension(:,:), pointer :: D_DELTA_DF   ! Incremental opacity derivative
                                            ! schlep from drad_tran_dt to
                                            ! get_d_deltau_pol_df.  Path x SVE.
-    real(rp), dimension(:,:), pointer :: D_T_SCR_dT  ! D Delta_B in some notes
+    real(rp), dimension(:,:), pointer :: D_T_SCR_dT   ! D Delta_B in some notes
                                            ! path x state-vector-components
-    real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, nz*np)
-    real(rp), dimension(:,:), pointer :: DACsStaging ! Temporary space for DACS radiances
+    real(rp), dimension(:,:), pointer :: D2X_DXDT     ! (No_tan_hts, nz*np)
+    real(rp), dimension(:,:), pointer :: DACsStaging  ! Temporary space for DACS radiances
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_C ! dBeta_dn on coarse grid
     real(rp), dimension(:,:), pointer :: DBETA_DN_PATH_F ! dBeta_dn on fine grid
-    real(rp), dimension(:,:), pointer :: DBETA_DT_PATH_C ! n in beta = beta_0 (T/T_0)**n
-                                           ! to compute dBeta_dt on coarse grid
-    real(rp), dimension(:,:), pointer :: DBETA_DT_PATH_F ! n in beta = beta_0 (T/T_0)**n
-                                           ! to compute dBeta_dt on fine grid
+    real(rp), dimension(:,:), pointer :: DBETA_DT_PATH_C ! dBeta_dT on coarse grid
+    real(rp), dimension(:,:), pointer :: DBETA_DT_PATH_F ! dBeta_dT on fine grid
     real(rp), dimension(:,:), pointer :: DBETA_DV_PATH_C ! dBeta_dv on coarse grid
     real(rp), dimension(:,:), pointer :: DBETA_DV_PATH_F ! dBeta_dv on fine grid
     real(rp), dimension(:,:), pointer :: DBETA_DW_PATH_C ! dBeta_dw on coarse grid
@@ -355,10 +359,6 @@ contains
     real(rp), dimension(:,:), pointer :: ETA_ZXP_T_F  ! ETA_ZXP_T on fine grid
     real(rp), dimension(:,:), pointer :: H_GLGRID     ! H on glGrid surfs
     real(rp), dimension(:,:), pointer :: IWC_PATH     ! IWC on path
-    real(rp), dimension(:,:), pointer :: Tscat_PATH   ! TScat on path
-    real(rp), dimension(:,:), pointer :: TT_PATH      ! TScat on path along the LOS
-    real(rp), dimension(:,:), pointer :: Salb_PATH    ! Single Scattering Albedo on path
-    real(rp), dimension(:,:), pointer :: Cext_PATH    ! Cloud extinction on path
     real(rp), dimension(:,:), pointer :: K_ATMOS_FRQ  ! dI/dVMR, frq X vmr
     real(rp), dimension(:,:), pointer :: K_SPECT_DN_FRQ ! ****
     real(rp), dimension(:,:), pointer :: K_SPECT_DV_FRQ ! ****
@@ -366,9 +366,13 @@ contains
     real(rp), dimension(:,:), pointer :: K_TEMP_FRQ   ! Storage for Temp. deriv.
     real(rp), dimension(:,:), pointer :: MAG_PATH     ! Magnetic field on path
     real(rp), dimension(:,:), pointer :: RADIANCES    ! (Nptg,noChans)
+    real(rp), dimension(:,:), pointer :: Salb_PATH    ! Single Scattering Albedo on path
     real(rp), dimension(:,:), pointer :: SPS_PATH     ! species on path
     real(rp), dimension(:,:), pointer :: TAN_DH_DT    ! dH/dT at Tangent
     real(rp), dimension(:,:), pointer :: T_GLGRID     ! Temp on glGrid surfs
+    real(rp), dimension(:,:), pointer :: Tscat_PATH   ! TScat on path
+    real(rp), dimension(:,:), pointer :: TT_PATH      ! TScat on path along the LOS
+    real(r8), dimension(:,:), pointer :: VMRARRAY     ! The VMRs
 
     real(rp), dimension(:,:,:), pointer :: DH_DT_GLGRID ! *****
 
@@ -521,13 +525,13 @@ contains
     ! Nullify all our pointers that are allocated!
 
     nullify ( alpha_path_c, alpha_path_f, alpha_path_polarized, &
-      & alpha_path_polarized_f, beta_path_c, beta_path_cloud_c, beta_path_f, &
-      & beta_path_polarized, cext_path, cg_inds, c_inds, &
-      & cld_ext%values, closestInstances, d2x_dxdt, d2xdxdt_surface, &
-      & d2xdxdt_tan, DACsStaging, DACsStaging2, dbeta_dn_path_c, &
-      & dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, dbeta_dv_path_c, &
-      & dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, d_delta_df, &
-      & ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, del_zeta, &
+      & alpha_path_polarized_f, beta_n_path_c, beta_n_path_f, beta_path_c, &
+      & beta_path_cloud_c, beta_path_f, beta_path_polarized, cext_path, &
+      & cg_inds, c_inds, cld_ext%values, closestInstances, d2x_dxdt, &
+      & d2xdxdt_surface, d2xdxdt_tan, DACsStaging, DACsStaging2, &
+      & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dT_path_c, dbeta_dT_path_f, &
+      & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
+      & d_delta_df, ddhidhidtl0, de_df, de_dt, del_s, deltau_pol, del_zeta, &
       & dh_dt_glgrid, dh_dt_path, dh_dt_path_c, dh_dt_path_f, dhdz_glgrid, &
       & dhdz_gw_path, dhdz_out, dhdz_path, dincoptdepth_pol_dt, &
       & do_calc_Cext, do_calc_Cext_zp, do_calc_dn, do_calc_dn_c, &
@@ -536,7 +540,8 @@ contains
       & do_calc_iwc, do_calc_iwc_zp, do_calc_Salb, do_calc_Salb_zp, &
       & do_calc_t, do_calc_t_c, do_calc_t_f, do_calc_tscat, &
       & do_calc_tscat_zp, do_calc_zp, do_gl, drad_dn, drad_dt, drad_dv, &
-      & drad_dw, d_rad_pol_df, d_rad_pol_dt, dsdz_gw_path, d_t_scr_dt, &
+      & drad_dw, d_rad_pol_df, d_rad_pol_dt, dsdz_gw_path, dTanh_dT_c, &
+      & dTanh_dT_f, d_t_scr_dt, &
       & dx_dh_out, dx_dt, dxdt_surface, dxdt_tan, eta_cext, eta_cext_zp, &
       & eta_fzp, eta_iwc, eta_iwc_zp, eta_mag_zp, eta_salb, eta_salb_zp, &
       & eta_tscat, eta_tscat_zp, eta_zp, eta_zxp_dn, eta_zxp_dn_c, &
@@ -962,8 +967,6 @@ contains
     call allocate_test ( tau,                 npc, 'tau',              moduleName )
     call allocate_test ( t_path_c,            npc, 't_path_c',         moduleName )
     call allocate_test ( t_path_f,        max_ele, 't_path_f',         moduleName )
-    call allocate_test ( t_path_m,        max_ele, 't_path_m',         moduleName )
-    call allocate_test ( t_path_p,        max_ele, 't_path_p',         moduleName )
     call allocate_test ( t_path,          max_ele, 't_path',           moduleName )
     call allocate_test ( t_script,            npc, 't_script',         moduleName )
     call allocate_test ( z_path,          max_ele, 'z_path',           moduleName )
@@ -993,12 +996,12 @@ contains
 !                         & no_sv_p_t, 'k_temp',moduleName )
       allocate ( k_temp(noUsedChannels, no_tan_hts, n_t_zeta, no_sv_p_t) )
 
+      call allocate_test ( beta_n_path_c,      npc, no_mol,   'beta_n_path_c', &
+                                                              & moduleName )
+      call allocate_test ( beta_n_path_f,  max_ele, no_mol,   'beta_n_path_f', &
+                                                              & moduleName )
       call allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', moduleName )
       call allocate_test ( d_t_scr_dt,         npc, sv_t_len, 'd_t_scr_dt', &
-                                                              & moduleName )
-      call allocate_test ( dbeta_dt_path_c,    npc, no_mol,   'dbeta_dt_path_c', &
-                                                              & moduleName )
-      call allocate_test ( dbeta_dt_path_f, max_ele, no_mol,   'dbeta_dt_path_f', &
                                                               & moduleName )
       call allocate_test ( dh_dt_path,      max_ele, sv_t_len, 'dh_dt_path', &
                                                               & moduleName )
@@ -1016,6 +1019,8 @@ contains
                                                               & moduleName )
       call allocate_test ( do_calc_t_f,     max_ele, sv_t_len, 'do_calc_t_f', &
                                                               & moduleName )
+      call allocate_test ( dTanh_dT_c,          npc, 'dTanh_dT_c', moduleName )
+      call allocate_test ( dTanh_dT_f,      max_ele, 'dTanh_dT_f', moduleName )
       call allocate_test ( eta_zxp_t,       max_ele, sv_t_len, 'eta_zxp_t', &
                                                               & moduleName )
       call allocate_test ( eta_zxp_t_c,        npc, sv_t_len, 'eta_zxp_t_c', &
@@ -1026,6 +1031,8 @@ contains
       call allocate_test ( tan_d2h_dhdt, 1, sv_t_len, 'tan_d2h_dhdt', moduleName )
       call allocate_test ( t_der_path_flags, max_ele,          't_der_path_flags', &
                                                               & moduleName )
+      call allocate_test ( t_path_m,        max_ele, 't_path_m',         moduleName )
+      call allocate_test ( t_path_p,        max_ele, 't_path_p',         moduleName )
 
     end if ! temp_der
 
@@ -1194,10 +1201,13 @@ contains
         & call Trace_Begin ( 'ForwardModel.Sideband ', index=thisSideband )
 
       ! Now, allocate gl_slabs arrays
-      call allocateSlabs ( gl_slabs, max_ele, my_catalog(thisSideband,:), moduleName )
+      call allocateSlabs ( gl_slabs, max_ele, my_catalog(thisSideband,:), &
+        & moduleName, temp_der )
       if ( temp_der ) then
-        call allocateSlabs ( gl_slabs_p, max_ele, my_catalog(thisSideband,:), moduleName )
-        call allocateSlabs ( gl_slabs_m, max_ele, my_catalog(thisSideband,:), moduleName )
+        call allocateSlabs ( gl_slabs_p, max_ele, my_catalog(thisSideband,:), &
+          & moduleName, temp_der )
+        call allocateSlabs ( gl_slabs_m, max_ele, my_catalog(thisSideband,:), &
+          & moduleName, temp_der )
       end if
 
       ! Work out which pointing frequency grid we're going to need if ----------
@@ -1566,17 +1576,19 @@ contains
         ! Compute ALL the slabs_prep entities over the path's GL grid for this
         ! pointing & mmaf:
 
-        call get_gl_slabs_arrays ( my_Catalog(thisSideband,:), p_path(1:no_ele), &
-          &  t_path(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs, &
-          &  fwdModelConf%Do_1D, true_path_flags(1:no_ele) )
-
         if ( temp_der ) then
-          call get_gl_slabs_arrays ( my_Catalog(thisSideband,:), p_path(1:no_ele), &
-            &  t_path_p(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_p, &
-            &  fwdModelConf%Do_1D, t_der_path_flags(1:no_ele) )
-          call get_gl_slabs_arrays ( my_Catalog(thisSideband,:), p_path(1:no_ele), &
-            &  t_path_m(1:no_ele), 0.001*losVel%values(1,maf), gl_slabs_m, &
-            &  fwdModelConf%Do_1D, t_der_path_flags(1:no_ele) )
+          call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
+            &  losVel%values(1,maf), gl_slabs, fwdModelConf%Do_1D, &
+            &  t_der_path_flags(1:no_ele) )
+          call get_gl_slabs_arrays ( p_path(1:no_ele), t_path_p(1:no_ele), &
+            &  losVel%values(1,maf), gl_slabs_p, fwdModelConf%Do_1D, &
+            &  t_der_path_flags(1:no_ele) )
+          call get_gl_slabs_arrays ( p_path(1:no_ele), t_path_m(1:no_ele), &
+            &  losVel%values(1,maf), gl_slabs_m, fwdModelConf%Do_1D, &
+            &  t_der_path_flags(1:no_ele) )
+        else
+          call get_gl_slabs_arrays ( p_path(1:no_ele), t_path(1:no_ele), &
+            &  losVel%values(1,maf), gl_slabs, fwdModelConf%Do_1D )
         end if
 
         ! Work out what frequencies we're using for --------------------------
@@ -1624,6 +1636,10 @@ contains
           ! Set up path quantities --------------------------------------
 
           tanh1_c(1:npc) = tanh( frqhk / t_path_c(1:npc) )
+          ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
+          if ( temp_der ) &
+            & dTanh_dT_c(1:npc) = frqhk / t_path_c(1:npc)**2 * &
+              & ( tanh1_c(1:npc) - 1.0_rp / tanh1_c(1:npc) )
 
           ! Compute the sps_path for this Frequency
           call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
@@ -1633,13 +1649,12 @@ contains
 
           call get_beta_path ( Frq,                               &
             &  p_path(1:no_ele), t_path_c(1:npc), tanh1_c(1:npc), &
-            &  my_Catalog(thisSideband,:), beta_group,            &
-            &  FwdModelConf%polarized,                            &
+            &  beta_group, FwdModelConf%polarized,                &
             &  gl_slabs, c_inds(1:npc), beta_path_c(1:npc,:),     &
-            &  gl_slabs_m, t_path_m(1:no_ele),                    &
-            &  gl_slabs_p, t_path_p(1:no_ele),                    &
-            &  t_der_path_flags,                                  &
-            &  dbeta_dt_path_c, dbeta_dw_path_c,                  &
+            &  gl_slabs_m, t_path_m,                              &
+            &  gl_slabs_p, t_path_p,                              &
+            &  t_der_path_flags, dTanh_dT_c, dbeta_dT_path_c,     &
+            &  beta_n_path_c, dbeta_dw_path_c,                    &
             &  dbeta_dn_path_c, dbeta_dv_path_c )
 
           do_gl = .false.
@@ -1875,6 +1890,10 @@ contains
 
           t_path_f(:ngl) = t_path(gl_inds(:ngl))
           tanh1_f(1:ngl) = tanh( frqhk / t_path_f(:ngl) )
+          ! dTanh_dT = -h nu / (2 k T**2) 1/tanh1 d(tanh1)/dT
+          if ( temp_der ) &
+            & dTanh_dT_f(1:ngl) = frqhk / t_path_f(1:ngl)**2 * &
+              & ( tanh1_f(1:ngl) - 1.0_rp / tanh1_f(1:ngl) )
 
           ! The derivatives that get_beta_path computes depend on which
           ! derivative arrays are allocated, not which ones are present.
@@ -1883,13 +1902,12 @@ contains
 
           call get_beta_path ( Frq,                                   &
             & p_path(1:no_ele), t_path_f(:ngl), tanh1_f(1:ngl),       &
-            & my_Catalog(thisSideband,:), beta_group,                 &
-            & FwdModelConf%polarized,                                 &
+            & beta_group, FwdModelConf%polarized,                     &
             & gl_slabs, gl_inds(:ngl), beta_path_f(:ngl,:),           &
-            & gl_slabs_m, t_path_m(1:no_ele),                         &
-            & gl_slabs_p, t_path_p(1:no_ele),                         &
-            & t_der_path_flags,                                       &
-            & dbeta_dt_path_f, dbeta_dw_path_f,                       &
+            & gl_slabs_m, t_path_m,                                   &
+            & gl_slabs_p, t_path_p,                                   &
+            & t_der_path_flags, dTanh_dT_f, dbeta_dT_path_f,          &
+            & beta_n_path_f, dbeta_dw_path_f,                         &
             & dbeta_dn_path_f, dbeta_dv_path_f )
 
           do j = 1, ngl ! loop around dot_product instead of doing sum(a*b,2)
@@ -2024,10 +2042,10 @@ contains
             h_path_f(:ngl) = h_path(gl_inds(:ngl))
             sps_beta_dbeta_c(:npc) = SUM(sps_path(c_inds(1:npc),:) * &
               &                          beta_path_c(1:npc,:) * &
-              &                          dbeta_dt_path_c(1:npc,:),DIM=2)
+              &                          beta_n_path_c(1:npc,:),DIM=2)
             sps_beta_dbeta_f(:ngl) = SUM(sps_path(gl_inds(1:ngl),:) * &
               &                          beta_path_f(1:ngl,:) * &
-              &                          dbeta_dt_path_f(1:ngl,:),DIM=2)
+              &                          beta_n_path_f(1:ngl,:),DIM=2)
 
             if ( .not. FwdModelConf%polarized ) then
 
@@ -2711,10 +2729,10 @@ contains
 
     if ( temp_der ) then
       deallocate ( k_temp, STAT=i )
+      call deallocate_test ( beta_n_path_c,   'beta_n_path_c',   moduleName )
+      call deallocate_test ( beta_n_path_f,   'beta_n_path_f',   moduleName )
       call deallocate_test ( d_t_scr_dt,      'd_t_scr_dt',      moduleName )
       call deallocate_test ( dRad_dt,         'dRad_dt',         moduleName )
-      call deallocate_test ( dbeta_dt_path_c, 'dbeta_dt_path_c', moduleName )
-      call deallocate_test ( dbeta_dt_path_f, 'dbeta_dt_path_f', moduleName )
       call deallocate_test ( dh_dt_path,      'dh_dt_path',      moduleName )
       call deallocate_test ( dh_dt_path_c,    'dh_dt_path_c',    moduleName )
       call deallocate_test ( dh_dt_path_f,    'dh_dt_path_f',    moduleName )
@@ -2723,6 +2741,8 @@ contains
       call deallocate_test ( do_calc_t,       'do_calc_t',       moduleName )
       call deallocate_test ( do_calc_t_c,     'do_calc_t_c',     moduleName )
       call deallocate_test ( do_calc_t_f,     'do_calc_t_f',     moduleName )
+      call deallocate_test ( dTanh_dT_c,      'dTanh_dT_c',      moduleName )
+      call deallocate_test ( dTanh_dT_f,      'dTanh_dT_f',      moduleName )
       call deallocate_test ( eta_zxp_t,       'eta_zxp_t',       moduleName )
       call deallocate_test ( eta_zxp_t_c,     'eta_zxp_t_c',     moduleName )
       call deallocate_test ( eta_zxp_t_f,     'eta_zxp_t_f',     moduleName )
@@ -3052,6 +3072,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.199  2004/03/20 04:05:50  vsnyder
+! Moved SpeedOfLight from units to physics
+!
 ! Revision 2.198  2004/03/20 01:15:16  jonathan
 ! add in scattering correction term in two t_script
 !

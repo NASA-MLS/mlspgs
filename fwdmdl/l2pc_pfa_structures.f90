@@ -2,9 +2,13 @@
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L2PC_PFA_STRUCTURES
-  use MLSCommon, only: I4, R4, R8
+
   use L2PC_File_Parameters, only: MAX_NO_POINTINGS
+  use MLSCommon, only: I4, R4, R8
+  use SpectroscopyCatalog_m, only: Catalog_T
+
   implicit none
+
   public
 
   interface DUMP
@@ -115,10 +119,13 @@ module L2PC_PFA_STRUCTURES
     real(r8) :: DELTA(maxlines)
   end type PFA_SLAB
 
-!------------------------------------------------------------
-! This structure contains the "slabs preps arrays"
+!--------------------------------------------------  SLABS_STRUCT  -----
+! This structure contains the "slabs preps arrays."  These are the
+! frequency-independent terms in the cross section.
+
   type SLABS_STRUCT
-    integer(i4) :: no_lines
+    type(catalog_t), pointer :: Catalog ! everything else is same size
+    !                                     as catalog%lines
     real(r8), dimension(:), pointer :: v0s => NULL()
     real(r8), dimension(:), pointer :: x1 => NULL()
     real(r8), dimension(:), pointer :: y => NULL()
@@ -134,29 +141,32 @@ module L2PC_PFA_STRUCTURES
     real(r8), dimension(:), pointer :: dy_dT => NULL()      ! / y
     real(r8), dimension(:), pointer :: dyi_dT => NULL()     ! / yi
     real(r8), dimension(:), pointer :: dslabs1_dT => NULL() ! / slabs1
-
   end type SLABS_STRUCT
 
 contains
 
-  ! -------------------------------------------- AllocateOneSlabs ---------
-  subroutine AllocateOneSlabs ( slabs, nl, TempDer )
+  ! -------------------------------------------  AllocateOneSlabs  -----
+  subroutine AllocateOneSlabs ( Slabs, Catalog, TempDer )
     ! Allocates the items in a slabs structure
     use Allocate_Deallocate, only: ALLOCATE_TEST
+    use SpectroscopyCatalog_m, only: Catalog_T
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
-    integer, intent(in) :: nl                   ! Number of lines
+    type (catalog_t), target, intent(in) :: Catalog
     logical, intent(in), optional :: TempDer    ! "Allocate temperature
                                                 !  derivative fields"
 
     ! Local variables
     integer :: myl
     logical :: MyDer
+    integer :: NL
 
     ! Executable code
-    myl = MAX(1,nl)
     myDer = .false.
     if ( present(tempDer) ) myDer = tempDer
+    nl = size(catalog%lines)
+    myL = nl
 
+    slabs%catalog => catalog
     call Allocate_test ( slabs%v0s,         myl, 'v0s',         ModuleName )
     call Allocate_test ( slabs%x1,          myl, 'x1',          ModuleName )
     call Allocate_test ( slabs%y,           myl, 'y',           ModuleName )
@@ -172,7 +182,6 @@ contains
       call Allocate_test ( slabs%dyi_dT,     myl, 'dyi_dT',     ModuleName )
       call Allocate_test ( slabs%dslabs1_dT, myl, 'dslabs1_dT', ModuleName )
     end if
-    slabs%no_lines = nl
     if ( nl == 0 ) then
       slabs%v0s = 0.0_r8
       slabs%x1 = 0.0_r8
@@ -214,7 +223,7 @@ contains
 
     do i = 1, size(catalog)
       do j = 1, no_ele
-        call AllocateOneSlabs ( slabs(j,i), size(catalog(i)%lines), TempDer )
+        call AllocateOneSlabs ( slabs(j,i), catalog(i), TempDer )
       end do
     end do
 
@@ -277,7 +286,9 @@ contains
   subroutine Dump_Slabs_Struct ( The_Slabs_Struct, Name )
 
     use Dump_0, only: Dump
+    use Intrinsic, only: Lit_indices
     use Output_m, only: Output
+    use String_Table, only: Display_String
 
     type(slabs_struct), intent(in) :: The_Slabs_Struct
     character(len=*), intent(in), optional :: Name
@@ -286,11 +297,17 @@ contains
 
     call output ( 'Slabs_Struct ' )
     if ( present(name) ) call output ( trim(name) )
-    nl = the_slabs_struct%no_lines
+    nl = size(the_slabs_struct%catalog%lines)
     if ( nl == 0 ) then
       call output ( ' is empty', advance='yes' )
     else
       call output ( '', advance='yes' )
+      if ( the_slabs_struct%catalog%species_name /= 0 ) then
+        call output ( 'Species ' )
+        call display_string ( the_slabs_struct%catalog%species_name )
+      end if
+      call output ( 'Molecule ' )
+      call display_string ( lit_indices(the_slabs_struct%catalog%molecule), advance='yes' )
       call dump ( the_slabs_struct%v0s(:nl), name='v0s' )
       call dump ( the_slabs_struct%x1(:nl), name='x1' )
       call dump ( the_slabs_struct%y(:nl), name='y' )
@@ -346,6 +363,9 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.11  2004/03/26 02:29:18  vsnyder
+! Add tempDer argument in call to AllocateOneSlabs
+!
 ! Revision 2.10  2004/03/20 04:08:55  vsnyder
 ! Steps along the way to analytic temperature derivatives
 !
