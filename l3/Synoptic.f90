@@ -79,6 +79,8 @@ CONTAINS
 	Real (r8), DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: delTad 
         REAL(r8), DIMENSION(:), POINTER :: l3Result       ! returned reconstructed result 
 
+        INTEGER, POINTER, DIMENSION(:) :: nc(:), nca(:), ncd(:)
+        Real (r8), POINTER, DIMENSION(:) :: startTime(:), endTime(:)
 
         CHARACTER (LEN=480) :: msr
 
@@ -233,6 +235,16 @@ CONTAINS
         flags%writel3rAsc  = .FALSE.
         flags%writel3rDes  = .FALSE.
  
+        ALLOCATE( nc(rDays), STAT=error )
+        ALLOCATE( nca(rDays), STAT=error )
+        ALLOCATE( ncd(rDays), STAT=error )
+
+        ALLOCATE( startTime(rDays), STAT=error )
+        ALLOCATE( endTime(rDays), STAT=error )
+        DO I = 1, rDays 
+	    startTime(I) = l3r(I)%time(1)
+	    endTime(I) = l3r(I)%time(l3r(I)%nTimes)
+	ENDDO 
 
 !*** Calculate average orbital period (day)
 
@@ -253,20 +265,18 @@ CONTAINS
 			atimes, dtimes, 			&
 			afields, dfields, delTad )
 
-	!open(5, file='l2gp_intp.dat', status='replace')
-	!DO J = 1, anlats(10, 1)
-	!  write(5,*) J, atimes(10, J, 1)*60.*60.*24.+l2gp(1)%time(1), alons(10, J, 1), afields(10, J, 1) 
-	  !write(5,*) J, atimes(10, J, 1), alons(10, J, 1), afields(10, J, 1) 
-        !ENDDO
-        !close(5)
-
 !*** Main Loop 
-
-!	cfProd%mode = 'com'
 
 	iP = 0
 	DO kP = pStartIndex, pEndIndex 
 	  iP = iP + 1
+
+          DO I = 1, rDays 
+	    nc(I) = 0
+	    nca(I) = 0
+	    ncd(I) = 0
+	  ENDDO 
+
 	  DO J = 1, cfProd%nLats
 	  !DO J = 10, 10 
        	     IF( anlats(J, iP) > 0 ) THEN
@@ -296,13 +306,32 @@ CONTAINS
 		      ENDDO
 		      l3dz(iD)%l3dzValue(iP, J) = zonAvg/float(l3dm(iD)%nLons) 
 		   ENDDO
-                   DO iL = 1, anlats(J, iP)
-		      !CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
-		      !print *, atimes(J, iL, iP), alons(J, iL, iP), afields(J, iL, iP)-l3ret
-		   ENDDO
-                   DO iL = 1, anlats(J, iP)
-		      !CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
-		      !print *, dfields(J, iL, iP)-l3ret
+
+                   DO iD = 1, rDays
+                      DO iL = 1, anlats(J, iP)
+			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+			   nc(iD) = nc(iD) + 1
+		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+			   l3r(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+			   l3r(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
+			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+			END IF
+		      ENDDO
+                      DO iL = 1, dnlats(J, iP)
+			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+			   nc(iD) = nc(iD) + 1
+		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+			   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+			   l3r(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+			END IF
+		      ENDDO
 		   ENDDO
 		   DeAllocate(l3Result)
 		   flags%writel3dmCom = .TRUE.
@@ -323,6 +352,21 @@ CONTAINS
 		      ENDDO
 		      dzA(iD)%l3dzValue(iP, J) = zonAvg/float(dmA(iD)%nLons) 
 		   ENDDO
+
+                   DO iD = 1, rDays
+                      DO iL = 1, anlats(J, iP)
+			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+			   nc(iD) = nc(iD) + 1
+		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+			   residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			   residA(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+			   residA(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   residA(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
+			   residA(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+			END IF
+		      ENDDO
+		   ENDDO
 		   DeAllocate(l3Result)
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3dzAsc = .TRUE.
@@ -341,6 +385,21 @@ CONTAINS
 		        zonAvg = zonAvg + l3Result(I) 
 		      ENDDO
 		      dzD(iD)%l3dzValue(iP, J) = zonAvg/float(dmD(iD)%nLons) 
+		   ENDDO
+
+                   DO iD = 1, rDays
+                      DO iL = 1, dnlats(J, iP)
+			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+			   nc(iD) = nc(iD) + 1
+		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+			   residD(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			   residD(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+			   residD(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   residD(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+			   residD(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+			END IF
+		      ENDDO
 		   ENDDO
 		   DeAllocate(l3Result)
 		   flags%writel3dmDes = .TRUE.
@@ -361,6 +420,33 @@ CONTAINS
 		      ENDDO
 		      l3dz(iD)%l3dzValue(iP, J) = zonAvg/float(l3dm(iD)%nLons) 
 		   ENDDO
+
+                   DO iD = 1, rDays
+                      DO iL = 1, anlats(J, iP)
+			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+			   nc(iD) = nc(iD) + 1
+		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+			   l3r(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+			   l3r(iD)%longitude(nc(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = afields(J, iL, iP)-l3ret 
+			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+			END IF
+		      ENDDO
+                      DO iL = 1, dnlats(J, iP)
+			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+			   nc(iD) = nc(iD) + 1
+		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+			   l3r(iD)%time(nc(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			   l3r(iD)%latitude(nc(iD)) = cfProd%latGridMap(J) 
+			   l3r(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   l3r(iD)%l2gpValue(1, iP, nc(iD)) = dfields(J, iL, iP)-l3ret 
+			   l3r(iD)%l2gpPrecision(1, iP, nc(iD)) = 0.0 
+			END IF
+		      ENDDO
+		   ENDDO
 		   DeAllocate(l3Result)
 
 		   flags%writel3dmCom = .TRUE.
@@ -379,6 +465,21 @@ CONTAINS
 		        zonAvg = zonAvg + l3Result(I) 
 		      ENDDO
 		      dzA(iD)%l3dzValue(iP, J) = zonAvg/float(dmA(iD)%nLons) 
+		   ENDDO
+
+                   DO iD = 1, rDays
+                      DO iL = 1, anlats(J, iP)
+			IF(atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+			   atimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+			   nca(iD) = nca(iD) + 1
+		           CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+			   residA(iD)%time(nc(iD))     = atimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			   residA(iD)%latitude(nca(iD)) = cfProd%latGridMap(J) 
+			   residA(iD)%longitude(nca(iD)) = alons(J, iL, iP) -  mod( real(alons(J, iL, iP)), (2.0*PI) ) 
+			   residA(iD)%l2gpValue(1, iP, nca(iD)) = afields(J, iL, iP)-l3ret 
+			   residA(iD)%l2gpPrecision(1, iP, nca(iD)) = 0.0 
+			END IF
+		      ENDDO
 		   ENDDO
 		   DeAllocate(l3Result)
 
@@ -399,6 +500,21 @@ CONTAINS
 		      ENDDO
 		      dzD(iD)%l3dzValue(iP, J) = zonAvg/float(dmD(iD)%nLons) 
 		   ENDDO
+
+                   DO iD = 1, rDays
+                      DO iL = 1, dnlats(J, iP)
+			IF(dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) >= startTime(iD) .AND. &
+			   dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1) <= endTime(iD)) THEN
+			   ncd(iD) = ncd(iD) + 1
+		           CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+			   residD(iD)%time(ncd(iD))     = dtimes(J, iL, iP)*86400.0+l2gp(1)%time(1)
+			   residD(iD)%latitude(ncd(iD)) = cfProd%latGridMap(J) 
+			   residD(iD)%longitude(nc(iD)) = dlons(J, iL, iP) -  mod( real(dlons(J, iL, iP)), (2.0*PI) ) 
+			   residD(iD)%l2gpValue(1, iP, ncd(iD)) = dfields(J, iL, iP)-l3ret 
+			   residD(iD)%l2gpPrecision(1, iP, ncd(iD)) = 0.0 
+			END IF
+		      ENDDO
+		   ENDDO
 		   DeAllocate(l3Result)
 
 		   flags%writel3dmDes = .TRUE.
@@ -413,6 +529,9 @@ CONTAINS
 	  ENDDO
 
 	ENDDO
+
+	DeAllocate(nc, nca, ncd)
+	DeAllocate(startTime, endTime)
 
 !-----------------------------------
    END SUBROUTINE DailyCoreProcessing
@@ -508,8 +627,6 @@ CONTAINS
 
 !*** Re-arrange the data into longitude order for each pressure level 
 
-!	open(5, file='l2gp_info.dat', status='replace')
-
         nstart = 1
 	DO iD = 1, l2Days
 	  DO iT = 1, l2gp(iD)%nTimes
@@ -521,12 +638,10 @@ CONTAINS
                 l2Lats(nstart, iP) = l2gp(iD)%latitude(iT)
                 l2Values(nstart, iP) = l2gp(iD)%l2gpValue(1, kP, iT) 
 	    ENDDO
-!	    write(5, *) nstart, l2Times(nstart, 1), l2Lons(nstart, 1), l2Lats(nstart, 1), l2Values(nstart, 1)
             nstart = nstart + 1
 	  ENDDO
 	ENDDO
 
-!	close(5)
 !*** Re-arrange the longitude into sequence 
 
 	iP = 0
@@ -773,6 +888,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.8  2001/03/05 19:58:59  ybj
+! with selected pressure levels
+!
 ! Revision 1.7  2001/03/03 01:38:02  ybj
 ! with selected pressure levels
 !
