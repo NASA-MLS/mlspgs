@@ -22,7 +22,14 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   !-----------------------------------------------------------------------------
 
   public::GriddedData_T, SetupNewGriddedData, DestroyGriddedData, &
-    & AddGriddedDataToDatabase, DestroyGriddedDataDatabase
+    & AddGriddedDataToDatabase, DestroyGriddedDataDatabase, Dump
+
+    logical, private, parameter :: MAYDUMPFIELDVALUES = .false.
+
+  interface DUMP
+    module procedure DumpGriddedData
+    module procedure DumpGriddedDatabase
+  end interface
 
   ! These are 'enumerated types' consistent with hph's
   ! work in l3ascii_read_field
@@ -153,46 +160,57 @@ contains
   end subroutine DestroyGriddedDataDatabase
 
   ! --------------------------------  DumpGriddedDatabase  -----
-  subroutine DumpGriddedDatabase(GriddedData, root)
+  subroutine DumpGriddedDatabase(GriddedData, Details)
     use Dump_0, only: Dump
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
 
     type (GriddedData_T), dimension(:), pointer :: GriddedData 
 
-    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
-
+    integer, intent(in), optional :: DETAILS
+    
     ! Local Variables
-    logical, parameter :: MAYDUMPFIELDVALUES = .false.
     integer            :: i
 
     if ( .not. associated(GriddedData)) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, 'Gridded database still null')
 
+    call output ( '============ Gridded Data Base ============', advance='yes' )
+    call output ( ' ', advance='yes' )
     call output ( 'database: a priori grids: SIZE = ' )
     call output ( size(GriddedData), advance='yes' )
+    if ( size(GriddedData) < 1 ) return
     do i = 1, size(GriddedData)
 
       call output ( 'item number ' )
       call output ( i, advance='yes' )
 
-      call DumpGriddedData(GriddedData(i), root)
+      call DumpGriddedData(GriddedData(i), Details)
     end do ! i
   end subroutine DumpGriddedDatabase
 
   ! --------------------------------  DumpGriddedData  -----
-  subroutine DumpGriddedData(GriddedData, root)
+  subroutine DumpGriddedData(GriddedData, Details)
     use Dump_0, only: Dump
 
     ! Imitating what dump_pointing_grid_database does, but for gridded data
     ! which may come from climatology, ncep, dao
     type (GriddedData_T) :: GriddedData 
-    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
+    !                                        ! -1 Skip even 1-d arrays
+    !                                        ! -2 Skip all but name
+    !                                        ! >0 Dump even multi-dim arrays
+    !                                        ! Default 1
 
     ! Local Variables
-    logical, parameter :: MAYDUMPFIELDVALUES = .false.
+    integer :: MYDETAILS
 
-    call output('quantity name ' // GriddedData%quantityName, advance='yes')
+    ! Executable code
+    myDetails = 1
+    if ( present(details) ) myDetails = details
+
+    call output('Gridded quantity name ' // GriddedData%quantityName, advance='yes')
+      if ( myDetails < -1 ) return
     call output('description ' // GriddedData%description, advance='yes')
     call output('units ' // GriddedData%units, advance='yes')
 
@@ -202,44 +220,45 @@ contains
     call output ( GriddedData%verticalCoordinate, advance='yes' )
     call output ( ' No. of heights = ' )
     call output ( GriddedData%noHeights, advance='yes' )
-    call dump ( GriddedData%heights, &
+    if ( myDetails >= 0 ) call dump ( GriddedData%heights, &
       & '    Heights =' )
 
     call output ( ' Equivalent latitude = ' )
     call output ( GriddedData%equivalentLatitude, advance='yes' )
     call output ( ' No. of latitudes = ' )
     call output ( GriddedData%noLats, advance='yes' )
-    call dump ( GriddedData%lats, &
+    if ( myDetails >= 0 ) call dump ( GriddedData%lats, &
       & '    latitudes =' )
 
     call output ( ' No. of longitudes = ' )
     call output ( GriddedData%noLons, advance='yes' )
-    call dump ( GriddedData%lons, &
+    if ( myDetails >= 0 ) call dump ( GriddedData%lons, &
       & '    longitudes =' )
 
     call output ( ' No. of local times = ' )
     call output ( GriddedData%noLsts, advance='yes' )
-    call dump ( GriddedData%lsts, &
+    if ( myDetails >= 0 ) call dump ( GriddedData%lsts, &
       & '    local times =' )
 
     call output ( ' No. of solar zenith angles = ' )
     call output ( GriddedData%noSzas, advance='yes' )
-    call dump ( GriddedData%szas, &
+    if ( myDetails >= 0 ) call dump ( GriddedData%szas, &
       & '    solar zenith angles =' )
 
     call output ( ' No. of dates = ' )
     call output ( GriddedData%noDates, advance='yes' )
-    call dump ( GriddedData%dateStarts, &
+    if ( myDetails >= 0 ) call dump ( GriddedData%dateStarts, &
       & '    starting dates =' )
-    call dump ( GriddedData%dateEnds, &
+    if ( myDetails >= 0 ) call dump ( GriddedData%dateEnds, &
       & '    ending dates =' )
 
-    if(MAYDUMPFIELDVALUES) then
+    if ( MAYDUMPFIELDVALUES .and. myDetails > 0 ) then
       call output ( ' ************ tabulated field values ********** ' ,advance='yes')
 
       ! No dump for 6-dimensional double arrays yet, anyway
       !     call dump ( GriddedData%field, &
       !      & '    gridded field values =' )
+      call output ( ' *(Sorry, dump_6d_double not yet coded)* ' ,advance='yes')
     endif
 
   end subroutine DumpGriddedData
@@ -308,6 +327,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.13  2001/10/26 23:17:14  pwagner
+! Provides a single dump module interface and details
+!
 ! Revision 2.12  2001/09/10 23:36:56  livesey
 ! Expanded and tidied up.  Stuff that was in ncep_dao is now here
 !
