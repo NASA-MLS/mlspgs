@@ -30,7 +30,8 @@ module ForwardModelSupport
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
   integer, parameter :: IrrelevantFwmParameter = IncompleteLinearFwm + 1
   integer, parameter :: LinearSidebandHasUnits = IrrelevantFwmParameter + 1
-  integer, parameter :: TangentNotSubset     = LinearSidebandHasUnits + 1
+  integer, parameter :: NoPolarizedAtmosDer  = LinearSidebandHasUnits + 1
+  integer, parameter :: TangentNotSubset     = NoPolarizedAtmosDer + 1
   integer, parameter :: ToleranceNotK        = TangentNotSubset + 1
   integer, parameter :: TooManyHeights       = ToleranceNotK + 1
   integer, parameter :: TooManyCosts         = TooManyHeights + 1
@@ -572,6 +573,10 @@ contains ! =====     Public Procedures     =============================
           & call AnnounceError ( TangentNotSubset, root )
       end do
 
+      ! Make sure that we don't ask for mixing ratio derivatives from the polarized model
+      if ( info%polarized .and. info%atmos_der ) &
+        & call AnnounceError ( NoPolarizedAtmosDer, root )
+
       ! Make sure signal specifications make sense; get sideband Start/Stop
       call validateSignals
     case ( l_cloudfull )
@@ -767,6 +772,9 @@ contains ! =====     Public Procedures     =============================
     case ( LinearSidebandHasUnits )
       call output ( 'irrelevant units for this linear sideband', &
         & advance='yes' )
+    case ( NoPolarizedAtmosDer )
+      call output ( 'illegally asked for mixing ratio derivatives from the polarized model', &
+        & advance='yes' )
     case ( TangentNotSubset )
       call output ('non subsurface tangent grid not a subset of integration&
         & grid', advance='yes' )
@@ -804,6 +812,10 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.75  2003/08/12 17:12:08  livesey
+! Added check to ensure you don't ask for mixing ratio derivatives from
+! the polarized model
+!
 ! Revision 2.74  2003/08/11 22:35:34  livesey
 ! Now more forgiving of running e.g. R5H and R5V together.
 !
