@@ -355,13 +355,17 @@ contains ! =====     Public Procedures     =============================
           & "Matrices in CholeskyFactor are not compatible" )
     n = x%m%row%nb
     do i = 1, n
-      n0 = x%m%col%nelts(i)
-      call createBlock ( s, n0, n0, M_Absent )
-      do k = 1, i-1
-        call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,i), s, &
-          & update=.true. )
-      end do ! k = 1, i-1
-      call choleskyFactor ( z%m%block(i,i), s ) ! Factor block on diagonal
+      if ( i > 1 ) then
+        n0 = x%m%col%nelts(i)
+        call createBlock ( s, n0, n0, M_Absent )
+        do k = 1, i-1
+          call multiplyMatrixBlocks ( z%m%block(k,i), z%m%block(k,i), s, &
+            & update=.true. )
+        end do ! k = 1, i-1
+        call choleskyFactor ( z%m%block(i,i), s ) ! Factor block on diagonal
+      else
+        call choleskyFactor ( z%m%block(i,i) )
+      end if
       do j = i+1, n
         call destroyBlock ( s )    ! Avoid a memory leak
         do k = 1, i-1
@@ -516,6 +520,7 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in), optional :: Extra_Col         ! Allocate one extra
       ! column, beyond what's specified by Row, if Extra_Col is present and true.
 
+    integer :: I, J      ! Subscripts, loop inductors
     integer :: STATUS    ! From ALLOCATE
 
     z%name = name
@@ -524,6 +529,11 @@ contains ! =====     Public Procedures     =============================
     allocate ( z%block(z%row%nb,z%col%nb), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "Z%Block in CreateEmptyMatrix" )
+    do i = 1, z%row%nb ! Now create absent blocks with the correct sizes
+      do j = 1, z%col%nb
+        call createBlock ( z, i, j, m_absent )
+      end do
+    end do
 
   contains
     subroutine DefineInfo ( RC, Vec, QuanFirst, extra )
@@ -723,22 +733,25 @@ contains ! =====     Public Procedures     =============================
   ! -----------------------------------------------  FillExtraRow  -----
   subroutine FillExtraRow ( A, X )
   ! Fill the "extra" row of A (see type RC_Info) from the vector X.
+  ! The extra column in the extra row is not filled.
     type(Matrix_T), intent(inout) :: A
     type(Vector_T), intent(in) :: X
 
-    integer :: J
+    integer :: J, NB
 
     ! Check compatibility of X with the column template for A
     if ( a%col%vec%template%id /= x%template%id ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Vector incompatible with matrix in FillExtraRow" )
     if ( .not. a%row%extra ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & "No extra column to fill in FillExtraRow" )
-    do j = 1, a%row%nb
+      & "No extra row to fill in FillExtraRow" )
+    nb = a%col%nb
+    if ( a%col%extra ) nb = nb - 1
+    do j = 1, nb
       call destroyBlock ( a%block(a%row%nb,j) )
       call createBlock ( a%block(a%row%nb,j), 1, a%col%nelts(j), m_full )
       if ( a%col%quant(j) /= 0 ) &
-        & a%block(a%row%nb,j)%values(:,1) = &
+        & a%block(a%row%nb,j)%values(1,:) = &
           & x%quantities(a%col%quant(j))%values(:,a%col%inst(j))
     end do ! i
   end subroutine FillExtraRow
@@ -849,18 +862,22 @@ contains ! =====     Public Procedures     =============================
       if ( ncols + matrix%col%nelts(block) >= column ) then
         colInBlock = column - ncols
         do row = 1, matrix%row%nb
-          call getVectorFromColumn ( matrix%block(row,block), colInBlock, &
-            & vector%quantities(matrix%row%quant(row))% &
+          if ( row <= vector%template%totalinstances ) & ! Don't get the extra
+            ! row if the vector doesn't have a place for it.
+            & call getVectorFromColumn ( matrix%block(row,block), colInBlock, &
+              & vector%quantities(matrix%row%quant(row))% &
               & values(:,matrix%row%inst(row)) )
         end do ! row = 1, matrix%row%nb
         return
       end if
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & 'In "GetVectorFromColumn", "Column" is greater than number&
-        & of columns in "Matrix"')
+      ncols = ncols + matrix%col%nelts(block)
     end do ! block = 1, matrix%col%nb
+    call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'In "GetVectorFromColumn", "Column" is greater than number&
+      & of columns in "Matrix"')
   end subroutine GetVectorFromColumn_1
 
+  ! ---------------------------------------------  InvertCholesky  -----
   subroutine InvertCholesky ( U, B )
   ! Compute B = U^{-T} = L^{-1}, where U is the upper-triangular
   ! Cholesky factor of some matrix, i.e. A = U^T U.
@@ -965,6 +982,7 @@ contains ! =====     Public Procedures     =============================
   subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE )
   ! Z = A^T V if UPDATE is absent or false.  Z is first cloned from V.
   ! Z = Z + A^T V is UPDATE is present and true.
+  ! The extra row and column are not multiplied, even if present.
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T), intent(inout) :: Z
@@ -974,23 +992,28 @@ contains ! =====     Public Procedures     =============================
     !                           whether to clear an element of Z, or add to it
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
+    integer :: MB, NB         ! Loop limits
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
     if ( a%row%vec%template%id /= v%template%id ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
-    if ( a%col%vec%template%id /= z%template%id ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
     if ( present(update) ) my_update = update
+    if ( my_update .and. a%col%vec%template%id /= z%template%id ) &
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     ! Copy characteristics, allocate values:
-    if ( .not. update ) call cloneVector ( z, v, vectorNameText='_z' ) 
-    do j = 1, a%col%nb
+    if ( .not. my_update ) call cloneVector ( z, v, vectorNameText='_z' )
+    mb = a%row%nb
+    if ( a%row%extra ) mb = mb - 1
+    nb = a%col%nb
+    if ( a%col%extra ) nb = nb - 1
+    do j = 1, nb
       k = a%col%quant(j)
       l = a%col%inst(j)
       do_update = my_update
-      do i = 1, a%row%nb
+      do i = 1, mb
         m = a%row%quant(i)
         n = a%row%inst(i)
         call multiplyMatrixVector ( a%block(i,j), &
@@ -1048,6 +1071,7 @@ contains ! =====     Public Procedures     =============================
   ! Z = Z + A V is UPDATE is present and true.
   ! Remember that for SPD, only the upper triangle is stored, so we need
   ! Z = A^T V + A V except don't do the diagonal twice.
+  ! The extra row and column are not multiplied, even if present.
     type(Matrix_SPD_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T), intent(inout) :: Z
@@ -1055,9 +1079,12 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
+    integer :: NB             ! Loop bound
 
     call MultiplyMatrixVector ( a%m, v, z, update ) ! A^T V
-    do j = 1, a%m%col%nb
+    nb = a%m%col%nb
+    if ( a%m%col%extra ) nb = nb - 1
+    do j = 1, nb
       k = a%m%col%quant(j)
       l = a%m%col%inst(j)
       do i = 1, j
@@ -1120,7 +1147,8 @@ contains ! =====     Public Procedures     =============================
     my_update = .false.
     if ( present(update) ) my_update = update
     if ( .not. my_update ) &
-      & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec )
+      & call createEmptyMatrix ( z%m, 0, a%col%vec, a%col%vec, &
+        &  extra_Row = a%col%extra, extra_Col=a%col%extra )
     do j = 1, a%col%nb
       nullify ( mj )
       if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) ) &
@@ -1292,12 +1320,15 @@ contains ! =====     Public Procedures     =============================
   subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT )
   ! Add X to the diagonal of A.  Don't update the extra row or column.
   ! If SUBTRACT is present and true, subtract X from the diagonal.
-    type(Matrix_SPD_T), intent(inout) :: A
+    type(matrix_SPD_T), intent(inout) :: A
     type(vector_T), intent(in) :: X
     logical, intent(in), optional :: SUBTRACT
 
     integer :: I, N
 
+    if ( a%m%col%vec%template%id /= x%template%id ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "A and X not compatible in UpdateDiagonalVec_1" )
     n = max(a%m%row%nb,a%m%col%nb)
     if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
     do i = 1, n
@@ -1376,6 +1407,7 @@ contains ! =====     Public Procedures     =============================
     call dump_rc ( matrix%col, 'column', my_details>0 )
     do j = 1, matrix%col%nb
       do i = 1, matrix%row%nb
+        if ( my_details < 1 .and. matrix%block(i,j)%kind == m_absent ) cycle
         call output ( 'Block at row ' )
         call output ( i )
         call output ( ' and column ' )
@@ -1398,8 +1430,13 @@ contains ! =====     Public Procedures     =============================
         end if
         call output ( ':' )
         call output ( matrix%col%Inst(j) )
-        call output ( ' )', advance='yes' )
-        call dump ( matrix%block(i,j), details=my_details>1 )
+        call output ( ' )' )
+        if ( matrix%block(i,j)%kind == m_absent ) then
+          call output ( ' [absent]', advance='yes' )
+        else
+          call output ( '', advance='yes' )
+          call dump ( matrix%block(i,j), details=my_details>1 )
+        end if
       end do
     end do
   end subroutine Dump_Matrix
@@ -1491,6 +1528,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.29  2001/05/08 20:29:40  vsnyder
+! Periodic commit -- workong on sparse matrix blunders
+!
 ! Revision 2.28  2001/05/03 02:11:23  vsnyder
 ! Spiffify dump, add names to cloned vectors
 !
