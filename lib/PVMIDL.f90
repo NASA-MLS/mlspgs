@@ -1,5 +1,5 @@
-! Copyright (c 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
 
@@ -11,7 +11,8 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
   ! length issues.
 
   use MLSCommon, only : r4, r8
-  use PVM, only: PVMDATADEFAULT, PVMErrorMessage, PVMFINITSEND, PVMFMYTID, &
+  use MLSMessageModule, only : PVMErrorMessage
+  use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFMYTID, &
     & PVMF90PACK, PVMF90UNPACK
 
   implicit none
@@ -1267,6 +1268,9 @@ contains
 end module PVMIDL
 
 ! $Log$
+! Revision 2.12  2005/03/15 23:48:55  pwagner
+! PVMERRORMESSAGE now part of MLSMessageModule
+!
 ! Revision 2.11  2004/10/19 22:59:33  vsnyder
 ! Add optional 'msg' argument and internal error processing
 !
