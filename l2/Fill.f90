@@ -126,7 +126,8 @@ contains ! =====     Public Procedures     =============================
       & ERRORINH5FFUNCTION, WRONGHDFVERSION
     use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_phase_timing
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
+      & MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues, Hunt
     use MLSRandomNumber, only: drang, mls_random_seed, MATH77_RAN_PACK
     use MLSSignals_m, only: GetSignalName, GetModuleName, IsModuleSpacecraft, &
@@ -542,11 +543,37 @@ contains ! =====     Public Procedures     =============================
           if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
           got(fieldIndex) = .true.
           select case ( fieldIndex )
+          case ( f_quantity )
+            vectorIndex = decoration(decoration(subtree(1,gson)))
+            quantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+            ! print *, 'vectorIndex: ', vectorIndex
+            ! print *, 'quantityIndex: ', quantityIndex
+            ! print *, 'size(vector database): ', size(vectors)
+            if ( vectorIndex > size(vectors) ) then
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'vector index too big' )
+            endif
+            ! print *, 'Num of quantities: ', vectors(vectorIndex)%template%noQuantities
+            if ( quantityIndex > vectors(vectorIndex)%template%noQuantities ) then
+              call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'quantity index too big' )
+            endif
           case ( f_vector )
             vectorIndex = decoration(decoration(gson))
           end select
         end do
-        call dump ( vectors(vectorIndex) )
+        if ( got(f_vector) ) then
+          call dump ( vectors(vectorIndex) )
+        elseif ( got(f_quantity) ) then
+          ! print *, 'About to try to obtain aQuantity'
+          aQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(vectorIndex), quantityIndex)
+          ! print *, 'About to try to dump aQuantity'
+          call dump ( aQuantity )
+        else
+          call Announce_error ( key, no_error_code, &
+          & 'Sorry-dont know how to dump this field' )
+        endif
 
       case ( s_matrix ) ! ===============================  Matrix  =====
         got = .false.
@@ -3136,6 +3163,22 @@ contains ! =====     Public Procedures     =============================
       do instance = useFirstInstance, useLastInstance
         ! Find 1st surface at or above tropopause
         ! (i.e., at a pressure equal to or less than boundaryPressure)
+        if ( instance > size(bndPressQty%values, 2) ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Cant fill column--instance outside b.pres. range' )
+          call deallocate_test(p, 'p', ModuleName )
+          return
+        elseif ( bndPressQty%values(1,instance) <= 0. ) then
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          & 'Cant fill column--zero boundary pressure' )
+          call deallocate_test(p, 'p', ModuleName )
+          call output('Instance: ', advance='no')
+          call output(Instance, advance='yes')
+          call announce_error(key, No_Error_code, &
+          & ' (Will try to continue)')
+          call dump ( bndPressQty )
+          return
+        endif
         call Hunt ( vmrQty%template%surfs(:,1), &
           & -log10 ( bndPressQty%values(1,instance) ), firstSurface )
         do surface=1, vmrQty%template%noSurfs
@@ -6053,6 +6096,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.246  2003/11/05 18:37:25  pwagner
+! Now can dump either entire vector or a single quantity
+!
 ! Revision 2.245  2003/10/22 21:17:06  pwagner
 ! aPhaseName: Phase added to Fill, Construct sections to time phases
 !
