@@ -8,7 +8,7 @@ module L2ParInfo
   use Allocate_Deallocate, only: ALLOCATE_TEST
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, MLSMSG_Allocate
   use PVM, only: PVMFMYTID, PVMFINITSEND, PVMF90PACK, PVMFSEND, &
-    & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG
+    & PVMDATADEFAULT, PVMERRORMESSAGE, PVMF90UNPACK, NEXTPVMARG, PVMTASKEXIT
   use PVMIDL, only: PVMIDLPACK
   use VectorsModule, only: VECTORVALUE_T
   use QuantityPVM, only: PVMSENDQUANTITY
@@ -121,6 +121,8 @@ contains ! ==================================================================
       if ( info /= 0 ) &
         & call PVMErrorMessage ( info, 'sending finish packet' )
       if ( parallel%fwmParallel ) then
+        call PVMFNotify ( PVMTaskExit, NotifyTag, 1, (/ parallel%masterTid /), info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'setting up notify' )
         call PVMFJoinGroup ( FWMSlaveGroup, info )
         if ( info < 0 ) &
           & call PVMErrorMessage ( info, 'Joining '//FWMSlaveGroup//' group' )
@@ -397,6 +399,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.22  2002/10/08 20:33:51  livesey
+! Added notify stuff for FWMParallel
+!
 ! Revision 2.21  2002/10/08 17:40:56  livesey
 ! Minor bug fix in FWMParallel stuff
 !
