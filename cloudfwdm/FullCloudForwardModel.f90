@@ -566,7 +566,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
      ! get tangent height from tangent pressure
       call InterpolateValues ( &
-        & reshape(temp%template%surfs,(/noSurf/)), &    ! Old X
+        & reshape(gph%template%surfs(:,1),(/noSurf/)), &    ! Old X
         & reshape(gph%values(:,instance),(/noSurf/)), &            ! Old Y
         & reshape(ptan%values(:,maf),(/noMifs/)), &   ! New X
         & zt, &                     ! New Y
@@ -745,9 +745,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       allocate( ds_fine(nfine*nNear), stat=status )
       
       do i=1,nNear*nfine
-       phi_fine(i) = minval(state_ext%template%phi(1,minInst:maxInst)) + &
-         & (i-1._r8)/nfine/nNear*(maxval(state_ext%template%phi(1,minInst:maxInst)) - &
-         & minval(state_ext%template%phi(1,minInst:maxInst)))
+       phi_fine(i) = state_ext%template%phi(1,minInst) + &
+         & (i-1._r8)/nfine/nNear*(state_ext%template%phi(1,maxInst) - &
+         & state_ext%template%phi(1,minInst))
       end do
 
       !----------------------------------
@@ -756,12 +756,16 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       ! vertical
       dz = abs(state_ext%template%surfs(2,1)-state_ext%template%surfs(1,1))
       ! horiozontal: in case of the last instance, use the previous one
-      if(instance < noInstances) &
-         & dphi = abs(state_ext%template%phi(1,instance+1)-state_ext%template%phi(1,instance))
+      if(instance < noInstances) then
+         dphi = abs(state_ext%template%phi(1,instance+1)-state_ext%template%phi(1,instance))
+      else
+         dphi = abs(state_ext%template%phi(1,instance-1)-state_ext%template%phi(1,instance))
+      end if
       
       do mif = 1, noMIFs
       ! Jacobians at only tangent heights less than the top level of retrieval are calculated
-      if(gph%values(noCldSurf,instance) > zt(mif)) then
+      if(  state_ext%template%surfs(noCldSurf,1) > ptan%values(mif,maf) .and. &
+         & state_ext%template%surfs(1,1) < ptan%values(mif,maf)) then
         !------------------------------
         ! find z for given phi_fine
         !------------------------------
@@ -770,8 +774,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          & earthradius%values(1,maf)
          ! convert back to log tangent pressure
          call InterpolateValues ( &
-            & reshape(gph%values(:,instance),(/noSurf/)), &            ! Old X
-            & reshape(temp%template%surfs,(/noSurf/)), &    ! Old Y
+            & reshape(gph%values(:,instance),(/noSurf/)), &    ! Old X
+            & reshape(gph%template%surfs(:,1),(/noSurf/)), &    ! Old Y
             & z_fine, &   ! New X
             & zp_fine, &                     ! New Y
             & 'Linear' )
@@ -812,7 +816,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          end do
       end if
       end do         ! mif
-      
+     
       Deallocate( phi_fine, stat=status )
       Deallocate( z_fine, stat=status )
       Deallocate( zp_fine, stat=status )
@@ -894,6 +898,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.80  2001/11/06 21:54:47  dwu
+! use phiWindow to save time
+!
 ! Revision 1.79  2001/11/06 20:06:31  dwu
 ! speed up Jacobian calculation for high tangent heights
 !
