@@ -8,15 +8,17 @@ module Join                     ! Join together chunk based data.
   ! This module performs the 'join' task in the MLS level 2 software.
 
   use INIT_TABLES_MODULE, only: F_COMPAREOVERLAPS, F_FILE, F_OUTPUTOVERLAPS, F_SOURCE, &
-    & F_SDNAME, F_SWATH, FIELD_FIRST, FIELD_INDICES, FIELD_LAST, L_PRESSURE, L_NONE, &
-    & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_TIME
+    & F_SDNAME, F_SWATH, F_XSTAR, F_YSTAR, F_KSTAR, FIELD_FIRST, FIELD_INDICES, FIELD_LAST
+  use INIT_TABLES_MODULE, only: L_PRESSURE, L_NONE, &
+    & L_TRUE, L_ZETA, S_L2AUX, S_L2GP, S_L2PC, S_TIME
   use L2AUXData, only: AddL2AUXToDatabase, ExpandL2AUXDataInPlace, &
     & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
   use LEXER_CORE, only: PRINT_SOURCE
+  use L2PC_M, only: L2PCBin_T, AddL2PCBinToDatabase
+  use MatrixModule_1, only: Matrix_Database_T, GetFromMatrixDatabase, Matrix_T
   use MLSCommon, only: MLSChunk_T, R8
-! use MLSL2Common
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
@@ -57,35 +59,44 @@ contains ! =====     Public Procedures     =============================
   ! routine has to create the l2gp and l2aux structures with the correct size
   ! in order to be able to store all the chunks.
 
-  subroutine MLSL2Join ( root, vectors, l2gpDatabase, l2auxDatabase, chunkNo, chunks )
+  subroutine MLSL2Join ( root, vectors, matrices, l2gpDatabase, l2auxDatabase, &
+    & l2pcDatabase, chunkNo, chunks )
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
-    type (Vector_T), dimension(:), intent(in) :: vectors
+    type (Vector_T), dimension(:), pointer :: vectors
+    type (Matrix_Database_T), dimension(:), pointer :: matrices
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
-    type (MLSChunk_T), dimension(:), intent(in) :: chunks
+    type (L2PCBin_T), dimension(:), pointer :: l2pcDatabase
     integer, intent(in) :: chunkNo
+    type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
     ! Local variables
-    integer :: FIELD               ! Subtree index of "field" node
-    integer :: FIELD_INDEX         ! F_..., see Init_Tables_Module
+    integer :: FIELD                    ! Subtree index of "field" node
+    integer :: FIELD_INDEX              ! F_..., see Init_Tables_Module
     logical :: GOT_FIELD(field_first:field_last)
-    integer :: GSON                ! Son of Key
-    integer :: KEY                 ! Index of an L2GP or L2AUX tree
-    integer :: KEYNO               ! Index of subtree of KEY
+    integer :: GSON                     ! Son of Key
+    integer :: KEY                      ! Index of an L2GP or L2AUX tree
+    integer :: KEYNO                    ! Index of subtree of KEY
+    integer :: KSTARINDEX               ! Matrix index
     integer :: mlscfLine
-    integer :: NAME                ! Sub-rosa index of name of L2GP or L2AUX
+    integer :: NAME                     ! Sub-rosa index of name of L2GP or L2AUX
     integer :: SWATHNAME                ! Name index
     integer :: SDNAME                   ! Name index
-    integer :: SON                 ! A son of ROOT
-    integer :: SOURCE              ! Index in AST
-    integer :: VALUE               ! Value of a field
-    integer :: vectorIndex, quantityIndex
+    integer :: SON                      ! A son of ROOT
+    integer :: SOURCE                   ! Index in AST
+    integer :: VALUE                    ! Value of a field
+    integer :: VECTORINDEX, QUANTITYINDEX
+    integer :: XSTARINDEX               ! Vector index
+    integer :: YSTARINDEX               ! Vector index
     type (VectorValue_T), pointer :: quantity
     logical :: compareOverlaps, outputOverlaps
     REAL :: T1, T2     ! for timing
     logical :: TIMING
+
+    type (Matrix_T), pointer :: tmpKStar
+    type (L2PCBin_T) :: thisL2PC
 
     ! Executable code
     timing = .false.
@@ -114,6 +125,7 @@ contains ! =====     Public Procedures     =============================
       select case( get_spec_id(key) )
       case ( s_l2aux )
       case ( s_l2gp )
+      case ( s_l2pc )
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -125,11 +137,13 @@ contains ! =====     Public Procedures     =============================
 
       got_field = .false.
       source = null_tree
-!     name=mlscfSection%entries(mlscfLine)%mlscfEntryName
       compareOverlaps = .FALSE.
       outputOverlaps = .FALSE.
       sdName=name
       swathName=name
+      xStarIndex = 0
+      yStarIndex = 0
+      kStarIndex = 0
 
       ! Loop over the fields of the mlscf line
 
@@ -144,6 +158,12 @@ contains ! =====     Public Procedures     =============================
         field_index = decoration(field)
         got_field(field_index) = .true.
         select case ( field_index )
+        case ( f_xStar )
+          xStarIndex = decoration(value)
+        case ( f_yStar )
+          yStarIndex = decoration(value)
+        case ( f_kStar )
+          kStarIndex = decoration(value)
         case ( f_source )
           source = subtree(2,gson) ! required to be an n_dot vertex
           vectorIndex = decoration(decoration(subtree(1,source)))
@@ -165,28 +185,39 @@ contains ! =====     Public Procedures     =============================
       if ( error > 0 ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Errors in configuration prevent proceeding" )
 
-      quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
+      select case ( get_spec_id(key) )
+      case ( s_l2gp, s_l2aux ) ! ------------- L2GP and L2AUX Data     ------------
+        quantity => GetVectorQtyByTemplateIndex(vectors(vectorIndex),quantityIndex)
+        
+        ! Now, depending on the properties of the source we deal with the
+        ! vector quantity appropriately.
+        if (ValidateVectorQuantity(quantity,coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.,&
+          & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
+          ! Coherent, stacked, regular quantities on pressure surfaces, or
+          ! with no vertical coordinate system go in l2gp files.
+          if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
+            & ModuleName, 'This quantity should be joined as an l2gp')
+          call JoinL2GPQuantities ( key, swathName, quantity, l2gpDatabase, chunkNo )
+        else
+          ! All others go in l2aux files.
+          if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
+            & ModuleName, 'This quantity should be joined as an l2aux')
+          call JoinL2AUXQuantities ( key, sdName, quantity, l2auxDatabase, chunkNo, chunks )
+        endif
 
-      ! Now, depending on the properties of the source we deal with the
-      ! vector quantity appropriately.
+      case ( s_l2pc ) ! ------------------- L2PC Bins ------------------------
+        thisL2PC%xStar = vectors(xStarIndex)
+        thisL2PC%yStar = vectors(yStarIndex)
+        call GetFromMatrixDatabase ( matrices(kStarIndex), tmpKStar )
+        thisL2PC%kStar = tmpKStar
+        call decorate ( key, AddL2PCBinToDatabase ( l2pcDatabase, thisL2PC ) )
+        
+      case default ! Timing
+      end select
 
-      if (ValidateVectorQuantity(quantity,coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.,&
-        & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
-        ! Coherent, stacked, regular quantities on pressure surfaces, or
-        ! with no vertical coordinate system go in l2gp files.
-        call JoinL2GPQuantities ( key, swathName, quantity, l2gpDatabase, chunkNo )
-      else
-        ! All others go in l2aux files.
-        call JoinL2AUXQuantities ( key, sdName, quantity, l2auxDatabase, chunkNo, chunks )
-      endif
     end do
 
-    if ( toggle(gen) ) then
-      if ( levels(gen) > 0 ) then
-!       call dump ( ???, details=levels(gen)-1 )
-      end if
-      call trace_end ( "MLSL2Join" )
-    end if
+    if ( toggle(gen) ) call trace_end ( "MLSL2Join" )
     if ( timing ) call sayTime
 
   contains
@@ -577,6 +608,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.21  2001/04/24 20:04:54  livesey
+! Added l2pc joining
+!
 ! Revision 2.20  2001/04/10 23:44:44  vsnyder
 ! Improve 'dump'
 !
