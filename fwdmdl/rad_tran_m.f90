@@ -176,7 +176,7 @@ END SUBROUTINE rad_tran
 !----------------------------------------------------------------------
 ! This is the radiative transfer derivative wrt mixing ratio model
 !
-SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
+SUBROUTINE drad_tran_df(z_path_c,Grids_f, &
                      &  beta_path_c,eta_zxp_f_c,sps_path_c,do_calc_f_c, &
                      &  beta_path_f,eta_zxp_f_f,sps_path_f,do_calc_f_f, &
                      &  do_gl,del_s,ref_cor,ds_dh_gl,dh_dz_gl,t_script,tau, &
@@ -185,9 +185,7 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
 ! Inputs
 !
   REAL(rp), INTENT(in) :: z_path_c(:) ! -log(P) on main grid.
-  Type (Grids_T) :: Grids_f           ! All the coordinates
-  LOGICAL, INTENT(in) :: lin_log(:) ! kind of basis to use for each species.
-  REAL(rp), INTENT(in) :: sps_values(:) ! sps basis break-point values.
+  Type (Grids_T), INTENT(in) :: Grids_f ! All the coordinates
   REAL(rp), INTENT(in) :: beta_path_c(:,:) ! cross section for each species
 !                                            on main grid.
   REAL(rp), INTENT(in) :: eta_zxp_f_c(:,:) ! representation basis function
@@ -284,7 +282,7 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
           ENDIF
         ENDDO
 !
-        IF(lin_log(sps_i)) THEN
+        IF(grids_f%lin_log(sps_i)) THEN
 !
           singularity = beta_path_c(inds,sps_i)*eta_zxp_f_c(inds,sv_i) &
                      &  * sps_path_c(inds,sps_i)
@@ -335,7 +333,7 @@ SUBROUTINE drad_tran_df(z_path_c,Grids_f,lin_log,sps_values,            &
           ENDIF
 !
           d_delta_df(inds) = ref_cor(inds)*d_delta_df(inds) &
-                           / EXP(sps_values(sv_i))
+                           / EXP(grids_f%values(sv_i))
 !
         ELSE
 !
@@ -916,6 +914,9 @@ END SUBROUTINE drad_tran_dt
 !----------------------------------------------------------------------
 End module RAD_TRAN_M
 ! $Log$
+! Revision 2.4  2002/06/04 10:28:04  zvi
+! rename n_sps to: no_mol, more correctly
+!
 ! Revision 2.3  2002/02/16 06:38:05  zvi
 ! Some cosmetic changes..
 !
