@@ -629,7 +629,8 @@ contains
 
     ! Compute the hydrostatic_model on the GL-Grid for all maf(s):
     ! First extend the grid below the surface.
-    si = FMI%Surface_index
+
+    si = ForwardModelConfig%SurfaceTangentIndex
 
     ! Now compute a hydrostatic grid given the temperature and refGPH
     ! information.
@@ -1039,9 +1040,8 @@ contains
             &     ForwardModelConfig%tangentGrid%noSurfs,  &
             &     k_info_count,i_star_all(i,:),k_star_all((1),:,:,:,:), &
             &     k_star_info,temp%template%noSurfs,temp%template%noInstances,&
-            &     TFMI%no_phi_f,   &
-            &     FMI%spectroscopic,temp%template%surfs(:,1),FMI%Xlamda,FMI%Aaap,&
-            &     FMI%D1Aaap,FMI%D2Aaap,FMI%Ias,ier)
+            &     TFMI%no_phi_f, FMI%spectroscopic,temp%template%surfs(:,1), &  
+            &     FMI%Xlamda,FMI%Aaap, FMI%D1Aaap,FMI%D2Aaap,FMI%Ias,ier)
           if(ier /= 0) goto 99
         else
           ! Note I am replacing the i's in the k's with 1's (enclosed in
@@ -1117,8 +1117,8 @@ contains
 905 format(4(2x,1pg15.8))
 
     call Deallocate_test(usedChannels, 'usedChannels', ModuleName)
-    print*,'At the end radiances are:'
-    call dump(radiance%values)
+!   print*,'At the end radiances are:'
+!   call dump(radiance%values)
 
     if(.not. any((/FMC%temp_der,FMC%atmos_der,FMC%spect_der/))) goto 99
 
@@ -1325,6 +1325,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.52  2001/03/29 12:11:16  zvi
+! Fixing Bug seeting surface index erroniously
+!
 ! Revision 2.51  2001/03/29 02:37:30  livesey
 ! Modified convolution to use new grids
 !
