@@ -24,12 +24,13 @@ module RetrievalModule
     & F_criteria, F_columnScale, F_covariance, F_diagonal, &
     & F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, F_jacobian, &
     & F_lambda, F_maxF, F_maxJ, F_measurements, F_measurementSD, F_method, &
-    & F_outputCovariance, F_outputSD, F_quantity, F_state, F_test, F_toleranceA, &
-    & F_toleranceF, F_toleranceR, Field_first, Field_last, &
+    & F_outputCovariance, F_outputSD, F_quantity, F_regOrders, F_regWeight, &
+    & F_state, F_test, F_toleranceA, F_toleranceF, F_toleranceR, &
+    & Field_first, Field_last, &
     & L_apriori, L_covariance, L_newtonian, L_none, L_norm, &
     & S_dumpBlocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, &
     & S_time
-  use Intrinsic, only: Field_indices, Spec_indices
+  use Intrinsic, only: Field_indices, PHYQ_Dimensionless, Spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
     & ClearMatrix, ColumnScale, CopyMatrix, CopyMatrixValue, CreateEmptyMatrix, &
@@ -44,6 +45,7 @@ module RetrievalModule
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use Output_M, only: Output
+  use Regularization, only: MaxRegOrd, Regularize
   use String_Table, only: Display_String
   use SidsModule, only: SIDS
   use Toggles, only: Gen, Switches, Toggle
@@ -158,6 +160,7 @@ contains
                                         ! n_named, subtree(1,son)
     type(matrix_SPD_T) :: NormalEquations         ! Jacobian**T * Jacobian
     integer :: NumF, NumJ               ! Number of Function, Jacobian evaluations
+    integer :: NumRegOrds               ! Number of regularization orders
     integer :: NWT_Flag                 ! Signal from NWT, q.v., indicating
                                         ! the action to take.
     integer :: NWT_Opt(20)              ! Options for NWT, q.v.
@@ -167,6 +170,8 @@ contains
     integer :: Quantity                 ! Index in tree of "quantity" field
                                         ! of subset specification, or zero
     integer :: QuantityIndex            ! Index within vector of a quantity
+    integer, dimension(:), pointer :: RegOrds    ! Regularization orders
+    real(r8) :: RegWeight               ! Weight of regularization conditions
     integer :: RowBlock                 ! Which block of rows is the forward
                                         ! model filling?
     integer :: Son                      ! Of Root or Key
@@ -195,15 +200,16 @@ contains
     type(vector_T) :: XminusApriori     ! X - Apriori
 
     ! Error message codes
-    integer, parameter :: AprioriAndCovar = 1     ! Only one of apriori and
-                                                  ! covariance supplied
-    integer, parameter :: Inconsistent = AprioriAndCovar + 1 ! Inconsistent fields
+    integer, parameter :: BothOrNeither = 1       ! Only one of two required
+                                                  !    fields supplied
+    integer, parameter :: Inconsistent = BothOrNeither + 1 ! Inconsistent fields
     integer, parameter :: NoFields = Inconsistent + 1  ! No fields are allowed
     integer, parameter :: NotExtra = noFields + 1 ! No "extra" row and/or column
     integer, parameter :: NotSPD = notExtra + 1   ! Not symmetric pos. definite
+    integer, parameter :: OrderAndWeight = notSPD + 1  ! Need both or neither
 
     error = 0
-    nullify ( apriori, configIndices, covariance, fwdModelOut )
+    nullify ( apriori, configIndices, covariance, fwdModelOut, regOrds )
     nullify ( measurements, measurementSD, state, outputSD )
     timing = .false.
 
@@ -278,6 +284,7 @@ contains
         maxFunctions = defaultMaxF
         maxJacobians = defaultMaxJ
         method = defaultMethod
+        numRegOrds = 0
         toleranceA = defaultToleranceA
         toleranceF = defaultToleranceF
         toleranceR = defaultToleranceR
@@ -321,6 +328,17 @@ contains
             measurementSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_method )
             method = decoration(subtree(2,son))
+          case ( f_regOrders )
+            call allocate_test ( regOrds, nsons(son)-1, &
+              & "Regularization orders", moduleName )
+            numRegOrds = nsons(son) - 1
+            do k = 2, nsons(son)
+              call expr(subtree(k,son), units, value, type )
+              if ( units(1) /= phyq_dimensionless ) call MLSMessage ( &
+                & MLSMSG_Error, moduleName, &
+                & "Regularization orders must be dimensionless" )
+              regOrds(k-1) = value(1)
+            end do
           case ( f_outputCovariance )
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
@@ -328,7 +346,7 @@ contains
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxF, f_maxJ, &
-            &    f_toleranceA, f_toleranceF, f_toleranceR )
+            &    f_regWeight, f_toleranceA, f_toleranceF, f_toleranceR )
             call expr ( subtree(2,son), units, value, type )
             select case ( field )
             case ( f_aprioriScale )
@@ -341,6 +359,8 @@ contains
               maxFunctions = value(1)
             case ( f_maxJ )
               maxJacobians = value(1)
+            case ( f_regWeight )
+              regWeight = value(1)
             case ( f_toleranceA )
               toleranceA = value(1)
             case ( f_toleranceF )
@@ -354,7 +374,9 @@ contains
         end do ! j = 2, nsons(key)
 
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
-          & call announceError ( aprioriAndCovar )
+          & call announceError ( bothOrNeither, f_apriori, f_covariance )
+        if ( got(f_regOrders) .neqv. got(f_regWeight) ) &
+          & call announceError ( bothOrNeither, f_regOrders, f_regWeight )
         if ( error == 0 ) then
 
           ! Verify the consistency of various matrices and vectors
@@ -480,6 +502,17 @@ contains
             end do
 
               if ( index(switches,'sca') /= 0 ) then
+                if ( got(f_regOrders) ) then
+                  if ( numRegOrds == 1 ) then
+                    call output ( ' regOrder = ' )
+                    call output ( regOrds(1) )
+                  else
+                    call dump ( regOrds, &
+                    & "Regularization orders:", clean=.true., format='(i3)' )
+                  end if
+                  call output ( ' regWeight = ' )
+                  call output ( regWeight )
+                end if
                 if ( got(f_apriori) ) then
                   call output ( ' apriori scale = ' )
                   call output ( aprioriScale )
@@ -1019,6 +1052,7 @@ contains
         call destroyVectorInfo ( f )
         call deallocate_test ( configIndices, "ConfigIndices", moduleName )
         ! Clear the masks of every vector
+        call deallocate_test ( regOrds, "Regularization orders", moduleName )
         do j = 1, size(vectorDatabase)
           call destroyVectorMask ( vectorDatabase(i) )
         end do
@@ -1049,11 +1083,11 @@ contains
       call print_source ( source_ref(son) )
       call output ( ' RetrievalModule complained: ' )
       select case ( code )
-      case ( aprioriAndCovar )
+      case ( bothOrNeither )
         call output ( 'One of ' )
-        call display_string ( field_indices(f_apriori) )
+        call display_string ( field_indices(fieldIndex) )
         call output ( ' or ' )
-        call display_string ( field_indices(f_covariance) )
+        call display_string ( field_indices(anotherFieldIndex) )
         call output ( ' is supplied, but the other is not.', advance='yes' )
       case ( noFields )
         call output ( 'No fields are allowed for a ' )
@@ -1089,6 +1123,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.43  2001/06/22 01:26:54  vsnyder
+! Process fields for regularization, but regularization isn't done yet
+!
 ! Revision 2.42  2001/06/20 22:21:22  vsnyder
 ! Added initialization for fmStat%newScanHydros
 !
