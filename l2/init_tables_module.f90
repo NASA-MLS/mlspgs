@@ -16,8 +16,8 @@ module INIT_TABLES_MODULE
     ! INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
     ! N, NADP, ND, NDP, NP, NR, P, S, T,
     ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
-    ! T_STRING and Z are used here, but everything is included so that it
-    ! can be gotten by USE INIT_TABLES_MODULE.
+    ! T_STRING, S_TIME and Z are used here, but everything is included so
+    ! that it can be gotten by USE INIT_TABLES_MODULE.
   use MOLECULES ! Everything.
 
   implicit NONE
@@ -229,8 +229,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_SNOOP              = s_sids + 1
   integer, parameter :: S_SUBSET             = s_snoop + 1
   integer, parameter :: S_TEMPLATE           = s_subset + 1
-  integer, parameter :: S_TIME               = s_template + 1
-  integer, parameter :: S_VECTOR             = s_time + 1
+  integer, parameter :: S_VECTOR             = s_template + 1
   integer, parameter :: S_VECTORTEMPLATE     = s_vector + 1
   integer, parameter :: S_VGRID              = s_vectortemplate + 1
   integer, parameter :: SPEC_LAST = s_vGrid
@@ -497,7 +496,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_snoop) =                add_ident ( 'snoop' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
-    spec_indices(s_time) =                 add_ident ( 'time' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
     spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
@@ -830,6 +828,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.78  2001/04/23 23:04:38  vsnyder
+! Move 's_time' to 'intrinsic'
+!
 ! Revision 2.77  2001/04/21 01:26:18  livesey
 ! Now supports creation of h/v grids from l2gp
 !
