@@ -94,7 +94,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_KSTAR               = f_jacobian + 1
   integer, parameter :: F_LENGTH              = f_kStar + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
-  integer, parameter :: F_MAXITERATIONS       = f_logBasis + 1
+  integer, parameter :: F_L2PC                = f_logBasis + 1
+  integer, parameter :: F_MAXITERATIONS       = f_l2pc + 1
   integer, parameter :: F_MATRIX              = f_maxIterations + 1
   integer, parameter :: F_MEASUREMENTS        = f_matrix + 1
   integer, parameter :: F_METHOD              = f_measurements + 1
@@ -403,6 +404,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_length) =              add_ident ( 'length' )
     field_indices(f_lines) =               add_ident ( 'lines' )
     field_indices(f_logBasis) =            add_ident ( 'logBasis' )
+    field_indices(f_L2PC) =                add_ident ( 'l2pc' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
     field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
     field_indices(f_measurements) =        add_ident ( 'measurements' )
@@ -755,9 +757,10 @@ contains ! =====     Public procedures     =============================
             ndp+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
+             begin, f+f_l2pc, t+t_string, n+n_field_type, &
              begin, f+f_filterShapes, t+t_string, n+n_field_type, &
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
-             nadp+n_spec_def /) )
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
@@ -849,6 +852,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.83  2001/04/26 00:07:51  livesey
+! Stuff to support reading of l2pc files
+!
 ! Revision 2.82  2001/04/25 20:34:19  livesey
 ! Now supports writing of l2pc files
 !
