@@ -20,7 +20,7 @@
   !define(pfgFile,{PFG_})               ; Include _ to avoid getting the PFG-rtvl file
   !define(pfgRtvlFile,{PFG-rtvl})
 },{
-  !define(antennaFile,'!calpath/MLS-Aura_L2Cal-AAAP_v1-4-0_0000d000.txt')
+  !define(antennaFile,'!calpath/MLS-Aura_L2Cal-AAAP_v1-4-1_0000d000.txt')
   !define(climatologyFile,'!calpath/MLS-Aura_L2Cal-Climatologies_v1-4-1_0000d000.txt')
   !define(filterFile,'!calpath/MLS-Aura_L2Cal-Filters_v1-4-0_0000d000.txt')
   !define(dacsFilterFile,'!calpath/MLS-Aura_L2Cal-DACSFilters_v1-4-1_0000d000.txt')
