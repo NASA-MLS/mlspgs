@@ -512,7 +512,7 @@ contains
   end subroutine Destroygrids_t
 
   ! -------------------------------------------------  Dump_Grids  -----
-  subroutine Dump_Grids ( The_Grid, Name )
+  subroutine Dump_Grids ( The_Grid, Name, Details )
   ! Dump The_Grid
 
     use Dump_0, only: Dump
@@ -520,22 +520,38 @@ contains
 
     type(grids_t), intent(in) :: The_Grid
     character(len=*), intent(in), optional :: Name
+    integer, intent(in), optional :: Details ! <= 0 => don't dump bases
+                                             ! <= 1 => don't dump values, default 0
+
+    integer :: myDetails
+
+    myDetails = 0
+    if ( present(details) ) myDetails = details
 
     call output ( 'Dump of Grids_T structure', advance='no' )
     if ( present(name) ) then
       call output ( ' ', advance='no' )
       call output ( name, advance='no' )
     end if
+    call output ( the_grid%p_len, before = ', P_Len = ' )
     call output ( the_grid%lastNonPfa, before =', Last Non-PFA = ', advance='yes' )
-    call dump ( the_grid%windowStart, 'The_grid%WindowStart' )
-    call dump ( the_grid%windowFinish, 'The_grid%WindowFinish' )
-    call dump ( the_grid%lin_log, 'The_grid%Lin_Log' )
-    call dump ( the_grid%min_val, 'The_grid%Min_Val' )
-    call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
-    call dump ( the_grid%zet_basis, 'The_grid%Zet_Basis' )
-    call dump ( the_grid%phi_basis, 'The_grid%Phi_Basis' )
-    call dump ( the_grid%values, 'The_grid%Values' )
-    call dump ( the_grid%deriv_flags, 'The_grid%Deriv_Flags' )
+    call dump ( the_grid%l_f(1:), 'The_grid%l_f' )
+    call dump ( the_grid%l_z(1:), 'The_grid%l_z' )
+    call dump ( the_grid%l_p(1:), 'The_grid%l_p' )
+    call dump ( the_grid%l_v(1:), 'The_grid%l_v' )
+    if ( myDetails > 0 ) then
+      call dump ( the_grid%windowStart, 'The_grid%WindowStart' )
+      call dump ( the_grid%windowFinish, 'The_grid%WindowFinish' )
+      call dump ( the_grid%lin_log, 'The_grid%Lin_Log' )
+      call dump ( the_grid%min_val, 'The_grid%Min_Val' )
+      call dump ( the_grid%frq_basis, 'The_grid%Frq_Basis' )
+      call dump ( the_grid%zet_basis, 'The_grid%Zet_Basis' )
+      call dump ( the_grid%phi_basis, 'The_grid%Phi_Basis' )
+      if ( myDetails > 1 ) then
+        call dump ( the_grid%values, 'The_grid%Values' )
+        call dump ( the_grid%deriv_flags, 'The_grid%Deriv_Flags' )
+      end if
+    end if
 
   end subroutine Dump_Grids
 
@@ -545,6 +561,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.59  2004/07/08 21:00:23  vsnyder
+! Inching toward PFA
+!
 ! Revision 2.58  2004/03/30 00:55:30  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !
