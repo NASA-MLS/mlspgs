@@ -962,7 +962,7 @@ contains ! =====     Public Procedures     =============================
     call ReadL1BData ( l1bInfo%l1bOAID, instrumentModuleName//".tpGeodAngle", &
       & l1bField, noMAFs, flag, &
       & firstMAF=chunk%firstMAFIndex, &
-      & lastMAF=chunk%lastMAFIndex
+      & lastMAF=chunk%lastMAFIndex )
     mifPhi => l1bField%dpField(1,:,:)
 
     phiMin = minval ( mifPhi )
@@ -1090,6 +1090,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.30  2002/06/29 06:11:36  livesey
+! Typo!
+!
 ! Revision 2.29  2002/06/29 05:55:19  livesey
 ! Added the geom diagnostic
 !
