@@ -26,7 +26,7 @@ module RetrievalModule
     & F_quantity, F_state, F_test, F_toleranceA, F_toleranceF, &
     & F_toleranceR, F_weight, field_first, field_last, &
     & L_apriori, L_covariance, L_newtonian, L_none, L_norm, &
-    & S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, S_time
+    & S_dumpblocks, S_forwardModel, S_sids, S_matrix, S_subset, S_retrieve, S_time
   use Intrinsic, only: Field_indices, Spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrix, AddToMatrixDatabase, CholeskyFactor, &
@@ -38,6 +38,7 @@ module RetrievalModule
     & Matrix_Database_T, Matrix_Cholesky_T, Matrix_SPD_T, MaxAbsVal, MinDiag, &
     & MultiplyMatrixVector, Negate, RowScale, ScaleMatrix, SolveCholesky, &
     & UpdateDiagonal
+  use MatrixTools, only: DumpBlock
   use MLSCommon, only: R8
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use Output_M, only: Output
@@ -204,6 +205,8 @@ contains
       got = .false.
       spec = get_spec_id(key)
       select case ( spec )
+      case ( s_dumpblocks )
+        call DumpBlock ( key, matrixDatabase )
       case ( s_matrix )
         if ( toggle(gen) ) call trace_begin ( "Retrieve.matrix/vector", root )
         if ( nsons(key) /= 1 ) call announceError ( noFields, spec )
@@ -724,6 +727,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.25  2001/05/02 05:28:04  livesey
+! Added DumpBlocks
+!
 ! Revision 2.24  2001/05/01 23:52:04  vsnyder
 ! Allocate and deallocate fmStat%rows here
 !
