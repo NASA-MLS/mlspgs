@@ -74,13 +74,6 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
     k = no_tan_hts
     j = size(Ptan)
-    print*,'tan_press:'
-    call dump(tan_press)
-    print*,'PTan:'
-    call dump(ptan)
-    print*,'i_raw'
-    call dump(i_raw)
-    print*,'k,j',k,j
     Call Cspline(tan_press,Ptan,i_raw,i_star_all,k,j)
 !
     if(.not. ANY((/temp_der,atmos_der,spect_der/))) Return
@@ -224,6 +217,9 @@ Subroutine no_conv_at_all (Ptan,n_sps,tan_press,band,temp_der,atmos_der,&
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.5  2001/03/29 02:54:29  livesey
+! Changed assumed size to assumed shape
+!
 ! Revision 1.4  2001/03/26 17:56:14  zvi
 ! New codes to deal with dh_dt_path issue.. now being computed on the fly
 !
