@@ -3,12 +3,19 @@
 
 module REFRACTION_M
 
-  use MLSCommon, only: RP  ! Need to use it here to define result of later function
+  use MLSCommon, only: RP
     
   implicit none
 
   private
   public :: Refractive_index, Comp_refcor, Path_ds_dh
+
+  real(rp), parameter, public :: RefrAterm = 0.0000776_rp
+  real(rp), parameter, public :: RefrBterm = 4810.0_rp
+
+  interface Refractive_index
+    module procedure Refractive_index_1, Refractive_index_0
+  end interface
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -17,9 +24,9 @@ module REFRACTION_M
   character (len=*), parameter :: ModuleName= "$RCSfile$"
 !---------------------------------------------------------------------------
 contains
-!----------------------------------------------  Refractive_index  -----
 
-  subroutine Refractive_index ( p_path, t_path, n_path, h2o_path )
+!--------------------------------------------  Refractive_index_1  -----
+  subroutine Refractive_index_1 ( p_path, t_path, n_path, h2o_path )
 
   ! This routine computes the refractive index as a function of altitude
   ! and phi. The returned value has one subtracted from it
@@ -38,17 +45,43 @@ contains
     real(rp), intent(out) :: n_path(:) ! refractive indicies - 1
   ! Keywords
     real(rp), optional, intent(in) :: h2o_path(:) ! H2O vmr(ppv)
-  !  ----------------
-  !  Local variables:
-  !  ----------------
-    real(rp), parameter :: const1 = 0.0000776_rp
-    real(rp), parameter :: const2 = 4810.0_rp
+
   ! begin code
-    n_path = const1 * p_path / t_path
-    if ( present(h2o_path) ) n_path = n_path *( 1.0_rp + const2*h2o_path/t_path)
+    n_path = refrAterm * p_path / t_path
+    if ( present(h2o_path) ) &
+      & n_path = n_path *( 1.0_rp + refrBterm*h2o_path/t_path)
     return
 
-  end subroutine Refractive_index
+  end subroutine Refractive_index_1
+
+!--------------------------------------------  Refractive_index_0  -----
+  subroutine Refractive_index_0 ( p_path, t_path, n_path, h2o_path )
+
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it
+  ! We could easily make this elemental but it might run slower due
+  ! to multiple executions of if ( PRESENT(...))
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  ! inputs
+    real(rp), intent(in) :: p_path ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path ! temperature vector(K)
+  ! output
+    real(rp), intent(out) :: n_path ! refractive indicies - 1
+  ! Keywords
+    real(rp), optional, intent(in) :: h2o_path ! H2O vmr(ppv)
+
+  ! begin code
+    n_path = refrAterm * p_path / t_path
+    if ( present(h2o_path) ) &
+      & n_path = n_path *( 1.0_rp + refrBterm*h2o_path/t_path)
+    return
+
+  end subroutine Refractive_index_0
 
 ! --------------------------------------------------  Comp_refcor  -----
 
@@ -303,6 +336,9 @@ o2: do j = mid+1, no_ele-1
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.11  2002/09/26 18:02:36  livesey
+! Bug fix (wouldn't compile)
+!
 ! Revision 2.10  2002/09/26 00:27:55  vsnyder
 ! Insert copyright notice, move USEs from module scope to procedure scope,
 ! cosmetic changes.
