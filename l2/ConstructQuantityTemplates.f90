@@ -622,6 +622,7 @@ contains ! =====     Public Procedures     =============================
     mifGeolocation(instrumentModule)%mafIndex = 0.0
     mifGeolocation(instrumentModule)%mafCounter = 0.0
 
+    mifGeolocation(instrumentModule)%surfs = 0.0
     do maf = 1, noMAFs
       call expr (subtree ( maf+1, geodAngleNode), expr_units, expr_value )
       mifGeolocation(instrumentModule)%phi(:,maf) = expr_value(1)
@@ -692,6 +693,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.26  2001/04/25 20:33:07  livesey
+! Minor bug fix, Forge now also zeros surfs.
+!
 ! Revision 2.25  2001/04/25 19:29:49  livesey
 ! Fixed bug in forge, now sets mafCounter and mafIndex correctly.
 !

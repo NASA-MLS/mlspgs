@@ -12,12 +12,13 @@ module OutputAndClose ! outputs all data from the Join module to the
   use Hdf, only: DFACC_CREATE, SFEND, SFSTART
   use HDFEOS, only: SWCLOSE, SWOPEN
   use INIT_TABLES_MODULE, only: F_FILE, F_OVERLAPS, F_QUANTITIES, F_TYPE, &
-    & L_L2AUX, L_L2GP, S_OUTPUT, S_TIME
+    & L_L2AUX, L_L2GP, L_L2PC, LIT_INDICES, S_OUTPUT, S_TIME
   use L2AUXData, only: L2AUXDATA_T, WriteL2AUXData
   use L2GPData, only: L2GPData_T, WriteL2GPData, L2GPNameLen
+  use L2PC_m, only: L2PC_T, WRITEONEL2PC
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: I4
-  use MLSFiles, only: GetPCFromRef
+  use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
@@ -26,7 +27,7 @@ module OutputAndClose ! outputs all data from the Join module to the
     & Mlspcf_mcf_l2dgg_start
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
-  use SDPToolkit, only: PGS_S_SUCCESS, Pgs_smf_getMsg
+  use SDPToolkit, only: PGS_S_SUCCESS, PGS_SMF_GETMSG, PGSD_IO_GEN_WSEQFRM
   use STRING_TABLE, only: GET_STRING
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
@@ -59,7 +60,8 @@ module OutputAndClose ! outputs all data from the Join module to the
 contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
-  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcf )
+  subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcDatabase,&
+    & l2pcf )
 
     ! Hard-wired assumptions:
 
@@ -77,6 +79,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in) :: ROOT   ! Of the output section's AST
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase ! L2GP products
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase ! L2AUX products
+    type (L2PC_T), dimension(:), pointer :: l2pcDatabase ! L2PC products
     type(PCFData_T) :: l2pcf
 
     ! - - - Local declarations - - -
@@ -90,6 +93,7 @@ contains ! =====     Public Procedures     =============================
     integer :: KEY                      ! Index of spec_args node
     integer :: l2auxFileHandle, l2aux_Version
     integer :: l2gp_mcf, l2aux_mcf, l2dgg_mcf  ! mcf numbers for writing metadata
+    integer :: L2PCUNIT
     character (len=132) :: l2auxPhysicalFilename
     integer :: l2gpFileHandle, l2gp_Version
     character (len=132) :: l2gpPhysicalFilename
@@ -101,6 +105,7 @@ contains ! =====     Public Procedures     =============================
     integer:: numquantitiesperfile        
     integer :: OUTPUT_TYPE              ! L_L2AUX or L_L2GP
     character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
+    integer :: RECLEN                   ! For file stuff
     integer :: returnStatus
     integer(i4) :: SDFID                ! File handle
     integer :: SON                      ! Of Root -- spec_args or named node
@@ -155,7 +160,7 @@ contains ! =====     Public Procedures     =============================
         end do
 
         select case ( output_type )
-        case ( l_l2gp )
+        case ( l_l2gp ) ! --------------------- Writing l2gp files -----
           if ( DEBUG ) call output('output file type l2gp', advance='yes')
           ! Get the l2gp file name from the PCF
 
@@ -165,7 +170,8 @@ contains ! =====     Public Procedures     =============================
             & exactName=l2gpPhysicalFilename)
 
           if ( returnStatus == 0 ) then
-            if ( DEBUG ) call output('file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
+            if ( DEBUG ) call output(&
+              & 'file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
             ! Open the HDF-EOS file and write swath data
 
             if ( DEBUG ) call output('Attempting swopen', advance='yes')
@@ -258,7 +264,7 @@ contains ! =====     Public Procedures     =============================
               &  "Error finding l2gp file matching:  "//file_base, returnStatus)
           end if
 
-        case ( l_l2aux )
+        case ( l_l2aux ) ! ------------------------------ Writing l2aux files ---
 
           if ( DEBUG ) call output ( 'output file type l2aux', advance='yes' )
           ! Get the l2aux file name from the PCF
@@ -270,7 +276,8 @@ contains ! =====     Public Procedures     =============================
 
           if ( returnStatus == 0 ) then
 
-            if ( DEBUG ) call output ( 'file name: ' // TRIM(l2auxPhysicalFilename), advance='yes' )
+            if ( DEBUG ) call output ( 'file name: ' // TRIM(l2auxPhysicalFilename), &
+              & advance='yes' )
             ! Create the HDF file and initialize the SD interface
             if ( DEBUG ) call output ( 'Attempting sfstart', advance='yes' )
             sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
@@ -294,7 +301,8 @@ contains ! =====     Public Procedures     =============================
                   if ( db_index <= size(l2auxDatabase) ) then
                     call WriteL2AUXData ( l2auxDatabase(db_index),sdfid )
                     numquantitiesperfile = numquantitiesperfile+1
-                    if ( DEBUG ) call output("attempting to fill quantity name", advance='yes')
+                    if ( DEBUG ) call output(&
+                      & "attempting to fill quantity name", advance='yes')
                     call get_string &
                       & ( l2auxDatabase(db_index)%name, &
                       &     QuantityNames(numquantitiesperfile) )
@@ -354,7 +362,31 @@ contains ! =====     Public Procedures     =============================
               &  "Error finding l2aux file matching:  "//file_base, returnStatus)
           end if
 
+        case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
+          ! I intend to completely ignore the PCF file in this case,
+          ! it's not worth the effort!
+          recLen = 0
+          l2pcUnit = mls_io_gen_openf ( 'open', .true., error,&
+            & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0 )
+          if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
+            & 'Failed to open l2pc file:'//trim(file_base))
+          do field_no = 2, nsons(key) ! Skip "output" name
+            gson = subtree(field_no,key)
+            select case ( decoration(subtree(1,gson)) )
+            case ( f_quantities )
+              do in_field_no = 2, nsons(gson)
+                db_index = decoration(decoration(subtree(in_field_no ,gson)))
+                call writeOneL2PC ( l2pcDatabase(db_index), l2pcUnit, lit_indices )
+              end do ! in_field_no = 2, nsons(gson)
+            case ( f_overlaps )
+              ! ??? More work needed here
+            end select
+          end do ! field_no = 2, nsons(key)
+          error = mls_io_gen_closef ( 'cl', l2pcUnit)
+          if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
+            & 'Failed to close l2pc file:'//trim(file_base))
         end select
+
       case ( s_time )
         if ( timing ) then
           call sayTime
@@ -432,6 +464,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.26  2001/04/25 20:34:04  livesey
+! Now writes l2pc files
+!
 ! Revision 2.25  2001/04/20 23:51:24  vsnyder
 ! Improve an error message.  Add an option to consider the penalty in
 ! Announce_Error.  Numerous cosmetic changes.
