@@ -21,6 +21,7 @@ Switches (set by -S option in mlsl2's command line):
   pro => Product files: l2gp, l2aux, l2dgg, l2pc, meta
   mas => Activities of the PVM master task
   neq => Normal equations during retriever iterations
+  ndb => Dump the Newton method's internal variables before every step
   nwt => Action flag at each return from Newton solver
   rad => Radiances in ForwardModelInterface
   sca => Scalars of interest to the Newton method
@@ -52,6 +53,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.6  2001/05/24 16:37:55  livesey
+ Added comments on mas and slv switches
+
  Revision 1.5  2001/05/23 22:26:19  pwagner
  Added section dividers; notes on automatic use
 
