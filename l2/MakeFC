@@ -140,6 +140,7 @@ clean:
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
 	fi
 	rm -f Make.dep.*
 
@@ -158,6 +159,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.17  2001/03/13 19:07:59  pwagner
+# clean now removes executables, too
+#
 # Revision 2.16  2001/03/12 22:46:57  pwagner
 # Revised clean, tar; automatic symlink to Makefile
 #
