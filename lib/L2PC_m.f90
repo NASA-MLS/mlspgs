@@ -38,6 +38,7 @@ module L2PC_m
   
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
+  public :: BinSelectors
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
   ! As this contains pointers to vector_T's and so on, I maintain a private
@@ -108,22 +109,21 @@ contains ! ============= Public Procedures ==========================
   end subroutine Close_L2PC_File
 
   ! -------------------------------------- DestroyBinSelectorDatabase
-  subroutine DestroyBinSelectorDatabase ( database )
-    type (BinSelector_T), dimension(:), pointer :: DATABASE
+  subroutine DestroyBinSelectorDatabase 
     ! Local variables
     integer :: I                        ! Loop counter
     integer :: STATUS                   ! Flag from deallocate
     ! Executable code
-    if ( .not. associated ( database ) ) return
-    do i = 1, size(database)
-      call Deallocate_test ( database(i)%signals, &
-        & 'database%signals', ModuleName )
-      call Deallocate_test ( database(i)%sidebands, &
-        & 'database%sidebands', ModuleName )
+    if ( .not. associated ( binSelectors ) ) return
+    do i = 1, size(binSelectors)
+      call Deallocate_test ( binSelectors(i)%signals, &
+        & 'binSelectors%signals', ModuleName )
+      call Deallocate_test ( binSelectors(i)%sidebands, &
+        & 'binSelectors%sidebands', ModuleName )
     end do
-    deallocate ( database, stat=status )
+    deallocate ( binSelectors, stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Deallocate//"bin selectors database" )
+      & MLSMSG_Deallocate//"bin selectors binSelectors" )
   end subroutine DestroyBinSelectorDatabase
 
   ! ----------------------------------------------- DestroyL2PC ----
@@ -722,6 +722,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.24  2002/01/21 23:11:49  livesey
+! Completed BinSelectors support
+!
 ! Revision 2.23  2002/01/21 21:13:42  livesey
 ! Added BinSelector definitions and support
 !
