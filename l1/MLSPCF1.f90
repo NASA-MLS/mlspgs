@@ -4,10 +4,10 @@
 !       perl script.  Do *NOT* attempt to modify this by hand.
 !
 MODULE MLSPCF1
-   INTEGER, PARAMETER :: mlspcf_l1_param_OutputVersion = 1000
-   INTEGER, PARAMETER :: mlspcf_l1_param_Cycle = 1001
-   INTEGER, PARAMETER :: mlspcf_l1_param_timeRangeStart = 1002
-   INTEGER, PARAMETER :: mlspcf_l1_param_timeRangeEnd = 1003
+   INTEGER, PARAMETER :: mlspcf_l1_param_StartUTC = 1001
+   INTEGER, PARAMETER :: mlspcf_l1_param_EndUTC = 1002
+   INTEGER, PARAMETER :: mlspcf_l1_param_OutputVersion = 1003
+   INTEGER, PARAMETER :: mlspcf_l1_param_Cycle = 1004
    !
    INTEGER, PARAMETER :: mlspcf_pcf_start = 900
    INTEGER, PARAMETER :: mlspcf_pcf_end = 900
@@ -76,8 +76,3 @@ MODULE MLSPCF1
    INTEGER, PARAMETER :: mlspcf_mcf_l1bradd_end = 4003
    !
 END MODULE MLSPCF1
-
-! $Log$
-! Revision 2.1  2001/02/23 20:53:12  perun
-! Version 0.5 commit
-!
