@@ -1306,9 +1306,10 @@ contains
 
       catalog => gl_slabs(1,i)%catalog ! gl_slabs(:,i)%catalog are all the same
 
-      if ( catalog%molecule == l_extinction ) cycle
-
       nl = Size(catalog%Lines)
+      if ( nl == 0 ) cycle
+
+      if ( catalog%molecule == l_extinction ) cycle
 
       do j = 1, n
         temp_der = present(t_der_flags)
@@ -1383,6 +1384,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.35  2004/05/11 02:52:43  vsnyder
+! Remove USE for Pi, which isn't referenced
+!
 ! Revision 2.34  2004/04/24 02:26:54  vsnyder
 ! Move Voigt stuff to its own module
 !
