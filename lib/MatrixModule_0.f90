@@ -358,7 +358,7 @@ contains ! =====     Public Procedures     =============================
           & ModuleName )
         call densify ( z, y )                    ! z = y%values
         if ( present(scale) ) z = s * z
-        do k = 1, size(x%r1)
+        do k = 1, x%nCols
           z(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) = &
             & z(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) + &
               & x%values(x%r2(k-1)+1:x%r2(k), 1)
@@ -367,7 +367,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Full )                            ! X banded, Y full
         call CopyBlock ( zb, y )                 ! Zb = y
         if ( present(scale) ) zb%values = s * zb%values
-        do k = 1, size(x%r1)
+        do k = 1, x%nCols
           zb%values(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) = &
             & zb%values(x%r1(k): x%r1(k) + x%r2(k) - x%r2(k-1) - 1, k) + &
               & x%values(x%r2(k-1)+1:x%r2(k), 1)
@@ -383,7 +383,7 @@ contains ! =====     Public Procedures     =============================
           & ModuleName )
         call densify ( z, y )                    ! z = y%values
         if ( present(scale) ) z = s * z
-        do k = 1, size(x%r1)
+        do k = 1, x%nCols
           z(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
             & z(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
               & x%values(x%r1(k-1)+1:x%r1(k),1)
@@ -394,7 +394,7 @@ contains ! =====     Public Procedures     =============================
         if ( present(scale) ) zb%values = s * zb%values
 
 ! Commented-out on account of internal NAG v4.0 bug
-         do k = 1, size(x%r1)
+         do k = 1, x%nCols
            zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) = &
              & zb%values(x%r2(x%r1(k-1)+1:x%r1(k)), k) + &
                & x%values(x%r1(k-1)+1:x%r1(k),1)
@@ -2654,9 +2654,9 @@ contains ! =====     Public Procedures     =============================
         end do
         if ( int(col_sparsity*(i2 - i1)) > nnzc(j) ) then
           kind = M_Column_Sparse
-          do i1 = 1, j-1 ! I1 is a column number in this case
-            nnzc(i1) = count(abs(z(:,i1)) <= zt(i1))
-          end do ! i1
+!!$          do i1 = 1, j-1 ! I1 is a column number in this case
+!!$            nnzc(i1) = count(abs(z(:,i1)) <= zt(i1))
+!!$          end do ! i1
           exit
         end if
         nnzc(j) = max(i2 - i1 + 1,0)
@@ -3056,6 +3056,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.91  2003/02/07 11:25:28  mjf
+! Small change to Add_Matrix_Blocks to correct m_column_sparse handling.  Unused code removed from SparsifyA.
+!
 ! Revision 2.90  2003/01/10 02:47:06  livesey
 ! Added quasi in-place densify, and brought sparsify back into the fold.
 !
