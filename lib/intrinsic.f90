@@ -86,6 +86,7 @@ module INTRINSIC
   integer, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
   integer, parameter :: ND = n+d*no_dup
   integer, parameter :: NDP = n+d*(no_dup+no_positional)
+  integer, parameter :: NDR = n+d*(no_dup+req_fld)
   integer, parameter :: NP = n+d*no_positional
   integer, parameter :: NR = n+d*req_fld
   integer, parameter :: P = 3000         ! Parameter index
@@ -234,6 +235,9 @@ contains ! =====     Public procedures     =============================
 end module INTRINSIC
 
 ! $Log$
+! Revision 2.48  2003/07/08 00:16:08  livesey
+! Added ndr
+!
 ! Revision 2.47  2003/05/29 16:36:09  livesey
 ! Added ident for phyq_gauss
 !
