@@ -14,7 +14,7 @@
 # (2) Create a new directory $mcfg_dir/$MLSCONFG
 #      in parallel with $plat_dir/platforms; then
 #     put Makefile in it created from appropriate 2 files in platforms;
-#     e.g., say $MLSCONFG is NAG.Linux
+#     e.g., say $MLSF95.$MLSPLAT is NAG.Linux
 #     this Makefile will then contain the following lines:
 #        # 1st: lines from .configure file
 #        MLSF90=NAG
@@ -35,6 +35,7 @@
 #  -help--brief         Brief overview
 #  -help--mlsconfigure  Help on mlsconfigure script
 #  -c compiler_name     Name of Fortran compiler (Absoft, NAG, LF95, Sun)
+#  -confg confg_name    Name of configuration (chosen by user)
 #  -p platform_name     Name of computer or OS (Linux , sun, or sgi)
 #  -dc conf_dir         Directory where .configuration file is to be stored
 #  -pc plat_dir         Directory where platforms directory to be found
@@ -177,11 +178,13 @@ GetPlatform()
         more << EOF_1
                     *        *        *
 
-The mls software requires that you configure it by responding to two
-questions; currently your platform and compiler are given by:
+The mls software requires that you configure it by responding to some
+questions; currently your platform, compiler and configuration name are given
+by:
 
-        platform: $current_platform
-        compiler: $current_compiler
+        platform:           $current_platform
+        compiler:           $current_compiler
+        configuration name: $current_confg
 
 If these settings are wrong, or you wish to change them in order to
 prepare multiple installations at your site, you will be given an
@@ -196,6 +199,12 @@ you may wish to try one of the options anyway, or else contact:
 	(818)354-2099
 
 and give the names of the compiler and platform you use.
+
+The name you choose for your configuration can reflect the choice of settings
+embodied in it. The default offered to you, based on the compiler and platform,
+should be accepted unless you intend to maintain multiple configurations
+simultaneously with different compiler or linker options, linked libraries, and
+so on.
 
                     *        *        *
 
@@ -279,6 +288,29 @@ EOF_1
 
 #Check if changed platform
    if [ "$platform" != "$current_platform" ] ; then
+		chngd_confg="true"
+	fi
+
+   if [ "$chngd_confg" = "true" ] ; then
+		current_confg="$compiler.$platform"
+	fi
+   eecchhoo "" "c o n f i g u r a t i o n   n a m e"
+	echo "You may choose either a custom name or accept the default name"
+ UserPrompt "Name [$current_confg]"
+   if [ "$user_response" != "" ] ; then
+      MLSCONFG="$user_response"
+   elif [ "$current_confg" != "" ] ; then
+	echo "Defaulting to the name $current_confg."
+        MLSCONFG=$current_confg
+   else
+	   echo "(This should not have happened--no name possible)"
+	   MLSCONFG="."
+   fi
+
+#Check if changed configuration name
+#(Don't worry about current_platform being different from the old one
+#--if that happened it was because chngd_confg was already true anyway)
+   if [ "$MLSCONFG" != "$current_confg" ] ; then
 		chngd_confg="true"
 	fi
 
@@ -851,7 +883,7 @@ MLS_default_LDOPTS=
 
 #MLSF95     name of the compiler: LF95, NAG, Sun, Abs
 #MLSPLAT    name of the platform: Sun, SGI, or Linux
-#MLSCONFG   MLSF95.MLSPLAT
+#MLSCONFG   MLSF95.MLSPLAT or else a name chosen by user
 #PGSINC     path to the toolbox include files
 #PGSTK      path to the toolbox library libPGSTK.a
 #           if blank, then build w/o toolkit
@@ -903,6 +935,7 @@ chngd_confg="false"
 
 current_compiler=$MLSF95
 current_platform=$MLSPLAT
+current_confg=$MLSCONFG
 
 current_PGSINC=$PGSINC
 current_PGSTK=$PGSLIB
@@ -968,6 +1001,11 @@ while [ "$1" != "" ] ; do
 
 	-c )
 	    current_compiler=$2
+	    shift
+	;;
+
+	-confg )
+	    current_confg=$2
 	    shift
 	;;
 
@@ -1132,10 +1170,13 @@ if [ $write_confg = "true" ] ; then
 	if [ -f $conf_dir/$MLSCFILE ] ; then
 		chmod u+w $conf_dir/$MLSCFILE
 		rm -f $conf_dir/$MLSCFILE
+      confg_is="changed"
+   else
+      confg_is="new"
 	fi
 
 #	Because MakeFC checks on whether MLSCONFG is empty, not whether it is "."
-	MLSCONFG=$compiler.$platform
+#	MLSCONFG=$compiler.$platform
 	if [ "MLSCONFG" = "." ] ; then
 		MLSCONFG=
 	fi
@@ -1144,7 +1185,7 @@ if [ $write_confg = "true" ] ; then
    # duplicate some settings (shouldn't you find a cleaner fix?)
    MLSF95=$compiler
    MLSPLAT=$platform
-   MLSCONFG=$compiler.$platform
+#   MLSCONFG=$compiler.$platform
    PGSLIB=$PGSTK
    HDFEOS_LIB=$HDFEOS
    HDFLIB=$HDF
@@ -1163,7 +1204,8 @@ else
 	platform=$current_platform
    MLSF95=$compiler
    MLSPLAT=$platform
-   MLSCONFG=$compiler.$platform
+#   MLSCONFG=$compiler.$platform
+   confg_is="the_same"
 fi
 
 export MLSF95
@@ -1179,6 +1221,14 @@ then
    done
 fi
 
+#  Warn of massive recompilation after changes to .configure file
+if [ "$confg_is" = "changed" ] ; then                                 
+   echo "   N o t i c e"                                              
+   echo "You have changed your .configure file: $conf_dir/$MLSCFILE"  
+   echo "(The next make command may trigger massive recompilation"    
+   echo "unless you do a 'make update' first or set NOCLEANING)"      
+fi                                                                    
+
 #Don't create object-file directory if platforms not a directory
 if [ ! -d $plat_dir/platforms ] ; then
 	exit
@@ -1189,8 +1239,10 @@ fi
 #(Because mlsconfigure may be called simply to update $MLSCONFG/Makefile)
 made_new_dir="false"
 
-if [ "$MLSCONFG" = "." ] ; then
+if [ "$MLSCONFG" = "." -o "$MLSCONFG" = "" ] ; then
 	echo "MLSCONFG not yet defined--still $MLSCONFG"
+	echo "To repair this, enter 'make configure'"
+   exit
 elif [ "$del_exist_dir" != "true" ] ; then
 	if [ ! -d $mcfg_dir/$MLSCONFG ] ; then
       mkdir $mcfg_dir/$MLSCONFG
@@ -1211,8 +1263,8 @@ else
 	made_new_dir="true"        
 fi
 
-if [ ! -f $plat_dir/platforms/$MLSCONFG ] ; then
-	echo "File $MLSCONFG not found in $plat_dir/platforms"
+if [ ! -f $plat_dir/platforms/$MLSF95.$MLSPLAT ] ; then
+	echo "File $MLSF95.$MLSPLAT not found in $plat_dir/platforms"
 	exit
 fi
 
@@ -1221,7 +1273,7 @@ if [ ! -f $plat_dir/platforms/targets ] ; then
 	exit
 fi
 
-cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSCONFG \
+cat $conf_dir/$MLSCFILE $plat_dir/platforms/$MLSF95.$MLSPLAT \
    $plat_dir/platforms/targets > $mcfg_dir/$MLSCONFG/Makefile
 
 if [ "$made_new_dir" = "true" ] ; then
@@ -1232,10 +1284,33 @@ if [ "$made_new_dir" = "true" ] ; then
 	echo ""
 	echo "If you later wish to rebuild for a different compiler"
 	echo "or platform, enter 'make configure'"
+   if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" ] ; then
+     # Custom configuration name -- create a machines sub-directory for it
+     # We will assume that the machines sub-directories live under the path
+     # $conf_dir/lib/machines/$MLSCONFG
+     machines_root=$conf_dir/lib/machines
+     if [ ! -d "$machines_root" ] ; then
+        echo "Unable to locate root machines directory $machines_root"
+        exit
+     fi
+     machines_base=$machines_root/$MLSF95.$MLSPLAT
+     if [ ! -d "$machines_base" ] ; then
+        echo "Unable to locate base machines directory $machines_base"
+        exit
+     fi
+     if [ ! -d "$machines_root/$MLSCONFG" ] ; then
+        mkdir "$machines_root/$MLSCONFG"
+        cp $machines_base/*.f9* $machines_root/$MLSCONFG
+        echo "New directory $machines_root/$MLSCONFG based on $machines_base"
+     fi
+   fi
 fi
 
 exit
 # $Log$
+# Revision 1.25  2001/11/08 00:39:14  pwagner
+# New help system; mention of NOCLEANING where appropriate
+#
 # Revision 1.24  2001/11/07 00:27:49  pwagner
 # Tells how to enter multiple LAPACK library names
 #
