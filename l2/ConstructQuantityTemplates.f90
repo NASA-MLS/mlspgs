@@ -279,7 +279,7 @@ contains ! =====     Public Procedures     =============================
       & l_cloudInducedRadiance, l_cloudRADSensitivity, l_effectiveOpticalDepth, &
       & l_tngtECI, l_tngtGeodAlt, l_tngtGeocAlt, l_scECI, l_scGeocAlt,&
       & l_scVel, l_scVelECI, l_scVelECR, l_losVel, l_heightOffset, &
-      & l_scanResidual, l_chisqmmif, l_opticalDepth /) )
+      & l_scanResidual, l_chisqmmif, l_opticalDepth, l_orbitInclination /) )
 
     majorFrame = any(quantityType == (/ l_chisqchan, l_chisqmmaf /) )
  
@@ -870,6 +870,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.67  2002/06/14 16:39:49  livesey
+! Orbital inclination now minor frame
+!
 ! Revision 2.66  2002/06/04 22:07:35  livesey
 ! Added phiTan as a state vector element
 !
