@@ -137,7 +137,7 @@ module QuantityTemplates         ! Quantities within vectors
     ! This is given here if needed.
 
     integer :: instrumentModule ! Index in the Modules database in MLSSignals_m
-    integer :: radiometer       ! For ptan etc. e.g. L_R1A
+    integer :: radiometer       ! For ptan etc., index into radiometers database
     integer :: molecule ! What molecule does this refer to? (One of the l_...
                         ! lits of type t_molecule in Init_Tables_Module.)
 
@@ -393,6 +393,10 @@ end module QuantityTemplates
 
 !
 ! $Log$
+! Revision 2.13  2001/04/23 23:52:16  livesey
+! Sorry, should have put comment in one below.  Now has optional ignoreMinorFrame
+! argument to DestroyQuantityTemplateDatabase
+!
 ! Revision 2.12  2001/04/23 23:50:41  livesey
 ! *** empty log message ***
 !
