@@ -139,7 +139,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_forge )
         call ForgeMinorFrames ( key, chunks(chunkNo), mifGeolocation )
       case ( s_forwardModel )
-        call decorate (son, AddForwardModelConfigToDatabase ( &
+        call decorate ( key, AddForwardModelConfigToDatabase ( &
           & forwardModelConfigDatabase, &
           & ConstructForwardModelConfig ( son, vGrids, .false. ) ) )
       case ( s_hgrid )
@@ -224,6 +224,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.36  2002/09/26 23:58:57  livesey
+! Bug fix, decorated wrong node
+!
 ! Revision 2.35  2002/09/25 20:07:41  livesey
 ! Can now construct forward models inside construct
 !
