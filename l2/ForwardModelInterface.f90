@@ -101,6 +101,8 @@ module ForwardModelInterface
 
   integer :: Error            ! Error level -- 0 = OK
 
+  real (r8), parameter :: DegToRad=1.74532925e-2
+
 contains
 
   ! ------------------------------------  ForwardModelGlobalSetup  -----
@@ -504,6 +506,26 @@ contains
       & InvalidQuantity//'elevOffset')
     ! There will be more to come here.
 
+!     call output ("Early work:",advance='yes')
+!     call output ("t_zeta_basis",advance='yes')
+!     call dump(TFMI%t_zeta_basis)
+!     call output ("temp%template%surfs",advance='yes')
+!     call dump(temp%template%surfs)
+!     call output ("t_phi_basis",advance='yes')
+!     call dump(TFMI%t_phi_basis)
+!     call output ("temp%template%phi",advance='yes')
+!     call dump(temp%template%phi)
+!     call output ("t_coeff",advance='yes')
+!     call dump(TFMI%t_coeff)
+!     call output ("temp%values",advance='yes')
+!     call dump(temp%values)
+!     stop
+
+!     call output("ptan%values(:,3)",advance='yes')
+!     call dump(ptan%values(:,3))
+!     call output("tfmi%ptg_press%lin_val",advance='yes')
+!     call dump( real(tfmi%ptg_press%lin_val,r8) )
+!     stop
 
     print*,'Got part of the way through'
 
@@ -553,30 +575,33 @@ contains
     mmaf = 3                     ! Do only this mmaf (middle phi)
     phi_tan = FMC%phi_tan_mmaf(mmaf)
     geod_lat= TFMI%t_geod_lat(mmaf)
-    Call geoc_geod_conv(TFMI%beta_inc,phi_tan,geod_lat, geoc_lat,E_rad)
+    Call geoc_geod_conv(orbIncline%values(1,1),phi_tan,geod_lat, geoc_lat,E_rad)
 !
 ! Compute the hydrostatic_model on the GL-Grid for all mmaf(s):
 !
-    thbs(1:) = 0.0
+    thbs = 0.0
     si = FMI%Surface_index
     no_tan_hts = FMC%no_tan_hts
     thbs(1:si-1) = FMI%Tan_hts_below_surface(1:si-1)
-    Call hydrostatic_model(si,FMC%N_lvls,TFMI%no_t,FMC%no_mmaf,FMC%t_indx, &
-         no_tan_hts,geoc_lat,TFMI%Href,TFMI%Zref,FMI%z_grid,thbs, &
-         TFMI%t_zeta_basis, TFMI%t_coeff, z_glgrid, h_glgrid, t_glgrid, &
-         dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
-         gl_count, Ier)
+    Call hydrostatic_model(si,FMC%N_lvls,temp%template%noSurfs, &
+      & radiance%template%noInstances,FMC%t_indx, &
+      & no_tan_hts,geoc_lat,refGPH%values(1,:)/1e3, &
+      & refGPH%template%surfs(1,1),FMI%z_grid,thbs, &
+      & temp%template%surfs(:,1), temp%values, z_glgrid, h_glgrid, t_glgrid, &
+      dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
+      gl_count, Ier)
     IF(ier /= 0) goto 99
 !
 ! Compute all path entities for all mmafs and tanget pointings
 !
-    Call comp_path_entities(FMC%n_lvls,TFMI%no_t,gl_count,ndx_path, &
+    Call comp_path_entities(FMC%n_lvls,temp%template%noSurfs,&
+      & gl_count,ndx_path, &
    &     z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,       &
    &     TFMI%atmospheric,TFMI%f_zeta_basis,TFMI%mr_f,              &
    &     TFMI%no_coeffs_f,tan_hts,no_tan_hts,FMI%n_sps,             &
    &     TFMI%no_phi_f,TFMI%f_phi_basis,z_path,h_path,t_path,       &
-   &     phi_path,n_path,dhdz_path,dh_dt_path,TFMI%no_phi_t,        &
-   &     TFMI%t_phi_basis,spsfunc_path,TFMI%is_f_log,FMC%no_mmaf,Ier)
+   &     phi_path,n_path,dhdz_path,dh_dt_path,temp%template%noInstances,        &
+   &     temp%template%phi(1,:)*degToRad,spsfunc_path,TFMI%is_f_log,FMC%no_mmaf,Ier)
     IF(ier /= 0) goto 99
 
 !
@@ -591,16 +616,18 @@ contains
 ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
 ! of chi w.r.t to T and other parameters
 !
-      Call get_chi_angles(ndx_path(1:,l),n_path(1:,l),FMI%tan_press,        &
-     &     tan_hts(1:,l),tan_temp(1:,l),phi_tan,RoC,TFMI%h_obs,elev_offset, &
-     &     tan_dh_dt(1:,l,1:),no_tan_hts,TFMI%no_t,TFMI%t_zeta_basis,si,    &
-     &     center_angle,ptg_angles(1:,l),dx_dt,d2x_dxdt,ier)
+      Call get_chi_angles(ndx_path(:,l),n_path(:,l),FMI%tan_press,        &
+     &     tan_hts(:,l),tan_temp(:,l),phi_tan,RoC,scGeocAlt%values(1,1),  &
+     &     elevOffset%values(1,1), &
+     &     tan_dh_dt(:,l,:),no_tan_hts,temp%template%noSurfs,temp%template%surfs(:,1),&
+     &     si,    &
+     &     center_angle,ptg_angles(:,l),dx_dt,d2x_dxdt,ier)
       IF(ier /= 0) goto 99
 !
 ! Compute the refraction correction scaling matrix for this mmaf:
 !
-      Call refraction_correction(no_tan_hts, tan_hts(1:,l), h_path(1:,l), &
-     &                n_path(1:,l), ndx_path(1:,l), E_rad, ref_corr)
+      Call refraction_correction(no_tan_hts, tan_hts(:,l), h_path(:,l), &
+     &                n_path(:,l), ndx_path(:,l), E_rad, ref_corr)
 !
       prev_npf = -1
       Radiances(1:Nptg,1:Nch) = 0.0
@@ -638,7 +665,8 @@ contains
             DEALLOCATE(k_spect_dnu_frq(j)%values,STAT=i)
           end do
 !
-          ALLOCATE(k_temp_frq%values(kk,TFMI%no_t,TFMI%no_phi_t),STAT=ier)
+          ALLOCATE(k_temp_frq%values(kk,temp%template%noSurfs,&
+            & temp%template%noInstances),STAT=ier)
           IF(ier /= 0) then
             Print *,'** ALLOCATE Error: k_temp_frq array, STAT =',ier
             goto 99
@@ -658,7 +686,7 @@ contains
             j = FMI%spect_atmos(m)
             if(j < 1) CYCLE
             if(.not. FMI%spectroscopic(j)%DER_CALC(FMI%band)) CYCLE
-            Vname(1:) = ' '
+            Vname = ' '
             Spectag = FMI%spectroscopic(j)%Spectag
             DO
               if(FMI%spectroscopic(j)%Spectag /= Spectag) EXIT
@@ -729,8 +757,8 @@ contains
           
           Call Rad_Tran(Frq, FMC%N_lvls, h_tan, FMI%n_sps, ndx_path(k,l),  &
          &    z_path(k,l), h_path(k,l), t_path(k,l), phi_path(k,l),&
-         &    dHdz_path(k,l), TFMI%earth_ref, beta_path(1:,frq_i),      &
-         &    spsfunc_path(1:,k,l), ref_corr(1:,k), TFMI%s_temp, brkpt, &
+         &    dHdz_path(k,l), earthRefl%values(1,1), beta_path(:,frq_i),      &
+         &    spsfunc_path(:,k,l), ref_corr(:,k), spaceRadiance%values(1,1), brkpt, &
          &    no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
           IF(ier /= 0) goto 99
 !
@@ -741,11 +769,11 @@ contains
 !         CALL Rad_Tran_WD(frq_i,FMI%band,Frq,FMC%N_lvls,FMI%n_sps, &
 !        &     FMC%temp_der,FMC%atmos_der,FMC%spect_der,            &
 !        &     z_path(k,l),h_path(k,l),t_path(k,l),phi_path(k,l),   &
-!        &     dHdz_path(k,l),TFMI%atmospheric,beta_path(1:,frq_i),&
-!        &     spsfunc_path(1:,k,l),TFMI%t_zeta_basis,  &
+!        &     dHdz_path(k,l),TFMI%atmospheric,beta_path(:,frq_i),&
+!        &     spsfunc_path(:,k,l),temp%template%surfs(:,1),  &
 !        &     TFMI%f_zeta_basis,TFMI%no_coeffs_f,   &
-!        &     TFMI%mr_f,TFMI%no_t,ref_corr(1:,k),TFMI%no_phi_f,       &
-!        &     TFMI%f_phi_basis,TFMI%no_phi_t,TFMI%t_phi_basis,  &
+!        &     TFMI%mr_f,TFMI%no_t,ref_corr(:,k),TFMI%no_phi_f,       &
+!        &     TFMI%f_phi_basis,temp%template%noInstances,temp%template%phi(1,:)*degToRad,  &
 !        &     dh_dt_path(k,l),FMI%spect_atmos,         &
 !        &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq,   &
 !        &     k_spect_dn_frq,k_spect_dnu_frq,TFMI%is_f_log,brkpt,       &
@@ -760,8 +788,8 @@ contains
           ch = pfa_ch(i)
           if(FMC%do_frqavg) then
             print*,'Doing frequency averaging'
-            Call Freq_Avg(frequencies,FMI%F_grid_filter(1:,i),  &
-           &     FMI%Filter_func(1:,i),RadV,kk,FMI%no_filt_pts, &
+            Call Freq_Avg(frequencies,FMI%F_grid_filter(:,i),  &
+           &     FMI%Filter_func(:,i),RadV,kk,FMI%no_filt_pts, &
            &     Radiances(ptg_i,ch))
           else
             Radiances(ptg_i,ch) = RadV(1)
@@ -777,12 +805,12 @@ contains
           do i = 1, no_pfa_ch
 !           ch = pfa_ch(i)
             ch = i               ! ** DEBUG, memory limitations on MLSGATE
-            do j = 1, TFMI%no_phi_t
-              do k = 1, TFMI%no_t
+            do j = 1, temp%template%noInstances
+              do k = 1, temp%template%noSurfs
                 if(FMC%do_frqavg) then
                   RadV(1:kk) = k_temp_frq%values(1:kk,k,j)
-                  Call Freq_Avg(frequencies,FMI%F_grid_filter(1:,i), &
-                 &              FMI%Filter_func(1:,i),          &
+                  Call Freq_Avg(frequencies,FMI%F_grid_filter(:,i), &
+                 &              FMI%Filter_func(:,i),          &
                  &              RadV,kk,FMI%no_filt_pts,r)
                 else
                   r = k_temp_frq%values(1,k,j)
@@ -809,8 +837,8 @@ contains
                   do n = 1, TFMI%no_coeffs_f(j)
                     if(FMC%do_frqavg) then
                       RadV(1:kk) = k_atmos_frq(j)%values(1:kk,n,k)
-                      Call Freq_Avg(frequencies,FMI%F_grid_filter(1:,i), &
-                     &              FMI%Filter_func(1:,i),          &
+                      Call Freq_Avg(frequencies,FMI%F_grid_filter(:,i), &
+                     &              FMI%Filter_func(:,i),          &
                      &              RadV,kk,FMI%no_filt_pts,r)
                     else
                       r = k_atmos_frq(j)%values(1,n,k)
@@ -851,8 +879,8 @@ contains
                         RadV(1:kk) = k_spect_dnu_frq(m)%values(1:kk,n,k)
                     end select
                     if(FMC%do_frqavg) then
-                        Call Freq_Avg(frequencies,FMI%F_grid_filter(1:,i), &
-                     &              FMI%Filter_func(1:,i),&
+                        Call Freq_Avg(frequencies,FMI%F_grid_filter(:,i), &
+                     &              FMI%Filter_func(:,i),&
                      &              RadV,kk,FMI%no_filt_pts,r)
                     else
                       r = RadV(1)
@@ -886,8 +914,9 @@ contains
         ch = pfa_ch(i)
         Radiances(kk,ch) = Radiances(kk-1,ch)
         if(FMC%temp_der) then
-          k_temp(i,kk,1:TFMI%no_t,1:TFMI%no_phi_t) = &
-       &              k_temp(i,kk-1,1:TFMI%no_t,1:TFMI%no_phi_t)
+          k_temp(i,kk,1:temp%template%noSurfs,1:temp%template%noInstances) = &
+       &              k_temp(i,kk-1,1:temp%template%noSurfs,&
+       &              1:temp%template%noInstances)
         endif
         if(FMC%atmos_der) then
           do m = 1, FMI%n_sps
@@ -925,30 +954,31 @@ contains
 !
         if(FMC%do_conv) then
 !
-          Call convolve_all(TFMI%ptg_press,TFMI%atmospheric,FMI%n_sps,   &
+          Call convolve_all(ptan%values(:,l),TFMI%atmospheric,FMI%n_sps,   &
          &     FMC%temp_der,FMC%atmos_der,FMC%spect_der,                   &
-         &     FMI%tan_press,ptg_angles(1:,l),tan_temp(1:,l), &
+         &     FMI%tan_press,ptg_angles(:,l),tan_temp(:,l), &
          &     dx_dt, d2x_dxdt,FMI%band,center_angle,FMI%fft_pts,          &
-         &     Radiances(1:,ch),k_temp(i,1:,1:,1:),k_atmos(i,1:,1:,1:,1:), &
-         &     k_spect_dw(i,1:,1:,1:,1:),k_spect_dn(i,1:,1:,1:,1:),    &
-         &     k_spect_dnu(i,1:,1:,1:,1:),FMI%spect_atmos,no_tan_hts,  &
-         &     k_info_count,i_star_all(i,1:),k_star_all(i,1:,1:,1:,1:), &
-         &     k_star_info,TFMI%no_t,TFMI%no_phi_t,TFMI%no_phi_f,   &
-         &     FMI%spectroscopic,TFMI%t_zeta_basis,FMI%Xlamda,FMI%Aaap,&
+         &     Radiances(:,ch),k_temp(i,:,:,:),k_atmos(i,:,:,:,:), &
+         &     k_spect_dw(i,:,:,:,:),k_spect_dn(i,:,:,:,:),    &
+         &     k_spect_dnu(i,:,:,:,:),FMI%spect_atmos,no_tan_hts,  &
+         &     k_info_count,i_star_all(i,:),k_star_all(i,:,:,:,:), &
+         &     k_star_info,temp%template%noSurfs,temp%template%noInstances,&
+         &     TFMI%no_phi_f,   &
+         &     FMI%spectroscopic,temp%template%surfs(:,1),FMI%Xlamda,FMI%Aaap,&
          &     FMI%D1Aaap,FMI%D2Aaap,FMI%Ias,ier)
           IF(ier /= 0) goto 99
 !
         else
 !
-          Call no_conv_at_all(TFMI%ptg_press,FMI%n_sps,FMI%tan_press, &
+          Call no_conv_at_all(ptan%values(:,l),FMI%n_sps,FMI%tan_press, &
          &     FMI%band,FMC%temp_der,FMC%atmos_der,FMC%spect_der,      &
-         &     Radiances(1:,ch),k_temp(i,1:,1:,1:),                    &
-         &     k_atmos(i,1:,1:,1:,1:),k_spect_dw(i,1:,1:,1:,1:),       &
-         &     k_spect_dn(i,1:,1:,1:,1:),k_spect_dnu(i,1:,1:,1:,1:),   &
+         &     Radiances(:,ch),k_temp(i,:,:,:),                    &
+         &     k_atmos(i,:,:,:,:),k_spect_dw(i,:,:,:,:),       &
+         &     k_spect_dn(i,:,:,:,:),k_spect_dnu(i,:,:,:,:),   &
          &     FMI%spect_atmos, no_tan_hts,k_info_count,               &
-         &     i_star_all(i,1:), k_star_all(i,1:,1:,1:,1:),            &
-         &     k_star_info,TFMI%no_t,TFMI%no_phi_t,                  &
-         &     TFMI%no_phi_f,TFMI%t_zeta_basis,TFMI%atmospheric,    &
+         &     i_star_all(i,:), k_star_all(i,:,:,:,:),            &
+         &     k_star_info,temp%template%noSurfs,temp%template%noInstances, &
+         &     TFMI%no_phi_f,temp%template%surfs(:,1),TFMI%atmospheric,    &
          &     FMI%spectroscopic)
 !
         endif
@@ -1007,10 +1037,10 @@ contains
 !
     m = -1
     ch = 1
-    tau(1:) = 0.0
+    tau = 0.0
     do i = 1, k_info_count
       Print *
-      Name(1:) = ' '
+      Name = ' '
       Name = k_star_info(i)%name
       if(Name == 'PTAN') CYCLE
       kz = k_star_info(i)%first_dim_index
@@ -1029,7 +1059,7 @@ contains
         else
           write(6,913) 'dI_d'//Name(1:l),char(92),ht_i
         endif
-        tau(1:) = 0.0
+        tau = 0.0
         tau(1:mnz) = k_star_info(i)%zeta_basis(1:mnz)
         Call Hunt(Zeta,tau,mnz,m,j)
         IF(ABS(Zeta-tau(j)) < ABS(Zeta-tau(m))) m=j
@@ -1177,6 +1207,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.29  2001/03/21 01:07:45  livesey
+! Before moving away from mr_f
+!
 ! Revision 2.28  2001/03/20 23:25:54  livesey
 ! Copied changes from Zvi
 !
