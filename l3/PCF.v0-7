@@ -78,7 +78,7 @@
 !  ~/runtime
 #
 900|PCF.v0-7|/user2/nakamura/mlspgs/l3||||1
-901|l3d_1prod_v0-7.cf|/user2/nakamura/mlspgs/l3||||1
+901|l3_v0-7.cf|/user2/nakamura/mlspgs/l3||||1
 22000|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-032.dat|/data/emls/l2gp/v0.5/1996||||1
 22001|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-033.dat|/data/emls/l2gp/v0.5/1996||||1
 22002|MLS-Aura_L2GP_ClO_V0-05-C01_WV_1996-034.dat|/data/emls/l2gp/v0.5/1996||||1
@@ -463,8 +463,6 @@
 4008|ML3DOH.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
 4009|ML3DT.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
 4010|ML3DZ.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
-4011|ML3DZMS.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
-4012|ML3DZMD.001.MCF|/software/mlsdev/files/v0.5/MCF/l3||||1
 #
 #
 # -----------------------------------------------------------------------
@@ -475,64 +473,64 @@
 # or attitude files.
 # -----------------------------------------------------------------------
 #
-10501|EOSCHEM_1996-02-29.eph|/data/emls/l0other/v0.5/1996||||29
-10501|EOSCHEM_1996-02-28.eph|/data/emls/l0other/v0.5/1996||||28
-10501|EOSCHEM_1996-02-27.eph|/data/emls/l0other/v0.5/1996||||27
-10501|EOSCHEM_1996-02-26.eph|/data/emls/l0other/v0.5/1996||||26
-10501|EOSCHEM_1996-02-25.eph|/data/emls/l0other/v0.5/1996||||25
-10501|EOSCHEM_1996-02-24.eph|/data/emls/l0other/v0.5/1996||||24
-10501|EOSCHEM_1996-02-23.eph|/data/emls/l0other/v0.5/1996||||23
-10501|EOSCHEM_1996-02-22.eph|/data/emls/l0other/v0.5/1996||||22
-10501|EOSCHEM_1996-02-21.eph|/data/emls/l0other/v0.5/1996||||21
-10501|EOSCHEM_1996-02-20.eph|/data/emls/l0other/v0.5/1996||||20
-10501|EOSCHEM_1996-02-19.eph|/data/emls/l0other/v0.5/1996||||19
-10501|EOSCHEM_1996-02-18.eph|/data/emls/l0other/v0.5/1996||||18
-10501|EOSCHEM_1996-02-17.eph|/data/emls/l0other/v0.5/1996||||17
-10501|EOSCHEM_1996-02-16.eph|/data/emls/l0other/v0.5/1996||||16
-10501|EOSCHEM_1996-02-15.eph|/data/emls/l0other/v0.5/1996||||15
-10501|EOSCHEM_1996-02-14.eph|/data/emls/l0other/v0.5/1996||||14
-10501|EOSCHEM_1996-02-13.eph|/data/emls/l0other/v0.5/1996||||13
-10501|EOSCHEM_1996-02-12.eph|/data/emls/l0other/v0.5/1996||||12
-10501|EOSCHEM_1996-02-11.eph|/data/emls/l0other/v0.5/1996||||11
-10501|EOSCHEM_1996-02-10.eph|/data/emls/l0other/v0.5/1996||||10
-10501|EOSCHEM_1996-02-09.eph|/data/emls/l0other/v0.5/1996||||9
-10501|EOSCHEM_1996-02-08.eph|/data/emls/l0other/v0.5/1996||||8
-10501|EOSCHEM_1996-02-07.eph|/data/emls/l0other/v0.5/1996||||7
-10501|EOSCHEM_1996-02-06.eph|/data/emls/l0other/v0.5/1996||||6
-10501|EOSCHEM_1996-02-05.eph|/data/emls/l0other/v0.5/1996||||5
-10501|EOSCHEM_1996-02-04.eph|/data/emls/l0other/v0.5/1996||||4
-10501|EOSCHEM_1996-02-03.eph|/data/emls/l0other/v0.5/1996||||3
-10501|EOSCHEM_1996-02-02.eph|/data/emls/l0other/v0.5/1996||||2
-10501|EOSCHEM_1996-02-01.eph|/data/emls/l0other/v0.5/1996||||1
-10502|EOSCHEM_1996-02-29.att|/data/emls/l0other/v0.5/1996||||29
-10502|EOSCHEM_1996-02-28.att|/data/emls/l0other/v0.5/1996||||28
-10502|EOSCHEM_1996-02-27.att|/data/emls/l0other/v0.5/1996||||27
-10502|EOSCHEM_1996-02-26.att|/data/emls/l0other/v0.5/1996||||26
-10502|EOSCHEM_1996-02-25.att|/data/emls/l0other/v0.5/1996||||25
-10502|EOSCHEM_1996-02-24.att|/data/emls/l0other/v0.5/1996||||24
-10502|EOSCHEM_1996-02-23.att|/data/emls/l0other/v0.5/1996||||23
-10502|EOSCHEM_1996-02-22.att|/data/emls/l0other/v0.5/1996||||22
-10502|EOSCHEM_1996-02-21.att|/data/emls/l0other/v0.5/1996||||21
-10502|EOSCHEM_1996-02-20.att|/data/emls/l0other/v0.5/1996||||20
-10502|EOSCHEM_1996-02-19.att|/data/emls/l0other/v0.5/1996||||19
-10502|EOSCHEM_1996-02-18.att|/data/emls/l0other/v0.5/1996||||18
-10502|EOSCHEM_1996-02-17.att|/data/emls/l0other/v0.5/1996||||17
-10502|EOSCHEM_1996-02-16.att|/data/emls/l0other/v0.5/1996||||16
-10502|EOSCHEM_1996-02-15.att|/data/emls/l0other/v0.5/1996||||15
-10502|EOSCHEM_1996-02-14.att|/data/emls/l0other/v0.5/1996||||14
-10502|EOSCHEM_1996-02-13.att|/data/emls/l0other/v0.5/1996||||13
-10502|EOSCHEM_1996-02-12.att|/data/emls/l0other/v0.5/1996||||12
-10502|EOSCHEM_1996-02-11.att|/data/emls/l0other/v0.5/1996||||11
-10502|EOSCHEM_1996-02-10.att|/data/emls/l0other/v0.5/1996||||10
-10502|EOSCHEM_1996-02-09.att|/data/emls/l0other/v0.5/1996||||9
-10502|EOSCHEM_1996-02-08.att|/data/emls/l0other/v0.5/1996||||8
-10502|EOSCHEM_1996-02-07.att|/data/emls/l0other/v0.5/1996||||7
-10502|EOSCHEM_1996-02-06.att|/data/emls/l0other/v0.5/1996||||6
-10502|EOSCHEM_1996-02-05.att|/data/emls/l0other/v0.5/1996||||5
-10502|EOSCHEM_1996-02-04.att|/data/emls/l0other/v0.5/1996||||4
-10502|EOSCHEM_1996-02-03.att|/data/emls/l0other/v0.5/1996||||3
-10502|EOSCHEM_1996-02-02.att|/data/emls/l0other/v0.5/1996||||2
-10502|EOSCHEM_1996-02-01.att|/data/emls/l0other/v0.5/1996||||1
+10501|EOSCHEM_1996-02-29.eph|/user2/nakamura/L1BOA/EPH||||29
+10501|EOSCHEM_1996-02-28.eph|/user2/nakamura/L1BOA/EPH||||28
+10501|EOSCHEM_1996-02-27.eph|/user2/nakamura/L1BOA/EPH||||27
+10501|EOSCHEM_1996-02-26.eph|/user2/nakamura/L1BOA/EPH||||26
+10501|EOSCHEM_1996-02-25.eph|/user2/nakamura/L1BOA/EPH||||25
+10501|EOSCHEM_1996-02-24.eph|/user2/nakamura/L1BOA/EPH||||24
+10501|EOSCHEM_1996-02-23.eph|/user2/nakamura/L1BOA/EPH||||23
+10501|EOSCHEM_1996-02-22.eph|/user2/nakamura/L1BOA/EPH||||22
+10501|EOSCHEM_1996-02-21.eph|/user2/nakamura/L1BOA/EPH||||21
+10501|EOSCHEM_1996-02-20.eph|/user2/nakamura/L1BOA/EPH||||20
+10501|EOSCHEM_1996-02-19.eph|/user2/nakamura/L1BOA/EPH||||19
+10501|EOSCHEM_1996-02-18.eph|/user2/nakamura/L1BOA/EPH||||18
+10501|EOSCHEM_1996-02-17.eph|/user2/nakamura/L1BOA/EPH||||17
+10501|EOSCHEM_1996-02-16.eph|/user2/nakamura/L1BOA/EPH||||16
+10501|EOSCHEM_1996-02-15.eph|/user2/nakamura/L1BOA/EPH||||15
+10501|EOSCHEM_1996-02-14.eph|/user2/nakamura/L1BOA/EPH||||14
+10501|EOSCHEM_1996-02-13.eph|/user2/nakamura/L1BOA/EPH||||13
+10501|EOSCHEM_1996-02-12.eph|/user2/nakamura/L1BOA/EPH||||12
+10501|EOSCHEM_1996-02-11.eph|/user2/nakamura/L1BOA/EPH||||11
+10501|EOSCHEM_1996-02-10.eph|/user2/nakamura/L1BOA/EPH||||10
+10501|EOSCHEM_1996-02-09.eph|/user2/nakamura/L1BOA/EPH||||9
+10501|EOSCHEM_1996-02-08.eph|/user2/nakamura/L1BOA/EPH||||8
+10501|EOSCHEM_1996-02-07.eph|/user2/nakamura/L1BOA/EPH||||7
+10501|EOSCHEM_1996-02-06.eph|/user2/nakamura/L1BOA/EPH||||6
+10501|EOSCHEM_1996-02-05.eph|/user2/nakamura/L1BOA/EPH||||5
+10501|EOSCHEM_1996-02-04.eph|/user2/nakamura/L1BOA/EPH||||4
+10501|EOSCHEM_1996-02-03.eph|/user2/nakamura/L1BOA/EPH||||3
+10501|EOSCHEM_1996-02-02.eph|/user2/nakamura/L1BOA/EPH||||2
+10501|EOSCHEM_1996-02-01.eph|/user2/nakamura/L1BOA/EPH||||1
+10502|EOSCHEM_1996-02-29.att|/user2/nakamura/L1BOA/EPH||||29
+10502|EOSCHEM_1996-02-28.att|/user2/nakamura/L1BOA/EPH||||28
+10502|EOSCHEM_1996-02-27.att|/user2/nakamura/L1BOA/EPH||||27
+10502|EOSCHEM_1996-02-26.att|/user2/nakamura/L1BOA/EPH||||26
+10502|EOSCHEM_1996-02-25.att|/user2/nakamura/L1BOA/EPH||||25
+10502|EOSCHEM_1996-02-24.att|/user2/nakamura/L1BOA/EPH||||24
+10502|EOSCHEM_1996-02-23.att|/user2/nakamura/L1BOA/EPH||||23
+10502|EOSCHEM_1996-02-22.att|/user2/nakamura/L1BOA/EPH||||22
+10502|EOSCHEM_1996-02-21.att|/user2/nakamura/L1BOA/EPH||||21
+10502|EOSCHEM_1996-02-20.att|/user2/nakamura/L1BOA/EPH||||20
+10502|EOSCHEM_1996-02-19.att|/user2/nakamura/L1BOA/EPH||||19
+10502|EOSCHEM_1996-02-18.att|/user2/nakamura/L1BOA/EPH||||18
+10502|EOSCHEM_1996-02-17.att|/user2/nakamura/L1BOA/EPH||||17
+10502|EOSCHEM_1996-02-16.att|/user2/nakamura/L1BOA/EPH||||16
+10502|EOSCHEM_1996-02-15.att|/user2/nakamura/L1BOA/EPH||||15
+10502|EOSCHEM_1996-02-14.att|/user2/nakamura/L1BOA/EPH||||14
+10502|EOSCHEM_1996-02-13.att|/user2/nakamura/L1BOA/EPH||||13
+10502|EOSCHEM_1996-02-12.att|/user2/nakamura/L1BOA/EPH||||12
+10502|EOSCHEM_1996-02-11.att|/user2/nakamura/L1BOA/EPH||||11
+10502|EOSCHEM_1996-02-10.att|/user2/nakamura/L1BOA/EPH||||10
+10502|EOSCHEM_1996-02-09.att|/user2/nakamura/L1BOA/EPH||||9
+10502|EOSCHEM_1996-02-08.att|/user2/nakamura/L1BOA/EPH||||8
+10502|EOSCHEM_1996-02-07.att|/user2/nakamura/L1BOA/EPH||||7
+10502|EOSCHEM_1996-02-06.att|/user2/nakamura/L1BOA/EPH||||6
+10502|EOSCHEM_1996-02-05.att|/user2/nakamura/L1BOA/EPH||||5
+10502|EOSCHEM_1996-02-04.att|/user2/nakamura/L1BOA/EPH||||4
+10502|EOSCHEM_1996-02-03.att|/user2/nakamura/L1BOA/EPH||||3
+10502|EOSCHEM_1996-02-02.att|/user2/nakamura/L1BOA/EPH||||2
+10502|EOSCHEM_1996-02-01.att|/user2/nakamura/L1BOA/EPH||||1
 #
 #------------------------------------------------------------------------
 # Datasets for PGS_DEM tools.
@@ -679,16 +677,6 @@
 31007|MLS-Aura_L3SP_OH_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
 31008|MLS-Aura_L3SP_T_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
 31009|MLS-Aura_L3SP_Z_V0-7-C01_1996-032:1996-060.dat|/user2/nakamura/L1BOA||||1
-31100|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-042.dat|/user2/nakamura/L1BOA||||1
-31101|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-043.dat|/user2/nakamura/L1BOA||||1
-31102|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-044.dat|/user2/nakamura/L1BOA||||1
-31103|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-045.dat|/user2/nakamura/L1BOA||||1
-31104|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-046.dat|/user2/nakamura/L1BOA||||1
-31105|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-047.dat|/user2/nakamura/L1BOA||||1
-31106|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-048.dat|/user2/nakamura/L1BOA||||1
-31107|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-049.dat|/user2/nakamura/L1BOA||||1
-31108|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-050.dat|/user2/nakamura/L1BOA||||1
-31109|MLS-Aura_L3DZ_Standard_V0-7-C01_1996-051.dat|/user2/nakamura/L1BOA||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -818,14 +806,12 @@
 # -----------------------------------------------------------------------
 # leap seconds (TAI-UTC) file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10301|leapsec.dat|~/database/common/TD||||1
-10301|leapsec.sids|/data/emls/l0other/v0.5||||1
+10301|leapsec.dat|~/database/common/TD||||1
 #
 # -----------------------------------------------------------------------
 # polar motion and UTC-UT1 file (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-#10401|utcpole.dat|~/database/common/CSC||||1
-10401|utcpole.sids|/data/emls/l0other/v0.5||||1
+10401|utcpole.dat|~/database/common/CSC||||1
 #
 # -----------------------------------------------------------------------
 # earth model tags file (DO NOT REMOVE THIS ENTRY)
@@ -882,7 +868,7 @@
 # loading them to shared memory, which is a TK5 enhancement.
 # (DO NOT REMOVE THIS ENTRY)
 # -----------------------------------------------------------------------
-10111|ShmMem|||||1
+10111|ShmMem|/user2/nakamura/L1BOA||||1
 #
 #  
 ?   USER DEFINED RUNTIME PARAMETERS
@@ -931,7 +917,7 @@
 # Toolkit version for which this PCF was intended.
 # DO NOT REMOVE THIS VERSION ENTRY!
 # -----------------------------------------------------------------------
-10220|Toolkit version string|SCF B.0 TK5.2.6.1
+10220|Toolkit version string|SCF B.0 TK5.2.6-MLS.
 #
 # -----------------------------------------------------------------------
 # The following parameters define the ADEOS-II TMDF values (all values
