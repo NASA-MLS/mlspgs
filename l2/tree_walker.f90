@@ -119,7 +119,7 @@ subtrees: do while ( j <= howmany )
                 & vectors, qtyTemplates, l2gpDatabase , l2auxDatabase, &
                 & chunks, chunkNo)
             case ( z_join )
-              call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo )
+              call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, chunkNo, chunks )
             case ( z_retrieve )
 !             call retrieve ( son, vectors, matrices, fwdModelInfo ) !??? Restore when l2load isn't needed
               call retrieve ( son, vectors, matrices, fwdModelInfo, &
@@ -156,6 +156,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.18  2001/03/15 21:20:54  pwagner
+! Split between GriddedData and ncep_dao modules
+!
 ! Revision 2.17  2001/03/15 21:05:23  vsnyder
 ! Set up to test Parse_Signal
 !
