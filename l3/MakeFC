@@ -61,7 +61,16 @@ PROG=mlsl3
 #----------------------- Build instructions
 
 $(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+	case "$(FFTW_ROOT)" in \
+	"") \
+		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
+		echo "Try make -f MakeFC configure_pvm" ; \
+		exit 2 ; \
+		;; \
+	*) \
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) ; \
+		;; \
+	esac 
 
 $(libmls_objs)/libmls.a: $(libmls_f90)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
@@ -129,6 +138,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.7  2001/02/22 18:08:11  pwagner
+# Includes L3DZData.f90
+#
 # Revision 1.6  2001/02/15 18:55:12  pwagner
 # L3DZData.f90 not ready for compiling
 #
