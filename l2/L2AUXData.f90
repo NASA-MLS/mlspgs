@@ -16,7 +16,7 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
     & MLSMSG_ERROR, MLSMSG_WARNING
   use MLSSignals_m, only: GETMODULENAME, MODULES
-  use MLSStrings, only: GetStringElement
+  use MLSStrings, only: GetStringElement, NumStringElements
   use Output_M, only: OUTPUT
   use STRING_TABLE, only: GET_STRING, DISPLAY_STRING
   use Tree, only: DUMP_TREE_NODE, SOURCE_REF
@@ -517,7 +517,7 @@ contains ! =====     Public Procedures     =============================
   !----------------------------------------------------- WriteL2AUXData ------
 
   subroutine WriteL2AUXData(l2aux, l2FileHandle, returnStatus, sdName, &
-    & NoMAFS, WriteCounterMAF, DimNames)
+    & NoMAFS, WriteCounterMAF, DimNames, Reuse_dimNames)
   ! Write l2aux to the file with l2FileHandle
   ! Optionally, write a bogus CounterMAF sd so the
   ! resulting file can masquerade as an l1BRad
@@ -530,6 +530,7 @@ contains ! =====     Public Procedures     =============================
                                                         ! (Requiring l2cf)
     integer, intent(in), optional :: NoMAFS
     logical, intent(in), optional :: WriteCounterMAF  ! Write bogus CounterMAF
+    logical, intent(in), optional :: Reuse_dimNames   ! We already wrote them
     integer, intent(out) :: returnStatus           ! 0 unless error
 
     ! Local variables
@@ -546,16 +547,22 @@ contains ! =====     Public Procedures     =============================
     integer, parameter, dimension(L2AUXRank) :: stride = (/ 1, 1, 1/)
     integer, parameter, dimension(L2AUXRank) :: start = (/ 0, 0, 0/)
     logical :: myWriteCounterMAF
+    logical :: myReuse_dimNames
     integer :: myNoMAFS, MAF
+    integer :: myL2AUXRANK
     integer, dimension(:), pointer :: CounterMAF ! bogus array
 
     ! Executable code
     myWriteCounterMAF = .false.
     if ( present(WriteCounterMAF) ) myWriteCounterMAF = WriteCounterMAF
+    myReuse_dimNames = .false.
+    if ( present(Reuse_dimNames) ) myReuse_dimNames = Reuse_dimNames
     myNoMAFS = 1
     if ( any(l2aux%dimensions%dimensionFamily == L_MAF) ) &
      & myNoMAFS = l2aux%dimensions(3)%noValues
     if ( present(NoMAFS) ) myNoMAFS = NoMAFS
+    myL2AUXRANK = L2AUXRANK
+    if ( present(DimNames) ) myL2AUXRANK = NumStringElements(DimNames, countEmpty=.true.)
     nullify ( dimSizes )
     error = 0
 
@@ -566,17 +573,18 @@ contains ! =====     Public Procedures     =============================
     endif
 
     goodDim=l2aux%dimensions%dimensionFamily /= L_None
-    noDimensionsUsed=COUNT(goodDim)
+    noDimensionsUsed = min(COUNT(goodDim), myL2AUXRank)
     call allocate_test(dimSizes,noDimensionsUsed,'dimSizes',ModuleName)
-    dimSizes=PACK(l2aux%dimensions%noValues, goodDim)
+    dimSizes=PACK(l2aux%dimensions(1:noDimensionsUsed)%noValues, goodDim(1:noDimensionsUsed))
 
     ! Create the sd within the file
     sdId= SFcreate ( l2FileHandle, nameString, DFNT_FLOAT32, &
       & noDimensionsUsed, dimSizes)
 
+    if ( .not. myReuse_dimNames ) then
     ! Now define the dimensions
     dimensionInFile=0
-    do dimensionInData=1,L2AUXRank
+    do dimensionInData=1, myL2AUXRank
       if (l2aux%dimensions(dimensionInData)%dimensionFamily &
         &    /= L_None) then
         dimID=SFDIMID(sdId,dimensionInFile)
@@ -622,6 +630,7 @@ contains ! =====     Public Procedures     =============================
         dimensionInFile=dimensionInFile+1
       endif
     end do
+    endif
 
     ! Now write the data
     status= SFWDATA_F90(sdId, start(1:noDimensionsUsed), &
@@ -648,6 +657,7 @@ contains ! =====     Public Procedures     =============================
       & "Too few MAFs to fake CounterMAFs in l2aux file:  " )
       return
     endif
+    nullify (CounterMAF, dimSizes)
     call allocate_test(CounterMAF,myNoMAFS,'counterMAF',ModuleName)
     call allocate_test(dimSizes,1,'dimSizes',ModuleName)
     dimSizes(1) = myNoMAFS
@@ -712,6 +722,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.28  2002/11/08 18:25:33  jonathan
+! Changes to allow writing rank 2; also reuse_DimNames
+!
 ! Revision 2.27  2002/11/06 02:01:06  livesey
 ! Changes to fill from l2aux
 !
