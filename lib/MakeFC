@@ -129,6 +129,10 @@ ifndef WE_CAN
   CASCADE := yes
 endif
 endif
+
+ifdef WE_CAN
+NOHUNTING := yes
+endif
 #These modules require custom builds, so omit build commands from dependencies
 CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90
 # Custom builds for some modules needed to fool LF95 compiler
@@ -293,6 +297,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.44  2002/07/18 18:00:02  pwagner
+# NOHUNTING default when .mod-mediated dependency
+#
 # Revision 2.43  2002/07/15 17:39:10  pwagner
 # Custom builds for L2PC_m.f90 MLSFiles.f90 L2GPData.f90 so LF95 finishes in finite time
 #
