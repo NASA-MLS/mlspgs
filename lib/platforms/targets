@@ -52,6 +52,10 @@ CC=cc
 
 #--------------------- dependency rules for PVM_OBJS
 
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+delete_lib_first = yes
+
 ifdef PVM_ROOT
    pvm_message=Building mlslib with PVM support
    PVM_OBJS=PVMwrappers.o
@@ -80,6 +84,9 @@ libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(tk_message)"
+ifeq ($(delete_lib_first),yes)
+		rm -f $@
+endif
 	ar ru $@ $?
 
 # ========================================================================
@@ -116,6 +123,9 @@ sdot.o:
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.26  2001/05/25 22:18:19  pwagner
+# sdot and ddot receive custom builds to avoid NAG runtime error
+#
 # Revision 1.25  2001/05/09 23:28:23  pwagner
 # Optionally builds library w/o toolkit support
 #

@@ -40,6 +40,10 @@ libl2_objs := $(shell echo $(itmdir)/*.o)
 
 l2_driver = mlsl2 test.o
 
+# "yes" is safer--
+# in case modules have been deleted or excluded since the last build
+delete_lib_first = yes
+
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
    pvm_message=Building mlsl2 test with PVM support
@@ -74,6 +78,9 @@ endif
 
 # ========================================================================
 libl2.a: $(libl2_objs)
+ifeq ($(delete_lib_first),yes)
+		rm -f $@
+endif
 	ar ru $@ $?
 	ar d $@ $(itmdir)/$(l2_driver)
 
@@ -107,6 +114,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.5  2001/05/18 23:30:23  pwagner
+# Brought into harmony with latest non-tests versions
+#
 # Revision 1.4  2001/03/14 00:20:58  pwagner
 # Brought up-to-date with non-test versions
 #
