@@ -122,10 +122,10 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_weight
   integer, public :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals:
+
   integer, public, parameter :: L_ANGLE         = last_intrinsic_lit + 1
   integer, public, parameter :: L_APRIORI       = l_angle + 1
-  integer, public, parameter :: L_BASELINE      = l_apriori + 1
-  integer, public, parameter :: L_BOTH 	        = l_baseline + 1
+  integer, public, parameter :: L_BOTH 	        = l_apriori + 1
   integer, public, parameter :: L_CHOLESKY      = l_both + 1
   integer, public, parameter :: L_CLIMATOLOGY   = l_cholesky+1
   integer, public, parameter :: L_CLO           = l_climatology + 1
@@ -135,13 +135,9 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_DIRECT        = l_dao + 1
   integer, public, parameter :: L_EITHER        = l_direct + 1
   integer, public, parameter :: L_EXPLICIT      = l_either + 1
-  integer, public, parameter :: L_EXTINCTION    = l_explicit + 1
-  integer, public, parameter :: L_FIXED         = l_extinction + 1
+  integer, public, parameter :: L_FIXED         = l_explicit + 1
   integer, public, parameter :: L_FRACTIONAL    = l_fixed + 1
-  integer, public, parameter :: L_GEODALTITUDE  = l_fractional + 1
-  integer, public, parameter :: L_GPH 	        = l_geodaltitude + 1
-  integer, public, parameter :: L_GPH_PRECISION = l_gph + 1
-  integer, public, parameter :: L_H2O           = l_gph_precision + 1
+  integer, public, parameter :: L_H2O           = l_fractional + 1
   integer, public, parameter :: L_HCL           = l_h2o + 1
   integer, public, parameter :: L_HEIGHT        = l_hcl + 1
   integer, public, parameter :: L_HNO3          = l_height + 1
@@ -159,10 +155,7 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_O3            = l_norm + 1
   integer, public, parameter :: L_PLAIN         = l_o3 + 1
   integer, public, parameter :: L_PRESSURE      = l_plain + 1
-  integer, public, parameter :: L_PTAN 	        = l_pressure + 1
-  integer, public, parameter :: L_RADIANCE      = l_ptan  + 1
-  integer, public, parameter :: L_REFGPH        = l_radiance + 1
-  integer, public, parameter :: L_R1A           = l_radiance + 1
+  integer, public, parameter :: L_R1A           = l_pressure + 1
   integer, public, parameter :: L_R1B           = l_r1a + 1
   integer, public, parameter :: L_R2            = l_r1b + 1
   integer, public, parameter :: L_R3            = l_r2 + 1
@@ -170,9 +163,7 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_R5H           = l_r4 + 1
   integer, public, parameter :: L_R5V           = l_r5h + 1
   integer, public, parameter :: L_SPD           = l_r5v + 1
-  integer, public, parameter :: L_TEMPERATURE   = l_spd + 1
-  integer, public, parameter :: L_TEMPERATURE_PREC = l_temperature + 1
-  integer, public, parameter :: L_THETA         = l_temperature_prec + 1
+  integer, public, parameter :: L_THETA         = l_spd + 1
   integer, public, parameter :: L_WEIGHTED      = l_theta + 1
   integer, public, parameter :: LAST_LIT        = l_weighted
   integer, public :: LIT_INDICES(first_lit:last_lit)
@@ -214,7 +205,8 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: S_CLIMATOLOGY    = last_parm + 1
   integer, public, parameter :: S_CREATE         = s_climatology + 1
   integer, public, parameter :: S_FILL           = s_create + 1
-  integer, public, parameter :: S_HGRID          = s_fill + 1
+  integer, public, parameter :: S_FORWARDMODEL   = s_fill + 1
+  integer, public, parameter :: S_HGRID          = s_forwardModel + 1
   integer, public, parameter :: S_L2GP           = s_hgrid + 1
   integer, public, parameter :: S_L2AUX          = s_l2gp + 1
   integer, public, parameter :: S_MATRIX         = s_l2aux + 1
@@ -286,7 +278,6 @@ contains ! =====     Public procedures     =============================
     ! Put enumeration literals into the symbol table:
     lit_indices(l_angle) =                 add_ident ( 'angle' )
     lit_indices(l_apriori) =               add_ident ( 'apriori' )
-    lit_indices(l_baseline) =              add_ident ( 'baseline' )
     lit_indices(l_both) =                  add_ident ( 'both' )
     lit_indices(l_cholesky) =              add_ident ( 'cholesky' )
     lit_indices(l_climatology) =           add_ident ( 'climatology' )
@@ -297,12 +288,8 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_direct) =                add_ident ( 'direct' )
     lit_indices(l_either) =                add_ident ( 'either' )
     lit_indices(l_explicit) =              add_ident ( 'explicit' )
-    lit_indices(l_extinction) =            add_ident ( 'extinction' )
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
     lit_indices(l_fractional) =            add_ident ( 'fractional' )
-    lit_indices(l_geodaltitude) =          add_ident ( 'geodaltitude' )
-    lit_indices(l_gph) =                   add_ident ( 'gph' )
-    lit_indices(l_gph_precision) =         add_ident ( 'gph_precision' )
     lit_indices(l_h2o) =                   add_ident ( 'h2o' )
     lit_indices(l_hcl) =                   add_ident ( 'hcl' )
     lit_indices(l_height) =                add_ident ( 'height' )
@@ -321,8 +308,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_o3) =                    add_ident ( 'o3' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
-    lit_indices(l_ptan) =                  add_ident ( 'ptan' )
-    lit_indices(l_radiance) =              add_ident ( 'radiance' )
     lit_indices(l_r1a) =                   add_ident ( 'r1a' )
     lit_indices(l_r1b) =                   add_ident ( 'r1b' )
     lit_indices(l_r2) =                    add_ident ( 'r2' )
@@ -331,8 +316,6 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_r5h) =                   add_ident ( 'r5h' )
     lit_indices(l_r5v) =                   add_ident ( 'r5v' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
-    lit_indices(l_temperature) =           add_ident ( 'temperature' )
-    lit_indices(l_temperature_prec) =      add_ident ( 'temperature_precision' )
     lit_indices(l_theta) =                 add_ident ( 'theta' )
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table
@@ -428,6 +411,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_climatology) =          add_ident ( 'climatology' )
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
+    spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
@@ -441,7 +425,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_time) =                 add_ident ( 'time' )
     spec_indices(s_tpfill) =               add_ident ( 'tpfill' )
     spec_indices(s_vector) =               add_ident ( 'vector' )
-    spec_indices(s_vectortemplate) =       add_ident ( 'vectortemplate' )
+    spec_indices(s_vectortemplate) =       add_ident ( 'vectorTemplate' )
     spec_indices(s_vgrid) =                add_ident ( 'vgrid' )
 
   ! Definitions are represented by trees.  The notation in the comments
@@ -633,6 +617,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_channels, t+t_numeric, n+n_field_type, &
              begin, f+f_criteria, t+t_numeric, n+n_field_type, &
              n+n_spec_def, &
+      begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
+             n+n_spec_def, &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
@@ -685,8 +671,8 @@ contains ! =====     Public procedures     =============================
       begin, z+z_fill, s+s_time, s+s_vector, s+s_tpfill, s+s_create, &
                        s+s_fill, s+s_matrix, &
              n+n_section, &
-      begin, z+z_retrieve, s+s_matrix, s+s_retrieve, s+s_subset, s+s_vector, &
-             n+n_section, &
+      begin, z+z_retrieve, s+s_matrix, s+s_forwardModel, s+s_retrieve, &
+             s+s_subset, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
       begin, z+z_output, s+s_time, s+s_output, n+n_section /) )
   end subroutine INIT_TABLES
@@ -757,6 +743,12 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.10  2001/01/31 23:32:00  vsnyder
+! Moved l_temperature l_temperature_prec l_ptan l_tangentheight l_sidebandratio
+! l_scvel l_orbitinclination l_geodaltitude l_radiance l_scanresidual l_gph
+! l_gph_precision l_refgph l_baseline l_extinction l_linewidth to
+! intrinsic module
+!
 ! Revision 2.9  2001/01/30 00:25:54  livesey
 ! Added L_REFGPH
 !
