@@ -131,7 +131,7 @@ $(OBJ_DIR)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -mc "$(OBJ_DIR)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh \
+	@$(MLSBIN)/makemakedep.sh \
         $(libmls_sources) $(srclib)
 
 ghostbuster:
@@ -172,13 +172,16 @@ targ:
 	rm -f ../$(PROG).tgz
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
-update: depends
-	cp $(MakeFName) Makefile
+update: depends ghostbuster
+	@cp $(MakeFName) Makefile; \
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" \
           -mc "$(OBJ_DIR)" -nc -nd
 
 # $Log$
+# Revision 1.2  2001/10/11 18:14:21  pwagner
+# Now builds sids_l1boa, not test
+#
 # Revision 1.1  2001/10/10 23:19:29  pwagner
 # First commit
 #
