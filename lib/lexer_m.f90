@@ -64,7 +64,7 @@ module LEXER_M
 ! P       Q       R       S       T       U       V       W
   letter, letter, letter, letter, letter, letter, letter, letter, & ! 120
 ! X       Y       Z       [       \       ]       ^       _
-  letter, letter, letter, punct,  op_char,punct,  more,   under,  & ! 130
+  letter, letter, letter, punct,  op_char,punct,  op_char,under,  & ! 130
 ! `       a       b       c       d       e       f       g
   more,   letter, letter, letter, letter, letter, letter, letter, & ! 140
 ! h       i       j       k       l       m       n       o
@@ -613,6 +613,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.20  2004/05/28 23:12:20  vsnyder
+! Add power (^) operator
+!
 ! Revision 2.19  2004/01/16 23:49:32  vsnyder
 ! Add backslash for 'into' operator
 !
