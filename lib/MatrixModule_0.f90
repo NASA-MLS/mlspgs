@@ -38,10 +38,11 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: MultiplyMatrix_XTY_0
   public :: MultiplyMatrixVector, MultiplyMatrixVector_0
   public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_0
-  public :: operator(+), operator(.TX.), RowScale
+  public :: operator(+), operator(.TX.), ReflectMatrix, RowScale
   public :: RowScale_0, ScaleBlock, SolveCholesky, SolveCholeskyM_0
   public :: SolveCholeskyV_0, Sparsify, Spill, Spill_0
-  public :: UpdateDiagonal, UpdateDiagonal_0, UpdateDiagonalVec_0
+  public :: TransposeMatrix, UpdateDiagonal, UpdateDiagonal_0
+  public :: UpdateDiagonalVec_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -141,6 +142,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     module procedure NewMultiplyMatrix_XTY_0, NewMultiplyMatrixVector_0
   end interface
 
+  interface ReflectMatrix
+    module procedure ReflectMatrix_0
+  end interface
+
   interface RowScale
     module procedure RowScale_0
   end interface
@@ -151,6 +156,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface Spill
     module procedure Spill_0
+  end interface
+
+  interface TransposeMatrix
+    module procedure TransposeMatrix_0
   end interface
 
   interface UpdateDiagonal
@@ -2203,6 +2212,36 @@ contains ! =====     Public Procedures     =============================
     call MultiplyMatrixVector ( b, v, p, .false. )
   end function NewMultiplyMatrixVector_0
 
+  ! -------------------------------------------------  ReflectMatrix_0 --
+  subroutine ReflectMatrix_0 ( M )
+    ! Given the matrix M copy the upper triangle into the lower
+    type ( MatrixElement_T ), intent(inout) :: M ! Matrix
+    ! Local variables
+    real (r8), dimension(:,:), pointer :: V ! Matrix values
+    integer :: I, J             ! Loop counters
+    ! executable code
+    select case ( m%kind )
+    case ( m_absent )
+      return
+    case ( m_full )
+      V => m%values
+    case ( m_banded, m_column_sparse )
+      nullify ( V )
+      call Allocate_test ( V, m%nRows, m%nCols, 'V', ModuleName )
+    end select
+
+    ! Do the reflection
+    do i = 1, m%nRows
+      do j = i + 1, m%nCols
+        v ( j, i ) = v ( i, j )
+      end do
+    end do
+
+    ! Sparsify again if appropriate
+    if ( m%kind ==  m_banded .or. m%kind == m_column_sparse ) &
+      & call Sparsify ( V, M, 'V in Reflect_0', ModuleName )
+  end subroutine ReflectMatrix_0
+      
   ! -------------------------------------------------  RowScale_0  -----
   subroutine RowScale_0 ( V, X, NEWX ) ! Z = V X where V is a diagonal
   !                                     matrix represented by a vector and
@@ -2675,6 +2714,33 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( d, "D in Spill_0", ModuleName )
   end subroutine Spill_0
 
+  ! -------------------------------------------  TransposeMatrix_0 -----
+  subroutine TransposeMatrix_0 ( M, MT )
+    ! Given the matrix M, compute MT
+    type ( MatrixElement_T), intent(in) :: M ! Input matrix
+    type ( MatrixElement_T), intent(inout) :: MT ! Output matrix
+    ! Local variables
+    real (r8), dimension(:,:), pointer :: D ! Dense form of matrix
+    real (r8), dimension(:,:), pointer :: DT ! Transpose of D
+
+    ! Executable code
+    call DestroyBlock ( MT )
+    select case ( m%kind )
+    case ( m_absent )
+    case ( m_full )
+      call CreateBlock ( mt, m%nCols, m%nRows, m_full )
+      mt%values = transpose ( m%values )
+    case ( m_banded, m_column_sparse )
+      nullify ( D )
+      call Allocate_test ( D, m%nRows, m%nCols, 'D', ModuleName )
+      call Allocate_test ( DT, m%nCols, m%nRows, 'DT', ModuleName )
+      call Densify ( D, M )
+      DT = transpose ( D )
+      call Sparsify ( DT, MT, 'DT in TransposeMatrix_0', ModuleName )
+      call Deallocate_test ( D, 'D', ModuleName )
+    end select
+  end subroutine TransposeMatrix_0
+  
   ! -------------------------------------------  UpdateDiagonal_0  -----
   subroutine UpdateDiagonal_0 ( A, LAMBDA )
   ! Add LAMBDA to the diagonal of A
@@ -3006,6 +3072,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.75  2002/08/06 02:15:10  livesey
+! Added TransposeMatrix_0 and ReflectMatrix_0
+!
 ! Revision 2.74  2002/07/22 03:26:25  livesey
 ! Added checkIntegrity
 !
