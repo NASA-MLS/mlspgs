@@ -1070,10 +1070,10 @@ contains ! =====     Public Procedures     =============================
   character(len=2) :: i_char
   character(len=*), parameter :: ottff = '1,2,3,4,5'
   ! Executable
-  call MakeHDF5Attribute(L2FileHandle, name, 'name', name)
-  call MakeHDF5Attribute(L2FileHandle, name, 'units', &
+  call MakeHDF5Attribute(L2FileHandle, name, 'Title', name)
+  call MakeHDF5Attribute(L2FileHandle, name, 'Units', &
     & trim(l2aux%VALUE_Units))
-  call MakeHDF5Attribute(L2FileHandle, name, 'dimension names', &
+  call MakeHDF5Attribute(L2FileHandle, name, 'Dimension Names', &
     & trim(l2aux%DIM_Names))
   if ( l2aux%majorframe) then
     framing = 'major'
@@ -1082,10 +1082,10 @@ contains ! =====     Public Procedures     =============================
   else
     framing = 'neither'
   endif
-  call MakeHDF5Attribute(L2FileHandle, name, 'framing', trim(framing))
-  call MakeHDF5Attribute(L2FileHandle, name, 'instrument module', &
+  call MakeHDF5Attribute(L2FileHandle, name, 'Framing', trim(framing))
+  call MakeHDF5Attribute(L2FileHandle, name, 'Instrument Module', &
     & l2aux%instrumentmodule)
-  call MakeHDF5Attribute(L2FileHandle, name, 'quantity type', &
+  call MakeHDF5Attribute(L2FileHandle, name, 'Quantity Type', &
     & l2aux%quantitytype)
   dim_name = ' '
   dim_unit = ' '
@@ -1499,6 +1499,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.47  2003/02/07 21:44:56  pwagner
+! Capitalized 1st letter of each attribute name
+!
 ! Revision 2.46  2003/01/30 01:02:28  pwagner
 ! Writing attributes for hdf5 files; global and data set
 !
