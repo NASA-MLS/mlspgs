@@ -48,7 +48,7 @@ module L2PC_m
   type(Matrix_T), dimension(:), pointer, public, save :: L2PCDatabase => NULL()
 
   integer :: counterStart
-  parameter ( counterStart = huge (0) / 2 )
+  parameter ( counterStart = huge (0) / 4 )
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -501,6 +501,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.19  2001/05/23 22:00:59  livesey
+! Changed counter start to avoid conflict with L2Parallel
+!
 ! Revision 2.18  2001/05/02 20:24:03  livesey
 ! Removed some unused variables.
 !
