@@ -515,7 +515,7 @@ contains
 !     CONTINUMA AND LINE EMISSIONS.   
 !=========================================================================
       if ( toggle(emit) .and. levels(emit) > 0 ) then
-         call Trace_End ( 'End Internal Grids' )
+         call Trace_End ( 'Internal Grids' )
       end if
 
 
@@ -524,7 +524,7 @@ contains
       IF ( doChannel(IFR) ) then
                
       if ( toggle(emit) .and. levels(emit) > 0 ) then
-         call Trace_Begin ( 'Begin ClearSky' )
+         call Trace_Begin ( 'ClearSky' )
       end if
 
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,                   &
@@ -584,7 +584,7 @@ contains
             cdepth = 0._r8
 
             if ( toggle(emit) .and. levels(emit) > 0 ) then
-               call Trace_End ( 'End ClearSky' )
+               call Trace_End ( 'ClearSky' )
             end if
 
             DO ISPI=1,N
@@ -592,7 +592,7 @@ contains
                IF(CWC .ge. 1.e-9_r8) then           
               
                if ( toggle(emit) .and. levels(emit) > 0 ) then
-                  call Trace_Begin ( 'Begin Clouds' )
+                  call Trace_Begin ( 'Clouds' )
                end if
 
                   CALL CLOUDY_SKY ( ISPI,CWC,TEMP(ILYR),FREQUENCY(IFR),  &
@@ -605,7 +605,7 @@ contains
                   DDm(ISPI,ILYR)=DMA              ! MASS-MEAN-DIAMETER
 
                if ( toggle(emit) .and. levels(emit) > 0 ) then
-                  call Trace_End ( 'End Clouds' )
+                  call Trace_End ( 'Clouds' )
                end if
 
                ENDIF
@@ -630,7 +630,7 @@ contains
 ! call radiative transfer calculations
       
        if ( toggle(emit) .and. levels(emit) > 0 ) then
-            call Trace_Begin ( 'Begin Radiative Transfer' )
+            call Trace_Begin ( 'Radiative Transfer' )
        end if
 
        select case ( i_saturation )
@@ -715,7 +715,7 @@ contains
        end select
  
        if ( toggle(emit) .and. levels(emit) > 0 ) then
-          call Trace_End ( 'End Radiative Transfer' )
+          call Trace_End ( 'Radiative Transfer' )
        end if
 
 
@@ -725,7 +725,7 @@ contains
        IF (IFOV) THEN       ! **** BEGIN FOV AVERAGING ****
 
        if ( toggle(emit) .and. levels(emit) > 0 ) then
-          call Trace_Begin ( 'Begin FOV Averaging' )
+          call Trace_Begin ( 'FOV Averaging' )
        end if
 
 !----------------------------------------------------------------------------
@@ -808,7 +808,7 @@ contains
               &                 method='Linear')
 
          if ( toggle(emit) .and. levels(emit) > 0 ) then
-              call Trace_End ( 'End FOV Averaging' )
+              call Trace_End ( 'FOV Averaging' )
          end if
 
 !========================================================================
@@ -853,7 +853,7 @@ contains
 !      RETURN
 !      END
 
-      if ( toggle(emit) ) call trace_end ( 'End Cloudy Sky Forward Model' )
+      if ( toggle(emit) ) call trace_end ( 'Cloudy Sky Forward Model' )
 
       END SUBROUTINE CloudForwardModel
 
@@ -864,6 +864,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.62  2004/01/08 00:24:58  jonathan
+! add tracing signals
+!
 ! Revision 1.61  2003/07/22 23:49:52  jonathan
 ! change dimension for RAD0 etc to NZmodel/8-1+Nsub
 !
