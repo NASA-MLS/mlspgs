@@ -1,309 +1,313 @@
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module REFRACTION_M
-  use MLSCommon, only: R8, RP, IP
-  use GLNP, only: NG, GX, GW
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
 
-  Implicit None
+  implicit none
 
-  Private
-  Public :: refractive_index, comp_refcor, path_ds_dh
+  private
+  public :: Refractive_index, Comp_refcor, Path_ds_dh
 
 !---------------------------- RCS Ident Info -------------------------------
-  CHARACTER (LEN=256) :: Id = &
- "$Id$"
-  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
- "$RCSfile$"
+  character (len=*), parameter :: IdParm = &
+    & "$Id$"
+  character (len=len(idParm)) :: Id = idParm
+  character (len=*), parameter :: ModuleName= "$RCSfile$"
 !---------------------------------------------------------------------------
-CONTAINS
-!-------------------------------------------------------------------
+contains
+!----------------------------------------------  Refractive_index  -----
 
-SUBROUTINE refractive_index(p_path,t_path,n_path,h2o_path)
+  subroutine Refractive_index ( p_path, t_path, n_path, h2o_path )
 
-! This routine computes the refractive index as a function of altitude
-! and phi. The returned value has one subtracted from it
-! We could easily make this elemental but it might run slower due
-! to multiple executions of IF(PRESENT(...))
-!  ===============================================================
-!  Declaration of variables for sub-program: refractive_index
-!  ===============================================================
-!  ---------------------------
-!  Calling sequence variables:
-!  ---------------------------
-! inputs
-  REAL(rp), INTENT(IN) :: p_path(:) ! pressure(hPa) vector
-  REAL(rp), INTENT(IN) :: t_path(:) ! temperature vector(K)
-! output
-  REAL(rp), INTENT(OUT) :: n_path(:) ! refractive indicies - 1
-! Keywords
-  REAL(rp), OPTIONAL, INTENT(IN) :: h2o_path(:) ! H2O vmr(ppv)
-!  ----------------
-!  Local variables:
-!  ----------------
-  REAL(rp), PARAMETER :: const1 = 0.0000776_rp
-  REAL(rp), PARAMETER :: const2 = 4810.0_rp
-! begin code
-  n_path = const1 * p_path / t_path
-  IF(PRESENT(h2o_path)) n_path = n_path*(1.0_rp + const2*h2o_path/t_path)
-  RETURN
+    use MLSCommon, only: RP
 
-END SUBROUTINE refractive_index
+  ! This routine computes the refractive index as a function of altitude
+  ! and phi. The returned value has one subtracted from it
+  ! We could easily make this elemental but it might run slower due
+  ! to multiple executions of if ( PRESENT(...))
+  !  ===============================================================
+  !  Declaration of variables for sub-program: refractive_index
+  !  ===============================================================
+  !  ---------------------------
+  !  Calling sequence variables:
+  !  ---------------------------
+  ! inputs
+    real(rp), intent(in) :: p_path(:) ! pressure(hPa) vector
+    real(rp), intent(in) :: t_path(:) ! temperature vector(K)
+  ! output
+    real(rp), intent(out) :: n_path(:) ! refractive indicies - 1
+  ! Keywords
+    real(rp), optional, intent(in) :: h2o_path(:) ! H2O vmr(ppv)
+  !  ----------------
+  !  Local variables:
+  !  ----------------
+    real(rp), parameter :: const1 = 0.0000776_rp
+    real(rp), parameter :: const2 = 4810.0_rp
+  ! begin code
+    n_path = const1 * p_path / t_path
+    if ( present(h2o_path) ) n_path = n_path *( 1.0_rp + const2*h2o_path/t_path)
+    return
 
-!---------------------------------------------------------------
-! This routine computes the integral described in Eqn. 8.11 of the
-! MLS ATBD, pg. 46,  using the Gauss-Legendre method.
-!
-! For derivation of the code below, please see: "FWD Model" paper,
-! Page 16, Eqn. 26 & 27
-!
-Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
-!
-    REAL(rp), intent(in) :: H_PATH(:)
-    REAL(rp), intent(in) :: N_PATH(:)
+  end subroutine Refractive_index
 
-    Real(rp), intent(in) :: ht
-!
-    REAL(rp), INTENT(out) :: Del_s(:)
-    Real(rp), intent(out) :: REF_CORR(:)
+! --------------------------------------------------  Comp_refcor  -----
 
-    Integer(ip) :: i,j,k,no_ele,mid
+  subroutine Comp_refcor ( h_path, n_path, ht, del_s, ref_corr )
 
-    Real(rp) :: INTEGRAND_GL(Ng)
+  ! This routine computes the integral described in Eqn. 8.11 of the
+  ! MLS ATBD, pg. 44,  using the Gauss-Legendre method.
 
-    Real(rp) :: q, htan2, Nt2Ht2
-    Real(rp) :: H,N,dndh,x1,x2,h1,h2,n1,n2,xm,ym,NH,eps
+  ! For derivation of the code below, please see: "FWD Model" paper,
+  ! Page 16, Eqn. 26 & 27
 
-    Real(rp), PARAMETER :: Tiny = 1.0e-8_rp
-!
-    no_ele = Size(n_path)
+    use MLSCommon, only: RP, IP
+    use GLNP, only: NG, GX, GW
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
+
+    real(rp), intent(in) :: H_PATH(:)
+    real(rp), intent(in) :: N_PATH(:)
+
+    real(rp), intent(in) :: ht
+
+    real(rp), intent(out) :: Del_s(:)
+    real(rp), intent(out) :: REF_CORR(:)
+
+    integer(ip) :: i, j, k, no_ele, mid
+
+    real(rp) :: INTEGRAND_GL(Ng)
+
+    real(rp) :: q, htan2, Nt2Ht2
+    real(rp) :: H, N, dndh, x1, x2, h1, h2, n1, n2, xm, ym, NH, eps
+
+    real(rp), parameter :: Tiny = 1.0e-8_rp
+
+    no_ele = size(n_path)
     mid = (no_ele + 1) / 2
-!
-!  Initialize the ref_corr array:
-!
+
+  !  Initialize the ref_corr array:
+
     ref_corr(1:no_ele) = 1.0_rp
-!
+
     Del_s = 0.0
-!
+
     htan2 = ht * ht
     Nt2Ht2 = (n_path(mid)*ht)**2
-!
+
     i = 2
     j = mid
     Del_s(i:j) = &
-       &    abs(Sqrt(abs(h_path(i-1:j-1)**2-htan2)) -  &
-       &        Sqrt(abs(h_path( i : j )**2-htan2)))
+       &    abs(sqrt(abs(h_path(i-1:j-1)**2-htan2)) -  &
+       &        sqrt(abs(h_path( i : j )**2-htan2)))
 
     i = j+1
     j = no_ele-1
     Del_s(i:j) = &
-       &    abs(Sqrt(abs(h_path(i+1:j+1)**2-htan2)) -  &
-       &        Sqrt(abs(h_path( i : j )**2-htan2)))
+       &    abs(sqrt(abs(h_path(i+1:j+1)**2-htan2)) -  &
+       &        sqrt(abs(h_path( i : j )**2-htan2)))
 
-! First, do the right hand side of the ray path:
-!
+  ! First, do the right hand side of the ray path:
+
     h2 = h_path(1)
     n2 = n_path(1)-1.0_rp
-!
-    q = (h_path(1)*n_path(1))**2-Nt2Ht2
-    if(abs(q) < Tiny) q = 0.0_rp
-    x2 = Sqrt(abs(q))
 
-    do j = 2, mid
-!
+    q = (h_path(1)*n_path(1))**2 - nt2ht2
+    if ( abs(q) < tiny ) q = 0.0_rp
+    x2 = sqrt(abs(q))
+
+o1: do j = 2, mid
+
       x1 = x2
       h1 = h2
       n1 = n2
       h2 = h_path(j)
       n2 = n_path(j)-1.0_rp
 
-      q = (h_path(j)*n_path(j))**2 - Nt2Ht2
-      if(abs(q) < Tiny) q = 0.0_rp
+      q = (h_path(j)*n_path(j))**2 - nt2ht2
+      if ( abs(q) < tiny) q = 0.0_rp
 
-      if(q < 0.0_rp .OR. n1*n2 <= 0.0_rp) then
+      if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
         ref_corr(j) = ref_corr(j-1)
-        CYCLE
-      endif
+        cycle
+      end if
 
-      x2 = Sqrt(q)
+      x2 = sqrt(q)
 
-      eps = Log(n2/n1)/(h2-h1)
+      eps = log(n2/n1)/(h2-h1)
       xm = 0.5_rp *(x1 + x2)
       ym = 0.5_rp *(x1 - x2)
-      do k = 1, Ng
-        q = xm + ym * Gx(k)
-        NH = Sqrt(q*q + Nt2Ht2)
-        Call Solve_Hn(NH)
-        if( H < 0.0) then
+      do k = 1, ng
+        q = xm + ym * gx(k)
+        nh = sqrt(q*q + nt2ht2)
+        call solve_hn ( nh )
+        if ( h < 0.0 ) then
           ref_corr(j) = ref_corr(j-1)
-          goto 10
-        endif
-        Integrand_GL(k) = 1.0_rp/(N+H*dndh)
+          cycle o1
+        end if
+        integrand_gl(k) = 1.0_rp/(n+h*dndh)
       end do
-!
-      q = SUM(integrand_GL(1:)*Gw(1:))
-!
-! And Finally - define the refraction correction:
-!
-      ref_corr(j) = q * ym / Del_s(j)
-!
- 10   k = 0
-!
-    end do
-!
-! Now, do the left hand side of the ray path:
-!
+
+  ! And Finally - define the refraction correction:
+
+      ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
+
+    end do o1
+
+  ! Now, do the left hand side of the ray path:
+
     j = mid+1
     h2 = h_path(j)
     n2 = n_path(j)-1.0_rp
 
-    q = (h_path(j)*n_path(j))**2 - Nt2Ht2
-    if(abs(q) < Tiny) q = 0.0_rp
-    x2 = Sqrt(abs(q))
+    q = (h_path(j)*n_path(j))**2 - nt2ht2
+    if ( abs(q) < tiny) q = 0.0_rp
+    x2 = sqrt(abs(q))
 
-    do j = mid+1, no_ele-1
-!
+o2: do j = mid+1, no_ele-1
+
       x1 = x2
       h1 = h2
       n1 = n2
       h2 = h_path(j+1)
       n2 = n_path(j+1)-1.0_rp
 
-      q = (h_path(j+1)*n_path(j+1))**2 - Nt2Ht2
-      if(abs(q) < Tiny) q = 0.0_rp
+      q = (h_path(j+1)*n_path(j+1))**2 - nt2ht2
+      if ( abs(q) < tiny) q = 0.0_rp
 
-      if(q < 0.0_rp .OR. n1*n2 <= 0.0_rp) then
+      if ( q < 0.0_rp .or. n1*n2 <= 0.0_rp ) then
         ref_corr(j) = ref_corr(j-1)
-        CYCLE
-      endif
+        cycle
+      end if
 
-      x2 = Sqrt(q)
+      x2 = sqrt(q)
 
-      eps = Log(n2/n1)/(h2-h1)
+      eps = log(n2/n1)/(h2-h1)
       xm = 0.5_rp *(x2 + x1)
       ym = 0.5_rp *(x2 - x1)
-      do k = 1, Ng
-        q = xm + ym * Gx(k)
-        NH = Sqrt(q*q + Nt2Ht2)
-        Call Solve_Hn(NH)
-        if( H < 0.0) then
+      do k = 1, ng
+        q = xm + ym * gx(k)
+        nh = sqrt(q*q + nt2ht2)
+        call solve_hn ( nh )
+        if ( h < 0.0 ) then
           ref_corr(j) = ref_corr(j-1)
-          goto 20
-        endif
-        Integrand_GL(k) = 1.0_rp/(N+H*dndh)
+          cycle o2
+        end if
+        integrand_gl(k) = 1.0_rp/(n+h*dndh)
       end do
-!
-      q = SUM(integrand_GL(1:)*Gw(1:))
-!
-! And Finally - define the refraction correction:
-!
-      ref_corr(j) = q * ym / Del_s(j)
-!
- 20   k = 0
-!
-    end do
-!
-    Return
-!
-Contains
-!------------------------------------------------------------------
-! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
-!    N(h) = n1*Exp(eps*(h-h1))
 
-  Subroutine Solve_Hn(NH)
+  ! And Finally - define the refraction correction:
 
-    Real(rp), intent(in) :: NH
+      ref_corr(j) = dot_product(integrand_gl,gw) * ym / Del_s(j)
 
-    Integer :: iter
-    Real(rp) :: v1,v2,f1,f2,df,hpos,hneg
+    end do o2
 
-    Integer,  PARAMETER :: Max_Iter = 20
+    return
 
-    CHARACTER(LEN=49), PARAMETER :: Msg1 = &
-          & 'From Solve_Hn routine: Could not bracket the root'
-    CHARACTER(LEN=61), PARAMETER :: Msg2 = &
-     & 'From Solve_Hn routine: Did not converged within 20 iterations'
+  contains
+  !------------------------------------------------------------------
+  ! Solve the equation h*(1.0+N(h)) = N*H, where N(h) is an exponential:
+  !    N(h) = n1*Exp(eps*(h-h1))
 
-     f1 = h1 * (1.0_rp + n1) - NH
-     f2 = h2 * (1.0_rp + n2) - NH
-     df = (f2 - f1) / (h2 - h1)
+    subroutine Solve_Hn ( NH )
 
-     IF (f1*f2 > 0.0_rp) THEN
-       H = -1.0_rp
-       Call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
-       RETURN 
-     ENDIF
+      real(rp), intent(in) :: NH
 
-     if(f1 <= 0.0_rp) then
-       hneg = h1
-       hpos = h2
-     else
-       hpos = h1
-       hneg = h2
-     endif
+      integer :: iter
+      real(rp) :: v1, v2, f1, f2, df, hpos, hneg
 
-     iter = 1
-     v2 = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
-     f2 = v2 * (1.0_rp + n1 * Exp(eps*(v2-h1)) ) - NH
+      integer,  parameter :: Max_Iter = 20
 
-     DO
+      character(LEN=*), parameter :: Msg1 = &
+        & 'From Solve_Hn routine: Could not bracket the root'
+      character(LEN=*), parameter :: Msg2 = &
+        & 'From Solve_Hn routine: Did not converge within 20 iterations'
 
-       v1 = v2
-       f1 = f2
+       f1 = h1 * (1.0_rp + n1) - NH
+       f2 = h2 * (1.0_rp + n2) - NH
+       df = (f2 - f1) / (h2 - h1)
 
-       v2 = v1 - f1 / df
+       if ( f1*f2 > 0.0_rp ) then
+         H = -1.0_rp
+         call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
+         return 
+       end if
 
-       if(v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg)) &
-           &  v2 = 0.5_rp * (hneg + hpos)
-
-       f2 = v2 * (1.0_rp + n1 * Exp(eps*(v2-h1)) ) - NH
-
-       if(abs(f2) < Tiny .OR. abs(v2-v1) < Tiny) EXIT
-
-       if(Iter == Max_Iter) EXIT
-
-       if(f2 < 0.0_rp) then
-         hneg = v2
+       if ( f1 <= 0.0_rp ) then
+         hneg = h1
+         hpos = h2
        else
-         hpos = v2
-       endif
+         hpos = h1
+         hneg = h2
+       end if
 
-       iter = iter + 1
-       df = (f2 - f1) / (v2 - v1)
+       iter = 1
+       v2 = (h1 * abs(f2) + h2 * abs(f1)) / (abs(f1) + abs(f2))
+       f2 = v2 * (1.0_rp + n1 * exp(eps*(v2-h1)) ) - NH
 
-     END DO
+       do
 
-     if(abs(f2) >= Tiny .AND. abs(v2-v1) >= Tiny) &
-         & Call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2)
+         v1 = v2
+         f1 = f2
 
-     H = v2
-     df = n1 * Exp(eps*(H-h1))
-     dndh = eps * df
-     N = 1.0_rp + df
+         v2 = v1 - f1 / df
 
-  End Subroutine Solve_Hn
+         if ( v2 < min(hpos,hneg) .OR. v2 > max(hpos,hneg) ) &
+             &  v2 = 0.5_rp * (hneg + hpos)
 
-End Subroutine comp_refcor
+         f2 = v2 * (1.0_rp + n1 * exp(eps*(v2-h1)) ) - NH
 
-!------------------------------------------------------------------
-  ELEMENTAL REAL(rp) FUNCTION path_ds_dh(r_path,r_tan)
-!
-! inputs:
-!
-  REAL(rp), INTENT(in) :: r_path ! heights + req (km).
-  REAL(rp), INTENT(in) :: r_tan ! tangent height + req (km).
-!
-! output:
-!  REAL(rp), INTENT(out) :: path_ds_dh ! path length derivative wrt height.
-!
-! calculation
-!
-  path_ds_dh = r_path / SQRT(r_path**2 - r_tan**2)
-!
-  END FUNCTION path_ds_dh
-!
+         if ( abs(f2) < tiny .or. abs(v2-v1) < tiny ) exit
+
+         if ( iter >= max_iter ) exit
+
+         if ( f2 < 0.0_rp ) then
+           hneg = v2
+         else
+           hpos = v2
+         end if
+
+         iter = iter + 1
+         df = (f2 - f1) / (v2 - v1)
+
+       end do
+
+       if ( abs(f2) >= tiny .and. abs(v2-v1) >= tiny ) &
+           & call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
+
+       H = v2
+       df = n1 * exp(eps*(H-h1))
+       dndh = eps * df
+       N = 1.0_rp + df
+
+    end subroutine Solve_Hn
+
+  end subroutine Comp_refcor
+
+! ---------------------------------------------------  Path_ds_dh  -----
+  elemental real(rp) function Path_ds_dh ( r_path, r_tan )
+
+    use MLSCommon, only: RP
+
+  ! inputs:
+
+    real(rp), intent(in) :: r_path ! heights + req (km).
+    real(rp), intent(in) :: r_tan ! tangent height + req (km).
+
+  ! output:
+  !  REAL(rp), INTENT(out) :: path_ds_dh ! path length derivative wrt height.
+
+  ! calculation
+
+    path_ds_dh = r_path / sqrt(r_path**2 - r_tan**2)
+
+  end function Path_ds_dh
+
 !------------------------------------------------------------------
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.9  2002/03/15 06:53:02  zvi
+! Some cosmetic changes
+!
 ! Revision 2.8  2002/03/14 22:33:30  zvi
 ! Add protection against Log() blowout
 !
