@@ -1,0 +1,255 @@
+; This l2cf is an attempt to make a universal l2cf for doing sids runs
+; This is a simple l2cf for testing purposes. Mainly for testing the
+; M4 stuff.  The band number to do is passed in as _band, the date as
+; _day.
+
+define(_outpath,/bigdata/livesey/misc/)
+define(_ver,v0-5-test1)
+define(_day,1996-051)
+define(_year,1996)
+
+define(_signal,_sigBand$1)
+define(_molecules,_mol$1)
+define(_systemp, _systemp$1)
+
+; First some m4 directives.
+include(m4defs.l2cf)
+
+; Now include the valid signals database
+l2cfinc(validsignals-emls.l2cf)
+
+; Now the spectroscopy database
+l2cfinc(spectroscopy.l2cf)
+
+; Now read the l2gp files for each specie
+l2cfinc(readl2gpfiles.l2cf)
+
+; Now read the gridded data for each specie
+l2cfinc(readclimatology.l2cf)
+
+; -------------------------------------------- Global settings ----
+BEGIN GlobalSettings
+
+    l1Boa, file='/data/emls/l1boa/truth/{}_year{}/MLS-Aura_L1BOA_Full_s4-t_{}_day{}.dat'
+    startTime = "00:00:00"
+    endTime = "00:05:00"
+
+    vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
+                   start=1000mb, formula=[25:12, 24:6]
+
+    vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
+
+    forwardModelGlobal, $
+      l2pc='/bigdata/livesey/misc/l2pc_band1L_v1.0.dat'
+
+    sidsFwm: forwardModel, type=linear,  $
+      signals = 'R1A:118.B1LF:PT', /do_baseline
+    retFwm: forwardModel, type=linear,  $
+      signals = 'R1A:118.B1LF:PT', /temp_der, /do_baseline
+    scanFwm: forwardModel, type=scan, module=GHz
+
+END GlobalSettings
+
+; ------------------------------------------ Chunk divide  ----
+BEGIN ChunkDivide
+    IdealLength = 10 MAFs
+    noChunks = 1
+    ignoreL1B = true
+
+;    IdealLength =             0.125 orbits
+    overlap =                 0 MAFs
+    HomeGeodAngle =           0 degrees
+    HomeModule =              GHz
+    ScanLowerLimit =          -10 km : 20 km
+    ScanUpperLimit =          40 km : 100 km
+    CriticalScanningModules = Both
+    MaxGap =                  3 minutes
+END ChunkDivide
+
+; ------------------------------------------- Construct sections --
+BEGIN Construct
+
+    hGridStandard: hGrid, type=height, height=15km, module=GHz
+
+END Construct
+
+l2cfinc(constructstandardspecies.l2cf)
+l2cfinc(constructunfoldedradiances.l2cf)
+
+BEGIN Construct
+  baseline: Quantity, type=baseline, radiometer=R1A, $
+    hGrid=hGridStandard, vGrid=vGridStandard
+
+  stateTemplate: VectorTemplate, quantities=  $
+    [ refGPH, ptanGHz, temp, baseline ]
+  
+  extraStateTemplate: VectorTemplate, quantities =  $
+    [ tngtGeocAltGHz, h2o ]
+  
+  measTemplate: VectorTemplate, quantities= $
+    [ band1L, scanResidualGHz ]
+END Construct
+
+; ------------------------------------------- Fill -----------------
+
+BEGIN Fill
+
+    ;; Define the vectors
+    x: Vector, template=stateTemplate ; State
+    a: Vector, template=stateTemplate ; A priori
+    sdIn: Vector, template=stateTemplate ; A priori standard deviation
+    sdOut: Vector, template=stateTemplate ; Solution standard deviation
+    t: Vector, template=stateTemplate ; Truth
+
+    b: Vector, template=extraStateTemplate ; Extra state
+    y: Vector, template=measTemplate ; Radiances
+    ya: Vector, template=measTemplate ; Radiances for a priori state
+    f: Vector, template=measTemplate ; Forward model radiances
+    yNoise: Vector, template=measTemplate ; Radiance noise
+
+    ;; Define the matrix
+    K: Matrix, rows=y, columns=x
+
+    ;; Fill t with the `truth'
+    Fill, quantity=t.temp,    method=l2gp, sourceL2GP=l2gpTEMPInput, /interpolate
+    Fill, quantity=t.refGPH,  method=explicit, explicitValues=15km, /spread
+    Fill, quantity=t.baseline, method=explicit, explicitValues=0K, /spread
+    
+    ;; Fill a and x with a apriori
+    Fill, quantity=a.temp,    method=gridded, sourceGrid=gridTemperature
+    Fill, quantity=x.temp,    method=gridded, sourceGrid=gridTemperature
+    Fill, quantity=a.refGPH, method=explicit, explicitvalues=16km,/spread
+    Fill, quantity=x.refGPH, method=explicit, explicitvalues=16km,/spread
+    Fill, quantity=a.baseline, method=explicit, explicitValues=0K, /spread
+    Fill, quantity=x.baseline, method=explicit, explicitValues=0K, /spread
+
+; OR can use truth
+;     Fill, quantity=a.temp, method=l2gp, sourceL2GP=l2gpTempInput, /interpolate
+;     Fill, quantity=x.temp, method=l2gp, sourceL2GP=l2gpTempInput, /interpolate
+;     Fill, quantity=x.temp, method=l2gp, sourceL2GP=l2gpTempInput, /interpolate
+;     Fill, quantity=a.refGPH, method=explicit, explicitvalues=15km,/spread
+;     Fill, quantity=x.refGPH, method=explicit, explicitvalues=15km,/spread
+;     Fill, quantity=a.baseline, method=explicit, explicitValues=0K, /spread
+;     Fill, quantity=x.baseline, method=explicit, explicitValues=0K, /spread
+
+    ;; Now fill the remaining state quantities
+    Fill, quantity=b.h2o,    method=gridded, sourceGrid=gridH2O, /interpolate
+
+    Fill, quantity=b.tngtGeocAltGHz, method=l1b
+
+    ;; Now the tangent presssures
+    Fill, quantity=t.ptanGHz, method=hydrostatic, $
+      h2oQuantity=b.h2o, $
+      temperatureQuantity=t.temp, $
+      refGPHQuantity=t.refGPH, $
+      geocAltitudeQuantity=b.tngtGeocAltGHz, $
+      maxIterations=10
+
+    Fill, quantity=x.ptanGHz, method=hydrostatic, $
+      h2oQuantity=b.h2o, $
+      temperatureQuantity=x.temp, $
+      refGPHQuantity=t.refGPH, $
+      geocAltitudeQuantity=b.tngtGeocAltGHz, $
+      maxIterations=10
+
+    ;; Define matrices
+    ;; myJacobian: matrix, rows=radiance, columns=state
+    myCovariance: matrix, columns=x, type=spd
+
+    Fill, quantity=sdIn.temp, method=explicit, explicitValues=20 K, /spread
+    Fill, quantity=sdIn.refGPH, method=explicit, explicitValues= 5 km, /spread
+    Fill, quantity=sdIn.baseline, method=explicit, explicitValues= 5 K, /spread
+    Fill, quantity=sdIn.ptanGHz, method=explicit, explicitValues=10, /spread
+    fillCovariance, matrix=myCovariance, diagonal=sdIn, /invert
+
+    Snoop, comment='Before sids'
+END Fill
+
+; ------------------------------------------------------- Sids -----
+
+BEGIN Retrieve
+
+   time
+   sids, fwdModelIn=t, fwdModelExtra=b, fwdModelOut=y,$
+     forwardModel=[sidsFwm]
+   sids, fwdModelIn=a, fwdModelExtra=b, fwdModelOut=ya,$
+     forwardModel=[sidsFwm]
+
+END Retrieve
+
+; ------------------------------------------------- Fill, noise -----
+
+BEGIN Fill
+
+    Fill, quantity=yNoise.band1L, radianceQuantity=y.band1L,  $
+      systemTemperature= 1500K, integrationTime=0.16 s,  $
+      method = estimatedNoise
+    Fill, quantity=yNoise.scanResidualGHz, method=explicit,  $
+      explicitValues = 16 km ,/spread
+    Snoop,comment='Before retrieval'
+END Fill
+
+; ------------------------------------------------------- Retrieve -----
+
+BEGIN Retrieve
+
+;   Subset, quantity=x.temp, height= [ 100mb : 0.1mb ]
+   Retrieve, state=x, fwdModelExtra=b, measurements=y, measurementSD=yNoise, $
+      forwardModel= [ retFwm, scanFwm ], $
+      covariance=myCovariance, apriori=a, columnScale=none, $
+      maxF=8, maxJ=4, lambda=0.0, outputSD=SDout
+   sids, fwdModelIn=x, fwdModelExtra=b, fwdModelOut=f,$
+     forwardModel=[sidsFwm]
+
+END Retrieve
+
+BEGIN Fill
+   Snoop,comment='After retrieval'
+END Fill
+
+; ------------------------------------------------------- Join -----
+
+BEGIN Join
+    l2gpTx:  l2gp, source=x.temp, swath = 'Temperature', precision=sdOut.temp
+    l2gpTa:  l2gp, source=a.temp, swath = 'Temperature', precision=sdIn.temp
+    l2gpTt:  l2gp, source=t.temp,  swath = 'Temperature'
+    l2gpHx:  l2gp, source=x.refGPH, swath = 'refGPH', precision=sdOut.refGPH
+    l2gpHa:  l2gp, source=a.refGPH, swath = 'refGPH', precision=sdIn.refGPH
+    l2gpHt:  l2gp, source=t.refGPH,  swath = 'refGPH'
+
+    ptanXl2aux: l2aux, source=x.ptanGHz,sdName='ptanGHzX'
+    ptanAl2aux: l2aux, source=a.ptanGHz,sdName='ptanGHzA'
+    ptanTl2aux: l2aux, source=t.ptanGHz,sdName='ptanGHzT'
+    ptanASl2aux: l2aux, source=sdIn.ptanGHz,sdName='ptanGHzA precision'
+    ptanXSl2aux: l2aux, source=sdOut.ptanGHz,sdName='ptanGHzX precision'
+
+    measRadL2AUX: l2aux, source=y.band1L, /prefixSignal, sdName=''
+    measNoiseL2AUX: l2aux, source=yNoise.band1L, /prefixSignal, sdName=' precision'
+    aprioriRadL2AUX: l2aux, source=ya.band1L, /prefixSignal, sdName=' apr'
+    fitRadL2AUX: l2aux, source=f.band1L, /prefixSignal, sdName=' fit'
+END Join
+
+
+; ---------------------------------------------------------  Output  -----
+BEGIN Output
+    
+    output, file='{}_outpath{}temp_x.l2gp', quantities=l2gpTx, type=l2gp
+    output, file='{}_outpath{}temp_a.l2gp', quantities=l2gpTa, type=l2gp
+    output, file='{}_outpath{}temp_t.l2gp', quantities=l2gpTt, type=l2gp
+    output, file='{}_outpath{}refGPH_x.l2gp', quantities=l2gpHx, type=l2gp
+    output, file='{}_outpath{}refGPH_a.l2gp', quantities=l2gpHa, type=l2gp
+    output, file='{}_outpath{}refGPH_t.l2gp', quantities=l2gpHt, type=l2gp
+
+    output, file='{}_outpath{}data.l2aux', quantities= $
+      [ ptanXl2aux, ptanAl2aux, ptanTl2aux, ptanASl2aux, ptanXSl2aux, $
+        measRadL2aux, measNoiseL2AUX, aprioriRadL2AUX, fitRadL2AUX ], type=l2aux
+
+END Output
+
+
+
+
+
+
+
+
