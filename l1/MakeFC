@@ -77,7 +77,8 @@ PROG=mlsl1
 $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean tarz targ mlsl1
@@ -139,6 +140,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.16  2001/05/17 20:02:59  pwagner
+# Automatically rebuilds lib on change to machine.f90
+#
 # Revision 2.15  2001/05/14 23:58:42  pwagner
 # default .configure name now set by environment
 #
