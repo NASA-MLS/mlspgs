@@ -22,6 +22,7 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
   private
   public :: L2GPData_T
+  public :: L2GPNameLen
   public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
     & Dump, Dump_L2GP,  ExpandL2GPDataInPlace,  OutputL2GP_createFile, &
     & OutputL2GP_writeData,  OutputL2GP_writeGeo,  ReadL2GPData, &
@@ -1219,6 +1220,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.26  2001/04/20 02:05:09  vsnyder
+! Cosmetic changes: Default visibility is now private
+!
 ! Revision 2.25  2001/03/20 01:44:25  livesey
 ! Fixed bug, was outputting chunkNumber as real!
 !
