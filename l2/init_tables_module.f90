@@ -230,7 +230,9 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_FORWARDMODELGLOBAL = s_forwardModel + 1
   integer, parameter :: S_GRIDDED            = s_forwardModelGlobal + 1
   integer, parameter :: S_HGRID              = s_gridded + 1
-  integer, parameter :: S_L2AUX              = s_hgrid + 1
+  integer, parameter :: S_L1BRAD             = s_hgrid + 1
+  integer, parameter :: S_L1BOA              = s_l1brad + 1
+  integer, parameter :: S_L2AUX              = s_l1boa + 1
   integer, parameter :: S_L2GP               = s_l2aux + 1
   integer, parameter :: S_MATRIX             = s_l2gp + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
@@ -253,8 +255,13 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_INPUT_VERSION_STRING        = p_allow_climatology_overloads + 1
   integer, parameter :: P_OUTPUT_VERSION_STRING       = p_input_version_string + 1
   integer, parameter :: P_VERSION_COMMENT             = p_output_version_string + 1
+  integer, parameter :: P_CYCLE                       = p_version_comment + 1
+  integer, parameter :: P_CCSDSSTARTTIME              = p_cycle + 1
+  integer, parameter :: P_CCSDSENDTIME                = p_ccsdsstarttime + 1
+  integer, parameter :: P_STARTTIME                   = p_ccsdsendtime + 1
+  integer, parameter :: P_ENDTIME                     = p_starttime + 1
   ! In ChunkDivide section:
-  integer, parameter :: P_CRITICAL_BANDS              = p_version_comment + 1
+  integer, parameter :: P_CRITICAL_BANDS              = p_endtime + 1
   integer, parameter :: P_CRITICAL_SCANNING_MODULES   = p_critical_bands + 1
   integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
   integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
@@ -482,6 +489,11 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_ignoreL1B) =            add_ident ( 'IgnoreL1B' )
     parm_indices(p_output_version_string) =add_ident ( 'OutputVersionString' )
     parm_indices(p_version_comment) =      add_ident ( 'VersionComment' )
+    parm_indices(p_cycle) =                add_ident ( 'Cycle' )
+    parm_indices(p_ccsdsstarttime) =       add_ident ( 'CCSDSStartTime' )
+    parm_indices(p_ccsdsendtime) =         add_ident ( 'CCSDSEndTime' )
+    parm_indices(p_starttime) =            add_ident ( 'StartTime' )
+    parm_indices(p_endtime) =              add_ident ( 'EndTime' )
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
     parm_indices(p_critical_scanning_modules) = &
                                            add_ident ( 'CriticalScanningModules' )
@@ -516,6 +528,8 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_forwardModelGlobal) =   add_ident ( 'forwardModelGlobal' )
     spec_indices(s_gridded) =              add_ident ( 'gridded' )
     spec_indices(s_hgrid) =                add_ident ( 'hgrid' )
+    spec_indices(s_l1brad) =               add_ident ( 'l1brad' )
+    spec_indices(s_l1boa) =                add_ident ( 'l1boa' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
@@ -770,6 +784,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
              begin, f+f_type, t+t_fwmType, nr+n_field_type, &
             ndp+n_spec_def, &      
+      begin, s+s_l1brad, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
+      begin, s+s_l1boa, &
+             begin, f+f_file, t+t_string, n+n_field_type, &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
              begin, f+f_l2pc, t+t_string, n+n_field_type, &
@@ -834,25 +852,25 @@ contains ! =====     Public procedures     =============================
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
       begin, z+z_mlsSignals, s+s_module, s+s_band, s+s_radiometer, &
-                             s+s_signal, s+s_spectrometerType, s+s_time, &
-             n+n_section, &
+                             s+s_signal, s+s_spectrometerType, s+s_time, n+n_section, &
       begin, z+z_spectroscopy, s+s_line, s+s_spectra, s+s_time, n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
-             begin, p+p_allow_climatology_overloads, t+t_boolean, &
-                    n+n_name_def,&
-             s+s_forwardModel, s+s_forwardModelGlobal, &
-             s+s_time, s+s_vgrid, &
-             n+n_section, &
+             begin, p+p_allow_climatology_overloads, t+t_boolean, n+n_name_def,&
+             begin, p+p_cycle, t+t_string, n+n_name_def, &
+             begin, p+p_ccsdsstarttime, t+t_string, n+n_name_def, &
+             begin, p+p_ccsdsendtime, t+t_string, n+n_name_def, &
+             begin, p+p_starttime, t+t_string, n+n_name_def, &
+             begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, s+s_l1boa, &
+             s+s_forwardModel, s+s_forwardModelGlobal, s+s_time, s+s_vgrid, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section, &
       begin, z+z_chunkdivide, &
              begin, p+p_critical_bands, t+t_string, n+n_name_def, &
-             begin, p+p_critical_scanning_modules, t+t_criticalModule, &
-                    n+n_name_def, &
+             begin, p+p_critical_scanning_modules, t+t_criticalModule, n+n_name_def, &
              begin, p+p_home_geod_angle, t+t_numeric, n+n_name_def, &
              begin, p+p_home_module, t+t_module, n+n_name_def, &
              begin, p+p_ideal_length, t+t_numeric, n+n_name_def, &
@@ -866,8 +884,7 @@ contains ! =====     Public procedures     =============================
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
       begin, z+z_fill, s+s_time, s+s_vector, s+s_create, &
-                       s+s_fill, s+s_matrix, s+s_snoop, &
-             n+n_section, &
+                       s+s_fill, s+s_matrix, s+s_snoop, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
              s+s_subset, s+s_sids, s+s_time, n+n_section, &
       begin, z+z_join, s+s_time, s+s_l2gp, s+s_l2aux, n+n_section, &
@@ -883,6 +900,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.93  2001/05/04 18:31:41  pwagner
+! Added stuff so global_settings replaces PCF functions
+!
 ! Revision 2.92  2001/05/03 23:03:19  livesey
 ! Added stuff to support scan model.
 !
