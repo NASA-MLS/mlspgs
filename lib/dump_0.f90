@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module DUMP_0
@@ -32,14 +32,19 @@ module DUMP_0
 contains
 
   ! --------------------------------------------  DUMP_1D_CHAR  -----
-  subroutine DUMP_1D_CHAR ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_1D_CHAR ( ARRAY, NAME, BLASE, CLEAN )
     character(len=*), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: BLASE
     logical, intent(in), optional :: CLEAN
 
     integer :: J, K
     logical :: MyClean
     integer :: NumZeroRows
+    character(len=len(array)) :: myBlase
+
+    myBlase = ' '
+    if ( present(Blase) ) myBlase = Blase
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -69,13 +74,15 @@ contains
       end if
       do j = 1, size(array), 10
         if (.not. myClean) then
-          if ( any(array(j:min(j+9, size(array))) /= ' ') ) then
+          if ( any(array(j:min(j+9, size(array))) /= myBlase) ) then
             if ( numZeroRows /= 0 ) then
               call output ( j-1, places=max(4,ilog10(size(array))+1) )
               call output ( afterSub )
               call output ( ' ' )
               call output ( numZeroRows )
-              call output ( ' rows of blanks not printed.', advance='yes' )
+              call output ( ' rows of "', advance='no' )
+              call output ( trim(myBlase), advance='no' )
+              call output ( '" not printed.', advance='yes' )
               numZeroRows = 0
             end if
             call output ( j, places=max(4,ilog10(size(array))+1) )
@@ -84,7 +91,7 @@ contains
             numZeroRows = numZeroRows + 1
           end if
         end if
-        if ( myClean .or. any(array(j:min(j+9, size(array))) /= ' ') ) then
+        if ( myClean .or. any(array(j:min(j+9, size(array))) /= myBlase) ) then
           do k = j, min(j+9, size(array))
               call output ( array(k) // ' ' )
           end do
@@ -96,21 +103,28 @@ contains
         call output ( afterSub )
         call output ( ' ' )
         call output ( numZeroRows )
-        call output ( ' rows of blanks not printed.', advance='yes' )
+        call output ( ' rows of "', advance='no' )           
+        call output ( trim(myBlase), advance='no' )          
+        call output ( '" not printed.', advance='yes' )      
         numZeroRows = 0
       end if
     end if
   end subroutine DUMP_1D_CHAR
 
   ! --------------------------------------------  DUMP_2D_CHAR  -----
-  subroutine DUMP_2D_CHAR ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_2D_CHAR ( ARRAY, NAME, BLASE, CLEAN )
     character(len=*), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: BLASE
     logical, intent(in), optional :: CLEAN
 
     integer :: I, J, K
     logical :: MyClean
     integer :: NumZeroRows
+    character(len=len(array)) :: myBlase
+
+    myBlase = ' '
+    if ( present(Blase) ) myBlase = Blase
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -130,7 +144,7 @@ contains
       end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, clean=clean )
+      call dump ( array(:,1), name, blase=blase, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -143,14 +157,16 @@ contains
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
           if (.not. myClean) then
-            if ( any(array(i,j:min(j+9, size(array,2))) /= ' ') ) then
+            if ( any(array(i,j:min(j+9, size(array,2))) /= myBlase) ) then
               if ( numZeroRows /= 0 ) then
                 call output ( i, places=max(4,ilog10(size(array,1))+1) )
                 call output ( j-1, places=max(4,ilog10(size(array))+1) )
                 call output ( afterSub )
                 call output ( ' ' )
                 call output ( numZeroRows )
-                call output ( ' rows of blanks not printed.', advance='yes' )
+                call output ( ' rows of "', advance='no' )
+                call output ( trim(myBlase), advance='no' )
+                call output ( '" not printed.', advance='yes' )
                 numZeroRows = 0
               end if
               call output ( i, places=max(4,ilog10(size(array,1))+1) )
@@ -160,7 +176,7 @@ contains
               numZeroRows = numZeroRows + 1
             end if
           end if
-          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= ' ') ) then
+          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= myBlase) ) then
             do k = j, min(j+9, size(array,2))
                 call output ( array(i,k) // ' ' )
             end do
@@ -174,16 +190,19 @@ contains
         call output ( afterSub )
         call output ( ' ' )
         call output ( numZeroRows )
-        call output ( ' rows of blanks not printed.', advance='yes' )
+        call output ( ' rows of "', advance='no' )           
+        call output ( trim(myBlase), advance='no' )          
+        call output ( '" not printed.', advance='yes' )      
         numZeroRows = 0
       end if
     end if
   end subroutine DUMP_2D_CHAR
 
   ! ---------------------------------------------  DUMP_3D_CHAR  -----
-  subroutine DUMP_3D_CHAR ( ARRAY, NAME, CLEAN )
+  subroutine DUMP_3D_CHAR ( ARRAY, NAME, BLASE, CLEAN )
     character(len=*), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
+    character(len=*), intent(in), optional :: BLASE
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
@@ -191,6 +210,10 @@ contains
     integer :: NumZeroRows
     integer, dimension(3) :: which, re_mainder
     integer :: how_many
+    character(len=len(array)) :: myBlase
+
+    myBlase = ' '
+    if ( present(Blase) ) myBlase = Blase
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -212,10 +235,11 @@ contains
       end if
       call output ( array(1,1,1), advance='yes' )
     else if ( how_many == 2 ) then
-      call dump ( reshape(array, (/ re_mainder(1) /)), name, clean=clean )
+      call dump ( reshape(array, (/ re_mainder(1) /)), name, blase=blase, &
+        & clean=clean )
     else if ( how_many == 1 ) then
       call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
-        & name, clean=clean )
+        & name, blase=blase, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -229,7 +253,7 @@ contains
         do j = 1, size(array,2)
           do k = 1, size(array,3), 10
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+9, size(array,3))) /= ' ') ) then
+              if ( any(array(i,j,k:min(k+9, size(array,3))) /= myBlase) ) then
                 if ( numZeroRows /= 0 ) then
                   call output ( i, places=max(4,ilog10(size(array,1))+1) )
                   call output ( j, places=max(4,ilog10(size(array,2))+1) )
@@ -237,7 +261,9 @@ contains
                   call output ( afterSub )
                   call output ( ' ' )
                   call output ( numZeroRows )
-                  call output ( ' rows of blanks not printed.', advance='yes' )
+                  call output ( ' rows of "', advance='no' )
+                  call output ( trim(myBlase), advance='no' )
+                  call output ( '" not printed.', advance='yes' )
                   numZeroRows = 0
                 end if
                 call output ( i, max(4,ilog10(size(array,1))+1) )
@@ -248,7 +274,7 @@ contains
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= ' ') ) then
+            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= myBlase) ) then
               do l = k, min(k+9, size(array,3))
                   call output ( array(i,j,l) // ' ' )
               end do
@@ -264,7 +290,9 @@ contains
         call output ( afterSub )
         call output ( ' ' )
         call output ( numZeroRows )
-        call output ( ' rows of blanks not printed.', advance='yes' )
+        call output ( ' rows of "', advance='no' )           
+        call output ( trim(myBlase), advance='no' )          
+        call output ( '" not printed.', advance='yes' )      
         numZeroRows = 0
       end if
     end if
@@ -694,7 +722,7 @@ contains
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, clean=clean )
+      call dump ( array(:,:,1), name, blase=blase, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -790,10 +818,11 @@ contains
       end if
       call output ( array(1,1,1), advance='yes' )
     else if ( how_many == 2 ) then
-      call dump ( reshape(array, (/ re_mainder(1) /)), name, clean=clean )
+      call dump ( reshape(array, (/ re_mainder(1) /)), name, clean=clean, &
+      & format=format )
     else if ( how_many == 1 ) then
       call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
-        & name, clean=clean )
+        & name, clean=clean, format=format )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -939,6 +968,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.15  2001/11/29 23:50:53  pwagner
+! Added optional blase arg to dump_nd_char; fixed bug where optional format not passed from dump_3d_int
+!
 ! Revision 2.14  2001/11/28 23:32:01  livesey
 ! Fixed bug where dump_2d_integer didn't pass format to 1d dump.
 !
