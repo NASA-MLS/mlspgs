@@ -108,4 +108,7 @@ type (VectorValue_T), pointer :: f, h2o
 
 end module GET_PATH_SPSFUNC_NGRID_M
 ! $Log$
+! Revision 1.1  2001/04/07 23:45:49  zvi
+! New routine to calculate spsfunc & refraction,(not done in comp_path )
+!
 ! Initial version, 2001/04/07 14:00:00  Z. Shippony

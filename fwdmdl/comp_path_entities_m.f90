@@ -1,17 +1,9 @@
 module COMP_PATH_ENTITIES_M
-  use MLSCommon, only: I4, R4, R8
+  use MLSCommon, only: I4, R8
   use GL6P, only: NG
-  use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM
-  use L2PC_FILE_PARAMETERS, only: DEG2RAD
   use ELLIPSE_M, only: ELLIPSE
-  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_DERIVATIVE, &
-                             PATH_VECTOR_2D
-  use REFRACTION_M, only: REFRACTIVE_INDEX
+  use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_VECTOR_2D
   use VERT_TO_PATH_M, only: VERT_TO_PATH
-  use TWO_D_POLATE_M, only: TWO_D_POLATE
-  use Molecules, only: l_h2o
-  use Intrinsic, only: l_vmr
-  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
   implicit NONE
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -19,22 +11,18 @@ module COMP_PATH_ENTITIES_M
   "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= &
   "$RCSfile$"
-!---------------------------------------------------------------------------
+!---------------------------------------------------------------------
 contains
 !---------------------------------------------------------------------
 
-SUBROUTINE comp_path_entities(fwdModelIn, fwdModelExtra, molecules, &
-           n_lvls,no_t,gl_count,ndx_path,z_glgrid,t_glgrid,h_glgrid,&
-           dhdz_glgrid,tan_hts, no_tan_hts,z_path,h_path,     &
-           t_path,phi_path,n_path,dhdz_path,eta_phi,no_phi_t,       &
-           t_phi_basis,spsfunc_path,no_mmaf,elvar,Ier)
+SUBROUTINE comp_path_entities(n_lvls,no_t,gl_count,ndx_path,z_glgrid,    &
+           t_glgrid, h_glgrid, dhdz_glgrid, tan_hts, no_tan_hts, z_path, &
+           h_path,t_path,phi_path,dhdz_path,eta_phi,no_phi_t,t_phi_basis,&
+           no_mmaf,elvar,Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: comp_path_entities
 !  ===============================================================
-
-type (Vector_T), intent(in) :: fwdModelIn, fwdModelExtra
-integer, dimension(:), intent(in) :: molecules
 
 !  ---------------------------
 !  Calling sequence variables:
@@ -55,7 +43,7 @@ Real(r8), INTENT(IN) :: tan_hts(:,:)
 
 Type(path_index) , INTENT(OUT) :: ndx_path(:,:)
 Type(path_vector), INTENT(OUT) :: z_path(:,:),t_path(:,:),h_path(:,:), &
-           n_path(:,:),phi_path(:,:),dhdz_path(:,:), spsfunc_path(:,:,:)
+                                  phi_path(:,:),dhdz_path(:,:)
 
 Type(path_vector_2d), INTENT(OUT) :: eta_phi(:,:)
 !
@@ -63,17 +51,12 @@ Type(path_vector_2d), INTENT(OUT) :: eta_phi(:,:)
 !  Local variables:
 !  ----------------
 
-Integer(i4) :: i, j, k, l, jp, sps_i, jj, kk, ih2o, lmin, lmax, &
-               klo, khi, ngt
+Integer(i4) :: i, j, k, l, jp, jj, kk, lmin, lmax, klo, khi, ngt
 
 Real(r8) :: h, q, r, zeta, phi
 
 Real(r8), DIMENSION(:)  , ALLOCATABLE :: zpath,tpath,hpath,ppath,dhdzp
 Real(r8), DIMENSION(:,:), ALLOCATABLE :: phi_eta
-
-type (VectorValue_T), pointer :: f, h2o
-
-!  PFA variables:
 
   ier = 0
   ngt = 2 * (Ng+1) * (N_lvls+1)
@@ -81,7 +64,7 @@ type (VectorValue_T), pointer :: f, h2o
 ! Compute all the various integration paths according to tanget heights.
 ! Get the z, t, h, phi, dhdz & dh_dt arrays on these paths.
 
-  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
+  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,phi_eta,STAT=i)
   ALLOCATE(zpath(ngt),hpath(ngt),tpath(ngt),ppath(ngt),dhdzp(ngt), &
  &         phi_eta(ngt,no_phi_t),STAT=ier)
   IF(ier /= 0) THEN
@@ -131,72 +114,17 @@ type (VectorValue_T), pointer :: f, h2o
     END DO
   END DO
 
-! Create the specie function along the path for all species
-!
-  do j = 1, size(molecules)
-    f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_vmr, molecule=molecules(j))
-    jp = f%template%noInstances
-    kk = f%template%noSurfs
-    DO l = 1, no_mmaf
-      DO k = 1, no_tan_hts
-        jj = ndx_path(k,l)%total_number_of_elements
-        DEALLOCATE(spsfunc_path(j,k,l)%values,STAT=i)
-        ALLOCATE(spsfunc_path(j,k,l)%values(jj),STAT=ier)
-        IF(ier /= 0) THEN
-          PRINT *,'** Error: ALLOCATION error for spsfunc_path ..'
-          PRINT *,'   STAT =',ier
-          goto 99
-        ENDIF
-        do i = 1, jj
-          zeta = z_path(k,l)%values(i)
-          phi = phi_path(k,l)%values(i)
-          if (f%template%logBasis) then
-            Call TWO_D_POLATE(f%template%surfs(:,1), &
-              & log(f%values), &
-           &           kk, Deg2Rad*f%template%phi(1,:), jp, zeta, phi, r)
-            q = exp(r)
-          else
-            Call TWO_D_POLATE(f%template%surfs(:,1), &
-              & f%values, kk, Deg2Rad*f%template%phi(1,:), jp, zeta, phi, q)
-          endif
-          spsfunc_path(j,k,l)%values(i) = q
-        end do
-      end do
-    END DO
-  END DO
+ 99  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,phi_eta,STAT=i)
 
-  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,phi_eta,STAT=i)
-!
-! Compute the relative refractive index minus one.
-! Get the water mixing ratio function
-
-  h2o => GetVectorQuantityByType( fwdModelIn, fwdModelExtra, &
-    & quantityType=l_vmr, molecule=l_h2o, noError=.true.)
-  print*,'Wet would have been:',associated(h2o)
-  if (associated(h2o)) then
-    jp = h2o%template%noInstances
-    kk = h2o%template%noSurfs
-  else
-    jp = 0
-    kk = 0
-  endif
-
-  DO l = 1, no_mmaf
-    CALL refractive_index(h2o%values,h2o%template%surfs(:,1),&
-      &             h2o%template%phi(1,:), &
-  &                 kk,jp,ndx_path(1:,l),z_path(1:,l),t_path(1:,l),    &
-  &                 phi_path(1:,l),n_path(1:,l),associated(h2o),no_tan_hts)
-  END DO
-
- 99  DEALLOCATE(zpath,hpath,tpath,ppath,dhdzp,STAT=i)
-
-  RETURN
+  Return
 
 END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.17  2001/04/07 01:21:10  livesey
+! Removed print statement
+!
 ! Revision 1.16  2001/03/31 23:40:55  zvi
 ! Eliminate l2pcdim (dimension parameters) move to allocatable ..
 !
@@ -220,9 +148,6 @@ end module COMP_PATH_ENTITIES_M
 !
 ! Revision 1.9  2001/03/21 18:40:09  livesey
 ! Removed dump statements
-!
-! Revision 1.8  2001/03/21 18:39:43  livesey
-! Fixed deg2rad bug
 !
 ! Revision 1.7  2001/03/21 06:30:10  livesey
 ! Minor change, still wrong
