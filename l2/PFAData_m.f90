@@ -30,22 +30,17 @@ contains ! =====     Public Procedures     =============================
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use Expr_m, only: Expr
     use Init_Tables_Module, only: F_Absorption, F_dAbsDnc, F_dAbsDnu, &
-      & F_dAbsDwc, F_File, F_Molecules, F_Signal, F_Temperatures, F_VelLin, &
+      & F_dAbsDwc, F_Molecules, F_Signal, F_Temperatures, F_VelLin, &
       & F_VGrid, Field_First, Field_Last, L_Zeta
     use Intrinsic, only: PHYQ_Dimensionless, PHYQ_Velocity
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSSignals_m, only: Signals
-    use MLSStrings, only: Capitalize
-    use Molecules, only: T_Molecule
-    use MoreTree, only: Get_Field_ID, GetLitIndexFromString
+    use MoreTree, only: Get_Field_ID
     use Parse_Signal_m, only: Parse_Signal
-    use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, RK, &
-      & Write_PFADatum
+    use PFADataBase_m, only: AddPFADatumToDatabase, PFAData, PFAData_T, RK
     use Physics, only: SpeedOfLight
-    use String_Table, only: Create_String, Get_String
-    use Tree, only: Decorate, Decoration, Node_Id, NSons, Sub_Rosa, Subtree
-    use Tree_Checker, only: Check_Type
-    use Tree_Types, only: N_String
+    use String_Table, only: Get_String
+    use Tree, only: Decorate, Decoration, NSons, Sub_Rosa, Subtree
     use VGridsDatabase, only: VGrid_t
 
     integer, intent(in) :: Root            ! of the pfaData subtree in the l2cf
@@ -180,7 +175,6 @@ contains ! =====     Public Procedures     =============================
 
     ! ...........................................  Announce_Error  .....
     subroutine Announce_Error ( Where, What, String, More, Stop )
-      use Machine, only: IO_Error
       use MoreTree, only: StartErrorMessage
       use Output_m, only: Output
       use PFADataBase_m, only: Dump
@@ -434,7 +428,7 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Warning
     use MLSSignals_m, only: MaxSigLen
     use MLSStrings, only: Capitalize
-    use MoreTree, only: FillArray, Get_Boolean, Get_Field_ID
+    use MoreTree, only: FillArray, Get_Field_ID
     use String_Table, only: Get_String
     use Tree, only: Decorate, Node_Id, NSons, Sub_Rosa, Subtree
     use Tree_Types, only: N_String
@@ -568,7 +562,7 @@ contains ! =====     Public Procedures     =============================
     else
       do i = 2, nsons(pfaTree)
         call write_PFADatum ( pfaData(decoration(decoration(subtree(i,pfaTree)))), &
-          & fileName, fileType, useMolecule=.true. )
+          & fileName, fileType )
       end do
     end if
 
@@ -603,6 +597,9 @@ contains ! =====     Public Procedures     =============================
 end module PFAData_m
 
 ! $Log$
+! Revision 2.16  2005/03/03 21:12:48  vsnyder
+! Remove UseMolecule from WritePFAData, remove unreferenced symbols
+!
 ! Revision 2.15  2005/01/27 21:21:28  vsnyder
 ! Remove 'file' field from PFAData, unformatted, nonscalar molecule
 !
