@@ -33,7 +33,7 @@ contains
           !... relative to ice
 
 	t0 = 273.16_r8
-	isat = -9.09718*(t0/t-1.0) + 0.78583503 - 3.56654*ALOG10(t0/t) &
+	isat = -9.09718*(t0/t-1.0) + 0.78583503 - 3.56654*LOG10(t0/t) &
           &     		+ 0.876793 * (1.0-t/t0)
 
         es=10**isat
@@ -55,6 +55,9 @@ contains
 end module WaterVapor
 
 ! $Log$
+! Revision 1.4  2002/10/30 00:53:36  jonathan
+! new water vapor formula
+!
 ! Revision 1.3  2002/10/08 17:08:08  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
