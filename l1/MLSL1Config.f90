@@ -9,6 +9,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
   USE MLSL1Common, ONLY: MaxMIFs, BandSwitch
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, &
        MLSMSG_Warning
+  USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
 
   IMPLICIT NONE
 
@@ -47,6 +48,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
   TYPE Output_T
      CHARACTER(LEN=80) :: HDFVersionString = 'hdf4'
+     INTEGER :: HDFversion
   END TYPE Output_T
 
   TYPE L1Config_T
@@ -230,9 +232,14 @@ MODULE MLSL1Config  ! Level 1 Configuration
       USE INIT_TABLES_MODULE, ONLY: p_hdf_version_string
       USE STRING_TABLE, ONLY: Get_string
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa
+      USE MLSStrings, ONLY: lowercase
 
       CHARACTER(LEN=80) :: line
       INTEGER :: root, i, son
+
+! Set default HDF version
+
+      L1Config%Output%HDFversion = HDFVERSION_4
 
       DO i = 2, Nsons (root) - 1
 
@@ -244,6 +251,16 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             CALL Get_string (Sub_rosa (Subtree(2,son)), &
                  L1Config%Output%HDFVersionString, strip=.TRUE.)
+
+            SELECT CASE (lowercase(TRIM(L1Config%Output%HDFVersionString))) 
+            CASE ('hdf4')
+               L1Config%Output%HDFversion = HDFVERSION_4
+            CASE ('hdf5')
+               L1Config%Output%HDFversion = HDFVERSION_5
+            CASE default
+               CALL MLSMessage (MLSMSG_Error, ModuleName, &
+                    L1Config%Output%HDFVersionString//' is not a legal input')
+            END SELECT
 
          END SELECT
 
@@ -261,7 +278,7 @@ MODULE MLSL1Config  ! Level 1 Configuration
            f_module, f_secondary, p_usedefaultgains, p_GHzSpaceTemp, &
            p_GHzTargetTemp, p_THzSpaceTemp, p_THzTargetTemp, p_mif_duration, &
            p_mif_dead_time, p_mifspermaf, p_calibDACS, s_switch, f_s, f_bandno
-      USE Intrinsic, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
+      USE INTRINSIC, ONLY: l_ghz, l_thz, phyq_mafs, phyq_temperature, &
            phyq_mifs, phyq_time
       USE TREE, ONLY: Decoration, Nsons, Subtree, Sub_rosa, Node_id
       USE TREE_TYPES
@@ -531,13 +548,13 @@ MODULE MLSL1Config  ! Level 1 Configuration
 
             CASE DEFAULT
 
-               print *, 'unknown spec!'
+               PRINT *, 'unknown spec!'
 
          END SELECT
 
          CASE DEFAULT
 
-            print *, 'cal default son', son
+            PRINT *, 'cal default son', son
 
          END SELECT
 
@@ -576,6 +593,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.8  2002/11/19 20:35:16  perun
+! Convert HDFVersionstring to HDFversion number
+!
 ! Revision 2.7  2002/11/14 16:51:13  perun
 ! Split space & target temps between GHz & THz
 !
