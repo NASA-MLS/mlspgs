@@ -477,8 +477,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine DeallocateL1BData
 
   !-------------------------------------------------  DiffL1BData  -----
-  subroutine DiffL1BData ( l1bData1, l1bData2, details )
-    ! Diiff two l1brad quantities
+  subroutine DiffL1BData ( l1bData1, l1bData2, details, stats, rms )
+    ! Diff two l1brad quantities
     type( L1BData_T ), intent(inout) :: L1bData1
     type( L1BData_T ), intent(inout) :: L1bData2
     integer, intent(in), optional :: DETAILS ! <=0 => Don't dump multidim arrays
@@ -486,13 +486,22 @@ contains ! ============================ MODULE PROCEDURES ======================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Dump even multi-dim arrays
     !                                        ! Default 1
+    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
+    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
+    ! If either of stats or rms is present and TRUE, print much less
 
     ! Local variables
+    logical :: hideAssocStatus
     integer :: MYDETAILS
-
+    logical :: prntAssocStatus  ! Whether to remark on association status
+                                !  of multidimensional arrays
     ! Executable code
     myDetails = 1
     if ( present(details) ) myDetails = details
+    hideAssocStatus = .false.
+    if ( present(stats) ) hideAssocStatus = stats
+    if ( present(rms) ) hideAssocStatus = hideAssocStatus .or. rms
+    prntAssocStatus = .not. hideAssocStatus
     if ( trim(L1bData1%NameInst) /= trim(L1bData2%NameInst) ) then
       call output(trim(L1bData1%NameInst), advance='yes')
       call output(trim(L1bData2%NameInst), advance='yes')
@@ -549,7 +558,8 @@ contains ! ============================ MODULE PROCEDURES ======================
           & 'l1bData%counterMAF (diff)' )
        endif
     else
-      call output('(CounterMAF arrays not associated)', advance='yes')
+      if ( prntAssocStatus ) &
+        & call output('(CounterMAF arrays not associated)', advance='yes')
     end if
 
     if ( myDetails < 1 ) return
@@ -560,26 +570,29 @@ contains ! ============================ MODULE PROCEDURES ======================
         call dump ( l1bData2%CharField, 'l1bData2%CharField' )
       end if
     else
-      call output('(CharField arrays not associated)', advance='yes')
+      if ( prntAssocStatus ) &
+        & call output('(CharField arrays not associated)', advance='yes')
     end if
 
     if ( associated(l1bData1%intField) &
       & .and. associated(l1bData1%intField) ) then
       if ( any(l1bData1%intField /= l1bData2%intField) ) then
         call dump ( l1bData1%intField - l1bData2%intField, &
-          & 'l1bData%intField (diff)' )
+          & 'l1bData%intField (diff)', stats=stats, rms=rms )
       endif
     else
-      call output('(intField arrays not associated)', advance='yes')
+      if ( prntAssocStatus ) &
+        & call output('(intField arrays not associated)', advance='yes')
     end if
 
     if ( associated(l1bData1%dpField) &
       & .and. associated(l1bData1%dpField) ) then
       if ( any(l1bData1%dpField /= l1bData2%dpField) ) &
         & call dump ( l1bData1%dpField-l1bData2%dpField, &
-        & 'l1bData%dpField (diff)' )
+        & 'l1bData%dpField (diff)', stats=stats, rms=rms )
     else
-      call output('(dpField arrays not associated)', advance='yes')
+      if ( prntAssocStatus ) &
+        & call output('(dpField arrays not associated)', advance='yes')
     end if
 
   end subroutine DiffL1BData
@@ -2178,6 +2191,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.53  2005/01/12 23:59:45  pwagner
+! diff accepts options to print only stats, rms
+!
 ! Revision 2.52  2004/12/21 22:05:14  pwagner
 ! Removed clunky temparray introduced to bypass memory issue
 !
