@@ -273,9 +273,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_OUTPUT_VERSION_STRING       = p_input_version_string + 1
   integer, parameter :: P_VERSION_COMMENT             = p_output_version_string + 1
   integer, parameter :: P_CYCLE                       = p_version_comment + 1
-  integer, parameter :: P_CCSDSSTARTTIME              = p_cycle + 1
-  integer, parameter :: P_CCSDSENDTIME                = p_ccsdsstarttime + 1
-  integer, parameter :: P_STARTTIME                   = p_ccsdsendtime + 1
+  integer, parameter :: P_STARTTIME                   = p_cycle + 1
   integer, parameter :: P_ENDTIME                     = p_starttime + 1
   ! In ChunkDivide section:
   integer, parameter :: P_CRITICAL_BANDS              = p_endtime + 1
@@ -523,8 +521,6 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_output_version_string) =add_ident ( 'OutputVersionString' )
     parm_indices(p_version_comment) =      add_ident ( 'VersionComment' )
     parm_indices(p_cycle) =                add_ident ( 'Cycle' )
-    parm_indices(p_ccsdsstarttime) =       add_ident ( 'CCSDSStartTime' )
-    parm_indices(p_ccsdsendtime) =         add_ident ( 'CCSDSEndTime' )
     parm_indices(p_starttime) =            add_ident ( 'StartTime' )
     parm_indices(p_endtime) =              add_ident ( 'EndTime' )
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
@@ -924,8 +920,6 @@ contains ! =====     Public procedures     =============================
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_allow_climatology_overloads, t+t_boolean, n+n_name_def,&
              begin, p+p_cycle, t+t_string, n+n_name_def, &
-             begin, p+p_ccsdsstarttime, t+t_string, n+n_name_def, &
-             begin, p+p_ccsdsendtime, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, s+s_l1boa, &
              s+s_forwardModel, s+s_forwardModelGlobal, s+s_time, s+s_vgrid, &
@@ -965,6 +959,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.109  2001/05/24 20:54:26  pwagner
+! Deleted p_ccs..times
+!
 ! Revision 2.108  2001/05/18 23:18:42  vsnyder
 ! Replace 'weight' field of 'retrieve' by 'measurementSD'
 !
