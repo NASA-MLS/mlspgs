@@ -3,7 +3,7 @@ module FOV_CONVOLVE_M
   use MLSCommon, only: I4, R8
   use D_CSPLINE_M, only: CSPLINE
   implicit NONE
-  private
+!  private
   public :: FOV_CONVOLVE
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -707,6 +707,9 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.12  2001/05/02 20:49:23  zvi
 ! Cleaning up code
 !
