@@ -98,7 +98,8 @@ subtrees: do while ( j <= howmany )
                 & qtyTemplates, vectorTemplates, mifGeolocation )
             case ( z_fill )
               call MLSL2Fill ( son, l1bInfo, aprioriData, vectorTemplates, &
-                & vectors, qtyTemplates, l2gpDatabase , l2auxDatabase)
+                & vectors, qtyTemplates, l2gpDatabase , l2auxDatabase, &
+                & chunks, chunkNo)
             case ( z_join )
               call MLSL2Join ( son, vectors, l2gpDatabase, l2auxDatabase, &
                 & qtyTemplates, chunks, chunkNo )
@@ -135,6 +136,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.5  2000/12/05 00:41:50  pwagner
+! Added L2AUXDatabase arg in call to MLSL2Fill
+!
 ! Revision 2.4  2000/11/30 00:21:08  pwagner
 ! passes l2*databses to read a priori
 !
