@@ -681,7 +681,7 @@ contains
     ! --------------------------------------------------  SayTime  -----
     subroutine SayTime
       call cpu_time ( t2 )
-      call output ( "Timing for MLSL2Join =" )
+      call output ( "Timing for Retrieve =" )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
@@ -690,6 +690,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.9  2001/03/09 03:05:05  vsnyder
+! Correct identification for timing
+!
 ! Revision 2.8  2001/03/08 03:23:09  vsnyder
 ! More stuff to work with L2_Load
 !
