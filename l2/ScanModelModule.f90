@@ -504,7 +504,6 @@ contains ! =============== Subroutines and functions ==========================
 
     ! Local variables
 
-    integer :: BELOWREF                 ! Returned from getBasisGPH
     integer :: COL                      ! Block col in jacobian
     integer :: H2OINST                  ! H2O Instance for this MAF
     integer :: I                        ! Loop index
@@ -921,7 +920,7 @@ contains ! =============== Subroutines and functions ==========================
       call allocate_test ( ifm%R, noTemps, &
         & 'ifm%gph', ModuleName )
       call GetBasisGPH ( temp, refGPH, ifm%basisGPH, &
-        & ifm%R, ifm%RT, belowRef=belowRef )
+        & ifm%R, ifm%RT, belowRef=ifm%belowRef )
       fmStat%newScanHydros = .false.
     end if
 
@@ -957,8 +956,8 @@ contains ! =============== Subroutines and functions ==========================
     do i = 1, noMIFs + 1
       if ( i == noMIFs+1 ) then
         usePtan = refGPH%template%surfs(1,1)
-        lower = belowRef
-        upper = belowRef + 1
+        lower = ifm%belowRef
+        upper = ifm%belowRef + 1
       else
         usePtan = ptanVals(i)
         lower = pointTempLayer(i)
@@ -1167,6 +1166,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.22  2001/06/04 22:42:36  livesey
+! Gets belowRef from intermediate
+!
 ! Revision 2.21  2001/05/10 00:46:49  livesey
 ! Changed else where to elsewhere (NAG problem?)
 !
