@@ -4762,7 +4762,7 @@ contains ! =====     Public Procedures     =============================
         errorCode = CantFillFromL2AUX
         return
       end if
-      if ( lastProfile > lbound ( l2aux%values, 3 ) ) then
+      if ( lastProfile > ubound ( l2aux%values, 3 ) ) then
         errorCode = CantFillFromL2AUX
         return
       end if
@@ -5824,6 +5824,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.233  2003/07/16 22:39:47  livesey
+! Bug fix in fill from l2aux
+!
 ! Revision 2.232  2003/07/08 00:17:46  livesey
 ! Bug fix in column filling
 !
