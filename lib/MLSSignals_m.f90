@@ -884,11 +884,14 @@ oc:     do
   subroutine DUMP_SIGNAL ( SIGNAL, DETAILS )
     type (signal_T), intent(in) :: SIGNAL
     logical, intent(in), optional :: Details ! false => don't dump frequencies
+                                             ! default true.
     logical :: My_Details
     character (len=80) :: Str
     my_details = .true.
     if ( present(details) ) my_details = details
     if ( signal%name > 0 ) call display_string ( signal%name, advance='yes' )
+    call output ( '   Signal: ' )
+    call displaySignalName ( signal )
     call output ( '   Module: ')
     call output ( signal%instrumentModule )
     call output ( ' - ' )
@@ -908,7 +911,7 @@ oc:     do
       call output ( 'Cannot get radiometer name', advance='yes' )
     end if
     call output ( '   First LO: ')
-    call output ( signal%lo, advance='yes')
+    call output ( signal%lo, after=' MHz', advance='yes' )
     call output ( '   Band: ')
     call output ( signal%band )
     call output (' - ')
@@ -919,7 +922,7 @@ oc:     do
       call output ( 'Cannot get band name', advance='yes' )
     end if
     call output ( '   Band center frequency: ')
-    call output ( signal%centerFrequency, advance='yes')
+    call output ( signal%centerFrequency, after=' MHz', advance='yes' )
     call output ( '   SpectrometerType: ')
     call output ( signal%spectrometerType )
     call output ( ' - ' )
@@ -939,8 +942,8 @@ oc:     do
     call output ( '   Single Sideband: ' )
     call output ( signal%singleSideband, advance='yes')
     if ( my_details ) then
-      call output ( '   Frequencies' )
-      if ( signal%deferred ) call output ( '(deferred)' )
+      call output ( '   Frequencies (MHz)' )
+      if ( signal%deferred ) call output ( ' (deferred)' )
       call output ( ':', advance='yes' )
       call dump ( signal%frequencies )
       call output ( '   Widths' )
@@ -1656,6 +1659,9 @@ oc:     do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.73  2004/07/23 19:48:12  vsnyder
+! Some cannonball polishing
+!
 ! Revision 2.72  2004/07/23 18:35:17  vsnyder
 ! Dump low bound of channels array
 !
