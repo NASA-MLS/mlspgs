@@ -59,6 +59,7 @@ contains
     integer :: I                        ! Subscript, loop inductor
     integer :: IxJacobian               ! Index of Jacobian in matrix database
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
+    integer :: Son                      ! Of ROOT
 
     ! Error message codes
     integer, parameter :: NeedJacobian = 1   ! Needed if derivatives requested
@@ -70,31 +71,39 @@ contains
     ixJacobian = 0
 
     do i = 2, nsons(root)
-      field = get_field_id(root)
+      son = subtree(i,root)
+      field = get_field_id(son)
       select case ( field )
       case ( f_fwdModelIn )
-        fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,root))))
+        fwdModelIn => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_fwdModelExtra )
-        fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,root))))
+        fwdModelExtra => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_fwdModelOut )
-        fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,root))))
+        fwdModelOut => vectorDatabase(decoration(decoration(subtree(2,son))))
       case ( f_jacobian )
-        ixJacobian = decoration(subtree(2,root)) ! jacobian: matrix vertex
+        ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
       end select
     end do ! i = 2, nsons(root)
 
-    i = decoration(ixJacobian)
-    if ( i > 0 ) then
+    if ( ixJacobian > 0 ) then
+      i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
     else if ( fmc%atmos_Der .or. fmc%do_conv .or. fmc%spect_Der .or. &
       & fmc%temp_der ) then
       call announceError ( needJacobian )
     end if
 
-    call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
-    &                   Jacobian, FwdModelOut=FwdModelOut, &
-    &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1))
-!   &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+    if ( ixjacobian > 0 ) then
+      call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+      &                   Jacobian, FwdModelOut=FwdModelOut, &
+      &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !???  temporary
+!     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+    else
+      call forwardModel ( FwdModelInfo, FwdModelExtra, FwdModelIn, &
+      &                   FwdModelOut=FwdModelOut, &
+      &                   FMC=FMC, FMI=FMI(1), TFMI=TFMI(1)) !??? temporary
+!     &                   FMC=FMC,FMI=FMI,TFMI=TFMI) !??? Last line temporary
+    end if
     if ( toggle(gen) ) call trace_end ( "SIDS" )
 
   contains
@@ -118,6 +127,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.4  2001/03/08 23:52:24  vsnyder
+! Process sons correctly
+!
 ! Revision 2.3  2001/03/08 20:11:19  zvi
 ! *** empty log message ***
 !
