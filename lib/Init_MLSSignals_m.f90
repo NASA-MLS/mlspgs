@@ -32,7 +32,8 @@ module Init_MLSSignals_m
   integer, parameter :: F_channel           = f_centerFrequency + 1
   integer, parameter :: F_channels          = f_channel + 1
   integer, parameter :: F_deferred          = f_channels + 1
-  integer, parameter :: F_first             = f_deferred + 1
+  integer, parameter :: F_direction         = f_deferred + 1
+  integer, parameter :: F_first             = f_direction + 1
   integer, parameter :: F_frequency         = f_first + 1
   integer, parameter :: F_last              = f_frequency + 1
   integer, parameter :: F_lo                = f_last + 1
@@ -89,6 +90,7 @@ contains
     field_indices(f_channel) =             add_ident ( 'channel' )
     field_indices(f_channels) =            add_ident ( 'channels' )
     field_indices(f_deferred) =            add_ident ( 'deferred' )
+    field_indices(f_direction) =           add_ident ( 'direction' )
     field_indices(f_first) =               add_ident ( 'first' )
     field_indices(f_frequency) =           add_ident ( 'frequency' )
     field_indices(f_last) =                add_ident ( 'last' )
@@ -173,6 +175,7 @@ contains
       begin, s+s_signal, &              ! Must be after band
              begin, f+f_band, s+s_band, nr+n_field_spec, &
              begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_direction, t+t_numeric, nr+n_field_type, &
              begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
              begin, f+f_switch, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
@@ -186,6 +189,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.16  2002/05/03 22:38:55  livesey
+! Added direction field
+!
 ! Revision 2.15  2001/06/07 21:59:41  pwagner
 ! Added Copyright statement
 !
