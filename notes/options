@@ -43,6 +43,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
     (repeat for 1st and last chunks in a range: 
       i.e., --chunk 1 --chunk 14 runs chunks 1..14)
   --[n]ckbk: Do [not] check the block calculations against full block algebra
+  --[n]clearOnAllocate: Do [not] set arrays etc. to zero on allocation.
   --[n]countChunks: Do [not] just print the number of chunks and quit
   --delay[ ]<amount> sleep <amount> micosecs at end of each master event loop
       default is 200000; 0 means no sleeping
@@ -64,6 +65,7 @@ Note: use "-T2" and not "--T2" because -T2 has one 'letter'
       scf default is 10; sips default is 1; 1 means allow no failures
   --maxFailuresPerMachine[ ]<amount> mark bad any machine after <amount> failures
       scf default is 1; sips default is 2; 1 means allow no failures
+  --[n]memTrack: Do [not] keep track of memory usage (simple arrays only).
   --[n]patch: Don't [do] let run create file, swath on first directWrite
     by default, the 1st directwrite obliterates an existing file
     turning this option on will let you merely patch it instead
@@ -117,6 +119,9 @@ by the equal-signs -- stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.33  2004/02/05 23:26:22  pwagner
+ Added --cat option
+
  Revision 1.32  2004/01/07 20:44:36  pwagner
  Correct, expand on patch option
 
