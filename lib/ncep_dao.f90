@@ -37,8 +37,8 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   !-----------------------------------------------------------------------------
 
   public:: source_file_already_read
-  public::OBTAIN_CLIM, READ_CLIMATOLOGY, OBTAIN_DAO, Obtain_NCEP
-  public::ReadGriddedData, ReadGloriaFile
+  public:: READ_CLIMATOLOGY
+  public:: ReadGriddedData, ReadGloriaFile
 
   integer :: ERROR
 
@@ -47,6 +47,7 @@ module ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
   character (len=*), parameter :: DEFAULTDAOFIELDNAME = 'TMPU'
   character (len=*), parameter :: DEFAULTNCEPDIMLIST = 'YDim,XDim'
   character (len=*), parameter :: DEFAULTNCEPGRIDNAME = 'TMP_3'
+  character (len=*), parameter :: DEFAULTNCEPSTRATFIELDNAME = 'Temperature'
   character (len=*), parameter :: GEO_FIELD1 = 'Latitude'
   character (len=*), parameter :: GEO_FIELD2 = 'Longitude'
   character (len=*), parameter :: GEO_FIELD3 = 'Height'
@@ -116,10 +117,27 @@ contains
         print *, 'Units         ' // trim(the_g_data%units)
       endif
     case ('ncep')
-      call Read_ncep(FileName, lcf_where, v_type, &
+      ! These are ncep global assimilation model data
+      ! in hdfeos format
+      call Read_ncep_gdas(FileName, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName, missingValue)
       if ( DEEBUG ) then
-        print *, '(Returned from read_ncep)'
+        print *, '(Returned from Read_ncep_gdas)'
+        print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
+        print *, 'Description   ' // trim(the_g_data%description)
+        print *, 'Units         ' // trim(the_g_data%units)
+      endif
+    case ('strat')
+      ! These are ncep stratospheric analysis combined data
+      ! in hdfeos5 format
+      call Read_ncep_strat(FileName, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName, gridName='NorthernHemisphere', &
+        & missingValue=missingValue)
+      call Read_ncep_strat(FileName, lcf_where, v_type, &
+        & the_g_data, GeoDimList, fieldName, gridName='SouthernHemisphere', &
+        & missingValue=missingValue)
+      if ( DEEBUG ) then
+        print *, '(Returned from read_ncep-strat)'
         print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
         print *, 'Description   ' // trim(the_g_data%description)
         print *, 'Units         ' // trim(the_g_data%units)
@@ -139,6 +157,7 @@ contains
     & the_g_data, GeoDimList, fieldName, missingValue)
     use Dump_0, only: Dump
 
+    ! What was once called 'dao' might be better known as 'gmao'
     ! This routine reads a dao file, named something like
     ! DAS.flk.asm.tsyn3d_mis_p.GEOS401.2003011800.2003011818.V01
     ! returning a filled data
@@ -413,15 +432,15 @@ contains
        end subroutine read_the_dim
   end subroutine Read_dao
 
-  ! ----------------------------------------------- Read_ncep
-  subroutine Read_ncep(FileName, lcf_where, v_type, &
+  ! ----------------------------------------------- Read_ncep_gdas
+  subroutine Read_ncep_gdas(FileName, lcf_where, v_type, &
     & the_g_data, GeoDimList, gridName, missingValue)
     use Dump_0, only: Dump
 
-    ! This routine reads a ncep file, named something like
+    ! This routine reads a ncep global assimilation model product
+    ! (GDAS) file, named something like
     ! 6207ea2e-1dd2-11b2-b61e-ae069991db9a.hdfeos 
-    ! returning a filled data
-    ! structure appropriate for newer style ncep
+    ! returning a filled data structure appropriate for it
 
     ! FileName and the_g_data are required args
     ! GeoDimList, if present, should be the Dimensions' short names
@@ -684,7 +703,7 @@ contains
     ! Insert code to transform upLeft and LowRight
     ! info into lats and lons
     if ( USEPROJECTFORDIMS ) then
-      call announce_error(lcf_where, "read_ncep unable to use projection")
+      call announce_error(lcf_where, "Read_ncep_gdas unable to use projection")
     else
     ! Now read the dims
     !  But .. they aren't there!
@@ -745,7 +764,299 @@ contains
            & call announce_error(lcf_where, "failed to read dim field " &
            & // trim(field_name))
        end subroutine read_the_dim
-  end subroutine Read_ncep
+  end subroutine Read_ncep_gdas
+
+  ! ----------------------------------------------- Read_ncep_strat
+  subroutine Read_ncep_strat(FileName, lcf_where, v_type, &
+    & the_g_data, GeoDimList, fieldName, gridName, missingValue)
+    use Dump_0, only: Dump
+    use HDFEOS5, only: HE5_HDFE_NENTDIM, HE5F_ACC_RDONLY, &
+      & HE5_GDOPEN, HE5_GDATTACH, HE5_GDDETACH, HE5_GDCLOSE, &
+      & HE5_GDNENTRIES, HE5_GDINQGRID, HE5_GDINQDIMS, HE5_GDINQFLDS, &
+      & HE5_GDFLDINFO
+
+    ! This routine reads a ncep stratospheric combined product file,
+    ! named something like nmct_030126.he5
+    ! returning a filled data structure appropriate for it
+
+    ! FileName and the_g_data are required args
+    ! GeoDimList, if present, should be the Dimensions' short names
+    ! as a comma-delimited character string in the order:
+    ! longitude, latitude, vertical level, time
+
+    ! The file itself determines which data field, e.g., Temperature,
+    ! is being defined
+    
+    ! fieldName, if present, should be a character string matching one of the
+    ! fields in the grid: {'Temperature', 'Moisture', 'Height'}
+    
+    ! gridName, if present, should be a character string matching one of the
+    ! grids in the file: {'NorthernHemisphere', 'SouthernHemisphere'}
+    
+    ! This file is formatted in the following way:
+    ! At each gridded quantity, e.g. /NorthernHemisphere/Temperature,
+    ! a Polar stereographic projection is defined
+
+    ! Arguments
+    character (LEN=*), intent(IN) :: FileName ! Name of the file of the grid(s)
+    integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
+    integer, intent(IN) :: v_type       ! vertical coordinate
+    type( GriddedData_T ) :: the_g_data ! Result
+    character (LEN=*), optional, intent(IN) :: GeoDimList ! E.g., 'X.Y,..'
+    character (LEN=*), optional, intent(IN) :: fieldName  ! Name of grid quant.
+    character (LEN=*), optional, intent(IN) :: gridName   ! Name of grid
+    real(rgr), optional, intent(IN) :: missingValue
+
+    ! Local Variables
+    integer :: file_id, gd_id
+    integer :: inq_success
+    integer :: nentries, ngrids, ndims, nfields
+    integer :: strbufsize
+    logical,  parameter       :: CASESENSITIVE = .false.
+    integer, parameter :: GRIDORDER=1   ! What order grid written to file
+    character (len=MAXLISTLENGTH) :: gridlist
+    character (len=MAXLISTLENGTH) :: dimlist, actual_dim_list
+    character (len=MAXLISTLENGTH), dimension(1) :: dimlists
+    character (len=MAXLISTLENGTH), dimension(1) :: maxdimlists
+    character (len=16), dimension(NENTRIESMAX) :: dimNames
+    character (len=MAXLISTLENGTH) :: fieldlist
+    integer, parameter :: MAXNAMELENGTH=NameLen		! Max length of grid name
+    character (len=MAXNAMELENGTH) :: mygridname, actual_field_name
+    integer, dimension(NENTRIESMAX) :: dims, rank, numberTypes
+    integer                        :: our_rank, numberType
+
+    integer :: start(3), stride(3), edge(3)
+    integer :: status
+    !                                  These start out initialized to one
+    integer                        :: nlon=1, nlat=1, nlev=1, ntime=1
+    integer, parameter             :: i_longitude=1
+    integer, parameter             :: i_latitude=i_longitude+1
+    integer, parameter             :: i_vertical=i_latitude+1
+    integer, parameter             :: i_time=i_vertical+1
+    integer, external :: GDRDFLD
+    logical, parameter :: COUNTEMPTY=.true.
+    real(r4), parameter :: FILLVALUE = 1.e15
+    real(r4), dimension(:,:,:,:), pointer :: all_the_fields
+    real(r8), dimension(:), pointer :: dim_field
+    logical, parameter :: DEEBUG = .false.
+    ! Some day we'll get all these from MLSHDFEOS
+    integer, external :: he5_gdrdfld
+    ! Executable code
+    ! Find list of grid names on this file (This has been core dumping on me)
+    if(DEEBUG) print *, 'About to find grid list of file ', trim(FileName)
+    inq_success = he5_gdinqgrid(FileName, gridlist, strbufsize)
+    if (inq_success < 0) then
+      call announce_error(lcf_where, "Could not inquire gridlist "// trim(FileName))
+    end if
+    if(DEEBUG) print *, 'grid list ', trim(gridlist)
+
+    error = 0
+    file_id = he5_gdopen(FileName, HE5F_ACC_RDONLY)
+
+    if (file_id < 0) then
+      call announce_error(lcf_where, "Could not open "// FileName)
+    end if
+
+    ! Find grid name corresponding to the GRIDORDER'th one
+    ngrids = NumStringElements(gridlist, COUNTEMPTY)
+
+    if(ngrids <= 0) then
+      call announce_error(lcf_where, "NumStringElements of gridlist <= 0")
+    elseif(ngrids /= inq_success) then
+      call announce_error(lcf_where, "NumStringElements of gridlist /= inq_success")
+    elseif(ngrids < GRIDORDER) then
+      call announce_error(lcf_where, "NumStringElements of gridlist < GRIDORDER")
+    endif
+
+    if ( present(gridName) ) then
+      myGridName = gridName
+    else
+      call GetStringElement(gridlist, mygridname, GRIDORDER, COUNTEMPTY)
+    endif
+
+    gd_id = he5_gdattach(file_id, mygridname)
+    if (gd_id < 0) then
+      call announce_error(lcf_where, "Could not attach "//trim(mygridname))
+    end if
+
+    ! Now find dimsize(), dimname(), etc.
+    nentries = he5_gdnentries(gd_id, HE5_HDFE_NENTDIM, strbufsize)
+
+    if(nentries <= 0) then
+      call announce_error(lcf_where, "nentries of gd_id <= 0")
+    elseif(nentries > NENTRIESMAX) then
+      call announce_error(lcf_where, "nentries of gd_id > NENTRIESMAX")
+    endif
+
+    ndims = he5_gdinqdims(gd_id, dimlist, dims)
+
+    if(ndims <= 0) then
+      call announce_error(lcf_where, "ndims of gd_id <= 0")
+    elseif(ndims > NENTRIESMAX) then
+      call announce_error(lcf_where, "ndims of gd_id > NENTRIESMAX")
+    endif
+
+    nfields = he5_gdinqflds(gd_id, fieldlist, rank, numberTypes)
+
+    if(nfields <= 0) then
+      call announce_error(lcf_where, "nfields of gd_id <= 0")
+    elseif(nfields > NENTRIESMAX) then
+      call announce_error(lcf_where, "nfields of gd_id > NENTRIESMAX")
+    endif
+
+    if(.not. CASESENSITIVE) then
+      fieldlist = Capitalize(fieldlist)
+    endif
+
+    if(present(fieldName)) then
+      actual_field_name=fieldName
+    else
+      actual_field_name=DEFAULTNCEPSTRATFIELDNAME
+    endif
+
+    actual_dim_list = ' '
+    if(present(GeoDimList)) then
+      actual_dim_list=GeoDimList
+    endif
+    if ( actual_dim_list == ' ' ) then
+      actual_dim_list = DEFAULTDAODIMLIST
+    endif
+    call List2Array (actual_dim_list, dimNames, countEmpty)
+
+    ! Now find the rank of our field
+    inq_success = he5_gdfldinfo(gd_id, trim(actual_field_name), our_rank, dims, &
+      & numbertype, dimlists(1), maxdimlists(1))
+
+    dimlist = trim(dimlists(1))
+    if(DEEBUG) print *, 'our_rank ', our_rank
+    if(DEEBUG) print *, 'dims ', dims(1:our_rank)
+    if(DEEBUG) print *, 'dimlist ', dimlist
+
+    nlon = dims(1)
+    nlat = dims(2)
+    nlev = dims(3)
+    ntime = dims(4)
+
+    the_g_data%quantityName = actual_field_name
+    the_g_data%description = lit_dao
+    the_g_data%verticalCoordinate = v_type
+
+    the_g_data%noLons = nlon
+    the_g_data%noLats = nlat
+    the_g_data%noHeights = nlev
+    ! the_g_data%noLsts = ntime
+    the_g_data%noDates = ntime
+    the_g_data%units = 'K'
+    if(DEEBUG) print *, 'our quantity name ', the_g_data%quantityName
+    if(DEEBUG) print *, 'our description ', the_g_data%description
+    if(DEEBUG) print *, 'our units ', the_g_data%units
+
+    call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
+    ! Setup the grid
+    call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
+      & noLons=nlon, noLsts=1, noSzas=1, noDates=ntime, missingValue=FILLVALUE )
+      ! & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1, missingValue=FILLVALUE )
+    if(DEEBUG) print *, '(Again) our quantity name ', the_g_data%quantityName
+    if(DEEBUG) print *, 'our description ', the_g_data%description
+    if(DEEBUG) print *, 'our units ', the_g_data%units
+    allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
+    all_the_fields = the_g_data%missingValue
+    if ( status /= 0 ) &
+        & call announce_error(lcf_where, "failed to allocate field_data")
+    start = 0                                                             
+    stride = 1                                                               
+    edge = dims(1:3)                                                        
+    if(DEEBUG) print *, 'About to read ' // trim(actual_field_name)
+    if(DEEBUG) print *, 'Start ', Start
+    if(DEEBUG) print *, 'Stride ', Stride
+    if(DEEBUG) print *, 'Edge ', Edge
+    status = he5_gdrdfld(gd_id, trim(actual_field_name), start, stride, edge, &  
+      & all_the_fields)                                                          
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to read field " &
+      & //trim(actual_field_name))
+    ! The actual dimlist is this                    XDim,YDim,Height,TIME
+    ! Need to reshape it so that the order becomes: Height,YDim,XDim,TIME
+    if ( DEEBUG) then
+      print *, 'dao Before reshaping'
+      call dump(all_the_fields(:,1,1,1), 'x-slice')
+      call dump(all_the_fields(1,:,1,1), 'y-slice')
+      call dump(all_the_fields(1,1,:,1), 'p-slice')
+      call dump(all_the_fields(1,1,1,:), 't-slice')
+    endif
+    ! the_g_data%field(:,:,:,:,1,1) = reshape( all_the_fields, &
+    the_g_data%field(:,:,:,1,1,:) = reshape( all_the_fields, &
+      & shape=(/nLev, nlat, nlon, ntime/), order=(/3,2,1,4/) &
+      & )
+    if ( DEEBUG ) then
+      print *, 'dao After reshaping'
+      call dump(the_g_data%field(1,1,:,1,1,1), 'x-slice')
+      call dump(the_g_data%field(1,:,1,1,1,1), 'y-slice')
+      call dump(the_g_data%field(:,1,1,1,1,1), 'p-slice')
+      call dump(the_g_data%field(1,1,1,:,1,1), 't-slice')
+    endif
+    deallocate(all_the_fields)
+    ! Now read the dims
+    nullify(dim_field)
+    ! call read_the_dim(gd_id, 'XDim', dims(1), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(1)), dims(1), dim_field)
+    the_g_data%lons = dim_field
+    ! call read_the_dim(gd_id, 'YDim', dims(2), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(2)), dims(2), dim_field)
+    the_g_data%lats = dim_field
+    ! call read_the_dim(gd_id, 'Height', dims(3), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(3)), dims(3), dim_field)
+    the_g_data%Heights = dim_field
+    ! call read_the_dim(gd_id, 'Time', dims(4), dim_field)
+    call read_the_dim(gd_id, trim(dimNames(4)), dims(4), dim_field)
+    ! the_g_data%lsts = dim_field
+    the_g_data%dateStarts = dim_field
+    the_g_data%dateEnds = dim_field
+    deallocate(dim_field)        ! Before leaving, some light housekeeping
+    ! Have not yet figured out how to assign these
+    ! Probably will have to read metadata
+    the_g_data%Szas = the_g_data%missingValue
+    ! the_g_data%DateStarts = the_g_data%missingValue
+    ! the_g_data%DateEnds = the_g_data%missingValue
+    the_g_data%lsts = the_g_data%missingValue
+    ! Close grid
+    status = he5_gddetach(gd_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to detach from grid " &
+      & //trim(mygridname))
+    status = he5_gdclose(file_id)
+    if(status /= 0) &
+      & call announce_error(lcf_where, "failed to close file " //trim(FileName))
+    contains 
+       subroutine read_the_dim(gd_id, field_name, field_size, values)
+         ! Arguments
+         integer, intent(in) :: gd_id
+         character(len=*), intent(in) :: field_name
+         integer, intent(in) :: field_size
+         real(r8), dimension(:), pointer :: values
+         ! Local variables
+         integer :: status
+         integer, dimension(1) :: start, stride, edge
+         ! Executable
+         if ( associated(values) ) then
+           deallocate(values, stat=status)
+           if ( status /= 0 ) &
+             & call announce_error(lcf_where, "failed to deallocate dim field")
+         endif
+         allocate(values(field_size), stat=status)
+         if ( status /= 0 ) &
+           & call announce_error(lcf_where, "failed to allocate dim field")
+         start = 0                                                             
+         stride = 1                                                             
+         edge = field_size                                                       
+         values = the_g_data%missingValue
+         status = he5_gdrdfld(gd_id, trim(field_name), start, stride, edge, &
+           & values)                                                     
+         if ( status /= 0 ) &
+           & call announce_error(lcf_where, "failed to read dim field " &
+           & // trim(field_name))
+       end subroutine read_the_dim
+  end subroutine Read_ncep_strat
 
   ! ----------------------------------------------- Read_old
   subroutine Read_old(FileName, lcf_where, description, v_type, &
@@ -1051,70 +1362,6 @@ contains
 
   end function ReadGloriaFile
 
-  ! --------------------------------------------- Obtain_Clim ----------
-  subroutine OBTAIN_CLIM ( aprioriData, root, &
-    & mlspcf_l2clim_start, mlspcf_l2clim_end )
-
-    ! An atavism--
-    ! a throwback to when ncep files were opened
-    ! independently of being required by the lcf
-
-    !Arguments 
-    type (GriddedData_T), dimension(:), pointer :: aprioriData 
-    ! Input a priori database
-    integer, intent(in) :: root        ! Root of the L2CF abstract syntax tree
-    integer, intent(in) :: mlspcf_l2clim_start, mlspcf_l2clim_end
-
-    !Local Variables
-
-    type (GriddedData_T):: qty
-    integer:: CliUnit, processCli, returnStatus, version
-
-    logical :: end_of_file = .false.
-
-   error = 0
-   
-   if( .not. UseSDPToolkit ) then
-      call announce_error(root, &
-      & 'Detached from toolkit--climatology files must be opened via lcf')
-      return
-   endif
-
-    do CliUnit = mlspcf_l2clim_start, mlspcf_l2clim_end
-
-      !     Open one Climatology file as a generic file for reading
-      version = 1
-      returnStatus = Pgs_io_gen_openF ( CliUnit, PGSd_IO_Gen_RSeqFrm, 0, &
-        processCli, version )
-      if ( returnStatus == PGS_S_SUCCESS ) then
-
-        do while (.not. end_of_file)
-
-          call l3ascii_read_field ( processCli, qty, end_of_file)
-          returnStatus = AddGriddedDataToDatabase(aprioriData, qty)
-
-          nullify (qty%lats)
-          nullify (qty%lons)
-          nullify (qty%lsts)
-          nullify (qty%szas)
-          nullify (qty%dateStarts)
-          nullify (qty%dateEnds)
-          nullify (qty%field)
-          ! No, this is a bad idea (according to njl)
-          !        call DestroyGridTemplateContents ( qty )
-
-        end do !(.not. end_of_file)
-
-        end_of_file = .false.
-
-      end if
-
-    end do ! CliUnit = mlspcf_l2clim_start, mlspcf_l2clim_end
-
-    return
-
-  end subroutine OBTAIN_CLIM
-
   ! --------------------------------------------------  Read_Climatology
   subroutine READ_CLIMATOLOGY ( input_fname, root, aprioriData, &
     & mlspcf_l2clim_start, mlspcf_l2clim_end, missingValue, echo_data, &
@@ -1257,110 +1504,6 @@ contains
     endif
 
   end subroutine READ_CLIMATOLOGY
-
-  ! -------------------------------------------------  Obtain_DAO
-  subroutine OBTAIN_DAO ( aprioriData, root, &
-    & mlspcf_l2dao_start, mlspcf_l2dao_end )
-
-    ! An atavism--
-    ! a throwback to when ncep files were opened
-    ! independently of being required by the lcf
-
-    type (GriddedData_T), dimension(:), pointer :: aprioriData 
-    ! Input a priori database
-    integer, intent(in) :: ROOT        ! Root of L2CF abstract syntax tree
-    integer, intent(IN) :: mlspcf_l2dao_start, mlspcf_l2dao_end
-
-    ! Local Variables
-
-    !    real(R8) :: data_array(XDIM, YDIM, ZDIM)
-    integer :: DAOFileHandle, DAO_Version
-    character (LEN=132) :: DAOphysicalFilename
-    type (GriddedData_T):: qty
-    integer :: returnStatus
-    !   integer :: sd_id
-    character (LEN=80) :: vname
-
-    !    ALLOCATE (data_array(XDIM, YDIM, ZDIM), stat=returnStatus)
-
-   error = 0
-   
-   if( .not. UseSDPToolkit ) then
-      call announce_error(root, &
-      & 'Detached from toolkit--DAO files must be opened via lcf')
-      return
-   endif
-
-    DAO_Version = 1
-    vname = "TMPU" ! for now
-
-    ! Get the DAO file name from the PCF
-    do DAOFileHandle = mlspcf_l2dao_start, mlspcf_l2dao_end
-      returnStatus = Pgs_pc_getReference ( DAOFileHandle, DAO_Version, &
-        DAOphysicalFilename )
-      if ( returnStatus == PGS_S_SUCCESS ) then
-        ! Open the HDF-EOS file and read gridded data
-        returnStatus = AddGriddedDataToDatabase(aprioriData, qty)
-        !        call read_dao ( DAOphysicalFilename, vname, data_array )
-        if(returnStatus > 0) then
-          call ReadGriddedData ( DAOphysicalFilename, root, &
-            & 'dao', v_is_pressure, aprioriData(returnStatus), returnStatus )
-        endif
-      end if
-    end do ! DAOFileHandle = mlspcf_l2_dao_start, mlspcf_l2_dao_end
-  end subroutine Obtain_DAO
-
-  ! ------------------------------------------------  Obtain_NCEP  -----
-  subroutine Obtain_NCEP ( aprioriData, root, &
-    & mlspcf_l2ncep_start, mlspcf_l2ncep_end )
-    ! An atavism--
-    ! a throwback to when ncep files were opened
-    ! independently of being required by the lcf
-    ! Arguments
-    type (GriddedData_T), dimension(:), pointer :: aprioriData 
-    ! Input a priori database
-    integer, intent(in) :: ROOT        ! Root of the L2CF abstract syntax tree
-    integer, intent(IN) :: mlspcf_l2ncep_start, mlspcf_l2ncep_end
-
-    ! Local Variables
-    integer :: NCEPFileHandle, NCEP_Version
-    character (len=132) :: NCEPphysicalFilename
-    type (GriddedData_T):: QTY
-    integer :: RETURNSTATUS
-
-   error = 0
-   
-   if( .not. UseSDPToolkit ) then
-      call announce_error(root, &
-      & 'Detached from toolkit--ncep files must be opened via lcf')
-      return
-   endif
-
-    NCEP_Version = 1
-    !    vname = "TMP_3" ! for now
-    ! Get the NCEP file name from the PCF
-
-    do NCEPFileHandle = mlspcf_l2ncep_start, mlspcf_l2ncep_end
-
-      returnStatus = Pgs_pc_getReference ( NCEPFileHandle, NCEP_Version, &
-        NCEPphysicalFilename )
-
-      if ( returnStatus == PGS_S_SUCCESS ) then
-
-        ! Open the HDF-EOS file and read gridded data
-
-        returnStatus = AddGriddedDataToDatabase(aprioriData, qty)
-
-        !        call read_ncep ( NCEPphysicalFilename, data_array )
-        if(returnStatus > 0) then
-          call ReadGriddedData ( NCEPphysicalFilename, root, &
-            & 'ncep', v_is_pressure, aprioriData(returnStatus), returnStatus )
-        endif
-
-      end if
-
-    end do ! NCEPFileHandle = mlspcf_l2_ncep_start, mlspcf_l2_ncep_end
-  end subroutine Obtain_NCEP
 
   ! --------------------------------  source_file_already_read  -----
   function source_file_already_read(GriddedDataBase, source_file, &
@@ -1528,6 +1671,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.32  2003/06/03 20:42:25  pwagner
+! Can read strat (ncep) files; untested
+!
 ! Revision 2.31  2003/05/06 00:31:45  vsnyder
 ! Delete trailing blanks from two too-long-to-be-standard lines
 !
