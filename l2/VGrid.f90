@@ -36,6 +36,7 @@ module vGrid                    ! Definitions for vGrids in vector quantities
     & "$Id$"
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), parameter, private :: ModuleName="$RCSfile$"
+  private :: not_used_here 
   !--------------------------------------------------------------------------
 
 ! -----     Private declarations     ---------------------------------
@@ -373,10 +374,17 @@ contains ! =====     Public Procedures     =============================
     end do
   end function CHECK_UNITS
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module vGrid
 
 !
 ! $Log$
+! Revision 2.13  2002/10/08 17:36:23  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.12  2002/08/04 16:04:24  mjf
 ! Added some nullify statements for Sun's rubbish compiler.
 !
