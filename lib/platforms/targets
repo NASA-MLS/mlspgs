@@ -32,8 +32,12 @@ all: libmlsSub.a libmls.a libmlsSDPTK.a
 TEST_ONLY=test_multiply.o test_sparsify.o \
 	test_cholesky.o test_multiply_vector.o
 
+#Dependency rules for MATRIX_OBJS (if we need them)
+MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
+MatrixModule_1.o: MatrixModule_1.f90 ${OBJS}
+
 ${OBJS}: machine.o
-libmlsSub.a: ${OBJS} machine.o
+libmlsSub.a: ${OBJS} ${MATRIX_OBJS} machine.o
 	ar ru $@ $?
 	ar d $@ SDPToolkit.o $(TEST_ONLY)
 
@@ -69,6 +73,9 @@ machine.o: $(S)/platforms/$(MLSCONFG).machine
 	$(FC) -c $(DUSTY) machine.f90
 
 # $Log$
+# Revision 1.10  2000/11/21 18:01:42  pwagner
+# Repaired machine.o commands
+#
 # Revision 1.9  2000/11/21 17:46:23  pwagner
 # Added prereq to machine.o dependency
 #
