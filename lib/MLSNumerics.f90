@@ -83,6 +83,7 @@ module MLSNumerics              ! Some low level numerical stuff
     module procedure InterpolateArray_r4, InterpolateArray_r8
     module procedure InterpolateScalar_r4, InterpolateScalar_r8
     module procedure InterpolateUsingSetup_r4, InterpolateUsingSetup_r8
+    module procedure InterpolateScalarUsingSetup_r4, InterpolateScalarUsingSetup_r8
   end interface
 
 contains
@@ -254,11 +255,11 @@ contains
     character(len=*), intent(in), optional :: Extrapolate
     integer, intent(in), optional :: Width ! Second dimension for OldY when
                                            ! interpolations get done
+    logical, optional, intent(in) :: DyByDx ! just a signal to
+                                           ! compute more coeffs for splines
     type (matrixElement_T), intent(inout), optional :: dNewByDOld ! Derivatives
                                            ! inout so createBlock can clean up
                                            ! after an old one
-    real(rk), dimension(:,:), optional, intent(in) :: DyByDx ! just a signal to
-                                           ! compute more coeffs for splines
 
     include "InterpolateArraySetup.f9h"
 
@@ -277,11 +278,11 @@ contains
     character(len=*), intent(in), optional :: Extrapolate
     integer, intent(in), optional :: Width ! Second dimension for OldY when
                                            ! interpolations get done
+    logical, optional, intent(in) :: DyByDx ! just a signal to
+                                           ! compute more coeffs for splines
     type (matrixElement_T), intent(inout), optional :: dNewByDOld ! Derivatives
                                            ! inout so createBlock can clean up
                                            ! after an old one
-    real(rk), dimension(:,:), optional, intent(in) :: DyByDx ! just a signal to
-                                           ! compute more coeffs for splines
 
     include "InterpolateArraySetup.f9h"
 
@@ -353,6 +354,52 @@ contains
     include "InterpolateScalar.f9h"
   end subroutine InterpolateScalar_r8
 
+! -------------------------------  InterpolateScalarUsingSetup_r4  -----
+
+  subroutine InterpolateScalarUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
+    & method, extrapolate, badValue, missingRegions, dyByDx )
+    integer, parameter :: RK = R4
+
+    ! Dummy arguments
+    type(coefficients_r4), intent(in) :: Coeffs
+    real(rk), dimension(:), intent(in) :: oldX
+    real(rk), dimension(:), intent(in) :: oldY
+    real(rk), dimension(:), intent(in) :: newX
+    real(rk), dimension(:), intent(out) :: newY
+
+    character (len=*), intent(in) :: method ! See comments above
+    character (len=*), optional, intent(in) :: extrapolate ! See comments above
+    real(rk), optional, intent(in) :: badvalue
+    logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    real(rk), dimension(:), optional, intent(out) :: dyByDx
+
+    include "InterpolateScalarUsingSetup.f9h"
+
+  end subroutine InterpolateScalarUsingSetup_r4
+
+! -------------------------------  InterpolateScalarUsingSetup_r8  -----
+
+  subroutine InterpolateScalarUsingSetup_r8 ( coeffs, oldX, oldY, newX, newY, &
+    & method, extrapolate, badValue, missingRegions, dyByDx )
+    integer, parameter :: RK = R8
+
+    ! Dummy arguments
+    type(coefficients_r8), intent(in) :: Coeffs
+    real(rk), dimension(:), intent(in) :: oldX
+    real(rk), dimension(:), intent(in) :: oldY
+    real(rk), dimension(:), intent(in) :: newX
+    real(rk), dimension(:), intent(out) :: newY
+
+    character (len=*), intent(in) :: method ! See comments above
+    character (len=*), optional, intent(in) :: extrapolate ! See comments above
+    real(rk), optional, intent(in) :: badvalue
+    logical, optional, intent(in) :: missingRegions ! Allow missing regions
+    real(rk), dimension(:), optional, intent(out) :: dyByDx
+
+    include "InterpolateScalarUsingSetup.f9h"
+
+  end subroutine InterpolateScalarUsingSetup_r8
+
 ! -------------------------------------  InterpolateUsingSetup_r4  -----
 
   subroutine InterpolateUsingSetup_r4 ( coeffs, oldX, oldY, newX, newY, &
@@ -409,6 +456,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.27  2002/11/25 18:51:19  vsnyder
+! More interfaces
+!
 ! Revision 2.26  2002/11/23 00:01:00  vsnyder
 ! Modify interpolation to separate setup and teardown
 !
