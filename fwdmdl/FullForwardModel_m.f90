@@ -149,6 +149,8 @@ contains ! ================================ FullForwardModel routine ======
     integer :: SURFACE                  ! Loop counter
     integer :: WHICHPATTERN             ! Index of antenna pattern
 
+    logical :: DOTHIS                   ! Flag for lines
+
     integer, dimension(1) :: WHICHPOINTINGGRIDASARRAY ! Result of minloc
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
 
@@ -476,27 +478,29 @@ contains ! ================================ FullForwardModel routine ======
       Spectag = spec_tags(fwdModelConf%molecules(j))
       thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
       ! Now subset the lines according to the signal we're using
-      do sigInd = 1, size(fwdModelConf%signals)
-        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', ModuleName )
-        do k = 1, size ( thisCatalogEntry%lines )
-          thisLine => lines(thisCatalogEntry%lines(k))
+      call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', ModuleName )
+      lineFlag = .false.
+      do k = 1, size ( thisCatalogEntry%lines )
+        thisLine => lines(thisCatalogEntry%lines(k))
+        do sigInd = 1, size(fwdModelConf%signals)
           if ( associated(thisLine%signals) ) then
-            lineFlag(k) = any (fwdModelConf%signals%index == thisLine%signals(sigInd) )
+            doThis = any (fwdModelConf%signals%index == thisLine%signals(sigInd) )
             ! If we're only doing one sideband, maybe we can remove some more lines
-            if ( sidebandStart==sidebandStop ) lineFlag(k) = lineFlag(k) .and. &
+            if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
               & any( ( thisLine%sidebands == sidebandStart ) .or. &
-              & ( thisLine%sidebands == 0 ))
+              & ( thisLine%sidebands == 0 ) )
           else
-            lineFlag(k) = .true.
+            doThis = .true.
           end if
-        end do
-        My_Catalog(j) = thisCatalogEntry
-        nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
-        call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
-          & 'my_catalog(?)%lines', ModuleName )
-        my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
-        call Deallocate_test ( lineFlag, 'lineFlag', ModuleName )
-      end do ! Loop over signals to be processed
+          lineFlag(k) = lineFlag(k) .or. doThis
+        end do ! End loop over signals requested in fwm
+      end do ! End loop over lines
+      My_Catalog(j) = thisCatalogEntry
+      nullify ( my_catalog(j)%lines ) ! Don't deallocate it by mistake
+      call Allocate_test ( my_catalog(j)%lines, count(lineFlag),&
+        & 'my_catalog(?)%lines', ModuleName )
+      my_catalog(j)%lines = pack ( thisCatalogEntry%lines, lineFlag )
+      call Deallocate_test ( lineFlag, 'lineFlag', ModuleName )
     end do ! Loop over species
 
     ! Work out which frequencies we're going to need in non frequency --------
@@ -1785,6 +1789,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
  
 ! $Log$
+! Revision 2.1  2001/09/18 01:23:19  livesey
+! Added band discrimination for lines catalog.  Not tested yet.
+!
 ! Revision 2.0  2001/09/17 20:26:25  livesey
 ! New forward model
 !
