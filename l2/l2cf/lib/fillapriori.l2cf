@@ -253,10 +253,13 @@ begin Fill
   ;; Now set the smoothing weights - we'll use a profile fill, even if
   ;; it's only one value.
   ;; Vertical
-  Fill, quantity=vReg.baselineR1A, method=explicit, explicitValues= 5 K, /spread
-  Fill, quantity=vReg.baselineR2, method=explicit, explicitValues= 5 K, /spread
-  Fill, quantity=vReg.temperature, method=explicit, explicitValues= 1 K, /spread
-  Fill, quantity=vReg.temperature_HR, method=explicit, explicitValues= 1K, /spread
+  Fill, quantity=vReg.baselineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineR1B, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineR2,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineR3,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineR4,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineR5H, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=vReg.baselineR5V, method=profile, profileValues=[146mb:0K, 100mb:5K ]
 
   Fill, quantity=vReg.bro,   method=profile, profileValues= [ 100mb:0.1ppbv ]
   Fill, quantity=vReg.ch3cn, method=profile, profileValues= [ 100mb:30pptv ]
@@ -289,6 +292,14 @@ begin Fill
   !forall(fillOneExtinctionShapedVReg,!allRadiometers)
 
   ;; Horizontal
+  Fill, quantity=hReg.baselineR1A, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineR1B, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineR2,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineR3,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineR4,  method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineR5H, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+  Fill, quantity=hReg.baselineR5V, method=profile, profileValues=[146mb:0K, 100mb:5K ]
+
   Fill, quantity=hReg.temperature, method=explicit, explicitValues=1K, /spread
   Fill, quantity=hReg.temperature_HR, method=explicit, explicitValues= 1K, /spread
 
