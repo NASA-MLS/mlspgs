@@ -130,8 +130,14 @@ ifndef WE_CAN
 endif
 endif
 #These modules require custom builds, so omit build commands from dependencies
-CUSTOM_BUILDS=Hdf.f90 string_table.f90 ncep_dao.f90
+CUSTOM_BUILDS := Hdf.f90 string_table.f90 ncep_dao.f90
+# Custom builds for some modules needed to fool LF95 compiler
+# (for now anyway) so it won't take forever to finish
+ifeq ($(MLSF95),LF95)
+  CUSTOM_BUILDS := $(CUSTOM_BUILDS) L2PC_m.f90 MLSFiles.f90 L2GPData.f90
+endif
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
+
 ifeq ($(MLSF95),Abs)
   UP_OR_LOW := -mod UPPER
 else
@@ -287,6 +293,9 @@ $(testsubdirs):
 	echo "Making $@"
 	$(MAKE) -f $(MakeFName) -C $@
 # $Log$
+# Revision 2.43  2002/07/15 17:39:10  pwagner
+# Custom builds for L2PC_m.f90 MLSFiles.f90 L2GPData.f90 so LF95 finishes in finite time
+#
 # Revision 2.42  2002/07/15 16:52:59  pwagner
 # Exits make with status 2 if error in any level
 #
