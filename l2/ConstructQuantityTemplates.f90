@@ -327,8 +327,9 @@ contains ! =====     Public Procedures     =============================
        ! Construct an empty quantity
        call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
         & qty, noChans=noChans)
-        
-        qty%frequencies = VGrids(sGridIndex)%surfs
+       call Allocate_test ( qty%frequencies, noChans, 'qty%frequencies', ModuleName )
+       
+       qty%frequencies = VGrids(sGridIndex)%surfs
         
    else
 
@@ -779,6 +780,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.53  2001/09/17 21:58:50  livesey
+! Added allocate of frequencies if needed
+!
 ! Revision 2.52  2001/09/14 23:30:33  pwagner
 ! Now constructs major frame quantity templates
 !
