@@ -707,6 +707,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_file, t+t_string, nr+n_field_type, &
              begin, f+f_quantities, s+s_l2aux, s+s_l2gp, s+s_matrix, nr+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
+             begin, f+f_ascii, t+t_boolean, n+n_field_type, &
              begin, f+f_packed, t+t_boolean, n+n_field_type, &
              begin, f+f_hdfVersion, t+t_numeric, n+n_field_type, &
              begin, f+f_metaName, t+t_string, n+n_field_type, &
@@ -916,6 +917,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.224  2002/06/12 17:57:04  livesey
+! Added ascii field for l2pc
+!
 ! Revision 2.223  2002/06/04 22:48:36  livesey
 ! Added refract fill for phiTan
 !
