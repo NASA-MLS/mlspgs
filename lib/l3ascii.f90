@@ -7,11 +7,12 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 
   use GriddedData, only: GriddedData_T, v_is_pressure, v_is_altitude, &
   & v_is_gph, v_is_theta
+  use LEXER_CORE, only: PRINT_SOURCE
   USE MLSCommon, only: R8, LineLen, NameLen
-  USE MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
-  & MLSMSG_Warning
   USE MLSStrings, only: Capitalize, &
   & Count_words, ReadCompleteLineWithoutComments
+  USE output_m, only: output
+  use TREE, only: DUMP_TREE_NODE, SOURCE_REF
 
   IMPLICIT NONE
   PUBLIC
@@ -28,6 +29,7 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
   !private::get_next_noncomment_line, 
   private :: make_linear_axis
   private::read_explicit_axis,ilocate
+  integer, private :: ERROR
 
    ! --------------------------------------------------------------------------
 
@@ -47,6 +49,7 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     !----executables----!
     !----- Find first unattached unit -----!
     found = .false.
+    error = 0
     do j = 1, 30
       inquire ( unit=j, opened=tiedup )
       if (.not. tiedup) then
@@ -58,8 +61,10 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     end do
     if ( .not. found ) then
       unit = -1
-      call MLSMessage ( MLSMSG_Error, ModuleName,&
+      call announce_error ( 0,&
            "in subroutine l3ascii_open: No units left" )
+!      call MLSMessage ( MLSMSG_Error, ModuleName,&
+!           "in subroutine l3ascii_open: No units left" )
     end if
 
     !First line is not prefaced with ; nor is it of any use. 
@@ -85,15 +90,19 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     integer,parameter :: maxNoDates = 30
     real(kind=r8), allocatable, dimension(:,:,:,:,:,:) :: tmpfield
     !---- Executable statements ----! 
+    error = 0
     nullify(tmpaxis)
 	 end_of_file = .TRUE.	! Terminate loops based around this on error
 
     write(unit=unitstring,fmt="(i3)") unit ! For use in error reporting
     inquire(unit=unit,opened=opened)
     if (.not. opened) then
-        call MLSMessage(MLSMSG_Error,ModuleName,&
+        call announce_error(0, &
        " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
        "is not connected to a file. Do call l3ascii_open(filename,unit) first")
+!        call MLSMessage(MLSMSG_Error,ModuleName,&
+!       " in subroutine l3ascii_read_field, Unit "//trim(unitstring)//&
+!       "is not connected to a file. Do call l3ascii_open(filename,unit) first")
        return
     endif
     inquire(unit=unit,name=filename) ! find the file name connected to this
@@ -125,6 +134,8 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
        !       print*,"This is a new struct"
 !       field%reusing=313323435
     endif
+! Automatically create a stub grid template with minimal size
+! Each component will be deallocated && reallocated with correct sizes later
     allocate(field%heights(1:1))
     field%heights(1)=1000.0
     field%noHeights=1
@@ -142,6 +153,15 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     allocate(field%szas(1:1))
     field%szas(1)=30.0
     field%noSzas=1
+    allocate(field%dateStarts(1:1))
+    field%dateStarts(1)=30.0
+    field%noDates=1
+    allocate(field%dateEnds(1:1))
+    field%dateStarts(1)=30.0
+    field%noDates=1
+    allocate(field%field(1:1,1:1,1:1,1:1,1:1,1:1))
+    field%dateStarts(1)=30.0
+    field%noDates=1
     ! Dates are mandatory, so we don't have to give them a default value
 
     !--- Read field info and all the axis info ---!
@@ -151,16 +171,23 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
 !    print*,"Read line"
 !    print*,inline
    if(Capitalize(inline(1:5)) /= "FIELD" ) then
-      call MLSMessage(MLSMSG_Error,ModuleName,&
+      call announce_error(0, &
            "in subroutine l3ascii_read_field, File "//trim(filename)// &
            "on unit"//trim(unitstring)//" contains no more Fields")
-       return
+!      call MLSMessage(MLSMSG_Error,ModuleName,&
+!           "in subroutine l3ascii_read_field, File "//trim(filename)// &
+!           "on unit"//trim(unitstring)//" contains no more Fields")
+	     end_of_file=.true.
+      return
     endif
     
     if(end_of_file) then
-       call MLSMessage(MLSMSG_Error,ModuleName,&
+       call announce_error(0,&
        "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
        " on unit"//trim(unitstring))
+!       call MLSMessage(MLSMSG_Error,ModuleName,&
+!       "In subroutine l3ascii_read_field, End of File"//trim(filename)// &
+!       " on unit"//trim(unitstring))
        return
     endif
 
@@ -190,11 +217,17 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
            call read_explicit_axis(unit,tmpaxis,tmpaxis_len)
 !           print*,"Done explicit axis"
         else
-           call MLSMessage(MLSMSG_Error,ModuleName,&
+		     end_of_file=.true.
+           call announce_error(0,&
                 "in subroutine l3ascii_read_field,File"//trim(filename)//&
                 " on unit"//trim(unitstring)//" contains coordinate"//&
                 " of invalid type "//trim(axistype)//"for axis"//&
                 trim(linetype))
+!           call MLSMessage(MLSMSG_Error,ModuleName,&
+!                "in subroutine l3ascii_read_field,File"//trim(filename)//&
+!                " on unit"//trim(unitstring)//" contains coordinate"//&
+!                " of invalid type "//trim(axistype)//"for axis"//&
+!                trim(linetype))
            return
         endif
 
@@ -269,10 +302,16 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
           sdstring=adjustl(sdstring)
           edstring=adjustl(edstring)
        else
-          call MLSMessage(MLSMSG_Error,ModuleName,&
+          call announce_error(0, &
                "in subroutine l3ascii_read_field: File"//trim(filename)//&
                "on unit"//trim(unitstring)//" contains a line beginning"//&
                trim(linetype)//"Date with too few words ")
+!          call MLSMessage(MLSMSG_Error,ModuleName,&
+!               "in subroutine l3ascii_read_field: File"//trim(filename)//&
+!               "on unit"//trim(unitstring)//" contains a line beginning"//&
+!               trim(linetype)//"Date with too few words ")
+		     end_of_file=.true.
+				return
        endif
        
         ! Date strings can begin with - indicating the year is 
@@ -312,16 +351,23 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
            exit datesloop                 
         endif
         if(linetype(1:4) /= "DATE") then ! There should be another date here
-           call MLSMessage(MLSMSG_Error,ModuleName,&
+           call announce_error(0, &
                 "in subroutine l3ascii_read_field: File"//trim(filename)//&
                 "on unit"//trim(unitstring)//" contains a line beginning"//&
                 trim(linetype)//"where I expected a line beginning Date ")
+!           call MLSMessage(MLSMSG_Error,ModuleName,&
+!                "in subroutine l3ascii_read_field: File"//trim(filename)//&
+!                "on unit"//trim(unitstring)//" contains a line beginning"//&
+!                trim(linetype)//"where I expected a line beginning Date ")
+		     end_of_file=.true.
            return
         endif
         field%noDates=field%noDates+1
 
     enddo datesloop
 
+	deallocate(field%dateStarts, field%dateEnds, field%field)
+!
     allocate(field%field(1:field%noHeights,1:field%noLats,&
          1:field%noLons,1:field%noLsts,1:field%noSzas,1:field%noDates))
     allocate(field%dateStarts(1:field%noDates),&
@@ -809,6 +855,7 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
     character(len=NameLen) :: ucunits
     integer :: ix
     !----Executable functions---!
+    error = 0
     ucunits = Capitalize(field%units)
     ix = index(ucunits,"VMR ")
     if (ix > 0) then
@@ -835,8 +882,12 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
        multiplier=1.0_r8
        return
     endif
-    call MLSMessage(MLSMSG_Warning,ModuleName,&
-         "in function l3ascii_get_multiplier: Units "//&
+!    call MLSMessage(MLSMSG_Warning,ModuleName,&
+!         "in function l3ascii_get_multiplier: Units "//&
+!         trim(field%units)//" for field "//trim(field%quantityName)//&
+!         "not known. Guessing multiplier=1.0")
+	CALL announce_error( 0, &
+	&"in function l3ascii_get_multiplier: Units "//&
          trim(field%units)//" for field "//trim(field%quantityName)//&
          "not known. Guessing multiplier=1.0")
     !print*,"in function l3ascii_get_multiplier: Units "//&
@@ -845,12 +896,80 @@ MODULE l3ascii ! Collections of Hugh's subroutines to handle TYPE GriddedData_T
    multiplier=1.0_r8
   end function l3ascii_get_multiplier
 
+  ! ------------------------------------------------  announce_error  -----
+  subroutine announce_error ( lcf_where, full_message, use_toolkit, &
+  & error_number )
+  
+   ! Arguments
+	
+	integer, intent(in)    :: lcf_where
+	character(LEN=*), intent(in)    :: full_message
+	logical, intent(in), optional :: use_toolkit
+	integer, intent(in), optional    :: error_number
+	! Local
+!  character (len=80) :: msg, mnemonic
+!  integer :: status
+  logical :: just_print_it
+  logical, parameter :: default_output_by_toolkit = .true.
+	
+	if(present(use_toolkit)) then
+		just_print_it = use_toolkit
+	elseif(default_output_by_toolkit) then
+		just_print_it = .false.
+	else
+		just_print_it = .true.
+	endif
+	
+	if(.not. just_print_it) then
+!    CALL Pgs_smf_getMsg(status, mnemonic, msg)
+!    CALL MLSMessage (level, ModuleName, &
+!              &trim(full_message)//" "//mnemonic//" "//msg)
+    error = max(error,1)
+    call output ( '***** At ' )
+
+	if(lcf_where > 0) then
+	    call print_source ( source_ref(lcf_where) )
+		else
+    call output ( '(no lcf node available)' )
+		endif
+
+    call output ( ': ' )
+    call output ( "The " );
+	if(lcf_where > 0) then
+    call dump_tree_node ( lcf_where, 0 )
+		else
+    call output ( '(no lcf tree available)' )
+		endif
+
+		CALL output("Caused the following error:", advance='yes', &
+		& from_where=ModuleName)
+		CALL output(trim(full_message), advance='yes', &
+		& from_where=ModuleName)
+		if(present(error_number)) then
+			CALL output('error number ', advance='no')
+			CALL output(error_number, places=9, advance='yes')
+		endif
+	else
+		print*, '***Error in module ', ModuleName
+		print*, trim(full_message)
+		if(present(error_number)) then
+			print*, 'error number ', error_number
+		endif
+	endif
+
+!===========================
+  end subroutine announce_error
+!===========================
+
 !=============================================================================
 END MODULE l3ascii
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.3  2001/03/27 17:33:30  pwagner
+! announce_error replaces MLSMessage
+!
 ! Revision 2.2  2001/03/15 21:40:30  pwagner
 ! Eliminated unused routines from USE statements
 !
