@@ -175,9 +175,9 @@ contains
             case (5)
               DWTH0 = 3.58e-7*SQRT(T/48.)*FF         ! O3
             case (6)
-              DWTH0 = 3.58e-7*SQRT(T/30.)*FF         ! N2O
+              DWTH0 = 3.58e-7*SQRT(T/44.)*FF         ! N2O
             case (7)
-              DWTH0 = 3.58e-7*SQRT(T/56.)*FF         ! HNO3
+              DWTH0 = 3.58e-7*SQRT(T/63.)*FF         ! HNO3
             end select
 
 !--------------------------------------------------
@@ -346,6 +346,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.20  2003/04/03 16:49:18  dwu
+! fix a bug: N2O mass should be 30; and add HNO3 in absorption calculation
+!
 ! Revision 1.19  2003/02/04 19:25:52  jonathan
 ! Fix bug in using RHIFromH2O
 !
