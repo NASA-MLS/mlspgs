@@ -1,3 +1,4 @@
+;@G
 ; $Id$
 
 ; This is a level 2 configuration file for an interim v0.5 version of
@@ -5,7 +6,6 @@
 
 ; This intent of this l2cf is simply to provide a sids style radiance
 ; dataset for band 2.
-
 
 ; -----------------------------------------------------  MLSSignals  -----
 BEGIN MLSSignals
@@ -16,38 +16,43 @@ BEGIN MLSSignals
   THz: Module
 
   ;; Radiometers, with their nominal local oscillator frequencies:
-  R1A: radiometer, suffix= "118", module= GHz, lo = 126.8e3 GHz
-  R1B: radiometer, suffix= "118", module= GHz, lo = 126.8e3 GHz
-  R2:  radiometer, suffix= "190", module= GHz, lo = 191.9e3 GHz
-  R3:  radiometer, suffix= "240", module= GHz, lo = 239.66e3 GHz
-  R4:  radiometer, suffix= "640", module= GHz, lo = 642.87e3 GHz
-  R5H: radiometer, suffix= "2T5", module= THz, lo = 2522.7816e3 GHz
-  R5V: radiometer, suffix= "2T5", module= THz, lo = 2522.7816e3 GHz
+  R1A: radiometer, suffix= "118", module= GHz, lo = 126.8 GHz
+  R1B: radiometer, suffix= "118", module= GHz, lo = 126.8 GHz
+  R2:  radiometer, suffix= "190", module= GHz, lo = 191.9 GHz
+  R3:  radiometer, suffix= "240", module= GHz, lo = 239.66 GHz
+  R4:  radiometer, suffix= "640", module= GHz, lo = 642.87 GHz
+  R5H: radiometer, suffix= "2T5", module= THz, lo = 2522.7816 GHz
+  R5V: radiometer, suffix= "2T5", module= THz, lo = 2522.7816 GHz
 
   ;; Spectrometer types
   ;; 25 channel filterbanks
   FB25: spectrometerType, first= 1,  $
     frequencies= [ $
-                   -575.0,  -479.0,  -383.0,  -303.0, -239.0, -175.0, -119.0, $
-                   -79.0,   -51.0,   -31.0,   -17.0,  -7.0,   0.0,    7.0,    $
-                   17.0,    31.0,    51.0,    79.0,   119.0,  175.0,  239.0,  $
-                   303.0,   383.0,   479.0,    575.0], $
+                   -575.0 MHz,  -479.0 MHz,  -383.0 MHz,  -303.0 MHz, $
+                   -239.0 MHz,  -175.0 MHz,  -119.0 MHz,   -79.0 MHz, $
+                    -51.0 MHz,   -31.0 MHz,   -17.0 MHz,    -7.0 MHz, $
+                      0.0 MHz,     7.0 MHz,    17.0 MHz,    31.0 MHz, $
+                     51.0 MHz,    79.0 MHz,   119.0 MHz,   175.0 MHz, $
+                    239.0 MHz,   303.0 MHz,   383.0 MHz,   479.0 MHz, 575.0 MHz], $
     widths= [ $
-              96.0,   96.0,   96.0,   64.0,   64.0,   64.0,   48.0,  $
-              32.0,   24.0,   16.0,   12.0,   8.0,    6.0,    8.0,   $
-              12.0,   16.0,   24.0,   32.0,   48.0,   64.0,   64.0,  $
-              64.0,   96.0,   96.0,   96.0]
+              96.0 MHz,   96.0 MHz,   96.0 MHz,   64.0 MHz,   64.0 MHz, $
+              64.0 MHz,   48.0 MHz,   32.0 MHz,   24.0 MHz,   16.0 MHz, $
+              12.0 MHz,    8.0 MHz,    6.0 MHz,    8.0 MHz,   12.0 MHz, $
+              16.0 MHz,   24.0 MHz,   32.0 MHz,   48.0 MHz,   64.0 MHz, $
+              64.0 MHz,   64.0 MHz,   96.0 MHz,   96.0 MHz,   96.0 MHz]
   
   ;; Digital autocorrelators:
-  DACS: spectrometerType, first= 0, start= 0.0, step= 0.2, width= 0.2, last= 128
+  DACS: spectrometerType, first= 0, start= 0.0, step= 200 kHz, width= 200 kHz, last= 128
 
   ;; Mid-band:
   MB11: spectrometerType, first= 1, $
     frequencies= [ $
-                   -79.0, -51.0, -31.0, -17.0, -7.0, 0.0, 7.0, $
-                    17.0,  31.0,  51.0,  79.0], $
-    widths= [ 32.0, 24.0, 16.0, 12.0, 8.0, 6.0, 8.0, $
-              12.0, 16.0, 24.0, 32.0]
+                   -79.0 MHz, -51.0 MHz, -31.0 MHz, -17.0 MHz, $
+                    -7.0 MHz,   0.0 MHz,   7.0 MHz, $
+                    17.0 MHz,  31.0 MHz,  51.0 MHz,  79.0 MHz], $
+    widths= [ 32.0 MHz, 24.0 MHz, 16.0 MHz, 12.0 MHz, $
+               8.0 MHz , 6.0 MHz,  8.0 MHz, $
+              12.0 MHz, 16.0 MHz, 24.0 MHz, 32.0 MHz]
   
   ;; Wide filters are a special case, we defer the definition of their
   ;; frequencies until the specific signals.
@@ -57,76 +62,76 @@ BEGIN MLSSignals
 
   ;; FB25s
   B1F:  band, suffix= "PT",   radiometer=R1A, spectrometerType= FB25,  $
-    centerfrequency= 8.047e3
+    centerfrequency= 8.047 GHz
   
   B2F:  band, suffix= "H2O",  radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 8.5858e3
+    centerfrequency= 8.5858 GHz
   B3F:  band, suffix= "N2O",  radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 9.0798e3
+    centerfrequency= 9.0798 GHz
   B4F:  band, suffix= "HNO3", radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 10.3013e3
+    centerfrequency= 10.3013 GHz
   B5F:  band, suffix= "CLO",  radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 12.4566e3
+    centerfrequency= 12.4566 GHz
   B6F:  band, suffix= "O3",   radiometer=R2 , spectrometerType= FB25,  $
-    centerfrequency= 14.2367e3
+    centerfrequency= 14.2367 GHz
 
   B7F:  band, suffix= "O3",   radiometer=R3 , spectrometerType= FB25,  $
-    centerfrequency= 3.9449e3
+    centerfrequency= 3.9449 GHz
   B8F:  band, suffix= "PT",   radiometer=R3 , spectrometerType= FB25,  $
-    centerfrequency= 5.7085e3
+    centerfrequency= 5.7085 GHz
   B9F:  band, suffix= "CO",   radiometer=R3 , spectrometerType= FB25,  $
-    centerfrequency= 9.1168e3
+    centerfrequency= 9.1168 GHz
 
   B10F: band, suffix= "CLO",  radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 6.5959e3
+    centerfrequency= 6.5959 GHz
   B11F: band, suffix= "BRO",  radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 7.3237e3
+    centerfrequency= 7.3237 GHz
   B12F: band, suffix= "N2O",  radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 9.9785e3
+    centerfrequency= 9.9785 GHz
   B13F: band, suffix= "HCL",  radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 16.9373e3
+    centerfrequency= 16.9373 GHz
   B14F: band, suffix= "O3",   radiometer=R4 , spectrometerType= FB25,  $
-    centerfrequency= 17.4844e3
+    centerfrequency= 17.4844 GHz
 
   B15F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
-    centerfrequency= 8.4081e3
+    centerfrequency= 8.4081 GHz
   B16F: band, suffix= "OH",   radiometer=R5H, spectrometerType= FB25,  $
-    centerfrequency= 12.7759e3
+    centerfrequency= 12.7759 GHz
   B17F: band, suffix= "PT",   radiometer=R5H, spectrometerType= FB25,  $
-    centerfrequency= 20.4012e3
+    centerfrequency= 20.4012 GHz
   B18F: band, suffix= "OH",   radiometer=R5V, spectrometerType= FB25,  $
-    centerfrequency= 8.4081e3
+    centerfrequency= 8.4081 GHz
   B19F: band, suffix= "OH",   radiometer=R5V, spectrometerType= FB25,  $
-    centerfrequency= 12.7749e3
+    centerfrequency= 12.7749 GHz
   B20F: band, suffix= "PT",   radiometer=R5V, spectrometerType= FB25,  $
-    centerfrequency= 20.4012e3
+    centerfrequency= 20.4012 GHz
 
   B21F: band, suffix= "PT",   radiometer=R1B, spectrometerType= FB25,  $
-    centerfrequency= 8.047e3
+    centerfrequency= 8.047 GHz
 
   ;; DACs
   B22D: band, suffix= "PT",   radiometer=R1A, spectrometerType= DACS,  $
-    centerfrequency= 8.047e3
+    centerfrequency= 8.047 GHz
   B23D: band, suffix= "H2O",  radiometer=R2 , spectrometerType= DACS,  $
-    centerfrequency= 8.5858e3
+    centerfrequency= 8.5858 GHz
   B24D: band, suffix= "O3",   radiometer=R3 , spectrometerType= DACS,  $
-    centerfrequency= 3.9449e3
+    centerfrequency= 3.9449 GHz
   B25D: band, suffix= "CO",   radiometer=R4 , spectrometerType= DACS,  $
-    centerfrequency= 9.1168e3
+    centerfrequency= 9.1168 GHz
   B26D: band, suffix= "PT",   radiometer=R1B, spectrometerType= DACS,  $
-    centerfrequency= 8.047e3
+    centerfrequency= 8.047 GHz
 
   ;; MB11s
   B27M: band, suffix= "HCN",  radiometer=R2 , spectrometerType= MB11,  $
-    centerfrequency= 14.6348e3
+    centerfrequency= 14.6348 GHz
   B28M: band, suffix= "HO2",  radiometer=R4 , spectrometerType= MB11,  $
-    centerfrequency= 6.8462e3
+    centerfrequency= 6.8462 GHz
   B29M: band, suffix= "HOCL", radiometer=R4 , spectrometerType= MB11,  $
-    centerfrequency= 6.9856e3
+    centerfrequency= 6.9856 GHz
   B30M: band, suffix= "HO2",  radiometer=R4 , spectrometerType= MB11,  $
-    centerfrequency= 17.6306e3
+    centerfrequency= 17.6306 GHz
   B31M: band, suffix= "BRO",  radiometer=R4 , spectrometerType= MB11,  $
-    centerfrequency= 18.0879e3
+    centerfrequency= 18.0879 GHz
 
   ;; Wide filters
   B32W: band, suffix= "PT", radiometer= R1A, spectrometerType=WF4
@@ -174,11 +179,11 @@ BEGIN MLSSignals
 
   ;; Wide filters for the tropospheric measurements
   sig_band32: signal, band=B32W, sideband=upper, switch=0, spectrometer=1, $
-    frequencies= [4.8e3, 6.3e3, 9.8e3, 11.5e3] , $
-    widths=      [0.5e3, 0.5e3, 0.5e3, 0.5e3] ;;  PT
+    frequencies= [4.8 GHz, 6.3 GHz, 9.8 GHz, 11.5 GHz] , $
+    widths=      [0.5 GHz, 0.5 GHz, 0.5 GHz, 0.5 GHz] ;;  PT
   sig_band33: signal, band=B33W, sideband=lower, switch=0,  spectrometer=2, $
-    frequencies= [3.0e3, 4.8e3, 7.2e3, 7.8e3] ,  $
-    widths=      [0.5e3, 0.5e3, 0.5e3, 0.5e3]
+    frequencies= [3.0 GHz, 4.8 GHz, 7.2 GHz, 7.8 GHz] ,  $
+    widths=      [0.5 GHz, 0.5 GHz, 0.5 GHz, 0.5 GHz]
 
   ;; Now the paths that are not nominally active
   ;; 25 spectrometer filterbanks, by radiometer
@@ -225,10 +230,15 @@ BEGIN GlobalSettings
     AllowClimatologyOverloads=FALSE
 
 ;; Stuff to start up the forward model from Zvi's and Bill's files
-    forwardModelGlobal, atmos_der=false, conv=true, freq_avg=true, $
-      spect_der=false, temp_der=false, frequency= -1.0
-    l2load, bill='/user5/zvi/ptg_frq_grid_b05.dat', zvi='/user5/zvi/seez'
-;; End of stuff to start up the forward model from Zvi's and Bill's files
+    l2load,   zvi='n_seez'
+;; End of stuff to start up the forward model from Zvi's and Bill's
+;; files
+
+    forwardModelGlobal, pointingGrids='/user1/livesey/mlspgs/l2/full_r2_b234_lsb'
+
+    testFwm: forwardModel, type=full, signals = [sig_band2], molecules = [h2o], $
+       frequency=182610.091 MHz, channels = [1], /do_conv
+
 END GlobalSettings
 
 
@@ -245,6 +255,9 @@ BEGIN ReadApriori
       swath='H2O'
     l2gpREFGPHInput: l2gp, file='/nas/bigdata/livesey/misc/refgph_input.l2gp', $
       swath='refGPH'
+
+;    gridTemp: gridded, file='/nas/bigdata/livesey/misc/temp_grid.dat', $
+;      field='Temperature', origin=climatology
     
 END ReadApriori
 
@@ -260,10 +273,11 @@ BEGIN ChunkDivide
     ;; Just a pretty typical setup, except no overlaps to avoid bug
 
  ;; IdealLength =             0.00416666667  orbits
-    IdealLength =             0.25  orbits
+  ;; IdealLength =             0.25 orbits
+    IdealLength =             0.03  orbits ; Chosen to give 5MAFs in first chunk
     Overlap =                 0 MAFs
 
-    HomeGeodAngle =           0 degrees
+    HomeGeodAngle =           1.5 degrees ; Chosen to give 5MAFs in the first chunk
     HomeModule =              GHz
 
     ScanLowerLimit =          -10 km : 20 km
@@ -281,7 +295,7 @@ BEGIN Construct
 
     ;; First construct vGrids and hGrids
     vGridStandard: vGrid, coordinate=Zeta, type=Logarithmic, $
-                   start=1000mb, number=[25, 24], per_decade=[12, 6]
+                   start=1000mb, number=[25, 24], per_decade=[12,6]
     vGridRefGPH: vGrid, coordinate=Zeta, type=Explicit, values=100mb
 
     hGridStandard: hGrid, module=THz, type=height, height=15km
@@ -299,6 +313,10 @@ BEGIN Construct
     orbitIncline: Quantity, type = orbitIncline
     scGeocAlt: Quantity, type = scGeocAlt, module= SC
     spaceRadiance: quantity, type = spaceRadiance
+    scECI: quantity, type=scECI, module=SC
+    scVel: quantity, type=scVel, module=SC
+    tpECIGHz: quantity, type=tngtECI, module=GHz
+    losVelGHz: quantity, type=losVel, module=GHz
 
     ;; Now some measurement quantities
     band2: Quantity, signal=sig_band2, type=radiance
@@ -308,10 +326,11 @@ BEGIN Construct
     stateTemplate: VectorTemplate, quantities = $
       [temp, refGPH, ptanGHz,H2O]
     extraStateTemplate: VectorTemplate, quantities =  $
-      [b2elevOffset, earthReflectivity, orbitIncline, scGeocAlt, spaceRadiance]
+      [b2elevOffset, earthReflectivity, orbitIncline, scGeocAlt,  $
+       spaceRadiance, scECI, scVel, losVelGHz, tpECIGHz]
 
     ;; Now define templates for the measurement vectors.
-    radianceTemplate: VectorTemplate, quantities = band2
+    radianceTemplate: VectorTemplate, quantities = [band2]
     miscMeasTemplate: VectorTemplate, quantities = [tpGeocAltGHz]
     
 
@@ -347,22 +366,36 @@ BEGIN Fill
     ;; Now fill the extra state stuff, mostly explicitly
     Fill, quantity = extraState.b2elevOffset, $
       method = explicit, explicitValues = 0 degrees
+;    Snoop, comment="Towards the start of fill"
+
     Fill, quantity = extraState.earthReflectivity, $
-      method = explicit, explicitValues = 0.14 ; CHECK THIS NUMBER !!!!!
+      method = explicit, explicitValues = 0.05 ; CHECK THIS NUMBER !!!!!
     Fill, quantity = extraState.orbitIncline, $
       method = explicit, explicitValues = 98.145 degrees
+;    Snoop, comment="In the middle of fill"
+
     Fill, quantity = extraState.scGeocAlt, method = l1b
+    Fill, quantity = extraState.scECI, method = l1b
+    Fill, quantity = extraState.scVel, method = l1b
+    Fill, quantity = extraState.tpECIGHz, method = l1b
+
+    Fill, quantity = extraState.losVelGHz, tngtECI=extraState.tpECIGHz, $
+      scECI=extraState.scECI, scVel=extraState.scVel, method=special
+
     Fill, quantity = extraState.spaceRadiance, $
-      method =explicit, explicitValues = 2.6 K ; CHECK THIS NUMBER !!!!!
+      method =explicit, explicitValues = 2.735 K
+
+; Snoop, comment="At the end of fill"
     
 END Fill
 
 
 ; -------------------------------------------------------  Retrieve  -----
+
 BEGIN Retrieve
 
-  time
-  sids, fwdModelIn = state, fwdModelExtra = extraState, fwdModelOut = radiance
+    sids, fwdModelIn = state, fwdModelExtra = extraState, fwdModelOut = radiance, $
+      forwardModel=testFwm
 
 END Retrieve
 
@@ -375,6 +408,8 @@ BEGIN Join
     refgphL2GP: l2gp, source=state.refgph, swath='refGPH'
 
     ptanGHzl2aux: l2aux, source=state.ptanGHz, sdName='ptanGHz'
+    tpECIl2aux: l2aux, source=extrastate.tpECIGHz, sdName='tpECIGHz'
+    losVelL2aux: l2aux, source=extrastate.losVelGHz, sdName='losVelGHz'
     b2l2aux: l2aux, source = radiance.band2, sdName='R2:240.B2F:H2O.S0.FB25-2'
 
 END Join
@@ -387,13 +422,17 @@ BEGIN Output
     output, file='l2gp_gph', quantities=refgphL2gp,type=l2gp
     output, file='l2gp_h2o', quantities=h2oL2gp,type=l2gp
     
-    output, file='l2aux_full', quantities= [ ptanGHzl2aux, b2l2aux ], type=l2aux
+    output, file='l2aux_full', quantities= [ ptanGHzl2aux, b2l2aux, $
+                                            tpECIl2aux, losVell2Aux], type=l2aux
 
 END Output
 
 ; ==========================================================================
 
 ; $Log$
+; Revision 2.7  2001/03/28 18:23:17  livesey
+; Regular commit, signals now has frequency information.
+;
 ; Revision 2.6  2001/03/16 02:23:03  vsnyder
 ; Add 'sideband' field to 'switch' specs
 ;
