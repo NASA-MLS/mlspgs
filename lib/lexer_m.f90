@@ -9,7 +9,7 @@ module LEXER_M
   use LEXER_CORE, only: NEED, TOKEN
   use OUTPUT_M, only: OUTPUT
   use STRING_TABLE, only: ADD_CHAR, CLEAR_STRING, DISPLAY_STRING, &
-                          ENTER_STRING, EOF, EOL, GET_CHAR, HOW_MANY_STRINGS, &
+                          EOF, EOL, GET_CHAR, HOW_MANY_STRINGS, &
                           LOOKUP_AND_INSERT, NEW_LINE, SOURCE_COLUMN, &
                           SOURCE_LINE
   use SYMBOL_TABLE, only: ADD_TERMINAL, DUMP_1_SYMBOL, ENTER_TERMINAL, &
@@ -613,6 +613,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.18  2003/01/29 00:49:38  vsnyder
+! Delete USE for unused entity
+!
 ! Revision 2.17  2002/10/08 00:09:11  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
