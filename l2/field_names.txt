@@ -43,6 +43,7 @@ destination
 destroyJacobian
 diagnostics
 diagonal
+df_spectroscopy
 do_baseline
 do_conv
 do_freq_avg
@@ -207,6 +208,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.17  2001/11/15 20:56:10  jonathan
+# add df_spectroscopy
+#
 # Revision 2.16  2001/11/09 00:04:09  livesey
 # New ChunkDivide stuff
 #
