@@ -43,6 +43,10 @@ module DUMP_0
   character, parameter :: AfterSub = '#'
   logical, parameter ::   DEEBUG = .false.
 
+  character(*), parameter :: MyFormatDefault = '(1pg14.6)'
+  character(*), parameter :: MyFormatDefaultCmplx = &
+    & '(1x,"(",1pg13.6,",",1pg13.6,")")'
+
 contains
 
   ! -----------------------------------------------  DUMP_1D_CHAR  -----
@@ -108,7 +112,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = 3
     if ( present(width) ) myWidth = width
-    myFormat = '(1x,"(",1pg13.6,",",1pg13.6,")")'
+    myFormat = MyFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -149,7 +153,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = 3
     if ( present(width) ) myWidth = width
-    myFormat = '(1x,"(",1pg13.6,",",1pg13.6,")")'
+    myFormat = MyFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -189,7 +193,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = 5
     if ( present(width) ) myWidth = width
-    myFormat = '(1x,1pg13.6)'
+    myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -312,7 +316,7 @@ contains
     if ( present(clean) ) myClean = clean
     myWidth = 5
     if ( present(width) ) myWidth = width
-    myFormat = '(1x,1pg13.6)'
+    myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -408,7 +412,7 @@ contains
     myWidth = 3
     if ( present(width) ) myWidth = width
 
-    myFormat = '(1x,"(",1pg13.6,",",1pg13.6,")")'
+    myFormat = MyFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -473,7 +477,7 @@ contains
     myWidth = 3
     if ( present(width) ) myWidth = width
 
-    myFormat = '(1x,"(",1pg13.6,",",1pg13.6,")")'
+    myFormat = MyFormatDefaultCmplx
     if ( present(format) ) myFormat = format
 
     if ( size(array) == 0 ) then
@@ -538,7 +542,7 @@ contains
     myFillValue = 0.0d0
     if ( present(FillValue) ) myFillValue = FillValue
 
-    myFormat = '(1x,1pg13.6)'
+    myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -546,7 +550,7 @@ contains
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), '(1x,1pg13.6)', advance='yes' )
+      call output ( array(1,1), myFormat, advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean )
     else 
@@ -713,7 +717,7 @@ contains
     myFillValue = 0.0e0
     if ( present(FillValue) ) myFillValue = FillValue
 
-    myFormat = '(1x,1pg13.g)'
+    myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -721,7 +725,7 @@ contains
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1), '(1x,1pg13.6)', advance='yes' )
+      call output ( array(1,1), myFormat, advance='yes' )
     else if ( size(array,2) == 1 ) then
       call dump ( array(:,1), name, clean=clean )
     else 
@@ -853,7 +857,7 @@ contains
     if ( present(FillValue) ) myFillValue = FillValue
     myClean = .false.
     if ( present(clean) ) myClean = clean
-    myFormat = '(1x,1pg13.6)'
+    myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -861,7 +865,7 @@ contains
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
+      call output ( array(1,1,1), myFormat, advance='yes' )
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
@@ -978,7 +982,7 @@ contains
     if ( present(FillValue) ) myFillValue = FillValue
     myClean = .false.
     if ( present(clean) ) myClean = clean
-    myFormat = '(1x,1pg13.6)'
+    myFormat = MyFormatDefault
     if ( present(format) ) myFormat = format
 
     numZeroRows = 0
@@ -986,7 +990,7 @@ contains
       call empty ( name )
     else if ( size(array) == 1 ) then
       call name_and_size ( name, myClean, 1 )
-      call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
+      call output ( array(1,1,1), myFormat, advance='yes' )
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
@@ -1343,6 +1347,11 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.28  2003/09/06 00:48:40  vsnyder
+! Specify default formats with a module parameter instead of literals.
+! Change default (1x,1pg13.6) to (1pg14.6) to avoid problems with length
+! calculation in output_m.
+!
 ! Revision 2.27  2003/08/08 20:45:42  vsnyder
 ! Made say_fill_* generic, made them test for numZeroRows, and made them
 ! optionally do say_subs_only.  This simplified several dump routines.
