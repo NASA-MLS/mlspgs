@@ -30,7 +30,7 @@ program TEST_MULTIPLY_VECTOR
   real :: T1, T2                   ! For timing
 
   !---------------------------- RCS Ident Info -------------------------------
-  character (len=256), private :: Id = &
+  character (len=256) :: Id = &
     & "$Id$"
   !---------------------------------------------------------------------------
 
@@ -168,6 +168,9 @@ program TEST_MULTIPLY_VECTOR
 end program TEST_MULTIPLY_VECTOR
 
 ! $Log$
+! Revision 2.2  2000/11/09 01:22:06  vsnyder
+! Removed "private" in a parameter statement -- can't work in a main program
+!
 ! Revision 2.1  2000/10/31 23:35:52  vsnyder
 ! Initial commit
 !
