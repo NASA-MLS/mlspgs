@@ -148,7 +148,7 @@ outer1: do
 
         ! First derivative field:     i*Q * F(S), i = Sqrt(-1)
 
-        q = (k-1) * lambdaX2Pi
+        q = (j-1) * lambdaX2Pi
         antennaPatterns(i)%d1aap(k,1)    = -v(2) * q
         antennaPatterns(i)%d1aap(k+1,1)  =  v(1) * q
         antennaPatterns(i)%d1aap(k,2)    = -v(4) * q
@@ -227,6 +227,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 1.7  2001/04/06 00:41:50  vsnyder
+! Fix another typo
+!
 ! Revision 1.6  2001/04/06 00:21:32  vsnyder
 ! Fix a typo
 !
