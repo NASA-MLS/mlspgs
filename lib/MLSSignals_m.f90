@@ -1043,7 +1043,7 @@ oc:   do
 
     type(signal_T), dimension(:), intent(in) :: Signals
     type(signal_T), intent(in) :: Probe
-    logical, dimension(size(signals)), intent(inout), optional :: matchFlags
+    logical, dimension(size(signals)), intent(out), optional :: matchFlags
 
     integer :: BestMatch                ! The smallest number of 
     integer :: I                        ! Loop inductors, subscripts
@@ -1088,6 +1088,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.25  2001/04/13 23:54:06  livesey
+! Change intent inout to intent out for matchFlags in MatchSignal
+!
 ! Revision 2.24  2001/04/13 23:28:59  livesey
 ! Tidied up some gothcas in MatchSignal.
 !
