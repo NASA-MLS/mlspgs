@@ -515,7 +515,7 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine SayTime
       call cpu_time ( t2 )
-      call output ( "Timing for MLSL2Fill =" )
+      call output ( "Timing for MLSL2Fill = " )
       call output ( dble(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
@@ -1540,6 +1540,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.44  2001/04/28 01:43:21  vsnyder
+! Improved the timing message
+!
 ! Revision 2.43  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
