@@ -20,7 +20,7 @@ program MLSL2
   use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, CURRENT_VERSION_ID, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
-    & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, &
+    & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, RESTARTWARNINGS, &
     & SECTIONTIMINGUNITS, SIPS_VERSION, SKIPDIRECTWRITES, SKIPRETRIEVAL, &
     & STOPAFTERCHUNKDIVIDE, STOPAFTERGLOBAL, STOPWITHERROR, TOOLKIT
   use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
@@ -28,7 +28,7 @@ program MLSL2
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMSG_Warning, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
-  use MLSStrings, only: lowerCase
+  use MLSStrings, only: lowerCase, readIntsFromChars
   use MLSStringLists, only: catLists, GetStringElement, GetUniqueList, &
     & NumStringElements, RemoveElemFromList, unquote
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
@@ -65,7 +65,7 @@ program MLSL2
   ! and where we expand 'mlsl2 [options]' below
   ! mlsl2 -slo1 -slo2 .. --mlo1 --mlo2 ..
   !    where slon are single-letter options and mlon are multiletter options
-  !    E.g., mlsl2 -m -p --nmeta -S"glo jac"
+  !    E.g., mlsl2 -m -p --nmeta -Sglo,jac
   !    For a list of available options enter 'mlsl2 --help'
   !    For a list of available switches enter 'mlsl2 -S"?"'
   ! In case the l2cf is named, say, "file_name" by (ii), we will try: 
@@ -99,7 +99,7 @@ program MLSL2
   ! will be running mlsl2
   ! The interprocess communication is handled by pvm
   !
-  ! Three alternatives are avialable to manage these tasks
+  ! Three alternatives are available to manage these tasks
   ! (1) "submit", where you specify --submit "command" as
   !       a command-line option, and the master uses "command"
   !       with a generic, non-mlsl2-aware batch queue system; 
@@ -110,9 +110,13 @@ program MLSL2
   ! (3) Direct control, where the master has sole responsibilty for
   !      inquiring from pvm as to available hosts, and using them
   !
-  ! Note that (1) and (2) may permit more than one master task to run
-  ! simultaneously. They require a queue manager to be running already.
-  ! In contrast, (3) requires only the pvm demon.
+  ! Notes on parallel processing:
+  ! (a) (1) and (2) may permit more than one master task to run
+  !     simultaneously. They require a queue manager to be running already.
+  !     In contrast, (3) requires only the pvm demon, but you are limited
+  !     to one master at a time
+  ! (b) The l2cf must be specified; you can't use stdin (the slaves wouldn't
+  !     see the master's stdin)
   implicit NONE
 
   integer, parameter :: L2CF_UNIT = 20  ! Unit # if L2CF is opened by Fortran
@@ -127,6 +131,7 @@ program MLSL2
   integer :: FIRST_SECTION         ! Index of son of root of first n_cf node
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
+  integer, dimension(1) :: ints
   integer :: J                     ! index within option
   integer :: LastCHUNK = 0         ! Just run range [SINGLECHUNK-LastCHUNK]
   character(len=2048) :: LINE      ! Into which is read the command args
@@ -146,6 +151,7 @@ program MLSL2
   character(len=FILENAMELEN) :: L2CF_file       ! Some text
   character(len=len(switches)) :: removeSwitches = ''
   character(len=16) :: aSwitch
+  character(len=16), dimension(1) :: strings
   character(len=len(switches)) :: tempSwitches
   character(len=2048) :: WORD      ! Some text
   character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
@@ -229,6 +235,7 @@ program MLSL2
         checkl2cf = switch
       ! Using lowercase so either --checkPaths or --checkpaths work
       ! Perhaps we should do this for all multiletter options
+      ! (single-letter options are case-sensitive)
       else if ( lowercase(line(3+n:8+n)) == 'checkp' ) then
         checkPaths = switch
       else if ( line(3+n:8+n) == 'chunk ' ) then
@@ -468,7 +475,7 @@ program MLSL2
       end if
     else if ( line(1:1) == '-' ) then   ! "letter" options
       j = 1
-      do while ( j < len(line) )
+      do while ( j < len_trim(line) )
         j = j + 1
         select case ( line(j:j) )
         case ( ' ' )
@@ -480,7 +487,7 @@ program MLSL2
         case ( 'f' )
           toggle(emit) = .true.
           levels(emit) = 0
-          if ( j < len(line) ) then
+          if ( j < len_trim(line) ) then
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
               j = j + 1
               levels(emit) = ichar(line(j:j)) - ichar('0')
@@ -489,7 +496,7 @@ program MLSL2
         case ( 'g' )
           toggle(gen) = .true.
           levels(gen) = 0
-          if ( j < len(line) ) then
+          if ( j < len_trim(line) ) then
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
               j = j + 1
               levels(gen) = ichar(line(j:j)) - ichar('0')
@@ -530,6 +537,19 @@ program MLSL2
           enddo
         case ( 't' ); toggle(tab) = .true.
         case ( 'v' ); do_listing = .true.
+        case ( 'w' )
+          ! print *, 'w option: ', trim(line(j+1:))
+          MLSMessageConfig%limitWarnings = 1
+          if ( line(j+1:j+1) == 'p' ) then
+            RESTARTWARNINGS = .false.
+            j = j + 1
+          endif
+          if ( j < len_trim(line) ) then
+            strings(1) = line(j+1:)
+            call readIntsFromChars(strings, ints)
+            j = j + len_trim(line(j+1:))
+            MLSMessageConfig%limitWarnings = ints(1)
+          end if
         case default
           print *, 'Unrecognized option -', line(j:j), ' ignored.'
           call option_usage
@@ -561,10 +581,11 @@ program MLSL2
     switches = tempSwitches
   enddo
   if ( parallel%slave ) then
-  ! Don't dump all the chunks agagin and again for each slave's chunk
+  ! Don't dump all the chunks again and again for each slave's chunk
     call RemoveElemFromList(switches, tempSwitches, 'chu')
     switches = tempSwitches
   endif
+  ! The following no longer does anything
   call Set_garbage_collection(garbage_collection_by_dt)
 
 ! Done with command-line parameters; enforce cascading negative options
@@ -598,10 +619,8 @@ program MLSL2
     singleChunk = 1
     lastChunk = 0
     ! Issue warning about l2pc files
-    ! Maybe we should do away with checkPaths option altogether?
-    ! or fix it somehow?
     call MLSMessage ( MLSMSG_Warning, ModuleName, &
-    & 'checkPaths will fail if l2pc files are on local disks but master runs' &
+    & 'checkPaths will fail if l2pc files only on local disks but master runs' &
     & // ' on front end' )
   endif
   ! If doing a range of chunks, the avoidance of unlimited dimensions
@@ -763,19 +782,12 @@ program MLSL2
   call time_now ( t0 )
   t1 = t0
   !---------------- Task (8) ------------------
-  ! print *, 'destroy_char_table'
   call destroy_char_table
-  ! print *, 'destroy_hash_table'
   call destroy_hash_table
-  ! print *, 'destroy_string_table'
   call destroy_string_table
-  ! print *, 'destroy_symbol_table'
   call destroy_symbol_table
-  ! print *, 'deallocate_decl'
   call deallocate_decl
-  ! print *, 'deallocate_tree'
   call deallocate_tree
-  ! print *, 'freepvmargs'
   call FreePVMArgs
   if ( parallel%slave .and. &
     & (SKIPDIRECTWRITES .or. SKIPRETRIEVAL) ) then
@@ -790,9 +802,7 @@ program MLSL2
     endif    
   endif    
   if ( timing ) call sayTime ( 'Closing and deallocating' )
-  ! print *, 'add_to_section_timing'
   call add_to_section_timing( 'main', t0 )
-  ! print *, 'dump_section_timings'
   if ( index(switches, 'time') /= 0 ) call dump_section_timings
   call output_date_and_time(msg='ending mlsl2')
   if( error /= 0 .or. STOPWITHERROR ) then
@@ -984,6 +994,12 @@ contains
       call output(' Ever crash:                                     ', advance='no')
       call blanks(4, advance='no')
       call output(.not. neverCrash, advance='yes')
+      call output(' Suppress identical warnings after:               ', advance='no')
+      call blanks(4, advance='no')
+      call output(MLSMessageConfig%limitWarnings, advance='yes')
+      call output(' Restart counting warnings at each phase:        ', advance='no')
+      call blanks(4, advance='no')
+      call output(restartWarnings, advance='yes')
       call output(' Stop after Chunk Divide:                        ', advance='no')
       call blanks(4, advance='no')
       call output(StopAfterChunkDivide, advance='yes')
@@ -1016,6 +1032,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.132  2005/03/12 00:49:18  pwagner
+! -w option added
+!
 ! Revision 2.131  2005/03/03 00:23:42  pwagner
 ! Added -Rs1,s2,.. Removeswitches option
 !
