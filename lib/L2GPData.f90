@@ -17,7 +17,7 @@ MODULE L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   
   IMPLICIT NONE
   INTEGER:: SWRDFLD
-  EXTERNAL::SWRDFLD !Should USE SWAPI
+  EXTERNAL SWRDFLD !Should USE SWAPI
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER(len=256), PRIVATE :: Id = &
        & "$Id$"
@@ -162,6 +162,7 @@ CONTAINS ! =====     Public Procedures     =============================
     CALL allocate_test(l2gp%losAngle,   useNTimes, "l2gp%losAngle",   ModuleName)
     CALL allocate_test(l2gp%geodAngle,  useNTimes, "l2gp%geodAngle",  ModuleName)
     CALL allocate_test(l2gp%time,       useNTimes, "l2gp%time",       ModuleName)
+    CALL allocate_test(l2gp%chunkNumber,useNTimes, "l2gp%chunkNumber",ModuleName)
 
     ! Allocate the data fields
 
@@ -348,7 +349,7 @@ CONTAINS ! =====     Public Procedures     =============================
     l2gp%Name = swathname
 
     swid = swattach(L2FileHandle, l2gp%Name)
-    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+    IF (swid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
          &attach to swath interface for reading.')
 
     ! Get dimension information
@@ -1138,6 +1139,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 2.4  2000/09/18 10:19:49  pumphrey
+! Removed some debugging statements.
+!
 ! Revision 2.1  2000/09/15 21:50:18  livesey
 ! New version of L2GP data, moved some stuff from l2 to lib
 !
