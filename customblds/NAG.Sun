@@ -10,9 +10,9 @@ OutputL1B.o: outputl1b.mod
    -T OutputL1B.o outputl1b.mod 
 outputl1b.mod:
 	$(UTILDIR)/newAifBdiff.sh -a outputl1b.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(S)/OutputL1B.f90 $(FAFTER)
-tree_checker.mod: init_tables_module.mod
+tree_checker.mod: tree_checker.f90 init_tables_module.mod
 	$(UTILDIR)/newAifBdiff.sh -a tree_checker.mod $(FC) -c $(DUSTY) $(INC_PATHS) $(srclib)/tree_checker.f90 $(FAFTER)
-tree_checker.o: tree_checker.mod
+tree_checker.o: tree_checker.mod tree_checker.f90
 	$(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -t \
    -T tree_checker.o tree_checker.mod 
 
@@ -296,6 +296,9 @@ ncep_dao.o:
 
 endif
 # $Log$
+# Revision 1.5  2002/07/15 23:20:19  pwagner
+# Added build instructions for getcf_m.mod
+#
 # Revision 1.4  2002/07/12 20:33:47  pwagner
 # l2/init_tables_module does not require custom build
 #

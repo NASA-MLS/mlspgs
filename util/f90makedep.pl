@@ -584,14 +584,20 @@ sub MakeDependsf90 {
          /^\s*include\s+["\']([^"\']+)["\']/i && push(@incs, $1);
          /^\s*use\s+([^\s,!]+)/i && push(@modules, &toLower($1));
          }
+
       if (defined @incs || defined @modules || $var_1_mod) {
          ($objfile = $file) =~ s/\.f90$/.o/;
          undef @dependencies;
          if ( $var_1_mod ) {
+# ------------------------
+#   The case of .mod file-mediated dependencies
+# ------------------------
 #           print MAKEFILE "$modulename_by_file{$objfile}.mod $objfile: ";
 #           print MAKEFILE "$objfile: ";
            if ("$modulename_by_file{$objfile}.mod" !~ /^\./) {
-              print MAKEFILE "$objfile: $modulename_by_file{$objfile}.mod \n";
+#   file_name.o: module_name.mod file_name.f90
+              print MAKEFILE "$objfile: $modulename_by_file{$objfile}.mod ";
+              print MAKEFILE "$file \n";
               if ($dont_build{$file} != 1) {
                 print MAKEFILE "\t";
 #                print MAKEFILE "touch $objfile \n";
@@ -599,6 +605,7 @@ sub MakeDependsf90 {
                 print MAKEFILE "$objfile ";
                 print MAKEFILE "$modulename_by_file{$objfile}.mod \n";
               }
+#   file_name.mod: file_name.f90
               print MAKEFILE "$modulename_by_file{$objfile}.mod: ";
            } else {
               print MAKEFILE "$objfile: ";
@@ -668,6 +675,9 @@ sub MakeDependsf90 {
      }
    }
 # $Log$
+# Revision 1.9  2002/07/01 20:51:22  pwagner
+# Rebuilds object file when deleted
+#
 # Revision 1.8  2002/07/01 17:27:08  pwagner
 # No longer compiles some sources twice
 #
