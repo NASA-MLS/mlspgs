@@ -31,6 +31,9 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../srclib
 
+# where sources (but not OBJS) shared with l3, etc. are stored
+blaslib=../blas
+
 # where sources for the forward model are stored
 libfwdmdl_sources=../fwdmdl
 
@@ -76,8 +79,9 @@ SHELL = /bin/sh
 #These seem to no longer work right (maybe some change to our suns?)
 #libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
 #libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
-libmls_f90 := $(shell echo $(libmls_sources)/*.f90)
+libmls_f90 := $(shell echo $(libmls_sources)/*.f90 $(libmls_sources)/*.c)
 libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
+blaslib_f := $(shell echo $(blaslib)/*.f)
 
 # In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
 l2_NEEDS_fwdmdl = true
@@ -92,6 +96,16 @@ else
    PROG_prereqs=$(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a
 endif
+
+ifdef BLAS
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+else
+   LIB_prereqs=$(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90 \
+   $(blaslib_f)
+endif
+
 
 # Because LF95 once couldn't handle write_meta.f90
 #ifeq ($(MLSF95),LF95)
@@ -116,8 +130,7 @@ $(PROG): $(PROG_prereqs)
 	esac 
 
 
-$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
-   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
+$(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 $(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
@@ -191,6 +204,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.29  2001/05/23 22:27:41  pwagner
+# Expanded LIB_prereqs
+#
 # Revision 2.28  2001/05/17 20:02:59  pwagner
 # Automatically rebuilds lib on change to machine.f90
 #
