@@ -118,6 +118,7 @@ contains ! ====     Public Procedures     ==============================
                                    ! their declarations are dumped.
     integer, intent(in), optional :: FIELDS(:) ! Field indices
     integer :: I                   ! Index for "sons" or "section_ordering"
+                                   ! or subtrees of "sons"
 
     error = max(error,1)
     call output ( '***** At ', from_where = "type checker" )
@@ -197,6 +198,17 @@ contains ! ====     Public Procedures     ==============================
       call display_string ( sub_rosa(where) )
       call output ( '" field has the wrong type of associated value.', &
         & advance='yes'  )
+      if ( present(sons) ) then
+        call output ( '         Expected' )
+        if ( nsons(sons(1)) > 2 ) call output ( ' one of' )
+        do i = 2, nsons(sons(1))
+          if ( i > 2 ) call output ( ',' )
+          call output ( ' ' )
+          if ( i > 2 .and. i == nsons(sons(i)) ) call output ( 'or ' )
+          call display_string ( sub_rosa(subtree(i,sons(1))) )
+        end do
+        call output ( '', advance='yes' )
+      end if
     case default
       call output ( 'No message in TREE_CHECKER for error code ' )
       call output ( code, advance='yes' )
@@ -334,7 +346,7 @@ m:              do j = 3, nsons(field)
           else
             call expr ( son, type, units, value )
             if ( .not. check_field_type(field,type_map(type)) ) then
-              call announce_error ( son1, wrong_type )
+              call announce_error ( son1, wrong_type, sons = (/ field /) )
             end if
           end if
         end do o ! i = 2, nsons(root)
@@ -850,6 +862,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.6  2001/03/06 22:50:11  vsnyder
+! Correct processing of /foo when it's not a valid field.
+!
 ! Revision 1.5  2001/03/05 23:20:09  vsnyder
 ! Correct obscure problem that only occurs if you have erroneous input
 !
