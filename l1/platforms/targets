@@ -124,7 +124,7 @@ else
 endif
 ifdef HDFVERSIONS
    he5lib_linker_line=-L../../he5lib/$(MLSCONFG) -lhe5
-   he5lib_message=mlsl2 will support files with either hdf version
+   he5lib_message=mlsl1 will support files with either hdf version
 endif
    hdf5_message=Building mlsl1 with hdf5
 else
@@ -178,6 +178,9 @@ OutputL1B.o: $(S)/OutputL1B.f90
 
 # ========================================================================
 # $Log$
+# Revision 1.18  2002/05/08 22:03:25  pwagner
+# Can build mlsl1 with he5lib if HDFVERSIONS set
+#
 # Revision 1.17  2002/05/02 22:35:16  pwagner
 # NOCASCADE setting in place; forestalls unwanted recompilations
 #
