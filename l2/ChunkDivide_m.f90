@@ -1308,18 +1308,93 @@ contains ! ===================================== Public Procedures =====
     end subroutine DeleteObstruction
 
     ! ----------------------------------------- notel1brad_changes -----
-    subroutine notel1brad_changes ( obstructions )
-      ! This routine merges overlapping range obstructions and deletes
-      ! wall obstructions inside ranges.  The job is made easier
-      ! by sorting the obstructions into order
+    subroutine notel1brad_changes ( obstructions, mafRange, l1bInfo )
+    use MLSSignals_m, only:GetModuleFromRadiometer, GetModuleFromSignal, &
+      & GetRadiometerFromSignal, GetSignal, Signal_T, SIGNALS, MODULES
+      ! This routine notes any lack of good data for one of the
+      ! signals, and, depending on sensitivity,
+      ! augments the database of obstructions
       type(Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
+      type (Obstruction_T) :: NEWOBSTRUCTION ! In progrss
+      integer, dimension(2), intent(in) :: MAFRANGE   ! Processing range in MAFs
+      type (L1BInfo_T), intent(in) :: L1BINFO
 
       ! Local variables
+      ! This next sets the threshold of what it takes to be an obstruction
+      ! At the most sensitive, hair-trigger level, any change in goodness
+      ! of any signal would suffice
+      ! Otherwise, a dead-zone in any signal must persist for at least a
+      ! duration of config%maxGap before we declare it an obstruction
+      ! and add it to the database
+      logical, parameter :: ANYCHANGEISOBSTRUCTION = .false.
+      integer :: Signal_index
+      type(Signal_T) :: Signal
+      integer, dimension(size(SIGNALS)) :: goods_after_gap
+      integer, dimension(size(SIGNALS)) :: goodness_changes
+      integer, dimension(size(SIGNALS)) :: howlong_nogood
+      logical, dimension(size(SIGNALS)) :: good_after_maxgap
+      logical, dimension(size(SIGNALS)) :: good_signals_now
+      logical, dimension(size(SIGNALS)) :: good_signals_last
+      integer :: maf
+      integer :: mafset
+      integer :: num_goods_after_gap
+      integer :: num_goodness_changes
       ! Here we will loop over the signals database
       ! Searching for 
       ! (1) mafs where there is no good data for any of the signals
       ! (2) mafs where the good data is switched from one signal to another
       ! (See Construct QuantityTemplates below line 253)
+      
+      ! Task (1a): Find mafs where there is at least one signal which
+      ! changes from either nogood to good or from good to nogood
+      ! compared with the last maf
+      ! Task (1b): Find mafs where there is at least one signal which
+      ! changes from nogood to good after a dead zone 
+      ! lasting at least maxGap mafs
+      num_goodness_changes = 0
+      howlong_nogood       = 0
+      do maf = mafRange(1), mafRange(2)
+        do Signal_index=1, size(SIGNALS)
+          Signal = SIGNALS(Signal_index)
+          good_signals_now(Signal_index) = &
+            & any_good_signaldata ( Signal_index, Signal%sideband, &
+            & l1bInfo, maf )
+          if ( .not. good_signals_now(Signal_index) ) &
+            & howlong_nogood(Signal_index) = howlong_nogood(Signal_index) + 1
+          good_after_maxgap(Signal_index) = &
+            & good_signals_now(Signal_index) &
+            & .and. &
+            & ( howlong_nogood(Signal_index) > config%maxGap )
+          if ( good_signals_now(Signal_index) ) howlong_nogood(Signal_index) = 0
+        enddo
+        if ( maf /= mafRange(1) ) then
+          if ( Any(good_signals_now .neqv. good_signals_last) ) then
+            num_goodness_changes = num_goodness_changes + 1
+            goodness_changes(num_goodness_changes) = maf
+          endif
+        endif
+        if ( Any(good_after_maxgap) ) then
+          num_goods_after_gap = num_goods_after_gap + 1
+          goods_after_gap(num_goods_after_gap) = maf
+        endif
+        good_signals_last = good_signals_now
+      enddo
+      
+      ! Depending on sensitivity, add these to Obstructions database
+      if ( ANYCHANGEISOBSTRUCTION .and. num_goodness_changes > 0 ) then
+        do mafset = 1, num_goodness_changes
+          newObstruction%range = .false.
+          newObstruction%mafs(1) = goodness_changes(mafset)
+          call AddObstructionToDatabase ( obstructions, newObstruction )
+        enddo
+      elseif ( num_goods_after_gap > 0 ) then
+        do mafset = 1, num_goods_after_gap
+          newObstruction%range = .false.
+          newObstruction%mafs(1) = goods_after_gap(mafset)
+          call AddObstructionToDatabase ( obstructions, newObstruction )
+        enddo
+      endif
+      ! OK, we have the mafs where the goodness changes, now what?
     end subroutine notel1brad_changes
 
     ! ----------------------------------------- PruneObstructions -----
@@ -1625,11 +1700,11 @@ contains ! ===================================== Public Procedures =====
         call Deallocate_test ( valid, 'valid', ModuleName )
       end if                              ! Consider scan issues
 
-      ! Here we'll eventually look at radiances and switch changes.  For the
-      ! moment I'm deferring this one too. NJL.
-      call notel1brad_changes ( obstructions ) 
+      ! Here we look at radiances and switch changes.  For the
+      ! moment I'm letting paw code this (not tested yet). NJL.
+      call notel1brad_changes ( obstructions, mafRange, l1bInfo ) 
 
-      ! Sort the obstructions into order and prune them of repeats, overlaps etc.
+      ! Sort the obstructions into order; prune them of repeats, overlaps etc.
       call PruneObstructions ( obstructions ) 
 
       ! Tidy up
@@ -1674,6 +1749,60 @@ contains ! ===================================== Public Procedures =====
     end if
   end subroutine Dump_Obstructions
 
+! -----------------------------------------------  ANY_GOOD_SIGNALDATA  -----
+  function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, maf )  &
+    & result (answer)
+  ! Read precision of signal
+  ! if all values < 0.0, return FALSE
+  ! if no precision data in file, return FALSE
+  ! otherwise return true
+  ! Arguments
+
+    use Allocate_Deallocate, only: Deallocate_Test
+    use L1BData, only: L1BData_T, READL1BDATA, &
+      & FindL1BData, AssembleL1BQtyName, PRECISIONSUFFIX
+    use MLSCommon, only: L1BInfo_T, MLSChunk_T, RK => R8
+    use MLSFiles, only: MLS_HDF_Version
+    use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSSignals_m, only: GetSignalName
+
+    integer, intent(in) :: signal
+    integer, intent(in) :: sideband
+    logical             :: answer
+    integer, intent(in) :: maf
+    type (l1bInfo_T), intent(in) :: L1bInfo
+  ! Private
+    integer :: FileID, flag, noMAFs
+    character(len=127)  :: namestring
+    type (l1bData_T) :: MY_L1BDATA
+    integer :: hdfVersion
+
+  ! Executable
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
+    call GetSignalName ( signal, nameString, &                   
+    & sideband=sideband, noChannels=.TRUE. )                     
+    nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
+    nameString = trim(nameString) // PRECISIONSUFFIX
+    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, hdfVersion )
+    if ( fileID <= 0 ) then
+      answer = .false.
+      return
+    end if
+    call ReadL1BData ( fileID , nameString, my_l1bData, noMAFs, flag, &
+      & firstMAF=maf, lastMAF=maf, &
+      & NeverFail= .true., hdfVersion=hdfVersion )
+    if ( flag == 0 ) then
+      answer = .not. all (my_l1bData%DpField < 0._rk)
+      call deallocate_test(my_l1bData%DpField, trim(nameString), ModuleName)
+    else
+      answer = .false.
+    end if
+  end function ANY_GOOD_SIGNALDATA
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -1681,6 +1810,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.30  2003/04/28 23:07:00  pwagner
+! Fleshed out notel1brad_changes; not yet tested where needed
+!
 ! Revision 2.29  2003/01/06 20:13:09  livesey
 ! New split upper/lower overlaps
 !
