@@ -61,7 +61,8 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_APRIORISCALE        = F_APRIORI + 1
   integer, public, parameter :: F_AUTOFILL            = f_aprioriScale + 1
   integer, public, parameter :: F_BAND                = f_autofill + 1
-  integer, public, parameter :: F_CHANNELS            = f_band + 1
+  integer, public, parameter :: F_CHANNEL             = f_band + 1
+  integer, public, parameter :: F_CHANNELS            = f_channel + 1
   integer, public, parameter :: F_COLUMNS             = f_channels + 1
   integer, public, parameter :: F_COLUMNSCALE         = f_columns + 1
   integer, public, parameter :: F_COMPAREOVERLAPS     = f_columnscale + 1
@@ -71,9 +72,12 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_CRITERIA            = f_covariance + 1
   integer, public, parameter :: F_DIAGONAL            = f_criteria + 1
   integer, public, parameter :: F_FILE                = f_diagonal + 1
-  integer, public, parameter :: F_FIRSTINDEXCHANNEL   = f_file + 1
+  integer, public, parameter :: F_FIRST               = f_file + 1
+  integer, public, parameter :: F_FIRSTINDEXCHANNEL   = f_first + 1
   integer, public, parameter :: F_FRACTION            = f_firstIndexChannel + 1
-  integer, public, parameter :: F_FWDMODELIN          = f_fraction + 1
+  integer, public, parameter :: F_FREQUENCIES         = f_fraction + 1
+  integer, public, parameter :: F_FREQUENCY           = f_frequencies + 1
+  integer, public, parameter :: F_FWDMODELIN          = f_frequency + 1
   integer, public, parameter :: F_FWDMODELOUT         = f_fwdModelIn + 1
   integer, public, parameter :: F_GPH                 = f_fwdModelOut + 1
   integer, public, parameter :: F_HDFNAME             = f_GPH + 1
@@ -81,8 +85,10 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_HGRID               = f_height + 1
   integer, public, parameter :: F_INTERPOLATIONFACTOR = f_hGrid + 1
   integer, public, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
-  integer, public, parameter :: F_LENGTH              = f_jacobian + 1
-  integer, public, parameter :: F_MAXITERATIONS       = f_length + 1
+  integer, public, parameter :: F_LAST                = f_jacobian + 1
+  integer, public, parameter :: F_LENGTH              = f_last + 1
+  integer, public, parameter :: F_LO                  = f_length + 1
+  integer, public, parameter :: F_MAXITERATIONS       = f_lo + 1
   integer, public, parameter :: F_MATRIX              = f_maxIterations + 1
   integer, public, parameter :: F_MEASUREMENTS        = f_matrix + 1
   integer, public, parameter :: F_METHOD              = f_measurements + 1
@@ -103,10 +109,14 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_SIGNALS             = f_scale + 1
   integer, public, parameter :: F_SOURCE              = f_signals + 1
   integer, public, parameter :: F_SPECIES             = f_source + 1
-  integer, public, parameter :: F_START               = f_species + 1
+  integer, public, parameter :: F_SPECTROMETER        = f_species + 1
+  integer, public, parameter :: F_START               = f_spectrometer + 1
   integer, public, parameter :: F_STATE               = f_start + 1
-  integer, public, parameter :: F_STOP                = f_state + 1
-  integer, public, parameter :: F_TEMPERATURE         = f_stop + 1
+  integer, public, parameter :: F_STEP                = f_state + 1
+  integer, public, parameter :: F_STOP                = f_step + 1
+  integer, public, parameter :: F_SUFFIX              = f_stop + 1
+  integer, public, parameter :: F_SWITCH              = f_suffix + 1
+  integer, public, parameter :: F_TEMPERATURE         = f_switch+1
   integer, public, parameter :: F_TOLERANCEA          = f_temperature + 1
   integer, public, parameter :: F_TOLERANCEF          = f_tolerancea + 1
   integer, public, parameter :: F_TOLERANCER          = f_tolerancef + 1
@@ -119,7 +129,9 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: F_VALUES              = f_unpackOutput + 1
   integer, public, parameter :: F_VGRID               = f_values + 1
   integer, public, parameter :: F_WEIGHT              = f_vGrid + 1
-  integer, public, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_weight
+  integer, public, parameter :: F_WIDTH               = f_weight + 1
+  integer, public, parameter :: F_WIDTHS              = f_width + 1
+  integer, public, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_widths
   integer, public :: FIELD_INDICES(field_first:field_last)
 ! Enumeration literals:
 
@@ -181,21 +193,24 @@ module INIT_TABLES_MODULE
   integer, public :: PARM_INDICES(first_parm:last_parm)
 ! Section identities (indices are in the order the sections are allowed to
 ! appear):
-  integer, public, parameter :: Z_CHUNKDIVIDE    = 4
-  integer, public, parameter :: Z_CONSTRUCT      = 5
-  integer, public, parameter :: Z_FILL           = 6
-  integer, public, parameter :: Z_GLOBALSETTINGS = 1
-  integer, public, parameter :: Z_JOIN           = 8
-  integer, public, parameter :: Z_MERGEAPRIORI   = 3
-  integer, public, parameter :: Z_OUTPUT         = 9
-  integer, public, parameter :: Z_READAPRIORI    = 2
-  integer, public, parameter :: Z_RETRIEVE       = 7
-  integer, public, parameter :: SECTION_FIRST = z_globalSettings, &
+  integer, public, parameter :: Z_CHUNKDIVIDE    = 5
+  integer, public, parameter :: Z_CONSTRUCT      = 6
+  integer, public, parameter :: Z_FILL           = 7
+  integer, public, parameter :: Z_GLOBALSETTINGS = 2
+  integer, public, parameter :: Z_JOIN           = 9
+  integer, public, parameter :: Z_MERGEAPRIORI   = 4
+  integer, public, parameter :: Z_MLSSIGNALS     = 1
+  integer, public, parameter :: Z_OUTPUT         = 10
+  integer, public, parameter :: Z_READAPRIORI    = 3
+  integer, public, parameter :: Z_RETRIEVE       = 8
+  integer, public, parameter :: SECTION_FIRST = z_mlsSignals, &
                                 SECTION_LAST = z_Output
   integer, public :: SECTION_INDICES(section_first:section_last)
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
-  integer, public, parameter :: S_CLIMATOLOGY    = last_parm + 1
+  integer, public, parameter :: S_BAND           = last_parm + 1
+  integer, public, parameter :: S_CHANNEL        = s_band + 1
+  integer, public, parameter :: S_CLIMATOLOGY    = s_channel + 1
   integer, public, parameter :: S_CREATE         = s_climatology + 1
   integer, public, parameter :: S_FILL           = s_create + 1
   integer, public, parameter :: S_FORWARDMODEL   = s_fill + 1
@@ -206,40 +221,49 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: S_MERGE          = s_matrix + 1
   integer, public, parameter :: S_OUTPUT         = s_merge + 1
   integer, public, parameter :: S_QUANTITY       = s_output + 1
-  integer, public, parameter :: S_RETRIEVE       = s_quantity + 1
-  integer, public, parameter :: S_SUBSET         = s_retrieve + 1
-  integer, public, parameter :: S_TEMPLATE       = s_subset + 1
+  integer, public, parameter :: S_RADIOMETER     = s_quantity + 1
+  integer, public, parameter :: S_RETRIEVE       = s_radiometer + 1
+  integer, public, parameter :: S_SIGNAL         = s_retrieve + 1
+  integer, public, parameter :: S_SUBSET         = s_signal + 1
+  integer, public, parameter :: S_SPECTROMETER   = s_subset + 1
+  integer, public, parameter :: S_TEMPLATE       = s_spectrometer + 1
   integer, public, parameter :: S_TIME           = s_template + 1
   integer, public, parameter :: S_TPFILL         = s_time + 1
   integer, public, parameter :: S_VECTOR         = s_tpfill + 1
   integer, public, parameter :: S_VECTORTEMPLATE = s_vector + 1
   integer, public, parameter :: S_VGRID          = s_vectortemplate + 1
-  integer, public, parameter :: SPEC_FIRST = s_Climatology, SPEC_LAST = s_vGrid
+  integer, public, parameter :: SPEC_FIRST = s_band, SPEC_LAST = s_vGrid
   integer, public :: SPEC_INDICES(spec_first:spec_last)
 
 ! Table for section ordering:
   integer, public, parameter :: OK = 1, & ! NO = 0
     SECTION_ORDERING(section_first:section_last, &
                      section_first-1:section_last) = reshape( &
-! To: | globalSettings    chunkDivide       retrieve             |
-!     |       readApriori       construct          join          |
-!     |             mergeApriori       fill             output   |
-! ====|==========================================================|== From: ==
-        (/OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! Start
-           0,   OK,    0,    0,    0,    0,    0,    0,    0,  & ! GlobalSettings
-           0,    0,   OK,    0,    0,    0,    0,    0,    0,  & ! readApriori
-           0,    0,    0,   OK,    0,    0,    0,    0,    0,  & ! mergeApriori
-           0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
-           0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Construct
-           0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Fill
-           0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
-           0,    0,    0,    0,    0,    0,    0,    0,   OK,  & ! Join
-           0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
+! To: |       globalSettings    chunkDivide       retrieve             |
+!     |             readApriori       construct          join          |
+!     | mlsSignals        mergeApriori       fill             output   |
+! ====|================================================================|== From: ==
+        (/OK,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! Start
+           0,   OK,    0,    0,    0,    0,    0,    0,    0,    0,  & ! mlsSignals
+           0,    0,   OK,    0,    0,    0,    0,    0,    0,    0,  & ! globalSettings
+           0,    0,    0,   OK,    0,    0,    0,    0,    0,    0,  & ! readApriori
+           0,    0,    0,    0,   OK,    0,    0,    0,    0,    0,  & ! mergeApriori
+           0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! chunkDivide
+           0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Construct
+           0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Fill
+           0,    0,    0,    0,    0,   OK,   OK,   OK,   OK,   OK,  & ! Retrieve
+           0,    0,    0,    0,    0,    0,    0,    0,    0,   OK,  & ! Join
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0/) & ! Output
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
-  integer, private, parameter :: F = 1000, L = 2000, N = 0, P = 3000
-  integer, private, parameter :: S = 4000, T = 5000, Z = 6000
+  integer, private, parameter :: D = 1000000
+  integer, private, parameter :: F = 1000, L = 2000, N = 0
+  integer, private, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
+  integer, private, parameter :: ND = n+d*no_dup
+  integer, private, parameter :: NDP = n+d*(no_dup+no_positional)
+  integer, private, parameter :: NP = n+d*no_positional
+  integer, private, parameter :: P = 3000, S = 4000, T = 5000, Z = 6000
   integer, private, parameter :: BEGIN = -1
 
 contains ! =====     Public procedures     =============================
@@ -308,40 +332,46 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_weighted) =              add_ident ( 'weighted' )
     ! Put field names into the symbol table
     field_indices(f_apriori) =             add_ident ( 'apriori' )
-    field_indices(f_aprioriscale) =        add_ident ( 'aprioriscale' )
+    field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
     field_indices(f_band) =                add_ident ( 'band' )
+    field_indices(f_channel) =             add_ident ( 'channel' )
     field_indices(f_channels) =            add_ident ( 'channels' )
     field_indices(f_columns) =             add_ident ( 'columns' )
-    field_indices(f_columnscale) =         add_ident ( 'columnscale' )
-    field_indices(f_compareOverlaps) =     add_ident ( 'compareoverlaps' )
+    field_indices(f_columnscale) =         add_ident ( 'columnScale' )
+    field_indices(f_compareOverlaps) =     add_ident ( 'compareOverlaps' )
     field_indices(f_coordinate) =          add_ident ( 'coordinate' )
     field_indices(f_copy) =                add_ident ( 'copy' )
     field_indices(f_covariance) =          add_ident ( 'covariance' )
     field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_file) =                add_ident ( 'file' )
-    field_indices(f_firstIndexChannel) =   add_ident ( 'f_firstindexchannel' )
+    field_indices(f_first) =               add_ident ( 'first' )
+    field_indices(f_firstIndexChannel) =   add_ident ( 'firstIndexChannel' )
     field_indices(f_fraction) =            add_ident ( 'fraction' )
-    field_indices(f_fwdModelIn) =          add_ident ( 'fwdmodelin' )
-    field_indices(f_fwdModelOut) =         add_ident ( 'fwdmodelout' )
+    field_indices(f_frequencies) =         add_ident ( 'frequencies' )
+    field_indices(f_frequency) =           add_ident ( 'frequency' )
+    field_indices(f_fwdModelIn) =          add_ident ( 'fwdModelIn' )
+    field_indices(f_fwdModelOut) =         add_ident ( 'fwdModelOut' )
     field_indices(f_gph) =                 add_ident ( 'gph' )
-    field_indices(f_hdfname) =             add_ident ( 'hdfname' )
+    field_indices(f_hdfname) =             add_ident ( 'hdfName' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
-    field_indices(f_interpolationFactor) = add_ident ( 'interpolationfactor' )
+    field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
+    field_indices(f_last) =                add_ident ( 'last' )
     field_indices(f_length) =              add_ident ( 'length' )
+    field_indices(f_lo) =                  add_ident ( 'lo' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
-    field_indices(f_maxIterations) =       add_ident ( 'maxiterations' )
+    field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
     field_indices(f_measurements) =        add_ident ( 'measurements' )
     field_indices(f_method) =              add_ident ( 'method' )
     field_indices(f_mif) =                 add_ident ( 'mif' )
     field_indices(f_module) =              add_ident ( 'module' )
     field_indices(f_molecule) =            add_ident ( 'molecule' )
     field_indices(f_number) =              add_ident ( 'number' )
-    field_indices(f_outputCovariance) =    add_ident ( 'outputcovariance' )
-    field_indices(f_outputOverlaps) =      add_ident ( 'outputoverlaps' )
+    field_indices(f_outputCovariance) =    add_ident ( 'outputCovariance' )
+    field_indices(f_outputOverlaps) =      add_ident ( 'outputOverlaps' )
     field_indices(f_overlaps) =            add_ident ( 'overlaps' )
     field_indices(f_per_decade) =          add_ident ( 'per_decade' )
     field_indices(f_quantities) =          add_ident ( 'quantities' )
@@ -353,22 +383,28 @@ contains ! =====     Public procedures     =============================
     field_indices(f_signals) =             add_ident ( 'signals' )
     field_indices(f_source) =              add_ident ( 'source' )
     field_indices(f_species) =             add_ident ( 'species' )
+    field_indices(f_spectrometer) =        add_ident ( 'spectrometer' )
     field_indices(f_start) =               add_ident ( 'start' )
     field_indices(f_state) =               add_ident ( 'state' )
+    field_indices(f_step) =                add_ident ( 'step' )
     field_indices(f_stop) =                add_ident ( 'stop' )
+    field_indices(f_suffix) =              add_ident ( 'suffix' )
+    field_indices(f_switch) =              add_ident ( 'switch' )
     field_indices(f_temperature) =         add_ident ( 'temperature' )
     field_indices(f_tolerancea) =          add_ident ( 'Atolerance' )
     field_indices(f_tolerancef) =          add_ident ( 'Ftolerance' )
     field_indices(f_tolerancer) =          add_ident ( 'Rtolerance' )
-    field_indices(f_versionRange) =        add_ident ( 'versionrange' )
+    field_indices(f_versionRange) =        add_ident ( 'versionRange' )
     field_indices(f_template) =            add_ident ( 'template' )
     field_indices(f_test) =                add_ident ( 'test' )
     field_indices(f_type) =                add_ident ( 'type' )
     field_indices(f_unit) =                add_ident ( 'unit' )
-    field_indices(f_unpackOutput) =        add_ident ( 'unpackoutput' )
+    field_indices(f_unpackOutput) =        add_ident ( 'unpackOutput' )
     field_indices(f_values) =              add_ident ( 'values' )
     field_indices(f_vGrid) =               add_ident ( 'vgrid' )
     field_indices(f_weight) =              add_ident ( 'weight' )
+    field_indices(f_width) =               add_ident ( 'width' )
+    field_indices(f_widths) =              add_ident ( 'widths' )
     ! Put parameter names into the symbol table
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
@@ -386,17 +422,20 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_scan_lower_limit) =     add_ident ( 'ScanLowerLimit' )
     parm_indices(p_scan_upper_limit) =     add_ident ( 'ScanUpperLimit' )
     ! Put section names into the symbol table
-    section_indices(z_chunkdivide) =       add_ident ( 'chunkdivide' )
+    section_indices(z_chunkDivide) =       add_ident ( 'chunkDivide' )
     section_indices(z_construct) =         add_ident ( 'construct' )
     section_indices(z_fill) =              add_ident ( 'fill' )
-    section_indices(z_globalsettings) =    add_ident ( 'globalsettings' )
+    section_indices(z_globalSettings) =    add_ident ( 'globalSettings' )
     section_indices(z_join) =              add_ident ( 'join' )
-    section_indices(z_mergeapriori) =      add_ident ( 'mergeapriori' )
+    section_indices(z_mergeApriori) =      add_ident ( 'mergeApriori' )
+    section_indices(z_mlsSignals) =        add_ident ( 'mlsSignals' )
     section_indices(z_output) =            add_ident ( 'output' )
-    section_indices(z_readapriori) =       add_ident ( 'readapriori' )
+    section_indices(z_readApriori) =       add_ident ( 'readApriori' )
     section_indices(z_retrieve) =          add_ident ( 'retrieve' )
     ! Put spec names into the symbol table
+    spec_indices(s_band) =                 add_ident ( 'band' )
     spec_indices(s_climatology) =          add_ident ( 'climatology' )
+    spec_indices(s_channel) =              add_ident ( 'channel' )
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
@@ -407,7 +446,10 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
+    spec_indices(s_radiometer) =           add_ident ( 'radiometer' )
     spec_indices(s_retrieve) =             add_ident ( 'retrieve' )
+    spec_indices(s_signal) =               add_ident ( 'signal' )
+    spec_indices(s_spectrometer) =         add_ident ( 'spectrometer' )
     spec_indices(s_subset) =               add_ident ( 'subset' )
     spec_indices(s_template) =             add_ident ( 'template' )
     spec_indices(s_time) =                 add_ident ( 'time' )
@@ -494,18 +536,48 @@ contains ! =====     Public procedures     =============================
     ! required to be in a specification named by the next-to-last
     ! f_field_name ... of the specification named by the spec_name.
     call make_tree ( (/ &
-      begin, s+s_time, n+n_spec_def, &
+      begin, s+s_band, &
+             begin, f+f_suffix, t+t_string, n+n_field_type, &
+             begin, f+f_frequency, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def, &
+      begin, s+s_channel, &
+             begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
+             begin, f+f_widths, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def, &
+      begin, s+s_radiometer, &
+             begin, f+f_lo, t+t_numeric, n+n_field_type, &
+             begin, f+f_suffix, t+t_string, n+n_field_type, &
+             nadp+n_spec_def, &
+      begin, s+s_spectrometer, & ! MUST be AFTER S_Channel
+             begin, f+f_channels, s+s_channel, n+n_field_spec, &
+             begin, f+f_first, t+t_numeric, n+n_field_type, &
+             begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
+             begin, f+f_last, t+t_numeric, n+n_field_type, &
+             begin, f+f_start, t+t_numeric, n+n_field_type, &
+             begin, f+f_step, t+t_numeric, n+n_field_type, &
+             begin, f+f_width, t+t_numeric, n+n_field_type, &
+             begin, f+f_widths, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def, &
+      begin, s+s_signal, & ! MUST be AFTER S_Band, S_Radiometer and S_Spectrometer
+             begin, f+f_band, s+s_band, n+n_field_spec, &
+             begin, f+f_channel, t+t_numeric, n+n_field_type, &
+             begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
+             begin, f+f_spectrometer, s+s_spectrometer, n+n_field_spec, &
+             begin, f+f_switch, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def /) )
+    call make_tree ( (/ &
+      begin, s+s_time, np+n_spec_def, &
       begin, s+s_climatology, &
              begin, f+f_type, t+t_aprioriType, n+n_field_type, &
              begin, f+f_source, t+t_aprioriSource, n+n_field_type, &
              begin, f+f_length, t+t_numeric, n+n_field_type, &
              begin, f+f_versionRange, t+t_string, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_create, &
              begin, f+f_template, n+n_field_type, &
              begin, f+f_copy, n+n_field_type, &
              begin, f+f_autofill, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_hGrid, &
              begin, f+f_type, t+t_hGridType, n+n_field_type, &
              begin, f+f_module, t+t_module, n+n_field_type, &
@@ -514,9 +586,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
              begin, f+f_values, n+n_field_type, &
-             n+n_spec_def /) )
+             np+n_spec_def /) )
     call make_tree ( (/ &
-      begin, s+s_merge, &  ! Must be AFTER s_climatology
+      begin, s+s_merge, &  ! Must be AFTER S_Climatology
              begin, f+f_apriori, s+s_climatology, n+n_field_spec, &
              begin, f+f_source, t+t_mergeSource, n+n_field_type, &
              begin, f+f_species, t+t_species, n+n_field_type, &
@@ -524,18 +596,18 @@ contains ! =====     Public procedures     =============================
              begin, f+f_height, t+t_numeric, n+n_field_type, &
              begin, f+f_method, t+t_mergeMethod, n+n_field_type, &
              begin, f+f_scale, t+t_numeric, n+n_field_type, &
-             n+n_spec_def /) )
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_template, &
              begin, f+f_copy, n+n_field_type, &
              begin, f+f_apriori, n+n_field_type, &
              begin, f+f_autofill, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_tpfill, &
              begin, f+f_type, n+n_field_type, &
              begin, f+f_temperature, n+n_field_type, &
              begin, f+f_gph, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_vgrid, &
              begin, f+f_type, t+t_vGridType, n+n_field_type, &
              begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
@@ -544,7 +616,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_start, t+t_numeric, n+n_field_type, &
              begin, f+f_stop, t+t_numeric, n+n_field_type, &
              begin, f+f_values, t+t_numeric, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_quantity, & ! Must be AFTER s_hgrid and s_vgrid
              begin, f+f_band, t+t_string, n+n_field_type, &
              begin, f+f_firstindexchannel, t+t_boolean, n+n_field_type, &
@@ -554,14 +626,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_radiometer, t+t_radiometer, n+n_field_type, &
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
              begin, f+f_unit, t+t_units, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
              begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_signals, t+t_string, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_vector, & ! Must be AFTER s_vectorTemplate
              begin, f+f_template, s+s_vectorTemplate, n+n_field_spec, &
-             n+n_spec_def /) )
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_l2gp, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
@@ -570,7 +642,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_unpackOutput, t+t_boolean, n+n_field_type, &
              begin, f+f_hdfname, t+t_string, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
@@ -578,24 +650,24 @@ contains ! =====     Public procedures     =============================
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_unpackOutput, t+t_boolean, n+n_field_type, &
              begin, f+f_hdfname, t+t_string, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_matrix, &  ! Must be AFTER s_vector
              begin, f+f_rows, s+s_vector, n+n_field_spec, &
              begin, f+f_columns, s+s_vector, n+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_fill, &    ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
              begin, f+f_matrix, s+s_matrix, n+n_field_spec, &
              begin, f+f_source, t+t_string, s+s_climatology, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_output, &  ! Must be AFTER s_l2aux and s_l2gp
              begin, f+f_type, t+t_outputType, n+n_field_type, &
              begin, f+f_file, t+t_string, n+n_field_type, &
              begin, f+f_quantities, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
              begin, f+f_overlaps, s+s_l2aux, s+s_l2gp, n+n_field_spec, &
-             n+n_spec_def /) )
+             np+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_subset, &  ! Must be AFTER s_vector
              begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -604,9 +676,9 @@ contains ! =====     Public procedures     =============================
                     n+n_dot, &
              begin, f+f_channels, t+t_numeric, n+n_field_type, &
              begin, f+f_criteria, t+t_numeric, n+n_field_type, &
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
-             n+n_spec_def, &
+             np+n_spec_def, &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
@@ -625,7 +697,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_toleranceF, t+t_numeric, n+n_field_type, &
              begin, f+f_toleranceR, t+t_numeric, n+n_field_type, &
              begin, f+f_weight, s+s_vector, n+n_field_spec, &
-             n+n_spec_def /) )
+             np+n_spec_def /) )
     ! Define the relations between sections and specs.  These are
     ! represented by trees of the form
     !  < n_section section_name
@@ -633,6 +705,9 @@ contains ! =====     Public procedures     =============================
     !  > or
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
+      begin, z+z_mlsSignals, s+s_band, s+s_channel, s+s_radiometer, &
+                             s+s_signal, s+s_spectrometer, &
+             n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_input_version_string, t+t_string, n+n_name_def, &
@@ -674,7 +749,7 @@ contains ! =====     Public procedures     =============================
     integer, intent(in) :: IDS(:)
 
     integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
-    integer :: I, ID, M, N_IDS, STACK(0:30), STRING, WHICH
+    integer :: DECOR, I, ID, M, N_IDS, STACK(0:30), STRING, WHICH
 
     callno = callno + 1
     n_ids = size(ids)
@@ -691,7 +766,8 @@ contains ! =====     Public procedures     =============================
         stack(m) = 0
       else
         id = mod(ids(i), 1000)
-        which = ids(i) / 1000
+        which = mod(ids(i) / 1000, 1000)
+        decor = ids(i) / 1000000
        select case ( which )
        case ( f/1000 ) ! Fields
          string = field_indices(id)
@@ -706,7 +782,7 @@ contains ! =====     Public procedures     =============================
        case ( z/1000 ) ! Sections
          string = section_indices(id)
        case ( n/1000 ) ! Tree nodes
-         call build_tree ( id, stack(m) )
+         call build_tree ( id, stack(m), decor )
          m = m - 1
          stack(m) = stack(m) + 1
     cycle
@@ -731,6 +807,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.13  2001/02/06 23:29:31  vsnyder
+! Periodic commit
+!
 ! Revision 2.12  2001/02/01 20:19:42  vsnyder
 ! Remove "gph" from the "molecule" type
 !
