@@ -37,6 +37,7 @@ coordinate
 copy
 covariance
 criteria
+criticalModules
 
 destination
 destroyJacobian
@@ -71,6 +72,8 @@ gph
 h2oquantity
 height
 hgrid
+homeGeodAngle
+homeModule
 
 ignore
 ignoreNegative
@@ -96,8 +99,10 @@ losqty
 
 matrix
 maxF
+maxGap
 maxIterations
 maxJ
+maxLength
 measurements
 measurementSD
 method
@@ -111,9 +116,11 @@ nabterms
 nazimuthangles
 ncloudspecies
 nmodelsurfs
+noChunks
 noFineGrid
 noise
 noMIFs
+noSlaves
 nscatteringangles
 nsizebins
 number
@@ -123,6 +130,7 @@ origin
 outputCovariance
 outputOverlaps
 outputSD
+overlap
 overlaps
 
 perturbation
@@ -151,6 +159,8 @@ rows
 rowSurfaces
 
 scale
+scanLowerLimit
+scanUpperLimit
 scECI
 scVel
 sdname
@@ -197,6 +207,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.16  2001/11/09 00:04:09  livesey
+# New ChunkDivide stuff
+#
 # Revision 2.15  2001/10/31 22:00:28  livesey
 # Added phaseName
 #
