@@ -24,6 +24,7 @@ module MLSHDF5
     & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, &
     & H5ESET_AUTO_F, &
     & H5FOPEN_F, H5FCLOSE_F, &
+    & H5GOPEN_F, H5GCLOSE_F, &
     & H5PCREATE_F, H5PSET_CHUNK_F, &
     & H5SCLOSE_F, &
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SGET_SIMPLE_EXTENT_NDIMS_F, &
@@ -85,9 +86,10 @@ module MLSHDF5
 !     r8 value(:), r8 value(:,:), r8 value(:,:,:)}
 ! === (end of api) ===
   interface MakeHDF5Attribute
-    module procedure MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
+    module procedure MakeHDF5Attribute_dbl, &
+      & MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
       & MakeHDF5Attribute_string, MakeHDF5Attribute_snglarr1, &
-      & MakeHDF5Attribute_string_arr1, &
+      & MakeHDF5Attribute_dblarr1, MakeHDF5Attribute_string_arr1, &
       & MakeHDF5AttributeDSN_int, &
       & MakeHDF5AttributeDSN_string, MakeHDF5AttributeDSN_snglarr1, &
       & MakeHDF5AttributeDSN_st_arr1
@@ -100,7 +102,7 @@ module MLSHDF5
 
   interface IsHDF5AttributePresent
     module procedure IsHDF5AttributePresent_in_fID, &
-      & IsHDF5AttributePresent_in_DSID
+      & IsHDF5AttributePresent_in_DSID, IsHDF5AttributePresent_in_grp
   end interface
 
   interface SaveAsHDF5DS
@@ -120,6 +122,46 @@ module MLSHDF5
   integer, dimension(7) :: ones = (/1,1,1,1,1,1,1/)
 
 contains ! ======================= Public Procedures =========================
+
+  ! ------------------------------------- MakeHDF5Attribute_dbl
+  subroutine MakeHDF5Attribute_dbl ( itemID, name, value, &
+   & skip_if_already_there )
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real(r8), intent(in) :: VALUE        ! Value of attribute
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: DSID                     ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
+    call h5sCreate_F ( h5s_scalar_f, dsID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for attribute '//trim(name) )
+    ! Now create the attribute
+    call h5aCreate_f ( itemID, trim(name), H5T_NATIVE_DOUBLE, dsID, attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create attribute '//trim(name) )
+    ! Write
+    call h5aWrite_f ( attrID, H5T_NATIVE_DOUBLE, value, ones, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write attribute '//trim(name) )
+    ! Finish off
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute '//trim(name) )
+    call h5sClose_f ( dsID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close attribute dataspace '//trim(name) )
+  end subroutine MakeHDF5Attribute_dbl
 
   ! ------------------------------------- MakeHDF5Attribute_int
   subroutine MakeHDF5Attribute_int ( itemID, name, value, &
@@ -210,7 +252,7 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype '//trim(name) )
-    call h5tset_size_f(stringtype, len_trim(value), status )
+    call h5tset_size_f(stringtype, max(len_trim(value), 1), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype '//trim(name) )
     ! Create dataspace and attribute
@@ -271,7 +313,7 @@ contains ! ======================= Public Procedures =========================
     call h5tcopy_f( H5T_NATIVE_CHARACTER, stringtype, status ) 
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to create stringtype for array'//trim(name) )
-    call h5tset_size_f(stringtype, len_trim(value(1)), status )
+    call h5tset_size_f(stringtype, max(len_trim(value(1)), 1), status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to set size for stringtype '//trim(name) )
     ! Create dataspace and attribute
@@ -342,6 +384,50 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to close 1d attribute array dataspace '//trim(name) )
   end subroutine MakeHDF5Attribute_snglarr1
+
+  ! ------------------------------------- MakeHDF5Attribute_dblarr1
+  subroutine MakeHDF5Attribute_dblarr1 ( itemID, name, value , &
+   & skip_if_already_there )
+    integer, intent(in) :: ITEMID       ! Group etc. to make attr to.
+    character (len=*), intent(in) :: NAME ! Name of attribute
+    real(r8), intent(in) :: VALUE(:)     ! The attribute array itself
+    logical, intent(in), optional :: skip_if_already_there
+
+    ! Local variables
+    integer :: ATTRID                   ! ID for attribute
+    integer :: spaceID                  ! ID for dataspace
+    integer :: STATUS                   ! Flag from HDF5
+    integer, dimension(1) :: SHP        ! Shape
+    logical :: my_skip
+
+    ! Executable code
+    my_skip = .false.
+    if ( present(skip_if_already_there) ) my_skip=skip_if_already_there
+    if ( my_skip ) then
+      if ( IsHDF5AttributePresent_in_DSID(itemID, name) ) return
+    endif
+    shp = shape(value)
+    call h5sCreate_simple_f ( 1, int(shp,hSize_T), spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create dataspace for 1D attribute array '//trim(name) )
+    ! Now create the attribute
+    call h5aCreate_f ( itemID, trim(name), H5T_NATIVE_DOUBLE, spaceID, &
+      & attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to create 1d attribute array '//trim(name) )
+    ! Write
+    call h5aWrite_f ( attrID, H5T_NATIVE_DOUBLE, value, &
+      & int ( (/ shp, ones(1:6) /), hID_T ), status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to write 1d attribute array '//trim(name) )
+    ! Finish off
+    call h5aClose_f ( attrID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close 1d attribute array'//trim(name) )
+    call h5sClose_f ( spaceID, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to close 1d attribute array dataspace '//trim(name) )
+  end subroutine MakeHDF5Attribute_dblarr1
 
   ! ------------------------------------- MakeHDF5AttributeDSN_int
   subroutine MakeHDF5AttributeDSN_int ( fileID, &
@@ -794,16 +880,28 @@ contains ! ======================= Public Procedures =========================
   end function IsHDF5AttributePresent_in_DSID
 
   ! -------------------------------- IsHDF5AttributePresent_in_fID ---
-  logical function IsHDF5AttributePresent_in_fID ( fileID, DSname, name )
+  logical function IsHDF5AttributePresent_in_fID ( fileID, DSname, name, &
+    & is_grpattr )
     ! This routine returns true if the given HDF5 attribute is present
+    ! If present it would be as an attribute either of the dataset DSname
+    ! or, if is_grpattr is TRUE, of the group DSname
     integer, intent(in) :: fileID        ! file ID--Where to look
     character (len=*), intent(in) :: DSNAME ! Name for the dataset
     character (len=*), intent(in) :: NAME ! Name for the attribute
-    integer :: SETID                    ! ID for attribute if present
+    logical, optional, intent(in) :: is_grpattr ! DSNAME is a group name
+    integer :: SETID                    ! ID for dataset if present
     integer :: ATTRID                   ! ID for attribute if present
     integer :: STATUS                   ! Flag
+    logical :: my_grpattr
     
     ! Executable code
+    my_grpattr = .true.
+    if ( present(is_grpattr) ) my_grpattr = is_grpattr
+    if ( my_grpattr ) then
+      IsHDF5AttributePresent_in_fID = IsHDF5AttributePresent_in_grp ( &
+        & DSname, fileID, name)
+      return
+    endif
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before looking for attribute '//trim(name) )
@@ -824,6 +922,39 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after looking for attribute '//trim(name) )
   end function IsHDF5AttributePresent_in_fID
+
+  ! -------------------------------- IsHDF5AttributePresent_in_grp ---
+  logical function IsHDF5AttributePresent_in_grp ( grpName, fileID, name )
+    ! This routine returns true if the given HDF5 attribute is present
+    ! (Note the unusual ordering of args--to make unambiguous)
+    integer, intent(in) :: fileID        ! file ID--Where to look
+    character (len=*), intent(in) :: grpName ! Name for the group
+    character (len=*), intent(in) :: NAME ! Name for the attribute
+    integer :: GRPID                    ! ID for group if present
+    integer :: ATTRID                   ! ID for attribute if present
+    integer :: STATUS                   ! Flag
+    
+    ! Executable code
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before looking for attribute '//trim(name) )
+    call h5gopen_f(fileID, trim(grpName), grpid, status)
+    if ( status /= 0 ) then
+      IsHDF5AttributePresent_in_grp = .false.
+    else
+      call h5aOpen_name_f ( GRPID, name, attrID, status )
+      if ( status /= 0 ) then
+        IsHDF5AttributePresent_in_grp = .false.
+      else
+        IsHDF5AttributePresent_in_grp = .true.
+        call h5aClose_f ( attrID, status )
+      end if
+      call h5gclose_f(grpid, status)
+    endif
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after looking for attribute '//trim(name) )
+  end function IsHDF5AttributePresent_in_grp
 
   ! --------------------------------------------- IsHDF5DSPresent ---
   logical function IsHDF5DSPresent ( locID, name )
@@ -1986,6 +2117,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.19  2003/02/12 21:38:14  pwagner
+! May make dbl scalar and array attributes; find if name is an attribute of a group
+!
 ! Revision 2.18  2003/01/30 00:56:01  pwagner
 ! Added string arrays as possible attributes (untested)
 !
