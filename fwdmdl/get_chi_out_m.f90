@@ -51,8 +51,8 @@ MODULE get_chi_out_m
   REAL(rp), INTENT(out) :: dx_dh_out(:)   ! d(chi)/dh on the output grid
   REAL(rp), INTENT(out) :: dhdz_out(:)    ! dh/dz on the output grid
 
-  REAL(rp), OPTIONAL, INTENT(out) :: dxdt_tan(:,:,:) ! computed dchi dt.
-  REAL(rp), OPTIONAL, INTENT(out) :: d2xdxdt_tan(:,:,:) ! computed d2chi dxdt.
+  REAL(rp), OPTIONAL, INTENT(out) :: dxdt_tan(:,:) ! computed dchi dt.
+  REAL(rp), OPTIONAL, INTENT(out) :: d2xdxdt_tan(:,:) ! computed d2chi dxdt.
 !
 ! the matrix hierarchy is n_out,phi,zeta
 ! internal variables
@@ -87,8 +87,8 @@ MODULE get_chi_out_m
   CALL allocate_test(temp_tan,n_out,n_t_phi,'temp_tan',ModuleName)
   CALL allocate_test(height_tan,n_out,n_t_phi,'height_tan',ModuleName)
   CALL allocate_test(dhdz_tan,n_out,n_t_phi,'dhdz_tan',ModuleName)
-  CALL allocate_test(dhdt_tan,n_out,n_t_phi,n_t_zeta,'dhdt_tan',ModuleName)
-  CALL allocate_test(d2hdhdt_tan,n_out,n_t_phi,n_t_zeta,'d2hdhdt_tan', &
+  CALL allocate_test(dhdt_tan,n_out,n_t_zeta,n_t_phi,'dhdt_tan',ModuleName)
+  CALL allocate_test(d2hdhdt_tan,n_out,n_t_zeta,n_t_phi,'d2hdhdt_tan', &
                    & ModuleName)
   CALL allocate_test(eta_t,n_out,n_t_phi,'eta_t',ModuleName)
   CALL allocate_test(h_tan_out,n_out,'h_tan_out',ModuleName)
@@ -151,16 +151,15 @@ MODULE get_chi_out_m
 !
   IF(PRESENT(dxdt_tan)) THEN
 !
-    dhdt_tan = dhdt_tan  * SPREAD(eta_t,3,n_t_zeta)
-    d2hdhdt_tan = d2hdhdt_tan * SPREAD(eta_t,3,n_t_zeta)
+    dhdt_tan = dhdt_tan  * SPREAD(eta_t,2,n_t_zeta)
+    d2hdhdt_tan = d2hdhdt_tan * SPREAD(eta_t,2,n_t_zeta)
     DO ht_i = 1, n_out
       dhdz = dhdz_out(ht_i)
       CALL get_chi_angles(scgeocalt(ht_i),n_tan_out(ht_i), &
          & h_tan_out(ht_i),phitan(ht_i),Req,elev_offset, &
          & tan_chi_out(ht_i),q,dhdz,RESHAPE(dhdt_tan(ht_i,:,:),&
-         & (/n_t_phi,n_t_zeta/)), RESHAPE(d2hdhdt_tan(ht_i,:,:), &
-         & (/n_t_phi,n_t_zeta/)), dxdt_tan(ht_i,:,:), &
-         & d2xdxdt_tan(ht_i,:,:))
+         & (/n_t_zeta*n_t_phi/)),RESHAPE(d2hdhdt_tan(ht_i,:,:), &
+         & (/n_t_zeta*n_t_phi/)),dxdt_tan(ht_i,:),d2xdxdt_tan(ht_i,:))
       dx_dh_out(ht_i) = q
     ENDDO
 !
@@ -188,6 +187,9 @@ MODULE get_chi_out_m
 !
 END MODULE get_chi_out_m
 ! $Log$
+! Revision 2.8  2002/07/05 07:52:48  zvi
+! Coor. switch (phi,z) -> (z,phi)
+!
 ! Revision 2.7  2002/06/28 11:06:51  zvi
 ! computes dx_dh & dh_dz on output grid as well
 !
