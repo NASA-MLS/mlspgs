@@ -2,8 +2,8 @@
 PROGRAM MLSStringTest ! tests subroutine
 !=================================
 
-   USE MLSStrings , ONLY: GetStringElement, NumStringElements, Reverse, &
-	& ReverseList, StringElementNum
+   USE MLSStrings , ONLY: GetStringElement, GetUniqueList, NumStringElements, &
+   & Reverse, ReverseList, StringElementNum
 
    IMPLICIT NONE
 
@@ -49,6 +49,9 @@ PROGRAM MLSStringTest ! tests subroutine
 	
    	print *, 'Number of chars read = ', listLength
    	print *, 'Number of words read = ', NumWords
+      call GetUniqueList(theList, theList, NumWords, countEmpty=.true., &
+        & ignoreLeadingSpaces=.true.)
+   	print *, 'Number of unique words read = ', NumWords
 		IF(NumWords <= 0) CYCLE
 	
 		DO wordNum=1, NumWords
@@ -56,12 +59,11 @@ PROGRAM MLSStringTest ! tests subroutine
 ! Print the output
 
 			print *, 'Word = ', aWord, ' ;  droW = ', Reverse(aWord)
-
- 	  		print *, 'Enter comma-separated list of words'
 		ENDDO
 		print *, 'tsiLeht = ', ReverseList(theList)
 		
 		DO
+ 	  		print *, 'Enter word from the list'
 			read(*, '(A16)') aWord
 			IF(aWord == ' ') EXIT
    		print *, 'Element number of word in list = ', &
@@ -75,4 +77,7 @@ END PROGRAM MLSStringTest
 !==================
 
 !# $Log$
+!# Revision 1.1  2001/02/23 00:11:22  pwagner
+!# First commit
+!#
 !#
