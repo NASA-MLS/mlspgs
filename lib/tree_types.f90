@@ -15,7 +15,8 @@ module TREE_TYPES
   integer, parameter :: N_STRING =     n_number + 1
 
   integer, parameter :: N_AND =        n_string + 1
-  integer, parameter :: N_ARRAY =      n_and + 1       ! []
+  integer, parameter :: N_ARG_DEF =    n_and + 1       ! Types of func args
+  integer, parameter :: N_ARRAY =      n_arg_def + 1   ! []
   integer, parameter :: N_ASG =        n_array + 1     ! = in spec
   integer, parameter :: N_CF =         n_asg +1        ! A spec (config)
   integer, parameter :: N_CFS =        n_cf +1         ! All the configs
@@ -27,8 +28,9 @@ module TREE_TYPES
   integer, parameter :: N_EQUAL =      n_dt_def + 1    ! = in X = Y spec
   integer, parameter :: N_FIELD_SPEC = n_equal + 1
   integer, parameter :: N_FIELD_TYPE = n_field_spec + 1
-  integer, parameter :: N_FUNC_REF = n_field_type + 1
-  integer, parameter :: N_INTO = n_func_ref + 1        ! A divided into B: A\B
+  integer, parameter :: N_FUNC_DEF =   n_field_type + 1
+  integer, parameter :: N_FUNC_REF =   n_func_def + 1
+  integer, parameter :: N_INTO =       n_func_ref + 1  ! A divided into B: A\B
   integer, parameter :: N_LESS_COLON = n_into + 1      ! Range open on left
   integer, parameter :: N_LESS_COLON_LESS = n_less_colon + 1 ! Open range
   integer, parameter :: N_MINUS =      n_less_colon_less + 1
@@ -72,6 +74,7 @@ contains
     case ( n_Number );     call add_char ( 'number' )
     case ( n_String );     call add_char ( 'string' )
     case ( n_And );        call add_char ( 'and' )
+    case ( n_Arg_Def );    call add_char ( 'arg_def' )
     case ( n_Array );      call add_char ( 'array' )
     case ( n_Asg );        call add_char ( 'assign' )
     case ( n_Cf );         call add_char ( 'cf' )
@@ -84,6 +87,7 @@ contains
     case ( n_Equal );      call add_char ( 'equal' )
     case ( n_Field_Spec ); call add_char ( 'field_spec' )
     case ( n_Field_Type ); call add_char ( 'field_type' )
+    case ( n_Func_Def );   call add_char ( 'func_def' )
     case ( n_Func_Ref );   call add_char ( 'func_ref' )
     case ( n_Into );       call add_char ( 'into' )
     case ( n_Less_colon ); call add_char ( 'less_colon' )
@@ -113,6 +117,9 @@ contains
 end module TREE_TYPES
 
 ! $Log$
+! Revision 2.8  2004/05/29 02:42:59  vsnyder
+! Rearrange function definition stuff
+!
 ! Revision 2.7  2004/05/28 23:12:21  vsnyder
 ! Add power (^) operator
 !
