@@ -1344,6 +1344,8 @@ contains
             & mag_path(1:no_ele,1:3) )
 
           rot = reshape(ECRtoFOV%values(9*mif-8:9*mif,maf), (/3,3/))
+          
+
           do j = 1, no_ele
             ! Rotate mag_path from ECR to IFOVPP (R1A) coordinates.  Use
             ! the rotation matrix for the MIF nearest to the current
@@ -1357,6 +1359,7 @@ contains
               mag_path(j,1:3) = mag_path(j,1:3) / mag_path(j,4)
             else
               mag_path(j,1:3) = 0.0_rp
+              mag_path(j,3) = 1.0_rp !arbitrarily, theta=0 for zero field
             end if
           end do
 
@@ -1557,6 +1560,15 @@ contains
                 end do
               end if
 
+              !  adding contributions from nonpolarized molecules 1/4 1/2 1/4 here
+              do j=1, npc
+                  alpha_path_polarized(-1,j)=alpha_path_polarized(-1,j) + 0.25 * alpha_path_c(j)
+                  alpha_path_polarized( 0,j)=alpha_path_polarized( 0,j) + 0.5 * alpha_path_c(j)
+                  alpha_path_polarized( 1,j)=alpha_path_polarized( 1,j) + 0.25 * alpha_path_c(j)
+              end do
+
+
+
               ! Turn sigma-, pi, sigma+ into 2X2 matrix
               call opacity ( ct(1:npc), stcp(1:npc), stsp(1:npc), &
                 & alpha_path_polarized(:,1:npc), incoptdepth_pol(:,:,1:npc) )
@@ -1567,12 +1579,10 @@ contains
 
               ! Do not trust the compiler to fuse loops
               do j = 1, npc
-                incoptdepth_pol(1,1,j) = - incoptdepth_pol(1,1,j) * del_s(j) - &
-                     & 0.5*incoptdepth(j)
+                incoptdepth_pol(1,1,j) = - incoptdepth_pol(1,1,j) * del_s(j) 
                 incoptdepth_pol(2,1,j) = - incoptdepth_pol(2,1,j) * del_s(j)
                 incoptdepth_pol(1,2,j) = - incoptdepth_pol(1,2,j) * del_s(j)
-                incoptdepth_pol(2,2,j) = - incoptdepth_pol(2,2,j) * del_s(j) - &
-                     & 0.5*incoptdepth(j)
+                incoptdepth_pol(2,2,j) = - incoptdepth_pol(2,2,j) * del_s(j)
 
                 ! deltau_pol = exp(incoptdepth_pol)
                 call cs_expmat ( incoptdepth_pol(:,:,j), deltau_pol(:,:,j) )
@@ -1642,9 +1652,6 @@ contains
 
             i_stop = npc ! needed by drad_tran_df
 
-!????DEBUG  This makes agreement to 0.2K with scalar model.  I don't know why.
-!we ought to need to add the scalar contribution 0.25 0.5 0.25 to the polarized
-alpha_path_f = 0.0 
 
             ! get the corrections to integrals for layers that need gl for
             ! the polarized species
@@ -2596,6 +2603,9 @@ alpha_path_f = 0.0
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.163  2003/07/15 23:07:21  vsnyder
+! Simplify Freq_Avg
+!
 ! Revision 2.162  2003/07/15 22:10:09  livesey
 ! Added support for hybridModel
 !
