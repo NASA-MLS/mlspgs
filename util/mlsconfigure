@@ -19,7 +19,7 @@
 #     e.g., say $MLSF95.$MLSPLAT is NAG.Linux
 #     this Makefile will then contain the following lines:
 #        # 1st: lines from .configure file
-#        MLSF90=NAG
+#        MLSF95=NAG
 #        MLSPLAT=Linux
 #        # 2nd: lines from platforms/NAG.Linux
 #        FC=f95
@@ -59,7 +59,7 @@
 #  -cf file_name        (if present) Use file_name instead of .configure
 # --------------- End mlsconfigure help
 #
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -304,6 +304,10 @@ fi
 	    l* | L* )
 		echo "Lahey compiler selected."
 		compiler=LF95
+	    ;;
+	    i* | I* )
+		echo "Intel compiler selected."
+		compiler=IFC
 	    ;;
 	    a* | A* )
 		echo "Absoft compiler selected."
@@ -846,6 +850,7 @@ fi
 
 GetFOPTS()
 {
+      default_LDOPTS="$MLS_default_LDOPTS"
 		if [ "$current_MLSF95" = "NAG" ] ; then
 			if [ "$current_MLSPLAT" = "SGI" ] ; then
 				default_FOPTS="$MLS_default_FOPTS_NAG_SGI"
@@ -854,12 +859,14 @@ GetFOPTS()
 			fi
 		elif [ "$current_MLSF95" = "Abs" ] ; then
 			default_FOPTS="$MLS_default_FOPTS_Abs"
+		elif [ "$current_MLSF95" = "IFC" ] ; then
+			default_FOPTS="$MLS_default_FOPTS_IFC"
+         default_LDOPTS="$MLS_default_LDOPTS_IFC"
 		elif [ "$current_MLSF95" = "Sun" ] ; then
 			default_FOPTS="$MLS_default_FOPTS_Abs"
 		else
 			default_FOPTS="$MLS_default_FOPTS_LF95"
 		fi
-
         more << EOF_5
                     *        *        *
 
@@ -876,7 +883,7 @@ Currently these paths are given by:
       compiler option  :  $current_FOPTS
            default     :  $default_FOPTS
         linker option  :  $current_LDOPTS
-           default     :  $MLS_default_LDOPTS
+           default     :  $default_LDOPTS
 
 EOF_5
 
@@ -1037,8 +1044,10 @@ debugging="off"
 MLS_default_FOPTS_NAG="-w"
 MLS_default_FOPTS_NAG_SGI="-w -abi=n32"
 MLS_default_FOPTS_LF95=
+MLS_default_FOPTS_IFC=
 MLS_default_FOPTS_Abs="-w"
 MLS_default_LDOPTS=
+MLS_default_LDOPTS_IFC="-Vaxlib"
 
 #---------------------- variables controlling mlsconfigure
 #                        controllable by Options--see above
@@ -1056,7 +1065,7 @@ MLS_default_LDOPTS=
 
 #---------------------- Settings written to .configure file
 
-#MLSF95     name of the compiler: LF95, NAG, Sun, Abs
+#MLSF95     name of the compiler: LF95, NAG, Sun, Abs, IFC
 #MLSPLAT    name of the platform: Sun, SGI, or Linux
 #MLSCONFG   MLSF95.MLSPLAT or else a name chosen by user
 #PGSINC     path to the toolbox include files
@@ -1326,6 +1335,8 @@ if [ "$current_FOPTS" = "" ] ; then
 			fi
 		elif [ "$compiler" = "Abs" ] ; then
 			FOPTS="$MLS_default_FOPTS_Abs"
+		elif [ "$compiler" = "IFC" ] ; then
+			FOPTS="$MLS_default_FOPTS_IFC"
 		elif [ "$compiler" = "Sun" ] ; then
 			FOPTS="$MLS_default_FOPTS_Abs"
 		else
@@ -1336,7 +1347,11 @@ else
 fi
 
 if [ "$current_LDOPTS" = "" ] ; then
+  if [ "$compiler" = "IFC" ] ; then
+         LDOPTS="$MLS_default_LDOPTS_IFC"
+  else
 			LDOPTS="$MLS_default_LDOPTS"
+  fi
 else
 	LDOPTS=$current_LDOPTS
 fi
@@ -1450,6 +1465,9 @@ fi
 exit
 
 # $Log$
+# Revision 1.33  2002/09/04 18:10:22  pwagner
+# LIB_BLAS may be multiple libraries (e.g., f77blas atlas)
+#
 # Revision 1.32  2002/07/29 23:02:17  pwagner
 # Replaced part of code to update Makefile in object directories with script updatemf.sh
 #
