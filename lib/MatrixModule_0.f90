@@ -19,7 +19,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: Add_Matrix_Blocks, Assignment(=), CholeskyFactor
   public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
   public :: ColumnScale_0, Col_L1, CopyBlock, CreateBlock, CreateBlock_0
-  public :: Densify, DestroyBlock, DestroyBlock_0, Dump
+  public :: DenseCholesky, Densify, DestroyBlock, DestroyBlock_0, Dump
   public :: GetDiagonal, GetDiagonal_0
   public :: GetMatrixElement, GetMatrixElement_0, GetVectorFromColumn
   public :: GetVectorFromColumn_0, M_Absent, M_Banded, M_Column_Sparse, M_Full
@@ -346,6 +346,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NC             ! Number of columns
     integer, pointer, dimension(:) :: R1      ! First nonzero row of Z (Banded)
     integer :: RZ             ! Starting row in Z for inner product (Banded)
+    real(r8), save :: TOL = -1.0_r8
     real(r8), pointer, dimension(:,:) :: XIN  ! A pointer to the input,
     !                           data, or a densified copy of it
     type(MatrixElement_T), pointer :: X       ! XOPT or Z, depending on whether
@@ -353,6 +354,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), pointer, dimension(:,:) :: ZT   ! A local full result that is
     !                           sparsified at the end.
 
+    if ( tol < 0.0_r8 ) tol = sqrt(tiny(0.0_r8))
     nullify ( r1, xin, zt )
     x => z
     if ( present(xopt) ) x => xopt
@@ -392,7 +394,7 @@ contains ! =====     Public Procedures     =============================
 !           & dot_product(zt(r1(i):i-1,i),zt(r1(i):i-1,i))
         g = x%values(ii+x%r2(i-1)+1,1) - &
             & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
-        if ( g <= sqrt(tiny(0.0_r8)) ) then
+        if ( g <= tol ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Matrix in CholeskyFactor is not positive-definite." )
         end if
@@ -430,27 +432,6 @@ contains ! =====     Public Procedures     =============================
       end if
       call denseCholesky ( z%values, x%values )
     end select
-
-  contains
-    subroutine DenseCholesky ( zt, xin )
-    ! Do the Cholesky decomposition of XIN giving ZT.
-      real(r8) :: ZT(:,:), XIN(:,:)
-      real(r8), save :: TOL = -1.0_r8
-      if ( tol < 0.0_r8 ) tol = sqrt(tiny(0.0_r8))
-      do i = 1, nc
-        zt(i+1:nc,i) = 0.0_r8 ! Clear below the diagonal (helps Sparsify!)
-!       g = xin(i,i) - dot_product(zt(1:i-1,i),zt(1:i-1,i))
-        g = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
-        if ( g <= tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-            & "Matrix in CholeskyFactor is not positive-definite." )
-        d = sqrt(g)
-        zt(i,i) = d
-        do j = i+1, nc
-!         zt(i,j) = ( xin(i,j) - dot_product(zt(1:i-1,i),zt(1:i-1,j)) ) / d
-          zt(i,j) = ( xin(i,j) - dot( i-1, zt(1,i), 1, zt(1,j), 1 ) ) / d
-        end do ! j
-      end do ! i
-    end subroutine DenseCholesky
   end subroutine CholeskyFactor_0
 
   ! ------------------------------------------------  ClearRows_0  -----
@@ -657,6 +638,41 @@ contains ! =====     Public Procedures     =============================
     z%kind = kind
   end subroutine CreateBlock_0
 
+  ! ----------------------------------------------  DenseCholesky  -----
+  subroutine DenseCholesky ( zt, xin, status )
+  ! Do the Cholesky decomposition of XIN giving ZT.
+    real(r8), intent(inout) :: ZT(:,:) ! Inout in case it's associated with XIN
+    real(r8), intent(inout) :: XIN(:,:) ! Inout in case it's associated with Z
+    integer, intent(out), optional :: Status
+
+    real(r8) :: D
+    real(r8), save :: TOL = -1.0_r8
+    integer :: I, J, NC
+
+    nc = size(xin,2)
+    if ( tol < 0.0_r8 ) tol = sqrt(tiny(0.0_r8))
+    do i = 1, nc
+      zt(i+1:nc,i) = 0.0_r8 ! Clear below the diagonal (helps Sparsify!)
+!     d = xin(i,i) - dot_product(zt(1:i-1,i),zt(1:i-1,i))
+      d = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
+      if ( d <= tol ) then
+        if ( present(status ) ) then
+          status = i
+          return
+        end if
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Matrix in CholeskyFactor is not positive-definite." )
+      end if
+      d = sqrt(d)
+      zt(i,i) = d
+      do j = i+1, nc
+!       zt(i,j) = ( xin(i,j) - dot_product(zt(1:i-1,i),zt(1:i-1,j)) ) / d
+        zt(i,j) = ( xin(i,j) - dot( i-1, zt(1,i), 1, zt(1,j), 1 ) ) / d
+      end do ! j
+    end do ! i
+    if ( present(status) ) status = 0
+  end subroutine DenseCholesky
+
   ! ----------------------------------------------------  Densify  -----
   subroutine Densify ( Z, B )
   ! Given a matrix block B, produce a full matrix Z, even if the matrix
@@ -750,7 +766,7 @@ contains ! =====     Public Procedures     =============================
       getMatrixElement_0 = 0.0_r8
     case ( m_banded )
       if ( row < matrix%r1(col) .or. &
-        &  row > matrix%r1(col) + matrix%r2(col)-matrix%r2(col-1) ) then
+        &  row >= matrix%r1(col) + matrix%r2(col)-matrix%r2(col-1) ) then
         getMatrixElement_0 = 0.0_r8
       else
         getMatrixElement_0 = matrix%values(row - matrix%r1(col) + &
@@ -1499,6 +1515,7 @@ contains ! =====     Public Procedures     =============================
     logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
     integer :: N         ! Size of U matrix, which must be square
     integer :: NC        ! Number of columns in B, not necessarily == N
+    real(r8), parameter :: TOL = tiny(0.0_r8)
     real(r8), pointer, dimension(:,:) :: XS  ! The solution, dense
     real(r8), pointer, dimension(:,:) :: UD  ! U, densified
 
@@ -1528,8 +1545,7 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is not triangular" )
           d = u%values(u%r2(i),1)
-          if ( abs(d) < tiny(0.0_r8) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
           do j = 1, nc
 !           xs(i,j) = ( xs(i,j) - &
@@ -1546,8 +1562,7 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is not triangular" )
           d = u%values(u%r1(i),1)
-          if ( abs(d) < tiny(0.0_r8) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
           do j = 1, nc
             do k = u%r1(i-1)+1, u%r1(i)-1
@@ -1559,8 +1574,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Full )
         do i = 1, n
           d = u%values(i,i)
-          if ( abs(d) < tiny(0.0_r8) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
           do j = 1, nc
 !           xs(i,j) = ( xs(i,j) - &
@@ -1578,14 +1592,12 @@ contains ! =====     Public Procedures     =============================
         call densify ( ud, u )
       end if
       d = ud(n,n)
-      if ( abs(d) < tiny(0.0_r8) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "U matrix in SolveCholeskyM_0 is singular" )
       xs(n,1:nc) = xs(n,1:nc) / d
       do i = n-1, 1, -1
         d = ud(i,i)
-        if ( abs(d) < tiny(0.0_r8) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "U matrix in SolveCholeskyM_0 is singular" )
         do j = 1, nc
 !         xs(i,j) = ( xs(i,j) - &
@@ -1620,6 +1632,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), dimension(:), pointer :: MY_B   ! B if B is present, else X
     logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
     integer :: N         ! Size of U matrix, which must be square
+    real(r8), parameter :: TOL = tiny(0.0_r8)
     real(r8), dimension(:,:), pointer :: UD  ! U, densified
 
     n = u%nrows
@@ -1643,8 +1656,7 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is not triangular" )
           d = u%values(u%r2(i),1)
-          if ( abs(d) < tiny(0.0_r8) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
           ! dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
           ! &            b(u%r1(i):u%r1(i)+u%r2(i)-u%r2(i-1)-1) )
@@ -1657,8 +1669,7 @@ contains ! =====     Public Procedures     =============================
             & call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is not triangular" )
           d = u%values(u%r1(i),1)
-          if ( abs(d) < tiny(0.0_r8) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
           do h = u%r1(i-1)+1, u%r1(i)-1
             x(i) = my_b(i) - u%values(h,1) * my_b(u%r2(h))
@@ -1668,8 +1679,7 @@ contains ! =====     Public Procedures     =============================
       case ( M_Full )
         do i = 1, n
           d = u%values(i,i)
-          if ( abs(d) < tiny(0.0_r8) ) &
-            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyV_0 is singular" )
           ! dot_product( u%values(1:i-1,i), my_b(1:i-1) )
           x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, my_b(1), 1) ) / d
@@ -1684,14 +1694,12 @@ contains ! =====     Public Procedures     =============================
         call densify ( ud, u )
       end if
       d = ud(n,n)
-      if ( abs(d) < tiny(0.0_r8) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "U matrix in SolveCholeskyV_0 is singular" )
       x(n) = my_b(n) / d
       do i = n-1, 1, -1
         d = ud(i,i)
-        if ( abs(d) < tiny(0.0_r8) ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "U matrix in SolveCholeskyV_0 is singular" )
         ! dot_product( ud(i,i+1:n), my_b(i+1:n) )
         x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), my_b(i+1), 1) ) / d
@@ -2015,6 +2023,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.32  2001/05/24 18:13:28  vsnyder
+! Make DenseCholesky public instead of internal; cosmetic changes
+!
 ! Revision 2.31  2001/05/22 19:09:13  vsnyder
 ! Implement Col_L1
 !
