@@ -10,7 +10,7 @@ begin ReadApriori
   !ifdef(flagUsingPCF,
     {!define(daoFile1,{})!define(daoFile2,{})},
     {
-    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS401})})
+    !ifdef(daoVersion,{},{!define(daoVersion,{GEOS402})})
     !define(daoDay1,!ccsdsbtodao(!day))
     !define(daoDay2,!ccsdsbtodao(!ccsdsbadd(!day,1)))
     !define(daoFile1,{, file='!inpathdao/DAS.flk.asm.tsyn3d_mis_p.!daoVersion.!daoDay1{}00.!daoDay1{}18.V01'})
