@@ -443,9 +443,11 @@ contains ! ================================ Procedures ======================
           &  (.not. usingSubmit .or. signal /= sig_register) ) then
           call output ( 'Signal is:' )
           call output ( signal )
-          call output ( 'Tid: ' // GetNiceTidString ( slaveTid ) )
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call output ( ' Tid: ' // trim ( GetNiceTidString ( slaveTid ) ), &
+            & advance='yes' )
+          call MLSMessage ( MLSMSG_Warning, ModuleName, &
             & "Got a message from an unknown slave")
+          cycle masterLoop
         else
           ! Unpack the first integer in the buffer
           if ( .not. usingSubmit .and. signal /= sig_register ) &
@@ -1258,6 +1260,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.50  2003/07/01 16:30:52  livesey
+! Changed error to warning.
+!
 ! Revision 2.49  2003/06/20 19:38:25  pwagner
 ! Allows direct writing of output products
 !
