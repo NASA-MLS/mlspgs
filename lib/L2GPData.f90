@@ -36,10 +36,10 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
     INTEGER :: noFreqs           ! Number of frequencies in breakdown
 
     ! Now we store the geolocation fields, first the vertical one:
-    REAL, POINTER, DIMENSION(:) :: pressures ! Vertical coordinates (noSurfs)
+    REAL(r8), POINTER, DIMENSION(:) :: pressures ! Vertical coords (noSurfs)
 
     ! Now the horizontal geolocation information. Dimensioned (noProfs)
-    REAL, POINTER, DIMENSION(:) :: latitude,longitude,solarTime, &
+    REAL(r8), POINTER, DIMENSION(:) :: latitude,longitude,solarTime, &
          & solarZenith, losAngle, geodAngle
     REAL(r8), POINTER, DIMENSION(:) :: time
     INTEGER, POINTER, DIMENSION(:) :: chunkNumber
@@ -52,18 +52,14 @@ MODULE L2GPData                 ! Data types for storing L2GP data internally
 
     ! Finally we store the data fields
 
-    REAL, POINTER, DIMENSION(:,:,:) :: l2gpValue
-    REAL, POINTER, DIMENSION(:,:,:) :: l2gpPrecision
+    REAL(r8), POINTER, DIMENSION(:,:,:) :: l2gpValue
+    REAL(r8), POINTER, DIMENSION(:,:,:) :: l2gpPrecision
     ! dimensioned (noFreqs, noSurfs, noProfs)
 
     CHARACTER (LEN=1), POINTER, DIMENSION(:) :: l2gpStatus
     !                (status is a reserved word in F90)
-    REAL, POINTER, DIMENSION(:) :: quality
+    REAL(r8), POINTER, DIMENSION(:) :: quality
     ! Both the above dimensioned (noProfs)
-
-    INTEGER :: accumulatedProfiles
-    ! This last one is needed by Join to keep track of which profiles
-    ! have been output so far.
 
   END TYPE L2GPData_T
 
@@ -145,6 +141,150 @@ CONTAINS
 
   !---------------------------------------------------------------------------
 
+  ! This subroutine expands an L2GPData_T in place allowing the user to add
+  ! more profiles to it.
+
+  SUBROUTINE ExpandL2GPDataInPlace(l2gp,newNoProfs)
+
+    ! Dummy arguments
+    TYPE (L2GPData_T), INTENT(INOUT) :: l2gp
+    INTEGER, INTENT(IN) :: newNoProfs
+
+    ! Local variables
+    INTEGER :: status           ! From ALLOCATE
+    ! The following are temporary arrays for copying data around.
+    REAL (r8), DIMENSION(:), POINTER :: temp1D
+    REAL (r8), DIMENSION(:,:,:), POINTER :: temp3D
+    INTEGER, DIMENSION(:), POINTER :: tempInt1D
+    CHARACTER (LEN=1), DIMENSION(:), POINTER :: tempChar1D
+    CHARACTER (LEN=CCSDSLen), DIMENSION(:), POINTER :: tempCCSDS
+
+    ! Executable code
+
+    ! First do a sanity check
+
+    IF (newNoProfs<l2gp%noProfs) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+      & "The number of profiles requested is fewer than those already present")
+    
+    ! Now go through the parameters one by one, allocate new space, copy
+    ! the previous contents, and remove the old information.
+
+    temp1D=>l2gp%latitude
+    ALLOCATE(l2gp%latitude(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%latitude")
+    l2gp%latitude(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    temp1D=>l2gp%longitude
+    ALLOCATE(l2gp%longitude(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%longitude")
+    l2gp%longitude(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    temp1D=>l2gp%solarTime
+    ALLOCATE(l2gp%solarTime(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%solarTime")
+    l2gp%solarTime(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    temp1D=>l2gp%solarZenith
+    ALLOCATE(l2gp%solarZenith(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%solarZenith")
+    l2gp%solarZenith(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    temp1D=>l2gp%losAngle
+    ALLOCATE(l2gp%losAngle(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%losAngle")
+    l2gp%losAngle(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    temp1D=>l2gp%geodAngle
+    ALLOCATE(l2gp%geodAngle(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%geodAngle")
+    l2gp%geodAngle(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    temp1D=>l2gp%time
+    ALLOCATE(l2gp%time(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%time")
+    l2gp%time(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    temp1D=>l2gp%time
+    ALLOCATE(l2gp%time(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%time")
+    l2gp%time(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+    tempInt1D=>l2gp%chunkNumber
+    ALLOCATE(l2gp%chunkNumber(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%chunkNumber")
+    l2gp%chunkNumber(1:l2gp%noProfs)=tempInt1D
+    DEALLOCATE(tempInt1D)
+
+    tempInt1D=>l2gp%chunkNumber
+    ALLOCATE(l2gp%chunkNumber(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%chunkNumber")
+    l2gp%chunkNumber(1:l2gp%noProfs)=tempInt1D
+    DEALLOCATE(tempInt1D)
+    
+    tempCCSDS=>l2gp%ccsdsTime
+    ALLOCATE(l2gp%ccsdsTime(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%ccsdsTime")
+    l2gp%ccsdsTime(1:l2gp%noProfs)=tempCCSDS
+    DEALLOCATE(tempCCSDS)
+
+    ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+    temp3D=>l2gp%l2gpValue
+    ALLOCATE(l2gp%l2gpValue(newNoProfs,l2gp%noSurfs,l2gp%noFreqs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%l2gpValue")
+    l2gp%l2gpValue(1:l2gp%noProfs,:,:)=temp3D
+    DEALLOCATE(temp3D)
+
+    temp3D=>l2gp%l2gpPrecision
+    ALLOCATE(l2gp%l2gpPrecision(newNoProfs,l2gp%noSurfs,l2gp%noFreqs), &
+         & STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%l2gpPrecision")
+    l2gp%l2gpPrecision(1:l2gp%noProfs,:,:)=temp3D
+    DEALLOCATE(temp3D)
+
+    tempChar1D=>l2gp%l2gpStatus
+    ALLOCATE(l2gp%l2gpStatus(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%l2gpStatus")
+    l2gp%l2gpStatus(1:l2gp%noProfs)=tempChar1D
+    DEALLOCATE(tempChar1D)
+
+    temp1D=>l2gp%quality
+    ALLOCATE(l2gp%quality(newNoProfs),STAT=status)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName,MLSMSG_Allocate//&
+         & "l2gp%quality")
+    l2gp%quality(1:l2gp%noProfs)=temp1D
+    DEALLOCATE(temp1D)
+
+    l2gp%noProfs=newNoProfs
+
+  END SUBROUTINE ExpandL2GPDataInPlace
+
+  !---------------------------------------------------------------------------
+
   ! This subroutine adds an l2gp data type to a database of said types,
   ! creating a new database if it doesn't exist
 
@@ -207,6 +347,9 @@ END MODULE L2GPData
 
 !
 ! $Log$
+! Revision 1.9  2000/01/12 20:28:20  livesey
+! Modified to allow for noSurfs=0 quantitites
+!
 ! Revision 1.8  1999/12/21 19:00:10  livesey
 ! Typo in accumulatedProfiles
 !
