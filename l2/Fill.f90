@@ -4141,7 +4141,7 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: KEY
       ! Local variables
       integer :: MYCHANNEL              ! Possibly offset channel
-      integer :: mif, maf
+      integer :: i, mif, maf
       type (Signal_T) :: signalIn, signalOut, signalRef
       real(r8), dimension(:), pointer :: freq1, freqL1, freqU1
       real(r8), dimension(:), pointer :: freq2, freqL2, freqU2
@@ -4163,9 +4163,6 @@ contains ! =====     Public Procedures     =============================
       
       myChannel = channel - lbound ( signalIn%frequencies, 1 ) + 1
 
-      call allocate_test ( freq, size(signalIn%frequencies), 'frequencies', ModuleName )
-      call allocate_test ( freqL, size(signalIn%frequencies), 'LSBfrequencies', ModuleName )
-      call allocate_test ( freqU, size(signalIn%frequencies), 'USBfrequencies', ModuleName )
       call allocate_test ( freq1, size(signalIn%frequencies), 'frequencies', ModuleName )
       call allocate_test ( freqL1, size(signalIn%frequencies), 'LSBfrequencies', ModuleName )
       call allocate_test ( freqU1, size(signalIn%frequencies), 'USBfrequencies', ModuleName )
@@ -4255,44 +4252,48 @@ contains ! =====     Public Procedures     =============================
           & call Announce_Error ( key, 0, 'Inappropriate reference radiance for splitting' )
 
             signalRef = GetSignal ( usb%template%signal )
+
+            call allocate_test ( freq, size(signalRef%frequencies), 'frequencies', ModuleName )
+            call allocate_test ( freqL, size(signalRef%frequencies), 'LSBfrequencies', ModuleName )
+            call allocate_test ( freqU, size(signalRef%frequencies), 'USBfrequencies', ModuleName )
             freq = signalRef%centerFrequency + signalRef%direction*signalRef%frequencies 
             freqL = signalOut%lo - freq    ! lower sideband freq
             freqU = signalOut%lo + freq    ! upper sideband freq
                if(signalRef%sideband == -1) freq = freqL
                if(signalRef%sideband == 1) freq = freqU
-         do i=1,size(signalOut%frequencies)
+            do i=1,size(signalOut%frequencies)
          
-           ! need to scale the opposite sideband for the output signal
-           if(signalOut%sideband == 1) then 
-               ratio1 = lsbFraction%values(i,1)
-               ratio2 = usbFraction%values(i,1)
-               freq2 = freqL2
-           endif
-           if(signalOut%sideband == -1) then
-               ratio2 = lsbFraction%values(i,1)
-               ratio1 = usbFraction%values(i,1)
-               freq2 = freqU2
-           endif
+            ! need to scale the opposite sideband for the output signal
+               if(signalOut%sideband == 1) then 
+                  ratio1 = lsbFraction%values(i,1)
+                  ratio2 = usbFraction%values(i,1)
+                  freq2 = freqL2
+               endif
+               if(signalOut%sideband == -1) then
+                  ratio2 = lsbFraction%values(i,1)
+                  ratio1 = usbFraction%values(i,1)
+                  freq2 = freqU2
+               endif
 
-           do maf=1, quantity%template%noInstances
-           do mif=1, quantity%template%noSurfs
-	          scaledRad = usb%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
-             &    freq2(i)**4/freq(MyChannel)**4
+               do maf=1, quantity%template%noInstances
+               do mif=1, quantity%template%noSurfs
+	               scaledRad = usb%values(MyChannel+(mif-1)*size(signalIn%frequencies), maf) * &
+                  &    freq2(i)**4/freq(MyChannel)**4
 
-             if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
-	          & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
-	          &   (sourceQuantity%values(i+(mif-1)*size(signalIn%frequencies), maf) - &
-             &    ratio1*scaledRad)/ratio2 
-   	     enddo
-	        enddo
-         enddo        
+                  if(iand(ichar(Quantity%mask(i+(mif-1)*size(signalOut%frequencies), maf)), m_cloud) == 1) &
+	               & quantity%values(i+(mif-1)*size(signalOut%frequencies), maf) = &
+	               &   (sourceQuantity%values(i+(mif-1)*size(signalIn%frequencies), maf) - &
+                  &    ratio1*scaledRad)/ratio2 
+   	         enddo
+	            enddo
+            enddo        
 
+            call deallocate_test ( freq, 'frequencies', ModuleName )
+            call deallocate_test ( freqL,'LSBfrequencies', ModuleName )
+            call deallocate_test ( freqU,'USBfrequencies', ModuleName )
         endif
       endif
 
-      call deallocate_test ( freq, 'frequencies', ModuleName )
-      call deallocate_test ( freqL,'LSBfrequencies', ModuleName )
-      call deallocate_test ( freqU,'USBfrequencies', ModuleName )
       call deallocate_test ( freq1, 'frequencies', ModuleName )
       call deallocate_test ( freqL1,'LSBfrequencies', ModuleName )
       call deallocate_test ( freqU1,'USBfrequencies', ModuleName )
@@ -5670,6 +5671,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.215  2003/05/12 23:53:55  dwu
+! fix a bug in splitsideband
+!
 ! Revision 2.214  2003/05/12 22:11:07  dwu
 ! add more checkpoints in splitsideband
 !
