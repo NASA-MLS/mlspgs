@@ -243,8 +243,13 @@ contains ! =====     Public Procedures     =============================
       if ( prev_units /= PHYQ_Pressure) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, UnitsMessage )
     case (l_zeta)
-      if ( prev_units /= PHYQ_Dimensionless ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, UnitsMessage )
+      select case ( prev_units )
+      case ( PHYQ_Dimensionless )     ! OK, do nothing
+      case ( PHYQ_Pressure )          ! Need to take log
+        vgrid%surfs= -LOG10(vgrid%surfs)
+      case default
+        call MLSMessage ( MLSMSG_Error, ModuleName, UnitsMessage )
+      end select
     case (l_geodAltitude)
       if ( prev_units /= PHYQ_Length) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, UnitsMessage )
@@ -445,6 +450,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.5  2001/02/28 17:21:05  livesey
+! Allowed user to specify zeta grids in pressure as well as log pressure space.
+!
 ! Revision 2.4  2001/02/22 23:44:50  livesey
 ! Got rid of VC_Invalid
 !
