@@ -166,6 +166,7 @@ contains
   ! -----------------------------  Destroy_Filter_Shapes_Database  -----
   subroutine Destroy_Filter_Shapes_Database
     integer :: I, Status
+    if ( .not. associated(filterShapes) ) return
     do i = 1, size(filterShapes)
       call deallocate_test ( filterShapes(i)%filterGrid, &
         & "FilterShapes(?)%filterGrid", moduleName )
@@ -200,6 +201,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.11  2001/05/03 22:05:22  vsnyder
+! Add a nullify, make database SAVE,
+!
 ! Revision 1.10  2001/04/26 02:36:52  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !

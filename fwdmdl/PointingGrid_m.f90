@@ -237,6 +237,7 @@ outer2: do
   ! -----------------------------  Destroy_Pointing_Grid_Database  -----
   subroutine Destroy_Pointing_Grid_Database
     integer :: I, J, Status
+    if (.not. associated(pointingGrids) ) return
     do i = 1, size(pointingGrids)
       call destroySignalDatabase ( pointingGrids(i)%signals )
       do j = 1, size(pointingGrids(i)%oneGrid)
@@ -283,6 +284,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.15  2001/04/26 02:36:52  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 1.14  2001/04/20 02:55:56  zvi
 ! Get rid of the 1/48 griiding assumption in the file reader
 !
