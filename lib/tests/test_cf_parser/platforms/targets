@@ -4,18 +4,14 @@ include ../Makefile.dep
 
 # ========================================================================
 #       The objects for the shared source files (in srclib)
-srclib_objs = getCF_m.o tree_checker.o
+# Include their dependencies
+include $(srclib)/Makefile.dep
 
-#       The objects for the shared source files (in srclib)
+#       The objects for init_table_module (in itmlib)
 itmlib_objs = init_tables_module.o
 
 # Add them to OBJS
 ALLOBJS = $(OBJS) $(srclib_objs) $(itmlib_objs)
-
-# Assert their dependence on init_tables_module
-# (Note: we are ignoring their dependence on other modules--may fix this later)
-getCF_m.o: getCF_m.f90 tree_checker.o init_tables_module.o
-tree_checker.o: tree_checker.f90 init_tables_module.o
 
 # ========================================================================
 test: $(ALLOBJS) $(libdir)/libmls.a
@@ -36,6 +32,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2000/11/04 02:09:42  pwagner
+# Shared source library
+#
 # Revision 1.1  2000/10/20 23:38:54  pwagner
 # first commit
 #
