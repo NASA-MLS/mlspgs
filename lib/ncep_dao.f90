@@ -506,7 +506,16 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 
         call l3ascii_read_field ( processCli, qty, end_of_file)
         returnStatus = AddGridTemplateToDatabase(aprioriData, qty)
-        call DestroyGridTemplateContents ( qty )
+
+		  nullify (qty%lats)
+		  nullify (qty%lons)
+		  nullify (qty%lsts)
+		  nullify (qty%szas)
+		  nullify (qty%dateStarts)
+		  nullify (qty%dateEnds)
+		  nullify (qty%field)
+! No, this is a bad idea (according to njl)
+!        call DestroyGridTemplateContents ( qty )
 
       end do !(.not. end_of_file)
 		
@@ -626,11 +635,21 @@ MODULE ncep_dao ! Collections of subroutines to handle TYPE GriddedData_T
 			endif
 
         ErrType = AddGridTemplateToDatabase(aprioriData, gddata)
+		  
+		  nullify (gddata%lats)
+		  nullify (gddata%lons)
+		  nullify (gddata%lsts)
+		  nullify (gddata%szas)
+		  nullify (gddata%dateStarts)
+		  nullify (gddata%dateEnds)
+		  nullify (gddata%field)
+		  
 
 			if(debug) call output('Destroying our grid template', advance='yes')
 			
 		endif
-        call DestroyGridTemplateContents ( gddata )
+! No, this a bad idea according to njl--see nullify statements above
+!        call DestroyGridTemplateContents ( gddata )
 
       end do !(.not. end_of_file)
 		
@@ -935,6 +954,9 @@ END MODULE ncep_dao
 
 !
 ! $Log$
+! Revision 2.8  2001/03/29 00:51:03  pwagner
+! AddGridTemplatetoDatabase now works
+!
 ! Revision 2.7  2001/03/28 00:25:14  pwagner
 ! More changes, but not perfect yet
 !
