@@ -27,7 +27,8 @@ MakeFName = MakeFC
 
 # This is how big COPY_NUMBER may grow before being reset
 # ---> and triggering internalcleanup <---
-MAX_COPIES = 10
+# (formerly 10)
+MAX_COPIES = 4
 ONE = 1
 
 # This keeps track of the number of times MakeFC -> Makefile
@@ -42,6 +43,19 @@ endif
 NEXT_COPY := $(shell expr $(COPY_NUMBER) + 1)
 
 # ---------------------- Paths to special directories
+# This is where this Makefile is located
+# Also beginning path for all relative paths defined below; e.g. CONFDIR
+# This assumes therefore that you have summoned this via
+#    cd $(MLSHOME)
+#    make
+# otherwise the following definition will fail
+# You might try something like
+#    make -f mlspgs/Makefile MLSHOME=$HOME/mlspgs
+# but this has not been tested.
+# Anyway, why would you want to
+# make things more difficult?
+MLSHOME := $(shell pwd)
+
 # where to store .configure; 
 # also where to install mls programs by default
 CONFDIR=.
@@ -110,6 +124,7 @@ SHELL = /bin/sh
 # help           -- prints some info on how to build the mls software
 # disthelp       -- prints README.MakeFC--a long file
 # install        -- mv programs mlsl* from sub-subs to INSTALLDIR
+#                    also create shell scripts in INSTALLDIR for each program
 # makefile       -- allows you to summon this custom Makefile with shorter
 #                    "make" rather than "make -f $(MakeFName)"
 # update         -- replaces customized Makefiles with latest versions
@@ -335,12 +350,22 @@ install:
 	case "$$dir" in \
 	"l3") \
 			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
-	         mv $$dir/$(MLSCONFG)/mlsl3d $(CONFDIR) ; \
+	         mv $$dir/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mlsl3d.sh ; \
+	         sed "s=mlsxxyyzz=mlsl3d=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=" \
+              $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mlsl3d.sh ; \
+            chmod a+x $(INSTALLDIR)/mlsl3d.sh ; \
 			fi ; \
 		;; \
 	*) \
-			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
-      	  mv $$dir/$(MLSCONFG)/mls$$dir $(CONFDIR) ; \
+			if [ -f $$dir/$(MLSCONFG)/mls$$dir ] ; then \
+      	  mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mls$$dir.sh ; \
+	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=" \
+              $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mls$$dir.sh ; \
+            chmod a+x $(INSTALLDIR)/mls$$dir.sh ; \
 			fi ; \
 		;; \
 	esac ; \
@@ -563,12 +588,8 @@ l2: fwdmdl cloudfwdm
 
 l3m: l3
 
-# This requires rm-ing uniquely-named sub-subs before archiving
-#tar tar_subs tar_sips: clean_all
-
 install: all
 
-#update: depends
 update:
 
 .PHONY: configure depends subdirs clean mostlyclean clean_config distclean\
@@ -581,6 +602,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.40  2001/07/26 23:09:25  pwagner
+# Added MLSINSTALLDIR, INSTALLDIR as destination for install
+#
 # Revision 1.39  2001/07/25 22:48:20  pwagner
 # fixed install target; general housekeeping
 #
