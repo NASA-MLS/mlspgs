@@ -30,6 +30,7 @@ Switches (set by -S option in mlsl2's command line):
   msk =>    Mask set up by subset command in Retrieve
   ndb =>    Dump the Newton method's internal variables before every step
   neq =>    Normal equations during retriever iterations
+  ngc =>    Show how many times garbage collected during each chunk
   nwt =>    Action flag at each return from Newton solver
   pcf[n] => open init params obtained from pcf,
             info on l1b files [higher the n, more the info]
@@ -73,6 +74,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.18  2002/01/24 00:16:13  pwagner
+ pro scope widened to include input files, too
+
  Revision 1.17  2001/12/01 01:01:41  livesey
  Documented vir switch
 
