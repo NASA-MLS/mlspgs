@@ -244,8 +244,10 @@ contains ! =====     Public Procedures     =============================
       & sidebandStart, sidebandStop, sidebandStep )
 
     ! If we're doing a split calculation then get the relevant
-    ! sideband information
-    if ( signal%sideband == 0 .or. fmConf%forceSidebandFraction ) then
+    ! sideband information.
+    ! Note, this is *NOT* the same decision process as for the full forward model
+    ! and deliberately so.
+    if ( sidebandStart /= sidebandStop .or. fmConf%forceSidebandFraction ) then
       sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
       lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -279,7 +281,9 @@ contains ! =====     Public Procedures     =============================
       call PopulateL2PCBin ( l2pcBins(sideband) )
 
       ! Setup a sideband fraction array
-      if ( signal%sideband == 0 .and. .not. fmConf%forceSidebandFraction ) then !????
+      ! Note, this is *NOT* the same decision process as for the full forward model
+      ! and deliberately so.
+      if ( sidebandStart /= sidebandStop .or. fmConf%forceSidebandFraction ) then !????
         if ( associated ( sidebandFraction ) ) then
           thisFraction = sidebandFraction%values(:,1)
           if ( sideband == 1 ) thisFraction = 1.0 - thisFraction
@@ -1133,6 +1137,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.52  2004/02/05 23:30:39  livesey
+! Fixed long standing problem with single sideband radiometers.
+!
 ! Revision 2.51  2003/11/01 18:44:39  livesey
 ! Bug fixes in bin selection
 !
