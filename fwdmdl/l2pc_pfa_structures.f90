@@ -144,13 +144,13 @@ contains
 
     ! Executable code
     myl = MAX(1,nl)
-    call Allocate_test ( slabs%v0s, myl,         'v0s',         ModuleName )
-    call Allocate_test ( slabs%x1, myl,          'x1',          ModuleName )
-    call Allocate_test ( slabs%y, myl,           'y',           ModuleName )
-    call Allocate_test ( slabs%yi, myl,          'yi',          ModuleName )
-    call Allocate_test ( slabs%slabs1, myl,      'slabs1',      ModuleName )
-    call Allocate_test ( slabs%dx1_dv0, myl,     'dx1_dv0',     ModuleName )
-    call Allocate_test ( slabs%dy_dv0, myl,      'dy_dv0',      ModuleName )
+    call Allocate_test ( slabs%v0s,         myl, 'v0s',         ModuleName )
+    call Allocate_test ( slabs%x1,          myl, 'x1',          ModuleName )
+    call Allocate_test ( slabs%y,           myl, 'y',           ModuleName )
+    call Allocate_test ( slabs%yi,          myl, 'yi',          ModuleName )
+    call Allocate_test ( slabs%slabs1,      myl, 'slabs1',      ModuleName )
+    call Allocate_test ( slabs%dx1_dv0,     myl, 'dx1_dv0',     ModuleName )
+    call Allocate_test ( slabs%dy_dv0,      myl, 'dy_dv0',      ModuleName )
     call Allocate_test ( slabs%dslabs1_dv0, myl, 'dslabs1_dv0', ModuleName )
     slabs%no_lines = nl
     if ( nl == 0 ) then
@@ -269,6 +269,9 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.6  2003/05/16 23:52:08  livesey
+! Removed reference to spectags.  What does this module do now anyway?
+!
 ! Revision 2.5  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
