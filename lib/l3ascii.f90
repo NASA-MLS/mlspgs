@@ -207,7 +207,7 @@ contains
         call make_log_axis ( inline, tmpaxis, tmpaxis_len )
        ! print*,"Done log axis"
       else if ( axistype(1:8) =="EXPLICIT" ) then
-               print*,"Doing explicit axis"
+            !   print*,"Doing explicit axis"
         backspace(unit=unit)
         call read_explicit_axis ( unit, tmpaxis, tmpaxis_len )
                  !print*,"Done explicit axis"
@@ -969,6 +969,9 @@ END MODULE L3ascii
 
 !
 ! $Log$
+! Revision 2.20  2002/07/17 00:24:54  livesey
+! Fixed another print statement
+!
 ! Revision 2.19  2002/07/17 00:21:07  livesey
 ! Commented out more print statements from Hugh
 !
