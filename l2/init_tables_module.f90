@@ -34,7 +34,8 @@ module INIT_TABLES_MODULE
 ! Enumeration types:
   integer, parameter :: T_CRITICALMODULE = t_last_signal+1
   integer, parameter :: T_FILLMETHOD     = t_criticalmodule+1
-  integer, parameter :: T_GRIDDEDORIGIN  = t_fillmethod+1
+  integer, parameter :: T_FWMTYPE        = t_fillmethod+1
+  integer, parameter :: T_GRIDDEDORIGIN  = t_fwmType+1
   integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
   integer, parameter :: T_MATRIX         = t_hgridtype+1
   integer, parameter :: T_MERGEMETHOD    = t_matrix+1
@@ -156,7 +157,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_EXPLICIT      = l_elevOffset + 1
   integer, parameter :: L_FIXED         = l_explicit + 1
   integer, parameter :: L_FRACTIONAL    = l_fixed + 1
-  integer, parameter :: L_HEIGHT        = l_fractional + 1
+  integer, parameter :: L_FULL          = l_fractional + 1
+  integer, parameter :: L_HEIGHT        = l_full + 1
   integer, parameter :: L_HYDROSTATIC   = l_height + 1
   integer, parameter :: L_KRONECKER     = l_hydrostatic + 1
   integer, parameter :: L_L1B           = l_kronecker + 1
@@ -171,7 +173,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: L_ORBITINCLINE  = l_norm + 1
   integer, parameter :: L_PLAIN         = l_orbitIncline + 1
   integer, parameter :: L_PRESSURE      = l_plain + 1
-  integer, parameter :: L_SCGEOCALT     = l_pressure + 1
+  integer, parameter :: L_SCAN          = l_pressure + 1
+  integer, parameter :: L_SCGEOCALT     = l_scan + 1
   integer, parameter :: L_SPACERADIANCE = l_scGeocAlt + 1
   integer, parameter :: L_SPD           = l_spaceRadiance + 1
   integer, parameter :: L_SPECIAL       = l_spd + 1
@@ -282,6 +285,7 @@ contains ! =====     Public procedures     =============================
     ! Put enumeration type names into the symbol table
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
+    data_type_indices(t_fwmType) =         add_ident ( 'fwmType' )
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
     data_type_indices(t_matrix) =          add_ident ( 'matrixType' )
@@ -313,6 +317,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_explicit) =              add_ident ( 'explicit' )
     lit_indices(l_fixed) =                 add_ident ( 'fixed' )
     lit_indices(l_fractional) =            add_ident ( 'fractional' )
+    lit_indices(l_full) =                  add_ident ( 'full' )
     lit_indices(l_height) =                add_ident ( 'height' )
     lit_indices(l_hydrostatic) =           add_ident ( 'hydrostatic' )
     lit_indices(l_kronecker) =             add_ident ( 'kronecker' )
@@ -328,6 +333,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_orbitIncline) =          add_ident ( 'orbitIncline' )
     lit_indices(l_plain) =                 add_ident ( 'plain' )
     lit_indices(l_pressure) =              add_ident ( 'pressure' )
+    lit_indices(l_scan) =                  add_ident ( 'scan' )
     lit_indices(l_scGeocAlt) =             add_ident ( 'scGeocAlt' )
     lit_indices(l_spaceRadiance) =         add_ident ( 'spaceRadiance' )
     lit_indices(l_spd) =                   add_ident ( 'spd' )
@@ -499,6 +505,7 @@ contains ! =====     Public procedures     =============================
              l+l_thz, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_apriori, l+l_explicit, l+l_hydrostatic, &
              l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, n+n_dt_def, &
+      begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
              l+l_height, l+l_linear, n+n_dt_def, &
       begin, t+t_matrix, l+l_plain, l+l_cholesky, l+l_kronecker, l+l_spd, &
@@ -689,11 +696,12 @@ contains ! =====     Public procedures     =============================
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
              begin, f+f_frequency, t+t_numeric, n+n_field_type, &
-             begin, f+f_molecules, t+t_molecule, nr+n_field_type, &
+             begin, f+f_molecules, t+t_molecule, n+n_field_type, &
              begin, f+f_moleculeDerivatives, t+t_molecule, n+n_field_type, &
-             begin, f+f_signals, s+s_signal, nr+n_field_spec, &
+             begin, f+f_signals, s+s_signal, n+n_field_spec, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
+             begin, f+f_type, t+t_fwmType, nr+n_field_type, &
              np+n_spec_def, &      
       begin, s+s_forwardModelGlobal, &                                 !???
              begin, f+f_pointingGrids, t+t_string, n+n_field_type, &
@@ -786,6 +794,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.55  2001/03/17 21:06:57  livesey
+! Added forward model type stuff
+!
 ! Revision 2.54  2001/03/17 03:24:23  vsnyder
 ! Work on forwardModelGlobalSetup
 !
