@@ -19,10 +19,14 @@ VERSION=v1.0.1
 SIMULATION=s5
 YEAR=1996
 FWMVERSION=''
+MYUSER=$USER
 
 # Now work out what we have been asked for.
 while [ -n "$(echo $1)" ]; do
     # First the 'global' arguments
+    if [ -z "${1##--user=*}" ]; then
+	MYUSER=${1#--user=}
+    fi
     if [ -z "${1##--version=*}" ]; then
 	VERSION=${1#--version=}
     fi
@@ -116,6 +120,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.20  2003/11/27 01:28:22  livesey
+# Bug fix
+#
 # Revision 1.19  2003/11/27 00:31:49  livesey
 # Moved stuff for soundbarrier
 #
