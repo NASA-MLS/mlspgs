@@ -10,11 +10,12 @@ module MLSHDF5
   ! Lets break down our use, parameters first
   use HDF5, only: H5S_SCALAR_F, H5T_NATIVE_INTEGER, H5T_NATIVE_CHARACTER, &
     & H5T_NATIVE_DOUBLE, H5T_NATIVE_REAL, HID_T, HSIZE_T, &
+    & H5T_STD_I32LE, H5T_IEEE_F32LE, H5T_IEEE_F64LE, &
     & H5F_ACC_RDONLY_F
   ! Now routines
   use HDF5, only: H5ACREATE_F, H5AGET_TYPE_F, H5AOPEN_NAME_F, H5AREAD_F, &
     & H5AWRITE_F, H5ACLOSE_F, &
-    & H5DCREATE_F, H5DGET_SPACE_F, H5DOPEN_F, &
+    & H5DCREATE_F, H5DGET_SPACE_F, H5DGET_TYPE_F, H5DOPEN_F, &
     & H5DREAD_F, H5DWRITE_F, H5DCLOSE_F, &
     & H5FOPEN_F, H5FCLOSE_F, &
     & H5SCREATE_F, H5SCREATE_SIMPLE_F, H5SCLOSE_F, &
@@ -30,7 +31,7 @@ module MLSHDF5
   public :: MakeHDF5Attribute, SaveAsHDF5DS, IsHDF5AttributePresent, &
     & IsHDF5DSPresent, GetHDF5Attribute, LoadFromHDF5DS, &
     & IsHDF5DSInFile, IsHDF5AttributeInFile, &
-    & GetHDF5DSRank, GetHDF5DSDims
+    & GetHDF5DSRank, GetHDF5DSDims, GetHDF5DSQType
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -39,6 +40,21 @@ module MLSHDF5
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
   !---------------------------------------------------------------------------
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+
+! GetHDF5Attribute     Retrieves an attribute
+! GetHDF5DSRank        How many dimensions in dataset
+! GetHDF5DSDims        Size of the dimensions in dataset
+! GetHDF5DSQType       What datatype is dataset?
+! IsHDF5...Present     Is the (attribute, DS) in the locid?
+! IsHDF5...InFile      Is the (attribute, DS) in the named file?
+! LoadFromHDF5DS       Retrieves a dataset
+! MakeHDF5Attribute    Turns an arg into an attribute
+! SaveAsHDF5DS         Turns an array into a dataset
+! === (end of toc) ===
 
   interface MakeHDF5Attribute
     module procedure MakeHDF5Attribute_int, MakeHDF5Attribute_logical, &
@@ -250,6 +266,9 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    ! Initializing values returned if there was trouble
+    dims = -1
+    if (present(maxDims)) maxDims = -1
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting dims '//trim(name) )
@@ -282,6 +301,7 @@ contains ! ======================= Public Procedures =========================
     integer :: STATUS                   ! Flag
 
     ! Executable code
+    rank = -1                          ! means trouble
     call h5eSet_auto_f ( 0, status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages off before getting rank '//trim(name) )
@@ -293,6 +313,52 @@ contains ! ======================= Public Procedures =========================
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to turn error messages back on after getting rank '//trim(name) )
   end subroutine GetHDF5DSRank
+
+  ! ------------------------------------- GetHDF5DSQType
+  subroutine GetHDF5DSQType ( FileID, name, Qtype )
+    integer, intent(in) :: FILEID       ! fileID
+    character (len=*), intent(in) :: NAME ! Name of DS
+    character (len=*), intent(out) :: Qtype    ! 'real' or 'integer' or ..
+
+    ! Local variables
+    integer :: type_id                 ! typeID for DS
+    integer :: SETID                    ! ID for DS
+    integer :: STATUS                   ! Flag
+
+    ! Executable code
+    Qtype = 'unknown'                          ! means trouble
+    call h5eSet_auto_f ( 0, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages off before getting rank '//trim(name) )
+    call h5dOpen_f ( FileID, trim(name), setID, status ) 
+    call h5dget_type_f(setID,type_id,status)
+  ! While case select seemed most natural here, these H5T_..
+  ! unfortunately are not initialization expressions; therefore
+  ! must use clunky old if elseif blocks
+  !  select case (type_id)                   
+  !  case (H5T_STD_I32LE, H5T_NATIVE_INTEGER)
+    if ( type_id == H5T_STD_I32LE .or. type_id == H5T_STD_I32LE ) then
+      Qtype = 'integer'                                        
+  !  case (H5T_NATIVE_CHARACTER)
+    elseif ( type_id == H5T_NATIVE_CHARACTER ) then
+      Qtype = 'character'                                      
+  !  case (H5T_NATIVE_REAL, H5T_IEEE_F32LE)
+    elseif ( type_id == H5T_NATIVE_REAL .or. type_id == H5T_IEEE_F32LE ) then
+      Qtype = 'real'                                           
+  !  case (H5T_NATIVE_DOUBLE, H5T_IEEE_F64LE)
+    elseif ( type_id == H5T_NATIVE_DOUBLE .or. type_id == H5T_IEEE_F64LE ) then
+      Qtype = 'double'                                         
+  !  case default
+  !  else      
+  !    error = 1
+  !    return   
+  !  end select 
+    endif                                                               
+    call h5dClose_f ( setID, status )
+    call h5eSet_auto_f ( 1, status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Unable to turn error messages back on after getting rank '//trim(name))
+  end subroutine GetHDF5DSQType
 
   ! --------------------------------------------- IsHDF5AttributeInFile ---
   logical function IsHDF5AttributeInFile ( filename, DSname, name )
@@ -861,6 +927,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.7  2002/09/27 23:39:26  pwagner
+! Added GetHDF5DSQType
+!
 ! Revision 2.6  2002/09/26 23:56:15  pwagner
 ! Added some things for MLSAux and l1bdata
 !
