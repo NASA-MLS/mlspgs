@@ -43,7 +43,7 @@ destination
 destroyJacobian
 diagnostics
 diagonal
-df_spectroscopy
+default_spectroscopy
 do_baseline
 do_conv
 do_freq_avg
@@ -208,6 +208,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.18  2001/11/15 23:49:58  jonathan
+# rename DF_spectroscopy to default_spectroscopy
+#
 # Revision 2.17  2001/11/15 20:56:10  jonathan
 # add df_spectroscopy
 #
