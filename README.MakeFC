@@ -140,9 +140,8 @@ PGSLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/lib/sgi
 
 This explanation has been given with a great deal of detail (perhaps too much)
 because it is very important. E.g., an empty value for the toolkit path will
-even prevent successfully compiling any of the mls sources. It may seem
-overwhelming, and you may exclaim, "Wasn't this supposed to make things
-easier?" Fortunately, the configuration will have to done only this once.
+even prevent successfully compiling any of the mls sources. Fortunately, the
+configuration will have to done only this once.
 
 BUILDING ONLY PARTS OF THE SOFTWARE
 If you wish to build only lib, for example, you may specify that target,
@@ -172,14 +171,22 @@ depends    recalculates dependencies;
            "USE ..." line to an existing module;
            may require editing first line of f90makedep.pl (see below)
 configure  change configuration: compiler, (less often) platform/OS,
-           paths
+           paths to Toolkit and other necessary libraries
 
-(The following apply only at the top level)
-all        builds lib, l1, l2, l3, l2pc, and fwdmdl
+(All the following apply only at the top level)
+all        builds lib, l1, l2, l3, and fwdmdl
 clean_all  does a clean; more thorough in case of multiple configurations
+help       prints this file
 install    moves the built programs from l1, l2, l3 to the mlspgs top level
 update     replaces Makefiles in subdirectories with latest versions after
            recalculating dependencies; useful after a cvs update
+
+(The following are more specialized)
+configure_pvm  reset paths to PVM_ROOT, FFTW_ROOT (see BEFORE.mls)
+               allowing you to turn on or off support for PVM
+configure_fopts  reset default Fortran95 compiler and linker switches
+configure_full  combines configure, configure_pvm, configure_fopts
+configure_help  prints brief help on how to configure the build
 
 (The following perform a top-level "clean_all" before archiving)
 tar        tar the whole mlspgs archive for distribution: mlspgs.tgz
@@ -197,13 +204,18 @@ MLSF95=NAG
 MLSPLAT=Linux
 MLSCONFG=NAG.Linux
 PGSINC=/nas/user2/pwagner/TOOLKIT/include
-PGSTK=/nas/user2/pwagner/TOOLKIT/NAG
-HDFEOS=/nas/user2/pwagner/TOOLKIT
-HDF=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
-GCTP=/nas/user2/pwagner/TOOLKIT
-PGSLIB=/nas/user2/pwagner/TOOLKIT/NAG
-HDFEOS_LIB=/nas/user2/pwagner/TOOLKIT
-HDFLIB=/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdf/linux/HDF4.1r3/lib
+PGSTK=/nas/user2/pwagner/TOOLKIT/lib/linux
+HDFEOS=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+HDF=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
+GCTP=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+PGSLIB=/nas/user2/pwagner/TOOLKIT/lib/linux
+HDFEOS_LIB=/nas/user2/pwagner/TOOLKIT/hdfeos/lib/linux
+HDFLIB=/nas/user2/pwagner/TOOLKIT/hdf/linux/HDF4.1r3/lib
+PVM_ROOT=
+PVM_ARCH=LINUX
+FFTW_ROOT=
+FOPTS=-w
+LDOPTS=
 export MLSF95
 export MLSPLAT
 export MLSCONFG
@@ -211,6 +223,15 @@ export PGSINC
 export PGSLIB
 export HDFEOS_LIB
 export HDFLIB
+export PGSTK
+export HDFEOS
+export HDF
+export GCTP
+export PVM_ROOT
+export PVM_ARCH
+export FFTW_ROOT
+export FOPTS
+export LDOPTS
 
 In addition, inside lib, l1, l2, and l3 a new directory will be created with a
 unique name given by the value of MLSCONFG. In the example above that name
@@ -291,14 +312,11 @@ CALL TO ACTION
 This is useable now. Please try it out and inform me of any bugs you
 find. And tell me their solutions if you can, of course. Also of any
 improvements you think of. The configuration is messy, especially
-changing the paths. If everyone could be relied upon to have executed
-pgs-dev-env.csh or pgs-env.csh as part of their login, then this could
-be better hidden.
+changing the paths.
 
 ACTUAL BUGS
 Unless either the Lahey compiler or the latest, "beta" copy of the NAG f95 is
-used, Matrix_Module.f90 in lib and l2 won't compile. The compiler-dependent
-Makefile created will therefore compile the routine only if you use Lahey.
+used, Matrix_Module.f90 in lib and l2 has been crudely hacked to compile.
 
 The Linux HDFEOS, HDF, PGSTK, etc. libraries as distributed can not be made to
 link properly. Sun and SGI versions seem correct. The solution is to build
@@ -353,14 +371,10 @@ to contain machine/OS/compiler specific information the software can obtain at
 runtime. As a start, I simply copied NAG.Linux into NAG.*, which is probably
 incorrect.
 
-Examining lib/platform/targets reveals yet another wrinkle in lib: one of the
+Examining lib/platform/targets reveals yet another wrinkle in lib: two of the
 sources required special compiler flags to compile successfully under NAG. You
-will see it mentioned explicitly at the end with its custom build
+will see them mentioned explicitly at the end with its custom build
 instructions.
-
-At the cost of making configuration more complex, an option could be
-added that would allow extra settings, e.g. compiler flags could be set
-to suppress warning messages. Until then, see the advanced settings below.
 
 The dependencies calculated by makedepf90 check only among files in the same
 directory as the source files. A consequence of this is that it does not show
@@ -379,10 +393,10 @@ unacceptable for reasons of performance or because debugging flags need to be
 set for the compiler and loader. There may be more than one way to give a value
 to any of these settings. One way is to assign the value on the same line where
 make is invoked; e.g.
-	make -f MakeFC target FOPTS="-g90" LDOPTS="-g90"
-would compile and link for debugging by dbx90, assuming use of NAG f95.
-Alternatively, these settings might be put in .configure or set as enviroment
-variables.
+	make -f MakeFC target FOPTS="-gline -gc" LDOPTS="-gc"
+would compile and link for debugging and garbage collection, assuming use of
+NAG f95. Alternatively, these settings can be set by configure_fopts or via
+enviroment variables.
 
 Setting            Use
 FOPTS              Override default compiler option; note that you must
@@ -395,7 +409,6 @@ BLAS               Path to an external blas library; note that the library
                    library of the usual blas routines.
 PVM_ROOT           Path to the root of the pvm libraries; note that they
                    must then be named \$PVM_ROOT/\$PVM_ARCH/lib*.a;
-                   You would use this if you could exploit multiple processors
                    Warning: if PVM_ROOT is set, then so must PVM_ARCH
 PVM_ARCH           (see above)
 FFTW_ROOT          Path to the FFTW library; required for mlsl3
@@ -404,6 +417,9 @@ FFTW_ROOT          Path to the FFTW library; required for mlsl3
 EOF
 exit
 # $Log$
+# Revision 1.11  2001/02/10 00:14:41  pwagner
+# mentions make -f MakeFC update
+#
 # Revision 1.10  2001/02/09 01:02:31  pwagner
 # Mentions advanced settings
 #
