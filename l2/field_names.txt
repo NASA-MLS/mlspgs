@@ -94,6 +94,7 @@ formula
 forwardModel
 fraction
 frequencies
+fromPrecision
 fuzz
 fwdModelExtra
 fwdModelIn
@@ -322,6 +323,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.110  2003/12/04 22:19:32  livesey
+# Added ability to fill from l2gpPrecision field
+#
 # Revision 2.109  2003/10/07 20:47:32  vsnyder
 # Remove redundant ignoreGeolocation
 #
