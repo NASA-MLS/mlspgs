@@ -262,8 +262,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -------------------------------------------------------------------------
 
-  SUBROUTINE ReadL2AUXData(sd_id, quantityname, l2aux, numProfs, &
-       firstProf, lastProf)
+  SUBROUTINE ReadL2AUXData(sd_id, quantityname, l2aux, firstProf, lastProf)
     !------------------------------------------------------------------------
 
     ! This routine reads an l2aux file, returning a filled data structure and the !
@@ -275,7 +274,6 @@ contains ! =====     Public Procedures     =============================
     INTEGER, INTENT(IN) :: sd_id ! Returned by sfstart before calling us
     INTEGER, INTENT(IN), OPTIONAL :: firstProf, lastProf ! Defaults to first and last
     TYPE( L2AUXData_T ), INTENT(OUT) :: l2aux ! Result
-    INTEGER, INTENT(OUT) :: numProfs ! Number actually read
 
     ! Parameters
 
@@ -406,6 +404,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.5  2001/02/14 23:41:33  livesey
+! Removed irrelevant numProfs argument
+!
 ! Revision 2.4  2001/01/03 00:46:19  pwagner
 ! Changed sfgetinfo to sfginfo
 !
