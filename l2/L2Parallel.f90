@@ -31,6 +31,7 @@ module L2Parallel
   use L2AUXData, only: L2AUXDATA_T
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
+    & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
     & GETNICETIDSTRING, SLAVEARGUMENTS
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS
@@ -292,6 +293,7 @@ contains ! ================================ Procedures ======================
 
     ! Local parameter
     integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
+    integer, parameter :: MAXDIRECTWRITEFILES=200 ! For internal array sizing
 
     ! External (C) function
     external :: Usleep
@@ -306,6 +308,8 @@ contains ! ================================ Procedures ======================
     integer :: BUFFERID                 ! From PVM
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     integer :: CHUNK                    ! Loop counter
+    integer :: COMPLETEDFILE            ! String index from slave
+    logical :: CREATEFILE               ! Flag for direct writes
     integer :: DEADCHUNK                ! A chunk from a dead task
     integer :: DEADMACHINE              ! A machine for a dead task
     integer :: DEADTID                  ! A task that's died
@@ -315,9 +319,12 @@ contains ! ================================ Procedures ======================
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
     integer :: NEXTCHUNK                ! A chunk number
     integer :: NOCHUNKS                 ! Number of chunks
+    integer :: NODIRECTWRITEFILES       ! Need to keep track of filenames
     integer :: NOMACHINES               ! Number of slaves
+    integer :: PENDINGCHUNK             ! Chunk waiting for direct write permission
     integer :: PRECIND                  ! Array index
     integer :: RESIND                   ! Loop counter
+    integer :: REQUESTEDFILE            ! String index from slave
     integer :: SIGNAL                   ! From slave
     integer :: SLAVETID                 ! One slave
     integer :: STATUS                   ! From deallocate
@@ -326,6 +333,9 @@ contains ! ================================ Procedures ======================
 
     integer, dimension(size(chunks)) :: CHUNKMACHINES ! Machine indices for chunks
     integer, dimension(size(chunks)) :: CHUNKTIDS ! Tids for chunks
+
+    integer, dimension(size(chunks)) :: DIRECTWRITESTATUS
+    integer, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILES
 
     logical, dimension(:), pointer :: MACHINEFREE ! Is this machine busy
     logical, dimension(:), pointer :: MACHINEOK ! Is this machine working?
@@ -360,6 +370,8 @@ contains ! ================================ Procedures ======================
     noChunks = size(chunks)
     nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
       & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled )
+    directWriteFiles = 0
+    directWriteStatus = 0
 
     ! Work out the information on our virtual machine
     call GetMachineNames ( machineNames )
@@ -504,7 +516,78 @@ contains ! ================================ Procedures ======================
             call StoreSlaveQuantity( joinedQuantities, &
               & joinedVectorTemplates, joinedVectors, &
               & storedResults, chunk, noChunks, slaveTid )
-            
+
+          case ( sig_RequestDirectWrite ) ! ------- Direct write permission --
+            ! What file did they ask for?
+            call PVMF90Unpack ( requestedFile, info )
+            if ( info /= 0 )  call PVMErrorMessage ( info, &
+              & "unpacking direct write request" )
+            ! Is this a new file?
+            createFile = .not. any ( directWriteFiles == requestedFile )
+            if ( createFile ) then
+              noDirectWriteFiles = noDirectWriteFiles + 1
+              if ( noDirectWriteFiles > maxDirectWriteFiles ) &
+                & call MLSMessage ( MLSMSG_Error, ModuleName, &
+                & 'Too many direct write files, increase limit' )
+              directWriteFiles ( noDirectWriteFiles ) = requestedFile
+            end if
+            if ( index ( switches, 'mas' ) /= 0 ) then
+              call output ( 'Direct write request for file ' )
+              call output ( requestedFile )
+              call output ( ' from ' // &
+                & trim(machineNames(machine)) // ' ' // &
+                & trim(GetNiceTidString(slaveTid)) // &
+                & ' chunk ' )
+              call output ( chunk, advance='yes')
+            end if
+            ! Is anyone else using this file?
+            if ( any ( directWriteStatus == requestedFile ) ) then
+              ! If so, log a request for it by setting our status to 
+              ! -requestedFile
+              call output ( 'Request pending', &
+                & advance='yes' )
+              directWriteStatus(chunk) = -requestedFile
+            else
+              ! Otherwise, go ahead
+              if ( index ( switches, 'mas' ) /= 0 ) then
+                call output ( 'Request was granted' )
+                if ( createFile ) then
+                  call output ( ' (new file)', advance='yes' )
+                else
+                  call output ( ' (old file)', advance='yes' )
+                end if
+              end if
+              call GrantDirectWrite ( slaveTid, createFile )
+              directWriteStatus(chunk) = requestedFile
+            end if
+
+          case ( sig_DirectWriteFinished ) ! - Finished with direct write -
+            ! Record that the chunk has finished direct write
+            completedFile = directWriteStatus(chunk)
+            directWriteStatus(chunk) = 0
+            if ( index ( switches, 'mas' ) /= 0 ) then
+              call output ( 'Direct write finished on file ' )
+              call output ( completedFile )
+              call output ( ' by ' // &
+                & trim(machineNames(machine)) // ' ' // &
+                & trim(GetNiceTidString(slaveTid)) // &
+                & ' chunk ' )
+              call output ( chunk, advance='yes')
+            end if
+            ! Is anyone else waiting for this file?
+            pendingChunk = FindFirst ( directWriteStatus == -completedFile )
+            if ( pendingChunk /= 0 ) then
+              ! We know createFile is false here.
+              if ( index ( switches, 'mas' ) /= 0 ) then
+                call output ( 'Permission granted to ' // &
+                  & trim(GetNiceTidString(chunkTids(pendingChunk))) // &
+                  & ' chunk ' )
+                call output ( pendingChunk, advance='yes' )
+              end if
+              call GrantDirectWrite ( chunkTids(pendingChunk), .false. )
+              directWriteStatus ( pendingChunk ) = completedFile
+            end if
+
           case ( sig_finished ) ! -------------- Got a finish message ----
             if ( index(switches,'mas') /= 0 ) then
               call output ( 'Got a finished message from ' // &
@@ -587,6 +670,7 @@ contains ! ================================ Procedures ======================
               & joinedVectorTemplates, joinedVectors, storedResults )
             chunksStarted(deadChunk) = .false.
             chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
+            directWriteStatus(deadChunk) = 0
             where ( machineNames(deadMachine) == machineNames )
               jobsMachineKilled = jobsMachineKilled + 1
             end where
@@ -699,6 +783,7 @@ contains ! ================================ Procedures ======================
           case ( s_l2aux )
             call JoinL2AuxQuantities ( storedResults(resInd)%key, hdfNameIndex, &
               & qty, l2auxDatabase, chunk, chunks )
+            ! Ignore timing and direct writes
           end select
           
           ! Now destroy this vector.  We'll do this as we go along to make
@@ -743,6 +828,26 @@ contains ! ================================ Procedures ======================
 
   contains
 
+    subroutine GrantDirectWrite ( tid, createFile )
+      ! This routine sends a direct write grant message to a slave
+      integer, intent(in) :: TID        ! Slave tid
+      logical, intent(in) :: CREATEFILE ! Set if new file
+      ! Local variables
+      integer :: INFO                   ! From PVM
+      integer :: BUFFERID               ! From PVM
+      integer :: CREATE                 ! Integer version of createFile
+      ! Executable code
+      create = 0
+      if ( createFile ) create = 1
+      call PVMFInitSend ( PvmDataDefault, bufferID ) 
+      call PVMF90Pack ( (/ SIG_DirectWriteGranted, create /), info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'packing direct write permission' )
+      call PVMFSend ( tid, InfoTag, info )
+      if ( info /= 0 ) &
+        & call PVMErrorMessage ( info, 'sending direct write permission' )
+    end subroutine GrantDirectWrite
+
     subroutine WelcomeSlave ( chunk, tid )
       ! This routine welcomes a slave into the fold and tells it stuff
       integer, intent(in) :: CHUNK      ! Chunk we're asking it to do
@@ -785,6 +890,7 @@ contains ! ================================ Procedures ======================
     integer :: i, status
 
     ! Executable code
+    if ( .not. associated ( database ) ) return
     do i = 1, size(database)
       call deallocate_test ( database(i)%valInds, 'database(?)%valInds', ModuleName)
       if ( associated ( database(i)%precInds ) ) &
@@ -947,6 +1053,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.33  2002/05/22 00:48:36  livesey
+! Added direct write stuff
+!
 ! Revision 2.32  2002/05/21 01:12:05  livesey
 ! Got rid of machine stuff not relevant in submit case
 !
