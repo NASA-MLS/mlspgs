@@ -27,22 +27,32 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
 
   ! This is a set of possible values for dimension%dimensionFamily
 
-  INTEGER, PARAMETER :: NoL2AUXDimTypes=6
-  CHARACTER(LEN=12), DIMENSION(NoL2AUXDimTypes),PARAMETER::L2AUXDimNames= (/ &
-       & "Channel  ", &
-       & "Frequency", &
-       & "MIF      ", &
-       & "MAF      ", &
-       & "Time     ", &
-       & "GeodAngle" /)
+  INTEGER, PARAMETER :: NoL2AUXDimTypes=7
+  CHARACTER(LEN=25), DIMENSION(NoL2AUXDimTypes),PARAMETER::L2AUXDimNames= (/ &
+       & "MLS Channel             ", &
+       & "Intermediate Frequency  ", &
+       & "Upper sideband Frequency", &
+       & "Lower sideband Frequency", &
+       & "Minor Frame             ", &
+       & "Major Frame             ", &
+       & "Geodetic Angle          " /)
+  CHARACTER (LEN=10), DIMENSION(NoL2AUXDimTypes), PARAMETER::L2AUXDimUnits= (/ &
+       & "          ", &
+       & "MHz       ", &
+       & "MHz       ", &
+       & "MHz       ", &
+       & "          ", &
+       & "          ", &
+       & "Degrees   "/)
 
   INTEGER, PARAMETER :: L2AUXDim_None=0
   INTEGER, PARAMETER :: L2AUXDim_Channel=1
-  INTEGER, PARAMETER :: L2AUXDim_Frequency=2
-  INTEGER, PARAMETER :: L2AUXDim_MIF=3
-  INTEGER, PARAMETER :: L2AUXDim_MAF=4
-  INTEGER, PARAMETER :: L2AUXDim_Time=5
-  INTEGER, PARAMETER :: L2AUXDim_GeodAngle=6
+  INTEGER, PARAMETER :: L2AUXDim_IntermediateFrequency=2
+  INTEGER, PARAMETER :: L2AUXDim_USBFrequency=3
+  INTEGER, PARAMETER :: L2AUXDim_LSBFrequency=4
+  INTEGER, PARAMETER :: L2AUXDim_MIF=5
+  INTEGER, PARAMETER :: L2AUXDim_MAF=6
+  INTEGER, PARAMETER :: L2AUXDim_GeodAngle=7
 
   ! This datatype describes a dimension for an L2AUX quantity
 
@@ -268,6 +278,9 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.10  2000/01/19 23:52:15  livesey
+! Added the noDimensionsUsed field.
+!
 ! Revision 1.9  2000/01/19 23:45:42  livesey
 ! Added ExpandL2AUXDataInPlace routine for Join.
 !
