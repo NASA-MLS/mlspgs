@@ -1,23 +1,23 @@
 #	Makefile
 #
-# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
-# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+#  Lost? Type 'cd ../; make help -f MakeFC' from this directory
 #
-#special case:
-#the 1st time through, before .configure exists yet,
-#execute $(MLSBIN)/mlsconfigure to create .configure
-
-#i.e., if you call are building this mls
-#by calling make with a different Makefile name,
-#say: make -f MakeFC
-#then rename the Makefiles in /l2 and /lib also MakeFC
+# Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+# U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
 
+# ---------------------- The name of this file (is the right-hand-side below)
 MakeFName = MakeFC
 
 # where to store .configure
 CONFDIR=..
+
+ifdef MLSINSTALLDIR
+   INSTALLDIR=$(MLSINSTALLDIR)
+else
+   INSTALLDIR=$(CONFDIR)/bin/$(MLSCONFG)
+endif
 
 # where configure and makemakedep.sh are stored
 MLSBIN=../util
@@ -30,6 +30,9 @@ libmls_objs=$(libmls_sources)/$(MLSCONFG)
 
 # where sources (but not OBJS) shared with l3, etc. are stored
 srclib=../srclib
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+blaslib=../blas
 
 # where sources (but not OBJS) used for hdf5 file versions are stored
 he5lib=../he5lib
@@ -82,8 +85,11 @@ SHELL = /bin/sh
 
 #----------------------------------------------------------
 #wildcard seems to no longer work right (maybe some change to our suns?)
-libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 $(libmls_sources)/*.c $(libmls_sources)/lit_names.txt)
-blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90)
+libmls_f90 := $(shell ${REECHO} $(libmls_sources)/*.f $(libmls_sources)/*.f90 \
+  $(libmls_sources)/*.f9h $(srclib)/*.f9h $(libmls_sources)/*.c \
+  $(libmls_sources)/lit_names.txt)
+blaslib_f := $(shell ${REECHO} $(blaslib)/*.c $(blaslib)/*.f $(blaslib)/*.f90 \
+  $(blaslib)/*.f9h $(srclib)/*.f9h)
 he5lib_f := $(shell ${REECHO} $(he5lib)/*.c $(he5lib)/*.f $(he5lib)/*.f90)
 
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) \
@@ -198,7 +204,9 @@ $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 	fi ; \
 	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
 
-.PHONY: configure depends clean tar mostlyclean tarz targ mlsl1 ghostbuster
+.PHONY: clean configure depends depends--mod ghostbuster install \
+  internalsaymake internalupdate mostlyclean \
+  tar targ tarz
 
 tar:
 
@@ -257,6 +265,39 @@ clean:
 	fi
 	rm -f Make.dep.*
 
+internalsaymake:
+	@echo "Copying or linking MakeFC to Makefile in ./" ; \
+	cp MakeFC Makefile
+
+internalupdate: internalsaymake
+	@echo "Updating the Makefile in ./"; \
+    m_option="-machine" ; \
+		$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
+         -cf "$(MLSCFILE)" -nc -nd $$m_option; \
+      m_option=""
+
+# install $(PROG) into $(INSTALLDIR)
+install: $(PROG)
+	@echo "Installing $(PROG) into $(INSTALLDIR)"; \
+	if [ ! -d $(INSTALLDIR) ] ; then \
+	   $(MLSBIN)/mkdir_cascade.sh $(INSTALLDIR) ; \
+	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1log ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1log $(INSTALLDIR) ; \
+	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1t ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1t $(INSTALLDIR) ; \
+	fi ; \
+	if [ -f $(PLATFORMS)/$(MLSCONFG)/mlsl1g ] ; then \
+	   mv $(PLATFORMS)/$(MLSCONFG)/mlsl1g $(INSTALLDIR) ; \
+      rm -f $(INSTALLDIR)/mlsl1.sh ; \
+	   sed "s=mlsxxyyzz_1=mlsl1log=; s=mlsxxyyzz_2=mlsl1g=; \
+        s=mlsxxyyzz_3=mlsl1t=; s=mlsbbiinn=$(INSTALLDIR)=; \
+        s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+        $(MLSBIN)/mlsl1prog.sh > $(INSTALLDIR)/mlsl1.sh ; \
+      chmod a+x $(INSTALLDIR)/mlsl1.sh ; \
+	fi
+
 tar:
 	rm -f ../$(PROG).tar
 	@echo "tar-ing l1"; \
@@ -273,6 +314,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl1
 
 # $Log$
+# Revision 2.39  2003/02/24 21:16:01  pwagner
+# Fixed bug where changes to .f9h were not triggering recompiles
+#
 # Revision 2.38  2003/01/31 23:52:42  pwagner
 # Changed for new l1 with 3 executables
 #
