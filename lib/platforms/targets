@@ -102,14 +102,23 @@ PVMwrappers.o: $(S)/PVMwrappers.c
 
 BUGGY := $(shell echo ${FOPTS} | sed 's/-O[0-9]*//')
 
+DUSTY_NO_OPT := $(shell echo ${DUSTY} | sed 's/-O[0-9]*//')
+
 L1BData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L1BData.f90 $(FAFTER)
 #L2GPData.o:
 #	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90 $(FAFTER)
 string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
+ddot.o:
+	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/ddot.f $(FAFTER)
+sdot.o:
+	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.25  2001/05/09 23:28:23  pwagner
+# Optionally builds library w/o toolkit support
+#
 # Revision 1.24  2001/04/02 17:39:57  pwagner
 # PVM and PVMIDL no longer treated as clumsily
 #
