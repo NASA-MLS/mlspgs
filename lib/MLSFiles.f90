@@ -289,7 +289,8 @@ contains
       
    else
       myName = FileName
-      the_eff_mode = 'op'
+      the_eff_mode = LowerCase(toolbox_mode(1:2))
+      if(the_eff_mode == 'pg') the_eff_mode = 'op'
    endif
 
     select case (the_eff_mode)
@@ -508,7 +509,8 @@ contains
     the_eff_mode = LowerCase(toolbox_mode(1:2))
    ! Not Using Toolkit
    else
-      the_eff_mode = 'cl'
+      the_eff_mode = LowerCase(toolbox_mode(1:2))
+      if(the_eff_mode == 'pg') the_eff_mode = 'cl'
    endif
 
     select case (the_eff_mode)
@@ -618,6 +620,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.19  2001/05/08 23:35:44  pwagner
+! Fixed bug in the_eff_mode
+!
 ! Revision 2.18  2001/05/08 21:36:38  livesey
 ! Changed PRINT_EVERY_OPEN to .false.
 !
