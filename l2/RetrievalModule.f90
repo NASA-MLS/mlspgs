@@ -3670,7 +3670,7 @@ contains
 
           ! convert pressure unit
           CHeightvalue = value
-          if ( heightUnit == phyq_pressure ) CHeightvalue = -log10(value)          
+          if ( cloudheightUnit == phyq_pressure ) CHeightvalue = -log10(value)          
       end if
 
       ! ----- finish checking ------
@@ -3742,6 +3742,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.235  2003/02/25 19:04:43  dwu
+! fix another bug in FlagCloud
+!
 ! Revision 2.234  2003/02/25 18:58:35  dwu
 ! fix another bug in FlagCloud
 !
