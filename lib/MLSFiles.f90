@@ -1486,13 +1486,12 @@ contains
   ! ---------------------------------------------  mls_sfstart  -----
 
   ! This function acts as a wrapper to allow hdf5 or hdf4 routines to be called
-  ! Right now, it works for hdf4 files in general, but only for adding
-  ! metadata to hdf5 files
+  ! with hdf4-style FileAccess (e.g., DFACC_RDONLY)
   
-  ! Therefore, when the grand unified hdf4/hdf5 interfaces are
-  ! implemented this will probably need to take an added arg:
-  ! the logical addingMetadata
-
+  ! the logical addingMetadata optionally treats hdf5 files as hdf4-like
+  ! in the sd_id returned, as required when adding metadata,
+  ! by calling special toolkit function
+  
   function mls_sfstart(FileName, FileAccess, hdfVersion, addingmetadata)
 
     ! Arguments
@@ -1561,40 +1560,36 @@ contains
      returnStatus = PGS_MET_SFstart(trim(FileName), myAccess, mls_sfstart)
    else
      access_prp_default = h5p_default_f    ! Can't figure out what this means
-! >      print *, 'About to call h5fopen_f'
-! >      print *, 'FileAccess: ', FileAccess
-! >      print *, 'DFACC_CREATE: ', DFACC_CREATE
-! >      print *, 'DFACC_RDWR: ', DFACC_RDWR
-! >      print *, 'DFACC_RDONLY: ', DFACC_RDONLY
-! >      print *, 'hdf2hdf5_fileaccess(FileAccess): ', hdf2hdf5_fileaccess(FileAccess)
-! >      print *, 'H5F_ACC_RDWR_F: ', H5F_ACC_RDWR_F
-! >      print *, 'H5F_ACC_EXCL_F: ', H5F_ACC_EXCL_F
-! >      print *, 'H5F_ACC_RDONLY_F: ', H5F_ACC_RDONLY_F
-! >      print *, 'H5F_ACC_TRUNC_F: ', H5F_ACC_TRUNC_F
      ! call h5fopen_f(trim(FileName), hdf2hdf5_fileaccess(FileAccess), &
      ! & mls_sfstart, returnStatus)
 !      & mls_sfstart, returnStatus, access_prp_default)  ! so abandoning it
      select case (FileAccess)
      case (DFACC_CREATE)
-       call h5fcreate_f(trim(filename), H5F_ACC_EXCL_F, mls_sfstart, returnStatus)
+       call h5fcreate_f(trim(filename), H5F_ACC_TRUNC_F, mls_sfstart, &
+         & returnStatus)
+       if ( returnStatus /= 0 ) &
+         & call output('Failing to create file; ' // &
+         & 'perhaps you lack write permission', advance='yes')
        ! call mls_openFile(filename, 'create', mls_sfstart, HDFVERSION_5)
      case (DFACC_RDWR)
        call h5fopen_f(trim(filename), H5F_ACC_RDWR_F, mls_sfstart, returnStatus)
        ! call mls_openFile(filename, 'update', mls_sfstart, HDFVERSION_5)
      case (DFACC_RDONLY)
-       call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, returnStatus)
+       call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, &
+         & returnStatus)
        ! call mls_openFile(filename, 'readonly', mls_sfstart, HDFVERSION_5)
      case default
-       call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, returnStatus)
+       call h5fopen_f(trim(filename), H5F_ACC_RDONLY_F, mls_sfstart, &
+         & returnStatus)
        ! call mls_openFile(filename, 'readonly', mls_sfstart, HDFVERSION_5)
      end select
    endif
-   if ( returnStatus /= 0 .and. myAddingMetaData) then                                            
-     call output ('Try again--PGS_MET_SFstart still unhappy; returns ')    
+   if ( returnStatus /= 0 .and. myAddingMetaData) then
+     call output ('Try again--PGS_MET_SFstart still unhappy; returns ')
      call output (returnStatus, advance='yes')                             
      mls_sfstart = -1                                                      
    elseif ( returnStatus /= 0) then                                            
-     call output ('Try again--h5fopen_f still unhappy; returns ')    
+     call output ('Try again--h5fopen_f/h5fcreate_f still unhappy; returns ')    
      call output (returnStatus, advance='yes')                             
      mls_sfstart = -1                                                      
    endif                                                                  
@@ -1840,6 +1835,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.47  2002/12/10 00:43:44  pwagner
+! At last can h5fcreate an extant file with H5F_ACC_TRUNC_F
+!
 ! Revision 2.46  2002/12/09 17:55:03  pwagner
 ! Reuses mls_sfstart in mls_io_gen_openf and open_mls routines
 !
