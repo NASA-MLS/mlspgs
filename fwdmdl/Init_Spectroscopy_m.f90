@@ -39,7 +39,8 @@ module Init_Spectroscopy_m
   integer, parameter :: F_n          = f_molecule + 1
   integer, parameter :: F_n1         = f_n + 1
   integer, parameter :: F_n2         = f_n1 + 1
-  integer, parameter :: F_ps         = f_n2 + 1
+  integer, parameter :: F_ns         = f_n2 + 1
+  integer, parameter :: F_ps         = f_ns + 1
   integer, parameter :: F_qlog       = f_ps + 1
   integer, parameter :: F_str        = f_qlog + 1
   integer, parameter :: F_v0         = f_str + 1
@@ -86,6 +87,7 @@ contains
     field_indices(f_n)          = add_ident ( 'n' )
     field_indices(f_n1)         = add_ident ( 'n1' )
     field_indices(f_n2)         = add_ident ( 'n2' )
+    field_indices(f_ns)         = add_ident ( 'ns' )
     field_indices(f_ps)         = add_ident ( 'ps' )
     field_indices(f_qlog)       = add_ident ( 'qlog' )
     field_indices(f_str)        = add_ident ( 'str' )
@@ -142,6 +144,7 @@ contains
              begin, f+f_n, t+t_numeric, nr+n_field_type, &
              begin, f+f_n1, t+t_numeric, nr+n_field_type, &
              begin, f+f_n2, t+t_numeric, nr+n_field_type, &
+             begin, f+f_ns, t+t_numeric, nr+n_field_type, &
              begin, f+f_ps, t+t_numeric, nr+n_field_type, &
              begin, f+f_str, t+t_numeric, nr+n_field_type, &
              begin, f+f_v0, t+t_numeric, nr+n_field_type, &
@@ -151,9 +154,9 @@ contains
              ndp+n_spec_def, &
       begin, s+s_spectra, & ! Must be AFTER S_Line
              begin, f+f_lines, s+s_line, n+n_field_spec, &
-             begin, f+f_molecule, t+t_molecule, n+n_field_type, &
+             begin, f+f_molecule, t+t_molecule, nr+n_field_type, &
              begin, f+f_qlog, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def /) )
+             ndp+n_spec_def /) )
 
   contains
     ! --------------------------------------------------  MAKE_TREE  -----
@@ -163,6 +166,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.2  2001/09/18 01:25:48  livesey
+! Changed emls/umls bands to emls/umls signals
+!
 ! Revision 2.1  2001/09/18 00:08:17  livesey
 ! Added the bands information stuff
 !

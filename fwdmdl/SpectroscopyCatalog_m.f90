@@ -35,6 +35,7 @@ module SpectroscopyCatalog_m
     Real(r8) :: N1                 ! Temperature dependency of delta
     Real(r8) :: N2                 ! Temperature dependency of gamma
     Real(r8) :: PS                 ! Pressure shift parameter in MHz/mbar
+    Real(r8) :: NS                 ! Pressure shift on temperature dependency
     Real(r8) :: STR                ! Integrated spectral intensity
                                    ! Log(nm**2 MHz) at 300 K
     Real(r8) :: V0                 ! Line center frequency MHz
@@ -78,7 +79,7 @@ contains ! =====  Public Procedures  ===================================
     use Init_Spectroscopy_M, only: S_Line, S_Spectra
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Delta, F_El, F_Gamma, F_Lines, &
-      & F_Molecule, F_N, F_N1, F_N2, F_Ps, F_Qlog, F_Str, F_V0, F_W, &
+      & F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_Str, F_V0, F_W, &
       & F_EMLSSIGNALS, F_UMLSSIGNALS
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
       & S_Time, L_EMLS, L_UMLS
@@ -145,6 +146,8 @@ contains ! =====  Public Procedures  ===================================
             call expr_check ( subtree(2,son), oneLine%n1, phyq_dimless )
           case ( f_n2 )
             call expr_check ( subtree(2,son), oneLine%n2, phyq_dimless )
+          case ( f_ns )
+            call expr_check ( subtree(2,son), oneLine%ns, phyq_dimless )
           case ( f_ps )
             call expr_check ( subtree(2,son), oneLine%ps, phyq_dimless )
           case ( f_str )
@@ -386,6 +389,8 @@ contains ! =====  Public Procedures  ===================================
       call output ( ', W =' )
       call output ( lines(i)%str, advance='yes' )
       call blanks ( 6 )
+      call output ( 'Ns = ' )
+      call output ( lines(i)%ns )
       call output ( 'Ps = ' )
       call output ( lines(i)%ps )
       call output ( ', N = ' )
@@ -439,6 +444,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.4  2001/09/19 04:38:48  livesey
+! Lines per band stuff works now
+!
 ! Revision 2.3  2001/09/18 01:25:48  livesey
 ! Changed emls/umls bands to emls/umls signals
 !
