@@ -517,6 +517,7 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I
 
+    if ( .not. associated(vector%quantities) ) return
     do i = 1, size(vector%quantities)
       call deallocate_test ( vector%quantities(i)%values, &
         & "vector%quantities(i)%values", ModuleName )
@@ -855,6 +856,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.10  2001/02/08 00:34:41  vsnyder
+! Don't destroy in DestroyVectorInfo if vector%quantities is disassociated
+!
 ! Revision 2.9  2001/01/26 19:00:02  vsnyder
 ! Periodic commit
 !
