@@ -22,7 +22,9 @@ module SidsModule
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use VectorsModule, only: Vector_T
   use Dump_0, only: dump
-  use ForwardModelIntermediate, only: ForwardModelIntermediate_T, ForwardModelStatus_T
+  use ForwardModelIntermediate, only: ForwardModelIntermediate_T,&
+    & ForwardModelStatus_T
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=130), private :: Id = &
@@ -43,9 +45,10 @@ contains
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
 
-    type (ForwardModelConfig_T), pointer :: CONFIG ! Selected configuration
     integer :: Error                    ! >= indicates an error occurred
     integer :: Field                    ! Of the "sids" specification
+    integer :: config                   ! Index for config loop
+    integer, pointer, dimension(:) :: configs ! Forward model configs
     type(vector_T), pointer :: FwdModelIn
     type(vector_T), pointer :: FwdModelExtra
     type(vector_T), pointer :: FwdModelOut
@@ -80,7 +83,10 @@ contains
       case ( f_jacobian )
         ixJacobian = decoration(subtree(2,son)) ! jacobian: matrix vertex
       case ( f_forwardModel )
-        config => configDatabase(decoration(decoration(subtree(2,son))))
+        call Allocate_Test(configs, nsons(son)-1, 'configs', ModuleName)
+        do config = 1, nsons(son)-1
+          configs(config) = decoration(decoration(subtree(config+1,son)))
+        end do
       end select
     end do ! i = 2, nsons(root)
 
@@ -88,31 +94,39 @@ contains
       i = decoration(ixJacobian)
       call getFromMatrixDatabase ( matrixDatabase(i), jacobian )
       if ( .not. associated(jacobian) ) call announceError ( notPlain )
-      fmStat%newHydros = .true.
-      fmStat%maf = 1
-      do
-        call forwardModel ( config, FwdModelIn, FwdModelExtra, &
-          & FwdModelOut, ifm, fmStat, Jacobian)
-        if (fmStat%finished) exit
-      end do
-
-    else if ( config%atmos_Der .or. config%spect_Der .or. config%temp_der ) then
-      call announceError ( needJacobian )
     else
-      fmStat%newHydros = .true.
-!      fmStat%maf = 2 ! DEBUG
-      fmStat%maf = 1
-!      config%signals(1)%channels=.false.
-!      config%signals(1)%channels(1)=.true.
-      do
-        call forwardModel ( config, FwdModelIn, FwdModelExtra, &
-          & FwdModelOut, ifm, fmStat)
-        if (fmStat%finished) exit
-!        if (fmStat%maf == 4) stop
-      end do
+      if ( any( (/configDatabase(configs)%atmos_Der, &
+        &         configDatabase(configs)%spect_Der, &
+        &         configDatabase(configs)%temp_der/) ) ) then
+        call announceError ( needJacobian )
+      endif
     end if
-    print*,'Done the forward model!!!'
+    
+    fmStat%newHydros = .true.
+    fmStat%maf = 1
+
+    ! Loop over mafs
+    do
+      do config = 1, size(configs)
+        if ( ixJacobian > 0 ) then
+          call forwardModel ( configDatabase(configs(config)), &
+            & FwdModelIn, FwdModelExtra, &
+            & FwdModelOut, ifm, fmStat, Jacobian)
+        else
+          call forwardModel ( configDatabase(configs(config)), &
+            & FwdModelIn, FwdModelExtra, &
+            & FwdModelOut, ifm, fmStat)
+        end if
+      end do
+      ! What if one config set finished but others still had more to do?
+      ! Ermmm, think of this next time.
+      if (fmStat%finished) exit
+      fmStat%maf = fmStat%maf + 1
+    end do
+
     if ( toggle(gen) ) call trace_end ( "SIDS" )
+
+    call deallocate_test( configs, 'configs', ModuleName)
 
   contains
     ! --------------------------------------------  AnnounceError  -----
@@ -138,6 +152,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.16  2001/04/12 17:48:11  livesey
+! Moved maf increment in from ForwardModel to here.
+!
 ! Revision 2.15  2001/04/10 23:28:10  livesey
 ! Interim working version
 !
