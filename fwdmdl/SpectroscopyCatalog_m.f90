@@ -72,7 +72,8 @@ contains ! =====  Public Procedures  ===================================
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Delta, F_El, F_Gamma, F_Lines, &
       & F_Molecule, F_N, F_N1, F_N2, F_Ps, F_Qlog, F_Str, F_V0, F_W
-    use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency
+    use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
+      & S_Time
     use Molecules, only: Spec_Tags
     use MoreTree, only: Get_Field_Id, Get_Spec_Id
     use Tree, only: Decorate, Decoration, Node_ID, NSons, Sub_Rosa, Subtree
@@ -91,6 +92,8 @@ contains ! =====  Public Procedures  ===================================
     integer :: Son                      ! Of root or key
     integer :: Key                      ! Index of spec_arg
     integer :: Name                     ! Index of name in string table
+    logical :: TIMING                   ! For S_Time
+    real :: T1, T2                      ! For S_Time
 
     ! Error message codes
     integer, parameter :: WrongSize = 1                ! Wrong number of elements
@@ -99,6 +102,7 @@ contains ! =====  Public Procedures  ===================================
     if ( toggle(gen) ) call trace_begin ( "Spectroscopy", root )
 
     error = 0
+    timing = .false.
 
     do i = 2, nsons(root)-1             ! Skip names of section
       son = subtree(i,root)
@@ -110,7 +114,7 @@ contains ! =====  Public Procedures  ===================================
         key = son
       end if
       select case ( get_spec_id(key) )
-      case ( s_line )
+      case ( s_line ) ! ...................................  LINE  .....
         oneLine%line_Name = name
         do j = 2, nsons(key)
           son = subtree(j,key)
@@ -140,7 +144,7 @@ contains ! =====  Public Procedures  ===================================
           end select
         end do
         call decorate ( key, addLineToDatabase ( lines, oneLine ) )
-      case ( s_spectra )
+      case ( s_spectra ) ! .............................  SPECTRA  .....
         nullify(oneSpecies%lines) ! So that Allocate_Test doesn't deallocate
         ! the most recently filled one
         oneSpecies%species_Name = name
@@ -166,6 +170,13 @@ contains ! =====  Public Procedures  ===================================
           end select
         end do
         call decorate ( key, addSpeciesToCatalog ( Catalog, oneSpecies ) )
+      case ( s_time ) ! ...................................  TIME  .....
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
       end select
     end do ! i
 
@@ -174,6 +185,7 @@ contains ! =====  Public Procedures  ===================================
         & call dump_SpectCat_database ( lit_indices )
       call trace_end ( "Spectroscopy" )
     end if
+    if ( timing ) call sayTime
 
     if ( error > 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
       & 'Error(s) in input for spectroscopy database' )
@@ -217,6 +229,14 @@ contains ! =====  Public Procedures  ===================================
         & call announce_error ( root, wrongUnits, neededUnits )
       value = values(1)
     end subroutine Expr_Check
+
+    ! ..................................................  SayTime  .....
+    subroutine SayTime
+      call cpu_time ( t2 )
+      call output ( "Timing for Spectroscopy = " )
+      call output ( dble(t2 - t1), advance = 'yes' )
+      timing = .false.
+    end subroutine SayTime
   end subroutine Spectroscopy
 
   ! ------------------------------------------  AddLineToDatabase  -----
@@ -368,6 +388,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 1.4  2001/04/20 17:26:31  vsnyder
+! Remove arguments from Destroy..., publish ...Lines...
+!
 ! Revision 1.3  2001/04/04 23:56:46  zvi
 ! Correfting Typo error in SpectCat  names
 !
