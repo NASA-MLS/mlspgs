@@ -18,7 +18,8 @@ program MLSL2
     & PENALTY_FOR_NO_METADATA, NORMAL_EXIT_STATUS, &
     & GARBAGE_COLLECTION_BY_CHUNK, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
-    & DEFAULT_HDFVERSION_WRITE, DEFAULT_HDFVERSION_READ, LEVEL1_HDFVERSION
+    & DEFAULT_HDFVERSION_WRITE, DEFAULT_HDFVERSION_READ, LEVEL1_HDFVERSION, &
+    & SKIPRETRIEVAL
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -269,6 +270,8 @@ program MLSL2
           call io_error ( "After --recl option", status, line )
           stop
         end if
+      else if ( line(3+n:10+n) == 'skipRetr' ) then
+        SKIPRETRIEVAL = switch
       else if ( line(3+n:10+n) == 'slaveMAF' ) then
         copyArg=.false.
         if ( line(11+n:) /= ' ' ) then
@@ -661,18 +664,45 @@ contains
       call output(' Default hdfeos version on writes:               ', advance='no')
       call blanks(5, advance='no')
       call output(default_hdfversion_write, advance='yes')
-!     call output(' Manually collect garbage after each chunk:      ', advance='no') 
-!     call blanks(4, advance='no')                                                   
-!     call output(garbage_collection_by_chunk, advance='yes')                        
+      if ( singleChunk /= 0 ) then
+      call output(' Compute only the single chunk:                  ', advance='no') 
+      call blanks(5, advance='no')                                                   
+      call output(singleChunk, advance='yes')
+      endif                      
 !     call output(' Manually collect garbage after each deallocate: ', advance='no') 
 !     call blanks(4, advance='no')                                                   
 !     call output(garbage_collection_by_dt, advance='yes')                           
+      call output(' Is this run in forward model parallel?:         ', advance='no')
+      call blanks(4, advance='no')
+      call output(parallel%fwmParallel, advance='yes')
       call output(' Is this the master task in pvm?:                ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%master, advance='yes')
+      if ( parallel%master ) then
+      call output(' Master task number:                             ', advance='no') 
+      call blanks(4, advance='no')                                                   
+      call output(parallel%myTid, advance='yes')
+      call output(' Command line sent to slaves:                    ', advance='no') 
+      call blanks(4, advance='no')                                                   
+      call output(trim(parallel%pgeName), advance='yes')
+      call output(' Command to queue slave tasks:                   ', advance='no') 
+      call blanks(4, advance='no')                                                   
+      call output(trim(parallel%submit), advance='yes')
+      endif                      
       call output(' Is this a slave task in pvm?:                   ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%slave, advance='yes')
+      if ( parallel%slave ) then
+      call output(' Master task number:                             ', advance='no') 
+      call blanks(4, advance='no')                                                   
+      call output(parallel%masterTid, advance='yes')
+      endif                      
+      call output(' Skip all retrievals?:                           ', advance='no')
+      call blanks(4, advance='no')
+      call output(SKIPRETRIEVAL, advance='yes')
+      call output(' Stage in memory instead of a file?:             ', advance='no')
+      call blanks(4, advance='no')
+      call output(parallel%stageInMemory, advance='yes')
       call output(' Using wall clock instead of cpu time?:          ', advance='no')
       call blanks(4, advance='no')
       call output(use_wall_clock, advance='yes')
@@ -705,6 +735,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.99  2003/09/05 23:22:08  pwagner
+! Takes in new --skipRetrieval option
+!
 ! Revision 2.98  2003/08/01 20:26:01  pwagner
 ! gets slave pge name from command line
 !
