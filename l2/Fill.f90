@@ -2119,10 +2119,10 @@ contains ! =====     Public Procedures     =============================
         & call announce_error ( key, 0, 'quantity/sourceQuantity must be same signal/sideband' )
       if ( .not. sourceQuantity%template%regular ) &
         & call Announce_Error ( key, 0, 'source quantity must be regular' )
-      chanInd = channel - GetFirstChannel ( quantity%template%signal )
+      chanInd = channel - GetFirstChannel ( quantity%template%signal ) + 1
       do mif = 1, quantity%template%noSurfs
         quantity%values ( mif, : ) = &
-          & sourceQuantity%values ( mif + chanInd * sourceQuantity%template%noChans, : )
+          & sourceQuantity%values ( chanInd + ( mif - 1 ) * sourceQuantity%template%noChans, : )
       end do
     end subroutine ExtractSingleChannel
 
@@ -6878,6 +6878,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.267  2004/04/19 21:04:02  livesey
+! Bug fix in ExtractSingleChannel
+!
 ! Revision 2.266  2004/04/16 00:49:03  livesey
 ! Added extractChannel fill
 !
