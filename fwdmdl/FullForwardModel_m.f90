@@ -38,6 +38,7 @@ contains
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelIntermediate, only: ForwardModelIntermediate_t, &
                                     &   ForwardModelStatus_t
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Freq_Avg_m, only: Freq_Avg
     use Geometry, only: EarthRadA, EarthRadB
     use Get_Beta_Path_m, only: Get_Beta_Path, Beta_Group_T
@@ -434,31 +435,34 @@ contains
     ! Start sorting out stuff from state vector ------------------------------
 
     ! Identify the appropriate state vector components, save vmrs for later
-    temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_temperature )
-    ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+    temp => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_temperature, config=fwdModelConf )
+    ptan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, instrumentModule=firstSignal%instrumentModule, &
-      & foundInFirst=ptan_der )
-    phitan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_phitan, instrumentModule=firstSignal%instrumentModule )
-    elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_elevOffset, radiometer=firstSignal%radiometer )
-    orbIncline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_orbitInclination )
-    spaceRadiance => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_spaceRadiance )
-    earthRefl => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_earthRefl )
-    refGPH => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_refGPH )
-    losVel => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_losVel, instrumentModule=firstSignal%instrumentModule )
-    scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & foundInFirst=ptan_der, config=fwdModelConf )
+    phitan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_phitan, instrumentModule=firstSignal%instrumentModule, &
+      & config=fwdModelConf )
+    elevOffset => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_elevOffset, radiometer=firstSignal%radiometer, &
+      & config=fwdModelConf )
+    orbIncline => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_orbitInclination, config=fwdModelConf )
+    spaceRadiance => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_spaceRadiance, config=fwdModelConf )
+    earthRefl => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_earthRefl, config=fwdModelConf )
+    refGPH => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_refGPH, config=fwdModelConf )
+    losVel => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_losVel, instrumentModule=firstSignal%instrumentModule, &
+      & config=fwdModelConf )
+    scGeocAlt => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
 
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
-    ! vmr => GetVectorQuantityBytype (fwdModelIn, fwdModelExtra, &
+    ! vmr => GetQuantityforForwardModel (fwdModelIn, fwdModelExtra, &
     !   quantityType=l_vmr, molecule=fwdModelConf.molecules(i))
 
     ! Now we're going to validate the quantities we've been given, don't forget
@@ -605,13 +609,9 @@ contains
     do specie = 1, noSpecies
       l = fwdModelConf%molecules(specie)
       if ( l > 0 ) then
-        if ( l == l_extinction ) then
-          f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-            & quantityType=l_extinction, radiometer=firstSignal%radiometer )
-        else
-          f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-            & quantityType=l_vmr, molecule=l )
-        end if
+        f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+          & quantityType=l_vmr, molIndex=specie, config=fwdModelConf, &
+          & radiometer=firstSignal%radiometer )
         maxNoFFreqs = max(maxNoFFreqs, f%template%noChans)
         maxNoFSurfs = max(maxNoFSurfs, f%template%noSurfs)
       end if
@@ -676,8 +676,9 @@ contains
           end if
         else
           if ( gl_inds(j-1) > 0) sv_i = sv_i + 1
-          f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_isotoperatio, molecule=l, noError=.TRUE. )
+          f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+              & quantityType=l_isotoperatio, molecule=l, noError=.TRUE., &
+              & config=fwdModelConf )
           if ( associated ( f ) ) beta_ratio = f%values(1,1)
           i = beta_group(sv_i)%n_elements + 1
           beta_group(sv_i)%n_elements   = i
@@ -889,15 +890,9 @@ contains
 
     DO sps_i = 1 , no_mol
 
-      l = fwdModelConf%molecules(mol_cat_index(sps_i))
-      if ( l == l_extinction ) then
-        f => getvectorquantitybytype(fwdmodelin,fwdmodelextra, &
-          &  quantitytype = l_extinction, radiometer = &
-          &  firstsignal%radiometer)
-      else
-        f => getvectorquantitybytype(fwdmodelin,fwdmodelextra, &
-          &  quantitytype = l_vmr, molecule = l)
-      end if
+      f => GetQuantityforForwardModel(fwdmodelin,fwdmodelextra, &
+          &  quantitytype = l_vmr, molIndex=mol_cat_index(sps_i), config=fwdModelConf, &
+          &  radiometer = firstsignal%radiometer )
 
 ! Concatenate vector
 
@@ -2136,13 +2131,13 @@ contains
         chanInd = channel + 1 - channelOrigins(i)
         sigInd = usedSignals(i)
         thisRadiance =>  &
-          GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
+          GetQuantityforForwardModel (fwdModelOut, quantityType=l_radiance, &
           & signal=fwdModelConf%signals(sigInd)%index, &
           & sideband=fwdModelConf%signals(sigInd)%sideband )
         if ( sidebandStart /= sidebandStop ) then   ! We're folding
-          sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+          sidebandRatio => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
             & quantityType=l_sidebandRatio, signal=fwdModelConf%signals(sigInd)%index, &
-            & sideband=thisSideband )
+            & sideband=thisSideband, config=fwdModelConf )
           thisRatio = sidebandRatio%values(chanInd,1)
         else                  ! Otherwise, want just unfolded signal
           thisRatio = 1.0
@@ -2490,6 +2485,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.89  2002/09/10 17:05:38  livesey
+! New update arguments to convolve/noconvole
+!
 ! Revision 2.88  2002/09/07 02:18:50  vsnyder
 ! More cosmetic changes
 !

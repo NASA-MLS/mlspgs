@@ -30,7 +30,8 @@ CONTAINS
     use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
     use MLSNumerics, ONLY: INTERPOLATEVALUES
     use dump_0,only:dump
-    use VectorsModule, only: Vector_T, VectorValue_T, GETVECTORQUANTITYBYTYPE
+    use VectorsModule, only: Vector_T, VectorValue_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use ForwardModelConfig, only: ForwardModelConfig_T
     use Intrinsic, only: L_VMR
     use String_Table, only: GET_STRING
@@ -237,16 +238,11 @@ CONTAINS
       do is = 1, no_mol
 
         jz = mol_cat_indx(is)
-        l = fwmConf%molecules(jz)
-        if ( l == l_extinction ) then
-          f => GetVectorQuantityByType(forwardModelIn, &
-                & quantityType=l_extinction,radiometer = &
-                & radiance%template%radiometer, noError=.TRUE. )
-        else
-          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr,&
-                & molecule=l, noError=.TRUE. )
-        endif
-
+        f => GetQuantityForForwardModel(forwardModelIn, &
+          & quantityType=l_vmr, molIndex=jz, &
+          & radiometer = radiance%template%radiometer, &
+          & noError=.true., config=fwmConf )
+        
         if(.not. associated(f) ) then
           jf = Grids_f%windowfinish(is)-Grids_f%windowStart(is)+1
           k = Grids_f%no_f(is) * Grids_f%no_z(is)
@@ -304,6 +300,9 @@ CONTAINS
 
 END module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 2.15  2002/09/11 17:43:39  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 2.14  2002/09/10 17:05:52  livesey
 ! Added update argument
 !

@@ -30,8 +30,9 @@ module Convolve_All_m
     use Molecules, only: L_EXTINCTION
     use Allocate_Deallocate, only: allocate_test, deallocate_test
     use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelVectorTools, only: GetQuantityForForwardModel
     use Fov_Convolve_m, only: Fov_Convolve
-    use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType
+    use VectorsModule, only: Vector_T, VectorValue_T
     use AntennaPatterns_m, only: AntennaPattern_T
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL
@@ -298,15 +299,10 @@ module Convolve_All_m
     do sps_i = 1, no_mol
 
       jz = mol_cat_index(sps_i)
-      k = FwdMdlConfig%molecules(jz)
-      if ( k == l_extinction ) then
-        f => GetVectorQuantityByType ( FwdMdlIn, quantityType= &
-            l_extinction, radiometer=fwdMdlConfig%signals(1)%radiometer, noError=.true.)
-      else
-        f => GetVectorQuantityByType ( FwdMdlIn, &
-           & quantityType=l_vmr, molecule=k, noError=.true. )
-      end if
-
+      f => GetQuantityForForwardModel ( FwdMdlIn, quantityType=l_vmr,&
+        & molIndex=jz, radiometer=fwdMdlConfig%signals(1)%radiometer, &
+        & noError=.true., config=fwdMdlConfig )
+      
       if ( .not. associated(f) ) then
         jf = Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
         k = Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
@@ -363,6 +359,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.22  2002/09/11 17:43:39  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 2.21  2002/09/10 17:05:45  livesey
 ! Added update argument
 !

@@ -6,9 +6,9 @@ module LOAD_SPS_DATA_M
   use Units, only: Deg2Rad
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
   use ForwardModelIntermediate, only: FORWARDMODELSTATUS_T
+  use ForwardModelVectorTools, only: GetQuantityForForwardModel
   use intrinsic, only: L_VMR, L_NONE, L_PHITAN, L_INTERMEDIATEFREQUENCY
-  use VectorsModule, only: Vector_T, VectorValue_T, GetVectorQuantityByType, &
-                        &  M_FullDerivatives
+  use VectorsModule, only: Vector_T, VectorValue_T, M_FullDerivatives
   use Molecules, only: spec_tags, L_EXTINCTION
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
@@ -166,8 +166,8 @@ contains
     if( present(ext_ind) ) ext_ind = 0
     if( present(h2o_ind) ) h2o_ind = 0
 
-    phitan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_phitan, &
+    phitan => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_phitan, config=fwdModelConf, &
       & instrumentModule=FwdModelConf%signals(1)%instrumentModule )
 
     l_x = l_vmr
@@ -178,14 +178,9 @@ contains
     do ii = 1, no_mol
       kk = FwdModelConf%molecules(mol_cat_index(ii))
       if(present(h2o_ind) .and. spec_tags(kk) == 18003) h2o_ind = ii
-      if ( kk == l_extinction ) then
-        if( present(ext_ind) ) ext_ind = ii
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_extinction, radiometer=radiometer)
-      else
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_x, molecule=kk)
-      endif
+      f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_x, molIndex=mol_cat_index(ii), &
+        & radiometer=radiometer, config=fwdModelConf )
       kz = f%template%noSurfs
       if ( f%template%frequencyCoordinate == l_none ) then
         kf = 1
@@ -233,14 +228,8 @@ contains
     f_len = 1
     do ii = 1, no_mol
       i = mol_cat_index(ii)
-      kk = FwdModelConf%molecules(i)
-      if ( kk == l_extinction ) then
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_extinction, radiometer=radiometer )
-      else
-        f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_x, molecule=kk )
-      endif
+      f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
+        & quantityType=l_x, molIndex=i, radiometer=radiometer, config=fwdModelConf )
       kz = Grids_x%no_z(ii)
       kp = Grids_x%no_p(ii)
       kf = Grids_x%no_f(ii)
@@ -319,6 +308,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.25  2002/09/24 21:37:01  livesey
+! Added min_val stuff
+!
 ! Revision 2.24  2002/09/05 20:48:59  livesey
 ! Added moleculeDerivatives info into deriv_flags
 !
