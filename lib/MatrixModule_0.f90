@@ -24,11 +24,12 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: GetMatrixElement, GetMatrixElement_0, GetVectorFromColumn
   public :: GetVectorFromColumn_0, M_Absent, M_Banded, M_Column_Sparse, M_Full
   public :: MatrixElement_T, MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0
-  public :: MultiplyMatrixBlocks, MultiplyMatrixVector, MultiplyMatrixVector_0
-  public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_0, operator(+)
-  public :: operator(.TX.), RowScale, RowScale_0, ScaleBlock, SolveCholesky
-  public :: SolveCholeskyM_0, SolveCholeskyV_0, Sparsify, UpdateDiagonal
-  public :: UpdateDiagonal_0, UpdateDiagonalVec_0
+  public :: Multiply, MultiplyMatrixBlocks, MultiplyMatrixVector
+  public :: MultiplyMatrixVector_0, MultiplyMatrixVectorNoT
+  public :: MultiplyMatrixVectorNoT_0, operator(+), operator(.TX.), RowScale
+  public :: RowScale_0, ScaleBlock, SolveCholesky, SolveCholeskyM_0
+  public :: SolveCholeskyV_0, Sparsify, UpdateDiagonal, UpdateDiagonal_0
+  public :: UpdateDiagonalVec_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -78,6 +79,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface MinDiag
     module procedure MinDiag_0
+  end interface
+
+  interface Multiply
+    module procedure MultiplyMatrixBlocks, MultiplyMatrixVector_0
   end interface
 
   interface MultiplyMatrixVector ! A^T V
@@ -718,10 +723,12 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyBlock_0
 
   ! ----------------------------------------------  GetDiagonal_0  -----
-  subroutine GetDiagonal_0 ( B, X )
-  ! Get the diagonal elements of B into X
+  subroutine GetDiagonal_0 ( B, X, SquareRoot )
+  ! Get the diagonal elements of B into X.  Return the square root of the
+  ! diagonal elements if SquareRoot is present and true.
     type(MatrixElement_T), intent(in) :: B
     real(r8), dimension(:), intent(out) :: X
+    logical, intent(in), optional :: SquareRoot
 
     integer :: I, J, N
 
@@ -753,6 +760,15 @@ contains ! =====     Public Procedures     =============================
         x(i) = b%values(i,i)
       end do
     end select
+    if ( present(squareRoot) ) then
+      if ( squareRoot ) then
+        do i = 1, n
+          if ( x(i) < 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Negative diagonal element in GetDiagonal_0 and SquareRoot is true" )
+          x(i) = sqrt(x(i))
+        end do
+      end if
+    end if
   end subroutine GetDiagonal_0
 
   ! -----------------------------------------  GetMatrixElement_0  -----
@@ -2057,6 +2073,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.36  2001/06/01 01:03:39  vsnyder
+! Add 'sqrt' option to 'GetDiagonal_0'; add 'Multiply' generic
+!
 ! Revision 2.35  2001/05/30 21:53:16  vsnyder
 ! Finish? 'invert' argument in 'UpdateDiagonalVec_0'
 !
