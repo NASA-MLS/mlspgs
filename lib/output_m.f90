@@ -103,28 +103,24 @@ contains
     end if
   end subroutine OUTPUT_CHAR_ARRAY
 
-  subroutine OUTPUT_DOUBLE ( VALUE, FORMAT, ADVANCE )
+  subroutine OUTPUT_DOUBLE ( VALUE, Format, LogFormat, ADVANCE )
   ! Output "double" to "prunit" using * format, trimmed of insignificant
   ! trailing zeroes, and trimmed of blanks at both ends.
     double precision, intent(in) :: VALUE
-    character(len=*), intent(in), optional :: FORMAT
+    character(len=*), intent(in), optional :: Format  ! How to print
+    character(len=*), intent(in), optional :: LogFormat     ! How to post to Log
     character(len=*), intent(in), optional :: ADVANCE
     integer :: I, J, K
     character(len=30) :: LINE
     character(len=3) :: MY_ADV
+    logical :: char_by_char               ! Build line char by char?
+
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
-    if ( present(format) ) then
-      if ( prunit == -1 .or. prunit < -2 ) &
-        & write ( *, format, advance=my_adv ) value
-      if ( prunit < -1 ) then
-        write ( line, * ) value
-        call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
-          & advance=my_adv )
-      end if
-      if ( prunit >= 0 ) &
-        & write ( prunit, format, advance=my_adv ) value
-    else
+    char_by_char = .not. (present(Format) .and. present(LogFormat))
+
+   ! No optional formats: use default char-by-char accretion
+    if ( char_by_char ) then
       write ( line, * ) value
       if ( scan(line,'123456789') == 0 ) then
         line = '0'
@@ -144,14 +140,42 @@ contains
         line = adjustl(line)
       end if
       k = len_trim(line)
-      if ( prunit == -1 .or. prunit < -2 ) &
-        & write ( *, '(a)', advance=my_adv ) line(:k)
-      if ( prunit < -1 ) &
-        & call MLSMessage ( MLSMSG_Level, ModuleName, line(:k), &
-          & advance=my_adv )
-      if ( prunit >= 0 ) &
-        & write ( prunit, '(a)', advance=my_adv ) line(:k)
+!      if ( prunit == -1 .or. prunit < -2 ) &
+!        & write ( *, '(a)', advance=my_adv ) line(:k)
+!      if ( prunit < -1 ) &
+!        & call MLSMessage ( MLSMSG_Level, ModuleName, line(:k), &
+!          & advance=my_adv )
+!      if ( prunit >= 0 ) &
+!        & write ( prunit, '(a)', advance=my_adv ) line(:k)
+!      return
     end if
+
+   ! Use one or both optional formats
+   if ( present(Format) ) then
+      if ( prunit == -1 .or. prunit < -2 ) then
+        write ( *, Format, advance=my_adv ) value
+      elseif ( prunit >= 0 ) then
+        write ( prunit, Format, advance=my_adv ) value
+      endif
+   else
+      if ( prunit == -1 .or. prunit < -2 ) then
+        write ( *, '(a)', advance=my_adv ) line(:k)
+      elseif ( prunit >= 0 ) then
+        write ( prunit, '(a)', advance=my_adv ) line(:k)
+      endif
+   endif
+
+   if ( prunit >= -1 ) return
+
+   if ( present(LogFormat) ) then
+        write ( line, LogFormat ) value
+        call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
+          & advance=my_adv )
+    else
+        call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
+          & advance=my_adv )
+    endif
+
   end subroutine OUTPUT_DOUBLE
 
   subroutine OUTPUT_INTEGER ( INT, PLACES, ADVANCE, FILL, FORMAT )
@@ -287,6 +311,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.10  2001/05/10 18:22:00  pwagner
+! Added LogFOrmat to output_double
+!
 ! Revision 2.9  2001/05/08 20:27:24  vsnyder
 ! Added an optional 'format' argument in a few more places
 !
