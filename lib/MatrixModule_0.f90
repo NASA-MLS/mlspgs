@@ -18,8 +18,9 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   private
   public :: Add_Matrix_Blocks, Assignment(=), CholeskyFactor
   public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
-  public :: ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, Densify
-  public :: DestroyBlock, DestroyBlock_0, Dump, GetDiagonal, GetDiagonal_0
+  public :: ColumnScale_0, Col_L1, CopyBlock, CreateBlock, CreateBlock_0
+  public :: Densify, DestroyBlock, DestroyBlock_0, Dump
+  public :: GetDiagonal, GetDiagonal_0
   public :: GetMatrixElement, GetMatrixElement_0, GetVectorFromColumn
   public :: GetVectorFromColumn_0, M_Absent, M_Banded, M_Column_Sparse, M_Full
   public :: MatrixElement_T, MaxAbsVal, MaxAbsVal_0, MinDiag, MinDiag_0
@@ -545,6 +546,30 @@ contains ! =====     Public Procedures     =============================
       end do
     end select
   end subroutine ColumnScale_0
+
+  ! -----------------------------------------------------  Col_L1  -----
+  real(r8) function Col_L1 ( X, N )
+  ! Return the L1 norm of column N of X
+    type(MatrixElement_T), intent(in) :: X
+    integer, intent(in) :: N
+    integer :: I
+    col_l1 = 0.0_r8
+    select case ( x%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do i = x%r2(n-1)+1, x%r2(n)
+        col_l1 = col_l1 + abs(x%values(i,1))
+      end do
+    case ( M_Column_Sparse )
+      do i = x%r1(n-1)+1, x%r1(n)
+        col_l1 = col_l1 + abs(x%values(i,1))
+      end do
+    case ( M_Full )
+      do i = 1, x%nrows
+        col_l1 = col_l1 + abs(x%values(i,n))
+      end do
+    end select
+  end function Col_L1
 
   ! --------------------------------------------------  CopyBlock  -----
   subroutine CopyBlock ( Z, X ) ! Destroy Z, deep Z = X, including the values
@@ -1990,6 +2015,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.31  2001/05/22 19:09:13  vsnyder
+! Implement Col_L1
+!
 ! Revision 2.30  2001/05/19 00:13:43  vsnyder
 ! Correct SolveCholesky*_0
 !
