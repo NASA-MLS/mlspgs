@@ -9,8 +9,8 @@ module Regularization
 ! problem for retrieval.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use MatrixModule_0, only: M_Absent, M_Banded, MatrixElement_T
-  use MatrixModule_1, only: Matrix_T
+  use MatrixModule_0, only: M_Absent, M_Banded, MatrixElement_T, CreateBlock
+  use MatrixModule_1, only: Matrix_T, CreateBlock
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
 
@@ -53,11 +53,11 @@ contains
 
     ! The regularization order is never going to be so large that
     ! SBINOM cannot calculate coefficients.
-    interface
-      real function SBINOM ( N, K )
-        integer, intent(in) :: N, K
-      end function SBINOM
-    end interface
+!     interface
+!       real function SBINOM ( N, K )
+!         integer, intent(in) :: N, K
+!       end function SBINOM
+!     end interface
 
     nb = a%col%nb
     if ( a%col%extra ) nb = nb - 1
@@ -123,9 +123,19 @@ contains
       & call createBlock ( a%block(1,a%col%nb), nrow, 1,  m_absent )
   end subroutine Regularize
 
+  real function SBINOM ( N, K )
+    integer, intent(in) :: N, K
+  end function SBINOM
+
 end module Regularization
 
+
+
 ! $Log$
+! Revision 2.2  2001/06/02 16:58:46  livesey
+! Temporary fix to let it compile before Paul has a go.
+! (commented out interface to sbinom and wrote empty routine instead).
+!
 ! Revision 2.1  2001/06/02 01:40:29  vsnyder
 ! Initial commit
 !
