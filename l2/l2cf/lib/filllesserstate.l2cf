@@ -64,6 +64,9 @@ begin Fill
   Fill, quantity=apriori.spaceRadiance, $
     method=explicit, explicitValues=!spaceRadiance
 
+  Fill, quantity=apriori.earthradius, $
+    method=explicit, explicitValues=6370.0km, /spread
+
 ;;  Check with Bill if this is going to be OK for the PEs
 ;   !ifdef(precisionEstimates,{
 ;   ;  O2 and N2 are in the climatology for PEs (vmr not constant in the
@@ -80,7 +83,7 @@ begin Fill
   ;; In some cases (e.g. when computing l2pc files) the l1boa file is
   ;; not the desired source of information
 
-  !ifdef(avoidL1BOA,{
+  !ifdef(flagAvoidL1BOA,{
   ;; ----------------- Avoiding l1boa
 
   Fill, quantity=apriori.orbitInclination, $
@@ -107,6 +110,9 @@ begin Fill
   Fill, quantity=apriori.tngtGeocAltGHz, method=l1b
   Fill, quantity=apriori.tngtGeocAltTHz, method=l1b
 
+  ;; Here we're after LOS velocities.  Newer L1BOA files have this
+  ;; information in them. For older files we have to extract it ourselves
+  !ifdef(flagOldSyleL1BOA, {
   ;; We're after the line of sight velocities here, have to get them
   ;; in a slightly awkward manner.  First get the position of the
   ;; spacecraft and tangent points in ECI coordinates.
@@ -124,7 +130,17 @@ begin Fill
     scECI=apriori.scECI, scVelECI=apriori.scVelECI, method=special
   Fill, quantity=apriori.losVelTHz, tngtECI=apriori.tngtECITHz, $
     scECI=apriori.scECI, scVelECI=apriori.scVelECI, method=special
+  },{
+  ;; Get it from the L1BOA file
+  Fill, quantity=apriori.losVelGHz, method=l1b
+  Fill, quantity=apriori.losVelTHz, method=l1b
   })
+
+  ;; For newer L1BOA files, read the ECRtoFOV rotation matrix,
+  ;; older files don't have this, so I guess we leave it blank.
+  !ifdef(flagOldStyleL1BOA,{},{Fill, quantity=apriori.ECRtoFOV, method=l1b})
+  })
+
 end Fill
 
 

@@ -1,0 +1,57 @@
+; This l2cf fragment is designed to hopefully automate the
+; identification of filenames for the level 2 configuration file.
+
+; There are three possible approaches this can take, these are described
+; below:
+; 
+; When using the toolkit, our control of filenames directories etc. is
+; very limited, as all files have to be accessed through the PCF, which
+; has it's own rather self-centered view of things.
+
+; The method that will I hope be used most of the time interfaces with
+; the mls scf files database and uses that to select files.
+
+; Finally, one can have the m4 macro assemble the file by hand and then
+; look for it in an appropriate path supplied by the user.
+
+; ----------------------------------- Low level stuff
+; This macro takes a full filename, and returns an appropriate
+; string to give the file type.
+!define(GetFileType,{!ifelse(!substr($1,0,8),{MLS-Aura},{!dnl
+!ifelse(!dnl
+!substr($1,9,4),{L2GP},{l2gp},!dnl
+!substr($1,9,5),{L2AUX},{l2aux},!dnl
+!substr($1,9,6),{L1BRAD},{l1brad},!dnl
+!substr($1,9,5),{L1BOA},{l1boa},!dnl
+!substr($1,9,10),{L2Cal-L2PC},{l2pc},!dnl
+!substr($1,9,5),{L2Cal},{l2cal},!dnl
+{!M4Error({This MLS-Aura file has an unrecognized type:}!nl{  $1}!nl)})!dnl
+},{!dnl
+!ifelse(!dnl
+!substr($1,0,3),{DAS},{dao},!dnl
+{!M4Error({This non MLS-Aura file is not recognized:}!nl{  $1}!nl)})})})
+
+; This routine uses this to get the appropriate path.  For l2gp files
+; it tries to be a little clever about where it gets them from.
+!define(GetAppropriatePathForFilename,{!ifelse(!GetFileType($1),{l2gp},{!dnl
+!ifelse(index($1,{--t}),-1,{!inpathcore},{!inpathtruthl2gp})},{!inpath!GetFileType($1)})})
+
+; ------------------------------------- Toolkit based file selection
+; Here, we take the date specific stuff out of the filename.
+!define(LocateMLSFileSDP,{!StripDateFromFilename($1)})
+
+; ------------------------------------- Database free file selection
+; Here, if given a filename, just stick the right path on the front.
+; Otherwise, try to piece it together.
+!define(LocateMLSFileSimple,{!GetAppropriatePathForFilename($1)/$1})
+
+; ------------------------------------- Database file selecion
+!define(LocateMLSFileDatabase,{!dnl
+!TrimLastChar(!esyscmd({locateatgodfile filename=$1}))})
+
+; ---------------------------------------- Choose the right one
+; Now, point the LocateMLSFile macro to the one we really want to use
+; Bring them all together
+!define(LocateMLSFile,!defn(LocateMLSFileDatabase))
+!ifdef(flagUseSDPToolkit,{!define(LocateMLSFile,!defn(LocateMLSFileSDP))})
+!ifdef(flagNoFilesDatabase,{!define(LocateMLSFile,!defn(LocateMLSFileSimple))})

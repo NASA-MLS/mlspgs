@@ -1,12 +1,6 @@
 ; This l2cf segment is useful for constructing `standard' species.
 ; It will make heavy use of m4 to (hopefully) simplify things.
 
-; Define a suffix to allow e.g. ptan to use the correct tmeperature
-; and H2O.  Effectively a `specificQuantities' in l2cf.  Depends on
-; hiRes implying not skipHiRes.  Maybe skipHiRes isn't required---does
-; it just save space?
-!ifelse(!resolution,{hiRes},{!define(res,{_HR})!define(swathRes,{-HR})},{!define(res,{})!define(swathRes,{})})
-
 begin Construct
 
   ;; ----------------------------------------- Macros
@@ -81,55 +75,50 @@ begin Construct
   rhi_HR: Quantity, vGrid=vGridHiRes, hGrid=hGridStandard, type=rhi, $
     molecule=h2o
   
-;; ----------------------------------------- Columns
-
-   ;; pressure marking the tropopause
+  ;; ----------------------------------------- Columns
   tpPressure: Quantity, type=boundaryPressure, hGrid=hGridStandard
   !define(constructColumn,{column_$1: Quantity, type=columnAbundance, $
-    molecule=$1, hGrid=hGridStandard!nl})
-  !define(constructHiResColumn,{column_$1_HR: Quantity, type=columnAbundance, $
     molecule=$1, hGrid=hGridStandard!nl})
 
   !forall( {constructColumn}, !allLinearMolecules )
   !forall( {constructColumn}, !allLogMolecules )
-  !forall( {constructHiResColumn}, !allLinearHRMolecules)
-  !forall( {constructHiResColumn}, !allLogHRMolecules)
   !define(allColumns,
     {!makelist({column_},{},!allLinearMolecules),!makelist({column_},{},!allLogMolecules)})
-  !define(allHiResColumns,
-    {!makelist({column_},{},!allHiResMolecules)})
 
-
-;; ----------------------------------------- Cloud Input
+  ;; ----------------------------------------- Cloud Input
   IWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudIce
   PSD:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = sizeDistribution
   LWC:  Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type = CloudWater
-  earthradius:     Quantity, hGrid=hGridStandard, type = earthradius
-  surfaceType:     Quantity, hGrid=hGridStandard, type = surfaceType
+  earthradius: Quantity, hGrid=hGridStandard, type = earthradius
+  surfaceType: Quantity, hGrid=hGridStandard, type = surfaceType
 
-;; ----------------------------------------- Cloud Output
+  ;; ----------------------------------------- Cloud Output
   trans:   Quantity, type=  losTransFunc,   Sgrid=sGridStandard, module=GHz
   cext:    Quantity, vGrid= vGridIWC, hGrid=hGridStandard, type = cloudExtinction
 
-;; Folded radiance-like quantities for cloud models
+  ;; Folded radiance-like quantities for cloud models
+  !define(constructDT,{DTband$1: Quantity, $
+    type=cloudInducedRadiance, signal=!signal($1)!nl})
+  !forall(constructDT,!allBands)
+  !define(constructSENS,{SENSband$1: Quantity, $
+    type=cloudRADSensitivity, signal=!signal($1)!nl})
+  !forall(constructSENS,!allBands)
+  !define(constructEOD,{EODband$1: Quantity, $
+    type=effectiveOpticalDepth, signal=!signal($1)!nl})
+  !forall(constructEOD,!allBands)
 
-  !define(constructRadiance,{DTband$1: Quantity, type=cloudInducedRadiance, signal=!signal($1)!nl})
-  !forall(constructRadiance,!allBands)
-  !define(constructRadiance,{SENSband$1: Quantity, type=cloudRADSensitivity, signal=!signal($1)!nl})
-  !forall(constructRadiance,!allBands)
-  !define(constructRadiance,{EODband$1: Quantity, type=effectiveOpticalDepth, signal=!signal($1)!nl})
-  !forall(constructRadiance,!allBands)
-
-  massMeanDiameterIce:   Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
-                                 type = massMeanDiameterIce
+  massMeanDiameterIce: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
+    type = massMeanDiameterIce
   massMeanDiameterWater: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, $
-                                 type = massMeanDiameterWater
+    type = massMeanDiameterWater
 
-  ; cldRad in l2gp format for quality flag uses
-  cldRadMin: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
-  cldRadMax: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
-;; ----------------------------------------- Baselines
-  
+  ;; cldRad in l2gp format for quality flag uses
+  !define(constructCloudMinMax,{!dnl
+  cloudRadMin$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature
+  cloudRadMax$1: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=temperature!nl})
+  !forall(constructCloudMinMax,2,10,33)
+
+  ;; ----------------------------------------- Baselines
   !define(constructBaseline,{baseline$1: Quantity, type=baseline, $
     radiometer=$1, hGrid=hGridStandard, vGrid=vGridBaseline, $
     fGrid=fGridBaseline$1!nl})
@@ -254,19 +243,26 @@ begin Construct
 
   !define(constructChisqMMAF, {chisqMMAF$1: Quantity, $
     type=chisqMMAF, signal=!signal($1)!nl})
+  !forall(constructChisqMMAF,!allBands)
   !define(constructChisqMMIF, {chisqMMIF$1: Quantity, $
     type=chisqMMIF, signal=!signal($1)!nl})
+  !forall(constructChisqMMIF,!allBands)
   !define(constructChisqChan, {chisqChan$1: Quantity, $
     type=chisqChan, signal=!signal($1)!nl})
-  !forall(constructChisqMMAF,!allBands)
-  !forall(constructChisqMMIF,!allBands)
   !forall(constructChisqChan,!allBands)
 
-  ;; All
   !define(allChisqMMAFs,{!makelist({chisqMMAF},{},!allBands)})
   !define(allChisqMMIFs,{!makelist({chisqMMIF},{},!allBands)})
   !define(allChisqChans,{!makelist({chisqChan},{},!allBands)})
-  !define(allRadianceChisqs,{!allChisqMMAFs, !allChisqMMIFs, !allChisqChans})
+  ;; ----------------------------------------- Binned chi squares
+  !define(constructBinnedChiSq, {chisqBinned$1: Quantity, $
+    type=chisqBinned, signal=!signal($1), vGrid=vGridStandard, $
+    hGrid=hGridStandard!nl})
+  !forall(constructBinnedChiSq,!allBands)
+
+  !define(allChisqBinned,{!makelist({chisqBinned},{},!allBands)})
+
+  !define(allRadianceChisqs,{!allChisqMMAFs, !allChisqMMIFs, !allChisqChans, !allChisqBinned})
 
   ;; ----------------------------------------- Scan residuals
 
@@ -320,14 +316,15 @@ begin Construct
   ;; running this with NAG.
   stateTemplate: VectorTemplate, quantities = [ $
     ptanGHZ, ptanTHz, phitanGHz, phitanTHz, $
-    temperature, !ifdef(skipHiRes,{},{temperature_HR,}) $
-    refGPH, GPH, !ifdef(skipHiRes,{},{GPH_HR,}) $
+    temperature, temperature_HR, $
+    refGPH, GPH, GPH_HR, $
     tpPressure, $
-    cldRadMin, cldRadMax, $
-    !allMolecules, tropH2O, !ifdef(skipHiRes,{},{tropH2O_HR,})$
-    !ifdef(skipHiRes,{},{!allHiResMolecules,}) $
-    rhi, !ifdef(skipHiRes,{},{rhi_HR,}) $
-    !allColumns,  !ifdef(skipHiRes,{},{!allHiResColumns,}) $
+    iwc, lwc, surfaceType, psd, earthRadius, $
+    trans, cext, $
+    !allMolecules, tropH2O, tropH2O_HR, $
+    !allHiResMolecules, $
+    rhi, rhi_HR, $
+    !allColumns, $
     !allBaselines, $
     !allExtinctions, $
     !allIsotopeRatios, $

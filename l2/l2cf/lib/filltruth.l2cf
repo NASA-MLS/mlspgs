@@ -37,15 +37,13 @@ begin Fill
 
   ;; --------------------------------------------- hiRes Fills
 
-  !define(fillWithL2GPHR,{Fill, quantity=truth.$1, method=l2gp, $
-    sourceL2GP={l2gpTruth}!trimHR($1){Input},/interpolate!nl})
-  !ifdef(skipHiRes,{},{
-    !fillWithL2GPHR(Temperature_HR)
-    !forall(fillWithL2GPHR,!allHiResMolecules)
-    ;; Get RHI_HR from RHI_HR.  Probably more accurate ways to do it.
-    ;; However, RHI is not an important input to e.g. sids.
-    !interpolateToHiRes(truth.RHI_HR)
-  })
+;   !define(fillWithL2GPHR,{Fill, quantity=truth.$1, method=l2gp, $
+;     sourceL2GP={l2gpTruth}!trimHR($1){Input},/interpolate!nl})
+;   !fillWithL2GPHR(Temperature_HR)
+;   !forall(fillWithL2GPHR,!allHiResMolecules)
+;     ;; Get RHI_HR from RHI_HR.  Probably more accurate ways to do it.
+;     ;; However, RHI is not an important input to e.g. sids.
+;     !interpolateToHiRes(truth.RHI_HR)
 
   ;; --------------------------------------------- trop H2O
 
@@ -60,52 +58,46 @@ begin Fill
   ;; Compute non refracted phitans for truth
   Fill, quantity=truth.phiTanGHz, method=refract, $
     ptanQuantity=truth.ptanGHz, $
-    h2oQuantity=truth.h2o!res, $
-    temperatureQuantity=truth.temperature!res, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
     refract=false
   Fill, quantity=truth.phiTanTHz, method=refract, $
     ptanQuantity=truth.ptanTHz, $
-    h2oQuantity=truth.h2o!res, $
-    temperatureQuantity=truth.temperature!res, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
     refract=false
 
-  !ifdef(skipHydrostatic,{},{
+  !ifdef(flagSkipHydrostatic,{},{
   ;; Get full gph profile
   Fill, quantity=truth.gph, method=hydrostatic, $
     temperatureQuantity=truth.temperature, $
     refGPHquantity=truth.refGPH
-  !ifdef(skipHiRes,{},{
-  Fill, quantity=truth.gph_HR, method=hydrostatic, $
-    temperatureQuantity=truth.temperature_HR, $
-    refGPHquantity=truth.refGPH
-  })
+;   Fill, quantity=truth.gph_HR, method=hydrostatic, $
+;     temperatureQuantity=truth.temperature_HR, $
+;     refGPHquantity=truth.refGPH
   ;; Now deduce a corresponding ptan for this using hydrostatic
   ;; balance.
   Fill, quantity=truth.ptanGHz, method=hydrostatic, $
-    h2oQuantity=truth.h2o!res, $
-    temperatureQuantity=truth.temperature!res, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
     refGPHQuantity=truth.refGPH, $
     geocAltitudeQuantity=truth.tngtGeocAltGHz, $
     orbitInclination=truth.orbitInclination, $
     phiTan=truth.phiTanGHz, $
     maxIterations=20, $
-    !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
 
   Fill, quantity=truth.ptanTHz, method=hydrostatic, $
-    h2oQuantity=truth.h2o!res, $
-    temperatureQuantity=truth.temperature!res, $
+    h2oQuantity=truth.h2o, $
+    temperatureQuantity=truth.temperature, $
     refGPHQuantity=truth.refGPH, $
     geocAltitudeQuantity=truth.tngtGeocAltTHz, $
     orbitInclination=truth.orbitInclination, $
     phiTan=truth.phiTanTHz, $
     maxIterations=20, $
-    !ifdef(strict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
+    !ifdef(flagStrict1D,{phiWindow=0 profiles},{phiWindow=4 degrees})
 
   })
-
-  ;; Do the magnetic field
-  Fill, quantity=truth.magneticField, method=magneticModel, $
-    GPHquantity=truth.gph
 
 end Fill
 

@@ -1,12 +1,24 @@
 ; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 ; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 ;
 ; This Level 2 Configuration File (l2cf) has been automatically
 ; generated using the GNU m4 macro preprocessor.  While it is
 ; perfectly allowable to edit this file directly, it will probably
 ; be more efficient to edit the `source' files that went into m4.
-; ----------------------------------------------------------------
 ;
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+; NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+; ----------------------------------------------------------------
+
+
+; --------------------------- Changing m4 syntax etc.
+
 ; These are the m4 definitions for l2cf's
 ; Change the quotes to braces
 changequote({,})
@@ -16,54 +28,79 @@ changesyntax({@!})
 !changecom(;)
 ; Make _ not a possible part of m4 names
 !changesyntax({O_})
+
+; --------------------------- Low level macros for loops etc.
+
 ; Define a very simple for loop prototcol
 ; Increment $1 from $2 to $3, doing $4
 !define({forloop},
   {!pushdef({$1}, {$2})!forloopint({$1}, {$2}, {$3}, {$4})!popdef({$1})})
 !define(forloopint,{!ifelse(!eval(!$1<={$3}),1,{$4{}!ifelse(!$1, {$3}, ,
     {!define({$1}, !incr(!$1))!forloopint({$1}, {$2}, {$3}, {$4})})},{})})
-; ------------------------------------------------------------------
-; This next bit commented out as never really made use of it
-; Redefine include to do fancy stuff for error checking.
-; !undefine({include})
-; !define(include,{
-; {;}@0 $1
-; !builtin(include,$1)
-; {;}@!builtin(__line__) !builtin(__file__)}
-; )
-; ------------------------------------------------------------------
-; Define a year function that just returns the first four digits of day.
-!define(year,{!substr(}$1{,0,4)})
-!define(doy,{!substr(}$1{,5,3)})
-; A macro that removes the last character from another.  This is
-; mainly to deal with the output of esyscmd
-!define(TrimNL, {!substr($1,0,!eval(!len($1)-1))})
-; This one is similar and deletes the first and last characters
+
+; This macro calls the macro that is its first argument many times,
+; once for each successive argument, with that argument being an
+; argument to the macro
+!define({forall},{!$1($2)!ifelse($#,2,{},{!forall}($1,!shift(!shift($@))))})
+
+; This macro makes a list separated by commas.  The items in the last
+; are arguments 3 onwards, prefixed with argument 1, and postfixed
+; with arguemtn 2.
+!define({makelist},{$1$3$2!ifelse($#,3,{},{, !makelist}($1,$2,!shift(!shift(!shift($@)))))})
+
+; ------------------------------- Macros for string manipulation
+
+; This macro trims the last character (often a newline) off it's
+; argument
+!define(TrimLastChar, {!substr($1,0,!eval(!len($1)-1))})
+
+; This macro is similar but trims the first and last character off,
 ; typically quotes.
-!define(TrimQ, {!substr($1,1,!eval(!len($1)-3))})
-; I'm really not sure why the last argument there is -3 not -2, but -2
-; is the one that works!
-; This is just a newline designed to simplify foralls
+!define(TrimFirstLastChar, {!substr($1,1,!eval(!len($1)-3))})
+
+; This is just a newline. It is mainly used in macros that are destined
+; to be called by forall macros.
 !define(nl,{
 })
-; The users home directory, should we need it.
-!define(home,!TrimNL(!esyscmd({echo $HOME})))
-; Define a macro that calls the macro being its first argument, with
-; each sucessive argument
-!define({forall},{!$1($2)!ifelse($#,2,{},{!forall}($1,!shift(!shift($@))))})
-!define({makelist},{$1$3$2!ifelse($#,3,{},{, !makelist}($1,$2,!shift(!shift(!shift($@)))))})
-; This macro takes a prefix as $1 (which can be blank), and a set of
-; arguments $2,$3.. of the form parameter=value, and defines the macros
-; (prefix)parameter=value for each such argument.
-; One would typically call it within another macro, in the form of a
-; prefix name, followed by $@.
-!define(getpar,{!translit(!substr($1,0,!index($1,{=})),{A-Z},{a-z})})
-; Note this lowercases all the parameters, though not the prefix
-!define(getval,{!substr($1,!incr(!index($1,{=})))})
-!define(processparval,{!dnl
-  !ifelse($2,{},{},{!dnl
-    !define($1!getpar($2),!getval($2))!dnl
-    !processparval($1,!shift(!shift($@)))})})
-; A quick macro to trim _HR of strings
-!define(trimHR,{!substr($1,0,!eval(!len($1)-3))})
 
+; This macro downcases its arguments
+!define(Downcase,{!translit($1,{A-Z},{a-z})})
+
+; This macro trims the last 3 characters from the string (_HR probably)
+!define(TrimLast3,{!substr($1,0,!eval(!len($1)-3))})
+
+; ----------------------------------------- Date etc. manipulation tools
+
+; Define a macro that just returns the first four digits of CCSDSb date.
+!define(year,{!substr(}$1{,0,4)})
+
+; This one returns the last three digits of a CCSDSb date.
+!define(doy,{!substr(}$1{,5,3)})
+
+; ---------------------------------------- Parameter=value macros
+
+; This set of macros allows us to write other macros which take
+; arguments of the form 'parameter=value'.  The first two are low level
+; macros.  The main one is ProcessParVal.  One invokes this as the first
+; thing in a macro that uses this facility, with a prefix (which may be
+; empty) followed by $@.  The ProcessParVal will then define a set of
+; macros of the form (prefix)parameter with the appropriate values.
+; Note that the 'parameter' names are all converted to lowercase
+; (excluding the prefix which is left alone).
+
+; This low level macro extracts a (lower case) parameter name
+!define(GetParameter,{!Downcase(!substr($1,0,!index($1,{=})))})
+; This macro extracts a parameter value
+!define(GetValue,{!substr($1,!incr(!index($1,{=})))})
+; This is the high level macro described above
+!define(ProcessParVal,{!ifelse($2,{},{},{!dnl
+!define($1!GetParameter($2),!GetValue($2))!dnl
+!ProcessParVal($1,!shift(!shift($@)))})})
+
+; ------------------------------------------------ Other low level
+;                                                  macros
+
+!define(home,!TrimLastChar(!esyscmd({echo $HOME})))
+
+!define(comment,{!ifelse($1)})
+!define(M4Error,{!errprint({M4-Error:},$*)!m4exit(1)})
