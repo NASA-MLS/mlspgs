@@ -731,7 +731,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mask, t+t_masks, n+n_field_type, &
              begin, f+f_opticalDepth, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type
+             begin, f+f_opticalDepthCutoff, t+t_numeric, n+n_field_type, &
              begin, f+f_reset, t+t_boolean, n+n_field_type, ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
@@ -920,6 +920,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.265  2003/01/07 23:58:33  livesey
+! Typo!
+!
 ! Revision 2.264  2003/01/07 23:58:15  livesey
 ! Bug fix
 !
