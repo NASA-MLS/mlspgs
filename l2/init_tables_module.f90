@@ -58,7 +58,7 @@ module INIT_TABLES_MODULE
   integer, public :: DATA_TYPE_INDICES(t_first:t_last)
 ! Field indices:
   integer, public, parameter :: F_APRIORI             = 1
-  integer, public, parameter :: F_APRIORISCALE        = F_APRIORI + 1
+  integer, public, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, public, parameter :: F_AUTOFILL            = f_aprioriScale + 1
   integer, public, parameter :: F_BAND                = f_autofill + 1
   integer, public, parameter :: F_CHANNEL             = f_band + 1
@@ -529,7 +529,7 @@ contains ! =====     Public procedures     =============================
     ! The n_field_spec subtree indicates the specifications whose names
     ! are allowed to appear for a field.
     ! The n_dot subtree indicates that the field given by the first
-    ! f_field_name  is required to be of the form spec_name.field_name,
+    ! f_field_name is required to be of the form spec_name.field_name,
     ! where spec_name is required to be a label of a specification of the
     ! type given by the s_spec son, and field_name is required to be
     ! present in the field given by the last f_field_name, which is
@@ -586,7 +586,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
              begin, f+f_values, n+n_field_type, &
-             np+n_spec_def /) )
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_merge, &  ! Must be AFTER S_Climatology
              begin, f+f_apriori, s+s_climatology, n+n_field_spec, &
@@ -807,6 +807,10 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.14  2001/02/08 01:52:43  vsnyder
+! Provide for noDuplicates, allFields and noPositional checking.
+! Turn on "no duplicates" and "noPositional" checking for several specs.
+!
 ! Revision 2.13  2001/02/06 23:29:31  vsnyder
 ! Periodic commit
 !
