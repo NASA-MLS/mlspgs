@@ -12,7 +12,8 @@ module ForwardModelSupport
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
   use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
-    & F_CLOUD_DER, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, F_FRQGAP, &
+    & F_CLOUD_DER, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
+    & F_FREQUENCY, F_FRQGAP, &
     & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
     & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE, &
     & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, &
@@ -229,6 +230,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Set sensible defaults
     info%do_conv = .false.
+    info%do_baseline = .false.
     info%do_freq_avg = .false.
     info%temp_der = .false.
     info%atmos_der = .false.
@@ -268,6 +270,8 @@ contains ! =====     Public Procedures     =============================
         info%cloud_der = nint( value(1) )
       case ( f_do_conv )
         info%do_conv = get_boolean(son)
+      case ( f_do_baseline )
+        info%do_baseline = get_boolean(son)
       case ( f_do_freq_avg )
         info%do_freq_avg = get_boolean(son)
       case ( f_skipOverlaps )
@@ -402,7 +406,7 @@ contains ! =====     Public Procedures     =============================
       !????
     case ( l_scan )
       ! Add 1d/2d method later probably !??? NJL
-      if ( any(got( (/f_atmos_der, f_channels, f_do_conv, &
+      if ( any(got( (/f_atmos_der, f_channels, f_do_conv, f_do_baseline, &
         & f_do_freq_avg, f_frequency, f_molecules, f_moleculeDerivatives, &
         & f_signals, f_spect_der, f_temp_der /) )) ) &
         & call AnnounceError ( IrrelevantFwmParameter, root )
@@ -469,6 +473,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.13  2001/10/02 20:34:50  livesey
+! Added do_baseline stuff
+!
 ! Revision 2.12  2001/09/04 15:58:02  jonathan
 ! add cloud_fov, jonathan
 !
