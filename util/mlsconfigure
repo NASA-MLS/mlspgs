@@ -1,0 +1,246 @@
+#/bin/sh
+#                 mlsconfigure    configures the mls for compiler, platform
+#
+#
+# Called for either or both of two purposes:
+# (1) Query user for compiler and platform; these get written to .configure
+#     (not done if called with -nc option)
+# (2) Create a new directory ./$MLSCONFG in parallel with ./platforms; then
+#     put Makefile in it created from appropriate 2 files in platforms;
+#     *.o, *.mod, etc. files will go in this new directory
+#     (not done if ./platforms directory fails to exist)
+#
+# "$Id$"
+
+# Function to prompt for user response
+#
+
+UserPrompt()
+{
+    if [ "$BRAND" = "linux" ] ; then
+	/bin/echo -n "$* " > /dev/tty
+    else
+	echo "$* \\c" > /dev/tty
+    fi
+    read user_response
+}
+GetPlatform()
+{
+        more << EOF
+                    *        *        *
+
+The mls software requires that you configure it by responding to two
+questions; currently your platform and compiler are given by:
+
+        platform: $current_platform
+        compiler: $current_compiler
+
+If these settings are wrong, or you wish to change them in order to
+prepare multiple installations at your site, you will be given an
+opportunity to (re)set them momentarily.
+
+If your compiler or platform is not among the options to be presented,
+you may wish to try one of the options anyway, or else contact:
+
+	mls software team
+	jpl
+	David.T.Cuddy@jpl.nasa.gov
+	(818)354-2099
+
+and be prepared to give them the names of your compiler and platform.
+
+                    *        *        *
+
+Note that you must have a Fortran 95 or later compiler, and that you
+must first have installed the SDP Toolkit for the ECS Project. The
+latter, as well as useful documentation, may be obtained from the
+management of the EOSDIS Core System Data Handling System. At the time
+this configuration was being written, the URL for them was
+	http://edhs1.gsfc.nasa.gov/
+EOF
+
+#accept user settings and write them to file .configure
+
+ UserPrompt "Fortran 95 Compiler (Lahey, NAG) [$current_compiler]"
+   if [ "$user_response" != "" ] ; then
+	case  "$user_response" in
+	    n* | N* )
+		echo "NAG compiler selected."
+		compiler=NAG
+	    ;;
+	    l* | L* )
+		echo "Lahey compiler selected."
+		compiler=LF95
+	    ;;
+	    * )
+		echo "Unknown compiler selected."
+		compiler=Unknown
+	    ;;
+	esac
+   elif [ "$current_compiler" != "" ] ; then
+	echo "Compiler still $current_compiler."
+        compiler=$current_compiler
+   else
+	echo "Unknown compiler selected."
+	compiler=Unknown
+    fi
+
+ UserPrompt "Platform (Linux, Sun, SGI) [$current_platform]"
+   if [ "$user_response" != "" ] ; then
+	case  "$user_response" in
+	    su* | Su* | SU*)
+		echo "Sun platform selected."
+		platform=Sun
+	    ;;
+	    sg* | Sg* | SG* )
+		echo "SGI platform selected."
+		platform=SGI
+	    ;;
+	    l* | L* )
+		echo "Linux platform selected."
+		platform=Linux
+	    ;;
+	    * )
+		echo "No platform selected."
+		platform=None
+	    ;;
+	esac
+   elif [ "$current_platform" != "" ] ; then
+	echo "Platform still $current_platform."
+        platform=$current_platform
+   else
+	echo "No platform selected."
+	platform=None
+   fi
+
+#export platform
+#export compiler
+}
+
+#
+# Function to output help message and exit
+#
+
+Help()
+{
+
+#No help available yet
+    exit
+}
+
+#****************************************************************
+#                                                               *
+#                  * * * Main Program  * * *                    *
+#                                                               *
+#****************************************************************
+
+#
+# Get arguments from command line
+#
+
+#conf_dir   the directory where the .configure file is to be stored
+#plat_dir   the directory to keep the platforms subdirectories
+#get_confg  true if user queried about configuration; false if use input values
+conf_dir="./"
+plat_dir="./"
+get_confg="true"
+
+while [ "$1" != "" ] ; do
+
+    case "$1" in
+
+	-h | -help )
+	    Help
+	;;
+
+	-c )
+	    current_compiler=$2
+	    shift
+	;;
+
+	-p )
+	    current_platform=$2
+	    shift
+	;;
+
+	-dc )
+	    conf_dir=$2
+	    shift
+	;;
+
+	-pc )
+	    plat_dir=$2
+	    shift
+	;;
+
+	-nc )
+	    get_confg="false"
+	;;
+
+    esac
+    shift
+
+done
+
+if [ $get_confg = "true" ] ; then
+	GetPlatform
+#	Create .configure file
+	if [ -f $conf_dir/.configure ] ; then
+		chmod u+w $conf_dir/.configure
+		rm -f $conf_dir/.configure
+	fi
+
+	echo "#	.configure for mls" > $conf_dir/.configure
+	echo "MLSF95=$compiler" >> $conf_dir/.configure
+	echo "MLSPLAT=$platform" >> $conf_dir/.configure
+	echo "MLSCONFG=$compiler.$platform" >> $conf_dir/.configure
+	echo "export MLSF95" >> $conf_dir/.configure
+	echo "export MLSPLAT" >> $conf_dir/.configure
+	echo "export MLSCONFG" >> $conf_dir/.configure
+else
+#	just re-use current settings
+	compiler=$current_compiler
+	platform=$current_platform
+fi
+
+MLSF95=$compiler
+MLSPLAT=$platform
+MLSCONFG=$compiler.$platform
+
+#Don't create object-file directory if platforms not a directory
+if [ ! -d $plat_dir/platforms ] ; then
+	exit
+fi
+
+#Create object-file directory for this MLSCONFG
+if [ -d $plat_dir/$MLSCONFG ] ; then
+	rm -f $plat_dir/$MLSCONFG/*.o
+	rm -f $plat_dir/$MLSCONFG/*.mod
+	rm -f $plat_dir/$MLSCONFG/Makefile
+else
+        mkdir $plat_dir/$MLSCONFG
+fi
+
+if [ ! -f $plat_dir/platforms/$MLSCONFG ] ; then
+	echo "File $MLSCONFG not found in $plat_dir/platforms"
+	exit
+fi
+
+if [ ! -f $plat_dir/platforms/targets ] ; then
+	echo "File targets not found in $plat_dir/platforms"
+	exit
+fi
+
+cat $plat_dir/platforms/$MLSCONFG $plat_dir/platforms/targets > $plat_dir/$MLSCONFG/Makefile
+
+echo "Configured mls to use $plat_dir/platforms/$MLSCONFG "
+echo "(This is where your object files, .mod files, libraries,"
+echo "and executable programs will be created)"
+echo "To build the software, enter the 'make' command again"
+echo ""
+echo "If you later wish to rebuild for a different compiler"
+echo "or platform, enter 'make configure'"
+
+exit
+# $Log$
+
