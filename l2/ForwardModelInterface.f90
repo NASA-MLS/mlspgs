@@ -475,11 +475,13 @@ contains
     real(r8), dimension(:), pointer :: E_RAD=>NULL() ! Effective earth radius at maf (km)
     real(r4), dimension(:), pointer :: TOAVG=>NULL()   ! Stuff to be passed to frq.avg.
     real(r8), dimension(:), pointer :: FREQUENCIES=>NULL() ! Frequency points
-    real(r8), dimension(:,:,:), allocatable :: DH_DT_PATH  ! (pathSize, Tsurfs, Tinstance)
+    real(r8), dimension(:,:,:), pointer :: DH_DT_PATH=>NULL()  ! (pathSize, Tsurfs, Tinstance)
     real(r8), dimension(:,:), pointer :: DX_DT=>NULL() ! (Nptg, Tsurfs)
     real(r8), dimension(:,:), pointer :: D2X_DXDT=>NULL() ! (Nptg, Tsurfs)
 
     integer, pointer, dimension(:) :: GRIDS=>NULL()    ! Frq grid for each tan_press
+
+    logical :: FOUNDINFIRST             ! Flag to indicate derivatives
 
     type(path_index), allocatable, dimension(:,:) :: NDX_PATH ! (Nptg,mnm)
 
@@ -579,7 +581,7 @@ contains
 !
 ! *** DEBUG
     ForwardModelConfig%temp_der = .true.
-!   ForwardModelConfig%atmos_der = .true.
+    ForwardModelConfig%atmos_der = .true.
 !   do j = 1, noSpecies
 !     forwardModelConfig%moleculeDerivatives(j) = .true.
 !   end do
@@ -722,8 +724,8 @@ contains
 
     ! ---------------------------- Begin main Major Frame loop --------
 
- !  do maf = 3, 3
-    do maf = 1, noMAFs
+    do maf = 3, 3
+    !do maf = 1, noMAFs
       print*,'Doing maf:',maf
 
  ! Compute the specie function (spsfunc) and the refraction along
@@ -829,7 +831,6 @@ contains
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
-        print*,'Pointing:',ptg_i
         k = ptg_i
         h_tan = tan_hts(k,maf)
 
@@ -859,10 +860,11 @@ contains
 !
 !  Define the dh_dt_path for this pointing and this MAF:
 !
+        ! Need to allocate this even if no derivatives as we pass it
+        ALLOCATE(dh_dt_path(no_ele,temp%template%noInstances, &
+          & temp%template%noSurfs),STAT=ier)
+
         if ( forwardModelConfig%temp_der ) then
-          DEALLOCATE(dum,dh_dt_path,STAT=i)
-          ALLOCATE(dh_dt_path(no_ele,temp%template%noInstances, &
-                 & temp%template%noSurfs),STAT=ier)
           if(ier == 0) ALLOCATE(dum(no_ele),STAT=ier)
           IF(ier /= 0) then
             Print *,'** ALLOCATE Error: dum or dh_dt_path, STAT =',ier
@@ -878,15 +880,12 @@ contains
             DEALLOCATE(dum,STAT=i)
           endif
         end if
-!
-        print*,'Frequencies:',frequencies
+
 
 ! ------------------------------- Begin loop over frequencies ------
         do frq_i = 1, noFreqs
 
           Frq = frequencies(frq_i)
-
-          print*,'Calling rad tran'
 
           Call Rad_Tran(elvar(maf), Frq, &
              & forwardModelConfig%integrationGrid%noSurfs, h_tan, &
@@ -899,20 +898,18 @@ contains
 
           RadV(frq_i) = Rad
 
-          print*,'Calling rad tran wd'
-
 ! Now, Compute the radiance derivatives:
 
-          k_temp_frq%values=0.0_r8
+          if (ForwardModelConfig%temp_der) k_temp_frq%values=0.0_r8
           Call Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
-         &     elvar(maf),frq_i,FMI%band,Frq,noSpecies,z_path(k,maf), &
-         &     h_path(k,maf),t_path(k,maf),phi_path(k,maf),dHdz_path(k,maf),&
-         &     beta_path(:,frq_i),spsfunc_path(:,k),temp%template%surfs(:,1),&
-         &     temp%template%noSurfs,ref_corr(:,k),temp%template%noInstances,&
-         &     temp%template%phi(1,:)*Deg2Rad,dh_dt_path,FMI%spect_atmos,&
-         &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq, &
-         &     k_spect_dn_frq,k_spect_dnu_frq,brkpt,no_ele,mid,ilo,ihi, &
-         &     t_script,tau,max_zeta_dim,max_phi_dim,ier)
+            &     elvar(maf),frq_i,FMI%band,Frq,noSpecies,z_path(k,maf), &
+            &     h_path(k,maf),t_path(k,maf),phi_path(k,maf),dHdz_path(k,maf),&
+            &     beta_path(:,frq_i),spsfunc_path(:,k),temp%template%surfs(:,1),&
+            &     temp%template%noSurfs,ref_corr(:,k),temp%template%noInstances,&
+            &     temp%template%phi(1,:)*Deg2Rad,dh_dt_path,FMI%spect_atmos,&
+            &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq, &
+            &     k_spect_dn_frq,k_spect_dnu_frq,brkpt,no_ele,mid,ilo,ihi, &
+            &     t_script,tau,max_zeta_dim,max_phi_dim,ier)
           IF(ier /= 0) goto 99
 
         end do                          ! Frequency loop
@@ -1049,6 +1046,10 @@ contains
 !           end do
 !        endif
 
+        deallocate (dh_dt_path, STAT=status)
+        if (status /= 0) call MLSMessage(MLSMSG_Error,ModuleName, &
+          & MLSMSG_Deallocate//'dh_dt_path')
+
       end do                            ! Pointing Loop
       ! ---------------------------------- End of Pointing Loop ---------------
 
@@ -1066,9 +1067,10 @@ contains
         if(ForwardModelConfig%atmos_der) then
           do m = 1, noSpecies
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m))
+              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(m), &
+              & foundInFirst=foundInFirst )
 
-            if(TFMI%atmospheric(m)%der_calc(FMI%band)) then
+            if ( foundInFirst ) then
               k = f%template%noInstances
               n = f%template%noSurfs
               k_atmos(i,no_tan_hts,1:n,1:k,m)=k_atmos(i,no_tan_hts-1,1:n,1:k,m)
@@ -1104,19 +1106,17 @@ contains
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
-          call convolve_all(ptan%values(:,maf),TFMI%atmospheric, &
-            &     noSpecies,ForwardModelConfig%temp_der, &
-            &     ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der,&
+          call convolve_all(forwardModelConfig, fwdModelIn, &
+            &     ptan%values(:,maf), noSpecies, &
             &     ForwardModelConfig%tangentGrid%surfs,ptg_angles,&
-            &     tan_temp(:,maf),dx_dt, d2x_dxdt,FMI%band,si,center_angle,&
+            &     tan_temp(:,maf),dx_dt, d2x_dxdt,si,center_angle,&
             &     FMI%fft_pts,Radiances(:,ch),k_temp(i,:,:,:), &
-            &     k_atmos(i,:,:,:,:),k_spect_dw(i,:,:,:,:), &
-            &     k_spect_dn(i,:,:,:,:),k_spect_dnu(i,:,:,:,:),&
-            &     FMI%spect_atmos,no_tan_hts,k_info_count,&
+            &     k_atmos(i,:,:,:,:), &
+            &     no_tan_hts,k_info_count,&
             &     i_star_all(i,:),k_star_all(i,:,:,:,:),k_star_info,&
             &     temp%template%noSurfs,temp%template%noInstances,&
-            &     TFMI%no_phi_f,FMI%spectroscopic,temp%template%surfs(:,1),&
-            &     AntennaPatterns(1),FMI%Ias,ier)
+            &     temp%template%surfs(:,1),&
+            &     AntennaPatterns(1),ier)
 !??? Need to choose some index other than 1 for AntennaPatterns ???
           if(ier /= 0) goto 99
         else
@@ -1276,7 +1276,7 @@ contains
     call deallocate_test(e_rad, 'e_rad', ModuleName)
 
 ! ** DEBUG, Zvi
-    if(i > -22) Stop
+!    if(i > -22) Stop
 ! ** END DEBUG
 
     Return
@@ -1325,6 +1325,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.74  2001/04/10 01:16:10  livesey
+! Another interim version.
+!
 ! Revision 2.73  2001/04/09 22:21:41  livesey
 ! An interim version, derivatives get right numbers.
 !
