@@ -105,10 +105,11 @@ contains
 	b=(0.633/th-0.131)*1e-4+(7.36e-4*th/(th-0.9927))**2
 
 !... additional term from Mishima
-	c=1.16e-11
+!	c=1.16e-11_r8
 
 	x=3.15
-	y=a/f+b*f+c*f**3
+        y=a/f+b*f
+!	y=a/f+b*f+c*f**3
 
 !        write(*,*)y,f,t
 
@@ -120,6 +121,9 @@ contains
 end module RefractiveIndex
 
 ! $Log$
+! Revision 1.3  2002/04/15 17:13:28  jonathan
+! add mishima term
+!
 ! Revision 1.2  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !

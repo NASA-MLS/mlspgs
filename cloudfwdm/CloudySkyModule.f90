@@ -96,7 +96,8 @@ contains
       IF (ISPI .EQ. 1) THEN
 
         ! DEFINE SIZE BINS FOR ICE CLOUD
-          DD=2000._r8/NR**2/(F/200._r8)  
+!          DD=(2000._r8/NR**2)/(F/200._r8)  
+          DD=2000._r8/NR**2
 
       ELSE IF (ISPI .EQ. 2) THEN
 
@@ -320,6 +321,9 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 1.7  2002/04/15 20:08:04  jonathan
+! add frequency-dependent size bin
+!
 ! Revision 1.6  2001/10/08 21:40:21  jonathan
 ! add cloud_model sub
 !
