@@ -154,7 +154,7 @@ CONTAINS
 
 !---------------------------------------------------------------------------
    SUBROUTINE OutputStd(pcf, type, mode, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
-        & sFiles, flag, hdfVersion)
+        & sFiles, flag, hdfVersion, prodCount)
 !---------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -178,7 +178,7 @@ CONTAINS
 
       TYPE( CreateFlags_T ), INTENT(OUT) :: flag
 
-      INTEGER, INTENT(IN) :: hdfVersion
+      INTEGER, INTENT(IN) :: hdfVersion, prodCount
 
 ! Parameters
 
@@ -188,24 +188,24 @@ CONTAINS
 
 ! Daily Zonal Mean output
 
-      CALL OutputL3DZ(type, dzA, sFiles, hdfVersion)
+      CALL OutputL3DZ(type, dzA, sFiles, hdfVersion, prodCount)
       CALL DestroyL3DZDatabase(dzA)
 
-      CALL OutputL3DZ(type, dzD, sFiles, hdfVersion)
+      CALL OutputL3DZ(type, dzD, sFiles, hdfVersion, prodCount+1)
       CALL DestroyL3DZDatabase(dzD)
 
 ! Monthly Zonal Mean output
 
-      CALL OutputL3MZ(pcf%zsName, mzA, flag%createZS, hdfVersion)
+      CALL OutputL3MZ(pcf%zsName, mzA, flag%createZS, hdfVersion, prodCount)
       CALL DeallocateL3MZ(mzA)
 
-      CALL OutputL3MZ(pcf%zsName, mzD, flag%createZS, hdfVersion)
+      CALL OutputL3MZ(pcf%zsName, mzD, flag%createZS, hdfVersion, prodCount+1)
       CALL DeallocateL3MZ(mzD)
 
 ! If required for this mode, output the monthly map
 
       IF ( (mode == 'com') .OR. (mode == 'all') ) THEN
-         CALL OutputMMGrids(pcf%msName, mm, flag%createMS, hdfVersion)
+         CALL OutputMMGrids(pcf%msName, mm, flag%createMS, hdfVersion, prodCount)
          CALL OutputMMDiags(pcf%msName, mm, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mm)
@@ -213,7 +213,7 @@ CONTAINS
 ! Ascending
 
       IF ( INDEX(mode,'a') /= 0) THEN
-         CALL OutputMMGrids(pcf%msName, mmA, flag%createMS, hdfVersion)
+         CALL OutputMMGrids(pcf%msName, mmA, flag%createMS, hdfVersion, prodCount)
          CALL OutputMMDiags(pcf%msName, mmA, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mmA)
@@ -221,7 +221,7 @@ CONTAINS
 ! Descending
 
       IF ( (INDEX(mode,'d') /= 0) .OR. (mode == 'all') )THEN
-         CALL OutputMMGrids(pcf%msName, mmD, flag%createMS, hdfVersion)
+         CALL OutputMMGrids(pcf%msName, mmD, flag%createMS, hdfVersion, prodCount)
          CALL OutputMMDiags(pcf%msName, mmD, hdfVersion)
       ENDIF
       CALL DeallocateL3MM(mmD)
@@ -232,7 +232,7 @@ CONTAINS
 
 !------------------------------------------------------------------------------
    SUBROUTINE OutputDg(pcf, type, dzA, dzD, mzA, mzD, mm,mmA,mmD,dFiles,flag,&
-        & hdfVersion)
+        & hdfVersion, prodCount)
 !------------------------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -255,7 +255,7 @@ CONTAINS
 
       TYPE( CreateFlags_T ), INTENT(OUT) :: flag
 
-      INTEGER, INTENT(IN) :: hdfVersion
+      INTEGER, INTENT(IN) :: hdfVersion, prodCount
 
 ! Parameters
 
@@ -270,23 +270,23 @@ CONTAINS
 
 ! Daily Zonal Mean output
 
-      CALL OutputL3DZ(type, dzA, dFiles, hdfVersion)
+      CALL OutputL3DZ(type, dzA, dFiles, hdfVersion, prodCount)
       CALL DestroyL3DZDatabase(dzA)
 
-      CALL OutputL3DZ(type, dzD, dFiles, hdfVersion)
+      CALL OutputL3DZ(type, dzD, dFiles, hdfVersion, prodCount+1)
       CALL DestroyL3DZDatabase(dzD)
 
 ! Monthly Zonal Mean output
 
-      CALL OutputL3MZ(pcf%zdName, mzA, flag%createZD, hdfVersion)
+      CALL OutputL3MZ(pcf%zdName, mzA, flag%createZD, hdfVersion, prodCount)
       CALL DeallocateL3MZ(mzA)
 
-      CALL OutputL3MZ(pcf%zdName, mzD, flag%createZD, hdfVersion)
+      CALL OutputL3MZ(pcf%zdName, mzD, flag%createZD, hdfVersion, prodCount+1)
       CALL DeallocateL3MZ(mzD)
 
 ! Output the monthly map (combined mode)
 
-      CALL OutputMMGrids(pcf%mdName, mm, flag%createMD, hdfVersion)
+      CALL OutputMMGrids(pcf%mdName, mm, flag%createMD, hdfVersion, prodCount)
       CALL OutputMMDiags(pcf%mdName, mm, hdfVersion)
       CALL DeallocateL3MM(mm)
 
@@ -329,6 +329,8 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
 
       INTEGER :: err, MyHDFVersion
+
+      LOGICAL :: writeLog = .false.
 
       ! Initialize MyHDFVersion
 
@@ -399,8 +401,7 @@ CONTAINS
       ENDIF
 
 ! Write the log file metadata
-
-      CALL WriteMetaLogM(pcf)
+      if (writeLog) CALL WriteMetaLogM(pcf)
 
 ! Deallocations
 
@@ -437,6 +438,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.9  2003/09/16 16:37:14  cvuu
+!Add parameter nFiles to the call WriteMetaL3MM and WriteMetaL3MZ
+!
 !Revision 1.8  2003/04/30 18:16:29  pwagner
 !Work-around for LF95 infinite compile-time bug
 !

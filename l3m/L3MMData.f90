@@ -94,7 +94,7 @@ CONTAINS
 
 !-----------------------------------------------------------------
   SUBROUTINE OutputMMGrids (physicalFilename, l3mm, creationFlag, &
-       & hdfVersion)
+       & hdfVersion, prodCount)
 !-----------------------------------------------------------------
 
 ! Brief description of subroutine
@@ -108,12 +108,12 @@ CONTAINS
 
     LOGICAL, INTENT(INOUT) :: creationFlag
    
-    INTEGER, INTENT(IN) :: hdfVersion
+    INTEGER, INTENT(IN) :: hdfVersion, prodCount
 
     IF (hdfVersion==HDFVERSION_4) THEN 
        CALL OutputMMGrids_HE2 (physicalFilename, l3mm, creationFlag)
     ELSE IF (hdfVersion==HDFVERSION_5) THEN 
-       CALL OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag)
+       CALL OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag, prodCount)
     ENDIF
 
   END SUBROUTINE OutputMMGrids
@@ -435,7 +435,7 @@ CONTAINS
 !------------------------------
 
 !-----------------------------------------------------------------
-   SUBROUTINE OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag)
+   SUBROUTINE OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag, prodCount)
 !-----------------------------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
        & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
@@ -446,11 +446,10 @@ CONTAINS
 ! Arguments
 
       CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
-
       TYPE (L3MMData_T), INTENT(IN) :: l3mm
-
       LOGICAL, INTENT(INOUT) :: creationFlag
-   
+      INTEGER, INTENT(IN) :: prodCount
+      
 ! Parameters
 
       CHARACTER (LEN=*), PARAMETER :: DATA_FIELDMV = 'L3mmValue'
@@ -477,9 +476,15 @@ CONTAINS
       INTEGER :: gdfID, gdId, status, err
       INTEGER, parameter :: NUMBER_BEATS = 20000
       
-! Open the output file
+! Open the output file. If first time, create the file. Otherwise just open and 
+! write other species to the files
 
-      gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_TRUNC)
+      IF (prodCount == 1) THEN
+         gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_TRUNC)
+      ELSE 
+         gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_RDWR)
+      ENDIF
+
       IF (gdfID == -1) THEN
          msr = MLSMSG_Fileopen // trim(physicalFilename)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1011,7 +1016,6 @@ CONTAINS
 ! Arguments
 
       CHARACTER (LEN=*), INTENT(IN) :: physicalFilename
-
       TYPE (L3MMData_T), INTENT(IN) :: mm
 
 ! Parameters
@@ -1286,10 +1290,9 @@ CONTAINS
 
 ! get the l3 start and end days
 
-      call output('start WriteL3MMData', advance='yes')
       daysNum = nFiles + 1 
-      call output('daysNum = ', advance='no')
-      call output(daysNum, advance='yes')
+      !call output('daysNum = ', advance='no')
+      !call output(daysNum, advance='yes')
 
 ! Initialize the fileType
       fileType = l_grid
@@ -1694,10 +1697,10 @@ CONTAINS
 
         ! Write global attributes
       if ( HDFVersion == HDFVERSION_5 ) then                        
-	print *, 'write global attributes in L3MM'
+	!print *, 'write global attributes in L3MM'
         sdid = he5_gdopen (file, HE5F_ACC_RDWR)                       
-        print *, 'daysNum in write Global'
-        print *, daysNum
+        !print *, 'daysNum in write Global'
+        !print *, daysNum
         call he5_writeglobalattr(sdid,daysNum) 
         result = he5_gdclose (sdid)                                   
       endif
@@ -1882,6 +1885,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.14  2003/09/16 16:35:11  cvuu
+!# Add new parameter nFiles to the subroutine WriteMetaL3MM
+!#
 !# Revision 1.13  2003/09/15 18:27:23  cvuu
 !# Output OrbitNumber and OrbitPeriod in the global attribute
 !#

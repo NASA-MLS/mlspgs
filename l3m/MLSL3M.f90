@@ -6,6 +6,7 @@
 PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 !==============================================
 
+  USE Allocate_Deallocate, ONLY: DEALLOCATE_TEST
   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
   USE L2Interface, ONLY: GetL2GPfromPCF, ReadL2DGData, ReadL2GPProd
   USE L3DZData, ONLY: L3DZData_T
@@ -21,8 +22,9 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   USE mon_Out, ONLY: CreateFlags_T, OutputDg, OutputStd, OutputMON
   USE MonthlyProcessModule, ONLY: MonthlyCoreProcessing
   USE PCFHdr, ONLY: GlobalAttributes
-
+!  USE H5LIB, ONLY: h5open_f, h5close_f
   IMPLICIT NONE
+
 
   !------------------- RCS Ident Info -----------------------
   CHARACTER(LEN=130) :: Id = &                                                 
@@ -88,7 +90,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   ! For each Standard product requested in the cf,
 
   DO i = 1, SIZE(cfStd)
-     print *, i,  SIZE(cfStd)
      
      ! Read all available data in the input window
 
@@ -124,7 +125,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
      ! Output and Close for the product
 
      CALL OutputStd(pcf, cfDef%stdType, cfStd(i)%mode, dzA, dzD, mzA, mzD, &
-          & mm, mmA, mmD, sFiles, flag, hdfVersion)
+          & mm, mmA, mmD, sFiles, flag, hdfVersion, i)
 
   ENDDO
 
@@ -134,7 +135,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
   CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
 
   ! Get the names of any L2GP Diagnostics files from the PCF
-
   CALL GetL2GPfromPCF(mlspcf_l2dg_start, mlspcf_l2dg_end, cfDef%l2dgType, &
        & pcf%startDay, pcf%EndDay, numFiles, pcfNames, mis_l2Days, mis_Days)
 
@@ -151,7 +151,6 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
      ! For each product in the Diagnostic section of the cf,
 
      DO i = 1, SIZE(cfDg)
-	print *, 'Diagnostic=', i,  SIZE(cfDg)
         
         ! Read all the l2gp data which exist in input window for that product
 
@@ -187,7 +186,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
         ! Output and Close for the product
 
         CALL OutputDg(pcf, cfDef%dgType, dzA, dzD, mzA, mzD, mm, mmA, mmD, &
-             & dFiles, flag, hdfVersion)
+             & dFiles, flag, hdfVersion, i)
 
      ENDDO
 
@@ -197,8 +196,16 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & 'Product processing completed; beginning Output/Close task ... ')
-  
-  CALL OutputMON(sFiles, dFiles, flag, pcf, cfStd, cfDg, cf, anText,hdfVersion)
+ 
+  CALL OutputMON(sFiles, dFiles, flag, pcf, cfStd, cfDg, cf, anText, &
+	& hdfVersion)
+
+  ! deallocate memory
+  CALL Deallocate_test(GlobalAttributes%OrbNumDays, &
+       & 'GlobalAttributes%OrbNumDays', ModuleName)
+  CALL Deallocate_test(GlobalAttributes%OrbPeriodDays, &
+       & 'GlobalAttributes%OrbPeriodDays', ModuleName)
+
 
   CALL MLSMessage (MLSMSG_Info, ModuleName, &
        & 'EOS MLS Level 3 Monthly data processing successfully completed!')
@@ -216,6 +223,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.14  2003/10/29 00:07:17  pwagner
+! GlobalAttributes%ProcessLevel assigned appropriate value
+!
 ! Revision 1.13  2003/04/06 02:25:59  jdone
 ! added HDFEOS5 capability
 !

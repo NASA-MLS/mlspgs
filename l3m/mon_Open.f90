@@ -8,10 +8,11 @@ MODULE mon_Open
 
   USE MLSCommon, ONLY: FileNameLen
   USE MLSL3Common, ONLY: MAXWINDOW 
+  USE MLSStrings, only: utc_to_yyyymmdd
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen
   USE mon_L3CF, ONLY: L3CFMDef_T, L3CFMProd_T, FillL3CFM
   USE OpenInit, ONLY: SetProcessingWindow
-  USE PCFHdr, ONLY: CreatePCFAnnotation
+  USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, PGS_IO_GEN_CLOSEF, PGSD_IO_GEN_RSEQFRM,&
        & PGS_PC_GETREFERENCE, PGS_IO_GEN_OPENF
   USE GETCF_M, only: GetCF, InitGetCF
@@ -148,6 +149,18 @@ CONTAINS
       indx = INDEX(name, '/', .TRUE.)
       l3pcf%logGranID = name(indx+1:)
 
+    ! Store appropriate user input as global attributes
+    GlobalAttributes%InputVersion = l3pcf%outputVersion
+    GlobalAttributes%StartUTC = l3pcf%StartDay // &
+      & 'T00:00:00.000000Z'
+    GlobalAttributes%EndUTC = l3pcf%EndDay // &
+      & 'T23:59:59.999999Z'
+    GlobalAttributes%PGEVersion = l3pcf%outputVersion   ! l3pcf%PGEVersion
+    call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+      & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+      & GlobalAttributes%GranuleDay)
+    call FillTAI93Attribute
+
 ! Get the name of the L3MM Standard file from the PCF
 
       version = 1
@@ -267,6 +280,9 @@ CONTAINS
 !==================
 
 ! $Log$
+! Revision 1.6  2003/09/15 18:28:18  cvuu
+! Read OrbitNumber and OrbitPeriod from the L2GP file
+!
 ! Revision 1.5  2003/04/30 18:16:29  pwagner
 ! Work-around for LF95 infinite compile-time bug
 !

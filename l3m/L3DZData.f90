@@ -93,7 +93,7 @@ MODULE L3DZData
  CONTAINS
 
    !------------------------------------------
-   SUBROUTINE OutputL3DZ(type, dzm, zFiles, hdfVersion)
+   SUBROUTINE OutputL3DZ(type, dzm, zFiles, hdfVersion, prodCount)
    !------------------------------------------
 
      ! Brief description of subroutine
@@ -107,12 +107,12 @@ MODULE L3DZData
 
      TYPE( OutputFiles_T ), INTENT(OUT) :: zFiles
 
-     INTEGER, INTENT(IN) :: hdfVersion
+     INTEGER, INTENT(IN) :: hdfVersion, prodCount
 
      IF (hdfVersion == HDFVERSION_4) THEN 
         CALL  OutputL3DZ_HE2(type, dzm, zFiles)
      ELSE IF (hdfVersion == HDFVERSION_5) THEN
-        CALL  OutputL3DZ_HE5(type, dzm, zFiles)
+        CALL  OutputL3DZ_HE5(type, dzm, zFiles, prodCount)
      ENDIF
 
     !---------------------------
@@ -382,7 +382,7 @@ MODULE L3DZData
     !---------------------------
 
    !------------------------------------------
-   SUBROUTINE OutputL3DZ_HE5(type, dzm, zFiles)
+   SUBROUTINE OutputL3DZ_HE5(type, dzm, zFiles, prodCount)
    !------------------------------------------
    USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
        & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
@@ -400,13 +400,14 @@ MODULE L3DZData
 
      TYPE( OutputFiles_T ), INTENT(OUT) :: zFiles
 
+     INTEGER, INTENT(IN) :: prodCount
      ! Parameters
 
 ! Functions
 
-     INTEGER, EXTERNAL :: he5_swattach, he5_swclose, he5_swcreate, & 
-          & he5_swdefdfld, he5_swdefdim, &
-          & He5_swdefgfld, he5_swdetach, he5_swopen, he5_swwrfld
+     INTEGER, EXTERNAL :: he5_zaattach, he5_zaclose, he5_zacreate, &
+           & he5_zadefine, he5_zadefdim, &
+           & he5_zadetach, he5_zaopen, he5_zawrite
 
 ! Variables
 
@@ -440,112 +441,110 @@ MODULE L3DZData
             zFiles%date(zFiles%nFiles) = dzm(i)%date
          ENDIF
 
-         ! Open the file for appending a swath
+         ! Open the file for appending a zonal
 
-         swfID = he5_swopen(trim(file), HE5F_ACC_TRUNC)
+         IF (prodCount == 1) THEN
+            swfID = he5_zaopen(trim(file), HE5F_ACC_TRUNC)
+         ELSE
+            swfID = he5_zaopen(trim(file), HE5F_ACC_RDWR)
+         ENDIF
+
          IF (swfID == -1) THEN
             msr = MLSMSG_Fileopen // trim(file)
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         ! Create a swath of the appropriate name
+         ! Create a zonal of the appropriate name
 
-         swID = he5_swcreate(swfID, trim(dzm(i)%name))
+         swID = he5_zacreate(swfID, trim(dzm(i)%name))
          IF (swID == -1) THEN
             msr = 'Failed to create swath ' // trim(dzm(i)%name)
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         ! Define the swath dimensions
+         ! Define the zonal dimensions
 
-         status = he5_swdefdim(swID, DIMR_NAME, MIN_MAX)
+         status = he5_zadefdim(swID, DIMR_NAME, MIN_MAX)
          IF (status == -1) THEN
             msr = DIM_ERR // DIMR_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefdim(swID, DIMT_NAME, DATE_LEN)
+         status = he5_zadefdim(swID, DIMT_NAME, DATE_LEN)
          IF (status == -1) THEN
             msr = DIM_ERR // DIMT_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefdim(swID, DIM_NAME2, dzm(i)%nLevels)
+         status = he5_zadefdim(swID, DIM_NAME2, dzm(i)%nLevels)
          IF (status == -1) THEN
             msr = DIM_ERR // DIM_NAME2
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefdim(swID, DIML_NAME, dzm(i)%nLats)
+         status = he5_zadefdim(swID, DIML_NAME, dzm(i)%nLats)
          IF (status == -1) THEN
             msr = DIM_ERR // DIML_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         ! Define the swath geolocation fields using the above dimensions
+         ! Define the zonal geolocation fields using the above dimensions
 
-         status = he5_swdefgfld(swID, GEO_FIELD11, DIMT_NAME, "", & 
-              & HE5T_NATIVE_CHAR, HDFE_NOMERGE)
+         status = he5_zadefine(swID, GEO_FIELD11, DIMT_NAME, "", HE5T_NATIVE_CHAR)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD11
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
          
-         status = he5_swdefgfld(swID, GEO_FIELD9, DIM_NAME2, "", & 
-              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         status = he5_zadefine(swID, GEO_FIELD9, DIM_NAME2, "",  HE5T_NATIVE_FLOAT)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD9
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
          
-         status = he5_swdefgfld(swID, GEO_FIELD1, DIML_NAME, "", &
-              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         status = he5_zadefine(swID, GEO_FIELD1, DIML_NAME, "", HE5T_NATIVE_FLOAT)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD1
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefgfld(swID, GEO_FIELD4, DIMRL_NAME, "", &
-              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         status = he5_zadefine(swID, GEO_FIELD4, DIMRL_NAME, "",  HE5T_NATIVE_FLOAT)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD4
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefgfld(swID, GEO_FIELD12, DIMRL_NAME, "", &
-              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         status = he5_zadefine(swID, GEO_FIELD12, DIMRL_NAME, "", HE5T_NATIVE_FLOAT)
          IF (status == -1) THEN
             msr = GEO_ERR // GEO_FIELD12
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         ! Define the swath data fields using the above dimensions
+         ! Define the zonal data fields using the above dimensions
 
-         status = he5_swdefdfld(swID, DATA_FIELDV, DIMLL_NAME, "", &
-              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         status = he5_zadefine(swID, DATA_FIELDV, DIMLL_NAME, "", HE5T_NATIVE_FLOAT)
          IF (status == -1) THEN
             msr = DAT_ERR // DATA_FIELDV
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swdefdfld(swID, DATA_FIELDP, DIMLL_NAME, "", &
-              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         status = he5_zadefine(swID, DATA_FIELDP, DIMLL_NAME, "", HE5T_NATIVE_FLOAT)
          IF (status == -1) THEN
             msr = DAT_ERR // DATA_FIELDP
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         ! Detach from the swath interface after definition
+         ! Detach from the zonal interface after definition
 
-         status = he5_swdetach(swID)
+         status = he5_zadetach(swID)
          IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, & 
-              & 'Failed to detach from swath interface after L3DZ definition.')
+              & 'Failed to detach from zonal interface after L3DZ definition.')
          
          ! Re-attach to the swath for writing
 
-         swID = he5_swattach(swfID, dzm(i)%name)
+         swID = he5_zaattach(swfID, dzm(i)%name)
          IF (swID == -1) THEN
-            msr = 'Failed to re-attach to swath ' // TRIM(dzm(i)%name) &
+            msr = 'Failed to re-attach to zonal ' // TRIM(dzm(i)%name) &
                  & // ' for writing.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -559,7 +558,7 @@ MODULE L3DZData
          
          ! Geolocation fields
 
-         status = he5_swwrfld(swID, GEO_FIELD11, start(1), stride(1), edge(1),&
+         status = he5_zawrite(swID, GEO_FIELD11, start(1), stride(1), edge(1),&
               & dzm(i)%date)
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD11
@@ -567,14 +566,14 @@ MODULE L3DZData
          ENDIF
          
          edge(1) = dzm(i)%nLevels
-         status = he5_swwrfld( swID, GEO_FIELD9, start(1), stride(1), edge(1),&
+         status = he5_zawrite( swID, GEO_FIELD9, start(1), stride(1), edge(1),&
               & REAL(dzm(i)%pressure) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD9
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swwrfld( swID, GEO_FIELD1, start(2), stride(2), edge(2),&
+         status = he5_zawrite( swID, GEO_FIELD1, start(2), stride(2), edge(2),&
               & REAL(dzm(i)%latitude) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD1
@@ -582,14 +581,14 @@ MODULE L3DZData
          ENDIF
 
          edge(1) = MIN_MAX
-         status = he5_swwrfld( swID, GEO_FIELD4, start, stride, edge,&
+         status = he5_zawrite( swID, GEO_FIELD4, start, stride, edge,&
               & REAL(dzm(i)%localSolarTime) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD4
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swwrfld( swID, GEO_FIELD12, start, stride, edge, &
+         status = he5_zawrite( swID, GEO_FIELD12, start, stride, edge, &
               & REAL(dzm(i)%localSolarZenithAngle) )
          IF (status == -1) THEN
             msr = WR_ERR // GEO_FIELD12
@@ -599,39 +598,39 @@ MODULE L3DZData
          ! Data fields
 
          edge(1) = dzm(i)%nLevels
-         status = he5_swwrfld( swID, DATA_FIELDV, start, stride, edge, &
+         status = he5_zawrite( swID, DATA_FIELDV, start, stride, edge, &
               & REAL(dzm(i)%l3dzValue) )
          IF (status == -1) THEN
             msr = WR_ERR // DATA_FIELDV
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         status = he5_swwrfld( swID, DATA_FIELDP, start, stride, edge, &
+         status = he5_zawrite( swID, DATA_FIELDP, start, stride, edge, &
               & REAL(dzm(i)%l3dzPrecision) )
          IF (status == -1) THEN
             msr = WR_ERR // DATA_FIELDP
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-         ! After writing, detach from swath interface
+         ! After writing, detach from zonal interface
 
-         status = he5_swdetach(swID)
+         status = he5_zadetach(swID)
          IF (status == -1) THEN
             CALL MLSMessage(MLSMSG_Error, ModuleName, & 
-                 & 'Failed to detach from swath interface after writing.')
+                 & 'Failed to detach from zonal interface after writing.')
          ENDIF
 
-         msr = 'Swath ' // TRIM(dzm(i)%name) // &
+         msr = 'Zonal ' // TRIM(dzm(i)%name) // &
               & ' successfully written to file ' // trim(file)
          CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
 
-         ! Define & write the diagnostic swath
+         ! Define & write the diagnostic zonal
 
          CALL OutputDZDiag_HE5( file, swfID, dzm(i) )
 
          ! Close the file
 
-         status = he5_swclose(swfID)
+         status = he5_zaclose(swfID)
          IF (status == -1) THEN
             msr = 'Failed to close file ' // trim(file) // ' after writing.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -838,8 +837,8 @@ MODULE L3DZData
 
       ! Functions
 
-      INTEGER, EXTERNAL :: he5_swattach, he5_swcreate, he5_swdefdfld, & 
-           & he5_swdefdim, he5_swdefgfld, he5_swdetach, he5_swwrfld
+      INTEGER, EXTERNAL :: he5_zaattach, he5_zacreate, he5_zadefine, &
+           & he5_zadefdim, he5_zadetach, he5_zawrite
 
       ! Variables
 
@@ -849,86 +848,81 @@ MODULE L3DZData
       INTEGER :: start(2), stride(2), edge(2)
       INTEGER :: status, swID
 
-      ! Create a swath of the appropriate name
+      ! Create a zonal of the appropriate name
 
       dgName = TRIM(dz%name) // 'Diagnostics'
 
-      swID = he5_swcreate(swfID, trim(dgName))
+      swID = he5_zacreate(swfID, trim(dgName))
       IF (swID == -1) THEN
-         msr = 'Failed to create swath ' // trim(dgName)
+         msr = 'Failed to create zonal ' // trim(dgName)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ! Define the swath dimensions
+      ! Define the zonal dimensions
 
-      status = he5_swdefdim(swID, DIMT_NAME, DATE_LEN)
+      status = he5_zadefdim(swID, DIMT_NAME, DATE_LEN)
       IF (status == -1) THEN
          msr = DIM_ERR // DIMT_NAME
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       
-      status = he5_swdefdim(swID, DIM_NAME2, dz%nLevels)
+      status = he5_zadefdim(swID, DIM_NAME2, dz%nLevels)
       IF (status == -1) THEN
          msr = DIM_ERR // DIM_NAME2
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_swdefdim(swID, DIML_NAME, dz%nLats)
+      status = he5_zadefdim(swID, DIML_NAME, dz%nLats)
       IF (status == -1) THEN
          msr = DIM_ERR // DIML_NAME
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-! Define the swath geolocation fields using the above dimensions
+! Define the zonal geolocation fields using the above dimensions
 
-      status = he5_swdefgfld(swID,GEO_FIELD11, DIMT_NAME, "", & 
-           & HE5T_NATIVE_CHAR, HDFE_NOMERGE)
+      status = he5_zadefine(swID,GEO_FIELD11, DIMT_NAME, "", HE5T_NATIVE_CHAR)
       IF (status == -1) THEN
          msr = GEO_ERR // GEO_FIELD11
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_swdefgfld(swID,GEO_FIELD9,DIM_NAME2, "", & 
-           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-      IF (status == -1) THEN
-         msr = GEO_ERR // GEO_FIELD9
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+!      status = he5_zadefine(swID,GEO_FIELD9,DIM_NAME2, "", HE5T_NATIVE_FLOAT)
+!      IF (status == -1) THEN
+!         msr = GEO_ERR // GEO_FIELD9
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+!      ENDIF
 
-      status = he5_swdefgfld(swID,GEO_FIELD1, DIML_NAME, "", & 
-           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
-      IF (status == -1) THEN
-         msr = GEO_ERR // GEO_FIELD1
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+!      status = he5_zadefine(swID,GEO_FIELD1, DIML_NAME, "", HE5T_NATIVE_FLOAT)
+!      IF (status == -1) THEN
+!         msr = GEO_ERR // GEO_FIELD1
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+!      ENDIF
 
-! Define the swath data fields using the above dimensions
+! Define the zonal data fields using the above dimensions
 
-      status = he5_swdefdfld(swID,DG_FIELD1, DIMLL_NAME, "", & 
-           & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+      status = he5_zadefine(swID,DG_FIELD1, DIMLL_NAME, "", HE5T_NATIVE_FLOAT)
       IF (status == -1) THEN
          msr = DAT_ERR // DG_FIELD1
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_swdefdfld(swID, DG_FIELD2, DIMLL_NAME, "", & 
-           & HE5T_NATIVE_INT, HDFE_NOMERGE)
+      status = he5_zadefine(swID, DG_FIELD2, DIMLL_NAME, "", HE5T_NATIVE_INT)
       IF (status == -1) THEN
          msr = DAT_ERR // DG_FIELD2
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-! Detach from the swath interface after definition
+! Detach from the zonal interface after definition
 
-      status = he5_swdetach(swID)
+      status = he5_zadetach(swID)
       IF (status /= 0) THEN
          msr = SW_ERR // TRIM(dgName) // ' after L3DZ dg definition.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-! Re-attach to the swath for writing
+! Re-attach to the zonal for writing
 
-      swID = he5_swattach(swfID, trim(dgName) )
+      swID = he5_zaattach(swfID, trim(dgName) )
       IF (swID == -1) THEN
          msr = 'Failed to re-attach to swath ' // TRIM(dgName)//' for writing.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -943,7 +937,7 @@ MODULE L3DZData
 
 ! Geolocation fields
 
-      status = he5_swwrfld(swID,GEO_FIELD11, start(1), stride(1), edge(1), & 
+      status = he5_zawrite(swID,GEO_FIELD11, start(1), stride(1), edge(1), & 
            & dz%date)
       IF (status == -1) THEN
          msr = WR_ERR // GEO_FIELD11
@@ -951,45 +945,45 @@ MODULE L3DZData
       ENDIF
 
       edge(1) = dz%nLevels
-      status = he5_swwrfld( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
-           & REAL(dz%pressure) )
-      IF (status == -1) THEN
-         msr = WR_ERR // GEO_FIELD9
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+!      status = he5_zawrite( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
+!           & REAL(dz%pressure) )
+!      IF (status == -1) THEN
+!         msr = WR_ERR // GEO_FIELD9
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+!      ENDIF
 
-      status = he5_swwrfld( swID, GEO_FIELD1, start(2), stride(2), edge(2), &
-           & REAL(dz%latitude) )
-      IF (status == -1) THEN
-         msr = WR_ERR // GEO_FIELD1
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+!      status = he5_zawrite( swID, GEO_FIELD1, start(2), stride(2), edge(2), &
+!           & REAL(dz%latitude) )
+!      IF (status == -1) THEN
+!         msr = WR_ERR // GEO_FIELD1
+!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+!      ENDIF
 
 ! Data fields
 
-      status = he5_swwrfld( swID, DG_FIELD1, start, stride, edge, & 
+      status = he5_zawrite( swID, DG_FIELD1, start, stride, edge, & 
            & REAL(dz%latRss) )
       IF (status == -1) THEN
          msr = WR_ERR // DG_FIELD1
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = he5_swwrfld(swID, DG_FIELD2, start, stride, edge, & 
+      status = he5_zawrite(swID, DG_FIELD2, start, stride, edge, & 
            & dz%perMisPoints)
       IF (status == -1) THEN
          msr = WR_ERR // DG_FIELD2
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-! After writing, detach from swath interface
+! After writing, detach from zonal interface
 
-      status = he5_swdetach(swID)
+      status = he5_zadetach(swID)
       IF (status /= 0) THEN
          msr = SW_ERR // TRIM(dgName) // ' after L3DZ dg definition.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      msr = 'Swath '// TRIM(dgName) // ' successfully written to file '// & 
+      msr = 'Zonal '// TRIM(dgName) // ' successfully written to file '// & 
            & trim(file)
       CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
 
@@ -1250,7 +1244,7 @@ MODULE L3DZData
     !-----------------------------
 
 !------------------------------------------------
-    SUBROUTINE ReadL3DZData_HE5(swfid, swathName, dz)
+    SUBROUTINE ReadL3DZData_HE5(swfid, zonalName, dz)
 !------------------------------------------------
 
 ! Brief description of subroutine
@@ -1259,7 +1253,7 @@ MODULE L3DZData
 
 ! Arguments
 
-      CHARACTER (LEN=*), INTENT(IN) :: swathName
+      CHARACTER (LEN=*), INTENT(IN) :: zonalName
 
       INTEGER, INTENT(IN) :: swfid
 
@@ -1273,7 +1267,7 @@ MODULE L3DZData
 
       INTEGER, EXTERNAL :: & 
            & pgs_td_utcToTAI, &
-           & he5_swattach, he5_swdetach, he5_swdiminfo, he5_swrdfld
+           & he5_zaattach, he5_zadetach, he5_zadiminfo, he5_zaread
 
 ! Variables
 
@@ -1288,17 +1282,17 @@ MODULE L3DZData
 
 ! Attach to the data swath for reading
 
-      swid = he5_swattach(swfid, swathName)
+      swid = he5_zaattach(swfid, zonalName)
 
       IF (status == -1) THEN
-         msr = 'Failed to attach to swath interface for reading ' // &
-              & trim(swathName)
+         msr = 'Failed to attach to zonal interface for reading ' // &
+              & trim(zonalName)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
 ! Get dimension information
 
-      size = he5_swdiminfo(swid, DIM_NAME2)
+      size = he5_zadiminfo(swid, DIM_NAME2)
 
       IF (size == -1) THEN
          msr = SZ_ERR // DIM_NAME2
@@ -1306,7 +1300,7 @@ MODULE L3DZData
       ENDIF
       nlev = size
 
-      size = he5_swdiminfo(swid, DIML_NAME)
+      size = he5_zadiminfo(swid, DIML_NAME)
 
       IF (size == -1) THEN
          msr = SZ_ERR // DIML_NAME
@@ -1338,14 +1332,14 @@ MODULE L3DZData
 
       ! Read the geolocation fields
 
-      dz%name = trim(swathName)
+      dz%name = trim(zonalName)
 
       start = 0
       stride = 1
       edge(1) = DATE_LEN
       edge(2) = dz%nLats
 
-      status = he5_swrdfld(swid, GEO_FIELD11, start(1), stride(1), edge(1), & 
+      status = he5_zaread(swid, GEO_FIELD11, start(1), stride(1), edge(1), & 
            & dz%date)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD11
@@ -1353,7 +1347,7 @@ MODULE L3DZData
       ENDIF
 
       edge(1) = dz%nLevels
-      status = he5_swrdfld(swid, GEO_FIELD9, start(1), stride(1), edge(1), & 
+      status = he5_zaread(swid, GEO_FIELD9, start(1), stride(1), edge(1), & 
            & rp)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD9
@@ -1361,7 +1355,7 @@ MODULE L3DZData
       ENDIF
       dz%pressure = DBLE(rp)
 
-      status = he5_swrdfld(swid, GEO_FIELD1, start(2), stride(2), edge(2), & 
+      status = he5_zaread(swid, GEO_FIELD1, start(2), stride(2), edge(2), & 
            & rl)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD1
@@ -1370,14 +1364,14 @@ MODULE L3DZData
       dz%latitude = DBLE(rl)
 
       edge(1) = MIN_MAX
-      status = he5_swrdfld(swid, GEO_FIELD4, start, stride, edge, r2)
+      status = he5_zaread(swid, GEO_FIELD4, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD4
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       dz%localSolarTime = DBLE(r2)
 
-      status = he5_swrdfld(swid, GEO_FIELD12, start, stride, edge, r2)
+      status = he5_zaread(swid, GEO_FIELD12, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // GEO_FIELD12
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1387,49 +1381,49 @@ MODULE L3DZData
       ! Read the data fields
 
       edge(1) = dz%nLevels
-      status = he5_swrdfld(swid, DATA_FIELDV, start, stride, edge, r2)
+      status = he5_zaread(swid, DATA_FIELDV, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // DATA_FIELDV
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       dz%l3dzValue = DBLE(r2)
 
-      status = he5_swrdfld(swid, DATA_FIELDP, start, stride, edge, r2)
+      status = he5_zaread(swid, DATA_FIELDP, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // DATA_FIELDP
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       dz%l3dzPrecision = DBLE(r2)
 
-      !  After reading, detach from swath interface
+      !  After reading, detach from zonal interface
       
-      status = he5_swdetach(swid)
+      status = he5_zadetach(swid)
       IF (status == -1) THEN
-         msr = 'Failed to detach from swath interface after reading ' // &
-              & trim(swathName)
+         msr = 'Failed to detach from zonal interface after reading ' // &
+              & trim(zonalName)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       ! Attach to the diagnostic swath for reading
 
-      dgName = TRIM(swathName) // 'Diagnostics'
-      swid = he5_swattach(swfid, dgName)
+      dgName = TRIM(zonalName) // 'Diagnostics'
+      swid = he5_zaattach(swfid, dgName)
       IF (status == -1) THEN
-         msr = 'Failed to attach to swath interface for reading ' // & 
+         msr = 'Failed to attach to zonal interface for reading ' // & 
               & trim(dgName)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
       ! Read the diagnostic fields
 
-      status = he5_swrdfld(swid, DG_FIELD1, start, stride, edge, r2)
+      status = he5_zaread(swid, DG_FIELD1, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // DG_FIELD1
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
       dz%latRss = DBLE(r2)
 
-      status = he5_swrdfld(swid, DG_FIELD2, start, stride, edge, r2)
+      status = he5_zaread(swid, DG_FIELD2, start, stride, edge, r2)
       IF (status == -1) THEN
          msr = RL3DZ_ERR // DG_FIELD2
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1438,9 +1432,9 @@ MODULE L3DZData
 
       !  After reading, detach from swath interface
 
-      status = he5_swdetach(swid)
+      status = he5_zadetach(swid)
       IF (status == -1) THEN
-         msr = 'Failed to detach from swath interface after reading ' // & 
+         msr = 'Failed to detach from zonal interface after reading ' // & 
               & trim(dgName)
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
@@ -1476,6 +1470,7 @@ MODULE L3DZData
         & DFACC_RDWR
    USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN 
    USE MLSPCF3
+  USE MLSStrings, only: utc_to_yyyymmdd
    USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, GlobalAttributes, &
 	& he5_writeglobalattr
    USE mon_Open, ONLY: PCFMData_T 
@@ -1506,23 +1501,24 @@ MODULE L3DZData
 
       INTEGER, EXTERNAL :: pgs_met_init, pgs_met_remove, pgs_met_setAttr_d, &
            & pgs_met_setAttr_i,pgs_met_setAttr_s, pgs_met_write, &
-           & pgs_pc_getUniversalRef
+           & pgs_pc_getUniversalRef, he5_zainqza
 
       ! Variables
 
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
-      CHARACTER (LEN=GridNameLen):: swathName
+      CHARACTER (LEN=GridNameLen):: zonalName
       CHARACTER (LEN=FileNameLen):: sval
       CHARACTER (LEN=6000) :: list
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=45) :: attrName, lvid
       CHARACTER (LEN=3) :: cNum
+      CHARACTER (LEN=8) :: rangeDate
       ! CHARACTER (LEN=2) :: fileType
       integer :: fileType
 
       REAL(r8) :: dval
 
-      INTEGER :: dg, hdfReturn, i, j, indx, len, numSwaths, pNum, &
+      INTEGER :: dg, hdfReturn, i, j, indx, len, numZonals, pNum, &
            & result, returnStatus, sdid, version
 
 ! Check to see whether these are Diagnostic files
@@ -1593,37 +1589,36 @@ MODULE L3DZData
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-! MeasuredParameterContainer -- find the number of swaths in the file
+! MeasuredParameterContainer -- find the number of zonal in the file
 
-         numSwaths = 0
-         numSwaths = mls_inqswath(trim(files%name(i)), list, len, & 
-              & hdfVersion=hdfVersion)
+         numZonals = 0
+         numZonals = he5_zainqza(trim(files%name(i)), list, len)
 
-         IF (numSwaths .LE. 0) THEN
-            msr = 'No swaths found in file ' // TRIM( files%name(i) ) // &
+         IF (numZonals .LE. 0) THEN
+            msr = 'No Zonal found in file ' // TRIM( files%name(i) ) // &
                  & ' while attempting to write its metadata.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          pNum = 0
 
-! For each swath in the file
+! For each zonal in the file
 
-         DO j = 1, numSwaths
+         DO j = 1, numZonals
 
 ! Extract its name
 
             indx = INDEX(list, ',')
             IF (indx /= 0) THEN
-               swathName = list(:indx-1)
+               zonalName = list(:indx-1)
                list = list(indx+1:)
             ELSE
-               swathName = list
+               zonalName = list
             ENDIF
 
-! If this is a diagnostic swath, skip to the next one
+! If this is a diagnostic zonal, skip to the next one
 
-            IF ( INDEX(swathName, 'Diagnostics') /= 0 ) CYCLE
+            IF ( INDEX(zonalName, 'Diagnostics') /= 0 ) CYCLE
 
 ! Append a class suffix to ParameterName, and write the grid name as its value
 
@@ -1639,7 +1634,7 @@ MODULE L3DZData
 
             attrName = 'ParameterName' // '.' // TRIM(cNum)
             result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-                 & swathName)
+                 & zonalName)
             IF (result /= PGS_S_SUCCESS) THEN
                msr = METAWR_ERR // attrName
                CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -1926,6 +1921,16 @@ MODULE L3DZData
          IF (hdfReturn /= 0 ) CALL MLSMessage(MLSMSG_Error, ModuleName, &
               & 'Error closing HDF file after writing metadata.')
 
+        ! Set global attributes
+        rangeDate = files%date(i)
+        GlobalAttributes%StartUTC = rangeDate(1:4)//'-'//rangeDate(6:8) &
+          & // 'T00:00:00.000000Z'
+        GlobalAttributes%EndUTC = rangeDate(1:4)//'-'//rangeDate(6:8) &
+          & // 'T23:59:59.999999Z'
+        call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
+          & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
+          & GlobalAttributes%GranuleDay)
+
         ! Write global attributes
         if ( HDFVersion == HDFVERSION_5 ) then
             sdid = he5_gdopen (files%name(i), HE5F_ACC_RDWR)
@@ -2194,6 +2199,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.13  2003/09/15 18:27:23  cvuu
+! Output OrbitNumber and OrbitPeriod in the global attribute
+!
 ! Revision 1.12  2003/08/11 23:26:37  cvuu
 ! brought closer to James Johnson want to
 !
