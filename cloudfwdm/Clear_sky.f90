@@ -16,7 +16,7 @@
 !     ATMOSPHERIC PROFILE PARAMETERS
 !-------------------------------------------------
 
-      INTEGER :: L, NU, NP, I, LORS, NS
+      INTEGER :: L, NU, I, LORS, NS
       REAL(r8) :: RS(NU/2),T(L),TAU(L),U(NU),Z(L),TAU100(L)
       REAL(r8) :: XZ(L+1),XP(L+1),XT(L+1),XQ(L+1)
       REAL(r8) :: VMR(NS,L+1),VMR1(NS)
@@ -25,11 +25,10 @@
 !-------------------------------------------------
 !     SURFACE REFLECTIVITY
 !-------------------------------------------------
-
-      PARAMETER(NP=800)                   ! DEMENSION OF WORKING ARRAYS
-      REAL(r8):: RH(NP)                   ! HORIZONTAL
-      REAL(r8):: RV(NP)                   ! VERTICAL
-      REAL(r8):: X(NP)                    ! SCATTERING ANGLES
+! local variables
+      REAL(r8):: RH(NU)                   ! HORIZONTAL
+      REAL(r8):: RV(NU)                   ! VERTICAL
+      REAL(r8):: X(NU)                    ! SCATTERING ANGLES
 
 !------------------------------------------------------------------------
       CALL HEADER(2)
@@ -45,7 +44,7 @@
          X(I)=U(I)
       ENDDO
 
-      CALL SURFACE(F,TS,LORS,S,WIND,X,NU/2,NP,RH,RV)
+      CALL SURFACE(F,TS,LORS,S,WIND,X,NU/2,NU,RH,RV)
       DO I=1,NU/2
          RS(I)=RH(I)
       ENDDO
