@@ -1097,23 +1097,23 @@ contains
       type (Vector_T), dimension(:) :: VECTORS
 
       ! Local variables
-      integer :: GSON                   ! Tree node
-      integer :: SON                    ! Tree node
-      integer :: FIELD                  ! Field type from tree
-      integer :: VECTORINDEX            ! Index
-      integer :: QUANTITYINDEX          ! Index
-      integer :: UNITS(2)               ! Units returned by expr
-      integer :: TYPE                   ! Type of value returned by expr
+      integer :: CHANNEL                ! Loop index
       integer :: CHANNELSNODE           ! Tree node for channels values
-      integer :: HEIGHTNODE             ! Tree node for height values
-      integer :: HEIGHTUNIT             ! Unit for heights command
       integer :: COORDINATE             ! Vertical coordinate type
       integer :: DEPTHNODE              ! Tree node for optical depth
+      integer :: FIELD                  ! Field type from tree
+      integer :: GSON                   ! Tree node
+      integer :: HEIGHT                 ! Loop counter
+      integer :: HEIGHTNODE             ! Tree node for height values
+      integer :: HEIGHTUNIT             ! Unit for heights command
       integer :: INSTANCE               ! Loop counter
+      integer :: QUANTITYINDEX          ! Index
+      integer :: SON                    ! Tree node
+      integer :: TYPE                   ! Type of value returned by expr
+      integer :: UNITS(2)               ! Units returned by expr
+      integer :: VECTORINDEX            ! Index
 
       integer :: S1(1), S2(1)           ! Results of minloc intrinsic
-
-      integer, pointer, dimension(:) :: TOCHANGE ! Indices
 
       real(r8) :: VALUE(2)              ! Value returned by expr
       real(r8), dimension(:), pointer :: THESEHEIGHTS ! Subset of heights
@@ -1122,9 +1122,10 @@ contains
       logical :: Got(field_first:field_last)   ! "Got this field already"
       logical, dimension(:), pointer :: CHANNELS ! Are we dealing with these channels
       logical :: IGNORE                 ! Flag
+      logical :: DOTHIS                 ! Flag
 
       ! Executable code
-      nullify ( channels, qty, ptan, tochange )
+      nullify ( channels, qty, ptan )
       do j = 2, nsons(key) ! fields of the "subset" specification
         son = subtree(j, key)
         field = get_field_id(son)   ! tree_checker prevents duplicates
@@ -1209,11 +1210,9 @@ contains
         & .not. got(f_ptanQuantity) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'must supply ptan for this subset if using pressure' )
 
-      ! Setup a temporary array
-      call allocate_test ( tochange, qty%template%instanceLen, 'tochange', ModuleName )
-      do j = 1, qty%template%instanceLen 
-        toChange(j)=j
-      end do
+      if ( got(f_height) .and. ignore ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Can't set both height and ignore fields" )
 
       ! Now we loop over the instances
       do instance = 1, qty%template%noInstances
@@ -1228,6 +1227,22 @@ contains
           coordinate = qty%template%verticalCoordinate
         endif
 
+        ! Now, make sure for the channels we're considering that the
+        ! default is to ignore all
+        if ( got(f_height) .or. ignore ) then
+          do channel = 1, qty%template%noChans
+            doThis = .true.
+            if ( associated(channels) ) doThis = channels(channel)
+            if ( doThis ) then
+              do height = 1, qty%template%noSurfs
+                call SetMask ( qty%mask(:,instance), &
+                  & (/ channel+qty%template%noChans*(height-1) /) )
+              end do
+            endif
+          enddo
+        end if
+
+        ! Now go and `unmask' the ones we want to consider
         if ( got(f_height) ) then
           do j = 1, nsons(heightNode)
             call expr ( subtree(j,heightNode), units, value, type )
@@ -1245,7 +1260,16 @@ contains
               s1 = minloc ( abs ( theseHeights - value(1) ) )
               s2 = minloc ( abs ( theseHeights - value(2) ) )
             end if
-            call ClearMask ( qty%mask(:,instance), tochange(s1(1):s2(1)) )
+            do channel = 1, qty%template%noChans
+              doThis = .true.
+              if ( associated(channels) ) doThis = channels(channel)
+              if ( doThis ) then
+                do height = s1(1), s2(1)
+                  call ClearMask ( qty%mask(:,instance), &
+                    & (/ channel+qty%template%noChans*(height-1) /) )
+                end do
+              endif
+            enddo
           end do
         end if
 
@@ -1258,6 +1282,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.46  2001/06/26 18:18:14  livesey
+! Another (working?) version.
+!
 ! Revision 2.45  2001/06/26 17:57:46  livesey
 ! Whoops, added another use clause
 !
