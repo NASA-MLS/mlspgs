@@ -127,7 +127,7 @@ contains
 
 ! --------------------------------------------------  Comp_refcor  -----
 
-  subroutine Comp_refcor ( h_path, n_path, ht, del_s, ref_corr )
+  subroutine Comp_refcor ( h_path, n_path, ht, del_s, ref_corr, status )
 
   ! This routine computes the integral described in Eqn. 8.11 of the
   ! MLS ATBD, pg. 44,  using the Gauss-Legendre method.
@@ -147,6 +147,9 @@ contains
     real(rp), intent(out) :: Del_s(:)
     real(rp), intent(out) :: REF_CORR(:)
 
+    integer, intent(out) :: Status ! 0 = OK, 1 = failed to bracket root,
+                                   ! 2 = too many iterations
+
     integer(ip) :: j, j1, j2, k, m, mid, no_ele
 
     real(rp) :: INTEGRAND_GL(Ng)
@@ -155,6 +158,8 @@ contains
     real(rp) :: dndh, eps, H, h1, h2, N, n1, n2, x1, x2, xm, ym, ys
 
     real(rp), parameter :: Tiny = 1.0e-8_rp
+
+    status = 0
 
     no_ele = size(n_path)
     mid = (no_ele + 1) / 2
@@ -254,6 +259,7 @@ jl:   do j = j1+1, j2
        if ( f1*f2 > 0.0_rp ) then
          H = -1.0_rp
          call MLSMessage ( MLSMSG_Warning, ModuleName, Msg1)
+         status = 1
          return 
        end if
 
@@ -288,6 +294,7 @@ jl:   do j = j1+1, j2
 
          if ( iter >= max_iter ) then
            call MLSMessage ( MLSMSG_Warning, ModuleName, Msg2 )
+           status = 2
            exit
          end if
 
@@ -318,6 +325,9 @@ jl:   do j = j1+1, j2
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.20  2004/06/17 00:08:24  vsnyder
+! Removed two unused variables
+!
 ! Revision 2.19  2003/11/04 01:55:08  vsnyder
 ! simplify nonconverged case
 !

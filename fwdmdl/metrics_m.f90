@@ -23,10 +23,11 @@ contains
   ! ----------------------------------------------------  Metrics  -----
 
   subroutine Metrics ( phi_t, tan_inds, p_basis, z_grid, h_ref, t_ref, dhidzij,&
-          &  beta, t_deriv_flag, h_grid, p_grid, t_grid, dhitdzi, req, dhidtlm,&
-          &  ddhidhidtl0, dhitdtlm, eta_zxp, tan_phi_h_grid, tan_phi_t_grid,   &
-          &  dhtdzt, dhtdtl0, ddhtdhtdtl0, neg_h_tan, z_basis, do_calc_t,      &
-          &  do_calc_hyd )
+          &  beta, t_deriv_flag, h_grid, p_grid, t_grid, dhitdzi, req, status, &
+          ! Optional:
+          &  dhidtlm, ddhidhidtl0, dhitdtlm, eta_zxp, tan_phi_h_grid,          &
+          &  tan_phi_t_grid, dhtdzt, dhtdtl0, ddhtdhtdtl0, neg_h_tan, z_basis, &
+          &  do_calc_t, do_calc_hyd )
 
     ! The goal of this program is to return a matrix of h_grids
     ! and t_grids which define 2 d integration paths
@@ -62,6 +63,8 @@ contains
     real(rp), intent(out) :: dhitdzi(:)!derivative of height wrt zeta
     !                                   --may be useful in future computations
     real(rp), intent(out) :: req       !equivalent elliptical earth radius
+    integer, intent(out) :: Status     ! 0 => No trouble, 1 => Convergence failed,
+    !                                    2 => Resorted to 1d
 
     ! Keywords:
     ! optional inputs
@@ -161,6 +164,7 @@ contains
 
     ! Begin program
 
+    status = 0 ! assume it will work
     calledTimes = calledTimes + 1
     p_coeffs = size(p_basis)
     n_vert = size(z_grid)
@@ -391,6 +395,7 @@ contains
       if ( toggle(emit) ) then
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Full convergence not achieved, implementing an improved approximation patch' )
+        status = 1
         call output ( 'pth ind, error', advance='yes' )
       end if
 
@@ -422,7 +427,8 @@ contains
         end if
         tan_ptr = 2 * n_vert * ((cvf_inds(low_pt)-1) / (2*n_vert) + 1)
         IF (cvf_inds(jun(st_ind)) == tan_ptr - 2*n_vert + 1) THEN
-          CALL mlsmessage(mlsmsg_warning,modulename,'resorting to 1d option in metrics')
+          CALL mlsMessage(mlsmsg_warning,moduleName,'resorting to 1d option in metrics')
+          status = 2
 ! resort to 1 d equvalent
           CALL allocate_test(eta_p,1,p_coeffs,'eta_p',modulename)
           CALL get_eta_sparse(p_basis,(/phi_t((cvf_inds(low_pt)-1) &
@@ -435,7 +441,8 @@ contains
           call deallocate_test ( eta_p, 'eta_p', ModuleName )
         ELSE IF (cvf_inds(jun(end_ind)) > tan_ptr - 1) THEN
 ! calculate the path ending index.
-          CALL mlsmessage(mlsmsg_warning,modulename,'resorting to 1d option in metrics')
+          CALL mlsMessage(mlsmsg_warning,moduleName,'resorting to 1d option in metrics')
+          status = 2
           end_ind1 = st_ind + tan_ptr - cvf_inds(jun(st_ind))
 ! resort to 1 d equvalent
           CALL allocate_test(eta_p,1,p_coeffs,'eta_p',modulename)
@@ -563,6 +570,9 @@ contains
 end module Metrics_m
 
 ! $Log$
+! Revision 2.21  2004/01/23 18:44:57  bill
+! problem with approximate correction patch when interpolation can't be done tentatively implimentaed
+!
 ! Revision 2.20  2003/11/14 21:22:46  livesey
 ! Bug fix and output tidy up
 !
