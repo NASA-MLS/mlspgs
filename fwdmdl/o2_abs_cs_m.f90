@@ -136,7 +136,66 @@ contains
     f_o_v0 = nu / v0
     del_nu = v0 - nu
 
-    if ( n > 0 ) then
+    if ( n == -1 ) then
+
+!     n = -1 => denom1 = =  n * (n - 1) == 2,
+!               denom2 = -n * (4 * n * n - 1) == 3
+
+!     denom1 =  2 ! n * (n - 1)
+!     denom2 =  3 ! -n * (4 * n * n - 1)
+
+!     m = n
+
+! sigma_p transition
+
+! m == n == -1 => ((m+1)*(2-n)-1) == -1
+!     nu_offst = x1*(del_nu + 2.803_rk*((m+1)*(2-n)-1)*h / denom1)
+      nu_offst = x1 * ( del_nu - (0.5_rk*2.803_rk) * h )
+      call simple_voigt ( nu_offst, w, u, v )
+! m == n == -1 and denom2 == 3 => xi == 0.5
+!     xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
+!     xi = 0.5_rk
+!     z  = 0.5_rk * s * xi * f_o_v0
+      z  = 0.25_rk * s * f_o_v0
+      zr = z * f_o_v0 * (u - y*v)
+      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      sigma_p = sigma_p + cmplx(zr, zi)
+
+!     m = -n
+
+! sigma_m transition
+
+! m == -n == 1 => ((m-1)*(2-n)+1) == +1
+!     nu_offst = x1*(del_nu + 2.803_rk*((m-1)*(2-n)+1)*h / denom1)
+      nu_offst = x1 * (del_nu + (0.5_rk*2.803_rk) * h )
+      call simple_voigt ( nu_offst, w, u, v )
+! m == -n == 1 and denom2 == 3 => xi == 0.5
+!     xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
+!     xi = 0.5_rk
+!     z  =  0.5_rk * s * xi * f_o_v0
+!     z  =  0.25_rk * s * f_o_v0
+      zr = z * f_o_v0 * (u - y*v)
+      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      sigma_m = sigma_m + cmplx(zr, zi)
+
+!     m = n + 1
+
+! pi transition
+
+! m == n + 1 == 0 => 2.803_rk*m*(2-n)*h == 0
+!     nu_offst = x1*(del_nu + 2.803_rk*m*(2-n)*h / denom1)
+      nu_offst = x1 * del_nu
+      call simple_voigt ( nu_offst, w, u, v )
+! m == n + 1 == 0 and denom2 == 3 => xi == 1.0
+!     xi = 3.0_rk * (n * n - m * m) / denom2
+!     z  = 0.5_rk * s * xi * f_o_v0
+!     z  = 0.5_rk * s * f_o_v0
+      z = 2.0_rk * z
+      zr = z * f_o_v0 * (u - y*v)
+      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      pi = pi + cmplx(zr, zi)
+
+    else if ( n > 0 ) then
 
 ! Delta J = +1
 
@@ -177,7 +236,7 @@ contains
 
       end do
 
-    else
+    else ! n < -1
 
 ! Delta J = -1 n is a negative number
 
@@ -247,71 +306,53 @@ contains
       zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
       sigma_m = sigma_m + cmplx(zr, zi)
 
-      if ( n /= -1 ) then
-
 ! m = -(n-1)
 
-        m = n + 1
+      m = n + 1
 
 ! pi transition
 
-        nu_offst = x1*(del_nu + 2.803_rk*m*(2-n)*h / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
-        xi = 3.0_rk * (n * n - m * m) / denom2
-        z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
-        pi = pi + cmplx(zr, zi)
+      nu_offst = x1*(del_nu + 2.803_rk*m*(2-n)*h / denom1)
+      call simple_voigt ( nu_offst, w, u, v )
+      xi = 3.0_rk * (n * n - m * m) / denom2
+      z  = 0.5_rk * s * xi * f_o_v0
+      zr = z * f_o_v0 * (u - y*v)
+      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      pi = pi + cmplx(zr, zi)
 
 ! sigma_p transition
 
-        nu_offst = x1*(del_nu + 2.803_rk*((m+1)*(2-n)-1)*h / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
-        xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
-        z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
-        sigma_p = sigma_p + cmplx(zr, zi)
+      nu_offst = x1*(del_nu + 2.803_rk*((m+1)*(2-n)-1)*h / denom1)
+      call simple_voigt ( nu_offst, w, u, v )
+      xi = 3.0_rk * (n + m) * (n + m + 1) / (4.0_rk * denom2)
+      z  = 0.5_rk * s * xi * f_o_v0
+      zr = z * f_o_v0 * (u - y*v)
+      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      sigma_p = sigma_p + cmplx(zr, zi)
 
 ! m = n - 1
 
-        m = -(n + 1)
+      m = -(n + 1)
 
 ! pi transition
 
-        nu_offst = x1*(del_nu + 2.803_rk*m*(2-n)*h / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
-        xi = 3.0_rk * (n * n - m * m) / denom2
-        z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
-        pi = pi + cmplx(zr, zi)
+      nu_offst = x1*(del_nu + 2.803_rk*m*(2-n)*h / denom1)
+      call simple_voigt ( nu_offst, w, u, v )
+      xi = 3.0_rk * (n * n - m * m) / denom2
+      z  = 0.5_rk * s * xi * f_o_v0
+      zr = z * f_o_v0 * (u - y*v)
+      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      pi = pi + cmplx(zr, zi)
 
 ! sigma_m transition
 
-        nu_offst = x1*(del_nu + 2.803_rk*((m-1)*(2-n)+1)*h / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
-        xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
-        z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
-        sigma_m = sigma_m + cmplx(zr, zi)
-
-      else
-
-        m = n + 1
-
-! pi transition
-
-        nu_offst = x1*(del_nu + 2.803_rk*m*(2-n)*h / denom1)
-        call simple_voigt ( nu_offst, w, u, v )
-        xi = 3.0_rk * (n * n - m * m) / denom2
-        z  = 0.5_rk * s * xi * f_o_v0
-        zr = z * f_o_v0 * (u - y*v)
-        zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
-        pi = pi + cmplx(zr, zi)
-
-      end if
+      nu_offst = x1*(del_nu + 2.803_rk*((m-1)*(2-n)+1)*h / denom1)
+      call simple_voigt ( nu_offst, w, u, v )
+      xi = 3.0_rk * (m - n) * (m - n - 1) / (4.0_rk * denom2)
+      z  = 0.5_rk * s * xi * f_o_v0
+      zr = z * f_o_v0 * (u - y*v)
+      zi = z * (v + u * f_o_v0 * (w/(x1*nu) + y))
+      sigma_m = sigma_m + cmplx(zr, zi)
 
     end if
 
@@ -376,6 +417,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.8  2003/08/14 02:15:03  vsnyder
+! Optimize n=-1 special case
+!
 ! Revision 2.7  2003/06/03 23:58:38  vsnyder
 ! Cosmetic changes
 !
