@@ -62,6 +62,12 @@ CONTAINS
       version = 1
       returnStatus = Pgs_pc_getFileSize(mlspcfN_pcf_start, version, size)
 
+      IF (returnStatus /= PGS_S_SUCCESS) THEN
+         call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
+         msr = mnemonic // ':  ' // msg
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
       ALLOCATE(anText(size), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' anText PCF array.'
@@ -173,6 +179,9 @@ END MODULE PCFHdr
 !================
 
 !# $Log$
+!# Revision 2.3  2001/04/04 19:37:25  vsnyder
+!# Try to produce an error message if there's no entry for the PCF in the PCF
+!#
 !# Revision 2.2  2001/03/09 21:32:45  nakamura
 !# Added INTENT(IN) for pcf number arg.
 !#
