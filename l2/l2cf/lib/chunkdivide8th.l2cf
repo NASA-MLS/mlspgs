@@ -1,4 +1,7 @@
 ; --------------------------------------------- ChunkDivide ----
+;
+; This l2cf fragment givesas many chunks are necessary each of
+; length 1/8th of an orbit with 5 MAFs of overlap.
 begin ChunkDivide
   ChunkDivide, method=orbital, maxLength=0.125 orbits, overlap=5 MAFs, $
     homeGeodAngle=0 degrees, homeModule=GHz, criticalModules=none, maxGap=2 MAFs
