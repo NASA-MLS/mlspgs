@@ -352,8 +352,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & quantityType=l_earthradius ) 
         scGeocAlt => GetVectorQuantityByType ( fwdModelExtra,                &
           & quantityType=l_scGeocAlt )
-        elevOffset => GetVectorQuantityByType ( fwdModelExtra,               &
-          & quantityType=l_elevOffset, radiometer=Signal%radiometer )
         losVel => GetVectorQuantityByType ( fwdModelExtra,                   &
           & quantityType=l_losVel, instrumentModule=Signal%instrumentModule )
     !-----------------------------------------
@@ -691,6 +689,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     do thisSideband = sidebandStart, sidebandStop, sidebandStep
 
+      elevOffset => GetVectorQuantityByType ( fwdModelExtra,               &
+        & quantityType=l_elevOffset, signal=Signal%index, sideband=thisSideband )
       if ( toggle(emit) .and. levels(emit) > 1 ) &
         & call Trace_Begin ( 'FullCloudForwardModel.Sideband ', index=thisSideband )
 
@@ -1095,6 +1095,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.130  2004/10/13 01:08:05  vsnyder
+! Moved some checking to ForwardModelSupport
+!
 ! Revision 1.129  2004/08/05 21:03:07  vsnyder
 ! Add sentinel at end of %molecules
 !
