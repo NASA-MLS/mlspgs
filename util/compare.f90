@@ -136,7 +136,10 @@ program COMPARE
     end do
 
     if ( verbose ) print *, 'Read control lines from both files'
-    if ( (end .neqv. status /= 0) .and. loud )  print *, 'Input file lengths unequal'
+    if ( (end .neqv. status /= 0) .and. loud ) then
+      print *, 'Input file lengths unequal'
+      same = .false.
+    end if
     if ( end .or. status /= 0 ) exit
 
     if ( line1 /= line2 ) then
@@ -248,8 +251,8 @@ program COMPARE
       & real(relAtAmaxG*eps,rs)
     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
       & ' Std. Devs. =', real(stdeva,rs)
-  else if ( same .and. rmaxg == 0.0 ) then
-    print '(a)', 'Identical'
+  else if ( same ) then
+    print *, 'Identical'
   end if
 
   if ( anyNaN(1) ) print *, trim(file1), ' has a NaN somewhere'
@@ -300,6 +303,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.11  2004/09/23 23:01:43  vsnyder
+! Don't print 'Identical' if file lengths different
+!
 ! Revision 1.10  2004/09/17 20:59:34  vsnyder
 ! Add -i option
 !
