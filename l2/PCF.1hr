@@ -80,8 +80,8 @@
 #-----------------
 # Test input files
 #-----------------
-20000|mls_l1b_oa_v0-01.2000-001.24hr|/class/perun/mlspgs/l1||||1
-20040|mls_l1b_radf_v0-01.2000-001.24hr|/class/perun/mlspgs/l1||||1
+20000|mls_l1b_oa_v0-01.2000-001.1hr|/class/perun/mlspgs/l1||||1
+20040|mls_l1b_radf_v0-01.2000-001.1hr|/class/perun/mlspgs/l1||||1
 22011|mls_l1b_radb_v0-01.2000-001|/users/lungu/mlspgs/l2||||1
 22020|mls_l1b_eng_v0-01.2000-001|/users/lungu/mlspgs/l2||||1
 21482|mls_l2cf-v0-01.dat|/users/lungu/mlspgs/l2||||1
@@ -169,8 +169,7 @@
 # dump metadata from the hdf attributes and is used by PGS_MET_GetPCAttr.
 # (DO NOT REMOVE THESE ENTRIES)
 #------------------------------------------------------------------------
-10250|MCF|/users/lungu/mlspgs/l2||||1
-10251|MCF_temp|/users/lungu/mlspgs/l2||||1
+10250|MCF|||||1
 10252|GetAttr.temp|/users/lungu/mlspgs/l2||||1
 10254|MCFWrite.temp|/users/lungu/mlspgs/l2||||1
 40260|MCF_temp|/users/lungu/mlspgs/l2||||1
@@ -242,26 +241,26 @@
 # Test output files
 #------------------
 #100|temp_metawrite|/users/lungu/mlspgs/l2||||1
-21000|mls_l2gp_temp_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21001|mls_l2gp_gph_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21002|mls_l2gp_h2o_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21003|mls_l2gp_hno3_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21004|mls_l2gp_o3_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21005|mls_l2gp_hcl_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21006|mls_l2gp_clo_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21007|mls_l2gp_n2o_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21008|mls_l2gp_co_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21009|mls_l2gp_oh_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21010|mls_l2gp_rhi_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21011|mls_l2gp_so2_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21012|mls_l2gp_ho2_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21013|mls_l2gp_bro_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21014|mls_l2gp_hocl_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21015|mls_l2gp_hcn_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21016|mls_l2gp_cirrus-ice_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-#22517|mls_l2gp_o3-strat-column_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-#22550|mls_l2gp_others_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
-21440|mls_l2aux_v01_24hr.2000-001|/users/lungu/mlspgs/l2||||1
+21000|mls_l2gp_temp_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21001|mls_l2gp_gph_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21002|mls_l2gp_h2o_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21003|mls_l2gp_hno3_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21004|mls_l2gp_o3_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21005|mls_l2gp_hcl_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21006|mls_l2gp_clo_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21007|mls_l2gp_n2o_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21008|mls_l2gp_co_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21009|mls_l2gp_oh_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21010|mls_l2gp_rhi_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21011|mls_l2gp_so2_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21012|mls_l2gp_ho2_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21013|mls_l2gp_bro_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21014|mls_l2gp_hocl_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21015|mls_l2gp_hcn_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21016|mls_l2gp_cirrus-ice_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+#22517|mls_l2gp_o3-strat-column_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+#22550|mls_l2gp_others_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
+21440|mls_l2aux_v01_1hr.2000-001|/users/lungu/mlspgs/l2||||1
 #
 #------------------------------------------------------------------------
 # This file is created when PGS_MET_Write is used with an intention
@@ -500,7 +499,7 @@
 # Toolkit version for which this PCF was intended.
 # DO NOT REMOVE THIS VERSION ENTRY!
 # -----------------------------------------------------------------------
-10220|Toolkit version string|SCF B.0 TK5.2.6
+10220|Toolkit version string|TK_VERSION_STRING
 #
 # -----------------------------------------------------------------------
 # The following parameters define the ADEOS-II TMDF values (all values
@@ -574,7 +573,7 @@
 # are used by pgs_pc_getconfigdata to obtain the processing range.
 # -----------------------------------------------------------------------
 10411|Processing CCSDS Start Time|2000-01-01T00:00:00.000000Z
-10412|Processing CCSDS End Time|2000-01-01T23:59:59.000000Z
+10412|Processing CCSDS End Time|2000-01-01T00:59:59.000000Z
 ?   INTERMEDIATE INPUT
 #########################################################################
 #
