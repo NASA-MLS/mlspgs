@@ -772,7 +772,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def, &
       begin, s+s_l2aux, &   ! Must be AFTER s_vector
              begin, f+f_source, s+s_vector, f+f_template, f+f_quantities, &
-                    nr+n_dot, &
+                    n+n_dot, &
              begin, f+f_compareOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_outputOverlaps, t+t_boolean, n+n_field_type, &
              begin, f+f_prefixSignal, t+t_boolean, n+n_field_type, &
@@ -998,6 +998,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.126  2001/07/09 18:18:45  pwagner
+! Allows readapriori with format of l2aux similar to l2gp
+!
 ! Revision 2.125  2001/07/07 03:55:19  livesey
 ! Removed l_cloudSensitivity as jonathan removed it from intrinsic.
 !
