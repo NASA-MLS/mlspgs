@@ -17,6 +17,7 @@
 # -d prog_path       install resulting program in prog_path
 # -ni                don't install; i.e., skip step (4) above
 # -m test_dir_name   use tests/test_dir_name instead of tests/misc
+# -main main.c       edit main.c so main() -> MAIN__() to appease Lahey
 # -M MYMAKE          use MYMAKE for make command instead of make
 # -t test_dir_path   use test_dir_path/misc instead of tests/misc
 # -c MLSCONFG        use arg for MLSCONFG instead of any current setting
@@ -172,6 +173,7 @@ INC_PATHS=""
 EXTRA_PATHS=""
 MYMAKE=make
 MYMAKEOPTS=
+main=
 
 me="$0"
 my_name=build_f90_in_misc.sh
@@ -201,6 +203,10 @@ while [ "$1" != "" ] ; do
 	;;
 	-m )
 	    test_dir_name=$2
+	    shift
+	;;
+	-main )
+	    main=$2
 	    shift
 	;;
 	-M )
@@ -265,6 +271,7 @@ then
    echo "test_dir_name: $test_dir_name"
    echo "test_dir_path: $test_dir_path"
    echo "target_name: $target_name"
+   echo "main.c name: $main"
    echo "make command: $MYMAKE"
    echo "NEED_MLSCONFG: $NEED_MLSCONFG"
    echo "MLSCONFG: $MLSCONFG"
@@ -371,6 +378,33 @@ then
    echo "Building the executable"
 fi
 
+# The following nonsense is necessary only if your main program is
+# a c language program na,ed main() and you're using Lahey:
+# Lahey insists then your main be renamed MAIN__()
+# (Why do we permit such behavior?)
+# Anyway, we'll try to rename our main to appease the Lahey monster
+is_lf95=`echo "$MYMAKEOPTS" | grep -i '=LF95'`
+if [ "$main" != "" -a -f "$test_dir_path/$test_dir_name/$main" \
+  -a "$is_lf95" != "" ]
+then
+   cd $test_dir_path/$test_dir_name
+   rm -f "temp"
+#  Sorry for the crude substitutions
+#  Should construct a more elegant method
+#  in a perl one-liner, perhaps
+   sed '/[^A-Za-z0-9]main[^A-Za-z0-9]/ s/main/MAIN__/' "$main" > "temp"
+   mv "temp" "$main"
+   sed '/^main[^A-Za-z0-9]/ s/main/MAIN__/' "$main" > "temp"
+   if [ $DEEBUG = "on" ]
+   then
+      echo "Lahey compiler: changing main c program in file $main"
+      echo "diffing changed and original:"
+      diff "temp" "$main"
+   fi
+   mv "temp" "$main"
+   cd $args_dir
+fi
+
 if [ "$EXTRA_PATHS" != "" ]
 then
    repair_subpaths $EXTRA_PATHS
@@ -447,6 +481,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.12  2002/05/03 18:02:56  pwagner
+# Fix bug (but who created it?)
+#
 # Revision 1.11  2002/04/26 23:41:14  pwagner
 # New options -T -O -ni; can build libutcttai.a now
 #

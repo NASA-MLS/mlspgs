@@ -48,9 +48,16 @@ include ../Makefile.dep
 # if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
 
 # ========================================================================
+ifndef NO_MACHINE
 ${OBJS}: machine.o
-
 ALLOBJS = $(OBJS) machine.o
+else
+ALLOBJS = $(OBJS)
+endif
+
+ifndef LDMISC
+LDMISC=$(FC)
+endif
 
 PROG_NAME=test
 
@@ -137,7 +144,7 @@ $(PROG_NAME): $(ALLOBJS) $(CONFDIR)/$(MLSCFILE)
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 		@echo "$(hdf5_message)"
-		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS)  \
+		$(LDMISC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS)  \
 		$(tk_linker_line) \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
@@ -177,6 +184,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.12  2002/07/16 18:46:34  pwagner
+# Works with latest Lahey and lf95-toolkit (hopefully)
+#
 # Revision 1.11  2002/06/06 22:02:50  pwagner
 # Attempts to link w/o toolkit if PGSTK not defined
 #

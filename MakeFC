@@ -79,9 +79,13 @@ endif
 #   l2cfmaker.sh           "Compiler" for building l2cf
 #   makemakedep.sh         Calculates dependencies   
 #   mkdir_cascade.sh       Creates a directory, and any yet uncreated parents
+#   mark_as_uptodate.sh    Marks files uptodate to forestall recompilations
 #   mlsconfigure           Configures Makefiles for building mlks software
 #   mlsprog.sh             sh wrapper to assure exit condition is "1" if probs
+#   newAifBdiff.sh         Precompiler to forestall recompilations
 #   reecho.sh              Filter list of args to remove bogus ones
+#   split_path.sh          Splits path/name into "path name"
+#   updatemf.sh            Updates Makefile in object file directory
 #   uptodate.make          Ensure that custom machine files are up-to-date
 #   which_fftw.sh          Construct correct fftw link lines for level 3
 #
@@ -92,6 +96,7 @@ endif
 #  make help--ghostbuster       ghostbuster.sh
 #  make help--mlsconfigure      mlsconfigure
 #  make help--reecho            reecho.sh
+#  (or in general for help on "script.sh" try the command "util/script.sh -h")
 # --------------- End scripts help
 
 MLSBIN=util
@@ -441,11 +446,15 @@ mostlyclean:
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir mostlyclean; \
 	done
+	@if [ -d "bin/$(MLSCONFG)" ] ; then \
+	   echo "rming bin/$(MLSCONFG)" ; \
+	   rm -f -r bin/$(MLSCONFG) ; \
+	 fi
 	@echo "Cleaning $(tests_sub_dirs)"; \
 	 for dir in $(tests_sub_dirs) $(sids_l1boa); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir mostlyclean; \
 	done
-	@$(MAKE) -f $(MakeFName) internalcleanup ; \
+	@$(MAKE) -f $(MakeFName) internalcleanup
 
 clean:
 	@echo "Cleaning objects from $(SUBDIRS)"; \
@@ -577,6 +586,12 @@ install:
 	esac ; \
 	done
 
+# Build executables out of sources from mlspgs/util directory
+ifeq ($(MLSF95),LF95)
+UTIL_OPTS=-O MLSF95=LF95
+else
+UTIL_OPTS=
+endif
 # unshar the sources for the executables (heconvert so far)
 $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h: $(MLSBIN)/heconvert.shar
 	@cd $(MLSBIN); \
@@ -626,6 +641,7 @@ heconvert: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/convert.c $(MLSBIN)/HE5_HdfEosDef.h
       -I $(HDFEOS5)/../../include \
       -I $(HDFEOS)/../../include \
       -I $(HDF)/../include -I $(HDF5)/../include -I $(HDF5)/../src \
+      $(UTIL_OPTS) -main convert.c\
 		;; \
 	esac 
    
@@ -648,6 +664,7 @@ h5subset: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5subset.c
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
 	   -C $(MLSCFILE) \
       -i "-I $(HDF5)/../include" \
+      $(UTIL_OPTS) -main h5subset.c\
       $(MLSBIN)/$@.c \
 		;; \
 	esac 
@@ -665,13 +682,15 @@ h5cat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/h5cat.c
 	   -C $(MLSCFILE) \
       -i "-I $(HDF5)/../include" \
       $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main h5cat.c\
 		;; \
 	esac 
 
 hl: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/hl.c
 	   $(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
       -c $(MLSCONFG) -p $@ -M $(MAKE) \
-	   -C $(MLSCFILE) $(MLSBIN)/$@.c
+	   -C $(MLSCFILE) $(MLSBIN)/$@.c \
+      $(UTIL_OPTS) -main hl.c
 
 utctotai: $(CONFDIR)/$(MLSCFILE) $(utctotai_sources)
 		$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
@@ -964,20 +983,23 @@ install: $(LEVELS)
 
 update:
 
-.PHONY: configure depends subdirs clean mostlyclean clean_config distclean\
-  tar substar disttar tarz substarz distarz targ substarg distarg substars\
-  all install levels configure_subdirs makefile update ghostbuster\
-  configure_pvm configure_fopts configure_full configure_help help disthelp\
-  firsthelp help--brief help--convert help--depends help--fopts\
-  help--ghostbuster help--mlsconfigure help--Makefile help--platform help--pvm\
-  help--reecho help--scripts help--toolkit \
+.PHONY: all configure clean clean_config\
+  configure_pvm configure_fopts configure_full configure_help configure_subdirs\
+  depends distclean disttar distarz distarg disthelp\
+  firsthelp  ghostbuster help--brief help--convert help--depends help--fopts\
+  help help--ghostbuster help--mlsconfigure help--Makefile help--platform\
+  help--pvm help--reecho help--scripts help--toolkit install\
   internalcleanup internaldepends internalmftests internalsaymake \
-  internaladd_copy internalreset_copy show_copy internalupdate\
+  internaladd_copy internalreset_copy show_copy internalupdate levels\
   lib--hdf5 l1--hdf5 l2--hdf5 l3--hdf5 l3m--hdf5 all--hdf5 lib--hdf4\
-  $(SUBDIRS)
+  makefile mostlyclean $(SUBDIRS) subdirs\
+  tar substar tarz substarz targ substarg substars update
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.74  2002/07/29 23:04:13  pwagner
+# Speedup by replacing mlsconfigure with updatemf.sh to update Makefile
+#
 # Revision 1.73  2002/07/26 20:43:18  pwagner
 # Adds cutomblds to machines.tar
 #
