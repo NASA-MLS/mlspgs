@@ -375,6 +375,28 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,   &
        & ModuleName, InvalidQuantity//'ptan' )
 
+    !----------------------------------
+    ! Set up some temporary quantities
+    !----------------------------------
+
+    call Allocate_test ( closestInstances, radiance%template%noInstances,    &
+      & 'closestInstances', ModuleName )      
+
+    !------------------------
+    ! Assemble the vmr array
+    !------------------------
+    if ( size(forwardModelConfig%molecules) .lt. 2 ) then
+!   make sure we have enough molecules
+      call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
+    endif
+    
+    !---------------------------------------------------------
+    ! Work out the closest instances from temperature
+    !---------------------------------------------------------
+    call FindClosestInstances ( temp, radiance, closestInstances )
+    instance = closestInstances(maf)
+    tLat = temp%template%geodLat(1,instance)    ! get latitude for each instance
+
     ! ----------------------------
     ! Get some basic dimensions
     ! ----------------------------
@@ -431,28 +453,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           Allocate( Slevl(noSgrid))
 
           Slevl = state_los%template%frequencies
-
-    !----------------------------------
-    ! Set up some temporary quantities
-    !----------------------------------
-
-    call Allocate_test ( closestInstances, radiance%template%noInstances,    &
-      & 'closestInstances', ModuleName )      
-
-    !------------------------
-    ! Assemble the vmr array
-    !------------------------
-    if ( size(forwardModelConfig%molecules) .lt. 2 ) then
-!   make sure we have enough molecules
-      call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
-    endif
-    
-    !---------------------------------------------------------
-    ! Work out the closest instances from temperature
-    !---------------------------------------------------------
-    call FindClosestInstances ( temp, radiance, closestInstances )
-    instance = closestInstances(maf)
-    tLat = temp%template%geodLat(1,instance)    ! get latitude for each instance
 
 ! now checking spectroscopy
     got = .false.
@@ -1102,6 +1102,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.122  2003/11/21 17:55:57  dwu
+! add vGrid check for size distribution
+!
 ! Revision 1.121  2003/11/20 20:30:58  dwu
 ! fit the problem when IWC and Temp vGrid mismatch
 !
