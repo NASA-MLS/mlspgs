@@ -101,6 +101,7 @@ contains
 
     if ( associated(pointingGrids) ) call destroy_pointing_grid_database
 
+    nullify ( howManyGrids, howManySignals )
     call allocate_test ( howManyGrids, size(signals), 'HowManyGrids', &
       & moduleName )
     call allocate_test ( howManySignals, size(signals), 'HowManySignals', &
@@ -126,6 +127,7 @@ outer1: do
         call deallocate_test ( signal_indices, 'Old HowManySignals', moduleName )
       end if
       howManySignals(howManyRadiometers) = 0
+      nullify(signal_indices)
       do
         line = adjustl(line)
         call parse_signal ( line, signal_indices, spec_indices, &
@@ -166,6 +168,7 @@ outer2: do
         & MLSMSG_Allocate // "PointingGrids(?)%signals" )
       n = 0 ! Counter in pointingGrids(howManyRadiometers)%signals
       nullify ( signal_indices )
+      nullify ( channels )
       do
         call parse_signal ( line, signal_indices, spec_indices, &
           & sideband=sideband, channels=channels )
@@ -280,6 +283,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.11  2001/04/13 21:39:15  vsnyder
+! Replace 'indices of signals' by 'array of signals'
+!
 ! Revision 1.10  2001/03/30 01:34:33  vsnyder
 ! More work on I/O status handling
 !
