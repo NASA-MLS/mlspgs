@@ -26,6 +26,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
     & DestroyQuantityTemplateDatabase, QuantityTemplate_T
   use String_Table, ONLY: GET_STRING
+  use Time_M, only: Time_Now
   use TOGGLES, only: GEN, LEVELS, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SUB_ROSA, &
@@ -85,7 +86,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code
     timing = section_times
-    if ( timing ) call cpu_time ( t1 )
+    if ( timing ) call time_now ( t1 )
 
     ! First we're going to setup our mifGeolocation quantityTemplates.
     ! These are just two quantity templates containing geolocation
@@ -146,7 +147,7 @@ contains ! =====     Public Procedures     =============================
         if ( timing ) then
           call sayTime
         else
-          call cpu_time ( t1 )
+          call time_now ( t1 )
           timing = .true.
         end if
       case default ! Can't get here if tree_checker worked correctly
@@ -169,7 +170,7 @@ contains ! =====     Public Procedures     =============================
 
   contains
     subroutine SayTime
-      call cpu_time ( t2 )
+      call time_now ( t2 )
       if ( total_times ) then
         call output ( "Total time = " )
         call output ( dble(t2), advance = 'no' )
@@ -205,6 +206,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.30  2001/11/09 23:17:22  vsnyder
+! Use Time_Now instead of CPU_TIME
+!
 ! Revision 2.29  2001/10/31 19:07:15  livesey
 ! Added fGrid stuff
 !
