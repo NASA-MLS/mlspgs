@@ -154,7 +154,7 @@ contains
 
     ! Setup some stuff for the case where we're doing numerical derivatives.
     if ( associated ( perturbation ) ) then
-      if ( perturbation%template%id /= fwdModelIn%template%id ) then
+      if ( perturbation%template%name /= fwdModelIn%template%name ) then
         call AnnounceError ( perturbationNotState )
         stop
       end if
@@ -336,6 +336,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.43  2003/06/20 19:38:26  pwagner
+! Allows direct writing of output products
+!
 ! Revision 2.42  2002/10/08 17:36:23  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
