@@ -67,8 +67,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1), advance='yes' )
     else
@@ -147,8 +150,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1), myFormat, advance='yes' )
     else
@@ -201,8 +207,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1), advance='yes' )
     else
@@ -274,8 +283,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1), advance='yes' )
     else
@@ -328,8 +340,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1), myFormat, advance='yes' )
     else
@@ -382,8 +397,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
@@ -469,8 +487,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 ) then
@@ -605,8 +626,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
@@ -686,8 +710,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
@@ -745,8 +772,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 ) then
@@ -885,8 +915,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1,1), advance='yes' )
     else if ( how_many == 2 ) then
@@ -980,8 +1013,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
@@ -1082,8 +1118,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1,1), advance='yes' )
     else if ( how_many == 2 ) then
@@ -1177,8 +1216,11 @@ contains
     else if ( size(array) == 1 ) then
       if ( present(name) ) then
         call output ( name )
-        if ( myClean ) call output ( ' \ 1 ' )
-        call output ( ' ' )
+        if ( myClean ) then
+          call output ( ' \ 1', advance='yes' )
+        else
+          call output ( ' ' )
+        end if
       end if
       call output ( array(1,1,1), '(1x,1pg13.6)', advance='yes' )
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
@@ -1457,6 +1499,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.24  2003/05/21 19:20:40  vsnyder
+! Start a new line after \ 1 if size==1 and clean
+!
 ! Revision 2.23  2003/05/06 00:15:03  pwagner
 ! Fixed incompatibility with FilterShapes
 !
