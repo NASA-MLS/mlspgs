@@ -330,14 +330,12 @@ contains ! =============== Subroutines and functions ==========================
         call output ( ' mean, min abs, max abs residual:', advance='yes' )
         call output ( '  ' )
         call output ( sum(residual%quantities(1)%values) / &
-          & (ptan%template%noInstances*ptan%template%noSurfs), &
-          & format='(f10.2)' )
+          & (ptan%template%noInstances*ptan%template%noSurfs) )
         call output ( ', ' )
-        call output ( minval(abs(residual%quantities(1)%values)), &
-          & format='(f10.2)' )
+        call output ( minval(abs(residual%quantities(1)%values)) )
         call output ( ', ' )
         call output ( maxval(abs(residual%quantities(1)%values)), &
-          & format='(f10.2)', advance='yes' )
+          & advance='yes' )
       end if
     end do
 
@@ -1620,7 +1618,7 @@ contains ! =============== Subroutines and functions ==========================
         & eta_z(:,sv_z) * eta_p_h2o(:,sv_p)
         not_zero_h2o(:,sv_z + temp%template%nosurfs*(sv_p-1)) = .TRUE.
         tan_h2o = tan_h2o + eta_zxp_h2o(:,sv_z+h2o%template%nosurfs*(sv_p-1)) &
-        & * LOG(h2o%values(sv_z,windowstart_h2o+sv_p-1))
+        & * LOG(max(h2o%values(sv_z,windowstart_h2o+sv_p-1),1e-9_rp))
       END WHERE
     ENDDO
   ENDDO
@@ -1887,6 +1885,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.42  2002/06/26 23:37:27  livesey
+! Tidied up dumps.
+!
 ! Revision 2.41  2002/06/26 23:29:52  bill
 ! fixed residual calculation bug--wgr
 !
