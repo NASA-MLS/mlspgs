@@ -756,7 +756,8 @@ contains
 
   subroutine Populate_metadata_std ( HDF_FILE, MCF_FILE, &
     & L2pcf, Field_name, hdfVersion, Metadata_error, setAlias, &
-    & isHDFEOS )
+    & filetype )
+    ! & isHDFEOS )
 
     ! This is the standard way to write meta data
     ! It should work unchanged for the standard l2gp files (e.g. BrO)
@@ -777,7 +778,8 @@ contains
     integer, optional, intent(in)  :: hdfVersion
     integer, optional, intent(out) :: Metadata_error
     logical, optional, intent(in)  :: setAlias
-    logical, optional, intent(in)  :: isHDFEOS
+    character(len=*), optional, intent(in)  :: filetype
+    ! logical, optional, intent(in)  :: isHDFEOS
 
     !Local Variables
 
@@ -881,7 +883,8 @@ contains
     ! Annotate the file with the PCF
 
     if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText, &
-     & hdfVersion, isHDFEOS=isHDFEOS)
+     & hdfVersion, filetype=filetype)
+     ! & hdfVersion, isHDFEOS=isHDFEOS)
 
     returnStatus = pgs_met_remove() 
     if ( returnStatus /= 0 ) then
@@ -902,7 +905,8 @@ contains
 
   subroutine Populate_metadata_oth ( HDF_FILE, MCF_FILE, L2pcf, &
     & NumQuantitiesPerFile, QuantityNames, hdfVersion, Metadata_error, &
-    & setAlias, isHDFEOS )
+    & setAlias, filetype )
+    ! & setAlias, isHDFEOS )
 
     ! This is specially to write meta data for heterogeneous files
     ! It should work unchanged for the 'OTH' l2gp files (e.g. ML2OTH.001.MCF)
@@ -918,7 +922,8 @@ contains
     integer, optional, intent(out) :: Metadata_error
     integer, optional, intent(in) :: hdfVersion
     logical, optional, intent(in)  :: setAlias
-    logical, optional, intent(in)  :: isHDFEOS
+    ! logical, optional, intent(in)  :: isHDFEOS
+    character(len=*), optional, intent(in)  :: filetype  ! 'sw' or 'hdf'
 
     !Local Variables
 
@@ -1026,7 +1031,8 @@ contains
 ! Annotate the file with the PCF
 
     if ( ANNOTATEWITHPCF ) call writePCF2Hdr(physical_filename, l2pcf%anText, &
-      & hdfVersion, isHDFEOS)
+      & hdfVersion, filetype=filetype)
+      ! & hdfVersion, isHDFEOS)
 
     returnStatus = pgs_met_remove() 
     if ( returnStatus /= 0 ) then
@@ -1567,6 +1573,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.40  2003/03/11 00:21:36  pwagner
+! Interfaces fit new WritePCF2Hdr flixibility
+!
 ! Revision 2.39  2003/03/07 00:55:38  pwagner
 ! Set INPUTPOINTERMESG when annotating with PCF as a private param /HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF
 !
