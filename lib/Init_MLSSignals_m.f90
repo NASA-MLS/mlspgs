@@ -256,4 +256,7 @@ contains
 
 end module Init_MLSSignals_m
 
-! $Log $
+! $Log$
+! Revision 2.4  2001/03/16 01:02:32  vsnyder
+! ... Including the Log at the end.
+!
