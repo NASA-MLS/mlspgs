@@ -674,7 +674,7 @@ contains ! =====     Public Procedures     =============================
     ! Look in the first vector
     index = GetVectorQuantityIndexByType ( vector, &
       & quantityType, molecule, instrumentModule, radiometer, signal, sideband, &
-      &   noError = present(otherVector) )
+      &   noError = present(otherVector) .or. myNoError)
     if ( index /= 0 ) then
       if ( present (foundInFirst) ) foundInFirst = .true.
       GetVectorQuantityByType => vector%quantities(index)
@@ -1112,6 +1112,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.32  2001/04/28 07:04:32  livesey
+! Minor bug fix
+!
 ! Revision 2.31  2001/04/28 01:48:52  vsnyder
 ! Improve dump
 !
