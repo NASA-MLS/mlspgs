@@ -1196,7 +1196,7 @@ contains ! =====     Public Procedures     =============================
     if ( present ( eps ) ) then
       myEps = eps
     else
-      myTol = sqrt ( tiny ( 0.0_rm ) )
+      myTol = epsilon ( 0.0_rm )
       if ( present ( tol ) ) myTol = tol
       myEps = myTol * sum ( A ** 2 )
     endif
@@ -3387,6 +3387,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.101  2004/01/30 23:19:24  livesey
+! Changed tiny to epsilon in DenseCyclicJacobi
+!
 ! Revision 2.100  2004/01/29 03:31:18  livesey
 ! Got a working DenseCyclicJacobi and added FrobeniusNorm
 !
