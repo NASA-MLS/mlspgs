@@ -82,17 +82,29 @@ CONTAINS
 
         CHARACTER (LEN=480) :: msr
 
-	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, numSwaths, rDays
+	INTEGER ::  error, l2Days, nlev, nf, nwv, numDays, numSwaths, rDays, pEndIndex, pStartIndex
 
-        integer i, j, k, ctype, iP, iD, iL
+        integer i, j, k, ctype, iP, kP, iD, iL
         real(r8), Dimension(nlons) :: xlon, result
 	real zonAvg, tau0, l3ret
 
-!*** Initilize variables & POINTERS
+!*** Initilize variables
  
 	nlev = 24
         nwv = 10
-        nf = 100
+        nf = cfProd%nFreqs
+
+	nlev = 0
+        DO j = 1, l2gp(1)%nLevels
+           IF( l2gp(1)%pressures(j) >= cfProd%l3presLvl(1) .AND. &
+	       l2gp(1)%pressures(j) <= cfProd%l3presLvl(2) ) THEN
+	     nlev = nlev + 1
+	     IF (nlev == 1) pStartIndex = j 
+	     pEndIndex = j 
+	   ENDIF
+        ENDDO
+
+!*** Initilize POINTERS
 
         IF (cfProd%mode == 'all') THEN
            numSwaths = 3
@@ -120,7 +132,7 @@ CONTAINS
         DO j = 1, numSwaths
 
            CALL AllocateL3SP( nlev, cfProd%nLats, nwv, nf, l3sp(j) )
-           l3sp(j)%pressure = l2gp(1)%pressures(:nlev)
+           l3sp(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
            l3sp(j)%latitude = cfProd%latGridMap(:l3sp(j)%nLats)
 
         ENDDO
@@ -149,9 +161,9 @@ CONTAINS
            dmA(j)%time = cfProd%timeD(j)
            dmD(j)%time = cfProd%timeD(j)
 
-           l3dm(j)%pressure = l2gp(1)%pressures(:nlev)
-           dmA(j)%pressure = l2gp(1)%pressures(:nlev)
-           dmD(j)%pressure = l2gp(1)%pressures(:nlev)
+           l3dm(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
+           dmA(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
+           dmD(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
 
            l3dm(j)%latitude = cfProd%latGridMap(:l3dm(j)%nLats)
            dmA(j)%latitude = cfProd%latGridMap(:dmA(j)%nLats)
@@ -179,9 +191,9 @@ CONTAINS
            dzA(j)%time = cfProd%timeD(j)
            dzD(j)%time = cfProd%timeD(j)
 
-           l3dz(j)%pressure = l2gp(1)%pressures(:nlev)
-           dzA(j)%pressure = l2gp(1)%pressures(:nlev)
-           dzD(j)%pressure = l2gp(1)%pressures(:nlev)
+           l3dz(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
+           dzA(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
+           dzD(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
 
            l3dz(j)%latitude = cfProd%latGridMap(:l3dm(j)%nLats)
            dzA(j)%latitude = cfProd%latGridMap(:dmA(j)%nLats)
@@ -229,6 +241,7 @@ CONTAINS
 !*** Sort & Prepare the Data 
 
 	Call SortData(cfProd, pcf, l2Days, l2gp, 		&
+			pStartIndex, pEndIndex,			&
 			tau0, 					&
 			anlats, dnlats, 			&
 		        alats, dlats, 				&
@@ -236,10 +249,22 @@ CONTAINS
 			atimes, dtimes, 			&
 			afields, dfields, delTad )
 
+	!open(5, file='l2gp_intp.dat', status='replace')
+	!DO J = 1, anlats(10, 1)
+	!  write(5,*) J, atimes(10, J, 1)*60.*60.*24.+l2gp(1)%time(1), alons(10, J, 1), afields(10, J, 1) 
+	  !write(5,*) J, atimes(10, J, 1), alons(10, J, 1), afields(10, J, 1) 
+        !ENDDO
+        !close(5)
+
 !*** Main Loop 
 
-	DO iP = 1, l2gp(1)%nLevels
+!	cfProd%mode = 'com'
+
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
 	  DO J = 1, cfProd%nLats
+	  !DO J = 10, 10 
        	     IF( anlats(J, iP) > 0 ) THEN
 	        CALL Init(cfProd%mode, 				&
 			  nt_a_i   = anlats(J, iP), 		&
@@ -268,18 +293,17 @@ CONTAINS
 		      l3dz(iD)%l3dzValue(iP, J) = zonAvg/float(l3dm(iD)%nLons) 
 		   ENDDO
                    DO iL = 1, anlats(J, iP)
-		      !CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
+		      CALL Diagnostics(cfProd%mode, atimes(J, iL, iP), alons(J, iL, iP), l3ret) 
 		      !print *, atimes(J, iL, iP), alons(J, iL, iP), afields(J, iL, iP)-l3ret
 		   ENDDO
                    DO iL = 1, anlats(J, iP)
-		      !CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
+		      CALL Diagnostics(cfProd%mode, dtimes(J, iL, iP), dlons(J, iL, iP), l3ret) 
 		      !print *, dfields(J, iL, iP)-l3ret
 		   ENDDO
 		   DeAllocate(l3Result)
 		   flags%writel3dmCom = .TRUE.
 		   flags%writel3dzCom = .TRUE.
-		   flags%writel3sp    = .TRUE.
-             	   flags%writel3rCom  = .TRUE.
+		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'asc') THEN
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -297,8 +321,7 @@ CONTAINS
 		   DeAllocate(l3Result)
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3dzAsc = .TRUE.
-		   flags%writel3sp    = .TRUE.
-        	   flags%writel3rAsc  = .TRUE.
+		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'des') THEN
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -316,8 +339,7 @@ CONTAINS
 		   DeAllocate(l3Result)
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3dzDes = .TRUE.
-		   flags%writel3sp    = .TRUE.
-        	   flags%writel3rDes  = .TRUE.
+		   flags%writel3sp = .TRUE.
 		ELSE IF (cfProd%mode == 'all') THEN
                    ALLOCATE(l3Result(l3dm(1)%nLons), STAT=error)
                    CALL CordTransform('com')
@@ -336,7 +358,6 @@ CONTAINS
 
 		   flags%writel3dmCom = .TRUE.
 		   flags%writel3dzCom = .TRUE.
-             	   flags%writel3rCom  = .TRUE.
 
                    ALLOCATE(l3Result(dmA(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -355,7 +376,6 @@ CONTAINS
 
 		   flags%writel3dmAsc = .TRUE.
 		   flags%writel3dzAsc = .TRUE.
-        	   flags%writel3rAsc  = .TRUE.
 
                    ALLOCATE(l3Result(dmD(1)%nLons), STAT=error)
                    CALL CordTransform(cfProd%mode)
@@ -374,7 +394,6 @@ CONTAINS
 
 		   flags%writel3dmDes = .TRUE.
 		   flags%writel3dzDes = .TRUE.
-        	   flags%writel3rDes  = .TRUE.
 		   flags%writel3sp = .TRUE.
 		END IF
 
@@ -408,13 +427,13 @@ CONTAINS
 
 
 !-------------------------------------------------------------------------
-   SUBROUTINE SortData(cfProd, pcf, l2Days, l2gp, tau0, anlats, dnlats, 	&
+   SUBROUTINE SortData(cfProd, pcf, l2Days, l2gp, pStartIndex, pEndIndex, tau0, anlats, dnlats, 	&
 		alats_interp, dlats_interp, alons_interp, dlons_interp, 	&
 		atimes_interp, dtimes_interp, afields_interp, dfields_interp,	&
 		delTad)
 !-------------------------------------------------------------------------
 
-        integer error, i, j, k, iT, iD, iP, ctype, nterms, nstart, nr, lindex, lindex_prev
+        integer error, i, j, k, iT, iD, iP, kP, ctype, nterms, nstart, nr, lindex, lindex_prev
 	INTEGER ::  l2Days, nloop, aindex, aindex_prev, dindex, dindex_prev
 
         TYPE( PCFData_T ) :: pcf
@@ -434,16 +453,16 @@ CONTAINS
 	Real (r8) dlons, alons, lons_found, lats_found, times_found, fields_found, 	&
 		  slope, slope_time, slope_field, sTime, ddtad
 
-	INTEGER, DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: anlats, dnlats
-	Real (r8), DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: delTad 
-
 	Real tau0
  
-	Integer nPd
+	Integer nPd, pStartIndex, pEndIndex
 
-	nPd = 15
+	INTEGER, DIMENSION(cfProd%nLats, pEndIndex-pStartIndex+1) :: anlats, dnlats
+	Real (r8), DIMENSION(cfProd%nLats, pEndIndex-pStartIndex+1) :: delTad 
 
 !*** Calculate the number of points in each pressure level 
+
+	nPd = 15
 
         nterms = 0
 	DO I = 1, l2Days
@@ -452,25 +471,25 @@ CONTAINS
 
 !*** Allocate space for all the arrays
 
-        ALLOCATE(l2Times(nterms, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(l2Lons(nterms, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(l2Lats(nterms, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(l2Values(nterms, l2gp(1)%nLevels), STAT=error)
+        ALLOCATE(l2Times(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Lons(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Lats(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Values(nterms, pEndIndex-pStartIndex+1), STAT=error)
 
-        ALLOCATE(l2Lons_new(nterms, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(l2Lons_Rev(nterms, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(l2Times_Rev(nterms, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(l2Lats_Rev(nterms, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(l2Values_Rev(nterms, l2gp(1)%nLevels), STAT=error)
+        ALLOCATE(l2Lons_new(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Lons_Rev(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Times_Rev(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Lats_Rev(nterms, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(l2Values_Rev(nterms, pEndIndex-pStartIndex+1), STAT=error)
 
-        ALLOCATE(alons_interp(cfProd%nLats, nPd*l2Days, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(alats_interp(cfProd%nLats, nPd*l2Days, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(atimes_interp(cfProd%nLats, nPd*l2Days, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(afields_interp(cfProd%nLats, nPd*l2Days, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(dlons_interp(cfProd%nLats, nPd*l2Days, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(dlats_interp(cfProd%nLats, nPd*l2Days, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(dtimes_interp(cfProd%nLats, nPd*l2Days, l2gp(1)%nLevels), STAT=error)
-        ALLOCATE(dfields_interp(cfProd%nLats, nPd*l2Days, l2gp(1)%nLevels), STAT=error)
+        ALLOCATE(alons_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(alats_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(atimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(afields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dlons_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dlats_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dtimes_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
+        ALLOCATE(dfields_interp(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
 
 	IF(error /= 0 ) THEN
           print *, "Allocation Error"
@@ -479,22 +498,30 @@ CONTAINS
 
 !*** Re-arrange the data into longitude order for each pressure level 
 
+!	open(5, file='l2gp_info.dat', status='replace')
+
         nstart = 1
 	DO iD = 1, l2Days
 	  DO iT = 1, l2gp(iD)%nTimes
-	    DO iP = 1, l2gp(iD)%nLevels
+	    iP = 0
+	    DO kP = pStartIndex, pEndIndex 
+	        iP = iP + 1
                 l2Times(nstart, iP) = l2gp(iD)%time(iT)
                 l2Lons(nstart, iP) = l2gp(iD)%longitude(iT) * PI/180.0
                 l2Lats(nstart, iP) = l2gp(iD)%latitude(iT)
-                l2Values(nstart, iP) = l2gp(iD)%l2gpValue(1, iP, iT) 
+                l2Values(nstart, iP) = l2gp(iD)%l2gpValue(1, kP, iT) 
 	    ENDDO
+!	    write(5, *) nstart, l2Times(nstart, 1), l2Lons(nstart, 1), l2Lats(nstart, 1), l2Values(nstart, 1)
             nstart = nstart + 1
 	  ENDDO
 	ENDDO
 
+!	close(5)
 !*** Re-arrange the longitude into sequence 
 
-	DO iP = 1, l2gp(1)%nLevels
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
           nr = 0
 	  DO iT = 2, nterms 
                 IF( l2Lons(iT, iP) >= 0.0 .AND. l2Lons(iT-1, iP) < 0.0 ) THEN 
@@ -509,7 +536,9 @@ CONTAINS
 
 !*** Reverse longitude order
 
-	DO iP = 1, l2gp(1)%nLevels
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
 	  DO iT = 1, nterms 
      		l2Lons_Rev(iT, iP) = l2Lons_new(nterms+1-iT, iP)
 	  ENDDO
@@ -517,14 +546,18 @@ CONTAINS
 
 !*** Reverse time order
 
-	DO iP = 1, l2gp(1)%nLevels
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
           sTime = l2Times(1, iP)
 	  DO iT = 1, nterms 
                 l2Times(iT, iP) = (l2Times(iT, iP) - sTime)/86400.0 
 	  ENDDO
 	ENDDO
 
-	DO iP = 1, l2gp(1)%nLevels
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
 	  DO iT = 1, nterms 
                 l2Times_Rev(iT, iP) = l2Times(nterms+1-iT, iP)
 	  ENDDO
@@ -532,7 +565,9 @@ CONTAINS
 
 !*** Reverse latitude order
 
-	DO iP = 1, l2gp(1)%nLevels
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
 	  DO iT = 1, nterms 
      		l2Lats_Rev(iT, iP) = l2Lats(nterms+1-iT, iP)
 	  ENDDO
@@ -540,7 +575,9 @@ CONTAINS
 
 !*** Reverse field value order
 
-	DO iP = 1, l2gp(1)%nLevels
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
 	  DO iT = 1, nterms 
      		l2Values_Rev(iT, iP) = l2Values(nterms+1-iT, iP)
 	  ENDDO
@@ -554,7 +591,9 @@ CONTAINS
 
         dlons = 0.3*PI/180.0
 
-	DO iP = 1, l2gp(1)%nLevels
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
 
  	  alons = l2Lons_Rev(1, iP) 
 
@@ -642,7 +681,9 @@ CONTAINS
 
 !*** Find averaged asc/des time difference 
 
-	DO iP = 1, l2gp(1)%nLevels
+	iP = 0
+	DO kP = pStartIndex, pEndIndex 
+	  iP = iP + 1
 	  DO J = 1, cfProd%nLats
             delTad(J,iP) = 0.0
 	    DO I = 1, anlats(J, iP) 
