@@ -1372,17 +1372,22 @@ contains ! =====     Public Procedures     =============================
 
         case ( l_phaseTiming ) ! ---------  Fill timings for phases  -----
           call finishTimings('phases', returnStatus=status)
-          if ( status /= 0 ) &
-            & call Announce_error ( key, 0, 'Unable to finish phases timings' )
-          call FillTimings ( quantity%values(:,1), 'phases', 'all', .true. )
-          call dump( quantity%values(:,1), 'phases' )
+          if ( status /= 0 ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, &
+              & 'Unable to finish phases timings' )
+          else
+            call FillTimings ( quantity%values(:,1), 'phases', 'all', .true. )
+            call dump( quantity%values(:,1), 'phases' )
+          endif
 
         case ( l_sectionTiming ) ! ---------  Fill timings for sections  -----
           call finishTimings('sections', returnStatus=status)
-          if ( status /= 0 ) &
-            & call Announce_error ( key, 0, 'Unable to finish sections timings' )
-          call FillTimings ( quantity%values(:,1), 'sections', 'all', .true. )
-          call dump( quantity%values(:,1), 'sections' )
+          if ( status /= 0 ) then
+            call MLSMessage ( MLSMSG_Warning, ModuleName, 'Unable to finish sections timings' )
+          else
+            call FillTimings ( quantity%values(:,1), 'sections', 'all', .true. )
+            call dump( quantity%values(:,1), 'sections' )
+          end if
 
         case ( l_profile ) ! ------------------------ Profile fill -------
           if ( .not. got ( f_profileValues ) ) &
@@ -6886,6 +6891,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.277  2004/07/30 00:17:22  livesey
+! Changed some errors to warnings
+!
 ! Revision 2.276  2004/07/22 20:39:14  cvuu
 ! Now can fill ForwardModel time, mean and std_dev
 !
