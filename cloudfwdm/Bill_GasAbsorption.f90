@@ -1,5 +1,10 @@
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 Module Bill_GasAbsorption
 
+   USE MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
+     & MLSMSG_DeAllocate
   implicit NONE
   private
   public :: get_beta_bill
@@ -23,9 +28,8 @@ contains
 !==============================================================
 
     use CREATE_BETA_M, only: CREATE_BETA
-    use GLNP, only: NG
-    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, DESTROYCOMPLETESLABS
-    use Make_Z_Grid_M, only: MAKE_Z_GRID
+    use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
+      & DESTROYCOMPLETESLABS
     use MLSCommon, only: R8, RP, IP
     use Molecules, only: SP_H2O, SP_H2O_18, SP_HNO3, SP_N2, SP_N2O, SP_O_18_O, &
       & SP_O2, SP_O3
@@ -37,16 +41,13 @@ contains
     ! INPUTS
     !-----------------
 
-    INTEGER :: NS
+    INTEGER, INTENT(IN) :: NS
     REAL(r8), INTENT(IN) :: F               ! FREQUENCY IN GHz
-    REAL(r8) :: FF                          ! FREQUENCY IN MHz
     REAL(r8), INTENT(IN) :: T               ! TEMPERATURE (K)
-    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
-    REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
     REAL(r8), INTENT(IN) :: PB              ! TOTAL AIR PRESSURE (hPa)
-    REAL(r8) :: VMR_in(NS-1)                ! VMR OF SPECIES 
-    REAL(r8), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO OR RELATIVE HUMIDITY
-    REAL(rp) :: LosVel
+    REAL(r8), INTENT(IN) :: VMR_in(NS-1)    ! VMR OF SPECIES 
+    REAL(r8), INTENT(IN) :: RH              ! H2O VOLUME MIXING RATIO
+    REAL(rp), INTENT(IN) :: LosVel          !     OR RELATIVE HUMIDITY
     
     Type(Catalog_T), INTENT(IN) :: Catalog(:)
     Type (slabs_struct), DIMENSION(:,:), POINTER :: gl_slabs
@@ -61,6 +62,9 @@ contains
     !-----------------
 
     REAL(r8) :: B                            ! BETA (1/m/ppv)
+    REAL(r8) :: FF                          ! FREQUENCY IN MHz
+    REAL(rp) :: myLosVel
+    REAL(r8) :: P                           ! DRY AIR PARTIAL PRESSURE (hPa)
     REAL(r8) :: VMR                          ! VOLUME MIXING RATIO
     REAL(r8) :: VMR_H2O                      ! H2O VOLUME MIXING RATIO
     REAL(r8) :: VMR_O3                       ! H2O VOLUME MIXING RATIO
@@ -70,11 +74,12 @@ contains
     REAL(r8) :: VMR_N2                       ! N2 VOLUME MIXING RATIO
     REAL(r8) :: VMR_N2O                      ! N2O VOLUME MIXING RATIO
     REAL(r8) :: VMR_HNO3                     ! HNO3 VOLUME MIXING RATIO
+    REAL(r8) :: VP                          ! VAPOR PARTIAL PRESSURE (hPa)
 
-    Integer(ip) :: n_sps, n_path, i, j, k, m, nl, no_of_lines, n_ele, maxvert
+    Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
     Integer(ip) :: Spectag, status
-    REAL(rp) :: bb, v0, vm, tm, tp, bp, bm, del_temp
-    REAL(rp), allocatable, dimension(:) :: PP, TT, z_psig
+    REAL(rp) :: bb, del_temp
+    REAL(rp), allocatable, dimension(:) :: PP, TT
     logical :: Do_1D
 
 !-----------------------------------------------------------------------------
@@ -108,9 +113,17 @@ contains
     n_ele = 1  ! number of pressure levels along the path, in our case =1
 
     allocate ( gl_slabs (n_ele,n_sps), stat=status )
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // ' gl_slabs ')
     allocate ( pp(n_ele), stat=status )
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // ' pp ')
     allocate ( tt(n_ele), stat=status )
-
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate // ' tt ')
     do i = 1, n_sps
       no_of_lines =  size(Catalog(i)%Lines)
       gl_slabs(1:n_ele,i)%no_lines =  no_of_lines
@@ -122,11 +135,12 @@ contains
     pp(1) = p
     tt(1) = t
     del_temp = 0.0_rp
+                              ! Bill uses km/sec 
+    myLosVel=losVel*0.00_rp   ! The Doppler correction already been done 
+                              ! in the FullCloudForwardModel, so set it 0
 
-    losVel=losVel*0.00_rp   ! Bill use km/sec ! The Doppler correction already been done 
-                                              ! in the FullCloudForwardModel, so set it 0
-
-    call get_gl_slabs_arrays( Catalog,PP(1:n_ele),TT(1:n_ele),losVel,gl_slabs,n_ele,del_temp, Do_1D)
+    call get_gl_slabs_arrays( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
+      & gl_slabs, n_ele, del_temp, Do_1D )
 
     DO i = 1, n_sps
       Spectag = Catalog(i)%Spec_Tag
@@ -134,25 +148,36 @@ contains
       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
         &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
       
-      IF (Spectag .EQ. SP_H2O) THEN
+      select case (Spectag)
+      case (SP_H2O)
+!      IF (Spectag .EQ. SP_H2O) THEN
         VMR = VMR_H2O
-      ELSE IF (Spectag .EQ. SP_O2) THEN
+      case (SP_O2)
+!      ELSE IF (Spectag .EQ. SP_O2) THEN
         VMR = VMR_O2
-      ELSE IF (Spectag .EQ. SP_N2) THEN
+      case (SP_N2)
+!      ELSE IF (Spectag .EQ. SP_N2) THEN
         VMR = VMR_N2
-      ELSE IF (Spectag .EQ. SP_O_18_O) THEN
+      case (SP_O_18_O)
+!      ELSE IF (Spectag .EQ. SP_O_18_O) THEN
         VMR = VMR_O_18_O
-      ELSE IF (Spectag .EQ. SP_H2O_18) THEN
+      case (SP_H2O_18)
+!      ELSE IF (Spectag .EQ. SP_H2O_18) THEN
         VMR = VMR_H2O_18
-      ELSE IF (Spectag .EQ. SP_O3) THEN
+      case (SP_O3)
+!      ELSE IF (Spectag .EQ. SP_O3) THEN
         VMR = VMR_O3
-      ELSE IF (Spectag .EQ. SP_N2O) THEN
+      case (SP_N2O)
+!      ELSE IF (Spectag .EQ. SP_N2O) THEN
         VMR = VMR_N2O
-      ELSE IF (Spectag .EQ. SP_HNO3) THEN
+      case (SP_HNO3)
+!      ELSE IF (Spectag .EQ. SP_HNO3) THEN
         VMR = VMR_HNO3
-      ELSE
+      case default
+!      ELSE
         VMR=0.0_r8
-      ENDIF
+      end select
+!      ENDIF
 
       B = B + VMR*bb
 
@@ -163,8 +188,14 @@ contains
 !    print*, B
 
     Call DestroyCompleteSlabs ( gl_slabs )
-    DEAllocate(pp)
-    DEAllocate(tt)
+    DEAllocate(pp, stat=status)
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // ' pp ')
+    DEAllocate(tt, stat=status)
+    if ( status /= 0 ) &
+      & CALL MLSMessage(MLSMSG_Error, ModuleName, &
+      & MLSMSG_DeAllocate // ' tt ')
 
   END SUBROUTINE get_beta_bill 
  
@@ -175,6 +206,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.10  2003/01/16 18:13:24  jonathan
+! add Do_1D option to get_gl_slabs_arrays
+!
 ! Revision 1.9  2002/12/13 02:07:18  vsnyder
 ! Use a SLABS structure for the slabs quantities, use spectag names
 !
