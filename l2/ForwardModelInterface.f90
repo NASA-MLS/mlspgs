@@ -474,8 +474,6 @@ contains
 
     !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
-    call Dump_Pointing_grid_database
-
     print*,'Entering forwardModel'
 
     ! First we identify the vector quantities we're going to need.  The key is to
@@ -597,15 +595,6 @@ contains
 !    call get_grids_near_tan_pressures ( whichPointingGrid, FMI%tan_press(1:no_tan_hts), &
 !      & tol, grids)
 
-    call output('Tangent pressures:',advance='yes')
-    call dump(FMI%tan_press(1:no_tan_hts))
-    call output('Pointing grid zetas:',advance='yes')
-    call dump(PointingGrids(whichPointingGrid)%oneGrid%height)
-    call output('Grids near zetas:',advance='yes')
-    call dump(grids)
-    call output('Pressures of said grids:',advance='yes')
-    call dump(PointingGrids(whichPointingGrid)%oneGrid(grids)%height)
-
     ! Now compute stuff along the path given this hydrostatic grid.
     print*,'Setting up paths'
     call comp_path_entities(fwdModelIn, fwdModelExtra, &
@@ -634,13 +623,16 @@ contains
 
       ! Compute the ptg_angles (chi) for Antenna convolution, also the derivatives
       ! of chi w.r.t to T and other parameters
+      print*,'scGeocAlt is:',scGeocAlt%values(1,1)
       call get_chi_angles(ndx_path(:,maf),n_path(:,maf),FMI%tan_press,        &
-        &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,RoC,scGeocAlt%values(1,1),  &
+        &     tan_hts(:,maf),tan_temp(:,maf),phi_tan,RoC,1e-3*scGeocAlt%values(1,1),  &
         &     elevOffset%values(1,1), &
         &     tan_dh_dt(:,maf,:),no_tan_hts,temp%template%noSurfs,temp%template%surfs(:,1),&
         &     si,    &
         &     center_angle,ptg_angles(:,maf),dx_dt,d2x_dxdt,ier)
       if(ier /= 0) goto 99
+      print*,'After get_chi_angles ptg_angles is:'
+      call dump(ptg_angles(:,maf))
 
       ! Compute the refraction correction scaling matrix for this mmaf:
       call refraction_correction(no_tan_hts, tan_hts(:,maf), h_path(:,maf), &
@@ -673,8 +665,6 @@ contains
             & 'Bad value of signal%sideband')
         end select
         noFreqs = size(frequencies)
-        print*,'Using frequencies:'
-        call dump(frequencies)
       endif
 
       ! First we have a mini loop over pointings to work out an upper limit
@@ -723,7 +713,6 @@ contains
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
-        print*,'  Pointing:',ptg_i,' of ',no_tan_hts, FMI%tan_press(ptg_i)
 
         k = ptg_i
         h_tan = tan_hts(k,maf)
@@ -745,8 +734,6 @@ contains
 !          call dump(PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
           frequencies => PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies 
           noFreqs = size(frequencies)
-          print*,'     Using:'
-          call dump(frequencies)
         endif ! If not, we dealt with this outside the loop
 
         call get_beta_path(frequencies,&
@@ -777,7 +764,6 @@ contains
 !
 
         ! ------------------------------- Begin loop over frequencies ------
-        print*,'    Loop over frequencies will be:', noFreqs
         do frq_i = 1, noFreqs
 
           Frq = frequencies(frq_i)
@@ -828,10 +814,6 @@ contains
 
           do i = 1, noUsedChannels
             ch = usedChannels(i)
-            if ( ch == 1 ) then
-              call output ('Frequency terms for channel 1',advance='yes')
-              call dump(centerFreq+sense*FMI%F_grid_filter(:,i))
-            endif
             call Freq_Avg(frequencies,centerFreq+sense*FMI%F_grid_filter(:,i),  &
               &     FMI%Filter_func(:,ch),RadV,noFreqs,FMI%no_filt_pts, &
               &     Radiances(ptg_i,ch))
@@ -983,6 +965,7 @@ contains
         ch = usedChannels(i)
 
         if(FMC%do_conv) then
+          print*,'Doing convolution'
 
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
@@ -1001,7 +984,7 @@ contains
             &     FMI%D1Aaap,FMI%D2Aaap,FMI%Ias,ier)
           if(ier /= 0) goto 99
         else
-          
+          print*,'Not doing convolution'
           ! Note I am replacing the i's in the k's with 1's (enclosed in
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
@@ -1253,6 +1236,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.42  2001/03/28 01:31:16  livesey
+! Got convolution working.
+!
 ! Revision 2.41  2001/03/28 00:39:15  zvi
 ! Fixing up the convolution call
 !
