@@ -42,7 +42,7 @@ contains
 !  w = Tr(a)
     w = A(2,2) + A(1,1)
 
-!  The quadratic equation is:  z*z -w*z + det(a)
+!  The quadratic equation is:  z*z - w*z + det(a)
 !  This solution doesn't check for pathologies.  See solve_quad.f9h
 
     q = w * w - 4.0_rk * ( A(2,2) * A(1,1) - A(1,2) * A(2,1) )
@@ -231,6 +231,9 @@ contains
 end module CS_GetEv_M
 
 ! $Log$
+! Revision 2.5  2003/12/19 20:46:18  vsnyder
+! Beautify a comment
+!
 ! Revision 2.4  2003/12/18 00:38:47  vsnyder
 ! Cosmetic changes
 !
