@@ -15,18 +15,19 @@ module ForwardModelSupport
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, Dump, &
     & ForwardModelConfig_T
   use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
-  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL
+  use Init_Tables_Module, only: L_FULL, L_SCAN, L_LINEAR, L_CLOUDFULL, &
+    & L_TEMPERATURE, L_VMR
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
-    & F_CLOUD_DER, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
-    & F_FREQUENCY, F_FRQGAP, &
-    & F_INTEGRATIONGRID, F_L2PC, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
-    & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE, &
-    & F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
+    & F_CLOUD_DER, F_COST, F_DO_BASELINE, F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, &
+    & F_FREQUENCY, F_FRQGAP, F_HEIGHT, &
+    & F_INTEGRATIONGRID, F_L2PC, F_MOLECULE, F_MOLECULES, F_MOLECULEDERIVATIVES, &
+    & F_PHIWINDOW, F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, &
+    & F_TEMP_DER, F_TYPE, F_MODULE, F_SKIPOVERLAPS, F_TOLERANCE, S_FORWARDMODEL, &
     & F_NABTERMS, F_NAZIMUTHANGLES, F_NCLOUDSPECIES, F_NMODELSURFS, &
     & F_NSCATTERINGANGLES, F_NSIZEBINS, F_CLOUD_WIDTH, F_CLOUD_FOV, &
     & F_DEFAULT_spectroscopy
   use Lexer_Core, only: PRINT_SOURCE
-  use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE
+  use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE, BINSELECTOR_T
   use MLSCommon, only: R8
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
   use MLSL2Options, only: PCF, PCFL2CFSAMECASE, PUNISH_FOR_INVALID_PCF
@@ -44,9 +45,10 @@ module ForwardModelSupport
   use Toggles, only: Emit, Gen, Levels, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
-use Tree, only: Print_Subtree
+  use Tree, only: Print_Subtree
   use Tree_Types, only: N_Array, N_named
-  use Units, only: Deg2Rad, PHYQ_FREQUENCY, PHYQ_TEMPERATURE
+  use Units, only: Deg2Rad, PHYQ_FREQUENCY, PHYQ_TEMPERATURE, &
+    & PHYQ_PRESSURE, PHYQ_DIMENSIONLESS
   use VGridsDatabase, only: VGrid_T
 
 
@@ -75,6 +77,11 @@ use Tree, only: Print_Subtree
   integer, parameter :: PhiWindowMustBeOdd   = TangentNotSubset + 1
   integer, parameter :: FrqGapNotFrq         = PhiWindowMustBeOdd + 1
   integer, parameter :: ToleranceNotK        = FrqGapNotFrq + 1
+  integer, parameter :: TooManyHeights       = ToleranceNotK + 1
+  integer, parameter :: TooManyCosts         = TooManyHeights + 1
+  integer, parameter :: BadHeightUnit        = TooManyCosts + 1
+  integer, parameter :: NoMolecule           = BadHeightUnit + 1
+  integer, parameter :: BadQuantityType      = NoMolecule + 1
 
   integer :: Error            ! Error level -- 0 = OK
 
@@ -195,6 +202,94 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) call trace_end ( 'ForwardModelGlobalSetup' )
     any_errors = error
   end subroutine ForwardModelGlobalSetup
+
+  ! -------------------------------- CreateBinSelectorFromMLSCFINFO --
+  type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
+    & result ( binSelector )
+    integer, intent(in) :: ROOT         ! Tree node
+    ! Local variables
+    integer :: SON                      ! Tree node
+    integer :: GSON                     ! Tree node
+    integer :: I,J                      ! Loop counters
+    integer :: FIELD                    ! Field identifier
+    logical :: GOT(field_first:field_last) ! "Got this field already"
+    integer :: TYPE                     ! Type of value returned by expr
+    integer :: UNITS(2)                 ! Units from expr
+    real(r8) :: VALUE(2)                ! Value from expr
+    character ( len=132 ) :: signalString ! Value of signal
+    integer, dimension(:), pointer :: THESESIGNALS ! From one parseSignal
+    integer :: THISSIDEBAND
+    integer :: SIGNALCOUNT              ! Number of signals
+    integer :: THISSIGNALCOUNT          ! Number of signals for one signal string
+
+    ! Exeuctable code
+    do i = 2, nsons(root)               ! Skip binSelector command
+      son = subtree ( i, root )
+      field = get_field_id ( son )
+      if ( nsons(son) == 2 ) gson = subtree(2,son)
+      got(field) = .true.
+      select case ( field )
+      case ( f_type )
+        binSelector%quantityType = decoration(gson)
+      case ( f_molecule )
+        binSelector%molecule = decoration(gson)
+      case ( f_height )
+        if ( nsons(son) > 2 ) call AnnounceError ( TooManyHeights, son, &
+          & f_height )
+        call expr ( gson, units, value, type )
+        if ( any ( units /= phyq_pressure .and. units /= phyq_dimensionless ) .or. &
+          & all ( units /= phyq_pressure ) ) &
+          & call AnnounceError ( BadHeightUnit, son, f_height )
+      case ( f_cost )
+        if ( nsons(son) > 2 ) call AnnounceError ( TooManyCosts, son, &
+          & f_cost )
+        call expr ( gson, units, value, type )
+        ! Some units checking should probably go here in the long run !???? NJL
+        binSelector%cost = value(1)
+      case ( f_signals )
+        ! First count the signals
+        signalCount = 0
+        do j = 2, nsons(son)
+          gson = subtree ( j, son )
+          call Get_string ( decoration(gson), signalString )
+          call Parse_Signal ( signalString, theseSignals, onlyCountEm=thisSignalCount, &
+            & tree_index = son )
+          signalCount = signalCount + thisSignalCount
+        end do
+        ! Now setup the result
+        call Allocate_test ( binSelector%signals, signalCount, &
+          & 'binSelector%signals', ModuleName )
+        call Allocate_test ( binSelector%sidebands, signalCount, &
+          & 'binSelector%sidebands', ModuleName )
+        ! Go through again and fill it up, use signalCount as index
+        signalCount = 1
+        do j = 2, nsons(son)
+          gson = subtree ( j, son )
+          call Get_string ( decoration(gson), signalString )
+          call Parse_Signal ( signalString, theseSignals, &
+            & sideband=thisSideband, tree_index = son )
+          binSelector%signals ( signalCount : signalCount+size(theseSignals)-1 ) = &
+            & theseSignals
+          binSelector%sidebands ( signalCount : signalCount+size(theseSignals)-1 ) = &
+            & thisSideband
+          signalCount = signalCount + size(theseSignals)
+          call Deallocate_test ( theseSignals, 'theseSignals', ModuleName )
+        end do
+      end select
+    end do
+
+    ! Just check a few last details
+    select case ( binSelector%quantityType ) 
+    case ( l_temperature )
+    case ( l_vmr )
+      if ( .not. got(f_molecule) ) call AnnounceError ( &
+        & NoMolecule, son )
+    case default
+      call AnnounceError ( BadQuantityType, son, f_type )
+    end select
+    if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "An error occured when parsing the BinSelector specification" )
+  end function CreateBinSelectorFromMLSCFINFO
 
   ! ------------------------------------------  ConstructForwardModelConfig  -----
   type (forwardModelConfig_T) function ConstructForwardModelConfig &
@@ -525,6 +620,21 @@ contains ! =====     Public Procedures     =============================
     case ( ToleranceNotK )
       call output ( 'tolerance does not have dimensions of temperature/radiance',&
         & advance='yes' )
+    case ( TooManyHeights )
+      call output ( 'Bin Selectors can only refer to one height range',&
+        & advance='yes' )
+    case ( BadHeightUnit )
+      call output ( 'Inappropriate units for height in binSelector',&
+        & advance='yes' )
+    case ( TooManyCosts )
+      call output ( 'Bin Selectors can only have one cost',&
+        & advance='yes' )
+    case ( BadQuantityType )
+      call output ( 'Bin Selectors cannot apply to this quantity type',&
+        & advance='yes' )
+    case ( NoMolecule )
+      call output ( 'A bin selector of type vmr must have a molecule',&
+        & advance='yes' )
    case default
       call output ( '(no specific description of this error)', advance='yes' )
     end select
@@ -534,6 +644,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.21  2002/01/21 21:13:28  livesey
+! Added binSelector parsing
+!
 ! Revision 2.20  2001/12/17 18:26:37  vsnyder
 ! Improve method to put '-' sign on 'part of a tree of molecules'
 !
@@ -594,3 +707,4 @@ end module ForwardModelSupport
 ! Revision 2.1  2001/05/29 23:18:18  livesey
 ! First version, was ForwardModelInterface
 !
+

@@ -35,6 +35,7 @@ comment
 compareOverlaps
 coordinate
 copy
+cost
 covariance
 criteria
 criticalModules
@@ -212,6 +213,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.21  2002/01/21 21:14:35  livesey
+# Added stuff for binSelector
+#
 # Revision 2.20  2002/01/18 00:24:46  livesey
 # Added packed field
 #
