@@ -111,7 +111,9 @@ while [ "$1" != "" ] ; do
     case "$1" in
 
 	-h | -help )
-	    Help
+#	    Help
+       sed -n '/'$me_simple' help/,/End '$me_simple' help/ p' $me \
+           | sed -n 's/^.//p' | sed '1 d; $ d'
        exit
 	;;
 	-cf )
@@ -234,6 +236,9 @@ fi
 exit 0
 
 # $Log$
+# Revision 1.2  2002/09/04 18:11:36  pwagner
+# my_dot repairs problem of multiple LIB_BLAS libraries
+#
 # Revision 1.1  2002/07/29 22:59:53  pwagner
 # First commit
 #
