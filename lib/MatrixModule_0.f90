@@ -890,33 +890,39 @@ contains ! =====     Public Procedures     =============================
   end function MaxAbsVal_0
 
 !---------------------------------------------Matrix Inversion for Array --
-  subroutine MatrixInversion(A)
+  subroutine MatrixInversion(A,upper)
   
   real (r8), dimension(:,:),intent(inout) :: A
+  logical, intent(in), optional :: upper
+
   real (r8), dimension(:,:), allocatable :: U
   logical :: TRANSPOSE1
   real (r8), dimension(:), allocatable :: b
   real (r8), dimension(:), allocatable :: x
+  logical :: myUpper  
+  integer :: i, j, n
   
-  integer :: i, n
-  
+  myUpper = .false.
+  if ( present ( upper) ) myUpper = upper
   n = size(A,2)
     
   allocate(x(n))
   allocate(b(n))
   allocate(u(n,n))
 
-   call DenseCholesky (U, A)
-
+  call DenseCholesky (U, A)
+  
+  if ( .not. myUpper ) j = n
   do i=1,n
-   b = 0._r8
-   b(i)=1._r8
-   TRANSPOSE1 = .true.  
-   call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
-   b = x
-   TRANSPOSE1 = .false.  
-   call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
-   A(:,i) = x
+    b = 0.0_r8
+    b(i) = 1.0_r8
+    TRANSPOSE1 = .true.  
+    call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
+    b = x
+    TRANSPOSE1 = .false.  
+    call SolveCholeskyA_0 ( U, x, b, TRANSPOSE1 )
+    if ( myUpper ) j = i
+    A(1:j,i) = x(1:j)
   end do
   
   deallocate(x)
@@ -2333,6 +2339,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.55  2001/10/26 18:08:57  livesey
+! Added upper argument to MatrixInversion
+!
 ! Revision 2.54  2001/10/20 01:21:02  vsnyder
 ! Inserted OpenMP comments in MultiplyMatrixBlocks_0, CholeskyFactor_0 and DenseCholesky
 !
