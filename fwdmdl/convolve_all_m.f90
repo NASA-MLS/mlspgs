@@ -57,9 +57,9 @@ contains
     real(r8), intent(IN) :: DX_DT(:,:), D2X_DXDT(:,:)
     real(r8), intent(in) :: SBRATIO
     type(antennaPattern_T), intent(in) :: AntennaPattern
-
-    Real(r4), intent(in) :: k_temp(:,:,:)                   ! (Nptg,mxco,mnp)
-    Real(r4), intent(in) :: k_atmos(:,:,:,:)                ! (Nptg,mxco,mnp,Nsps)
+!
+    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)   ! (Nptg,mxco,mnp)
+    Real(r4), intent(in) :: k_atmos(:,:,WindowStart:,:) ! (Nptg,mxco,mnp,Nsps)
 
     real(r8) :: k_star_tmp(ptan%template%noSurfs)
     logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
@@ -74,7 +74,7 @@ contains
     integer :: Ind                      ! Index
     integer :: N, I, J, Is, Ktr, Nf, Ntr, Ptg_i, Sv_i, Spectag, Ki, Kc, FFT_pts
     integer :: Row, Col                 ! Matrix entries
-    integer :: No_t, No_tan_hts, No_phi_t, PhiWindow, Lk, Uk
+    integer :: No_t, No_tan_hts, No_phi_t, Lk, Uk
     logical :: Want_Deriv
 
     Real(r8) :: Q, R
@@ -84,7 +84,6 @@ contains
     Character :: CA
 
     ! -----  Begin the code  -----------------------------------------
-    phiWindow = windowFinish - windowStart +1
     no_t = temp%template%noSurfs
     no_phi_t = temp%template%noInstances
     no_tan_hts = size(tan_press)
@@ -197,9 +196,8 @@ contains
 
       ! Derivatives needed continue to process
 
-      do nf = 1, phiWindow
-        lk = nf + windowStart - 1
-        col = FindBlock ( Jacobian%col, temp%index, lk )
+      do nf = windowStart, windowFinish
+        col = FindBlock ( Jacobian%col, temp%index, nf )
         select case ( Jacobian%block(row,col)%kind ) 
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_full )
@@ -217,7 +215,7 @@ contains
           do ptg_i = 1, no_tan_hts
             q = 0.0
             if ( nf == mafTInstance) q = d2x_dxdt(ptg_i,sv_i)
-            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,lk)
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf)
           end do
 
           ! Now, Convolve:
@@ -453,6 +451,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.22  2001/04/28 17:48:08  livesey
+! Now accepts and sets rowFlags
+!
 ! Revision 1.21  2001/04/27 22:37:54  vsnyder
 ! Don't compute derivatives if Jacobian isn't present
 !

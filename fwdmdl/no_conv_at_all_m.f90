@@ -47,9 +47,9 @@ contains
 
     real(r8), intent(IN) :: I_RAW(:),TAN_PRESS(:)
     real(r8), intent(IN) :: SBRATIO
-
-    Real(r4) :: k_temp(:,:,:)                    ! (Nptg,mxco,mnp)
-    Real(r4) :: k_atmos(:,:,:,:)                 ! (Nptg,mxco,mnp,Nsps)
+!
+    Real(r4), intent(in) :: k_temp(:,:,WindowStart:)    ! (Nptg,mxco,mnp)
+    Real(r4), intent(in) :: k_atmos(:,:,WindowStart:,:) ! (Nptg,mxco,mnp,Nsps)
 
     type (Matrix_T), intent(inout), optional :: Jacobian
     logical, dimension(:), intent(inout) :: rowFlags ! Flag to calling code
@@ -60,7 +60,6 @@ contains
     type (VectorValue_T), pointer :: F  ! vmr quantity
     integer :: Nz, Lk, Uk
     integer :: N, I, IS, J, K, NF, SV_I, Spectag
-    integer :: PhiWindow
     integer :: Row, col                 ! Indices
     integer :: Ptg                      ! Index
     integer :: Ind                      ! Index
@@ -138,9 +137,8 @@ contains
     ! Derivatives needed continue to process
 
       Rad(1:) = 0.0
-      phiWindow = windowFinish-windowStart+1
-      do nf = 1, phiWindow
-        col = FindBlock ( Jacobian%col, temp%index, nf+windowStart-1 )
+      do nf = windowStart, windowFinish
+        col = FindBlock ( Jacobian%col, temp%index, nf )
         select case ( Jacobian%block(row,col)%kind ) 
         case ( m_absent )
           call CreateBlock ( Jacobian, row, col, m_full )
@@ -152,7 +150,7 @@ contains
         end select
 
         do sv_i = 1, no_t
-          Rad(1:k) = k_temp(1:k,sv_i,nf+WindowStart-1)
+          Rad(1:k) = k_temp(1:k,sv_i,nf)
           Call Cspline(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
           do ptg = 1,j
             ind = channel+ radiance%template%noChans*(ptg-1)
@@ -281,6 +279,9 @@ contains
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.17  2001/04/28 17:47:57  livesey
+! Now accepts and sets rowFlags
+!
 ! Revision 1.16  2001/04/27 22:02:13  vsnyder
 ! Don't compute derivatives if Jacobian isn't present
 !
