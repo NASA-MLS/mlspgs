@@ -14,8 +14,10 @@ module MLSFiles               ! Utility file routines
   use MLSCommon, only: i4, BareFNLen, FileNameLen, MLSFile_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MLSStrings, only: Capitalize, ExtractSubString, LowerCase, &
-    & ReplaceSubString, Reverse, SortArray
+  use MLSStrings, only: Capitalize, LowerCase, &
+    & Reverse
+  use MLSStringLists, only: ExtractSubString, &
+    & ReplaceSubString, SortArray
   use output_m, only: blanks, output
   use SDPToolkit, only: &
     & HDF5_ACC_CREATE, HDF5_ACC_RDONLY, HDF5_ACC_RDWR,  &
@@ -2043,6 +2045,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.59  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.58  2004/02/05 23:29:16  pwagner
 ! Extra debugging when appropriate
 !
