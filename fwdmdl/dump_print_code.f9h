@@ -4,6 +4,11 @@
 
 ! ** To create *seez* file for "nasty" purposes, include the following code
 
+!   subroutine Dump_Print_Code
+      use Molecules, only:  L_Extinction
+      use String_table, only: GET_STRING
+      real :: Frq, R
+      integer :: J, K, L, Specie
       print *
       k = windowFinish - windowStart + 1
       print *, ' windowStart:', windowStart, '  windowFinish:', windowFinish
@@ -45,9 +50,9 @@
       print '(5(3x,f10.7))', Ptan%values(1:k,maf)
       
       print *, ' no_sps'
-      print *, noSpecies
+      print *, size(fwdModelConf%molecules)
 
-      do specie = 1, noSpecies
+      do specie = 1, size(fwdModelConf%molecules)
         l = fwdModelConf%molecules(specie)
         if(l < 1) CYCLE
         if ( l /= l_extinction ) then
@@ -105,8 +110,12 @@
 ! **********  END ZEBUG - End print cycle for the creation of *seez* file ..
 !
 !     Call MLSMessage ( MLSMSG_Error, ModuleName, "End of DUMP print cycle")
+!   end subroutine Dump_Print_Code
 !
 ! $Log$
+! Revision 2.6  2004/07/08 21:00:23  vsnyder
+! Inching toward PFA
+!
 ! Revision 2.5  2004/02/03 02:50:11  vsnyder
 ! Changes induced by DACs frequency convolution
 !
