@@ -35,7 +35,7 @@ module FullForwardModel_m
   use Load_sps_data_m, only: LOAD_SPS_DATA, Grids_T
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
-  use Molecules, only: L_EXTINCTION
+  use Molecules, only: L_EXTINCTION, spec_tags
   use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
   use String_table, only: GET_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
@@ -48,7 +48,6 @@ module FullForwardModel_m
     & MLSMSG_Error, MLSMSG_Warning
   use MLSNumerics, only: HUNT
   use Toggles, only: Emit, Gen, Levels, Switches, Toggle
-  use Molecules, only: spec_tags
   use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Output_m, only: OUTPUT
   use ManipulateVectorQuantities, only: FindOneClosestInstance
@@ -1837,6 +1836,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.13  2001/11/08 09:56:59  zvi
+! Fixing a bug..
+!
 ! Revision 2.12  2001/11/08 00:11:29  livesey
 ! Added extinction stuff
 !
