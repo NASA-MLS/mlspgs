@@ -685,6 +685,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_atmos_der, t+t_boolean, n+n_field_type, &
              begin, f+f_default_spectroscopy, t+t_boolean, n+n_field_type, &
+             begin, f+f_differentialScan, t+t_boolean, n+n_field_type, &
              begin, f+f_do_baseline, t+t_boolean, n+n_field_type, &
              begin, f+f_do_conv, t+t_boolean, n+n_field_type, &
              begin, f+f_do_freq_avg, t+t_boolean, n+n_field_type, &
@@ -868,6 +869,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.201  2002/02/13 00:08:40  livesey
+! Added differential scan model
+!
 ! Revision 2.200  2002/02/09 19:12:00  livesey
 ! Added optical depth stuff
 !
