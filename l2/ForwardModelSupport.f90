@@ -617,8 +617,9 @@ contains ! =====     Public Procedures     =============================
 
     select case ( info%fwmType )
     case ( l_full, l_hybrid )
-      if ( .not. all(got( (/ f_molecules, f_signals, f_integrationGrid, &
-        & f_tangentGrid /) )) ) call AnnounceError ( IncompleteFullFwm, root )
+      if ( .not. ( (got(f_molecules) .or. got(f_pfamolecules)) .and. &
+        & all(got( (/ f_signals, f_integrationGrid, f_tangentGrid /) )) ) ) &
+        & call AnnounceError ( IncompleteFullFwm, root )
 
       ! Now identify the Earth's surface in the tangent grid
       call Hunt ( info%tangentGrid%surfs(:,1), info%integrationGrid%surfs(1,1), &
@@ -986,6 +987,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.99  2004/10/06 21:14:37  vsnyder
+! Require Molecules or PFAMolecules
+!
 ! Revision 2.98  2004/08/05 21:01:59  vsnyder
 ! Add sentinel at end of %molecules
 !
