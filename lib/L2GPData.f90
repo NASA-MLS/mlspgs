@@ -1190,7 +1190,7 @@ contains ! =====     Public Procedures     =============================
        ! Value and Precision are 3-D fields
 
        status = swwrfld(swid, DATA_FIELD1, start, stride, edge, &
-            & RESHAPE(l2gp%l2gpValue, (/SIZE(l2gp%l2gpValue)/)) )
+            & RESHAPE(real(l2gp%l2gpValue), (/SIZE(l2gp%l2gpValue)/)) )
        if ( status == -1 ) then
           msr = WR_ERR // DATA_FIELD1
           call MLSMessage ( MLSMSG_Error, ModuleName, msr )
@@ -1430,6 +1430,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.46  2002/08/20 20:10:20  livesey
+! Dealt with frequency in expand l2gp in place.
+!
 ! Revision 2.45  2002/08/20 19:48:29  livesey
 ! Bug fix in handling of frequencies.
 !
