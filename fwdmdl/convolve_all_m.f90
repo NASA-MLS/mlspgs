@@ -14,6 +14,7 @@ module CONVOLVE_ALL_M
   use ForwardModelConfig, only: ForwardModelConfig_T
   use MLSCommon, only: I4, R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use Molecules, only: L_EXTINCTION
   use Intrinsic, only: L_VMR
   use String_table, only: GET_STRING
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_FULL, DUMP
@@ -308,10 +309,14 @@ contains
       lk = lbound(k_atmos,3)
       uk = ubound(k_atmos,3)
       do is = 1, size(ForwardModelConfig%molecules) ! What about derivatives!???NJL
-
-        f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
-          & molecule=forwardModelConfig%molecules(is), noError=.true. )
-
+        if ( forwardModelConfig%molecules(is) == l_extinction ) then
+          f => GetVectorQuantityByType ( forwardModelIn, &
+            & quantityType=l_extinction, radiometer=radiance%template%radiometer, &
+            & noError=.true. )
+        else
+          f => GetVectorQuantityByType ( forwardModelIn, &
+            & quantityType=l_vmr, molecule=forwardModelConfig%molecules(is), noError=.true. )
+        endif
         if ( associated(f)) then
 
           ! Derivatives needed continue to process
@@ -370,6 +375,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.29.2.1  2001/09/13 11:18:20  zvi
 ! Fix temp. derv. bug
 !
