@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module L2Parallel
@@ -227,7 +227,7 @@ contains ! ================================ Procedures ======================
     type (L2AuxData_T), dimension(:), pointer :: L2AUXDATABASE
 
     ! Local parameter
-    integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
+    ! integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
     integer, parameter :: MAXDIRECTWRITEFILES=200 ! For internal array sizing
     integer, parameter :: DATABASEINFLATION=100
 
@@ -895,7 +895,8 @@ contains ! ================================ Procedures ======================
 
       ! Now, rather than chew up cpu time on the master machine, we'll wait a
       ! bit here.
-      if ( .not. skipDelay ) call usleep ( delay )
+      if ( .not. skipDelay .and. parallel%delay > 0 ) &
+        & call usleep ( parallel%delay )
     end do masterLoop ! --------------------- End of master loop --------------
 
     ! Now, we have to tidy some stuff up here to ensure we can join things
@@ -1290,6 +1291,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.58  2003/11/14 23:37:13  pwagner
+! Lets user change masterLoop delay via commandline option
+!
 ! Revision 2.57  2003/09/24 23:41:55  pwagner
 ! Moved some USE statements around to workaround IFC bugs
 !
