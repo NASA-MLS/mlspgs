@@ -71,10 +71,11 @@ module INIT_TABLES_MODULE
 ! Parameter names:
   ! In GlobalSettings section:
   integer, public, parameter :: P_L2_VER = 1
-  integer, public, parameter :: P_MAX_GAP = 2
-  integer, public, parameter :: P_N = 3
-  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 4
-  integer, public, parameter :: P_VERSION_COMMENT = 5
+  integer, public, parameter :: P_LOG_TYPE = 2
+  integer, public, parameter :: P_MAX_GAP = 3
+  integer, public, parameter :: P_N = 4
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 5
+  integer, public, parameter :: P_VERSION_COMMENT = 6
   integer, public, parameter :: FIRST_PARM = P_L2_VER
   integer, public, parameter :: LAST_PARM = P_VERSION_COMMENT
   integer, public :: PARM_INDICES(first_parm:last_parm)
@@ -146,6 +147,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_time) =                 add_ident ( 'timeD' )
     ! Put parameter names into the symbol table
     parm_indices(p_l2_ver) =                add_ident ( 'L2Ver' )
+    parm_indices(p_log_type) =              add_ident ( 'LogType' )
     parm_indices(p_max_gap) =               add_ident ( 'MaxGap' )
     parm_indices(p_n)=                      add_ident ( 'N' )
     parm_indices(p_output_version_string) = add_ident ( 'OutputVersionString' )
@@ -240,6 +242,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_l2_ver, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
+             begin, p+p_log_type, t+t_string, n+n_name_def, &
              begin, p+p_max_gap, t+t_numeric, n+n_name_def, &
              begin, p+p_n, t+t_numeric, n+n_name_def, &
              n+n_section, &
@@ -310,6 +313,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 1.2  2000/12/29 21:46:35  nakamura
+! Removed bypass flag, quantities.
+!
 ! Revision 1.1  2000/10/24 19:47:17  nakamura
 ! Customized for L3.
 !
