@@ -763,7 +763,7 @@ contains ! =====     Public Procedures     =============================
         end if
         d = sqrt(g)
         zt(i,i) = d
-!$OMP PARALLEL DO private ( ij, rz, g)
+!$OMP PARALLEL DO private ( ij, rz, g )
         do j = i+1, nc
           ij = i - x%r1(j)    ! Offset in VALUES of (I,J) element
           rz = max(r1(i),r1(j))
@@ -1739,7 +1739,7 @@ contains ! =====     Public Procedures     =============================
           yr_n = yr_1 + yi_n - yi_1 ! last row index of yb
           mz = zb%nRows
           if ( my_upper ) mz = j
-!$OMP PARALLEL DO private ( xi_1, xi_n, xr_1, xr_n, cr_1, cr_n, c_n, xd, yd, xy)
+!$OMP PARALLEL DO private ( xi_1, xi_n, xr_1, xr_n, cr_1, cr_n, c_n, xd, yd, xy )
           do i = 1, mz       ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             if ( associated(xm) ) then
@@ -2083,8 +2083,8 @@ contains ! =====     Public Procedures     =============================
 !                 &               yb%values(r0:r1,j) )
                 zb%values(i,j) = zb%values(i,j) + s * xy
               end do ! i
-            end do ! j
 !$OMP END PARALLEL DO
+            end do ! j
           end do ! r0
         else
           call gemm ( 'T', 'N', xb%nCols, yb%nCols, xb%nRows, s, &
@@ -2491,7 +2491,6 @@ contains ! =====     Public Procedures     =============================
             & "U matrix in SolveCholeskyM_0 is singular" )
         end if
         xs(1,1:nc) = xs(1,1:nc) / d
-!$OMP PARALLEL DO private ( d )
         do i = 2, n
           d = u%values(i,i)
           if ( abs(d) < tol ) then
@@ -2499,14 +2498,15 @@ contains ! =====     Public Procedures     =============================
             call MLSMessage ( MLSMSG_Error, ModuleName, &
               & "U matrix in SolveCholeskyM_0 is singular" )
           end if
+!$OMP PARALLEL DO
           do j = 1, nc
             xs(i,j) = ( xs(i,j) - &
                     &   dot( i-1, u%values(1,i), 1, xs(1,j), 1) ) / d
 !           xs(i,j) = ( xs(i,j) - &
 !                   &   dot_product( u%values(1:i-1,i), xs(1:i-1,j)) ) / d
           end do ! j = 1, nc
-        end do ! i = 2, n
 !$OMP END PARALLEL DO
+        end do ! i = 2, n
       end select
     else             ! solve U X = B for X
       if ( u%kind == M_full ) then
@@ -3056,6 +3056,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.92  2003/02/21 04:06:14  livesey
+! Fixed up the OpenMP stuff, seems to work now
+!
 ! Revision 2.91  2003/02/07 11:25:28  mjf
 ! Small change to Add_Matrix_Blocks to correct m_column_sparse handling.  Unused code removed from SparsifyA.
 !
