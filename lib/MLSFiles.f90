@@ -14,8 +14,7 @@ module MLSFiles               ! Utility file routines
   use MLSCommon, only: i4, BareFNLen, FileNameLen, MLSFile_T
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
-  use MLSStrings, only: Capitalize, LowerCase, &
-    & Reverse
+  use MLSStrings, only: Capitalize, LowerCase
   use MLSStringLists, only: ExtractSubString, &
     & ReplaceSubString, SortArray
   use output_m, only: blanks, output
@@ -2046,6 +2045,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.61  2004/10/13 00:50:32  vsnyder
+! Remove USE for Reverse, which isn't used
+!
 ! Revision 2.60  2004/10/09 02:46:09  vsnyder
 ! Simplify split_file_name.  It doesn't work anyway if len(full_file_name) >
 ! MAXFILENAMELENGTH.
