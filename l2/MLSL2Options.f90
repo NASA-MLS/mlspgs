@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -34,6 +34,60 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
   ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
   ! Set the following to TRUE before delivering level 2 to sips
   logical, private, parameter :: SIPS_VERSION =  .false. 
+
+  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  ! Update these lines before delivery to sips     
+  ! id to print out in response to "--version" command-line option       
+  character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
+    & 'v1.1 swdev team                                           ', &       
+    & 'Copyright (c) 2003, California Institute of Technology.   ', &       
+    & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
+     
+  ! Set the following to 1 before delivering to sips;                       
+  ! when set to 0, it allows program to run w/o creating metadata           
+  integer            ::                         PENALTY_FOR_NO_METADATA = 0
+
+  ! Set the following to -2 before delivering to sips;                      
+  ! (its possible values and their effects on normal output:                
+  ! -1          sent to stdout (via print *, '...')                         
+  ! -2          sent to Log file (via MLSMessage)                           
+  ! < -2        both stdout and Log file                                    
+  ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')                           
+  integer            :: OUTPUT_PRINT_UNIT = -2                              
+
+  ! Set the following to MLSMSG_Error before delivering to sips;
+  ! when set higher, it allows program keep going despite errors
+  ! when set lower, the program would quit even on warnings
+  integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error
+
+  ! Set the following to 2 before delivering to sips;
+  ! If 0, you won't be able to distinguish normal termination
+  ! from some abnormal ones (e.g. in parser) (a bad thing)
+  ! if 2, status will be 2 only if run complete                             
+  ! and without error (a good thing)
+  integer, parameter :: NORMAL_EXIT_STATUS = 2          
+
+  ! ---------------------------------------------------------------
+  ! None of the following need to be changed before delivery to sips
+  
+  ! Assume hdf files w/o explicit hdfVersion field are this                 
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
+  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
+  ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
+  ! on input                                                                
+  integer            :: DEFAULT_HDFVERSION_READ = WILDCARDHDFVERSION
+  integer            :: LEVEL1_HDFVERSION = WILDCARDHDFVERSION
+
+  integer, parameter :: ILLEGALL1BRADID=-1   ! sfstart should catch
+  integer, parameter :: MAXNUML1BRADIDS=&
+  & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
+
+  ! Whether to explicitly collect garbage at end of each chunk                
+  logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.         
+
+  ! * * *                     Overly detailed section                 * * *
+  !                         (Should probably delete all this)
   logical            :: PUNISH_FOR_INVALID_PCF = SIPS_VERSION 
   logical, parameter :: PUNISH_FOR_NO_L1BRAD =   SIPS_VERSION
   logical, parameter :: PUNISH_FOR_NO_L1BOA =    SIPS_VERSION
@@ -54,56 +108,7 @@ MODULE MLSL2Options              !  Options and Settings for the MLSL2 program
 
   ! Must files named in PCF have same case as short names used in l2cf?
   logical, parameter ::                          PCFL2CFSAMECASE = SIPS_VERSION
-  ! * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-  ! Update these lines before delivery to sips     
-  ! id to print out in response to "--version" command-line option       
-  character(LEN=*), dimension(3), parameter :: CURRENT_VERSION_ID = (/ &    
-    & 'v1.0 swdev team                                           ', &       
-    & 'Copyright (c) 2002, California Institute of Technology.   ', &       
-    & 'U.S. Government Sponsorship under NASA Contract NAS7-1407.' /)       
-     
-  ! Set the following to 1 before delivering to sips;                       
-  ! when set to 0, it allows program to run w/o creating metadata           
-  integer            ::                         PENALTY_FOR_NO_METADATA = 0
-
-  ! Set the following to -2 before delivering to sips;                      
-  ! (its possible values and their effects on normal output:                
-  ! -1          sent to stdout (via print *, '...')                         
-  ! -2          sent to Log file (via MLSMessage)                           
-  ! < -2        both stdout and Log file                                    
-  ! > -1        Fortran 'unit=OUTPUT_PRINT_UNIT')                           
-  integer            :: OUTPUT_PRINT_UNIT = -2                              
-
-  ! Set the following to MLSMSG_Error before delivering to sips;            
-  ! when set higher, it allows program keep going despite errors            
-  ! when set lower, the program would quit even on warnings                 
-  integer, parameter :: QUIT_ERROR_THRESHOLD = MLSMSG_Error                 
-
-  ! Set the following to 2 before delivering to sips;                       
-  ! If 0, program simply stops both upon normal termination                 
-  ! as well as some abnormal ones (e.g. in parser)                          
-  ! if 2, status will be 2 only if run complete                             
-  ! and without error                                                       
-  integer, parameter :: NORMAL_EXIT_STATUS = 2                              
-
-  ! ---------------------------------------------------------------
-  ! None of the following need to be changed before delivery to sips
-  
-  ! Assume hdf files w/o explicit hdfVersion field are this                 
-  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc.                   
-  ! Set to WILDCARDHDFVERSION if you wish to autodetect such files          
-  ! on input                                                                
-  integer            :: DEFAULT_HDFVERSION_WRITE = HDFVERSION_4
-  integer            :: DEFAULT_HDFVERSION_READ = HDFVERSION_4
-  integer            :: LEVEL1_HDFVERSION = HDFVERSION_4
-
-  integer, parameter :: ILLEGALL1BRADID=-1   ! sfstart should catch
-  integer, parameter :: MAXNUML1BRADIDS=&
-  & mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1   ! In case more than one
-
-  ! Whether to explicitly collect garbage at end of each chunk                
-  logical            :: GARBAGE_COLLECTION_BY_CHUNK = .true.                
+  ! * * *                End of Overly detailed section             * * *
   ! --------------------------------------------------------------------------
 
 !=============================================================================
@@ -117,6 +122,9 @@ END MODULE MLSL2Options
 
 !
 ! $Log$
+! Revision 2.20  2003/05/02 20:53:19  pwagner
+! Reordered to make SIPS-dependent section clearer; default_hdfversion at read now wildcard
+!
 ! Revision 2.19  2002/10/08 17:36:21  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
