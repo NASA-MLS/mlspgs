@@ -32,11 +32,11 @@ MODULE MLSCommon                ! Common definitions for the MLS software
   ! Now choose the precision we want by preference (may automate this through
   ! make later on, with perl or m4 or something).
   ! These are used according to the final letter in the two-letter name:
-  ! Final Letter          Context
-  !    ----               -------
-  !     m                 Matrix
-  !     p                 Forward Model
-  !     v                 Vector
+  ! Final Letter          Context           Suggested Value
+  !    ----               -------           ---------------
+  !     m                 Matrix            r8  (r4 to save memory)
+  !     p                 Forward Model     r8
+  !     v                 Vector            r8
   INTEGER, PARAMETER:: rm=r8
   INTEGER, PARAMETER:: rp=r8
   INTEGER, PARAMETER:: ip=i4
@@ -113,6 +113,9 @@ END MODULE MLSCommon
 
 !
 ! $Log$
+! Revision 2.12  2002/09/13 18:08:12  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.11  2002/08/28 22:16:18  pwagner
 ! Added rm, rv types
 !
