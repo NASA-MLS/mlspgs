@@ -191,7 +191,7 @@ CONTAINS
       l2gpData%name = swathname
 
       swid = swattach(L2FileHandle, l2gpData%name)
-      IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+      IF (swid == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
                                      &attach to swath interface for reading.')
 
 ! Get dimension information
@@ -1231,6 +1231,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.8  2002/04/10 21:54:05  jdone
+!# error checking on allocated statements
+!#
 !# Revision 1.7  2002/02/20 19:21:15  ybj
 !# *** empty log message ***
 !#
