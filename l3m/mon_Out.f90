@@ -17,14 +17,11 @@ MODULE mon_Out
    USE MLSL3Common, ONLY: INVENTORYMETADATA, OutputFiles_T
    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_DeAllocate, &
         & MLSMSG_Warning
-   USE MLSPCF3
-   USE mon_L3CF, ONLY: L3CFMProd_T
    USE mon_Open, ONLY: PCFMData_T
-   USE PCFModule, ONLY: ExpandFileTemplate
-   USE SDPToolkit, ONLY: PGS_S_SUCCESS, WARNIFCANTPGSMETREMOVE, &
-        & PGSD_MET_GROUP_NAME_L, PGSD_MET_NUM_OF_GROUPS
    IMPLICIT NONE
-   PUBLIC
+   private
+   PUBLIC :: CreateFlags_T, &
+     & WriteMetaLogM, OutputStd, OutputDg, OutputMON
 
    PRIVATE :: ID, ModuleName
 
@@ -65,6 +62,10 @@ CONTAINS
 !--------------------------------
    SUBROUTINE WriteMetaLogM (pcf)
 !--------------------------------
+   USE MLSPCF3
+   USE PCFModule, ONLY: ExpandFileTemplate
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, WARNIFCANTPGSMETREMOVE, &
+        & PGSD_MET_GROUP_NAME_L, PGSD_MET_NUM_OF_GROUPS
 
 ! Brief description of subroutine
 ! This subroutine writes metadata for the log file to a separate ASCII file.
@@ -296,6 +297,8 @@ CONTAINS
    SUBROUTINE OutputMON (sFiles, dFiles, flags, pcf, cfProd, cfDg, cf, anText,&
         & hdfVersion)
 !-----------------------------------------------------------------------------
+   USE MLSPCF3
+   USE mon_L3CF, ONLY: L3CFMProd_T
 
 ! Brief description of subroutine
 ! This subroutine performs the monthly Output/Close task for a product.
@@ -433,6 +436,9 @@ END MODULE mon_Out
 !=================
 
 !$Log$
+!Revision 1.7  2003/04/06 02:31:09  jdone
+!added hdfVersion
+!
 !Revision 1.6  2003/03/15 00:20:03  pwagner
 !May warn if pgs_met_remove returns non-zero value
 !

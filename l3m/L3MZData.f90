@@ -8,8 +8,6 @@ MODULE L3MZData
 
    USE HDF, ONLY: DFACC_RDWR, DFACC_WRITE, DFNT_FLOAT32, DFNT_INT32, & 
         & DFNT_FLOAT64
-   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
    USE MLSCommon, ONLY: r8
    USE MLSFiles, ONLY: MLS_SFSTART, MLS_SFEND, mls_inqswath, & 
         & HDFVERSION_4, HDFVERSION_5
@@ -28,11 +26,13 @@ MODULE L3MZData
    USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate
    USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE, PGSD_MET_NUM_OF_GROUPS, &
         & PGSD_MET_GROUP_NAME_L, PGSMET_E_MAND_NOT_SET, PGS_S_SUCCESS
-   USE SWAPI
-   USE HE5_SWAPI
+   ! USE SWAPI
+   ! USE HE5_SWAPI
 
    IMPLICIT NONE
-   PUBLIC
+   private
+   PUBLIC :: L3MZData_T, &
+     & OutputL3MZ, WriteMetaL3MZ, AllocateL3MZ, DeallocateL3MZ
 
    PRIVATE :: ID, ModuleName
 
@@ -360,6 +360,8 @@ CONTAINS
 !----------------------------------------------
    SUBROUTINE OutputL3MZ_HE5 (file, mz, createFlag)
 !----------------------------------------------
+   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the swaths in an l3mz file.
@@ -771,6 +773,8 @@ CONTAINS
 !-------------------------------------------
    SUBROUTINE OutputMZDiag_HE5 (file, swfID, mz)
 !-------------------------------------------
+   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the diagnostic swaths in an l3mz file.
@@ -1590,6 +1594,9 @@ END MODULE L3MZData
 !==================
 
 ! $Log$
+! Revision 1.7  2003/04/06 02:25:50  jdone
+! added HDFEOS5 capability
+!
 ! Revision 1.6  2003/03/15 00:20:02  pwagner
 ! May warn if pgs_met_remove returns non-zero value
 !

@@ -9,22 +9,17 @@ MODULE Synoptic
   Use DailyMapModule, ONLY: Init, ClearMemory, CordTransform, & 
        & FFSM, FFSMA, FFSMD, &
        & Reconstruct, Diagnostics, DataGenerate
-  USE L2Interface, ONLY: ReadL2GPProd
   USE L3CF, ONLY: L3CFDef_T, L3CFProd_T
-  USE L3DMData, ONLY: L3DMData_T, AllocateL3DM
   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
-  USE L3SPData, ONLY: L3SPData_T, OutputL3SP, AllocateL3SP
   USE MLSCommon, ONLY: r8, r4
   USE MLSL3Common, ONLY: DATE_LEN, maxWindow
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_ALLOCATE, & 
        & MLSMSG_DEALLOCATE
-  USE OpenInit, ONLY: PCFData_T 
-  USE OutputClose, ONLY: OutputFlags_T
-  USE global_data
-  USE SDPToolkit, ONLY: PI
 
   Implicit none
   
+  private
+  public :: DailyCoreProcessing
   PRIVATE :: ID, ModuleName, my_sortp
   
   !------------------- RCS Ident Info -----------------------
@@ -53,6 +48,12 @@ CONTAINS
        & avgPeriod, l3sp, l3dm, dmA, dmD, l3r, residA, residD, & 
        & flags)
   !-------------------------------------------------------------------------
+  USE L2Interface, ONLY: ReadL2GPProd
+  USE L3DMData, ONLY: L3DMData_T, AllocateL3DM
+  USE L3SPData, ONLY: L3SPData_T, AllocateL3SP
+  USE OpenInit, ONLY: PCFData_T 
+  USE OutputClose, ONLY: OutputFlags_T
+  USE SDPToolkit, ONLY: PI
      
      ! Brief description of program
      ! This is the main program to run the Core processing.
@@ -2516,6 +2517,7 @@ CONTAINS
           & dlons_interp, atimes_interp, dtimes_interp, afields_interp, & 
           & dfields_interp, aprec_interp, dprec_interp, delTad, perMisPoints)
       !------------------------------------------------------------------------
+  USE SDPToolkit, ONLY: PI
         
        TYPE( L3CFProd_T ) :: cfProd
        TYPE( L2GPData_T ), POINTER :: l2gp(:)
@@ -2980,6 +2982,7 @@ CONTAINS
      !-------------------------------------------------------------------------
      REAL(r8) FUNCTION FindRealLon(alon)
      !-------------------------------------------------------------------------
+  USE SDPToolkit, ONLY: PI
   
        Real, intent(in) :: alon
   
@@ -3061,6 +3064,9 @@ CONTAINS
 !===================
 
 ! $Log$
+! Revision 1.29  2003/03/22 02:59:22  jdone
+! individual allocate/deallocate, use only and indentation added
+!
 ! Revision 1.28  2003/02/06 19:51:31  pwagner
 ! Fixed problem arising from different num types in calls to _sortp
 !

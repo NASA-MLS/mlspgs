@@ -6,10 +6,6 @@
 MODULE L3DZData
 !==============================================================================
 
-   USE Hdf, ONLY: DFACC_WRITE, DFNT_FLOAT32, DFNT_CHAR8, DFNT_INT32, &
-        & DFACC_RDWR
-   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
    USE MLSCommon, ONLY: r8, FileNameLen
    USE MLSFiles, ONLY: mls_sfstart, mls_sfend, mls_inqswath, & 
         & HDFVERSION_5, HDFVERSION_4
@@ -20,17 +16,11 @@ MODULE L3DZData
         & HDFE_NOMERGE, DIM_ERR, MIN_MAX, DIMRL_NAME, WR_ERR, METAWR_ERR
    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
         & MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate, MLSMSG_WARNING
-   USE MLSStrings, ONLY: LinearSearchStringArray
-   USE MLSPCF3
-   USE mon_Open, ONLY: PCFMData_T 
-   USE PCFHdr, ONLY: WritePCF2Hdr
-   USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
-   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
-        & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET, PGS_S_SUCCESS
-   USE SWAPI
-   USE HE5_SWAPI
    IMPLICIT NONE
-   PUBLIC
+   private
+   PUBLIC :: L3DZData_T, &
+     & OutputL3DZ, ReadL3DZData, WriteMetaL3DZ, &
+     & AllocateL3DZ, DeallocateL3DZ, DestroyL3DZDatabase
 
    PRIVATE :: ID, ModuleName
 
@@ -132,6 +122,11 @@ MODULE L3DZData
    !------------------------------------------
    SUBROUTINE OutputL3DZ_HE2(type, dzm, zFiles)
    !------------------------------------------
+   USE Hdf, ONLY: DFNT_FLOAT32, DFNT_CHAR8, DFNT_INT32, &
+        & DFACC_RDWR
+   USE MLSPCF3, only : mlspcf_l3dz_start, mlspcf_l3dz_end
+   USE MLSStrings, ONLY: LinearSearchStringArray
+   USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
 
      ! Brief description of subroutine
      ! This subroutine creates and writes to the swaths in an l3dz file.
@@ -389,7 +384,11 @@ MODULE L3DZData
    !------------------------------------------
    SUBROUTINE OutputL3DZ_HE5(type, dzm, zFiles)
    !------------------------------------------
-
+   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
+   USE MLSPCF3, only : mlspcf_l3dz_start, mlspcf_l3dz_end
+   USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
+   USE MLSStrings, ONLY: LinearSearchStringArray
      ! Brief description of subroutine
      ! This subroutine creates and writes to the swaths in an l3dz file.
 
@@ -647,6 +646,8 @@ MODULE L3DZData
     !-------------------------------------------
     SUBROUTINE OutputDZDiag_HE2(file, swfID, dz)
     !-------------------------------------------
+   USE Hdf, ONLY: DFNT_FLOAT32, DFNT_CHAR8, DFNT_INT32, &
+        & DFACC_RDWR
 
       ! Brief description of subroutine
       ! This subroutine creates and writes to the diagnostic swaths 
@@ -818,6 +819,8 @@ MODULE L3DZData
     !-------------------------------------------
     SUBROUTINE OutputDZDiag_HE5(file, swfID, dz)
     !-------------------------------------------
+   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
 
       ! Brief description of subroutine
       ! This subroutine creates and writes to the diagnostic swaths 
@@ -1469,6 +1472,14 @@ MODULE L3DZData
     !-------------------------------------------------------
     SUBROUTINE WriteMetaL3DZ (pcf, mcfNum, files, anText, hdfVersion)
     !-------------------------------------------------------
+   USE Hdf, ONLY: DFNT_FLOAT32, DFNT_CHAR8, DFNT_INT32, &
+        & DFACC_RDWR
+   USE MLSPCF3
+   USE PCFHdr, ONLY: WritePCF2Hdr
+   USE mon_Open, ONLY: PCFMData_T 
+   USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
+   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
+        & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET, PGS_S_SUCCESS
 
       ! Brief description of subroutine
       ! This routine writes the metadata for an l3dz file, 
@@ -2151,6 +2162,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.7  2003/04/06 02:25:34  jdone
+! added HDFEOS5 capability
+!
 ! Revision 1.6  2003/03/15 00:20:02  pwagner
 ! May warn if pgs_met_remove returns non-zero value
 !

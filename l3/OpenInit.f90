@@ -20,7 +20,6 @@ MODULE OpenInit
        & Pgs_td_utcToTAI, max_orbits, spacecraftId, PGS_IO_Gen_CloseF, &
        & Pgs_io_gen_openF, PGSd_IO_Gen_RSeqFrm, Pgs_pc_getReference
   USE GETCF_M, only: GetCF, InitGetCF
-  USE dates_module, only: days_in_year
   IMPLICIT NONE
   PUBLIC
 
@@ -153,6 +152,7 @@ CONTAINS
   !-------------------------------------------------------------
   SUBROUTINE SetProcessingWindow (start, end, dates, numDays)
   !-------------------------------------------------------------
+  USE dates_module, only: days_in_year
 
     ! Brief description of subroutine
     ! This subroutine finds each DOY for the L3 processing window 
@@ -470,6 +470,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.10  2003/03/22 02:51:22  jdone
+! average orbit retrieved from cf or calculated
+!
 ! Revision 1.9  2002/04/10 22:09:02  jdone
 ! Division by zero checked.
 !

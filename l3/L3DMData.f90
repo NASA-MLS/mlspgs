@@ -6,15 +6,8 @@
 MODULE L3DMData
 !==============================================================================
 
-  USE HDF, ONLY: DFACC_RDWR, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, & 
-       & DFACC_WRITE
-  USE HDF5, ONLY: HID_T
-  USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC 
-  USE HE5_SWAPI
   USE L3CF, ONLY: L3CFDef_T, L3CFProd_T
   USE MLSCommon, ONLY: r8, FileNameLen
-  USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4, mls_sfstart, mls_sfend
   USE MLSL3Common, ONLY: OutputFiles_T, DIM_ERR, GEO_ERR, DAT_ERR, WR_ERR, &
        & GD_ERR, METAWR_ERR, TAI2A_ERR, &
        & GEO_FIELD1, GEO_FIELD2, GEO_FIELD3, GEO_FIELD4, GEO_FIELD5, &
@@ -27,17 +20,10 @@ MODULE L3DMData
        & HDFE_NOMERGE, INVENTORYMETADATA
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, & 
        & MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN, MLSMSG_ALLOCATE, MLSMSG_WARNING
-  USE MLSPCF3, ONLY: mlspcf_l3dm_start, mlspcf_l3dm_end
-  USE MLSStrings, ONLY: LinearSearchStringArray
-  USE OpenInit, ONLY: PCFData_T
-  USE PCFHdr, ONLY: WritePCF2Hdr
-  USE PCFModule, ONLY: ExpandFileTemplate, FindFileDay 
-  USE SDPToolkit, ONLY: PGSd_MET_NUM_OF_GROUPS, PGSd_MET_GROUP_NAME_L, & 
-       & PGS_S_SUCCESS, PGSMET_E_MAND_NOT_SET, pgs_td_taiToUTC, &
-       & WARNIFCANTPGSMETREMOVE
-  USE SWAPI
   IMPLICIT NONE
-  PUBLIC
+  private
+  PUBLIC :: L3DMData_T, ConvertDeg2DMS, OutputGrids, &
+    & WriteMetaL3DM, AllocateL3DM, DeallocateL3DM, DestroyL3DMDatabase
 
   PRIVATE :: ID, ModuleName
 
@@ -52,7 +38,6 @@ MODULE L3DMData
 ! Definition -- L3DMData_T
 ! Subroutines -- ConvertDeg2DMS
 !                OutputGrids
-!                OutputDiags
 !                WriteMetaL3DM
 !                AllocateL3DM
 !                DeallocateL3DM
@@ -63,8 +48,8 @@ MODULE L3DMData
 
 ! Parameters
 
-   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDV = 'L3dmValue'
-   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDP = 'L3dmPrecision'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELDV = 'L3dmValue'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELDP = 'L3dmPrecision'
 
 ! This data type is used to store the l3 daily map data.
 
@@ -174,6 +159,7 @@ CONTAINS
   !---------------------------------------------------
   SUBROUTINE OutputGrids(type, l3dmData, l3dmFiles, hdfVersion)
   !---------------------------------------------------
+  USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4
 
     ! Brief description of subroutine
     ! This subroutine creates and writes to the grid portion of the l3dm files.
@@ -201,6 +187,11 @@ CONTAINS
   !---------------------------------------------------
   SUBROUTINE OutputGrids_HE2(type, l3dmData, l3dmFiles)
   !---------------------------------------------------
+  USE HDF, ONLY: DFACC_RDWR, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, & 
+       & DFACC_WRITE
+  USE MLSPCF3, ONLY: mlspcf_l3dm_start, mlspcf_l3dm_end
+  USE MLSStrings, ONLY: LinearSearchStringArray
+  USE PCFModule, ONLY: ExpandFileTemplate, FindFileDay 
 
     ! Brief description of subroutine
     ! This subroutine creates and writes to the grid portion of l3dm files.
@@ -522,6 +513,12 @@ CONTAINS
  SUBROUTINE OutputGrids_HE5(type, l3dmData, l3dmFiles)
  !---------------------------------------------------
    
+  USE HDF5, ONLY: HID_T
+  USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC 
+  USE MLSPCF3, ONLY: mlspcf_l3dm_start, mlspcf_l3dm_end
+  USE MLSStrings, ONLY: LinearSearchStringArray
+  USE PCFModule, ONLY: ExpandFileTemplate, FindFileDay 
    ! Brief description of subroutine
    ! This subroutine creates and writes to the grid portion of the l3dm files.
 
@@ -843,6 +840,8 @@ CONTAINS
    !----------------------------------------------
     SUBROUTINE OutputDiags_HE2(physicalFilename, dg)
     !----------------------------------------------
+  USE HDF, ONLY: DFACC_RDWR, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, & 
+       & DFACC_WRITE
 
       ! Brief description of subroutine
       ! This subroutine creates and writes to 
@@ -1111,6 +1110,9 @@ CONTAINS
     !----------------------------------------------
     SUBROUTINE OutputDiags_HE5(physicalFilename, dg)
     !----------------------------------------------
+  USE HDF5, ONLY: HID_T
+  USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC 
 
       ! Brief description of subroutine
       ! This subroutine creates and writes to 
@@ -1385,6 +1387,14 @@ CONTAINS
     !-----------------------------------------------------
     SUBROUTINE WriteMetaL3DM (pcf, l3cf, files, anText, hdfVersion)
     !-----------------------------------------------------
+  USE HDF, ONLY: DFACC_RDWR, DFNT_FLOAT64, DFNT_FLOAT32, DFNT_INT32, & 
+       & DFACC_WRITE
+  USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4, mls_sfstart, mls_sfend
+  USE OpenInit, ONLY: PCFData_T
+  USE PCFHdr, ONLY: WritePCF2Hdr
+  USE PCFModule, ONLY: ExpandFileTemplate, FindFileDay 
+  USE SDPToolkit, ONLY: PGSd_MET_NUM_OF_GROUPS, PGSd_MET_GROUP_NAME_L, & 
+     & PGS_S_SUCCESS, PGSMET_E_MAND_NOT_SET, WARNIFCANTPGSMETREMOVE
 
       ! Brief description of subroutine
       ! This routine writes the metadata for an l3dm file, 
@@ -2146,6 +2156,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.23  2003/04/08 20:26:46  pwagner
+!# Snipped intraline continuation character to appease Lahey
+!#
 !# Revision 1.22  2003/03/22 02:13:20  jdone
 !# added HDFEOS5/HDFEOS2 capability
 !#

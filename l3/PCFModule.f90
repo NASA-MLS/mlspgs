@@ -9,9 +9,10 @@ MODULE PCFModule
    USE MLSCommon, ONLY: FileNameLen, r8
    USE MLSL3Common, ONLY: TAI2A_ERR, CCSDS_LEN
    USE MLSMessageModule, ONLY: MLSMSG_Error, MLSMessage
-   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference, Pgs_td_taiToUTC
    IMPLICIT NONE
-   PUBLIC
+   private
+   PUBLIC :: ExpandFileTemplate, SearchPCFNames, FindFileType, &
+     & FindFileDay, SearchPCFDates
 
    PRIVATE :: ID, ModuleName
 
@@ -151,6 +152,7 @@ CONTAINS
    SUBROUTINE SearchPCFNames (inName, mlspcf_start, mlspcf_end, mlspcf, &
         & outName)
 !------------------------------------------------------------------------
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
 
 ! Brief description of subroutine 
 ! This subroutine searches the PCF for an entry matching the input name.  If a
@@ -225,6 +227,7 @@ CONTAINS
 !-----------------------------------------------------------------------
    SUBROUTINE FindFileType (type, mlspcf_start, mlspcf_end, match, name)
 !-----------------------------------------------------------------------
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
 
 ! Brief description of subroutine
 ! This subroutine searches the PCF for a file of the proper level/species.  It
@@ -296,6 +299,7 @@ CONTAINS
    SUBROUTINE FindFileDay(type, time, mlspcf_start, mlspcf_end, match, name, &
         & date)
 !-----------------------------------------------------------------------------
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
 
 ! Brief description of subroutine
 ! This subroutine searches the PCF for a file of a desired level/species/day.
@@ -387,6 +391,7 @@ CONTAINS
 !------------------------------------------------------------------------------
    SUBROUTINE SearchPCFDates(type, date, mlspcf_start, mlspcf_end, match, file)
 !------------------------------------------------------------------------------
+   USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
 
 ! Brief description of subroutine
 ! This routine searches the PCF for a file for desired type and date.  
@@ -472,6 +477,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.10  2003/03/22 02:55:53  jdone
+! use only and indentation added
+!
 ! Revision 1.9  2001/07/18 15:59:37  nakamura
 ! Added subroutine SearchPCFDates.
 !

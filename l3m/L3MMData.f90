@@ -8,8 +8,6 @@ MODULE L3MMData
 
    USE HDF, ONLY: DFACC_RDWR, DFACC_WRITE, DFNT_FLOAT64, DFNT_FLOAT32, &
         & DFNT_INT32, DFNT_CHAR8
-   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
-       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
    USE L3DMData, ONLY: ConvertDeg2DMS
    USE MLSCommon, ONLY: r8
    USE MLSFiles, ONLY: MLS_SFEND, MLS_SFSTART, HDFVERSION_4, HDFVERSION_5
@@ -21,18 +19,14 @@ MODULE L3MMData
         & METAWR_ERR
    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen, &
         & MLSMSG_Info, MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_WARNING
-   USE MLSPCF3
-   USE mon_Open, ONLY: PCFMData_T
-   USE PCFHdr, ONLY: WritePCF2Hdr
-   USE PCFModule
-   USE SDPToolkit, only: WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
-        & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET
    USE Time_M, only: Time_Now
-   USE SWAPI
-   USE HE5_SWAPI
+   ! USE SWAPI
+   ! USE HE5_SWAPI
 
    IMPLICIT NONE
-   PUBLIC
+   private
+   PUBLIC :: L3MMData_T, OutputMMGrids, OutputMMDiags, WriteMetaL3MM, &
+     & AllocateL3MM, DeallocateL3MM
 
    PRIVATE :: ID, ModuleName
 
@@ -443,6 +437,8 @@ CONTAINS
 !-----------------------------------------------------------------
    SUBROUTINE OutputMMGrids_HE5 (physicalFilename, l3mm, creationFlag)
 !-----------------------------------------------------------------
+   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the grid portion of l3mm files.
@@ -1006,6 +1002,8 @@ CONTAINS
 !------------------------------------------------
    SUBROUTINE OutputMMDiags_HE5(physicalFilename, mm)
 !------------------------------------------------
+   USE HDFEOS5, ONLY: HE5T_NATIVE_FLOAT, HE5T_NATIVE_INT, HE5T_NATIVE_DOUBLE, &
+       & HE5F_ACC_RDWR, HE5F_ACC_TRUNC, HE5T_NATIVE_CHAR
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the diagnostic portion of l3mm files.
@@ -1227,6 +1225,13 @@ CONTAINS
 !---------------------------------------------------------------
    SUBROUTINE WriteMetaL3MM (file, mlspcf_mcf_l3mm, pcf, anText, hdfVersion)
 !---------------------------------------------------------------
+   USE MLSPCF3
+   USE mon_Open, ONLY: PCFMData_T
+   USE PCFHdr, ONLY: WritePCF2Hdr
+   USE PCFModule, ONLY: SearchPCFDates, ExpandFileTemplate 
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS, &
+   & WARNIFCANTPGSMETREMOVE, PGSD_MET_GROUP_NAME_L, &
+        & PGSD_MET_NUM_OF_GROUPS, PGSMET_E_MAND_NOT_SET
 
 ! Brief description of subroutine
 ! This routine writes the metadata for the l3mm file, and annotates it with the
@@ -1827,6 +1832,9 @@ END MODULE L3MMData
 !==================
 
 !# $Log$
+!# Revision 1.6  2003/04/06 02:25:41  jdone
+!# added HDFEOS5 capability
+!#
 !# Revision 1.5  2003/03/15 00:20:02  pwagner
 !# May warn if pgs_met_remove returns non-zero value
 !#

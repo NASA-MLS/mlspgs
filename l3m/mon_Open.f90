@@ -6,11 +6,9 @@
 MODULE mon_Open
 !==============================================================================
 
-  USE MLSCF, ONLY: Mlscf_T
   USE MLSCommon, ONLY: FileNameLen
   USE MLSL3Common, ONLY: MAXWINDOW 
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen
-  USE MLSPCF3
   USE mon_L3CF, ONLY: L3CFMDef_T, L3CFMProd_T, FillL3CFM
   USE OpenInit, ONLY: SetProcessingWindow
   USE PCFHdr, ONLY: CreatePCFAnnotation
@@ -18,7 +16,8 @@ MODULE mon_Open
        & PGS_PC_GETREFERENCE, PGS_IO_GEN_OPENF
   USE GETCF_M, only: GetCF, InitGetCF
   IMPLICIT NONE
-  PUBLIC
+  private
+  PUBLIC :: PCFMData_T, GetPCFParams, OpenMON
 
   PRIVATE :: ID, ModuleName
 
@@ -82,6 +81,7 @@ CONTAINS
 !---------------------------------
    SUBROUTINE GetPCFParams (l3pcf)
 !---------------------------------
+  USE MLSPCF3
 
 ! Brief description of subroutine
 ! This subroutine retrieves the User-Defined Runtime Parameters from the PCF
@@ -191,6 +191,8 @@ CONTAINS
 !------------------------------------------------------------
     SUBROUTINE OpenMON (l3pcf, cf, cfStd, cfDg, cfDef, anText)
 !------------------------------------------------------------
+  USE MLSCF, ONLY: Mlscf_T
+  USE MLSPCF3, only: mlspcf_pcf_start, mlspcf_l3cf_start
 
 ! Brief description of subroutine
 ! This subroutine performs the Open/Init task in the MLSL3 program.
@@ -260,6 +262,9 @@ CONTAINS
 !==================
 
 ! $Log$
+! Revision 1.4  2003/04/06 02:30:33  jdone
+! added indentation; added use only to modules list
+!
 ! Revision 1.3  2001/09/06 18:50:27  nakamura
 ! Modified so that dg products use the same data type as std prods.
 !

@@ -6,10 +6,6 @@
 MODULE L3SPData
 !==============================================================================
 
-   USE HDF, ONLY: DFACC_CREATE, DFNT_FLOAT32 
-   USE HDFEOS
-   USE HDFEOS5
-   USE HE5_SWAPI
    USE L3CF, ONLY: L3CFProd_T
    USE MLSCommon, ONLY: r8
    USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
@@ -21,12 +17,11 @@ MODULE L3SPData
    USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, & 
         & MLSMSG_Fileopen, MLSMSG_Info, MLSMSG_DeAllocate
    USE MLSPCF3, ONLY: mlspcf_l3sp_start, mlspcf_l3sp_end
-   USE PCFHdr, ONLY: WritePCF2Hdr
-   USE PCFModule, ONLY: ExpandFileTemplate, FindFileType
-   USE SWAPI
 
    IMPLICIT NONE
-   PUBLIC
+   private
+   public :: L3SPData_T, AllocateL3SP, OutputL3SP, DeallocateL3SP, &
+     &        DestroyL3SPDatabase
 
    PRIVATE :: ID, ModuleName
 
@@ -49,17 +44,17 @@ MODULE L3SPData
 
 ! Parameters
 
-   CHARACTER (LEN=*), PARAMETER :: DIMW_NAME  = 'nWaveNum'
-   CHARACTER (LEN=*), PARAMETER :: DIMWD_NAME = 'nLevels,nLats,nWaveNum'
-   CHARACTER (LEN=*), PARAMETER :: DIMFD_NAME = 'nLevels,nLats,nFreqs'
-   CHARACTER (LEN=*), PARAMETER :: DIMSP_NAME = 'nLevels,nLats,nWaveNum,nFreqs'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMW_NAME  = 'nWaveNum'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMWD_NAME = 'nLevels,nLats,nWaveNum'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMFD_NAME = 'nLevels,nLats,nFreqs'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DIMSP_NAME = 'nLevels,nLats,nWaveNum,nFreqs'
 
-   CHARACTER (LEN=*), PARAMETER :: GEO_FIELDWN  = 'waveNumber'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: GEO_FIELDWN  = 'waveNumber'
 
-   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDRV = 'L3spRelValue'
-   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDRP = 'L3spRelPrecision'
-   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDIV = 'L3spImgValue'
-   CHARACTER (LEN=*), PARAMETER :: DATA_FIELDIP = 'L3spImgPrecision'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELDRV = 'L3spRelValue'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELDRP = 'L3spRelPrecision'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELDIV = 'L3spImgValue'
+   CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELDIP = 'L3spImgPrecision'
 
 ! This data type is used to store the L3 fourier spectra.
 
@@ -249,6 +244,9 @@ CONTAINS
 !--------------------------------------------
    SUBROUTINE OutputL3SP_HDF4(cfProd, anText, sp)
 !--------------------------------------------
+   USE HDF, ONLY: DFACC_CREATE, DFNT_FLOAT32 
+   USE PCFHdr, ONLY: WritePCF2Hdr
+   USE PCFModule, ONLY: ExpandFileTemplate, FindFileType
 
 ! Brief description of subroutine
 ! This subroutine creates and writes to the swaths in an l3sp file.
@@ -578,6 +576,9 @@ CONTAINS
    SUBROUTINE OutputL3SP_HDF5(cfProd, anText, sp)
 !--------------------------------------------
 
+   USE HDFEOS5, only: HE5F_ACC_TRUNC, HE5T_NATIVE_FLOAT
+   USE PCFHdr, ONLY: WritePCF2Hdr
+   USE PCFModule, ONLY: ExpandFileTemplate, FindFileType
 ! Brief description of subroutine
 ! This subroutine creates and writes to the swaths in an l3sp file.
 
@@ -1053,6 +1054,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.10  2003/03/22 02:42:37  jdone
+! added HDFEOS2/HDFEOS5 functionality
+!
 ! Revision 1.9  2002/04/10 22:06:05  jdone
 ! check on array size for allocate
 !

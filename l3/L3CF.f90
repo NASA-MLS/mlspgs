@@ -6,16 +6,14 @@
 MODULE L3CF
 !==============================================================================
 
-  USE MLSCF, ONLY: Mlscf_T
   USE MLSCommon, ONLY: r8, FileNameLen
   USE MLSL3Common, ONLY: maxWindow, maxGridPoints, GridNameLen, CCSDSB_LEN
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
-  USE MLSPCF3, ONLY: mlspcf_mcf_l3dm_start, mlspcf_mcf_l3dm_end
   USE MLSStrings, ONLY: LinearSearchStringArray
-  USE PCFModule, ONLY: SearchPCFNames
-  USE SDPToolkit, ONLY: PGS_S_SUCCESS, pgs_td_utcToTAI
   IMPLICIT NONE
-  PUBLIC
+  private
+  PUBLIC :: L3CFDef_T, L3CFProd_T
+  PUBLIC :: CalculateArray, FillL3CF
 
   PRIVATE :: ID, ModuleName
 
@@ -145,6 +143,10 @@ CONTAINS
   !-------------------------------------------------------------------
   SUBROUTINE FillL3CF (cf, pcfL3Ver, l3Days, l3Window, l3cf, cfDef)
   !-------------------------------------------------------------------
+  USE MLSCF, ONLY: Mlscf_T
+  USE MLSPCF3, ONLY: mlspcf_mcf_l3dm_start, mlspcf_mcf_l3dm_end
+  USE PCFModule, ONLY: SearchPCFNames
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS
 
     ! Brief description of subroutine
     ! This subroutine checks the parser output and fills L3CFProd_T.
@@ -463,6 +465,9 @@ END MODULE L3CF
 !==============
 
 ! $Log$
+! Revision 1.18  2003/03/22 02:38:29  jdone
+! added HDF output string and average orbital period value
+!
 ! Revision 1.17  2002/04/29 23:38:27  ybj
 ! Modified Option for ado
 !

@@ -6,16 +6,11 @@
 MODULE mon_L3CF
 !==============================================================================
 
-  USE L3CF, ONLY: CalculateArray
-  USE MLSCF, ONLY: Mlscf_T
   USE MLSCommon, ONLY: FileNameLen, r8
-  USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
   USE MLSL3Common, ONLY: maxGridPoints, GridNameLen
-  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
-       & MLSMSG_Warning
-  USE MLSStrings, ONLY: LinearSearchStringArray
   IMPLICIT NONE
-  PUBLIC
+  private
+  PUBLIC :: L3CFMDef_T, L3CFMProd_T, FillL3CFM
 
   PRIVATE :: ID, ModuleName
 
@@ -98,6 +93,12 @@ MODULE mon_L3CF
 !---------------------------------------------------------
    SUBROUTINE FillL3CFM (cf, pcfL3Ver, cfStd, cfDg, cfDef)
 !---------------------------------------------------------
+  USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5
+  USE L3CF, ONLY: CalculateArray
+  USE MLSCF, ONLY: Mlscf_T
+  USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
+       & MLSMSG_Warning
+  USE MLSStrings, ONLY: LinearSearchStringArray
 
      ! Brief description of subroutine
      ! This subroutine checks the parser output 
@@ -440,6 +441,9 @@ MODULE mon_L3CF
 !==================
 
 ! $Log$
+! Revision 1.3  2003/04/06 02:29:02  jdone
+! added HDFVersionString
+!
 ! Revision 1.2  2001/09/06 18:50:02  nakamura
 ! Modified so that dg products use the same data type as std prods.
 !

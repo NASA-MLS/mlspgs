@@ -7,20 +7,17 @@ MODULE MonthlyProcessModule
 !===============
 
   USE MLSL3Common, ONLY: DATE_LEN, maxWindow
-  USE L3DZData, ONLY: L3DZData_T, AllocateL3DZ, DestroyL3DZDatabase
   USE L2GPData, ONLY: L2GPData_T, rgp
   USE global_data
-  USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
-  USE L3MZData, ONLY: L3MZData_T, AllocateL3MZ, DeallocateL3MZ
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, &
        & MLSMSG_Deallocate
   USE SDPToolkit, ONLY: DEG2RAD, PI
   USE NumRecipesModule, ONLY: SPLINE, SPLINT
-  USE mon_Open, ONLY: PCFMData_T
   USE mon_L3CF, ONLY: L3CFMProd_T, L3CFMDef_T
 
   Implicit none
-
+  private
+  public :: MonthlyCoreProcessing
   PRIVATE :: ID, ModuleName
 
   !------------------- RCS Ident Info -----------------------
@@ -46,6 +43,10 @@ CONTAINS
   SUBROUTINE MonthlyCoreProcessing(cfProd, pcf, cfDef, l2Days, l2gp, l3mm, & 
        & mmA, mmD, mzA, mzD, dzA, dzD, mis_Days)
   !-------------------------------------------------------------------------
+  USE L3DZData, ONLY: L3DZData_T, AllocateL3DZ, DestroyL3DZDatabase
+  USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
+  USE L3MZData, ONLY: L3MZData_T, AllocateL3MZ, DeallocateL3MZ
+  USE mon_Open, ONLY: PCFMData_T
 
     ! Brief description of program
     ! This is the main program to run the Core processing.
@@ -799,6 +800,7 @@ CONTAINS
   SUBROUTINE DailyZonalMeanFromL2(cfDef, l2gp, l2Days, & 
        & pStartIndex, pEndIndex, l3dz, dzA, dzD )
   !-------------------------------------------------------------------------
+  USE L3DZData, ONLY: L3DZData_T, AllocateL3DZ, DestroyL3DZDatabase
 
     TYPE( L3CFMDef_T  ) :: cfDef
     TYPE( L2GPData_T  ), POINTER :: l2gp(:)
@@ -1137,6 +1139,7 @@ CONTAINS
   SUBROUTINE MonthlyZonalMeanFromL2(cfDef, l2gp, l2Days, & 
        & pStartIndex, pEndIndex, l3mz, mzA, mzD )
 !-------------------------------------------------------------------------
+  USE L3MZData, ONLY: L3MZData_T, AllocateL3MZ, DeallocateL3MZ
 
     TYPE( L3CFMDef_T  ) :: cfDef
     TYPE( L2GPData_T  ), POINTER :: l2gp(:)
@@ -1466,6 +1469,7 @@ CONTAINS
       SUBROUTINE MonthlyMapFromL2_Simple(cfProd, cfDef, l2gp, l2Days, & 
            & pStartIndex, pEndIndex, l3mm, mmA, mmD )
 !-------------------------------------------------------------------------
+  USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
 
         TYPE( L3CFMProd_T ) :: cfProd
 	TYPE( L3CFMDef_T  ) :: cfDef
@@ -1703,6 +1707,7 @@ CONTAINS
    SUBROUTINE MonthlyMapFromL2(cfProd, l2gp, pStartIndex, pEndIndex, &
         & anlats, dnlats, alons, dlons, afields, dfields, l3mm, mmA, mmD )
    !-------------------------------------------------------------------------
+  USE L3MMData, ONLY: L3MMData_T, AllocateL3MM
 
      TYPE( L3CFMProd_T ) :: cfProd
      TYPE( L3MMData_T  ) :: l3mm, mmA, mmD

@@ -9,17 +9,14 @@ MODULE OutputClose
   USE L2GPData, ONLY: L2GPData_T
   USE L2Interface, ONLY: ResidualOutput
   USE L3CF, ONLY: L3CFProd_T
-  USE L3DMData, ONLY: L3DMData_T, OutputGrids, WriteMetaL3DM, INVENTORYMETADATA
-  USE L3SPData, ONLY: L3SPData_T, OutputL3SP
   USE MLSCF, ONLY: Mlscf_T
   USE MLSCommon, ONLY: FileNameLen, r8
   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4
-  USE MLSL3Common, ONLY: NOOUT_ERR, OutputFiles_T
+  USE MLSL3Common, ONLY: NOOUT_ERR, OutputFiles_T, INVENTORYMETADATA
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Warning, & 
        & MLSMSG_DeAllocate
   USE MLSPCF3, ONLY: mlspcf_mcf_l3log_start 
   USE OpenInit, ONLY: PCFData_T
-  USE PCFModule, ONLY: ExpandFileTemplate
   USE SDPToolkit, only: PGS_S_SUCCESS, PGSd_MET_GROUP_NAME_L, & 
        & PGSD_MET_NUM_OF_GROUPS, Pgs_smf_getMsg, WARNIFCANTPGSMETREMOVE
   IMPLICIT NONE
@@ -67,6 +64,7 @@ CONTAINS
   !-------------------------------
   SUBROUTINE WriteMetaLog (pcf)
   !-------------------------------
+  USE PCFModule, ONLY: ExpandFileTemplate
 
     ! Brief description of subroutine
     ! This subroutine writes metadata for the log file to separate ASCII file. 
@@ -155,6 +153,9 @@ CONTAINS
   SUBROUTINE OutputProd (pcf, l3cf, anText, l3sp, l3dm, dmA, dmD, &
        & l3r, residA, residD, flags, hdfVersion)
   !-------------------------------------------------------------------
+  USE L3DMData, ONLY: L3DMData_T, OutputGrids, WriteMetaL3DM
+  USE L3SPData, ONLY: L3SPData_T, OutputL3SP
+  USE PCFModule, ONLY: ExpandFileTemplate
     
     ! Brief description of subroutine
     ! This subroutine performs the Output/Close task in the MLSL3 program.
@@ -385,6 +386,9 @@ CONTAINS
  !=====================
 
 !$Log$
+!Revision 1.18  2003/03/22 02:54:02  jdone
+!HDFEOS2/HDFEOS5 functionality, use only, and indentation added
+!
 !Revision 1.17  2003/03/15 00:16:38  pwagner
 !May warn if pgs_met_remove returns non-zero value
 !

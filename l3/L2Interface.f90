@@ -6,7 +6,6 @@
 MODULE L2Interface
 !==============================================================================
 
-  USE HDF, ONLY: DFACC_RDWR
   USE L2GPData, ONLY: L2GPData_T, ReadL2GPData, WriteL2GPData
   USE MLSCommon, ONLY: r8
   USE MLSFiles, ONLY: mls_openFile, mls_closeFile, & 
@@ -18,9 +17,9 @@ MODULE L2Interface
   USE MLSPCF3, ONLY: mlspcf_l2gp_start, mlspcf_l2gp_end, &
        & mlspcf_l3dm_start, mlspcf_l3dm_end
   USE PCFModule, ONLY: FindFileDay, ExpandFileTemplate
-  USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
   IMPLICIT NONE
-  PUBLIC
+  private
+  PUBLIC :: GetL2GPfromPCF, ReadL2GP, ReadL2GPProd, ResidualOutput, ReadL2DGData
   
   PRIVATE :: ID, ModuleName
   
@@ -35,8 +34,6 @@ MODULE L2Interface
   ! Subroutines -- GetL2GPfromPCF
   !                ReadL2GP
   !                ReadL2GPProd
-  !                ResidualCreate
-  !                ResidualWrite
   !                ResidualOutput
   !                ReadL2DGData
   
@@ -45,11 +42,11 @@ MODULE L2Interface
   
   ! Parameters
   
-  CHARACTER (LEN=*), PARAMETER :: DATA_FIELD1 = 'L2gpValue'
-  CHARACTER (LEN=*), PARAMETER :: DATA_FIELD2 = 'L2gpPrecision'
-  CHARACTER (LEN=*), PARAMETER :: DATA_FIELD3 = 'Status'
-  CHARACTER (LEN=*), PARAMETER :: DATA_FIELD4 = 'Quality'
-  CHARACTER (LEN=*), PARAMETER :: DATA_FIELD5 = 'L3Residual'
+CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELD1 = 'L2gpValue'
+CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELD2 = 'L2gpPrecision'
+CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELD3 = 'Status'
+CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELD4 = 'Quality'
+CHARACTER (LEN=*), PARAMETER, PUBLIC :: DATA_FIELD5 = 'L3Residual'
   
 CONTAINS
   
@@ -57,6 +54,7 @@ CONTAINS
   SUBROUTINE GetL2GPfromPCF(mlspcf_start, mlspcf_end, template, startDOY, &
        & endDOY, numFiles, pcfNames, mis_numFiles, mis_Days)
   !----------------------------------------------------------------------------
+  USE SDPToolkit, ONLY: PGS_S_SUCCESS, Pgs_pc_getReference
     
     ! Brief description of subroutine
     ! This routine searches the PCF for l2gp files for a desired species.  It
@@ -249,6 +247,7 @@ CONTAINS
  !---------------------------------------
  SUBROUTINE ResidualOutput (type, l3r)
  !---------------------------------------
+  USE HDF, ONLY: DFACC_RDWR
    
    ! Brief description of subroutine
    ! This program creates & writes the L3Residual swaths in an l3 map file.
@@ -419,6 +418,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.11  2003/03/22 02:41:32  jdone
+!# implemented L2GPData library routines
+!#
 !# Revision 1.10  2002/04/15 22:25:00  jdone
 !#  swid checked
 !#
