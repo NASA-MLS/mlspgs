@@ -44,7 +44,7 @@ Contains
 ! \---------------------------------------------------------------/
 
       SUBROUTINE SPLINE(X,Y,N,YP1,YPN,Y2)
-      PARAMETER(NMAX=100)
+      PARAMETER(NMAX=1000)
       DIMENSION X(N),Y(N),Y2(N),U(NMAX)
       IF (YP1.GT..99E30) THEN
         Y2(1)=0.
@@ -108,6 +108,9 @@ End Module NumRecipesModule
 !===================
 
 ! $Log$
+! Revision 1.1  2001/02/27 20:54:21  ybj
+! Interpolation Routines From Numerical Recipes
+!
 ! Revision 1.1  2000/10/05 18:17:41  nakamura
 ! Module split from synoptic.f90 and modified to be more like the standard template.
 !
