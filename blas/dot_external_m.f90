@@ -1,3 +1,6 @@
+! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module Dot_M
 
   implicit NONE
@@ -24,4 +27,4 @@ module Dot_M
 
 end module Dot_M
 
-!$Log: !
+! $Log$
