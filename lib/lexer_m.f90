@@ -196,8 +196,9 @@ contains
         case ( cmt )
           call new_line
           state = start
-          need = .false.
-          ch = EOL
+          need = .true.
+!         need = .false.           ! This doesn't allow comments between
+!         ch = EOL                 ! continuation lines
         case ( spaces );           need = .true.
         case ( cont );             state = contin; need = .true.
         case ( eof_in )
@@ -489,6 +490,9 @@ contains
 end module LEXER_M
 
 ! $Log$
+! Revision 2.8  2001/03/05 23:18:43  vsnyder
+! Allow comments between continuations
+!
 ! Revision 2.7  2000/11/30 20:18:47  vsnyder
 ! Added <: :< and <:< operators.
 !
