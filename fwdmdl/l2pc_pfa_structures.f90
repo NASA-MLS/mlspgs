@@ -133,8 +133,7 @@ contains
 
   ! -------------------------------------------- AllocateOneSlabs ---------
   subroutine AllocateOneSlabs ( slabs, nl )
-    ! Allocates the commonly used items in a slabs, or all if the optional
-    ! Full parameter is set
+    ! Allocates the items in a slabs structure
     use Allocate_Deallocate, only: ALLOCATE_TEST
     type (slabs_struct), intent(inout) :: slabs ! Slabs to allocate
     integer, intent(in) :: nl         ! Number of lines
@@ -164,6 +163,32 @@ contains
       slabs%dslabs1_dv0 = 0.0_r8
     end if
   end subroutine AllocateOneSlabs
+
+  ! --------------------------------------------  AllocateSlabs  ----------
+  subroutine AllocateSlabs ( Slabs, No_Ele, Catalog, Caller )
+  ! Allocate an array of slabs structures, and then the items in each one
+
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
+    use SpectroscopyCatalog_m, only: Catalog_T
+
+    type (slabs_struct), dimension(:,:), pointer :: Slabs
+    integer, intent(in) :: No_Ele
+    type (catalog_t), dimension(:), intent(in) :: Catalog
+    character(len=*), intent(in) :: Caller
+
+    integer :: I, J
+
+    allocate ( slabs(no_ele, size(catalog)), stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, Caller, &
+      & MLSMSG_Allocate//"slabs" )
+
+    do i = 1, size(catalog)
+      do j = 1, no_ele
+        call AllocateOneSlabs ( slabs(j,i), size(catalog(i)%lines) )
+      end do
+    end do
+
+  end subroutine AllocateSlabs
 
   ! ------------------------------------------ DeallocateAllSlabs ---------
   subroutine DeallocateAllSlabs ( Slabs, inName )
@@ -279,6 +304,9 @@ contains
 
 end module L2PC_PFA_STRUCTURES
 ! $Log$
+! Revision 2.8  2003/07/04 02:46:33  vsnyder
+! Create DeallocateAllSlabs subroutine, futzing
+!
 ! Revision 2.7  2003/05/17 01:20:52  vsnyder
 ! Futzing
 !
