@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -36,7 +36,8 @@ CONTAINS
 
     REAL :: freq                      ! calculated frequency
 
-    IF ((lo_freq == 0) .OR. (hi_freq == 0) .OR. (hi_freq == lo_freq)) THEN
+    IF ((lo_freq == 0) .OR. (hi_freq == 0) .OR. (meas_freq == 0.0) .OR. &
+         (hi_freq == lo_freq)) THEN
        freq = QNan()
     ELSE
        freq = (REAL(meas_freq - lo_freq) / (hi_freq - lo_freq)) * &
@@ -368,9 +369,11 @@ END MODULE EngUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.8  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.7  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
-!
 ! Revision 2.6  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !

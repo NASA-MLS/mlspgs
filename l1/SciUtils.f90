@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -13,7 +13,7 @@ MODULE SciUtils ! L0 science utilities
        Finite
   USE DACsUtils, ONLY: ExtractDACSdata, UncompressDACSdata, ProcessDACSdata
   USE MLSL1Common, ONLY: FBnum, MBnum, WFnum, WFchans, deg24, BankLogical_T, &
-       DACSchans, BandSwitch, L1ProgType, THzType, MaxMIFs, NumBands
+       DACSchans, BandSwitch, L1ProgType, THzType, MaxMIFs, NumBands, BankInt_T
 
   IMPLICIT NONE
 
@@ -29,6 +29,10 @@ MODULE SciUtils ! L0 science utilities
 
   TYPE (BankLogical_T) :: MaxAtten = & ! initialize to NOT Max Atten
        BankLogical_T (.FALSE., .FALSE., .FALSE., .FALSE.)
+  TYPE (BankLogical_T) :: DeltaAtten = & ! initialize to NOT Delta Atten
+       BankLogical_T (.FALSE., .FALSE., .FALSE., .FALSE.)
+  TYPE (BankInt_T) :: BankAtten = & ! initialize to NO bank Atten reading
+       BankInt_T (0, 0, 0, 0)
 
   CONTAINS
 
@@ -199,10 +203,11 @@ MODULE SciUtils ! L0 science utilities
 !! Determine latest attenuations
 
     CALL DetermineAttens (Attenuation%RIU, Attenuation%Addr, Attenuation%Value,&
-         Sci_pkt%BandSwitch, MaxAtten, AttenMaxed)
+         Sci_pkt%BandSwitch, MaxAtten, AttenMaxed, DeltaAtten)
 
     Sci_pkt%MaxAtten = MaxAtten   ! Use latest attenuation flags
     Sci_pkt%AttenMaxed = AttenMaxed
+    Sci_pkt%DeltaAtten = DeltaAtten
 
 ! Nothing more if THz
 
@@ -616,47 +621,53 @@ MODULE SciUtils ! L0 science utilities
   END SUBROUTINE Band_switch
 
 !=============================================================================
-  SUBROUTINE DetermineAttens (RIU, Addr, Val, BandSwitch, MaxAtten, AttenMaxed)
+  SUBROUTINE DetermineAttens (RIU, Addr, Val, BandSwitch, MaxAtten, &
+       AttenMaxed, DeltaAtten)
 !=============================================================================
 
     USE L0_sci_tbls, ONLY: BandAtten
     USE MLSL1Common, ONLY: SwitchBank
 
     INTEGER, INTENT (IN) :: RIU, Addr, Val, BandSwitch(5)
-    TYPE (BankLogical_T), INTENT (OUT) :: MaxAtten
+    TYPE (BankLogical_T), INTENT (OUT) :: MaxAtten, DeltaAtten
     LOGICAL, INTENT (OUT) :: AttenMaxed
 
-    INTEGER :: i, n, nMatch, nBanks, swBanks, MatchBand, BankIndx(2)
-    LOGICAL :: BandMask(NumBands), SwitchMask(5), IsSwitchFB
+    INTEGER :: i, n, nMatch, nBanks, swBanks, MatchBand(2), BankIndx(2), tblIndx
+    LOGICAL :: BandMask(SIZE(BandAtten)), SwitchMask(5), IsSwitchFB
 
-    INTEGER, PARAMETER :: BandIndx(NumBands) = (/ (i,i=1,NumBands) /)
+    INTEGER, PARAMETER :: BandIndx(SIZE(BandAtten)) = &
+         (/ (i, i=1, SIZE(BandAtten)) /)
     INTEGER, PARAMETER :: DACS_indx(22:26) = (/ 4, 2, 3, 1, 1 /)
     INTEGER, PARAMETER :: MaxAttenVal = 63   ! Value for maximum attenuation
 
+    DeltaAtten = BankLogical_T (.FALSE., .FALSE., .FALSE., .FALSE.)
     AttenMaxed = (Val == MaxAttenVal)
     BandMask = .FALSE.  ! Nothing matches yet
 
     WHERE (BandAtten%RIU == RIU .AND. BandAtten%Addr == Addr)
-       BandMask = .TRUE.          ! only for matched case(s)!
+       BandMask = .TRUE.          ! only for matched case!
     ENDWHERE
-    nMatch = COUNT (BandMask)
+    IF (COUNT (BandMask) /= 1) RETURN
 
-    DO i = 1, nMatch    ! 0, 1 or 2 possible
+    tblIndx = MAXVAL (BandIndx, BandMask)
+    MatchBand = (/ BandAtten(tblIndx)%Band, BandAtten(tblIndx)%Link /)
+    IF (MatchBand(2) /= 0) THEN
+       nMatch = 2
+    ELSE
+       nMatch = 1
+    ENDIF
+
+    DO i = 1, nMatch    ! 1 or 2 possible
 
        BankIndx = 0     ! No indexes (yet)
-       IF (i == 1) THEN
-          MatchBand = MinVal (BandIndx, BandMask)
-       ELSE
-          MatchBand = MaxVal (BandIndx, BandMask)
-       ENDIF
 
-       SELECT CASE (MatchBand)
+       SELECT CASE (MatchBand(i))
 
           CASE (1:21)     ! FBs
 
-             IsSwitchFB = ANY (SwitchBank(2:5) == MatchBand) ! Is a switch FB
+             IsSwitchFB = ANY (SwitchBank(2:5) == MatchBand(i)) ! Is a switch FB
              SwitchMask = .FALSE.
-             WHERE (BandSwitch == MatchBand)
+             WHERE (BandSwitch == MatchBand(i))
                 SwitchMask = .TRUE.
              END WHERE
              swBanks = COUNT (SwitchMask)
@@ -666,17 +677,17 @@ MODULE SciUtils ! L0 science utilities
                 IF (IsSwitchFB) THEN
                    nBanks = swBanks
                 ELSE
-                   IF (MatchBand < 20) THEN
+                   IF (MatchBand(i) < 20) THEN
                       nBanks = 2
-                      BankIndx(1) = MatchBand
+                      BankIndx(1) = MatchBand(i)
                    ELSE
                       nBanks = swBanks
                    ENDIF
                 ENDIF
              ELSE    ! Not in switch readbacks
-                IF (.NOT. IsSwitchFB .AND. MatchBand < 20) THEN
+                IF (.NOT. IsSwitchFB .AND. MatchBand(i) < 20) THEN
                    nBanks = 1   ! Is just one bare FB
-                   BankIndx(1) = MatchBand
+                   BankIndx(1) = MatchBand(i)
                 ELSE
                    nBanks = 0   ! FB not hooked up!
                 ENDIF
@@ -684,15 +695,18 @@ MODULE SciUtils ! L0 science utilities
 
              DO n = 1, nBanks
                 MaxAtten%FB(BankIndx(n)) = AttenMaxed
+                DeltaAtten%FB(BankIndx(n)) = &
+                     (BankAtten%FB(BankIndx(n)) /= Val)
+                BankAtten%FB(BankIndx(n)) = Val
              ENDDO
 
           CASE (22:26)    ! DACS
 
-             BankIndx = DACS_indx(MatchBand)
-             IF (MatchBand < 25) THEN
+             BankIndx = DACS_indx(MatchBand(i))
+             IF (MatchBand(i) < 25) THEN
                 nBanks = 1
              ELSE
-                IF (MatchBand == BandSwitch(1)) THEN
+                IF (MatchBand(i) == BandSwitch(1)) THEN
                    nBanks = 1
                 ELSE
                    nBanks = 0
@@ -701,24 +715,33 @@ MODULE SciUtils ! L0 science utilities
 
              DO n = 1, nBanks
                 MaxAtten%DACS(BankIndx(n)) = AttenMaxed
+                DeltaAtten%DACS(BankIndx(n)) = &
+                     (BankAtten%DACS(BankIndx(n)) /= Val)
+                BankAtten%DACS(BankIndx(n)) = Val
              ENDDO
 
           CASE (27:31)    ! MBs
 
              nBanks = 1
-             BankIndx = MatchBand - 26
+             BankIndx = MatchBand(i) - 26
 
              DO n = 1, nBanks
                 MaxAtten%MB(BankIndx(n)) = AttenMaxed
+                DeltaAtten%MB(BankIndx(n)) = &
+                     (BankAtten%MB(BankIndx(n)) /= Val)
+                BankAtten%MB(BankIndx(n)) = Val
              ENDDO
 
           CASE (32:34)    ! WFs
 
              nBanks = 1
-             BankIndx = MatchBand - 31
+             BankIndx = MatchBand(i) - 31
 
              DO n = 1, nBanks
                 MaxAtten%WF(BankIndx(n)) = AttenMaxed
+                DeltaAtten%WF(BankIndx(n)) = &
+                     (BankAtten%WF(BankIndx(n)) /= Val)
+                BankAtten%WF(BankIndx(n)) = Val
              ENDDO
 
        END SELECT
@@ -766,6 +789,9 @@ MODULE SciUtils ! L0 science utilities
 END MODULE SciUtils
 
 ! $Log$
+! Revision 2.8  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.7  2004/01/09 17:46:23  perun
 ! Version 1.4 commit
 !
@@ -782,8 +808,8 @@ END MODULE SciUtils
 ! moved parameter statement to data statement for LF/NAG compatitibility
 !
 ! $Log$
-! Revision 2.7  2004/01/09 17:46:23  perun
-! Version 1.4 commit
+! Revision 2.8  2004/05/14 15:59:11  perun
+! Version 1.43 commit
 !
 ! Revision 2.5  2003/08/15 14:25:04  perun
 ! Version 1.2 commit

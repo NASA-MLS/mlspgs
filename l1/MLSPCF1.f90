@@ -1,4 +1,4 @@
-! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 ! NOTE: This module is automatically created by the makemlspcfmodule
 !       perl script.  Do *NOT* attempt to modify this by hand.
@@ -105,6 +105,9 @@ MODULE MLSPCF1
   INTEGER, PARAMETER :: mlspcf_l1b_log_start = 30006
   INTEGER, PARAMETER :: mlspcf_l1b_log_end = 30006
 !
+  INTEGER, PARAMETER :: mlspcf_l1b_diagT_start = 30007
+  INTEGER, PARAMETER :: mlspcf_l1b_diagT_end = 30007
+!
   INTEGER, PARAMETER :: mlspcf_mcf_l1log_start = 4000
   INTEGER, PARAMETER :: mlspcf_mcf_l1log_end = 4000
 !
@@ -123,6 +126,9 @@ MODULE MLSPCF1
 END MODULE MLSPCF1
 
 ! $Log$
+! Revision 2.8  2004/05/14 15:59:11  perun
+! Version 1.43 commit
+!
 ! Revision 2.7  2004/01/09 17:46:22  perun
 ! Version 1.4 commit
 !
