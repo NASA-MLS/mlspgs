@@ -62,6 +62,8 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
     task and is not recommneded for manual invocations.
   --snoop: Activate the snooping capability (interaction with
     an IDL diagnostics process)
+  --submit "command": In conjunction with --master, use the command
+    to submit the slave task to a batch queue system.
     
   Options a, c, f0, g0, l, p and t can be toggled in the 
         configuration file
@@ -87,6 +89,9 @@ by the equal-signs--stuff outside that space, like these
 comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.13  2002/05/24 17:35:31  pwagner
+ Added --recl option
+
  Revision 1.12  2002/03/20 00:48:29  pwagner
  Option -check just checks l2cf then quits
 
