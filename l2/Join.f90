@@ -24,7 +24,6 @@ module Join                     ! Join together chunk based data.
     & Dump, GetFromMatrixDatabase, Matrix_T
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MatrixModule_1, only: Matrix_Database_T, GetFromMatrixDatabase, Matrix_T
   use MoreTree, only: Get_Spec_ID
   use OUTPUT_M, only: OUTPUT
   use QuantityTemplates, only: QuantityTemplate_T
@@ -616,6 +615,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.28  2001/04/26 15:59:30  livesey
+! Tidied up uses
+!
 ! Revision 2.27  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !

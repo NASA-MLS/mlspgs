@@ -379,7 +379,7 @@ contains ! =====     Public Procedures     =============================
             case ( f_quantities )
               do in_field_no = 2, nsons(gson)
                 db_index = decoration(decoration(subtree(in_field_no ,gson)))
-                call writeOneL2PC ( l2pcDatabase(db_index), l2pcUnit, lit_indices )
+                call writeOneL2PC ( l2pcDatabase(db_index), l2pcUnit )
               end do ! in_field_no = 2, nsons(gson)
             case ( f_overlaps )
               ! ??? More work needed here
@@ -467,6 +467,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.28  2001/04/26 15:59:13  livesey
+! Fixed arguments to writeOneL2PC
+!
 ! Revision 2.27  2001/04/25 21:51:28  livesey
 ! Minor changes, add canWriteL2PC flag
 !
