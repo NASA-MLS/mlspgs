@@ -1,0 +1,14 @@
+* means it's been checked to be (maybe) the right one.
+cp /nas/zvi/f90/l2pc/s_get_one_eta.f90 .
+cp /nas/zvi/f90/library/s_hunt.f s_hunt_m.f90
+*cp /nas/zvi/f90/prep/abs_cs_*f90 .
+cp /nas/zvi/vax_code/slabs_prep.for slabs_pref_m.f90
+cp /nas/zvi/f90/library/solve_quad.f solve_quad_m.f90
+cp /nas/zvi/f90/library/dcspline_der.f dcspline_der_m.f90
+cp /nas/zvi/f90/library/d_lintrp.f d_lintrp_m.f90
+cp /nas/zvi/f90/library/dcspline.f d_cspline_m.f90
+cp /nas/zvi/sun/library/csinterp.f  csinterp_m.f90
+cp /nas/zvi/vax_code/q_log.for q_log_m.f90
+*cp /nas/zvi/eos/prep/slabs.f slabs.f90
+cp /nas/zvi/eos/l2pc/zeqv_circle/l2pc_file.f l2pc_file.f90
+cp /nas/zvi/eos/l2pc/eqv_circle/read_uif.f read_uif_m.f90
