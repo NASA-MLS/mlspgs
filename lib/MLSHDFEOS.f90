@@ -130,8 +130,16 @@ contains ! ======================= Public Procedures =========================
     integer, intent(in) :: DATATYPE    ! E.g., MLS_CHARTYPE
     integer, intent(in) :: COUNT   ! How many
     character(len=*), intent(in) :: BUFFER  ! Buffer for write
-    MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
-    & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+    !
+    character(len=1), parameter :: BLANK = ' '
+    !
+    if ( len_trim(buffer) > 0 ) then
+      MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
+      & ATTRNAME, DATATYPE, max(COUNT, len_trim(BUFFER)), BUFFER )
+    else
+      MLS_EHWRGLATT = he5_ehwrglatt_character_scalar( FILEID, &
+      & ATTRNAME, DATATYPE, 1, BLANK )
+    endif
 
   end function MLS_EHWRGLATT
 
@@ -1750,6 +1758,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.23  2004/09/23 22:58:59  pwagner
+! Fix for when passed blank BUFFER (do we need to fix this elsewhere\?)
+!
 ! Revision 2.22  2004/08/04 23:19:01  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
