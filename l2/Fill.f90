@@ -15,6 +15,7 @@ module Fill                     ! Create vectors and fill them.
     & F_EXTINCTION, F_FRACTION, F_H2OQUANTITY, F_LOSQTY,&
     & F_dontMask, F_IGNORENEGATIVE, F_IGNOREZERO, &
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
+    & F_LSB, F_LSBFRACTION, &
     & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
     & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISEBANDWIDTH, F_PRECISION,  &
     & F_PRECISIONFACTOR, &
@@ -25,16 +26,17 @@ module Fill                     ! Create vectors and fill them.
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
     & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, &
-    & F_TYPE, F_VECTOR, F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
+    & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
-    & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, L_HEIGHT, &
+    & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_HEIGHT, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, L_RHI, &
     & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
-    & L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
+    & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
+    & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
   use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
@@ -197,10 +199,20 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
-    type (vectorValue_T), pointer :: QUANTITY ! Quantity to be filled
+    type (vectorValue_T), pointer :: APRIORIPRECISION
+    type (vectorValue_T), pointer :: BNDPRESSQTY
+    type (vectorValue_T), pointer :: EARTHRADIUSQTY
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     type (vectorValue_T), pointer :: H2OQUANTITY
+    type (vectorValue_T), pointer :: LOSQTY
+    type (vectorValue_T), pointer :: LSB
+    type (vectorValue_T), pointer :: LSBFRACTION
+    type (vectorValue_T), pointer :: MEASQTY
+    type (vectorValue_T), pointer :: MODELQTY
+    type (vectorValue_T), pointer :: NBWQUANTITY
+    type (vectorValue_T), pointer :: NOISEQTY
     type (vectorValue_T), pointer :: PRECISIONQUANTITY
+    type (vectorValue_T), pointer :: QUANTITY ! Quantity to be filled
     type (vectorValue_T), pointer :: RADIANCEQUANTITY
     type (vectorValue_T), pointer :: RATIOQUANTITY
     type (vectorValue_T), pointer :: REFGPHQUANTITY
@@ -211,15 +223,9 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
     type (vectorValue_T), pointer :: TNGTPRESQUANTITY
-    type (vectorValue_T), pointer :: EARTHRADIUSQTY
-    type (vectorValue_T), pointer :: LOSQTY
-    type (vectorValue_T), pointer :: BNDPRESSQTY
+    type (vectorValue_T), pointer :: USB
+    type (vectorValue_T), pointer :: USBFRACTION
     type (vectorValue_T), pointer :: VMRQTY
-    type (vectorValue_T), pointer :: MEASQTY
-    type (vectorValue_T), pointer :: MODELQTY
-    type (vectorValue_T), pointer :: NBWQUANTITY
-    type (vectorValue_T), pointer :: NOISEQTY
-    type (vectorValue_T), pointer :: APRIORIPRECISION
 
     integer :: aprPrecVctrIndex         ! Index of apriori precision vector
     integer :: aprPrecQtyIndex          ! Index of apriori precision quantity    
@@ -262,6 +268,10 @@ contains ! =====     Public Procedures     =============================
     integer :: LENGTHSCALE              ! Index of lengthscale vector in database
     integer :: LOSVECTORINDEX           ! index in vector database
     integer :: LOSQTYINDEX              ! index in QUANTITY database
+    integer :: LSBVECTORINDEX           ! Inddex in vector database
+    integer :: LSBQUANTITYINDEX         ! Inddex in vector database
+    integer :: LSBFRACTIONVECTORINDEX   ! Index in vector database
+    integer :: LSBFRACTIONQUANTITYINDEX ! Index in vector database
     type(matrix_Cholesky_T) :: MatrixCholesky
     type(matrix_Kronecker_T) :: MatrixKronecker
     type(matrix_SPD_T) :: MatrixSPD
@@ -312,6 +322,10 @@ contains ! =====     Public Procedures     =============================
     integer :: TNGTECIQUANTITYINDEX     ! In the quantities database
     integer :: TNGTECIVECTORINDEX       ! In the vector database
     integer, dimension(2) :: UNITASARRAY ! From expr
+    integer :: USBVECTORINDEX           ! Inddex in vector database
+    integer :: USBQUANTITYINDEX         ! Inddex in vector database
+    integer :: USBFRACTIONVECTORINDEX   ! Index in vector database
+    integer :: USBFRACTIONQUANTITYINDEX ! Index in vector database
     real(r8), dimension(2) :: VALUEASARRAY ! From expr
     integer :: VALUESNODE               ! For the parser
     integer :: VECTORINDEX              ! In the vector database
@@ -518,6 +532,12 @@ contains ! =====     Public Procedures     =============================
           case ( f_losQty ) ! For losGrid fill
             losVectorIndex = decoration(decoration(subtree(1,gson)))
             losQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_lsb ) ! For folding
+            lsbVectorIndex = decoration(decoration(subtree(1,gson)))
+            lsbQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_lsbFraction ) ! For folding
+            lsbFractionVectorIndex = decoration(decoration(subtree(1,gson)))
+            lsbFractionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_maxIterations )      ! For hydrostatic fill
             call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
             if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
@@ -610,6 +630,12 @@ contains ! =====     Public Procedures     =============================
           case ( f_temperatureQuantity ) ! For hydrostatic or rhi
             temperatureVectorIndex = decoration(decoration(subtree(1,gson)))
             temperatureQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_usb ) ! For folding
+            usbVectorIndex = decoration(decoration(subtree(1,gson)))
+            usbQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_usbFraction ) ! For folding
+            usbFractionVectorIndex = decoration(decoration(subtree(1,gson)))
+            usbFractionQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_vmrQuantity )     ! For special fill of columnAbundance
             vmrQtyVctrIndex = decoration(decoration(subtree(1,gson)))
             vmrQtyIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -943,6 +969,17 @@ contains ! =====     Public Procedures     =============================
           end do
           !quantity%values = spread ( vGrids(vGridIndex)%surfs, 2, &
           !  & quantity%template%noInstances )
+
+        case ( l_fold ) ! --------------- Fill by sideband folding -----
+          lsb => GetVectorQtyByTemplateIndex ( &
+            & vectors(lsbVectorIndex), lsbQuantityIndex )
+          lsbFraction => GetVectorQtyByTemplateIndex ( &
+            & vectors(lsbFractionVectorIndex), lsbFractionQuantityIndex )
+          usb => GetVectorQtyByTemplateIndex ( &
+            & vectors(usbVectorIndex), usbQuantityIndex )
+          usbFraction => GetVectorQtyByTemplateIndex ( &
+            & vectors(usbFractionVectorIndex), usbFractionQuantityIndex )
+          call FillFoldedRadiance ( quantity, lsb, usb, lsbFraction, usbFraction, key )
 
         case ( l_gridded ) ! ------------  Fill from gridded data  -----
           if ( .not. got(f_sourceGrid) ) &
@@ -2323,6 +2360,52 @@ contains ! =====     Public Procedures     =============================
    endif   
 
   end subroutine FillColAbundance
+  
+  ! ------------------------------------- FillFoldedRadiance ---
+  subroutine FillFoldedRadiance ( radiance, lsb, usb, &
+    & lsbFraction, usbFraction, key )
+    type (VectorValue_T), intent(inout) :: RADIANCE
+    type (VectorValue_T), intent(in) :: USB
+    type (VectorValue_T), intent(in) :: LSB
+    type (VectorValue_T), intent(in) :: USBFRACTION
+    type (VectorValue_T), intent(in) :: LSBFRACTION
+    integer, intent(in) :: KEY
+
+    ! Local variables
+    integer :: C                        ! Channel loop inductor
+    integer :: I                        ! Array index
+    integer :: MIF                      ! Minor frame loop inductor
+
+    ! Executable code
+    ! First some sanity checks
+    if (.not. ValidateVectorQuantity ( radiance, quantityType=(/l_radiance/), &
+      & sideband=(/0/), minorFrame=.true. )) &
+      & call Announce_Error ( key, 0, 'Inappropriate radiance quantity to fill' )
+    if (.not. ValidateVectorQuantity ( lsb, quantityType=(/l_radiance/), &
+      & sideband=(/-1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
+      & call Announce_Error ( key, 0, 'Inappropriate lsb radiance quantity for fill' )
+    if (.not. ValidateVectorQuantity ( usb, quantityType=(/l_radiance/), &
+      & sideband=(/1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
+      & call Announce_Error ( key, 0, 'Inappropriate usb radiance quantity for fill' )
+    if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
+      & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
+      & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
+    if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
+      & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
+      & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+
+    ! Now do the work
+    i = 1                               ! Use i as a composit mif,channel index
+    do mif = 1, radiance%template%noSurfs
+      do c = 1, radiance%template%noChans
+        radiance%values(i,:) = &
+          & lsbFraction%values(c,1) * lsb%values(i,:) + &
+          & usbFraction%values(c,1) * usb%values(i,:)
+        i = i + 1
+      end do
+    end do
+
+  end subroutine FillFoldedRadiance
 
   ! ------------------------------------- FillRHIFromH2O ----
   subroutine FillRHIFromH2O ( key, quantity, &
@@ -3389,6 +3472,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.124  2002/05/17 17:55:48  livesey
+! Added sideband folding fill
+!
 ! Revision 2.123  2002/05/14 00:26:25  livesey
 ! New code for system temperatures etc.
 !
