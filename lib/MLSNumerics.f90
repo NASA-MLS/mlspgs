@@ -264,8 +264,8 @@ contains
     real(R8), dimension(:,:), pointer :: CC
     real(R8), dimension(:),   pointer :: D ! Coefficients
     real(R8), dimension(:,:), pointer :: DD ! Spread coefs.
+    real(R8), dimension(:),   pointer :: gap
     real(R8), dimension(:),   pointer :: gap2
-    real(R8), dimension(:),   pointer :: gap =>NULL()
     integer, dimension(:),    pointer :: lowerInds
     real(R8), dimension(:),   pointer :: maskVector
     real(R8), dimension(:,:), pointer :: oldSecond
@@ -284,7 +284,7 @@ contains
 
     ! Executable code
 
-    nullify ( a, aa, b, bb, c, cc, d, dd, gap2, gap, lowerInds, maskVector, &
+    nullify ( a, aa, b, bb, c, cc, d, dd, gap, gap2, lowerInds, maskVector, &
       &       oldSecond, oldSecondLower, oldSecondUpper, oldYlower, oldYupper, p, &
       &       spreadGap, temp, tempDNewByDOld, upperInds )
 
@@ -575,6 +575,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.13  2001/07/10 17:55:23  livesey
+! Cosmetic changes only
+!
 ! Revision 2.12  2001/07/06 18:44:40  dwu
 ! Add a feature in InterpolateScaler to handle periodic data
 !
