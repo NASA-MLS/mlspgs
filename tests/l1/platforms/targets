@@ -63,6 +63,18 @@ else
    blas_message=Building mlsl1 test with internally-supplied BLAS
 endif
 
+ifdef HDF5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5}
+endif
+   hdf5_message=Building mlsl2 with hdf5
+else
+   hdf5_linker_line=
+   hdf5_message=Building mlsl2 without hdf5
+endif
+
 # ========================================================================
 libl1.a: $(libl1_objs)
 ifeq ($(delete_lib_first),yes)
@@ -74,6 +86,7 @@ endif
 test: $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(hdf5_message)"
 		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll1 \
                       -L${libdir} -lmls \
@@ -86,6 +99,7 @@ test: $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
+        $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
 # ========================================================================
@@ -99,6 +113,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.6  2001/05/30 20:45:23  pwagner
+# Set delete_lib_first to no with note to think harder
+#
 # Revision 1.5  2001/05/29 22:35:31  pwagner
 # Added delete_lib_first
 #

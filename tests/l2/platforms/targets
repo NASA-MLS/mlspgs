@@ -69,12 +69,28 @@ l2_NEEDS_fwdmdl = true
 ifdef l2_NEEDS_fwdmdl
    fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
    fwdmdl_message=Building mlsl2 test with forward model
+   cloud_linker_line=-L${clouddir} -lcloud
+   cloud_message=Building mlsl2 with cloud forward model
    mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a \
-	 $(fwdmdldir)/libfwdmdl.a
+	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a
 else
    fwdmdl_linker_line=
    fwdmdl_message=Building mlsl2 test without forward model
+   cloud_linker_line=
+   cloud_message=Building mlsl2 without cloud forward model
    mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a 
+endif
+
+ifdef HDF5
+ifeq ($(MLSPLAT),Sun)
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -R${HDF5}
+else
+   hdf5_linker_line=-L${HDF5} -lhdf5_fortran -lhdf5 -Xlinker -rpath=${HDF5}
+endif
+   hdf5_message=Building mlsl2 with hdf5
+else
+   hdf5_linker_line=
+   hdf5_message=Building mlsl2 without hdf5
 endif
 
 # ========================================================================
@@ -88,9 +104,12 @@ endif
 test: $(mlsl2_prereqs)
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
+		@echo "$(hdf5_message)"
 		@echo "$(fwdmdl_message)"
+		@echo "$(cloud_message)"
 		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll2 \
+        $(cloud_linker_line) \
         $(fwdmdl_linker_line) \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
@@ -102,6 +121,7 @@ test: $(mlsl2_prereqs)
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
+        $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 
 # ========================================================================
@@ -115,6 +135,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.7  2001/05/30 20:45:23  pwagner
+# Set delete_lib_first to no with note to think harder
+#
 # Revision 1.6  2001/05/29 22:35:31  pwagner
 # Added delete_lib_first
 #
