@@ -59,10 +59,12 @@ contains
       & P_CYCLE, P_ENDTIME, P_INPUT_VERSION_STRING, P_INSTRUMENT, &
       & P_LEAPSECFILE, P_OUTPUT_VERSION_STRING, P_STARTTIME, &
       & P_VERSION_COMMENT, S_BINSELECTOR, S_EMPIRICALGEOMETRY, S_FGRID, &
-      & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, S_TIME, S_VGRID
+      & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
+      & S_L2PARSF, S_TIME, S_VGRID
     use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
       & AssembleL1BQtyName, DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
     use L2GPData, only: L2GPDATA_T
+    use L2ParInfo, only: parallel
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
     use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
     use MLSFiles, only: FILENOTFOUND, mls_hdf_version
@@ -274,18 +276,17 @@ contains
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
             & just_a_warning = .true.)
-!        Not a spec but a parameter
-!        case ( s_leapsecfile )
-!          if ( .not. pcf ) then  
-!            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
-!            call get_string ( sub_rosa_index, LeapSecFileName, strip=.true. )
-!            if(index(switches, 'pro') /= 0) &  
-!            & call proclaim(LeapSecFileName, 'leapsecfile')
-!          else
-!            call announce_error(0, &
-!            & '*** Leap Second File in global settings despite pcf ***', &
-!            & just_a_warning = .true.)
-!          end if
+        case ( s_l2parsf )
+          sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
+          call get_string ( sub_rosa_index, FilenameString, strip=.true. )
+          parallel%stagingFile = FilenameString
+          if(index(switches, 'pro') /= 0) then  
+            call proclaim(FilenameString, 'l2 parallel staging file') 
+          end if
+          if ( pcf ) &
+            & call announce_error(0, &
+            & '*** l2cf overrides pcf for L2 Parallel staging file ***', &
+            & just_a_warning = .true.)
         case ( s_empiricalGeometry )
           call InitEmpiricalGeometry ( son )
         case ( s_time )
@@ -706,6 +707,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.67  2003/05/10 22:20:50  livesey
+! Tried to calm down -g1..
+!
 ! Revision 2.66  2003/05/07 23:58:04  pwagner
 ! outputs trimmed LeapSecFileName
 !
