@@ -101,7 +101,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_INTEGRATIONTIME     = f_integrationGrid + 1
   integer, parameter :: F_INTERPOLATE         = f_integrationTime + 1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_interpolate + 1
-  integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
+  integer, parameter :: F_INVERT              = f_interpolationFactor + 1
+  integer, parameter :: F_JACOBIAN            = f_invert + 1
   integer, parameter :: F_LAMBDA              = f_jacobian + 1
   integer, parameter :: F_LENGTH              = f_lambda + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
@@ -435,6 +436,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_integrationTime) =     add_ident ( 'integrationTime' )
     field_indices(f_interpolate) =         add_ident ( 'interpolate' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
+    field_indices(f_invert) =              add_ident ( 'invert' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_lambda) =              add_ident ( 'lambda' )
     field_indices(f_length) =              add_ident ( 'length' )
@@ -799,6 +801,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_matrix, s+s_matrix, nr+n_field_spec, &
              begin, f+f_diagonal, s+s_vector, nr+n_field_spec, &
              begin, f+f_decay, s+s_vector, n+n_field_spec, &
+             begin, f+f_invert, t+t_boolean, n+n_field_type, &
              begin, f+f_superDiagonal, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -956,6 +959,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.113  2001/05/30 20:16:27  vsnyder
+! Add 'invert' field to 'fillCovariance' spec
+!
 ! Revision 2.112  2001/05/29 23:22:48  livesey
 ! Some state vector types moved down to intrinsic to be with the others.
 !
