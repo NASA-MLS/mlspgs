@@ -371,7 +371,8 @@ contains ! =====     Public procedures     =============================
              l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_hydrostatic, l+l_addnoise, &
-             l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
+             l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_negativePrecision, &
+             l+l_vector, l+l_special, &
              l+l_rectanglefromlos,l+l_vGrid, n+n_dt_def, &
       begin, t+t_fwmType, l+l_linear, l+l_full, l+l_scan, l+l_cloudFull, n+n_dt_def, &
       begin, t+t_hGridType, l+l_explicit, l+l_fixed, l+l_fractional, &
@@ -580,6 +581,8 @@ contains ! =====     Public procedures     =============================
 
      id_last = 0
      call acorn((/begin, s+s_fill/))    ! Must be AFTER s_vector, s_matrix and s_climatology
+     call acorn((/begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
+            f+f_quantities, n+n_dot/))           
      call acorn((/begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_dontMask, t+t_boolean, n+n_field_type/))
@@ -610,6 +613,7 @@ contains ! =====     Public procedures     =============================
             f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_precision, s+s_vector, f+f_template, &
             f+f_quantities, n+n_dot/))
+     call acorn((/begin, f+f_precisionFactor, t+t_numeric, n+n_field_type/))
      call acorn((/begin, f+f_ptanQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_quantity, s+s_vector, f+f_template, f+f_quantities, &
@@ -876,6 +880,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.209  2002/04/04 16:32:42  livesey
+! Added negative error bar stuff
+!
 ! Revision 2.208  2002/03/15 21:22:20  livesey
 ! Introduced new binselector type
 !
