@@ -54,13 +54,12 @@ module HGrid                    ! Horizontal grid information
   integer, private :: ERROR
 
 ! Error codes for "announce_error"
-  integer, private, parameter :: DuplicateField = 1
-  integer, private, parameter :: LengthUnitMessage = 2
-  integer, private, parameter :: NoFraction = 3
-  integer, private, parameter :: NoHeight = 4
-  integer, private, parameter :: NoInstrumentModule = 5
-  integer, private, parameter :: NoType = 6
-  integer, private, parameter :: UnitlessMessage = 7
+  integer, private, parameter :: LengthUnitMessage = 1
+  integer, private, parameter :: NoFraction = LengthUnitMessage + 1
+  integer, private, parameter :: NoHeight = NoFraction + 1
+  integer, private, parameter :: NoInstrumentModule = NoHeight + 1
+  integer, private, parameter :: NoType = NoInstrumentModule + 1
+  integer, private, parameter :: UnitlessMessage = NoType + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -151,8 +150,7 @@ contains ! =====     Public Procedures     =============================
       son = subtree(keyNo,root)
       field = subtree(1,son)
       field_index = decoration(field)
-      if ( got_field(field_index) ) &
-        & call announce_error ( field, duplicateField )
+      ! The tree checker prevents duplicate fields
       got_field(field_index) = .true.
       select case ( field_index )
       case ( f_type )
@@ -423,10 +421,6 @@ contains ! =====     Public Procedures     =============================
     call print_source ( source_ref(where) )
     call output ( ': ' )
     select case ( code )
-    case ( duplicateField )
-      call output ( "The " )
-      call dump_tree_node ( where, 0 )
-      call output ( " field appears more than once.", advance='yes' )
     case ( lengthUnitMessage )
       call output ( "Value for the " )
       call dump_tree_node ( where, 0 )
@@ -455,6 +449,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.2  2001/02/08 01:50:11  vsnyder
+! Move duplicate field checking to tree_checker, set by init_tables
+!
 ! Revision 2.1  2000/12/04 23:34:38  vsnyder
 ! Move more of addItemToDatabase into the include.
 !
