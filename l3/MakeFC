@@ -128,6 +128,10 @@ ifndef WE_CAN
   CASCADE := yes
 endif
 endif
+
+ifdef WE_CAN
+NOHUNTING := yes
+endif
 #These modules require custom builds, so omit build commands from dependencies
 CUSTOM_BUILDS=L2Interface.f90 L3DMData.f90
 CUSTOM_PREFXD := $(shell ${REECHO} -prefix=-db $(CUSTOM_BUILDS))
@@ -265,6 +269,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.37  2002/07/15 16:52:59  pwagner
+# Exits make with status 2 if error in any level
+#
 # Revision 1.36  2002/07/02 00:14:01  pwagner
 # Skips marking uptodate after an error
 #
