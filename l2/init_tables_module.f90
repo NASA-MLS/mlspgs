@@ -248,8 +248,10 @@ module INIT_TABLES_MODULE
   integer, parameter :: P_HOME_GEOD_ANGLE             = p_critical_scanning_modules + 1
   integer, parameter :: P_HOME_MODULE                 = p_home_geod_angle + 1
   integer, parameter :: P_IDEAL_LENGTH                = p_home_module + 1
-  integer, parameter :: P_MAX_GAP                     = p_ideal_length + 1
-  integer, parameter :: P_OVERLAP                     = p_max_gap + 1
+  integer, parameter :: P_IGNOREL1B                   = p_ideal_length + 1
+  integer, parameter :: P_MAX_GAP                     = p_ignorel1b + 1
+  integer, parameter :: P_NOCHUNKS                    = p_max_gap + 1
+  integer, parameter :: P_OVERLAP                     = p_noChunks + 1
   integer, parameter :: P_SCAN_LOWER_LIMIT            = p_overlap + 1
   integer, parameter :: P_SCAN_UPPER_LIMIT            = p_scan_lower_limit + 1
   integer, parameter :: LAST_PARM = p_scan_upper_limit
@@ -452,6 +454,7 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_allow_climatology_overloads) = &
                                            add_ident ( 'AllowClimatologyOverloads' )
     parm_indices(p_input_version_string) = add_ident ( 'InputVersionString' )
+    parm_indices(p_ignoreL1B) =            add_ident ( 'IgnoreL1B' )
     parm_indices(p_output_version_string) =add_ident ( 'OutputVersionString' )
     parm_indices(p_version_comment) =      add_ident ( 'VersionComment' )
     parm_indices(p_critical_bands) =       add_ident ( 'CriticalBands' )
@@ -461,6 +464,7 @@ contains ! =====     Public procedures     =============================
     parm_indices(p_home_module) =          add_ident ( 'HomeModule' )
     parm_indices(p_ideal_length) =         add_ident ( 'IdealLength' )
     parm_indices(p_max_gap) =              add_ident ( 'MaxGap' )
+    parm_indices(p_noChunks) =             add_ident ( 'noChunks' )
     parm_indices(p_overlap) =              add_ident ( 'Overlap' )
     parm_indices(p_scan_lower_limit) =     add_ident ( 'ScanLowerLimit' )
     parm_indices(p_scan_upper_limit) =     add_ident ( 'ScanUpperLimit' )
@@ -804,11 +808,13 @@ contains ! =====     Public procedures     =============================
              begin, p+p_home_module, t+t_module, n+n_name_def, &
              begin, p+p_ideal_length, t+t_numeric, n+n_name_def, &
              begin, p+p_max_gap, t+t_numeric, n+n_name_def, &
+             begin, p+p_noChunks, t+t_numeric, n+n_name_def, &
+             begin, p+p_ignoreL1B, t+t_boolean, n+n_name_def, &
              begin, p+p_overlap, t+t_numeric, n+n_name_def, &
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              n+n_section, &
-      begin, z+z_construct, s+s_time, s+s_hgrid, s+s_quantity, &
+      begin, z+z_construct, s+s_time, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_vectortemplate, s+s_snoop, n+n_section, &
       begin, z+z_fill, s+s_time, s+s_vector, s+s_create, &
                        s+s_fill, s+s_matrix, s+s_snoop, &
@@ -828,6 +834,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.79  2001/04/23 23:24:10  livesey
+! Added forge instruction
+!
 ! Revision 2.78  2001/04/23 23:04:38  vsnyder
 ! Move 's_time' to 'intrinsic'
 !
