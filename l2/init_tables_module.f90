@@ -511,7 +511,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_molecule, t+t_molecule, n+n_field_type, &
              begin, f+f_nameFragment, t+t_string, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_cost, t+t_numeric, nr+n_field_type, &
+             begin, f+f_cost, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_empiricalGeometry, &
@@ -1105,6 +1105,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.340  2003/11/01 18:45:00  livesey
+! Made f_cost an optional argument to binSelector
+!
 ! Revision 2.339  2003/10/22 21:17:05  pwagner
 ! aPhaseName: Phase added to Fill, Construct sections to time phases
 !
