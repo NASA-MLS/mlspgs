@@ -57,9 +57,7 @@ module HGrid                    ! Horizontal grid information
   integer, private, parameter :: LengthUnitMessage = 1
   integer, private, parameter :: NoFraction = LengthUnitMessage + 1
   integer, private, parameter :: NoHeight = NoFraction + 1
-  integer, private, parameter :: NoInstrumentModule = NoHeight + 1
-  integer, private, parameter :: NoType = NoInstrumentModule + 1
-  integer, private, parameter :: UnitlessMessage = NoType + 1
+  integer, private, parameter :: UnitlessMessage = NoHeight + 1
 
 contains ! =====     Public Procedures     =============================
 
@@ -177,11 +175,8 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    ! Now check the sanity of what we have
-
-    if ( .not. got_field(f_type) ) call announce_error ( root, noType )
-    if ( .not. got_field(f_module) ) &
-      & call announce_error ( root, noInstrumentModule )
+    ! The tree checker verifies that required fields "type" and "module"
+    ! are present.
 
     ! This is where we will start reading the l1bdata to get the name to read
 
@@ -430,11 +425,6 @@ contains ! =====     Public Procedures     =============================
         & advance='yes' )
     case ( noHeight )
       call output ( "TYPE = HEIGHT but no height is specified", advance='yes' )
-    case ( noInstrumentModule )
-      call output ( "No instrument module specified for the hGrid", &
-        & advance='yes' )
-    case ( noType )
-      call output ( "No type specified for the hGrid", advance='yes' )
     case ( unitlessMessage )
       call output ( "Value for the " )
       call dump_tree_node ( where, 0 )
@@ -448,6 +438,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.4  2001/02/09 19:30:16  vsnyder
+! Move checking for required and duplicate fields to init_tables_module
+!
 ! Revision 2.3  2001/02/09 00:38:22  livesey
 ! Various updates
 !

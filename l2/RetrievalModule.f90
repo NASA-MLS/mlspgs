@@ -25,6 +25,7 @@ module RetrievalModule
     & field_last, l_apriori, l_covariance, l_newtonian, l_none, l_norm, &
     & l_true, s_forwardModel, s_matrix, s_subset, s_retrieve, &
     & spec_indices
+  use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrixDatabase, CholeskyFactor, ClearMatrix, &
     & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, DestroyMatrix, &
     & FillExtraCol, FillExtraRow, FormNormalEquations => NormalEquations, &
@@ -160,7 +161,6 @@ contains
     integer, parameter :: NotExtra = noFields + 1 ! No "extra" row and/or column
     integer, parameter :: NotRange = notExtra + 1 ! A field is a range
     integer, parameter :: NotSPD = notRange + 1   ! Not symmetric pos. definite
-    integer, parameter :: Twice = notSPD + 1      ! A field appears twice
 
     error = 0
     nullify ( apriori, covariance, fwdModelIn, fwdModelOut )
@@ -196,8 +196,7 @@ contains
         if ( toggle(gen) ) call trace_begin ( "Retrieve.subset", root )
         do j = 2, nsons(key) ! fields of the "subset" specification
           son = subtree(j, key)
-          field = decoration(subtree(1,son))
-          if ( got(field) ) call announceError ( twice, field )
+          field = decoration(subtree(1,son)) ! tree_checker prevents duplicates
           got(field) = .true.
           select case ( field )
           case ( f_channels )
@@ -214,12 +213,6 @@ contains
         end do ! j = 2, nsons(key)
         if ( error == 0 ) then
           ! Compute the mask for the vector
-          son = key ! in case it's needed for error messages -- see announceError
-          if ( .not. got(f_criteria) ) call announceError ( noField, f_criteria )
-          if ( .not. got(f_quantity) ) call announceError ( noField, f_quantity )
-          if ( .not. got(f_test) ) call announceError ( noField, f_test )
-        end if
-        if ( error == 0 ) then
           vectorIndex = decoration(decoration(subtree(1,quantity)))
           quantityIndex = getVectorQuantityIndexByName &
             & ( vectorDatabase(vectorIndex), sub_rosa(subtree(2,quantity)) )
@@ -247,8 +240,7 @@ contains
         toleranceR = defaultToleranceR
         do j = 2, nsons(key) ! fields of the "retrieve" specification
           son = subtree(j, key)
-          field = decoration(subtree(1,son))
-          if ( got(field) ) call announceError ( twice, field )
+          field = decoration(subtree(1,son)) ! tree_checker prevents duplicates
           got(field) = .true.
           select case ( field )
           case ( f_apriori )
@@ -311,11 +303,6 @@ contains
           end select
         end do ! j = 2, nsons(key)
 
-        ! Check that we have all of the necessary fields
-        son = key ! in case it's needed for error messages -- see announceError
-        if ( .not. got(f_fwdModelIn) ) call announceError ( noField, f_fwdModelIn )
-        if ( .not. got(f_measurements) ) call announceError ( noField, f_measurements )
-        if ( .not. got(f_state) ) call announceError ( noField, f_state )
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
           & call announceError ( aprioriAndCovar )
         if ( error == 0 ) then
@@ -607,14 +594,11 @@ contains
     subroutine AnnounceError ( Code, FieldIndex, AnotherFieldIndex )
       integer, intent(in) :: Code       ! Index of error message
       integer, intent(in), optional :: FieldIndex, AnotherFieldIndex ! f_...
-      integer :: Source
 
       error = max(error,1)
-      source = source_ref ( son )
-      call output ( 'At line '  )
-      call output ( mod(source,256) )
-      call output ( ', column ' )
-      call output ( source/256 )
+      call output ( '***** At ' )
+      call print_source ( source_ref(son) )
+      call output ( ' RetrievalModule complained: ' )
       select case ( code )
       case ( aprioriAndCovar )
         call output ( 'One of ' )
@@ -623,11 +607,11 @@ contains
         call display_string ( field_indices(f_covariance) )
         call output ( ' is supplied, but the other is not.', advance='yes' )
       case ( noFields )
-        call output ( ': No fields are allowed for a ' )
+        call output ( 'No fields are allowed for a ' )
         call display_string ( spec_indices(fieldIndex) )
         call output ( ' specification.', advance='yes' )
-      case ( inconsistent, noField, notExtra, notRange, notSPD, twice )
-        call output ( ': the field ' )
+      case ( inconsistent, noField, notExtra, notRange, notSPD )
+        call output ( 'the field ' )
         call display_string ( field_indices(fieldIndex) )
         select case ( code )
         case ( inconsistent )
@@ -644,8 +628,6 @@ contains
         case ( notSPD )
           call output ( ' is not a symmetric positive-definite matrix.', &
             & advance='yes' )
-        case ( twice )
-          call output ( ' shall not appear twice.', advance='yes' )
         end select
       end select
     end subroutine AnnounceError
@@ -654,6 +636,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.4  2001/02/09 19:30:16  vsnyder
+! Move checking for required and duplicate fields to init_tables_module
+!
 ! Revision 2.3  2001/02/08 00:56:55  vsnyder
 ! Periodic commit.  Still needs work.
 !
