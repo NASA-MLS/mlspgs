@@ -76,7 +76,7 @@ contains
     !{ Empirical formula: $H_s = R_s + 38.9014\, \sin 2(\phi_t-51^{\circ}.6814 )$
 
     hs = sc_geoc_alt + ampl * sin(2.0*(phi_tan-phas))
-    x = Np1 * ht / hs
+    x = min ( Np1 * ht / hs, 1.0_rp )
 
     !{ $\sin \chi^{\text{refr}}_{\text{eq}} = N_t \frac{H_t}{H_s}
     !    \frac{ \text{min} ( H_t, H^{\oplus} ) }{H^{\oplus}}$
@@ -112,7 +112,11 @@ contains
     end if
 
     ptg_angle = ASIN(sinChi) - elev_offset
-    dx_dh = q / (hs * sqrt(1.0_rp - sinChi**2))
+    if ( sinChi < 1.0_rp ) then
+      dx_dh = q / (hs * sqrt(1.0_rp - sinChi**2))
+    else
+      dx_dh = 0.0_rp
+    end if
 
   ! Do temperature stuff if user requests it
   ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
@@ -134,6 +138,9 @@ contains
 
 end module Get_Chi_Angles_m
 ! $Log$
+! Revision 2.14  2003/05/14 22:23:10  bill
+! corrected sign convention for elev offset angle
+!
 ! Revision 2.13  2002/10/08 17:08:04  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
