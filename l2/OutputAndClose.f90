@@ -65,24 +65,25 @@ contains ! =====     Public Procedures     =============================
       & MAXSWATHNAMESBUFSIZE, cpL2GPData, WriteL2GPData
     use L2PC_m, only: WRITEONEL2PC, OUTPUTHDF5L2PC
     use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
-    use MLSCommon, only: I4, findFirst, findNext
-    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
+    use MLSCommon, only: I4
     use MLSFiles, only: HDFVERSION_5, &
       & GetPCFromRef, mls_exists, &
       & MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, MLS_SFSTART, MLS_SFEND, &
       & SPLIT_PATH_NAME, unSplitName
     use MLSL2Options, only: CATENATESPLITS, CHECKPATHS, &
       & DEFAULT_HDFVERSION_WRITE, PENALTY_FOR_NO_METADATA, TOOLKIT
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
       & Mlspcf_mcf_l2gp_start, Mlspcf_mcf_l2dgm_start, &
       & Mlspcf_mcf_l2dgg_start
+    use MLSSets, only: FindFirst, FindNext
     use MLSStrings, only: Array2List
     use MoreTree, only: Get_Spec_ID, GET_BOOLEAN
     use SDPToolkit, only: PGS_S_SUCCESS, PGSD_IO_GEN_WSEQFRM, Pgs_smf_getMsg
     use Time_M, only: Time_Now
-    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TOGGLES, only: GEN, TOGGLE, Switches
+    use TRACE_M, only: TRACE_BEGIN, TRACE_END
     use TREE, only: DECORATION, NODE_ID, NSONS, SUBTREE, SUB_ROSA
     use TREE_TYPES, only: N_NAMED
     use WriteMetadata, only: L2PCF, WriteMetaLog
@@ -599,8 +600,8 @@ contains ! =====     Public Procedures     =============================
     if ( CATENATESPLITS .and. associated(DirectDatabase) ) then
     !! if ( .true. .and. associated(DirectDatabase) ) then
       ! Any dgg eligible for being catenated
-      DB_index = findFirst( DirectDatabase%autoType == l_l2dgg )
-      if ( findNext(DirectDatabase%autoType == l_l2dgg, DB_index) > 0 ) then
+      DB_index = findFirst( DirectDatabase%autoType, l_l2dgg )
+      if ( findNext(DirectDatabase%autoType, l_l2dgg, DB_index) > 0 ) then
         if ( TOOLKIT ) then
           l2gp_Version = 1
           l2gpFileHandle = GetPCFromRef('DGG', mlspcf_l2dgg_start, &
@@ -642,8 +643,8 @@ contains ! =====     Public Procedures     =============================
         end if
       end if
       ! Next we would do the same for any split dgm direct write files
-      DB_index = findFirst( DirectDatabase%autoType == l_l2aux )
-      if ( findNext(DirectDatabase%autoType == l_l2aux, DB_index) > 0 ) then
+      DB_index = findFirst( DirectDatabase%autoType, l_l2aux )
+      if ( findNext(DirectDatabase%autoType, l_l2aux, DB_index) > 0 ) then
         if ( TOOLKIT ) then
           l2gp_Version = 1
           l2gpFileHandle = GetPCFromRef('DGM', mlspcf_l2dgm_start, &
@@ -969,6 +970,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.98  2004/06/10 00:58:45  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.97  2004/05/19 20:22:09  vsnyder
 ! Remove USEs for unreferenced symbols, polish some cannonballs
 !
