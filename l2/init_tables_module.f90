@@ -127,7 +127,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L1BOA              = s_l1brad + 1
   integer, parameter :: S_L2AUX              = s_l1boa + 1
   integer, parameter :: S_L2GP               = s_l2aux + 1
-  integer, parameter :: S_MATRIX             = s_l2gp + 1
+  integer, parameter :: S_L2PARSF            = s_l2gp + 1
+  integer, parameter :: S_MATRIX             = s_l2parsf + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
   integer, parameter :: S_NEGATIVEPRECISION  = s_merge + 1
   integer, parameter :: S_OUTPUT             = s_negativePrecision + 1
@@ -303,6 +304,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l1boa) =                add_ident ( 'l1boa' )
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
     spec_indices(s_l2gp) =                 add_ident ( 'l2gp' )
+    spec_indices(s_l2parsf) =              add_ident ( 'l2parsf' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
     spec_indices(s_negativePrecision ) =   add_ident ( 'negativePrecision' )
@@ -869,6 +871,8 @@ contains ! =====     Public procedures     =============================
       begin, s+s_l1brad, &
              begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def, &
       begin, s+s_l1boa, &
+             begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def, &
+      begin, s+s_l2parsf, &
              begin, f+f_file, t+t_string, n+n_field_type, np+n_spec_def &
              /) )
     call make_tree ( (/ &
@@ -974,7 +978,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_cycle, t+t_string, n+n_name_def, &
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, &
-             s+s_l1boa, &
+             s+s_l1boa, s+s_l2parsf, &
              s+s_empiricalGeometry, s+s_forwardModel, s+s_forwardModelGlobal, &
              s+s_time, s+s_vgrid, s+s_binSelector, &
              s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
@@ -1022,6 +1026,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.310  2003/05/12 20:57:21  pwagner
+! Added L2ParSF spec to allow changing staging file name in global settings
+!
 ! Revision 2.309  2003/05/10 01:05:51  livesey
 ! Added binTotal as allowed vector quantity
 !
