@@ -79,15 +79,17 @@ contains
     character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
-    type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
+    type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), intent(IN) :: description ! e.g., 'dao'
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
 
     ! Local Variables
     character ( len=NameLen) :: my_description   ! In case mixed case
+    logical, parameter :: DEEBUG = .true.
     ! Executable code
     my_description = lowercase(description)
+    if ( DEEBUG ) print *, 'Reading ' // trim(my_description) // ' data'
 
 ! >     descrpt_is_legal = (my_description(:len(lit_dao)) == lit_dao) &
 ! >       & .or. &
@@ -115,9 +117,21 @@ contains
     case ('dao')
       call Read_dao(FileName, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
+      if ( DEEBUG ) then
+        print *, '(Returned from read_dao)'
+        print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
+        print *, 'Description   ' // trim(the_g_data%description)
+        print *, 'Units         ' // trim(the_g_data%units)
+      endif
     case ('ncep')
       call Read_ncep(FileName, lcf_where, v_type, &
         & the_g_data, GeoDimList, fieldName)
+      if ( DEEBUG ) then
+        print *, '(Returned from read_ncep)'
+        print *, 'Quantity Name ' // trim(the_g_data%QuantityName)
+        print *, 'Description   ' // trim(the_g_data%description)
+        print *, 'Units         ' // trim(the_g_data%units)
+      endif
     case ('olddao', 'oldncep')
       call Read_old(FileName, lcf_where, my_description(4:), v_type, &
         & the_g_data, GeoDimList, fieldName)
@@ -158,7 +172,7 @@ contains
     character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
-    type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
+    type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
 
@@ -294,11 +308,17 @@ contains
     the_g_data%noHeights = nlev
     the_g_data%noLsts = ntime
     the_g_data%units = 'K'
+    print *, 'our quantity name ', the_g_data%quantityName
+    print *, 'our description ', the_g_data%description
+    print *, 'our units ', the_g_data%units
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     ! Setup the grid
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
       & noLons=nlon, noLsts=ntime, noSzas=1, noDates=1 )
+    print *, '(Again) our quantity name ', the_g_data%quantityName
+    print *, 'our description ', the_g_data%description
+    print *, 'our units ', the_g_data%units
     allocate(all_the_fields(dims(1), dims(2), dims(3), dims(4)), stat=status)
     all_the_fields = UNDEFINED_VALUE
     if ( status /= 0 ) &
@@ -428,7 +448,7 @@ contains
     character (LEN=*), intent(IN) :: FileName ! Name of the file of the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate
-    type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
+    type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), optional, intent(IN) :: GeoDimList ! E.g., 'X.Y,..'
     character (LEN=*), optional, intent(IN) :: gridName ! Name of grid
 
@@ -626,6 +646,9 @@ contains
     enddo
     the_g_data%noLsts = 0
     the_g_data%units = 'K'
+    print *, 'our quantity name ', the_g_data%quantityName
+    print *, 'our description ', the_g_data%description
+    print *, 'our units ', the_g_data%units
 
     call nullifyGriddedData ( the_g_data ) ! for Sun's still useless compiler
     ! Setup the grid
@@ -635,6 +658,9 @@ contains
     if(DEEBUG) print *, 'NoLats   : ', nLat
     call SetupNewGriddedData ( the_g_data, noHeights=nlev, noLats=nlat, &
       & noLons=nlon, noLsts=1, noSzas=1, noDates=1 )
+    print *, '(Again) our quantity name ', the_g_data%quantityName
+    print *, 'our description ', the_g_data%description
+    print *, 'our units ', the_g_data%units
     ! The dimlist as stacked up is this             Height,XDim,YDim                                                                                                              
     ! Need to reshape it so that the order becomes: Height,YDim,XDim
     if(DEEBUG) then
@@ -742,7 +768,7 @@ contains
     character (LEN=*), intent(IN) :: FileName ! Name of the file containing the grid(s)
     integer, intent(IN) :: lcf_where    ! node of the lcf that provoked me
     integer, intent(IN) :: v_type       ! vertical coordinate; an 'enumerated' type
-    type( GriddedData_T ), intent(OUT) :: the_g_data ! Result
+    type( GriddedData_T ) :: the_g_data ! Result
     character (LEN=*), intent(IN) :: description ! e.g., 'dao'
     character (LEN=*), optional, intent(IN) :: GeoDimList ! Comma-delimited dim names
     character (LEN=*), optional, intent(IN) :: fieldName ! Name of gridded field
@@ -1527,6 +1553,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.25  2003/02/27 18:38:49  pwagner
+! Removed some intent(out); Lahey takes perverse delight in resetting such to undefined
+!
 ! Revision 2.24  2003/02/21 21:01:06  pwagner
 ! Actually uses GeoDimList; filters Fill values
 !
