@@ -4,10 +4,11 @@
 # list.  It is used by the test harness and in other applications of the
 # library, but is not part of the library.
 
-OBJLIB = declaration_table.o  error_handler.o expr_m.o        hash.o \
-         io_stuff.o           lexer_core.o    lexer_m.o       machine.o \
-         output_m.o           parser.o        string_table.o  symbol_table.o \
-         symbol_types.o       toggles_core.o  trace_m.o       tree.o \
+OBJLIB = declaration_table.o  error_handler.o expr_m.o        getL2CF_m.o \
+         hash.o               io_stuff.o      lexer_core.o    lexer_m.o \
+         machine.o            MLSCF.o         output_m.o      parser.o \
+         string_table.o       symbol_table.o  symbol_types.o  table_dumper.o \
+         table_generator.o    toggles_core.o  trace_m.o       tree.o \
          tree_checker.o       tree_types.o    units.o
 
 all: test
@@ -22,6 +23,12 @@ error_handler.o: $S/error_handler.f90 machine.o output_m.o
 expr_m.o: $S/expr_m.f90 declaration_table.o init_tables_module.o \
           string_table.o toggles_core.o trace_m.o tree.o tree_types.o
 	$(FC) -c $(FOPTS) $I$S $S/expr_m.f90
+
+getL2CF_m.o: $S/getL2CF_m.f90 declaration_table.o init_tables_module.o \
+             lexer_core.o MLSCF.o output_m.o parser.o string_table.o \
+             table_dumper.o table_generator.o toggles_core.o tree_checker.o \
+             tree.o units.o
+	$(FC) -c $(FOPTS) $I$S $S/getL2CF_m.f90
 
 hash.o: $S/hash.f90
 	$(FC) -c $(FOPTS) $I$S $S/hash.f90
@@ -68,6 +75,15 @@ tree_checker.o: $S/tree_checker.f90 declaration_table.o init_tables_module.o \
                 trace_m.o tree.o tree_types.o
 	$(FC) -c $(FOPTS) $I$S $S/tree_checker.f90
 
+table_dumper.o: $S/table_dumper.f90 declaration_table.o init_tables_module.o \
+                MLSCF.o output_m.o string_table.o
+	$(FC) -c $(FOPTS) $I$S $S/table_dumper.f90
+
+table_generator.o: $S/table_generator.f90 declaration_table.o expr_m.o \
+                   init_tables_module.o lexer_core.o MLSCF.o output_m.o \
+                   string_table.o toggles_core.o trace_m.o tree.o tree_types.o
+	$(FC) -c $(FOPTS) $I$S $S/table_generator.f90
+
 toggles_core.o: $S/toggles_core.f90
 	$(FC) -c $(FOPTS) $I$S $S/toggles_core.f90
 
@@ -87,7 +103,7 @@ libCF.a: $(OBJLIB)
 	ar ru libCF.a $(OBJLIB)
 
 clean:
-	rm -f *.o *.a *.mod *.g90 $S/*.g90 test out.test
+	rm -f *.o *.a *.mod *.g90 $S/*.g90 test out.* Log[RSU]*
 
 tar:
 	rm -f parser.tgz
@@ -97,22 +113,9 @@ tar:
 
 # =====     For test harness     =========================================
 
-OBJS = init_tables_module.o MLSCF.o table_dumper.o \
-       table_generator.o test.o
+OBJS = init_tables_module.o test.o
 
-table_dumper.o: $S/table_dumper.f90 declaration_table.o init_tables_module.o \
-                MLSCF.o output_m.o string_table.o
-	$(FC) -c $(FOPTS) $I$S $S/table_dumper.f90
-
-table_generator.o: $S/table_generator.f90 declaration_table.o expr_m.o \
-                   init_tables_module.o lexer_core.o MLSCF.o output_m.o \
-                   string_table.o toggles_core.o trace_m.o tree.o tree_types.o
-	$(FC) -c $(FOPTS) $I$S $S/table_generator.f90
-
-test.o: $S/test.f90 declaration_table.o init_tables_module.o lexer_core.o \
-        machine.o MLSCF.o parser.o string_table.o tree_checker.o \
-        table_generator.o toggles_core.o tree.o units.o \
-        table_dumper.o
+test.o: $S/test.f90 getL2CF_m.o machine.o MLSCF.o toggles_core.o
 	$(FC) -c $(FOPTS) $I$S $S/test.f90
 
 test: $(OBJS) libCF.a
@@ -122,6 +125,9 @@ out.test: test $S/in.test
 	./test -a <$S/in.test >out.test
 
 # $Log$
+# Revision 2.0  2000/09/05 17:41:49  dcuddy
+# Change revision to 2.0
+#
 # Revision 1.4  2000/07/28 18:30:18  vsnyder
 # Added a comment to make it clear that init_tables_module is not part
 # of the library.
