@@ -73,7 +73,7 @@ program MLSL2
   ! (4) Open the l2cf (if not stdin)
   ! (5) Parse the l2cf
   ! (6) Close the l2cf (if not stdin)
-  ! (7) call walk_tree_to_do_MLS_L2 to do the (mostly) scientific tasks
+  ! (7) Call walk_tree_to_do_MLS_L2 to do the (mostly) scientific tasks
   ! (8) Close down some remaining things and exit with an appropriate status
 
   ! Parallel processing
@@ -89,6 +89,7 @@ program MLSL2
   character(len=255) :: command_line ! All the opts
   logical :: COPYARG               ! Copy this argument to parallel command line
   logical :: COUNTCHUNKS = .false. ! Just count the chunks and quit
+  logical :: CHECKL2CF = .false.   ! Just check the l2cf and quit
   logical :: DO_DUMP = .false.     ! Dump declaration table
   logical :: DUMP_TREE = .false.   ! Dump tree after parsing
   integer :: ERROR                 ! Error flag from check_tree
@@ -158,6 +159,8 @@ program MLSL2
       end if
       if ( line(3+n:8+n) == 'cfpcf ' ) then
         pcf_for_input = switch
+      else if ( line(3+n:7+n) == 'check ' ) then
+        checkl2cf = switch
       else if ( line(3+n:7+n) == 'chunk' ) then
         copyArg=.false.
         if ( line(8+n:) /= ' ' ) then
@@ -396,10 +399,10 @@ program MLSL2
     ! types for fields of commands, correct command order, etc.
     call time_now ( t1 )
     call check_tree ( root, error, first_section )
-   if(error /= 0) then
-      call MLSMessage(MLSMSG_Error, ModuleName, &
-      & 'error in check_tree: probably need to repair l2cf ' )
-   end if
+    if(error /= 0) then
+       call MLSMessage(MLSMSG_Error, ModuleName, &
+       & 'error in check_tree: probably need to repair l2cf ' )
+    end if
     if ( timing ) call sayTime ( 'Type checking the L2CF' )
     if ( do_dump ) call dump_decl
     if ( toggle(syn) ) then
@@ -411,7 +414,7 @@ program MLSL2
     call add_to_section_timing( 'main', t0 )
 
   !---------------- Task (7) ------------------
-    if ( error == 0 .and. first_section /= 0 ) then
+    if ( error == 0 .and. first_section /= 0 .and. .not. checkl2cf ) then
       ! Now do the L2 processing.
       call time_now ( t1 )
       if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
@@ -440,9 +443,9 @@ program MLSL2
      call MLSMessageExit(1)
   elseif(NORMAL_EXIT_STATUS /= 0 .and. .not. parallel%slave) then
      call MLSMessageExit(NORMAL_EXIT_STATUS)
-   else
-     call MLSMessageExit
-   endif
+  else                  
+     call MLSMessageExit 
+  endif                 
 
 contains
   subroutine SayTime ( What )
@@ -559,6 +562,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.69  2002/03/20 00:48:29  pwagner
+! Option -check just checks l2cf then quits
+!
 ! Revision 2.68  2002/02/20 00:29:04  pwagner
 ! Retries FN+.l2cf; tracks successful l2cf file name
 !
