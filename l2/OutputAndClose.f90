@@ -61,7 +61,7 @@ contains ! =====     Public Procedures     =============================
 
   ! -----------------------------------------------  Output_Close  -----
   subroutine Output_Close ( root, l2gpDatabase, l2auxDatabase, l2pcDatabase,&
-    & l2pcf )
+    & l2pcf, canWriteL2PC )
 
     ! Hard-wired assumptions:
 
@@ -80,7 +80,8 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase ! L2GP products
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase ! L2AUX products
     type (L2PC_T), dimension(:), pointer :: l2pcDatabase ! L2PC products
-    type(PCFData_T) :: l2pcf
+    logical, intent(in) :: canWriteL2PC ! Flag
+    type(PCFData_T), intent(in) :: l2pcf
 
     ! - - - Local declarations - - -
 
@@ -365,9 +366,11 @@ contains ! =====     Public Procedures     =============================
         case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
           ! I intend to completely ignore the PCF file in this case,
           ! it's not worth the effort!
+          if ( .not. canWriteL2PC ) call MLSMessage(MLSMSG_Error,ModuleName,&
+            & "Cannot write l2pc files with multi chunk l2cf's")
           recLen = 0
           l2pcUnit = mls_io_gen_openf ( 'open', .true., error,&
-            & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0 )
+            & recLen, PGSd_IO_Gen_WSeqFrm, trim(file_base), 0,0,0, unknown=.true. )
           if ( error /= 0 ) call MLSMessage(MLSMSG_Error,ModuleName,&
             & 'Failed to open l2pc file:'//trim(file_base))
           do field_no = 2, nsons(key) ! Skip "output" name
@@ -464,6 +467,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.27  2001/04/25 21:51:28  livesey
+! Minor changes, add canWriteL2PC flag
+!
 ! Revision 2.26  2001/04/25 20:34:04  livesey
 ! Now writes l2pc files
 !
