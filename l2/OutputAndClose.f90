@@ -633,7 +633,7 @@ contains ! =====     Public Procedures     =============================
           call cpL2GPData(trim(DirectDatabase(DB_index)%fileName), &
             & trim(l2gpPhysicalFilename), create2=(DB_index==1), &
             & hdfVersion1=HDFVERSION_5, hdfVersion2=HDFVERSION_5, &
-            & notUnlimited=avoidUnlimitedDims)
+            & notUnlimited=avoidUnlimitedDims, ReadStatus=.true.)
         enddo
         if ( TOOLKIT .and. madeFile ) then
           call add_metadata ( 0, trim(l2gpPhysicalFilename), 1, &
@@ -770,7 +770,9 @@ contains ! =====     Public Procedures     =============================
   integer, intent(out) :: metadata_error
   
   ! Internal variables
+  integer :: baseIndex
   logical, parameter :: DEBUG = .false.
+  character(len=*), parameter :: L2GPHEAD = 'L2GP-'
   integer :: field_no
   character (len=132) :: FILE_BASE
   integer :: fileHandle
@@ -790,6 +792,10 @@ contains ! =====     Public Procedures     =============================
   select case (filetype)
   case (l_swath, l_l2dgg)
      call split_path_name(fileName, path, file_base)
+     baseIndex = index(trim(file_base), L2GPHEAD)
+     if ( baseIndex > 0 ) then
+       file_base=file_base(baseIndex+len(L2GPHEAD):)
+     endif
      if ( filetype == l_l2dgg ) then
        FileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
          & mlspcf_l2dgg_end, &
@@ -965,6 +971,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.96  2004/04/24 00:22:55  pwagner
+! Forcibly sets ReadStatus when knitting DGG; prunes L2GP- prefix from file_base
+!
 ! Revision 2.95  2004/03/12 00:39:37  pwagner
 ! Interface to cpL2GPData changed to match
 !
