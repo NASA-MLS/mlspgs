@@ -23,7 +23,7 @@ contains
              & phi_tan, Req, elev_offset, ptg_angle, dx_dh, dh_dz, tan_dh_dt, &
              & tan_d2h_dhdt, dx_dt, d2x_dxdt )
 
-    use Geometry, only: Ln10
+    use Units, only: Ln10
     use L2PC_FILE_PARAMETERS, only: DEG2RAD
     use MLSCommon, only: RP
 
@@ -101,6 +101,10 @@ contains
 
 end module GET_CHI_ANGLES_M
 ! $Log$
+! Revision 2.10  2002/09/26 00:48:45  vsnyder
+! Insert copyright notice.  Move USEs from module scope to procedure scope.
+! Cosmetic changes.  Get Ln10 from Geometry module.
+!
 ! Revision 2.9  2002/07/05 07:52:47  zvi
 ! Coor. switch (phi,z) -> (z,phi)
 !
