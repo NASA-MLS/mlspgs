@@ -3,6 +3,11 @@
   !            & MLSMSG_Error
 ! in the including scoping unit or its host.
 
+
+  !---------------------------- RCS Ident Info -------------------------------
+    character(len=130) :: Id = &
+      & "$Id$"
+  !---------------------------------------------------------------------------
     integer :: newSize, status
 
     ! Executable code
@@ -22,8 +27,12 @@
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_DeAllocate // "database" )
     database => tempDatabase
+    database(newSize) = item
 
 ! $Log$
+! Revision 1.1  2000/11/17 20:50:54  pwagner
+! Moved here from lib & l2
+!
 ! Revision 2.1  2000/09/15 21:50:19  livesey
 ! New version of L2GP data, moved some stuff from l2 to lib
 !
