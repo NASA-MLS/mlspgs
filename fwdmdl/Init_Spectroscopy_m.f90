@@ -3,9 +3,8 @@
 
 module Init_Spectroscopy_m
 
-  use Init_MLSSignals_m, only: Field_First, Init_MLSSignals, &
-    & Last_Signal_Field, Last_Signal_Lit, Last_Signal_Spec, Last_Signal_Type, &
-    & Spec_First
+  use Init_MLSSignals_m, only: Init_MLSSignals, &
+    & Last_Signal_Field, Last_Signal_Lit, Last_Signal_Spec, Last_Signal_Type
 
   implicit NONE
 
@@ -185,6 +184,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.11  2004/01/09 08:13:30  livesey
+! Bug fix
+!
 ! Revision 2.10  2004/01/09 07:25:20  livesey
 ! Added the fictitious instrument mls1
 !
