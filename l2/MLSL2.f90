@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 program MLSL2
@@ -76,7 +76,7 @@ program MLSL2
   ! (c) the l2cf 
   ! (d) the pcf (unless the variable 'pcf' is FALSE) 
   ! Tasks
-  ! (1) Accept hard-wired options 
+  ! (1) Accept hard-wired options (see module MLSL2OPtions.f90)
   ! (2) Initialize parser structures
   ! (3) Read command-line options
   ! (4) Open the l2cf (if not stdin)
@@ -106,10 +106,10 @@ program MLSL2
   logical :: garbage_collection_by_dt = .false. ! Collect garbage after each deallocate_test?
   integer :: I                     ! counter for command line arguments
   integer :: J                     ! index within option
-  character(len=2048) :: LINE           ! Into which is read the command args
+  character(len=2048) :: LINE      ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
   integer :: NUMFILES
-  integer :: RECL = 10000          ! Record length for l2cf
+  integer :: RECL = 20000          ! Record length for l2cf (but see --recl opt)
   integer :: RECORD_LENGTH
   integer :: ROOT                  ! of the abstract syntax tree
   integer :: SINGLECHUNK = 0       ! Just run one chunk
@@ -119,8 +119,8 @@ program MLSL2
   real :: T0, T1, T2               ! For timing
   logical :: Timing = .false.      ! -T option is set
   character(len=FILENAMELEN) :: L2CF_file       ! Some text
-  character(len=2048) :: WORD       ! Some text
-  character(len=1) :: arg_rhs       ! 'n' part of 'arg=n'
+  character(len=2048) :: WORD      ! Some text
+  character(len=1) :: arg_rhs      ! 'n' part of 'arg=n'
   character(len=*), parameter :: L2CFNAMEEXTENSION = ".l2cf"
 
   !------------------------------- RCS Ident Info ------------------------------
@@ -193,6 +193,7 @@ program MLSL2
         else
           i = i + 1
           call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
         end if
         read ( line, *, iostat=status ) singleChunk
         if ( status /= 0 ) then
@@ -246,6 +247,7 @@ program MLSL2
         parallel%master = .true.
         i = i + 1
         call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
         parallel%slaveFilename = trim ( line )
         call InitParallel ( 0, 0 )
         word = '--slave'
@@ -258,6 +260,7 @@ program MLSL2
       else if ( line(3+n:7+n) == 'recl ' ) then
         i = i + 1
         call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
         read ( line, *, iostat=status ) recl
         if ( status /= 0 ) then
           call io_error ( "After --recl option", status, line )
@@ -271,6 +274,7 @@ program MLSL2
         else
           i = i + 1
           call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
         end if
         read ( line, *, iostat=status ) parallel%masterTid
         if ( status /= 0 ) then
@@ -284,6 +288,7 @@ program MLSL2
         else
           i = i + 1
           call getarg ( i, line )
+          command_line = trim(command_line) // ' ' // trim(line)
         end if
         read ( line, *, iostat=status ) slaveMAF
         if ( status /= 0 ) then
@@ -296,11 +301,13 @@ program MLSL2
         call AccumulateSlaveArguments ( line )
         i = i + 1
         call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
         snoopName = line
       else if ( line(3+n:11+n) == 'subblock ' ) then
         call AccumulateSlaveArguments ( line )
         i = i + 1
         call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
         read ( line, *, iostat=status ) subBlockLength
         if ( status /= 0 ) then
           call io_error ( "After --subblock option", status, line )
@@ -310,6 +317,7 @@ program MLSL2
         copyArg = .false.
         i = i + 1
         call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
         parallel%submit = trim ( line )
       else if ( line(3+n:5+n) == 'tk ' ) then
         toolkit = switch
@@ -323,6 +331,7 @@ program MLSL2
       else if ( line(3:) == ' ' ) then  ! "--" means "no more options"
         i = i + 1
         call getarg ( i, line )
+        command_line = trim(command_line) // ' ' // trim(line)
         call AccumulateSlaveArguments(line)
         exit
       else
@@ -710,6 +719,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.92  2003/02/08 00:30:57  pwagner
+! Increased default RECL due to new l2cfs in lib
+!
 ! Revision 2.91  2002/12/19 11:54:45  livesey
 ! Upped tree size
 !
