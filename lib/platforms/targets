@@ -8,7 +8,7 @@ endif
 
 include ../Makefile.dep
 
-machines_f90 := $(shell cd ../machines/$(MLSCONFG); echo *.f90)
+machines_f90 := $(shell cd $(MACH_DIR); echo *.f90)
 MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
 # "$Id$"
 # ========================================================================
@@ -177,6 +177,9 @@ ncep_dao.o:
 	$(FC) -c $(NOUNASS) $(INC_PATHS) $(S)/ncep_dao.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.42  2002/01/31 00:33:13  pwagner
+# Prefixes preset paths just like forwaard model
+#
 # Revision 1.41  2002/01/23 21:55:13  livesey
 # Add stuff so lf95 doesn't do unassigned checking on ncep_dao.f90
 #
