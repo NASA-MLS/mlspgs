@@ -782,6 +782,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          & sin((phi_fine - radiance%template%phi(mif,maf))*Deg2Rad)
         ds_fine(1:nfine*noInstances-1) = s_fine(2:nfine*noInstances) - &
          & s_fine(1:nfine*noInstances-1)
+        ds_fine(nfine*noInstances) = 0._r8
 
          call InterpolateValues ( &
             & sLevl, &            ! Old X
@@ -911,6 +912,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.73  2001/11/05 20:25:14  dwu
+! *** empty log message ***
+!
 ! Revision 1.72  2001/11/02 01:14:17  dwu
 ! correction in high cloud Jacobian
 !
