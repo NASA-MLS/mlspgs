@@ -37,7 +37,6 @@
 !define(fovdirL2cf,{!calpath/MLS-Aura_L2Cal-FOV-Directions_v1-2-0_0000d000.l2cf})
 !define(systempL2cf,{!calpath/MLS-Aura_L2Cal-Tsys_v1-0-0_0000d000.l2cf})
 !define(nbwL2cf,{!calpath/MLS-Aura_L2Cal-NBW_v1-0-0_0000d000.l2cf})
-!define(lossesL2cf,{!calpath/MLS-Aura_L2Cal-Antenna-Losses_v1-2-0_0000d000.l2cf})
 ; The next lot are arguments to fowardModelGlobal, so quoted.
 !define(antennaFile,{'!calpath/MLS-Aura_L2Cal-AAAP_v1-2-0_0000d000.txt'})
 !ifdef(climatologyFile,{},!dnl
