@@ -386,6 +386,7 @@ contains ! =================================== Public Procedures==============
 
       ! Work out their positions
       ! Boundaries are the angles/times at the end of the chunks
+      nullify ( boundaries )
       call Allocate_test ( boundaries, noChunks, 'boundaries', ModuleName )
       do chunk = 1, noChunks
         boundaries(chunk) = homeV + ( chunk - noChunksBelowHome ) * config%maxLength
@@ -405,6 +406,7 @@ contains ! =================================== Public Procedures==============
 
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! Think about overlaps
+    nullify ( newFirstMAFs, newLastMAFs )
     call Allocate_test ( newFirstMAFs, noChunks, 'newFirstMAFs', ModuleName )
     call Allocate_test ( newLastMAFs, noChunks, 'newLastMAFs', ModuleName )
     if ( config%overlapFamily == PHYQ_MAFs ) then
@@ -1060,6 +1062,7 @@ contains ! =================================== Public Procedures==============
 
     ! Now look through the L1B data first look for scan problems
     if ( config%criticalModules /= l_none ) then
+      nullify ( valid )
       call Allocate_test ( valid, noMAFs, 'valid', ModuleName )
       if ( config%criticalModules == l_both ) then
         valid = .true.
@@ -1110,6 +1113,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.13  2001/11/16 20:38:42  livesey
+! Nullified some pointers I missed
+!
 ! Revision 2.12  2001/11/15 17:43:46  livesey
 ! Tidied up, more comments etc.
 !
