@@ -40,9 +40,19 @@ libfwdmdl_objs=$(libfwdmdl_sources)/$(MLSCONFG)
 # where the platforms directory is
 PLATFORMS = .
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
--include $(CONFDIR)/.configure
+-include $(CONFDIR)/$(MLSCFILE)
+
+TAR=tar
 
 SHELL = /bin/sh
 
@@ -54,14 +64,17 @@ SHELL = /bin/sh
 #                  also (re)creates uniquely-named sub-sub-directories
 #                  with custom Makefiles where *.o, *.mod, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
-# clean          -- deletes uniquely-named sub-sub-directories
-# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
 # tar            -- creates a directory archive suitable for distribution
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
-libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
+#These seem to no longer work right (maybe some change to our suns?)
+#libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+#libfwdmdl_f90 := $(wildcard $(libfwdmdl_sources)/*.f90)
+libmls_f90 := $(shell echo $(libmls_sources)/*.f90)
+libfwdmdl_f90 := $(shell echo $(libfwdmdl_sources)/*.f90)
 
 # In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
 l2_NEEDS_fwdmdl = true
@@ -84,44 +97,44 @@ PROG=test
 $(PROG): $(PROG_prereqs)
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_f90)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90)
+$(libfwdmdl_objs)/libfwdmdl.a: $(libfwdmdl_f90) $(libmls_objs)/libmls.a \
+               $(CONFDIR)/$(MLSCFILE)
 	$(MAKE) -f $(MakeFName) libfwdmdl.a -C $(libfwdmdl_sources)
 
-.PHONY: configure depends clean tar clean_objs
+.PHONY: configure depends clean tar mostlyclean tarz targ test
 
 tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(CONFDIR)/.configure:
+$(CONFDIR)/$(MLSCFILE):
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
-#	@case "$(PVM_ROOT)" in \
-#		"") \
-#		echo "Preparing mlsl2 without PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in lib Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#		*) \
-#		echo "Preparing mlsl2 with PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in l2 Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=SnoopMLSL2.o" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#	esac 
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
+#SnoopMLSL2 requires PVM
+ifdef PVM_ROOT
 depends:
-	$(MLSBIN)/makemakedep.sh $(depends_where)
+	$(MLSBIN)/makemakedep.sh \
+	$(depends_where) 
+else
+depends:
+	$(MLSBIN)/makemakedep.sh \
+	-d SnoopMLSL2.f90 \
+	$(depends_where) 
+endif
+
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
 
 mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -156,9 +169,12 @@ tarz: tar
 
 targ:
 	rm -f ../$(PROG).tgz
-	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.2  2001/03/14 00:20:58  pwagner
+# Brought up-to-date with non-test versions
+#
 # Revision 1.1  2001/02/01 23:11:12  pwagner
 # First commit
 #

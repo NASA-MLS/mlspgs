@@ -61,10 +61,10 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir)
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $<
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
 
 #These are the locations of the libraries
 #
@@ -89,6 +89,9 @@ INC_PATHS = -I $(PGSINC) -I $(srclib) -I $S -I $(libdir) -I $(itmdir)
 l_specials = 
 
 # $Log$
+# Revision 1.2  2001/02/26 21:14:39  pwagner
+# Commented out FOPTS assignment; now part of .configure setting
+#
 # Revision 1.1  2001/02/01 23:12:32  pwagner
 # First commit
 #

@@ -34,9 +34,19 @@ srclib=../../srclib
 # where the platforms directory is
 PLATFORMS = .
 
+# This is the default name of the configure file
+# It may be overridden for multiple platforms, special options, etc.
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
+
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
--include $(CONFDIR)/.configure
+-include $(CONFDIR)/$(MLSCFILE)
+
+TAR=tar
 
 SHELL = /bin/sh
 
@@ -48,83 +58,91 @@ SHELL = /bin/sh
 #                  also (re)creates uniquely-named sub-sub-directories
 #                  with custom Makefiles where *.o, *.mod, etc. built
 # depends        -- runs makemakedep.sh to calculate dependencies
-# clean          -- deletes uniquely-named sub-sub-directories
-# clean_objs     -- deletes only *.o, *.mod from sub-subs
+# mostlyclean    -- deletes uniquely-named sub-sub-directories
+# clean          -- deletes only *.o, *.mod from sub-subs
 # tar            -- creates a directory archive suitable for distribution
 #
 
 #----------------------------------------------------------
-libmls_f90 := $(wildcard $(libmls_sources)/*.f90)
+#wildcard seems to no longer work right (maybe some change to our suns?)
+libmls_f90 := $(shell echo $(libmls_sources)/*.f90)
 
 PROG=test
 
 #----------------------- Build instructions
 
-$(PROG): $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
-	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
+$(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
+		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG)
 
-$(libmls_objs)/libmls.a: $(libmls_f90)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar clean_objs
+.PHONY: configure depends clean tar mostlyclean tarz targ test
 
-tar: clean
+tar:
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(CONFDIR)/.configure:
+$(CONFDIR)/$(MLSCFILE):
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)"
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)"
 
-$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
+$(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/$(MLSCFILE)
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
-#	@case "$(PVM_ROOT)" in \
-#		"") \
-#		echo "Preparing mlsl2 without PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in lib Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#		*) \
-#		echo "Preparing mlsl2 with PVM support" ; \
-#		rm -f $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "#   PVM_OBJS.inc  (included in l2 Makefile)" > $(PLATFORMS)/PVM_OBJS.inc ; \
-#		echo "PVM_OBJS=SnoopMLSL2.o" >> $(PLATFORMS)/PVM_OBJS.inc ; \
-#		;; \
-#	esac 
+          -c "$(MLSF95)" -p "$(MLSPLAT)" -cf "$(MLSCFILE)" -nc
 
+#The following explicitly excludes synoptic_prog from mlsl3
+#(otherwise makemakedep.sh assumes every .f90 needed)
 depends:
-	$(MLSBIN)/makemakedep.sh $(libmls_sources) $(srclib) 
+	$(MLSBIN)/makemakedep.sh \
+        -d synoptic_prog.f90 \
+        $(libmls_sources) $(srclib)
 
-clean:
+ghostbuster:
+	$(MLSBIN)/ghostbuster.sh $(PLATFORMS)/$(MLSCONFG) ./ $(srclib)
+
+mostlyclean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		echo "Deleting $(MLSCONFG) files" ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
-		rm -f $(PLATFORMS)/$(MLSCONFG)/Makefile ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/* ; \
 	fi ; \
 	if [ -d "$(PLATFORMS)/$(MLSCONFG)" ] ; then  \
 		echo "Deleting $(MLSCONFG) directory" ; \
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
+	rm -f Make.dep.*
 
-clean_objs:
+clean:
 	@echo "Cleaning objects from directory $(MLSCONFG)" ; \
 	if [ "$(MLSCONFG)" != "" ] ; then  \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.[ao] ; \
 		rm -f $(PLATFORMS)/$(MLSCONFG)/*.mod ; \
+		rm -f $(PLATFORMS)/$(MLSCONFG)/$(PROG) ; \
 	fi
+	rm -f Make.dep.*
 
 tar:
+	rm -f ../$(PROG).tar
+	@echo "tar-ing l3"; \
+	$(TAR) hcvf ../$(PROG).tar * --exclude CVS\
+	--exclude Make.dep\* --exclude NAG.\* --exclude LF95.\*
+
+tarz: tar
+	@echo "... then gzipping it"; \
+	cd ..; rm -f $(PROG).tgz; gzip $(PROG).tar; mv $(PROG).tar.gz $(PROG).tgz
+
+targ:
 	rm -f ../$(PROG).tgz
-	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
+	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude test
 
 # $Log$
+# Revision 1.1  2001/02/01 23:11:12  pwagner
+# First commit
+#
 #
 
 

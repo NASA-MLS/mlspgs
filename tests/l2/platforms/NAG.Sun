@@ -78,10 +78,10 @@ endif
 .SUFFIXES:
 .SUFFIXES: .o .dbg.o .f90
 .f90.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER) $(FAFTER)
 
 .f90.dbg.o:
-	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER)
+	$(FC) -c $(FOPTS) $(INC_PATHS) $< -o $*.dbg.o $(FAFTER) $(FAFTER)
 
 #SDP =SDPToolkitSubstitute.o
 #GD=GDapi.o
@@ -106,9 +106,12 @@ endif
 #GCTP =/software/SRC/TOOLKIT-5.2.6v1.00.NAG/hdfeos/lib/linux
 
 #Special load libraries
-l_specials = -lnsl
+l_specials = -lnsl -lsocket
 
 # $Log$
+# Revision 1.4  2001/03/14 00:20:58  pwagner
+# Brought up-to-date with non-test versions
+#
 # Revision 1.3  2001/02/26 21:14:39  pwagner
 # Commented out FOPTS assignment; now part of .configure setting
 #
