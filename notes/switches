@@ -9,6 +9,7 @@ Switches (set by -S option in mlsl2's command line):
   V => VGrids (in globalSettings)
 
   apr[n] => apriori file info [higher the n, more the info]
+  atb =>    Dump ATb vector
   cab =>    Column Abundance-containing l2gp swaths dumped
   chi =>    chi-related diagnostic quantities dumped; chi1 for 1st chunk only
   cho =>    How good was the Cholesky decomposition?
@@ -81,6 +82,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.26  2002/08/28 20:42:52  livesey
+ Added l2pc
+
  Revision 1.25  2002/08/15 22:47:04  livesey
  Added snoop
 
