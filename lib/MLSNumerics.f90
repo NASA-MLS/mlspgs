@@ -8,7 +8,7 @@ module MLSNumerics              ! Some low level numerical stuff
   use MLSCommon, only : r8
   use MLSMessageModule, only: MLSMessage,MLSMSG_Error
   use MLSStrings, only: Capitalize
-  use MatrixModule_0, only: MatrixElement_T,CreateBlock_0,M_Column_Sparse, Sparsify
+  use MatrixModule_0, only: MatrixElement_T,CreateBlock_0,M_Column_Sparse,M_Absent,Sparsify
   use Allocate_Deallocate, only : Allocate_test, Deallocate_test
 
   implicit none
@@ -358,6 +358,33 @@ contains
     if ( computeDNewByDOld .and. spline ) call MLSMessage &
       & ( MLSMSG_Error, ModuleName, "Cannot get dNewBydOld from spline")
 
+    ! Special case where only one input point
+    if ( noOld == 1 ) then
+      ! If extrapolating allowed or clamped, out values same as in
+      if ( extrapolateMethod=="A" .or. extrapolateMethod=="C" ) then
+        do ind = 1, noNew
+          newY(ind,:) =oldY(1,:)
+        end do
+        ! Note these next two aren't totally gracefull with respect to 
+        ! the missingRegions flag.
+        if ( present(dyByDx) ) dyByDx = 0.0
+      else
+        ! Else extrapolation forbidden
+        do ind = 1, noNew
+          if ( newX(ind) == oldX(1) ) then
+            newY(ind,:) = oldY(1,:)
+            if ( present(dyByDx) ) dyByDx = 0.0
+          else
+            newY(ind,:) = badValue
+            if ( present(dyByDx) ) dyByDx = badValue
+          end if
+        end do
+      end if
+      if ( computeDNewByDOld ) call CreateBlock_0 ( dNewByDOld, &
+        & noNew*width, noOld*width, M_Absent )
+      return
+    end if
+
     call Allocate_Test ( lowerInds, noNew, "lowerInds", ModuleName )
     call Allocate_Test ( upperInds, noNew, "upperInds", ModuleName )
     call Allocate_Test ( gap, noNew, "gap", ModuleName )
@@ -638,6 +665,9 @@ end module MLSNumerics
 
 !
 ! $Log$
+! Revision 2.19  2002/05/24 17:00:55  livesey
+! Fixed bug with interpolation with only one oldX value
+!
 ! Revision 2.18  2001/12/01 01:03:07  livesey
 ! Bug fix with derivatives.
 !
