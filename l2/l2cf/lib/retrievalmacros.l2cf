@@ -55,6 +55,15 @@
 {!ifdef(flagUsingPCF,{L2AUX-DGM},!dnl
 {!outpathl2aux/MLS-Aura_L2AUX-Cloud_!l2version_!day.h!hdfVersion})})
 
+;; DGG/DGM DirectWrite command may or may not include file name
+;; depending on whether we set flag to automatically split sources
+!define(DirectWriteDGGCommand, !dnl
+{!ifdef(flagAutoSplitSources,{DirectWrite},!dnl
+{DirectWrite, file='!DGGFileName'})})
+!define(DirectWriteDGMCommand, !dnl
+{!ifdef(flagAutoSplitSources,{DirectWrite},!dnl
+{DirectWrite, file='!DGMFileName'})})
+
 ;; Filename for forward model radiance output
 !define(l2fwmFileName, !dnl
 {!ifdef(flagUsingPCF,{$1},!dnl
@@ -255,11 +264,11 @@ Label, quantity=$1, label=$2!ifelse($#,2,{},{,!shift(!shift($*))})!dnl
 {!define(flushDGGDGMFiles,{!dnl
 ;; First do the DGGs
 !ifdef(flagGotDirectDGGs,{!dnl
-DirectWrite, file='!DGGFileName', hdfVersion=!hdfVersion, $
+!DirectWriteDGGCommand, hdfVersion=!hdfVersion, $
   type=l2dgg, !undivert(!directDGGDivert)})
 ;; Now the DGMs
 !ifdef(flagGotDirectDGMs,{!dnl
-DirectWrite, file='!DGMFileName', hdfVersion=!hdfVersion, $
+!DirectWriteDGMCommand, hdfVersion=!hdfVersion, $
   type=l2aux, !undivert(!directDGMDivert)})
 ;; Now the cloud stuff
 !ifdef(flagGotDirectClouds,{!dnl
@@ -441,6 +450,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 })
 
 ; $Log$
+; Revision 1.81  2004/02/13 21:12:23  livesey
+; Added allHiResProducts
+;
 ; Revision 1.80  2004/02/12 02:06:33  livesey
 ; Various bug fixes and additions
 ;
