@@ -261,6 +261,7 @@ contains
     ! Setup the grid
     call SetupNewGriddedData ( grid, noHeights=noHeights, noLats=noLats, &
       & noLons=noLons, noLsts=1, noSzas=1, noDates=1 )
+    grid%equivalentLatitude = .false.
 
     ! Now fill the coordinates
     grid%verticalCoordinate = v_is_pressure
@@ -782,6 +783,9 @@ contains
 end module ncep_dao
 
 ! $Log$
+! Revision 2.19  2002/02/05 04:13:43  livesey
+! Minor bug fix
+!
 ! Revision 2.18  2002/01/23 22:34:37  livesey
 ! Added ReadGloriaFile functionality
 !
