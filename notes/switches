@@ -27,6 +27,7 @@ Switches (set by -S option in mlsl2's command line):
   l1b =>    l1b quantities dumped (only when filled from)
   l2aux =>  l2aux quantities (all) dumped
   l2gp =>   l2gp swaths (all) dumped
+  l2pc =>   l2pc reading progress dumped
   log =>    Log file messages
   mas =>    Activities of the PVM master task
   msk =>    Mask set up by subset command in Retrieve
@@ -80,6 +81,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.25  2002/08/15 22:47:04  livesey
+ Added snoop
+
  Revision 1.24  2002/08/08 22:04:48  vsnyder
  Add 'reg' to description of -S
 
