@@ -39,19 +39,19 @@ module DUMP_0
 contains
 
   ! --------------------------------------------  DUMP_1D_CHAR  -----
-  subroutine DUMP_1D_CHAR ( ARRAY, NAME, BLASE, CLEAN )
+  subroutine DUMP_1D_CHAR ( ARRAY, NAME, FillValue, CLEAN )
     character(len=*), intent(in) :: ARRAY(:)
     character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: BLASE
+    character(len=*), intent(in), optional :: FillValue
     logical, intent(in), optional :: CLEAN
 
     integer :: J, K
     logical :: MyClean
     integer :: NumZeroRows
-    character(len=len(array)) :: myBlase
+    character(len=len(array)) :: myFillValue
 
-    myBlase = ' '
-    if ( present(Blase) ) myBlase = Blase
+    myFillValue = ' '
+    if ( present(FillValue) ) myFillValue = FillValue
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -81,14 +81,14 @@ contains
       end if
       do j = 1, size(array), 10
         if (.not. myClean) then
-          if ( any(array(j:min(j+9, size(array))) /= myBlase) ) then
+          if ( any(array(j:min(j+9, size(array))) /= myFillValue) ) then
             if ( numZeroRows /= 0 ) then
               call output ( j-1, places=max(4,ilog10(size(array))+1) )
               call output ( afterSub )
               call output ( ' ' )
               call output ( numZeroRows )
               call output ( ' rows of "', advance='no' )
-              call output ( trim(myBlase), advance='no' )
+              call output ( trim(myFillValue), advance='no' )
               call output ( '" not printed.', advance='yes' )
               numZeroRows = 0
             end if
@@ -98,7 +98,7 @@ contains
             numZeroRows = numZeroRows + 1
           end if
         end if
-        if ( myClean .or. any(array(j:min(j+9, size(array))) /= myBlase) ) then
+        if ( myClean .or. any(array(j:min(j+9, size(array))) /= myFillValue) ) then
           do k = j, min(j+9, size(array))
               call output ( array(k) // ' ' )
           end do
@@ -111,7 +111,7 @@ contains
         call output ( ' ' )
         call output ( numZeroRows )
         call output ( ' rows of "', advance='no' )           
-        call output ( trim(myBlase), advance='no' )          
+        call output ( trim(myFillValue), advance='no' )          
         call output ( '" not printed.', advance='yes' )      
         numZeroRows = 0
       end if
@@ -119,19 +119,19 @@ contains
   end subroutine DUMP_1D_CHAR
 
   ! --------------------------------------------  DUMP_2D_CHAR  -----
-  subroutine DUMP_2D_CHAR ( ARRAY, NAME, BLASE, CLEAN )
+  subroutine DUMP_2D_CHAR ( ARRAY, NAME, FillValue, CLEAN )
     character(len=*), intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: BLASE
+    character(len=*), intent(in), optional :: FillValue
     logical, intent(in), optional :: CLEAN
 
     integer :: I, J, K
     logical :: MyClean
     integer :: NumZeroRows
-    character(len=len(array)) :: myBlase
+    character(len=len(array)) :: myFillValue
 
-    myBlase = ' '
-    if ( present(Blase) ) myBlase = Blase
+    myFillValue = ' '
+    if ( present(FillValue) ) myFillValue = FillValue
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -151,7 +151,7 @@ contains
       end if
       call output ( array(1,1), advance='yes' )
     else if ( size(array,2) == 1 ) then
-      call dump ( array(:,1), name, blase=blase, clean=clean )
+      call dump ( array(:,1), name, FillValue=FillValue, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -164,7 +164,7 @@ contains
       do i = 1, size(array,1)
         do j = 1, size(array,2), 10
           if (.not. myClean) then
-            if ( any(array(i,j:min(j+9, size(array,2))) /= myBlase) ) then
+            if ( any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
               if ( numZeroRows /= 0 ) then
                 call output ( i, places=max(4,ilog10(size(array,1))+1) )
                 call output ( j-1, places=max(4,ilog10(size(array))+1) )
@@ -172,7 +172,7 @@ contains
                 call output ( ' ' )
                 call output ( numZeroRows )
                 call output ( ' rows of "', advance='no' )
-                call output ( trim(myBlase), advance='no' )
+                call output ( trim(myFillValue), advance='no' )
                 call output ( '" not printed.', advance='yes' )
                 numZeroRows = 0
               end if
@@ -183,7 +183,7 @@ contains
               numZeroRows = numZeroRows + 1
             end if
           end if
-          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= myBlase) ) then
+          if ( myClean .or. any(array(i,j:min(j+9, size(array,2))) /= myFillValue) ) then
             do k = j, min(j+9, size(array,2))
                 call output ( array(i,k) // ' ' )
             end do
@@ -198,7 +198,7 @@ contains
         call output ( ' ' )
         call output ( numZeroRows )
         call output ( ' rows of "', advance='no' )           
-        call output ( trim(myBlase), advance='no' )          
+        call output ( trim(myFillValue), advance='no' )          
         call output ( '" not printed.', advance='yes' )      
         numZeroRows = 0
       end if
@@ -206,10 +206,10 @@ contains
   end subroutine DUMP_2D_CHAR
 
   ! ---------------------------------------------  DUMP_3D_CHAR  -----
-  subroutine DUMP_3D_CHAR ( ARRAY, NAME, BLASE, CLEAN )
+  subroutine DUMP_3D_CHAR ( ARRAY, NAME, FillValue, CLEAN )
     character(len=*), intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    character(len=*), intent(in), optional :: BLASE
+    character(len=*), intent(in), optional :: FillValue
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
@@ -217,10 +217,10 @@ contains
     integer :: NumZeroRows
     integer, dimension(3) :: which, re_mainder
     integer :: how_many
-    character(len=len(array)) :: myBlase
+    character(len=len(array)) :: myFillValue
 
-    myBlase = ' '
-    if ( present(Blase) ) myBlase = Blase
+    myFillValue = ' '
+    if ( present(FillValue) ) myFillValue = FillValue
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -242,11 +242,11 @@ contains
       end if
       call output ( array(1,1,1), advance='yes' )
     else if ( how_many == 2 ) then
-      call dump ( reshape(array, (/ re_mainder(1) /)), name, blase=blase, &
+      call dump ( reshape(array, (/ re_mainder(1) /)), name, FillValue=FillValue, &
         & clean=clean )
     else if ( how_many == 1 ) then
       call dump ( reshape(array, (/ re_mainder(1), re_mainder(2) /)), &
-        & name, blase=blase, clean=clean )
+        & name, FillValue=FillValue, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -260,7 +260,7 @@ contains
         do j = 1, size(array,2)
           do k = 1, size(array,3), 10
             if (.not. myClean) then
-              if ( any(array(i,j,k:min(k+9, size(array,3))) /= myBlase) ) then
+              if ( any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
                 if ( numZeroRows /= 0 ) then
                   call output ( i, places=max(4,ilog10(size(array,1))+1) )
                   call output ( j, places=max(4,ilog10(size(array,2))+1) )
@@ -269,7 +269,7 @@ contains
                   call output ( ' ' )
                   call output ( numZeroRows )
                   call output ( ' rows of "', advance='no' )
-                  call output ( trim(myBlase), advance='no' )
+                  call output ( trim(myFillValue), advance='no' )
                   call output ( '" not printed.', advance='yes' )
                   numZeroRows = 0
                 end if
@@ -281,7 +281,7 @@ contains
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= myBlase) ) then
+            if ( myClean .or. any(array(i,j,k:min(k+9, size(array,3))) /= myFillValue) ) then
               do l = k, min(k+9, size(array,3))
                   call output ( array(i,j,l) // ' ' )
               end do
@@ -298,7 +298,7 @@ contains
         call output ( ' ' )
         call output ( numZeroRows )
         call output ( ' rows of "', advance='no' )           
-        call output ( trim(myBlase), advance='no' )          
+        call output ( trim(myFillValue), advance='no' )          
         call output ( '" not printed.', advance='yes' )      
         numZeroRows = 0
       end if
@@ -527,19 +527,19 @@ contains
   end subroutine DUMP_1D_REAL
 
   ! ---------------------------------------------  DUMP_2D_DOUBLE  -----
-  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, BLASE, CLEAN )
+  subroutine DUMP_2D_DOUBLE ( ARRAY, NAME, FillValue, CLEAN )
     double precision, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: BLASE
+    double precision, intent(in), optional :: FillValue
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
     integer :: I, J, K
     integer :: NumZeroRows
-    double precision :: myBlase
+    double precision :: myFillValue
 
-    myBlase = 0.d0
-    if ( present(Blase) ) myBlase = Blase
+    myFillValue = 0.d0
+    if ( present(FillValue) ) myFillValue = FillValue
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -577,7 +577,7 @@ contains
               !call output ( i, max(4,ilog10(size(array,1))+1) )
               !call output ( j, max(4,ilog10(size(array,2))+1) )
               !call output ( afterSub )
-              if ( any(array(i,j:min(j+4, size(array,2))) /= myBlase) ) then
+              if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
                 if ( numZeroRows /= 0 ) then
                   call output ( i, places=max(4,ilog10(size(array,1))+1) )
                   call output ( j-1, places=max(4,ilog10(size(array))+1) )
@@ -585,7 +585,7 @@ contains
                   call output ( ' ' )
                   call output ( numZeroRows )
                   call output ( ' rows of ')
-                  call output ( myBlase , advance='no' )
+                  call output ( myFillValue , advance='no' )
                   call output ( ' not printed.', advance='yes' )
                   numZeroRows = 0
                 end if
@@ -596,7 +596,7 @@ contains
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myBlase) ) then
+            if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
               do k = j, min(j+4, size(array,2))
                 call output ( array(i,k), '(1x,1pg13.6)' )
               end do
@@ -611,7 +611,7 @@ contains
           call output ( ' ' )
           call output ( numZeroRows )
           call output ( ' rows of ')                            
-          call output ( myBlase , advance='no' )                
+          call output ( myFillValue , advance='no' )                
           call output ( ' not printed.', advance='yes' )        
           numZeroRows = 0
         end if
@@ -622,7 +622,7 @@ contains
             !call output ( i, max(4,ilog10(size(array,1))+1) )
             !call output ( j, max(4,ilog10(size(array,2))+1) )
             !call output ( afterSub )
-            if ( any(array(i:min(i+4, size(array,1)),j) /= myBlase) ) then  
+            if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
               if ( numZeroRows /= 0 ) then                                  
                 call output ( i, places=max(4,ilog10(size(array,1))+1) )    
                 call output ( j-1, places=max(4,ilog10(size(array))+1) )    
@@ -630,7 +630,7 @@ contains
                 call output ( ' ' )                                         
                 call output ( numZeroRows )                                 
                 call output ( ' rows of ')                                  
-                call output ( myBlase , advance='no' )                      
+                call output ( myFillValue , advance='no' )                      
                 call output ( ' not printed.', advance='yes' )              
                 numZeroRows = 0                                             
               end if                                                        
@@ -640,7 +640,7 @@ contains
             else                                                            
               numZeroRows = numZeroRows + 1                                 
             end if                                                          
-            if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myBlase) ) then
+            if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then
               do k = i, min(i+4, size(array,1))
                 call output ( array(k,j), '(1x,1pg13.6)' )
               end do
@@ -656,7 +656,7 @@ contains
         call output ( ' ' )                                         
         call output ( numZeroRows )                                 
         call output ( ' rows of ')                                  
-        call output ( myBlase , advance='no' )                      
+        call output ( myFillValue , advance='no' )                      
         call output ( ' not printed.', advance='yes' )              
         numZeroRows = 0                                             
       end if                                                        
@@ -751,19 +751,19 @@ contains
   end subroutine DUMP_2D_INTEGER
 
   ! ---------------------------------------------  DUMP_2D_REAL  -----
-  subroutine DUMP_2D_REAL ( ARRAY, NAME, BLASE, CLEAN )
+  subroutine DUMP_2D_REAL ( ARRAY, NAME, FillValue, CLEAN )
     real, intent(in) :: ARRAY(:,:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: BLASE
+    real, intent(in), optional :: FillValue
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
     integer :: I, J, K
     integer :: NumZeroRows
-    real :: myBlase
+    real :: myFillValue
 
-    myBlase = 0.e0
-    if ( present(Blase) ) myBlase = Blase
+    myFillValue = 0.e0
+    if ( present(FillValue) ) myFillValue = FillValue
 
     myClean = .false.
     if ( present(clean) ) myClean = clean
@@ -801,7 +801,7 @@ contains
               !call output ( i, max(4,ilog10(size(array,1))+1) )
               !call output ( j, max(4,ilog10(size(array,2))+1) )
               !call output ( afterSub )
-              if ( any(array(i,j:min(j+4, size(array,2))) /= myBlase) ) then
+              if ( any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
                 if ( numZeroRows /= 0 ) then
                   call output ( i, places=max(4,ilog10(size(array,1))+1) )
                   call output ( j-1, places=max(4,ilog10(size(array))+1) )
@@ -809,7 +809,7 @@ contains
                   call output ( ' ' )
                   call output ( numZeroRows )
                   call output ( ' rows of ')
-                  call output ( myBlase , advance='no' )
+                  call output ( myFillValue , advance='no' )
                   call output ( ' not printed.', advance='yes' )
                   numZeroRows = 0
                 end if
@@ -820,7 +820,7 @@ contains
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myBlase) ) then
+            if ( myClean .or. any(array(i,j:min(j+4, size(array,2))) /= myFillValue) ) then
               do k = j, min(j+4, size(array,2))
                 call output ( array(i,k), '(1x,1pg13.6)' )
               end do
@@ -835,7 +835,7 @@ contains
           call output ( ' ' )
           call output ( numZeroRows )
           call output ( ' rows of ')                            
-          call output ( myBlase , advance='no' )                
+          call output ( myFillValue , advance='no' )                
           call output ( ' not printed.', advance='yes' )        
           numZeroRows = 0
         end if
@@ -846,7 +846,7 @@ contains
             !call output ( i, max(4,ilog10(size(array,1))+1) )
             !call output ( j, max(4,ilog10(size(array,2))+1) )
             !call output ( afterSub )
-            if ( any(array(i:min(i+4, size(array,1)),j) /= myBlase) ) then  
+            if ( any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then  
               if ( numZeroRows /= 0 ) then                                  
                 call output ( i, places=max(4,ilog10(size(array,1))+1) )    
                 call output ( j-1, places=max(4,ilog10(size(array))+1) )    
@@ -854,7 +854,7 @@ contains
                 call output ( ' ' )                                         
                 call output ( numZeroRows )                                 
                 call output ( ' rows of ')                                  
-                call output ( myBlase , advance='no' )                      
+                call output ( myFillValue , advance='no' )                      
                 call output ( ' not printed.', advance='yes' )              
                 numZeroRows = 0                                             
               end if                                                        
@@ -864,7 +864,7 @@ contains
             else                                                            
               numZeroRows = numZeroRows + 1                                 
             end if                                                          
-            if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myBlase) ) then
+            if ( myClean .or. any(array(i:min(i+4, size(array,1)),j) /= myFillValue) ) then
               do k = i, min(i+4, size(array,1))
                 call output ( array(k,j), '(1x,1pg13.6)' )
               end do
@@ -880,7 +880,7 @@ contains
         call output ( ' ' )                                         
         call output ( numZeroRows )                                 
         call output ( ' rows of ')                                  
-        call output ( myBlase , advance='no' )                      
+        call output ( myFillValue , advance='no' )                      
         call output ( ' not printed.', advance='yes' )              
         numZeroRows = 0                                             
       end if                                                        
@@ -888,19 +888,19 @@ contains
   end subroutine DUMP_2D_REAL
 
   ! ---------------------------------------------  DUMP_3D_DOUBLE  -----
-  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, BLASE, CLEAN )
+  subroutine DUMP_3D_DOUBLE ( ARRAY, NAME, FillValue, CLEAN )
     double precision, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    double precision, intent(in), optional :: BLASE
+    double precision, intent(in), optional :: FillValue
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
     integer :: I, J, K, L
     integer :: NumZeroRows
-    double precision :: myBlase
+    double precision :: myFillValue
 
-    myBlase = 0.d0
-    if ( present(Blase) ) myBlase = Blase
+    myFillValue = 0.d0
+    if ( present(FillValue) ) myFillValue = FillValue
     myClean = .false.
     if ( present(clean) ) myClean = clean
 
@@ -921,7 +921,7 @@ contains
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, blase=blase, clean=clean )
+      call dump ( array(:,:,1), name, FillValue=FillValue, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -939,7 +939,7 @@ contains
               !call output ( j, max(4,ilog10(size(array,2))+1) )
               !call output ( k, max(4,ilog10(size(array,3))+1) )
               !call output ( afterSub )
-              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myBlase) ) then
+              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
                 if ( numZeroRows /= 0 ) then
                   call output ( i, places=max(4,ilog10(size(array,1))+1) )
                   call output ( j, places=max(4,ilog10(size(array,2))+1) )
@@ -948,7 +948,7 @@ contains
                   call output ( ' ' )
                   call output ( numZeroRows )
                   call output ( ' rows of ')
-                  call output ( myBlase , advance='no' )
+                  call output ( myFillValue , advance='no' )
                   call output ( ' not printed.', advance='yes' )
                   numZeroRows = 0
                 end if
@@ -960,7 +960,7 @@ contains
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myBlase) ) then
+            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
               do l = k, min(k+4, size(array,3))
                 call output ( array(i,j,l), '(1x,1pg13.6)' )
               end do
@@ -977,7 +977,7 @@ contains
         call output ( ' ' )
         call output ( numZeroRows )
         call output ( ' rows of ')                              
-        call output ( myBlase , advance='no' )                  
+        call output ( myFillValue , advance='no' )                  
         call output ( ' not printed.', advance='yes' )          
         numZeroRows = 0
       end if
@@ -1085,19 +1085,19 @@ contains
   end subroutine DUMP_3D_INTEGER
 
   ! ---------------------------------------------  DUMP_3D_REAL  -----
-  subroutine DUMP_3D_REAL ( ARRAY, NAME, BLASE, CLEAN )
+  subroutine DUMP_3D_REAL ( ARRAY, NAME, FillValue, CLEAN )
     real, intent(in) :: ARRAY(:,:,:)
     character(len=*), intent(in), optional :: NAME
-    real, intent(in), optional :: BLASE
+    real, intent(in), optional :: FillValue
     logical, intent(in), optional :: CLEAN
 
     logical :: myClean
     integer :: I, J, K, L
     integer :: NumZeroRows
-    real    :: myBlase
+    real    :: myFillValue
 
-    myBlase = 0.e0
-    if ( present(Blase) ) myBlase = Blase
+    myFillValue = 0.e0
+    if ( present(FillValue) ) myFillValue = FillValue
     myClean = .false.
     if ( present(clean) ) myClean = clean
 
@@ -1118,7 +1118,7 @@ contains
     else if ( size(array,2) == 1 .and. size(array,3) == 1 ) then
       call dump ( array(:,1,1), name, clean=clean )
     else if ( size(array,3) == 1 ) then
-      call dump ( array(:,:,1), name, blase=blase, clean=clean )
+      call dump ( array(:,:,1), name, FillValue=FillValue, clean=clean )
     else
       if ( present(name) ) then 
         call output ( name )
@@ -1136,7 +1136,7 @@ contains
               !call output ( j, max(4,ilog10(size(array,2))+1) )
               !call output ( k, max(4,ilog10(size(array,3))+1) )
               !call output ( afterSub )
-              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myBlase) ) then
+              if ( any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
                 if ( numZeroRows /= 0 ) then
                   call output ( i, places=max(4,ilog10(size(array,1))+1) )
                   call output ( j, places=max(4,ilog10(size(array,2))+1) )
@@ -1145,7 +1145,7 @@ contains
                   call output ( ' ' )
                   call output ( numZeroRows )
                   call output ( ' rows of ')
-                  call output ( myBlase , advance='no' )
+                  call output ( myFillValue , advance='no' )
                   call output ( ' not printed.', advance='yes' )
                   numZeroRows = 0
                 end if
@@ -1157,7 +1157,7 @@ contains
                 numZeroRows = numZeroRows + 1
               end if
             end if
-            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myBlase) ) then
+            if ( myClean .or. any(array(i,j,k:min(k+4, size(array,3))) /= myFillValue) ) then
               do l = k, min(k+4, size(array,3))
                 call output ( array(i,j,l), '(1x,1pg13.6)' )
               end do
@@ -1174,7 +1174,7 @@ contains
         call output ( ' ' )
         call output ( numZeroRows )
         call output ( ' rows of ')                              
-        call output ( myBlase , advance='no' )                  
+        call output ( myFillValue , advance='no' )                  
         call output ( ' not printed.', advance='yes' )          
         numZeroRows = 0
       end if
@@ -1390,6 +1390,9 @@ contains
 end module DUMP_0
 
 ! $Log$
+! Revision 2.22  2003/04/17 23:05:44  pwagner
+! Renamed optional blase arg to FillValue
+!
 ! Revision 2.21  2003/02/19 18:33:38  pwagner
 ! Can now dump 3d reals
 !
@@ -1409,7 +1412,7 @@ end module DUMP_0
 ! Added dump_1d_real for s.p. arrays
 !
 ! Revision 2.15  2001/11/29 23:50:53  pwagner
-! Added optional blase arg to dump_nd_char; fixed bug where optional format not passed from dump_3d_int
+! Added optional FillValue arg to dump_nd_char; fixed bug where optional format not passed from dump_3d_int
 !
 ! Revision 2.14  2001/11/28 23:32:01  livesey
 ! Fixed bug where dump_2d_integer didn't pass format to 1d dump.
