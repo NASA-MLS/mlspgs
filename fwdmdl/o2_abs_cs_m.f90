@@ -51,7 +51,7 @@ contains
 
     integer(ip) :: J, No_lines
 
-    real(rk) :: F_o_v0, X, Z, U, V, Denomm
+    real(rk) :: F_o_v0, Z, Denomm
 
     complex(rk) :: Wing
 
@@ -376,6 +376,9 @@ contains
 end module O2_Abs_CS_M
 
 ! $Log$
+! Revision 2.6  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.5  2003/05/17 00:30:39  pwagner
 ! Ousted last bogus ref to sp_o2
 !
