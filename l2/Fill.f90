@@ -28,6 +28,7 @@ module Fill                     ! Create vectors and fill them.
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T, L2AUXRank
+  use L3ASCII, only: L3ASCII_INTERP_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
     & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, &
@@ -111,6 +112,7 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: BadUnitsForMaxIterations = nonConformingHydrostatic + 1
   integer, parameter :: NoSpecialFill = badUnitsForMaxIterations + 1
   integer, parameter :: BadlosVelFill = noSpecialFill + 1
+  integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
 
   !  integer, parameter :: s_Fill = 0   ! to be replaced by entry in init_tables_module
   !---------------------------- RCS Ident Info -------------------------------
@@ -603,7 +605,35 @@ contains ! =====     Public Procedures     =============================
     integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
 
     ! Local variables
+    integer :: instance,surf            ! Loop counter
+    integer :: instIndex,surfIndex      ! Indices
 
+    ! Executable code
+    errorCode = 0
+
+    if (quantity%template%verticalCoordinate /= l_zeta) then
+      errorCode=NotZetaForGrid
+      return
+    endif
+
+    instIndex=1
+    surfIndex=1
+
+    do instance = 1, quantity%template%noInstances
+      if (.not. quantity%template%stacked) instIndex=instance
+      print*,'Doing instance:',instance,instIndex
+      
+      do surf = 1, quantity%template%noSurfs
+        if (.not. quantity%template%coherent) surfIndex=surf
+        call l3ascii_interp_field(grid, quantity%values(surf,instance), &
+          & pressure=10.0**(-quantity%template%surfs(surf,instIndex)), &
+          & lat=quantity%template%geodLat(surfIndex,instance), &
+          & lon=quantity%template%lon(surfIndex,instance), &
+          & lst=quantity%template%solarTime(surfIndex,instance), &
+          & sza=quantity%template%solarZenith(surfIndex,instance), &
+          & date=quantity%template%time(surfIndex,instance))
+      end do                            ! End surface loop
+    end do                              ! End instance loop
   end subroutine FillVectorQuantityFromGrid
 
   !=============================== FillOL2GPVector ==========================
@@ -1469,6 +1499,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.37  2001/04/10 20:04:17  livesey
+! Now does fill from Grid.
+!
 ! Revision 2.36  2001/04/10 00:02:19  vsnyder
 ! Implement 'matrix' spec in Fill section
 !
