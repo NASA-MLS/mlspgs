@@ -75,12 +75,6 @@ contains
 
       Bill_Spectra = .false.
 
-!      n_sps = Size(Catalog)
-
-!      DO i = 1, n_sps
-!        Spectag = Catalog(i)%Spec_Tag
-!      Enddo
-      
       CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,   &
                   &      GAMMA,N2,MOL,NMOL,NCNT)
 
@@ -150,6 +144,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.10  2001/11/14 00:39:42  jonathan
+! switch to use bill'd data
+!
 ! Revision 1.9  2001/11/09 22:06:56  jonathan
 ! add Bill_GasAbsorption Module
 !
