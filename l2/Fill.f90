@@ -22,7 +22,7 @@ module Fill                     ! Create vectors and fill them.
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
     & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TEMPLATE, F_TNGTECI, &
-    & F_TYPE, F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
+    & F_TYPE, F_VECTOR, F_VMRQUANTITY, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
   use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BOUNDARYPRESSURE, L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
@@ -34,7 +34,7 @@ module Fill                     ! Create vectors and fill them.
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
-  use INIT_TABLES_MODULE, only: S_FILL, S_FILLCOVARIANCE, S_MATRIX, S_REMOVE, &
+  use INIT_TABLES_MODULE, only: S_DUMP, S_FILL, S_FILLCOVARIANCE, S_MATRIX, S_REMOVE, &
     & S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
   ! Now some arrays
   use Intrinsic, only: Field_Indices
@@ -71,7 +71,9 @@ module Fill                     ! Create vectors and fill them.
     & SOURCE_REF, SUB_ROSA, SUBTREE
   use TREE_TYPES, only: N_NAMED, N_SET_ONE
   use UNITS
-  use VectorsModule, only: AddVectorToDatabase, CreateVector, Dump, &
+  use VectorsModule, only: AddVectorToDatabase, &
+    & ClearUnderMask, CopyVector, CreateMask, CreateVector, &
+    & DestroyVectorInfo, Dump, &
     & GetVectorQtyByTemplateIndex, isVectorQtyMasked, &
     & rmVectorFromDatabase, ValidateVectorQuantity, Vector_T, &
     & VectorTemplate_T, VectorValue_T
@@ -375,6 +377,21 @@ contains ! =====     Public Procedures     =============================
           & qtyTemplates, globalUnit=globalUnit ) ) )
 
         ! That's the end of the create operation
+
+      case ( s_dump ) ! ============================== Dump ==========
+        ! Currently the only field here is the quantity, but let's
+        ! do a loop anyway, as I may add more later
+        do j = 2, nsons(key)
+          gson = subtree(j,key) ! The argument
+          fieldIndex = get_field_id(gson)
+          if (nsons(gson) > 1) gson = subtree(2,gson) ! Now value of said argument
+          got(fieldIndex) = .true.
+          select case ( fieldIndex )
+          case ( f_vector )
+            vectorIndex = decoration(decoration(gson))
+          end select
+        end do
+        call dump ( vectors(vectorIndex) )
 
       case ( s_matrix ) ! ===============================  Matrix  =====
         got = .false.
@@ -963,7 +980,12 @@ contains ! =====     Public Procedures     =============================
     real(r8), parameter :: DECADE = 16000.0 ! Number of meters per decade.
 
     ! Local variables
+    type (VectorValue_T), pointer :: d  ! Diagonal
+    type (VectorValue_T), pointer :: l  ! Length
+    type (VectorValue_T), pointer :: f  ! Fraction
     type (QuantityTemplate_T), pointer :: qt ! One quantity template
+    type (Vector_T), pointer :: DMASKED ! Masked diagonal
+    type (Vector_T), pointer :: LMASKED ! Masked length scale
     integer :: B                        ! Block index
     integer :: I                        ! Instance index
     integer :: J                        ! Loop index
@@ -976,24 +998,36 @@ contains ! =====     Public Procedures     =============================
     real (r8) :: meanLength             ! Geometric mean length scale
     real (r8) :: meanDiag               ! Geometric mean diagonal value
     real (r8) :: thisFraction           ! Geometric mean diagonal value
+    logical, dimension(:), pointer :: condition ! Condition
 
     ! Executable code
 
+    ! Apply mask to diagonal
+    call CopyVector ( Dmasked, vectors(diagonal) )
+    call ClearUnderMask ( Dmasked )
+    
     if ( lengthScale == 0 ) then
       call updateDiagonal ( covariance, vectors(diagonal), square=.true., &
         & invert=invert )
-    else
+
+    else ! Do a more complex fill.
+
+      ! Setup some stuff
       nullify ( m )
-      ! Do a more complex fill.  First check our vectors are OK.
+      call CopyVector ( Lmasked, vectors(lengthScale) ) 
+      call ClearUnderMask ( Lmasked )
+
+      ! Check the validity of the supplied vectors
       if ( covariance%m%row%vec%template%id /= &
-        & vectors(diagonal)%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & dMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "diagonal and covariance not compatible in fillCovariance" )
       if ( covariance%m%row%vec%template%id /= &
-        & vectors(lengthScale)%template%id ) call MLSMessage ( MLSMSG_Error, &
+        & lMasked%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "lengthScale and covariance not compatible in fillCovariance" )
-      if ( vectors(lengthScale)%globalUnit /= phyq_length ) &
+      if ( lMasked%globalUnit /= phyq_length ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "length vector does not have dimensions of length" )
+
       if ( fraction /= 0 ) then
         if ( covariance%m%row%vec%template%id /= &
           & vectors(fraction)%template%id ) call MLSMessage ( MLSMSG_Error, &
@@ -1007,7 +1041,12 @@ contains ! =====     Public Procedures     =============================
 
       ! Now loop over the quantities
       do q = 1, covariance%m%col%vec%template%noQuantities
-        qt => vectors(diagonal)%quantities(q)%template
+
+        ! Setup pointers etc.
+        d => dMasked%quantities(q)
+        qt => d%template
+        l => lMasked%quantities(q)
+        if (fraction /=0) f => vectors(fraction)%quantities(q)
         n = qt%instanceLen
         if ( qt%coherent ) surfs => qt%surfs(:,1)
         if ( .not. qt%regular ) &
@@ -1016,13 +1055,13 @@ contains ! =====     Public Procedures     =============================
         call Allocate_test ( m, n, n, 'M', ModuleName )
 
         ! Loop over the instances
-        do i = 1, covariance%m%col%vec%quantities(q)%template%noInstances
+        do i = 1, qt%noInstances
           if ( .not. qt%coherent ) surfs => qt%surfs(:,i)
 
           ! Clear the working matrix and load the diagonal
           m = 0.0
           do j = 1, n
-            m(j,j) = vectors(diagonal)%quantities(q)%values(j,i) ** 2.0
+            m(j,j) = d%values(j,i) ** 2.0
           end do
 
           ! Now if appropriate add off diagonal terms.
@@ -1030,11 +1069,9 @@ contains ! =====     Public Procedures     =============================
             ! Loop over off diagonal terms
             do j = 1, n
               do k = j+1, n
-                meanLength = sqrt ( vectors(lengthScale)%quantities(q)%values(j,i) * &
-                  &                 vectors(lengthScale)%quantities(q)%values(k,i) )
+                meanLength = sqrt ( l%values(j,i) * l%values(k,i) )
                 meanDiag = sqrt ( m(j,j) * m(k,k) ) 
-                if ( fraction /= 0) thisFraction = &
-                  & vectors(fraction)%quantities(q)%values(j,i)
+                if ( fraction /= 0) thisFraction = f%values(j,i)
                 select case (qt%verticalCoordinate)
                 case ( l_height )
                   distance = abs ( surfs ( j/qt%noChans ) - surfs ( k/qt%noChans ) )
@@ -1049,13 +1086,31 @@ contains ! =====     Public Procedures     =============================
               end do                    ! Loop over k (in M)
             end do                      ! Loop over j (in M)
           end if                        ! An appropriate vertical coordinate
-          if ( invert ) call MatrixInversion(M)
+
+          ! Now we may need to invert this, if so we need to be clever.
+          if ( invert ) then
+            call Allocate_test ( condition, n, 'condition', ModuleName )
+            condition = d%values(:,i) <= 0.0
+            do j = 1, n
+              if ( condition(j) ) M(j,j) = 1.0
+            end do
+            call MatrixInversion(M)
+            do j = 1, n
+              if ( condition(j) ) M(j,j) = 0.0
+            end do
+            call Deallocate_test ( condition, 'condition', ModuleName )
+          endif
+
           b = FindBlock ( covariance%m%col, q, i )
           call Sparsify ( M, covariance%m%block(b,b) )
         end do                          ! Loop over instances
         call Deallocate_test ( m, 'M', ModuleName )
       end do                            ! Loop over quantities
     end if                              ! A non diagonal fill
+
+    call DestroyVectorInfo ( DMasked )
+    call DestroyVectorInfo ( LMasked )
+
   end subroutine FillCovariance
 
   !=============================== FillVectorQuantityFromGrid ============
@@ -2383,7 +2438,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
     integer :: Dummy                   ! Dummy integer
-    type (VectorValue_T), POINTER :: DQ ! Destination quantity
+    type (VectorValue_T), pointer :: DQ ! Destination quantity
+    type (VectorValue_T), pointer :: SQ ! Source quantity
     integer :: SQI                      ! Quantity index in source
 
     ! Executable code
@@ -2392,10 +2448,17 @@ contains ! =====     Public Procedures     =============================
     dest%globalUnit = source%globalUnit
     do sqi = 1, size ( source%quantities )
       ! Try to find this in dest
+      sq => dest%quantities(sqi)
       dq => GetVectorQtyByTemplateIndex ( dest, source%template%quantities(sqi), dummy )
       if ( associated ( dq ) ) then
-        dq%values = source%quantities(sqi)%values
-        ! Think about mask later !??? NJL
+        dq%values = sq%values
+        if (associated(dq%mask)) then
+          if (.not. associated(sq%mask)) call CreateMask ( dq )
+          dq%mask = sq%mask
+        else
+          if ( associated(dq%mask) ) &
+            & call Deallocate_test ( dq%mask, 'dq%mask', ModuleName )
+        endif
       end if
     end do
   end subroutine TransferVectors
@@ -2544,6 +2607,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.87  2001/10/18 22:30:30  livesey
+! Added s_dump and more functionality to fillCovariance
+!
 ! Revision 2.86  2001/10/18 03:51:46  livesey
 ! Just some tidying up.
 !
