@@ -16,15 +16,20 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: Add_Matrix_Blocks, CholeskyFactor, CholeskyFactor_0, CloneBlock, &
-    & ColumnScale, ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, &
-    & Densify, DestroyBlock, Dump, M_Absent, M_Banded, M_Column_Sparse, &
-    & M_Full, MatrixElement_T, Multiply_Matrix_Blocks, MultiplyMatrixVector, &
-    & MultiplyMatrixVectorNoT, MultiplyMatrixVector_0, operator(+), &
-    & operator(.TX.), RowScale, RowScale_0, SolveCholesky, SolveCholeskyM_0, &
-    & SolveCholeskyV_0, Sparsify, UpdateDiagonal, UpdateDiagonal_0
+  public :: Add_Matrix_Blocks, Assignment(=), CholeskyFactor, &
+    & CholeskyFactor_0, CloneBlock, ColumnScale, ColumnScale_0, CopyBlock, &
+    & CreateBlock, CreateBlock_0, Densify, DestroyBlock, Dump, M_Absent, &
+    & M_Banded, M_Column_Sparse, M_Full, MatrixElement_T, &
+    & Multiply_Matrix_Blocks, MultiplyMatrixVector, MultiplyMatrixVectorNoT, &
+    & MultiplyMatrixVector_0, operator(+), operator(.TX.), RowScale, &
+    & RowScale_0, SolveCholesky, SolveCholeskyM_0, SolveCholeskyV_0, &
+    & Sparsify, UpdateDiagonal, UpdateDiagonal_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
+
+  interface Assignment(=)
+    module procedure AssignBlock
+  end interface
 
   interface CholeskyFactor
     module procedure CholeskyFactor_0
@@ -142,7 +147,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyBlock using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K, L, N
@@ -272,6 +277,22 @@ contains ! =====     Public Procedures     =============================
       end select
     end select
   end function Add_Matrix_Blocks
+
+  ! ------------------------------------------------  AssignBlock  -----
+  subroutine AssignBlock ( Z, X )
+  ! Destroy Z, then copy X to it, using pointer assignment for pointer
+  ! components.  Notice that CopyBlock does a deep copy.  If one has
+  ! Z = X in a loop, it is therefore necessary only to destroy Z after
+  ! the loop.
+    type(MatrixElement_T), intent(inout) :: Z
+    type(MatrixElement_T), intent(in) :: X
+    call destroyBlock ( z )
+    z%kind = x%kind
+    z%nRows = x%nRows; z%nCols = x%nCols
+    z%r1 => x%r1
+    z%r2 => x%r2
+    z%values => x%values
+  end subroutine AssignBlock
 
   ! -------------------------------------------  CholeskyFactor_0  -----
   subroutine CholeskyFactor_0 ( Z, XOPT )
@@ -403,6 +424,7 @@ contains ! =====     Public Procedures     =============================
     type(MatrixElement_T), intent(out) :: Z
     type(MatrixElement_T), intent(in) :: X
     if ( first ) call CreateEmptyBlock
+    call destroyBlock ( z )
     if ( x%kind == M_absent ) then
       z = emptyBlock
       return
@@ -417,41 +439,42 @@ contains ! =====     Public Procedures     =============================
       & "z%values", ModuleName )
   end subroutine CloneBlock
 
-  ! ----------------------------------------------  ColumnScale_0  -----
-  function ColumnScale_0 ( X, V ) result ( Z ) ! Z = X V where V is a diagonal
-  !                                     matrix represented by a vector.
-    type(MatrixElement_T), intent(in) :: X
+  ! -------------------------------------------------  ColumnScale_0  -----
+  subroutine ColumnScale_0 ( X, V, NEWX ) ! Z = X V where V is a diagonal
+  !                                     matrix represented by a vector and
+  !                                     Z is either X or NEWX.
+    type(MatrixElement_T), intent(inout), target :: X
     real(r8), intent(in), dimension(:) :: V
-    type(MatrixElement_T) :: Z
-
-  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyBlock using the result of this
-  ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
-  ! !!!!! ===== END NOTE ===== !!!!! 
+    type(MatrixElement_T), intent(out), target, optional :: NEWX
+    type(MatrixElement_T), pointer :: Z
 
     integer :: I
 
-    call copyBlock ( z, x )
+    if ( present(newx) ) then
+      z => newx
+      call copyBlock ( z, x )
+    else
+      z => x
+    end if
     select case ( z%kind )
     case ( M_Absent )
     case ( M_Banded )
       do i = 1, z%ncols
-        z%values(z%r2(i-1)+1:z%r2(i),1) = z%values(z%r2(i-1)+1:z%r2(i),1) * v(i)
+        z%values(z%r2(i-1)+1:z%r2(i),1) = x%values(z%r2(i-1)+1:z%r2(i),1) * v(i)
       end do
     case ( M_Column_Sparse )
       do i = 1, z%ncols
-        z%values(z%r1(i-1)+1:z%r1(i),1) = z%values(z%r1(i-1)+1:z%r1(i),1) * v(i)
+        z%values(z%r1(i-1)+1:z%r1(i),1) = x%values(z%r1(i-1)+1:z%r1(i),1) * v(i)
       end do
     case ( M_Full )
       do i = 1, z%ncols
-        z%values(:,i) = z%values(:,i) * v(i)
+        z%values(:,i) = x%values(:,i) * v(i)
       end do
     end select
-  end function ColumnScale_0
+  end subroutine ColumnScale_0
 
   ! --------------------------------------------------  CopyBlock  -----
-  subroutine CopyBlock ( Z, X ) ! Z = X, including the values
+  subroutine CopyBlock ( Z, X ) ! Destroy Z, deep Z = X, including the values
     type(MatrixElement_T), intent(out) :: Z
     type(MatrixElement_T), intent(in) :: X
     call CloneBlock ( Z, X )
@@ -565,7 +588,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyBlock using the result of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K, L, M, N, P, R
@@ -895,40 +918,41 @@ contains ! =====     Public Procedures     =============================
   end function NewMultiplyMatrixVector_0
 
   ! -------------------------------------------------  RowScale_0  -----
-  function RowScale_0 ( V, X ) result ( Z ) ! Z = V X where V is a diagonal
-  !                                     matrix represented by a vector.
+  subroutine RowScale_0 ( V, X, NEWX ) ! Z = V X where V is a diagonal
+  !                                     matrix represented by a vector and
+  !                                     Z is either X or NEWX.
     real(r8), intent(in), dimension(:) :: V
-    type(MatrixElement_T), intent(in) :: X
-    type(MatrixElement_T) :: Z
-
-  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyBlock using the result of this
-  ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
-  ! !!!!! ===== END NOTE ===== !!!!! 
+    type(MatrixElement_T), intent(inout), target :: X
+    type(MatrixElement_T), intent(out), target, optional :: NEWX
+    type(MatrixElement_T), pointer :: Z
 
     integer :: I
 
-    call copyBlock ( z, x )
+    if ( present(newx) ) then
+      z => newx
+      call copyBlock ( z, x )
+    else
+      z => x
+    end if
     select case ( z%kind )
     case ( M_Absent )
     case ( M_Banded )
       do i = 1, z%ncols
         z%values(z%r2(i-1)+1:z%r2(i),1) = &
           & v(z%r1(i):z%r1(i)+z%r2(i)-z%r2(i-1)-1) * &
-          & z%values(z%r2(i-1)+1:z%r2(i),1)
+          & x%values(z%r2(i-1)+1:z%r2(i),1)
       end do
     case ( M_Column_Sparse )
       do i = 1, z%ncols
         z%values(z%r1(i-1)+1:z%r1(i),1) = v(z%r2(z%r1(i-1)+1:z%r1(i))) * &
-          & z%values(z%r1(i-1)+1:z%r1(i),1)
+          & x%values(z%r1(i-1)+1:z%r1(i),1)
       end do
     case ( M_Full )
       do i = 1, z%nrows
-        z%values(i,:) = v(i) * z%values(i,:)
+        z%values(i,:) = v(i) * x%values(i,:)
       end do
     end select
-  end function RowScale_0
+  end subroutine RowScale_0
 
   ! -------------------------------------------  SolveCholeskyM_0  -----
   subroutine SolveCholeskyM_0 ( U, X, B, TRANSPOSE )
@@ -1148,7 +1172,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
   ! It is important to invoke DestroyBlock using the B argument of this
   ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.
+  ! result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I1, I2              ! Row indices in Z
@@ -1357,6 +1381,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.7  2000/11/15 00:18:26  vsnyder
+! Added assignment(=) interface, row scale, column scale
+!
 ! Revision 2.6  2000/11/10 00:28:13  vsnyder
 ! Added multiply untransposed matrix * vector
 !
