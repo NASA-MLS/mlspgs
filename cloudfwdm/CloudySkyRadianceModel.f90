@@ -5,24 +5,24 @@
 module CloudySkyRadianceModel
 
 ! -------------------------------------------------------------------------  
-! MICROWAVE LIMB RADIATIVE TRANSFER MODEL FOR CLOUDY ATMOSPHERES  
+! CLOUDY-SKY MICROWAVE RADIATIVE TRANSFER MODEL      (VERSION 1.0)  
 ! -------------------------------------------------------------------------
-      use AntennaPatterns_m, only: AntennaPattern_T
-      use ClearSkyModule, only: CLEAR_SKY
-      use CloudySkyModule, only: CLOUDY_SKY
-      use SpectroscopyCatalog_m, only: CATALOG_T
-      use DCSPLINE_DER_M, only: CSPLINE_DER
-      use FOV_CONVOLVE_M, only: FOV_CONVOLVE
-      use HYDROSTATIC_INTRP, only: GET_PRESSURES
-      use L2PC_FILE_PARAMETERS, only: DEG2RAD
-      use ModelInput, only: MODEL_ATMOS
-      use ModelOutput, only: SENSITIVITY
-      use MLSCommon, only: r8
-      use MLSNumerics, only: INTERPOLATEVALUES
-      use PrtMsg, only: HEADER
+      use AntennaPatterns_m,       only: AntennaPattern_T
+      use ClearSkyModule,          only: CLEAR_SKY
+      use CloudySkyModule,         only: CLOUDY_SKY
+      use DCSPLINE_DER_M,          only: CSPLINE_DER
+      use FOV_CONVOLVE_M,          only: FOV_CONVOLVE
+      use HYDROSTATIC_INTRP,       only: GET_PRESSURES
+      use L2PC_FILE_PARAMETERS,    only: DEG2RAD
+      use ModelInput,              only: MODEL_ATMOS
+      use ModelOutput,             only: SENSITIVITY
+      use MLSCommon,               only: r8
+      use MLSNumerics,             only: INTERPOLATEVALUES
+      use PrtMsg,                  only: HEADER
       use RadiativeTransferModule, only: RADXFER
-      use ScatteringAngle, only: ANGLE
-      use Tmp, only: GET_TAN_PRESS
+      use ScatteringAngle,         only: ANGLE
+      use SpectroscopyCatalog_m,   only: CATALOG_T
+      use Tmp,                     only: GET_TAN_PRESS
 
       IMPLICIT NONE
       private
@@ -63,6 +63,7 @@ contains
 !     -- AUG 18, 2001: ADDED FIELD OF VIEW AVERAGING                         C
 !     -- SEP 19, 2001: MODIFIED F95 VERSION USE MODULES                      C
 !     -- SEP 25, 2001: ADDED EFFECT OF ATMOSPHERIC REFRACTION                C 
+!     -- Dec  1, 2001: ADDED OPTION TO USE BILL'S CLEAR SKY MODEL            C  
 !----------------------------------------------------------------------------C
 !                                                                            C
 !     <<< INPUT PARAMETERS >>>                                               C
@@ -70,44 +71,34 @@ contains
 !                                                                            C
 !     0. DEMENSION:                                                          C
 !     -------------                                                          C
-!     NF:             -> Number of Frequencies.                              C
-!     NZ:             -> Number of Pressure Levels.                          C
-!                        -------------------------------------------------   C
-!               NOTE:    The internal model grid resuires NZmodel=640,       C
-!                        where pressure levels are defined as following:     C
-!                            NZmodel = 640                                   C
-!                            Ptop    = 80./16.-3.                            C
-!                            Pbottom =-ALOG10(PRESSURE(lowest_level))        C
-!                            dP      =(Ptop-Pbottom)/NZmodel                 C
-!                            ZH(I)   =Pbottom+(I-1)*dP,   I=1,NZmodel        C
-!                            P(I)    = 10**(-ZH(I)) ,        I=1,NZmodel     C
-!                        -------------------------------------------------   C
-!     NT:             -> Number of Tangent Pressures.                        C
-!     NS:             -> Number of Chemical Species.                         C
-!     N:              -> Number of Cloud Species.                            C
+!     NF:                 -> Number of Frequencies.                          C
+!     NZ:                 -> Number of Pressure Levels.                      C
+!     NT:                 -> Number of Tangent Pressures.                    C
+!     NS:                 -> Number of Chemical Species.                     C
+!     N:                  -> Number of Cloud Species.                        C
 !                                                                            C
 !     1. ATMOSPHERIC PROFILES:                                               C
 !     ------------------------                                               C
-!     FREQUENCY  (NF) -> Frequency (GHz).                                    C 
-!     PRESSURE   (NZ) -> Pressure (hPa).                                     C
-!     HEIGHT     (NZ) -> Geopotential Height (hPa).                          C
-!     TEMPERATURE(NZ) -> Temperature (K).                                    C 
-!     VMRin   (NS,NZ) -> NS=1: H2O Volumn Mixing Ratios (ppm).               C
-!                        NS=2: O3 Volumn Mixing Ratio (ppm).                 C
+!     FREQUENCY  (NF)     -> Frequency (GHz).                                C 
+!     PRESSURE   (NZ)     -> Pressure (hPa).                                 C
+!     HEIGHT     (NZ)     -> Geopotential Height (hPa).                      C
+!     TEMPERATURE(NZ)     -> Temperature (K).                                C 
+!     VMRin   (NS,NZ)     -> NS=1: H2O Volumn Mixing Ratios (ppm).           C
+!                            NS=2: O3 Volumn Mixing Ratio (ppm).             C
 !                                                                            C
 !     2. CLOUD PARAMETERS:                                                   C
 !     --------------------                                                   C
-!     WCin     (N,NZ) -> N=1: Cloud Ice Water Content (g/m3).                C
-!                        N=2: Cloud Liquid Water Content (g/m3).             C
-!     IPSDin     (NZ) -> Particle Size Distribution Flag.                    C
+!     WCin     (N,NZ)     -> N=1: Cloud Ice Water Content (g/m3).            C
+!                            N=2: Cloud Liquid Water Content (g/m3).         C
+!     IPSDin     (NZ)     -> Particle Size Distribution Flag.                C
 !                                                                            C
 !     3. OTHER PARAMETERS:                                                   C
 !     --------------------                                                   C
-!     ZT         (NT) -> Tangent Pressure (hPa).                             C
-!     RE              -> Radius of Earth (m).                                C
-!     ISURE           -> Surface Types (Default: 0).                         C
-!     ISWI            -> Switch for Sensitivity Calculation (Default: 0).    C
-!     ICON            -> Cloud Control Switch (Default: 2).                  C
+!     ZT         (NT)     -> Tangent Pressure (hPa).                         C
+!     RE                  -> Radius of Earth (m).                            C
+!     ISURE               -> Surface Types (Default: 0).                     C
+!     ISWI                -> Switch for Sensitivity Calculation (Default:0). C
+!     ICON                -> Cloud Control Switch (Default: 2).              C
 !     -----------------------------------------------                        C
 !                                                                            C
 !     >>> OUTPUT PARAMETERS <<<                                              C
@@ -115,15 +106,15 @@ contains
 !                                                                            C
 !     4. STANDARD OUTPUTS:                                                   C
 !     --------------------                                                   C
-!     TB0     (NT,NF) -> Background Clear-sky Radiance (K).                  C 
-!     DRcir   (NT,NF) -> Cloud Induced Radiance (K).                         C
-!     TAUeff  (NT,NF) -> Effective Cloud Optical Depth.                      C
-!     SS      (NT,NF) -> Cloud Radiance Sensitivity (K).                     C
-!     BETA  (NZ,NF) -> Total Extinction Profile (m-1).                       C
-!     BETAc (NZ,NF) -> Cloud Extinction Profile (m-1).                       C
-!     Trans (noS,NT,NF) -> Clear Sky Transmittance Function                  C
-!     Dm     (N,NZ) -> Mass-Mean-Diameters (micron).                         C 
-!                        Note:1=Ice,2=Liquid.                                C 
+!     TB0     (NT,NF)     -> Background Clear-sky Radiance (K).              C 
+!     DRcir   (NT,NF)     -> Cloud Induced Radiance (K).                     C
+!     TAUeff  (NT,NF)     -> Effective Cloud Optical Depth.                  C
+!     SS      (NT,NF)     -> Cloud Radiance Sensitivity (K).                 C
+!     BETA    (NZ,NF)     -> Total Extinction Profile (m-1).                 C
+!     BETAc   (NZ,NF)     -> Cloud Extinction Profile (m-1).                 C
+!     Trans   (noS,NT,NF) -> Clear Sky Transmittance Function                C
+!     Dm      (N,NZ)      -> Mass-Mean-Diameters (micron).                   C 
+!                            Note:1=Ice,2=Liquid.                            C 
 !                                                                            C
 !     -----------------------------------------------                        C
 !                                                                            C
@@ -131,11 +122,11 @@ contains
 !                                                                            C
 !     5. INTERNAL MODEL PARAMETERS                                           C
 !     ----------------------------                                           C
-!     NZmodel = 640   -> Number of pressure levels.                          C
-!     NU      = 16    -> Number of scattering angles.                        C
-!     NUA     = 8     -> Number of azimuth angles.                           C
-!     NAB     = 50    -> Maximum number of truncation terms.                 C
-!     NR      = 40    -> Number of particle size bins.                       C 
+!     NZmodel = 640       -> Number of pressure levels.                      C
+!     NU      = 16        -> Number of scattering angles.                    C
+!     NUA     = 8         -> Number of azimuth angles.                       C
+!     NAB     = 50        -> Maximum number of truncation terms.             C
+!     NR      = 40        -> Number of particle size bins.                   C 
 !     --------------------------------------------------------------         C
 !                                                                            C
 !     FREQUENCY RANGE: 1-3000GHz                                             C
@@ -156,7 +147,6 @@ contains
 !     INPUT PARAMETERS (INPUTS FROM L2)        ! -- INTERFACE AEA -- ! 
 !---------------------------------------
       INTEGER :: NF                            ! NUMBER OF FREQUENCIES
-      LOGICAL :: doChannel(NF)                 ! do only true channels
       INTEGER :: NZ                            ! NUMBER OF PRESSURE LEVELS
       INTEGER :: NT                            ! NUMBER OF TANGENT HEIGHTS
       INTEGER :: NS                            ! NUMBER OF CHEMICAL SPECIES
@@ -208,6 +198,9 @@ contains
       REAL(r8) :: RE                           ! EARTH RADIUS
       REAL(r8) :: Slevl(noS)                   ! Sgrid levels
       REAL(r8) :: LosVel                       ! Line of sight velocity
+
+      LOGICAL :: doChannel(NF)                 ! do only true channels
+
 !--------------------------------------
 !     OUTPUT PARAMETERS (OUTPUT TO L2)        
 !--------------------------------------
@@ -426,10 +419,12 @@ contains
 
       DO I=1, Multi
          if (i .le. 10) zzt1(i) = -20000.0_r8 + i*2000.0_r8 
-         if (i .gt. 10) zzt1(i) = 1000._r8*i-10000._r8
+         if (i .gt. 10) zzt1(i) = 1000._r8*i-10000._r8 
+
          ZPT1(I) = 0._r8    
          ZTT1(I) = 0._r8
          ZVT1(I) = 0._r8                
+
       ENDDO
 
       IF (IFOV .EQ. 1) THEN         
@@ -795,6 +790,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.30  2001/11/16 00:41:08  jonathan
+! add losVel
+!
 ! Revision 1.29  2001/11/15 23:52:20  jonathan
 ! add default_spectroscopy
 !

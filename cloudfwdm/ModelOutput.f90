@@ -28,7 +28,7 @@ contains
       SUBROUTINE SENSITIVITY(DTcir,ZT,NT,YP,YZ,NH,PRESSURE,NZ,   &
         &                    delTAU,delTAUc,delTAU100,TAUeff,SS, &
         &                    Trans_out,BETA,BETAc,DDm,Dm,DDZ,DZ, &
-        &                    N,RE, noS, Slevl)
+        &                    N, RE, noS, Slevl)
 !----------------------------------------------------------------
 
       INTEGER :: NH, NZ, NT, N, noS
@@ -69,13 +69,17 @@ contains
 !===============================================================
 ! COMPUTE TRANSMISSION FUNCTION
 
-      trans = 0._r8            ! initialization
+      trans = 0._r8                ! initialization
+      trans_out = 0._r8            ! initialization
 
       do k=1,nt
+        IF ( zt(k) .LE. 30000._r8) THEN 
         sum = 0._r8
         s = 0._r8    
+
             s(1) = - sqrt((re+yz(NH))**2-(re+zt(k))**2)
             s(2*NH) = sqrt((re+yz(NH))**2-(re+zt(k))**2)
+
         DO I=1,NH
 
           if(yz(NH-i+1) > zt(k) .and. i > 1) then
@@ -104,6 +108,9 @@ contains
         
       ! sLevl is defined differently from s
       CALL INTERPOLATEVALUES(s,trans, -Slevl,trans_out(:,k),method='Linear')
+      ELSE
+      ! DO NOTHING
+      ENDIF
       enddo
 
 ! CONVERT DELTAU TO BETA
@@ -133,7 +140,7 @@ contains
       SS = 0._r8
       
       DO I=1,NT
-
+        IF ( zt(I) .LE. 30000._r8) THEN 
             HT = ZT(I)
             if(HT .gt. yz(nh-1)) cycle    ! don't compute for large Zt  
             
@@ -188,6 +195,9 @@ contains
                else
                   SS(I)=0._r8
                endif
+        ELSE
+        ! DO NOTHING
+        ENDIF
 
       ENDDO
       
@@ -199,6 +209,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.14  2001/10/30 20:57:38  dwu
+! minor on transmission function
+!
 ! Revision 1.13  2001/10/24 22:50:26  dwu
 ! revise teff calculation
 !
