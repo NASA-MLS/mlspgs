@@ -12,7 +12,7 @@
 #The fix involves changing lines to each file to the following:
 #  >  OBJECT                 = INPUTPOINTER
 #  >    NUM_VAL              = 1
-#  >    VALUE                = "Found at Dataset /TextPCF"
+#  >    VALUE                = "Found at /PCF"
 #  >  END_OBJECT             = INPUTPOINTER
 #(where the changed lines have been marked with the ">")
 #
@@ -43,6 +43,8 @@
 # -obj myOBJECT instead of INPUTPOINTER, change value of myOBJECT
 # -val myVALUE  instead of use(1) or (2), change value of OBJECT to myVALUE
 # -print        instead of creating new file(s), print results of sed to stdout
+# -test         instead of creating new file(s), confirm that files already 
+#                  match output of running script; i.e., diff would be null
 # -h[elp]       print brief help message; exit
 #Notes:
 #(1)Options -1, -2, -val are mutually exclusive
@@ -53,80 +55,6 @@
 #different functionalities within a single multi-use file
 #Isn't it cleaner to devote a single file to a single use?
 
-#------------------------------- change_the_lines_1 ------------
-#
-# Function to add the lines needed according to the usage
-# usage: change_the_lines_1 file
-
-change_the_lines_1()
-{
-file="$1"
-test=`grep -i 'INPUTPOINTER' $file`                     
-if [ "$test" != "" ]                                      
-then                                                     
-  rm -f temp
-  sed '/INPUTPOINTER/,/INPUTPOINTER/ c\
- OBJECT                 = INPUTPOINTER \
-   NUM_VAL              = 1 \
-   VALUE                = "Found at Dataset /TextPCF" \
- END_OBJECT             = INPUTPOINTER \
- ' $file > temp
-  mv temp $file                                     
-else                                                
-  echo "$file lacks INPUTPOINTER object to edit"  
-fi                                                  
-}
-
-#------------------------------- change_the_lines_2 ------------
-#
-# Function to add the lines needed according to the usage
-# usage: change_the_lines_2 file
-
-change_the_lines_2()
-{
-file="$1"
-test=`grep -i 'INPUTPOINTER' $file`                     
-if [ "$test" != "" ]                                      
-then                                                     
-  rm -f temp
-  sed '/INPUTPOINTER/,/INPUTPOINTER/ c\
- OBJECT                 = INPUTPOINTER \
-   NUM_VAL              = 1 \
-   VALUE                = "Found at /HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/PCF" \
- END_OBJECT             = INPUTPOINTER \
- ' $file > temp
-  mv temp $file                                     
-else                                                
-  echo "$file lacks INPUTPOINTER object to edit"  
-fi                                                  
-}
-
-#------------------------------- extant_files ------------
-#
-# Function to return only those files among the args
-# that actually exist
-# Useful when passed something like *.f which may 
-# (1) expand to list of files, returned as extant_files_result, or
-# (2) stay *.f, in which case a blank is returned as extant_files_result 
-#     (unless you have perversely named a file '*.f')
-# usage: extant_files arg1 [arg2] ..
-
-extant_files()
-{
-   extant_files_result=
-   # Trivial case ($# = 0)
-   if [ "$1" != "" ]
-   then
-      for file
-      do
-         if [ -f "$file" ]
-         then
-               extant_files_result="$extant_files_result $file"
-         fi
-      done
-   fi
-}
-
 #------------------------------- print_the_lines ------------
 #
 # Function to print the lines from a file bookended by 
@@ -135,8 +63,8 @@ extant_files()
 # . . .
 #'END_OBJECT             = INPUTPOINTER'
 #
-# Optionally end each line with a "\" so it can serve as
-# replacement text in a sed script
+# Optionally end each line (except the last) with a "\" 
+# so it can serve as replacement text in a sed script
 # usage: print_the_lines object file [opt]
 
 print_the_lines()
@@ -145,16 +73,12 @@ object="$1"
 file="$2"
 if [ "$3" = "" ]
 then
-  #echo "Trying to print lines in $file, object $object"
-  #echo '/=== (start of '$section') ===/,/=== (end of '$section') ===/ p' $file
   sed -n \
   '/OBJECT * = *'$object'/,/END_OBJECT * = *'$object'/ p' $file 
 else
-  #echo "Trying to print lines in $file, object $object"
-  #echo '/=== (start of '$section') ===/,/=== (end of '$section') ===/ p' $file
   sed -n \
   '/OBJECT * = *'$object'/,/END_OBJECT * = *'$object'/ p' $file \
-  | sed 's/.*$/&\\/'
+  | sed 's/.*$/&\\/' | sed '$ s/\\$//'
 
 fi
 }
@@ -217,6 +141,10 @@ while [ "$more_opts" = "yes" ] ; do
        print_to_stdout="yes"
        shift
        ;;
+    -test )
+       print_to_stdout="diff"
+       shift
+       ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
@@ -243,7 +171,7 @@ fi
 case "$usage" in
    1)
      myOBJECT="INPUTPOINTER"
-     myVALUE="Found at Dataset /TextPCF"
+     myVALUE="Found at /PCF"
      ;;
    2)
      myOBJECT="INPUTPOINTER"
@@ -261,6 +189,8 @@ print_the_lines "$myOBJECT" "$example_file" "yes" >> temp.sed
 rm -f temp1.sed
 sed '/VALUE/ s^".*"^"'"$myVALUE"'"^' temp.sed > temp1.sed
 mv temp1.sed temp.sed
+diff_list=""
+nodiff_list=""
 # Now use the file of sed instructions plus our resed script
 # to act upon the args (which we hope are the filenames)
 #if [ ! -x "$resed" ]
@@ -280,14 +210,43 @@ do
   if [ "$print_to_stdout" = "yes" ]
   then
     sed -f temp.sed "$the_file"
+  elif [ "$print_to_stdout" = "diff" ]
+  then
+    sed -f temp.sed "$the_file" > temp1.sed
+    how_many=`diff "$the_file" temp1.sed | wc -l`
+    if [ "$how_many" -gt 0 ]
+    then
+      diff_list="$diff_list $the_file"
+    else
+      nodiff_list="$nodiff_list $the_file"
+    fi
+    rm -f temp1.sed
   else
     sed -f temp.sed "$the_file" > temp1.sed
     mv temp1.sed "$the_file"
   fi
 done
 rm temp.sed
+if [ "$print_to_stdout" = "diff" ]
+then
+  if [ "$diff_list" = "" ]
+  then
+    echo "All the files pass the test"
+  elif [ "$nodiff_list" = "" ]
+  then
+    echo "Sorry--none of the files pass the test"
+  else
+    echo "The following files failed the test"
+    echo "$diff_list"
+    echo "The following files passed the test"
+    echo "$nodiff_list"
+  fi
+fi
 exit 0
 # $Log$
+# Revision 1.3  2003/05/28 20:25:46  pwagner
+# Fixed embarrassing error where usage(2) no different from (1)
+#
 # Revision 1.2  2003/05/28 16:20:34  pwagner
 # Small fix--not yet tested with resed script
 #
