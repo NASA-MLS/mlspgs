@@ -74,7 +74,7 @@ contains ! =====     Public Procedures     =============================
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
-    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMIN, L_BINTOTAL, &
+    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_CHISQCHAN, &
       & L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
       & L_cloudice, L_cloudextinction, L_cloudInducedRADIANCE, L_COLUMNABUNDANCE, &
@@ -971,7 +971,7 @@ contains ! =====     Public Procedures     =============================
           call addGaussianNoise ( key, quantity, sourceQuantity, &
             & noiseQty, multiplier )
 
-        case ( l_binMax, l_binMin, l_binTotal )
+        case ( l_binMax, l_binMean, l_binMin, l_binTotal )
           if ( .not. got ( f_sourceQuantity ) ) &
             & call Announce_Error ( key, 0, &
             & 'Need source quantity for bin max/min fill' )
@@ -5745,16 +5745,26 @@ contains ! =====     Public Procedures     =============================
           if ( count ( surfs == qs .and. insts == qi ) > 0 ) then
             select case ( method )
             case  ( l_binMax )
+              ! Compute the maximum value in the bin
               quantity%values(qs,qi) = maxval ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
+            case ( l_binMean )
+              ! Compute the average in the bin, be careful about dividing by zero
+              quantity%values(qs,qi) = sum ( pack ( sourceQuantity%values ( &
+                & myChannel : sourceQuantity%template%instanceLen : &
+                &   sourceQuantity%template%noChans, : ), &
+                & surfs == qs .and. insts == qi ) ) / &
+                & max ( count ( surfs == qs .and. insts == qi ), 1 )
             case ( l_binMin )
+              ! Compute the minimum value in the bin
               quantity%values(qs,qi) = minval ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
                 & surfs == qs .and. insts == qi ) )
             case ( l_binTotal )
+              ! Compute the total in the bin
               quantity%values(qs,qi) = sum ( pack ( sourceQuantity%values ( &
                 & myChannel : sourceQuantity%template%instanceLen : &
                 &   sourceQuantity%template%noChans, : ), &
@@ -6105,6 +6115,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.249  2004/01/20 20:26:03  livesey
+! Added the binMean fill
+!
 ! Revision 2.248  2003/12/04 22:19:32  livesey
 ! Added ability to fill from l2gpPrecision field
 !
