@@ -102,7 +102,7 @@ contains
       do n = 1, size(beta_group(i)%cat_index)
         ib = beta_group(i)%cat_index(n)
         call create_beta_path ( path_inds, p_path, t_path, frq,             &
-          & beta_group(i)%ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
+          & beta_group(i)%lbl_ratio(n), gl_slabs(:,ib), tanh_path, noPolarized, &
           & beta_path(:,i), dTanh_dT, t_der_path_flags, dBdT, dBdw, dBdn, dBdv )
       end do
     end do
@@ -227,7 +227,7 @@ contains
 
     do i = 1, size(beta_group)
       do n = 1, size(beta_group(i)%cat_index)
-        ratio = beta_group(i)%ratio(n)
+        ratio = beta_group(i)%lbl_ratio(n)
         ib = beta_group(i)%cat_index(n)
 
         do j = 1, n_path
@@ -1072,6 +1072,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.67  2004/11/01 20:26:36  vsnyder
+! Reorganization of representation for molecules and beta groups; PFA may be broken for now
+!
 ! Revision 2.66  2004/10/06 21:21:21  vsnyder
 ! Change how dumps are done
 !

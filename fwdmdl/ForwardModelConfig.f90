@@ -54,6 +54,10 @@ module ForwardModelConfig
     integer, pointer :: LBL_Molecules(:) => NULL() ! LBL molecules in the group
                                       ! if a group, i.e., "m1...mn", else "m" if
                                       ! "m" is LBL, else zero size.
+    real(rp), pointer :: LBL_Ratio(:) => NULL() ! 1:size(LBL_Molecules).  Isotope
+                                      ! ratio.  Allocated in ForwardModelSupport
+                                      ! with value 1.0, but could be filled in
+                                      ! Get_Species_Data.
     integer :: Molecule               ! Group name, i.e., "m".
     integer, pointer :: PFA_Indices(:,:,:) => NULL() ! Sidebands x size(Channels)
                                       ! x 1:size(PFA_Molecules).  Indices in
@@ -62,11 +66,11 @@ module ForwardModelConfig
     integer, pointer :: PFA_Molecules(:) => NULL() ! PFA molecules in the group
                                       ! if a group, i.e., "m1...mn", else "m" if
                                       ! "m" is PFA, else zero size.
+    real(rp), pointer :: PFA_Ratio(:) => NULL() ! 1:size(PFA_Molecules).  Isotope
+                                      ! ratio.  Allocated in ForwardModelSupport
+                                      ! with value 1.0, but could be filled in
+                                      ! Get_Species_Data.
     type(qtyStuff_t) :: Qty           ! The Qty's vector and foundInFirst
-    real(rp), pointer :: Ratio(:) => NULL() ! 1:size(LBL_Molecules).  Isotope
-                                      ! ratio. Allocated with size == 1 and
-                                      ! value == 1.0 if not a group.  Allocated
-                                      ! and filled in Get_Species_Data.
   end type Beta_Group_T
 
   ! Channel information from the signals database
@@ -223,6 +227,7 @@ contains
 
     type (ForwardModelConfig_T), intent(inout) :: FwdModelConf
 
+    integer :: B                           ! Index for beta groups
     integer :: Channel
     integer :: DumpFwm = -1                ! -1 = not called yet, 0 = no dumps,
                                            ! 1 = dump, 2 = dump and stop
@@ -235,6 +240,7 @@ contains
     integer :: M1, M2                      ! Matched signal indices
     integer :: NoUsedChannels, NoUsedDACS
     integer :: NumPFA                      ! Like HowManyPFA, but for one channel
+    integer :: P                           ! Index for PFA molecules in a beta group
     integer, pointer :: PFAWork(:,:)       ! PFA Indices for a channel.
                                            ! Sideband X Molecules.
     integer :: SB                          ! Sideband index
@@ -258,6 +264,8 @@ contains
       if ( index(switches,'fwmd') /= 0 )  dumpFwm = 1
       if ( index(switches,'fwmD') /= 0 )  dumpFwm = 2
     end if
+
+    call sort_PFADatabase ! Only does anything once
 
     error = .false.
 
@@ -321,7 +329,11 @@ contains
       end do
     end do
 
-!    if ( associated(pfaData) ) then
+    if ( associated(pfaData) ) then
+      do b = 1, size(fwdModelConf%beta_group)
+        do p = 1, size(fwdModelConf%beta_group(b)%PFA_Molecules)
+        end do ! p
+      end do ! b
 !
 !      call allocate_test ( PFAWork, s2, size(fwdModelConf%molecules), &
 !        & 'PFAWork', moduleName, lowBound_1=s1, lowBound_2=fwdModelConf%firstPFA )
@@ -443,7 +455,7 @@ contains
 !      call deallocate_test ( PFAWork, 'PFAWork', moduleName )
 !      call deallocate_test ( whichPFA, 'whichPFA', moduleName )
 !      call deallocate_test ( whichMolecule, 'whichMolecule', moduleName )
-!    end if ! associated(pfaData)
+    end if ! associated(pfaData)
 
     ! Hook the shortcuts into the structure
     fwdModelConf%forwardModelDerived%channels => channels
@@ -480,11 +492,13 @@ contains
         & moduleName )
       call deallocate_test ( beta_group(i)%lbl_molecules, 'beta_group(i)%LBL_molecules', &
         & moduleName )
+      call deallocate_test ( beta_group(i)%lbl_ratio, 'beta_group(i)%LBL_ratio', &
+        & moduleName )
       call deallocate_test ( beta_group(i)%PFA_indices, 'beta_group(i)%PFA_indices', &
         & moduleName )
       call deallocate_test ( beta_group(i)%pfa_molecules, 'beta_group(i)%PFA_molecules', &
         & moduleName )
-      call deallocate_test ( beta_group(i)%ratio, 'beta_group(i)%ratio', &
+      call deallocate_test ( beta_group(i)%pfa_ratio, 'beta_group(i)%PFA_ratio', &
         & moduleName )
     end do
 
@@ -901,11 +915,12 @@ contains
       call newLine
       if ( size(beta_group(i)%lbl_molecules) > 0 ) then
         if ( associated ( beta_group(i)%qty%qty ) ) call dump ( beta_group(i)%qty )
-        call dump ( beta_group(i)%ratio, name='   Ratio' )
+        call dump ( beta_group(i)%lbl_ratio, name='   LBL Ratio' )
         if ( associated ( beta_group(i)%cat_index ) ) &
           & call dump ( beta_group(i)%cat_index, name='   Cat_Index' )
       end if
       if ( associated(beta_group(i)%PFA_indices) ) then
+        call dump ( beta_group(i)%pfa_ratio, name='   PFA Ratio' )
         do j = lbound(beta_group(i)%PFA_indices,1), &
                ubound(beta_group(i)%PFA_indices,1), 2
           call output ( j, before='   PFA Indices for sideband ', advance='yes' )
@@ -1062,6 +1077,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.61  2004/11/03 01:25:30  vsnyder
+! Don't deallocate config%molecules -- it's a pointer into beta_group
+!
 ! Revision 2.60  2004/11/01 20:18:23  vsnyder
 ! Reorganization of representation for molecules and beta groups
 !
