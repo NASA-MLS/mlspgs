@@ -589,7 +589,7 @@ contains ! =====  Public Procedures  ===================================
     integer :: Sideband
     ! Executable code
     do sideband = lbound(catalog,1), ubound(catalog,1), 2
-      call Dump ( catalog(sideband,:), name, sideband )
+      call Dump ( catalog(sideband,:), name, sideband, details )
     end do
   end subroutine Dump_SpectCat_Database_2d
 
@@ -707,6 +707,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.25  2004/08/07 00:34:57  vsnyder
+! Correct subscript error in Dump_SpectCat_Database_2d
+!
 ! Revision 2.24  2004/08/03 02:27:05  vsnyder
 ! Add 'Details' argument to dump
 !
