@@ -110,12 +110,12 @@ H$_{2}^{18}$O$(\nu_{2})$                H2O_18_V2                H2O-18-v2   0
                       OH                       OH                       OH  -2
                $^{18}$OH                   O_18_H                   O-18-H   0
                       OD                       OD                       OD   0
-                 O$_{2}$                       O2                       O2  -6
+                 O$_{2}$                       O2                       O2  -4
         O$_{2}(\nu_{1})$                    O2_V1                    O2-v1   0
- $^{1}\Delta_{g}$O$_{2}$            SNGLT_DLTA_O2            snglt-dlta-O2   0
                O$^{17}$O                   O_17_O                   O-17-O   0
                O$^{18}$O                   O_18_O                   O-18-O   0
     O$^{18}$O$(\nu_{1})$                O_18_O_V1                O-18-O-v1   0
+ $^{1}\Delta_{g}$O$_{2}$            SNGLT_DLTA_O2            snglt-dlta-O2  -1
  $^{1}\Delta_{g}^{18}$OO        SNGLT_DLTA_O_18_O        snglt-dlta-O-18-O   0
                  O$_{3}$                       O3                       O3 -11
                O$_{3}$-r                     O3_R                     O3-r   0
