@@ -1428,16 +1428,17 @@ CONTAINS
 ! Space port angle check
 
           IF (HasSpaceView) THEN
-             space_angle = ACOS (sc_unit_vector(2)) * Rad2Deg  ! Y vector
+             space_angle = ACOS (MAX (MIN (sc_unit_vector(2), 1.0d0), &
+                  -1.0d0)) * Rad2Deg  ! Y vector
              SpaceView(i)%ptr(MIF) = (space_angle < space_tol(i))
           ENDIF
 
 ! Limb port angle check
 
-          limb_angle = ACOS ( DOT_PRODUCT( &
+          limb_angle = ACOS (MAX (MIN ( DOT_PRODUCT( &
                (/ COS (scAngle(MIF) * Deg2Rad), 0.0, &
                SIN (scAngle(MIF) * Deg2Rad) /), &
-               sc_unit_vector) ) * Rad2Deg
+               sc_unit_vector), 1.0d0), -1.0d0)) * Rad2Deg
           LimbView(i)%ptr(MIF) = (limb_angle < limb_tol(i))
 
        ENDDO
@@ -1449,6 +1450,9 @@ CONTAINS
 END MODULE TkL1B
 
 ! $Log$
+! Revision 2.22  2005/02/14 19:30:48  perun
+! Protect acos/asin from crashing.
+!
 ! Revision 2.21  2005/01/28 17:04:05  perun
 ! Pass in MoonToLimb tolerance instead of getting it from L1Config
 !
