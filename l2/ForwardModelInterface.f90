@@ -346,7 +346,6 @@ contains
     use L2PCdim, only: Nlvl, N2lvl, NSPS, Nptg, NCH, MNP => max_no_phi, &
       MNM => max_no_mmaf
     use ELLIPSE, only: PHI_TAN, ROC
-    use L2_LOAD_M, only: L2_LOAD
     use COMP_PATH_ENTITIES_M, only: COMP_PATH_ENTITIES
     use REFRACTION_M, only: REFRACTION_CORRECTION
     use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA, &
@@ -631,17 +630,18 @@ contains
     ! Compute the hydrostatic_model on the GL-Grid for all maf(s):
     ! First extend the grid below the surface.
     si = FMI%Surface_index
-    no_tan_hts = FMC%no_tan_hts
 
     ! Now compute a hydrostatic grid given the temperature and refGPH
     ! information.
     call hydrostatic_model(ForwardModelConfig%SurfaceTangentIndex, &
-      &  FMC%N_lvls,temp%template%noSurfs, &
-      &  radiance%template%noInstances,FMC%t_indx, &
-      &  no_tan_hts,geoc_lat,refGPH%values(1,:)/1e3, &
-      &  refGPH%template%surfs(1,1),FMI%z_grid, &
+      &  radiance%template%noInstances, &
+      &  geoc_lat,refGPH%values(1,:)/1e3, &
+      &  refGPH%template%surfs(1,1), &
+      &  ForwardModelConfig%integrationGrid%surfs, &
       &  temp%template%surfs(:,1),temp%values,z_glgrid,h_glgrid,t_glgrid, &
-      &  dhdz_glgrid,dh_dt_glgrid,FMI%tan_press,tan_hts,tan_temp,tan_dh_dt, &
+      &  dhdz_glgrid,dh_dt_glgrid, &
+      &  ForwardModelConfig%TangentGrid%surfs, &
+      &  tan_hts,tan_temp,tan_dh_dt, &
       &  gl_count, Ier)
     if(ier /= 0) goto 99
 
@@ -652,13 +652,13 @@ contains
     if ( whichPointingGrid <= 0 ) &
       call MLSMessage ( MLSMSG_Error, moduleName, &
       & "There is no pointing grid for the desired signal" )
-    call allocate_test ( grids, no_tan_hts, "Grids", moduleName )
+    call allocate_test ( grids, ForwardModelConfig%TangentGrid%nosurfs, &
+    "Grids", moduleName )
     call Hunt(PointingGrids(whichPointingGrid)%oneGrid%height, &
-      & FMI%tan_press(1:no_tan_hts), grids, allowTopValue=.true.)
-    
-!    call get_grids_near_tan_pressures ( whichPointingGrid, FMI%tan_press(1:no_tan_hts), &
-!      & tol, grids)
+      & ForwardModelConfig%TangentGrid%surfs, grids, allowTopValue=.true.)
 
+    no_tan_hts = ForwardModelConfig%TangentGrid%nosurfs
+    
     ! Now compute stuff along the path given this hydrostatic grid.
     call comp_path_entities(fwdModelIn, fwdModelExtra, &
       &  forwardModelConfig%molecules, &
@@ -1321,6 +1321,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.50  2001/03/29 01:21:25  zvi
+! Interim version
+!
 ! Revision 2.49  2001/03/29 00:53:54  livesey
 ! Modified error message.
 !
