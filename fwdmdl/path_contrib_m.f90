@@ -21,8 +21,7 @@ contains
 !-------------------------------------------  Path_Contrib_Scalar  -----
 ! Estimate the contributions (along the path) of each interval of the
 ! (coarse) pre-selected integration grid.  Use that estimate to select
-! where to do Gauss-Legendre quadrature.  Then allocate and fill
-! arrays that control the Gauss-Legendre quadratures.
+! where to do Gauss-Legendre quadrature.
 
   subroutine Path_Contrib_Scalar ( incoptdepth, e_rflty, tol, do_gl )
 
@@ -86,8 +85,7 @@ contains
 !----------------------------------------  Path_Contrib_Polarized  -----
 ! Estimate the contributions (along the path) of each interval of the
 ! (coarse) pre-selected integration grid.  Use that estimate to select
-! where to do Gauss-Legendre quadrature.  Then allocate and fill
-! arrays that control the Gauss-Legendre quadratures.
+! where to do Gauss-Legendre quadrature.
 
   subroutine Path_Contrib_Polarized ( deltau, e_rflty, tol, do_gl )
 
@@ -171,7 +169,7 @@ contains
 
   ! ------------------------------------------------  Get_GL_inds  -----
   subroutine Get_GL_inds ( Do_GL, GL_Inds, NGL )
-  ! Fill the array that controls application of GL
+  ! Fill the array that controls application of GL.
 
     use GLnp, only: NG
     use MLSCommon, only: IP
@@ -185,8 +183,8 @@ contains
     integer :: I, N_PATH
 
     integer, parameter :: NGP1 = NG + 1
-    integer, parameter :: GLIR(ng) = (/ (i, i = 1, ng ) /)  ! for > n_path/2
-    integer, parameter :: GLIL(ng) = (/ (i ,i = -ng, -1) /) ! for <= n_path/2
+    integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /)  ! for > n_path/2
+    integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /)  ! for <= n_path/2
 
     n_path = size(do_gl)
 
@@ -199,9 +197,9 @@ contains
       if ( do_gl(i) ) then
         ngl = ngl + ng
         if ( i > n_path / 2 ) then
-          gl_inds(ngl-ng+1:ngl) = 1 - Ng + Ngp1 * (i - 1) + glir
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glir
         else
-          gl_inds(ngl-ng+1:ngl) = 1 +      Ngp1 * (i - 1) + glil
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glil
         end if
       end if
     end do
@@ -216,6 +214,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.13  2003/08/13 22:19:11  michael
+! Fixed indexing bug at line 150 in path_contrib_polarized
+!
 ! Revision 2.12  2003/08/12 23:05:30  vsnyder
 ! Fix a bug at line 162
 !
