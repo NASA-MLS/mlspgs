@@ -116,6 +116,18 @@ CONTAINS
            CALL AllocateL3DZ( nlev, cfDef%nNom, l3dz(j) )
            CALL AllocateL3DZ( nlev, cfDef%nNom, dzA(j) )
            CALL AllocateL3DZ( nlev, cfDef%nNom, dzD(j) )
+           l3dz(j)%pressure = 0.0
+           l3dz(j)%latitude = 0.0
+           l3dz(j)%l3dzValue = 0.0
+           l3dz(j)%l3dzPrecision = 0.0
+           dzA(j)%pressure = 0.0
+           dzA(j)%latitude = 0.0
+           dzA(j)%l3dzValue = 0.0
+           dzA(j)%l3dzPrecision = 0.0
+           dzD(j)%pressure = 0.0
+           dzD(j)%latitude = 0.0
+           dzD(j)%l3dzValue = 0.0
+           dzD(j)%l3dzPrecision = 0.0
 
         ENDDO
 
@@ -125,9 +137,31 @@ CONTAINS
         mzA%name = TRIM(cfProd%l3prodName) // 'Ascending'
         mzD%name = TRIM(cfProd%l3prodName) // 'Descending'
 
+        l3mz%startTime = l2gp(1)%time(1)
+        l3mz%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        mzA%startTime = l2gp(1)%time(1)
+        mzA%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        mzD%startTime = l2gp(1)%time(1)
+        mzD%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+
         CALL AllocateL3MZ( nlev, cfDef%nNom, l3mz )
         CALL AllocateL3MZ( nlev, cfDef%nNom, mzA )
         CALL AllocateL3MZ( nlev, cfDef%nNom, mzD )
+
+        l3mz%pressure = 0.0
+        l3mz%latitude = 0.0
+        l3mz%l3mzValue = 0.0
+        l3mz%l3mzPrecision = 0.0
+
+        mzA%pressure = 0.0
+        mzA%latitude = 0.0
+        mzA%l3mzValue = 0.0
+        mzA%l3mzPrecision = 0.0
+
+        mzD%pressure = 0.0
+        mzD%latitude = 0.0
+        mzD%l3mzValue = 0.0
+        mzD%l3mzPrecision = 0.0
 
 !!      Initialize Monthly Map 
 
@@ -135,9 +169,34 @@ CONTAINS
         mmA%name = TRIM(cfProd%l3prodName) // 'Ascending'
         mmD%name = TRIM(cfProd%l3prodName) // 'Descending'
 
+        l3mm%startTime = l2gp(1)%time(1)
+        l3mm%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        mmA%startTime = l2gp(1)%time(1)
+        mmA%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+        mmD%startTime = l2gp(1)%time(1)
+        mmD%endTime = l2gp(l2Days)%time(l2gp(l2Days)%nTimes)
+
         CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, l3mm )
         CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, mmA )
         CALL AllocateL3MM( nlev, cfProd%nLats, cfProd%nLons, mmD )
+
+        l3mm%pressure = 0.0
+        l3mm%latitude = 0.0
+        l3mm%longitude = 0.0
+        l3mm%l3mmValue = 0.0
+        l3mm%l3mmPrecision = 0.0
+
+        mmA%pressure = 0.0
+        mmA%latitude = 0.0
+        mmA%longitude = 0.0
+        mmA%l3mmValue = 0.0
+        mmA%l3mmPrecision = 0.0
+
+        mmD%pressure = 0.0
+        mmD%latitude = 0.0
+        mmD%longitude = 0.0
+        mmD%l3mmValue = 0.0
+        mmD%l3mmPrecision = 0.0
 
 !*** Sort & Prepare the Data 
 
@@ -441,7 +500,7 @@ CONTAINS
 	      dzA(iD)%l3dzValue(iP, iT) = 0.0 
 	      dzD(iD)%l3dzValue(iP, iT) = 0.0 
             ENDDO
-	    DO iT = 1, l2gp(iD)%nTimes
+	    DO iT = 1, l2gp(iD)%nTimes-1
 	      !iCom = real(l2gp(iD)%latitude(iT)-cfDef%l2nomLats(1))/real(cfDef%l2nomLats(2)-cfDef%l2nomLats(1))+1.5
    	      iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
 	      l3dz(iD)%l3dzValue(iP, iCom) = l3dz(iD)%l3dzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
@@ -539,7 +598,7 @@ CONTAINS
 	DO kP = pStartIndex, pEndIndex 
 	  iP = iP + 1
           DO iD = 1, l2Days
-	    DO iT = 1, l2gp(iD)%nTimes
+	    DO iT = 1, l2gp(iD)%nTimes-1
 	      !iCom = real(l2gp(iD)%latitude(iT)-l3mz%latitude(1))/real(l3mz%latitude(2)-l3mz%latitude(1))+1.5
    	      iCom = FindIndexForNormGrid(cfDef, l2gp(iD)%latitude(iT))
 	      l3mz%l3mzValue(iP, iCom) = l3mz%l3mzValue(iP, iCom) + l2gp(iD)%l2gpValue(1, kP, iT)
