@@ -23,8 +23,18 @@ module L2FWMParallel
     "$RCSfile$"
   !---------------------------------------------------------------------------
 
-  integer, pointer, dimension(:), private, save :: slaveTIDs => NULL()
+  ! Local parameters
+  ! These are the three vectors / templates we're after
+  integer, parameter :: FWMIN = 1
+  integer, parameter :: FWMEXTRA = FWMIn + 1
+  integer, parameter :: FWMOUT = FWMExtra + 1
+  integer, parameter :: NOVECTORS = 3
+
   ! We keep a record of the slaves
+  integer, pointer, dimension(:), save :: slaveTIDs => NULL()
+
+  ! Need a global flag here as the slave is called many times
+  logical, save :: finished = .false.
 
 contains
   
@@ -158,13 +168,255 @@ contains
 
   ! ------------------------------------------------ L2FWMSlaveTask -----
   subroutine L2FWMSlaveTask ( mifGeolocation )
-    use QuantityTemplates, only: QUANTITYTEMPLATE_T
+    ! This is the core routine for the 'slave mode' of the L2Fwm parallel stuff
+    use Allocate_Deallocate, only: ALLOCATE_TEST
+    use QuantityTemplates, only: QUANTITYTEMPLATE_T, DESTROYQUANTITYTEMPLATEDATABASE, &
+      & INFLATEQUANTITYTEMPLATEDATABASE
+    use VectorsModule, only: VECTORTEMPLATE_T, VECTOR_T, DESTROYVECTORDATABASE, &
+      & DESTROYVECTORTEMPLATEDATABASE, CREATEVECTOR, CREATEMASK
+    use ForwardModelConfig, only: FORWARDMODELCONFIG_T, DESTROYFWMCONFIGDATABASE, &
+      & PVMUNPACKFWMCONFIG
+    use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
+    use L2ParInfo, only: PARALLEL, SIG_FINISHED, SIG_NEWSETUP, SIG_RUNMAF, INFOTAG, &
+      & SIG_SENDRESULTS
+    use MorePVM, only: PVMUNPACKSTRINGINDEX
+    use PVM, only: PVMFRECV, PVMERRORMESSAGE, PVMDATADEFAULT, PVMFINITSEND, &
+      & PVMF90UNPACK
+    use PVMIDL, only: PVMIDLUNPACK, PVMIDLPACK
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate
+    use MatrixModule_0, only: M_Absent, M_Banded, M_Column_Sparse, M_Full, MatrixElement_T
+    use MatrixModule_1, only: Matrix_T, CREATEEMPTYMATRIX, CLEARMATRIX
+    use QuantityPVM, only: PVMRECEIVEQUANTITY
+    use ForwardModelWrappers, only: FORWARDMODEL
+    ! Dummy argument
     type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
+
+    ! Local variables
+    integer :: INFO                     ! From pvm
+    integer :: BUFFERID                 ! For pvm
+    integer :: SIGNAL                   ! Signal code from master
+    integer :: NOFWMCONFIGS             ! Number of forward model confis
+    integer :: NOQUANTITIES             ! Number of quantity templates we'll need
+    integer :: NOQUANTITIESINVECTOR     ! Number of quantities in the vector
+    integer :: I,J                      ! Loop counters
+    integer :: NAME                     ! An enumerated name
+    logical :: FLAG                     ! A flag sent via pvm
+    logical, dimension(2) :: L2         ! Two flags sent by pvm
+    integer, dimension(:), pointer :: QTINDS ! Index of relevant quantities
+
+    type (ForwardModelIntermediate_T) :: FMW
+    type (ForwardModelStatus_T) :: FMSTAT
+    type (QuantityTemplate_T), dimension(:), pointer :: QUANTITIES
+    type (VectorTemplate_T), dimension(:), pointer :: VECTORTEMPLATES
+    type (Vector_T), dimension(:), pointer :: VECTORS
+    type (ForwardModelConfig_T), dimension(:), pointer :: FWMCONFIGS
+    type (Matrix_T) :: JACOBIAN
+    type (MatrixElement_T), pointer :: B ! A block from the jacobian matrix
+
+    type (Vector_T), pointer :: V
+
+    ! Executable code
+
+    ! If the finished flag is set (by an earlier call to this routine) exit
+    if ( finished ) return
+
+    ! Some setup
+    nullify ( quantities, vectorTemplates, vectors, fwmConfigs, qtInds )
+
+    mainLoop: do
+
+      ! We basically wait for some communication from the master task.
+      call PVMFrecv ( parallel%masterTid, InfoTag, bufferID )
+      if ( bufferID <= 0 ) &
+        & call PVMErrorMessage ( bufferID, 'Receiveing information from master' )
+      ! We get from this just an integer (at least at first), based on which we do
+      ! various tasks
+      call PVMF90Unpack ( signal, info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking signal from master' )
+
+      ! There are three possible signals
+      ! SIG_NewSetup - a new set of state vectors and measurement vectors are to be used
+      ! SIG_RunMAF - run a forward model for a given MAF and a given set of values of the
+      !              state vector.
+      ! SIG_Finished - That's all we require
+      select case ( signal )
+      case ( SIG_Finished )
+        finished = .true.
+      case ( SIG_NewSetup )
+        ! For this we have to get the templates for the main state and
+        ! measurement vectors, and the complete values for the auxilliary
+        ! state vector.  We also get all the forward model configurations.
+        ! First destroy all our old information
+        call DestroyFWMConfigDatabase ( fwmConfigs, deep=.true. )
+        call DestroyVectorDatabase ( vectors )
+        call DestroyVectorTemplateDatabase ( vectorTemplates )
+        call DestroyQuantityTemplateDatabase ( quantities, &
+          & ignoreMinorFrame=.true. )
+
+        ! Get the forward model configs we'll need
+        call PVMIDLUnpack ( noFWMConfigs, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking noFwmConfigs' )
+        ! Setup the structure for them
+        allocate ( fwmConfigs ( noFwmConfigs ), STAT=info )
+        if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'fwmConfigs' )
+        do i = 1, noFwmConfigs
+          call PVMUnpackFWMConfig ( fwmConfigs(i) )
+        end do
+
+        ! Now get all the quantity templates we'll need
+        call PVMIDLUnpack ( noQuantities, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking noQuantities' )
+        info = InflateQuantityTemplateDatabase ( quantities, noQuantities )
+        do i = 1, noQuantities
+          ! Unpack a flag, if true this quantity is worth getting
+          call PVMIDLUnpack ( flag, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking quantity relevant flag' )
+          if ( flag ) then
+            call PVMReceiveQuantity ( quantities(i), justUnpack=.true., &
+              & mifGeolocation=mifGeolocation )
+          end if
+        end do
+
+        ! Allocate the vector templates and vectors
+        allocate ( vectorTemplates ( noVectors ), STAT=info )
+        if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'vectorTemplates' )
+        allocate ( vectors ( noVectors ), STAT=info )
+        if ( info /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & MLSMSG_Allocate//'vectors' )
+
+
+        ! Now get the three vector templates and vectors
+        do i = 1, noVectors
+          v => vectors ( i )
+          call PVMIDLUnpack ( noQuantitiesInVector, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'noQuantitiesInVector' )
+          call Allocate_Test ( qtInds, noQuantitiesInVector, 'qtInds', ModuleName )
+          call PVMIDLUnpack ( qtInds, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'qtInds' )
+          call PVMUnpackStringIndex ( name, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector template name' )
+          call ConstructVectorTemplate ( name, quantities, qtInds, &
+            & vectorTemplates ( i ) )
+          ! Create the vector
+          call PVMUnpackStringIndex ( name, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector name' )
+          vectors ( i ) = CreateVector ( name, vectorTemplates(i), &
+            & quantities )
+          ! Get the vector values in some circumstances
+          if ( i == FWMExtra .or. i == FWMOut ) then
+            do j = 1, noQuantitiesInVector
+              if ( i == FWMExtra ) then
+                call PVMIDLUnpack ( vectors(i)%quantities(j)%values, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'vector values' )
+              end if
+              call PVMIDLUnpack ( flag, info )
+              if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask flag' )
+              if ( flag ) then
+                call CreateMask ( vectors(i)%quantities(j) )
+                call PVMIDLUnpack ( vectors(i)%quantities(j)%mask, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask' )
+              end if
+            end do
+          end if
+        end do
+
+        ! OK, we now have vectors and vector templates for fwmIn, fwmExtra and fwmOut
+        ! We have also filled fwmExtra and got the forward model configs.
+        ! Create a jacobian, get its information from the master
+        call PVMIDLUnpack ( l2, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, '2 logical flags' )
+        call CreateEmptyMatrix ( jacobian, 0, vectors(fwmOut), vectors(fwmIn), &
+          & l2(1), l2(2) )
+        call Allocate_test ( fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName )
+
+        ! OK, I think we're ready to go
+
+      case ( SIG_RunMAF )
+        ! Get the state vector for this iteration
+        do j = 1, size ( vectors(fwmIn)%quantities )
+          call PVMIDLUnpack ( vectors(fwmIn)%quantities(j)%values, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector values' )
+          call PVMIDLUnpack ( flag, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask flag' )
+          if ( flag ) then
+            call CreateMask ( vectors(fwmIn)%quantities(j) )
+            call PVMIDLUnpack ( vectors(fwmIn)%quantities(j)%mask, info )
+            if ( info /= 0 ) call PVMErrorMessage ( info, 'vector mask' )
+          end if
+        end do
+        ! Setup the fmStat stuff
+        call PVMIDLUnpack ( fmStat%maf, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%maf' )
+
+        ! Loop over the configs and call the forward model
+        do i = 1, size ( fwmConfigs )
+          call ForwardModel ( fwmConfigs(i), &
+            & vectors(fwmIn), vectors(fwmExtra), vectors(fwmOut), fmw, fmStat, jacobian )
+        end do
+
+        ! Now we sit patiently and wait for an instruction to 'dump' our results
+        call PVMFrecv ( parallel%masterTid, infoTag, bufferID )
+        if ( bufferID <= 0 ) &
+          & call PVMErrorMessage ( bufferID, 'Receiveing go-ahead from master' )
+        call PVMF90Unpack ( signal, info )
+        if ( info /= 0 ) call PVMErrorMessage ( info, 'Unpacking signal from master' )
+        if ( signal == SIG_SendResults ) then
+          call PVMFInitSend ( PVMDataDefault, bufferID )
+          if ( bufferID <= 0 ) &
+            & call PVMErrorMessage ( bufferID, 'Setting up results buffer' )
+          call PVMIDLPack ( fmStat%rows, info ) 
+          if ( info /= 0 ) call PVMErrorMessage ( info, 'fmStat%rows' )
+          do i = 1, jacobian%row%nb
+            ! Send corresponding values of fwmOut
+            if ( fmStat%rows ( i ) ) then
+              call PVMIDLPack ( vectors(fwmOut)%quantities ( &
+                & jacobian%row%quant(i) ) % values ( :, &
+                & jacobian%row%inst(i) ), info )
+              if ( info /= 0 ) call PVMErrorMessage ( info, 'row of fwmOut' )
+              ! Send non empty blocks of jacobian
+              do j = 1, jacobian%col%nb
+                b => jacobian%block ( i, j )
+                call PVMIDLPack ( b%kind, info )
+                if ( info /= 0 ) call PVMErrorMessage ( info, 'b%kind' )
+                if ( b%kind == M_Banded .or. b%kind == M_Column_sparse ) then
+                  call PVMIDLPack ( size ( b%values, 1 ), info )
+                  if ( info /= 0 ) call PVMErrorMessage ( info, 'noValues for block' )
+                  call PVMIDLPack ( b%r1, info )
+                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r1' )
+                  call PVMIDLPack ( b%r2, info )
+                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%r2' )
+                end if
+                if ( b%kind /= M_Absent ) then
+                  call PVMIDLPack ( b%values, info )
+                  if ( info /= 0 ) call PVMErrorMessage ( info, 'b%values' )
+                end if
+              end do
+            end if                      ! Any rows here?
+          end do
+        else if ( signal == SIG_Finished ) then
+          finished = .true.
+        else
+          call MLSMessage ( MLSMSG_Error, ModuleName, 'Got unexpected message from master' )
+        end if
+
+        ! OK, we've run our forward models and sent our results
+        call ClearMatrix ( jacobian )
+
+      end select
+
+      if ( finished ) exit mainLoop
+    end do mainLoop
+    
   end subroutine L2FWMSlaveTask
 
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.2  2002/10/06 01:10:31  livesey
+! More code added, still not complete.
+!
 ! Revision 2.1  2002/10/05 02:06:28  livesey
 ! First version, should have checked in earlier
 !
