@@ -189,6 +189,11 @@ EVERY_MLSCONFG = LF95.Linux  NAG.Linux  NAG.SGI  NAG.Sun  Unknown.None
 
 tests_sub_dirs := $(shell echo tests/*)
 
+# This determines the command which MakeFC transmits to each of the
+# SUBDIRS when you invoke it with "make update":
+# likely candidates are "depends" or "depends ghostbuster"
+SUBDIRS_UPDATE = depends ghostbuster
+
 # This determines the command by which MakeFC looks like Makefile
 # Choose either "link" or "copy"; warning--link once caused cvs probs
 LOOKS_LIKE_MakeFC = copy
@@ -211,34 +216,6 @@ levels:
 $(CONFDIR)/.configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -pv -fl
-# equivalent to the following:
-#		$(MAKE) -f $(MakeFName) configure_full
-# (except w/o the infinite regress)
-#	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
-#          -c "$(MLSF95)" -p "$(MLSPLAT)"
-#	$(MAKE) -f $(MakeFName) configure_subdirs
-#	@echo "Configuring $(SUBDIRS)"; \
-#	 for dir in $(SUBDIRS); do \
-#		cd $$dir ; \
-#		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-#          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
-#		cd .. ; \
-#	done
-#	@echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
-#	if [ -f Makefile ] ; then \
-#		rm -f Makefile.old ;\
-#		mv Makefile Makefile.old ;\
-#	fi ; \
-#	$(LOOKS_LIKE_line)
-#	 @for dir in $(SUBDIRS); do \
-#	  cd $$dir; \
-#		if [ -f Makefile ] ; then \
-#			rm -f Makefile.old ;\
-#			mv Makefile Makefile.old ;\
-#		fi ; \
-#		$(LOOKS_LIKE_line) ;\
-#	  cd ..; \
-#	done
 	$(MAKE) -f $(MakeFName) internalmakefile makefilesintests
 
 # Targets that must be named explicitly
@@ -276,25 +253,22 @@ clean:
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
-#	$(MAKE) -f $(MakeFName) configure_subdirs
-#	 for dir in $(SUBDIRS); do \
-#		cd $$dir ; \
-#		../$(MLSBIN)/mlsconfigure -dc "../$(CONFDIR)" -pc "$(PLATFORMS)" \
-#          -c "$(MLSF95)" -p "$(MLSPLAT)" -nc; \
-#		cd .. ; \
-#	done
+	@$(MAKE) -f $(MakeFName) update
 
 configure_pvm:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -pv
+	@$(MAKE) -f $(MakeFName) update
 
 configure_fopts:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc -fl
+	@$(MAKE) -f $(MakeFName) update
 
 configure_full:
 	echo $(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -pv -fl
+	@$(MAKE) -f $(MakeFName) update
 
 configure_help:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -434,10 +408,6 @@ substarg: substars
 # For internal use
 
 internaladd_copy:
-#	@rm -f temp.Makefile
-#	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(NEXT_COPY)'/' \
-#	 $(MakeFName) > temp.Makefile
-#	@mv temp.Makefile $(MakeFName)
 	@echo "MakeFC copy number $(COPY_NUMBER) incremented by 1"
 
 # Automatically called to keep number of files Make.dep.nn under MAX_COPIES
@@ -462,10 +432,16 @@ internalcleanup:
 	done
 	$(MAKE) -f $(MakeFName) internalreset_copy ; \
 
+ghostbuster:
+	@echo "Busting ghosts for $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir ghostbuster; \
+	done
+
 internaldepends:
 	@echo "Making dependencies for $(SUBDIRS)"; \
 	 for dir in $(SUBDIRS); do \
-	  $(MAKE) -f $(MakeFName) -C $$dir depends; \
+	  $(MAKE) -f $(MakeFName) -C $$dir $(SUBDIRS_UPDATE); \
 	done; \
 	echo "Making dependencies for srclib"; \
         cd srclib; \
@@ -498,13 +474,10 @@ internalupdate: internalmakefile makefilesintests
           -nc -nd; \
 		cd .. ; \
 	done
+#	@$(MAKE) -f $(MakeFName) ghostbuster
 	@$(MAKE) -f $(MakeFName) internaldepends
 
 internalreset_copy:
-#	@rm -f temp.Makefile
-#	@sed 's/COPY_NUMBER = '$(COPY_NUMBER)'/COPY_NUMBER = '$(ONE)'/' \
-#	 $(MakeFName) > temp.Makefile
-#	@mv temp.Makefile $(MakeFName)
 	@echo "MakeFC copy number reset from $(COPY_NUMBER) to 0"
 
 makefilesintests:
@@ -557,11 +530,14 @@ update:
   all install levels configure_subdirs makefile update\
   configure_pvm configure_fopts configure_full configure_help help disthelp\
   internalcleanup internaldepends makefilesintests internalmakefile \
-  internalmakefile show_copy \
+  internalmakefile show_copy ghostbuster\
   $(SUBDIRS)
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.30  2001/04/18 22:20:25  pwagner
+# Removed dependence of tar on clean_all
+#
 # Revision 1.29  2001/03/23 21:40:41  pwagner
 # Stopped using internal_copy_number
 #
