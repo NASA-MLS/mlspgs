@@ -96,8 +96,12 @@ contains
             trans(NH+i) = sum
         ENDDO
 
-        where(trans < 10._r8) trans = exp(-trans)
-        where(trans > 10._r8) trans = 0._r8
+        where(trans < 10._r8) 
+         trans = exp(-trans)
+        elsewhere 
+         trans = 0._r8
+        endwhere
+        
       ! sLevl is defined differently from s
       CALL INTERPOLATEVALUES(s,trans, -Slevl,trans_out(:,k),method='Linear')
       enddo
@@ -195,6 +199,9 @@ contains
 end module ModelOutput
 
 ! $Log$
+! Revision 1.13  2001/10/24 22:50:26  dwu
+! revise teff calculation
+!
 ! Revision 1.12  2001/10/24 22:09:53  dwu
 ! provent cases where tangent heights are greater than model top
 !
