@@ -5,7 +5,8 @@
 MODULE Close_files ! Close the production files
 !=============================================================================
 
-  USE MLSL1Common, ONLY: L0FileInfo, L1BFileInfo, L1ProgType, THzType, LogType
+  USE MLSL1Common, ONLY: L0FileInfo, L1BFileInfo, L1ProgType, THzType, &
+       LogType, HDFversion
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info
   USE WriteMetaL1
 
@@ -27,16 +28,16 @@ CONTAINS
   SUBROUTINE CloseFiles   ! Close production Level 1 files
 !=============================================================================
 
-    USE MLSL1Config, ONLY: L1Config
     USE SDPToolkit, ONLY: PGS_IO_Gen_closeF
-    USE MLSFiles, ONLY: MLS_closeFile, HDFVERSION_5
+    USE MLSFiles, ONLY: MLS_closeFile
     USE L1BOutUtils, ONLY: WriteHdrAnnots
     USE HDF5, ONLY: H5gClose_f, H5gOpen_f
     USE MLSHDF5, ONLY: MakeHDF5Attribute
     USE Orbit, ONLY: OrbitNumber, OrbPeriod
+!    USE H5LIB
 
     CHARACTER(LEN=132) :: filename
-    INTEGER :: i, returnStatus, error, HDFversion, grp_id
+    INTEGER :: i, returnStatus, error, grp_id
     LOGICAL :: opened
 
     INTEGER, EXTERNAL :: PGS_IO_L0_Close
@@ -95,8 +96,6 @@ CONTAINS
 
 ! Close HDF files
 
-    HDFversion = L1Config%Output%HDFversion
-
     IF (L1ProgType == THzType) THEN
 
        ! Write Hdr Annotations and Close L1RAD T file
@@ -128,17 +127,22 @@ CONTAINS
 
     ! Write Hdr Annotations and Close L1BOA file
 
-    IF (HDFversion == HDFVERSION_5) THEN
-       CALL H5gOpen_f (L1BFileInfo%OAid, '/', grp_id, returnStatus)
-       CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .true.)
-       CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .true.)
-       CALL H5gClose_f (grp_id, returnStatus)
-    ENDIF
+    CALL H5gOpen_f (L1BFileInfo%OAid, '/', grp_id, returnStatus)
+    CALL MakeHDF5Attribute (grp_id, 'OrbitNumber', OrbitNumber, .true.)
+    CALL MakeHDF5Attribute (grp_id, 'OrbitPeriod', OrbPeriod, .true.)
+    CALL H5gClose_f (grp_id, returnStatus)
 
     CALL WriteHdrAnnots (L1BFileInfo%OAFileName, HDFversion)
     CALL MLS_closeFile (L1BFileInfo%OAid, HDFversion=HDFversion)
     CALL MLSMessage (MLSMSG_Info, ModuleName, &
          & 'Closed L1BOA file: '//L1BFileInfo%OAFileName)
+
+    ! Write Hdr Annotations and Close L1B Diag file
+
+    CALL WriteHdrAnnots (L1BFileInfo%DiagFileName, HDFversion)
+    CALL MLS_closeFile (L1BFileInfo%DiagId, HDFversion=HDFversion)
+    CALL MLSMessage (MLSMSG_Info, ModuleName, &
+         & 'Closed L1B Diag file: '//L1BFileInfo%DiagFileName)
 
     CALL WriteMetaData
 
@@ -149,20 +153,11 @@ CONTAINS
             & 'Closed L1BENG file: '//filename)
     ENDIF
 
-    INQUIRE (unit=L1BFileInfo%DiagId, name=filename, opened=opened)
-    IF (opened) THEN
-       CLOSE (L1BFileInfo%DiagId)
-       CALL MLSMessage (MLSMSG_Info, ModuleName, &
-            & 'Closed L1BDIAG file: '//filename)
-    ENDIF
-
 !! Close the HDF 5 Fortran Interface
 
-    IF (HDFversion == HDFVERSION_5) THEN
-       CALL h5close_f (error)
-       IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
-            "Fortran HDF 5 API error on closing.")
-    ENDIF
+    CALL h5close_f (error)
+    IF (error /= 0) CALL MLSMessage (MLSMSG_Error, ModuleName, &
+         "Fortran HDF 5 API error on closing.")
     
   END SUBROUTINE CloseFiles
 
@@ -170,6 +165,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.13  2004/01/09 17:46:22  perun
+! Version 1.4 commit
+!
 ! Revision 2.12  2003/09/15 17:15:53  perun
 ! Version 1.3 commit
 !

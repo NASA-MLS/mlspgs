@@ -34,8 +34,9 @@ CONTAINS
   SUBROUTINE populate_metadata_l1 (HDF_FILE, MCF_FILE)
 
     USE InitPCFs, ONLY: L1PCF
-    USE MLSFiles, ONLY: mls_sfstart, mls_sfend, HDFVERSION_5
+    USE MLSFiles, ONLY: mls_sfstart, mls_sfend
     USE MLSL1Config, ONLY: L1Config
+    USE MLSL1Common, ONLY: HDFversion
 
     !Arguments
 
@@ -51,7 +52,7 @@ CONTAINS
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: physical_filename
     CHARACTER (LEN=PGSd_PC_FILE_PATH_MAX) :: sval
     CHARACTER (LEN=132) :: attrname, errmsg
-    INTEGER :: hdfVersion, version, ival, indx, error
+    INTEGER :: version, ival, indx, error
     CHARACTER (LEN=*), PARAMETER :: METAWR_ERR = &
          'Error writing metadata attribute '
 
@@ -69,8 +70,6 @@ CONTAINS
          pgs_met_write, pgs_met_remove
 
     !Executable code
-
-    hdfVersion = L1Config%Output%HDFversion
 
     version = 1
 
@@ -428,11 +427,10 @@ CONTAINS
     ENDIF          
 
     ! Write global attributes
-    if ( hdfVersion == HDFVERSION_5 ) then
-      sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .FALSE.)
-      call h5_writeglobalattr(sdid, skip_if_already_there=.false.)
-      returnStatus = mls_sfend (sdid, hdfVersion, .FALSE.)
-    endif
+
+    sdid = mls_sfstart (physical_fileName, DFACC_RDWR, hdfVersion, .FALSE.)
+    call h5_writeglobalattr(sdid, skip_if_already_there=.false.)
+    returnStatus = mls_sfend (sdid, hdfVersion, .FALSE.)
 
   END SUBROUTINE populate_metadata_l1
 
@@ -460,6 +458,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.13  2004/01/09 17:46:23  perun
+! Version 1.4 commit
+!
 ! Revision 2.12  2003/08/12 16:57:25  cvuu
 ! brought closer to James Johnson want to
 !
