@@ -2,18 +2,28 @@
 ! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
-!===============================================================================
+!==============================================================================
 MODULE L3SPData
-!===============================================================================
+!==============================================================================
 
-   USE Hdf
-   USE L3CF
-   USE MLSCommon
-   USE MLSL3Common
-   USE MLSMessageModule
-   USE MLSPCF3
-   USE PCFHdr
-   USE PCFModule
+   USE HDF, ONLY: DFACC_CREATE, DFNT_FLOAT32 
+   USE HDFEOS
+   USE HDFEOS5
+   USE HE5_SWAPI
+   USE L3CF, ONLY: L3CFProd_T
+   USE MLSCommon, ONLY: r8
+   USE MLSFiles, ONLY: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+        & MLS_HDF_VERSION, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
+   USE MLSL3Common, ONLY: GridNameLen, HDFE_NOMERGE, FILENAMELEN, &
+        & DIM_ERR, GEO_ERR, DAT_ERR, WR_ERR, &
+        & GEO_FIELD1, GEO_FIELD9, GEO_FIELD10, &
+        & DIML_NAME, DIM_NAME2, DIM_NAME3
+   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, & 
+        & MLSMSG_Fileopen, MLSMSG_Info, MLSMSG_DeAllocate
+   USE MLSPCF3, ONLY: mlspcf_l3sp_start, mlspcf_l3sp_end
+   USE PCFHdr, ONLY: WritePCF2Hdr
+   USE PCFModule, ONLY: ExpandFileTemplate, FindFileType
+   USE SWAPI
 
    IMPLICIT NONE
    PUBLIC
@@ -39,12 +49,12 @@ MODULE L3SPData
 
 ! Parameters
 
-   CHARACTER (LEN=*), PARAMETER :: DIMW_NAME = 'nWaveNum'
+   CHARACTER (LEN=*), PARAMETER :: DIMW_NAME  = 'nWaveNum'
    CHARACTER (LEN=*), PARAMETER :: DIMWD_NAME = 'nLevels,nLats,nWaveNum'
    CHARACTER (LEN=*), PARAMETER :: DIMFD_NAME = 'nLevels,nLats,nFreqs'
    CHARACTER (LEN=*), PARAMETER :: DIMSP_NAME = 'nLevels,nLats,nWaveNum,nFreqs'
 
-   CHARACTER (LEN=*), PARAMETER :: GEO_FIELDWN = 'waveNumber'
+   CHARACTER (LEN=*), PARAMETER :: GEO_FIELDWN  = 'waveNumber'
 
    CHARACTER (LEN=*), PARAMETER :: DATA_FIELDRV = 'L3spRelValue'
    CHARACTER (LEN=*), PARAMETER :: DATA_FIELDRP = 'L3spRelPrecision'
@@ -55,12 +65,26 @@ MODULE L3SPData
 
   TYPE L3SPData_T
 
+     ! Now the spectra fields:
+
      CHARACTER (LEN=GridNameLen) :: name	! name for the output quantity
 
-     INTEGER :: nLevels				! Total number of surfaces
-     INTEGER :: nLats				! Total number of latitudes
-     INTEGER :: nWaveNum			! Total number of waveNumbers
-     INTEGER :: nFreqs				! Total number of frequencies
+     ! dimensioned as (nLevels, nLats, nWaveNum, nFreqs):
+
+     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spRelValue     ! Real part
+     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spRelPrecision
+						! Real part precision
+     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spImgValue     ! Imaginary part
+     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spImgPrecision
+						! Imaginary part precision
+
+     ! Now we store the waveNumber and frequency fields:
+
+     REAL(r8), DIMENSION(:,:,:), POINTER :: waveNumber
+	! dimensioned (nLevels, nLats, nWaveNum)
+
+     REAL(r8), DIMENSION(:,:,:), POINTER :: frequency
+	! dimensioned (nLevels, nLats, nFreqs):
 
      ! Now we store the geolocation fields.  First, the vertical one:
 
@@ -74,23 +98,10 @@ MODULE L3SPData
 
      REAL(r8) :: endTime	! end time of L2 data used in the analysis
 
-     ! Now we store the waveNumber and frequency fields:
-
-     REAL(r8), DIMENSION(:,:,:), POINTER :: waveNumber
-	! dimensioned (nLevels, nLats, nWaveNum)
-
-     REAL(r8), DIMENSION(:,:,:), POINTER :: frequency
-	! dimensioned (nLevels, nLats, nFreqs)
-
-     ! Now the spectra fields:
-
-     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spRelValue     ! Real part
-     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spRelPrecision
-						! Real part precision
-     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spImgValue     ! Imaginary part
-     REAL(r8), DIMENSION(:,:,:,:), POINTER :: l3spImgPrecision
-						! Imaginary part precision
-     ! dimensioned as (nLevels, nLats, nWaveNum, nFreqs)
+     INTEGER :: nLevels				! Total number of surfaces
+     INTEGER :: nLats				! Total number of latitudes
+     INTEGER :: nWaveNum			! Total number of waveNumbers
+     INTEGER :: nFreqs				! Total number of frequencies
 
    END TYPE L3SPData_T
 
@@ -120,58 +131,62 @@ CONTAINS
 
       INTEGER :: err
 
-! Store the sizes of the dimensions
+      ! Store the sizes of the dimensions
 
-      l3sp%nLevels = nlev
-      l3sp%nLats = nlat
+      l3sp%nLevels  = nlev
+      l3sp%nLats    = nlat
       l3sp%nWaveNum = nwv
-      l3sp%nFreqs = nfreq
+      l3sp%nFreqs   = nfreq
 
-! Allocate the vertical geolocation field
+      ! Allocate the vertical geolocation field
 
-	if (l3sp%nLevels .gt. 0) then
+      if (l3sp%nLevels .gt. 0) then
 
-      ALLOCATE(l3sp%pressure(l3sp%nLevels), STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3SPData_T pressure pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+         ALLOCATE(l3sp%pressure(l3sp%nLevels), STAT=err)
+         IF ( err /= 0 ) THEN
+            msr = MLSMSG_Allocate // ' L3SPData_T pressure pointer.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
 
-	endif
+      endif
 
-! Horizontal geolocation field
+      ! Horizontal geolocation field
 
 	if (l3sp%nLats .gt. 0) then
 
-      ALLOCATE(l3sp%latitude(l3sp%nLats), STAT=err)
-      IF ( err /= 0 ) THEN
-         msr = MLSMSG_Allocate // ' L3SPData_T latitude pointer.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
+           ALLOCATE(l3sp%latitude(l3sp%nLats), STAT=err)
+           IF ( err /= 0 ) THEN
+              msr = MLSMSG_Allocate // ' L3SPData_T latitude pointer.'
+              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+           ENDIF
 
 	endif
 
-! Wavenumber & frequency
+        ! Wavenumber & frequency
 
-	if ((l3sp%nLevels .gt. 0).and.(l3sp%nLats .gt. 0).and.(l3sp%nWaveNum .gt. 0)) then
-      ALLOCATE(l3sp%waveNumber(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum), STAT=err)
+	if ( (l3sp%nLevels .gt. 0).and. & 
+             & (l3sp%nLats .gt. 0).and.(l3sp%nWaveNum .gt. 0)) then
+      ALLOCATE(l3sp%waveNumber(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum), & 
+           & STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T waveNumber pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 	endif
 
-	if ((l3sp%nLevels .gt. 0).and.(l3sp%nLats .gt. 0).and.(l3sp%nFreqs .gt. 0)) then
+	if ((l3sp%nLevels .gt. 0).and.(l3sp%nLats .gt. 0) & 
+             & .and.(l3sp%nFreqs .gt. 0)) then
       ALLOCATE(l3sp%frequency(l3sp%nLevels,l3sp%nLats,l3sp%nFreqs), STAT=err)
       IF ( err /= 0 ) THEN
          msr = MLSMSG_Allocate // ' L3SPData_T frequency pointer.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-	endif
+      endif
 
 ! Spectra fields
 
-	if ((l3sp%nLevels .gt. 0).and.(l3sp%nLats .gt. 0).and.(l3sp%nWaveNum .gt. 0) .and. (l3sp%nFreqs.gt.0) ) then
+	if ((l3sp%nLevels .gt. 0).and.(l3sp%nLats .gt. 0).and. & 
+             & (l3sp%nWaveNum .gt. 0) .and. (l3sp%nFreqs.gt.0) ) then
 
       ALLOCATE(l3sp%l3spRelValue(l3sp%nLevels,l3sp%nLats,l3sp%nWaveNum,&
               &l3sp%nFreqs), STAT=err)
@@ -202,13 +217,37 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-	endif
+     endif
 !-----------------------------
    END SUBROUTINE AllocateL3SP
 !-----------------------------
 
 !--------------------------------------------
-   SUBROUTINE OutputL3SP (cfProd, anText, sp)
+   SUBROUTINE OutputL3SP (cfProd, anText, sp, hdfVersion)
+!--------------------------------------------
+
+     ! Arguments
+
+     TYPE( L3CFProd_T ), INTENT(IN) :: cfProd
+
+     TYPE( L3SPData_T ), INTENT(IN) :: sp(:)
+
+     CHARACTER (LEN=1), POINTER :: anText(:)
+
+     INTEGER :: hdfVersion
+
+     IF (hdfVersion == HDFVERSION_4) THEN
+        CALL OutputL3SP_HDF4(cfProd, anText, sp)
+     ELSE IF (hdfVersion == HDFVERSION_5) THEN
+        CALL OutputL3SP_HDF5(cfProd, anText, sp)
+     ENDIF
+
+!---------------------------
+   END SUBROUTINE OutputL3SP
+!---------------------------
+
+!--------------------------------------------
+   SUBROUTINE OutputL3SP_HDF4(cfProd, anText, sp)
 !--------------------------------------------
 
 ! Brief description of subroutine
@@ -226,16 +265,16 @@ CONTAINS
 
 ! Functions
 
-      INTEGER, EXTERNAL :: swattach, swclose, swcreate, swdefdfld, swdefgfld
-      INTEGER, EXTERNAL :: swdefdim, swdetach, swopen, swwrfld
+      INTEGER, EXTERNAL :: swattach, swclose, swcreate, swdefdfld, & 
+           & swdefgfld, swdefdim, swdetach, swopen, swwrfld
 
 ! Variables
 
-      CHARACTER (LEN=FileNameLen) :: spFile, type
       CHARACTER (LEN=480) :: msr
-
-      INTEGER :: i, match, numSwaths, status, swfID, swID
+      CHARACTER (LEN=FileNameLen) :: spFile, type
+ 
       INTEGER :: start(4), stride(4), edge(4)
+      INTEGER :: i, match, numSwaths, status, swfID, swID
 
 ! Expand the template given in the CF
 
@@ -244,11 +283,12 @@ CONTAINS
 ! Find a PCF entry for this file type
 
       CALL FindFileType(type, mlspcf_l3sp_start, mlspcf_l3sp_end, match, &
-                        spFile)
+           & spFile)
 
 ! Open the l3sp file for the creation of swaths
 
       swfID = swopen(spFile, DFACC_CREATE)
+
       IF (swfID == -1) THEN
          msr = MLSMSG_Fileopen // spFile
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -263,33 +303,35 @@ CONTAINS
 ! Create a swath of the appropriate name
 
          swID = swcreate( swfID, sp(i)%name )
+
          IF (swID == -1) THEN
-            msr = ' L3SPData::OutputL3SP: Failed to create swath ' // sp(i)%name
+            msr = ' L3SPData::OutputL3SP: Failed to create swath ' & 
+                 & // trim(sp(i)%name)
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
 ! Define the swath dimensions
 
          status = swdefdim(swID, DIM_NAME2, sp(i)%nLevels)
-         IF (status == -1) THEN
+         IF (status /= 0) THEN
             msr = DIM_ERR // DIM_NAME2
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          status = swdefdim(swID, DIML_NAME, sp(i)%nLats)
-         IF (status == -1) THEN
+         IF (status /= 0) THEN
             msr = DIM_ERR // DIML_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          status = swdefdim(swID, DIMW_NAME, sp(i)%nWaveNum)
-         IF (status == -1) THEN
+         IF (status /= 0) THEN
             msr = DIM_ERR // DIMW_NAME
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          status = swdefdim(swID, DIM_NAME3, sp(i)%nFreqs)
-         IF (status == -1) THEN
+         IF (status /= 0) THEN
             msr = DIM_ERR // DIM_NAME3
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -297,8 +339,8 @@ CONTAINS
 ! Define the vertical geolocation field, using the above dimensions
 
          status = swdefgfld(swID, GEO_FIELD9, DIM_NAME2, DFNT_FLOAT32, &
-                            HDFE_NOMERGE)
-         IF (status == -1) THEN
+              & HDFE_NOMERGE)
+         IF (status /= 0) THEN
             msr = GEO_ERR // GEO_FIELD9
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -306,8 +348,8 @@ CONTAINS
 ! Define the horizontal geolocation field
 
          status = swdefgfld(swID, GEO_FIELD1, DIML_NAME, DFNT_FLOAT32, &
-                            HDFE_NOMERGE)
-         IF (status == -1) THEN
+              & HDFE_NOMERGE)
+         IF (status /= 0) THEN
             msr = GEO_ERR // GEO_FIELD1
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -316,15 +358,15 @@ CONTAINS
 
 
          status = swdefgfld(swID, GEO_FIELDWN, DIMWD_NAME, DFNT_FLOAT32, &
-                            HDFE_NOMERGE)
-         IF (status == -1) THEN
+              & HDFE_NOMERGE)
+         IF (status /= 0) THEN
             msr = GEO_ERR // GEO_FIELDWN
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          status = swdefgfld(swID, GEO_FIELD10, DIMFD_NAME, DFNT_FLOAT32, &
-                            HDFE_NOMERGE)
-         IF (status == -1) THEN
+              & HDFE_NOMERGE)
+         IF (status /= 0) THEN
             msr = GEO_ERR // GEO_FIELD10
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -332,39 +374,40 @@ CONTAINS
 ! Define the data fields using above dimensions
 
          status = swdefdfld(swID, DATA_FIELDRV, DIMSP_NAME, DFNT_FLOAT32, &
-                            HDFE_NOMERGE)
-         IF (status == -1) THEN
+              & HDFE_NOMERGE)
+         IF (status /= 0) THEN
             msr = DAT_ERR // DATA_FIELDRV
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          status = swdefdfld(swID, DATA_FIELDRP, DIMSP_NAME, DFNT_FLOAT32, &
-                            HDFE_NOMERGE)
-         IF (status == -1) THEN
+              & HDFE_NOMERGE)
+         IF (status /= 0) THEN
             msr = DAT_ERR // DATA_FIELDRP 
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          status = swdefdfld(swID, DATA_FIELDIV, DIMSP_NAME, DFNT_FLOAT32, &
-                            HDFE_NOMERGE)
-         IF (status == -1) THEN
+              & HDFE_NOMERGE)
+         IF (status /= 0) THEN
             msr = DAT_ERR // DATA_FIELDIV 
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
          status = swdefdfld(swID, DATA_FIELDIP, DIMSP_NAME, DFNT_FLOAT32, &
-                            HDFE_NOMERGE)
-         IF (status == -1) THEN
+              & HDFE_NOMERGE)
+         IF (status /= 0) THEN
             msr = DAT_ERR // DATA_FIELDIP
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
-! Detach from the swath interface
+         ! Detach from the swath interface
 
          status = swdetach(swID)
-         IF (status == -1) THEN
-           CALL MLSMessage(MLSMSG_Error, ModuleName, & 
-             'Failed to detach from swath interface after L3SP definition.')
+         IF (status /= 0) THEN
+            CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                 & 'Failed to detach from swath interface ' & 
+                 & //'after L3SP definition.')
          ENDIF
 
 ! Re-attach to the swath for writing
@@ -372,7 +415,7 @@ CONTAINS
          swID = swattach(swfID, sp(i)%name)
          IF (swID == -1) THEN
             msr = 'Failed to re-attach to swath ' // TRIM(sp(i)%name) &
-                   // ' for writing.'
+                 & // ' for writing.'
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
@@ -390,8 +433,8 @@ CONTAINS
          if ( sp(i)%nLevels.gt.0 ) then
 
          status = swwrfld( swID, GEO_FIELD9, start(1), stride(1), edge(1), &
-                           REAL(sp(i)%pressure) )
-         IF (status == -1) THEN
+              & REAL(sp(i)%pressure) )
+         IF (status /= 0) THEN
             msr = WR_ERR // GEO_FIELD9
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
@@ -403,8 +446,8 @@ CONTAINS
          if (sp(i)%nLats.gt.0) then
 
          status = swwrfld( swID, GEO_FIELD1, start(2), stride(2), edge(2), &
-                           REAL(sp(i)%latitude) )
-         IF (status == -1) THEN
+              & REAL(sp(i)%latitude) )
+         IF (status /= 0) THEN
             msr = WR_ERR // GEO_FIELD1
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -413,12 +456,12 @@ CONTAINS
 
 ! Write the waveNumber data
 
-         if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and.(sp(i)%nLats.gt.0)) then
-
+         if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+              & (sp(i)%nLats.gt.0)) then
 
          status = swwrfld( swID, GEO_FIELDWN, start(1:3), stride(1:3), &
-                           edge(1:3), REAL(sp(i)%waveNumber) )
-         IF (status == -1) THEN
+              & edge(1:3), REAL(sp(i)%waveNumber) )
+         IF (status /= 0) THEN
             msr = WR_ERR // GEO_FIELDWN
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -434,8 +477,8 @@ CONTAINS
          if ((sp(i)%nLevels.gt.0).and.(sp(i)%nLats.gt.0)) then
 
          status = swwrfld( swID, GEO_FIELD10, start(1:3), stride(1:3), &
-                           edge(1:3), REAL(sp(i)%frequency) )
-         IF (status == -1) THEN
+              & edge(1:3), REAL(sp(i)%frequency) )
+         IF (status /= 0) THEN
             msr = WR_ERR // GEO_FIELD10
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
@@ -450,23 +493,24 @@ CONTAINS
 
          if (sp(i)%nFreqs.gt.0) then 
 
-         if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and.(sp(i)%nLats.gt.0)) then
+            if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+                 & (sp(i)%nLats.gt.0)) then
 
-         status = swwrfld( swID, DATA_FIELDRV, start, stride, edge, &
-                           REAL(sp(i)%l3spRelValue) )
-         IF (status == -1) THEN
-            msr = WR_ERR // DATA_FIELDRV
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
+               status = swwrfld( swID, DATA_FIELDRV, start, stride, edge, &
+                    & REAL(sp(i)%l3spRelValue) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // DATA_FIELDRV
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
          
-         status = swwrfld( swID, DATA_FIELDRP, start, stride, edge, &
-                           REAL(sp(i)%l3spRelPrecision) )
-         IF (status == -1) THEN
-            msr = WR_ERR // DATA_FIELDRP
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
+               status = swwrfld( swID, DATA_FIELDRP, start, stride, edge, &
+                    & REAL(sp(i)%l3spRelPrecision) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // DATA_FIELDRP
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
 
-         endif
+            endif
 
          endif
 
@@ -474,23 +518,24 @@ CONTAINS
 
          if (sp(i)%nFreqs.gt.0) then 
 
-         if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and.(sp(i)%nLats.gt.0)) then
+            if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+                 & (sp(i)%nLats.gt.0)) then
 
-         status = swwrfld( swID, DATA_FIELDIV, start, stride, edge, &
-                        REAL(sp(i)%l3spImgValue) )
-         IF (status == -1) THEN
-            msr = WR_ERR // DATA_FIELDIV
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
+               status = swwrfld( swID, DATA_FIELDIV, start, stride, edge, &
+                    & REAL(sp(i)%l3spImgValue) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // DATA_FIELDIV
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
 
-         status = swwrfld( swID, DATA_FIELDIP, start, stride, edge, &
-                           REAL(sp(i)%l3spImgPrecision) )
-         IF (status == -1) THEN
-            msr = WR_ERR // DATA_FIELDIP
-            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-         ENDIF
+               status = swwrfld( swID, DATA_FIELDIP, start, stride, edge, &
+                    & REAL(sp(i)%l3spImgPrecision) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // DATA_FIELDIP
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
 
-         endif
+            endif
 
          endif
 
@@ -499,23 +544,23 @@ CONTAINS
 
 
          status = swdetach(swID)
-         IF (status == -1) THEN
+         IF (status /= 0) THEN
             CALL MLSMessage(MLSMSG_Error, ModuleName, & 
-              'Failed to detach from swath interface after writing.')
+                 & 'Failed to detach from swath interface after writing.')
          ELSE
-            msr = 'Swath ' // TRIM(sp(i)%name) // ' successfully written to &
-                  &file ' // spFile
+            msr = 'Swath ' // TRIM(sp(i)%name) // & 
+                 & ' successfully written to file ' // spFile
             CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
          ENDIF
 
       ENDDO
 
-! Close the file
+      ! Close the file
 
 
       status = swclose(swfID)
 
-      IF (status == -1) THEN
+      IF (status /= 0) THEN
          msr = 'Failed to close file ' // spFile // ' after writing.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
@@ -526,7 +571,336 @@ CONTAINS
       CALL WritePCF2Hdr(spFile, anText)
 
 !---------------------------
-   END SUBROUTINE OutputL3SP
+   END SUBROUTINE OutputL3SP_HDF4
+!---------------------------
+
+!--------------------------------------------
+   SUBROUTINE OutputL3SP_HDF5(cfProd, anText, sp)
+!--------------------------------------------
+
+! Brief description of subroutine
+! This subroutine creates and writes to the swaths in an l3sp file.
+
+! Arguments
+
+      TYPE( L3CFProd_T ), INTENT(IN) :: cfProd
+
+      TYPE( L3SPData_T ), INTENT(IN) :: sp(:)
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
+
+! Parameters
+
+! Functions
+
+      INTEGER, EXTERNAL :: he5_swattach, he5_swclose, he5_swcreate, & 
+           & he5_swdefdfld, he5_swdefgfld, he5_swdefdim, & 
+           & he5_swdetach, he5_swopen, he5_swwrfld
+
+! Variables
+
+      CHARACTER (LEN=480) :: msr
+      CHARACTER (LEN=FileNameLen) :: spFile, type
+ 
+      INTEGER :: start(4), stride(4), edge(4)
+      INTEGER :: i, match, numSwaths, status, swfID, swID
+
+! Expand the template given in the CF
+
+      CALL ExpandFileTemplate(cfProd%fileTemplate, type, 'L3SP')
+
+! Find a PCF entry for this file type
+
+      CALL FindFileType(type, mlspcf_l3sp_start, mlspcf_l3sp_end, match, &
+           & spFile)
+
+! Open the l3sp file for the creation of swaths
+
+      swfID = he5_swopen(spFile, HE5F_ACC_TRUNC)
+
+      IF (swfID == -1) THEN
+         msr = MLSMSG_Fileopen // trim(spFile)
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+! For each swath found,
+
+      numSwaths = SIZE(sp)
+
+      DO i = 1, numSwaths
+
+! Create a swath of the appropriate name
+
+         swID = he5_swcreate( swfID, sp(i)%name )
+
+         IF (swID == -1) THEN
+            msr = ' L3SPData::OutputL3SP: Failed to create swath '// & 
+                 & trim(sp(i)%name)
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Define the swath dimensions
+
+         status = he5_swdefdim(swID, DIM_NAME2, sp(i)%nLevels)
+         IF (status /= 0) THEN
+            msr = DIM_ERR // DIM_NAME2
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = he5_swdefdim(swID, DIML_NAME, sp(i)%nLats)
+         IF (status /= 0) THEN
+            msr = DIM_ERR // DIML_NAME
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = he5_swdefdim(swID, DIMW_NAME, sp(i)%nWaveNum)
+         IF (status /= 0) THEN
+            msr = DIM_ERR // DIMW_NAME
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = he5_swdefdim(swID, DIM_NAME3, sp(i)%nFreqs)
+         IF (status /= 0) THEN
+            msr = DIM_ERR // DIM_NAME3
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Define the vertical geolocation field, using the above dimensions
+
+         status = he5_swdefgfld(swID, GEO_FIELD9, DIM_NAME2, "", & 
+              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         IF (status /= 0) THEN
+            msr = GEO_ERR // GEO_FIELD9
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Define the horizontal geolocation field
+
+         status = he5_swdefgfld(swID, GEO_FIELD1, DIML_NAME, "",& 
+              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         IF (status /= 0) THEN
+            msr = GEO_ERR // GEO_FIELD1
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Define the waveNumber & frequency fields
+
+
+         status = he5_swdefgfld(swID, GEO_FIELDWN, DIMWD_NAME, "",& 
+              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         IF (status /= 0) THEN
+            msr = GEO_ERR // GEO_FIELDWN
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = he5_swdefgfld(swID, GEO_FIELD10, DIMFD_NAME, "",&
+              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         IF (status /= 0) THEN
+            msr = GEO_ERR // GEO_FIELD10
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Define the data fields using above dimensions
+
+         status = he5_swdefdfld(swID, DATA_FIELDRV, DIMSP_NAME, "", &
+              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         IF (status /= 0) THEN
+            msr = DAT_ERR // DATA_FIELDRV
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = he5_swdefdfld(swID, DATA_FIELDRP, DIMSP_NAME, "", &
+              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         IF (status /= 0) THEN
+            msr = DAT_ERR // DATA_FIELDRP 
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = he5_swdefdfld(swID, DATA_FIELDIV, DIMSP_NAME, "", &
+              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         IF (status /= 0) THEN
+            msr = DAT_ERR // DATA_FIELDIV 
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         status = he5_swdefdfld(swID, DATA_FIELDIP, DIMSP_NAME, "", &
+              & HE5T_NATIVE_FLOAT, HDFE_NOMERGE)
+         IF (status /= 0) THEN
+            msr = DAT_ERR // DATA_FIELDIP
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         ! Detach from the swath interface
+
+         status = he5_swdetach(swID)
+         IF (status /= 0) THEN
+            CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                & 'Failed to detach from swath interface ' & 
+                & //'after L3SP definition.')
+         ENDIF
+
+! Re-attach to the swath for writing
+
+         swID = he5_swattach(swfID, sp(i)%name)
+         IF (swID == -1) THEN
+            msr = 'Failed to re-attach to swath ' // TRIM(sp(i)%name) &
+                 & // ' for writing.'
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+! Write the data
+
+         start = 0
+         stride = 1
+         edge(1) = sp(i)%nLevels
+         edge(2) = sp(i)%nLats
+         edge(3) = sp(i)%nWaveNum
+         edge(4) = sp(i)%nFreqs
+
+! Write the vertical geolocation data
+
+         if ( sp(i)%nLevels.gt.0 ) then
+
+         status = he5_swwrfld(swID, GEO_FIELD9, start(1), stride(1), edge(1), &
+              & REAL(sp(i)%pressure) )
+         IF (status /= 0) THEN
+            msr = WR_ERR // GEO_FIELD9
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
+
+         endif
+
+! Write the horizontal geolocation data
+
+         if (sp(i)%nLats.gt.0) then
+
+         status = he5_swwrfld(swID, GEO_FIELD1, start(2), stride(2), edge(2), &
+              & REAL(sp(i)%latitude) )
+         IF (status /= 0) THEN
+            msr = WR_ERR // GEO_FIELD1
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         endif
+
+! Write the waveNumber data
+
+         if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+              & (sp(i)%nLats.gt.0)) then
+
+         status = he5_swwrfld( swID, GEO_FIELDWN, start(1:3), stride(1:3), &
+              & edge(1:3), REAL(sp(i)%waveNumber) )
+         IF (status /= 0) THEN
+            msr = WR_ERR // GEO_FIELDWN
+            CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         ENDIF
+
+         endif
+
+! Write the frequency data
+
+         edge(3) = sp(i)%nFreqs
+         
+         if (sp(i)%nFreqs.gt.0) then 
+
+            if ((sp(i)%nLevels.gt.0).and.(sp(i)%nLats.gt.0)) then
+
+               status = he5_swwrfld(swID,GEO_FIELD10,start(1:3),stride(1:3), &
+                    & edge(1:3), REAL(sp(i)%frequency) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // GEO_FIELD10
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
+
+            endif
+
+         endif
+
+! Write the real part of the data
+
+         edge(3) = sp(i)%nWaveNum
+
+         if (sp(i)%nFreqs.gt.0) then 
+
+            if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+                 & (sp(i)%nLats.gt.0)) then
+
+               status = he5_swwrfld( swID, DATA_FIELDRV, start, stride, edge, &
+                    & REAL(sp(i)%l3spRelValue) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // DATA_FIELDRV
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
+         
+               status = he5_swwrfld( swID, DATA_FIELDRP, start, stride, edge, &
+                    & REAL(sp(i)%l3spRelPrecision) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // DATA_FIELDRP
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
+
+            endif
+
+         endif
+
+! Write the imaginary part of the data
+
+         if (sp(i)%nFreqs.gt.0) then 
+
+            if ((sp(i)%nWaveNum.gt.0).and.(sp(i)%nLevels.gt.0).and. & 
+                 & (sp(i)%nLats.gt.0)) then
+
+               status = he5_swwrfld( swID, DATA_FIELDIV, start, stride, edge, &
+                    & REAL(sp(i)%l3spImgValue) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // DATA_FIELDIV
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
+
+               status = he5_swwrfld( swID, DATA_FIELDIP, start, stride, edge, &
+                    & REAL(sp(i)%l3spImgPrecision) )
+               IF (status /= 0) THEN
+                  msr = WR_ERR // DATA_FIELDIP
+                  CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+               ENDIF
+
+            endif
+
+         endif
+
+
+! After writing, detach from swath interface
+
+
+         status = he5_swdetach(swID)
+         IF (status /= 0) THEN
+            CALL MLSMessage(MLSMSG_Error, ModuleName, & 
+                 & 'Failed to detach from swath interface after writing.')
+         ELSE
+            msr = 'Swath ' // TRIM(sp(i)%name) // & 
+                 & ' successfully written to file ' // trim(spFile)
+            CALL MLSMessage(MLSMSG_Info, ModuleName, msr)
+         ENDIF
+
+      ENDDO
+
+      ! Close the file
+
+
+      status = he5_swclose(swfID)
+
+      IF (status /= 0) THEN
+         msr = 'Failed to close file ' // trim(spFile) // ' after writing.'
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+
+! Annotate the file with the PCF
+
+      CALL WritePCF2Hdr(spFile, anText, HDFVERSION_5, 'sw')
+
+!---------------------------
+   END SUBROUTINE OutputL3SP_HDF5
 !---------------------------
 
 !----------------------------------
@@ -679,6 +1053,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.9  2002/04/10 22:06:05  jdone
+! check on array size for allocate
+!
 ! Revision 1.8  2001/04/24 19:39:12  nakamura
 ! Removed references to private L2 parameters.
 !
