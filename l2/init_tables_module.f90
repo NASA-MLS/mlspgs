@@ -848,8 +848,8 @@ contains ! =====     Public procedures     =============================
                     nr+n_dot, &
              begin, f+f_ptanquantity, s+s_vector, f+f_template, f+f_quantities, &
                     n+n_dot, &
-             begin, f+f_channels, t+t_numeric, n+n_field_type, &
-             begin, f+f_height, t+t_numeric, n+n_field_type, &
+             begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_height, t+t_numeric_range, n+n_field_type, &
              begin, f+f_ignore, t+t_boolean, n+n_field_type, &
              begin, f+f_opticalDepth, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
@@ -998,6 +998,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.124  2001/06/26 20:11:08  livesey
+! Couple of changes to subset
+!
 ! Revision 2.123  2001/06/26 00:08:38  vsnyder
 ! Add RegQuants field to Retrieve
 !
