@@ -134,6 +134,10 @@ CONTAINS
            CALL AllocateL3SP( nlev, cfProd%nLats, nwv, nf, l3sp(j) )
            l3sp(j)%pressure = l2gp(1)%pressures(pStartIndex:pEndIndex)
            l3sp(j)%latitude = cfProd%latGridMap(:l3sp(j)%nLats)
+           l3sp(j)%l3spRelValue = 0.0 
+           l3sp(j)%l3spRelPrecision = 0.0 
+           l3sp(j)%l3spImgValue = 0.0 
+           l3sp(j)%l3spImgPrecision = 0.0 
 
         ENDDO
 
@@ -769,6 +773,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.7  2001/03/03 01:38:02  ybj
+! with selected pressure levels
+!
 ! Revision 1.6  2001/03/03 00:45:44  ybj
 ! with selected pressure levels
 !
