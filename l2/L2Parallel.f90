@@ -743,7 +743,7 @@ contains ! ================================ Procedures ======================
         & 'precInds', ModuleName )
       ! Shouldn't need these really, but just in case
       oneResult%valInds = 0
-      oneResult%precInds = 0
+      if ( oneResult%gotPrecision ) oneResult%precInds = 0
       noStoredResults = AddStoredResultToDatabase ( storedResults, oneResult )
       thisResult => storedResults ( noStoredResults )
     end if
