@@ -16,6 +16,7 @@ module MLSSignals_M
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
+  use MLSStrings, only: LowerCase
   use MoreTree, only: Get_Boolean
   use Output_M, only: Output
   use String_Table, only: Display_String, Get_String
@@ -27,6 +28,44 @@ module MLSSignals_M
 
   implicit none
 
+!     c o n t e n t s
+!     - - - - - - - -
+
+! AddBandToDatabase               As the name implies
+! AddModuleToDatabase             ...
+! AddRadiometerToDatabase         ...
+! AddSignalToDatabase             ...
+! AddSpectrometerTypeToDatabase   ...
+! AreSignalsSuperset              ...
+! DestroyBandDatabase             ...
+! DestroyModuleDatabase           ...
+! DestroyRadiometerDatabase       ...
+! DestroySignal                   ...
+! DestroySignalDatabase           ...
+! DestroySpectrometerType         ...
+! DestroySpectrometerTypeDatabase ...
+! Dump                            ...
+! Dump_Bands                      ...
+! Dump_Radiometers                ...
+! Dump_Signals                    ...
+! Dump_Spectrometertypes          ...
+! GetAllModules                   Return tree nodes for all modules
+! GetBandName                     Given an index in the Bands database, place band name in string
+! GetModuleFromRadiometer         Returns module field from given radiometer given as database index
+! GetModuleIndex                  Returns the index in the module database, given module name in mixed case
+! GetModuleFromSignal             Returns module field from given signal given as database index
+! GetModuleName                   Given the index in the module database, returns module name in mixed case
+! GetNameOfSignal                 Given a signal object, this routine constructs a full signal name
+! GetRadiometerFromSignal         Returns radiometer field from given signal given as database index
+! GetRadiometerName               Given an index in the Radiometers database, place radiometer name
+! GetSignal                       Given the database index, this routine returns the signal data structure
+! GetSignalIndex                  Returns the index in the signals database, given signal name in mixed case
+! GetSignalName                   Given an index in the signals database, constructs full signal name.
+! GetSpectrometerTypeName         Place spectrometer name and number in string
+! IsModuleSpacecraft              Returns true if the module is really the spacecraft
+! MatchSignal                     Given an array Signals, find the matching one
+! MLSSignals                      Process the MLSSignals section of the L2 configuration file
+
   private ! So as not to re-export everything accessed by USE association.
 
   ! Public procedures and interfaces:
@@ -37,6 +76,7 @@ module MLSSignals_M
   public :: DestroySpectrometerType, DestroySpectrometerTypeDatabase, Dump
   public :: Dump_Bands, Dump_Radiometers, Dump_Signals, Dump_Spectrometertypes
   public :: GetAllModules, GetBandName, GetModuleFromRadiometer
+  public :: GetModuleIndex, GetSignalIndex
   public :: GetModuleFromSignal, GetModuleName, GetNameOfSignal
   public :: GetRadiometerFromSignal, GetRadiometerName, GetSignal, GetSignalName
   public :: GetSpectrometerTypeName, IsModuleSpacecraft, MatchSignal, MLSSignals
@@ -909,13 +949,60 @@ contains
     GetModuleFromSignal = signals(signal)%instrumentModule
   end function GetModuleFromSignal
 
+  ! ----------------------------------------------  GetModuleIndex  -----
+  subroutine GetModuleIndex(string_text, instrumentModule)
+    ! Returns the index in the module database, given module name in mixed case
+    ! Returns 0 if module name not found
+    ! (inverse function: GetModuleName)
+    integer, intent(out) :: instrumentModule
+    character (len=*), intent(in) :: string_text
+    ! Local variables
+    character (len=len(string_text))             :: string_test
+    if ( size(modules) < 1 ) then
+      instrumentModule = 0
+      return
+    endif
+    do instrumentModule=1, size(modules)
+      if ( modules(instrumentModule)%name > 0 ) then
+        call Get_String ( modules(instrumentModule)%name, string_test )
+        if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+          & return
+      endif
+    enddo
+    instrumentModule = 0
+  end subroutine GetModuleIndex
+
   ! ----------------------------------------------  GetModuleName  -----
   subroutine GetModuleName(instrumentModule, string_text)
     ! Given the index in the module database, returns module name in mixed case
+    ! (inverse function: GetModuleIndex)
     integer, intent(in) :: instrumentModule
     character (len=*), intent(out) :: string_text
     call Get_String ( modules(instrumentModule)%name, string_text )
   end subroutine GetModuleName
+
+  ! ----------------------------------------------  GetSignalIndex  -----
+  subroutine GetSignalIndex(string_text, signal_index)
+    ! Returns the index in the signals database, given signal name in mixed case
+    ! Returns 0 if signal name not found
+    ! (inverse function: GetSignalName)
+    integer, intent(out) :: signal_index
+    character (len=*), intent(in) :: string_text
+    ! Local variables
+    character (len=len(string_text))             :: string_test
+    if ( size(signals) < 1 ) then
+      signal_index = 0
+      return
+    endif
+    do signal_index=1, size(signals)
+      if ( signals(signal_index)%name > 0 ) then
+        call Get_String ( signals(signal_index)%name, string_test )
+        if ( LowerCase(trim(string_text)) == LowerCase(trim(string_test))) &
+          & return
+      endif
+    enddo
+    signal_index = 0
+  end subroutine GetSignalIndex
 
   ! --------------------------------------------  GetNameOfSignal  -----
   subroutine GetNameOfSignal ( Signal, String_text, NoRadiometer, NoBand, &
@@ -1243,6 +1330,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.41  2001/10/12 23:07:23  pwagner
+! Added two inverse functions to signal (module) indexes
+!
 ! Revision 2.40  2001/09/17 22:53:46  livesey
 ! Added Instrument variable
 !
