@@ -58,12 +58,13 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   integer, parameter :: UnnecessaryGrid = 5
   integer, parameter :: noModule=6
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=256) :: Id = &
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=*), parameter :: ModuleName= &
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
 contains ! =====     Public Procedures     =============================
   ! -----------------------------  CreateQtyTemplateFromMLSCFInfo  -----
@@ -692,6 +693,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.28  2001/04/26 02:45:25  vsnyder
+! Fix up CVS stuff
+!
 ! Revision 2.27  2001/04/26 02:44:17  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
