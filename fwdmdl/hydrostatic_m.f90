@@ -1,14 +1,14 @@
 MODULE hydrostatic_m
 !
-! This computes a hydrostatic function per L2PC method
-! and returns geometric heights
-! reference height is now an input
+! This computes a hydrostatic function per L2PC method and returns 
+! geometric heights reference height is now an input
 ! This is for EOS prototyping
 !
   use MLSCommon, only: RP, IP
   USE Geometry, ONLY: earthrada,earthradb
   USE get_eta_m, only: get_eta
   USE piq_int_m, only: piq_int
+!
   IMPLICIT NONE
 !
   Private
@@ -22,7 +22,7 @@ MODULE hydrostatic_m
   CONTAINS
 !---------------------------------------------------------------------------
   SUBROUTINE hydrostatic(lat,t_basis,t_coeffs,z_grid,z_ref,h_ref,t_grid, &
-                  h_grid,dhidtq,dhidzi,ddhdhdtq,z_surface)
+                      &  h_grid,dhidtq,dhidzi,ddhdhdtq,z_surface)
 !
 ! Inputs
 !
@@ -40,6 +40,7 @@ MODULE hydrostatic_m
   REAL(rp), INTENT(out) :: dhidzi(:) ! dh/dz on z_grid
   REAL(rp), INTENT(out) :: dhidtq(:,:) ! dh/dt on z_grid assuming dh/dt = 0.0
 !                 at the reference ellipse surface  equivalent to h_ref = 0.0
+
   REAL(rp), OPTIONAL, INTENT(out) :: ddhdhdtq(:,:) !ddh/dhdt on z_grid
   REAL(rp), OPTIONAL :: z_surface
 !
@@ -113,11 +114,15 @@ MODULE hydrostatic_m
 !
   CALL piq_int((/z_surf+0.01_rp/),t_basis,z_ref,piqa)
   CALL piq_int((/z_surf-0.01_rp/),t_basis,z_ref,piqb)
+
   dh_dz_s = boltz*SUM((RESHAPE(piqa,(/n_coeffs/))-RESHAPE(piqb,(/n_coeffs/))) &
           * t_coeffs) / (0.02_rp*g_ref)
   z_new = z_surf - (h_ref + h_calc) / dh_dz_s
-  iter = 1
+
+  iter = 0
   DO
+
+    iter = iter + 1
     IF(ABS(z_new - z_surf) < 0.0001_rp .OR. iter == 10) EXIT
     z_surf = z_new
     CALL piq_int((/z_surf/),t_basis,z_ref,piqa)
@@ -130,7 +135,7 @@ MODULE hydrostatic_m
     dh_dz_s = boltz*SUM((RESHAPE(piqa,(/n_coeffs/)) &
             - RESHAPE(piqb,(/n_coeffs/))) * t_coeffs) / (0.02_rp*g_ref)
     z_new = z_surf - (h_ref + h_calc) / dh_dz_s
-    iter = iter + 1
+
   END DO
 !
   DEALLOCATE(piqb)
@@ -165,6 +170,9 @@ MODULE hydrostatic_m
 END MODULE hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.1.2.3  2001/09/13 22:51:22  zvi
 ! Separating allocation stmts
 !

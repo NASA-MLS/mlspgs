@@ -17,7 +17,7 @@ MODULE two_d_hydrostatic_m
 !---------------------------------------------------------------------------
 
   SUBROUTINE two_d_hydrostatic(z_basis,p_basis,t_coeffs,z_refs,h_refs, &
-    &  z_grid,beta,t_grid,h_grid,dhidzij,dhidtlm,ddhdhdtl0)
+          &  z_grid,beta,t_grid,h_grid,dhidzij,dhidtlm,ddhdhdtl0)
 !
 ! inputs:
 !
@@ -46,6 +46,7 @@ MODULE two_d_hydrostatic_m
 ! internal stuff
 !
   INTEGER(ip) :: n_vert,z_coeffs,p_coeffs,i
+
   REAL(rp) :: c
   REAL(rp), ALLOCATABLE, DIMENSION(:) :: lats,t_prfl,h_prfl,dhidzi,red_phi_t
   REAL(rp), ALLOCATABLE, DIMENSION(:,:) :: ddhdhdtq,dhidtq
@@ -117,6 +118,9 @@ MODULE two_d_hydrostatic_m
 END MODULE two_d_hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:28  livesey
+! New forward model
+!
 ! Revision 1.1.2.3  2001/09/13 22:51:25  zvi
 ! Separating allocation stmts
 !
