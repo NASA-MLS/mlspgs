@@ -10,7 +10,7 @@ module TABLE_GENERATOR
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCF, only: ALLOCATE_MLSCF, MLSCF_T, MLSCFCELL_T
   use OUTPUT_M, only: OUTPUT
-  use STRING_TABLE, only: GET_STRING
+  use STRING_TABLE, only: GET_STRING, STRING_LENGTH
   use TRACE_M, only: DEPTH, TRACE_BEGIN, TRACE_END
   use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DUMP_TREE_NODE, NODE_ID, &
@@ -46,7 +46,8 @@ module TABLE_GENERATOR
 
 contains ! ====     Public Procedures     ==============================
 ! -----------------------------------------------  GENERATE_TABLE  -----
-  subroutine GENERATE_TABLE ( ROOT, HOW_MANY_SECTIONS, L2CF_DATA, UPCASE )
+  subroutine GENERATE_TABLE ( ROOT, HOW_MANY_SECTIONS, L2CF_DATA, UPCASE, &
+    &                         QUOTE )
   ! Traverse the abstract syntax tree starting at ROOT, which should
   ! be a N_CFS node (but we don't check).
     integer, intent(in) :: ROOT               ! Root of tree output by parser
@@ -56,8 +57,11 @@ contains ! ====     Public Procedures     ==============================
     type(mlscf_t), intent(inout) :: L2CF_DATA ! Tables
     logical, intent(in), optional :: UPCASE   ! Upper-case strings if present
                                               ! and true.
+    logical, intent(in), optional :: QUOTE    ! Quote strings if present
+                                              ! and true.
 
     integer :: I              ! Loop inductor
+    logical :: MYQUOTE
     logical :: MYUPCASE
     integer :: SON            ! Son of root
 
@@ -65,6 +69,8 @@ contains ! ====     Public Procedures     ==============================
     error = 0
     isection = 0
     if ( toggle(gen) ) call trace_begin ( 'GENERATE_TABLE', root )
+    myquote = .false.
+    if ( present(quote) ) myquote = quote
     myupcase = .false.
     if ( present(upcase) ) myupcase = upcase
     nullify ( l2cf_data%sections )
@@ -127,6 +133,7 @@ contains ! ====     Public Procedures     ==============================
 
     integer :: GSON1, GSON2   ! Sons of Son
     integer :: I              ! Index of son
+    integer :: L              ! Length of a string
     integer :: SON            ! A son of root
     integer :: TYPE           ! Type of son
     integer :: UNITS(2)       ! Units of son
@@ -196,6 +203,10 @@ contains ! ====     Public Procedures     ==============================
           cell(ic)%units = phyq_dimensionless
         case ( n_string )
           call get_string ( sub_rosa(son), cell(ic)%charValue, myupcase )
+          if ( .not. myquote ) then
+            l = string_length(sub_rosa(son))
+            cell(ic)%charValue(1:l) = cell(ic)%charValue(2:l-1)
+          end if
           cell(ic)%type = str_value
           cell(ic)%units = phyq_dimensionless
         case default
@@ -213,8 +224,11 @@ contains ! ====     Public Procedures     ==============================
   ! Fill a cell's RHS from expr
     integer, intent(in) :: ROOT              ! Root of subtree
     type(MlscfCell_T), intent(inout) :: CELL ! Cell to fill
+
+    integer :: L                             ! Length of a string
     integer :: UNITS(2)                      ! Output of expr
     double precision :: VALUE(2)             ! Output of expr
+
     call expr ( root, units, value, cell%type )
     if ( cell%type == label ) then
       call get_string ( sub_rosa(root), cell%charValue, myupcase )
@@ -225,6 +239,10 @@ contains ! ====     Public Procedures     ==============================
       cell%type = enum_value
     else if ( cell%type == str_value ) then
       call get_string ( sub_rosa(root), cell%charValue, myupcase )
+      if ( .not. myquote ) then
+        l = string_length(sub_rosa(son))
+        cell%charValue(1:l) = cell%charValue(2:l-1)
+      end if
       cell%type = str_value
     else
       cell%units = units(1)
@@ -314,6 +332,9 @@ contains ! ====     Public Procedures     ==============================
 end module TABLE_GENERATOR
 
 ! $Log$
+! Revision 2.1  2000/09/11 19:33:53  vsnyder
+! Added an optional argument (default .false.) to request quoting strings.
+!
 ! Revision 2.0  2000/09/05 17:41:51  dcuddy
 ! Change revision to 2.0
 !
