@@ -12,7 +12,7 @@ module Geometry
   private
 
   public :: Earth_Axis_Ratio_Squared, EarthRadA, EarthRadB, EarthSurfaceGPH
-  public :: GM, G0, J2, J4, W
+  public :: GM, G0, J2, J4, SecPerYear, W
 
   public :: GeodToGeocLat
 
@@ -24,8 +24,8 @@ module Geometry
 
   ! Gravity-related terms.
 
-  real(r8), parameter :: G0 = 9.80665          ! Nominal little g ms-2
   real(rp), parameter :: GM = 3.98600436e14_rp ! m^3/sec^2
+  real(r8), parameter :: G0 = 9.80665          ! Nominal little g ms-2
 
   ! These are the 1980 reference geoid values.
 
@@ -63,7 +63,7 @@ contains ! ------------------------------- Subroutines and functions ----
     use Units, only: Deg2Rad, PI
 
     ! Arguments
-    real (r8), intent(IN) :: geodLat
+    real (r8), intent(in) :: geodLat
 
     ! Executable code, use special method for high latitudes.
     if ( geodLat > 89.0 ) then
@@ -84,6 +84,9 @@ contains ! ------------------------------- Subroutines and functions ----
 end module Geometry
 
 ! $Log$
+! Revision 2.12  2003/01/15 02:45:50  vsnyder
+! Make SecPerYear public (oops!)
+!
 ! Revision 2.11  2003/01/15 02:35:08  vsnyder
 ! Add SecPerYear, move a USE to procedure scope
 !
