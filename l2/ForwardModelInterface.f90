@@ -23,8 +23,7 @@ module ForwardModelInterface
   ! We're going to use lots of things from init_tables_module, so let's sort
   ! them into some sort of order
   ! First admin stuff
-  use Init_Tables_Module, only: FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
-    & LIT_INDICES, SPEC_INDICES
+  use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
   ! Now fields
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, &
@@ -65,12 +64,8 @@ module ForwardModelInterface
 
   implicit none
   private
-  public :: ConstructForwardModelConfig, Dump, ForwardModel, &
+  public :: ConstructForwardModelConfig, ForwardModel, &
     ForwardModelGlobalSetup
-
-  interface Dump
-    module procedure MyDump_ForwardModelConfigs
-  end interface
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -124,17 +119,17 @@ contains ! =====     Public Procedures     =============================
       case ( f_antennaPatterns )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         call open_antenna_patterns_file ( fileName, lun )
-        call read_antenna_patterns_file ( lun, spec_indices )
+        call read_antenna_patterns_file ( lun )
         call close_antenna_patterns_file ( lun )
       case ( f_filterShapes )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         call open_filter_shapes_file ( fileName, lun )
-        call read_filter_shapes_file ( lun, spec_indices )
+        call read_filter_shapes_file ( lun )
         call close_filter_shapes_file ( lun )
       case ( f_pointingGrids )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
         call open_pointing_grid_file ( fileName, lun )
-        call read_pointing_grid_file ( lun, spec_indices )
+        call read_pointing_grid_file ( lun )
         call close_pointing_grid_file ( lun )
       case ( f_l2pc )
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
@@ -281,7 +276,7 @@ contains ! =====     Public Procedures     =============================
         do j = 1, nsons(son)-1
           call get_string ( sub_rosa(subtree(j+1,son)), signalString, &
             & strip=.true.)
-          call parse_Signal ( signalString, signalInds, spec_indices, &
+          call parse_Signal ( signalString, signalInds, &
             & tree_index=son, sideband=sideband, channels=channels )
           if ( .not. associated(signalInds) ) then ! A parse error occurred
             error = max(error,1)
@@ -1436,15 +1431,12 @@ contains ! =====     Public Procedures     =============================
     end select
   end subroutine AnnounceError
 
-  ! ---------------------------------  MyDump_ForwardModelConfigs  -----
-  subroutine MyDump_ForwardModelConfigs ( ForwardModelConfigs )
-    type(forwardModelConfig_T), pointer, dimension(:) :: ForwardModelConfigs
-    call dump ( forwardModelConfigs, lit_indices )
-  end subroutine MyDump_ForwardModelConfigs
-
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.116  2001/04/26 02:44:17  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.115  2001/04/26 00:06:58  livesey
 ! Added l2pc reading to global setup
 !
