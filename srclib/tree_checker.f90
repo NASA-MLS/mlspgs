@@ -22,10 +22,10 @@ module TREE_CHECKER
     &                           FIELD_LAST, LIT_INDICES, PHYQ_DIMENSIONLESS, &
     &                           SECTION_FIRST,SECTION_INDICES, SECTION_LAST, &
     &                           SECTION_ORDERING, T_BOOLEAN
-  use INTRINSIC, only: ALL_FIELDS, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
+  use INTRINSIC, only: ALL_FIELDS, NO_ARRAY, NO_CHECK_EQ, NO_DUP, NO_POSITIONAL, &
     &                  PHYQ_INVALID, REQ_FLD
   use LEXER_CORE, only: PRINT_SOURCE
-  use MoreTree, only: StartErrorMessage
+  use MoreTree, only: Scalar, StartErrorMessage
   use OUTPUT_M, only: NEWLINE, OUTPUT
   use STRING_TABLE, only: DISPLAY_STRING, FLOAT_VALUE
   use TOGGLES, only: CON, TOGGLE
@@ -44,7 +44,8 @@ module TREE_CHECKER
 
 ! Error codes for "announce_error"
   integer, private, parameter :: ALREADY_DECLARED = 1
-  integer, private, parameter :: INCONSISTENT_TYPES = ALREADY_DECLARED + 1
+  integer, private, parameter :: ARRAY_NOT_ALLOWED = ALREADY_DECLARED + 1
+  integer, private, parameter :: INCONSISTENT_TYPES = ARRAY_NOT_ALLOWED + 1
   integer, private, parameter :: INCONSISTENT_UNITS = INCONSISTENT_TYPES + 1
   integer, private, parameter :: MISSING_FIELD = INCONSISTENT_UNITS + 1
   integer, private, parameter :: NO_CODE_FOR = MISSING_FIELD + 1
@@ -166,6 +167,10 @@ contains ! ====     Public Procedures     ==============================
     case ( already_declared )
       call dump_tree_node ( where, 0 )
       call output ( ' is already defined.', advance='yes' )
+    case ( array_not_allowed )
+      call output ( 'an array value is not allowed for the "')
+      call display_string ( field_indices(fields(1)) )
+      call output ( '" field.', advance='yes' )
     case ( inconsistent_types )
       call output ( 'types are not consistent.', advance = 'yes' )
     case ( inconsistent_units )
@@ -293,6 +298,7 @@ contains ! ====     Public Procedures     ==============================
     integer :: FIELD_LIT ! f_... for a field
     integer :: I         ! Index of son of "root"
     integer :: LOOK_FOR  ! Look for an enum_value or a spec?
+    logical :: NO_ARRAY_ALLOWED ! Field is n_field_type and is required to be scalar
     integer :: SON1, SON ! Sons of "root"
     integer :: SPEC_DECL ! Tree node of the spec's declaration
 
@@ -305,6 +311,7 @@ contains ! ====     Public Procedures     ==============================
         call announce_error ( son1, not_field_of, &
           & fields=(/ spec_decl /) )
       else
+        no_array_allowed = mod(decoration(field)/no_array,2) /= 0
         if ( node_id(field) == n_field_type ) then
           look_for = enum_value
         else ! node_id(field) == n_field_spec or node_id(field) == n_dot
@@ -323,6 +330,8 @@ contains ! ====     Public Procedures     ==============================
           son = subtree(i,root)
           call assignBody ( son )
         end do ! i = 2, nsons(root)
+        if ( no_array_allowed .and. .not. scalar(root) ) &
+          & call announce_error ( root, array_not_allowed, fields=(/ field_lit /) )
       end if
     else
       call announce_error ( son1, not_name )
@@ -351,7 +360,7 @@ contains ! ====     Public Procedures     ==============================
           if ( test_type == type_decl ) then  ! right kind of spec
             field_ref = decl%tree
             call decorate ( gson, field_ref ) ! decorate label_ref with tree
-m:              do j = 3, nsons(field)
+m:          do j = 3, nsons(field)
             ! This loop assumes there is only one field of the required
             ! name.  If it is desired to search through several fields,
             ! it will be necessary to have a stack to keep track of the
@@ -958,8 +967,8 @@ m:              do j = 3, nsons(field)
       else
         call decorate ( son, spec_decl%tree )
         flags = decoration(spec_decl%tree)
-        all_fields_flag = mod(flags/all_fields,2) .ne. 0
-        no_dup_flag = mod(flags/no_dup,2) .ne. 0
+        all_fields_flag = mod(flags/all_fields,2) /= 0
+        no_dup_flag = mod(flags/no_dup,2) /= 0
         got = .false.
         do i = 2, nsons(root)
           son = subtree(i,root)
@@ -1002,6 +1011,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.23  2004/06/23 02:12:24  vsnyder
+! Add Check_Type
+!
 ! Revision 1.22  2004/05/29 02:42:16  vsnyder
 ! Rearrange function definition stuff
 !
