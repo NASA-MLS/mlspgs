@@ -149,12 +149,34 @@
       INTEGER FUNCTION PGS_MET_Remove( )
         PGS_MET_Remove=-99
       END FUNCTION PGS_MET_Remove
+
+! The next two functions are not in SDPToolkit.f90 yet. However 
+! he5lib/MLSFiles.f90 declares them external and calls them, so they 
+! need to be in here. Right now they do nothing  -- they are here to prevent
+! link-time errors. If a person was going to actually _use_ them, they would
+! have to work! 
+      INTEGER FUNCTION PGS_MET_SFStart(filename,access,mls_sfstart)
+        character(len=*),intent(in)::filename
+        integer,intent(in)::access, mls_sfstart
+        PGS_MET_SFStart=0
+      END FUNCTION PGS_MET_SFStart
+
+      INTEGER FUNCTION PGS_MET_SFEnd(sdid)
+        integer,intent(in)::sdid
+        PGS_MET_SFEnd=0
+      END FUNCTION PGS_MET_SFEnd
+      
+
 !=============================================================================
 !END MODULE SDPToolkitSubstitute
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.6  2002/04/18 15:41:26  hcp
+! Added two functions that have appeared in he5lib/MLSFiles.f90 . They
+! don't work, but at least you don't get link errors.
+!
 ! Revision 2.5  2001/05/24 18:39:37  vsnyder
 ! Give a value to every intent(out) argument, so as not to trigger the
 ! undefined-variable stop when running with maximum run-time checks.
