@@ -19,8 +19,8 @@ module GLOBAL_SETTINGS
   use TOGGLES, only: GEN, LEVELS, SWITCHES, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
   use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, SUB_ROSA, SUBTREE
-  use VGrid, only: CreateVGridFromMLSCFInfo, Dump
-  use VGridsDatabase, only: AddVGridToDatabase, VGrid_T
+  use VGrid, only: CreateVGridFromMLSCFInfo
+  use VGridsDatabase, only: AddVGridToDatabase, Dump, VGrid_T
   use TREE_TYPES, only: N_EQUAL, N_NAMED
 
   implicit NONE
@@ -125,6 +125,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.19  2001/04/26 00:07:33  livesey
+! Stuff to support reading of l2pc files
+!
 ! Revision 2.18  2001/04/24 00:31:42  vsnyder
 ! Finish adding 'time' command
 !

@@ -11,10 +11,9 @@ module TREE_WALKER
   use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
   use Global_Settings, only: Set_Global_Settings
   use GriddedData, only: GriddedData_T
-  use Init_Tables_Module, only: Field_Indices, Lit_Indices, &
-    & Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, Z_GLOBALSETTINGS, Z_JOIN, &
-    & Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, Z_READAPRIORI, Z_RETRIEVE, &
-    & Z_SPECTROSCOPY
+  use Init_Tables_Module, only: Z_CHUNKDIVIDE,  Z_CONSTRUCT, Z_FILL, &
+    & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
+    & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
   use JOIN, only: MLSL2Join
   use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T
   use L2GPData, only: DestroyL2GPDatabase, L2GPData_T
@@ -48,12 +47,13 @@ module TREE_WALKER
 
   public :: WALK_TREE_TO_DO_MLS_L2
 
-!---------------------------- RCS Ident Info ---------------------------
-  character (len=256) :: Id = &
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
        "$Id$"
-  character (len=*), parameter :: ModuleName= &
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
-!-----------------------------------------------------------------------
+!---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
@@ -105,10 +105,10 @@ contains ! ====     Public Procedures     ==============================
         call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
           & l2gpDatabase, l2pcDatabase )
       case ( z_mlsSignals )
-        call MLSSignals ( son, field_indices )
+        call MLSSignals ( son )
         if ( index(switches,'tps') /= 0 ) call test_parse_signals
       case ( z_spectroscopy )
-        call spectroscopy ( son, lit_indices )
+        call spectroscopy ( son )
       case ( z_readapriori )
       	call read_apriori ( son , l2gpDatabase, l2auxDatabase, griddedData)
       case ( z_mergeapriori )
@@ -194,6 +194,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.45  2001/04/26 00:08:02  livesey
+! Stuff to support reading of l2pc files
+!
 ! Revision 2.44  2001/04/25 21:54:16  livesey
 ! Added canDoL2PC flag to join
 !

@@ -4,7 +4,7 @@ module DUMPER
 
   use DUMP_0, only: DUMP
   use HGRID, only: HGRID_T
-  use INIT_TABLES_MODULE, only: LIT_INDICES, PHYQ_INDICES
+  use Intrinsic, only: LIT_INDICES, PHYQ_INDICES
   use MLSCommon, only: MLSCHUNK_T
   use MLSSignals_m, only: signals, DUMP, GetRadiometerName, GetModuleName
   use OUTPUT_M, only: OUTPUT
@@ -192,6 +192,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.9  2001/04/10 23:44:44  vsnyder
+! Improve 'dump'
+!
 ! Revision 2.8  2001/03/28 03:03:38  vsnyder
 ! Remove use, only's that aren't used
 !
