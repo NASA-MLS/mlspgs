@@ -15,7 +15,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use DUMP_0, only: DUMP
   use Gemm_M, only: GEMM
   use Gemv_M, only: GEMV
-  use MLSCommon, only: RM
+  use MLSCommon, only: RM, RV, R4, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: OUTPUT
   use VectorsModule, only: M_LinAlg
@@ -24,10 +24,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   private
   public :: Add_Matrix_Blocks, CheckBlocks, CheckIntegrity, Assignment(=), CholeskyFactor
   public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
-  public :: ColumnScale_0, Col_L1, CopyBlock, CreateBlock, CreateBlock_0
+  public :: Col_L1, CopyBlock, CreateBlock, CreateBlock_0
   public :: DenseCholesky, Densify, DestroyBlock, DestroyBlock_0, Dump
-  public :: GetDiagonal, GetDiagonal_0, GetMatrixElement, GetMatrixElement_0
-  public :: GetVectorFromColumn, GetVectorFromColumn_0
+  public :: GetDiagonal, GetMatrixElement, GetMatrixElement_0
+  public :: GetVectorFromColumn
   public :: InvertCholesky, InvertCholesky_0
   public :: InvertDenseCholesky, InvertDenseCholesky_0
   public :: M_Absent, M_Banded, M_Column_Sparse, M_Full, M_Unknown
@@ -36,13 +36,12 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   public :: Multiply, MultiplyMatrix_XY, MultiplyMatrix_XY_0
   public :: MultiplyMatrix_XY_T, MultiplyMatrix_XY_T_0
   public :: MultiplyMatrix_XTY_0
-  public :: MultiplyMatrixVector, MultiplyMatrixVector_0
-  public :: MultiplyMatrixVectorNoT, MultiplyMatrixVectorNoT_0
+  public :: MultiplyMatrixVector
+  public :: MultiplyMatrixVectorNoT
   public :: operator(+), operator(.TX.), ReflectMatrix, RowScale
-  public :: RowScale_0, ScaleBlock, SolveCholesky, SolveCholeskyM_0
-  public :: SolveCholeskyV_0, Sparsify, Spill, Spill_0, SubBlockLength
-  public :: TransposeMatrix, UpdateDiagonal, UpdateDiagonal_0
-  public :: UpdateDiagonalVec_0
+  public :: ScaleBlock, SolveCholesky, SolveCholeskyM_0
+  public :: Sparsify, Spill, Spill_0, SubBlockLength
+  public :: TransposeMatrix, UpdateDiagonal
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -63,7 +62,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface ColumnScale
-    module procedure ColumnScale_0
+    module procedure ColumnScale_0_r4, ColumnScale_0_r8
   end interface
 
   interface CreateBlock
@@ -79,7 +78,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface GetDiagonal
-    module procedure GetDiagonal_0
+    module procedure GetDiagonal_0_r4, GetDiagonal_0_r8
   end interface
 
   interface GetMatrixElement
@@ -87,7 +86,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface GetVectorFromColumn
-    module procedure GetVectorFromColumn_0
+    module procedure GetVectorFromColumn_0_r4, GetVectorFromColumn_0_r8
   end interface
 
   interface InvertCholesky
@@ -111,15 +110,16 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface Multiply
-    module procedure MultiplyMatrix_XTY_0, MultiplyMatrixVector_0
+    module procedure MultiplyMatrix_XTY_0, &
+      & MultiplyMatrixVector_0_r4, MultiplyMatrixVector_0_r8
   end interface
 
   interface MultiplyMatrixVector ! A^T V
-    module procedure MultiplyMatrixVector_0
+    module procedure MultiplyMatrixVector_0_r4, MultiplyMatrixVector_0_r8
   end interface
 
   interface MultiplyMatrixVectorNoT ! A V
-    module procedure MultiplyMatrixVectorNoT_0
+    module procedure MultiplyMatrixVectorNoT_0_r4, MultiplyMatrixVectorNoT_0_r8
   end interface
 
   interface MultiplyMatrix_XY
@@ -134,12 +134,17 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     module procedure MultiplyMatrix_XTY_0
   end interface
 
+  interface NewMultiplyMatrixVector_0 ! (see .tx. below)
+    module procedure NewMultiplyMatrixVector_0_r4, NewMultiplyMatrixVector_0_r8
+  end interface
+
   interface operator (+)
     module procedure Add_Matrix_Blocks_Unscaled
   end interface
 
   interface operator ( .TX. ) ! A^T * B
-    module procedure NewMultiplyMatrix_XTY_0, NewMultiplyMatrixVector_0
+    module procedure NewMultiplyMatrix_XTY_0, &
+      & NewMultiplyMatrixVector_0_r4, NewMultiplyMatrixVector_0_r8
   end interface
 
   interface ReflectMatrix
@@ -147,11 +152,16 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface RowScale
-    module procedure RowScale_0
+    module procedure RowScale_0_r4, RowScale_0_r8
   end interface
 
   interface SolveCholesky
-    module procedure SolveCholeskyM_0, SolveCholeskyV_0, SolveCholeskyA_0
+    module procedure SolveCholeskyM_0, SolveCholeskyV_0_r4, SolveCholeskyV_0_r8, &
+      & SolveCholeskyA_0_r4, SolveCholeskyA_0_r8
+  end interface
+
+  interface Sparsify
+    module procedure Sparsify_r4, Sparsify_r8
   end interface
 
   interface Spill
@@ -163,7 +173,8 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface UpdateDiagonal
-    module procedure UpdateDiagonal_0, UpdateDiagonalVec_0
+    module procedure UpdateDiagonal_0_r8, UpdateDiagonalVec_0_r8, &
+      & UpdateDiagonal_0_r4, UpdateDiagonalVec_0_r4
   end interface
 
 !---------------------------- RCS Ident Info -------------------------------
@@ -225,7 +236,7 @@ contains ! =====     Public Procedures     =============================
   function Add_Matrix_Blocks ( XB, YB, SCALE ) result ( ZB )
   ! ZB = XB + [SCALE *] YB
     type(MatrixElement_T), intent(in), target :: XB, YB
-    real(rm), intent(in), optional :: SCALE
+    real(r8), intent(in), optional :: SCALE
     type(MatrixElement_T) :: ZB
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
@@ -235,7 +246,7 @@ contains ! =====     Public Procedures     =============================
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K, L, N
-    real(rm) :: S                            ! My copy of Scale
+    real(r8) :: S                            ! My copy of Scale
     type(MatrixElement_T), pointer :: X, Y
     real(kind(zb%values)), pointer :: Z(:,:) ! May be used if Y is col-sparse/banded
     real(kind(zb%values)), pointer :: W(:,:) ! May be used if X is banded
@@ -802,12 +813,12 @@ contains ! =====     Public Procedures     =============================
     z%nRows = x%nRows; z%nCols = x%nCols
   end subroutine CloneBlock
 
-  ! -------------------------------------------------  ColumnScale_0  -----
-  subroutine ColumnScale_0 ( X, V, NEWX ) ! Z = X V where V is a diagonal
+  ! -------------------------------------------------  ColumnScale_0_r4  -----
+  subroutine ColumnScale_0_r4 ( X, V, NEWX ) ! Z = X V where V is a diagonal
   !                                         matrix represented by a vector
   !                                         and Z is either X or NEWX.
     type(MatrixElement_T), intent(inout), target :: X
-    real(rm), intent(in), dimension(:) :: V
+    real(r4), intent(in), dimension(:) :: V
     type(MatrixElement_T), intent(inout), target, optional :: NEWX ! intent(inout)
       !                            so that the destroyBlock in cloneBlock
       !                            gets a chance to clean up surds
@@ -836,7 +847,43 @@ contains ! =====     Public Procedures     =============================
         z%values(:,i) = x%values(:,i) * v(i)
       end do
     end select
-  end subroutine ColumnScale_0
+  end subroutine ColumnScale_0_r4
+
+  ! -------------------------------------------------  ColumnScale_0_r8  -----
+  subroutine ColumnScale_0_r8 ( X, V, NEWX ) ! Z = X V where V is a diagonal
+  !                                         matrix represented by a vector
+  !                                         and Z is either X or NEWX.
+    type(MatrixElement_T), intent(inout), target :: X
+    real(r8), intent(in), dimension(:) :: V
+    type(MatrixElement_T), intent(inout), target, optional :: NEWX ! intent(inout)
+      !                            so that the destroyBlock in cloneBlock
+      !                            gets a chance to clean up surds
+    type(MatrixElement_T), pointer :: Z
+
+    integer :: I
+
+    if ( present(newx) ) then
+      z => newx
+      call copyBlock ( z, x )
+    else
+      z => x
+    end if
+    select case ( z%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do i = 1, z%nCols
+        z%values(z%r2(i-1)+1:z%r2(i),1) = x%values(z%r2(i-1)+1:z%r2(i),1) * v(i)
+      end do
+    case ( M_Column_Sparse )
+      do i = 1, z%nCols
+        z%values(z%r1(i-1)+1:z%r1(i),1) = x%values(z%r1(i-1)+1:z%r1(i),1) * v(i)
+      end do
+    case ( M_Full )
+      do i = 1, z%nCols
+        z%values(:,i) = x%values(:,i) * v(i)
+      end do
+    end select
+  end subroutine ColumnScale_0_r8
 
   ! -----------------------------------------------------  Col_L1  -----
   real(rm) function Col_L1 ( X, N )
@@ -1032,12 +1079,12 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyBlock_0
 
-  ! ----------------------------------------------  GetDiagonal_0  -----
-  subroutine GetDiagonal_0 ( B, X, SquareRoot )
+  ! ----------------------------------------------  GetDiagonal_0_r4  -----
+  subroutine GetDiagonal_0_r4 ( B, X, SquareRoot )
   ! Get the diagonal elements of B into X.  Return the square root of the
   ! diagonal elements if SquareRoot is present and true.
     type(MatrixElement_T), intent(in) :: B
-    real(rm), dimension(:), intent(out) :: X
+    real(r4), dimension(:), intent(out) :: X
     logical, intent(in), optional :: SquareRoot
 
     integer :: I, J, N
@@ -1047,13 +1094,13 @@ contains ! =====     Public Procedures     =============================
       & 'Array "X" to small in GetDiagonal_0' )
     select case ( b%kind )
     case ( M_Absent )
-      x = 0.0_rm
+      x = 0.0_r4
     case ( M_Banded )
       do i = 1, n
         if ( b%r1(i) <= i .and. b%r1(i) + b%r2(i) - b%r2(i-1) > i ) then
           x(i) = b%values(b%r2(i-1)+i-b%r1(i)+1,1)
         else
-          x(i) = 0.0_rm
+          x(i) = 0.0_r4
         end if
       end do
     case ( M_Column_Sparse )
@@ -1073,13 +1120,62 @@ contains ! =====     Public Procedures     =============================
     if ( present(squareRoot) ) then
       if ( squareRoot ) then
         do i = 1, n
-          if ( x(i) < 0.0_rm ) call MLSMessage ( MLSMSG_Error, moduleName, &
+          if ( x(i) < 0.0_r4 ) call MLSMessage ( MLSMSG_Error, moduleName, &
             & "Negative diagonal element in GetDiagonal_0 and SquareRoot is true" )
           x(i) = sqrt(x(i))
         end do
       end if
     end if
-  end subroutine GetDiagonal_0
+  end subroutine GetDiagonal_0_r4
+
+  ! ----------------------------------------------  GetDiagonal_0_r8  -----
+  subroutine GetDiagonal_0_r8 ( B, X, SquareRoot )
+  ! Get the diagonal elements of B into X.  Return the square root of the
+  ! diagonal elements if SquareRoot is present and true.
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(out) :: X
+    logical, intent(in), optional :: SquareRoot
+
+    integer :: I, J, N
+
+    n = min(b%nRows,b%nCols)
+    if ( n > size(x) ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Array "X" to small in GetDiagonal_0' )
+    select case ( b%kind )
+    case ( M_Absent )
+      x = 0.0_r8
+    case ( M_Banded )
+      do i = 1, n
+        if ( b%r1(i) <= i .and. b%r1(i) + b%r2(i) - b%r2(i-1) > i ) then
+          x(i) = b%values(b%r2(i-1)+i-b%r1(i)+1,1)
+        else
+          x(i) = 0.0_r8
+        end if
+      end do
+    case ( M_Column_Sparse )
+      x = 0.0_r8
+      do j = b%r1(i-1)+1, b%r1(i)
+        if ( b%r2(j) == i ) then
+          x(i) = b%values(j,1)
+          exit ! j loop
+        end if
+        if ( b%r2(j) > i ) exit ! j loop
+      end do ! j
+    case ( M_Full )
+      do i = 1, n
+        x(i) = b%values(i,i)
+      end do
+    end select
+    if ( present(squareRoot) ) then
+      if ( squareRoot ) then
+        do i = 1, n
+          if ( x(i) < 0.0_r8 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+            & "Negative diagonal element in GetDiagonal_0 and SquareRoot is true" )
+          x(i) = sqrt(x(i))
+        end do
+      end if
+    end if
+  end subroutine GetDiagonal_0_r8
 
   ! -----------------------------------------  GetMatrixElement_0  -----
   real(rm) function GetMatrixElement_0 ( Matrix, Row, Col )
@@ -1111,12 +1207,12 @@ contains ! =====     Public Procedures     =============================
     end select
   end function GetMatrixElement_0
 
-  ! --------------------------------------  GetVectorFromColumn_0  -----
-  subroutine GetVectorFromColumn_0 ( B, Column, X )
+  ! --------------------------------------  GetVectorFromColumn_0_r4  -----
+  subroutine GetVectorFromColumn_0_r4 ( B, Column, X )
   ! Fill the vector X from "Column" of B.
     type(MatrixElement_T), intent(in) :: B
     integer, intent(in) :: Column
-    real(rm), dimension(:), intent(out) :: X
+    real(r4), dimension(:), intent(out) :: X
 
     if ( column < 1 .or. column > b%nCols ) call MLSMessage ( MLSMSG_Error, &
       & moduleName, '"Column" is out-of-range in GetVectorFromColumn_0' )
@@ -1124,19 +1220,46 @@ contains ! =====     Public Procedures     =============================
       & moduleName, '"X" is too small in GetVectorFromColumn_0' )
     select case ( b%kind )
     case ( M_Absent )
-      x = 0.0_rm
+      x = 0.0_r4
     case ( M_Banded )
-      x = 0.0_rm
+      x = 0.0_r4
       x(b%r1(column):b%r1(column)+b%r2(column)-b%r2(column-1)-1) = &
         b%values(b%r2(column-1)+1:b%r2(column),column)
     case ( M_Column_Sparse )
-      x = 0.0_rm
+      x = 0.0_r4
       x(b%r2(b%r1(column-1)+1:b%r1(column))) = &
         b%values(b%r1(column-1)+1:b%r1(column),column)
     case ( M_Full )
       x(1:b%nRows) = b%values(1:b%nRows,column)
     end select
-  end subroutine GetVectorFromColumn_0
+  end subroutine GetVectorFromColumn_0_r4
+
+  ! --------------------------------------  GetVectorFromColumn_0_r8  -----
+  subroutine GetVectorFromColumn_0_r8 ( B, Column, X )
+  ! Fill the vector X from "Column" of B.
+    type(MatrixElement_T), intent(in) :: B
+    integer, intent(in) :: Column
+    real(r8), dimension(:), intent(out) :: X
+
+    if ( column < 1 .or. column > b%nCols ) call MLSMessage ( MLSMSG_Error, &
+      & moduleName, '"Column" is out-of-range in GetVectorFromColumn_0' )
+    if ( size(x) < b%nRows )  call MLSMessage ( MLSMSG_Error, &
+      & moduleName, '"X" is too small in GetVectorFromColumn_0' )
+    select case ( b%kind )
+    case ( M_Absent )
+      x = 0.0_r8
+    case ( M_Banded )
+      x = 0.0_r8
+      x(b%r1(column):b%r1(column)+b%r2(column)-b%r2(column-1)-1) = &
+        b%values(b%r2(column-1)+1:b%r2(column),column)
+    case ( M_Column_Sparse )
+      x = 0.0_r8
+      x(b%r2(b%r1(column-1)+1:b%r1(column))) = &
+        b%values(b%r1(column-1)+1:b%r1(column),column)
+    case ( M_Full )
+      x(1:b%nRows) = b%values(1:b%nRows,column)
+    end select
+  end subroutine GetVectorFromColumn_0_r8
 
   ! -------------------------------------------  InvertCholesky_0  -----
   subroutine InvertCholesky_0 ( U, UI, Square, Status )
@@ -1308,7 +1431,7 @@ contains ! =====     Public Procedures     =============================
   ! Return the magnitude of the element in B that has the largest magnitude.
     type(MatrixElement_T), intent(in) :: B
     if ( b%kind == m_absent ) then
-      maxAbsVal_0 = 0.0
+      maxAbsVal_0 = 0.0_rm
     else
       maxAbsVal_0 = maxval(abs(b%values))
     end if
@@ -2085,21 +2208,21 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine MultiplyMatrix_XTY_0
 
-  ! -------------------------------------  MultiplyMatrixVector_0  -----
-  subroutine MultiplyMatrixVector_0 ( A, V, P, UPDATE, SUBTRACT, MASK )
+  ! -------------------------------------  MultiplyMatrixVector_0_r4  -----
+  subroutine MultiplyMatrixVector_0_r4 ( A, V, P, UPDATE, SUBTRACT, MASK )
   ! P = A^T V if UPDATE is absent or false.
   ! P = P + A^T V if UPDATE is present and true and SUBTRACT is absent or false.
   ! P = P - A^T V if UPDATE is present and true and SUBTRACT is present and true.
   ! If MASK is present and associated, columns of A that correspond to elements
   ! of MASK that have a nonzero M_LinAlg bit are not multiplied.
     type(MatrixElement_T), intent(in) :: A
-    real(rm), dimension(:), intent(in) :: V
-    real(rm), dimension(:), intent(inout) :: P
+    real(r4), dimension(:), intent(in) :: V
+    real(r4), dimension(:), intent(inout) :: P
     logical, optional, intent(in) :: UPDATE
     logical, optional, intent(in) :: SUBTRACT
     character, optional, pointer, dimension(:) :: MASK ! intent(in)
 
-    real(rm) :: AV                 ! Product of a column of A and the vector V
+    real(r8) :: AV                 ! Product of a column of A and the vector V
     integer :: I, M, N             ! Subscripts and loop inductors
     character, pointer, dimension(:) :: MY_MASK
     logical :: My_Sub, My_update
@@ -2118,7 +2241,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(mask) ) my_mask => mask
     s = 1.0_rm
     if ( my_sub ) s = -1.0_rm
-    if ( .not. my_update ) p = 0.0_rm
+    if ( .not. my_update ) p = 0.0_r4
     select case ( a%kind )
     case ( M_Absent )
     case ( M_Banded )
@@ -2143,7 +2266,7 @@ contains ! =====     Public Procedures     =============================
           if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
       cycle
         end if
-        av = 0.0_rm
+        av = 0.0_r8
         do n = a%r1(i-1)+1, a%r1(i)
           av = av + a%values(n,1) * v(a%r2(n))
         end do ! n
@@ -2165,18 +2288,100 @@ contains ! =====     Public Procedures     =============================
 !       p = p + s * matmul(transpose(a%values),v)
       end if
     end select
-  end subroutine MultiplyMatrixVector_0
+  end subroutine MultiplyMatrixVector_0_r4
 
-  ! ----------------------------------  MultiplyMatrixVectorNoT_0  -----
-  subroutine MultiplyMatrixVectorNoT_0 ( B, V, P, UPDATE, DoDiag, SUBTRACT )
+  ! -------------------------------------  MultiplyMatrixVector_0_r8  -----
+  subroutine MultiplyMatrixVector_0_r8 ( A, V, P, UPDATE, SUBTRACT, MASK )
+  ! P = A^T V if UPDATE is absent or false.
+  ! P = P + A^T V if UPDATE is present and true and SUBTRACT is absent or false.
+  ! P = P - A^T V if UPDATE is present and true and SUBTRACT is present and true.
+  ! If MASK is present and associated, columns of A that correspond to elements
+  ! of MASK that have a nonzero M_LinAlg bit are not multiplied.
+    type(MatrixElement_T), intent(in) :: A
+    real(r8), dimension(:), intent(in) :: V
+    real(r8), dimension(:), intent(inout) :: P
+    logical, optional, intent(in) :: UPDATE
+    logical, optional, intent(in) :: SUBTRACT
+    character, optional, pointer, dimension(:) :: MASK ! intent(in)
+
+    real(r8) :: AV                 ! Product of a column of A and the vector V
+    integer :: I, M, N             ! Subscripts and loop inductors
+    character, pointer, dimension(:) :: MY_MASK
+    logical :: My_Sub, My_update
+    real(rm) :: S                  ! SUBTRACT => -1 else +1
+    integer :: V1                  ! Subscripts and loop inductors
+
+    if ( a%nRows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
+    if ( a%nCols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
+    my_update = .false.
+    if ( present(update) ) my_update = update
+    my_sub = .false.
+    if ( present(subtract) ) my_sub = subtract
+    nullify ( my_Mask )
+    if ( present(mask) ) my_mask => mask
+    s = 1.0_rm
+    if ( my_sub ) s = -1.0_rm
+    if ( .not. my_update ) p = 0.0_r8
+    select case ( a%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+!$OMP PARALLEL DO private ( v1, n, m, av )
+      do i = 1, size(p)
+        if ( associated(my_mask) ) then
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
+      cycle
+        end if
+        v1 = a%r2(i-1)             ! starting position in A%VALUES - 1
+        n = a%r2(i) - v1           ! how many values
+        if ( n <= 0 ) cycle
+        m = a%r1(i)                ! starting position in V
+        av = dot(n, a%values(v1+1,1), 1, v(m), 1)
+!       av = dot_product( a%values(v1+1:v1+n,1), v(m:m+n-1) )
+        p(i) = p(i) + s * av
+      end do ! i
+!$OMP END PARALLEL DO
+     case ( M_Column_Sparse )
+      do i = 1, size(p)
+        if ( associated(my_mask) ) then
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
+      cycle
+        end if
+        av = 0.0_r8
+        do n = a%r1(i-1)+1, a%r1(i)
+          av = av + a%values(n,1) * v(a%r2(n))
+        end do ! n
+        p(i) = p(i) + s * av
+      end do ! i
+    case ( M_Full )
+      if ( associated(my_mask) ) then
+!$OMP PARALLEL DO
+        do i = 1, size(p)
+          if ( iand(ichar(my_mask(i)),m_LinAlg) /= 0 ) &
+        cycle
+          p(i) = p(i) + s * dot(size(v), a%values(1,i), 1, v(1), 1)
+!         p(i) = p(i) + s * dot_product( a%values(:,i), v)
+        end do ! i
+!$OMP END PARALLEL DO
+      else
+        call gemv ( 't', size(a%values,1), size(a%values,2), s, a%values, &
+          & size(a%values,1), v, 1, 1.0_rm, p, 1 )
+!       p = p + s * matmul(transpose(a%values),v)
+      end if
+    end select
+  end subroutine MultiplyMatrixVector_0_r8
+
+  ! ----------------------------------  MultiplyMatrixVectorNoT_0_r4  -----
+  subroutine MultiplyMatrixVectorNoT_0_r4 ( B, V, P, UPDATE, DoDiag, SUBTRACT )
   ! P = B V if UPDATE is absent or false.
   ! P = P + B V if UPDATE is present and true and SUBTRACT is absent or false
   ! P = P - B V if UPDATE is present and true and SUBTRACT is present and true
   ! Don't multiply by the diagonal element if doDiag (default true) is
   ! present and false.
     type(MatrixElement_T), intent(in) :: B
-    real(rm), dimension(:), intent(in) :: V
-    real(rm), dimension(:), intent(inout) :: P
+    real(r4), dimension(:), intent(in) :: V
+    real(r4), dimension(:), intent(inout) :: P
     logical, optional, intent(in) :: UPDATE, DoDiag, SUBTRACT
 
     integer :: I, J, M, N          ! Subscripts and loop inductors
@@ -2196,7 +2401,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(subtract) ) my_sub = subtract
     sign = 1.0_rm
     if ( my_sub ) sign = -1.0_rm
-    if ( .not. my_update ) p = 0.0_rm
+    if ( .not. my_update ) p = 0.0_r4
     select case ( b%kind )
     case ( M_Absent )
     case ( M_Banded )
@@ -2247,7 +2452,89 @@ contains ! =====     Public Procedures     =============================
 !$OMP END PARALLEL DO
       end if
     end select
-  end subroutine MultiplyMatrixVectorNoT_0
+  end subroutine MultiplyMatrixVectorNoT_0_r4
+
+  ! ----------------------------------  MultiplyMatrixVectorNoT_0_r8  -----
+  subroutine MultiplyMatrixVectorNoT_0_r8 ( B, V, P, UPDATE, DoDiag, SUBTRACT )
+  ! P = B V if UPDATE is absent or false.
+  ! P = P + B V if UPDATE is present and true and SUBTRACT is absent or false
+  ! P = P - B V if UPDATE is present and true and SUBTRACT is present and true
+  ! Don't multiply by the diagonal element if doDiag (default true) is
+  ! present and false.
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(in) :: V
+    real(r8), dimension(:), intent(inout) :: P
+    logical, optional, intent(in) :: UPDATE, DoDiag, SUBTRACT
+
+    integer :: I, J, M, N          ! Subscripts and loop inductors
+    logical :: My_diag, My_sub, My_update
+    real(rm) :: SIGN               ! Multiplying by sign is faster than testing
+    integer :: V1                  ! Subscripts and loop inductors
+
+    if ( b%nCols /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and vector not compatible in MultiplyMatrixVectorNoT_0" )
+    if ( b%nRows /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and result not compatible in MultiplyMatrixVectorNoT_0" )
+    my_update = .false.
+    if ( present(update) ) my_update = update
+    my_diag = .true.
+    if ( present(doDiag) ) my_diag = doDiag
+    my_sub = .false.
+    if ( present(subtract) ) my_sub = subtract
+    sign = 1.0_rm
+    if ( my_sub ) sign = -1.0_rm
+    if ( .not. my_update ) p = 0.0_r8
+    select case ( b%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do j = 1, size(v)            ! columns
+        v1 = b%r2(j-1)             ! (starting position in B%VALUES) - 1
+        n = b%r2(j) - v1           ! how many values
+        m = b%r1(j)                ! starting row subscript in B%VALUES
+        if ( my_diag ) then        ! do the whole matrix
+          do i = m, m+n-1          ! rows
+            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
+          end do ! i = 1, n
+        else                       ! skip the diagonal
+          do i = m, min(m+n-1,j-1) ! rows
+            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
+          end do ! i = m, min(m+n-1,j-1)
+          do i = max(m,j+1), m+n-1 ! rows
+            p(i) = p(i) + sign * b%values(v1+i-m+1,1) * v(j)
+          end do ! i = m, min(m,n-1,j-1)
+        end if
+      end do ! j
+     case ( M_Column_Sparse )
+      do j = 1, size(p)            ! columns
+        do n = b%r1(j-1)+1, b%r1(j)! rows
+          i = b%r2(n)              ! row number
+          if ( i/=j .or. my_diag ) &
+            & p(i) = p(i) + sign * b%values(n,1) * v(j)
+        end do ! n
+      end do ! j
+    case ( M_Full )
+      if ( my_diag ) then          ! do the whole matrix
+        call gemv ( 'n', size(b%values,1), size(b%values,2), sign, b%values, &
+          & size(b%values,1), v, 1, 1.0_rm, p, 1 )
+!       p = p + sign * matmul(b%values,v)
+!       do i = 1, size(p)
+!         p(i) = p(i) + sign * dot(size(v), b%values(i,1), size(b%values,1), v(1), 1)
+!         p(i) = p(i) + sign * dot_product( b%values(i,:), v )
+!       end do ! i
+      else                         ! skip the diagonal
+!$OMP PARALLEL DO
+        do i = 1, size(p)
+          if ( i > 1 ) p(i) = p(i) + &
+            & sign * dot(i-1, b%values(i,1), size(b%values,1), v(1), 1)
+!           & sign * dot_product(b%values(i,1:i-1), v(1:i-1))
+          if ( i < size(v) ) p(i) = p(i) + &
+            & sign * dot(size(v)-i, b%values(i,i+1), size(b%values,1), v(i+1), 1)
+!           & sign * dot_product(b%values(i,i+1:), v(i+1:))
+        end do ! i
+!$OMP END PARALLEL DO
+      end if
+    end select
+  end subroutine MultiplyMatrixVectorNoT_0_r8
 
   ! -------------------------------------  NewMultiplyMatrix_XTY_0  ----
   function NewMultiplyMatrix_XTY_0 ( X, Y ) result ( Z ) ! Z = X^T Y
@@ -2263,13 +2550,21 @@ contains ! =====     Public Procedures     =============================
     call MultiplyMatrix_XTY_0 ( x, y, z )
   end function NewMultiplyMatrix_XTY_0
 
-  ! -----------------------------------  NewMultiplyMatrixVector_0  ----
-  function NewMultiplyMatrixVector_0 ( B, V ) result ( P ) ! P = B^T V
+  ! -----------------------------------  NewMultiplyMatrixVector_0_r4  ----
+  function NewMultiplyMatrixVector_0_r4 ( B, V ) result ( P ) ! P = B^T V
     type(MatrixElement_T), intent(in) :: B
-    real(rm), dimension(:), intent(in) :: V
-    real(rm), dimension(size(v)) :: P
+    real(r4), dimension(:), intent(in) :: V
+    real(r4), dimension(size(v)) :: P
     call MultiplyMatrixVector ( b, v, p, .false. )
-  end function NewMultiplyMatrixVector_0
+  end function NewMultiplyMatrixVector_0_r4
+
+  ! -----------------------------------  NewMultiplyMatrixVector_0_r8  ----
+  function NewMultiplyMatrixVector_0_r8 ( B, V ) result ( P ) ! P = B^T V
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(in) :: V
+    real(r8), dimension(size(v)) :: P
+    call MultiplyMatrixVector ( b, v, p, .false. )
+  end function NewMultiplyMatrixVector_0_r8
 
   ! -------------------------------------------------  ReflectMatrix_0 --
   subroutine ReflectMatrix_0 ( M )
@@ -2302,11 +2597,11 @@ contains ! =====     Public Procedures     =============================
       & call Sparsify ( V, M, 'V in Reflect_0', ModuleName )
   end subroutine ReflectMatrix_0
       
-  ! -------------------------------------------------  RowScale_0  -----
-  subroutine RowScale_0 ( V, X, NEWX ) ! Z = V X where V is a diagonal
+  ! -------------------------------------------------  RowScale_0_r4  -----
+  subroutine RowScale_0_r4 ( V, X, NEWX ) ! Z = V X where V is a diagonal
   !                                     matrix represented by a vector and
   !                                     Z is either X or NEWX.
-    real(rm), intent(in), dimension(:) :: V
+    real(r4), intent(in), dimension(:) :: V
     type(MatrixElement_T), intent(inout), target :: X
     type(MatrixElement_T), intent(inout), target, optional :: NEWX ! intent(inout)
       !                            so that the destroyBlock in cloneBlock
@@ -2339,31 +2634,70 @@ contains ! =====     Public Procedures     =============================
         z%values(i,:) = v(i) * x%values(i,:)
       end do
     end select
-  end subroutine RowScale_0
+  end subroutine RowScale_0_r4
+
+  ! -------------------------------------------------  RowScale_0_r8  -----
+  subroutine RowScale_0_r8 ( V, X, NEWX ) ! Z = V X where V is a diagonal
+  !                                     matrix represented by a vector and
+  !                                     Z is either X or NEWX.
+    real(r8), intent(in), dimension(:) :: V
+    type(MatrixElement_T), intent(inout), target :: X
+    type(MatrixElement_T), intent(inout), target, optional :: NEWX ! intent(inout)
+      !                            so that the destroyBlock in cloneBlock
+      !                            gets a chance to clean up surds
+    type(MatrixElement_T), pointer :: Z
+
+    integer :: I
+
+    if ( present(newx) ) then
+      z => newx
+      call copyBlock ( z, x )
+    else
+      z => x
+    end if
+    select case ( z%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do i = 1, z%nCols
+        z%values(z%r2(i-1)+1:z%r2(i),1) = &
+          & v(z%r1(i):z%r1(i)+z%r2(i)-z%r2(i-1)-1) * &
+          & x%values(z%r2(i-1)+1:z%r2(i),1)
+      end do
+    case ( M_Column_Sparse )
+      do i = 1, z%nCols
+        z%values(z%r1(i-1)+1:z%r1(i),1) = v(z%r2(z%r1(i-1)+1:z%r1(i))) * &
+          & x%values(z%r1(i-1)+1:z%r1(i),1)
+      end do
+    case ( M_Full )
+      do i = 1, z%nRows
+        z%values(i,:) = v(i) * x%values(i,:)
+      end do
+    end select
+  end subroutine RowScale_0_r8
 
   ! -------------------------------------------------  ScaleBlock  -----
   subroutine ScaleBlock ( Z, A )        ! Z := A * Z, where A is scalar
     type(matrixElement_T), intent(inout) :: Z
-    real(rm), intent(in) :: A
+    real(r8), intent(in) :: A
     if ( z%kind /= m_absent ) z%values = a * z%values
   end subroutine ScaleBlock
 
-  ! -------------------------------------------  SolveCholeskyA_0  -----  
-  subroutine SolveCholeskyA_0 ( U, X, B, TRANSPOSE )
+  ! -------------------------------------------  SolveCholeskyA_0_r4  -----  
+  subroutine SolveCholeskyA_0_r4 ( U, X, B, TRANSPOSE )
   ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
   ! where U is known to be upper-triangular Array.  X may be the same as B.
   ! B may be absent, in which case the right-hand side is in X on input,
   ! and the solution replaces it on output.  The arrays X and B are
   ! one-dimensional arrays.
 
-    real (rm), dimension(:), intent(inout), target :: X
-    real (rm), dimension(:), intent(in), target, optional :: B
+    real (r4), dimension(:), intent(inout), target :: X
+    real (r4), dimension(:), intent(in), target, optional :: B
     logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
     !                                               present and true.
 
     real (rm) :: D        ! Diagonal element of U
     integer :: I          ! Subscripts and loop inductors
-    real (rm), dimension(:), pointer :: MY_B   ! B if B is present, else X
+    real (r4), dimension(:), pointer :: MY_B   ! B if B is present, else X
     logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
     integer :: N         ! Size of U matrix, which must be square
     real (rm), parameter :: TOL = tiny(0.0)
@@ -2401,7 +2735,62 @@ contains ! =====     Public Procedures     =============================
 !       x(i) = ( my_b(i) - dot_product(u(i,i+1:n), x(i+1:n)) ) / d
       end do ! i = n-1, 1, -1
     end if ! my_t
-  end subroutine SolveCholeskyA_0
+  end subroutine SolveCholeskyA_0_r4
+
+  ! -------------------------------------------  SolveCholeskyA_0_r8  -----  
+  subroutine SolveCholeskyA_0_r8 ( U, X, B, TRANSPOSE )
+  ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
+  ! where U is known to be upper-triangular Array.  X may be the same as B.
+  ! B may be absent, in which case the right-hand side is in X on input,
+  ! and the solution replaces it on output.  The arrays X and B are
+  ! one-dimensional arrays.
+
+    real (r8), dimension(:), intent(inout), target :: X
+    real (r8), dimension(:), intent(in), target, optional :: B
+    logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
+    !                                               present and true.
+
+    real (rm) :: D        ! Diagonal element of U
+    integer :: I          ! Subscripts and loop inductors
+    real (r8), dimension(:), pointer :: MY_B   ! B if B is present, else X
+    logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
+    integer :: N         ! Size of U matrix, which must be square
+    real (rm), parameter :: TOL = tiny(0.0)
+    real (rm), dimension(:,:), intent(in) :: U 
+
+    n = size(x)
+    
+    my_b => x
+    if ( present(b) ) my_b => b
+    my_t = .false.
+    if ( present(transpose) ) my_t = transpose
+
+    if ( my_t ) then ! solve U^T X = B for X
+      d = u(1,1)                                                           
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &    
+          & "U matrix in SolveCholeskyA_0 is singular" )                   
+      x(1) = my_b(1) / d                                                   
+      do i = 2, n                                                          
+        d = u(i,i)                                                         
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &  
+            & "U matrix in SolveCholeskyA_0 is singular" )                 
+        x(i) = ( my_b(i) - dot(i-1, u(1,i), 1, x(1), 1) ) / d              
+!       x(i) = ( my_b(i) - dot_product( u(:i-1,i), x(:i-1)) ) / d          
+      end do ! i = 2, n                                                    
+    else             ! solve U X = B for X
+      d = u(n,n)
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyA_0 is singular" )
+      x(n) = my_b(n) / d
+      do i = n-1, 1, -1
+        d = u(i,i)
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyA_0 is singular" )
+        x(i) = ( my_b(i) - dot(n-i, u(i,i+1), size(u,1), x(i+1), 1) ) / d
+!       x(i) = ( my_b(i) - dot_product(u(i,i+1:n), x(i+1:n)) ) / d
+      end do ! i = n-1, 1, -1
+    end if ! my_t
+  end subroutine SolveCholeskyA_0_r8
 
   ! -------------------------------------------  SolveCholeskyM_0  -----
   subroutine SolveCholeskyM_0 ( U, X, B, TRANSPOSE )
@@ -2545,8 +2934,8 @@ contains ! =====     Public Procedures     =============================
     call sparsify ( xs, x, "XS in SolveCholeskyM_0", ModuleName ) ! X := Xs
   end subroutine SolveCholeskyM_0
 
-  ! -------------------------------------------  SolveCholeskyV_0  -----
-  subroutine SolveCholeskyV_0 ( U, X, B, TRANSPOSE )
+  ! -------------------------------------------  SolveCholeskyV_0_r4  -----
+  subroutine SolveCholeskyV_0_r4 ( U, X, B, TRANSPOSE )
   ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
   ! where U is known to be upper-triangular.  X may be the same as B.
   ! B may be absent, in which case the right-hand side is in X on input,
@@ -2555,14 +2944,14 @@ contains ! =====     Public Procedures     =============================
   ! Their elements are taken to correspond to the rows of U in array
   ! element order.
     type(MatrixElement_T), intent(in) :: U        ! Must be square
-    real(rm), dimension(:), intent(inout), target :: X
-    real(rm), dimension(:), intent(in), target, optional :: B
+    real(r4), dimension(:), intent(inout), target :: X
+    real(r4), dimension(:), intent(in), target, optional :: B
     logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
     !                                               present and true.
 
     real(rm) :: D        ! Diagonal element of U
     integer :: H, I      ! Subscripts and loop inductors
-    real(rm), dimension(:), pointer :: MY_B   ! B if B is present, else X
+    real(r4), dimension(:), pointer :: MY_B   ! B if B is present, else X
     logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
     integer :: N         ! Size of U matrix, which must be square
     real(rm), parameter :: TOL = tiny(0.0_rm)
@@ -2642,13 +3031,112 @@ contains ! =====     Public Procedures     =============================
       if ( u%kind /= M_Full ) &
         & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
     end if ! my_t
-  end subroutine SolveCholeskyV_0
+  end subroutine SolveCholeskyV_0_r4
 
-  ! ---------------------------------------------------  Sparsify  -----
-  subroutine Sparsify ( Z, B, Why, CallingModule )
+  ! -------------------------------------------  SolveCholeskyV_0_r8  -----
+  subroutine SolveCholeskyV_0_r8 ( U, X, B, TRANSPOSE )
+  ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
+  ! where U is known to be upper-triangular.  X may be the same as B.
+  ! B may be absent, in which case the right-hand side is in X on input,
+  ! and the solution replaces it on output.  The arrays X and B are
+  ! two-dimensional sections of subvectors of objects of type Vector_T.
+  ! Their elements are taken to correspond to the rows of U in array
+  ! element order.
+    type(MatrixElement_T), intent(in) :: U        ! Must be square
+    real(r8), dimension(:), intent(inout), target :: X
+    real(r8), dimension(:), intent(in), target, optional :: B
+    logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
+    !                                               present and true.
+
+    real(rm) :: D        ! Diagonal element of U
+    integer :: H, I      ! Subscripts and loop inductors
+    real(r8), dimension(:), pointer :: MY_B   ! B if B is present, else X
+    logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
+    integer :: N         ! Size of U matrix, which must be square
+    real(rm), parameter :: TOL = tiny(0.0_rm)
+    real(rm), dimension(:,:), pointer :: UD  ! U, densified
+
+    n = u%nRows
+    if ( n /= u%nCols ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "U matrix in SolveCholeskyV_0 must be square" )
+    my_b => x
+    if ( present(b) ) my_b => b
+    if ( n /= size(my_b) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "B matrix not compatible with U matrix in SolveCholeskyV_0" )
+    my_t = .false.
+    if ( present(transpose) ) my_t = transpose
+
+    if ( my_t ) then ! solve U^T X = B for X
+      select case ( u%kind )
+      case ( M_Absent )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "U matrix in SolveCholeskyV_0 must not be absent" )
+      case ( M_Banded )
+        do i = 1, n
+          if ( u%r1(i) + u%r2(i) - u%r2(i-1) - 1 /= i ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is not triangular" )
+          d = u%values(u%r2(i),1)
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          x(i) = ( my_b(i) - dot(u%r2(i)-u%r2(i-1)-1, &
+            &      u%values(u%r2(i-1)+1,1), 1, &
+            &      my_b(u%r1(i)), 1) ) / d
+!         x(i) = ( my_b(i) - dot_product ( &
+!           &      u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
+!           &      my_b(u%r1(i):i-1)) ) / d
+        end do ! i = 1, n
+      case ( M_Column_Sparse )
+        do i = 1, n
+          if ( u%r2(u%r1(i)) /= i ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is not triangular" )
+          d = u%values(u%r1(i),1)
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          do h = u%r1(i-1)+1, u%r1(i)-1
+            x(i) = my_b(i) - u%values(h,1) * my_b(u%r2(h))
+          end do ! h = u%r1(i-1)+1, u%r1(i)-1
+          x(i) = x(i) / d
+        end do ! i = 1, n
+      case ( M_Full )
+        do i = 1, n
+          d = u%values(i,i)
+          if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          x(i) = ( my_b(i) - dot(i-1, u%values(1,i), 1, x(1), 1) ) / d
+!         x(i) = ( my_b(i) - dot_product( u%values(1:i-1,i), x(1:i-1)) ) / d
+        end do ! i = 1, n
+      end select
+    else             ! solve U X = B for X
+      if ( u%kind == M_full ) then
+        ud => u%values
+      else
+        nullify ( ud )
+        call allocate_test ( ud, n, n, "UD in SolveCholeskyV_0", ModuleName )
+        call densify ( ud, u )
+      end if
+      d = ud(n,n)
+      if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "U matrix in SolveCholeskyV_0 is singular" )
+      x(n) = my_b(n) / d
+      do i = n-1, 1, -1
+        d = ud(i,i)
+        if ( abs(d) < tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "U matrix in SolveCholeskyV_0 is singular" )
+!       x(i) = ( my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), x(i+1), 1) ) / d
+        x(i) = ( my_b(i) - dot_product(ud(i,i+1:n), x(i+1:n)) ) / d
+      end do ! i = 1, n
+      if ( u%kind /= M_Full ) &
+        & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
+    end if ! my_t
+  end subroutine SolveCholeskyV_0_r8
+
+  ! ---------------------------------------------------  Sparsify_r4  -----
+  subroutine Sparsify_r4 ( Z, B, Why, CallingModule )
   ! Given an array Z, compute its sparse representation and store it
   ! in the matrix block B.
-    real(rm), pointer :: Z(:,:)              ! Full array of values
+    real(r4), pointer :: Z(:,:)              ! Full array of values
     type(MatrixElement_T), intent(inout) :: B     ! Z as a block, maybe sparse
     ! B is intent(inout) so that createBlock gets a chance to clean up surds
     character(len=*), intent(in), optional :: Why
@@ -2669,7 +3157,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NNZC(size(z,2))     ! Number of nonzeroes in a column of Z
     integer :: R1(size(z,2))       ! Row number of first nonzero in a column
     real(rm), save :: SQ_EPS = -1.0_rm  ! sqrt(epsilon(1.0_rm))
-    real(rm) :: ZT(size(z,2))      ! Maximum value in a column of Z, then
+    real(r4) :: ZT(size(z,2))      ! Maximum value in a column of Z, then
       ! max(sqrt(sq_eps*zt),tiny(1.0_rm)).  Elements less than this threshold
       ! in magnitude are considered to be zero.
 
@@ -2746,7 +3234,111 @@ contains ! =====     Public Procedures     =============================
     else if ( present(callingModule) ) then
       call deallocate_test ( z, "No variable specified", callingModule )
     end if
-  end subroutine Sparsify
+  end subroutine Sparsify_r4
+
+  ! ---------------------------------------------------  Sparsify_r8  -----
+  subroutine Sparsify_r8 ( Z, B, Why, CallingModule )
+  ! Given an array Z, compute its sparse representation and store it
+  ! in the matrix block B.
+    real(r8), pointer :: Z(:,:)              ! Full array of values
+    type(MatrixElement_T), intent(inout) :: B     ! Z as a block, maybe sparse
+    ! B is intent(inout) so that createBlock gets a chance to clean up surds
+    character(len=*), intent(in), optional :: Why
+    character(len=*), intent(in), optional :: CallingModule
+    ! If either Why or CallingModule is present, Z is deallocated using
+    ! Deallocate_Test
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the B argument of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignBlock.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    integer :: I1, I2              ! Row indices in Z
+    integer :: J                   ! Column index in Z
+    integer :: KIND                ! Representation to use for B
+    integer :: NNZ                 ! Number of nonzeroes in Z
+    integer :: NNZC(size(z,2))     ! Number of nonzeroes in a column of Z
+    integer :: R1(size(z,2))       ! Row number of first nonzero in a column
+    real(rm), save :: SQ_EPS = -1.0_rm  ! sqrt(epsilon(1.0_rm))
+    real(r8) :: ZT(size(z,2))      ! Maximum value in a column of Z, then
+      ! max(sqrt(sq_eps*zt),tiny(1.0_rm)).  Elements less than this threshold
+      ! in magnitude are considered to be zero.
+
+    if ( sq_eps < 0.0_rm ) sq_eps = sqrt(epsilon(1.0_rm))
+    do j = 1, size(z,2)
+    ! zt(j) = maxval(abs(z(:,j)))
+    ! zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
+    ! nnzc(j) = count(abs(z(:,j)) < zt(j))
+      zt(j) = 0.0_rm
+!     do i1 = 1, size(z,1)
+!       zt(j) = max(zt(j),abs(z(i1,j)))
+!     end do ! i1
+!     zt(j) = max(sq_eps*zt(j), sqrt(tiny(1.0_rm)))
+      nnzc(j) = 0
+      do i1 = 1, size(z,1)
+        if ( abs(z(i1,j)) > zt(j) ) nnzc(j) = nnzc(j) + 1
+      end do ! i1
+    end do ! j
+    nnz = sum(nnzc)
+    if ( nnz == 0 ) then ! Empty
+      call createBlock ( b, size(z,1), size(z,2), M_Absent )
+    else if ( nnz <= int(sparsity * size(z)) ) then ! sparse
+      kind = M_Banded
+      do j = 1, size(z,2)
+        do i1 = 1, size(z,1)       ! Find row number of first nonzero
+          if ( abs(z(i1,j)) > zt(j) ) exit
+        end do
+        r1(j) = i1
+        do i2 = size(z,1), 1, -1   ! Find row number of last nonzero
+          if ( abs(z(i2,j)) > zt(j) ) exit
+        end do
+        if ( int(col_sparsity*(i2 - i1)) > nnzc(j) ) then
+          kind = M_Column_Sparse
+          do i1 = 1, j-1 ! I1 is a column number in this case
+            nnzc(i1) = count(abs(z(:,i1)) <= zt(i1))
+          end do ! i1
+          exit
+        end if
+        nnzc(j) = max(i2 - i1 + 1,0)
+      end do ! j
+      if ( kind == M_Banded ) then
+        call createBlock ( b, size(z,1), size(z,2), M_Banded, sum(nnzc) )
+        b%r1 = r1        ! Row number of first nonzero in the column
+        do j = 1, size(z,2)
+          b%r2(j) = nnzc(j) + b%r2(j-1) ! Subscript of last nonzero in the
+                                        ! column
+          b%values(b%r2(j-1)+1:b%r2(j),1) = &
+            & z(b%r1(j):b%r1(j)+b%r2(j)-b%r2(j-1)-1,j)
+        end do
+      else
+        call createBlock ( b, size(z,1), size(z,2), M_Column_Sparse, nnz )
+        i1 = 0
+        do j = 1, size(z,2)
+          do i2 = 1, size(z,1)
+            if ( abs(z(i2,j)) > zt(j) ) then
+              i1 = i1 + 1
+              b%values(i1,1) = z(i2,j)
+              b%r2(i1) = i2
+            end if
+            b%r1(j) = i1
+          end do ! i2
+        end do ! j
+      end if
+    else ! full
+      call createBlock ( b, size(z,1), size(z,2), M_Full )
+      b%values = z
+    end if
+    if ( present(why) ) then
+      if ( present(callingModule) ) then
+        call deallocate_test ( z, why, callingModule )
+      else
+        call deallocate_test ( z, why, "No module specified" )
+      end if
+    else if ( present(callingModule) ) then
+      call deallocate_test ( z, "No variable specified", callingModule )
+    end if
+  end subroutine Sparsify_r8
 
   ! ----------------------------------------------------  Spill_0  -----
   subroutine Spill_0 ( A, Unit )
@@ -2801,11 +3393,11 @@ contains ! =====     Public Procedures     =============================
     end select
   end subroutine TransposeMatrix_0
   
-  ! -------------------------------------------  UpdateDiagonal_0  -----
-  subroutine UpdateDiagonal_0 ( A, LAMBDA )
+  ! -------------------------------------------  UpdateDiagonal_0_r8  -----
+  subroutine UpdateDiagonal_0_r8 ( A, LAMBDA )
   ! Add LAMBDA to the diagonal of A
     type(MatrixElement_T), intent(inout) :: A
-    real(rm), intent(in) :: LAMBDA
+    real(r8), intent(in) :: LAMBDA
 
     integer :: I, J                          ! Subscripts and loop inductors
     integer :: N                             ! min(a%nCols,a%nRows)
@@ -2863,22 +3455,93 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine UpdateDenseDiagonal ( T, LAMBDA, START )
       real(rm), intent(inout) :: T(:,:)
-      real(rm), intent(in) :: LAMBDA
+      real(r8), intent(in) :: LAMBDA
       integer, intent(in) :: START
       integer :: I
       do i = start, n
         t(i,i) = t(i,i) + lambda
       end do
     end subroutine UpdateDenseDiagonal
-  end subroutine UpdateDiagonal_0
+  end subroutine UpdateDiagonal_0_r8
 
-  ! ----------------------------------------  UpdateDiagonalVec_0  -----
-  subroutine UpdateDiagonalVec_0 ( A, X, SUBTRACT, INVERT )
+  ! -------------------------------------------  UpdateDiagonal_0_r4  -----
+  subroutine UpdateDiagonal_0_r4 ( A, LAMBDA )
+  ! Add LAMBDA to the diagonal of A
+    type(MatrixElement_T), intent(inout) :: A
+    real(r4), intent(in) :: LAMBDA
+
+    integer :: I, J                          ! Subscripts and loop inductors
+    integer :: N                             ! min(a%nCols,a%nRows)
+    integer :: nCols, nRows                  ! Copies of a%...
+    real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
+
+    nullify ( t )
+    n = min(a%nCols,a%nRows)
+    select case ( a%kind )
+    case ( m_absent )
+      nCols = a%nCols ! because createBlock destroys A before re-creating it
+      nRows = a%nRows
+      call createBlock ( a, nRows, nCols, m_banded, n )
+      do i = 1, n
+        a%r1(i) = i
+        a%r2(i) = i
+        a%values(i,1) = lambda
+      end do
+    case ( m_banded )
+      do i = 1, n
+        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
+          ! No diagonal element.  Make room for one by densify-update-sparsify
+          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+            & ModuleName )
+          call densify ( t, a )
+          call updateDenseDiagonal ( t, lambda, i )
+          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
+          return
+        end if
+        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
+          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + lambda
+      end do
+    case ( m_column_sparse )
+      do i = 1, n
+        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
+          if ( a%r2(j) == i ) then
+            a%values(j,1) = a%values(j,1) + lambda
+          else if ( a%r2(j) > i ) then
+            ! No diagonal element.  Make room for one by densify-update-sparsify
+            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+              & ModuleName )
+            call densify ( t, a )
+            call updateDenseDiagonal ( t, lambda, i )
+            call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+            call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
+            return
+          end if
+        end do
+      end do
+    case ( m_full )
+      call updateDenseDiagonal ( a%values, lambda, 1 )
+    end select
+
+  contains
+    subroutine UpdateDenseDiagonal ( T, LAMBDA, START )
+      real(rm), intent(inout) :: T(:,:)
+      real(r4), intent(in) :: LAMBDA
+      integer, intent(in) :: START
+      integer :: I
+      do i = start, n
+        t(i,i) = t(i,i) + lambda
+      end do
+    end subroutine UpdateDenseDiagonal
+  end subroutine UpdateDiagonal_0_r4
+
+  ! ----------------------------------------  UpdateDiagonalVec_0_r8  -----
+  subroutine UpdateDiagonalVec_0_r8 ( A, X, SUBTRACT, INVERT )
   ! Add X to the diagonal of A if SUBTRACT is absent or false.
   ! Subtract X from the diatonal of A if SUBTRACT is present and true.
   ! If INVERT is present and true, use the inverses of the elements of X.
     type(MatrixElement_T), intent(inout) :: A
-    real(rm), intent(in) :: X(:)
+    real(r8), intent(in) :: X(:)
     logical, intent(in), optional :: SUBTRACT
     logical, intent(in), optional :: INVERT  ! Update with inverse of X
 
@@ -2911,7 +3574,7 @@ contains ! =====     Public Procedures     =============================
         a%r1(i) = j
         a%r2(i) = j + m - 1
         if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_rm) ) call MLSMessage ( &
+          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
             & MLSMSG_Error, moduleName, &
             & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
           ! Don't misinterpret the use of r1 and r2 here, it does make sense
@@ -2934,7 +3597,7 @@ contains ! =====     Public Procedures     =============================
           return
         end if
         if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_rm) ) call MLSMessage ( &
+          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
             & MLSMSG_Error, moduleName, &
             & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
           v = s / x(i)
@@ -2949,7 +3612,7 @@ contains ! =====     Public Procedures     =============================
         do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
           if ( a%r2(j) == i ) then
             if ( myInvert ) then
-              if ( abs(x(i)) <= tiny(0.0_rm) ) call MLSMessage ( &
+              if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
                 & MLSMSG_Error, moduleName, &
                 & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
               v = s / x(i)
@@ -2976,13 +3639,13 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine UpdateDenseDiagonal ( T, X, S, START )
       real(rm), intent(inout) :: T(:,:) ! Matrix element to update
-      real(rm), intent(in) :: X(:)      ! Vector update diagonal
+      real(r8), intent(in) :: X(:)      ! Vector update diagonal
       real(rm), intent(in) :: S         ! Sign for X, +1 or -1.
       integer, intent(in) :: START      ! Where to start
       integer :: I
       do i = start, n
         if ( myInvert ) then
-          if ( abs(x(i)) <= tiny(0.0_rm) ) call MLSMessage ( &
+          if ( abs(x(i)) <= tiny(0.0_r8) ) call MLSMessage ( &
             & MLSMSG_Error, moduleName, &
             & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
           v = s / x(i)
@@ -2992,7 +3655,129 @@ contains ! =====     Public Procedures     =============================
         t(i,i) = t(i,i) + v
       end do
     end subroutine UpdateDenseDiagonal
-  end subroutine UpdateDiagonalVec_0
+  end subroutine UpdateDiagonalVec_0_r8
+
+  ! ----------------------------------------  UpdateDiagonalVec_0_r4  -----
+  subroutine UpdateDiagonalVec_0_r4 ( A, X, SUBTRACT, INVERT )
+  ! Add X to the diagonal of A if SUBTRACT is absent or false.
+  ! Subtract X from the diatonal of A if SUBTRACT is present and true.
+  ! If INVERT is present and true, use the inverses of the elements of X.
+    type(MatrixElement_T), intent(inout) :: A
+    real(r4), intent(in) :: X(:)
+    logical, intent(in), optional :: SUBTRACT
+    logical, intent(in), optional :: INVERT  ! Update with inverse of X
+
+    integer :: I, J                          ! Subscripts and loop inductors
+    logical :: MyInvert
+    integer :: N                             ! min(a%nCols,a%nRows)
+    integer :: M                             ! max(a%nCols,a%nRows) / n
+    integer :: nCols, nRows                  ! Copies of a%...
+    real(rm) :: S                            ! Sign to use for X, +1 or -1
+    real(rm), dimension(:,:), pointer :: T   ! A temporary dense matrix
+    real(rm) :: V                            ! The value to update.  Either
+    !                                          S*X or S/X.
+
+    nullify ( t )
+    s = 1.0_rm
+    if ( present(subtract) ) then
+      if ( subtract ) s = -1.0_rm
+    end if
+    myInvert = .false.
+    if ( present(invert) ) myInvert = invert
+    n = min(a%nCols,a%nRows)
+    m = max(a%nCols,a%nRows) / n
+    select case ( a%kind )
+    case ( m_absent )
+      nCols = a%nCols ! because the createBlock destroys A before re-creating it
+      nRows = a%nRows
+      call createBlock ( a, nRows, nCols, m_banded, m*n )
+      do i = 1, n                       ! Loop over shorter side
+        j = 1 + m*(i-1)                 ! Index into longer side
+        a%r1(i) = j
+        a%r2(i) = j + m - 1
+        if ( myInvert ) then
+          if ( abs(x(i)) <= tiny(0.0_r4) ) call MLSMessage ( &
+            & MLSMSG_Error, moduleName, &
+            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+          ! Don't misinterpret the use of r1 and r2 here, it does make sense
+          ! see their assignment above.
+          a%values(a%r1(i):a%r2(i),1) = s / x(a%r1(i):a%r2(i))
+        else
+          a%values(a%r1(i):a%r2(i),1) = s * x(a%r1(i):a%r2(i))
+        end if
+      end do
+    case ( m_banded )
+      do i = 1, n
+        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
+          ! No diagonal element.  Make room for one by densify-update-sparsify
+          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+            & ModuleName )
+          call densify ( t, a )
+          call updateDenseDiagonal ( t, x, s, i )
+          call sparsify ( t, a, "T in UpdateDiagonal_0", ModuleName ) ! A := T
+          call deallocate_test ( t, "T in UpdateDiagonal_0", ModuleName )
+          return
+        end if
+        if ( myInvert ) then
+          if ( abs(x(i)) <= tiny(0.0_r4) ) call MLSMessage ( &
+            & MLSMSG_Error, moduleName, &
+            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+          v = s / x(i)
+        else
+          v = s * x(i)
+        end if
+        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
+          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + v
+      end do
+    case ( m_column_sparse )
+      do i = 1, n
+        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
+          if ( a%r2(j) == i ) then
+            if ( myInvert ) then
+              if ( abs(x(i)) <= tiny(0.0_r4) ) call MLSMessage ( &
+                & MLSMSG_Error, moduleName, &
+                & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+              v = s / x(i)
+            else
+              v = s * x(i)
+            end if
+            a%values(j,1) = a%values(j,1) + v
+          else if ( a%r2(j) > i ) then
+            ! No diagonal element.  Make room for one by densify-update-sparsify
+            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+              & ModuleName )
+            call densify ( t, a )
+            call updateDenseDiagonal ( t, x, s, i )
+            call sparsify ( t, a, "T in UpdateDiagonal_0", moduleName ) ! A := T
+            call deallocate_test ( t, "T in UpdateDiagonal_0", moduleName )
+            return
+          end if
+        end do
+      end do
+    case ( m_full )
+      call updateDenseDiagonal ( a%values, x, s, 1 )
+    end select
+
+  contains
+    subroutine UpdateDenseDiagonal ( T, X, S, START )
+      real(rm), intent(inout) :: T(:,:) ! Matrix element to update
+      real(r4), intent(in) :: X(:)      ! Vector update diagonal
+      real(rm), intent(in) :: S         ! Sign for X, +1 or -1.
+      integer, intent(in) :: START      ! Where to start
+      integer :: I
+      do i = start, n
+        if ( myInvert ) then
+          if ( abs(x(i)) <= tiny(0.0_r4) ) call MLSMessage ( &
+            & MLSMSG_Error, moduleName, &
+            & "Cannot update with inverse of zero in UpdateDiagonalVec_0" )
+          v = s / x(i)
+        else
+          v = s * x(i)
+        end if
+        t(i,i) = t(i,i) + v
+      end do
+    end subroutine UpdateDenseDiagonal
+  end subroutine UpdateDiagonalVec_0_r4
 
 ! =====     Private Procedures     =====================================
 
@@ -3136,6 +3921,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.83  2002/09/13 18:08:12  pwagner
+! May change matrix precision rm from r8
+!
 ! Revision 2.82  2002/09/11 17:43:38  pwagner
 ! Began changes needed to conform with matrix%values type move to rm from r8
 !
