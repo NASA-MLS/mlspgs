@@ -33,9 +33,9 @@ module L2Parallel
   use L2ParInfo, only: L2PARALLELINFO_T, PARALLEL, INFOTAG, CHUNKTAG, GIVEUPTAG, &
     & SIG_TOJOIN, SIG_FINISHED, SIG_ACKFINISH, SIG_REGISTER, NOTIFYTAG, &
     & SIG_REQUESTDIRECTWRITE, SIG_DIRECTWRITEGRANTED, SIG_DIRECTWRITEFINISHED, &
-    & SIG_DIRECTWRITEABANDONED, SIG_DIRECTWRITEWAIT, &
     & GETNICETIDSTRING, SLAVEARGUMENTS, MACHINENAMELEN, GETMACHINENAMES, &
-    & MACHINEFIXEDTAG
+    & MACHINEFIXEDTAG, DIRECTWRITEREQUEST_T, DW_PENDING, DW_INPROGRESS, DW_COMPLETED, &
+    & INFLATEDIRECTWRITEREQUESTDB, COMPACTDIRECTWRITEREQUESTDB, DUMP
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, &
     & DESTROYQUANTITYTEMPLATECONTENTS, INFLATEQUANTITYTEMPLATEDATABASE, &
     & NULLIFYQUANTITYTEMPLATE, DESTROYQUANTITYTEMPLATEDATABASE
@@ -46,7 +46,7 @@ module L2Parallel
   use String_table, only: Display_String
   use Init_Tables_Module, only: S_L2GP, S_L2AUX
   use MoreTree, only: Get_Spec_ID
-  use MorePVM, only: PVMUNPACKSTRINGINDEX
+  use MorePVM, only: PVMUNPACKSTRINGINDEX, PVMPACKSTRINGINDEX
   use VectorHDF5, only: WRITEVECTORASHDF5, READVECTORFROMHDF5
   use HDF5, only: H5FCREATE_F, H5FCLOSE_F, H5FOPEN_F, H5F_ACC_RDONLY_F, H5F_ACC_TRUNC_F
 
@@ -230,12 +230,14 @@ contains ! ================================ Procedures ======================
     ! Local parameter
     integer, parameter :: DELAY = 200000  ! For Usleep, no. microsecs
     integer, parameter :: MAXDIRECTWRITEFILES=200 ! For internal array sizing
+    integer, parameter :: DATABASEINFLATION=5
 
     ! External (C) function
     external :: Usleep
 
     ! Local variables
     logical :: USINGSUBMIT              ! Set if using the submit mechanism
+    logical :: SKIPDELAY                ! Don't wait before doing the next go round
     character(len=MachineNameLen), dimension(:), pointer :: MACHINENAMES
     character(len=MachineNameLen) :: THISNAME
     character(len=8) :: CHUNKNOSTR
@@ -246,38 +248,43 @@ contains ! ================================ Procedures ======================
     integer :: BYTES                    ! Dummy from PVMFBufInfo
     integer :: CHUNK                    ! Loop counter
     integer :: COMPLETEDFILE            ! String index from slave
-    logical :: CREATEFILE               ! Flag for direct writes
+    integer :: CREATEFILE               ! Flag for direct writes
     integer :: DEADCHUNK                ! A chunk from a dead task
     integer :: DEADFILE                 ! ID of file writen by dead task
     integer :: DEADMACHINE              ! A machine for a dead task
     integer :: DEADTID                  ! A task that's died
+    integer :: DUMMY                    ! From inflate database
     integer :: FILEINDEX                ! Index for a direct write
     integer :: HDFNAMEINDEX             ! String index
     integer :: INFO                     ! From PVM
-    integer :: NEXTTICKET               ! For direct write handling
     integer :: MACHINE                  ! Index
     integer :: MSGTAG                   ! Dummy from PVMFBufInfo
     integer :: NEXTCHUNK                ! A chunk number
+    integer :: NEXTTICKET               ! For direct write handling
     integer :: NOCHUNKS                 ! Number of chunks
+    integer :: NODE                     ! A tree node
     integer :: NODIRECTWRITEFILES       ! Need to keep track of filenames
+    integer :: NODIRECTWRITEREQUESTS    ! Number of (relevantish) directWrite requests
     integer :: NOMACHINES               ! Number of slaves
     integer :: NOQUANTITIESACCUMULATED  ! Running counter / index
     integer :: PRECIND                  ! Array index
-    integer :: RESIND                   ! Loop counter
     integer :: REQUESTEDFILE            ! String index from slave
+    integer :: REQUESTINDEX             ! Index of direct write request
+    integer :: REQUESTINDEXA(1)         ! Result of minloc
+    integer :: RESIND                   ! Loop counter
+    integer :: RETURNEDTICKET           ! Ticket for completed direct write
     integer :: SIGNAL                   ! From slave
     integer :: SLAVETID                 ! One slave
-    integer :: STATUS                   ! From deallocate etc.
     integer :: STAGEFILEID              ! From HDF5
+    integer :: STATUS                   ! From deallocate etc.
     integer :: TIDARR(1)                ! One tid
     integer :: VALIND                   ! Array index
 
     integer, dimension(size(chunks)) :: CHUNKMACHINES ! Machine indices for chunks
     integer, dimension(size(chunks)) :: CHUNKTIDS ! Tids for chunks
 
-    integer, dimension(size(chunks)) :: DIRECTWRITESTATUS
-    integer, dimension(size(chunks)) :: DIRECTWRITETICKET
-    integer, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILES
+    integer, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILENAMES
+    logical, dimension(maxDirectWriteFiles) :: DIRECTWRITEFILEBUSY
     integer, dimension(maxDirectWriteFiles) :: NODIRECTWRITECHUNKS
 
     logical, dimension(:), pointer :: MACHINEFREE ! Is this machine busy
@@ -287,6 +294,7 @@ contains ! ================================ Procedures ======================
     logical, dimension(size(chunks)) :: CHUNKSSTARTED ! Chunks being processed
     logical, dimension(size(chunks)) :: CHUNKSABANDONED ! Chunks kept failing
     integer, dimension(size(chunks)) :: CHUNKFAILURES ! Failure count
+    logical, dimension(size(chunks)) :: CHUNKSWRITING ! Which chunks are writing
 
     logical, save :: FINISHED = .false. ! This will be called multiple times
     logical :: INTEGRITY
@@ -303,6 +311,8 @@ contains ! ================================ Procedures ======================
     type (VectorValue_T), pointer :: PRECQTY
     type (Vector_T), target :: MYVALUES
     type (Vector_T), target :: MYPRECISIONS
+    type (DirectWriteRequest_T), dimension(:), pointer :: DIRECTWRITEREQUESTS
+    type (DirectWriteRequest_T), pointer :: REQUEST
 
     ! Executable code --------------------------------
 
@@ -315,14 +325,18 @@ contains ! ================================ Procedures ======================
     ! Setup some stuff
     noChunks = size(chunks)
     nullify ( joinedQuantities, joinedVectorTemplates, joinedVectors, &
-      & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled )
-    directWriteFiles = 0
+      & machineNames, machineFree, storedResults, machineOK, jobsMachineKilled, &
+      & directWriteRequests )
+    noDirectWriteRequests = 0
+    directWriteFileNames = 0
     noDirectWriteChunks = 0
-    directWriteStatus = 0
+    directWriteFileBusy = .false.
     noDirectWriteFiles = 0
-    directWriteTicket = 0
     nextTicket = 1
     noQuantitiesAccumulated = 0
+
+    ! Setup the directWrite request database with a default size.
+    dummy = InflateDirectWriteRequestDB ( directWriteRequests, DatabaseInflation )
 
     ! Work out the information on our virtual machine
     if ( .not. usingSubmit ) then
@@ -349,11 +363,13 @@ contains ! ================================ Procedures ======================
     chunksCompleted = .false.
     chunksStarted = .false.
     chunksAbandoned = .false.
+    chunksWriting = .false.
     chunkFailures = 0
     chunkTids = 0
     chunkMachines = 0
 
     masterLoop: do ! --------------------------- Master loop -----------------------
+      skipDelay = .false.               ! Assume we're going to delay
       ! This loop is in two main parts.
 
       ! In the first part, we look to see if there are any chunks still to be
@@ -428,6 +444,9 @@ contains ! ================================ Procedures ======================
       if ( bufferIDRcv < 0 ) then
         call PVMErrorMessage ( info, "checking for Info message" )
       else if ( bufferIDRcv > 0 ) then
+        ! So we got a message.  There may be another one following on so don't delay
+        ! before going round this loop again.
+        skipDelay = .true.
         ! Who sent this?
         call PVMFBufInfo ( bufferIDRcv, bytes, msgTag, slaveTid, info )
         if ( info /= 0 ) &
@@ -485,23 +504,36 @@ contains ! ================================ Procedures ======================
           ! What file did they ask for?
           call PVMUnpackStringIndex ( requestedFile, info )
           if ( info /= 0 )  call PVMErrorMessage ( info, &
-            & "unpacking direct write request" )
+            & "unpacking direct write request filename" )
+          call PVMF90Unpack ( node, info )
+          if ( info /= 0 )  call PVMErrorMessage ( info, &
+            & "unpacking direct write request node" )
           ! Is this a new file?
-          fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == requestedFile )
+          fileIndex = FindFirst ( directWriteFilenames(1:noDirectWriteFiles) == &
+            & requestedFile )
           if ( fileIndex == 0 ) then
             ! Clearly, if we don't know about this file it's new
-            createFile = .true.
             noDirectWriteFiles = noDirectWriteFiles + 1
             if ( noDirectWriteFiles > maxDirectWriteFiles ) &
               & call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Too many direct write files, increase limit' )
+              & 'Too many direct write files, increase limit maxDirectWriteFiles in ' &
+              & // ModuleName )
             fileIndex = noDirectWriteFiles
-            directWriteFiles ( fileIndex ) = requestedFile
-          else
-            ! On the other hand, if the first task that tried to write to it died
-            ! we'll know about it, but we might want to recreate it anyway.
-            createFile = noDirectWriteChunks ( fileIndex ) == 0
+            directWriteFilenames ( fileIndex ) = requestedFile
           end if
+          if ( size(directWriteRequests) == noDirectWriteRequests ) then
+            dummy = InflateDirectWriteRequestDB ( directWriteRequests, DatabaseInflation )
+          end if
+          noDirectWriteRequests = noDirectWriteRequests + 1
+          request => directWriteRequests ( noDirectWriteRequests )
+          ! Record this request, and have it 'take a ticket'
+          request%chunk = chunk
+          request%machine = machine
+          request%node = node
+          request%fileIndex = fileIndex
+          request%ticket = nextTicket
+          request%status = DW_Pending
+          nextTicket = nextTicket + 1
 
           if ( index ( switches, 'mas' ) /= 0 ) then
             call output ( 'Direct write request from ' )
@@ -509,75 +541,38 @@ contains ! ================================ Procedures ======================
               & call output ( trim(machineNames(machine)) // ', ' )
             call output ( trim(GetNiceTidString(slaveTid)) )
             call output ( ' chunk ' )
-            call output ( chunk, advance='yes' )
-            call display_string ( requestedFile, strip=.true., advance='yes' )
-          end if
-          ! Is anyone else using this file?
-          if ( any ( directWriteStatus == requestedFile ) ) then
-            ! If so, log a request for it by setting our status to 
-            ! -requestedFile, and have this chunk 'take a ticket'
-            if ( index ( switches, 'mas' ) /= 0 ) then
-              call output ( 'Request is pending as ticket ')
-              call output ( nextTicket, advance='yes' )
-            end if
-            directWriteStatus(chunk) = -requestedFile
-            directWriteTicket(chunk) = nextTicket
-            nextTicket = nextTicket + 1
-            ! Send the slave a message that it will have to wait
-            call TellSlaveToWait ( slaveTid )
-            ! At this point, create file, true or otherwise, becomes irrelevant.
-          else
-            ! Otherwise, go ahead
-            if ( index ( switches, 'mas' ) /= 0 ) then
-              call output ( 'Request was immediately granted' )
-              if ( createFile ) then
-                call output ( ' (new file)', advance='yes' )
-              else
-                call output ( ' (old file)', advance='yes' )
-              end if
-            end if
-            call GrantDirectWrite ( slaveTid, createFile )
-            directWriteStatus(chunk) = requestedFile
-            directWriteTicket(chunk) = 0
-          end if
-
-        case ( sig_DirectWriteAbandoned )
-          ! This chunk doesn't want to wait for the ticket, perhaps will 
-          ! try for another file
-          if ( index ( switches, 'mas' ) /= 0 ) then
-            call output ( 'Direct write request abandoned by ' )
-            if ( .not. usingSubmit ) &
-              & call output ( trim(machineNames(machine)) // ' ' )
-            call output ( trim(GetNiceTidString(slaveTid)) )
-            call output ( ' chunk ' )
             call output ( chunk )
             call output ( ' ticket ' )
-            call output ( directWriteTicket(chunk), advance='yes' )
-            call display_string ( -directWriteStatus(chunk), strip=.true., &
-              & advance='yes' )
+            call output ( nextTicket - 1, advance='yes' )
+            call display_string ( requestedFile, strip=.true., advance='yes' )
           end if
-          directWriteStatus ( chunk ) = 0
-          directWriteTicket ( chunk ) = 0
 
         case ( sig_DirectWriteFinished ) ! - Finished with direct write -
+          ! Unpack the ticket number we got back
+          call PVMF90Unpack ( returnedTicket, info )
+          if ( info /= 0 ) call PVMErrorMessage ( info, &
+            & "unpacking returned ticket" )
           ! Record that the chunk has finished direct write
-          completedFile = directWriteStatus(chunk)
-          fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == requestedFile )
-          noDirectWriteChunks ( fileIndex ) = &
-            & noDirectWriteChunks ( fileIndex ) + 1
-          directWriteStatus(chunk) = 0
-          directWriteTicket(chunk) = 0
+          requestIndex = FindFirst ( directWriteRequests%ticket == returnedTicket )
+
+          request => directWriteRequests(requestIndex)
+          request%status = DW_Completed
+          fileIndex = request%fileIndex
+          directWriteFileBusy ( fileIndex ) = .false.
+          chunksWriting ( chunk ) = .false.
+          noDirectWriteChunks ( fileIndex ) = noDirectWriteChunks ( fileIndex ) + 1
           if ( index ( switches, 'mas' ) /= 0 ) then
             call output ( 'Direct write finished from ' )
             if ( .not. usingSubmit ) &
               & call output ( trim(machineNames(machine)) // ', ' )
             call output ( trim(GetNiceTidString(slaveTid)) )
             call output ( ' chunk ' )
-            call output ( chunk, advance='yes')
-            call display_string ( completedFile, strip=.true., advance='yes' )
+            call output ( chunk )
+            call output ( ' ticket ' )
+            call output ( returnedTicket, advance='yes')
+            call display_string ( directWriteFilenames(fileIndex), &
+              & strip=.true., advance='yes' )
           end if
-          ! OK, perhaps someone else's turn to write to this file
-          call NextSlaveToWrite ( completedFile )
 
         case ( sig_finished ) ! -------------- Got a finish message ----
           if ( index(switches,'mas') /= 0 ) then
@@ -655,6 +650,9 @@ contains ! ================================ Procedures ======================
       ! Listen out for any message telling us that a machine is OK again
       call PVMFNRecv ( -1, MachineFixedTag, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then 
+        ! So we got a message.  There may be another one following on so don't delay
+        ! before going round this loop again.
+        skipDelay = .true.
         call PVMIDLUnpack ( thisName, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, 'unpacking machine fixed message' )
@@ -676,6 +674,9 @@ contains ! ================================ Procedures ======================
       ! Listen out for any message that a slave task has died
       call PVMFNRecv ( -1, NotifyTAG, bufferIDRcv )
       if ( bufferIDRcv > 0 ) then
+        ! So we got a message.  There may be another one following on so don't delay
+        ! before going round this loop again.
+        skipDelay = .true.
         ! Get the TID for the dead task
         call PVMF90Unpack ( deadTid, info )
         if ( info /= 0 ) call PVMErrorMessage ( info, 'unpacking deadTid' )
@@ -704,28 +705,23 @@ contains ! ================================ Procedures ======================
               & joinedVectorTemplates, joinedVectors, storedResults )
             chunksStarted(deadChunk) = .false.
             chunkFailures(deadChunk) = chunkFailures(deadChunk) + 1
-            directWriteStatus(deadChunk) = 0 
-            directWriteTicket(deadChunk) = 0
             if ( .not. usingSubmit ) then
               where ( machineNames(deadMachine) == machineNames )
                 jobsMachineKilled = jobsMachineKilled + 1
               end where
             end if
 
-            ! If the chunk posesses any direct writes, free them up
-            ! and tell any other chunks wanting to write that they can do so.
-            if ( directWriteStatus(deadChunk) > 0 ) then
-              ! If this file has not had the first chunk written sucessfully (i.e.
-              ! it was deadChunk's task to do so).  Tell the next person who wants
-              ! to write it to create it again.
-              deadFile = directWriteStatus ( deadChunk )
-              fileIndex = FindFirst ( directWriteFiles(1:noDirectWriteFiles) == deadFile )
-              createFile = noDirectWriteChunks ( fileIndex ) == 0
-              ! OK perhaps someone else's turn for this file, sort that out.
-              call NextSlaveToWrite ( deadFile )
-            end if
-            directWriteStatus ( deadChunk ) = 0
-            directWriteTicket ( deadChunk ) = 0
+            ! If the chunk posesses any direct writes, free them up.
+            chunksWriting ( deadChunk ) = .false.
+            ! First free any files that are in progress
+            requestIndex = FindFirst ( directWriteRequests%chunk == deadChunk .and. &
+              & directWriteRequests%status == DW_InProgress )
+            if ( requestIndex /= 0 ) directWriteFileBusy ( &
+              & directWriteRequests(requestIndex)%fileIndex ) = .false.
+            ! Now forget all the requests we had pending
+            where ( directWriteRequests%chunk == deadChunk )
+              directWriteRequests%status = dw_Completed
+            end where
 
             ! Does this chunk keep failing, if so, give up.
             if ( chunkFailures(deadChunk) > &
@@ -756,6 +752,8 @@ contains ! ================================ Procedures ======================
               end if
             end if
           else
+            ! Otherwise we'd already forgotten about this slave, it told
+            ! us it had finished.
             if ( index(switches,'mas') /= 0 ) call output ( &
               & "A slave task died after giving results, " // &
               & "we won't worry about it.", &
@@ -765,6 +763,82 @@ contains ! ================================ Procedures ======================
 
       else if ( bufferIDRcv < 0 ) then
         call PVMErrorMessage ( info, "checking for Notify message" )
+      end if
+
+      ! Now hand out whatever direct write permissions we are able to give
+      ! Give each request a value the same as their ticket number
+      directWriteRequests%value = directWriteRequests%ticket
+      ! Invalidate all the requests that are not pending
+      where ( directWriteRequests%status /= DW_Pending )
+        directWriteRequests%value = nextTicket + 1
+      end where
+      ! Invalidate all requests from a chunk that is busy
+      do requestIndex = 1, noDirectWriteRequests
+        if ( directWriteRequests(requestIndex)%status == DW_Pending ) then
+          if ( chunksWriting(directWriteRequests(requestIndex)%chunk) ) &
+            & directWriteRequests%value = nextTicket + 1
+        end if
+      end do
+      ! Now invalidate all corresponding to busy files
+      do fileIndex = 1, noDirectWriteFiles
+        if ( directWriteFileBusy ( fileIndex ) ) then
+          where ( directWriteRequests%fileIndex == fileIndex )
+            directWriteRequests%value = nextTicket + 1
+          end where
+        end if
+      end do
+      ! Now find the one with the best cost
+      requestIndexA = minloc ( directWriteRequests%value )
+      request => directWriteRequests ( requestIndexA(1) )
+      ! If we can do this one then do so
+      if ( request%value <= nextTicket ) then
+        ! So we can do a direct write let's not delay the next time round the loop
+        ! in case there are more things we can do immediately
+        skipDelay = .true.
+        ! OK, we can grant this request, record that in our information
+        request%status = DW_InProgress
+        fileIndex = request%fileIndex
+        directWriteFileBusy ( fileIndex ) = .true.
+        chunksWriting ( request%chunk ) = .true.
+        if ( noDirectWriteChunks(fileIndex) == 0 ) then
+          createFile = 1
+        else
+          createFile = 0
+        end if
+        if ( index(switches,'mas') /= 0 ) then
+          call output ( 'Direct write granted to ' )
+          if ( .not. usingSubmit ) &
+            & call output ( trim(machineNames(request%machine)) // ' ' )
+          call output ( trim(GetNiceTidString(chunkTids(request%chunk))) )
+          call output ( ' chunk ' )
+          call output ( request%chunk )
+          call output ( ' ticket ' )
+          call output ( request%ticket, advance='yes' )
+          call display_string ( directWriteFilenames(request%fileIndex), strip=.true., &
+            & advance='yes' )
+        end if
+        
+        ! Tell the slave to go ahead
+        call PVMFInitSend ( PvmDataDefault, bufferIdSnd )
+        if ( bufferIdSnd < 0 ) &
+          & call PVMErrorMessage ( bufferIDSnd, 'setting up direct write granted' )
+        call PVMF90Pack ( SIG_DirectWriteGranted, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing direct write granted flag' )
+        call PVMF90Pack ( (/ request%node, request%ticket, createFile /), info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'packing direct write granted info' )
+        
+        call PVMFSend ( chunkTids(request%chunk), InfoTag, info )
+        if ( info /= 0 ) &
+          & call PVMErrorMessage ( info, 'sending direct write granted' )
+      end if
+
+      ! Perhaps compact the direct write request database
+      if ( count ( directWriteRequests%status /= DW_Completed ) < &
+        & noDirectWriteRequests / 2 ) then
+        call CompactDirectWriteRequestDB ( directWriteRequests, noDirectWriteRequests )
+        skipDelay = .true. ! This may take time so don't hang around later
       end if
 
       ! Have we abandoned everything?
@@ -796,7 +870,7 @@ contains ! ================================ Procedures ======================
 
       ! Now, rather than chew up cpu time on the master machine, we'll wait a
       ! bit here.
-      call usleep ( delay )
+      if ( .not. skipDelay ) call usleep ( delay )
     end do masterLoop ! --------------------- End of master loop --------------
 
     ! Now, we have to tidy some stuff up here to ensure we can join things
@@ -930,76 +1004,6 @@ contains ! ================================ Procedures ======================
     call Deallocate_test ( jobsMachineKilled, 'jobsMachineKilled', ModuleName )
 
   contains
-
-    subroutine GrantDirectWrite ( tid, createFile )
-      ! This routine sends a direct write grant message to a slave
-      integer, intent(in) :: TID        ! Slave tid
-      logical, intent(in) :: CREATEFILE ! Set if new file
-      ! Local variables
-      integer :: INFO                   ! From PVM
-      integer :: BUFFERID               ! From PVM
-      integer :: CREATE                 ! Integer version of createFile
-      ! Executable code
-      create = 0
-      if ( createFile ) create = 1
-      call PVMFInitSend ( PvmDataDefault, bufferID ) 
-      call PVMF90Pack ( (/ SIG_DirectWriteGranted, create /), info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'packing direct write permission' )
-      call PVMFSend ( tid, InfoTag, info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'sending direct write permission' )
-    end subroutine GrantDirectWrite
-
-    subroutine NextSlaveToWrite ( file )
-      ! This routine works out who is the next slave to do a direct
-      ! write and lets them know
-      ! Dummy arguments
-      integer, intent(in) :: FILE
-      ! Local variables
-      integer, dimension(size(chunks)) :: RELEVANTTICKETS
-      integer :: LOCATION(1)            ! Result of minloc
-      integer :: CHUNK                  ! Chunk index
-      ! Exectuable code
-      relevantTickets = directWriteTicket
-      where ( directWriteStatus /= -file .or. directWriteTicket == 0 )
-        ! Mark the irrelevant ones out as being very new (i.e. never chosen)
-        relevantTickets = nextTicket + 1
-      end where
-      if ( any ( relevantTickets /= nextTicket + 1 ) ) then
-        location = minloc ( relevantTickets )
-        chunk = location ( 1 )
-        if ( index ( switches, 'mas' ) /= 0 ) then
-          call output ( 'Permission now granted to ' // &
-            & trim(GetNiceTidString(chunkTids(chunk))) // &
-            & ' chunk ' )
-          call output ( chunk )
-          call output ( ' ticket ' )
-          call output ( relevantTickets(location(1)), advance='yes' )
-        end if
-        ! We know createFile is false here because someone else just
-        ! wrote to the file sucessfully!
-        call GrantDirectWrite ( chunkTids(chunk), .false. )
-        directWriteStatus ( chunk ) = file
-        directWriteTicket ( chunk ) = 0
-      end if
-    end subroutine NextSlaveToWrite
-
-    subroutine TellSlaveToWait ( tid )
-      ! This routine sends a simple 'please wait' message to a slave
-      ! who has asked for a direct write
-      integer, intent(in) :: TID
-      ! Local variables
-      integer :: INFO                   ! From PVM
-      integer :: BUFFERID               ! From PVM
-      call PVMFInitSend ( PvmDataDefault, bufferID ) 
-      call PVMF90Pack ( SIG_DirectWriteWait, info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'packing direct write wait' )
-      call PVMFSend ( tid, InfoTag, info )
-      if ( info /= 0 ) &
-        & call PVMErrorMessage ( info, 'sending direct write wait' )
-    end subroutine TellSlaveToWait
 
     subroutine WelcomeSlave ( chunk, tid )
       ! This routine welcomes a slave into the fold and tells it stuff
@@ -1258,6 +1262,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.52  2003/07/07 17:32:00  livesey
+! New approach to directWrite
+!
 ! Revision 2.51  2003/07/02 00:54:10  livesey
 ! Various tidy ups and bug fixes
 !
