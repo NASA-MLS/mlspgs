@@ -15,7 +15,6 @@ module FullForwardModel_m
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
-  private :: not_used_here 
 !-----------------------------------------------------------------------
 contains
 
@@ -232,9 +231,6 @@ contains
     real(rp), dimension(:), pointer :: TAN_TEMP ! ***
     real(rp), dimension(:), pointer :: T_PATH ! Temperatures on path
     real(rp), dimension(:), pointer :: T_SCRIPT ! ********
-    real(rp), dimension(:), pointer :: XM ! Midpoint of integration grid intervals
-    real(rp), dimension(:), pointer :: YM ! Half length of integration grid intervals
-    real(rp), dimension(:), pointer :: ZGX ! Gauss weights (with -1 at front)
     real(rp), dimension(:), pointer :: Z_BASIS !zeta basis per specie (n_f_zeta)
     real(rp), dimension(:), pointer :: Z_BASIS_DN ! zeta basis for dw (n_dn_z)
     real(rp), dimension(:), pointer :: Z_BASIS_DV ! zeta basis for dw (n_dv_z)
@@ -399,8 +395,8 @@ contains
       & ptg_angles, radiances, RadV, ref_corr, req_out, sps_path, &
       & superset, tan_chi_out, tan_d2h_dhdt, tan_dh_dt, tan_inds, &
       & tan_phi, tan_press, tan_temp, tau, t_glgrid, t_path, t_script, &
-      & usedchannels, usedsignals, xm, ym, z_all, z_basis, z_basis_dn, &
-      & z_basis_dv, z_basis_dw, z_glgrid, zgx, z_path, z_tmp )
+      & usedchannels, usedsignals, z_all, z_basis, z_basis_dn, &
+      & z_basis_dv, z_basis_dw, z_glgrid, z_path, z_tmp )
 
     ! Work out what we've been asked to do -----------------------------------
 
@@ -773,9 +769,9 @@ contains
                        & moduleName )
     earthradc = earthRadA*earthRadB / &
           & SQRT((earthRadA**2-earthRadB**2) * &
-                 &   SIN(Deg2Rad*orbIncline%values(1,maf))**2 + &
+                 &   SIN(orbIncline%values(1,maf)*Deg2Rad)**2 + &
                  & earthRadB**2)
-    req_out = COS(Deg2Rad*phitan%values(:,maf))**2
+    req_out = COS(phitan%values(:,maf)*Deg2Rad)**2
     req_out = 0.001_rp*SQRT((earthrada**4*(1.0_rp-req_out) &
     & + earthradc**4*req_out) / (earthrada**2*req_out &
     & + earthradc**2*(1.0-req_out)))
@@ -786,17 +782,17 @@ contains
     call allocate_test ( dhdz_out,ptan%template%nosurfs, 'dhdz_out', &
                        & moduleName )
     if ( h2o_ind > 0 .and. .not. temp_der ) then
-      end_ind_z = SUM(grids_f%no_z(1:h2o_ind))
+      end_ind_z = sum(grids_f%no_z(1:h2o_ind))
       beg_ind_z = end_ind_z - grids_f%no_z(h2o_ind) + 1
-      end_ind_p = SUM(grids_f%no_p(1:h2o_ind))
+      end_ind_p = sum(grids_f%no_p(1:h2o_ind))
       beg_ind_p = end_ind_p - grids_f%no_p(h2o_ind) + 1
-      end_ind = SUM(grids_f%no_z(1:h2o_ind)*grids_f%no_p(1:h2o_ind) * &
+      end_ind = sum(grids_f%no_z(1:h2o_ind) * grids_f%no_p(1:h2o_ind) * &
                  &  grids_f%no_f(1:h2o_ind))
       beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
                        &  grids_f%no_f(h2o_ind) + 1
-      call get_chi_out ( ptan%values(:,maf), Deg2Rad*phitan%values(:,maf), &
+      call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*Deg2Rad, &
          & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp, &
-         & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+         & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, elevoffset%values(1,1)*Deg2Rad, &
          & req_out, tan_chi_out, dhdz_out, dx_dh_out, &
@@ -805,9 +801,9 @@ contains
          & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
          & lin_log=grids_f%lin_log(h2o_ind))
     else if ( h2o_ind == 0 .and. .not. temp_der ) then
-      call get_chi_out ( ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
+      call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
          & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp, &
-         & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+         & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, elevoffset%values(1,1)*Deg2Rad, &
          & req_out, tan_chi_out, dhdz_out, dx_dh_out )
@@ -824,9 +820,9 @@ contains
                   & grids_f%no_f(1:h2o_ind))
       beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
                      &  grids_f%no_f(h2o_ind) + 1
-      call get_chi_out ( ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
+      call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
          & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp, &
-         & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+         & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, elevoffset%values(1,1)*Deg2Rad, &
          & req_out, tan_chi_out, dhdz_out, dx_dh_out, &
@@ -840,9 +836,9 @@ contains
                         &  'dxdt_tan',moduleName )
       call allocate_test ( d2xdxdt_tan,ptan%template%nosurfs,sv_t_len, &
                          & 'd2xdxdt_tan',moduleName )
-      call get_chi_out ( ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
+      call get_chi_out ( ptan%values(:,maf), phitan%values(:,maf)*deg2rad, &
          & 0.001_rp*scGeocAlt%values(:,maf), Grids_tmp, &
-         & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+         & (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, elevoffset%values(1,1)*Deg2Rad, &
          & req_out, tan_chi_out, dhdz_out, dx_dh_out, &
@@ -915,10 +911,8 @@ contains
 
 ! note that z_psig(1) is the designated surface
     Nlvl = SIZE(z_psig)
-    maxVert = (Nlvl-1) * Ng + Nlvl
-
-    ! Work out the dimensions of it
     NLm1 = Nlvl - 1
+    maxVert = NLm1 * Ngp1 + 1
 
 ! Allocate GL grid stuff
 
@@ -934,25 +928,18 @@ contains
     call allocate_test ( ddhidhidtl0, maxVert, n_t_zeta, no_sv_p_t, &
                       &  'ddhidhidtl0', moduleName )
 
-    call allocate_test ( xm, NLm1, 'xm', moduleName )
-    call allocate_test ( ym, NLm1, 'ym', moduleName )
-    call allocate_test ( zgx, Ngp1, 'zgx', moduleName )
-
 ! From the selected integration grid pressures define the GL pressure grid:
 
-    zGx(1) = -1.0_rp
-    zGx(2:Ngp1) = Gx(1:Ng)
-
-    xm(1:NLm1) = 0.5_rp * (z_psig(2:Nlvl) + z_psig(1:Nlm1))
-    ym(1:NLm1) = 0.5_rp * (z_psig(2:Nlvl) - z_psig(1:Nlm1))
-    z_glgrid(1:maxVert-1) = RESHAPE ((SPREAD(xm,1,Ngp1) + &
-       & SPREAD(ym,1,Ngp1) * SPREAD(zGx,2,NLm1)), (/maxVert-1/))
+    z_glgrid(1:maxVert-1) = reshape ( &
+      ! Midpoint of integration grid intervals:
+      & spread(0.5_rp * (z_psig(2:Nlvl) + z_psig(1:Nlm1)),1,Ngp1) + &
+      ! Half length of integration grid intervals:
+      & spread(0.5_rp * (z_psig(2:Nlvl) - z_psig(1:Nlm1)),1,Ngp1) * &
+      ! Gauss points (with -1 at front):
+      & spread((/-1.0_rp,Gx(1:Ng)/),2,NLm1), (/maxVert-1/))
     z_glgrid(maxVert) = z_psig(Nlvl)
     p_glgrid = 10.0_rp**(-z_glgrid)
 
-    call deallocate_test ( xm, 'xm', moduleName )
-    call deallocate_test ( ym, 'ym', moduleName )
-    call deallocate_test ( zgx, 'zgx', moduleName )
     call deallocate_test ( z_psig, 'z_psig', moduleName )
 
     ! Compute hydrostatic grid -----------------------------------------------
@@ -966,13 +953,12 @@ contains
       & call Trace_Begin ( 'ForwardModel.Hydrostatic' )
 
     call two_d_hydrostatic ( Grids_tmp, &
-      &  SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
+      &  (/ (refGPH%template%surfs(1,1), j=1,no_sv_p_t) /), &
       &  0.001*refGPH%values(1,windowStart:windowFinish), z_glgrid, &
       &  orbIncline%values(1,maf)*Deg2Rad, t_glgrid, h_glgrid, &
       &  dhdz_glgrid, dh_dt_glgrid, DDHDHDTL0=ddhidhidtl0 )
 
-! We are going to over-writing the user's Tangent Grid specifications ..
-! (Replacing "fwdModelConf%tangentGrid%surfs" with: "tan_press")
+! Compute tan_press from fwdModelConf%tangentGrid%surfs
 
     j = COUNT(fwdModelConf%tangentGrid%surfs < (z_glgrid(1) - 0.0001_rp))
     no_tan_hts = Nlvl + j
@@ -1030,6 +1016,8 @@ contains
     call interpolateValues ( z_path, t_path, tan_press(j+1:no_tan_hts), &
        & est_scgeocalt(j+1:no_tan_hts), METHOD='L' )
 
+    tan_phi(1:no_tan_hts) = tan_phi(1:no_tan_hts) * deg2rad
+
     call deallocate_test ( z_path, 'h_path', moduleName )
     call deallocate_test ( p_path, 'p_path', moduleName )
     call deallocate_test ( t_path, 't_path', moduleName )
@@ -1049,7 +1037,7 @@ contains
                 & grids_f%no_f(1:h2o_ind))
         beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
                 & grids_f%no_f(h2o_ind) + 1
-        call get_chi_out ( tan_press(1:1), deg2rad*tan_phi(1:1), &
+        call get_chi_out ( tan_press(1:1), tan_phi(1:1), &
            & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
@@ -1061,7 +1049,7 @@ contains
            & lin_log=grids_f%lin_log(h2o_ind), &
            & dxdt_tan=dxdt_surface, d2xdxdt_tan=d2xdxdt_surface )
       else if ( h2o_ind == 0 ) then
-        call get_chi_out ( tan_press(1:1), deg2rad*tan_phi(1:1), &
+        call get_chi_out ( tan_press(1:1), tan_phi(1:1), &
            & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
@@ -1081,7 +1069,7 @@ contains
                 & grids_f%no_f(1:h2o_ind))
         beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
                 & grids_f%no_f(h2o_ind) + 1
-        call get_chi_out ( tan_press(1:1), deg2rad*tan_phi(1:1), &
+        call get_chi_out ( tan_press(1:1), tan_phi(1:1), &
            & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
@@ -1092,7 +1080,7 @@ contains
            & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
            & lin_log=grids_f%lin_log(h2o_ind) )
       else if ( h2o_ind == 0 ) then
-        call get_chi_out ( tan_press(1:1), deg2rad*tan_phi(1:1), &
+        call get_chi_out ( tan_press(1:1), tan_phi(1:1), &
            & 0.001_rp*est_scgeocalt(1:1), Grids_tmp, &
            & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
            & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
@@ -1298,8 +1286,8 @@ contains
         ! Work out the maximum number of frequencies
         maxNoPtgFreqs = 0
         do ptg_i = 1, no_tan_hts
-          k = Size(pointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%&
-                  &frequencies)
+          k = Size(pointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))% &
+                 & frequencies)
           maxNoPtgFreqs = max ( maxNoPtgFreqs, k )
         end do
 
@@ -1350,20 +1338,20 @@ contains
       call allocate_test ( RadV, maxNoPtgFreqs, 'RadV', moduleName )
 
       if ( temp_der) &
-        & call allocate_test ( k_temp_frq,maxNoPtgFreqs,sv_t_len, 'k_temp_frq', &
-        &  moduleName )
+        & call allocate_test ( k_temp_frq, maxNoPtgFreqs, sv_t_len, 'k_temp_frq', &
+                             &  moduleName )
 
       if ( atmos_der ) &
-        & call allocate_test ( k_atmos_frq,maxNoPtgFreqs,f_len, 'k_atmos_frq',&
+        & call allocate_test ( k_atmos_frq, maxNoPtgFreqs, f_len, 'k_atmos_frq',&
                              & moduleName )
 
       if ( spect_der ) then
         call allocate_test ( k_spect_dw_frq , maxNoPtgFreqs, f_len_dw , &
-                          & 'k_spect_dw_frq', moduleName )
+                           & 'k_spect_dw_frq', moduleName )
         call allocate_test ( k_spect_dn_frq , maxNoPtgFreqs, f_len_dn , &
-                          & 'k_spect_dn_frq', moduleName )
+                           & 'k_spect_dn_frq', moduleName )
         call allocate_test ( k_spect_dv_frq , maxNoPtgFreqs, f_len_dv , &
-                          & 'k_spect_dv_frq', moduleName )
+                           & 'k_spect_dv_frq', moduleName )
       end if
 
       if ( toggle(emit) .and. levels(emit) > 2 ) &
@@ -1382,14 +1370,14 @@ contains
         ! This is not pretty but we need some coarse grid extraction indices
         k = Ngp1
         j = (npc+1)/2
-        indices_c(1:) = 0
         indices_c(1:npc) = (/(i*k-Ng,i=1,j),((i-1)*k-Ng+1,i=j+1,npc)/)
+        indices_c(npc+1:) = 0
 
         ! Compute z_path & p_path
         z_path(1:no_ele) = (/(z_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
-          (z_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
+                           & (z_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
         p_path(1:no_ele) = (/(p_glgrid(i),i=MaxVert,tan_inds(ptg_i),-1), &
-          (p_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
+                           & (p_glgrid(i),i=tan_inds(ptg_i),MaxVert)/)
 
         ! Compute the h_path, t_path, dhdz_path, phi_path, dhdt_path
 
@@ -1403,9 +1391,9 @@ contains
 
           if ( temp_der ) then
             ! Set up temperature representation basis stuff
-            call metrics ( (/tan_phi(ptg_i)*Deg2Rad/), (/tan_inds(ptg_i)/),  &
+            call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
-              &  Deg2Rad*orbIncline%values(1,maf), Grids_tmp%deriv_flags,    &
+              &  orbIncline%values(1,maf)*Deg2Rad, Grids_tmp%deriv_flags,    &
               &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
               &  TAN_PHI_H_GRID=one_tan_ht, TAN_PHI_T_GRID=one_tan_temp,     &
@@ -1418,9 +1406,9 @@ contains
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
               &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:) )
           else
-            call metrics ( (/tan_phi(ptg_i)*Deg2Rad/), (/tan_inds(ptg_i)/),  &
+            call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
-              &  Deg2Rad*orbIncline%values(1,maf),                           &
+              &  orbIncline%values(1,maf)*Deg2Rad,                           &
               &  dummy, h_path(1:no_ele), phi_path(1:no_ele),                &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
@@ -1433,10 +1421,10 @@ contains
           e_rflty = 1.0_rp
           if ( temp_der ) then
             ! Set up temperature representation basis stuff
-            call metrics ( (/tan_phi(ptg_i)*Deg2Rad/), (/tan_inds(ptg_i)/),  &
+            call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
-              &  Deg2Rad*orbIncline%values(1,maf),                           &
-              &  Grids_tmp%deriv_flags, h_path(1:no_ele), phi_path(1:no_ele),&
+              &  orbIncline%values(1,maf)*Deg2Rad, Grids_tmp%deriv_flags,    &
+              &  h_path(1:no_ele), phi_path(1:no_ele),                       &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp, &
               &  DHTDTL0 = tan_dh_dt, DDHIDHIDTL0 = ddhidhidtl0,             &
@@ -1447,9 +1435,9 @@ contains
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
               &  DO_CALC_HYD = do_calc_hyd(1:no_ele,:) )
           else
-            call metrics ( (/tan_phi(ptg_i)*Deg2Rad/), (/tan_inds(ptg_i)/),  &
+            call metrics ( tan_phi(ptg_i:ptg_i), tan_inds(ptg_i:ptg_i),      &
               &  Grids_tmp%phi_basis, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid, &
-              &  Deg2Rad*orbIncline%values(1,maf),                           &
+              &  orbIncline%values(1,maf)*Deg2Rad,                           &
               &  dummy, h_path(1:no_ele), phi_path(1:no_ele),                &
               &  t_path(1:no_ele), dhdz_path(1:no_ele), Req,                 &
               &  TAN_PHI_H_GRID = one_tan_ht, TAN_PHI_T_GRID = one_tan_temp )
@@ -1495,12 +1483,12 @@ contains
 
         if ( temp_der ) then
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path(npc/2),&
-             & one_tan_ht(1), tan_phi(ptg_i)*Deg2Rad, Req, 0.0_rp,        &
+             & one_tan_ht(1), tan_phi(ptg_i), Req, 0.0_rp,                &
              & ptg_angles(ptg_i), r, 1.0_rp, tan_dh_dt(1,:),              &
              & tan_d2h_dhdt(1,:), dx_dt(ptg_i,:), d2x_dxdt(ptg_i,:) )
         else
           call get_chi_angles ( 0.001*est_scGeocAlt(ptg_i), n_path(npc/2),&
-             & one_tan_ht(1), tan_phi(ptg_i)*Deg2Rad,Req, 0.0_rp,         &
+             & one_tan_ht(1), tan_phi(ptg_i),Req, 0.0_rp,                 &
              & ptg_angles(ptg_i), r, 1.0_rp )
         end if
 
@@ -2273,7 +2261,7 @@ contains
     i = Index(molName, '.B')
     do j = i+1,32
       if ( molName(j:j) == '.' ) then
-        molName(j:32)=' '
+        molName(j:)=' '
         exit
       end if
     end do
@@ -2450,15 +2438,19 @@ contains
       call trace_end ( 'ForwardModel MAF=',fmStat%maf )
     end if
 
- end subroutine FullForwardModel
+  end subroutine FullForwardModel
 
-  logical function not_used_here()
+! --------------------------------------------------  not_used_here  -----
+  logical function NOT_USED_HERE()
     not_used_here = (id(1:1) == ModuleName(1:1))
-  end function not_used_here
+  end function NOT_USED_HERE
 
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.95  2002/10/10 01:46:50  livesey
+! Whoops, typo fix
+!
 ! Revision 2.94  2002/10/10 01:28:06  livesey
 ! Bug fix in k_temp windowing
 !
