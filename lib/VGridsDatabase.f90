@@ -23,7 +23,7 @@ module VGridsDatabase
                                    ! 0 if empty
     integer :: NoSurfs             ! Number of surfaces
     real(r8), dimension(:,:), pointer :: Surfs => NULL()  ! Array of surfaces
-                                   ! (actually dimensioned 1:noSurfs)
+                                   ! (actually dimensioned (1:noSurfs,1))
   end type VGrid_T
 
   ! Public procedures:
@@ -121,7 +121,7 @@ contains
     call display_string ( vgrid%name )
     call output ( ' noSurfs = ' )
     call output ( vgrid%noSurfs )
-    call output ( ' verticalCoordinate = ' )
+    call output ( ' Coordinate = ' )
     call display_string ( lit_indices(vgrid%verticalCoordinate) )
     if ( myDetails > 0 ) call dump ( vgrid%surfs(:,1), ' Surfs = ' )
   end subroutine Dump_a_VGrid
@@ -255,6 +255,9 @@ contains
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.13  2004/06/03 22:57:48  vsnyder
+! Cosmetic changes to account for using VGrid struct for TGrids too
+!
 ! Revision 2.12  2004/05/29 02:46:39  vsnyder
 ! Fix a bug in Dump_a_VGrid, some cannonball-polishing
 !
