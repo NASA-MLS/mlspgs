@@ -13,7 +13,7 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
   use HGrid, only: hGrid_T
   use INIT_TABLES_MODULE, only: F_GEODANGLE, F_FGRID, F_HGRID, F_INCLINATION, &
     & F_LOGBASIS, F_MINVALUE, F_MODULE, F_MOLECULE, F_NOMIFS, F_RADIOMETER, &
-    & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID
+    & F_SIGNAL, F_SGRID, F_TYPE, F_UNIT, F_VGRID, F_IRREGULAR
   use INIT_TABLES_MODULE, only: &
     FIRST_LIT, LAST_LIT, L_BASELINE, L_BOUNDARYPRESSURE, &
     L_CHANNEL, L_CHISQCHAN, L_CHISQMMAF, L_CHISQMMIF, L_CLOUDICE, L_CLOUDEXTINCTION, &
@@ -132,6 +132,7 @@ contains ! =====     Public Procedures     =============================
     integer :: NoChans
     integer :: QuantityType
     integer :: Radiometer               ! Database index
+    logical :: Regular                  ! Flag
     real(r8) :: ScaleFactor
     integer :: Sideband
     integer :: Signal                   ! Database index
@@ -158,6 +159,7 @@ contains ! =====     Public Procedures     =============================
     hGridIndex = 0
     instrumentModule = 0
     logBasis = .false.
+    regular = .true.
     minValue = -huge ( 0.0_r8 )
     molecule = 0
 
@@ -233,6 +235,8 @@ contains ! =====     Public Procedures     =============================
         hGridIndex = decoration(value) ! node_id(value) == n_spec_args
       case ( f_logBasis )
         logBasis = (value == l_true)
+      case ( f_irregular )
+        regular = (value /= l_true)
       case ( f_minValue )
         call expr ( subtree(2,son), expr_units, expr_value )
         minValue = expr_value(1)
@@ -348,7 +352,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Construct an empty quantity
       call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-        & qty, noChans=noChans, mifGeolocation=mifGeolocation )
+        & qty, noChans=noChans, mifGeolocation=mifGeolocation, regular=regular )
 
       ! Make absolutely certain template's dimensions are what we want
       if ( quantityType == l_chiSqMMIF ) then
@@ -396,7 +400,7 @@ contains ! =====     Public Procedures     =============================
 
        ! Construct an empty quantity
        call ConstructMinorFrameQuantity ( l1bInfo, chunk, instrumentModule, &
-        & qty, noChans=noChans)
+        & qty, noChans=noChans )
        call Allocate_test ( qty%frequencies, noChans, 'qty%frequencies', ModuleName )
        
        qty%frequencies = VGrids(sGridIndex)%surfs
@@ -428,7 +432,8 @@ contains ! =====     Public Procedures     =============================
         noChans = 3
       case default
       end select
-
+      if ( .not. regular ) call announce_error ( root, no_error_code, &
+        & 'Inappropriate irregular quantity request' )
       call SetupNewQuantityTemplate ( qty, noInstances=noInstances, &
         & noSurfs=noSurfs, coherent=.TRUE., stacked=.TRUE., regular=.TRUE.,&
         & noChans=noChans )
@@ -703,8 +708,13 @@ contains ! =====     Public Procedures     =============================
           & 'You must supply NoChans to reuse geolocation information' )
       ! We have geolocation information, setup the quantity as a clone of that.
       qty = mifGeolocation(instrumentModule)
+      if ( present ( regular ) ) qty%regular = regular
       qty%noChans = noChans
-      qty%instanceLen = qty%noChans*qty%noSurfs
+      if ( qty%regular ) then
+        qty%instanceLen = qty%noChans*qty%noSurfs
+      else
+        qty%instanceLen = 0
+      end if
       ! Increment the id counter and set the id field
       quantityTemplateCounter = quantityTemplateCounter + 1
       qty%id = quantityTemplateCounter
@@ -739,9 +749,9 @@ contains ! =====     Public Procedures     =============================
       !  print *, 'noChans not present'
       !endif
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
-        & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
-        & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
-        & minorFrame=.TRUE. )
+        & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.false., &
+        & stacked=.false., regular=regular, instanceLen=instanceLen, &
+        & minorFrame=.true. )
       qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
       qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
 
@@ -1001,6 +1011,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.80  2003/01/08 23:50:44  livesey
+! Added irregular argument
+!
 ! Revision 2.79  2003/01/07 23:46:53  livesey
 ! Added magnetic field stuff
 !
