@@ -18,6 +18,10 @@ begin Output
 !forall(outputStandardProductWithoutColumn,!allStandardProductsWithoutColumns)
 
 ;; --------------------------------- Other files ---
+;; The IWC file is a somewhat special case
+Output, quantities=[joined_iwc, joined_iwcFine], type=l2gp, $
+  file='!outpathl2gp/MLS-Aura_L2GP-IWC_!l2version_!day.he4'
+
 ;; Now output the DGG file.
 !ifdef(flagGotDGGs,{
 Output, quantities=[ !undivert(!DGGDivert) ], type=l2gp, $

@@ -15,4 +15,10 @@ begin Join
     precision=outputPrecision.column_$1, swath='$1 Column wmo'!nl})
   !forall(joinStandardColumn,!allStandardProductsWithColumns)
 
+  ;; IWC is a special case
+  joined_iwc: l2gp, source=state.iwc, precision=outputPrecision.iwc, $
+    swath='IWC'
+  joined_iwcFine: l2gp, source=state.iwcFine, precision=outputPrecision.iwcFine, $
+    swath='IWC-fine'
+
 end Join
