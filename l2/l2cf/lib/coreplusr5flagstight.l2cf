@@ -1,0 +1,40 @@
+; $Id$
+
+; This l2cf fragment does all the quality flagging for the Core+R5
+; products.
+
+begin Fill
+  ;; ------------------------------------ OH-2T5
+  !define(flaggingBands,{15,17,18,19})
+  !makeFlagsForOneProduct(product=OH,radiometer=R5,chisqScale=20.0,minRads=2000,cloudMax=10K)
+
+  ;; ------------------------------------ O3-2T5
+  !define(flaggingBands,{15,17,18,19})
+  !makeFlagsForOneProduct(product=O3,radiometer=R5,chisqScale=20.0,minRads=2000,cloudMax=10K)
+
+  ;; ------------------------------------- Temperature-CorePlusR5
+  !define(flaggingBands,{1,17,22})
+  !makeFlagsForOneProduct(product=Temperature,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=10K,cloudMin= -20K)
+
+  ;; ------------------------------------- GPH-CorePlusR5
+  !define(flaggingBands,{1,17,22})
+  !makeFlagsForOneProduct(product=GPH,radiometer=R2,chisqScale=10.0,minRads=800,cloudMax=10K,cloudMin= -20K)
+
+end Fill
+
+; $Log$
+; Revision 1.5  2004/04/28 00:32:19  livesey
+; Bug fix
+;
+; Revision 1.4  2004/04/27 23:51:09  livesey
+; Added low cloud flagging for t/gph
+;
+; Revision 1.3  2004/04/27 23:46:37  livesey
+; Added GPH
+;
+; Revision 1.2  2004/04/17 05:47:37  livesey
+; Backed off the number of radiances missing flags
+;
+; Revision 1.1  2004/04/08 22:42:35  livesey
+; First version
+;
