@@ -4,6 +4,7 @@ module Parse_Signal_M
   use Declaration_Table, only: Decls, Get_Decl, Label
   use Init_MLSSignals_m, only: S_Band, S_Module, S_Radiometer, S_Signal, &
     & S_SpectrometerType, Spec_First
+  use Intrinsic, only: Spec_Indices
   use Lexer_Core, only: Print_Source, Token
   use Lexer_m, only: Lex_Signal
   use MLSSignals_m, only: Bands, Radiometers, Signals, SpectrometerTypes
@@ -29,7 +30,7 @@ module Parse_Signal_M
 
 contains
 
-  subroutine Parse_Signal ( Signal_String, Signal_Indices, Spec_indices, &
+  subroutine Parse_Signal ( Signal_String, Signal_Indices, &
     & Tree_Index, Sideband, Channels, OnlyCountEm )
 
   ! Parse a signal string.  Return the indices in the signal database of
@@ -44,8 +45,6 @@ contains
     ! database.  Deallocated here using Allocate_Test, so don't start with an
     ! undefined pointer!  Upon return, if Signal_Indices is not associated
     ! (and OnlyCountEm is not present), an error occurred.
-    integer, intent(in) :: Spec_indices(spec_first:)   ! Indices in string
-    !                                               table; For error messages
     integer, intent(in), optional :: Tree_Index   ! To get line and column
     !                                               numbers for messages
     integer, intent(out), optional :: Sideband    ! Zero if no band is
@@ -440,6 +439,9 @@ o:  do
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.10  2001/04/26 02:33:03  vsnyder
+! Moved *_indices declarations from init_tables_module to intrinsic
+!
 ! Revision 2.9  2001/04/13 20:58:48  vsnyder
 ! Add 'OnlyCountEm' argument
 !
