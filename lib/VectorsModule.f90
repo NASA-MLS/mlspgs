@@ -24,6 +24,8 @@ module VectorsModule            ! Vectors in the MLS PGS suite
 ! AssignVector                 Destroy 1st arg, then assign 2nd arg to it
 ! AxPy                         Result z = A x + y
 ! ClearMask                    Clear bits of MASK according to TO_CLEAR
+! ClearUnderMask               Clear elements of z corresponding to MASK
+! ClearVector                  Clear elements of z
 ! CloneVector                  Destroy 1st arg, then use 2nd arg for a template
 ! ConstantXVector              Result z = A x
 ! ConstructVectorTemplate      Creates a vectorTemplate from a list of quantities
@@ -78,7 +80,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! Specifics
   public :: AddToVector, AddVectors, AddVectorTemplateToDatabase
   public :: AddVectorToDatabase, AssignVector, AXPY, ClearMask
-  public :: ClearUnderMask, CloneVector, ConstantXVector
+  public :: ClearUnderMask, ClearVector, CloneVector, ConstantXVector
   public :: ConstructVectorTemplate, CopyVector, CreateMaskArray
   public :: CreateMask, CreateVector, DestroyVectorDatabase, DestroyVectorInfo
   public :: DestroyVectorMask, DestroyVectorTemplateDatabase
@@ -358,6 +360,17 @@ contains ! =====     Public Procedures     =============================
       end if
     end do ! qi
   end subroutine ClearUnderMask 
+
+  !-------------------------------------------------  ClearVector  -----
+  subroutine ClearVector ( Z )
+  ! Clear the elements of Z (make them zero).  Don't change its structure
+  ! or mask.
+    type(Vector_T), intent(inout) :: Z
+    integer :: I
+    do i = 1, size(z%quantities)
+      z%quantities(i)%values = 0.0
+    end do
+  end subroutine ClearVector
 
   !-------------------------------------------------  CloneVector  -----
   subroutine CloneVector ( Z, X, VectorNameText )
@@ -1492,6 +1505,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.60  2001/10/01 20:32:27  vsnyder
+! Handle word and bit indexing in mask consistently
+!
 ! Revision 2.59  2001/09/29 00:25:51  vsnyder
 ! Correct word indexing for mask operations
 !
