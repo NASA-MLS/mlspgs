@@ -1421,6 +1421,7 @@ contains ! =====     Public Procedures     =============================
     swid = mls_SWattach (l2FileHandle, name, hdfVersion=hdfVersion)
     if ( l2gp%nFreqs > 0 ) then
        ! Value and Precision are 3-D fields
+       if (DEEBUG) print *, 'start, stride, edge ', start, stride, edge
        status = mls_SWwrfld(swid, 'L2gpValue', start, stride, edge, &
             & reshape(real(l2gp%l2gpValue), (/size(l2gp%l2gpValue)/)), &
             & hdfVersion=hdfVersion )
@@ -1431,6 +1432,7 @@ contains ! =====     Public Procedures     =============================
     else if ( l2gp%nLevels > 0 ) then
        ! Value and Precision are 2-D fields
       
+       if (DEEBUG) print *, 'start, stride, edge: ', start(2:3), stride(2:3), edge(2:3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(2:3), stride(2:3), &
             edge(2:3), real(l2gp%l2gpValue(1,:,:) ), hdfVersion=hdfVersion)
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(2:3), stride(2:3), &
@@ -1438,6 +1440,7 @@ contains ! =====     Public Procedures     =============================
     else
 
        ! Value and Precision are 1-D fields
+       if (DEEBUG) print *, 'start, stride, edge: ', start(3), stride(3), edge(3)
        status = mls_SWwrfld( swid, 'L2gpValue', start(3:3), stride(3:3), edge(3:3), &
             real(l2gp%l2gpValue(1,1,:) ), hdfVersion=hdfVersion)
        status = mls_SWwrfld( swid, 'L2gpPrecision', start(3:3), stride(3:3), edge(3:3), &
@@ -1777,7 +1780,8 @@ contains ! =====     Public Procedures     =============================
   !-------------------------------------------------------------
 
   subroutine AppendL2GPData_fileID(l2gp, l2FileHandle, &
-    & swathName, filename, offset, TotNumProfs, hdfVersion, createSwath)
+    & swathName, filename, offset, lastProfile, TotNumProfs, hdfVersion, &
+    & createSwath)
     ! sticks l2gp into the swath swathName in the file pointed at by
     ! l2FileHandle,starting at the profile number "offset" (First profile
     ! in the file has offset==0). If this runs off the end of the swath, 
@@ -1798,13 +1802,14 @@ contains ! =====     Public Procedures     =============================
     ! This (offset) is the point in the swath at which the data is written. 
     ! First profile in the file has offset==0. If the swath in the file is 
     ! shorter than offset + ( num of profiles in l2gp) then it grows by magic
-    integer,intent(IN),optional::offset
+    integer, intent(IN), optional::offset
     ! TotNumProfs is a new argument. It seems only to be used if we are 
     ! creating a swath, rather than adding to one. In that case I guess
     ! it is the total number of profiles in the swath created. I also 
     ! guess that this is done so that we can avoid growing and re-growing 
     ! the swath.
-    integer,intent(IN),optional::TotNumProfs
+    integer, intent(IN), optional::TotNumProfs
+    integer, intent(IN), optional::lastProfile
     integer, optional, intent(in) :: hdfVersion ! better be 4 or 5!
     logical, intent(in), optional :: createSwath
     ! Local
@@ -1827,7 +1832,9 @@ contains ! =====     Public Procedures     =============================
     ! of TotNumProfs with myLastProfile as they are equal if TotNumProfs
     ! is present and cause a crash if it is not. Another occurrance seemed 
     ! wrong anyway, so I commented it out.
-    if (present(TotNumProfs)) then
+    if (present(lastProfile)) then
+      myLastProfile = lastProfile 
+    elseif (present(TotNumProfs)) then
       myLastProfile = TotNumProfs 
     else
       myLastProfile = L2GP%nTimesTotal
@@ -1899,6 +1906,8 @@ contains ! =====     Public Procedures     =============================
         & "No profiles in this chunk" )
 
     else
+      actual_ntimes = l2gp%nTimes
+      l2gp%nTimes = max(myLastProfile - offset + 1, 1)
       call OutputL2GP_writeGeo_hdf (l2gp, l2FileHandle, myHDFVersion, &
         & myswathName, offset)
       call OutputL2GP_writeData_hdf (l2gp, l2FileHandle, myHDFVersion, &
@@ -1914,6 +1923,7 @@ contains ! =====     Public Procedures     =============================
         call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Unrecognized hdfVersion passed to AppendL2GPData" )
       end select
+      l2gp%nTimes = actual_ntimes
     end if
 
   end subroutine AppendL2GPData_fileID
@@ -1921,7 +1931,7 @@ contains ! =====     Public Procedures     =============================
   ! ---------------------- AppendL2GPData_fileName  ---------------------------
 
   subroutine AppendL2GPData_fileName(l2gp, fileName, &
-    & swathname, offset, TotNumProfs, hdfVersion)
+    & swathname, offset, lastProfile, TotNumProfs, hdfVersion)
     !------------------------------------------------------------------------
 
     ! Given a file name,
@@ -1934,6 +1944,7 @@ contains ! =====     Public Procedures     =============================
     type( l2GPData_T ), intent(inout) :: l2gp ! Result
     character (LEN=*), optional, intent(IN) ::swathName!default->l2gp%swathName
     integer,intent(IN),optional :: offset
+    integer, intent(IN), optional::lastProfile
     integer,intent(IN),optional :: TotNumProfs
     integer, optional, intent(in) :: hdfVersion
     ! logical, optional, intent(in) :: clean   ! Not implemented yet
@@ -1979,7 +1990,8 @@ contains ! =====     Public Procedures     =============================
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(FileName) // ' for appending')
     call AppendL2GPData_fileID(l2gp, L2FileHandle, swathname, &
-      & FileName, offset, totNumProfs=totNumProfs, hdfVersion=the_hdfVersion)
+      & FileName, offset, lastProfile=lastProfile, totNumProfs=totNumProfs, &
+      & hdfVersion=the_hdfVersion)
     status = mls_io_gen_closeF('swclose', L2FileHandle, FileName=FileName, &
       & hdfVersion=the_hdfVersion)
     if ( status /= 0 ) &
@@ -2034,9 +2046,6 @@ contains ! =====     Public Procedures     =============================
       ! Write the filled l2gp to file2
       call WriteL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion, &
         & notUnlimited=notUnlimited)
-      ! call AppendL2GPData(l2gp, file2, trim(swath), hdfVersion=hdfVersion, &
-      !   & TotNumProfs=l2gp%nTimesTotal, createSwath=.true.)
-      ! Deallocate memory used by the l2gp
       call DestroyL2GPContents ( l2gp )
     enddo
        
@@ -2332,6 +2341,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.89  2004/02/05 23:33:21  pwagner
+! Some bug fixes in cpL2GPData and its relatives
+!
 ! Revision 2.88  2004/01/23 01:14:04  pwagner
 ! Can cp l2gps from one file to another
 !
