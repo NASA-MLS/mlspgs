@@ -23,6 +23,7 @@ module MLSRandomNumber              ! Some random number-generating things
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
   integer, private, parameter          ::      haystack =        97
@@ -980,11 +981,18 @@ contains
          end subroutine RN1
 
 !=============================================================================
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module MLSRandomNumber
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.9  2002/10/08 00:09:12  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.8  2002/01/09 23:45:20  pwagner
 ! Removed vistiges of print statements
 !

@@ -28,6 +28,7 @@ module PARSER
        "$Id$"
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains ! ====     Public Procedures     ==============================
@@ -417,9 +418,16 @@ o:  do
       how_many = how_many + 1
     end if
   end subroutine VALUE
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module PARSER
 
 ! $Log$
+! Revision 2.9  2002/10/08 00:09:13  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.8  2001/11/28 03:05:54  vsnyder
 ! Implement arrays of arrays
 !
