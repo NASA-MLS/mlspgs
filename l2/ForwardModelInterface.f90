@@ -849,10 +849,11 @@ contains ! =====     Public Procedures     =============================
         
         ! For the moment take the first match, later we'll be cleverer and choose
         ! the smallest.  Or maybe we'll turn this whole section into another routine.
+        print*,'All match:',allMatch
         do i = 1, totalSignals
           if ( allMatch(i) ) exit
         end do
-        whichPointingGrid = i
+        whichPointingGrid = signalsGrid(i)
         
         call deallocate_test( thisMatch, 'thisMatch', ModuleName )
         call deallocate_test( allMatch, 'allMatch', ModuleName )
@@ -1358,6 +1359,7 @@ contains ! =====     Public Procedures     =============================
 
     call deallocate_test ( radiances, 'Radiances', ModuleName )
     call deallocate_test ( i_star_all, 'i_star_all', ModuleName )
+    call deallocate_test ( radv, 'rad_v', ModuleName )
 
     if ( fmStat%Finished ) then
 
@@ -1421,6 +1423,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.105  2001/04/21 01:21:29  livesey
+! Fixed memory leak properly!
+!
 ! Revision 2.104  2001/04/20 23:34:54  livesey
 ! Fixed sideband code
 !
