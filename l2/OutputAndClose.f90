@@ -328,7 +328,7 @@ contains ! =====     Public Procedures     =============================
               call populate_metadata_std &
                 & (l2gpFileHandle, l2gp_mcf, l2pcf, QuantityNames(1), &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & setAlias=.true. )
+                & setAlias=.true., isHDFEOS=.true. )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
 
             else
@@ -348,7 +348,7 @@ contains ! =====     Public Procedures     =============================
                 & ( l2gpFileHandle, l2gp_mcf, l2pcf, &
                 & numquantitiesperfile, QuantityNames, &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & setAlias=.true.  )
+                & setAlias=.true., isHDFEOS=.true.  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -466,7 +466,7 @@ contains ! =====     Public Procedures     =============================
                 & ( l2auxFileHandle, l2aux_mcf, l2pcf, &
                 & numquantitiesperfile, QuantityNames,&
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & setAlias=.false.  )
+                & setAlias=.false., isHDFEOS=.false.  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -631,7 +631,7 @@ contains ! =====     Public Procedures     =============================
                 & ( l2gpFileHandle, mlspcf_mcf_l2dgg_start, l2pcf, &
                 & numquantitiesperfile, QuantityNames, &
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
-                & setAlias=.true.  )
+                & setAlias=.true., isHDFEOS=.true.  )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
             end if
 
@@ -714,6 +714,10 @@ contains ! =====     Public Procedures     =============================
   subroutine DirectWrite ( quantity, sdName, file, hdfVersion, &
     & chunkNo, chunks )
 
+    ! Purpose:
+    ! Write plain hdf-formatted files ala l2aux for datasets that
+    ! are too big to keep all chunks stored in memory
+    ! so instead write them out chunk-by-chunk
     use MLSCommon, only: MLSCHUNK_T
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5
     use VectorsModule, only: VectorValue_T
@@ -884,6 +888,7 @@ contains ! =====     Public Procedures     =============================
     use MLSCommon, only: MLSCHUNK_T
     use MLSFiles, only: HDFVERSION_5, MLS_SFSTART, MLS_SFEND
     use MLSHDF5, only: ISHDF5DSPRESENT, SaveAsHDF5DS
+    use PCFHdr, only: h5_writeglobalattr
     use VectorsModule, only: VectorValue_T
 
     type (VectorValue_T), intent(in) :: QUANTITY
@@ -975,24 +980,15 @@ contains ! =====     Public Procedures     =============================
     start(noDims) = quantity%template%mafIndex ( &
       & 1+quantity%template%noInstancesLowerOverlap )
 
-    ! Now write it out
-! >     status = SFWDATA_F90(sdId, start(1:noDims), &
-! >       & stride(1:noDims), sizes(1:noDims), real ( &
-! >       &   quantity%values ( :, &
-! >       &   1+quantity%template%noInstancesLowerOverlap : &
-! >       &    quantity%template%noInstances - quantity%template%noInstancesUpperOverlap &
-! >       &  ) ) )
     call SaveAsHDF5DS( fileID, trim(sdNameStr), real(quantity%values), &
       & start, sizes, may_add_to=.true., adding_to=already_there)
-    ! if ( status /= 0 ) then
-    !  call announce_error (0,&
-    !    & "Error writing SDS data to l2aux file:  " )
-    ! end if
 
-    ! End access to the SD and close the file
-    ! status = sfEndAcc ( sdId )
-    ! if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-    !     & 'Error ending access to direct write sd' )
+    ! Now some attribute stuff
+    ! This first call to write dataset-specific stuff needs work
+    ! basically repeat the steps you go through in SetupNewl2auxRecord;
+    ! see e.g. Join
+    ! call WriteL2AUXAttributes(fileID, l2aux, trim(dataProduct%name))
+    call h5_writeglobalattr(fileID)
     status = mls_sfend( fileID, hdfVersion=hdfVersion)
     if ( status == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Error ending closing direct write file (hdf5)' )
@@ -1078,6 +1074,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.65  2003/02/10 22:01:54  pwagner
+! Passes isHDFEOS to metadata; writes globalattributes during DirectWrite
+!
 ! Revision 2.64  2003/01/23 23:31:42  pwagner
 ! May directwrite to hdf5 l2aux files
 !
