@@ -51,7 +51,8 @@ module RetrievalModule
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
-  use Tree_Types, only: N_named
+  use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
+    & N_less_colon_less, N_named
   use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
     & CloneVector, CopyVector, DestroyVectorInfo, DestroyVectorDatabase, &
     & DumpMask, GetVectorQuantityByType, IsVectorQtyMasked, &
@@ -2244,8 +2245,9 @@ contains
       integer :: HEIGHTUNIT             ! Unit for heights command
       integer :: I, J                   ! Subscripts, loop inductors
       integer :: INSTANCE               ! Loop counter
-      integer :: QUANTITYINDEX          ! Index
       integer :: NROWS                  ! Loop limit dumping mask
+      integer :: QUANTITYINDEX          ! Index
+      integer :: RANGE_LOW, RANGE_HI    ! Bounds of a range
       integer :: ROW                    ! Row index dumping mask
       integer :: SON                    ! Tree node
       integer :: TYPE                   ! Type of value returned by expr
@@ -2310,8 +2312,18 @@ contains
               if ( units(i) /= phyq_dimensionless ) &
                 & call announceError ( wrongUnits, f_channels, string='no' )
             end do
-            channels ( nint(value(1)) : &
-              & nint(value(merge(1,2,type==num_value))) ) = .true.
+            range_low = nint(value(1))
+            range_hi = nint(value(merge(1,2,type==num_value)))
+            select case ( node_id(channelsNode) )
+            case ( n_colon_less )
+              range_hi = range_hi - 1
+            case ( n_less_colon )
+              range_low = range_low + 1
+            case ( n_less_colon_less )
+              range_low = range_low + 1
+              range_hi = range_hi - 1
+            end select
+            channels ( range_low : range_hi ) = .true.
           end do
         else
           channels = .true.             ! Apply this to all channels
@@ -2389,8 +2401,8 @@ contains
         ! Now go and `unmask' the ones we want to consider
         if ( got(f_height) ) then
           do j = 2, nsons(heightNode)
-            call expr ( subtree(j,heightNode), units, value, type )
-            ! Now maybe do something nasty to value to get in right units
+            ! Don't need to call expr again.
+            ! Now maybe do something nasty to value to get in right units.
             if ( coordinate == l_zeta &
               & .and. heightUnit == phyq_pressure ) then
               value = -log10(value)
@@ -2499,6 +2511,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.119  2001/11/27 01:28:17  vsnyder
+! Implement (partially) open range for channels in subset
+!
 ! Revision 2.118  2001/11/17 02:30:44  vsnyder
 ! Add L_numF and L_numJ to 'diagnostics' vector
 !
