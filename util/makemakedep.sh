@@ -41,6 +41,20 @@
 # 
 ##End of Makefile.dep
 # 
+#
+# Function to prompt for user response
+#
+
+UserPrompt()
+{
+    if [ "$BRAND" = "linux" ] ; then
+	/bin/echo -n "$* " > /dev/tty
+    else
+	echo "$* \\c" > /dev/tty
+    fi
+    read user_response
+}
+
 #this version uses either of the two depmakers
 #to trace dependencies based on USEs and INCLUDEs:
 #(1)  makedepf90 (a compiled program)
@@ -184,6 +198,46 @@ else
 	the_DEPMAKER="`echo $0 | sed 's/makemakedep.sh/f90makedep.pl/'`"
 	echo " Your perl is `which perl` "
 	echo " f90makedep.pl is looking for it at `sed -n '1 p' $the_DEPMAKER`"
+
+# Check whether script is looking for perl in right place
+# && give user a chance to redirect it if it is not
+	script_perl=`sed -n '1 p' $the_DEPMAKER`
+	your_perl='#!'`which perl` 
+        if [ "$script_perl" != "$your_perl" ]
+        then
+		#Warn user that perl script may need to be changed
+
+		echo " *** Warning: f90makedep.pl may need to be changed"
+		echo " ***          to point to where your perl actually is"
+ 		UserPrompt "Change f90makedep.pl to look in [$your_perl](yes) or no?"
+   		if [ "$user_response" != "" ] ; then
+			case  "$user_response" in
+	    		n* | N* )
+				echo "Continuing to use $script_perl"
+              		  	change_perl=
+	   		 ;;
+	    		y* | Y* )
+				echo "Changing to use $your_perl"
+                		change_perl="$your_perl"
+	    		;;
+	   		 * )
+				echo "Changing to use $user_response"
+                		change_perl="$user_response"
+	    		;;
+			esac
+		else
+				echo "Continuing to use $script_perl"
+              		  	change_perl=
+		fi
+   		if [ "$change_perl" != "" ] ; then
+                	sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > temp.pl
+			chmod u+w "$the_DEPMAKER"
+			chmod u+w "$the_DEPMAKER"
+                        mv temp.pl "$the_DEPMAKER"
+			chmod a+x "$the_DEPMAKER"
+			echo "*** You have changed f90makedep.f90"
+                fi
+       fi
 #	f90makedep.pl >> Makefile.dep
 	$the_DEPMAKER "$@" >> Makefile.dep
 fi
@@ -204,8 +258,11 @@ then
 	fi
         rmdir "$dsuffix"
 fi
-
+exit
 # $Log$
+# Revision 1.5  2000/11/14 21:50:14  pwagner
+# Can exclude specified files from dependencies
+#
 # Revision 1.4  2000/11/02 23:22:38  pwagner
 # Dependencies may cross directories
 #
