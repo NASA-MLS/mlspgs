@@ -25,9 +25,8 @@ contains
 
 ! ---------------------------------------  Get_Beta_Path_Scalar  -----
   subroutine Get_Beta_Path_Scalar ( frq, p_path, t_path, tanh_path, &
-        & beta_group, NoPolarized, gl_slabs, path_inds,               &
-        & beta_path,    &
-        & t_der_path_flags, dTanh_dT, dBeta_dt_path,                &
+        & beta_group, NoPolarized, gl_slabs, path_inds,             &
+        & beta_path, t_der_path_flags, dTanh_dT, dBeta_dt_path,     &
         & dBeta_dw_path, dBeta_dn_path, dBeta_dv_path )
 
     use Get_Species_Data_m, only: Beta_Group_T
@@ -110,6 +109,10 @@ contains
     end do
 
   end subroutine Get_Beta_Path_Scalar
+
+  ! ------------------------------------------  Get_Beta_Path_PFA  -----
+  subroutine Get_Beta_Path_PFA
+  end subroutine Get_Beta_Path_PFA
 
   ! ------------------------------------  Get_Beta_Path_Polarized  -----
   subroutine Get_Beta_Path_Polarized ( Frq, H, Beta_group, GL_slabs, &
@@ -435,7 +438,6 @@ contains
 !  For a given frequency and height, compute beta_value function. This routine
 !  should be called for primary and image separately. Compute dBeta_dT if it's
 !  associated.  Compute dBeta_dw, dBeta_dn, dBeta_dv if they're associated. 
-!  We can't do both temperature and spectroscopy derivatives.
 
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT
     use MLSCommon, only: RP, R8
@@ -797,6 +799,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.58  2004/04/19 21:03:29  vsnyder
+! Remove unused stuff; respect tder_path_flags
+!
 ! Revision 2.57  2004/04/17 00:37:00  vsnyder
 ! Analytic temperature derivatives
 !

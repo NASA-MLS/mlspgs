@@ -13,6 +13,8 @@ module LOAD_SPS_DATA_M
   public :: Destroygrids_t, Dump, Dump_Grids
 
   type, public :: Grids_T                 ! Fit all Gridding categories
+    integer :: LastNonPFA                 ! Index in l_* of last non-pfa sps
+                                          ! Assumes all PFA come after all non-PFA
     integer,  pointer :: l_f(:) => null() ! Last entry in frq. grid per sps
     integer,  pointer :: l_z(:) => null() ! Last entry in zeta grid per sps
     integer,  pointer :: l_p(:) => null() ! Last entry in phi  grid per sps
@@ -24,18 +26,19 @@ module LOAD_SPS_DATA_M
 !                                                  from l2gp
     logical,  pointer :: lin_log(:) => null()   ! type of representation basis
     real(r8), pointer :: min_val(:) => null()   ! Minimum value
-    real(r8), pointer :: frq_basis(:) => null() ! frq grid entries for all
+    real(r8), pointer :: frq_basis(:) => null() ! frq  grid entries for all
 !                                                 molecules
     real(rp), pointer :: zet_basis(:) => null() ! zeta grid entries for all
 !                                                 molecules
     real(rp), pointer :: phi_basis(:) => null() ! phi  grid entries for all
 !                                                 molecules
     real(rp), pointer :: values(:) => null()    ! species values (ie vmr). 
-!     This is really a three-dimensional quantity dimensioned frequency (or
-!     1) X zeta (or 1) X phi (or 1), taken in Fortran's column-major
+!     This is really a three-dimensional quantity dimensioned frequency
+!     (or 1) X zeta (or 1) X phi (or 1), taken in Fortran's column-major
 !     array-element order.
     logical,  pointer :: deriv_flags(:) => null() ! do derivatives flags
 !     corresponding to the values component.
+
   end type Grids_T
 
   interface Dump
@@ -55,20 +58,21 @@ contains
 
   ! ----------------------------------------------  Load_SPS_Data  -----
 
-  subroutine Load_Sps_Data ( FwdModelConf, fwdModelIn, fwdModelExtra, FmStat, &
-       &    radiometer, mol_cat_index, QuantityType, Grids_x,      &
-       &    h2o_ind, ext_ind )
+  subroutine Load_Sps_Data ( FwdModelConf, fwdModelIn, fwdModelExtra, MAF, &
+       &    radiometer, mol_cat_index, QuantityType, Grids_x,              &
+       &    Qtys, h2o_ind, ext_ind )
 
     use ForwardModelConfig, only: ForwardModelConfig_t
-    use ForwardModelIntermediate, only: ForwardModelStatus_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel, QtyStuff_T
     use Intrinsic, only: L_Phitan
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Deallocate, &
+      & MLSMSG_Error
     use Molecules, only: l_extinction, l_h2o
     use VectorsModule, only: Vector_T, VectorValue_T
 
-    type(forwardModelConfig_T), intent(in) :: fwdModelConf
-    type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
-    type(forwardModelStatus_t), intent(in) :: FmStat ! Reverse comm. stuff
+    type (forwardModelConfig_T), intent(in) :: fwdModelConf
+    type (vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    integer, intent(in) :: MAF
 
     integer, intent(in) :: RADIOMETER       
     integer, intent(in) :: MOL_CAT_INDEX(:) 
@@ -77,21 +81,30 @@ contains
 
     type (Grids_T), intent(out) :: Grids_x   ! All the coordinates
 
+    type (qtyStuff_t), intent(in), target, optional :: Qtys(:)
     integer, intent(out), optional :: H2O_IND
     integer, intent(out), optional :: EXT_IND
 
 ! Local variables:
 
-
     integer :: ii, kk, no_mol, mol, my_ext_ind, my_h2o_ind
 
     type (VectorValue_T), pointer :: PHITAN  ! Tangent geodAngle component of
 
-    type(qtyStuff_t) :: QtyStuff( size( mol_cat_index ) )
+    type (qtyStuff_t), pointer :: QtyStuff(:)
 
 ! Begin code:
 
     no_mol = size( mol_cat_index )
+
+    if ( present(qtys) ) then
+      ! Assumes qtys corresponds to mol_cat_index
+      qtyStuff => qtys
+    else
+      allocate ( qtyStuff( no_mol ), stat = ii )
+      if ( ii /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_Allocate // 'qtyStuff' )
+    end if
 
     call create_grids_1 ( Grids_x, no_mol )
 
@@ -108,17 +121,20 @@ contains
     do ii = 1, no_mol
 
       mol = mol_cat_index(ii)
+      if ( mol >= fwdModelConf%firstPFA ) & ! Assumes all PFA after all non-PFA
+        & grids_x%lastNonPFA = min(grids_x%lastNonPFA, ii-1)
       kk = FwdModelConf%molecules(mol)
       if ( kk == l_h2o ) my_h2o_ind = ii        ! memorize h2o index
       if ( kk == l_extinction ) my_ext_ind = ii ! memorize extiction ix
-      
-      qtyStuff(ii)%qty => GetQuantityforForwardModel ( &
-        & fwdModelIn, fwdModelExtra, &
-        & quantityType=quantityType, molIndex=mol, &
-        & radiometer=radiometer, config=fwdModelConf, &
-        & foundInFirst=qtyStuff(ii)%foundInFirst )
 
-      call fill_grids_1 ( grids_x, ii, qtyStuff(ii)%qty, phitan, fmStat%maf, &
+      if ( .not. present(qtys) ) &
+        & qtyStuff(ii)%qty => GetQuantityforForwardModel ( &
+          & fwdModelIn, fwdModelExtra, &
+          & quantityType=quantityType, molIndex=mol, &
+          & radiometer=radiometer, config=fwdModelConf, &
+          & foundInFirst=qtyStuff(ii)%foundInFirst )
+
+      call fill_grids_1 ( grids_x, ii, qtyStuff(ii)%qty, phitan, maf, &
         &                 fwdModelConf )
 
     end do
@@ -138,6 +154,12 @@ contains
 ! ** ZEBUG - Simulate qty%values for EXTINCTION, using the N2 function
 !  (Some code here ...)
 ! ** END ZEBUG
+
+    if ( .not. present(qtys) ) then
+      deallocate ( qtyStuff, stat = ii )
+      if ( ii /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+        & MLSMSG_DeAllocate // 'qtyStuff' )
+    end if
 
     if ( present(ext_ind) ) ext_ind = my_ext_ind
     if ( present(h2o_ind) ) h2o_ind = my_h2o_ind
@@ -321,6 +343,7 @@ contains
     type (Grids_T), intent(inout) :: Grids_X
     integer, intent(in) :: N
 
+    grids_x%lastNonPFA = n ! gets reduced later
     call allocate_test ( Grids_x%l_z, n, 'Grids_x%l_z', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_p, n, 'Grids_x%l_p', ModuleName, lowBound=0 )
     call allocate_test ( Grids_x%l_f, n, 'Grids_x%l_f', ModuleName, lowBound=0 )
@@ -498,9 +521,12 @@ contains
     type(grids_t), intent(in) :: The_Grid
     character(len=*), intent(in), optional :: Name
 
-    call output ( 'Dump of Grids_T structure ', advance='no' )
-    if ( present(name) ) call output ( name, advance='no' )
-    call output ( '', advance='yes' )
+    call output ( 'Dump of Grids_T structure', advance='no' )
+    if ( present(name) ) then
+      call output ( ' ', advance='no' )
+      call output ( name, advance='no' )
+    end if
+    call output ( the_grid%lastNonPfa, before =', Last Non-PFA = ', advance='yes' )
     call dump ( the_grid%windowStart, 'The_grid%WindowStart' )
     call dump ( the_grid%windowFinish, 'The_grid%WindowFinish' )
     call dump ( the_grid%lin_log, 'The_grid%Lin_Log' )
@@ -519,6 +545,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.58  2004/03/30 00:55:30  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.57  2004/03/20 01:15:29  jonathan
 !  minor changes
 !

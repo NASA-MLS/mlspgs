@@ -3,21 +3,34 @@
 
 module Get_Species_Data_M
 
+  use ForwardModelVectorTools, only: QtyStuff_T
   use MLSCommon, only: RP
+  use SpectroscopyCatalog_m, only: Catalog_t
 
   implicit NONE
   private
-  public :: Get_Species_Data, Destroy_Beta_Group, Destroy_Species_Data, Dump
+  public :: Get_Species_Data, Destroy_Beta_Group, Destroy_Catalog_Extract
+  public :: Destroy_Species_Data, Dump
 
-! *** Beta group type declaration:
+! Beta group type declaration:
   type, public :: Beta_Group_T
-    integer :: n_elements
-    integer, pointer  :: cat_index(:)
-    real(rp), pointer :: ratio(:)
+    integer :: N_Elements
+    integer, pointer  :: Cat_Index(:) => NULL()
+    real(rp), pointer :: Ratio(:) => NULL()
   end type Beta_Group_T
 
+! Species stuff
+  type, public :: SPS_T
+    integer :: No_Mol ! Size of several arrays
+    integer :: No_LBL ! Number of Line-by-line molecules
+    type(beta_group_t), pointer :: Beta_Group(:) => NULL() ! 1:no_mol
+    type(catalog_t), pointer :: Catalog(:,:) => NULL()     ! -1:1,1:no_species
+    integer, pointer :: Mol_Cat_Index(:) => NULL()         ! 1:no_mol
+    type(qtyStuff_t), pointer :: Qtys(:) => NULL()         ! 1:no_mol
+  end type SPS_T
+
   interface Dump
-    module procedure Dump_Beta_Group
+    module procedure Dump_Beta_Group, Dump_Sps_Data
   end interface
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -31,18 +44,18 @@ contains
 
   ! -------------------------------------------  Get_Species_Data  -----
   subroutine Get_Species_Data ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-    & NoSpecies, No_Mol, Beta_Group, My_Catalog )
+    & Radiometer, Sps )
 
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use ForwardModelConfig, only: ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO
+    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO, L_VMR
     use MLSCommon, only: RP
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
       & MLSMSG_Warning
     use MLSSets, only: FINDFIRST
     use MLSSignals_m, only: GetRadiometerFromSignal
-    use SpectroscopyCatalog_m, only: Catalog, Catalog_t, Dump, Empty_Cat, &
+    use SpectroscopyCatalog_m, only: Catalog, Dump, Empty_Cat, &
       & Line_t, Lines
     use String_table, only: GET_STRING
     use Toggles, only: Switches
@@ -52,13 +65,11 @@ contains
 
     type(forwardModelConfig_T), intent(in) :: FwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
+    integer, intent(in) :: Radiometer
 
     ! Outputs
 
-    integer, intent(out) :: NoSpecies   ! No. of Molecules under consideration
-    integer, intent(out) :: No_Mol      ! Number of major Molecules (NO iso/vib)
-    type (beta_group_T), dimension(:), pointer :: Beta_Group
-    type (catalog_T), dimension(:,:), pointer :: My_Catalog
+    type (sps_t), intent(out) :: Sps
 
     ! Local variables
 
@@ -71,9 +82,11 @@ contains
     integer, dimension(size(fwdModelConf%molecules,1)+1) :: Molecules_Temp
     character (len=32) :: molName       ! Name of a molecule
     integer :: NLines                   ! count(lineFlag)
+    integer  :: NoSpecies               ! No. of Molecules under consideration
     integer :: Polarized                ! -1 => One of the selected lines is Zeeman split
     ! +1 => None of the selected lines is Zeeman split
     integer :: SIGIND                   ! Signal index, loop counter
+    integer :: Spec1, SpecN             ! First and last species in fwdModelConf%molecules
     integer :: SV_I
     integer :: S                        ! Sideband index
     type (catalog_T), pointer :: thisCatalogEntry
@@ -85,46 +98,52 @@ contains
 
     nullify ( lineFlag )
 
-    noSpecies = size (fwdModelConf%molecules)
-    no_mol = count (fwdModelConf%molecules > 0)
+    noSpecies = size(fwdModelConf%molecules)
+    sps%no_lbl = count(fwdModelConf%molecules(1:fwdModelConf%firstPFA-1) > 0)
+    sps%no_mol = sps%no_lbl + noSpecies - fwdModelConf%firstPFA + 1
+    spec1 = 1
+    specN = noSpecies
 
-    allocate ( beta_group(no_mol), stat=ier )
+    if ( sps%no_mol == 0 ) return
+
+    allocate ( sps%beta_group(sps%no_mol), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'beta_group' )
+      & MLSMSG_Allocate//'sps%beta_group' )
 
-    k = max(1,noSpecies-no_mol)
-    do i = 1, no_mol
-      allocate ( beta_group(i)%cat_index(k), stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'beta_group%cat_index' )
-      allocate ( beta_group(i)%ratio(k), stat=ier )
-      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & MLSMSG_Allocate//'beta_group%ratio' )
-      beta_group(i)%n_elements = 0
-      beta_group(i)%ratio = 0.0
-      beta_group(i)%cat_index = 0
+    call allocate_test ( sps%mol_cat_index, sps%no_mol, 'sps%mol_cat_index', moduleName )
+
+    k = max(1,noSpecies-sps%no_mol)
+    do i = 1, sps%no_mol
+      call allocate_test ( sps%beta_group(i)%cat_index, k, 'beta_group%cat_index', moduleName )
+      call allocate_test ( sps%beta_group(i)%ratio, k, 'beta_group%ratio', moduleName )
+      sps%beta_group(i)%n_elements = 0
+      sps%beta_group(i)%ratio = 0.0
+      sps%beta_group(i)%cat_index = 0
     end do
 
-    if ( noSpecies == no_mol ) then ! No grouping
+    if ( noSpecies == sps%no_mol ) then ! No grouping
 
       sv_i = 0
       beta_ratio = 1.0_rp   ! Always, for single element (no grouping)
-      do j = 1, noSpecies
+      do j = spec1, specN
         l = fwdModelConf%molecules(j)
         !        if ( l == l_extinction ) CYCLE
         sv_i = sv_i + 1
-        beta_group(sv_i)%n_elements   = 1
-        beta_group(sv_i)%cat_index(1) = j
-        beta_group(sv_i)%ratio(1)     = beta_ratio
+        sps%mol_cat_index(sv_i) = j
+        sps%beta_group(sv_i)%n_elements   = 1
+        sps%beta_group(sv_i)%cat_index(1) = j
+        sps%beta_group(sv_i)%ratio(1)     = beta_ratio
       end do
 
     else
 
-      molecules_temp(1:noSpecies) = fwdModelConf%molecules(1:noSpecies)
-      molecules_temp(noSpecies+1) = noSpecies
+      molecules_temp(spec1:specN) = fwdModelConf%molecules(spec1:specN)
+      molecules_temp(specN+1) = noSpecies ! Anything positive will do
+
+      sps%mol_cat_index = PACK((/(i,i=spec1,specN)/), fwdModelConf%molecules(spec1:specN) > 0)
 
       sv_i = 0
-      do j = 1, noSpecies
+      do j = spec1, specN
         k = molecules_temp(j)
         l = abs(k)
         !        if ( l == l_extinction ) CYCLE
@@ -132,20 +151,20 @@ contains
         if ( k > 0 ) then
           if ( molecules_temp(j+1) > 0 ) then
             sv_i = sv_i + 1
-            beta_group(sv_i)%n_elements   = 1
-            beta_group(sv_i)%cat_index(1) = j
-            beta_group(sv_i)%ratio(1)     = beta_ratio
+            sps%beta_group(sv_i)%n_elements   = 1
+            sps%beta_group(sv_i)%cat_index(1) = j
+            sps%beta_group(sv_i)%ratio(1)     = beta_ratio
           end if
         else
           if ( molecules_temp(j-1) > 0) sv_i = sv_i + 1
           f => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
-            & quantityType=l_isotoperatio, molecule=l, noError=.TRUE., &
+            & quantityType=l_isotopeRatio, molecule=l, noError=.TRUE., &
             & config=fwdModelConf )
           if ( associated ( f ) ) beta_ratio = f%values(1,1)
-          i = beta_group(sv_i)%n_elements + 1
-          beta_group(sv_i)%n_elements   = i
-          beta_group(sv_i)%cat_index(i) = j
-          beta_group(sv_i)%ratio(i)     = beta_ratio
+          i = sps%beta_group(sv_i)%n_elements + 1
+          sps%beta_group(sv_i)%n_elements   = i
+          sps%beta_group(sv_i)%cat_index(i) = j
+          sps%beta_group(sv_i)%ratio(i)     = beta_ratio
         end if
       end do
 
@@ -153,30 +172,32 @@ contains
 
     ! Work out which spectroscopy we're going to need ------------------------
 
-    allocate ( My_Catalog(-1:1,noSpecies), stat=ier )
+    allocate ( sps%catalog(-1:1,noSpecies), stat=ier )
     if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//'my_catalog' )
+      & MLSMSG_Allocate//'sps%catalog' )
 
+    sps%catalog = empty_cat
     do s = fwdModelConf%sidebandStart, fwdModelConf%sidebandStop, 2
-      do j = 1, noSpecies
+      j = 0
+      do sv_i = spec1, specN
+        j = j + 1
         ! Skip if the next molecule is negative (indicates that this one is a
         ! parent)
-        if ( (j < noSpecies) .and. (fwdModelConf%molecules(j) > 0) ) then
-          if (fwdModelConf%molecules(j+1) < 0 ) then
-            my_catalog(s, j) = empty_cat
-            ! my_catalog springs into existence with %lines and %polarized null
-            call allocate_test ( my_catalog(s,j)%lines, 0, &
-              & 'my_catalog(?,?)%lines(0)', moduleName )
-            call allocate_test ( my_catalog(s,j)%polarized, 0, &
-              & 'my_catalog(?,?)%polarized(0)', moduleName )
+        if ( (sv_i < specN) .and. (fwdModelConf%molecules(sv_i) > 0) ) then
+          if (fwdModelConf%molecules(sv_i+1) < 0 ) then
+            ! sps%catalog springs into existence with %lines and %polarized null
+            call allocate_test ( sps%catalog(s,j)%lines, 0, &
+              & 'sps%catalog(?,?)%lines(0)', moduleName )
+            call allocate_test ( sps%catalog(s,j)%polarized, 0, &
+              & 'sps%catalog(?,?)%polarized(0)', moduleName )
             cycle
           end if
         end if
-        l = abs(fwdModelConf%molecules(j))
+        l = abs(fwdModelConf%molecules(sv_i))
         thisCatalogEntry => Catalog(FindFirst(catalog%molecule, l ) )
-        My_Catalog(s,j) = thisCatalogEntry
-        ! Don't deallocate them by mistake -- my_catalog is a shallow copy
-        nullify ( my_catalog(s,j)%lines, my_catalog(s,j)%polarized )
+        sps%catalog(s,j) = thisCatalogEntry
+        ! Don't deallocate them by mistake -- sps%catalog is a shallow copy
+        nullify ( sps%catalog(s,j)%lines, sps%catalog(s,j)%polarized )
         if ( associated ( thisCatalogEntry%lines ) ) then
           ! Now subset the lines according to the signal we're using
           call allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
@@ -242,18 +263,18 @@ contains
           ! Check we have at least one line for this species
 
           nLines = count(lineFlag /= 0)
-          if ( nLines == 0 .and. all ( my_catalog(s,j)%continuum == 0.0 ) &
+          if ( nLines == 0 .and. all ( sps%catalog(s,j)%continuum == 0.0 ) &
             & .and. (index(switches, '0sl') > 0) ) then
             call get_string ( lit_indices(l), molName )
             call MLSMessage ( MLSMSG_Warning, ModuleName, &
               & 'No relevant lines or continuum for '//trim(molName) )
           end if
-          call allocate_test ( my_catalog(s,j)%lines, nLines, &
-            & 'my_catalog(?,?)%lines', moduleName )
-          call allocate_test ( my_catalog(s,j)%polarized, nLines, &
-            & 'my_catalog(?,?)%polarized', moduleName )
-          my_catalog(s,j)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
-          my_catalog(s,j)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
+          call allocate_test ( sps%catalog(s,j)%lines, nLines, &
+            & 'sps%catalog(?,?)%lines', moduleName )
+          call allocate_test ( sps%catalog(s,j)%polarized, nLines, &
+            & 'sps%catalog(?,?)%polarized', moduleName )
+          sps%catalog(s,j)%lines = pack ( thisCatalogEntry%lines, lineFlag /= 0 )
+          sps%catalog(s,j)%polarized = pack ( lineFlag < 0, lineFlag /= 0 )
           call deallocate_test ( lineFlag, 'lineFlag', moduleName )
 
         else
@@ -262,48 +283,28 @@ contains
           ! so don't set it to empty.
           ! Won't bother checking that continuum /= 0 as if it was then
           ! presumably having no continuum and no lines it wouldn't be in the catalog!
-          call allocate_test ( my_catalog(s,j)%lines, 0, 'my_catalog(?,?)%lines(0)', &
+          call allocate_test ( sps%catalog(s,j)%lines, 0, 'sps%catalog(?,?)%lines(0)', &
             & moduleName )
-          call allocate_test ( my_catalog(s,j)%polarized, 0, 'my_catalog(?,?)%polarized(0)', &
+          call allocate_test ( sps%catalog(s,j)%polarized, 0, 'sps%catalog(?,?)%polarized(0)', &
             & moduleName )
         end if
       end do         ! Loop over species
     end do                              ! Loop over sidebands
-    if ( index(switches,'bgrp') /= 0 ) then
-      call dump ( my_catalog, 'My_Catalog in Get_Species_Data' )
-      call dump ( beta_group )
-    end if
 
-  end subroutine Get_Species_Data
+    ! Get state vector quantities for species
+    allocate ( sps%qtys(sps%no_mol), stat = i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Allocate // 'sps%qtys' )
 
-  ! ---------------------------------------  Destroy_Species_Data  -----
-  subroutine Destroy_Species_Data ( My_Catalog )
-
-  ! Destroy the catalog extract prepared by Get_Species_Data
-
-    use Allocate_Deallocate, only: DEALLOCATE_TEST
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
-    use SpectroscopyCatalog_m, only: Catalog_t
-
-    type(catalog_t), pointer :: My_Catalog(:,:)
-
-    integer :: I, J
-    do j = -1, 1, 2
-      do i = 1, size(my_catalog,2)
-        ! Note that we don't deallocate the signals/sidebands stuff for each line
-        ! as these are shallow copies of the main spectroscopy catalog stuff
-        call deallocate_test ( my_catalog(j,i)%lines, 'my_catalog(?,?)%lines', &
-          & moduleName )
-        call deallocate_test ( my_catalog(j,i)%polarized, 'my_catalog(?,?)%polarized', &
-          & moduleName )
-      end do
+    do sv_i = 1 , sps%no_mol
+      sps%qtys(sv_i)%qty => GetQuantityForForwardModel(fwdmodelin, fwdmodelextra, &
+        &  quantitytype=l_vmr, molIndex=sps%mol_cat_index(sv_i), config=fwdModelConf, &
+        &  radiometer=radiometer, foundInFirst=sps%qtys(sv_i)%foundInFirst )
     end do
 
-    deallocate ( my_catalog, stat=i )
-    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
-      & MLSMSG_Deallocate // 'My_Catalog' )
+    if ( index(switches,'sps') /= 0 ) call dump ( sps )
 
-  end subroutine Destroy_Species_Data
+  end subroutine Get_Species_Data
 
   ! -----------------------------------------  Destroy_Beta_Group  -----
   subroutine Destroy_Beta_Group ( Beta_Group )
@@ -330,6 +331,56 @@ contains
 
   end subroutine Destroy_Beta_Group
 
+  ! ------------------------------------  Destroy_Catalog_Extract  -----
+  subroutine Destroy_Catalog_Extract ( My_Catalog )
+
+  ! Destroy the catalog extract prepared by Get_Species_Data
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+
+    type(catalog_t), pointer :: My_Catalog(:,:)
+
+    integer :: I, J
+    do j = -1, 1, 2
+      do i = 1, size(my_catalog,2)
+        ! Note that we don't deallocate the signals/sidebands stuff for each line
+        ! as these are shallow copies of the main spectroscopy catalog stuff
+        call deallocate_test ( my_catalog(j,i)%lines, 'my_catalog(?,?)%lines', &
+          & moduleName )
+        call deallocate_test ( my_catalog(j,i)%polarized, 'my_catalog(?,?)%polarized', &
+          & moduleName )
+      end do
+    end do
+
+    deallocate ( my_catalog, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'My_Catalog' )
+
+  end subroutine Destroy_Catalog_Extract
+
+  ! ---------------------------------------  Destroy_Species_Data  -----
+  subroutine Destroy_Species_Data ( Species_Data )
+
+  ! Destroy the SPS_T structure
+
+    use Allocate_Deallocate, only: DEALLOCATE_TEST
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
+
+    type(sps_t), intent(inout) :: Species_Data
+
+    integer :: I
+
+    if ( species_data%no_mol == 0 ) return
+    call destroy_beta_group ( species_data%beta_group )
+    call destroy_catalog_extract ( species_data%catalog )
+    call deallocate_test ( species_data%mol_cat_index, 'Mol_Cat_Index', moduleName )
+    deallocate ( species_data%qtys, stat=i )
+    if ( i /= 0 ) call MLSMessage ( MLSMSG_Error, moduleName, &
+      & MLSMSG_Deallocate // 'Species_Data%Qtys' )
+
+  end subroutine Destroy_Species_Data
+
   ! --------------------------------------------  Dump_Beta_Group  -----
   subroutine Dump_Beta_Group ( Beta_Group, Name )
 
@@ -353,6 +404,38 @@ contains
     end do
   end subroutine Dump_Beta_Group
 
+  ! ----------------------------------------------  Dump_Sps_Data  -----
+  subroutine Dump_Sps_Data ( Sps )
+
+    use Dump_0, only: Dump
+    use Output_m, only: NewLine, Output
+    use SpectroscopyCatalog_m, only: Dump
+    use String_Table, only: Display_String
+
+    type(sps_t), intent(in) :: Sps
+
+    integer :: I
+
+    call output ( 'Species data', advance='yes' )
+    call output ( sps%no_mol, before=' Total molecules = ' )
+    call output ( sps%no_lbl, before=', Line-by-line molecules = ', advance='yes' )
+    call dump ( sps%beta_group )
+    call dump ( sps%catalog )
+    call dump ( sps%mol_cat_index, name='Mol_Cat_Index' )
+    call output ( 'QtyStuff:', advance='yes' )
+    do i = 1, size(sps%qtys)
+      call output ( ' Quantity ' )
+      if ( sps%qtys(i)%qty%template%name /= 0 ) then
+        call display_string ( sps%qtys(i)%qty%template%name )
+      else
+        call output ( '???' )
+      end if
+      if ( sps%qtys(i)%foundInFirst ) call output ( ', Found in first' )
+      call newLine
+    end do
+
+  end subroutine Dump_Sps_Data
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -360,6 +443,9 @@ contains
 end module  Get_Species_Data_M
 
 ! $Log$
+! Revision 2.10  2004/06/10 00:59:56  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.9  2004/03/22 18:23:56  livesey
 ! Added handling of AllLinesInCatalog flag (precludes polarized)
 !
