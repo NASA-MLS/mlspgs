@@ -3,8 +3,10 @@
 
 BEGIN ReadApriori
 
+;     l2gpTempInput: l2gp, $
+;      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_Temperature_s1-0-t_{}!day{}.dat'
     l2gpTempInput: l2gp, $
-      file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_Temperature_s1-0-t_{}!day{}.dat'
+      file='/user6/pumphrey/sidsdat/MLS-Aura_L2GP_temp_s4b-t_{}!day{}.dat'
     l2gpGPHInput: l2gp, $
       file='/nas/data/emls/l2gp/truth/1996/MLS-Aura_L2GP_GPH_s1-0-t_{}!day{}.dat'
 

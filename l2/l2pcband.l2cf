@@ -160,7 +160,7 @@ END Join
 ; ---------------------------------------------------------  Output  -----
 BEGIN Output
     
-    output, file='!outpath/l2pc_band!band_v1.0-lowres-test.dat', quantities=K, $
+    output, file='!outpath/l2pc_band!band_v1.0-lowres.dat', quantities=K, $
       type=l2pc
 
 END Output
