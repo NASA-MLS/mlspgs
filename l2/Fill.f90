@@ -4606,7 +4606,9 @@ contains ! =====     Public Procedures     =============================
             qty%values(surface,instance) = strength
           case ( l_fieldElevation )
             if ( strength /= 0.0_r8 ) then
-              qty%values(surface,instance) = acos ( thisField(3) / strength ) * rad2deg
+              ! Elevation is constrained to 0--90 degrees instead of 0--180 degrees because
+              ! radiative transfer Physics is symmetric.  We save half of l2pc bins. 
+              qty%values(surface,instance) = acos ( abs ( thisField(3) / strength ) ) * rad2deg
             else
               qty%values(surface,instance) = 0.0
             end if
@@ -6020,6 +6022,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.242  2003/09/25 16:41:12  michael
+! magnetic field Elevation angle is constrained to 0-90 degrees.
+!
 ! Revision 2.241  2003/09/09 22:06:38  livesey
 ! Added resilency to missing radiances.
 !
