@@ -26,7 +26,7 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning, &
     MLSMSG_Info, MLSMSG_Allocate, MLSMSG_DeAllocate
   use PVM, only: PVMFbcast, PVMDataDefault, PVMFinitsend, PVMFmyTid, PVMFgSize, &
-    & PVMErrorMessage, PVMF90Unpack
+    & PVMErrorMessage, PVMF90Unpack, PVMTaskExit, PVMFNotify
   use PVMIDL, only:  IDLMsgTag, PVMIDLPack, PVMIDLReceive, PVMIDLSend, PVMIDLUnpack
   use QuantityPVM, only: PVMSENDQUANTITY
   use TREE, only:  DUMP_TREE_NODE, SUB_ROSA, SUBTREE, SOURCE_REF
@@ -69,7 +69,6 @@ module SnoopMLSL2               ! Interface between MLSL2 and IDL snooper via pv
   integer, parameter :: SnoopTag = 300
   integer, parameter :: SnooperDiedTag = 301
 
-  character (LEN=*), parameter :: ReceptiveSnoopersGroupName="MLSL2ReceptiveSnoopers"
   character (LEN=*), parameter :: Level2CodeGroupName="MLSL2Executable"
 
   ! Now the type definitions for snooping
@@ -183,6 +182,12 @@ contains ! ========  Public Procedures =========================================
     newSnooper%mode = SnooperObserving
     noSnoopers = AddSnooperToDatabase ( snoopers, newSnooper )
 
+    ! Ask to be notified of its death
+    call PVMFNotify ( PVMTaskExit, SnooperDiedTag, 1, &
+      (/ snooperTid /), info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, &
+      & "calling PVMFNotify" )
+
     ! Now if this is the first, let's have it controling us
     if ( size(snoopers) == 1 ) then
       snoopers(1)%mode = SnooperControling
@@ -274,7 +279,6 @@ contains ! ========  Public Procedures =========================================
     integer :: BUFFERID, INFO           ! Flags and ids from PVM
     character (len=132) :: COMMENT      ! Comment field to snoop command
     integer :: CONTROLINGSNOOPER        ! This one is controling
-    logical :: DONESNOOPINGFORNOW       ! Flag to end loop
     integer :: INUM                     ! Index in group
     character (len=132) :: LINE         ! Line of text received
     character (len=132) :: NEXTLINE     ! Line of text received
@@ -283,6 +287,7 @@ contains ! ========  Public Procedures =========================================
     integer :: SNOOPER                  ! Loop counter
     integer :: SNOOPERTID               ! Task ID for snooper
     integer :: STATUS                   ! Status from allocate/deallocate
+    logical :: FIRSTCALL                ! First time snoop called
 
     ! Executable code
     if ( .not. snoopingActive ) return
@@ -299,6 +304,7 @@ contains ! ========  Public Procedures =========================================
     ! If this is the very first call enroll in PVM for the first time, allocate
     ! 0 snoopers to start with.
     if ( myTid==0 ) then
+      firstCall = .true.
       call PVMfmytid ( myTid )
       if ( myTid<=0 ) call PVMErrorMessage ( myTid, "Enroling in PVM" )
       call PVMfjoingroup ( Level2CodeGroupName, inum )
@@ -307,6 +313,8 @@ contains ! ========  Public Procedures =========================================
       allocate ( snoopers(0), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
         & MLSMSG_Allocate // "snoopers(0)" )
+    else
+      firstCall = .false.
     end if
 
     ! Tell all the snoopers we're ready to talk to them
@@ -315,9 +323,6 @@ contains ! ========  Public Procedures =========================================
         & 'Ready', any ( snoopers%mode == SnooperControling ) )
       call SendVectorsListToSnooper ( snoopers(snooper), vectorDatabase )
     end do
-
-    doneSnoopingForNow = size(snoopers) /= 0 .and. &
-      & all ( snoopers%mode /= SnooperControling )
 
     snoopEventLoop: do ! --------------------------- Snoop event loop ------
 
@@ -344,7 +349,7 @@ contains ! ========  Public Procedures =========================================
 
         case ( 'Continue' )
           if ( snoopers(snooper)%mode == SnooperControling ) &
-            & doneSnoopingForNow = .true.
+            exit SnoopEventLoop
 
         case ( 'Control' )
           if ( any ( snoopers%mode == SnooperControling ) ) then
@@ -388,8 +393,13 @@ contains ! ========  Public Procedures =========================================
         endif
       endif ! Got a message
 
-      ! End of the loop
-      if ( doneSnoopingForNow ) exit snoopEventLoop
+      ! Shall we quit the loop?
+      if ( size(snoopers) == 0 ) then
+        if (.not. firstCall) exit SnoopEventLoop
+      else
+        if ( all ( snoopers%mode /= SnooperControling ) ) exit SnoopEventLoop
+      end if
+
       call usleep ( delay )
     end do snoopEventLoop ! ------------------ End of snoop event loop -----
 
@@ -484,6 +494,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.13  2001/09/20 00:27:21  livesey
+! Minor changes
+!
 ! Revision 2.12  2001/09/19 23:47:39  livesey
 ! Compilable version
 !
