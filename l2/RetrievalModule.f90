@@ -11,10 +11,8 @@ module RetrievalModule
 ! This module and ones it calls consume most of the cycles.
 
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use BitStuff, only: CountBits
   use Dump_0, only: Dump
   use Expr_M, only: Expr
-  use ForwardModelConfig, only: ForwardModelConfig_T
   use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
     & F_channels, F_columnScale, F_Comment, F_covariance, F_diagnostics, &
     & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
@@ -23,8 +21,8 @@ module RetrievalModule
     & F_opticalDepthCutoff, &
     & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
     & F_quantity, F_regAfter, F_regOrders, F_regQuants, F_regWeights, &
-    & F_state, F_toleranceA, F_toleranceF, F_toleranceR, Field_first, &
-    & Field_last, &
+    & F_regWeightVec, F_state, F_toleranceA, F_toleranceF, F_toleranceR, &
+    & Field_first, Field_last, &
     & L_apriori, L_covariance, &
     & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
     & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
@@ -32,7 +30,7 @@ module RetrievalModule
     & L_dnwt_sq,  L_dnwt_sqt, L_Fill, L_full_derivatives, &
     & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
     & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, L_numF, &
-    & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_zeta, &
+    & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
     & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
     & S_subset, S_time
   use Intrinsic, only: PHYQ_Dimensionless
@@ -45,7 +43,6 @@ module RetrievalModule
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
   use OUTPUT_M, only: BLANKS, OUTPUT
-  use SidsModule, only: SIDS
   use SnoopMLSL2, only: SNOOP
   use String_Table, only: DISPLAY_STRING, Get_String
   use Time_M, only: Time_Now
@@ -59,7 +56,7 @@ module RetrievalModule
     & CloneVector, CopyVector, CopyVectorMask, DestroyVectorInfo, &
     & DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
     & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, &
-    & Vector_T, VectorValue_T
+    & M_Tikhonov, Vector_T, VectorValue_T
 
   implicit NONE
   private
@@ -89,6 +86,10 @@ contains
   !{Process the ``Retrieve'' section of the L2 Configuration File.
   ! The ``Retrieve'' section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
+
+    use BitStuff, only: CountBits
+    use ForwardModelConfig, only: ForwardModelConfig_T
+    use SidsModule, only: SIDS
 
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
@@ -151,6 +152,7 @@ contains
     integer :: RegOrders                ! Regularization orders
     integer :: RegQuants                ! Regularization quantities
     integer :: RegWeights               ! Weight of regularization conditions
+    type(vector_T), pointer :: RegWeightVec  ! Weight vector for regularization
     integer :: Son                      ! Of Root or Key
     character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
@@ -278,6 +280,8 @@ contains
         maxJacobians = defaultMaxJ
         method = defaultMethod
         regQuants = 0
+        regWeights = 0
+        nullify ( regWeightVec )
         toleranceA = defaultToleranceA
         toleranceF = defaultToleranceF
         toleranceR = defaultToleranceR
@@ -329,6 +333,8 @@ contains
             regQuants = son
           case ( f_regWeights )
             regWeights = son
+          case ( f_regWeightVec )
+            RegWeightVec => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_outputCovariance )
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
@@ -365,8 +371,11 @@ contains
 
         if ( got(f_apriori) .neqv. got(f_covariance) ) &
           & call announceError ( bothOrNeither, f_apriori, f_covariance )
-        if ( got(f_regOrders) .neqv. got(f_regWeights) ) &
-          & call announceError ( bothOrNeither, f_regOrders, f_regWeights )
+        if ( got(f_regOrders) .neqv. &
+          & (got(f_regWeights) .or. got(f_regWeightVec)) ) then
+          call announceError ( bothOrNeither, f_regOrders, f_regWeights )
+          call announceError ( bothOrNeither, f_regOrders, f_regWeightVec )
+        end if
         if ( got(f_regQuants) .and. .not. got(f_regOrders) ) &
           & call announceError ( ifAThenB, f_regQuants, f_regOrders )
         if ( error == 0 ) then
@@ -1001,7 +1010,7 @@ contains
             ! We need a matrix with the same column space as the "jacobian".
             ! The "jacobian" matrix is handily unused, so we used it here.
             call regularize ( jacobian, regOrders, regQuants, regWeights, &
-              & tikhonovRows )
+              & RegWeightVec, tikhonovRows )
             call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
             call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
               if ( index(switches,'reg') /= 0 ) &
@@ -1131,7 +1140,7 @@ contains
             ! We need a matrix with the same column space as the "jacobian".
             ! The "jacobian" matrix is handily unused, so we used it here.
             call regularize ( jacobian, regOrders, regQuants, regWeights, &
-              & tikhonovRows )
+              & regWeightVec, tikhonovRows )
             call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
             call scaleVector ( v(reg_X_x), -1.0_r8 )   ! -R x_n
 
@@ -1618,7 +1627,6 @@ contains
         outputAverage%name = preserveMatrixName
           if ( index(switches,'cov') /= 0 ) call output ( &
             & 'Computed the Averaging Kernel from the Covariance', advance='yes' )
-        call destroyMatrix ( kTk%m )
       end if
 
       call copyVector ( state, v(x) )
@@ -2599,6 +2607,8 @@ contains
               maskBit = ior(maskBit, m_fullDerivatives)
             case ( l_linAlg )
               maskBit = ior(maskBit, m_linAlg)
+            case ( l_Tikhonov )
+              maskBit = ior(maskBit, m_Tikhonov)
             end select
           end do
         case ( f_opticalDepth )
@@ -2942,6 +2952,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.161  2002/08/08 22:02:52  vsnyder
+! Add regWeightVec and Tikhonov mask
+!
 ! Revision 2.160  2002/08/06 02:16:09  livesey
 ! Fixed averaging kernels by reflecting the kTk matrix
 !
