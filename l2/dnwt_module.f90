@@ -573,6 +573,7 @@ contains
       if (gfac <= c0) go to 780
       axmax = axmaxb
       dxn = gradnb*gfac
+      aj%dxn = dxn ! In case the caller wants to compute cosines
       gfac = gfac*cp125
       spl = spg
       spg = spl/cp125
@@ -773,6 +774,7 @@ contains
 ! Store the Aitken-modified DX
   760 sq = -cait
       dxn = cait*dxn
+      aj%dxn = dxn ! In case the caller wants to compute cosines
       aj%cait = cait
       ifl = nf_dx_aitken
       nflag = ifl
@@ -984,6 +986,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.12  2001/05/24 20:23:41  vsnyder
+! Keep aj%dxn up to date after Gradient or Aitken moves
+!
 ! Revision 2.11  2001/05/24 18:16:11  vsnyder
 ! Added NF_START parameter; initially define aj%dxdxl
 !
