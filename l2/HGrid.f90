@@ -51,7 +51,7 @@ module HGrid                    ! Horizontal grid information
     real(r8), dimension(:), pointer :: time => NULL()
     real(r8), dimension(:), pointer :: solarTime => NULL()
     real(r8), dimension(:), pointer :: solarZenith => NULL()
-    real(r8), dimension(:), pointer :: logAngle => NULL()
+    real(r8), dimension(:), pointer :: losAngle => NULL()
   end type HGrid_T
 
 ! -----     Private declarations     ---------------------------------
@@ -444,6 +444,9 @@ end module HGrid
 
 !
 ! $Log$
+! Revision 2.7  2001/02/22 23:44:29  livesey
+! Typo
+!
 ! Revision 2.6  2001/02/22 23:43:26  livesey
 ! Nullified pointer elements of HGrid_T
 !
