@@ -814,7 +814,7 @@ contains ! =================================== Public Procedures==============
     if ( mafRange(1) == taiTime%noMAFs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'L1B data ends before requested processing range' )
     mafRange = max(mafRange, 1)
-    noMAFS = mafRange(1) - mafRange(0) + 1
+    noMAFS = mafRange(2) - mafRange(1) + 1
 
     ! At this point we'd look through the L1B data for data gaps.
     ! I want to defer this for now until I've reached agreement with VSP, RFJ
@@ -840,10 +840,10 @@ contains ! =================================== Public Procedures==============
           do maf = 1, noMAFs
             scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
             scanMin = minval ( tpGeodAlt%dpField(1,:,maf) )
-            thisOneValid = ( scanMin >= config%scanLowerLimit(0) .and. &
-              &              scanMin <= config%scanLowerLimit(1) ) .and. &
-              &            ( scanMax >= config%scanUpperLimit(0) .and. &
-              &              scanMax <= config%scanUpperLimit(1) )
+            thisOneValid = ( scanMin >= config%scanLowerLimit(1) .and. &
+              &              scanMin <= config%scanLowerLimit(2) ) .and. &
+              &            ( scanMax >= config%scanUpperLimit(1) .and. &
+              &              scanMax <= config%scanUpperLimit(2) )
             if ( config%criticalModules == l_both ) then
               valid(maf) = valid(maf) .and. thisOneValid
             else
@@ -872,6 +872,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.9  2001/11/12 21:15:34  livesey
+! More bug fixes
+!
 ! Revision 2.8  2001/11/12 20:31:23  livesey
 ! Bug fix check in
 !
