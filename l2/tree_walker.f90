@@ -127,6 +127,7 @@ contains ! ====     Public Procedures     ==============================
     totalNGC = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
+    call time_now ( t1 )
     call OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
     call add_to_section_timing ( 'open_init', t1)
     i = first_section
@@ -352,6 +353,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.90  2002/09/24 18:18:47  pwagner
+! Consistent with add_to_section_timing now calling time_now at its end
+!
 ! Revision 2.89  2002/08/28 22:29:19  pwagner
 ! Moved DestroyL1BInfo to after end of loop of chunks
 !
