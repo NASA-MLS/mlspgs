@@ -188,6 +188,7 @@ overlap
 overlaps
 
 packed
+polarized
 perturbation
 phaseName
 phiWindow
@@ -290,6 +291,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.81  2003/02/27 17:45:11  bill
+# Added polarized
+#
 # Revision 2.80  2003/02/20 21:26:21  pwagner
 # Lets you read field dimList=x,y,.. w/ griddeddata
 #
