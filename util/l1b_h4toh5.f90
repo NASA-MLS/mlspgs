@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !
@@ -9,20 +9,18 @@
      PROGRAM l1b_h4toh5
 
      use MLSDataInfo, only: MLSDataInfo_T, Query_MLSData
-     use HDF, only: sfstart, DFACC_RDONLY, &
-       & DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
-       & sfselect, sfn2index, sfginfo, sfendacc, sffinfo
+     use MLSHDF5, only: SaveAsHDF5DS, mls_h5close, mls_h5open
      use HDF5, only: HID_T, H5F_ACC_TRUNC_F, h5fopen_f, h5fclose_f, &
        & h5fis_hdf5_f, h5gcreate_f, h5gclose_f
+     use HDF, only: DFACC_RDONLY, &
+       & DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
+       & sfselect, sfn2index, sfginfo, sfendacc, sffinfo, sfstart, sfend
      use L1BData, only: AssembleL1BQtyName, ReadL1BData, &
        & l1bdata_t
      use MACHINE, only: FILSEP, HP, IO_ERROR, GETARG
      use MLSFiles, only: split_path_name
-     use MLSHDF5, only: SaveAsHDF5DS
-     use MLSMessageModule, ONLY : MLSMessage, MLSMSG_Error
+     use MLSMessageModule, ONLY : MLSMessage, MLSMSG_Error, MLSMSG_Warning
      use MLSStrings, only: GetIntHashElement
-     use OutputL1B, only: L1BOAindex_T, L1BOAsc_T, L1BOAtp_T, &
-       & lenUTC
 
      IMPLICIT NONE
 
@@ -54,7 +52,7 @@
        "$RCSfile$"
 !---------------------------------------------------------------------------
      
-  CALL h5open_f(error)
+  CALL mls_h5open(error)
   do      ! Loop over files to convert
      call get_filename(hdf4filename, hdf5filename)
      if ( hdf5filename == ' ' ) exit
@@ -112,12 +110,12 @@
          status = sfendacc(sds_id)
        enddo
      endif ! if h5fopen_f
-     call sfend(hdf4_id)
+     error = sfend(hdf4_id)
      CALL h5fclose_f(hdf5_id, error)
 
   enddo        ! Loop over filenames
 
-     CALL h5close_f(error)
+     CALL mls_h5close(error)
 !-------------------------------------------------------------
      STOP
   contains
@@ -131,6 +129,7 @@
     integer, intent(in)             :: NoMAF      
     !
     type(l1bdata_t)                 :: L1BDATA    
+    integer                         :: NoMAFsRead      
     integer                         :: status     
     integer                         :: rank       
     integer                         :: data_type  
@@ -166,8 +165,13 @@
     case default
       ! These are the standard cases:
       ! subdivided according to data type
-      call ReadL1BData( hdf4_id, trim(sds_name), L1bData, NoMAF, &  
+      call ReadL1BData( hdf4_id, trim(sds_name), L1bData, NoMAFsRead, &  
         &  status, hdfVersion=4 )                                        
+      if ( NoMAFsRead /= NoMAF ) then
+        CALL MLSMessage(MLSMSG_Warning, ModuleName, & 
+          & 'Number of mafs read different from expected number in sd ' // &
+          & trim(sds_name))
+      endif
       sds5_name = AssembleL1BQtyName(trim(sds_name), 5, .FALSE.)
       select case ( data_type )
 
@@ -200,8 +204,8 @@
      CHARACTER(LEN=len(hdf4filename)) :: filename
      integer ::                          error = 0
      integer, save ::                    i = 1
-     integer                          :: ihdf4 = 1
-     integer                          :: ihdf5 = ihdf4+1
+     integer, parameter               :: ihdf4 = 1
+     integer, parameter               :: ihdf5 = ihdf4+1
      logical ::                          got(ihdf4:ihdf5)
   ! Get inputfile name, process command-line args
   ! (which always start with -)
@@ -350,3 +354,6 @@
 END PROGRAM l1b_h4toh5
 
 ! $Log$
+! Revision 1.1  2002/10/29 00:56:57  pwagner
+! First commit
+!
