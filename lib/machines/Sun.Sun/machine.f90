@@ -12,6 +12,16 @@ module MACHINE
   character(LEN=1) :: FILSEP = '/'      ! '/' for Unix, '\' for DOS or NT
   integer, parameter :: HP = 0          ! Offset for first argument for GETARG
 
+   ! According to Sun's own docs, e.g. 806-7987.pdf, Sun supplies
+   ! getarg as an intrinsic library routine
+  public :: GETARG
+  interface
+    subroutine GETARG ( ARGNUM, ARGVAL )
+      integer, intent(in) :: ARGNUM  ! 0 = command name, 1 = first arg, etc.
+      character(len=*), intent(out) :: ARGVAL   ! Blank if argnum out-of-range
+    end subroutine GETARG
+  end interface
+
   interface IO_ERROR; module procedure IO_ERROR_; end interface
   private IO_ERROR_
 
@@ -50,35 +60,8 @@ contains
     call exit(istatus)
   end subroutine exit_with_status
 
-!  subroutine GETARG ( ARGNUM, ARGVAL )
-!    integer, intent(in) :: ARGNUM  ! 0 = command name, 1 = first arg, etc.
-!    character(len=*), intent(out) :: ARGVAL   ! Blank if argnum out-of-range
-!    integer :: STATUS
-!    call nag_getarg ( argnum, argval, errno = status )
-!    if ( status /= 0 ) argval = ' '
-!  end subroutine GETARG
-
 end module MACHINE
 
 ! $Log$
-! Revision 1.1  2001/01/13 00:29:44  pwagner
-! moved to lib/machines/MLSCONFG/machine.f90
-!
-! Revision 1.1  2000/10/21 00:16:25  pwagner
-! First commit
-!
-! Revision 1.1  2000/10/19 17:40:52  pwagner
-! first commit
-!
-! Revision 1.2  2000/10/12 22:54:12  vsnyder
-! Correct a commented-out line that may get commented-in for another
-! computer/os/compiler combination
-!
-! Revision 1.1  2000/10/12 22:21:11  vsnyder
-! Change directory name from NAG to pclinuxNAG
-!
-! Revision 1.3  2000/10/09 22:15:55  vsnyder
-! Moved machine.f90 from l2 to lib
-!
-! Revision 2.0  2000/09/05 18:58:04  ahanzel
-! Changing file revision to 2.0.
+! Revision 1.1  2001/06/28 15:12:45  pumphrey
+! Machine.f90 for Sun's f95 compiler added. It is not complete yet. (HCP)
