@@ -42,10 +42,10 @@ contains
   
   ! ------------------------------------------- LaunchFwmSlaves ----
   subroutine LaunchFWMSlaves ( chunk )
+    use Chunks_m, only: MLSChunk_T
     use Output_m, only: Output
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_test
     use Machine, only: SHELL_COMMAND
-    use MLSCommon, only: MLSChunk_T
     use L2ParInfo, only: PARALLEL, GETMACHINENAMES, MACHINENAMELEN, &
       & SLAVEARGUMENTS, SIG_REGISTER, INFOTAG, NOTIFYTAG, GETNICETIDSTRING
     use MLSCommon, only: FINDFIRST
@@ -763,6 +763,9 @@ contains
 end module L2FWMParallel
 
 ! $Log$
+! Revision 2.17  2004/05/19 19:16:11  vsnyder
+! Move MLSChunk_t to Chunks_m
+!
 ! Revision 2.16  2003/06/20 19:38:25  pwagner
 ! Allows direct writing of output products
 !
