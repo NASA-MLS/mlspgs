@@ -13,9 +13,9 @@ program MLSL2
   USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
     & MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
   !    & MLSFile_T, MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
-  use MLSL2Options, only: PCF_FOR_INPUT, PCF, OUTPUT_PRINT_UNIT, &
-    & QUIT_ERROR_THRESHOLD, TOOLKIT, CREATEMETADATA, CURRENT_VERSION_ID, &
-    & PENALTY_FOR_NO_METADATA, PUNISH_FOR_INVALID_PCF, NORMAL_EXIT_STATUS, &
+  use MLSL2Options, only: OUTPUT_PRINT_UNIT, &
+    & QUIT_ERROR_THRESHOLD, TOOLKIT, CURRENT_VERSION_ID, &
+    & PENALTY_FOR_NO_METADATA, NORMAL_EXIT_STATUS, &
     & GARBAGE_COLLECTION_BY_CHUNK, &
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & DEFAULT_HDFVERSION_WRITE, DEFAULT_HDFVERSION_READ, LEVEL1_HDFVERSION
@@ -52,7 +52,7 @@ program MLSL2
   ! mlsl2 [options] [<] [l2cf]
   ! where l2cf is an ascii file which comes from one of
   ! (i)   a file named by a line in the pcf 
-  !        (if and only if pcf_for_input is TRUE)
+  !        (if and only if toolkit is TRUE)
   ! (ii)  a file named on the command line w/o the '<' redirection
   ! (iii) stdin or a file redirected as stdin using '<'
   ! and where we expand 'mlsl2 [options]' below
@@ -181,9 +181,7 @@ program MLSL2
         switch = .false.
         n = 1
       end if
-      if ( line(3+n:8+n) == 'cfpcf ' ) then
-        pcf_for_input = switch
-      else if ( line(3+n:7+n) == 'check ' ) then
+      if ( line(3+n:7+n) == 'check ' ) then
         checkl2cf = switch
       else if ( line(3+n:7+n) == 'chunk' ) then
         call AccumulateSlaveArguments ( line )
@@ -253,10 +251,6 @@ program MLSL2
         word = '--slave'
         write ( word(len_trim(word)+1:), * ) parallel%myTid
         call AccumulateSlaveArguments(word)
-      else if ( line(3+n:7+n) == 'meta ' ) then
-        createMetadata = switch
-      else if ( line(3+n:6+n) == 'pcf ' ) then
-        pcf = switch
       else if ( line(3+n:7+n) == 'recl ' ) then
         i = i + 1
         call getarg ( i, line )
@@ -415,7 +409,6 @@ program MLSL2
 ! (waited til here in case any were (re)set on command line)
 
   if ( .not. toolkit ) then
-     pcf = .false.
      prunit = max(-1, prunit)   ! stdout or Fortran unit
   end if
 
@@ -425,12 +418,9 @@ program MLSL2
      MLSMessageConfig%LogFileUnit = -2   ! the default in MLSMessageModule
   end if
 
-  UseSDPToolkit = pcf    ! Redundant, but may be needed in lib
+  UseSDPToolkit = toolkit    ! Redundant, but may be needed in lib
 
-  if ( .not. pcf ) then
-     pcf_for_input = .false.
-     punish_for_invalid_pcf = .false.
-     createMetadata = .false.
+  if ( .not. toolkit ) then
      penalty_for_no_metadata = 0
   end if
 
@@ -469,7 +459,7 @@ program MLSL2
       call announce_success(L2CF_file, l2cf_unit)               
     end if
     inunit = l2cf_unit
-  else if ( pcf_for_input ) then
+  else if ( TOOLKIT ) then
     call open_MLSCF ( MLSPCF_L2CF_Start, inunit, L2CF_file, status, recl )
     if(status /= 0) then
       call output( 'Non-zero status returned from open_MLSCF: ', &
@@ -500,7 +490,7 @@ program MLSL2
   if ( timing ) call sayTime ( 'Parsing the L2CF' )
 
   !---------------- Task (6) ------------------
-  if ( PCF_FOR_INPUT .and. error==0) then
+  if ( TOOLKIT .and. error==0) then
     call close_MLSCF ( inunit, error )
   else
     if ( inunit >= 0 ) close ( inunit )  ! Don't worry about the status
@@ -647,21 +637,6 @@ contains
       call output(' Use toolkit panoply:                            ', advance='no')
       call blanks(4, advance='no')
       call output(toolkit, advance='yes')
-      call output(' Use PCF file:                                   ', advance='no')
-      call blanks(4, advance='no')
-      call output(pcf, advance='yes')
-      call output(' Get l2cf from pcf:                              ', advance='no')
-      call blanks(4, advance='no')
-      call output(pcf_for_input, advance='yes')
-      call output(' Punish for errors in pcf:                       ', advance='no')
-      call blanks(4, advance='no')
-      call output(punish_for_invalid_pcf, advance='yes')
-      call output(' Create metadata for each output file:           ', advance='no')
-      call blanks(4, advance='no')
-      call output(createMetadata, advance='yes')
-      call output(' Punish for metadata creation errors:            ', advance='no')
-      call blanks(5, advance='no')
-      call output(penalty_for_no_metadata, advance='yes')
       call output(' Error threshold before halting:                 ', advance='no')
       call blanks(5, advance='no')
       call output(quit_error_threshold, advance='yes')
@@ -721,6 +696,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.96  2003/06/09 22:49:33  pwagner
+! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
+!
 ! Revision 2.95  2003/05/14 00:59:40  livesey
 ! Increased hash table size.
 !
