@@ -11,7 +11,6 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
   USE SDPToolkit
   USE MLSPCF1
   USE Orbit, ONLY: orbitNumber, numOrb
-  USE MLSFiles, only: HDFVERSION_5, HDFVERSION_4 
 
   IMPLICIT NONE
 
@@ -24,14 +23,12 @@ MODULE WriteMetaL1 ! Populate metadata and write it out
   CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
-
 CONTAINS
 
   SUBROUTINE populate_metadata_l1 (HDF_FILE, MCF_FILE)
 
     USE InitPCFs, ONLY: L1PCF
-    USE MLSFiles, only: mls_sfstart, mls_sfend
-    USE MLSStrings, ONLY: lowercase
+    USE MLSFiles, ONLY: mls_sfstart, mls_sfend
     USE MLSL1Config, ONLY: L1Config
 
     !Arguments
@@ -67,14 +64,7 @@ CONTAINS
 
     !Executable code
 
-    select case (lowercase(trim(L1Config%Output%HDFVersionString))) 
-       case ('hdf4')
-          hdfVersion = HDFVERSION_4
-       case ('hdf5')
-          hdfVersion = HDFVERSION_5
-       case default
-          hdfVersion = HDFVERSION_4
-    end select 
+    hdfVersion = L1Config%Output%HDFversion
 
     version = 1
 
@@ -408,16 +398,16 @@ CONTAINS
        ENDIF
     ENDIF
 
-    returnStatus = mls_sfend(sdid,hdfVersion)
+    returnStatus = mls_sfend (sdid, hdfVersion)
     IF (returnStatus /= 0) THEN 
-          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
-               "Calling mls_sfend failed for file "//physical_fileName ) 
+       CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+            "Calling mls_sfend failed for file "//physical_fileName ) 
     ENDIF          
 
-   returnStatus = pgs_met_remove() 
+    returnStatus = pgs_met_remove() 
     IF (returnStatus /= PGS_S_SUCCESS) THEN 
-          CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
-               "Calling pgs_met_remove() failed." )
+       CALL MLSMessage (MLSMSG_ERROR, ModuleName, &
+            "Calling pgs_met_remove() failed." )
     ENDIF          
 
   END SUBROUTINE populate_metadata_l1
@@ -435,6 +425,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.6  2002/11/19 21:46:38  perun
+! Use HDFversion instead of HDFVersionString
+!
 ! Revision 2.5  2002/11/07 21:32:35  jdone
 ! Added HDF4/HDF5 capabilities.
 !
