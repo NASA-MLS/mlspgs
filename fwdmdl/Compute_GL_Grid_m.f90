@@ -69,7 +69,7 @@ contains
 
 ! Calculate size of z_all and allocate it
 
-    z_all_size = temp%template%nosurfs+2 + &
+    z_all_size = temp%template%nosurfs + 2 + &
       & Size(FwdModelConf%integrationGrid%surfs)
     if ( associated(FwdModelConf%tangentGrid) ) &
       & z_all_size = z_all_size + FwdModelConf%tangentGrid%nosurfs
@@ -81,7 +81,7 @@ contains
 ! Fill in z_all
 ! the -3.000 is a designated "surface" value
 
-    z_all_prev = temp%template%nosurfs+2
+    z_all_prev = temp%template%nosurfs + 2
     z_all(1) = -3.000_rp
     z_all(2:z_all_prev-1) = temp%template%surfs(:,1)
     z_all(z_all_prev) = 4.000_rp
@@ -160,6 +160,9 @@ contains
 end module Compute_GL_Grid_M
 
 ! $Log$
+! Revision 2.5  2004/02/12 02:21:21  vsnyder
+! Cosmetics
+!
 ! Revision 2.4  2003/09/19 18:10:38  vsnyder
 ! Simplify computation of tangent point indices
 !
