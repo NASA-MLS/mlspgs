@@ -31,7 +31,7 @@ module Fill                     ! Create vectors and fill them.
   use L3ASCII, only: L3ASCII_INTERP_FIELD
   use LEXER_CORE, only: PRINT_SOURCE
   use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, &
+    & Dump, Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, &
     & Matrix_SPD_T, Matrix_T
   use MLSCommon, only: L1BInfo_T, NameLen, LineLen, MLSChunk_T, R8
   use MLSSignals_m, only: GetSignalName, GetModuleName
@@ -270,9 +270,9 @@ contains ! =====     Public Procedures     =============================
           gson = decoration(subtree(2,gson)) ! The field's value
           select case ( fieldIndex )
           case ( f_columns )
-            colVector = gson
+            colVector = decoration(gson)
           case ( f_rows )
-            rowVector = gson
+            rowVector = decoration(gson)
           case ( f_type )
             matrixType = gson
           end select
@@ -479,7 +479,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 ) then
-        call dump ( vectors )
+        call dump ( vectors, details=levels(gen)-1 )
+        call dump ( matrices, details=levels(gen)-1 )
       end if
       call trace_end ( "MLSL2Fill" )
     end if
@@ -1499,6 +1500,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.38  2001/04/10 23:45:17  vsnyder
+! Construct matrix properly
+!
 ! Revision 2.37  2001/04/10 20:04:17  livesey
 ! Now does fill from Grid.
 !
