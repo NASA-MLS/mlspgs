@@ -1,14 +1,36 @@
-      SUBROUTINE SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1, &
-      &                         GAMMA,N2,MOL,NMOL,NCNT)
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module SpectraLines
+
+! -------------------------------------------------------------------------  
+! SET-UP SPECTRA LINE EMISSIONS
+! -------------------------------------------------------------------------
 
       use MLSCommon, only: r8
       IMPLICIT NONE
+      Private
+      Public :: SETUP_SPECTRA
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+      
+contains
+
+      SUBROUTINE SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1, &
+      &                         GAMMA,N2,MOL,NMOL,NCNT)
+!-----------------------------------------------------------------------
       INCLUDE 'spectra.f9h'
       INCLUDE 'data.f9h'
       REAL(r8) ::  QQ(3)
       INTEGER :: I, J
 
-! -------------------------------------------------------------
+! ----------------------------------------------------------------------
 
       DO I=1, N_O2_LINES
             QLG(1,I) = QQ_O2(1)
@@ -173,14 +195,9 @@
       NCNT(5)=N_O3_LINES
       NMOL=5
 
-      RETURN
-      END
+      END SUBROUTINE SETUP_SPECTRA
 
-! $Log: setup_spectra.f90,v      
+end module SpectraLines
 
-
-
-
-
-
+! $Log: SpectraLines.f90,v      
 

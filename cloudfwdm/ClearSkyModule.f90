@@ -9,6 +9,7 @@ module ClearSkyModule
 
       use GasAbsorption, only: GET_BETA
       use MLSCommon, only: r8
+      use SpectraLines, only: SETUP_SPECTRA
 
       IMPLICIT NONE
       Private
