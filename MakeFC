@@ -880,8 +880,9 @@ internaldepends:
 	echo "Making dependencies for srclib"; \
         cd srclib; \
         ../$(MLSBIN)/makemakedep.sh ../lib ../l2; \
-        sed 's/OBJS =/srclib_objs =/' Makefile.dep > temp.dep; \
-        mv temp.dep Makefile.dep
+        temp_name=temp.dep.${MLSCONFG} ;\
+        sed 's/OBJS =/srclib_objs =/' Makefile.dep > $$temp_name; \
+        mv $$temp_name Makefile.dep
 
 internalsaymake:
 	@echo "Copying or linking MakeFC to Makefile in ./ $(SUBDIRS)"; \
@@ -997,6 +998,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.75  2002/08/05 18:07:46  pwagner
+# turns main to MAIN__ if MLSF95 is Lahey
+#
 # Revision 1.74  2002/07/29 23:04:13  pwagner
 # Speedup by replacing mlsconfigure with updatemf.sh to update Makefile
 #
