@@ -6,12 +6,10 @@ module WriteMetadata ! Populate metadata and write it out
 ! -------------------------------------------------------
 
   use Hdf, only: DFACC_RDWR, Sfend, Sfstart
-! use HDFEOS ! Appears not to be used
   use LEXER_CORE, only: PRINT_SOURCE
-! use MLSCF  ! Appears not to be used
   use MLSCommon, only: NameLen, R8
   use MLSFiles, only: Split_path_name
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA
+  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: Mlspcf_mcf_l2gp_end, Mlspcf_mcf_l2gp_start, &
     & Mlspcf_mcf_l2log_start
@@ -180,8 +178,6 @@ contains
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
     if ( returnStatus /= PGS_S_SUCCESS ) then 
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Error in getting ref for PCF number in 1st grouping.") 
       call announce_error ( 0, &
       & "Error in getting ref for PCF number in 1st grouping." ) 
     end if
@@ -189,8 +185,6 @@ contains
     returnStatus = pgs_met_init (MCF_FILE, groups)
 
     if ( returnStatus /= PGS_S_SUCCESS ) then 
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Initialization error.  See LogStatus for details.") 
       call announce_error ( 0, &
       & "Metadata initialization error" )
     end if
@@ -203,8 +197,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'further update anticipated using enhanced PGE')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing ReprocessingPlanned attribute." )
     end if
@@ -213,8 +205,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'processed once')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing ReprocessingActual attribute." )
     end if
@@ -224,8 +214,6 @@ contains
     indx = INDEX (sval, "/", .TRUE.) + 1  ! Begin after last "/"
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval(indx:))
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
        & "Error in writing LocalGranuleID attribute." ) 
     end if
@@ -233,8 +221,6 @@ contains
     attrName = 'DayNightFlag'
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, 'Both')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing DayNightFlag attribute." )
     end if
@@ -243,8 +229,6 @@ contains
     call expandFileTemplate ( '$cycle', sval, cycle=l2pcf%cycle )
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing LocalVersionID attribute." ) 
     end if
@@ -309,23 +293,12 @@ contains
 
 
     if ( returnStatus /= PGS_S_SUCCESS ) then 
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Error in getting ref for PCF number in measured_parameter.") 
       call announce_error ( 0, &
         & "Error in getting ref for PCF id in measured_parameter." )
     end if
 
     ! MeasuredParameterContainer
 
-!    if ( hdf_file == mlspcf_l1b_radf_start ) then
-!       sval = "Filter bank radiances"
-!    else if ( hdf_file == mlspcf_l1b_radd_start ) then
-!       sval = "DACS radiances"
-!    else if ( hdf_file == mlspcf_l1b_oa_start ) then
-!       sval = "Orbit/attitude and tangent point"
-!    else if ( hdf_file == mlspcf_l1b_eng_start ) then
-!       sval = "MLS Instrument Engineering"
-!    end if
 
     if ( class_num <= 0 ) then
       class(:2) = '0 '
@@ -344,10 +317,8 @@ contains
     attrName = 'ParameterName' // '.' // class
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
       call announce_error ( 0, &
         & "Error in writing ParameterName attribute." )
-!       CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
     end if
 
     ! QAFlags Group
@@ -356,8 +327,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'Passed')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing AutomaticQualityFlag attribute." )
     end if
@@ -366,8 +335,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'pending algorithm update')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing AutomaticQualityFlagExplanation attribute." )
     end if
@@ -376,8 +343,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'Not Investigated')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing OperationalQualityFlag attribute." )
     end if
@@ -386,8 +351,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'Not Investigated')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage(MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing OperationalQualityFlagExplanation attribute.") 
     end if
@@ -397,8 +360,6 @@ contains
     attrName = 'QAPercentInterpolatedData' // '.' // class
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing QAPercentInterpolatedData attribute." )
     end if
@@ -406,8 +367,6 @@ contains
     attrName = 'QAPercentMissingData' // '.' // class
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing QAPercentMissingData attribute." )
     end if
@@ -415,8 +374,6 @@ contains
     attrName = 'QAPercentOutofBoundsData' // '.' // class
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, 0)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
         & "Error in writing QAPercentOutofBoundsData attribute." )
     end if
@@ -495,8 +452,6 @@ contains
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
     if ( returnStatus /= PGS_S_SUCCESS ) then 
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Error in getting ref for PCF number in third_grouping.") 
       call announce_error ( 0, &
       & "Error in getting ref for PCF id in third_grouping.") 
     end if
@@ -506,8 +461,6 @@ contains
     attrName = 'OrbitNumber' // '.1'
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing OrbitNumber attribute.") 
     end if
@@ -518,8 +471,6 @@ contains
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
          -1)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing StartOrbitNumber attribute.") 
     end if
@@ -528,8 +479,6 @@ contains
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
          -1)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing StopOrbitNumber attribute.") 
     end if
@@ -538,8 +487,6 @@ contains
     dval = 0.0
     returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing EquatorCrossingLongitude attribute.") 
     end if
@@ -548,8 +495,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          '00:00:00')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing EquatorCrossingTime attribute.") 
     end if
@@ -559,8 +504,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          L2PCF%startUTC(1:indx-1))
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing EquatorCrossingDate attribute.") 
     end if
@@ -571,8 +514,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'See the PCF annotation to this file.')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing InputPointer attribute.") 
     end if
@@ -583,8 +524,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
          'Limb')
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
        call announce_error ( 0, &
        & "Error in writing LocalityValue attribute.")
      end if
@@ -595,8 +534,6 @@ contains
      returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
           'Atmosphere Layer')
      if ( returnStatus /= PGS_S_SUCCESS ) then
-     !   errmsg = METAWR_ERR // attrName
-!        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
        call announce_error ( 0, &
        & "Error in writing VerticalSpatialDomainType attribute.")
      end if
@@ -605,8 +542,6 @@ contains
      returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
           'Brightness Temperature')
      if ( returnStatus /= PGS_S_SUCCESS ) then
-     !   errmsg = METAWR_ERR // attrName
-!        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
        call announce_error ( 0, &
        & "Error in writing VerticalSpatialDomainValue attribute.")
      end if
@@ -617,8 +552,6 @@ contains
      returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
           'Other Grid System')
      if ( returnStatus /= PGS_S_SUCCESS ) then
-     !   errmsg = METAWR_ERR // attrName
-!        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
        call announce_error ( 0, &
        & "Error in writing ZoneIdentifier attribute.")
      end if
@@ -627,8 +560,6 @@ contains
      dval = -180.0
      returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
      if ( returnStatus /= PGS_S_SUCCESS ) then
-     !   errmsg = METAWR_ERR // attrName
-!        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
        call announce_error ( 0, &
        & "Error in writing WestBoundingCoordinate attribute.")
      end if
@@ -637,8 +568,6 @@ contains
      dval = 90.0
      returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
      if ( returnStatus /= PGS_S_SUCCESS ) then
-     !   errmsg = METAWR_ERR // attrName
-!        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
        call announce_error ( 0, &
        & "Error in writing NorthBoundingCoordinate attribute.")
      end if
@@ -647,8 +576,6 @@ contains
      dval = 180.0
      returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
      if ( returnStatus /= PGS_S_SUCCESS ) then
-     !   errmsg = METAWR_ERR // attrName
-!        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
        call announce_error ( 0, &
        & "Error in writing EastBoundingCoordinate attribute.")
      end if
@@ -657,8 +584,6 @@ contains
      dval = -90.0
      returnStatus = pgs_met_setAttr_d (groups(INVENTORY), attrName, dval)
      if ( returnStatus /= PGS_S_SUCCESS ) then
-     !   errmsg = METAWR_ERR // attrName
-!        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in writing SouthBoundingCoordinate attribute.")
     end if
@@ -671,8 +596,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), &
          attrName, L2PCF%startUTC(1:indx-1))
     if ( returnStatus /= PGS_S_SUCCESS ) then 
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Error setting RangeBeginningDate")
       call announce_error ( 0, &
       & "Error in setting RangeBeginningDate attribute.") 
     end if
@@ -680,8 +603,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), &
          "RangeBeginningTime", L2PCF%startUTC(indx+1:))
     if ( returnStatus /= PGS_S_SUCCESS ) then 
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Error setting RangeBeginningTime")
       call announce_error ( 0, &
       & "Error in setting RangeBeginningTime attribute.") 
     end if
@@ -689,8 +610,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), "RangeEndingDate", &
          L2PCF%endUTC(1:indx-1))
     if ( returnStatus /= PGS_S_SUCCESS ) then 
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Error setting RangeEndingDate")
       call announce_error ( 0, &
       & "Error in setting RangeEndingDate attribute.") 
     end if
@@ -698,8 +617,6 @@ contains
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), "RangeEndingTime", &
          L2PCF%endUTC(indx+1:))
     if ( returnStatus /= PGS_S_SUCCESS ) then 
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Error setting RangeEndingTime")
       call announce_error ( 0, &
       & "Error in setting RangeEndingTime attribute.") 
     end if
@@ -710,8 +627,6 @@ contains
     sval = L2PCF%PGEVersion
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
     if ( returnStatus /= PGS_S_SUCCESS ) then
-    !   errmsg = METAWR_ERR // attrName
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
       call announce_error ( 0, &
       & "Error in setting PGEVersion attribute.") 
     end if
@@ -719,8 +634,6 @@ contains
     sdid = sfstart (physical_fileName, DFACC_RDWR) 
 
     if ( sdid == -1 ) then
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Failed to open the hdf file "//physical_fileName ) 
       call announce_error ( 0, &
       & "Error: failed to open hdf file: "//physical_fileName) 
     end if
@@ -730,14 +643,9 @@ contains
     if ( returnStatus /= PGS_S_SUCCESS .AND. &
       &  returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
       if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
-!       CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
-!        & "Some of the mandatory parameters were not set" )
         call announce_error ( 0, &
         & "Error: some of the mandatory parameters not set.") 
       else
-!       CALL Pgs_smf_getMsg (returnStatus, attrname, errmsg)
-!       CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
-!         &  "Metadata write failed "//attrname//errmsg)
         call announce_error ( 0, &
         & "Error: metadata write failed in third_grouping.", &
         & error_number=returnStatus) 
@@ -804,6 +712,7 @@ contains
 
     module_error = 0
     if ( present(metadata_error)) metadata_error=1
+    if(.NOT. CREATEMETADATA) return
 
     version = 1
     if ( mcf_file > 0 ) then
@@ -813,8 +722,6 @@ contains
     end if
 
     if ( returnStatus /= PGS_S_SUCCESS ) then
-!     CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-!       & "Failed to find the PCF reference for MCF_FILE in populate_metadata_std" ) 
       call announce_error ( 0, &
       & "Error: failed to find PCF ref for MCF_FILE in populate_metadata_std.") 
       return
@@ -824,8 +731,6 @@ contains
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
     if ( returnStatus /= PGS_S_SUCCESS ) then
-!     CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-!       & "Failed to find the PCF reference for HDF_FILE in populate_metadata_std" ) 
       call announce_error ( 0, &
       & "Error: failed to find PCF ref for HDF_FILE in populate_metadata_std.") 
       return
@@ -838,8 +743,6 @@ contains
     sdid = sfstart (physical_fileName, DFACC_RDWR) 
 
     if ( sdid == -1 ) then
-!       CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!            "Failed to open the hdf file "//physical_fileName ) 
       call announce_error ( 0, &
       & "Error: failed to open the hdf file in populate_metadata_std: "&
       & //TRIM(physical_fileName)) 
@@ -851,8 +754,6 @@ contains
     if ( returnStatus /= PGS_S_SUCCESS .AND. &
          returnStatus /= PGSMET_W_METADATA_NOT_SET ) then 
       if ( returnStatus == PGSMET_W_METADATA_NOT_SET ) then 
-!       CALL MLSMessage (MLSMSG_WARNING, ModuleName, &
-!         & "Some of the mandatory parameters were not set" )
         call announce_error ( 0, &
         & "Error--some of the mandatory parameters were not set") 
 !					return
@@ -929,6 +830,7 @@ contains
 
     module_error = 0
     if ( present(metadata_error)) metadata_error=1
+    if(.NOT. CREATEMETADATA) return
 
     version = 1
     if ( MCF_FILE > 0 ) then
@@ -938,8 +840,6 @@ contains
     end if
 	
     if ( returnStatus /= PGS_S_SUCCESS ) then
-!     CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-!       & "Failed to find the PCF reference for MCF_FILE in populate_metadata_oth" ) 
       call announce_error ( 0, &
       & "Error: failed to find PCF ref for MCF_FILE in populate_metadata_oth.") 
       return
@@ -949,8 +849,6 @@ contains
     returnStatus = PGS_PC_GetReference (HDF_FILE, version , physical_filename)
 
     if ( returnStatus /= PGS_S_SUCCESS ) then
-!     CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-!       & "Failed to find the PCF reference for HDF_FILE in populate_metadata_oth" ) 
       call announce_error ( 0, &
       & "Error: failed to find PCF ref for HDF_FILE in populate_metadata_oth.") 
       return
@@ -970,8 +868,6 @@ contains
     sdid = sfstart (physical_fileName, DFACC_RDWR) 
 
     if ( sdid == -1 ) then
-!     CALL MLSMessage (MLSMSG_Error, ModuleName, &
-!       & "Failed to open the hdf file "//physical_fileName ) 
       call announce_error ( 0, &
       & "Error: failed to open the hdf file: "//TRIM(physical_fileName))
       return
@@ -1045,6 +941,11 @@ contains
     logical, parameter :: DEBUG = .false.
 	
     ! Begin
+
+    if(.NOT. CREATEMETADATA) then
+      mcf=0
+      return
+   endif
 
     if ( MCFFORL2GPOPTION == 1 ) then
       mcf = mcf+1
@@ -1240,6 +1141,7 @@ contains
     ! Begin
     module_error = 0
     if ( present(metadata_error)) metadata_error=1
+    if(.NOT. CREATEMETADATA) return
 
     nullStr = ''
 
@@ -1525,6 +1427,9 @@ contains
 
 end module WriteMetadata 
 ! $Log$
+! Revision 2.15  2001/05/07 18:04:51  pwagner
+! Always check for CREATEMETADATA first
+!
 ! Revision 2.14  2001/05/03 20:34:20  vsnyder
 ! Cosmetic changes
 !
