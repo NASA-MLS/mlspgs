@@ -20,7 +20,7 @@ module Fill                     ! Create vectors and fill them.
     & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_NOISEBANDWIDTH, F_PRECISION,  &
     & F_PRECISIONFACTOR, &
     & F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
-    & F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
+    & F_REFRACT, F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
     & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
     & F_SOURCE, F_SOURCEGRID, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
@@ -33,8 +33,8 @@ module Fill                     ! Create vectors and fill them.
     & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_FOLD, L_GPH, L_GRIDDED, L_HEIGHT, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_NOISEBANDWIDTH, L_LOSVEL, L_NONE, L_PLAIN, &
-    & L_PRESSURE, L_PTAN, L_RADIANCE, L_RHI, &
-    & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
+    & L_PRESSURE, L_PHITAN, L_PTAN, L_RADIANCE, L_RHI, &
+    & L_REFGPH, L_REFRACT, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
     & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SYSTEMTEMPERATURE, &
     & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_XYZ, L_ZETA
@@ -159,6 +159,7 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: BadlosVelFill = noSpecialFill + 1
   integer, parameter :: NotZetaForGrid = BadLosVelFill + 1
   integer, parameter :: BadEstNoiseFill = NotZetaForGrid + 1
+  integer, parameter :: BadRefractFill = BadEstNoiseFill + 1
   
   real, parameter ::    UNDEFINED_VALUE = -999.99 ! Same as %template%badvalue
 
@@ -222,7 +223,7 @@ contains ! =====     Public Procedures     =============================
     type (vectorValue_T), pointer :: SYSTEMPQUANTITY
     type (vectorValue_T), pointer :: TEMPERATUREQUANTITY
     type (vectorValue_T), pointer :: TNGTECIQUANTITY
-    type (vectorValue_T), pointer :: TNGTPRESQUANTITY
+    type (vectorValue_T), pointer :: PTANQUANTITY
     type (vectorValue_T), pointer :: USB
     type (vectorValue_T), pointer :: USBFRACTION
     type (vectorValue_T), pointer :: VMRQTY
@@ -295,10 +296,11 @@ contains ! =====     Public Procedures     =============================
     integer :: RADIANCEVECTORINDEX      ! For radiance quantity
     integer :: RATIOQUANTITYINDEX       ! in the quantities database
     integer :: RATIOVECTORINDEX         ! In the vector database
+    logical :: REFRACT                  ! Do refraction in phiTan fill
     integer :: REFGPHQUANTITYINDEX      ! in the quantities database
     integer :: REFGPHVECTORINDEX        ! In the vector database
-    logical :: ResetSeed                ! Let mls_random_seed choose new seed
-    integer :: RowVector                ! Vector defining rows of Matrix
+    logical :: RESETSEED                ! Let mls_random_seed choose new seed
+    integer :: ROWVECTOR                ! Vector defining rows of Matrix
     integer :: SCECIQUANTITYINDEX       ! In the quantities database
     integer :: SCECIVECTORINDEX         ! In the vector database
     integer :: SCVELQUANTITYINDEX       ! In the quantities database
@@ -373,6 +375,7 @@ contains ! =====     Public Procedures     =============================
       invert = .false.
       isPrecision = .false.
       resetSeed = .false.
+      refract = .false.
       spread = .false.
       switch2intrinsic = .false.
       seed = 0
@@ -582,6 +585,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_ratioQuantity )      ! For isotope ratio
             ratioVectorIndex = decoration(decoration(subtree(1,gson)))
             ratioQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_refract )
+            refract = get_boolean ( gson )
           case ( f_refGPHQuantity ) ! For hydrostatic or rhi
             refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
             refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
@@ -762,17 +767,24 @@ contains ! =====     Public Procedures     =============================
           call FillVectorQtyFromIsotope ( key, quantity, sourceQuantity, &
             & ratioQuantity )
 
+        case ( l_refract )              ! --------- refraction for phiTan -----
+          if ( refract .and. .not. all ( got ( &
+            & (/ f_temperatureQuantity, f_h2oQuantity, f_ptanQuantity /) ) ) ) &
+            & call Announce_error ( key, badRefractFill )
+          call FillPhiTanWithRefrcation ( key, quantity, ptanQuantity, temperatureQuantity, &
+            & h2oQuantity, refract )
+
         case ( l_rectanglefromlos ) ! -------fill from losGrid quantity -------
           if (.not. all(got((/f_losQty,f_earthRadius,f_PtanQuantity/))))&
             & call Announce_Error ( key, badlosGridFill )
           earthRadiusQty => GetVectorQtyByTemplateIndex( &
             & vectors(earthRadiusVectorIndex), earthRadiusQtyIndex )
-          TngtPresQuantity => GetVectorQtyByTemplateIndex( &
+          PtanQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(PtanVectorIndex), PtanQtyIndex )
           losQty => GetVectorQtyByTemplateIndex( &
             & vectors(losVectorIndex), losQtyIndex )
           call FillQuantityFromLosGrid ( key, Quantity, losQty, &
-            & tngtPresQuantity, earthRadiusQty, &
+            & ptanQuantity, earthRadiusQty, &
             & noFineGrid, extinction, errorCode )
 
         case ( l_special ) ! -  Special fills for some quantities  -----
@@ -2403,7 +2415,48 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine FillFoldedRadiance
 
-  ! ------------------------------------- FillRHIFromH2O ----
+  ! ------------------------------------ FillPhiTanWithRefraction --
+  subroutine FillPhiTanWithRefrcation ( key, quantity, ptanQuantity, &
+    & temperatureQuantity, h2oQuantity, refract )
+    integer, intent(in) :: KEY          ! Tree node
+    type (VectorValue_T), intent(inout) :: QUANTITY ! PhiTan quantity to fill
+    type (VectorValue_T), pointer :: PTANQUANTITY ! Ptan for same module
+    type (VectorValue_T), pointer :: TEMPERATUREQUANTITY ! Temperature
+    type (VectorValue_T), pointer :: H2OQUANTITY ! Water vapor
+    logical, intent(in) :: REFRACT      ! Do refraction or not
+
+    ! Executable code
+    ! First check sanity
+    if ( .not. ValidateVectorQuantity ( quantity, &
+      & quantityType=(/l_phiTan/), minorFrame=.true. ) ) &
+      & call Announce_error ( key, 0, 'Quantity to fill is not phiTan' )
+    if ( refract ) then
+      ! More sanity checks
+      if ( .not. ValidateVectorQuantity ( ptanQuantity, &
+        & quantityType=(/l_ptan/), minorFrame=.true. ) ) &
+        & call Announce_error ( key, 0, 'Problem with ptan quantity for phiTan fill' )
+      if ( quantity%template%instrumentModule /= &
+        &  ptanQuantity%template%instrumentModule ) &
+        & call Announce_error ( key, 0, 'phiTan and ptan quantities not for same module' )
+      if ( .not. ValidateVectorQuantity ( temperatureQuantity, &
+        & quantityType=(/l_temperature/), coherent=.true., stacked=.true., &
+        & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+        & call Announce_error ( key, 0, 'Problem with temperature quantity for phiTan fill' )
+      if ( .not. ValidateVectorQuantity ( h2oQuantity, &
+        & quantityType=(/l_vmr/), molecule=(/l_h2o/), coherent=.true., stacked=.true., &
+        & frequencyCoordinate=(/l_none/), verticalCoordinate=(/l_zeta/) ) ) &
+        & call Announce_error ( key, 0, 'Problem with temperature quantity for phiTan fill' )
+
+      ! OK, do the refraction calculation
+      call Announce_error ( key, 0, 'Refract=true, not yet supported' )
+    else
+      ! Just copy it from the template
+      quantity%values = quantity%template%phi
+    endif
+
+  end subroutine FillPhiTanWithRefrcation
+
+    ! ------------------------------------- FillRHIFromH2O ----
   subroutine FillRHIFromH2O ( key, quantity, &
    & sourceQuantity, temperatureQuantity, &
    & dontMask, ignoreZero, ignoreNegative, interpolate, &
@@ -3454,6 +3507,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " command found zero geod. ang. span.", advance='yes' )
     case ( zeroProfilesFound )
       call output ( " command found zero profiles.", advance='yes' )
+    case ( badRefractFill )
+      call output ( " missing information for phiTan refract fill", advance='yes' )
     case default
       call output ( " command caused an unrecognized programming error", advance='yes' )
     end select
@@ -3468,6 +3523,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.127  2002/06/04 22:40:44  livesey
+! Added framework for phiTan fill
+!
 ! Revision 2.126  2002/05/28 17:08:42  livesey
 ! More explicit error message still in l2gp fill.
 !
