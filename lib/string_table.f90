@@ -410,7 +410,7 @@ contains
     return
   end function HOW_MANY_STRINGS
   ! ====================================     LOOKUP_AND_INSERT     =====
-  subroutine LOOKUP_AND_INSERT ( STRING, FOUND, CASELESS )
+  subroutine LOOKUP_AND_INSERT ( STRING, FOUND, CASELESS, DEBUG )
   ! Look for the string built up by Add_Char.  If it is found return the
   ! position at which it was found in STRING, and FOUND = .true.  If it is
   ! not found, add it, return the position at which it was added in
@@ -420,15 +420,19 @@ contains
     integer, intent(out) :: STRING
     logical, intent(out) :: FOUND
     logical, optional, intent(in) :: CASELESS
+    logical, optional, intent(in) :: DEBUG
 
     integer :: HASH_KEY  ! Integer derived from characters of STRING
     integer :: I         ! Subscript, loop inductor
     integer :: LOC       ! Where HASH_KEY was found in HASH_TABLE
+    logical :: myDEBUG    ! .false. or CASELESS
     logical :: NOCASE    ! .false. or CASELESS
     integer :: STATUS    ! Result, see HASH_LOOKUP
 
     nocase = .false.
     if ( present(caseless) ) nocase = caseless
+    myDEBUG=.false.
+    if ( present(DEBUG) ) myDEBUG = DEBUG
 
     ! Construct a hash_key by adding up the numeric representations
     ! of the characters in NSTRING+1, ignoring overflows
@@ -454,6 +458,15 @@ contains
         hash_table(2,loc) = nstring
         string = nstring
         strings(nstring+1) = strings(nstring)
+      if(myDEBUG) then
+        write ( *, * ) 'STRING_TABLE%LOOKUP_AND_INSERT-E- ', &
+                       'hash_key was not found in table'
+      write (*, *) 'hash key: ', hash_key
+      write (*, *) 'hash table keys: ', hash_table(2,:)
+      write (*, *) 'Compare', hash_table(2,loc), ': ', &
+      char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
+      ' to ',1, ': ', char_table(1:strings(2))
+      endif
         return
       end if
       if ( status /= hash_found ) then
@@ -466,18 +479,21 @@ contains
         stop
       end if
       ! The hash key matches; check whether the string does
-!write (*, *) 'Compare', hash_table(2,loc), ': ', &
-!char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
-!' to ', nstring+1, ': ', char_table(strings(nstring)+1:strings(nstring+1))
+      if(myDEBUG) then
+write (*, *) 'Compare', hash_table(2,loc), ': ', &
+char_table(strings(hash_table(2,loc)-1)+1:strings(hash_table(2,loc))), &
+' to ', nstring+1, ': ', char_table(strings(nstring)+1:strings(nstring+1))
 
-!  call output ( 'Compare ', advance='no' )
-!  call output ( hash_table(2,loc) ); call output ( ': ', advance='no')
-!  call display_string ( hash_table(2,loc) )
-!  call output ( ' to ' )
-!  call output ( nstring+1 ); call output ( ': ')
+  call output ( 'Compare ', advance='no' )
+  call output ( hash_table(2,loc) ); call output ( ': ', advance='no')
+  call display_string ( hash_table(2,loc) )
+  call output ( ' to ' )
+  call output ( nstring+1 ); call output ( ': ')
 !  call display_string ( nstring+1, advance='no' )
-!  if ( nocase ) call output ( ' caseless')
-!  call output ( '', advance='yes' )
+  call output ( char_table(strings(nstring)+1:strings(nstring+1)), advance='no' )
+  if ( nocase ) call output ( ' caseless')
+  call output ( '', advance='yes' )
+      endif
       string = hash_table(2,loc)
       found = compare_strings ( string, nstring+1, caseless ) == 0
       if ( found ) then
@@ -658,6 +674,9 @@ contains
 end module STRING_TABLE
 
 ! $Log$
+! Revision 2.9  2001/06/06 17:30:15  pwagner
+! DEBUG optional arg to lookup..
+!
 ! Revision 2.8  2001/05/15 16:44:41  livesey
 ! Added noError argument to get_string
 !
