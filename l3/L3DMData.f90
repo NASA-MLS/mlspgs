@@ -29,7 +29,8 @@ MODULE L3DMData
 
 ! Contents:
 
-! Definition -- L3DMData_T
+! Definitions -- L3DMData_T
+!                L3DMDiag_T
 ! Subroutines -- ConvertDeg2DMS
 !                OutputGrids
 !                ReadL3DMData
@@ -74,6 +75,34 @@ MODULE L3DMData
 	! dimensioned as (nLevels, nLats, nLons)
 
    END TYPE L3DMData_T
+
+! This data type is used to store the l3 daily map diagnostics.
+
+   TYPE L3DMDiag_T
+
+     CHARACTER (LEN=GridNameLen) :: name        ! name for the output quantity
+
+     INTEGER :: N		! number for "largest differences" diagnostics
+     INTEGER :: nLevels		! Total number of surfaces
+     INTEGER :: nLats		! Total number of latitudes
+
+     ! Global Root-Sum_Square, dimensioned (nLevels)
+
+     REAL(r8), DIMENSION(:), POINTER :: gRss
+
+     ! Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
+
+     REAL(r8), DIMENSION(:,:), POINTER :: latRss
+
+     ! Maximum difference, dimensioned (N, nLevels)
+
+     REAL(r8), DIMENSION(:,:), POINTER :: maxDiff
+
+     ! Missing points (percentage), dimensioned (nLevels)
+
+     INTEGER, DIMENSION(:), POINTER :: perMisPoints
+
+   END TYPE L3DMDiag_T
 
 CONTAINS
 
@@ -903,7 +932,7 @@ CONTAINS
          attrName = 'RangeBeginningTime'
          returnStatus = pgs_td_taiToUTC(l3cf%timeD(1), timeA)
          IF (returnStatus /= PGS_S_SUCCESS) CALL MLSMessage(MLSMSG_Error, &
-                                                     ModuleName, TAI2A_ERR)
+                                                            ModuleName, TAI2A_ERR)
          sval = timeA(12:26)
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, sval)
          IF (result /= PGS_S_SUCCESS) THEN
@@ -1162,6 +1191,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.13  2001/07/18 15:54:37  nakamura
+!# Gets metadata time from l3cf, rather than hard-coded to noon.
+!#
 !# Revision 1.12  2001/05/04 18:30:01  nakamura
 !# Removed L3DMFiles_T and used generic OutputFiles_T.
 !#
