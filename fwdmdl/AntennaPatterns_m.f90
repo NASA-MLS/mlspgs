@@ -8,7 +8,7 @@ module AntennaPatterns_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSSignals_m, only: MaxSigLen, Signals, Signal_T, GetNameOfSignal
+  use MLSSignals_m, only: MaxSigLen, Signals, Signal_T, DisplaySignalName
 
   implicit NONE
 
@@ -263,12 +263,11 @@ outer1: do
   subroutine Dump_Antenna_Patterns_Database ( where )
     use Dump_0, only: Dump
     use MoreTree, only: StartErrorMessage
-    use Output_m, only: Output
+    use Output_m, only: Blanks, Output
 
     integer, intent(in), optional :: Where   ! Tree node index
 
     integer :: I, J                ! Subscripts, loop inductors
-    character(len=MaxSigLen) :: SIGNAME ! Signal name
     if ( associated(antennaPatterns) ) then
       call output ( 'Antenna Patterns: SIZE = ' )
       call output ( size(antennaPatterns), advance='yes' )
@@ -276,8 +275,9 @@ outer1: do
         call output ( i, 4 )
         call output ( ':    Signal = ' )
         do j = 1, size(antennaPatterns(i)%signals)
-          call GetNameOfSignal ( antennaPatterns(i)%signals(j), SigName )
-          call output ( trim(sigName), advance='yes' )
+          if ( j > 1 ) &
+          call blanks ( 18 )
+          call displaySignalName ( antennaPatterns(i)%signals(j), advance='yes' )
         end do
         call output ( ' Lambda = ' )
         call output ( antennaPatterns(i)%lambda, advance='yes' )
@@ -298,6 +298,9 @@ outer1: do
 end module AntennaPatterns_m
 
 ! $Log$
+! Revision 2.8  2004/05/26 23:54:14  vsnyder
+! Don't dump the database if it's not allocated
+!
 ! Revision 2.7  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !

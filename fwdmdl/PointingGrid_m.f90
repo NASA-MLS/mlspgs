@@ -10,7 +10,7 @@ module PointingGrid_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSSignals_m, only: GetNameOfSignal, MaxSigLen, Signals, Signal_T
+  use MLSSignals_m, only: DisplaySignalName, MaxSigLen, Signals, Signal_T
 
   ! More USEs below in each procedure, if they're only used therein.
 
@@ -267,7 +267,6 @@ outer2: do
     integer, intent(in), optional :: Where   ! Tree node index
 
     integer :: I, J                     ! Subscripts, loop inductors
-    character(len=MaxSigLen) :: SigName ! From GetSignalName
     if ( associated(pointingGrids) ) then
       call output ( 'Pointing Grids: SIZE = ' )
       call output ( size(pointingGrids), advance='yes' )
@@ -276,8 +275,7 @@ outer2: do
         call output ( ':    Signals =', advance='yes' )
         do j = 1, size(pointingGrids(i)%signals)
           call blanks ( 6 )
-          call getNameOfSignal ( pointingGrids(i)%signals(j), sigName )
-          call output ( trim(sigName), advance='yes' )
+          call DisplaySignalName ( pointingGrids(i)%signals(j), advance='yes' )
         end do ! j = 1, size(pointingGrids(i)%signals)
         call output ( ' Center Frequency = ' )
         call output ( pointingGrids(i)%centerFrequency, advance='yes' )
@@ -302,6 +300,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 2.6  2004/05/26 23:54:14  vsnyder
+! Don't dump the database if it's not allocated
+!
 ! Revision 2.5  2003/05/19 19:58:07  vsnyder
 ! Remove USEs for unreferenced symbols, remove unused local variables
 !
