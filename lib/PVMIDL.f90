@@ -24,7 +24,7 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
 
   interface PVMIDLpack
      module procedure PVMIDLpackstring, PVMIDLpackInteger, PVMIDLpackReal, &
-          & PVMIDLPACKLogical, PVMIDLpackChararr1, &
+          & PVMIDLPACKLogical, PVMIDLpackChararr1, PVMIDLpackChararr2, &
           & PVMIDLpackIntarr1, PVMIDLpackIntarr2, PVMIDLpackIntarr3, &
           & PVMIDLpackRealarr1, PVMIDLpackRealarr2, PVMIDLpackRealarr3,&
           & PVMIDLpackLogArr1
@@ -32,7 +32,7 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
 
   interface PVMIDLunpack
      module procedure PVMIDLunpackstring, PVMIDLunpackInteger, PVMIDLunpackReal, &
-          & PVMIDLPACKLogical, PVMIDLunpackChararr1, &
+          & PVMIDLPACKLogical, PVMIDLunpackChararr1, PVMIDLunpackChararr2, &
           & PVMIDLunpackIntarr1, PVMIDLunpackIntarr2, PVMIDLunpackIntarr3, &
           & PVMIDLunpackRealarr1, PVMIDLunpackRealarr2, PVMIDLunpackRealarr3, &
           & PVMIDLunpackLogarr1
@@ -113,25 +113,43 @@ contains
     if (info==0) call pvmf90pack(intValue,info)
   end subroutine PVMIDLpackLogical
 
-  subroutine PVMIDLpackChararr1 ( line,info)
+  subroutine PVMIDLpackChararr1 ( line,info )
     character (LEN=1), dimension(:), intent(in) :: line
     integer, intent(out) :: info
 
     integer :: length
 
-    ! First pack noDims and a 7 to indicate string
-    call pvmf90pack( (/1,7/), info)
+    ! First pack noDims and a 1 to indicate byte
+    call pvmf90pack( (/1,1/), info)
 
-    ! Now pack the length of the string
+    ! Now pack the length of the array
     length=size(line)
-    if (info==0) call pvmf90pack( length, info)
+    if (info==0) call pvmf90pack ( length, info )
 
     ! Now pack the string itself
     if ((info==0).and.(length/=0)) call pvmf90pack(line,info)
 
   end subroutine PVMIDLpackChararr1
 
-  subroutine PVMIDLpackIntarr1(values,info)
+  subroutine PVMIDLpackChararr2 ( line,info )
+    character (LEN=1), dimension(:,:), intent(in) :: line
+    integer, intent(out) :: info
+
+    integer :: length
+
+    ! First pack noDims and a 1 to indicate byte
+    call pvmf90pack( (/2,1/), info)
+
+    length = size(line)
+    ! Now pack the length of the array
+    if (info==0) call pvmf90pack ( (/shape(line),size(line)/), info )
+
+    ! Now pack the string itself
+    if ((info==0).and.(length/=0)) call pvmf90pack(line,info)
+
+  end subroutine PVMIDLpackChararr2
+
+  subroutine PVMIDLpackIntarr1 ( values,info )
     integer, intent(in), dimension(:) :: values
     integer, intent(out) :: info
 
@@ -327,7 +345,7 @@ contains
     call pvmf90unpack( details, info)
 
     if (info==0) then 
-       if (any(details/= (/1,7/)) ) info= -200
+       if (any(details/= (/1,1/)) ) info= -200 ! rank one byte array
 
        ! Now output the dimensions themselves
        if (info==0) call pvmf90unpack( sentShape,info)
@@ -337,6 +355,28 @@ contains
        if (info==0) call pvmf90unpack(values,info)
     end if
   end subroutine PVMIDLunpackChararr1
+
+  subroutine PVMIDLunpackChararr2(values,info)
+    character(len=1), intent(out), dimension(:,:) :: values
+    integer, intent(out) :: info
+
+    integer, dimension(2) :: details
+    integer, dimension(2) :: sentShape
+
+    ! First unpack noDims and a 3 to indicate integer (LONG in IDL of course)
+    call pvmf90unpack( details, info)
+
+    if (info==0) then 
+       if (any(details/= (/2,1/)) ) info= -200 ! rank two byte array
+
+       ! Now output the dimensions themselves
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape/=shape(values))) info= -201
+       
+       ! Now unpack the data itself
+       if (info==0) call pvmf90unpack(values,info)
+    end if
+  end subroutine PVMIDLunpackChararr2
 
   subroutine PVMIDLunpackIntarr1(values,info)
     integer, intent(out), dimension(:) :: values
