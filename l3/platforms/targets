@@ -130,7 +130,7 @@ else
 endif
 
 utctotai_linker_line=-L${INSTALLDIR} -lutctotai
-utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+utctotai_message=Building mlsl3 with toolkitless utc to tai conversion
 
 ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
@@ -173,7 +173,12 @@ libmlsl3.a: $(ALLOBJS)
 	ar d $@ $(l3_driver) ; \
    fi
 
-mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES) $(libdir)/libmls.a
+#mlsl3d: libmlsl3.a $(CONFDIR)/$(MLSCFILE) $(MODULES) $(libdir)/libmls.a
+mlsl3d: $(ALLOBJS) $(CONFDIR)/$(MLSCFILE) $(MODULES) $(libdir)/libmls.a
+	   ar ru libmlsl3.a $(ALLOBJS); \
+      if [ "`ar -t libmlsl3.a | grep -i $(l3_driver)`" != "" ]; then \
+	   ar d libmlsl3.a $(l3_driver) ; \
+      fi
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
 		fi
@@ -221,6 +226,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.30  2003/02/28 17:44:23  pwagner
+# Links utctotai library
+#
 # Revision 1.29  2002/10/03 23:07:45  pwagner
 # l_specials for Lahey depend on gcc_version
 #

@@ -173,7 +173,8 @@ endif
 
 #----------------------- Build instructions
 
-$(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
+#$(PROG): $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a
+$(PROG): $(PROG_prereqs)
 		@cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) $(PROG) \
       UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include" ; \
         return_status=`expr $$?` ; \
@@ -195,18 +196,18 @@ $(PLATFORMS)/$(MLSCONFG)/$(PROG): $(PROG)
            MARK_ALL_AS_UPTODATE= ;\
          fi
 
-$(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
-	@case "$(FFTW_ROOT)" in \
-	"") \
-		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
-		echo "Try make configure_pvm" ; \
-		exit 2 ; \
-		;; \
-	*) \
-		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmlsl3.a  \
-      UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include"; \
-		;; \
-	esac 
+# > $(PLATFORMS)/$(MLSCONFG)/libmlsl3.a: $(PROG_prereqs)
+# > 	@case "$(FFTW_ROOT)" in \
+# > 	"") \
+# > 		echo "Sorry--FFTW_ROOT must be defined to build mlsl3" ; \
+# > 		echo "Try make configure_pvm" ; \
+# > 		exit 2 ; \
+# > 		;; \
+# > 	*) \
+# > 		cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) libmlsl3.a  \
+# >       UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include"; \
+# > 		;; \
+# > 	esac 
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
@@ -335,6 +336,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.46  2003/06/03 20:38:24  pwagner
+# Renamed mkdir_cascade mkpath
+#
 # Revision 1.45  2003/05/21 20:52:13  pwagner
 # Added PROG to .PHONY list as appropriate
 #

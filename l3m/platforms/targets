@@ -137,7 +137,7 @@ else
 endif
 
 utctotai_linker_line=-L${INSTALLDIR} -lutctotai
-utctotai_message=Building mlsl2 with toolkitless utc to tai conversion
+utctotai_message=Building mlsl3 with toolkitless utc to tai conversion
 
 ifdef HDF5
 ifeq ($(MLSPLAT),Sun)
@@ -202,6 +202,8 @@ mlsl3m: $(mlsl3m_prereqs)
         $(fftw_linker_line) \
         $(l_specials) $(LAFTER) \
 		  
+$(libmlsl3dir)/libmlsl3.a:
+		$(MAKE) -C $(libmlsl3dir) mlsl3d
 # ========================================================================
 
 clean:
@@ -220,6 +222,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 1.16  2003/03/13 18:27:53  ybj
+# Fixed bug in utctotai linker line
+#
 # Revision 1.15  2003/02/28 17:44:22  pwagner
 # Links utctotai library
 #
