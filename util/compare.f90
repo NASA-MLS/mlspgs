@@ -44,6 +44,7 @@ program COMPARE
   real(rk), parameter :: EPS = epsilon(1.0_rs)
   character(127) :: File1, File2
   integer :: I, I1, I2, J
+  logical :: Same = .false.  ! Print "Identical" if files are the same
   integer :: LAMAX, LRMAX    ! Locations of absolute, relative max. diffs.
   logical :: LOUD = .true.   ! Messages about unequal file lengths etc.
   character(127) :: Line1, line2
@@ -77,6 +78,8 @@ program COMPARE
           all = .true.
         else if ( line1(j:j) == 'c' ) then
           cont = .true.
+        else if ( line1(j:j) == 'i' ) then
+          same = .true.
         else if ( line1(j:j) == 'q' ) then
           loud = .false.
         else if ( line1(j:j) == 's' ) then
@@ -245,6 +248,8 @@ program COMPARE
       & real(relAtAmaxG*eps,rs)
     if ( doStats ) print '(1x,2(a,1p,2g10.3))', 'Avgs =', real(avgsa,rs), &
       & ' Std. Devs. =', real(stdeva,rs)
+  else if ( same ) then
+    print '(a)', 'Identical'
   end if
 
   if ( anyNaN(1) ) print *, trim(file1), ' has a NaN somewhere'
@@ -282,9 +287,11 @@ contains
     print *, 'Usage: ', trim(line1), ' [option] file1 file2'
     print *, ' Options: -a => Show nonzero difference for all quantities'
     print *, '          -c => Continue even if control lines differ'
+    print *, '          -i => Print "Identical" if files are identical'
     print *, '          -q => No messages about unequal file lengths etc.'
     print *, '          -s => Compute average and standard deviation of nonzero elements'
     print *, '          -v => Print the version'
+    print *, '          -V => Be verbose'
     print *, '          -z => Show zero difference summary at the end'
     print *, '                With -a, show zero individual differences too.'
     stop
@@ -293,6 +300,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.9  2003/11/01 01:51:24  vsnyder
+! Use single-precision epsilon for output computation
+!
 ! Revision 1.8  2003/10/24 23:51:35  vsnyder
 ! Give AbsAtRmaxg and RelAtAmaxg initial NaN value
 !
