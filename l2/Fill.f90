@@ -2867,6 +2867,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " command caused an allocation error in squeeze.", advance='yes' )
     case ( badGeocAltitudeQuantity )
       call output ( " geocAltitudeQuantity is not geocAltitude", advance='yes' )
+    case ( badHeightUnitForExplicit )
+      call output ( " incorrect units for height field", advance='yes' )
     case ( badlosGridfill )
       call output ( " incomplete/incorrect information for los Grid fill", advance='yes' )
     case ( badlosvelfill )
@@ -2900,6 +2902,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " L1B file could not be read.", advance='yes' )
     case ( invalidExplicitFill )
       call output ( " is an inappropriate explicit fill.", advance='yes' )
+    case ( invalidHeightRestrExpFill )
+      call output ( " is an inappropriate height restricted explicit fill.", advance='yes' )
     case ( m1_too_small )
       call output ( " command caused a m1 too small error in squeeze.", advance='yes' )
     case ( m2_too_small )
@@ -2954,6 +2958,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " command caused an n3=0 error in squeeze.", advance='yes' )
     case ( objIsFullRank3 )
       call output ( " command array is full rank 3.", advance='yes' )
+    case ( onlyOneHEightForExplicit )
+      call output ( " can only have one height field for explicit fill.", advance='yes' )
     case ( otherErrorInFillVector )
       call output ( " command caused an error in FillVector.", advance='yes' )
     case ( source_not_in_db )
@@ -2985,6 +2991,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.108  2002/03/07 19:20:11  livesey
+! Hooked up the errors for height restricted explicit fills.
+!
 ! Revision 2.107  2002/02/20 22:42:35  livesey
 ! Embarassing bug fix
 !
