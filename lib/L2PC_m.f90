@@ -10,8 +10,9 @@ module L2PC_m
   ! will probably be HDF.
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
-  use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL
+  use Declaration_Table, only: DECLS, ENUM_VALUE, GET_DECL, DUMP_DECL
   use Intrinsic, only: Lit_Indices, L_ZETA, L_NONE, L_VMR, L_RADIANCE, L_PTAN
+  use machine, only: io_error
   use MLSCommon, only: R8
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
@@ -23,11 +24,13 @@ module L2PC_m
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
     & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE
   use MLSSignals_m, only: GETSIGNALNAME
+  use Output_m, only: output
   use Parse_Signal_m, only: Parse_Signal
   use QuantityTemplates, only: ADDQUANTITYTEMPLATETODATABASE, QUANTITYTEMPLATE_T
   use String_Table, only: GET_STRING
-  use Symbol_Table, only: ENTER_TERMINAL
+  use Symbol_Table, only: ENTER_TERMINAL, DUMP_SYMBOL_CLASS
   use Symbol_Types, only: T_IDENTIFIER
+  use TOGGLES, only: TAB, TOGGLE
   use Tree, only: DECORATION
 
   implicit NONE
@@ -287,11 +290,13 @@ contains ! ============= Public Procedures ==========================
     type (VectorTemplate_T) :: VT       ! Temporary template for vector
     type (Vector_T) :: V                ! Temporary vector
     type (Decls) :: Decl                ! From tree
+    logical, parameter :: DEBUG=.false.
     
     ! Executable code
     
     eof = .false. 
     nullify ( sigInds, qtInds )
+      toggle(tab) = DEBUG
     
     read (unit,*, IOSTAT=status) line
     if (status == -1 ) then
@@ -303,6 +308,22 @@ contains ! ============= Public Procedures ==========================
     read (unit,*) noQuantities
     call allocate_test ( qtInds, noQuantities, 'qtInds', ModuleName )
     
+    if(DEBUG) then
+          print *, 'unit: ', unit
+          print *, 'noQuantities: ', noQuantities
+!          CALL output('Declaration table:', advance='yes')
+!          call DUMP_DECL
+!          CALL output('Symbol table:', advance='yes')
+!          call DUMP_SYMBOL_CLASS(t_identifier)
+          stringIndex = enter_terminal ( 'vmr', t_identifier, DEBUG )
+          decl = get_decl ( stringIndex, type=enum_value )
+          print *, 'Test of enter_terminal and get_decl parser functions'
+          print *, 'literal: ', 'vmr'
+          print *, 'decl%type: ', decl%type
+          print *, 'decl%units: ', decl%units
+          print *, 'decl%tree: ', decl%tree
+          print *, 'decl%prior: ', decl%prior
+    endif
     ! Loop over quantities
     do quantity = 1, noQuantities
       
@@ -310,22 +331,50 @@ contains ! ============= Public Procedures ==========================
       nullify ( qt%surfs, qt%phi )
       
       ! Read quantity type
-      read (unit,*) line
-      stringIndex = enter_terminal ( trim(line), t_identifier )
+      read (unit,*, IOSTAT=status) line
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of line for quantity type', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'An io-error occured' )
+      end if
+      stringIndex = enter_terminal ( trim(line), t_identifier, DEBUG )
       decl = get_decl ( stringIndex, type=enum_value )
       qt%quantityType = decl%units
       qt%name = stringIndex
+      if(DEBUG) then
+          print *, 'Quantity: ', quantity
+          print *, 'literal: ', trim(line)
+          print *, 'decl%type: ', decl%type
+          print *, 'decl%units: ', decl%units
+          print *, 'decl%tree: ', decl%tree
+          print *, 'decl%prior: ', decl%prior
+          print *, 'QuantityName: ', qt%name
+          print *, 'QuantityType: ', qt%quantityType
+      endif
 
       ! Read other info associated with type
       select case ( qt%quantityType )
       case (l_vmr)
-        read (unit,*) line
+        read (unit,*, IOSTAT=status) line
+        if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of line for l_vmr', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'An io-error occured' )
+        end if
         stringIndex = enter_terminal ( trim(line), t_identifier )
         decl = get_decl ( stringIndex, type=enum_value )
         qt%molecule = decl%units
         qt%name = stringIndex
       case (l_radiance)
-        read (unit,*) line
+        read (unit,*, IOSTAT=status) line
+        if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of line for radiance', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'An io-error occured' )
+        end if
         call Parse_Signal (line, sigInds, sideband=sideband)
         qt%signal = sigInds(1)
         qt%sideband = sideband
@@ -334,9 +383,26 @@ contains ! ============= Public Procedures ==========================
       end select
       
       ! Next read the dimensions for the quantity
-      read (unit,*) qt%noChans, qt%noSurfs, qt%noInstances
+      read (unit,*, IOSTAT=status) qt%noChans, qt%noSurfs, qt%noInstances
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of NoChans, noSurfs, noInstances', status)
+          print *, 'Quantity: ', quantity
+          print *, 'QuantityName: ', qt%name
+          print *, 'QuantityType: ', qt%quantityType
+          print *, 'l_vmr: ', l_vmr
+          print *, 'last literal read: ', trim(line)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'An io-error occured' )
+      end if
       qt%instanceLen = qt%noChans* qt%noSurfs
-      read (unit,*) qt%coherent, qt%stacked
+      read (unit,*, IOSTAT=status) qt%coherent, qt%stacked
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of coherent, stacked', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'An io-error occured' )
+      end if
       
       if (qt%coherent) then
         noInstancesOr1 = 1
@@ -352,10 +418,34 @@ contains ! ============= Public Procedures ==========================
       call Allocate_test( qt%surfs, qt%noSurfs, noInstancesOr1, 'qt%surfs', ModuleName)
       call Allocate_test( qt%phi, noSurfsOr1, qt%noInstances, 'qt%phi', ModuleName)
       
-      read (unit,*) line              ! Line saying surfs
-      read (unit,*) qt%surfs
-      read (unit,*) line              ! Line saying phi
-      read (unit,*) qt%phi
+      read (unit,*, IOSTAT=status) line              ! Line saying surfs
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of line saying surfs', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'An io-error occured' )
+      end if
+      read (unit,*, IOSTAT=status) qt%surfs
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of surfs', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'An io-error occured' )
+      end if
+      read (unit,*, IOSTAT=status) line              ! Line saying phi
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of line saying phi', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'An io-error occured' )
+      end if
+      read (unit,*, IOSTAT=status) qt%phi
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of phi', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'An io-error occured' )
+      end if
       
       ! Now add this template to our private database 
       qt%id = l2pcQTCounter
@@ -378,8 +468,20 @@ contains ! ============= Public Procedures ==========================
     
     ! Now go through the quantities again and read the values
     do quantity = 1, noQuantities
-      read (unit,*) line              ! Just a comment line
-      read (unit,*) l2pcVs(vector)%quantities(quantity)%values
+      read (unit,*, IOSTAT=status) line              ! Just a comment line
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of comment in loop of quantities', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'An io-error occured' )
+      end if
+      read (unit,*, IOSTAT=status) l2pcVs(vector)%quantities(quantity)%values
+      if (status /= 0 ) then
+        call io_error('io error in L2PC_m: ReadOneVector' // &
+          & ' Fortran read of quantities', status)
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'An io-error occured' )
+      end if
     end do
   end subroutine ReadOneVector
 
@@ -501,6 +603,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.20  2001/06/06 17:27:29  pwagner
+! DEBUG parameter; checks on some more reads
+!
 ! Revision 2.19  2001/05/23 22:00:59  livesey
 ! Changed counter start to avoid conflict with L2Parallel
 !
