@@ -275,8 +275,9 @@ contains ! =====     Public Procedures     =============================
         ! Now see if we are wanting to deal with this
         if ( l2pcQ%template%quantityType == l_ptan ) cycle ! Get this from interpolation
         if ( l2pcQ%template%quantityType == l_vmr ) then
-          if ( .not. any &
-            & (l2pcQ%template%molecule == forwardModelConfig%molecules)) cycle
+          if (.not. associated(forwardModelConfig%molecules) ) cycle
+          if ( .not. any (l2pcQ%template%molecule == &
+            &   forwardModelConfig%molecules)) cycle
         end if
 
         ! Identify this quantity in x
@@ -328,7 +329,9 @@ contains ! =====     Public Procedures     =============================
         doDerivatives = present(jacobian) .and. foundInFirst
         if (doDerivatives .and. (l2pcQ%template%quantityType==l_temperature) ) &
           & doDerivatives = forwardModelConfig%temp_der
-        if (doDerivatives .and. (l2pcQ%template%quantityType==l_vmr) ) then
+        if (doDerivatives .and. &
+          & (l2pcQ%template%quantityType==l_vmr) .and. &
+          & associated(forwardModelConfig%molecules) ) then
           doDerivatives = forwardModelConfig%atmos_der
           if ( doDerivatives .and. .not. any (l2pcQ%template%molecule == &
             & pack(ForwardModelConfig%molecules, &
@@ -576,6 +579,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.21  2001/06/01 20:35:55  livesey
+! Now obeys the phiWindow parameter to give 1D forward models.
+!
 ! Revision 1.20  2001/06/01 20:09:28  livesey
 ! Embarassing bug to do with edge effects removed.  This version makes L2 work!
 !
