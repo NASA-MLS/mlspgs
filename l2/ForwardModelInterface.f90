@@ -187,12 +187,13 @@ contains
     end if
 
     ! Set sensible defaults
-    info%atmos_der = .false.
     info%do_conv = .false.
     info%do_freq_avg = .false.
     info%the_freq = 0.0
-    info%spect_der = .false.
     info%temp_der = .false.
+    info%atmos_der = .false.
+    info%spect_der = .false.
+    info%phiwindow = 5
 
     noChannelsSpecs=0
 
@@ -366,7 +367,10 @@ contains
 
     ! Dummy arguments --------------------------------------------------------
 
-    type(forwardModelConfig_T), intent(in) :: forwardModelConfig ! From ForwardModelSetup
+! From ForwardModelSetup
+!   type(forwardModelConfig_T), intent(in) :: forwardModelConfig
+    type(forwardModelConfig_T), intent(inout) :: forwardModelConfig
+
     type(vector_T), intent(in) :: FwdModelExtra, FwdModelIn ! ???
     type(matrix_T), intent(inout), optional :: Jacobian
     integer, intent(in), optional :: RowBlock          ! With which block of
@@ -390,9 +394,9 @@ contains
     integer(i4), parameter :: NGT = (Ng+1) * N2lvl
 
     integer(i4) :: i, j, k, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
-      m, prev_npf, ier, maf, si, ptg_i, &
-      frq_i, klo, n, brkpt, no_ele, mid, ilo, ihi, &
-      k_info_count, gl_count, ld
+                   m, ier, maf, si, ptg_i, frq_i, klo, n, brkpt, no_ele, &
+                   mid, ilo, ihi, k_info_count, gl_count, ld, &
+                   max_phi_dim, max_zeta_dim
 
     real(r8) :: t_script(N2lvl),ref_corr(N2lvl,Nptg),tau(N2lvl), &
                 tan_dh_dt(Nlvl,mnm,mxco)
@@ -416,8 +420,8 @@ contains
     type(k_matrix_info) :: k_star_info(20)
 
     type(path_derivative) :: k_temp_frq, k_atmos_frq(Nsps), &
-      k_spect_dw_frq(Nsps), k_spect_dn_frq(Nsps), &
-      k_spect_dnu_frq(Nsps)
+                k_spect_dw_frq(Nsps), k_spect_dn_frq(Nsps), &
+                k_spect_dnu_frq(Nsps)
 
     type(path_beta), dimension(:,:), pointer :: beta_path => null()
 
@@ -573,7 +577,37 @@ contains
         endif
       end do
     end do
+!
+! *** DEBUG
+    ForwardModelConfig%temp_der = .true.
+!   ForwardModelConfig%atmos_der = .true.
+!   do j = 1, noSpecies
+!     forwardModelConfig%moleculeDerivatives(j) = .true.
+!   end do
+! *** END DEBUG
 
+! Get the max. dimension in zeta coeff. space and phi coeff. space
+! (To be used later in rad_tran_wd, for automatic arrays asignement)
+    max_phi_dim = 1
+    max_zeta_dim = 1
+    if(ForwardModelConfig%temp_der) then
+      max_zeta_dim = temp%template%noSurfs
+      max_phi_dim = temp%template%noInstances
+    endif
+!
+    if(forwardModelConfig%atmos_der) then
+      do k = 1, noSpecies
+        IF (forwardModelConfig%moleculeDerivatives(k)) THEN
+          f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+       &     quantityType=l_vmr, molecule=forwardModelConfig%molecules(k))
+          j = f%template%noInstances
+          max_phi_dim = max(max_phi_dim,j)
+          j = f%template%noSurfs
+          max_zeta_dim = max(max_zeta_dim,j)
+        ENDIF
+      end do
+    endif
+!
     ! Work out what signal we're after
     signal = getSignal ( forwardModelConfig%sigInfo(1)%signal )
 
@@ -651,7 +685,7 @@ contains
     ! Now compute a hydrostatic grid given the temperature and refGPH
     ! information.
     call hydrostatic_model(ForwardModelConfig%SurfaceTangentIndex, &
-      &  noMAFs, geoc_lat,refGPH%values(1,:)/1.0e3, &
+      &  noMAFs, geoc_lat,0.001*refGPH%values(1,:), &
       &  refGPH%template%surfs(1,1), &
       &  ForwardModelConfig%integrationGrid%surfs, &
       &  temp%template%surfs(:,1),temp%values,z_glgrid,h_glgrid,t_glgrid, &
@@ -699,7 +733,7 @@ contains
       Call get_path_spsfunc_ngrid(fwdModelIn, fwdModelExtra, &
      &     forwardModelConfig%molecules, ndx_path(:,maf),no_tan_hts, &
      &     z_path(:,maf), t_path(:,maf), phi_path(:,maf), n_path, &
-     &     spsfunc_path(:,:), Ier)
+     &     spsfunc_path, Ier)
       if(ier /= 0) goto 99
 !
 !??? Choose better value for phi_tan later
@@ -722,7 +756,6 @@ contains
       call refraction_correction(no_tan_hts, tan_hts(:,maf), h_path(:,maf), &
         &                n_path, ndx_path(:,maf), E_rad(maf), ref_corr)
 
-      prev_npf = -1
       Radiances(1:Nptg,1:25) = 0.0
 
       ! If we're not doing frequency averaging, instead outputting radiances
@@ -800,7 +833,7 @@ contains
         k = ptg_i
         h_tan = tan_hts(k,maf)
 
-        ! Compute the beta's along the path, for this tanget hight and this mmaf:
+ ! Compute the beta's along the path, for this tanget hight and this mmaf:
 
         no_ele = ndx_path(ptg_i,maf)%total_number_of_elements
 
@@ -827,6 +860,7 @@ contains
 !  Define the dh_dt_path for this pointing and this MAF:
 !
         if ( forwardModelConfig%temp_der ) then
+          DEALLOCATE(dum,dh_dt_path,STAT=i)
           ALLOCATE(dh_dt_path(no_ele,temp%template%noInstances, &
                  & temp%template%noSurfs),STAT=ier)
           if(ier == 0) ALLOCATE(dum(no_ele),STAT=ier)
@@ -852,36 +886,31 @@ contains
           Frq = frequencies(frq_i)
 
           Call Rad_Tran(elvar(maf), Frq, &
-            &    forwardModelConfig%integrationGrid%noSurfs, &
-            &    h_tan, noSpecies, ndx_path(k,maf),  &
-            &    z_path(k,maf), h_path(k,maf), t_path(k,maf), phi_path(k,maf),&
-            &    dHdz_path(k,maf),earthRefl%values(1,1),beta_path(:,frq_i),  &
-            &    spsfunc_path(:,k), ref_corr(:,k), spaceRadiance%values(1,1), &
-            &    brkpt, no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
+             & forwardModelConfig%integrationGrid%noSurfs, h_tan, &
+             & noSpecies, ndx_path(k,maf), z_path(k,maf), h_path(k,maf), &
+             & t_path(k,maf), phi_path(k,maf), dHdz_path(k,maf), &
+             & earthRefl%values(1,1),beta_path(:,frq_i), spsfunc_path(:,k), &
+             & ref_corr(:,k), spaceRadiance%values(1,1), brkpt, no_ele, mid,&
+             & ilo, ihi, t_script, tau, Rad, Ier)
           if(ier /= 0) goto 99
 
           RadV(frq_i) = Rad
 
 ! Now, Compute the radiance derivatives:
 
-!         Call Rad_Tran_WD(elvar(maf),frq_i,FMI%band,Frq, &
-!        &     ForwardModelConfig%integrationGrid%noSurfs,FMI%n_sps, &
-!        &     ForwardModelConfig%temp_der,forwardModelConfig%atmos_der, &
-!        &     ForwardModelConfig%spect_der,            &
-!        &     z_path(k,maf),h_path(k,maf),t_path(k,maf),phi_path(k,maf),   &
-!        &     dHdz_path(k,maf),TFMI%atmospheric,beta_path(:,frq_i),&
-!        &     spsfunc_path(:,k),temp%template%surfs(:,1),  &
-!        &     TFMI%f_zeta_basis,TFMI%no_coeffs_f,   &
-!        &     TFMI%mr_f,TFMI%no_t,ref_corr(:,k),TFMI%no_phi_f,       &
-!        &     TFMI%f_phi_basis,temp%template%noInstances, &
-!        &     temp%template%phi(1,:)*Deg2Rad,  &
-!        &     dh_dt_path,FMI%spect_atmos,         &
-!        &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq,   &
-!        &     k_spect_dn_frq,k_spect_dnu_frq,TFMI%is_f_log,brkpt,       &
-!        &     no_ele,mid,ilo,ihi,t_script,tau,ier)
-!         IF(ier /= 0) goto 99
+          Call Rad_Tran_WD(ForwardModelConfig, FwdModelExtra, FwdModelIn, &
+         &     elvar(maf),frq_i,FMI%band,Frq,noSpecies,z_path(k,maf), &
+         &     h_path(k,maf),t_path(k,maf),phi_path(k,maf),dHdz_path(k,maf),&
+         &     beta_path(:,frq_i),spsfunc_path(:,k),temp%template%surfs(:,1),&
+         &     temp%template%noSurfs,ref_corr(:,k),temp%template%noInstances,&
+         &     temp%template%phi(1,:)*Deg2Rad,dh_dt_path,FMI%spect_atmos,&
+         &     FMI%spectroscopic,k_temp_frq,k_atmos_frq,k_spect_dw_frq, &
+         &     k_spect_dn_frq,k_spect_dnu_frq,brkpt,no_ele,mid,ilo,ihi, &
+         &     t_script,tau,max_zeta_dim,max_phi_dim,ier)
+          IF(ier /= 0) goto 99
 
         end do                          ! Frequency loop
+
 ! ----------------------------- End loop over frequencies ----
 
         ! Here we either frequency average to get the unconvolved radiances, or
@@ -899,7 +928,6 @@ contains
             call MLSMessage(MLSMSG_Error, ModuleName, &
               & 'Asked for folded in wrong place')
           end select
-
           do i = 1, noUsedChannels
             ch = usedChannels(i)
             call Freq_Avg(frequencies,                           &
@@ -907,11 +935,8 @@ contains
               &       FilterShapes(i)%FilterShape,RadV,noFreqs,    &
               &       Size(FilterShapes(i)%FilterGrid),Radiances(ptg_i,ch))
           end do
-
         else
-
-          Radiances(ptg_i, usedChannels) = RadV
-
+          Radiances(ptg_i,usedChannels) = RadV(1:noFreqs)
         endif
 
         ! Frequency Average the temperature derivatives with the appropriate
@@ -932,7 +957,9 @@ contains
               end do                    ! Instance loop
             end do                      ! Channel loop
           else
-            k_temp(:,ptg_i,:,:) = k_temp_frq%values
+            do i = 1, noUsedChannels
+              k_temp(i,ptg_i,:,:) = k_temp_frq%values(1,:,:)
+            end do
           endif
         endif
 
@@ -941,9 +968,7 @@ contains
         do specie = 1, noSpecies
           if ( forwardModelConfig%moleculeDerivatives(specie) ) then
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
-
-            print*,'Doing a vmr derivative'
+     &  quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
             if ( forwardModelConfig%do_freq_avg) then
               do i = 1, noUsedChannels
                 ch = usedChannels(i)
@@ -960,14 +985,17 @@ contains
                 end do                  ! Instance loop
               end do                    ! Channel loop
             else                        ! Else not frequency averaging
-              k_atmos(:,ptg_i,:,:,specie)=  k_atmos_frq(specie)%values
+              do i = 1, noUsedChannels
+                k_atmos(i,ptg_i,:,:,specie) = &
+                       &  k_atmos_frq(specie)%values(1,:,:)
+              end do
             end if                      ! Frequency averaging or not
           end if                        ! Want derivatives for this
         end do                          ! Loop over species
 
 !        if(ForwardModelConfig%spect_der) then
-!           ! Frequency Average the spectroscopic derivatives with the appropriate
-!           ! filter shapes
+! Frequency Average the spectroscopic derivatives with the appropriate
+! filter shapes
 !           do i = 1, noUsedChannels
 !             ch = usedChannels(i)
 !             do m = 1, FMI%n_sps
@@ -1070,38 +1098,32 @@ contains
           ! brackets to make it clear.)  We're not wanting derivatives anyway
           ! so it shouldn't matter
           call convolve_all(ptan%values(:,maf),TFMI%atmospheric, &
-            &     noSpecies, &
-            &     ForwardModelConfig%temp_der,ForwardModelConfig%atmos_der,&
-            &     ForwardModelConfig%spect_der,                   &
-            &     ForwardModelConfig%tangentGrid%surfs,&
-            &     ptg_angles,tan_temp(:,maf), &
-            &     dx_dt, d2x_dxdt,FMI%band,si,center_angle,FMI%fft_pts,   &
-            &     Radiances(:,ch),k_temp((1),:,:,:),k_atmos((1),:,:,:,:), &
-            &     k_spect_dw((1),:,:,:,:),k_spect_dn((1),:,:,:,:),    &
-            &     k_spect_dnu((1),:,:,:,:),FMI%spect_atmos,&
-            &     ForwardModelConfig%tangentGrid%noSurfs,  &
-            &     k_info_count,i_star_all(i,:),k_star_all((1),:,:,:,:), &
-            &     k_star_info,temp%template%noSurfs,temp%template%noInstances,&
-            &     TFMI%no_phi_f, FMI%spectroscopic,temp%template%surfs(:,1), &
+            &     noSpecies,ForwardModelConfig%temp_der, &
+            &     ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der,&
+            &     ForwardModelConfig%tangentGrid%surfs,ptg_angles,&
+            &     tan_temp(:,maf),dx_dt, d2x_dxdt,FMI%band,si,center_angle,&
+            &     FMI%fft_pts,Radiances(:,ch),k_temp(i,:,:,:), &
+            &     k_atmos(i,:,:,:,:),k_spect_dw(i,:,:,:,:), &
+            &     k_spect_dn(i,:,:,:,:),k_spect_dnu(i,:,:,:,:),&
+            &     FMI%spect_atmos,no_tan_hts,k_info_count,&
+            &     i_star_all(i,:),k_star_all(i,:,:,:,:),k_star_info,&
+            &     temp%template%noSurfs,temp%template%noInstances,&
+            &     TFMI%no_phi_f,FMI%spectroscopic,temp%template%surfs(:,1),&
             &     AntennaPatterns(1),FMI%Ias,ier)
 !??? Need to choose some index other than 1 for AntennaPatterns ???
           if(ier /= 0) goto 99
         else
-          ! Note I am replacing the i's in the k's with 1's (enclosed in
-          ! brackets to make it clear.)  We're not wanting derivatives anyway
-          ! so it shouldn't matter
           call no_conv_at_all(ptan%values(:,maf),noSpecies, &
             &     ForwardModelConfig%tangentGrid%surfs, &
             &     FMI%band,ForwardModelConfig%temp_der,&
-            &     ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der,      &
-            &     Radiances(:,ch),k_temp((1),:,:,:),                    &
-            &     k_atmos((1),:,:,:,:),k_spect_dw((1),:,:,:,:),       &
-            &     k_spect_dn((1),:,:,:,:),k_spect_dnu((1),:,:,:,:),   &
-            &     FMI%spect_atmos, ForwardModelConfig%tangentGrid%noSurfs,&
-            &     k_info_count,               &
-            &     i_star_all(i,:), k_star_all((1),:,:,:,:),            &
-            &     k_star_info,temp%template%noSurfs,temp%template%noInstances, &
-            &     TFMI%no_phi_f,temp%template%surfs(:,1),TFMI%atmospheric,    &
+            &     ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der,&
+            &     Radiances(:,ch),k_temp(i,:,:,:),  &
+            &     k_atmos(i,:,:,:,:),k_spect_dw(i,:,:,:,:),       &
+            &     k_spect_dn(i,:,:,:,:),k_spect_dnu(i,:,:,:,:),   &
+            &     FMI%spect_atmos,no_tan_hts, k_info_count,       &
+            &     i_star_all(i,:), k_star_all(i,:,:,:,:),k_star_info, &
+            &     temp%template%noSurfs,temp%template%noInstances, &
+            &     TFMI%no_phi_f,temp%template%surfs(:,1),TFMI%atmospheric,&
             &     FMI%spectroscopic)
         endif
 
@@ -1109,8 +1131,8 @@ contains
 
       do mif = 1, radiance%template%noSurfs
         do channel = 1, noUsedChannels
-          radiance%values( usedChannels(channel)+ &
-            & (mif-1)*radiance%template%noChans, maf ) = i_star_all( channel, mif )
+          k = usedChannels(channel)+(mif-1)*radiance%template%noChans
+          radiance%values(k,maf) = i_star_all(channel,mif)
         end do
       end do
 
@@ -1146,14 +1168,6 @@ contains
 
     if (.not. forwardModelConfig%do_freq_avg) deallocate(frequencies)
 
-    tau(1:Nptg) = 0.0
-    tau(1:ptan%template%noSurfs) = dble(ptan%values(:,3))
-
-    klo = -1
-    Zeta = -1.666667
-    call Hunt_zvi(Zeta,tau,ptan%template%noSurfs,klo,j)
-    if(abs(Zeta-tau(j)) < abs(Zeta-tau(klo))) klo=j
-
     do i = 1, noUsedChannels
       ch = usedChannels(i)
       write(*,903) ch,char(92),ptan%template%noSurfs
@@ -1165,11 +1179,20 @@ contains
     call Deallocate_test(usedChannels, 'usedChannels', ModuleName)
 
 ! ** DEBUG, Zvi
-!   if(i > -2) Stop
+!   if(i > -22) Stop
 ! ** END DEBUG
 
     if(.not. any((/ForwardModelConfig%temp_der,&
       & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/))) goto 99
+
+    tau(1:) = 0.0
+    m = ptan%template%noSurfs
+    tau(1:m) = dble(ptan%values(1:m,3))
+
+    klo = -1
+    Zeta = -1.666667
+    call Hunt_zvi(Zeta,tau,m,klo,j)
+    if(abs(Zeta-tau(j)) < abs(Zeta-tau(klo))) klo=j
 
     m = -1
     ch = 1
@@ -1199,7 +1222,7 @@ contains
         tau(1:mnz) = k_star_info(i)%zeta_basis(1:mnz)
         call Hunt_zvi(Zeta,tau,mnz,m,j)
         if(abs(Zeta-tau(j)) < abs(Zeta-tau(m))) m=j
-        print *,(k_star_all(ch,kz,m,ptan%template%noSurfs,klo),k=1,ht_i)
+        print *,(k_star_all(ch,kz,m,j,klo),j=1,ht_i)
       endif
     end do
 
@@ -1243,7 +1266,11 @@ contains
     call deallocate_test(geoc_lat, 'geoc_lat', ModuleName)
     call deallocate_test(e_rad, 'e_rad', ModuleName)
 
-    return
+! ** DEBUG, Zvi
+    if(i > -22) Stop
+! ** END DEBUG
+
+    Return
 
   end subroutine ForwardModel
 
@@ -1289,6 +1316,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.71  2001/04/09 20:51:03  zvi
+! Debugging Derivatives version
+!
 ! Revision 2.70  2001/04/07 23:59:32  zvi
 ! Ellimination the second dimension from ptg_angles (not MAF dependant)
 !
