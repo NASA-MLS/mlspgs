@@ -17,7 +17,7 @@ module SpectroscopyCatalog_m
   private
   ! Public procedures:
   public :: Spectroscopy
-  public :: Destroy_SpecCat_Database, Dump_SpecCat_Database
+  public :: Destroy_SpectCat_Database, Dump_SpectCat_Database
 
   ! Public types:
   type, public :: Line_T           ! One line in the spectrum for a species
@@ -369,6 +369,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 1.2  2001/04/04 23:21:46  vsnyder
+! Add comments for fields of Lines_T and Catalog_T
+!
 ! Revision 1.1  2001/04/04 02:09:16  vsnyder
 ! Initial Commit
 !
