@@ -168,7 +168,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
 
      ! Now the dimensions of the data
 
-     integer :: nTimes          ! Total number of profiles
+     integer :: nTimes          ! Number of profiles in this slave
+     integer :: nTimesTotal     ! Total number of profiles
      integer :: nLevels         ! Total number of surfaces (==1 for col. abund)
      integer :: nFreqs          ! Number of frequencies in breakdown
 
@@ -256,6 +257,7 @@ contains ! =====     Public Procedures     =============================
     ! Store the dimensionality
 
     l2gp%nTimes = useNTimes
+    l2gp%nTimesTotal = useNTimes
     l2gp%nLevels = useNLevels
     l2gp%nFreqs = useNFreqs
 
@@ -336,6 +338,7 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( l2gp%status,            "l2gp%status",            ModuleName )
     call deallocate_test ( l2gp%quality,           "l2gp%quality",           ModuleName )
     l2gp%nTimes = 0
+    l2gp%nTimesTotal = 0
     l2gp%nLevels = 0
     l2gp%nFreqs = 0
 
@@ -703,6 +706,7 @@ contains ! =====     Public Procedures     =============================
       endif
     endif
     l2gp%nTimes = size
+    l2gp%nTimesTotal = size
     nTimes=size
 
     if (lev == 0) then
@@ -994,8 +998,8 @@ contains ! =====     Public Procedures     =============================
     ! Create the swath within the file
     ! print*,"Creating swath called ",name
 
-    ! print *, 'About to sw_create ', TRIM(name)
-    ! if ( present(filename) ) print *, 'file name ', TRIM(filename)
+    if ( DEEBUG )  print *, 'About to sw_create ', TRIM(name)
+    if ( present(filename) .and. DEEBUG ) print *, 'file name ', TRIM(filename)
     swid = mls_SWcreate(L2FileHandle, trim(name), &
       & filename=filename, hdfVersion=hdfVersion)
     !print*,"Swath ",name,"has SW id :",swid
@@ -1023,8 +1027,16 @@ contains ! =====     Public Procedures     =============================
       myDim12 = MAX_DIML12
       myDim123 = MAX_DIML123
     endif
-
-    status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimes,1), &
+    if ( DEEBUG ) then
+      print *, 'myDim1 ', myDim1
+      print *, 'myDim12 ', myDim12
+      print *, 'myDim123 ', myDim123
+      print *, 'nTimes ', l2gp%nTimes
+      print *, 'nTimesTotal ', l2gp%nTimesTotal
+      print *, 'nLevels ', l2gp%nLevels
+      print *, 'nFreqs ', l2gp%nFreqs
+    endif
+    status = mls_swdefdim(swid, 'nTimes', max(l2gp%nTimesTotal,1), &
       & hdfVersion=hdfVersion)
 
     if ( l2gp%nLevels > 0 ) then
@@ -1771,7 +1783,7 @@ contains ! =====     Public Procedures     =============================
     if (present(TotNumProfs)) then
       myLastProfile = TotNumProfs 
     else
-      myLastProfile = L2GP%nTimes
+      myLastProfile = L2GP%nTimesTotal
     endif
     myswathName = l2gp%name
     if ( present(swathName) ) myswathName = swathName
@@ -1812,7 +1824,8 @@ contains ! =====     Public Procedures     =============================
         ! Currently force unlimited, remove the .false. .and. to allow limited
         ! if ( present(TotNumProfs) ) l2gp%nTimes = TotNumProfs
         call OutputL2GP_createFile_hdf (l2gp, L2FileHandle, myhdfVersion, &
-          & myswathName, filename, notUnlimited=.false. .and. present(totNumProfs))
+          & myswathName, filename, notUnlimited=present(totNumProfs))
+          ! & myswathName, filename, notUnlimited=.false. .and. present(totNumProfs))
       case default
         call MLSMessage ( MLSMSG_Error, ModuleName, &
          & 'Illegal hdf version in AppendL2GPData_fileName')
@@ -2090,6 +2103,10 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.85  2003/11/19 22:14:08  livesey
+! Added option (not invoked at the moment) for 'limited' dimensions in
+! AppendL2GP
+!
 ! Revision 2.84  2003/11/05 21:44:38  pwagner
 ! Skips trying to read 4 mls-specific fields from non-mls files
 !
