@@ -1017,6 +1017,7 @@ contains
 
       ! Local Variables
       type(nwt_T) :: AJ                 ! "About the Jacobian", see NWT.
+      type(nwt_T) :: BestAJ             ! AJ at Best Fnorm so far.
       real(r8) :: Cosine                ! Of an angle between two vectors
       type(matrix_Cholesky_T) :: Factored ! Cholesky-factored normal equations
       type (ForwardModelStatus_T) :: FmStat ! Status for forward model
@@ -1043,6 +1044,7 @@ contains
       real(rk) :: NWT_Xopt(20)          ! Real parameters for NWT options, q.v.
       integer :: PreserveMatrixName     ! Temporary name store
       integer :: Prev_NWT_Flag          ! Previous value of NWT_Flag
+      type(vector_T) :: Q               ! Used to calculate Marquardt parameter
       integer :: RowBlock               ! Which block of rows is the forward
                                         ! model filling?
       integer, parameter :: SnoopLevels(NF_DX_AITKEN:NF_FANDJ) = (/ &
@@ -1063,8 +1065,8 @@ contains
       if ( parallelMode ) &
         & call SetupFWMSlaves ( configDatabase(configIndices), &
         & state, fwdModelExtra, FwdModelOut, jacobian )
-      ! Set options for NWT
       foundBetterState = ( maxJacobians == 0 )
+      ! Set options for NWT
       nwt_opt(1:9) = (/  15, 1,      17, 2,      18, 3,      11, 4, 0 /)
       nwt_xopt(1:4) = (/ toleranceF, toleranceA, toleranceR, initLambda /)
       call nwt ( nwt_flag, nwt_xopt, nwt_opt )
@@ -1090,6 +1092,7 @@ contains
       call cloneVector ( v(f_rowScaled), measurements, vectorNameText='_f_rowScaled' )
       call copyVectorMask ( v(f_rowScaled), measurements )
       call cloneVector ( v(gradient), v(x), vectorNameText='_gradient' )
+      call cloneVector ( q, v(x), vectorNameText='Q' )
       call cloneVector ( v(reg_X_x), state, vectorNameText='_reg_X_x' )
       if ( got(f_measurementSD) ) then
         call cloneVector ( v(weight), measurementSD, vectorNameText='_weight' )
@@ -1225,6 +1228,7 @@ contains
         !   \item[AJ\%GRADN] = L2 norm of Gradient = $|| {\bf J^T f}||_2$.
         !   \end{description}
           numJ = numJ + 1
+          if ( index(switches,'dst') /= 0 ) call dump ( v(x), details=2, name='State' )
           if ( numJ > maxJacobians .and. nwt_flag /= nf_getJ ) then
               if ( index(switches,'nwt') /= 0 ) then
                 call output ( &
@@ -1233,14 +1237,15 @@ contains
                 call output ( ') > maxJacobians (' )
                 call output ( maxJacobians )
                 call output ( ')', advance='yes' )
+            if ( .not. foundBetterState ) exit
               end if
             ! Restore BestX, run the forward model one more time to get a new
             ! Jacobian, and form normal equations -- the last two so that the
             ! a posteriori covariance is consistent with BestX.
+            aj = bestAJ
             call copyVector ( v(x), v(bestX) ) ! x := bestX
             if ( .not. (got(f_outputCovariance) .or. got(f_outputSD) .or. &
               & got(f_average)) ) exit
-            if ( .not. foundBetterState ) exit
             nwt_flag = nf_getJ
           end if
 
@@ -1285,10 +1290,6 @@ contains
             ! ( a - x_n )^T F^T F ( a - x_n ) = ( a - x_n )^T \left [ 
             ! C ( a - x_n ) \right ] }$
             aj%fnorm = v(aprioriMinusX) .mdot. v(covarianceXapriori)
-            if ( index ( switches, 'fnorm' ) /= 0 ) then
-              call output ( 'A priori contribution to | F | = ' )
-              call output ( aj%fnorm, advance='yes' )
-            end if
 
             !{ Using Apriori requires adding equations of the form ${\bf F
             !  x}_{n+1} \simeq {\bf F a}$ where ${\bf F}$ is the Cholesky
@@ -1315,9 +1316,6 @@ contains
             end if
           else
             aj%fnorm = 0.0_r8
-            if ( index ( switches, 'fnorm' ) /= 0 ) then
-              call output ( 'No a priori so setting | F | to zero.', advance='yes' )
-            end if
             call clearMatrix ( normalEquations%m ) ! start with zero
             call clearVector ( v(aTb) ) ! Clear the RHS vector
           end if
@@ -1368,14 +1366,6 @@ contains
               call clearMatrix ( tikhonov )           ! free the space
               ! aj%fnorm is still the square of the norm of f
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-              if ( index ( switches, 'fnorm' ) /= 0 ) then
-                if ( t == 1 ) then
-                  call output ( 'Vertical Regularization contribution to | F | = ' )
-                else
-                  call output ( 'Horizontal Regularization contribution to | F | = ' )
-                end if
-                call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
-              end if
               ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
               ! Don't destroy reg_X_x unless we move the 'clone' for it
               ! inside the loop.  Also, if we destroy it, we can't snoop it.
@@ -1495,10 +1485,6 @@ contains
 
           ! aj%fnorm is still the square of the function norm
           aj%fnorm = aj%fnorm + ( v(f_rowScaled) .mdot. v(f_rowScaled) )
-          if ( index ( switches, 'fnorm' ) /= 0 ) then
-            call output ( 'Measurement contribution to | F | = ' )
-            call output ( v(f_rowScaled) .mdot. v(f_rowScaled), advance='yes' )
-          end if
 
           ! Add Tikhonov regularization if requested.  We do it here instead
           ! of before adding the Jacobian so that we can scale it up by the
@@ -1569,14 +1555,6 @@ contains
               call clearMatrix ( tikhonov )           ! free the space
               ! aj%fnorm is still the square of the norm of f
               aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
-              if ( index ( switches, 'fnorm' ) /= 0 ) then
-                if ( t == 1 ) then
-                  call output ( 'Vertical Regularization contribution to | F | = ' )
-                else
-                  call output ( 'Horizontal Regularization contribution to | F | = ' )
-                end if
-                call output ( v(reg_X_x) .dot. v(reg_X_x), advance='yes' )
-              end if
               ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
               ! Don't destroy reg_X_x unless we move the 'clone' for it
               ! inside the loop.  Also, if we destroy it, we can't snoop it.
@@ -1584,26 +1562,6 @@ contains
             end do ! t
           else
             tikhonovRows = 0
-          end if
-
-          ! Quit if the tolerance is reached.  aj%fnorm is norm**2 here.
-          if ( nwt_flag /= nf_getj .and. aj%fnorm < toleranceF**2 ) then
-              if ( index(switches,'nwt') /= 0 ) then
-                call output ( &
-                  & 'Newton iteration terminated because aj%fnorm (' )
-                call output ( aj%fnorm )
-                call output ( ') < ToleranceF (' )
-                call output ( toleranceF )
-                call output ( ')', advance='yes' )
-              end if
-            ! Finish getting the Jacobian, and form normal equations, to get
-            ! the a posteriori covariance.
-            if ( .not. got(f_outputCovariance) .and. .not. got(f_outputSD) &
-              & .and. .not. got(f_average) ) then
-                aj%fnorm = sqrt(aj%fnorm)
-                exit
-            end if
-            nwt_flag = nf_getJ ! so we exit the loop at the end
           end if
 
           !{Column Scale $\bf J$ (row and column scale ${\bf J}^T {\bf J}$)
@@ -1734,9 +1692,9 @@ contains
               & jacobian_rows = jacobian_rows - &
               &   countBits(measurements%quantities(j)%mask, what=m_linAlg )
           end do
-          ! Correct for apriori information, note that there is an approximation here
-          ! we don't take any account of whether the a priori is used on an element
-          ! by element basis.
+          ! Correct for apriori information.  Note that there is an
+          ! approximation here: We don't take any account of whether the a
+          ! priori is used on an element by element basis.
           if ( got(f_apriori) ) &
             & jacobian_rows = jacobian_rows + jacobian_cols
           ! Correct for Tikhonov information.
@@ -1756,8 +1714,15 @@ contains
                 & '  chi^2/n      chimin^2/n ', clean=.true. )
             end if
         case ( nf_lev ) ! ..................................  LEV  .....
-        ! Calculate quantities necessary to determine the
-        ! Levenberg-Marquardt stabilization parameter
+        ! Solve U^T q = dx, then compute ||q||**2, which is used to
+        ! compute the Levenberg-Marquardt stabilization parameter.
+          call solveCholesky ( factored, q, v(candidateDX), &
+            & transpose=.true. ) ! q := factored^{-T} v(candidateDX)
+          aj%qnsq = q .dot. q
+            if ( index(switches,'sca') /= 0 ) then
+              call output ( 'QN^2 = ' )
+              call output ( aj%qnsq, advance='yes' )
+            end if
         case ( nf_solve ) ! ..............................  SOLVE  .....
         !{Apply Levenberg-Marquardt stabilization with parameter
         ! $\lambda =$ {\bf AJ\%SQ}.  I.e., form $({\bf \Sigma}^T {\bf J}^T
@@ -1935,11 +1900,12 @@ contains
               call output ( ' aj%gfac = ' )
               call output ( aj%gfac, format='(1pe14.7)' )
               call output ( ' |DX| = ' )
-              call output ( aj%gradn * aj%gfac, advance='yes' )
+              call output ( aj%gradnb * aj%gfac, advance='yes' )
             end if
         case ( nf_best ) ! ................................  BEST  .....
         ! Set "Best X" = X, "Best Gradient" = Gradient
           foundBetterState = .true.
+          bestAJ = aj
           call copyVector ( v(bestX), v(x) ) ! bestX = x
           call copyVector ( v(bestGradient), v(gradient) ) ! bestGradient = gradient
         case ( nf_aitken ) ! ............................  AITKEN  .....
@@ -1977,9 +1943,12 @@ contains
           ! IF ( NWT_FLAG == NF_TOO_SMALL ) THEN
           !   Take special action if requested accuracy is critical
           ! END IF
-          if ( nwt_flag == nf_tolx_best ) call copyVector ( v(x), v(bestX) )
           ! Convergence to desired solution.  Do whatever you want to
           ! with the solution.
+          if ( nwt_flag == nf_tolx_best ) then
+            call copyVector ( v(x), v(bestX) )
+            aj = bestAJ
+          end if
           if ( .not. got(f_apriori) .or. .not. diagonal ) then
               if ( index(switches,'nwt') /= 0 ) then
                 call output ( &
@@ -2103,6 +2072,7 @@ contains
       call destroyMatrix ( normalEquations%m )
       call destroyMatrix ( kTkSep%m )
       call destroyMatrix ( factored%m )
+      call destroyVectorInfo ( q )
       call deallocate_test ( fmStat%rows, 'FmStat%rows', moduleName )
         call add_to_retrieval_timing( 'newton_solver', t1 )
     end subroutine NewtonianSolver
@@ -3678,8 +3648,10 @@ contains
 end module RetrievalModule
 
 ! $Log$
-! Revision 2.226  2003/01/29 22:43:46  livesey
-! Added the fnorm switch to dump contributions to fnorm
+! Revision 2.227  2003/02/03 23:08:50  vsnyder
+! Delete test for small residual -- there's a test relative to FNMIN in
+! dnwt.  Add stuff for dnwt to use Mor\'e and Sorensen algorithm to
+! compute the Levenberg parameter.
 !
 ! Revision 2.225  2003/01/18 02:15:43  vsnyder
 ! Change names of global loop inductors "I" and "J" to something more clever,
