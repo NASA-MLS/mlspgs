@@ -37,6 +37,8 @@ dir2 = $(itmdir)/
 vpath %.o ./
 vpath %.f90 ../ ../../../lib/machines/$(MLSCONFG)
 vpath %.f9h ../
+vpath %.f ../
+vpath %.c ../
 
 FC = f95
 
@@ -49,7 +51,7 @@ INC_PATHS = -I $(PGSINC) -I $S
 # Define some suffix rules
 
 .SUFFIXES:
-.SUFFIXES: .o .dbg.o .f90 .f
+.SUFFIXES: .o .dbg.o .f90 .f .c
 .f90.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
@@ -59,10 +61,16 @@ INC_PATHS = -I $(PGSINC) -I $S
 .f.o:
 	$(FC) -c $(FOPTS) $(INC_PATHS) $< $(FAFTER)
 
+.c.o:
+	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
+
 #Special load libraries
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.2  2001/06/14 23:04:16  pwagner
+# Now builds f90tex from util successfully
+#
 # Revision 1.1  2001/06/14 22:36:31  pwagner
 # First commit
 #
