@@ -27,10 +27,10 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
     L_LOSTRANSFUNC, L_LOSVEL, L_LSBFREQUENCY, L_MAGNETICFIELD, &
     L_MAF, L_MASSMEANDIAMETERICE, L_MASSMEANDIAMETERWATER, L_MIF, &
     L_NOISEBANDWIDTH, L_NONE, L_NUMJ, L_ORBITINCLINATION, L_OPTICALDEPTH, &
-    L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, &
+    L_PHITAN, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFLSPILL, L_REFLTEMP, &
     L_SCANRESIDUAL, L_SCECI, L_SCGEOCALT, L_SCVEL, &
     L_SCVELECI, L_SCVELECR, L_LIMBSIDEBANDFRACTION, L_SIZEDISTRIBUTION, &
-    L_SPACERADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
+    L_SPACERADIANCE, L_STRAYRADIANCE, L_SURFACETYPE, L_SYSTEMTEMPERATURE, &
     L_TNGTECI, L_TNGTGEOCALT, L_TNGTGEODALT, &
     L_TOTALEXTINCTION, L_USBFREQUENCY, L_VMR, L_XYZ
   use intrinsic, only: LIT_INDICES !, L_CHANNEL, &
@@ -1429,10 +1429,19 @@ contains ! =====     Public Procedures     =============================
     case ( l_limbSidebandFraction )  
       framing = 'neither'
       dim_names = (/ l_channel, l_none, l_none /)                  
+    case ( l_reflSpill )
+      framing = 'major'
+      dim_names = (/ l_channel, l_none, l_MAF /)
+    case ( l_reflTemp )
+      framing = 'major'
+      dim_names = (/ l_channel, l_none, l_MAF /)
     case ( l_spaceRadiance )  
       framing = 'neither'
       units_name = 'K'
       dim_names = (/ l_none, l_none, l_none /)                  
+    case ( l_strayRadiance )
+      framing = 'major'
+      dim_names = (/ l_channel, l_none, l_MAF /)
     case ( l_surfacetype )  
       framing = 'neither'
       dim_names = (/ l_none, l_none, l_none /)                  
@@ -1507,6 +1516,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.54  2003/05/30 00:08:54  livesey
+! Added antenna loss terms
+!
 ! Revision 2.53  2003/05/29 16:43:02  livesey
 ! Renamed sideband fraction
 !
