@@ -19,7 +19,7 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
   use MLSStrings, only: Capitalize, ExtractSubString, &
-    & GetStringHashElement, GetStringElement, &
+    & GetStringHashElement, GetStringElement, GetUniqueList, &
     & ints2Strings, list2array, lowercase, NumStringElements, &
     & strings2Ints, StringElementNum
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -689,6 +689,7 @@ contains ! =====     Public Procedures     =============================
     real(r4), pointer, dimension(:,:,:) :: REAL3
     logical :: dontfail
     logical :: ReadingStatus
+    logical :: deeBugHere
 !  How to deal with status and columnTypes? swrfld fails
 !  with char data on Linux with HDF4. With HDF5 we may or may not need to
 !  Have recourse to ints2Strings and strings2Ints if USEINTS4STRINGS
@@ -696,6 +697,7 @@ contains ! =====     Public Procedures     =============================
 !    character (LEN=L2GPNameLen), allocatable :: the_status_buffer(:)
 !    integer, allocatable, dimension(:,:) :: string_buffer
 
+    deeBugHere = DEEBUG     ! .or. .true.
     nullify ( realFreq, realSurf, realProf, real3 )
     
     ! Don't fail when trying to read an mls-specific field 
@@ -733,9 +735,11 @@ contains ! =====     Public Procedures     =============================
     else
       nDims = HE5_SWinqdims(swid, list, dims)
     endif
-    if ( DEEBUG ) print *, 'dimlist: ', trim(list)
-    if ( DEEBUG ) print *, 'ndims: ', ndims
-    if ( DEEBUG ) print *, 'dims: ', dims
+    if ( deeBugHere ) print *, 'HMOT: ', HMOT
+    if ( deeBugHere ) print *, 'swathName: ', l2gp%name
+    if ( deeBugHere ) print *, 'dimlist: ', trim(list)
+    if ( deeBugHere ) print *, 'ndims: ', ndims
+    if ( deeBugHere ) print *, 'dims: ', dims
     if (nDims == -1) call MLSMessage(MLSMSG_Error, ModuleName, &
       & 'Failed to get dimension information on hdfeos5 swath ' // trim(swathname))
     if ( index(list,'nLevels') /= 0 ) lev = 1
@@ -840,7 +844,7 @@ contains ! =====     Public Procedures     =============================
     endif
 
     ! Allocate result
-    if ( DEEBUG ) then
+    if ( deeBugHere ) then
       print *, 'nFreqs: ', nFreqs
       print *, 'nLevels: ', nLevels
       print *, 'mynumProfs: ', mynumProfs
@@ -2322,85 +2326,73 @@ contains ! =====     Public Procedures     =============================
       endif
       if ( myDetails < 0 ) return
       if ( any(l2gp1%pressures /= l2gp2%pressures)) then
-        if ( myStats ) then
-          !call diffStats(l2gp1%pressures, l2gp2%pressures, 'Pressures')
-        else
           call dump ( l2gp1%pressures - l2gp2%pressures, &
-            & 'l2gp%pressures (diff)' )
-        endif
+            & 'l2gp%pressures (diff)', stats=stats )
       endif
       if ( any(l2gp1%latitude /= l2gp2%latitude)) then
-        if ( myStats ) then
-          !call diffStats(l2gp1%latitude, l2gp2%latitude, 'Latitudes')
-        else
           call dump ( l2gp1%latitude - l2gp2%latitude, &
-            & 'l2gp%latitude (diff)' )
-        endif
+            & 'l2gp%latitude (diff)', stats=stats )
       endif
       if ( any(l2gp1%longitude /= l2gp2%longitude)) then
-        if ( myStats ) then
-          !call diffStats(l2gp1%longitudes, l2gp2%longitudes, 'Longitudes')
-        else
           call dump ( l2gp1%longitude - l2gp2%longitude, &
-            & 'l2gp%longitude (diff)' )
-        endif
+            & 'l2gp%longitude (diff)', stats=stats )
       endif
       if ( any(l2gp1%solarTime /= l2gp2%solarTime)) then
         call dump ( l2gp1%solarTime - l2gp2%solarTime, &
-          & 'l2gp%solarTime (diff)' )
+          & 'l2gp%solarTime (diff)', stats=stats )
       endif
       if ( any(l2gp1%solarZenith /= l2gp2%solarZenith)) then
         call dump ( l2gp1%solarZenith - l2gp2%solarZenith, &
-          & 'l2gp%solarZenith (diff)' )
+          & 'l2gp%solarZenith (diff)', stats=stats )
       endif
       if ( any(l2gp1%losAngle /= l2gp2%losAngle)) then
         call dump ( l2gp1%losAngle - l2gp2%losAngle, &
-          & 'l2gp%losAngle (diff)' )
+          & 'l2gp%losAngle (diff)', stats=stats )
       endif
       if ( any(l2gp1%geodAngle /= l2gp2%geodAngle)) then
         call dump ( l2gp1%geodAngle - l2gp2%geodAngle, &
-          & 'l2gp%geodAngle (diff)' )
+          & 'l2gp%geodAngle (diff)', stats=stats )
       endif
       if ( any(l2gp1%time /= l2gp2%time)) then
         call dump ( l2gp1%time - l2gp2%time, &
-          & 'l2gp%time (diff)' )
+          & 'l2gp%time (diff)', stats=stats )
       endif
       if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber)) then
         call dump ( l2gp1%chunkNumber - l2gp2%chunkNumber, &
-          & 'l2gp%chunkNumber (diff)' )
+          & 'l2gp%chunkNumber (diff)', stats=stats )
       endif
       
       if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
         if ( any(l2gp1%frequency /= l2gp2%frequency)) then
           call dump ( l2gp1%frequency - l2gp2%frequency, &
-            & 'l2gp%frequency (diff)' )
+            & 'l2gp%frequency (diff)', stats=stats )
         endif
       endif
       
       if ( myDetails < 1 ) return
       if ( any(l2gp1%l2gpValue /= l2gp2%l2gpValue)) then
         call dump ( real(l2gp1%l2gpValue - l2gp2%l2gpValue, r8), &
-          & 'l2gp%l2gpValue (diff)')
+          & 'l2gp%l2gpValue (diff)', stats=stats )
           !& 'l2gp%l2gpValue (diff)', FillValue=FillValue )
       endif
       if ( any(l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision)) then
         call dump ( real(l2gp1%l2gpPrecision - l2gp2%l2gpPrecision, r8), &
-          & 'l2gp%l2gpPrecision (diff)' )
+          & 'l2gp%l2gpPrecision (diff)', stats=stats )
       endif
       
       if ( any(l2gp1%status /= l2gp2%status)) then
         call dump (l2gp1%status - l2gp2%status, &
-          & 'l2gp%status (diff)' )
+          & 'l2gp%status (diff)', stats=stats )
       endif
       if ( any(l2gp1%quality /= l2gp2%quality)) then
         call dump ( l2gp1%quality - l2gp2%quality, &
-          & 'l2gp%quality (diff)' )
+          & 'l2gp%quality (diff)', stats=stats )
       endif
       
   end subroutine DiffL2GPData
     
   ! ------------------------------------------ DiffL2GPFiles ------------
-  subroutine DiffL2GPFiles ( file1, file2, Details )
+  subroutine DiffL2GPFiles ( file1, file2, Details, swList, stats, showMissing )
     ! Show diff between swaths in file1 and file2 down to level of Details
     ! Dummy arguments
     character (len=*), intent(in) :: file1 ! Name of file 1
@@ -2410,7 +2402,10 @@ contains ! =====     Public Procedures     =============================
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
-    ! Local
+    character (len=*), optional, intent(in) :: swList
+    logical, intent(in), optional :: STATS   ! if TRUE, just print stats
+    logical, intent(in), optional :: showMissing   ! if TRUE, just show which
+    ! Local                                         swaths are missing from other
     logical, parameter            :: countEmpty = .true.
     integer :: File1Handle
     integer :: File2Handle
@@ -2423,12 +2418,17 @@ contains ! =====     Public Procedures     =============================
     integer :: file_access
     integer :: listsize
     integer :: noSwaths
+    integer :: noUnique
+    logical :: myShowMissing
     character (len=MAXSWATHNAMESBUFSIZE) :: swathList1
     character (len=MAXSWATHNAMESBUFSIZE) :: swathList2
+    character (len=MAXSWATHNAMESBUFSIZE) :: swathUnique
     character (len=L2GPNameLen) :: swath
     type (L2GPData_T) :: l2gp1
     type (L2GPData_T) :: l2gp2
     ! Executable code
+    myShowMissing = .false.
+    if ( present(showMissing) ) myShowMissing=showMissing
     file_exists = ( mls_exists(trim(File1)) == 0 )
     if ( .not. file_exists ) then
       call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -2448,6 +2448,47 @@ contains ! =====     Public Procedures     =============================
          & hdfVersion=the_hdfVersion1)
     noSwaths = mls_InqSwath ( file2, swathList2, listSize, &
          & hdfVersion=the_hdfVersion2)
+    ! Are we merely to point out which swaths are missing from the other file?
+    if ( myShowMissing ) then
+      if ( present(swList) ) then
+        call GetUniqueList(swList, swathUnique, noUnique, countEmpty, &
+          & str2=trim(swathList1))
+        if ( noUnique > 0 ) then
+          call output('swaths missing from ' // trim(File1), advance='yes')
+          call output(trim(swathUnique), advance='yes')
+        else
+          call output('All swaths in ' // trim(File1), advance='yes')
+        endif
+        call GetUniqueList(swList, swathUnique, noUnique, countEmpty, &
+          & str2=trim(swathList2))
+        if ( noUnique > 0 ) then
+          call output('swaths missing from ' // trim(File2), advance='yes')
+          call output(trim(swathUnique), advance='yes')
+        else
+          call output('All swaths in ' // trim(File2), advance='yes')
+        endif
+      else
+        call output('Comparing swaths in ' // trim(File1), advance='no')
+        call output(' with ' // trim(File2), advance='yes')
+        call GetUniqueList(trim(swathList1), swathUnique, noUnique, countEmpty, &
+          & str2=trim(swathList2))
+         ! print *, 'swathList1: ', trim(swathList1)
+         ! print *, 'swathList2: ', trim(swathList2)
+         ! print *, 'list1 not in list2 : ', noUnique
+        if ( noUnique > 0 ) then
+          call output('swaths only in ' // trim(File1), advance='yes')
+          call output(trim(swathUnique), advance='yes')
+        endif
+        call GetUniqueList(trim(swathList2), swathUnique, noUnique, countEmpty, &
+          & str2=trim(swathList1))
+        ! print *, 'list2 not in list1 : ', noUnique
+        if ( noUnique > 0 ) then
+          call output('swaths only in ' // trim(File2), advance='yes')
+          call output(trim(swathUnique), advance='yes')
+        endif
+      endif
+      return
+    endif
     File1Handle = mls_io_gen_openF('swopen', .TRUE., status, &
        & record_length, DFACC_READ, FileName=File1, &
        & hdfVersion=the_hdfVersion1, debugOption=.false. )
@@ -2460,9 +2501,10 @@ contains ! =====     Public Procedures     =============================
     if ( status /= 0 ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
        & "Unable to open L2gp file: " // trim(File2) // ' for diff')
+
     ! Loop over swaths in file 1
 
-    print *, 'swathList1: ', trim(swathList1)
+    ! print *, 'swathList1: ', trim(swathList1)
     do i = 1, noSwaths
       call GetStringElement (trim(swathList1), swath, i, countEmpty )
       status = stringElementNum(swathList2, trim(swath), countEmpty)
@@ -2471,12 +2513,12 @@ contains ! =====     Public Procedures     =============================
           & trim(File2), advance='yes')
         cycle
       endif
-      print *, 'swath name: ', trim(swath)
+      ! print *, 'swath name: ', trim(swath)
       call ReadL2GPData ( File1Handle, trim(swath), l2gp1, &
            & hdfVersion=the_hdfVersion1 )
       call ReadL2GPData ( File2Handle, trim(swath), l2gp2, &
            & hdfVersion=the_hdfVersion2 )
-      call DiffL2GPData(l2gp1, l2gp2, details)
+      call DiffL2GPData(l2gp1, l2gp2, details, stats)
       call DestroyL2GPContents ( l2gp1 )
       call DestroyL2GPContents ( l2gp2 )
     enddo
@@ -2938,6 +2980,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.105  2004/06/02 19:37:52  pwagner
+! Added stats option to diff
+!
 ! Revision 2.104  2004/05/26 23:57:29  pwagner
 ! Added new diff routines
 !
