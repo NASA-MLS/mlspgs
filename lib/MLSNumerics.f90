@@ -349,7 +349,7 @@ CONTAINS
        oldSecond(noOld,:)=0.0D0
        
        ! Now do the back substitution
-       DO ind=noOld,1,-1
+       DO ind=noOld-1,1,-1
           oldSecond(ind,:)=oldSecond(ind,:)*oldSecond(ind+1,:)+temp(ind,:)
        ENDDO
 
@@ -529,6 +529,9 @@ END MODULE MLSNumerics
 
 !
 ! $Log$
+! Revision 2.6  2001/04/28 07:05:05  livesey
+! Minor bug fix in spline
+!
 ! Revision 2.5  2001/04/11 22:43:19  vsnyder
 ! Let sparsify do the deallocate_test
 !
