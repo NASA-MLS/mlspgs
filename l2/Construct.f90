@@ -10,6 +10,7 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
     & CreateQtyTemplateFromMLSCfInfo, ForgeMinorFrames
   use ConstructVectorTemplates, only: CreateVecTemplateFromMLSCfInfo
   use Dumper, only: Dump
+  use FGrid, only: FGrid_T
   use HGrid, only: AddHGridToDatabase, CreateHGridFromMLSCFInfo, &
     & DestroyHGridDatabase, HGrid_T
   use INIT_TABLES_MODULE, only: S_FORGE, S_HGRID, S_QUANTITY, S_TIME, &
@@ -54,7 +55,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ---------------------------------------------  MLSL2Construct  -----
   subroutine MLSL2Construct ( root, l1bInfo, chunk, &
-       & quantityTemplates, vectorTemplates, VGrids, HGrids, &
+       & quantityTemplates, vectorTemplates, FGrids, VGrids, HGrids, &
        & l2gpDatabase, mifGeolocation )
 
   ! This is the `main' subroutine for this module
@@ -65,6 +66,7 @@ contains ! =====     Public Procedures     =============================
     type (MLSChunk_T), intent(in) :: chunk
     type (QuantityTemplate_T), dimension(:), pointer :: quantityTemplates
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
+    type (FGrid_T), dimension(:), pointer :: fGrids
     type (VGrid_T), dimension(:), pointer :: vGrids
     type (HGrid_T), dimension(:), pointer :: HGrids
     type (L2GPData_T), dimension(:), pointer :: L2GPDatabase
@@ -136,7 +138,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_quantity )
         call decorate ( key, AddQuantityTemplateToDatabase ( &
           & quantityTemplates, CreateQtyTemplateFromMLSCfInfo ( name, key, &
-            & hGrids, vGrids, l1bInfo, chunk, mifGeolocation ) ) )
+            & fGrids, vGrids, hGrids, l1bInfo, chunk, mifGeolocation ) ) )
       case ( s_vectortemplate )
         call decorate ( key, AddVectorTemplateToDatabase ( vectorTemplates, &
           & CreateVecTemplateFromMLSCfInfo ( name, key, quantityTemplates ) ) )
@@ -203,6 +205,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.29  2001/10/31 19:07:15  livesey
+! Added fGrid stuff
+!
 ! Revision 2.28  2001/10/05 23:30:37  pwagner
 ! Fixed small bug in destroyingQuantTempldb
 !
