@@ -29,7 +29,7 @@ all: libmlsSub.a libmls.a libmlsSDPTK.a
 #(I deleted them before creating Makefile.dep, but a new make depends
 #will probably re-insert them)
 
-TEST_ONLY=table_dumper.o table_generator.o test_multiply.o test_sparsify.o \
+TEST_ONLY=test_multiply.o test_sparsify.o \
 	test_cholesky.o test_multiply_vector.o
 
 libmlsSub.a: ${OBJS}
@@ -63,6 +63,9 @@ L2GPData.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/L2GPData.f90
 
 # $Log$
+# Revision 1.6  2000/11/16 22:57:02  pwagner
+# Looks for %.f9h in srclib
+#
 # Revision 1.5  2000/11/09 00:00:37  pwagner
 # Account for new test sources
 #
