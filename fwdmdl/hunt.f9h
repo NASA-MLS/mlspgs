@@ -16,7 +16,8 @@
 !   real(rk), intent(in) :: ELEMENT, ARRAY(n)
     real(rk), intent(in) :: ELEMENT, ARRAY(*)
 
-    integer(i4), intent(in out) :: JLO, JHI
+    integer(i4), intent(in out) :: JLO
+    integer(i4), intent(out)    :: JHI
 
     integer :: INC, JM
     logical :: ASCND
@@ -71,6 +72,9 @@
 
 ! end subroutine ?_HUNT
 ! $Log$
+! Revision 2.2  2002/10/04 01:49:04  vsnyder
+! Cosmetic changes
+!
 ! Revision 2.1  2002/10/02 15:49:46  bwknosp
 ! Added Id and RCS info
 !
