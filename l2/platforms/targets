@@ -80,6 +80,14 @@ else
    blas_message=Building mlsl2 with internally-supplied BLAS
 endif
 
+ifdef l2_NEEDS_fwdmdl
+   fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
+   fwdmdl_message=Building mlsl2 with forward model
+else
+   fwdmdl_linker_line=
+   fwdmdl_message=Building mlsl2 without forward model
+endif
+
 # ========================================================================
 mlsl2: $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
 		@echo "$(pvm_message)"
@@ -95,6 +103,7 @@ mlsl2: $(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
+        $(fwdmdl_linker_line) \
         $(l_specials) \
 		  
 # ========================================================================
@@ -108,6 +117,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.9  2001/02/12 17:44:34  pwagner
+# RetrievalModule and ForwardModelInterface now included
+#
 # Revision 1.8  2001/02/08 23:22:14  pwagner
 # variable_linker_line tied to PVM and BLAS
 #
