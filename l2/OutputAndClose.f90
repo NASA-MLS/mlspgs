@@ -105,7 +105,7 @@ contains ! =====     Public Procedures     =============================
     character (len=32) :: Mnemonic
     character (len=256) :: Msg
     integer :: NAME                     ! string index of label on output
-    integer :: Numquantitiesperfile        
+    integer :: Numquantitiesperfile     ! < MAXQUANTITIESPERFILE
     integer :: OUTPUT_TYPE              ! L_L2AUX, L_L2GP, L_PC, L_L2DGG
     character (len=132) :: path
     character(len=L2GPNameLen), dimension(MAXQUANTITIESPERFILE) :: QuantityNames  ! From "quantities" field
@@ -216,6 +216,12 @@ contains ! =====     Public Procedures     =============================
                   db_index = -decoration(decoration(subtree(in_field_no ,gson)))
                   call writeL2GPData ( l2gpDatabase(db_index), swfid )
                   numquantitiesperfile = numquantitiesperfile+1
+                  if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                    call announce_error ( son, &
+                      & 'Attempt to write too many l2gp quantities to a file', &
+                      & numquantitiesperfile )
+                    numquantitiesperfile = MAXQUANTITIESPERFILE
+                  endif
                   quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
                 end do ! in_field_no = 2, nsons(gson)
               case ( f_overlaps )
@@ -342,7 +348,13 @@ contains ! =====     Public Procedures     =============================
                     numquantitiesperfile = numquantitiesperfile+1
                     if ( DEBUG ) call output(&
                       & "attempting to fill quantity name", advance='yes')
-                    call get_string &
+                    if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                      call announce_error ( son, &
+                        & 'Attempt to write too many l2aux quantities to a file', &
+                        & numquantitiesperfile )
+                      numquantitiesperfile = MAXQUANTITIESPERFILE
+                    endif
+                       call get_string &
                       & ( l2auxDatabase(db_index)%name, &
                       &     QuantityNames(numquantitiesperfile) )
                   else
@@ -474,6 +486,12 @@ contains ! =====     Public Procedures     =============================
                   db_index = -decoration(decoration(subtree(in_field_no ,gson)))
                   call writeL2GPData ( l2gpDatabase(db_index), swfid )
                   numquantitiesperfile = numquantitiesperfile+1
+                  if ( numquantitiesperfile > MAXQUANTITIESPERFILE ) then
+                    call announce_error ( son, &
+                      & 'Attempt to write too many l2dgg quantities to a file', &
+                      & numquantitiesperfile )
+                    numquantitiesperfile = MAXQUANTITIESPERFILE
+                  endif
                   quantityNames(numquantitiesperfile) = l2gpDatabase(db_index)%name
                 end do ! in_field_no = 2, nsons(gson)
               case ( f_overlaps )
@@ -548,7 +566,6 @@ contains ! =====     Public Procedures     =============================
       end select
 
     end do  ! spec_no
-    if ( timing ) call sayTime
 
 ! Write the log file metadata
 
@@ -579,6 +596,7 @@ contains ! =====     Public Procedures     =============================
         & 'Problem with Output_Close section' )
     end if
 
+    if ( timing ) call sayTime
     if ( toggle(gen) ) call trace_end ( "Output_Close")
 
   contains
@@ -614,9 +632,9 @@ contains ! =====     Public Procedures     =============================
     call output ( trim(Name), advance='yes')
 
     if ( num_quants > 0 ) then
-    call output ( 'number ' )
-    call blanks(5)
-    call output ( 'quantity', advance='yes')
+      call output ( 'number ' )
+      call blanks(5)
+      call output ( 'quantity', advance='yes')
       do i=1, num_quants
           call output ( i )
           call blanks(5)
@@ -656,6 +674,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.40  2001/10/12 23:12:23  pwagner
+! Checks that number of quantities written to a file not grow too large
+!
 ! Revision 2.39  2001/09/28 23:59:20  pwagner
 ! Fixed various timing problems
 !
