@@ -430,6 +430,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fraction, t+t_numeric, n+n_field_type, &
              begin, f+f_forbidOverspill, t+t_boolean, n+n_field_type, &
              begin, f+f_height, t+t_numeric, n+n_field_type, &
+             begin, f+f_insetOverlaps, t+t_boolean, n+n_field_type, &
+             begin, f+f_maxLowerOverlap, t+t_numeric, n+n_field_type, &
+             begin, f+f_maxUpperOverlap, t+t_numeric, n+n_field_type, &
              begin, f+f_mif, t+t_numeric, n+n_field_type, &
              begin, f+f_interpolationfactor, t+t_numeric, n+n_field_type, &
              begin, f+f_inclination, t+t_numeric, n+n_field_type, &
@@ -463,6 +466,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_method, t+t_chunkDivideMethod, nr+n_field_type, &
              begin, f+f_noChunks, t+t_numeric, n+n_field_type, &
              begin, f+f_overlap, t+t_numeric, n+n_field_type, &
+             begin, f+f_lowerOverlap, t+t_numeric, n+n_field_type, &
+             begin, f+f_upperOverlap, t+t_numeric, n+n_field_type, &
              begin, f+f_maxLength, t+t_numeric, n+n_field_type, &
              begin, f+f_noSlaves, t+t_numeric, n+n_field_type, &
              begin, f+f_homeModule, t+t_module, n+n_field_type, &
@@ -911,6 +916,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.262  2003/01/06 20:13:30  livesey
+! New overlap handling in ChunkDivide and HGrid
+!
 ! Revision 2.261  2002/11/27 19:26:20  livesey
 ! Added stuff for manipulate fill
 !
