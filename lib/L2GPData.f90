@@ -1004,7 +1004,7 @@ contains ! =====     Public Procedures     =============================
     & HE5S_UNLIMITED_F, &
     & HE5T_NATIVE_CHAR, HE5T_NATIVE_DOUBLE, HE5T_NATIVE_INT, HE5T_NATIVE_FLOAT
   use MLSHDFEOS, ONLY : mls_swcreate, mls_dfldsetup, mls_gfldsetup, &
-    & mls_swdefdim, MLS_SWSETFILL
+    & mls_swdefdim
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
 
@@ -1135,48 +1135,48 @@ contains ! =====     Public Procedures     =============================
     chunk_dims(1)=CHUNKTIMES
     status = mls_gfldsetup(swid, 'Latitude', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'Longitude', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'Time', 'nTimes', MYDIM1, &
       & DFNT_FLOAT64, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, dFill=real(l2gp%MissingValue, r8))
 
     status = mls_gfldsetup(swid, 'LocalSolarTime', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'SolarZenithAngle', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'LineOfSightAngle', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'OrbitGeodeticAngle', 'nTimes', MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     status = mls_gfldsetup(swid, 'ChunkNumber', 'nTimes', MYDIM1, &
       & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue))
 
     if ( l2gp%nLevels > 0 ) then
 
       status = mls_gfldsetup(swid, 'Pressure', 'nLevels', MAX_DIML, &
       & DFNT_FLOAT32, HDFE_NOMERGE, 0, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
     end if
 
     if ( l2gp%nFreqs > 0 ) then
 
       status = mls_gfldsetup(swid, 'Frequency', 'nFreqs', MAX_DIML, &
       & DFNT_FLOAT32, HDFE_NOMERGE, 0, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
     end if
 
     ! Define data fields using above dimensions
@@ -1188,12 +1188,12 @@ contains ! =====     Public Procedures     =============================
       status = mls_dfldsetup(swid, 'L2gpValue', 'nFreqs,nLevels,nTimes', &
       & MYDIM123, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nFreqs,nLevels,nTimes', &
       & MYDIM123, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     else if ( l2gp%nLevels > 0 ) then
        chunk_rank=2
@@ -1202,12 +1202,12 @@ contains ! =====     Public Procedures     =============================
       status = mls_dfldsetup(swid, 'L2gpValue', 'nLevels,nTimes', &
       & MYDIM12, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nLevels,nTimes', &
       & MYDIM12, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     else
        chunk_rank=1
@@ -1216,12 +1216,12 @@ contains ! =====     Public Procedures     =============================
       status = mls_dfldsetup(swid, 'L2gpValue', 'nTimes', &
       & MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
       status = mls_dfldsetup(swid, 'L2gpPrecision', 'nTimes', &
       & MYDIM1, &
       & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-      & hdfVersion=hdfVersion)
+      & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     end if
 
@@ -1230,7 +1230,7 @@ contains ! =====     Public Procedures     =============================
     status = mls_dfldsetup(swid, 'Status', 'nTimes', &
     & MYDIM1, &
     & DFNT_INT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-    & hdfVersion=hdfVersion)
+    & hdfVersion=hdfVersion, iFill=int(l2gp%MissingValue))
     ! & DFNT_CHAR8, HDFE_NOMERGE, chunk_rank, chunk_dims, &
 
     chunk_rank=1
@@ -1238,51 +1238,7 @@ contains ! =====     Public Procedures     =============================
     status = mls_dfldsetup(swid, 'Quality', 'nTimes', &
     & MYDIM1, &
     & DFNT_FLOAT32, HDFE_NOMERGE, chunk_rank, chunk_dims, &
-    & hdfVersion=hdfVersion)
-
-    if ( hdfVersion == HDFVERSION_5 ) then
-      ! Set Fill Values
-      status =  mls_swsetfill(swid, DATA_FIELDS, HE5T_NATIVE_FLOAT, &
-       & l2gp%MissingValue)
-      if ( status == -1 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & 'Cant set fill for ' // DATA_FIELDS )
-      status =  mls_swsetfill(swid, GEO_FIELDS, HE5T_NATIVE_FLOAT, &
-       & l2gp%MissingValue)
-      if ( status == -1 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & 'Cant set fill for ' // GEO_FIELDS )
-      status =  mls_swsetfill(swid, 'Time', HE5T_NATIVE_DOUBLE, &
-       & real(l2gp%MissingValue, r8) )
-      if ( status == -1 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & 'Cant set fill for ' // 'Time' )
-      status =  mls_swsetfill(swid, 'ChunkNumber', HE5T_NATIVE_INT, &
-       & int(l2gp%MissingValue) )
-      if ( status == -1 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-           & 'Cant set fill for ' // 'ChunkNumber' )
-      if ( l2gp%nLevels > 0 ) then
-        status =  mls_swsetfill(swid, 'Pressure', HE5T_NATIVE_FLOAT, &
-         & l2gp%MissingValue)
-        if ( status == -1 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-             & 'Cant set fill for ' // 'Pressure' )
-      endif
-
-      if ( l2gp%nFreqs > 0 ) then
-        status =  mls_swsetfill(swid, 'Frequency', HE5T_NATIVE_FLOAT, &
-         & l2gp%MissingValue)
-        if ( status == -1 ) &
-          & call MLSMessage ( MLSMSG_Error, ModuleName, &
-             & 'Cant set fill for ' // 'Frequency' )
-      endif
-      ! Get fill value
-      if ( DEEBUG ) then
-        status = HE5_SWgetfill(swID, 'L2gpValue', fillValue)
-        print *, 'status, fillValue: ', status, fillValue
-      endif
-    endif
+    & hdfVersion=hdfVersion, rFill=l2gp%MissingValue)
 
     ! Detach from the HE5_SWath interface.This stores the swath info within the
     ! file and must be done before writing or reading data to or from the
@@ -2267,31 +2223,49 @@ contains ! =====     Public Procedures     =============================
   end subroutine cpL2GPData_fileName
 
   ! ------------------------------------------ DiffL2GPData ------------
-  subroutine DiffL2GPData ( L2gp1, L2gp2, Details, stats )
+  subroutine DiffL2GPData ( L2gp1, L2gp2, &
+    & Details, wholeArray, stats, rms, ignoreBadChunks )
     ! Show diff between l2gp1 and l2gp2 down to level of Details
-    ! Assumes fields of each already allocated and have same shape
+    ! Assumes fields of each already allocated
     ! (If not, then why are you trying to show differences?)
+    ! (Couldn't you at least print warning and return if not?)
+    
+    ! Note:
+    ! by default, print arrays of diffs, but not stats nor rms
+    ! If either stats or rms, just print those, but not arrays
+    ! To print stats and arrays, both, turn on wholeArrays and stats
+    ! To print stats, rms, and arrays, both, turn on wholeArrays, rms, stats
+    
+    ! (Is this too complicated? Should we make wholeArrays always on
+    !  by default unless explicitly turned off?)
     ! Dummy arguments
-    type (l2gpData_T), intent(in) ::          L2GP1
-    type (l2gpData_T), intent(in) ::          L2GP2
+    type (l2gpData_T), intent(inout) ::          L2GP1
+    type (l2gpData_T), intent(inout) ::          L2GP2
     integer, intent(in), optional :: DETAILS ! <=0 => Don't diff data fields
     !                                        ! -1 Skip even geolocation fields
     !                                        ! -2 Skip all but name
     !                                        ! >0 Diff even data fields
     !                                        ! Default 1
     logical, intent(in), optional :: STATS   ! if TRUE, just print stats
-
+    logical, intent(in), optional :: RMS     ! if TRUE, just print mean, rms
+    logical, intent(in), optional :: WHOLEARRAY   ! if TRUE, print anyway
+    logical, intent(in), optional :: IGNOREBADCHUNKS   ! if TRUE, ignore
+                                                     ! instances where geod bad
     ! Local variables
     integer :: ierr
     integer :: MYDETAILS
     real(r8) :: FillValue
     integer :: ChunkFillValue
-    logical :: myStats
+    logical :: ShapesDontMatch
+    logical :: badChunks
+    integer :: instance
+    integer :: badInstances
     ! Executable code
     myDetails = 1
     if ( present(details) ) myDetails = details
-    myStats = .false.
-    if ( present(stats) ) myStats = stats    
+    ShapesDontMatch = .false.
+    badChunks = .false.
+    badInstances = 0
       !FillValue = real(l2gp1%MissingValue, r8)
       !ChunkFillValue = int(l2gp1%MissingValue)
 
@@ -2311,88 +2285,127 @@ contains ! =====     Public Procedures     =============================
         call output(L2gp1%nTimes, advance='yes')
         call output(' (2) nTimes = ', advance='no')
         call output(L2gp2%nTimes, advance='yes')
+        ShapesDontMatch = .true.
       endif
       if ( L2gp1%nLevels /= L2gp2%nLevels ) then
         call output(' (1) nLevels = ', advance='no')
         call output(L2gp1%nLevels, advance='yes')
         call output(' (2) nLevels = ', advance='no')
         call output(L2gp2%nLevels, advance='yes')
+        ShapesDontMatch = .true.
       endif
       if ( L2gp1%nFreqs /= L2gp2%nFreqs ) then
         call output(' (1) nFreqs = ', advance='no')
         call output(L2gp1%nFreqs, advance='yes')
         call output(' (2) nFreqs = ', advance='no')
         call output(L2gp2%nFreqs, advance='yes')
+        ShapesDontMatch = .true.
       endif
       if ( myDetails < 0 ) return
+      if ( ShapesDontMatch ) then
+        call output('Skipping further details because shapes dont match',&
+          & advance='yes')
+        return
+      endif
       if ( any(l2gp1%pressures /= l2gp2%pressures)) then
           call dump ( l2gp1%pressures - l2gp2%pressures, &
-            & 'l2gp%pressures (diff)', stats=stats )
+            & 'l2gp%pressures (diff)', stats=stats, rms=rms )
       endif
       if ( any(l2gp1%latitude /= l2gp2%latitude)) then
           call dump ( l2gp1%latitude - l2gp2%latitude, &
-            & 'l2gp%latitude (diff)', stats=stats )
+            & 'l2gp%latitude (diff)', stats=stats, rms=rms )
       endif
       if ( any(l2gp1%longitude /= l2gp2%longitude)) then
           call dump ( l2gp1%longitude - l2gp2%longitude, &
-            & 'l2gp%longitude (diff)', stats=stats )
+            & 'l2gp%longitude (diff)', stats=stats, rms=rms )
       endif
       if ( any(l2gp1%solarTime /= l2gp2%solarTime)) then
         call dump ( l2gp1%solarTime - l2gp2%solarTime, &
-          & 'l2gp%solarTime (diff)', stats=stats )
+          & 'l2gp%solarTime (diff)', stats=stats, rms=rms )
       endif
       if ( any(l2gp1%solarZenith /= l2gp2%solarZenith)) then
         call dump ( l2gp1%solarZenith - l2gp2%solarZenith, &
-          & 'l2gp%solarZenith (diff)', stats=stats )
+          & 'l2gp%solarZenith (diff)', stats=stats, rms=rms )
+        badChunks = .true.
       endif
       if ( any(l2gp1%losAngle /= l2gp2%losAngle)) then
         call dump ( l2gp1%losAngle - l2gp2%losAngle, &
-          & 'l2gp%losAngle (diff)', stats=stats )
+          & 'l2gp%losAngle (diff)', stats=stats, rms=rms )
       endif
       if ( any(l2gp1%geodAngle /= l2gp2%geodAngle)) then
         call dump ( l2gp1%geodAngle - l2gp2%geodAngle, &
-          & 'l2gp%geodAngle (diff)', stats=stats )
+          & 'l2gp%geodAngle (diff)', stats=stats, rms=rms )
+        badChunks = .true.
       endif
       if ( any(l2gp1%time /= l2gp2%time)) then
         call dump ( l2gp1%time - l2gp2%time, &
-          & 'l2gp%time (diff)', stats=stats )
+          & 'l2gp%time (diff)', stats=stats, rms=rms )
+        badChunks = .true.
       endif
       if ( any(l2gp1%chunkNumber /= l2gp2%chunkNumber)) then
         call dump ( l2gp1%chunkNumber - l2gp2%chunkNumber, &
-          & 'l2gp%chunkNumber (diff)', stats=stats )
+          & 'l2gp%chunkNumber (diff)', stats=stats, rms=rms )
       endif
       
       if ( associated(l2gp1%frequency) .and.  associated(l2gp2%frequency)) then
         if ( any(l2gp1%frequency /= l2gp2%frequency)) then
           call dump ( l2gp1%frequency - l2gp2%frequency, &
-            & 'l2gp%frequency (diff)', stats=stats )
+            & 'l2gp%frequency (diff)', stats=stats, rms=rms )
         endif
       endif
       
+      if ( present ( ignoreBadChunks ) ) then
+        badChunks = ignoreBadChunks .and. badChunks
+      else
+        badChunks = .false.
+      endif
       if ( myDetails < 1 ) return
+      ! This is a very bad idea--to redefine arrays in a procedure
+      ! whose ostensible purpose is merely to dump them
+      ! It would be smarter to allocate a temp array and use
+      ! that, remembering to deallocate it before returning
+      if ( badChunks ) then
+        do instance=1, L2gp1%nTimes
+          if ( l2gp1%geodAngle(instance) /= l2gp2%geodAngle(instance) &
+            & .or. &
+            & l2gp1%solarZenith(instance) /= l2gp2%solarZenith(instance) &
+            & .or. &
+            & l2gp1%time(instance) /= l2gp2%time(instance) &
+            & ) then
+            l2gp2%l2gpValue(:,:,instance) = l2gp1%l2gpValue(:,:,instance)
+            l2gp2%l2gpPrecision(:,:,instance) = l2gp1%l2gpPrecision(:,:,instance)
+            l2gp2%status(instance) = l2gp1%status(instance)
+            l2gp2%quality(instance) = l2gp1%quality(instance)
+            badInstances = badInstances + 1
+          endif
+        enddo
+        call output('Number of bad instances of l2gp2 reset to l2gp1 ', advance='no')
+        call output(badInstances, advance='yes')
+      endif
       if ( any(l2gp1%l2gpValue /= l2gp2%l2gpValue)) then
         call dump ( real(l2gp1%l2gpValue - l2gp2%l2gpValue, r8), &
-          & 'l2gp%l2gpValue (diff)', stats=stats )
+          & 'l2gp%l2gpValue (diff)', stats=stats, rms=rms )
           !& 'l2gp%l2gpValue (diff)', FillValue=FillValue )
       endif
       if ( any(l2gp1%l2gpPrecision /= l2gp2%l2gpPrecision)) then
         call dump ( real(l2gp1%l2gpPrecision - l2gp2%l2gpPrecision, r8), &
-          & 'l2gp%l2gpPrecision (diff)', stats=stats )
+          & 'l2gp%l2gpPrecision (diff)', stats=stats, rms=rms )
       endif
       
       if ( any(l2gp1%status /= l2gp2%status)) then
         call dump (l2gp1%status - l2gp2%status, &
-          & 'l2gp%status (diff)', stats=stats )
+          & 'l2gp%status (diff)', stats=stats, rms=rms )
       endif
       if ( any(l2gp1%quality /= l2gp2%quality)) then
         call dump ( l2gp1%quality - l2gp2%quality, &
-          & 'l2gp%quality (diff)', stats=stats )
+          & 'l2gp%quality (diff)', stats=stats, rms=rms )
       endif
       
   end subroutine DiffL2GPData
     
   ! ------------------------------------------ DiffL2GPFiles ------------
-  subroutine DiffL2GPFiles ( file1, file2, Details, stats, swList, showMissing )
+  subroutine DiffL2GPFiles ( file1, file2, &
+    & Details, wholeArray, stats, rms, ignoreBadChunks, swList, showMissing )
     ! Show diff between swaths in file1 and file2 down to level of Details
     ! Dummy arguments
     character (len=*), intent(in) :: file1 ! Name of file 1
@@ -2404,7 +2417,10 @@ contains ! =====     Public Procedures     =============================
     !                                        ! Default 1
     !
     ! The following parameters, if present, will override Details
+    logical, intent(in), optional :: WHOLEARRAY
+    logical, intent(in), optional :: RMS   ! if TRUE, just print mean, rms
     logical, intent(in), optional :: STATS   ! if TRUE, just print stats
+    logical, intent(in), optional :: IGNOREBADCHUNKS
     ! swList currently used only if showMissing is TRUE
     character (len=*), optional, intent(in) :: swList
     logical, intent(in), optional :: showMissing   ! if TRUE, just show which
@@ -2529,7 +2545,9 @@ contains ! =====     Public Procedures     =============================
            & hdfVersion=the_hdfVersion1 )
       call ReadL2GPData ( File2Handle, trim(swath), l2gp2, &
            & hdfVersion=the_hdfVersion2 )
-      call DiffL2GPData(l2gp1, l2gp2, details, stats)
+      call DiffL2GPData(l2gp1, l2gp2, &
+        & details=details, wholeArray=wholeArray, rms=rms, stats=stats, &
+        & ignoreBadChunks=ignoreBadChunks)
       call DestroyL2GPContents ( l2gp1 )
       call DestroyL2GPContents ( l2gp2 )
     enddo
@@ -2991,6 +3009,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.107  2004/06/11 19:07:02  pwagner
+! Fixed small bug in diffl2gpfiles
+!
 ! Revision 2.106  2004/06/09 00:04:51  pwagner
 ! New optional args to diff
 !
