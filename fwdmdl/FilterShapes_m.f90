@@ -9,7 +9,8 @@ module FilterShapes_m
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error
-  use MLSSignals_m, only: GetSignalName, MaxSigLen, Signals, Signal_T
+  use MLSSignals_m, only: GetNameOfSignal, MaxSigLen, Signals, Signal_T
+  use Dump_0, only: Dump
   
   implicit none
 
@@ -98,15 +99,14 @@ contains
       if ( .not. associated(signal_indices) ) &
         call MLSMessage ( MLSMSG_Error, moduleName, &
           & trim(sigName) // " is not a valid signal." )
-      if ( size ( signal_indices ) /= 1 ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & trim(sigName) // " is ambiguous." )
-
+      ! Just take the first one.
       thisShape%signal = signals(signal_indices(1))
       thisShape%signal%sideband = sideband
       numChannels = size(thisShape%signal%frequencies)
       call deallocate_test ( signal_indices, "Signal_Indices", moduleName )
       
+      ! Now need to nullify so this add doesn't hose any previous work
+      nullify ( thisShape%filterShape, thisShape%filterGrid )
       call allocate_test ( thisShape%filterGrid,&
         & numChannels, numFilterPts, &
         & 'thisShape%filterGrid', ModuleName )
@@ -125,6 +125,7 @@ contains
       end do ! i
 
       call AddFilterShapeToDatabase ( filterShapes, thisShape )
+
     end do
 
     if ( toggle(gen) ) then
@@ -203,7 +204,7 @@ contains
     do i = 1, size(filterShapes)
       call output ( i, 4 )
       call output ( ':    Signal = ' )
-      call GetSignalName ( filterShapes(i)%signal%index, sigName )
+      call GetNameOfSignal ( filterShapes(i)%signal, sigName )
       call output ( sigName, advance='yes' )
       call dump ( filterShapes(i)%filterShape, name='FilterShape' )
       call dump ( filterShapes(i)%filterGrid, name='FilterGrid' )
@@ -213,6 +214,9 @@ contains
 end module FilterShapes_m
 
 ! $Log$
+! Revision 1.13  2001/05/16 01:25:02  livesey
+! New version.  Stores thing differently.
+!
 ! Revision 1.12  2001/05/04 00:49:06  livesey
 ! Let destroy quit if nothing to destroy
 !
