@@ -117,7 +117,7 @@ program INIT_GEN
       pfx = line(3:)
     else if ( line(1:1) == '-' ) then
       call getarg ( hp, line )
-      print *, 'Usage: ', trim(line), ' [options] out_parm out_add index_name'
+      print *, 'Usage: ', trim(line), ' [options] out_parm [out_add index_name]'
       print *, ' Options:  -c: Capitalize entire name in declarations'
       print *, '           -f[ ]first_name -- The expression from which the'
       print *, '             first name gets its value.  Default 1.'
@@ -132,6 +132,8 @@ program INIT_GEN
       print *, '           -p[ ]prefix -- Prefix for variable names.'
       print *, '           -<anything else>: This output.'
       print *, ' out_parm:   The file to store the generated parameter declarations.'
+      print *, '                (Mandatory)'
+      print *, '    The next two are co-optional: if one given then both must be given'
       print *, ' out_add:    The file to store the generated references to add_ident.'
       print *, ' index_name: The name of the array in which to store the outputs'
       print *, '             of add_ident.'
@@ -273,7 +275,7 @@ program INIT_GEN
     if ( writeheader ) then
       write ( 11, '(a, a)' ) '! File name: ', trim(Out_add)
       do i = 1, size(header)
-        write ( 11, '(a, a)' ) '! ', header(i)
+        write ( 11, '(a, a)' ) '! ', trim(header(i))
       end do
     end if
 
@@ -314,6 +316,9 @@ contains
 end program INIT_GEN
 
 ! $Log$
+! Revision 1.9  2001/10/12 22:13:44  vsnyder
+! Put input file name in comment in output file
+!
 ! Revision 1.8  2001/10/12 22:03:09  vsnyder
 ! Generate only the parameters if the add_ident file isn't specified
 !
