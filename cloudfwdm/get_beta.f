@@ -50,12 +50,12 @@ C------------------------------------------------------------------------
       ELSE IF (RH .EQ. 100.) THEN
          CALL RHtoEV(PB,T,100.,VP)     ! RH HERE IS 100% RELATIVE HUMIDITY 
          P = PB-VP
-         VMR_H2O = VP/P
+         VMR_H2O = VP/(max(1.e-9, P))
       END IF
 
       VMR_O2 = 0.209476
       FF     = F*1000.                 ! CONVERT F TO MHz
-      ZP     = -ALOG10(P)              ! CONVERT P(hPa) TO ZP
+      ZP     = -ALOG10( max(1.e-9,P) ) ! CONVERT P(hPa) TO ZP
       TT     = 300./T
 
       ABSC=0.
