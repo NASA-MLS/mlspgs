@@ -600,7 +600,8 @@ contains ! =====     Public Procedures     =============================
   function ANY_GOOD_SIGNALDATA ( signal, sideband, l1bInfo, Chunk )  result (answer)
   ! Read precision of signal
   ! if all values < 0.0, return FALSE
-  ! else return true
+  ! if no precision data in file, return FALSE
+  ! otherwise return true
   ! Arguments
     integer, intent(in) :: signal
     integer, intent(in) :: sideband
@@ -611,17 +612,27 @@ contains ! =====     Public Procedures     =============================
     integer :: FileID, flag, noMAFs
     character(len=127)  :: namestring
     type (l1bData_T) :: L1BDATA
+    integer :: hdfVersion
 
   ! Executable
+    hdfVersion = mls_hdf_version(trim(l1bInfo%L1BOAFileName), LEVEL1_HDFVERSION)
+    if ( hdfversion <= 0 ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Illegal hdf version for l1boa file (file missing or non-hdf?)' )
     call GetSignalName ( signal, nameString, &                   
     & sideband=sideband, noChannels=.TRUE. )                     
-    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString )
+    nameString = AssembleL1BQtyName ( nameString, hdfVersion, .false. )
     nameString = trim(nameString) // PRECISIONSUFFIX
+    fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, hdfVersion )
+    if ( fileID <= 0 ) then
+      answer = .false.
+      return
+    endif
     ! print *, 'About to read ', trim(nameString)
     ! print *, 'From Fileid ', fileID
       call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
         & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-        & NeverFail= .true., hdfVersion=LEVEL1_HDFVERSION )
+        & NeverFail= .true., hdfVersion=hdfVersion )
       if (flag == 0) then
         answer = .not. all (l1bData%DpField < 0._r8)
         call deallocate_test(l1bData%DpField, trim(nameString), ModuleName)
@@ -1078,6 +1089,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.87  2003/02/12 21:53:48  pwagner
+! Fix to errant ANY_GOOD_SIGNALDATA in case of hdf5 files
+!
 ! Revision 2.86  2003/02/07 03:42:50  vsnyder
 ! Fill NATURAL_UNITS on first call only -- it's a SAVE variable now
 !
