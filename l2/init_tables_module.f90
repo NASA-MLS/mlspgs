@@ -750,6 +750,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_channels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_cloudchannels, t+t_numeric, t+t_numeric_range, n+n_field_type, &
              begin, f+f_height, t+t_numeric_range, n+n_field_type, &
+             begin, f+f_cloudHeight, t+t_numeric_range, n+n_field_type, &
              begin, f+f_cloudRadianceCutoff, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -943,6 +944,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.277  2003/02/05 04:06:18  dwu
+! add cloudheight
+!
 ! Revision 2.276  2003/01/30 17:28:35  jonathan
 ! add logical incl_cld
 !
