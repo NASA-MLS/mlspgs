@@ -2161,16 +2161,16 @@ contains ! =====     Public Procedures     =============================
       if ( quadrature ) then 
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
-            quantity%values ( ind, : ) = quantity%values ( ind, : ) + &
-              & baselineQuantity%values ( chan, : )
+            quantity%values ( ind, : ) = sqrt ( quantity%values ( ind, : )**2 + &
+              & baselineQuantity%values ( chan, : )**2 )
             ind = ind + 1
           end do
         end do
       else
         do mif = 1, quantity%template%noSurfs
           do chan = 1, quantity%template%noChans
-            quantity%values ( ind, : ) = sqrt ( quantity%values ( ind, : )**2 + &
-              & baselineQuantity%values ( chan, : )**2 )
+            quantity%values ( ind, : ) = quantity%values ( ind, : ) + &
+              & baselineQuantity%values ( chan, : )
             ind = ind + 1
           end do
         end do
@@ -6914,6 +6914,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.289  2004/09/28 22:26:46  livesey
+! Bug fix in applyBaseline, had quadrature handled the wrong way round.
+!
 ! Revision 2.288  2004/09/27 20:11:29  livesey
 ! Added stuff for reading and applying L1BMAFBaseline.  This includes new
 ! suffix argument to L1B reading.
