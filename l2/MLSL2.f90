@@ -179,8 +179,9 @@ program MLSL2
       else if ( line(3+n:7+n) == 'check ' ) then
         checkl2cf = switch
       else if ( line(3+n:7+n) == 'chunk' ) then
-        copyArg=.false.
+        call AccumulateSlaveArguments ( line )
         if ( line(8+n:) /= ' ' ) then
+          copyArg = .false.
           line(:7+n) = ' '
         else
           i = i + 1
@@ -665,6 +666,10 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.84  2002/10/08 17:41:20  livesey
+! Now passes chunk argument to slaves if present.  Needed for
+! fwmParallel mode.
+!
 ! Revision 2.83  2002/10/05 00:44:14  livesey
 ! Included the FMWParallel stuff
 !
