@@ -1,4 +1,4 @@
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -31,6 +31,16 @@ module HDFEOS               ! F90 interface to HDF-EOS.
     integer function GDCLOSE ( FILE_ID )
       integer, intent(in) :: FILE_ID
     end function GDCLOSE
+
+    integer function GDCREATE ( GDFID, GRIDNAME,&
+      & XDIMSIZE,YDIMSIZE,UPLEFT,LOWRIGHT )
+      integer, intent(in) :: GDFID
+      character (len=*), intent(in) :: GRIDNAME
+      integer,intent(in)::XDIMSIZE
+      integer,intent(in)::YDIMSIZE
+      double precision,dimension(2),intent(in)::UPLEFT
+      double precision,dimension(2),intent(in)::LOWRIGHT
+    end function GDCREATE
 
     integer function GDDETACH ( GRIDID )
       integer, intent(in) :: GRIDID
@@ -177,6 +187,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.15  2003/06/06 22:48:24  pwagner
+! Added interface for gdcreate
+!
 ! Revision 2.14  2002/10/08 00:09:09  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
