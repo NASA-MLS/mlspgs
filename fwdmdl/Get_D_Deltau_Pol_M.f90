@@ -74,7 +74,6 @@ contains
     use Opacity_m, only: Opacity
     use Physics, only: H_OVER_K
     use SpectroscopyCatalog_m, only: CATALOG_T
-use toggles, only: Switches
 
   ! Arguments
     ! SVE == # of state vector elements
@@ -185,25 +184,17 @@ use toggles, only: Switches
           where ( beta_0 /= 0.0 )
             r0m = log(beta_0/beta_m) / l_ttm
             rp0 = log(beta_p/beta_0) / l_tpt
+            n = 0.25 * ( r0m + 2.0 * rpm + rp0 )
           elsewhere
-            r0m = rpm
-            rp0 = rpm
+            n = rpm
           end where
         elsewhere ( beta_m /= 0.0 .and. beta_0 /= 0.0 )
-          r0m = log(beta_0/beta_m) / l_ttm
-          rpm = r0m
-          rp0 = r0m
+          n = log(beta_0/beta_m) / l_ttm
         elsewhere ( beta_0 /= 0.0 .and. beta_p /= 0.0 )
-          rp0 = log(beta_p/beta_0) / l_tpt
-          rpm = rp0
-          r0m = rp0
+          n = log(beta_p/beta_0) / l_tpt
         elsewhere
-          rp0 = 0.0
-          rpm = 0.0
-          r0m = 0.0
+          n = 0.0
         end where
-          
-        n = 0.25 * ( r0m + 2.0 * rpm + rp0 )
 
         ! not quite D alpha, because we haven't multiplied by tanh or
         ! divided by T.
@@ -333,6 +324,9 @@ use toggles, only: Switches
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.9  2003/06/27 22:04:50  vsnyder
+! Simplify calculation of N
+!
 ! Revision 2.8  2003/06/13 23:54:41  vsnyder
 ! Include nonpolarized d_delta_dT even if there's no polarized stuff
 !
