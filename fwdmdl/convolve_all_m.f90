@@ -24,13 +24,14 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,atmos_der, &
+Subroutine convolve_all (ptan,atmospheric,n_sps,temp_der,atmos_der, &
            spect_der,tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,band,  &
            center_angle,fft_pts,i_raw, k_temp, k_atmos, k_spect_dw,      &
            k_spect_dn,k_spect_dnu,spect_atmos,no_tan_hts,k_info_count,  &
            i_star_all,k_star_all,k_star_info,no_t,no_phi_t,no_phi_f,     &
            spectroscopic,t_z_basis,XLAMDA,AAAP,D1AAP,D2AAP,IAS,Ier)
 !
+    real(r8), dimension(:), intent(IN) :: ptan
     Logical, intent(IN) :: temp_der,atmos_der,spect_der
 !
     integer(i4), intent(IN) :: no_t, n_sps, no_tan_hts, band, &
@@ -49,7 +50,6 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,atmos_der, &
                 k_spect_dn(Nptg,mxco,mnp,Nsps),  &
                 k_spect_dnu(Nptg,mxco,mnp,Nsps)
 !
-    type(limb_press), intent(IN) :: PTG_PRESS
     type(atmos_comp), intent(IN) :: ATMOSPHERIC(*)
     type (spectro_param), intent(IN) :: SPECTROSCOPIC(*)
 !
@@ -87,8 +87,8 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,atmos_der, &
 !
     kc = 0
     ki = 0
-    j = ptg_press%no_lin_values
-    PtP(1:j) = dble(ptg_press%lin_val(1:j))
+    j = size(ptan)
+    PtP(1:j) = ptan
 !
 ! Compute the convolution of the mixed radiances
 !
@@ -103,7 +103,8 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,atmos_der, &
 !
 ! Find out if user wants pointing derivatives
 !
-    if (ptg_press%der_calc(band)) then
+    if (.true.) then                    ! Add a condition later !??? NJL
+      
 !
 !  Get 'Ntr' pressures associated with the fft_angles:
 !
@@ -138,7 +139,7 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,atmos_der, &
 ! Interpolate the output values and store the radiances derivative
 ! with respect to pointing pressures in: term
 !
-      j = ptg_press%no_lin_values
+      j = size(ptan)
       Call Cspline_der(fft_press,PtP,Rad,Sc1,term,k,j)
 !
 ! Derivatives wanted,find index location k_star_all and write the derivative
@@ -383,6 +384,9 @@ Subroutine convolve_all (ptg_press,atmospheric,n_sps,temp_der,atmos_der, &
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.5  2001/03/07 23:45:14  zvi
+! Adding logical flags fro Temp, Atmos & Spect. derivatives
+!
 ! Revision 1.1  2000/06/21 21:56:14  zvi
 ! First version D.P.
 !

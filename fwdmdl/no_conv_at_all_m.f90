@@ -21,12 +21,13 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,temp_der,atmos_der,&
+Subroutine no_conv_at_all (ptan,n_sps,tan_press,band,temp_der,atmos_der,&
            spect_der,i_raw,k_temp,k_atmos, k_spect_dw, k_spect_dn,           &
            k_spect_dnu, spect_atmos,no_tan_hts,k_info_count,i_star_all,      &
            k_star_all, k_star_info,no_t,no_phi_t,no_phi_f,t_z_basis,         &
            atmospheric,spectroscopic)
 !
+    real(r8), intent(in), dimension(:) :: ptan
     Logical, intent(IN) :: temp_der,atmos_der,spect_der
 !
     integer(i4), intent(IN) :: no_t,n_sps,no_tan_hts,band,no_phi_t
@@ -40,7 +41,6 @@ Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,temp_der,atmos_der,&
                 k_spect_dn(Nptg,mxco,mnp,Nsps),  &
                 k_spect_dnu(Nptg,mxco,mnp,Nsps)
 !
-    type(limb_press), intent(IN) :: PTG_PRESS
     type(atmos_comp), intent(IN) :: ATMOSPHERIC(*)
     type (spectro_param), intent(IN) :: SPECTROSCOPIC(*)
 !
@@ -72,8 +72,8 @@ Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,temp_der,atmos_der,&
     K_INFO_COUNT = 0
 !
     k = no_tan_hts
-    j = ptg_press%no_lin_values
-    PtP(1:j) = dble(ptg_press%lin_val(1:j))
+    j = size(ptan)
+    PtP(1:j) = ptan
     Call Cspline(tan_press,PtP,i_raw,i_star_all,k,j)
 !
     if(.not. ANY((/temp_der,atmos_der,spect_der/))) Return
@@ -217,6 +217,9 @@ Subroutine no_conv_at_all (ptg_press,n_sps,tan_press,band,temp_der,atmos_der,&
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.2  2001/03/07 23:45:15  zvi
+! Adding logical flags fro Temp, Atmos & Spect. derivatives
+!
 ! Revision 1.1  2000/06/21 21:56:14  zvi
 ! First version D.P.
 !
