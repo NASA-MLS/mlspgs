@@ -9,6 +9,7 @@ module RAD_TRAN_M
   implicit NONE
   private
   public :: RAD_TRAN, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
+  private ::  Get_Del_Zeta_All, Get_Do_Calc
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -23,8 +24,8 @@ contains
 !------------------------------------------------------  Rad_tran  -----
 ! This is the radiative transfer model, radiances only !
 
-  subroutine Rad_tran ( indicies_c, gl_inds, frq, s_temp, e_rflty, z_path, &
-                     &  t_path, alpha_path_c, ref_cor, do_gl, incoptdepth, &
+  subroutine Rad_tran ( indices_c, gl_inds, frq, s_temp, e_rflty, z_path_c, &
+                     &  t_path_c, alpha_path_c, ref_cor, do_gl, incoptdepth, &
                      &  alpha_path_gl, ds_dh_gl, dh_dz_gl, t_script, tau, &
                      &  rad, i_stop )
 
@@ -34,29 +35,29 @@ contains
 
   ! inputs
 
-    integer(ip), intent(in) :: indicies_c(:) ! coarse grid indicies
+    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
-    real(r8), intent(in) :: frq ! calculation frequency in MHz.
-    real(rp), intent(in) :: s_temp ! farside boundary temperature
-  !                                usually cosmic space (2.7K).
-    real(rp), intent(in) :: e_rflty ! earth reflectivity value (0--1).
-    real(rp), intent(in) :: z_path(:) ! path -log(P) on input grid.
-    real(rp), intent(in) :: t_path(:) ! path T(K) on input grid.
-    real(rp), intent(in) :: alpha_path_c(:) ! absorption coefficient
-  !                         on input grid.
-    real(rp), intent(in) :: ref_cor(:) ! refracted to unrefracted path
-  !                                      length ratios.
-    logical, intent(in) :: do_gl(:) ! path flag indicating where to do
-  !                                   gl integrations.
+    real(r8), intent(in) :: frq              ! calculation frequency in MHz.
+    real(rp), intent(in) :: s_temp           ! farside boundary temperature
+  !                                            usually cosmic space (2.7K).
+    real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
+    real(rp), intent(in) :: z_path_c(:)      ! path -log(P) on coarse grid.
+    real(rp), intent(in) :: t_path_c(:)      ! path T(K) on coarse grid.
+    real(rp), intent(in) :: alpha_path_c(:)  ! absorption coefficient
+  !                                            on coarse grid.
+    real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
+  !                                            length ratios.
+    logical, intent(in) :: do_gl(:)          ! path flag indicating where to do
+  !                                            gl integrations.
     real(rp), intent(inout) :: incoptdepth(:) ! incremental path opacities
   !                            from one-sided layer calculation on output.
   !                            it is the full integrated layer opacity.
     real(rp), intent(in) :: alpha_path_gl(:) ! absorption coefficient on gl
-  !                                        grid.
-    real(rp), intent(in) :: ds_dh_gl(:) ! path length wrt height derivative on
-  !                                        gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:) ! path height wrt zeta derivative on
-  !                                       gl grid.
+  !                                            grid.
+    real(rp), intent(in) :: ds_dh_gl(:)      ! path length wrt height
+  !                                            derivative on gl grid.
+    real(rp), intent(in) :: dh_dz_gl(:)      ! path height wrt zeta derivative
+  !                                            on gl grid.
   ! outputs
 
     real(rp), intent(out) :: t_script(:) ! differential temperatures (K).
@@ -66,30 +67,32 @@ contains
 
   ! Internals
 
+    logical :: Do_It                   ! Saw one true element of Do_GL
     integer(ip) :: i, p_i, n_path
     real(rp) :: gl_delta(size(gl_inds)/ng), del_zeta(size(gl_inds)/ng)
     integer(ip) ::  more_inds(size(gl_inds)/ng)
 
   ! Begin code
 
-    call two_d_t_script ( t_path(indicies_c), s_temp, frq, t_script )
-
   ! see if anything needs to be gl-d
 
-    if ( any(do_gl) ) then
-      n_path = size(indicies_c)
-      i = 1
-      do p_i = 1, n_path
-        if ( do_gl(p_i) ) then
-          more_inds(i) = p_i
-          if ( p_i > n_path/2 ) then
-            del_zeta(i) = z_path(indicies_c(p_i+1)) - z_path(indicies_c(p_i))
-          else
-            del_zeta(i) = z_path(indicies_c(p_i-1)) - z_path(indicies_c(p_i))
-          end if
-          i = i + 1
+    do_it = .false.
+    n_path = size(indices_c)
+    i = 1
+    do p_i = 1, n_path
+      do_it = .true.
+      if ( do_gl(p_i) ) then
+        more_inds(i) = p_i
+        if ( p_i > n_path/2 ) then
+          del_zeta(i) = z_path_c(p_i+1) - z_path_c(p_i)
+        else
+          del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
         end if
-      end do
+        i = i + 1
+      end if
+    end do
+
+    if ( do_it ) then ! Saw one true element of Do_GL
 
       call path_opacity ( del_zeta, &
                 &  alpha_path_c(more_inds), &
@@ -102,6 +105,8 @@ contains
 
     incoptdepth = ref_cor * incoptdepth
 
+    call two_d_t_script ( t_path_c, s_temp, frq, t_script )
+
     call scrt_dn ( t_script, e_rflty, incoptdepth, tau, rad, i_stop )
 
   end subroutine Rad_tran
@@ -109,54 +114,53 @@ contains
 !--------------------------------------------------  drad_tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
-  subroutine DRad_tran_df ( indicies_c, gl_inds, z_path, Grids_f, &
+  subroutine DRad_tran_df ( indices_c, gl_inds, z_path_c, Grids_f, &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f, &
                          &  beta_path_f, do_gl, del_s, ref_cor, ds_dh_gl, &
-                         &  dh_dz_gl, t_script, tau, i_stop, drad_df, ptg_i, &
-                         &  frq_i)
+                         &  dh_dz_gl, t_script, tau, i_stop, drad_df )
 
     use DO_DELTA_M, ONLY: PATH_OPACITY
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
+    use Where_M, only: Where
 
 ! Inputs
 
-    integer(ip), intent(in) :: indicies_c(:) ! coarse grid indicies
+    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
-    real(rp), intent(in) :: z_path(:) ! -log(P) on main grid.
-    type (Grids_T), intent(in) :: Grids_f ! All the coordinates
+    real(rp), intent(in) :: z_path_c(:)      ! -log(P) on main grid.
+    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
     real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
 !                                              on coarse grid.
-    real(rp), intent(in) :: eta_zxp_f(:,:) ! representation basis function.
-    real(rp), intent(in) :: sps_path(:,:) ! Path species function.
-    logical, intent(in) :: do_calc_f(:,:) ! A logical indicating where the
-!                                           representation basis function is
-!                                           not zero.
+    real(rp), intent(in) :: eta_zxp_f(:,:)   ! representation basis function.
+    real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
+    logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
+!                                              representation basis function is
+!                                              not zero.
     real(rp), intent(in) :: beta_path_f(:,:) ! cross section for each species
 !                                              on gl grid.
-    logical, intent(in) :: do_gl(:) ! A logical indicating where to do gl
-!                                     integrations
-    real(rp), intent(in) :: ref_cor(:) ! refracted to unrefracted path
-!                                        length ratios.
-    real(rp), intent(in) :: del_s(:) ! unrefracted path length.
-    real(rp), intent(in) ::  ds_dh_gl(:) ! path length wrt height derivative on
-!                                          gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:) ! path height wrt zeta derivative on
-!                                         gl grid.
-    real(rp), intent(in) :: t_script(:) ! differential temperatures (K).
-    real(rp), intent(in) :: tau(:) ! transmission function.
-    integer(ip), intent(in) :: i_stop ! path stop index
-    integer(ip), intent(in) :: ptg_i,frq_i ! debugger statements
+    logical, intent(in) :: do_gl(:)          ! A logical indicating where to
+!                                              do gl integrations
+    real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
+!                                              length ratios.
+    real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
+    real(rp), intent(in) ::  ds_dh_gl(:)     ! path length wrt height derivative
+!                                              on gl grid.
+    real(rp), intent(in) :: dh_dz_gl(:)      ! path height wrt zeta derivative
+!                                              on gl grid.
+    real(rp), intent(in) :: t_script(:)      ! differential temperatures (K).
+    real(rp), intent(in) :: tau(:)           ! transmission function.
+    integer(ip), intent(in) :: i_stop        ! path stop index
 
 ! Outputs
 
-    real(rp), intent(out) :: drad_df(:)    ! derivative of radiances wrt
-!                                            mixing ratio statevector
-!                                            element. (K)
+    real(rp), intent(out) :: drad_df(:)      ! derivative of radiances wrt
+!                                              mixing ratio state vector
+!                                              element. (K)
 ! Internals
 
-    integer(ip) :: sv_i, sps_i, n_inds, i, j, k, l, i_start, no_mol
-    integer(ip) :: n_path, p_i, no_to_gl, mid
+    integer(ip) :: sv_i, sps_i, n_inds, i_start, no_mol
+    integer(ip) :: no_to_gl
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part_of_all_inds_B
@@ -174,8 +178,6 @@ contains
 ! Begin code
 
     no_mol = ubound(Grids_f%l_z,1)
-    n_path = size(tau)
-    mid = n_path / 2
 
     drad_df(:) = 0.0_rp
 
@@ -187,15 +189,10 @@ contains
 
         if ( .not. Grids_f%deriv_flags(sv_i) ) cycle
 
-        i = 1
         d_delta_df = 0.0_rp
-        do_calc = do_calc_f(indicies_c,sv_i)
-        do p_i = 1 , n_path
-          if ( do_gl(p_i) ) then
-            if ( any(do_calc_f(gl_inds(i:i+ng-1),sv_i))) do_calc(p_i)=.true.
-            i = i + Ng
-          end if
-        end do
+
+        call get_do_calc ( do_calc_f(indices_c,sv_i), do_calc_f(gl_inds,sv_i), &
+          & do_gl, do_calc )
 
 ! find where the non zeros are along the path
 
@@ -205,111 +202,63 @@ contains
           inds => inds_B(1:n_inds)
           singularity => singularity_B(1:n_inds)
 
-          i = 1
-          do p_i = 1 , n_path
-            if ( do_calc(p_i) ) then
-              inds(i) = p_i
-              i = i + 1
-            end if
-          end do
+          call where ( do_calc, inds )
+
+          no_to_gl = count(do_gl(inds))
+
+          if ( no_to_gl > 0 ) then
+
+! see if anything needs to be gl-d
+
+            all_inds => all_inds_B(1:ng*no_to_gl)
+            gl_delta => gl_delta_B(1:no_to_gl)
+            del_zeta => del_zeta_B(1:no_to_gl)
+            more_inds => more_inds_B(1:no_to_gl)
+
+            call get_del_zeta_all ( do_gl, do_calc, z_path_c, &
+              &                     more_inds, all_inds, del_zeta )
+          end if
 
           if ( grids_f%lin_log(sps_i) ) then
 
             singularity = beta_path_c(inds,sps_i) &
-                      & * eta_zxp_f(indicies_c(inds),sv_i) &
-                      & * sps_path(indicies_c(inds),sps_i)
+                      & * eta_zxp_f(indices_c(inds),sv_i) &
+                      & * sps_path(indices_c(inds),sps_i)
             d_delta_df(inds) = singularity * del_s(inds)
 
-            no_to_gl = count(do_gl(inds))
             if ( no_to_gl > 0 ) then
 
-! see if anything needs to be gl-d
-
-              all_inds => all_inds_B(1:ng*no_to_gl)
-              gl_delta => gl_delta_B(1:no_to_gl)
-              del_zeta => del_zeta_B(1:no_to_gl)
-              more_inds => more_inds_B(1:no_to_gl)
-
-              i = 1
-              j = 1
-              l = 1
-              do p_i = 1 , n_path
-                if ( do_gl(p_i) ) then
-                  if ( do_calc(p_i) ) then
-                    more_inds(i) = p_i
-                    all_inds(j:j+ng-1) = l + (/(k-1,k=1,ng)/)
-                    if ( p_i > mid ) then
-                      del_zeta(i) = z_path(indicies_c(p_i+1)) &
-                                & - z_path(indicies_c(p_i))
-                    else
-                      del_zeta(i) = z_path(indicies_c(p_i-1)) &
-                                & - z_path(indicies_c(p_i))
-                    end if
-                    i = i + 1
-                    j = j + Ng
-                  end if
-                  l = l + Ng
-                end if
-              end do
-
-              call path_opacity ( del_zeta, &
-                   pack(singularity,do_gl(inds)),     &
-                   beta_path_f(all_inds,sps_i) &
-                 & * eta_zxp_f(gl_inds(all_inds),sv_i) &
+              call path_opacity ( del_zeta,             &
+                 & pack(singularity,do_gl(inds)),       &
+                 & beta_path_f(all_inds,sps_i)          &
+                 & * eta_zxp_f(gl_inds(all_inds),sv_i)  &
                  & * sps_path(gl_inds(all_inds),sps_i), &
-                 &   ds_dh_gl(gl_inds(all_inds)), &
-                 &   dh_dz_gl(gl_inds(all_inds)), gl_delta )
+                 & ds_dh_gl(gl_inds(all_inds)),         &     
+                 & dh_dz_gl(gl_inds(all_inds)), gl_delta )  
+
               d_delta_df(more_inds) = d_delta_df(more_inds) + gl_delta
 
             end if
 
-            d_delta_df(inds) = ref_cor(inds)*d_delta_df(inds) &
+            d_delta_df(inds) = ref_cor(inds) * d_delta_df(inds) &
                              / exp(grids_f%values(sv_i))
 
           else
 
             singularity = beta_path_c(inds,sps_i) &
-                      & * eta_zxp_f(indicies_c(inds),sv_i)
+                      & * eta_zxp_f(indices_c(inds),sv_i)
+
             d_delta_df(inds) = singularity * del_s(inds)
 
-            no_to_gl = count(do_gl(inds))
             if ( no_to_gl > 0 ) then
 
-! see if anything needs to be gl-d
-
-              all_inds => all_inds_B(1:ng*no_to_gl)
-              gl_delta => gl_delta_B(1:no_to_gl)
-              del_zeta => del_zeta_B(1:no_to_gl)
-              more_inds => more_inds_B(1:no_to_gl)
-
-              i = 1
-              j = 1
-              l = 1
-              do p_i = 1 , n_path
-                if ( do_gl(p_i) ) then
-                  if ( do_calc(p_i) ) then
-                    more_inds(i) = p_i
-                    all_inds(j:j+ng-1) = l + (/(k-1,k=1,ng)/)
-                    if ( p_i > mid ) then
-                      del_zeta(i) = z_path(indicies_c(p_i+1)) &
-                                & - z_path(indicies_c(p_i))
-                    else
-                      del_zeta(i) = z_path(indicies_c(p_i-1)) &
-                                & - z_path(indicies_c(p_i))
-                    end if
-                    i = i + 1
-                    j = j + Ng
-                  end if
-                  l = l + Ng
-                end if
-              end do
-
-              call path_opacity(del_zeta, &
-                   pack(singularity,do_gl(inds)), &
-                   beta_path_f(all_inds,sps_i) &
+              call path_opacity( del_zeta,              &
+                 & pack(singularity,do_gl(inds)),       &
+                 & beta_path_f(all_inds,sps_i)          &
                  & * eta_zxp_f(gl_inds(all_inds),sv_i), &
-                 & ds_dh_gl(gl_inds(all_inds)),dh_dz_gl(gl_inds(all_inds)), &
-                 & gl_delta)
+                 & ds_dh_gl(gl_inds(all_inds)),         &
+                 & dh_dz_gl(gl_inds(all_inds)), gl_delta)
+
               d_delta_df(more_inds) = d_delta_df(more_inds) + gl_delta
 
             end if
@@ -338,55 +287,54 @@ contains
   subroutine DRad_tran_dx ( z_path_c, Grids_f, dbeta_path_c, eta_zxp_f_c, &
                          &  sps_path_c, do_calc_f_c, dbeta_path_f, eta_zxp_f_f, &
                          &  sps_path_f, do_calc_f_f, do_gl, del_s, ref_cor,     &
-                         &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dx, &
-                         &  ptg_i, frq_i )
+                         &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dx )
 
     use DO_DELTA_M, ONLY: PATH_OPACITY
     use LOAD_SPS_DATA_M, ONLY: GRIDS_T
     use SCRT_DN_M, ONLY: GET_DSCRT_NO_T_DN
+    use Where_M, only: Where
 
 ! Inputs
 
-    real(rp), intent(in) :: z_path_c(:) ! -log(P) on main grid.
-    type (Grids_T) :: Grids_f           ! All the coordinates
+    real(rp), intent(in) :: z_path_c(:)      ! -log(P) on main grid.
+    type (Grids_T) :: Grids_f                ! All the coordinates
     real(rp), intent(in) :: dbeta_path_c(:,:) ! derivative of beta wrt dx
 !                                              on main grid.
     real(rp), intent(in) :: eta_zxp_f_c(:,:) ! representation basis function
 !                                              main grid.
-    real(rp), intent(in) :: sps_path_c(:,:) ! species function on  main grid.
-    logical, intent(in) :: do_calc_f_c(:,:) ! A logical indicating where the
-!                                           representation basis function is
-!                                           not zero on main grid.
+    real(rp), intent(in) :: sps_path_c(:,:)  ! species function on  main grid.
+    logical, intent(in) :: do_calc_f_c(:,:)  ! A logical indicating where the
+!                                              representation basis function is
+!                                              not zero on main grid.
     real(rp), intent(in) :: dbeta_path_f(:,:) ! derivative of beta wrt dx
 !                                              on gl grid.
     real(rp), intent(in) :: eta_zxp_f_f(:,:) ! representation basis function
 !                                              gl grid.
-    real(rp), intent(in) :: sps_path_f(:,:) ! species function on gl grid.
-    logical, intent(in) :: do_calc_f_f(:,:) ! A logical indicating where the
-!                                           representation basis function is
-!                                           not zero on main grid.
-    logical, intent(in) :: do_gl(:) ! A logical indicating where to do gl
-!                                     integrations
-    real(rp), intent(in) :: ref_cor(:) ! refracted to unrefracted path
-!                                        length ratios.
-    real(rp), intent(in) :: del_s(:) ! unrefracted path length.
-    real(rp), intent(in) ::  ds_dh_gl(:) ! path length wrt height derivative on
-!                                          gl grid.
-    real(rp), intent(in) :: dh_dz_gl(:) ! path height wrt zeta derivative on
-!                                         gl grid.
-    real(rp), intent(in) :: t_script(:) ! differential temperatures (K).
-    real(rp), intent(in) :: tau(:) ! transmission function.
-    integer(ip), intent(in) :: i_stop ! path stop index
-    integer(ip), intent(in) :: ptg_i,frq_i ! debugger statements
+    real(rp), intent(in) :: sps_path_f(:,:)  ! species function on gl grid.
+    logical, intent(in) :: do_calc_f_f(:,:)  ! A logical indicating where the
+!                                              representation basis function is
+!                                              not zero on main grid.
+    logical, intent(in) :: do_gl(:)          ! A logical indicating where to
+!                                              do rec_tan_inds gl integrations
+    real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
+!                                              length ratios.
+    real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
+    real(rp), intent(in) ::  ds_dh_gl(:)     ! path length wrt height derivative
+!                                              on gl grid.
+    real(rp), intent(in) :: dh_dz_gl(:)      ! path height wrt zeta derivative on
+!                                              gl grid.
+    real(rp), intent(in) :: t_script(:)      ! differential temperatures (K).
+    real(rp), intent(in) :: tau(:)           ! transmission function.
+    integer(ip), intent(in) :: i_stop        ! path stop index
 
 ! Outputs
 
-    real(rp), intent(out) :: drad_dx(:)    ! derivative of radiances wrt x
-!                                            statevector element. (K)
+    real(rp), intent(out) :: drad_dx(:)      ! derivative of radiances wrt x
+!                                              state vector element. (K)
 ! Internals
 
-    integer(ip) :: sv_i, sv_j, sps_i, n_inds, i, j, k, l, i_start, no_mol
-    integer(ip) :: n_path, p_i, no_to_gl, mid
+    integer(ip) :: sv_i, sv_j, sps_i, n_inds, i_start, no_mol
+    integer(ip) :: no_to_gl
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
     integer(ip), pointer :: all_inds(:)  ! all_inds => part_of_all_inds_B
@@ -405,8 +353,6 @@ contains
 ! Begin code
 
     no_mol = ubound(grids_f%l_z,1)
-    n_path = size(tau)
-    mid = n_path / 2
 
     sv_i = 0
     drad_dx(:) = 0.0_rp
@@ -419,15 +365,8 @@ contains
         sv_i = sv_i + 1
         d_delta_dx = 0.0_rp
 
-        do_calc = do_calc_f_c(:,sv_i)
-
-        i = 1
-        do p_i = 1 , n_path
-          if ( do_gl(p_i) ) then
-            if ( any(do_calc_f_f(i:i+Ng-1,sv_i))) do_calc(p_i) = .true.
-            i = i + Ng
-          end if
-        end do
+        call get_do_calc ( do_calc_f_c(:,sv_i), do_calc_f_f(:,sv_i), do_gl, &
+          & do_calc )
 
 ! find where the non zeros are along the path
 
@@ -437,13 +376,7 @@ contains
           inds => inds_B(1:n_inds)
           singularity => singularity_B(1:n_inds)
 
-          i = 1
-          do p_i = 1 , n_path
-            if ( do_calc(p_i) ) then
-              inds(i) = p_i
-              i = i + 1
-            end if
-          end do
+          call where ( do_calc, inds )
 
           singularity = dbeta_path_c(inds,sps_i) * eta_zxp_f_c(inds,sv_i)  &
                      &  * sps_path_c(inds,sps_i)
@@ -459,25 +392,8 @@ contains
             gl_delta => gl_delta_B(1:no_to_gl)
             del_zeta => del_zeta_B(1:no_to_gl)
 
-            i = 1
-            j = 1
-            l = 1
-            do p_i = 1 , n_path
-              if ( do_gl(p_i) ) then
-                if ( do_calc(p_i) ) then
-                  more_inds(i) = p_i
-                  all_inds(j:j+Ng-1) = l + (/(k-1,k=1,Ng)/)
-                  if ( p_i > mid ) then
-                    del_zeta(i) = z_path_c(p_i+1) - z_path_c(p_i)
-                  else
-                    del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
-                  end if
-                  i = i + 1
-                  j = j + Ng
-                end if
-                l = l + Ng
-              end if
-            end do
+            call Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
+              &                     More_Inds, All_Inds, Del_Zeta )
 
             call path_opacity ( del_zeta, &
                 &  pack(singularity,do_gl(inds)),        &
@@ -511,12 +427,11 @@ contains
                          &  do_gl, h_path_f, t_path_f, dh_dt_path_f, &
                          &  alpha_path_f, alphaxn_path_f, eta_zxp_f, do_calc_t_f, &
                          &  ds_dh_gl, dh_dz_gl, t_script, dt_scr_dt, &
-                         &  tau, i_stop, drad_dt,  &
-                         &  ptg_i, frq_i )
+                         &  tau, i_stop, drad_dt )
 
     use DO_DELTA_M, ONLY: PATH_OPACITY, HYD_OPACITY
-    use D_T_SCRIPT_DTNP_M, only: DT_SCRIPT_DT
     use SCRT_DN_M, ONLY: GET_DSCRT_DN
+    use Where_M, only: Where
 
 ! Inputs
 
@@ -562,16 +477,15 @@ contains
     real(rp), intent(in) :: dt_scr_dt(:,:)  ! d t_script / d T * d T / d eta.
     real(rp), intent(in) :: tau(:)          ! transmission function.
     integer(ip), intent(in) :: i_stop       ! path stop index
-    integer(ip), intent(in) :: ptg_i, frq_i ! debugger statements
 
 ! Outputs
 
     real(rp), intent(out) :: drad_dt(:)     ! derivative of radiances wrt
-!                                             mixing ratio statevector
+!                                             mixing ratio state vector
 !                                             element. (K)
 ! Internals
 
-    integer(ip) :: sv_i, sv_t, n_inds, i, j, k, l, i_start
+    integer(ip) :: sv_i, sv_t, n_inds, i, i_start
     integer(ip) :: n_path, p_i, no_to_gl, mid
     integer(ip), target, dimension(1:Ng*size(tau)) :: all_inds_B
     integer(ip), target, dimension(1:size(tau)) :: inds_B, more_inds_B
@@ -607,15 +521,8 @@ contains
 ! do the absorption part
 ! combine non zeros flags for both the main and gl parts
 
-      do_calc = do_calc_t_c(:,sv_i)
-
-      i = 1
-      do p_i = 1 , n_path
-        if ( do_gl(p_i) ) then
-          if ( any(do_calc_t_f(i:i+ng-1,sv_i))) do_calc(p_i) = .true.
-          i = i + Ng
-        end if
-      end do
+      call get_do_calc ( do_calc_t_c(:,sv_i), do_calc_t_f(:,sv_i), do_gl, &
+        & do_calc )
 
 ! find where the non zeros are along the path
 
@@ -623,13 +530,8 @@ contains
       if ( n_inds > 0 ) then
         inds => inds_B(1:n_inds)
         singularity => singularity_B(1:n_inds)
-        i = 1
-        do p_i = 1 , n_path
-          if ( do_calc(p_i) ) then
-            inds(i) = p_i
-            i = i + 1
-          end if
-        end do
+
+        call where ( do_calc, inds )
 
         singularity = alphaxn_path_c(inds)*eta_zxp_c(inds,sv_i) &
                     / t_path_c(inds)
@@ -640,37 +542,20 @@ contains
 
 ! see if anything needs to be gl-d
 
-           all_inds => all_inds_B(1:ng*no_to_gl)
-           gl_delta => gl_delta_B(1:no_to_gl)
-           del_zeta => del_zeta_B(1:no_to_gl)
-           more_inds => more_inds_B(1:no_to_gl)
+          all_inds => all_inds_B(1:ng*no_to_gl)
+          gl_delta => gl_delta_B(1:no_to_gl)
+          del_zeta => del_zeta_B(1:no_to_gl)
+          more_inds => more_inds_B(1:no_to_gl)
 
-           i = 1
-           j = 1
-           l = 1
-           do p_i = 1 , n_path
-             if ( do_gl(p_i) ) then
-               if ( do_calc(p_i) ) then
-                 more_inds(i) = p_i
-                 all_inds(j:j+ng-1) = l + (/(k-1,k=1,ng)/)
-                 if ( p_i > mid ) then
-                   del_zeta(i) = z_path_c(p_i+1) - z_path_c(p_i)
-                 else
-                   del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
-                 end if
-                 i = i + 1
-                 j = j + Ng
-               end if
-               l = l + Ng
-             end if
-           end do
+          call Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
+            &                     More_Inds, All_Inds, Del_Zeta )
 
-           call path_opacity ( del_zeta, &
-             &  pack(singularity,do_gl(inds)), &
-             &  alphaxn_path_f(all_inds)*eta_zxp_f(all_inds,sv_i)  &
-             &    / t_path_f(all_inds), ds_dh_gl(all_inds), dh_dz_gl(all_inds), &
-             &  gl_delta )
-           d_delta_dt(more_inds) = d_delta_dt(more_inds) + gl_delta
+          call path_opacity ( del_zeta, &
+            &  pack(singularity,do_gl(inds)), &
+            &  alphaxn_path_f(all_inds)*eta_zxp_f(all_inds,sv_i)  &
+            &    / t_path_f(all_inds), ds_dh_gl(all_inds), dh_dz_gl(all_inds), &
+            &  gl_delta )
+          d_delta_dt(more_inds) = d_delta_dt(more_inds) + gl_delta
 
         end if
 
@@ -767,25 +652,8 @@ contains
            del_zeta => del_zeta_B(1:no_to_gl)
            more_inds => more_inds_B(1:no_to_gl)
 
-           i = 1
-           j = 1
-           l = 1
-           do p_i = 1 , n_path
-             if ( do_gl(p_i) ) then
-               if ( do_calc(p_i) ) then
-                 more_inds(i) = p_i
-                 all_inds(j:j+ng-1) = l + (/(k-1,k=1,ng)/)
-                 if ( p_i > mid ) then
-                   del_zeta(i) = z_path_c(p_i+1) - z_path_c(p_i)
-                 else
-                   del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
-                 end if
-                 i = i + 1
-                 j = j + Ng
-               end if
-               l = l + Ng
-             end if
-           end do
+          call Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
+            &                     More_Inds, All_Inds, Del_Zeta )
 
 ! add special hydrostatic gl routine here
 ! the singularity point is alpha_path_c(more_inds)
@@ -814,6 +682,80 @@ contains
 
   end subroutine DRad_tran_dt
 
+! =====     Private Procedures     =====================================
+
+  ! -------------------------------------------  Get_Del_Zeta_All  -----
+  subroutine Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
+    &                           More_Inds, All_Inds, Del_Zeta )
+
+    use GLNP, ONLY: Ng
+    use MLSCommon, only: RP
+
+    implicit NONE
+
+  ! Inputs
+    logical, intent(in) :: Do_GL(:)          ! path flag indicating where to do
+      !                                        gl integrations.
+    logical, intent(in) :: Do_Calc(:)
+    real(rp), intent(in) :: Z_path_c(:)      ! path -log(P) on coarse grid.
+
+  ! Outputs
+    integer, intent(out) :: More_Inds(:)
+    integer, intent(out) :: All_Inds(:)
+    real(rp), intent(out) :: Del_Zeta(:)
+
+    integer :: I, J, K, L, Mid, N_Path, P_I
+
+    i = 1
+    j = 1
+    l = 1
+    n_path = size(do_gl)
+    mid = n_path / 2
+    do p_i = 1 , n_path
+      if ( do_gl(p_i) ) then
+        if ( do_calc(p_i) ) then
+          more_inds(i) = p_i
+          all_inds(j:j+ng-1) = l + (/(k-1,k=1,ng)/)
+          if ( p_i > mid ) then
+            del_zeta(i) = z_path_c(p_i+1) - z_path_c(p_i)
+          else
+            del_zeta(i) = z_path_c(p_i-1) - z_path_c(p_i)
+          end if
+          i = i + 1
+          j = j + Ng
+        end if
+        l = l + Ng
+      end if
+    end do
+
+  end subroutine Get_Del_Zeta_All
+
+  ! ------------------------------------------------  Get_Do_Calc  -----
+  subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_f, Do_GL, Do_Calc )
+
+  ! Set Do_Calc if Do_Calc_c or Do_GL and any of the corresponding Do-Calc_f
+  ! flags are set.
+
+    use GLNP, ONLY: Ng
+
+    logical, intent(in) :: Do_Calc_c(:) ! On the coarse grid
+    logical, intent(in) :: Do_Calc_f(:) ! On the GL grid
+    logical, intent(in) :: Do_GL(:)
+    logical, intent(out) :: Do_Calc(:)  ! Where on coarse grid to do calc.
+
+    integer :: I, P_I
+
+    i = 1
+    do_calc = do_calc_c
+    do p_i = 1 , size(do_gl)
+      if ( do_gl(p_i) ) then
+        if ( any(do_calc_f(i:i+ng-1)) ) do_calc(p_i)=.true.
+        i = i + Ng
+      end if
+    end do
+
+  end subroutine Get_Do_Calc
+
 !----------------------------------------------------------------------
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -821,6 +763,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.14  2003/05/15 03:29:00  vsnyder
+! Moved some stuff up to FullForwardModel because Get_d_Deltau_pol_dT needs it
+!
 ! Revision 2.13  2003/05/05 23:00:26  livesey
 ! Merged in feb03 newfwm branch
 !
