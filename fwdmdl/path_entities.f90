@@ -18,19 +18,19 @@ module PATH_ENTITIES_M
  end type PATH_INDEX
 
  type PATH_VECTOR
-   Real(r8), DIMENSION(:), POINTER :: values
+   Real(r8), DIMENSION(:), POINTER :: values => NULL()
  end type PATH_VECTOR
 
  type PATH_DERIVATIVE
-   Real(r4), DIMENSION(:,:,:), POINTER :: values    ! (Npath,mnp,mxco)
+   Real(r4), DIMENSION(:,:,:), POINTER :: values => NULL()   ! (Npath,mnp,mxco)
  end type PATH_DERIVATIVE
 
  type PATH_BETA
-   Real(r8), DIMENSION(:), POINTER :: values
-   Real(r8), DIMENSION(:), POINTER :: t_power
-   Real(r8), DIMENSION(:), POINTER :: dbeta_dw
-   Real(r8), DIMENSION(:), POINTER :: dbeta_dn
-   Real(r8), DIMENSION(:), POINTER :: dbeta_dnu
+   Real(r8), DIMENSION(:), POINTER :: values => NULL()
+   Real(r8), DIMENSION(:), POINTER :: t_power => NULL()
+   Real(r8), DIMENSION(:), POINTER :: dbeta_dw => NULL()
+   Real(r8), DIMENSION(:), POINTER :: dbeta_dn => NULL()
+   Real(r8), DIMENSION(:), POINTER :: dbeta_dnu => NULL()
  end type PATH_BETA
 
 !type PATH_CROSS_SECTION
@@ -40,4 +40,7 @@ module PATH_ENTITIES_M
 
 end module PATH_ENTITIES_M
 ! $Log$
+! Revision 1.2  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! First version 2000/08/28 21:56:12  zvi
