@@ -78,6 +78,13 @@ module HDFEOS               ! F90 interface to HDF-EOS.
     
     end function SWINQDIMS
     
+    integer function SWINQDFLDS (SWATHID, FIELDLIST, RANK, NUMBERTYPE)
+       integer,intent(in)::SWATHID
+       character(len=*),intent(out)::FIELDLIST
+       integer,intent(out),dimension(*)::RANK, NUMBERTYPE
+    
+    end function SWINQDFLDS
+    
     integer function SWDIMINFO (SWATHID,DIMNAME)
        integer,intent(in)::SWATHID
        character(len=*),intent(IN)::DIMNAME
@@ -92,6 +99,9 @@ end module HDFEOS
 
 !
 ! $Log$
+! Revision 2.5  2001/02/02 21:39:56  pwagner
+! Added swinqdflds
+!
 ! Revision 2.4  2000/09/17 20:49:33  pumphrey
 ! Removed references to SWRDFLD as these are handled by swapi.f90
 !
