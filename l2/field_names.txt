@@ -30,7 +30,7 @@ boundarypressure
 
 climatology
 cloud_der
-cloud_width
+i_saturation
 cloud_fov
 cloudRadiance
 cloudRadianceCutOff
@@ -276,6 +276,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.67  2003/01/13 17:17:42  jonathan
+# change cloud_width to i_saturation
+#
 # Revision 2.66  2003/01/11 01:02:39  livesey
 # Added maxValue
 #
