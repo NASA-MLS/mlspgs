@@ -63,7 +63,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_APRIORISCALE        = f_apriori + 1
   integer, parameter :: F_AUTOFILL            = f_aprioriScale + 1
   integer, parameter :: F_BAND                = f_autofill + 1
-  integer, parameter :: F_CHANNEL             = f_band + 1
+  integer, parameter :: F_CENTERFREQUENCY     = f_band + 1
+  integer, parameter :: F_CHANNEL             = f_centerfrequency + 1
   integer, parameter :: F_CHANNELS            = f_channel + 1
   integer, parameter :: F_COLUMNS             = f_channels + 1
   integer, parameter :: F_COLUMNSCALE         = f_columns + 1
@@ -357,6 +358,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_aprioriscale) =        add_ident ( 'aprioriScale' )
     field_indices(f_autofill) =            add_ident ( 'autofill' )
     field_indices(f_band) =                add_ident ( 'band' )
+    field_indices(f_centerFrequency) =     add_ident ( 'centerFrequency' )
     field_indices(f_channel) =             add_ident ( 'channel' )
     field_indices(f_channels) =            add_ident ( 'channels' )
     field_indices(f_columns) =             add_ident ( 'columns' )
@@ -580,11 +582,7 @@ contains ! =====     Public procedures     =============================
     ! f_field_name ... of the specification named by the spec_name.
     call make_tree ( (/ &
       begin, s+s_module, np+n_spec_def, &
-      begin, s+s_band, &
-             begin, f+f_suffix, t+t_string, n+n_field_type, &
-             begin, f+f_frequency, t+t_numeric, n+n_field_type, &
-             ndp+n_spec_def, &
-      begin, s+s_radiometer, &
+      begin, s+s_radiometer, &          ! Must be after module
              begin, f+f_lo, t+t_numeric, n+n_field_type, &
              begin, f+f_suffix, t+t_string, n+n_field_type, &
              begin, f+f_module, s+s_module, n+n_field_spec, &
@@ -599,13 +597,17 @@ contains ! =====     Public procedures     =============================
              begin, f+f_width, t+t_numeric, n+n_field_type, &
              begin, f+f_widths, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
-      begin, s+s_ValidSignal, & ! MUST be AFTER S_Band, S_Radiometer and S_Spectrometer
+      begin, s+s_band, &                ! Must be after radiometer and spectrometerType
+             begin, f+f_suffix, t+t_string, n+n_field_type, &
+             begin, f+f_spectrometerType, s+s_spectrometerType, nr+n_field_spec, &
+             begin, f+f_radiometer, s+s_radiometer, nr+n_field_spec, &
+             begin, f+f_centerfrequency, t+t_numeric, n+n_field_type, &
+             ndp+n_spec_def, &
+      begin, s+s_ValidSignal, &         ! Must be after band
              begin, f+f_band, s+s_band, nr+n_field_spec, &
              begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
-             begin, f+f_radiometer, s+s_radiometer, nr+n_field_spec, &
              begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
              begin, f+f_widths, t+t_numeric, n+n_field_type, &
-             begin, f+f_spectrometerType, s+s_spectrometerType, nr+n_field_spec, &
              begin, f+f_switch, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def /) )
     call make_tree ( (/ &
@@ -869,6 +871,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.30  2001/02/28 21:36:14  livesey
+! More changes in the signals section
+!
 ! Revision 2.29  2001/02/28 17:13:10  livesey
 ! Removed temporary work-around.
 !
