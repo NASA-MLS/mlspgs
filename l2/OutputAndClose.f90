@@ -25,6 +25,8 @@ module OutputAndClose ! outputs all data from the Join module to the
   use OUTPUT_M, only: OUTPUT
   use SDPToolkit, only: Pgs_pc_getReference, PGS_S_SUCCESS, Pgs_smf_getMsg
   use STRING_TABLE, only: GET_STRING
+  use TRACE_M, only: TRACE_BEGIN, TRACE_END
+  use TOGGLES, only: GEN, TOGGLE
   use TREE, only: DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, SOURCE_REF, &
     & SUBTREE, SUB_ROSA
   use TREE_TYPES, only: N_NAMED
@@ -99,10 +101,14 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     timing = .false.
 
+    if ( toggle(gen) ) call trace_begin ( "Output_Close", root)
+
     error = 0
     got = .false.
     l2gp_Version = 1
     l2aux_Version = 1
+
+    
 
     ! Loop over the lines in the l2cf
 
@@ -292,6 +298,8 @@ contains ! =====     Public Procedures     =============================
     end do  ! spec_no
     if ( timing ) call sayTime
 
+    if ( toggle(gen) ) call trace_end ( "Output_Close")
+
   contains
     subroutine SayTime
       call cpu_time ( t2 )
@@ -320,6 +328,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.9  2001/02/23 18:15:48  livesey
+! Added trace calls.
+!
 ! Revision 2.8  2001/02/13 22:59:36  pwagner
 ! l2 modules can only use MLSPCF2
 !
