@@ -67,7 +67,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
   use DUMP_0, only: DUMP
   use Intrinsic, only: LIT_INDICES, PHYQ_INVALID
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, RV
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use MLSSignals_m, only: MODULES, SIGNALS, GETSIGNALNAME
@@ -177,7 +177,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   type VectorValue_T
     type (QuantityTemplate_T) :: TEMPLATE ! Template for this quantity.
     integer :: index                    ! Index of this quantity into vector
-    real(r8), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
+    real(rv), dimension(:,:), pointer :: VALUES => NULL() ! The dimensions of
     ! VALUES are Frequencies (or 1) * Vertical Coordinates (or 1), and
     ! Horizontal Instances (scan or profile or 1).  These are taken from
     ! (template%noChans * template%noSurfs, template%noInstances).
@@ -567,7 +567,7 @@ contains ! =====     Public Procedures     =============================
         do ii = i1, i2
           do vi = 1, size(z%quantities(qi)%values,1)
             if ( iand(ichar(z%quantities(qi)%mask(vi,ii)), myWhat) /= 0 ) &
-              & z%quantities(qi)%values(vi,ii) = 0.0
+              & z%quantities(qi)%values(vi,ii) = 0.0_rv
           end do ! vi
         end do ! ii
       end if
@@ -581,7 +581,7 @@ contains ! =====     Public Procedures     =============================
     type(Vector_T), intent(inout) :: Z
     integer :: I
     do i = 1, size(z%quantities)
-      z%quantities(i)%values = 0.0
+      z%quantities(i)%values = 0.0_rv
     end do
   end subroutine ClearVector
 
@@ -790,7 +790,7 @@ contains ! =====     Public Procedures     =============================
   subroutine CreateMaskArray ( mask, values )
     ! Allocate the MASK array for a vector quantity.
     character, dimension(:,:), pointer :: MASK ! To create
-    real(r8), dimension(:,:), pointer :: VALUES ! Template values
+    real(rv), dimension(:,:), pointer :: VALUES ! Template values
     nullify ( mask ) ! for Sun's rubbish compiler
     call allocate_test ( mask, (size(values,1)), &
       & size(values,2), "MASK in CreateMaskArray", ModuleName )
@@ -960,7 +960,7 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyVectorValue
 
   !--------------------------------------------------  DotVectors  -----
-  real(r8) function DotVectors ( X, Y ) result (Z)
+  real(rv) function DotVectors ( X, Y ) result (Z)
   ! Compute the inner product of two vectors.
 
     ! Dummy arguments:
@@ -970,14 +970,14 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot .DOT. vectors having different templates" )
-    z = 0.0_r8
+    z = 0.0_rv
     do i = 1, size(x%quantities)
       z = z + sum( x%quantities(i)%values * y%quantities(i)%values )
     end do
   end function DotVectors
 
   !--------------------------------------------  DotVectorsMasked  -----
-  real(r8) function DotVectorsMasked ( X, Y ) result (Z)
+  real(rv) function DotVectorsMasked ( X, Y ) result (Z)
   ! Compute the inner product of two vectors.  Ignore elements masked
   ! by m_linAlg in either X or Y.
 
@@ -988,7 +988,7 @@ contains ! =====     Public Procedures     =============================
     ! Executable statements:
     if ( x%template%id /= y%template%id ) call MLSMessage ( MLSMSG_Error, &
         & ModuleName, "Cannot .DOT. vectors having different templates" )
-    z = 0.0_r8
+    z = 0.0_rv
     do i = 1, size(x%quantities)
       if ( associated(x%quantities(i)%mask) ) then
         if ( associated(y%quantities(i)%mask) ) then
@@ -2016,7 +2016,7 @@ contains ! =====     Public Procedures     =============================
         & vector%quantities(qty)%template%noSurfs, &
         & vector%quantities(qty)%template%noInstances, &
         & "Vector%quantities(qty)%values", ModuleName )
-      vector%quantities(qty)%values=0.0
+      vector%quantities(qty)%values=0.0_rv
     end do
   end subroutine
 !=======================================================================
@@ -2025,6 +2025,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.88  2002/09/11 14:06:12  livesey
+! Bug fix in CopyVector
+!
 ! Revision 2.87  2002/08/08 22:06:33  vsnyder
 ! Add M_Tikhonov
 !

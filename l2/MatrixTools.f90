@@ -14,7 +14,7 @@ module MatrixTools                      ! Various tools for matrices
     & FINDBLOCK, GETFROMMATRIXDATABASE, RC_INFO
   use MatrixModule_0, only: MATRIXELEMENT_T, DENSIFY, &
     & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL
-  use MLSCommon, only: R8
+  use MLSCommon, only: R8, RM
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use Init_Tables_Module, only: F_COLCHANNELS, F_COLQUANTITY, F_COLSURFACES, &
     & F_MATRIX, F_ROWCHANNELS, F_ROWQUANTITY, F_ROWSURFACES, F_ROWINSTANCES, &
@@ -103,7 +103,7 @@ contains ! ================ Public procedures ================================
     logical, dimension(:), pointer :: ROWINSTANCES ! Do we want this surface?
     logical, dimension(:), pointer :: COLINSTANCES ! Do we want this surface?
 
-    real(r8), dimension(:,:), pointer :: VAL ! The values from the block
+    real(rm), dimension(:,:), pointer :: VAL ! The values from the block
     real(r8), dimension(:,:), pointer :: TODUMP ! The 2D matrix to dump
 
     type (Matrix_T), pointer :: MATRIX  ! The matrix to dump
@@ -410,6 +410,8 @@ contains ! ================ Public procedures ================================
     ! Local variables
     integer :: BUFFERID                 ! From pvm
     integer :: INFO                     ! Flag
+    real(r8), dimension(:,:), pointer :: values
+    integer :: n_rows, n_cols
 
     ! Executable code
 
@@ -426,7 +428,13 @@ contains ! ================ Public procedures ================================
     end if
 
     if ( block%kind /= M_Absent ) then
-      call PVMIDLPack ( block%values, info )
+!      call PVMIDLPack ( block%values, info )
+        n_rows = size(block%values, 1)
+        n_cols = size(block%values, 2)
+        allocate(values(n_rows, n_cols))
+        values = block%values
+        call PVMIDLPack ( values, info )
+        deallocate(values)
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing block values" )
     end if
 
@@ -502,6 +510,9 @@ contains ! ================ Public procedures ================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.6  2001/09/13 00:54:06  livesey
+! Fixed a bug with dump blocks dumping values when kind==m_absent
+!
 ! Revision 1.5  2001/07/17 17:32:15  livesey
 ! Added PVM pack stuff
 !

@@ -135,8 +135,8 @@ contains ! =====     Public Procedures     =============================
     real (r8), dimension(:,:), pointer :: yPmapped ! Remapped values of yP
     real (r8), dimension(:,:), pointer :: resultMapped ! Remapped values of result
     real (r8), dimension(:,:), pointer :: dyByDX ! Raw dRad/dPtan
-    real (r8), dimension(:,:), pointer :: dense  ! Densified matrix from l2pc
-    real (r8), dimension(:,:), pointer :: kBit ! Remapped values of l2pc
+    real (rm), dimension(:,:), pointer :: dense  ! Densified matrix from l2pc
+    real (rm), dimension(:,:), pointer :: kBit ! Remapped values of l2pc
 
     type(vector_T) :: XP                ! Same form as xStar, contents as x
     type(vector_T) :: YP                ! Same form as yStar,=kstar*(xp-xStar)
@@ -850,6 +850,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.24  2002/09/11 17:43:39  pwagner
+! Began changes needed to conform with matrix%values type move to rm from r8
+!
 ! Revision 2.23  2002/09/03 23:46:04  livesey
 ! Moved debug print statement to location where it will be less verbose.
 !
