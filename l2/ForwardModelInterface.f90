@@ -429,7 +429,7 @@ contains
     Type(path_beta), DIMENSION(:,:), POINTER :: beta_path => null()
 
     Real(r8) :: Radiances(Nptg,Nch)
-    Real(r8) :: e_rad, Zeta, Frq, h_tan, Rad, geoc_lat, r
+    Real(r8) :: e_rad, Zeta, Frq, h_tan, Rad, geoc_lat, geod_lat, r
     !
     Character (LEN=01) :: CA
     Character (LEN=08) :: Name
@@ -552,7 +552,8 @@ contains
 !
     mmaf = 3                     ! Do only this mmaf (middle phi)
     phi_tan = FMC%phi_tan_mmaf(mmaf)
-    Call geoc_geod_conv(TFMI%beta_inc,phi_tan,geoc_lat,E_rad)
+    geod_lat= TFMI%t_geod_lat(mmaf)
+    Call geoc_geod_conv(TFMI%beta_inc,phi_tan,geod_lat, geoc_lat,E_rad)
 !
 ! Compute the hydrostatic_model on the GL-Grid for all mmaf(s):
 !
@@ -875,6 +876,7 @@ contains
         endif
 !
       END DO              ! Pointing Loop
+
 !
 ! Complete the radiances's last location, also  complete k_temp last
 ! location as well as k_atmos last location and k_spect_d? last location:
@@ -998,7 +1000,7 @@ contains
       write(*,903) ch,char(92),kk
       write(*,905) (i_star_all(i,k),k=1,kk)
     end do
-903 format('ch',i2.2,'_avg_conv_pfa_rad',a1,i3.3)
+903 format('ch',i2.2,'_pfa_rad',a1,i3.3)
 905 format(4(2x,1pg15.8))
 !
     if(.not. ANY((/FMC%temp_der,FMC%atmos_der,FMC%spect_der/))) goto 99
@@ -1175,6 +1177,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.28  2001/03/20 23:25:54  livesey
+! Copied changes from Zvi
+!
 ! Revision 2.27  2001/03/20 11:03:43  zvi
 ! Fixing code, increase dim. etc.
 !
