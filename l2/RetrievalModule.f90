@@ -981,6 +981,7 @@ contains
 
           ! Add Tikhonov regularization if requested
           if ( got(f_regOrders) ) then
+            call add_to_retrieval_timing( 'newton_solver', t1 )
             !{ Tikhonov regularization is of the form ${\bf R x}_n \simeq {\bf
             !  0}$. So that all of the parts of the problem are solving for
             !  ${\bf\delta x}$, we subtract ${\bf R x}_{n-1}$ from both sides to
@@ -1003,6 +1004,7 @@ contains
             ! call destroyVectorValue ( v(reg_X_x) )  ! free the space
             ! Don't destroy reg_X_x unless we move the 'clone' for it
             ! inside the loop.  Also, if we destroy it, we can't snoop it.
+            call add_to_retrieval_timing( 'tikh_reg', t1 )
           else
             tikhonovRows = 0
           end if
@@ -1074,8 +1076,10 @@ contains
             ! {\bf J}^T {\bf S}_m^{-1} {\bf J \delta \hat x} =
             ! {\bf J}^T {\bf W}^T {\bf W f} =
             ! {\bf J}^T {\bf S}_m^{-1} {\bf f}$:
+            call add_to_retrieval_timing( 'newton_solver', t1 )
             call formNormalEquations ( jacobian, kTk, rhs_in=v(f_rowScaled), &
               & rhs_out=v(aTb), update=update, useMask=.true. )
+            call add_to_retrieval_timing( 'form_normeq', t1 )
             update = .true.
               if ( index(switches,'jac') /= 0 ) &
                 call dump_Linf ( jacobian, 'L_infty norms of Jacobian blocks:' )
@@ -2811,6 +2815,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.151  2002/07/22 22:53:42  pwagner
+! Added form norm eq and tikh reg timings
+!
 ! Revision 2.150  2002/07/08 21:05:09  vsnyder
 ! Make sure "Best X" has a value even if no Newtonian iterations are done.
 ! Mark Filipiak noticed this problem.
