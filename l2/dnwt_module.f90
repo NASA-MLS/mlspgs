@@ -229,6 +229,7 @@ module DNWT_MODULE
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -1207,9 +1208,16 @@ contains
     end select
   end subroutine FlagName
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.34  2002/10/07 23:43:11  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.33  2002/09/23 22:04:11  vsnyder
 ! Correct an error message, better computation of defaults for two options
 !
