@@ -60,7 +60,8 @@ module Molecules
   integer, parameter :: L_HNO3 =         l_hdo + 1
   integer, parameter :: L_HO2 =          l_hno3 + 1
   integer, parameter :: L_HOCL =         l_ho2 + 1
-  integer, parameter :: L_HOCL_37 =      l_hocl + 1
+  integer, parameter :: L_HOCL_35 =      l_hocl + 1
+  integer, parameter :: L_HOCL_37 =      l_hocl_35 + 1
   integer, parameter :: L_LIQ_H2O =      l_hocl_37 + 1
   integer, parameter :: L_N2 =           l_liq_h2o + 1
   integer, parameter :: L_N2O =          l_n2 + 1
@@ -123,6 +124,7 @@ module Molecules
   data spec_tags(l_hno3)         / 00063001 /
   data spec_tags(l_ho2)          / 00033001 /
   data spec_tags(l_hocl)         / 00052006 /
+  data spec_tags(l_hocl_35)      / 00052006 /
   data spec_tags(l_hocl_37)      / 00054005 /
   data spec_tags(l_liq_h2o)      / 00018999 /
   data spec_tags(l_n2)           / 00028964 /
@@ -214,6 +216,7 @@ contains ! =====     Public procedures     =============================
     lit_indices(l_hno3) =         add_ident ( 'hno3' )
     lit_indices(l_ho2) =          add_ident ( 'ho2' )
     lit_indices(l_hocl) =         add_ident ( 'hocl' )
+    lit_indices(l_hocl_35) =      add_ident ( 'hocl_35' )
     lit_indices(l_hocl_37) =      add_ident ( 'hocl_37' )
     lit_indices(l_liq_h2o) =      add_ident ( 'liq_h2o' )
     lit_indices(l_n2) =           add_ident ( 'n2' )
@@ -256,6 +259,9 @@ contains ! =====     Public procedures     =============================
 end module MOLECULES
 
 ! $Log$
+! Revision 2.10  2001/05/11 00:38:46  livesey
+! Added hocl_35
+!
 ! Revision 2.9  2001/05/10 23:28:39  livesey
 ! Added extra molecules for non-isotopes etc.
 !
