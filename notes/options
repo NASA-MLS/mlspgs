@@ -46,6 +46,8 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --[n]meta: [Do not] Create metadata files.
   --[n]pcf: [Do not] Use the PCF for file names, parameters, etc.
     (--npcf sets --nmeta and --ncfpcf.)
+  --recl <number>: set the max record length size for l2cf to <number>
+      (In case the default value, 10000, is too small for some l2cfs)
   --[n]tk: [Do not] Use the panoply of the PGS_toolkit
     (--ntk sets --npcf, --ncfpcf and --nmeta)
   --version: Print current version number
@@ -80,9 +82,14 @@ or separate sections for mlsl1 or mlsl3)
 (The equal signs in the section dividers above are to help
 sed dynamically update mlsl2 to show changes in the option
 usage automatically. Thus you only need to edit this file,
-not MLSL2.f90)
+not MLSL2.f90. Add your changes to the space book-ended
+by the equal-signs--stuff outside that space, like these
+comments, will not be printed in response to mlsl2 -?)
 
  $Log$
+ Revision 1.12  2002/03/20 00:48:29  pwagner
+ Option -check just checks l2cf then quits
+
  Revision 1.11  2002/02/12 00:26:05  pwagner
  Added --version
 
