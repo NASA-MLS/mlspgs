@@ -1265,7 +1265,7 @@ contains ! =====     Public Procedures     =============================
        end if
     end if
 
-    if ( l2gp%nFreqs > 1 ) then
+    if ( l2gp%nFreqs > 0 ) then
        status = swdefdim(swid, DIM_NAME3, l2gp%nFreqs)
        if ( status == -1 ) then
           msr = DIM_ERR // DIM_NAME3
@@ -1480,8 +1480,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Write data to the fields
 
-    stride = 1
-    start = myOffset
+    stride(1) = 1
+    start(1) = 0     ! myOffset
     edge(1) = l2gp%nTimes
 
     status = swwrfld(swid, GEO_FIELD1, start, stride, edge, &
@@ -1542,7 +1542,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
-       start(1)=0 ! needed because offset may have made this /=0
+       ! start(1)=0 ! needed because offset may have made this /=0
        status = swwrfld(swid, GEO_FIELD9, start, stride, edge, &
             real(l2gp%pressures))
        if ( status == -1 ) then
@@ -1553,7 +1553,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
-       start(1)=0 ! needed because offset may have made this /=0
+       ! start(1)=0 ! needed because offset may have made this /=0
        if (MONKEYAROUND) then
          l2gp%frequency = 0
        endif
@@ -1626,7 +1626,7 @@ contains ! =====     Public Procedures     =============================
 
     start = 0
     stride = 1
-    start(3)= myOffset
+    ! start(3)= myOffset
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
@@ -2060,7 +2060,7 @@ contains ! =====     Public Procedures     =============================
     ! Write data to the fields
 
     stride = 1
-    start = myOffset
+    start = 0  ! myOffset
     edge(1) = l2gp%nTimes
     !print*,"writeGeo Attached swath ",name," with SW ID=",swid
     !print*,"About to write latitude with offset=",myoffset
@@ -2127,7 +2127,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nLevels > 0 ) then
        edge(1) = l2gp%nLevels
-       start(1)=0 ! needed because offset may have made this /=0
+       ! start(1)=0 ! needed because offset may have made this /=0
        status = HE5_SWwrfld(swid, GEO_FIELD9, start, stride, edge, &
             real(l2gp%pressures))
        if ( status == -1 ) then
@@ -2138,7 +2138,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( l2gp%nFreqs > 0 ) then
        edge(1) = l2gp%nFreqs
-       start(1)=0 ! needed because offset may have made this /=0
+       ! start(1)=0 ! needed because offset may have made this /=0
        if (MONKEYAROUND) l2gp%frequency = 0
        status = HE5_SWwrfld(swid, GEO_FIELD10, start, stride, edge, &
             real(l2gp%frequency))
@@ -2214,7 +2214,7 @@ contains ! =====     Public Procedures     =============================
 
     start = 0
     stride = 1
-    start(3)= myOffset
+    ! start(3)= 0 ! myOffset
     edge(1) = l2gp%nFreqs
     edge(2) = l2gp%nLevels
     edge(3) = l2gp%nTimes
@@ -2573,6 +2573,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.49  2003/02/03 21:33:15  pwagner
+! Having fixed (most)bugs, brought back from he5lib
+!
 ! Revision 1.28  2003/01/30 00:58:53  pwagner
 ! Writing first attributes for hdfeos5
 !
