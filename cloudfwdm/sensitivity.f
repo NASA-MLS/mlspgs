@@ -11,9 +11,9 @@ C----------------------------------------------------------------
       REAL YP(NH)                              ! MODEL PRESSURE LEVEL
       REAL YZ(NH)                              ! MODEL PRESSURE HEIGHT
       REAL PRESSURE(NZ)                        ! L2 PRESSURE LEVEL
-      REAL DTcir(NT+1,NF)                      ! CLOUD-INDUCED RADIANCE
-      REAL SS(NT+1,NF)                         ! CLOUD RADIANCE SENSITIVITY
-      REAL TAUeff(NT+1,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
+      REAL DTcir(NT,NF)                      ! CLOUD-INDUCED RADIANCE
+      REAL SS(NT,NF)                         ! CLOUD RADIANCE SENSITIVITY
+      REAL TAUeff(NT,NF)                     ! CLOUD EFFECTIVE OPTICAL DEPTH
 
       REAL delTAU(NH-1)                        ! TOTAL EXTINCTION 
       REAL delTAUc(NH-1)                       ! CLOUDY-SKY EXTINCTION
