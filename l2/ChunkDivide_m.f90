@@ -44,7 +44,11 @@ module ChunkDivide_m
     integer :: maxLengthFamily = PHYQ_Invalid ! PHYQ_Angle etc.
     integer :: noChunks = 0             ! Number of chunks for [fixed]
     real(rp) :: overlap = 0.0           ! Desired length of overlaps
+    real(rp) :: lowerOverlap = 0.0      ! Desired length of lower overlaps
+    real(rp) :: upperOverlap = 0.0      ! Desired length of lower overlaps
     integer :: overlapFamily = PHYQ_Invalid ! PHYQ_MAF, PHYQ_Time etc.
+    integer :: lowerOverlapFamily = PHYQ_Invalid
+    integer :: upperOverlapFamily = PHYQ_Invalid
     integer :: noSlaves = 0             ! Number of slave nodes [even]
     integer :: homeModule = l_none      ! Which module to consider [orbital]
     real(rp) :: homeGeodAngle = 0.0     ! Aim for one chunk to start here [orbital]
@@ -107,7 +111,8 @@ contains ! ===================================== Public Procedures =====
     use Dumper, only: DUMP
     use Dump_0, only: DUMP
     use EXPR_M, only: EXPR
-    use Init_Tables_Module, only: F_OVERLAP, F_MAXLENGTH, F_NOCHUNKS, &
+    use Init_Tables_Module, only: F_OVERLAP, F_LOWEROVERLAP, F_UPPEROVERLAP, &
+      & F_MAXLENGTH, F_NOCHUNKS, &
       & F_METHOD, F_HOMEMODULE, F_CRITICALMODULES, F_HOMEGEODANGLE, &
       & F_SCANLOWERLIMIT, F_SCANUPPERLIMIT, F_NOSLAVES, &
       & FIELD_FIRST, FIELD_LAST, L_EVEN, &
@@ -310,7 +315,8 @@ contains ! ===================================== Public Procedures =====
       integer :: I                        ! Loop inductor
       integer :: STATUS                   ! From allocate
       integer :: MAXLENGTH                ! nint(config%maxLength)
-      integer :: OVERLAP                  ! nint(config%overlap)
+      integer :: LOWEROVERLAP             ! nint(config%lowerOverlap)
+      integer :: UPPEROVERLAP             ! nint(config%upperOverlap)
       integer :: NONONOVERLAP             ! maxLength-2*overlap
 
       ! Exectuable code
@@ -319,14 +325,15 @@ contains ! ===================================== Public Procedures =====
         & MLSMSG_Allocate//'chunks' )
 
       maxLength = nint ( config%maxLength )
-      overlap = nint ( config%overlap )
-      noNonOverlap = maxLength - 2 * overlap
+      lowerOverlap = nint ( config%lowerOverlap )
+      upperOverlap = nint ( config%upperOverlap )
+      noNonOverlap = maxLength - ( lowerOverlap + upperOverlap )
       do i = 1, config%noChunks
-        chunks(i)%firstMAFIndex = max ( (i-1)*maxLength - overlap, 0 )
-        chunks(i)%lastMAFIndex = i*maxLength + overlap - 1
-        chunks(i)%noMAFsUpperOverlap = overlap
+        chunks(i)%firstMAFIndex = max ( (i-1)*maxLength - lowerOverlap, 0 )
+        chunks(i)%lastMAFIndex = i*maxLength + upperOverlap - 1
+        chunks(i)%noMAFsUpperOverlap = upperOverlap
         if ( i > 1 ) then
-          chunks(i)%noMAFsLowerOverlap = overlap
+          chunks(i)%noMAFsLowerOverlap = lowerOverlap
         else
           chunks(i)%noMAFsLowerOverlap = 0
         end if
@@ -735,20 +742,26 @@ contains ! ===================================== Public Procedures =====
       ! chunks%lastMAFIndex = chunks%lastMAFIndex + mafRange(1) - 1 
       chunks%firstMAFIndex = chunks%firstMAFIndex - 1
       chunks%lastMAFIndex = chunks%lastMAFIndex - 1 
-
       ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       ! Think about overlaps
       nullify ( newFirstMAFs, newLastMAFs )
       call Allocate_test ( newFirstMAFs, noChunks, 'newFirstMAFs', ModuleName )
       call Allocate_test ( newLastMAFs, noChunks, 'newLastMAFs', ModuleName )
-      if ( config%overlapFamily == PHYQ_MAFs ) then
-        newFirstMAFs = max(chunks%firstMAFIndex - nint(config%overlap), &
+      ! We could split things out to deal with mixed unit, but lets make life easier 
+      ! for ourselves.  ChunkDivideL2PC has already insisted that 
+      ! lowerOverlapFamily == upperOverlapFamily.
+      if ( config%lowerOverlapFamily == PHYQ_MAFs ) then
+        newFirstMAFs = max(chunks%firstMAFIndex - nint(config%lowerOverlap), &
           & mafRange(1) )
-        newLastMAFs = min(chunks%lastMAFIndex + nint(config%overlap), &
+        newLastMAFs = min(chunks%lastMAFIndex + nint(config%upperOverlap), &
           & mafRange(2) )
         if ( index(switches, 'chu') /= 0 ) then
             call output ( 'config%overlap  ' )
-            call output ( config%overlap , advance='yes')
+            call output ( config%overlap, advance='yes')
+            call output ( 'config%lowerOverlap  ' )
+            call output ( config%lowerOverlap, advance='yes')
+            call output ( 'config%upperOverlap  ' )
+            call output ( config%upperOverlap, advance='yes')
             call output ( 'new 1st MAF  ' )
             call output ( chunks(1:two)%firstMAFIndex - nint(config%overlap) )
             call output ( '   new last MAF  ' )
@@ -770,15 +783,15 @@ contains ! ===================================== Public Procedures =====
         case ( PHYQ_MAFs)
         end select
         call Hunt ( field, field(chunks%firstMAFIndex-1) + &
-          & config%overlap, newFirstMAFs, allowTopValue=.true. )
+          & config%lowerOverlap, newFirstMAFs, allowTopValue=.true. )
         call Hunt ( field, field(chunks%firstMAFIndex-1) - &
-          & config%overlap, newLastMAFs, allowTopValue=.true. )
+          & config%upperOverlap, newLastMAFs, allowTopValue=.true. )
         if ( index(switches, 'chu') /= 0 ) then
-          call dump ( field(chunks%firstMAFIndex-1) - &
-          & config%overlap , 'fields-overlap' )
-          call dump ( field(newFirstMAFs) , 'hunted values' )
           call dump ( field(chunks%firstMAFIndex-1) + &
-          & config%overlap , 'fields+overlap' )
+          & config%lowerOverlap , 'fields+lowerOverlap' )
+          call dump ( field(newFirstMAFs) , 'hunted values' )
+          call dump ( field(chunks%firstMAFIndex-1) - &
+          & config%upperOverlap , 'fields-upperOverlap' )
           call dump ( field(newLastMAFs) , 'hunted values' )
         end if
         ! Correct this to be real MAF indices (starting from zero)
@@ -942,6 +955,12 @@ contains ! ===================================== Public Procedures =====
         case ( f_overlap )
           config%overlap = value(1)
           config%overlapFamily = units(1)
+        case ( f_lowerOverlap )
+          config%lowerOverlap = value(1)
+          config%lowerOverlapFamily = units(1)
+        case ( f_upperOverlap )
+          config%upperOverlap = value(1)
+          config%upperOverlapFamily = units(1)
         case ( f_noSlaves )
           config%noSlaves = value(1)
           if ( units(1) /= PHYQ_DimensionLess ) &
@@ -989,6 +1008,27 @@ contains ! ===================================== Public Procedures =====
         notWanted => NotWantedForEven
       end select
 
+      ! Some special thought for overlap cases
+      if ( any ( got ( (/ f_lowerOverlap, f_upperOverlap /) ) ) ) then
+        if ( .not. all ( got ( (/ f_lowerOverlap, f_upperOverlap /) ) ) ) &
+          & call AnnounceError ( root, notSpecified, &
+          & FindFirst ( .not. got ( (/ f_lowerOverlap, f_upperOverlap /) ) ) )
+        if ( got ( f_overlap ) ) &
+          & call AnnounceError ( root, unnecessary, f_overlap )
+        got ( f_overlap ) = .true.
+        ! Insist that upper/lower overlaps be specified in the same units
+        if ( config%lowerOverlapFamily /= config%upperOverlapFamily ) &
+          & call AnnounceError ( root, badUnits, f_upperOverlap )
+      else
+        ! If single overlap specified, copy it into upper/lower
+        if ( got ( f_overlap ) ) then
+          config%lowerOverlap = config%overlap
+          config%lowerOverlapFamily = config%overlapFamily
+          config%upperOverlap = config%overlap
+          config%upperOverlapFamily = config%overlapFamily
+        end if
+      end if
+
       ! Check we've got all the arguments we need
       do i = 1, size(needed)
         if ( .not. got(needed(i) ) ) &
@@ -1024,13 +1064,17 @@ contains ! ===================================== Public Procedures =====
       case ( l_orbital )
         if (all(config%maxLengthFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
           & call AnnounceError ( root, badUnits, f_maxLength )
-        if (all(config%overlapFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
-          & call AnnounceError ( root, badUnits, f_overlap )
+        if (all(config%lowerOverlapFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
+          & call AnnounceError ( root, badUnits, f_lowerOverlap )
+        if (all(config%upperOverlapFamily/=(/PHYQ_MAFs, PHYQ_Angle, PHYQ_Time/))) &
+          & call AnnounceError ( root, badUnits, f_upperOverlap )
       case ( l_fixed, l_even )
         if ( config%maxLengthFamily /= PHYQ_MAFs ) &
           & call AnnounceError ( root, badUnits, f_maxLength )
-        if ( config%overlapFamily /= PHYQ_MAFs ) &
-          & call AnnounceError ( root, badUnits, f_overlap )
+        if ( config%lowerOverlapFamily /= PHYQ_MAFs ) &
+          & call AnnounceError ( root, badUnits, f_lowerOverlap )
+        if ( config%upperOverlapFamily /= PHYQ_MAFs ) &
+          & call AnnounceError ( root, badUnits, f_upperOverlap )
       end select
 
       if ( error /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1637,6 +1681,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.29  2003/01/06 20:13:09  livesey
+! New split upper/lower overlaps
+!
 ! Revision 2.28  2002/12/11 22:17:05  pwagner
 ! Added error checks on hdf version
 !
