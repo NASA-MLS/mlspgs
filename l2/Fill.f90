@@ -12,6 +12,18 @@ module Fill                     ! Create vectors and fill them.
   private
   public :: MLSL2Fill
 
+! === (start of toc) ===
+! MLSL2Fill          given a vector template, and creates and fills a vector
+! === (end of toc) ===
+
+! === (start of api) ===
+! MLSL2Fill (int root, l1binfo_t l1binfo, *griddedData_T GriddedDataBase(:),
+!        *vectorTemplate_T VectorTemplates(:), &
+!        *vector_t Vectors(:), *quantityTemplate_T QtyTemplates(:),
+!        *matrix_database_T Matrices(:), VGrid_T vGrids(:),
+!        *l2GPData_T L2GPDatabase(:), *l2AUXData_T L2AUXDatabase(:),
+!        *mlSChunk_T Chunks(:), int ChunkNo )      
+! === (end of api) ===
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
@@ -82,7 +94,7 @@ contains ! =====     Public Procedures     =============================
       & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
       & PHYQ_Time, PHYQ_Length, PHYQ_Pressure, PHYQ_Zeta
     use L1BData, only: DeallocateL1BData, Dump, FindL1BData, L1BData_T, &
-      & PRECISIONSUFFIX, ReadL1BData
+      & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
     use L2GPData, only: L2GPData_T
     use L2AUXData, only: L2AUXData_T
     use L3ASCII, only: L3ASCII_INTERP_FIELD
@@ -97,7 +109,10 @@ contains ! =====     Public Procedures     =============================
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
     ! carefully check out the code around the call to snoop.
-    use MLSCommon, only: L1BInfo_T, MLSChunk_T, R8, RM, RV
+    use MLSCommon, only: FileNameLen, L1BInfo_T, MLSChunk_T, R8, RM, RV
+    use MLSFiles, only: mls_hdf_version, HDFVERSION_5, &
+      & ERRORINH5FFUNCTION, WRONGHDFVERSION
+    use MLSL2Options, only: LEVEL1_HDFVERSION
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Allocate, MLSMSG_Deallocate
     use MLSNumerics, only: InterpolateValues
@@ -3820,45 +3835,79 @@ contains ! =====     Public Procedures     =============================
 
       ! Local variables
       character (len=80) :: NAMESTRING
+      character (len=FileNameLen) :: FILENAMESTRING
       integer :: fileID, FLAG, NOMAFS
       type (l1bData_T) :: L1BDATA
       integer :: ROW, COLUMN
+      integer :: this_hdfVersion
 
       ! Executable code
 
       if ( toggle(gen) .and. levels(gen) > 0 ) &
         & call trace_begin ("FillVectorQuantityFromL1B",root)
-
       fileID=l1bInfo%l1bOAID
+      if ( quantity%template%quantityType /= l_radiance ) then
+        filenamestring = l1bInfo%L1BOAFileName
+      else
+        filenamestring = l1bInfo%L1BRADFileNames(1)
+      endif
+      this_hdfVersion = mls_hdf_version(trim(filenamestring), LEVEL1_HDFVERSION)
+      if ( this_hdfVersion == ERRORINH5FFUNCTION ) then
+        call Announce_Error ( root, No_Error_code, &
+          & 'Error in finding hdfversion of l1b file' )
+      elseif ( this_hdfVersion == WRONGHDFVERSION ) then
+        call Announce_Error ( root, No_Error_code, &
+          & 'Wrong hdfversion declared/coded for l1b file' )
+      endif
+      
       select case ( quantity%template%quantityType )
       case ( l_ptan )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString=TRIM(nameString)//'.ptan'
+!        nameString=TRIM(nameString)//'.ptan'
+        nameString = AssembleL1BQtyName('ptan', this_hdfVersion, .FALSE., &
+          & trim(nameString))
       case ( l_radiance )
         call GetSignalName ( quantity%template%signal, nameString, &
           & sideband=quantity%template%sideband, noChannels=.TRUE. )
-        fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString )
+        nameString = AssembleL1BQtyName(nameString, this_hdfVersion, .FALSE.)
+        fileID = FindL1BData (l1bInfo%l1bRadIDs, nameString, this_hdfVersion )
       case ( l_tngtECI )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString=TRIM(nameString)//'.tpECI'
+!        nameString=TRIM(nameString)//'.tpECI'
+        nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .TRUE., &
+          & trim(nameString))
       case ( l_tngtGeodAlt )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString=TRIM(nameString)//'.tpGeodAlt'
+!        nameString=TRIM(nameString)//'.tpGeodAlt'
+        nameString = AssembleL1BQtyName('GeodAlt', this_hdfVersion, .TRUE., &
+          & trim(nameString))
       case ( l_tngtGeocAlt )
         call GetModuleName( quantity%template%instrumentModule,nameString )
-        nameString=TRIM(nameString)//'.tpGeocAlt'
+!        nameString=TRIM(nameString)//'.tpGeocAlt'
+        nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .TRUE., &
+          & trim(nameString))
       case ( l_scECI )
-        nameString='scECI'
+!        nameString='scECI'
+        nameString = AssembleL1BQtyName('ECI', this_hdfVersion, .FALSE., 'sc')
       case ( l_scVel )
-        nameString='scVel'
+!        nameString='scVel'
+        nameString = AssembleL1BQtyName('Vel', this_hdfVersion, .FALSE., 'sc')
       case ( l_scVelECI )
-        nameString='scVelECI'
+!        nameString='scVelECI'
+        nameString = AssembleL1BQtyName('VelECI', this_hdfVersion, .FALSE., &
+          & 'sc')
       case ( l_scVelECR )
-        nameString='scVelECR'
+!        nameString='scVelECR'
+        nameString = AssembleL1BQtyName('VelECR', this_hdfVersion, .FALSE., &
+          & 'sc')
       case ( l_scGeocAlt )
-        nameString='scGeocAlt'
+!        nameString='scGeocAlt'
+        nameString = AssembleL1BQtyName('GeocAlt', this_hdfVersion, .FALSE., &
+          & 'sc')
       case ( l_orbitInclination )
-        nameString='scOrbIncl'
+!        nameString='scOrbIncl'
+        nameString = AssembleL1BQtyName('OrbIncl', this_hdfVersion, .FALSE., &
+          & 'sc')
       case default
         call Announce_Error ( root, cantFillFromL1B )
       end select
@@ -3867,7 +3916,7 @@ contains ! =====     Public Procedures     =============================
 
       call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
         & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-        & NeverFail= .false. )
+        & NeverFail= .false., hdfVersion=LEVEL1_HDFVERSION )
       ! We'll have to think about `bad' values here .....
       if ( flag /= 0 ) then
         call Announce_Error ( root, errorReadingL1B )
@@ -4373,6 +4422,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.154  2002/10/10 23:52:57  pwagner
+! Added code to fill from L1bdata with hdf5; untested
+!
 ! Revision 2.153  2002/10/08 17:36:20  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
