@@ -120,28 +120,28 @@ module DNWT_MODULE
   public :: NWT, NWT_T, NWTA, NWTDB, NWTOP
   public :: FlagName
 
-  type NWT_T             ! Stuff about the problem, neatly packaged.  This
-                         ! is the type of the AJ argument of NWTA.  Unless
-                         ! otherwise noted, components are inputs to ?NWTA.
-                         ! See usage instructions above.
-    real(rk) :: AJN      ! Largest L1 norm of column in upper triangle
-                         ! of factored Jacobian matrix
-    real(rk) :: AXMAX    ! MAXVAL(ABS(X))
-    real(rk) :: CAIT     ! Aitken parameter -- intent(out)
-    real(rk) :: DIAG     ! Smallest | diagonal element | after factoring
-    real(rk) :: DXDX     ! dot_product( DX, DX )
-    real(rk) :: DXDXL    ! dot_product( "candidate DX", DX )
-    real(rk) :: DXN      ! L2 Norm of candidate DX
-    real(rk) :: DXNL     ! L2 Norm of last candidate DX -- intent(out)
-    real(rk) :: FNMIN    ! L2 Norm of F not in column space of the Jacobian
-    real(rk) :: FNORM    ! L2 Norm of F at current X
-    real(rk) :: GDX      ! dot_product( Gradient, "Candidate DX" )
-    real(rk) :: GFAC     ! Amount of best gradient to use for DX
-    real(rk) :: GRADN    ! L2 norm of Gradient
-    real(rk) :: SQ       ! Levenberg-Marquardt parameter -- intent(out)
-    real(rk) :: SQT      ! Total Levenberg-Marquardt stabilization -- intent(out)
-    logical :: BIG       ! ANY( DX > 10.0 * epsilon(X) * X )
-    logical :: STARTING  ! NWTA is still in "starting up" phase -- intent(out)
+  type NWT_T               ! Stuff about the problem, neatly packaged.  This
+                           ! is the type of the AJ argument of NWTA.  Unless
+                           ! otherwise noted, components are inputs to ?NWTA.
+                           ! See usage instructions above.
+    real(rk) :: AJN        ! Largest L1 norm of column in upper triangle
+                           ! of factored Jacobian matrix
+    real(rk) :: AXMAX      ! MAXVAL(ABS(X))
+    real(rk) :: CAIT = 0.0 ! Aitken parameter -- intent(out)
+    real(rk) :: DIAG       ! Smallest | diagonal element | after factoring
+    real(rk) :: DXDX       ! dot_product( DX, DX )
+    real(rk) :: DXDXL      ! dot_product( "candidate DX", DX )
+    real(rk) :: DXN        ! L2 Norm of candidate DX
+    real(rk) :: DXNL = 0.0 ! L2 Norm of last candidate DX -- intent(out)
+    real(rk) :: FNMIN      ! L2 Norm of F not in column space of the Jacobian
+    real(rk) :: FNORM      ! L2 Norm of F at current X
+    real(rk) :: GDX        ! dot_product( Gradient, "Candidate DX" )
+    real(rk) :: GFAC       ! Amount of best gradient to use for DX
+    real(rk) :: GRADN      ! L2 norm of Gradient
+    real(rk) :: SQ = 0.0   ! Levenberg-Marquardt parameter -- intent(out)
+    real(rk) :: SQT        ! Total Levenberg-Marquardt stabilization -- intent(out)
+    logical :: BIG         ! ANY( DX > 10.0 * epsilon(X) * X )
+    logical :: STARTING = .true. ! NWTA is still in "starting up" phase -- intent(out)
   end type NWT_T
 
   ! Start or restart:
@@ -228,15 +228,15 @@ contains
 
 ! Variables in the calling sequence are of the following type
 
-      integer, intent(out) :: NFLAG
-      real(rk), intent(in) :: XOPT(*)
-      integer, intent(in), optional :: NOPT(*)
+    integer, intent(out) :: NFLAG
+    real(rk), intent(in) :: XOPT(*)
+    integer, intent(in), optional :: NOPT(*)
 
 ! The above parameters are used as follows:
 
-! NFLAG  = Integer used for communication with the user.  NWT sets NFLAG
-!     = 0.  NFLAG is by NWTA.  When NWTA returns control to the calling
-!     program unit, NFLAG is used as shown above.
+! NFLAG  = Integer used for communication with the user.  NWT sets NFLAG =
+!     NF_START.  NFLAG is used by NWTA.  When NWTA returns control to the
+!     calling program unit, NFLAG is used as shown above.
 
 ! XOPT( ) = Array used for values needed to set options; see NOPT below.
 
@@ -1021,6 +1021,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.16  2001/06/01 01:38:27  vsnyder
+! Correct some comments, and some cosmetic changes
+!
 ! Revision 2.15  2001/05/25 20:14:01  vsnyder
 ! Replace 1p5e format that NAG doesn't like with 5es format
 !
