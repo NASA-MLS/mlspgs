@@ -128,10 +128,12 @@ contains ! =====     Public Procedures     =============================
         call output ( error_number, places=9, advance='yes' )
       end if
     else
-      print*, '***Error in module ', ModuleName
-      print*, trim(full_message)
+      call output ( '***Error in module ' )
+      call output ( ModuleName, advance='yes' )
+      call output ( trim(full_message), advance='yes' )
       if ( present(error_number) ) then
-        print*, 'error number ', error_number
+        call output ( 'Error number ' )
+        call output ( error_number, advance='yes' )
       end if
     end if
 
@@ -142,6 +144,9 @@ contains ! =====     Public Procedures     =============================
 end module OBTAIN_MLSCF
 
 ! $Log$
+! Revision 2.8  2001/07/18 23:57:57  pwagner
+! Returns error from close_mlscf
+!
 ! Revision 2.7  2001/05/02 23:33:48  pwagner
 ! Replace pgs_io_gen.. routines with mls_..
 !
