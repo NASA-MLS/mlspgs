@@ -4,48 +4,37 @@
 
 module FullCloudForwardModel
 
-! -------------------------------------------------------------------------
+! ===========================================================================
 ! THIS MODULE CONTAINS THE FULL CLOUD FORWARD MODEL  
-! Jonathan Jiang,  Paul Wagner, July 16, 2001 
-! Jonathan Jiang,  Dong Wu, add Jacobian, August 3, 2001
-! Jonathan Jiang,  add Field Of View Convolution, August 16, 2001  
-! Jonathan Jiang,  add sideband ratio, October 4, 2001 
-! Jonathan Jiang,  add CloudProfile module, October 5, 2001 
-! -------------------------------------------------------------------------
+! ===========================================================================
 
-  use Allocate_deallocate, only: Allocate_test, Deallocate_test
-  use AntennaPatterns_m, only: ANTENNAPATTERNS
-  use CloudySkyModule, only: CLOUD_MODEL
-  use CloudySkyRadianceModel, only: CloudForwardModel
-  use Hdf, only: DFACC_READ, DFACC_CREATE
-  use HDFEOS, only: SWOPEN,     SWCLOSE
-  use L2GPData, only: L2GPData_T, ReadL2GPData, WriteL2GPData
-  use MLSCommon,only: NameLen, FileNameLen, r8,  FINDFIRST
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use MLSSignals_m, only: SIGNAL_T, ARESIGNALSSUPERSET
-  use MatrixModule_0, only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED,   &
-                          & M_COLUMN_SPARSE, CREATEBLOCK, M_FULL
-  use MatrixModule_1, only: MATRIX_T, FINDBLOCK
-  use ManipulateVectorQuantities, only: FindClosestInstances
-  use MLSNumerics, only: InterpolateValues
-  use Molecules, only: L_H2O, L_O3, spec_tags
-  use Output_m, only: OUTPUT
-  use PointingGrid_m, only: POINTINGGRIDS
-  use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
-  use Toggles, only: Emit, Levels, Toggle
-  use Trace_M, only: Trace_begin, Trace_end
+  use Allocate_deallocate,          only: Allocate_test, Deallocate_test
+  use AntennaPatterns_m,            only: ANTENNAPATTERNS
+  use CloudySkyModule,              only: CLOUD_MODEL
+  use CloudySkyRadianceModel,       only: CloudForwardModel
+  use Hdf,                          only: DFACC_READ, DFACC_CREATE
+  use HDFEOS,                       only: SWOPEN, SWCLOSE
+  use L2GPData,                     only: L2GPData_T, ReadL2GPData, WriteL2GPData
+  use MLSCommon,                    only: NameLen, FileNameLen, r8,  FINDFIRST
+  use MLSMessageModule,             only: MLSMessage, MLSMSG_Error
+  use MLSSignals_m,                 only: SIGNAL_T, ARESIGNALSSUPERSET
+  use MatrixModule_0,               only: M_Absent, M_BANDED, MATRIXELEMENT_T, M_BANDED, &
+                                        & M_COLUMN_SPARSE, CREATEBLOCK, M_FULL
+  use MatrixModule_1,               only: MATRIX_T, FINDBLOCK
+  use ManipulateVectorQuantities,   only: FindClosestInstances
+  use MLSNumerics,                  only: InterpolateValues
+  use Molecules,                    only: L_H2O, L_O3, spec_tags
+  use Output_m,                     only: OUTPUT
+  use PointingGrid_m,               only: POINTINGGRIDS
+  use SpectroscopyCatalog_m,        only: CATALOG_T, LINE_T, LINES, CATALOG
+  use Toggles,                      only: Emit, Levels, Toggle
+  use Trace_M,                      only: Trace_begin, Trace_end
   use Units
-  use VectorsModule, only: GETVECTORQUANTITYBYTYPE,                          &
-                         & VECTOR_T, VECTORVALUE_T,                          &
-                         & VALIDATEVECTORQUANTITY
-  
-! -----------------------------------------------------------------------
-! THE FOLLOWING IS MODIFICATIONS FOR THE CLOUD FORWARD MODEL PARAMETERS
-! -----------------------------------------------------------------------
+  use VectorsModule,                only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T, &
+                                        & VALIDATEVECTORQUANTITY
 
-  use ForwardModelConfig, only: FORWARDMODELCONFIG_T   
-  use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T,            &
-                                    & FORWARDMODELSTATUS_T
+  use ForwardModelConfig,           only: FORWARDMODELCONFIG_T   
+  use ForwardModelIntermediate,     only: FORWARDMODELINTERMEDIATE_T, FORWARDMODELSTATUS_T
 
 ! ----------------------------------------------------------
 ! DEFINE INTRINSIC CONSTANTS NEEDED BY Init_Tables_Module
@@ -99,12 +88,12 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
                                             FwdModelExtra, FwdModelOut, Ifm, &
                                             fmStat, Jacobian                 )  
     ! Dummy arguments
-    type(forwardModelConfig_T), intent(inout) :: FORWARDMODELCONFIG
-    type(vector_T), intent(in) ::  FWDMODELIN, FwdModelExtra
-    type(vector_T), intent(inout) :: FWDMODELOUT                ! Radiances, etc.
-    type(forwardModelIntermediate_T), intent(inout) :: IFM      ! Workspace
-    type(forwardModelStatus_t), intent(inout) :: FMSTAT         ! Reverse comm. stuff
-    type(matrix_T), intent(inout), optional :: JACOBIAN
+    type(forwardModelConfig_T),       intent(inout) :: FORWARDMODELCONFIG
+    type(vector_T),                   intent(in) ::  FWDMODELIN, FwdModelExtra
+    type(vector_T),                   intent(inout) :: FWDMODELOUT             ! Radiances, etc.
+    type(forwardModelIntermediate_T), intent(inout) :: IFM                     ! Workspace
+    type(forwardModelStatus_t),       intent(inout) :: FMSTAT                  ! Reverse comm. stuff
+    type(matrix_T),                   intent(inout), optional :: JACOBIAN
 
     ! Local variables
     type (VectorValue_T), pointer :: CLOUDICE                   ! Profiles
@@ -125,13 +114,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     type (VectorValue_T), pointer :: TEMP                       ! Temperature 
     type (VectorValue_T), pointer :: TOTALEXTINCTION            ! Profile
     type (VectorValue_T), pointer :: VMR                        ! Quantity
-    type (VectorValue_T), pointer :: SCGEOCALT     ! Geocentric spacecraft altitude
-    type (VectorValue_T), pointer :: ELEVOFFSET    ! Elevation offset quantity
-    type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
-    type (Signal_T) :: signal                      ! A signal
-    type(VectorValue_T), pointer :: STATE_ext      ! A state vector quantity
-    type(VectorValue_T), pointer :: STATE_los      ! A state vector quantity
-    type(VectorValue_T), pointer :: SIDEBANDRATIO  ! From the state vector
+    type (VectorValue_T), pointer :: SCGEOCALT                  ! Geocentric spacecraft altitude
+    type (VectorValue_T), pointer :: ELEVOFFSET                 ! Elevation offset quantity
+    type (VectorValue_T), pointer :: LOSVEL                     ! Line of sight velocity
+    type (Signal_T) :: signal                                   ! A signal
+    type(VectorValue_T), pointer :: STATE_ext                   ! A state vector quantity
+    type(VectorValue_T), pointer :: STATE_los                   ! A state vector quantity
+    type(VectorValue_T), pointer :: SIDEBANDRATIO               ! From the state vector
 
     type (catalog_T), dimension(:), pointer :: MY_CATALOG 
     type (catalog_T), pointer :: thisCatalogEntry
@@ -140,47 +129,47 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
     ! for jacobian
     type(MatrixElement_T), pointer :: JBLOCK       ! A block from the jacobian
-    integer :: COLJBLOCK                ! Column index in jacobian
-    integer :: ROWJBLOCK                ! Row index in jacobian
-    integer :: noInstances              ! no of instance
-    integer :: noMIFs                   ! Number of minor frames
-    integer :: noSgrid                  ! no of elements in S grid
-    integer :: noSurf                   ! Number of pressure levels
-    integer :: novmrSurf                   ! Number of vmr levels
-    integer :: noCldSurf                   ! Number of cloud ext levels
-    integer :: NOFREQS                  ! Number of frequencies
-    integer :: NOFREQS0                  ! Number of frequencies of the last signal
+    integer :: COLJBLOCK                           ! Column index in jacobian
+    integer :: ROWJBLOCK                           ! Row index in jacobian
+    integer :: noInstances                         ! no of instance
+    integer :: noMIFs                              ! Number of minor frames
+    integer :: noSgrid                             ! no of elements in S grid
+    integer :: noSurf                              ! Number of pressure levels
+    integer :: novmrSurf                           ! Number of vmr levels
+    integer :: noCldSurf                           ! Number of cloud ext levels
+    integer :: NOFREQS                             ! Number of frequencies
+    integer :: NOFREQS0                            ! Number of frequencies of the last signal
 
-    integer :: i                        ! Loop counter
-    integer :: j                        ! Loop counter
-    integer :: k                        ! Loop counter
-    integer :: IER                      ! Status flag from allocates
+    integer :: i                                   ! Loop counter
+    integer :: j                                   ! Loop counter
+    integer :: k                                   ! Loop counter
+    integer :: IER                                 ! Status flag from allocates
     integer :: ivmr
     integer :: mif
-    integer :: MAF                      ! major frame counter
-    integer :: INSTANCE                 ! Relevant instance for temperature
-    integer :: MinInst                  ! lower bound of instance
-    integer :: MaxInst                  ! upper bound of instance
-    integer :: nfine                    ! no of fine resolution grids
-    integer :: nNear                    ! no of nearest profiles
-    integer :: status                   ! allocation status 
-    integer :: SIDEBAND                 ! Loop index
-    integer :: SIDEBANDSTART            ! For sideband loop
-    integer :: SIDEBANDSTEP             ! For sideband loop
-    integer :: SIDEBANDSTOP             ! For sideband loop
-    integer :: THISSIDEBAND             ! Loop counter for sidebands
-    integer :: SIGIND                   ! Signal index, loop counter
-    integer :: SPECTAG                  ! A single spectag
+    integer :: MAF                                 ! major frame counter
+    integer :: INSTANCE                            ! Relevant instance for temperature
+    integer :: MinInst                             ! lower bound of instance
+    integer :: MaxInst                             ! upper bound of instance
+    integer :: nfine                               ! no of fine resolution grids
+    integer :: nNear                               ! no of nearest profiles
+    integer :: status                              ! allocation status 
+    integer :: SIDEBAND                            ! Loop index
+    integer :: SIDEBANDSTART                       ! For sideband loop
+    integer :: SIDEBANDSTEP                        ! For sideband loop
+    integer :: SIDEBANDSTOP                        ! For sideband loop
+    integer :: THISSIDEBAND                        ! Loop counter for sidebands
+    integer :: SIGIND                              ! Signal index, loop counter
+    integer :: SPECTAG                             ! A single spectag
 
-    integer :: iCloudHeight                          ! Index for Cloud Top Height
+    integer :: iCloudHeight                        ! Index for Cloud Top Height
 
     integer, dimension(:), pointer :: closestInstances 
 
-    integer :: WHICHChannel                           ! which single channel is used
-    integer :: WHICHPATTERN                           ! Index of antenna pattern
-    integer :: MAXSUPERSET                            ! Max. value of superset
-    integer, dimension(:), pointer :: SUPERSET        ! Result of AreSignalsSuperset
-    integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
+    integer :: WHICHChannel                        ! which single channel is used
+    integer :: WHICHPATTERN                        ! Index of antenna pattern
+    integer :: MAXSUPERSET                         ! Max. value of superset
+    integer, dimension(:), pointer :: SUPERSET     ! Result of AreSignalsSuperset
+    integer, dimension(1) :: WHICHPATTERNASARRAY   ! Result of minloc
 
     real(r8), dimension(:,:), pointer :: A_CLEARSKYRADIANCE
     real(r8), dimension(:,:), pointer :: A_CLOUDINDUCEDRADIANCE
@@ -189,37 +178,37 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     real(r8), dimension(:,:), pointer :: A_EFFECTIVEOPTICALDEPTH
     real(r8), dimension(:,:), pointer :: A_MASSMEANDIAMETER
     real(r8), dimension(:,:), pointer :: A_TOTALEXTINCTION
-    real(r8), dimension(:,:), pointer :: VMRARRAY     ! The VMRs
-    real(r8), dimension(:), allocatable :: Slevl      ! S grid
-    real(r8), dimension(:), allocatable :: Zt         ! tangent height
-    real (r8), dimension(:), pointer :: thisRatio     ! Sideband ratio values
+    real(r8), dimension(:,:), pointer :: VMRARRAY  ! The VMRs
+    real(r8), dimension(:), allocatable :: Slevl   ! S grid
+    real(r8), dimension(:), allocatable :: Zt      ! tangent height
+    real (r8), dimension(:), pointer :: thisRatio  ! Sideband ratio values
 
-    real(r8), dimension(:), pointer :: phi_fine       ! Fine resolution for phi 
-    real(r8), dimension(:), pointer :: z_fine         ! Fine resolution for z
-    real(r8), dimension(:), pointer :: zp_fine         ! Fine resolution for zp
-    real(r8), dimension(:), pointer :: s_fine        ! Fine resolution for s
-    real(r8), dimension(:), pointer :: ds_fine        ! Fine resolution for ds
-    real(r8), dimension(:), pointer :: w_fine        ! weight along s_fine
+    real(r8), dimension(:), pointer :: phi_fine    ! Fine resolution for phi 
+    real(r8), dimension(:), pointer :: z_fine      ! Fine resolution for z
+    real(r8), dimension(:), pointer :: zp_fine     ! Fine resolution for zp
+    real(r8), dimension(:), pointer :: s_fine      ! Fine resolution for s
+    real(r8), dimension(:), pointer :: ds_fine     ! Fine resolution for ds
+    real(r8), dimension(:), pointer :: w_fine      ! weight along s_fine
 
     real(r8), dimension(:,:,:), allocatable  :: A_TRANS
     real(r8), dimension(:), pointer :: FREQUENCIES
     real(r8), dimension(:,:), allocatable :: WC
 
     real(r8) :: phi_tan
-    real(r8) :: dz                                    ! thickness of state quantity
-    real(r8) :: dphi                                  ! phi interval of state quantity
-    real(r8) :: tLat                                  ! temperature 'window' latitude
-    real(r8) :: CloudHeight                           ! Cloud Top Height
+    real(r8) :: dz                                 ! thickness of state quantity
+    real(r8) :: dphi                               ! phi interval of state quantity
+    real(r8) :: tLat                               ! temperature 'window' latitude
+    real(r8) :: CloudHeight                        ! Cloud Top Height
 
-    logical, dimension(:), pointer :: doChannel       ! Do this channel?
-    logical :: DoHighZt                               ! Flag
-    logical :: DoLowZt                                ! Flag
+    logical, dimension(:), pointer :: doChannel    ! Do this channel?
+    logical :: DoHighZt                            ! Flag
+    logical :: DoLowZt                             ! Flag
     logical :: Got(2)  = .false.  
     logical :: dee_bug = .true.  
     logical :: prt_log = .false.
-    logical :: FOUNDINFIRST                           ! Flag to indicate derivatives
+    logical :: FOUNDINFIRST                        ! Flag to indicate derivatives
 
-    character :: cloudtype                            ! cloud profile type
+    character :: cloudtype                         ! cloud profile type
 
     !---------------------------------------------------------------------------
     ! >>>>>>>>>>>>>>>>>>>>>>>>>>> Executable code  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -289,52 +278,52 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! --------
     ! Outputs:
     ! --------
-        radiance => GetVectorQuantityByType ( fwdModelOut,                 &
-          & quantityType=l_radiance,                                       &
+        radiance => GetVectorQuantityByType ( fwdModelOut,                   &
+          & quantityType=l_radiance,                                         &
           & signal=signal%index, sideband=signal%sideband )
-        modelCloudRadiance => GetVectorQuantityByType ( fwdModelOut,     &
-          & quantityType=l_cloudInducedRadiance,                           &
+        modelCloudRadiance => GetVectorQuantityByType ( fwdModelOut,         &
+          & quantityType=l_cloudInducedRadiance,                             &
           & signal=signal%index, sideband=signal%sideband )
-        cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          & 
+        cloudExtinction => GetVectorQuantityByType ( fwdModelOut,            & 
             & quantityType=l_cloudExtinction, noerror=.true. )
-        cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
-          & quantityType=l_cloudRADSensitivity, noerror=.true.,            &
+        cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,        &
+          & quantityType=l_cloudRADSensitivity, noerror=.true.,              &
           & signal=signal%index, sideband=signal%sideband )
-        totalExtinction => GetVectorQuantityByType ( fwdModelOut,          &
+        totalExtinction => GetVectorQuantityByType ( fwdModelOut,            &
           & quantityType=l_totalExtinction, noerror=.true. )
-        effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,    &
-          & quantityType=l_effectiveOpticalDepth, noerror=.true.,          &
+        effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut,      &
+          & quantityType=l_effectiveOpticalDepth, noerror=.true.,            &
           & signal=signal%index, sideband=signal%sideband )
-        massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut,      &
+        massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut,        &
           & quantityType=l_massMeanDiameterIce, noerror=.true. )
-        massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut,    &
+        massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut,      &
           & quantityType=l_massMeanDiameterWater, noerror=.true. )
 
     ! -------
     ! Inputs:
     ! -------
-        ptan => GetVectorQuantityByType ( fwdModelExtra,       &
+        ptan => GetVectorQuantityByType ( fwdModelExtra,                     &
           & quantityType=l_ptan, instrumentModule = Signal%instrumentModule )
 !          & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
-        temp => GetVectorQuantityByType ( fwdModelExtra,      &
+        temp => GetVectorQuantityByType ( fwdModelExtra,                     &
           & quantityType=l_temperature )
-        gph => GetVectorQuantityByType ( fwdModelExtra,       &
+        gph => GetVectorQuantityByType ( fwdModelExtra,                      &
           & quantityType=l_gph )
-        cloudIce => GetVectorQuantityByType ( fwdModelExtra,   &
+        cloudIce => GetVectorQuantityByType ( fwdModelExtra,                 &
           & quantityType=l_cloudIce )
-        cloudWater => GetVectorQuantityByType ( fwdModelExtra, &
+        cloudWater => GetVectorQuantityByType ( fwdModelExtra,               &
           & quantityType=l_cloudWater )
-        surfaceType => GetVectorQuantityByType ( fwdModelExtra, &
+        surfaceType => GetVectorQuantityByType ( fwdModelExtra,              &
           & quantityType=l_surfaceType )
-        sizeDistribution=>GetVectorQuantityByType(fwdModelExtra,&
+        sizeDistribution=>GetVectorQuantityByType(fwdModelExtra,             &
           & quantityType=l_sizeDistribution )
-        earthradius=>GetVectorQuantityByType ( fwdModelExtra,  &
+        earthradius=>GetVectorQuantityByType ( fwdModelExtra,                &
           & quantityType=l_earthradius ) 
-        scGeocAlt => GetVectorQuantityByType ( fwdModelExtra, &
+        scGeocAlt => GetVectorQuantityByType ( fwdModelExtra,                &
           & quantityType=l_scGeocAlt )
-        elevOffset => GetVectorQuantityByType ( fwdModelExtra, &
+        elevOffset => GetVectorQuantityByType ( fwdModelExtra,               &
           & quantityType=l_elevOffset, radiometer=Signal%radiometer )	
-        losVel => GetVectorQuantityByType ( fwdModelExtra, &
+        losVel => GetVectorQuantityByType ( fwdModelExtra,                   &
           & quantityType=l_losVel, instrumentModule=Signal%instrumentModule )
     !-----------------------------------------
     ! Make sure the quantities we need are got and with correct format
@@ -361,7 +350,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Set up some temporary quantities
     !----------------------------------
 
-    call Allocate_test ( closestInstances, radiance%template%noInstances,   &
+    call Allocate_test ( closestInstances, radiance%template%noInstances,    &
       & 'closestInstances', ModuleName )      
 
     !------------------------
@@ -372,7 +361,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
     endif
     call allocate_test ( vmrArray,                                           &
-      & size(forwardModelConfig%molecules), noSurf,           &
+      & size(forwardModelConfig%molecules), noSurf,                          &
       & 'vmrArray', ModuleName )
 
     !---------------------------------------------------------
@@ -411,15 +400,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 	   novmrSurf = vmr%template%nosurfs
       call InterpolateValues ( &
         & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
-        & reshape(vmr%values(:,instance),(/novmrSurf/)), &     ! Old Y
-        & reshape(temp%template%surfs(:,1),(/noSurf/)), &   ! New X
-        & vmrArray(i,:), &                     ! New Y
+        & reshape(vmr%values(:,instance),(/novmrSurf/)),  &    ! Old Y
+        & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
+        & vmrArray(i,:),                                  &    ! New Y
         & 'Linear', extrapolate='Clamp' )
       Got(ivmr)=.true.
     end do
 
     if ( .not. got(1) .or. .not. got(2) ) then
-      call MLSMessage( MLSMSG_Error, ModuleName,                             &
+      call MLSMessage( MLSMSG_Error, ModuleName,          &
                       'Missing the required molecules' )
     endif
 
@@ -548,7 +537,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         case ( 0 )
           frequencies = signal%lo + frequencies
         case default
-          call MLSMessage ( MLSMSG_Error, ModuleName, &
+          call MLSMessage ( MLSMSG_Error, ModuleName,            &
             & 'Bad value of signal%sideband' )
         end select
 
@@ -583,9 +572,9 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
      ! get tangent height from tangent pressure
       call InterpolateValues ( &
         & reshape(gph%template%surfs(:,1),(/noSurf/)), &    ! Old X
-        & reshape(gph%values(:,instance),(/noSurf/)), &            ! Old Y
-        & reshape(ptan%values(:,maf),(/noMifs/)), &   ! New X
-        & zt, &                     ! New Y
+        & reshape(gph%values(:,instance),(/noSurf/)),  &    ! Old Y
+        & reshape(ptan%values(:,maf),(/noMifs/)),      &    ! New X
+        & zt, &                                             ! New Y
         & 'Linear' )
 
      IF ( present(jacobian) ) THEN
@@ -641,6 +630,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Now call the full CloudForwardModel code
     !------------------------------------------
 
+    ! all demensions are in meters
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
       & noSurf,                                                              & 
@@ -691,15 +681,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     do mif=1, noMIFs
     radiance%values (i+(mif-1)*noFreqs, maf) = a_clearSkyRadiance(mif,i) 
 
-    modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) = &
+    modelCloudRadiance%values (i+(mif-1)*noFreqs, maf ) =                    &
       & a_cloudInducedRadiance(mif,i)
 
-    if(associated(effectiveOpticalDepth)) &
-      & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) = &
+    if(associated(effectiveOpticalDepth))                                    &
+      & effectiveOpticalDepth%values (i+(mif-1)*noFreqs, maf ) =             &
       & a_effectiveOpticalDepth(mif,i)
 
-    if(associated(cloudRADSensitivity)) &
-      & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =   &
+    if(associated(cloudRADSensitivity))                                      &
+      & cloudRADSensitivity%values (i+(mif-1)*noFreqs, maf ) =               &
       & a_cloudRADSensitivity(mif,i)
     enddo
     endif
@@ -803,10 +793,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
          & earthradius%values(1,maf)
          ! convert back to log tangent pressure
          call InterpolateValues ( &
-            & reshape(gph%values(:,instance),(/noSurf/)), &    ! Old X
+            & reshape(gph%values(:,instance),(/noSurf/)), &     ! Old X
             & reshape(gph%template%surfs(:,1),(/noSurf/)), &    ! Old Y
-            & z_fine, &   ! New X
-            & zp_fine, &                     ! New Y
+            & z_fine, &                                         ! New X
+            & zp_fine, &                                        ! New Y
             & 'Linear' )
 
         !--------------------------------
@@ -820,10 +810,10 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         end do
 
          call InterpolateValues ( &
-            & sLevl, &            ! Old X
+            & sLevl, &                                               ! Old X
             & reshape(a_trans(:,mif,whichChannel),(/noSgrid/)), &    ! Old Y
-            & s_fine, &   ! New X
-            & w_fine, &                     ! New Y
+            & s_fine, &                                              ! New X
+            & w_fine, &                                              ! New Y
             & 'Linear' )
             
         ! ds needs to be weighted by transmission function
@@ -835,8 +825,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         !----------------------------------------------------------
         
          do i = minInst,maxInst             ! loop over closer profiles
-         do j = 1,noCldSurf               ! loop over cloudQty surface
-         do k = 1,nfine*nNear             ! sum up all the lengths
+         do j = 1,noCldSurf                 ! loop over cloudQty surface
+         do k = 1,nfine*nNear               ! sum up all the lengths
            if(abs(zp_fine(k) - state_ext%template%surfs(j,1)) < dz/2._r8 &
            & .AND. abs(phi_fine(k) - state_ext%template%phi(1,i)) < dphi/2._r8) &
            & jBlock%values(mif,j+(i-1)*noCldSurf) = &
@@ -929,6 +919,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.90  2001/11/16 00:49:05  jonathan
+! clean log
+!
 ! Revision 1.89  2001/11/16 00:47:13  jonathan
 ! change ptan from radiance%template%instrumentModule to Signal%instrumentModule
 !
