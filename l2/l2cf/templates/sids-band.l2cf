@@ -9,7 +9,7 @@ include(m4defs.l2cf)
 !ifdef(day,{},{!define(day,{1996d051})})
 !ifdef(band,{},{!define(band,{1})})
 !ifdef(l1boaversion,{},{!define(l1boaversion,{s5--t})})
-!ifdef(l1bradversion,{},{!define(l1bradversion,{s5-f2--t})})
+!ifdef(l1bradversion,{},{!define(l1bradversion,{s5-f6--t})})
 
 ; Now define our directories
 !define(inpathl1boa,{/data/emls/l1boa/!l1boaversion/!year(!day)/})
@@ -19,19 +19,19 @@ include(m4defs.l2cf)
 ; ----------------------------------- Boiler plate l2cf stuff -------
 
 ; Valid signals database
-!include(!calpath/MLS-Aura_L2Cal-Signals_v1-0-0_0000d000.l2cf)
+!include(!signalsL2cf)
 
 ; Spectroscopy and molecule/isotope information
-!include(!calpath/MLS-Aura_L2Cal-Spectroscopy_v1-0-0_0000d000.l2cf)
+!include(!spectroscopyL2cf)
 
 ; Sideband ratio information
-!include(!calpath/MLS-Aura_L2Cal-SBRatio_v1-0-0_0000d000.l2cf)
+!include(!sidebandL2cf)
 
 ; System temperature information
-!include(!calpath/MLS-Aura_L2Cal-Tsys_v1-0-0_0000d000.l2cf)
+!include(!systempL2cf)
 
 ; Noise bandwidth information
-!include(!calpath/MLS-Aura_L2Cal-NBW_v1-0-0_0000d000.l2cf)
+!include(!nbwL2cf)
 
 ; Now include some minor calibration parameters
 !include(lesserparams.l2cf)
@@ -73,9 +73,9 @@ begin GlobalSettings
 
   ;; Load our forward model databases
   ForwardModelGlobal, $
-    antennaPatterns='!calpath/MLS-Aura_L2Cal-AAAP_v1-0-0_0000d000.txt', $
-    filterShapes='!calpath/MLS-Aura_L2Cal-Filters_v1-0-1_0000d000.txt', $
-    pointingGrids='!calpath/MLS-Aura_L2Cal-PFG_v1-0-1_0000d000.txt'
+    antennaPatterns=!antennaFile, $
+    filterShapes=!filterFile, $
+    pointingGrids=!pfgFile
 
   ;; Setup the particular forward model we're going to want
   sidsFwm: forwardModel, type=full,  $
@@ -140,16 +140,13 @@ end Retrieve
 ; ------------------------------------------ Join the chunks
 
 begin Join
-  radL2AUX: l2aux, source=y.band!band, /prefixSignal, sdName=''
-  noiseL2AUX: l2aux, source=yNoise.band!band, /prefixSignal, sdName=' precision'
-  ptanGHzL2AUX: l2aux, source=truth.ptanGHz
-  ptanTHzL2AUX: l2aux, source=truth.ptanTHz
+  !define(outfile,{'!outpathl1brad/MLS-Aura_L1BRAD-band!band-clean_!l1bradversion_!day.h4'})
+  directWrite, source=y.band!band, /prefixSignal, sdName='', file=!outfile
+  directWrite, source=yNoise.band!band, /prefixSignal, sdName=' precision', file=!outfile
+  directWrite, source=truth.ptanGHz, sdName='GHz.ptan', file=!outfile
+  directWrite, source=truth.ptanTHz, sdName='THz.ptan', file=!outfile
 end Join
 
 ; ---------------------------------------  Output the result
 begin Output
-  output, file='!outpathl1brad/MLS-Aura_L1BRAD-band!band-clean_!l1bradversion_!day.dat', $
-    quantities=  $
-    [ ptanGHzL2AUX, ptanTHzL2AUX, radL2AUX, noiseL2AUX ], type=l2aux, $
-    /writeCounterMAF
 end Output
