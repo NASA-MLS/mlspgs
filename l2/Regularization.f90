@@ -226,7 +226,8 @@ contains
             c1 = 1
             c2 = ncol
             if ( associated(weightVec) ) then
-              wtVec = weightVec%quantities(nq)%values(:,ni)
+              wtVec(1:weightVec%quantities(nq)%template%instanceLen) = &
+                & weightVec%quantities(nq)%values(:,ni)
               call fillBlock ( a%block(r,ib), ord, rows, 1, ncol, wt, wtVec )
             else
               call fillBlock ( a%block(r,ib), ord, rows, 1, ncol, wt )
@@ -248,7 +249,8 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
                 if ( c2 > a%block(r,ib)%ncols ) exit
               end do
               if ( associated(weightVec) ) then
-                wtVec = weightVec%quantities(nq)%values(c1:c2-1,ni)
+                wtVec = 0.0_r8
+                wtVec ( c1 : c2-1 ) = weightVec%quantities(nq)%values(c1:c2-1,ni)
                 call fillBlock ( a%block(r,ib), ord, rows, c1, c2-1, wt, wtVec )
               else
                 call fillBlock ( a%block(r,ib), ord, rows, c1, c2-1, wt )
@@ -257,12 +259,14 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
           end if
 
         end if
+
+        if ( index(switches,'reg') /= 0 ) &
+          & call dump ( a%block(r,ib), name='Tikhonov', details=2 )
+
       end do
       call deallocate_test ( wtVec, "Weight vector", moduleName )
       if ( warn ) call MLSMessage ( MLSMSG_Warning, moduleName, &
         & "Some blocks not regularized, or at lower order than requested" )
-        if ( index(switches,'reg') /= 0 ) &
-          & call dump ( a%block(r,ib), name='Tikhonov', details=2 )
     else
       call MLSMessage ( MLSMSG_Error, moduleName, "Regularization failed." )
     end if ! error == 0
@@ -346,7 +350,8 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
 
       if ( present(wtVec) ) then
         do i = 1, ncol
-          wtVec(i) = dot_product(wtVec(i:i+ord),abs(c))
+          j = min(i+ord,ncol)
+          wtVec(i) = dot_product(wtVec(i:j),abs(c(0:j-i)))
         end do
       end if
 
@@ -373,7 +378,7 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
         b%r1(k) = rows
         b%r2(k) = nv + j - 1
         if ( present(wtVec) ) then
-          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j) * wtVec(i:j)
+          b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j) * wtVec(i:i+j-1)
         else
           b%values(nv:nv+j-1,1) = c(ord-i+1:ord-i+j)
         end if
@@ -386,7 +391,7 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
         b%r1(k) = rows
         b%r2(k) = nv + ord
         if ( present(wtVec) ) then
-          b%values(nv:nv+ord,1) = c(0:ord) * wtVec(i:j+ord)
+          b%values(nv:nv+ord,1) = c(0:ord) * wtVec(i:i+ord)
         else
           b%values(nv:nv+ord,1) = c(0:ord)
         end if
@@ -415,6 +420,9 @@ o:          do while ( c2 <= a%block(r,ib)%ncols )
 end module Regularization
 
 ! $Log$
+! Revision 2.17  2002/08/15 22:45:05  livesey
+! Lots of array bounds/indexing changes (fixes hopefully).
+!
 ! Revision 2.16  2002/08/08 22:02:05  vsnyder
 ! Implement mask and weight vector.  Make AnnounceError an internal subroutine
 ! instead of a module subroutine.  Move USE statements into subroutines.
