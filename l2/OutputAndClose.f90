@@ -69,7 +69,7 @@ contains ! =====     Public Procedures     =============================
     use MLSFiles, only: HDFVERSION_5, &
       & GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
       & SPLIT_PATH_NAME, MLS_SFSTART, MLS_SFEND
-    use MLSL2Options, only: PENALTY_FOR_NO_METADATA, TOOLKIT, &
+    use MLSL2Options, only: CHECKPATHS, PENALTY_FOR_NO_METADATA, TOOLKIT, &
       & DEFAULT_HDFVERSION_WRITE
     use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
       & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
@@ -251,7 +251,7 @@ contains ! =====     Public Procedures     =============================
             returnStatus = 0
           end if
 
-          if ( returnStatus == 0 ) then
+          if ( returnStatus == 0 .and. .not. checkPaths ) then
             if ( DEBUG ) call output(&
               & 'file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
             ! Open the HDF-EOS file and write swath data
@@ -310,7 +310,7 @@ contains ! =====     Public Procedures     =============================
             ! Write the metadata file
             call add_metadata ( file_base, numquantitiesperfile, quantityNames, &
               & hdfVersion, l_swath, metadata_error )
-          else
+          elseif ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
               &  "Error finding l2gp file matching:  "//file_base, returnStatus)
           end if
@@ -331,7 +331,7 @@ contains ! =====     Public Procedures     =============================
             returnStatus = 0
           end if
 
-          if ( returnStatus == 0 ) then
+          if ( returnStatus == 0 .and. .not. checkPaths ) then
 
             if ( DEBUG ) call output ( 'file name: ' // TRIM(l2auxPhysicalFilename), &
               & advance='yes' )
@@ -397,7 +397,7 @@ contains ! =====     Public Procedures     =============================
             call add_metadata ( file_base, numquantitiesperfile, quantityNames, &
               & hdfVersion, l_hdf, metadata_error )
 
-          else
+          elseif ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
               &  "Error finding l2aux file matching:  "//file_base, returnStatus)
           end if
@@ -405,6 +405,7 @@ contains ! =====     Public Procedures     =============================
         case ( l_l2pc ) ! ------------------------------ Writing l2pc files --
           ! I intend to completely ignore the PCF file in this case,
           ! it's not worth the effort!
+          ! In that case, I will ignore the possibility of checkPaths being true
           if ( .not. canWriteL2PC ) call MLSMessage(MLSMSG_Error,ModuleName,&
             & "Cannot write l2pc files with multi chunk l2cf's")
           recLen = 0
@@ -489,7 +490,7 @@ contains ! =====     Public Procedures     =============================
             returnStatus = 0
           end if
 
-          if ( returnStatus == 0 ) then
+         if ( returnStatus == 0 .and. .not. checkPaths ) then
             if ( DEBUG ) call output(&
               & 'file name: ' // TRIM(l2gpPhysicalFilename), advance='yes')
             ! Open the HDF-EOS file and write swath data
@@ -544,7 +545,7 @@ contains ! =====     Public Procedures     =============================
             call add_metadata ( file_base, numquantitiesperfile, quantityNames, &
               & hdfVersion, output_type, metadata_error )
 
-          else
+          elseif ( returnStatus /= PGS_S_SUCCESS ) then
             call announce_error ( son, &
               &  "Error finding l2gp file matching:  "//file_base, returnStatus)
           end if
@@ -591,7 +592,7 @@ contains ! =====     Public Procedures     =============================
     end do  ! spec_no
 
       ! Write the log file metadata
-      if ( LOGFILEGETSMETADATA ) then
+      if ( LOGFILEGETSMETADATA .and. .not. checkPaths ) then
         if ( DEBUG ) then
           call output('About to write log file metadata' , advance='yes')
         end if
@@ -848,6 +849,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.88  2003/11/07 00:46:51  pwagner
+! New quicker preflight option: --checkPaths
+!
 ! Revision 2.87  2003/10/28 21:42:36  pwagner
 ! Exits with message if cant GetPCFFromRef
 !
