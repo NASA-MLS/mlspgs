@@ -675,12 +675,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_type, t+t_matrix, n+n_field_type, &
              begin, f+f_source, t+t_string, n+n_field_type, &
              ndp+n_spec_def /) )
-    call make_tree ( (/ &
-      begin, s+s_dump, &
-             begin, f+f_vector, s+s_vector, n+n_field_spec, &
-             begin, f+f_quantity, s+s_vector, f+f_template, &
-                    f+f_quantities, n+n_dot, &
-             ndp+n_spec_def/) )
 
     call make_tree( (/ &
       begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
@@ -995,6 +989,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_nmodelsurfs, t+t_numeric, n+n_field_type, &
              begin, f+f_nscatteringangles, t+t_numeric, n+n_field_type, &
              begin, f+f_nsizebins, t+t_numeric, n+n_field_type, &
+             begin, f+f_pfaMolecules, t+t_molecule, n+n_field_type, &
              begin, f+f_phiWindow, t+t_numeric, n+n_field_type, &
              begin, f+f_polarized, t+t_boolean, n+n_field_type /) )
     call make_tree ( (/ &
@@ -1012,6 +1007,16 @@ contains ! =====     Public procedures     =============================
              begin, f+f_xStar, s+s_vector, n+n_field_spec, &
              begin, f+f_yStar, s+s_vector, n+n_field_spec, &
              ndp+n_spec_def /), continue=.true. )
+    call make_tree ( (/ & ! Must be AFTER s_vector, s_vectorTemplate and
+                          ! s_forwardModel
+      begin, s+s_dump, &
+             begin, f+f_details, t+t_numeric, n+n_field_type, &
+             begin, f+f_forwardModel, s+s_forwardModel, n+n_field_spec, &
+             begin, f+f_quantity, s+s_vector, f+f_template, &
+                    f+f_quantities, n+n_dot, &
+             begin, f+f_template, s+s_vectorTemplate, s+s_quantity, n+n_field_spec, &
+             begin, f+f_vector, s+s_vector, n+n_field_spec, &
+             np+n_spec_def/) )
     call make_tree ( (/ &
       begin, s+s_forwardModelGlobal, &
              begin, f+f_antennaPatterns, t+t_string, n+n_field_type, &
@@ -1193,8 +1198,9 @@ contains ! =====     Public procedures     =============================
              begin, p+p_scan_lower_limit, t+t_numeric_range, n+n_name_def, &
              begin, p+p_scan_upper_limit, t+t_numeric_range, n+n_name_def, &
              s+s_time, s+s_chunkDivide, n+n_section, &
-      begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_forwardModel, s+s_quantity, &
-             s+s_snoop, s+s_time, s+s_vectortemplate, s+s_phase, n+n_section, &
+      begin, z+z_construct, s+s_hgrid, s+s_dump, s+s_forge, s+s_forwardModel, &
+             s+s_quantity, s+s_snoop, s+s_time, s+s_vectortemplate, s+s_phase, &
+             n+n_section, &
       begin, z+z_fill, &
              s+s_destroy, s+s_dump, s+s_fill, s+s_fillCovariance, &
              s+s_fillDiagonal, s+s_flagcloud, s+s_flushL2PCBins, s+s_load, s+s_matrix, &
@@ -1225,6 +1231,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.368  2004/05/01 04:03:00  vsnyder
+! Added pfaMolecules, added 'dump' in Construct
+!
 ! Revision 2.367  2004/04/30 21:49:17  livesey
 ! Added DisjointEquations command
 !
