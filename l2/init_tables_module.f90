@@ -133,8 +133,8 @@ module INIT_TABLES_MODULE
 ! Specification indices don't overlap parameter indices, so a section can
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_Spectroscopy_Spec + 1
-  integer, parameter :: S_CREATE             = s_apriori + 1
-  integer, parameter :: S_DUMPBLOCKS         = s_create + 1
+  integer, parameter :: S_DUMP               = s_apriori + 1
+  integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
   integer, parameter :: S_FILL               = s_dumpblocks + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
   integer, parameter :: S_FORGE              = s_fillCovariance + 1
@@ -293,7 +293,7 @@ contains ! =====     Public procedures     =============================
     ! Put spec names into the symbol table.  Don't add ones that are
     ! put in by init_MLSSignals.
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
-    spec_indices(s_create) =               add_ident ( 'create' )
+    spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_fillCovariance) =       add_ident ( 'fillCovariance' )
@@ -428,11 +428,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_field, t+t_string, n+n_field_type, &
              begin, f+f_origin, t+t_griddedOrigin, n+n_field_type, &
              np+n_spec_def, &
-      begin, s+s_create, &
-             begin, f+f_template, n+n_field_type, &
-             begin, f+f_copy, n+n_field_type, &
-             begin, f+f_autofill, n+n_field_type, &
-             np+n_spec_def, &
 !      begin, s+s_l2gp, np+n_spec_def, & ! To avoid forward reference in h/vGrid
       begin, s+s_hGrid, &
              begin, f+f_type, t+t_hGridType, nr+n_field_type, &
@@ -528,6 +523,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_columns, s+s_vector, nr+n_field_spec, &
              begin, f+f_type, t+t_matrix, n+n_field_type, &
              ndp+n_spec_def /) )
+     call make_tree ( (/ &
+      begin, s+s_dump, &
+             begin, f+f_vector, s+s_vector, n+n_field_spec, &
+             nadp+n_spec_def/) )
 
      id_last = 0
      call acorn((/begin, s+s_fill/))    ! Must be AFTER s_vector, s_matrix and s_climatology
@@ -761,7 +760,7 @@ contains ! =====     Public procedures     =============================
              s+s_time, n+n_section, &
       begin, z+z_construct, s+s_hgrid, s+s_forge, s+s_quantity, &
              s+s_snoop, s+s_time, s+s_vectortemplate, n+n_section, &
-      begin, z+z_fill, s+s_create, s+s_fill, s+s_fillCovariance, s+s_matrix, &
+      begin, z+z_fill, s+s_dump, s+s_fill, s+s_fillCovariance, s+s_matrix, &
                        s+s_remove, s+s_snoop, s+s_time, s+s_vector, &
                        s+s_transfer, n+n_section, &
       begin, z+z_retrieve, s+s_dumpBlocks, s+s_matrix, s+s_retrieve, &
@@ -805,6 +804,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.173  2001/10/18 23:42:31  livesey
+! Added dump to fill
+!
 ! Revision 2.172  2001/10/16 23:34:05  pwagner
 ! intrinsic, resetseed, seed fields added to addnoise method
 !
