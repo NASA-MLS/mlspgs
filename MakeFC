@@ -610,6 +610,33 @@ install:
             chmod a+x $(INSTALLDIR)/mlsl1.sh ; \
 			fi ; \
 		;; \
+	"l2") \
+			if [ -f $$dir/$(MLSCONFG)/mls$$dir ] ; then \
+      	  mv $$dir/$(MLSCONFG)/mls$$dir $(INSTALLDIR) ; \
+            rm -f $(INSTALLDIR)/mls$$dir.sh ; \
+	         sed "s=mlsxxyyzz=mls$$dir=; s=mlsbbiinn=$(INSTALLDIR)=; \
+              s=mlshhoommee=$(MLSHOME)=; s=mlseexxttrraa==" \
+              $(MLSBIN)/mlsprog.sh > $(INSTALLDIR)/mls$$dir.sh ; \
+            chmod a+x $(INSTALLDIR)/mls$$dir.sh ; \
+			fi ; \
+			if [ "$$L2PARALLEL" = "" ] ; then \
+           echo "To install parallel executables for level 2: " ;\
+           echo "enter  make install L2PARALLEL=yes" ;\
+			else \
+           if [ "$$PVM_EP" = "" ] ; then \
+             PVM_EP=$$HOME/pvm3/bin/LINUX ;\
+           fi; \
+			  if [ ! -d "$$PVM_EP" ] ; then \
+             echo "Unable to install parallel executables; $$PVM_EP not found";\
+             exit 0; \
+           else \
+             echo "Installing level 2 parallel executables into $$PVM_EP"; \
+             cp -a $(INSTALLDIR)/mls$$dir "$$PVM_EP"; \
+             cp -a $(MLSBIN)/mlsl2p.sh $(MLSBIN)/slavetmplt.sh "$$PVM_EP"; \
+             chmod a+x "$$PVM_EP/mlsl2p.sh"; \
+           fi; \
+         fi; \
+		;; \
 	"l3") \
 			if [ -f $$dir/$(MLSCONFG)/mlsl3d ] ; then \
 	         mv $$dir/$(MLSCONFG)/mlsl3d $(INSTALLDIR) ; \
@@ -1057,6 +1084,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.83  2003/06/03 20:38:24  pwagner
+# Renamed mkdir_cascade mkpath
+#
 # Revision 1.82  2003/05/06 20:38:51  pwagner
 # Fixed make update in tests sub dir
 #
