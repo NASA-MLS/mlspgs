@@ -6,18 +6,21 @@ module MLSHDFEOS
   ! This module contains MLS specific routines to do common HDFEOS
   ! tasks not specifically found in he5_swapi or he5_gdapi.
 
-  use MLSStrings, only: GetStringElement, NumStringElements
   use HE5_SWAPI, only: HE5_SWSETFILL, HE5_SWWRATTR, HE5_SWWRLATTR
   use HE5_SWAPI_CHARACTER_ARRAY, only: HE5_EHWRGLATT_CHARACTER_ARRAY
   use HE5_SWAPI_CHARACTER_SCALAR, only: HE5_EHWRGLATT_CHARACTER_SCALAR
   use HE5_SWAPI_DOUBLE, only: HE5_EHWRGLATT_DOUBLE
   use HE5_SWAPI_INTEGER, only: HE5_EHWRGLATT_INTEGER
   use HE5_SWAPI_REAL, only: HE5_EHWRGLATT_REAL
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
+    & mls_hdf_version
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+  use MLSStrings, only: GetStringElement, NumStringElements
 
   implicit NONE
   private
 
-  public :: HE5_EHWRGLATT, MLS_SWSETFILL
+  public :: HE5_EHWRGLATT, MLS_SWSETFILL, MLS_SWRDFLD
   logical, parameter :: HE5_SWSETFILL_BROKEN = .true.
   character(len=*), parameter :: SETFILLTITLE = '_FillValue'
 
@@ -54,6 +57,14 @@ module MLSHDFEOS
   interface MLS_SWSETFILL
     module procedure MLS_SWSETFILL_DOUBLE, &
       & MLS_SWSETFILL_INTEGER, MLS_SWSETFILL_REAL
+  end interface
+
+  interface MLS_SWRDFLD
+    module procedure &
+      & MLS_SWRDFLD_DOUBLE_1D
+!      & MLS_SWRDFLD_DOUBLE_1D, MLS_SWRDFLD_DOUBLE_2D, MLS_SWRDFLD_DOUBLE_3D, &
+!      & MLS_SWRDFLD_INTEGER, &
+!      & MLS_SWRDFLD_REAL_1D, MLS_SWRDFLD_REAL_2D, MLS_SWRDFLD_REAL_3D
   end interface
 
 contains ! ======================= Public Procedures =========================
@@ -124,15 +135,11 @@ contains ! ======================= Public Procedures =========================
     integer :: Field
     integer :: numFields
     character(len=len(FIELDNAMES)) :: FIELDNAME
-    print *, 'SWATHID: ', SWATHID
-    print *, 'FIELDNAMES: ', FIELDNAMES
     mls_swsetfill_real = 0
     numFields = NumStringElements(fieldnames, .false.)
     if ( numFields == -1 ) return
-    print *, 'numFields: ', numFields
     do Field=1, numFields
       call GetStringElement(fieldnames, fieldname, Field, .true.)
-      print *, 'trim(fieldname): ', trim(fieldname)
       if ( HE5_SWSETFILL_BROKEN ) then
         mls_swsetfill_real = he5_swwrlattr(swathid, trim(fieldname), &
           & trim(SETFILLTITLE), &
@@ -146,6 +153,59 @@ contains ! ======================= Public Procedures =========================
 
   end function MLS_SWSETFILL_REAL
 
+  integer function MLS_SWRDFLD_DOUBLE_1D ( SWATHID, FIELDNAME, &
+    & START, STRIDE, EDGE, VALUES, FILENAME, hdfVersion, DONTFAIL )
+    integer, parameter :: RANK = 1
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    integer, dimension(RANK), intent(in) :: START
+    integer, dimension(RANK), intent(in) :: STRIDE
+    integer, dimension(RANK), intent(in) :: EDGE
+    double precision, dimension(:), intent(in) :: VALUES
+    character(len=*), optional :: FIleName
+    integer, optional, intent(in) :: hdfVersion
+    logical, optional, intent(in) :: DONTFAIL
+    integer, external :: HE5_SWrdfld, SWrdfld
+    ! Internal variables
+    logical :: myDontFail
+    integer :: myHdfVersion
+    logical :: needsFileName
+    mls_swrdfld_double_1d = 0
+    myDontFail = .false.
+    if ( present(DontFail) ) myDontFail = DontFail
+    ! All necessary input supplied?
+    needsFileName = (.not. present(hdfVersion))
+    if ( present(hdfVersion) ) &
+      & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
+    if ( needsFileName .and. .not. present(FIleName)) then
+      if ( myDontFail ) then
+        mls_swrdfld_double_1d = -1
+      else
+        CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Missing needed arg FILENAME from call to MLS_SWRDFLD_DOUBLE_1D' )
+      endif
+    endif
+    if ( needsFileName ) then
+      myHdfVersion = mls_hdf_version ( trim(FileName) )
+    else
+      myHdfVersion = hdfVersion
+    endif
+    select case (myHdfVersion)
+    case (HDFVERSION_4)
+      mls_swrdfld_double_1d = swrdfld(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case (HDFVERSION_5)
+      mls_swrdfld_double_1d = HE5_swrdfld(swathid, trim(fieldname), &
+        & start, stride, edge, values)
+    case default
+      mls_swrdfld_double_1d = -1
+    end select
+    if ( myDontFail .or. mls_swrdfld_double_1d /= -1 ) return
+    CALL MLSMessage ( MLSMSG_Error, moduleName,  &
+          & 'Failed to read 1-d double field ' // trim(fieldname) )
+
+  end function MLS_SWRDFLD_DOUBLE_1D
+
 
 ! ======================= Private Procedures =========================  
 
@@ -156,6 +216,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.3  2003/04/15 23:16:46  pwagner
+! Removed prints; begun MLS_SWRDFLD stuff
+!
 ! Revision 2.2  2003/04/15 21:58:54  pwagner
 ! Now sets _FillValue attribute because swsetfill seems broken
 !
