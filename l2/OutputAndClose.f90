@@ -10,7 +10,7 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   use Allocate_Deallocate, only: Deallocate_Test
   use Expr_M, only: Expr
-  use Hdf, only: DFACC_CREATE, SFEND, SFSTART
+  use Hdf, only: DFACC_CREATE  !, SFEND, SFSTART
   use INIT_TABLES_MODULE, only: F_FILE, F_HDFVERSION, &
     & F_OVERLAPS, F_PACKED, F_QUANTITIES, F_TYPE, &
     & L_L2AUX, L_L2DGG, L_L2GP, L_L2PC, S_OUTPUT, S_TIME
@@ -23,9 +23,9 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MLSCommon, only: I4
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
-    & split_path_name !, mls_sfsstart
+    & SPLIT_PATH_NAME, MLS_SFSTART, MLS_SFEND
   use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
-    & PCFL2CFSAMECASE, DEFAULT_HDFVERSION
+    & PCFL2CFSAMECASE, DEFAULT_HDFVERSION_WRITE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
@@ -157,7 +157,7 @@ contains ! =====     Public Procedures     =============================
 
       l2gp_Version = 1
       l2aux_Version = 1
-      hdfVersion = DEFAULT_HDFVERSION
+      hdfVersion = DEFAULT_HDFVERSION_WRITE
 
       son = subtree(spec_no,root)
       if ( node_id(son) == n_named ) then ! Is spec labeled?
@@ -358,9 +358,9 @@ contains ! =====     Public Procedures     =============================
             ! Create the HDF file and initialize the SD interface
             if ( DEBUG ) call output ( 'Attempting sfstart', advance='yes' )
   ! (((( This will have to be changed to incorporate hdf5 ))))
-  !         sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE, &
-  !          & hdfVersion=hdfVersion)
-            sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
+           sdfId = mls_sfstart(l2auxPhysicalFilename, DFACC_CREATE, &
+            & hdfVersion=hdfVersion)
+  !         sdfId = sfstart(l2auxPhysicalFilename, DFACC_CREATE)
 
             if ( DEBUG ) call output ( "looping over quantities", advance='yes' )
             numquantitiesperfile = 0
@@ -401,8 +401,8 @@ contains ! =====     Public Procedures     =============================
             ! Now close the file
   ! ((((( This, too, will have to be changed for hdf5 )))))
   !                  conversion
-  !         returnStatus = mls_sfend(sdfid, hdfVersion=hdfVersion)
-            returnStatus = sfend(sdfid)
+            returnStatus = mls_sfend(sdfid, hdfVersion=hdfVersion)
+  !         returnStatus = sfend(sdfid)
             
             if ( returnStatus /= PGS_S_SUCCESS ) then
               call announce_error ( root, &
@@ -727,6 +727,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.48  2002/01/29 23:49:38  pwagner
+! Separate DEFAULT_HDFVERSION_(READ)(WRITE)
+!
 ! Revision 2.47  2002/01/26 00:10:45  pwagner
 ! Correctly sets hdfVersion; changed proclaim to announce_success
 !
