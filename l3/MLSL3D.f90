@@ -5,9 +5,10 @@
 !==========================================
 PROGRAM MLSL3D ! MLS Level 3 Daily software
 !==========================================
-  
+
+  USE Allocate_Deallocate, ONLY: DEALLOCATE_TEST
   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
-  USE L2Interface, ONLY: ReadL2GPProd
+  USE L2Interface, ONLY: ReadL2GPProd, ReadL2GPAttribute
   USE L3CF, ONLY: L3CFDef_T, L3CFProd_T  
   USE L3DMData, ONLY: L3DMData_T, DestroyL3DMDatabase
   USE L3SPData, ONLY: L3SPData_T, DestroyL3SPDatabase
@@ -19,8 +20,9 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
        & MLSMessageExit
   USE OpenInit, ONLY: PCFData_T, OpenAndInitialize
   USE OutputClose, ONLY: OutputFlags_T, OutputProd, OutputAndClose
+  USE PCFHdr, ONLY: GlobalAttributes
   USE Synoptic, ONLY: DailyCoreProcessing
-  
+
   IMPLICIT NONE
   
   !------------------- RCS Ident Info -----------------------
@@ -56,14 +58,14 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   INTEGER :: i, l2Days, mis_l2Days, hdfVersion
   
   INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
-  
+
   CALL MLSMessage (MLSMSG_Info, ModuleName, & 
        & 'EOS MLS Level 3 data processing started')
   
   ! Fill structures with input data from the PCF and L3CF.
   
   CALL OpenAndInitialize(pcf, cf, cfProd, cfDef, anText, avgPer)
-  
+ 
   ! Determine the necessary version for HDF output
   
   if (cfDef%hdfOutputVersionString .EQ. 'hdfeos5' ) then 
@@ -79,7 +81,12 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   ! For each product in the DailyMap section of the cf,
   
   DO i = 1, SIZE(cfProd)
-     
+    
+     ! Read l2gp attributes
+
+     CALL ReadL2GPAttribute (pcf%l3StartDay, pcf%l3EndDay, &
+        & cfProd(i)%fileTemplate)
+ 
      ! Read all the l2gp data which exist in the input window for that product
      
      CALL ReadL2GPProd(cfProd(i)%l3prodNameD, cfProd(i)%fileTemplate, &
@@ -116,6 +123,13 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, & 
           & residA, residD, flags, hdfVersion)
      
+     ! Deallocate memory 
+
+     CALL Deallocate_test(GlobalAttributes%OrbNumDays, &
+	& 'GlobalAttributes%OrbNumDays', ModuleName)   
+     CALL Deallocate_test(GlobalAttributes%OrbPeriodDays, &
+	& 'GlobalAttributes%OrbPeriodDays', ModuleName)   
+
      ! Deallocate the databases passed between CORE & the I/O shell
      
      CALL DestroyL2GPDatabase(l3r)
@@ -151,6 +165,9 @@ END PROGRAM MLSL3D
 !=================
 
 ! $Log$
+! Revision 1.12  2003/03/22 02:45:34  jdone
+! added HDFEOS2/HDFEOS5 functionality; HDFEOS2 is default
+!
 ! Revision 1.11  2002/08/22 23:33:32  pwagner
 ! Made ready for hdf5
 !
