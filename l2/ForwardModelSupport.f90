@@ -33,7 +33,6 @@ module ForwardModelSupport
   use Tree_Types, only: N_named
   use Units, only: Deg2Rad, PHYQ_FREQUENCY
   use VGridsDatabase, only: VGrid_T
-  use PointingGrid_m, only: READ_POINTING_GRID_FILE, CLOSE_POINTING_GRID_FILE
   use L2PC_m, only: OPEN_L2PC_FILE, CLOSE_L2PC_FILE, READ_L2PC_FILE
   use AntennaPatterns_m, only: OPEN_ANTENNA_PATTERNS_FILE, READ_ANTENNA_PATTERNS_FILE,&
     & CLOSE_ANTENNA_PATTERNS_FILE
@@ -421,6 +420,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.5  2001/06/19 22:48:42  pwagner
+! Eliminated duplicate declaration of PointingGrid_m
+!
 ! Revision 2.4  2001/06/04 22:42:24  livesey
 ! Added belowRef to forwardModelIntermediate_T
 !
