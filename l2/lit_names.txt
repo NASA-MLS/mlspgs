@@ -58,6 +58,7 @@ even
 
 fill
 fixed
+fold
 fractional
 full
 full_derivatives
@@ -112,6 +113,9 @@ vGrid
 weighted
 
 # $Log$
+# Revision 2.13  2002/05/17 17:56:11  livesey
+# Stuff for sideband fills
+#
 # Revision 2.12  2002/04/04 16:32:42  livesey
 # Added negative error bar stuff
 #
