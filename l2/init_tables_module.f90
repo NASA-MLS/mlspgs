@@ -89,7 +89,8 @@ module INIT_TABLES_MODULE
 
 ! Enumeration types:
   integer, parameter :: T_CRITICALMODULE = Last_spectroscopy_type+1
-  integer, parameter :: T_FILLMETHOD     = t_criticalmodule+1
+  integer, parameter :: T_FGRIDCOORD     = t_criticalmodule+1
+  integer, parameter :: T_FILLMETHOD     = t_fGridCoord+1
   integer, parameter :: T_FWMTYPE        = t_fillmethod+1
   integer, parameter :: T_GRIDDEDORIGIN  = t_fwmType+1
   integer, parameter :: T_HGRIDTYPE      = t_griddedOrigin+1
@@ -136,7 +137,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_DESTROY            = s_apriori + 1
   integer, parameter :: S_DUMP               = s_destroy + 1
   integer, parameter :: S_DUMPBLOCKS         = s_dump + 1
-  integer, parameter :: S_FILL               = s_dumpblocks + 1
+  integer, parameter :: S_FGRID              = s_dumpblocks + 1
+  integer, parameter :: S_FILL               = s_fGrid + 1
   integer, parameter :: S_FILLCOVARIANCE     = s_fill + 1
   integer, parameter :: S_FILLDIAGONAL       = s_fillcovariance + 1
   integer, parameter :: S_FORGE              = s_filldiagonal + 1
@@ -232,6 +234,7 @@ contains ! =====     Public procedures     =============================
     ! Put enumeration type names into the symbol table
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
     data_type_indices(t_fillmethod) =      add_ident ( 'fillMethod' )
+    data_type_indices(t_fgridcoord) =      add_ident ( 'fGridCoord' )
     data_type_indices(t_fwmType) =         add_ident ( 'fwmType' )
     data_type_indices(t_griddedOrigin) =   add_ident ( 'griddedOrigin' )
     data_type_indices(t_hgridtype) =       add_ident ( 'hGridType' )
@@ -297,6 +300,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_destroy) =              add_ident ( 'destroy' )
     spec_indices(s_dump) =                 add_ident ( 'dump' )
     spec_indices(s_dumpblocks) =           add_ident ( 'dumpblocks' )
+    spec_indices(s_fGrid) =                add_ident ( 'fGrid' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_fillCovariance) =       add_ident ( 'fillCovariance' )
     spec_indices(s_fillDiagonal)   =       add_ident ( 'fillDiagonal' )
@@ -351,6 +355,8 @@ contains ! =====     Public procedures     =============================
       begin, t+t_griddedOrigin, l+l_climatology, l+l_dao, l+l_ncep, n+n_dt_def, &
       begin, t+t_criticalModule, l+l_both, l+l_either, l+l_ghz, l+l_neither, &
              l+l_thz, n+n_dt_def, &
+      begin, t+t_fGridCoord, l+l_frequency, l+l_LSBFrequency, l+l_USBFrequency, &
+             l+l_IntermediateFrequency, n+n_dt_def, &
       begin, t+t_fillMethod, l+l_gridded, l+l_estimatedNoise, l+l_explicit, &
              l+l_hydrostatic, l+l_addnoise, &
              l+l_isotope, l+l_l1b, l+l_l2aux, l+l_l2gp, l+l_vector, l+l_special, &
@@ -458,6 +464,10 @@ contains ! =====     Public procedures     =============================
              begin, f+f_apriori, n+n_field_type, &
              begin, f+f_autofill, n+n_field_type, &
              np+n_spec_def, &
+      begin, s+s_fgrid, &
+             begin, f+f_coordinate, t+t_fGridCoord, n+n_field_type, &
+             begin, f+f_values, t+t_numeric, n+n_field_type, &
+             nadp+n_spec_def, &
       begin, s+s_vgrid, &
              begin, f+f_type, t+t_vGridType, nr+n_field_type, &
              begin, f+f_coordinate, t+t_vGridCoord, n+n_field_type, &
@@ -748,7 +758,7 @@ contains ! =====     Public procedures     =============================
              begin, p+p_starttime, t+t_string, n+n_name_def, &
              begin, p+p_endtime, t+t_string, n+n_name_def, s+s_l1brad, s+s_l1boa, &
              s+s_forwardModel, s+s_forwardModelGlobal, s+s_time, s+s_vgrid, &
-             s+s_l1brad, s+s_l1boa, n+n_section, &
+             s+s_fGrid, s+s_l1brad, s+s_l1boa, n+n_section, &
       begin, z+z_readapriori, s+s_time, s+s_gridded, s+s_l2gp, &
              s+s_l2aux, s+s_snoop, n+n_section, &
       begin, z+z_mergeapriori, s+s_time, s+s_merge, n+n_section /) )
@@ -812,6 +822,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.182  2001/10/31 18:36:50  livesey
+! Added fGrids stuff
+!
 ! Revision 2.181  2001/10/30 01:47:22  livesey
 ! Minor change, got rid of some outdated column related stuff
 !
