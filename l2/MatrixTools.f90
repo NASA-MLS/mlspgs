@@ -469,6 +469,8 @@ contains ! =====  Public procedures  ===================================
     use ManipulateVectorQuantities, only: FILLWITHCOMBINEDCHANNELS
     use MatrixModule_1, only: CLEARMATRIX
     use MatrixModule_0, only: MULTIPLYMATRIX_XY, DUMP
+    use Output_m, only: OUTPUT
+    use String_Table, only: DISPLAY_STRING
     type (Matrix_T), intent(inout) :: MOUT ! Result matrix
     type (Matrix_T), intent(in) :: MIN ! Source matrix
     
@@ -500,9 +502,27 @@ contains ! =====  Public procedures  ===================================
 
     do row = 1, mOut%row%nb
       do col = 1, mOut%col%nb
+        ! Put out a useful progress message
+        call output ( 'Block [ ' )
+        call output ( row )
+        call output ( ', ' )
+        call output ( col )
+        call output ( ' ] -- [ ' )
+        call display_string ( mIn%row%vec%quantities(mIn%row%quant(row))%template%name, strip=.true. )
+        call output ( '(' )
+        call output ( mIn%row%inst(row) )
+        call output ( '), ' )
+        call display_string ( mIn%col%vec%quantities(mIn%col%quant(col))%template%name, strip=.true. )
+        call output ( '(' )
+        call output ( mIn%col%inst(col) )
+        call output ( ') ]: ' )
+
         if ( mIn%block(row,col)%kind /= m_absent ) then
           ! This does all the creation etc.
+          call output ( 'present', advance='yes' )
           call MultiplyMatrix_XY ( mapping, mIn%block(row,col), mOut%block(row,col) )
+        else
+          call output ( 'absent', advance='yes' )
         end if
       end do
     end do
@@ -620,6 +640,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.15  2004/09/25 00:16:53  livesey
+! Added CombineChannelsInMatrix
+!
 ! Revision 1.14  2004/01/21 22:00:46  vsnyder
 ! Remove unused variable declarations
 !
