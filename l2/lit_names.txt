@@ -69,6 +69,7 @@ even
 fill
 fixed
 fold
+fwdModelTiming
 fractional
 full_derivatives
 
@@ -153,6 +154,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.50  2004/07/22 20:39:14  cvuu
+# Now can fill ForwardModel time, mean and std_dev
+#
 # Revision 2.49  2004/06/29 00:08:41  pwagner
 # Now can fill timings
 #
