@@ -51,6 +51,7 @@ earthRadius
 explicitValues
 extinction
 
+fgrid
 field
 file
 filterShapes
@@ -195,6 +196,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.14  2001/10/31 19:17:41  livesey
+# Added fGrid stuff
+#
 # Revision 2.13  2001/10/23 16:38:56  pwagner
 # new isPrecision field
 #
