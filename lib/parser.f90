@@ -104,6 +104,23 @@ contains ! ====     Public Procedures     ==============================
     end do
   end subroutine ARRAY
 
+! --------------------------------------------------------  EXPON  -----
+  recursive subroutine EXPON  ! expon -> ( +|- )? primary
+    if ( toggle(par) ) call where ( 'Enter EXPON', advance='yes' )
+    if ( next%class == t_plus ) then
+      call get_token
+      call primary
+      call build_tree ( n_plus, 1 )
+    else if ( next%class == t_minus ) then
+      call get_token
+      call primary
+      call build_tree ( n_minus, 1 )
+    else
+      call primary
+    end if
+    if ( toggle(par) ) call output ( 'Exit  EXPON', advance='yes' )
+  end subroutine EXPON 
+
 ! ---------------------------------------------------------  EXPR  -----
   recursive subroutine EXPR
     integer :: NSONS
@@ -136,18 +153,18 @@ contains ! ====     Public Procedures     ==============================
     if ( toggle(par) ) call output ( 'Exit  EXPR', advance='yes' )
   end subroutine EXPR
 ! -------------------------------------------------------  FACTOR  -----
-  recursive subroutine FACTOR  ! factor -> ( +|- )? primary
+  recursive subroutine FACTOR  ! factor -> expon ( ^ expon )*
+    integer :: HOW_MANY       ! sons of the n_pow node
     if ( toggle(par) ) call where ( 'Enter FACTOR', advance='yes' )
-    if ( next%class == t_plus ) then
-      call get_token
-      call primary
-      call build_tree ( n_plus, 1 )
-    else if ( next%class == t_minus ) then
-      call get_token
-      call primary
-      call build_tree ( n_minus, 1 )
-    else
-      call primary
+    call expon
+    if ( next%class == t_hat ) then
+      how_many = 1
+      do while ( next%class == t_hat )
+        call get_token
+        call expon
+        how_many = how_many + 1
+      end do
+      call build_tree ( n_pow, how_many )
     end if
     if ( toggle(par) ) call output ( 'Exit  FACTOR', advance='yes' )
   end subroutine FACTOR 
@@ -274,6 +291,7 @@ o:  do
           call test_token ( t_identifier )
           call build_tree ( n_dot, 2 )
         else if ( next%class == t_left_parenthesis ) then
+          ! primary -> 'name' '(' expr list ',' ')' 'unit'?
           n = 1
           call get_token
           do while ( next%class /= t_right_parenthesis )
@@ -283,8 +301,14 @@ o:  do
           exit
             call get_token
           end do
+          call build_tree ( n_func_ref, n ) ! Do this BEFORE test_token because
+                                            ! test_token will push the unit
+                                            ! name if it's there
           call test_token ( t_right_parenthesis )
-          call build_tree ( n_func_ref, n )
+          if ( next%class == t_identifier ) then
+            call build_tree ( n_unit, 2 )
+            call get_token    ! the identifier is used up
+          end if
         end if
     exit
       case ( t_number )       ! primary -> 'number' 'unit' ?
@@ -297,10 +321,14 @@ o:  do
       case ( t_string )       ! primary -> 'string'
         call get_token
     exit
-      case ( t_left_parenthesis ) ! primary -> '(' expr ')'
+      case ( t_left_parenthesis ) ! primary -> '(' expr ')' 'unit' ?
         call get_token
         call expr
         call test_token ( t_right_parenthesis )
+        if ( next%class == t_identifier ) then
+          call build_tree ( n_unit, 2 )
+          call get_token      ! the identifier is used up
+        end if
     exit
       case default
         if ( error > 1 ) exit
@@ -392,7 +420,7 @@ o:  do
     if ( toggle(par) ) call output ( 'Exit  SPEC_REST', advance='yes' )
   end subroutine SPEC_REST
 ! ---------------------------------------------------------  TERM  -----
-  recursive subroutine TERM   ! term -> primary ( *|/ primary )*
+  recursive subroutine TERM   ! term -> factor ( *|/ factor )*
     if ( toggle(par) ) call where ( 'Enter TERM', advance='yes' )
     call factor
     do
@@ -449,6 +477,9 @@ o:  do
 end module PARSER
 
 ! $Log$
+! Revision 2.14  2004/05/28 23:13:12  vsnyder
+! Add power (^) operator, units coercion for (expr) and function result
+!
 ! Revision 2.13  2004/01/20 19:43:33  vsnyder
 ! Cosmetic changes
 !
