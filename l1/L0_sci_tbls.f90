@@ -6,7 +6,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 !=============================================================================
 
   USE MLSL1Common, ONLY: R8, FBnum, FBchans, MBnum, MBchans, WFnum, WFchans, &
-       DACSnum, DACSchans, MaxMIFs
+       DACSnum, DACSchans, MaxMIFs, THzChans, THzNum
 
   IMPLICIT NONE
 
@@ -101,7 +101,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
                           ! filter, mid-band plus status data
      CHARACTER (LEN=1) :: DACS(320)
      CHARACTER (LEN=24) :: thz_scan_switch
-     CHARACTER (LEN=1) :: laser_lo(80)
+     CHARACTER (LEN=80) :: laser_lo
      CHARACTER (LEN=1) :: TM03_stat(2)
      CHARACTER (LEN=24) :: ghz_ant_scan
      CHARACTER (LEN=24) :: ghz_switch
@@ -162,7 +162,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
                           ! filter, mid-band plus status data
      CHARACTER (LEN=1) :: DACS(261)
      CHARACTER (LEN=24) :: thz_scan_switch
-     CHARACTER (LEN=1) :: laser_lo(80)
+     CHARACTER (LEN=80) :: laser_lo
      CHARACTER (LEN=1) :: TM03_stat(2)
      CHARACTER (LEN=24) :: ghz_ant_scan
      CHARACTER (LEN=24) :: ghz_switch
@@ -186,7 +186,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 
   CHARACTER (LEN=*), PARAMETER :: Sci2_T1_fmt = &
        "(3A2,3A1,A4,A2,2A1,2A2,A1,2(11A2,25A2,A2),2(25A2),2(11A2),A2,4(25A2),&
-       & 320A1,A24,80A1,2A1,2A24,A1,A9,A1,A2)"
+       & 320A1,A24,A80,2A1,2A24,A1,A9,A1,A2)"
 
 !! Formats to convert Type II/III raw Science packets internally:
 
@@ -196,7 +196,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 
   CHARACTER (LEN=*), PARAMETER :: Sci2_T2_fmt = &
        "(3A2,3A1,A4,A2,2A1,2A2,A1,3(11A2,25A2,A2),2(25A2),2(11A2),A2,4(25A2),&
-       & 261A1,A24,80A1,2A1,2A24,A1,A9,A1,A2)"
+       & 261A1,A24,A80,2A1,2A24,A1,A9,A1,A2)"
 
 !! Character (LEN=1) pointer types
 
@@ -235,7 +235,7 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      TYPE (CS13PTR) :: WF(WFnum)     ! Wide filter pointers
      TYPE (C1PTR) :: GSN             ! GHz Switch Network
      TYPE (CS1PTR) :: THzSw          ! THz Switch
-     TYPE (C1PTR)  :: LLO_data       ! Laser LO data pointers
+     CHARACTER (LEN=80), POINTER :: LLO_DN         ! Laser LO data pointers
      CHARACTER (LEN=24), POINTER :: GHz_ant_scan, GHz_sw, THz_sw
 
   END TYPE Sci_cptr_T
@@ -281,12 +281,10 @@ MODULE L0_sci_tbls  ! Define L0 science tables
      INTEGER :: MB(MBchans,MBnum)
      INTEGER :: WF(WFchans,WFnum)
      REAL :: DACS(DACSchans,DACSnum)
-     REAL :: GHz_sw_angle(2)
-     REAL :: THz_sw_angle(2)
-     REAL :: scan_angle(2)
-     CHARACTER(len=2) :: GHz_sw_pos
-     CHARACTER(len=2) :: THz_sw_pos
-     CHARACTER(len=1) :: LLO_data(80)  ! Laser LO data
+     REAL :: APE_pos(2), ASE_pos(2), GME_pos(2), TSE_pos(2)
+     CHARACTER(len=1) :: GHz_sw_pos
+     CHARACTER(len=1) :: THz_sw_pos
+     CHARACTER(len=80) :: LLO_DN       ! Laser LO data
      INTEGER :: GSN(4)                 ! GHz Switch Network readings
      INTEGER :: THzSw                  ! THz Switch reading
      INTEGER :: BandSwitch(5)          ! band associated with each switch
@@ -300,6 +298,45 @@ MODULE L0_sci_tbls  ! Define L0 science tables
 !! L0 science for 1 MAF:
 
   TYPE (Sci_pkt_T) :: SciMAF(0:(MaxMIFs-1))
+
+!! L0 THz science data packet for 1 MIF:
+
+  TYPE THz_Sci_pkt_T
+     REAL(r8) :: secTAI
+     INTEGER :: MAFno
+     INTEGER :: MIFno
+     INTEGER :: Orbit
+     INTEGER :: FB(THzChans,THzNum)
+     REAL :: TSE_pos(2)
+     CHARACTER(len=1) :: SwMirPos
+     REAL :: LLO_Bias                  ! LLO Bias V
+     INTEGER :: BandSwitch(4:5)        ! band associated with switches #4 and #5
+     LOGICAL :: CRC_good
+  END TYPE THz_Sci_pkt_T
+
+!! L0 THz science for 1 MAF:
+
+  TYPE (THz_Sci_pkt_T) :: THzSciMAF(0:(MaxMIFs-1))
+
+!! L0 DACS data for 1 MIF:
+
+  TYPE DACS_pkt_T
+     INTEGER :: C_K(DACSchans,DACSnum)  ! C for compressed; K for uncompressed
+     INTEGER :: D(4,DACSnum)            ! State counters
+     INTEGER :: TP(DACSnum)
+     INTEGER :: DIO(DACSnum)
+     INTEGER :: LO(DACSnum)
+     INTEGER :: Zlag(DACSnum)
+     LOGICAL :: Compressed
+  END TYPE DACS_pkt_T
+
+!! L0 DACS data for 1 MIF:
+
+  TYPE (DACS_pkt_T) :: DACS_pkt
+
+!! L0 DACS data for 1 MAF:
+
+  TYPE (DACS_pkt_T) :: DACS_MAF(0:(MaxMIFs-1))
 
 CONTAINS
 
@@ -366,7 +403,7 @@ CONTAINS
     sci_cptr(1)%THz_sw => sci2_T1%thz_scan_switch      ! THz switching data
     sci_cptr(1)%GSN%ptr => sci1_T1%GM15_stat(2:5)      ! GSN data
     sci_cptr(1)%THzSw%ptr => sci2_T1%TM03_stat(2)      ! THz switch data
-    sci_cptr(1)%LLO_data%ptr => sci2_T1%laser_lo
+    sci_cptr(1)%LLO_DN => sci2_T1%laser_lo
 
     !! Initialize pointers for Type II/III science packets:
 
@@ -422,13 +459,16 @@ CONTAINS
     sci_cptr(2)%THz_sw => sci2_T2%thz_scan_switch      ! THz switching data
     sci_cptr(2)%GSN%ptr => sci1_T2%GM15_stat(2:5)      ! GSN data
     sci_cptr(2)%THzSw%ptr => sci2_T2%TM03_stat(2)      ! THz switch data
-    sci_cptr(2)%LLO_data%ptr => sci2_T2%laser_lo
+    sci_cptr(2)%LLO_DN => sci2_T2%laser_lo
 
   END SUBROUTINE InitSciPointers
 
 END MODULE L0_sci_tbls
 
 ! $Log$
+! Revision 2.3  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.2  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !

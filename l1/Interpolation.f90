@@ -9,7 +9,10 @@ MODULE Interpolation   ! Interpolation routines
 
   IMPLICIT NONE
 
-  PRIVATE :: Id, ModuleName
+  PRIVATE
+
+  PUBLIC :: QuadInterpW
+
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
@@ -41,7 +44,7 @@ CONTAINS
     INTEGER :: astat
     INTEGER, SAVE :: nsize = 0
     REAL(r8) :: sx1, sx2, sx3, sx4
-    REAL(r8), ALLOCATABLE, DIMENSION(:),SAVE :: apoVec_x, tVec_x
+    REAL(r8), ALLOCATABLE, DIMENSION(:), SAVE :: apoVec_x, tVec_x
     REAL(r8), ALLOCATABLE, DIMENSION(:), SAVE :: x1, x2, x3, x4
 
     status = 0   ! OK so far
@@ -102,10 +105,6 @@ CONTAINS
     comVec = comVec / SUM (comVec)
     errmul = SUM (comVec * comVec)
 
-!!$    print '(A/, 20(i4))', 'tVec: ', INT(tVec)
-!!$    print  '(A/, 20(i4))', 'apoVec: ',  INT(apoVec)
-!!$    print  '(A/, 20(i4))', 'qualVec: ', INT(qualVec)
-!!$stop "interp"
   END SUBROUTINE QuadInterpW
 
 !=============================================================================
@@ -113,6 +112,9 @@ END MODULE Interpolation
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2003/01/31 18:13:34  perun
+! Version 1.1 commit
+!
 ! Revision 2.2  2002/03/29 20:18:34  perun
 ! Version 1.0 commit
 !
