@@ -45,13 +45,14 @@ module RetrievalModule
   use OUTPUT_M, only: BLANKS, OUTPUT
   use SidsModule, only: SIDS
   use SnoopMLSL2, only: SNOOP
+  use String_Table, only: Get_String
   use Toggles, only: Gen, Switches, Toggle
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
     & Subtree
   use Tree_Types, only: N_named
-  use VectorsModule, only: AddVectorToDatabase, CloneVector, CopyVector, &
-    & DestroyVectorInfo, DestroyVectorDatabase, DumpMask, &
+  use VectorsModule, only: AddVectorToDatabase, ClearVector, CloneVector, &
+    & CopyVector, DestroyVectorInfo, DestroyVectorDatabase, DumpMask, &
     & GetVectorQuantityByType, Vector_T, VectorValue_T
 
   implicit NONE
@@ -142,6 +143,7 @@ contains
     integer :: RegQuants                ! Regularization quantities
     real(r8) :: RegWeight               ! Weight of regularization conditions
     integer :: Son                      ! Of Root or Key
+    character(len=127) :: SnoopComment  ! From comment= field of S_Snoop spec.
     integer :: SnoopKey                 ! Tree point of S_Snoop spec.
     integer :: SnoopLevel               ! From level field of S_Snoop spec.
     integer :: Spec                     ! s_matrix, s_subset or s_retrieve
@@ -174,6 +176,7 @@ contains
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
     nullify ( measurements, measurementSD, myVectors, state, outputSD )
+    snoopComment = ' '
     snoopKey = 0
     snoopLevel = 1
     timing = section_times
@@ -209,7 +212,7 @@ contains
           field = get_field_id(son)  ! tree_checker prevents duplicates
           select case ( field )
           case ( f_comment )
-            ! Processed by snoop
+            call get_string ( sub_rosa(subtree(2,son)), snoopComment, strip=.true. )
           case ( f_level )
             call expr ( subtree(2,son), units, value, type )
             if ( units(1) /= phyq_dimensionless ) &
@@ -718,6 +721,7 @@ contains
 
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call cpu_time ( t1 )
+          call clearVector ( f )
           ! Loop over MAFs
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             fmStat%maf = fmStat%maf + 1
@@ -867,6 +871,7 @@ contains
           fmStat%newScanHydros = .true.
 
           ! Loop over MAFs
+          call clearVector ( f )
           do while (fmStat%maf < chunk%lastMAFIndex-chunk%firstMAFIndex+1)
             call add_to_retrieval_timing( 'newton_solver', t1 )
             call cpu_time ( t1 )
@@ -1221,7 +1226,8 @@ contains
         end if
         if ( snoopKey /= 0 .and. snoopLevel >= snoopLevels(nwt_flag) ) then
           call FlagName ( nwt_flag, theFlagName )
-          call snoop ( snoopKey, vectorDatabase, myVectors, theFlagName )
+          call snoop ( snoopKey, vectorDatabase, myVectors, &
+            & trim(snoopComment) // ': ' // trim(theFlagName) )
         end if
       end do ! Newton iteration
       if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
@@ -1777,6 +1783,9 @@ print*,'start inversion'
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.88  2001/10/05 20:50:16  vsnyder
+! Concatenate Snoop comment and DNWT flag; clear F before EVAL[FJ]
+!
 ! Revision 2.87  2001/10/05 20:20:16  vsnyder
 ! Put Nwt_Flag into Snoop's comment; add Dnwt_Flag to diagnostics vector
 !
