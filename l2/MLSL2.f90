@@ -19,7 +19,7 @@ program MLSL2
     & GARBAGE_COLLECTION_BY_CHUNK, &
     & DEFAULT_HDFVERSION_READ, &
     & DEFAULT_HDFVERSION_WRITE, DEFAULT_HDFVERSION_READ, LEVEL1_HDFVERSION, &
-    & SKIPRETRIEVAL
+    & SKIPRETRIEVAL, CHECKPATHS
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -200,6 +200,8 @@ program MLSL2
       end if
       if ( line(3+n:7+n) == 'check ' ) then
         checkl2cf = switch
+      else if ( line(3+n:12+n) == 'checkpaths' ) then
+        checkPaths = switch
       else if ( line(3+n:7+n) == 'chunk' ) then
         call AccumulateSlaveArguments ( line )
         if ( line(8+n:) /= ' ' ) then
@@ -464,7 +466,14 @@ program MLSL2
   if ( .not. toolkit ) then
      penalty_for_no_metadata = 0
   end if
-
+  
+  ! If checking paths, run as a single-chunk case in serial mode
+  if ( checkPaths ) then
+    parallel%master = .false.
+    parallel%slave = .false.
+    singleChunk = 1
+    lastChunk = 0
+  endif
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
   if ( parallel%master .and. parallel%myTid <= 0 ) &
@@ -748,6 +757,9 @@ contains
       call blanks(4, advance='no')                                                   
       call output(parallel%masterTid, advance='yes')
       endif                      
+      call output(' Preflight check paths?:                         ', advance='no')
+      call blanks(4, advance='no')
+      call output(checkPaths, advance='yes')
       call output(' Skip all retrievals?:                           ', advance='no')
       call blanks(4, advance='no')
       call output(SKIPRETRIEVAL, advance='yes')
@@ -794,6 +806,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.105  2003/11/07 00:46:51  pwagner
+! New quicker preflight option: --checkPaths
+!
 ! Revision 2.104  2003/11/05 21:27:54  pwagner
 ! Can enter range of chunks to be processed instead of single
 !
