@@ -69,6 +69,8 @@ program COMPARE
           loud = .false.
         else if ( line1(j:j) == 's' ) then
           doStats = .true.
+        else if ( line1(j:j) == 'v' ) then
+          print *, Id
         else if ( line1(j:j) == 'z' ) then
           zero = .true.
         else
@@ -216,7 +218,8 @@ contains
     print *, ' Options: -a => Show nonzero difference for all quantities'
     print *, '          -c => Continue even if control lines differ'
     print *, '          -q => No messages about unequal file lengths etc.'
-    print *, '          -s => Compute average and standard deviation of nonzero elements.'
+    print *, '          -s => Compute average and standard deviation of nonzero elements'
+    print *, '          -v => Print the version'
     print *, '          -z => Show zero difference summary at the end'
     print *, '                With -a, show zero individual differences too.'
     stop
@@ -225,6 +228,9 @@ contains
 end program
 
 ! $Log$
+! Revision 1.4  2003/10/07 01:57:17  vsnyder
+! Detect NaN in relative difference
+!
 ! Revision 1.3  2003/09/27 02:15:29  vsnyder
 ! Add computation of average and std dev
 !
