@@ -91,32 +91,31 @@ Subset, quantity=y$1.band$2, height=$3, ptanQuantity=state.ptanTHz, $
   opticalDepth=od$1.depth$2, opticalDepthCutoff=$4!nl})
 
 ;; These macros are used to accumulate quantities destined for the DGM
-;; or DGG file.  $1 is the quantity within state, $2 is the name to
-;; give the internal l2gp item (to avoid confusion with the 'main'
-;; one), and $3 is the swath name.
+;; or DGG file.  $1 is the quantity within state, and $2 is the swath/sd
+;; name.  The variable is joined into joinedDG?_$1_!phase to avoid confusion
 !define(DGGDivert,1)
 !define(DGMDivert,2)
 
 !define(joinDGG,{
-joinedDGG_$2: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$3'
+joinedDGG_$1_!phase: l2gp, source=state.$1, precision=outputPrecision.$1, swath='$2'
 !ifdef(gotDGGs,{!dnl
-  !divert(!DGGDivert), joinedDGG_$2!divert},{!dnl
-  !divert(!DGGDivert)joinedDGG_$2!divert})
+  !divert(!DGGDivert), joinedDGG_$1_!phase!divert},{!dnl
+  !divert(!DGGDivert)joinedDGG_$1_!phase!divert})
 !define(gotDGGs,{Yes})
 {
-; --ConfigInfo-- DGG: $3
+; --ConfigInfo-- DGG: $2
 }
 })
 !define(joinDGM,{
-joinedDGM_$2: l2aux, source=state.$1, sdName='$3'
-joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
+joinedDGM_$1_!phase: l2aux, source=state.$1, sdName='$2'
+joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 precision'
 !ifdef(gotDGMs,{!dnl
-  !divert(!DGMDivert), joinedDGM_$2, joinedDGM_$2_precision!divert},{!dnl
-  !divert(!DGMDivert)joinedDGM_$2, joinedDGM_$2_precision!divert})
+  !divert(!DGMDivert), joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert},{!dnl
+  !divert(!DGMDivert)joinedDGM_$1_!phase, joinedDGM_$1_!phase_precision!divert})
 !define(gotDGMs,{Yes})
 {
-; --ConfigInfo-- DGM: $3
-; --ConfigInfo-- DGM: $3 precision
+; --ConfigInfo-- DGM: $2
+; --ConfigInfo-- DGM: $2 precision
 }
 })
 
@@ -150,7 +149,42 @@ joinedDGM_$2_precision: l2aux, source=outputPrecision.$1, sdName='$3 precision'
 !define(systemp,{!systemp$1})
 !define(nbw,{!nbw$1})
 
+;; This macro defines a set of full forward models under a given name
+;; $1, for band $2, signal $3.
+!define(makeFwm,{!dnl
+  $1: ForwardModel, type=full, $
+    signals=$3, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der, /temp_der
+  $1_mono: ForwardModel, type=full, $
+    signals=$3, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der, /temp_der
+  $1_notd: ForwardModel, type=full, $
+    signals=$3, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /do_freq_avg, /atmos_der
+  $1_mono_notd: ForwardModel, type=full, $
+    signals=$3, $
+    molecules = !molecules($2), $
+    moleculeDerivatives = !moleculeFamilies($2), $
+    integrationGrid=vGridTangent, $
+    tangentGrid=vGridTangent, $
+    /do_conv, /atmos_der})
+
 ; $Log$
+; Revision 1.20  2002/10/02 23:06:01  pwagner
+; RHI now separate fill methods
+;
 ; Revision 1.19  2002/10/01 18:33:36  mjf
 ; New Fill for RHi precision.  Need gotAK defined for AK output.
 ; RetrivalArguments depends on precisionEstimates.
