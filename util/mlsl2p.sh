@@ -64,8 +64,19 @@ NORMAL_STATUS=2
 otheropts="$OTHEROPTS -g -S'slv,mas,chu,opt1,log,pro,time'"
 $PVM_EP/mlsl2 --pge mlsl2.$SLV_SUF --tk --master $PVM_HOSTS_INFO $otheropts
 
+# Save return status
 return_status=`expr $?`
 
+# catenate each slave's log to a log file
+LOGFILE="$PVM_EP/mlsl2.log"
+if [ ! -w "$LOGFILE"  ]
+then
+  echo "catenating slave logs in $LOGFILE"
+  echo "catenating slave logs in $LOGFILE" > "$LOGFILE".1
+  cat $PVM_EP/*.log >> "$LOGFILE".1
+  rm -f $PVM_EP/*.log
+  mv "$LOGFILE".1 "$LOGFILE"
+fi
 if [ $return_status != $NORMAL_STATUS ]
 then
    exit 1
@@ -74,6 +85,9 @@ else
 fi
 
 # $Log$
+# Revision 1.3  2003/10/15 17:01:18  pwagner
+# Added slv option
+#
 # Revision 1.2  2003/09/11 20:15:57  pwagner
 # Allow OTHEROPTS environmental variable pass-through to mlsl2
 #
