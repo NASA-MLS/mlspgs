@@ -199,9 +199,10 @@ contains
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
     nullify ( measurements, measurementSD, myVectors, state, outputSD )
-    snoopComment = ' '
+    phaseName = ' '              ! Default in case there's no field
+    snoopComment = ' '           ! Ditto
     snoopKey = 0
-    snoopLevel = 1
+    snoopLevel = 1               ! Ditto
     timing = section_times
     do j = firstVec, lastVec ! Make the vectors in the database initially empty
       nullify ( v(j)%quantities, v(j)%template%quantities )
@@ -2462,6 +2463,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.114  2001/11/08 01:21:45  vsnyder
+! Make sure phaseName has a value
+!
 ! Revision 2.113  2001/11/07 23:55:43  dwu
 ! added option to constain cloud top height
 !
