@@ -58,7 +58,7 @@
     logical :: dataset_found
 
     call h5gn_members_f(loc_id,loc_name,nmembers,h5error)
-    if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, 
+    if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Group member access of ' // loc_name // ' failed.')
 
     if (h5error.eq.0) then 
@@ -66,7 +66,7 @@
     do i=0, nmembers-1
 
     call h5gget_obj_info_idx_f(loc_id,loc_name,i,name_buffer,type_id,h5error)
-    if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, 
+    if (h5error /= 0) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'Retrieval of object information from ' // loc_name // ' failed.')
 
     if (h5error.eq.0) then 
@@ -110,6 +110,9 @@
 end module MLSDataInfo
 
 ! $Log$
+! Revision 2.2  2002/08/25 19:21:09  mjf
+! Added a couple of continuation characters.
+!
 ! Revision 2.1  2002/08/24 00:40:08  jdone
 ! Creating & adding to repository
 !
