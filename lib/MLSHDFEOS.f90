@@ -104,6 +104,9 @@ module MLSHDFEOS
   integer, public, parameter :: MAXNODFIELDS = 80
   integer, public, parameter :: MAXDLISTLENGTH = 1024
 
+  ! Print debugging stuff?
+  logical, parameter :: DEEBUG = .true.  
+
 contains ! ======================= Public Procedures =========================
 
   integer function MLS_GDCREATE ( FILEID, GRIDNAME, &
@@ -142,7 +145,7 @@ contains ! ======================= Public Procedures =========================
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
       endif
-      MLS_GDCREATE = gdcreate(Fileid, GRIDNAME, &
+      MLS_GDCREATE = gdcreate(Fileid, trim(GRIDNAME), &
         & xdimsize, ydimsize, upleft, lowright)
     case (HDFVERSION_5)
       alreadyThere = (he5_gdattach(FileID, trim(GRIDNAME)) >= 0)
@@ -150,7 +153,7 @@ contains ! ======================= Public Procedures =========================
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'GRIDNAME call to MLS_GDCREATE already there: ' // trim(GRIDNAME))
       endif
-      MLS_GDCREATE = he5_gdcreate(Fileid, GRIDNAME, &
+      MLS_GDCREATE = he5_gdcreate(Fileid, trim(GRIDNAME), &
         & xdimsize, ydimsize, upleft, lowright)
     case default
       MLS_GDCREATE = -1
@@ -195,9 +198,9 @@ contains ! ======================= Public Procedures =========================
     endif
     select case (myHdfVersion)
     case (HDFVERSION_4)
-      MLS_SWATTACH = swattach(Fileid, SwathNAME)
+      MLS_SWATTACH = swattach(Fileid, trim(swathName))
     case (HDFVERSION_5)
-      MLS_SWATTACH = he5_swattach(Fileid, SwathNAME)
+      MLS_SWATTACH = he5_swattach(Fileid, trim(swathName))
     case default
       MLS_SWATTACH = -1
     end select
@@ -208,6 +211,7 @@ contains ! ======================= Public Procedures =========================
   end function MLS_SWATTACH
 
   integer function MLS_SWCREATE ( FILEID, SWATHNAME, FileName, hdfVersion )
+    use hdf5, only: h5eSet_auto_f
     integer, intent(in) :: FILEID      ! ID returned by mls_swopen
     character(len=*), intent(in) :: SWATHNAME       ! Swath name
     character(len=*), optional, intent(in) :: FILENAME  ! File name
@@ -216,6 +220,7 @@ contains ! ======================= Public Procedures =========================
     logical :: alreadyThere
     integer :: myHdfVersion
     logical :: needsFileName
+    integer :: status
     MLS_SWCREATE = 0
     ! All necessary input supplied?
     needsFileName = (.not. present(hdfVersion))
@@ -233,19 +238,29 @@ contains ! ======================= Public Procedures =========================
     endif
     select case (myHdfVersion)
     case (HDFVERSION_4)
+      if(DEEBUG) print *, 'About to call swattach with FileID: ', Fileid, ' swathname ', &
+        & trim(swathName)
       alreadyThere = (swattach(FileID, trim(swathName)) >= 0)
       if ( alreadyThere ) then
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
       endif
-      MLS_SWCREATE = swcreate(Fileid, SwathNAME)
+      if(DEEBUG) print *, 'About to call swcreate with FileID: ', Fileid, ' swathname ', &
+        & trim(swathName)
+      MLS_SWCREATE = swcreate(Fileid, trim(swathName))
     case (HDFVERSION_5)
+      call h5eSet_auto_f ( 0, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to turn error messages off in MLS_SWCREATE')
       alreadyThere = (he5_swattach(FileID, trim(swathName)) >= 0)
+      call h5eSet_auto_f ( 1, status )
+      if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to turn error messages back on in MLS_SWCREATE')
       if ( alreadyThere ) then
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Swathname call to MLS_SWCREATE already there: ' // trim(swathName))
       endif
-      MLS_SWCREATE = he5_swcreate(Fileid, SwathNAME)
+      MLS_SWCREATE = he5_swcreate(Fileid, trim(swathName))
     case default
       MLS_SWCREATE = -1
     end select
@@ -436,10 +451,10 @@ contains ! ======================= Public Procedures =========================
         & mls_dfldsetup = HE5_SWdefdfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
         & he2he5_DataType(Datatype), MERGE)
 !>       if ( Datatype == DFNT_CHAR8 ) then
-!>         print *,' Hey, we just tried to set up a char-valued hdfeos5 field'
-!>         print *,' Data type: ', Datatype
-!>         print *,' he2he5_DataType(Datatype): ', he2he5_DataType(Datatype)
-!>         print *,' HE5T_NATIVE_SCHAR: ', HE5T_NATIVE_SCHAR
+!>         if(DEEBUG) print *,' Hey, we just tried to set up a char-valued hdfeos5 field'
+!>         if(DEEBUG) print *,' Data type: ', Datatype
+!>         if(DEEBUG) print *,' he2he5_DataType(Datatype): ', he2he5_DataType(Datatype)
+!>         if(DEEBUG) print *,' HE5T_NATIVE_SCHAR: ', HE5T_NATIVE_SCHAR
 !>       endif
     case default
       mls_dfldsetup = -1
@@ -1089,10 +1104,10 @@ contains ! ======================= Public Procedures =========================
     needsFileName = is_swath_datatype_right(swathid, fieldname, DFNT_CHAR8, &
       & myHdfVersion, rank_out=dfrank, numbertype_out=numbertype, &
       & fieldlist_out=fieldlist, nflds_out=nflds)
-!>     print *, 'num data fields  ', nflds
-!>     print *, 'data field ranks ', dfrank
-!>     print *, 'data field types ', numbertype
-!>     print *, 'data field list  ', trim(fieldlist)
+!>     if(DEEBUG) print *, 'num data fields  ', nflds
+!>     if(DEEBUG) print *, 'data field ranks ', dfrank
+!>     if(DEEBUG) print *, 'data field types ', numbertype
+!>     if(DEEBUG) print *, 'data field list  ', trim(fieldlist)
     if ( myDontFail .or. mls_SWWRFLD_CHAR_1D /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to write 1-d char field ' // trim(fieldname) )
@@ -1401,6 +1416,13 @@ contains ! ======================= Public Procedures =========================
     else
       myHdfVersion = hdfVersion
     endif
+    if(DEEBUG) print *, 'swathid: ', swathid
+    if(DEEBUG) print *, 'myHdfVersion: ', myHdfVersion
+    if(DEEBUG) print *, 'fieldname: ', trim(fieldname)
+    if(DEEBUG) print *, 'start: ', start
+    if(DEEBUG) print *, 'stride: ', stride
+    if(DEEBUG) print *, 'edge: ', edge
+    if(DEEBUG) print *, 'shape(values): ', shape(values)
     select case (myHdfVersion)
     case (HDFVERSION_4)
       mls_SWWRFLD_REAL_2d = SWWRFLD_REAL_2D(swathid, trim(fieldname), &
@@ -1575,6 +1597,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.9  2003/07/02 00:54:25  pwagner
+! Failed attempt to turn off hdfeos5 warnings by turning off hdf5 ones
+!
 ! Revision 2.8  2003/06/26 00:05:40  pwagner
 ! Added optional DONTFAIL arg to MLS_SWATTACH
 !
