@@ -48,6 +48,16 @@ include ../Makefile.dep
 # if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
 
 # ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+include $(CONFDIR)/customblds/$(MLSF95).$(MLSPLAT)
+
 ALLOBJS = $(OBJS)
 
 PROG_NAME=test
@@ -97,11 +107,13 @@ endif
 # In the long run just evict the stuff that assumes l2_NEEDS_fwdmdl is undefined
 l2_NEEDS_fwdmdl = true
 
-   fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
-   fwdmdl_message=Building $(PROG_NAME) with forward model
-   cloud_linker_line=-L${clouddir} -lcloud
-   cloud_message=Building mlsl2 with cloud forward model
-   mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a \
+fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
+fwdmdl_message=Building $(PROG_NAME) with forward model
+cloud_linker_line=-L${clouddir} -lcloud
+cloud_message=Building $(PROG_NAME) with cloud forward model
+utctotai_linker_line=-L${INSTALLDIR} -lutctotai
+utctotai_message=Building $(PROG_NAME) with toolkitless utc to tai conversion
+mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a libl2.a \
 	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a $(CONFDIR)/$(MLSCFILE)
 
 ifdef LAPACK
@@ -163,12 +175,14 @@ $(PROG_NAME): $(mlsl2_prereqs)
 		@echo "$(fwdmdl_message)"
 		@echo "$(cloud_message)"
 		@echo "$(mlspack_message)"
+		@echo "$(utctotai_message)"
 		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll2 \
         $(cloud_linker_line) \
         $(fwdmdl_linker_line) \
         $(he5lib_linker_line) \
                       -L${libdir} -lmls \
+        $(utctotai_linker_line) \
 		-L${PGSTK} -lPGSTK \
         -L${HDFEOS} -lhdfeos \
         $(hdfeos5_linker_line) \
@@ -195,6 +209,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.19  2002/11/25 21:21:02  pwagner
+# gcc_version to allow building with Lahey on gcc post 2.96
+#
 # Revision 1.18  2002/09/06 00:09:07  pwagner
 # BLAS can now bring in more than a single
 #
