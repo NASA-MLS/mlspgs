@@ -1,5 +1,22 @@
 # $Id$
 
+# Variables set before this file is included:
+# C = Path to CF Parser's .mod files and libCF.a
+# E = Beginning of path to HDFEOS library
+# FC = Name of Fortran compiler
+# FOPTS = Options for Fortran compiler, other than -c
+# I = option to tell compiler path to includes and .mod files (usually -I)
+# M = path to MLS library's .mod files and libmls.a
+# PLATFORM = The "platform" part of the path to HDF and HDFEOS libraries,
+#            e.g. linux, sgi or sun5.
+# S = path to source files
+# TOOLKIT = Beginning of path to HDFEOS's GCT library, and to HDF's libraries,
+#           e.g. /software/SRC/TOOLKIT-5.2.6v1.00.NAG
+
+# Any of these variables can be set by environment variables, or by
+# command-line arguments of the "make" command, overriding the values
+# set in the Makefile that includes this file.
+
 L2OBJS = Construct.o ConstructQuantityTemplates.o \
        ConstructVectorTemplates.o dumper.o Fill.o get_3d_view.o \
        global_settings.o HGrid.o init_tables_module.o Join.o L2AUXData.o \
@@ -148,24 +165,25 @@ GD=
 
 mlsl2: $(L2OBJS) $(GD) $(PG) $M/SDPToolkit$(SDP).o $C/libCF.a $M/libmls.a
 	$(FC) -o mlsl2 $(L2OBJS) \
-                      $M/SDPToolkit$(SDP).o $(PG) $(GD) \
-                      -L$C -lCF \
-                      -L$M -lmls \
-                      -L$(HOME)/mlspgs/SDPToolkit -lPGSTK \
-                      -L$E/hdfeos/lib/$(PLATFORM) -lhdfeos \
-                      -L $(TOOLKIT)/hdfeos/lib/$(PLATFORM) -lGctp \
-                      -L $(TOOLKIT)/hdf/$(PLATFORM)/HDF4.1r3/lib \
-                        -lmfhdf -ldf -ljpeg -lz
+              $M/SDPToolkit$(SDP).o $(PG) $(GD) \
+              -L$C -lCF \
+              -L$M -lmls \
+              -L$(PGSTK) -lPGSTK \
+              -L$(HDFEOS)/hdfeos/lib/$(PLATFORM) -lhdfeos \
+              -L$(TOOLKIT)/hdfeos/lib/$(PLATFORM) -lGctp \
+              -L$(TOOLKIT)/hdf/$(PLATFORM)/HDF4.1r3/lib \
+                -lmfhdf -ldf -ljpeg -lz
 
 #mlsl2: $(L2OBJS) $(GD) $(PG) $M/SDPToolkit$(SDP).o $C/libCF.a $M/libmls.a
 #	$(FC) -o mlsl2 $(L2OBJS) \
-#                      $M/SDPToolkit$(SDP).o $(PG) $(GD) \
-#                      -L$C -lCF \
-#                      -L$M -lmls \
-#                      -L $(TOOLKIT)/lib/$(PLATFORM) -lPGSTK \
-#                      -L $(TOOLKIT)/hdfeos/lib/$(PLATFORM) -lhdfeos -lGctp \
-#                      -L $(TOOLKIT)/hdf/$(PLATFORM)/HDF4.1r3/lib \
-#                        -lmfhdf -ldf -ljpeg -lz
+#             $M/SDPToolkit$(SDP).o $(PG) $(GD) \
+#             -L$C -lCF \
+#             -L$M -lmls \
+#             -L$(TOOLKIT)/lib/$(PLATFORM) -lPGSTK \
+#             -L$(TOOLKIT)/hdfeos/lib/$(PLATFORM) -lhdfeos
+#             -L$(TOOLKIT)/hdfeos/lib/$(PLATFORM) -lGctp \
+#             -L$(TOOLKIT)/hdf/$(PLATFORM)/HDF4.1r3/lib \
+#               -lmfhdf -ldf -ljpeg -lz
 
 # ========================================================================
 
@@ -179,6 +197,9 @@ tar:
 # ========================================================================
 
 # $Log$
+# Revision 2.4  2000/10/10 00:24:43  vsnyder
+# Account for moving L2GPData.f90 and machine.f90 to lib
+#
 # Revision 2.3  2000/10/05 01:38:31  vsnyder
 # Added CVS comments
 #

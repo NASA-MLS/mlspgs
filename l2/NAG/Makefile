@@ -1,8 +1,11 @@
+# $Id$
+
 # Fortran compiler:
 FC = f95
 
 # Compiler options:
 FOPTS = -g -C=all
+#FOPTS = -O
 
 # Path to source files:
 S = ..
@@ -14,19 +17,22 @@ M = $(HOME)/mlspgs/lib/NAG
 I = -I
 
 # Beginning of path to libraries:
-#L = /nas/software/SRC/TOOLKIT-5.2.6v1.00
-L = /nas/software/SRC/TOOLKIT-5.2.6v1.00.NAG
+TOOLKIT = /software/SRC/TOOLKIT-5.2.6v1.00.NAG
 
-# Beginning of path to HDFEOS  libraries:
-E = /van1/opt/TOOLKIT
+# Beginning of path to HDFEOS libraries:
+HDFEOS = /van1/opt/TOOLKIT
+#HDFEOS = $(TOOLKIT)
 
 # Path to Configuration parser
 C = $(HOME)/mlspgs/lib/cf_parser/NAG
 
 # Platform (used in a directory path in ../Makefile.inc):
-P = linux
+PLATFORM = linux
 
-machine.o: machine.f90
-	$(FC) -c $(FOPTS) machine.f90
+# Path to libPGSTK
+PGSTK = $(HOME)/mlspgs/SDPToolkit/NAG
+#PGSTK = $(TOOLKIT)/lib/$(PLATFORM)
 
-include ../Makefile.inc
+include $S/Makefile.inc
+
+# $Log$
