@@ -68,7 +68,10 @@ geodAngle
 GHz
 gph
 gph_precision
+grid
 
+hdf
+hdfeos
 heightOffset
 hours
 hPa
@@ -153,6 +156,7 @@ sizeDistribution
 spaceRadiance
 strayRadiance
 surfaceType
+swath
 systemTemperature
 sza
 
@@ -178,6 +182,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.24  2003/07/07 23:45:46  pwagner
+# Added grid, hdf, hdfeos, and swath
+#
 # Revision 2.23  2003/05/29 16:35:55  livesey
 # New sideband fractions and reflector stuff
 #
