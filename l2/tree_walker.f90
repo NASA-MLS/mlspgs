@@ -55,7 +55,6 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) :: FIRST_SECTION! Index of son of root of first n_cf
 
-    CHARACTER (LEN=1), POINTER :: anText(:) => null()
     type (GriddedData_T), dimension(:), pointer :: GriddedData
     integer :: chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
@@ -87,7 +86,7 @@ contains ! ====     Public Procedures     ==============================
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
       & subtree(first_section,root) )
-    call OpenAndInitialize ( processingRange, l1bInfo, l2pcf, anText )
+    call OpenAndInitialize ( processingRange, l1bInfo, l2pcf )
 
     i = first_section
     howmany = nsons(root)
@@ -136,7 +135,7 @@ subtrees: do while ( j <= howmany )
         end do ! on chunkNo
         i = j - 1 ! one gets added back in at the end of the outer loop
       case ( z_output ) ! Write out the data
-        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcf, anText )
+        call Output_Close ( son, l2gpDatabase, l2auxDatabase, l2pcf )
 
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
@@ -159,6 +158,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.33  2001/04/11 17:47:47  pwagner
+! presets anText to null
+!
 ! Revision 2.32  2001/04/10 22:27:47  vsnyder
 ! Nullify explicitly instead of with <initialization> so as not to give
 ! pointers the SAVE attribute.  <initialization> is NOT executed on each
