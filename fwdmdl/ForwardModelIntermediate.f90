@@ -17,18 +17,26 @@ module ForwardModelIntermediate
   type, public :: ForwardModelIntermediate_T
 
     ! These ones are for the scan model
-    real (r8), dimension(:,:),             pointer :: basisGph=>NULL()
-    real (r8), dimension(:,:),             pointer :: RT=>NULL()
+    real (r8), dimension(:,:),             pointer :: BasisGph=>NULL()
     real (r8), dimension(:),               pointer :: R=>NULL()
-    integer :: belowRef                 ! T. basis at or below refGPH
+    real (r8), dimension(:,:),             pointer :: RT=>NULL()
+    integer :: BelowRef                 ! T. basis at or below refGPH
 
   end type ForwardModelIntermediate_T
 
   type, public :: ForwardModelStatus_T
-    logical :: newScanHydros            ! Scan model needs to recompute hydrostatic
-    integer :: maf                      ! The MAF to process
-    logical, dimension(:), pointer :: rows=>NULL() ! Flag to indicate this row has non zeros
+    integer :: Flags                    ! Bits indicate problems.  See B_...
+    integer :: Maf                      ! The MAF to process
+    logical :: NewScanHydros            ! Scan model needs to recompute hydrostatic
+    logical, dimension(:), pointer :: Rows=>NULL() ! Flag to indicate this row has non zeros
   end type ForwardModelStatus_T
+
+  ! Bits set in Flags:
+  integer, public, parameter :: B_Metrics = 1 ! Trouble with metrics
+  integer, public, parameter :: B_Ptg_Angles = 2*b_metrics ! Patched some
+    ! out-of-order pointing angles
+  integer, public, parameter :: B_Refraction = 2*b_ptg_angles ! Computation of
+    ! refraction coefficient failed or was not as accurate as desired.
 
   public :: DestroyForwardModelIntermediate
 
@@ -38,7 +46,7 @@ module ForwardModelIntermediate
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
-  private :: not_used_here 
+  private :: not_used_here
   !---------------------------------------------------------------------------
 
 contains
@@ -65,6 +73,9 @@ contains
 end module ForwardModelIntermediate
 
 ! $Log$
+! Revision 2.4  2003/07/09 00:53:10  vsnyder
+! Remove unreferenced variables
+!
 ! Revision 2.3  2002/10/08 17:08:03  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
