@@ -26,8 +26,10 @@ contains
 ! And : dB/dTnp = dB/dT * Etan * Etap
 ! Where: Etan = Eta(n,zeta), Etap = Eta(p,phi)
 
+    use DCOSH1_M, only: COSH1             ! In case RP is double
     use MLSCommon, only: R8, RP, IP
     use PHYSICS, only: H_O_K => h_over_k
+    use SCOSH1_M, only: COSH1             ! In case RP is single
 
 ! inputs
 
@@ -52,18 +54,18 @@ contains
     n_path = size(t_path)
     n_sv = size(eta_zxp,dim=2)
 
-! Avoid some array temps by not using whole-array operations
-
 !{ Compute $\frac{\text{d} B}{\text{d} T} =
 !   \exp \left ( \frac{h \nu}{k T} \right )
 !   \left ( \frac{h \nu}
-!     {k T \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]} \right ) ^2$
+!     {k T \left [ \exp \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}
+!     \right ) ^2$.  Dividing numerator and denominator by
+!     $\exp \left ( \frac{h \nu}{k T} \right )$ gives
+!     $\frac{\left ( \frac{h \nu}{k T} \right )^2}
+!           { 2 \left [ \cosh \left ( \frac{h \nu}{k T} \right ) - 1 \right ]}$.
+!   $2 ( \cosh x \, - \, 1) / x^2$ has substantial cancellation near $x = 0$,
+!   so a specially-developed procedure is used to evaluate it.
 
-    do sv_i = 1, n_path
-      a = h_o_k * nu / t_path(sv_i)        !{ \frac{h \nu}{k T}
-      b = exp(a)                           !{ \exp \left ( \frac{h \nu}{k T} \right )
-      dstdt(sv_i) = b * (a/(b-1.0_rp))**2  !{ \frac{\text{d} B}{\text{d} T}
-    end do
+    dstdt = 1.0_rp / cosh1(h_o_k * nu / t_path) !{ \frac{a^2}{2 ( \cosh a - 1 )}
 
 ! This part Zvi will hate
 
@@ -84,6 +86,10 @@ contains
 
 end module D_T_SCRIPT_DTNP_M
 ! $Log$
+! Revision 2.2  2002/10/10 19:49:04  vsnyder
+! Move USE statements from module scope to procedure scope.  Remove an
+! unnecessary one.  Get rid of some array temps.  Cosmetic changes.
+!
 ! Revision 2.1  2002/10/08 17:08:02  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
