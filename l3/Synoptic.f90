@@ -73,7 +73,7 @@ CONTAINS
      
     CHARACTER (LEN=480) :: msr
 
-    CHARACTER (LEN=DATE_LEN) :: mis_Days_temp(maxWindow)
+    INTEGER :: mis_Days_temp(maxWindow)
      
     REAL (r8), DIMENSION(cfProd%nLats, l2gp(1)%nLevels) :: delTad
      
@@ -391,11 +391,6 @@ CONTAINS
     endif
  
     !!      Initialize Daily Map Residues
-     
-    DO j = 1, maxWindow
-       mis_Days_temp(j) = ''
-    ENDDO
-    mis_l2Days_temp = 0
    
     IF (cfProd%mode == 'com') THEN
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
@@ -454,10 +449,6 @@ CONTAINS
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
-       DO j = 1, maxWindow
-          mis_Days_temp(j) = ''
-       ENDDO
-       mis_l2Days_temp = 0
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
            & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
@@ -466,7 +457,6 @@ CONTAINS
            & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residD)
         residA%name = TRIM(cfProd%l3prodNameD) // 'AscendingResiduals'
         residD%name = TRIM(cfProd%l3prodNameD) // 'DescendingResiduals'
-        !print *, 'rDays', rDays
 
         DO j = 1, rDays
            residA(j)%l2gpValue      = 0.0
@@ -488,20 +478,12 @@ CONTAINS
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, l3r)
-       DO j = 1, maxWindow
-          mis_Days_temp(j) = ''
-       ENDDO
-       mis_l2Days_temp = 0
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residA_temp)
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, &
 	   & pcf%l3StartDay, & 
            & pcf%l3EndDay, rDays, mis_l2Days_temp, mis_Days_temp, residA)
-       DO j = 1, maxWindow
-          mis_Days_temp(j) = ''
-       ENDDO
-       mis_l2Days_temp = 0
        CALL ReadL2GPProd(cfProd%l3prodNameD, cfProd%fileTemplate, & 
            & pcf%l3StartDay, & 
            & pcf%l3EndDay,rDays, mis_l2Days_temp, mis_Days_temp, residD_temp)
@@ -551,8 +533,10 @@ CONTAINS
     DO I = 1, size(avgPeriod)
        tau0 = tau0 + avgPeriod(i)
     ENDDO
-        
+       
+    print *, 'tau0 before if, avgPeriod ', tau0, size(avgPeriod) 
     IF (size(avgPeriod) .ne. 0) tau0 = tau0/86400.0/float(size(avgPeriod))
+    print *, 'tau0 after if ', tau0
         
     !*** Sort & Prepare the Data 
     
@@ -2677,6 +2661,7 @@ CONTAINS
           ENDIF
        endif
 
+       CALL DestroyL2GPDatabase(l2gp)
        IF (cfProd%mode == 'com') THEN
           CALL DestroyL2GPDatabase(l3r_temp)
        ELSE IF (cfProd%mode == 'asc') THEN
@@ -3249,6 +3234,9 @@ CONTAINS
 !===================
 
 ! $Log$
+! Revision 1.31  2004/01/07 21:43:18  cvuu
+! version 1.4 commit
+!
 ! Revision 1.30  2003/04/30 18:15:48  pwagner
 ! Work-around for LF95 infinite compile-time bug
 !

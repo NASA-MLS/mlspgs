@@ -302,7 +302,7 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
           ENDIF
        ENDIF
-       
+      
        ! Write the L3DM metadata
        CALL WriteMetaL3DM(pcf, l3cf, files, anText, hdfVersion)
        
@@ -399,6 +399,9 @@ CONTAINS
  !=====================
 
 !$Log$
+!Revision 1.20  2004/01/07 21:43:18  cvuu
+!version 1.4 commit
+!
 !Revision 1.19  2003/04/30 18:15:48  pwagner
 !Work-around for LF95 infinite compile-time bug
 !

@@ -72,8 +72,9 @@ CONTAINS
     
     INTEGER, INTENT(OUT) :: numFiles, mis_numFiles
     
+    INTEGER, INTENT(OUT) :: mis_Days(:)
     CHARACTER (LEN=FileNameLen) :: pcfNames(:)
-    CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(:)
+!    CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(:)
    
     ! Parameters
     
@@ -83,8 +84,11 @@ CONTAINS
     
     CHARACTER (LEN=FileNameLen) :: physicalFilename, type
     CHARACTER (LEN=8) :: date
+    CHARACTER (LEN=7) :: dateChar
+    CHARACTER (LEN=3) :: startChar, endChar
     
     INTEGER :: i, indx, returnStatus, version, size, err
+    INTEGER :: startInt, endInt, dateInt
     LOGICAL, parameter :: DEBUG = .false. 
  
   
@@ -101,7 +105,6 @@ CONTAINS
     mis_numFiles = 0
     
     ! Loop through all the PCF numbers for L2GP files
-     !  call output( PGS_S_SUCCESS, advance='yes')
    
     DO i = mlspcf_start, mlspcf_end
        
@@ -116,34 +119,37 @@ CONTAINS
        end if
 
        ! If no file name was returned, go on to the next PCF number
-      
+    
        IF(returnStatus /= PGS_S_SUCCESS) THEN
           
           IF ( INDEX(physicalFilename, TRIM(type)) /= 0 ) THEN
+       
+                ! Extract the date from the file name
              
-             ! Extract the date from the file name
+                indx = INDEX(physicalFilename, '.', .TRUE.)
+                date = physicalFilename(indx-8:indx-5)//'-'//physicalFilename(indx-3:indx-1)
+                ! Check that the date is within the desired boundaries for reading
              
-             indx = INDEX(physicalFilename, '.', .TRUE.)
-             !date = physicalFilename(indx-8:indx-1)
-             date = physicalFilename(indx-8:indx-5)//'-'//physicalFilename(indx-3:indx-1)
-
-             if (DEBUG) then
-          	call output('date=', advance='no')
-	  	call output( date, advance='yes')
-          	print *, startDOY 
-          	print *, endDOY 
-	     end if
-
-             ! Check that the date is within the desired boundaries for reading
-             
-             IF ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
+                IF ( (date .GE. startDOY) .AND. (date .LE. endDOY) ) THEN
+	           startChar = startDOY(6:8)
+                   read (startChar, '(i3)') startInt
+	           endChar = endDOY(6:8)
+                   read (endChar, '(i3)') endInt
+		   
+		   IF (numFiles <= (endInt - startInt)) then 
+               
+                   ! Save the name in an array of files for the species
                 
-                ! Save the name in an array of files for the species
+                    mis_numFiles = mis_numFiles + 1
                 
-                mis_numFiles = mis_numFiles + 1
-                mis_Days(mis_numFiles) = date
+		   ! convert from char to int. There was problem using charstring 
+		   ! with tk 5.2.10 (hdfeos5.1.6.2) 3/2004                         
+	              dateChar = date(1:4) // date(6:8)
+                      read (dateChar, '(i7)') dateInt
+                      mis_Days(mis_numFiles) = dateInt
+		   ENDIF
                 
-             ENDIF
+                ENDIF
              
           ENDIF
           
@@ -158,7 +164,6 @@ CONTAINS
           ! Extract the date from the file name
            
           indx = INDEX(physicalFilename, '.', .TRUE.)
-          !date = physicalFilename(indx-8:indx-1)
           date = physicalFilename(indx-8:indx-5)//'-'//physicalFilename(indx-3:indx-1)
           
           ! Check that the date is within the desired boundaries for reading
@@ -212,20 +217,16 @@ CONTAINS
     ! Local variables
 
     CHARACTER (LEN=FileNameLen) :: pcfNames(40)
-    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
+    !CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
+    INTEGER :: mis_Days(maxMisDays)
     INTEGER :: numDays, mis_numDay, the_hdfVersion, file_id
     INTEGER :: record_length, i, status, aID, mis_numDays
     INTEGER :: Flag = 0, size, err=0
     INTEGER, external :: HE5_EHrdglatt
     character  (len=20) :: name
 
-  !  call output('filetemplate= ', advance='no')
-  !  call output(tempfile, advance='yes')
-
     call GetL2GPfromPCF(mlspcf_l2gp_start,mlspcf_l2gp_end, tempfile, &
 	& l3StartDay, l3EndDay, numDays, pcfNames, mis_numDays, mis_Days)
-
-!    call output('subroutine ReadL2GPAttribute', advance='yes')
 
     if (present(L3MFlag)) numDays = numDays + 1
 
@@ -239,10 +240,6 @@ CONTAINS
        if (present(L3MFLag) .and. i==numDays ) exit
 
        the_hdfVersion = mls_hdf_version(trim(pcfNames(i)))
-!      call output('the_hdfVersion= ', advance='no')
-!      call output(the_hdfVersion, advance='yes')
-!      call output('pcfNames= ', advance='no')
-!      call output(trim(pcfNames(i)), advance='yes')
 
       if (the_hdfVersion == 4) then
 	 GlobalAttributes%OrbNumDays(:,i) = -1
@@ -251,8 +248,6 @@ CONTAINS
          file_id = mls_io_gen_openF('swopen', .TRUE., status, &
             & record_length, DFACC_READ, pcfNames(i), &
             & hdfVersion=the_hdfVersion, debugOption=.false. )
-  !      call output('file_id= ', advance='no')
-  !      call output(file_id, advance='yes')
          if ( status /= 0 ) &
             call MLSMessage ( MLSMSG_Error, ModuleName, &
 		& "Unable to open L2gp file: " &
@@ -266,9 +261,6 @@ CONTAINS
 	       GlobalAttributes%OrbNumDays(:,i) = -1
             end if
 
-!            call output('ok reading orbitNumber', advance='yes')
-!            call output(status, advance='yes')
-!            call output('OrbitNumber =', advance='no')
 !            call output(GlobalAttributes%OrbNumDays(:,i), advance='yes')
 
             status = HE5_EHrdglatt(file_id, 'OrbitPeriod', & 
@@ -280,11 +272,7 @@ CONTAINS
 	  	GlobalAttributes%OrbPeriodDays(:,i) = -1.0
             end if
 
-!      	    call output('ok reading orbitPeriod', advance='yes')
-!            call output(status, advance='yes')
-!            call output('OrbitPeriod =', advance='no')
 !            call output(GlobalAttributes%OrbPeriodDays(:,i), advance='yes')
-!            call output(GlobalAttributes%OrbPeriodDays(2:2,i), advance='yes')
 
             status = mls_io_gen_closeF('swclose', file_id, pcfNames(i), & 
            	& hdfVersion=the_hdfVersion)
@@ -355,7 +343,8 @@ CONTAINS
       
     TYPE( L2GPData_T ), POINTER :: prodL2GP(:)
       
-    CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(:)
+    !CHARACTER (LEN=DATE_LEN), INTENT(OUT) :: mis_Days(:)
+    INTEGER, INTENT(OUT) :: mis_Days(:)
       
     ! Parameters
             
@@ -365,7 +354,9 @@ CONTAINS
     CHARACTER (LEN=FileNameLen) :: pcfNames(40)
       
     INTEGER :: err, i
-            
+    
+    mis_Days = 0
+    mis_numDays = 0        
     ! Search the PCF for L2GP files for this species
       
     CALL GetL2GPfromPCF(mlspcf_l2gp_start, mlspcf_l2gp_end, template, & 
@@ -503,7 +494,6 @@ CONTAINS
    CHARACTER (LEN=GridNameLen) :: swath
       
    INTEGER :: err, i, j, indx, len, ns, hdfversion
-
    
    ! Check for the product in the input files
       
@@ -512,11 +502,6 @@ CONTAINS
    DO i = 1, numFiles
          
       ns = mls_inqswath( files(i), list, len, hdfversion=5 )
-
-      !call output('files= '//trim(files(i)), advance='yes')
-      !call output('list= '//trim(list), advance='yes')
-      !call output('ns= ', advance='no')
-      !call output(ns, advance='yes')
 
       IF (ns == -1) THEN
          msr = 'Failed to read swath list from ' // files(i)
@@ -584,6 +569,9 @@ END MODULE L2Interface
 !=====================
 
 !# $Log$
+!# Revision 1.14  2004/01/07 21:43:18  cvuu
+!# version 1.4 commit
+!#
 !# Revision 1.13  2003/09/15 18:30:48  cvuu
 !# Read OrbitNumber and OrbitPeriod from L2GP files
 !#

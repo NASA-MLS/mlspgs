@@ -437,8 +437,6 @@ CONTAINS
 
 ! Loop through all the PCF numbers for the file type
 
-      !call output(' 1 date = ', advance='no')
-      !call output(date, advance='yes')
       DO i = mlspcf_start, mlspcf_end
 
          version = 1
@@ -489,6 +487,9 @@ END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.14  2004/03/19 14:31:10  cvuu
+! Correct the date format in the metadata file
+!
 ! Revision 1.13  2004/01/07 21:43:18  cvuu
 ! version 1.4 commit
 !

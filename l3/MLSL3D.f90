@@ -6,6 +6,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
 !==========================================
 
   USE Allocate_Deallocate, ONLY: DEALLOCATE_TEST
+  !USE H5LIB, ONLY: h5open_f, h5close_f
   USE L2GPData, ONLY: L2GPData_T, DestroyL2GPDatabase
   USE L2Interface, ONLY: ReadL2GPProd, ReadL2GPAttribute
   USE L3CF, ONLY: L3CFDef_T, L3CFProd_T  
@@ -50,7 +51,8 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   TYPE( L3SPData_T ), POINTER :: l3sp(:)
   
   CHARACTER (LEN=480) :: msr
-  CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
+  !CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
+  INTEGER :: mis_Days(maxMisDays)
   CHARACTER (LEN=1), POINTER :: anText(:) => NULL()
   
   REAL(r8), POINTER :: avgPer(:) => NULL()
@@ -58,6 +60,12 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   INTEGER :: i=0, l2Days, mis_l2Days, hdfVersion, error
   
   INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
+
+  INTEGER :: details = 1
+
+  LOGICAL :: columnsOnly = .false.
+
+! Executable code
 
   CALL h5open_f(error)
 
@@ -68,8 +76,6 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
      call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_open_f" )
   endif
  
-  GlobalAttributes%ProcessLevel = '3-daily'
-
   ! Fill structures with input data from the PCF and L3CF.
   
   CALL OpenAndInitialize(pcf, cf, cfProd, cfDef, anText, avgPer)
@@ -123,8 +129,6 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
           & // '; starting Output task ...'
      CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
      
-     CALL DestroyL2GPDatabase(l2gp)
-
      CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, & 
           & residA, residD, flags, hdfVersion)
   ENDDO
@@ -155,14 +159,14 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
  
   call MLSMessageExit(NORMAL_EXIT_STATUS)
   
-  ! Detailed description of program
-  ! The program is a prototype for the MLS Level 3 Daily software.
-
 !=================
 END PROGRAM MLSL3D
 !=================
 
 ! $Log$
+! Revision 1.15  2004/01/07 21:57:36  cvuu
+! version 1.4 commit
+!
 ! Revision 1.14  2003/10/29 00:07:17  pwagner
 ! GlobalAttributes%ProcessLevel assigned appropriate value
 !

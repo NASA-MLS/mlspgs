@@ -59,36 +59,36 @@ MODULE L3DMData
 
      ! Now the data fields:
 
-     REAL(r8), DIMENSION(:,:,:), POINTER :: l3dmValue	  ! Field value
-     REAL(r8), DIMENSION(:,:,:), POINTER :: l3dmPrecision ! Field precision
+     REAL(r8), DIMENSION(:,:,:), POINTER :: l3dmValue=>NULL()	  ! Field value
+     REAL(r8), DIMENSION(:,:,:), POINTER :: l3dmPrecision=>NULL() ! Field precision
 	! dimensioned as (nLevels, nLats, nLons)
 
-     REAL(r8), DIMENSION(:,:), POINTER :: latRss
+     REAL(r8), DIMENSION(:,:), POINTER :: latRss=>NULL()
 	! Root-Sum-Square for each latitude, dimensioned (nLevels, nLats)
 
-     REAL(r8), DIMENSION(:,:), POINTER :: maxDiff
+     REAL(r8), DIMENSION(:,:), POINTER :: maxDiff=>NULL()
 	! Maximum difference, dimensioned (N, nLevels)
 
-     REAL(r8), DIMENSION(:,:), POINTER :: maxDiffTime
+     REAL(r8), DIMENSION(:,:), POINTER :: maxDiffTime=>NULL()
 	! Time of maximum differences, dimensioned (N, nLevels)
 
      ! Now we store the geolocation fields.  First, the vertical one:
 
-     REAL(r8), DIMENSION(:), POINTER :: pressure	! dimensioned (nLevels)
+     REAL(r8), DIMENSION(:), POINTER :: pressure=>NULL()	! dimensioned (nLevels)
 
      ! Now the horizontal geolocation information and time:
 
-     REAL(r8), DIMENSION(:), POINTER :: latitude	! dimensioned (nLats)
-     REAL(r8), DIMENSION(:), POINTER :: longitude	! dimensioned (nLons)
+     REAL(r8), DIMENSION(:), POINTER :: latitude=>NULL()	! dimensioned (nLats)
+     REAL(r8), DIMENSION(:), POINTER :: longitude=>NULL()	! dimensioned (nLons)
 
      REAL(r8) :: time	! Synoptic time
 
      ! Now the diagnostic fields
 
-     REAL(r8), DIMENSION(:), POINTER :: gRss
+     REAL(r8), DIMENSION(:), POINTER :: gRss=>NULL()
 	! Global Root-Sum_Square, dimensioned (nLevels)
 
-     INTEGER, DIMENSION(:), POINTER :: perMisPoints
+     INTEGER, DIMENSION(:), POINTER :: perMisPoints=>NULL()
 	! Missing points (percentage), dimensioned (nLevels)
 
      INTEGER :: nLevels		! Total number of surfaces
@@ -702,37 +702,20 @@ CONTAINS
          msr = DAT_ERR // DATA_FIELDP
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-      
-      ! Detach from and close the grid interface.  
+
+      ! Detach from and close the grid interface.
       ! This step is necessary to store
-      ! properly the grid information within the file and must be done 
+      ! properly the grid information within the file and must be done
       ! before writing or reading data to or from the grid.
-      
+                                                                                           
       status = he5_gddetach(gdId)
       IF (status /= 0) THEN
          msr = GD_ERR // TRIM( l3dmData(i)%name ) // ' after definition.'
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
-      
-!      status = he5_gdclose(gdfID)
-!      IF (status /= 0) THEN
-!         msr = 'Failed to close file ' // TRIM(physicalFilename) // &
-!              & ' after definition.'
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-      
-      
-      ! Re-open the file for writing
-      
-!      gdfID = he5_gdopen(trim(physicalFilename), HE5F_ACC_RDWR)
-!      IF (gdfID == -1) THEN
-!         msr = MLSMSG_Fileopen // TRIM(physicalFilename) // & 
-!              & ' for writing grid data.'
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-      
+
       ! Re-attach to the grid for writing
-      
+                                                                                           
       gdId = he5_gdattach(gdfID, l3dmData(i)%name)
       IF (gdId == -1) THEN
          msr = 'Failed to attach to grid ' // trim(l3dmData(i)%name)
@@ -793,7 +776,6 @@ CONTAINS
          
       endif
       
-
       if ((l3dmData(i)%nLons.gt.0).and.(l3dmData(i)%nLats.gt.0).and. & 
            & (l3dmData(i)%nLevels.gt.0)) then
          
@@ -1257,39 +1239,6 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      ! Detach from the swath interface after definition
-
-      status = he5_swdetach(swId)
-      IF (status /= 0) THEN
-         msr = 'Failed to detach from swath ' // TRIM(dgName) // &
-              & ' after definition.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-
-!      status = he5_swclose(swfID)
-!      IF (status /= 0) THEN
-!         msr = 'Failed to close file ' // TRIM(physicalFilename) // &
-!              & ' after writing.'
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
-!      CALL MLSMessage(MLSMSG_Info, ModuleName, 'pass swclose')
-                                                                                
-!      swfID = he5_swopen(trim(physicalFilename), HE5F_ACC_RDWR)
-                                                                                
-!      IF (swfID == -1) THEN
-!!jj         msr = MLSMSG_Fileopen // trim(physicalFilename) //' for writing swath'
-!         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-!      ENDIF
- 
-      ! Re-attach to the swath for writing
-      
-      swId = he5_swattach(swfID, dgName)
-      IF (swId == -1) THEN
-         msr = 'Failed to re-attach to swath ' // TRIM(dgName) // & 
-              & ' for writing.'
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-      ENDIF
-      
       ! Write to fields
 
       start  = 0
@@ -1868,7 +1817,7 @@ CONTAINS
          CALL WritePCF2Hdr(files%name(i), anText, & 
               & hdfVersion=MyHDFVersion, fileType=fileType)
         
-	! Set global attributes 
+	! Set global attributes of Granule for each day of L3 Daily output file 
         rangeDate = files%date(i)
         GlobalAttributes%StartUTC = rangeDate(1:4)//'-'//rangeDate(6:8) &
 	  & // 'T00:00:00.000000Z'
@@ -1887,11 +1836,11 @@ CONTAINS
       ENDDO
 
       result = pgs_met_remove()
-      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
-         write(msr, *) result
-         CALL MLSMessage (MLSMSG_Warning, ModuleName, &
-              & "Calling pgs_met_remove() failed with value " // trim(msr) )
-      endif
+!      if (result /= PGS_S_SUCCESS .and. WARNIFCANTPGSMETREMOVE) THEN 
+!         write(msr, *) result
+!         CALL MLSMessage (MLSMSG_Warning, ModuleName, &
+!              & "Calling pgs_met_remove() failed with value " // trim(msr) )
+!      endif
       
 
 !------------------------------
@@ -2234,6 +2183,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.35  2004/03/19 14:25:26  cvuu
+!# Fix the RangeBeginningTime in metadata file
+!#
 !# Revision 1.34  2004/01/08 21:25:44  cvuu
 !# Correct the day, month and doy in the global attribute
 !#

@@ -149,6 +149,7 @@ CONTAINS
     l3pcf%logGranID = name(indx+1:)
 
     ! Store appropriate user input as global attributes
+    GlobalAttributes%ProcessLevel = '3-daily'
     GlobalAttributes%InputVersion = l3pcf%outputVersion
     GlobalAttributes%StartUTC = l3pcf%l3StartDay // &
       & 'T00:00:00.000000Z'
@@ -344,20 +345,19 @@ CONTAINS
           IF (GlobalAttributes%OrbPeriodDays(1,i) /= -1.0) THEN 
              !call output('first orbitPeriod = ', advance='no')
              DO j = 1, max_orbits
-               IF (GlobalAttributes%OrbPeriodDays(j,i) /= -1.0) THEN 
+               IF (GlobalAttributes%OrbPeriodDays(j,i) /= 0) THEN 
 		   sum = sum + GlobalAttributes%OrbPeriodDays(j,i)
                    count = count + 1
 	       END IF	 
              END DO
              avgPer(i) = sum/count 
-             !call output('avgPer(i) = ', advance='no')
-             !call output(avgPer(i), advance='yes')
           ELSE  
              avgPer(i) = cfDef%averageOrbitalPeriod
           END IF
        END DO
 
     ELSE
+       print *, 'in else'
        call AvgOrbPeriod(l3pcf%l2StartDay, l3pcf%l2EndDay, avgPer)
     END IF
 
@@ -500,6 +500,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.14  2004/01/08 21:24:56  cvuu
+! correct the PGEVersion in the global attribute
+!
 ! Revision 1.13  2004/01/07 21:43:18  cvuu
 ! version 1.4 commit
 !
