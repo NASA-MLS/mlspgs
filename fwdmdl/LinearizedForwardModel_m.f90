@@ -56,7 +56,7 @@ contains ! =====     Public Procedures     =============================
     use MatrixModule_1, only: MATRIX_T, MULTIPLYMATRIXVECTORNOT, DUMP, &
       & FINDBLOCK, CREATEBLOCK
     use MLSCommon, only: r8, rm
-    use MLSSignals_m, only: Signal_T, GetSidebandLoop
+    use MLSSignals_m, only: Signal_T, GetSidebandLoop, GetSignalName
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
       & MLSMSG_Allocate, MLSMSG_Deallocate, MLSMSG_WARNING
     use MLSNumerics, only: HUNT, INTERPOLATEVALUES
@@ -734,6 +734,7 @@ contains ! =====     Public Procedures     =============================
       use MLSSignals_m, only: signals
       use L2PC_M, only: BINSELECTORS, BINSELECTOR_T
       use Intrinsic, only: L_NAMEFRAGMENT, L_SZA
+      use Toggles, only: SWITCHES
 
       type (VectorValue_T), intent(in) :: RADIANCE ! The radiance we're after
       integer, intent(in) :: MAF                      ! MAF index
@@ -921,6 +922,20 @@ contains ! =====     Public Procedures     =============================
           & MLSMSG_Allocate//'sel' )
       end if
 
+      if ( index ( switches, 'binsel' ) /= 0 ) then
+        call output ( 'Choosing bin for ' )
+        call GetSignalName ( signal, namefragment, sideband=sideband )
+        call output ( trim(nameFragment), advance='yes' )
+        do bin = 1, noBins
+          if ( any ( possible ( :, bin ) ) ) then
+            call output  ( 'Candidate: ' )
+            call display_string ( l2pcDatabase(bin)%name, strip=.true. )
+            call output ( ' cost = ' )
+            call output ( cost(bin), advance='yes' )
+          end if
+        end do
+      end if
+
       ! OK, now we've surveyed the bins, let's cut things down.
       ! When computing folded radiances I'll always choose folded bins
       ! over unfolded ones, even if they cost more.  I think it's
@@ -976,6 +991,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.36  2003/02/06 00:46:03  livesey
+! New SelectL2PCBins routine.
+!
 ! Revision 2.35  2003/02/05 21:58:31  livesey
 ! Just a tidy up in preparation for the new bin selectors stuff
 !
