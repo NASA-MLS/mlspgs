@@ -124,7 +124,7 @@ CONTAINS
 
     attrName = 'LocalVersionID'
     READ (L1PCF%Cycle, '(I3)') ival
-    WRITE (sval, '("C", i2.2)') ival
+    WRITE (sval, '("c", i2.2)') ival
     returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, sval)
     IF (returnStatus /= PGS_S_SUCCESS) THEN
        errmsg = METAWR_ERR // attrName
@@ -210,12 +210,14 @@ CONTAINS
 
     ! Orbit Calculated Spatial Domain Container
 
-    attrName = 'OrbitNumber' // '.1'
-    returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
-    IF (returnStatus /= PGS_S_SUCCESS) THEN
-       errmsg = METAWR_ERR // attrName
-       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
-    ENDIF
+    ! This changes confirm to James Johnson suggestion on 6/12/03
+
+    !attrName = 'OrbitNumber' // '.1'
+    !returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, -1)
+    !IF (returnStatus /= PGS_S_SUCCESS) THEN
+    !   errmsg = METAWR_ERR // attrName
+    !   CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
+    !ENDIF
 
     attrName = 'StartOrbitNumber' // '.1'
     returnStatus = pgs_met_setAttr_i (groups(INVENTORY), attrName, &
@@ -291,6 +293,7 @@ CONTAINS
           CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
        ENDIF
 
+       !This changes confirm to James Johnson suggestion on 6/12/03
        attrName = 'VerticalSpatialDomainValue' // '.1'
        returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
             'Brightness Temperature')
@@ -457,6 +460,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.12  2003/08/12 16:57:25  cvuu
+! brought closer to James Johnson want to
+!
 ! Revision 2.11  2003/07/08 00:17:11  pwagner
 ! fileType now a lit_name instead of a char string
 !
