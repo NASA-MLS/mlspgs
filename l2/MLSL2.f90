@@ -5,6 +5,7 @@ program MLSL2
   use Allocate_Deallocate, only: SET_GARBAGE_COLLECTION
   use DECLARATION_TABLE, only: ALLOCATE_DECL, DEALLOCATE_DECL, DUMP_DECL
   use INIT_TABLES_MODULE, only: INIT_TABLES
+  use INTRINSIC, only: L_HOURS, L_MINUTES, L_SECONDS
   use L2PARINFO, only: PARALLEL, INITPARALLEL, ACCUMULATESLAVEARGUMENTS
   use LEXER_CORE, only: INIT_LEXER
   use LEXER_M, only: CapIdentifiers
@@ -13,19 +14,17 @@ program MLSL2
   USE MLSFiles, only: WILDCARDHDFVERSION, HDFVERSION_4, HDFVERSION_5, &
     & MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
   !    & MLSFile_T, MLS_IO_GEN_OPENF, ADDFILETODATABASE, Deallocate_filedatabase
-  use MLSL2Options, only: OUTPUT_PRINT_UNIT, &
-    & QUIT_ERROR_THRESHOLD, TOOLKIT, CURRENT_VERSION_ID, &
-    & PENALTY_FOR_NO_METADATA, NORMAL_EXIT_STATUS, &
-    & GARBAGE_COLLECTION_BY_CHUNK, &
-    & DEFAULT_HDFVERSION_READ, &
-    & DEFAULT_HDFVERSION_WRITE, DEFAULT_HDFVERSION_READ, LEVEL1_HDFVERSION, &
-    & SKIPRETRIEVAL, CHECKPATHS
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, &
+  use MLSL2Options, only: CHECKPATHS, CURRENT_VERSION_ID, &
+    & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
+    & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
+    & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, &
+    & SKIPRETRIEVAL, SECTIONTIMINGUNITS, TOOLKIT
+  use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
     & MLSMSG_Error, MLSMSG_Severity_to_quit, MLSMessageExit
   use MLSPCF2, only: MLSPCF_L2CF_START
-  use MLSStrings, only: GetUniqueList
+  use MLSStrings, only: GetUniqueList, lowerCase
   use OBTAIN_MLSCF, only: Close_MLSCF, Open_MLSCF
   use OUTPUT_M, only: BLANKS, OUTPUT, PRUNIT
   use PARSER, only: CONFIGURATION
@@ -33,7 +32,7 @@ program MLSL2
   use SDPToolkit, only: UseSDPToolkit, PGSD_IO_GEN_RSEQFRM
   use SnoopMLSL2, only: SNOOPINGACTIVE, SNOOPNAME
   use STRING_TABLE, only: DESTROY_CHAR_TABLE, DESTROY_HASH_TABLE, &
-    & DESTROY_STRING_TABLE, DO_LISTING, INUNIT
+    & DESTROY_STRING_TABLE, DISPLAY_STRING, DO_LISTING, INUNIT
   use SYMBOL_TABLE, only: DESTROY_SYMBOL_TABLE
   use Time_M, only: Time_Now, Use_Wall_Clock
   use TOGGLES, only: CON, EMIT, GEN, LEVELS, LEX, PAR, SYN, SWITCHES, TAB, &
@@ -246,10 +245,10 @@ program MLSL2
         end if
       else if ( line(3+n:14+n) == 'fwmParallel ' ) then
         parallel%fwmParallel = .true.
-      else if ( line(3+n:7+n) == 'gcch ' ) then
-        garbage_collection_by_chunk = switch
-      else if ( line(3+n:7+n) == 'gcdt ' ) then
-        garbage_collection_by_dt = switch
+      ! else if ( line(3+n:7+n) == 'gcch ' ) then
+      !  garbage_collection_by_chunk = switch
+      ! else if ( line(3+n:7+n) == 'gcdt ' ) then
+      !  garbage_collection_by_dt = switch
       else if ( line(3+n:6+n) == 'kit ' ) then
         MLSMessageConfig%useToolkit = switch
       else if ( line(3+n:6+n) == 'l1b=' ) then
@@ -323,6 +322,8 @@ program MLSL2
           call io_error ( "After --maxFailuresPerMachine option", status, line )
           stop
         end if
+      else if ( line(3+n:14+n) == 'patch ' ) then
+        patch = switch
       else if ( line(3+n:5+n) == 'pge ' ) then
         i = i + 1
         call getarg ( i, line )
@@ -459,16 +460,23 @@ program MLSL2
           exit ! Took the rest of the string, so there can't be more options
         case ( 'T' )
           timing = .true.
-          if ( j < len(line) ) then
+          do
+            if ( j >= len(line) ) exit
             if ( line(j+1:j+1) >= '0' .and. line(j+1:j+1) <= '9' ) then
               if( line(j+1:j+1) /= '0' ) &
                 & switches = trim(switches) // ',' // 'time'
               section_times = &
                 & ( index(switches, 'time') /= 0 .and. (line(j+1:j+1) /= '1') )
               total_times = section_times .and. (line(j+1:j+1) /= '2')
-              j = j + 1
+            elseif ( lowercase(line(j+1:j+1)) == 's' ) then
+              sectionTimingUnits = l_seconds
+            elseif ( lowercase(line(j+1:j+1)) == 'm' ) then
+              sectionTimingUnits = l_minutes
+            elseif ( lowercase(line(j+1:j+1)) == 'h' ) then
+              sectionTimingUnits = l_hours
             end if
-          end if
+            j = j + 1
+          enddo
         case ( 't' ); toggle(tab) = .true.
         case ( 'v' ); do_listing = .true.
         case default
@@ -512,6 +520,7 @@ program MLSL2
      penalty_for_no_metadata = 0
   end if
   
+  if ( use_wall_clock ) call time_now(run_start_time)
   ! If checking paths, run as a single-chunk case in serial mode
   if ( checkPaths ) then
     parallel%master = .false.
@@ -774,6 +783,9 @@ contains
       call output(' Is this run in forward model parallel?:         ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%fwmParallel, advance='yes')
+      call output(' Avoid creating file on first directWrite?:                ', advance='no')
+      call blanks(4, advance='no')
+      call output(patch, advance='yes')
       call output(' Is this the master task in pvm?:                ', advance='no')
       call blanks(4, advance='no')
       call output(parallel%master, advance='yes')
@@ -817,6 +829,9 @@ contains
       call output(' Using wall clock instead of cpu time?:          ', advance='no')
       call blanks(4, advance='no')
       call output(use_wall_clock, advance='yes')
+      call output(' Summarize time in what units?:                   ', advance='no')
+      call blanks(4, advance='no')
+      call display_string ( sectionTimingUnits, strip=.true., advance='yes' )
       call output(' Number of switches set:                         ', advance='no')
       call blanks(4, advance='no')
       call output(numSwitches, advance='yes')
@@ -854,6 +869,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.108  2003/12/05 00:40:11  pwagner
+! Added patch option, section timing units
+!
 ! Revision 2.107  2003/11/15 00:33:37  pwagner
 ! New commandline opts: maxfailuresperchunk, maxfailurespermachine
 !
