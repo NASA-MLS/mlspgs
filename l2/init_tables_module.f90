@@ -811,7 +811,6 @@ contains ! =====     Public procedures     =============================
              begin, f+f_specificQuantities, s+s_quantity, n+n_field_spec, &
              begin, f+f_cloud_der, t+t_numeric, n+n_field_type, &
              begin, f+f_i_saturation, t+t_numeric, n+n_field_type,&
-             begin, f+f_cloud_fov, t+t_numeric, n+n_field_type, &
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &
              begin, f+f_tangentGrid, s+s_vGrid, n+n_field_spec, &
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &
@@ -974,6 +973,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.294  2003/04/02 21:49:00  jonathan
+! remove cloud_fov
+!
 ! Revision 2.293  2003/03/27 20:45:34  livesey
 ! Added logSpace to fill
 !
