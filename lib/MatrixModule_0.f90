@@ -16,22 +16,54 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: Add_Matrix_Blocks, CloneBlock, CopyBlock, CreateBlock, Densify
-  public :: DestroyBlock, Dump, MatrixElement_T, Multiply_Matrix_Blocks
-  public :: operator(+), operator(.TX.), Sparsify
+  public :: Add_Matrix_Blocks, CholeskyFactor, CholeskyFactor_0, CloneBlock, &
+    & ColumnScale, ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, &
+    & Densify, DestroyBlock, Dump, M_Absent, M_Banded, M_Column_Sparse, &
+    & M_Full, MatrixElement_T, Multiply_Matrix_Blocks, MultiplyMatrixVector, &
+    & MultiplyMatrixVector_0, operator(+), operator(.TX.), RowScale, &
+    & RowScale_0, SolveCholesky, SolveCholeskyM_0, SolveCholeskyV_0, &
+    & Sparsify, UpdateDiagonal, UpdateDiagonal_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
+  interface CholeskyFactor
+    module procedure CholeskyFactor_0
+  end interface
+
+  interface ColumnScale
+    module procedure ColumnScale_0
+  end interface
+
+  interface CreateBlock
+    module procedure CreateBlock_0
+  end interface
+
   interface DUMP
     module procedure DUMP_MATRIX_BLOCK
+  end interface
+
+  interface MultiplyMatrixVector
+    module procedure MultiplyMatrixVector_0
   end interface
 
   interface operator (+)
     module procedure Add_Matrix_Blocks
   end interface
 
-  interface operator ( .TX. ) ! A transpose * B
-    module procedure Multiply_Matrix_Blocks
+  interface operator ( .TX. ) ! A^T * B
+    module procedure Multiply_Matrix_Blocks, NewMultiplyMatrixVector_0
+  end interface
+
+  interface RowScale
+    module procedure RowScale_0
+  end interface
+
+  interface SolveCholesky
+    module procedure SolveCholeskyM_0, SolveCholeskyV_0
+  end interface
+
+  interface UpdateDiagonal
+    module procedure UpdateDiagonal_0
   end interface
 
   !---------------------------- RCS Ident Info -------------------------------
@@ -55,19 +87,21 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   integer, parameter :: M_Full = 3           ! A non-sparse block
 
   type MatrixElement_T
-    integer :: KIND      ! Kind of block -- one of the M_... parameters above
+    integer :: KIND = M_Absent               ! Kind of block -- one of the
+      !                                        M_... parameters above
     integer :: NROWS, NCOLS                  ! Numbers of rows and columns
-    integer, pointer, dimension(:) :: R1     ! Indexed by the column number.
-      ! Used for the first column number if KIND = M_Banded, as described
-      ! above for M_Column_sparse if KIND = M_Column_sparse, and not used
-      ! otherwise.
-    integer, pointer, dimension(:) :: R2     ! Indexed by the column number if
-      ! KIND = M_Banded, by elements of R1 if KIND = M_Column_sparse, and
-      ! not used otherwise.  See M_Banded and M_Column_sparse above.
-    real(r8), pointer, dimension(:,:) :: VALUES   ! Values of the matrix
-      ! elements.  Indexed by row and column indices if KIND == M_Full, by
-      ! elements in the range of values of R1 and R2 if KIND == M_Banded,
-      ! and by elements of R2 if KIND == M_Column_sparse.
+    integer, pointer, dimension(:) :: R1 => NULL()     ! Indexed by the column
+      ! number. Used for the first column number if KIND = M_Banded, as
+      ! described above for M_Column_sparse if KIND = M_Column_sparse, and not
+      ! used otherwise.
+    integer, pointer, dimension(:) :: R2 => NULL()     ! Indexed by the
+      ! column number if KIND = M_Banded, by elements of R1 if KIND =
+      ! M_Column_sparse, and not used otherwise.  See M_Banded and
+      ! M_Column_sparse above.
+    real(r8), pointer, dimension(:,:) :: VALUES => NULL()   ! Values of the
+      ! matrix elements.  Indexed by row and column indices if KIND == M_Full,
+      ! by elements in the range of values of R1 if KIND == M_Banded, and by
+      ! elements of R2 if KIND == M_Column_sparse.
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
@@ -79,9 +113,24 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
     ! can copy the components without looking at the block kind if one
     ! operand is absent during an operation.
   logical, save, private :: FIRST = .true.        ! to create EmptyBlock
-  real, parameter, private :: SPARSITY = 0.25     ! If a full matrix has
+  real, parameter, private :: SPARSITY = 0.33     ! If a full matrix has
     ! a greater fraction of nonzeroes than specified by this number, there's
     ! no point in making it sparse.
+
+  ! It is important to lie about the interface for the Y argument for *DOT.
+  ! We pass an element of a rank-2 object to it, and assume the subsequent
+  ! elements are consecutive in memory with stride INCY.  *DOT then treats
+  ! this as a rank-1 stride INCY vector.
+  interface DOT
+    real function SDOT ( N, X, INCX, Y, INCY )
+      integer, intent(in) :: N, INCX, INCY
+      real, intent(in) :: X, Y
+    end function SDOT
+    double precision function DDOT ( N, X, INCX, Y, INCY )
+      integer, intent(in) :: N, INCX, INCY
+      double precision, intent(in) :: X, Y
+    end function DDOT
+  end interface
 
 contains ! =====     Public Procedures     =============================
 
@@ -89,6 +138,13 @@ contains ! =====     Public Procedures     =============================
   function Add_Matrix_Blocks ( XB, YB ) result ( ZB ) ! ZB = XB + YB
     type(MatrixElement_T), intent(in), target :: XB, YB
     type(MatrixElement_T) :: ZB
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
     integer :: I, J, K, L, N
     type(MatrixElement_T), pointer :: X, Y
     real(kind(zb%values)), pointer :: Z(:,:) ! May be used if Y is col-sparse
@@ -106,7 +162,7 @@ contains ! =====     Public Procedures     =============================
     ! are in the same order as their declarations.  The kind of the XB
     ! operand is less than or equal to the kind of the YB operand.
     if ( x%kind == M_Absent ) then
-      call CopyBlock ( zb, y )                   ! Zb = y
+      call copyBlock ( zb, y )                   ! Zb = y
       return
     end if
     if ( xb%nrows /= yb%nrows .or. xb%ncols /= yb%ncols ) &
@@ -119,12 +175,16 @@ contains ! =====     Public Procedures     =============================
         call allocate_test ( zb%r1, size(x%r1), "zb%r1", ModuleName )
         zb%r1 = min(x%r1, y%r1)                  ! First nonzero row
         call allocate_test ( zb%r2, size(x%r2), "zb%r2", ModuleName )
-        zb%r2 = max(x%r2, y%r2)                  ! Last nonzero row
+        zb%r2(0) = 0
         do k = 1, size(x%r1)                     ! Calculate size of Values
-          zb%r2(k) = zb%r2(k-1) + zb%r2(k) - zb%r1(k) + 1 ! Last entry in Values
+          zb%r2(k) = zb%r2(k-1) + &
+            & max( x%r2(k)-x%r2(k-1)+x%r1(k), y%r2(k)-y%r2(k-1)+y%r1(k) ) - &
+            & zb%r1(k) + 1
         end do
         call allocate_test ( zb%values, zb%r2(size(x%r1)), 1, "zb%values", &
           & ModuleName )
+        zb%values = 0.0_r8 ! ??? Improve this in level 1.0 by only filling
+        !                    ??? values that don't get set below
         do k = 1, size(x%r1)
           i = 1; j = 1; l = 1
           n = y%r1(k) - x%r1(k)
@@ -213,6 +273,129 @@ contains ! =====     Public Procedures     =============================
     end select
   end function Add_Matrix_Blocks
 
+  ! -------------------------------------------  CholeskyFactor_0  -----
+  subroutine CholeskyFactor_0 ( Z, XOPT )
+  ! If XOPT is present compute Z such that Z^T Z = XOPT and Z is upper-
+  ! triangular. Otherwise, replace Z such that Z(output) = Z(input)^T
+  ! Z(input) and Z(output) is upper-triangular.
+    type(MatrixElement_T), target, intent(inout) :: Z
+    type(MatrixElement_T), target, intent(in), optional :: XOPT
+
+    real(r8) :: D             ! Diagonal(I,I) element of Z
+    real(r8) :: G             ! X(I,J) - dot_product(X(1:i-1,i),X(1:i-1,j))
+    integer :: I, J           ! Subscripts and loop inductors
+    integer :: II, IJ         ! Subscripts in VALUES for I,I and I,J components
+    !                           in the case of M_Banded
+    integer :: NC             ! Number of columns
+    integer, pointer, dimension(:) :: R1      ! First nonzero row of Z (Banded)
+    integer :: RZ             ! Starting row in Z for inner product (Banded)
+    real(r8), pointer, dimension(:,:) :: XIN  ! A pointer to the input,
+    !                           data, or a densified copy of it
+    type(MatrixElement_T), pointer :: X       ! XOPT or Z, depending on whether
+    !                           XOPT is present or absent, respectively.
+    real(r8), pointer, dimension(:,:) :: ZT   ! A local full result that is
+    !                           sparsified at the end.
+
+    x => z
+    if ( present(xopt) ) x => xopt
+    nc = x%ncols
+    if ( nc /= x%nrows )&
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "Cannot CholeskyFactor a non-square block" )
+    select case ( x%kind )
+    case ( M_Absent )
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Cannot CholeskyFactor an empty block" )
+    case ( M_Column_Sparse )
+      call allocate_test ( zt, nc, nc, "ZT for CholeskyFactor", ModuleName )
+      call allocate_test ( xin, nc, nc, "XIN for CholeskyFactor", ModuleName )
+      ! ??? Densify and then compute Cholesky decomposition of dense block.
+      ! ??? If necessary, improve this in level 1.0 by working directly
+      ! ??? with sparse input.
+      call densify ( xin, x )
+      call denseCholesky ( zt, xin )
+      call sparsify ( zt, z )
+      call deallocate_test ( zt, "ZT in CholeskyFactor", ModuleName )
+      call deallocate_test ( xin, "XIN in CholeskyFactor", ModuleName )
+    case ( M_Banded )
+      call allocate_test ( zt, nc, nc, "ZT in CholeskyFactor", &
+        & ModuleName )
+      call allocate_test ( r1, nc, "R1 in CholeskyFactor", ModuleName )
+      do i = 1, nc
+        r1(i) = i             ! We know the diagonal will get a value
+      end do
+      do i = 1, nc
+        zt(i,1:i-1) = 0.0_r8  ! Clear left from the diagonal (helps Sparsify!)
+        ii = i - x%r1(i)      ! Offset in VALUES of (I,I) element
+        if ( ii < 0 .or. ii > x%r2(i) - x%r2(i-1) ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Matrix in CholeskyFactor is not positive-definite." )
+        end if
+!       g = x%values(ii+x%r2(i-1)+1,1) - &
+!           & dot_product(zt(r1(i):i-1,i),zt(r1(i):i-1,i))
+        g = x%values(ii+x%r2(i-1)+1,1) - &
+            & dot( i-r1(i), zt(r1(i),i), 1, zt(r1(i),i), 1 )
+        if ( g <= sqrt(tiny(0.0_r8)) ) then
+          call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Matrix in CholeskyFactor is not positive-definite." )
+        end if
+        d = sqrt(g)
+        zt(i,i) = d
+        do j = i+1, nc
+          ij = i - x%r1(j)    ! Offset in VALUES of (I,J) element
+          rz = max(r1(i),r1(j))
+!         g = - dot_product(zt(rz:i-1,i),zt(rz:i-1,j))
+          g = - dot( i-rz, zt(rz,i), 1, zt(rz,j), 1 )
+          if ( ij >= 0 .and. ij <= x%r2(j) - x%r2(j-1) ) &
+            & g = x%values(ij+x%r2(j-1)+1,1) + g
+          zt(i,j) = g / d
+          if ( abs(zt(i,j)) >= tiny(0.0_r8) ) r1(j) = min( r1(j), i )
+        end do ! j
+      end do ! i
+      ! Sparsify the result.  We do it here because Sparsify is slow, and
+      ! we know something about the structure: the first and last nonzero
+      ! rows in each column.
+      j = 1 ! number of nonzeroes
+      do i = 2, nc
+        j = j + i + 1 - r1(i)
+      end do
+      call createBlock ( z, nc, nc, M_Banded, j )
+      z%r1 = r1
+      do i = 1, nc
+        z%r2(i) = z%r2(i-1) + i + 1 - r1(i)
+        z%values(z%r2(i-1)+1:z%r2(i),1) = zt(r1(i):i,i)
+      end do ! i
+      call deallocate_test ( r1, "R1 in CholeskyFactor", ModuleName )
+      call deallocate_test ( zt, "ZT in CholeskyFactor", ModuleName )
+    case ( M_Full )
+      if ( present(xopt) ) then
+        call createBlock ( z, nc, nc, M_Full )
+      end if
+      call denseCholesky ( z%values, x%values )
+    end select
+
+  contains
+    subroutine DenseCholesky ( zt, xin )
+    ! Do the Cholesky decomposition of XIN giving ZT.
+      real(r8) :: ZT(:,:), XIN(:,:)
+      real(r8), save :: TOL = -1.0_r8
+      if ( tol < 0.0_r8 ) tol = sqrt(tiny(0.0_r8))
+      do i = 1, nc
+        zt(i+1:nc,i) = 0.0_r8 ! Clear below the diagonal (helps Sparsify!)
+!       g = xin(i,i) - dot_product(zt(1:i-1,i),zt(1:i-1,i))
+        g = xin(i,i) - dot( i-1, zt(1,i), 1, zt(1,i), 1 )
+        if ( g <= tol ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "Matrix in CholeskyFactor is not positive-definite." )
+        d = sqrt(g)
+        zt(i,i) = d
+        do j = i+1, nc
+!         zt(i,j) = ( xin(i,j) - dot_product(zt(1:i-1,i),zt(1:i-1,j)) ) / d
+          zt(i,j) = ( xin(i,j) - dot( i-1, zt(1,i), 1, zt(1,j), 1 ) ) / d
+        end do ! j
+      end do ! i
+    end subroutine DenseCholesky
+  end subroutine CholeskyFactor_0
+
   ! -------------------------------------------------  CloneBlock  -----
   subroutine CloneBlock ( Z, X ) ! Z = X, except the values
   ! Duplicate a matrix block, including copying all of its structural
@@ -234,6 +417,39 @@ contains ! =====     Public Procedures     =============================
       & "z%values", ModuleName )
   end subroutine CloneBlock
 
+  ! ----------------------------------------------  ColumnScale_0  -----
+  function ColumnScale_0 ( X, V ) result ( Z ) ! Z = X V where V is a diagonal
+  !                                     matrix represented by a vector.
+    type(MatrixElement_T), intent(in) :: X
+    real(r8), intent(in), dimension(:) :: V
+    type(MatrixElement_T) :: Z
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    integer :: I
+
+    call copyBlock ( z, x )
+    select case ( z%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do i = 1, z%ncols
+        z%values(z%r2(i-1)+1:z%r2(i),1) = z%values(z%r2(i-1)+1:z%r2(i),1) * v(i)
+      end do
+    case ( M_Column_Sparse )
+      do i = 1, z%ncols
+        z%values(z%r1(i-1)+1:z%r1(i),1) = z%values(z%r1(i-1)+1:z%r1(i),1) * v(i)
+      end do
+    case ( M_Full )
+      do i = 1, z%ncols
+        z%values(:,i) = z%values(:,i) * v(i)
+      end do
+    end select
+  end function ColumnScale_0
+
   ! --------------------------------------------------  CopyBlock  -----
   subroutine CopyBlock ( Z, X ) ! Z = X, including the values
     type(MatrixElement_T), intent(out) :: Z
@@ -242,21 +458,22 @@ contains ! =====     Public Procedures     =============================
     z%values = x%values
   end subroutine CopyBlock
 
-  ! ------------------------------------------------  CreateBlock  -----
-  subroutine CreateBlock ( Z, nRows, nCols, Kind, NumberNonzero )
+  ! ----------------------------------------------  CreateBlock_0  -----
+  subroutine CreateBlock_0 ( Z, nRows, nCols, Kind, NumberNonzero )
   ! Create a matrix block, but don't fill any elements or structural
   ! information.  The "NumberNonzero" is required if and only if the
   ! "Kind" argument has the value M_Banded or M_Column_Sparse.
+  ! The block is first destroyed, so as not to have a memory leak.
 
   ! Filling the block after it's created depends on the kind.
   !  M_Absent: Do nothing
   !  M_Banded: The arrays R1 and R2 are indexed by the column number (c).
   !   R1(c) gives the index of the first nonzero row.  R2(c) gives the
-  !   subscript in the first dimension of VALUES for the last nonzero
-  !   element in the column.  The second dimension of VALUES has shape
-  !   (1:1).  The subscript for the first nonzero element is R2(c-1)+1
-  !   (R2(0)==0).  The number of nonzero elements is R2(c) - R2(c-1).  The
-  !   index of the last nonzero row is R1(c) + R2(c) - R2(c-1) - 1.
+  !   subscript in the first dimension of VALUES for the last nonzero element
+  !   in the column.  The second dimension of VALUES has shape (1:1).  The
+  !   subscript for the first nonzero element is R2(c-1)+1 (R2(0)==0 is set
+  !   here).  The number of nonzero elements is R2(c) - R2(c-1).  The index
+  !   of the last nonzero row is R1(c) + R2(c) - R2(c-1) - 1.
   !  M_Column_Sparse:  The array R1 is indexed by the column number (c). It
   !   gives the subscripts in R2 and the first dimension of VALUES for
   !   the last entry in the column.  The first one is in R2(R1(c-1)+1)
@@ -271,6 +488,7 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: NumberNonzero ! Only for M_Banded and
                                                    ! M_Column_Sparse
 
+    call destroyBlock ( z )
     select case ( kind )
     case ( M_Absent )
       if ( first ) call CreateEmptyBlock
@@ -296,7 +514,7 @@ contains ! =====     Public Procedures     =============================
     z%nRows = nRows
     z%nCols = nCols
     z%kind = kind
-  end subroutine CreateBlock
+  end subroutine CreateBlock_0
 
   ! ----------------------------------------------------  Densify  -----
   subroutine Densify ( Z, B )
@@ -305,6 +523,7 @@ contains ! =====     Public Procedures     =============================
     real(r8), intent(out) :: Z(:,:)          ! Full matrix to produce
     type(MatrixElement_T), intent(in) :: B   ! Input matrix block
     integer :: I                             ! Column index
+
     if ( size(z,1) /= b%nRows .or. size(z,2) /= b%nCols ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Incompatible shapes in Densify" )
@@ -334,13 +553,20 @@ contains ! =====     Public Procedures     =============================
     call deallocate_test ( b%r1, "b%r1", ModuleName )
     call deallocate_test ( b%r2, "b%r2", ModuleName )
     call deallocate_test ( b%values, "b%values", ModuleName )
+    b%kind = M_Absent
   end subroutine DestroyBlock
 
   ! -------------------------------------  Multiply_Matrix_Blocks  -----
   function Multiply_Matrix_Blocks ( XB, YB ) result ( ZB ) ! ZB = XB^T * YB
   ! Compute the matrix product of XB^T and YB.
-    type(MatrixElement_T), intent(in), target :: XB, YB
+    type(MatrixElement_T), intent(in) :: XB, YB
     type(MatrixElement_T) :: ZB
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.
+  ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K, L, M, N, P, R
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
@@ -358,30 +584,31 @@ contains ! =====     Public Procedures     =============================
     case ( M_Banded )
       select case ( yb%kind )
       case ( M_Banded )       ! XB banded, YB banded
-        ! Make a full matrix, then sparsify it.  There _must_ be a better
-        ! way ???
-        call allocate_test ( z, xb%ncols, yb%ncols, &
+        ! ??? Make a full matrix, then sparsify it.  There _must_ be a
+        ! ??? better way
+        call allocate_test ( z, zb%nrows, zb%ncols, &
           & "Z for banded * banded in Multiply_Matrix_Blocks", ModuleName )
-        do j = 1, yb%ncols    ! Columns of Z
+        do j = 1, zb%ncols    ! Columns of Z = columns of YB
           p = yb%r2(j-1)+1
           k = yb%r1(j)        ! k,l = row indices of YB
           l = k+yb%r2(j)-p
           p = p-k
-          do i = 1, xb%ncols  ! Rows of Z
+          do i = 1, zb%nrows  ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
             m = xb%r1(i)
             r = xb%r2(i-1)+1-m
             m = max(k,m)      ! m,n = row indices of intersection of XB and YB
             n = min(l,xb%r2(i)-r)
-            z(i,j) = dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
+!           z(i,j) = dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
+            z(i,j) = dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
           end do ! i
         end do ! j
         call sparsify ( z, zb )
         call deallocate_test ( z, &
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Column_sparse ) ! XB banded, YB column-sparse
-        ! Make a full matrix, then sparsify it.  There _must_ be a better
-        ! way ???
+        ! ??? Make a full matrix, then sparsify it.  There _must_ be a
+        ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
         do j = 1, yb%ncols    ! Columns of Z
@@ -421,16 +648,18 @@ contains ! =====     Public Procedures     =============================
           l = xb%r2(i)
           do j = 1, yb%ncols  ! Columns of ZB
             ! Inner product of column I of XB with column J of YB
-            zb%values(i,j) = dot_product( &
-              & xb%values(k:l,1), yb%values(m:m+l-k,j) )
+!           zb%values(i,j) = dot_product( &
+!             & xb%values(k:l,1), yb%values(m:m+l-k,j) )
+            zb%values(i,j) = dot( l-k+1, &
+              & xb%values(k,1), 1, yb%values(m,j), 1 )
           end do ! j
         end do ! i
       end select
     case ( M_Column_sparse )
       select case ( yb%kind )
       case ( M_Banded )       ! XB column-sparse, YB banded
-        ! Make a full matrix, then sparsify it.  There _must_ be a better
-        ! way ???
+        ! ??? Make a full matrix, then sparsify it.  There _must_ be a
+        ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
         do j = 1, yb%ncols    ! Columns of Z
@@ -463,8 +692,8 @@ contains ! =====     Public Procedures     =============================
         call deallocate_test ( z, &
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Column_sparse ) ! XB column-sparse, YB column-sparse
-        ! Make a full matrix, then sparsify it.  There _must_ be a better
-        ! way ???
+        ! ??? Make a full matrix, then sparsify it.  There _must_ be a
+        ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
         do j = 1, yb%ncols    ! Columns of Z
@@ -505,8 +734,10 @@ contains ! =====     Public Procedures     =============================
             k = xb%r1(i-1)+1
             l = xb%r1(i)
             ! Inner product of column I of XB with column J of YB
-            zb%values(i,j) = dot_product( &
-              & xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
+!           zb%values(i,j) = dot_product( &
+!             & xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
+            zb%values(i,j) = dot( l-k+1, &
+              & xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
           end do ! i
         end do ! j
       end select
@@ -520,8 +751,10 @@ contains ! =====     Public Procedures     =============================
           l = yb%r2(j)
           do i = 1, xb%ncols  ! Rows of ZB
             ! Inner product of column I of XB with column J of YB
-            zb%values(i,j) = dot_product( &
-              & xb%values(m:m+l-k,i), yb%values(k:l,1))
+!           zb%values(i,j) = dot_product( &
+!             & xb%values(m:m+l-k,i), yb%values(k:l,1))
+            zb%values(i,j) = dot( l-k+1, &
+              & xb%values(m,i), 1, yb%values(k,1), 1 )
           end do ! i
         end do ! j
       case ( M_Column_sparse ) ! XB full, YB column-sparse
@@ -540,12 +773,314 @@ contains ! =====     Public Procedures     =============================
     end select
   end function Multiply_Matrix_Blocks
 
+  ! -------------------------------------  MultiplyMatrixVector_0  -----
+  subroutine MultiplyMatrixVector_0 ( B, V, P, UPDATE )
+  ! P = B^T V if UPDATE is absent or false.
+  ! P = P + B^T V if UPDATE is present and true.
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(in) :: V
+    real(r8), dimension(:), intent(inout) :: P
+    logical, optional, intent(in) :: UPDATE
+
+    integer :: I, M, N             ! Subscripts and loop inductors
+    logical :: My_update
+    integer :: V1                  ! Subscripts and loop inductors
+
+    if ( b%nrows /= size(v) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and vector not compatible in MultiplyMatrixVector_0" )
+    if ( b%ncols /= size(p) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Matrix block and result not compatible in MultiplyMatrixVector_0" )
+    if ( any(shape(v) /= shape(p)) ) call MLSMessage ( MLSMSG_Error, &
+      & ModuleName, "Vectors not compatible in MultiplyMatrixVector_0" )
+    my_update = .false.
+    if ( present(update) ) my_update = update
+    if ( .not. my_update ) p = 0.0_r8
+    select case ( b%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do i = 1, size(p)
+        v1 = b%r2(i-1)             ! starting position in B%VALUES - 1
+        n = b%r2(i) - v1           ! how many values
+        m = b%r1(i)                ! starting position in V
+        p(i) = p(i) + dot(n, b%values(v1+1,1), 1, v(m), 1)
+      end do ! i
+     case ( M_Column_Sparse )
+      do i = 1, size(p)
+        do n = b%r1(i-1)+1, b%r1(i)
+          p(i) = p(i) + b%values(n,1) * v(b%r2(n))
+        end do ! n
+      end do ! i
+    case ( M_Full )
+      do i = 1, size(p)
+        p(i) = p(i) + dot(size(v), b%values(1,i), 1, v(1), 1)
+      end do ! i
+    end select
+  end subroutine MultiplyMatrixVector_0
+
+  ! -----------------------------------  NewMultiplyMatrixVector_0  ----
+  function NewMultiplyMatrixVector_0 ( B, V ) result ( P ) ! P = B^T V
+    type(MatrixElement_T), intent(in) :: B
+    real(r8), dimension(:), intent(in) :: V
+    real(r8), dimension(size(v)) :: P
+    call MultiplyMatrixVector ( b, v, p, .false. )
+  end function NewMultiplyMatrixVector_0
+
+  ! -------------------------------------------------  RowScale_0  -----
+  function RowScale_0 ( V, X ) result ( Z ) ! Z = V X where V is a diagonal
+  !                                     matrix represented by a vector.
+    real(r8), intent(in), dimension(:) :: V
+    type(MatrixElement_T), intent(in) :: X
+    type(MatrixElement_T) :: Z
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    integer :: I
+
+    call copyBlock ( z, x )
+    select case ( z%kind )
+    case ( M_Absent )
+    case ( M_Banded )
+      do i = 1, z%ncols
+        z%values(z%r2(i-1)+1:z%r2(i),1) = &
+          & v(z%r1(i):z%r1(i)+z%r2(i)-z%r2(i-1)-1) * &
+          & z%values(z%r2(i-1)+1:z%r2(i),1)
+      end do
+    case ( M_Column_Sparse )
+      do i = 1, z%ncols
+        z%values(z%r1(i-1)+1:z%r1(i),1) = v(z%r2(z%r1(i-1)+1:z%r1(i))) * &
+          & z%values(z%r1(i-1)+1:z%r1(i),1)
+      end do
+    case ( M_Full )
+      do i = 1, z%nrows
+        z%values(i,:) = v(i) * z%values(i,:)
+      end do
+    end select
+  end function RowScale_0
+
+  ! -------------------------------------------  SolveCholeskyM_0  -----
+  subroutine SolveCholeskyM_0 ( U, X, B, TRANSPOSE )
+  ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
+  ! where U is known to be upper-triangular.  X may be the same as B.
+  ! B may be absent, in which case the right-hand side is in X on input,
+  ! and the solution replaces it on output.
+    type(MatrixElement_T), intent(in) :: U        ! Must be square
+    type(MatrixElement_T), intent(inout), target :: X
+    type(MatrixElement_T), intent(in), target, optional :: B
+    logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
+    !                                               present and true.
+
+    real(r8) :: D        ! Diagonal element of U
+    integer :: I, J, K   ! Subscripts and loop inductors
+    type(MatrixElement_T), pointer :: MY_B   ! B if B is present, else X
+    logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
+    integer :: N         ! Size of U matrix, which must be square
+    integer :: NC        ! Number of columns in B, not necessarily == N
+    real(r8), pointer, dimension(:,:) :: XS  ! The solution, dense
+    real(r8), pointer, dimension(:,:) :: UD  ! U, densified
+
+    n = u%nrows
+    if ( n /= u%nCols ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "U matrix in SolveCholeskyM_0 must be square" )
+    my_b => x
+    if ( present(b) ) my_b => b
+    if ( n /= my_b%nrows ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "B matrix not compatible with U matrix in SolveCholeskyM_0" )
+    my_t = .false.
+    if ( present(transpose) ) my_t = transpose
+    nc = b%nCols
+
+    call allocate_test ( xs, my_b%nRows, my_b%nCols, "XS in SolveCholeskyM_0", &
+      & ModuleName )
+    call densify ( xs, my_b )
+    if ( my_t ) then ! solve U^T X = B for X
+      select case ( u%kind )
+      case ( M_Absent )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "U matrix in SolveCholeskyM_0 must not be absent" )
+      case ( M_Banded )
+        do i = 1, n
+          if ( u%r1(i) + u%r2(i) - u%r2(i-1) - 1 /= i ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyM_0 is not triangular" )
+          d = u%values(u%r2(i),1)
+          if ( abs(d) < tiny(0.0_r8) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyM_0 is singular" )
+          do j = 1, nc
+!           xs(i,j) = ( xs(i,j) - &
+!                   &   dot_product(u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
+!                   &               xs(u%r1(i):i-1,j) ) ) / d
+            xs(i,j) = ( xs(i,j) - &
+                    &   dot( u%r2(i)-u%r2(i-1)-1, u%values(u%r2(i-1)+1,1), 1, &
+                    &               xs(u%r1(i),j), 1 ) ) / d
+          end do ! j = 1, nc
+        end do ! i = 1, n
+      case ( M_Column_Sparse )
+        do i = 1, n
+          if ( u%r2(u%r1(i)) /= i ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyM_0 is not triangular" )
+          d = u%values(u%r1(i),1)
+          if ( abs(d) < tiny(0.0_r8) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyM_0 is singular" )
+          do j = 1, nc
+            do k = u%r1(i-1)+1, u%r1(i)-1
+              xs(i,j) = xs(i,j) - u%values(k,1) * xs(u%r2(k),j)
+            end do ! k = u%r1(i-1)+1, u%r1(i)-1
+            xs(i,j) = xs(i,j) / d
+          end do ! j = 1, nc
+        end do ! i = 1, n
+      case ( M_Full )
+        do i = 1, n
+          d = u%values(i,i)
+          if ( abs(d) < tiny(0.0_r8) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyM_0 is singular" )
+          do j = 1, nc
+!           xs(i,j) = ( xs(i,j) - &
+!                   &   dot_product(u%values(1:i-1,i),xs(1:i-1,j) ) ) / d
+            xs(i,j) = ( xs(i,j) - &
+                    &   dot( i-1, u%values(1,i), 1, xs(1,j), 1) ) / d
+          end do ! j = 1, nc
+        end do ! i = 1, n
+      end select
+    else             ! solve U X = B for X
+      if ( u%kind == M_full ) then
+        ud => u%values
+      else
+        call allocate_test ( ud, n, n, "UD in SolveCholeskyM_0", ModuleName )
+        call densify ( ud, u )
+      end if
+      do i = n, 1, -1
+        d = ud(i,i)
+        if ( abs(d) < tiny(0.0_r8) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "U matrix in SolveCholeskyM_0 is singular" )
+        do j = 1, nc
+!         xs(i,j) = ( xs(i,j) - &
+!                 &   dot_product(ud(i,i+1:n),xs(i+1:n,j) ) ) / d
+          xs(i,j) = ( xs(i,j) - &
+                  &   dot( n-i, ud(i,i+1), size(ud,1), xs(i+1,j), 1 ) ) / d
+        end do ! j = 1, nc
+      end do ! i = 1, n
+      if ( u%kind /= M_Full ) &
+        & call deallocate_test ( ud, "UD in SolveCholeskyM_0", ModuleName )
+    end if ! my_t
+    call sparsify ( xs, x )
+    call deallocate_test ( xs, "XS in SolveCholeskyM_0", ModuleName )
+  end subroutine SolveCholeskyM_0
+
+  ! -------------------------------------------  SolveCholeskyV_0  -----
+  subroutine SolveCholeskyV_0 ( U, X, B, TRANSPOSE )
+  ! Solve the system U X = B or U^T X = B for X, depending on TRANSPOSE,
+  ! where U is known to be upper-triangular.  X may be the same as B.
+  ! B may be absent, in which case the right-hand side is in X on input,
+  ! and the solution replaces it on output.  The arrays X and B are
+  ! two-dimensional sections of subvectors of objects of type Vector_T.
+  ! Their elements are taken to correspond to the rows of U in array
+  ! element order.
+    type(MatrixElement_T), intent(in) :: U        ! Must be square
+    real(r8), dimension(:), intent(inout), target :: X
+    real(r8), dimension(:), intent(in), target, optional :: B
+    logical, intent(in), optional :: TRANSPOSE    ! Solve U^T X = B if
+    !                                               present and true.
+
+    real(r8) :: D        ! Diagonal element of U
+    integer :: H, I      ! Subscripts and loop inductors
+    real(r8), dimension(:), pointer :: MY_B   ! B if B is present, else X
+    logical :: MY_T      ! FALSE if TRANSPOSE is absent, else TRANSPOSE
+    integer :: N         ! Size of U matrix, which must be square
+    real(r8), dimension(:,:), pointer :: UD  ! U, densified
+
+    n = u%nrows
+    if ( n /= u%nCols ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "U matrix in SolveCholeskyV_0 must be square" )
+    my_b => x
+    if ( present(b) ) my_b => b
+    if ( n /= size(my_b) ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "B matrix not compatible with U matrix in SolveCholeskyV_0" )
+    my_t = .false.
+    if ( present(transpose) ) my_t = transpose
+
+    if ( my_t ) then ! solve U^T X = B for X
+      select case ( u%kind )
+      case ( M_Absent )
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "U matrix in SolveCholeskyV_0 must not be absent" )
+      case ( M_Banded )
+        do i = 1, n
+          if ( u%r1(i) + u%r2(i) - u%r2(i-1) - 1 /= i ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is not triangular" )
+          d = u%values(u%r2(i),1)
+          if ( abs(d) < tiny(0.0_r8) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          ! dot_product( u%values(u%r2(i-1)+1:u%r2(i)-1,1), &
+          ! &            b(u%r1(i):u%r1(i)+u%r2(i)-u%r2(i-1)-1) )
+          my_b(i) = my_b(i) - dot(u%r2(i)-u%r2(i-1), &
+            &                     u%values(u%r2(i-1)+1,1), 1, my_b(u%r1(i)), 1)
+        end do ! i = 1, n
+      case ( M_Column_Sparse )
+        do i = 1, n
+          if ( u%r2(u%r1(i)) /= i ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is not triangular" )
+          d = u%values(u%r1(i),1)
+          if ( abs(d) < tiny(0.0_r8) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          do h = u%r1(i-1)+1, u%r1(i)-1
+            my_b(i) = my_b(i) - u%values(h,1) * my_b(u%r2(h))
+          end do ! h = u%r1(i-1)+1, u%r1(i)-1
+        end do ! i = 1, n
+      case ( M_Full )
+        do i = 1, n
+          d = u%values(i,i)
+          if ( abs(d) < tiny(0.0_r8) ) &
+            & call MLSMessage ( MLSMSG_Error, ModuleName, &
+              & "U matrix in SolveCholeskyV_0 is singular" )
+          ! dot_product( ud(1:i-1,i), my_b(1:i-1) )
+          my_b(i) = my_b(i) - dot(i-1, ud(1,i), 1, my_b(1), 1)
+        end do ! i = 1, n
+      end select
+    else             ! solve U X = B for X
+      if ( u%kind == M_full ) then
+        ud => u%values
+      else
+        call allocate_test ( ud, n, n, "UD in SolveCholeskyV_0", ModuleName )
+        call densify ( ud, u )
+      end if
+      do i = n, 1, -1
+        d = ud(i,i)
+        if ( abs(d) < tiny(0.0_r8) ) &
+          & call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & "U matrix in SolveCholeskyV_0 is singular" )
+        ! dot_product( ud(i,i+1:n), my_b(i+1:n) )
+        my_b(i) = my_b(i) - dot(n-i, ud(i,i+1), size(ud,1), my_b(i+1), 1)
+      end do ! i = 1, n
+      if ( u%kind /= M_Full ) &
+        & call deallocate_test ( ud, "UD in SolveCholeskyV_0", ModuleName )
+    end if ! my_t
+  end subroutine SolveCholeskyV_0
+
   ! ---------------------------------------------------  Sparsify  -----
   subroutine Sparsify ( Z, B )
   ! Given an array Z, compute its sparse representation and store it
   ! in the matrix block B.
     real(r8), intent(in) :: Z(:,:)           ! Full array of values
     type(MatrixElement_T), intent(out) :: B  ! Z as a block, maybe sparse
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the B argument of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.
+  ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I1, I2              ! Row indices in Z
     integer :: J                   ! Column index in Z
@@ -624,6 +1159,71 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine Sparsify
 
+  ! -------------------------------------------  UpdateDiagonal_0  -----
+  subroutine UpdateDiagonal_0 ( A, LAMBDA )
+  ! Add LAMBDA to the diagonal of A
+    type(MatrixElement_T), intent(inout) :: A
+    real(r8), intent(in) :: LAMBDA
+
+    integer :: I, J                          ! Subscripts and loop inductors
+    integer :: N                             ! min(a%ncols,a%nrows)
+    real(r8), dimension(:,:), pointer :: T   ! A temporary dense matrix
+
+    n = min(a%ncols,a%nrows)
+    select case ( a%kind )
+    case ( m_absent )
+      call createBlock ( a, a%nRows, a%nCols, m_banded, n )
+      do i = 1, n
+        a%r1(i) = i
+        a%r2(i) = i
+        a%values(i,1) = lambda
+      end do
+    case ( m_banded )
+      do i = 1, n
+        if ( i < a%r1(i) .or. i > a%r1(i) + a%r2(i) - a%r2(i-1) - 1 ) then
+          ! No diagonal element.  Make room for one by densify-update-sparsify
+          call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+            & ModuleName )
+          call densify ( t, a )
+          call updateDenseDiagonal ( t, lambda, i )
+          call sparsify ( t, a )
+          return
+        end if
+        a%values(a%r2(i-1)+i-a%r1(i)+1,1) = &
+          & a%values(a%r2(i-1)+i-a%r1(i)+1,1) + lambda
+      end do
+    case ( m_column_sparse )
+      do i = 1, n
+        do j = a%r1(i-1)+1, a%r1(i) ! hunt for the diagonal subscript
+          if ( a%r2(j) == i ) then
+            a%values(j,1) = a%values(j,1) + lambda
+          else if ( a%r2(j) > i ) then
+            ! No diagonal element.  Make room for one by densify-update-sparsify
+            call allocate_test ( t, a%nRows, a%nCols, "T in UpdateDiagonal_0", &
+              & ModuleName )
+            call densify ( t, a )
+            call updateDenseDiagonal ( t, lambda, i )
+            call sparsify ( t, a )
+            return
+          end if
+        end do
+      end do
+    case ( m_full )
+      call updateDenseDiagonal ( a%values, lambda, 1 )
+    end select
+
+  contains
+    subroutine UpdateDenseDiagonal ( T, LAMBDA, START )
+      real(r8), intent(inout) :: T(:,:)
+      real(r8), intent(in) :: LAMBDA
+      integer, intent(in) :: START
+      integer :: I
+      do i = start, n
+        t(i,i) = t(i,i) + lambda
+      end do
+    end subroutine UpdateDenseDiagonal
+  end subroutine UpdateDiagonal_0
+
 ! =====     Private Procedures     =====================================
 
   ! -------------------------------------------  CreateEmptyBlock  -----
@@ -637,37 +1237,60 @@ contains ! =====     Public Procedures     =============================
   end subroutine CreateEmptyBlock
 
   ! ------------------------------------------  DUMP_MATRIX_BLOCK  -----
-  subroutine DUMP_MATRIX_BLOCK ( MATRIX_BLOCK, NAME )
+  subroutine DUMP_MATRIX_BLOCK ( MATRIX_BLOCK, NAME, DETAILS, BOUNDS )
     type(MatrixElement_T), intent(in) :: MATRIX_BLOCK
     character(len=*), intent(in), optional :: NAME
+    logical, intent(in), optional :: DETAILS   ! Print details, default true
+    integer, intent(in), optional :: BOUNDS(4) ! Dump only Bounds(1):Bounds(2)
+                                               !        X  Bounds(3):Bounds(4)
+    logical :: MY_DETAILS
+    my_details = .true.
+    if ( present(details) ) my_details = details
     if ( present(name) ) call output ( name, advance='yes' )
     call output ( matrix_block%nrows ); call output ( " Rows, " )
     call output ( matrix_block%ncols ); call output ( " Columns, " )
     select case ( matrix_block%kind )
     case ( m_banded )
-      call output ( ' Banded First-Rows =', advance='yes' )
-      call dump ( matrix_block%r1 )
-      call output ( '  Last-Row-values =', advance='yes' )
-      call dump ( matrix_block%r2 )
+      call output ( ' Banded' )
+      if ( my_details ) then
+        call output ( ' First-nonzero-rows =', advance='yes' )
+        call dump ( matrix_block%r1(1:) )
+        call output ( '  Last-value-in-column =', advance='yes' )
+        call dump ( matrix_block%r2(1:) )
+      end if
     case ( m_column_sparse )
-      call output ( ' Column-sparse Row-map =', advance='yes' )
-      call dump ( matrix_block%r1 )
-      call output ( '  Rows =', advance='yes' )
-      call dump ( matrix_block%r2 )
+      call output ( ' Column-sparse' )
+      if ( my_details ) then
+        call output ( ' Last-in-column =', advance='yes' )
+        call dump ( matrix_block%r1(1:) )
+        call output ( '  Rows =', advance='yes' )
+        call dump ( matrix_block%r2(1:) )
+      end if
     case ( m_full )
       call output ( 'Full' )
     end select
     if ( matrix_block%kind == M_Absent ) then
       call output ( ' Absent', advance='yes' )
+    else if ( my_details ) then
+      call output ( ' Values =', advance='yes' )
+      if ( present(bounds) ) then
+        call dump ( matrix_block%values(bounds(1):bounds(2),bounds(3):bounds(4)) )
+      else
+        call dump ( matrix_block%values )
+      end if
     else
-      call output ( '  Values =', advance='yes' )
-      call dump ( matrix_block%values )
+      call output ( ' ' )
+      call output ( size(matrix_block%values) )
+      call output ( ' values.', advance='yes' )
     end if
   end subroutine DUMP_MATRIX_BLOCK
 
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.5  2000/11/09 01:22:43  vsnyder
+! Periodic commit -- still under construction
+!
 ! Revision 2.4  2000/10/13 22:22:48  vsnyder
 ! Change name of multiply operator from .XT. to .TX.
 !
