@@ -18,13 +18,12 @@ module UNITS
   real(r8), parameter :: Pi = 3.141592653589793238462643383279502884197
   real(r8), parameter :: Deg2Rad = Pi/180.0_r8 ! Degrees-to-Radians
   real(r8), parameter :: Rad2Deg = 180.0_r8/Pi ! Radians-to-Degrees
-  real(r8), parameter :: Omega = 7.292115D-5 ! Angular velocity of earth
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
        "$Id$"
   character (len=len(idParm)), private :: Id = idParm
-  character (len=*), private, parameter :: ModuleName= &
+  character (len=*), private, parameter :: ModuleName = &
        "$RCSfile$"
 !---------------------------------------------------------------------------
 
@@ -116,6 +115,10 @@ contains ! =====     Public procedures     =============================
 end module UNITS
 
 ! $Log$
+! Revision 2.15  2002/09/27 00:27:52  vsnyder
+! Remove Omega -- it's properly in Geometry.
+! Move some USEs from module scope to procedure scope.
+!
 ! Revision 2.14  2002/09/27 00:18:05  vsnyder
 ! Move USEs from module scope to procedure scope, add Boltzman constant
 !
