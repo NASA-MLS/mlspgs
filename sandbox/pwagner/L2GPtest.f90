@@ -8,7 +8,7 @@ PROGRAM L2GPtest ! tests L2GPData routines
    use Hdf, only: DFACC_CREATE, DFACC_RDWR, DFACC_READ
    use HDFEOS5, only: HE5T_NATIVE_CHAR
    use L2GPData, only: Dump, L2GPData_T, ReadL2GPData, WriteL2GPData, &
-     SetupNewL2GPRecord 
+     SetupNewL2GPRecord, AppendL2GPData
    use MLSCommon, only: R8
    use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
     & HDFVERSION_4, HDFVERSION_5
@@ -158,6 +158,8 @@ PROGRAM L2GPtest ! tests L2GPData routines
        & HE5T_NATIVE_CHAR, len(big_file), big_file)
      returnStatus = he5_SWdetach(swid)
    endif
+   call AppendL2GPData(l2gp, swfid, &
+    & swathName, offset=nTimes, TotNumProfs=2*nTimes, hdfVersion=hdfVersion)
    returnStatus = mls_io_gen_closeF('swclose', swfid, &
     & hdfVersion=hdfVersion)
    ! Now read what we just wrote and see if it's the same
@@ -211,6 +213,9 @@ END PROGRAM L2GPtest
 !==================
 
 ! $Log$
+! Revision 1.4  2003/04/10 17:12:10  pwagner
+! Test some extra attribute stuff
+!
 ! Revision 1.3  2003/01/31 00:32:43  pwagner
 ! Added Global attributes for writing
 !
