@@ -1474,6 +1474,10 @@ contains ! =====     Public Procedures     =============================
     ! Executable code
     units_name = ' '
     select case (quantityType)                                       
+    case ( l_baseline )
+      framing = 'minor'
+      units_name = 'K'
+      dim_names = (/ l_frequency, l_MIF, l_MAF /)
     case ( l_channel )  
       framing = 'major'
       units_name = 'channel'
@@ -1754,6 +1758,9 @@ end module L2AUXData
 
 !
 ! $Log$
+! Revision 2.65  2004/08/16 23:43:22  livesey
+! Added ability to output minor frame baselines
+!
 ! Revision 2.64  2004/08/04 23:19:57  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !
