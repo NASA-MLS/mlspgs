@@ -72,7 +72,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_COPY                = f_coordinate + 1
   integer, parameter :: F_COVARIANCE          = f_copy + 1
   integer, parameter :: F_CRITERIA            = f_covariance + 1
-  integer, parameter :: F_DIAGONAL            = f_criteria + 1
+  integer, parameter :: F_DEFERRED            = f_criteria + 1
+  integer, parameter :: F_DIAGONAL            = f_deferred + 1
   integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
   integer, parameter :: F_EXPLICITVALUES      = f_diagonalout + 1
   integer, parameter :: F_FILE                = f_explicitvalues + 1
@@ -86,7 +87,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_H2OQUANTITY         = f_gph + 1
   integer, parameter :: F_HEIGHT              = f_h2oquantity + 1
   integer, parameter :: F_HGRID               = f_height + 1
-  integer, parameter :: F_INSTRUMENTMODULE    = f_hgrid +1
+  integer, parameter :: F_INSTRUMENTMODULE    = f_hgrid + 1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_instrumentmodule + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
   integer, parameter :: F_LAST                = f_jacobian + 1
@@ -225,8 +226,7 @@ module INIT_TABLES_MODULE
 ! have both parameters and specifications:
   integer, parameter :: S_APRIORI            = last_parm + 1
   integer, parameter :: S_BAND               = s_apriori + 1
-  integer, parameter :: S_CHANNEL            = s_band + 1
-  integer, parameter :: S_CLIMATOLOGY        = s_channel + 1
+  integer, parameter :: S_CLIMATOLOGY        = s_band + 1
   integer, parameter :: S_CREATE             = s_climatology + 1
   integer, parameter :: S_FILL               = s_create + 1
   integer, parameter :: S_FORWARDMODEL       = s_fill + 1
@@ -235,7 +235,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: S_L2AUX              = s_l2gp + 1
   integer, parameter :: S_MATRIX             = s_l2aux + 1
   integer, parameter :: S_MERGE              = s_matrix + 1
-  integer, parameter :: S_OUTPUT             = s_merge + 1
+  integer, parameter :: S_MODULE             = s_merge + 1
+  integer, parameter :: S_OUTPUT             = s_module + 1
   integer, parameter :: S_QUANTITY           = s_output + 1
   integer, parameter :: S_RADIOMETER         = s_quantity + 1
   integer, parameter :: S_RETRIEVE           = s_radiometer + 1
@@ -365,6 +366,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_copy) =                add_ident ( 'copy' )
     field_indices(f_covariance) =          add_ident ( 'covariance' )
     field_indices(f_criteria) =            add_ident ( 'criteria' )
+    field_indices(f_deferred) =            add_ident ( 'deferred' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
     field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
     field_indices(f_explicitvalues) =      add_ident ( 'explicitValues' )
@@ -379,7 +381,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_h2oquantity) =         add_ident ( 'f_h2oquantity' )
     field_indices(f_height) =              add_ident ( 'height' )
     field_indices(f_hgrid) =               add_ident ( 'hgrid' )
-    field_indices(f_instrumentmodule) =    add_ident ( 'instrumentModule' )
+    field_indices(f_instrumentModule) =    add_ident ( 'instrumentModule' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
     field_indices(f_last) =                add_ident ( 'last' )
@@ -469,7 +471,6 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_apriori) =              add_ident ( 'apriori' )
     spec_indices(s_band) =                 add_ident ( 'band' )
     spec_indices(s_climatology) =          add_ident ( 'climatology' )
-    spec_indices(s_channel) =              add_ident ( 'channel' )
     spec_indices(s_create) =               add_ident ( 'create' )
     spec_indices(s_fill) =                 add_ident ( 'fill' )
     spec_indices(s_forwardModel) =         add_ident ( 'forwardModel' )
@@ -478,6 +479,7 @@ contains ! =====     Public procedures     =============================
     spec_indices(s_l2aux) =                add_ident ( 'l2aux' )
     spec_indices(s_matrix) =               add_ident ( 'matrix' )
     spec_indices(s_merge) =                add_ident ( 'merge' )
+    spec_indices(s_module) =               add_ident ( 'module' )
     spec_indices(s_output) =               add_ident ( 'output' )
     spec_indices(s_quantity) =             add_ident ( 'quantity' )
     spec_indices(s_radiometer) =           add_ident ( 'radiometer' )
@@ -577,21 +579,18 @@ contains ! =====     Public procedures     =============================
     ! required to be in a specification named by the next-to-last
     ! f_field_name ... of the specification named by the spec_name.
     call make_tree ( (/ &
+      begin, s+s_module, n+n_spec_def, & !??? REMEMBER TO CHANGE TO NP+.. LATER NJL
       begin, s+s_band, &
              begin, f+f_suffix, t+t_string, n+n_field_type, &
              begin, f+f_frequency, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
-      begin, s+s_channel, &
-             begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
-             begin, f+f_widths, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def, &
       begin, s+s_radiometer, &
              begin, f+f_lo, t+t_numeric, n+n_field_type, &
              begin, f+f_suffix, t+t_string, n+n_field_type, &
-             begin, f+f_module, t+t_module, n+n_field_type, &
+             begin, f+f_module, s+s_module, n+n_field_spec, &
              nadp+n_spec_def, &
-      begin, s+s_spectrometerType, & ! MUST be AFTER S_Channel
-             begin, f+f_channels, s+s_channel, n+n_field_spec, &
+      begin, s+s_spectrometerType, &
+             begin, f+f_deferred, t+t_boolean, n+n_field_type, &
              begin, f+f_first, t+t_numeric, n+n_field_type, &
              begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
              begin, f+f_last, t+t_numeric, n+n_field_type, &
@@ -601,14 +600,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_widths, t+t_numeric, n+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_ValidSignal, & ! MUST be AFTER S_Band, S_Radiometer and S_Spectrometer
-             begin, f+f_band, s+s_band, n+n_field_spec, &
-             begin, f+f_spectrometer, t+t_numeric, n+n_field_type, &
-             begin, f+f_radiometer, s+s_radiometer, n+n_field_spec, &
+             begin, f+f_band, s+s_band, nr+n_field_spec, &
+             begin, f+f_spectrometer, t+t_numeric, nr+n_field_type, &
+             begin, f+f_radiometer, s+s_radiometer, nr+n_field_spec, &
              begin, f+f_frequencies, t+t_numeric, n+n_field_type, &
              begin, f+f_widths, t+t_numeric, n+n_field_type, &
-             begin, f+f_spectrometerType, s+s_spectrometerType, n+n_field_spec, &
-             begin, f+f_switch, t+t_numeric, n+n_field_type, &
-             nadp+n_spec_def /) )
+             begin, f+f_spectrometerType, s+s_spectrometerType, nr+n_field_spec, &
+             begin, f+f_switch, t+t_numeric, nr+n_field_type, &
+             ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_time, np+n_spec_def, &
       begin, s+s_climatology, &
@@ -767,8 +766,8 @@ contains ! =====     Public procedures     =============================
     !  > or
     !  < n_section section_name s_spec ... s_spec >
     call make_tree ( (/ &
-      begin, z+z_mlsSignals, s+s_band, s+s_channel, s+s_radiometer, &
-                             s+s_signal, s+s_spectrometerType, &
+      begin, z+z_mlsSignals, s+s_module, s+s_band, s+s_radiometer, &
+                             s+s_validSignal, s+s_spectrometerType, &
              n+n_section, &
       begin, z+z_globalsettings, &
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
@@ -870,6 +869,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.28  2001/02/28 01:15:36  livesey
+! Reworked the signals stuff
+!
 ! Revision 2.27  2001/02/27 19:00:19  livesey
 ! Added a few more items.
 !
