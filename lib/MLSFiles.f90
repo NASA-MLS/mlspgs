@@ -6,8 +6,6 @@ module MLSFiles               ! Utility file routines
   !===============================================================================
   use Hdf, only: DFACC_CREATE, DFACC_RDONLY, DFACC_READ, DFACC_RDWR, &
     & sfstart, sfend
-  use HDF5, only: hid_t, h5fopen_f, h5fcreate_f, h5fclose_f, h5fis_hdf5_f, &
-      H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F, H5F_ACC_EXCL_F
   use HDFEOS, only: gdclose, gdopen, swclose, swopen, swinqswath
   use HDFEOS5, only: he5_swclose, he5_swopen, he5_swinqswath, &
     & he5_gdopen, he5_gdclose, &
@@ -659,8 +657,6 @@ contains
         return
       elseif(myhdfVersion == HDFVERSION_5) then
       
-        ! call h5fopen_f(trim(myName), &
-        !  & hdf2hdf5_fileaccess(FileAccessType), theFileHandle, ErrType)
         theFileHandle = mls_sfstart(trim(myName), FileAccessType, &
           & HDFVERSION_5)
       elseif(myhdfVersion == HDFVERSION_4) then
@@ -952,8 +948,6 @@ contains
 
     case('hdf')
       if(MLSFile%HDFVersion == HDFVERSION_5) then
-        ! call h5fopen_f(trim(MLSFile%Name), &
-        ! & hdf2hdf5_fileaccess(FileAccessType), MLSFile%File_Id, ErrType)
         MLSFile%File_Id = mls_sfstart(trim(MLSFile%Name), &
           & FileAccessType, HDFVERSION_5)
       elseif(MLSFile%HDFVersion == HDFVERSION_4) then
@@ -1067,6 +1061,7 @@ contains
     & FileName, hdfVersion) &
     &  result (ErrType)
 
+    use HDF5, only: h5fclose_f
     ! Dummy arguments
     integer(i4)  :: ErrType
     integer(i4), intent(IN)  :: theFileHandle
@@ -1171,6 +1166,7 @@ contains
   ! It must be supplied an MLSFile_t for its arg
   subroutine close_MLSFile(MLSFile)
 
+    use HDF5, only: h5fclose_f
     ! Dummy arguments
     type (MLSFile_T) ::            MLSFile
 
@@ -1431,6 +1427,8 @@ contains
 
   function hdf2hdf5_fileaccess(FileAccesshdf4) result (FileAccesshdf5)
 
+    use HDF5, only: &
+     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F, H5F_ACC_EXCL_F
     ! Arguments
 
     integer(i4), intent(IN)       :: FileAccesshdf4
@@ -1505,7 +1503,9 @@ contains
   ! by calling special toolkit function
   
   function mls_sfstart(FileName, FileAccess, hdfVersion, addingmetadata)
-
+    use HDF5, only: h5fopen_f, h5fcreate_f
+    use HDF5, only: &
+     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F, H5F_ACC_EXCL_F
     ! Arguments
 
     character (len=*), intent(in) :: FILENAME
@@ -1575,9 +1575,6 @@ contains
      returnStatus = PGS_MET_SFstart(trim(FileName), myAccess, mls_sfstart)
    else
      access_prp_default = h5p_default_f    ! Can't figure out what this means
-     ! call h5fopen_f(trim(FileName), hdf2hdf5_fileaccess(FileAccess), &
-     ! & mls_sfstart, returnStatus)
-!      & mls_sfstart, returnStatus, access_prp_default)  ! so abandoning it
      select case (FileAccess)
      case (DFACC_CREATE)
        call h5fcreate_f(trim(filename), H5F_ACC_TRUNC_F, mls_sfstart, &
@@ -1627,6 +1624,7 @@ contains
 
   function mls_sfend(sdid, hdfVersion, addingMetadata)
 
+    use HDF5, only: h5fclose_f
     ! Arguments
 
     integer, intent(IN)       :: sdid  
@@ -1693,6 +1691,7 @@ contains
   function mls_hdf_version(FileName, preferred_version, AccessType) &
    & result (hdf_version)
 
+   use HDF5, only: h5fis_hdf5_f
    ! Arguments
 
     character (len=*), intent(in)  :: FILENAME                                  
@@ -1764,6 +1763,9 @@ contains
 ! Returns file_id
 ! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
 ! which version to open the filename under
+   use HDF5, only: h5fopen_f, h5fcreate_f, h5fis_hdf5_f
+   use HDF5, only: &
+     & H5F_ACC_RDONLY_F, H5F_ACC_RDWR_F, H5F_ACC_TRUNC_F, H5F_ACC_EXCL_F
 !
 ! External Variables
 !
@@ -1840,6 +1842,7 @@ contains
 ! By default, hdfVersion is WILDCARDHDFVERSION meaning it autodetects
 ! which version to close the filename under
 ! so unless you supply hdfVersion, you'd better supply filename
+    use HDF5, only: h5fclose_f
 !
 ! External Variables
 !
@@ -1905,6 +1908,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.52  2003/06/23 21:06:55  pwagner
+! Moved use HDF5 down among module procedures to speed up Lahey compilation
+!
 ! Revision 2.51  2003/06/20 19:32:32  pwagner
 ! mls_exists now public
 !
