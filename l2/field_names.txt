@@ -26,6 +26,7 @@ autofill
 average
 
 b
+binSelectors
 boundarypressure
 
 climatology
@@ -282,6 +283,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.74  2003/02/05 21:55:57  livesey
+# Added binSelectors
+#
 # Revision 2.73  2003/02/05 04:07:25  dwu
 # add cloudheight
 #
