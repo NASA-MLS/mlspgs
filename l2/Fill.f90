@@ -41,7 +41,7 @@ module Fill                     ! Create vectors and fill them.
   use Intrinsic, only: &
     & PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
     & PHYQ_Time, PHYQ_Length
-  use L1BData, only: DeallocateL1BData, DumpL1BData, FindL1BData, L1BData_T, &
+  use L1BData, only: DeallocateL1BData, Dump, FindL1BData, L1BData_T, &
     & PRECISIONSUFFIX, ReadL1BData
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T
@@ -2500,7 +2500,7 @@ contains ! =====     Public Procedures     =============================
     endif
     
     if ( index(switches, 'l1b') /= 0 ) &
-     & call DumpL1BData( l1bData )
+     & call Dump( l1bData )
     call DeallocateL1BData(l1bData)
 
     if (toggle(gen) ) call trace_end( "FillVectorQuantityFromL1B" )
@@ -2851,6 +2851,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.98  2001/10/26 23:23:05  pwagner
+! Complies with l1b data dump
+!
 ! Revision 2.97  2001/10/26 18:15:18  livesey
 ! Added upper argument to MatrixInversion in FillCovariance
 !
