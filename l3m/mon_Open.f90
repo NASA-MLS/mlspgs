@@ -150,6 +150,8 @@ CONTAINS
       l3pcf%logGranID = name(indx+1:)
 
     ! Store appropriate user input as global attributes
+ 
+    GlobalAttributes%ProcessLevel = '3-monthly'
     GlobalAttributes%InputVersion = l3pcf%outputVersion
     GlobalAttributes%StartUTC = l3pcf%StartDay // &
       & 'T00:00:00.000000Z'
@@ -280,6 +282,9 @@ CONTAINS
 !==================
 
 ! $Log$
+! Revision 1.7  2004/01/08 21:21:37  cvuu
+! version 1.4 commit
+!
 ! Revision 1.6  2003/09/15 18:28:18  cvuu
 ! Read OrbitNumber and OrbitPeriod from the L2GP file
 !
