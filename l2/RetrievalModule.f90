@@ -203,6 +203,7 @@ contains
     integer, parameter :: BestX = bestGradient + 1 ! for NWT
     integer, parameter :: CandidateDX = bestX + 1  ! for NWT
     integer, parameter :: ColumnScaleVector = candidateDX + 1 ! For column scaling by column norms
+                          ! ColumnScaleVector is really a diagonal matrix
     integer, parameter :: CovarianceDiag = columnScaleVector + 1
     integer, parameter :: CovarianceXApriori = covarianceDiag + 1
     integer, parameter :: DX = covarianceXApriori + 1  ! for NWT
@@ -821,7 +822,7 @@ contains
       end if
 
       ! Now if mu has goten really small, we'll change it back to one,
-      ! and do an element by element modification of dx
+      ! and do an element-by-element modification of dx
       if ( abs(mu) < muMin ) then
         mu = muOrig
         if ( which == 'low' ) then
@@ -1051,9 +1052,9 @@ contains
       use Regularization, only: Regularize
       use Symbol_Table, only: ENTER_TERMINAL
       use Symbol_Types, only: T_IDENTIFIER
-      use VectorsModule, only: AddToVector, DestroyVectorInfo, &
-        & Dump, Multiply, operator(.DOT.), &
-        & operator(.MDOT.), operator(-), ScaleVector, SubtractFromVector
+      use VectorsModule, only: AddToVector, DestroyVectorInfo, DivideVectors, &
+        & Dump, Multiply, operator(.DOT.), operator(.MDOT.), operator(-), &
+        & ScaleVector, SubtractFromVector
       use L2FWMParallel, only: SETUPFWMSLAVES, TRIGGERSLAVERUN, &
         & REQUESTSLAVESOUTPUT, RECEIVESLAVESOUTPUT
 
@@ -1950,7 +1951,11 @@ contains
             & call boundMove ( mu, lowBound, v(x), v(dxUnScaled), 'low', muMin )
           if ( got(f_highBound) ) &
             & call boundMove ( mu, highBound, v(x), v(dxUnScaled), 'high', muMin )
-          if ( mu < 1.0_rv ) call scaleVector ( v(candidateDX), mu )
+          ! dxUnScaled = mu * dxUnScaled -- may shorten vector in problem space
+          call scaleVector ( v(dxUnScaled), mu )
+          ! candidateDX = dxUnScaled / columnScaleVector -- Scale into solver's space
+          call divideVectors ( v(dxUnScaled), v(columnScaleVector), &
+            & v(candidateDX) ) 
           aj%dxn = sqrt(v(candidateDX) .dot. v(candidateDX)) ! L2Norm(dx)
           aj%gdx = v(gradient) .dot. v(candidateDX)
           if ( .not. aj%starting ) aj%dxdxl = v(dx) .dot. v(candidateDX)
@@ -2271,6 +2276,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.259  2004/06/16 01:21:57  vsnyder
+! Repair bug in constrained move
+!
 ! Revision 2.258  2004/06/16 00:01:36  livesey
 ! Bug fixes to BoundMove
 !
