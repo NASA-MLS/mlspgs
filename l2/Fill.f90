@@ -3505,6 +3505,12 @@ contains ! =====     Public Procedures     =============================
         ! Find 1st surface immediately above tropopause
         firstSurfaceAbove = FindFirst (Pi < thisBndPress)
         if ( firstSurfaceAbove < 1 ) then
+          call output ( 'tropopause: ', advance='no')
+          call output ( thisBndPress, advance='yes')
+          call output ( 'p0 ', advance='no')
+          call output ( Pi(1), advance='yes')
+          call output ( 'pTop ', advance='no')
+          call output ( Pi(N), advance='yes')
           call MLSMessage ( MLSMSG_Warning, ModuleName, &
           & 'Filling column, but tropopause outside pres. surfaces' )
           firstSurfaceBelow = 1
@@ -6563,6 +6569,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.258  2004/03/03 19:26:38  pwagner
+! More printing if tropopause outside pressure grid
+!
 ! Revision 2.257  2004/02/20 00:43:27  pwagner
 ! Clarified warning message when tropopause too big/little
 !
