@@ -5,16 +5,17 @@
 MODULE VectorQuantities         ! Quantities within vectors
 !=============================================================================
 
+  USE MLSMessageModule
   USE MLSSignalNomenclature
 
   IMPLICIT NONE
   PUBLIC
 
-  PRIVATE :: id
-
+  PRIVATE :: Id,ModuleName
   !------------------------------- RCS Ident Info ------------------------------
   CHARACTER(LEN=130) :: id = & 
        "$Id$"
+  CHARACTER(LEN=*), PARAMETER :: ModuleName="$RCSfile$"
   !-----------------------------------------------------------------------------
 
   ! This module defines the `quantities' that make up vectors and their
@@ -141,10 +142,6 @@ MODULE VectorQuantities         ! Quantities within vectors
     INTEGER, INTENT(IN), OPTIONAL :: subVectorLen
     LOGICAL, INTENT(IN), OPTIONAL :: storeByChannel
 
-    ! Local parameters
-    CHARACTER (LEN=*), PARAMETER :: AllocateMessage= &
-         & "Allocation failed for "
-
     ! Local variables
     INTEGER :: status           ! Status from allocates etc.
     LOGICAL :: useStoreByChannel ! Copy of store by channel
@@ -222,44 +219,52 @@ MODULE VectorQuantities         ! Quantities within vectors
     ! First the vertical coordinates
 
     ALLOCATE (qty%surfs(qty%noSurfs,noSubVectorsToAllocate),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"surfs",error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"surfs")
 
     ! Now the horizontal coordinates
 
     ALLOCATE (qty%phi(noSurfsToAllocate,qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"phi",error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"phi")
 
     ALLOCATE (qty%geodLat(noSurfsToAllocate,qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"geodLat",error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"geodLat")
 
     ALLOCATE (qty%lon(noSurfsToAllocate,qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"lon",error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"lon")
 
     ALLOCATE (qty%time(noSurfsToAllocate,qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"time",error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"time")
 
     ALLOCATE (qty%solarTime(noSurfsToAllocate,qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"solarTime",error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"solarTime")
 
     ALLOCATE (qty%solarZenith(noSurfsToAllocate,qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"solarZenith",error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"solarZenith")
 
     ALLOCATE (qty%losAngle(noSurfsToAllocate,qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"losAngle",error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"losAngle")
 
     ! Now some other stuff to allocate
     ALLOCATE (qty%subVectorIndex(qty%noSubVectors),STAT=status)
-    IF (status /= 0) CALL MLSMessage(AllocateMessage//"subVectorIndex", &
-         & error=.TRUE.)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"subVectorIndex")
 
     IF (.NOT. qty%regular) THEN
        ALLOCATE (qty%surfIndex(qty%subVectorLen,qty%noSubVectors),STAT=status)
-       IF (status /= 0) CALL MLSMessage(AllocateMessage//"surfIndex", &
-         & error=.TRUE.)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"surfIndex")
 
        ALLOCATE (qty%chanIndex(qty%subVectorLen,qty%noSubVectors),STAT=status)
-       IF (status /= 0) CALL MLSMessage(AllocateMessage//"chanIndex", &
-         & error=.TRUE.)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+            & MLSMSG_Allocate//"chanIndex")
     ENDIF
   END SUBROUTINE SetupNewQuantityTemplate
 
@@ -315,8 +320,8 @@ MODULE VectorQuantities         ! Quantities within vectors
     ENDIF
 
     ALLOCATE(tempDatabase(newSize),STAT=status)
-    IF (status/=0) CALL MLSMessage("Allocation failed for tempDatabase", &
-         & error=.TRUE.)
+    IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "Allocation failed for tempDatabase")
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=qty
@@ -350,6 +355,9 @@ END MODULE VectorQuantities
 
 !
 ! $Log$
+! Revision 1.3  1999/12/01 05:03:56  livesey
+! Nightly checkin
+!
 ! Revision 1.2  1999/11/30 04:03:51  livesey
 ! Bug fix
 !

@@ -5,14 +5,15 @@
 include make.inc
 
 OBJS=	mlsstrings.o mlssignalnomenclature.o verticalcoordinates.o \
-	vectorquantities.o mlsnumerics.o
+	vectorquantities.o mlsnumerics.o mlsmessagemodule.o
 OBJS_DEBUG= mlsstrings.o_debug mlssignalnomenclature.o_debug \
 	verticalcoordinates.o_debug vectorquantities.o_debug \
-	mlsnumerics.o_debug
+	mlsnumerics.o_debug mlsmessagemodule.o_debug
 MODULEPATH=.
 
-all: mlslib.a
-debug: mlslib.a_debug
+both: all debug
+all: mlslib.a SDPToolkitSubstitute.a
+debug: mlslib.a_debug SDPToolkitSubstitute.a_debug
 
 mlslib.a: ${OBJS}
 	ar ru mlslib.a $?
@@ -20,17 +21,30 @@ mlslib.a: ${OBJS}
 mlslib.a_debug: ${OBJS_DEBUG}
 	ar ru mlslib.a_debug $?
 
+SDPToolkitSubstitute.a: ${TKS_OBJS}
+	ar ru SDPToolkitSubstitute.a $?
+SDPToolkitSubstitute.a_debug: ${TKS_OBJS}
+	ar ru SDPToolkitSubstitute.a $?
+
 clean:
 	-rm -f *.o *.a *.mod *.M *.o_debug *.a_debug
 
-mlssignalnomenclature.o: mlsstrings.o
-vectorquantities.o: mlssignalnomenclature.o mlsstrings.o
+mlsstrings.o: mlsmessagemodule.o
+mlssignalnomenclature.o: mlsstrings.o mlsmessagemodule.o
+vectorquantities.o: mlssignalnomenclature.o mlsstrings.o mlsmessagemodule.o
+mlsnumerics.o: mlsmessagemodule.o
 
-mlssignalnomenclature.o_debug: mlsstrings.o_debug
-vectorquantities.o_debug: mlssignalnomenclature.o_debug mlsstrings.o_debug
+mlsstrings.o_debug: mlsmessagemodule.o_debug
+mlssignalnomenclature.o_debug: mlsstrings.o_debug mlsmessagemodule.o
+vectorquantities.o_debug: mlssignalnomenclature.o_debug mlsstrings.o_debug \
+	mlsmessagemodule.o_debug
+mlsnumerics.o_debug: mlsmessagemodule.o_debug
 
 #
 # $Log$
+# Revision 1.10  1999/12/01 23:01:39  livesey
+# Before renaming things to upper/lower case
+#
 # Revision 1.9  1999/12/01 05:03:55  livesey
 # Nightly checkin
 #

@@ -1,4 +1,5 @@
 PROGRAM Test
+USE SDPToolkitSubstitute
 USE MLSSignalNomenclature
 IMPLICIT NONE
 
