@@ -32,6 +32,7 @@ module TREE_WALKER
     & Signals, SpectrometerTypes
   use NCEP_DAO, only: DestroyGridTemplateDatabase
   use Open_Init, only: DestroyL1BInfo, OpenAndInitialize
+  use Output_m, only: Output
   use OutputAndClose, only: Output_Close
   use PointingGrid_m, only: Destroy_Pointing_Grid_Database
   use QuantityTemplates, only: QuantityTemplate_T
@@ -130,6 +131,11 @@ contains ! ====     Public Procedures     ==============================
           call L2MasterTask ( chunks, l2gpDatabase, l2auxDatabase )
         else
           do chunkNo = lbound(chunks,1), ubound(chunks,1)
+            if ( index(switches,'chu') /= 0 ) then
+              call output ( " ================ Starting processing for chunk " )
+              call output ( chunkNo )
+              call output ( " ================ ", advance='yes' )
+            endif
             j = i
 subtrees:   do while ( j <= howmany )
               son = subtree(j,root)
@@ -210,6 +216,10 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.56  2001/06/13 20:44:08  livesey
+! Moved the CloseParallel higher up, to work around the memory management
+! problem (somethine [HDF?] seems to stamp on PointingFrequencyDatabase)
+!
 ! Revision 2.55  2001/06/07 21:58:28  pwagner
 ! Added Copyright statement
 !
