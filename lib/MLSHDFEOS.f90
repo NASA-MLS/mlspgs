@@ -33,7 +33,7 @@ module MLSHDFEOS
   use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
     & mls_hdf_version
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MLSStrings, only: GetStringElement, NumStringElements, StringElementNum
+  use MLSStringLists, only: GetStringElement, NumStringElements, StringElementNum
   use SWAPI_DOUBLE, only: SWRDFLD_DOUBLE, SWRDFLD_DOUBLE_2D, SWRDFLD_DOUBLE_3D, &
     &                     SWWRFLD_DOUBLE, SWWRFLD_DOUBLE_2D, SWWRFLD_DOUBLE_3D
   use SWAPI_INTEGER, only: SWRDFLD_INTEGER, SWRDFLD_INTEGER_2D, SWRDFLD_INTEGER_3D, &
@@ -1750,6 +1750,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.22  2004/08/04 23:19:01  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.21  2004/07/22 17:07:15  pwagner
 ! Fixed set fill values
 !
