@@ -350,12 +350,13 @@ contains ! =====     Public Procedures     =============================
             & stateQ%values(:,xInstance)
 
           ! If the state vector part has a mask, copy it to DeltaX
-          if ( associated ( stateQ%mask ) ) then
-            if ( .not. associated ( deltaX%quantities(qtyInd)%mask ) ) &
-              & CreateMask ( deltaX%quantities(qtyInd) )
-            deltaX%mask(qtyInd)%values(:,xStarInstance) = &
-              stateQ%mask(:,xInstance)
-          endif
+! *************** MORE WORK NEEDED HERE NJL
+!           if ( associated ( stateQ%mask ) ) then
+!             if ( .not. associated ( deltaX%quantities(qtyInd)%mask ) ) &
+!               & CreateMask ( deltaX%quantities(qtyInd) )
+!             deltaX%mask(qtyInd)%values(:,xStarInstance) = &
+!               stateQ%mask(:,xInstance)
+!           endif
 
           ! If so, interpolate this block of kStar and place in jacobian
           if (doDerivatives) then
@@ -561,6 +562,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.9  2001/04/28 22:32:07  livesey
+! Nothing much changed apart from comments.
+! Need to add code to have it ignore state stuff according to MASK.
+!
 ! Revision 1.8  2001/04/28 21:23:33  livesey
 ! Working version.  Does folded sidebands (not tested yet), nice and fast
 !

@@ -1,10 +1,12 @@
 #Makefile.dep -- a file to be included by a Makefile
 #to compile a Fortran 9x program or library
 OBJS = \
-AntennaPatterns_m.o  	      geoc_geod_conv_m.o  \
-FilterShapes_m.o  	      get_beta_path_m.o  \
-ForwardModelConfig.o  	      get_chi_angles_m.o  \
-Init_Spectroscopy_m.o         get_delta_m.o  \
+AntennaPatterns_m.o  	      freq_avg_m.o  \
+FilterShapes_m.o  	      generic_delta_integral_m.o  \
+ForwardModelConfig.o  	      geoc_geod_conv_m.o  \
+ForwardModelIntermediate.o    get_beta_path_m.o  \
+Init_Spectroscopy_m.o         get_chi_angles_m.o  \
+LinearizedForwardModel_m.o    get_delta_m.o  \
 PointingGrid_m.o  	      get_drad_m.o  \
 SpectroscopyCatalog_m.o       get_drad_notder_m.o  \
 abs_cs_air_cont_m.o  	      get_eta_m.o  \
@@ -17,24 +19,22 @@ d_cspline_m.o  		      i_hunt_m.o  \
 d_delta_dt_m.o  	      l2pc_file_parameters.o  \
 d_get_one_eta_m.o  	      l2pc_file_structures.o  \
 d_hunt_m.o  		      l2pc_pfa_structures.o  \
-d_lintrp_m.o  		      l2pcdim.o  \
-d_pcspl_m.o  		      mdbeta.o  \
-d_solve_quad_m.o  	      no_conv_at_all_m.o  \
-d_stat_temp_m.o  	      path_entities.o  \
-d_t_script_dtnp_m.o  	      pfa_db_delta_m.o  \
-dcspline_der_m.o  	      physics.o  \
-do_t_script_m.o  	      rad_tran_m.o  \
-dsimpson_module.o  	      rad_tran_wd_m.o  \
-earth_intersection_m.o        refraction_m.o  \
-ellipse_m.o  		      scrt_dn_m.o  \
-ellipse_sw_m.o  	      slabs_sw_m.o  \
-eos_mdb.o  		      spectro_derivative_m.o  \
-errmsg.o  		      strings.o  \
-fast_delta_m.o  	      temperature_deriv_m.o  \
-fast_zopacity_m.o  	      two_d_polate.o  \
-fov_convolve_m.o  	      vert_to_path_m.o  \
-freq_avg_m.o  		      zatmos_deriv_m.o  \
-generic_delta_integral_m.o  \
+d_lintrp_m.o  		      mdbeta.o  \
+d_pcspl_m.o  		      no_conv_at_all_m.o  \
+d_solve_quad_m.o  	      path_entities.o  \
+d_stat_temp_m.o  	      pfa_db_delta_m.o  \
+d_t_script_dtnp_m.o  	      physics.o  \
+dcspline_der_m.o  	      rad_tran_m.o  \
+do_t_script_m.o  	      rad_tran_wd_m.o  \
+dsimpson_module.o  	      refraction_m.o  \
+earth_intersection_m.o        scrt_dn_m.o  \
+ellipse_m.o  		      slabs_sw_m.o  \
+ellipse_sw_m.o  	      spectro_derivative_m.o  \
+eos_mdb.o  		      strings.o  \
+errmsg.o  		      temperature_deriv_m.o  \
+fast_delta_m.o  	      two_d_polate.o  \
+fast_zopacity_m.o  	      vert_to_path_m.o  \
+fov_convolve_m.o  	      zatmos_deriv_m.o  \
  
 # using f90makedep.pl to calculate dependencies 
 AntennaPatterns_m.o: AntennaPatterns_m.f90 $(dir1)Allocate_Deallocate.o \
@@ -47,11 +47,21 @@ FilterShapes_m.o: FilterShapes_m.f90 $(dir1)Allocate_Deallocate.o \
 	$(dir1)toggles_core.o $(dir1)trace_m.o
 ForwardModelConfig.o: ForwardModelConfig.f90 $(dir1)Allocate_Deallocate.o \
 	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSSignals_m.o \
-	$(dir1)VGridsDatabase.o $(dir1)dump_0.o $(dir1)output_m.o \
-	$(dir1)string_table.o addItemToDatabase.f9h
+	$(dir1)VGridsDatabase.o $(dir1)dump_0.o $(dir1)intrinsic.o \
+	$(dir1)output_m.o $(dir1)string_table.o addItemToDatabase.f9h
+ForwardModelIntermediate.o: ForwardModelIntermediate.f90 \
+	$(dir1)Allocate_Deallocate.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o ellipse_m.o path_entities.o
 Init_Spectroscopy_m.o: Init_Spectroscopy_m.f90 $(dir1)Init_MLSSignals_m.o \
-	$(dir1)Molecules.o $(dir1)intrinsic.o $(dir1)tree.o \
-	$(dir1)tree_types.o make_tree.f9h
+	$(dir1)Molecules.o $(dir1)intrinsic.o $(dir1)tree_types.o \
+	$(dir2)tree.o make_tree.f9h
+LinearizedForwardModel_m.o: LinearizedForwardModel_m.f90 \
+	$(dir1)Allocate_Deallocate.o $(dir1)L2PC_m.o $(dir1)MLSCommon.o \
+	$(dir1)MLSMessageModule.o $(dir1)MLSNumerics.o $(dir1)MLSSignals_m.o \
+	$(dir1)ManipulateVectorQuantities.o $(dir1)MatrixModule_0.o \
+	$(dir1)MatrixModule_1.o $(dir1)QuantityTemplates.o \
+	$(dir1)VectorsModule.o $(dir1)dump_0.o $(dir1)intrinsic.o \
+	$(dir1)string_table.o ForwardModelConfig.o ForwardModelIntermediate.o
 PointingGrid_m.o: PointingGrid_m.f90 $(dir1)Allocate_Deallocate.o \
 	$(dir1)MLSCommon.o $(dir1)MLSMessageModule.o $(dir1)MLSSignals_m.o \
 	$(dir1)Parse_Signal_m.o $(dir1)dump_0.o $(dir1)output_m.o \
@@ -62,15 +72,17 @@ SpectroscopyCatalog_m.o: SpectroscopyCatalog_m.f90 \
 	$(dir1)MLSMessageModule.o $(dir1)MLSSignals_m.o $(dir1)Molecules.o \
 	$(dir1)MoreTree.o $(dir1)dump_0.o $(dir1)expr_m.o $(dir1)intrinsic.o \
 	$(dir1)lexer_core.o $(dir1)output_m.o $(dir1)string_table.o \
-	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree.o \
-	$(dir1)tree_types.o Init_Spectroscopy_m.o addItemToDatabase.f9h
+	$(dir1)toggles_core.o $(dir1)trace_m.o $(dir1)tree_types.o \
+	$(dir2)tree.o Init_Spectroscopy_m.o addItemToDatabase.f9h
 comp_path_entities_m.o: comp_path_entities_m.f90 $(dir1)MLSCommon.o \
-	ellipse_m.o gl6p.o path_entities.o vert_to_path_m.o
+	$(dir1)VectorsModule.o ellipse_m.o gl6p.o path_entities.o \
+	vert_to_path_m.o
 convolve_all_m.o: convolve_all_m.f90 $(dir1)MLSCommon.o \
-	$(dir1)VectorsModule.o $(dir1)dump_0.o $(dir1)intrinsic.o \
-	$(dir1)string_table.o AntennaPatterns_m.o ForwardModelConfig.o \
-	d_cspline_m.o d_lintrp_m.o dcspline_der_m.o fov_convolve_m.o \
-	hydrostatic_intrp.o l2pc_pfa_structures.o
+	$(dir1)MLSMessageModule.o $(dir1)MatrixModule_0.o \
+	$(dir1)MatrixModule_1.o $(dir1)VectorsModule.o $(dir1)dump_0.o \
+	$(dir1)intrinsic.o $(dir1)string_table.o AntennaPatterns_m.o \
+	ForwardModelConfig.o d_cspline_m.o d_lintrp_m.o dcspline_der_m.o \
+	fov_convolve_m.o hydrostatic_intrp.o l2pc_pfa_structures.o
 create_beta_m.o: create_beta_m.f90 $(dir1)MLSCommon.o SpectroscopyCatalog_m.o \
 	abs_cs_air_cont_m.o abs_cs_h2o_213g_cont_m.o abs_cs_liq_h2o_m.o \
 	slabs_sw_m.o
@@ -131,12 +143,12 @@ l2pc_file_structures.o: l2pc_file_structures.f90 $(dir1)MLSCommon.o \
 	l2pc_file_parameters.o
 l2pc_pfa_structures.o: l2pc_pfa_structures.f90 $(dir1)MLSCommon.o \
 	l2pc_file_parameters.o
-l2pcdim.o: l2pcdim.f90 $(dir1)MLSCommon.o
 mdbeta.o: mdbeta.f90 $(dir1)MLSCommon.o
 no_conv_at_all_m.o: no_conv_at_all_m.f90 $(dir1)MLSCommon.o \
-	$(dir1)VectorsModule.o $(dir1)dump_0.o $(dir1)intrinsic.o \
-	$(dir1)string_table.o ForwardModelConfig.o d_cspline_m.o d_lintrp_m.o \
-	l2pc_pfa_structures.o
+	$(dir1)MLSMessageModule.o $(dir1)MatrixModule_0.o \
+	$(dir1)MatrixModule_1.o $(dir1)VectorsModule.o $(dir1)dump_0.o \
+	$(dir1)intrinsic.o $(dir1)string_table.o ForwardModelConfig.o \
+	d_cspline_m.o d_lintrp_m.o dcspline_der_m.o l2pc_pfa_structures.o
 path_entities.o: path_entities.f90 $(dir1)MLSCommon.o
 pfa_db_delta_m.o: pfa_db_delta_m.f90 $(dir1)MLSCommon.o ellipse_m.o \
 	generic_delta_integral_m.o path_entities.o
@@ -158,9 +170,9 @@ spectro_derivative_m.o: spectro_derivative_m.f90 $(dir1)MLSCommon.o \
 temperature_deriv_m.o: temperature_deriv_m.f90 $(dir1)MLSCommon.o \
 	d_delta_dt_m.o ellipse_m.o get_drad_m.o path_entities.o
 two_d_polate.o: two_d_polate.f90 $(dir1)MLSCommon.o d_get_one_eta_m.o
-vert_to_path_m.o: vert_to_path_m.f90 $(dir1)MLSCommon.o d_get_one_eta_m.o \
-	d_lintrp_m.o earth_intersection_m.o ellipse_m.o ellipse_sw_m.o \
-	i_hunt_m.o
+vert_to_path_m.o: vert_to_path_m.f90 $(dir1)Allocate_Deallocate.o \
+	$(dir1)MLSCommon.o d_get_one_eta_m.o d_lintrp_m.o \
+	earth_intersection_m.o ellipse_m.o ellipse_sw_m.o i_hunt_m.o
 zatmos_deriv_m.o: zatmos_deriv_m.f90 $(dir1)MLSCommon.o \
 	$(dir1)VectorsModule.o $(dir1)intrinsic.o ForwardModelConfig.o \
 	get_drad_notder_m.o path_entities.o
