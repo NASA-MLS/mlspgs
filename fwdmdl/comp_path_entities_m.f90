@@ -84,14 +84,12 @@ contains
     Return
   end if
 
-
   do maf = 1, NoMAFs
     l = closestInstances(maf)
     lmin = max(1,l-phiWindow/2)
     lmax = min(no_phi_t,l+phiWindow/2)
     WinSize = lmax-lmin+1
     MidWin = l - lmin + 1
-    print*,'Hello there',l,lmin,lmax,winSize,midwin
     allocate ( phi_eta(ngt,lmin:lmax), stat=ier )
     if ( ier /= 0 ) then
       print *,'** Error Allocating phi_eta in routine: comp_path_entities..'
@@ -136,6 +134,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.33  2001/04/25 00:53:43  livesey
+! Removed print statement
+!
 ! Revision 1.32  2001/04/25 00:40:07  livesey
 ! Removed unnecessary deallocate
 !

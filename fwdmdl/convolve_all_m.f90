@@ -33,9 +33,8 @@ contains
 
   Subroutine convolve_all (ForwardModelConfig, ForwardModelIn, maf, channel, &
     windowStart, windowFinish, mafTInstance, temp, ptan, radiance, &
-    tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt,  &
-    si,center_angle,i_raw, k_temp, k_atmos, &
-    sbRatio, Jacobian,AntennaPattern,Ier)
+    tan_press,ptg_angles,tan_temp,dx_dt,d2x_dxdt, si,center_angle,i_raw, &
+    k_temp, k_atmos, sbRatio, Jacobian,AntennaPattern,Ier)
 
     ! Dummy arguments
     type (ForwardModelConfig_T), intent(in) :: FORWARDMODELCONFIG
@@ -72,7 +71,7 @@ contains
     integer :: FFT_INDEX(size(antennaPattern%aaap))
     integer :: n,i,j,is,Ktr,nf,Ntr,ptg_i,sv_i,Spectag,ki,kc, fft_pts
     integer :: row,col                  ! Matrix entries
-    integer :: no_t, no_tan_hts, no_phi_t, phiWindow
+    integer :: no_t, no_tan_hts, no_phi_t, phiWindow, lk, uk
     integer :: ind                      ! Index
 
     Real(r8) :: Q, R
@@ -198,7 +197,10 @@ contains
 
       ! Derivatives needed continue to process
 
+      lk = lbound(k_temp,3)
+      uk = ubound(k_temp,3)
       do nf = 1, phiWindow
+        if(nf+lk-1 > uk) EXIT
         col = FindBlock ( Jacobian%col, temp%index, nf+windowStart-1 )
         select case ( Jacobian%block(row,col)%kind ) 
         case ( m_absent )
@@ -217,7 +219,7 @@ contains
           do ptg_i = 1, no_tan_hts
             q = 0.0
             if(nf == mafTInstance) q = d2x_dxdt(ptg_i,sv_i)
-            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf)
+            Rad(ptg_i) = i_raw(ptg_i) * q + k_temp(ptg_i,sv_i,nf+lk-1)
           end do
 
           ! Now, Convolve:
@@ -311,6 +313,8 @@ contains
 
     if(forwardModelConfig%atmos_der) then
 
+      lk = lbound(k_atmos,3)
+      uk = ubound(k_atmos,3)
       do is = 1, size(ForwardModelConfig%molecules) ! What about derivatives!???NJL
 
         f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
@@ -321,6 +325,7 @@ contains
           ! Derivatives needed continue to process
 
           do nf = 1, f%template%noInstances
+            if(nf+lk-1 > uk) EXIT
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
             select case ( Jacobian%block(row,col)%kind ) 
             case ( m_absent )
@@ -336,7 +341,7 @@ contains
 
               ! run through representation basis coefficients
 
-              Rad(1:no_tan_hts) = k_atmos(1:no_tan_hts,sv_i,nf,is)
+              Rad(1:no_tan_hts) = k_atmos(1:no_tan_hts,sv_i,nf+lk-1,is)
 
               ! Now Convolve the derivative
 
@@ -449,6 +454,9 @@ contains
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.18  2001/04/20 23:09:13  livesey
+! Cleaned up multi-channel case, also does folding in place
+!
 ! Revision 1.17  2001/04/20 02:57:09  livesey
 ! Writes derivatives in matrix_t
 !

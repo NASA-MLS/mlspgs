@@ -53,7 +53,7 @@ contains
 !
     integer:: no_t,no_tan_hts,no_phi_t
     type (VectorValue_T), pointer :: F  ! vmr quantity
-    integer :: nz
+    integer :: nz, lk, uk
     integer :: N, I, IS, J, K, NF, SV_I, Spectag
     integer :: phiWindow
     integer :: row, col                 ! Indices
@@ -164,6 +164,8 @@ contains
 
       ! ****************** atmospheric derivatives ******************
 
+      lk = lbound(k_atmos,3)
+      uk = ubound(k_atmos,3)
       do is = 1, size(ForwardModelConfig%molecules)
 
          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
@@ -177,6 +179,7 @@ contains
           ! Derivatives needed continue to process
 
           do nf = 1, f%template%noInstances
+            if(nf+lk-1 > uk) EXIT
             col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
             select case ( Jacobian%block(row,col)%kind ) 
             case ( m_absent )
@@ -189,7 +192,7 @@ contains
             end select
 
             do sv_i = 1, f%template%noSurfs
-              Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
+              Rad(1:k) = k_atmos(1:k,sv_i,nf+lk-1,is)
               Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
               do ptg = 1,j
                 ind = channel+ radiance%template%noChans*(ptg-1)
@@ -272,6 +275,9 @@ contains
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.13  2001/04/24 21:32:45  zvi
+! fixing a dimension bug..
+!
 ! Revision 1.12  2001/04/20 23:09:29  livesey
 ! Now folds in place
 !
