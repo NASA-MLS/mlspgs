@@ -64,6 +64,7 @@ criticalModules
 criticalSignals
 
 DACSfilterShapes
+date
 default_spectroscopy
 destination
 destroyJacobian
@@ -331,6 +332,9 @@ xStar
 yStar
 
 # $Log$
+# Revision 2.118  2004/03/24 01:02:43  livesey
+# Added date
+#
 # Revision 2.117  2004/03/22 18:25:50  livesey
 # Added allLinesInCatalog
 #
