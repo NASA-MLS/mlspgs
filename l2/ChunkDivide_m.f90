@@ -601,10 +601,11 @@ contains ! =================================== Public Procedures==============
   end subroutine ChunkDivideL2CF
 
   ! ------------------------------------------ ConvertFlagsToObstructions --
-  subroutine ConvertFlagsToObstructions ( valid, obstructions )
+  subroutine ConvertFlagsToObstructions ( valid, mafRange, obstructions )
     ! This routine takes an array of logicals indicating good/bad data
     ! and converts it into obstruction information.
     logical, dimension(:), intent(in) :: VALID
+    integer, dimension(:), intent(in) :: MAFRANGE
     type (Obstruction_T), dimension(:), pointer :: OBSTRUCTIONS
 
     ! Local variables
@@ -620,9 +621,9 @@ contains ! =================================== Public Procedures==============
         if ( .not. valid(maf) ) then
           ! From good to bad
           newObstruction%range = .true.
-          newObstruction%mafs(1) = maf
+          newObstruction%mafs(1) = maf + mafRange(1) - 1
         else
-          newObstruction%mafs(2) = maf - 1
+          newObstruction%mafs(2) = maf + mafRange(1) - 2
           call AddObstructionToDatabase ( obstructions, newObstruction )
         end if
       end if
@@ -631,7 +632,7 @@ contains ! =================================== Public Procedures==============
     
     ! Make sure any range at the end gets added
     if ( .not. lastOneValid ) then
-      newObstruction%mafs(2) = size(valid)
+      newObstruction%mafs(2) = mafRange(2)
       call AddObstructionToDatabase ( obstructions, newObstruction )
     end if
   end subroutine ConvertFlagsToObstructions
@@ -871,6 +872,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.7  2001/11/10 01:09:41  livesey
+! Bug fixes
+!
 ! Revision 2.6  2001/11/10 01:01:03  livesey
 ! Just tidied up
 !
