@@ -98,7 +98,8 @@ CONTAINS
     LOGICAL, INTENT(IN), OPTIONAL :: regular
     INTEGER, INTENT(IN), OPTIONAL :: subVectorLen
     LOGICAL, INTENT(IN), OPTIONAL :: storeByChannel
-    TYPE (QuantityTemplate_T), INTENT(IN), DIMENSION(:) :: mifGeolocation
+    TYPE (QuantityTemplate_T), INTENT(IN), DIMENSION(:), OPTIONAL :: &
+         & mifGeolocation
 
     ! Local parameters, note the similarity to CreateHGridFromMLSCFInfo
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -140,7 +141,7 @@ CONTAINS
        ! Now we're going to deal with a VGrid for this quantity
 
        qty%verticalCoordinate=VC_Altitude
-       qty%surfs=l1bField=>mifGeolocation(instrumentModule)%surfs
+       qty%surfs=>mifGeolocation(instrumentModule)%surfs
 
        ! Now we're going to fill in the hGrid information
 
@@ -231,8 +232,8 @@ CONTAINS
     ! Dummy arguments
     TYPE (QuantityTemplate_T), INTENT(OUT) :: qty
     TYPE (L2CFEntry), INTENT(IN) :: cfInfo
-    TYPE (HGrid_T), DIMENSION(:), POINTER :: hGrids
-    TYPE (VGrid_T), DIMENSION(:), POINTER :: vGrids
+    TYPE (HGrid_T), DIMENSION(:), INTENT(IN) :: hGrids
+    TYPE (VGrid_T), DIMENSION(:), INTENT(IN) :: vGrids
     TYPE (l1bInfo_T), INTENT(IN) :: l1bInfo
     TYPE (MLSChunk_T), INTENT(IN) :: chunk
     TYPE (MLSSignalsDatabase_T), INTENT(IN) :: mlsSignalsDatabase
@@ -404,4 +405,7 @@ END MODULE ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 1.1  1999/12/18 00:35:40  livesey
+! First version
+!
 !
