@@ -16,13 +16,13 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   use Gemm_M, only: GEMM
   use Gemv_M, only: GEMV
   use MLSCommon, only: R8
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: OUTPUT
   use VectorsModule, only: M_LinAlg
 
   implicit NONE
   private
-  public :: Add_Matrix_Blocks, CheckBlocks, Assignment(=), CholeskyFactor
+  public :: Add_Matrix_Blocks, CheckBlocks, CheckIntegrity, Assignment(=), CholeskyFactor
   public :: CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale
   public :: ColumnScale_0, Col_L1, CopyBlock, CreateBlock, CreateBlock_0
   public :: DenseCholesky, Densify, DestroyBlock, DestroyBlock_0, Dump
@@ -47,6 +47,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface Assignment(=)
     module procedure AssignBlock
+  end interface
+
+  interface CheckIntegrity
+    module procedure CheckIntegrity_0
   end interface
 
   interface CholeskyFactor
@@ -379,6 +383,179 @@ contains ! =====     Public Procedures     =============================
     z%r2 => x%r2
     z%values => x%values
   end subroutine AssignBlock
+
+  ! ------------------------------------------- CheckIntegrity_0 -------
+  logical function CheckIntegrity_0 ( block, noError )
+    type ( MatrixElement_T), intent(in) :: BLOCK
+    logical, optional, intent(in) :: NOERROR
+
+    ! Local variables
+    integer :: MESSAGETYPE
+    integer :: I                        ! Loop counter
+    integer :: N                        ! No entries in a column
+    
+    ! Executable code
+
+    messageType = MLSMSG_Error
+    if ( present ( noError ) ) then
+      if ( noError ) messageType = MLSMSG_Warning
+    end if
+
+    checkIntegrity_0 = .true.
+
+    ! Check dimensions
+    if ( block%nRows < 0 ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Block is negative nRows' )
+      checkIntegrity_0 = .false.
+    end if
+    if ( block%nCols < 0 ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Block is negative nCols' )
+      checkIntegrity_0 = .false.
+    end if
+
+    ! Check associated stuff
+    if ( block%kind == m_absent .or. block%kind == m_unknown ) then
+      if ( associated ( block%values ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block is absent/unknown yet has values associated' )
+        checkIntegrity_0 = .false.
+      end if
+    else
+      if ( .not. associated ( block%values ) ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Block has no values associted, but not absent/unkown')
+        checkIntegrity_0 = .false.
+      end if
+      if ( any ( lbound ( block%values ) /= (/1,1/) ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block is had bad lbound on values.' )
+        checkIntegrity_0 = .false.
+      end if
+    end if
+    if ( any ( block%kind == (/ m_absent, m_unknown /) ) ) then
+      if ( associated ( block%R1 ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block is absent/unknown yet has R1 associated' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( associated ( block%R2 ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block is absent/unknown yet has R2 associated' )
+        checkIntegrity_0 = .false.
+      end if
+    end if
+    if ( block%kind == m_full ) then
+      if ( size ( block%R1 ) /= 0 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block is full yet has non zero R1 allocated' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( size ( block%R2 ) /= 0 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block is full yet has non zero R2 allocted' )
+        checkIntegrity_0 = .false.
+      end if
+    end if
+
+    if ( block%kind == m_banded .or. block%kind == m_column_sparse ) then
+      if ( .not. associated ( block%r1 ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block is banded/sparse yet has no R1 associated' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( .not. associated ( block%r2 ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block is banded/sparse yet has no R2 associated' )
+        checkIntegrity_0 = .false.
+      end if
+    end if
+
+    if ( block%kind == m_banded ) then
+      ! Check lbound
+      if ( lbound ( block%r1,1 ) /= 1 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has bad lbound on R1' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( lbound ( block%r2,1 ) /= 0 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has bad lbound on R2' )
+        checkIntegrity_0 = .false.
+      end if
+      ! Check ubound
+      if ( ubound ( block%r1,1 ) /= block%nCols ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has bad ubound on R1' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( ubound ( block%r2,1 ) /= block%nCols ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has bad ubound on R2' )
+        checkIntegrity_0 = .false.
+      end if
+      ! Check values
+      if ( block%r2(0) /= 0 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has bad first value in R2' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( any ( (/ block%r1(:), block%r2(1:) /) < 1 ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has 0/-ve value(s) in R1/R2' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( any ( (/ block%r1(:) /) > block%nRows ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has too large value(s) in R1' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( any ( (/ block%r2(:) /) > ubound ( block%values,1 ) ) ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has too large value(s) in R2' )
+        checkIntegrity_0 = .false.
+      end if
+      do i = 1, block%nCols
+        n =  block%r2(i) - block%r2(i-1) - 1
+        if ( n < 0 ) then
+          call MLSMessage ( messageType, ModuleName, &
+            & 'Banded block has too small a delta in R2' )
+          checkIntegrity_0 = .false.
+        end if
+        if ( block%r1(i) + n > block%nRows ) then
+          call MLSMessage ( messageType, ModuleName, &
+            & 'Banded block has too large a delta in R2' )
+          checkIntegrity_0 = .false.
+        end if
+      end do
+      if ( ubound(block%values,2) /= 1 ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Banded block has bad ubound(2) for values' )
+        checkIntegrity_0 = .false.
+      end if
+    end if
+
+    if ( block%kind == m_column_sparse ) then
+      call MLSMessage ( messageType, ModuleName, &
+        & 'Block is column sparse.  I thought these were suppressed!' )
+      checkIntegrity_0 = .false.
+    end if
+
+    if ( block%kind == m_full ) then 
+      if ( ubound ( block%values,1 ) /= block%nRows ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block nRows inconsistent with dimensions of values' )
+        checkIntegrity_0 = .false.
+      end if
+      if ( ubound ( block%values,2 ) /= block%nCols ) then
+        call MLSMessage ( messageType, ModuleName, &
+          & 'Block nCols inconsistent with dimensions of values' )
+        checkIntegrity_0 = .false.
+      end if
+    end if
+
+  end function CheckIntegrity_0
 
   ! -------------------------------------------  CholeskyFactor_0  -----
   subroutine CholeskyFactor_0 ( Z, XOPT, STATUS )
@@ -2829,6 +3006,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.74  2002/07/22 03:26:25  livesey
+! Added checkIntegrity
+!
 ! Revision 2.73  2002/07/17 06:00:55  livesey
 ! Added M_Unknown
 !
