@@ -184,15 +184,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !    print*, maf
 
     ! For the moment make it only single sideband
+    noFreqs = size (signal%frequencies)
     if ( signal%sideband == 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,  &
       & 'Only single sidebands allowed in FullForwardCloudModel for now' )
-    call Allocate_test ( frequencies, count ( signal%channels ),             &
+    call Allocate_test ( frequencies, noFreqs,             &
       & 'frequencies', ModuleName )
 !    frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
 !      & pack ( signal%frequencies, signal%channels ) )
     frequencies = signal%lo + signal%sideband * ( signal%centerFrequency +   &
       signal%frequencies)
-    noFreqs = size (frequencies)
 
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
     doChannel = .true.
@@ -222,7 +222,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           & signal=signal%index, sideband=signal%sideband )
           qgot(2) = .true.
         case (l_cloudExtinction)
-          cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          &             & quantityType=l_cloudExtinction )
+          cloudExtinction => GetVectorQuantityByType ( fwdModelOut,          &             
+            & quantityType=l_cloudExtinction )
           qgot(3) = .true.
         case (l_cloudRADSensitivity)
           cloudRADSensitivity => GetVectorQuantityByType ( fwdModelOut,      &
@@ -280,8 +281,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       select case (l_quantity_type)
         case (l_ptan)
           ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,      &
-          & quantityType=l_ptan,radiometer=signal%radiometer)
-        
+          & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
         case (l_temperature)
           temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
           & quantityType=l_temperature )
@@ -725,6 +725,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.22  2001/08/02 01:03:16  dwu
+! add doChannel to frequency loop
+!
 ! Revision 1.21  2001/08/01 20:51:30  dwu
 ! add delTau100
 !
