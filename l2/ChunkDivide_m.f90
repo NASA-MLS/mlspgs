@@ -159,11 +159,11 @@ contains ! ===================================== Public Procedures =====
     use L1BData, only: DEALLOCATEL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA, &
       & AssembleL1BQtyName
     use Lexer_core, only: PRINT_SOURCE
-    use MLSCommon, only: R8, RP, L1BINFO_T, TAI93_Range_T, &
-      & FINDFIRST
+    use MLSCommon, only: R8, RP, L1BINFO_T, TAI93_Range_T
     use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, WILDCARDHDFVERSION, &
       & mls_hdf_version
     use MLSL2Options, only: LEVEL1_HDFVERSION
+    use MLSSets, only: FINDFIRST
     use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
     use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
       & MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, MLSMSG_WARNING
@@ -2071,6 +2071,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.47  2004/06/10 00:58:44  vsnyder
+! Move FindFirst, FindNext from MLSCommon to MLSSets
+!
 ! Revision 2.46  2004/05/19 19:16:09  vsnyder
 ! Move MLSChunk_t to Chunks_m
 !
