@@ -34,8 +34,8 @@ module Fill                     ! Create vectors and fill them.
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VGRID, L_VMR, L_ZETA
   ! Now the specifications:
-  use INIT_TABLES_MODULE, only: S_DUMP, S_FILL, S_FILLCOVARIANCE, S_MATRIX, S_REMOVE, &
-    & S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
+  use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
+    & S_MATRIX,  S_SNOOP, S_TIME, S_TRANSFER, S_VECTOR
   ! Now some arrays
   use Intrinsic, only: Field_Indices
   use Intrinsic, only: &
@@ -851,11 +851,11 @@ contains ! =====     Public Procedures     =============================
 
       ! End of fill operations
 
-      case ( s_remove ) ! ===============================  Remove ==
-        if (DEEBUG) call output('Remove vector instruction', advance='no')
+      case ( s_destroy ) ! ===============================  Destroy ==
+        if (DEEBUG) call output('Destroy vector instruction', advance='no')
         ! Here we're to try to shrink the vector database by removing a vector
         ! Loop over the instructions
-        ! (Shall we allow multiple rms on a single line? Maybe later)
+        ! (Shall we allow multiple vectors on a single line? Maybe later)
         do j = 2, nsons(key)
           son = subtree(j,key)  ! The argument
           fieldIndex = get_field_id(son)
@@ -865,7 +865,7 @@ contains ! =====     Public Procedures     =============================
             fieldValue = son
           end if
           select case ( fieldIndex )
-          case ( f_source )
+          case ( f_vector )
             sourceVectorIndex = decoration(decoration(subtree(2,son)))
           case default ! Can't get here if type checker worked
           end select
@@ -2634,6 +2634,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.91  2001/10/19 00:00:36  pwagner
+! Replaced remove with destroy
+!
 ! Revision 2.90  2001/10/18 23:29:57  pwagner
 ! Fixes in addNoise, remove
 !
