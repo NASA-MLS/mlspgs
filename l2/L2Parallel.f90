@@ -470,7 +470,7 @@ contains ! ================================ Procedures ======================
               & "Got a message from an unknown slave")
           else
             ! Unpack the first integer in the buffer
-            machine = chunkMachines(chunk)
+            if ( signal /= sig_register ) machine = chunkMachines(chunk)
           end if
 
           select case (signal) 
@@ -945,6 +945,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.31  2002/05/08 16:19:29  livesey
+! Bug fix.
+!
 ! Revision 2.30  2002/04/24 20:20:53  livesey
 ! Submit now working, also if pvm specified as host filename, takes
 ! hostname list from pvm configuration
