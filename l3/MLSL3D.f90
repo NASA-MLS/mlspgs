@@ -14,10 +14,11 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   USE MLSCF, ONLY: Mlscf_T 
   USE MLSCommon, ONLY: r8
   USE MLSFiles, ONLY: HDFVERSION_5, HDFVERSION_4
-  USE MLSL3Common, ONLY: DATE_LEN, maxWindow
+  USE MLSL3Common, ONLY: DATE_LEN, maxWindow, GridNameLen, maxMisDays
   USE MLSMessageModule, ONLY: MLSMSG_Info, MLSMSG_Warning, MLSMessage, & 
-       & MLSMessageExit
+       & MLSMessageExit, MLSMSG_Error
   USE OpenInit, ONLY: PCFData_T, OpenAndInitialize
+  USE output_m, only: output
   USE OutputClose, ONLY: OutputFlags_T, OutputProd, OutputAndClose
   USE PCFHdr, ONLY: GlobalAttributes
   USE Synoptic, ONLY: DailyCoreProcessing
@@ -49,19 +50,26 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   TYPE( L3SPData_T ), POINTER :: l3sp(:)
   
   CHARACTER (LEN=480) :: msr
-  CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
+  CHARACTER (LEN=DATE_LEN) :: mis_Days(maxMisDays)
   CHARACTER (LEN=1), POINTER :: anText(:) => NULL()
   
   REAL(r8), POINTER :: avgPer(:) => NULL()
   
-  INTEGER :: i, l2Days, mis_l2Days, hdfVersion
+  INTEGER :: i=0, l2Days, mis_l2Days, hdfVersion, error
   
   INTEGER, PARAMETER :: NORMAL_EXIT_STATUS = 2
 
+  CALL h5open_f(error)
+
   CALL MLSMessage (MLSMSG_Info, ModuleName, & 
        & 'EOS MLS Level 3 data processing started')
-  
-   GlobalAttributes%ProcessLevel = '3-daily'
+ 
+  if (error /= 0) then
+     call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_open_f" )
+  endif
+ 
+  GlobalAttributes%ProcessLevel = '3-daily'
+
   ! Fill structures with input data from the PCF and L3CF.
   
   CALL OpenAndInitialize(pcf, cf, cfProd, cfDef, anText, avgPer)
@@ -81,14 +89,9 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   ! For each product in the DailyMap section of the cf,
   
   DO i = 1, SIZE(cfProd)
-    
-     ! Read l2gp attributes
-
-     CALL ReadL2GPAttribute (pcf%l3StartDay, pcf%l3EndDay, &
-        & cfProd(i)%fileTemplate)
- 
+   
      ! Read all the l2gp data which exist in the input window for that product
-     
+
      CALL ReadL2GPProd(cfProd(i)%l3prodNameD, cfProd(i)%fileTemplate, &
           & pcf%l2StartDay, pcf%l2EndDay, l2Days, mis_l2Days, mis_Days, l2gp)
      
@@ -102,7 +105,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
         CYCLE
      ELSE
         msr = 'Input data successfully read for ' //  &
-             & TRIM(cfProd(i)%l3prodNameD) // '; CORE processing started ...'
+             & trim(cfProd(i)%l3prodNameD) // '; CORE processing started ...'
         CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
      ENDIF
      
@@ -120,28 +123,18 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
           & // '; starting Output task ...'
      CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
      
-     CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, & 
-          & residA, residD, flags, hdfVersion)
-     
-     ! Deallocate memory 
-
-     CALL Deallocate_test(GlobalAttributes%OrbNumDays, &
-	& 'GlobalAttributes%OrbNumDays', ModuleName)   
-     CALL Deallocate_test(GlobalAttributes%OrbPeriodDays, &
-	& 'GlobalAttributes%OrbPeriodDays', ModuleName)   
-
-     ! Deallocate the databases passed between CORE & the I/O shell
-     
-     CALL DestroyL2GPDatabase(l3r)
-     CALL DestroyL2GPDatabase(residA)
-     CALL DestroyL2GPDatabase(residD)
-     CALL DestroyL3DMDatabase(l3dm)
-     CALL DestroyL3DMDatabase(dmA)
-     CALL DestroyL3DMDatabase(dmD)
-     CALL DestroyL3SPDatabase(l3sp)
      CALL DestroyL2GPDatabase(l2gp)
 
+     CALL OutputProd(pcf, cfProd(i), anText, l3sp, l3dm, dmA, dmD, l3r, & 
+          & residA, residD, flags, hdfVersion)
   ENDDO
+
+  ! Deallocate global attribute memory 
+
+  CALL Deallocate_test(GlobalAttributes%OrbNumDays, &
+	& 'GlobalAttributes%OrbNumDays', ModuleName)   
+  CALL Deallocate_test(GlobalAttributes%OrbPeriodDays, &
+	& 'GlobalAttributes%OrbPeriodDays', ModuleName)   
 
   msr = 'Product loop processing completed; beginning Output/Close task ... '
   CALL MLSMessage (MLSMSG_Info, ModuleName, msr)
@@ -155,7 +148,12 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
   CALL MLSMessage (MLSMSG_Info, ModuleName, & 
        & 'EOS MLS Level 3 data processing successfully completed!')
   
-  CALL MLSMessageExit(NORMAL_EXIT_STATUS)
+  call h5close_f(error)
+  if (error /= 0) then
+     call MLSMessage ( MLSMSG_Error, moduleName, "Unable to h5_close_f" )
+  endif
+ 
+  call MLSMessageExit(NORMAL_EXIT_STATUS)
   
   ! Detailed description of program
   ! The program is a prototype for the MLS Level 3 Daily software.
@@ -165,6 +163,9 @@ END PROGRAM MLSL3D
 !=================
 
 ! $Log$
+! Revision 1.14  2003/10/29 00:07:17  pwagner
+! GlobalAttributes%ProcessLevel assigned appropriate value
+!
 ! Revision 1.13  2003/09/15 18:30:48  cvuu
 ! Read OrbitNumber and OrbitPeriod from L2GP files
 !
