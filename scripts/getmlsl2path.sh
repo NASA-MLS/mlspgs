@@ -42,7 +42,7 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/v1.1.9"
 	else
-	    echo "/data/emls/l2gp/s5--t/1996"
+	    echo "/data/emls/l2gp/s6--t/1996"
 	fi
     fi
     if [ $1 == "--corel2gp" ]; then
@@ -56,7 +56,7 @@ while [ -n "$(echo $1)" ]; do
 	if [ $SOUNDBARRIER == 1 ]; then
 	    echo "$HOME/v1.1.9"
 	else
-	    echo "/data/emls/l1boa/s5--t/1996"
+	    echo "/data/emls/l1boa/s6--t/1996"
 	fi
     fi
     if [ $1 == "--l1brad" ]; then
@@ -80,6 +80,9 @@ while [ -n "$(echo $1)" ]; do
 done
 
 # $Log$
+# Revision 1.7  2003/05/07 20:54:53  livesey
+# Moved to v1.1.9
+#
 # Revision 1.6  2003/05/06 00:54:21  livesey
 # Moved DAO data for the moment.
 #
