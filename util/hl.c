@@ -7,12 +7,12 @@
   static char Id[] = "$Id$";
 
 main ( int argc, char* argv[] )
-{ char b[256];                     /* input buffer */
-  char after[] = "\033[0m";        /* black on transparent background */
-  char blue[] = "\033[00;34;1m";   /* bold blue on transparent background */
-  char puce[] = "\033[00;35;1m";   /* bold puce on transparent background */
-  char red[] = "\033[00;31;1m";    /* bold red on transparent background */
-  int i;                           /* Subscript/loop inductor */
+{ char b[256];                      /* input buffer */
+  char after[] = "\033[0m";         /* black on transparent background */
+  char blue[] = "\033[00;34;1m";    /* bold blue on transparent background */
+  char magenta[] = "\033[00;35;1m"; /* bold magenta on transparent background */
+  char red[] = "\033[00;31;1m";     /* bold red on transparent background */
+  int i;                            /* Subscript/loop inductor */
 
   typedef struct
   { char* find;          /* Pattern to find */
@@ -24,12 +24,12 @@ main ( int argc, char* argv[] )
 
   pat pats[] = { "[0-9]+-[SU]", red, {},     /* lf95 errors */
                  "[0-9]+-W", blue, {},       /* lf95 warnings */
-                 "[0-9]+-I", puce, {},       /* lf95 informative */
+                 "[0-9]+-I", magenta, {},    /* lf95 informative */
                  /* NAG f95 patterns: */
                  "Deleted", red, {},       "Error", red, {},
                  "Fatal", red, {},         "Panic", red, {},
                  "Warning", blue, {},      "Extension", blue, {},
-                 "Obsolescent", blue, {},  "Info", puce, {},
+                 "Obsolescent", blue, {},  "Info", magenta, {},
                  "undefined", red, {} };     /* during linking */
 
 #define NPAT sizeof pats / sizeof pats[0]
@@ -61,6 +61,9 @@ main ( int argc, char* argv[] )
 
 /*
 $Log$
+Revision 1.5  2004/10/06 23:44:46  vsnyder
+Add 'colors' bash script at the end as a comment
+
 Revision 1.4  2001/03/03 02:15:48  vsnyder
 Correct misunderstanding about usage of regex
 
