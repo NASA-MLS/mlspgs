@@ -1,3 +1,12 @@
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+
+
 !... spectral header file 
 
 	integer :: no_line		     ! max no. of lines for all species
@@ -18,4 +27,7 @@
 
 	integer :: nmol		             ! no. of molecules
 	integer :: ncnt(no_mol)	             ! no. of lines used for each molecule
+
+
+! $Log$
 

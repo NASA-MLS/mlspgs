@@ -1,6 +1,17 @@
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+
 	real :: pi
 	parameter (pi=3.1415926)
 	real(r8) :: re		! earth radius
 	parameter (re=6370000.)
 	integer :: nu0		! max dimension for u
 	parameter (nu0=128)
+
+
+! $Log$
