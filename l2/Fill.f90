@@ -89,7 +89,7 @@ contains ! =====     Public Procedures     =============================
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, L_RHI, &
       & L_RHIFROMH2O, L_RHIPRECISIONFROMH2O, L_SCALEOVERLAPS, &
       & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
-      & L_SIDEBANDRATIO, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
+      & L_LIMBSIDEBANDFRACTION, L_SPD, L_SPECIAL, L_SPREADCHANNEL, &
       & L_SPLITSIDEBAND, L_SYSTEMTEMPERATURE, &
       & L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
       & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_WMOTROPOPAUSE, &
@@ -3126,10 +3126,12 @@ contains ! =====     Public Procedures     =============================
       if (.not. ValidateVectorQuantity ( usb, quantityType=(/l_radiance/), &
         & sideband=(/1/), signal=(/radiance%template%signal/), minorFrame=.true. )) &
         & call Announce_Error ( key, 0, 'Inappropriate usb radiance quantity for fill' )
-      if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
+      if (.not. ValidateVectorQuantity ( lsbFraction, &
+        & quantityType=(/l_limbSidebandFraction/), &
         & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
         & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
-      if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
+      if (.not. ValidateVectorQuantity ( usbFraction, &
+        & quantityType=(/l_limbSidebandFraction/), &
         & signal=(/radiance%template%signal/), sideband=(/-1/) ) ) &
         & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
 
@@ -4289,12 +4291,14 @@ contains ! =====     Public Procedures     =============================
         & quantityType=(/l_cloudInducedRadiance/), &
         & sideband=(/0/), signal=(/quantity%template%signal/), minorFrame=.true. )) &
         & call Announce_Error ( key, 0, 'Inappropriate sourceQuantity radiance for fill' )
-        if (.not. ValidateVectorQuantity ( lsbFraction, quantityType=(/l_sidebandRatio/), &
-        & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
-        & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
-        if (.not. ValidateVectorQuantity ( usbFraction, quantityType=(/l_sidebandRatio/), &
-        & signal=(/quantity%template%signal/), sideband=(/1/) ) ) &
-        & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
+        if (.not. ValidateVectorQuantity ( lsbFraction, &
+          & quantityType=(/l_limbSidebandFraction/), &
+          & signal=(/quantity%template%signal/), sideband=(/-1/) ) ) &
+          & call Announce_Error ( key, 0, 'Inappropriate lsbFraction quantity for fill' )
+        if (.not. ValidateVectorQuantity ( usbFraction, &
+          & quantityType=(/l_limbSidebandFraction/), &
+          & signal=(/quantity%template%signal/), sideband=(/1/) ) ) &
+          & call Announce_Error ( key, 0, 'Inappropriate usbFraction quantity for fill' )
 
         ! This method is only appliable to the cloud-induced radiances. One may assume 
         ! that the scattering radiances are proportional to f^4. And this operation 
@@ -5730,6 +5734,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.226  2003/05/29 16:41:56  livesey
+! Renamed sideband fraction
+!
 ! Revision 2.225  2003/05/28 06:00:06  livesey
 ! Bug fix in profile fill where the 'latching' to the output surfaces was
 ! leading to redundancy in the interpolation
