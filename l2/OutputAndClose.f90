@@ -55,6 +55,9 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   ! -----     Private declarations     ---------------------------------
 
+  ! Shall we write bogus CounterMAF so l2aux is l1brad counterfeit?
+  logical, parameter :: COUNTERFEITCOUNTERMAF = .false.
+
   ! For Announce_Error
   integer :: ERROR
 
@@ -344,7 +347,9 @@ contains ! =====     Public Procedures     =============================
                     call output ( size(l2auxDatabase), advance='yes')
                   end if
                   if ( db_index <= size(l2auxDatabase) ) then
-                    call WriteL2AUXData ( l2auxDatabase(db_index),sdfid )
+                    call WriteL2AUXData ( l2auxDatabase(db_index), sdfid, &
+                    & WriteCounterMAF=&
+                    & (COUNTERFEITCOUNTERMAF .and. numquantitiesperfile == 0) )
                     numquantitiesperfile = numquantitiesperfile+1
                     if ( DEBUG ) call output(&
                       & "attempting to fill quantity name", advance='yes')
@@ -674,6 +679,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.41  2001/11/01 21:05:10  pwagner
+! Satisfies new WriteL2AuxData interface
+!
 ! Revision 2.40  2001/10/12 23:12:23  pwagner
 ! Checks that number of quantities written to a file not grow too large
 !
