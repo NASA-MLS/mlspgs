@@ -97,7 +97,7 @@ contains
   ! inputs
 
 !    complex(rk), intent(in) :: incoptdepth(:,:,:) ! layer optical depth
-    complex(rk), intent(in) :: deltau(:,:,:)    ! exp(incoptdepth)
+    complex(rk), intent(in) :: deltau(:,:,:)    ! = E == exp(-incoptdepth)
                                            ! (2,2,:)
     real(rk), intent(in) :: e_rflty        ! earth reflectivity
     real(rk), intent(in) :: tol            ! accuracy target in K
@@ -114,7 +114,7 @@ contains
     complex(rk), parameter :: Ident(2,2) = reshape( (/ 1.0, 0.0, &
       &                                                0.0, 1.0 /), (/ 2,2 /) )
 
-    complex(rk) :: tmp(2,2,size(deltau,3)), tmp1(2,2,size(deltau,3))
+    complex(rk) :: P(2,2,size(deltau,3)), Tau(2,2,size(deltau,3))
 
     integer(ip) :: i, i_tan, n_path
 
@@ -128,38 +128,38 @@ contains
     i_tan = n_path / 2
 
   ! Compute exp(incoptdepth) for all but the last level
-  !(now done ouside)
+  !(now done outside)
 
   !  do i = 1, n_path - 1
   !    call cs_expmat ( incoptdepth(:,:,i), deltau(:,:,i) )
   !  end do
 
-    tmp(:,:,1) = ident
-    tmp1(:,:,1) = ident
+    P(:,:,1) = ident
+    Tau(:,:,1) = ident
 
   ! Multiply the exp(incoptdepth) matrices together.
 
     do i = 2, i_tan
-      tmp(:,:,i) =  matmul ( tmp(:,:,i-1),  deltau(:,:,i-1) )
-      tmp1(:,:,i) = matmul ( tmp1(:,:,i-1), conjg(tmp(:,:,i)) )
+      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
+      Tau(:,:,i) = matmul ( P(1:2,1:2,i), conjg(transpose(P(1:2,1:2,i))) )
     end do
 
-    tmp(:,:,i_tan+1) = tmp(:,:,i_tan) * sqrt(e_rflty)
-    tmp1(:,:,i_tan+1) = tmp1(:,:,i_tan) * e_rflty
+    P(:,:,i_tan+1) = P(:,:,i_tan) * sqrt(e_rflty)
+    Tau(:,:,i_tan+1) = Tau(:,:,i_tan) * e_rflty
 
     do i = i_tan+2, n_path
-      tmp(:,:,i) =  matmul ( tmp(:,:,i-1),  deltau(:,:,i-1) )
-      tmp1(:,:,i) = matmul ( tmp1(:,:,i-1), conjg(tmp(:,:,i)) )
+      P(:,:,i) =  matmul ( P(1:2,1:2,i-1),  deltau(1:2,1:2,i-1) )
+      Tau(:,:,i) = matmul ( P(1:2,1:2,i), conjg(transpose(P(1:2,1:2,i))) )
     end do
 
   ! Where is the derivative of that product large?
 
-    dtaudn = 0.5_rk * ( eoshift(tmp1(:,:,1:n_path),+1,dim=3) - &
-                      & eoshift(tmp1(:,:,1:n_path),-1,dim=3) )
+    dtaudn = 0.5_rk * ( eoshift(Tau(:,:,1:n_path),+1,dim=3) - &
+                      & eoshift(Tau(:,:,1:n_path),-1,dim=3) )
 
     do i = 2, n_path-1
-      if ( any(abs(real(dtaudn(:,:,i)))  > tolScale*tol ) .or. &
-           any(abs(aimag(dtaudn(:,:,i))) > tolScale*tol ) ) do_gl(i) = .true.
+      if ( any(abs(real(dtaudn(:,:,i)))  >= tolScale*tol ) .or. &
+           any(abs(aimag(dtaudn(:,:,i))) >= tolScale*tol ) ) do_gl(i) = .true.
     end do
 
   end subroutine Path_Contrib_Polarized
@@ -211,6 +211,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.8  2003/02/07 03:26:24  vsnyder
+! Compute deltau instead of incoptdepth in Path_Contrib_Polarized
+!
 ! Revision 2.7  2003/02/06 21:36:18  vsnyder
 ! Cosmic -- errr -- cosmetic changes
 !
