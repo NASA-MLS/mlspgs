@@ -381,12 +381,12 @@ contains ! =====     Public Procedures     =============================
         r1(i) = i             ! We know the diagonal will get a value
       end do
       do i = 1, nc
-        zt(i,1:i-1) = 0.0_r8  ! Clear left from the diagonal (helps Sparsify!)
         ii = i - x%r1(i)      ! Offset in VALUES of (I,I) element
         if ( ii < 0 .or. ii > x%r2(i) - x%r2(i-1) ) then
           call MLSMessage ( MLSMSG_Error, ModuleName, &
             & "Matrix in CholeskyFactor is not positive-definite." )
         end if
+        zt(i,1:i-1) = 0.0_r8  ! Clear left from the diagonal (helps Sparsify!)
 !       g = x%values(ii+x%r2(i-1)+1,1) - &
 !           & dot_product(zt(r1(i):i-1,i),zt(r1(i):i-1,i))
         g = x%values(ii+x%r2(i-1)+1,1) - &
@@ -579,7 +579,7 @@ contains ! =====     Public Procedures     =============================
   !  M_Full: R1 and R2 are not used (they are allocated with zero extent).
   !   The value of the (i,j) element of the block is VALUES(i,j).
 
-    type(MatrixElement_T), intent(out) :: Z
+    type(MatrixElement_T), intent(inout) :: Z
     integer, intent(in) :: nRows, nCols, Kind
     integer, intent(in), optional :: NumberNonzero ! Only for M_Banded and
                                                    ! M_Column_Sparse
@@ -949,7 +949,6 @@ contains ! =====     Public Procedures     =============================
             end if
           end do ! j
         end do ! i
-        zb%values => z
       end select
     case ( M_Column_sparse )
       select case ( yb%kind )
@@ -1376,7 +1375,7 @@ contains ! =====     Public Procedures     =============================
       & "B matrix not compatible with U matrix in SolveCholeskyM_0" )
     my_t = .false.
     if ( present(transpose) ) my_t = transpose
-    nc = b%nCols
+    nc = my_b%nCols
 
     call allocate_test ( xs, my_b%nRows, my_b%nCols, "XS in SolveCholeskyM_0", &
       & ModuleName )
@@ -1872,6 +1871,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.23  2001/05/09 01:58:12  vsnyder
+! Improper intent(out) -> intent(inout), don't access an absent optional dummy
+!
 ! Revision 2.22  2001/05/08 20:29:40  vsnyder
 ! Periodic commit -- workong on sparse matrix blunders
 !
