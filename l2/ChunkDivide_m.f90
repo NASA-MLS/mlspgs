@@ -812,9 +812,11 @@ contains ! ===================================== Public Procedures =====
 
       ! If at this point the last two chunks end in the same place, this is
       ! a subtle defect in our chunking algorihtm, lets avoid it
-      if ( chunks(noChunks-1)%lastMAFIndex == chunks(noChunks)%lastMAFIndex ) then
-        call DeleteChunk ( chunks, noChunks )
-        noChunks = noChunks - 1
+      if ( noChunks > 1 ) then
+        if ( chunks(noChunks-1)%lastMAFIndex == chunks(noChunks)%lastMAFIndex ) then
+          call DeleteChunk ( chunks, noChunks )
+          noChunks = noChunks - 1
+        end if
       end if
 
       ! Do some dumping
@@ -2190,6 +2192,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.56  2004/11/03 17:19:09  livesey
+! Bug fix in case where only one chunk
+!
 ! Revision 2.55  2004/10/05 23:09:54  pwagner
 ! Can handle dropped MAFs, maneuvers that disrupt monotonic geodAngle
 !
