@@ -92,6 +92,7 @@ module ChunkDivide_m
   logical, parameter :: CHECKFORSHAREDMAFS = .true.
   logical, parameter :: CHECKFORMAFSINRANGE = .true.
   logical, parameter :: CHECKFORNONNEGOVLPS = .true.
+  logical, parameter :: DONTPAD = .true.
 
 contains ! ===================================== Public Procedures =====
 
@@ -451,9 +452,11 @@ contains ! ===================================== Public Procedures =====
         & l1b_hdf_version, &
         & .false. )
       call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
-        & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+        & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+        & dontPad=DONTPAD )
       call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
-        & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+        & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+        & dontPad=DONTPAD )
       noMAFs = mafRange(2) - mafRange(1) + 1
       m1 = mafRange(1) + 1
       m2 = mafRange(2) + 1
@@ -592,9 +595,11 @@ contains ! ===================================== Public Procedures =====
         & l1b_hdf_version, &
         & .false. )
       call ReadL1BData ( l1bInfo%l1bOAId, trim(tp_angle), &
-        & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+        & tpGeodAngle, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+        & dontPad=DONTPAD )
       call ReadL1BData ( l1bInfo%l1bOAId, trim(MAF_start), &
-        & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+        & taiTime, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+        & dontPad=DONTPAD )
       noMAFs = mafRange(2) - mafRange(1) + 1
       m1 = mafRange(1) + 1
       m2 = mafRange(2) + 1
@@ -1854,7 +1859,8 @@ contains ! ===================================== Public Procedures =====
       !  .false. )
       ! Read time from the L1BOA file
       call ReadL1BData ( l1bInfo%l1boaId, trim(MAF_start), taiTime, &
-        & noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+        & noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+        & dontPad=DONTPAD )
 
       ! Deduce the first and last MAFs to consider
       call Hunt ( taiTime%dpField(1,1,:), &
@@ -1896,10 +1902,12 @@ contains ! ===================================== Public Procedures =====
             &   lit_indices(config%criticalModules) == modules(mod)%name ) ) then
             ! Read the tangent point altitude
             call ReadL1BData ( l1bInfo%l1boaID, trim(tp_alt), &
-              & tpGeodAlt, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+              & tpGeodAlt, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+              & dontPad=DONTPAD )
             ! Read the out of plane distance
             call ReadL1BData ( l1bInfo%l1boaID, trim(tp_orby), &
-              & tpOrbY, noMAFsRead, flag, hdfVersion=l1b_hdf_version )
+              & tpOrbY, noMAFsRead, flag, hdfVersion=l1b_hdf_version , &
+              & dontPad=DONTPAD )
             ! Consider the scan range in each MAF in turn
             do maf = 1, noMAFs
               scanMax = maxval ( tpGeodAlt%dpField(1,:,maf) )
@@ -2110,6 +2118,9 @@ contains ! ===================================== Public Procedures =====
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.54  2004/08/23 22:00:39  pwagner
+! Made most readl1bData dontpad=.true.
+!
 ! Revision 2.53  2004/08/16 17:10:04  pwagner
 ! Passes dontPad option to readL1BData
 !
