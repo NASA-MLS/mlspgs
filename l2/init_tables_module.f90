@@ -375,6 +375,7 @@ contains ! =====     Public procedures     =============================
              l+l_negativePrecision, l+l_offsetRadiance, l+l_profile, &
              l+l_reflectorTempModel, l+l_rotateField, l+l_vector, &
              l+l_scaleOverlaps, l+l_special, l+l_splitSideband, &
+             l+l_resetUnusedRadiances, &
              l+l_RHIFromH2O, l+l_RHIPrecisionFromH2O, l+l_spreadChannel, &
              l+l_H2OFromRHI, l+l_fold, l+l_rectanglefromlos, l+l_vGrid, &
              l+l_wmoTropopause, n+n_dt_def, &
@@ -1087,6 +1088,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.337  2003/10/15 23:12:16  livesey
+! Added resetUnusedRadiances
+!
 ! Revision 2.336  2003/10/10 23:28:19  vsnyder
 ! Allow rowQuantity and colQuantity to be optional in dumpBlocks
 !
