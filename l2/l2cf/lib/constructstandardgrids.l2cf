@@ -44,10 +44,13 @@ vGridHighCloudR4:  vGrid, type=Explicit, coordinate=Zeta, values=[146mb, 46mb], 
 vGridLowCloudR5:  vGrid, type=Explicit, coordinate=Zeta, values=[1000mb,68mb], resolution=6
 vGridHighCloudR5: vGrid, type=Explicit, coordinate=Zeta, values=[68mb,46mb], resolution=6
 
+!define(allIterationLevels,{!forloop({i},1,19,{!i, })20}) ; 1,2,3..20
+!define(allPhaseLevels,{!forloop({i},1,99,{!i, })100}) ; 1,2,3..100
+                                                                                
 vGridIterations: vGrid, type=Explicit, coordinate=Integer, $
-    values=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    values=[!allIterationLevels]
 vGridPhases: vGrid, type=Explicit, coordinate=Integer, $
-    values=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    values=[!allPhaseLevels]
 
 sGridStandard:  vGrid, type=Explicit,   $
        values=[20,40,60,80,100,120,140,160,180,200,$
@@ -60,6 +63,9 @@ vGridWMO: VGrid, type=Logarithmic, coordinate=Zeta, $
   start=1000mb, formula=[97:48]
 
 ; $Log$
+; Revision 1.22  2004/06/22 22:43:26  pwagner
+; Increased diagnostic vGrid noSurfs to 20
+;
 ; Revision 1.21  2004/06/22 18:35:04  pwagner
 ; defaults to writing retrieval diagnostics to l2aux instead of dgg
 ;
