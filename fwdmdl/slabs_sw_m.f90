@@ -1138,12 +1138,17 @@ contains
 
       uv = cvoigth6(xa,y)
 
-    else
+    else if ( x*x + y*y > 0.0036 ) then
 
 ! Near line center where Doppler dominates Pressure broadening
 
+      uv = cdrayson(xa,y)
+
+    else
+
+! Very close to the line center, where cdrayson seems to have a bug
+
       uv = taylor(xa,y)
-!     uv = cdrayson(xa,y)
 
     end if
 
@@ -2113,6 +2118,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.32  2004/04/19 21:02:19  vsnyder
+! Use Taylor instead of CDrayson near the origin
+!
 ! Revision 2.31  2004/04/17 00:37:00  vsnyder
 ! Analytic temperature derivatives
 !
