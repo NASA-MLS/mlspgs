@@ -1,0 +1,31 @@
+\fillMethod{Gridded}
+
+\index{Gridded data!filling from}
+
+\begin{cfFragment}
+Fill, quantity=<vector>.<quantity>, method=gridded,
+   sourceGrid=<grid>
+   [, allowMissing=<true|false>]
+\end{cfFragment}
+\cfField{sourceGrid}
+\cfField{allowMissing}
+
+This fill method fills a vector quantity by interpolating a gridded
+dataset in all the appropriate directions (temporal, horizontal,
+vertical, solar time / zenith).  The grid would have been defined by a
+\cf+gridded+ command in the \cf+readApriori+ section, or by a \cf+merge+
+instruction in the \cf+mergeGrids+ section.  The vertical coordinate
+types for the grid and the quantity have to match.  No other checking is
+done to ensure that the fill is appropriate (\eg that you're not trying
+to fill a temperature quantity with H\cs2O data).
+
+By default the program will raise an error if any of the input gridded
+data values used in the interpolation are missing or bad.  If the user
+wishes to allow missing values in the resulting vector quantity (not
+recommended), then set the \cf+allowMissing+ option.
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "l2ug"
+%%% End: 

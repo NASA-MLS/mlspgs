@@ -4,10 +4,14 @@
 %
 \newcommand{\eg}{e.g.,\xspace}
 \newcommand{\ie}{i.e.,\xspace}
+\newcommand{\cs}[1]{$_{\text{#1}}$}
+\newcommand{\cp}[1]{$^{\text{#1}}$}
 %
 % Standard sections and subsections
 \newcommand{\cfCommand}[1]{\clearpage\section*{#1}\index{#1|textbf}}
-\newcommand{\fillMethod}[1]{\subsection*{Fill method #1}\index{#1}\index{Fill!#1}}
+\newcommand{\fillMethod}[1]{\subsection*{Fill method
+    #1}\index{#1}\index{Fill!#1}}
+\newcommand{\cfField}[1]{\index{#1@\texttt{#1}}}
 %
 % Wrappers for the listings stuff
 \lstnewenvironment{cfFragment}{\vspace{1ex}}{\vspace{1ex}}
