@@ -17,18 +17,18 @@
     tempY = oldY
 
     if ( present(rangeofperiod) ) then
-	  period  = rangeofPeriod(2)-rangeofPeriod(1)
-	  jump = -1
-	  do j =1, size(oldY)-1
-		  if(abs(tempY(j+1)-tempY(j)) > period/2. ) jump = j 
-	  end do
-	  if(jump /= -1) then
-	     if(tempY(jump+1) > tempY(jump)) then
-		  tempY(jump+1:) = tempY(jump+1:) - period
-	     else 
-		  tempY(jump+1:) = tempY(jump+1:) + period
-	     end if
-	  end if
+      period  = rangeofPeriod(2)-rangeofPeriod(1)
+      jump = -1
+      do j = 1, size(oldY)-1
+	if ( abs(tempY(j+1)-tempY(j)) > 0.5*period ) jump = j 
+      end do
+      if(jump /= -1) then
+	if ( tempY(jump+1) > tempY(jump) ) then
+	  tempY(jump+1:) = tempY(jump+1:) - period
+	else 
+	  tempY(jump+1:) = tempY(jump+1:) + period
+	end if
+      end if
     end if
 
     nullify ( tempDerivative )
@@ -51,13 +51,16 @@
     newY = tempResult(:,1)
 
     if ( present(rangeofperiod) ) then
-	  period  = rangeofPeriod(2)-rangeofPeriod(1)
-	  where (newY > rangeofperiod(2)) 
-	    newY = newY - period
-	  elsewhere (newY < rangeofperiod(1)) 
-	    newY = newY + period
-	  end where
+      period  = rangeofPeriod(2)-rangeofPeriod(1)
+      where ( newY > rangeofperiod(2) ) 
+	newY = newY - period
+      elsewhere (newY < rangeofperiod(1)) 
+	newY = newY + period
+      end where
     end if
 !  end subroutine InterpolateScalar_r*
 
 ! $Log$
+! Revision 1.1  2002/10/04 00:45:50  vsnyder
+! First commit
+!
