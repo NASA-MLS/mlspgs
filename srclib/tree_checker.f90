@@ -647,11 +647,11 @@ m:              do j = 3, nsons(field)
       if ( type /= type2 ) then
         call announce_error ( root, inconsistent_types, (/ son1, son2 /) )
       end if
-      if ( units /= phyq_dimensionless .and. &
-           units2 /= phyq_dimensionless .and. &
-           units /= units2 ) then
-        call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
-      end if
+!     if ( units /= phyq_dimensionless .and. &
+!          units2 /= phyq_dimensionless .and. &
+!          units /= units2 ) then
+!       call announce_error ( root, inconsistent_units, (/ son1, son2 /) )
+!     end if
       if ( type == num_value ) type = range
     case ( n_and, n_or )
       son1 = subtree(1,root); son2 = subtree(2,root)
@@ -879,6 +879,9 @@ m:              do j = 3, nsons(field)
 end module TREE_CHECKER
 
 ! $Log$
+! Revision 1.14  2002/07/25 00:25:10  vsnyder
+! In Check_Field_Type, say NO if type is out-of-range -- i.e., don't crash
+!
 ! Revision 1.13  2002/05/23 20:35:57  vsnyder
 ! Eliminate two unused variables
 !
