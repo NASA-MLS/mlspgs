@@ -16,7 +16,7 @@ module ForwardModelWrappers
 
   use ForwardModelInterface, only: FULLFORWARDMODEL
   use LinearizedForwardModel_m, only: LINEARIZEDFORWARDMODEL
-!  use ScanModelModule, only: SCANFORWARDMODEL
+  use ScanModelModule, only: SCANFORWARDMODEL
 
   implicit none
   private
@@ -54,8 +54,8 @@ contains ! ============= Public Procedures ==========================
       call LinearizedForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
         FwdModelOut, Ifm, fmStat, Jacobian )
     case ( l_scan )
-      !call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
-      !  FwdModelOut, Ifm, fmStat, Jacobian )
+      call ScanForwardModel ( ForwardModelConfig, FwdModelIn, FwdModelExtra, &
+        FwdModelOut, Ifm, fmStat, Jacobian )
     case default ! Shouldn't get here if parser etc. worked
     end select
   end subroutine ForwardModel
@@ -63,6 +63,9 @@ contains ! ============= Public Procedures ==========================
 end module ForwardModelWrappers
 
 ! $Log$
+! Revision 2.4  2001/05/03 23:42:48  livesey
+! Activated scan model.
+!
 ! Revision 2.3  2001/04/28 17:48:48  livesey
 ! Removed some unnecessary checks
 !
