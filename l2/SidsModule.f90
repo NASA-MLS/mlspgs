@@ -51,7 +51,7 @@ contains
     ! Dummy arguments:
     integer, intent(in) :: Root         ! Of the relevant subtree of the AST
     ! Indexes an n_cf vertex
-    type(vector_T), dimension(:), intent(inout), target :: VectorDatabase
+    type(vector_T), dimension(:), pointer :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: configDatabase
     type(MLSChunk_T), intent(in) :: chunk
@@ -218,11 +218,11 @@ contains
             if ( ixJacobian > 0 .and. .not. associated(perturbation)) then
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
-                & FwdModelOut, ifm, fmStat, Jacobian )
+                & FwdModelOut, ifm, fmStat, Jacobian, vectorDatabase )
             else
               call forwardModel ( configDatabase(configs(config)), &
                 & FwdModelIn, FwdModelExtra, &
-                & FwdModelOut, ifm, fmStat )
+                & FwdModelOut, ifm, fmStat, vectors=vectorDatabase )
             end if
           end do                        ! MAF loop
 
@@ -336,6 +336,10 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.44  2003/09/11 23:16:36  livesey
+! Now hands the vectors database to the forward model to support the
+! linearized forward model's xStar / yStar capabilities.
+!
 ! Revision 2.43  2003/06/20 19:38:26  pwagner
 ! Allows direct writing of output products
 !
