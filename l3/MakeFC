@@ -100,7 +100,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 #(otherwise makemakedep.sh assumes *.f90 needed)
 depends:
 	$(MLSBIN)/makemakedep.sh \
-        -d synoptic.f90 -d synoptic_prog.f90 -d main_func.f90 \
+        -d synoptic.f90 -d synoptic_prog.f90 -d main_func.f90 -d L3DZData.f90\
         $(libmls_sources) $(srclib)
 
 clean:
@@ -129,6 +129,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.5  2001/02/08 23:16:46  pwagner
+# Without PVM_OBJS.inc file
+#
 # Revision 1.4  2001/01/23 23:27:38  pwagner
 # With optional PVM support
 #
