@@ -31,7 +31,6 @@ module L2Parallel
     & GETNICETIDSTRING
   use QuantityTemplates, only: QUANTITYTEMPLATE_T, ADDQUANTITYTEMPLATETODATABASE, &
     & DESTROYQUANTITYTEMPLATECONTENTS
-  use MLSCommon, only: MLSCHUNK_T
   use Toggles, only: Gen, Switches, Toggle
   use Output_m, only: Output
   use Symbol_Table, only: ENTER_TERMINAL
@@ -789,3 +788,9 @@ contains ! ================================ Procedures ======================
   end subroutine CleanUpDeadChunksOutput
 
 end module L2Parallel
+
+!
+! $Log$
+! Revision 2.13  2001/06/19 22:58:07  pwagner
+! Eliminated duplicate declaration of MLSCommon
+!
