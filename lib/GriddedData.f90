@@ -46,8 +46,8 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   integer, parameter :: V_is_GPH = v_is_altitude+1
   integer, parameter :: V_is_theta = v_is_gph+1
   
-  ! If dumping gridded dataa, always give full details of any matching these
-  character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep'
+  ! If dumping gridded data, always give full details of any matching these
+  character(len=*), parameter :: ALWAYSDUMPTHESE = 'dao,ncep' ! -> ' '
 
   ! This type reflects the format of the Level 3 ASCII files, though note that
   ! these files can store multiple quantities such as these.
@@ -212,14 +212,16 @@ contains
     !                                        ! -1 Skip even 1-d arrays
     !                                        ! -2 Skip all but name
     !                                        ! >0 Dump even multi-dim arrays
-    !                                        ! Default 1
+    !                                        ! Default 0
 
     ! Local Variables
     integer :: MYDETAILS
+    integer :: FIELDVALUESDETAILS
 
     ! Executable code
-    myDetails = 1
+    myDetails = 0
     if ( present(details) ) myDetails = details
+    fieldvaluesdetails = myDetails
     if ( index(ALWAYSDUMPTHESE, trim(GriddedData%description)) > 0 ) &
       & myDetails = 1
 
@@ -266,7 +268,7 @@ contains
     if ( myDetails >= 0 ) call dump ( GriddedData%dateEnds, &
       & '    ending dates =' )
 
-    if ( MAYDUMPFIELDVALUES .and. myDetails > 0 ) then
+    if ( MAYDUMPFIELDVALUES .and. fieldvaluesdetails > 0 ) then
       call output ( ' ************ tabulated field values ********** ' ,advance='yes')
      ! May dump a 3-d slice of 6-d array
       if ( GriddedData%noDates == 1 .and. GriddedData%noSzas == 1 &
@@ -369,6 +371,9 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.20  2003/02/20 21:22:20  pwagner
+! Changed default dump details to no for multidim arrays
+!
 ! Revision 2.19  2003/02/19 19:13:28  pwagner
 ! new GriddedData_T with reduced precision
 !
