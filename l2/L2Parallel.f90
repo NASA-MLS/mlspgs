@@ -716,9 +716,23 @@ contains ! ================================ Procedures ======================
             ! First free any files that are in progress
             requestIndex = FindFirst ( directWriteRequests%chunk == deadChunk .and. &
               & directWriteRequests%status == DW_InProgress )
-            if ( requestIndex /= 0 ) directWriteFileBusy ( &
-              & directWriteRequests(requestIndex)%fileIndex ) = .false.
-            ! Now forget all the requests we had pending
+            if ( requestIndex /= 0 ) then
+              request => directWriteRequests(requestIndex)
+              directWriteFileBusy ( request%fileIndex ) = .false.
+              if ( index(switches,'mas') /= 0 ) then
+                call output ( 'Direct write died from ' )
+                if ( .not. usingSubmit ) &
+                  & call output ( trim(machineNames(deadMachine)) // ', ' )
+                call output ( trim(GetNiceTidString(deadTid)) )
+                call output ( ' chunk ' )
+                call output ( deadChunk )
+                call output ( ' ticket ' )
+                call output ( request%ticket, advance='yes')
+                call display_string ( directWriteFilenames(request%fileIndex), &
+                  & strip=.true., advance='yes' )
+              end if
+            end if
+            ! Now forget all the requests the dead chunk had pending
             where ( directWriteRequests%chunk == deadChunk )
               directWriteRequests%status = DW_Completed
             end where
@@ -899,29 +913,30 @@ contains ! ================================ Procedures ======================
         & 'Unable to reopen staging file:'//parallel%stagingFile )
     end if
 
-    do resInd = 1, size ( storedResults )
-      hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
-      if ( index(switches,'mas') /= 0 ) then
-        call output ( 'Joining ' // trim ( storedResults(resInd)%hdfName ), &
-          & advance='yes' )
-      endif
-      
-      do chunk = 1, noChunks
-        if (.not. chunksAbandoned(chunk) ) then
-          ! Setup for this quantity
-          if ( parallel%stageInMemory ) then
-            valInd = storedResults(resInd)%valInds(chunk)
-            qty => joinedVectors(valInd)%quantities(1)
-
-            if ( storedResults(resInd)%gotPrecision ) then
-              precInd = storedResults(resInd)%precInds(chunk)
-              precQty => joinedVectors(precInd)%quantities(1)
+    if ( associated ( storedResults ) ) then
+      do resInd = 1, size ( storedResults )
+        hdfNameIndex = enter_terminal ( trim(storedResults(resInd)%hdfName), t_string )
+        if ( index(switches,'mas') /= 0 ) then
+          call output ( 'Joining ' // trim ( storedResults(resInd)%hdfName ), &
+            & advance='yes' )
+        endif
+        
+        do chunk = 1, noChunks
+          if (.not. chunksAbandoned(chunk) ) then
+            ! Setup for this quantity
+            if ( parallel%stageInMemory ) then
+              valInd = storedResults(resInd)%valInds(chunk)
+              qty => joinedVectors(valInd)%quantities(1)
+              
+              if ( storedResults(resInd)%gotPrecision ) then
+                precInd = storedResults(resInd)%precInds(chunk)
+                precQty => joinedVectors(precInd)%quantities(1)
+              else
+                nullify ( precQty )
+              endif
             else
-              nullify ( precQty )
-            endif
-          else
-            write ( thisName, '(i0)' ) storedResults(resInd)%valInds(chunk)
-            call ReadVectorFromHDF5 ( stageFileID, trim(thisName), &
+              write ( thisName, '(i0)' ) storedResults(resInd)%valInds(chunk)
+              call ReadVectorFromHDF5 ( stageFileID, trim(thisName), &
               & myValues, joinedQuantities )
             qty => myValues%quantities(1)
             if ( storedResults(resInd)%gotPrecision ) then
@@ -968,6 +983,7 @@ contains ! ================================ Procedures ======================
         end if                          ! Didn't give up on this chunk
       end do
     end do
+  end if
 
     ! Now clean up and quit
     if ( .not. parallel%stageInMemory ) then
@@ -1264,6 +1280,9 @@ end module L2Parallel
 
 !
 ! $Log$
+! Revision 2.54  2003/07/11 01:23:59  livesey
+! Minor bug fix and more informative output
+!
 ! Revision 2.53  2003/07/08 17:30:43  livesey
 ! Bug fix in ticket issuing
 !
