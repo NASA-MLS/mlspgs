@@ -66,15 +66,17 @@ module Hydrostatic_m
     real(rp) :: dh_dz_S, H_calc, Z_old
     real(rp), dimension(size(z_grid),size(t_basis)) :: Eta, Piq
     real(rp), dimension(1,size(t_basis)) :: Piqa, Piqb
-    real(rp), dimension(size(t_basis)) :: Mass_corr
+    real(rp), dimension(size(z_grid)) :: Mass_corr
 !
 ! begin the code
 !
     n_lvls = size(z_grid)
     n_coeffs = size(t_basis)
 
-    where ( t_basis > 2.5_rp )
-      mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*t_basis - 0.02_rp*t_basis**2)
+    where ( z_grid > 2.5_rp )
+!      mass_corr = 1.0_rp / (0.875_rp + 0.1_rp*z_grid - 0.02_rp*z_grid**2)
+! This is a second order approximation to the above
+      mass_corr = 1.0_rp * 0.02_rp*(z_grid - 2.5_rp)**2
     elsewhere
       mass_corr = 1.0_rp
     end where
@@ -147,15 +149,10 @@ module Hydrostatic_m
 
     if (present(z_surface)) z_surface = z_surf
 
-! compute the piq integrals relative to the surface
+! compute the piq integrals with mass reduction compensation relative to the
+! surface
 
-    call piq_int ( z_grid, t_basis, z_surf, piq )
-
-! compensate piq for mass reduction. Note this is not the
-! most rigourous code because it assumes the mass is constant
-! across a coefficient.
-
-    piq = piq * SPREAD(mass_corr,1,n_lvls)
+    CALL piq_int ( z_grid,t_basis,z_surf,piq,Z_MASS=2.5_rp,C_MASS=0.02_rp )
 
 ! compute the height vector
 
@@ -164,7 +161,7 @@ module Hydrostatic_m
     h_grid = r_eff * h_grid / (r_eff * g_ref - h_grid)
     dhidzi = (h_grid+r_eff)**2 * boltz / (g_ref * r_eff**2)
     dhidtq = spread(dhidzi,2,n_coeffs) * piq
-    dhidzi = dhidzi * t_grid
+    dhidzi = dhidzi * MATMUL(eta * SPREAD(mass_corr,2,n_coeffs),t_coeffs)
 
 ! this derivative is useful for antenna derivatives
 
@@ -181,6 +178,9 @@ module Hydrostatic_m
 end module Hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.6  2003/02/07 00:04:54  bill
+! mass function bug fix
+!
 ! Revision 2.5  2002/10/08 17:08:04  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
