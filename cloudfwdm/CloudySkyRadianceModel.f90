@@ -40,7 +40,7 @@ contains
       SUBROUTINE CloudForwardModel (doChannel, NF, NZ, NT, NS, N, &
              &   NZmodel,                                         &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin, &
-             &   WCin, IPSDin, ZT, RE, ISURF, ISWI, ICON, IFOV,   &
+             &   WCin, IPSDin, ZT, ZZT, RE, ISURF, ISWI, ICON, IFOV,   &
              &   phi_tan, h_obs, elev_offset, AntennaPattern,     &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,  &
              &   NU, NUA, NAB, NR, Slevl, noS)
@@ -810,6 +810,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.16  2001/10/11 20:02:46  jonathan
+! *** empty log message ***
+!
 ! Revision 1.15  2001/10/09 22:12:10  jonathan
 ! *** empty log message ***
 !
