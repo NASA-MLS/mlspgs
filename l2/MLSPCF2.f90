@@ -34,14 +34,11 @@ MODULE MLSPCF2
    INTEGER, PARAMETER :: mlspcf_clouds_start = 20004
    INTEGER, PARAMETER :: mlspcf_clouds_end = 20033
    !
-   INTEGER, PARAMETER :: mlspcf_l2ncep_start = 21000
-   INTEGER, PARAMETER :: mlspcf_l2ncep_end = 21019
+   INTEGER, PARAMETER :: mlspcf_l2pc_start = 20034
+   INTEGER, PARAMETER :: mlspcf_l2pc_end = 20063
    !
-   INTEGER, PARAMETER :: mlspcf_l2dao_start = 21020
-   INTEGER, PARAMETER :: mlspcf_l2dao_end = 21039
-   !
-   INTEGER, PARAMETER :: mlspcf_l2clim_start = 21040
-   INTEGER, PARAMETER :: mlspcf_l2clim_end = 21049
+   INTEGER, PARAMETER :: mlspcf_l2apriori_start = 21000
+   INTEGER, PARAMETER :: mlspcf_l2apriori_end = 21049
    !
    INTEGER, PARAMETER :: mlspcf_l1b_rad_start = 21050
    INTEGER, PARAMETER :: mlspcf_l1b_rad_end = 21109
