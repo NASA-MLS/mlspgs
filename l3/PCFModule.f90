@@ -27,6 +27,7 @@ MODULE PCFModule
 !                SearchPCFNames
 !                FindFileType
 !                FindFileDay
+!                SearchPCFDates
 
 ! Remarks:  This module contains subroutines related to getting file names from
 !           the PCF.
@@ -383,11 +384,96 @@ CONTAINS
    END SUBROUTINE FindFileDay
 !----------------------------
 
+!-------------------------------------------------------------------------------
+   SUBROUTINE SearchPCFDates (type, date, mlspcf_start, mlspcf_end, match, file)
+!-------------------------------------------------------------------------------
+
+! Brief description of subroutine
+! This routine searches the PCF for a file for desired type and date.  For input,
+! the date is given as a CHARACTER string in CCSDS B format.  For output, a
+! matching PCF number & name, or a value of match = -1 if no match was found, are
+! returned.
+
+
+! Arguments
+
+      CHARACTER (LEN=8), INTENT(IN) :: date
+
+      CHARACTER (LEN=*), INTENT(IN) :: type
+
+      INTEGER, INTENT(IN) :: mlspcf_end, mlspcf_start
+
+      INTEGER, INTENT(OUT) :: match
+
+      CHARACTER (LEN=FileNameLen) :: file
+
+! Parameters
+
+! Functions
+
+! Variables
+
+      CHARACTER (LEN=8) :: pDate
+      CHARACTER (LEN=480) :: msr
+
+      INTEGER :: i, indx, returnStatus, version
+
+      match = -1
+
+! Loop through all the PCF numbers for the file type
+
+      DO i = mlspcf_start, mlspcf_end
+
+         version = 1
+         returnStatus = Pgs_pc_getReference(i, version, file)
+
+! If no file name was returned, go on to the next PCF number
+
+         IF (returnStatus /= PGS_S_SUCCESS) CYCLE
+
+! Check that the returned file name is for the proper type
+
+         IF ( INDEX(file, TRIM(type)) /= 0 ) THEN
+
+! Extract the date from the file name
+
+            indx = INDEX(file, '.', .TRUE.)
+            pDate = file(indx-8:indx-1)
+
+! Check that the date matches the desired input
+
+            IF ( date == pDate) THEN
+
+! Save the PCF name and number
+
+               match = i
+               EXIT
+
+            ENDIF
+
+         ENDIF
+
+      ENDDO
+
+! If match was found, this is an error condition
+
+      IF (match == -1) THEN
+         msr = 'No PCF entry of the form ' // TRIM(type) // ' for day ' // date
+         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+      ENDIF
+
+!-------------------------------
+   END SUBROUTINE SearchPCFDates
+!-------------------------------
+
 !===================
 END MODULE PCFModule
 !===================
 
 ! $Log$
+! Revision 1.8  2001/03/27 19:42:38  nakamura
+! Moved annotation routines to PCFHdr module.
+!
 ! Revision 1.7  2001/02/21 21:17:36  nakamura
 ! Changed MLSPCF to MLSPCF3.
 !
@@ -409,4 +495,3 @@ END MODULE PCFModule
 ! Revision 1.1  2000/10/17 20:31:58  nakamura
 ! Module for getting file names based on input in the PCF and CF.
 !
-
