@@ -11,18 +11,24 @@ S = ..
 # include files %.f9h shared by l2, lib are in $(srclib)
 srclib = ../../srclib
 
+# .mod files needed by lib are in $(blaslib)
+blaslib = ../../blas/$(MLSCONFG)
 
-# Set paths for finding source files (different from .o and .mod)
+# This is the machines directory--its files are compiled directly into libdir
+dir1 =
 
-# include files %.fneeded by lib are in $(blaslib)
-blaslib = ../../blas
+# This is the srclib directory--its files are compiled directly into libdir
+dir2 =
+
+# This is the blas directory
+dir3 = $(blaslib)/
 
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ ../machines/$(MLSCONFG) $(blaslib)
+vpath %.f90 ../ ../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
-vpath %.f ../ $(PGSINC) $(blaslib)
+vpath %.f ../ $(PGSINC)
 vpath %.c ../
 
 FC = f95
@@ -34,7 +40,7 @@ libdir = ../../lib/$(MLSCONFG)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S 
+INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S -I $(blaslib)
 
 # Define some suffix rules
 
@@ -53,6 +59,9 @@ INC_PATHS = $(EXTRA_PATHS) -I $(PGSINC) -I $(srclib) -I $S
 	$(CC) -c ${INC_PATHS} -DNAGf90Fortran $<
 
 # $Log$
+# Revision 1.13  2001/11/02 01:03:30  pwagner
+# Added stuff for lapack, inrinsic BLAS
+#
 # Revision 1.12  2001/09/05 20:51:08  pwagner
 # Deleted refs to MATRIX_OBJS
 #

@@ -11,18 +11,24 @@ S = ..
 # include files %.f9h shared by l2, lib are in $(srclib)
 srclib = ../../srclib
 
+# .mod files needed by lib are in $(blaslib)
+blaslib = ../../blas/$(MLSCONFG)
 
-# Set paths for finding source files (different from .o and .mod)
+# This is the machines directory--its files are compiled directly into libdir
+dir1 =
 
-# include files %.fneeded by lib are in $(blaslib)
-blaslib = ../../blas
+# This is the srclib directory--its files are compiled directly into libdir
+dir2 =
+
+# This is the blas directory
+dir3 = $(blaslib)/
 
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
-vpath %.f90 ../ ../machines/$(MLSCONFG) $(blaslib)
+vpath %.f90 ../ ../machines/$(MLSCONFG)
 vpath %.f9h ../ $(srclib)
-vpath %.f ../ $(PGSINC) $(blaslib)
+vpath %.f ../ $(PGSINC)
 vpath %.c ../
 
 FC = f90
@@ -35,8 +41,8 @@ libdir = ../../lib/$(MLSCONFG)
 
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I "
-INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S \
- -I $(PGSINC) -I $(srclib) -I $S 
+INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S -p $(blaslib) \
+ -I $(PGSINC) -I $(srclib) -I $S -I $(blaslib)
 
 # Define some suffix rules
 
@@ -58,9 +64,10 @@ INC_PATHS = $(EXTRA_PATHS) -p $(PGSINC) -p $(srclib) -p $S \
 # They currently compile only under Lahey's LF95
 MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o 
 
-#SDP =SDPToolkitSubstitute.o
-#GD=GDapi.o
 # $Log$
+# Revision 1.6  2001/11/02 01:03:30  pwagner
+# Added stuff for lapack, inrinsic BLAS
+#
 # Revision 1.5  2001/08/15 21:03:28  pwagner
 # Default rules for .f and .c; EXTRA_PATHS added to INC_PATHS
 #
@@ -75,28 +82,3 @@ MATRIX_OBJS = MatrixModule_0.o MatrixModule_1.o
 #
 # Revision 1.1  2001/03/06 00:15:19  pwagner
 # First commit
-#
-# Revision 1.8  2001/02/26 21:14:39  pwagner
-# Commented out FOPTS assignment; now part of .configure setting
-#
-# Revision 1.7  2001/02/08 00:31:44  pwagner
-# Conditionally links sdot and ddot unless BLAS defined
-#
-# Revision 1.6  2001/01/13 00:24:42  pwagner
-# uses lib/machines/MLSCONFG/machine.f90
-#
-# Revision 1.5  2000/11/27 18:17:06  pwagner
-# MatrixModules part of lib only for LF95
-#
-# Revision 1.4  2000/11/16 22:57:02  pwagner
-# Looks for %.f9h in srclib
-#
-# Revision 1.3  2000/10/27 23:03:18  pwagner
-# Added PGSINC to vpath .f
-#
-# Revision 1.2  2000/10/21 00:15:39  pwagner
-# Removed hardwired PGSINC
-#
-# Revision 1.1  2000/10/18 22:11:28  pwagner
-# First commit
-#

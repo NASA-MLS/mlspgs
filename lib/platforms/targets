@@ -33,28 +33,6 @@ MACH_OBJS := $(shell echo ${machines_f90} | sed 's/f90/o/g')
 # If this is done, i.e. if PVM is defined, then PVM_OBJS will
 # be defined and built and added to libmls.a
 
-# LAPACK
-# If it is desired to link the executable with external LAPACK support,
-# the variable LAPACK should be defined
-# e.g. in the make statement: make LAPACK=/my_path/to_lapack_library
-# If this is done, i.e., LAPACK is defined, then 
-# lapack_objs will be gemm_external_m.o
-# otherwise it will be gemm_intrinsic.o
-
-# BLAS
-# If it is desired to link the executable with external BLAS support,
-# the variable BLAS should be defined
-# e.g. in the make statement: make BLAS=/my_path/to_BLAS_library
-# If this is done, i.e., BLAS is defined, then blas_objs will
-# be blank
-# Otherwise, i.e. if BLAS is left undefined, then blas_objs will
-# depend on LIB_BLAS:
-# if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
-# and blas_objs will be dot_intrinsic.o; otherwise
-# be set to the compiled objects based on the routines in blaslib
-# currently sdot and ddot, which will be built and added to libmls.a
-# along with dot_external_m
-
 # PGSTK
 # This variable is defined only if you will use the toolkit
 # to build the library and all the other software
@@ -114,25 +92,18 @@ endif
 
 ifdef BLAS
    blas_message=Building mlslib with external blas support
-   blas_objs := dot_external_m.o
 else
 ifeq ($(LIB_BLAS),f95)
    blas_message=Building mlslib with blas supplied by f95 intrinsics
-   blas_objs := dot_intrinsic.o
 else
    blas_message=Building mlslib with internal blas support
-   blas_objs := sdot.o ddot.o  dot_external_m.o
 endif
 endif
 
 ifdef LAPACK
    lapack_message=Building mlslib with external lapack support
-   lapack_objs := gemm_external_m.o gemv_external_m.o
 else
    lapack_message=Building mlslib with lapack supplied by f95 intrinsics
-#   lapack_objs := gemm_intrinsic.o
-   lapack_objs := dgemm_intrinsic.o sgemm_intrinsic.o gemm_external_m.o \
-        dgemv_intrinsic.o sgemv_intrinsic.o gemv_external_m.o
 endif
 
 ifdef PGSTK
@@ -141,13 +112,7 @@ else
    tk_message=Building mlslib without toolkit; using SDPToolkitSubstitute
 endif
 
-#${OBJS}: machine.o
-#${OBJS}: ${MACH_OBJS} ${blas_objs} ${lapack_objs}
-
-MatrixModule_0.o MatrixModule_0.o: ${blas_objs} ${lapack_objs}
-
-#libmls.a: ${OBJS} machine.o ${PVM_OBJS} ${blas_objs}
-libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS} ${blas_objs} ${lapack_objs}
+libmls.a: ${OBJS} ${MACH_OBJS} ${PVM_OBJS}
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
@@ -199,12 +164,11 @@ Hdf.o:
 	$(FC) -c $(DUSTY) $(INC_PATHS) $(S)/Hdf.f90 $(FAFTER)
 string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
-ddot.o:
-	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/ddot.f $(FAFTER)
-sdot.o:
-	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) $(blaslib)/sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.39  2001/11/14 17:30:23  pwagner
+# Added ..gemv.. stuff
+#
 # Revision 1.38  2001/11/12 21:42:46  pwagner
 # gemm_external_m.o now always there
 #

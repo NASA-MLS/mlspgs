@@ -24,8 +24,8 @@ include ../Makefile.dep
 #   ../Makefile.dep -- dependencies among the primary Fortran modules
 
 # ========================================================================
-#          The different versions of libblas.a
-all: libblas.a
+#          The different versions of libmlspack.a
+all: libmlspack.a
 #
 #	if BLAS blank, LIB_BLAS != f95   sdot.o ddot.o dot_external_m.o
 #	if BLAS blank, LIB_BLAS = f95        dot_intrinsic.o
@@ -51,28 +51,22 @@ endif
 delete_lib_first = no
 
 ifdef BLAS
-   blas_message=Building mlslib with external blas support
-   blas_objs := dot_external_m.o
+   blas_message=Building mlspack without blas support
 else
 ifeq ($(LIB_BLAS),f95)
-   blas_message=Building mlslib with blas supplied by f95 intrinsics
-   blas_objs := dot_intrinsic.o
+   blas_message=Building mlspack with blas supplied by f95 intrinsics
 else
-   blas_message=Building mlslib with internal blas support
-   blas_objs := sdot.o ddot.o  dot_external_m.o
+   blas_message=Building mlspack with internal blas support
 endif
 endif
 
 ifdef LAPACK
-   lapack_message=Building mlslib with external lapack support
-   lapack_objs := gemm_external_m.o
+   lapack_message=Building mlspack without lapack support
 else
-   lapack_message=Building mlslib with lapack supplied by f95 intrinsics
-#   lapack_objs := gemm_intrinsic.o
-   lapack_objs := dgemm_intrinsic.o sgemm_intrinsic.o gemm_external_m.o
+   lapack_message=Building mlspack with lapack supplied by f95 intrinsics
 endif
 
-libblas.a: ${OBJS} 
+libmlspack.a: ${OBJS} 
 		@echo "$(blas_message)"
 		@echo "$(lapack_message)"
 ifeq ($(delete_lib_first),yes)
@@ -86,8 +80,8 @@ clean:
 	rm -f *.o *.mod *.a
 
 tar:
-	rm -f libblas.tgz
-	tar hcvzf libblas.tgz * --exclude \*.o --exclude \*.mod --exclude libblas.a
+	rm -f libmlspack.tgz
+	tar hcvzf libmlspack.tgz * --exclude \*.o --exclude \*.mod --exclude libmlspack.a
 
 # ========================================================================
 
@@ -103,3 +97,6 @@ sdot.o:
 	$(FC) -c $(DUSTY_NO_OPT) -O $(INC_PATHS) ../sdot.f $(FAFTER)
 
 # $Log$
+# Revision 1.1  2001/11/13 23:01:42  pwagner
+# First commit
+#

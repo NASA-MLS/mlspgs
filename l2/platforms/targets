@@ -66,6 +66,8 @@ CONFDIR=../..
 UTILDIR=../../util
 TESTSDIR=../../tests
 
+mlspack_dir=../../blas/$(MLSCONFG)
+
 # reecho.sh can filter out globbed file expansions that fail
 # e.g., '*.f90 *.f' -> '*.f90" if there aren't any .f files
 # However we will be using it just to create lapack_linker_line 
@@ -117,11 +119,13 @@ else
    lapack_message=Building mlsl2 with internally-supplied LAPACK
 endif
 
+mlspack_linker_line=-L${mlspack_dir} -lmlspack
+mlspack_message=Building mlsl2 with mlspack
 fwdmdl_linker_line=-L${fwdmdldir} -lfwdmdl
 fwdmdl_message=Building mlsl2 with forward model
 cloud_linker_line=-L${clouddir} -lcloud
 cloud_message=Building mlsl2 with cloud forward model
-mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(libdir)/libmls.a \
+mlsl2_prereqs=$(ALLOBJS) $(PVM_OBJS) $(mlspack_dir)/libmlspack.a $(libdir)/libmls.a \
 	 $(fwdmdldir)/libfwdmdl.a $(clouddir)/libcloud.a
 
 ifdef PGSTK
@@ -176,6 +180,7 @@ mlsl2: $(mlsl2_prereqs)
         $(pvm_linker_line) \
         $(blas_linker_line) \
         $(lapack_linker_line) \
+        $(mlspack_linker_line) \
         $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 		  
@@ -251,6 +256,9 @@ MLSL2.o: $(CONFDIR)/notes/switches $(CONFDIR)/notes/options
 
 
 # $Log$
+# Revision 1.33  2001/11/07 00:31:44  pwagner
+# Added lapack linker line and msg
+#
 # Revision 1.32  2001/10/15 17:20:09  pwagner
 # Uses new -j option in init_gen
 #

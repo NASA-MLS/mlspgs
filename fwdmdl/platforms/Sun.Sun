@@ -24,6 +24,9 @@ srclib = ../../srclib
 
 dir2 =
 
+# Use the libmlspack.a directory, blaslib, for .mod files
+blaslib = ../../blas/$(MLSCONFG)
+
 # Set paths for finding source files (different from .o and .mod)
 
 vpath %.o ./
@@ -39,8 +42,8 @@ DUSTY = $(FOPTS)
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I" . Don't put spaces between "-I" and the path
 # Same goes for "-M" for module paths.
-INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
- -I$(PGSINC) -I$(srclib) -I$S -I$(libdir)
+INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) -M$(blaslib) \
+ -I$(PGSINC) -I$(srclib) -I$S -I$(libdir) -I$(blaslib)
 
 # Define some suffix rules
 
@@ -62,6 +65,9 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$(srclib) -M$S -M$(libdir) \
 l_specials = -lnsl
 
 # $Log$
+# Revision 2.0  2001/09/17 20:26:28  livesey
+# New forward model
+#
 # Revision 1.1  2001/09/10 18:39:07  pwagner
 # First commit
 #
