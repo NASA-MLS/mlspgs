@@ -506,6 +506,7 @@ contains ! =====     Public procedures     =============================
              begin, f+f_signal, t+t_string, n+n_field_type, &
              begin, f+f_type, t+t_quantityType, n+n_field_type, &
              begin, f+f_unit, t+t_units, n+n_field_type, &
+             begin, f+f_minValue, t+t_numeric, n+n_field_type, &
              np+n_spec_def, &
       begin, s+s_vectorTemplate, & ! Must be AFTER s_quantity
              begin, f+f_quantities, s+s_quantity, n+n_field_spec, &
@@ -871,6 +872,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.241  2002/09/24 21:38:03  livesey
+! Added minValue
+!
 ! Revision 2.240  2002/09/23 22:15:05  vsnyder
 ! Delete maxF field name and numF literal name
 !
