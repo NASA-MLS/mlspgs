@@ -1,0 +1,15 @@
+; $Id$
+
+;; This L2CF fragment sets the contents of parts of state to the results
+;; of the `core' retrievals.
+
+begin Fill
+  !define(fillFromOneCoreL2GP,{Fill, quantity=state.$1, method=l2gp, $
+    sourceL2GP=l2gpCore$1Input!nl})
+  !forall(fillFromOneCoreL2GP,!coreL2GPSpecies)
+  ;; Also do GPH
+  Fill, quantity=state.GPH, method=hydrostatic, refGPHQuantity=state.refGPH, $
+    temperatureQuantity=state.temperature
+  ;; Also do ptan
+  Fill, quantity=state.ptanGHz, method=l2aux, sourceL2AUX=l2auxCorePtanInput
+end Fill
