@@ -166,8 +166,8 @@ contains
       tm = t_path_m(path_inds)
       tp = t_path_p(path_inds)
       ! compute path hyperbolic tangents
-      tanh1_p = tanh(0.5_rp * h_over_k * frq / tm)
-      tanh1_m = tanh(0.5_rp * h_over_k * frq / tp)
+      tanh1_p = tanh(0.5_rp * h_over_k * frq / tp)
+      tanh1_m = tanh(0.5_rp * h_over_k * frq / tm)
 
       do i = 1, no_mol
         betam = 0.0
@@ -657,7 +657,7 @@ contains
     type(slabs_struct), intent(in), optional :: Slabs_p(:), Slabs_m(:)
     real(rp), intent(in), optional :: Tanh1_p(:), Tanh1_m(:) ! tanh(frq*expa/2)
 ! outputs
-    real(rp), intent(out) :: Beta_value(:)
+    real(rp), intent(inout) :: Beta_value(:)
 ! optional outputs
     real(rp), optional, intent(out) :: T_power(:) ! for temperature derivative
     real(rp), pointer :: dBeta_dw(:) ! line width derivative
@@ -978,6 +978,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.46  2003/07/15 17:50:30  vsnyder
+! Callers need t_der_path_flags to be a pointer
+!
 ! Revision 2.45  2003/07/14 22:45:09  vsnyder
 ! Scale BP, BM by isotope ratio in t_power computation
 !
