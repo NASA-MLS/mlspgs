@@ -22,9 +22,9 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   private :: not_used_here 
   !-----------------------------------------------------------------------------
 
-  public :: AddGriddedDataToDatabase, Dump, DestroyGriddedData, &
-    & DestroyGriddedDataDatabase, GriddedData_T, SetupNewGriddedData, &
-    & NullifyGriddedData
+  public :: AddGriddedDataToDatabase, ConcatenateGriddedData, CopyGrid, &
+    & Dump, DestroyGriddedData, DestroyGriddedDataDatabase, GriddedData_T, &
+    & SetupNewGriddedData, NullifyGriddedData, WrapGriddedData
 
   logical, private, parameter :: MAYDUMPFIELDVALUES = .true.
 
@@ -57,6 +57,7 @@ module GriddedData ! Contains the derived TYPE GriddedData_T
   type GriddedData_T
 
     ! First the comment line(s) from the relevant input file
+    logical :: EMPTY                    ! Set for example when file read failed
     character (LEN=LineLen), pointer, dimension(:) :: fileComments => NULL()
 
     ! Now the name, description and units information
@@ -116,6 +117,81 @@ contains
     AddGriddedDataToDatabase = newSize
 
   end function AddGriddedDataToDatabase
+
+  ! -------------------------------------------- ConcatenateGriddedData
+  subroutine ConcatenateGriddedData ( A, B, X )
+    ! This routine takes two grids A and B, B dated after A and tries
+    ! to produce a third grid which is a combination of A and B
+    use MLSNumerics, only: EssentiallyEqual
+    type ( GriddedData_T ), intent(in) :: A
+    type ( GriddedData_T ), intent(in) :: B
+    type ( GriddedData_T ), intent(inout) :: X ! inout to let us deallocate it
+    ! Local variables
+
+    ! Executable code
+    ! First, check that the grids A and B are conformable.
+    if ( a%verticalCoordinate /= b%verticalCoordinate .or. &
+      & a%equivalentLatitude .neqv. b%equivalentLatitude .or. &
+      & a%noYear .neqv. b%noYear ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Grids for Concatenate are not compatible' )
+    if ( .not. all ( EssentiallyEqual ( a%heights, b%heights ) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Grids for Concatenate do not share heights' )
+    if ( .not. all ( EssentiallyEqual ( a%lats, b%lats ) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Grids for Concatenate do not share lats' )
+    if ( .not. all ( EssentiallyEqual ( a%lons, b%lons ) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Grids for Concatenate do not share lons' )
+    if ( .not. all ( EssentiallyEqual ( a%lsts, b%lsts ) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Grids for Concatenate do not share lsts' )
+    if ( .not. all ( EssentiallyEqual ( a%szas, b%szas ) ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Grids for Concatenate do not share szas' )
+    if ( .not. EssentiallyEqual ( a%missingValue, b%missingValue ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Grids for Concatenate have different missing values' )
+
+    ! Check that the dates are going to work out
+    if ( maxval ( a%dateEnds ) > minval ( b%dateStarts ) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Grids for concatenation are not in correct time order' )
+
+    ! OK, now we're ready
+    call DestroyGriddedData ( X )
+    call SetupNewGriddedData ( X, source=A, noDates= a%noDates + b%noDates )
+    ! Copy over the unchanged position data
+    x%heights = a%heights
+    x%lats = a%lats
+    x%lons = a%lons
+    x%lsts = a%lsts
+    x%szas = a%szas
+    x%dateStarts = (/ a%dateStarts, b%dateStarts /)
+    x%dateEnds = (/ a%dateEnds, b%dateEnds /) 
+
+    x%field ( :, :, :, :, :, 1:a%noDates ) = a%field
+    x%field ( :, :, :, :, :, a%noDates+1:x%noDates ) = b%field
+  end subroutine ConcatenateGriddedData
+
+  ! ---------------------------------------- CopyGrid ------------------
+  subroutine CopyGrid ( Z, X )
+    ! Does a deep copy of X into Z
+    type ( GriddedData_T ), intent(inout) :: Z
+    type ( GriddedData_T ), intent(in) :: X
+    ! Executable code
+    call DestroyGriddedData ( Z )
+    call SetupNewGriddedData ( Z, source=X )
+    ! Copy the information over
+    z%heights = x%heights
+    z%lats = x%lats
+    z%lons = x%lons
+    z%lsts = x%lsts
+    z%szas = x%szas
+    z%dateStarts = x%dateStarts
+    z%dateEnds = x%dateEnds
+    z%field = x%field
+  end subroutine CopyGrid
 
   ! -----------------------------------------  DestroyGriddedData  -----
 
@@ -303,7 +379,8 @@ contains
 
   ! ----------------------------------------  SetupNewGriddedData  -----
   subroutine SetupNewGriddedData ( Qty, Source, NoHeights, NoLats, &
-    & NoLons, NoLsts, NoSzas, NoDates, missingValue )
+    & NoLons, NoLsts, NoSzas, NoDates, missingValue, &
+    & Empty )
   ! This first routine sets up a new quantity template according to the user
   ! input.  This may be based on a previously supplied template (with possible
   ! modifications), or created from scratch.
@@ -311,40 +388,64 @@ contains
     type (GriddedData_T) :: QTY ! Result
     type (GriddedData_T), optional, intent(in) :: SOURCE ! Template
     integer, optional, intent(in) :: NOHEIGHTS, NOLATS, NOLONS, NOLSTS, NOSZAS, NODATES
+    logical, optional, intent(in) :: EMPTY
     real(rgr), optional, intent(in) :: missingValue
     ! Local parameters
     real(rgr), parameter :: DefaultMissingValue = -999.99
     ! Local variables
     integer :: status           ! Status from allocates etc.
+    logical :: myEmpty                  ! Copy of empty possibly
 
     ! Executable code
 
-    ! First, if we have a template setup according to that
-    if (present(source)) then
-      qty%noHeights=source%noHeights
-      qty%noLats=source%noLats
-      qty%noLons=source%noLons
-      qty%noLsts=source%noLsts
-      qty%noSzas=source%noSzas
-      qty%noDates=source%noDates
-    else ! We have no template, setup a very bare quantity
-      qty%noHeights=1
-      qty%noLats=1
-      qty%noLons=1
-      qty%noLsts=1
-      qty%noSzas=1
-      qty%noDates=1
-    endif
-
-    ! Now, see if the user asked for modifications to this
-    if (present(noHeights)) qty%noHeights=noHeights
-    if (present(noLats)) qty%noLats=noLats
-    if (present(noLons)) qty%noLons=noLons
-    if (present(noLsts)) qty%noLsts=noLsts
-    if (present(noSzas)) qty%noSzas=noSzas
-    if (present(noDates)) qty%noDates=noDates
-    qty%missingValue = defaultMissingValue
-    if ( present ( missingValue ) ) qty%missingValue = missingValue
+    myEmpty = .false.
+    if ( present ( empty ) ) myEmpty = empty
+    if ( present ( source ) .and. .not. present ( empty )  ) myEmpty = source%empty
+    if ( myEmpty ) then
+      qty%empty = .true.
+      qty%noHeights = 0
+      qty%noLats = 0
+      qty%noLons = 0
+      qty%noLsts = 0
+      qty%noSzas = 0
+      qty%noDates = 0
+    else
+      qty%empty = .false.
+      
+      ! Set sensible values for some parameters
+      ! First, if we have a template setup according to that
+      if (present(source)) then
+        qty%noHeights = source%noHeights
+        qty%noLats = source%noLats
+        qty%noLons = source%noLons
+        qty%noLsts = source%noLsts
+        qty%noSzas = source%noSzas
+        qty%noDates = source%noDates
+        qty%equivalentLatitude = source%equivalentLatitude
+        qty%noYear = source%noYear
+        qty%missingValue = source%missingValue
+        qty%verticalCoordinate = source%verticalCoordinate
+      else ! We have no template, setup a very bare quantity
+        qty%noHeights = 1
+        qty%noLats = 1
+        qty%noLons = 1
+        qty%noLsts = 1
+        qty%noSzas = 1
+        qty%noDates = 1
+        qty%equivalentLatitude = .false.
+        qty%noYear = .false.
+        qty%missingValue = defaultMissingValue
+      endif
+      
+      ! Now, see if the user asked for modifications to this
+      if (present(noHeights)) qty%noHeights = noHeights
+      if (present(noLats)) qty%noLats = noLats
+      if (present(noLons)) qty%noLons = noLons
+      if (present(noLsts)) qty%noLsts = noLsts
+      if (present(noSzas)) qty%noSzas = noSzas
+      if (present(noDates)) qty%noDates = noDates
+      if ( present ( missingValue ) ) qty%missingValue = missingValue
+    end if
 
     ! First the vertical/horizontal coordinates
     call Allocate_test ( qty%heights, qty%noHeights, "qty%heights", ModuleName )
@@ -382,6 +483,78 @@ contains
     nullify ( g%field )
   end subroutine NullifyGriddedData
 
+  ! -------------------------------------------- WrapGriddedData ---
+  subroutine WrapGriddedData ( GRID )
+    ! Given a grid add an extra longitude which helps when interpolating
+    ! over the +/- 180 degree region
+    ! One could do the same for local time, but I can't get too excited about
+    ! that I'm afraid.
+    ! Dummy arguments
+    type ( GriddedData_T ), intent(inout) :: GRID
+    ! Local variables
+    real (rgr), dimension(:), pointer :: NEWLONS
+    real (rgr), dimension(:,:,:,:,:,:), pointer :: NEWFIELD
+    integer :: LOWER
+    integer :: UPPER
+    integer :: STATUS
+    ! Executable code
+    ! Don't bother with 'zonal mean' type quantities
+    if ( grid%noLons <= 1 ) return
+
+    ! Check that this field is as we expect
+    lower = count ( grid%lons < -180.0 )
+    upper = count ( grid%lons > 180.0 )
+    if ( lower > 0 .or. upper > 0 ) then
+      ! This is either unconventional or it's already been wrapped
+      ! in either case, we're not going to do anything.
+      if ( lower > 1 .or. upper > 1 ) then
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Gridded data disobeys EOS convention of -180..180 longitude' )
+      endif
+      return
+    end if
+
+    ! Do we need one or two more points
+    lower = 0
+    upper = 0
+    if ( grid%lons(1) > -180.0 ) lower = 1
+    if ( grid%lons(grid%noLons) < 180.0 ) upper = 1
+
+    ! Create new arrays
+    nullify ( newLons, newField )
+    call Allocate_test ( newLons, grid%noLons + lower + upper, &
+      & 'newLons', ModuleName )
+    allocate ( newField ( grid%noHeights, grid%noLats, &
+      & grid%noLons + lower + upper, &
+      & grid%noLsts, grid%noSzas, grid%noDates ), STAT=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Allocate//'newField' )
+
+    ! Fill them
+    newLons ( 1+lower : lower+grid%noLons ) = grid%lons
+    newField ( :, :, 1+lower : lower+grid%noLons, :, :, : ) = grid%field
+    if ( lower == 1 ) then
+      newLons(1) = grid%lons ( grid%noLons ) - 360.0
+      newField ( :, :, 1, :, :, : ) = grid%field ( :, :, grid%noLons, :, :, : )
+    end if
+    if ( upper == 1 ) then
+      newLons ( grid%noLons + lower + 1 ) = grid%lons ( 1 ) + 360.0
+      newField ( :, :, grid%noLons + lower + 1, :, :, : ) = &
+        & grid%field ( :, :, 1, : , : ,: )
+    end if
+
+    ! Tidy up
+    call Deallocate_test ( grid%lons, 'grid%lons', ModuleName )
+    deallocate ( grid%field, stat=status )
+    if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & MLSMSG_Deallocate//'grid%values' )
+
+    ! Make grid use new values
+    grid%noLons = grid%noLons + lower + upper
+    grid%lons => newLons
+    grid%field => newField
+  end subroutine WrapGriddedData
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -390,6 +563,10 @@ end module GriddedData
 
 !
 ! $Log$
+! Revision 2.25  2003/04/04 00:09:32  livesey
+! Added empty field, ConcatenateGriddedData, CopyGrid, WrapGriddedData,
+! and appropriate changes to SetupNewGriddedData
+!
 ! Revision 2.24  2003/03/01 00:22:30  pwagner
 ! Dump also prints missing value for that grid
 !
