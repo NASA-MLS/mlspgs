@@ -322,6 +322,11 @@ module PVM ! Interface to the f77 pvm library.
        integer, intent(out) :: INFO
      end subroutine pvmfconfig
 
+     subroutine pvmffreebuf(bufid, info)
+       integer, intent(in) :: BUFID
+       integer, intent(out) :: INFO
+     end subroutine pvmffreebuf
+
      ! These ones are to get around the irritating inability of pvmfspawn
      ! to pass arguments
 
@@ -574,6 +579,9 @@ contains
 end module PVM
 
 ! $Log$
+! Revision 2.12  2003/01/13 20:58:53  livesey
+! Added PVMFFreeBuf
+!
 ! Revision 2.11  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
