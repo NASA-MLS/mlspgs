@@ -69,11 +69,11 @@ contains ! =====     Public Procedures     =============================
           STATUS = sfend(l1bInfo%L1BRADIDs(id))
          endif
       enddo
-      deallocate( l1bInfo%L1BRADIDs, stat=status )
+      deallocate( l1bInfo%L1BRADIDs, l1bInfo%L1BRADFileNames, stat=status )
       if ( status /= 0 ) then
         ! call MLSMessage ( MLSMSG_Error, ModuleName, &
         !   & MLSMSG_DeAllocate // "l1bInfo" )
-        call announce_error ( 0, 'Error deallocating L1BRADIDs' )
+        call announce_error ( 0, 'Error deallocating l1bInfo' )
       end if
     end if
     
@@ -184,6 +184,7 @@ contains ! =====     Public Procedures     =============================
 
       if(.NOT. associated(l1bInfo%L1BRADIDs)) then
         allocate ( l1bInfo%L1BRADIDs(MAXNUML1BRADIDS), stat=status )
+        allocate ( l1bInfo%L1BRADFileNames(MAXNUML1BRADIDS), stat=status )
         l1bInfo%L1BRADIDs = ILLEGALL1BRADID
         if ( status /= 0 ) &
           & call announce_error ( 0, 'Allocation failed for L1BRADIDs' )
@@ -488,6 +489,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.45  2001/05/06 20:55:25  pwagner
+! [De]Allocates l1binfo%filenames along with ids
+!
 ! Revision 2.44  2001/05/04 22:56:40  pwagner
 ! Detachable from Toolkit
 !
