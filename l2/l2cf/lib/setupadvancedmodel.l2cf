@@ -18,15 +18,6 @@ begin Construct
     tangentGrid=vGridTangent, $
     tolerance= -1K,$
     /do_conv, /do_freq_avg, /polarized ;; We skip the baseline deliberately
-  r1aSetupModelHR: ForwardModel, type=full, $
-    signals=['R1A:118.B1F:PT','R1A:118.B22D:PT','R1A:118.B32W:PT'], $
-    phiWindow=4.0 degrees, $
-    molecules=!moleculesForR1A, $
-    integrationGrid=vGridTangent, $
-    tangentGrid=vGridTangent, $
-    tolerance= -1K, $
-    specificQuantities = [ temperature_hr, h2o_hr ], $
-    /do_conv, /do_freq_avg, /polarized ;; We skip the baseline deliberately
 end Construct
 
 ;; Setup the vectors
@@ -37,31 +28,17 @@ begin Fill
   Transfer, source=state, destination=r1aX
   ;; Zero out the baseline just to be sure (shouldn't matter)
   Fill, quantity=r1aX.baselineR1A, method=explicit, explicitValues= 0K, /spread
-  ;; Make sure the _hr species are interpolations of their parents
-  Fill, quantity=r1aX.temperature_hr, method=vector, sourceQuantity=r1aX.temperature, /interpolate
-  Fill, quantity=r1aX.h2o_hr, method=vector, sourceQuantity=r1aX.h2o, /interpolate
-  Fill, quantity=r1aX.o3_hr, method=vector, sourceQuantity=r1aX.o3, /interpolate
 end Fill
 
 ;; Do a sids calculation
 begin Retrieve
   !ifdef(flagSkipAdvancedSids,{},{
   sids, fwdModelIn=state, fwdModelOut=r1aY, forwardModel=[r1aSetupModel]
-  !ifdef(flagSkipHR,{},{sids, fwdModelIn=state, fwdModelOut=r1aYHR, forwardModel=[r1aSetupModelHR]})})
 end Retrieve
 
 ;; Now we construct the advanced linear models to use these
 begin Construct
   !define(makeAdvancedL2PCModel,{!dnl
-  !ifdef(flagSkipHR,{},{!dnl
-  advancedHRL2PCFwm$1: ForwardModel, type=linear, signals=!signal($1), $
-    molecules=!moleculeFamilies(!radiometerForBand($1)), $
-    moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
-    /atmos_der, /temp_der, /do_baseline, $
-    phiWindow=100 profiles, /lockBins, $
-    specificQuantities=[ temperature_hr, h2o_hr ], $
-    binSelectors=[hiResBin, latBin], $
-    xStar=r1aX, yStar=r1aYHR})
   advancedL2PCFwm$1: ForwardModel, type=linear, signals=!signal($1), $
     molecules=!moleculeFamilies(!radiometerForBand($1)), $
     moleculeDerivatives=!moleculeFamilies(!radiometerForBand($1)), $
@@ -82,6 +59,4 @@ begin Construct
   !makeAdvancedL2PCModel(32)
 end Construct
 
-
-  
-  
+; $Log$
