@@ -62,7 +62,6 @@ begin Fill
     geocAltitudeQuantity=apriori.tngtGeocAltTHz, $
     maxIterations=10
   })
-})
 
   ;; Compute refracted phitans for apriori
   Fill, quantity=apriori.phiTanGHz, method=refract, $
@@ -73,6 +72,7 @@ begin Fill
     ptanQuantity=apriori.ptanTHz, $
     h2oQuantity=apriori.h2o, $
     temperatureQuantity=apriori.temperature, refract=false
+})
 
 end Fill
 
@@ -80,22 +80,22 @@ end Fill
 
 begin Fill
   ;; Now we're going to fill the apriori errors up
-  Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 100 pptv
-  Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 100 pptv
-  Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 5 ppbv
+  Fill, quantity=aprioriPrecision.bro,  method=explicit, /spread, explicitValues= 1 ppbv
+  Fill, quantity=aprioriPrecision.ch3cn,method=explicit, /spread, explicitValues= 500 pptv
+  Fill, quantity=aprioriPrecision.clo,  method=explicit, /spread, explicitValues= 3 ppbv
   Fill, quantity=aprioriPrecision.co,   method=explicit, /spread, explicitValues= 500 ppbv
-  Fill, quantity=aprioriPrecision.h2o,  method=explicit, /spread, explicitValues= 10 ppmv
-  Fill, quantity=aprioriPrecision.hcl,  method=explicit, /spread, explicitValues= 5 ppbv
-  Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 1 ppbv
-  Fill, quantity=aprioriPrecision.hno3, method=explicit, /spread, explicitValues= 20 ppbv
+  Fill, quantity=aprioriPrecision.h2o,  method=explicit, /spread, explicitValues= 3 ppmv
+  Fill, quantity=aprioriPrecision.hcl,  method=explicit, /spread, explicitValues= 3 ppbv
+  Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 0.2 ppbv
+  Fill, quantity=aprioriPrecision.hno3, method=explicit, /spread, explicitValues= 10 ppbv
   Fill, quantity=aprioriPrecision.ho2,  method=explicit, /spread, explicitValues= 1 ppbv
-  Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 100 pptv
-  Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 500 ppbv
-  Fill, quantity=aprioriPrecision.o3,   method=explicit, /spread, explicitValues= 10 ppmv
+  Fill, quantity=aprioriPrecision.hocl, method=explicit, /spread, explicitValues= 3 ppbv
+  Fill, quantity=aprioriPrecision.n2o,  method=explicit, /spread, explicitValues= 0.2 ppmv
+  Fill, quantity=aprioriPrecision.o3,   method=explicit, /spread, explicitValues= 4 ppmv
   Fill, quantity=aprioriPrecision.oh,   method=explicit, /spread, explicitValues= 1 ppbv
   Fill, quantity=aprioriPrecision.so2,  method=explicit, /spread, explicitValues= 100 pptv
 
-  Fill, quantity=aprioriPrecision.temperature,   method=explicit, /spread, explicitValues= 20 K
+  Fill, quantity=aprioriPrecision.temperature, method=explicit, /spread, explicitValues= 20 K
   Fill, quantity=aprioriPrecision.refGPH, method=explicit, /spread, explicitValues= 5 km
 
   ;; Now we're going to fill the a priori length scales up
