@@ -1,0 +1,430 @@
+! subroutine ?TCST (A, TCS, MODE, M, ND, MS, S)
+!>> 1997-03-31 DTCST Krogh  Increased KEDIM, more sine table checks.
+!>> 1996-01-23 DTCST Krogh  Changes to simplify conversion to C.
+!>> 1994-11-11 DTCST Krogh  Declared all vars.
+!>> 1994-10-20 DTCST Krogh  Changes to use M77CON
+!>> 1989-06-16 DTCST FTK Fix error message on MODE, and TCS.
+!>> 1989-06-05 WVS Change length of MODE and TCS from (ND) to (*)
+!>> 1989-05-08 FTK & CLL
+!>> 1989-04-21 FTK & CLL
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  U. S. Government sponsorship under
+!     .  NASA contract NAS7-918 is acknowledged.
+!
+!     This subroutine computes trigonometirc (sine-cosine), sine, or
+!     cosine transforms of real data in up to 6 dimensions using the
+!     Cooley-Tukey fast Fourier transform.
+!
+!     Variables in the calling sequence have the following types
+      real(rk), intent(inout) ::      A(*), S(*)
+      integer, intent(in) ::          ND, M(ND)
+      integer, intent(inout) ::       MS
+      character(len=*), intent(in) :: TCS, MODE
+!
+!     Programmed by Fred F. Krogh at the Jet Propulsion Laboratory,
+!     Pasadena, Calif.   August 1, 1969.
+!     Revised for portability by Krogh -- January 29, 1988
+!
+!     Values for A, TCS, MODE, M, ND, and MS must be specified before
+!     calling the subroutine.
+!
+!     In describing the usage the following notation is used
+!     N(K) = 2 ** M(K)
+!     MA = M(1) + M(2) + ... + M(ND)
+!     NA = 2 ** MA
+!
+!     MTCS(K) = M(K)     TCS(K:K) = 'T'
+!             = M(K)+1   otherwise
+!
+!     MX = MAX(MTCS(1), MTCS(2), ..., MTCS(ND))
+!     NX = 2 ** MX
+!
+!     T(L,j,k) is defined differently for different values of TCS(L)
+!
+!       if TCS(L:L) = 'T' and MODE(L:L) = 'S', T(L,j,k)
+!         =1/2                     if k = 0
+!         =(1/2)*(-1)**j           if k = 1
+!         =COS(j*k*PI/N(L))        if k IS EVEN  (k = 2, 4, ..., N(L)-2)
+!         =SIN(j*(k-1)*PI/N(L))    if k IS ODD   (k = 3, 5, ..., N(L)-1)
+!                    and if MODE(L:L) = 'A', T(L,j,k)
+!         = (4/N) * (value of T(L,k,j) defined above)   If j<2
+!         = (2/N) * (value of T(L,k,j) defined above)   Otherwise
+!
+!       if TCS(L:L) = 'C' and MODE(L:L) = 'S', T(L,j,k)
+!         =1/2                     if k = 0
+!         =COS(j*k*PI/N(L))           k = 1, 2, ..., N(L)-1
+!         =(1/2)*(-1)**j           if k = N(L)
+!                    and if MODE(L:L) = 'A', T(L,j,k)
+!         = (2/N) * (value of T(L,j,k) defined above)
+!
+!       if TCS(L:L) = 'S' and MODE(L:L) = 'S', T(L,j,k)
+!         =SIN(j*k*PI/N(L))           k = 0, 1, ..., N(L)-1
+!                    and if MODE(L:L) = 'A', T(L,j,k)
+!         = (2/N) * (value of T(L,j,k) defined above)
+!
+!     D(L) = N(L)     if TCS(L:L) /= 'C'
+!          = N(L)+1   if TCS(L:L) = 'C'
+!
+!     The usage is as follows
+!
+! A() on input is an array of function values if one is doing Fourier
+!   analysis, and is an array of Fourier coefficients if one is doing
+!   Fourier synthesis.  On output, these are reversed.  In either case
+!   A() is a real array with dimension A(D(1), D(2), ..., D(ND)).
+!
+! TCS  is a character variable of length ND.  The k-th character must be
+!   'T' or 't' to select the general Trigonometric transform, or
+!   'C' or 'c' to select the Cosine transform, or
+!   'S' or 's' to select the Sine transform.
+!     See the description of T(L,j,k) and M above.
+!
+! MODE  A character variable of length ND.  The k-th character must be
+!   'A' or 'a' to select Analysis in the k-th dimension, or
+!   'S' or 's' to select Synthesis in the k-th dimension.
+!   One may be doing analysis, MODE(k:k) = 'A', with respect to one
+!   dimension and synthesis, MODE(k:k) = 'S', with respect to
+!   another.  A(j1+1, j2+1, ..., jND+1) is replaced by the sum over
+!   0 <= k1 <= D(1)-1, 0 <= k2 <= D(2)-1, ..., 0 <= kND  <= 
+!   D(ND)-1, of A(k1+1, k2+1, ..., kND+1) * T(1, k1, j1) * T(2, k2, j2)
+!   ... * T(ND, kND, jND), 0 <= j1 <= D(1)-1, ..., 0 <= jND  <= 
+!   D(ND)-1.
+
+! M() is a vector used to indicate N(k) = 2**M(k)).  The number of
+!   points in the k-th variable is then given by D(k) (see above).  M
+!   must be specified in such a way that 0 < M(k) < 22
+!   for k = 1, 2, ..., ND.
+!
+! ND is the dimension of (i.e. the number of subscripts in) the
+!    array A.  ND must satisfy 1 <= ND <= 6.
+!
+! MS gives the state of the sine table.  If MS > 0, there are NT =
+!    2 ** (MS-2) good entries in the sine table.  On the initial call,
+!    MS must be set to 0, and when the return is made, it will be set
+!    to MX, which is the value of MS required for computing a
+!    transform of size N.  If MS = -1, the sine table will be computed
+!    as for the case MS = 0, and then a return to the user will be made
+!    with MS set as before, but no transform will be computed.  This
+!    option is useful if the user would like access to the sine table
+!    before computing the FFT.
+!    On detected errors the error message subrs are called and
+!    execution stops.  If the user overrides the stop to cause
+!    continuation, then this subr will return with MS = -2.
+!
+! S() is a vector, S(j) = sin(pi*j/2*NT)), j = 1, 2, ..., NT-1, where
+!  NT is defined in the description of MS above.  S is computed by the
+!  subroutine if MX > MS.  (If S is altered, set MS=0 so that S
+!  is recomputed.)
+!     -----------------------------------------------------------------
+!                Notes on PARAMETERs, and variables
+!
+!     NDMAX = the maximum value for ND, and MAXMX = the maximum
+!     permitted for MTCS(1), ..., MTCS(ND)
+!
+!     NF(1) = 1, NF(K+1) = NF(K) * D(K) K = 1, 2, ..., ND
+!
+!     MU is used in the process of eliminating transforms with respect
+!     to the first subscript of transforms with TCS(:) = 'S'.
+!     (This is only necessary if ND > 1.)
+!
+!     The dimension of KE must be at least as large as MAXMX-1.
+!     The subroutine ?FFT computes a one dimensional complex Fourier
+!     transform and computes the sine table.
+!
+!     The input character variable TCS is mapped to the internal
+!     integer array ITCS() by mapping 'T' to 1, 'C' to 2, 'S' to 3.
+!
+!     -----------------------------------------------------------------
+!--D replaces "?": ?TCST, ?FFT
+!     Both versions use ERM1
+!     -----------------------------------------------------------------
+    integer, parameter ::  MAXMX = KEDIM+1
+    integer, parameter :: NDMAX = 6
+
+    real(rk) :: FN
+    real(rk), parameter :: FOUR = 4.0_rk
+    integer :: I, I1, II, IR, ITCS(NDMAX), ITCSK
+    integer :: J, JDIF, JJ, JK
+    integer :: K, KDR
+    integer :: KII, KIN, KK, KKI, KKL, KKN
+    integer :: L
+    integer :: MA, MI, MMAX, MSI, MU(NDMAX)
+    integer :: N, NDD, NDIV, NF(NDMAX+1)
+    integer :: NI, NI1, NI2, NI2I, NTOT2
+    character(len=*), parameter :: ME = prec//'TCST'
+    character(len=13) :: MSG1 = 'MODE(K:K) = ?'
+    character(len=12) :: MSG2 = 'TCS(K:K) = ?'
+    real(rk), parameter :: ONE = 1.0_rk
+    real(rk) :: SUM, T, T1, TP, TPI, TS, TS1
+    real(rk), parameter :: TWO = 2.0_rk
+    real(rk) :: WI, WR
+    real(rk), parameter :: ZERO = 0.0_rk
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+
+!     -----------------------------------------------------------------
+!
+    ndd = nd
+    if ((ndd <= 0) .or. (ndd > ndmax)) then
+!                             Fatal error, default is to stop in ERM1
+      call erm1 (me, 1, 2, 'Bad ND', 'ND', ND, '.')
+      ms = -2
+      return
+    end if
+    ma = 0
+    mmax = 0
+    ndiv = 1
+! Every element in the array A is divided by NDIV before computing
+! the transform.  The value computed for NDIV depends on whether
+! one is doing analysis or synthesis and on the type of
+! transform being computed.
+    do k = 1, ndd
+      mm = m(k)
+      if ((mm < 0) .or. (mm > maxmx)) go to 200
+      ma = ma + mm
+      n = 2 ** mm
+      if (mode(k:k) == 'A' .or. mode(k:k) == 'a') then
+        ndiv = ndiv * n
+      else if (mode(k:k) == 'S' .or. mode(k:k) == 's') then
+        ndiv = 2 * ndiv
+      else
+        msg1(13:13) = mode(k:k)
+        call erm1 (me, 2, 2, msg1, 'for K =',  K, '.')
+        ms = -2
+        return
+      end if
+      itcsk = (index('TtCcSs', tcs(k:k)) + 1) / 2
+      itcs(k) = itcsk
+      if(itcsk == 0) then
+        msg2(12:12) = tcs(k:k)
+        call erm1 (me, 3, 2, msg2, 'for K =', K, '.')
+        return
+      endif
+      nf(1) = 1
+      if (itcsk >= 2) then
+        if (itcsk == 2) n = n + 1
+        ndiv = 2 * ndiv
+        mm = mm + 1
+      end if
+      nf(k+1) = nf(k) * n
+      if (mm > mmax) mmax = mm
+    end do ! k
+!
+    msi = ms
+    needst = mmax > msi
+
+    if (.not. needst) then
+!  Check internal parameters to catch certain user errors.
+      if (mt < kedim) then
+         if (mmax <= mt + 2) then
+!           skip sine table computation if all appears o.k.
+            if (mt <= 0) go to 15
+            if (abs(s(nt/2) - spi4) <= 1.d-7) go to 15
+         end if
+      end if
+      needst = .true.
+      call ermsg (me, 3, 1, 'Invalid sine table (re)computed', '.')
+    end if
+    ms = mmax
+    mt = mmax - 2
+    call fft (a, a, s)
+    if (msi == -1) return
+!                   All setup for computation now
+ 15 ntot2 = nf(ndd+1)
+!
+    fn = one / dble(ndiv)
+!   Divide every element of A by NDIV
+    do i = 1, ntot2
+       a(i) = a(i) * fn
+    end do
+!
+!     Beginning of loop for computing multiple sum
+    do k = 1, ndd
+      itcsk = itcs(k)
+      mi = m(k)
+      mm = mi - 1
+      if(mode(k:k) == 'A' .or. mode(k:k) == 'a') mi = -  mi
+      kdr = nf(k)
+      ks = kdr + kdr
+      ilast = nf(k+1)
+      if (itcsk == 2) ilast = ilast - kdr
+      do l = 1, mm
+        kee(l+1) = kee(l) / 2
+      end do
+!
+      i = 1
+      j = ndd
+ 40   do l = 1, j
+        mu(l) = 0
+        if ((l /= k) .and. (itcs(l) > 2)) then
+!           Skip the part of the array left empty by the sine transform
+          mu(l) = nf(l)
+          i = i + nf(l)
+        end if
+      end do
+!
+!        Compute indices associated with the current value of I (and K)
+ 60   i1 = i + kdr
+      ni1 = i + nf(k+1)
+      if (itcsk == 2) ni1 = ni1 - kdr
+      ni = ni1 - kdr
+      ni2 = (ni1 + i) / 2
+      ni2i = ni2 + kdr
+      if (itcsk /= 1) then
+!                Doing a cosine or a sine transform -- set MI = 0 and do
+!                calculations not required for sine-cosine transforms
+        mi = 0
+        j = ni
+        sum = a(i1)
+        t = a(j)
+        do
+          jk = j - ks
+          if (jk < i1) exit
+          sum = sum + a(j)
+          a(j) = a(jk) - a(j)
+          j = jk
+        end do
+        if (itcsk /= 2) then
+!                                Calculations for the sine transform
+          a(i) = two * a(i1)
+          a(i1) = -two * t
+          if (mm == 0) go to 90
+          t = two * a(ni2)
+          a(ni2) = -two * a(ni2i)
+          a(ni2i) = t
+          go to 90
+        end if
+!                               set for cosine transform
+        a(i1) = a(ni1)
+      end if
+      if (mm == 0) go to 90
+      if (mi < 0) then
+!        Set for Fourier analysis
+        ii = i
+        ir = ii + kdr
+        go to 110
+      end if
+!     begin calculations for the sine-cosine transform
+ 80   a(ni2) = two * a(ni2)
+      a(ni2i) = two * a(ni2i)
+ 90   t = a(i) + a(i1)
+      a(i1) = a(i) - a(i1)
+      if (mi < 0) then
+        if (itcsk == 1) then
+          a(i1) = two * a(i1)
+          t = two * t
+        end if
+      end if
+      a(i) = t
+      j = 0
+      jdif = 2 ** (mt - mm + 1)
+      kkl = ke(1) - kdr
+      if (mm > 1) then
+        do kk = ks, kkl, ks
+          kki = i + kk
+          kii = kki + kdr
+          kkn = ni1 - kk
+          kin = kkn + kdr
+          j = j + jdif
+          wi = s(j)
+          jj = nt - j
+          wr = s(jj)
+          t = a(kki) + a(kkn)
+          ts = a(kkn) - a(kki)
+          t1 = a(kin) - a(kii)
+          ts1 = a(kin) + a(kii)
+          if (itcsk > 2) then
+!                         The sine-cosine transform must be computed
+!                         differently in the case of the sine transform
+!                         because the input data is stored differently.
+            tp = wr * t - wi * t1
+            tpi = wi * t + wr * t1
+            a(kki) = tp - ts1
+            a(kkn) = -tp - ts1
+            a(kii) = tpi + ts
+            a(kin) = tpi - ts
+          else
+            tp = wr * ts1 + wi * ts
+            tpi = wi * ts1 - wr * ts
+            a(kki) = t + tp
+            a(kkn) = t - tp
+            a(kii) = t1 + tpi
+            a(kin) = tpi - t1
+          end if
+        end do
+      else if (mm == 0) then
+        go to 120
+      end if
+!        End of computing sine-cosine transform
+!
+      if (mi < 0) go to 140
+      ir = i
+      ii = ir + kdr
+!
+!        Compute a one-dimensional complex Fourier transform
+110   call fft (a(ir:n), a(ii:n), s)
+      if (mi < 0) go to 80
+      if (mi /= 0) go to 140
+120   if (itcsk /= 1) then
+        if (itcsk == 3) then
+          a(i) = zero
+        else
+!                Compute first and last elements of the cosine transform
+          sum = four * sum
+          t = two * a(i)
+          a(ni1) = t - sum
+          a(i) = t + sum
+          if (mm >= 0) a(ni2) = two * a(ni2)
+        end if
+        if (mm > 0) then
+!               Extra calculations required by sine and cosine transform
+          j = 0
+          jdif = jdif / 2
+          do kk = kdr, kkl, kdr
+            kki = i + kk
+            kkn = ni1 - kk
+            j = j + jdif
+            wi = two * s(j)
+            t = a(kki) + a(kkn)
+            ts = a(kki) - a(kkn)
+            if (itcsk /= 2) then
+               t = t / wi
+            else
+               ts = ts / wi
+            end if
+            a(kki) = t + ts
+            a(kkn) = t - ts
+          end do
+        end if
+      end if
+!
+!        Logic for deciding which one-dimensional transform to do next
+140   j = 0
+150   j = j + 1
+        if (j == k) then
+          j = j + 1
+          i = i + nf(j) - nf(j-1)
+        end if
+        if (j > ndd) cycle ! k
+        mu(j) = mu(j) + nf(j)
+        if (mu(j) >= nf(j+1)) go to 150
+      i = i + nf(1)
+      j = j - 1
+      if (j /= 0) go to 40
+      go to 60
+!
+    end do ! k
+!
+    return
+!
+!                               Fatal error, default is to stop in ERM1
+200 call erm1 (me, 4, 2, 'Require 0 <= max(M(K)) <= 31', 'M', mm, '.')
+    ms = -2
+    return
+!
+! end subroutine ?TCST
+
+! $Log$

@@ -1,0 +1,407 @@
+! subroutine ?RFT (A, MODE, M, ND, MS, S)
+!>> 1997-03-31 DFFT Krogh  Increased KEDIM, more sine table checks.
+!>> 1996-01-23 DRFT Krogh  Changes to simplify conversion to C.
+!>> 1994-10-20 DRFT Krogh  Changes to use M77CON
+!>> 1990-01-23 DRFT CLL Removed extraneous label 80.
+!>> 1989-06-16 FTK Fix error message on MODE.
+!>> 1989-05-10 FTK & CLL
+!>> 1989-05-07 FTK & CLL
+!>> 1989-04-21 FTK & CLL
+!     .  Copyright (C) 1989, California Institute of Technology.
+!     .  U. S. Government sponsorship under
+!     .  NASA contract NAS7-918 is acknowledged.
+!
+! This subroutine computes Fourier transforms of real data in up to 6
+! dimensions using the Cooley-Tukey fast Fourier transform.
+!
+!     Programmed by Fred F. Krogh at the Jet Propulsion Laboratory,
+!     Pasadena, Calif.   August 1, 1969.
+!     Revised for portability by Krogh -- February 2, 1988
+!
+!     Variables in the calling sequence have the following types
+      real(rk), intent(inout) :: A(*), S(*)
+      integer, intent(in) ::     ND, M(ND)
+      integer, intent(inout) ::  MS
+      character, intent(in) ::   MODE
+!
+!     Values for A(), MODE, M(), ND, and MS must be specified before
+!     calling the subroutine.
+!
+!     In describing the usage the following notation is used
+!     NDA = ND
+!     N(K) = 2 ** M(K)
+!     MA = M(1) + M(2) + ... + M(ND)
+!     NA = 2 ** MA
+!     MX = MAX(M(1),M(2), ..., M(ND))
+!     NX = 2**MX
+!     WK = EXP(2*PI*I/N(K)), WHERE I = SQRT(-1) AND PI = 3.14159...
+!
+!     The usage is as follows
+!
+! A() on input is an array of function values, X, if one is doing
+!   Fourier analysis, and is an array of Fourier coefficients, B, if one
+!   is doing Fourier synthesis.  On output, A contains B if doing
+!   analysis, and contains X if doing synthesis.  In our description
+!   here, we assume that A has been declared by the user as a real array
+!   with dimension A(N(1), N(2), ..., N(NDA)) when A contains the real
+!   data, and A is a complex array, C, with dimension C(N(1)/2,N(2),...,
+!   N(NDA)), when A contains complex Fourier coefficients.  (B(k1, k2,
+!   ..., kNDA) for k1 > N(1)/2 need not be saved since B(N(1)-k1,
+!   N(2)-k2, ..., N(NDA)-kNDA) = conjugate of B(k1, k2, ..., kNDA),
+!   where the L-th subscripts are to be interpreted modulo N(L).  It is
+!   assumed that the imaginary part of a complex number is stored
+!   in the cell immediately following its real part, except that
+!   if k1 = 0 and all of the remaining ki satisfy ki = 0 or ki = N(i)/2,
+!   then B(0,k2,...,kNDA) and B(N(1)/2,k2,...,kNDA) are real, and
+!   real part of C(1,k2+1,...,kNDA+1) = B(0,k2,...,kNDA) and
+!   imag. part of C(0,k2+1,...,kNDA+1) = B(N(1)/2,k2,...,kNDA).
+!   If k1 = 0 and kL is the first ki that does not satisfy ki = 0 or
+!   ki = N(i)/2 then C(1,k2+1,...,kNDA+1) = B(0,k2,...,kNDA) for
+!   kL < N(L)/2, and C(1,k2+1,...,kNDA+1) = B(N(1)/2,k2,...,kNDA) for
+!   kL > N(L)/2.  Of course the storage required for A can be
+!   reserved by the user in any way that works.
+!
+! MODE  A character variable to select Analysis or Synthesis.
+!   'A' or 'a' selects Analysis, and 'S' or 's' selects Synthesis.
+!   For Analysis the subroutine computes
+!      B(k1,k2,...,kNDA) = sum over 0 <= j1 <= N(1)-1, 0 <= j2
+!      <= N(2)-1,..., 0 <= jNDA <= N(NDA)-1, of X(j1,j2,...,jNDA)
+!      * T(1,j1,k1) * T(1,j2,k2) * ... * T(NDA,jNDA,kNDA), 0  <= 
+!      k1 <= N(1)-1,..., 0 <= kNDA <= N(NDA)-1
+!      with T(L,j,k) = (1/N(L)) * WL ** (-j*k).
+!   For Synthesis the subroutine computes
+!      X(j1,j2,...,jNDA) = sum over 0 <= k1 <= N(1)-1, 0 <= k2
+!      <= N(2)-1,..., 0 <= kNDA <= N(NDA)-1, of B(k1,k2,...,kNDA)
+!      * T(1,j1,k1) * T(1,j2,k2) * ... * T(NDA,jNDA,kNDA), 0  <= 
+!      j1 <= N(1)-1,..., 0 <= jNDA <= N(NDA)-1
+!      with T(L,j,k) = WL**(j*k).
+!
+! M() is a vector used to indicate N(k) = 2**M(k), the number of
+!  real points in the k-th variable.  M must be such that 0 <= M(k)
+!  <= 21, and if M(1)=0, then M(k) must be 0 for k =1, ..., NDA.
+!
+! ND gives the dimension of (i.e. the number of subscripts in)
+!    the array A.  ND must satisfy 1 <= ND <= 6.
+!
+! MS gives the state of the sine table.  If MS > 0, there are NT =
+!    2 ** (MS-2) good entries in the sine table.  On the initial call,
+!    MS must be set to 0, and when the return is made, it will be set
+!    to MX, which is the value of MS required for computing a
+!    transform of size NX.  If MS = -1, the sine table will be computed
+!    as for the case MS = 0, and then a return to the user will be made
+!    with MS set as before, but no transform will be computed.  This
+!    option is useful if the user would like access to the sine table
+!    before computing the FFT.
+!
+! S is a vector, S(j) = sin(pi*j/2*NT)), j = 1, 2, ..., NT-1, where
+!  NT is defined in the description of MS above.  S is computed by the
+!  subroutine if MX > MS.  (If S is altered, set MS=0 so that S
+!  is recomputed.)
+!     ------------------------------------------------------------------
+!                Notes on PARAMETER, and variables
+!
+!     NDMAX = the maximum value for ABS(ND), and MAXM = the maximum
+!     permitted for M(1), ..., M(ND)
+!
+!     The dimension of KE must be at least as large as MAXM-1.
+!
+!     The subroutine ?FFT computes a one dimensional complex Fourier
+!     transform and computes the sine table.
+!
+!     NF(1) = 1, NF(K+1) = 2**(M(1) + M(2) + ... + M(K)), K = 1,...,NDA
+!
+!     MU is used in computing the index associated with a given index.
+!     (The indices (k1,k2,...,kNDA) and (j1,j2,...,jNDA) are associated
+!     if k1 = (N(1)/2)-j1 (modulo (N(1)/2)) and ki = N(i)-j1 (modulo ni)
+!     i = 2,...,ND.)
+!
+!     ANAL = .TRUE. when doing Fourier analysis, and .FALSE. otherwise
+!
+!     N1 = 2**M(1)
+!     ------------------------------------------------------------------
+!--D replaces "?": ?RFT, ?FFT, C?FFTC
+!     Both versions use ERM1
+!     ------------------------------------------------------------------
+      integer, parameter :: NDMAX = 6
+
+      real(rk) :: FN
+      integer :: I, I1, I2, II, II1, II2, IIB, IIC
+      integer :: IR, IR1, IR2, IRB, IRC
+      integer :: J, JDIF, JJ, JL
+      integer :: K, K1, K1L, K1N, KB
+      integer :: KK, KN2, KN2S, KSM
+      integer :: L, LB
+      integer :: M1, MA
+      integer, parameter :: MAXM = KEDIM + 1
+      integer :: MMAX, MSI, MU(NDMAX-1)
+      integer :: N1, NDA, NF(NDMAX+1), NTOT2
+      logical :: ANAL
+      character(len=*), parameter :: ME = prec//'RFT'
+      character(len=*), parameter :: MSG = 'Bad MODE.  MODE =  '
+      character(len=len(msg)) :: MSG1 = MSG
+      real(rk) :: T, TI, TT, TTI, WI, WR
+!
+      equivalence (NF(2), N1)
+
+      data NF(1) / 1 /
+
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
+!---------------------------------------------------------------------------
+!     ------------------------------------------------------------------
+!
+    if( mode == 'A' .or. mode == 'a') then
+       anal = .true.
+    else if( mode == 'S' .or. mode == 's') then
+       anal = .false.
+    else
+       msg1(19:19) = mode
+       call ermsg(me, 2, 2, msg1, '.')
+       ms = -2
+       return
+    end if
+    nda = nd
+    if ((nda == 0) .or. (nda > ndmax)) then
+!                               Fatal error, default is to stop in ERM1
+      call erm1 (me, 1, 2, 'Bad ND', 'ND', ND, '.')
+      ms = -2
+      return
+    end if
+    ma = 0
+    mmax = -1
+    do k = 1, nda
+      mm = m(k)
+      if (mm < 0) go to 400
+      if (mm > mmax) then
+!                if M(1)=0, then so must all of the rest.
+         if ((mmax == 0) .or. (mm > maxm)) go to 400
+         mmax = mm
+       end if
+       ma = ma + mm
+       nf(k+1) = nf(k) * 2 ** mm
+    end do
+    msi = ms
+    needst = mmax > msi
+    if (.not. needst) then
+!  Check internal parameters to catch certain user errors.
+      if (mt < kedim) then
+         if (mmax <= mt + 2) then
+!           Skip sine table computation if all appears O.K.
+            if (mt <= 0) go to 20
+            if (abs(s(nt/2) - spi4) <= 1.d-7) go to 20
+         end if
+      end if
+      needst = .true.
+      call ermsg(me, 3, 1, 'Invalid sine table (re)computed', '.')
+    end if
+    ms = mmax
+    mt = mmax - 2
+    call fft (a, a, s)
+    if (msi == -1) return
+!                   All setup for computation now
+ 20 if (mmax == 0) return
+    ntot2 = nf(nda+1)
+    m1 = m(1)
+!
+!     Compute constants associated with N1.
+    kn2 = n1 / 2
+    kn2s = kn2
+    if (anal) kn2s = -kn2s
+    k1l = kn2 - 1
+    jdif = (4 * nt) / n1
+!
+    if (.not. anal) then
+!                   Set flags for Fourier synthesis
+       irc = 0
+       iic = 1
+       go to 160
+    end if
+!
+!     Set flags for Fourier analysis
+    irc = 1
+    iic = 0
+    fn = half / dble(ntot2)
+!     Doing Fourier analysis, so multiply by 2**(-M(1)-M(2)-...-M(ND)-1)
+    do i = 1, ntot2
+       a(i) = a(i) * fn
+    end do
+!     Beginning of loop for computing multiple sum
+!     multi-dimensional complex Fourier synthesis or analysis
+100 do k = 1, nda
+      mm = m(k)
+      ks = nf(k)
+      if (k == 1) then
+        mm = mm - 1
+        ks = 2
+      end if
+      ksm = ks - 1
+      ilast = nf(k+1)
+      do l = 1, mm
+        kee(l+1) = kee(l) / 2
+      end do
+      do j = 1, ntot2, ilast
+        jl = j + ksm
+        do i = j, jl, 2
+          ir = i + irc
+          ii = i + iic
+          call fft (a(ir:nda), a(ii:nda), s)
+        end do
+      end do
+    end do
+!     End of loop for doing multi-dimensional complex Fourier transforms
+!
+    if (.not. anal) return
+!
+!
+!     Beginning of calculations relating coefficients of real data
+!     with coefficients of associated complex data
+160 kb = 0
+    l = 1
+    lb = 1
+!     L = LB occurs when the coefficients of the real data which are
+!     computed in the case k1 = 0, are real.
+!
+!     Coefficients with index L + k1 and LB + N1 - k1 (k1 > 0) are
+!     associated in the sense described above where MU is dimensioned.
+!     When K > 1, LB = KB - L.
+!
+    k = 1
+!
+!     Special case -- K1 = N1/4  (L = LB)
+170 if (m1 /= 1) then
+       i1 = l + kn2
+       a(i1) = two * a(i1)
+       a(i1+1) = -two * a(i1+1)
+    end if
+!
+!     Special case --  K1 = 0    (L = LB)
+    t = a(l) + a(l+1)
+    ti = a(l) - a(l+1)
+    if (anal) then
+       t = two * t
+       ti = two * ti
+    end if
+    a(l) = t
+    a(l+1) = ti
+    go to 220
+!
+!     Special case -- K1 = N1/4  (L /= LB)
+200 if (m1 /= 1) then
+       i1 = l + kn2
+       i2 = lb + kn2
+       t = two * a(i2)
+       a(i2) = two * a(i1)
+       a(i1) = t
+       t = -two * a(i2+1)
+       a(i2+1) = -two * a(i1+1)
+       a(i1+1) = t
+    end if
+!        Set up base indices
+    ir = l
+    irb = lb
+    if (anal) then
+       ir = irb
+       irb = l
+    end if
+    ii = ir + 1
+    iib = irb + 1
+!
+!     Special case-- K1 = 0     (L /= LB)
+    t = a(ir) + a(irb)
+    tt = a(iib) + a(ii)
+    ti = a(ii) - a(iib)
+    tti = a(ir) - a(irb)
+    a(ir) = t - tt
+    a(irb) = t + tt
+    a(ii) = ti + tti
+    a(iib) = tti - ti
+!
+220 if (m1 <= 2) go to 260
+    j = 0
+!
+!     Usual case -- K1 /= 0  AND  K1 /= N1/4
+    do k1 = 2, k1l, 2
+      k1n = n1 - k1
+      if (anal) then
+        ir1 = lb + k1n
+        ir2 = l + k1
+      else
+        ir1 = l + k1
+        ir2 = lb + k1n
+      end if
+      ii2 = ir2 + 1
+      ii1 = ir1 + 1
+      j = j + jdif
+      wi = s(j)
+      jj = nt - j
+      wr = s(jj)
+      t = a(ir1) - a(ir2)
+      ti = a(ii1) + a(ii2)
+      tt = t * wi + ti * wr
+      tti = t * wr - ti * wi
+      t = a(ir1) + a(ir2)
+      ti = a(ii1) - a(ii2)
+      a(ir1) = t - tt
+      a(ir2) = t + tt
+      a(ii1) = tti + ti
+      a(ii2) = tti - ti
+      if (l /= lb) then
+        ir1 = ir1 + kn2s
+        ir2 = ir2 - kn2s
+        ii2 = ir2 + 1
+        ii1 = ir1 + 1
+        t = a(ir1) - a(ir2)
+        ti = a(ii1) + a(ii2)
+        tt = t * wr - ti * wi
+        tti = t * wi + ti * wr
+        t = a(ir1) + a(ir2)
+        ti = a(ii1) - a(ii2)
+        a(ir1) = t - tt
+        a(ir2) = t + tt
+        a(ii1) = ti - tti
+        a(ii2) = -ti - tti
+      end if
+    end do
+!
+260 if (k < 2) go to 310
+270 l = l + n1
+    kk = 1
+    if (k > 2) then
+!             Logic used to find index associated with a given index.
+      do
+        if (mu(kk) == 0) kb = kb + nf(kk+2)
+        mu(kk) = mu(kk) + nf(kk+1)
+        if (mu(kk) < nf(kk+2)) exit
+        mu(kk) = 0
+        kk = kk + 1
+        kb = kb - nf(kk+1)
+        if (kk > (k - 2)) exit
+      end do
+    end if
+300 lb = kb - l
+    if (lb >= l) then
+      if (lb > l) go to 200
+      go to 170
+    end if
+    if (kk <= (k-2)) go to 270
+310 if (k < nda) then
+      mu(1:k) = 0
+      k = k + 1
+      kb = nf(k+1) + 2
+      l = nf(k) + 1
+      go to 300
+    end if
+!
+    if (.not. anal) go to 100
+    return
+!
+!               Fatal error, default is to stop in ERMSG
+400 call ermsg(me,2,2,'M() specified improperly','.')
+    ms = -2
+    return
+!
+! end subroutine ?RFT
+
+! $Log$
