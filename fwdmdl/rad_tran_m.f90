@@ -131,26 +131,25 @@ contains
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     complex(rp), intent(in) :: alpha_path_c(-1:,:)  ! absorption coefficient
-  !                                            on coarse grid.
+      !              on coarse grid.
     complex(rp), intent(inout) :: deltau_pol(:,:,:) ! 2 X 2 X path.  Incremental
-  !                                            transmissivity on the coarse path.
-  !                                            Called E in some notes.
+      !              transmissivity on the coarse path. Called E in some notes.
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
-  !                                            length ratios.
+      !              length ratios.
     logical, intent(in) :: do_gl(:)          ! path flag indicating where to do
-  !                                            gl integrations.
+      !              gl integrations.
     complex(rp), intent(inout) :: incoptdepth_pol(:,:,:) ! incremental path
-  !                            opacities from one-sided layer calculation on
-  !                            output. it is the full integrated layer opacity.
-  !                            2x2xPath
+      !              opacities from one-sided layer calculation on output. it
+      !              is the full integrated layer opacity. 2x2xPath
     complex(rp), intent(in) :: alpha_path_gl(-1:,:) ! absorption coefficient on
-  !                                            gl grid.
-    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw.
+      !              gl grid.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
+      !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: CT(:)            ! Cos theta          for Mag field
     real(rp), intent(in) :: STCP(:)          ! Sin theta Cos Phi  for Mag field
     real(rp), intent(in) :: STSP(:)          ! Sin theta Sin Phi  for Mag field
     real(rp), intent(in) :: T_script(:)      ! differential temperatures (K)
-  !                                            on coarse path.
+      !              on coarse path.
 
   ! outputs
 
@@ -158,8 +157,7 @@ contains
     complex(rp), intent(out) :: tau_pol(:,:,:)  ! transmission function. 2x2xPath
     complex(rp), intent(out) :: rad_pol(:,:)    ! radiance (K). 2x2.
     integer(ip), intent(out) :: p_stop       ! path stop index if >= 0, else
-      !                                        -index in incoptdepth_pol where
-      !                                        cs_expmat failed.
+      !              -index in incoptdepth_pol where cs_expmat failed.
 
   ! Internals
 
@@ -246,26 +244,26 @@ contains
 ! Inputs
 
     integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
-    integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
+    integer(ip), intent(in) :: gl_inds(:)   ! Gauss-Legendre grid indicies
     real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
       !              main grid.  This is for the whole coarse path, not just
       !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
     real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
-!                                              on coarse grid.
+      !                                        on coarse grid.
     real(rp), intent(in) :: eta_zxp_f(:,:)   ! representation basis function.
     real(rp), intent(in) :: sps_path(:,:)    ! Path species function.
     logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where the
-!                                              representation basis function is
-!                                              not zero.
+      !              representation basis function is not zero.
     real(rp), intent(in) :: beta_path_f(:,:) ! cross section for each species
-!                                              on gl grid.
+      !              on gl grid.
     logical, intent(in) :: do_gl(:)          ! A logical indicating where to
-!                                              do gl integrations
+      !              do gl integrations
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
-!                                              length ratios.
+      !              length ratios.
     real(rp), intent(in) :: del_s(:)         ! unrefracted path length.
-    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative * gw.
+    real(rp), intent(in) :: ds_dz_gw(:)      ! path length wrt zeta derivative *
+      !              gw on the entire grid.  Only the gl_inds part is used.
     real(rp), intent(in) :: t_script(:)      ! differential temperatures (K).
     real(rp), intent(in) :: tau(:)           ! transmission function.
     integer(ip), intent(in) :: i_stop        ! path stop index
@@ -273,11 +271,9 @@ contains
 ! Outputs
 
     real(rp), intent(out) :: d_delta_df(:,:) ! path x sve.  derivative of delta
-!                                              wrt mixing ratio state vector
-!                                              element. (K)
+      !              wrt mixing ratio state vector element. (K)
     real(rp), intent(out) :: drad_df(:)      ! derivative of radiances wrt
-!                                              mixing ratio state vector
-!                                              element. (K)
+      !              mixing ratio state vector element. (K)
 ! Internals
 
     integer(ip) :: i_start, n_inds, no_mol, no_to_gl, sps_i, sv_i
@@ -655,11 +651,14 @@ contains
     logical, intent(in) :: do_calc_t_f(:,:) ! Indicates where the
 !                    representation basis function is not zero on gl grid.
     real(rp), intent(in) :: ds_dh(:)        ! path length wrt height derivative
-!                                             on complete grid.
+!                                             on complete grid.  Only the
+!                                             gl_inds part is used.
     real(rp), intent(in) :: dh_dz_gw(:)     ! path height wrt zeta derivative * gw
-!                                             on complete grid.
+!                                             on complete grid.  Only the
+!                                             gl_inds part is used.
     real(rp), intent(in) :: ds_dz_gw(:)     ! path length wrt zeta derivative * gw
-!                                             on complete grid.
+!                                             on complete grid.  Only the
+!                                             gl_inds part is used.
     real(rp), intent(in) :: t_script(:)     ! differential temperatures (K).
     real(rp), intent(in) :: dt_scr_dt(:,:)  ! d t_script / d T * d T / d eta.
     real(rp), intent(in) :: tau(:)          ! transmission function.
@@ -795,6 +794,7 @@ contains
 
       n_inds = count(do_calc)
       needFA = .true.
+      fa = 0.0_rp ! in case n_path <= 4
       if ( n_inds > 0 ) then
         inds => inds_B(1:n_inds)
         i = 1
@@ -1006,6 +1006,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.29  2003/11/01 03:04:02  vsnyder
+! Use ds_dz_gw instead of ds_dh, dh_dz and gw; use del_zeta from FullForwardModel
+!
 ! Revision 2.28  2003/10/30 20:36:41  vsnyder
 ! Get del_zeta from FullForwardModel
 !
