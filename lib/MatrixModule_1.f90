@@ -298,8 +298,8 @@ contains ! =====     Public Procedures     =============================
 
     call nullifyMatrix ( z ) ! for Sun's still useless compiler
     ! Check that the matrices are compatible.
-    if ( x%col%vec%template%id /= y%col%vec%template%id &
-      & .or. x%row%vec%template%id /= y%row%vec%template%id &
+    if ( x%col%vec%template%name /= y%col%vec%template%name &
+      & .or. x%row%vec%template%name /= y%row%vec%template%name &
       & .or. (x%col%instFirst .neqv. y%col%instFirst) &
       & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -353,8 +353,8 @@ contains ! =====     Public Procedures     =============================
     integer :: I, J      ! Subscripts for [XYZ]%Block
 
     ! Check that the matrices are compatible.
-    if ( x%col%vec%template%id /= y%col%vec%template%id &
-      & .or. x%row%vec%template%id /= y%row%vec%template%id &
+    if ( x%col%vec%template%name /= y%col%vec%template%name &
+      & .or. x%row%vec%template%name /= y%row%vec%template%name &
       & .or. (x%col%instFirst .neqv. y%col%instFirst) &
       & .or. (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -579,8 +579,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Check that the matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
-    if ( x%m%col%vec%template%id /= z%m%col%vec%template%id &
-      & .or. x%m%row%vec%template%id /= z%m%row%vec%template%id &
+    if ( x%m%col%vec%template%name /= z%m%col%vec%template%name &
+      & .or. x%m%row%vec%template%name /= z%m%row%vec%template%name &
       & .or. (x%m%col%instFirst .neqv. z%m%col%instFirst) &
       & .or. (x%m%row%instFirst .neqv. z%m%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -772,8 +772,8 @@ contains ! =====     Public Procedures     =============================
     type(matrix_T), intent(inout) :: Z
     type(matrix_T), intent(in) :: X
     integer :: I, J ! Subscripts and loop inductors
-    if ( x%col%vec%template%id /= z%col%vec%template%id &
-      & .or. x%row%vec%template%id /= z%row%vec%template%id &
+    if ( x%col%vec%template%name /= z%col%vec%template%name &
+      & .or. x%row%vec%template%name /= z%row%vec%template%name &
       & .or. (x%col%instFirst .neqv. z%col%instFirst) &
       & .or. (x%row%instFirst .neqv. z%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1151,7 +1151,7 @@ contains ! =====     Public Procedures     =============================
 
     if ( column < 1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'In "GetVectorFromColumn", "Column" < 1' )
-    if ( matrix%col%vec%template%id /= vector%template%id ) &
+    if ( matrix%col%vec%template%name /= vector%template%name ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & "Vector incompatible with matrix in GetVectorFromColumn" )
     ncols = 0
@@ -1322,7 +1322,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Check that matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
-    if ( (x%row%vec%template%id /= y%row%vec%template%id)  .or. &
+    if ( (x%row%vec%template%name /= y%row%vec%template%name)  .or. &
       & (x%row%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in MultiplyMatrix_XTY_1" )
@@ -1364,7 +1364,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Check that matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
-    if ( (x%col%vec%template%id /= y%row%vec%template%id)  .or. &
+    if ( (x%col%vec%template%name /= y%row%vec%template%name)  .or. &
       & (x%col%instFirst .neqv. y%row%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in MultiplyMatrix_XY_1" )
@@ -1394,7 +1394,7 @@ contains ! =====     Public Procedures     =============================
 
     ! Check that matrices are compatible.  We don't need to check
     ! Nelts or Nb, because these are deduced from Vec.
-    if ( (x%col%vec%template%id /= y%col%vec%template%id)  .or. &
+    if ( (x%col%vec%template%name /= y%col%vec%template%name)  .or. &
       & (x%col%instFirst .neqv. y%col%instFirst) ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Incompatible arrays in MultiplyMatrix_XY_T_1" )
@@ -1446,7 +1446,7 @@ contains ! =====     Public Procedures     =============================
     logical :: My_Mask        ! My copy of UseMask or false if it's absent
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
-    if ( a%row%vec%template%id /= v%template%id ) &
+    if ( a%row%vec%template%name /= v%template%name ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
@@ -1456,7 +1456,7 @@ contains ! =====     Public Procedures     =============================
     my_clone = .false.
     if ( present(clone) ) my_clone = clone
     if ( (my_update .or. .not. my_clone) .and. &
-      & a%col%vec%template%id /= z%template%id ) &
+      & a%col%vec%template%name /= z%template%name ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     ! Copy characteristics, allocate values:
@@ -1499,7 +1499,7 @@ contains ! =====     Public Procedures     =============================
     logical :: My_Clone       ! My copy of Clone or false if it's absent
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
-    if ( a%col%vec%template%id /= v%template%id ) &
+    if ( a%col%vec%template%name /= v%template%name ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
@@ -1507,7 +1507,7 @@ contains ! =====     Public Procedures     =============================
     my_clone = .false.
     if ( present(clone) ) my_clone = clone
     if ( (my_update .or. .not. my_clone) .and. &
-      & a%row%vec%template%id /= z%template%id ) &
+      & a%row%vec%template%name /= z%template%name ) &
         & call MLSMessage ( MLSMSG_Error, ModuleName, &
           & "Matrix and result not compatible in MultiplyMatrixVector_1" )
     ! Copy characteristics, allocate values:
@@ -1773,7 +1773,7 @@ contains ! =====     Public Procedures     =============================
     my_transpose = .false.
     if ( present(transpose) ) my_transpose = transpose
     if ( present(rhs) ) call copyVector ( x, rhs ) ! X := RHS
-    if ( z%m%col%vec%template%id /= x%template%id ) &
+    if ( z%m%col%vec%template%name /= x%template%name ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Z and RHS not compatible in SolveCholesky_1" )
 
@@ -1930,7 +1930,7 @@ contains ! =====     Public Procedures     =============================
     mySquare = .false.
     if ( present(square) ) mySquare = square
 
-    if ( a%m%col%vec%template%id /= x%template%id ) &
+    if ( a%m%col%vec%template%name /= x%template%name ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "A and X not compatible in UpdateDiagonalVec_1" )
     if ( mySquare ) then
@@ -2275,6 +2275,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.91  2003/06/20 19:31:39  pwagner
+! Changes to allow direct writing of products
+!
 ! Revision 2.90  2003/06/03 19:21:38  livesey
 ! Made CholeskyFactor and SolveCholesky return with status rather than
 ! crash.  Also added invert option to GetDiagonal
