@@ -5,6 +5,7 @@ IMPLICIT NONE
 TYPE (MLS_SignalsDatabase_T) :: database
 INTEGER :: i
 
+PRINT*,"Hello"
 OPEN(UNIT=9,FILE="emls-signals.dat",STATUS="OLD",ACTION="READ")
 CALL ReadSignalsDatabase(9,database)
 CLOSE(UNIT=9)
