@@ -1,12 +1,36 @@
-	subroutine Miecoeff(ISPI,f,t,nr,r,a,b,nab,nabr,bc)
+! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+module MieTheory
+
+! -------------------------------------------------------------------------  
+! MODULE TO COMPUTE MIE EFFICIENCIES
+! -------------------------------------------------------------------------
+
         use MLSCommon, only: r8   
 	implicit none
+
+        Private
+        Public :: MieCoeff
+
+ !---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm =                          &
+    "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName=                       &
+    "$RCSfile$"
+ !---------------------------------------------------------------------------
+      
+contains
+
+	SUBROUTINE MieCoeff(ISPI,f,t,nr,r,a,b,nab,nabr,bc)
+
 	include 'constants.f9h'
         integer :: ISPI	                        ! cloud type (1=ICE, 2=WATER)
 	real(r8) :: f 		                ! frequency in GHz
 	real(r8) :: t 		                ! Temperature in K 
 	real(r8) :: wl 	                        ! wavelength in meters
-        integer :: nr	                ! no of particle size
+        integer :: nr	                        ! no of particle size
 	integer :: nab	                        ! no of a/b terms
 	real (r8) :: r(nr)	                ! particle radius
 	integer :: nabr(nr)	                ! truncation number for a and b
@@ -99,7 +123,8 @@
 	bc(3,j)=bc(3,j)*2/x/x
  12    continue
 
-       RETURN
-       END
+       END SUBROUTINE MieCoeff
 
-! $Log: miecoeff.f90,v      
+end module MieTheory
+
+! $Log: MieTheory.f90,v      

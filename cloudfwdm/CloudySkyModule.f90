@@ -7,6 +7,7 @@ module CloudySkyModule
 ! MLS CLOUD RADIANCE MODEL
 ! -------------------------------------------------------------------------
 
+      use MieTheory, only: MieCoeff
       use MLSCommon, only: r8      
       use PhaseFunction, only: pfsetup
       use SizeDistribution, only: DRP_SIZE
