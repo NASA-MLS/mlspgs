@@ -102,7 +102,7 @@ contains
       ELSE IF (ISPI .EQ. 2) THEN
 
         ! DEFINE SIZE BINS FOR WATER CLOUD
-          DD=200._r8/NR**2                   
+          DD=200._r8/NR**2/(F/200._r8)                    
 
       ENDIF
 
@@ -321,6 +321,9 @@ contains
 end module CloudySkyModule
 
 ! $Log$
+! Revision 1.9  2002/04/16 03:42:06  jonathan
+! adjust size bin
+!
 ! Revision 1.8  2002/04/15 22:22:40  jonathan
 ! check bug
 !
