@@ -36,7 +36,7 @@ module FullForwardModel_m
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
   use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
-  use String_table, only: GET_STRING, DISPLAY_STRING
+  use String_table, only: GET_STRING
   use SpectroscopyCatalog_m, only: CATALOG_T, LINE_T, LINES, CATALOG
   use intrinsic, only: L_TEMPERATURE, L_RADIANCE, L_PTAN, L_ELEVOFFSET, &
     & L_ORBITINCLINATION, L_SPACERADIANCE, L_EARTHREFL, L_LOSVEL,       &
@@ -90,7 +90,6 @@ contains ! ================================ FullForwardModel routine ======
     ! alphabetically
 
     integer :: BRKPT                    ! Index of midpoint of path
-    integer :: CATINDEX                 ! Index for molecule
     integer :: CHANNEL                  ! A Loop counter
     integer :: FRQ_I                    ! Frequency loop index
     integer :: F_LEN                    ! Total number of f's
@@ -165,6 +164,8 @@ contains ! ================================ FullForwardModel routine ======
     logical, dimension(:), pointer :: DO_GL ! GL indicator
     logical, dimension(:), pointer :: LIN_LOG ! Is this vmr on a log basis? (noSpecies)
     logical, dimension(:), pointer :: LINEFLAG ! Use this line (noLines per species)
+
+    logical, dimension(:), pointer :: SKIP_ETA_FRQ  ! 'Avoid non-freq. mol.'
 
     logical, dimension(:,:), pointer :: DO_CALC_ZP  ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_FZP ! 'Avoid zeros' indicator
@@ -331,7 +332,7 @@ contains ! ================================ FullForwardModel routine ======
       & eta_zxp_dv, eta_zxp_dw, eta_zxp_t, h_glgrid, k_atmos_frq, &
       & k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, eta_fzp, &
       & k_temp_frq, ptg_angles, radiances, sps_path, tan_dh_dt, tan_temp, &
-      & t_glgrid, dh_dt_glgrid )
+      & t_glgrid, dh_dt_glgrid, skip_eta_frq )
 
     nullify ( lineFlag )
 
@@ -471,27 +472,16 @@ contains ! ================================ FullForwardModel routine ======
 
     do j = 1, noSpecies
       Spectag = spec_tags(fwdModelConf%molecules(j))
-      catIndex = FindFirst(catalog%spec_tag == spectag)
-
-      if ( catIndex < 1 ) then
-        call output ( 'No catalog entry for molecule ' )
-        call display_string ( lit_indices ( fwdModelConf%molecules(j) ), advance='yes' )
-        call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & "Possible problem with spectroscopy catalog" )
-      endif
-
-      thisCatalogEntry => Catalog(catIndex)
+      thisCatalogEntry => Catalog(FindFirst(catalog%spec_tag == spectag ) )
       if ( associated ( thisCatalogEntry%lines ) ) then
         ! Now subset the lines according to the signal we're using
-        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), &
-          & 'lineFlag', ModuleName )
+        call Allocate_test ( lineFlag, size(thisCatalogEntry%lines), 'lineFlag', ModuleName )
         lineFlag = .false.
         do k = 1, size ( thisCatalogEntry%lines )
           thisLine => lines(thisCatalogEntry%lines(k))
           do sigInd = 1, size(fwdModelConf%signals)
             if ( associated(thisLine%signals) ) then
-              doThis = any ( thisLine%signals == &
-                & fwdModelConf%signals(sigInd)%index )
+              doThis = any ( thisLine%signals == fwdModelConf%signals(sigInd)%index )
               ! If we're only doing one sideband, maybe we can remove some more lines
               if ( sidebandStart==sidebandStop ) doThis = doThis .and. &
                 & any( ( thisLine%sidebands == sidebandStart ) .or. &
@@ -694,6 +684,10 @@ contains ! ================================ FullForwardModel routine ======
     call Allocate_test ( eta_fzp, no_ele, f_len, 'eta_zp', ModuleName )
     call Allocate_test ( sps_path, no_ele, noSpecies, 'sps_path', ModuleName )
 
+    call Allocate_test ( skip_eta_frq, noSpecies, 'skip_eta_frq', ModuleName )
+
+    skip_eta_frq = (Grids_f%no_f < 2)
+
     if(FwdModelConf%temp_der) then
 
       ! Allocation for metrics routine when Temp. derivative is needed:
@@ -735,6 +729,7 @@ contains ! ================================ FullForwardModel routine ======
                         &  ModuleName )
       call Allocate_test ( do_calc_dv, no_ele, sv_dv_len, 'do_calc_dv', &
                         &  ModuleName )
+
 
       call Allocate_test ( eta_zxp_dw, no_ele, sv_dw_len, 'eta_zxp_dw', &
                         &  ModuleName )
@@ -967,11 +962,16 @@ contains ! ================================ FullForwardModel routine ======
         call comp_eta_docalc_no_frq(Grids_f,z_path(1:no_ele), &
           &  phi_path(1:no_ele),do_calc_zp(1:no_ele,:),eta_zp(1:no_ele,:))
 
+       ! Now compute sps_path with a FAKE frequency, mainly to get the
+       ! WATER (H2O) contribution for refraction calculations, but also
+       ! to compute sps_path for all those witn no frequecy componenet
+
+        Frq = 0.0
+        call comp_sps_path_frq(Grids_f,Frq,sps_values,eta_zp(1:no_ele,:), &
+      &  do_calc_zp(1:no_ele,:),skip_eta_frq,lin_log,sps_path(1:no_ele,:),&
+      &  do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
+
         if (h2o_ind > 0) then
-          Frq = 0.0
-          call comp_sps_path_frq(Grids_f,Frq,sps_values,eta_zp(1:no_ele,:), &
-            &  do_calc_zp(1:no_ele,:),lin_log,sps_path(1:no_ele,:),       &
-            &  do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
           call refractive_index(p_path(ext_ind_c(1:npc)), &
             &  t_path(ext_ind_c(1:npc)),n_path(1:npc),    &
             &  h2o_path=sps_path((ext_ind_c(1:npc)),h2o_ind))
@@ -1049,8 +1049,8 @@ contains ! ================================ FullForwardModel routine ======
 
           ! Compute the sps_path for this Frequency
           call comp_sps_path_frq(Grids_f,Frq,sps_values,eta_zp(1:no_ele,:), &
-               & do_calc_zp(1:no_ele,:),lin_log,sps_path(1:no_ele,:),       &
-               & do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
+        &  do_calc_zp(1:no_ele,:),skip_eta_frq,lin_log,sps_path(1:no_ele,:),&
+        &  do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
 
           if(FwdModelConf%temp_der  .and. FwdModelConf%spect_der) then
 
@@ -1779,6 +1779,8 @@ contains ! ================================ FullForwardModel routine ======
     call Deallocate_test ( eta_fzp, 'eta_fzp', ModuleName )
     call Deallocate_test ( sps_path, 'sps_path', ModuleName )
 
+    call Deallocate_test ( skip_eta_frq,   'skip_eta_frq',   ModuleName )
+
     if(FwdModelConf%temp_der) then
       call Deallocate_test ( dRad_dt, 'dRad_dt', ModuleName )
       call Deallocate_test ( dbeta_dt_path_c, 'dbeta_dt_path_c', ModuleName )
@@ -1829,9 +1831,6 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
-! Revision 2.7  2001/11/02 10:47:57  zvi
-! Implementing frequecy grid
-!
 ! Revision 2.6  2001/10/12 20:40:25  livesey
 ! Moved sideband ratio check
 !
