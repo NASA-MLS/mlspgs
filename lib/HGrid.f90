@@ -320,8 +320,15 @@ MODULE HGrid                    ! Horizontal grid information
        END SELECT
     END DO
 
-    DEALLOCATE (defaultMIFs)
-    DEALLOCATE (defaultField,interpolatedField)
+    DEALLOCATE (defaultMIFs, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"defaultMIFs")
+    DEALLOCATE (defaultField, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"defaultField")
+    DEALLOCATE (interpolatedField, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"interpolatedField")
 
     ! This calculation may need attention! ***
     hGrid%noProfsLowerOverlap=NINT(chunk%noMAFsLowerOverlap*interpolationFactor)
@@ -337,11 +344,39 @@ MODULE HGrid                    ! Horizontal grid information
 
     ! Dummy arguments
     TYPE (HGrid_T), INTENT(OUT) :: hGrid
-
+    !Local variables
+    INTEGER:: status
     ! Executable code
 
-    DEALLOCATE(hGrid%phi, hGrid%geodLat, hGrid%lon, hGrid%time, &
-         & hGrid%solarTime, hGrid%solarZenith, hGrid%losAngle)
+    DEALLOCATE(hGrid%phi, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"hGrid%phi")
+
+
+    DEALLOCATE(hGrid%geodLat, stat=status)                              
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"hGrid%geodLat")
+
+    DEALLOCATE(hGrid%lon,  stat=status)                              
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"hGrid%lon")
+
+    DEALLOCATE(hGrid%time, stat=status)                              
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"hGrid%time")
+
+    DEALLOCATE(hGrid%solarTime, stat=status)                              
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"hGrid%solarTime")
+
+    DEALLOCATE(hGrid%solarZenith, stat=status)                              
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"hGrid%solarZenith")
+
+    DEALLOCATE(hGrid%losAngle, stat=status)                              
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"hGrid%losAngle")
+
 
     hGrid%noProfs=0
     hGrid%name=""
@@ -377,7 +412,9 @@ MODULE HGrid                    ! Horizontal grid information
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=hGrid
-    IF (ASSOCIATED(database))DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"database")
     database=>tempDatabase
   END SUBROUTINE AddHGridToDatabase
 
@@ -391,13 +428,15 @@ MODULE HGrid                    ! Horizontal grid information
     TYPE (HGrid_T), DIMENSION(:), POINTER :: database
 
     ! Local variables
-    INTEGER :: hGridIndex
+    INTEGER :: hGridIndex, status
 
     IF (ASSOCIATED(database)) THEN
        DO hGridIndex=1,SIZE(database)
           CALL DestroyHGridContents(database(hGridIndex))
        ENDDO
-       DEALLOCATE(database)
+       DEALLOCATE(database, stat=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"database") 
     ENDIF
   END SUBROUTINE DestroyHGridDatabase
 
@@ -407,6 +446,11 @@ END MODULE HGrid
 
 !
 ! $Log$
+! Revision 1.9  2000/05/17 23:33:51  lungu
+! Added dots between MLSInstrumentModuleName and l1bItemName so that is consistent with L1BOA file.
+! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)" so it doesn't chrash trying to dealocate
+! an "empty" database.
+!
 ! Revision 1.8  2000/05/17 18:15:23  livesey
 ! Finished off interaction with l2cf.
 !
