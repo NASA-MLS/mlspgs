@@ -1,0 +1,3748 @@
+#!/bin/sh
+echo test.f90 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'test.f90' &&
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+!
+! "$Id$"
+program test_utctotai
+  ! This tests the utctotai93 conversion
+  ! that the mls software substitutes for
+  ! the SDP Toolkit when level 2 is
+  ! run with the "no toolkit" option
+  ! The driver will not be copied into
+  ! libutctotai.a, however; it's for testing only
+  implicit NONE
+
+  integer, parameter :: CCSDSLen=27
+  character (len=*), parameter :: &
+   & LEAPSEC_GUESS = '/nas/user2/pwagner/mlspgs/tests/misc/leapsec.dat'
+  character (len=256) :: LEAPSEC_FILE
+  character (len=CCSDSLen), parameter :: CCSDS_END_TIME = '2001-001T23:59:59'
+  character (len=CCSDSLen) :: CCSDSEndTime
+  integer :: returnStatus
+  INTEGER, PARAMETER:: r8=SELECTED_REAL_KIND(13)
+  real(r8) :: endtime
+  !integer, external :: pgs_td_utctotai
+  integer, external :: mls_utctotai
+
+    print *, 'This is a sample for how utc time is converted to tai'
+    print *, '(The file may be named: ', LEAPSEC_GUESS, ' )'
+    print *, '(If this is correct enter return; otherwise its correct name )'
+    read(*,'(A256)') LEAPSEC_FILE
+    if ( LEAPSEC_FILE == '' ) LEAPSEC_FILE=LEAPSEC_GUESS
+    CCSDSEndTime = CCSDS_END_TIME
+    !returnStatus = pgs_td_utctotai (CCSDSEndTime, endtime)
+    !print *, returnStatus
+    !print *, 'utc: ', CCSDSEndTime, ' tai: ', endtime
+    returnStatus = mls_utctotai (trim(LEAPSEC_FILE), CCSDSEndTime, endtime)
+    print *, returnStatus
+    print *, 'utc: ', CCSDSEndTime, ' tai: ', endtime
+    print *, 'Now input your own utc times for conversion: yyyy-dddThh:mm:ss'
+    print *, '(When done simply type "quit")'
+    DO
+      read *, CCSDSEndTime
+      if ( index(CCSDSEndTime, 'q') > 0 &
+       & .or. &
+       & index(CCSDSEndTime, 'Q') > 0 ) stop
+      returnStatus = mls_utctotai (trim(LEAPSEC_FILE), CCSDSEndTime, endtime)
+      print *, 'utc: ', CCSDSEndTime, ' tai: ', endtime
+    ENDDO
+end program test_utctotai
+! $Log$
+SHAR_EOF
+echo mls_bindFORTRAN.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'mls_bindFORTRAN.c' &&
+/* Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+ U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+ "$Id$" */
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*******************************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME:
+  PGS_TD_bindFORTRAN.c
+
+DESCRIPTION:
+  This file contain FORTRAN bindings for the SDP (aka PGS) Toolkit Time and 
+  Date (TD) tools. 
+
+AUTHOR:
+  Guru Tej S. Khalsa / Applied Research Corporation
+
+HISTORY:
+  02-Jun-1995  GTSK  Initial version
+
+END_FILE_PROLOG:
+*******************************************************************************/
+
+#include <cfortran.h>
+#include <PGS_TD.h>
+
+
+/*********************
+ * cfortran.h MACROS *
+ *********************/
+
+/* The following macros are expanded by cfortran.h to C functions which allow
+   FORTRAN users to access the SDP Toolkit relatively painlessly. */
+
+
+/* mls_UTCtoTAI() */
+
+FCALLSCFUN3(INT, mls_UTCtoTAI, MLS_UTCTOTAI, mls_utctotai, STRING, \
+        PSTRING, PDOUBLE)
+
+
+
+
+
+/* $Log$ */
+SHAR_EOF
+echo mls_LeapSec.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'mls_LeapSec.c' &&
+/* Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+ U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+ "$Id$" */
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*******************************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME: 
+      mls_LeapSec.c
+ 
+DESCRIPTION:
+      This file contains the tool mls_LeapSec(), which extracts the
+      leap second value from file leapsec.dat and returns an error
+      status. Based on PGS_TD_Leapsec() which used PGS_IO_GenOpen
+      to get at the leapsec.dat while this function uses the first
+      arg instead.
+
+AUTHOR:
+      Deborah Foch          / Applied Research Corporation
+      Peter D. Noerdlinger  / Applied Research Corporation  
+      Guru Tej S. Khalsa    / Applied Research Corporation
+    
+HISTORY:
+      10-Feb-1994   DF/PDN  Designed
+      24-Feb-1994   DF      Created
+      25-Feb-1994   DF      Modified to correct errors             
+      28-Feb-1994   DF      Modified to improve efficiency/logic   
+      01-Mar-1994   PDN     Modified to streamline I/O list and
+                            to warn on need to input UTC   
+      02-Mar-1994   PDN     Modified to search table only when 
+                            time is within its range      
+      02-Mar-1994   PDN     Modified to utilize first and last rows
+      09-Mar-1994   PDN     Modified to use more static variables
+      01-Apr-1994   UP      Modified prolog
+      22-Jul-1994   DF      Modified prolog
+      25-Jul-1994   DF      Added functions to compute leapsecs 
+                            between 1961 and 1968.  Added linear
+                            function to compute leapsecs without
+                            the table (rough estimate)
+      26-Jul-1994   DF      Modified table read section to read
+                            the constants to compute leap seconds
+		      	    between 1961 and 1968.
+      03-Aug-1994   DF      Corrected errors
+      05-Aug-1994   DF      Changed table read algorithm for
+                            improved efficiency
+      17-Aug-1994   DF      Completed changes determined from code inspection
+      19-Aug-1994   DF      Changed <= to < in line 349 to change Max UTC
+      23-Sep-1994   GTSK    Modified to use PGS_IO_ routines to open and
+                            close data file.
+      23-Sep-1994   GTSK    Altered leap second search algorithm to optimize for
+                            successive calls with similar times.
+      28-Apr-1994   GTSK    Changed types of some values read from the file
+                            leapsec.dat to be float rather than PGSt_double to
+			    speed up processing and reduce storage requirements.
+      01-Jun-1994   GTSK    Changed input Julian day from a single number to
+                            an array of two numbers.
+      30-Jun-1995   PDN     Fixed to skip new header line in data file
+                            and fixed examples
+      08-Jan-1997   PDN     Added a "break" statement for the cases of radical
+                            failure of PGS_IO_Gen_Open - such as a missing file
+      21-May-1997   PDN     Fixed Comments
+      21-Oct-1999   PDN     Changed method of reading from fscanf to fgets followed
+                            by sscanf.  Added more "sanity checks". New code avoids
+                            going into a loop or core dumping with most plausible
+                            kinds of corrupt leap seconds files. Also added better
+                            messaging in case of failure
+      27-Oct-1999   PDN     Changed MAX_HEADER from 600 to 110. This is fully ample
+                            for normal length lines, which should not exceed 91 
+                            characters, although obsolete files with PREDICTED
+                            in the right hand column could reach 94 characters.
+      25-Apr-2002   PAW     Changed from PGS_TD_Leapsec to mls_LeapSec
+
+  
+END_FILE_PROLOG:
+*******************************************************************************/
+
+/*******************************************************************************
+BEGIN_PROLOG:
+  
+TITLE:
+      Get Leap Second 
+ 
+NAME:
+      mls_LeapSec()
+   
+SYNOPSIS:
+   
+      #include <PGS_TD.h> 
+   
+      PGSt_SMF_status
+      mls_LeapSec(
+          PGSt_double   jdUTC[2],                         
+          PGSt_double   *leapSec,
+	  PGSt_double   *lastChangeJD,
+	  PGSt_double   *nextChangeJD,
+	  char          *leapStatus)                       
+
+DESCRIPTION:	 
+      This tool accesses the file 'leapsec.dat', extracts the leap second 
+      value for an input Julian Day number, and returns an error status.
+
+INPUTS:
+
+      NAME            DESCRIPTION            UNITS        MIN         MAX
+      ----            ----------------       -----        ---         ---
+   LEAPSEC_FILE    leapsec.dat file name with path
+      jdUTC           input Julian Day       days         N/A         N/A
+                      number (UTC)                          (see NOTES)
+		                              
+OUTPUTS:
+      NAME            DESCRIPTION            UNITS        MIN         MAX
+      ----            -----------            -----        ---         ---
+      leapSec         leap second value      seconds       0          N/A
+                      for day jdUTC,
+                      read from table 
+		      'leapsec.dat'                       
+     
+      lastChangeJD    Julian Day number      days         N/A         N/A
+		      upon which that                       (see NOTES)
+                      leap second value  
+		      was effective                      
+
+      nextChangeJD    Julian Day number      days         N/A         N/A
+		      of the next ACTUAL                    (see NOTES)
+                      or PREDICTED leap  
+		      second
+	                                                                  
+      leapStatus      indicates whether      N/A          N/A         N/A
+		      the leap second
+                      value is ACTUAL, 
+		      PREDICTED, a LINEARFIT,
+		      or ZEROLEAPS (leap
+		      second value is set to 
+		      zero if the input time 
+	              is before the start
+                      of the table)
+
+
+RETURNS:
+      PGS_S_SUCCESS                successful execution
+      PGSTD_W_JD_OUT_OF_RANGE      invalid input Julian Day number
+      PGSTD_W_DATA_FILE_MISSING    leap second file not found
+      PGSTD_E_NO_LEAP_SECS         defective leap second file
+
+
+EXAMPLES:
+      PGSt_double        jdUTC[2];
+      PGSt_double        leapsecond;
+      PGSt_double        lastChangeJD;
+      PGSt_double        nextChangeJD;
+
+      PGSt_SMF_status    returnStatus;
+
+      char           leapStatus[10];
+
+      jdUTC[0] = 2439999.5;
+      jdUTC[1] = 0.5;
+      returnStatus = mls_LeapSec(jdUTC,&leapsecond,&lastChangeJD,
+                                    &nextChangeJD,leapStatus);
+
+      if (returnStatus != PGS_S_SUCCESS)
+      {
+              **  handle errors  **
+      }
+
+NOTES:
+   TIME ACRONYMS:
+     
+      UTC: Coordinated Universal Time
+      TAI: International Atomic Time
+
+
+   TIME BOUNDARIES for TRANSFORMATIONS BETWEEN UTC and TAI:
+
+     The minimum and maximum times that can successfully be processed by 
+     this function depend on the file "leapsec.dat" which relates leap 
+     second (TAI-UTC) values to UTC Julian dates. The file "leapsec.dat" 
+     contains dates of new leap seconds and the total leap seconds for 
+     times on and after Jan 1, 1972.  For times between Jan 1, 1961 and 
+     Jan 1, 1972 it contains coefficients for an approximation supplied 
+     by the International Earth Rotation Service (IERS) and the United 
+     States Naval Observatory (USNO).  The Toolkit then uses these 
+     coefficients in an algorithm consistent with IERS/USNO usage. For 
+     times after Jan 1, 1961, but before the last date in the file, the
+     Toolkit sets TAI-UTC equal to the total number of leap seconds to 
+     date, (or to the USNO/IERS approximation, for dates before Jan 1,
+     1972). If an input date is before Jan 1, 1961 the Toolkit sets the
+     leap seconds value to 0.0.  This is consistent with the fact that,
+     for civil timekeeping since 1972, UTC replaces Greenwich Mean Solar 
+     Time (GMT), which had no leap seconds. Thus for times before Jan 1, 
+     1961, the user can, for most Toolkit-related purposes, encode 
+     Greenwich Mean Solar Time as if it were UTC.  If an input date
+     is after the last date in the file, or after Jan 1, 1961, but the 
+     file cannot be read, the function will use a calculated value of 
+     TAI-UTC based on a linear fit of the data known to be in the table
+     as of early 1997.  This value is a crude estimate and may be off by 
+     as much as 1.0 or more seconds.  If the data file, "leapsec.dat", 
+     cannot be opened, or the time is outside the range from Jan 1, 1961 
+     to the last date in the file, the return status level will be 'E'.  
+     Even when the status level is 'E', processing will continue, using 
+     the default value of TAI-UTC (0.0 for times before Jan 1, 1961, or 
+     the linear fit for later times). Thus, the user should always 
+     carefully check the return status.  
+
+     The file "leapsec.dat" is updated when a new leap second is 
+     announced by the IERS, which has been, historically, about once 
+     every year or two. 
+
+
+   JULIAN DATES:
+
+     The Julian date is a day count originating at noon of Jan. 1st, 4713 B.C.
+
+     Format:
+
+       Toolkit Julian dates are kept as an array of two real (high precision)
+       numbers (C: PGSt_double, FORTRAN: DOUBLE PRECISION).  The first element
+       of the array should be the half integer Julian day (e.g. N.5 where N is a
+       Julian day number).  The second element of the array should be a real
+       number greater than or equal to zero AND less than one (1.0) representing
+       the time of the current day (as a fraction of that (86400 second) day.
+       This format allows relatively simple translation to calendar days (since
+       the Julian days begin at noon of the corresponding calendar day).  Users
+       of the Toolkit are encouraged to adhere to this format to maintain high
+       accuracy (one number to track significant digits to the left of the
+       decimal and one number to track significant digits to the right of the
+       decimal).  Toolkit functions that do NOT require a Julian type date as an
+       input and return a Julian date will return the Julian date in the above
+       mentioned format.  Toolkit functions that require a Julian date as an
+       input and do NOT return a Julian date will first convert (internally) the
+       input date to the above format if necessary.  Toolkit functions that have
+       a Julian date as both an input and an output will assume the input is in
+       the above described format but will not check and the format of the
+       output may not be what is expected if any other format is used for the
+       input.
+
+     Meaning:
+
+       Toolkit "Julian dates" are all derived from UTC Julian Dates.  A Julian
+       date in any other time stream (e.g. TAI, TDT, UT1, etc.) is the UTC
+       Julian date plus the known difference of the other stream from UTC
+       (differences range in magnitude from 0 seconds to about a minute).
+
+       Examples:
+
+         In the following examples, all Julian Dates are expressed in Toolkit
+         standard form as two double precision numbers. For display here, the
+         two members of the array are enclosed in braces {} and separated by a
+         comma.
+
+         A) UTC to TAI Julian dates conversion
+
+         The Toolkit UTC Julian date for 1994-02-01T12:00:00 is: 
+         {2449384.50, 0.5}.
+         TAI-UTC at 1994-02-01T12:00:00 is 28 seconds (.00032407407407 days). 
+         The Toolkit TAI Julian date for 1994-02-01T12:00:00 is:
+         {2449384.50, 0.5 + .00032407407407} = {2449384.50, 0.50032407407407}
+
+         Note that the Julian day numbers in UTC and the target time stream may
+         be different by + or - 1 for times near midnight:
+
+         B) UTC to UT1 Julian dates conversion
+
+         The Toolkit UTC Julian date for 1994-04-10T00:00:00 is: 
+         {2449452.50, 0.0}.
+         UT1-UTC at 1994-04-10T00:00:00 is -.04296 seconds 
+         (-0.00000049722221 days).  The Toolkit UT1 Julian date for
+         1994-04-10T00:00:00 is:
+         {2449452.50, 0.0 - 0.0000004972222} = 
+         {2449452.50, -0.0000004972222} =
+         {2449451.50, 0.9999995027778}
+
+   MODIFIED JULIAN DATES:
+
+     Modified Julian dates follow the same conventions as those for Julian
+     dates (above) EXCEPT that the modified Julian day number is integral (NOT
+     half-integral).  The modified Julian date in any time stream has a day 
+     number that is 2400000.5 days less than the Julian date day number and an
+     identical day fraction (i.e. the modified Julian date is a day count
+     originating at 1858-11-17T00:00:00).
+
+
+REQUIREMENTS:
+      PGSTK - 1050, 0930 
+
+DETAILS:
+     Input times which are not included in the leap second file, are handled by
+     setting the leap second value equal to 0 if the input time is before the
+     start of the leap second file, and by a linear fit of the whole number leap
+     seconds in the table as of July 1994 for input times after the end date of
+     the table.  If the leap second file is not found, any input time will be
+     accepted, and the leap second value estimated based on the appropriate
+     linear fit which is determined by whether the input time is before or after
+     Jan 1, 1972.
+
+     The equation used for the linear fit of the table values between 1972 and
+     2007 (and beyond) is the linear fit of the steps of leap second value
+     changes (between 1972 and 2007) minus 0.5 (to put the line through the
+     average values for each time interval between leap second increases).  The
+     equation was updated last on July 27, 1994.
+
+GLOBALS:
+      NONE
+
+FILES:
+      This tool accesses the file leapsec.dat.  If this file is not
+      available a computed value is returned (see NOTES).
+     
+FUNCTIONS_CALLED:
+      PGS_SMF_SetDynamicMsg()      set error/status message
+        
+
+END_PROLOG:
+*******************************************************************************/
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <PGS_math.h>
+#include <PGS_TD.h>
+#include <PGS_EPH.h>
+#include <PGS_IO.h>
+
+#define MAX_HEADER  110
+#define ARRAYSIZE   200
+#define PREDCHAR    10
+#define MONTHCHAR   4
+#define JD1961JAN1  2437300.5
+#define JD1972JAN1  2441317.5
+#define MAX_PERIOD  83.0       /* maximum number of days after the last UPDATE
+				  of the leap seconds file that the last leap
+				  second entry in the file will be assumed to be
+				  valid for (after which an error will be
+				  returned indicating that the leap second file
+				  is out of date), the number 83 corresponds to
+				  roughly 3 months less 7 days */
+
+/* logical identifier for leap seconds file leapsec.dat (defined in Process
+   Control File) */
+ 
+#define LEAPSEC 10301
+#define LEAPSEC_NAME "/nas/user2/pwagner/mlspgs/tests/misc/leapsec.dat"
+/* Use PGS_IO_.. to open, close leapsec.dat? */
+#define USE_PGS_IO_NONSENSE  0
+ 
+/* name of this function */
+
+#define FUNCTION_NAME "mls_LeapSec()"
+
+PGSt_SMF_status 
+mls_LeapSec(                                /* Get Leap Second */
+    char            *LEAPSEC_FILE, /* path and name of leapsec.dat file */
+    PGSt_double jdUTC[2],                      /* UTC Julian Date */
+    PGSt_double *leapSec,                      /* requested leap second value */
+    PGSt_double *lastChangeJD,                 /* Julian Day number on which
+						  output leap second was
+						  effective */
+    PGSt_double *nextChangeJD,                 /* Julian Day number on which
+						  next leap second change
+						  occurred (or is predicted to
+						  occur) */
+    char        leapStatus[PREDCHAR])          /* indicates whether the leap sec
+						  value is actual, predicted or
+						  computed using a linear fit */
+{	   
+    PGSt_double        jdUTCadd;               /* input UTC Julian Date as a 
+						  single number:
+						  jdUTC[0] + jdUTC[1] */
+    PGSt_double        updateJD[2];            /* Julian date of last update
+						  time of leap seconds file */
+    static  double     jd[ARRAYSIZE];          /* array of Julian Day numbers in
+						  the leap second table */
+    static  float      leapseconds[ARRAYSIZE]; /* array of leap second values in
+						  leap second table */
+    static  float      slope[ARRAYSIZE];       /* array of slopes used to
+						  compute leap seconds values
+						  for 1961 to 1971 */
+    static  float      baseDay[ARRAYSIZE];     /* array of constants to subtract
+						  from MJD in equation used to
+						  compute leap seconds */  
+    static PGSt_double jdfirst;                /* first Julian Day number in
+						  table */
+    static PGSt_double jdlast;                 /* last Julian Day number for
+						  which a valid leap second
+						  value is defined */
+    static char predict[ARRAYSIZE][PREDCHAR];  /* character array indicating
+						  whether the leap second values
+						  are PREDICTED, ACTUAL,  set to
+						  ZEROLEAPS for a 0 leap second 
+						  value, or computed with a
+						  LINEARFIT equation*/ 
+    static PGSt_uinteger numrecs;              /* leap second file/table record
+						  number or array member counter
+						  (minus one) */
+    static PGSt_boolean tableread = PGS_FALSE; /* indicates whether table of
+						  leap second values has been
+						  read into memory */
+    static PGSt_boolean filenotfound = PGS_FALSE; /* indicates whether an
+						     attempt to read a file
+						     which cannot be found has
+						     already been made */
+    
+    static PGSt_integer recordread;            /* sscanf return value */ 
+                      
+    static PGSt_uinteger cntr = 1;             /* array member counter,
+						  initialized to 0 */    
+    FILE *fp;                                  /* pointer to current position in
+						  file */
+    PGSt_SMF_status returnStatus;              /* return status of this
+						  function */
+    PGSt_SMF_status returnStatus1;             /* return status of PGS function
+						  calls */
+    PGSt_SMF_status code;	    	       /* status code returned by
+						  PGS_SMF_GetMsg() */
+
+    char*           asciiUTC;                  /* UTC in CCSDS ASCII format */
+
+    char            headerl[MAX_HEADER];   /* used for reading in header lines */
+ 
+    char	    mnemonic[PGS_SMF_MAX_MNEMONIC_SIZE]; /* mnemonic returned by
+							    PGS_SMF_GetMsg() */
+    char	    msg[PGS_SMF_MAX_MSG_SIZE];		 /* message returned by
+							    PGS_SMF_GetMsg() */
+    char	    specifics[PGS_SMF_MAX_MSG_SIZE];	 /* message returned by
+							    PGS_SMF_GetMsg() */
+    static char	    noFileMsg[PGS_SMF_MAX_MSG_SIZE];	 /* message returned by
+							    PGS_IO_Gen_Open() */
+    static char	    bareFileMsg[PGS_SMF_MAX_MSG_SIZE];	 /* message returned by
+							    PGS_IO_Gen_Open() */
+    /* begin executable program */
+
+    /* initialize returnStatus to indicate success */
+
+    returnStatus = PGS_S_SUCCESS;
+    
+    /* input is UTC Julian date as two numbers, convert to one number */
+
+    jdUTCadd = jdUTC[0] + jdUTC[1];
+
+    /* If the Julian day fraction is greater than 0.99, subtract 0.000001 to
+       avoid computer round-off errors to the next Julian day */
+    
+    if (fmod(jdUTC[1],1.) > .99)
+	jdUTCadd -= 1.0E-6;
+    
+    *leapSec = 0;
+    *lastChangeJD = jdUTCadd;
+    *nextChangeJD = jdUTCadd;
+    leapStatus[0] = '\0';
+    
+    
+    /* If leap second file containing the table of values has already been read 
+       into memory, skip to SEARCH section */
+    
+    if(tableread == PGS_FALSE)
+    {
+	if(filenotfound == PGS_FALSE)
+	{
+	    /* Open Leap Second file */
+	    
+       if(USE_PGS_IO_NONSENSE == 1)
+         returnStatus = PGS_IO_Gen_Open(LEAPSEC,PGSd_IO_Gen_Read,&fp,1);
+       else
+/*         printf("name of LeapSeconds file is %s \n",LEAPSEC_FILE); */
+         fp = fopen(LEAPSEC_FILE, "r");
+/*         fp = fopen(LEAPSEC_NAME, "r"); */
+/*         printf("fp of LeapSeconds file is %d \n",fp); */
+         if(fp == NULL)
+           exit(1);
+         returnStatus = PGS_S_SUCCESS;
+	    switch (returnStatus)
+	    {
+	      case PGS_S_SUCCESS:
+		break;
+	      case PGS_E_UNIX:
+	      case PGSIO_E_GEN_OPENMODE:
+	      case PGSIO_E_GEN_FILE_NOEXIST:
+	      case PGSIO_E_GEN_REFERENCE_FAILURE:
+	      case PGSIO_E_GEN_BAD_ENVIRONMENT:
+		PGS_SMF_GetMsg(&code,mnemonic,bareFileMsg);
+		if (code != returnStatus)
+		  PGS_SMF_GetMsgByCode(returnStatus,bareFileMsg);
+		filenotfound = PGS_TRUE;
+                break;
+	      default:
+		PGS_SMF_SetUnknownMsg(returnStatus,FUNCTION_NAME);
+		return PGS_E_TOOLKIT;
+	    }
+	}
+	    
+	if(filenotfound == PGS_TRUE) /** FILE MISSING ** IF START */
+	{
+	    returnStatus = PGSTD_W_DATA_FILE_MISSING;
+            sprintf(specifics,"\nFor UTC Julian Date %f "
+                              ,jdUTC[0]+jdUTC[1]);
+            strcpy(noFileMsg,bareFileMsg);
+            strcat(noFileMsg,specifics);
+	    PGS_SMF_SetDynamicMsg(returnStatus,noFileMsg,FUNCTION_NAME);
+	    
+	    /* leap second value defaults to initialized value of zero if input
+	       date is before 1961 -- otherwise, the appropriate linear
+	       approximation is used depending on whether the jdUTCadd is
+	       between Jan 1, 1961 and 12/31/71, or after 12/31/71.*/
+	    
+	    /* do linear fits */
+	    
+	    if(jdUTCadd >= JD1961JAN1)  /** LINEAR FIT ** IF START */
+	    {
+		if( jdUTCadd < JD1972JAN1)
+		  *leapSec = (jdUTCadd - JD1961JAN1)*10.0/(JD1972JAN1 -
+							   JD1961JAN1);
+		else
+		  *leapSec = (2.21908779093e-3)*jdUTCadd - 5406.04201391 - 0.5;
+		
+		strncpy(leapStatus,"LINEARFIT",PREDCHAR);
+		return returnStatus;
+	    }  
+	    else /* otherwise, set the leap seconds value to zero */
+	    {
+		*leapSec = 0; 
+		strncpy(leapStatus,"ZEROLEAPS",PREDCHAR);
+		return returnStatus;
+		
+	    }                        /** LINEAR FIT ** IF END*/
+	}                            /** FILE MISSING ** IF END */
+	
+	/* Read leap second file and load into arrays in memory until the end of
+	   file is encountered, skipping unwanted characters */
+	
+	/* initialize record counter to zero */
+	
+	numrecs = 0; 
+	
+	/*  Read header line - ignore (recycle the msg variable which is no
+	    longer needed at this point) */
+
+/*         printf("About to read header, fp of LeapSeconds file is %d \n",fp); */
+        fgets(headerl,MAX_HEADER,fp);
+
+	asciiUTC = PGS_EPH_getToken(headerl, ":");
+	asciiUTC = PGS_EPH_getToken(NULL, " ");
+	if (asciiUTC == NULL)
+	{
+	    /* if asciiUTC could not be successfully determined, set jdlast to
+	       indicate an error condition */
+
+	    jdlast = PGSd_GEO_ERROR_VALUE;
+	}
+
+	returnStatus = PGS_TD_UTCtoUTCjd(asciiUTC, updateJD);
+	switch (returnStatus)
+	{
+	  case PGS_S_SUCCESS:
+	  case PGSTD_M_LEAP_SEC_IGNORED:
+
+	    /* set jdlast to MAX_PERIOD days greater then the time of the
+	       last update of the leap seconds file, the idea is that the
+	       leap seconds file should be checked (and updated if necessary)
+	       with a minimum frequency of MAX_PERIOD days) */
+
+	    jdlast = updateJD[0] + MAX_PERIOD;
+	    break;
+	    
+	  default:
+
+	    /* if asciiUTC could not be successfully determined, set jdlast to
+	       indicate an error condition */
+	    
+	    jdlast = PGSd_GEO_ERROR_VALUE;
+	}
+	
+       /*  Read first data line */
+
+/*         printf("About to read 1st data line, fp of LeapSeconds file is %d \n",fp);*/
+       fgets(headerl,MAX_HEADER,fp);
+ 
+        if(strlen(headerl) < 91)
+        {
+           returnStatus = PGSTD_E_NO_LEAP_SECS;
+           sprintf(specifics,"short 1st data line in LeapSeconds file \n");
+           PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+           if(USE_PGS_IO_NONSENSE == 1)
+             PGS_IO_Gen_Close(fp);
+           else
+             fclose(fp);
+           return returnStatus;
+        }
+       recordread = sscanf(headerl, "%*d %*s %*d %*s %lf %*s %f %*s %*s %*s %*s"
+                           "%f%*s %*s %f %*s %9s", &jd[numrecs],
+                           &leapseconds[numrecs],&baseDay[numrecs],
+                           &slope[numrecs],predict[numrecs]);
+        if(recordread < 5)
+        {
+           returnStatus = PGSTD_E_NO_LEAP_SECS;
+           sprintf(specifics,"insufficient fields in LeapSeconds file at 1st data line\n");
+           PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+           if(USE_PGS_IO_NONSENSE == 1)
+             PGS_IO_Gen_Close(fp);
+           else
+             fclose(fp);
+           return returnStatus;
+        }
+
+	    /*  Read remaining data lines */
+
+	    /* The following && clause is to handle blank records at end 
+	       of leapsec.dat - if any (\n's) */
+/*         printf("While looping, fp of LeapSeconds file is %d \n",fp);*/
+	    while (fgets(headerl,MAX_HEADER,fp) != NULL &&
+		  (int) strlen(headerl) > 20 )   
+	    {
+		numrecs++;
+                if(strlen(headerl) < 91)
+                {
+                   returnStatus = PGSTD_E_NO_LEAP_SECS;
+                   sprintf(specifics,"short LeapSeconds file data line No. %d \n",numrecs+1);
+                   PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+                   if(USE_PGS_IO_NONSENSE == 1)
+                     PGS_IO_Gen_Close(fp);
+                   else
+                     fclose(fp);
+                   return returnStatus;
+                }
+		if (numrecs == ARRAYSIZE)
+		{
+		    returnStatus = PGS_E_TOOLKIT;
+		    sprintf(specifics,"%s %d %s","leap seconds file exceeds ",
+				    ARRAYSIZE, "records ");
+		    PGS_SMF_SetDynamicMsg(returnStatus,
+					       specifics,
+					       FUNCTION_NAME);
+                    if(USE_PGS_IO_NONSENSE == 1)
+                      PGS_IO_Gen_Close(fp);
+                    else
+                      fclose(fp);
+		    return returnStatus;
+		}
+
+		recordread = sscanf(headerl, 
+                                    "%*d %*s %*d %*s %lf %*s %f %*s %*s %*s"
+				    "%*s %f%*s %*s %f %*s %9s", &jd[numrecs],
+				     &leapseconds[numrecs], &baseDay[numrecs],
+				     &slope[numrecs],predict[numrecs]);
+       if(recordread < 5)
+       {
+          returnStatus = PGSTD_E_NO_LEAP_SECS;
+          sprintf(specifics,"insufficient fields in LeapSeconds file at data line %d\n",
+                  numrecs+1);
+          PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+          if(USE_PGS_IO_NONSENSE == 1)
+            PGS_IO_Gen_Close(fp);
+          else
+            fclose(fp);
+          return returnStatus;
+       }
+    }  /* end while */ 
+/* here we increment numrecs one more time to show that the last "recordread = sscanf"
+   was fulfilled */
+		numrecs++;
+	
+	jdfirst = jd[0];         /* first Julian Day number in the table */
+
+	if ( (jdlast == PGSd_GEO_ERROR_VALUE)  ||
+	     (updateJD[0] < jd[numrecs-1]) )
+	{
+	    /* if the last time in the leap seconds file is > than the time of
+	       the last file update (which will be the case when a new leap
+	       second occurrence has been announced but the date has not yet
+	       passed) OR if an error occurred determining jdlast (see above)
+	       then base jdlast on the time last in the leap seconds file */
+
+	    jdlast = jd[numrecs-1] + MAX_PERIOD;
+	}
+	
+	/* close file */
+	
+   if(USE_PGS_IO_NONSENSE == 1)
+	  returnStatus1 = PGS_IO_Gen_Close(fp);
+   else
+     fclose(fp);
+     returnStatus1 = PGS_S_SUCCESS;
+	if (returnStatus1 != PGS_S_SUCCESS)
+	{
+	    PGS_SMF_GetMsg(&code,mnemonic,msg);
+	    if (code != returnStatus1)
+		PGS_SMF_GetMsgByCode(returnStatus1,msg);
+	    returnStatus = PGS_E_TOOLKIT;
+	    PGS_SMF_SetDynamicMsg(returnStatus,msg,FUNCTION_NAME);
+	    return returnStatus;
+	}
+	
+	/* Set table read flag to indicate table has been read into memory */
+	
+	tableread = PGS_TRUE;
+    } /* END: if (tablereadd == PGS_FALSE) */
+    
+    /* SEARCH through arrays to find desired Julian Day number and leap
+       seconds value */
+    
+    /* If the input Julian day is within the range of the table -- output it. */
+    
+    if ( (jdUTCadd < jdlast ) && (jdUTCadd >= jdfirst) )
+	
+    {                                    /** TABLE SEARCH ** IF START */
+
+	/* Search through the table and find the appropriate time.  The variable
+	   cntr is static, search for the time using the most recent value of
+	   cntr.  This optimizes for the case that the times input (in
+	   successive calls to this function) are near one another (seems pretty
+	   likely). */
+
+	if (jdUTCadd < (PGSt_double) jd[cntr-1])
+	    while ( jdUTCadd < (PGSt_double) jd[cntr-1] ) cntr--; 
+	else
+	    while ( (cntr < numrecs) && (jdUTCadd >= (PGSt_double) jd[cntr]) )
+		cntr++; 
+
+	if (slope[cntr-1] == 0.0F)
+	    *leapSec = (PGSt_double) leapseconds[cntr-1];
+	else
+	    *leapSec = (PGSt_double) (leapseconds[cntr-1] + slope[cntr-1]*
+				      (jdUTCadd - 2400000.5 - baseDay[cntr-1]));
+	*lastChangeJD = (PGSt_double) jd[cntr-1];
+	if (cntr < numrecs)
+	    *nextChangeJD = (PGSt_double) jd[cntr];
+	else
+	    *nextChangeJD = jdlast;
+	
+	strncpy(leapStatus,predict[cntr-1],PREDCHAR);
+    }                                    /** TABLE SEARCH **  IF END  */
+    else
+    {                            /** LEAP SECONDS ESTIMATE ** IF START */
+	
+	/* If input Julian Day number is not within the  table, estimate the
+	   value of the leap seconds using a linear fit equation */
+	
+	if( jdUTCadd < jdfirst)                     
+	{
+	    *leapSec = 0;
+	    strncpy(leapStatus,"ZEROLEAPS",PREDCHAR);
+	    
+	    returnStatus = PGSTD_W_JD_OUT_OF_RANGE;
+            sprintf(specifics,"input time (at UTC Julian Date %f) is before"
+                              " start of table --\n a leap seconds value"
+                              " of 0 is being returned",jdUTC[0]+jdUTC[1]);
+            PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+
+	}                                       
+	else      
+	{
+	    *leapSec = (2.21908779093e-3)*jdUTCadd - 5406.04201391 - 0.5;
+	    strncpy(leapStatus,"LINEARFIT",PREDCHAR);
+	    
+	    returnStatus = PGSTD_W_JD_OUT_OF_RANGE;
+            sprintf(specifics,"input time (at UTC Julian Date %f) is past"
+                              " end of table --\n a linear approximation was"
+                              " used to determine the leap seconds value",
+                                jdUTC[0]+jdUTC[1]);
+            PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+
+	}
+    }                           /** LEAP SECONDS ESTIMATE **  IF END  */
+    
+    return returnStatus;
+} 
+/* $Log$ */
+SHAR_EOF
+echo mls_UTCjdtoTAIjd.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'mls_UTCjdtoTAIjd.c' &&
+/* Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+ U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+ "$Id$" */
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*******************************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME:   
+   mls_UTCjdtoTAIjd.c
+
+DESCRIPTION:
+   This file contains the function mls_UTCjdtoTAIjd().
+   The function converts UTC as a Julian date to TAI as a Julian date.
+   Converted from MLS_TD_UTCjdtoTAIjd
+                                         
+AUTHOR:
+   Peter D. Noerdlinger / Applied Research Corp.
+   Anubha Singhal / Applied Research Corp.
+   Guru Tej S. Khalsa / Applied Research Corp.
+
+HISTORY:
+   15-Dec-1994  GTSK   Initial version--based on code by PDN and AS.
+   07-Jun-1995  GTSK   Altered algorithm to check for occurrence of a negative
+                       leap second event (highly unlikely, but possible).
+   04-Jul-1995  GTSK   Fixed minor bug that was causing an erroneous time to be
+                       returned for times very near a leap second  event IF the
+		       same array was passed in for both input and output.
+   12-Jul-1995  PDN    Fixed prolog.
+   25-Jul-1995  GTSK   Improved efficacy and efficiency of leap second event
+                       testing schemes.
+   22-May-1997  PDN    Fixed NOTES and code on PRED_LEAPS no longer supported
+   25-Apr-2002  PAW    Changed from PGS_TD_UTCjdtoTAIjd to mls_UTCjdtoTAIjd
+
+END_FILE_PROLOG:
+*******************************************************************************/
+
+/*******************************************************************************
+BEGIN_PROLOG:
+
+TITLE:  
+   Convert UTC Julian date to TAI Julian date
+
+NAME:    
+   mls_UTCjdtoTAIjd()
+
+SYNOPSIS
+ C:
+   #include PGS_TD.h
+
+   PGSt_SMF_status
+   mls_UTCjdtoTAIjd(
+          PGSt_double  jdUTC[2],
+	  PGSt_boolean onLeap,
+	  PGSt_double  jdTAI[2]);
+
+FORTRAN:
+      include 'PGS_SMF.f'
+      include 'PGS_TD_3.f'
+
+      integer function mls_UTCjdtoTAIjd(jdutc,onleap,jdtai)
+      double precision  jdutc[2]
+      integer           onleap
+      double precision  jdtai[2]
+
+DESCRIPTION:
+   This tool converts UTC as a Julian date to TAI as a Julian date.
+
+INPUTS:
+   NAME      DESCRIPTION                  UNITS       MIN        MAX
+   ----      -----------                  -----       ---        ---
+   LEAPSEC_FILE    leapsec.dat file name with path
+   jdUTC     UTC as a Julian date         days        2441317.5  invocation
+                                                                 (see notes)
+   onLeap    set to PGS_TRUE to indicate  T/F
+             that the current time is
+	     occurring during a leap
+	     second, otherwise set to
+	     PGS_FALSE
+ 
+OUTPUTS:
+   NAME      DESCRIPTION                  UNITS       MIN        MAX
+   ----      -----------                  -----       ---        ---
+   jdTAI     TAI as a Julian date         days        2441317.5  invocation
+                                                                 (see notes)
+
+RETURNS:
+   PGS_S_SUCCESS               successful execution
+   PGSTD_E_TIME_VALUE_ERROR    error in value of input UTC time
+   PGSTD_E_NO_LEAP_SECS        assigned to errors coming back from
+                               mls_LeapSec
+   PGS_E_TOOLKIT               something unexpected happened, execution of
+                               function terminated prematurely
+EXAMPLES:
+ C:
+   PGSt_SMF_status      returnStatus
+   PGSt_double          jdUTC[2]={2449305.5,0.0}
+   PGSt_double          jdTAI[2]
+   char                 err[PGS_SMF_MAX_MNEMONIC_SIZE];
+   char                 msg[PGS_SMF_MAX_MSG_SIZE];  
+
+   returnStatus = mls_UTCjdtoTAIjd(jdUTC,PGS_FALSE,jdTAI)
+   if (returnStatus != PGS_S_SUCCESS)
+   {
+       PGS_SMF_GetMsg(&returnStatus,err,msg);
+       printf("\nERROR: %s",msg);
+    }
+
+ FORTRAN:
+      implicit none
+      integer           mls_UTCjdtoTAIjd
+      integer           returnstatus
+      double precision  jdutc(2)
+      double precision  jdtai(2)
+      character*33      err
+      character*241     msg
+
+      jdutc(1) = 2449305.5D0
+      jdutc(2) = 0.0D0
+      returnstatus = mls_UTCjdtoTAIjd(jdutc,onleap,jdtai)
+      if (returnstatus .ne. pgs_s_success) then
+	  returnstatus = pgs_smf_getmsg(returnstatus,err,msg)
+	  write(*,*) err, msg
+      endif
+
+ NOTES:
+
+   TIME ACRONYMS:
+     
+     MJD is:  Modified Julian Date
+     TAI is:  International Atomic Time
+     UTC is:  Coordinated Universal Time
+
+   TIME BOUNDARIES for TRANSFORMATIONS BETWEEN UTC and TAI:
+
+     The minimum and maximum times that can successfully be processed by 
+     this function depend on the file "leapsec.dat" which relates leap 
+     second (TAI-UTC) values to UTC Julian dates. The file "leapsec.dat" 
+     contains dates of new leap seconds and the total leap seconds for 
+     times on and after Jan 1, 1972.  For times between Jan 1, 1961 and 
+     Jan 1, 1972 it contains coefficients for an approximation supplied 
+     by the International Earth Rotation Service (IERS) and the United 
+     States Naval Observatory (USNO).  The Toolkit then uses these 
+     coefficients in an algorithm consistent with IERS/USNO usage. For 
+     times after Jan 1, 1961, but before the last date in the file, the
+     Toolkit sets TAI-UTC equal to the total number of leap seconds to 
+     date, (or to the USNO/IERS approximation, for dates before Jan 1,
+     1972). If an input date is before Jan 1, 1961 the Toolkit sets the
+     leap seconds value to 0.0.  This is consistent with the fact that,
+     for civil timekeeping since 1972, UTC replaces Greenwich Mean Solar 
+     Time (GMT), which had no leap seconds. Thus for times before Jan 1, 
+     1961, the user can, for most Toolkit-related purposes, encode 
+     Greenwich Mean Solar Time as if it were UTC.  If an input date
+     is after the last date in the file, or after Jan 1, 1961, but the 
+     file cannot be read, the function will use a calculated value of 
+     TAI-UTC based on a linear fit of the data known to be in the table
+     as of early 1997.  This value is a crude estimate and may be off by 
+     as much as 1.0 or more seconds.  If the data file, "leapsec.dat", 
+     cannot be opened, or the time is outside the range from Jan 1, 1961 
+     to the last date in the file, the return status level will be 'E'.  
+     Even when the status level is 'E', processing will continue, using 
+     the default value of TAI-UTC (0.0 for times before Jan 1, 1961, or 
+     the linear fit for later times). Thus, the user should always 
+     carefully check the return status.  
+
+     The file "leapsec.dat" is updated when a new leap second is 
+     announced by the IERS, which has been, historically, about once 
+     every year or two. 
+
+
+   TIME BOUNDARIES for TRANSFORMATIONS BETWEEN UT1 and OTHER TIMES:
+
+     The minimum and maximum times that can successfully be processed by this
+     function depend on the file utcpole.dat which relates UT1 - UTC values to
+     UTC dates.  The file "utcpole.dat" starts at Jan 1, 1972; therefore,
+     the correction UT1 - UTC, which can be as large as (+-) 0.9 s, is not
+     available until that date, and an error status message will be returned if
+     this function is called with a time before that date.  The file
+     utcpole.dat, which is maintained periodically, contains final (definitive),
+     and predicted values (partially reduced data and short term predictions of 
+     good accuracy).  The predictions run about a year ahead of real time. By
+     that time, the error in UT1 is generally equivalent to 10 to 12 meters of
+     equivalent Earth surface motion. Thus, when the present function is used,
+     users should carefully check the return status.  A success status 
+     message will be returned if all input times correspond to final values.
+     A warning status message will be returned if predicted values are
+     encountered.  An error message will be returned if the time requested is
+     beyond the end of the predictions, or the file cannot be read.
+
+   JULIAN DATES:
+
+     The Julian date is a day count originating at noon of Jan. 1st, 4713 B.C.
+
+     Format:
+
+       Toolkit Julian dates are kept as an array of two real (high precision)
+       numbers (C: PGSt_double, FORTRAN: DOUBLE PRECISION).  The first element
+       of the array should be the half integer Julian day (e.g. N.5 where N is a
+       Julian day number).  The second element of the array should be a real
+       number greater than or equal to zero AND less than one (1.0) representing
+       the time of the current day (as a fraction of that (86400 second) day.
+       This format allows relatively simple translation to calendar days (since
+       the Julian days begin at noon of the corresponding calendar day).  Users
+       of the Toolkit are encouraged to adhere to this format to maintain high
+       accuracy (one number to track significant digits to the left of the
+       decimal and one number to track significant digits to the right of the
+       decimal).  Toolkit functions that do NOT require a Julian type date as an
+       input and return a Julian date will return the Julian date in the above
+       mentioned format.  Toolkit functions that require a Julian date as an
+       input and do NOT return a Julian date will first convert (internally) the
+       input date to the above format if necessary.  Toolkit functions that have
+       a Julian date as both an input and an output will assume the input is in
+       the above described format but will not check and the format of the
+       output may not be what is expected if any other format is used for the
+       input.
+
+     Meaning:
+
+       Toolkit "Julian dates" are all derived from UTC Julian Dates.  A Julian
+       date in any other time stream (e.g. TAI, TDT, UT1, etc.) is the UTC
+       Julian date plus the known difference of the other stream from UTC
+       (differences range in magnitude from 0 seconds to about a minute).
+
+       Examples:
+
+         In the following examples, all Julian Dates are expressed in Toolkit
+         standard form as two double precision numbers. For display here, the
+         two members of the array are enclosed in braces {} and separated by a
+         comma.
+
+         A) UTC to TAI Julian dates conversion
+
+         The Toolkit UTC Julian date for 1994-02-01T12:00:00 is: 
+         {2449384.50, 0.5}.
+         TAI-UTC at 1994-02-01T12:00:00 is 28 seconds (.00032407407407 days). 
+         The Toolkit TAI Julian date for 1994-02-01T12:00:00 is:
+         {2449384.50, 0.5 + .00032407407407} = {2449384.50, 0.50032407407407}
+
+         Note that the Julian day numbers in UTC and the target time stream may
+         be different by + or - 1 for times near midnight:
+
+         B) UTC to UT1 Julian dates conversion
+
+         The Toolkit UTC Julian date for 1994-04-10T00:00:00 is: 
+         {2449452.50, 0.0}.
+         UT1-UTC at 1994-04-10T00:00:00 is -.04296 seconds 
+         (-0.00000049722221 days).  The Toolkit UT1 Julian date for
+         1994-04-10T00:00:00 is:
+         {2449452.50, 0.0 - 0.0000004972222} = 
+         {2449452.50, -0.0000004972222} =
+         {2449451.50, 0.9999995027778}
+
+   MODIFIED JULIAN DATES:
+
+     Modified Julian dates follow the same conventions as those for Julian
+     dates (above) EXCEPT that the modified Julian day number is integral (NOT
+     half-integral).  The modified Julian date in any time stream has a day 
+     number that is 2400000.5 days less than the Julian date day number and an
+     identical day fraction (i.e. the modified Julian date is a day count
+     originating at 1858-11-17T00:00:00).
+
+   TRUNCATED JULIAN DATES:
+
+     Truncated Julian dates follow the same conventions as those for Julian
+     dates (above) EXCEPT that the truncated Julian day number is integral (NOT
+     half-integral).  The truncated Julian date in any time stream has a day 
+     number that is 2440000.5 days less than the Julian date day number and an
+     identical day fraction (i.e. the truncated Julian date is a day count
+     originating at 1968-05-24T00:00:00).
+
+   ASCII UTC:
+
+     Toolkit functions that accept an ASCII time as input require the time to
+     be UTC time in CCSDS ASCII Time Code A or CCSDS ASCII Time Code B format.
+     Toolkit functions that return an ASCII time return the UTC time in CCSDS
+     ASCII Time Code A format (see CCSDS 301.0-B-2 for details).
+     (CCSDS => Consultative Committee for Space Data Systems)
+
+      The general format is:
+ 
+          YYYY-MM-DDThh:mm:ss.ddddddZ (Time Code A)
+          YYYY-DDDThh:mm:ss.ddddddZ   (Time Code B)
+ 
+          where:
+              -,T,: are field delimiters
+              Z is the (optional) time code terminator
+              other fields are numbers as implied:
+                Time Code A:
+                   4 Year digits, 2 Month, 2 Day, 2 hour,
+                   2 minute, 2 second, and up to 6 decimal
+                   digits representing a fractional second
+                Time Code B:
+                   4 Year digits, 3 Day of year, 2 hour,
+                   2 minute, 2 second, and up to 6 decimal
+                   digits representing a fractional second
+
+   TOOLKIT INTERNAL TIME (TAI):
+
+     Toolkit internal time is the real number of continuous SI seconds since the
+     epoch of UTC 12 AM 1-1-1993.  Toolkit internal time is also referred to in
+     the toolkit as TAI (upon which it is based).
+
+   PB5 TIME FORMAT:
+    
+     A 9 byte (72 bit) time format comprised of four binary counter values:
+
+     ("timePB5" represents an array of 9 (unsigned) one byte elements)
+          
+     1)  A 16-bit value (the first two elements of array timePB5 each with 8 
+	 bits) containing the truncated Julian date (integral day number).  The
+         range of decimal values is 0-65535, computed as 256*element1+element2.
+         The maximum decimal values of elements 1 and 2 are 255 and 255
+         respectively.
+     2)  A 24-bit value (elements 3, 4 and 5 of array timePB5, each with 8 bits)
+         containing the seconds of the latest day.  The range of values is
+         0-86401 seconds, computed as 256*256*element3+256*element4+element5.
+     3)  A 16-bit value (elements 6 and 7 of array timePB5, each with 8 bits)
+         containing the number of milliseconds of the latest second.  The range
+	 of values is 0-999 milliseconds, computed as 256*element6+element7.
+     4)  A 16-bit value (elements 8 and 9 of array timePB5, each with 8 bits)
+         containing the number of microseconds of latest millisecond.  The range
+         of values is 0-999 microseconds, computed as 256*element8+element9.
+       
+     This allows the PB5 format to represent times from 1968-05-24T00:00:00 to
+     2147-10-28T23:59:59.999999.
+
+   REFERENCES FOR TIME:
+
+     CCSDS 301.0-B-2 (CCSDS => Consultative Committee for Space Data Systems) 
+     Astronomical Almanac, Explanatory Supplement to the Astronomical Almanac
+
+   REFERENCES FOR TIME:
+
+     CCSDS 301.0-B-2 (CCSDS => Consultative Committee for Space Data Systems) 
+     Astronomical Almanac, Explanatory Supplement to the Astronomical Almanac
+
+REQUIREMENTS:
+   PGSTK - 1160, 1170, 1210
+
+DETAILS:
+      See "Theoretical Basis of the SDP Toolkit Geolocation Package for the
+      ECS Project", Document 445-TP-002-002, May 1995, by P. Noerdlinger, 
+      for more information on the algorithm.
+
+GLOBALS:
+   None
+
+FILES:
+   mls_LeapSec requires leapsec.dat
+         	  
+FUNCTIONS_CALLED:
+   mls_LeapSec          -    get leap second value
+   PGS_SMF_SetStaticMsg    -    set error/status message
+   PGS_SMF_SetDynamicMsg   -    set error/status message
+   PGS_SMF_SetUnknownMsg   -    set unknown error/status message
+
+END_PROLOG:
+*******************************************************************************/
+
+#include <string.h>
+#include <PGS_TD.h>               /*  Header file for Time and Date Tools */
+       
+/* name of this function */
+
+#define FUNCTION_NAME   "mls_UTCjdtoTAIjd()"
+
+/* constants */
+
+#define SECONDSperDAY     86400.0 /* number of seconds in a day */
+
+PGSt_SMF_status
+mls_UTCjdtoTAIjd(              /* converts UTC as a Julian date to TAI as a
+				     Julian date  */
+    char        *LEAPSEC_FILE, /* path and name of leapsec.dat file */
+    PGSt_double  jdUTC[2],        /* UTC as a Julian date */
+    PGSt_boolean onLeap,          /* set to true if UTC time is occurring during
+				     a positive leap second */
+    PGSt_double  jdTAI[2])        /* TAI as a Julian date */
+{
+    PGSt_double  jdTemp[2];       /* temporary Julian date array */
+    PGSt_double  leapSecs;        /* leap seconds value from tables read 
+                                     by mls_LeapSec()  */
+    PGSt_double  newleapSecs;     /* leap seconds value from tables read
+                                     by second call to mls_LeapSec()  */
+    PGSt_double  lastChangeJD;    /* Julian day number on which leap second
+				     returned by mls_LeapSec() became (or is
+				     predicted to become) effective */
+    PGSt_double  newLastChangeJD; /* Julian day number on which leap second
+				     returned by mls_LeapSec() became (or is
+				     predicted to become) effective (used in
+				     second call to mls_LeapSec()) */
+    PGSt_double  nextChangeJD;    /* Julian day number on which next leap second
+				     value became (or is predicted to become)
+				     effective */
+    PGSt_integer currentLeap=0;   /* current leap second value (0 or 1) as
+				     determined by onLeap */
+    char         leapStatus[10];  /* flag indicating actual or predicted leap
+                                     seconds - for user-defined diagnostics
+                                     and latency checks */
+    PGSt_SMF_status returnStatus; /* default return value of function */
+    PGSt_SMF_status returnStatus1;/* status/error return of SetStaticMsg */
+    
+    /* Start Executable Code */
+    
+    /* initialize returnStatus to indicate success */
+
+    returnStatus = PGS_S_SUCCESS;
+    
+    /* Access Leap Seconds file; obtain current leap second value */
+
+/*         printf("About to call mls_LeapSec \n"); */
+/*         printf("name of LeapSeconds file is %s \n",LEAPSEC_FILE); */
+    returnStatus = mls_LeapSec(LEAPSEC_FILE, jdUTC, &leapSecs, &lastChangeJD, 
+				  &nextChangeJD, leapStatus);
+        
+    /* check for error, reassign some of the errors coming back from 
+       mls_LeapSec() since they are really more specific than
+       required, set dynamic message to pass on specifics */
+    
+      switch (returnStatus)
+      {
+	case PGS_S_SUCCESS:
+
+
+	  /* issue an error if the difference of TAI and UTC is predicted */
+	  
+	  if (strcmp(leapStatus,"PREDICTED") == 0)
+	  {
+	      returnStatus = PGS_E_TOOLKIT;
+	      PGS_SMF_SetDynamicMsg(returnStatus,
+                      "Obsolete leap seconds file format encountered ",
+                                         FUNCTION_NAME);
+	  }
+
+	  /* If onLeap is set to true, then call mls_LeapSec with
+	     the next julian date value. If the last change day is the same as
+	     the last change day from the previous call, then a leap second
+	     boundary has not been crossed and this is an invalid date for a
+	     leap second. */
+
+          if (onLeap == PGS_TRUE)
+          {
+	      /* set currentLeap to 1 */
+
+	      currentLeap = 1;
+	      
+	      jdTemp[0] = jdUTC[0];
+	      jdTemp[1] = jdUTC[1] + 1.0/SECONDSperDAY;
+	  
+	      returnStatus1 = mls_LeapSec(jdTemp,&newleapSecs,
+					     &newLastChangeJD,&nextChangeJD,
+					     leapStatus);
+
+	      /* if the return status is not PGS_S_SUCCESS, we have most likely
+		 fallen off the end of the table, don't harass users about leap
+		 seconds if this is the case since the values are unknown at
+		 that point anyway */
+
+	      if (returnStatus1 != PGS_S_SUCCESS)
+		  break;
+
+              if ((jdTemp[1] > (1.0 + (newleapSecs-leapSecs)/SECONDSperDAY)) ||
+		  (newLastChangeJD == lastChangeJD))
+	      {
+	           returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	           PGS_SMF_SetDynamicMsg(returnStatus,"error in UTC Julian "
+					 "date: invalid date for leap second",
+                                         FUNCTION_NAME);
+              }
+
+          }
+
+	  /* If the input date is very near to the next date of change of leap
+	     second value then check for the occurrence of a negative leap
+	     second (very unlikely, but possible). */
+
+	  else if ((jdUTC[0] + 1.0) == nextChangeJD)
+	  {
+	      /* if the day fraction is not very near midnight then there is no
+		 need to check for a negative leap second occurrence, so break
+		 here in that case (actually there is no need to check for the
+		 occurrence of a leap second unless the day fraction indicates a
+		 time of 23:59:59 or greater, but let's not push machine
+		 accuracy by testing right at the boundary only) */
+
+	      if (jdUTC[1] < .999)
+		  break;
+	      
+	      jdTemp[0] = jdUTC[0];
+	      jdTemp[1] = jdUTC[1] + 1.0/SECONDSperDAY;
+	  
+	      returnStatus1 = mls_LeapSec(jdTemp,&newleapSecs,&lastChangeJD,
+					     &nextChangeJD,leapStatus);
+
+	      /* if the return status is not PGS_S_SUCCESS, we have most likely
+		 fallen off the end of the table, don't harass users about leap
+		 seconds if this is the case since the values are unknown at
+		 that point anyway */
+
+	      if (returnStatus1 != PGS_S_SUCCESS)
+		  break;
+
+	      /* If (newleapSecs < leapSecs) then the next leap second event
+		 is a negative leap second and the quantity 
+		 (1.0 - (leapSecs - newleapSecs)/SECONDSperDAY) will be the
+		 largest value that the current day fraction can be.  If the
+		 current day fraction is greater than this value then it is
+		 occurring during a UTC time which has been precluded by the
+		 occurrence of the negative leap second event. */
+
+	      if (jdUTC[1] >= (1.0 - (leapSecs - newleapSecs)/SECONDSperDAY))
+	      {
+	           returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	           PGS_SMF_SetDynamicMsg(returnStatus,"error in UTC Julian "
+					 "date: a negative leap second event "
+					 "precludes input date",FUNCTION_NAME);
+              }
+	  }
+	  break;
+	case PGSTD_W_JD_OUT_OF_RANGE:
+	  returnStatus = PGSTD_E_NO_LEAP_SECS;
+	  PGS_SMF_SetDynamicMsg(
+		      returnStatus,
+		      "input Julian day out of range for tabulated corrections"
+		      " - approximate value used",
+		      FUNCTION_NAME);
+	  break;
+	case PGSTD_W_DATA_FILE_MISSING:
+	  returnStatus = PGSTD_E_NO_LEAP_SECS;
+	  PGS_SMF_SetDynamicMsg(
+		      returnStatus,
+		     "unable to find or open leap second correction file:"
+                     " leapsec.dat - an approximate value was used",
+		     FUNCTION_NAME);
+	  break;
+	default:
+	  PGS_SMF_SetUnknownMsg(returnStatus,FUNCTION_NAME);
+	  return PGS_E_TOOLKIT;
+      }
+
+    /* calculate the TAI julian date:
+       the Julian date is the Julian day and the fraction of the day */
+    
+    jdTAI[0] = jdUTC[0];
+    jdTAI[1] = jdUTC[1] + ((leapSecs + currentLeap) / SECONDSperDAY);
+    
+    /* check to see if the day fraction is greater than or equal one - if so, 
+       then add a day to the Julian day number and subtract one from the day 
+       fraction so that the day fraction is between 0.0 and 1.0 */ 
+
+    if (jdTAI[1] >= 1.0)
+    {
+	jdTAI[0] +=  1.0;
+	jdTAI[1] -=  1.0;
+    }
+    
+    /* return to calling function */
+
+    if (returnStatus == PGS_S_SUCCESS)
+        PGS_SMF_SetStaticMsg(returnStatus,FUNCTION_NAME);
+    return returnStatus;
+}
+/* $Log$ */
+SHAR_EOF
+echo mls_UTCtoTAI.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'mls_UTCtoTAI.c' &&
+/* Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+ U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
+ "$Id$" */
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*******************************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME:
+   mls_UTCtoTAI.c
+
+DESCRIPTION:
+   This file contains the function mls_UTCtoTAI()
+   This function converts UTC time in CCSDS ASCII Time Code (A or B format) to
+   Toolkit internal time (real continuous seconds since 12AM UTC 1-1-93).
+   Converted from MLS_TD_UTCtoTAI so it accepts leapsec.dat file as an arg
+
+AUTHOR:
+   Guru Tej S. Khalsa / Applied Research Corporation
+   Peter D. Noerdlinger / Applied Research Corporation
+
+HISTORY:
+   30-Mar-1994  GTSK  Initial version
+   18-Jul-1994  GTSK  Increased accuracy by splitting Julian date into
+                      two doubles: jdTAI and dayFraction.  No longer calling
+		      mls_UTCtoTAIjd, cribbed much of the code from that
+		      function (by Peter D. Noerdlinger) for direct use here.
+		      Corrected algorithm to allow for the unlikely event of
+		      a negative leap second.
+   28-Jul-1994  GTSK  Added call to mls_UTCtoTAIjd() which now keeps track
+                      of TAI Julian date in two (count 'em, 2) "double"
+		      variables so the accuracy is fine now.  Removed much
+		      of the code alluded to in above message.
+   03-Mar-1994  GTSK  Extracted all real functionality to lower level functions.
+                      This tool now just strings together the appropriate lower
+		      level functions.
+   22-May-1997  PDN   Removed code/references to PGSTD_W_PRED_LEAPS
+   28-Oct-1999  PDN   Added a call to PGS_TD_timeCheck to prevent core dumps down
+                      the road when leap seconds file is extremely corrupt
+   25-Apr-2002  PAW   Converted to accept leapsec.dat file name and path
+
+END_FILE_PROLOG:
+*******************************************************************************/
+
+/*******************************************************************************
+BEGIN_PROLOG:
+
+TITLE:
+   Convert UTC to TAI Time
+
+NAME:
+   mls_UTCtoTAI()
+
+SYNOPSIS:
+C:
+   #include <PGS_TD.h>
+
+   PGSt_SMF_status
+   mls_UTCtoTAI(
+       char         asciiUTC[28],
+       PGSt_double  *secTAI93)
+     
+FORTRAN:
+      include 'PGS_SMF.f'
+      include 'PGS_TD_3.f'
+      
+      integer function mls_UTCtoTAI(asciiutc,sectai93)
+      character*27      asciiutc
+      double precision  sectai93
+      
+DESCRIPTION:
+   This function converts UTC time in CCSDS ASCII Time Code (A or B format) to
+   Toolkit internal time (real continuous seconds since 12AM UTC 1-1-93).
+
+INPUTS:
+   Name       Description                Units    Min                  Max
+   ----       -----------                -----    ---                  ---
+   LEAPSEC_FILE    leapsec.dat file name with path
+   asciiUTC   UTC time in CCSDS ASCII    time     1961-01-01T00:00:00  see NOTES
+              Time Code A format or
+	      ASCII Time Code B format
+
+OUTPUTS:
+   Name       Description                Units    Min                  Max
+   ----       -----------                -----    ---                  ---
+   secTAI93   continuous seconds since   seconds  -1009843225.5        see NOTES
+              12AM UTC Jan 1, 1993
+             
+RETURNS:
+   PGS_S_SUCCESS               successful return 
+   PGSTD_E_NO_LEAP_SECS        no leap seconds correction available for
+                               input time
+   PGSTD_E_TIME_FMT_ERROR      error in format of input ASCII UTC time
+   PGSTD_E_TIME_VALUE_ERROR    error in value of input ASCII UTC time
+   PGS_E_TOOKIT                something unexpected happened, execution aborted
+	
+EXAMPLES:
+C:
+   PGSt_SMF_status  returnStatus;
+   char             asciiUTC[28];
+   PGSt_double      secTAI93;
+
+   strcpy(asciiUTC,"1993-01-02T00:00:00.000000Z");
+   returnStatus = mls_UTCtoTAI(asciiUTC,&secTAI93);
+   if (returnStatus != PGS_S_SUCCESS)
+   {
+    *** do some error handling ***
+                  :
+	          :
+   }
+	   
+   printf("TAI: %f\n", (double) secTAI93);
+
+FORTRAN:
+      implicit none
+
+      include 'PGS_SMF.f'
+      include 'PGS_TD_3.f'
+
+      integer          mls_UTCtoTAI
+
+      integer          returnstatus
+
+      character*27     asciiutc
+
+      double precision sectai93
+
+      asciiutc = '1993-01-02T00:00:00.000000Z'
+      returnstatus = mls_UTCtoTAI(asciiutc,sectai93)
+      if (returnstatus .ne. pgs_s_success) goto 999
+      write(6,*) 'TAI: ', sectai93
+
+ 999  *** do some error handling ***
+                    :
+                    :
+
+NOTES:
+   TIME ACRONYMS:
+     
+     TAI is: International Atomic Time
+     UTC is: Universal Coordinated Time
+			  
+   TIME BOUNDARIES for TRANSFORMATIONS BETWEEN UTC and TAI:
+
+     The minimum and maximum times that can successfully be processed by 
+     this function depend on the file "leapsec.dat" which relates leap 
+     second (TAI-UTC) values to UTC Julian dates. The file "leapsec.dat" 
+     contains dates of new leap seconds and the total leap seconds for 
+     times on and after Jan 1, 1972.  For times between Jan 1, 1961 and 
+     Jan 1, 1972 it contains coefficients for an approximation supplied 
+     by the International Earth Rotation Service (IERS) and the United 
+     States Naval Observatory (USNO).  The Toolkit then uses these 
+     coefficients in an algorithm consistent with IERS/USNO usage. For 
+     times after Jan 1, 1961, but before the last date in the file, the
+     Toolkit sets TAI-UTC equal to the total number of leap seconds to 
+     date, (or to the USNO/IERS approximation, for dates before Jan 1,
+     1972). If an input date is before Jan 1, 1961 the Toolkit sets the
+     leap seconds value to 0.0.  This is consistent with the fact that,
+     for civil timekeeping since 1972, UTC replaces Greenwich Mean Solar 
+     Time (GMT), which had no leap seconds. Thus for times before Jan 1, 
+     1961, the user can, for most Toolkit-related purposes, encode 
+     Greenwich Mean Solar Time as if it were UTC.  If an input date
+     is after the last date in the file, or after Jan 1, 1961, but the 
+     file cannot be read, the function will use a calculated value of 
+     TAI-UTC based on a linear fit of the data known to be in the table
+     as of early 1997.  This value is a crude estimate and may be off by 
+     as much as 1.0 or more seconds.  If the data file, "leapsec.dat", 
+     cannot be opened, or the time is outside the range from Jan 1, 1961 
+     to the last date in the file, the return status level will be 'E'.  
+     Even when the status level is 'E', processing will continue, using 
+     the default value of TAI-UTC (0.0 for times before Jan 1, 1961, or 
+     the linear fit for later times). Thus, the user should always 
+     carefully check the return status.  
+
+     The file "leapsec.dat" is updated when a new leap second is 
+     announced by the IERS, which has been, historically, about once 
+     every year or two. 
+
+   ASCII UTC:
+
+     Toolkit functions that accept an ASCII time as input require the time to
+     be UTC time in CCSDS ASCII Time Code A or CCSDS ASCII Time Code B format.
+     Toolkit functions that return an ASCII time return the UTC time in CCSDS
+     ASCII Time Code A format (see CCSDS 301.0-B-2 for details).
+     (CCSDS => Consultative Committee for Space Data Systems)
+
+      The general format is:
+ 
+          YYYY-MM-DDThh:mm:ss.ddddddZ (Time Code A)
+          YYYY-DDDThh:mm:ss.ddddddZ   (Time Code B)
+ 
+          where:
+              -,T,: are field delimiters
+              Z is the (optional) time code terminator
+              other fields are numbers as implied:
+                Time Code A:
+                   4 Year digits, 2 Month, 2 Day, 2 hour,
+                   2 minute, 2 second, and up to 6 decimal
+                   digits representing a fractional second
+                Time Code B:
+                   4 Year digits, 3 Day of year, 2 hour,
+                   2 minute, 2 second, and up to 6 decimal
+                   digits representing a fractional second
+
+
+   TOOLKIT INTERNAL TIME (TAI):
+
+     Toolkit internal time is the real number of continuous SI seconds since the
+     epoch of UTC 12 AM 1-1-1993.  Toolkit internal time is also referred to in
+     the toolkit as TAI (upon which it is based).
+
+   REFERENCES FOR TIME:
+
+     CCSDS 301.0-B-2 (CCSDS => Consultative Committee for Space Data Systems) 
+     Astronomical Almanac, Explanatory Supplement to the Astronomical Almanac
+
+REQUIREMENTS:
+   PGSTK - 1170, 1210
+
+DETAILS:
+   This tool converts UTC time to TAI time.  Input is a string in CCSDS ASCII
+   Time Code (Format A or B).  The function PGS_TD_UTCtoUTCjd() then converts
+   that input to the equivalent UTC Julian date.  Note that there is no way to
+   uniquely indicate the occurrence of a leap leap second in a UTC Julian date
+   and the function PGS_TD_UTCtoUTCjd() will return a status message indicating
+   that the leap second has been ignored if the input ASCII UTC date occurs
+   during a leap second.  If this is the case then the variable onLeap is set to
+   PGS_TRUE to indicate that the input time is occurring during a leap second.
+   This function then calls mls_UTCjdtoTAIjd which converts the UTC Julian
+   date to the equivalent TAI Julian date.  mls_UTCjdtoTAIjd is passed the
+   value of the variable onLeap and will properly adjust the TAI Julian date if
+   the input time is occurring during a leap second.  Finally this function
+   calls PGS_TD_TAIjdtoTAI() to convert the TAI Julian date to Toolkit Internal
+   time (real continuous seconds since 12AM UTC January 1st, 1993).
+
+GLOBALS:
+   None
+
+FILES:
+   None
+
+FUNCTIONS_CALLED:
+   PGS_TD_timeCheck()      - verify format of ASCII time
+   PGS_TD_UTCtoUTCjd()     - convert ASCII UTC to UTC Julian date
+   mls_UTCjdtoTAIjd()   - convert UTC Julian date to TAI Julian date
+   PGS_TD_TAIjdtoTAI()     - convert TAI Julian date to Toolkit Internal time
+   PGS_SMF_SetUnknownMsg() - set error message
+   PGS_SMF_SetStaticMsg()  - set error message
+
+END_PROLOG:
+*******************************************************************************/
+
+#include <PGS_TD.h>
+
+/* name of this function */
+
+#define FUNCTION_NAME "mls_UTCtoTAI()"
+
+PGSt_SMF_status
+mls_UTCtoTAI(                  /* convert ASCII UTC time to internal time */
+    char            *LEAPSEC_FILE, /* path and name of leapsec.dat file */
+    char            asciiUTC[28], /* UTC time in CCSDS ASCII Format (A or B) */
+    PGSt_double     *secTAI93)    /* equivalent toolkit internal time */
+{
+    PGSt_double     jdTAI[2];     /* TAI Julian Date equivalent of input time */
+    PGSt_double     jdUTC[2];     /* UTC Julian Date equivalent of input time */
+
+    PGSt_boolean    onLeap;       /* indicates if input time occurs during a
+				     leap second (TRUE) or not (FALSE) */
+
+    PGSt_SMF_status returnStatus; /* return status of this function */
+
+    /* Initialize onLeap to be false (usual case).  Call PGS_TD_UTCtoUTCjd() to
+       convert input time from CCSDS ASCII Format to the equivalent Julian date
+       expressed as two real numbers (toolkit Julian date format). */
+
+    onLeap = PGS_FALSE;
+
+    /* prevent feeding a bad ASCII string to PGS_TD_UTCtoUTCjd() */
+
+    /* call PGS_TD_timeCheck() which checks the time string for format
+       or value errors.  PGS_TD_timeCheck also indicates if the input time
+       string is in CCSDS ASCII Time Code B format.  If the input string
+       is in ASCII B format PGS_TD_ASCIItime_BtoA is called which returns
+       ASCII A format.  This function assumes CCSDS ASCII Time Code A format
+       when parsing the time string so this step ensures that the appropriate
+       format is used. */
+ 
+    returnStatus = PGS_TD_timeCheck(asciiUTC);
+    switch (returnStatus)
+    {
+      case PGS_S_SUCCESS:
+        break;
+      case PGSTD_M_ASCII_TIME_FMT_B:
+        returnStatus = PGS_S_SUCCESS;
+        break;
+      case PGSTD_E_TIME_FMT_ERROR:
+      case PGSTD_E_TIME_VALUE_ERROR:
+        return returnStatus;
+      default:
+        PGS_SMF_SetUnknownMsg(returnStatus,FUNCTION_NAME);
+        return PGS_E_TOOLKIT;
+    }
+
+    returnStatus = PGS_TD_UTCtoUTCjd(asciiUTC,jdUTC);
+    switch (returnStatus)
+    {
+      case PGSTD_M_LEAP_SEC_IGNORED:
+	onLeap = PGS_TRUE;
+      case PGS_S_SUCCESS:
+	break;
+      case PGSTD_E_TIME_FMT_ERROR:
+      case PGSTD_E_TIME_VALUE_ERROR:
+      case PGS_E_TOOLKIT:
+	return returnStatus;
+      default:
+	PGS_SMF_SetUnknownMsg(returnStatus,FUNCTION_NAME);
+	return PGS_E_TOOLKIT;
+    }
+    
+    /* Convert UTC Julian date to TAI Julian date.  For times after 1-1-1972
+       this is just an integer number of seconds difference. */
+
+/*         printf("About to call mls_UTCjdtoTAIjd \n"); */
+/*         printf("name of LeapSeconds file is %s \n",LEAPSEC_FILE); */
+    returnStatus = mls_UTCjdtoTAIjd(LEAPSEC_FILE,jdUTC,onLeap,jdTAI);
+    switch (returnStatus)
+    {
+      case PGS_S_SUCCESS:
+      case PGSTD_E_NO_LEAP_SECS:
+	break;
+      case PGS_E_TOOLKIT:
+	return returnStatus;
+      default:
+	PGS_SMF_SetUnknownMsg(returnStatus,FUNCTION_NAME);
+	return PGS_E_TOOLKIT;
+    }
+    
+    /* Convert TAI Julian date (in toolkit julian date format) to toolkit
+       internal time (real continuous seconds since 12 AM UTC 1-1-1993). */
+
+    *secTAI93 = PGS_TD_TAIjdtoTAI(jdTAI);
+    
+    if (returnStatus == PGS_S_SUCCESS)
+      PGS_SMF_SetStaticMsg(returnStatus,FUNCTION_NAME);
+
+    return returnStatus;
+}
+/* $Log$ */
+SHAR_EOF
+echo PGS_SMF1.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'PGS_SMF1.c' &&
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*******************************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME:
+  PGS_SMF_SetUnknownMsg.c
+
+DESCRIPTION:
+  This file contains the function PGS_SMF_SetUnknownMsg().
+  This function sets a dynamic message for an unknown input status code.
+
+AUTHOR:
+  Guru Tej S. Khalsa
+
+HISTORY:
+  20-Jul-1994  GTSK  Initial version
+
+END_FILE_PROLOG:
+*******************************************************************************/
+
+/*******************************************************************************
+BEGIN_PROLOG:
+
+TITLE:
+   Sets a dynamic message for an unknown input status code
+
+NAME:
+   PGS_SMF_SetUnknownMsg()
+
+SYNOPSIS:
+   #include <PGS_SMF.h>
+
+   void
+   PGS_SMF_SetUnknownMsg(
+      PGSt_SMF_status unknownStatus,
+      char            *callingFunction)
+
+DESCRIPTION:
+   This function sets a dynamic message for an unknown input status code.
+
+INPUTS:
+   Name              Description                  
+   ----              -----------                  
+   unknownReturn     return status from a call to a PGS toolkit function
+
+   callingFunction   name of calling function
+
+OUTPUTS:
+   None
+
+RETURNS:
+   None
+
+NOTES:
+   None
+
+REQUIREMENTS:
+   None
+
+DETAILS:
+   This function sets a message indicating that the calling function has 
+   received an unexpected return value from a call to a PGS Toolkit function.
+   The input is the unexpected return status and the name of the function
+   calling this function.  This function calls PGS_SMF_GetMsg and checks the
+   returning SMF code from that call with unknownStatus.  It also checks
+   to see if the mnemonic returned from the call to PGS_SMF_GetMsg is at
+   least 7 characters long (min. valid mnemonic length).  If both these
+   conditions test true then this function calls PGS_SMF_SetDynamicMsg with
+   a code of PGS_E_TOOLKIT and a function name of callingFunction.  The message
+   string explains that the return code was unexpected by the calling function
+   and then gives the unexpected returned mnemonic and associated message.  If
+   the returned SMF code from the call to PGS_SMF_GetMsg is not the same as
+   unknownStatus or the returned mnemonic is not valid this function calls
+   PGS_SMF_GetMsgByCode.  If the return status of this indicates that it
+   successfully identified the input status value this function calls
+   PGS_SMF_SetDynamicMsg with a code of PGS_E_TOOLKIT and a function name of
+   callingFunction.  The message string explains that the return code was
+   unexpected by the calling function and then gives the message associated with
+   the unexpected returned status value.  If neither of these SMF calls is
+   successful this function calls PGS_SMF_SetDynamicMsg with a code of
+   PGS_E_TOOLKIT and a function name of callingFunction.  The message string
+   explains that the return code was unexpected by the calling function and that
+   furthermore the SMF message system has no knowledge of the returned status 
+   value.
+
+GLOBALS:
+   None
+
+FILES:
+   None
+
+FUNCTIONS_CALLED:
+   PGS_SMF_GetMsg()
+   PGS_SMF_GetMsgByCode()
+   PGS_SMF_SetDynamicMsg()
+
+END_PROLOG:
+*******************************************************************************/
+
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <PGS_SMF.h>
+
+void
+PGS_SMF_SetUnknownMsg(
+    PGSt_SMF_status unknownStatus,  /* return status from call to PGSTK func. */
+    char            *callingFunction) /* name of calling function */
+{
+    PGSt_SMF_status code;
+    char            mnemonic[PGS_SMF_MAX_MNEMONIC_SIZE];
+    char            msg[PGS_SMF_MAX_MSG_SIZE];
+    char            specifics[PGS_SMF_MAX_MSG_SIZE];
+
+    PGS_SMF_GetMsg(&code,mnemonic,msg);
+
+    /* if code is not the same as unknown status assume the message buffer
+       contains old (irrelavant information.  Mnemonics must be at least
+       seven characters long */
+
+    if (unknownStatus == code && strlen(mnemonic) > 6UL)
+    {
+
+	/* mnemonics must be at least 7 characters long */
+
+	sprintf(specifics,"%s%s%s%s","ERROR: encountered unexpected status ",
+		"value => mnemonic: ",mnemonic,", message: ");
+
+	/* concatenate the returned message but only as much as will fit in
+	   string specifics which already has the above message in it.  The
+	   above message has 67 characters and the string mnemonic is not
+	   expected to have more than 40 characters for a total of 107.  This
+	   is not a nice round number so 110 is used since it make the
+	   programmer feel better. */
+
+	strncat(specifics,msg,(PGS_SMF_MAX_MSG_SIZE-110));
+    }
+    else
+    {
+	code = PGS_SMF_GetMsgByCode(unknownStatus,msg);
+	if (code == PGS_S_SUCCESS)
+	{
+	    sprintf(specifics,"%s%s%d%s","ERROR: encountered unexpected ",
+		    "status value => value: ",unknownStatus,", message: ");
+	    strncat(specifics,msg,(PGS_SMF_MAX_MSG_SIZE-75));
+	}
+	else
+	{
+	    sprintf(specifics,"%s%s%d%s%s","ERROR: encountered unexpected ",
+		    "status value => value: ",unknownStatus," (no known ",
+		    "mnemonic or message associated with this status value)");
+	}
+    }
+    PGS_SMF_SetDynamicMsg(PGS_E_TOOLKIT,specifics,callingFunction);
+}
+
+SHAR_EOF
+echo PGS_TD_TAIjdtoTAI.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'PGS_TD_TAIjdtoTAI.c' &&
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*******************************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME:
+   PGS_TD_TAIjdtoTAI.c
+
+DESCRIPTION:
+   This file contains the function PGS_TD_TAIjdtoTAI().
+   This function converts TAI Julian date to time in TAI seconds since
+   12 AM UTC 1-1-1993.
+
+AUTHOR:
+   Guru Tej S. Khalsa
+
+HISTORY:
+   14-Dec-1994  GTSK  Initial version
+
+END_FILE_PROLOG:
+*******************************************************************************/
+
+/*******************************************************************************
+BEGIN_PROLOG:
+
+TITLE:
+   Convert TAI Julian Date to Toolkit Internal Time
+
+NAME:
+   PGS_TD_TAIjdtoTAI()
+
+SYNOPSIS:
+ C:
+   #include <PGS_TD.h>
+
+   PGSt_double
+   PGS_TD_TAIjdtoTAI(
+       PGSt_double  jdTAI[2])
+
+ FORTRAN:
+      double precision function pgs_td_taijdtotai(jdtai)
+      double precision jdtai(2)
+
+DESCRIPTION:
+   This function converts TAI Julian date to time in TAI seconds since
+   12 AM UTC 1-1-1993.
+
+INPUTS:
+   Name         Description               Units       Min   Max
+   ----         -----------               -----       ---   ---
+   jdTAI        TAI Julian date           days        ANY   ANY
+
+OUTPUTS:
+   None
+          
+RETURNS:
+   Toolkit internal time (seconds since 12 AM UTC 1-1-1993).
+
+EXAMPLES:
+C:
+   PGSt_double      secTAI93;
+   PGSt_double      jdTAI[2];
+
+   jdTAI[0] = 2448989.5;
+   jdTAI[1] = 0.0003125;
+
+   secTAI93 = PGS_TD_TAItoTAIjd(secTAI93);
+    
+   ** secTAI93 should now have the value: 86400.**
+
+FORTRAN:
+      double precision pgs_td_taitotaijd
+
+      double precision sectai93
+      double precision jdtai
+ 
+      jdtai(1) = 2448989.5d0;
+      jdtai(2) = 0.0003125d0;
+
+      sectai93 = pgs_td_taijdtotai(jdtai)
+
+      ! sectai93 should now have the value: 86400.
+
+NOTES:
+   TAI is: International Atomic Time
+
+   TOOLKIT INTERNAL TIME (TAI):
+
+     Toolkit internal time is the real number of continuous SI seconds since the
+     epoch of UTC 12 AM 1-1-1993.  Toolkit internal time is also referred to in
+     the toolkit as TAI (upon which it is based).
+
+   JULIAN DATES:
+
+     Format:
+
+       Toolkit Julian dates are kept as an array of two real (high precision)
+       numbers (C: PGSt_double, FORTRAN: DOUBLE PRECISION).  The first element
+       of the array should be the half integer Julian day (e.g. N.5 where N is a
+       Julian day number).  The second element of the array should be a real
+       number greater than or equal to zero AND less than one (1.0) representing
+       the time of the current day (as a fraction of that (86400 second) day.
+       This format allows relatively simple translation to calendar days (since
+       the Julian days begin at noon of the corresponding calendar day).  Users
+       of the Toolkit are encouraged to adhere to this format to maintain high
+       accuracy (one number to track significant digits to the left of the
+       decimal and one number to track significant digits to the right of the
+       decimal).  Toolkit functions that do NOT require a Julian type date as an
+       input and return a Julian date will return the Julian date in the above
+       mentioned format.  Toolkit functions that require a Julian date as an
+       input and do NOT return a Julian date will first convert (internally) the
+       input date to the above format if necessary.  Toolkit functions that have
+       a Julian date as both an input and an output will assume the input is in
+       the above described format but will not check and the format of the
+       output may not be what is expected if any other format is used for the
+       input.
+
+     Meaning:
+
+       Toolkit "Julian dates" are all derived from UTC Julian Dates.  A Julian
+       date in any other time stream (e.g. TAI, TDT, UT1, etc.) is the UTC
+       Julian date plus the known difference of the other stream from UTC
+       (differences range in magnitude from 0 seconds to about a minute).
+
+       Examples:
+
+         In the following examples, all Julian Dates are expressed in Toolkit
+         standard form as two double precision numbers. For display here, the
+         two members of the array are enclosed in braces {} and separated by a
+         comma.
+
+         A) UTC to TAI Julian dates conversion
+
+         The Toolkit UTC Julian date for 1994-02-01T12:00:00 is: 
+         {2449384.50, 0.5}.
+         TAI-UTC at 1994-02-01T12:00:00 is 28 seconds (.00032407407407 days). 
+         The Toolkit TAI Julian date for 1994-02-01T12:00:00 is:
+         {2449384.50, 0.5 + .00032407407407} = {2449384.50, 0.50032407407407}
+
+         Note that the Julian day numbers in UTC and the target time stream may
+         be different by + or - 1 for times near midnight:
+
+         B) UTC to UT1 Julian dates conversion
+
+         The Toolkit UTC Julian date for 1994-04-10T00:00:00 is: 
+         {2449452.50, 0.0}.
+         UT1-UTC at 1994-04-10T00:00:00 is -.04296 seconds 
+         (-0.00000049722221 days).  The Toolkit UT1 Julian date for
+         1994-04-10T00:00:00 is:
+         {2449452.50, 0.0 - 0.0000004972222} = 
+         {2449452.50, -0.0000004972222} =
+         {2449451.50, 0.9999995027778}
+
+   REFERENCES FOR TIME:
+
+     CCSDS 301.0-B-2 (CCSDS => Consultative Committee for Space Data Systems) 
+     Astronomical Almanac, Explanatory Supplement to the Astronomical Almanac
+
+REQUIREMENTS:
+   PGSTK - 1220, 1160, 1170
+
+DETAILS:
+   None
+
+GLOBALS:
+   None
+
+FILES:
+   None
+
+FUNCTIONS_CALLED:
+   None
+
+END_PROLOG:
+*******************************************************************************/
+
+#include <PGS_TD.h>
+
+/* constants */
+
+#define EPOCH_DAY            2448988.5  /* TAI Julian day of 0 hrs UTC 1-1-93 */
+#define EPOCH_DAY_FRACTION   0.0003125  /* TAI Julian day fraction 0 hrs UTC
+					   1-1-1993 */
+#define SECONDSperDAY        86400.0    /* number of seconds in a day */
+    
+PGSt_double
+PGS_TD_TAIjdtoTAI(          /* converts TAI as a Julian date to TAI as seconds
+			       since 12AM UTC 1-1-93 */
+    PGSt_double jdTAI[2])   /* TAI time as a Julian date */
+{
+    /* calculate the seconds since epoch.  The Julian day portions and the
+       fractional day portions are calculated separately.  This is because the
+       Julian day numbers can be so big that there is a loss of accuracy in the
+       day fraction if the two numbers are added together.  The desired accuracy
+       is microseconds which is aprx. 10^-12 day.  This is within a few decimal
+       places of the limit on the accuracy of a "double" variable.  Maximum 
+       Julian days of only 10^3 or so could be allowed if the day and day
+       fraction were added together first and this wouldn't even get the dates
+       out of the B.C. range!  By taking the differences of the big numbers
+       first and multiplying each of the differences by the appropriate scaling
+       factor before adding them, much better accuracy is achieved. */
+
+    /* basically this is the difference between the TAI Julian Date of the input
+       time (julianDayNum+dayFraction+leapSec) and the TAI Julian Date of the
+       epoch time (EPOCH_DAY + EPOCH_DAY_FRACTION).  The epoch time is
+       1993-01-01T00:00:00.000000 UTC */
+
+    return (jdTAI[0] - EPOCH_DAY)*SECONDSperDAY +
+           (jdTAI[1] - EPOCH_DAY_FRACTION)*SECONDSperDAY;
+}
+SHAR_EOF
+echo PGS_TD_timeCheck.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'PGS_TD_timeCheck.c' &&
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*******************************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME:
+  PGS_TD_timeCheck.c
+
+DESCRIPTION:
+  This file contains the function PGS_TD_timeCheck()
+
+AUTHOR:
+  Guru Tej S. Khalsa / Applied Research Corporation
+  Peter D. Noerdlinger / SM&A Inc.
+
+HISTORY:
+  01-Mar-1994  GTSK  Initial version
+  19-Jul-1994  GTSK  Modified to check for validity of CCSDS ASCII Time Code B
+                     inputs (previously only checked for valid CCSDS ASCII Time
+		     Code A inputs).  Increased efficiency slightly.  Added
+		     prolog and comments (NONE previously).
+  25-Jul-1994  GTSK  Further spiffing up of prologs to meet latest ECS/PGS 
+                     standards.  Added code to allow leap seconds (i.e. seconds
+		     equal to or greater than 60) only at 23:59 (i.e. just
+		     before midnight).
+  27-Oct-1999   PDN  Added a check for an input string pointer that is not
+                     NULL and a minimum input string length (must have a
+                     4 digit year) to prevent core dumps out of C library
+                     string functions
+
+END_FILE_PROLOG:
+*******************************************************************************/
+
+/*******************************************************************************
+BEGIN_PROLOG:
+
+TITLE:    
+   Verify or repudiate validity of input CCSDS ASCII time string
+
+NAME:     
+   PGS_TD_timeCheck()
+
+SYNOPSIS:
+   #include <PGS_TD.h>
+   
+   PGSt_SMF_status
+   PGS_TD_timeCheck(
+       char   *asciiUTC)
+      
+DESCRIPTION:
+   This function accepts a character array (string) as an input and returns
+   a value indicating if the string is in a valid CCSDS ASCII format.
+
+INPUTS:
+   Name         Description                     Units      Min     Max
+   ----         -----------                     -----      ---     ---
+   asciiUTC     CCSDS ASCII time string         ASCII      N/A     N/A
+                in Time Code A or Time
+		Code B format
+
+OUTPUTS:
+   None
+          
+RETURNS:
+   PGS_S_SUCCESS               input string is in valid CCSDS 
+                               ASCII Time Code A format
+   PGSTD_M_ASCII_TIME_FMT_B    input string is in valid CCSDS
+                               ASCII Time Code B format
+   PGSTD_E_TIME_VALUE_ERROR    error in input time value
+   PGSTD_E_TIME_FMT_ERROR      error in input time format
+
+EXAMPLES:
+   PGSt_SMF_status  returnStatus;
+   char             asciiUTC[28];
+
+   strcpy(asciiUTC,"1999-12-23T12:34:52.123456Z");
+   returnStatus = PGS_TD_timeCheck(asciiUTC);
+   if (returnStatus != PGS_S_SUCCESS)
+   {
+     ** handle errors **
+              :
+	      :
+   }
+	     
+
+NOTES:
+   The input is UTC time in CCSDS ASCII Time Code A or CCSDS ASCII Time 
+   Code B format (see CCSDS 301.0-B-2 for details). 
+   (CCSDS => Consultative Committee for Space Data Systems)
+      The general format is:
+
+          YYYY-MM-DDThh:mm:ss.ddddddZ (Time Code A)
+	  YYYY-DDDThh:mm:ss.ddddddZ   (Time Code B)
+	
+	  where:
+              -,T,: are field delimiters
+	      Z is the (optional) time code terminator
+	      other fields are numbers as implied:
+	        Time Code A:
+                   4 Year digits, 2 Month, 2 Day, 2 hour,
+                   2 minute, 2 second, and up to 6 decimal
+                   digits representing a fractional second
+	        Time Code B:
+                   4 Year digits, 3 Day of year, 2 hour,
+                   2 minute, 2 second, and up to 6 decimal
+                   digits representing a fractional second
+
+   For the PGS Toolkit all fields up to the 'T' are mandatory (i.e. date must
+   be specified).  After this minimum any number of the allowed field- 
+   terminator/field combinations may be added.  For this purpose each place
+   after the decimal point (terminator for the seconds field) is considered a
+   field unto itself and has no terminator.
+
+   The time string may not end on a field terminator and all fields that are
+   included must be entirely included; padded with leading zeros if necessary
+   (i.e. a two digit field MUST have two digits).
+
+   All fields not included are assumed by PGS Toolkit software to be 0.
+
+   The 'Z' terminator (not a field terminator) may optionally terminate any
+   valid time string.
+
+   Some examples:
+      1994-123             <=== valid
+      1995-126T            <=== invalid (may not end with field terminator)
+      1996-235Z            <=== valid
+      1992-12-24Z          <=== valid
+      1999-01-12T23        <=== valid
+      1986-1-14            <=== invalid (incomplete month field)
+      1934-12-12T14: 4:12  <=== invalid (no leading zero in minute field)
+
+REQUIREMENTS:
+   PGSTK - 1180, 1190, 1210
+
+DETAILS:
+   This function accepts a character string as input and makes a local copy.
+   The local copy is examined for the first occurrence of the character 'Z'.
+   If found this 'Z' is replaced with the null character, terminating the
+   string at this point an ignoring anything following the 'Z' in the input
+   string.  A determination of the format (A or B) of the time string is made.
+   The size of the string is then examined and an error returned if
+   the size indicates that there are not enough characters to fully specify the
+   date and/or to include another field (or multiple fields).  If the size of
+   the string is OK the format of the string is checked.  If an unexpected 
+   character is found (e.g. 'a') or a character is found in an unexpected place
+   (e.g. a ':' as the second character in the year field) this function returns
+   an error.  If the general format is OK the string is parsed into the
+   numerical values of each field.  These are then checked to make sure that
+   they are appropriate for the format, year, and time given (e.g. days < 28 for
+   a month of 02 unless it is a leap year; hours less than 24 always).
+
+GLOBALS:
+   None
+
+FILES:
+   None
+
+FUNCTIONS_CALLED:
+   PGS_SMF_SetStaticMsg()
+   PGS_SMF_SetDynamicMsg()
+
+END_PROLOG:
+*******************************************************************************/
+
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <PGS_TD.h>
+
+/* name of this function */
+
+#define FUNCTION_NAME "PGS_TD_timeCheck()"
+
+PGSt_SMF_status
+PGS_TD_timeCheck(              /* verify string is a valid CCSDS ASCII time */
+    char         *asciiUTC)    /* time in CCSDS ASCII format (A or B) */
+{
+    char         tempTime[28]; /* temporary copy of input time */
+    char         format='a';   /* A format or B format */
+    char         *zPtr;        /* pointer to terminating Z char in time
+				  string */
+    
+    char         specifics[PGS_SMF_MAX_MSG_SIZE]; /* string to hold a specific
+						     message about an error */
+    
+    size_t       length;       /* length of time string */
+
+    int cntr;                  /* loop counter */
+    
+    int          leapYear;     /* 1 if year is leap year, otherwise 0 */
+    int          year;         /* calendar year */
+    int          month;        /* calendar month */
+    int          day;          /* day of month or day of year */
+    int          hour=0;       /* hour of day */
+    int          min=0;        /* minute of hour */
+    int          adjust=0;     /* field offset in time string, 0 for format A
+				  -2 for format B */
+
+    double       sec=0.0;      /* second of minute (to nearest micro-second) */
+   
+    PGSt_SMF_status returnStatus=PGS_S_SUCCESS; /* return status of this 
+						   function */
+   
+    /* copy asciiUTC into tempTime so the time string can be poked, prodded and
+       otherwise manipulated without changing the input string.  Make sure the
+       result is null terminated. First check that string is reasonable. */
+    
+    if(asciiUTC == NULL)
+    {
+          PGS_SMF_SetStaticMsg(PGSTD_E_TIME_FMT_ERROR,FUNCTION_NAME);
+          return PGSTD_E_TIME_FMT_ERROR;
+    }
+ 
+    if(strlen(asciiUTC) > 5) /* require at least a year + terminator */
+    {
+          strncpy(tempTime,asciiUTC,28);
+          tempTime[27] = '\0';
+    }
+    else
+    {
+          PGS_SMF_SetStaticMsg(PGSTD_E_TIME_FMT_ERROR,FUNCTION_NAME);
+          return PGSTD_E_TIME_FMT_ERROR;
+    }
+
+    
+    /* determine length of time string */
+
+    length = strlen(tempTime);
+
+    /* determine the useful length of input time string as determined by the
+       terminating character 'Z'.  This is done by checking for the first
+       occurrence of the character 'Z' in the time string and substituting a
+       null character there by ignoring the string from the 'Z' on. */
+
+    zPtr = strchr(tempTime,'Z');
+    if (zPtr != NULL)
+    {
+	*zPtr = '\0';
+	length = (size_t) (zPtr - tempTime);
+    }
+
+    /* if the eighth character of the time string is '-' then assume
+       the input time is in CCSDS ASCII Time Code B format, otherwise
+       assume default case of CCSDS ASCII Time Code A format */
+
+    if (tempTime[7] != '-')
+    {
+	format = 'b';
+	adjust = -2;
+    }
+	
+    /* check for valid lengths.  The maximum length is 26 and this is
+       guaranteed since tempTime was set up that way in the above code.
+       The following code checks that the time string is long enough to
+       contain the full date portion (left of the 'T') and that the
+       string does not end in the middle of a field or on an element reserved
+       for a field delimiter ('-', 'T', ':' or '.') */
+
+    if (((int) length - adjust) < 21)
+      switch ((int) length - adjust)
+      {
+	case 10:
+	case 13:
+	case 16:
+	case 19:
+	  break;
+	default:
+	  PGS_SMF_SetStaticMsg(PGSTD_E_TIME_FMT_ERROR,FUNCTION_NAME);
+	  return PGSTD_E_TIME_FMT_ERROR;
+      }
+    
+    /* now step through the string and check that each character in the
+       string is in a place where it belongs (e.g. no field delimiter in
+       the month field or number in a delimiter space) */
+       
+    for (cntr=0;cntr<(int)length;cntr++)
+    {
+	switch (tempTime[cntr])
+	{
+	  case '0':
+	  case '1':
+	  case '2':
+	  case '3':
+	  case '4':
+	  case '5':
+	  case '6':
+	  case '7':
+	  case '8':
+	  case '9':
+	    if (cntr == 4 || (cntr == 7 && format == 'a') || cntr == (10+adjust)
+		|| cntr == (13+adjust) || cntr == (16+adjust) ||
+		cntr ==	(19+adjust))
+	    {
+		returnStatus = PGSTD_E_TIME_FMT_ERROR;
+		sprintf(specifics,"%s%c%s%d%s%s","A digit ('",tempTime[cntr],
+			"') is in an inappropriate place (",cntr+1,") in the ",
+			"time string");
+	        cntr = (int) length;
+	    }
+	    break;
+	  case '-':
+	    if (!(cntr == 4 || (cntr == 7 && format == 'a')))
+	    {
+		returnStatus = PGSTD_E_TIME_FMT_ERROR;
+		sprintf(specifics,"%s%s%d%s","A '-' is in an ",
+			"inappropriate place (",cntr+1,") in the time string");
+	        cntr = (int) length;
+	    }
+	    break;
+	  case 'T':
+	    if (cntr != (10+adjust))
+	    {
+		returnStatus = PGSTD_E_TIME_FMT_ERROR;
+		sprintf(specifics,"%s%s%d%s","A 'T' is in an ",
+			"inappropriate place (",cntr+1,") in the time string");
+	        cntr = (int) length;
+	    }
+	    break;
+	  case ':':
+	    if (!(cntr == (13+adjust) || cntr ==(16+adjust)))
+	    {
+		returnStatus = PGSTD_E_TIME_FMT_ERROR;
+		sprintf(specifics,"%s%s%d%s","A ':' is in an ",
+			"inappropriate place (",cntr+1,") in the time string");
+	        cntr = (int) length;
+	    }
+	    break;
+	  case '.':
+	    if (cntr != (19+adjust))
+	    {
+		returnStatus = PGSTD_E_TIME_FMT_ERROR;
+		sprintf(specifics,"%s%s%d%s","A '.' is in an ",
+			"inappropriate place (",cntr+1,") in the time string");
+	        cntr = (int) length;
+	    }
+	    break;
+	  default:
+	    returnStatus = PGSTD_E_TIME_FMT_ERROR;
+	    sprintf(specifics,"%s%c%s","An inappropriate character ('",
+		    tempTime[cntr],"') is in the time string");
+	    cntr = (int) length;
+	}
+    }
+
+    /* if something was found to be in an inappropriate place, this is
+       a format error, return to the calling function indicating this 
+       error */
+
+    if (returnStatus != PGS_S_SUCCESS)
+    {
+	PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+	return returnStatus;
+    }
+
+    /* parse the time string.  This is obviously done differently for
+       Time Code A (year/month/day) than for Time Code B (year/day of year) */
+
+    if (format == 'a')
+    {
+	sscanf(tempTime,"%4d-%2d-%2dT%2d:%2d:%lfZ",&year,&month,&day,&hour,
+	       &min,&sec);
+    }
+    else
+    {
+	sscanf(tempTime,"%4d-%3dT%2d:%2d:%lfZ",&year,&day,&hour,&min,&sec);
+    }
+    
+    /* if the format is Time Code A, check to make sure the month is a valid
+       number (i.e 0 < month < 13 ) */
+
+    if (format == 'a')
+    {
+	if (month < 1 || month > 12)
+	{
+	    returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	    sprintf(specifics,"%s%s%d%s","error in ASCII time string value: ",
+		    "bad month value (",month,")");
+	    PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+	    return returnStatus;
+	}
+    }
+    
+    /* check the hour, min, and sec variables for appropriate values.  There is
+       no need to check for negative values since the above format check would
+       catch a '-' in the wrong place.  The hours are of course on the 24 hour
+       clock.  Note that the seconds are allowed to run up to just under 61
+       seconds which may occur during a leap second.  This doesn't mean that
+       this is appropriate at the given time but it should not be flagged as an
+       error and it is left to the user not to put in an inappropriate value
+       here. */
+
+    if (hour > 23)
+    {
+	returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	sprintf(specifics,"%s%s%d%s","error in ASCII time string value: ",
+		"bad hour value (",hour,")");
+	PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+	return returnStatus;
+    }
+    if (min > 59)
+    {
+	returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	sprintf(specifics,"%s%s%d%s","error in ASCII time string value: ",
+		"bad minute value (",min,")");
+	PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+	return returnStatus;
+    }
+    if (sec > 60.99999999)
+    {
+	returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	sprintf(specifics,"%s%s%.6f%s","error in ASCII time string value: ",
+		"bad second value (",sec,")");
+	PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+	return returnStatus;
+    }
+    else if (sec >= 60.0 && (min != 59 || hour != 23))
+    {
+	/* leap seconds always occur at midnight */
+
+	returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	sprintf(specifics,"%s%s%.6f%s%s","error in ASCII time string value: ",
+		"bad second value (",sec,") for input time (invalid time for ",
+		"leap second)");
+	PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+	return returnStatus;
+    }
+	
+    /* determine if input year is a leap year */
+
+    leapYear = (year%4) ? 0 : 1;
+    leapYear = (year%100) ? leapYear : 0;
+    leapYear = (year%400) ? leapYear : 1;
+
+    /* if input time string is in Time Code A format the day should be
+       appropriate for the input month and year (i.e. 28, 29, 30 or 31).
+       If input time string is in Time Code B format the day should be
+       appropriate for the input year (i.e. 365 or 366). */
+
+    if (format == 'a')
+    {
+	switch (month)
+	{
+	  case 1:
+	  case 3:
+	  case 5:
+	  case 7:
+	  case 8:
+	  case 10:
+	  case 12:
+	    if (day > 31)
+	      returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	    break;
+	  case 4:
+	  case 6:
+	  case 9:
+	  case 11:
+	    if (day > 30)
+	      returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	    break;
+	  case 2:
+	    if (day > (28 + leapYear))
+	      returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	    break;
+	  default:
+	    returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	}
+	if (returnStatus != PGS_S_SUCCESS)
+	{
+	    sprintf(specifics,"%s%s%d%s","error in ASCII time string value: ",
+		    "bad day value (",day,") for given month");
+	    PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+	}
+    }
+    else
+    {
+	if (day > (365 + leapYear))
+	{
+	    returnStatus = PGSTD_E_TIME_VALUE_ERROR;
+	    sprintf(specifics,"%s%s%d%s","error in ASCII time string value:",
+		    " bad day value (",day,") for given year");
+	    PGS_SMF_SetDynamicMsg(returnStatus,specifics,FUNCTION_NAME);
+	}
+    }
+    
+    /* if the time string is valid set return status to indicate if it is
+       in Time Code B format and then set the appropriate message */
+ 
+    if (returnStatus == PGS_S_SUCCESS)
+    {
+	if (format == 'b')
+	  returnStatus = PGSTD_M_ASCII_TIME_FMT_B;
+	PGS_SMF_SetStaticMsg(returnStatus,FUNCTION_NAME);
+    }
+
+    return returnStatus;
+}
+SHAR_EOF
+echo PGS_TD_UTCtoUTCjd.c 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'PGS_TD_UTCtoUTCjd.c' &&
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*******************************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME:
+  PGS_TD_UTCtoUTCjd.c
+
+DESCRIPTION:
+  This file contains the function PGS_TD_UTCtoUTCjd()
+
+AUTHOR:
+  Guru Tej S. Khalsa / Applied Research Corporation
+  Deborah Foch / Applied Research Corporation
+  Peter D. Noerdlinger / Applied Research Corporation
+
+HISTORY:
+      Mar-1994  GTSK    Initial version
+      Mar-1994  DF/PDN  Modifications in notation and comments
+   20-Jul-1994  GTSK    Changed name from PGS_TD_UtcAsciiToDouble
+                        to PGS_TD_UTCtoUTCjd.  Added ability to
+			accept CCSDS ASCII Time Code B as input.
+			Fixed a leap second situation to repeat
+			the second before midnight, not the 
+			second after.  Updated prologs to current ECS/PGS
+			standards, changed appropriate variable names
+			to standard names.
+   29-Jul-1994  GTSK    Altered function to return UTC Julian day as an array
+                        of two real numbers instead of a single real number.
+			Modified comments and prolog to reflect this change.
+   04-Aug-1994  GTSK    Added message PGSTD_M_LEAP_SEC_IGNORED to indicate that
+                        an input time with a seconds field of 60 has been
+			treated as if the seconds field were 59.
+  27-Apr-1995  GTSK     Replaced "PGSt_integer" with "int" and "PGSt_double"
+                        with "double" (in one case) in an attempt to guarantee
+                        that sscanf will always behave properly
+
+END_FILE_PROLOG:
+*******************************************************************************/
+
+/*******************************************************************************
+BEGIN_PROLOG
+
+TITLE:   
+   Convert UTC in CCSDS ASCII format to Julian date format
+
+NAME:    
+   PGS_TD_UTCtoUTCjd
+
+SYNOPSIS:
+C:
+   #include <PGS_TD.h>
+
+   PGSt_SMF_status
+   PGS_TD_UTCtoUTCjd(
+       char        asciiUTC[28],
+       PGSt_double jdUTC[2])
+
+DESCRIPTION:
+   This tool converts a time from CCSDS ASCII Time (Format A or B) to Julian
+   date.
+
+INPUTS:
+   Name       Description                 Units      Min     Max
+   ----       -----------                 -----      ---     ---
+   asciiUTC   UTC time in CCSDS ASCII     ASCII      N/A     N/A     
+              Time Code A format or
+	      ASCII Time Code B format
+
+OUTPUTS:
+   Name       Description                 Units      Min     Max
+   ----       -----------                 -----      ---     ---
+   jdUTC      UTC Julian date as two      days       N/A     N/A
+              real numbers, the first
+	      a half integer number of
+	      days and the second the
+	      fraction of a day between
+              this half integer number
+	      of days and the next half
+	      integer day number.
+RETURNS:
+   PGS_S_SUCCESS               successful execution
+   PGSTD_M_LEAP_SEC_IGNORED    leap second portion of input time discarded
+   PGSTD_E_TIME_FMT_ERROR      error in format of input ASCII UTC time
+   PGSTD_E_TIME_VALUE_ERROR    error in value of input ASCII UTC time
+   PGS_E_TOOLKIT               something unexpected happened, execution aborted
+
+EXAMPLES:
+C:
+   char             asciiUTC[28];
+
+   PGSt_double      jdUTC[2];
+
+   strcpy(asciiUTC, "1993-01-02T00:00:00.000000Z");
+
+   returnStatus = PGS_TD_UTCtoUTCjd(asciiUTC,jdUTC);
+
+   ** jdUTC[0] should now have the value: 2448989.5 **
+   ** jdUTC[1] should now have the value: 0.0 **
+ 
+FORTRAN:
+      integer pgs_td_utctoutcjd
+
+      double precision sectai93
+      double precision jdtai
+ 
+      integer returnstatus
+
+      asciiutc = '1993-01-02T00:00:00.000000Z'
+
+      returnstatus = pgs_td_utctoutcjd(asciiutc, utcjd)
+
+! jdutc[0] should now have the value: 2448989.5
+! jdutc[1] should now have the value: 0.0
+  
+NOTES:
+   Caution should be used because UTC time jumps backwards each time a leap
+   second is introduced.  Therefore, in a leap second interval the output
+   times will repeat those in the previous second (provided that the UTC 
+   seconds ran from 60.0 to 60.9999999  etc. as they should during that
+   one second).  Therefore, the only known uses for this function are:
+
+       (a) to get UT1, by accessing an appropriate table of differences
+       (b) to determine the correct Julian Day at which to access any table
+           based on UTC and listed in Julian date, such as leap seconds,
+           UT1, and polar motion tables.
+
+   The input is UTC time in CCSDS ASCII Time Code A or CCSDS ASCII Time 
+   Code B format (see CCSDS 301.0-B-2 for details). 
+   (CCSDS => Consultative Committee for Space Data Systems)
+      The general format is:
+
+          YYYY-MM-DDThh:mm:ss.ddddddZ (Time Code A)
+	  YYYY-DDDThh:mm:ss.ddddddZ   (Time Code B)
+	
+	  where:
+              -,T,: are field delimiters
+	      Z is the (optional) time code terminator
+	      other fields are numbers as implied:
+	        Time Code A:
+                   4 Year digits, 2 Month, 2 Day, 2 hour,
+                   2 minute, 2 second, and up to 6 decimal
+                   digits representing a fractional second
+	        Time Code B:
+                   4 Year digits, 3 Day of year, 2 hour,
+                   2 minute, 2 second, and up to 6 decimal
+                   digits representing a fractional second
+
+   The output is UTC as a Julian Date.
+   Toolkit Julian dates are kept as an array of two real (high precision)
+   numbers (C: PGSt_double, FORTRAN: DOUBLE PRECISION).  The first element of
+   the array should be the half integer Julian day (e.g. N.5 where N is a Julian
+   day number).  The second element of the array should be a real number greater
+   than or equal to zero AND less than one (1.0) representing the time of the
+   current day (as a fraction of that (86400 second) day.  This format allows
+   relatively simple translation to calendar days (since the Julian days begin
+   at noon of the corresponding calendar day).  Users of the Toolkit are
+   encouraged to adhere to this format to maintain high accuracy (one number to
+   track significant digits to the left of the decimal and one number to track
+   significant digits to the right of the decimal).  Toolkit functions that do
+   NOT require a Julian type date as an input and return a Julian date will
+   return the Julian date in the above mentioned format.  Toolkit functions that
+   require a Julian date as an input and do NOT return a Julian date will first
+   convert the input date (internal) to the above format.  Toolkit functions
+   that have a Julian date as both an input and an output will assume the input
+   is in the above described format but will not check and the format of the
+   output may not be what is expected if any other format is used for the input.
+
+   UTC is: Coordinated Universal Time
+
+REQUIREMENTS:
+   PGSTK - 1170, 1220
+
+DETAILS:
+      See "Theoretical Basis of the SDP Toolkit Geolocation Package for the
+      ECS Project", Document 445-TP-002-002, May 1995, by P. Noerdlinger, 
+      for more information on the algorithm.
+
+GLOBALS:
+   None
+
+FILES:
+   None
+
+FUNCTIONS_CALLED:
+   PGS_TD_timeCheck()      - check time string for format or value errors
+   PGS_TD_ASCIItime_BtoA() - convert CCSDS ASCII Time Code A to Time Code B
+   PGS_TD_julday()         - compute Julian Day number
+   PGS_SMF_SetStaticMsg()  - set error/status message
+   PGS_SMF_SetDynamicMsg() - set error/status message
+   PGS_SMF_SetUnknownMsg() - set error/status message for unknown status
+
+END_PROLOG
+*******************************************************************************/
+
+#include <string.h>
+#include <sys/types.h>  
+#include <stdio.h>
+#include <PGS_TD.h>
+
+/* conversion constants */
+
+#ifdef UNICOS
+
+#define SECONDSperDAY     86400.0L  /* number of seconds in a day */  
+#define	SECONDSperHOUR    3600.0L   /* number of seconds in an hour */
+#define	SECONDSperMINUTE  60.0L     /* number of seconds in a min. */ 
+
+#else
+
+#define SECONDSperDAY     86400.0   /* number of seconds in a day */  
+#define	SECONDSperHOUR    3600.0    /* number of seconds in an hour */
+#define	SECONDSperMINUTE  60.0      /* number of seconds in a min. */ 
+
+#endif /* END: #ifdef UNICOS */
+
+/* name of this function */
+
+#define FUNCTION_NAME "PGS_TD_UTCtoUTCjd()"
+
+PGSt_SMF_status
+PGS_TD_UTCtoUTCjd(         /* converts CCSDS ASCII format to Julian date */
+    char        *asciiUTC, /* UTC as a CCSDS ASCII Time Code A (or B) string */
+    PGSt_double jdUTC[2])  /* UTC Julian date */
+{
+    char         asciiUTC_A[28];   /* UTC as a CCSDS ASCII Time Code A string */
+
+    int          scanCheck;        /* checks the return value of sscanf call */
+    int          year;             /* year portion of date */
+    int          month;            /* month portion of date */
+    int          day;              /* day portion of date */
+    int          hours;            /* hours of the given date */
+    int          minutes;          /* minutes of the given date */
+
+    double       seconds;          /* seconds portion of the given date */
+
+    PGSt_SMF_status returnStatus1; /* return value of PGS functions called */
+    PGSt_SMF_status returnStatus;  /* return value of function */
+
+    /* defaults for values not specified in time string */
+
+    hours = 0;
+    minutes = 0;
+    seconds = 0.0;
+
+    /* initialize return status to indicate success */
+
+    returnStatus = PGS_S_SUCCESS;
+
+    /* default value in case of failure */
+
+    jdUTC[0] = 0.0;
+    jdUTC[1] = 0.0;
+
+    /* call PGS_TD_timeCheck() which checks the time string for format 
+       or value errors.  PGS_TD_timeCheck also indicates if the input time
+       string is in CCSDS ASCII Time Code B format.  If the input string
+       is in ASCII B format PGS_TD_ASCIItime_BtoA is called which returns
+       ASCII A format.  This function assumes CCSDS ASCII Time Code A format
+       when parsing the time string so this step ensures that the appropriate
+       format is used. */
+
+    returnStatus = PGS_TD_timeCheck(asciiUTC);
+    switch (returnStatus)
+    {
+      case PGS_S_SUCCESS:
+	strncpy(asciiUTC_A,asciiUTC,28);
+	asciiUTC_A[27] = '\0';
+	break;
+      case PGSTD_M_ASCII_TIME_FMT_B:
+	returnStatus1 = PGS_TD_ASCIItime_BtoA(asciiUTC,asciiUTC_A);
+	if (returnStatus1 != PGS_S_SUCCESS)
+	{
+	    PGS_SMF_SetUnknownMsg(returnStatus,FUNCTION_NAME);
+	    return PGS_E_TOOLKIT;
+	}
+	returnStatus = PGS_S_SUCCESS;
+	break;
+      case PGSTD_E_TIME_FMT_ERROR:
+      case PGSTD_E_TIME_VALUE_ERROR:
+	return returnStatus;
+      default:
+	PGS_SMF_SetUnknownMsg(returnStatus,FUNCTION_NAME);
+	return PGS_E_TOOLKIT;
+    }
+
+    /* separate the time string into its various numerical components. 
+       Indicate error if an inappropriate number of fields is read.
+       Note that the minimum number of fields (for CCSDS ASCII Time Code A
+       format) accepted by PGS Toolkit functions is 3 (year, month, day) and the
+       maximum is 6 (year, month, day, hours, minutes, seconds). */
+
+    scanCheck = sscanf(asciiUTC_A,"%4d-%2d-%2dT%2d:%2d:%lfZ",
+		       &year, &month, &day, &hours, &minutes, &seconds);
+    if (scanCheck < 3 || scanCheck > 6)
+    {
+	returnStatus = PGS_E_TOOLKIT;
+	PGS_SMF_SetDynamicMsg(returnStatus,"error parsing time string",
+			      FUNCTION_NAME);
+	return returnStatus;
+    }
+
+    /* calculate the time of the date as fraction of 86400 sec day.
+       UTC Julian date can't represent leap seconds uniquely, so just
+       duplicate time during leap second, however duplicate the second
+       before midnight, not the second after.  Return a message indicating
+       that this has been done.  */
+
+    if (seconds >= 60.0)
+    {
+	seconds -= 1.0;
+	returnStatus = PGSTD_M_LEAP_SEC_IGNORED;
+	PGS_SMF_SetStaticMsg(returnStatus,FUNCTION_NAME);
+    }
+
+    /* calculate the fraction of the day:
+       the input hours and minutes are converted to seconds and added to
+       the input seconds to get the total seconds of the day.  This number
+       is then divided by the total number of seconds in a day to get the
+       time of day as the fraction of a whole day. */
+
+    jdUTC[1] = (hours*SECONDSperHOUR + minutes*SECONDSperMINUTE + seconds)/
+               SECONDSperDAY;
+
+
+    /* calculate the Julian day number:
+       PGS_TD_julday() returns the integer number of the Julian day that begins
+       on the input calendar year-month-day.  Since the Julian day begins at
+       noon, this function returns the Julian day that begins at noon on the
+       input day.  What is actually desired here is the Julian DATE of midnight
+       of the input year-month-day which occurs half a day earlier than the
+       Julian day returned by the function.  Therefore 0.5 is subtracted from
+       the return value of PGS_TD_julday to get the appropriate answer. */
+
+    jdUTC[0] = PGS_TD_julday(year, month, day) - 0.5;
+
+    /* return to calling function */
+
+    if (returnStatus == PGS_S_SUCCESS)
+      PGS_SMF_SetStaticMsg(returnStatus,FUNCTION_NAME);
+
+    return returnStatus;
+}
+
+
+
+
+SHAR_EOF
+echo PGS_SMF.h 1>&2
+sed 's/^X//' << 'SHAR_EOF' > 'PGS_SMF.h' &&
+/*-------------------------------------------------------------------------*/
+/*                                                                         */
+/*  COPYRIGHT[copyright mark] 2000, Raytheon System Company, its vendors,  */
+/*  and suppliers.  ALL RIGHTS RESERVED.                                   */
+/*                                                                         */
+/*-------------------------------------------------------------------------*/
+/*****************************************************************
+BEGIN_FILE_PROLOG:
+
+FILENAME:
+  PGS_SMF.h
+
+DESCRIPTION:
+        
+AUTHOR:
+  Kelvin K. Wan      / Applied Research Corp.
+  Michael E. Sucher  / Applied Research Corp.
+  David P. Heroux    / Applied Research Corp.
+  Guru Tej S. Khalsa / Applied Research Corp.
+  Carol S. W. Tsai   / Space Applications Corporation
+
+HISTORY:
+  25-Mar-1994 Standard Convention
+
+  18-Jul-1994 Modify to include PGS_TYPES.h
+
+  15-Aug-1994 No longer need PGS_SMF_2.h and PGS_0.h
+
+  23-Aug-1994 The level mask has been reordered for severity
+
+  22-Mar-1995 MES Created new typedef struct: PGSSmfOtherGlb and
+                  added member of this type to PGSSmfGlbVar.
+                  This is to encapsulate the former static globals
+                  (callerID, writeLogFile, useMemType, whichProc) 
+                  used by the 1-file version of SMF 
+
+  23-Mar-1995 MES Added PGSSMF_W_NO_MESSAGE_FILE
+
+  24-Mar-1995 MES Added PGSSMF_M_NOT_IN_CACHE
+
+  28-Mar-1995 MES Created PGS_SMF_MsgCacheInfo structure typedef
+                  and added to PGSSmfShm to give shared memory
+                  support for the message buffer.
+
+  23-Mar-1995 MES Added command definitions for PGS_SMF_MsgLevel
+
+  28-Apr-1995 MES Added function prototypes for new high-level 
+                  tools PGS_SMF_Begin and PGS_SMF_End.
+
+  27-Sep-1995 MES Added return status codes: PGSSMF_M_NOT_ACTION, 
+                  PGSSMF_M_REGULAR_ACTION and PGSSMF_M_EMAIL_ACTION
+
+  12-Oct-1995 DPH Added contant identifier PGSd_SMF_TOOLKIT_SMFS.
+
+  13-Oct-1995 DPH Added logical identifier PGSd_SMF_LOGICAL_SNMP_CONNECT
+		  to switch CSMS event logging on and off.
+		 
+                  Added logical identifier PGSd_SMF_LOGICAL_EVENTLOG
+		  to define the PCF address for the local host Event
+		  Logger file.
+
+		  Added constant ON & OFF values.
+
+  16-Oct-1995 DPH Added another level 'C' to handle SNMP channel 
+		  communications. All action codes with level C
+		  will trigger code to handle MSS dispositions.
+		  Also added placeholders for future SMF levels.
+
+  19-Oct-1995 DPH Added shell return value PGS_SH_SMF_MSSLOGFILE
+		  to report problem with MSS environment values
+
+  20-Oct-1995 DPH Moved the following routine declarations to the
+                  include file: PGS_SMF_LogEvent()
+                                PGS_SMF_GetActionType()
+                                PGS_SMF_GetActionMneByCode()
+				PGS_SMF_GetMSSGlobals()
+
+		  Added additional MSS Disposition code to support
+		  non-email communications; added adjunct returnStatus 
+		  also.
+
+  31-Oct-1995 GSK Removed "L" suffix on hexidecimal constants, the "L" was
+                  unnecessary and was causing some compilers to warn that an
+		  integer constant was being promoted to an unsigned long.
+
+  05-Mar-1997 CST Added shell return value PGS_SH_PC_BUFSIZEERROR
+                  to report problem with the size of file listed
+                  in the PCF.
+
+  12-Feb-1998 CST Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.1 to B.0 TK5.2.1.1
+
+  17-Feb-1998 EML Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.1.1 to B.0 TK5.2.2 for ECS drop 4
+  19-May-1998 CST Changed the length of character string from PGS_SMF_MAX_MSG_SIZE
+                  defined as 241 to PGS_SMF_MAX_MSGBUF_SIZE defined as 481 for the
+                  element, msg that defined to hold the message, of the structure
+                  PGS_SMF_MsgData, a variable Data Structure (This changing is for
+                  ECSed14746 about SDPTK5.2.1 limits on user-defined log messages
+                  greater than 275 chars)
+
+  28-May-1998 CST Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.2 to B.0 TK5.2.3 for ECS drop 4
+
+  25-Jun-1998 CST Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.3 to B.0 TK5.2.4 for ECS drop 4
+
+  28-May-1998 CST Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.2 to B.0 TK5.2.3 for ECS drop 4
+
+
+  19-Aug-1998 MEDS Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.3 to B.0 TK5.2.4 for ECS drop 4PL
+  29-Apr-1999 MEDS Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.4 to B.0 TK5.2.5 for ECS drop 5A
+  11-Jul-2000 AT   Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.6 to B.0 TK5.2.6.1 for ECS drop 5B and 6A
+  08-AUG-2000 AT   Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.6.1 to B.0 TK5.2.6.2 for ECS drop 5B and 6A
+  22-Sep-2000 AT   Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.6.2 to TK5.2.7 for ECS drop 6A.
+  05-Jan-2001 AT   Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.7 to TK5.2.7.1 for ECS drop 6A.
+  27-Feb-2001 AT   Modified for linux
+  26-Mar-2001 AT   Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.7.1 to TK5.2.7.2 for ECS drop 6A.
+  26-Mar-2001 AT   Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.7.2 to TK5.2.7.3 for ECS drop 6A.
+  14-Nov-2001 PTN  Changed definition of PGSd_TOOLKIT_MAJOR_VERSION from
+                  B.0 TK5.2.7.3 to TK5.2.7.4 for ECS drop 6A.
+
+END_FILE_PROLOG:
+*****************************************************************/
+
+#ifndef _PGS_SMF_H
+#define _PGS_SMF_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/*
+ * Debug Flag 
+ */
+#define PGSSMF  "pgssmf" 
+
+/*
+ * Toolkit return status 
+ */
+#ifndef NULL
+#define NULL               0
+#endif
+
+#define PGS_TRUE           1          
+#define PGS_FALSE          0
+#define PGS_NULL_STR       "NULL"
+
+#define PGSd_CALLERID_SMF     10   /* SMF is starting to init. */
+#define PGSd_CALLERID_USR     11   /* User calling SMF */
+
+/*
+ * System Headers
+ */
+#include <limits.h>
+#include <stdio.h>
+#include <errno.h>
+extern int   errno;            /* not POSIX definition but needed to support */
+extern int   sys_nerr;         /* UNIX error/message                         */
+#define LINUX               true
+#ifndef LINUX             /* for linux the following is not needed */
+extern char *sys_errlist[];
+#endif
+
+/*
+ * Toolkit Headers 
+ */
+#include <PGS_TYPES.h>
+
+typedef PGSt_integer      PGSt_SMF_status;
+typedef PGSt_SMF_status   PGSt_SMF_code;
+typedef PGSt_integer      PGSt_SMF_boolean;
+typedef PGSt_SMF_status   pgs_status;
+typedef PGSt_SMF_code     pgs_code;
+typedef PGSt_SMF_boolean  pgs_boolean;
+
+/*
+ * Contants
+ */
+#define PGSd_SMF_CHAR_FORMFEED            0x0c   /* form feed character: Ctrl-L */
+#define PGSd_SMF_NUM_OPENFILE                5   /* maximum number of opened files */
+#define PGSd_SMF_TOOLKIT_SMFS		    16   /* number of Toolkit defined SMF files */
+#define PGSd_SMF_USE_SHAREDMEM               0   /* use shared memory */
+#define PGSd_SMF_USE_ASCIIFILE               1   /* use ascii file */
+#define PGSd_SMF_WRITELOG_OFF                0   /* write to log file OFF */
+#define PGSd_SMF_WRITELOG_ON                 1   /* write to log file ON */
+#define PGSd_SMF_PROC_INIT                 0x2   /* initialization process */
+#define PGSd_SMF_PROC_TERM                 0x4   /* termination process */
+#define PGSd_SMF_PROC_USER                 0x8   /* user (PGE) process */
+
+#define PGSd_SMF_TAG_LENGTH_MAX             61   /* message tag; 1 char. for '\0' */
+#define PGSd_SMF_PATH_MAX                  256   /* maximumm path+filename; 1 char. for '\0' */
+#define PGSd_SMF_MAILMSG_LEN             10001   /* mail message length */
+
+#define PGSd_SMF_LOGICAL_LOGSTATUS       10100   /* status log file */
+#define PGSd_SMF_LOGICAL_LOGREPORT       10101   /* report log file */
+#define PGSd_SMF_LOGICAL_LOGUSER         10102   /* user log file */
+#define PGSd_SMF_LOGICAL_TMPSTATUS       10103   /* temporary log status file */
+#define PGSd_SMF_LOGICAL_TMPREPORT       10104   /* temporary log report file */
+#define PGSd_SMF_LOGICAL_TMPUSER         10105   /* temporary log user file */
+
+#define PGSd_SMF_LOGICAL_REMOTEHOSTNAME  10106   /* remote host name */
+#define PGSd_SMF_LOGICAL_REMOTEPATH      10107   /* remote path to send the file */
+#define PGSd_SMF_LOGICAL_MAILUSER        10108   /* send the mail to user */
+#define PGSd_SMF_LOGICAL_TRANSMIT        10109   /* transmit file */
+
+#define PGSd_SMF_LOGICAL_TMPFILE         10110   /* temporary file */
+#define PGSd_SMF_LOGICAL_SHMMEM          10111   /* simulation of SMF shared memory */
+#define PGSd_SMF_LOGICAL_SNMP_CONNECT    10112   /* enable/diable event log transactions */
+#define PGSd_SMF_LOGICAL_EVENTLOG        10113   /* Local host event log */
+
+#define PGSd_SMF_LOGICAL_LOGGING         10114
+#define PGSd_SMF_LOGICAL_TRACE           10115
+#define PGSd_SMF_LOGICAL_PID             10116
+#define PGSd_SMF_LOGICAL_LEVEL           10117
+#define PGSd_SMF_LOGICAL_SEED            10118
+#define PGSd_SMF_LOGICAL_CODE            10119
+
+#define PGSd_TOOLKIT_VERSION_LOGICAL     10220
+#define PGSd_TOOLKIT_MAJOR_VERSION       "TK5.2.7.4"
+#ifdef PGS_DAAC
+#    define PGSd_TOOLKIT_MINOR_VERSION   "DAAC"
+#else
+#    define PGSd_TOOLKIT_MINOR_VERSION   "SCF"
+#endif
+  /*#define PGSd_TOOLKIT_VERSION_STRING \
+    PGSd_TOOLKIT_MINOR_VERSION##" "##PGSd_TOOLKIT_MAJOR_VERSION*/
+#ifdef PGS_DAAC
+#    define PGSd_TOOLKIT_VERSION_STRING "DAAC  TK5.2.7.4"
+#else
+#    define PGSd_TOOLKIT_VERSION_STRING  "SCF  TK5.2.7.4"
+#endif
+
+/*
+ * Defined contants with seed = 0 (system code)
+ */
+#define PGS_S_SUCCESS                                  0 
+#define PGS_SH_PC_BUFSIZEERROR                       222 /* 0x000000de */
+#define PGS_SH_SMF_MSSLOGFILE			     242 /* 0x000000f2 */
+#define PGS_SH_PC_TRUNC                              243 /* 0x000000f3 */
+#define PGS_SH_PC_TOOLERROR                          244 /* 0x000000f4 */
+#define PGS_SH_PC_NODATA                             245 /* 0x000000f5 */
+#define PGS_SH_SYS_PARAM                             246 /* 0x000000f6 */
+#define PGS_SH_MEM_INIT                              247 /* 0x000000f7 */
+#define PGS_SH_PC_DELETETMP                          248 /* 0x000000f8 */
+#define PGS_SH_SMF_SENDRUNTIME                       249 /* 0x000000f9 */
+#define PGS_SH_SMF_SENDLOGFILE                       250 /* 0x000000fa */
+#define PGS_SH_MEM_TERM                              251 /* 0x000000fb */
+#define PGS_SH_SMF_LOGFILE                           252 /* 0x000000fc */
+#define PGS_SH_PC_LOADDATA                           253 /* 0x000000fd */
+#define PGS_SH_PC_ENV                                254 /* 0x000000fe */
+#define PGS_SH_SMF_SHMMEM                            255 /* 0x000000ff */
+#define PGS_SH_SIGFPE                                260 /* 0x00000104 */
+
+#define PGS_M_NULL                                  1797 /* 0x00000705 */
+#define PGS_M_UNIX                                  1798 /* 0x00000706 */
+#define PGS_E_HDF                                   3847 /* 0x00000f07 */
+#define PGS_E_UNIX                                  3848 /* 0x00000f08 */
+#define PGS_E_ECS                                   3849 /* 0x00000f09 */
+#define PGS_E_TOOLKIT                               3850 /* 0x00000f0a */
+#define PGS_F_TOOLKIT                               4363 /* 0x0000110b */
+#define PGS_E_GEO                                   3852 /* 0x00000f0c */
+#define PGS_E_DCE                                   3853 /* 0x00000f0d */
+#define PGS_E_MATH                                  3854 /* 0x00000f0e */
+#define PGS_E_ENV                                   3855 /* 0x00000f0f */
+
+/*
+ * Defined constants with seed = 2 (SMF code)
+ * I don't believe that order matters here since these entries are not in 
+ * an actual SMF file. However, since only 512 codes can be supported for
+ * each seed number, the total number of entries here MUST NOT EXCEED THOSE
+ * BOUNDS!
+ */
+#define PGSSMF_E_UNDEFINED_CODE                    19968 /* 0x00004e00 */
+#define PGSSMF_E_UNDEFINED_UNIXERRNO               19969 /* 0x00004e01 */
+#define PGSSMF_E_CANT_OPEN_FILE                    19970 /* 0x00004e02 */
+#define PGSSMF_E_MSG_TOOLONG                       19971 /* 0x00004e03 */
+#define PGSSMF_E_SIGFPE                            19972 /* 0x00004e04 */
+#define PGSSMF_E_SIGACTION                         19973 /* 0x00004e05 */
+#define PGSSMF_E_INVALID_FORMAT                    19974 /* 0x00004e06 */
+#define PGSSMF_E_BAD_REFERENCE                     19975 /* 0x00004e07 */
+#define PGSSMF_E_INVALID_FILE                      19976 /* 0x00004e08 */
+#define PGSSMF_E_SENDFILE                          19977 /* 0x00004e09 */
+#define PGSSMF_E_NOMAIL_ADDR                       19978 /* 0x00004e0a */
+#define PGSSMF_E_NONETRC_FILE                      19979 /* 0x00004e0b */
+#define PGSSMF_E_NETRC_MODE                        19980 /* 0x00004e0c */
+#define PGSSMF_E_SENDMAIL                          19981 /* 0x00004e0d */
+#define PGSSMF_E_REMOTEPATH                        19982 /* 0x00004e0e */
+#define PGSSMF_E_NOHOSTNAME                        19983 /* 0x00004e0f */
+#define PGSSMF_E_LOGFILE                           19984 /* 0x00004e10 */
+#define PGSSMF_E_SENDRUNTIME_DATA                  19985 /* 0x00004e11 */
+#define PGSSMF_E_SENDSTATUS_LOG                    19986 /* 0x00004e12 */
+#define PGSSMF_E_BAD_EVENTLOG_ACCESS		   19987 /* 0x00004e13 */
+#define PGSSMF_E_MSSLOGFILE                        19988 /* 0x00004e14 */
+#define PGSSMF_E_INVALID_SWITCH                    19989 /* 0x00004e15 */
+
+#define PGSSMF_W_NOACTION                          19475 /* 0x00004c13 */
+#define PGSSMF_W_SENDRUNTIME_DATA                  19476 /* 0x00004c14 */
+#define PGSSMF_W_NO_CONSTRUCT_TAG                  19477 /* 0x00004c15 */
+#define PGSSMF_W_NO_MESSAGE_FILE                   19478 /* 0x00004c16 */
+
+#define PGSSMF_M_TRANSMIT_DISABLE                  17942 /* 0x00004616 */
+#define PGSSMF_M_UNIX                              17943 /* 0x00004617 */
+#define PGSSMF_M_NOT_IN_CACHE                      17944 /* 0x00004618 */
+#define PGSSMF_M_NOT_ACTION                        17945 /* 0x00004619 */
+#define PGSSMF_M_REGULAR_ACTION                    17946 /* 0x0000461a */
+#define PGSSMF_M_EMAIL_ACTION                      17947 /* 0x0000461b */
+#define PGSSMF_M_INFO_ACTION                       17948 /* 0x0000461c */
+#define PGSSMF_M_LOGGING_DISABLED                  17949 /* 0x0000461d */
+#define PGSSMF_M_LOGGING_ENABLED                   17950 /* 0x0000461e */
+#define PGSSMF_M_TRACE_DISABLED                    17951 /* 0x0000461f */
+#define PGSSMF_M_ERROR_TRACE_ENABLED               17952 /* 0x00004620 */
+#define PGSSMF_M_FULL_TRACE_ENABLED                17953 /* 0x00004621 */
+ 
+/*
+ * SMF Limitations 
+ */
+#define PGS_SMF_MAX_SEED_NO            524287   /* 2^19 - 1; 19 bits                */
+#define PGS_SMF_MAX_MNEMONIC           510      /* 2^9 - 1; 9 bits                  */
+#define PGS_SMF_MAX_INSTR_SIZE         11       /* max. 10 chars, 1 char for '\0'   */           
+#define PGS_SMF_MAX_LABEL_SIZE         11       /* max. 10 chars, 1 char for '\0'   */
+#define PGS_SMF_MAX_MNEMONIC_SIZE      32       /* instr_size + _ + SH + _ + 17, 1 char for '\0'     */
+#define PGS_SMF_MAX_MSG_SIZE           241      /* max. 240 chars, 1 char for '\0'  */
+#define PGS_SMF_MAX_ACT_SIZE           241      /* max. 240 chars, 1 char for '\0'  */
+#define PGS_SMF_MAX_MSGBUF_SIZE        481      /* max. 480 chars, 1 char for '\0'  */
+#define PGS_SMF_MAX_FUNC_SIZE          101      /* max. 100 chars, 1 char for '\0'  */
+#define PGS_SMF_MAX_MSGTAG_SIZE        61       /* max. 60 chars, 1 char for '\0'   */
+
+/*
+ * SMF Status Level 
+ */
+#define PGS_SMF_STAT_LEV_SH            "_SH_"
+#define PGS_SMF_STAT_LEV_M             "_M_"
+#define PGS_SMF_STAT_LEV_U             "_U_"
+#define PGS_SMF_STAT_LEV_S             "_S_"
+#define PGS_SMF_STAT_LEV_N             "_N_"
+#define PGS_SMF_STAT_LEV_W             "_W_"
+#define PGS_SMF_STAT_LEV_F             "_F_"
+#define PGS_SMF_STAT_LEV_E             "_E_"
+#define PGS_SMF_STAT_LEV_A             "_A_"
+#define PGS_SMF_STAT_LEV_X0            "_?_"
+#define PGS_SMF_STAT_LEV_C             "_C_"
+#define PGS_SMF_STAT_LEV_X2            "_?_"
+#define PGS_SMF_STAT_LEV_X3            "_?_"
+#define PGS_SMF_STAT_LEV_X4            "_?_"
+#define PGS_SMF_STAT_LEV_X5            "_?_"
+#define PGS_SMF_STAT_LEV_X6            "_?_"
+#define PGS_SMF_LEV_DELIMIT            "_"
+#define PGS_SMF_LEV_DISPLAY            3 
+
+#define PGS_SMF_MASK_LEV_SH            0x00000000      /* _SH_ : shell     */
+#define PGS_SMF_MASK_LEV_S             0x00000200      /* _S_  : success   */
+#define PGS_SMF_MASK_LEV_A             0x00000400      /* _A_  : action    */
+#define PGS_SMF_MASK_LEV_M             0x00000600      /* _M_  : message   */
+#define PGS_SMF_MASK_LEV_U             0x00000800      /* _U_  : user info */
+#define PGS_SMF_MASK_LEV_N             0x00000a00      /* _N_  : notice    */
+#define PGS_SMF_MASK_LEV_W             0x00000c00      /* _W_  : warning   */
+#define PGS_SMF_MASK_LEV_E             0x00000e00      /* _E_  : error     */
+#define PGS_SMF_MASK_LEV_F             0x00001000      /* _F_  : fatal     */
+#define PGS_SMF_MASK_LEV_X0            0x00001200      /* _?_  : unused    */
+#define PGS_SMF_MASK_LEV_C             0x00001400      /* _C_  : channel   */
+#define PGS_SMF_MASK_LEV_X2            0x00001600      /* _?_  : unused    */
+#define PGS_SMF_MASK_LEV_X3            0x00001800      /* _?_  : unused    */
+#define PGS_SMF_MASK_LEV_X4            0x00001a00      /* _?_  : unused    */
+#define PGS_SMF_MASK_LEV_X5            0x00001c00      /* _?_  : unused    */
+#define PGS_SMF_MASK_LEV_X6            0x00001e00      /* _?_  : unused    */
+#define PGS_SMF_MASK_CONSTANT          0x000001ff      /* Bit: 8  - 0  */
+#define PGS_SMF_MASK_LEVEL             0x00001e00      /* Bit: 12 - 9  */
+#define PGS_SMF_MASK_SEED              0xffffe000      /* Bit: 31 - 13 */
+
+
+/*
+ * SMF System Info
+ */
+#define PGS_SMF_SYS_FILEPREFIX     "PGS"         
+#define PGS_SMF_SYS_INSTR          "PGSTK"            
+#define PGS_SMF_SYS_LABEL          "PGS" 
+#define PGS_SMF_SYS_SEED           0            
+
+#define PGS_SMF_ASSIGN_LABEL       "PGSSMF"            
+#define PGS_SMF_ASSIGN_SEED        2            
+
+#define PGSd_SMF_ON		   "1"
+#define PGSd_SMF_OFF           	   "0"
+
+/*
+ * Messaging control
+ */
+#define PGSd_QUERY                   2
+#define PGSd_QUERY_ALL               3
+#define PGSd_ON		             1
+#define PGSd_OFF           	     0
+#define PGSd_DISABLE_STATUS_LEVEL  -10
+#define PGSd_DISABLE_SEED          -20
+#define PGSd_DISABLE_CODE          -30
+#define PGSd_DISABLE_ALL           -40
+#define PGSd_ENABLE_STATUS_LEVEL    10
+#define PGSd_ENABLE_SEED            20
+#define PGSd_ENABLE_CODE            30
+#define PGSd_ENABLE_ALL             40
+#define PGSd_FLUSH                  86
+#define PGSd_ADD_ELEMENT             1
+#define PGSd_DELETE_ELEMENT         -1
+#define PGSd_FREE_LIST              86
+#define PGSd_SET_NO_TRACE          100
+#define PGSd_SET_ERROR_TRACE       101 
+#define PGSd_SET_FULL_TRACE        102
+#define PGSd_ENABLE_PID_LOGGING    111
+#define PGSd_DISABLE_PID_LOGGING  -111
+
+/* special command flags */
+
+#define PGSd_GET  1
+#define PGSd_SET -1
+
+/*
+ * Old SMF Globals
+ */
+
+#define PGSd_CALLER_ID         1
+#define PGSd_WRITE_LOG_FILE    2
+#define PGSd_USE_MEM_TYPE      3
+#define PGSd_WHICH_PROC        4
+
+/*
+ * MSS Disposition Codes
+ */
+#define PGS_SMF_MSSCODE_EMAIL      "PGSEMAIL"            
+#define PGS_SMF_MSSCODE_INFO       "PGSINFO"            
+
+/*
+ * Command Definitions Used By PGS_SMF_CacheMsgShm
+ */
+#define PGSd_SMF_FindByCode        1
+#define PGSd_SMF_FindByMnemonic    2
+#define PGSd_SMF_AddRecord         3
+#define PGSd_SMF_LastFindStatus    4
+#define PGSd_SMF_DisplayBuffer     5
+#define PGSd_SMF_InitCacheInfo1    6
+#define PGSd_SMF_InitCacheInfo2    7
+
+
+/*
+ * Definitions Used By PGS_SMF_MsgLevel
+ */
+#define PGSd_SMF_IncLevel          1    /* command */
+#define PGSd_SMF_DecLevel          2    /* command */
+#define PGSd_SMF_GetLevel          3    /* command */
+#define PGSd_SMF_SetIndentString   4    /* command */
+#define PGSd_SMF_EnableLevel       5    /* command */
+#define PGSd_SMF_DisableLevel      6    /* command */
+#define PGSd_SMF_GetTracePath      7    /* command */
+
+#define PGSd_SMF_MaxMsgLevel      20    /* max value */
+ 
+/*
+ * Structure Defintions
+ */ 
+typedef struct
+{
+    PGSt_SMF_code           seed;                                   /* unique seed no  */
+    char                    instr[PGS_SMF_MAX_INSTR_SIZE];          /* organization    */
+    char                    label[PGS_SMF_MAX_LABEL_SIZE];          /* instrument name */
+}PGS_SMF_FileInfo;
+
+typedef struct 
+{
+    PGSt_SMF_code           code;                                    /* unique code              */
+    char                    mnemonic[PGS_SMF_MAX_MNEMONIC_SIZE];     /* mnemonic label           */
+    char                    msg[PGS_SMF_MAX_MSGBUF_SIZE];               /* mnemonic message string  */
+    char                    action[PGS_SMF_MAX_MNEMONIC_SIZE];       /* action label             */
+}PGS_SMF_MsgData;
+                         
+typedef struct
+{
+    PGSt_SMF_code           seed;                /* max unique seed (19 bits)  */ 
+    short                   levels;              /* max levels (4 bits)        */
+    short                   unique_code;         /* max unique code (9 bits)   */
+}PGS_SMF_CodeInfo;
+
+typedef struct                                  
+{                                       
+    PGS_SMF_FileInfo        fileinfo;
+    PGS_SMF_MsgData         msgdata;
+    char                    funcname[PGS_SMF_MAX_FUNC_SIZE];
+}PGS_SMF_MsgInfo;
+
+typedef struct
+{
+    void (*func)(int signo);                              /* signal handler */
+    char funcname[PGS_SMF_MAX_FUNC_SIZE];                 /* function name */
+}PGSSmfSigHandler;
+
+typedef struct
+{
+    char               logStatus[PGSd_SMF_PATH_MAX];       /* status log file */
+    char               logReport[PGSd_SMF_PATH_MAX];       /* report log file */
+    char               logUser[PGSd_SMF_PATH_MAX];         /* user log file */ 
+    FILE              *fptrStatus;                         /* status log file pointer */
+    FILE              *fptrReport;                         /* report log file pointer */
+    FILE              *fptrUser;                           /* user log file pointer */
+    char               msgTag[PGSd_SMF_TAG_LENGTH_MAX];    /* message tag */   
+    PGSt_SMF_boolean   record;                             /* flag to indicate if errors are to be captured into log files */
+    PGSt_SMF_boolean   transmit;                           /* flag to indicate if allow to send the log files */    
+}PGSSmfLog;
+
+typedef struct
+{
+    PGSt_SMF_boolean   transmit;            /* flag to indicate if allow to send the files */
+}PGSSmfRunData;
+
+typedef struct
+{
+    PGSt_SMF_code     fileNo[PGSd_SMF_NUM_OPENFILE];     /* file number */
+    FILE             *filePtr[PGSd_SMF_NUM_OPENFILE];    /* opened file pointer */
+    int               num;                               /* number of file opened */
+}PGSSmfOpenFile;
+
+/*
+ *  Former Static Global Variables
+ */
+
+typedef struct
+{
+    PGSt_SMF_status    callerID;            /* callerID to stop cyclic situation */
+    PGSt_SMF_status    writeLogFile;        /* flag to capture errors to log file */
+    PGSt_SMF_status    useMemType;          /* flag to use either shared memory or ascii file */
+    PGSt_SMF_status    whichProc;           /* which process are we in? (init., PGE, or term.) */
+}PGSSmfOtherGlb;
+
+typedef struct                     /* message cache: indices, record count */
+{                                       
+    PGSt_integer            newest;        /* index to newest entry */
+    PGSt_integer            oldest;        /* index to oldest entry */
+    PGSt_uinteger            count;        /* count of records allocated */
+}PGS_SMF_MsgCacheInfo;
+
+/*
+ *  SMF Global Variable Data Structure
+ */
+
+typedef struct
+{
+    PGS_SMF_MsgInfo   msginfo;                      /* code buffer */
+    char              msg[PGS_SMF_MAX_MSGBUF_SIZE]; /* current message buffer */
+    PGSSmfSigHandler  signal;                       /* signal handling */
+    PGSSmfLog         log;                          /* log files */
+    PGSSmfRunData     rundata;                      /* runtime files */
+    PGSSmfOpenFile    open;                         /* opened files */
+    PGS_SMF_MsgCacheInfo msgCacheInfo;              /* message cache info */
+    PGSSmfOtherGlb    other;                        /* other globals */
+    PGSt_SMF_code     unixErrno;                    /* Unix errno */
+}PGSSmfGlbVar;
+
+/*
+ * Current Static Global Variables
+ */ 
+
+
+/*
+ *  Shared Memory Data Structure
+ */
+
+typedef struct
+{
+    char  logStatus[PGSd_SMF_PATH_MAX];      /* status log file */
+    char  logReport[PGSd_SMF_PATH_MAX];      /* report log file */
+    char  logUser[PGSd_SMF_PATH_MAX];        /* user log file */ 
+    char  msgTag[PGSd_SMF_TAG_LENGTH_MAX];   /* message tag */  
+    int   writeLogFile;                      /* write to log file */
+    PGS_SMF_MsgCacheInfo msgCacheInfo;       /* message cache info */
+}PGSSmfShm;
+
+
+/*
+ * PGS_SMF.c: External Functions 
+ */
+extern PGSt_SMF_status       PGS_SMF_SetHDFMsg             (PGSt_SMF_code code,char *msg,char *funcname);       
+extern PGSt_SMF_status       PGS_SMF_SetUNIXMsg            (PGSt_integer unix_errcode,char *msg,char *funcname);
+extern PGSt_SMF_status       PGS_SMF_SetStaticMsg          (PGSt_SMF_code code,char *funcname);
+extern PGSt_SMF_status       PGS_SMF_SetDynamicMsg         (PGSt_SMF_code code,char *msg,char *funcname);
+extern PGSt_SMF_status       PGS_SMF_GetActionByCode       (PGSt_SMF_code code,char action[]);
+extern PGSt_SMF_status       PGS_SMF_GetMsgByCode          (PGSt_SMF_code code,char msg[]);
+extern void                  PGS_SMF_GetMsg                (PGSt_SMF_code *code,char mnemonic[],char msg[]);
+extern PGSt_SMF_status       PGS_SMF_CreateMsgTag          (char *systemTag);
+extern PGSt_SMF_status       PGS_SMF_GetInstrName          (PGSt_SMF_code code,char instr[]);
+extern PGSt_SMF_status       PGS_SMF_GenerateStatusReport  (char *report);
+extern PGSt_SMF_boolean      PGS_SMF_TestErrorLevel        (PGSt_SMF_status code);
+extern PGSt_SMF_boolean      PGS_SMF_TestFatalLevel        (PGSt_SMF_status code);
+extern PGSt_SMF_boolean      PGS_SMF_TestMessageLevel      (PGSt_SMF_status code);
+extern PGSt_SMF_boolean      PGS_SMF_TestWarningLevel      (PGSt_SMF_status code);
+extern PGSt_SMF_boolean      PGS_SMF_TestUserInfoLevel     (PGSt_SMF_status code);
+extern PGSt_SMF_boolean      PGS_SMF_TestSuccessLevel      (PGSt_SMF_status code);
+extern PGSt_SMF_boolean      PGS_SMF_TestNoticeLevel       (PGSt_SMF_status code);
+extern PGSt_SMF_status       PGS_SMF_TestStatusLevel       (PGSt_SMF_status code);
+extern PGSt_SMF_status       PGS_SMF_GetGlobalVar          (PGSSmfGlbVar **global_var);
+extern void                  PGS_SMF_GetSystemCode         (PGSt_SMF_code code,char *mnemonic,char *msg);
+extern void                  PGS_SMF_GetSMFCode            (PGSt_SMF_code code,char *mnemonic,char *msg);
+extern void                  PGS_SMF_ExtractMsgInfo        (PGS_SMF_MsgInfo *codeinfo,char *line);
+extern void                  PGS_SMF_ExtractFileInfo       (PGS_SMF_MsgInfo *codeinfo,char *line);
+extern PGSt_SMF_status       PGS_SMF_GetEnv                (PGS_SMF_MsgInfo *codeinfo,char *funcname);
+extern PGSt_SMF_status       PGS_SMF_CallerID              (void);
+extern PGSt_SMF_status       PGS_SMF_Get_WriteLogFile      (void);
+extern PGSt_SMF_status       PGS_SMF_DecodeCode            (PGSt_SMF_code code,char *mnemonic,PGS_SMF_MsgInfo *codeinfo,char *func,short op);
+extern PGSt_SMF_status       PGS_SMF_GetSysShm             (PGSSmfGlbVar *global_var);
+extern void                  PGS_SMF_InitProc              (PGSt_SMF_status useMem,PGSt_SMF_status writeLog);
+extern void                  PGS_SMF_TermProc              (PGSt_SMF_status useMem,PGSt_SMF_status writeLog);
+extern void                  PGS_SMF_TermSMF               (void);
+extern PGSt_SMF_status       PGS_SMF_Begin                 (char *);
+extern PGSt_SMF_status       PGS_SMF_End                   (char *);
+extern PGSt_SMF_status 	     PGS_SMF_LogEvent		   (PGSt_SMF_code statusCode, char *messageString, char *messageLabel, char *actionString, PGSt_SMF_code mssDisposition);
+extern PGSt_SMF_status 	     PGS_SMF_GetActionMneByCode(PGSt_SMF_code code, char action[], char mnemonic[]);
+ 
+extern PGSt_SMF_status 	     PGS_SMF_GetActionType(char *actionLabel);
+extern void 		     PGS_SMF_GetMSSGlobals(char **eventLogRef, char **comm_snmp);
+extern PGSt_SMF_status       PGS_SMF_Logging(PGSt_integer, char*);
+extern PGSt_SMF_status       PGS_SMF_LoggingControl(PGSt_integer, PGSt_SMF_code);
+extern PGSt_integer          PGS_SMF_ManageLogControlList(PGSt_SMF_status**,
+							  size_t*,
+							  PGSt_SMF_status,
+							  PGSt_SMF_status);
+extern PGSt_SMF_status       PGS_SMF_TraceControl(int);
+extern void                  PGS_SMF_SetCallerID(PGSt_SMF_status);
+extern char*                 PGS_SMF_LogPID(PGSt_integer);
+extern void                  PGS_SMF_InitializeLogging(void);
+extern void                  PGS_SMF_GetToolkitVersion(char [21]);
+
+
+
+/*
+ * PGS_SMF_Util.c: External Functions
+ */
+extern PGSt_SMF_status       PGS_SMF_PrintFile             (char *file);
+extern PGSt_SMF_status       PGS_SMF_SetRunTimeData_Int    (char msg[],PGSt_integer value);
+extern PGSt_SMF_status       PGS_SMF_SetRunTimeData_Short  (char msg[],short value);
+extern PGSt_SMF_status       PGS_SMF_SetRunTimeData_Double (char msg[],PGSt_double value);
+extern PGSt_SMF_status       PGS_SMF_SetRunTimeData_Float  (char msg[],float value);
+extern void                  PGS_SMF_PrintMsgInfo          (PGS_SMF_MsgInfo *msginfo);
+extern PGSt_SMF_status       PGS_SMF_SetArithmeticTrap     (void (*func)(int signo));
+extern void                  PGS_SMF_SysSignalHandler      (int signo);
+extern PGSt_SMF_status       PGS_SMF_Sigaction             (void (*func)(int signo),char *funcname);
+
+/*
+ * PGS_SMF_Comm.c: External Functions
+ */
+extern PGSt_SMF_status       PGS_SMF_System                (char *cmdStr);
+extern PGSt_SMF_status       PGS_SMF_SendFile              (char *LocalFileName,char *RemoteHostName,char *RemoteFileName);  
+extern PGSt_SMF_status       PGS_SMF_SendMail              (char *toAddresses,char *ccAddresses,char *bccAddresses,char *subText,char *msgText);
+extern PGSt_SMF_status       PGS_SMF_CheckNetrcFile        (char *RemoteHostName);
+extern void                  PGS_SMF_RemoveSpace           (char *str);
+
+/*
+ * PGS_SMF_SendStatusReport.c: External Functions
+ */
+extern PGSt_SMF_status       PGS_SMF_SendStatusReport        (void);
+extern PGSt_SMF_status       PGS_SMF_SysSendStatusReport     (void);
+extern PGSt_SMF_status       PGS_SMF_SysTermSendStatusReport (void);
+
+/*
+ * PGS_SMF_SendRuntimeData.c: External Functions
+ */
+extern PGSt_SMF_status       PGS_SMF_SendRuntimeData         (PGSt_integer numfiles,PGSt_PC_Logical files[],PGSt_integer version[]);
+extern PGSt_SMF_status       PGS_SMF_SysSendRuntimeData      (void);
+extern PGSt_SMF_status       PGS_SMF_SysTermSendRuntimeData  (void);
+
+/*
+ * PGS_SMF_Popen.c: External Functions
+ */
+extern FILE*                 PGS_SMF_Popen                 (const char *cmdStr,const char *type);
+extern int                   PGS_SMF_Pclose                (FILE *fp);
+extern int                   PGS_SMF_OpenMax               (void);
+
+/*
+ * PGS_SMF1.c: External Functions
+ */
+extern void                  PGS_SMF_SetUnknownMsg         (PGSt_SMF_status code,char *funcname);
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* end _PGS_SMF_H */
+
+SHAR_EOF
+exit 0
