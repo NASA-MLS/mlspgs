@@ -11,15 +11,17 @@ module L2PC_m
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
   use Intrinsic, only: Lit_Indices, L_CHANNEL, L_GEODALTITUDE, L_ZETA, L_NONE, L_VMR, &
-    & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH
+    & L_RADIANCE, L_PTAN, L_NONE, L_INTERMEDIATEFREQUENCY, L_LATITUDE, L_FIELDAZIMUTH, &
+    & L_ROWS, L_COLUMNS
   use machine, only: io_error
   use MLSCommon, only: R8, RM, R4, FindFirst
   use VectorsModule, only: assignment(=), DESTROYVECTORINFO, &
     & VECTORTEMPLATE_T, VECTOR_T, VECTORVALUE_T, CREATEVECTOR, ADDVECTORTODATABASE,&
-    & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE
+    & ADDVECTORTEMPLATETODATABASE, CONSTRUCTVECTORTEMPLATE, NULLIFYVECTORTEMPLATE
+  use ManipulateVectorQuantities, only: DOVECTORSMATCH
   use MatrixModule_1, only: CREATEBLOCK, CREATEEMPTYMATRIX, &
     & DESTROYMATRIX, MATRIX_T, DUMP, FINDBLOCK, MATRIX_DATABASE_T, &
-    & GETACTUALMATRIXFROMDATABASE, DUMP_STRUCT
+    & GETACTUALMATRIXFROMDATABASE, DUMP_STRUCT, COPYMATRIXVALUE
   use MatrixModule_0, only: M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL, &
     & MATRIXELEMENT_T, M_UNKNOWN, DESTROYBLOCK
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ERROR, &
@@ -38,10 +40,12 @@ module L2PC_m
   implicit NONE
   private
   
+  public :: AdoptVectorTemplate, AdoptMatrix
   public :: AddL2PCToDatabase, DestroyL2PC, DestroyL2PCDatabase, WriteOneL2PC
   public :: Open_l2pc_file, read_l2pc_file, close_l2pc_file, binSelector_T
   public :: BinSelectors, DestroyBinSelectorDatabase,  AddBinSelectorToDatabase
   public :: OutputHDF5L2PC, ReadCompleteHDF5L2PCFile, PopulateL2PCBin, FlushL2PCBins
+  public :: PopulateL2PCBinByName
   public :: CreateDefaultBinSelectors, DefaultSelector_Latitude, DefaultSelector_FieldAzimuth
 
   ! This is the third attempt to do this.  An l2pc is simply a Matrix_T.
@@ -54,6 +58,17 @@ module L2PC_m
   type(VectorTemplate_T), dimension(:), pointer, save :: L2PCVTS => NULL()
   type(Vector_T), dimension(:), pointer, save :: L2PCVS => NULL()
   type(Matrix_T), dimension(:), pointer, public, save :: L2PCDatabase => NULL()
+
+  ! Now it is possible to adopt L2PC quantity templates, vector
+  ! templates, vectors and matrices into the main 'namespace' as it were.
+  ! These integers keep track of that information
+  type L2PCAdoptionInfo_T
+    integer, dimension(:), pointer :: QUANTITYTEMPLATES
+    integer, dimension(:), pointer :: ROWTEMPLATES
+    integer, dimension(:), pointer :: COLTEMPLATES
+  end type L2PCAdoptionInfo_T
+
+  type(L2PCAdoptionInfo_T), save :: ADOPTIONS
 
   integer :: counterStart
   parameter ( counterStart = huge (0) / 4 )
@@ -104,7 +119,7 @@ contains ! ============= Public Procedures ==========================
     AddBinSelectorToDatabase = newSize
   end function AddBinSelectorToDatabase
 
-  ! ------------------------------------  Add l2pc  to database ----
+  ! ------------------------------------  Add l2pc to database ----
   integer function AddL2PCToDatabase ( Database, Item )
     
     ! This function simply adds an l2pc  to a database of said l2pc s.
@@ -118,6 +133,86 @@ contains ! ============= Public Procedures ==========================
 
     AddL2PCToDatabase = newSize
   end function AddL2PCToDatabase
+
+  ! ---------------------------------- AdoptMatrix ----------
+  subroutine AdoptMatrix ( matrix, name, message )
+    ! This function copies the matrix from the l2pc database into the
+    ! given matrix (presumably from the main dabase)
+
+    ! Dummy arguments
+    type(Matrix_T), intent(inout) :: MATRIX
+    integer, intent(in) :: NAME
+    character (len=*), intent(out) :: MESSAGE
+
+    ! Local variables
+    integer :: I                        ! Index
+    type(Matrix_T), pointer :: SOURCE
+
+    ! Executable code
+    message = ''
+    i = FindFirst ( l2pcDatabase%name == name )
+    if ( i == 0 ) then
+      message = 'No such l2pc matrix'
+      return
+    end if
+    call PopulateL2PCBin ( i )
+    source => l2pcDatabase(i)
+    if ( .not. DoVectorsMatch ( matrix%row%vec, source%row%vec ) ) then
+      message = 'Rows do not match for adoption'
+      return
+    endif
+    if ( .not. DoVectorsMatch ( matrix%col%vec, source%col%vec ) ) then
+      message = 'Columns do not match for adoption'
+      return
+    endif
+    call CopyMatrixValue ( matrix, source, allowNameMismatch=.true. )
+  end subroutine AdoptMatrix
+
+  ! ----------------------------------- AdoptVectorTemplate --
+  type (VectorTemplate_T) function AdoptVectorTemplate ( name, quantityTemplates, source ) &
+    & result ( vectorTemplate )
+    ! This function is used to import a vector template from our private l2pc database
+    ! into the mainstream database.  It also adopts the individual quantities into
+    ! the mainstream quantity template database.  Note that the quantities are shallow
+    ! copied, so be very careful with the chunk loop which will deallocate things in a nasty way.
+    use String_Table, only: Display_STRING
+
+    ! Dummy arguments
+    integer, intent(in) :: NAME         ! Name of MATRIX (not vector tempalte!)
+    type(QuantityTemplate_T), dimension(:), pointer :: QUANTITYTEMPLATES ! Mainstream database
+    type(VectorTemplate_T), dimension(:), pointer :: VECTORTEMPLATES ! Mainstream database
+    integer, intent(in) :: SOURCE       ! L_COLUMNS, L_ROWS
+
+    ! Local variables
+    integer :: I                        ! Array index
+    type(VectorTemplate_T), pointer :: SOURCETEMPLATE ! Sought vector template
+    type(Matrix_T), pointer :: M        ! The matrix
+    integer :: QTY                      ! Loop counter
+
+    ! Executable code
+    call NullifyVectorTemplate ( vectorTemplate )
+
+    i = FindFirst ( l2pcDatabase%name == name )
+    if ( i == 0 ) return
+
+    m => l2pcDatabase(i)
+    if ( source == l_rows ) then
+      sourceTemplate => m%row%vec%template
+    else
+      sourceTemplate => m%col%vec%template
+    end if
+
+    vectorTemplate = sourceTemplate
+    ! We need our own quantities array to point to the mainstream database
+    nullify ( vectorTemplate%quantities )
+    call Allocate_test ( vectorTemplate%quantities, vectorTemplate%noQuantities, &
+      & 'adopted vectorTemplate%quantities', ModuleName )
+    ! Copy each quantity from the l2pc database into the mainstream one
+    do qty = 1, vectorTemplate%noQuantities
+      vectorTemplate%quantities(qty) = AddQuantityTemplateToDatabase ( quantityTemplates, &
+        & l2pcQTs ( sourceTemplate%quantities(qty) ) )
+    end do
+  end function AdoptVectorTemplate
 
   ! -----------------------------------  Close_L2PC_File  -----
   subroutine Close_L2PC_File ( Lun )
@@ -721,6 +816,15 @@ contains ! ============= Public Procedures ==========================
     
   end subroutine MakeMatrixPackMap
 
+  ! --------------------------------------- PopulateL2PCBinByName ---
+  subroutine PopulateL2PCBinByName ( name )
+    integer, intent(in) :: NAME         ! Name index
+    integer :: INDEX
+    ! Executable code
+    index = FindFirst ( l2pcDatabase%name == name )
+    if ( index /= 0 ) call PopulateL2PCBin ( index )
+  end subroutine PopulateL2PCBinByName
+
   ! --------------------------------------- Populate L2PCBin --------
   subroutine PopulateL2PCBin ( bin )
   use HDF5, only: H5GCLOSE_F, H5GOPEN_F
@@ -1110,6 +1214,7 @@ contains ! ============= Public Procedures ==========================
   subroutine ReadOneHDF5L2PCRecord ( l2pc, fileID, l2pcIndex, shallow, info )
   use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
   use MLSHDF5, only: GetHDF5Attribute, LoadFromHDF5DS
+  use Symbol_types, only: T_STRING
     type ( Matrix_T ), intent(out), target :: L2PC
     integer, intent(in) :: FILEID       ! HDF5 ID of input file
     integer, intent(in) :: L2PCINDEX        ! Index of l2pc entry to read
@@ -1165,7 +1270,7 @@ contains ! ============= Public Procedures ==========================
     call GetHDF5Attribute ( blocksID, 'rowInstanceFirst', rowInstanceFirst )
     call GetHDF5Attribute ( blocksID, 'colInstanceFirst', colInstanceFirst )
 
-    stringIndex = GetStringIndexFromString ( matrixName )
+    stringIndex = GetStringIndexFromString ( "'"//trim(matrixName)//"'" )
 
     ! Create the matrix
     call CreateEmptyMatrix ( l2pc, stringIndex, l2pcVs(yStar), l2pcVs(xStar), &
@@ -1236,7 +1341,8 @@ contains ! ============= Public Procedures ==========================
   use HDF5, only: H5GCLOSE_F, H5GOPEN_F, H5GGET_OBJ_INFO_IDX_F
   use MLSHDF5, only: GetHDF5Attribute, IsHDF5AttributePresent, &
     & IsHDF5DSPresent, LoadFromHDF5DS
-    use MLSSignals_m, only: Radiometers, Radiometer_T
+  use MLSSignals_m, only: Radiometers, Radiometer_T
+  use Symbol_types, only: T_IDENTIFIER
     ! Read a vector from an l2pc HDF5 and adds it to internal databases.
     ! Dummy arguments
     integer, intent(in) :: LOCATION     ! Node in HDF5
@@ -1386,7 +1492,7 @@ contains ! ============= Public Procedures ==========================
       ! older l2pc files.
       if ( IsHDF5AttributePresent ( qID, 'frequencyCoordinate' ) ) then
         call GetHDF5Attribute ( qId, 'frequencyCoordinate', word )
-        frequencyCoordinate = GetLitIndexFromString ( word )
+        frequencyCoordinate = GetLitIndexFromString ( trim(word) )
       end if
       call GetHDF5Attribute ( qId, 'logBasis', logBasis )
       call GetHDF5Attribute ( qId, 'coherent', coherent )
@@ -1570,6 +1676,9 @@ contains ! ============= Public Procedures ==========================
 end module L2PC_m
 
 ! $Log$
+! Revision 2.67  2004/01/23 05:37:34  livesey
+! Added the adoption stuff
+!
 ! Revision 2.66  2003/09/15 17:45:03  livesey
 ! Added target declaration for fussy intel compiler
 !
