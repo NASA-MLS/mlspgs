@@ -66,9 +66,9 @@ contains
       & S_BINSELECTOR, S_DIRECTWRITEFILE, S_DUMP, S_EMPIRICALGEOMETRY, S_FGRID, &
       & S_FORWARDMODEL, S_ForwardModelGlobal, S_L1BOA, S_L1BRAD, &
       & S_L2PARSF, S_PFADATA, S_TGRID, S_TIME, S_VGRID
-    use L1BData, only: l1bradSetup, l1boaSetup, ReadL1BData, L1BData_T, &
-      & AssembleL1BQtyName, DeallocateL1BData, Dump, NAME_LEN, &
-      & PRECISIONSUFFIX, ReadL1BAttribute
+    use L1BData, only: L1BData_T, NAME_LEN, PRECISIONSUFFIX, &
+      & AssembleL1BQtyName, DeallocateL1BData, Dump, FindMaxMAF, &
+      & l1bradSetup, l1boaSetup, ReadL1BAttribute, ReadL1BData 
     use L2GPData, only: L2GPDATA_T
     use L2ParInfo, only: parallel
     use L2PC_M, only: AddBinSelectorToDatabase, BinSelectors
@@ -455,6 +455,13 @@ contains
       call utc_to_yyyymmdd(GlobalAttributes%StartUTC, returnStatus, &
         & GlobalAttributes%GranuleYear, GlobalAttributes%GranuleMonth, &
         & GlobalAttributes%GranuleDay) 
+      ! We'll possibly need the first and last MAF counter numbers, especially
+      ! if gaps occur
+      ! For now, just look for them in l1boa
+      ! Later you may look also in l1brad files
+      GlobalAttributes%LastMAFCtr = FindMaxMAF ( (/l1bInfo%L1BOAID/), &
+        & the_hdf_version, &
+        & GlobalAttributes%FirstMAFCtr )
     end if
     if ( details > -4 ) &
       & call dump_global_settings( processingRange, l1bInfo, DirectDatabase, &
@@ -840,6 +847,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.87  2004/08/04 23:19:58  pwagner
+! Much moved from MLSStrings to MLSStringLists
+!
 ! Revision 2.86  2004/07/26 18:22:48  pwagner
 ! Fixed failure to set returnStatus bug in CreateDirectTypeFromMLSCFInfo
 !
