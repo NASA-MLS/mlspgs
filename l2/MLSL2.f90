@@ -121,6 +121,14 @@ program MLSL2
 
   call time_now ( t0 )
 
+! Initialize the lexer, symbol table, and tree checker's tables:
+!  ( Under some circumstances, you may need to increase these )
+  call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=7841 )
+  call allocate_decl ( ndecls=8000 )
+  call allocate_tree ( n_tree=120000 )
+  call init_tables
+
+  !---------------- Task (2) ------------------
 ! Where to send output, how severe an error to quit
    prunit = OUTPUT_PRINT_UNIT
    MLSMSG_Severity_to_quit = MAX(QUIT_ERROR_THRESHOLD, MLSMSG_Debug+1)
@@ -128,20 +136,12 @@ program MLSL2
 ! Clear the command line arguments we're going to accumulate to pass
 ! to slave tasks
    call ClearPVMArgs
-   
-  !---------------- Task (2) ------------------
-! Initialize the lexer, symbol table, and tree checker's tables:
-!  ( Under some circumstances, you may need to increase these )
-  call init_lexer ( n_chars=80000, n_symbols=4000, hash_table_size=7841 )
-  call allocate_decl ( ndecls=1000 )
-  call allocate_tree ( n_tree=120000 )
-  call init_tables
 
   ! We set up a mirror command line for launching slaves
   call getarg ( hp, parallel%executable )
-  i = 1+hp
 
   !---------------- Task (3) ------------------
+  i = 1+hp
   command_line = ' '
   do ! Process the command line options to set toggles
     copyArg = .true.
@@ -320,36 +320,36 @@ program MLSL2
 ! Done with command-line parameters; enforce cascading negative options
 ! (waited til here in case any were (re)set on command line)
 
-   if ( .not. toolkit ) then
-      pcf = .false.
-      prunit = max(-1, prunit)   ! stdout or Fortran unit
-   end if
+  if ( .not. toolkit ) then
+     pcf = .false.
+     prunit = max(-1, prunit)   ! stdout or Fortran unit
+  end if
 
-   if( index(switches, 'log') /= 0 .or. .not. toolkit ) then
-      MLSMessageConfig%LogFileUnit = -1
-   else
-      MLSMessageConfig%LogFileUnit = -2   ! the default in MLSMessageModule
-   end if
+  if( index(switches, 'log') /= 0 .or. .not. toolkit ) then
+     MLSMessageConfig%LogFileUnit = -1
+  else
+     MLSMessageConfig%LogFileUnit = -2   ! the default in MLSMessageModule
+  end if
 
-   UseSDPToolkit = pcf    ! Redundant, but may be needed in lib
+  UseSDPToolkit = pcf    ! Redundant, but may be needed in lib
 
-   if ( .not. pcf ) then
-      pcf_for_input = .false.
-      punish_for_invalid_pcf = .false.
-      createMetadata = .false.
-      penalty_for_no_metadata = 0
-   end if
+  if ( .not. pcf ) then
+     pcf_for_input = .false.
+     punish_for_invalid_pcf = .false.
+     createMetadata = .false.
+     penalty_for_no_metadata = 0
+  end if
 
   if( index(switches, 'opt') /= 0 ) then
     call dump_settings
-  endif
+  end if
 
   ! Setup the parallel stuff.  Register our presence with the master if we're a
   ! slave.
   if ( parallel%slave ) call InitParallel ( singleChunk )
-! Parse the L2CF, producing an abstract syntax tree
 
   !---------------- Task (4) ------------------
+  ! Open the L2CF
   status = 0
   L2CF_file = '<STDIN>'
   if ( line /= ' ' ) then
@@ -382,6 +382,7 @@ program MLSL2
 
   !---------------- Task (5) ------------------
   if (error == 0) then
+    ! Parse the L2CF, producing an abstract syntax tree
     call configuration ( root )
   else
     root = -1
@@ -398,7 +399,7 @@ program MLSL2
     call output ( &
       'An io error occurred with the l2cf -- there is no abstract syntax tree', &
       advance='yes' )
-  elseif ( root <= 0 ) then
+  else if ( root <= 0 ) then
     call output ( &
       'A syntax error occurred -- there is no abstract syntax tree', &
       advance='yes' )
@@ -416,10 +417,6 @@ program MLSL2
     ! types for fields of commands, correct command order, etc.
     call time_now ( t1 )
     call check_tree ( root, error, first_section )
-    if(error /= 0) then
-       call MLSMessage(MLSMSG_Error, ModuleName, &
-       & 'error in check_tree: probably need to repair l2cf ' )
-    end if
     if ( timing ) call sayTime ( 'Type checking the L2CF' )
     if ( do_dump ) call dump_decl
     if ( toggle(syn) ) then
@@ -429,6 +426,11 @@ program MLSL2
     end if
 
     call add_to_section_timing( 'main', t0 )
+
+    if(error /= 0) then
+       call MLSMessage(MLSMSG_Error, ModuleName, &
+       & 'error in check_tree: probably need to repair l2cf ' )
+    end if
 
   !---------------- Task (7) ------------------
     if ( error == 0 .and. first_section /= 0 .and. .not. checkl2cf ) then
@@ -579,6 +581,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.76  2002/07/18 21:59:28  vsnyder
+! Cosmetic changes, move some stuff around so PRUNIT is stdout in init_tables
+!
 ! Revision 2.75  2002/05/28 22:34:59  livesey
 ! Increased tree size
 !
