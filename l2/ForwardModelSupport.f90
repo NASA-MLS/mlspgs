@@ -219,6 +219,12 @@ contains ! =====     Public Procedures     =============================
     integer :: WANTEDUNIT               ! Units wanted for cost
 
     ! Exeuctable code
+    ! Set up appropriate initial values
+    binSelector%molecule = 0
+    binSelector%nameFragment = 0
+    binSelector%heightRange = 0.0
+    binSelector%cost = 0.0
+
     do i = 2, nsons(root)               ! Skip binSelector command
       son = subtree ( i, root )
       field = get_field_id ( son )
@@ -381,8 +387,6 @@ contains ! =====     Public Procedures     =============================
     info%num_size_bins = 40
     info%phiwindow = 5
     info%polarized = .false.
-    info%sideBandStart = -1
-    info%sideBandStop = 1
     info%skipOverlaps = .false.
     info%spect_der = .false.
     info%switchingMirror= .false.
@@ -558,19 +562,17 @@ contains ! =====     Public Procedures     =============================
         & f_tangentGrid /) )) ) call AnnounceError ( IncompleteFullFwm, root )
 
       ! Now identify the Earth's surface in the tangent grid
-      call Hunt ( info%tangentGrid%surfs, info%integrationGrid%surfs(1), &
+      call Hunt ( info%tangentGrid%surfs(:,1), info%integrationGrid%surfs(1,1), &
         &  info%surfaceTangentIndex )
 
       ! Ensure that points in tangentGrid at and above the surface are a subset
       ! of integration grid
       do tangent = info%surfaceTangentIndex, info%tangentGrid%noSurfs
-        if ( .not. any ( abs( info%tangentGrid%surfs(tangent) - &
-          & info%integrationGrid%surfs ) < 1e-4 ) ) &
+        if ( .not. any ( abs( info%tangentGrid%surfs(tangent,1) - &
+          & info%integrationGrid%surfs(:,1) ) < 1e-4 ) ) &
           & call AnnounceError ( TangentNotSubset, root )
       end do
 
-      ! Make sure signal specifications make sense; get sideband Start/Stop
-      call validateSignals
     case ( l_cloudfull )
 
       ! full cloud forward model
@@ -623,48 +625,6 @@ contains ! =====     Public Procedures     =============================
         moleculeSign = -1 ! Indicate "Part of a tree of molecules"
       end if
     end subroutine FillElements
-
-    subroutine ValidateSignals
-      use MLSSignals_m, only: Signal_t
-      type (Signal_T), pointer :: FirstSignal
-
-      firstSignal => info%signals(1)
-
-      ! Make sure all the signals we're dealing with are same module,
-      ! radiometer and sideband.
-      if ( any( info%signals%sideband /= firstSignal%sideband ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        &  "Can't have mixed sidebands in forward model config" )
-      if ( any( info%signals%radiometer /= firstSignal%radiometer ) ) &
-        & call MLSMessage ( MLSMSG_Error, ModuleName, &
-        &  "Can't have mixed radiometers in forward model config" )
-
-      ! Think about sidebands
-      if ( ( firstSignal%sideband == 0 ) .and.&
-        &  ( firstSignal%singleSideband == 0 ) ) then
-        ! Do a folded measurement
-        info%sidebandStart = -1
-        info%sidebandStop = 1
-      else
-        ! It's either a single sideband radiometer, or the user requested a
-        ! specific sideband.
-        ! Check sanity, if they are both non zero they should be the same.
-        if ( ( firstSignal%singleSideband /= 0 ) .and. &
-          &  ( firstSignal%sideband /= 0 ) .and. &
-          &  ( firstSignal%singleSideband /= &
-          &    firstSignal%sideband ) ) call MLSMessage ( &
-          &      MLSMSG_Error, ModuleName, &
-          &      "User requested a sideband that doesn't exist" )
-        ! OK, use whichever one is given
-        if ( firstSignal%singleSideband /= 0 ) then
-          info%sidebandStart = firstSignal%singleSideband
-        else
-          info%sidebandStart = firstSignal%sideband
-        end if
-        info%sidebandStop = info%sidebandStart
-      end if
-    end subroutine ValidateSignals
-
   end function ConstructForwardModelConfig
 
   ! =====     Private Procedures     =====================================
@@ -742,10 +702,8 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
-! Revision 2.63  2003/06/18 01:57:12  vsnyder
-! Move checking that all signals in a config are for the same radiometer,
-! module and sideband here from FullForwardModel.  Move computation for
-! SidebandStart and SidebandStop here from FullForwardModel.
+! Revision 2.64  2003/06/20 19:37:06  pwagner
+! Quanities now share grids stored separately in databses
 !
 ! Revision 2.62  2003/06/09 22:50:13  pwagner
 ! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
