@@ -14,7 +14,6 @@ module MatrixTools                      ! Various tools for matrices
     & M_ABSENT, M_BANDED, M_COLUMN_SPARSE, M_FULL
   use MLSCommon, only: R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use Init_Tables_Module, only: FIELD_FIRST, FIELD_LAST
   use Init_Tables_Module, only: F_COLCHANNELS, F_COLQUANTITY, F_COLSURFACES, &
     & F_MATRIX, F_ROWCHANNELS, F_ROWQUANTITY, F_ROWSURFACES, F_ROWINSTANCES, &
     & F_COLINSTANCES
@@ -53,7 +52,6 @@ contains ! ================ Public procedures ================================
     integer :: CC                       ! Loop counter
     integer :: COL                      ! Matrix block column
     integer :: COLCHANNELSNODE          ! Tree node
-    integer :: COLINDEX                 ! Index into column vector
     integer :: COLINSTANCE              ! Loop counter
     integer :: COLINSTANCESNODE         ! Tree node
     integer :: COLQI                    ! Index of column quantity within vector
@@ -73,7 +71,6 @@ contains ! ================ Public procedures ================================
     integer :: RC                       ! Loop counter
     integer :: ROW                      ! Matrix block row
     integer :: ROWCHANNELSNODE          ! Tree node
-    integer :: ROWINDEX                 ! Index into row vector
     integer :: ROWINSTANCE              ! Loop counter
     integer :: ROWINSTANCESNODE         ! Tree node
     integer :: ROWQI                    ! Index of row quantity within vector
@@ -98,8 +95,6 @@ contains ! ================ Public procedures ================================
     logical, dimension(:), pointer :: COLSURFACES ! Do we want this surface?
     logical, dimension(:), pointer :: ROWINSTANCES ! Do we want this surface?
     logical, dimension(:), pointer :: COLINSTANCES ! Do we want this surface?
-
-    logical, dimension(field_first:field_last) :: got
 
     real(r8), dimension(:,:), pointer :: VAL ! The values from the block
     real(r8), dimension(:,:), pointer :: TODUMP ! The 2D matrix to dump
@@ -128,12 +123,10 @@ contains ! ================ Public procedures ================================
     colInstancesNode = 0
 
     ! First go through the parsed information.
-    got = .false.
     do node = 2, nsons(key)                ! Skip the DumpBlock son
       son = subtree(node,key)              ! This argument
       fieldIndex = get_field_id(son)    ! ID for this field
       if (nsons(son) > 1 ) gson = subtree(2,son)
-      got(fieldIndex) = .true.
       select case ( fieldIndex )
       case ( f_matrix )
         matrixIndex = decoration(decoration(gson))
