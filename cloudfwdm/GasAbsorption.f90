@@ -85,12 +85,15 @@ contains
          P=PB-VP                       ! PRESSURE, P IS DRY-AIR PRESSURE
 
       ELSE IF (RH .GE. 1._r8) THEN   ! RH HERE IS RELATIVE HUMIDITY 
-
-         CALL RHtoEV(T,RH,VP)    
-         P = PB-VP
-         VMR_H2O = VP/(max(1.e-9_r8, P))
-!         VMR_H2O = RHIFromH2O_Factor (T, -log(PB), 6, .true.)*100._r8
-         ! optional 6 will return mixing ratio in units of ppmv
+!         CALL RHtoEV(T,RH,VP)    
+!         P = PB-VP
+!         VMR_H2O = VP/(max(1.e-9_r8, P))
+         VMR_H2O = RHIFromH2O_Factor (T, -log10(PB), 0, .true.)*RH
+         !                                           *
+         ! * optional 0 will return mixing ratio in parts per 1
+         ! * optional 6 will return mixing ratio in units of ppmv
+         VP=PB*VMR_H2O
+         P =PB-VP              !approximate dry air pressure
       END IF
 
          VMR_H2O = max(1.e-9_r8, vmr_h2o)
@@ -361,6 +364,9 @@ contains
 end module GasAbsorption
 
 ! $Log$
+! Revision 1.18  2003/02/03 20:28:45  dwu
+! make wet continuum dependent on radiometer frequency
+!
 ! Revision 1.17  2003/02/01 06:43:16  dwu
 ! some fixes
 !
