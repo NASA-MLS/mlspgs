@@ -26,10 +26,10 @@ contains ! ====     Public Procedures     ==============================
     integer :: I              ! Loop inductor
     if ( present(root) ) then
       call output ( root, 4 ); call output ( ': ' )
-      do i = 1, depth
-        call output ( '.' )
-      end do
     end if
+    do i = 1, depth
+      call output ( '.' )
+    end do
     call output ( 'Enter ' ); call output ( name );
     if ( present(root) ) then
       call output ( ' with ' );
@@ -56,6 +56,9 @@ contains ! ====     Public Procedures     ==============================
 end module TRACE_M
 
 ! $Log$
+! Revision 2.3  2001/04/17 20:56:10  vsnyder
+! Emit 'depth' dots in trace_begin even if 'root' is absent
+!
 ! Revision 2.2  2001/03/16 21:01:17  vsnyder
 ! Make ROOT optional in Trace_Begin
 !
