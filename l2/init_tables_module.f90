@@ -100,11 +100,14 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_INTEGRATIONTIME     = f_integrationGrid + 1
   integer, parameter :: F_INTERPOLATIONFACTOR = f_integrationTime + 1
   integer, parameter :: F_JACOBIAN            = f_interpolationFactor + 1
-  integer, parameter :: F_LENGTH              = f_jacobian + 1
+  integer, parameter :: F_LAMBDA              = f_jacobian + 1
+  integer, parameter :: F_LENGTH              = f_lambda + 1
   integer, parameter :: F_LOGBASIS            = f_length + 1
   integer, parameter :: F_L2PC                = f_logBasis + 1
-  integer, parameter :: F_MAXITERATIONS       = f_l2pc + 1
-  integer, parameter :: F_MATRIX              = f_maxIterations + 1
+  integer, parameter :: F_MAXF                = f_l2pc + 1
+  integer, parameter :: F_MAXITERATIONS       = f_maxf + 1
+  integer, parameter :: F_MAXJ                = f_maxIterations + 1
+  integer, parameter :: F_MATRIX              = f_maxJ + 1
   integer, parameter :: F_MEASUREMENTS        = f_matrix + 1
   integer, parameter :: F_METHOD              = f_measurements + 1
   integer, parameter :: F_MIF                 = f_method + 1
@@ -436,12 +439,15 @@ contains ! =====     Public procedures     =============================
     field_indices(f_integrationTime) =     add_ident ( 'integrationTime' )
     field_indices(f_interpolationFactor) = add_ident ( 'interpolationFactor' )
     field_indices(f_jacobian) =            add_ident ( 'jacobian' )
+    field_indices(f_lambda) =              add_ident ( 'lambda' )
     field_indices(f_length) =              add_ident ( 'length' )
     field_indices(f_lines) =               add_ident ( 'lines' )
     field_indices(f_logBasis) =            add_ident ( 'logBasis' )
     field_indices(f_L2PC) =                add_ident ( 'l2pc' )
     field_indices(f_matrix) =              add_ident ( 'matrix' )
+    field_indices(f_maxF) =                add_ident ( 'maxF' )
     field_indices(f_maxIterations) =       add_ident ( 'maxIterations' )
+    field_indices(f_maxJ) =                add_ident ( 'maxJ' )
     field_indices(f_measurements) =        add_ident ( 'measurements' )
     field_indices(f_method) =              add_ident ( 'method' )
     field_indices(f_mif) =                 add_ident ( 'mif' )
@@ -854,7 +860,9 @@ contains ! =====     Public procedures     =============================
              begin, f+f_fwdModelExtra, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
-             begin, f+f_maxIterations, t+t_numeric, n+n_field_type, &
+             begin, f+f_lambda, t+t_numeric, n+n_field_type, &
+             begin, f+f_maxF, t+t_numeric, n+n_field_type, &
+             begin, f+f_maxJ, t+t_numeric, n+n_field_type, &
              begin, f+f_measurements, s+s_vector, nr+n_field_spec, &
              begin, f+f_method, t+t_method, n+n_field_type, &
              begin, f+f_outputCovariance, s+s_matrix, n+n_field_spec, &
@@ -951,6 +959,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.105  2001/05/18 01:02:03  vsnyder
+! Add Lambda, maxF, maxJ fields to Retrieve, deleted maxIterations
+!
 ! Revision 2.104  2001/05/16 19:44:05  livesey
 ! Added estimatedNoise stuff
 !
