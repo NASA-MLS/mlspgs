@@ -55,7 +55,7 @@ contains ! =====     Public Procedures     =============================
     use INIT_TABLES_MODULE, only: F_COORDINATE, F_FORMULA, F_NUMBER, &
       & F_RESOLUTION, F_SOURCEL2GP, F_START, F_STEP, F_STOP, F_TYPE, &
       & F_VALUES, FIELD_FIRST, FIELD_LAST, &
-      & L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_L2GP, &
+      & L_ANGLE, L_EXPLICIT, L_GEODALTITUDE, L_GPH, L_INTEGER, L_L2GP, &
       & L_LINEAR, L_LOGARITHMIC, L_NONE, L_PRESSURE, L_THETA, L_ZETA, &
       & PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Length, PHYQ_Pressure, &
       & PHYQ_Temperature, S_VGRID
@@ -109,7 +109,7 @@ contains ! =====     Public Procedures     =============================
     vGrid%name = name
     vGrid%noSurfs = 0
     vGrid%verticalCoordinate = L_None
-
+    prev_units = PHYQ_Dimensionless
     do i = 2, nsons(root)
       son = subtree(i,root)
       field = subtree(1,son)
@@ -249,6 +249,9 @@ contains ! =====     Public Procedures     =============================
           & call announce_error ( coordIndex, wrongUnits, f_type, phyq_temperature )
       case (l_angle)
         if ( prev_units /= PHYQ_Angle) &
+          & call announce_error ( coordIndex, wrongUnits, f_type, phyq_angle )
+      case (l_integer)
+        if ( prev_units /= PHYQ_Dimensionless) &
           & call announce_error ( coordIndex, wrongUnits, f_type, phyq_angle )
       end select
 
@@ -474,6 +477,9 @@ end module vGrid
 
 !
 ! $Log$
+! Revision 2.22  2004/06/17 23:05:15  pwagner
+! integer now a possible coord type for a VGrid
+!
 ! Revision 2.21  2004/06/12 00:41:13  vsnyder
 ! Handle formula field in tGrid
 !
