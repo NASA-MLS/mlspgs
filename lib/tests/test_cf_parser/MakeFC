@@ -22,10 +22,19 @@ CONFDIR=../../..
 # where configure and makemakedep.sh are stored
 MLSBIN=../../../util
 
+# where sources for libmls.a are stored
+libmls_sources=../../../lib
+
+# where sources (but not OBJS) shared with l3, etc. are stored
+srclib=../../../srclib
+
+# where init_tables_module stored
+itmlib=../../../l2
+
 # where the platforms directory is
 PLATFORMS = .
 
-# This will set our MLS platfor, compiler. etc.
+# This will set our MLS platform, compiler. etc.
 # w/o complaining if it does not exist yet
 -include $(CONFDIR)/.configure
 
@@ -44,26 +53,19 @@ output: $(CONFDIR)/.configure $(PLATFORMS)/$(MLSCONFG)
 .PHONY: configure depends clean
 
 configure:
-#	echo "Target: configure"
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
 
 $(CONFDIR)/.configure:
-#$(CONFDIR)/.configure: $(MakeFName)
-#	echo "Target: $(CONFDIR)/.configure"
-#	echo "Target because of $?"
-#	ls -tl $(CONFDIR)/.configure $?
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)"
 
 $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
-#	echo "Target: $(PLATFORMS)/$(MLSCONFG)"
-#	echo "Target because of $?"
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
           -c "$(MLSF95)" -p "$(MLSPLAT)" -nc
 
 depends:
-	$(MLSBIN)/makemakedep.sh
+	$(MLSBIN)/makemakedep.sh $(libmls_sources) $(srclib) $(itmlib)
 
 clean:
 	@echo "Cleaning directory $(MLSCONFG)" ; \
@@ -79,6 +81,9 @@ clean:
 		rmdir $(PLATFORMS)/$(MLSCONFG) ; \
 	fi
 # $Log$
+# Revision 1.1  2000/10/20 23:35:50  pwagner
+# first commit
+#
 # Revision 2.1  2000/10/18 21:58:16  pwagner
 # First commit
 #
