@@ -9,8 +9,8 @@ module RAD_TRAN_M
   implicit NONE
   private
   public :: RAD_TRAN, RAD_TRAN_POL, DRAD_TRAN_DF, DRAD_TRAN_DT, DRAD_TRAN_DX
-  public :: Get_Del_Zeta_All, Get_Do_Calc
-  private ::  Get_Do_Calc_Indexed
+  public :: Get_Do_Calc
+  private ::  Get_Do_Calc_Indexed, Get_Inds
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -25,19 +25,22 @@ contains
 !------------------------------------------------------  Rad_tran  -----
 ! This is the radiative transfer model, radiances only !
 
-  subroutine Rad_tran ( gl_inds, e_rflty, z_path_c, &
+  subroutine Rad_tran ( gl_inds, e_rflty, del_zeta, &
                      &  alpha_path_c, ref_cor, do_gl, incoptdepth, &
                      &  alpha_path_gl, ds_dh, dh_dz, t_script, tau, &
                      &  rad, i_stop )
 
     use GLNP, only: NG, GW
     use SCRT_DN_M, ONLY: SCRT_DN
+    use Where_M, only: Where
 
   ! inputs
 
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
-    real(rp), intent(in) :: z_path_c(:)      ! path -log(P) on coarse grid.
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
     real(rp), intent(in) :: alpha_path_c(:)  ! absorption coefficient on coarse
   !                                            grid.
     real(rp), intent(in) :: ref_cor(:)       ! refracted to unrefracted path
@@ -61,7 +64,6 @@ contains
 
   ! Internals
 
-    real(rp) :: del_zeta(size(gl_inds)/ng)
     integer :: A, AA, I
     integer(ip) ::  more_inds(size(gl_inds)/ng) ! Places in the coarse path
   !                                            where GL is needed
@@ -72,7 +74,7 @@ contains
 
     if ( size(gl_inds) > 0 ) then
 
-      call where_GL ( do_gl, z_path_c, more_inds, del_zeta )
+      call where ( do_gl, more_inds )
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
       !  {\tt more\_inds}.  We remove a singularity (which actually only
@@ -93,7 +95,7 @@ contains
       do i = 1, size(more_inds)
         aa = gl_inds(a)
         incoptdepth(more_inds(i)) = incoptdepth(more_inds(i)) + &
-          & 0.5_rp * del_zeta(i) * &
+          & 0.5_rp * del_zeta(more_inds(i)) * &
           & sum( (alpha_path_gl(a:a+ng-1) -  alpha_path_c(more_inds(i))) * &            
                & ds_dh(aa:aa+ng-1) * dh_dz(aa:aa+ng-1) * gw ) 
         a = a + ng
@@ -109,7 +111,7 @@ contains
 
 !--------------------------------------------------  Rad_Tran_Pol  -----
 
-  subroutine Rad_tran_Pol ( gl_inds, e_rflty, z_path_c, alpha_path_c, ref_cor, &
+  subroutine Rad_tran_Pol ( gl_inds, e_rflty, del_zeta, alpha_path_c, ref_cor, &
                      &  do_gl, incoptdepth_pol, deltau_pol, alpha_path_gl, &
                      &  ds_dh, dh_dz, ct, stcp, stsp, t_script, &
                      &  prod_pol, tau_pol, rad_pol, p_stop )
@@ -120,12 +122,15 @@ contains
     use DO_DELTA_M, ONLY: POLARIZED_PATH_OPACITY
     use MCRT_M, ONLY: MCRT
     use Opacity_m, only: Opacity
+    use Where_M, only: Where
 
   ! inputs
 
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indices
     real(rp), intent(in) :: e_rflty          ! earth reflectivity value (0--1).
-    real(rp), intent(in) :: z_path_c(:)      ! path -log(P) on coarse grid.
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
     complex(rp), intent(in) :: alpha_path_c(-1:,:)  ! absorption coefficient
   !                                            on coarse grid.
     complex(rp), intent(inout) :: deltau_pol(:,:,:) ! 2 X 2 X path.  Incremental
@@ -160,14 +165,15 @@ contains
 
   ! Internals
 
-    real(rp) :: del_zeta(size(gl_inds)/ng)
     real(rp), save :: E_Stop  = 1.0_rp ! X for which Exp(X) is too small to worry
     complex(rp) :: gl_delta_polarized(-1:1,size(gl_inds)/ng)
     complex(rp) :: incoptdepth_pol_gl(2,2,size(gl_inds)/ng)
-    integer(ip) ::  more_inds(size(gl_inds)/ng)
+    integer(ip) ::  more_inds(size(gl_inds)/ng), N_PATH
     integer :: Status ! from cs_expmat
 
   ! Begin code
+
+    n_path = size(del_zeta)
 
     if ( e_stop > 0.0_rp ) e_stop = log(epsilon(0.0_rp)) ! only once
 
@@ -175,7 +181,7 @@ contains
 
     if ( size(gl_inds) > 0 ) then
 
-      call where_GL ( do_gl, z_path_c, more_inds, del_zeta )
+      call where ( do_gl, more_inds )
 
       call polarized_path_opacity ( del_zeta,    &
                  &  alpha_path_c, alpha_path_gl, &
@@ -193,7 +199,7 @@ contains
 
     end if
 
-    do p_stop = 1, size(z_path_c)
+    do p_stop = 1, n_path
       incoptdepth_pol(:,:,p_stop) = incoptdepth_pol(:,:,p_stop) * ref_cor(p_stop)
     end do
 
@@ -201,7 +207,7 @@ contains
     ! identical to incoptdepth_pol(:,:,1:npc/2+1) (npc/2 is the
     ! zero-thickness tangent layer).
 
-    do p_stop = 0, size(z_path_c)-1
+    do p_stop = 0, n_path-1
       ! exp(A) = exp(s) * ((sinh d)/d (A - s I) + cosh d I) where
       ! s is the sum of A's eigenvalues, and d is their difference.
       ! The sum of A's eigenvalues is Tr(A).  So when the trace
@@ -227,7 +233,7 @@ contains
 !--------------------------------------------------  drad_tran_df  -----
 ! This is the radiative transfer derivative wrt mixing ratio model
 
-  subroutine DRad_tran_df ( indices_c, gl_inds, z_path_c, Grids_f, &
+  subroutine DRad_tran_df ( indices_c, gl_inds, del_zeta, Grids_f, &
                          &  beta_path_c, eta_zxp_f, sps_path, do_calc_f, &
                          &  beta_path_f, do_gl, del_s, ref_cor, ds_dh, &
                          &  dh_dz, t_script, tau, &
@@ -242,7 +248,9 @@ contains
 
     integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
     integer(ip), intent(in) :: gl_inds(:)    ! Gauss-Legendre grid indicies
-    real(rp), intent(in) :: z_path_c(:)      ! -log(P) on main grid.
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
     type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
     real(rp), intent(in) :: beta_path_c(:,:) ! cross section for each species
 !                                              on coarse grid.
@@ -287,8 +295,6 @@ contains
                                          ! Indices on the coarse path where GL
                                          ! corrections get applied.
 
-    real(rp), target, dimension(1:size(tau)) :: del_zeta_B
-    real(rp), pointer :: del_zeta(:)     ! del_zeta => part_of_del_zeta_B
     real(rp) :: singularity(1:size(tau)) ! integrand on left edge of coarse
                                          ! grid panel -- singular at tangent pt.
     logical :: do_calc(1:size(tau))      ! Flags on coarse path where do_calc_c
@@ -330,11 +336,9 @@ contains
 ! see if anything needs to be gl-d
 
             all_inds => all_inds_B(1:ng*no_to_gl)
-            del_zeta => del_zeta_B(1:no_to_gl)
             more_inds => more_inds_B(1:no_to_gl)
 
-            call get_del_zeta_all ( do_gl, do_calc, z_path_c, &
-              &                     more_inds, all_inds, del_zeta )
+            call get_inds ( do_gl, do_calc, more_inds, all_inds )
           end if
 
           if ( grids_f%lin_log(sps_i) ) then
@@ -435,7 +439,7 @@ contains
 ! This is the radiative transfer derivative wrt spectroscopy model
 !  (Here dx could be: dw, dn or dv (dNu0) )
 
-  subroutine DRad_tran_dx ( z_path_c, Grids_f, dbeta_path_c, eta_zxp_f_c, &
+  subroutine DRad_tran_dx ( del_zeta, Grids_f, dbeta_path_c, eta_zxp_f_c, &
                          &  sps_path_c, do_calc_f_c, dbeta_path_f, eta_zxp_f_f, &
                          &  sps_path_f, do_calc_f_f, do_gl, del_s, ref_cor,     &
                          &  ds_dh_gl, dh_dz_gl, t_script, tau, i_stop, drad_dx )
@@ -447,7 +451,9 @@ contains
 
 ! Inputs
 
-    real(rp), intent(in) :: z_path_c(:)      ! -log(P) on main grid.
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
     type (Grids_T) :: Grids_f                ! All the coordinates
     real(rp), intent(in) :: dbeta_path_c(:,:) ! derivative of beta wrt dx
 !                                              on main grid.
@@ -498,8 +504,6 @@ contains
                                          ! corrections get applied.
 
     real(rp) :: d_delta_dx(1:size(tau))
-    real(rp), target, dimension(1:size(tau)) :: del_zeta_B
-    real(rp), pointer :: del_zeta(:)     ! del_zeta => part_of_del_zeta_B
     real(rp) :: singularity(1:size(tau)) ! integrand on left edge of coarse
                                          ! grid panel -- singular at tangent pt.
 
@@ -547,10 +551,8 @@ contains
 
             all_inds => all_inds_B(1:Ng*no_to_gl)
             more_inds => more_inds_B(1:no_to_gl)
-            del_zeta => del_zeta_B(1:no_to_gl)
 
-            call Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
-              &                     More_Inds, All_Inds, Del_Zeta )
+            call get_inds ( do_gl, do_calc, more_inds, all_inds )
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
       !  {\tt more\_inds}.  We remove a singularity (which actually only
@@ -598,10 +600,12 @@ contains
 
   end subroutine DRad_tran_dx
 
+!{\newpage
+
 !--------------------------------------------------  drad_tran_dt  -----
 ! This is the radiative transfer derivative wrt temperature model
 
-  subroutine DRad_tran_dt ( z_path_c, h_path_c, t_path_c, dh_dt_path_c, &
+  subroutine DRad_tran_dt ( del_zeta, h_path_c, t_path_c, dh_dt_path_c, &
                          &  alpha_path_c, alphaxn_path_c, eta_zxp_c, do_calc_t_c, &
                          &  do_calc_hyd_c, del_s, ref_cor, h_tan, dh_dt_tan, &
                          &  do_gl, h_path_f, t_path_f, dh_dt_path_f, &
@@ -616,7 +620,9 @@ contains
 
 ! Inputs
 
-    real(rp), intent(in) :: z_path_c(:)     ! path -log(P) on main grid.
+    real(rp), intent(in) :: del_zeta(:)     ! path -log(P) differences on the
+      !              main grid.  This is for the whole coarse path, not just
+      !              the part up to the black-out
     real(rp), intent(in) :: h_path_c(:)     ! path heights + req on main grid km.
     real(rp), intent(in) :: t_path_c(:)     ! path temperature(K) on main grid.
     real(rp), intent(in) :: dh_dt_path_c(:,:) ! derivative of path height wrt
@@ -684,8 +690,7 @@ contains
                                          ! Indices on the coarse path where GL
                                          ! corrections get applied.
 
-    real(rp), pointer :: del_zeta(:)     ! del_zeta => part_of_del_zeta_B
-    real(rp), target, dimension(1:size(tau)) :: del_zeta_B, gl_delta_B
+    real(rp), target, dimension(1:size(tau)) :: gl_delta_B
     real(rp) :: fa, fb
     real(rp), pointer :: gl_delta(:)     ! gl_delta => part_of_gl_delta_B
     real(rp) :: S_DEl_S                  ! Running sum of Del_S
@@ -738,11 +743,9 @@ contains
         if ( no_to_gl > 0 ) then
 
           all_inds => all_inds_B(1:ng*no_to_gl)
-          del_zeta => del_zeta_B(1:no_to_gl)
           more_inds => more_inds_B(1:no_to_gl)
 
-          call Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
-            &                     More_Inds, All_Inds, Del_Zeta )
+          call Get_Inds ( Do_GL, Do_Calc, More_Inds, All_Inds )
 
       !{ Apply Gauss-Legendre quadrature to the panels indicated by
       !  {\tt more\_inds}.  We remove a singularity (which actually only
@@ -764,7 +767,7 @@ contains
           do i = 1, no_to_gl
             aa = all_inds(a)
             d_delta_dt(more_inds(i),sv_i) = d_delta_dt(more_inds(i),sv_i) + &
-              & 0.5_rp * del_zeta(i) * &
+              & 0.5_rp * del_zeta(more_inds(i)) * &
               & sum( (alphaxn_path_f(aa:aa+ng-1) * &
                    &  eta_zxp_f(aa:aa+ng-1,sv_i) / &
                    &  t_path_f(aa:aa+ng-1) - &
@@ -866,11 +869,9 @@ contains
 
           all_inds => all_inds_B(1:ng*no_to_gl)
           gl_delta => gl_delta_B(1:no_to_gl)
-          del_zeta => del_zeta_B(1:no_to_gl)
           more_inds => more_inds_B(1:no_to_gl)
 
-          call Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
-            &                     More_Inds, All_Inds, Del_Zeta )
+          call Get_Inds ( Do_GL, Do_Calc, More_Inds, All_Inds )
 
 ! add special hydrostatic gl routine here
 ! the singularity point is alpha_path_c(more_inds)
@@ -901,54 +902,6 @@ contains
     end do ! sv_i
 
   end subroutine DRad_tran_dt
-
-! =====     Would be private if Get_D_Deltau_Pol_d* were here     ======
-
-  ! -------------------------------------------  Get_Del_Zeta_All  -----
-  subroutine Get_Del_Zeta_All ( Do_GL, Do_Calc, Z_path_c, &
-    &                           More_Inds, All_Inds, Del_Zeta )
-
-    use GLNP, ONLY: Ng
-    use MLSCommon, only: RP
-
-    implicit NONE
-
-  ! Inputs
-    logical, intent(in) :: Do_GL(:)          ! path flag indicating where to do
-      !                                        gl integrations.
-    logical, intent(in) :: Do_Calc(:)
-    real(rp), intent(in) :: Z_path_c(:)      ! path -log(P) on coarse grid.
-
-  ! Outputs
-    integer, intent(out) :: More_Inds(:)
-    integer, intent(out) :: All_Inds(:)
-    real(rp), intent(out) :: Del_Zeta(:)
-
-    integer :: I, J, K, L, M, N_Path, P_I, P2
-
-    i = 1
-    j = 1
-    l = 1
-    n_path = size(do_gl)
-    p_i = 2
-    p2 = n_path / 2
-    do m = -1, 1, 2
-      do p_i = p_i , p2
-        if ( do_gl(p_i) ) then
-          if ( do_calc(p_i) ) then
-            more_inds(i) = p_i
-            all_inds(j:j+ng-1) = (/ (l + k, k = 0, ng-1 ) /)
-            del_zeta(i) = z_path_c(p_i+m) - z_path_c(p_i)
-            i = i + 1
-            j = j + Ng
-          end if
-          l = l + Ng
-        end if
-      end do
-      p2 = n_path - 1
-    end do
-
-  end subroutine Get_Del_Zeta_All
 
   ! ------------------------------------------------  Get_Do_Calc  -----
   subroutine Get_Do_Calc ( Do_Calc_c, Do_Calc_f, Do_GL, Do_Calc )
@@ -1005,43 +958,45 @@ contains
 
   end subroutine Get_Do_Calc_Indexed
 
-! -----------------------------------------------------  Where_GL  -----
+  ! ---------------------------------------------------  Get_Inds  -----
+  subroutine Get_Inds ( Do_GL, Do_Calc, More_Inds, All_Inds )
 
-  subroutine Where_GL ( DO_GL, Z_Path_c, More_Inds, Del_Zeta )
+    ! More_Inds are the places in the coarse path where both Do_Calc and Do_GL.
+    ! All_Inds are the corresponding places in the GL-extracted fine path.
 
-  ! Compute the indices More_Inds where more GL is needed and the
-  ! corresponding Del_Z's.  If this is called when the caller's GL_Inds
-  ! has zero size, you'll do a lot of work for nothing.
+    use GLNP, ONLY: Ng
+    use MLSCommon, only: RP
 
-    use MLSCommon, only: RP, IP
+    implicit NONE
 
-    logical, intent(in) :: Do_gl(:)          ! path flag indicating where to do
-  !                                            GL integrations.
-    real(rp), intent(in) :: Z_path_c(:)      ! path -log(P) on coarse grid.
+  ! Inputs
+    logical, intent(in) :: Do_GL(:)          ! path flag indicating where to do
+      !                                        gl integrations.
+    logical, intent(in) :: Do_Calc(:)
 
-    integer(ip), intent(out) :: More_Inds(:) ! Where on coarse path is GL needed?
-    real(rp), intent(out) :: Del_Zeta(:)     ! Differences of Z_Path_C
+  ! Outputs
+    integer, intent(out) :: More_Inds(:)
+    integer, intent(out) :: All_Inds(:)
 
-    integer(ip) :: i, m, n_path, p_i, p2
+    integer :: I, J, K, L, P_I
 
-  ! See if anything needs to be gl-d.  Compute del_zeta.
-
-    n_path = size(z_path_c)
-    p_i = 1
-    p2 = n_path / 2
     i = 1
-    do m = -1, 1, 2
-      do p_i = p_i, p2
-        if ( do_gl(p_i) ) then
+    j = 1
+    l = 1
+    do p_i = 2 , size(do_gl)-1
+      if ( do_gl(p_i) ) then
+        if ( do_calc(p_i) ) then
           more_inds(i) = p_i
-          del_zeta(i) = z_path_c(p_i+m) - z_path_c(p_i)
+!         all_inds(j:j+ng-1) = (/ ( (p_i-2)*ng+k, k = 1, ng ) /)
+          all_inds(j:j+ng-1) = (/ ( l + k, k = 0, ng-1 ) /)
           i = i + 1
+          j = j + Ng
         end if
-      end do
-      p2 = n_path
+        l = l + Ng
+      end if
     end do
 
-  end subroutine Where_GL 
+  end subroutine Get_Inds
 
 !----------------------------------------------------------------------
   logical function not_used_here()
@@ -1050,6 +1005,9 @@ contains
 
 end module RAD_TRAN_M
 ! $Log$
+! Revision 2.27  2003/10/16 23:06:09  vsnyder
+! Polish up some comments
+!
 ! Revision 2.26  2003/10/15 02:04:08  vsnyder
 ! Simplifications possible after inlining path_opacity.  Cosmetic changes.
 ! Make Get_Del_Zeta_All public.  Don't bother checking do_calc(1) and
