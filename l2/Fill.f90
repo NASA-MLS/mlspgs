@@ -58,7 +58,7 @@ contains ! =====     Public Procedures     =============================
       & F_APRIORIPRECISION, F_B, F_BASELINEQUANTITY, F_BIN, F_BOUNDARYPRESSURE, F_BOXCARMETHOD, &
       & F_CENTERVERTICALLY, F_CHANNEL, F_COLUMNS, F_DESTINATION, F_DIAGONAL, F_dontMask,&
       & F_ECRTOFOV, F_EARTHRADIUS, F_EXCLUDEBELOWBOTTOM, F_EXPLICITVALUES, &
-      & F_EXTINCTION, F_FIELDECR, F_FORCE, &
+      & F_EXTINCTION, F_FIELDECR, F_FILE, F_FORCE, &
       & F_FRACTION, F_FROMPRECISION, F_GEOCALTITUDEQUANTITY, F_GPHQUANTITY, &
       & F_HEIGHT, F_HIGHBOUND, F_H2OQUANTITY, F_H2OPRECISIONQUANTITY, &
       & F_IGNORENEGATIVE, F_IGNOREGEOLOCATION, F_IGNOREZERO, F_INSTANCES, & 
@@ -81,7 +81,7 @@ contains ! =====     Public Procedures     =============================
       & F_TYPE, F_USB, F_USBFRACTION, F_VECTOR, F_VMRQUANTITY, F_WIDTH, &
       & FIELD_FIRST, FIELD_LAST
     ! Now the literals:
-    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, &
+    use INIT_TABLES_MODULE, only: L_ADDNOISE, L_APPLYBASELINE, L_ASCIIFILE, &
       & L_BINMAX, L_BINMEAN, L_BINMIN, L_BINTOTAL, &
       & L_BOUNDARYPRESSURE, L_BOXCAR, L_CHISQBINNED, L_CHISQCHAN, &
       & L_CHANNEL, L_CHISQMMAF, L_CHISQMMIF, L_CHOLESKY, &
@@ -97,7 +97,7 @@ contains ! =====     Public Procedures     =============================
       & L_MANIPULATE, L_MAX, L_MEAN, L_MIN, L_NEGATIVEPRECISION, &
       & L_NOISEBANDWIDTH, L_NONE, &
       & L_NORADSPERMIF, L_OFFSETRADIANCE, L_ORBITINCLINATION, &
-      & l_PHASETIMING, L_PHITAN, &
+      & L_PHASETIMING, L_PHITAN, &
       & L_PLAIN, L_PRESSURE, L_PROFILE, L_PTAN,  L_QUALITY, &
       & L_RADIANCE, L_RECTANGLEFROMLOS, L_REFGPH, L_REFRACT, &
       & L_REFLECTORTEMPMODEL, L_REFLTEMP, L_RESETUNUSEDRADIANCES, L_RHI, &
@@ -349,6 +349,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELDECRQUANTITYINDEX    ! Magnetic field
     integer :: FIELDECRVECTORINDEX      ! Magnetic field
     integer :: FILLMETHOD               ! How will we fill this quantity
+    integer :: FILENAME                 ! String index for ascii fill
     logical :: FORCE                    ! Bypass checks on some operations
     integer :: FRACTION                 ! Index of fraction vector in database
     logical :: FROMPRECISION            ! Fill from l2gpPrecision not l2gpValue
@@ -775,6 +776,8 @@ contains ! =====     Public Procedures     =============================
           case ( f_fieldECR ) ! For hydrostatic
             fieldECRVectorIndex = decoration(decoration(subtree(1,gson)))
             fieldECRQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_file ) ! For asciifile
+            filename = sub_rosa ( gson )
           case ( f_force )
             force = get_boolean ( gson )
           case ( f_fromPrecision )
@@ -1082,6 +1085,12 @@ contains ! =====     Public Procedures     =============================
           baselineQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(baselineVctrIndex), baselineQtyIndex )
           call ApplyBaseline ( key, quantity, baselineQuantity, quadrature )
+
+        case ( l_asciiFile )
+          if ( .not. got ( f_file ) ) &
+            & call Announce_Error ( key, 0, &
+            & 'Need filename for asciiFile fill' )
+          call FillQuantityFromASCIIFile ( key, quantity, filename )
 
         case ( l_binMax, l_binMean, l_binMin, l_binTotal )
           if ( .not. got ( f_sourceQuantity ) ) &
@@ -5193,6 +5202,13 @@ contains ! =====     Public Procedures     =============================
 
     end subroutine FillVectorQtyFromIsotope
 
+    ! ----------------------------------- FillQuantityFromASCIIFile --------
+    subroutine FillQuantityFromAsciiFile ( key, quantity, filename )
+      integer, intent(in) :: KEY        ! Tree node
+      type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+      integer, intent(in) :: FILENAME   ! ASCII filename to read from
+    end subroutine FillQuantityFromAsciiFile
+
     ! --------------------------------------------- RotateMagneticField ----
     subroutine RotateMagneticField ( key, qty, fieldECR, ecrToFOV )
       use Intrinsic, only: L_FIELDAZIMUTH, L_FIELDELEVATION, L_FIELDSTRENGTH
@@ -6918,6 +6934,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.291  2004/10/16 17:26:08  livesey
+! Added stub of fill from ascii file
+!
 ! Revision 2.290  2004/10/13 02:25:11  livesey
 ! Changes to fill from vGrid
 !
