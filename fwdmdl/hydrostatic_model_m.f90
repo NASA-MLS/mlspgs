@@ -181,7 +181,6 @@ Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
       CALL lintrp(z_grid,tan_press(si:),t_grid,tan_dh_dt(si:,l,m), &
      &            cnt,no_tan_hts-si+1)
       tan_dh_dt(1:si-1,l,m) = 0.0
-      tan_dh_dt(no_tan_hts+1:,l,m) = dh_dt_glgrid(gl_count,l,m)
     END DO
   END DO
 
@@ -381,6 +380,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.10  2001/03/29 02:09:28  zvi
+! Fix an error
+!
 ! Revision 1.9  2001/03/29 01:39:42  zvi
 ! Fixing an error in tan_hts computations
 !
