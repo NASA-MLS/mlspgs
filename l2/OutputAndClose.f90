@@ -20,7 +20,8 @@ module OutputAndClose ! outputs all data from the Join module to the
   use MatrixModule_1, only: MATRIX_DATABASE_T, MATRIX_T, GETFROMMATRIXDATABASE
   use MLSCommon, only: I4
   use MLSFiles, only: GetPCFromRef, MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF
-  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF
+  use MLSL2Options, only: PENALTY_FOR_NO_METADATA, CREATEMETADATA, PCF, &
+    & PCFL2CFSAMECASE
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSPCF2, only: MLSPCF_L2DGM_END, MLSPCF_L2DGM_START, MLSPCF_L2GP_END, &
     & MLSPCF_L2GP_START, mlspcf_l2dgg_start, mlspcf_l2dgg_end, &
@@ -54,9 +55,6 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   ! For Announce_Error
   integer :: ERROR
-
-  ! Must files named in PCF have same case as short names used in l2cf?
-  logical, parameter :: PCFL2FCSAMECASE = .FALSE.
 
 contains ! =====     Public Procedures     =============================
 
@@ -187,7 +185,7 @@ contains ! =====     Public Procedures     =============================
           if ( PCF ) then
             l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2gp_start, &
             & mlspcf_l2gp_end, &
-            & PCFL2FCSAMECASE, returnStatus, l2gp_Version, DEBUG, &
+            & PCFL2CFSAMECASE, returnStatus, l2gp_Version, DEBUG, &
             & exactName=l2gpPhysicalFilename)
           else
             l2gpPhysicalFilename = file_base
@@ -302,7 +300,7 @@ contains ! =====     Public Procedures     =============================
           if ( PCF ) then
             l2auxFileHandle = GetPCFromRef(file_base, mlspcf_l2dgm_start, &
             & mlspcf_l2dgm_end, &
-            & PCFL2FCSAMECASE, returnStatus, l2aux_Version, DEBUG, &
+            & PCFL2CFSAMECASE, returnStatus, l2aux_Version, DEBUG, &
             & exactName=l2auxPhysicalFilename)
           else
             l2auxPhysicalFilename = file_base
@@ -443,7 +441,7 @@ contains ! =====     Public Procedures     =============================
           if ( PCF ) then
             l2gpFileHandle = GetPCFromRef(file_base, mlspcf_l2dgg_start, &
             & mlspcf_l2dgg_end, &
-            & PCFL2FCSAMECASE, returnStatus, l2gp_Version, DEBUG, &
+            & PCFL2CFSAMECASE, returnStatus, l2gp_Version, DEBUG, &
             & exactName=l2gpPhysicalFilename)
           else
             l2gpPhysicalFilename = file_base
@@ -646,6 +644,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.36  2001/05/30 23:03:13  pwagner
+! Moved PCFL2CFSAMECASE to MLSL2Options
+!
 ! Revision 2.35  2001/05/17 22:33:28  pwagner
 ! Prints info if pro switch set
 !
