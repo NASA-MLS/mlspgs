@@ -233,7 +233,8 @@ contains ! =====     Public Procedures     =============================
 
     integer :: I, J, K, L, N
     type(MatrixElement_T), pointer :: X, Y
-    real(kind(zb%values)), pointer :: Z(:,:) ! May be used if Y is col-sparse
+    real(kind(zb%values)), pointer :: Z(:,:) ! May be used if Y is col-sparse/banded
+    real(kind(zb%values)), pointer :: W(:,:) ! May be used if X is banded
     real(r8), dimension(:,:), pointer :: XD, YD ! For testing
     logical :: OK                       ! For testing
     if ( xb%kind <= yb%kind ) then
@@ -260,51 +261,65 @@ contains ! =====     Public Procedures     =============================
     case ( M_Banded )
       select case ( y%kind )
       case ( M_Banded )                          ! X banded, Y banded
-        call allocate_test ( zb%r1, size(x%r1), "zb%r1", ModuleName )
-        zb%r1 = min(x%r1, y%r1)                  ! First nonzero row
-        call allocate_test ( zb%r2, size(x%r2), "zb%r2", ModuleName, lowBound=0 )
-        zb%r2(0) = 0
-        do k = 1, size(x%r1)                     ! Calculate size of Values
-          zb%r2(k) = zb%r2(k-1) + &
-            & max( x%r2(k)-x%r2(k-1)+x%r1(k), y%r2(k)-y%r2(k-1)+y%r1(k) ) - &
-            & zb%r1(k) + 1
-        end do
-        call allocate_test ( zb%values, zb%r2(size(x%r1)), 1, "zb%values", &
+        ! Used to be intelligent (below), but didn't work. 
+        ! Do it the slow way for now.
+        nullify ( z, w )
+        call allocate_test ( z, x%nRows, x%nCols, 'Z in Add_Matrix_Blocks', &
           & ModuleName )
-        zb%values = 0.0_r8 ! ??? Improve this by only filling
-        !                    ??? values that don't get set below
-        do k = 1, size(x%r1)
-          i = 1; j = 1; l = 1
-          n = y%r1(k) - x%r1(k)
-          if ( n > 0 ) then ! Copy rows in X that are not in Y
-            zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
-              & x%values(x%r2(k-1)+i:x%r2(k-1)+i-1+n, 1)
-            i = i + n
-          else if ( n < 0 ) then ! Copy rows in Y that are not in X
-            n = - n
-            zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
-              & y%values(y%r2(k-1)+j:y%r2(k-1)+j-1+n, 1)
-            j = j + n
-          end if
-          l = l + n
-          n = min( x%r1(k) + x%r2(k) - x%r2(k-1) - 1, &
-            &      y%r1(k) + y%r2(k) - y%r2(k-1) - 1 ) - &
-            &      max( x%r1(k), y%r1(k) )
-          zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
-            & x%values(x%r2(k-1)+i:x%r2(k-1)+i-1+n, 1) + &
-            & y%values(y%r2(k-1)+j:y%r2(k-1)+j-1+n, 1)
-          i = i + n; j = j + n; l = l + n
-          n = y%r1(k) + y%r2(k) - y%r2(k-1) - &
-            & ( x%r1(k) + x%r2(k) - x%r2(k-1) )
-          if ( n > 0 ) then ! Copy rows of Y that are not in X
-            zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
-              & y%values(y%r2(k-1)+j:y%r2(k-1)+j-1+n, 1)
-          else if ( n < 0 ) then ! Copy rows in X that are not in Y
-            n = - n
-            zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
-              & x%values(x%r2(k-1)+i:x%r2(k-1)+i-1+n, 1)
-          end if
-        end do
+        call allocate_test ( w, y%nRows, y%nCols, 'W in Add_Matrix_Blocks', &
+          & ModuleName )
+        call densify ( z, x )
+        call densify ( w, y )
+        z = z + w
+        call sparsify ( z, zb, 'Z in Add_matrix_block', ModuleName )
+        call Deallocate_test ( w, 'W in Add_Matrix_Blocks', ModuleName )
+        
+! OLD CODE THAT DIDN'T WORK
+!         call allocate_test ( zb%r1, zb%ncols, "zb%r1", ModuleName )
+!         zb%r1 = min(x%r1, y%r1)                  ! First nonzero row
+!         call allocate_test ( zb%r2, zb%ncols, "zb%r2", ModuleName, lowBound=0 )
+!         zb%r2(0) = 0
+!         do k = 1, size(x%r1)                     ! Calculate size of Values
+!           zb%r2(k) = zb%r2(k-1) + &
+!             & max( x%r2(k)-x%r2(k-1)+x%r1(k), y%r2(k)-y%r2(k-1)+y%r1(k) ) - &
+!             & zb%r1(k) + 1
+!         end do
+!         call allocate_test ( zb%values, zb%r2(size(x%r1)), 1, "zb%values", &
+!           & ModuleName )
+!         zb%values = 0.0_r8 ! ??? Improve this by only filling
+!         !                    ??? values that don't get set below
+!         do k = 1, size(x%r1)
+!           i = 1; j = 1; l = 1
+!           n = y%r1(k) - x%r1(k)
+!           if ( n > 0 ) then ! Copy rows in X that are not in Y
+!             zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
+!               & x%values(x%r2(k-1)+i:x%r2(k-1)+i-1+n, 1)
+!             i = i + n
+!           else if ( n < 0 ) then ! Copy rows in Y that are not in X
+!             n = - n
+!             zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
+!               & y%values(y%r2(k-1)+j:y%r2(k-1)+j-1+n, 1)
+!             j = j + n
+!           end if
+!           l = l + n
+!           n = min( x%r1(k) + x%r2(k) - x%r2(k-1) - 1, &
+!             &      y%r1(k) + y%r2(k) - y%r2(k-1) - 1 ) - &
+!             &      max( x%r1(k), y%r1(k) )
+!           zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
+!             & x%values(x%r2(k-1)+i:x%r2(k-1)+i-1+n, 1) + &
+!             & y%values(y%r2(k-1)+j:y%r2(k-1)+j-1+n, 1)
+!           i = i + n; j = j + n; l = l + n
+!           n = y%r1(k) + y%r2(k) - y%r2(k-1) - &
+!             & ( x%r1(k) + x%r2(k) - x%r2(k-1) )
+!           if ( n > 0 ) then ! Copy rows of Y that are not in X
+!             zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
+!               & y%values(y%r2(k-1)+j:y%r2(k-1)+j-1+n, 1)
+!           else if ( n < 0 ) then ! Copy rows in X that are not in Y
+!             n = - n
+!             zb%values(zb%r2(k-1)+l:zb%r2(k-1)+l-1+n, 1) = &
+!               & x%values(x%r2(k-1)+i:x%r2(k-1)+i-1+n, 1)
+!           end if
+!         end do
       case ( M_Column_sparse )                   ! X banded, Y col sparse
         ! Make a full matrix, then sparsify it.  There _must_ be a better
         ! way ???
@@ -2731,7 +2746,7 @@ contains ! =====     Public Procedures     =============================
       call CreateBlock ( mt, m%nCols, m%nRows, m_full )
       mt%values = transpose ( m%values )
     case ( m_banded, m_column_sparse )
-      nullify ( D )
+      nullify ( D, DT )
       call Allocate_test ( D, m%nRows, m%nCols, 'D', ModuleName )
       call Allocate_test ( DT, m%nCols, m%nRows, 'DT', ModuleName )
       call Densify ( D, M )
@@ -3072,6 +3087,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.76  2002/08/15 22:12:47  livesey
+! Bug work around in Add_Matrix_Blocks and fix in TransposeMatrix_0
+!
 ! Revision 2.75  2002/08/06 02:15:10  livesey
 ! Added TransposeMatrix_0 and ReflectMatrix_0
 !
