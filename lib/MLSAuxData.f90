@@ -1809,7 +1809,7 @@ contains ! ============================ MODULE PROCEDURES ====================
 
                    call h5tset_size_f(s_type_id, string_length, h5error)
                    if (h5error /= 0) call MLSMessage (MLSMSG_Error, &
-                        ModuleName, &H5_ERROR_TYPE_SET // trim(MLSAuxData%name))
+                        & ModuleName, H5_ERROR_TYPE_SET // trim(MLSAuxData%name))
 
                    call h5dcreate_f(file_id, trim(MLSAuxData%name), s_type_id, &
                         dspace_id, dset_id, h5error, cparms)
@@ -2209,6 +2209,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     atype_id = H5T_IEEE_F32LE
     is_char = .false.
     nullify(char_data, attr_data)
+    adims = 1
     ! Check that exactly 1 of the optional args is supplied
     ! The following will produce 0 if neither, 3 if both; else 1 or 2
     which_opt_arg = 0
@@ -2393,6 +2394,7 @@ contains ! ============================ MODULE PROCEDURES ====================
     error = 0
     myRead_attributes = .false.
     nullify (character_buffer, real_buffer, double_buffer, integer_buffer)
+    dims = 1
     if ( present(read_attributes) ) myRead_attributes=read_attributes
     !-- assign name and type for dataset
 
@@ -2694,6 +2696,8 @@ contains ! ============================ MODULE PROCEDURES ====================
     if ( present(write_attributes) ) myWrite_attributes=write_attributes
 
     nullify (char_data, attr_data)
+    dims = 1
+    adims = 1
     test_type: select case (trim(MLSAuxData%type_name))
 
     case ('real')
@@ -3065,6 +3069,9 @@ contains ! ============================ MODULE PROCEDURES ====================
 end module MLSAuxData
 
 ! $Log$
+! Revision 2.21  2003/01/02 23:14:50  pwagner
+! Repaired misplaced ampersand on line 1812
+!
 ! Revision 2.20  2002/12/20 20:45:57  perun
 ! Added MaxCharFieldLen for MLSAuxData_T
 !
