@@ -19,7 +19,7 @@ program MLSL2
     & DEFAULT_HDFVERSION_READ, DEFAULT_HDFVERSION_WRITE, &
     & LEVEL1_HDFVERSION, NORMAL_EXIT_STATUS, OUTPUT_PRINT_UNIT, &
     & PATCH, PENALTY_FOR_NO_METADATA, QUIT_ERROR_THRESHOLD, &
-    & SKIPRETRIEVAL, SECTIONTIMINGUNITS, TOOLKIT
+    & SKIPDIRECTWRITES, SKIPRETRIEVAL, SECTIONTIMINGUNITS, TOOLKIT
   use MLSL2Timings, only: RUN_START_TIME, SECTION_TIMES, TOTAL_TIMES, &
     & ADD_TO_SECTION_TIMING, DUMP_SECTION_TIMINGS
   use MLSMessageModule, only: MLSMessage, MLSMessageConfig, MLSMSG_Debug, &
@@ -358,6 +358,8 @@ program MLSL2
           call io_error ( "After --recl option", status, line )
           stop
         end if
+      else if ( lowercase(line(3+n:9+n))  == 'skipdir' ) then
+        SKIPDIRECTWRITES = switch
       else if ( lowercase(line(3+n:10+n)) == 'skipretr' ) then
         SKIPRETRIEVAL = switch
       else if ( lowercase(line(3+n:10+n)) == 'slavemaf' ) then
@@ -856,6 +858,9 @@ contains
       call output(' Preflight check paths?:                         ', advance='no')
       call blanks(4, advance='no')
       call output(checkPaths, advance='yes')
+      call output(' Skip all direct writes?:                        ', advance='no')
+      call blanks(4, advance='no')
+      call output(SKIPDIRECTWRITES, advance='yes')
       call output(' Skip all retrievals?:                           ', advance='no')
       call blanks(4, advance='no')
       call output(SKIPRETRIEVAL, advance='yes')
@@ -906,6 +911,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.119  2004/04/27 23:50:24  pwagner
+! Added SKIPDIRECTWRITES option
+!
 ! Revision 2.118  2004/04/15 22:48:30  pwagner
 ! Multiword options like maxFailuresPerChunk made case-insensitive
 !
