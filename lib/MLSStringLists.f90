@@ -1,5 +1,5 @@
-! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
-! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+! Copyright (c) 2005, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contracts NAS7-1407/NAS7-03001 is acknowledged.
 
 !=============================================================================
 MODULE MLSStringLists               ! Module to treat string lists
@@ -44,6 +44,7 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! GetStringElement   Returns n'th element of string list
 ! GetStringHashElement   
 !                    Returns string from hash list corresponding to key string
+! GetUniqueInts      Returns array of only unique entries from input array
 ! GetUniqueList      Returns str list of only unique entries from input list
 ! GetUniqueStrings   Returns array of only unique entries from input array
 ! List2Array         Converts a single string list to an array of strings
@@ -55,6 +56,8 @@ MODULE MLSStringLists               ! Module to treat string lists
 ! SortList           Turns 'def,ghi,abc' -> 'abc,def,ghi'
 ! StringElementNum   Returns element number of test string in string list
 ! unquote            Removes surrounding [quotes]
+! utc_to_date        Returns date portion from dateTtime; e.g. yyyy-dddThh:mm:ss
+! utc_to_time        Returns time portion from dateTtime; e.g. yyyy-dddThh:mm:ss
 ! utc_to_yyyymmdd    Parses yyyy-mm-ddThh:mm:ss.sss or yyyy-dddThh:mm:ss.sss
 ! yyyymmdd_to_dai    Converts yyyymmdd to days after Jan 1, 2001
 ! === (end of toc) ===
@@ -72,11 +75,14 @@ MODULE MLSStringLists               ! Module to treat string lists
 !   i4 nElement, log countEmpty, [char inseparator])
 ! GetStringHashElement (strlist keyList, strlist hashList, char* key, 
 !   char* outElement, log countEmpty, [char inseparator], [log part_match])
-! GetUniqueList (char* str, char* outstr(:), int noUnique, &
-!   & log countEmpty, [char inseparator], [log IgnoreLeadingSpaces]) 
-! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique) 
-! List2Array (strlist inList, char* outArray(:), log countEmpty, [char inseparator],
-!    [log IgnoreLeadingSpaces])
+! GetUniqueInts (int ints(:), int outs(:), int noUnique, 
+!    [int extra(:)], [int fillValue], [int minValue]) 
+! GetUniqueList (char* str, char* outstr(:), int noUnique, log countEmpty, &
+!   & [char inseparator], [log IgnoreLeadingSpaces], [char* fillValue]) 
+! GetUniqueStrings (char* inList(:), char* outList(:), int noUnique, 
+!   [char* extra(:)], [char* fillValue])
+! List2Array (strlist inList, char* outArray(:), log countEmpty,
+!   [char inseparator], [log IgnoreLeadingSpaces])
 ! int NumStringElements(strlist inList, log countEmpty, &
 !   & [char inseparator], [int LongestLen])
 ! ReplaceSubString (char* str, char* outstr, char* sub1, char* sub2, &
@@ -115,11 +121,11 @@ MODULE MLSStringLists               ! Module to treat string lists
 
   public :: catLists, Array2List, ExpandStringRange, ExtractSubString, &
    & GetIntHashElement, GetStringElement, GetStringHashElement, &
-   & GetUniqueStrings, GetUniqueList, &
+   & GetUniqueInts, GetUniqueStrings, GetUniqueList, &
    & List2Array, NumStringElements, &
    & RemoveElemFromList, ReplaceSubString, ReverseList, &
    & SortArray, SortList, StringElementNum, &
-   & unquote, utc_to_yyyymmdd, yyyymmdd_to_dai
+   & unquote, utc_to_date, utc_to_time, utc_to_yyyymmdd, yyyymmdd_to_dai
 
   interface catLists
     module procedure catLists_str, catLists_int, catLists_intarray
@@ -855,17 +861,117 @@ CONTAINS
 
   END SUBROUTINE GetStringHashElement
 
+  ! ---------------------------------------------  GetUniqueInts  -----
+
+  ! This subroutine takes an array of ints and returns another containing
+  ! only the unique entries. The resulting array is supplied by the caller
+  ! Its first noUnique entries return the unique values found
+  ! Later entries are returned unchanged
+  ! If optional extra array is supplied, instead
+  ! returns entries from first array not also found in second
+  ! If optional fillValue is supplied, values = fillValue are ignored
+  ! else if optional minValue is supplied, values < minValue are ignored
+  ! Some checking is done to make sure it's appropriate
+
+  SUBROUTINE GetUniqueInts(ints, outs, noUnique, extra, fillValue, minValue)
+    ! Dummy arguments
+    integer, dimension(:) :: ints
+    integer, dimension(:) :: outs
+    integer :: nounique ! number of unique entries
+    integer, optional, dimension(:) :: extra
+    integer, optional               :: fillValue
+    integer, optional               :: minValue
+
+    ! Local variables
+    integer :: i,j,k           ! Loop counters
+    logical, dimension(:), allocatable :: duplicate ! Set if already found
+    integer :: status        ! Status from allocate
+
+    integer :: extrasize
+    integer :: howmanymax
+    integer :: insize
+
+    ! Executable code, setup arrays
+    inSize=SIZE(ints)
+    ALLOCATE (duplicate(inSize), STAT=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_Allocate//"duplicate")
+    if ( present(extra) ) then
+      extraSize=size(extra)
+      howManyMax = inSize
+      ! print *, 'SIZE(inList) ', inSize
+      ! print *, 'SIZE(extra) ', extraSize
+    else
+      extraSize = -1
+      howManyMax = inSize-1 ! Don't bother with last one
+    endif
+    duplicate = .FALSE.
+
+    ! Go through and find duplicates
+
+    DO i = 1, howManyMax
+       IF (.NOT. duplicate(i)) THEN
+         if ( extraSize < 1 ) then
+          DO j = i+1, inSize
+             IF (ints(j)==ints(i)) duplicate(j)=.TRUE.
+          END DO
+         else
+          DO j = 1, extraSize
+             IF (extra(j)==ints(i)) duplicate(i)=.TRUE.
+          END DO
+         endif
+       END IF
+    END DO
+
+    ! Ignore any values = fillValue
+    if ( present(fillValue) ) then
+      duplicate = duplicate .or. (ints == fillValue)
+    elseif ( present(minValue) ) then
+      duplicate = duplicate .or. (ints < minValue)
+    endif
+    ! Count how many unique ones there are
+
+    noUnique=count(.NOT. duplicate)
+
+    IF (noUnique>SIZE(outs)) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & "outs too small")
+
+    if ( noUnique > 0 ) then
+      j=1
+      UniqueLoop: DO i = 1, noUnique
+         k = findFirst(.not. duplicate(j:))
+         ! print *, 'j: ', j, '   k: ', k
+         if ( k+j-1 > inSize ) then
+           call MLSMessage(MLSMSG_Error, ModuleName, &
+             & "k goes past array end in GetUniqueInts")
+           outs(i)=ints(inSize)
+           return
+         elseif ( k > 0 ) then
+           outs(i)=ints(k+j-1)  ! was ints(j)
+           j = j + k
+         else
+           exit UniqueLoop
+         endif
+         ! j=j+1
+         if ( j > inSize ) exit UniqueLoop
+      END DO UniqueLoop
+    endif
+
+    deallocate ( duplicate )
+  end subroutine GetUniqueInts
+
   ! ---------------------------------------------  GetUniqueList  -----
 
   ! This subroutine takes a string list and returns another containing
   ! only the unique entries. The resulting list is supplied by the caller
-  ! (You may safely use the same variable for str and outStr)
+  ! (You may safely use the same variable for str and outStr) (?? f95 std??)
   ! E.g., given 'one,two,three,one,four' returns 'one,two,three,four'
   ! If optional string list str2 is supplied, instead
   ! returns list from str that are not also in str2
+  ! If optional FillValue supplied, ignores any entries = fillvalue
 
   SUBROUTINE GetUniqueList(str, outStr, noUnique, countEmpty, &
-    & inseparator, IgnoreLeadingSpaces, str2)
+    & inseparator, IgnoreLeadingSpaces, str2, fillValue)
     ! Dummy arguments
     CHARACTER (LEN=*), intent(in) :: str
     CHARACTER (LEN=*), intent(out) :: outstr
@@ -874,6 +980,7 @@ CONTAINS
     CHARACTER (LEN=1), OPTIONAL, INTENT(IN)       :: inseparator
     LOGICAL, OPTIONAL, INTENT(IN)       :: IgnoreLeadingSpaces
     CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: str2
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: fillValue
 
     ! Local variables
     CHARACTER (LEN=1)               :: separator
@@ -922,7 +1029,8 @@ CONTAINS
            & MLSMSG_Allocate//"stringArray2 in GetUniqueList")
       call list2Array(str2, inStrAr2, countEmpty, inseparator, &
        & IgnoreLeadingSpaces)
-      call GetUniqueStrings(inStringArray, outStringArray, noUnique, inStrAr2)
+      call GetUniqueStrings(inStringArray, outStringArray, noUnique, &
+       & inStrAr2, fillValue)
       if ( noUnique > 0 ) then
         call Array2List(outStringArray(1:noUnique), outStr, &
          & inseparator)
@@ -931,7 +1039,8 @@ CONTAINS
       endif
       DEALLOCATE(inStringArray, outStringArray, inStrAr2)
     else
-      call GetUniqueStrings(inStringArray, outStringArray, noUnique)
+      call GetUniqueStrings(inStringArray, outStringArray, noUnique, &
+      & fillValue=fillValue)
       if ( noUnique > 0 ) then
         call Array2List(outStringArray(1:noUnique), outStr, &
          & inseparator)
@@ -948,14 +1057,16 @@ CONTAINS
   ! only the unique entries. The resulting array is supplied by the caller
   ! If optional extra array is supplied, instead
   ! returns entries from first array not also found in second
+  ! If optional FillValue supplied, ignores any entries = fillvalue
   ! Some checking is done to make sure it's appropriate
 
-  SUBROUTINE GetUniqueStrings(inList, outList, noUnique, extra)
+  SUBROUTINE GetUniqueStrings(inList, outList, noUnique, extra, fillValue)
     ! Dummy arguments
     CHARACTER (LEN=*), DIMENSION(:) :: inList
     CHARACTER (LEN=*), DIMENSION(:) :: outList
     INTEGER :: noUnique ! Number of unique entries
     CHARACTER (LEN=*), optional, DIMENSION(:) :: extra
+    CHARACTER (LEN=*), OPTIONAL, INTENT(IN)       :: fillValue
 
     ! Local variables
     INTEGER :: i,j,k           ! Loop counters
@@ -998,6 +1109,10 @@ CONTAINS
        END IF
     END DO
 
+    ! Ignore any values = fillValue
+    if ( present(fillValue) ) then
+      duplicate = duplicate .or. (inList == fillValue)
+    endif
     ! Count how many unique ones there are
 
     noUnique=count(.NOT. duplicate)
@@ -2110,6 +2225,116 @@ CONTAINS
       
   end Function unquote
 
+  ! ---------------------------------------------  utc_to_date  -----
+  subroutine utc_to_date(str, ErrTyp, date, &
+    & strict, utcAt0z)
+    ! Routine that returns the date portion from a string of the form
+    ! (A) yyyy-mm-ddThh:mm:ss.sss
+    ! (B) yyyy-dddThh:mm:ss.sss
+    ! where the field separator 'T' divides the string into two
+    ! sub-strings encoding the date and time
+    ! The date substring in subdivided by the separator '-'
+    ! into either two or three fields
+    ! In case (A), the 3 fields are year, month, and day of month
+    ! in case (B) the two fields are year and day of year
+    
+    ! For case (A) returns year, month, and day=day of month
+    ! For case (B) returns year, month=-1, and day=day of year
+    ! Useful to decode utc inputs into attribute values
+    
+    ! Optionally returns the input string in utcAt0z modified so that 
+    ! the hh:mm:ss.sss is 00:00:00Z
+    
+    ! (See also utc_to_time and utc_to_yyymmdd)
+    !--------Argument--------!
+    character(len=*),intent(in)   :: str
+    integer, intent(out)          :: ErrTyp
+    character(len=*), intent(out) :: date
+    logical,intent(in), optional  :: strict
+    character(len=*),intent(out), optional   :: utcAt0z
+    !----------Local vars----------!
+    character(len=1), parameter :: dash='-'
+    logical :: mystrict
+    character(len=1) :: utc_format        ! 'a' or 'b'
+    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
+    !----------Executable part----------!
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   if(len_trim(str) <= 0) then
+      if(mystrict) then
+         ErrTyp=INVALIDUTCSTRING
+      else
+         ErrTyp=0
+      endif
+      return
+   endif
+   
+   ErrTyp=INVALIDUTCSTRING
+   ! Snip off time fields from date fields
+   call GetStringElement(lowercase(str), date, 1, &
+     & countEmpty=.true., inseparator='t')
+   if ( date == ' ' ) then
+     if ( .not. mystrict) Errtyp = 0
+     if ( present(utcAt0z) ) utcAt0z = ' '
+     return
+   endif
+   if ( present(utcAt0z) ) utcAt0z = trim(date) // chars_0z
+   ErrTyp=0
+   
+  end subroutine utc_to_date
+
+  ! ---------------------------------------------  utc_to_time  -----
+  subroutine utc_to_time(str, ErrTyp, time, strict)
+    ! Routine that returns the time portion from a string of the form
+    ! (A) yyyy-mm-ddThh:mm:ss.sss
+    ! (B) yyyy-dddThh:mm:ss.sss
+    ! where the field separator 'T' divides the string into two
+    ! sub-strings encoding the date and time
+    ! (See also utc_to_date and utc_to_yyymmdd)
+    !--------Argument--------!
+    character(len=*),intent(in)   :: str
+    integer, intent(out)          :: ErrTyp
+    character(len=*), intent(out) :: time
+    logical,intent(in), optional  :: strict
+    !----------Local vars----------!
+    character(len=1), parameter :: dash='-'
+    logical :: mystrict
+    character(len=1) :: utc_format        ! 'a' or 'b'
+    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
+    !----------Executable part----------!
+
+   if(present(strict)) then
+      mystrict=strict
+   else
+      mystrict=.false.
+   endif
+         
+   if(len_trim(str) <= 0) then
+      if(mystrict) then
+         ErrTyp=INVALIDUTCSTRING
+      else
+         ErrTyp=0
+      endif
+      return
+   endif
+   
+   ErrTyp=INVALIDUTCSTRING
+   ! Snip off time fields from date fields
+   call GetStringElement(lowercase(str), time, 2, &
+     & countEmpty=.true., inseparator='t')
+   if ( time == ' ' ) then
+     if ( .not. mystrict) Errtyp = 0
+     return
+   endif
+   ErrTyp=0
+   
+  end subroutine utc_to_time
+
   ! ---------------------------------------------  utc_to_yyyymmdd_ints  -----
   subroutine utc_to_yyyymmdd_ints(str, ErrTyp, year, month, day, strict, nodash)
     ! Routine that returns the year, month, and day from a string of the form
@@ -2169,21 +2394,9 @@ CONTAINS
       mynodash=.false.
    endif
          
-   if(len_trim(str) <= 0) then
-      if(mystrict) then
-         ErrTyp=INVALIDUTCSTRING
-      else
-         ErrTyp=0
-      endif
-      return
-   endif
-   
-   ErrTyp=INVALIDUTCSTRING
-   ! Snip off time fields from date fields
-   call GetStringElement(lowercase(str), date, 1, &
-     & countEmpty=.true., inseparator='t')
-   if ( date == ' ' ) then
-     if ( .not. mystrict) Errtyp = 0
+   call utc_to_date(str, ErrTyp, date, strict= .true.)
+   if ( ErrTyp /= 0 ) then
+     if ( .not. mystrict ) ErrTyp = 0
      return
    endif
    if ( myNoDash ) then
@@ -2246,7 +2459,7 @@ CONTAINS
 
   ! ---------------------------------------------  utc_to_yyyymmdd_strs  -----
   subroutine utc_to_yyyymmdd_strs(str, ErrTyp, year, month, day, &
-    & strict, utcAt0z)
+    & strict)
     ! Routine that returns the year, month, and day from a string of the form
     ! (A) yyyy-mm-ddThh:mm:ss.sss
     ! (B) yyyy-dddThh:mm:ss.sss
@@ -2261,9 +2474,6 @@ CONTAINS
     ! For case (B) returns year, month=-1, and day=day of year
     ! Useful to decode utc inputs into attribute values
     
-    ! Optionally returns the input string in utcAt0z modified so that 
-    ! the hh:mm:ss.sss is 00:00:00Z
-    
     ! (See also PGS_TD_UTCtoTAI and mls_UTCtoTAI)
     !--------Argument--------!
     character(len=*),intent(in)   :: str
@@ -2272,13 +2482,11 @@ CONTAINS
     character(len=*), intent(out) :: month
     character(len=*), intent(out) :: day
     logical,intent(in), optional  :: strict
-    character(len=*),intent(out), optional   :: utcAt0z
     !----------Local vars----------!
     character(len=1), parameter :: dash='-'
     character(len=NameLen) :: date
     logical :: mystrict
     character(len=1) :: utc_format        ! 'a' or 'b'
-    character(len=*), parameter :: chars_0z = 'T00:00:00Z'
     !----------Executable part----------!
 
    year = ' '
@@ -2291,25 +2499,11 @@ CONTAINS
       mystrict=.false.
    endif
          
-   if(len_trim(str) <= 0) then
-      if(mystrict) then
-         ErrTyp=INVALIDUTCSTRING
-      else
-         ErrTyp=0
-      endif
-      return
-   endif
-   
-   ErrTyp=INVALIDUTCSTRING
-   ! Snip off time fields from date fields
-   call GetStringElement(lowercase(str), date, 1, &
-     & countEmpty=.true., inseparator='t')
-   if ( date == ' ' ) then
-     if ( .not. mystrict) Errtyp = 0
-     if ( present(utcAt0z) ) utcAt0z = ' '
+   call utc_to_date(str, ErrTyp, date, strict= .true.)
+   if ( ErrTyp /= 0 ) then
+     if ( .not. mystrict ) ErrTyp = 0
      return
    endif
-   if ( present(utcAt0z) ) utcAt0z = trim(date) // chars_0z
    call GetStringElement(trim(date), year, 1, countEmpty=.true., inseparator=dash)
    if ( &
      & NumStringElements(trim(date), countEmpty=.true., inseparator=dash) == 2) then
@@ -2495,6 +2689,9 @@ end module MLSStringLists
 !=============================================================================
 
 ! $Log$
+! Revision 2.6  2005/02/03 19:04:58  pwagner
+! Added GetUniqueInts, utc_to_date, utc_to_time
+!
 ! Revision 2.5  2004/10/19 22:59:08  vsnyder
 ! Remove USE for unused R8
 !
