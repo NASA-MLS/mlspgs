@@ -224,7 +224,6 @@ contains
           &             -prod(1,2,k+1), prod(1,1,k+1) /), (/2,2/) ) / &
           &   ( prod(1,1,k+1)*prod(2,2,k+1) - prod(1,2,k+1)*prod(2,1,k+1) )
         w = w + matmul ( matmul ( prod(1:2,1:2,k), d_e(1:2,1:2,k) ), pinv )
-          &  
       end do
       q(1,1) = d_t_script(k) + t_script(k) * w(1,1)
       q(1,2) =                 t_script(k) * w(1,2)
@@ -243,6 +242,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.2  2003/05/09 19:27:02  vsnyder
+! Initial stuff for temperature derivatives
+!
 ! Revision 2.1  2003/05/05 23:00:26  livesey
 ! Merged in feb03 newfwm branch
 !
