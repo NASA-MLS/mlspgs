@@ -41,6 +41,7 @@ contains ! =====     Public Procedures     =============================
       & CREATEEMPTYMATRIX, DESTROYMATRIX
     use MLSCommon, only: R8
     use MLSSignals_M, only: SIGNAL_T
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Units, only: DEG2RAD
     use ForwardModelVectorTools, only: GETQUANTITYFORFORWARDMODEL
     use ManipulateVectorQuantities, only: FINDONECLOSESTINSTANCE
@@ -104,6 +105,22 @@ contains ! =====     Public Procedures     =============================
     if ( .not. associated ( radiance ) ) then
       radiance => GetVectorQuantityByType (fwdModelOut, quantityType=l_opticalDepth, &
         & signal=fmConf%signals(1)%index, sideband=fmConf%signals(1)%sideband, noError=.true. )
+    end if
+
+    ! Now, some possible error messages
+    if ( .not. associated ( radiance ) ) call MLSMessage ( &
+      & MLSMSG_Error, ModuleName, &
+      & 'Unable to find a radiance or optical depth quantity for this signal' )
+    if ( radiance%template%quantityType == l_opticalDepth ) then
+      if ( present(jacobian)  ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to ask for derivatives for optical depth' )
+      if ( fmConf%xStar /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to supply x/yStar for optical depth' )
+      if  ( fmConf%signals(1)%sideband /= 0 ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Not appropriate to request optical depth from unfolded signal' )
     end if
 
     phi => GetQuantityForForwardModel ( fwdModelIn, fwdModelExtra, &
