@@ -119,6 +119,18 @@ contains
           vp = Log(bp/bb)/Log(tp/t)        ! Estimate over [temp+10,temp]
           v0 = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
           vm = Log(bb/bm)/Log(t/tm)        ! Estimate over [temp,temp-10]
+        else if ( bp > 0.0 .and. bb > 0.0) then
+          vp = Log(bp/bb)/Log(tp/t)        ! Estimate over [temp+10,temp]
+          vm = vp
+          v0 = vp
+        else if ( bm > 0.0 .and. bb > 0.0) then
+          vm = Log(bb/bm)/Log(t/tm)        ! Estimate over [temp,temp-10]
+          vp = vm
+          v0 = vm
+        else if ( bm > 0.0 .and. bp > 0.0) then
+          v0 = Log(bp/bm)/Log(tp/tm)       ! Estimate over [temp+10,temp-10]
+          vp = v0
+          vm = v0
         else
           vp = 0.0
           v0 = 0.0
@@ -135,6 +147,10 @@ contains
 !----------------------------------------------------------------------
 End module GET_BETA_PATH_M
 ! $Log$
+! Revision 2.2  2001/11/07 21:13:48  livesey
+! Fixed bug with log(0.0/0.0) for molecues with no lines
+! or continua
+!
 ! Revision 2.1  2001/10/16 15:07:18  zvi
 ! Continuum parameters are now part of Catalog
 !
