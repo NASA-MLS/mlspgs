@@ -542,9 +542,14 @@ contains ! =====     Public Procedures     =============================
   end function DotVectors
 
   ! -----------------------------------------------  DUMP_VECTORS  -----
-  subroutine DUMP_VECTORS ( VECTORS )
+  subroutine DUMP_VECTORS ( VECTORS, DETAILS )
     type(Vector_T), intent(in) :: VECTORS(:)
-    integer :: I, J
+    integer, intent(in), optional :: DETAILS ! <=0 => Don't dump quantity values
+    !                                        ! >0 Do dump quantity values
+    !                                        ! Default 1
+    integer :: I, J, MyDetails
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     call output ( 'VECTORS: SIZE = ' )
     call output ( size(vectors), advance='yes' )
     do i = 1, size(vectors)
@@ -569,15 +574,21 @@ contains ! =====     Public Procedures     =============================
         end if
         call output ( ' Quantity_Template_ID = ' )
         call output ( vectors(i)%quantities(j)%template%id, advance='yes' )
-        call dump ( vectors(i)%quantities(j)%values, '      Elements = ' )
+        if ( details > 0 ) &
+          & call dump ( vectors(i)%quantities(j)%values, '      Elements = ' )
       end do ! j
     end do ! i
   end subroutine DUMP_VECTORS
 
   ! --------------------------------------  DUMP_VECTOR_TEMPLATES  -----
-  subroutine DUMP_VECTOR_TEMPLATES ( VECTOR_TEMPLATES )
+  subroutine DUMP_VECTOR_TEMPLATES ( VECTOR_TEMPLATES, DETAILS )
     type(VectorTemplate_T), intent(in) :: VECTOR_TEMPLATES(:)
-    integer :: I
+    integer, intent(in), optional :: DETAILS ! <= 0 => Don't dump arrays
+    !                                        ! > 0  => Do dump arrays
+    !                                        ! Default 1
+    integer :: I, MyDetails
+    myDetails = 1
+    if ( present(details) ) myDetails = details
     call output ( 'VECTOR_TEMPLATES: SIZE = ' )
     call output ( size(vector_templates), advance='yes' )
     do i = 1, size(vector_templates)
@@ -594,7 +605,8 @@ contains ! =====     Public Procedures     =============================
       call output ( vector_templates(i)%totalInstances )
       call output ( ' TotalElements = ' )
       call output ( vector_templates(i)%totalElements, advance='yes' )
-      call dump ( vector_templates(i)%quantities, '      Quantities = ' )
+      if ( myDetails > 0 ) &
+        & call dump ( vector_templates(i)%quantities, '      Quantities = ' )
     end do
   end subroutine DUMP_VECTOR_TEMPLATES
 
@@ -1019,6 +1031,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.20  2001/03/21 02:14:37  livesey
+! Add noError argument to GetVectorQtyByType
+!
 ! Revision 2.19  2001/03/19 17:10:47  livesey
 ! Added more options to validate vector quantity
 !
