@@ -340,8 +340,7 @@ contains ! =====     Public Procedures     =============================
 
       call SetupNewQuantityTemplate ( qty, &
         & source=mifGeolocation(instrumentModuleIndex), &
-        & noChans=noChans,  regular=regular, instanceLen=instanceLen, &
-        & firstIndexChannel=firstIndexChannel )
+        & noChans=noChans,  regular=regular, instanceLen=instanceLen )
 
       ! Now we're going to deal with a VGrid for this quantity
 
@@ -381,8 +380,8 @@ contains ! =====     Public Procedures     =============================
 
       call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
         & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
-        & stacked=.FALSE., regular=regular, instanceLen=instanceLen ,&
-        & firstIndexChannel=firstIndexChannel, minorFrame=.TRUE. )
+        & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
+        & minorFrame=.TRUE. )
 
       qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
       qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
@@ -516,6 +515,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.2  2001/02/14 00:12:45  livesey
+! Removed firstIndexChannel
+!
 ! Revision 2.1  2001/02/09 00:38:22  livesey
 ! Various updates
 !
