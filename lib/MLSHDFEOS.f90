@@ -112,7 +112,7 @@ module MLSHDFEOS
   integer, public, parameter :: MAXDLISTLENGTH = 400000
 
   ! Print debugging stuff?
-  logical, parameter :: DEEBUG = .true.  
+  logical, parameter :: DEEBUG = .false.  
 
 contains ! ======================= Public Procedures =========================
 
@@ -248,9 +248,9 @@ contains ! ======================= Public Procedures =========================
     logical, parameter :: MUSTCREATE = .true.
     MLS_SWCREATE = 0
     ! All necessary input supplied?
-    print *, 'Now in mls_swcreate'
-    print *, 'SWATHNAME: ', trim(SWATHNAME)
-    if ( present(filename) ) print *, 'filename: ', trim(filename)
+   ! print *, 'Now in mls_swcreate'
+   ! print *, 'SWATHNAME: ', trim(SWATHNAME)
+    ! if ( present(filename) ) print *, 'filename: ', trim(filename)
     needsFileName = (.not. present(hdfVersion))
     if ( present(hdfVersion) ) &
       & needsFileName = (hdfVersion == WILDCARDHDFVERSION)
@@ -549,31 +549,32 @@ contains ! ======================= Public Procedures =========================
     else
       myHdfVersion = hdfVersion
     endif
-    print *, 'mls_gfldsetup'
-    print *, 'FIELDName: ', trim(FIELDName)
-    print *, 'myHdfVersion: ', myHdfVersion
-    print *, 'swathid: ', swathid
-    print *, 'Datatype: ', Datatype
-    print *, 'he5_Datatype: ', he2he5_DataType(Datatype)
-    print *, 'chunk_rank: ', chunk_rank
-    print *, 'chunk_dims: ', chunk_dims
-    print *, 'DIMNAME: ', trim(DIMNAME)
-    print *, 'MAXDIMLIST: ', trim(MAXDIMLIST)
-    print *, 'MERGE: ', MERGE
+   ! print *, 'mls_gfldsetup'
+   ! print *, 'FIELDName: ', trim(FIELDName)
+   ! print *, 'myHdfVersion: ', myHdfVersion
+   ! print *, 'swathid: ', swathid
+   ! print *, 'Datatype: ', Datatype
+   ! print *, 'he5_Datatype: ', he2he5_DataType(Datatype)
+   ! print *, 'chunk_rank: ', chunk_rank
+   ! print *, 'chunk_dims: ', chunk_dims
+   ! print *, 'DIMNAME: ', trim(DIMNAME)
+   ! print *, 'MAXDIMLIST: ', trim(MAXDIMLIST)
+   ! print *, 'MERGE: ', MERGE
     select case (myHdfVersion)
     case (HDFVERSION_4)
-      mls_gfldsetup = swdefgfld(swathid, FIELDName, DIMNAME, Datatype, &
-         & MERGE)
+      mls_gfldsetup = swdefgfld(swathid, trim(FIELDName), trim(DIMNAME), &
+        & Datatype, MERGE)
     case (HDFVERSION_5)
       if ( chunk_rank /= 0 ) &
         & mls_gfldsetup = HE5_SWdefchunk(swathid, chunk_rank, chunk_dims)
       if ( mls_gfldsetup == 0 ) &
-        & mls_gfldsetup = HE5_SWdefgfld(swathid, FIELDName, DIMNAME, MAXDIMLIST, &
+        & mls_gfldsetup = HE5_SWdefgfld(swathid, trim(FIELDName), &
+        & trim(DIMNAME), trim(MAXDIMLIST), &
         & he2he5_DataType(Datatype), MERGE)
     case default
       mls_gfldsetup = -1
     end select
-    print *, 'mls_gfldsetup returns: ', mls_gfldsetup
+   ! print *, 'mls_gfldsetup returns: ', mls_gfldsetup
     if ( myDontFail .or. mls_gfldsetup /= -1 ) return
     CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'Failed to set up geoloc field ' // trim(fieldname) )
@@ -1589,6 +1590,7 @@ contains ! ======================= Public Procedures =========================
     nswaths = 0
     mls_swath_in_file_arr = .false.
     present = .false.
+    fieldlist = ' '
     if ( size(swaths) > size(present) ) &
         CALL MLSMessage ( MLSMSG_Error, moduleName,  &
           & 'array to small to hold values in mls_swath_in_file_arr' )
@@ -1599,6 +1601,9 @@ contains ! ======================= Public Procedures =========================
       nswaths = HE5_swinqswath(trim(filename), fieldlist, listsize)
     end select
     if ( nswaths == 0 ) return
+    if (Deebug) print *, ' nswaths is ', nswaths
+    if (Deebug) print *, ' listsize is ', listsize
+    if (Deebug) print *, ' fieldlist is ', trim(fieldlist)
     do i=1, size(swaths)
       present(i) = &
       & ( StringElementNum(fieldlist, trim(swaths(i)), .true.) > 0 )
@@ -1719,6 +1724,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDFEOS
 
 ! $Log$
+! Revision 2.13  2003/07/15 23:36:28  pwagner
+! Disabled most printing; trims args to (HE5_)SWdefgfld
+!
 ! Revision 2.12  2003/07/11 21:50:31  livesey
 ! Minor bug fix, probably of little consquence
 !
