@@ -1073,17 +1073,11 @@ contains ! =====     Public Procedures     =============================
         ! we just store what we have as we're using delta funciton channels
 
         if ( forwardModelConfig%do_freq_avg ) then
-          if ( signal%sideband == 0 ) then
-            call MLSMessage ( MLSMSG_Error, ModuleName, &
-              & 'Asked for folded in wrong place' )
-          else
-            sense = signal%sideband
-            centerFreq = signal%lo + sense * signal%centerFrequency
-          end if
+          centerFreq = signal%lo + thisSideband * signal%centerFrequency
           do i = 1, noUsedChannels
             ch = usedChannels(i)
             call Freq_Avg ( frequencies,                           &
-              &       centerFreq+sense*FilterShapes(ch)%FilterGrid, &
+              &       centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
               &       FilterShapes(ch)%FilterShape, RadV, noFreqs,  &
               &       Size(FilterShapes(ch)%FilterGrid), Radiances(ptg_i,i) )
           end do
@@ -1102,7 +1096,7 @@ contains ! =====     Public Procedures     =============================
                 do surface = 1, temp%template%noSurfs
                   ToAvg => k_temp_frq%values(1:noFreqs,surface,instance)
                   call Freq_Avg ( frequencies,                        &
-                    &        centerFreq+sense*FilterShapes(ch)%FilterGrid, &
+                    &        centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
                     &        FilterShapes(ch)%FilterShape, real(ToAvg,r8), &
                     &        noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
                   k_temp(i,ptg_i,surface,instance) = r
@@ -1131,7 +1125,7 @@ contains ! =====     Public Procedures     =============================
                   do surface = 1, f%template%noSurfs
                     ToAvg => k_atmos_frq(specie)%values(1:noFreqs,surface,instance)
                     call Freq_Avg ( frequencies,                      &
-                      &          centerFreq+sense*FilterShapes(ch)%FilterGrid, &
+                      &          centerFreq+thisSideband*FilterShapes(ch)%FilterGrid, &
                       &          FilterShapes(ch)%FilterShape, real(ToAvg,r8),  &
                       &          noFreqs, Size(FilterShapes(ch)%FilterGrid), r )
                     k_atmos(i,ptg_i,surface,instance,specie) = r
@@ -1427,6 +1421,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.104  2001/04/20 23:34:54  livesey
+! Fixed sideband code
+!
 ! Revision 2.103  2001/04/20 23:08:55  livesey
 ! Cleaned up confusion in multi-channel cases
 !
