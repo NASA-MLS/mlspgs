@@ -17,10 +17,11 @@ MODULE Construct                ! The construct module for the MLS L2 sw.
   use Intrinsic, ONLY: L_None
   use L2GPData, only: L2GPDATA_T
   use MLSCommon, only: L1BInfo_T, MLSChunk_T
+  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error
   use MLSSignals_m, only: Modules
   use MoreTree, only: Get_Spec_ID
-  use OUTPUT_M, only: OUTPUT
+  use OUTPUT_M, only: BLANKS, OUTPUT
   use QuantityTemplates, only: AddQuantityTemplateToDatabase, &
     & DestroyQuantityTemplateDatabase, QuantityTemplate_T
   use String_Table, ONLY: GET_STRING
@@ -81,7 +82,7 @@ contains ! =====     Public Procedures     =============================
     logical :: TIMING
 
     ! Executable code
-    timing = .false.
+    timing = section_times
 
     ! First we're going to setup our mifGeolocation quantityTemplates.
     ! These are just two quantity templates containing geolocation
@@ -166,6 +167,11 @@ contains ! =====     Public Procedures     =============================
   contains
     subroutine SayTime
       call cpu_time ( t2 )
+      if ( total_times ) then
+        call output ( "Total time = " )
+        call output ( dble(t2), advance = 'no' )
+        call blanks ( 4, advance = 'no' )
+      endif
       call output ( "Timing for MLSL2Construct = " )
       call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
@@ -195,6 +201,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.26  2001/09/28 17:50:30  pwagner
+! MLSL2Timings module keeps timing info
+!
 ! Revision 2.25  2001/05/21 20:57:55  livesey
 ! Fixed bug, was overwriting mifGelocation with each new construct.
 !
