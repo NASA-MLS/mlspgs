@@ -93,10 +93,10 @@ begin Construct
   IWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
   LWC:  Quantity, vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudWater
 
-  iwcR1A: Quantity,vGrid=vGridBaseline, hGrid=hGridfine, type=CloudIce
-  iwcR2: Quantity,vGrid=vGridBaseline, hGrid=hGridfine, type=CloudIce
-  iwcR3: Quantity,vGrid=vGridBaseline, hGrid=hGridfine, type=CloudIce
-  iwcR4: Quantity,vGrid=vGridBaseline, hGrid=hGridfine, type=CloudIce
+  iwcR1A: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+  iwcR2: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+  iwcR3: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
+  iwcR4: Quantity,vGrid=vGridBaseline, hGrid=hGridStandard, type=CloudIce
 
   IwcFine:  Quantity, vGrid=vGridIWC, hGrid=hGridFine, type=CloudIce
 
