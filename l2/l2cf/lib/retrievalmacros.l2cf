@@ -165,9 +165,11 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
    Fill, quantity=radianceDiagnostics.noRadsPerMIF$1, method=special, $
      measurements=y!phase.band$1
    Fill, quantity=radianceDiagnostics.chisqBinned$1, method=binmax, $
-     sourceQuantity=radianceDiagnostics.chisqMMIF$1
+     sourceQuantity=radianceDiagnostics.chisqMMIF$1, $
+     ptanQuantity=state.ptanGHz
    Fill, quantity=radianceDiagnostics.noRadsBinned$1, method=binTotal, $
-     sourceQuantity=radianceDiagnostics.noRadsPerMIF$1!nl})
+     sourceQuantity=radianceDiagnostics.noRadsPerMIF$1, $
+     ptanQuantity=state.ptanGHz!nl})
 
 ;; This macro joins the above filled quantities
 !define(joinRadianceDiagnostics,{!dnl
@@ -179,9 +181,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
      /prefixSignal, sdName=' chisqChan !phase'
    joinedDGM_noRadsPerMIF$1_!phase: l2aux, source=radianceDiagnostics.noRadsPerMIF$1, $
      /prefixSignal, sdName=' noRadsPerMIF !phase'
-   joinedDGG_chisqBinned$1_!phase: l2gp, radianceDiagnostics.chisqBinned$1, $
+   joinedDGG_chisqBinned$1_!phase: l2gp, source=radianceDiagnostics.chisqBinned$1, $
      /prefixSignal, swath=' chisqBinned !phase'
-   joinedDGG_noRadsBinned$1_!phase: l2gp, radianceDiagnostics.noRadsBinned$1, $
+   joinedDGG_noRadsBinned$1_!phase: l2gp, source=radianceDiagnostics.noRadsBinned$1, $
      /prefixSignal, swath=' noRadsBinned !phase'
    !storeDGM(joinedDGM_chisqMMAF$1_!phase)!dnl
    !storeDGM(joinedDGM_chisqMMIF$1_!phase)!dnl
@@ -240,6 +242,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
   lowBound=lb$1, highBound=hb$1, diagnostics=diag$1})})
 
 ; $Log$
+; Revision 1.46  2003/05/10 22:22:17  livesey
+; New approach to standard products, joining, output, columns etc.
+;
 ; Revision 1.45  2003/05/10 20:47:08  livesey
 ; Bug fixes
 ;
