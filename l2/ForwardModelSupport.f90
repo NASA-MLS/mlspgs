@@ -133,7 +133,8 @@ contains ! =====     Public Procedures     =============================
         end do
       case ( f_l2pc )
         do j = 2, nsons(son)
-          call get_file_name ( mlspcf_l2pc_start, 'L2PC File not found in PCF' )
+          call get_file_name ( mlspcf_l2pc_start, 'L2PC File not found in PCF', &
+            & mlspcf_l2pc_end )
           if ( index ( fileName, '.txt' ) /= 0 ) then
             call open_l2pc_file ( fileName, lun)
             call read_l2pc_file ( lun )
@@ -154,19 +155,23 @@ contains ! =====     Public Procedures     =============================
   contains
 
     ! ............................................  Get_File_Name  .....
-    subroutine Get_File_Name ( pcfCode, MSG )
+    subroutine Get_File_Name ( pcfCode, MSG, pcfEndCode )
       integer, intent(in) :: pcfCode
       character(len=*), intent(in) :: MSG ! in case of error
+      integer, intent(in), optional :: pcfEndCode
 
       character(len=255) :: PCFFileName, path
       integer :: returnStatus             ! non-zero means trouble
+      integer :: mypcfEndCode
 
       call get_string ( sub_rosa(subtree(j,son)), fileName, strip=.true. )
       if ( TOOLKIT ) then
+        mypcfEndCode = pcfCode
+        if ( present(pcfEndCode) ) mypcfEndCode = pcfEndCode
         PCFFileName = fileName
         call split_path_name(PCFFileName, path, fileName)
         lun = GetPCFromRef(fileName, pcfCode, &
-          & pcfCode, &
+          & mypcfEndCode, &
           & TOOLKIT, returnStatus, Version, DEBUG, &
           & exactName=PCFFileName)
         if ( returnStatus /= 0 ) then
@@ -798,6 +803,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.73  2003/07/21 18:13:44  pwagner
+! Looks farther than just 1st l2pc file in pcf
+!
 ! Revision 2.72  2003/07/18 22:54:35  pwagner
 ! Ignores path in file names if TOOLKIT
 !
