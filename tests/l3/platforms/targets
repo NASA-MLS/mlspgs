@@ -35,6 +35,8 @@ REECHO=$(MLSBIN)/reecho.sh
 
 ALLOBJS = $(OBJS)
 
+PROG_NAME=test
+
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 libl3_sources = ../../../$(init_m_dir)/
@@ -52,11 +54,11 @@ delete_lib_first = no
 
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
-   pvm_message=Building mlsl3 test with PVM support
+   pvm_message=Building $(PROG_NAME) with PVM support
    PVM_OBJS=
 else
    pvm_linker_line=
-   pvm_message=Building mlsl3 test without PVM support
+   pvm_message=Building $(PROG_NAME) without PVM support
    PVM_OBJS=
 endif
 
@@ -66,10 +68,10 @@ ifdef LIB_BLAS
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
-   blas_message=Building mlsl3 test with externally-supplied BLAS
+   blas_message=Building $(PROG_NAME) with externally-supplied BLAS
 else
    blas_linker_line=
-   blas_message=Building mlsl3 test with internally-supplied BLAS
+   blas_message=Building $(PROG_NAME) with internally-supplied BLAS
 endif
 
 ifdef HDF5
@@ -93,6 +95,8 @@ else
    hdf5_message=Building test of mlsl3 without hdf5
 endif
 
+fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
+
 # ========================================================================
 # Now that we build libmlsl3.a for use by l3 and l3m, the following is outmoded
 #libl3.a: $(libl3_objs)
@@ -103,11 +107,12 @@ endif
 #	ar d $@ $(itmdir)/$(l3_driver)
 
 #test: $(ALLOBJS) $(PVM_OBJS) $(itmdir)/libmlsl3.a  $(libdir)/libmls.a
-test: $(ALLOBJS) $(itmdir)/libmlsl3.a $(libdir)/libmls.a
+$(PROG_NAME): $(ALLOBJS) $(itmdir)/libmlsl3.a $(libdir)/libmls.a
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(hdf5_message)"
-		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
+		@cat fftw_link_message
+		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L$(itmdir)/ -lmlsl3 \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
@@ -119,21 +124,24 @@ test: $(ALLOBJS) $(itmdir)/libmlsl3.a $(libdir)/libmls.a
 		-L${GCTP} -lGctp \
         $(pvm_linker_line) \
         $(blas_linker_line) \
-	-L${FFTW_ROOT} -lrfftw -lfftw \
+        $(fftw_linker_line) \
         $(hdf5_linker_line) \
         $(l_specials) $(LAFTER) \
 		  
 # ========================================================================
 
 clean:
-	rm -f *.o *.mod test
+	rm -f *.o *.mod $(PROG_NAME)
 
 tar:
 	rm -f l3test.tgz
-	tar hcvzf l3test.tgz * --exclude \*.o --exclude \*.mod --exclude test
+	tar hcvzf l3test.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
 
 # ========================================================================
 # $Log$
+# Revision 1.10  2001/08/13 18:09:08  pwagner
+# replaced shell echo -> shell {REECHO}
+#
 # Revision 1.9  2001/07/24 18:31:48  pwagner
 # Brought up to date with changes in mlspgs/l3
 #

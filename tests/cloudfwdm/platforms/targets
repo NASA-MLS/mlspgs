@@ -35,15 +35,17 @@ include $(srclib)/Makefile.dep
 # Add them to L2OBJS
 ALLOBJS = $(OBJS) $(srclib_objs) $(itmdir)/init_tables_module.o
 
+PROG_NAME=test
+
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
-   pvm_message=Building test of fwdmdl with PVM support
+   pvm_message=Building $(PROG_NAME) with PVM support
    PVM_OBJS=
 else
    pvm_linker_line=
-   pvm_message=Building test of fwdmdl without PVM support
+   pvm_message=Building $(PROG_NAME) without PVM support
    PVM_OBJS=
 endif
 
@@ -53,10 +55,10 @@ ifdef LIB_BLAS
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
-   blas_message=Building test of fwdmdl with externally-supplied BLAS
+   blas_message=Building $(PROG_NAME) with externally-supplied BLAS
 else
    blas_linker_line=
-   blas_message=Building test of fwdmdl with internally-supplied BLAS
+   blas_message=Building $(PROG_NAME) with internally-supplied BLAS
 endif
 
 ifdef HDF5
@@ -73,19 +75,19 @@ ifdef HDFEOS5
 else
    hdfeos5_linker_line=
 endif
-   hdf5_message=Building test of fwdmdl with hdf5
+   hdf5_message=Building $(PROG_NAME) with hdf5
 else
    hdf5_linker_line=
    hdfeos5_linker_line=
-   hdf5_message=Building test of fwdmdl without hdf5
+   hdf5_message=Building $(PROG_NAME) without hdf5
 endif
 
 # ========================================================================
-test: $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libcloud.a $(fwddir)/libfwdmdl.a $(libdir)/libmls.a
+$(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libcloud.a $(fwddir)/libfwdmdl.a $(libdir)/libmls.a
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(hdf5_message)"
-		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
+		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L${ourdir} -lcloud \
                       -L${fwddir} -lfwdmdl \
                       -L${libdir} -lmls \
@@ -104,14 +106,17 @@ test: $(ALLOBJS) $(PVM_OBJS) $(ourdir)/libcloud.a $(fwddir)/libfwdmdl.a $(libdir
 # ========================================================================
 
 clean:
-	rm -f *.o *.mod test
+	rm -f *.o *.mod $(PROG_NAME)
 
 tar:
 	rm -f libtest.tgz
-	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude test
+	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
 
 # ========================================================================
 # $Log$
+# Revision 1.2  2001/07/16 18:00:21  pwagner
+# Builds correctly with hdf5 on new and older Linux
+#
 # Revision 1.1  2001/07/02 18:30:20  pwagner
 # First commit
 #

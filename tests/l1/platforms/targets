@@ -36,6 +36,8 @@ REECHO=$(MLSBIN)/reecho.sh
 
 ALLOBJS = $(OBJS)
 
+PROG_NAME=test
+
 PVM_PATH = ${PVM_ROOT}/lib/${PVM_ARCH}
 
 libl1_sources = ../../../$(init_m_dir)/
@@ -53,11 +55,11 @@ delete_lib_first = no
 
 ifdef PVM_ROOT
    pvm_linker_line=-L${PVM_PATH} -lfpvm3 -lgpvm3 -lpvm3
-   pvm_message=Building mlsl1 test with PVM support
+   pvm_message=Building $(PROG_NAME) with PVM support
    PVM_OBJS=
 else
    pvm_linker_line=
-   pvm_message=Building mlsl1 test without PVM support
+   pvm_message=Building $(PROG_NAME) without PVM support
    PVM_OBJS=
 endif
 
@@ -67,10 +69,10 @@ ifdef LIB_BLAS
 else
    blas_linker_line=-L${BLAS} -lblas
 endif
-   blas_message=Building mlsl1 test with externally-supplied BLAS
+   blas_message=Building $(PROG_NAME) with externally-supplied BLAS
 else
    blas_linker_line=
-   blas_message=Building mlsl1 test with internally-supplied BLAS
+   blas_message=Building $(PROG_NAME) with internally-supplied BLAS
 endif
 
 ifdef HDF5
@@ -102,11 +104,11 @@ endif
 	ar ru $@ $?
 	ar d $@ $(itmdir)/$(l1_driver)
 
-test: $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
+$(PROG_NAME): $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
 		@echo "$(pvm_message)"
 		@echo "$(blas_message)"
 		@echo "$(hdf5_message)"
-		$(FC) $(LDOPTS) -o test $(ALLOBJS) $(PVM_OBJS)  \
+		$(FC) $(LDOPTS) -o $(PROG_NAME) $(ALLOBJS) $(PVM_OBJS)  \
                       -L./ -ll1 \
                       -L${libdir} -lmls \
 		-L${PGSTK} -lPGSTK \
@@ -124,11 +126,11 @@ test: $(ALLOBJS) $(PVM_OBJS) libl1.a $(libdir)/libmls.a
 # ========================================================================
 
 clean:
-	rm -f *.o *.mod test
+	rm -f *.o *.mod $(PROG_NAME)
 
 tar:
 	rm -f libtest.tgz
-	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude test
+	tar hcvzf libtest.tgz * --exclude \*.o --exclude \*.mod --exclude $(PROG_NAME)
 
 # ========================================================================
 
@@ -140,6 +142,9 @@ Sd.o:
 
 # ========================================================================
 # $Log$
+# Revision 1.10  2001/10/10 23:21:47  pwagner
+# Allows use by sids/l1boa
+#
 # Revision 1.9  2001/08/13 18:09:08  pwagner
 # replaced shell echo -> shell {REECHO}
 #
