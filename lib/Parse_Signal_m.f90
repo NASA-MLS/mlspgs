@@ -7,12 +7,13 @@ module Parse_Signal_M
   use Lexer_Core, only: Print_Source, Token
   use Lexer_m, only: Lex_Signal
   use MLSSignals_m, only: Bands, Radiometers, Signals, SpectrometerTypes
+  use MoreTree, only: Get_Spec_ID
   use Output_m, only: Output
   use String_table, only: Display_string, Get_String
   use Symbol_Table, only: Dump_symbol_class
   use Symbol_Types, only: T_Colon, T_Dot, T_End_of_input, T_Identifier, &
     & T_Minus
-  use Tree, only: Decoration, Source_Ref, Subtree
+  use Tree, only: Decoration, Source_Ref
 
   implicit NONE
   private
@@ -126,7 +127,7 @@ contains
             & expected = spec_indices((/ s_band, s_radiometer, &
             &                            s_spectrometerType /)) )
         else
-          select case ( decoration(subtree(1,decoration(subtree(1,decl%tree)))) )
+          select case ( get_spec_id(decl%tree) )
           case ( s_band )
             next = sawBand
             band_i = decoration(decl%tree)
@@ -281,15 +282,11 @@ contains
       switchMatch = switch < 0
 
       do i = 1, size(signals)
-!       spectrometer = decoration(decoration(signals(i)%spectrometerType))
         spectrometer = signals(i)%spectrometerType
-        if ( band_i >= 0 ) bandMatch(i) = &
-          & band_i == decoration(decoration(signals(i)%band))
+        if ( band_i >= 0 ) bandMatch(i) = band_i == signals(i)%band
         if ( channel >= 0 ) channelMatch(i) = &
           & channel >= lbound(spectrometerTypes(spectrometer)%frequencies,1) .and. &
           & channel <= ubound(spectrometerTypes(spectrometer)%frequencies,1)
-!       if ( radiometer_i >= 0 ) radiometerMatch(i) = &
-!         & radiometer_i == decoration(decoration(signals(i)%radiometer))
         if ( radiometer_i >= 0 ) radiometerMatch(i) = &
           & radiometer_i == signals(i)%radiometer
         if ( spectrometer_n >= 0 ) spectrometerMatch(i) = &
@@ -324,6 +321,9 @@ contains
 end module Parse_Signal_M
 
 ! $Log$
+! Revision 2.3  2001/03/16 00:34:50  vsnyder
+! Correct handling of the Band database
+!
 ! Revision 2.2  2001/03/15 23:57:27  vsnyder
 ! OOPS, forgot to put 'Log' at the end
 !
