@@ -78,9 +78,9 @@ contains
 
     Integer(ip) :: n_sps, i, j, no_of_lines, n_ele
     Integer(ip) :: Spectag, status
-    REAL(rp) :: bb, del_temp
+    REAL(rp) :: bb, del_temp, cld_ext
     REAL(rp), allocatable, dimension(:) :: PP, TT
-    logical :: Do_1D
+    logical :: Do_1D, Incl_Cld
 
 !-----------------------------------------------------------------------------
 
@@ -146,7 +146,7 @@ contains
       Spectag = Catalog(i)%Spec_Tag
 
       CALL create_beta ( Spectag, Catalog(i)%continuum, PB, T, &
-        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb )
+        &  FF, Lines(Catalog(i)%Lines)%W, gl_slabs(n_ele,i), bb, Incl_Cld, cld_ext )
       
       select case (Spectag)
       case (SP_H2O)
@@ -206,6 +206,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.11  2003/01/30 18:25:06  pwagner
+! Cosmetic changes; fixed bug where losVel was being changed
+!
 ! Revision 1.10  2003/01/16 18:13:24  jonathan
 ! add Do_1D option to get_gl_slabs_arrays
 !
