@@ -27,7 +27,7 @@ contains
 
     Integer(i4), intent(out) :: IER
 
-    Integer(i4) :: I, J, IND, NTR, IAS
+    Integer(i4) :: I, J, NTR, IAS
 
     ias = size(antennaPattern%aaap)/2
 !
@@ -707,6 +707,9 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 1.11  2001/04/10 01:16:34  livesey
+! Tidied up convolution
+!
 ! Revision 1.10  2001/04/09 23:32:29  zvi
 ! Correcting a small error in radiances folding code
 !

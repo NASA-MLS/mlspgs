@@ -55,7 +55,6 @@ Real(r8) :: values,t_power,dbeta_dw,dbeta_dn,dbeta_dnu
 Real(r8) :: y(50), ym(50), yp(50)
 Real(r8) :: yi(50), yim(50), yip(50)
 Real(r8) :: x1(50), x1m(50), x1p(50)
-Real(r8) :: y1(50), y1m(50), y1p(50)
 Real(r8) :: v0s(50), v0sm(50), v0sp(50)
 Real(r8) :: slabs1(50), slabs1m(50), slabs1p(50)
 Real(r8) :: dy_dv0(50), dx1_dv0(50), dslabs1_dv0(50)
@@ -206,6 +205,9 @@ Real(r8) :: dy_dv0(50), dx1_dv0(50), dslabs1_dv0(50)
  END SUBROUTINE get_beta_path
 end module GET_BETA_PATH_M
 ! $Log$
+! Revision 1.16  2001/04/05 21:58:47  zvi
+! Implementing l2cf inputs for FilterShape & Spectroscopy instead of FMI
+!
 ! Revision 1.15  2001/04/03 07:32:45  zvi
 ! Modify the spectral structure - eliminating sps_ from the names
 !

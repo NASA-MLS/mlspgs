@@ -67,21 +67,17 @@ contains
 
     integer :: FFT_INDEX(size(antennaPattern%aaap))
     integer :: Ind                      ! Index
-    integer :: FFT_pts, I, Is, J, Kc, Ki, Ktr, N, Nf, Ntr, Ptg_i, Spectag, Sv_i
+    integer :: FFT_pts, Is, J, Ktr, Nf, Ntr, Ptg_i, Sv_i
     integer :: Row, Col                 ! Matrix entries
-    integer :: No_phi_t, No_t, No_tan_hts, Lk, Uk
+    integer :: No_tan_hts, Lk, Uk
     logical :: Want_Deriv
 
     real(r8) :: K_star_tmp(ptan%template%noSurfs)
-    Real(r8) :: Q, R
+    Real(r8) :: Q
     Real(r8) :: SRad(ptan%template%noSurfs), Term(ptan%template%noSurfs)
     Real(r8), dimension(size(fft_index)) :: FFT_PRESS, FFT_ANGLES, RAD
 
-    Character :: CA
-
     ! -----  Begin the code  -----------------------------------------
-    no_t = temp%template%noSurfs
-    no_phi_t = temp%template%noInstances
     no_tan_hts = size(tan_press)
     k_star_tmp = 0.0
 
@@ -94,8 +90,6 @@ contains
 
     Rad(1:no_tan_hts) = i_raw(1:no_tan_hts)
 
-    kc = 0
-    ki = 0
     j = ptan%template%noSurfs
 
     ! Compute the convolution of the mixed radiances
@@ -363,90 +357,17 @@ contains
       end do                            ! Loop over species
     end if                              ! Any derivatives
 !
-    !     ! ****************** Spectroscopic derivatives ******************
-    ! !
-    !     if ( spect_der) then
-    ! !
-    !       do is = 1, n_sps
-    ! !
-    !         i = spect_atmos(is)
-    !         if ( i < 1) CYCLE
-    !         if ( .not.spectroscopic(i)%DER_CALC(band)) CYCLE
-    ! !
-    !         ! Derivatives needed continue to process
-    ! !
-    !         Spectag = atmospheric(is)%spectag
-    ! !
-    !         DO
-    ! !
-    !           if ( spectroscopic(i)%Spectag /= Spectag) EXIT
-    !           n = spectroscopic(i)%no_phi_values
-    !           nz = spectroscopic(i)%no_zeta_values
-    !           CA = spectroscopic(i)%type
-    !           ki = ki + 1
-    !           kc = kc + 1
-    !           k_star_info(kc)%name = spectroscopic(i)%NAME
-    !           k_star_info(kc)%first_dim_index = ki
-    !           k_star_info(kc)%no_phi_basis = n
-    !           k_star_info(kc)%no_zeta_basis = nz
-    !           k_star_info(kc)%zeta_basis(1:nz) = &
-    !             &  spectroscopic(i)%zeta_basis(1:nz)
-    ! !
-    !           do nf = 1, n
-    ! !
-    !             do sv_i = 1, nz
-    ! !
-    !               select case ( CA )
-    !               case ( 'W' )
-    !                 Rad(1:no_tan_hts) = k_spect_dw(1:no_tan_hts,sv_i,nf,i)
-    !               case ( 'N' )
-    !                 Rad(1:no_tan_hts) = k_spect_dn(1:no_tan_hts,sv_i,nf,i)
-    !               case ( 'V' )
-    !                 Rad(1:no_tan_hts) = k_spect_dnu(1:no_tan_hts,sv_i,nf,i)
-    !               case default
-    !                 Ier = -99
-    !                 Print *,'** Unknown Spectroscopic element !'
-    !                 Return
-    !               end select
-    ! !
-    !               ! Now Convolve the derivative
-    ! !
-    !               fft_angles(1:no_tan_hts) = ptg_angles(1:no_tan_hts)
-    !               Call fov_convolve(fft_angles,Rad,center_angle,1,no_tan_hts, &
-    !                 &               fft_pts,AntennaPattern,Ier)
-    !               if ( Ier /= 0) Return
-    ! !
-    !               if ( fft_index(1).gt.0) then
-    !                 do ptg_i = 1, Ktr
-    !                   Rad(ptg_i) = Rad(fft_index(ptg_i))
-    !                 end do
-    !               end if
-    ! !
-    !               ! Interpolate onto the output grid, and store in k_star_all ..
-    ! !
-    !               Call Lintrp(fft_press,Ptan,Rad,SRad,Ktr,j)
-    !               k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
-    ! !
-    !             end do        ! sv_i loop
-    ! !
-    !           end do          ! nf loop
-    ! !
-    !           i = i + 1
-    !           if ( i > 3 * n_sps) EXIT
-    ! !
-    !         END DO
-    ! !
-    !       end do
-    ! !
-    !     end if
-!
-10  CONTINUE ! K_INFO_COUNT = kc
+10  CONTINUE
+
     Return
 !
   End Subroutine CONVOLVE_ALL
 !
 end module CONVOLVE_ALL_M
 ! $Log$
+! Revision 1.24  2001/05/01 17:48:33  vsnyder
+! Cosmetic changes -- put dummy arg declarations in same order as in header
+!
 ! Revision 1.23  2001/05/01 00:42:54  zvi
 ! Fixing phi window bug
 !

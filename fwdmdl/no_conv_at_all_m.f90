@@ -58,8 +58,8 @@ contains
 
     integer:: No_t, No_tan_hts, No_phi_t
     type (VectorValue_T), pointer :: F  ! vmr quantity
-    integer :: Nz, Lk, Uk
-    integer :: N, I, IS, J, K, NF, SV_I, Spectag
+    integer :: Lk, Uk
+    integer :: IS, J, K, NF, SV_I, Spectag
     integer :: Row, col                 ! Indices
     integer :: Ptg                      ! Index
     integer :: Ind                      ! Index
@@ -68,8 +68,6 @@ contains
     real(r8) :: SRad(ptan%template%noSurfs)
     real(r8) :: Der_all(ptan%template%noSurfs)
     real(r8) :: I_star_all(ptan%template%noSurfs)
-
-    Character :: CA
 
     ! -----  Begin the code  -------------------------------------------
 
@@ -177,7 +175,6 @@ contains
 
         if ( associated(f) ) then
 
-          nz = f%template%noSurfs
           Rad(1:) = 0.0
 
           ! Derivatives needed continue to process
@@ -213,72 +210,15 @@ contains
 
     end if
 
-!     if ( spect_der ) then
-
-! ! ****************** Spectroscopic derivatives ******************
-! !
-!       do is = 1, n_sps
-! !
-!         i = spect_atmos(is)
-!         if ( i < 1) CYCLE
-!         if ( .not.spectroscopic(i)%DER_CALC(band)) CYCLE
-! !
-! ! Derivatives needed continue to process
-! !
-!         Spectag = atmospheric(is)%spectag
-! !
-!         DO
-! !
-!           if ( spectroscopic(i)%Spectag /= Spectag) EXIT
-!           n = spectroscopic(i)%no_phi_values
-!           nz = spectroscopic(i)%no_zeta_values
-!           CA = spectroscopic(i)%type
-!           ki = ki + 1
-!           kc = kc + 1
-!           k_star_info(kc)%name = spectroscopic(i)%NAME
-!           k_star_info(kc)%first_dim_index = ki
-!           k_star_info(kc)%no_phi_basis = n
-!           k_star_info(kc)%no_zeta_basis = nz
-!           k_star_info(kc)%zeta_basis(1:nz) = &
-!                   &  spectroscopic(i)%zeta_basis(1:nz)
-! !
-!           Rad(1:) = 0.0
-!           do nf = 1, n
-! !
-!             do sv_i = 1, nz
-! !
-!               select case ( CA )
-!                 case ( 'W' )
-!                   Rad(1:k) = k_spect_dw(1:k,sv_i,nf,i)
-!                 case ( 'N' )
-!                   Rad(1:k) = k_spect_dn(1:k,sv_i,nf,i)
-!                 case ( 'V' )
-!                   Rad(1:k) = k_spect_dnu(1:k,sv_i,nf,i)
-!               end select
-! !
-!               Call Lintrp(tan_press,Ptan,Rad,SRad,k,j)
-!               k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
-! !
-!             end do        ! sv_i loop
-! !
-!           end do          ! nf loop
-! !
-!           i = i + 1
-!           if ( i > 3 * n_sps) EXIT
-! !
-!         END DO
-! !
-!       end do
-! !
-!     end if
-
-
     Return
 
   End Subroutine NO_CONV_AT_ALL
 
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.18  2001/05/01 00:42:54  zvi
+! Fixing phi window bug
+!
 ! Revision 1.17  2001/04/28 17:47:57  livesey
 ! Now accepts and sets rowFlags
 !
