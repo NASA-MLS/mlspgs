@@ -24,11 +24,13 @@ Switches (set by -S option in mlsl2's command line):
   l2aux => l2aux quantities (all) dumped
   l2gp =>  l2gp swaths (all) dumped
   log =>   Log file messages
-  pro =>   Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta
   mas =>   Activities of the PVM master task
+  msk =>   Mask set up by subset command in Retrieve
   neq =>   Normal equations during retriever iterations
   ndb =>   Dump the Newton method's internal variables before every step
   nwt =>   Action flag at each return from Newton solver
+  pro =>   Proclaim each product file: l2gp, l2aux, l2dgg, l2pc, meta
+  qtmp =>  Quantity templates being constructed
   rad =>   Radiances in ForwardModelInterface
   sca =>   Scalars of interest to the Newton method
   slv =>   Show output of slaves using pvmfcatchout
@@ -65,6 +67,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.10  2001/09/28 18:07:18  pwagner
+ Added time switch
+
  Revision 1.9  2001/09/21 17:37:00  pwagner
  New chi switch
 
