@@ -33,20 +33,21 @@ module SYMBOL_TABLE
 
 contains
   ! =========================================     ADD_TERMINAL     =====
-  integer function ADD_TERMINAL ( TERMINAL )
+  integer function ADD_TERMINAL ( TERMINAL, DEBUG )
   ! Add a terminal symbol with token index TERMINAL to the symbol table.
   ! Its text has already been entered into the string table by
   ! STRING_TABLE % ADD_CHAR.
     integer, intent(in) :: TERMINAL
+    logical, optional, intent(in) :: DEBUG
 
     integer :: WHERE
     logical :: FOUND
 
-    call lookup_and_insert ( where, found, caseless_look(terminal) )
+    call lookup_and_insert ( where, found, caseless_look(terminal), DEBUG )
     if ( where > size(symbols) ) then
       call increase_symbols ! String table was expanded
     end if
-    if ( toggle(tab) ) then
+    if ( toggle(tab) .OR. present(DEBUG)) then
       call output ( 'Looked up ' ); call output ( terminal )
       call output ( ' ' ); call display_string ( where )
       if ( caseless_look(terminal) ) then; call output ( ' caseless' ); end if
@@ -131,13 +132,14 @@ contains
     return
   end subroutine DUMP_SYMBOL_TYPE
   ! =======================================     ENTER_TERMINAL     =====
-  integer function ENTER_TERMINAL ( TEXT, TERMINAL )
+  integer function ENTER_TERMINAL ( TEXT, TERMINAL, DEBUG )
   ! Put the text of a terminal symbol at the end of the character table,
   ! then enter it and its terminal index into the symbol table.
     character(len=*), intent(in) :: TEXT
     integer, intent(in) :: TERMINAL
+    logical, optional, intent(in) :: DEBUG
     call add_char ( text )
-    enter_terminal = add_terminal ( terminal )
+    enter_terminal = add_terminal ( terminal, DEBUG )
     return
   end function ENTER_TERMINAL
   ! ====================================     INIT_SYMBOL_TABLE     =====
@@ -220,6 +222,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.3  2001/06/06 17:33:03  pwagner
+! DEBUG optional arg to (add, enter)_terminal
+!
 ! Revision 2.2  2001/04/21 00:37:30  vsnyder
 ! Add 'Destroy_Symbol_Table' routine
 !
