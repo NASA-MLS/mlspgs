@@ -57,6 +57,9 @@ Switches (set by -S option in mlsl2's command line):
   qtmp =>   Quantity templates being constructed
   rad =>    Radiances in ForwardModelInterface
   reg =>    Dump regularization matrix
+  runxxx => run only the following chunks in parallel mode (depending on xxx)
+             first (first)  last (last)   firstlast (first and last)
+             (Warning--output files will contain fillvalues for other chunks)
   sca =>    Scalars of interest to the Newton method
   seez =>   Turn on some of Zvi's debugging output in FullForwardModel
   sig =>    MLS Signals
@@ -108,6 +111,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.44  2004/07/17 02:40:09  vsnyder
+ Add fwmd
+
  Revision 1.43  2004/07/08 21:02:11  vsnyder
  Replace 'bgrp' switch with 'sps' switch
 
