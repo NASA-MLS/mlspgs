@@ -854,7 +854,7 @@ contains ! =====     Public Procedures     =============================
               else
                 call FillRHIFromH2O ( key, quantity, &
                 & h2oQuantity, temperatureQuantity, &
-                & dontMask, ignoreZero, ignoreNegative )
+                & dontMask, ignoreZero, ignoreNegative, interpolate )
               endif
             endif
           case default
@@ -2265,11 +2265,23 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------- FillRHIFromH2O ----
   subroutine FillRHIFromH2O ( key, quantity, &
-   & h2oQuantity, temperatureQuantity, dontMask, ignoreZero, ignoreNegative )
+   & h2oQuantity, temperatureQuantity, &
+   & dontMask, ignoreZero, ignoreNegative, interpolate )
     ! Convert h2o vmr to %RHI
     ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
     !  humidity measurement: Method and validation" Read et. al. 
     !  J. Geoph. Res. Dec. 2001 (106) D23)
+
+    !  Method:
+    ! (1) straight convert--all quantities must have the same shape
+    ! (2) interpolate--all quantities may have different shapes
+    !     (the interpolation will be along the vertical coordinate only)
+    !     I.e., for xQuantity (where x can be h2o or temperature)
+    !     if NoChans(xQuantity) /= NoChans(Quantity)
+    !        => use only xQuantity(channel==1)
+    !     if NoInstances(xQuantity) /= NoInstances(Quantity)
+    !        => use only xQuantity(instance==1)
+    !
     integer, intent(in) :: key          ! For messages
     type (VectorValue_T), intent(inout) :: QUANTITY ! rhi Quantity to fill
     type (VectorValue_T), intent(in) :: h2oQuantity ! vmr
@@ -2278,20 +2290,33 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)           ::    dontMask    ! Use even masked values
     logical, intent(in)           ::    ignoreZero  ! Ignore 0 values of h2o
     logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
+    logical, intent(in)           ::    interpolate ! If VGrids differ
 
     ! Local variables
     integer ::                          Channel     ! Channel loop counter    
+    integer ::                          Chan_h2o    ! Channel loop counter    
+    integer ::                          Chan_T      ! Channel loop counter    
     integer ::                          S           ! Surface loop counter    
-    integer ::                          I           ! Instances               
+    integer ::                          I           ! Instances
+    integer ::                          I_H2O       ! Instances
+    integer ::                          I_T         ! Instances
     integer ::                          QINDEX                                
-    integer ::                          NOCHANS                               
     integer ::                          N           ! Num. of summed values   
     logical ::                          skipMe                                
+    logical                          :: matched_h2o_channels
+    logical                          :: matched_h2o_instances
     logical                          :: matched_sizes
     logical                          :: matched_surfs
-    logical, parameter               :: interpolate = .false.
+    logical                          :: matched_T_channels
+    logical                          :: matched_T_instances
+!    logical, parameter               :: interpolate = .false.
     integer                          :: dim
-    real (r8), dimension(quantity%template%noSurfs) :: outZeta
+    real (r8), dimension(quantity%template%noSurfs) :: &
+     &                                  zeta, TofZeta, H2OofZeta
+    real (r8), dimension(Temperaturequantity%template%noSurfs) :: &
+     &                                  zetaTemperature, oldTemperature
+    real (r8), dimension(h2oquantity%template%noSurfs) :: &
+     &                                  zetaH2o, oldH2o
     real (r8) ::                        T
     ! Executable statements
     ! Check that all is well
@@ -2306,7 +2331,7 @@ contains ! =====     Public Procedures     =============================
     if ( .not. (matched_sizes .or. interpolate) ) then
      call Announce_Error ( key, No_Error_code, &
       & 'Incompatible quantities in FillRHIFromH2O--' //&
-      & '(currently all must have same size)' )
+      & '(unless interpolating, all must have same shape)' )
      return
     endif
     matched_surfs = .true.
@@ -2318,36 +2343,112 @@ contains ! =====     Public Procedures     =============================
     if ( .not. (matched_surfs .or. interpolate) ) then
      call Announce_Error ( key, No_Error_code, &
       & 'Different vertical coords in FillRHIFromH2O--' //&
-      & '(currently all must be on the same VGrid)' )
+      & '(unless interpolating, all must be on the same VGrid)' )
      return
     endif
-    ! zeta must be in log(hPa) units
-    if ( quantity%template%verticalCoordinate == l_pressure ) then  
-      outZeta = -log10 ( quantity%template%surfs(:,1) )             
-    else                                                            
-      outZeta = quantity%template%surfs(:,1)                        
-    endif                                                           
+    matched_h2o_channels = &
+     &   (h2oQuantity%template%noChans == Quantity%template%noChans)
+    matched_h2o_instances = &
+     &   (h2oQuantity%template%noInstances == Quantity%template%noInstances)
+    matched_T_channels = &
+     &   (TemperatureQuantity%template%noChans == Quantity%template%noChans)
+    matched_T_instances = &
+     &   (TemperatureQuantity%template%noInstances == Quantity%template%noInstances)
     ! Now let's do the actual conversion
     do i=1, quantity%template%noInstances
+      ! zeta must be in log(hPa) units
+      if ( quantity%template%verticalCoordinate == l_pressure ) then 
+        zeta = -log10 ( quantity%template%surfs(:,i) )             
+      else                                                           
+        zeta = quantity%template%surfs(:,i)                        
+      endif
+      if ( interpolate .and. .not. matched_h2o_instances ) then
+        i_h2o = 1
+      else
+        i_h2o = i
+      endif
+      if ( interpolate .and. .not. matched_T_instances ) then
+        i_T = 1
+      else
+        i_T = i
+      endif
+      if ( h2oquantity%template%verticalCoordinate == l_pressure ) then 
+        zetah2o = -log10 ( h2oquantity%template%surfs(:,i_h2o) )             
+      else                                                           
+        zetah2o = h2oquantity%template%surfs(:,i_h2o)            
+      endif
+      if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
+        zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,i_T) )             
+      else                                                           
+        zetaTemperature = Temperaturequantity%template%surfs(:,i_T)            
+      endif
       N = 0
       do Channel=1, quantity%template%noChans
+        if ( interpolate .and. .not. matched_h2o_channels ) then
+          Chan_h2o = 1
+        else
+          Chan_h2o = Channel
+        endif
+        if ( interpolate .and. .not. matched_T_channels ) then
+          Chan_T = 1
+        else
+          Chan_T = Channel
+        endif
+        if ( interpolate ) then
+          do s=1, h2oquantity%template%noSurfs
+            qIndex = Chan_h2o + (s-1)*h2oquantity%template%noChans
+            oldH2o(s) = h2oQuantity%values(qIndex, i_h2o)
+          enddo
+          ! Know the following about the procedure we will call:
+          ! First pair of args are old(X,Y), next pair are new(X,Y)
+          ! We want newY(newX) via linear interp. w/o extrapolating
+          ! and mark undefined values among oldY with UNDEFINED_VALUE
+          call InterpolateValues( zetah2o, oldH2o, &
+           & zeta, H2OofZeta, &
+           & 'Linear', extrapolate='Constant', &
+           & badValue=real(UNDEFINED_VALUE, r8), &
+           & missingRegions=.TRUE. )
+          do s=1, Temperaturequantity%template%noSurfs
+            qIndex = Chan_T + (s-1)*Temperaturequantity%template%noChans
+            oldTemperature(s) = TemperatureQuantity%values(qIndex, i_T)
+          enddo
+          call InterpolateValues( zetaTemperature, oldTemperature, &
+           & zeta, TofZeta, &
+           & 'Linear', extrapolate='Constant', &
+           & badValue=real(UNDEFINED_VALUE, r8), &
+           & missingRegions=.TRUE. )
+        else
+          do s=1, quantity%template%noSurfs
+            N = N + 1
+            qIndex = Channel + (s-1)*quantity%template%noChans
+            H2OofZeta(s) = h2oQuantity%values(qIndex, i)
+            TofZeta(s) = TemperatureQuantity%values(qIndex, i)
+          enddo
+        endif
         do s=1, quantity%template%noSurfs
           N = N + 1
-          qIndex = Channel + (s-1)*nochans
-          skipMe = &
+          qIndex = Channel + (s-1)*quantity%template%noChans
+          skipMe = .false.
+          if ( .not. interpolate) then
+           skipMe = skipMe .or. &
+           & .not. dontMask .and. ( &
+           &   isVectorQtyMasked(h2oQuantity, qIndex, i) .or. &
+           &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
+           & )
+          endif
+          skipMe = skipMe .or. &
           & .not. dontMask .and. ( &
-          &   isVectorQtyMasked(h2oQuantity, qIndex, i) .or. &
-          &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
-          & .or. (ignoreNegative .and. h2oQuantity%values(qIndex, i) < 0.0 ) &
-          & .or. (ignoreZero .and. h2oQuantity%values(qIndex, i) == 0.0 ))
+          & (ignoreNegative .and. H2OofZeta(s) < 0.0 ) &
+          & .or. (ignoreZero .and. H2OofZeta(s) == 0.0 ) &
+          & )
           ! But skip no matter what else if temperature illegal
-          skipMe = skipMe .or. temperatureQuantity%values(qIndex, i) <= 0.0
+          skipMe = skipMe .or. TofZeta(s) <= 0.0
           if ( .not. skipMe ) then
-            T = temperatureQuantity%values(qIndex, i)
+            T = TofZeta(s)
             Quantity%values(qIndex, i) = &
-             & h2oQuantity%values(qIndex, i) &
+             & H2OofZeta(s) &
              & * &
-             & exp(-(C(T)+outZeta(qIndex)) * log(10.)) &
+             & exp(-(C(T)+zeta(qIndex)) * log(10.)) &
              & / &
              & exp(3.56654*log(T/273.16))
           endif
@@ -3115,6 +3216,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.118  2002/04/13 00:31:46  pwagner
+! More flesh on FillrhiFromH2o; still untested
+!
 ! Revision 2.117  2002/04/11 23:51:28  pwagner
 ! Fleshed out FillRHIFromH2O; untested yet
 !
