@@ -391,6 +391,7 @@ contains ! =====     Public procedures     =============================
              l+l_jacobian_cols, l+l_jacobian_rows, &
              l+l_losTransFunc, l+l_losVel, &
              l+l_massMeanDiameterIce, l+l_massMeanDiameterWater, &
+             l+l_numF, l+l_numJ, &
              l+l_orbitInclination, l+l_ptan, l+l_radiance, l+l_earthradius,&
              l+l_refGPH, l+l_sizedistribution, &
              l+l_scanResidual, l+l_scECI, l+l_scVel, l+l_scGeocAlt, &
@@ -844,6 +845,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.189  2001/11/17 02:30:16  vsnyder
+! Add L_numF and L_numJ
+!
 ! Revision 2.188  2001/11/15 23:49:49  jonathan
 ! rename DF_spectroscopy to default_spectroscopy
 !
