@@ -21,6 +21,7 @@ module L1BData
   use MLSStrings, only: CompressString, NumStringElements
   use MoreTree, only: Get_Field_ID
   use Output_M, only: Output
+  use SDPToolkit, only: max_orbits
   use String_Table, only: Get_String
   use TREE, only: NSONS, SUB_ROSA, SUBTREE, DUMP_TREE_NODE, SOURCE_REF
 
@@ -57,6 +58,7 @@ module L1BData
 ! L1BOASetup                      From l2cf, open, and save l1boa file info
 ! L1BRadSetup                     From l2cf, open, and save l1brad file info
 ! ReadL1BData                     Read all info concerning a l1brad quantity
+! ReadL1BAttribute                Read attributes 
 ! === (end of toc) ===
 
 ! === (start of api) ===
@@ -80,13 +82,15 @@ module L1BData
 ! ReadL1BData (int L1FileHandle, char QuantityName, l1bData_T l1bData,
 !               int NoMAFs, int Flag, [int FirstMAF], [int LastMAF],
 !               [log NeverFail], [int hdfVersion]) 
+! ReadL1BAttribute (int L1FileHandle, value(:), nchar AttributeName, 
+!               int Flag, [int hdfVersion]) 
 ! === (end of api) ===
 
   private
 
   public :: Dump, L1BData_T, L1BRadSetup, L1BOASetup, DeallocateL1BData, &
     & FINDL1BDATA, NAME_LEN, PRECISIONSUFFIX, ReadL1BData, &
-    & AssembleL1BQtyName
+    & AssembleL1BQtyName, ReadL1BAttribute
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -99,6 +103,11 @@ module L1BData
 
   interface DUMP
     module procedure DumpL1BData
+  end interface
+
+  interface ReadL1BAttribute
+    module procedure ReadL1BAttribute_intarr1, &
+	& ReadL1BAttribute_dblarr1
   end interface
 
   ! Parameters
@@ -120,6 +129,8 @@ module L1BData
   ! (An early idea we later repented of)
   logical, parameter :: DROPTPSUBGROUP = .true.
 
+  ! Max number for Orbit Number and Orbit period
+
   ! This data type is used to store quantities from an L1B data file.
 
   type L1BData_T
@@ -130,9 +141,9 @@ module L1BData
     integer :: MaxMIFs                  ! Max # of MIFs/MAF in SD array
     integer :: NoAuxInds                ! # of auxilliary indices
     integer :: TrueRank                 ! # necessary indices (e.g., 1 for MAFs)
+    character (len=16) :: NameInst     
 
     integer, dimension(:), pointer :: CounterMAF => NULL() ! dimensioned (noMAFs)
-
     character, dimension(:,:,:), pointer :: CharField => NULL()
     real(r8),  dimension(:,:,:), pointer :: DpField => NULL()
     integer,   dimension(:,:,:), pointer :: IntField => NULL()
@@ -294,6 +305,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     myDetails = 1
     if ( present(details) ) myDetails = details
     
+    call output(trim(L1bData%NameInst), advance='yes')
     call output('L1B rad quantity Name = ', advance='no')
     call output(trim(L1bData%L1BName), advance='yes')
     if ( myDetails < -1 ) return
@@ -500,6 +512,116 @@ contains ! ============================ MODULE PROCEDURES ======================
     end do
 
   end subroutine L1bradSetup
+
+  !-------------------------------------ReadL1BAttribute_intarr1l---------
+  subroutine ReadL1BAttribute_intarr1 ( L1FileHandle, value, AttrName, Flag, &
+     & hdfVersion )
+    
+    use MLSHDF5, only: IsHDF5AttributePresent, GetHDF5Attribute
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+
+    ! Dummy arguments
+    integer, intent(in)            :: L1FileHandle ! From HDF
+    integer, intent(out) :: value(:) ! Result
+    character(len=*), intent(in) :: AttrName ! attribute name to retrieve
+    integer, intent(out) :: Flag        ! Error flag
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local variables
+    integer :: myhdfVersion
+    integer :: aID, status
+
+    ! Executable code
+    if ( present(hdfVersion) ) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L1BDEFAULT_HDFVERSION
+    end if
+
+    Flag = 0
+
+    if ( myhdfVersion == HDFVERSION_4 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Not implement in l1boa file')
+	Flag = -1
+    else 
+	call h5gOpen_f (L1FileHandle,'/', aID, status)
+        if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Unable to open group attribute in l1boa file' )
+	   Flag = -1
+	end if	
+     	if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
+     	   Flag = -1
+           call MLSMessage ( MLSMSG_Warning, ModuleName, &
+		& 'Failed to find attribute in l1boa file'//AttrName)
+	else 
+           call output ('get attribute', advance='no')
+           call output (AttrName, advance='yes')
+           call GetHDF5Attribute(aID, AttrName, value)
+    	end if
+	call h5gClose_f (aID, status)
+        if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Unable to close group attribute in l1boa file' )
+	end if	
+    end if
+  end subroutine ReadL1BAttribute_intarr1
+
+  !-------------------------------------ReadL1BAttribute_dbtarr1l---------
+  subroutine ReadL1BAttribute_dblarr1 ( L1FileHandle, value, AttrName, Flag, &
+     & hdfVersion )
+    
+    use MLSHDF5, only: IsHDF5AttributePresent, GetHDF5Attribute
+    use HDF5, only: H5GCLOSE_F, H5GOPEN_F
+
+    ! Dummy arguments
+    integer, intent(in)            :: L1FileHandle ! From HDF
+    real(r8), intent(out) :: value(:) ! Result
+    character(len=*), intent(in) :: AttrName   ! attribute name to retrieve
+    integer, intent(out) :: Flag        ! Error flag
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local variables
+    integer :: myhdfVersion
+    integer :: aID, status
+
+    ! Executable code
+    if ( present(hdfVersion) ) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L1BDEFAULT_HDFVERSION
+    end if
+
+    Flag = 0
+
+    if ( myhdfVersion == HDFVERSION_4 ) then
+        call MLSMessage ( MLSMSG_Warning, ModuleName, &
+        & 'Not implement in l1boa file')
+	Flag = -1
+    else 
+	call h5gOpen_f (L1FileHandle,'/', aID, status)
+        if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Unable to open group attribute in l1boa file' )
+	   Flag = -1
+	end if	
+     	if ( .not. IsHDF5AttributePresent(aID, AttrName) ) then
+     	   Flag = -1
+           call MLSMessage ( MLSMSG_Warning, ModuleName, &
+		& 'Failed to find attribute in l1boa file'//AttrName)
+	else 
+           call output ('get attribute', advance='no')
+           call output (AttrName, advance='yes')
+           call GetHDF5Attribute(aID, AttrName, value)
+    	end if
+	call h5gClose_f (aID, status)
+        if ( status /= 0 ) then
+	   call MLSMessage ( MLSMSG_Warning, ModuleName, &
+          	& 'Unable to close group attribute in l1boa file' )
+	end if	
+    end if
+  end subroutine ReadL1BAttribute_dblarr1
 
   !-------------------------------------------------  ReadL1BData  -----
   subroutine ReadL1BData ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
@@ -1253,6 +1375,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.43  2003/09/12 16:37:10  cvuu
+! add subroutine to read L1BOA attributes
+!
 ! Revision 2.42  2003/05/07 01:05:57  vsnyder
 ! Remove three duplicated lines
 !
