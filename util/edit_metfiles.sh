@@ -200,7 +200,7 @@ while [ "$more_opts" = "yes" ] ; do
        shift
        ;;
     -2 )
-       usage="1"
+       usage="2"
        shift
        ;;
     -obj )
@@ -288,6 +288,9 @@ done
 rm temp.sed
 exit 0
 # $Log$
+# Revision 1.2  2003/05/28 16:20:34  pwagner
+# Small fix--not yet tested with resed script
+#
 # Revision 1.1  2003/05/22 20:52:19  pwagner
 # First commit
 #
