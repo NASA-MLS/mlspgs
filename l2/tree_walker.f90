@@ -121,7 +121,8 @@ contains ! ====     Public Procedures     ==============================
       & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
       & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
-    nullify ( l2pcf%anText ) ! for Sun's rubbish compiler
+!   The following should not be needed
+!    call nullifyPCFData ( l2pcf ) ! for Sun's rubbish compiler
     depth = 0
     totalNGC = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
@@ -370,6 +371,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.98  2002/11/22 01:14:06  vsnyder
+! Remove USE'd but unreferenced symbols and two unused local variables
+!
 ! Revision 2.97  2002/11/21 18:45:04  livesey
 ! Changes to way the destroy stuff is called based on chunks
 !
