@@ -1561,7 +1561,7 @@ MODULE L3DZData
 
          attrName = 'ReprocessingActual'
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-              & 'processed once')
+              & 'unknown')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2167,6 +2167,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.17  2004/12/13 17:41:26  cvuu
+! remove writing QA flags to meta file, use the ones in MCF v1.5
+!
 ! Revision 1.16  2004/08/04 23:21:23  pwagner
 ! Much moved from MLSStrings to MLSStringLists
 !

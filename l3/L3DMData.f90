@@ -1460,7 +1460,7 @@ CONTAINS
          
          attrName = 'ReprocessingActual'
          result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), attrName, &
-              & 'processed once')
+              & 'unknown')
          IF (result /= PGS_S_SUCCESS) THEN
             msr = METAWR_ERR // attrName
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -2149,6 +2149,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.38  2004/12/13 17:40:56  cvuu
+!# remove writing QA flags to meta file, use the ones in MCF v1.5
+!#
 !# Revision 1.37  2004/08/04 23:20:55  pwagner
 !# Much moved from MLSStrings to MLSStringLists
 !#
