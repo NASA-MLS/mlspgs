@@ -62,6 +62,7 @@ dnwt_sqt
 # earthRefl -- in lib/lit_names.txt
 either
 explicit
+extractChannel
 estimatedNoise
 even
 
@@ -150,6 +151,9 @@ weighted
 wmoTropopause
 
 # $Log$
+# Revision 2.48  2004/04/16 00:46:41  livesey
+# Added extractChannel
+#
 # Revision 2.47  2004/03/22 18:25:38  livesey
 # Added combineChannels
 #
