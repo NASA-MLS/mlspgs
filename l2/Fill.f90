@@ -1406,6 +1406,8 @@ contains ! =====     Public Procedures     =============================
           if ( .not. all(got( (/f_lsbFraction,f_usbFraction/) ))) &
             & call Announce_Error ( key, No_Error_Code, &
             & 'Missing a usb/lsb fraction field for vector fill' )
+          if ( .not. got ( f_channel ) ) call Announce_Error ( key, &
+            & no_error_code, 'Must supply channel for spreadChannel fill' )
           sourceQuantity => GetVectorQtyByTemplateIndex( &
             & vectors(sourceVectorIndex), sourceQuantityIndex )
           lsbFraction => GetVectorQtyByTemplateIndex ( &
@@ -5505,6 +5507,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.204  2003/04/24 00:35:14  dwu
+! modify splitSideband to allow the splitted sideband cloud radiances being spread to other bands assuming the f**4 law
+!
 ! Revision 2.203  2003/04/24 00:29:45  dwu
 ! modify splitSideband to allow the splitted sideband cloud radiances being spread to other bands assuming the f**4 law
 !
