@@ -10,9 +10,9 @@ module Fill                     ! Create vectors and fill them.
   use GriddedData, only: GriddedData_T
   use INIT_TABLES_MODULE, only: F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, &
     & F_H2OQUANTITY, F_MAXITERATIONS, F_METHOD, F_QUANTITY, F_REFGPHQUANTITY, &
-    & F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY,&
-    & F_SPREAD, F_TEMPERATUREQUANTITY, F_TNGTECI, FIELD_FIRST, FIELD_LAST,&
-    & L_EXPLICIT, L_GPH, L_HYDROSTATIC, L_L1B, L_L2GP, &
+    & F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, F_SOURCEL2GP, &
+    & F_SOURCEQUANTITY, F_SPREAD, F_TEMPERATUREQUANTITY, F_TNGTECI, FIELD_FIRST, &
+    & FIELD_LAST, L_EXPLICIT, L_GPH, L_GRIDDED, L_HYDROSTATIC, L_L1B, L_L2GP, &
     & L_L2AUX, L_LOSVEL, L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, &
     & L_SCECI, L_SCGEOCALT, L_SCVEL, L_SPECIAL, L_TEMPERATURE, L_TNGTECI,&
     & L_TNGTGEODALT, L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VMR, &
@@ -67,7 +67,8 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: numChansisZero = numSurfsisZero+1
   integer, parameter :: objIsFullRank3 = numChansisZero+1
   integer, parameter :: otherErrorInFillVector = objIsFullRank3+1
-  integer, parameter :: noSourceL2GPGiven= otherErrorInFillVector+1
+  integer, parameter :: noSourceGridGiven= otherErrorInFillVector+1
+  integer, parameter :: noSourceL2GPGiven= noSourceGridGiven+1
   integer, parameter :: noSourceL2AUXGiven= noSourceL2GPGiven+1
   integer, parameter :: noExplicitValuesGiven= noSourceL2AUXGiven+1
   integer, parameter :: noSourceQuantityGiven= noExplicitValuesGiven+1
@@ -112,7 +113,7 @@ contains ! =====     Public Procedures     =============================
 
   !---------------------------------------------------  MLSL2Fill  -----
 
-  subroutine MLSL2Fill ( root, l1bInfo, aprioriData, vectorTemplates, vectors, &
+  subroutine MLSL2Fill ( root, l1bInfo, griddedData, vectorTemplates, vectors, &
     & qtyTemplates , L2GPDatabase, L2AUXDatabase, chunks, chunkNo )
 
     ! This is the main routine for the module.  It parses the relevant lines
@@ -121,7 +122,7 @@ contains ! =====     Public Procedures     =============================
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the FILL section in the AST
     type (L1BInfo_T), intent(in) :: l1bInfo
-    type (GriddedData_T), dimension(:), pointer :: aprioriData
+    type (GriddedData_T), dimension(:), pointer :: griddedData
     type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
     type (Vector_T), dimension(:), pointer :: vectors
     type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
@@ -151,6 +152,7 @@ contains ! =====     Public Procedures     =============================
     integer :: FIELDINDEX               ! Entry in tree
     integer :: FILLMETHOD               ! How will we fill this quantity
     integer :: GSON                     ! Descendant of Son
+    integer :: GRIDINDEX                ! Index of requested grid
     integer :: H2OQUANTITYINDEX         ! in the quantities database
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: I, J, K                  ! Loop indices for section, spec, expr
@@ -280,6 +282,8 @@ contains ! =====     Public Procedures     =============================
             refGPHQuantityIndex=decoration(decoration(decoration(subtree(2,gson))))
           case (f_explicitValues) ! For explicit fill
             valuesNode=subtree(j,key)
+          case (f_sourceGrid)
+            gridIndex=decoration(decoration(gson))
           case (f_maxIterations)      ! For hydrostatic fill
             call expr(subtree(2,subtree(j,key)), unitAsArray,valueAsArray)
             if (all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/))) &
@@ -353,6 +357,11 @@ contains ! =====     Public Procedures     =============================
           case default
             call Announce_error(key, noSpecialFill)
           end select
+
+        case (l_gridded) ! --------------------- Fill from gridded data --
+          if (.not. got(f_sourceGrid)) call Announce_Error(key,noSourceGridGiven)
+          call FillVectorQuantityFromGrid(quantity,griddedData(gridIndex),errorCode)
+          if (errorCode/=0) call Announce_error(key,errorCode)
 
         case (l_l2gp) ! ---------------------- Fill from L2GP quantity ---
           if (.NOT. got(f_sourceL2GP)) call Announce_Error(key,noSourceL2GPGiven)
@@ -517,6 +526,17 @@ contains ! =====     Public Procedures     =============================
     end select
 
   end subroutine FillVector
+
+  !=============================== FillOL2GPVector ==========================
+  subroutine FillVectorQuantityFromGrid(quantity,grid, errorCode)
+    ! Dummy arguments
+    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+    type (GriddedData_T), intent(in) :: GRID ! Grid to fill it from
+    integer, intent(out) :: ERRORCODE   ! Error code (one of constants defined above)
+
+    ! Local variables
+
+  end subroutine FillVectorQuantityFromGrid
 
   !=============================== FillOL2GPVector ==========================
   subroutine FillVectorQuantityFromL2GP(quantity,l2gp, errorCode)
@@ -1308,6 +1328,8 @@ contains ! =====     Public Procedures     =============================
       call output ( " command caused an deallocation error in squeeze.", advance='yes' )
     case ( noExplicitValuesGiven )
       call output ( " no explicit values given for explicit fill.", advance='yes' )
+    case ( noSourceGridGiven )
+      call output ( " no sourceGrid field given for gridded fill.", advance='yes' )
     case ( noSourceL2GPGiven )
       call output ( " no sourceL2GP field given for L2GP fill.", advance='yes' )
     case ( noSourceL2AUXGiven )
@@ -1350,6 +1372,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.33  2001/03/29 19:12:40  livesey
+! Added gridded data fill
+!
 ! Revision 2.32  2001/03/15 23:28:23  livesey
 ! Bug fix
 !
