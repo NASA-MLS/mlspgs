@@ -5,8 +5,6 @@ module DUMPER
 
 ! Dump various stuff so we can look at it.
 
-  use OUTPUT_M, only: OUTPUT
-  use QuantityTemplates, only: DUMP
   implicit NONE
   private
 
@@ -34,42 +32,16 @@ module DUMPER
 !-----------------------------------------------------------------------
 
   interface DUMP
-    module procedure DUMP_CHUNKS
     module procedure DUMP_a_HGRID
     module procedure DUMP_HGRIDS
   end interface
 
 contains ! =====     Private Procedures     ============================
-  ! ------------------------------------------------  DUMP_CHUNKS  -----
-  subroutine DUMP_CHUNKS ( CHUNKS )
-
-    use MLSCommon, only: MLSCHUNK_T
-
-    type(MLSChunk_t), intent(in) :: CHUNKS(:)
-    integer :: I
-    call output ( 'CHUNKS: SIZE = ' )
-    call output ( size(chunks), advance='yes' )
-    do i = 1, size(chunks)
-      call output ( i, before=' Chunk ', advance='yes' )
-      call output ( chunks(i)%firstMAFIndex, before='  firstMAFIndex: ' )
-      call output ( chunks(i)%lastMAFIndex, before='  lastMAFIndex: ', advance='yes' )
-      call output ( chunks(i)%noMAFsLowerOverlap, before='  noMAFsLowerOverlap: ' )
-      call output ( chunks(i)%noMAFsUpperOverlap, before='  noMAFsUpperOverlap: ', advance='yes' )
-      call output ( chunks(i)%firstMAFIndex + chunks(i)%noMAFsLowerOverlap, &
-        & before='  1st non-overlapped MAF: ' )
-      call output ( chunks(i)%lastMAFIndex - chunks(i)%noMAFsUpperOverlap, &
-        & before='  last non-overlapped MAF: ', advance='yes' )
-      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex + 1, &
-        & before='  chunk size: ' )
-      call output ( chunks(i)%lastMAFIndex - chunks(i)%firstMAFIndex &
-        & - chunks(i)%noMAFsUpperOverlap - chunks(i)%noMAFsLowerOverlap + 1, &
-        & before='  non-overlapped chunk size: ', advance='yes' )
-    end do
-  end subroutine DUMP_CHUNKS
 
   ! ------------------------------------------------  DUMP_A_HGRID  -----
   subroutine DUMP_a_HGRID ( aHGRID )
     use HGridsDatabase, only: HGRID_T
+    use OUTPUT_M, only: OUTPUT
     use STRING_TABLE, only: DISPLAY_STRING
     type(hGrid_T), intent(in) :: aHGRID
     integer :: J
@@ -96,6 +68,7 @@ contains ! =====     Private Procedures     ============================
   ! ------------------------------------------------  DUMP_HGRIDS  -----
   subroutine DUMP_HGRIDS ( HGRIDS )
     use HGridsDatabase, only: HGRID_T
+    use OUTPUT_M, only: OUTPUT
     type(hGrid_T), intent(in) :: HGRIDS(:)
     integer :: I
     call output ( size(hgrids), before='HGRIDS: SIZE = ', advance='yes' )
@@ -112,6 +85,9 @@ contains ! =====     Private Procedures     ============================
 end module DUMPER
 
 ! $Log$
+! Revision 2.22  2004/05/18 01:16:57  vsnyder
+! More cannonball-polishing
+!
 ! Revision 2.21  2004/05/18 01:07:33  vsnyder
 ! Repair broken Dump_a_HGrid and Dump_HGrids routines
 !
