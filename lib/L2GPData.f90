@@ -2360,7 +2360,7 @@ contains ! =====     Public Procedures     =============================
     if ( present(swathName) ) myswathName = swathName
 
     swathid = mls_swattach(L2FileHandle, trim(myswathName), &
-      & hdfVersion=myhdfVersion)
+      & hdfVersion=myhdfVersion, DONTFAIL=.true.)
     swath_exists = ( swathid > 0 )
     if ( swath_exists ) then
       status = mls_swdetach(swathid)
@@ -2632,6 +2632,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.66  2003/06/20 19:31:39  pwagner
+! Changes to allow direct writing of products
+!
 ! Revision 2.65  2003/06/09 22:44:09  pwagner
 ! Uses mls_swcreate
 !
