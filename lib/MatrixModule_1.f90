@@ -1,3 +1,4 @@
+
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -1008,7 +1009,7 @@ contains ! =====     Public Procedures     =============================
     integer :: K, L, M, N     ! Subscripts
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
-    if ( .not. associated(a%row%vec%template, v%template) ) &
+    if ( .not. associated(a%col%vec%template, v%template) ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
@@ -1464,6 +1465,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.20  2001/04/26 23:56:02  livesey
+! Fix to test for MatrixVectorMultiplyNoT
+!
 ! Revision 2.19  2001/04/25 01:12:39  vsnyder
 ! Improve some comments
 !
