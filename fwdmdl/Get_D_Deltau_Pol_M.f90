@@ -5,7 +5,7 @@ module Get_D_Deltau_Pol_M
 
   implicit NONE
   private
-  public :: Get_D_Deltau_Pol_DT
+  public :: Get_D_Deltau_Pol_DF, Get_D_Deltau_Pol_DT
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter :: IdParm = &
@@ -16,6 +16,141 @@ module Get_D_Deltau_Pol_M
   private :: not_used_here 
 !---------------------------------------------------------------------------
 contains
+
+! ------------------------------------------  Get_D_Deltau_Pol_DF  -----
+  subroutine Get_D_Deltau_Pol_DF ( CT, STCP, STSP, indices_c, z_path_c, Grids_f, &
+               &  beta_path_pol, eta_zxp_f, do_calc_f, sps_path, Del_S, &
+               &  incoptdepth, ref_cor, &
+               &  t_script, d_delta_df, D_Deltau_Pol_DF  )
+
+    use DExdT_m, only: dExdT
+    use LOAD_SPS_DATA_M, ONLY: GRIDS_T
+    use MLSCommon, only: RP, IP
+    use Opacity_m, only: Opacity
+    use Where_M, only: Where
+
+    ! SVE == # of state vector elements
+    real(rp), intent(in) :: CT(:)           ! Cos(Theta), where theta
+      ! is the angle between the line of sight and magnetic field vectors.
+    real(rp), intent(in) :: STCP(:)         ! Sin(Theta) Cos(Phi) where
+      ! theta is as for CT and phi (for this purpose only) is the angle
+      ! between the plane defined by the line of sight and the magnetic
+      ! field vector, and the "instrument field of view plane polarized"
+      ! (IFOVPP) X axis.
+    real(rp), intent(in) :: STSP(:)         ! Sin(Theta) Sin(Phi)
+    integer(ip), intent(in) :: indices_c(:) ! coarse grid indicies
+    real(rp), intent(in) :: z_path_c(:)      ! -log(P) on main grid.
+    type (Grids_T), intent(in) :: Grids_f    ! All the coordinates
+    real(rp), intent(in) :: beta_path_pol(:,:,:) ! -1:1 x path x species.
+!                                              cross section for each species
+!                                              on coarse grid.
+    real(rp), intent(in) :: eta_zxp_f(:,:)   ! fine path x sve
+!                                              representation basis function.
+    logical, intent(in) :: do_calc_f(:,:)    ! A logical indicating where
+!                                              eta_zxp_f is not zero.
+    real(rp), intent(in) :: sps_path(:,:)    ! fine path x species.
+!                                              Path species function.
+    real(rp), intent(in) :: Del_S(:)        ! unrefracted path length.  This
+      !                                       is for the whole coarse path, not
+      !                                       just the part up to the black-out
+    complex(rp), intent(in) :: Incoptdepth(:,:,:) ! negative of incremental
+      !                                       optical depth.  2 x 2 x path
+    real(rp), intent(in) :: Ref_cor(:)      ! refracted to unrefracted path
+    !                                         length ratios.
+    real(rp), intent(in) :: t_script(:)      ! differential temperatures (K).
+    real(rp), intent(in) :: d_delta_df(:,:)  ! derivative of delta wrt
+!                                              mixing ratio state vector
+!                                              element. (K)
+
+! Outputs
+
+    complex(rp), intent(out) :: D_Deltau_Pol_DF(:,:,:,:) ! 2 x 2 x path x sve.
+!                                              derivative of delta Tau wrt
+!                                              mixing ratio state vector
+!                                              element.
+
+! Internals
+
+    complex(rp) :: D_Delta_DF_Pol(-1:1,size(indices_c))
+    complex(rp) :: D_Incoptdepth_df(2,2,size(indices_c))
+    integer :: I_Stop                        ! Length of coarse path
+    integer :: Inds(size(indices_c))         ! Where on the path to calc
+    integer :: N_Inds                        ! Effective size of Inds
+    integer :: N_Sps                         ! Number of species
+    integer :: P_I                           ! Path index
+    integer :: SPS_I                         ! Species index
+    integer :: SV_I                          ! State vector index
+
+    n_sps = ubound(Grids_f%l_z,1)
+    i_stop = size(indices_c)
+
+    do sps_i = 1, n_sps
+
+      do sv_i = Grids_f%l_v(sps_i-1)+1, Grids_f%l_v(sps_i)
+
+! Skip the masked derivatives, according to the l2cf inputs
+
+        if ( .not. Grids_f%deriv_flags(sv_i) ) cycle
+
+        n_inds = count(do_calc_f(indices_c,sv_i))
+        if ( n_inds == 0 ) cycle
+
+        d_delta_df_pol = 0.0
+
+        call where ( do_calc_f(indices_c,sv_i), inds(:n_inds) )
+
+        if ( grids_f%lin_log(sps_i) ) then
+
+          do p_i = 1, n_inds
+
+            d_delta_df_pol(:,inds(p_i)) = beta_path_pol(:,inds(p_i),sps_i) &
+                      & * sps_path(indices_c(inds(p_i)),sps_i) &
+                      & / exp(grids_f%values(sv_i))
+
+          end do ! p_i
+
+        else
+
+          d_delta_df_pol(:,inds(:n_inds)) = beta_path_pol(:,inds(:n_inds),sps_i)
+
+        end if
+
+        ! Finish the integration
+        do p_i = 1, n_inds
+          d_delta_df_pol(:,inds(p_i)) = d_delta_df_pol(:,inds(p_i)) * &
+            & eta_zxp_f(indices_c(inds(p_i)),sv_i) * del_s(inds(p_i)) * &
+            & ref_cor(inds(p_i))
+        end do ! p_i
+
+        ! Now add in contribution from scalar model, 0.25 for +/- sigma,
+        ! 0.5 for pi.
+        do p_i = 1, i_stop
+          d_delta_df_pol(:,inds(p_i)) = d_delta_df_pol(:,inds(p_i)) + &
+            & 0.25_rp * d_delta_df(p_i,sv_i)
+          d_delta_df_pol(0,inds(p_i)) = d_delta_df_pol(0,inds(p_i)) + &
+            & 0.25_rp * d_delta_df(p_i,sv_i)
+        end do ! p_i
+        ! d_delta_df_pol is now really \int incremental opacity ds.
+
+        call opacity ( ct, stcp, stsp, d_delta_df_pol, d_incoptdepth_df )
+
+        do p_i = 1, i_stop             ! along the path
+          if ( eta_zxp_f(indices_c(p_i),sv_i) /= 0.0 &
+            & .or. d_delta_df(p_i,sv_i) /= 0.0 &
+            & .or. do_calc_f(indices_c(p_i),sv_i) ) then
+            call dExdT ( incoptdepth(:,:,p_i), -d_incoptdepth_df(:,:,p_i), &
+                       & d_deltau_pol_df(:,:,p_i,sv_i) ) ! d exp(incoptdepth) / df
+          else
+            d_deltau_pol_df(:,:,p_i,sv_i) = 0.0_rp
+          end if
+        end do ! p_i
+
+      end do ! sv_i
+
+    end do ! sps_i
+
+  end subroutine Get_D_Deltau_Pol_DF
+! ------------------------------------------  Get_D_Deltau_Pol_DT  -----
 
 !{Compute {\tt D\_Deltau\_Pol\_DT}.
 !
@@ -58,7 +193,7 @@ contains
 ! and the {\tt dExDt} routine.
 ! 
 
-  SUBROUTINE Get_D_Deltau_Pol_DT ( Frq, Mid, H, CT, STCP, STSP, My_Catalog, &
+  subroutine Get_D_Deltau_Pol_DT ( Frq, Mid, H, CT, STCP, STSP, My_Catalog, &
                 & Beta_group, GL_slabs_M, GL_slabs_P, &
                 & T_Path_C, T_Path_M, T_Path_P, Beta_Path, &
                 & SPS_Path, Alpha_Path, Eta_zxp, Del_S, Path_inds, &
@@ -124,7 +259,12 @@ contains
     real(rp), intent(in) :: D_Delta_DT(:,:) ! Incremental opacity derivatives
     !                                         schlep from drad_tran_dt.  Path x SVE
 
-    complex(rp), intent(out) :: D_Deltau_Pol_DT(:,:,:,:) ! 2 x 2 x path x sve
+! Outputs
+
+    complex(rp), intent(out) :: D_Deltau_Pol_DT(:,:,:,:) ! 2 x 2 x path x sve.
+!                                              derivative of delta Tau wrt
+!                                              temperature state vector
+!                                              element. (K)
 
   ! Local variables
     complex(rp) :: Alpha_Path_N(-1:1)       ! alpha_path_n * N
@@ -324,6 +464,9 @@ contains
 end module Get_D_Deltau_Pol_M
 
 ! $Log$
+! Revision 2.10  2003/08/15 18:50:22  vsnyder
+! Preparing the way for polarized vmr derivatives
+!
 ! Revision 2.9  2003/06/27 22:04:50  vsnyder
 ! Simplify calculation of N
 !
