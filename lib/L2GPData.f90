@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !=============================================================================
@@ -25,8 +25,8 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   public :: L2GPNameLen
   public :: AddL2GPToDatabase,  DestroyL2GPContents,  DestroyL2GPDatabase, &
     & Dump, ExpandL2GPDataInPlace,  &
-    & OutputL2GP_createFile, OutputL2GP_writeData,  OutputL2GP_writeGeo, &
-    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData
+    & ReadL2GPData, SetupNewL2GPRecord,  WriteL2GPData !, &
+!    & OutputL2GP_createFile, OutputL2GP_writeData,  OutputL2GP_writeGeo
 !  INTEGER :: SWRDFLD
 !  EXTERNAL SWRDFLD !Should USE SWAPI
   !---------------------------- RCS Ident Info -------------------------------
@@ -42,11 +42,23 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
     module procedure DUMP_L2GP_DataBase
   end interface
 
+  ! ((( Not yet ready for hdfeos5 versions of files )))
+  !       The latter will incorporate the
+  !       routines rewritten by H. Pumphrey in he5lib
+  !       Perhaps in non-public retitled subroutines:
+  !       ReadL2GPData_hdf5
+  !       OutputL2GP_createFile_hdf5
+  !       OutputL2GP_writeGeo_hdf5
+  !       OutputL2GP_writeData_hdf5
 
   ! This module defines datatypes and gives basic routines for storing and
   ! manipulating L2GP data.
 
   ! First some local parameters
+
+  ! Assume L2GP files w/o explicit hdfVersion field are this
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
+  integer, parameter :: L2GPDEFAULT_HDFVERSION = 4            
 
   integer, parameter :: L2GPNameLen = 80
 
@@ -362,13 +374,53 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine DestroyL2GPDatabase
 
-  ! -------------------------------------------------------------------------
+  ! ---------------------- ReadL2GPData  -----------------------------
 
   subroutine ReadL2GPData(L2FileHandle, swathname, l2gp, numProfs, &
+       firstProf, lastProf, hdfVersion)
+    !------------------------------------------------------------------------
+
+    ! This routine reads an L2GP file, in either hdfVersion,
+    ! returning a filled data structure and the !
+    ! number of profiles read.
+
+    ! Arguments
+
+    character (len=*), intent(in) :: swathname ! Name of swath
+    integer, intent(in) :: L2FileHandle ! Returned by swopen
+    integer, intent(in), optional :: firstProf, lastProf ! Defaults to first and last
+    type( l2GPData_T ), intent(out) :: l2gp ! Result
+    integer, intent(out), optional :: numProfs ! Number actually read
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L2GPDEFAULT_HDFVERSION
+    endif
+
+    if (myhdfVersion == 4) then
+      call ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
+       firstProf, lastProf)
+    else
+       call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'This version of L2GPData not yet ready for hdf5' )
+    endif
+
+  end subroutine ReadL2GPData
+
+  ! ---------------------- ReadL2GPData_hdf4  -----------------------------
+
+  subroutine ReadL2GPData_hdf4(L2FileHandle, swathname, l2gp, numProfs, &
        firstProf, lastProf)
     !------------------------------------------------------------------------
 
-    ! This routine reads an L2GP file, returning a filled data structure and the !
+    ! This routine reads an L2GP file, assuming it is hdfeos2 format
+    ! (i.e. hdf4) returning a filled data structure and the
     ! number of profiles read.
 
     ! Arguments
@@ -731,11 +783,11 @@ contains ! =====     Public Procedures     =============================
     if ( present(numProfs) ) numProfs=myNumProfs
 
     !-----------------------------
-  end subroutine ReadL2GPData
+  end subroutine ReadL2GPData_hdf4
   !-----------------------------
 
-  ! --------------------------------------  OutputL2GP_createFile  -----
-  subroutine OutputL2GP_createFile (l2gp, L2FileHandle, swathName)
+  ! --------------------------------------  OutputL2GP_createFile_hdf4  -----
+  subroutine OutputL2GP_createFile_hdf4 (l2gp, L2FileHandle, swathName)
 
     ! Brief description of subroutine
     ! This subroutine sets up the structural definitions in an empty L2GP file.
@@ -959,11 +1011,11 @@ contains ! =====     Public Procedures     =============================
     end if
 
     !--------------------------------------
-  end subroutine OutputL2GP_createFile
+  end subroutine OutputL2GP_createFile_hdf4
   !--------------------------------------
 
-  !-----------------------------------------  OutputL2GP_writeGeo  -----
-  subroutine OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName)
+  !-----------------------------------------  OutputL2GP_writeGeo_hdf4  -----
+  subroutine OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
 
     ! Brief description of subroutine
     ! This subroutine writes the geolocation fields to an L2GP output file.
@@ -1088,11 +1140,11 @@ contains ! =====     Public Procedures     =============================
     end if
 
     !------------------------------------
-  end subroutine OutputL2GP_writeGeo
+  end subroutine OutputL2GP_writeGeo_hdf4
   !------------------------------------
 
-  !----------------------------------------  OutputL2GP_writeData  -----
-  subroutine OutputL2GP_writeData(l2gp, l2FileHandle, swathName)
+  !----------------------------------------  OutputL2GP_writeData_hdf4  -----
+  subroutine OutputL2GP_writeData_hdf4(l2gp, l2FileHandle, swathName)
 
     ! Brief description of subroutine
     ! This subroutine writes the data fields to an L2GP output file.
@@ -1222,26 +1274,40 @@ contains ! =====     Public Procedures     =============================
     end if
 
     !-------------------------------------
-  end subroutine OutputL2GP_writeData
+  end subroutine OutputL2GP_writeData_hdf4
   !-------------------------------------
 
   ! --------------------------------------------------------------------------
 
   ! This subroutine is an amalgamation of the last three
 
-  subroutine WriteL2GPData(l2gp,l2FileHandle,swathName)
+  subroutine WriteL2GPData(l2gp,l2FileHandle,swathName, hdfVersion)
 
     ! Arguments
 
     integer, intent(in) :: l2FileHandle ! From swopen
     type (l2GPData_T), intent(inout) :: l2gp
     character (len=*), optional, intent(in) :: swathName ! (defaults to l2gp%swathName)
+    integer, optional, intent(in) :: hdfVersion
 
-    ! Exectuable code
+    ! Local
+    integer :: myhdfVersion
 
-    call OutputL2GP_createFile (l2gp, l2FileHandle, swathName)
-    call OutputL2GP_writeGeo (l2gp, l2FileHandle, swathName)
-    call OutputL2GP_writeData (l2gp, l2FileHandle, swathName)
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L2GPDEFAULT_HDFVERSION
+    endif
+
+    if (myhdfVersion == 4) then
+      call OutputL2GP_createFile_hdf4 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeGeo_hdf4 (l2gp, l2FileHandle, swathName)
+      call OutputL2GP_writeData_hdf4 (l2gp, l2FileHandle, swathName)
+    else
+       call MLSMessage ( MLSMSG_Error, ModuleName, &
+            & 'This version of L2GPData not yet ready for hdf5' )
+    endif
 
   end subroutine WriteL2GPData
 
@@ -1363,6 +1429,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.38  2001/10/26 23:13:18  pwagner
+! Provides a single dump module interface and details
+!
 ! Revision 2.37  2001/09/05 22:57:16  pwagner
 ! Removed Columns from L2GPData_T
 !
