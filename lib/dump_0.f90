@@ -27,6 +27,7 @@ module DUMP_0
 !---------------------------------------------------------------------------
 
   character, parameter :: AfterSub = '#'
+  logical, parameter ::   DEEBUG = .false.
 
 contains
 
@@ -194,7 +195,7 @@ contains
     myClean = .false.
     if ( present(clean) ) myClean = clean
     call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
-      & 1, which, how_many, re_mainder)
+      & 1, which, how_many, re_mainder=re_mainder)
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -663,7 +664,7 @@ contains
     myClean = .false.
     if ( present(clean) ) myClean = clean
     call which_ints_are_it( (/ size(array, 1), size(array, 2), size(array, 3)/), &
-      & 1, which, how_many, re_mainder)
+      & 1, which, how_many, re_mainder=re_mainder)
 
     numZeroRows = 0
     if ( size(array) == 0 ) then
@@ -751,12 +752,16 @@ contains
   ! this is possibly better aligned with MLSNumerics or MLSStrings
   ! themes; however, for now we leave it here
   ! -------------------------  which_ints_are_it  -----
-  subroutine which_ints_are_it(ints, it, which, how_many, re_mainder)
-    ! Return which of ints = it
+  subroutine which_ints_are_it(ints, it, which, how_many, re_mainder, which_not)
+    ! Return which i of ints[i] = it
     ! optionally, return also how many of them do
+    ! which_not of them (which don't)
     ! and the re_mainder of the ints != it
     ! e.g. given ints = /(4, 3, 1, 2, 1, 3 )/ and it = 1
-    ! produces which = /(3, 5)/, how_many = 2, re_mainder = /(4, 3, 2, 3)/
+    ! produces which = /(3, 5)/, 
+    !      which_not = /(1, 2, 4, 6)/, 
+    !       how_many = 2,
+    !     re_mainder = /(4, 3, 2, 3)/
     
     ! This may be useful in reshaping an array to suppress any dims 
     ! that are identically 1
@@ -767,12 +772,21 @@ contains
     integer, intent(out), dimension(:) ::           which
     integer, intent(out), optional ::               how_many
     integer, intent(out), dimension(:), optional :: re_mainder
+    integer, intent(out), dimension(:), optional :: which_not
 
     ! local variables
     integer :: i, i_which, i_re_mainder
     
     if ( size(ints) < 1 .or. size(which) < 1 ) then
       if ( present(how_many) ) how_many = 0
+      if ( present(re_mainder) ) re_mainder = 0
+      if ( DEEBUG ) then
+        call output('size of ints or which too small', advance='yes')
+        call output('ints: ')
+        call output(ints, advance='yes')
+        call output('which: ')
+        call output(which, advance='yes')
+      endif
       return
     endif
     i_which = 0
@@ -783,17 +797,42 @@ contains
         which(min(size(which), i_which)) = i
       else
         i_re_mainder = i_re_mainder+1
+        if ( present(which_not) ) &
+          & re_mainder(min(size(which_not), i_re_mainder)) = i
         if ( present(re_mainder) ) &
-          & re_mainder(min(size(re_mainder), i_re_mainder)) = i
+          & re_mainder(min(size(re_mainder), i_re_mainder)) = ints(i)
       endif
     enddo
     if ( present(how_many) ) how_many = i_which
+    if ( DEEBUG ) then
+        call output('ints: ')
+        call output(ints, advance='yes')
+        call output('it: ')
+        call output(it, advance='yes')
+        call output('which: ')
+        call output(which, advance='yes')
+        if ( present(how_many) ) then
+          call output('how_many: ')
+          call output(how_many, advance='yes')
+        endif
+        if ( present(which_not) ) then
+          call output('which_not: ')
+          call output(which_not, advance='yes')
+        endif
+        if ( present(re_mainder) ) then
+          call output('re_mainder: ')
+          call output(re_mainder, advance='yes')
+        endif
+    endif
 
   end subroutine which_ints_are_it
 
 end module DUMP_0
 
 ! $Log$
+! Revision 2.12  2001/10/24 18:11:14  pwagner
+! which_ints_are_it now works properly
+!
 ! Revision 2.11  2001/10/23 22:40:37  pwagner
 ! Now dumps 1d,2d,3d char arrays and 3d ints
 !
