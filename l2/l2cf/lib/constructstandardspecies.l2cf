@@ -108,6 +108,10 @@ begin Construct
   !forall(constructSENS,!allBandLSBs)
   !forall(constructSENS,!allBandUSBs)
 
+  !define(allDTs,{!makelist({DTBand},{},!allBands)})
+  !define(allSens,{!makelist({sensBand},{},!allLSBands)})
+  !define(allSens,{!makelist({sensBand},{},!allUSBands)})
+  
   !define(constructEOD,{EODband$1: Quantity, $
     type=effectiveOpticalDepth, signal=!signal($1)!nl})
   !forall(constructEOD,!allBands)
