@@ -81,7 +81,8 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 l2_test: libfwdmdl.a
 	cd $(PLATFORMS)/$(MLSCONFG) && $(MAKE) l2_test
 
-$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE)
+$(libmls_objs)/libmls.a: $(libmls_f90) $(CONFDIR)/$(MLSCFILE) \
+   $(libmls_sources)/machines/$(MLSCONFG)/machine.f90
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
 .PHONY: configure depends clean tar mostlyclean targ tarz libfwdmdl.a l2_test
@@ -143,6 +144,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.15  2001/05/14 23:58:42  pwagner
+# default .configure name now set by environment
+#
 # Revision 1.14  2001/05/14 17:37:14  pwagner
 # .configure now a variable file name
 #
