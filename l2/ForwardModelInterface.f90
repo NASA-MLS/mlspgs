@@ -1111,9 +1111,7 @@ signal%sideband=-1
 
     ! ------------------------------ End of Major Frame Specific stuff --------
 
-    ! Update status
-    fmStat%maf = fmStat%maf + 1
-    fmStat%finished = fmStat%maf > noMAFs
+    if ( maf == noMAFs ) fmStat%finished = .true.
 
     if ( ForwardModelConfig%temp_der) call deallocate_test ( k_temp_frq%values, &
       & "k_temp_frq%values", moduleName )
@@ -1313,6 +1311,9 @@ signal%sideband=-1
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.87  2001/04/12 17:48:31  livesey
+! Moved maf increment to calling code, left finished flag here though.
+!
 ! Revision 2.86  2001/04/12 16:55:08  livesey
 ! Fixed arguments to comp_path_entities
 !
