@@ -137,6 +137,7 @@ maxJ # Maximum number of Jacobian evaluations in Retrieve
 maxLength
 maxLowerOverlap
 maxUpperOverlap
+maxValue
 measurements
 measurementSD
 metaName
@@ -275,6 +276,9 @@ vRegWeightVec
 writeCounterMAF
 
 # $Log$
+# Revision 2.66  2003/01/11 01:02:39  livesey
+# Added maxValue
+#
 # Revision 2.65  2003/01/10 23:58:08  dwu
 # add cloudRadiance cloudRadianceCutOff
 #
