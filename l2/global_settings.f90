@@ -240,7 +240,7 @@ contains
         case ( s_forwardModel )
           call decorate (son, AddForwardModelConfigToDatabase ( &
             & forwardModelConfigDatabase, &
-            & ConstructForwardModelConfig ( son, vGrids, .true. ) ) )
+            & ConstructForwardModelConfig ( name, son, vGrids, .true. ) ) )
         case ( s_vgrid )
           call decorate ( son, AddVGridToDatabase ( vGrids, &
             & CreateVGridFromMLSCFInfo ( name, son, l2gpDatabase ) ) )
@@ -709,6 +709,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.71  2003/07/07 23:50:04  pwagner
+! Now uses saved variable L2pcf from writeMetaData
+!
 ! Revision 2.70  2003/06/09 22:49:34  pwagner
 ! Reduced everything (PCF, PUNISH.., etc.) to TOOLKIT
 !
