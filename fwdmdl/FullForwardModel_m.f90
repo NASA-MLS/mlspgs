@@ -1,4 +1,3 @@
-!*******************  Bill's version ****************
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
@@ -22,10 +21,8 @@ module FullForwardModel_m
                        &  DRAD_TRAN_DX
   use SLABS_SW_M, only: GET_GL_SLABS_ARRAYS
   use FREQ_AVG_M, only: FREQ_AVG
-! use CONVOLVE_ALL_M, only: CONVOLVE_ALL
-!  USE Convolve_all_v2_m, only: Convolve_all_v2
-  USE fov_convolve_v2_m, only: fov_convolve_v2
-!  use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
+  use CONVOLVE_ALL_M, only: CONVOLVE_ALL
+! use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
   use D_LINTRP_M, only: LINTRP
   use D_HUNT_M, only: hunt_zvi => HUNT
 
@@ -82,15 +79,15 @@ module FullForwardModel_m
   character (len=len(idParm)) :: Id = IdParm
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
-  !---------------------------------------------------------------------------
+!-----------------------------------------------------------------------
+CONTAINS
+! ================================ FullForwardModel routine ======
 
-contains ! ================================ FullForwardModel routine ======
-
-  ! -----------------------------------------------  ForwardModel  -----
-  Subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
+! -----------------------------------------------  ForwardModel  -----
+ Subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
                              &  FwdModelOut, oldIfm, FmStat, Jacobian )
-    ! This is the full radiative transfer forward model, the workhorse
-    ! code
+  ! This is the full radiative transfer forward model, the workhorse
+  ! code
     type(forwardModelConfig_T), intent(inout) :: fwdModelConf
     type(vector_T), intent(in) ::  FwdModelIn, FwdModelExtra
     type(vector_T), intent(inout) :: FwdModelOut  ! Radiances, etc.
@@ -122,7 +119,6 @@ contains ! ================================ FullForwardModel routine ======
     integer :: L                        ! Loop index and other uses ..
     integer :: M                        ! Loop index and other uses ..
     integer :: JF                       ! Loop index and other uses ..
-    integer :: ROW, COL                 ! Rows & colomns matrix indecies
     integer :: MAF                      ! MAF under consideration
     integer :: MAXNOPTGFREQS            ! Used for sizing arrays
     integer :: MAXNOFFREQS              ! Max. no. frequencies for any molecule
@@ -133,7 +129,6 @@ contains ! ================================ FullForwardModel routine ======
     integer :: NLM1                     ! Nlvl - 1
     integer :: Nlvl                     ! Size of integration grid
     integer :: NOFREQS                  ! Number of frequencies for a pointing
-    integer :: NOMAFS                   ! Number of major frames
     integer :: NOSPECIES                ! No. of molecules under consideration
     integer :: NO_MOL                   ! Number of major molecules (NO iso/vib)
     integer :: NOUSEDCHANNELS           ! How many channels are we considering
@@ -141,7 +136,6 @@ contains ! ================================ FullForwardModel routine ======
     integer :: NO_GL_NDX                ! Number of GL points to do
     integer :: NO_TAN_HTS               ! Number of tangent heights
     integer :: NPC                      ! Length of coarse path
-    integer :: N_T_PHI                  ! Number of phis for temperature
     integer :: N_T_ZETA                 ! Number of zetas for temperature
     integer :: PTG_I                    ! Loop counter for the pointings
     integer :: SHAPEIND                 ! Index into filter shapes
@@ -167,6 +161,8 @@ contains ! ================================ FullForwardModel routine ======
     integer :: WHICHPATTERN             ! Index of antenna pattern
 
     logical :: DOTHIS                   ! Flag for lines
+    logical :: temp_der, atmos_der, spect_der ! Flags for various derivatives
+
     character (len=32) :: molName       ! Name of a molecule
 
     logical :: dummy(2) = (/.FALSE.,.FALSE./)  ! dummy Flag array
@@ -202,7 +198,6 @@ contains ! ================================ FullForwardModel routine ======
 
     real(r8) :: FRQ                     ! Frequency
 
-    real(rp) :: CENTER_ANGLE            ! For angles
     real(rp) :: DEL_TEMP   ! Temp. step-size in evaluation of Temp. power dep.
     real(rp) :: E_RFLTY                 ! Earth reflectivity at given tan. point
     real(rp) :: NEG_TAN_HT              ! GP Height (in KM.) of tan. press.
@@ -312,21 +307,12 @@ contains ! ================================ FullForwardModel routine ======
     REAL(rp), DIMENSION(:), POINTER :: tan_press
     REAL(rp), DIMENSION(:), POINTER :: tan_phi
     REAL(rp), DIMENSION(:), POINTER :: est_scgeocalt
-    REAL(rp), DIMENSION(:), POINTER :: tan
     REAL(rp), DIMENSION(:,:,:), POINTER :: dxdt_tan
     REAL(rp), DIMENSION(:,:,:), POINTER :: d2xdxdt_tan
     REAL(rp), DIMENSION(:,:,:), POINTER :: dxdt_surface
     REAL(rp), DIMENSION(:,:,:), POINTER :: d2xdxdt_surface
     REAL(rp), DIMENSION(:,:,:), POINTER :: ddhidhidtl0
     REAL(rp), DIMENSION(:,:,:), POINTER :: tan_d2h_dhdt
-!
-! remove when debug is done
-!
-    REAL(rp), DIMENSION(:,:), POINTER :: drad_dt_out
-    REAL(rp), DIMENSION(:,:), POINTER :: drad_df_out
-    REAL(rp), DIMENSION(:,:), POINTER :: test1
-    REAL(rp), DIMENSION(:,:), POINTER :: test2
-    REAL(rp), DIMENSION(:,:), POINTER :: test3
 !
 ! THIS VARIABLE REPLACES fwdModelConf%tangentGrid%surfs
 !
@@ -390,7 +376,14 @@ contains ! ================================ FullForwardModel routine ======
     ! ------------------------------------------------------------------------
 
 !   Print *,'** Enter ForwardModel, MAF =',fmstat%maf   ! ** ZEBUG
-    Print *,'** ForwardModel - Bill'                    ! ** ZEBUG
+
+    temp_der = FwdModelConf%temp_der
+    spect_der = FwdModelConf%spect_der
+    atmos_der = FwdModelConf%atmos_der
+
+! ** ZEBUG
+    Print *,' temp_der, atmos_der, spect_der:',temp_der,atmos_der,spect_der
+! ** END ZEBUG
 
     if ( toggle(emit) ) &
       & call trace_begin ( 'ForwardModel, MAF=', index=fmstat%maf )
@@ -422,8 +415,8 @@ contains ! ================================ FullForwardModel routine ======
       & k_temp_frq, ptg_angles, radiances, sps_path, tan_dh_dt, tan_temp, &
       & t_glgrid, dh_dt_glgrid)
     NULLIFY(tan_press, tan_phi, est_scgeocalt, tan_chi_out, &
-      & dxdt_tan, d2xdxdt_tan, ddhidhidtl0, tan_d2h_dhdt, drad_dt_out, &
-      & dxdt_surface, d2xdxdt_surface, test1, test2, test3, drad_df_out)
+      & dxdt_tan, d2xdxdt_tan, ddhidhidtl0, tan_d2h_dhdt, &
+      & dxdt_surface, d2xdxdt_surface)
     nullify ( lineFlag )
 
     ! Work out what we've been asked to do -----------------------------------
@@ -536,11 +529,9 @@ contains ! ================================ FullForwardModel routine ======
  ! Sort out some important dimensions
     noSpecies = size ( fwdModelConf%molecules )
     no_mol = count ( fwdModelConf%molecules > 0)
-    n_t_phi = temp%template%noInstances
     n_t_zeta = temp%template%noSurfs
 
     MAF = fmStat%maf
-    noMAFs = firstRadiance%template%noInstances
 
     Vel_Cor = 1.0_rp - losvel%values(1,maf)/299792458.3_rp
 
@@ -762,20 +753,19 @@ contains ! ================================ FullForwardModel routine ======
         & (earthrada**2*cp2 + earthradc**2*sp2))
     CALL ALLOCATE_TEST(tan_chi_out,ptan%template%nosurfs,'tan_chi_out', &
                      & ModuleName )
-    IF (h2o_ind > 0 .and. .not. FwdModelConf%temp_der) THEN
+    IF (h2o_ind > 0 .and. .not. temp_der) THEN
       end_ind_z = SUM(grids_f%no_z(1:h2o_ind))
       beg_ind_z = end_ind_z - grids_f%no_z(h2o_ind) + 1
       end_ind_p = SUM(grids_f%no_p(1:h2o_ind))
       beg_ind_p = end_ind_p - grids_f%no_p(h2o_ind) + 1
       end_ind = SUM(grids_f%no_z(1:h2o_ind)*grids_f%no_p(1:h2o_ind) * &
-      &         grids_f%no_f(1:h2o_ind))
+                 &  grids_f%no_f(1:h2o_ind))
       beg_ind = end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
-      &         grids_f%no_f(h2o_ind) + 1
+                       &  grids_f%no_f(h2o_ind) + 1
       CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
          & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
          & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-         & RESHAPE(temp%values(:,windowStart:windowFinish), &
-         & (/sv_t_len/)), &
+         & RESHAPE(temp%values(:,windowStart:windowFinish),(/sv_t_len/)),&
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, &
@@ -784,7 +774,7 @@ contains ! ================================ FullForwardModel routine ======
          & h2o_phi_basis=grids_f%phi_basis(beg_ind_p:end_ind_p), &
          & h2o_coeffs=grids_f%values(beg_ind:end_ind), &
          & lin_log=grids_f%lin_log(h2o_ind))
-    ELSE IF (h2o_ind == 0 .and. .not. FwdModelConf%temp_der) THEN
+    ELSE IF (h2o_ind == 0 .and. .not. temp_der) THEN
       CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
          & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
          & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
@@ -794,7 +784,7 @@ contains ! ================================ FullForwardModel routine ======
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, &
          & elevoffset%values(1,1)*Deg2Rad,req,tan_chi_out)
-    ELSE IF (h2o_ind > 0 .and.  FwdModelConf%temp_der) THEN
+    ELSE IF (h2o_ind > 0 .and.  temp_der) THEN
       CALL ALLOCATE_TEST(dxdt_tan,ptan%template%nosurfs, &
            & no_sv_p_t, temp%template%nosurfs,'dxdt_tan',ModuleName )
       CALL ALLOCATE_TEST(d2xdxdt_tan,ptan%template%nosurfs, &
@@ -804,14 +794,13 @@ contains ! ================================ FullForwardModel routine ======
       end_ind_p=SUM(grids_f%no_p(1:h2o_ind))
       beg_ind_p=end_ind_p - grids_f%no_p(h2o_ind) + 1
       end_ind=SUM(grids_f%no_z(1:h2o_ind)*grids_f%no_p(1:h2o_ind) * &
-      &         grids_f%no_f(1:h2o_ind))
+                & grids_f%no_f(1:h2o_ind))
       beg_ind=end_ind - grids_f%no_z(h2o_ind)*grids_f%no_p(h2o_ind) * &
-      &       grids_f%no_f(h2o_ind) + 1
+                     &  grids_f%no_f(h2o_ind) + 1
       CALL get_chi_out(ptan%values(:,maf), deg2rad*phitan%values(:,maf), &
          & 0.001_rp*scGeocAlt%values(:,maf),temp%template%surfs(:,1), &
          & temp%template%phi(1,windowStart:windowFinish)*Deg2Rad, &
-         & RESHAPE(temp%values(:,windowStart:windowFinish), &
-         & (/sv_t_len/)), &
+         & RESHAPE(temp%values(:,windowStart:windowFinish),(/sv_t_len/)),&
          & SPREAD(refGPH%template%surfs(1,1),1,no_sv_p_t), &
          & 0.001_rp*refGPH%values(1,windowStart:windowFinish), &
          & orbIncline%values(1,maf)*Deg2Rad, &
@@ -988,7 +977,7 @@ contains ! ================================ FullForwardModel routine ======
 !
 ! This is a lazy way to get the surface angle
 !
-    IF (FwdModelConf%temp_der) THEN
+    IF (temp_der) THEN
       CALL allocate_test(dxdt_surface,1,no_sv_p_t,n_t_zeta, &
                       & 'dxdt_surface',modulename)
       CALL allocate_test(d2xdxdt_surface,1,no_sv_p_t,n_t_zeta, &
@@ -1065,7 +1054,7 @@ contains ! ================================ FullForwardModel routine ======
       end do
     end do
 
-    if(FwdModelConf%temp_der) then
+    if(temp_der) then
       allocate(gl_slabs_p(no_ele,noSpecies), &
         &  gl_slabs_m(no_ele,noSpecies), STAT=ier)
       if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -1114,12 +1103,12 @@ contains ! ================================ FullForwardModel routine ======
     call Allocate_test ( eta_fzp, no_ele, f_len, 'eta_fzp', ModuleName )
     call Allocate_test ( sps_path, no_ele, no_mol, 'sps_path', ModuleName )
 
-    if(FwdModelConf%temp_der) then
+    if(temp_der) then
 
-      ! Allocation for metrics routine when Temp. derivative is needed:
+! Allocation for metrics routine when Temp. derivative is needed:
 
 !      CALL allocate_test ( k_temp,noUsedChannels, no_tan_hts, n_t_zeta, &
-!      & no_sv_p_t, 'k_temp',modulename)
+!                         & no_sv_p_t, 'k_temp',modulename)
       ALLOCATE(k_temp(noUsedChannels, no_tan_hts, n_t_zeta, no_sv_p_t))
       call Allocate_test ( t_deriv_flag, sv_t_len, 't_deriv_flag', ModuleName )
 
@@ -1128,8 +1117,8 @@ contains ! ================================ FullForwardModel routine ======
 ! ** Loading the Temp. derivative coeff. flag according to the L2CF
 
       IF(associated(temp%mask)) t_deriv_flag = RESHAPE((IAND( &
-      & M_FullDerivatives,ICHAR(temp%mask(:,WindowStart:WindowFinish)))==0), &
-      & (/sv_t_len/))
+        & M_FullDerivatives,ICHAR(temp%mask(:,WindowStart:WindowFinish)))==0), &
+        & (/sv_t_len/))
 
       call Allocate_test ( dRad_dt, sv_t_len, 'dRad_dt', ModuleName )
       call Allocate_test ( dbeta_dt_path_c,npc,no_mol,'dbeta_dt_path_c', &
@@ -1147,15 +1136,16 @@ contains ! ================================ FullForwardModel routine ======
 
       CALL Allocate_test (tan_d2h_dhdt, 1, no_sv_p_t, n_t_zeta, &
       &  'tan_d2h_dhdt', ModuleName )
+
     endif
 
-    if ( FwdModelConf%atmos_der ) then
+    if ( atmos_der ) then
       call Allocate_test ( dRad_df, f_len, 'dRad_df', ModuleName )
-      CALL allocate_test(k_atmos,noUsedChannels,no_tan_hts,f_len, &
-        & 'k_atmos', modulename)
-    end if
+      CALL allocate_test(k_atmos,noUsedChannels,no_tan_hts,f_len,'k_atmos',& 
+                       & modulename)
+    endif
 
-    if(FwdModelConf%spect_der) then
+    if(spect_der) then
 
       ! Allocation when spectaral derivative are needed:
 
@@ -1293,17 +1283,16 @@ contains ! ================================ FullForwardModel routine ======
 
       call Allocate_test ( RadV, maxNoPtgFreqs, 'RadV', ModuleName )
 
-      if (fwdModelConf%temp_der) &
+      if (temp_der) &
         & call Allocate_test (k_temp_frq,maxNoPtgFreqs,sv_t_len,'k_temp_frq', &
         &  ModuleName )
 
-      if (fwdModelConf%atmos_der) then
-
-          call Allocate_test ( k_atmos_frq,maxNoPtgFreqs,f_len,'k_atmos_frq',&
-        &   ModuleName )
+      if (atmos_der) then
+        call Allocate_test ( k_atmos_frq,maxNoPtgFreqs,f_len,'k_atmos_frq',&
+                           & ModuleName )
       endif
 
-      if (fwdModelConf%spect_der) then
+      if (spect_der) then
         call Allocate_test ( k_spect_dw_frq , maxNoPtgFreqs, f_dw_len , &
           & 'k_spect_dw_frq', ModuleName )
         call Allocate_test ( k_spect_dn_frq , maxNoPtgFreqs, f_dn_len , &
@@ -1347,7 +1336,7 @@ contains ! ================================ FullForwardModel routine ======
             &  (tan_press(ptg_i) - z_glgrid(1)) / 14.8_rp
           e_rflty = earthRefl%values(1,1)
 
-          if(FwdModelConf%temp_der) then
+          if(temp_der) then
             ! Set up temperature representation basis stuff
             CALL metrics((/tan_phi(ptg_i)*Deg2Rad/),(/tan_inds(ptg_i)/),     &
               &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad,      &
@@ -1379,7 +1368,7 @@ contains ! ================================ FullForwardModel routine ======
 
         else
           e_rflty = 1.0_rp
-          if(FwdModelConf%temp_der) then
+          if(temp_der) then
             ! Set up temperature representation basis stuff
             CALL metrics((/tan_phi(ptg_i)*Deg2Rad/),(/tan_inds(ptg_i)/),     &
               &  temp%template%phi(1,windowStart:windowFinish)*Deg2Rad,      &
@@ -1407,7 +1396,7 @@ contains ! ================================ FullForwardModel routine ======
         endif
 
         !  ** Determine the eta_zxp_dw, eta_zxp_dn, eta_zxp_dv
-        if(FwdModelConf%spect_der) then
+        if(spect_der) then
           call eval_spect_path(Grids_dw,z_path(1:no_ele), &
             &  phi_path(1:no_ele),do_calc_dw(1:no_ele,:),         &
             &  eta_zxp_dw(1:no_ele,:))
@@ -1441,7 +1430,7 @@ contains ! ================================ FullForwardModel routine ======
             &  t_path(indices_c(1:npc)),n_path(1:npc))
         endif
 
-        if(FwdModelConf%temp_der) then
+        if(temp_der) then
           call get_chi_angles(0.001*est_scGeocAlt(ptg_i),n_path(npc/2),    &
           &    one_tan_ht(1),tan_phi(ptg_i)*Deg2Rad,Req,0.0_rp, &
           &    ptg_angles(ptg_i),tan_dh_dt(1,:,:),tan_d2h_dhdt(1,:,:), &
@@ -1470,7 +1459,7 @@ contains ! ================================ FullForwardModel routine ======
           &  t_path(1:no_ele),0.001*losVel%values(1,maf),gl_slabs, &
           &  no_ele,del_temp)
 
-        if(FwdModelConf%temp_der) then
+        if(temp_der) then
           del_temp = 10.0_rp
           call get_gl_slabs_arrays(my_Catalog,p_path(1:no_ele), &
             &  t_path(1:no_ele),0.001*losVel%values(1,maf),gl_slabs_p, &
@@ -1498,10 +1487,12 @@ contains ! ================================ FullForwardModel routine ======
           call allocate_test ( frequencies,noFreqs, "frequencies", ModuleName )
           frequencies(1:noFreqs) = PointingGrids(whichPointingGrid)%&
                                    &oneGrid(grids(ptg_i))%frequencies(j:m)
-          frequencies =  Vel_Cor * frequencies
-        endif
 !
 ! VELOCITY shift correction to frequency grid
+!
+          frequencies =  Vel_Cor * frequencies
+!
+        endif
 !
         ! Loop over frequencies ----------------------------------------------
         if ( toggle(emit) .and. levels(emit) > 4 ) &
@@ -1523,7 +1514,7 @@ contains ! ================================ FullForwardModel routine ======
         &  do_calc_zp(1:no_ele,:),sps_path(1:no_ele,:),&
         &  do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
 
-          if(FwdModelConf%temp_der  .and. FwdModelConf%spect_der) then
+          if(temp_der  .and. spect_der) then
 
             call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
               &  my_Catalog,beta_group,gl_slabs,indices_c(1:npc),         &
@@ -1535,7 +1526,7 @@ contains ! ================================ FullForwardModel routine ======
               &  DBETA_DN_PATH=dbeta_dn_path_c(1:npc,:),                   &
               &  DBETA_DV_PATH=dbeta_dv_path_c(1:npc,:) )
 
-          else if(FwdModelConf%temp_der) then
+          else if(temp_der) then
 
             call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),      &
               &  my_Catalog, beta_group,gl_slabs,indices_c(1:npc),        &
@@ -1544,7 +1535,7 @@ contains ! ================================ FullForwardModel routine ======
               &  GL_SLABS_P=gl_slabs_p, T_PATH_P=t_path(1:no_ele)+del_temp,&
               &  DBETA_DT_PATH=dbeta_dt_path_c(1:npc,:))
 
-          else if(FwdModelConf%spect_der) then
+          else if(spect_der) then
 
             call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),        &
               &  my_Catalog,beta_group,gl_slabs,indices_c(1:npc),           &
@@ -1598,7 +1589,7 @@ contains ! ================================ FullForwardModel routine ======
             &  gl_indgen,(/Ng*no_gl_ndx/))
 
           j = Ng*no_gl_ndx
-          if(FwdModelConf%temp_der  .and. FwdModelConf%spect_der) then
+          if(temp_der  .and. spect_der) then
 
             call Allocate_test ( dbeta_dt_path_f, j, no_mol, &
               & 'dbeta_dt_path_f', ModuleName )
@@ -1616,7 +1607,7 @@ contains ! ================================ FullForwardModel routine ======
               & DBETA_DT_PATH=dbeta_dt_path_f,DBETA_DW_PATH=dbeta_dw_path_f,&
               & DBETA_DN_PATH=dbeta_dn_path_f,DBETA_DV_PATH=dbeta_dv_path_f)
 
-          else if(FwdModelConf%temp_der) then
+          else if(temp_der) then
 
             call Allocate_test ( dbeta_dt_path_f, j, no_mol, &
               & 'dbeta_dt_path_f', ModuleName )
@@ -1626,7 +1617,7 @@ contains ! ================================ FullForwardModel routine ======
               &   GL_SLABS_P=gl_slabs_p,T_PATH_P=t_path(1:no_ele)+del_temp, &
               &   DBETA_DT_PATH=dbeta_dt_path_f)
 
-          else if(FwdModelConf%spect_der) then
+          else if(spect_der) then
 
             call Allocate_test ( dbeta_dw_path_f, j, no_mol, &
               & 'dbeta_dw_path_f', ModuleName )
@@ -1659,7 +1650,7 @@ contains ! ================================ FullForwardModel routine ======
 
           ! Compute derivatives if needed ----------------------------------
 
-          if(FwdModelConf%atmos_der) then
+          if(atmos_der) then
 
             CALL drad_tran_df(z_path(indices_c(1:npc)), &
               &  Grids_f,beta_path_c(1:npc,:),                           &
@@ -1674,7 +1665,7 @@ contains ! ================================ FullForwardModel routine ======
 
           endif
 
-          if(FwdModelConf%temp_der) then
+          if(temp_der) then
 
             call drad_tran_dt(z_path(indices_c(1:npc)),                      &
               & Req+h_path(indices_c(1:npc)),                                &
@@ -1695,7 +1686,7 @@ contains ! ================================ FullForwardModel routine ======
 
           endif
 
-          if(FwdModelConf%spect_der) then
+          if(spect_der) then
 
             ! Spectroscopic derivative  wrt: W
 
@@ -1743,11 +1734,11 @@ contains ! ================================ FullForwardModel routine ======
           call Deallocate_test ( gl_ndx, 'gl_ndx', ModuleName )
           call Deallocate_Test ( gl_indgen, 'gl_indgen', ModuleName )
 
-          if ( FwdModelConf%temp_der ) &
+          if ( temp_der ) &
             & call Deallocate_test (dbeta_dt_path_f, 'dbeta_dt_path_f', &
             & ModuleName )
 
-          if ( FwdModelConf%spect_der ) then
+          if ( spect_der ) then
             call Deallocate_test(dbeta_dw_path_f,'dbeta_dw_path_f',ModuleName)
             call Deallocate_test(dbeta_dn_path_f,'dbeta_dn_path_f',ModuleName)
             call Deallocate_test(dbeta_dv_path_f,'dbeta_dv_path_f',ModuleName)
@@ -1799,7 +1790,7 @@ contains ! ================================ FullForwardModel routine ======
         ! filter shapes
         !??? Do we need to do this if there's no Jacobian ???
 
-        if ( fwdModelConf%temp_der ) then
+        if ( temp_der ) then
           if ( fwdModelConf%do_freq_avg ) then
             do i = 1, noUsedChannels
               sigInd = usedSignals(i)
@@ -1837,8 +1828,8 @@ contains ! ================================ FullForwardModel routine ======
         ! filter shapes
         !??? Do we need to do this if there's no Jacobian ???
 
-        if ( fwdModelConf%atmos_der ) then
-
+        if ( atmos_der ) then
+!
           sv_i = 1
           do k = 1, no_mol
             specie = mol_cat_index(k)
@@ -1853,12 +1844,12 @@ contains ! ================================ FullForwardModel routine ======
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
-                  do instance = grids_f%WindowStart(k), grids_f%WindowFinish(k)
-                    DO surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
+                  do instance = Grids_f%WindowStart(k), Grids_f%WindowFinish(k)
+                    do surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
                       call Freq_Avg ( frequencies, &
-                        & FilterShapes(shapeInd)%FilterGrid, &
-                        & FilterShapes(shapeInd)%FilterShape, &
-                        & k_atmos_frq(1:noFreqs,sv_i), noFreqs, j, r )
+                          & FilterShapes(shapeInd)%FilterGrid, &
+                          & FilterShapes(shapeInd)%FilterShape, &
+                          & k_atmos_frq(1:noFreqs,sv_i), noFreqs, j, r )
                       k_atmos(i,ptg_i,sv_i) = r
                       sv_i = sv_i + 1
                     end do                ! Surface loop
@@ -1868,8 +1859,8 @@ contains ! ================================ FullForwardModel routine ======
                 sv_start = sv_i
                 do i = 1, noUsedChannels
                   sv_i = sv_start
-                  do instance = grids_f%WindowStart(k), grids_f%WindowFinish(k)
-                    DO surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
+                  do instance = Grids_f%WindowStart(k), Grids_f%WindowFinish(k)
+                    do surface = 1, Grids_f%no_f(k)*Grids_f%no_z(k)
                       k_atmos(i,ptg_i,sv_i) = k_atmos_frq(i,sv_i)
                       sv_i = sv_i + 1
                     end do
@@ -1878,14 +1869,14 @@ contains ! ================================ FullForwardModel routine ======
               end if                      ! Frequency averaging or not
             end if                        ! Want derivatives for this
           end do                          ! Loop over major molecules
-
+!
         end if                          ! Want derivatives for atmos
 
         ! Frequency Average the spectroscopic derivatives with the appropriate
         ! filter shapes
         !??? Do we need to do this if there's no Jacobian ???
 
-        if ( fwdModelConf%spect_der ) then
+        if ( spect_der ) then
 
           !  *** dI/dW
 
@@ -2049,9 +2040,6 @@ contains ! ================================ FullForwardModel routine ======
       call allocate_test ( superset, size(antennaPatterns), &
         & 'superset', ModuleName )
 
-      k = ptan%template%nosurfs
-      Allocate(PrtRad(ptan%template%nosurfs),STAT=i)
-
       do i = 1, noUsedChannels
 
         channel = usedChannels(i)
@@ -2078,7 +2066,7 @@ contains ! ================================ FullForwardModel routine ======
 
         ! Here comes the Convolution codes
 
-        if ( FwdModelConf%do_conv ) then
+        IF ( FwdModelConf%do_conv ) THEN
 
           do j = 1, size(antennaPatterns)
             superset(j) = AreSignalsSuperset ( antennaPatterns(j)%signals, &
@@ -2097,234 +2085,51 @@ contains ! ================================ FullForwardModel routine ======
           whichPatternAsArray = minloc ( superset )
           whichPattern = whichPatternAsArray(1)
 !
-!          center_angle = ptg_angles(surfaceTangentIndex)
-!
-!  New code, from Bill, to eliminate the Temp. derivative jump ..
-!
-          IF (.not. FwdModelConf%temp_der .and. .not. FwdModelConf%atmos_der) &
-          & then
-            CALL fov_convolve_v2(antennaPatterns(whichPattern), &
-            & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad)
-            j = thisradiance%template%noChans
-            do ptg_i = 1, ptan%template%nosurfs
-              beg_ind = channel + thisradiance%template%noChans * (ptg_i - 1)
-              thisRadiance%values(beg_ind,maf) = PrtRad(ptg_i)
-            end do
-          ELSE IF (FwdModelConf%atmos_der .and. .not. FwdModelConf%temp_der) &
-          & then
-            CALL ALLOCATE_TEST(drad_df_out,ptan%template%nosurfs,f_len, &
-            & 'drad_df_out',ModuleName)
-            CALL fov_convolve_v2(antennaPatterns(whichPattern), &
-            & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad, &
-            & DI_DF = DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))), &
-            & DRAD_DF_OUT = drad_df_out)
-! load into jacobian
-! load into jacobian
-            row = FindBlock( Jacobian%row, thisradiance%index, maf )
-            fmStat%rows(row) = .true.
-
-            do sps_i = 1, no_mol
-              if (fwdModelConf%molecules(mol_cat_index(sps_i)) == &
-            &   l_extinction ) then
-                f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-            &   quantityType=l_extinction,radiometer=firstSignal%radiometer )
-              else
-                f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-            &   quantityType=l_vmr, &
-            &   molecule=fwdModelConf%molecules(mol_cat_index(sps_i)))
-              endif
-              sv_t_len = 0
-              DO jf = grids_f%windowStart(sps_i),grids_f%windowfinish(sps_i)
-                col = FindBlock ( Jacobian%col, f%index, jf)
-                select case ( Jacobian%block(row,col)%kind )
-                case ( m_absent )
-                  call CreateBlock ( Jacobian, row, col, m_full )
-                  jacobian%block(row,col)%values = 0.0_r8
-                case ( m_full )
-                case default
-                  call MLSMessage ( MLSMSG_Error, ModuleName, &
-                  & 'Wrong type for temperature derivative matrix' )
-                end select
-
-                DO k = 1, grids_f%no_f(sps_i)*grids_f%no_z(sps_i)
- 
-! Check if derivatives are needed for this (zeta & phi) :
-
-                  sv_t_len = sv_t_len + 1
-                  if(.NOT. grids_f%deriv_flags(sv_t_len)) CYCLE
-
-! run through representation basis coefficients
-
-                  do ptg_i = 1, ptan%template%noSurfs
-                    beg_ind = channel + thisradiance%template%noChans &
-                  &         * (ptg_i-1)
-                    jacobian%block(row,col)%values(beg_ind,k) = &
-                  &   drad_df_out(ptg_i,sv_t_len)
-                  end do
-                end do
-              enddo
-            enddo
-            call Deallocate_test ( drad_df_out, 'drad_df_out', ModuleName )
-          ELSE IF (FwdModelConf%temp_der) then
-
-            M = sv_t_len
-            CALL ALLOCATE_TEST(test1,no_tan_hts,M,'test1',Modulename)
-            CALL ALLOCATE_TEST(test2,no_tan_hts,M,'test2',Modulename)
-            CALL ALLOCATE_TEST(test3,ptan%template%noSurfs,M,'test3',&
-            & Modulename)
-            CALL ALLOCATE_TEST(drad_dt_out,ptan%template%noSurfs,  &
-            & M,'drad_dt_out',ModuleName)
-!
-            DO j = 1, no_sv_p_t
-              DO k = 1, n_t_zeta
-                r1 = dxdt_surface(1,j,k)
-                test1(:,k+n_t_zeta*(j-1)) = dx_dt(:,j,k)
-                test2(:,k+n_t_zeta*(j-1)) = d2x_dxdt(:,j,k)
-! This arithmatic makes a surface value adjustment:
-                test3(:,k+n_t_zeta*(j-1)) = dxdt_tan(:,j,k) - r1
-              ENDDO
-            ENDDO
-            IF (FwdModelConf%atmos_der) then
-              CALL ALLOCATE_TEST(drad_df_out,ptan%template%nosurfs,f_len, &
-              & 'drad_df_out',ModuleName)
-              CALL fov_convolve_v2(antennaPatterns(whichPattern), &
-              & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad, &
-              & SURF_ANGLE=surf_angle(1),DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),&
-              & (/no_tan_hts,M/))),DX_DT=test1,DDX_DXDT=test2, &
-              & DX_DT_OUT=test3,DRAD_DT_OUT=drad_dt_out, &
-              & DI_DF = DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))), &
-              & DRAD_DF_OUT = drad_df_out)
-! load into jacobian
-              row = FindBlock( Jacobian%row, thisradiance%index, maf )
-              fmStat%rows(row) = .true.
-
-              do sps_i = 1, no_mol
-                if (fwdModelConf%molecules(mol_cat_index(sps_i)) == &
-              &   l_extinction ) then
-                  f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              &   quantityType=l_extinction,radiometer=firstSignal%radiometer )
-                else
-                  f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-              &   quantityType=l_vmr, &
-              &   molecule=fwdModelConf%molecules(mol_cat_index(sps_i)))
-                endif
-                sv_t_len = 0
-                DO jf = grids_f%windowStart(sps_i),grids_f%windowfinish(sps_i)
-                  col = FindBlock ( Jacobian%col, f%index, jf)
-                  select case ( Jacobian%block(row,col)%kind )
-                  case ( m_absent )
-                    call CreateBlock ( Jacobian, row, col, m_full )
-                    jacobian%block(row,col)%values = 0.0_r8
-                  case ( m_full )
-                  case default
-                    call MLSMessage ( MLSMSG_Error, ModuleName, &
-                    & 'Wrong type for temperature derivative matrix' )
-                  end select
-
-                  DO k = 1, grids_f%no_f(sps_i)*grids_f%no_z(sps_i)
- 
-! Check if derivatives are needed for this (zeta & phi) :
-
-                    sv_t_len = sv_t_len + 1
-                    if(.NOT. grids_f%deriv_flags(sv_t_len)) CYCLE
-
-! run through representation basis coefficients
-
-                    do ptg_i = 1, ptan%template%noSurfs
-                      beg_ind = channel + thisradiance%template%noChans &
-                    &         * (ptg_i-1)
-                      jacobian%block(row,col)%values(beg_ind,k) = &
-                    &   drad_df_out(ptg_i,sv_t_len)
-                    end do
-                  end do
-                enddo
-              enddo
-              call Deallocate_test ( drad_df_out, 'drad_df_out', ModuleName )
-            ELSE
-              CALL fov_convolve_v2(antennaPatterns(whichPattern), &
-              & ptg_angles,Radiances(:,i),tan_chi_out,PrtRad, &
-              & SURF_ANGLE=surf_angle(1),DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),&
-              & (/no_tan_hts,M/))),DX_DT=test1,DDX_DXDT=test2, &
-              & DX_DT_OUT=test3,DRAD_DT_OUT=drad_dt_out)
-            ENDIF
-!
-! Load the Radiance values into the Radiance structure:
-!
-            j = thisradiance%template%noChans
-            do ptg_i = 1, ptan%template%noSurfs
-              beg_ind = channel + thisradiance%template%noChans * (ptg_i - 1)
-              thisRadiance%values(beg_ind,maf) = PrtRad(ptg_i)
-            end do
-!
-! Load the Temp. derivative values into the Jacobian
-!
-            row = FindBlock( Jacobian%row, thisradiance%index, maf )
-            fmStat%rows(row) = .true.
-
-            sv_t_len = 0
-            do jf = windowStart, windowFinish
-
-              col = FindBlock ( Jacobian%col, temp%index, jf )
-              select case ( Jacobian%block(row,col)%kind )
-              case ( m_absent )
-                call CreateBlock ( Jacobian, row, col, m_full )
-                jacobian%block(row,col)%values = 0.0_r8
-              case ( m_full )
-              case default
-                call MLSMessage ( MLSMSG_Error, ModuleName, &
-                  & 'Wrong type for temperature derivative matrix' )
-              end select
-
-              do k = 1, temp%template%noSurfs
- 
-! Check if derivatives are needed for this (zeta & phi) :
-
-                sv_t_len = sv_t_len + 1
-                if(.NOT. t_deriv_flag(sv_t_len)) CYCLE
-
-! run through representation basis coefficients
-
-                do ptg_i = 1, ptan%template%noSurfs
-                  r1 = drad_dt_out(ptg_i,sv_t_len)
-                  beg_ind = channel + thisradiance%template%noChans * (ptg_i-1)
-                  jacobian%block(row,col)%values(beg_ind,k) = r1
-                end do
-
-              end do
-
-            end do
-            CALL DEALLOCATE_TEST(drad_dt_out,'drad_dt_out',ModuleName)
-            CALL DEALLOCATE_TEST(test1,'test1',Modulename)
-            CALL DEALLOCATE_TEST(test2,'test2',Modulename)
-            CALL DEALLOCATE_TEST(test3,'test3',Modulename)
+          j = sv_t_len
+          IF (.not. temp_der .AND. .not. atmos_der ) THEN
+            CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
+               & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
+               & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
+               & thisRatio,antennaPatterns(whichPattern),t_deriv_flag,      &
+               & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1) )
+          ELSE IF ( temp_der .AND. .not. atmos_der ) THEN
+            CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
+               & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
+               & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
+               & thisRatio,antennaPatterns(whichPattern),t_deriv_flag,      &
+               & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
+               & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),     &
+               & DX_DT=dx_dt,D2X_DXDT=d2x_dxdt,DXDT_TAN=dxdt_tan,           &
+               & DXDT_SURFACE=dxdt_surface)
+          ELSE IF ( atmos_der .AND. .not. temp_der ) THEN
+            CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
+               & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
+               & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
+               & thisRatio,antennaPatterns(whichPattern),t_deriv_flag,      &
+               & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
+               & DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
+          ELSE
+            CALL convolve_all(FwdModelConf,FwdModelIn,FwdModelExtra,maf,&
+               & channel,windowStart,windowFinish,mol_cat_index,temp,ptan,  &
+               & thisRadiance,ptg_angles,Radiances(:,i),tan_chi_out,        &
+               & thisRatio,antennaPatterns(whichPattern),t_deriv_flag,      &
+               & Grids_f,Jacobian,fmStat%rows,SURF_ANGLE=surf_angle(1),     &
+               & DI_DT=DBLE(RESHAPE(k_temp(i,:,:,:),(/no_tan_hts,j/))),     &
+               & DX_DT=dx_dt,D2X_DXDT=d2x_dxdt,DXDT_TAN=dxdt_tan,           &
+               & DXDT_SURFACE=dxdt_surface,                                 &
+               & DI_DF=DBLE(RESHAPE(k_atmos(i,:,:),(/no_tan_hts,f_len/))) )
           ENDIF
 !
+        ELSE          ! No convolution needed ..
 
-!      WRITE(*,'(a)') 'WARNING Two d antenna code not properly implemented!'
-!      WRITE(*,'(a)') 'for general 2 d temperature coefficients'
-!         call convolve_all ( fwdModelConf, fwdModelIn, maf, channel, &
-!           &  windowStart, windowFinish, mafTInstance-windowStart+1, &
-!           &  temp, ptan, thisRadiance, tan_press, ptg_angles,       &
-!           &  tan_temp, RESHAPE(dx_dt(:,3,:),(/no_tan_hts,n_t_zeta/)), &
-!           &  RESHAPE(d2x_dxdt(:,3,:),(/no_tan_hts,n_t_zeta/)),       &
-!           &  surfaceTangentIndex, center_angle, Radiances(:,i), &
-!           &  k_temp(i,:,:,:),         &
-!           &  k_atmos(i,:,:,:,:,:), thisRatio, t_deriv_flag, Grids_f,&
-!           &  Jacobian, fmStat%rows, antennaPatterns(whichPattern),  &
-!           &  mol_cat_index, ier )
-!??? Need to choose some index other than 1 for AntennaPatterns ???
-!         if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-!           & 'convolve_all failed' )
-
-        else          ! No convolution needed ..
           WRITE(*,'(a)') 'no convolve feature is not working'
-!          call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
-!            &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
-!            &  ptg_angles, tan_chi_out, Radiances(:,i), k_temp(i,:,:,:),&
-!            &  k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows,  &
-!            &  mol_cat_index )
-
-        end if
+!         call no_conv_at_all ( fwdModelConf, fwdModelIn, maf, channel, &
+!           &  windowStart, windowFinish, temp, ptan, thisRadiance,     &
+!           &  ptg_angles, tan_chi_out, Radiances(:,i), k_temp(i,:,:,:),&
+!           &  k_atmos(i,:,:,:,:,:), thisRatio, Jacobian, fmStat%rows,  &
+!           &  mol_cat_index )
+!
+        ENDIF
 
       end do                            ! Channel loop
 
@@ -2335,18 +2140,18 @@ contains ! ================================ FullForwardModel routine ======
       ! Deallocate maxNoPtgFreqs stuff
       call Deallocate_test ( Radv, 'RadV', ModuleName )
 
-      if ( fwdModelConf%temp_der ) then
-!          CALL deallocate_test ( k_temp, 'k_temp', Modulename )
-          deallocate( k_temp)
-          call Deallocate_test ( k_temp_frq, 'k_temp_frq', ModuleName )
+      if ( temp_der ) then
+!       CALL deallocate_test ( k_temp, 'k_temp', Modulename )
+        deallocate( k_temp)
+        call Deallocate_test ( k_temp_frq, 'k_temp_frq', ModuleName )
       endif
 
-      if (fwdModelConf%atmos_der) then
+      if (atmos_der) then
          call Deallocate_test ( k_atmos, 'k_atmos', ModuleName )
          call Deallocate_test ( k_atmos_frq, 'k_atmos_frq', ModuleName )
       endif
 
-      if (fwdModelConf%spect_der) then
+      if (spect_der) then
         call Deallocate_test ( k_spect_dw_frq, 'k_spect_dw_frq', ModuleName )
         call Deallocate_test ( k_spect_dn_frq, 'k_spect_dn_frq', ModuleName )
         call Deallocate_test ( k_spect_dv_frq, 'k_spect_dv_frq', ModuleName )
@@ -2355,10 +2160,8 @@ contains ! ================================ FullForwardModel routine ======
       if ( toggle(emit) .and. levels(emit) > 1 ) &
         & call trace_end ( 'ForwardModel.sideband ',index=thisSideband )
 
-      deallocate(PrtRad,STAT=i)
+    end do            ! End of loop over sidebands -------------------------
 
-      ! End of loop over sidebands ---------------------------------------------
-    end do
     if ( toggle(emit) .and. levels(emit) > 0 ) &
       & call Trace_End ( 'ForwardModel.SidebandLoop' )
 
@@ -2508,7 +2311,7 @@ contains ! ================================ FullForwardModel routine ======
     call Deallocate_test ( sps_path, 'sps_path', ModuleName )
 
     CALL DEALLOCATE_TEST(tan_chi_out,'tan_chi_out',ModuleName )
-    if(FwdModelConf%temp_der) then
+    if(temp_der) then
       call Deallocate_test ( dRad_dt, 'dRad_dt', ModuleName )
       call Deallocate_test ( dbeta_dt_path_c, 'dbeta_dt_path_c', ModuleName )
       call Deallocate_test ( dh_dt_path, 'dh_dt_path', ModuleName )
@@ -2525,11 +2328,11 @@ contains ! ================================ FullForwardModel routine ======
       call DestroyCompleteSlabs ( gl_slabs_m )
     endif
 
-    if ( FwdModelConf%atmos_der ) then
+    if ( atmos_der ) then
       call Deallocate_test ( dRad_df, 'dRad_df', ModuleName )
     end if
 
-    if(FwdModelConf%spect_der) then
+    if(spect_der) then
 
       call Deallocate_test ( dbeta_dw_path_c, 'dbeta_dw_path_c', ModuleName )
       call Deallocate_test ( dbeta_dn_path_c, 'dbeta_dn_path_c', ModuleName )
@@ -2560,9 +2363,9 @@ contains ! ================================ FullForwardModel routine ======
       call trace_end ( 'ForwardModel MAF=',fmStat%maf )
     end if
 
-  end subroutine FullForwardModel
+ end subroutine FullForwardModel
 
- end module FullForwardModel_m
+end module FullForwardModel_m
 
 ! $Log$
 ! Revision 2.58  2002/06/13 22:40:38  bill
