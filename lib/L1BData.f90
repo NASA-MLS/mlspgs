@@ -5,13 +5,17 @@ module L1BData
 
   ! Reading and interacting with Level 1B data (HDF4)
 
+  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
   use Dump_0, only: DUMP
   use Hdf, only: DFACC_READ, SFSTART, SFGINFO, SFN2INDEX, SFSELECT, SFRDATA_f90, &
     & SFRCDATA, SFENDACC, DFNT_CHAR8, DFNT_INT32, DFNT_FLOAT64, &
     & DFNT_FLOAT32
   use Lexer_Core, only: PRINT_SOURCE
+  use MLSAuxData, only: MLSAuxData_T, Read_MLSAuxData
   use MLSCommon, only: R4, R8, L1BINFO_T, FILENAMELEN
-  use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
+  use MLSFiles, only: HDFVERSION_4, HDFVERSION_5, &
+    & MLS_IO_GEN_OPENF
+  use MLSHDF5, only: IsHDF5DSPresent, LoadFromHDF5DS
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_ERROR, &
     & MLSMSG_L1BREAD, MLSMSG_WARNING, MLSMSG_DEALLOCATE
   use MoreTree, only: Get_Field_ID
@@ -64,6 +68,9 @@ module L1BData
   ! so we may read l2aux and l1brad files alike
   logical, parameter            :: JUSTLIKEL2AUX = .true.
 
+  ! Assume l1b files w/o explicit hdfVersion field are this
+  ! 4 corresponds to hdf4, 5 to hdf5 in L2GP, L2AUX, etc. 
+  integer, parameter :: L1BDEFAULT_HDFVERSION = HDFVERSION_4
   ! This data type is used to store quantities from an L1B data file.
 
   type L1BData_T
@@ -174,40 +181,57 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine DumpL1BData
 
   ! -------------------------------------------------  FindL1BData  ----
-  integer function FindL1BData ( files, fieldName )
+  integer function FindL1BData ( files, fieldName, hdfVersion )
     integer, dimension(:), intent(in) :: files ! File handles
     character (len=*), intent(in) :: fieldName ! Name of field
+    integer, optional, intent(in) :: hdfVersion
 
     ! Externals
     integer, external :: SFN2INDEX
 
     ! Local variables
     integer :: i
+    integer :: myhdfVersion
 
     ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L1BDEFAULT_HDFVERSION
+    endif
+
     findL1BData=0
     do i = 1, size(files)
-      if ( sfn2index(files(i),fieldName) /= -1 ) then
-        findL1BData = files(i)
-        return
+      if ( myhdfVersion == HDFVERSION_4 ) then
+        if ( sfn2index(files(i),fieldName) /= -1 ) then
+          findL1BData = files(i)
+          return
+        end if
+      else
+        if ( IsHDF5DSPresent(files(i),fieldName) ) then
+          findL1BData = files(i)
+          return
+        end if
       end if
     end do
   end function FindL1BData
 
   !--------------------------------------------------  L1BOASetup  -----
-  subroutine L1boaSetup ( root, l1bInfo, F_FILE )
+  subroutine L1boaSetup ( root, l1bInfo, F_FILE, hdfVersion )
     ! Take file name from l2cf, open, and store unit no. in l1bInfo
 
     ! Dummy arguments
     type (L1BInfo_T) :: L1BINFO         ! File handles etc. for L1B dataset
     integer, intent(in) :: ROOT         ! of the l1brad file specification.
     integer, intent(in) :: F_FILE       ! From init_tables_module
+    integer, optional, intent(in) :: hdfVersion
 
     ! Local variables
 
-    character(len=FileNameLen) :: FileName ! Duh
+    character(len=FileNameLen) :: FileName
 
     integer :: I                        ! Loop inductor, subscript
+    integer :: record_length
     integer :: SON                      ! Some subtree of root.
     integer :: SD_ID                    ! From HDF
 
@@ -218,7 +242,10 @@ contains ! ============================ MODULE PROCEDURES ======================
       son = subtree(i,root)
       if(get_field_id(son) == f_file) then
         call get_string ( sub_rosa(subtree(2,son)), fileName, strip=.true. )
-        sd_id = sfstart(Filename, DFACC_READ)
+        ! sd_id = sfstart(Filename, DFACC_READ)
+        sd_id = mls_io_gen_openF('hg', .true., error, &
+          & record_length, DFACC_READ, &
+          & FileName, hdfVersion=hdfVersion)
         if ( sd_id == -1 ) then
           call announce_error ( son, &
             & 'Error opening L1BOA file: ' //Filename)
@@ -234,7 +261,8 @@ contains ! ============================ MODULE PROCEDURES ======================
   end subroutine L1boaSetup
 
   ! ------------------------------------------------- L1BRadSetup  -----
-  subroutine L1bradSetup ( Root, L1bInfo, F_File, MaxNumL1BRadIDs, illegalL1BRadID )
+  subroutine L1bradSetup ( Root, L1bInfo, F_File, MaxNumL1BRadIDs, &
+    & illegalL1BRadID, hdfVersion )
     ! Take file name from l2cf, open, and store unit no. in l1bInfo
     ! Dummy arguments
     type (L1BInfo_T) :: L1BINFO         ! File handles etc. for L1B dataset
@@ -242,6 +270,7 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer, intent(in) :: F_FILE
     integer, intent(in) :: MAXNUML1BRADIDS
     integer, intent(in) :: ILLEGALL1BRADID
+    integer, optional, intent(in) :: hdfVersion
 
     ! Local variables
     character(len=FileNameLen) :: FILENAME       ! Duh
@@ -252,8 +281,9 @@ contains ! ============================ MODULE PROCEDURES ======================
     integer :: SD_ID                    ! ID from HDF
 
     integer, save :: IFL1 = 0           ! num. of L1brad files opened so far
+    integer :: record_length
 
-    ! Exectuable code
+    ! Executable code
     error = 0
 
     ! Collect data from the fields. (only one legal field: file='...')
@@ -268,7 +298,10 @@ contains ! ============================ MODULE PROCEDURES ======================
           if ( status /= 0 ) &
             & call announce_error ( son, 'Allocation failed for l1bInfo' )
         endif
-        sd_id = sfstart(Filename, DFACC_READ)
+        ! sd_id = sfstart(Filename, DFACC_READ)
+        sd_id = mls_io_gen_openF('hg', .true., error, &
+          & record_length, DFACC_READ, &
+          & FileName, hdfVersion=hdfVersion)
         if ( sd_id == -1 ) then
           call announce_error ( son, &
             & 'Error opening L1BRAD file: ' //Filename)
@@ -290,6 +323,40 @@ contains ! ============================ MODULE PROCEDURES ======================
 
   !-------------------------------------------------  ReadL1BData  -----
   subroutine ReadL1BData ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
+    & FirstMAF, LastMAF, NEVERFAIL, hdfVersion )
+    
+    ! Dummy arguments
+    character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
+    integer, intent(in)            :: L1FILEHANDLE ! From HDF
+    integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
+    integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
+    logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
+    type(l1bdata_t), intent(inout) :: L1BDATA ! Result
+    integer, intent(out) :: FLAG        ! Error flag
+    integer, intent(out) :: NOMAFS      ! Number actually read
+    integer, optional, intent(in) :: hdfVersion
+
+    ! Local variables
+    integer :: myhdfVersion
+
+    ! Executable code
+    if (present(hdfVersion)) then
+      myhdfVersion = hdfVersion
+    else
+      myhdfVersion = L1BDEFAULT_HDFVERSION
+    endif
+
+    if ( myhdfVersion == HDFVERSION_4 ) then
+      call ReadL1BData_hdf4 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
+      & FirstMAF, LastMAF, NEVERFAIL )
+    else
+      call ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
+      & FirstMAF, LastMAF, NEVERFAIL )
+    endif
+  end subroutine ReadL1BData
+
+  !-------------------------------------------------  ReadL1BData_hdf4  -----
+  subroutine ReadL1BData_hdf4 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
     & FirstMAF, LastMAF, NEVERFAIL )
     
     ! Dummy arguments
@@ -555,7 +622,94 @@ contains ! ============================ MODULE PROCEDURES ======================
     call Deallocate_test ( start,  'start',  ModuleName )
     call Deallocate_test ( stride, 'stride', ModuleName )
 
-  end subroutine ReadL1BData
+  end subroutine ReadL1BData_hdf4
+
+  !-------------------------------------------------  ReadL1BData_hdf5  -----
+  subroutine ReadL1BData_hdf5 ( L1FileHandle, QuantityName, L1bData, NoMAFs, Flag, &
+    & FirstMAF, LastMAF, NEVERFAIL )
+    
+    ! Dummy arguments
+    character(len=*), intent(in)   :: QUANTITYNAME ! Name of SD to read
+    integer, intent(in)            :: L1FILEHANDLE ! From HDF
+    integer, intent(in), optional  :: FIRSTMAF ! First to read (default 0)
+    integer, intent(in), optional  :: LASTMAF ! Last to read (default last in file)
+    logical, intent(in), optional  :: NEVERFAIL ! Don't call MLSMessage if TRUE
+    type(l1bdata_t), intent(inout) :: L1BDATA ! Result
+    integer, intent(out) :: FLAG        ! Error flag
+    integer, intent(out) :: NOMAFS      ! Number actually read
+
+    ! Local Parameters
+    character (len=*), parameter :: INPUT_ERR = 'Error in input argument '
+    integer, parameter :: MAX_VAR_DIMS = 32
+    integer, parameter :: MAX_NOMAFS = 7000     ! Expect ~3500 in one day
+    integer, parameter :: SD_NO_COUNTERMAF = -2
+
+    ! Local Variables
+
+    character (len=128) :: DUMMY        ! Dummy quantity name
+
+    integer :: ALLOC_ERR
+    integer :: DATA_TYPE
+    integer :: DIM_SIZES(MAX_VAR_DIMS)
+    integer :: I
+    type(MLSAuxData_T) :: MLSAuxData
+    logical :: MyNeverFail
+    integer :: N_ATTRS
+    integer :: NUMMAFS
+    integer :: RANK
+    integer :: SDS1_ID
+    integer :: SDS2_ID
+    integer :: SDS_INDEX
+    integer :: STATUS
+
+    integer, dimension(:), pointer :: COUNTERMAF_PTR
+    integer, dimension(:), pointer :: START
+    integer, dimension(:), pointer :: STRIDE
+
+    real(r4), pointer, dimension(:,:,:) :: tmpR4Field
+
+    ! Executable code
+    call deallocateL1BData ( l1bData ) ! Avoid memory leaks
+
+    flag = 0
+    MyNeverFail = .false.
+    if ( present(NeverFail) ) MyNeverFail = NeverFail
+
+    ! Find data sets for counterMAF & quantity by name
+
+    if ( .not. IsHDF5DSPresent(L1FileHandle, 'CounterMAF') ) then
+      if ( .not. JUSTLIKEL2AUX ) then
+        flag = NOCOUNTERMAFINDX
+        if ( MyNeverFail ) return
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Failed to find index of counterMAF data set.')
+      else
+        sds1_id = SD_NO_COUNTERMAF
+      endif
+    else
+
+      l1bData%L1BName = quantityName
+      allocate(countermaf_ptr(MAX_NOMAFS))
+      countermaf_ptr = 0
+      call LoadFromHDF5DS(L1FileHandle, 'CounterMAF', countermaf_ptr)
+      if ( sds1_id == -1) then
+        flag = NOCOUNTERMAFID
+        if ( MyNeverFail ) return
+        call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Failed to find identifier of counterMAF data set.')
+      endif
+    endif
+
+    if ( .not. IsHDF5DSPresent(L1FileHandle, QuantityName) ) then
+      flag = NOQUANTITYINDEX
+      if ( MyNeverFail ) return
+      dummy = 'Failed to find index of quantity "' // trim(quantityName) // &
+        & '" data set.'
+      call MLSMessage ( MLSMSG_Error, ModuleName, dummy )
+    end if
+    call Read_MLSAuxData(L1FileHandle, QuantityName, 'unknown', & 
+       MLSAuxData, error, FirstMAF, LastMAF, read_attributes=.false.)
+  end subroutine ReadL1BData_hdf5
 
   ! ---------------------------------------------  announce_error  -----
   subroutine announce_error ( lcf_where, full_message, use_toolkit, &
@@ -621,6 +775,9 @@ contains ! ============================ MODULE PROCEDURES ======================
 end module L1BData
 
 ! $Log$
+! Revision 2.20  2002/09/27 00:00:39  pwagner
+! Began addings hdf5 functionality; incomplete
+!
 ! Revision 2.19  2002/07/23 23:16:06  pwagner
 ! Added suggested cause of firstMAF error being bad chunk num
 !
