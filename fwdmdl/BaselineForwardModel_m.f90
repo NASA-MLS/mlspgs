@@ -357,8 +357,7 @@ contains ! ======================================== BaselineForwardModel ======
           select case (jBlock%kind)
           case (m_absent)
             call CreateBlock ( Jacobian, rowBlock, colBlock, m_banded, &
-              & noMIFs*noChans, bandHeight=noChans )
-            jBlock%values = 0.0_rm
+              & noMIFs*noChans, bandHeight=noChans, init=0.0_rm )
           case (m_banded)
             call CheckForSimpleBandedLayout ( jBlock, noChans, &
               & 'd[Radiance]/d[ptan] in baseline model' )
@@ -423,6 +422,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.19  2004/07/07 19:42:11  vsnyder
+! Use new Init argument of CreateBlock
+!
 ! Revision 2.18  2003/10/09 22:16:13  livesey
 ! Added call to CheckForSimpleBandedLayout.
 !
