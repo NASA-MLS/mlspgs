@@ -18,8 +18,11 @@ module L2ParInfo
 
   public :: L2ParallelInfo_T, parallel, InitParallel, CloseParallel
   public :: SIG_ToJoin, SIG_Finished, SIG_Register, ChunkTag, InfoTag, SlaveJoin
-  public :: SIG_AckFinish, NotifyTag, GetNiceTidString, SlaveArguments
-  public :: AccumulateSlaveArguments
+  public :: SIG_AckFinish, SIG_RequestDirectWrite, SIG_DirectWriteGranted
+  public :: SIG_DirectWriteFinished
+  public :: NotifyTag, GetNiceTidString, SlaveArguments
+  public :: AccumulateSlaveArguments, RequestDirectWritePermission
+  public :: FinishedDirectWrite
   
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -39,6 +42,9 @@ module L2ParInfo
   integer, parameter :: SIG_FINISHED = SIG_toJoin + 1
   integer, parameter :: SIG_ACKFINISH = SIG_finished + 1
   integer, parameter :: SIG_REGISTER = SIG_AckFinish + 1
+  integer, parameter :: SIG_REQUESTDIRECTWRITE = SIG_Register + 1
+  integer, parameter :: SIG_DIRECTWRITEGRANTED = SIG_RequestDirectWrite + 1
+  integer, parameter :: SIG_DIRECTWRITEFINISHED = SIG_DirectWriteGranted + 1
 
   ! This datatype defines configuration for the parallel code
   type L2ParallelInfo_T
@@ -130,6 +136,68 @@ contains ! ==================================================================
     end if
   end subroutine CloseParallel
 
+  ! --------------------------------------- FinishedDirectWrite ------------
+  subroutine FinishedDirectWrite
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    ! Local variables
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_DirectWriteFinished, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "packing direct write finished flag" )
+
+    call PVMFSend ( parallel%masterTid, InfoTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "sending direct write finished packet" )
+    
+    ! Executable code
+  end subroutine FinishedDirectWrite
+    
+
+  ! ---------------------------------------- RequestDirectWritePermission --
+  subroutine RequestDirectWritePermission (filename, createFile )
+    integer, intent(in) :: FILENAME
+    logical, intent(out) :: CREATEFILE
+
+    ! Local variables
+    integer :: BUFFERID                 ! From PVM
+    integer :: INFO                     ! From PVM
+    integer :: SIGNAL                   ! From Master
+    integer :: CREATEFLAG               ! Returned by PVM
+
+    ! Executable code
+
+    ! Pack and dispatch
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMF90Pack ( SIG_RequestDirectWrite, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "packing direct write request flag" )
+    call PVMF90Pack ( filename, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "packing direct write information" )
+
+    call PVMFSend ( parallel%masterTid, InfoTag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, "sending direct write request packet" )
+
+    ! Now wait for a reply.  This may mean waiting for other chunks to
+    ! finish writing their part of the file.
+    call PVMFRecv ( parallel%masterTid, InfoTag, bufferID )
+    if ( bufferID <= 0 ) call PVMErrorMessage ( bufferID, &
+      & 'receiving direct write permission' )
+
+    ! Once we have the reply unpack it
+    call PVMF90Unpack ( signal, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'unpacking direct write permission')
+    if ( signal /= SIG_DirectWriteGranted ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Got unrecognised signal from master' )
+    call PVMF90Unpack ( createFlag, info )
+    if ( info /= 0 ) &
+      & call PVMErrorMessage ( info, 'unpacking create file flag')
+    createFile = createFlag == 1
+  end subroutine RequestDirectWritePermission
+
   ! ------------------------------------------- SlaveJoin ---------------
   subroutine SlaveJoin ( quantity, precisionQuantity, hdfName, key )
     ! This simply sends one or more vector quantities down a pvm spigot.
@@ -178,6 +246,9 @@ contains ! ==================================================================
 end module L2ParInfo
 
 ! $Log$
+! Revision 2.12  2002/05/22 00:48:28  livesey
+! Added direct write stuff
+!
 ! Revision 2.11  2002/04/24 16:53:50  livesey
 ! Changes to implement submit.
 !
