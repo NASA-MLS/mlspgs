@@ -258,7 +258,7 @@ contains ! =====     Public Procedures     =============================
           ! Now, depending on the properties of the source we deal with the
           ! vector quantity appropriately.
           if (ValidateVectorQuantity(quantity,coherent=.true.,stacked=.true.,regular=.true.,&
-            & verticalCoordinate=(/L_Pressure,L_Zeta/),&
+            & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/),&
             & minorFrame=.false.,majorFrame=.false.)) then
             ! Coherent, stacked, regular quantities on pressure surfaces, or
             ! with no vertical coordinate system go in l2gp files.
@@ -770,6 +770,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.66  2002/12/19 15:53:47  livesey
+! Allowed verticalCoordinate=l_none quantities back into the l2gp fold.
+!
 ! Revision 2.65  2002/11/26 23:38:01  livesey
 ! Better joining of major frame quantities
 !
