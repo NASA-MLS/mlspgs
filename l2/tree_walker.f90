@@ -70,11 +70,13 @@ module TREE_WALKER
 
 contains ! ====     Public Procedures     ==============================
   ! -------------------------------------  WALK_TREE_TO_DO_MLS_L2  -----
-  subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, COUNTCHUNKS )
+  subroutine WALK_TREE_TO_DO_MLS_L2 ( ROOT, ERROR_FLAG, FIRST_SECTION, COUNTCHUNKS, &
+    & SINGLECHUNK )
     integer, intent(in) ::     ROOT         ! Root of the abstract syntax tree
     integer, intent(out) ::    ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) ::     FIRST_SECTION! Index of son of root of first n_cf
     logical, intent(in) ::     COUNTCHUNKS ! Just count the chunks, print them out and quit
+    integer, intent(in) ::     SINGLECHUNK ! Just run this one chunk (0 if all)
 
     integer ::                                  chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
@@ -144,8 +146,13 @@ contains ! ====     Public Procedures     ==============================
           ! This is the old routine, which will be going away shortly
           ! call ScanAndDivide ( son, processingRange, l1bInfo, chunks )
           call ChunkDivide ( son, processingRange, l1bInfo, chunks )
-          firstChunk = 1
-          lastChunk = size(chunks)
+          if ( singleChunk /= 0 ) then
+            firstChunk = singleChunk
+            lastChunk = singleChunk
+          else
+            firstChunk = 1
+            lastChunk = size(chunks)
+          endif
           if ( countChunks ) then
             error_flag = 0
             call output ( size(chunks) )
@@ -298,6 +305,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.76  2002/01/09 22:56:17  livesey
+! Now sends slaves all chunks as regular HGrids need them.
+!
 ! Revision 2.75  2001/12/16 00:57:12  livesey
 ! Now passes all chunks to construct
 !
