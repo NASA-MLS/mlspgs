@@ -61,7 +61,7 @@ contains ! =====     Public Procedures     =============================
   ! in order to be able to store all the chunks.
 
   subroutine MLSL2Join ( root, vectors, matrices, l2gpDatabase, l2auxDatabase, &
-    & l2pcDatabase, chunkNo, chunks )
+    & l2pcDatabase, canDoL2PC, chunkNo, chunks )
 
     ! Dummy arguments
     integer, intent(in) :: ROOT    ! Of the JOIN section in the AST
@@ -70,6 +70,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T), dimension(:), pointer :: l2gpDatabase
     type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
     type (L2PC_T), dimension(:), pointer :: l2pcDatabase
+    logical, intent(in) :: canDoL2PC
     integer, intent(in) :: chunkNo
     type (MLSChunk_T), dimension(:), intent(in) :: chunks
 
@@ -207,6 +208,8 @@ contains ! =====     Public Procedures     =============================
         endif
 
       case ( s_l2pc ) ! ------------------- L2PC Bins ------------------------
+        if (.not. canDoL2PC) call MLSMessage(MLSMSG_Error,ModuleName,&
+          & "Cannot join l2pcs in multi chunk l2cfs")
         thisL2PC%xStar = vectors(xStarIndex)
         thisL2PC%yStar = vectors(yStarIndex)
         call GetFromMatrixDatabase ( matrices(kStarIndex), tmpKStar )
@@ -609,6 +612,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.25  2001/04/25 21:54:22  livesey
+! Added candol2pc flag
+!
 ! Revision 2.24  2001/04/25 21:51:46  livesey
 ! Tidied up Join for l2pcs
 !
