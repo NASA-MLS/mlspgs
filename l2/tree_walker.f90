@@ -130,7 +130,7 @@ subtrees: do while ( j <= howmany )
                 & l2auxDatabase, chunks, chunkNo)
             case ( z_join )
               call MLSL2Join ( son, vectors, matrices, l2gpDatabase, &
-                & l2auxDatabase, l2pcDatabase, chunkNo, chunks )
+                & l2auxDatabase, l2pcDatabase, size(chunks)==1, chunkNo, chunks )
             case ( z_retrieve )
               call retrieve ( son, vectors, matrices, forwardModelConfigDatabase)
             case default
@@ -193,6 +193,10 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.43  2001/04/25 21:52:13  livesey
+! Moved DeConstruct to after output for 1 chunk cases.
+! This is to protect vectors and matrices stored in l2pcs.
+!
 ! Revision 2.42  2001/04/25 20:34:36  livesey
 ! Now supports writing of l2pc files
 !
