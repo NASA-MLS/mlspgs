@@ -22,6 +22,7 @@ baseline
 boundarypressure
 
 C
+calSidebandFraction
 channel
 chunk
 clear
@@ -38,6 +39,7 @@ cloudy_110RH_below_top
 cloudy_110RH_in_cloud
 cloudy_nearside_only
 columnabundance
+complete
 
 days
 deg
@@ -87,6 +89,7 @@ KHz
 km
 
 latitude
+limbSidebandFraction
 linewidth
 logp
 LOSTransFunc
@@ -124,12 +127,17 @@ ppbv
 ppmv
 pptv
 pressure
+primary
 profiles
 
 rad
 radiance
 radians
 refGPH
+refltemp
+refltrans
+reflrefl
+reflspill
 rhi
 
 s
@@ -139,16 +147,18 @@ scGeocAlt
 scVel
 scVelECI
 scVelECR
+secondary
 seconds
-sidebandRatio
 sizeDistribution
 spaceRadiance
+strayRadiance
 surfaceType
 systemTemperature
 sza
 
 temperature
 temperature_prec temperature_precision
+tertiary
 theta
 THz
 time
@@ -168,6 +178,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.23  2003/05/29 16:35:55  livesey
+# New sideband fractions and reflector stuff
+#
 # Revision 2.22  2003/05/05 23:00:05  livesey
 # Merged in feb03 newfwm branch
 #
