@@ -713,7 +713,6 @@ contains
       condai = min(cgdx,gradn/(dxn*ajn**2),diag/ajn)
       fnxe = fnmin**2
       if (sq /= c0) fnxe = fnxe-(spl*ajn*dxn)**2
-      if ( fnxe > fnb**2 ) go to 222
       tp = dxinc
       if (inc < 0) then
         if (dxn <= dxinc) then
@@ -723,11 +722,11 @@ contains
         end if
       else
         cdxdxl = aj%dxdxl/(dxn*dxnl)
+        if ( fnxe > fnb**2 ) go to 222 ! Go do a gradient move
         tp1 = min(cp5,dxi*((c1-cdxdxl)**2))
         if (tp*tp1 > dxnl) tp = dxnl/tp1
         if (dxn <= tp .or. sp >= 1.0e12_rk) then
           if ( inc == 0 ) go to 200
-      if ( fnxe > fnb**2 ) go to 222
           cait = cbig
           go to 755
         end if
@@ -1211,6 +1210,9 @@ contains
 end module DNWT_MODULE
 
 ! $Log$
+! Revision 2.30  2002/09/19 01:25:53  vsnyder
+! More on when to stop going uphill
+!
 ! Revision 2.29  2002/09/14 02:46:00  vsnyder
 ! Move test for retreat-to-best, some housecleaning
 !
