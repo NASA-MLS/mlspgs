@@ -1052,6 +1052,7 @@ CONTAINS
 !  Apply velocity corrections:
 !
        gl_slabs(j,i)%v0s = gl_slabs(j,i)%v0s * Vel_z_correction
+
 !
      end do
 !
@@ -1065,6 +1066,9 @@ CONTAINS
 
 End module SLABS_SW_M
 ! $Log$
+! Revision 2.4  2001/12/14 23:43:44  zvi
+! Modification for Grouping concept
+!
 ! Revision 2.3  2001/11/30 01:18:11  zvi
 ! Correcting a minor bug
 !
