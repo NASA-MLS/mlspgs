@@ -11,12 +11,14 @@ module Fill                     ! Create vectors and fill them.
   ! We need many things from Init_Tables_Module.  First the fields:
   use INIT_TABLES_MODULE, only: F_Columns, F_Decay, F_Diagonal, &
     & F_GEOCALTITUDEQUANTITY, F_EXPLICITVALUES, F_EXTRA, F_H2OQUANTITY, &
-    & F_MAXITERATIONS, F_Matrix, F_METHOD, F_QUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
+    & F_INTEGRATIONTIME, F_MAXITERATIONS, F_MATRIX, F_METHOD, &
+    & F_QUANTITY, F_RADIANCEQUANTITY, &
+    & F_RATIOQUANTITY, F_REFGPHQUANTITY, &
     & F_Rows, F_SCECI, F_SCVEL, F_SOURCE, F_SOURCEGRID, F_SOURCEL2AUX, &
-    & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SuperDiagonal, &
-    & F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, FIELD_FIRST, FIELD_LAST
+    & F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, F_SPREAD, F_SUPERDIAGONAL, &
+    & F_SYSTEMTEMPERATURE, F_TEMPERATUREQUANTITY, F_TNGTECI, F_TYPE, FIELD_FIRST, FIELD_LAST
   ! Now the literals:
-  use INIT_TABLES_MODULE, only: L_CHOLESKY, L_EXPLICIT, L_GPH, L_GRIDDED, &
+  use INIT_TABLES_MODULE, only: L_CHOLESKY, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_LOSVEL, L_NONE, L_PLAIN, &
     & L_PRESSURE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, &
@@ -28,7 +30,8 @@ module Fill                     ! Create vectors and fill them.
   ! Now some arrays
   use Intrinsic, only: Field_Indices, Lit_Indices
   use Intrinsic, only: L_CHANNEL, L_INTERMEDIATEFREQUENCY, L_USBFREQUENCY,&
-    & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid
+    & L_LSBFREQUENCY, L_MIF, L_MAF, PHYQ_Dimensionless, PHYQ_Invalid, PHYQ_Temperature, &
+    & PHYQ_Time
   use L1BData, only: DeallocateL1BData, FindL1BData, L1BData_T, ReadL1BData
   use L2GPData, only: L2GPData_T
   use L2AUXData, only: L2AUXData_T, L2AUXRank
@@ -94,7 +97,9 @@ module Fill                     ! Create vectors and fill them.
   integer, parameter :: NoSourceQuantityGiven= noExplicitValuesGiven + 1
   integer, parameter :: InvalidExplicitFill= noSourceQuantityGiven + 1
   integer, parameter :: BadUnitsForExplicit= invalidExplicitFill + 1
-  integer, parameter :: BadIsotopeFill = badUnitsForExplicit + 1
+  integer, parameter :: BadUnitsForIntegrationTime = badUnitsForExplicit + 1
+  integer, parameter :: BadUnitsForSystemTemperature = badUnitsForIntegrationTime + 1
+  integer, parameter :: BadIsotopeFill = badUnitsForSystemTemperature + 1
 
   ! Error codes resulting from FillCovariance
   integer, parameter :: NotSPD = BadIsotopeFill + 1
@@ -163,9 +168,10 @@ contains ! =====     Public Procedures     =============================
 
     ! Local variables
 
+    type (vectorValue_T), pointer :: QUANTITY ! Quantity to be filled
     type (vectorValue_T), pointer :: GEOCALTITUDEQUANTITY
     type (vectorValue_T), pointer :: H2OQUANTITY
-    type (VectorValue_T), pointer :: QUANTITY ! Quantity to be filled
+    type (vectorValue_T), pointer :: RADIANCEQUANTITY
     type (vectorValue_T), pointer :: RATIOQUANTITY
     type (vectorValue_T), pointer :: REFGPHQUANTITY
     type (vectorValue_T), pointer :: SCECIQUANTITY
@@ -194,6 +200,7 @@ contains ! =====     Public Procedures     =============================
     integer :: H2OVECTORINDEX           ! In the vector database
     integer :: I, J, K                  ! Loop indices for section, spec, expr
     integer :: IND                      ! Temoprary index
+    real(r8) :: INTEGRATIONTIME         ! For estimated noise
     integer :: INSTANCE                 ! Loop counter
     integer :: KEY                      ! Definitely n_named
     integer :: L2AUXINDEX               ! Index into L2AUXDatabase
@@ -210,6 +217,8 @@ contains ! =====     Public Procedures     =============================
     type (Vector_T) :: NewVector ! A vector we've created
     integer :: PREVDEFDQT               !
     integer :: QUANTITYINDEX            ! Within the vector
+    integer :: RADIANCEQUANTITYINDEX    ! For radiance quantity
+    integer :: RADIANCEVECTORINDEX    ! For radiance quantity
     integer :: RATIOQUANTITYINDEX       ! in the quantities database
     integer :: RATIOVECTORINDEX         ! In the vector database
     integer :: REFGPHQUANTITYINDEX      ! in the quantities database
@@ -222,9 +231,10 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Of root, an n_spec_args or a n_named
     integer :: SOURCEQUANTITYINDEX      ! in the quantities database
     integer :: SOURCEVECTORINDEX        ! In the vector database
-    logical :: SPREAD           ! Do we spread values accross instances in explict
-    integer :: SuperDiagonal            ! Index of superdiagonal matrix in database
+    logical :: SPREAD                   ! Do we spread values accross instances in explict
+    integer :: SUPERDIAGONAL            ! Index of superdiagonal matrix in database
     !                                     -- for FillCovariance
+    real(r8) :: SYSTEMTEMPERATURE       ! For estimated noise
     real :: T1, T2                      ! for timing
     integer :: TEMPERATUREQUANTITYINDEX ! in the quantities database
     integer :: TEMPERATUREVECTORINDEX   ! In the vector database
@@ -375,6 +385,9 @@ contains ! =====     Public Procedures     =============================
           case ( f_ratioQuantity )      ! For isotope ratio
             ratioVectorIndex = decoration(decoration(subtree(1,gson)))
             ratioQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
+          case ( f_radianceQuantity )      ! For estimated noise
+            radianceVectorIndex = decoration(decoration(subtree(1,gson)))
+            radianceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_refGPHQuantity ) ! For hydrostatic
             refGPHVectorIndex = decoration(decoration(subtree(1,gson)))
             refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -384,6 +397,16 @@ contains ! =====     Public Procedures     =============================
             gridIndex=decoration(decoration(gson))
           case ( f_sourceVGrid )
             vGridIndex=decoration(decoration(gson))
+          case ( f_systemTemperature )
+            call expr ( gson , unitAsArray, valueAsArray )
+            if ( all (unitAsArray /= (/PHYQ_Temperature, PHYQ_Invalid/) ) ) &
+              call Announce_error ( key, badUnitsForSystemTemperature )
+            systemTemperature = valueAsArray(1)
+          case ( f_integrationTime )
+            call expr ( gson , unitAsArray, valueAsArray )
+            if ( all (unitAsArray /= (/PHYQ_Time, PHYQ_Invalid/) ) ) &
+              call Announce_error ( key, badUnitsForIntegrationtime )
+            integrationTime = valueAsArray(1)
           case ( f_maxIterations )      ! For hydrostatic fill
             call expr ( subtree(2,subtree(j,key)), unitAsArray,valueAsArray )
             if ( all(unitAsArray(1) /= (/PHYQ_Dimensionless,PHYQ_Invalid/)) ) &
@@ -503,6 +526,12 @@ contains ! =====     Public Procedures     =============================
             & call Announce_Error ( key, noSourceL2AUXGiven )
 !          call FillVectorQuantityFromL2AUX(quantity,l2auxDatabase(l2auxIndex),errorCode)
           if ( errorCode /= 0 ) call Announce_error ( key, errorCode )
+
+        case ( l_estimatedNoise ) ! ----------- Fill with estimated noise ---
+          radianceQuantity => GetVectorQtyByTemplateIndex( &
+            & vectors(radianceVectorIndex), radianceQuantityIndex )
+          call FillVectorQtyWithEstNoise ( &
+            & quantity, radianceQuantity, systemTemperature, integrationTime )
 
         case ( l_explicit ) ! ---------  Explicity fill from l2cf  -----
           if ( .not. got(f_explicitValues) ) &
@@ -776,6 +805,54 @@ contains ! =====     Public Procedures     =============================
       end do
     end do
   end subroutine FillLOSVelocity
+
+  ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
+  subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
+    & systemTemperature, integrationTime )
+
+    use MLSSignals_m, only: signals
+
+    ! Dummy arguments
+    type (VectorValue_T), intent(inout) :: QUANTITY ! Quantity to fill
+    type (VectorValue_T), intent(in) :: RADIANCE ! Radiances to use in calculation
+    real(r8), intent(in) :: SYSTEMTEMPERATURE ! System temperature in K
+    real(r8), intent(in) :: INTEGRATIONTIME ! Integration time in seconds
+
+    ! Local variables
+    integer :: C                        ! Channel loop counter
+    integer :: S                        ! Surface loop counter
+    integer :: I                        ! Index into first dimension of values
+
+    real (r8), dimension(:), pointer :: WIDTH ! Channel widths in MHz
+
+    ! Executable code
+
+    if (.not. ValidateVectorQuantity ( quantity, &
+      & quantityType=(/l_radiance/), minorFrame=.true.) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Invalid quantity for estimated noise fill.")
+
+    if (.not. ValidateVectorQuantity ( radiance, &
+      & quantityType=(/l_radiance/), minorFrame=.true.) ) &
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & "Invalid quantity for estimated noise fill.")
+
+    if ( radiance%template%signal /= quantity%template%signal ) &
+      & call MLSMEssage ( MLSMSG_Error, ModuleName, &
+      & "Quantity and radiances not same signal for estimated noise fill.")
+
+    width => signals(radiance%template%signal)%widths
+
+    i = 1
+    do s = 1, quantity%template%noSurfs
+      do c = 1, quantity%template%noChans
+        quantity%values(i,:) = ( radiance%values(i,:) + systemTemperature ) / &
+          & sqrt ( integrationTime * 10e6 * width(c) )
+        i = i + 1
+      end do
+    end do
+
+  end subroutine FillVectorQtyWithEstNoise
 
   ! ------------------------------------- FillVectorHydrostatically ----
   subroutine FillVectorQtyHydrostatically ( key, quantity, &
@@ -1084,6 +1161,10 @@ contains ! =====     Public Procedures     =============================
       call output ( " temperatureQuantity is not temperature", advance='yes' )
     case ( badUnitsForExplicit )
       call output ( " has inappropriate units for Fill instruction.", advance='yes' )
+    case ( badUnitsForIntegrationTime )
+      call output ( " has inappropriate units for integration time.", advance='yes' )
+    case ( badUnitsForSystemTemperature )
+      call output ( " has inappropriate units for system temperature.", advance='yes' )
     case ( badUnitsForMaxIterations )
       call output ( " maxIterations should be dimensionless", advance='yes' )
     case ( cantFillFromL1B )
@@ -1180,6 +1261,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.48  2001/05/16 19:44:16  livesey
+! Added estimated noise stuff
+!
 ! Revision 2.47  2001/05/10 23:25:12  livesey
 ! Added isotope scaling stuff, tidied up some old code.
 !
