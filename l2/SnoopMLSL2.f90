@@ -296,8 +296,7 @@ contains ! ========  Public Procedures =========================================
     !  TYPE (Matrix_T), DIMENSION(:), POINTER, OPTIONAL :: MATRIXDATABASE
     
     ! Local parameter
-    integer, parameter :: DELAY=100000  ! For Usleep, no. microsecs
-
+    integer, parameter :: DELAY=50*1000  ! For Usleep, no. microsecs
     ! External (C) function
     external :: Usleep
 
@@ -554,6 +553,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.22  2001/10/06 23:49:16  livesey
+! Decreased delay in the hope it makes it faster
+!
 ! Revision 2.21  2001/10/05 20:19:21  vsnyder
 ! Process arguments by name instead of position.
 ! Add 'AnotherComment' optional argument.
