@@ -26,7 +26,7 @@ module MatrixTools                      ! Various tools for matrices
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
     "$Id$"
-  character (len=len(idParm)), private :: Id = idParm
+  character (len=len(idParm)), save :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
     "$RCSfile$"
   private :: not_used_here 
@@ -459,7 +459,7 @@ contains ! =====  Public procedures  ===================================
 
   end subroutine DumpBlocks
 
-  ! ----------------------------------------- CombineChannelsInMatrix
+  ! ------------------------------------  CombineChannelsInMatrix  -----
   subroutine CombineChannelsInMatrix ( mOut, mIn )
     ! This subroutine might belong better in L2PC_m, as it's really only for
     ! working with that kind of matrix.  It takes a matrix with a
@@ -468,7 +468,7 @@ contains ! =====  Public procedures  ===================================
     ! set of channels
     use ManipulateVectorQuantities, only: FILLWITHCOMBINEDCHANNELS
     use MatrixModule_1, only: CLEARMATRIX
-    use MatrixModule_0, only: MULTIPLYMATRIX_XY, DUMP
+    use MatrixModule_0, only: MULTIPLYMATRIX_XY
     use Output_m, only: OUTPUT
     use String_Table, only: DISPLAY_STRING
     type (Matrix_T), intent(inout) :: MOUT ! Result matrix
@@ -529,7 +529,7 @@ contains ! =====  Public procedures  ===================================
 
   end subroutine CombineChannelsInMatrix
 
-  ! ----------------------------------------- PVMSendBlock
+  ! -----------------------------------------------  PVMSendBlock  -----
   subroutine PVMPackBlock ( BLOCK )
     ! Dummy arguments
     type (MatrixElement_T), intent(in) :: BLOCK ! The block of the matrix
@@ -566,7 +566,7 @@ contains ! =====  Public procedures  ===================================
 
   end subroutine PVMPackBlock
 
-  ! ----------------------------------------- PVMSendRC
+  ! --------------------------------------------------  PVMSendRC  -----
   subroutine PVMPackRC ( RC )
     ! Dummy argument
     use QuantityPVM, only: PVMSENDQUANTITY
@@ -599,7 +599,7 @@ contains ! =====  Public procedures  ===================================
 
   end subroutine PVMPackRC
 
-  ! ----------------------------------------- PVMSendMatrix
+  ! ----------------------------------------------  PVMSendMatrix  -----
   subroutine PVMSendMatrix ( MATRIX, TID, JUSTPACK )
     ! Dummy arguments
     type (Matrix_T), intent(in) :: MATRIX ! The matrix to send
@@ -640,6 +640,9 @@ contains ! =====  Public procedures  ===================================
 end module MatrixTools
 
 ! $Log$
+! Revision 1.16  2004/09/28 00:40:06  livesey
+! More informative log in CombineChannelsInMatrix
+!
 ! Revision 1.15  2004/09/25 00:16:53  livesey
 ! Added CombineChannelsInMatrix
 !
