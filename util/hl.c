@@ -14,12 +14,10 @@ main ( int argc, char* argv[] )
   char red[] = "\033[00;31;1m";    /* bold red on transparent background */
   int i;                           /* Subscript/loop inductor */
 
-#define PSIZ 256         /* Compiled pattern buffer size */
-
   typedef struct
   { char* find;          /* Pattern to find */
     char* color;         /* String to but before it */
-    regex_t preg[PSIZ];  /* Compiled pattern -- from regcomp */
+    regex_t preg;        /* Compiled pattern -- from regcomp */
   } pat;
 
   regmatch_t match;      /* Where is the string that matches the pattern? */
@@ -37,7 +35,7 @@ main ( int argc, char* argv[] )
 #define NPAT sizeof pats / sizeof pats[0]
 
   /* Compile the patterns */
-  for ( i=0; i<NPAT ; i++ ) regcomp ( pats[i].preg, pats[i].find, REG_EXTENDED );
+  for ( i=0; i<NPAT ; i++ ) regcomp ( &pats[i].preg, pats[i].find, REG_EXTENDED );
 
   setvbuf ( stdout, (char*)NULL, _IONBF, 1 ); /* unbuffer the output */
 
@@ -46,7 +44,7 @@ main ( int argc, char* argv[] )
     if ( fgets ( b, sizeof b, stdin ) == NULL ) return(0);
     /* Look for a pattern match */
     for ( i=0; i<NPAT; i++ )
-    { if ( regexec ( pats[i].preg, b, 1, &match, 0 ) == 0 )
+    { if ( regexec ( &pats[i].preg, b, 1, &match, 0 ) == 0 )
       /* Got a match; put the desired color around it */
       { fwrite ( b, sizeof(char), match.rm_so, stdout );
         printf ( "%s", pats[i].color );
@@ -63,4 +61,7 @@ main ( int argc, char* argv[] )
 
 /*
 $Log$
+Revision 1.3  2001/03/03 02:04:24  vsnyder
+Committing working version
+
 */
