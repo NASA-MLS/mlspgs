@@ -62,7 +62,8 @@ MODULE ConstructQuantityTemplates ! Construct templates from user supplied info
 ! Error codes for "announce_error"
   integer, parameter :: No_Error_Code = 0
   integer, parameter :: BadUnitMessage =         No_Error_Code+1
-  integer, parameter :: InappropriateQuantity =  BadUnitMessage+1
+  integer, parameter :: InappropriateExtinction = BadUnitMessage+1
+  integer, parameter :: InappropriateQuantity =  InappropriateExtinction+1
   integer, parameter :: NeedGrid =               InappropriateQuantity+1
   integer, parameter :: NoQuantityType =         NeedGrid+1
   integer, parameter :: UnnecessaryGrid =        NoQuantityType+1
@@ -211,6 +212,8 @@ contains ! =====     Public Procedures     =============================
 !      case ( f_molecule );          molecule = value  ! I don't understand this
       case ( f_molecule )
         molecule = value
+        if ( molecule == l_extinction ) &
+          & call Announce_error ( root, inappropriateExtinction )
         call get_string( sub_rosa(subtree(2,son)), moleculeString, strip=.true. )
       case ( f_radiometer )
         radiometer = decoration(decoration(subtree(2,son)))
@@ -499,6 +502,9 @@ contains ! =====     Public Procedures     =============================
     select case ( code )
     case ( badUnitMessage )
       call output ( "Incorrect or absent unit.", advance='yes' )
+    case ( InappropriateExtinction )
+      call output ( "Extinction is not a valid molecule, use type=extinction instead", &
+        advance='yes' )
     case ( InappropriateQuantity )
       call output ( "A quantity inappropriate for this version is specified.", &
                     advance='yes' )
@@ -849,6 +855,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.59  2001/11/08 00:13:38  livesey
+! Sorted out extinction stuff
+!
 ! Revision 2.58  2001/10/31 19:07:25  livesey
 ! Added fGrid stuff
 !
