@@ -36,7 +36,11 @@ PLATFORMS = .
 
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
-MLSCFILE=.configure
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
 
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does nor exist yet
@@ -139,6 +143,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.14  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
 # Revision 1.13  2001/05/01 18:32:13  pwagner
 # Added .configure to prereqs for lib
 #

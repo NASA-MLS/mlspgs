@@ -56,7 +56,11 @@ PLATFORMS = .
 
 # This is the default name of the configure file
 # It may be overridden for multiple platforms, special options, etc.
-MLSCFILE=.configure
+ifdef HOSTMLSCFILE
+   MLSCFILE=$(HOSTMLSCFILE)
+else
+   MLSCFILE=.configure
+endif
 
 # This will set our MLS platform, compiler. etc.
 # w/o complaining if it does not exist yet
@@ -539,6 +543,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.32  2001/05/14 17:37:14  pwagner
+# .configure now a variable file name
+#
 # Revision 1.31  2001/05/01 18:31:07  pwagner
 # Automatically update after any configure
 #
