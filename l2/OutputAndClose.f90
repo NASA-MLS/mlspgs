@@ -216,7 +216,7 @@ contains ! =====     Public Procedures     =============================
         if ( DEBUG ) call output(l_l2gp, advance='yes')
 
         if ( DEBUG ) call output('l2aux type number: ', advance='no')
-        if ( DEBUG ) call output(l_l2gp, advance='yes')
+        if ( DEBUG ) call output(l_l2aux, advance='yes')
 
         if ( DEBUG ) call output('l2dgg type number: ', advance='no')
         if ( DEBUG ) call output(l_l2dgg, advance='yes')
@@ -307,7 +307,11 @@ contains ! =====     Public Procedures     =============================
 
             call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
 
-            if ( l2gp_mcf <= 0 ) then
+	    if ( l2gp_mcf <= -999 ) then
+              call MLSMessage ( MLSMSG_Warning, ModuleName, &
+                &  "no mcf for this l2gp species in" // trim(file_base) )
+		
+            else if ( l2gp_mcf <= 0 ) then
 
               ! Error in finding mcf number
               call announce_error ( son, &
@@ -340,7 +344,6 @@ contains ! =====     Public Procedures     =============================
                 & hdfVersion=hdfVersion, metadata_error=metadata_error, &
                 & filetype=l_swath )
               error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
-
             else
 
               ! Type l2gp file 'other'
@@ -351,7 +354,7 @@ contains ! =====     Public Procedures     =============================
                 call output ( '   l2gp_mcf: ', advance='no' )
                 call output ( l2gp_mcf , advance='no' )
                 call output ( '   swfid: ', advance='no' )
-                call output ( swfid , advance='yes' )
+                call output ( swfid , advance='yes')
               end if
 
               call populate_metadata_oth &
@@ -835,7 +838,7 @@ contains ! =====     Public Procedures     =============================
       end if
 
       ! Done with text of PCF file at last
-
+   
       if ( DEBUG ) &
         & call output ( 'About to deallocate text of PCF file' , advance='yes' )
 
@@ -870,7 +873,7 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine Output_Close
 
-  ! ---------------------------------------------  announce_success  -----
+  ! ---------------------------------------------  add_metadata  -----
   subroutine add_metadata ( fileName, numquantitiesperfile, quantityNames, &
     & hdfVersion, filetype, metadata_error )
     use Intrinsic, only: l_swath, l_grid, l_hdf
@@ -911,6 +914,13 @@ contains ! =====     Public Procedures     =============================
        & .true., returnStatus, Version, DEBUG, &
        & exactName=PhysicalFilename)
      call get_l2gp_mcf ( file_base, meta_name, l2gp_mcf  )
+     if ( l2gp_mcf <= -999 ) then
+         call MLSMessage ( MLSMSG_Warning, ModuleName, &
+           &  "no mcf for this l2gp species in" // trim(file_base) )
+     else if (l2gp_mcf <= 0) then
+         call MLSMessage ( MLSMSG_Error, ModuleName, &
+           &  "no mcf for this l2gp species in" // trim(file_base) )
+     end if
 
      if ( QuantityNames(numquantitiesperfile) &
        & == QuantityNames(1) ) then
@@ -1054,6 +1064,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.79  2003/07/23 18:29:32  cvuu
+! quick and dirty fixed for CH3CN
+!
 ! Revision 2.78  2003/07/07 23:49:11  pwagner
 ! Add_metadata procedure now public
 !
