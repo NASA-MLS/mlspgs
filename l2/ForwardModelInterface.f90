@@ -104,8 +104,8 @@ module ForwardModelInterface
   ! Error codes
 
   integer, parameter :: AllocateError        = 1
-  integer, parameter :: BadMolecule          = AllocateError + 1  
-  integer, parameter :: DefineSignalsFirst   = BadMolecule + 1  
+  integer, parameter :: BadMolecule          = AllocateError + 1
+  integer, parameter :: DefineSignalsFirst   = BadMolecule + 1
   integer, parameter :: DefineMoleculesFirst = DefineSignalsFirst + 1
   integer, parameter :: DuplicateField       = DefineMoleculesFirst + 1
   integer, parameter :: IncompleteFullFwm    = DuplicateField + 1
@@ -326,7 +326,7 @@ contains
       ! Now identify the Earth's surface in the tangent grid
       call Hunt(info%tangentGrid%surfs, info%integrationGrid%surfs(1), &
         &  info%surfaceTangentIndex)
-      
+
       ! Ensure that points in tangentGrid at and above the surface are a subset
       ! of integration grid
       do tangent = info%surfaceTangentIndex, info%tangentGrid%noSurfs
@@ -439,8 +439,8 @@ contains
     real(r4) :: K_TEMP(02,Nptg,mxco,mnp)
     real(r4) :: K_ATMOS(02,Nptg,mxco,mnp,Nsps)
     real(r4) :: K_SPECT_DW(02,Nptg,mxco,mnp,Nsps),  &
-      K_SPECT_DN(02,Nptg,mxco,mnp,Nsps),  &
-      K_SPECT_DNU(02,Nptg,mxco,mnp,Nsps)
+                K_SPECT_DN(02,Nptg,mxco,mnp,Nsps),  &
+                K_SPECT_DNU(02,Nptg,mxco,mnp,Nsps)
 
     real(r8) :: I_STAR_ALL(Nch,Nptg)
 
@@ -518,9 +518,9 @@ contains
     type(path_vector), allocatable, dimension(:,:) :: PHI_PATH  ! (Nptg,mnm)
     type(path_vector), allocatable, dimension(:,:) :: T_PATH    ! (Nptg,mnm)
     type(path_vector), allocatable, dimension(:,:) :: Z_PATH    ! (Nptg,mnm)
-    
+
 ! dimensions of SPSFUNC_PATH are: (Nsps,Nptg,mnm)
-    type(path_vector), allocatable, dimension(:,:,:) :: SPSFUNC_PATH 
+    type(path_vector), allocatable, dimension(:,:,:) :: SPSFUNC_PATH
 
     Type(path_vector_2d), allocatable, dimension(:,:) :: ETA_PHI ! (Nptg,mnm)
 
@@ -530,7 +530,7 @@ contains
 
     ! Executable code --------------------------------------------------------
 
-    ! First we identify the vector quantities we're going to need.  
+    ! First we identify the vector quantities we're going to need.
     ! The key is to identify the signal we'll be working with first
     ! Deal with multiple signals in later versions !??? NJL
     if (size(forwardModelConfig%sigInfo) > 1) call MLSMessage ( &
@@ -564,7 +564,7 @@ contains
 
     print*,'Just some checks:',temp%template%noInstances, &
       & radiance%template%noInstances, ptan%template%noInstances
-    ! We won't seek for molecules here as we can't have an array of pointers. 
+    ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
     ! vmr => GetVectorQuantityBytype (fwdModelIn, fwdModelExtra, &
     !   quantityType=l_vmr, molecule=forwardModelConfig.molecules(i))
@@ -654,7 +654,7 @@ contains
     if (temp%template%noInstances /= noMAFs) &
       & call MLSMessage(MLSMSG_Error,ModuleName,'no temperature profiles /= no maf')
     do maf = 1, noMAFs
-      phi_tan = degToRad*temp%template%phi(1,maf) 
+      phi_tan = degToRad*temp%template%phi(1,maf)
          ! ??? For the moment, change this soon.
       print*,'MAF ',maf,' phi_tan ',phi_tan
       geod_lat= degToRad*temp%template%geodLat(1,maf)
@@ -702,7 +702,7 @@ contains
       &  temp%template%phi(1,:)*degToRad,spsfunc_path,noMAFs,elvar,Ier)
     if(ier /= 0) goto 99
 
-    ! The first part of the forward model dealt with the chunks as a whole. 
+    ! The first part of the forward model dealt with the chunks as a whole.
     ! This next part is more complex, and is performed within a global outer
     ! loop over major frame (maf)
 
@@ -714,7 +714,7 @@ contains
 
       phi_tan = degtorad*temp%template%phi(1,maf) !??? Choose better value later
 
-      ! Compute the ptg_angles (chi) for Antenna convolution, also the 
+      ! Compute the ptg_angles (chi) for Antenna convolution, also the
       ! derivatives of chi w.r.t to T and other parameters
       call get_chi_angles(ndx_path(:,maf),n_path(:,maf),&
         &     forwardModelConfig%tangentGrid%surfs,        &
@@ -776,13 +776,13 @@ contains
           &   temp%template%noSurfs, temp%template%noInstances, &
           &   'k_temp_frq', ModuleName)
       end if
- 
+
       call Allocate_Test(radV,maxNoFreqs, 'radV', ModuleName)
 
       do specie = 1, noSpecies
         f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
           & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
-        
+
         ! Allocate intermediate space for vmr derivatives
         if ( forwardModelConfig%moleculeDerivatives(specie) ) then
           call Allocate_Test( k_atmos_frq(specie)%values, &
@@ -826,7 +826,7 @@ contains
 !          print*,'Center frequency is:',PointingGrids(whichPointingGrid)%CenterFrequency
 !          print*,'Offsets:'
 !          call dump(PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies )
-          frequencies => PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies 
+          frequencies => PointingGrids(whichPointingGrid)%oneGrid(grids(ptg_i))%frequencies
           noFreqs = size(frequencies)
         endif ! If not, we dealt with this outside the loop
 
@@ -897,7 +897,7 @@ contains
         ! Here we either frequency average to get the unconvolved radiances, or
         ! we just store what we have as we're using delta funciton channels
 
-        if ( forwardModelConfig%do_freq_avg ) then 
+        if ( forwardModelConfig%do_freq_avg ) then
           select case (signal%sideband)
           case (l_lower)
             centerFreq = signal%lo - signal%centerFrequency
@@ -948,7 +948,7 @@ contains
           if ( forwardModelConfig%moleculeDerivatives(specie) ) then
             f => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
               & quantityType=l_vmr, molecule=forwardModelConfig%molecules(specie))
-            
+
             if ( forwardModelConfig%do_freq_avg) then
               do i = 1, noUsedChannels
                 ch = usedChannels(i)
@@ -1022,7 +1022,7 @@ contains
       ! location as well as k_atmos last location and k_spect_d? last location:
 
       do i = 1, noUsedChannels
-        ch = usedChannels(i)        
+        ch = usedChannels(i)
         Radiances(no_tan_hts,ch) = Radiances(no_tan_hts-1,ch)
         if(ForwardModelConfig%temp_der) then
           k_temp(i,no_tan_hts,1:temp%template%noSurfs,1:temp%template%noInstances) = &
@@ -1083,7 +1083,7 @@ contains
             &     ForwardModelConfig%tangentGrid%noSurfs,  &
             &     k_info_count,i_star_all(i,:),k_star_all((1),:,:,:,:), &
             &     k_star_info,temp%template%noSurfs,temp%template%noInstances,&
-            &     TFMI%no_phi_f, FMI%spectroscopic,temp%template%surfs(:,1), &  
+            &     TFMI%no_phi_f, FMI%spectroscopic,temp%template%surfs(:,1), &
             &     FMI%Xlamda,FMI%Aaap, FMI%D1Aaap,FMI%D2Aaap,FMI%Ias,ier)
           if(ier /= 0) goto 99
         else
@@ -1165,6 +1165,9 @@ contains
     call Deallocate_test(usedChannels, 'usedChannels', ModuleName)
 !   print*,'At the end radiances are:'
 !   call dump(radiance%values)
+!  *** Zvi DEBUG   
+     if(i > -2) Stop
+!  *** END Zvi DEBUG   
 
     if(.not. any((/ForwardModelConfig%temp_der,&
       & ForwardModelConfig%atmos_der,ForwardModelConfig%spect_der/))) goto 99
@@ -1352,15 +1355,15 @@ contains
     call print_source ( source_ref ( where ) )
     call output ( ' ForwardModelSetup complained: ' )
     select case ( code )
-    case (AllocateError) 
+    case (AllocateError)
       call output ( 'allocation error.', advance='yes')
-    case (BadMolecule) 
+    case (BadMolecule)
       call output ( 'asked for derivatives for an unlisted molecule.')
-    case (DefineMoleculesFirst) 
+    case (DefineMoleculesFirst)
       call output ( 'molecule must be defined before moleules derivatives.', advance='yes')
-    case (DefineSignalsFirst) 
+    case (DefineSignalsFirst)
       call output ( 'signals must be defined before channels.', advance='yes')
-    case (DuplicateField) 
+    case (DuplicateField)
       call output ( 'duplicate field specified:' )
       call display_string(field_indices(FieldIndex), advance='yes')
     case (IncompleteFullFwm)
@@ -1379,6 +1382,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.63  2001/04/01 00:08:52  zvi
+! *** empty log message ***
+!
 ! Revision 2.62  2001/03/31 01:49:45  zvi
 ! *** empty log message ***
 !
