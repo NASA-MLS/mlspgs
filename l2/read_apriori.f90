@@ -4,12 +4,12 @@
 !=============================================================================
 module ReadAPriori
 
-  use GriddedData, only: GriddedData_T, v_is_pressure, &
+  use GriddedData, only: rgr, GriddedData_T, v_is_pressure, &
     & AddGriddedDataToDatabase, Dump
   use Expr_M, only: Expr
   use Hdf, only: DFACC_READ  !, SFSTART
-  use INIT_TABLES_MODULE, only: F_DIMLIST, F_FIELD, F_FILE, F_HDFVERSION, &
-    & F_ORIGIN, F_SDNAME, F_SWATH, &
+  use INIT_TABLES_MODULE, only: F_DIMLIST, F_FIELD, F_FILE, &
+    & F_HDFVERSION, F_missingValue, F_ORIGIN, F_SDNAME, F_SWATH, &
     & FIELD_FIRST, FIELD_LAST, L_CLIMATOLOGY, L_DAO, L_NCEP, S_GRIDDED, &
     & L_GLORIA, S_L2AUX, S_L2GP, F_QUANTITYTYPE
   use Intrinsic, only: PHYQ_Dimensionless
@@ -74,6 +74,8 @@ contains ! =====     Public Procedures     =============================
     integer :: Details             ! How much info about the files to dump
     integer :: DIMLIST             ! index of 'X,Y,..' in dimList='X,Y,..'
     character(len=FileNameLen) :: DIMLISTSTRING ! 'X,Y,..'
+    integer :: EXPR_UNITS(2)            ! Output from Expr subroutine
+    double precision :: EXPR_VALUE(2)   ! Output from Expr subroutine
     integer :: FIELD               ! Son of KEY, must be n_assign
     integer :: FIELDINDEX          ! Literal
     integer :: FieldName        ! sub-rosa index of name in field='name'
@@ -97,6 +99,7 @@ contains ! =====     Public Procedures     =============================
     type (L2GPData_T) :: L2GP
     integer :: L2Index             ! In the l2gp or l2aux database
     integer :: L2Name              ! Sub-rosa index of L2[aux/gp] label
+    real(rgr) ::    missingValue = 0.
     integer :: NOSWATHS                 ! In an input file
     character(len=FileNameLen) :: path   ! path of actual literal file name
     integer :: pcf_indx            ! loop index of climatology pcf numbers
@@ -172,6 +175,9 @@ contains ! =====     Public Procedures     =============================
           fieldName = sub_rosa(subtree(2,field))
         case ( f_file )
           fileName = sub_rosa(subtree(2,field))
+        case ( f_missingValue )
+          call expr ( subtree(2,field), expr_units, expr_value )
+          missingValue = expr_value(1)
         case ( f_hdfVersion )           
           call expr ( subtree(2,field), units, value, type )             
           if ( units(1) /= phyq_dimensionless ) &                        
@@ -355,25 +361,26 @@ contains ! =====     Public Procedures     =============================
           call decorate ( key, gridIndex )
           call readGriddedData ( FileNameString, son, 'ncep', v_is_pressure, &
             & GriddedDatabase(gridIndex), &
-            & dimListString, TRIM(fieldNameString) )
+            & dimListString, TRIM(fieldNameString), missingValue )
           if(index(switches, 'pro') /= 0) then                            
             call announce_success(FilenameString, 'ncep', &                    
              & fieldNameString, hdfVersion=hdfVersion)
-             print *, trim(GriddedDatabase(gridIndex)%quantityName)
-             print *, trim(GriddedDatabase(gridIndex)%description)
-             print *, trim(GriddedDatabase(gridIndex)%units)
+             ! print *, trim(GriddedDatabase(gridIndex)%quantityName)
+             ! print *, trim(GriddedDatabase(gridIndex)%description)
+             ! print *, trim(GriddedDatabase(gridIndex)%units)
           endif
         case ( l_dao ) ! ---------------------------- DAO Data
           gridIndex = AddGriddedDataToDatabase( GriddedDatabase, GriddedData )
           call decorate ( key, gridIndex )
           call ReadGriddedData ( FileNameString, son, 'dao', v_is_pressure, &
-            & GriddedDatabase(gridIndex), dimListString, TRIM(fieldNameString) )
+            & GriddedDatabase(gridIndex), dimListString, TRIM(fieldNameString), &
+            & missingValue )
           if(index(switches, 'pro') /= 0) then                            
             call announce_success(FilenameString, 'dao', &                    
              & fieldNameString, hdfVersion=hdfVersion)    
-             print *, trim(GriddedDatabase(gridIndex)%quantityName)
-             print *, trim(GriddedDatabase(gridIndex)%description)
-             print *, trim(GriddedDatabase(gridIndex)%units)
+             ! print *, trim(GriddedDatabase(gridIndex)%quantityName)
+             ! print *, trim(GriddedDatabase(gridIndex)%description)
+             ! print *, trim(GriddedDatabase(gridIndex)%units)
           endif
         case ( l_gloria ) ! ------------------------- Data in Gloria's UARS format
           call decorate ( key, &
@@ -405,7 +412,8 @@ contains ! =====     Public Procedures     =============================
           if ( .not. gotAlready ) then
             ! No, well read it then, add its entire contents to the database
             call read_climatology ( FileNameString, son, &
-              & GriddedDatabase, mlspcf_l2apriori_start, mlspcf_l2apriori_end )
+              & GriddedDatabase, mlspcf_l2apriori_start, mlspcf_l2apriori_end, &
+              & missingValue )
           end if
        
           ! Locate requested grid by name, store index in gridIndex
@@ -566,6 +574,9 @@ end module ReadAPriori
 
 !
 ! $Log$
+! Revision 2.43  2003/03/01 00:24:27  pwagner
+! Added missingValue as filed to reading Gridded data
+!
 ! Revision 2.42  2003/02/27 18:41:40  pwagner
 ! Handles WILDCARDHDFVERSION properly
 !
