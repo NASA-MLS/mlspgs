@@ -209,7 +209,7 @@ contains ! =====     Public Procedures     =============================
   type (BinSelector_T) function CreateBinSelectorFromMLSCFINFO ( root ) &
     & result ( binSelector )
 
-    use L2PC_m, only: BINSELECTOR_T
+    use L2PC_m, only: BINSELECTOR_T, NullifyBinSelector
 
     integer, intent(in) :: ROOT         ! Tree node
     ! Local variables
@@ -228,7 +228,7 @@ contains ! =====     Public Procedures     =============================
     integer :: THISSIGNALCOUNT          ! Number of signals for one signal string
 
     ! Exeuctable code
-    nullify ( binSelector%signals, binSelector%sidebands ) ! for Sun's rubbish compiler
+    call nullifyBinSelector ( binSelector ) ! for Sun's rubbish compiler
     do i = 2, nsons(root)               ! Skip binSelector command
       son = subtree ( i, root )
       field = get_field_id ( son )
@@ -297,7 +297,7 @@ contains ! =====     Public Procedures     =============================
     ! Process the forwardModel specification to produce ForwardModelConfig to add
     ! to the database
 
-    use ForwardModelConfig, only: ForwardModelConfig_T
+    use ForwardModelConfig, only: ForwardModelConfig_T, NullifyForwardModelConfig
     use MLSSignals_M, only: Signals
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSNumerics, only: HUNT
@@ -340,7 +340,7 @@ contains ! =====     Public Procedures     =============================
     ! Don't initialize them with =>NULL() because that makes them SAVEd.
 
     nullify ( channels, signalInds )
-    nullify ( info%molecules, info%moleculeDerivatives, info%signals ) ! for Sun's rubbish compiler
+    call NullifyForwardModelConfig ( info ) ! for Sun's rubbish compiler
 
     error = 0
     if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -672,6 +672,10 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.41  2002/11/22 12:20:13  mjf
+! Added nullify routine(s) to get round Sun's WS6 compiler not
+! initialising derived type function results.
+!
 ! Revision 2.40  2002/11/15 01:33:24  livesey
 ! Added allLinesForRadiometer stuff
 !
