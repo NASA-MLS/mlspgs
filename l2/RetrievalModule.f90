@@ -418,7 +418,7 @@ contains
           case ( l_lowcloud )
         !    call add_to_retrieval_timing( 'low_cloud', t1 )
         !    call cpu_time ( t1 )
-            call CloudRetrieval
+            call LowCloudRetrieval
           end select ! method
           !??? Make sure the jacobian and outputCovariance get destroyed
           !??? after ?what? happens?  Can we destroy the entire matrix
@@ -2021,6 +2021,9 @@ print*,'begin cloud retrieval maf= ',fmstat%maf
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.96  2001/10/17 20:50:30  dwu
+! a fix of cloud retrieval
+!
 ! Revision 2.95  2001/10/17 19:52:43  dwu
 ! Add standard deviation calculation to LowCloudRetrieval
 !
