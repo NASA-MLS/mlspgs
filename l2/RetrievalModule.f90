@@ -598,7 +598,7 @@ contains
       call createEmptyMatrix ( normalEquations%m, 0, state, state )
       ! Create the vectors we need.
       call copyVector ( v(x), state, vectorNameText='_x', clone=.true. ) ! x := state
-      call cloneVector ( v(atb), v(x), vectorNameText='_ATb' )
+      call cloneVector ( v(aTb), v(x), vectorNameText='_ATb' )
       call cloneVector ( v(bestGradient), v(x), vectorNameText='_bestGradient' )
       call cloneVector ( v(bestX), v(x), vectorNameText='_bestX' )
       call cloneVector ( v(candidateDX), v(x), vectorNameText='_candidateDX' )
@@ -843,6 +843,11 @@ contains
           end if
           update = got(f_apriori)
           if ( update ) then ! start normal equations with apriori
+            !{ Using Apriori requires adding equations of the form
+            !  $C x_n \simeq C a$ where $C$ is the Cholesky factor of the
+            !  apriori covariance.  So that all of the parts of the problem
+            !  are solving for $\delta x$, we subtract $C x_{n-1}$ from both
+            !  sides, to get $C \delta x \simeq C (a - x_{n-1})$.
             if ( diagonal ) then
             ! Iterate with the diagonal of the apriori covariance, then
             ! use the full apriori covariance (one hopes only for one
@@ -852,23 +857,29 @@ contains
             else
               call copyMatrixValue ( normalEquations%m, covariance%m )
             end if
-            call copyVector ( v(atb), v(covarianceXApriori) ) ! A^T b := C (a-x_n)
-            if ( got(f_aprioriScale) ) &
-              & call scaleMatrix ( normalEquations%m, aprioriScale )
+            call copyVector ( v(aTb), v(covarianceXApriori) ) ! A^T b := C (a-x_n)
+            if ( got(f_aprioriScale) ) then
+              call scaleMatrix ( normalEquations%m, aprioriScale )
+              call scaleVector ( v(aTb), aprioriScale )
+            end if
           else
             call clearMatrix ( normalEquations%m ) ! start with zero
-            call destroyVectorValue ( v(atb) ) ! Clear the RHS vector
+            call destroyVectorValue ( v(aTb) ) ! Clear the RHS vector
           end if
           ! aprioriNorm was computed when nwt_flag was NF_EVALF
           aj%fnorm = aprioriNorm
 
           ! Add Tikhonov regularization if requested
           if ( got(f_regOrders) ) then
+            !{ Tikhonov regularization is of the form $R x_n \simeq 0$.
+            !  So that all of the parts of the problem are solving for
+            !  $\delta x$, we subtract $R x_{n-1}$ from both sides to get
+            !  $R \delta x \simeq -R x_{n-1}$.
             call regularize ( jacobian, regOrders, regQuants, regWeight )
             call multiplyMatrixVectorNoT ( jacobian, v(x), v(reg_X_x) ) ! regularization * x_n
             call scaleVector ( v(reg_X_x), -regWeight )   ! -R x_n
             call formNormalEquations ( jacobian, normalEquations, &
-              & v(reg_X_x), v(atb), update=update, useMask=.false. )
+              & v(reg_X_x), v(aTb), update=update, useMask=.false. )
             update = .true.
             call clearMatrix ( jacobian )           ! free the space
             aj%fnorm = aj%fnorm + ( v(reg_X_x) .dot. v(reg_X_x) )
@@ -877,7 +888,8 @@ contains
             ! inside the loop.  Also, if we destroy it, we can't snoop it.
           end if
 
-          ! Add some early stabilization
+          !{ Add some early stabilization.  This consists of adding equations
+          ! of the form $\lambda I \simeq 0$.
           if ( got(f_lambda) ) then
             call updateDiagonal ( normalEquations, initLambda )
             update = .true.
@@ -930,7 +942,7 @@ contains
             !{Form normal equations:
             ! $\mathbf{J^T W^T W J \delta \hat x = J^T W^T W f}$:
             call formNormalEquations ( jacobian, normalEquations, &
-              & rhs_in=v(f_rowScaled), rhs_out=v(atb), update=update, &
+              & rhs_in=v(f_rowScaled), rhs_out=v(aTb), update=update, &
               & useMask=.true. )
             update = .true.
               if ( index(switches,'jac') /= 0 ) &
@@ -970,7 +982,7 @@ contains
             !{Scale: $\mathbf{\Sigma^T J^T J \Sigma = -\Sigma^T J^T f}$
             call columnScale ( normalEquations%m, v(columnScaleVector) )
             call rowScale ( v(columnScaleVector), normalEquations%m )
-            call multiply ( v(atb), v(columnScaleVector) )
+            call multiply ( v(aTb), v(columnScaleVector) )
   
           end if
           !{Compute the (negative of the) gradient $= -\mathbf{J^T f}$.
@@ -978,7 +990,7 @@ contains
           ! $\mathbf{J^T J \delta \hat x = -J^T f}$ where $\mathbf{\delta
           ! \hat x}$ is the "Candidate $\mathbf{\delta x}$" that may or
           ! may not get used.
-          call copyVector ( v(gradient), v(atb) ) ! gradient := atb
+          call copyVector ( v(gradient), v(aTb) ) ! gradient := atb
             if ( index(switches,'gvec') /= 0 ) &
               & call dump ( v(gradient), name='gradient' )
 
@@ -1018,7 +1030,7 @@ contains
           !       column in upper triangle after triangularization
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call cpu_time ( t1 )
-          call solveCholesky ( factored, v(candidateDX), v(atb), &
+          call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true. )
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call cpu_time ( t1 )
@@ -1092,7 +1104,7 @@ contains
           ! stabilization
           call add_to_retrieval_timing( 'newton_solver', t1 )
           call cpu_time ( t1 )
-          call solveCholesky ( factored, v(candidateDX), v(atb), &
+          call solveCholesky ( factored, v(candidateDX), v(aTb), &
             & transpose=.true. )
           call add_to_retrieval_timing( 'cholesky_solver', t1 )
           call cpu_time ( t1 )
@@ -2084,6 +2096,10 @@ print*,'begin cloud retrieval maf= ',fmstat%maf,' chunk size=',chunk%lastMAFInde
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.105  2001/10/23 20:08:59  vsnyder
+! Scale the RHS of apriori equations by aprioriScale too!
+! Cosmetic changes -- LaTeX comments about how Tikhonov and apriori work.
+!
 ! Revision 2.104  2001/10/22 22:40:21  livesey
 ! Tried to add a matrixDatabase to snoop call
 !
