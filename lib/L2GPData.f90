@@ -18,10 +18,12 @@ module L2GPData                 ! Creation, manipulation and I/O for L2GP Data
   use MLSHDFEOS, only: mls_swattach, mls_swdetach
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_Debug
-  use MLSStrings, only: Capitalize, ExtractSubString, &
+  use MLSStrings, only: Capitalize,  ints2Strings, lowercase, &
+    & strings2Ints
+  use MLSStringLists, only: ExtractSubString, &
     & GetStringHashElement, GetStringElement, GetUniqueList, &
-    & ints2Strings, list2array, lowercase, NumStringElements, &
-    & strings2Ints, StringElementNum
+    & list2array, NumStringElements, &
+    & StringElementNum
   use OUTPUT_M, only: BLANKS, OUTPUT
   use PCFHdr, only: GA_VALUE_LENGTH, GlobalAttributes_T, GlobalAttributes, &
     & he5_readglobalattr, he5_writeglobalattr
@@ -3009,6 +3011,9 @@ end module L2GPData
 
 !
 ! $Log$
+! Revision 2.109  2004/08/03 17:59:35  pwagner
+! Gets DEFAULTUNDEFINEDVALUE from MLSCommon
+!
 ! Revision 2.108  2004/07/22 17:07:15  pwagner
 ! Fixed set fill values
 !

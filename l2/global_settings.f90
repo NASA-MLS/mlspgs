@@ -83,8 +83,7 @@ contains
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end, mlspcf_l2fwm_full_start, &
       & mlspcf_l2fwm_full_end, &
       & mlspcf_l2dgg_start, mlspcf_l2dgg_end
-    use MLSStrings, only: hhmmss_value, utc_to_yyyymmdd
-    use MLSStrings, only: 
+    use MLSStringLists, only: hhmmss_value, utc_to_yyyymmdd
     use MLSSignals_m, only: INSTRUMENT
     use MoreTree, only: GET_FIELD_ID, GET_SPEC_ID
     use OUTPUT_M, only: BLANKS, OUTPUT
@@ -841,6 +840,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.86  2004/07/26 18:22:48  pwagner
+! Fixed failure to set returnStatus bug in CreateDirectTypeFromMLSCFInfo
+!
 ! Revision 2.85  2004/06/17 22:49:36  pwagner
 ! Details for dumping VGrids determined by switch setting
 !

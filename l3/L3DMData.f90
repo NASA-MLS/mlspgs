@@ -19,7 +19,7 @@ MODULE L3DMData
        & HDFE_NOMERGE, INVENTORYMETADATA
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Info, & 
        & MLSMSG_DEALLOCATE, MLSMSG_FILEOPEN, MLSMSG_ALLOCATE, MLSMSG_WARNING
-  USE MLSStrings, only: utc_to_yyyymmdd
+  USE MLSStringLists, only: utc_to_yyyymmdd
   IMPLICIT NONE
   private
   PUBLIC :: L3DMData_T, ConvertDeg2DMS, OutputGrids, &
@@ -2183,6 +2183,9 @@ CONTAINS
 !==================
 
 !# $Log$
+!# Revision 1.36  2004/05/04 15:33:15  cvuu
+!# v1.4.3: Use int array for Date in Data Field
+!#
 !# Revision 1.35  2004/03/19 14:25:26  cvuu
 !# Fix the RangeBeginningTime in metadata file
 !#

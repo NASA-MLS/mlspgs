@@ -15,7 +15,7 @@ MODULE OpenInit
   USE MLSPCF3, ONLY: mlspcf_l3_param_OutputVersion, mlspcf_l3_param_Cycle, &
        & mlspcf_l3_param_L2DayRange, mlspcf_l3_param_RangDays, & 
        & mlspcf_pcf_start,mlspcf_l3cf_start
-  USE MLSStrings, only: utc_to_yyyymmdd
+  USE MLSStringLists, only: utc_to_yyyymmdd
   USE Output_m, only: output
   USE PCFHdr, ONLY: CreatePCFAnnotation, GlobalAttributes, FillTAI93Attribute
   USE SDPToolkit, ONLY: PGS_S_SUCCESS, pgs_pc_getConfigData, & 
@@ -500,6 +500,9 @@ END MODULE OpenInit
 !==================
 
 ! $Log$
+! Revision 1.15  2004/05/04 15:33:15  cvuu
+! v1.4.3: Use int array for Date in Data Field
+!
 ! Revision 1.14  2004/01/08 21:24:56  cvuu
 ! correct the PGEVersion in the global attribute
 !

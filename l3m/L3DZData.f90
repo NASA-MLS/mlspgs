@@ -1472,7 +1472,7 @@ MODULE L3DZData
         & DFACC_RDWR
    USE HDFEOS5, ONLY: HE5F_ACC_RDWR, HE5_GDCLOSE, HE5_GDOPEN 
    USE MLSPCF3
-  USE MLSStrings, only: utc_to_yyyymmdd
+   USE MLSStringLists, only: utc_to_yyyymmdd
    USE PCFHdr, ONLY: WritePCF2Hdr, WriteInputPointer, GlobalAttributes, &
 	& he5_writeglobalattr
    USE mon_Open, ONLY: PCFMData_T 
@@ -2201,6 +2201,9 @@ MODULE L3DZData
  !==================
 
 ! $Log$
+! Revision 1.15  2004/05/04 15:57:20  cvuu
+! Fixed bug
+!
 ! Revision 1.14  2004/01/08 21:21:36  cvuu
 ! version 1.4 commit
 !

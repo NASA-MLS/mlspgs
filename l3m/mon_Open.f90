@@ -8,7 +8,7 @@ MODULE mon_Open
 
   USE MLSCommon, ONLY: FileNameLen
   USE MLSL3Common, ONLY: MAXWINDOW 
-  USE MLSStrings, only: utc_to_yyyymmdd
+  USE MLSStringLists, only: utc_to_yyyymmdd
   USE MLSMessageModule, ONLY: MLSMessage, MLSMSG_Error, MLSMSG_Fileopen
   USE mon_L3CF, ONLY: L3CFMDef_T, L3CFMProd_T, FillL3CFM
   USE OpenInit, ONLY: SetProcessingWindow
@@ -282,6 +282,9 @@ CONTAINS
 !==================
 
 ! $Log$
+! Revision 1.8  2004/05/04 16:02:29  cvuu
+! Set GlobalAttribute%processLevel
+!
 ! Revision 1.7  2004/01/08 21:21:37  cvuu
 ! version 1.4 commit
 !
