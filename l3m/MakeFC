@@ -104,7 +104,8 @@ libmlsl3_f90 := $(shell ${REECHO} $(libmlsl3_sources)/*.c \
 depends_where:=$(libmls_sources) $(libmlsl3_sources)
 PROG_prereqs := $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) \
 	  $(libmls_objs)/libmls.a \
-	  $(libmlsl3_objs)/libmlsl3.a  $(REECHO)   
+	  $(libmlsl3_objs)/libmlsl3.a  $(REECHO)   \
+     $(INSTALLDIR)/libutctotai.a
 
 libmlsl3_prereqs := $(libmlsl3_f90) $(libmls_objs)/libmls.a \
                $(CONFDIR)/$(MLSCFILE) $(libmlsl3_objs)
@@ -225,6 +226,9 @@ $(he5lib_objs)/libhe5.a: $(libmls_objs)/libmls.a $(he5lib_f)
 	fi ; \
 	$(MAKE) -f $(MakeFName) libhe5.a -C $(he5lib) MARK_ALL_AS_UPTODATE=no
 
+$(INSTALLDIR)/libutctotai.a:
+	$(MAKE) -f $(MakeFName) utctotai -C $(CONFDIR)
+
 .PHONY: clean configure depends depends--mod ghostbuster install \
   internalsaymake internalupdate mostlyclean \
   tar targ tarz
@@ -311,6 +315,11 @@ install: $(PROG)
       chmod a+x $(INSTALLDIR)/mlsl3m.sh ; \
 	fi
 
+# install mlsl3d and mlsl3m into $(INSTALLDIR)
+install-l3:
+	@echo "Installing mlsl3d and mlsl3m into $(INSTALLDIR)"; \
+	@cd .. && $(MAKE) install-l3
+
 tar:
 	rm -f ../$(PROG).tar
 	@echo "tar-ing l3m"; \
@@ -327,6 +336,9 @@ targ:
    --exclude \*.mod --exclude $(PROG)
 
 # $Log$
+# Revision 1.20  2003/02/24 21:16:01  pwagner
+# Fixed bug where changes to .f9h were not triggering recompiles
+#
 # Revision 1.19  2002/08/22 23:33:05  pwagner
 # Made ready for hdf5
 #
