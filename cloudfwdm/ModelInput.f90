@@ -94,7 +94,7 @@ contains
       END DO
 
       DO I=1,NZ
-         ZVMR(I)=LOG10( VMR(1,I) )
+         ZVMR(I)=LOG10( max(1.e-39_r8, VMR(1,I)) )
       END DO
 
 
@@ -189,6 +189,9 @@ contains
 end module ModelInput
 
 ! $Log$
+! Revision 1.3  2001/10/11 22:10:02  dwu
+! remove tangent height calculation
+!
 ! Revision 1.2  2001/09/21 15:51:37  jonathan
 ! modified F95 version
 !
