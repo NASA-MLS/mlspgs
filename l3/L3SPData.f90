@@ -7,8 +7,6 @@ MODULE L3SPData
 !===============================================================================
 
    USE Hdf
-   USE L2GPData, ONLY: L2GPNameLen, DIM_NAME2, DIM_NAME3, GEO_FIELD1, &
-                       GEO_FIELD9, GEO_FIELD10, HDFE_NOMERGE
    USE L3CF
    USE MLSCommon
    USE MLSL3Common
@@ -57,7 +55,7 @@ MODULE L3SPData
 
   TYPE L3SPData_T
 
-     CHARACTER (LEN=L2GPNameLen) :: name	! name for the output quantity
+     CHARACTER (LEN=GridNameLen) :: name	! name for the output quantity
 
      INTEGER :: nLevels				! Total number of surfaces
      INTEGER :: nLats				! Total number of latitudes
@@ -620,6 +618,9 @@ END MODULE L3SPData
 !==================
 
 ! $Log$
+! Revision 1.7  2001/03/27 19:30:43  nakamura
+! Added use of PCFHdr; fixed err checks on deallocate.
+!
 ! Revision 1.6  2001/02/21 20:49:29  nakamura
 ! Changed MLSPCF to MLSPCF3.
 !

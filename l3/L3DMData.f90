@@ -7,8 +7,6 @@ MODULE L3DMData
 !===============================================================================
 
    USE Hdf
-   USE L2GPData, ONLY: L2GPNameLen, GEO_FIELD1, GEO_FIELD2, GEO_FIELD3, &
-                       GEO_FIELD9, HDFE_NOMERGE
    USE MLSCommon
    USE MLSL3Common
    USE MLSMessageModule
@@ -53,7 +51,7 @@ MODULE L3DMData
 
    TYPE L3DMData_T
 
-     CHARACTER (LEN=L2GPNameLen) :: name	! name for the output quantity
+     CHARACTER (LEN=GridNameLen) :: name	! name for the output quantity
 
      INTEGER :: nLevels				! Total number of surfaces
      INTEGER :: nLats				! Total number of latitudes
@@ -1174,6 +1172,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.10  2001/03/27 19:28:15  nakamura
+!# Moved some parameters to MLSL3Common; updated metadata; fixed err checks on deallocate.
+!#
 !# Revision 1.9  2001/02/21 20:57:12  nakamura
 !# Changed MLSPCF to MLSPCF3; made some parameters global; added ReadL3DMData; changed InputPointer.
 !#

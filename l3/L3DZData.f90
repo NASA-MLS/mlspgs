@@ -7,8 +7,6 @@ MODULE L3DZData
 !===============================================================================
 
    USE Hdf
-   USE L2GPData, ONLY: DIM_NAME2, GEO_FIELD1, GEO_FIELD3, GEO_FIELD9, &
-                       HDFE_NOMERGE, L2GPNameLen
    USE L3CF
    USE MLSCommon
    USE MLSL3Common
@@ -53,7 +51,7 @@ MODULE L3DZData
 
   TYPE L3DZData_T
 
-     CHARACTER (LEN=L2GPNameLen) :: name	! name for the output quantity
+     CHARACTER (LEN=GridNameLen) :: name	! name for the output quantity
 
      INTEGER :: nLevels				! Total number of surfaces
      INTEGER :: nLats				! Total number of latitudes
@@ -1445,6 +1443,9 @@ END MODULE L3DZData
 !==================
 
 !# $Log$
+!# Revision 1.3  2001/03/27 19:29:13  nakamura
+!# Updated the metadata; fixed err checks on deallocate.
+!#
 !# Revision 1.2  2001/02/21 21:02:50  nakamura
 !# Changed MLSPCF to MLSPCF3; shifted some parameters; added ReadL3DZData; allowed for expanded swath list; changed InputPointer.
 !#
