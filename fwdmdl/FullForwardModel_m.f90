@@ -434,7 +434,8 @@ contains ! ================================ FullForwardModel routine ======
     phiWindow = fwdModelConf%phiWindow
     mafTInstance = FindOneClosestInstance ( temp, firstRadiance, maf )
     windowStart  = max(1, mafTInstance - phiWindow/2)
-    windowFinish = min(mafTInstance + phiWindow/2, n_t_phi)
+!   windowFinish = min(mafTInstance + phiWindow/2, n_t_phi)
+    windowFinish = min(WindowStart + phiWindow - 1, n_t_phi)  ! ** ZVI's suggestion
 
     ! Work out which channels are used, also check we have radiances for them.
     noUsedChannels = 0
@@ -1363,7 +1364,7 @@ contains ! ================================ FullForwardModel routine ======
           else
             do i = 1, noUsedChannels
               sv_i = 1
-              do instance = 1, n_t_phi
+              do instance = WindowStart, WindowFinish
                 do surface = 1, n_t_zeta
                   k_temp(i,ptg_i,surface,instance) = k_temp_frq(1,sv_i)
                   sv_i = sv_i + 1
@@ -1851,6 +1852,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.17  2001/11/20 01:18:59  zvi
+! Fixing Shifting Window bug
+!
 ! Revision 2.16  2001/11/15 01:21:57  zvi
 ! Extiction debug fix
 !
