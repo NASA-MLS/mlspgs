@@ -145,6 +145,8 @@ fi
 # i.e., $$..$color (where the number of $ signs is n)
 # usage: mega_buck n color
 
+# (uses PID to generate unique name) 
+
 mega_buck()
 {
 
@@ -169,15 +171,17 @@ mega_buck()
          exit 1
    else
       
-      rm -f temp.mega_buck
+      unique_name=temp.$$
+      rm -f $unique_name
+#      rm -f temp.mega_buck
 
       number=0
       mega_buck_result=$2
       while [ "$number" -lt "$1" ]
       do
-         echo "echo \$arg" | sed 's/arg/'$mega_buck_result'/' > temp.mega_buck
-         mega_buck_result=`. temp.mega_buck`
-         rm -f temp.mega_buck
+         echo "echo \$arg" | sed 's/arg/'$mega_buck_result'/' > $unique_name
+         mega_buck_result=`. $unique_name`
+         rm -f $unique_name
          number=`expr $number + 1`
       done
    fi
@@ -1470,6 +1474,9 @@ if [ "$MLSCONFG" != "$MLSF95.$MLSPLAT" -a "$m_update" = "true" ] ; then
 fi
 exit
 # $Log$
+# Revision 1.29  2002/02/06 00:46:18  pwagner
+# Optionally checks that machine files are up-to-date
+#
 # Revision 1.28  2001/11/17 00:23:05  pwagner
 # New helps; split GetToolkit from GetPlatform; automated current_SETTING=SETTING
 #
