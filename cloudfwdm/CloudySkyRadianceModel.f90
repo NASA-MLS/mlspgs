@@ -621,6 +621,7 @@ contains
               &     UI,UA,TT,0,RE)                          !CLEAR-SKY
          TT0 = min(TT, TT0)
          TT  = TT0	   ! so that dTcir=0
+
        case default
          CALL RADXFER(NZmodel-1,NU,NUA,U,DU,PH0,MULTI,ZZT1,W00,tau_clear,&
               &   RS,TS,FREQUENCY(IFR),YZ,TEMP,N,THETA,THETAI,PHI,        &
@@ -742,7 +743,8 @@ contains
 
          ENDIF
 
-         CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
+	IF (ICON .gt. 0) &
+          & CALL SENSITIVITY (DTcir(:,IFR),ZZT,NT,YP,YZ,NZmodel,PRESSURE,NZ, &
               &            tau,tauc,tau_wetCld,TAUeff(:,IFR),SS(:,IFR), &
               &            Trans(:,:,IFR), BETA(:,IFR), BETAc(:,IFR), DDm, Dm, &
               & Z, DZ, N,RE, noS, Slevl)     ! COMPUTE SENSITIVITY
@@ -769,6 +771,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.50  2003/01/31 23:17:15  dwu
+! rename tau_wet to tau_wetAll
+!
 ! Revision 1.49  2003/01/31 23:07:16  dwu
 ! mask 100%rhi only below 100mb
 !
