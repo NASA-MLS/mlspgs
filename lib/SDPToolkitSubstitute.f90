@@ -12,7 +12,7 @@
 !  CHARACTER (LEN=256) :: Id = &
 !       "$Id$"
 !  CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
-  private :: not_used_here 
+!  private :: not_used_here 
   !---------------------------------------------------------------------------
 
 
@@ -174,6 +174,9 @@
 
 !
 ! $Log$
+! Revision 2.8  2002/10/08 09:02:48  hcp
+! Commented out private :: not_used_here which broke compile.
+!
 ! Revision 2.7  2002/10/08 00:09:13  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
