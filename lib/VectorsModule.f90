@@ -1705,7 +1705,7 @@ contains ! =====     Public Procedures     =============================
 
     myWhat = m_LinAlg
     if ( present(what) ) myWhat = what
-    if ( .not. associated(vectorQty%mask)) return
+    if ( .not. associated(vectorQty%mask)) call CreateMask ( vectorQty)
     vectorQty%mask(row, column) = &
       & char(ior( ichar(vectorQty%mask(row, column)), myWhat ) )
 
@@ -2165,6 +2165,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.102  2003/06/20 19:33:53  pwagner
+! Quanities now share grids stored separately in databses
+!
 ! Revision 2.101  2003/06/03 20:47:05  livesey
 ! Typo bug fix
 !
