@@ -225,7 +225,7 @@ contains
         & 'When overwriting H2O, it must share coordinates with temperature' )
     end if
     ! Check the boundary pressure
-    failed = size ( grids_tmp%phi_basis, 1 ) /= boundaryPressure%template%noInstances
+    failed = wf1 < 1 .or. wf2 > boundaryPressure%template%noInstances
     if ( .not. failed ) then
       failed = .not. all ( EssentiallyEqual ( &
         & boundaryPressure%template%phi(1,wf1:wf2), grids_tmp%phi_basis ) )
@@ -481,6 +481,9 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.47  2003/05/06 20:23:21  livesey
+! Bug fixes and cosmetic changes, renamed some variables etc.
+!
 ! Revision 2.46  2003/05/05 23:00:25  livesey
 ! Merged in feb03 newfwm branch
 !
