@@ -178,8 +178,13 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(tab) ) then
       call output ( 'Declare ' ); call display_string ( string )
       call output ( ' with VALUE = ' ); call output ( value )
-      call output ( ', TYPE = ' ); call output ( type )
-      call output ( ', UNITS = ' ); call output ( units )
+      call output ( ', TYPE = ' ); call output ( trim(type_names(type)) )
+      call output ( ', UNITS = ' )
+      if ( type == units_name ) then
+        call display_string ( phyq_indices(units) )
+      else
+        call output ( units )
+      end if
       call output ( ', TREE = ' ); call output ( tree, advance='yes' )
     end if
   end subroutine DECLARE
@@ -194,7 +199,7 @@ contains ! =====     Public Procedures     =============================
   subroutine DUMP_DECL
     integer :: I    ! Loop inductor
     if ( num_decls <= 0 ) return
-    call output ( ' dec str', advance='yes' )
+    call output ( ' dec  str', advance='yes' )
     do i = 1, how_many_strings()
       call dump_1_decl ( i )
     end do
@@ -208,7 +213,7 @@ contains ! =====     Public Procedures     =============================
     decl = symbol_decl(symbol)
     do while ( decl /= null_decl )
       call output ( decl, 4 )
-      call output ( symbol, 4 ); call output ( ': ' )
+      call output ( symbol, 5 ); call output ( ': ' )
       call display_string ( symbol )
       call output ( ' value=' )
       call output ( decl_table(decl)%value )
@@ -346,6 +351,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.4  2002/07/18 22:04:06  vsnyder
+! Improve some debugging print
+!
 ! Revision 2.3  2001/04/16 23:05:29  vsnyder
 ! SAVE some module variables
 !
