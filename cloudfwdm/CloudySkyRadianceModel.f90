@@ -352,7 +352,7 @@ contains
       integer :: FFT_pts
       REAL(r8) :: schi
 
-      Real(r8), dimension( NZmodel/8+Nsub ) :: RAD0, RAD, SRad0, SRad
+      Real(r8), dimension( NZmodel/8-1+Nsub ) :: RAD0, RAD, SRad0, SRad
 
       REAL(r8) :: PH1(NU)                      ! SINGLE PARTICLE PHASE FUNCTION
       REAL(r8) :: P(NAB,NU)                    ! LEGENDRE POLYNOMIALS l=1
@@ -810,6 +810,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.60  2003/05/14 23:12:29  dwu
+! fix a dimension problem and modify the structure
+!
 ! Revision 1.59  2003/05/07 23:05:00  jonathan
 ! some clean-up and cosmetic changes
 !
