@@ -135,6 +135,7 @@ outputSD
 overlap
 overlaps
 
+packed
 perturbation
 phaseName
 phiWindow
@@ -211,6 +212,9 @@ vGrid
 vmrQuantity
 
 # $Log$
+# Revision 2.20  2002/01/18 00:24:46  livesey
+# Added packed field
+#
 # Revision 2.19  2001/12/12 00:59:50  zvi
 # Added stuff for regular hGrids
 #
