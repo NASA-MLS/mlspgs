@@ -97,6 +97,7 @@ CONTAINS
                             offsets, numOrbits, orbitNumber, orbitAscendTime, &
                             orbitDescendTime, orbitDownLongitude)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
+        print*,'Time was:',startTime
          call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
          msr = 'Routine getEphMet, ' // mnemonic // ':  ' // msg
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
@@ -107,7 +108,8 @@ CONTAINS
                                            'Failed deallocation of offsets.')
 
 ! Convert values to forms more useful to software
-
+      ascTAI = 0.0
+      dscTAI = 0.0
       DO i = 1, numOrbits
          orbitNumber(i) = i-1
          returnStatus = Pgs_td_utcToTAI( orbitAscendTime(i), ascTAI(i) )
@@ -176,6 +178,9 @@ END MODULE Orbit
 !===============
 
 ! $Log$
+! Revision 2.4  2001/12/14 01:43:46  livesey
+! Working version with ECR based master coordinate
+!
 ! Revision 2.3  2001/10/12 22:11:05  livesey
 ! Tidied things up a bit, added scVelECR, but not filled yet
 !
