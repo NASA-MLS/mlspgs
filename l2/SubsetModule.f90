@@ -694,7 +694,7 @@ contains ! ========= Public Procedures ============================
   end subroutine SetupSubset
 
   ! -------------------------------------------------- FlagCloud ---
-  ! if flagged, m_cloud is set and an additional mask is also set if it's given
+  ! m_cloud is the default if no maskbit is given
 
   subroutine SetupFlagCloud ( key, vectors )
     
@@ -761,6 +761,7 @@ contains ! ========= Public Procedures ============================
     ! Executable code
     nullify ( channels, qty, ptan, cloudRadiance )
     got = .false.
+    maskBit = m_cloud
 
     do j = 2, nsons(key) ! fields of the "Flagcloud" specification
       son = subtree(j, key)
@@ -796,7 +797,6 @@ contains ! ========= Public Procedures ============================
           & call announceError ( key, WrongUnits, f_cloudRadianceCutoff )
         cloudRadianceCutoff = value(1)
       case ( f_mask )
-        if ( .not. got(f_mask) ) maskBit = 0 ! clear default first time
         maskBit = GetMaskBit ( son )
       case default
         ! Shouldn't get here if the type checker worked
@@ -920,10 +920,6 @@ contains ! ========= Public Procedures ============================
           if ( doThisChannel ) then
             ind = channel + qty%template%noChans*(height-1)
             if ( doThisHeight .and. isCloud )  &
-              &     call SetMask ( qty%mask(:,instance), (/ ind /), &
-              &     what=m_cloud )
-            ! if additional maskbit is given, it is set as well
-            if ( doThisHeight .and. isCloud .and. got(f_mask))  &
               &     call SetMask ( qty%mask(:,instance), (/ ind /), &
               &     what=maskBit )
           end if                        ! do this channel
@@ -1142,6 +1138,9 @@ contains ! ========= Public Procedures ============================
 end module SubsetModule
  
 ! $Log$
+! Revision 2.7  2003/04/10 18:30:57  dwu
+! make m_cloud as default in FlagCloud
+!
 ! Revision 2.6  2003/04/08 23:12:18  dwu
 ! add m_cloud in setupFlagCloud
 !
