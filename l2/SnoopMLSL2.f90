@@ -488,17 +488,14 @@ contains ! ========  Public Procedures =========================================
     do vector = 1, size(vectorDatabase)
       if ( vectorDatabase(vector)%name == vectorName) exit
     end do
-    if ( vectorDatabase(vector)%name /= vectorName ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to find requested vector: '//trim(line) )
+    if ( vectorDatabase(vector)%name /= vectorName ) return
 
     do quantity = 1, size(vectorDatabase(vector)%quantities)
       if ( vectorDatabase(vector)%quantities(quantity)%template%name == &
         & quantityName ) exit
     end do
     if ( vectorDatabase(vector)%quantities(quantity)%template%name /= &
-      & quantityName ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to find requested vector quantity: '//line )
+      & quantityName ) return
 
     q => vectorDatabase(vector)%quantities(quantity)
 
@@ -516,6 +513,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.18  2001/09/28 23:39:09  livesey
+! Now doesn't give error if unknown quantity/vector requested
+!
 ! Revision 2.17  2001/09/27 23:39:22  livesey
 ! Bug fix for going from one to zero snoopers
 !
