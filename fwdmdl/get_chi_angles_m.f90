@@ -70,20 +70,22 @@ SUBROUTINE get_chi_angles(sc_geoc_alt,tan_index_refr,tan_ht, &
 ! Set up: dx_dt, d2x_dxdt arrays for temperature derivative computations
 ! (NOTE: These entities has NO PHI dimension, so take the center Phi in dh_dt)
 !
+!  First: Get table of temperature basis functions
+!
   IF(PRESENT(tan_dh_dt)) THEN
-    tp = TAN(ptg_angle)
-    dx_dt = tp * tan_dh_dt / ht
-    d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+!    IF(tan_ht > 0.0_rp) THEN
+      tp = TAN(ptg_angle)
+      dx_dt = tp * tan_dh_dt / ht
+      d2x_dxdt = tp*tp*tan_dh_dt/ht + tan_d2h_dhdt
+!    ELSE
+!      dx_dt = 0.0_rp
+!      d2x_dxdt = 0.0_rp
+!    ENDIF
   ENDIF
-
   RETURN
-
 END SUBROUTINE get_chi_angles
 end module GET_CHI_ANGLES_M
 ! $Log$
-! Revision 2.5  2002/06/24 21:01:28  zvi
-! Adding Grids_tmp stracture and modify calling sequences
-!
 ! Revision 2.3  2002/06/11 22:20:45  bill
 ! eliminate zero-out feature--wgr
 !

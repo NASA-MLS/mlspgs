@@ -2381,9 +2381,6 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
-! Revision 2.63  2002/06/24 21:01:28  zvi
-! Adding Grids_tmp stracture and modify calling sequences
-!
 ! Revision 2.61  2002/06/17 17:12:15  bill
 ! fixed yet another bug--wgr
 !
