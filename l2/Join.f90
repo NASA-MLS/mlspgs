@@ -85,6 +85,7 @@ contains ! =====     Public Procedures     =============================
     integer :: SON                      ! Tree node
     integer :: SPECID                   ! Type of l2cf line this is
     integer :: TICKET                   ! Direct write permission ticket
+    integer :: THEFILE                  ! Direct write permission on file
     logical :: CREATEFILE               ! Flag
     logical :: TIMING                   ! Flag
     real :: T1                          ! Time we started
@@ -116,7 +117,8 @@ contains ! =====     Public Procedures     =============================
       ! For the later passes, we wait for permission to do one of the direct writes
       if ( pass > 2 ) then
         call time_now ( dwt2 )
-        call WaitForDirectWritePermission ( directWriteNodeGranted, ticket, createFile )
+        call WaitForDirectWritePermission ( directWriteNodeGranted, ticket, &
+          & theFile, createFile )
         call output ( "Got permission for ticket " )
         call output ( ticket )
         call output ( " node " )
@@ -180,7 +182,7 @@ contains ! =====     Public Procedures     =============================
               call time_now ( dwt2 )
               if(DEEBUG)print*,'Calling direct write to do the write'
               call DirectWriteCommand ( son, ticket, vectors, DirectdataBase, &
-                & chunkNo, chunks, create=createFile )
+                & chunkNo, chunks, create=createFile, theFile=theFile )
               call add_to_directwrite_timing ( 'writing', dwt2)
               noDirectWritesCompleted = noDirectWritesCompleted + 1
               ! If that was the last one then bail out
@@ -225,7 +227,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------ DirectWriteCommand -----
   subroutine DirectWriteCommand ( node, ticket, vectors, DirectDataBase, &
-    & chunkNo, chunks, makeRequest, create )
+    & chunkNo, chunks, makeRequest, create, theFile )
     ! Imports
     use Allocate_Deallocate, only: ALLOCATE_TEST, DEALLOCATE_TEST
     use DirectWrite_m, only: DirectData_T, &
@@ -267,8 +269,13 @@ contains ! =====     Public Procedures     =============================
     type (DirectData_T), dimension(:), pointer :: DirectDatabase
     integer, intent(in) :: CHUNKNO
     type (MLSChunk_T), dimension(:), intent(in) :: CHUNKS
+    ! The next 3 args are used in the multi-pass followed by each slave:
+    ! 1st pass just counts up requests to write
+    ! 2nd pass just logs requests to write
+    ! later passes come with permission granted to write
     logical, intent(in), optional :: MAKEREQUEST  ! Set on first pass through
     logical, intent(in), optional :: CREATE       ! Set if slave is to create file.
+    integer, intent(in), optional :: THEFILE      ! Which file permission granted for
     ! Local parameters
     integer, parameter :: MAXFILES = 1000 ! Set for an internal array
     ! Saved variable - used to work out the createFile flag in the serial case
@@ -276,48 +283,49 @@ contains ! =====     Public Procedures     =============================
     integer, save :: NOCREATEDFILES=0   ! Number of files created
     ! Local variables
     integer :: DBINDEX
+    logical :: CREATEFILEFLAG           ! Flag (often copy of create)
+    logical, dimension(:), pointer :: CREATETHISSOURCE
+    logical :: DEEBUG
+    logical :: DUMMY
     integer :: ERRORTYPE
     integer :: EXPECTEDTYPE             ! l2gp/l2aux
+    integer :: EXPRUNITS(2)             ! From expr
+    real (r8) :: EXPRVALUE(2)           ! From expr
     integer :: FILE                     ! File name string index
     integer :: FILEACCESS               ! DFACC_CREATE or DFACC_RDWR
     integer :: FIELDINDEX               ! Type of field in l2cf line
+    character(len=1024) :: FILENAME     ! Output full filename
+    character(len=1024) :: FILE_BASE    ! made up of
     integer :: FILETYPE
     integer :: GSON                     ! Son of son
     integer :: HANDLE                   ! File handle from hdf/hdf-eos
+    character(len=1024) :: HDFNAME      ! Output swath/sd name
     integer :: HDFNAMEINDEX             ! String index for output name
     integer :: HDFVERSION               ! 4 or 5
     logical :: ISNEWDIRECT              ! TRUE if not already in database
     integer :: KEYNO                    ! Loop counter, field in l2cf line
+    integer :: l2gp_Version
     integer :: LASTFIELDINDEX           ! Type of previous field in l2cf line
+    logical :: MYMAKEREQUEST            ! Copy of makeRequest
+    integer :: MYTHEFILE                ! File permission granted for
+    character(len=256), dimension(:), pointer :: NAMEBUFFER
     integer :: NOSOURCES                ! No. things to output
     integer :: OUTPUTTYPE               ! l_l2gp, l_l2aux, l_l2fwm, l_l2dgg
+    character(len=1024) :: PATH         ! path/file_base
+    integer :: record_length
+    integer :: RETURNSTATUS
     integer :: SON                      ! A tree node
     integer :: SOURCE                   ! Loop counter
-    integer :: RETURNSTATUS
-    logical :: CREATEFILEFLAG           ! Flag (often copy of create)
-    logical :: MYMAKEREQUEST            ! Copy of makeRequest
-    logical :: DUMMY
-    logical, dimension(:), pointer :: CREATETHISSOURCE
-    character(len=256), dimension(:), pointer :: NAMEBUFFER
-    integer :: record_length
-    integer :: l2gp_Version
 
-    integer :: EXPRUNITS(2)             ! From expr
-    real (r8) :: EXPRVALUE(2)           ! From expr
-    integer, dimension(:), pointer :: SOURCEVECTORS ! Indicies
-    integer, dimension(:), pointer :: SOURCEQUANTITIES ! Indicies
-    integer, dimension(:), pointer :: PRECISIONVECTORS ! Indicies
-    integer, dimension(:), pointer :: PRECISIONQUANTITIES ! Indicies
-    character(len=1024) :: FILENAME     ! Output full filename
-    character(len=1024) :: FILE_BASE    ! made up of
-    character(len=1024) :: PATH         ! path/file_base
-    character(len=1024) :: HDFNAME      ! Output swath/sd name
+    integer, dimension(:), pointer :: SOURCEVECTORS ! Indices
+    integer, dimension(:), pointer :: SOURCEQUANTITIES ! Indices
+    integer, dimension(:), pointer :: PRECISIONVECTORS ! Indices
+    integer, dimension(:), pointer :: PRECISIONQUANTITIES ! Indices
     type(VectorValue_T), pointer :: QTY ! The quantity
     type(VectorValue_T), pointer :: PRECQTY ! The quantities precision
     type(DirectData_T) :: newDirect
     type(DirectData_T), pointer :: thisDirect ! => null()
-    logical :: DEEBUG
-    integer, external :: he5_SWclose
+    ! integer, external :: he5_SWclose
 
     ! Executable code
     DEEBUG = (index(switches, 'direct') /= 0)
@@ -325,6 +333,8 @@ contains ! =====     Public Procedures     =============================
 
     myMakeRequest = .false.
     if ( present ( makeRequest ) ) myMakeRequest = makeRequest
+    myTheFile = 0
+    if ( present ( theFile ) ) myTheFile = theFile
 
     ! Direct write is probably going to be come the predominant form
     ! of output in the software, as the other forms have become a
@@ -338,6 +348,8 @@ contains ! =====     Public Procedures     =============================
     lastFieldIndex = 0
     noSources = 0
     hdfVersion = DEFAULT_HDFVERSION_WRITE
+    file = 0
+    filename = 'undefined'
     do keyNo = 2, nsons(node)           ! Skip DirectWrite command
       son = subtree ( keyNo, node )
       if ( keyNo > 2 ) lastFieldIndex = fieldIndex
@@ -361,8 +373,9 @@ contains ! =====     Public Procedures     =============================
       end select
     end do
 
-    call get_string ( file, filename, strip=.true. )
-    
+    if ( file > 0 ) then
+      call get_string ( file, filename, strip=.true. )
+    endif    
     ! Now identify the quantities we're after
     nullify ( sourceVectors, sourceQuantities, precisionVectors, precisionQuantities )
     call Allocate_test ( sourceVectors, noSources, 'sourceVectors', ModuleName )
@@ -436,6 +449,10 @@ contains ! =====     Public Procedures     =============================
     ! Bail out at this stage if there is some kind of error.
     if ( error /= 0 ) return
 
+    ! Distribute sources among available DirectWrite files if filename undefined
+    if ( filename == 'undefined' ) then
+       call DistributeSources
+    endif
     if ( DeeBUG ) then
       call output('Direct write to file', advance='yes')
       call output('File name: ', advance='no')
@@ -673,6 +690,10 @@ contains ! =====     Public Procedures     =============================
     call Deallocate_test ( precisionVectors, 'precisionVectors', ModuleName )
     call Deallocate_test ( precisionQuantities, 'precisionQuantities', ModuleName )
 
+  contains
+    subroutine DistributeSources
+      
+    end subroutine DistributeSources
   end subroutine DirectWriteCommand
 
   ! ------------------------------------------------ LabelVectorQuantity -----
@@ -1392,6 +1413,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.100  2004/01/02 23:36:00  pwagner
+! DirectWrites may choose files automatically from db
+!
 ! Revision 2.99  2003/12/05 00:41:14  pwagner
 ! patch option avoids deleting existing data in file
 !
