@@ -23,7 +23,7 @@ MODULE L2AUXData                 ! Data types for storing L2AUX data internally
   ! manipulating L2AUX data.
 
   INTEGER, PARAMETER :: L2AUXNameLen=80
-  INTEGER, PARAMETER, PRIVATE :: CCSDSLen=27
+  INTEGER, PARAMETER :: CCSDSLen=27
 
   ! This is a set of possible values for dimension%dimensionFamily
 
@@ -100,12 +100,12 @@ CONTAINS
 
     ! Fill the dimensions data structure
 
+
     l2aux%noDimensionsUsed=COUNT(dimensionFamilies /= L2AUXDim_None)
     l2aux%dimensions%dimensionFamily=dimensionFamilies
     l2aux%dimensions%noValues=dimSizes
 
     ! Allocate the values for each dimension
-
     DO dimIndex=1,3
        IF (dimensionFamilies(dimIndex)/=L2AUXDim_None) THEN
           ALLOCATE(l2aux%dimensions(dimIndex)%values(dimSizes(dimIndex)), &
@@ -136,13 +136,17 @@ CONTAINS
 
     ! Dummy arguments
     TYPE (L2AUXData_T), INTENT(INOUT) :: l2aux
-
+    ! Local variables
+    INTEGER :: status
     ! Executable code
     DEALLOCATE(l2aux%dimensions(1)%values, &
          & l2aux%dimensions(2)%values, &
-         & l2aux%dimensions(3)%values)
-    DEALLOCATE(l2aux%values)
-
+         & l2aux%dimensions(3)%values, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2aux%dimensions") 
+    DEALLOCATE(l2aux%values, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"l2aux%values") 
   END SUBROUTINE DestroyL2AUXContents
 
   !---------------------------------------------------------------------------
@@ -173,18 +177,20 @@ CONTAINS
 
     ! Now see how long this is
     oldSize=l2aux%dimensions(expandingDimension)%noValues
-
     ! Do a sanity check
     IF (newSize<oldSize) CALL MLSMessage(MLSMSG_Error,ModuleName,&
          & "This l2aux is getting smaller not bigger")
 
     ! Now expand this dimension
     temp1D=>l2aux%dimensions(expandingDimension)%values
+    l2aux%dimensions(expandingDimension)%noValues = newSize
     ALLOCATE(l2aux%dimensions(expandingDimension)%values(newSize),STAT=status)
     IF (status/=0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
          & "New dimension information")
     l2aux%dimensions(expandingDimension)%values(1:oldSize)=temp1D
-    DEALLOCATE(temp1D)
+    DEALLOCATE(temp1D, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp1D")
 
     ! Now expand the data in this dimension
     temp3d=>l2aux%values
@@ -208,7 +214,9 @@ CONTAINS
             & "New l2aux values")
        l2aux%values(:,:,1:oldSize)=temp3d
     END SELECT
-    DEALLOCATE(temp3d)
+    DEALLOCATE(temp3d, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"temp3D")
 
     ! That's it.
 
@@ -233,9 +241,9 @@ CONTAINS
 
     IF (ASSOCIATED(database)) THEN
        ! Check we don't already have one of this name
-       IF (LinearSearchStringArray(database%name,l2aux%name, &
-            & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
-            & ModuleName,MLSMSG_Duplicate//l2aux%name)
+    !   IF (LinearSearchStringArray(database%name,l2aux%name, &
+    !        & caseInsensitive=.TRUE.)/=0) CALL MLSMessage(MLSMSG_Error,&
+    !        & ModuleName,MLSMSG_Duplicate//l2aux%name)
        newSize=SIZE(database)+1
     ELSE
        newSize=1
@@ -247,7 +255,9 @@ CONTAINS
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=l2aux
-    IF (ASSOCIATED(database))DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database, stat=status)
+    IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"database")
     database=>tempDatabase
   END SUBROUTINE AddL2AUXToDatabase
 
@@ -261,13 +271,15 @@ CONTAINS
     TYPE (L2AUXData_T), DIMENSION(:), POINTER :: database
 
     ! Local variables
-    INTEGER :: l2auxIndex
+    INTEGER :: l2auxIndex, status
 
     IF (ASSOCIATED(database)) THEN
        DO l2auxIndex=1,SIZE(database)
           CALL DestroyL2AUXContents(database(l2auxIndex))
        ENDDO
-       DEALLOCATE(database)
+       DEALLOCATE(database, stat=status)
+       IF (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName, &
+         & MLSMSG_DeAllocate//"database")
     ENDIF
   END SUBROUTINE DestroyL2AUXDatabase
 
@@ -278,6 +290,10 @@ END MODULE L2AUXData
 
 !
 ! $Log$
+! Revision 1.12  2000/05/17 23:36:58  lungu
+! Added check "IF (ASSOCIATED(database))DEALLOCATE(database)" so it doesn't chrash trying to dealocate
+! an "empty" database.
+!
 ! Revision 1.11  2000/01/20 00:26:50  livesey
 ! Added some extra dimensions, took away time, just have geodetic angle
 ! or MAF now.  Also added the L2AUXDimUnits array.
