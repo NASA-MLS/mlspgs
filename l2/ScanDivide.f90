@@ -11,7 +11,7 @@ module ScanDivide
     L_NONE, L_THZ, LAST_PARM, L_TRUE
   use INIT_TABLES_MODULE, only: P_CRITICAL_BANDS, P_CRITICAL_SCANNING_MODULES, &
     P_HOME_GEOD_ANGLE, P_HOME_MODULE, P_IDEAL_LENGTH, P_IGNOREL1B, P_MAX_GAP, &
-    P_NOCHUNKS, P_OVERLAP, P_SCAN_LOWER_LIMIT, P_SCAN_UPPER_LIMIT
+    P_NOCHUNKS, P_OVERLAP, P_SCAN_LOWER_LIMIT, P_SCAN_UPPER_LIMIT, S_TIME
   use INIT_TABLES_MODULE, only: PARM_INDICES, PHYQ_ANGLE, &
     PHYQ_INVALID, PHYQ_LENGTH, PHYQ_MAFS, PHYQ_TIME
   use L1BData, only: deallocateL1BDATA, L1BDATA_T, NAME_LEN, READL1BDATA
@@ -21,22 +21,27 @@ module ScanDivide
     & MLSMSG_Error, MLSMSG_Warning, MLSMSG_L1BRead
   use MLSNumerics, only: HUNT, R8
   !  use MLSStrings, only: MLSMSG_L1BRead
+  use MoreTree, only: Get_Spec_ID
   use Output_M, only: Output
   use SDPToolkit, only: MAX_ORBITS
   use STRING_TABLE, only: Display_String
   use TOGGLES, only: GEN, TOGGLE
   use TRACE_M, only: TRACE_BEGIN, TRACE_END
-  use TREE, only: DECORATION, NSONS, Source_Ref, SUBTREE
+  use TREE, only: DECORATION, Node_ID, NSONS, Source_Ref, SUBTREE
+  use Tree_Types, only: N_Equal, N_Named
   implicit none
+
   private
 
   public :: DestroyChunkDatabase, ScanAndDivide
 
-  !------------------- RCS Ident Info ------------------------------------
-  character(len=130) :: Id = &
-    "$Id$"
-  character(len=*), parameter :: ModuleName= "$RCSfile$"
-  !------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
   ! Contents:
 
@@ -71,6 +76,9 @@ module ScanDivide
     integer   :: maxGap_family          ! Time, MAFs, angle
     ! Think later about bands etc.
   end type ScanDivideConfig_T
+
+  logical :: Timing
+  real :: T1
 
 contains ! =====     Public Procedures     =============================
 
@@ -467,6 +475,7 @@ contains ! =====     Public Procedures     =============================
       msr = MLSMSG_Deallocate // ' local variables.'
       call MLSMessage(MLSMSG_Warning, ModuleName, msr)
     end if
+    if ( timing ) call sayTime
     if ( toggle(gen) ) call trace_end ( "ScanDivide" )
 
   end subroutine ScanAndDivide
@@ -1213,160 +1222,186 @@ subroutine ScanDivide_mlscf ( root, config )
 
   ! Arguments
 
-integer, intent(in) :: ROOT    ! Root of the ChunkDivide section of the
-! MLSCF abstract syntax tree
-type (ScanDivideConfig_T), intent(out) :: CONFIG ! Result of operation
+  integer, intent(in) :: ROOT    ! Root of the ChunkDivide section of the
+  ! MLSCF abstract syntax tree
+  type (ScanDivideConfig_T), intent(out) :: CONFIG ! Result of operation
 
-! Parameters
+  ! Parameters
 
-! For announce_error:
-integer, parameter :: BadUnitsForIgnore = 1
-integer, parameter :: NotLength = BadUnitsForIgnore + 1
-integer, parameter :: NotSpecified = notLength + 1
-integer, parameter :: NotAngle = NotSpecified + 1
+  ! For announce_error:
+  integer, parameter :: BadUnitsForIgnore = 1
+  integer, parameter :: NotLength = BadUnitsForIgnore + 1
+  integer, parameter :: NotSpecified = notLength + 1
+  integer, parameter :: NotAngle = NotSpecified + 1
 
-! Functions
+  ! Functions
 
-! Variables
-integer :: Error     ! Error level
-logical :: GOT(first_parm:last_parm) = .false.
-integer :: I         ! Loop inductor
-integer :: KEY       ! A P_... parameter from Init_Tables_Module
-integer :: SON       ! A son of the ChunkDivide section node
-integer :: UNITS(2)  ! Units of expression
-real(r8) :: VALUE(2)   ! Value of expression
+  ! Variables
+  integer :: Error     ! Error level
+  logical :: GOT(first_parm:last_parm) = .false.
+  integer :: I         ! Loop inductor
+  integer :: KEY       ! A P_... parameter from Init_Tables_Module
+  integer :: SON       ! A son of the ChunkDivide section node
+  integer :: UNITS(2)  ! Units of expression
+  real(r8) :: VALUE(2)   ! Value of expression
 
-! Initialize variables to 'unfound' values
+  ! Initialize variables to 'unfound' values
 
-config%ignoreL1B = .false.
-config%noChunks = 0
-config%idealLength_family = PHYQ_Invalid
-config%homeGeodAngle = 0.0
-config%homeModule = L_None
-config%overlap = 0.0
-config%overlap_family = PHYQ_Invalid
-config%scanLLSet = .false.
-config%scanULSet = .false.
-config%criticalModules = l_none
-config%maxGap_family = PHYQ_Invalid
+  config%ignoreL1B = .false.
+  config%noChunks = 0
+  config%idealLength_family = PHYQ_Invalid
+  config%homeGeodAngle = 0.0
+  config%homeModule = L_None
+  config%overlap = 0.0
+  config%overlap_family = PHYQ_Invalid
+  config%scanLLSet = .false.
+  config%scanULSet = .false.
+  config%criticalModules = l_none
+  config%maxGap_family = PHYQ_Invalid
 
-error = 0
+  error = 0
 
-! Loop through MLSCF section, identifying keywords and setting variables
+  ! Loop through MLSCF section, identifying keywords and setting variables
 
-do i = 2, nsons(root)-1 ! Skip the section identifiers
-  son = subtree(i,root)
-  key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
-  got(key) = .true.
-  call expr ( subtree(2,son), units, value )
+  do i = 2, nsons(root)-1 ! Skip the section identifiers
+    son = subtree(i,root)
+    if ( node_id(son) == n_equal ) then
+      key = decoration(subtree(1,son)) ! P_... index from Init_Tables_Module
+      got(key) = .true.
+      call expr ( subtree(2,son), units, value )
 
-  select case ( key )
-  case ( p_ignoreL1B )
-    config%ignoreL1B = value(1) == l_true
-  case ( p_noChunks )
-    config%noChunks = nint(value(1))
-  case ( p_ideal_length )
-    config%idealLength = value(1)
-    config%idealLength_family = units(1)
-  case ( p_home_geod_angle )
-    config%homeGeodAngle = value(1)
-    if ( units(1) /= PHYQ_Angle ) call announce_error ( son, notAngle, key )
-  case ( p_home_module )
-    config%homeModule = value(1)
-  case ( p_overlap )
-    config%overlap = value(1)
-    config%overlap_family = units(1)
-  case ( p_scan_lower_limit )
-    if ( units(1) /= phyq_Length) &
-      & call announce_error ( son, notLength, key )
-    config%scanLLSet = .true.
-    config%scanLowerLimit = value
-  case ( p_scan_upper_limit )
-    if ( units(1) /= phyq_Length) &
-      & call announce_error ( son, notLength, key )
-    config%scanULSet = .true.
-    config%scanUpperLimit = value
-  case ( p_critical_scanning_modules )
-    config%criticalModules = value(1)
-  case ( p_max_gap )
-    config%maxGap = value(1)
-    config%maxGap_family = units(1)
-  case ( p_critical_bands )
-    !bands = value(1)
-  end select
+      select case ( key )
+      case ( p_ignoreL1B )
+        config%ignoreL1B = value(1) == l_true
+      case ( p_noChunks )
+        config%noChunks = nint(value(1))
+      case ( p_ideal_length )
+        config%idealLength = value(1)
+        config%idealLength_family = units(1)
+      case ( p_home_geod_angle )
+        config%homeGeodAngle = value(1)
+        if ( units(1) /= PHYQ_Angle ) call announce_error ( son, notAngle, key )
+      case ( p_home_module )
+        config%homeModule = value(1)
+      case ( p_overlap )
+        config%overlap = value(1)
+        config%overlap_family = units(1)
+      case ( p_scan_lower_limit )
+        if ( units(1) /= phyq_Length) &
+          & call announce_error ( son, notLength, key )
+        config%scanLLSet = .true.
+        config%scanLowerLimit = value
+      case ( p_scan_upper_limit )
+        if ( units(1) /= phyq_Length) &
+          & call announce_error ( son, notLength, key )
+        config%scanULSet = .true.
+        config%scanUpperLimit = value
+      case ( p_critical_scanning_modules )
+        config%criticalModules = value(1)
+      case ( p_max_gap )
+        config%maxGap = value(1)
+        config%maxGap_family = units(1)
+      case ( p_critical_bands )
+        !bands = value(1)
+      end select
+    else
+      if ( node_id(son) == n_named ) son = subtree(2,son) ! ignore label
+      select case ( get_spec_id(son) )
+      case ( s_time )
+        if ( timing ) then
+          call sayTime
+        else
+          call cpu_time ( t1 )
+          timing = .true.
+        end if
+      case default
+      end select
+    end if
 
-end do
+  end do
 
-! Check for missing values that would cause error exits
+  ! Check for missing values that would cause error exits
 
-do i = first_parm, last_parm
-  select case ( i )
-  case ( p_ideal_length, p_overlap )
-    if ( .not. got(i) ) call announce_error ( root, notSpecified, i )
-  case ( p_home_module, p_critical_scanning_modules )    
-    if ( .not. got(i) .and. .not. config%ignoreL1B) &
-      & call announce_error ( root, notSpecified, i )
-  case ( p_noChunks) 
-    if ( .not. got(i) .and. config%ignoreL1B) &
-      & call announce_error ( root, notSpecified, i )
-  end select
-end do
+  do i = first_parm, last_parm
+    select case ( i )
+    case ( p_ideal_length, p_overlap )
+      if ( .not. got(i) ) call announce_error ( root, notSpecified, i )
+    case ( p_home_module, p_critical_scanning_modules )    
+      if ( .not. got(i) .and. .not. config%ignoreL1B) &
+        & call announce_error ( root, notSpecified, i )
+    case ( p_noChunks) 
+      if ( .not. got(i) .and. config%ignoreL1B) &
+        & call announce_error ( root, notSpecified, i )
+    end select
+  end do
 
-if (config%ignoreL1B) then
-  if (config%idealLength_family /= phyq_MAFs ) &
-    & call announce_error ( root, badUnitsForIgnore, p_ideal_length )
-  if (config%overlap_family /= phyq_MAFs ) &
-    & call announce_error ( root, badUnitsForIgnore, p_overlap )
-endif    
+  if (config%ignoreL1B) then
+    if (config%idealLength_family /= phyq_MAFs ) &
+      & call announce_error ( root, badUnitsForIgnore, p_ideal_length )
+    if (config%overlap_family /= phyq_MAFs ) &
+      & call announce_error ( root, badUnitsForIgnore, p_overlap )
+  endif    
 
-! Check for values that depend on the presence of other quantities
+  ! Check for values that depend on the presence of other quantities
 
-if ( config%criticalModules /= l_none ) then
-  if ( .not. got(p_scan_lower_limit) ) &
-    & call announce_error ( root, notSpecified, p_scan_lower_limit )
-  if ( .not. got(p_scan_upper_limit) ) &
-    & call announce_error ( root, notSpecified, p_scan_upper_limit )
-end if
+  if ( config%criticalModules /= l_none ) then
+    if ( .not. got(p_scan_lower_limit) ) &
+      & call announce_error ( root, notSpecified, p_scan_lower_limit )
+    if ( .not. got(p_scan_upper_limit) ) &
+      & call announce_error ( root, notSpecified, p_scan_upper_limit )
+  end if
 
-if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-  & 'Errors in specification prevent processing.' )
+  if ( error > 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+    & 'Errors in specification prevent processing.' )
 
 contains
 
-subroutine Announce_Error ( where, Code, Param )
-  integer, intent(in) :: where, Code, Param
+  subroutine Announce_Error ( where, Code, Param )
+    integer, intent(in) :: where, Code, Param
 
-  error = max(error,1)
-  call print_source ( source_ref(where) )
-  call output ( ' ScanDivide complained: ' )
-  select case ( code )
-  case ( BadUnitsForIgnore )
-    call output ( ' In the IgnoreL1B case ' )
-    call display_string ( parm_indices(param) )
-    call output (' must have units of MAFs' )
-  case ( notLength )
-    call output ( ' The value of ' )
-    call display_string ( parm_indices(param) )
-    call output ( ' does not have units of Length.', advance='yes' )
-  case ( notAngle )
-    call output ( ' The value of ' )
-    call display_string ( parm_indices(param) )
-    call output ( ' does not have units of Angle.', advance='yes' )
-  case ( notSpecified )
-    call output ( ' The parameter ' )
-    call display_string ( parm_indices(param) )
-    call output ( ' is required but not specified.', advance='yes' )
-  end select
-end subroutine Announce_Error
+    error = max(error,1)
+    call print_source ( source_ref(where) )
+    call output ( ' ScanDivide complained: ' )
+    select case ( code )
+    case ( BadUnitsForIgnore )
+      call output ( ' In the IgnoreL1B case ' )
+      call display_string ( parm_indices(param) )
+      call output (' must have units of MAFs' )
+    case ( notLength )
+      call output ( ' The value of ' )
+      call display_string ( parm_indices(param) )
+      call output ( ' does not have units of Length.', advance='yes' )
+    case ( notAngle )
+      call output ( ' The value of ' )
+      call display_string ( parm_indices(param) )
+      call output ( ' does not have units of Angle.', advance='yes' )
+    case ( notSpecified )
+      call output ( ' The parameter ' )
+      call display_string ( parm_indices(param) )
+      call output ( ' is required but not specified.', advance='yes' )
+    end select
+  end subroutine Announce_Error
 !--------------------------------
 end subroutine ScanDivide_mlscf
 !--------------------------------
+
+  ! ....................................................  SayTime  .....
+  subroutine SayTime
+    real :: T2
+    call cpu_time ( t2 )
+    call output ( 'Timing for ScanDivide = ' )
+    call output ( dble(t2-t1), advance='yes' )
+    timing = .false.
+  end subroutine SayTime
 
 !====================
 end module ScanDivide
 !====================
 
 !# $Log$
+!# Revision 2.11  2001/04/24 23:12:12  vsnyder
+!# Add timing
+!#
 !# Revision 2.10  2001/04/24 19:08:58  livesey
 !# Interim version, needs changes later on.
 !#
