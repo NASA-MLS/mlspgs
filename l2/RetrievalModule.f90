@@ -10,64 +10,9 @@ module RetrievalModule
 !
 ! This module and ones it calls consume most of the cycles.
 
-  use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
-  use Dump_0, only: Dump
-  use Expr_M, only: Expr
-  use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
-    & F_channels, F_columnScale, F_Comment, F_covariance, F_diagnostics, &
-    & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
-    & F_height, F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, &
-    & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
-    & F_opticalDepthCutoff, &
-    & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
-    & F_quantity, F_regAfter, F_regOrders, F_regQuants, F_regWeights, &
-    & F_regWeightVec, F_state, F_toleranceA, F_toleranceF, F_toleranceR, &
-    & Field_first, Field_last, &
-    & L_apriori, L_covariance, &
-    & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
-    & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
-    & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, L_dnwt_gradn,  L_dnwt_sq, &
-    & L_dnwt_sq,  L_dnwt_sqt, L_Fill, L_full_derivatives, &
-    & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
-    & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, L_numF, &
-    & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
-    & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
-    & S_subset, S_time
-  use Intrinsic, only: PHYQ_Dimensionless
-  use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
-    & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
-    & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, Dump
-  use MatrixTools, only: DumpBlock
-  use MLSCommon, only: R8, MLSCHUNK_T
-  use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
-  use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
-  use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
-  use OUTPUT_M, only: BLANKS, OUTPUT
-  use SnoopMLSL2, only: SNOOP
-  use String_Table, only: DISPLAY_STRING, Get_String
-  use Time_M, only: Time_Now
-  use Toggles, only: Gen, Switches, Toggle
-  use Trace_M, only: Trace_begin, Trace_end
-  use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
-    & Subtree
-  use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
-    & N_less_colon_less, N_named
-  use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
-    & CloneVector, CopyVector, CopyVectorMask, DestroyVectorInfo, &
-    & DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
-    & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, &
-    & M_Tikhonov, Vector_T, VectorValue_T
-
   implicit NONE
   private
   public :: RETRIEVE
-
-  real(r8), parameter, private :: DefaultInitLambda = 0.0_r8
-  integer, parameter, private :: DefaultMaxF = 30, DefaultMaxJ = 5
-  integer, parameter, private :: DefaultMethod = l_newtonian
-  double precision, parameter, private :: DefaultToleranceA = 1.0d-6 ! for NWT
-  double precision, parameter, private :: DefaultToleranceF = 1.0d-6 ! for NWT
-  double precision, parameter, private :: DefaultToleranceR = 1.0d-6 ! for NWT
 
 !---------------------------- RCS Ident Info -------------------------------
   character (len=*), private, parameter :: IdParm = &
@@ -87,18 +32,73 @@ contains
   ! The ``Retrieve'' section can have ForwardModel, Matrix, Sids, Subset or
   ! Retrieve specifications.
 
+    use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use BitStuff, only: CountBits
+    use Dump_0, only: Dump
+    use Expr_M, only: Expr
     use ForwardModelConfig, only: ForwardModelConfig_T
+    use Init_Tables_Module, only: F_apriori, F_aprioriScale, F_Average, &
+      & F_channels, F_columnScale, F_Comment, F_covariance, F_diagnostics, &
+      & F_diagonal, F_forwardModel, F_fuzz, F_fwdModelExtra, F_fwdModelOut, &
+      & F_height, F_ignore, F_jacobian, F_lambda, F_Level, F_mask, F_maxF, &
+      & F_maxJ, F_measurements, F_measurementSD, F_method, F_opticalDepth, &
+      & F_opticalDepthCutoff, &
+      & F_outputCovariance, F_outputSD, F_phaseName, F_ptanQuantity, &
+      & F_quantity, F_regAfter, F_regOrders, F_regQuants, F_regWeights, &
+      & F_regWeightVec, F_state, F_toleranceA, F_toleranceF, F_toleranceR, &
+      & Field_first, Field_last, &
+      & L_apriori, L_covariance, &
+      & L_dnwt_ajn,  L_dnwt_axmax,  L_dnwt_cait, L_dnwt_diag,  L_dnwt_dxdx, &
+      & L_dnwt_dxdxl, L_dnwt_dxn,  L_dnwt_dxnl,  L_dnwt_flag, L_dnwt_fnmin, &
+      & L_dnwt_fnorm,  L_dnwt_gdx,  L_dnwt_gfac, L_dnwt_gradn,  L_dnwt_sq, &
+      & L_dnwt_sq,  L_dnwt_sqt, L_Fill, L_full_derivatives, &
+      & L_highcloud, L_Jacobian_Cols, L_Jacobian_Rows, &
+      & L_linalg, L_lowcloud, L_newtonian, L_none, L_norm, L_numF, &
+      & L_numJ, L_opticalDepth, L_pressure, L_radiance, L_Tikhonov, L_zeta, &
+      & S_dumpBlocks, S_forwardModel, S_matrix, S_retrieve, S_sids, S_snoop, &
+      & S_subset, S_time
+    use Intrinsic, only: PHYQ_Dimensionless
+    use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
+      & DestroyMatrix, GetFromMatrixDatabase, Matrix_T, Matrix_Database_T, &
+      & Matrix_SPD_T, MultiplyMatrixVectorNoT, operator(.TX.), ReflectMatrix, Dump
+    use MatrixTools, only: DumpBlock
+    use MLSCommon, only: R8, MLSCHUNK_T
+    use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES, add_to_retrieval_timing
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error, MLSMSG_Warning
+    use MoreTree, only: Get_Boolean, Get_Field_ID, Get_Spec_ID
+    use Output_m, only: BLANKS, OUTPUT
     use SidsModule, only: SIDS
+    use SnoopMLSL2, only: SNOOP
+    use String_Table, only: DISPLAY_STRING, Get_String
+    use Time_M, only: Time_Now
+    use Toggles, only: Gen, Switches, Toggle
+    use Trace_M, only: Trace_begin, Trace_end
+    use Tree, only: Decorate, Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, &
+      & Subtree
+    use Tree_Types, only: N_colon, N_colon_less, N_less_colon, &
+      & N_less_colon_less, N_named
+    use VectorsModule, only: AddToVector, AddVectorToDatabase, ClearVector, &
+      & CloneVector, CopyVector, CopyVectorMask, DestroyVectorInfo, &
+      & DestroyVectorDatabase, DumpMask, GetVectorQuantityByType, &
+      & IsVectorQtyMasked, M_Fill, M_FullDerivatives, M_LinAlg, &
+      & M_Tikhonov, Vector_T, VectorValue_T
 
     ! Dummy arguments:
-    integer, intent(in) :: Root         ! Of the relevant subtree of the AST
-                                        ! Indexes an n_cf vertex
+    integer, intent(in) :: Root         ! Of the relevant subtree of the AST;
+                                        ! It indexes an n_cf vertex
     type(vector_T), dimension(:), pointer :: VectorDatabase
     type(matrix_Database_T), dimension(:), pointer :: MatrixDatabase
     type(forwardModelConfig_T), dimension(:), pointer :: ConfigDatabase
 
     type(MLSChunk_T), intent(in) :: CHUNK
+
+    ! Default values:
+    real(r8), parameter :: DefaultInitLambda = 0.0_r8
+    integer, parameter :: DefaultMaxF = 30, DefaultMaxJ = 5
+    integer, parameter :: DefaultMethod = l_newtonian
+    double precision, parameter :: DefaultToleranceA = 1.0d-6 ! for NWT
+    double precision, parameter :: DefaultToleranceF = 1.0d-6 ! for NWT
+    double precision, parameter :: DefaultToleranceR = 1.0d-6 ! for NWT
 
     ! Local variables:
     type(vector_T), pointer :: Apriori  ! A priori estimate of state
@@ -126,7 +126,7 @@ contains
     real(r8) :: InitLambda              ! Initial Levenberg-Marquardt parameter
     integer :: IxAverage                ! Index in tree of averagingKernel
     integer :: IxCovariance             ! Index in tree of outputCovariance
-    integer :: IxJacobian               ! Index in tree of jacobian matrix
+    integer :: IxJacobian               ! Index in tree of Jacobian matrix
     type(matrix_T), pointer :: Jacobian ! The Jacobian matrix
     integer :: Jacobian_Cols            ! Number of columns of the Jacobian.
     integer :: Jacobian_Rows            ! (Number of rows of Jacobian) -
@@ -2960,6 +2960,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.163  2002/08/21 19:55:31  vsnyder
+! Move USE statements from module scope to procedure scope
+!
 ! Revision 2.162  2002/08/20 19:55:02  vsnyder
 ! Use matrix with same row and column templates for Tikhonov
 !
