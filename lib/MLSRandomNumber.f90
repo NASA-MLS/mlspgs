@@ -263,7 +263,7 @@ contains
 !         DRANG = (XX-YY)*R
          DRANG = (X-Y)*(X+Y)*R
          DGFLAG = .true.
-         was_last_time_m77 = MATH77_RAN_PACK
+!         was_last_time_m77 = MATH77_RAN_PACK  ! Already done in mls_random_number
          return
       endif
 !     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -272,7 +272,7 @@ contains
 !                                Compute result as  R*Cos(PHI)
       DRANG = TWO*X*Y*R
       DGFLAG=.false.
-      was_last_time_m77 = MATH77_RAN_PACK
+!         was_last_time_m77 = MATH77_RAN_PACK  ! Already done in mls_random_number
       return
       end function  DRANG
 
@@ -324,7 +324,7 @@ contains
 !     ------------------------------------------------------------------
       integer M
       parameter(M = haystack)
-      integer i
+!      integer i
       real                ONE, TWO
       parameter(ONE = 1.0E0, TWO = 2.0E0)
       real                R, S, U3, X, XX, Y, YY
@@ -407,7 +407,7 @@ contains
 !
 !         SRANG = (XX-YY)*R
          SRANG = (X-Y)*(X+Y)*R
-         was_last_time_m77 = MATH77_RAN_PACK
+!         was_last_time_m77 = MATH77_RAN_PACK  ! Already done in mls_random_number
          return
       endif
 !     -- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -416,7 +416,7 @@ contains
 !                                Compute result as  R*Cos(PHI)
       SRANG = TWO*X*Y*R
       SGFLAG=.false.
-      was_last_time_m77 = MATH77_RAN_PACK
+!         was_last_time_m77 = MATH77_RAN_PACK  ! Already done in mls_random_number
       return
       end function  SRANG
 
@@ -588,7 +588,7 @@ contains
 !      save FIRST
 !      data FIRST / .true. /
 !
-      if (FIRST .or. was_last_time_m77) then
+      if (FIRST .or. .not. was_last_time_m77) then
          FIRST = .false.
          call RANMOD
       end if
@@ -662,7 +662,7 @@ contains
 !      save FIRST
 !      data FIRST / .true. /
 !
-      if (FIRST .or. was_last_time_m77) then
+      if (FIRST .or. .not. was_last_time_m77) then
          FIRST = .false.
          call RANMOD
       end if
@@ -827,7 +827,8 @@ contains
 !     ------------------------------------------------------------------
 !                         For use by library users: CALL RANPUT(KSEED)
       subroutine RANPUT(KSEED)
-      integer KSEED(*)
+      integer KSEED(:)     ! Switch to assumed-shape array
+!      integer KSEED(*)
 !      integer DPTR, SPTR
 !      logical DGFLAG, SGFLAG
 !      common/RANCD1/DPTR, DGFLAG
@@ -848,7 +849,8 @@ contains
 !              User should call RANPUT(KSEED) in RANPK1.
 !
       subroutine RNPUT(KSEED)
-      integer KSEED(2)
+      integer KSEED(:)     ! Switch to assumed-shape array
+!      integer KSEED(2)
 !                    Common Block
 !      integer MODE
 !      real XCURSP
@@ -859,11 +861,11 @@ contains
       real             MDIVSP, SCALSP
       parameter( MDIVDP=68719476503.0D0, MDIVSP=68719476503.0e0 )
       parameter( SCALDP=100000.0D0, SCALSP=100000.0e0 )
-      logical FIRST
-      save FIRST
-      data FIRST / .true. /
+!      logical FIRST
+!      save FIRST
+!      data FIRST / .true. /
 !
-      if (FIRST .or. was_last_time_m77) then
+      if (FIRST .or. .not. was_last_time_m77) then
          FIRST = .false.
          call RANMOD
       end if
@@ -879,7 +881,8 @@ contains
       end subroutine RNPUT
 !     ------------------------------------------------------------------
       subroutine RANGET(KSEED)
-      integer KSEED(2)
+      integer KSEED(:)     ! Switch to assumed-shape array
+!      integer KSEED(2)
 !                    Common Block
 !      integer MODE
 !      real XCURSP
@@ -889,11 +892,11 @@ contains
       double precision SCALDP
       real             SCALSP
       parameter( SCALDP=100000.0D0, SCALSP=100000.0e0 )
-      logical FIRST
-      save FIRST
-      data FIRST / .true. /
+!      logical FIRST
+!      save FIRST
+!      data FIRST / .true. /
 !
-      if (FIRST .or. was_last_time_m77) then
+      if (FIRST .or. .not. was_last_time_m77) then
          FIRST = .false.
          call RANMOD
       end if
@@ -996,6 +999,9 @@ end module MLSRandomNumber
 
 !
 ! $Log$
+! Revision 2.7  2001/10/18 23:30:59  pwagner
+! Works even if change to/from intrinsic
+!
 ! Revision 2.6  2001/10/17 23:38:32  pwagner
 ! MATH77_ran_pack now publicly settable
 !
