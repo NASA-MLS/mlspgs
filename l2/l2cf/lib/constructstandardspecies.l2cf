@@ -3,8 +3,9 @@
 
 ; Define a suffix to allow e.g. ptan to use the correct tmeperature
 ; and H2O.  Effectively a `specificQuantities' in l2cf.  Depends on
-; hiRes implying not skipHiRes.
-!ifelse(!resolution,{hiRes},!define(res,{_HR}),!define(res,{}))
+; hiRes implying not skipHiRes.  Maybe skipHiRes isn't required---does
+; it just save space?
+!ifelse(!resolution,{hiRes},{!define(res,{_HR})!define(swathRes,{-HR})},{!define(res,{})!define(swathRes,{})})
 
 begin Construct
 
@@ -71,6 +72,8 @@ begin Construct
   ;; We'll do Trop. H2O as a special one here.
   tropH2O: Quantity, type=vmr, molecule=h2o, $
     vGrid=vGridTropH2O, hGrid=hGridStandard, /logBasis, minValue=0.1ppmv
+  tropH2O_HR: Quantity, type=vmr, molecule=h2o, $
+    vGrid=vGridTropH2OHiRes, hGrid=hGridStandard, /logBasis, minValue=0.1ppmv
 
   ;; ----------------------------------------- RHI
   rhi: Quantity, vGrid=vGridStandard, hGrid=hGridStandard, type=rhi, $
@@ -304,7 +307,7 @@ begin Construct
     temperature, !ifdef(skipHiRes,{},{temperature_HR,}) $
     refGPH, GPH, !ifdef(skipHiRes,{},{GPH_HR,}) $
     tpPressure, $
-    !allMolecules, tropH2O, $
+    !allMolecules, tropH2O, !ifdef(skipHiRes,{},{tropH2O_HR,})$
     !ifdef(skipHiRes,{},{!allHiResMolecules,}) $
     rhi, !ifdef(skipHiRes,{},{rhi_HR,}) $
     !allColumns,  !ifdef(skipHiRes,{},{!allHiResColumns,}) $
