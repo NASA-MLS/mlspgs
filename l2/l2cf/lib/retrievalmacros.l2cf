@@ -32,6 +32,7 @@
 !define(allStandardProductsWithoutColumns,{Temperature,GPH,RHI})
 !define(allStandardProducts,{!tidyList(!allStandardProductsWithColumns, $
   !allStandardProductsWithoutColumns)})
+!define(allHiResProducts,{Temperature_HR,H2O_HR,RHI_HR,GPH_HR})
 
 ; ------------------------------------------------------- File IO information
 
@@ -440,6 +441,9 @@ joinedDGM_$1_!phase_precision: l2aux, source=outputPrecision.$1, sdName='$2 prec
 })
 
 ; $Log$
+; Revision 1.80  2004/02/12 02:06:33  livesey
+; Various bug fixes and additions
+;
 ; Revision 1.79  2004/02/11 21:41:58  livesey
 ; Added output of status and quality and tidied up
 ;
