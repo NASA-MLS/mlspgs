@@ -625,6 +625,8 @@ contains ! =====     Public procedures     =============================
      call acorn((/begin, f+f_refGPHQuantity, s+s_vector, f+f_template, f+f_quantities, &
             n+n_dot/))
      call acorn((/begin, f+f_resetSeed, t+t_boolean, n+n_field_type/))
+     call acorn((/begin, f+f_rhiQuantity, s+s_vector, f+f_template, f+f_quantities, &
+            n+n_dot/))
      call acorn((/begin, f+f_scVel, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_scVelECI, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
      call acorn((/begin, f+f_scVelECR, s+s_vector, f+f_template, f+f_quantities, n+n_dot/))
@@ -880,6 +882,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.211  2002/04/18 18:40:17  pwagner
+! Can fill h2o from an rhiQuantity
+!
 ! Revision 2.210  2002/04/10 17:44:50  pwagner
 ! Added rhi quantity (but is this enough?)
 !
