@@ -32,7 +32,7 @@ module VGridsDatabase
   end interface Dump
 
   public :: AddVGridToDatabase, DestroyVGridContents, DestroyVGridDatabase
-  public :: Dump, Dump_VGrids
+  public :: Dump, Dump_VGrids, GetUnitForVerticalCoordinate
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -128,9 +128,39 @@ contains
     end do
   end subroutine Dump_VGrids
 
+  ! ------------------------------------------------  GetUnitForVGrid  -----
+  integer function GetUnitForVerticalCoordinate ( coordinate )
+    use units, only: PHYQ_Pressure, PHYQ_Zeta, PHYQ_Temperature, &
+      & PHYQ_Length, PHYQ_Angle, PHYQ_Dimensionless, PHYQ_Invalid
+    use intrinsic, only: L_ANGLE, L_GEODALTITUDE, L_GPH, L_NONE, &
+      & L_PRESSURE, L_THETA, L_ZETA
+    integer, intent(in) :: coordinate
+    ! Excutable code
+    select case ( coordinate )
+    case ( l_angle )
+      GetUnitForVerticalCoordinate = PHYQ_Angle
+    case ( l_geodAltitude, l_gph )
+      GetUnitForVerticalCoordinate = PHYQ_Length
+    case ( l_none )
+      GetUnitForVerticalCoordinate = PHYQ_Invalid
+    case ( l_pressure ) 
+      GetUnitForVerticalCoordinate = PHYQ_Pressure
+    case ( l_theta ) 
+      GetUnitForVerticalCoordinate = PHYQ_Temperature
+    case ( l_zeta )
+      GetUnitForVerticalCoordinate = PHYQ_Zeta
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Invalid vGrid type' )
+    end select
+  end function GetUnitForVerticalCoordinate
+
 end module VGridsDatabase
 
 ! $Log$
+! Revision 2.4  2002/08/20 19:19:32  livesey
+! Added GetUnitForVerticalCoordinate
+!
 ! Revision 2.3  2001/04/26 02:33:03  vsnyder
 ! Moved *_indices declarations from init_tables_module to intrinsic
 !
