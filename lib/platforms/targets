@@ -75,6 +75,9 @@ all: libmlsSub.a libmls.a libmlsSDPTK.a
 #MatrixModule_0.o: MatrixModule_0.f90 ${OBJS}
 #MatrixModule_1.o: MatrixModule_1.f90 ${OBJS}
 
+#--------------------- default name of GNU-compatible c compiler
+CC=cc
+
 #--------------------- dependency rules for PVM_OBJS
 
 PVM.o: PVM.f90 ${OBJS}
@@ -127,7 +130,7 @@ tar:
 # vpath %.c $(S) $(srclib)
 
 PVMwrappers.o: $(S)/PVMwrappers.c
-	cc -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
+	$(CC) -c -I${PGSINC} -DNAGf90Fortran $(S)/PVMwrappers.c
 
 #	special options for compiling some modules--override .f90 rules
 
@@ -141,6 +144,9 @@ string_table.o:
 	$(FC) -c $(BUGGY) $(INC_PATHS) $(S)/string_table.f90 $(FAFTER)
 
 # $Log$
+# Revision 1.22  2001/03/12 23:57:47  pwagner
+# New FAFTER, LAFTER flags to postprocess compile & link steps
+#
 # Revision 1.21  2001/03/09 19:38:14  pwagner
 # Removed TEST_ONLY exceptions
 #
