@@ -48,20 +48,21 @@ module VectorsModule            ! Vectors in the MLS PGS suite
     module procedure DotVectors
   end interface
 
-  !---------------------------- RCS Ident Info -------------------------------
-  character (len=130), private :: Id = &
-    & "$Id$"
-  character (len=*), parameter, private :: ModuleName= &
-    & "$RCSfile$"
-  !---------------------------------------------------------------------------
+!---------------------------- RCS Ident Info -------------------------------
+  character (len=*), private, parameter :: IdParm = &
+       "$Id$"
+  character (len=len(idParm)), private :: Id = idParm
+  character (len=*), private, parameter :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
 
   ! This type describes a vector template
 
   type VectorTemplate_T
      
     ! Administrative stuff
-    integer :: Id              ! Id code for vector (for checking purposes)
-    integer :: Name            ! Sub-rosa index of name, if any, else zero
+    integer :: Id = 0          ! Id code for vector (for checking purposes)
+    integer :: Name = 0        ! Sub-rosa index of name, if any, else zero
 
     ! General information about the vector
 
@@ -95,7 +96,7 @@ module VectorsModule            ! Vectors in the MLS PGS suite
   ! This type describes a vector.
 
   type Vector_T
-    integer :: Name            ! Sub-rosa index of the vector name
+    integer :: Name = 0        ! Sub-rosa index of the vector name
     type (VectorTemplate_T), pointer :: TEMPLATE => NULL() ! In the template
     ! database
     type (VectorValue_T), dimension(:), pointer :: QUANTITIES => NULL() ! The
@@ -1240,6 +1241,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.25  2001/04/24 21:33:53  livesey
+! Added insulate vector
+!
 ! Revision 2.24  2001/04/20 00:07:15  livesey
 ! Added the index field to vectorvalue_t
 !
