@@ -40,8 +40,6 @@ module HGridsDatabase                   ! Horizontal grid information
     real(r8), dimension(:,:), pointer :: solarTime => NULL()
     real(r8), dimension(:,:), pointer :: solarZenith => NULL()
     real(r8), dimension(:,:), pointer :: losAngle => NULL()
-    integer, dimension(:), pointer :: mafIndex => NULL()
-    integer, dimension(:), pointer :: mafCounter => NULL()
   end type HGrid_T
 
 contains ! =========== Public procedures ===================================
@@ -257,6 +255,9 @@ contains ! =========== Public procedures ===================================
 end module HGridsDatabase
 
 ! $Log$
+! Revision 2.3  2004/05/18 01:05:06  vsnyder
+! Delete unused MAFIndex and MAFCounter fields from HGrid_T
+!
 ! Revision 2.2  2003/07/07 20:20:28  livesey
 ! New FindClosestMatch routine
 !
