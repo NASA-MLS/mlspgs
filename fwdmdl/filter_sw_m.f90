@@ -1,6 +1,6 @@
 !
 module FILTER_SW_M
-  use UNITS, only: filter_unit
+  use GET_LUN, only: filter_unit
   use MLSCommon, only: I4, R8
   use STRINGS, only: LEFTJ, SQZSTR, STRUPR, STRLWR
   implicit NONE
@@ -291,6 +291,9 @@ END FUNCTION CosSum
 
 end module FILTER_SW_M
 ! $Log$
+! Revision 1.2  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.2  2000/07/06 00:11:44  zvi
 !  This is the Freeze version of Jun/24/2000
 !

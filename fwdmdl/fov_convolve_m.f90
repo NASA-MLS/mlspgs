@@ -72,7 +72,7 @@ contains
 ! file
 !
   Subroutine ANTENNA ( Fn, M, XLAMDA, AAAP, D1AAP, D2AAP, IAS, IERR )
-    use UNITS, only: AAAP_UNIT
+    use GET_LUN, only: AAAP_UNIT
     Integer(i4), parameter :: MaxV= 2048
 !
     Real(r8), intent(out) :: AAAP(*),D1AAP(*),D2AAP(*),XLAMDA
@@ -847,5 +847,8 @@ contains
 
 end module FOV_CONVOLVE_M
 ! $Log$
+! Revision 1.3  2001/01/31 22:40:12  zvi
+! Add new version
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90

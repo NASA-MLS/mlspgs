@@ -1,4 +1,4 @@
-module UNITS
+module GET_LUN
   implicit NONE
   public
 !  This is used with sid_fwd_mdl routines and uth routines.
@@ -24,8 +24,11 @@ module UNITS
        "$Id$"
   CHARACTER (LEN=*), PARAMETER :: ModuleName= "$RCSfile$"
 !---------------------------------------------------------------------------
-end module UNITS
+end module GET_LUN
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:06  vsnyder
 ! Initial conversion to Fortran 90
 !
