@@ -123,6 +123,7 @@ module Convolve_All_m
     real(r8) :: SRad(ptan%template%noSurfs), di_dx(ptan%template%noSurfs)
 
     logical :: my_ptan_der
+    logical :: foundInFirst             ! Flag
 
     my_ptan_der = .false.
     if ( present ( ptan_der ) ) my_ptan_der = ptan_der
@@ -302,11 +303,11 @@ module Convolve_All_m
     do sps_i = 1, no_mol
 
       jz = mol_cat_index(sps_i)
-      f => GetQuantityForForwardModel ( FwdMdlIn, quantityType=l_vmr,&
+      f => GetQuantityForForwardModel ( FwdMdlIn, FwdMdlExtra, quantityType=l_vmr,&
         & molIndex=jz, radiometer=fwdMdlConfig%signals(1)%radiometer, &
-        & noError=.true., config=fwdMdlConfig )
+        & noError=.true., config=fwdMdlConfig, foundInFirst=foundInFirst )
       
-      if ( .not. associated(f) ) then
+      if ( .not. associated(f) .or. .not. foundInFirst ) then
         jf = Grids_f%windowfinish(sps_i)-Grids_f%windowStart(sps_i)+1
         k = Grids_f%no_f(sps_i) * Grids_f%no_z(sps_i)
         sv_f = sv_f + jf * k
@@ -366,6 +367,9 @@ module Convolve_All_m
 end module Convolve_All_m
 
 ! $Log$
+! Revision 2.27  2002/10/10 19:36:22  vsnyder
+! Add di_dt_flag
+!
 ! Revision 2.26  2002/10/10 01:00:10  vsnyder
 ! Delete unreferenced entities from USE list
 !
