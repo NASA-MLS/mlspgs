@@ -9,11 +9,14 @@ module INIT_TABLES_MODULE
 
 ! Declaring the definitions is handled by the tree walker.
 
-  use INTRINSIC ! Everything. FIRST_LIT, INIT_INTRINSIC,
-    ! L_FALSE, L_TRUE, LAST_INTRINSIC_LIT, T_BOOLEAN, T_FIRST,
-    ! T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE and T_STRING are used
-    ! here, but everything is included so that it can be gotten by
-    ! USE INIT_TABLES_MODULE.
+  use Init_MLSSignals_m ! Everything. Init_MLSSignals, Field_First,
+    ! Last_Signal_Field, Spec_First, Last_Signal_Spec, Numerous S_....
+  use INTRINSIC ! Everything. ADD_IDENT, BEGIN, D, F, FIRST_LIT,
+    ! FIRST_MOLECULE,  INIT_INTRINSIC, L, L_<several>, LAST_INTRINSIC_LIT,
+    ! LAST_MOLECULE, MAKE_TREE, N, NADP, ND, NDP, NP, NR, P, S, T,
+    ! T_BOOLEAN, T_FIRST, T_LAST_INTRINSIC, T_NUMERIC, T_NUMERIC_RANGE,
+    ! T_STRING and Z are used here, but everything is included so that it
+    ! can be gotten by USE INIT_TABLES_MODULE.
 
   implicit NONE
   public ! This would be a MUCH LONGER list than the list of private
@@ -36,9 +39,9 @@ module INIT_TABLES_MODULE
 
 ! Field indices:
 
-  integer, public, parameter :: F_MIFS = 1
-  integer, public, parameter :: F_USE = 2
-  integer, public, parameter :: FIELD_FIRST = f_mifs, FIELD_LAST = f_use
+  integer, public, parameter :: F_MIFS = last_Signal_Field + 1
+  integer, public, parameter :: F_USE = f_mifs + 1
+  integer, public, parameter :: FIELD_LAST = f_use
   integer, public :: FIELD_INDICES(field_first:field_last)
 
 ! Enumeration literals:
@@ -48,21 +51,6 @@ module INIT_TABLES_MODULE
   integer, public, parameter :: L_OVERRIDE = l_mask + 1
   integer, public, parameter :: LAST_LIT = l_override
   integer, public :: LIT_INDICES(first_lit:last_lit)
-
-! Parameter names:
-
-  ! In GlobalSettings section:
-
-  integer, public, parameter :: P_OUTPUT_VERSION_STRING = 1
-  integer, public, parameter :: P_VERSION_COMMENT = 2
-
-  ! In Calibration section:
-
-  integer, public, parameter :: P_CALWINDOW = 3
-
-  integer, public, parameter :: FIRST_PARM = P_OUTPUT_VERSION_STRING
-  integer, public, parameter :: LAST_PARM = P_CALWINDOW
-  integer, public :: PARM_INDICES(first_parm:last_parm)
 
 ! Section identities:
 
@@ -74,11 +62,25 @@ module INIT_TABLES_MODULE
 
 ! Specification indices:
 
-  integer, public, parameter :: S_SPACEMIFS = 1
-  integer, public, parameter :: S_TARGETMIFS = 2
-  integer, public, parameter :: SPEC_FIRST = s_spaceMIFs, &
-       SPEC_LAST = s_targetMIFs
+  integer, public, parameter :: S_SPACEMIFS = last_Signal_Spec + 1
+  integer, public, parameter :: S_TARGETMIFS = s_spacemifs + 1
+  integer, public, parameter :: SPEC_LAST = s_targetMIFs
   integer, public :: SPEC_INDICES(spec_first:spec_last)
+
+! Parameter names:
+
+  ! In GlobalSettings section:
+
+  integer, public, parameter :: P_OUTPUT_VERSION_STRING = spec_last + 1
+  integer, public, parameter :: P_VERSION_COMMENT = p_output_version_string +1
+
+  ! In Calibration section:
+
+  integer, public, parameter :: P_CALWINDOW = p_version_comment + 1
+
+  integer, public, parameter :: FIRST_PARM = P_OUTPUT_VERSION_STRING
+  integer, public, parameter :: LAST_PARM = P_CALWINDOW
+  integer, public :: PARM_INDICES(first_parm:last_parm)
 
 ! Table for section ordering:
 
@@ -94,16 +96,6 @@ module INIT_TABLES_MODULE
 !       , shape(section_ordering) )
         , (/ section_last-section_first+1, section_last-section_first+2 /) )
 
-  integer, private, parameter :: BEGIN = -1
-  integer, private, parameter :: D = 1000000
-  integer, private, parameter :: F = 1000, L = 2000, N = 0
-  integer, private, parameter :: NADP = n+d*(all_fields+no_dup+no_positional)
-  integer, private, parameter :: ND = n+d*no_dup
-  integer, private, parameter :: NDP = n+d*(no_dup+no_positional)
-  integer, private, parameter :: NP = n+d*no_positional
-  integer, private, parameter :: NR = n+d*req_fld
-  integer, private, parameter :: P = 3000, S = 4000, T = 5000, Z = 6000
-
 contains ! =====     Public procedures     =============================
 ! --------------------------------------------------  INIT_TABLES  -----
   subroutine INIT_TABLES
@@ -113,6 +105,7 @@ contains ! =====     Public procedures     =============================
 
   ! Put intrinsic predefined identifiers into the symbol table.
     call init_intrinsic ( data_type_indices, lit_indices )
+    call init_MLSSignals ( field_indices, spec_indices, data_type_indices )
 
   ! Put nonintrinsic predefined identifiers into the symbol table.
 
@@ -162,17 +155,9 @@ contains ! =====     Public procedures     =============================
   ! Start with the definitions of types. These are represented by trees of
   ! the form  < n_dt_def t_type_name l_lit ... l_lit >
 
-    ! Define the intrinsic data types
-
-    call make_tree ( (/ &
-      begin, t+t_numeric, n+n_dt_def, &
-      begin, t+t_numeric_range, n+n_dt_def, &
-      begin, t+t_string, n+n_dt_def /) )
-
     ! Define the enumerated types
 
     call make_tree ( (/ &
-      begin, t+t_boolean, l+l_true, l+l_false, n+n_dt_def, &
       begin, t+t_use, l+l_expected, l+l_mask, l+l_override, n+n_dt_def, &
       begin, t+t_units, l+l_days, l+l_deg, l+l_degrees, &
              l+l_dimensionless, l+l_dimless, l+l_dl, l+l_ghz, &
@@ -232,18 +217,6 @@ contains ! =====     Public procedures     =============================
              s+s_spaceMIFs, s+s_targetMIFs, n+n_section /) )
 
   end subroutine INIT_TABLES
-
-! =====     Private procedures     =====================================
-  ! --------------------------------------------------  ADD_IDENT  -----
-
-  integer function ADD_IDENT ( TEXT )
-
-    use SYMBOL_TABLE, only: ENTER_TERMINAL 
-    use SYMBOL_TYPES, only: T_IDENTIFIER
-
-    character(len=*), intent(in) :: TEXT
-    add_ident = enter_terminal ( text, t_identifier )
-  end function ADD_IDENT
     
   ! --------------------------------------------------  MAKE_TREE  -----
   include "make_tree.f9h"
@@ -251,6 +224,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE    
 
 ! $Log$
+! Revision 2.7  2001/03/14 15:59:27  perun
+! Use Van's latest with Init_MLSSignals_m module
+!
 ! Revision 2.6  2001/03/05 16:46:37  perun
 ! Use Van's include method
 !
