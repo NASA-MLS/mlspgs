@@ -24,6 +24,9 @@ all: mlslib.a SDPToolkitSubstitute.a
 mlslib.a: $(OBJS)
 	ar ru $@ $?
 
+libmls.a: mlslib.a
+	ln -s -f mlslib.a libmls.a
+
 SDPToolkitSubstitute.a: SDPToolkitSubstitute.o
 	ar ru $@ $?
 
@@ -60,6 +63,10 @@ swapi.o: swapi_character_array.o swapi_character_scalar.o swapi_double.o \
 	swapi_integer.o swapi_real.o
 
 # $Log$
+# Revision 2.3  2000/10/04 01:25:11  vsnyder
+# Added an explicit action for L1BData, to specify the DUSTY option,
+# because sfrdata is called with inconsistent argument lists.
+#
 # Revision 2.2  2000/09/29 18:05:32  vsnyder
 # Add CVS comments.  Replace inference rule ".f90.o" with "%.o: %.f90"
 # because the former sometimes didn't "make" out-of-date files, but the
