@@ -106,7 +106,8 @@ contains
     fmStat%newHydros = .true.
     fmStat%maf = 0
     fmStat%finished = .false.
-    nullify ( fmStat%rows )
+    if ( ixJacobian > 0 ) &
+      & call allocate_test(fmStat%rows, jacobian%row%nb, 'fmStat%rows', ModuleName)
 
     ! Loop over mafs
     do while ( .not. fmStat%finished )
@@ -157,6 +158,9 @@ contains
 end module SidsModule
 
 ! $Log$
+! Revision 2.24  2001/05/01 00:20:34  livesey
+! Sets up fmStat%rows correctly.
+!
 ! Revision 2.23  2001/04/26 19:48:11  livesey
 ! Now uses ForwardModelWrappers
 !
