@@ -74,6 +74,7 @@ END GlobalSettings
 ; quantities in from the climatology database.
 
 BEGIN ReadApriori
+time
     ;;
     ;; Each line in this file describes one geophysical parameter
     ;; for which a priori information is needed from the
@@ -205,6 +206,7 @@ END MergeApriori
 ; parameters for which are given below.
 ;
 BEGIN ChunkDivide
+time
     ;;
     ;; This items in this section can occur in any order.
     ;;
@@ -259,7 +261,7 @@ BEGIN ChunkDivide
     ;;
     ;; Now we list the bands that must be on for data to be considered
     ;; useful. This is a standard boolean expression using the MLS
-    ;; standard nomencalture and wildcards.
+    ;; standard nomenclature and wildcards.
     ;;
     CriticalBands="R1A:118.B1:PT or R1B:118.B21:PT and R2:190.B*"
     ;;
@@ -302,7 +304,7 @@ BEGIN Construct
     ;; This gives us 60 pressure surfaces at 12 per decade from 1000mb up.
     ;;
     vGridStandard: vGrid, coordinate=Pressure,type=Logarithmic, $
-                   start = 1000mb, number = 25 24, per_decade = 12 6
+                   start = 1000mb, number = [25, 24], per_decade = [12, 6]
     ;;
     ;; This one gives 12 per decade from 1000mb to 10mb, with 6 per
     ;; decade above that up to 0.001mb.
@@ -412,8 +414,8 @@ BEGIN Construct
     ;;
     ;; vectorTemplate, quantities=quantity list
     ;;
-    stateTemplate: vectorTemplate, quantities=ptan118 ptan2t5h temp gph $
-      h2o hno3 o3 hcl clo n2o co o3_190 o3_640 n2o_190 n2o_640
+    stateTemplate: vectorTemplate, quantities= [ ptan118, ptan2t5h, temp, gph, $
+      h2o, hno3, o3, hcl, clo, n2o, co, o3_190, o3_640, n2o_190, n2o_640 ]
     ;;
     ;; Having done the state vector template, now we define the measurement
     ;; vectors.  These are typically made up of collections of bands.
@@ -537,15 +539,16 @@ BEGIN Output
     ;; Now the l2gp_others file contains the secondary l2gp quantities
     ;; and the overlaps from the primary products.
     ;;
-    output, file='l2gp_others', quantities=o3_190L2gp o3_640L2gp n2o_190L2gp $
-                                           n2o_640L2gp,  $
-                                overlaps=tempL2gp gphL2gp h2oL2gp hno3L2gp $
-                                         o3L2gp hclL2gp cloL2gp n2oL2gp
+    output, file='l2gp_others', quantities= [ o3_190L2gp, o3_640L2gp, $
+                                             n2o_190L2gp, n2o_640L2gp ],  $
+                                overlaps= [ tempL2gp, gphL2gp, h2oL2gp, $
+                                           hno3L2gpo3L2gp, hclL2gp, cloL2gp, $
+                                           n2oL2gp ]
     ;;
     ;; Now the l2aux file contains non l2gp data
     ;;
-    output, file='l2aux_full', quantities=ptan118l2gp ptan2t5hL2gp, $
-                               overlaps=ptan118L2gp ptan2t5hL2gp
+    output, file='l2aux_full', quantities= [ ptan118l2gp, ptan2t5hL2gp ], $
+                               overlaps= [ ptan118L2gp, ptan2t5hL2gp ]
     ;;
     ;; In later versions there may be some lines dealing with metadata
     ;; population.
@@ -557,6 +560,9 @@ END Output
 ; ----------------------------------------------------------------------------
 ;
 ; $Log$
+; Revision 1.1  2000/10/20 23:36:54  pwagner
+; moved to test directory
+;
 ; Revision 1.1  2000/10/11 20:54:39  vsnyder
 ; Initial addition
 ;
