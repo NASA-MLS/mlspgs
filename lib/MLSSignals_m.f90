@@ -626,7 +626,7 @@ contains
     ! Destroy one signal in the signals database (or elsewhere)
     type(signal_T), intent(inout) :: Signal
 
-    call deallocate_test ( signal%channels, 'Signal', moduleName )
+    call deallocate_test ( signal%channels, 'Signal%channels', moduleName )
     ! Don't destroy Frequencies or Widths unless signal%Deferred.  Those
     ! fields are shallow copies here.  They're destroyed in
     ! DestroySpectrometerType.
@@ -1123,6 +1123,9 @@ oc:   do
 end module MLSSignals_M
 
 ! $Log$
+! Revision 2.32  2001/04/24 22:36:27  vsnyder
+! Correct the 'what' argument to deallocate_test
+!
 ! Revision 2.31  2001/04/23 23:12:45  vsnyder
 ! Finish adding 'time' command
 !
