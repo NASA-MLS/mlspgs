@@ -72,7 +72,8 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_COVARIANCE          = f_copy + 1
   integer, parameter :: F_CRITERIA            = f_covariance + 1
   integer, parameter :: F_DIAGONAL            = f_criteria + 1
-  integer, parameter :: F_FILE                = f_diagonal + 1
+  integer, parameter :: F_DIAGONALOUT         = f_diagonal + 1
+  integer, parameter :: F_FILE                = f_diagonalout + 1
   integer, parameter :: F_FIRST               = f_file + 1
   integer, parameter :: F_FIRSTINDEXCHANNEL   = f_first + 1
   integer, parameter :: F_FRACTION            = f_firstIndexChannel + 1
@@ -139,8 +140,7 @@ module INIT_TABLES_MODULE
   integer, parameter :: F_WIDTHS              = f_width + 1
   integer, parameter :: FIELD_FIRST = f_Apriori, FIELD_LAST = f_widths
   integer :: FIELD_INDICES(field_first:field_last)
-! Enumeration literals:
-
+! Enumeration literals (there are more in INTRINSIC and MOLECULES):
   integer, parameter :: L_ANGLE         = last_intrinsic_lit + 1
   integer, parameter :: L_APRIORI       = l_angle + 1
   integer, parameter :: L_BOTH 	        = l_apriori + 1
@@ -354,6 +354,7 @@ contains ! =====     Public procedures     =============================
     field_indices(f_covariance) =          add_ident ( 'covariance' )
     field_indices(f_criteria) =            add_ident ( 'criteria' )
     field_indices(f_diagonal) =            add_ident ( 'diagonal' )
+    field_indices(f_diagonalOut) =         add_ident ( 'diagonalOut' )
     field_indices(f_file) =                add_ident ( 'file' )
     field_indices(f_first) =               add_ident ( 'first' )
     field_indices(f_firstIndexChannel) =   add_ident ( 'firstIndexChannel' )
@@ -545,7 +546,7 @@ contains ! =====     Public procedures     =============================
     !  >
     ! The n_field_type, n_field_spec, and n_dot subtrees may appear in
     ! any quantity or order.
-    ! The n_field_type subtree indicates the type allowed for a field.
+    ! The n_field_type subtree indicates the types allowed for a field.
     ! The n_field_spec subtree indicates the specifications whose names
     ! are allowed to appear for a field.
     ! The n_dot subtree indicates that the field given by the first
@@ -705,13 +706,14 @@ contains ! =====     Public procedures     =============================
              begin, f+f_criteria, t+t_numeric, nr+n_field_type, &
              ndp+n_spec_def, &
       begin, s+s_forwardModel, & ! Must be AFTER s_vector and s_matrix
-             np+n_spec_def, &
+             ndp+n_spec_def, &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
              begin, f+f_columnScale, t+t_scale, n+n_field_type, &
              begin, f+f_covariance, s+s_matrix, n+n_field_spec, &
              begin, f+f_diagonal, t+t_boolean, n+n_field_type, &
+             begin, f+f_diagonalOut, t+t_boolean, n+n_field_type, &
              begin, f+f_fwdModelIn, s+s_vector, nr+n_field_spec, &
              begin, f+f_fwdModelOut, s+s_vector, n+n_field_spec, &
              begin, f+f_jacobian, s+s_matrix, n+n_field_spec, &
@@ -835,6 +837,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.21  2001/02/16 19:19:04  vsnyder
+! Added "diagonalOut" field to "retrieve" specification.
+!
 ! Revision 2.20  2001/02/16 00:46:47  livesey
 ! Reworked Fill and parts of ReadApriori
 !
