@@ -52,8 +52,9 @@ $(SUBDIRS):
 
 l2: lib
 #l3: lib
+tar: clean
 
-.PHONY: configure depends subdirs $(SUBDIRS)
+.PHONY: configure depends subdirs $(SUBDIRS) clean tar
 
 configure:
 	$(MLSBIN)/mlsconfigure -dc "$(CONFDIR)" -pc "$(PLATFORMS)" \
@@ -78,7 +79,16 @@ clean:
 	 for dir in $(SUBDIRS); do \
 	  $(MAKE) -f $(MakeFName) -C $$dir clean; \
 	done
+
+tar:
+	@echo "tar-ing $(SUBDIRS)"; \
+	 for dir in $(SUBDIRS); do \
+	  $(MAKE) -f $(MakeFName) -C $$dir tar; \
+	done
 # $Log$
+# Revision 1.2  2000/10/23 17:16:34  pwagner
+# Remove extra echo commands
+#
 # Revision 1.1  2000/10/18 21:57:35  pwagner
 # First commit
 #
