@@ -54,6 +54,13 @@ l2pcRetFwmRad2X$1: forwardModel, type=linear, signals=!signal($1), $
   lockBins=true, specificQuantities=[extinctionShaped!radiometerForBand($1), $
   extinctionConstant!radiometerForBand($1), $
   temperature, !allLinearHRMolecules, !allLogHRMolecules]
+l2pcRetFwmRadSpecific2X$1: forwardModel, type=linear, signals=!signal($1), $
+  molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
+  moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $
+  /atmos_der, /temp_der, do_baseline=!doBaseline, phiWindow=100.0, $
+  lockBins=true, specificQuantities=[extinctionShapedLinear!radiometerForBand($1), $
+  extinctionConstantLinear!radiometerForBand($1), $
+  temperature, !allLinearHRMolecules, !allLogHRMolecules]
 l2pcRetFwmRad2X$1_1D: forwardModel, type=linear, signals=!signal($1), $
   molecules=!moleculeFamilies2X(!radiometerForBand($1)), $
   moleculeDerivatives=!moleculeFamilies2X(!radiometerForBand($1)), $

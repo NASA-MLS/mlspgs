@@ -202,35 +202,20 @@ begin Fill
     !fillHiRes(length.tropH2O_HR)
   })
 
-  Fill, quantity=aprioriPrecision.extinctionConstantR1A, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstantR1B, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstantR2, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstantR3, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstantR4, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstantR5H, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionConstantR5V, method=explicit, /spread, $
-    explicitValues=1.0e-3
-
-  Fill, quantity=aprioriPrecision.extinctionShapedR1A, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShapedR1B, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShapedR2, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShapedR3, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShapedR4, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShapedR5H, method=explicit, /spread, $
-    explicitValues=1.0e-3
-  Fill, quantity=aprioriPrecision.extinctionShapedR5V, method=explicit, /spread, $
-    explicitValues=1.0e-3
+  !define(fillExtinctionApriori,{
+  Fill, quantity=aprioriPrecision.extinctionConstant$1, $
+    method=explicit, /spread, explicitValues=1.0e-3
+  Fill, quantity=aprioriPrecision.extinctionShaped$1, $
+    method=explicit, /spread, explicitValues=1.0e-3
+  Fill, quantity=aprioriPrecision.extinctionConstantLinear$1, $
+    method=explicit, /spread, explicitValues=1.0e-3
+  Fill, quantity=aprioriPrecision.extinctionShapedLinear$1, $
+    method=explicit, /spread, explicitValues=1.0e-3
+  Fill, quantity=aprioriPrecision.extinctionConstantFull$1, $
+    method=explicit, /spread, explicitValues=1.0e-3
+  Fill, quantity=aprioriPrecision.extinctionShapedFull$1, $
+    method=explicit, /spread, explicitValues=1.0e-3})
+  !forall({fillExtinctionApriori},!allRadiometers)
 
   ;; Now do the same for baseline
   !define(baselinePrecision, 5 K )
