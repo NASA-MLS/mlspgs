@@ -14,6 +14,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
    use MLSCommon, only: R8
    use MLSFiles, only: MLS_IO_GEN_OPENF, MLS_IO_GEN_CLOSEF, &
      & HDFVERSION_4, HDFVERSION_5, MLS_INQSWATH
+   use MLSHDF5, only: mls_h5open, mls_h5close
    use MLSMessageModule, only: MLSMessageConfig, MLSMSG_Warning, &
      & MLSMessage
    use MLSStrings, only: GetStringElement, NumStringElements
@@ -49,7 +50,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      ! 
   MLSMessageConfig%useToolkit = .false.   
   MLSMessageConfig%logFileUnit = -1       
-  CALL h5open_f(error)                    
+  CALL mls_h5open(error)
   n_filenames = 0
   do      ! Loop over filenames
      call get_filename(filename, n_filenames, details, columnsOnly, attributesToo)
@@ -61,7 +62,7 @@ PROGRAM L2GPDump ! dumps L2GPData files
      endif
      call dump_one_file(trim(filename), details, columnsOnly, attributesToo)
   enddo
-   call h5close_f(error)
+  call mls_h5close(error)
 contains
 !------------------------- get_filename ---------------------
     subroutine get_filename(filename, n_filenames, details, columnsOnly, attributesToo)
@@ -189,6 +190,9 @@ END PROGRAM L2GPDump
 !==================
 
 ! $Log$
+! Revision 1.3  2004/03/03 19:10:38  pwagner
+! Knows to write error messages to stdout
+!
 ! Revision 1.2  2004/02/25 00:07:49  pwagner
 ! Many options added
 !
