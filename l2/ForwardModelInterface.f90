@@ -560,7 +560,8 @@ contains
 !
 ! Compute all path entities for all mmafs and tanget pointings
 !
-    Call comp_path_entities(FMC%n_lvls,temp%template%noSurfs,&
+    Call comp_path_entities(fwdModelIn, fwdModelExtra, forwardModelConfig%molecules, &
+      & FMC%n_lvls,temp%template%noSurfs,&
       & gl_count,ndx_path, &
    &     z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,dh_dt_glgrid,       &
    &     TFMI%atmospheric,TFMI%f_zeta_basis,TFMI%mr_f,              &
@@ -1170,6 +1171,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.31  2001/03/21 02:14:01  livesey
+! Interim version mr_f in, but not quite working yet.
+!
 ! Revision 2.30  2001/03/21 01:10:09  livesey
 ! Interim version before dealing with mr_f
 !
