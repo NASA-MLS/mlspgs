@@ -30,7 +30,7 @@ begin Fill
     orbitInclination=stateCore.orbitInclination, $
     phiTan=stateCore.phiTanTHz, $
     maxIterations=20, $
-    phiWindow=0 degrees
+    phiWindow=4 degrees
 
   ;; Transfer the low resolution data into the high resolution data
   Fill, quantity=stateCore.h2o_hr, method=vector, sourceQuantity=stateCore.h2o, /interpolate
