@@ -25,10 +25,10 @@ all: MLSL1
 debug: MLSL1
 
 MLSL1: $(OBJS) MLSL1.o mlslib
-	${F90} ${LDFLAGS} PGS_TD_ADEOSIItoTAI.obj -o $@ ${OBJS} MLSL1.o \
-	${MLSPGS_LIB_PATH}/mlslib.a ${TOOLKIT_LIB} ${HDF_LIB}
+	${F90} ${F90FLAGS} ${LDFLAGS} PGS_TD_ADEOSIItoTAI.obj -o $@ ${OBJS} \
+	MLSL1.o ${MLSPGS_LIB_PATH}/mlslib.a ${TOOLKIT_LIB} ${HDF_LIB}
 MLSL1_debug: $(OBJS_DEBUG) MLSL1.o_debug mlslib_debug
-	${F90} ${LDFLAGS} -o $@ ${OBJS} MLSL1.o_debug  \
+	${F90} ${F90DEBUGFLAGS} ${LDFLAGS} -o $@ ${OBJS} MLSL1.o_debug  \
 	${MLSPGS_LIB_PATH}/mlslib.a_debug ${TOOLKIT_LIB} ${HDF_LIB}
 
 MLSL1.o: $(OBJS)
@@ -42,6 +42,9 @@ include ${MLSPGS_LIB_PATH}/makelibs.inc
 
 #
 # $Log$
+# Revision 1.3  2000/02/15 19:05:41  nakamura
+# Removed Mc module.
+#
 # Revision 1.2  2000/02/14 17:27:56  perun
 # Added modules for L1BOA records and L1B data
 #
