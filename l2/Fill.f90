@@ -117,7 +117,7 @@ contains ! =====     Public Procedures     =============================
     use MatrixModule_0, only: Sparsify, MatrixInversion
     use MatrixModule_1, only: AddToMatrixDatabase, CreateEmptyMatrix, &
       & DestroyMatrix, Dump, GetActualMatrixFromDatabase, GetDiagonal, &
-      & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_SPD, &
+      & FindBlock, GetKindFromMatrixDatabase, GetFromMatrixDatabase, K_Plain, K_SPD, &
       & Matrix_Cholesky_T, Matrix_Database_T, Matrix_Kronecker_T, Matrix_SPD_T, &
       & Matrix_T, NullifyMatrix, UpdateDiagonal
     ! NOTE: If you ever want to include defined assignment for matrices, please
@@ -211,7 +211,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Error codes resulting from FillCovariance
     integer, parameter :: NotSPD = CantInterpolate3D + 1
-    integer, parameter :: NotImplemented = notSPD + 1
+    integer, parameter :: NotPlain = NotSPD + 1
+    integer, parameter :: NotImplemented = notPlain + 1
     integer, parameter :: BothFractionAndLength = NotImplemented + 1
 
     ! Error codes resulting from squeeze
@@ -654,6 +655,8 @@ contains ! =====     Public Procedures     =============================
           select case ( fieldIndex )
           case ( f_matrix )
             matrixToFill = decoration(decoration( subtree(2, gson) ))
+            if ( getKindFromMatrixDatabase(matrices(matrixToFill)) /= k_plain ) &
+              call announce_error ( key, notPlain )
           case ( f_vector )
             vectorIndex = decoration(decoration( subtree(2, gson) ))
           case ( f_bin )
@@ -2102,7 +2105,7 @@ contains ! =====     Public Procedures     =============================
             if ( any( qt%verticalCoordinate == (/ l_height, l_pressure, l_zeta /) ) ) then
               ! Loop over off diagonal terms
               do j = 1, n
-                do k = 1, j -1
+                do k = 1, j-1
                   meanDiag = sqrt ( m(j,j) * m(k,k) ) 
                   if ( lengthScale /= 0 ) &
                     & thisLength = sqrt ( l%values(j,i) * l%values(k,i) )
@@ -2120,7 +2123,6 @@ contains ! =====     Public Procedures     =============================
                   end select
                   if ( thisLength > 0.0 .and. thisFraction > 0.0 ) then
                     m(j,k) = meanDiag*thisFraction*exp(-distance/thisLength)
-                    m(k,j) = meanDiag*thisFraction*exp(-distance/thisLength)
                     anyOffDiag = .true.
                   end if
                 end do                    ! Loop over k (in M)
@@ -6112,6 +6114,8 @@ contains ! =====     Public Procedures     =============================
         call output ( " is not implemented yet.", advance='yes' )
       case ( notSPD )
         call output ( " is not a SPD matrix.", advance='yes' )
+      case ( notPlain )
+        call output ( " is not a plain matrix.", advance='yes' )
       case ( not_permutation )
         call output ( " command caused an illegal permutation in squeeze.", advance='yes' )
       case ( numInstancesisZero )
@@ -6164,6 +6168,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.253  2004/01/30 23:28:33  livesey
+! Insist on loading a plain matrix
+!
 ! Revision 2.252  2004/01/29 03:32:42  livesey
 ! Made FillCovariance (temporarily?) fill both sides of the digaonal (in
 ! any case was wrongly doing upper).
