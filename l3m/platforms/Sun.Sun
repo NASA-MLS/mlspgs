@@ -39,7 +39,10 @@ DUSTY = $(FOPTS)
 # All the paths to supply .mod and INCLUDE files used in compiling %.f90
 # Precede each path by "-I" . Don't put spaces between "-I" and the path
 # Same goes for "-M" for module paths.
-INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -M$(libdir) \
+PATHS_PREFXD := $(shell ${REECHO} -d -prefixn=-M $(UNPREFXDPTHS)) \
+                $(shell ${REECHO} -d -prefixn=-I $(UNPREFXDPTHS))
+INC_PATHS = $(EXTRA_PATHS) $(PATHS_PREFXD) \
+     -M$(PGSINC) -M$S -M$(libdir) \
      -M$(libmlsl3dir) \
      -I$(PGSINC) -I$S -I$(libdir) \
      -I$(libmlsl3dir)
@@ -64,6 +67,9 @@ INC_PATHS = $(EXTRA_PATHS) -M$(PGSINC) -M$S -M$(libdir) \
 l_specials = -lnsl
 
 # $Log$
+# Revision 1.5  2002/07/15 23:12:15  pwagner
+# Dropped srclib from path searched for source files
+#
 # Revision 1.4  2002/07/01 17:32:22  pwagner
 # No longer compiles some sources twice
 #
