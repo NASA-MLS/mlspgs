@@ -1,3 +1,6 @@
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
+! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
+
 module HE5_SWAPI_CHARACTER_SCALAR
 
   public
@@ -42,9 +45,56 @@ contains
          strides,edges, buffer )
   end function HE5_SWWRFLD_CHARACTER_SCALAR
 
+  integer function HE5_EHWRGLATT_CHARACTER_SCALAR ( FILEID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: FILEID      ! File ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE    ! Start array
+    integer, intent(in) :: COUNT   ! Stride array
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    integer, external :: HE5_EHWRGLATT
+
+    he5_ehwrglatt_character_scalar = he5_ehwrglatt(fileID, &
+         & attrname, datatype, count, buffer )
+  end function HE5_EHWRGLATT_CHARACTER_SCALAR
+
+  integer function HE5_SWWRATTR_CHARACTER_SCALAR ( SWATHID, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE    ! Start array
+    integer, intent(in) :: COUNT   ! Stride array
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    integer, external :: HE5_SWWRATTR
+
+    he5_swwrattr_character_scalar = he5_swwrattr(swathid, &
+         & attrname, datatype, count, buffer )
+  end function HE5_SWWRATTR_CHARACTER_SCALAR
+
+  integer function HE5_SWWRLATTR_CHARACTER_SCALAR ( SWATHID, FIELDNAME, &
+    & ATTRNAME, DATATYPE, COUNT, BUFFER )
+    integer, intent(in) :: SWATHID      ! Swath structure ID
+    character(len=*), intent(in) :: FIELDNAME     ! Field name
+    character(len=*), intent(in) :: ATTRNAME     ! Field name
+    integer, intent(in) :: DATATYPE    ! Start array
+    integer, intent(in) :: COUNT   ! Stride array
+    character(len=*), intent(in) :: BUFFER  ! Buffer for write
+
+    integer, external :: HE5_SWWRLATTR
+
+    he5_swwrlattr_character_scalar = he5_swwrlattr(swathid, fieldname, &
+         & attrname, datatype, count, buffer )
+  end function HE5_SWWRLATTR_CHARACTER_SCALAR
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
 
 end module HE5_SWAPI_CHARACTER_SCALAR
 
+! $Log$
+! Revision 2.3  2003/02/08 00:32:54  pwagner
+! New attribute-related interfaces
+!
