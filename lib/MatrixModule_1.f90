@@ -87,7 +87,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   end interface
 
   interface Dump
-    module procedure Dump_Matrix, Dump_Matrix_Database
+    module procedure Dump_Matrix, Dump_Matrix_Database, Dump_Matrix_in_Database
   end interface
 
   interface GetDiagonal
@@ -1542,6 +1542,7 @@ contains ! =====     Public Procedures     =============================
     else
       if ( present(name) ) call output ( '', advance='yes' )
     end if
+    if ( my_details < 0 ) return
     call dump_rc ( matrix%row, 'row', my_details>0 )
     call dump_rc ( matrix%col, 'column', my_details>0 )
     do j = 1, matrix%col%nb
@@ -1596,6 +1597,25 @@ contains ! =====     Public Procedures     =============================
       end if
     end do
   end subroutine Dump_Matrix_Database
+
+  ! ---------------------------------------  Dump_Matrix_in_Database  -----
+  subroutine Dump_Matrix_in_Database ( MatrixDatabase, Details )
+    type(Matrix_Database_T) :: MatrixDatabase
+    integer, intent(in), optional :: Details   ! Print details, default 1
+    !  <= Zero => no details, == One => Details of matrix but not its blocks,
+    !  >One => Details of the blocks, too.
+
+      call output ( 'Matrix d.b. ' )
+      if ( associated(matrixDatabase%matrix) ) then
+        call dump ( matrixDatabase%matrix, 'Plain', details )
+      else if ( associated(matrixDatabase%cholesky) ) then
+        call dump ( matrixDatabase%cholesky%m, 'Cholesky', details )
+      else if ( associated(matrixDatabase%kronecker) ) then
+        call dump ( matrixDatabase%kronecker%m, 'Kronecker', details )
+      else if ( associated(matrixDatabase%spd) ) then
+        call dump ( matrixDatabase%spd%m, 'SPD', details )
+      end if
+  end subroutine Dump_Matrix_in_Database
 
   ! ----------------------------------------------------  Dump_RC  -----
   subroutine Dump_RC ( RC, R_or_C, Details )
@@ -1692,6 +1712,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.60  2001/10/19 22:30:18  pwagner
+! Now can dump a single matrixdb
+!
 ! Revision 2.59  2001/10/18 23:48:23  livesey
 ! Made dump_struct take up less space in the case of large matrices
 !
