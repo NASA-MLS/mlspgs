@@ -10,13 +10,20 @@ module FullCloudForwardModel
   use Allocate_deallocate, only: Allocate_test, Deallocate_test
   use MLSCommon, only: r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
-  use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T
+  use MLSSignals_m, only: SIGNAL_T
+  use VectorsModule, only: GETVECTORQUANTITYBYTYPE, VECTOR_T, VECTORVALUE_T, &
+    & VALIDATEVECTORQUANTITY
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
   use ForwardModelIntermediate, only: FORWARDMODELINTERMEDIATE_T, &
     & FORWARDMODELSTATUS_T
   use MatrixModule_1, only: MATRIX_T
-  use Intrinsic, only: L_TEMPERATURE, L_PTAN, L_VMR, L_GPH
+  use Intrinsic, only: L_TEMPERATURE, L_PTAN, L_VMR, L_GPH, L_RADIANCE, L_NONE, &
+    & L_CLOUDINDUCEDRADIANCE, L_EFFECTIVEOPTICALDEPTH, L_CLOUDSENSITIVITY, &
+    & L_TOTALEXTINCTION, L_CLOUDEXTINCTION, L_MASSMEANDIAMETERICE, &
+    & L_MASSMEANDIAMETERWATER, L_SURFACETYPE, L_SIZEDISTRIBUTION, &
+    & L_CLOUDICE, L_CLOUDWATER
   use ManipulateVectorQuantities, only: FindClosestInstances
+  use MLSNumerics, only: InterpolateValues
 
   implicit none
   private
@@ -53,10 +60,21 @@ contains ! ============= Public Procedures ==========================
 
     ! Local variables
 
+    type (VectorValue_T), pointer :: CLOUDICE ! Profiles
+    type (VectorValue_T), pointer :: CLOUDWATER ! Profiles
+    type (VectorValue_T), pointer :: CLOUDEXTINCTION ! Like radiance too
+    type (VectorValue_T), pointer :: CLOUDINDUCEDRADIANCE ! Like radiance
+    type (VectorValue_T), pointer :: CLOUDSENSITIVITY ! Vector quantity
+    type (VectorValue_T), pointer :: EFFECTIVEOPTICALDEPTH ! Another quantity
     type (VectorValue_T), pointer :: GPH ! Geopotential height sv qty
+    type (VectorValue_T), pointer :: MASSMEANDIAMETERICE ! Quantity
+    type (VectorValue_T), pointer :: MASSMEANDIAMETERWATER ! Quantity
     type (VectorValue_T), pointer :: PTAN ! Tangent pressure
     type (VectorValue_T), pointer :: RADIANCE ! Radiance quantity
+    type (VectorValue_T), pointer :: SIZEDISTRIBUTION ! Integer really
+    type (VectorValue_T), pointer :: SURFACETYPE ! Integer really
     type (VectorValue_T), pointer :: TEMP ! Temperature state vector quantity
+    type (VectorValue_T), pointer :: TOTALEXTINCTION ! Vector quantity
     type (VectorValue_T), pointer :: VMR ! One vmr quantity
 
     type (Signal_T) :: signal           ! The signal we're working on.
@@ -68,16 +86,18 @@ contains ! ============= Public Procedures ==========================
     integer :: VMRINST                  ! Instance index
     integer :: INSTANCE                 ! Relevant instance for temperature
     integer :: GPHINST                  ! Relevant instance for GPH
+    integer :: NOLAYERS                 ! temp.noSurfs - 1
+    integer :: NOFREQS                  ! Number of frequencies
 
     integer, dimension(:), pointer :: closestInstances ! From find routine
 
     real(r8), dimension(:,:), pointer :: A_CLEARSKYRADIANCE
     real(r8), dimension(:,:), pointer :: A_CLOUDINDUCEDRADIANCE
-    real(r8), dimension(:,:), pointer :: A_CLOUDOPTICALDEPTH
+    real(r8), dimension(:,:), pointer :: A_CLOUDEXTINCTION
     real(r8), dimension(:,:), pointer :: A_CLOUDSENSITIVITY
     real(r8), dimension(:,:), pointer :: A_EFFECTIVEOPTICALDEPTH
     real(r8), dimension(:,:), pointer :: A_MASSMEANDIAMETER
-    real(r8), dimension(:,:), pointer :: A_TOTALOPTICALDEPTH
+    real(r8), dimension(:,:), pointer :: A_TOTALEXTINCTION
 
     real(r8), dimension(:), pointer :: FREQUENCIES
 
@@ -87,7 +107,7 @@ contains ! ============= Public Procedures ==========================
     if ( size ( forwardModelConfig%signals ) /= 1 ) &
       & call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Cannot call the full cloud forward model with multiple signals' )
-    signal = forwardModelConfig%signal(1)
+    signal = forwardModelConfig%signals(1)
     maf = fmStat%maf
 
     ! For the moment make it only single sideband
@@ -97,13 +117,31 @@ contains ! ============= Public Procedures ==========================
       & 'frequencies', ModuleName )
     frequencies = signal%lo + signal%sideband * ( signal%centerFrequency + &
       & pack ( signal%frequencies, signal%channels ) )
+    noFreqs = size (frequencies)
 
-    ! Get the quantities we need from thevectors
+    ! Get the quantities we need from the vectors, outputs first
     radiance => GetVectorQuantityByType ( fwdModelOut, &
       & quantityType=l_radiance, signal=signal%index, sideband=signal%sideband )
     cloudInducedRadiance => GetVectorQuantityByType ( fwdModelOut, &
       & quantityType=l_cloudInducedRadiance, &
       & signal=signal%index, sideband=signal%sideband )
+    cloudExtinction => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_cloudExtinction, &
+      & signal=signal%index, sideband=signal%sideband )
+    cloudSensitivity => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_cloudSensitivity, &
+      & signal=signal%index, sideband=signal%sideband )
+    totalExtinction => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_totalExtinction, &
+      & signal=signal%index, sideband=signal%sideband )
+    effectiveOpticalDepth => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_effectiveOpticalDepth, &
+      & signal=signal%index, sideband=signal%sideband )
+
+    massMeanDiameterIce => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_massMeanDiameterIce )
+    massMeanDiameterWater => GetVectorQuantityByType ( fwdModelOut, &
+      & quantityType=l_massMeanDiameterWater )
 
     ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_ptan, radiometer=signal%radiometer )
@@ -111,6 +149,15 @@ contains ! ============= Public Procedures ==========================
       & quantityType=l_temperature )
     gph => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_gph )
+    cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_cloudIce )
+    cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_cloudWater )
+    surfaceType => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_surfaceType )
+    sizeDistribution => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_sizeDistribution )
+    
     ! Do the vmr's one by one later on.
 
     ! Make sure the quantities we have are OK
@@ -143,11 +190,11 @@ contains ! ============= Public Procedures ==========================
       call FindClosestInstances ( vmr, radiance, closestInstances )
       vmrInst = closestInstances(maf)
       call InterpolateValues ( &
-        & vmr%template%surfs, &         ! Old X
-        & vmr%values(:,vmrInst), &         ! Old Y
-        & temp%template%surfs, &        ! New X
+        & vmr%template%surfs(:,1), &    ! Old X
+        & vmr%values(:,vmrInst), &      ! Old Y
+        & temp%template%surfs(:,1), &   ! New X
         & vmrArray(i,:), &              ! New Y
-        & method='Linear', extrapolate='Clamp' )
+        & 'Linear', extrapolate='Clamp' )
     end do
 
     ! Work out the closest instances for the other quantities
@@ -168,45 +215,38 @@ contains ! ============= Public Procedures ==========================
     call Allocate_test ( a_cloudSensitivity, &
       & radiance%template%noSurfs, noFreqs, &
       & 'a_cloudSensitivity', ModuleName )
-    call Allocate_test ( a_totalOpticalDepth, &
+    call Allocate_test ( a_totalExtinction, &
       & temp%template%noSurfs, noFreqs, &
-      & 'a_totalOpticalDepth', ModuleName )
-    call Allocate_test ( a_cloudOpticalDepth, &
+      & 'a_totalExtinction', ModuleName )
+    call Allocate_test ( a_cloudExtinction, &
       & temp%template%noSurfs, noFreqs, &
-      & 'a_cloudOpticalDepth', ModuleName )
+      & 'a_cloudExtinction', ModuleName )
     call Allocate_test ( a_massMeanDiameter, &
       & 2, temp%template%noSurfs, &
-      & 'a_massMeanDiameterModuleName', ModuleName )
+      & 'a_massMeanDiameter', ModuleName )
     
     ! Now call Jonathan's f77 code
 
     call CloudForwardModel ( &
-      & frequency/1e3_r8, &
-      & 10.0^(-temp%template%surfs), &
+      & frequencies/1e3_r8, &
+      & 10.0**(-temp%template%surfs), &
       & gph%values(:, instance), &
       & temp%values(:,instance), &
       & vmrArray, &
-      & 10.0^(-ptan%values(:,maf)), &
-      & size(frequency), &
+      & 10.0**(-ptan%values(:,maf)), &
+      & noFreqs, &
       & temp%template%noSurfs, &
       & radiance%template%noSurfs, &
-      & WCscale%values(1,wcScaleInst), &
-      & cloudType%values(1,instance), &
-      & PSDtype%values(1,instance), &
+      & sizeDistribution%values(1,instance), &
       & surfaceType%values(1, instance), &
       & forwardModelConfig%cloud_der, &
-      & saturatedBelowClouds%values(1, instance), &
-      & cloudHeight%values(1, instance), &
       & a_clearSkyRadiance, &
       & a_cloudInducedRadiance, &
-      & a_totalOpticalDepth, &
-      & a_cloudOpticalDepth, &
-      & layerThickness%value( 1:noLayers, instance ), &
+      & a_totalExtinction, &
+      & a_cloudExtinction, &
       & a_massMeanDiameter, &
       & a_effectiveOpticalDepth, &
       & cloudSensitivity )
-
-    effectiveOpticalDeptmassMeanDiameterIce%values(:,instance) = 0.0_r8
 
     ! Now store results in relevant vectors
     ! Vectors are stored ( noChannels * noSurfaces, noInstances ), so transpose
@@ -214,7 +254,7 @@ contains ! ============= Public Procedures ==========================
     ! First the minor frame stuff
     radiance%values ( :, maf) = &
       & reshape ( transpose(a_clearSkyRadiance), &
-      & (/clearSkyRadiance%template%instanceLen/) )
+      & (/radiance%template%instanceLen/) )
     cloudInducedRadiance%values ( :, maf ) = &
       & reshape ( transpose(a_cloudInducedRadiance), &
       & (/cloudInducedRadiance%template%instanceLen/) )
@@ -226,25 +266,22 @@ contains ! ============= Public Procedures ==========================
       & (/cloudSensitivity%template%instanceLen/) )
 
     ! For layer (noTempSurfs-1) stuff make sure all are zero to start, then do rest
-    cloudOpticalDepth%values(:,instance) =     0.0_r8
-    layerThickness%value( :, instance) =       0.0_r8
+    cloudExtinction%values(:,instance) =       0.0_r8
     massMeanDiameterIce%values(:,instance) =   0.0_r8
     massMeanDiameterWater%values(:,instance) = 0.0_r8
-    totalOpticalDepth%values(:,instance) =     0.0_r8
+    totalExtinction%values(:,instance) =       0.0_r8
     
-    cloudOpticalDepth%values ( 1:noLayers, instance ) = &
-      & reshape ( transpose(a_cloudOpticalDepth), (/noLayers*noFreqs/) )
-    massMeanDiameterIce%values ( 1:noLayers, instance ) = &
-      & reshape ( transpose(a_massMeanDiameterIce), (/noLayers*noFreqs/) )
-    massMeanDiameterWater%values ( 1:noLayers, instance ) = &
-      & reshape ( transpose(a_massMeanDiameterWater), (/noLayers*noFreqs/) )
-    totalOpticalDepth%values ( 1:noLayers, instance ) = &
-      & reshape ( transpose(a_totalOpticalDepth), (/noLayers*noFreqs/) )
+    cloudExtinction%values ( 1:noLayers, instance ) = &
+      & reshape ( transpose(a_cloudExtinction), (/noLayers*noFreqs/) )
+    massMeanDiameterIce%values ( 1:noLayers, instance ) = a_massMeanDiameter(1,:)
+    massMeanDiameterWater%values ( 1:noLayers, instance ) = a_massMeanDiameter(2,:)
+    totalExtinction%values ( 1:noLayers, instance ) = &
+      & reshape ( transpose(a_totalExtinction), (/noLayers*noFreqs/) )
 
     ! Remove temporary quantities
     call Deallocate_test ( a_massMeanDiameter, 'a_massMeanDiameterModuleName', ModuleName )
-    call Deallocate_test ( a_cloudOpticalDepth, 'a_cloudOpticalDepth', ModuleName )
-    call Deallocate_test ( a_totalOpticalDepth, 'a_totalOpticalDepth', ModuleName )
+    call Deallocate_test ( a_cloudExtinction, 'a_cloudExtinction', ModuleName )
+    call Deallocate_test ( a_totalExtinction, 'a_totalExtinction', ModuleName )
     call Deallocate_test ( a_cloudSensitivity, 'a_cloudSensitivity', ModuleName )
     call Deallocate_test ( a_effectiveOpticalDepth, 'a_effectiveOpticalDepth', ModuleName )
     call Deallocate_test ( a_cloudInducedRadiance, 'a_cloudInducedRadiance', ModuleName )
