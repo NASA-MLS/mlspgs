@@ -142,6 +142,8 @@ contains
       type (VectorValue_T), pointer :: F             ! An arbitrary species
       type (VectorValue_T), pointer :: PHITAN ! Tangent geodAngle component of
 
+      logical :: FoundInFirst           ! Flag
+
 
       !******************* LOAD SPECIES DATA ************
 
@@ -231,7 +233,8 @@ contains
       do ii = 1, no_mol
         i = mol_cat_index(ii)
         f => GetQuantityforForwardModel ( fwdModelIn, fwdModelExtra, &
-          & quantityType=l_x, molIndex=i, radiometer=radiometer, config=fwdModelConf )
+          & quantityType=l_x, molIndex=i, radiometer=radiometer, config=fwdModelConf, &
+          & foundInFirst=foundInFirst )
         kz = Grids_x%no_z(ii)
         kp = Grids_x%no_p(ii)
         kf = Grids_x%no_f(ii)
@@ -266,7 +269,7 @@ contains
 
   ! set 'do derivative' flags
 
-        if ( fwdModelConf%moleculeDerivatives(i) ) then
+        if ( fwdModelConf%moleculeDerivatives(i) .and. foundInFirst ) then
           if ( associated(f%mask) ) then
             Grids_x%deriv_flags(f_len:r-1) = reshape(( iand (M_FullDerivatives,&
               & ichar(f%mask)) == 0),(/kf*kz*kp/))
@@ -312,6 +315,10 @@ contains
 
 end module LOAD_SPS_DATA_M
 ! $Log$
+! Revision 2.27  2002/10/02 22:42:39  vsnyder
+! Move USE statements from module scope to procedure scope.  Make Load_One_Grid
+! an internal subroutine of Load_SPS_Data.  Cosmetic changes.
+!
 ! Revision 2.26  2002/09/26 18:02:10  livesey
 ! Now uses GetQuantityForForwardModel.
 !
