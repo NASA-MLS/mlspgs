@@ -210,6 +210,7 @@ SHELL = /bin/sh
 # killmaster     -- build and install this prog
 # l2gpcat        -- build and install this prog
 # l2gpdiff       -- build and install this prog
+# l2q            -- build and install this prog
 # machineok      -- build and install this prog
 # MLS_h5ls       -- build and install this prog
 # utctotai       -- build and install this lib
@@ -723,6 +724,11 @@ l2gpcat: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpcat.f90 l1--itm
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
 	-C $(MLSCFILE) $(MLSBIN)/$@.f90
 
+l2q: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2q.f90 l2
+	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
+   -c $(MLSCONFG) -p $@ -M $(MAKE) -m l2 \
+	-C $(MLSCFILE) $(MLSBIN)/$@.f90
+
 l2gpdiff: $(CONFDIR)/$(MLSCFILE) $(MLSBIN)/l2gpdiff.f90 l1--itm
 	$(MLSBIN)/build_f90_in_misc.sh -d $(INSTALLDIR) -t ./tests \
    -c $(MLSCONFG) -p $@ -M $(MAKE) -m lib \
@@ -1060,7 +1066,7 @@ update:
   help--pvm help--reecho help--scripts help--toolkit \
   install install-l1 install-l2 install-l3 install-l3d install-l3m \
   internalcleanup internaldepends internalmftests internalsaymake \
-  internaladd_copy internalreset_copy show_copy internalupdate levels\
+  internaladd_copy internalreset_copy show_copy internalupdate levels l2q \
   makefile mostlyclean $(SUBDIRS) subdirs\
   tar substar tarz substarz targ substarg substars update\
   chunktimes CondenseLeakLog end_stmts f90tex heconvert init_gen \
@@ -1068,6 +1074,9 @@ update:
 
 #---------------------------------------------------------------
 # $Log$
+# Revision 1.92  2004/09/15 18:12:18  pwagner
+# Added build commands for chunktimes
+#
 # Revision 1.91  2004/07/26 20:54:54  pwagner
 # Can build l2gpcat and diff w/o having built l1 first
 #
