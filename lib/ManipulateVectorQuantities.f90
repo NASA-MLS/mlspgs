@@ -99,63 +99,10 @@ MODULE ManipulateVectorQuantities ! Interpolate in coordinate spaces
            referenceQuantity%template%noInstances)
 
     END SUBROUTINE FindClosestInstances
-
-    ! ---------------------------------------- ValidateVectorQuantity -------
-
-    ! This function performes a series of tests on a quantity to make sure it
-    ! matches our requirements
-
-    FUNCTION ValidateVectorQuantity(quantity, coherent, stacked, regular,&
-      & verticalCoordinate, quantityType)
-
-      ! Dummy arguments
-      TYPE (VectorValue_T), INTENT(IN) :: quantity ! Test quantity
-      LOGICAL, OPTIONAL, INTENT(IN) :: coherent ! .TRUE.,.FALSE. or not present
-      LOGICAL, OPTIONAL, INTENT(IN) :: stacked  ! .TRUE.,.FALSE. or not present
-      LOGICAL, OPTIONAL, INTENT(IN) :: regular ! .TRUE.,.FALSE. or not present
-
-      INTEGER, OPTIONAL, DIMENSION(:), INTENT(IN) :: verticalCoordinate
-      INTEGER, OPTIONAL, DIMENSION(:), INTENT(IN) :: quantityType
-
-      ! Result
-      LOGICAL :: ValidateVectorQuantity
-
-      ! Executable code
-
-      if (present(coherent)) then
-        if (quantity%template%coherent .neqv. coherent) then
-          ValidateVectorQuantity=.FALSE.
-          return
-        endif
-      end if
-
-      if (present(stacked)) then
-        if (quantity%template%stacked .neqv. stacked) then
-          ValidateVectorQuantity=.FALSE.
-          return
-        end if
-      end if
-
-      if (present(regular)) then
-        if (quantity%template%regular .neqv. regular) then
-          ValidateVectorQuantity=.FALSE.
-          return
-        end if
-      end if
-
-      if (present(verticalCoordinate)) then
-        ValidateVectorQuantity=any(quantity%template%verticalCoordinate == verticalCoordinate)
-        if (.not. ValidateVectorQuantity) return
-      end if
-
-      if (present(quantityType)) then
-        ValidateVectorQuantity=any(quantity%template%quantityType == quantityType)
-        if (.not. ValidateVectorQuantity) return
-      end if
-
-    end function ValidateVectorQuantity
-
     
   END MODULE ManipulateVectorQuantities
   
-
+! $Log$
+! Revision 2.3  2001/02/27 17:18:20  livesey
+! Moved ValidateVectorQuantity into vectors module
+!
