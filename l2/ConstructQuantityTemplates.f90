@@ -667,7 +667,7 @@ contains ! ============= Public procedures ===================================
   end subroutine ConstructMinorFrameQuantity
 
   ! ------------------------------------ ForgeMinorFrames --------------
-  subroutine ForgeMinorFrames ( root, chunk, mifGeolocation )
+  subroutine ForgeMinorFrames ( root, chunk, mifGeolocation, vGrids )
     ! This routine is used when we're in the mode of creating l2pc files
     ! and we want to invent a set of minor frame quantities with no
     ! reference to the l1 files
@@ -675,18 +675,20 @@ contains ! ============= Public procedures ===================================
     use Chunks_m, only: MLSChunk_T
     use EXPR_M, only: EXPR
     use INIT_TABLES_MODULE, only: F_FGRID, F_GEODANGLE, F_MODULE, F_NOMIFS, &
-      & F_SOLARTIME, F_SOLARZENITH
-    use INIT_TABLES_MODULE, only: L_NONE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
+      & F_SOLARTIME, F_SOLARZENITH, F_GEODALT
+    use INIT_TABLES_MODULE, only: L_GEODALTITUDE, PHYQ_ANGLE, PHYQ_DIMENSIONLESS, &
       & PHYQ_TIME
     use MLSCommon, only: RK => R8
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use QuantityTemplates, only: QuantityTemplate_T, SetupNewQuantityTemplate
     use TREE, only: DECORATION, NSONS, SUBTREE
+    use VgridsDatabase, only: VGRID_T
 
     ! Dummy arguments
     integer, intent(in) :: ROOT         ! Tree vertex
     type (MLSChunk_T), intent(in) :: CHUNK ! This chunk
     type (QuantityTemplate_T), dimension(:), intent(inout) :: MIFGEOLOCATION
+    type (VGrid_T), dimension(:), pointer :: VGRIDS
 
     ! Local variables
     integer :: GEODANGLENODE            ! Tree vertex
@@ -706,11 +708,14 @@ contains ! ============= Public procedures ===================================
     real(rk), dimension(:,:), pointer :: VALUES ! An array to fill
     integer, dimension(2) :: EXPR_UNITS ! From tree
     real(rk), dimension(2) :: EXPR_VALUE ! From tree
+    type(VGrid_T), pointer :: GEODALT
 
     ! Executable code
+    nullify ( geodAlt )
     solarTimeNode = 0
     solarZenithNode = 0
     geodAngleNode = 0
+
     do i = 2, nsons( root )
       son = subtree(i,root)
       key = subtree(1,son)
@@ -720,6 +725,8 @@ contains ! ============= Public procedures ===================================
         instrumentModule = decoration(decoration(subtree(2,son)))
       case ( f_geodAngle )
         geodAngleNode = son
+      case ( f_geodAlt )
+        geodAlt => vGrids(decoration(decoration(subtree(2,son))))
       case ( f_solarTime )
         solarTimeNode = son
       case ( f_solarZenith )
@@ -763,7 +770,7 @@ contains ! ============= Public procedures ===================================
     mifGeolocation(instrumentModule)%instrumentModule = instrumentModule
     mifGeolocation(instrumentModule)%noInstancesLowerOverlap = 0
     mifGeolocation(instrumentModule)%noInstancesUpperOverlap = 0
-    mifGeolocation(instrumentModule)%verticalCoordinate = l_none
+    mifGeolocation(instrumentModule)%verticalCoordinate = l_geodAltitude
     mifGeolocation(instrumentModule)%time = 0.0
     mifGeolocation(instrumentModule)%phi = 0.0
     mifGeolocation(instrumentModule)%geodLat = 0.0
@@ -772,6 +779,13 @@ contains ! ============= Public procedures ===================================
     mifGeolocation(instrumentModule)%lon = 0.0
     mifGeolocation(instrumentModule)%losAngle = 0.0
     mifGeolocation(instrumentModule)%surfs = 0.0
+
+    ! Check the geodAlt information if supplied
+    if ( associated ( geodAlt ) ) then 
+      if ( noMIFs /= geodAlt%noSurfs ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Incorrect number of minor frames for geodAlt' )
+      mifGeolocation(instrumentModule)%surfs = spread ( geodAlt%surfs(:,1), 2, noMAFs )
+    end if
 
     ! Loop over the parameters we might have
     do param = 1, 3
@@ -1249,6 +1263,9 @@ contains ! ============= Public procedures ===================================
 end module ConstructQuantityTemplates
 !
 ! $Log$
+! Revision 2.117  2004/10/13 02:24:33  livesey
+! Added ability to set altitude in forge
+!
 ! Revision 2.116  2004/09/27 20:11:05  livesey
 ! Added L1BMAFBaseline
 !
