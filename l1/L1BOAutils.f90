@@ -63,42 +63,29 @@ CONTAINS
   END SUBROUTINE OutputL1BOA
 
 !=============================================================================
-  SUBROUTINE WriteHdrAnnots (FileName, File_id, HDFversion)
+  SUBROUTINE WriteHdrAnnots (FileName, HDFversion)
 !=============================================================================
 
+    USE Intrinsic, ONLY: l_hdf
     USE OpenInitBOA, ONLY: antextPCF, antextCF
     USE PCFHdr, ONLY: WritePCF2Hdr
-    USE MLSFiles, ONLY: HDFVERSION_4
-    USE MLS_DataProducts, ONLY: DataProducts_T, Deallocate_DataProducts
-    USE MLSAuxData, ONLY: Build_MLSAuxData, MaxCharFieldLen
 
     CHARACTER(LEN=*), INTENT(IN) :: Filename
-    INTEGER, INTENT(IN) :: File_id, HDFversion
-    CHARACTER(len=MaxCharFieldLen) :: cbuf
+    INTEGER, INTENT(IN) :: HDFversion
 
-    TYPE (DataProducts_T) :: dataset
-
-    IF (HDFversion == HDFVERSION_4) THEN
-       CALL WritePCF2Hdr (FileName, anTextPCF)
-       CALL WritePCF2Hdr (FileName, anTextCF)
-    ELSE
-       CALL Deallocate_DataProducts (dataset)
-       dataset%name      = 'TextPCF'
-       dataset%data_type = 'character'
-       cbuf = TRANSFER (anTextPCF, cbuf)
-       CALL Build_MLSAuxData (File_id, dataset, cbuf, &
-            char_length=SIZE(anTextPCF))
-       dataset%name      = 'TextCF'
-       cbuf = TRANSFER (anTextCF, cbuf)
-       CALL Build_MLSAuxData (File_id, dataset, cbuf, &
-            char_length=SIZE(anTextCF))
-    ENDIF
+    CALL WritePCF2Hdr (FileName, anTextPCF, hdfVersion=HDFversion, &
+         & fileType=l_hdf)
+    CALL WritePCF2Hdr (FileName, anTextCF, hdfVersion=HDFversion, &
+         & fileType=l_hdf, name='/LCF')
 
   END SUBROUTINE WriteHdrAnnots
 
 END MODULE L1BOAutils
 
 ! $Log$
+! Revision 2.2  2004/01/09 20:02:57  perun
+! Update BOA to HDF 5
+!
 ! Revision 2.1  2003/10/24 19:38:36  perun
 ! Version 1.3 commit
 !
