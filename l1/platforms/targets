@@ -1,10 +1,13 @@
 #mlsl1: MLSL1.o
+mlsl1boa: MLSL1BOA
+	cp -p MLSL1BOA $@
 mlsl1log: MLSL1log
 	cp -p MLSL1log $@
 mlsl1g: MLSL1G
 	cp -p MLSL1G $@
 mlsl1t: MLSL1T
 	cp -p MLSL1T $@
+MLSL1BOA: MLSL1BOA.o
 MLSL1log: MLSL1log.o
 MLSL1G: MLSL1G.o
 MLSL1T: MLSL1T.o
@@ -170,7 +173,7 @@ endif
 
 fftw_linker_line = $(shell ${MLSBIN}/which_fftw.sh ${FFTW_ROOT} ${FFTW_PREC})
 # ========================================================================
-MLSL1log MLSL1G MLSL1T: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CONFDIR)/$(MLSCFILE) \
+MLSL1log MLSL1G MLSL1T MLSL1BOA: $(ALLOBJS) $(libdir)/libmls.a $(PVM_OBJS) $(CONFDIR)/$(MLSCFILE) \
      $(MODULES)
 		@if [ "$(MODULES)" != "" -a "$(MARK_ALL_AS_UPTODATE)" = "yes" ]; then \
 		 $(UTILDIR)/mark_as_uptodate.sh -M $(MAKE) -fyes ; \
@@ -226,6 +229,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.28  2003/02/28 17:44:22  pwagner
+# Links utctotai library
+#
 # Revision 1.27  2003/02/03 22:01:26  pwagner
 # -a is a linux-only option to cp; replaced with -p
 #
