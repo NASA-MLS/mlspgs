@@ -84,7 +84,7 @@ contains ! ====     Public Procedures     ==============================
         if ( nsons(root) > 1 ) &
           call expr ( subtree(2,root), units2, value2, type )
         select case ( me )
-        case ( n_colon )
+        case ( n_colon, n_colon_less, n_less_colon, n_less_colon_less )
           units(2) = units2(1); value(2) = value2(1)
           if ( present(type) ) then
             if ( type == num_value ) type = range
@@ -114,6 +114,9 @@ contains ! ====     Public Procedures     ==============================
 end module EXPR_M
 
 ! $Log$
+! Revision 2.3  2001/11/27 00:54:37  vsnyder
+! Implement (partially) open ranges
+!
 ! Revision 2.2  2001/04/09 20:59:57  vsnyder
 ! Subtract negative scale factors instead of multiplying
 !
