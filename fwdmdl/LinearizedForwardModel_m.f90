@@ -464,22 +464,22 @@ contains ! =====     Public Procedures     =============================
 
       ! Now compute yP
 
-      print*,'Delta X:'
-      call dump ( (/deltaX/) )
+      if ( toggle(emit) .and. levels(emit) > 2 ) then
+        call dump ( (/deltaX/) )
 
-      print*,'l2pc%col%inst'
-      call dump(l2pc%col%inst)
-      print*,'l2pc%col%quant'
-      call dump(l2pc%col%quant)
+        call dump ( l2pc%col%inst, 'l2pc%col%inst' )
+        call dump ( l2pc%col%quant, 'l2pc%col%quant' )
 
-      print*,'l2pc%row%inst'
-      call dump(l2pc%row%inst)
-      print*,'l2pc%row%quant'
-      call dump(l2pc%row%quant)
+        call dump ( l2pc%row%inst, 'l2pc%row%inst' )
+        call dump ( l2pc%row%quant, 'l2pc%row%quant' )
+      end if
 
       call cloneVector( yp, l2pc%row%vec, vectorNameText='_yP' )
       call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP, update = .false. )
-      call dump ( (/yp, l2pc%row%vec/) )
+
+      if ( toggle(emit) .and. levels(emit) > 2 ) then
+        call dump ( (/yp, l2pc%row%vec/) )
+      end if
       yP = yP + l2pc%row%vec
 
       ! Now we interpolate yP to ptan
@@ -595,6 +595,10 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.13  2001/05/02 20:26:17  vsnyder
+! Give names to cloned vectors.  Use toggle(emit) and levels(emit) to
+! control debugging output.
+!
 ! Revision 1.12  2001/05/02 20:22:13  livesey
 ! Removed some unused variables.
 !
