@@ -35,7 +35,8 @@ module Init_Spectroscopy_m
   integer, parameter :: F_gamma      = f_emlsSignalsPol + 1
   integer, parameter :: F_lines      = f_gamma + 1
   integer, parameter :: F_mass       = f_lines + 1
-  integer, parameter :: F_molecule   = f_mass + 1
+  integer, parameter :: F_mls1Signals  = f_mass + 1
+  integer, parameter :: F_molecule   = f_mls1Signals + 1
   integer, parameter :: F_n          = f_molecule + 1
   integer, parameter :: F_n1         = f_n + 1
   integer, parameter :: F_n2         = f_n1 + 1
@@ -92,6 +93,7 @@ contains
     field_indices(f_gamma)      = add_ident ( 'gamma' )
     field_indices(f_lines)      = add_ident ( 'lines' )
     field_indices(f_mass)       = add_ident ( 'mass' )
+    field_indices(f_mass)       = add_ident ( 'mls1Signals' )
     field_indices(f_molecule)   = add_ident ( 'molecule' )
     field_indices(f_n1)         = add_ident ( 'n1' )
     field_indices(f_n2)         = add_ident ( 'n2' )
@@ -183,6 +185,9 @@ contains
 end module Init_Spectroscopy_m
 
 ! $Log$
+! Revision 2.9  2003/05/16 23:51:05  livesey
+! Added mass.
+!
 ! Revision 2.8  2003/05/16 02:44:46  vsnyder
 ! Removed USE's for unreferenced symbols
 !

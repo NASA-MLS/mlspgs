@@ -94,9 +94,9 @@ contains ! =====  Public Procedures  ===================================
     ! Now the Fields:
     use Init_Spectroscopy_M, only: F_Continuum, F_Delta, F_El, F_Gamma, F_Lines, &
       & F_Mass, F_Molecule, F_N, F_N1, F_N2, F_Ns, F_Ps, F_Qlog, F_QN, F_Str, F_V0, F_W, &
-      & F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_UMLSSIGNALS
+      & F_EMLSSIGNALS, F_EMLSSIGNALSPOL, F_MLS1SIGNALS, F_UMLSSIGNALS
     use Intrinsic, only: Phyq_Dimless => Phyq_Dimensionless, Phyq_Frequency, &
-      & S_Time, L_EMLS, L_UMLS
+      & S_Time, L_EMLS, L_UMLS, L_MLS1
     use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
       & MLSMSG_DeAllocate, MLSMSG_Error
     use MoreTree, only: Get_Field_Id, Get_Spec_Id
@@ -230,6 +230,8 @@ contains ! =====  Public Procedures  ===================================
             if ( instrument == l_emls ) signalsNodePol = son
           case ( f_gamma )
             call expr_check ( subtree(2,son), lines(numLines)%gamma, phyq_dimless )
+          case ( f_mls1Signals )
+            if ( instrument == l_mls1 ) signalsNode = son
           case ( f_n )
             call expr_check ( subtree(2,son), lines(numLines)%n, phyq_dimless )
           case ( f_n1 )
@@ -678,6 +680,9 @@ contains ! =====  Public Procedures  ===================================
 end module SpectroscopyCatalog_m
 
 ! $Log$
+! Revision 2.19  2003/07/15 18:17:31  livesey
+! Added a 2D dump
+!
 ! Revision 2.18  2003/05/21 22:14:53  vsnyder
 ! Add 'new' fields to the dump routines
 !
