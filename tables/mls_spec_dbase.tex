@@ -1,0 +1,95 @@
+\documentclass{article}
+\usepackage{longtable}
+\usepackage{dcolumn}
+%Landscape format
+\setlength{\headsep}{0pt}
+\setlength{\headheight}{30pt}
+\setlength{\evensidemargin}{-36pt}
+\setlength{\oddsidemargin}{-36pt}
+\setlength{\topmargin}{-36pt}
+\setlength{\textwidth}{760pt}
+\setlength{\textheight}{500pt}
+\setlength{\parindent}{22pt}
+\setlength{\parskip}{0.5ex}
+\setlength{\footskip}{0pt}
+\setlength{\marginparsep}{10pt}
+\setlength{\marginparwidth}{60pt}
+\newcolumntype{d}[1]{D{.}{.}{#1}}
+\begin{document}
+{\footnotesize
+%\setlongtables
+\begin{longtable}[c]{cd{6}d{4}*{3}{d{5}}cd{2}*{4}{c}}
+\caption{Spectroscopy data base for MLS signals.} \\
+\hline
+species & \multicolumn{1}{c}{isotopic} &
+\multicolumn{1}{c}{mass} & \multicolumn{1}{c}{Q at 300K} &
+\multicolumn{1}{c}{Q at 225K} & \multicolumn{1}{c}{Q at 150K} &
+cont 1 & \multicolumn{1}{c}{cont 2} & cont 3 & cont 4 & cont 5 & cont 6 \\
+ &\multicolumn{1}{c}{abundance} & \multicolumn{1}{c}{AMU} & & & &
+km$^{-1}$hPa$^{-1}$MHz$^{-2}$ & & MHz$^{-2}$ &
+km$^{-1}$hPa$^{-1}$MHz$^{-4}$ & MHz$^{-2}$ & MHz \\
+\endfirsthead
+\hline
+species & \multicolumn{1}{c}{abundance} &
+\multicolumn{1}{c}{mass} & \multicolumn{1}{c}{Q at 300K} &
+\multicolumn{1}{c}{Q at 225K} & \multicolumn{1}{c}{Q at 150K} &
+cont 1 & \multicolumn{1}{c}{cont 2} & cont 3 & cont 4 & cont 5 & cont 6 \\
+ & & \multicolumn{1}{c}{AMU} & & & &
+km$^{-1}$hPa$^{-1}$MHz$^{-2}$ & & MHz$^{-2}$ &
+km$^{-1}$hPa$^{-1}$MHz$^{-4}$ & MHz$^{-2}$ & MHz \\
+\endhead
+\hline
+\multicolumn{12}{r}{\textit{Continued on next page}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+\hline
+\input{/user1/bill/mlspgs/tables/mol_data_table}
+\end{longtable}}
+\clearpage
+{\footnotesize
+%\setlongtables
+\begin{longtable}[c]{d{4}d{4}d{5}*{2}{d{6}d{3}}*{2}{cd{2}}p{140pt}p{50pt}}
+%\caption{Species line data for MLS signals\footnotemark{a}.} \\
+\caption{Species line data for MLS signals.} \\
+\hline
+\multicolumn{1}{c}{$\nu_{a\rightarrow b}$} & \multicolumn{1}{c}{$\nu_{a}$} &
+\multicolumn{1}{c}{$\log I_{a\rightarrow b}$} & \multicolumn{1}{c}{w$_{c}$} &
+\multicolumn{1}{c}{n$_{w}$} & \multicolumn{1}{c}{ps} &
+\multicolumn{1}{c}{n$_{ps}$} & \multicolumn{1}{c}{$\delta$} &
+\multicolumn{1}{c}{n$_{\delta}$} & \multicolumn{1}{c}{$\gamma$} &
+\multicolumn{1}{c}{n$_{\gamma}$} & \multicolumn{1}{c}{EOS Bands} &
+\multicolumn{1}{c}{UARS Bands} \\
+\multicolumn{1}{c}{MHz} & \multicolumn{1}{c}{cm$^{-1}$} &
+\multicolumn{1}{c}{nm$^{2}$MHz} & \multicolumn{1}{c}{MHz hPa$^{-1}$} & &
+\multicolumn{1}{c}{MHz hPa$^{-1}$} & & \multicolumn{1}{c}{hPa$^{-1}$} & &
+\multicolumn{1}{c}{hPa$^{-1}$} & & & \\
+\hline
+\endfirsthead
+\hline
+\multicolumn{1}{c}{$\nu_{a\rightarrow b}$} & \multicolumn{1}{c}{$\nu_{a}$} &
+\multicolumn{1}{c}{$\log I_{a\rightarrow b}$} & \multicolumn{1}{c}{w$_{c}$} &
+\multicolumn{1}{c}{n$_{w}$} & \multicolumn{1}{c}{ps} &
+\multicolumn{1}{c}{n$_{ps}$} & \multicolumn{1}{c}{$\delta$} &
+\multicolumn{1}{c}{n$_{\delta}$} & \multicolumn{1}{c}{$\gamma$} &
+\multicolumn{1}{c}{n$_{\gamma}$} & \multicolumn{1}{c}{EOS Bands} &
+\multicolumn{1}{c}{UARS Bands} \\
+\multicolumn{1}{c}{MHz} & \multicolumn{1}{c}{cm$^{-1}$} &
+\multicolumn{1}{c}{nm$^{2}$MHz} & \multicolumn{1}{c}{MHz hPa$^{-1}$} & &
+\multicolumn{1}{c}{MHz hPa$^{-1}$} & & \multicolumn{1}{c}{hPa$^{-1}$} & &
+\multicolumn{1}{c}{hPa$^{-1}$} & & & \\
+\hline
+\endhead
+\hline
+\multicolumn{13}{r}{\textit{Continued on next page}} \\
+\endfoot
+\hline
+\endlastfoot
+\hline
+\input{/user1/bill/mlspgs/tables/line_data_table}
+\end{longtable}}
+%\footnotetext[a]{All spectroscopic parameters are values at 300~K.}
+\end{document}
+
+
