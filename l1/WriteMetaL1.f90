@@ -95,14 +95,6 @@ CONTAINS
        CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
     ENDIF
 
-    attrName = 'ReprocessingActual'
-    returnStatus = pgs_met_setAttr_s (groups(INVENTORY), attrName, &
-         'unknown')
-    IF (returnStatus /= PGS_S_SUCCESS) THEN
-       errmsg = METAWR_ERR // attrName
-       CALL MLSMessage (MLSMSG_Error, ModuleName, errmsg)
-    ENDIF
-
     attrName = 'LocalGranuleID'
     sval = physical_filename
     indx = INDEX (sval, "/", .TRUE.) + 1  ! Begin after last "/"
@@ -425,6 +417,9 @@ CONTAINS
 END MODULE WriteMetaL1 
 
 ! $Log$
+! Revision 2.16  2005/01/27 00:35:06  pwagner
+! ReprocessingActual field dropped from product metadata
+!
 ! Revision 2.15  2004/12/16 15:09:13  cvuu
 ! v1.5: Change value of ReprocessingActual to unknown, remove QAFlags Group and use the ones in MCF v1.5
 !
