@@ -18,13 +18,13 @@ module ForwardModelConfig
 
   ! Public procedures:
   interface Dump
-    module procedure Dump_ForwardModelConfigs
+    module procedure Dump_ForwardModelConfig, Dump_ForwardModelConfigDatabase
   end interface Dump
 
   public :: AddForwardModelConfigToDatabase, DestroyFWMConfigDatabase, Dump
   public :: NullifyForwardModelConfig
   public :: StripForwardModelConfigDatabase, PVMPackFWMConfig, PVMUnpackFWMConfig
-
+ 
   ! Public Types:
 
   ! These arguments are sorted in the order they are to make the packing
@@ -498,7 +498,7 @@ contains
   end subroutine DestroyOneForwardModelConfig
 
   ! ------------------------------------  Dump_FowardModelConfigs  -----
-  subroutine Dump_ForwardModelConfigs ( Database )
+  subroutine Dump_ForwardModelConfigDatabase ( Database )
 
     use Dump_0, only: DUMP
     use Intrinsic, only: Lit_indices
@@ -509,55 +509,73 @@ contains
     type (ForwardModelConfig_T), pointer, dimension(:) :: Database
 
     ! Local variables
-    integer :: I, J                          ! Loop counters
+    integer :: I                         ! Loop counters
 !   character (len=MaxSigLen) :: SignalName  ! A line of text
 
     ! executable code
     if ( associated(database) ) then
       do i = 1, size(database)
-        call output ( 'FowardModelConfig: ' )
-        call output ( i, advance = 'yes' )
+        call Dump_ForwardModelConfig( database(i) )
+      end do
+    end if
+  end subroutine Dump_ForwardModelConfigDatabase
+
+  ! ------------------------------------  Dump_FowardModelConfig  -----
+  subroutine Dump_ForwardModelConfig ( Config )
+
+    use Dump_0, only: DUMP
+    use Intrinsic, only: Lit_indices
+    use MLSSignals_M, only: GetSignalName, MaxSigLen
+    use Output_M, only: Output
+    use String_Table, only: Display_String
+
+    type (ForwardModelConfig_T):: Config
+
+    ! Local variables
+    integer ::  J                          ! Loop counters
+!   character (len=MaxSigLen) :: SignalName  ! A line of text
+
+    ! executable code
+   
         call output ( '  Atmos_der:' )
-        call output ( database(i)%atmos_der, advance='yes' )
+        call output ( Config%atmos_der, advance='yes' )
         call output ( '  Do_conv:' )
-        call output ( database(i)%do_conv, advance='yes' )
+        call output ( Config%do_conv, advance='yes' )
         call output ( '  Do_Baseline:' )
-        call output ( database(i)%do_Baseline, advance='yes' )
+        call output ( Config%do_Baseline, advance='yes' )
         call output ( '  Default_spectroscopy:' )
-        call output ( database(i)%Default_spectroscopy, advance='yes' )
+        call output ( Config%Default_spectroscopy, advance='yes' )
         call output ( '  Do_freq_avg:' )
-        call output ( database(i)%do_freq_avg, advance='yes' )
+        call output ( Config%do_freq_avg, advance='yes' )
         call output ( '  Do_1D:' )
-        call output ( database(i)%do_1d, advance='yes' )
+        call output ( Config%do_1d, advance='yes' )
         call output ( '  Incl_Cld:' )
-        call output ( database(i)%incl_cld, advance='yes' )
+        call output ( Config%incl_cld, advance='yes' )
         call output ( '  SkipOverlaps:' )
-        call output ( database(i)%skipOverlaps, advance='yes' )
+        call output ( Config%skipOverlaps, advance='yes' )
         call output ( '  Spect_der:' )
-        call output ( database(i)%spect_der, advance='yes' )
+        call output ( Config%spect_der, advance='yes' )
         call output ( '  Temp_der:' )
-        call output ( database(i)%temp_der, advance='yes' )
+        call output ( Config%temp_der, advance='yes' )
         call output ( '  Molecules: ', advance='yes' )
-        do j = 1, size(database(i)%molecules)
+        do j = 1, size(Config%molecules)
           call output ( '    ' )
-          call display_string(lit_indices(database(i)%molecules(j)))
-          if (database(i)%moleculeDerivatives(j)) then
+          call display_string(lit_indices(Config%molecules(j)))
+          if (Config%moleculeDerivatives(j)) then
             call output (' compute derivatives', advance='yes')
           else
             call output (' no derivatives', advance='yes')
           end if
         end do
         call output ( '  Signals:', advance='yes')
-        do j = 1, size(database(i)%signals)
+        do j = 1, size(Config%signals)
           call output ( '    ' )
-          !call GetSignalName( signal=database(i)%signals(j), signalName)
+          !call GetSignalName( signal=Config%signals(j), signalName)
           !??? Sort this out later!
           ! call output ( signalName//' channelIncluded:', advance='yes')
-          call dump ( database(i)%signals(j)%channels )
+          call dump ( Config%signals(j)%channels )
         end do
-      end do
-    end if
-  end subroutine Dump_ForwardModelConfigs
+   end subroutine Dump_ForwardModelConfig
 
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
@@ -566,6 +584,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.40  2003/07/15 22:09:59  livesey
+! Added forceSidebandFraction and linearSideband
+!
 ! Revision 2.39  2003/07/15 18:16:26  livesey
 ! Added name to configuration
 !
