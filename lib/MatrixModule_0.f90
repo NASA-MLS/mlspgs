@@ -17,13 +17,13 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   implicit NONE
   private
   public :: Add_Matrix_Blocks, Assignment(=), CholeskyFactor, &
-    & CholeskyFactor_0, CloneBlock, ColumnScale, ColumnScale_0, CopyBlock, &
-    & CreateBlock, CreateBlock_0, Densify, DestroyBlock, Dump, M_Absent, &
-    & M_Banded, M_Column_Sparse, M_Full, MatrixElement_T, &
-    & Multiply_Matrix_Blocks, MultiplyMatrixVector, MultiplyMatrixVectorNoT, &
-    & MultiplyMatrixVector_0, operator(+), operator(.TX.), RowScale, &
-    & RowScale_0, SolveCholesky, SolveCholeskyM_0, SolveCholeskyV_0, &
-    & Sparsify, UpdateDiagonal, UpdateDiagonal_0
+    & CholeskyFactor_0, ClearRows, ClearRows_0, CloneBlock, ColumnScale, &
+    & ColumnScale_0, CopyBlock, CreateBlock, CreateBlock_0, Densify, &
+    & DestroyBlock, Dump, M_Absent, M_Banded, M_Column_Sparse, M_Full, &
+    & MatrixElement_T, MultiplyMatrixBlocks, MultiplyMatrixVector, &
+    & MultiplyMatrixVectorNoT, MultiplyMatrixVector_0, operator(+), &
+    & operator(.TX.), RowScale, RowScale_0, SolveCholesky, SolveCholeskyM_0, &
+    & SolveCholeskyV_0, Sparsify, UpdateDiagonal, UpdateDiagonal_0
 
 ! =====     Defined Operators and Generic Identifiers     ==============
 
@@ -33,6 +33,10 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
 
   interface CholeskyFactor
     module procedure CholeskyFactor_0
+  end interface
+
+  interface ClearRows
+    module procedure ClearRows_0
   end interface
 
   interface ColumnScale
@@ -56,7 +60,7 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end interface
 
   interface operator ( .TX. ) ! A^T * B
-    module procedure Multiply_Matrix_Blocks, NewMultiplyMatrixVector_0
+    module procedure NewMultiplyMatrixBlocks, NewMultiplyMatrixVector_0
   end interface
 
   interface RowScale
@@ -110,6 +114,8 @@ module MatrixModule_0          ! Low-level Matrices in the MLS PGS suite
   end type MatrixElement_T
 
   ! - - -  Private data     - - - - - - - - - - - - - - - - - - - - - -
+  integer, parameter, private :: B_sizer = 0
+  integer, parameter, private :: B = bit_size(b_sizer) ! can't use "bit_size(b)"
   real, parameter, private :: COL_SPARSITY = 0.5  ! If more than this
     ! fraction of the elements between the first and last nonzero in a
     ! column are nonzero, use M_Banded, otherwise use M_Column_Sparse.
@@ -162,7 +168,7 @@ contains ! =====     Public Procedures     =============================
     end if
     ! The structure of cases-within-cases below depends on the order of
     ! the M_... parameters, because order of the KIND field values is
-    ! used determine whether to commute the operands.  The M_...
+    ! used to determine whether to commute the operands.  The M_...
     ! parameters are declared in alphabetical order, and their values
     ! are in the same order as their declarations.  The kind of the XB
     ! operand is less than or equal to the kind of the YB operand.
@@ -417,6 +423,43 @@ contains ! =====     Public Procedures     =============================
     end subroutine DenseCholesky
   end subroutine CholeskyFactor_0
 
+  ! ------------------------------------------------  ClearRows_0  -----
+  subroutine ClearRows_0 ( X, MASK )
+  ! Clear the rows of X for which MASK has nonzero bits.
+    type(MatrixElement_T), intent(inout) :: X
+    integer, dimension(0:), intent(in) :: MASK
+    integer :: I, J                ! Subscripts and row indices
+    integer :: NB, NW              ! Indices of bit and word in MASK
+    select case ( x%kind )
+    case ( M_Absent )
+    case ( M_Banded )              ! ??? Adjust the sparsity representation ???
+      do j = 1, x%ncols
+        do i = x%r1(j), x%r1(j) + x%r2(j) - x%r2(j-1) - 1 ! row numbers
+          if ( btest( mask(i/b), mod(i,b) ) ) &
+            & x%values(x%r2(j-1) + i - x%r1(j) + 1, 1) = 0.0_r8
+        end do ! i
+      end do ! j = 1, x%ncols
+    case ( M_Column_Sparse )       ! ??? Adjust the sparsity representation ???
+      do j = 1, x%ncols
+        do i = x%r1(j-1)+1, x%r1(j)
+          if ( btest( mask(x%r2(i)/b), mod(x%r2(i),b) ) ) &
+            & x%values(j,1) = 0.0_r8
+        end do ! i
+      end do ! j = 1, x%ncols
+    case ( M_Full )
+      i = 0
+      do nw = lbound(mask,1), ubound(mask,1)
+        i = i + 1
+        if ( i > x%nrows ) return
+        do nb = 0, b-1
+          if ( btest( mask(nw), nb ) ) then
+              x%values(i,:) = 0.0_r8
+          end if
+        end do ! nb = 0, b-1
+      end do ! nw = lbound(mask,1), ubound(mask,1)
+    end select
+  end subroutine ClearRows_0
+
   ! -------------------------------------------------  CloneBlock  -----
   subroutine CloneBlock ( Z, X ) ! Z = X, except the values
   ! Duplicate a matrix block, including copying all of its structural
@@ -579,30 +622,44 @@ contains ! =====     Public Procedures     =============================
     b%kind = M_Absent
   end subroutine DestroyBlock
 
-  ! -------------------------------------  Multiply_Matrix_Blocks  -----
-  function Multiply_Matrix_Blocks ( XB, YB ) result ( ZB ) ! ZB = XB^T * YB
-  ! Compute the matrix product of XB^T and YB.
+  ! ---------------------------------------  MultiplyMatrixBlocks  -----
+  subroutine MultiplyMatrixBlocks ( XB, YB, ZB, UPDATE, XMASK, YMASK )
+  ! ZB = XB^T YB if UPDATE is absent or false;
+  ! ZB = ZB + XB^T YB if UPDATE is present and true.
+  ! If XMASK (resp. YMASK) is present, ignore columns of XB (resp. YB)
+  ! that correspond to nonzero bits of XMASK (resp. YMASK).
     type(MatrixElement_T), intent(in) :: XB, YB
-    type(MatrixElement_T) :: ZB
+    type(MatrixElement_T), intent(inout) :: ZB
+    logical, intent(in), optional :: UPDATE
+    integer, intent(in), optional, dimension(0:) :: XMASK, YMASK
 
   ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
-  ! It is important to invoke DestroyBlock using the result of this
-  ! function after it is no longer needed. Otherwise, a memory leak will
-  ! result.  Also see AssignBlock.
+  ! If UPDATE is absent or false, it is important to invoke DestroyBlock
+  ! using the result of this function after it is no longer needed.
+  ! Otherwise, a memory leak will result.  Also see AssignBlock.
   ! !!!!! ===== END NOTE ===== !!!!! 
 
     integer :: I, J, K, L, M, N, P, R
+    logical :: MY_UPD
     real(r8), pointer, dimension(:,:) :: Z   ! Temp for sparse * sparse
 
+    my_upd = .false.
+    if ( present(update) ) my_upd = update
     if ( xb%kind == M_Absent .or. yb%kind == M_Absent ) then
-      call createBlock ( zb, xb%nCols, yb%nCols, M_Absent )
+      if ( my_upd) call createBlock ( zb, xb%nCols, yb%nCols, M_Absent )
       return
     end if
     if ( xb%nrows /= yb%nrows ) &
-      call MLSMessage ( MLSMSG_Error, ModuleName, &
-        & "Matrix sizes incompatible in Multiply_Matrix_Blocks" )
-    zb%nrows = xb%ncols
-    zb%ncols = yb%ncols
+      & call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & "XB and YB Matrix sizes incompatible in Multiply_Matrix_Blocks" )
+    if ( my_upd ) then
+      zb%nrows = xb%ncols
+      zb%ncols = yb%ncols
+    else
+      if ( xb%ncols /= zb%nrows .or. yb%ncols /= zb%ncols ) &
+        & call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "ZB Matrix size incompatible in Multiply_Matrix_Blocks" )
+    end if
     select case ( xb%kind )
     case ( M_Banded )
       select case ( yb%kind )
@@ -610,20 +667,33 @@ contains ! =====     Public Procedures     =============================
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
         call allocate_test ( z, zb%nrows, zb%ncols, &
-          & "Z for banded * banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+        if ( update ) then
+          call densify ( z, zb )
+        else
+          z = 0.0_r8
+        end if
         do j = 1, zb%ncols    ! Columns of Z = columns of YB
+          if ( present(ymask) ) then
+            if ( btest(ymask(j/b),mod(j,b)) ) cycle
+          end if
           p = yb%r2(j-1)+1
           k = yb%r1(j)        ! k,l = row indices of YB
           l = k+yb%r2(j)-p
           p = p-k
           do i = 1, zb%nrows  ! Rows of Z = columns of XB
             ! Inner product of column I of XB with column J of YB
+            if ( present(xmask) ) then
+              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+            end if
             m = xb%r1(i)
             r = xb%r2(i-1)+1-m
             m = max(k,m)      ! m,n = row indices of intersection of XB and YB
             n = min(l,xb%r2(i)-r)
-!           z(i,j) = dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
-            z(i,j) = dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
+!           z(i,j) = z(i,j) + &
+!                    & dot_product ( xb%values(r+m:r+n,1), yb%values(p+m:p+n,1) )
+            z(i,j) = z(i,j) + &
+                     & dot( n-m+1, xb%values(r+m,1), 1, yb%values(p+m,1), 1 )
           end do ! i
         end do ! j
         call sparsify ( z, zb )
@@ -633,14 +703,24 @@ contains ! =====     Public Procedures     =============================
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
-          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for banded X sparse in Multiply_Matrix_Blocks", ModuleName )
+        if ( update ) then
+          call densify ( z, zb )
+        else
+          z = 0.0_r8
+        end if
         do j = 1, yb%ncols    ! Columns of Z
+          if ( present(ymask) ) then
+            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+          end if
           do i = 1, xb%ncols  ! Rows of Z
+            if ( present(xmask) ) then
+              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+            end if
             k = xb%r1(i)      ! Row subscript of first nonzero in XB's column I
             l = xb%r2(i-1)+1  ! Position in XB%VALUES of it
             n = yb%r1(j-1)+1  ! Position in YB%R2 of row subscript in YB
             m = yb%r2(n)      ! Row subscript of nonzero in YB's column J
-            z(i,j) = 0.0_r8
             do while ( l <= xb%r2(i) .and. n <= yb%r1(j) )
               if ( k < m ) then
                 l = l + 1
@@ -664,16 +744,25 @@ contains ! =====     Public Procedures     =============================
         call deallocate_test ( z, &
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Full )         ! XB banded, YB full
-        call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
+        if ( .not. my_upd ) then
+          call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
+          zb%values = 0.0_r8
+        end if
         do i = 1, xb%ncols    ! Rows of ZB
+          if ( present(xmask) ) then
+            if ( btest(xmask(i/b),mod(i,b)) ) cycle
+          end if
           m = xb%r1(i)        ! Index of first row of XB with nonzero value
           k = xb%r2(i-1) + 1
           l = xb%r2(i)
           do j = 1, yb%ncols  ! Columns of ZB
+            if ( present(ymask) ) then
+              if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+            end if
             ! Inner product of column I of XB with column J of YB
-!           zb%values(i,j) = dot_product( &
+!           zb%values(i,j) = zb%values(i,j) + dot_product( &
 !             & xb%values(k:l,1), yb%values(m:m+l-k,j) )
-            zb%values(i,j) = dot( l-k+1, &
+            zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
               & xb%values(k,1), 1, yb%values(m,j), 1 )
           end do ! j
         end do ! i
@@ -684,14 +773,24 @@ contains ! =====     Public Procedures     =============================
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
-          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for sparse X banded in Multiply_Matrix_Blocks", ModuleName )
+        if ( update ) then
+          call densify ( z, zb )
+        else
+          z = 0.0_r8
+        end if
         do j = 1, yb%ncols    ! Columns of Z
+          if ( present(ymask) ) then
+            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+          end if
           do i = 1, xb%ncols  ! Rows of Z
+            if ( present(xmask) ) then
+              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+            end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
             m = yb%r1(j)      ! Row subscript of first nonzero in YB's column J
             n = yb%r2(j-1)+1  ! Position in YB%VALUES of it
-            z(i,j) = 0.0_r8
             do while ( l <= xb%r2(i) .and. n <= yb%r1(j) )
               if ( k < m ) then
                 l = l + 1
@@ -718,9 +817,20 @@ contains ! =====     Public Procedures     =============================
         ! ??? Make a full matrix, then sparsify it.  There _must_ be a
         ! ??? better way
         call allocate_test ( z, xb%ncols, yb%ncols, &
-          & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
+          & "Z for sparse X sparse in Multiply_Matrix_Blocks", ModuleName )
+        if ( update ) then
+          call densify ( z, zb )
+        else
+          z = 0.0_r8
+        end if
         do j = 1, yb%ncols    ! Columns of Z
+          if ( present(ymask) ) then
+            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+          end if
           do i = 1, xb%ncols  ! Rows of Z
+            if ( present(xmask) ) then
+              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+            end if
             l = xb%r1(i-1)+1  ! Position in XB%R2 of row subscript in XB
             k = xb%r2(l)      ! Row subscript of nonzero in XB's column I
             n = yb%r1(j-1)+1  ! Position in YB%R2 of row subscript in YB
@@ -751,50 +861,89 @@ contains ! =====     Public Procedures     =============================
         call deallocate_test ( z, &
           & "Z for banded X banded in Multiply_Matrix_Blocks", ModuleName )
       case ( M_Full )         ! XB column-sparse, YB full
-        call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
+        if ( .not. my_upd ) then
+          call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
+          zb%values = 0.0_r8
+        end if
         do j = 1, yb%ncols    ! Columns of ZB
+          if ( present(ymask) ) then
+            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+          end if
           do i = 1, xb%ncols  ! Rows of ZB
+            if ( present(xmask) ) then
+              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+            end if
             k = xb%r1(i-1)+1
             l = xb%r1(i)
             ! Inner product of column I of XB with column J of YB
-!           zb%values(i,j) = dot_product( &
+!           zb%values(i,j) = zb%values(i,j) + dot_product( &
 !             & xb%values(k:l,1), yb%values(xb%r2(k:l),j) )
-            zb%values(i,j) = dot( l-k+1, &
+            zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
               & xb%values(k,1), 1, yb%values(xb%r2(k),j), 1 )
           end do ! i
         end do ! j
       end select
     case ( M_Full )
-      call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
+      if ( .not. my_upd ) then
+        call createBlock ( zb, xb%ncols, yb%ncols, M_Full )
+        zb%values = 0.0_r8
+      end if
       select case ( yb%kind )
       case ( M_Banded )       ! XB full, YB banded
         do j = 1, yb%ncols    ! Columns of ZB
+          if ( present(ymask) ) then
+            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+          end if
           m = yb%r1(j)        ! Index of first row of YB with nonzero value
           k = yb%r2(j-1)+1    ! K and L are indices of YB
           l = yb%r2(j)
           do i = 1, xb%ncols  ! Rows of ZB
+            if ( present(xmask) ) then
+              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+            end if
             ! Inner product of column I of XB with column J of YB
-!           zb%values(i,j) = dot_product( &
+!           zb%values(i,j) = zb%values(i,j) + dot_product( &
 !             & xb%values(m:m+l-k,i), yb%values(k:l,1))
-            zb%values(i,j) = dot( l-k+1, &
+            zb%values(i,j) = zb%values(i,j) + dot( l-k+1, &
               & xb%values(m,i), 1, yb%values(k,1), 1 )
           end do ! i
         end do ! j
       case ( M_Column_sparse ) ! XB full, YB column-sparse
         do j = 1, yb%ncols    ! Columns of ZB
+          if ( present(ymask) ) then
+            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+          end if
           k = yb%r1(j-1)+1    ! K and L are indices of YB
           l = yb%r1(j)
           do i = 1, xb%ncols  ! Rows of ZB
+            if ( present(xmask) ) then
+              if ( btest(xmask(i/b),mod(i,b)) ) cycle
+            end if
             ! Inner product of column I of XB with column J of YB
-            zb%values(i,j) = dot_product( &
+            zb%values(i,j) = zb%values(i,j) + dot_product( &
               & xb%values(yb%r2(k:l),i), yb%values(k:l,1) )
           end do ! i
         end do ! j
       case ( M_Full )         ! XB full, YB full
-        zb%values = matmul(transpose(xb%values),yb%values)
+        if ( present(xmask) .or. present(ymask) ) then
+          do j = 1, yb%ncols    ! Columns of ZB
+          if ( present(ymask) ) then
+            if ( btest(ymask(j/b+1),mod(j,b)) ) cycle
+          end if
+            do i = 1, xb%ncols  ! Rows of ZB
+              if ( present(xmask) ) then
+                if ( btest(xmask(i/b),mod(i,b)) ) cycle
+              end if
+              zb%values(i,j) = zb%values(i,j) + dot( xb%nrows, xb%values(1,i), &
+                               & 1, yb%values(1,j), 1 )
+            end do ! i = 1, xb%ncols
+          end do ! j = 1, yb%ncols
+        else
+          zb%values = zb%values + matmul(transpose(xb%values),yb%values)
+        end if
       end select
     end select
-  end function Multiply_Matrix_Blocks
+  end subroutine MultiplyMatrixBlocks
 
   ! -------------------------------------  MultiplyMatrixVector_0  -----
   subroutine MultiplyMatrixVector_0 ( B, V, P, UPDATE )
@@ -908,6 +1057,20 @@ contains ! =====     Public Procedures     =============================
       end if
     end select
   end subroutine MultiplyMatrixVectorNoT
+
+  ! -------------------------------------  NewMultiplyMatrixBlocks  ----
+  function NewMultiplyMatrixBlocks ( X, Y ) result ( Z ) ! Z = X^T Y
+    type(MatrixElement_T), intent(in) :: X, Y
+    type(MatrixElement_T) :: Z
+
+  ! !!!!! ===== IMPORTANT NOTE ===== !!!!!
+  ! It is important to invoke DestroyBlock using the result of this
+  ! function after it is no longer needed. Otherwise, a memory leak will
+  ! result.  Also see AssignBlock.
+  ! !!!!! ===== END NOTE ===== !!!!! 
+
+    call MultiplyMatrixBlocks ( x, y, z, .false. )
+  end function NewMultiplyMatrixBlocks
 
   ! -----------------------------------  NewMultiplyMatrixVector_0  ----
   function NewMultiplyMatrixVector_0 ( B, V ) result ( P ) ! P = B^T V
@@ -1381,6 +1544,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_0
 
 ! $Log$
+! Revision 2.8  2000/11/23 01:09:19  vsnyder
+! Add provision to ignore specified columns during matrix-matrix multiply
+!
 ! Revision 2.7  2000/11/15 00:18:26  vsnyder
 ! Added assignment(=) interface, row scale, column scale
 !
