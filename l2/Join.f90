@@ -218,7 +218,7 @@ contains ! =====     Public Procedures     =============================
     use Hdf, only: DFACC_CREATE, DFACC_RDWR
     use Init_tables_module, only: F_SOURCE, F_PRECISION, F_HDFVERSION, F_FILE, F_TYPE
     use Init_tables_module, only: L_L2GP, L_L2AUX, L_PRESSURE, L_ZETA
-    use intrinsic, only: L_NONE, L_GEODANGLE, &
+    use intrinsic, only: L_NONE, L_GEODANGLE, L_HDF, L_SWATH, &
       & L_MAF, PHYQ_DIMENSIONLESS
     use L2ParInfo, only: PARALLEL, LOGDIRECTWRITEREQUEST, FINISHEDDIRECTWRITE
     use MLSCommon, only: MLSCHUNK_T, R4, R8, RV
@@ -230,6 +230,7 @@ contains ! =====     Public Procedures     =============================
       & mlspcf_l2dgm_start, mlspcf_l2dgm_end
     use MoreTree, only: GET_FIELD_ID
     use Output_m, only: OUTPUT, BLANKS
+    use OutputAndClose, only: add_metadata
     use String_Table, only: DISPLAY_STRING, GET_STRING
     use TOGGLES, only: GEN, TOGGLE, LEVELS, SWITCHES
     use TREE, only: DECORATE, DECORATION, NODE_ID, NSONS, NULL_TREE, SOURCE_REF, &
@@ -257,6 +258,7 @@ contains ! =====     Public Procedures     =============================
     integer :: EXPECTEDTYPE             ! l2gp/l2aux
     integer :: FIELDINDEX               ! Type of field in l2cf line
     integer :: FILE                     ! File name string index
+    integer :: FILETYPE
     integer :: GSON                     ! Son of son
     integer :: HANDLE                   ! File handle from hdf/hdf-eos
     integer :: HDFNAMEINDEX             ! String index for output name
@@ -509,6 +511,7 @@ contains ! =====     Public Procedures     =============================
           ! qty%template%instanceOffset + 1
           call DirectWrite_l2GP ( handle, qty, precQty, hdfName, chunkNo, &
             & hdfVersion )   ! May optionally supply first, last profiles
+          filetype=l_swath
         case ( l_l2aux )
           ! Call the l2aux sd write routine.  This should write the 
           ! non-overlapped portion of qty (with possibly precision in precQty)
@@ -519,6 +522,7 @@ contains ! =====     Public Procedures     =============================
           ! a real pain.  I wish I never want down that road!
           call DirectWrite_L2Aux ( handle, qty, precQty, hdfName, hdfVersion, &
             & chunkNo, chunks )
+          filetype=l_hdf
         end select
       end do ! End loop over swaths/sds
 
@@ -541,6 +545,12 @@ contains ! =====     Public Procedures     =============================
       end select
       if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
         & 'DirectWriteCommand unable to close ' // trim(filename) )
+      if ( createFileFlag .and. TOOLKIT ) then
+        call add_metadata ( file_base, noSources, thisDirect%sdNames, &
+          & hdfVersion, filetype, errortype )
+        if ( errortype /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'DirectWriteCommand unable to addmetadata to ' // trim(filename) )
+      endif
       
       ! Tell the master we're done
       if ( parallel%slave ) call FinishedDirectWrite ( ticket )
@@ -1270,6 +1280,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.80  2003/07/07 23:52:13  pwagner
+! Slave that creates DirectWrite file may also add_metadata
+!
 ! Revision 2.79  2003/07/07 20:29:43  livesey
 ! Mainly cosmetic changes
 !
