@@ -104,7 +104,7 @@ contains ! ====     Public Procedures     ==============================
 
     nullify ( chunks, forwardModelConfigDatabase, griddedData, &
       & hGrids, l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
-      & qtyTemplates, vectors, vectorTemplates, vGrids )
+      & qtyTemplates, vectors, vectorTemplates, fGrids, vGrids )
 
     depth = 0
     if ( toggle(gen) ) call trace_begin ( 'WALK_TREE_TO_DO_MLS_L2', &
@@ -119,7 +119,7 @@ contains ! ====     Public Procedures     ==============================
       call cpu_time ( t1 )
       select case ( decoration(subtree(1,son)) ) ! section index
       case ( z_globalsettings )
-        call set_global_settings ( son, forwardModelConfigDatabase, vGrids, &
+        call set_global_settings ( son, forwardModelConfigDatabase, fGrids, vGrids, &
           & l2gpDatabase, l2pcf, processingRange, l1bInfo )
         call add_to_section_timing ( 'global_settings', t1)
       case ( z_mlsSignals )
@@ -169,7 +169,7 @@ subtrees:   do while ( j <= howmany )
               select case ( decoration(subtree(1,son)) ) ! section index
               case ( z_construct )
                 call MLSL2Construct ( son, l1bInfo, chunks(chunkNo), &
-                  & qtyTemplates, vectorTemplates, vGrids, hGrids, &
+                  & qtyTemplates, vectorTemplates, fGrids, vGrids, hGrids, &
                   & l2gpDatabase, mifGeolocation )
                 call add_to_section_timing ( 'construct', t1)
               case ( z_fill )
@@ -279,6 +279,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.67  2001/10/31 18:36:58  livesey
+! Added fGrids stuff
+!
 ! Revision 2.66  2001/10/26 23:16:15  pwagner
 ! Similar dump interfaces for l2gp, l2aux, Griddeddata databases
 !
