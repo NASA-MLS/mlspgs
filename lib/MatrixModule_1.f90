@@ -17,8 +17,8 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
     & MatrixElement_T, MaxAbsVal, MinDiag, Multiply, MultiplyMatrix_XY, &       
     & MultiplyMatrix_XY_T, MultiplyMatrixVectorNoT, operator(+), &              
     & operator(.TX.), ReflectMatrix, RowScale, ScaleBlock, SolveCholesky, &     
-    & Spill, TransposeMatrix, UpdateDiagonal                                    
-  use MLSCommon, only: RM, RV, R8
+    & Sparsify, Spill, TransposeMatrix, UpdateDiagonal                                    
+  use MLSCommon, only: RM, RV, R8, R4
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, &
     & MLSMSG_DeAllocate, MLSMSG_Error, MLSMSG_Warning
   use OUTPUT_M, only: BLANKS, OUTPUT
@@ -56,6 +56,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
   public :: operator(.TX.)
   public :: operator(+), ReflectMatrix, RC_Info, RowScale, RowScale_1, ScaleMatrix
   public :: SolveCholesky, SolveCholesky_1, Spill, Spill_1
+  public :: Sparsify_1, Sparsify
   public :: UpdateDiagonal, UpdateDiagonal_1, UpdateDiagonalVec_1
 
 ! =====     Defined Operators and Generic Identifiers     ==============
@@ -177,6 +178,10 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   interface SolveCholesky
     module procedure SolveCholesky_1
+  end interface
+
+  interface Sparsify
+    module procedure Sparsify_1
   end interface
 
   interface Spill
@@ -1740,6 +1745,32 @@ contains ! =====     Public Procedures     =============================
     end if
   end subroutine SolveCholesky_1
 
+  ! ----------------------------------------------------  Sparsify_1 ---
+  subroutine Sparsify_1 ( M, rowQuantities, colQuantities )
+    ! Sparsify the blocks of M (possibly only for blocks associated with
+    ! particular quantities?
+    type (Matrix_T), intent(inout) :: M
+    integer, dimension(:), intent(in), optional :: rowQuantities
+    integer, dimension(:), intent(in), optional :: colQuantities
+    ! Local variables
+    integer :: ROW, COL                 ! Loop counters
+    logical :: DOTHIS                   ! Flag
+    ! Executable code
+    do col = 1, m%col%nb
+      doThis = .true.
+      if ( present ( colQuantities ) ) doThis = any ( colQuantities == &
+        & m%col%vec%template%quantities ( m%col%quant(col) ) )
+      if ( doThis ) then
+        do row = 1, m%row%nb
+          doThis = .true.
+          if ( present ( rowQuantities ) ) doThis = any ( rowQuantities == &
+            & m%row%vec%template%quantities ( m%row%quant(row) ) )
+          if ( doThis ) call Sparsify ( m%block(row,col) )
+        end do
+      end if
+    end do
+  end subroutine Sparsify_1
+
   ! ----------------------------------------------------  Spill_1  -----
   subroutine Spill_1 ( A, Unit, ID, Text )
   ! Spill the matrix A to Fortran Unit, which is presumed to be open
@@ -2112,7 +2143,15 @@ contains ! =====     Public Procedures     =============================
     call output ( ' columns, ' )
     ! Convert size to bytes (is there a better way to do this to automatically
     ! deal with the case when we decide to switch to r4?)
-    n = n * 8
+    select case ( rm )
+    case ( r4 )
+      n = n * 4
+    case ( r8 )
+      n = n * 8
+    case default
+      call MLSMessage ( MLSMSG_Error, ModuleName, 'Unrecognized value for rm' )
+    end select
+      
     ! Make a 'nice' output
     if ( n < kb ) then
       call output ( n*1.0, format='(f5.1)' )
@@ -2147,6 +2186,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.86  2003/01/08 23:51:46  livesey
+! Added sparsify and handling of r4/r8 in dump_struct
+!
 ! Revision 2.85  2002/11/22 12:53:59  mjf
 ! Didn't add nullify routine(s) to get round Sun's WS6 compiler not
 ! initialising derived type function results.
