@@ -274,7 +274,6 @@ contains ! =====     Public Procedures     =============================
     if ( present(vectorNameText) ) &
       & z%name = enter_terminal ( vectorNameText, t_identifier )
     z%template = x%template
-i = size(x%quantities)
     allocate ( z%quantities(size(x%quantities)), stat=status )
     if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
       & MLSMSG_Allocate // "z%quantities" )
@@ -1123,6 +1122,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.36  2001/05/02 20:44:37  vsnyder
+! Provide for text names for vectors that didn't come from CF
+!
 ! Revision 2.35  2001/05/02 05:29:44  livesey
 ! Added index argument to GetVectorQtyByTemplateIndex
 !
