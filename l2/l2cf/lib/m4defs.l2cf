@@ -77,6 +77,10 @@ changesyntax({@!})
 ; This one returns the last three digits of a CCSDSb date.
 !define(doy,{!substr(}$1{,5,3)})
 
+; This macro calls a python script to add dates etc.
+!define(ccsdsbadd,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbadd $1 $2))})
+!define(ccsdsbtodao,{!TrimLastChar(!esyscmd(!home/mlspgs/scripts/ccsdsbtodao $1))})
+
 ; ---------------------------------------- Parameter=value macros
 
 ; This set of macros allows us to write other macros which take
