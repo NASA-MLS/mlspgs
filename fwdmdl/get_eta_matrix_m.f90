@@ -24,6 +24,7 @@ contains
 
 ! Compute the eta matrix
 
+    use Sort_m, only: SortP
 ! Inputs
 
     real(rp), intent(in) :: Basis(:) ! basis break points
@@ -36,8 +37,13 @@ contains
 
 ! Internals
 
-    integer(ip) :: J, N_coeffs
+    integer(ip) :: I, J, N_coeffs, N_Grid, P(size(grid))
     real(rp) :: Del_basis
+
+! Things below go more efficiently if Grid is sorted
+
+    n_grid = size(grid)
+    call sortp ( grid, 1, n_grid, p ) ! grid(p(i)) are now sorted
 
 ! The first coefficient is one for all values of grid below basis(1)
 ! until grid = basis(1),then it ramps down in the usual triangular sense.
@@ -51,53 +57,72 @@ contains
       ! not_zero(:,:n_coeffs) = .false.
       not_zero = .false.
 
-! The wheres could be replaced with a search routine which would speed
-! this up some more but you have to worry about sorting grid.
 ! first basis calculation
 
-      where ( grid <= basis(1) )
-        eta(:,1) = 1.0_rp
-        not_zero(:,1) = .true.
-      end where
+      do i = 1, n_grid
+        if ( grid(p(i)) > basis(1) ) exit
+        eta(p(i),1) = 1.0_rp
+        not_zero(p(i),1) = .true.
+      end do
+
+! Normal triangular function for j=2 to j=n_coeffs-1.  Both Basis and
+! Grid are sorted, so we don't need to start from i=1.
+
+      do j = 2 , n_coeffs
+        del_basis = basis(j) - basis(j-1)
+        do while ( i <= n_grid )
+          if ( grid(p(i)) > basis(j) ) exit
+          if ( basis(j-1) <= grid(p(i)) ) then
+            eta(p(i),j-1) = (basis(j) - grid(p(i))) / del_basis
+            eta(p(i),j) =   (grid(p(i)) - basis(j-1)) / del_basis
+            not_zero(p(i),j-1) = .true.
+            not_zero(p(i),j) = .true.
+          end if
+          i = i + 1
+        end do
+      end do
+
+! last basis calculation
+
+      do while ( i <= n_grid )
+        if ( basis(n_coeffs) < grid(p(i)) ) then
+          eta(p(i),n_coeffs) = 1.0_rp
+          not_zero(p(i),n_coeffs) = .true.
+        end if
+        i = i + 1
+      end do
+
+    else ! not_zero is not present
+
+! first basis calculation
+
+      do i = 1, n_grid
+        if ( grid(p(i)) > basis(1) ) exit
+        eta(p(i),1) = 1.0_rp
+      end do
 
 ! Normal triangular function for j=2 to j=n_coeffs-1
 
       do j = 2 , n_coeffs
         del_basis = basis(j) - basis(j-1)
-        where ( basis(j-1) <= grid .and. grid <= basis(j) )
-          eta(:,j-1) = (basis(j) - grid) / del_basis
-          eta(:,j) =   (grid - basis(j-1)) / del_basis
-          not_zero(:,j-1) = .true.
-          not_zero(:,j) = .true.
-        end where
+        do while ( i <= n_grid )
+          if ( grid(p(i)) > basis(j) ) exit
+          if ( basis(j-1) <= grid(p(i)) ) then
+            eta(p(i),j-1) = (basis(j) - grid(p(i))) / del_basis
+            eta(p(i),j) =   (grid(p(i)) - basis(j-1)) / del_basis
+          end if
+          i = i + 1
+        end do
       end do
 
 ! last basis calculation
 
-      where ( basis(n_coeffs) < grid )
-        eta(:,n_coeffs) = 1.0_rp
-        not_zero(:,n_coeffs) = .true.
-      end where
-
-    else
-
-! first basis calculation
-
-      where ( grid <= basis(1) ) eta(:,1) = 1.0_rp
-
-! Normal triangular function for j=2 to j=n_coeffs-1
-
-      do j = 2 , n_coeffs
-        del_basis = basis(j) - basis(j-1)
-        where ( basis(j-1) <= grid .and. grid <= basis(j) )
-          eta(:,j-1) = (basis(j) - grid)/ del_basis
-          eta(:,j) =   (grid - basis(j-1))/ del_basis
-        end where
+      do while ( i <= n_grid )
+        if ( basis(n_coeffs) < grid(p(i)) ) then
+          eta(p(i),n_coeffs) = 1.0_rp
+        end if
+        i = i + 1
       end do
-
-! last basis calculation
-
-      where ( basis(n_coeffs) < grid ) eta(:,n_coeffs) = 1.0_rp
 
     end if
 
@@ -110,6 +135,9 @@ contains
 end module Get_Eta_Matrix_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.4  2003/03/21 17:02:19  pwagner
+! Initalizating whole eta, not_zero arrays instead of sections
+!
 ! Revision 2.3  2002/10/08 17:08:04  pwagner
 ! Added idents to survive zealous Lahey optimizer
 !
