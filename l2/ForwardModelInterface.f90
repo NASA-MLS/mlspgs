@@ -14,12 +14,22 @@ module ForwardModelInterface
   use Declaration_Table, only: NUM_VALUE, RANGE
   use Dump_0, only: DUMP
   use Expr_M, only: EXPR
+  ! We're going to use lots of things from init_tables_module, so lets sort
+  ! them into some sort of order
+  ! First admin stuff
+  use Init_Tables_Module, only: FIELD_FIRST, FIELD_INDICES, FIELD_LAST, &
+    & LIT_INDICES, SPEC_INDICES
+  ! Now fields
   use Init_Tables_Module, only: F_ATMOS_DER, F_CHANNELS, F_DO_CONV, F_DO_FREQ_AVG, &
-    F_FREQUENCY, F_MOLECULES, F_MOLECULEDERIVATIVES, F_SIGNALS, &
+    F_FREQUENCY, F_MOLECULES, F_MOLECULEDERIVATIVES, F_POINTINGGRIDS, F_SIGNALS, &
     F_SPECT_DER, F_TEMP_DER, F_TYPE
-  use Init_Tables_Module, only: L_FULL, L_LINEAR, L_SCAN
-  use Init_Tables_Module, only: F_POINTINGGRIDS, F_ZVI, field_indices, &
-    & field_first, field_last, lit_indices, spec_indices
+  ! Now literals
+  use Init_Tables_Module, only: L_EARTHREFL, L_ELEVOFFSET, L_FULL, L_LINEAR,&
+    & L_LOSVEL, L_ORBITINCLINE, L_PTAN, L_RADIANCE, L_REFGPH, L_SCAN,&
+    & L_SCGEOCALT, L_SPACERADIANCE, L_TEMPERATURE
+  ! Now temporary stuff we hope not to have to use in the end
+  use Init_Tables_Module, only: F_ZVI
+  ! That's it for Init_Tables_Module
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: Matrix_Database_T, Matrix_T
   use MLSCommon, only: R8
@@ -35,7 +45,7 @@ module ForwardModelInterface
   use Trace_M, only: Trace_begin, Trace_end
   use Tree, only: Decoration, Node_ID, Nsons, Source_Ref, Sub_Rosa, Subtree
   use Tree_Types, only: N_named
-  use VectorsModule, only: Vector_T
+  use VectorsModule, only: GetVectorQuantityByType, Vector_T, VectorValue_T
 
   !??? The next USE statement is Temporary for l2load:
   use L2_TEST_STRUCTURES_M, only: FWD_MDL_CONFIG, FWD_MDL_INFO, &
@@ -45,7 +55,7 @@ module ForwardModelInterface
   private
   public :: AddForwardModelConfigToDatabase, ConstructForwardModelConfig, &
     Dump, DestroyFWMConfigDatabase, ForwardModel, ForwardModelGlobalSetup, &
-    ForwardModelConfig_T, ForwardModelSignal_T
+    ForwardModelConfig_T, ForwardModelSignalInfo_T
 
   interface DUMP
     module procedure DUMP_FORWARDMODELCONFIGS
@@ -59,10 +69,10 @@ module ForwardModelInterface
     & "$RCSfile$"
   !---------------------------------------------------------------------------
 
-  type ForwardModelSignal_T
+  type ForwardModelSignalInfo_T
     integer :: signal                   ! The signal we're considering
     logical, dimension(:), pointer :: channelIncluded ! Which channels to use
-  end type ForwardModelSignal_T
+  end type ForwardModelSignalInfo_T
 
   type ForwardModelConfig_T
     integer :: fwmType        ! l_linear, l_full or l_scan
@@ -72,7 +82,7 @@ module ForwardModelInterface
     integer, dimension(:), pointer :: molecules=>NULL() ! Which molecules to consider
     logical, dimension(:), pointer :: moleculeDerivatives=>NULL() ! Want jacobians
     real(r8) :: The_Freq      ! Frequency to use if .not. do_freq_avg
-    type (ForwardModelSignal_T), dimension(:), pointer :: signals=>NULL()
+    type (ForwardModelSignalInfo_T), dimension(:), pointer :: siginfo=>NULL()
     logical :: Spect_Der      ! Do spectroscopy derivatives
     logical :: Temp_Der       ! Do temperature derivatives
   end type ForwardModelConfig_T
@@ -136,7 +146,7 @@ contains
     ! Local variables
 
     type (Signal_T) :: thisSignal ! A signal
-    type (ForwardModelSignal_T), pointer :: thisFWMSignal ! A signal
+    type (ForwardModelSignalInfo_T), pointer :: thisFWMSignal ! A signal
     integer :: Field                    ! Field index -- f_something
     logical :: Got(field_first:field_last)   ! "Got this field already"
     integer :: I                        ! Subscript and loop inductor.
@@ -197,11 +207,11 @@ contains
         call expr ( subtree(2,son), units, value, type )
         info%the_freq = value(1)
       case ( f_channels )
-        if ( .not. associated( info%signals ) ) then
+        if ( .not. associated( info%siginfo ) ) then
           call AnnounceError(DefineSignalsFirst, key)
         else
           noChannelsSpecs=noChannelsSpecs+1
-          thisFWMSignal => info%signals(noChannelsSpecs)
+          thisFWMSignal => info%sigInfo(noChannelsSpecs)
           ! Now default to none included
           thisFWMSignal%channelIncluded = .false.
           do j = 2, nsons(son)
@@ -240,14 +250,14 @@ contains
           end do                          ! End loop over listed signals
         end if
       case ( f_signals )
-        allocate ( info%signals (nsons(son)-1), stat = status)
+        allocate ( info%sigInfo (nsons(son)-1), stat = status)
         if (status /= 0) call AnnounceError( AllocateError, key )
         do j = 1, nsons(son)-1
-          info%signals(j)%signal = &
+          info%sigInfo(j)%signal = &
             & decoration(decoration( subtree(j+1, son )))
           ! Now allocate the channels information
-          thisSignal = GetSignal( info%signals(j)%signal )
-          allocate ( info%signals(j)%channelIncluded( &
+          thisSignal = GetSignal( info%sigInfo(j)%signal )
+          allocate ( info%sigInfo(j)%channelIncluded( &
             & lbound(thisSignal%frequencies,1):ubound(thisSignal%frequencies,1)),&
             & stat=status)
           if (status /= 0) then
@@ -255,7 +265,7 @@ contains
             exit
           end if
           ! Default to include this channel
-          info%signals(j)%channelIncluded = .true.
+          info%sigInfo(j)%channelIncluded = .true.
         end do                          ! End loop over listed signals
       case ( f_spect_der )
         info%spect_der = get_boolean(son)
@@ -342,6 +352,22 @@ contains
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
+    ! Local parameters
+    character, parameter :: InvalidQuantity="Invalid vector quantity for "
+
+    ! This is the `legit stuff' we hope will stay they are all pointers to
+    ! VectorValue_T's containing vector quantities
+    type (VectorValue_T), pointer :: radiance ! Radiance quantity to be filled
+    type (VectorValue_T), pointer :: temp ! Temperature quantity
+    type (VectorValue_T), pointer :: ptan ! PTAN quantity
+    type (VectorValue_T), pointer :: elevOffset ! Elevation offset quantity
+    type (VectorValue_T), pointer :: orbIncline ! Orbital inclination (beta)
+    type (VectorValue_T), pointer :: spaceRadiance ! Space radiance
+    type (VectorValue_T), pointer :: earthRefl ! Earth reflectivity
+    type (VectorValue_T), pointer :: refGPH ! Reference GPH, (zRef and hRef)
+    type (VectorValue_T), pointer :: losVel ! Line of sight velocity
+    type (VectorValue_T), pointer :: scGeocAlt ! Geocentric spacecraft altitude
+
     Integer(i4), parameter :: ngt = (Ng+1) * N2lvl
 
     Integer(i4) :: i, j, k, kk, kz, ht_i, mnz, no_tan_hts, ch, Spectag, &
@@ -418,6 +444,60 @@ contains
 
 !zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
+    ! First we identify the vector quantities we're going to need.  The key is to
+    ! identify the signal we'll be working with first
+    ! Deal with multiple signals in later versions !??? NJL
+    if (size(forwardModelConfig%sigInfo) > 1) call MLSMessage ( &
+      & MLSMSG_Error,ModuleName, &
+      & "Can't yet have multiple signals in forward model")
+    signal = GetSignal(forwardModelConfig%sigInfo(1)%signal)
+
+    ! Now from that we identify the radiance quantity we'll be outputting
+    radiance = GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
+      & signal= forwardModelConfig%sigInfo(1)%signal )
+
+    ! Identify the appropriate state vector components, save vmrs for later
+    temp => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_temperature)
+    ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_ptan, instrumentModule=signal%instrumentModule)
+    elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_elevOffset, radiometer=signal%radiometer)
+    orbIncline => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_orbitIncline)
+    spaceRadiance => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_spaceRadiance)
+    earthRefl => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_earthRefl)
+    refGPH => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_refGPH)
+    losVel => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_losVel, instrumentModule=signal%instrumentModule)
+    scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+      & quantityType=l_scGeocAlt)
+    ! We won't seek for molecules here as we can't have an array of pointers. 
+    ! When we do want molecule i we would do something like
+    ! vmr => GetVectorQuantityBytype (fwdModelIn, fwdModelExtra, &
+    !   quantityType=l_vmr, molecule=forwardModelConfig.molecules(i))
+
+    ! Now we're going to validate the quantities we've been given, don't forget
+    ! we already know what their quantityType's are as that's how we found them
+    !, so we don't need to check that.
+    if (.not. ValidateVectorQuantity(radiance, minorFrame=.true.,&
+      & frequencyCoordinate=l_channel)) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & InvalidQuantity//'radiance')
+    if (.not. ValidateVectorQuantity(temp, stacked=.true., coherent=.true., &
+      & noChans=1)) call MLSMessage(MLSMSG_Error, ModuleName,&
+      & InvalidQuantity//'temperature')
+    if (.not. ValidateVectorQuantity(ptan, minorFrame=.true., &
+      & frequencyCoordinate=l_none)) call MLSMessage(MLSMSG_Error, ModuleName, &
+      & InvalidQuantity//'ptan')
+    if (.not. ValidateVectorQuantity(elevOffset, verticalCoordinate=l_none, &
+      & frequencyCoordinate=l_none, noInstances=1) &
+      & call MLSMessage(MLSMSG_Error, ModuleName, &
+      & InvalidQuantity//'elevOffset')
+    ! There will be more to come here.
+
 
     fmc%atmos_der = forwardModelConfig%atmos_der
     fmc%do_conv = forwardModelConfig%do_conv
@@ -443,7 +523,7 @@ contains
 !   Call ptg_frq_load(FMC, FMI, Ier)
 !   if(ier /= 0) goto 99
 
-    signal = getSignal ( forwardModelConfig%signals(1)%signal )
+    signal = getSignal ( forwardModelConfig%sigInfo(1)%signal )
     whichPointingGrid = signal%pointingGrid
     if ( whichPointingGrid <= 0 ) &
       call MLSMessage ( MLSMSG_Error, moduleName, &
@@ -985,12 +1065,12 @@ contains
 
     if (associated(database)) then
       do config = 1, size(database)
-        do signal = 1, size(database(config)%signals)
-          deallocate(database(config)%signals(signal)%channelIncluded,stat=status)
+        do signal = 1, size(database(config)%sigInfo)
+          deallocate(database(config)%sigInfo(signal)%channelIncluded,stat=status)
           if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
             & MLSMSG_Deallocate//"database%signals%channelIncluded")
         end do
-        deallocate (database(config)%signals, stat=status)
+        deallocate (database(config)%sigInfo, stat=status)
         if (status /= 0) CALL MLSMessage(MLSMSG_Error,ModuleName,&
           & MLSMSG_Deallocate//"database%signals")
         deallocate (database(config)%molecules, stat=status)
@@ -1003,7 +1083,6 @@ contains
         & MLSMSG_Deallocate//"database")
     end if
   end subroutine DestroyFWMConfigDatabase
-
 
 ! =====     Private Procedures     =====================================
   ! ------------------------------------  DUMP_FOWARDMODELCONFIGS  -----
@@ -1042,11 +1121,11 @@ contains
           end if
         end do
         call output ( '  Signals:', advance='yes')
-        do j = 1, size(database(i)%signals)
+        do j = 1, size(database(i)%sigInfo)
           call output ( '    ' )
-          call GetSignalName( database(i)%signals(j)%signal, signalName)
+          call GetSignalName( database(i)%sigInfo(j)%signal, signalName)
           call output ( signalName//' channelIncluded:', advance='yes')
-          call dump ( database(i)%signals(j)%channelIncluded )
+          call dump ( database(i)%sigInfo(j)%channelIncluded )
         end do
       end do
     end if
@@ -1086,6 +1165,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.24  2001/03/18 00:55:50  livesey
+! Interim version
+!
 ! Revision 2.23  2001/03/17 21:08:01  livesey
 ! Added forward model type stuff to ForwardModelConfig_T and parser thereof
 !
