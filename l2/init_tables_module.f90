@@ -47,6 +47,7 @@ module INIT_TABLES_MODULE
   character (len=len(idParm)), private :: Id = idParm
   character (len=*), private, parameter :: ModuleName= &
        "$RCSfile$"
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 ! Enumeration types:
@@ -876,9 +877,16 @@ contains ! =====     Public procedures     =============================
 
   end subroutine INIT_TABLES
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
+
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.248  2002/10/08 17:36:21  pwagner
+! Added idents to survive zealous Lahey optimizer
+!
 ! Revision 2.247  2002/10/03 13:44:53  mjf
 ! Renamed temperaturePrecisionQuantitiy to tempPrecisionQuantity to get
 ! names < 31 long.
