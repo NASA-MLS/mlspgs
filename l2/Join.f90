@@ -18,6 +18,7 @@ module Join                     ! Join together chunk based data.
     & L2AUXData_T, L2AUXRank, SetupNewL2AUXRecord
   use L2GPData, only: AddL2GPToDatabase, ExpandL2GPDataInPlace, &
     & L2GPData_T, SetupNewL2GPRecord
+  use L2Parallel, only: PARALLEL, SLAVEJOIN
   use LEXER_CORE, only: PRINT_SOURCE
   use MLSCommon, only: MLSChunk_T, R8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error, &
@@ -198,7 +199,7 @@ contains ! =====     Public Procedures     =============================
         else
           precisionQuantity => NULL()
         endif
-        
+
         hdfName = ''
         if ( prefixSignal ) &
           & call GetSignalName ( quantity%template%signal, hdfName, &
@@ -206,23 +207,30 @@ contains ! =====     Public Procedures     =============================
         call Get_String( hdfNameIndex, hdfName(len_trim(hdfName)+1:), strip=.true. )
         hdfNameIndex = enter_terminal ( trim(hdfName), t_string )
 
-        ! Now, depending on the properties of the source we deal with the
-        ! vector quantity appropriately.
-        if (ValidateVectorQuantity(quantity,coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.,&
-          & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
-          ! Coherent, stacked, regular quantities on pressure surfaces, or
-          ! with no vertical coordinate system go in l2gp files.
-          if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
-            & ModuleName, 'This quantity should be joined as an l2gp')
-          call JoinL2GPQuantities ( key, hdfNameIndex, quantity, precisionQuantity, &
-            & l2gpDatabase, chunkNo )
+        ! For slave tasks in a PVM system, simply ship this vector off
+        ! Otherwise, do a join.
+        if ( parallel%slave ) then
+          call SlaveJoin ( quantity, precisionQuantity, &
+            & hdfName, key )
         else
-          ! All others go in l2aux files.
-          if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
-            & ModuleName, 'This quantity should be joined as an l2aux')
-          call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
-            & l2auxDatabase, chunkNo, chunks )
-        endif
+          ! Now, depending on the properties of the source we deal with the
+          ! vector quantity appropriately.
+          if (ValidateVectorQuantity(quantity,coherent=.TRUE.,stacked=.TRUE.,regular=.TRUE.,&
+            & verticalCoordinate=(/L_Pressure,L_Zeta,L_None/))) then
+            ! Coherent, stacked, regular quantities on pressure surfaces, or
+            ! with no vertical coordinate system go in l2gp files.
+            if ( get_spec_id(key) /= s_l2gp ) call MLSMessage ( MLSMSG_Error,&
+              & ModuleName, 'This quantity should be joined as an l2gp')
+            call JoinL2GPQuantities ( key, hdfNameIndex, quantity, precisionQuantity, &
+              & l2gpDatabase, chunkNo )
+          else
+            ! All others go in l2aux files.
+            if ( get_spec_id(key) /= s_l2aux ) call MLSMessage ( MLSMSG_Error,&
+              & ModuleName, 'This quantity should be joined as an l2aux')
+            call JoinL2AUXQuantities ( key, hdfNameIndex, quantity, &
+              & l2auxDatabase, chunkNo, chunks )
+          end if
+        end if
 
       case default ! Timing
       end select
@@ -634,6 +642,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.40  2001/05/23 01:43:19  livesey
+! New parallel version in progress
+!
 ! Revision 2.39  2001/05/19 01:19:58  livesey
 ! Fills precision correctly for l2gp!
 !
