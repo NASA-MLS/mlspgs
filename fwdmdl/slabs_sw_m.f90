@@ -4,7 +4,7 @@ module SLABS_SW_M
 
   use MLSCommon, only: R8, RP
   use SpectroscopyCatalog_m, only: CATALOG_T, Lines
-  use Units, only: Pi, SqrtPi
+  use Units, only: SqrtPi
 
   implicit NONE
 
@@ -1383,6 +1383,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.34  2004/04/24 02:26:54  vsnyder
+! Move Voigt stuff to its own module
+!
 ! Revision 2.33  2004/04/20 00:48:06  vsnyder
 ! Only use Taylor really close to the origin
 !
