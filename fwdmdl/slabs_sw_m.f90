@@ -88,13 +88,15 @@ contains
     dx_dv0 = -x1
     du_dv0 = du_dx * dx_dv0
     dv_dv0 = dv_dx * dx_dv0
-    db_dv0 = x1
-    dg_dv0 = 2.0_rp * b*db_dv0
-    dz_dv0 = (-yi*db_dv0-z*dg_dv0)/g
-    dr_dv0 = dz_dv0*OneOvSPi+yi*dv_dv0
+!    db_dv0 = x1
+!    dg_dv0 = 2.0_rp * b*db_dv0
+!    dz_dv0 = (-yi*db_dv0-z*dg_dv0)/g
+!    dr_dv0 = dz_dv0*OneOvSPi+yi*dv_dv0
 !    dvvw_dv0 = (du_dv0+dr_dv0)*q + dq_dv0*(u+r)
-    dvvw_dv0 = (du_dv0+dr_dv0)*q
-    if ( present(dslabs1_dNu0) ) dSwI_dNu0 = dslabs1_dNu0*vvw + slabs2*dvvw_dv0
+!    dvvw_dv0 = (du_dv0+dr_dv0)*q
+!    if (present(dslabs1_dNu0)) dSwI_dNu0 = dslabs1_dNu0*vvw + slabs2*dvvw_dv0
+    if (present(dslabs1_dNu0)) dSwI_dNu0 = swi * (dslabs1_dNu0/slabs1 &
+                   - 1.0_r8/Nu0) + slabs2*q*(du_dv0 + yi * dv_dv0)
 
   end subroutine dVoigt_spectral
 
@@ -114,7 +116,7 @@ contains
 
     real(rp) :: u
 
-    call real_simple_voigt(x1*dNu,y,u)
+    CALL real_simple_voigt(x1*dNu,y,u)
 
 !  Van Vleck - Wieskopf line shape with Voigt, Added Mar/2/91, Bill
 !  Modified code to include interference: June/3/1992 (Bill + Zvi)
@@ -178,7 +180,7 @@ contains
     real(rp) :: xj, zj, q, y2, u, v, up1, up2, dn1, dn2, dup1, &
      &          dup2, ddn1, ddn2, dy_dw, dy_dn, dSum_dw, dSum_dn, &
      &          dSum_dNu0, slabs2
-!    real(rp) :: dq_dNu0, Sum
+    real(rp) :: dq_dNu0, Sum
 
     q = 1.0_rp + dNu / Nu0
 
@@ -193,12 +195,12 @@ contains
     call simple_voigt ( xj, y, u, v )
     dup1 = up1 * OneOvSPi / dn1 + yi * v
     ddn2 = u + dup1
-!    Sum = ddn2 / OneOvSPi
+    Sum = ddn2 / OneOvSPi
     slabs2 = slabs1 * tanh1
     VL = slabs2 * ddn2 * q            ! This is the Voigt + VVW correction
 
     dn2 = xj * xj + y2
-    up2 = y - yi * xj
+    up2 = y + yi * xj
 
     dy_dw = y / w
     dup1 = dy_dw
@@ -221,16 +223,20 @@ contains
 
     dVL_dn = OneOvSPi * slabs2 * q * dSum_dn
 
-    dup2 =  yi * x1               !  x1 = -dxj_dNu0
-    ddn2 = -2.0 * xj * x1         !  x1 = -dxj_dNu0
-    dSum_dNu0 = (dn2*dup2-up2*ddn2)/(dn2*dn2)
+!    dup2 =  yi * x1               !  x1 = -dxj_dNu0
+!    ddn2 = -2.0 * xj * x1         !  x1 = -dxj_dNu0
+!    dSum_dNu0 = (dn2*dup2-up2*ddn2)/(dn2*dn2)
 !    dq_dNu0 = -(dNu+Nu0)/(Nu0*Nu0)
 
 !    dVL_dNu0 = OneOvSPi * (dslabs1_dNu0 * q * Sum          + &
 !              &         slabs2 * dq_dNu0 * Sum + &
 !              &         slabs2 * q * dSum_dNu0)
 
-    dVL_dNu0 = OneOvSPi * slabs2 * q * dSum_dNu0
+!    dVL_dNu0 = OneOvSPi * slabs2 * q * dSum_dNu0
+    dVL_dNu0 = VL * (dslabs1_dNu0 / slabs1 - 1.0_rp / Nu0) &
+           & + OneOvSPi * slabs2 * q * ( &
+           &  (-yi*x1*(xj*xj+y2)+2.0_rp*(y+yi*xj)*xj*x1)/(xj*xj+y2)**2 &
+           & + (yi*x1*  dn1     -2.0_rp*   up1   *x1*zj)/dn1**2)
 
   end subroutine Voigt_Lorentz
 
@@ -817,7 +823,7 @@ contains
 
 ! Internal data:
 
-    real(rp) :: Wd, Q_Log, betae, betav, t3t, onedt
+    REAL(rp) :: Wd, Q_Log, betae, betav, t3t, onedt, expn, expd
 
 ! The action begins here
 
@@ -838,10 +844,12 @@ contains
    Wd = v0s * Sqrt(t/m) * dc
    x1 = sqrtln2 / Wd
    y = x1 * w * p * (t3t**n)
+   expn = EXP(-betav*onedt)
+   expd = EXP(-betav*oned300)
    slabs1 = i2abs * p * 10.0**(i - Q_Log + loge *  betae * (oned300 - onedt)) &
-        & * (1.0_rp + EXP(-betav*onedt)) &
-        & / (t * Wd * (1.0_rp - EXP(-betav*oned300)))
-   dslabs1 = 0.0_rp
+        & * (1.0_rp + expn) / (t * Wd * (1.0_rp - expd))
+   dslabs1 = -slabs1 * (expn / (t * (1.0_rp + expn)) + expd / (300.0_rp &
+        &  * (1.0_rp - expd))) / boltzmhz
 
  end subroutine Slabs_prep
 
@@ -920,7 +928,7 @@ contains
 
 ! Internal data:
 
-    real(r8) :: Wd, Q_Log, betae, betav, t3t, onedt, r
+    REAL(r8) :: Wd, Q_Log, betae, betav, t3t, onedt, r, expn, expd
 
 ! The action begins here
 
@@ -943,12 +951,14 @@ contains
     Wd = v0s * Dsqrt(t/m) * dc
     x1 = sqrtln2 / Wd
     y = x1 * w * p * (t3t**n)
+    expn = EXP(-betav*onedt)
+    expd = EXP(-betav*oned300)
     slabs1 = i2abs * p * 10.0**(i - Q_Log + loge *  betae * (oned300-onedt)) &
-        &  * (1.0_rp + EXP(-betav*onedt)) &
-        &  / (t * Wd * (1.0_rp - EXP(-betav*oned300)))
+         & * (1.0_rp + expn) / (t * Wd * (1.0_rp - expd))
     dx1_dv0 = 0.0_rp
     dy_dv0 = 0.0_rp
-    dslabs1_dv0 = 0.0_rp
+    dslabs1_dv0 = -slabs1 * (expn / (t * (1.0_rp + expn)) + expd / (300.0_rp &
+             &  * (1.0_rp - expd))) / boltzmhz
 
  end subroutine Slabs_prep_wder
 
@@ -1089,6 +1099,9 @@ contains
 end module SLABS_SW_M
 
 ! $Log$
+! Revision 2.19  2003/05/19 19:58:07  vsnyder
+! Remove USEs for unreferenced symbols, remove unused local variables
+!
 ! Revision 2.18  2003/05/16 23:53:05  livesey
 ! Now uses molecule indices rather than spectags
 !
