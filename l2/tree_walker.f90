@@ -13,7 +13,7 @@ module TREE_WALKER
   use FilterShapes_m, only: Destroy_Filter_Shapes_Database
   use ForwardModelConfig, only: ForwardModelConfig_T, DestroyFWMConfigDatabase
   use Global_Settings, only: Set_Global_Settings
-  use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase
+  use GriddedData, only: GriddedData_T, DestroyGriddedDataDatabase, Dump
   use HGrid, only: HGrid_T
   use Init_Tables_Module, only: L_CHISQCHAN, &
     & L_CHISQMMAF, L_CHISQMMIF, L_RADIANCE, L_PTAN, &
@@ -21,8 +21,8 @@ module TREE_WALKER
     & Z_GLOBALSETTINGS, Z_JOIN, Z_MERGEAPRIORI, Z_MLSSIGNALS, Z_OUTPUT, &
     & Z_READAPRIORI, Z_RETRIEVE, Z_SPECTROSCOPY
   use JOIN, only: MLSL2Join
-  use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump_L2AUX
-  use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump_L2GP
+  use L2AUXData, only: DestroyL2AUXDatabase, L2AUXData_T, Dump
+  use L2GPData, only: DestroyL2GPDatabase, L2GPData_T, Dump
   use L2ParInfo, only: PARALLEL, CLOSEPARALLEL
   use L2Parallel, only: GETCHUNKFROMMASTER, L2MASTERTASK
   use L2PC_m, only: DestroyL2PCDatabase
@@ -233,16 +233,20 @@ subtrees:   do while ( j <= howmany )
         ! Now tidy up any remaining `pointer' data.
         ! processingRange needs no deallocation
         call DestroyL1BInfo ( l1bInfo )
+        if ( index(switches,'grid') /= 0 .and. .not. parallel%slave &
+         & .and. associated(griddedData) ) then
+          call Dump(griddedData)
+        endif
         call DestroyGriddedDataDatabase ( griddedData )
         call DestroyChunkDatabase (chunks )
         if ( index(switches,'l2gp') /= 0 .and. .not. parallel%slave) then
-          call Dump_L2GP(l2gpDatabase)
+          call Dump(l2gpDatabase)
         elseif ( index(switches,'cab') /= 0 .and. .not. parallel%slave) then
-          call Dump_L2GP(l2gpDatabase, ColumnsOnly=.true.)
+          call Dump(l2gpDatabase, ColumnsOnly=.true.)
         endif
         call DestroyL2GPDatabase ( l2gpDatabase )
         if ( index(switches,'l2aux') /= 0 .and. .not. parallel%slave) then
-          call Dump_L2AUX(l2auxDatabase)
+          call Dump(l2auxDatabase)
         endif
         call DestroyL2AUXDatabase ( l2auxDatabase )
         ! vectors, vectorTemplates and qtyTemplates destroyed at the
@@ -272,6 +276,9 @@ subtrees:   do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.65  2001/10/12 23:14:22  pwagner
+! Debugging when dumping diagnostics; may remove later
+!
 ! Revision 2.64  2001/10/09 23:43:42  pwagner
 ! Some further improvements in dumping vectors
 !
