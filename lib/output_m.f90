@@ -178,15 +178,13 @@ contains
     character(len=30) :: LINE, LOG_CHARS
     character(len=3) :: MY_ADV
     character(len=20) :: kChar, myFormat
-    logical :: char_by_char               ! Build line char by char?
 
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
-    char_by_char = .not. (present(Format) .and. present(LogFormat))
 
+    if ( .not. present(Format) ) then
    ! No optional formats: use default char-by-char accretion
-    if ( char_by_char ) then
       write ( line, * ) value
       if ( scan(line,'123456789') == 0 ) then
         line = '0'
@@ -206,56 +204,17 @@ contains
         line = adjustl(line)
       end if
       k = len_trim(line)
-!      if ( prunit == -1 .or. prunit < -2 ) &
-!        & write ( *, '(a)', advance=my_adv ) line(:k)
-!      if ( prunit < -1 ) &
-!        & call MLSMessage ( MLSMSG_Level, ModuleName, line(:k), &
-!          & advance=my_adv )
-!      if ( prunit >= 0 ) &
-!        & write ( prunit, '(a)', advance=my_adv ) line(:k)
-!      return
-    end if
-
     ! Use one or both optional formats
-    if ( present(Format) ) then
-      !if ( prunit == -1 .or. prunit < -2 ) then
-      !  write ( *, Format, advance=my_adv ) value
-      !else if ( prunit >= 0 ) then
-      !  write ( prunit, Format, advance=my_adv ) value
-      !end if
-    !else
-      !call output ( line(:k), advance=my_adv, dont_log = .true. )
-      ! return   ! But this prevented use of LogFormat
+    else
       line = ' '
       write ( line, Format ) value
-      !k = len_trim(Format)
-      !kChar=lowerCase(Format)
-      !call ReplaceSubString(kChar, myFormat, 'g', 'f')
-      !call ReplaceSubString(myFormat, kChar, 'e', 'f')
-      !call ReplaceSubString(kChar, myFormat, 'd', 'f')
-      !call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
-      !read (kChar, '(i2)') k
-      !if (k < 1) then
-      !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-		!  & 'Bad conversion to k in OUTPUT_DOUBLE (format neither "d" or "f"' )
-      !end if
       k = nCharsinFormat(Format)
     end if
 
-    !if ( prunit >= -1 ) return
-
     log_chars = line
     if ( present(LogFormat) ) then
-      ! write ( line, LogFormat ) value
       write ( log_chars, LogFormat ) value
     end if
-    !if ( my_adv == 'yes' ) then
-    !  call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
-    !    & advance=my_adv )
-    !else
-    !  call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)) // ' ', &
-    !    & advance=my_adv )
-    !endif
     call output ( line(:k), advance=my_adv, log_chars=log_chars )
 
   end subroutine OUTPUT_DOUBLE
@@ -381,10 +340,9 @@ contains
     my_adv = 'no'
     if ( present(advance) ) then; my_adv = advance; end if
     my_adv = Advance_is_yes_or_no(my_adv)
-    char_by_char = .not. (present(Format) .and. present(LogFormat))
 
+    if ( .not. present(Format) ) then
    ! No optional formats: use default char-by-char accretion
-    if ( char_by_char ) then
       write ( line, * ) value
       if ( scan(line,'123456789') == 0 ) then
         line = '0'
@@ -404,54 +362,17 @@ contains
         line = adjustl(line)
       end if
       k = len_trim(line)
-!      if ( prunit == -1 .or. prunit < -2 ) &
-!        & write ( *, '(a)', advance=my_adv ) line(:k)
-!      if ( prunit < -1 ) &
-!        & call MLSMessage ( MLSMSG_Level, ModuleName, line(:k), &
-!          & advance=my_adv )
-!      if ( prunit >= 0 ) &
-!        & write ( prunit, '(a)', advance=my_adv ) line(:k)
-!      return
-    end if
-
     ! Use one or both optional formats
-    if ( present(Format) ) then
-      !if ( prunit == -1 .or. prunit < -2 ) then
-      !  write ( *, Format, advance=my_adv ) value
-      !else if ( prunit >= 0 ) then
-      !  write ( prunit, Format, advance=my_adv ) value
-      !end if
+    else
       line = ' '
       write ( line, Format ) value
-      !k = len_trim(Format)
-      !kChar=lowerCase(Format)
-      !call ReplaceSubString(kChar, myFormat, 'g', 'f')
-      !call ReplaceSubString(myFormat, kChar, 'e', 'f')
-      !call ReplaceSubString(kChar, myFormat, 'd', 'f')
-      !call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
-      !read (kChar, '(i2)') k
-      !if (k < 1) then
-      !  call MLSMessage ( MLSMSG_Error, ModuleName, &
-		!& 'Bad conversion to k in OUTPUT_SINGLE' )
-      !end if
       k = nCharsinFormat(Format)
     end if
-    !call output ( line(:k), advance=my_adv )
-
-    !if ( prunit >= -1 ) return
 
     log_chars = line
     if ( present(LogFormat) ) then
-      !write ( line, LogFormat ) value
       write ( log_chars, LogFormat ) value
     end if
-    !if ( my_adv == 'yes' ) then
-    !  call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)), &
-    !    & advance=my_adv )
-    !else
-    !  call MLSMessage ( MLSMSG_Level, ModuleName, trim(adjustl(line)) // ' ', &
-    !    & advance=my_adv )
-    !endif
     call output ( line(:k), advance=my_adv, log_chars=log_chars )
 
   end subroutine OUTPUT_SINGLE
@@ -485,7 +406,7 @@ contains
      ! Utility to calculated how many characters in a format spec:
      ! [n{xX}][,]{DEFGdefg}m.b
      ! where n, m, and b are digits (we care only about n and m)
-     ! My plan is to return (n+m)
+     ! return (n+m)
      ! Args
      character(len=*), intent(in) ::  Format
      integer :: nplusm
@@ -503,13 +424,14 @@ contains
         call MLSMessage ( MLSMSG_Error, ModuleName, &
 		  & 'Bad conversion to m in OUTPUT_xxxLE (format not "{defg}"' )
       end if
-      ! call GetStringElement(TRIM(myFormat), kChar, 1, .true., 'x')
-      call ExtractSubString(TRIM(myFormat), kChar, '(', 'x')
-      if ( trim(kChar) == trim(myFormat )) then
+      if ( index(TRIM(myFormat), 'x' ) == 0 ) then
         n = 0
       else
+        call ExtractSubString(TRIM(myFormat), kChar, '(', 'x')
         read (kChar, '(i2)') n
         if (n < 1) then
+          print *, trim(kChar)
+          print *, trim(myFormat)
           call MLSMessage ( MLSMSG_Error, ModuleName, &
 		    & 'Bad conversion to n in OUTPUT_xxxLE (format not "{defg}"' )
         end if
@@ -524,6 +446,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.26  2003/09/08 17:43:25  pwagner
+! Fixed bug in nCharsinFormat when no 'x' in Format
+!
 ! Revision 2.25  2003/09/06 01:35:55  pwagner
 ! Can account for (nx,{defg}m.b} in f.p. format
 !
