@@ -22,7 +22,7 @@ module DumpCommand_M
 contains
 
   subroutine DumpCommand ( Root, QuantityTemplatesDB, &
-    & VectorTemplates, Vectors, ForwardModelConfigs )
+    & VectorTemplates, Vectors, ForwardModelConfigs, HGrids )
 
   ! Process a "dump" command
 
@@ -35,8 +35,9 @@ contains
     use Dumper, only: Dump ! HGrid, Quantity templates
     use Expr_m, only: Expr
     use ForwardModelConfig, only: Dump, ForwardModelConfig_T
-    use Init_Tables_Module, only: F_Details, F_ForwardModel, F_Quantity, &
-      & F_Template, F_Vector, &
+    use HGridsDatabase, only: HGRID_T
+    use Init_Tables_Module, only: F_Details, F_ForwardModel, F_HGrid, &
+      & F_Quantity, F_Template, F_Vector, &
       & S_Quantity, S_VectorTemplate
     use Intrinsic, only: PHYQ_Dimensionless
     use MoreTree, only: Get_Field_ID, Get_Spec_ID
@@ -53,6 +54,7 @@ contains
     type (vectorTemplate_T), dimension(:), intent(in) :: VectorTemplates
     type (vector_T), dimension(:), intent(in), optional :: Vectors
     type (forwardModelConfig_t), dimension(:), intent(in), optional :: ForwardModelConfigs
+    type (HGrid_T), dimension(:), intent(in), optional :: HGrids
 
     integer :: Details
     integer :: FieldIndex
@@ -67,7 +69,8 @@ contains
     ! Error codes
     integer, parameter :: Dimless = 1
     integer, parameter :: NoFWM = dimless + 1
-    integer, parameter :: NoVectors = noFWM + 1
+    integer, parameter :: NoHGrid = NoFWM + 1
+    integer, parameter :: NoVectors = noHGrid + 1
     integer, parameter :: Numeric = noVectors + 1
     integer, parameter :: Unknown = numeric + 1 ! Unknown template
 
@@ -82,12 +85,20 @@ contains
         if ( units(1) /= phyq_dimensionless ) call AnnounceError ( gson, dimless )
         if ( type /= num_value ) call AnnounceError ( gson, numeric )
         details = nint(values(1))
-      case ( f_forwardModel )
+      case ( f_forwardModel ) ! Dump a forward model config
         if ( present(forwardModelConfigs) ) then
           what = decoration(decoration(gson))
           call dump ( forwardModelConfigs(what) ) ! has no details switch
         else
           call announceError ( gson, noFWM )
+        end if
+      case ( f_hGrid )    ! Dump an HGrid
+        if ( present(hGrids) ) then
+          what = decoration(decoration(gson))
+          call output ( ' HGrid ' )
+          call dump ( hGrids(what) ) ! has no details switch
+        else
+          call announceError ( gson, noHGrid )
         end if
       case ( f_quantity ) ! Dump a vector quantity
         vectorIndex = decoration(decoration(subtree(1,gson)))
@@ -118,6 +129,7 @@ contains
     end do
 
   contains
+
     subroutine AnnounceError ( where, what )
       use LEXER_CORE, only: PRINT_SOURCE
       use Tree, only: Source_Ref
@@ -135,6 +147,8 @@ contains
         call output ( "The details field is not unitless." )
       case ( noFWM )
         call output ( "Can't dump Forward Model Configs here." )
+      case ( noHGrid )
+        call output ( "Can't dump HGrids here." )
       case ( noVectors )
         call output ( "Can't dump vectors here." )
       case ( numeric )
@@ -143,11 +157,15 @@ contains
         call output ( "Can't figure out what kind of template it is." )
       end select
     end subroutine AnnounceError
+
   end subroutine DumpCommand
 
 end module DumpCommand_M
 
 ! $Log$
+! Revision 2.3  2004/05/18 01:18:51  vsnyder
+! Add dump for HGrid
+!
 ! Revision 2.2  2004/05/11 02:53:29  vsnyder
 ! Remove USEs for unreferenced symbols
 !
