@@ -1,8 +1,7 @@
 module HYDROSTATIC_MODEL_M
   use MLSCommon, only: I4, R8
   use GL6P, only: NG, GX
-  use L2PCDIM, only: N2lvl, Nlvl
-  use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
+  use D_HUNT_M, only: HUNT
   use D_LINTRP_M, only: LINTRP
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
   use HYDROSTATIC_INTRP, only: GET_HEIGHTS, GET_PRESSURES
@@ -17,11 +16,10 @@ module HYDROSTATIC_MODEL_M
 contains
 !---------------------------------------------------------------
 
-SUBROUTINE hydrostatic_model(si,n_lvls,no_t,no_mmaf,t_indx,   &
-           no_tan_hts, geoc_lat, Href, Zref, z_grid, t_z_basis,  &
-           t_coeff, z_glgrid, h_glgrid, t_glgrid, dhdz_glgrid,         &
-           dh_dt_glgrid, tan_press, tan_hts, tan_temp, tan_dh_dt,      &
-           gl_count, Ier)
+SUBROUTINE hydrostatic_model(si,no_mmaf, geoc_lat, Href, &
+           Zref, z_grid, t_z_basis, t_coeff, z_glgrid, h_glgrid,     &
+           t_glgrid, dhdz_glgrid, dh_dt_glgrid, tan_press, tan_hts,  &
+           tan_temp, tan_dh_dt, gl_count, Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: hydrostatic_model
@@ -30,10 +28,7 @@ SUBROUTINE hydrostatic_model(si,n_lvls,no_t,no_mmaf,t_indx,   &
 !  Calling sequence variables:
 !  ---------------------------
 
-Integer(i4), INTENT(IN) :: t_indx(*)
-Integer(i4), INTENT(IN) :: si,N_lvls,no_t,no_mmaf
-
-Integer(i4), INTENT(IN OUT) :: no_tan_hts
+Integer(i4), INTENT(IN) :: si,no_mmaf
 
 Integer(i4), INTENT(OUT) :: Ier, gl_count
 
@@ -54,15 +49,33 @@ Real(r8), INTENT(OUT) :: tan_dh_dt(:,:,:)
 !  ----------------------
 !  Local variables:
 !  ----------------
-Integer(i4) :: h_i,i,j,k,l,m,jj,cnt,Ngp1
+Integer(i4) :: t_index(Size(z_grid))
+Integer(i4) :: h_i,i,j,k,l,m,jj,cnt,Ngp1,no_tan_hts,n_lvls,no_t
 
 Real(r8) :: G,Reff,const,q,h,z,t,v,z1,z2,xm,ym
-Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
+Real(r8) :: h_grid(Size(z_grid)),t_grid(Size(z_grid)),dhdt(Size(t_z_basis))
 
 ! Begin the code here
 
   ier = 0
   Ngp1 = Ng + 1
+  N_lvls = Size(z_grid)
+  no_t = Size(t_z_basis)
+  no_tan_hts = Size(tan_press) - si + 1 
+!
+  do i = 1, no_tan_hts
+    z1 = tan_press(i+si-1)
+    Call Hunt(z1,z_grid,n_lvls,j,k)
+    if(abs(z1-z_grid(j)) > abs(z1-z_grid(k))) j=k
+    if(abs(z1-z_grid(j)) > 1.0e-4) then
+      Ier = 1
+      Print *,'** Error in hydrostatic_model routine ..'
+      Print *,'   Tanget array NOT a subset of Integration grid !'
+      Print *,'   Nathaniel is a LIAR !'
+      Return
+    endif
+    t_index(i) = j
+  end do
 
 ! From the selected integration grid pressures define the GL pressure
 ! grid:
@@ -119,16 +132,16 @@ Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
 ! Define tan_hts as a TRUE subset of h_grid for each mmaf:
 !
   h_grid(1:) = 0.0
-  jj = min(Nlvl,n_lvls+1)
+  jj = Size(z_grid)
   cnt = (gl_count + Ng) / Ngp1
   do l = 1, no_mmaf
     tan_temp(1:si-1,l) = t_glgrid(1,l)
     h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,l)
-    h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
+    if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,l)
     t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,l)
-    t_grid(cnt+1:jj) = t_glgrid(gl_count,l)
+    if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,l)
     do i = 1, no_tan_hts
-      j = t_indx(i)
+      j = t_index(i)
       tan_hts(si+i-1,l) = h_grid(j)
       tan_temp(si+i-1,l) = t_grid(j)
     end do
@@ -144,8 +157,8 @@ Real(r8) :: h_grid(Nlvl),t_grid(Nlvl),dhdt(mxco)
   t_grid(1:) = 0.0
   h_grid(1:cnt) = h_glgrid(1:gl_count:Ngp1,k)
   t_grid(1:cnt) = t_glgrid(1:gl_count:Ngp1,k)
-  h_grid(cnt+1:jj) = h_glgrid(gl_count,k)
-  t_grid(cnt+1:jj) = t_glgrid(gl_count,k)
+  if(cnt < jj) h_grid(cnt+1:jj) = h_glgrid(gl_count,k)
+  if(cnt < jj) t_grid(cnt+1:jj) = t_glgrid(gl_count,k)
   CALL get_heights('h',h_grid,t_grid,z_grid,n_lvls,tan_press,tan_hts, &
  &                  si-1,ier)
   IF(ier /= 0) RETURN
@@ -359,6 +372,9 @@ END SUBROUTINE pq_ana
 
 end module HYDROSTATIC_MODEL_M
 ! $Log$
+! Revision 1.6  2001/03/28 23:50:11  zvi
+! Tanget below surface are now in Zeta units..
+!
 ! Revision 1.5  2001/03/05 21:37:20  zvi
 ! New filter format
 !
