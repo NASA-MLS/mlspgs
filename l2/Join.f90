@@ -23,7 +23,7 @@ module Join                     ! Join together chunk based data.
   use L2ParInfo, only: PARALLEL, SLAVEJOIN
   use LEXER_CORE, only: PRINT_SOURCE
   use ManipulateVectorQuantities, only: DOHGRIDSMATCH
-  use MLSCommon, only: MLSChunk_T, R8
+  use MLSCommon, only: MLSChunk_T         ! , R8 (not used???)
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
   use MLSSignals_M, only: GETSIGNALNAME
@@ -513,7 +513,7 @@ contains ! =====     Public Procedures     =============================
     logical ::                           L2auxDataIsNew
     integer, dimension(3) ::             DimensionFamilies, DimensionSizes, DimensionStarts
     integer ::                           AuxFamily     ! Channel or Frequency
-    integer ::                           DimensionIndex, Channel, Surf, Prof, &
+    integer ::                           DimensionIndex, Channel, Surf, &
     &                                    NoMAFs,index
     integer ::                           FirstProfile, LastProfile
 !   real(r8), dimension(:,:), pointer :: values !??? Not used ???
@@ -584,7 +584,7 @@ contains ! =====     Public Procedures     =============================
 
       auxFamily=quantity%template%frequencyCoordinate
 
-      if ( quantity%template%minorFrame ) then
+      if ( quantity%template%minorFrame .or. quantity%template%majorFrame ) then
         ! For minor frame quantities, the dimensions are:
         ! ([frequency or channel],MIF,MAF)
         !
@@ -743,6 +743,9 @@ end module Join
 
 !
 ! $Log$
+! Revision 2.52  2001/10/08 23:38:58  pwagner
+! Tiny fixes; not perfect yet
+!
 ! Revision 2.51  2001/10/06 00:27:42  pwagner
 ! Still some problems with diagnostics
 !
