@@ -85,12 +85,12 @@ contains
   REAL(rp), INTENT(in) :: t_script(:) ! differential temparatures
   REAL(rp), INTENT(in) :: tau(:) ! path transmission path
 !
-  INTEGER(ip) :: i_start ! where non-zeros on the path begin
-  INTEGER(ip) :: i_end   ! where non-zeros on path end
+  INTEGER(ip), INTENT(in) :: i_start ! where non-zeros on the path begin
+  INTEGER(ip), INTENT(in) :: i_end   ! where non-zeros on path end
 !
 ! Output
 !
-  REAL(rp) :: drad_dx ! radiance derivative wrt x
+  REAL(rp), INTENT(out) :: drad_dx ! radiance derivative wrt x
 !
 ! internals
 !
@@ -160,6 +160,9 @@ contains
 !
 END module SCRT_DN_M
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:27  livesey
+! New forward model
+!
 ! Revision 1.6.2.1  2001/09/10 10:02:32  zvi
 ! Cleanup..comp_path_entities_m.f90
 !
