@@ -30,7 +30,7 @@ module Fill                     ! Create vectors and fill them.
     & L_COLUMNABUNDANCE, L_ESTIMATEDNOISE, L_EXPLICIT, L_GPH, L_GRIDDED, L_HEIGHT, &
     & L_HYDROSTATIC, L_ISOTOPE, L_ISOTOPERATIO, L_KRONECKER, L_L1B, L_L2GP, L_L2AUX, &
     & L_RECTANGLEFROMLOS, L_NEGATIVEPRECISION, L_LOSVEL, L_NONE, L_PLAIN, &
-    & L_PRESSURE, L_PTAN, L_RADIANCE, &
+    & L_PRESSURE, L_PTAN, L_RADIANCE, L_RHI, &
     & L_REFGPH, L_SCECI, L_SCGEOCALT, L_SCVEL, L_SCVELECI, L_SCVELECR, &
     & L_SPD, L_SPECIAL, L_TEMPERATURE, L_TNGTECI, L_TNGTGEODALT, &
     & L_TNGTGEOCALT, L_TRUE, L_VECTOR, L_VGRID, L_VMR, L_ZETA
@@ -490,7 +490,7 @@ contains ! =====     Public Procedures     =============================
           case ( f_geocAltitudeQuantity ) ! For hydrostatic
             geocAltitudeVectorIndex = decoration(decoration(subtree(1,gson)))
             geocAltitudeQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
-          case ( f_h2oQuantity ) ! For hydrostatic
+          case ( f_h2oQuantity ) ! For hydrostatic or rhi
             h2oVectorIndex = decoration(decoration(subtree(1,gson)))
             h2oQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
           case ( f_dontMask )
@@ -832,6 +832,18 @@ contains ! =====     Public Procedures     =============================
               call FillChiSqMMif ( key, quantity, &
                 & measQty, modelQty, noiseQty, &
                 & dontMask, ignoreZero, ignoreNegative, multiplier )
+            endif
+          case ( l_rhi )
+            if ( .not. got(f_h2oQuantity) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing the h2o field to fill rhi'  )
+            else
+              h2oQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(h2oVectorIndex), h2oQuantityIndex)
+              if ( .not. ValidateVectorQuantity(h2oQuantity, &
+                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) )&
+                & call Announce_Error ( key, badGeocAltitudeQuantity )
+              call FillRHI ( key, quantity, h2oQuantity )
             endif
           case default
             call Announce_error ( key, noSpecialFill )
@@ -2239,6 +2251,18 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine FillColAbundance
 
+  ! ------------------------------------- FillRHI ----
+  subroutine FillRHI ( key, quantity, h2oQuantity )
+    ! Convert h2o vmr to %RHI
+    ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
+    !  humidity measurement: Metjod and validation" Read et. al. 
+    !  J. Geoph. Res. Dec. 2001 (106) D23)
+    integer, intent(in) :: key          ! For messages
+    type (VectorValue_T), intent(inout) :: QUANTITY ! rhi Quantity to fill
+    type (VectorValue_T), intent(in) :: h2oQuantity ! vmr
+
+  end subroutine FillRHI
+
   ! ---------------------------------- FillVectorQuantityWithEsimatedNoise ---
   subroutine FillVectorQtyWithEstNoise ( quantity, radiance, &
     & systemTemperature, integrationTime )
@@ -2982,6 +3006,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.116  2002/04/10 17:45:44  pwagner
+! Added FillRHI from h2oquantity (just a placeholder)
+!
 ! Revision 2.115  2002/04/04 16:32:42  livesey
 ! Added negative error bar stuff
 !
