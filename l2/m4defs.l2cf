@@ -1,6 +1,8 @@
 ; These are the m4 definitions for l2cf's
 ; Change the quotes to braces
 changequote({,})
+; Change the comment to a semicolon
+!changecom(;)
 ; Insist all m4 stuff is prefixed with !
 changesyntax({@!})
 ; Make _ not a possible part of m4 names
@@ -20,6 +22,4 @@ changesyntax({@!})
 ; Define a year function that just returns the first four digits of
 ; day, this one took a little thought!
 !define(year,{!substr(}$1{,0,4)})
-; For some reason, I can't get changecom to do anything reliable!
-!changecom(;)
 
