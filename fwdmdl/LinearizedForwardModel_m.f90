@@ -88,9 +88,6 @@ contains ! =====     Public Procedures     =============================
     type(VectorValue_T), pointer :: STATEQ ! A state vector quantity
     type(VectorValue_T), pointer :: PTAN ! Tangent pressure quantity
     type(VectorValue_T), pointer :: L2PCQ ! A quantity in the l2pc
-    type(QuantityTemplate_T) :: yP_QT   ! Quantity template for yPrime
-    type(VectorTemplate_T) :: yP_T      ! Vector template for yPrime
-
     ! Executable code
 
     nullify ( yPmapped, resultMapped, dyByDX, closestInstances )
@@ -118,20 +115,6 @@ contains ! =====     Public Procedures     =============================
 
     radInl2pc => GetVectorQuantityByType (l2pc%row%vec, quantityType=l_radiance, &
       & signal=signal%index, sideband=signal%sideband )
-
-    ! Create a boring vector containing only this MAF for this band but with
-    ! the surfaces from the l2pc file. For speed, we'll do this by hand
-    ! quantity template first
-    yP_qt%noSurfs = radInL2PC%template%noSurfs
-    yP_qt%noInstances = 1
-    yP_qt%noChans = radiance%template%noChans
-    yP_qt%instanceLen = yP_qt%noSurfs*yP_qt%noChans
-
-    ! Create a boring vector template for this
-    call ConstructVectorTemplate ( 0, (/yp_qt/), (/1/), yP_t )
-
-    ! Finally, create a yPrime vector
-    yp = CreateVector ( 0, yP_t, (/yp_qt/) )
 
     ! Now we loop over the quantities in the l2pc file and construct an xPrime
     ! for them
@@ -242,7 +225,15 @@ contains ! =====     Public Procedures     =============================
 
     ! Now compute yP
 
+    call cloneVector( yp, l2pc%row%vec )
     print*,'Got to the multiply'
+    do qtyInd = 1, size(yp%quantities)
+      print*,qtyInd,&
+        & yp%quantities(qtyInd)%template%noInstances, &
+        & yp%quantities(qtyInd)%template%instanceLen, &
+        & shape(yp%quantities(qtyInd)%values )
+    end do
+    print*,'OK doing it'
     call MultiplyMatrixVectorNoT ( l2pc, deltaX, yP )
     print*,'Survived the multiply'
 
@@ -300,6 +291,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 1.4  2001/04/28 01:54:54  livesey
+! Interim, non working but compiling version
+!
 ! Revision 1.3  2001/04/27 17:35:42  livesey
 ! An interim version for some testing.
 !
