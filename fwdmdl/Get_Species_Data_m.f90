@@ -7,7 +7,7 @@ module Get_Species_Data_m
 
   implicit NONE
   private
-  public :: Get_Species_Data, Destroy_Species_Data
+  public :: Get_Species_Data
 
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
@@ -24,16 +24,10 @@ contains
     ! Fill in the Beta_Groups' isotope ratios in FwdModelConf.
     ! Get vector quantities.
 
-    use Allocate_Deallocate, only: Allocate_Test
     use ForwardModelConfig, only: Dump, ForwardModelConfig_t
     use ForwardModelVectorTools, only: GetQuantityForForwardModel
-    use Intrinsic, only: LIT_INDICES, L_ISOTOPERATIO, L_NONE, L_VMR
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_Error, &
-      & MLSMSG_Warning
-    use MLSSignals_m, only: GetRadiometerFromSignal
-    use SpectroscopyCatalog_m, only: Catalog, Dump, Empty_Cat, Line_t, &
-      & Lines, MostLines
-    use String_table, only: GET_STRING
+    use Intrinsic, only: L_ISOTOPERATIO, L_VMR
+    use SpectroscopyCatalog_m, only: Dump
     use Toggles, only: Switches
     use VectorsModule, only: VECTOR_T, VECTORVALUE_T
 
@@ -95,20 +89,6 @@ contains
 
   end subroutine Get_Species_Data
 
-  ! -------------------------------------------  Destroy_Species_Data  -----
-  subroutine Destroy_Species_Data ( FwdModelConf )
-
-  ! Destroy the spectroscopy catalog extract that was allocated by
-  ! Get_Species_Data.
-
-    use Allocate_Deallocate, only: Deallocate_Test
-    use ForwardModelConfig, only: ForwardModelConfig_t
-    use MLSMessageModule, only: MLSMessage, MLSMSG_Deallocate, MLSMSG_Error
-
-    type(forwardModelConfig_t), intent(inout) :: FwdModelConf
-
-  end subroutine Destroy_Species_Data
-
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -116,6 +96,9 @@ contains
 end module Get_Species_Data_m
 
 ! $Log$
+! Revision 2.21  2004/12/13 20:38:24  vsnyder
+! Moved stuff that doesn't depend on state vector to ForwardModelConfig
+!
 ! Revision 2.20  2004/11/05 19:37:23  vsnyder
 ! Move some stuff to ForwardModelConfig%DeriveFromForwardModel
 !
