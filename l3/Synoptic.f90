@@ -1871,8 +1871,6 @@ CONTAINS
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  afields_interp(:, :, :), dfields_interp(:, :, :)
 	Real (r8), POINTER, DIMENSION(:, :, :) ::  aprec_interp(:, :, :), dprec_interp(:, :, :)
 
-	Real (r8), POINTER, DIMENSION(:, :, :) ::  alons_interp_old(:, :, :), dlons_interp_old(:, :, :)
-
 	Real (r8) dlons, alons, lons_found, lats_found, times_found, fields_found, prec_found, 	&
 		  slope, slope_time, slope_field, slope_prec, sTime
 
@@ -2010,18 +2008,6 @@ CONTAINS
              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
           ENDIF
 
-        ALLOCATE(alons_interp_old(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
-          IF ( error /= 0 ) THEN
-             msr = MLSMSG_Allocate // ' alons_interp_old array.'
-             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-          ENDIF
-
-        ALLOCATE(dlons_interp_old(cfProd%nLats, nPd*l2Days, pEndIndex-pStartIndex+1), STAT=error)
-
-          IF ( error /= 0 ) THEN
-             msr = MLSMSG_Allocate // ' dlons_interp_old array.'
-             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
-          ENDIF
 
 !*** Re-arrange the data into longitude order for each pressure level 
 
@@ -2154,7 +2140,6 @@ CONTAINS
 	           atimes_interp(aindex, anlats(aindex, iP), iP) = times_found
 	           afields_interp(aindex, anlats(aindex, iP), iP) = fields_found
 		   aprec_interp(aindex, anlats(aindex, iP), iP) = prec_found
-	           alons_interp_old(aindex, anlats(aindex, iP), iP) = lons_found_old
 	         !END IF
 	     END IF
 
@@ -2167,7 +2152,6 @@ CONTAINS
 	           dtimes_interp(aindex, dnlats(aindex, iP), iP) = times_found
 	           dfields_interp(aindex, dnlats(aindex, iP), iP) = fields_found
 		   dprec_interp(aindex, dnlats(aindex, iP), iP) = prec_found
-	           dlons_interp_old(aindex, dnlats(aindex, iP), iP) = lons_found_old
 	         END IF
 	     END IF
 
@@ -2205,6 +2189,13 @@ CONTAINS
 	ENDDO
 
 !*** Deallocate intermidiate arrays 
+
+
+        DEALLOCATE(l2Times, STAT=error)
+          IF ( error /= 0 ) THEN
+              msr = MLSMSG_DeAllocate // '  l2Times array.'
+              CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+          ENDIF
 
         DEALLOCATE(l2Lons, STAT=error)
           IF ( error /= 0 ) THEN
@@ -2273,6 +2264,9 @@ END MODULE Synoptic
 !===================
 
 ! $Log$
+! Revision 1.21  2002/03/27 21:35:14  jdone
+! allocate statements checked and maxDiff is initialized
+!
 ! Revision 1.20  2002/02/20 22:30:33  ybj
 ! *** empty log message ***
 !
