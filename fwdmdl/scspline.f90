@@ -15,7 +15,7 @@ module SCSPLINE_DER_M
   character (len=len(idParm)) :: Id = idParm
   character (len=*), parameter :: ModuleName = &
     & "$RCSfile$"
-  private :: not_useS_here 
+  private :: not_used_here 
 !---------------------------------------------------------------------------
 
 contains
@@ -32,6 +32,9 @@ contains
 end module SCSPLINE_DER_M
 
 ! $Log$
+! Revision 2.3  2003/11/10 17:43:56  pwagner
+! Correct spelling of not_used_here in other place
+!
 ! Revision 2.2  2003/11/08 02:03:05  vsnyder
 ! Correct spelling of not_used_here
 !
