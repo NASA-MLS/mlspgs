@@ -54,7 +54,7 @@ contains ! ============= Public procedures ===================================
 
   ! ------------------------------------------- CreateQtyTemplateFromMLSCFInfo ----
   type (QuantityTemplate_T) function CreateQtyTemplateFromMLSCFInfo ( &
-    & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation, returnStatus ) &
+    & Name, Root, FGrids, VGrids, HGrids, L1bInfo, Chunk, MifGeolocation ) &
     & result ( QTY )
     use Allocate_Deallocate, only: Allocate_Test, Deallocate_Test
     use EXPR_M, only: EXPR
@@ -107,7 +107,6 @@ contains ! ============= Public procedures ===================================
     type (MLSChunk_T), intent(in) :: Chunk
     type (QuantityTemplate_T), dimension(:), intent(in), optional :: &
       & MifGeolocation
-    integer, intent(out) :: RETURNSTATUS
 
     ! Local variables
     logical :: LOGBASIS                 ! To place in quantity
@@ -151,7 +150,6 @@ contains ! ============= Public procedures ===================================
       call InitQuantityTemplates
       firstCall = .true.
     end if
-    returnStatus = 0
 
     ! Set appropriate defaults
     call nullifyQuantityTemplate ( qty ) ! for Sun's rubbish compiler
