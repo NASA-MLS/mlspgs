@@ -401,7 +401,7 @@ contains ! =====     Public Procedures     =============================
           & associated(fmConf%molecules) ) then
           doDerivatives = fmConf%atmos_der
           if ( doDerivatives .and. .not. any (l2pcQ%template%molecule == &
-            & pack(fmConf%molecules(1:size(fmConf%molecules)-1), fmConf%moleculeDerivatives))) &
+            & pack(fmConf%molecules, fmConf%moleculeDerivatives))) &
             & doDerivatives = .false.
         end if
 
@@ -1135,6 +1135,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.55  2004/08/06 01:09:49  livesey
+! Updated to fix Van's new definition of fmConf%molecules
+!
 ! Revision 2.54  2004/07/07 19:42:11  vsnyder
 ! Use new Init argument of CreateBlock
 !
