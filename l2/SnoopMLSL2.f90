@@ -235,7 +235,29 @@ contains ! ========  Public Procedures =========================================
 
   end subroutine SendVectorsListToSnooper
 
-  ! -----------------------------------------  DEALWITHONESNOOPER  -----
+  ! ---------------------------------------- TellSnoopersRunning -------
+  subroutine TellSnooperRunning ( LOCATION, COMMENT, SNOOPER )
+    character (len=*), intent(in) :: LOCATION
+    character (len=*), intent(in) :: COMMENT
+    type (SnooperInfo_T), intent(INOUT) :: SNOOPER
+
+    ! Local variables
+    integer :: BUFFERID                 ! ID for PVM
+    integer :: INFO                     ! Flag from PVM
+
+    ! Executable code
+    call PVMFInitSend ( PvmDataDefault, bufferID )
+    call PVMIDLPack ( location, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing location" )
+    call PVMIDLPack ( comment, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing comment" )
+    call PVMIDLPack ( 'Running', info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Running'" )
+    call PVMFSend ( snooper%tid, IDLMsgTag, info )
+    if ( info /= 0 ) call PVMErrorMessage ( info, "sending status etc." )
+  end subroutine TellSnooperRunning
+    
+  ! -----------------------------------------  DealWithOneSnooper  -----
 
   subroutine DealWithOneSnooper ( MYTID, FIRSTTIME, NONECONTROLING, LOCATION, &
     & COMMENT, SNOOPER, VECTORDATABASE, DONESNOOPINGFORNOW )
@@ -262,7 +284,7 @@ contains ! ========  Public Procedures =========================================
     
     ! First we send a message to the snooper to indicate our presence and our
     ! location/comment.
-
+    print*,'Dealing with one snooper'
     if ( firstTime .or. snooper%new ) then
       snooper%new = .false.
       call PVMFInitSend ( PvmDataDefault, bufferID )
@@ -270,8 +292,10 @@ contains ! ========  Public Procedures =========================================
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing location" )
       call PVMIDLPack ( comment, info )
       if ( info /= 0 ) call PVMErrorMessage ( info, "packing comment" )
+      call PVMIDLPack ( 'Ready', info )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "packing 'Ready'" )
       call PVMFSend ( snooper%tid, IDLMsgTag, info )
-      if ( info /= 0 ) call PVMErrorMessage ( info, "sending location comment" )
+      if ( info /= 0 ) call PVMErrorMessage ( info, "sending status etc." )
 
       ! Now we send our list of current vectors
       call SendVectorsListToSnooper ( snooper, vectorDatabase )
@@ -432,6 +456,10 @@ contains ! ========  Public Procedures =========================================
         call LookForSnoopers ( myTid, snoopers )
         call usleep ( delay )
       end do snoopLoop
+      do snooper = 1, size(snoopers)
+        call TellSnooperRunning ( trim(location), trim(comment), &
+          & snoopers(snooper) )
+      end do
     end if
   end subroutine Snoop
 
