@@ -9,8 +9,8 @@ begin ReadApriori
   ;; This macro reads in the core l2gps for species $1 from swath name
   ;; $1-Core
   !define(readCoreL2GP,{l2gpCore$1Input: l2gp, $
-    file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!CoreHDFVersion', $
-    swath='$1-Core', hdfVersion=!CoreHDFVersion!nl})
+    file='!inpathcore/MLS-Aura_L2GP-DGG_!coreversion_!day.he!coreHDFVersion', $
+    swath='$1-Core', hdfVersion=!coreHDFVersion!nl})
   ;; These are the species for which we want to read Core data (no
   ;; continuations allowed).
   !define(coreL2GPSpecies,{Temperature,H2O,RHI,refGPH})
@@ -18,14 +18,14 @@ begin ReadApriori
 
   ;; Ptan we have to get from an l2aux file, this could be fun!
   l2auxCorePtanInput: l2aux, $
-    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!CoreHDFVersion', $
-    sdName='GHz.ptan-Core', quantityType=ptan, hdfVersion=!CoreHDFVersion
+    file='!inpathcore/MLS-Aura_L2AUX-DGM_!coreversion_!day.h!coreHDFVersion', $
+    sdName='GHz.ptan-Core', quantityType=ptan, hdfVersion=!coreHDFVersion
 
   b1CoreInput: l2aux, $
-    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!CoreHDFVersion', $
-    sdName='R1A:118.B1F:PT.S0.FB25-1 UpdatePtan', quantityType=radiance, hdfVersion=!CoreHDFVersion
+    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!coreHDFVersion', $
+    sdName='R1A:118.B1F:PT.S0.FB25-1 UpdatePtan', quantityType=radiance, hdfVersion=!coreHDFVersion
   b32CoreInput: l2aux, $
-    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!CoreHDFVersion', $
-    sdName='R1A:118.B32W:PT.S0.WF4-1 UpdatePtan', quantityType=radiance, hdfVersion=!CoreHDFVersion
+    file='!inpathcore/MLS-Aura_L2FWM-GHz_!coreversion_!day.h!coreHDFVersion', $
+    sdName='R1A:118.B32W:PT.S0.WF4-1 UpdatePtan', quantityType=radiance, hdfVersion=!coreHDFVersion
 
 end ReadApriori
