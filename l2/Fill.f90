@@ -4150,9 +4150,13 @@ contains ! =====     Public Procedures     =============================
       real(r8) :: scaledRad   ! scaled radiance according to the f^4 law 
       
       ! Executable code
+
+      ! check for qualified quantity
       if (.not. ValidateVectorQuantity ( quantity, quantityType=(/l_cloudInducedRadiance/), &
         & sideband=(/-1,1/), minorFrame=.true. )) &
-        & call Announce_Error ( key, 0, 'Inappropriate radiance quantity to fill' )
+        & call Announce_Error ( key, 0, 'Quantity must be cloud-induced-radiances to fill' )
+      if (.not. associated(quantity%mask)) &
+         & call Announce_Error ( key, 0, 'Quantity must be a subset to fill' )
 
       signalIn = GetSignal ( sourceQuantity%template%signal )
       signalOut = GetSignal ( Quantity%template%signal )
@@ -5666,6 +5670,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.214  2003/05/12 22:11:07  dwu
+! add more checkpoints in splitsideband
+!
 ! Revision 2.213  2003/05/11 00:05:06  livesey
 ! Informative error message when L1B data wrong size
 !
