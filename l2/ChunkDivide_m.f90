@@ -306,7 +306,7 @@ contains ! =================================== Public Procedures==============
     ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ! First try to locate the last MAF before the homeGeodAngle
     orbit = int ( tpGeodAngle%dpField(1,1,m1)/360.0 )
-    if ( tpGeodAngle%dpField(1,1,mafRange(1)) < 0.0 ) orbit = orbit - 1
+    if ( tpGeodAngle%dpField(1,1,m1) < 0.0 ) orbit = orbit - 1
     testAngle = config%homeGeodAngle + orbit*360.0
     if ( config%maxLengthFamily == PHYQ_Angle ) then
       angleIncrement = config%maxLength
@@ -1152,6 +1152,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.16  2001/11/20 00:10:29  livesey
+! Another bug fix
+!
 ! Revision 2.15  2001/11/19 23:53:50  livesey
 ! Works better, fixed bug with cases with all missing data, also handles
 ! ends of processing range properly.
