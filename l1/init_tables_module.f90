@@ -1,4 +1,4 @@
-! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 MODULE INIT_TABLES_MODULE
@@ -76,10 +76,11 @@ MODULE INIT_TABLES_MODULE
   INTEGER, PUBLIC, PARAMETER :: P_OUTPUT_VERSION_STRING = spec_last + 1
   INTEGER, PUBLIC, PARAMETER :: P_VERSION_COMMENT = p_output_version_string + 1
   INTEGER, PUBLIC, PARAMETER :: P_PRODUCE_L1BOA = p_version_comment + 1
+  INTEGER, PUBLIC, PARAMETER :: P_SIMOA = p_produce_l1boa + 1
 
   ! In Calibration section:
 
-  INTEGER, PUBLIC, PARAMETER :: P_CALWINDOW = p_produce_l1boa + 1
+  INTEGER, PUBLIC, PARAMETER :: P_CALWINDOW = p_simoa + 1
   INTEGER, PUBLIC, PARAMETER :: P_USEDEFAULTGAINS = p_calwindow + 1
   INTEGER, PUBLIC, PARAMETER :: P_CALIBDACS = p_usedefaultgains + 1
   INTEGER, PUBLIC, PARAMETER :: P_GHZSPACETEMP = p_calibdacs + 1
@@ -161,6 +162,7 @@ CONTAINS ! =====     Public procedures     =============================
     parm_indices(p_output_version_string) = add_ident ( 'OutputVersionString' )
     parm_indices(p_version_comment) =       add_ident ( 'VersionComment' )
     parm_indices(p_produce_l1boa)=          add_ident ( 'ProduceL1BOA' )
+    parm_indices(p_simoa)=          add_ident ( 'SimOA' )
     parm_indices(p_hdf_version_string) =    add_ident ( 'HDFVersionString' )
 
     ! Put section names into the symbol table
@@ -272,6 +274,7 @@ CONTAINS ! =====     Public procedures     =============================
              begin, p+p_version_comment, t+t_string, n+n_name_def, &
              begin, p+p_output_version_string, t+t_string, n+n_name_def, &
              begin, p+p_produce_l1boa, t+t_boolean, n+n_name_def, &
+             begin, p+p_simoa, t+t_boolean, n+n_name_def, &
              n+n_section, &
       begin, z+z_calibration, &
              begin, p+p_calwindow, t+t_numeric, n+n_name_def, &
@@ -298,19 +301,13 @@ CONTAINS ! =====     Public procedures     =============================
 END MODULE INIT_TABLES_MODULE
   
 ! $Log$
-! Revision 2.13  2002/11/14 16:49:57  perun
-! Split space & target temps between GHz & THz
-!
-! Revision 2.12  2002/11/07 21:34:42  jdone
-! Added HDF4/HDF5 switch.
-!
-! Revision 2.11  2002/03/29 20:18:34  perun
-! Version 1.0 commit
-!
-! Revision 2.10  2001/04/27 14:01:14  perun
-! For the latest parser version.
+! Revision 2.14  2003/08/15 14:25:04  perun
+! Version 1.2 commit
 !
 ! $Log$
+! Revision 2.14  2003/08/15 14:25:04  perun
+! Version 1.2 commit
+!
 ! Revision 2.13  2002/11/14 16:49:57  perun
 ! Split space & target temps between GHz & THz
 !
