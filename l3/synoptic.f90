@@ -899,7 +899,10 @@ Program Synoptic
         close(3)
 
 End Program Synoptic
+!=============================================================================
 
-
-
+!
+! $Log$
+! Revision 1.1  2000/10/05 16:37:19  ybj
+! L3 Core File (test) 
 
