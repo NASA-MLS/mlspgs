@@ -355,17 +355,16 @@ contains
 !    x1(:)          ! Doppler width
 !    y(:)           ! ratio Pressure to Doppler widths
 !    yi(:)          ! Interference coefficients
-!    expa(:)        ! exponential argument / frequency (not used)
 !    slabs1(:)      ! strengths
 !    dslabs1_dv0(:) ! strength derivative wrt line position
 
-    real(rp), intent(in) :: tanh1      ! tanh(frq*expa/2)
+    real(rp), intent(in) :: tanh1      ! tanh(h*frq/(2*k*T))
 
     ! "Don't do line(L) if slabs%catalog%polarized(L)"
     logical, intent(in) :: NoPolarized
 
 ! Optional inputs for temperature derivatives
-    ! (h frq) / (k T^2) ( tanh( (h frq) / (k T) ) - 1/tanh( (h frq) / (k T) ) ):
+    ! -(h frq) / (2 k T^2) ( tanh( (2 h frq) / (k T) ) - 1/tanh( (h frq) / (2 k T) ) ):
     real(rp), intent(in), optional :: dTanh_dT ! 1/tanh d/dT tanh
 ! Outputs
     real(rp), intent(out) :: beta_value
@@ -387,11 +386,9 @@ contains
 !----------------------------------------------------------------------------
 
     if ( present(dBeta_dw) .or. present(dBeta_dn) .or. present(dBeta_dv) ) then
-
       dbdw = 0.0_rp
       dbdn = 0.0_rp
       dbdv = 0.0_rp
-
     end if
 
 !  Setup absorption coefficients function
@@ -472,17 +469,17 @@ contains
     else ! No spectroscopy derivatives required
 
       if ( .not. present(dBeta_dT) ) then
-        if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
-          beta_value = slabs_lines ( Fgr, slabs_0, tanh1, noPolarized )
-        else
+        if ( slabs_0%useYi ) then
           beta_value = slabswint_lines ( Fgr, slabs_0, tanh1, noPolarized )
+        else
+          beta_value = slabs_lines ( Fgr, slabs_0, tanh1, noPolarized )
         end if
       else ! Temperature derivatives needed
-        if ( maxval(ABS(slabs_0%yi)) < 1.0e-06_rp ) then
-          call slabs_lines_dT ( fgr, slabs_0, tanh1, dTanh_dT, &
+        if ( slabs_0%useYi ) then
+          call slabswint_lines_dT ( fgr, slabs_0, tanh1, dTanh_dT, &
             & beta_value, dBeta_dT, noPolarized )
         else
-          call slabswint_lines_dT ( fgr, slabs_0, tanh1, dTanh_dT, &
+          call slabs_lines_dT ( fgr, slabs_0, tanh1, dTanh_dT, &
             & beta_value, dBeta_dT, noPolarized )
         end if
       end if
@@ -524,11 +521,11 @@ contains
 !    x1(:)          ! Doppler width
 !    y(:)           ! ratio Pressure to Doppler widths
 !    yi(:)          ! Interference coefficients
-!    expa(:)        ! exponential argument / frequency (not used)
 !    slabs1(:)      ! strengths
 !    dslabs1_dv0(:) ! strength derivative wrt line position
 
-    real(rp), intent(in) :: Tanh1(:)   ! tanh(frq*expa/2)
+    real(rp), intent(in) :: Tanh1(:)   ! tanh(h*frq/(2*k*T))
+
     ! "Don't do line L if slabs_0(k)%catalog%Polarized(L)"
     logical, intent(in) :: NoPolarized
 
@@ -565,6 +562,12 @@ contains
       dumpStop = index(switches,'LBLB') > 0
       dumpAll = dumpStop .or. index(switches,'lblB') > 0
       dumpBeta = dumpAll .or. ( index(switches,'lblb') > 0 )
+    end if
+
+    if ( associated(dBeta_dw) .or. associated(dBeta_dn) .or. associated(dBeta_dv) ) then
+      dbdw = 0.0_rp
+      dbdn = 0.0_rp
+      dbdv = 0.0_rp
     end if
 
     nl = size(slabs_0(1)%catalog%lines) ! All of the slabs have the same catalog
@@ -624,23 +627,23 @@ contains
       if ( .not. temp_der .and. .not. spect_der ) then
 
         ! Add in sum of betas for all the lines
-        if ( maxval(ABS(slabs_0(k)%yi)) < 1.0e-06_rp ) then
-          beta_value(j) = beta_value(j) + &
-            & ratio * slabs_lines ( Fgr, slabs_0(k), tanh1(j), noPolarized )
-        else
+        if ( slabs_0(k)%useYi ) then
           beta_value(j) = beta_value(j) + &
             & ratio * slabswint_lines ( Fgr, slabs_0(k), tanh1(j), noPolarized )
+        else
+          beta_value(j) = beta_value(j) + &
+            & ratio * slabs_lines ( Fgr, slabs_0(k), tanh1(j), noPolarized )
         end if
 
       else
 
         if ( temp_der ) then ! Temperature derivatives required
 
-          if ( maxval(ABS(slabs_0(k)%yi)) < 1.0e-06_rp ) then
-            call slabs_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
+          if ( slabs_0(k)%useYi ) then
+            call slabswint_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
               & bv, dBdT, noPolarized )
           else
-            call slabswint_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
+            call slabs_lines_dT ( fgr, slabs_0(k), tanh1(j), dTanh_dT(j), &
               & bv, dBdT, noPolarized )
           end if
           beta_value(j) = beta_value(j) + ratio * bv
@@ -1072,6 +1075,9 @@ contains
 end module GET_BETA_PATH_M
 
 ! $Log$
+! Revision 2.68  2004/11/04 03:42:09  vsnyder
+! Provide for both LBL_Ratio and PFA_Ratio in beta_group
+!
 ! Revision 2.67  2004/11/01 20:26:36  vsnyder
 ! Reorganization of representation for molecules and beta groups; PFA may be broken for now
 !
