@@ -1404,8 +1404,6 @@ contains ! =====     Public Procedures     =============================
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
-        call solveCholesky ( z%m%block(i,i), &
-          & my_rhs%quantities(qc)%values(:,ic), transpose=.false. )
       end do ! i = 1, n
     else                           ! Solve Z X = RHS for X
       do i = n, 1, -1
@@ -1421,18 +1419,18 @@ contains ! =====     Public Procedures     =============================
         end do ! j = 1, i-1
         call solveCholesky ( z%m%block(i,i), &
           & my_rhs%quantities(qc)%values(:,ic), transpose=.false. )
-        call solveCholesky ( z%m%block(i,i), &
-          & my_rhs%quantities(qc)%values(:,ic), transpose=.true. )
       end do ! i = n, 1, -1
     end if
   end subroutine SolveCholesky_1
 
   ! -------------------------------------------  UpdateDiagonal_1  -----
-  subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUARE )
+  subroutine UpdateDiagonal_1 ( A, LAMBDA, SQUARE, INVERT )
   ! Add LAMBDA to the diagonal of A.  Don't update the extra row or column.
     type(Matrix_SPD_T), intent(inout) :: A
     real(r8), intent(in) :: LAMBDA
-    logical, intent(in), optional :: SQUARE ! Update with square of value
+    logical, intent(in), optional :: SQUARE ! Update with square of lambda
+    logical, intent(in), optional :: INVERT ! Update with inverse of (square
+    !                                         of) lambda
 
     integer :: I, N
     real(r8) :: MYLAMBDA
@@ -1440,7 +1438,14 @@ contains ! =====     Public Procedures     =============================
     myLambda = lambda
     if ( present(square) ) then
       if (square) myLambda = lambda**2
-    endif
+    end if
+    if ( present(invert) ) then
+      if ( invert ) then
+        if ( myLambda == 0.0_r8 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & "Updating with inverse of zero in UpdateDiagonal_1" )
+        myLambda = 1.0_r8 / myLambda
+      end if
+    end if
 
     n = max(a%m%row%nb,a%m%col%nb)
     if ( a%m%row%extra .or. a%m%col%extra ) n = n - 1
@@ -1452,13 +1457,15 @@ contains ! =====     Public Procedures     =============================
   end subroutine UpdateDiagonal_1
 
   ! ----------------------------------------  UpdateDiagonalVec_1  -----
-  subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT, SQUARE )
+  subroutine UpdateDiagonalVec_1 ( A, X, SUBTRACT, SQUARE, INVERT )
   ! Add X to the diagonal of A.  Don't update the extra row or column.
   ! If SUBTRACT is present and true, subtract X from the diagonal.
     type(matrix_SPD_T), intent(inout) :: A
     type(vector_T), intent(in) :: X
     logical, intent(in), optional :: SUBTRACT
-    logical, intent(in), optional :: SQUARE
+    logical, intent(in), optional :: SQUARE ! Update with square of X
+    logical, intent(in), optional :: INVERT ! Update with inverse of (square
+    !                                         of) X
 
     integer :: I, N
     logical :: MYSQUARE
@@ -1474,12 +1481,14 @@ contains ! =====     Public Procedures     =============================
     if ( mySquare ) then
       do i = 1, n
         call updateDiagonal ( a%m%block(i,i), &
-          & (x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)))**2, subtract )
+          & (x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)))**2, &
+          & subtract, invert )
       end do
     else
       do i = 1, n
         call updateDiagonal ( a%m%block(i,i), &
-          & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)), subtract )
+          & x%quantities(a%m%row%quant(i))%values(:,a%m%row%inst(i)), &
+          & subtract, invert )
       end do
     endif
   end subroutine UpdateDiagonalVec_1
@@ -1761,6 +1770,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.43  2001/05/30 20:18:01  vsnyder
+! Add 'invert' argument to 'UpdateDiagonal'
+!
 ! Revision 2.42  2001/05/22 19:09:33  vsnyder
 ! Implement MaxL1
 !
