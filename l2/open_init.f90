@@ -25,6 +25,7 @@ module Open_Init
     &                mlspcf_l2_param_CCSDSEndId, &
     &                mlspcf_l2_param_spec_keys, &
     &                mlspcf_l2_param_spec_hash, &
+    &                mlspcf_l2_param_switches, &
     &                mlspcf_pcf_start
   use MLSStrings, only: LowerCase
   use Output_m, only: Output
@@ -127,6 +128,8 @@ contains ! =====     Public Procedures     =============================
     integer :: Status, Size ! From allocate
 
     character (len=fileNameLen) :: name
+
+    character (len=len(switches)) :: extra_switches
 
     integer :: Indx, Mlspcf_log, Version
 
@@ -328,6 +331,15 @@ contains ! =====     Public Procedures     =============================
       l2pcf%spec_keys = LowerCase(l2pcf%spec_keys)
     end if
 
+   ! If using PCF, it will be difficult to set switches from command-line
+   ! so the following allows us to do so inside the PCF
+   ! This way we can still dump vectors, monitor iterations or activities
+    returnStatus = pgs_pc_getConfigData(mlspcf_l2_param_switches, extra_switches)
+
+    if ( returnstatus == PGS_S_SUCCESS ) then
+      switches = trim(switches) // trim(extra_switches)
+    end if
+	
 ! Get the name of the log file from the PCF
 
     version = 1
@@ -515,6 +527,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.53  2001/08/09 00:23:05  pwagner
+! pcf param for extra switches added; read
+!
 ! Revision 2.52  2001/05/24 20:34:50  pwagner
 ! More forgiving of faulty pcf
 !
