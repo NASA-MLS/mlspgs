@@ -299,6 +299,7 @@ contains ! ================================ FullForwardModel routine ======
     ! place, and doesn't want to write comments for
 
     ! Local storage places for derivatives..(Temporary..)
+    real(r8), allocatable :: PrtRad(:)
     real(r4), dimension(:,:,:,:)  , pointer :: K_TEMP
     real(r4), dimension(:,:,:,:,:), pointer :: K_ATMOS
     real(r4), dimension(:,:,:,:,:), pointer :: K_SPECT_DW
@@ -903,7 +904,8 @@ contains ! ================================ FullForwardModel routine ======
               &  Req,TAN_PHI_H_GRID=one_tan_ht,                              &
               &  TAN_PHI_T_GRID=one_tan_temp,                                &
               &  NEG_H_TAN = (/neg_tan_ht/),DHTDTL0=tan_dh_dt,               &
-              &  DHIDTLM=dh_dt_glgrid, DHITDTLM=dh_dt_path(1:no_ele,:),      &
+              &  DHIDTLM=dh_dt_glgrid(:,windowStart:windowFinish,:), &
+              &  DHITDTLM=dh_dt_path(1:no_ele,:),      &
               &  Z_BASIS = temp%template%surfs(:,1),                         &
               &  ETA_ZXP=eta_zxp_t(1:no_ele,:),                              &
               &  DO_CALC_T = do_calc_t(1:no_ele,:),                          &
@@ -933,7 +935,8 @@ contains ! ================================ FullForwardModel routine ======
               &  orbIncline%values(1,1)*Deg2Rad,h_path(1:no_ele),            &
               &  phi_path(1:no_ele),t_path(1:no_ele),dhdz_path(1:no_ele),    &
               &  Req,TAN_PHI_H_GRID=one_tan_ht,TAN_PHI_T_GRID=one_tan_temp,  &
-              &  DHTDTL0=tan_dh_dt,DHIDTLM=dh_dt_glgrid,                     &
+              &  DHTDTL0=tan_dh_dt,                                          &
+              &  DHIDTLM=dh_dt_glgrid(:,windowStart:windowFinish,:),         &
               &  DHITDTLM=dh_dt_path(1:no_ele,:),                            &
               &  Z_BASIS = temp%template%surfs(:,1),                         &
               &  ETA_ZXP=eta_zxp_t(1:no_ele,:),                              &
@@ -1297,7 +1300,6 @@ contains ! ================================ FullForwardModel routine ======
 
         ! Work out which channel shape information we're going need ----------
 
-
         ! Frequency averaging if needed --------------------------------------
 
         ! Here we either frequency average to get the unconvolved radiances, or
@@ -1325,7 +1327,7 @@ contains ! ================================ FullForwardModel routine ======
               & Radiances(ptg_i,i) )
           end do
         else
-          Radiances(ptg_i,1:noFreqs) = RadV(1:noFreqs)
+          Radiances(ptg_i,1:noUsedChannels) = RadV(1)
         end if
 
         ! Frequency averaging of derivatives if needed -----------------------
@@ -1692,19 +1694,29 @@ contains ! ================================ FullForwardModel routine ======
       print *
       k=ptan%template%noSurfs
       print 901, k
-901   format ( 'ptan\ ',i3.3)
       Print 902,Ptan%values(1:k,maf)
+
+901   format ( 'ptan\ ',i3.3)
 902   format ( 4(4x, f10.7))
 
-      print *
+      Allocate(PrtRad(k), STAT=i)
+
+      Print *
       do i = 1, noUsedChannels
+        PrtRad(:) = 0.0
         channel = usedChannels(i)
-        print 903, channel, char(92), ptan%template%noSurfs
-903     format ( 'ch', i2.2, '_pfa_rad', a1, i3.3 )
-        print 905, &
-          & firstRadiance%values(i:firstRadiance%template%InstanceLen:25,maf)
-905     format ( 4(2x, 1pg15.8) )
+        print 903, channel, char(92), k
+        do ptg_i = 1, k
+          j = channel + thisRadiance%template%noChans*(ptg_i-1) 
+          PrtRad(ptg_i) = thisRadiance%values(j,maf ) 
+        end do
+        print 905, PrtRad(1:ptan%template%noSurfs)
       end do
+
+903   format ( 'ch', i2.2, '_pfa_rad', a1, i3.3 )
+905   format ( 4(2x, 1pg15.8) )
+
+      Deallocate(PrtRad, STAT=i)
 
 932   format (A,i2.2,A1,i4.4)
 933   format ( 5(2x, 1pg13.6) )
@@ -1839,6 +1851,9 @@ contains ! ================================ FullForwardModel routine ======
  end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.16  2001/11/15 01:21:57  zvi
+! Extiction debug fix
+!
 ! Revision 2.15  2001/11/10 00:46:40  zvi
 ! Adding the EXTINCTION capabilitis
 !
