@@ -190,6 +190,7 @@ subtrees:   do while ( j <= howmany )
       end select
       i = i + 1
     end do
+    call CloseParallel
     call destroy_ant_patterns_database
     call DestroyL2PCDatabase
     call destroy_filter_shapes_database
@@ -203,13 +204,15 @@ subtrees:   do while ( j <= howmany )
     call DestroySpectrometerTypeDatabase ( SpectrometerTypes )
     call DestroySignalDatabase ( Signals )
     call destroyVGridDatabase ( vGrids )
-    call CloseParallel
     error_flag = 0
     if ( toggle(gen) ) call trace_end ( 'WALK_TREE_TO_DO_MLS_L2' )
   end subroutine WALK_TREE_TO_DO_MLS_L2
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.55  2001/06/07 21:58:28  pwagner
+! Added Copyright statement
+!
 ! Revision 2.54  2001/05/23 22:00:16  livesey
 ! Interim version
 !
