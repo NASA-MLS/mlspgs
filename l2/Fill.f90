@@ -4221,7 +4221,7 @@ contains ! =====     Public Procedures     =============================
           else
             surfOr1 = surf
           end if
-          ! Convert (/ lat(deg), lon(deg), height(m) /) to cartesian (e-radius)
+          ! Convert (/ lat(deg), lon(deg), height(km) /) to cartesian (e-radius)
           call to_cart ( real( (/ qty%template%geodLat(surfOr1,instance), &
             &                     qty%template%lon(surfOr1,instance), &
             &                     gphQty%values(surf,instance)*1.0e-3 /) ), xyz )
@@ -4779,6 +4779,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.179  2003/01/16 21:48:58  vsnyder
+! Fix a comment
+!
 ! Revision 2.178  2003/01/15 23:29:41  pwagner
 ! Compatible with adjustable data types L2GPData
 !
