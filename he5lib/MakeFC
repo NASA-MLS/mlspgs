@@ -113,11 +113,11 @@ endif
 $(PROG): $(CONFDIR)/$(MLSCFILE) \
    $(OBJ_DIR)/$(MLSCONFG) $(libmls_objs)/libmls.a
 	cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) LIB_NAME=$(PROG) $(PROG) \
-   UNPREFXDPTHS="$(HDF5)/../fortran/src"
+   UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include"
 
 $(OBJ_DIR)/$(MLSCONFG)/$(PROG): $(PROG)
 	cd $(OBJ_DIR)/$(MLSCONFG) && $(MAKE) LIB_NAME=$(PROG) $(PROG) \
-   UNPREFXDPTHS="$(HDF5)/../fortran/src"
+   UNPREFXDPTHS="$(HDF5)/../fortran/src $(HDF5)/../include"
 
 $(libmls_objs)/libmls.a: $(LIB_prereqs) $(libmls_objs)
 	@if [ "$(NOHUNTING)" != "" ] ; then \
@@ -188,6 +188,9 @@ targ:
 	$(TAR) hcvzf ../fwdmdl.tgz * --exclude \*.o --exclude \*.mod --exclude l2_test
 
 # $Log$
+# Revision 1.3  2002/01/19 00:26:40  pwagner
+# Restored h5_griddeddata
+#
 # Revision 1.2  2002/01/15 00:40:18  pwagner
 # Now uses user-settable OMIT and internal OMIT_SRCS and OMIT_PREFIXD variables
 #
