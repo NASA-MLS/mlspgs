@@ -236,7 +236,11 @@ contains ! =====     Public Procedures     =============================
       call output ( trim(type_names(decl_table(decl)%type)) )
       call output ( ' units=' )
       if ( decl_table(decl)%type == units_name ) then
-        call display_string ( phyq_indices(decl_table(decl)%units) )
+        if ( phyq_indices(decl_table(decl)%units) == 0 ) then
+          call output ( ' <unknown> ' )
+        else
+          call display_string ( phyq_indices(decl_table(decl)%units) )
+        end if
       else
         call output ( decl_table(decl)%units )
       end if
@@ -370,6 +374,9 @@ contains ! =====     Public Procedures     =============================
 end module DECLARATION_TABLE
 
 ! $Log$
+! Revision 2.8  2004/01/23 05:35:50  livesey
+! Made dump_1_decl a little more robust
+!
 ! Revision 2.7  2004/01/17 03:04:48  vsnyder
 ! Provide for functions in expressions
 !
