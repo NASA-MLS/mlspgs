@@ -62,9 +62,9 @@ MODULE OutputClose
 
 CONTAINS
 
-!-------------------------------
-   SUBROUTINE WriteMetaLog (pcf)
-!-------------------------------
+!----------------------------------------
+   SUBROUTINE WriteMetaLog (pcf, logType)
+!----------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine writes metadata for the log file to a separate ASCII file.
@@ -72,6 +72,8 @@ CONTAINS
 ! Arguments
 
       TYPE( PCFData_T ), INTENT(IN) :: pcf
+
+      CHARACTER (LEN=*), INTENT(IN) :: logType
 
 ! Parameters
 
@@ -85,7 +87,7 @@ CONTAINS
 ! Variables
 
       CHARACTER (LEN=1) :: nullStr
-      CHARACTER (LEN=21) :: sval
+      CHARACTER (LEN=45) :: sval
       CHARACTER (LEN=32) :: mnemonic
       CHARACTER (LEN=480) :: msg, msr
       CHARACTER (LEN=PGSd_MET_GROUP_NAME_L) :: groups(PGSd_MET_NUM_OF_GROUPS)
@@ -102,11 +104,14 @@ CONTAINS
 
 ! Set PGE values
 
+      sval = TRIM(logType) // pcf%l3StartDay // ':' // pcf%l3EndDay
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalGranuleID", &
-                                 pcf%logGranID)
+                                 sval)
 
+      CALL ExpandFileTemplate('$version-$cycle', sval, &
+                              version=pcf%outputVersion, cycle=pcf%cycle)
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), "LocalVersionID", &
-                                 pcf%outputVersion)
+                                 sval)
 
       result = pgs_met_setAttr_s(groups(INVENTORYMETADATA), &
                                  "RangeBeginningDate", pcf%l3StartDay)
@@ -144,15 +149,17 @@ CONTAINS
    END SUBROUTINE WriteMetaLog
 !-----------------------------
 
-!-----------------------------------------------------------------------
-   SUBROUTINE OutputAndClose (l3cf, l3sp, l3dm, dmA, dmD, l3r, residA, &
-                              residD, flags)
-!-----------------------------------------------------------------------
+!----------------------------------------------------------------------------
+   SUBROUTINE OutputAndClose (pcf, l3cf, anText, l3sp, l3dm, dmA, dmD, l3r, &
+                              residA, residD, flags)
+!----------------------------------------------------------------------------
 
 ! Brief description of subroutine
 ! This subroutine performs the Output/Close task in the MLSL3 program.
 
 ! Arguments
+
+      TYPE( PCFData_T ), INTENT(IN) :: pcf
 
       TYPE( L3CFProd_T ), INTENT(IN) :: l3cf
 
@@ -163,6 +170,8 @@ CONTAINS
       TYPE( L3DMData_T ), POINTER :: l3dm(:), dmA(:), dmD(:)
 
       TYPE( L3SPData_T ), POINTER :: l3sp(:)
+
+      CHARACTER (LEN=1), POINTER :: anText(:)
 
 ! Parameters
 
@@ -178,7 +187,7 @@ CONTAINS
 ! L3SP -- if data exist, create & write a file for this product
 
       IF (flags%writel3sp) THEN
-         CALL OutputL3SP (l3cf, l3sp)
+         CALL OutputL3SP (l3cf, anText, l3sp)
       ELSE
          msr = TRIM(l3cf%l3prodNameD) // ' L3SP' // NOOUT_ERR
          CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
@@ -268,7 +277,7 @@ CONTAINS
 
 ! Write the L3DM metadata
 
-         CALL WriteMetaL3DM(files, l3cf%mcf)
+         CALL WriteMetaL3DM(pcf, l3cf, files, anText)
 
       ENDIF
 
@@ -293,6 +302,9 @@ END MODULE OutputClose
 !=====================
 
 !$Log$
+!Revision 1.5  2000/12/29 21:44:16  nakamura
+!Removed obsolete routines CheckOutputDate & FindDatabaseIndex; switched to one-product/all-days paradigm.
+!
 !Revision 1.4  2000/12/07 21:20:43  nakamura
 !Changed search/bypass PCF logic, so that the SearchPCFNames subroutine always returns a file name with a path.
 !
