@@ -72,6 +72,7 @@ frequency
 full
 
 gauss
+geocAltitude
 geodAltitude
 geodAngle
 GHz
@@ -205,6 +206,9 @@ xyz
 zeta
 
 # $Log$
+# Revision 2.38  2004/10/13 02:22:38  livesey
+# Added geocAltitude
+#
 # Revision 2.37  2004/09/27 20:10:18  livesey
 # Added L1BMAFBaseline
 #
