@@ -1,10 +1,9 @@
- ! Copyright (c) 2001, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module GLOBAL_SETTINGS
 
   use EmpiricalGeometry, only: INITEMPIRICALGEOMETRY
-  use EXPR_M, only: EXPR   
   use FGrid, only: AddFGridToDatabase, CreateFGridFromMLSCFInfo, FGrid_T
   use ForwardModelConfig, only: AddForwardModelConfigToDatabase, &
     & ForwardModelConfig_T
@@ -19,7 +18,7 @@ module GLOBAL_SETTINGS
     & DeallocateL1BData, Dump, NAME_LEN, PRECISIONSUFFIX
   use L2GPData, only: L2GPDATA_T
   use LEXER_CORE, only: PRINT_SOURCE
-  use MLSCommon, only: R8, NameLen, L1BInfo_T, TAI93_Range_T
+  use MLSCommon, only: R8, FileNameLen, NameLen, L1BInfo_T, TAI93_Range_T
   use MLSL2Options, only: PCF
   use MLSL2Timings, only: SECTION_TIMES, TOTAL_TIMES
   use MLSMessageModule, only: MLSMessage, MLSMSG_Error
@@ -44,6 +43,8 @@ module GLOBAL_SETTINGS
   private
 
   public :: SET_GLOBAL_SETTINGS
+
+  integer, parameter :: LEVEL1_HDFVERSION = 4  ! Until we convert level 1 to hdf5
 
   integer, public, parameter :: ILLEGALL1BRADID=-1      ! something sfstart should catch
   integer, public, parameter :: MAXNUML1BRADIDS=&
@@ -82,6 +83,7 @@ contains
 
     integer :: Details   ! How much info about l1b files to dump
     logical :: GOT(2) = .false.
+    integer :: hdfVersion               ! 4 or 5 (corresp. to hdf4 or hdf5)
     integer :: I         ! Index of son of root
     integer :: L1BFLAG
     real(r8) :: MINTIME, MAXTIME        ! Time Span in L1B file data
@@ -93,12 +95,11 @@ contains
     logical :: TIMING    ! For S_Time
     logical :: startTimeIsAbsolute, stopTimeIsAbsolute
     real :: T1, T2       ! For S_Time
-    integer :: UNITS(2)  ! Units of expression
-    real(r8) :: VALUE(2)   ! Value of expression
     real(r8) :: start_time_from_1stMAF, end_time_from_1stMAF
 
 
     character(LEN=NameLen) :: name_string
+    character(LEN=FileNameLen) :: FilenameString
     character (len=name_len) :: QUANTITY
     character(LEN=*), parameter :: time_conversion='(F32.0)'
 
@@ -202,14 +203,30 @@ contains
           call decorate ( son, AddFGridToDatabase ( fGrids, &
             & CreateFGridFromMLSCFInfo ( name, son ) ) )
         case ( s_l1brad )
+  ! ((( If we convert level 1 files to hdf5, return hdfVersion  )))
+  !      as an argument from l1bradSetup
           call l1bradSetup ( son, l1bInfo, F_FILE, &
             & MAXNUML1BRADIDS, ILLEGALL1BRADID )
+          if(index(switches, 'pro') /= 0) then  
+            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))                         
+            call get_string ( sub_rosa_index, FilenameString, strip=.true. )
+            call proclaim(FilenameString, 'l1brad', &                   
+            & hdfVersion=LEVEL1_HDFVERSION) 
+          endif
           if ( pcf ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1B Rad. file(s) ***', &
             & just_a_warning = .true.)
         case ( s_l1boa )
+  ! ((( If we convert level 1 files to hdf5, return hdfVersion  )))
+  !      as an argument from l1boaSetup
           call l1boaSetup ( son, l1bInfo, F_FILE )
+          if(index(switches, 'pro') /= 0) then  
+            sub_rosa_index = sub_rosa(subtree(2,subtree(2, son)))
+            call get_string ( sub_rosa_index, FilenameString, strip=.true. )
+            call proclaim(FilenameString, 'l1boa', &                   
+            & hdfVersion=LEVEL1_HDFVERSION) 
+          endif
           if ( pcf ) &
             & call announce_error(0, &
             & '*** l2cf overrides pcf for L1BOA file ***', &
@@ -314,6 +331,29 @@ contains
     end subroutine SayTime
 
   end subroutine SET_GLOBAL_SETTINGS
+
+! =====     Private Procedures     =====================================
+
+  ! ---------------------------------------------  proclaim  -----
+  subroutine proclaim ( Name, l1_type, hdfVersion )
+    character(LEN=*), intent(in)   :: Name
+    character(LEN=*), intent(in)   :: l1_type
+    integer, optional,  intent(in) :: hdfVersion
+
+    call output ( 'Level 1 product type : ' )
+    call output ( trim(l1_type), advance='no')
+    if ( present(hdfVersion) ) then
+      call blanks(4)
+      call output ( 'hdf ' )
+      call output ( hdfVersion, advance='yes')
+    else
+      call output ( ' ', advance='yes')
+    endif
+    call blanks(15)
+    call output ( 'name : ' )
+    call blanks(8)
+    call output ( trim(Name), advance='yes')
+  end subroutine proclaim
 
   ! ------------------------------------------  dump_global_settings  -----
   subroutine dump_global_settings ( l2pcf, processingRange, l1bInfo, &
@@ -550,6 +590,9 @@ contains
 end module GLOBAL_SETTINGS
 
 ! $Log$
+! Revision 2.50  2001/12/16 00:57:26  livesey
+! Temporary fix to deal with tai93 time issues for sids
+!
 ! Revision 2.49  2001/12/10 20:22:22  livesey
 ! Added code for EmpiricalGeometry
 !
