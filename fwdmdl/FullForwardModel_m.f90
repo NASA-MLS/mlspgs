@@ -1,12 +1,14 @@
 ! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
- 
+
 module FullForwardModel_m
- 
+
   use GLNP, only: NG, GX
   use MLSCommon, only: I4, R4, R8, RP, IP, FINDFIRST
-  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, DESTROYCOMPLETESLABS
-  use COMP_SPS_PATH_M, only: COMP_SPS_PATH
+  use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATEONESLABS, &
+                              &  DESTROYCOMPLETESLABS
+  use COMP_ETA_DOCALC_NO_FRQ_M, only: comp_eta_docalc_no_frq
+  use COMP_SPS_PATH_FRQ_M, only: comp_sps_path_frq
   use EVAL_SPECT_PATH_M, only: EVAL_SPECT_PATH
   use REFRACTION_M, only: REFRACTIVE_INDEX, COMP_REFCOR, PATH_DS_DH
   use TWO_D_HYDROSTATIC_M, only: two_d_hydrostatic
@@ -21,7 +23,7 @@ module FullForwardModel_m
   use NO_CONV_AT_ALL_M, only: NO_CONV_AT_ALL
   use D_LINTRP_M, only: LINTRP
   use D_HUNT_M, only: hunt_zvi => HUNT
- 
+
   use VectorsModule, only: VECTOR_T, VECTORVALUE_T, VALIDATEVECTORQUANTITY, &
                        &   GETVECTORQUANTITYBYTYPE
   use ForwardModelConfig, only: FORWARDMODELCONFIG_T
@@ -30,7 +32,7 @@ module FullForwardModel_m
   use AntennaPatterns_m, only: ANTENNAPATTERNS
   use FilterShapes_m, only: FILTERSHAPES
   use PointingGrid_m, only: POINTINGGRIDS
-  use Load_sps_data_m, only: LOAD_SPS_DATA
+  use Load_sps_data_m, only: LOAD_SPS_DATA, Grids_T
   use MatrixModule_1, only: MATRIX_T
   use Trace_M, only: Trace_begin, Trace_end
   use MLSSignals_m, only: SIGNAL_T, MATCHSIGNAL, ARESIGNALSSUPERSET
@@ -53,11 +55,11 @@ module FullForwardModel_m
   use Dump_0, only: DUMP
 
   ! This module contains the `full' forward model.
- 
+
   implicit none
   private
   public :: FullForwardModel
- 
+
   !---------------------------- RCS Ident Info -------------------------------
   character (len=*), parameter, private :: IdParm = &
     & "$Id$"
@@ -65,12 +67,12 @@ module FullForwardModel_m
   character (len=*), parameter, private :: ModuleName= &
     & "$RCSfile$"
   !---------------------------------------------------------------------------
- 
+
 contains ! ================================ FullForwardModel routine ======
- 
+
   ! -----------------------------------------------  ForwardModel  -----
-  subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
-    &                       FwdModelOut, oldIfm, FmStat, Jacobian )
+  Subroutine FullForwardModel ( FwdModelConf, FwdModelIn, FwdModelExtra, &
+                             &  FwdModelOut, oldIfm, FmStat, Jacobian )
     ! This is the full radiative transfer forward model, the workhorse
     ! code
     type(forwardModelConfig_T), intent(inout) :: fwdModelConf
@@ -91,6 +93,7 @@ contains ! ================================ FullForwardModel routine ======
     integer :: CHANNEL                  ! A Loop counter
     integer :: FRQ_I                    ! Frequency loop index
     integer :: F_LEN                    ! Total number of f's
+    integer :: P_LEN                    ! Partial number of f's (No freq.)
     integer :: H2O_IND                  ! Index of h2o inside f array
     integer :: I                        ! Loop index and other uses .
     integer :: IER                      ! Status flag from allocates
@@ -104,7 +107,6 @@ contains ! ================================ FullForwardModel routine ======
     integer :: MAXNOFSURFS              ! Max. no. surfaces for any molecule
     integer :: MAXSUPERSET              ! Max. value of superset
     integer :: MAXVERT                  ! Number of points in gl grid
-    integer :: N2LVL                    ! 2*nLvl
     integer :: NL                       ! Number of lines
     integer :: NLM1                     ! NLVL - 1
     integer :: NLVL                     ! Size of integration grid
@@ -117,14 +119,6 @@ contains ! ================================ FullForwardModel routine ======
     integer :: NO_GL_NDX                ! Number of GL points to do
     integer :: NO_TAN_HTS               ! Number of tangent heights
     integer :: NPC                      ! Length of coarse path
-    integer :: N_DN_PHI                 ! Number of phi's for all n's (spectroscopy)
-    integer :: N_DN_ZETA                ! Number of zetas for all n's (spectroscopy)
-    integer :: N_DV_PHI                 ! Number of phi's for all v's (spectroscopy)
-    integer :: N_DV_ZETA                ! Number of zetas for all v's (spectroscopy)
-    integer :: N_DW_PHI                 ! Number of phi's for all w's (spectroscopy)
-    integer :: N_DW_ZETA                ! Number of zetas for all w's (spectroscopy)
-    integer :: N_F_PHI                  ! Number of phis for all f's
-    integer :: N_F_ZETA                 ! Number of zetas for all f's
     integer :: N_T_PHI                  ! Number of phis for temperature
     integer :: N_T_ZETA                 ! Number of zetas for temperature
     integer :: PHIWINDOW                ! From fwdMdlConfig
@@ -157,14 +151,6 @@ contains ! ================================ FullForwardModel routine ======
     integer, dimension(1) :: WHICHPATTERNASARRAY      ! Result of minloc
 
     integer, dimension(:), pointer :: GRIDS ! Heights in ptgGrid for each tangent
-    integer, dimension(:), pointer :: NO_Z ! Number of z components (noSpecies)
-    integer, dimension(:), pointer :: NO_PHI ! Number of phi components (noSpecies)
-    integer, dimension(:), pointer :: NO_Z_DW ! no. z compts. for w derivative (noSpecies)
-    integer, dimension(:), pointer :: NO_PHI_DW ! no. phi compts. for w derivative (noSpecies)
-    integer, dimension(:), pointer :: NO_Z_DN ! no. z compts. for n derivative (noSpecies)
-    integer, dimension(:), pointer :: NO_PHI_DN ! no. phi compts. for n derivative (noSpecies)
-    integer, dimension(:), pointer :: NO_Z_DV ! no. z compts. for v derivative (noSpecies)
-    integer, dimension(:), pointer :: NO_PHI_DV ! no. phi compts. for v derivative (noSpecies)
     integer, dimension(:), pointer :: USEDCHANNELS ! Which channel is this
     integer, dimension(:), pointer :: USEDSIGNALS ! Which signal is this channel from
     integer, dimension(:), pointer :: SUPERSET ! Used for matching signals
@@ -179,7 +165,8 @@ contains ! ================================ FullForwardModel routine ======
     logical, dimension(:), pointer :: LIN_LOG ! Is this vmr on a log basis? (noSpecies)
     logical, dimension(:), pointer :: LINEFLAG ! Use this line (noLines per species)
 
-    logical, dimension(:,:), pointer :: DO_CALC ! 'Avoid zeros' indicator
+    logical, dimension(:,:), pointer :: DO_CALC_ZP  ! 'Avoid zeros' indicator
+    logical, dimension(:,:), pointer :: DO_CALC_FZP ! 'Avoid zeros' indicator
     logical, dimension(:,:), pointer :: DO_CALC_DN ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_DV ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_DW ! 'Avoid zeros'
@@ -190,7 +177,7 @@ contains ! ================================ FullForwardModel routine ======
     real(r8) :: CENTERFREQ              ! Of band
 
     real(rp) :: CENTER_ANGLE            ! For angles
-    real(rp) :: DEL_TEMP            ! Temp. step-size in evaluation of Temp. power dep.
+    real(rp) :: DEL_TEMP   ! Temp. step-size in evaluation of Temp. power dep.
     real(rp) :: ELEV_OFFSET             ! Elevation offset
     real(rp) :: E_RFLTY                 ! Earth reflectivity at given tan. point
     real(rp) :: NEG_TAN_HT              ! GP Height (in KM.) of tan. press. below surface
@@ -215,10 +202,10 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:), pointer :: ONE_TAN_HT ! ***
     real(rp), dimension(:), pointer :: ONE_TAN_TEMP ! ***
     real(rp), dimension(:), pointer :: PATH_DSDH ! dS/dH on path
-    real(rp), dimension(:), pointer :: PHI_BASIS ! phi basis per species (n_f_phi)
-    real(rp), dimension(:), pointer :: PHI_BASIS_DN ! phi basis per species (n_dn_phi)
-    real(rp), dimension(:), pointer :: PHI_BASIS_DV ! phi basis per species (n_dv_phi)
-    real(rp), dimension(:), pointer :: PHI_BASIS_DW ! phi basis per species (n_dw_phi)
+    real(rp), dimension(:), pointer :: PHI_BASIS ! phi basis per species
+    real(rp), dimension(:), pointer :: PHI_BASIS_DN ! phi basis per species
+    real(rp), dimension(:), pointer :: PHI_BASIS_DV ! phi basis per species
+    real(rp), dimension(:), pointer :: PHI_BASIS_DW ! phi basis per species
     real(rp), dimension(:), pointer :: PHI_PATH ! Phi's on path
     real(rp), dimension(:), pointer :: P_GLGRID ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: P_PATH ! Pressure on path
@@ -253,7 +240,8 @@ contains ! ================================ FullForwardModel routine ======
     real(rp), dimension(:,:), pointer :: DH_DT_PATH ! dH/dT on path
     real(rp), dimension(:,:), pointer :: DX_DT       ! (No_tan_hts, Tsurfs)
     real(rp), dimension(:,:), pointer :: D2X_DXDT    ! (No_tan_hts, Tsurfs)
-    real(rp), dimension(:,:), pointer :: ETA_ZXP ! Eta_z x Eta_p
+    real(rp), dimension(:,:), pointer :: ETA_ZP  ! Eta_z x Eta_p
+    real(rp), dimension(:,:), pointer :: ETA_FZP ! Eta_z x Eta_p * Eta_f
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN ! Eta_z x Eta_p for N
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DV ! Eta_z x Eta_p for V
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DW ! Eta_z x Eta_p for W
@@ -297,6 +285,11 @@ contains ! ================================ FullForwardModel routine ======
     type (catalog_T), pointer :: thisCatalogEntry
     type (line_T), pointer :: thisLine
 
+    type (Grids_T) :: Grids_f   ! All the coordinates
+    type (Grids_T) :: Grids_dw  ! All the spectroscopy(W) coordinates
+    type (Grids_T) :: Grids_dn  ! All the spectroscopy(N) coordinates
+    type (Grids_T) :: Grids_dv  ! All the spectroscopy(V) coordinates
+
     ! ZVI's dumping ground for variables he's too busy to put in the right
     ! place, and doesn't want to write comments for
 
@@ -307,7 +300,6 @@ contains ! ================================ FullForwardModel routine ======
     real(r4), dimension(:,:,:,:,:), pointer :: K_SPECT_DN
     real(r4), dimension(:,:,:,:,:), pointer :: K_SPECT_DV
 
-
     ! Executable code --------------------------------------------------------
     ! ------------------------------------------------------------------------
 
@@ -316,13 +308,12 @@ contains ! ================================ FullForwardModel routine ======
 
     ! Nullify all our pointers!
 
-    nullify ( grids, no_z, no_phi, no_z_dw, no_phi_dw, no_z_dn, no_phi_dn, &
-      & no_z_dv, no_phi_dv, usedchannels, usedsignals, superset, ext_ind_c, &
+    nullify ( grids, usedchannels, usedsignals, superset, ext_ind_c, &
       & tan_inds, gl_inds )
     nullify ( gl_ndx, gl_indgen )
     nullify ( do_gl, lin_log )
-    nullify ( do_calc, do_calc_dn, do_calc_dv, do_calc_dw, &
-      & do_calc_hyd, do_calc_t )
+    nullify ( do_calc_zp, do_calc_dn, do_calc_dv, do_calc_dw, &
+      & do_calc_hyd, do_calc_t, do_calc_fzp )
     nullify ( k_temp, k_atmos, k_spect_dw, k_spect_dn, k_spect_dv )
     nullify ( frequencies )
     nullify ( alpha_path_c, del_s, dhdz_path, drad_df, drad_dn, &
@@ -335,9 +326,9 @@ contains ! ================================ FullForwardModel routine ======
     nullify ( beta_path, beta_path_c, beta_path_f, dbeta_dn_path_c, &
       & dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
-      & dhdz_glgrid, dh_dt_path, dx_dt, d2x_dxdt, eta_zxp, eta_zxp_dn, &
+      & dhdz_glgrid, dh_dt_path, dx_dt, d2x_dxdt, eta_zp, eta_zxp_dn, &
       & eta_zxp_dv, eta_zxp_dw, eta_zxp_t, h_glgrid, k_atmos_frq, &
-      & k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, &
+      & k_spect_dn_frq, k_spect_dv_frq, k_spect_dw_frq, eta_fzp, &
       & k_temp_frq, ptg_angles, radiances, sps_path, tan_dh_dt, tan_temp, &
       & t_glgrid, dh_dt_glgrid )
 
@@ -550,15 +541,11 @@ contains ! ================================ FullForwardModel routine ======
 
     ! Setup our temporary `state vector' like arrays -------------------------
     call load_sps_data ( fwdModelIn, fwdModelExtra, fwdModelConf%molecules, &
-      f_len, n_f_phi, n_f_zeta, &
-      h2o_ind, no_z, no_phi, lin_log, z_basis, phi_basis, sps_values, &
-      n_dw_phi, n_dw_zeta, n_dn_phi, n_dn_zeta, n_dv_phi, n_dv_zeta, &
-      no_z_dw, no_phi_dw, no_z_dn, no_phi_dn, no_z_dv, no_phi_dv, &
-      z_basis_dw, phi_basis_dw, z_basis_dn, phi_basis_dn, z_basis_dv,phi_basis_dv )
+     &   p_len, f_len, h2o_ind, lin_log, sps_values, Grids_f, Grids_dw, &
+     &   Grids_dn, Grids_dv)
 
     ! Compute Gauss Legendre (GL) grid ---------------------------------------
     nlvl = size(FwdModelConf%integrationGrid%surfs)
-    n2lvl = 2 * nlvl
     maxVert = (Nlvl-1) * Ng + Nlvl
 
     ! Work out the dimensions of it
@@ -689,8 +676,10 @@ contains ! ================================ FullForwardModel routine ======
     call Allocate_test ( ref_corr,     npc, 'ref_corr',     ModuleName )
 
     call Allocate_test ( beta_path_c, npc, noSpecies, 'beta_path_c', ModuleName )
-    call Allocate_test ( do_calc, no_ele, f_len, 'do_calc', ModuleName )
-    call Allocate_test ( eta_zxp, no_ele, f_len, 'eta_zxp', ModuleName )
+    call Allocate_test ( do_calc_fzp, no_ele, f_len, 'do_calc_fzp', ModuleName )
+    call Allocate_test ( do_calc_zp, no_ele, p_len, 'do_calc_zp', ModuleName )
+    call Allocate_test ( eta_zp, no_ele, p_len, 'eta_zp', ModuleName )
+    call Allocate_test ( eta_fzp, no_ele, f_len, 'eta_zp', ModuleName )
     call Allocate_test ( sps_path, no_ele, noSpecies, 'sps_path', ModuleName )
 
     if(FwdModelConf%temp_der) then
@@ -724,17 +713,23 @@ contains ! ================================ FullForwardModel routine ======
       call Allocate_test ( dbeta_dv_path_c, npc, noSpecies, &
         & 'dbeta_dv_path_c', ModuleName )
 
-      sv_dw_len = SUM(no_z_dw(:) * no_phi_dw(:))
-      sv_dn_len = SUM(no_z_dn(:) * no_phi_dn(:))
-      sv_dv_len = SUM(no_z_dv(:) * no_phi_dv(:))
+      sv_dw_len = SUM(Grids_dw%no_z(:) * Grids_dw%no_p(:) * Grids_dw%no_f(:))
+      sv_dn_len = SUM(Grids_dn%no_z(:) * Grids_dn%no_p(:) * Grids_dn%no_f(:))
+      sv_dv_len = SUM(Grids_dv%no_z(:) * Grids_dv%no_p(:) * Grids_dv%no_f(:))
 
-      call Allocate_test ( do_calc_dw, no_ele, sv_dw_len, 'do_calc_dw', ModuleName )
-      call Allocate_test ( do_calc_dn, no_ele, sv_dn_len, 'do_calc_dn', ModuleName )
-      call Allocate_test ( do_calc_dv, no_ele, sv_dv_len, 'do_calc_dv', ModuleName )
+      call Allocate_test ( do_calc_dw, no_ele, sv_dw_len, 'do_calc_dw', &
+                        &  ModuleName )
+      call Allocate_test ( do_calc_dn, no_ele, sv_dn_len, 'do_calc_dn', &
+                        &  ModuleName )
+      call Allocate_test ( do_calc_dv, no_ele, sv_dv_len, 'do_calc_dv', &
+                        &  ModuleName )
 
-      call Allocate_test ( eta_zxp_dw, no_ele, sv_dw_len, 'eta_zxp_dw', ModuleName )
-      call Allocate_test ( eta_zxp_dn, no_ele, sv_dn_len, 'eta_zxp_dn', ModuleName )
-      call Allocate_test ( eta_zxp_dv, no_ele, sv_dv_len, 'eta_zxp_dv', ModuleName )
+      call Allocate_test ( eta_zxp_dw, no_ele, sv_dw_len, 'eta_zxp_dw', &
+                        &  ModuleName )
+      call Allocate_test ( eta_zxp_dn, no_ele, sv_dn_len, 'eta_zxp_dn', &
+                        &  ModuleName )
+      call Allocate_test ( eta_zxp_dv, no_ele, sv_dv_len, 'eta_zxp_dv', &
+                        &  ModuleName )
 
       call Allocate_test ( drad_dw, sv_dw_len, 'drad_dw', ModuleName )
       call Allocate_test ( drad_dn, sv_dn_len, 'drad_dn', ModuleName )
@@ -747,7 +742,8 @@ contains ! ================================ FullForwardModel routine ======
     call allocate_test ( radiances, no_tan_hts, noUsedChannels, &
       & 'radiances', ModuleName )
     call allocate_test ( dx_dt, no_tan_hts, n_t_zeta, 'dx_dt', ModuleName )
-    call allocate_test ( d2x_dxdt, no_tan_hts, n_t_zeta, 'd2x_dxdt', ModuleName )
+    call allocate_test ( d2x_dxdt, no_tan_hts, n_t_zeta, 'd2x_dxdt', &
+                      &  ModuleName )
 
     if ( toggle(emit) .and. levels(emit) > 0 ) &
       & call Trace_End ( 'ForwardModel.Hydrostatic' )
@@ -806,7 +802,7 @@ contains ! ================================ FullForwardModel routine ======
           frequencies(channel) = &
             & fwdModelConf%signals(usedSignals(channel))%centerFrequency + &
             & fwdModelConf%signals(usedSignals(channel))% &
-            &  frequencies(usedChannels(channel))
+            & frequencies(usedChannels(channel))
         end do
         select case ( thisSideband )
         case ( -1 )
@@ -943,25 +939,27 @@ contains ! ================================ FullForwardModel routine ======
 
         !  ** Determine the eta_zxp_dw, eta_zxp_dn, eta_zxp_dv
         if(FwdModelConf%spect_der) then
-          call eval_spect_path(z_basis_dw,phi_basis_dw+phi_tan,       &
-            &  no_z_dw,no_phi_dw,z_path(1:no_ele),phi_path(1:no_ele), &
-            &  do_calc_dw(1:no_ele,:),eta_zxp_dw(1:no_ele,:))
-          call eval_spect_path(z_basis_dn,phi_basis_dn+phi_tan,       &
-            &  no_z_dn,no_phi_dn,z_path(1:no_ele),phi_path(1:no_ele), &
-            &  do_calc_dn(1:no_ele,:),eta_zxp_dn(1:no_ele,:))
-          call eval_spect_path(z_basis_dv,phi_basis_dv+phi_tan,       &
-            &  no_z_dv,no_phi_dv,z_path(1:no_ele),phi_path(1:no_ele), &
-            &  do_calc_dv(1:no_ele,:),eta_zxp_dv(1:no_ele,:))
+          call eval_spect_path(Grids_dw,z_path(1:no_ele), &
+            &  phi_path(1:no_ele),do_calc_dw(1:no_ele,:),         &
+            &  eta_zxp_dw(1:no_ele,:))
+          call eval_spect_path(Grids_dn,z_path(1:no_ele), &
+            &  phi_path(1:no_ele),do_calc_dn(1:no_ele,:),         &
+            &  eta_zxp_dn(1:no_ele,:))
+          call eval_spect_path(Grids_dv,z_path(1:no_ele), &
+            &  phi_path(1:no_ele),do_calc_dv(1:no_ele,:),         &
+            &  eta_zxp_dv(1:no_ele,:))
         endif
         tan_temp(ptg_i,maf) = one_tan_temp(1)
 
-        ! Now compute the sps_path
-        call comp_sps_path(z_basis,phi_basis,sps_values,no_z,no_phi, &
-          &   lin_log,z_path(1:no_ele),phi_path(1:no_ele),   &
-          &   sps_path(1:no_ele,:),do_calc(1:no_ele,:),      &
-          &   eta_zxp(1:no_ele,:))
+        ! Now compute the eta_zp & do_calc_zp (for Zeta & Phi only)
+        call comp_eta_docalc_no_frq(Grids_f,z_path(1:no_ele), &
+          &  phi_path(1:no_ele),do_calc_zp(1:no_ele,:),eta_zp(1:no_ele,:))
 
         if (h2o_ind > 0) then
+          Frq = 0.0
+          call comp_sps_path_frq(Grids_f,Frq,sps_values,eta_zp(1:no_ele,:), &
+            &  do_calc_zp(1:no_ele,:),lin_log,sps_path(1:no_ele,:),       &
+            &  do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
           call refractive_index(p_path(ext_ind_c(1:npc)), &
             &  t_path(ext_ind_c(1:npc)),n_path(1:npc),    &
             &  h2o_path=sps_path((ext_ind_c(1:npc)),h2o_ind))
@@ -1037,6 +1035,11 @@ contains ! ================================ FullForwardModel routine ======
 
           ! Setup path quantities --------------------------------------
 
+          ! Compute the sps_path for this Frequency
+          call comp_sps_path_frq(Grids_f,Frq,sps_values,eta_zp(1:no_ele,:), &
+               & do_calc_zp(1:no_ele,:),lin_log,sps_path(1:no_ele,:),       &
+               & do_calc_fzp(1:no_ele,:),eta_fzp(1:no_ele,:))
+
           if(FwdModelConf%temp_der  .and. FwdModelConf%spect_der) then
 
             call get_beta_path(Frq,p_path(1:no_ele),t_path(1:no_ele),     &
@@ -1072,7 +1075,7 @@ contains ! ================================ FullForwardModel routine ======
 
           endif
 
-          alpha_path_c(1:npc) = sum(sps_path(ext_ind_c(1:npc),:) &
+          alpha_path_c(1:npc) = SUM(sps_path(ext_ind_c(1:npc),:) &
             &    * beta_path_c(1:npc,:),DIM=2)
           call path_contrib(alpha_path_c(1:npc),del_s(1:npc),e_rflty, &
             &  fwdModelConf%tolerance,tau(1:npc),        &
@@ -1082,7 +1085,7 @@ contains ! ================================ FullForwardModel routine ======
 
           no_gl_ndx = count(do_gl(1:npc))
           j = Ng * no_gl_ndx
-          
+
           call Allocate_test ( gl_inds, j, 'gl_inds', ModuleName )
           call Allocate_test ( beta_path_f, j, noSpecies, 'beta_path_f', ModuleName )
           call Allocate_test ( gl_indgen, Ng, no_gl_ndx, 'gl_indgen', ModuleName )
@@ -1161,7 +1164,7 @@ contains ! ================================ FullForwardModel routine ======
           call rad_tran(Frq,spaceRadiance%values(1,1),e_rflty,             &
             & z_path(ext_ind_c(1:npc)),t_path(ext_ind_c(1:npc)),            &
             & alpha_path_c(1:npc),ref_corr(1:npc),do_gl(1:npc),             &
-            & incoptdepth(1:npc),sum(sps_path(gl_inds,:)*beta_path_f,DIM=2),&
+            & incoptdepth(1:npc),SUM(sps_path(gl_inds,:)*beta_path_f,DIM=2),&
             & path_dsdh(gl_inds),dhdz_path(gl_inds),t_script(1:npc),        &
             & tau(1:npc),Rad,i_stop)
 
@@ -1171,12 +1174,13 @@ contains ! ================================ FullForwardModel routine ======
 
           if(FwdModelConf%atmos_der) then
 
-            call drad_tran_df(z_path(ext_ind_c(1:npc)),no_z,no_phi,lin_log,&
-              &  sps_values,beta_path_c(1:npc,:),eta_zxp(ext_ind_c(1:npc),:), &
-              &  sps_path(ext_ind_c(1:npc),:),do_calc(ext_ind_c(1:npc),:),    &
-              &  beta_path_f,eta_zxp(gl_inds,:),sps_path(gl_inds,:),          &
-              &  do_calc(gl_inds,:),do_gl(1:npc),del_s(1:npc),                &
-              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds),       &
+            call drad_tran_df(z_path(ext_ind_c(1:npc)),Grids_f%no_z,       &
+              &  Grids_f%no_p,lin_log,sps_values,beta_path_c(1:npc,:),     &
+              &  eta_fzp(ext_ind_c(1:npc),:),sps_path(ext_ind_c(1:npc),:), &
+              &  do_calc_fzp(ext_ind_c(1:npc),:),beta_path_f,              &
+              &  eta_fzp(gl_inds,:),sps_path(gl_inds,:),                   &
+              &  do_calc_fzp(gl_inds,:),do_gl(1:npc),del_s(1:npc),         &
+              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds),    &
               &  t_script(1:npc),tau(1:npc),i_stop,drad_df,ptg_i,frq_i)
 
             k_atmos_frq(frq_i,:) = drad_df
@@ -1185,17 +1189,17 @@ contains ! ================================ FullForwardModel routine ======
 
           if(FwdModelConf%temp_der) then
 
-            call drad_tran_dt(z_path(ext_ind_c(1:npc)),                    &
-              & Req + h_path(ext_ind_c(1:npc)),                              &
+            call drad_tran_dt(z_path(ext_ind_c(1:npc)),                      &
+              & Req+h_path(ext_ind_c(1:npc)),                                &
               & t_path(ext_ind_c(1:npc)),dh_dt_path(ext_ind_c(1:npc),:),     &
-              & alpha_path_c(1:npc),sum(sps_path(ext_ind_c(1:npc),:)         &
+              & alpha_path_c(1:npc),SUM(sps_path(ext_ind_c(1:npc),:)         &
               & * dbeta_dt_path_c(1:npc,:) * beta_path_c(1:npc,:),DIM=2),    &
               & eta_zxp_t(ext_ind_c(1:npc),:),do_calc_t(ext_ind_c(1:npc),:), &
               & do_calc_hyd(ext_ind_c(1:npc),:),del_s(1:npc),ref_corr(1:npc),&
               & Req + one_tan_ht(1),dh_dt_path(brkpt,:),frq,do_gl(1:npc),    &
               & req + h_path(gl_inds),t_path(gl_inds),dh_dt_path(gl_inds,:), &
-              & sum(sps_path(gl_inds,:)*beta_path_f,DIM=2),                  &
-              & sum(sps_path(gl_inds,:)*beta_path_f*dbeta_dt_path_f,DIM=2),  &
+              & SUM(sps_path(gl_inds,:)*beta_path_f,DIM=2),                  &
+              & SUM(sps_path(gl_inds,:)*beta_path_f*dbeta_dt_path_f,DIM=2),  &
               & eta_zxp_t(gl_inds,:),do_calc_t(gl_inds,:),path_dsdh(gl_inds),&
               & dhdz_path(gl_inds),t_script(1:npc),tau(1:npc),i_stop,drad_dt,&
               & ptg_i,frq_i)
@@ -1208,36 +1212,39 @@ contains ! ================================ FullForwardModel routine ======
 
             ! Spectroscopic derivative  wrt: W
 
-            call drad_tran_dx(z_path(ext_ind_c(1:npc)),no_z_dw,no_phi_dw,  &
-              &  dbeta_dw_path_c(1:npc,:),eta_zxp_dw(ext_ind_c(1:npc),:),    &
-              &  sps_path(ext_ind_c(1:npc),:),do_calc_dw(ext_ind_c(1:npc),:),&
-              &  dbeta_dw_path_f,eta_zxp_dw(gl_inds,:),sps_path(gl_inds,:),  &
-              &  do_calc_dw(gl_inds,:),do_gl(1:npc),del_s(1:npc),            &
-              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds),      &
+            call drad_tran_dx(z_path(ext_ind_c(1:npc)),Grids_dw%no_z, &
+              &  Grids_dw%no_p,dbeta_dw_path_c(1:npc,:),              &
+              &  eta_zxp_dw(ext_ind_c(1:npc),:),sps_path(ext_ind_c(1:npc),:), &
+              &  do_calc_dw(ext_ind_c(1:npc),:),dbeta_dw_path_f,      &
+              &  eta_zxp_dw(gl_inds,:),sps_path(gl_inds,:),           &
+              &  do_calc_dw(gl_inds,:),do_gl(1:npc),del_s(1:npc),     &
+              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds), &
               &  t_script(1:npc),tau(1:npc),i_stop,drad_dw,ptg_i,frq_i)
 
             k_spect_dw_frq(frq_i,:) = drad_dw
 
             ! Spectroscopic derivative  wrt: N
 
-            call drad_tran_dx(z_path(ext_ind_c(1:npc)),no_z_dn,no_phi_dn,   &
-              &  dbeta_dn_path_c(1:npc,:),eta_zxp_dn(ext_ind_c(1:npc),:),     &
-              &  sps_path(ext_ind_c(1:npc),:),do_calc_dn(ext_ind_c(1:npc),:), &
-              &  dbeta_dn_path_f,eta_zxp_dn(gl_inds,:),sps_path(gl_inds,:),   &
-              &  do_calc_dn(gl_inds,:),do_gl(1:npc),del_s(1:npc),             &
-              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds),       &
+            call drad_tran_dx(z_path(ext_ind_c(1:npc)),Grids_dn%no_z,   &
+              &  Grids_dn%no_p,dbeta_dn_path_c(1:npc,:),                &
+              &  eta_zxp_dn(ext_ind_c(1:npc),:),sps_path(ext_ind_c(1:npc),:), &
+              &  do_calc_dn(ext_ind_c(1:npc),:),dbeta_dn_path_f,        &
+              &  eta_zxp_dn(gl_inds,:),sps_path(gl_inds,:),             &
+              &  do_calc_dn(gl_inds,:),do_gl(1:npc),del_s(1:npc),       &
+              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds), &
               &  t_script(1:npc),tau(1:npc),i_stop,drad_dn,ptg_i,frq_i)
 
             k_spect_dn_frq(frq_i,:) = drad_dn
 
             ! Spectroscopic derivative  wrt: Nu0
 
-            call drad_tran_dx(z_path(ext_ind_c(1:npc)),no_z_dv,no_phi_dv,  &
-              &  dbeta_dv_path_c(1:npc,:),eta_zxp_dv(ext_ind_c(1:npc),:),    &
-              &  sps_path(ext_ind_c(1:npc),:),do_calc_dv(ext_ind_c(1:npc),:),&
-              &  dbeta_dv_path_f,eta_zxp_dv(gl_inds,:),sps_path(gl_inds,:),  &
-              &  do_calc_dv(gl_inds,:),do_gl(1:npc),del_s(1:npc),            &
-              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds),      &
+            call drad_tran_dx(z_path(ext_ind_c(1:npc)),Grids_dv%no_z,   &
+              &  Grids_dv%no_p,dbeta_dv_path_c(1:npc,:),                &
+              &  eta_zxp_dv(ext_ind_c(1:npc),:),sps_path(ext_ind_c(1:npc),:), &
+              &  do_calc_dv(ext_ind_c(1:npc),:),dbeta_dv_path_f,        &
+              &  eta_zxp_dv(gl_inds,:),sps_path(gl_inds,:),             &
+              &  do_calc_dv(gl_inds,:),do_gl(1:npc),del_s(1:npc),       &
+              &  ref_corr(1:npc),path_dsdh(gl_inds),dhdz_path(gl_inds), &
               &  t_script(1:npc),tau(1:npc),i_stop,drad_dv,ptg_i,frq_i)
 
             k_spect_dv_frq(frq_i,:) = drad_dv
@@ -1269,7 +1276,7 @@ contains ! ================================ FullForwardModel routine ======
           & call Trace_End ( 'ForwardModel.FrequencyLoop' )
 
         ! Work out which channel shape information we're going need ----------
-        
+
 
         ! Frequency averaging if needed --------------------------------------
 
@@ -1349,7 +1356,7 @@ contains ! ================================ FullForwardModel routine ======
         !??? Do we need to do this if there's no Jacobian ???
 
         if ( fwdModelConf%atmos_der ) then
-          
+
           sv_i = 1
           do specie = 1, noSpecies
             if ( fwdModelConf%moleculeDerivatives(specie) ) then
@@ -1365,8 +1372,8 @@ contains ! ================================ FullForwardModel routine ======
                   shapeInd = MatchSignal ( filterShapes%signal, &
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
-                  do instance = 1, no_phi(specie)
-                    do surface = 1, no_z(specie)
+                  do instance = 1, Grids_f%no_p(specie)
+                    do surface = 1, Grids_f%no_z(specie)
                       call Freq_Avg ( frequencies,                      &
                         & centerFreq+thisSideband * &
                         & FilterShapes(shapeInd)%FilterGrid(channel,:), &
@@ -1381,8 +1388,8 @@ contains ! ================================ FullForwardModel routine ======
                 sv_start = sv_i
                 do i = 1, noUsedChannels
                   sv_i = sv_start
-                  do instance = 1, no_phi(specie)
-                    do surface = 1, no_z(specie)
+                  do instance = 1, Grids_f%no_p(specie)
+                    do surface = 1, Grids_f%no_z(specie)
                       k_atmos(i,ptg_i,surface,instance,specie) = &
                         k_atmos_frq(1,sv_i)
                       sv_i = sv_i + 1
@@ -1417,8 +1424,8 @@ contains ! ================================ FullForwardModel routine ======
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
                   if(specie == 1) sv_i = 1
-                  do instance = 1, no_phi_dw(specie)
-                    do surface = 1, no_z_dw(specie)
+                  do instance = 1, Grids_dw%no_p(specie)
+                    do surface = 1, Grids_dw%no_z(specie)
                       call Freq_Avg ( frequencies,                      &
                         & centerFreq+thisSideband * &
                         & FilterShapes(shapeInd)%FilterGrid(channel,:), &
@@ -1432,8 +1439,8 @@ contains ! ================================ FullForwardModel routine ======
               else                        ! Else not frequency averaging
                 do i = 1, noUsedChannels
                   if(specie == 1) sv_i = 1
-                  do instance = 1, no_phi_dw(specie)
-                    do surface = 1, no_z_dw(specie)
+                  do instance = 1, Grids_dw%no_p(specie)
+                    do surface = 1, Grids_dw%no_z(specie)
                       k_spect_dw(i,ptg_i,surface,instance,specie) = &
                         k_spect_dw_frq(1,sv_i)
                       sv_i = sv_i + 1
@@ -1460,8 +1467,8 @@ contains ! ================================ FullForwardModel routine ======
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
                   if(specie == 1) sv_i = 1
-                  do instance = 1, no_phi_dn(specie)
-                    do surface = 1, no_z_dn(specie)
+                  do instance = 1, Grids_dn%no_p(specie)
+                    do surface = 1, Grids_dn%no_z(specie)
                       call Freq_Avg ( frequencies,                      &
                         & centerFreq+thisSideband * &
                         & FilterShapes(shapeInd)%FilterGrid(channel,:), &
@@ -1475,8 +1482,8 @@ contains ! ================================ FullForwardModel routine ======
               else                        ! Else not frequency averaging
                 do i = 1, noUsedChannels
                   if(specie == 1) sv_i = 1
-                  do instance = 1, no_phi_dn(specie)
-                    do surface = 1, no_z_dn(specie)
+                  do instance = 1, Grids_dn%no_p(specie)
+                    do surface = 1, Grids_dn%no_z(specie)
                       k_spect_dn(i,ptg_i,surface,instance,specie) = &
                         k_spect_dn_frq(1,sv_i)
                       sv_i = sv_i + 1
@@ -1503,8 +1510,8 @@ contains ! ================================ FullForwardModel routine ======
                     & fwdModelConf%signals(sigInd), &
                     & sideband = thisSideband, channel=channel )
                   if(specie == 1) sv_i = 1
-                  do instance = 1, no_phi_dv(specie)
-                    do surface = 1, no_z_dv(specie)
+                  do instance = 1, Grids_dv%no_p(specie)
+                    do surface = 1, Grids_dv%no_z(specie)
                       call Freq_Avg ( frequencies,                      &
                         & centerFreq+thisSideband * &
                         & FilterShapes(shapeInd)%FilterGrid(channel,:), &
@@ -1518,8 +1525,8 @@ contains ! ================================ FullForwardModel routine ======
               else                        ! Else not frequency averaging
                 do i = 1, noUsedChannels
                   if(specie == 1) sv_i = 1
-                  do instance = 1, no_phi_dv(specie)
-                    do surface = 1, no_z_dv(specie)
+                  do instance = 1, Grids_dv%no_p(specie)
+                    do surface = 1, Grids_dv%no_z(specie)
                       k_spect_dv(i,ptg_i,surface,instance,specie) = &
                         k_spect_dv_frq(1,sv_i)
                       sv_i = sv_i + 1
@@ -1754,8 +1761,10 @@ contains ! ================================ FullForwardModel routine ======
     call Deallocate_test ( ref_corr,     'ref_corr',     ModuleName )
 
     call Deallocate_test ( beta_path_c, 'beta_path_c', ModuleName )
-    call Deallocate_test ( do_calc, 'do_calc', ModuleName )
-    call Deallocate_test ( eta_zxp, 'eta_zxp', ModuleName )
+    call Deallocate_test ( do_calc_zp, 'do_calc_zp', ModuleName )
+    call Deallocate_test ( do_calc_fzp, 'do_calc_fzp', ModuleName )
+    call Deallocate_test ( eta_zp, 'eta_zp', ModuleName )
+    call Deallocate_test ( eta_fzp, 'eta_fzp', ModuleName )
     call Deallocate_test ( sps_path, 'sps_path', ModuleName )
 
     if(FwdModelConf%temp_der) then
@@ -1806,8 +1815,11 @@ contains ! ================================ FullForwardModel routine ======
   end subroutine FullForwardModel
 
  end module FullForwardModel_m
- 
+
 ! $Log$
+! Revision 2.6  2001/10/12 20:40:25  livesey
+! Moved sideband ratio check
+!
 ! Revision 2.5  2001/10/09 22:39:08  livesey
 ! Allow for molecules with zero lines.  This may need attention
 ! from Bill/Zvi later on.

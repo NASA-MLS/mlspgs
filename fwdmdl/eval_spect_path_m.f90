@@ -5,6 +5,7 @@ MODULE eval_spect_path_m
 !
   use MLSCommon, only: RP, IP
   USE get_eta_matrix_m, ONLY: get_eta_sparse
+  use Load_sps_data_m, only: Grids_T
 !
   IMPLICIT NONE
 
@@ -20,19 +21,13 @@ MODULE eval_spect_path_m
  CONTAINS
 !-----------------------------------------------------------------
 !
- SUBROUTINE eval_spect_path(z_basis,phi_basis,no_z,no_phi,path_zeta, &
-                        &   path_phi,do_calc,eta_zxp)
+ SUBROUTINE eval_spect_path(Grids_x,path_zeta,path_phi, &
+                        &   do_calc,eta_zxp)
 ! Input:
+  type (Grids_T), INTENT(in) :: Grids_x  ! All the needed coordinates
 !
-  REAL(rp), INTENT(in) :: z_basis(:) ! a vector of zeta basis loaded
-!                             sequentially ie [basis_1,basis_2,..., basis_n]
-  REAL(rp), INTENT(in) :: phi_basis(:) ! a vector of orbit plane projected
-!                                      horizontal bases, entered squentially
-!                             ie [basis_1,basis_2,..., basis_n]
-  INTEGER(ip), INTENT(in) :: no_z(:) ! number of z_bases by sps number
-  INTEGER(ip), INTENT(in) :: no_phi(:) ! number of phi_bases by sps number
   REAL(rp), INTENT(in) :: path_zeta(:) ! zeta values along path
-  REAL(rp), INTENT(in) :: path_phi(:) ! phi values along path
+  REAL(rp), INTENT(in) :: path_phi(:)  ! phi values along path
 !
 ! Output:
 !
@@ -52,7 +47,7 @@ MODULE eval_spect_path_m
 !
 ! Begin executable code:
 !
-  n_sps = SIZE(no_z)
+  n_sps = SIZE(Grids_x%no_z)
   n_path = SIZE(path_zeta)
 !
   eta_zxp = 0.0
@@ -64,8 +59,8 @@ MODULE eval_spect_path_m
 !
   DO i_sps = 1, n_sps
 !
-    n_z = no_z(i_sps)
-    n_p = no_phi(i_sps)
+    n_z = Grids_x%no_z(i_sps)
+    n_p = Grids_x%no_p(i_sps)
     npxz = n_z * n_p
     if(npxz == 0) CYCLE
 
@@ -84,8 +79,10 @@ MODULE eval_spect_path_m
 !
 ! Compute etas
 !
-    CALL get_eta_sparse(z_basis(z_inda:z_indb-1),path_zeta,eta_z,not_zero_z)
-    CALL get_eta_sparse(phi_basis(p_inda:p_indb-1),path_phi,eta_p,not_zero_p)
+    CALL get_eta_sparse(Grids_x%zet_basis(z_inda:z_indb-1),path_zeta, &
+                     &  eta_z,not_zero_z)
+    CALL get_eta_sparse(Grids_x%phi_basis(p_inda:p_indb-1),path_phi,  &
+                     &  eta_p,not_zero_p)
 !
     DO sv_i = 0 , npxz - 1
       sv_j = v_inda + sv_i
@@ -113,6 +110,9 @@ MODULE eval_spect_path_m
 END MODULE eval_spect_path_m
 !
 ! $Log$
+! Revision 2.0  2001/09/17 20:26:26  livesey
+! New forward model
+!
 ! Revision 1.1.2.5  2001/09/13 22:51:21  zvi
 ! Separating allocation stmts
 !
