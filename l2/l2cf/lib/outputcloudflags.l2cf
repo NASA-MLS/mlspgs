@@ -5,31 +5,28 @@
 begin Fill
   ;; First subset the cloudrads
   !define(extractRadDT,{!dnl
-  Fill, quantity=cloudOutput.dtR$1, method=extractChannel, $
-    sourceQuantity=cloudOutput.dtBand!cloudBandForR$1, channel=!cloudChannelForR$1!nl})
-  !forall(extractRadDT,!oneToFive)
+  Fill, quantity=cloudOutput.dt$1, method=extractChannel, $
+    sourceQuantity=cloudOutput.dtBand!cloudBandFor$1, channel=!cloudChannelFor$1!nl})
+  !forall(extractRadDT,!allRadiometers)
 end Fill
 
 begin Join
 
-  !define(outputCloudRad,{!directWriteCloud(cloudOutput.dtR$1,'.C!cloudChannelForR$1 DT', /prefixSignal)!nl})
-  !forall(outputCloudRad,!oneToFive)
-
-  !define(outputPolCloudRad,{!directWriteCloud(cloudOutput.DTband$1,' DT', /prefixSignal)!nl})
-  !forall(outputPolCloudRad,18,34)
+  !define(outputCloudRad,{!directWriteCloud(cloudOutput.dt$1,'.C!cloudChannelFor$1 DT', /prefixSignal)!nl})
+  !forall(outputCloudRad,!allRadiometers)
 
   !define(writeOneCloudRadBin,{!ifdef(flagAvoidDirectWrite,{!dnl
-  joined_cloudRadMinR$1: l2gp, source=cloudOutput.cloudRadMinR$1, $
-     /prefixSignal, swath='.C!cloudChannelForRadNo($1) cloudMin'
-   joined_cloudRadMaxR$1: l2gp, source=cloudOutput.cloudRadMaxR$1, $
-     /prefixSignal, swath='.C!cloudChannelForRadNo($1) cloudMax'
-  !storeJoinedDGG(joined_cloudRadMinR$1)!storeJoinedDGG(joined_cloudRadMaxR$1)},{!dnl
-  label, quantity=cloudOutput.cloudRadMinR$1, $
-    /prefixSignal, label='.C!cloudChannelForRadNo($1) cloudMin'
-  label, quantity=cloudOutput.cloudRadMaxR$1, $
-    /prefixSignal, label='.C!cloudChannelForRadNo($1) cloudMax'
-  !noteDirectDGG({source=cloudOutput.cloudRadMinR$1, source=cloudOutput.cloudRadMaxR$1})})})
-  !forall(writeOneCloudRadBin,!oneToFive)
+  joined_cloudRadMin$1: l2gp, source=cloudOutput.cloudRadMin$1, $
+     /prefixSignal, swath='.C!cloudChannelForRad($1) cloudMin'
+   joined_cloudRadMax$1: l2gp, source=cloudOutput.cloudRadMax$1, $
+     /prefixSignal, swath='.C!cloudChannelForRad($1) cloudMax'
+  !storeJoinedDGG(joined_cloudRadMin$1)!storeJoinedDGG(joined_cloudRadMax$1)},{!dnl
+  label, quantity=cloudOutput.cloudRadMin$1, $
+    /prefixSignal, label='.C!cloudChannelForRad($1) cloudMin'
+  label, quantity=cloudOutput.cloudRadMax$1, $
+    /prefixSignal, label='.C!cloudChannelForRad($1) cloudMax'
+  !noteDirectDGG({source=cloudOutput.cloudRadMin$1, source=cloudOutput.cloudRadMax$1})})})
+  !forall(writeOneCloudRadBin,!allRadiometers)
 
   ;; Write the IWC products
   !directWriteDGGNoDiag(iwcR1A,IWC-118)
