@@ -1,5 +1,6 @@
 module RAD_TRAN_WD_M
   use GL6P, only: NG
+  use ELLIPSE_M, only: ELLIPSE
   use L2PCDim, only: NLVL, NSPS, N2LVL, MNP => max_no_phi
   use MLSCommon, only: I4, R8
   use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
@@ -23,7 +24,7 @@ contains
 !----------------------------------------------------------------------
 ! This is the radiative transfer model with derivatives
 
-Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
+Subroutine Rad_Tran_WD(elvar,frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
       &    spect_der,z_path,h_path,t_path,phi_path,dHdz_path,atmospheric,&
       &    beta_path,spsfunc_path,t_z_basis,f_basis,no_coeffs_f,mr_f, &
       &    no_t, ref_corr, no_phi_f, phi_basis_f, no_phi_t, &
@@ -31,6 +32,8 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
       &    k_atmos, k_spect_dw, k_spect_dn, k_spect_dnu,is_f_log,brkpt,&
       &    no_ele, mid, ilo, ihi, t_script, tau, Ier)
 !
+    Type(ELLIPSE), INTENT(IN OUT) :: elvar
+
     Logical, intent(in) :: temp_der,atmos_der,spect_der
     Logical, intent(in) :: IS_F_LOG(:)
 
@@ -86,7 +89,7 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
       Call GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,   &
    &       beta_path,dHdz_path,n_sps,N_lvls,mxco,no_coeffs_f,   &
    &       Nlvl,f_basis,ref_corr,mnp,no_phi_f, &
-   &       phi_basis_f,spsfunc_path,mr_f,is_f_log,delta,Ier)
+   &       phi_basis_f,spsfunc_path,mr_f,is_f_log,elvar,delta,Ier)
       if (Ier /= 0) Return
 !
 ! Compute atmosperic derivatives for this channel
@@ -115,7 +118,7 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
       Call temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,t_path,   &
      &     h_path,phi_path,beta_path,dHdz_path,dh_dt_path,no_phi_t,no_t, &
      &     N_lvls,n_sps,ref_corr,t_phi_basis,tau,t_script, &
-     &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,k_temp)
+     &     dt_scrpt_dnp,spsfunc_path,ilo,ihi,frq_i,elvar,k_temp)
 !
     end if
 !
@@ -150,21 +153,21 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
  &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dw, tau,  &
  &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &               frq_i,k_spect_dw(nf), Ier )
+ &               frq_i,elvar,k_spect_dw(nf), Ier )
 !
           else if (CA == 'N') then
             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
  &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dn, tau,  &
  &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &               frq_i,k_spect_dn(nf), Ier )
+ &               frq_i,elvar,k_spect_dn(nf), Ier )
 !
           else if (CA == 'V') then
             Call spectro_derivative(mid, brkpt, no_ele, z_path,         &
  &               h_path, phi_path, DHDZ_PATH, N_lvls,mxco, ref_corr,mnp,&
  &               spsfunc_path(nf)%values, beta_path(nf)%dbeta_dnu, tau, &
  &               t_script,ary_zero,s_np,s_nz,ilo,ihi,spectroscopic(sa), &
- &               frq_i,k_spect_dnu(nf), Ier )
+ &               frq_i,elvar,k_spect_dnu(nf), Ier )
 !
           end if
 !
@@ -183,6 +186,9 @@ Subroutine Rad_Tran_WD(frq_i,band,Frq,N_lvls,n_sps,temp_der,atmos_der,&
   End Subroutine RAD_TRAN_WD
 end module RAD_TRAN_WD_M
 ! $Log$
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.5  2001/03/26 17:56:14  zvi
 ! New codes to deal with dh_dt_path issue.. now being computed on the fly
 !

@@ -5,8 +5,7 @@ module COMP_PATH_ENTITIES_M
   use L2PC_PFA_STRUCTURES, only: ATMOS_COMP, GEOM_PARAM
   use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component, &
                                   DEG2RAD
-  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, CPS, SPS, CPTS, SPTS, HT, &
-      HT2, RR, NPHI_TAN, PHI_S, NPHI_S, PS, ROC, XOC, YOC, EARTHX
+  use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_DERIVATIVE, &
                              PATH_VECTOR_2D
   use REFRACTION_M, only: REFRACTIVE_INDEX
@@ -28,10 +27,9 @@ contains
 
 SUBROUTINE comp_path_entities(fwdModelIn, fwdModelExtra, molecules, &
            n_lvls,no_t,gl_count,ndx_path,z_glgrid,t_glgrid,h_glgrid,&
-           dhdz_glgrid,tan_hts,&
-           no_tan_hts,z_path,h_path,     &
+           dhdz_glgrid,tan_hts, no_tan_hts,z_path,h_path,     &
            t_path,phi_path,n_path,dhdz_path,eta_phi,no_phi_t,       &
-           t_phi_basis,spsfunc_path,no_mmaf,Ier)
+           t_phi_basis,spsfunc_path,no_mmaf,elvar,Ier)
 
 !  ===============================================================
 !  Declaration of variables for sub-program: comp_path_entities
@@ -49,6 +47,8 @@ Integer(i4), INTENT(IN) :: no_t, n_lvls, gl_count, &
              no_mmaf, no_phi_t
 !
 Integer(i4), INTENT(IN OUT) :: no_tan_hts
+
+Type(ELLIPSE), INTENT(IN OUT) :: elvar(:)
 
 Integer(i4), INTENT(OUT) :: ier
 !
@@ -106,7 +106,7 @@ type (VectorValue_T), pointer :: f, h2o
     print*,'Hello there:',jp,l,no_mmaf,lmin,lmax,shape(t_glgrid),lbound(t_glgrid,2)
     DO k = 1, no_tan_hts
       h = tan_hts(k,l)
-      CALL vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,   &
+      CALL vert_to_path(elvar(l),n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,h,&
            z_glgrid,t_glgrid(1:,lmin:lmax),h_glgrid(1:,lmin:lmax),  &
            dhdz_glgrid(1:,lmin:lmax),t_phi_basis,zpath,hpath,tpath, &
            ppath,dhdzp,phi_eta,klo,khi,Ier)
@@ -202,6 +202,9 @@ END SUBROUTINE comp_path_entities
 
 end module COMP_PATH_ENTITIES_M
 ! $Log$
+! Revision 1.14  2001/03/30 01:40:24  livesey
+! Removed some arguments
+!
 ! Revision 1.13  2001/03/30 00:07:57  livesey
 ! Removed more arguments
 !

@@ -6,8 +6,7 @@ module VERT_TO_PATH_M
   use ELLIPSE_SW_M, only: H_TO_S_PHI
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
   use EARTH_INTERSECTION_M, only: EARTH_INTERSECTION
-  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, CPS, SPS, CPTS, SPTS, HT, &
- &    HT2, RR, PHI_TAN, NPHI_TAN, PHI_S, NPHI_S, PS, ROC, XOC, YOC, EARTHX
+  use ELLIPSE_M, only: ELLIPSE
   Implicit NONE
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -24,7 +23,7 @@ contains
 
 ! *** NOTE: This routine is using The Equivalent Circle concept
 
-SUBROUTINE vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,htan,     &
+SUBROUTINE vert_to_path(elvar,n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,htan,     &
            z_glgrid,t_glgrid,h_glgrid,dhdz_glgrid,t_phi_basis,z_path,  &
            h_path,t_path,phi_path,dhdz_path,phi_eta,brkpt,totnp,Ier)
 
@@ -37,6 +36,8 @@ SUBROUTINE vert_to_path(n_lvls,Ng,ngt,gl_count,no_phi_t,no_t,htan,     &
 Integer(i4), INTENT(IN) :: n_lvls,Ng,gl_count,no_phi_t,no_t,ngt
 
 Integer(i4), INTENT(OUT) :: totnp,brkpt,Ier
+
+Type(ELLIPSE), intent(in out) :: elvar
 
 Real(r8), INTENT(OUT) :: h_path(:), z_path(:), t_path(:), phi_path(:), &
                          dhdz_path(:), phi_eta(:,:)
@@ -101,18 +102,18 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
   phi_path(1:ngt) = dz
   dhdz_path(1:ngt) = 0.0
 
-! Define the various COMMON variables needed for computations:
+! Define the various ELLIPSE variables needed for computations:
 
-  ht = htan
-  earthx = (htan < -0.01)
+  elvar%ht = htan
+  elvar%earthx = (htan < -0.01)
 
   IF(htan < -0.01) THEN
-    rr = (roc + ht) / roc
-    CALL earth_intersection(rs)
+    elvar%rr = (elvar%roc + elvar%ht) / elvar%roc
+    CALL earth_intersection(elvar,rs)
   ELSE
-    rr = 0.0D0
-    phi_s = phi_tan
-    nphi_s = nphi_tan
+    elvar%rr = 0.0D0
+    elvar%phi_s = elvar%phi_tan
+    elvar%nphi_s = elvar%nphi_tan
   END IF
 
 ! Define the index points of the tangent locations:
@@ -175,15 +176,16 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
 !  Right hand side ray:
 
   l = -1
-  ps = -1.0D0
+  elvar%ps = -1.0D0
   DO i = 1, ibrk-1
     h = dum_h(i)
     phi = dum_phi(i)
     IF(n_d == ngt) THEN
-      CALL H_TO_S_PHI(h,s,phi)
+      CALL H_TO_S_PHI(elvar,h,s,phi)
     ELSE
       CALL hunt(i,cndx,n_d,l,j)
-      IF(cndx(l) == i .OR. cndx(j) == i) CALL H_TO_S_PHI(h,s,phi)
+      IF(cndx(l) == i .OR. cndx(j) == i) &
+              CALL H_TO_S_PHI(elvar,h,s,phi)
     END IF
     dum_phi(i) = phi
   END DO
@@ -191,15 +193,16 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
 !  Left hand side ray:
 
   l = -1
-  ps = 1.0D0
+  elvar%ps = 1.0D0
   DO i = ibrk, npp
     h = dum_h(i)
     phi = dum_phi(i)
     IF(n_d == ngt) THEN
-      CALL H_TO_S_PHI(h,s,phi)
+      CALL H_TO_S_PHI(elvar,h,s,phi)
     ELSE
       CALL hunt(i,cndx,n_d,l,j)
-      IF(cndx(l) == i .OR. cndx(j) == i) CALL H_TO_S_PHI(h,s,phi)
+      IF(cndx(l) == i .OR. cndx(j) == i) &
+               CALL H_TO_S_PHI(elvar,h,s,phi)
     END IF
     dum_phi(i) = phi
   END DO
@@ -242,12 +245,12 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
     dhdz = (dum_h(l) - dum_h(k)) / dz
     DO i = 1, n_d
       j = cndx(i)
-      ps = -1.0D0
+      elvar%ps = -1.0D0
       dz = dum_z(j) - dum_z(k)
       dum_h(j) = dum_h(k) + dhdz * dz
       h = dum_h(j)
-      IF(j >= ibrk) ps = 1.0D0
-      CALL H_TO_S_PHI(h,s,phi)
+      IF(j >= ibrk) elvar%ps = 1.0D0
+      CALL H_TO_S_PHI(elvar,h,s,phi)
       dum_phi(j) = phi
       DO m = 1, no_phi_t
         CALL get_one_eta(dum_phi(j),t_phi_basis,no_phi_t,m, phi_eta(j,m))
@@ -301,6 +304,9 @@ Real(r8), ALLOCATABLE, DIMENSION(:,:) :: h_a
 END SUBROUTINE vert_to_path
 end module VERT_TO_PATH_M
 ! $Log$
+! Revision 1.5  2001/03/26 17:56:14  zvi
+! New codes to deal with dh_dt_path issue.. now being computed on the fly
+!
 ! Revision 1.4  2001/03/20 11:03:16  zvi
 ! Fixing code for "real" data run, increase dim. etc.
 !

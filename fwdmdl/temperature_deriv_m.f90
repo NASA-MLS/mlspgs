@@ -1,4 +1,5 @@
 module TEMPERATURE_DERIV_M
+  use ELLIPSE_M, only: ELLIPSE
   use D_DELTA_DT_M, only: D_DELTA_DT
   use GET_DRAD_M, only: GET_DRAD
   use L2PC_FILE_PARAMETERS, only: MXCO => max_no_elmnts_per_sv_component
@@ -19,10 +20,13 @@ contains
     Subroutine temperature_deriv(mid,brkpt,no_ele,t_z_basis,z_path,  &
    &           t_path,h_path,phi_path,beta_path,dHdz_path,dh_dt_path, &
    &           no_phi_t,no_t,N_lvls,n_sps,ref_corr,t_phi_basis, tau, &
-   &           t_script,dt_script_dc,spsfunc_path,ilo,ihi,frq_i,k_temp)
+   &           t_script,dt_script_dc,spsfunc_path,ilo,ihi,frq_i,     &
+   &           elvar,k_temp)
 !
     Integer(i4), intent(in) :: MID,BRKPT,NO_ELE,NO_PHI_T,NO_T, &
                                N_LVLS,N_SPS,ILO,IHI,FRQ_I
+
+    Type(ELLIPSE), intent(in out) :: elvar
 
     Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
 
@@ -54,7 +58,7 @@ contains
         Call d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
        &     beta_path,dHdz_path,dh_dt_path(:,ip,in),N_lvls,n_sps,Nlvl, &
        &     ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
-       &     in,ip,d_delta_dtnp)
+       &     in,ip,elvar,d_delta_dtnp)
 !
 ! Now assemble the derivative:
 !
@@ -70,6 +74,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.7  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.6  2001/03/26 17:56:14  zvi
 ! New codes to deal with dh_dt_path issue.. now being computed on the fly
 !

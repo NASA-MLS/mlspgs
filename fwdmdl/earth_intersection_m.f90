@@ -1,7 +1,6 @@
 module EARTH_INTERSECTION_M
-  use ELLIPSE, only: A2, CPS, CPTS, C2, C2OA2, EARTHX, HT, NPHI_S, &
-                     PHI_S, PHI_TAN, ROC, SPS, SPTS
   use MLSCommon, only: R8
+  use ELLIPSE_M, only: ELLIPSE
   implicit NONE
   private
   public :: Earth_Intersection
@@ -15,27 +14,34 @@ contains
 ! This routine solves for the Phi_s and Rs for Earth intersection case.
 !  ** Note: This routine is using The Equivalent Circle concept
 !
-  Subroutine Earth_Intersection ( Rs )
+  Subroutine Earth_Intersection (elvar,Rs)
+
+    Type(ELLIPSE), intent(IN OUT) :: elvar
     real(r8), intent(out) :: RS
 !
-    real(r8) :: V
-    EarthX = .true.            ! Set Earth Intersecting Ray flag
+    real(r8) :: r,V
 !
-    Phi_s = Phi_tan - Acos( (ht+RoC)/RoC )
-    sps = Sin(Phi_s)
-    cps = Cos(Phi_s)
-    NPhi_s = a2 / Sqrt(a2*cps*cps + c2*sps*sps)
-    v = 2.0_r8 * Phi_s - Phi_tan
-    spts = Sin(v)
-    cpts = Cos(v)
+    elvar%EarthX = .true.            ! Set Earth Intersecting Ray flag
+    v = (elvar%ht + elvar%RoC)/elvar%RoC
+    elvar%Phi_s = elvar%Phi_tan - Acos(v)
+    elvar%sps = Sin(elvar%Phi_s)
+    elvar%cps = Cos(elvar%Phi_s)
+    r = elvar%a2*elvar%cps*elvar%cps + elvar%c2*elvar%sps*elvar%sps
+    elvar%NPhi_s = elvar%a2 / Sqrt(r)
+    v = 2.0_r8 * elvar%Phi_s - elvar%Phi_tan
+    elvar%spts = Sin(v)
+    elvar%cpts = Cos(v)
 !
-    v = c2oa2 * sps
-    Rs = NPhi_s * Sqrt(cps*cps + v*v)
+    v = elvar%c2oa2 * elvar%sps
+    Rs = elvar%NPhi_s * Sqrt(elvar%cps*elvar%cps + v*v)
 !
     Return
   End Subroutine Earth_Intersection
 end module EARTH_INTERSECTION_M
 ! $Log$
+! Revision 1.4  2001/01/31 01:08:48  zvi
+! New version of forward model
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

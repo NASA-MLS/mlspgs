@@ -1,7 +1,7 @@
 module GENERIC_DELTA_INTEGRAL_M
   use MLSCOmmon, only: I4, R8
   use GL6P, only: GW, NG
-  use ELLIPSE, only: HT, HT2, PS, ROC
+  use ELLIPSE_M, only: ELLIPSE
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
   use PATH_ENTITIES_M, only: PATH_VECTOR
   implicit NONE
@@ -22,7 +22,7 @@ contains
 !
   Subroutine generic_delta_integral(mid, brkpt, no_ele, z_path, h_path,   &
  &           phi_path, dhdz_path, N_lvls, ref_corr, integrand, s_z_basis, &
- &           s_phi_basis, s_nz, s_np, iz, ip, fq, delta, Ier )
+ &           s_phi_basis, s_nz, s_np, iz, ip, fq, elvar, delta, Ier )
 !
     Integer(i4), intent(in) :: N_LVLS, MID, BRKPT, NO_ELE, S_NZ, S_NP, &
    &                           IZ, IP
@@ -33,6 +33,8 @@ contains
     Real(r8), intent(in) :: REF_CORR(:), INTEGRAND(:), FQ
 
     Real(r8), intent(in) :: S_Z_BASIS(:), S_PHI_BASIS(:)
+!
+    Type(ELLIPSE), intent(in out) :: elvar
 
     Real(r8), intent(out) :: DELTA(:)
 
@@ -46,7 +48,7 @@ contains
    &            ZL, ZS, HD, HH, HL, HTAN2, PH, PL, RC, SA, SB, SING
 !
     Ier = 0
-    htan2 = ht2
+    htan2 = elvar%ht2
 !
 !  Initialize all arrays:
 !
@@ -58,13 +60,13 @@ contains
 ! First, do the right hand side of the ray path:
 !
     mp = 1
-    ps = -1.0
+    elvar%ps = -1.0
     Ngp1 = Ng + 1
     zh = z_path%values(mp)
     hh = h_path%values(mp)
     ph = phi_path%values(mp)
 
-    hd = hh + RoC
+    hd = hh + elvar%RoC
     sb = Sqrt(abs(hd*hd-htan2))
 !
     do h_i = 1, mid
@@ -74,7 +76,7 @@ contains
 !
       hl = hh
       hh = h_path%values(mp)
-      if (hh < ht-0.001) EXIT
+      if (hh < elvar%ht-0.001) EXIT
 !
       zl = zh
       zh = z_path%values(mp)
@@ -83,7 +85,7 @@ contains
       ph = phi_path%values(mp)
 !
       sa = sb
-      hd = hh + RoC
+      hd = hh + elvar%RoC
       sb = Sqrt(abs(hd*hd-htan2))
 !
       if (abs(sa-sb) < 0.05) EXIT
@@ -121,11 +123,11 @@ contains
 !
 ! Second, do the left hand side of the ray path:
 !
-    ps = 1.0
+    elvar%ps = 1.0
     h_i = mid
     mp = brkpt + 1
     hh = h_path%values(mp)
-    do while (hh < ht-0.0001)
+    do while (hh < elvar%ht-0.0001)
       h_i = h_i + 1
       mp = mp + Ngp1
       hh = h_path%values(mp)
@@ -134,7 +136,7 @@ contains
     zh = z_path%values(mp)
     ph = phi_path%values(mp)
 
-    hd = hh + RoC
+    hd = hh + elvar%RoC
     sb = Sqrt(abs(hd*hd-htan2))
 !
     do while (h_i < hend)
@@ -152,7 +154,7 @@ contains
       ph = phi_path%values(mp)
 !
       sa = sb
-      hd = hh + RoC
+      hd = hh + elvar%RoC
       sb = Sqrt(abs(hd*hd-htan2))
 !
       rc = ref_corr(h_i)
@@ -227,7 +229,7 @@ contains
 !
 ! Compute the "Hydrostatic" contribution to the derivative:
 !
-        hd = h_GL(i) + RoC
+        hd = h_GL(i) + elvar%RoC
         ds_dh = hd / Sqrt(hd*hd-htan2)
 !
         q = integrand_GL(i) * veta(i)
@@ -251,6 +253,9 @@ contains
   End Subroutine generic_delta_integral
 End module GENERIC_DELTA_INTEGRAL_M
 ! $Log$
+! Revision 1.3  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.2  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

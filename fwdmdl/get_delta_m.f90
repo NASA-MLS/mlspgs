@@ -1,5 +1,6 @@
 module GET_DELTA_M
   use MLSCommon, only: I4, R8
+  use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
   use GENERIC_DELTA_INTEGRAL_M, only: GENERIC_DELTA_INTEGRAL
   implicit NONE
@@ -20,7 +21,7 @@ contains
   Subroutine GET_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,         &
  &           beta_path,dHdz_path,n_sps,N_lvls,Nc,ncoeffs,Nlvl,  &
  &           z_basis,ref_corr,mnp,no_phi_f,phi_basis,spsfunc_path,mr_f, &
- &           is_f_log,delta,Ier)
+ &           is_f_log,elvar,delta,Ier)
 
     Logical,     intent(in) :: IS_F_LOG(:)
     Integer(i4), intent(in) :: NLVL, NC, N_SPS, N_LVLS, MNP
@@ -35,6 +36,8 @@ contains
     Real(r8), intent(inout) :: DELTA(:,:,:,:)
 
     Integer(i4), intent(out) :: IER
+
+    Type(ELLIPSE), intent(in out) :: elvar
 
     Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
 
@@ -94,7 +97,7 @@ contains
           Call generic_delta_integral(mid, brkpt, no_ele, z_path,   &
          &     h_path, phi_path, dhdz_path, N_lvls, ref_corr,       &
          &     integrand, z_basis(1:,j), phi_basis(1:,j), nco, npf, &
-         &     iz, ip, q, delta(1:,iz,ip,j), Ier)
+         &     iz, ip, q, elvar, delta(1:,iz,ip,j), Ier)
           IF(ier /= 0) goto 99
 !
         end do
@@ -111,6 +114,9 @@ contains
 !
 end module GET_DELTA_M
 ! $Log$
+! Revision 1.5  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.4  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

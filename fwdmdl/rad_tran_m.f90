@@ -3,8 +3,7 @@ module RAD_TRAN_M
   use L2PCDim, only: NLVL, NSPS, N2LVL
   use MLSCommon, only: I4, R8
   use EARTH_INTERSECTION_M, only: EARTH_INTERSECTION
-  use ELLIPSE, only: EARTHX, HT, HT2, NPHI_TAN, NPHI_S, PHI_S, PHI_TAN, &
-                     ROC, RR
+  use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_INDEX, PATH_VECTOR, PATH_BETA
   use DO_T_SCRIPT_M, only: DO_T_SCRIPT
   use FAST_DELTA_M, only: FAST_DELTA
@@ -23,7 +22,7 @@ contains
 !----------------------------------------------------------------------
 ! This is the radiative transfer model, radiances only !
 
-    Subroutine Rad_Tran(Frq,N_lvls,h_tan,n_sps, &
+    Subroutine Rad_Tran(elvar,Frq,N_lvls,h_tan,n_sps, &
       &    ndx_path, z_path, h_path, t_path, phi_path, dHdz_path,     &
       &    earth_ref,beta_path, spsfunc_path, ref_corr, s_temp,brkpt, &
       &    no_ele, mid, ilo, ihi, t_script, tau, Rad, Ier)
@@ -35,6 +34,8 @@ contains
     Real(r8), intent(in) :: FRQ, H_TAN, EARTH_REF, S_TEMP
 
     Real(r8), intent(in) :: REF_CORR(:)
+
+    Type(ELLIPSE), intent(in out) :: elvar
 
     Type(path_beta), intent(in) :: BETA_PATH(:)   ! (Nsps)
 
@@ -59,19 +60,19 @@ contains
     brkpt = ndx_path%break_point_index
     no_ele = ndx_path%total_number_of_elements
 
-    EarthX = .false.
-    ht = h_tan
-    Rr = ht + RoC
-    ht2 = Rr * Rr
+    elvar%EarthX = .false.
+    elvar%ht = h_tan
+    elvar%Rr = elvar%ht + elvar%RoC
+    elvar%ht2 = elvar%Rr * elvar%Rr
     if (h_tan < -0.01) then
-      Rr = Rr / RoC
+      elvar%Rr = elvar%Rr / elvar%RoC
       cse = earth_ref
-      Call Earth_Intersection(Rs)
+      Call Earth_Intersection(elvar,Rs)
     else
       cse = 1.0
-      Rr = 0.0d0
-      Phi_s = Phi_tan
-      NPhi_s = NPhi_tan
+      elvar%Rr = 0.0d0
+      elvar%Phi_s = elvar%Phi_tan
+      elvar%NPhi_s = elvar%NPhi_tan
     end if
 !
 !  Compute the appropriate t_script & dt_scrpt_dnp along the integration
@@ -81,7 +82,8 @@ contains
    &                 mid, t_script)
 !
     Call FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path,beta_path, &
- &       dHdz_path,spsfunc_path,n_sps,N_lvls,Nlvl,ref_corr,delta,Ier)
+ &       dHdz_path,spsfunc_path,n_sps,N_lvls,Nlvl,ref_corr,elvar, &
+ &       delta,Ier)
     if (Ier /= 0) Return
 !
 ! Initialize the tau & del_opacity arrays:
@@ -99,6 +101,9 @@ contains
   End Subroutine RAD_TRAN
 end module RAD_TRAN_M
 ! $Log$
+! Revision 1.4  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.3  2001/02/26 09:01:16  zvi
 ! New version - Using "Super-Structures"
 !

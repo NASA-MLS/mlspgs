@@ -1,4 +1,5 @@
 module SPECTRO_DERIVATIVE_M
+  use ELLIPSE_M, only: ELLIPSE
   use GET_DRAD_M, only: GET_DRAD
   use L2PCdim, only: N2LVL
   use L2PC_PFA_STRUCTURES, only: SPECTRO_PARAM
@@ -18,13 +19,15 @@ module SPECTRO_DERIVATIVE_M
 contains
   Subroutine SPECTRO_DERIVATIVE(mid,brkpt,no_ele,z_path,h_path,phi_path, &
  &           DHDZ_PATH,N_lvls,mxco,ref_corr,mnp,spsfunc_s,pfa_dbeta_s,   &
- &           tau,t_script,Ary_Zero,s_np,s_nz,ilo,ihi,spectro,frq_i,      &
+ &           tau,t_script,Ary_Zero,s_np,s_nz,ilo,ihi,spectro,frq_i,elvar,&
  &           k_spect,ier)
 !
     Integer(i4), intent(in) :: MNP, N_LVLS, MXCO, MID, BRKPT, ILO,   &
    &                           IHI, S_NP, S_NZ, NO_ELE, frq_i
 !
     Type(path_vector), intent(in) :: z_path, h_path, phi_path, dhdz_path
+
+    Type(ELLIPSE), INTENT(IN OUT) :: elvar
 
     Real(r8), intent(in) :: REF_CORR(:), TAU(:)
     Real(r8), intent(in) :: T_SCRIPT(:), ARY_ZERO(:), PFA_DBETA_S(:), &
@@ -48,7 +51,7 @@ contains
 !
         Call pfa_db_delta (mid, brkpt, no_ele, z_path, h_path, phi_path, &
  &           DHDZ_PATH, N_lvls, ref_corr, spsfunc_s, pfa_dbeta_s,        &
- &           zeta_basis, phi_basis, s_nz, s_np, iz, ip, delta_s, Ier )
+ &           zeta_basis,phi_basis,s_nz,s_np,iz,ip,elvar,delta_s,Ier )
         if (Ier /= 0) Return
 !
 ! Now assemble the spectral derivatives for this frequency:
@@ -64,6 +67,9 @@ contains
   End Subroutine SPECTRO_DERIVATIVE
 end module SPECTRO_DERIVATIVE_M
 ! $Log$
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.5  2001/03/05 21:37:20  zvi
 ! New filter format
 !

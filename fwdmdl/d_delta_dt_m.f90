@@ -1,5 +1,5 @@
 module D_DELTA_DT_M
-  use ELLIPSE, only: HT, HT2, PS, ROC
+  use ELLIPSE_M, only: ELLIPSE
   use GL6P, only: GW, NG
   use MLSCommon, only: I4, R8
   use D_GET_ONE_ETA_M, only: GET_ONE_ETA
@@ -22,7 +22,7 @@ contains
   Subroutine d_delta_dt(mid,brkpt,no_ele,z_path,t_path,h_path,phi_path, &
  &           beta_path,dHdz_path,dh_dt_path,N_lvls,n_sps,Nlvl,  &
  &           ref_corr,t_z_basis,no_t,t_phi_basis,no_phi_t,spsfunc_path, &
- &           in,ip,d_delta_dtnp)
+ &           in,ip,elvar,d_delta_dtnp)
 !
     Integer(i4), intent(in) :: NLVL,NO_PHI_T,N_LVLS,N_SPS, &
    &             NO_T,IN,IP,MID,BRKPT,NO_ELE
@@ -35,6 +35,8 @@ contains
 
     real(r8), intent(in) :: T_Z_BASIS(:), T_PHI_BASIS(:),DH_DT_PATH(:)
     real(r8), intent(in) :: REF_CORR(:)
+
+    Type(ELLIPSE), intent(in out) :: elvar
 
     real(r8), intent(out) :: D_DELTA_DTNP(:)
 !
@@ -56,10 +58,10 @@ contains
 !
 !  Define htan and its square, also the dhdt at the tangent:
 !
-    htan = ht + RoC
-    htan2 = ht2
+    htan = elvar%ht + elvar%RoC
+    htan2 = htan * htan
 !
-    ps = -1.0
+    elvar%ps = -1.0
     Ngp1 = Ng + 1
 !
     htxdht = htan * dh_dt_path(brkpt)
@@ -76,7 +78,7 @@ contains
     hh = h_path%values(mp)
     ph = phi_path%values(mp)
 
-    hd = hh + RoC
+    hd = hh + elvar%RoC
     sb = Sqrt(abs(hd*hd-htan2))
     dhdth = dh_dt_path(mp)
 !
@@ -87,7 +89,7 @@ contains
 !
       hl = hh
       hh = h_path%values(mp)
-      if (hh < ht) EXIT
+      if (hh < elvar%ht) EXIT
 !
       zl = zh
       zh = z_path%values(mp)
@@ -99,7 +101,7 @@ contains
       ph = phi_path%values(mp)
 !
       sa = sb
-      hd = hh + RoC
+      hd = hh + elvar%RoC
       sb = Sqrt(abs(hd*hd-htan2))
 !
       if (abs(sa-sb) < 0.05) EXIT
@@ -124,11 +126,11 @@ contains
 !
 ! Second, do the left hand side of the ray path:
 !
-    ps = 1.0
+    elvar%ps = 1.0
     h_i = mid
     mp = brkpt + 1
     hh = h_path%values(mp)
-    do while (hh < ht)
+    do while (hh < elvar%ht)
       h_i = h_i + 1
       mp = mp + Ngp1
       hh = h_path%values(mp)
@@ -138,7 +140,7 @@ contains
     th = t_path%values(mp)
     ph = phi_path%values(mp)
 
-    hd = hh + RoC
+    hd = hh + elvar%RoC
     sb = Sqrt(abs(hd*hd-htan2))
     dhdth = dh_dt_path(mp)
 !
@@ -151,7 +153,7 @@ contains
       hh = h_path%values(mp)
 !
       sa = sb
-      hd = hh + RoC
+      hd = hh + elvar%RoC
       sb = Sqrt(abs(hd*hd-htan2))
 !
       zl = zh
@@ -267,7 +269,7 @@ contains
 !
 ! Compute the "Hydrostatic" contribution to the derivative:
 !
-        hd = h_GL(i) + RoC
+        hd = h_GL(i) + elvar%RoC
         hd2 = hd * hd
         hyd = dhdt_GL(i) * (2.0*hd2 - 3.0*htan2) + hd*htxdht
         r = hd2 - htan2
@@ -326,16 +328,16 @@ contains
       real(r8) :: DSDT, HD, DS, Q, R
 
       dsdt = 0.0
-      hd = hh + RoC
+      hd = hh + elvar%RoC
       ds = hd * hd - htan2
       if (ds > 0.0) dsdt = (hd*dhdth-htxdht)/Sqrt(ds)
 !
-      hd = hl + RoC
+      hd = hl + elvar%RoC
       ds = hd * hd - htan2
       if (ds > 0.0) dsdt = dsdt - (hd*dhdtl-htxdht)/Sqrt(ds)
 !
       q = sum1 + sing1 * abs(sb-sa)
-      r = sum2 + sing2 * dsdt * ps
+      r = sum2 + sing2 * dsdt * elvar%ps
 !
       d_delta_dtnp(h_i) = (q + r) * rc       ! for (in,ip)
 !
@@ -345,6 +347,9 @@ contains
 !
 end module D_DELTA_DT_M
 ! $Log$
+! Revision 1.6  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.5  2001/03/26 17:56:14  zvi
 ! New codes to deal with dh_dt_path issue.. now being computed on the fly
 !

@@ -1,5 +1,6 @@
 module FAST_DELTA_M
   use MLSCommon, only: I4, R8
+  use ELLIPSE_M, only: ELLIPSE
   use PATH_ENTITIES_M, only: PATH_VECTOR, PATH_BETA
   use GENERIC_DELTA_INTEGRAL_M, only: GENERIC_DELTA_INTEGRAL
   implicit NONE
@@ -20,7 +21,7 @@ contains
 !
   Subroutine FAST_DELTA(mid,brkpt,no_ele,z_path,h_path,phi_path, &
  &           beta_path,dHdz_path,spsfunc_path,n_sps,N_lvls,      &
- &           Nlvl,ref_corr,delta,Ier)
+ &           Nlvl,ref_corr,elvar,delta,Ier)
 !
     Integer(i4), intent(in) :: NLVL, N_SPS, N_LVLS, MID, BRKPT, NO_ELE
 
@@ -29,6 +30,8 @@ contains
     Real(r8), intent(inout) :: DELTA(:,:)     ! (N2lvl,Nsps)
 
     Integer(i4), intent(out) :: IER
+
+    Type(ELLIPSE), intent(in out) :: elvar
 
     Type(path_beta), intent(in) :: BETA_PATH(:)      ! (Nsps)
 
@@ -66,7 +69,7 @@ contains
 !
       Call generic_delta_integral(mid, brkpt, no_ele, z_path, h_path, &
  &         phi_path, dhdz_path, N_lvls, ref_corr, integrand, z_basis, &
- &         phi_basis, nz, np, iz, ip, fq, delta(1:,j), Ier)
+ &         phi_basis, nz, np, iz, ip, fq, elvar, delta(1:,j), Ier)
       IF(ier /= 0) goto 99
 
     end do
@@ -79,6 +82,9 @@ contains
 !
 end module FAST_DELTA_M
 ! $Log$
+! Revision 1.3  2001/03/29 08:51:01  zvi
+! Changing the (*) toi (:) everywhere
+!
 ! Revision 1.2  2001/01/31 01:08:48  zvi
 ! New version of forward model
 !

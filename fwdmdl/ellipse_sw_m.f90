@@ -1,8 +1,7 @@
 !
 module ELLIPSE_SW_M
   use MLSCommon, only: R8
-  use ELLIPSE, only: CPT, SPT, CPS, SPS, CPTS, SPTS, HT, RR, PHI_TAN, &
-                     PHI_S, PS, ROC, EARTHX
+  use ELLIPSE_M, only: ELLIPSE
   Implicit NONE
   Private
   Public PHI_TO_H_S, H_TO_S_PHI, S_TO_H_PHI
@@ -18,25 +17,29 @@ contains
 !  Given Phi, get H and S
 !  ** Note: This routine is using The Equivalent Circel concept
 !
-      Subroutine Phi_to_H_S(Phi,h,S)
+      Subroutine Phi_to_H_S(elvar,Phi,h,S)
 !
       Real(r8), Intent(IN) :: Phi
       Real(r8), Intent(OUT) :: H, S
+!   
+      Type(ELLIPSE), intent(in out) :: elvar
+!
 !
       Real(r8) :: rt,delphi,q,v
-!
-      delphi = Phi - Phi_tan
+! 
+      delphi = Phi - elvar%Phi_tan
       v = Cos(delphi)
 !
-      if(.not.EarthX) then
-        rt = ht + RoC
-        h = rt / v - RoC
+      if(.not.elvar%EarthX) then
+        rt = elvar%ht + elvar%RoC
+        h = rt / v - elvar%RoC
         S = rt * Tan(delphi)
       else
-        if(ps.gt.0.0) v = Cos(Phi-(2.0d0*Phi_s-Phi_tan))
-        h = RoC * (Rr / v - 1.0d0)
-        q = Sin(Phi-Phi_s) / v
-        S = RoC * abs(q)
+        if(elvar%ps.gt.0.0) &
+       &     v = Cos(Phi-(2.0d0*elvar%Phi_s-elvar%Phi_tan))
+        h = elvar%RoC * (elvar%Rr / v - 1.0d0)
+        q = Sin(Phi-elvar%Phi_s) / v
+        S = elvar%RoC * abs(q)
       endif
 !
       Return
@@ -46,32 +49,34 @@ contains
 !  Given H, get S and Phi
 !  ** Note: This routine is using The Equivalent Circel concept
 !
-      Subroutine H_to_S_Phi(h,S,Phi)
+      Subroutine H_to_S_Phi(elvar,h,S,Phi)
 !
       Real(r8), intent(IN) :: h
       Real(r8), intent(OUT) :: S, Phi
+!
+      Type(ELLIPSE), intent(in out) :: elvar
 
       Real(r8) :: q,v,r,rt
 !
-      r = h + RoC
+      r = h + elvar%RoC
 !
-      if(.not.EarthX) then
+      if(.not.elvar%EarthX) then
         S = 0.0d0
-        Phi = Phi_tan
-        rt = ht + RoC
+        Phi = elvar%Phi_tan
+        rt = elvar%ht + elvar%RoC
         q = r * r - rt * rt
         if(q.ge.1.0d-6) S = Sqrt(q)
         v = rt / r
-        if(abs(v).lt.1.0d0) Phi = Phi_tan + ps * DAcos(v)
+        if(abs(v).lt.1.0d0) Phi = elvar%Phi_tan + elvar%ps * DAcos(v)
       else
-        v = (RoC / r) * Rr        ! Rr = Cos(Phi_tan-Phi_s)=(ht+RoC)/RoC
-        if(ps.lt.0.0) then
-          Phi = Phi_tan - DAcos(v)
+        v = (elvar%RoC / r) * elvar%Rr   ! Rr = Cos(Phi_tan-Phi_s)=(ht+RoC)/RoC
+        if(elvar%ps.lt.0.0) then
+          Phi = elvar%Phi_tan - DAcos(v)
         else
-          Phi = 2.0d0 * Phi_s - Phi_tan + DAcos(v)
+          Phi = 2.0d0 * elvar%Phi_s - elvar%Phi_tan + DAcos(v)
         endif
-        q = Sin(Phi-Phi_s) / v
-        S = RoC * abs(q)
+        q = Sin(Phi-elvar%Phi_s) / v
+        S = elvar%RoC * abs(q)
       endif
 !
       Return
@@ -81,29 +86,31 @@ contains
 !  Given S, get H and Phi
 !  ** Note: This routine is using The Equivalent Circel concept
 !
-      Subroutine S_to_H_Phi(S,h,Phi)
+      Subroutine S_to_H_Phi(elvar,S,h,Phi)
 !
       Real(r8), intent(IN) :: S
       Real(r8), intent(OUT) :: Phi,H
+!
+      Type(ELLIPSE), intent(in out) :: elvar
 
       Real(r8) :: rt,r,q,v
 !
-      if(.not.EarthX) then
-        rt = ht + RoC
+      if(.not.elvar%EarthX) then
+        rt = elvar%ht + elvar%RoC
         r = Sqrt(S*S + rt*rt)
-        h = r - RoC
+        h = r - elvar%RoC
         v = rt / r
-        Phi = Phi_tan + ps * DAcos(v)
+        Phi = elvar%Phi_tan + elvar%ps * DAcos(v)
       else
-        q = ps * S / RoC
-        if(ps.lt.0.0) then
-          Phi = DAtan2(q*cpt+sps,cps-q*spt)
-          v = Cos(Phi - Phi_tan)
+        q = elvar%ps * S / elvar%RoC
+        if(elvar%ps.lt.0.0) then
+          Phi = DAtan2(q*elvar%cpt+elvar%sps,elvar%cps-q*elvar%spt)
+          v = Cos(Phi - elvar%Phi_tan)
         else
-          Phi = DAtan2(q*cpts+sps,cps-q*spts)
-          v = Cos(Phi- 2.0d0 * Phi_s + Phi_tan)
+          Phi = DAtan2(q*elvar%cpts+elvar%sps,elvar%cps-q*elvar%spts)
+          v = Cos(Phi- 2.0d0 * elvar%Phi_s + elvar%Phi_tan)
         endif
-        h = RoC * (Rr / v - 1.0d0)
+        h = elvar%RoC * (elvar%Rr / v - 1.0d0)
       endif
 !
       Return

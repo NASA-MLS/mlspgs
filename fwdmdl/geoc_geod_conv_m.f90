@@ -3,8 +3,7 @@ module GEOC_GEOD_CONV_M
   use Geometry, only: GeodToGeocLat
   use UNITS, only: DEG2RAD, RAD2DEG
   use L2PC_PFA_STRUCTURES, only: EARTH_MAJOR, EARTH_MINOR
-  use ELLIPSE, only: A2, C2, C2OA2, CPT, SPT, NPHI_TAN, ROC, XOC, YOC
-
+  use ELLIPSE_M, only: ELLIPSE
   implicit NONE
   private
   public :: GEOC_GEOD_CONV
@@ -18,24 +17,26 @@ module GEOC_GEOD_CONV_M
 !---------------------------------------------------------------------------
 contains
 
-  ! ---------------------------------------------  GEOC_GEOD_CONV  -----
-  subroutine GEOC_GEOD_CONV ( BETA_INC, PHI_TAN, GEOD_LAT, GEOC_LAT, Rp)
+  ! ------------------------------------- --------  GEOC_GEOD_CONV  -----
+  subroutine GEOC_GEOD_CONV (elvar,BETA_INC,PHI_TAN,GEOD_LAT,GEOC_LAT,Rp)
 
     real(r8), intent(in) :: BETA_INC    ! In Degrees
     real(r8), intent(in) :: PHI_TAN     ! In Radians
     real(r8), intent(in) :: GEOD_LAT    ! In Radians
+    
+    type(ELLIPSE), intent(in out) :: elvar
 
     real(r8), intent(out) :: GEOC_LAT   ! In Radians
 
     real(r8), intent(out) :: RP         ! In Kilometers
 
-    real(r8) :: CW, INCL, SW
+    real(r8) :: CW, INCL, SW, r
 !   real(r8), parameter :: B2 = real(earth_minor,r8) ** 2 ! Doesn't work
     real(r8), parameter :: B2 = (earth_minor + 0.0_r8) ** 2
 
 ! Fill in some variables in the Ellipse module
 
-    a2 = real(earth_major,r8) ** 2
+    elvar%a2 = real(earth_major,r8) ** 2
 
     incl = (beta_inc - 90.0_r8) * deg2rad
 !   r = tan(incl) ** 2
@@ -43,23 +44,24 @@ contains
 ! c is the Minor axis for 2D ellipse, c2 = c * c
 ! c2oa2 is c**2 / a**2
 
-    c2oa2 = b2/(a2 * cos(incl)**2 + b2 * sin(incl)**2 )
+    elvar%c2oa2 = b2/(elvar%a2 * cos(incl)**2 + b2 * sin(incl)**2 )
 !   c2oa2 = (1.0_r8+r)*b2/(a2+b2*r)
 
-    c2 = a2 * c2oa2
+    elvar%c2 = elvar%a2 * elvar%c2oa2
 
-    spt = sin(Phi_tan)
-    cpt = cos(Phi_tan)
-    sw = spt * spt
-    cw = cpt * cpt
+    elvar%phi_tan = Phi_tan
+    elvar%spt = sin(Phi_tan)
+    elvar%cpt = cos(Phi_tan)
+    sw = elvar%spt * elvar%spt
+    cw = elvar%cpt * elvar%cpt
 
-    nphi_tan = a2 / sqrt(c2*sw + a2*cw)
+    elvar%nphi_tan = elvar%a2 / sqrt(elvar%c2*sw + elvar%a2*cw)
 
 !  Compute Radius of Curvature Circle (RoC) and its center coordinates:
 
-    RoC = nphi_tan * sqrt(sw + c2oa2**2 * cw)
-    XoC = (nphi_tan - RoC) * cpt
-    YoC = (c2oa2 * nphi_tan - RoC) * spt
+    elvar%RoC = elvar%nphi_tan * sqrt(sw + elvar%c2oa2**2 * cw)
+    elvar%XoC = (elvar%nphi_tan - elvar%RoC) * elvar%cpt
+    elvar%YoC = (elvar%c2oa2 * elvar%nphi_tan - elvar%RoC) * elvar%spt
 
 ! Get the Geocentric Lat. (geoc_lat) from the Geodetic Lat.
 
@@ -67,7 +69,8 @@ contains
 
 !  Compute Earth Radius (Elliptical)
 
-    Rp = sqrt( ((a2*a2)*cw + (b2*b2)*sw) / (a2*cw + b2*sw) )
+    r = elvar%a2*cw + b2*sw
+    Rp = sqrt( ((elvar%a2*elvar%a2)*cw + (b2*b2)*sw) / r)
 
     return
 
@@ -76,6 +79,10 @@ contains
 end module GEOC_GEOD_CONV_M
 
 ! $Log$
+! Revision 1.6  2001/03/28 19:55:26  vsnyder
+! Revised some computations to make them more stable.
+! Corrected units on call to GeodToGeocLat.
+!
 ! Revision 1.4  2001/03/27 19:48:00  vsnyder
 ! Get Deg2Rad from Units, add some comments, make everything but
 ! geoc_geod_conv private, make constants _r8 instead of d0, cosmetic changes
