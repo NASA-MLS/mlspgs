@@ -13,7 +13,6 @@ module OBTAIN_MLSCF
   public :: Close_MLSCF, Open_MLSCF
 
   ! =====  Private declarations  =======================================
-  integer, save :: L2CF_UNIT
 
   !------------------------------- RCS Ident Info ------------------------------
   character(len=130) :: id = &
@@ -24,13 +23,15 @@ module OBTAIN_MLSCF
 contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------------  CLOSE_MLSCF  -----
-  subroutine CLOSE_MLSCF
+  subroutine CLOSE_MLSCF ( CF_Unit )
+
+    integer, intent(in) :: CF_Unit
 
     character (LEN=32) :: MNEMONIC
     character (LEN=256) :: MSG
     integer :: RETURN_STATUS
 
-    return_Status = Pgs_io_gen_closeF ( L2CF_Unit )
+    return_Status = Pgs_io_gen_closeF ( CF_Unit )
 
     if ( return_Status /= PGS_S_SUCCESS ) then
       call Pgs_smf_getMsg ( return_Status, mnemonic, msg )
@@ -40,7 +41,10 @@ contains ! =====     Public Procedures     =============================
   end subroutine CLOSE_MLSCF
 
   ! -------------------------------------------------  OPEN_MLSCF  -----
-  subroutine OPEN_MLSCF
+  subroutine OPEN_MLSCF ( MLSPCF_Start, CF_Unit )
+
+    integer, intent(in) :: MLSPCF_Start
+    integer, intent(out) :: CF_Unit
 
     integer :: L2CF_VERSION
     character (LEN=32) :: MNEMONIC
@@ -48,8 +52,8 @@ contains ! =====     Public Procedures     =============================
     integer :: RETURN_STATUS
 
     L2CF_Version = 1
-    return_Status = Pgs_io_gen_openF ( mlspcf_l2cf_start, PGSd_IO_Gen_RSeqFrm, &
-                                      0, L2CF_Unit, L2CF_Version)
+    return_Status = Pgs_io_gen_openF ( MLSPCF_Start, PGSd_IO_Gen_RSeqFrm, &
+                                      0, CF_Unit, L2CF_Version)
 
     if ( return_Status /= PGS_S_SUCCESS ) then
 
@@ -61,3 +65,5 @@ contains ! =====     Public Procedures     =============================
   end subroutine OPEN_MLSCF
 
 end module OBTAIN_MLSCF
+
+! $Log$
