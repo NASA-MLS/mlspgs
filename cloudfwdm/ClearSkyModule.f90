@@ -30,7 +30,7 @@ module ClearSkyModule
 contains
 
       SUBROUTINE CLEAR_SKY(L,NU,TS,S,LORS,WIND,XZ,XP,XT,XQ,VMR, NS, &
-                 &         F,RS,U,T,TAU,Z,TAU100, Catalog )
+                 &         F,RS,U,T,TAU,Z,TAU100, Catalog, Bill_Spectra )
 
 !======================================================
 !     >>>>>>>>CLEAR-SKY RADIATION SCHEME<<<<<<<<<<
@@ -73,7 +73,11 @@ contains
 
 !      CALL HEADER(2)
 
-      Bill_Spectra = .false.
+      if (.not. Bill_Spectra) print*, 'bill is not true'
+      if (Bill_Spectra) print*, 'bill is true'
+      stop
+
+!      Bill_Spectra = .false.
 
       CALL SETUP_SPECTRA(QLG,V0,GSE,IST,WTH,NTH,DELTA,N1,   &
                   &      GAMMA,N2,MOL,NMOL,NCNT)
@@ -144,6 +148,9 @@ contains
 end module ClearSkyModule
 
 ! $Log$
+! Revision 1.11  2001/11/15 00:54:14  jonathan
+! minor changes
+!
 ! Revision 1.10  2001/11/14 00:39:42  jonathan
 ! switch to use bill'd data
 !

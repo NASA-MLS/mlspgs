@@ -42,6 +42,7 @@ contains
              &   NZmodel,                                              &
              &   FREQUENCY, PRESSURE, HEIGHT, TEMPERATURE, VMRin,      &
              &   WCin, IPSDin, ZT, ZZT, RE, ISURF, ISWI, ICON, IFOV,   &
+             &   Bill_data,                                            &
              &   phi_tan, h_obs, elev_offset, AntennaPattern,          &
              &   TB0, DTcir, Trans, BETA, BETAc, Dm, TAUeff, SS,       &
              &   NU, NUA, NAB, NR, Slevl, noS, Catalog )
@@ -118,10 +119,10 @@ contains
 !     DRcir   (NT,NF) -> Cloud Induced Radiance (K).                         C
 !     TAUeff  (NT,NF) -> Effective Cloud Optical Depth.                      C
 !     SS      (NT,NF) -> Cloud Radiance Sensitivity (K).                     C
-!     BETA  (NZ,NF) -> Total Extinction Profile (m-1).                     C
-!     BETAc (NZ,NF) -> Cloud Extinction Profile (m-1).                     C
-!     Trans (noS,NT,NF) -> Clear Sky Transmittance Function                    C
-!     Dm     (N,NZ) -> Mass-Mean-Diameters (micron).                       C 
+!     BETA  (NZ,NF) -> Total Extinction Profile (m-1).                       C
+!     BETAc (NZ,NF) -> Cloud Extinction Profile (m-1).                       C
+!     Trans (noS,NT,NF) -> Clear Sky Transmittance Function                  C
+!     Dm     (N,NZ) -> Mass-Mean-Diameters (micron).                         C 
 !                        Note:1=Ice,2=Liquid.                                C 
 !                                                                            C
 !     -----------------------------------------------                        C
@@ -368,6 +369,7 @@ contains
 
       REAL(r8), PARAMETER :: CONST1 = 0.0000776_r8
       REAL(r8), PARAMETER :: CONST2 = 4810.0_r8
+      Logical :: Bill_data 
 
       COMPLEX(r8) A(NR,NAB),B(NR,NAB)          ! MIE COEFFICIENCIES
 
@@ -490,7 +492,7 @@ contains
          CALL CLEAR_SKY(NZmodel-1,NU,TS,S,LORS,SWIND,           &
               &         YZ,YP,YT,YQ,VMR,NS,                     &
               &         FREQUENCY(IFR),RS,U,TEMP,TAU0,Z,TAU100, &
-              &         Catalog ) 
+              &         Catalog, Bill_data ) 
 
 !         CALL HEADER(3)
 
@@ -793,6 +795,9 @@ contains
 end module CloudySkyRadianceModel
 
 ! $Log$
+! Revision 1.28  2001/11/09 18:07:09  jonathan
+! add spectra catalog
+!
 ! Revision 1.27  2001/10/30 21:14:01  dwu
 ! change order of delTau100 and Tau0 initialization
 !

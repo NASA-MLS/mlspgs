@@ -640,7 +640,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     call CloudForwardModel ( doChannel,                                      &
       & noFreqs,                                                             &
       & noSurf,                                                              & 
-      & noMifs,                                           &
+      & noMifs,                                                              &
       & size(ForwardModelConfig%molecules),                                  &
       & ForwardModelConfig%no_cloud_species,                                 &
       & ForwardModelConfig%no_model_surfs,                                   &
@@ -925,6 +925,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.86  2001/11/15 23:50:21  jonathan
+! rename DF_spectroscopy to default_spectroscopy
+!
 ! Revision 1.85  2001/11/09 18:12:13  jonathan
 ! add deallocate my_catalog
 !
