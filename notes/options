@@ -50,7 +50,7 @@ E.g., mlsl2 -m -p --nmeta -S"glo jac"
   --slave[ ]<master-tid>: This is a slave; <master-tid>
     is the id of the master.  This option is set by a master
     task and is not recommneded for manual invocations.
-  --ckbk: Check the block calculations against full block algebra
+  --[n]ckbk: Check the block calculations against full block algebra
   --snoop: Activate the snooping capability (interaction with
     an IDL diagnostics process)
     
@@ -76,6 +76,9 @@ usage automatically. Thus you only need to edit this file,
 not MLSL2.f90)
 
  $Log$
+ Revision 1.5  2001/11/05 23:21:48  livesey
+ More stuff for --master
+
  Revision 1.4  2001/10/04 23:51:42  livesey
  Added ckbk option
 
