@@ -214,7 +214,7 @@ contains
 
   function mls_io_gen_openF(toolbox_mode, caseSensitive, ErrType, &
     & record_length, FileAccessType, &
-    & FileName, PCBottom, PCTop, versionNum, thePC) &
+    & FileName, PCBottom, PCTop, versionNum, unknown, thePC) &
     &  result (theFileHandle)
 
     ! Dummy arguments
@@ -228,6 +228,7 @@ contains
     integer(i4),  optional, intent(IN)   :: PCBottom, PCTop
     integer(i4), optional, intent(IN)                :: thePC
     integer(i4),  optional     :: versionNum
+    logical, optional, intent(in) :: unknown
 
     ! Local variables
 
@@ -408,6 +409,9 @@ contains
         return
       endif
 
+      if (present(unknown)) then
+        if (unknown) status = 'unknown'
+      end if
 
       if(access /= 'direct') then
         open(unit=unit, access=access, action=action, form=form, &
@@ -581,6 +585,9 @@ end module MLSFiles
 
 !
 ! $Log$
+! Revision 2.16  2001/04/25 21:52:50  livesey
+! Added optional `unknown' argument
+!
 ! Revision 2.15  2001/04/25 20:32:29  livesey
 ! Bug fix, trim filename on output
 !
