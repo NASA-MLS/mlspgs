@@ -63,33 +63,32 @@ contains ! ====     Public Procedures     ==============================
     integer, intent(out) :: ERROR_FLAG  ! Nonzero means failure
     integer, intent(in) :: FIRST_SECTION! Index of son of root of first n_cf
 
-    type (GriddedData_T), dimension(:), pointer :: GriddedData
     integer :: chunkNo                  ! Index of Chunks
     type (MLSChunk_T), dimension(:), pointer :: Chunks ! of data
+    ! Forward model configurations:
+    type (ForwardModelConfig_T), dimension(:), &
+      & pointer :: ForwardModelConfigDatabase
+    type (GriddedData_T), dimension(:), pointer :: GriddedData
     integer :: HOWMANY                  ! Nsons(Root)
     integer :: I, J                     ! Loop inductors
     type (L1BInfo_T) :: L1BInfo         ! File handles etc. for L1B dataset
-    type (L2AUXData_T), dimension(:), pointer :: l2auxDatabase
-    type (L2GPData_T), dimension(:), pointer  :: l2gpDatabase
+    type (L2AUXData_T), dimension(:), pointer :: L2AUXDatabase
+    type (L2GPData_T), dimension(:), pointer  :: L2GPDatabase
+    type(PCFData_T) :: L2pcf
     type (Matrix_Database_T), dimension(:), pointer :: Matrices
-	 type(PCFData_T) :: l2pcf
     type (TAI93_Range_T) :: ProcessingRange  ! Data processing range
     integer :: SON                      ! Son of Root
     type (Vector_T), dimension(:), pointer :: Vectors
     type (VGrid_T), dimension(:), pointer :: VGrids
 
-    ! Forward model configurations
-    type (ForwardModelConfig_T), dimension(:), &
-      & pointer :: ForwardModelConfigDatabase
-
     ! Arguments for Construct not declared above:
-    type (QuantityTemplate_T), dimension(:), pointer :: qtyTemplates
-    type (QuantityTemplate_T), dimension(:), pointer :: mifGeolocation
-    type (VectorTemplate_T), dimension(:), pointer :: vectorTemplates
+    type (QuantityTemplate_T), dimension(:), pointer :: MifGeolocation
+    type (QuantityTemplate_T), dimension(:), pointer :: QtyTemplates
+    type (VectorTemplate_T), dimension(:), pointer :: VectorTemplates
 
-    nullify ( griddedData, chunks, l2auxDatabase, l2gpDatabase, &
-      & matrices, vectors, vGrids, forwardModelConfigDatabase, qtyTemplates, &
-      & mifGeolocation, vectorTemplates )
+    nullify ( chunks, forwardModelConfigDatabase, griddedData, &
+      & l2auxDatabase, l2gpDatabase, matrices, mifGeolocation, &
+      & qtyTemplates, vectors, vectorTemplates, vGrids )
 
     call InitParallel
 
@@ -200,6 +199,9 @@ subtrees: do while ( j <= howmany )
 end module TREE_WALKER
 
 ! $Log$
+! Revision 2.49  2001/05/02 23:23:00  livesey
+! Added some of the parallel stuff
+!
 ! Revision 2.48  2001/04/28 01:31:46  livesey
 ! Changes for new l2pc / matrix handling.
 !
