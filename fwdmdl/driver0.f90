@@ -15,6 +15,13 @@ program DRIVER0
   use MDBETA, only: MNF => max_no_freq, NO_T_PHI
   use MLSCommon, only: I4, R4, R8
 
+!---------------------------- RCS Ident Info -------------------------------
+  CHARACTER (LEN=256) :: Id = &
+       "$Id$"
+  CHARACTER (LEN=*), PARAMETER :: ModuleName= &
+       "$RCSfile$"
+!---------------------------------------------------------------------------
+
   integer, parameter :: NPATH = 1
 
     type(l2pc_header_one) :: header1
@@ -138,3 +145,5 @@ program DRIVER0
  &           Npath, path_brkpt, no_phi_t, t_phi_basis, dh_dt_path,         &
              mdb_hdr, mdb_rec, spectroscopic, Ier )
 end program DRIVER0
+
+! Log: DRIVER0,v $
