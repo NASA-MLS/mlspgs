@@ -138,6 +138,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     integer :: noMIFs                   ! Number of minor frames
     integer :: noSgrid                  ! no of elements in S grid
     integer :: noSurf                   ! Number of pressure levels
+    integer :: novmrSurf                   ! Number of vmr levels
     integer :: noCldSurf                   ! Number of cloud ext levels
     integer :: NOFREQS                  ! Number of frequencies
 
@@ -292,25 +293,25 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! -------
     ! Inputs:
     ! -------
-        ptan => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,       &
+        ptan => GetVectorQuantityByType ( fwdModelExtra,       &
           & quantityType=l_ptan, instrumentModule = radiance%template%instrumentModule)
-        temp => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,      &
+        temp => GetVectorQuantityByType ( fwdModelExtra,      &
           & quantityType=l_temperature )
-        gph => GetVectorQuantityByType ( fwdModelIn,  fwdModelExtra,       &
+        gph => GetVectorQuantityByType ( fwdModelExtra,       &
           & quantityType=l_gph )
-        cloudIce => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,   &
+        cloudIce => GetVectorQuantityByType ( fwdModelExtra,   &
           & quantityType=l_cloudIce )
-        cloudWater => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        cloudWater => GetVectorQuantityByType ( fwdModelExtra, &
           & quantityType=l_cloudWater )
-        surfaceType => GetVectorQuantityByType ( fwdModelIn,fwdModelExtra, &
+        surfaceType => GetVectorQuantityByType ( fwdModelExtra, &
           & quantityType=l_surfaceType )
-        sizeDistribution=>GetVectorQuantityByType(fwdModelIn,fwdModelExtra,&
+        sizeDistribution=>GetVectorQuantityByType(fwdModelExtra,&
           & quantityType=l_sizeDistribution )
-        earthradius=>GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,  &
+        earthradius=>GetVectorQuantityByType ( fwdModelExtra,  &
           & quantityType=l_earthradius ) 
-	     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        scGeocAlt => GetVectorQuantityByType ( fwdModelExtra, &
           & quantityType=l_scGeocAlt )
-        elevOffset => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+        elevOffset => GetVectorQuantityByType ( fwdModelExtra, &
           & quantityType=l_elevOffset, radiometer=Signal%radiometer )	
 
     !-----------------------------------------
@@ -335,6 +336,13 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        & frequencyCoordinate=(/l_none/)) ) call MLSMessage ( MLSMSG_Error,   &
        & ModuleName, InvalidQuantity//'ptan' )
 
+    ! ----------------------------
+    ! Get some basic dimensions
+    ! ----------------------------
+    noMIFs  = radiance%template%noSurfs
+    noFreqs = size (signal%frequencies) ! Note: noFreq and noChans should be the same
+    noSurf  = temp%template%noSurfs     ! Number of model layers
+
     !----------------------------------
     ! Set up some temporary quantities
     !----------------------------------
@@ -350,7 +358,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
     endif
     call allocate_test ( vmrArray,                                           &
-      & size(forwardModelConfig%molecules), temp%template%noSurfs,           &
+      & size(forwardModelConfig%molecules), noSurf,           &
       & 'vmrArray', ModuleName )
 
     !---------------------------------------------------------
@@ -384,10 +392,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !      vmrInst = closestInstances(maf)
 !      instance = closestInstances(maf)
 
+	novmrSurf = vmr%template%nosurfs
       call InterpolateValues ( &
-        & vmr%template%surfs(:,1), &    ! Old X
-        & vmr%values(:,instance), &            ! Old Y
-        & temp%template%surfs(:,1), &   ! New X
+        & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
+        & reshape(vmr%values(:,instance),(/novmrSurf/)), &     ! Old Y
+        & reshape(temp%template%surfs(:,1),(/noSurf/)), &   ! New X
         & vmrArray(i,:), &                     ! New Y
         & 'Linear', extrapolate='Clamp' )
       Got(ivmr)=.true.
@@ -397,13 +406,6 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
       call MLSMessage( MLSMSG_Error, ModuleName,                             &
                       'Missing the required molecules' )
     endif
-
-    ! ----------------------------
-    ! Get some basic dimensions
-    ! ----------------------------
-    noMIFs  = radiance%template%noSurfs
-    noFreqs = size (signal%frequencies) ! Note: noFreq and noChans should be the same
-    noSurf  = temp%template%noSurfs     ! Number of model layers
 
     call allocate_test ( thisRatio, noFreqs, 'thisRatio', ModuleName )
     call allocate_test ( doChannel, noFreqs, 'doChannel', ModuleName )
@@ -428,7 +430,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
        sidebandStart = -1
        sidebandStop  = 1
        sidebandStep  = 2
-       sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+       sidebandRatio => GetVectorQuantityByType ( fwdModelExtra, &
                      & quantityType = l_sidebandRatio, signal=signal%index )
        thisRatio = sidebandRatio%values(:,1)
     else
@@ -579,7 +581,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
           endif
         enddo
 
-        CloudHeight = 18.e3_r8     ! meters  as a default
+        CloudHeight = 20.e3_r8     ! meters  as a default
         if(iCloudHeight .ne. 0) CloudHeight = gph%values(iCloudHeight, instance)
 
         call CLOUD_MODEL ( CloudType, CloudHeight, gph%values(:,instance),   &
@@ -902,6 +904,9 @@ end module FullCloudForwardModel
 
 
 ! $Log$
+! Revision 1.61  2001/10/12 16:58:31  dwu
+! distinguish number surfaces between model temperature grid and retrieval ext grid
+!
 ! Revision 1.60  2001/10/11 22:44:01  dwu
 ! modify high zt Jacobian and use cloud_der as the switch between high and low Zt
 !
