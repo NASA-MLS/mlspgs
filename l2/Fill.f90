@@ -6490,7 +6490,7 @@ contains ! =====     Public Procedures     =============================
         surface = 1
       end if
 
-      quantity%values(1,:) = exp ( - sourceQuantity%values(surface,:) / scale )
+      quantity%values(1,:) = min ( exp ( 1.0_r8 - sourceQuantity%values(surface,:) / scale ), 1.0_r8 )
     end subroutine FillQualityFromChisq
 
     ! -------------------------------------- FillWithCombinedChannels ----------
@@ -6907,6 +6907,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.284  2004/09/21 22:59:18  livesey
+! Another change to the chi-squared to quality conversion.
+!
 ! Revision 2.283  2004/09/21 19:17:23  livesey
 ! Changed the 1-tanh to an exp in converting from chi squared to quality.
 !
