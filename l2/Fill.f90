@@ -96,7 +96,7 @@ contains ! =====     Public Procedures     =============================
       & L_XYZ, L_ZETA
     ! Now the specifications:
     use INIT_TABLES_MODULE, only: S_DESTROY, S_DUMP, S_FILL, S_FILLCOVARIANCE, &
-      & S_FILLDIAGONAL, S_MATRIX,  S_NEGATIVEPRECISION, S_SNOOP, S_TIME, &
+      & S_FILLDIAGONAL, S_FLUSHL2PCBINS, S_MATRIX,  S_NEGATIVEPRECISION, S_SNOOP, S_TIME, &
       & S_TRANSFER, S_VECTOR, S_SUBSET, S_FLAGCLOUD, S_RESTRICTRANGE, S_UPDATEMASK
     ! Now some arrays
     use Intrinsic, only: FIELD_INDICES
@@ -107,6 +107,7 @@ contains ! =====     Public Procedures     =============================
       & PRECISIONSUFFIX, ReadL1BData, AssembleL1BQtyName
     use L2GPData, only: L2GPData_T
     use L2AUXData, only: L2AUXData_T
+    use L2PC_m, only: FLUSHL2PCBINS
     use L3ASCII, only: L3ASCII_INTERP_FIELD
     use LEXER_CORE, only: PRINT_SOURCE
     use ManipulateVectorQuantities, only: DOFGRIDSMATCH, DOHGRIDSMATCH, &
@@ -596,6 +597,9 @@ contains ! =====     Public Procedures     =============================
         call RestrictRange ( key, vectors )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
           & call trace_end ( "Fill.RestrictRange" )
+
+      case ( s_flushL2PCBins )
+        call FlushL2PCBins
 
       case ( s_updateMask )
         if ( toggle(gen) .and. levels(gen) > 0 ) &
@@ -5187,12 +5191,12 @@ contains ! =====     Public Procedures     =============================
           quantity%values = valueAsArray(1)
         else if ( mod ( i, 2 ) == 1 ) then
           ! A sine term
-          quantity%values(1,:) = quantity%values(1,:) + valueAsArray(1) * &
-            & sin ( Deg2Rad * ((i+1)/2) * ( quantity%template%phi(1,:) - phiZero ) )
+          quantity%values(1,:) = quantity%values(1,:) + 2 * valueAsArray(1) * &
+            & cos ( Deg2Rad * ((i+1)/2) * ( quantity%template%phi(1,:) - phiZero ) )
         else
           ! A cosine term
-          quantity%values(1,:) = quantity%values(1,:) + valueAsArray(1) * &
-            & cos ( Deg2Rad * ((i+1)/2) * ( quantity%template%phi(1,:) - phiZero ) )
+          quantity%values(1,:) = quantity%values(1,:) - 2 * valueAsArray(1) * &
+            & sin ( Deg2Rad * ((i+1)/2) * ( quantity%template%phi(1,:) - phiZero ) )
         end if
       end do
 
@@ -5787,6 +5791,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.228  2003/06/03 19:23:51  livesey
+! Added flushL2PCBins
+!
 ! Revision 2.227  2003/05/29 20:01:55  livesey
 ! Added reflector temperature model.
 !
