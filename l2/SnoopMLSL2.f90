@@ -288,6 +288,7 @@ contains ! ========  Public Procedures =========================================
     integer :: SNOOPERTID               ! Task ID for snooper
     integer :: STATUS                   ! Status from allocate/deallocate
     logical :: FIRSTCALL                ! First time snoop called
+    logical :: GOTSOMETHING             ! Set if we got a message
 
     ! Executable code
     if ( .not. snoopingActive ) return
@@ -326,6 +327,7 @@ contains ! ========  Public Procedures =========================================
 
     snoopEventLoop: do ! --------------------------- Snoop event loop ------
 
+      gotSomething = .false.
       ! Now try to receive a message
       call PVMFNRecv ( -1, SnoopTag, bufferID )
       if ( bufferID < 0 ) then
@@ -333,6 +335,7 @@ contains ! ========  Public Procedures =========================================
       else if ( bufferID > 0 ) then
         ! We have something to look at
         ! Get first line and find out who sent it.
+        gotSomething = .true.
         call PVMFBufInfo ( bufferID, bytes, msgTag, snooperTid, info )
         if ( info /= 0 ) &
           & call PVMErrorMessage ( info, "calling PVMFBufInfo" )
@@ -391,6 +394,7 @@ contains ! ========  Public Procedures =========================================
       if ( bufferID < 0 ) then
         call PVMErrorMessage ( info, "checking for snooper died message" )
       else if ( bufferID > 0 ) then     ! Got a message
+        gotSomething = .true.
         call PVMF90Unpack ( snooperTid, info )
         if ( info < 0 ) then
           call PVMErrorMessage ( info, "unpacking dead snooper tid" )
@@ -408,7 +412,7 @@ contains ! ========  Public Procedures =========================================
         if ( all ( snoopers%mode /= SnooperControling ) ) exit SnoopEventLoop
       end if
 
-      call usleep ( delay )
+      if (.not. gotSomething) call usleep ( delay )
     end do snoopEventLoop ! ------------------ End of snoop event loop -----
 
     ! Tell all the snoopers we're off and running again
@@ -509,6 +513,9 @@ contains ! ========  Public Procedures =========================================
 end module SnoopMLSL2
 
 ! $Log$
+! Revision 2.16  2001/09/22 15:49:54  livesey
+! Made delay in loop optional, only if nothing received
+!
 ! Revision 2.15  2001/09/21 22:04:16  livesey
 ! Removed some print statements
 !
