@@ -158,7 +158,7 @@ contains ! =====     Public Procedures     =============================
       case ( s_forwardModel )
         call decorate ( key, AddForwardModelConfigToDatabase ( &
           & forwardModelConfigDatabase, &
-          & ConstructForwardModelConfig ( son, vGrids, .false. ) ) )
+          & ConstructForwardModelConfig ( name, key, vGrids, .false. ) ) )
       case ( s_hgrid )
         call decorate ( key, AddHGridToDatabase ( hGrids, &
           & CreateHGridFromMLSCFInfo ( name, key, l1bInfo, l2gpDatabase, &
@@ -241,6 +241,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.41  2003/07/15 18:18:16  livesey
+! Change to forward model config call
+!
 ! Revision 2.40  2003/06/20 19:37:06  pwagner
 ! Quanities now share grids stored separately in databses
 !
