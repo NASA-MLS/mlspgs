@@ -108,7 +108,7 @@ CONTAINS
        BeginEnd%EngTAI(2) = EngMAF%secTAI
        BeginEnd%TotalMAFcount(2) = EngMAF%TotalMAF
 
-       more_data = ABS (EngMAF%secTAI - TAI_range%endTime) > (1.5*MAF_dur)
+       more_data = (EngMAF%secTAI <= BeginEnd%SciTAI(2))
        IF (.NOT. more_data) more_data = (EngMAF%MAFno /= BeginEnd%SciMAFno(2))
        IF (.NOT. more_data) EXIT
    ENDDO
@@ -307,6 +307,9 @@ END MODULE L1LogUtils
 !=============================================================================
 
 ! $Log$
+! Revision 2.3  2003/09/02 17:10:52  perun
+! Change examine eng data exit condition
+!
 ! Revision 2.2  2003/08/15 14:25:04  perun
 ! Version 1.2 commit
 !
