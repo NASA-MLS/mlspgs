@@ -331,8 +331,6 @@ CONTAINS
     type (VectorValue_T), pointer :: REFGPH ! Reference geopotential height
     type (VectorValue_T), pointer :: SCGEOCALT ! S/C geocentric altitude /m
     type (VectorValue_T), pointer :: SIDEBANDRATIO ! The sideband ratio to use
-    type (VectorValue_T), pointer :: LOWERSIDEBANDRATIO ! The split sideband ratio to use
-    type (VectorValue_T), pointer :: UPPERSIDEBANDRATIO ! The split sideband ratio to use
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
     type (VectorValue_T), pointer :: TEMP ! Temperature component of state vector
     type (VectorValue_T), pointer :: THISRADIANCE ! A radiance vector quantity
@@ -468,14 +466,6 @@ CONTAINS
       & quantityType=l_losVel, instrumentModule=firstSignal%instrumentModule )
     scGeocAlt => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
       & quantityType=l_scGeocAlt )
-    sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.TRUE. )
-    lowerSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.TRUE., &
-      & sideband = -1 )
-    upperSidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
-      & quantityType=l_sidebandRatio, signal= firstSignal%index, noError=.TRUE., &
-      & sideband = 1 )
 
     ! We won't seek for molecules here as we can't have an array of pointers.
     ! When we do want molecule i we would do something like
@@ -503,10 +493,6 @@ CONTAINS
     ! Think about sidebands
     if ( ( fwdModelConf%signals(1)%sideband == 0 ) .and.&
       &  ( fwdModelConf%signals(1)%singleSideband == 0 ) ) then
-      if (.not. associated (sidebandRatio) .and. .not. &
-        & ( associated ( lowerSidebandRatio) .and. associated ( upperSidebandRatio ) ) ) &
-        & Call MLSMessage(MLSMSG_Error,ModuleName, &
-        & "No sideband ratio supplied")
       ! Do a folded measurement
       sidebandStart = -1
       sidebandStop = 1
@@ -2139,18 +2125,11 @@ CONTAINS
           GetVectorQuantityByType (fwdModelOut, quantityType=l_radiance, &
           & signal=fwdModelConf%signals(sigInd)%index, &
           & sideband=firstSignal%sideband )
-
         if ( sidebandStart /= sidebandStop ) then   ! We're folding
-          if ( associated ( sidebandRatio ) ) then
-            thisRatio = sidebandRatio%values(chanInd,1)
-            if ( thisSideband == 1 ) thisRatio = 1.0 - thisRatio
-          else
-            if ( thisSideband == -1 ) then
-              thisRatio = lowerSidebandRatio%values(chanInd,1)
-            else
-              thisRatio = upperSidebandRatio%values(chanInd,1)
-            end if
-          end if
+          sidebandRatio => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
+            & quantityType=l_sidebandRatio, signal=fwdModelConf%signals(sigInd)%index, &
+            & sideband=thisSideband )
+          thisRatio = sidebandRatio%values(chanInd,1)
         else                  ! Otherwise, want just unfolded signal
           thisRatio = 1.0
         end if
@@ -2498,6 +2477,9 @@ CONTAINS
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.75  2002/07/29 21:41:30  bill
+! no changes, just debugging
+!
 ! Revision 2.74  2002/07/23 22:26:31  livesey
 ! Added ptan_der, set k_atmos to zero on creation
 !
