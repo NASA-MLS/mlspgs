@@ -5851,9 +5851,9 @@ contains ! =====     Public Procedures     =============================
       integer, intent(in) :: KEY        ! Tree node
       logical, intent(in) :: FORCE      ! If set throw caution to the wind
       ! Local parameters
-      integer, parameter :: NOMANIPULATIONS = 5
+      integer, parameter :: NOMANIPULATIONS = 6
       character(len=3), parameter :: VALIDMANIPULATIONS ( noManipulations ) = &
-        & (/ 'a+b', 'a-b', 'a*b', 'a>b', 'a<b' /)
+        & (/ 'a+b', 'a-b', 'a*b', 'a>b', 'a<b', 'a|b' /)
       ! Local variables
       character (len=128) :: MSTR
       character (len=1) :: ABNAME
@@ -5958,6 +5958,14 @@ contains ! =====     Public Procedures     =============================
         else
           where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
             quantity%values = min ( a%values, b%values )
+          end where
+        end if
+      case ( 'a|b' )
+        if ( .not. associated ( quantity%mask ) ) then
+          quantity%values = ior ( nint(a%values), nint(b%values) )
+        else
+          where ( iand ( ichar(quantity%mask(:,:)), m_fill ) == 0 )
+            quantity%values = ior ( nint(a%values), nint(b%values) )
           end where
         end if
       end select
@@ -6878,6 +6886,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.268  2004/04/28 00:30:58  livesey
+! Added a|b option in manipulate fill.
+!
 ! Revision 2.267  2004/04/19 21:04:02  livesey
 ! Bug fix in ExtractSingleChannel
 !
