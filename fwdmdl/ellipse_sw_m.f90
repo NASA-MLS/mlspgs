@@ -67,9 +67,11 @@ contains
         q = r * r - rt * rt
         if(q.ge.1.0d-6) S = Sqrt(q)
         v = rt / r
-        if(abs(v).lt.1.0d0) Phi = elvar%Phi_tan + elvar%ps * DAcos(v)
+        if(abs(v).gt.1.0d0) v = Sign(1.0_r8,v)
+        Phi = elvar%Phi_tan + elvar%ps * DAcos(v)
       else
         v = (elvar%RoC / r) * elvar%Rr   ! Rr = Cos(Phi_tan-Phi_s)=(ht+RoC)/RoC
+        if(abs(v).gt.1.0d0) v = Sign(1.0_r8,v)
         if(elvar%ps.lt.0.0) then
           Phi = elvar%Phi_tan - DAcos(v)
         else
@@ -100,6 +102,7 @@ contains
         r = Sqrt(S*S + rt*rt)
         h = r - elvar%RoC
         v = rt / r
+        if(abs(v).gt.1.0d0) v = Sign(1.0_r8,v)
         Phi = elvar%Phi_tan + elvar%ps * DAcos(v)
       else
         q = elvar%ps * S / elvar%RoC
@@ -118,6 +121,9 @@ contains
 !---------------------------------------------------------------------------
 end module ELLIPSE_SW_M
 ! $Log$
+! Revision 1.3  2001/03/30 20:28:21  zvi
+! General fix-up to get rid of COMMON BLOCK (ELLIPSE)
+!
 ! Revision 1.1  2000/05/04 18:12:05  Z.Shippony
 ! Initial conversion to Fortran 90
 !

@@ -38,7 +38,7 @@ Type(path_index) , INTENT(IN) :: ndx_path(:)
 Type(path_vector), INTENT(IN) :: z_path(:),t_path(:),phi_path(:)
 
 Integer(i4), INTENT(OUT) :: ier
-Type(path_vector), INTENT(OUT) :: n_path(:), spsfunc_path(:,:)
+Type(path_vector), INTENT(INOUT) :: n_path(:), spsfunc_path(:,:)
 !
 !  ----------------------
 !  Local variables:
@@ -108,6 +108,9 @@ type (VectorValue_T), pointer :: f, h2o
 
 end module GET_PATH_SPSFUNC_NGRID_M
 ! $Log$
+! Revision 1.2  2001/04/07 23:51:17  zvi
+! New code - move the spsfunc & refraction along the path to get_path_spsfunc
+!
 ! Revision 1.1  2001/04/07 23:45:49  zvi
 ! New routine to calculate spsfunc & refraction,(not done in comp_path )
 !

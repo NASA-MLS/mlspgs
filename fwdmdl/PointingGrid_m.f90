@@ -86,6 +86,8 @@ contains
     !                                          Should ultimately come from the
     !                                          signals database.
     real(r8) :: Height                       ! Zeta, actually, from the file
+    real(r8) :: z,q                          ! Local variables
+    integer :: J                             ! Local variable
     integer, pointer, dimension(:) :: HowManyGrids  ! per radiometer batch
     integer, pointer, dimension(:) :: HowManySignals ! per radiometer batch
     integer :: HowManyRadiometers            ! gotten by counting the file
@@ -199,8 +201,13 @@ outer2: do
         if ( status < 0 ) exit outer2
         if ( verify(line(1:1), ' 0123456789.+-') /= 0 ) exit ! not a number
         n = n + 1
-        read ( line, *, iostat=status, err=99 ) & 
-          & pointingGrids(howManyRadiometers)%oneGrid(n)%height, numHeights
+        read ( line, *, iostat=status, err=99 ) height, numHeights
+        if ( status < 0 ) exit outer2
+        if ( status /= 0 ) goto 99
+        j = nint(48.0*abs(height))
+        z = (Real(j,r8)/48.0_r8) * Sign(1.0_r8,height)
+        if(abs(height-z) < 1.0e-6) height = z
+        pointingGrids(howManyRadiometers)%oneGrid(n)%height = height
         call allocate_test ( &
           & pointingGrids(howManyRadiometers)%oneGrid(n)%frequencies, &
           & numHeights, "PointingGrids(?)%oneGrid(?)%frequencies", moduleName )
@@ -272,7 +279,7 @@ outer2: do
       call output ( pointingGrids(i)%centerFrequency, advance='yes' )
       do j = 1, size(pointingGrids(i)%oneGrid)
         call output ( j, 4 )
-        call output ( ':: Height = ' )
+        call output ( ':: Zeta = ' )
         call output ( pointingGrids(i)%oneGrid(j)%height )
         call dump ( pointingGrids(i)%oneGrid(j)%frequencies, &
           & '    Frequencies =' )
@@ -283,6 +290,9 @@ outer2: do
 end module PointingGrid_m
 
 ! $Log$
+! Revision 1.12  2001/04/13 22:50:27  livesey
+! Tidied up, added some nullifies etc.
+!
 ! Revision 1.11  2001/04/13 21:39:15  vsnyder
 ! Replace 'indices of signals' by 'array of signals'
 !

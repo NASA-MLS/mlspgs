@@ -45,11 +45,11 @@ contains
   real(r8), intent(in) :: T_phi_basis(:)
   real(r8), intent(in) :: Tan_hts(:,:)
 
-  type(path_index) , intent(out) :: Ndx_path(:,:)
-  type(path_vector), intent(out) :: Z_path(:,:), T_path(:,:), H_path(:,:), &
-                                    Phi_path(:,:), Dhdz_path(:,:)
+  type(path_index) , intent(inout) :: Ndx_path(:,:)
+  type(path_vector), intent(inout) :: Z_path(:,:), T_path(:,:), H_path(:,:), &
+                                      Phi_path(:,:), Dhdz_path(:,:)
 
-  type(path_vector_2d), intent(out) :: Eta_phi(:,:)
+  type(path_vector_2d), intent(inout) :: Eta_phi(:,:)
   !
   !  ----------------------
   !  Local variables:
@@ -80,9 +80,13 @@ contains
   do l = 1, no_mmaf
     k = min(no_phi_t,no_mmaf)
     lmin = max(1,l-phiWindow/2)
-    lmax = min(l+phiWindow/2,k)
+    lmax = min(k,l+phiWindow/2)
     allocate ( phi_eta(ngt,lmin:lmax), stat=ier )
-    print*,'Window:', lmin, lmax
+    if ( ier /= 0 ) then
+      print *,'** Error Allocating phi_eta in routine: comp_path_entities..'
+      print *,'   STAT =',ier
+      return
+    endif
     do k = 1, no_tan_hts
       h = tan_hts(k,l)
       call vert_to_path ( elvar(l), n_lvls, Ng, ngt, gl_count, lmax-lmin+1, &
@@ -123,6 +127,9 @@ end subroutine Comp_Path_Entities
 
 end module Comp_Path_Entities_M
 ! $Log$
+! Revision 1.25  2001/04/13 03:34:45  zvi
+! Correcting minor error in allocation, cleaing up comments.
+!
 ! Revision 1.24  2001/04/13 02:00:55  vsnyder
 ! Finish changing phi_eta back to allocatable
 !
