@@ -800,7 +800,7 @@ contains ! =====     Public procedures     =============================
              ndp+n_spec_def /) )
     call make_tree ( (/ &
       begin, s+s_snoop, &
-             begin, f+f_comment, t+t_string, n+n_field_spec, &
+             begin, f+f_comment, t+t_string, n+n_field_type, &
              nd+n_spec_def /) )
     call make_tree ( (/ &                                    !???
       begin, s+s_l2load, &                                   !???
@@ -867,6 +867,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.41  2001/03/07 23:52:16  livesey
+! Another bug fix
+!
 ! Revision 2.40  2001/03/07 23:50:08  livesey
 ! Bug fix, whoops!
 !
