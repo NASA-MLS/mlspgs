@@ -513,6 +513,8 @@ contains ! =====     Public Procedures     =============================
 
     ! Executable code --------------------------------------------------------
 
+    if ( toggle(gen) ) call trace_begin ( "ForwardModel" )
+
     ! Nullify a bunch of pointers so that Allocate_Test doesn't try to
     ! deallocate them.  We don't want them to be initialized NULL()
     ! because that makes them SAVEd.
@@ -580,6 +582,7 @@ contains ! =====     Public Procedures     =============================
     ! There will be more to come here.
 
     noSpecies = size(forwardModelConfig%molecules)
+
     !  Create a subset of the catalog composed only of those molecules to be
     !  used for this run
 
@@ -671,7 +674,8 @@ contains ! =====     Public Procedures     =============================
 
     if ( fmStat%newHydros ) then
 
-      print*,'(re)computing hydrostatic stuff.'
+      if ( toggle(gen) ) call trace_begin ( "ForwardModel.hydrostatic" )
+
       ! Now we're going to create the many temporary arrays we need
       allocate (ifm%ndx_path(No_tan_hts,noMAFs), stat=status )
       if ( status /= 0 ) call MLSMessage ( MLSMSG_Error,ModuleName, &
@@ -757,6 +761,8 @@ contains ! =====     Public Procedures     =============================
       if ( ier /= 0 ) goto 99
 
       fmStat%newHydros = .false.
+
+      if ( toggle(gen) ) call trace_end ( "ForwardModel.hydrostatic" )
     end if
 
     ! ------ End of hydrostatic setup stuff --------------------------
@@ -818,12 +824,20 @@ contains ! =====     Public Procedures     =============================
     ! ----------------- Begin loop over sidebands -----------------------
     do thisSideband = sidebandStart, sidebandStop, sidebandStep
 
-      print 901,thisSideband,sidebandStart,sidebandStop
-901   format(' Doing sideband: ',i2,' (',i2,', ',i2,')')
+
+      if ( toggle(gen) ) then
+        call trace_begin ( "ForwardModel.sideband" )
+        call output ( ' Doing sideband ' )
+        call output ( thisSideband )
+        call output ( ' (' ); call output ( sidebandStart )
+        call output ( ', ' ); call output ( sidebandStop )
+        call output ( ')', advance='yes' )
+      end if
 
       ! Now code splits into two sections, one for when we're doing frequency
       ! averaging, and one when we're not.
       if ( forwardModelConfig%do_freq_avg ) then ! --- Doing freq. avg. ---
+        if ( toggle(gen) ) call trace_begin ( "ForwardModel.FreqAvg" )
         totalSignals = 0
         do i = 1, size(pointingGrids)
           totalSignals = totalSignals + size(pointingGrids(i)%signals)
@@ -870,15 +884,17 @@ contains ! =====     Public Procedures     =============================
           & MLSMSG_DeAllocate//'allSignals')
         call deallocate_test(signalsGrid, 'signalsGrid', ModuleName)
         
-   ! Now we've identified the pointing grids.  Locate the tangent grid within
-   ! it.
+        ! Now we've identified the pointing grids.  Locate the tangent grid
+        ! within it.
         call allocate_test ( grids, ForwardModelConfig%TangentGrid%nosurfs, &
           "Grids", ModuleName )
         call Hunt ( PointingGrids(whichPointingGrid)%oneGrid%height, &
           & ForwardModelConfig%TangentGrid%surfs, grids, allowTopValue=.true. )
+        if ( toggle(gen) ) call trace_end ( "ForwardModel.FreqAvg" )
 
       else ! ------------------------- Not frequency averaging ---------
         
+        if ( toggle(gen) ) call trace_begin ( "ForwardModel.NotFreqAvg" )
         noFreqs = count( forwardModelConfig%signals(1)%channels )
         call allocate_test ( frequencies,noFreqs, "frequencies", ModuleName )
         frequencies = pack( signal%frequencies, &
@@ -896,12 +912,17 @@ contains ! =====     Public Procedures     =============================
             & 'Bad value of signal%sideband' )
         end select
         noFreqs = size(frequencies)
+        if ( toggle(gen) ) call trace_end ( "ForwardModel.NotFreqAvg" )
       end if
 
       ! ----------- Done the gnarly frequency stuff ----------
 
       maf=fmStat%maf
-      print*,'Doing maf:',maf
+      if ( toggle(gen) ) then
+        call trace_begin ( "ForwardModel.MAF" )
+        call output ( 'Doing MAF: ' )
+        call output ( maf, advance='yes' )
+      end if
 
       ! Now work out what `window' we're inside.  This will need to be changed
       ! a bit in later versions to avoid the noMAFS==noTemp/f instances
@@ -922,10 +943,14 @@ contains ! =====     Public Procedures     =============================
       ! Compute the specie function (spsfunc) and the refraction along
       ! all the paths for the current maf
 
+      if ( toggle(gen) ) &
+        call trace_begin ( 'ForwardModel.get_path_spsfunc_ngrid' )
       Call get_path_spsfunc_ngrid ( fwdModelIn, fwdModelExtra, &
         &  forwardModelConfig%molecules, ifm%ndx_path(:,maf), no_tan_hts, &
         &  ifm%z_path(:,maf), ifm%t_path(:,maf), ifm%phi_path(:,maf), n_path, &
         &  spsfunc_path, Ier )
+      if ( toggle(gen) ) &
+        call trace_end ( 'ForwardModel.get_path_spsfunc_ngrid' )
       if ( ier /= 0 ) goto 99
 
       !??? Choose better value for phi_tan later
@@ -933,6 +958,7 @@ contains ! =====     Public Procedures     =============================
 
       ! Compute the ptg_angles (chi) for Antenna convolution, also the
       ! derivatives of chi w.r.t to T and other parameters
+      if ( toggle(gen) ) call trace_begin ( 'ForwardModel.get_chi_angles' )
       call get_chi_angles ( ifm%ndx_path(:,maf), n_path, &
         &  forwardModelConfig%tangentGrid%surfs, &
         &  ifm%tan_hts(:,mafTInstance),ifm%tan_temp(:,mafTInstance),&
@@ -944,19 +970,24 @@ contains ! =====     Public Procedures     =============================
         &  temp%template%surfs(:,1), &
         &  forwardModelConfig%SurfaceTangentIndex, &
         &  center_angle, ptg_angles, dx_dt, d2x_dxdt, ier )
+      if ( toggle(gen) ) call trace_end ( 'ForwardModel.get_chi_angles' )
       if ( ier /= 0 ) goto 99
 
       ! Compute the refraction correction scaling matrix for this mmaf:
+      if ( toggle(gen) ) &
+        & call trace_begin ( 'ForwardModel.refraction_correction' )
       call refraction_correction(no_tan_hts, ifm%tan_hts(:,mafTInstance), &
         &  ifm%h_path(:,maf), n_path, ifm%ndx_path(:,maf),      &
         &  ifm%E_rad(mafTInstance), ref_corr)
+      if ( toggle(gen) ) &
+        & call trace_end ( 'ForwardModel.refraction_correction' )
 
       Radiances = 0.0
 
       ! If we're not doing frequency averaging, instead outputting radiances
-      ! corresponding to delta function responses, we can setup the frequency
+      ! corresponding to delta function responses, we can set up the frequency
       ! information here.  In the more common case where we are doing the
-      ! averaging the frequency grid varies from pointing to pointing, and is
+      ! averaging, the frequency grid varies from pointing to pointing, and is
       ! allocated inside the pointing loop.
 
       ! First we have a mini loop over pointings to work out an upper limit
@@ -994,11 +1025,15 @@ contains ! =====     Public Procedures     =============================
             & MLSMSG_Allocate//'k_atmos_frq' )
         end if
 
-      end do ! End loop over speices
+      end do ! End loop over species
 
       ! Now we can go ahead and loop over pointings
       ! ------------------------------ Begin loop over pointings --------
       do ptg_i = 1, no_tan_hts - 1
+        if ( toggle(gen) ) then
+          call trace_begin ( 'ForwardModel.Pointing' )
+          call output ( 'Ptg = ' ); call output ( ptg_i, advance='yes' )
+        end if
         k = ptg_i
         h_tan = ifm%tan_hts(k,mafTInstance)
 
@@ -1048,6 +1083,10 @@ contains ! =====     Public Procedures     =============================
         do frq_i = 1, noFreqs
 
           Frq = frequencies(frq_i)
+          if ( toggle(gen) ) then
+            call trace_begin ( 'ForwardModel.Frequencies' )
+            call output ( 'Frq = ' ); call output ( frq_i, advance='yes' )
+          end if
 
           Call Rad_Tran ( ifm%elvar(maf), Frq, &
             & forwardModelConfig%integrationGrid%noSurfs, h_tan, &
@@ -1073,6 +1112,7 @@ contains ! =====     Public Procedures     =============================
             &  max_zeta_dim, max_phi_dim, ier )
           if ( ier /= 0 ) goto 99
 
+          if ( toggle(gen) ) call trace_end ( 'ForwardModel.Frequencies' )
         end do                          ! Frequency loop
 
         ! ----------------------------- End loop over frequencies ----
@@ -1080,6 +1120,7 @@ contains ! =====     Public Procedures     =============================
         ! Here we either frequency average to get the unconvolved radiances, or
         ! we just store what we have as we're using delta funciton channels
 
+        if ( toggle(gen) ) call trace_begin ( 'ForwardModel.FrequencyAvg' )
         if ( forwardModelConfig%do_freq_avg ) then
           centerFreq = signal%lo + thisSideband * signal%centerFrequency
           do i = 1, noUsedChannels
@@ -1150,7 +1191,11 @@ contains ! =====     Public Procedures     =============================
           end if                        ! Want derivatives for this
         end do                          ! Loop over species
 
+        if ( toggle(gen) ) call trace_end ( 'ForwardModel.FrequencyAvg' )
+
         call deallocate_test ( dh_dt_path, 'dh_dt_path', ModuleName )
+
+        if ( toggle(gen) ) call trace_end ( 'ForwardModel.Pointing' )
 
       end do                            ! Pointing Loop
       ! ---------------------------------- End of Pointing Loop ---------------
@@ -1182,6 +1227,7 @@ contains ! =====     Public Procedures     =============================
       end do
 
       !  Here comes the Convolution code
+      if ( toggle(gen) ) call trace_begin ( 'ForwardModel.Convolution' )
       do i = 1, noUsedChannels
 
         ch = usedChannels(i)
@@ -1213,7 +1259,9 @@ contains ! =====     Public Procedures     =============================
         end if
 
       end do                            ! Channel loop
+      if ( toggle(gen) ) call trace_end ( 'ForwardModel.Convolution' )
 
+      if ( toggle(gen) ) call trace_end ( "ForwardModel.sideband" )
     end do
     ! ---------------------------- End of loop over sideband ------------------
     ! ------------------------------ End of Major Frame Specific stuff --------
@@ -1323,6 +1371,8 @@ contains ! =====     Public Procedures     =============================
 
 !    if ( i > -22) Stop      ! DEBUG, Zvi
 
+    if ( toggle(gen) ) call trace_end ( "ForwardModel" )
+
     Return
 
   end subroutine ForwardModel
@@ -1374,6 +1424,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.111  2001/04/24 19:44:48  vsnyder
+! Add 'toggle(gen)' stuff in ForwardModel
+!
 ! Revision 2.110  2001/04/24 00:03:36  livesey
 ! Bug fix
 !
