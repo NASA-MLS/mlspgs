@@ -25,7 +25,8 @@ module PFADataBase_m
   integer, parameter :: RK = r4 ! Kind of real fields in PFAData_t
 
   type PFAData_T
-    integer :: Name                                ! of the pfaData spec
+    integer :: Name = 0                            ! of the pfaData spec
+    integer :: FilterFile = 0                      ! Index in string table
     integer, pointer :: Molecules(:) => NULL()     ! Molecule indices
     character(len=127) :: Signal                   ! The signal string
     integer :: SignalIndex                         ! in Signals database
@@ -40,7 +41,7 @@ module PFADataBase_m
     real(rk), pointer :: dAbsDnu(:,:) => NULL()    ! d Ln Absorption / d nu data
   end type PFAData_T
 
-  type(PFAData_t), pointer,save :: PFAData(:) => NULL()
+  type(PFAData_t), pointer, save :: PFAData(:) => NULL()
 
   ! PFAData(SortPFAData(i)) < PFAData(SortPFAData(j)) if i < j, with "<"
   ! defined by PFADataOrder.
@@ -110,16 +111,16 @@ contains ! =====     Public Procedures     =============================
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use Output_m, only: Output
     integer, intent(in), optional :: Details
-    integer :: I
+    integer :: I, J
     if ( .not. associated(pfaData) ) &
       & call MLSMessage ( MLSMSG_Error, moduleName, &
         & "Cannot dump unallocated PFA data base" )
     do i = 1, size(pfaData)
+      j = i
       if ( associated(sortPFAdata) ) then
-        call dump_PFADatum ( pfaData(sortPFAdata(i)), details, sortPFAdata(i) )
-      else
-        call dump_PFADatum ( pfaData(i), details, i )
+        if ( size(sortPFAdata) == size(pfaData) ) j = sortPFAdata(i)
       end if
+      call dump_PFADatum ( pfaData(j), details, j )
     end do
   end subroutine Dump_PFADataBase
 
@@ -129,6 +130,7 @@ contains ! =====     Public Procedures     =============================
     use Dump_0, only: Dump
     use Intrinsic, only: Lit_Indices
     use MLSSignals_m, only: DisplaySignalName
+    use Physics, only: SpeedOfLight
     use String_Table, only: Display_String, String_Length
     use Output_m, only: Blanks, NewLine, Output
 
@@ -136,6 +138,8 @@ contains ! =====     Public Procedures     =============================
     integer, intent(in), optional :: Details ! >0 => Dump arrays, 0 => Don't
     integer, intent(in), optional :: Index   ! In PFA Database
 
+    integer, parameter :: CK = kind(speedOfLight)
+    real(ck) :: C = speedOfLight / 1000.0_ck ! km/s
     integer :: I, L, W
     character(len=*), parameter :: Molecules = ' Molecules:'
     integer :: MyDetails
@@ -174,6 +178,9 @@ contains ! =====     Public Procedures     =============================
       call output ( ': ' )
     end if
     call displaySignalName ( pfaDatum%theSignal, advance='yes' )
+    if ( pfaDatum%filterFile /= 0 ) &
+      & call display_string ( pfaDatum%filterFile, before=' Filter file: ', &
+      & advance='yes' )
 
     call output ( ' TGrid: ' )
     call display_string ( pfaDatum%tGrid%name )
@@ -181,8 +188,8 @@ contains ! =====     Public Procedures     =============================
     call output ( ', VGrid: ' )
     call display_string ( pfaDatum%vGrid%name )
 
-    call output ( pfaDatum%vel_rel, before=', Velocity linearization / C: ', &
-      & advance='yes' )
+    call output ( pfaDatum%vel_rel*c, before=', Velocity linearization: ', &
+      & after='kms', advance='yes' )
 
     if ( myDetails <= 0 ) return
 
@@ -234,15 +241,19 @@ contains ! =====     Public Procedures     =============================
   ! important.  What we're trying to do is make sure that we find stuff in
   ! the same order when we're processing the upper and lower sidebands.
 
-    use Allocate_Deallocate, only: Allocate_Test
+    use Allocate_Deallocate, only: Allocate_Test, DeAllocate_Test
     use Sort_m, only: ISORT, GSORTP
 
     integer :: I, J, N
 
-    if ( associated(sortPFAData) ) return ! only do it once
     if ( .not. associated(PFAData) ) return ! Can't sort it if it's not there
 
     n = size(PFAData)
+
+    if ( associated(sortPFAData) ) then
+      if ( size(sortPFAData) == n ) return ! only do it once
+      call deallocate_test ( sortPFAData, 'SortPFAData', moduleName )
+    end if
 
     call allocate_test ( sortPFAData, n, 'SortPFAData', moduleName )
 
@@ -271,56 +282,181 @@ contains ! =====     Public Procedures     =============================
   end subroutine Sort_PFADatabase
 
   ! ------------------------------------------  Write_PFADatabase  -----
-  subroutine Write_PFADatabase ( FileName )
-    character(len=*), intent(in) :: FileName
+  subroutine Write_PFADatabase ( FileName, FileType )
+    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F
+    use MLSMessageModule, only: MLSMessage, MLSMSG_Error
+    use MLSStrings, only: Capitalize
+    character(len=*), intent(in) :: FileName, FileType
+    integer :: FileID
+    integer :: I, IOSTAT
+    if ( capitalize(fileType) == 'HDF5' ) then ! open HDF5 file here
+      call H5FCreate_F ( trim(fileName), H5F_ACC_TRUNC_F, fileID, &
+        & iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to open hdf5 PFA file ' // trim(fileName) // ' for output.' )
+      do i = 1, size(pfaData)
+        call write_PFADatum ( pfadata(i), FileName, FileType, lun=fileID )
+      end do
+      call H5FClose_F ( fileID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+        & 'Unable to close hdf5 PFA file ' // trim(fileName) // '.' )
+    else ! Open file(s) in Write_PFADatum
+      do i = 1, size(pfaData)
+        call write_PFADatum ( pfadata(i), FileName, FileType, useMolecule=.true. )
+      end do 
+    end if
   end subroutine Write_PFADatabase
 
   ! ---------------------------------------------  Write_PDADatum  -----
-  subroutine Write_PFADatum ( PFADatum, FileName, FileType )
+  subroutine Write_PFADatum ( PFADatum, FileName, FileType, UseMolecule, Lun )
 
     ! Write the PFADatum on FileName using the format given by FileType
-    ! If FileType is "UNFORMATTED" (case insensitive), the output file
-    ! name consists of the part of FileName before "$" (or all of it if
-    ! "$" does not appear, followed by the pfaDatum%signal, followed by
-    ! the part of FileName after the "$".
+    ! If FileType is "UNFORMATTED" (case insensitive) and UseMolecule is
+    ! absent or present but false, the output file name consists of the
+    ! part of FileName before "$" (or all of it if "$" does not appear,
+    ! followed by the pfaDatum%signal, followed by the part of FileName
+    ! after the "$".  If UseMolecule is present and true, instead of the
+    ! signal, the embedded part consists of the (first) molecule name,
+    ! followed by an underscore, followed by the signal.
 
+    use HDF5, only: H5FCREATE_F, H5FClose_F, H5F_ACC_TRUNC_F, &
+      & H5GCLOSE_F, H5GCREATE_F
+    use Intrinsic, only: Lit_Indices
     use IO_Stuff, only: Get_Lun
     use Machine, only: IO_Error
+    use MLSHDF5, only: MakeHDF5Attribute, SaveAsHDF5DS
     use MLSMessageModule, only: MLSMessage, MLSMSG_Error
     use MLSStrings, only: Capitalize
+    use Output_m, only: Output
+    use Physics, only: SpeedOfLight
     use String_Table, only: Get_String, String_Length
+    use Toggles, only: Switches
 
     type(PFAData_t), intent(in) :: PFADatum
     character(len=*), intent(in) :: FileName, FileType
+    logical, intent(in), optional :: UseMolecule
+    integer, intent(in), optional :: Lun ! Don't open a new file if present
 
-    integer :: I, IOSTAT, L, Lun
-    character(len=len(fileName)+len_trim(pfaDatum%signal)) :: MyFile
+    character(len=1023) :: Attrib
+    integer, parameter :: CK = kind(speedOfLight)
+    real(ck) :: C = speedOfLight / 1000.0_ck ! km/s
+    logical DoMolecule
+    character(len=255) :: FilterFile
+    integer :: GroupID
+    character(len=len_trim(pfaDatum%signal)+32) :: GroupName
+    integer :: I, IOSTAT, L, MyLun
+    character(len=len(fileName)+len_trim(pfaDatum%signal)+31) :: MyFile
     character(len=31) :: Molecule
+    character(len=31) :: Molecules(size(pfaDatum%molecules))
     character(len=5) :: What
 
+    doMolecule = .false.
+    if ( present(useMolecule) ) doMolecule = useMolecule
+
+    if ( doMolecule ) then
+      call get_string ( lit_indices(pfaDatum%molecules(1)), molecule )
+      molecule = trim(molecule) // '_'
+    else
+      molecule = ''
+    end if
+
+    if ( present(lun) ) myLun = lun
     if ( capitalize(fileType) == 'UNFORMATTED' ) then
-      i = index(fileName,'$')
-      if ( i == 0 ) then
-        myFile = trim(fileName) // trim(pfaDatum%signal)
-      else
-        myFile = fileName(:i-1) // trim(pfaDatum%signal) // trim(fileName(i+1:))
+      if ( .not. present(lun) ) then
+        i = index(fileName,'$')
+        if ( i == 0 ) then
+          myFile = trim(fileName) // trim(molecule) // trim(pfaDatum%signal)
+        else
+          myFile = fileName(:i-1) // trim(molecule) // trim(pfaDatum%signal) // trim(fileName(i+1:))
+        end if
+        call get_lun ( myLun )
+        what = 'open'
+        open ( myLun, file=trim(myFile), form='unformatted', iostat=iostat, err=9 )
       end if
-      call get_lun ( lun )
-      what = 'open'
-      open ( lun, file=trim(myFile), form='unformatted', iostat=iostat, err=9 )
       what = 'write'
-      write ( lun, iostat=iostat, err=9 ) pfaDatum%tGrid%noSurfs, pfaDatum%vGrid%noSurfs, &
-        & size(pfaDatum%molecules), pfaDatum%vel_rel, &
-        & len_trim(pfaDatum%signal), trim(pfaDatum%signal)
-      write ( lun, iostat=iostat, err=9 ) pfaDatum%absorption, pfaDatum%dAbsDwc, &
+      write ( myLun, iostat=iostat, err=9 ) pfaDatum%tGrid%noSurfs, pfaDatum%vGrid%noSurfs, &
+        & size(pfaDatum%molecules), real(pfaDatum%vel_rel*c,rk), &
+        & len_trim(pfaDatum%signal), trim(pfaDatum%signal), &
+        & real(pfaDatum%vGrid%surfs(1,1)), &
+        & real(pfaDatum%vGrid%surfs(2,1)-pfaDatum%vGrid%surfs(1,1)), &
+        & real(pfaDatum%tGrid%surfs(1,1)), &
+        & real(pfaDatum%tGrid%surfs(2,1)-pfaDatum%tGrid%surfs(1,1))
+      write ( myLun, iostat=iostat, err=9 ) pfaDatum%absorption, pfaDatum%dAbsDwc, &
         & pfaDatum%dAbsDnc, pfaDatum%dAbsDnu
       do i = 1, size(pfaDatum%molecules)
-        l = string_length(pfaDatum%molecules(i))
-        call get_string ( pfaDatum%molecules(i), molecule )
-        write ( lun, iostat=iostat, err=9 ) l, molecule(:l)
+        l = string_length(lit_indices(pfaDatum%molecules(i)))
+        call get_string ( lit_indices(pfaDatum%molecules(i)), molecule )
+        write ( myLun, iostat=iostat, err=9 ) l, molecule(:l)
       end do
+      write ( myLun, iostat=iostat, err=9 ) pfaDatum%tGrid%surfs, pfaDatum%vGrid%surfs
+      if ( pfaDatum%filterFile /= 0 ) then
+        l = string_length(pfaDatum%filterFile)
+        call get_string ( pfaDatum%filterFile, filterFile )
+        write ( myLun,iostat=iostat, err=9 ) l, filterFile(:l)
+      end if
       what = 'close'
-      close ( lun, iostat=iostat, err=9 )
+      if ( .not. present(lun) ) close ( myLun, iostat=iostat, err=9 )
+    else if ( capitalize(fileType) == 'HDF5' ) then
+      if ( .not. present(lun) ) then
+        ! Open the HDF file
+        call H5FCreate_F ( trim(fileName), H5F_ACC_TRUNC_F, myLun, &
+          & iostat )
+        if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+          & 'Unable to open hdf5 PFA file ' // trim(fileName) // ' for output.' )
+      end if
+
+      ! Create a group named <molecule>_<signal>
+      call get_string ( lit_indices(pfaDatum%molecules(1)), molecule )
+      groupName = trim(molecule) // '_' // trim(pfaDatum%signal)
+      call h5gCreate_f ( myLun, trim(groupName), groupID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to create group for PFA table ' // trim(groupName) )
+      if ( index(switches,'pfaw') /= 0 ) then
+        call output ( 'Created PFA group ' )
+        call output ( trim(groupName) )
+        call output ( ' in HDF5 file ' )
+        call output ( trim(fileName), advance='yes' )
+      end if
+
+      ! Fill the group
+      if ( pfaDatum%name /= 0 ) then
+        call get_string ( pfaDatum%name, attrib )
+        call MakeHDF5Attribute ( groupID, 'name', attrib(:string_length(pfaDatum%name)) )
+      end if
+      if ( pfaDatum%name /= 0 ) then
+        call get_string ( pfaDatum%filterFile, attrib )
+        call MakeHDF5Attribute ( groupID, 'filterFile', &
+          & attrib(:string_length(pfaDatum%filterFile)) )
+      end if
+      do i = 1, size(pfaDatum%molecules)
+        call get_string ( pfaDatum%molecules(i), molecules(i) )
+      end do
+      call MakeHDF5Attribute ( groupID, 'numMolecules', size(molecules) )
+      call MakeHDF5Attribute ( groupID, 'molecules', molecules )
+      call MakeHDF5Attribute ( groupID, 'signal', pfaDatum%signal )
+      call MakeHDF5Attribute ( groupID, 'vel_rel', pfaDatum%vel_rel )
+      call MakeHDF5Attribute ( groupID, 'nTemps', pfaDatum%tGrid%noSurfs )
+      call MakeHDF5Attribute ( groupID, 'tStart', pfaDatum%tGrid%surfs(1,1) )
+      call MakeHDF5Attribute ( groupID, 'tStep', pfaDatum%tGrid%surfs(2,1)-pfaDatum%tGrid%surfs(1,1) )
+      call MakeHDF5Attribute ( groupID, 'nPress', pfaDatum%vGrid%noSurfs )
+      call MakeHDF5Attribute ( groupID, 'vStart', pfaDatum%vGrid%surfs(1,1) )
+      call MakeHDF5Attribute ( groupID, 'vStep', pfaDatum%vGrid%surfs(2,1)-pfaDatum%vGrid%surfs(1,1) )
+      call SaveAsHDF5DS ( groupID, 'absorption', pfaDatum%absorption )
+      call SaveAsHDF5DS ( groupID, 'dAbsDwc', pfaDatum%dAbsDwc )
+      call SaveAsHDF5DS ( groupID, 'dAbsDnc', pfaDatum%dAbsDnc )
+      call SaveAsHDF5DS ( groupID, 'dAbsDnu', pfaDatum%dAbsDnu )
+
+      ! Close the group
+      call h5gClose_f ( groupID, iostat )
+      if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & 'Unable to close qroup for PFA table ' // trim(groupName) )
+
+      if ( .not. present(lun) ) then
+        ! Close the HDF file
+        call H5FClose_F ( myLun, iostat )
+        if ( iostat /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName,&
+          & 'Unable to close hdf5 PFA file ' // trim(fileName) // '.' )
+      end if
     else
       call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unsupported file format in Write_PFADatum' )
@@ -342,6 +478,10 @@ contains ! =====     Public Procedures     =============================
 end module PFADataBase_m
 
 ! $Log$
+! Revision 2.10  2004/12/13 20:41:40  vsnyder
+! Filled in Write_PFADatabase.  Handle HDF5 in Write_PFADatum.  Some cannonball
+! polishing.
+!
 ! Revision 2.9  2004/11/04 03:42:09  vsnyder
 ! Provide for both LBL_Ratio and PFA_Ratio in beta_group
 !
