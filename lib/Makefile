@@ -7,13 +7,13 @@ MLSPGS_LIB_PATH=.
 
 OBJS=	MLSStrings.o MLSSignalNomenclature.o VerticalCoordinate.o \
 	VectorQuantities.o MLSNumerics.o MLSMessageModule.o \
-	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o
+	SDPToolkit.o L2GPData.o L2AUXData.o VectorsModule.o Units.o
 
 OBJS_DEBUG= 	MLSStrings.o_debug MLSSignalNomenclature.o_debug \
 		VerticalCoordinate.o_debug VectorQuantities.o_debug \
 		MLSNumerics.o_debug MLSMessageModule.o_debug \
 		SDPToolkit.o_debug L2GPData.o_debug L2AUXData.o_debug \
-		VectorsModule.o_debug
+		VectorsModule.o_debug Units.o_debug
 
 LIBPATH=.
 MODULEPATH=.
@@ -52,6 +52,9 @@ VectorQuantities.o_debug: MLSSignalNomenclature.o_debug MLSStrings.o_debug \
 MLSNumerics.o_debug: MLSMessageModule.o_debug
 #
 # $Log$
+# Revision 1.15  1999/12/14 22:56:02  livesey
+# Regular commit
+#
 # Revision 1.14  1999/12/04 00:27:43  livesey
 # Regular end of day checkin
 #

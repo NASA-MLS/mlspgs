@@ -5,7 +5,7 @@
 MODULE vGrid                    ! Definitions for vGrids in vector quantities
 !=============================================================================
 
-  USE Inc                       ! General MLS constants etc.
+  USE MLSCommon                 ! General constants etc.
   USE L2CF                      ! Information on l2cf data
   USE VerticalCoordinates       ! The various vertical coorindate systems.
   USE MLSStrings                ! String handling routines
@@ -13,7 +13,7 @@ MODULE vGrid                    ! Definitions for vGrids in vector quantities
   IMPLICIT NONE
   PUBLIC
 
-  PRIVATE :: ID
+  PRIVATE :: ID, ModuleName
   !------------------------------- RCS Ident Info ---------------------------
   CHARACTER (LEN=130) :: Id= "$Id$"
   !--------------------------------------------------------------------------
@@ -26,7 +26,7 @@ MODULE vGrid                    ! Definitions for vGrids in vector quantities
      CHARACTER (LEN=NameLen) :: name ! Name for vGrid
      INTEGER :: verticalCoordinate ! Enumerated type e.g. VC_Pressure
      INTEGER :: noSurfs         ! Number of surfaces
-     DOUBLE PRECISION, DIMENSION(:), POINTER :: surfs  ! Array of surfaces
+     REAL(r8), DIMENSION(:), POINTER :: surfs  ! Array of surfaces
      ! (actually dimensioned noSurfs)
   END TYPE vGrid_T
 
@@ -37,24 +37,25 @@ CONTAINS
   ! This routine creates a vGrid according to user supplied information in the
   ! l2cf.
 
-  SUBROUTINE CreateVGridFromMLSCFInfo(vGrid, mlscfInfo)
+  SUBROUTINE CreateVGridFromMLSCFInfo(vGrid, cfInfo)
 
     ! Dummy arguments
 
     TYPE(vGrid_T),    INTENT(OUT) :: vGrid ! Returned vGrid
-    TYPE(mlsCfEntry), INTENT(IN)  :: mlscfInfo ! Input info. from l2cf
+    TYPE(L2CfEntry), INTENT(IN)  :: cfInfo ! Input info. from l2cf
 
     ! Local variables
 
-    INTEGER :: l2cfKeyNo        ! Entry in l2cf line
+    INTEGER :: keyNo            ! Entry in the l2cf line
 
     ! Executable code
 
     ! We will go through the information given in the l2cf and create an
     ! appropriate vGrid for it.
 
-    DO l2cfKeyNo=0,mlsCFInfo
-
+    DO keyNo=1,cfInfo%l2cfEntryNoKeys
+       SELECT 
+       
     END DO
 
   END SUBROUTINE CreateVGridFromMLSCFInfo
@@ -85,4 +86,7 @@ END MODULE vGrid
 
 !
 ! $Log$
+! Revision 1.1  1999/11/24 23:06:19  livesey
+! First simple version
+!
 !

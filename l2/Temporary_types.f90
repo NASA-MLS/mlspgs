@@ -6,8 +6,8 @@
 MODULE Temporary_types
 !===============================================================================
 
-   USE L1BData
-   USE L2GP
+!   USE L1BData
+!   USE L2GP
    IMPLICIT NONE
    PUBLIC
 
@@ -39,7 +39,7 @@ MODULE Temporary_types
 ! retrievals are to be performed.
 
    TYPE ProfileGrid_T
-      CHARACTER (LEN=NAME_LEN) :: name	! Name for this profile grid
+      CHARACTER (LEN=30) :: name	! Name for this profile grid
       INTEGER :: chunkNo		! Chunk that grid refers to
       INTEGER :: l2gpStart		! Profile # of chunk start in L2GP data
       INTEGER :: noProfs		! # of profiles in the chunk
@@ -153,3 +153,6 @@ END MODULE Temporary_types
 !=========================
 
 !# $Log$
+!# Revision 1.1  1999/12/06 21:28:01  nakamura
+!# Definitions for derived types not currently attached to any module.
+!#
