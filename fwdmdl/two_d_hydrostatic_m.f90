@@ -77,9 +77,9 @@ MODULE two_d_hydrostatic_m
   WHERE(0.5_rp*Pi < red_phi_t .AND. red_phi_t <= 1.5_rp*Pi) &
               &  red_phi_t = Pi - red_phi_t
   WHERE(red_phi_t > 1.5_rp*Pi) red_phi_t = red_phi_t - 2.0_rp*Pi
-  lats = ASIN(c*SIN(red_phi_t)*SIN(beta) &
-       / SQRT(earthrada**2*COS(red_phi_t)**2 + &
-              c**2*SIN(red_phi_t)**2))
+  lats = ASIN(c**2 * SIN(red_phi_t) * SIN(beta) &
+       / SQRT(earthrada**4*COS(red_phi_t)**2 + &
+              c**4*SIN(red_phi_t)**2))
 !
 ! compute the 2 d hydrostatic
 !
@@ -118,6 +118,9 @@ MODULE two_d_hydrostatic_m
 END MODULE two_d_hydrostatic_m
 !---------------------------------------------------
 ! $Log$
+! Revision 2.1  2002/02/02 11:20:08  zvi
+! Some cosmetic changes
+!
 ! Revision 2.0  2001/09/17 20:26:28  livesey
 ! New forward model
 !
