@@ -29,7 +29,7 @@ module ForwardModelInterface
   use Init_Tables_Module, only: F_ANTENNAPATTERNS, F_ATMOS_DER, F_CHANNELS, &
     & F_DO_CONV, F_DO_FREQ_AVG, F_FILTERSHAPES, F_FREQUENCY, &
     & F_INTEGRATIONGRID, F_MOLECULES, F_MOLECULEDERIVATIVES, F_PHIWINDOW, &
-    & F_POINTINGGRIDS,F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
+    & F_POINTINGGRIDS, F_SIGNALS, F_SPECT_DER, F_TANGENTGRID, F_TEMP_DER, F_TYPE
   ! Now literals
   use Init_Tables_Module, only: L_CHANNEL, L_EARTHREFL, L_ELEVOFFSET, L_FULL, &
     & L_LINEAR, L_LOSVEL, L_NONE, L_ORBITINCLINE, L_PTAN, L_RADIANCE,&
@@ -81,7 +81,8 @@ module ForwardModelInterface
 
   integer, parameter :: AllocateError        = 1
   integer, parameter :: BadMolecule          = AllocateError + 1
-  integer, parameter :: DefineSignalsFirst   = BadMolecule + 1
+  integer, parameter :: ChannelOutOfRange    = BadMolecule + 1
+  integer, parameter :: DefineSignalsFirst   = ChannelOutOfRange + 1
   integer, parameter :: DefineMoleculesFirst = DefineSignalsFirst + 1
   integer, parameter :: IncompleteFullFwm    = DefineMoleculesFirst + 1
   integer, parameter :: IncompleteLinearFwm  = IncompleteFullFwm + 1
@@ -263,31 +264,40 @@ contains
         end if
       case ( f_signals )
         allocate ( info%signals (nsons(son)-1), stat = status)
-        if (status /= 0) call AnnounceError( AllocateError, key )
+        if ( status /= 0 ) call announceError( AllocateError, key )
         do j = 1, nsons(son)-1
-          call get_string(sub_rosa(subtree(j+1,son)), signalString, strip=.true.)
-          call Parse_Signal(signalString, signalInds, spec_indices, &
-            tree_index=son, sideband=sideband, channels=channels)
+          call get_string ( sub_rosa(subtree(j+1,son)), signalString, &
+            & strip=.true.)
+          call parse_Signal ( signalString, signalInds, spec_indices, &
+            & tree_index=son, sideband=sideband, channels=channels )
           ! Later on choose the `right' one from the match
           ! For the moment choose first !????
           wanted=1
           info%signals(j) = signals(signalInds(wanted))
           info%signals(j)%sideband = sideband
-          call Allocate_Test(info%signals(j)%channels, &
-            & size(info%signals(j)%frequencies), 'info%signals%channels', ModuleName)
-          if (associated(channels)) then
-            commonSize=min(size(info%signals(j)%channels),size(channels))
-            info%signals(j)%channels(1:commonSize) = channels(1:commonSize)
+          call allocate_Test ( info%signals(j)%channels, &
+            & size(info%signals(j)%frequencies), 'info%signals%channels', &
+            & ModuleName )
+          if ( associated(channels) ) then
+            if ( ubound(channels,1) > ubound(info%signals(j)%channels,1) ) then
+              call announceError ( channelOutOfRange, key )
+            else
+              info%signals(j)%channels(1:lbound(channels,1)-1) = .false.
+              info%signals(j)%channels(lbound(channels,1):ubound(channels,1)) = &
+                channels
+              info%signals(j)%channels(ubound(channels,1)+1:) = .false.
+            end if
           else
             info%signals(j)%channels = .true.
           end if
-          call deallocate_test(channels,'channels',ModuleName)
-          call deallocate_test(signalInds,'signalInds',ModuleName)
+          call deallocate_test ( channels, 'channels', ModuleName )
+          call deallocate_test ( signalInds, 'signalInds', ModuleName )
         end do                          ! End loop over listed signals
       case ( f_phiWindow )
         call expr( subtree(2,son), units, value, type )
         info%phiWindow = nint( value(1) )
-        if (mod(info%phiWindow,2) /= 1) call AnnounceError (phiWindowMustBeOdd, key)
+        if (mod(info%phiWindow,2) /= 1) &
+          & call AnnounceError (phiWindowMustBeOdd, key)
       case ( f_spect_der )
         info%spect_der = get_boolean(son)
       case ( f_temp_der )
@@ -1249,24 +1259,31 @@ contains
     call print_source ( source_ref ( where ) )
     call output ( ' ForwardModelSetup complained: ' )
     select case ( code )
-    case (AllocateError)
-      call output ( 'allocation error.', advance='yes')
-    case (BadMolecule)
-      call output ( 'asked for derivatives for an unlisted molecule.')
-    case (DefineMoleculesFirst)
-      call output ( 'molecule must be defined before moleules derivatives.', advance='yes')
-    case (DefineSignalsFirst)
+    case ( AllocateError )
+      call output ( 'allocation error.', advance='yes' )
+    case ( BadMolecule )
+      call output ( 'asked for derivatives for an unlisted molecule.', &
+        & advance='yes' )
+    case ( channelOutOfRange )
+      call output ( 'Channel out-of-range for signal.', advance='yes' )
+    case ( DefineMoleculesFirst )
+      call output ( 'molecule must be defined before moleules derivatives.', &
+        & advance='yes')
+    case ( DefineSignalsFirst )
       call output ( 'signals must be defined before channels.', advance='yes')
-    case (IncompleteFullFwm)
-      call output ( 'incomplete full foward model specification' )
-    case (IncompleteLinearFwm)
-      call output ( 'incomplete linear foward model specification' )
-    case (IrrelevantFwmParameter)
-      call output ( 'irrelevant parameter for this forward model type' )
-    case (TangentNotSubset)
-      call output ( 'non subsurface tangent grid not a subset of integration grid' )
-    case (PhiWindowMustBeOdd)
-      call output ( 'phiWindow is not odd' )
+    case ( IncompleteFullFwm )
+      call output ( 'incomplete full foward model specification', advance='yes' )
+    case ( IncompleteLinearFwm )
+      call output ( 'incomplete linear foward model specification', &
+        & advance='yes' )
+    case ( IrrelevantFwmParameter )
+      call output ( 'irrelevant parameter for this forward model type', &
+        & advance='yes' )
+    case ( TangentNotSubset )
+      call output ( 'non subsurface tangent grid not a subset of integration grid', &
+        & advance='yes' )
+    case ( PhiWindowMustBeOdd )
+      call output ( 'phiWindow is not odd', advance='yes' )
     end select
   end subroutine AnnounceError
 
@@ -1279,6 +1296,9 @@ contains
 end module ForwardModelInterface
 
 ! $Log$
+! Revision 2.83  2001/04/11 01:18:37  vsnyder
+! Check channel number range
+!
 ! Revision 2.82  2001/04/11 00:50:06  livesey
 ! Another interim version, the `moving window' is better implemented
 !
