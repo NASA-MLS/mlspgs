@@ -2496,6 +2496,9 @@ contains ! =====     Public Procedures     =============================
 
     fileID=l1bInfo%l1bOAID
     select case ( quantity%template%quantityType )
+    case ( l_ptan )
+      call GetModuleName( quantity%template%instrumentModule,nameString )
+      nameString=TRIM(nameString)//'.ptan'
     case ( l_radiance )
       call GetSignalName ( quantity%template%signal, nameString, &
         & sideband=quantity%template%sideband, noChannels=.TRUE. )
@@ -2900,6 +2903,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.105  2002/02/06 01:35:29  livesey
+! Added ability to load ptan from l1b
+!
 ! Revision 2.104  2002/02/05 01:45:21  livesey
 ! Added preliminary vector/vector fill, not yet tested.
 !
