@@ -266,6 +266,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! --------
     ! Outputs:
     ! --------
+
     do quantity_type = 1, fwdModelOut%template%noQuantities
       l_quantity_type = fwdModelOut%quantities(quantity_type)%template%quantityType
 !      print*,'quantity_type: ', 'outputs', quantity_type
@@ -758,16 +759,11 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
         noChans = radiance%template%noChans
         noSgrid=stateQ%template%noChans
 
+        colJBlock = FindBlock ( Jacobian%col, ptan%index, maf )
         rowJBlock = FindBlock ( jacobian%row, radiance%index, maf)
         fmStat%rows(rowJBlock) = .true.
-        colJBlock = 0
-        do while (colJBlock <= jacobian%col%nb .and. &
-           jacobian%col%inst(colJBlock) /= maf)
-           colJBlock = colJBlock +1 
-        end do
 
         jBlock => jacobian%block(rowJblock,colJblock)
-
 
         select case ( jBlock%kind )
         case ( M_Absent )
@@ -933,6 +929,9 @@ subroutine FindTransForSgrid ( PT, Re, NT, NZ, NS, Zlevel, TRANSonZ, Slevel, TRA
 end subroutine FindTransForSgrid
 
 ! $Log$
+! Revision 1.36  2001/10/02 17:08:02  jonathan
+! some adjustment due to construction
+!
 ! Revision 1.35  2001/10/02 16:27:36  livesey
 ! Removed reference to fmStat%finished
 !
