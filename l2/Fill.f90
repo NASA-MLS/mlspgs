@@ -1271,23 +1271,22 @@ contains ! =====     Public Procedures     =============================
         do j = 2, nsons(key)
           gson = subtree(j,key)  ! The argument
           fieldIndex = get_field_id(gson)
-          gson = subtree(2,gson) ! Now the value of said argument
-          if ( nsons(son) > 1 ) then
-            fieldValue = decoration(subtree(2,son)) ! The field's value
+          if ( nsons(gson) > 1 ) then
+            gson = subtree(2,gson) ! Now the value of said argument
+            fieldValue = decoration(gson) ! The field's value
           else
-            fieldValue = son
+            fieldValue = gson
           end if
           select case ( fieldIndex )
           case ( f_source )
-            sourceVectorIndex = decoration(decoration(gson))
+            sourceVectorIndex = decoration(fieldValue)
           case ( f_destination )
-            destinationVectorIndex = decoration(decoration(gson))
+            destinationVectorIndex = decoration(fieldValue)
           case ( f_skipMask )
             skipMask = get_boolean ( fieldValue )
           case default ! Can't get here if type checker worked
           end select
         end do
-
         call TransferVectors ( vectors(sourceVectorIndex), &
           & vectors(destinationVectorIndex), skipMask )
 
@@ -3785,6 +3784,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.142  2002/09/05 21:48:54  livesey
+! More fixes in transfer skipmask
+!
 ! Revision 2.141  2002/09/05 20:49:38  livesey
 ! Added skipMask to transfer
 !
