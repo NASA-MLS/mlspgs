@@ -33,7 +33,7 @@ CONTAINS
 
     DO i = 1, 2
        
-       returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_pcf(i))
+       returnStatus = PGS_IO_L0_Close (L0FileInfo%sci_unit(i))
 
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & 'Closed L0 Science file: '//L0FileInfo%SciFileName(i))
@@ -44,7 +44,7 @@ CONTAINS
 
     DO i = 1, 6
        
-       returnStatus = PGS_IO_L0_Close (L0FileInfo%eng_pcf(i))
+       returnStatus = PGS_IO_L0_Close (L0FileInfo%eng_unit(i))
 
        CALL MLSMessage (MLSMSG_Info, ModuleName, &
             & 'Closed L0 Engineering file: '//L0FileInfo%EngFileName(i))
@@ -92,6 +92,9 @@ CONTAINS
 END MODULE Close_files
 !=============================================================================
 ! $Log$
+! Revision 2.2  2001/03/05 22:35:13  perun
+! Corrected L0_Close call
+!
 ! Revision 2.1  2001/02/23 18:51:39  perun
 ! Version 0.5 commit
 !
