@@ -173,8 +173,6 @@ contains
     integer, dimension(:), pointer :: USEDCHANNELS ! Which channel is this
     integer, dimension(:), pointer :: USEDSIGNALS ! Which signal is this channel from
 
-    integer, dimension(:,:), pointer :: GL_NDX ! Packed Index array of GL intervals
-
     logical, dimension(:), pointer :: DO_GL ! GL indicator
     logical, dimension(:), pointer :: LINEFLAG ! Use this line (noLines per species)
 
@@ -188,8 +186,6 @@ contains
     logical, dimension(:,:), pointer :: DO_CALC_DW_C  ! DO_CALC_DW  on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_DW_F  ! DO_CALC_DW  on fine grid
     logical, dimension(:,:), pointer :: DO_CALC_FZP   ! 'Avoid zeros' indicator
-!    logical, dimension(:,:), pointer :: DO_CALC_FZP_C ! DO_CALC_FZP on coarse grid
-!    logical, dimension(:,:), pointer :: DO_CALC_FZP_F ! DO_CALC_FZP on fine grid
     logical, dimension(:,:), pointer :: DO_CALC_HYD   ! 'Avoid zeros'
     logical, dimension(:,:), pointer :: DO_CALC_HYD_C ! DO_CALC_HYD on coarse grid
     logical, dimension(:,:), pointer :: DO_CALC_T     ! 'Avoid zeros'
@@ -212,24 +208,24 @@ contains
 
     real(rp), dimension(1) :: ONE_TAN_HT ! ***
     real(rp), dimension(1) :: ONE_TAN_TEMP ! ***
-    real(r8), dimension(:), pointer :: FREQUENCIES ! Frequencies to compute for
     real(rp), dimension(:), pointer :: ALPHA_PATH_C ! coarse grid abs coeff.
     real(rp), dimension(:), pointer :: ALPHA_PATH_F ! fine grid abs coeff.
     real(rp), dimension(:), pointer :: DEL_S        ! Integration lengths along path
     real(rp), dimension(:), pointer :: DHDZ_PATH    ! dH/dZ on path
-!    real(rp), dimension(:), pointer :: DHDZ_PATH_F  ! DHDZ_PATH on find grid
     real(rp), dimension(:), pointer :: DRAD_DF      ! dI/dVmr
     real(rp), dimension(:), pointer :: DRAD_DN      ! dI/dN
     real(rp), dimension(:), pointer :: DRAD_DT      ! dI/dT
     real(rp), dimension(:), pointer :: DRAD_DV      ! dI/dV
     real(rp), dimension(:), pointer :: DRAD_DW      ! dI/dW
+    real(r8), dimension(:), pointer :: FREQUENCIES  ! Frequencies to compute for
+    real(rp), dimension(:), pointer :: H            ! Magnetic field on path, in
+                                                    ! IFOVPP
     real(rp), dimension(:), pointer :: H_PATH       ! Heights on path
     real(rp), dimension(:), pointer :: H_PATH_C     ! H_PATH on coarse grid
     real(rp), dimension(:), pointer :: H_PATH_F     ! H_PATH on fine grid
     real(rp), dimension(:), pointer :: INCOPTDEPTH  ! Incremental Optical depth
     real(rp), dimension(:), pointer :: N_PATH       ! Refractivity on path
     real(rp), dimension(:), pointer :: PATH_DSDH    ! dS/dH on path
-!    real(rp), dimension(:), pointer :: PATH_DSDH_F  ! PATH_DSDH on find grid
     real(rp), dimension(:), pointer :: P_GLGRID     ! Pressure on glGrid surfs
     real(rp), dimension(:), pointer :: PHI_BASIS_DN ! phi basis per species
     real(rp), dimension(:), pointer :: PHI_BASIS_DV ! phi basis per species
@@ -238,6 +234,7 @@ contains
     real(rp), dimension(:), pointer :: PHI_PATH     ! Phi's on path
     real(rp), dimension(:), pointer :: P_PATH       ! Pressure on path
     real(rp), dimension(:), pointer :: P_PATH_C     ! P_PATH on coarse grid
+    real(rp), dimension(:), pointer :: PTG_ANGLES   ! (no_tan_hts)
     real(rp), dimension(:), pointer :: RADV         ! Radiances for 1 pointing on
                                                     ! Freq_Grid
     real(rp), dimension(:), pointer :: REF_CORR     ! Refraction correction
@@ -272,14 +269,12 @@ contains
     real(rp), dimension(:,:), pointer :: DBETA_DV_PATH_F ! dBeta_dv on fine grid
     real(rp), dimension(:,:), pointer :: DBETA_DW_PATH_C ! dBeta_dw on coarse grid
     real(rp), dimension(:,:), pointer :: DBETA_DW_PATH_F ! dBeta_dw on fine grid
-    real(rp), dimension(:,:), pointer :: DH_DT_PATH   ! dH/dT on path
     real(rp), dimension(:,:), pointer :: DH_DT_PATH_C ! DH_DT_PATH on coarse grid
+    real(rp), dimension(:,:), pointer :: DH_DT_PATH   ! dH/dT on path
     real(rp), dimension(:,:), pointer :: DH_DT_PATH_F ! DH_DT_PATH on fine grid
     real(rp), dimension(:,:), pointer :: DHDZ_GLGRID  ! dH/dZ on glGrid surfs
     real(rp), dimension(:,:), pointer :: DX_DT        ! (No_tan_hts, nz*np)
     real(rp), dimension(:,:), pointer :: ETA_FZP      ! Eta_z x Eta_p * Eta_f
-!    real(rp), dimension(:,:), pointer :: ETA_FZP_C    ! ETA_FZP on coarse grid
-!    real(rp), dimension(:,:), pointer :: ETA_FZP_F    ! ETA_FZP on fine grid
     real(rp), dimension(:,:), pointer :: ETA_ZP       ! Eta_z x Eta_p
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN   ! Eta_z x Eta_p for N
     real(rp), dimension(:,:), pointer :: ETA_ZXP_DN_C ! ETA_ZXP_DN on coarse grid
@@ -299,15 +294,15 @@ contains
     real(rp), dimension(:,:), pointer :: K_SPECT_DV_FRQ ! ****
     real(rp), dimension(:,:), pointer :: K_SPECT_DW_FRQ ! ****
     real(rp), dimension(:,:), pointer :: K_TEMP_FRQ ! Storage for Temp. deriv.
-    real(rp), dimension(:),   pointer :: PTG_ANGLES ! (no_tan_hts)
     real(rp), dimension(:,:), pointer :: RADIANCES  ! (Nptg,noChans)
     real(rp), dimension(:,:), pointer :: SPS_PATH   ! species on path
-!    real(rp), dimension(:,:), pointer :: SPS_PATH_C ! SPS_PATH on coarse grid
-!    real(rp), dimension(:,:), pointer :: SPS_PATH_F ! SPS_PATH on fine grid
     real(rp), dimension(:,:), pointer :: TAN_DH_DT ! dH/dT at Tangent
     real(rp), dimension(:,:), pointer :: T_GLGRID ! Temp on glGrid surfs
 
     real(rp), dimension(:,:,:), pointer :: DH_DT_GLGRID ! *****
+
+    complex(rp), dimension(:,:), pointer :: ALPHA_PATH_POLARIZED
+    complex(rp), dimension(:,:,:), pointer :: BETA_PATH_POLARIZED
 
 ! Some declarations by bill
 
@@ -411,7 +406,8 @@ contains
 
     ! Nullify all our pointers!
 
-    NULLIFY (alpha_path_c, alpha_path_f, beta_path, beta_path_c, beta_path_f, &
+    nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
+      & beta_path, beta_path_c, beta_path_f, beta_path_polarized, &
       & channelOrigins, d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
@@ -420,8 +416,7 @@ contains
       & do_calc_dn, do_calc_dn_c, do_calc_dn_F, &
       & do_calc_dv, do_calc_dv_c, do_calc_dv_f, &
       & do_calc_dw, do_calc_dw_c, do_calc_dw_f, &
-      & do_calc_fzp, &
-      & do_calc_hyd, do_calc_hyd_c, &
+      & do_calc_fzp, do_calc_hyd, do_calc_hyd_c, &
       & do_calc_t, do_calc_t_c, do_calc_t_f, &
       & do_calc_zp, do_gl, drad_df, &
       & drad_dn, drad_dt, drad_dv, drad_dw, dx_dh_out, dx_dt, &
@@ -430,7 +425,7 @@ contains
       & eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, &
       & eta_zxp_dw, eta_zxp_dw_c, eta_zxp_dw_f, &
       & eta_zxp_t, eta_zxp_t_c, eta_zxp_t_f, frequencies, &
-      & gl_inds, gl_ndx, grids, h_glgrid, h_path, h_path_c, h_path_f, &
+      & gl_inds, grids, h_glgrid, h_path, h_path_c, h_path_f, &
       & incoptdepth, indices_c, k_atmos, k_atmos_frq, &
       & k_spect_dn, k_spect_dn_frq, &
       & k_spect_dv, k_spect_dv_frq, k_spect_dw, k_spect_dw_frq, k_temp, &
@@ -910,7 +905,7 @@ contains
 ! Insert automatic preselected integration gridder here. Need to make a
 ! large concatenated vector of bases and pointings.
 
-    call allocate_test ( z_all,temp%template%nosurfs+2, 'z_all', moduleName )
+    call allocate_test ( z_all, temp%template%nosurfs+2, 'z_all', moduleName )
 
 ! the -3.000 is a designated "surface" value
 ! initialize step
@@ -934,7 +929,7 @@ contains
 
     do sps_i = 1 , no_mol
 
-      f => GetQuantityForForwardModel(fwdmodelin,fwdmodelextra, &
+      f => GetQuantityForForwardModel(fwdmodelin, fwdmodelextra, &
           &  quantitytype = l_vmr, molIndex=mol_cat_index(sps_i), config=fwdModelConf, &
           &  radiometer = firstsignal%radiometer )
 
@@ -1213,13 +1208,11 @@ contains
     ! This can be put outside the mmaf loop
 
     call allocate_test ( dhdz_path,   no_ele, 'dhdz_path',   moduleName )
-!    call allocate_test ( dhdz_path_f, no_ele, 'dhdz_path_f', moduleName )
     call allocate_test ( gl_inds,     no_ele, 'gl_inds',     moduleName )
     call allocate_test ( h_path,      no_ele, 'h_path',      moduleName )
     call allocate_test ( h_path_c,    no_ele, 'h_path_c',    moduleName )
     call allocate_test ( h_path_f,    no_ele, 'h_path_f',    moduleName )
     call allocate_test ( path_dsdh,   no_ele, 'path_dsdh',   moduleName )
-!    call allocate_test ( path_dsdh_f, no_ele, 'path_dsdh_f', moduleName )
     call allocate_test ( phi_path,    no_ele, 'phi_path',    moduleName )
     call allocate_test ( p_path,      no_ele, 'p_path',      moduleName )
     call allocate_test ( p_path_c,    no_ele, 'p_path_c',    moduleName )
@@ -1245,16 +1238,10 @@ contains
     call allocate_test ( beta_path_c,      npc, no_mol, 'beta_path_c',   moduleName )
     call allocate_test ( beta_path_f,   no_ele, no_mol, 'beta_path_f',   moduleName )
     call allocate_test ( do_calc_fzp,   no_ele, f_len,  'do_calc_fzp',   moduleName )
-!    call allocate_test ( do_calc_fzp_c, no_ele, f_len,  'do_calc_fzp_c', moduleName )
-!    call allocate_test ( do_calc_fzp_f, no_ele, f_len,  'do_calc_fzp_f', moduleName )
     call allocate_test ( do_calc_zp,    no_ele, p_len,  'do_calc_zp',    moduleName )
     call allocate_test ( eta_fzp,       no_ele, f_len,  'eta_fzp',       moduleName )
-!    call allocate_test ( eta_fzp_c,     no_ele, f_len,  'eta_fzp_c',     moduleName )
-!    call allocate_test ( eta_fzp_f,     no_ele, f_len,  'eta_fzp_f',     moduleName )
     call allocate_test ( eta_zp,        no_ele, p_len,  'eta_zp',        moduleName )
     call allocate_test ( sps_path,      no_ele, no_mol, 'sps_path',      moduleName )
-!    call allocate_test ( sps_path_c,    no_ele, no_mol, 'sps_path_c',    moduleName )
-!    call allocate_test ( sps_path_f,    no_ele, no_mol, 'sps_path_f',    moduleName )
 
     if ( temp_der ) then
 
@@ -1366,6 +1353,15 @@ contains
       call allocate_test ( drad_dn, f_len_dn, 'drad_dn', moduleName )
       call allocate_test ( drad_dv, f_len_dv, 'drad_dv', moduleName )
 
+    end if
+
+    if ( FwdModelConf%polarized ) then
+      allocate ( alpha_path_polarized(3,npc) ,stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'alpha_path_polarized' )
+      allocate ( beta_path_polarized(3,npc,no_mol) ,stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//'beta_path_polarized' )
     end if
 
     call allocate_test ( ptg_angles,no_tan_hts, 'ptg_angles',moduleName )
@@ -1631,9 +1627,6 @@ contains
           & Frq, eta_zp(1:no_ele,:), &
           & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
           & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
-!        sps_path_c(1:npc,:) = sps_path(indices_c(1:npc),:)
-!        do_calc_fzp_c(1:npc,:) = do_calc_fzp(indices_c(1:npc),:)
-!        eta_fzp_c(1:npc,:) = eta_fzp(indices_c(1:npc),:)
 
         if ( h2o_ind > 0 ) then
           call refractive_index ( p_path_c(1:npc), &
@@ -1730,9 +1723,17 @@ contains
             & Frq, eta_zp(1:no_ele,:), &
             & do_calc_zp(1:no_ele,:), sps_path(1:no_ele,:),      &
             & do_calc_fzp(1:no_ele,:), eta_fzp(1:no_ele,:) )
-!          sps_path_c(1:npc,:) = sps_path(indices_c(1:npc),:)
-!          do_calc_fzp_c(1:npc,:) = do_calc_fzp(indices_c(1:npc),:)
-!          eta_fzp_c(1:npc,:) = eta_fzp(indices_c(1:npc),:)
+
+          if ( FwdModelConf%polarized ) then
+            call get_beta_path ( frq, h, my_Catalog, beta_group, gl_slabs, &
+              & indices_c(1:npc), beta_path_polarized )
+            alpha_path_polarized(1,1:npc) = SUM( sps_path(indices_c,:) * &
+              & beta_path_polarized(1,1:npc,:), DIM=2 )
+            alpha_path_polarized(2,1:npc) = SUM( sps_path(indices_c,:) * &
+              & beta_path_polarized(2,1:npc,:), DIM=2 )
+            alpha_path_polarized(3,1:npc) = SUM( sps_path(indices_c,:) * &
+              & beta_path_polarized(3,1:npc,:), DIM=2 )
+          end if
 
           ! The derivatives that get_beta_path computes depend on which
           ! derivative arrays are allocated.  This avoids having four
@@ -1761,11 +1762,7 @@ contains
           call path_contrib ( incoptdepth(1:npc), e_rflty, &
             & fwdModelConf%tolerance, do_gl(1:npc) )
 
-          call get_GL_inds ( do_gl(1:npc), gl_inds, gl_ndx, ngl )
-
-!          dhdz_path_f(:ngl) = dhdz_path(gl_inds(:ngl))
-!          path_dsdh_f(:ngl) = path_dsdh(gl_inds(:ngl))
-!          sps_path_f(:ngl,:) = sps_path(gl_inds(:ngl),:)
+          call get_GL_inds ( do_gl(1:npc), gl_inds, ngl )
 
           ! The derivatives that get_beta_path computes depend on which
           ! derivative arrays are allocated, not which ones are present. 
@@ -1892,8 +1889,6 @@ contains
             k_spect_dv_frq(frq_i,1:1:f_len_dv) = drad_dv(1:1:f_len_dv)
 
           end if
-
-          call deallocate_test ( gl_ndx, 'gl_ndx', moduleName )
 
           ! End of frequency loop ----------------------------------------------
 
@@ -2485,14 +2480,12 @@ contains
     call destroygrids_t ( grids_tmp )
 
     call deallocate_test ( dhdz_path,   'dhdz_path',   moduleName )
-!    call deallocate_test ( dhdz_path_f, 'dhdz_path_f', moduleName )
     call deallocate_test ( h_path,      'h_path',      moduleName )
     call deallocate_test ( h_path_c,    'h_path_c',    moduleName )
     call deallocate_test ( h_path_f,    'h_path_f',    moduleName )
     call deallocate_test ( p_path,      'p_path',      moduleName )
     call deallocate_test ( p_path_c,    'p_path_c',    moduleName )
     call deallocate_test ( path_dsdh,   'path_dsdh',   moduleName )
-!    call deallocate_test ( path_dsdh_f, 'path_dsdh_f', moduleName )
     call deallocate_test ( phi_path,    'phi_path',    moduleName )
     call deallocate_test ( t_path,      't_path',      moduleName )
     call deallocate_test ( t_path_c,    't_path_c',    moduleName )
@@ -2517,14 +2510,9 @@ contains
     call deallocate_test ( beta_path_f,   'beta_path_f',   moduleName )
     call deallocate_test ( do_calc_zp,    'do_calc_zp',    moduleName )
     call deallocate_test ( do_calc_fzp,   'do_calc_fzp',   moduleName )
-!    call deallocate_test ( do_calc_fzp_c, 'do_calc_fzp_c', moduleName )
-!    call deallocate_test ( do_calc_fzp_f, 'do_calc_fzp_f', moduleName )
     call deallocate_test ( eta_zp,        'eta_zp',        moduleName )
     call deallocate_test ( eta_fzp,       'eta_fzp',       moduleName )
-!    call deallocate_test ( eta_fzp_c,     'eta_fzp_c',     moduleName )
-!    call deallocate_test ( eta_fzp_f,     'eta_fzp_f',     moduleName )
     call deallocate_test ( sps_path,      'sps_path',      moduleName )
-!    call deallocate_test ( sps_path_c,    'sps_path_c',    moduleName )
 
     call deallocate_test ( tan_chi_out, 'tan_chi_out',moduleName )
     call deallocate_test ( dx_dh_out, 'dx_dh_out',moduleName )
@@ -2594,6 +2582,11 @@ contains
       call deallocate_test ( drad_dv, 'drad_dv', moduleName )
 
     end if
+    if ( FwdModelConf%polarized ) then
+      deallocate ( beta_path_polarized(3,no_ele,no_mol) ,stat=ier )
+      if ( ier /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_DeAllocate//'beta_path_polarized' )
+    end if
 
     call deallocate_test ( ptg_angles, 'ptg_angles', moduleName )
     call deallocate_test ( radiances, 'radiances', moduleName )
@@ -2619,6 +2612,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.116  2003/02/03 19:00:36  bill
+! changed interface to rad tran to speed up program
+!
 ! Revision 2.115  2003/02/01 02:33:22  vsnyder
 ! Plug a bunch of memory leaks
 !
