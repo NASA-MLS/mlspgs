@@ -521,8 +521,8 @@ contains ! =====     Public Procedures     =============================
       ! Ensure that points in tangentGrid at and above the surface are a subset
       ! of integration grid
       do tangent = info%surfaceTangentIndex, info%tangentGrid%noSurfs
-        if ( .not. any ( abs(info%tangentGrid%surfs(tangent) - &
-          & info%integrationGrid%surfs) < 1e-4) ) &
+        if ( .not. any ( abs( info%tangentGrid%surfs(tangent) - &
+          & info%integrationGrid%surfs ) < 1e-4 ) ) &
           & call AnnounceError ( TangentNotSubset, root )
       end do
 
@@ -644,6 +644,9 @@ contains ! =====     Public Procedures     =============================
 end module ForwardModelSupport
 
 ! $Log$
+! Revision 2.22  2002/02/04 23:24:49  livesey
+! Removed dumps
+!
 ! Revision 2.21  2002/01/21 21:13:28  livesey
 ! Added binSelector parsing
 !
