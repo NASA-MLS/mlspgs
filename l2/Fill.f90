@@ -93,7 +93,7 @@ contains ! =====     Public Procedures     =============================
 !    INTEGER :: OL2FileHandle
     INTEGER :: qtiesStart
     CHARACTER (LEN=LineLen) ::              msr
-    double precision :: T1, T2     ! for timing
+    REAL :: T1, T2     ! for timing
     logical :: TIMING
 
     ! Executable code
@@ -261,7 +261,7 @@ contains ! =====     Public Procedures     =============================
     subroutine SayTime
       call cpu_time ( t2 )
       call output ( "Timing for MLSL2Fill =" )
-      call output ( t2 - t1, advance = 'yes' )
+      call output ( DBLE(t2 - t1), advance = 'yes' )
       timing = .false.
     end subroutine SayTime
   end subroutine MLSL2Fill
@@ -792,6 +792,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.11  2001/01/03 18:15:13  pwagner
+! Changed types of t1, t2 to real
+!
 ! Revision 2.10  2001/01/03 17:49:49  pwagner
 ! Accounts for chunking when filling from old L2GP
 !
