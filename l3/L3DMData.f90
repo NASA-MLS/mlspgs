@@ -375,6 +375,8 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+         if ((associated(l3dmData(i)%pressure) ).and.(l3dmData(i)%nLevels.gt.0)) then
+
          status = gdwrfld( gdId, GEO_FIELD9, start(1), stride(1), edge(1), &
                            REAL(l3dmData(i)%pressure) )
          IF (status /= 0) THEN
@@ -382,6 +384,10 @@ CONTAINS
                   // l3dmData(i)%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
+
+         endif
+
+         if ((associated(l3dmData(i)%latitude) ).and.(l3dmData(i)%nLats.gt.0)) then
 
          status = gdwrfld( gdId, GEO_FIELD1, start(2), stride(2), edge(2), &
                            REAL(l3dmData(i)%latitude) )
@@ -391,6 +397,9 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+         endif
+
+         if ((associated(l3dmData(i)%longitude) ).and.(l3dmData(i)%nLons.gt.0)) then
          status = gdwrfld( gdId, GEO_FIELD2, start(3), stride(3), edge(3), &
                            REAL(l3dmData(i)%longitude) )
          IF (status /= 0) THEN
@@ -399,6 +408,11 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+         endif
+
+         if ((l3dmData(i)%nLons.gt.0).and.(l3dmData(i)%nLats.gt.0).and.(l3dmData(i)%nLevels.gt.0)) then
+
+         if (associated (l3dmData(i)%l3dmValue) ) then
          status = gdwrfld( gdId, DATA_FIELDV, start, stride, edge, &
                            REAL(l3dmData(i)%l3dmValue) )
          IF (status /= 0) THEN
@@ -407,6 +421,10 @@ CONTAINS
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
 
+         endif
+ 
+
+         if (associated(l3dmData(i)%l3dmPrecision) ) then
          status = gdwrfld( gdId, DATA_FIELDP, start, stride, edge, &
                            REAL(l3dmData(i)%l3dmPrecision) )
          IF (status /= 0) THEN
@@ -414,6 +432,10 @@ CONTAINS
                   // l3dmData(i)%name
             CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
          ENDIF
+
+         endif
+
+         endif
 
 ! Detach from the grid after writing
 
@@ -473,9 +495,10 @@ CONTAINS
       CHARACTER (LEN=480) :: msr
       CHARACTER (LEN=GridNameLen) :: dgName
 
-      INTEGER :: swfID, swId, status
+      INTEGER :: swfID, swId, status, i, j
       INTEGER :: start(2), stride(2), edge(2)
 
+	print *, 'OutputDiags'
 ! Re-open the file for the creation of diagnostic swaths
 
       swfID = swopen(physicalFilename, DFACC_RDWR)
@@ -487,6 +510,7 @@ CONTAINS
 ! Create the swath
 
       dgName = TRIM(dg%name) // 'Diagnostics'
+
       swId = swcreate(swfID, dgName)
       IF (swId == -1) THEN
          msr = 'Failed to create swath ' // dgName
@@ -597,18 +621,24 @@ CONTAINS
 
 ! Geolocation
 
+        
       status = swwrfld(swId, GEO_FIELD3, start(1), stride(1), stride(1), dg%time)
       IF (status /=0) THEN
          msr = WR_ERR //  GEO_FIELD3 // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      if ( associated(dg%pressure) ) then
       status = swwrfld( swId, GEO_FIELD9, start(1), stride(1), edge(1), &
                         REAL(dg%pressure) )
       IF (status /= 0) THEN
          msr = WR_ERR //  GEO_FIELD9 // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
+
+      if ( associated(dg%latitude) ) then 
 
       status = swwrfld( swId, GEO_FIELD1, start(2), stride(2), edge(2), &
                         REAL(dg%latitude) )
@@ -617,7 +647,12 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
 ! One-dimensional data fields
+
+
+      if ( associated(dg%gRss) ) then
 
       status = swwrfld( swId, DG_FIELD, start(1), stride(1), edge(1), &
                         REAL(dg%gRss) )
@@ -625,6 +660,10 @@ CONTAINS
          msr = WR_ERR //  DG_FIELD // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+      
+      endif
+
+      if ( associated(dg%perMisPoints) ) then
 
       status = swwrfld(swId, DG_FIELD2, start(1), stride(1), edge(1), &
                        dg%perMisPoints )
@@ -633,27 +672,45 @@ CONTAINS
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
 ! Two-dimensional data fields
 
-      status = swwrfld( swId, DG_FIELD1, start, stride, edge, REAL(dg%latRss) )
+
+      if ( associated(dg%latRss) ) then
+
+      status = swwrfld( swId, DG_FIELD1, start, stride, edge, real(dg%latRss) )
       IF (status /= 0) THEN
          msr = WR_ERR //  DG_FIELD1 // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
+      endif
+
       edge(1) = dg%N
       edge(2) = dg%nLevels
-      status = swwrfld( swId, MD_FIELD, start, stride, edge, REAL(dg%maxDiff) )
+
+      if (( associated (dg%maxDiff) ).and.(dg%N.gt.0).and.(dg%nLevels.gt.0) )  then
+
+      status = swwrfld( swId, MD_FIELD, start, stride, edge, real(dg%maxDiff) )
       IF (status /= 0) THEN
          msr = WR_ERR //  MD_FIELD // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
 
-      status = swwrfld( swId, MDT_FIELD, start, stride, edge, REAL(dg%maxDiffTime) )
+      endif
+
+      if (( associated(dg%maxDiffTime) ).and.(dg%N.gt.0).and.(dg%nLevels.gt.0) ) then 
+
+      status = swwrfld( swId, MDT_FIELD, start, stride, edge, real(dg%maxDiffTime) )
+
       IF (status /= 0) THEN
          msr = WR_ERR //  MDT_FIELD // ' to swath ' // dgName
          CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
       ENDIF
+
+      endif
+
 
 ! Detach from the swath after writing
 
@@ -1068,7 +1125,11 @@ CONTAINS
 
 ! Annotate the file with the PCF
 
+         if (associated (anText) ) then
+
          CALL WritePCF2Hdr(files%name(i), anText)
+
+         endif
 
       ENDDO
 
@@ -1347,6 +1408,9 @@ END MODULE L3DMData
 !==================
 
 !# $Log$
+!# Revision 1.17  2001/12/13 20:47:50  nakamura
+!# Removed unused subroutine ReadL3DMData; merged dg fields into L3DMData_T.
+!#
 !# Revision 1.16  2001/11/26 19:24:20  nakamura
 !# Moved L3DMDiag_T to its own module.
 !#
