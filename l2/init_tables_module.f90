@@ -52,7 +52,8 @@ module INIT_TABLES_MODULE
 
 ! Enumeration types:
   integer, parameter :: T_BINSELECTORTYPE = Last_spectroscopy_type+1
-  integer, parameter :: T_CHUNKDIVIDEMETHOD = t_binSelectorType+1
+  integer, parameter :: T_BOXCARMETHOD = t_binSelectorType+1
+  integer, parameter :: T_CHUNKDIVIDEMETHOD = t_boxCarMethod+1
   integer, parameter :: T_CLOUD_DER      = t_chunkDivideMethod+1
   integer, parameter :: T_CRITICALMODULE = t_cloud_der+1
   integer, parameter :: T_FGRIDCOORD     = t_criticalmodule+1
@@ -230,6 +231,7 @@ contains ! =====     Public procedures     =============================
   ! Put nonintrinsic predefined identifiers into the symbol table.
     ! Put enumeration type names into the symbol table
     data_type_indices(t_binSelectorType) = add_ident ( 'binSelectorType' )
+    data_type_indices(t_boxCarMethod) = add_ident ( 'boxCarMethod' )
     data_type_indices(t_chunkDivideMethod) = add_ident ( 'chunkDivideMethod' )
     data_type_indices(t_cloud_der) =       add_ident ( 'cloud_Der' )
     data_type_indices(t_criticalmodule) =  add_ident ( 'criticalModule' )
@@ -383,6 +385,7 @@ contains ! =====     Public procedures     =============================
       begin, t+t_binSelectorType, l+l_vmr, l+l_temperature, l+l_latitude, &
              l+l_fieldStrength, l+l_fieldElevation, l+l_fieldAzimuth, &
              l+l_nameFragment, l+l_sza, n+n_dt_def, &
+      begin, t+t_boxCarMethod, l+l_max, l+l_mean, l+l_min, n+n_dt_def, &
       begin, t+t_chunkDivideMethod, l+l_fixed, l+l_even, l+l_orbital, l+l_PE, n+n_dt_def, &
       begin, t+t_cloud_der, l+l_iwc_low_height, l+l_iwc_high_height, l+l_iwp, &
              l+l_none,n+n_dt_def, &
@@ -675,6 +678,7 @@ contains ! =====     Public procedures     =============================
       begin, s+s_fill, &  ! Must be AFTER s_vector, s_matrix and s_climatology
              begin, f+f_a, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_additional, t+t_boolean, n+n_field_type, &
              begin, f+f_allowMissing, t+t_boolean, n+n_field_type, &
              begin, f+f_aprioriPrecision, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
@@ -682,6 +686,7 @@ contains ! =====     Public procedures     =============================
                     f+f_quantities, n+n_dot, &
              begin, f+f_boundaryPressure, s+s_vector, f+f_template, &
                     f+f_quantities, n+n_dot, &
+             begin, f+f_boxCarMethod, t+t_boxCarMethod, n+n_field_type, &
              begin, f+f_channel, t+t_numeric, n+n_field_type, &
              begin, f+f_dontMask, t+t_boolean, n+n_field_type, &
              begin, f+f_earthRadius, s+s_vector, f+f_template, f+f_quantities, &
@@ -1173,6 +1178,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.358  2004/02/17 14:07:54  livesey
+! Added functionality to the boxCar and binned fills
+!
 ! Revision 2.357  2004/02/11 23:12:23  livesey
 ! Typo, forgot quality, had 2 statuses
 !
