@@ -26,7 +26,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
   ! This set of integers define various families that quantities can fall into
   ! No doubt more will be added.
 
-  INTEGER, PARAMETER :: NoQTYTypes=6
+  INTEGER, PARAMETER :: NoQTYTypes=7
   CHARACTER (LEN=12), PARAMETER, DIMENSION(NoQtyTypes) :: &
        & QTYTypeNames= (/ &
        & "TEMPERATURE ", &
@@ -34,8 +34,8 @@ MODULE QuantityTemplates         ! Quantities within vectors
        & "RADIANCE    ", &
        & "PTAN        ", &
        & "BASELINE    ", &
-       & "EXTINCTION  "/)
-
+       & "EXTINCTION  ", &
+       & "GPH         "/)
   INTEGER, PARAMETER :: QTY_Invalid=0
   INTEGER, PARAMETER :: QTY_Temperature=1
   INTEGER, PARAMETER :: QTY_Vmr=2
@@ -43,6 +43,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
   INTEGER, PARAMETER :: QTY_Ptan=4
   INTEGER, PARAMETER :: QTY_Baseline=5
   INTEGER, PARAMETER :: QTY_Extinction=6
+  INTEGER, PARAMETER :: QTY_Gph=7
 
   ! This set of integers defines how quantities are broken into `channels'
   ! These are known as FGrid information.  Rather than have an FGrid module,
@@ -410,7 +411,7 @@ MODULE QuantityTemplates         ! Quantities within vectors
 
     IF (newSize>1) tempDatabase(1:newSize-1)=database
     tempDatabase(newSize)=qty
-    DEALLOCATE(database)
+    IF (ASSOCIATED(database))DEALLOCATE(database)
     database=>tempDatabase
   END SUBROUTINE AddQuantityTemplateToDatabase
 
@@ -440,6 +441,9 @@ END MODULE QuantityTemplates
 
 !
 ! $Log$
+! Revision 1.10  2000/05/15 22:52:35  livesey
+! Typo fix.
+!
 ! Revision 1.9  2000/01/20 21:59:28  livesey
 ! Replaced subVectorIndex with MAFIndex and MAFCounter
 !
