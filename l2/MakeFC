@@ -98,7 +98,7 @@ $(PLATFORMS)/$(MLSCONFG): $(CONFDIR)/.configure
 
 depends:
 	$(MLSBIN)/makemakedep.sh \
-	-d RetrievalModule.f90 -d SnoopMLSL2.f90 -d ForwardModelInterface.f90 \
+	-d SnoopMLSL2.f90 \
 	$(libmls_sources) $(srclib) 
 
 clean:
@@ -127,6 +127,9 @@ tar:
 	tar hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl2
 
 # $Log$
+# Revision 2.10  2001/02/12 17:43:13  pwagner
+# RetrievalModule and ForwardModelInterface now included
+#
 # Revision 2.9  2001/02/08 23:16:46  pwagner
 # Without PVM_OBJS.inc file
 #
