@@ -19,8 +19,8 @@ f90 l2pc_file.o \
         gauss_legendre_m.o geo_grids_m.o get_angles_m.o get_atmos_m.o \
         get_cs_m.o get_delta_m.o get_drad_m.o get_eta_m.o \
         get_pfa_delta_m.o get_rad_m.o gh06.o gl6p.o \
-        hydrostatic_intrp.o i_and_k_star_m.o i_hunt_m.o l2pc_file.o \
-        i_k_star_no_conv_m.o int_etah_dh_m.o l2pc_file.o l2pcdim.o \
+        hydrostatic_intrp.o i_and_k_star_m.o i_hunt_m.o \
+        i_k_star_no_conv_m.o int_etah_dh_m.o l2pcdim.o \
         l2pc_file_mngmt_sw_m.o l2pc_file_parameters.o machine.o \
         l2pc_file_structures.o l2pc_pfa_structures.o mdbeta.o \
         pfa_beta_intrp_m.o pfa_db_delta_m.o pfa_dbeta_intrp_m.o \

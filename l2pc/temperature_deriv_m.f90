@@ -24,9 +24,14 @@ contains
  &           t_phi_basis,  tau, t_script, dt_script_dc, mnf, cs_mnf,   &
  &           ilo, ihi, IndxR, IndxL, path_brkpt, k_star_geophys, Ier)
 !
+    integer(i4), intent(in) :: MNP
     integer(i4), intent(in) :: KGP
-    integer(i4), intent(in) :: MNF, CS_MNF
     integer(i4), intent(in) :: NO_PHI_T
+    integer(i4), intent(in) :: NO_T
+    integer(i4), intent(in) :: N_LVLS
+    integer(i4), intent(in) :: N_SPS
+    integer(i4), intent(in) :: MNF, CS_MNF
+!
     type(geophys_param), intent(in) :: GEOPHYSIC(*)
     integer(i4), intent(in) :: TNDX
     integer(i4), intent(in) :: BAND
@@ -39,7 +44,6 @@ contains
     real(r8), intent(in) :: PHI_PATH(*)
     real(r4), intent(in) :: DHDZ_PATH(*)
     real(r4), intent(in) :: DH_DT_PATH(Kgp,mnp,*)
-    integer(i4), intent(in) :: MNP
     real(r8), intent(in) :: MDB_FREQ(cs_mnf,*)
     real(r8), intent(in) :: MDB_PRES(*)
     real(r8), intent(in) :: MDB_TEMP(*)
@@ -48,9 +52,6 @@ contains
     integer(i4), intent(in) :: NO_COEFFS_F(*)
     integer(i4), intent(in) :: NO_FREQS_F(*)
     integer(i4), intent(in) :: NO_PHI_F(*)
-    integer(i4), intent(in) :: NO_T
-    integer(i4), intent(in) :: N_LVLS
-    integer(i4), intent(in) :: N_SPS
     real(r8), intent(in) :: PHI_BASIS_F(mnp,*)
     integer(i4), intent(in) :: PTG_I
     real(r8), intent(in) :: REF_CORR(*)
@@ -102,6 +103,9 @@ contains
   End Subroutine TEMPERATURE_DERIV
 end module TEMPERATURE_DERIV_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:17  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:06  vsnyder
 ! Initial conversion to Fortran 90
 !

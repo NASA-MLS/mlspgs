@@ -28,28 +28,29 @@ contains
 !
     integer(i4), intent(in) :: MAXAITKENPTS
     integer(i4), intent(in) :: MAXPFACH
-    real(r8), intent(in) :: Z_PATH(*)
-    real(r8), intent(in) :: T_PATH(*)
-    real(r8), intent(in) :: H_PATH(*)
-    real(r8), intent(in) :: PHI_PATH(*)
-    real(r4), intent(in) :: DHDZ_PATH(*)
     integer(i4), intent(in) :: N_LVLS
     integer(i4), intent(in) :: JF
     integer(i4), intent(in) :: CH
     integer(i4), intent(in) :: N_SPS
-!   Real(r8), intent(in) :: PFA_BETA_COEFF(N2lvl,maxaitkenpts,maxpfach,*)
-    Real(r8), intent(in) :: PFA_BETA_COEFF(N2lvl,maxaitkenpts,2,*)
-    integer(i4), intent(in) :: NCOEFFS(*)
-    integer(i4), intent(in) :: SPS_TBL(*)
     integer(i4), intent(in) :: NC
     integer(i4), intent(in) :: NLVL
     integer(i4), intent(in) :: N2LVL
     integer(i4), intent(in) :: NSPS          ! not used
     integer(i4), intent(in) :: NO_PHI_T      ! not used
+    integer(i4), intent(in) :: MNP
+!
+    real(r8), intent(in) :: Z_PATH(*)
+    real(r8), intent(in) :: T_PATH(*)
+    real(r8), intent(in) :: H_PATH(*)
+    real(r8), intent(in) :: PHI_PATH(*)
+    real(r4), intent(in) :: DHDZ_PATH(*)
+!   Real(r8), intent(in) :: PFA_BETA_COEFF(N2lvl,maxaitkenpts,maxpfach,*)
+    Real(r8), intent(in) :: PFA_BETA_COEFF(N2lvl,maxaitkenpts,2,*)
+    integer(i4), intent(in) :: NCOEFFS(*)
+    integer(i4), intent(in) :: SPS_TBL(*)
     real(r8), intent(in) :: F_BASIS(Nc,*)
     integer(i4), intent(in) :: SCLOOP(2,Nlvl,*)
     real(r8), intent(in) :: REF_CORR(*)
-    integer(i4), intent(in) :: MNP
     integer(i4), intent(in) :: NO_FREQS_F(*) ! not used
     integer(i4), intent(in) :: NO_PHI_F(*)
     real(r8), intent(in) :: PHI_BASIS_F(mnp,*)
@@ -335,6 +336,9 @@ contains
   End Subroutine GET_PFA_DELTA
 end module GET_PFA_DELTA_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:14  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

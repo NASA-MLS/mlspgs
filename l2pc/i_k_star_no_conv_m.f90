@@ -35,15 +35,18 @@ contains
  &           s_pitch, elev_183, elev_205, azim_183, azim_205, azim_ref,   &
  &           geocsrad, i_star_all, k_star_all, no_phi_g, no_phi_f, Ier )
 !
+    integer(i4), intent(in) :: NO_GEOM
+    integer(i4), intent(in) :: NO_GEOPHYS
+    integer(i4), intent(in) :: NO_SPS_TBL
+    integer(i4), intent(in) :: N_LVLS
+    integer(i4), intent(in) :: NO_CONV_HTS
+!
+    integer(i4), intent(in) :: SPS_TBL(no_sps_tbl)
     type(l2pc_header_one), intent(in) :: HEADER1
     type(limb_press), intent(in) :: PTG_PRESS
     type(geom_param), intent(in) :: GEOMETRIC(no_geom)
     type(geophys_param), intent(in) :: GEOPHYSIC(no_geophys)
     type(atmos_comp), intent(in) :: ATMOSPHERIC(*)
-    integer(i4), intent(in) :: NO_GEOM
-    integer(i4), intent(in) :: NO_GEOPHYS
-    integer(i4), intent(in) :: NO_SPS_TBL
-    integer(i4), intent(in) :: SPS_TBL(no_sps_tbl)
     real(r8), intent(in) :: CONV_PRESS(no_conv_hts)
     real(r8), intent(in) :: CONV_HTS(no_conv_hts)
     real(r8), intent(in) :: PTG_ANGLES(no_conv_hts)
@@ -54,8 +57,6 @@ contains
     real(r8), intent(in) :: A_GRID(N_lvls)
     real(r8), intent(in) :: T_GRID(N_lvls)
     real(r8), intent(in) :: Z_GRID(N_lvls)
-    integer(i4), intent(in) :: N_LVLS
-    integer(i4), intent(in) :: NO_CONV_HTS
     real(r8), intent(in) :: C_YAW, S_YAW
     real(r8), intent(in) :: C_ROLL, S_ROLL
     real(r8), intent(in) :: C_PITCH, S_PITCH

@@ -28,22 +28,23 @@ contains
  &           pfa_dbeta_s, s_z_basis, s_phi_basis, s_nz, s_np, iz, ip,    &
  &           delta_s, Ier )
 !
+    integer(i4), intent(in) :: N_LVLS
+    integer(i4), intent(in) :: JSPS
+    integer(i4), intent(in) :: NC
+    integer(i4), intent(in) :: N2LVL
+    integer(i4), intent(in) :: MAXAITKENPTS
+    integer(i4), intent(in) :: MAXPFACH
+    integer(i4), intent(in) :: MNP
+!
     real(r8), intent(in) :: Z_PATH(*)
     real(r8), intent(in) :: T_PATH(*)
     real(r8), intent(in) :: H_PATH(*)
     real(r8), intent(in) :: PHI_PATH(*)
     real(r4), intent(in) :: DHDZ_PATH(*)
-    integer(i4), intent(in) :: N_LVLS
-    integer(i4), intent(in) :: JSPS
-    integer(i4), intent(in) :: NCOEFFS(*)
-    integer(i4), intent(in) :: NC
-    integer(i4), intent(in) :: N2LVL
-    integer(i4), intent(in) :: MAXAITKENPTS
-    integer(i4), intent(in) :: MAXPFACH
     real(r8), intent(in) :: F_BASIS(Nc,*)
     real(r8), intent(in) :: MR_F(Nc,mnp,*)
     real(r8), intent(in) :: REF_CORR(*)
-    integer(i4), intent(in) :: MNP
+    integer(i4), intent(in) :: NCOEFFS(*)
     integer(i4), intent(in) :: NO_PHI_F(*)
     real(r8), intent(in) :: PHI_BASIS_F(mnp,*)
     integer(i4), intent(in) :: INDXR, INDXL
@@ -338,6 +339,9 @@ contains
   End Subroutine PFA_DB_DELTA
 end module PFA_DB_DELTA_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:16  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

@@ -14,17 +14,17 @@ module AITKEN_INT_M
 contains
   Function Aitken_int (F_GRID, F_GRID_FLTR, FLTR_FUNC, RAD, JP, NFP, IER)
     real(r8) :: Aitken_int
-    real(r8), intent(in) :: F_GRID(*)
+    real(r8), intent(in) :: F_GRID(:)
     real(r8) :: F_GRID_FLTR(*)
-    real(r8), intent(in) :: FLTR_FUNC(nfp)
-    real(r8), intent(in) :: RAD(*)
+    real(r8), intent(in) :: FLTR_FUNC(:)
+    real(r8), intent(in) :: RAD(:)
     integer(i4), intent(in) :: JP
     integer(i4), intent(in) :: NFP
     integer(i4), intent(out) :: IER
     Integer(i4) :: N, KZ, JUMP
     Integer(i4), Parameter :: M = 161       ! For 161 maxfiltpts
     Real(r8) :: A(3)
-    Real(r8) :: RXF(nfp), TMPARY(nfp), TMPF(m), DF
+    Real(r8) :: RXF(m), TMPARY(m), TMPF(m), DF
     ier = 2000
     if ( nfp > m ) then
       Print *, '** Error in subroutine Aitken_Int !'
@@ -49,6 +49,9 @@ contains
   End Function Aitken_int
 end module AITKEN_INT_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:09  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:04  vsnyder
 ! Initial conversion to Fortran 90
 !

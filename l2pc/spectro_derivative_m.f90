@@ -21,11 +21,13 @@ contains
  &           path_brkpt, beta_t_power, pfa_dbeta_s, tau, t_script,       &
  &           Ary_Zero, ilo, ihi, spectro, Rad_s, Ier )
 !
+    integer(i4), intent(in) :: MNP,N_LVLS,JF,JCH,NF,MXCO
+!
     real(r8), intent(in) :: Z_PATH(*), T_PATH(*), H_PATH(*), PHI_PATH(*)
     real(r4), intent(in) :: DHDZ_PATH(*)
-    integer(i4), intent(in) :: N_LVLS, JF, JCH, NF, NO_COEFFS_f(*), MXCO
+    integer(i4), intent(in) :: NO_COEFFS_f(*)
+    integer(i4), intent(in) :: NO_PHI_F(*)
     real(r8), intent(in) :: F_BASIS(mxco,*), MR_F(mxco,mnp,*), REF_CORR(*)
-    integer(i4), intent(in) :: MNP, NO_PHI_F(*)
     real(r8), intent(in) :: PHI_BASIS_F(mnp,*)
     integer(i4), intent(in) :: INDXR, INDXL, PATH_BRKPT(*)
     real(r8), intent(in) :: BETA_T_POWER(N2lvl,maxaitkenpts,2,*)
@@ -72,6 +74,9 @@ contains
   End Subroutine SPECTRO_DERIVATIVE
 end module SPECTRO_DERIVATIVE_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:17  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:06  vsnyder
 ! Initial conversion to Fortran 90
 !

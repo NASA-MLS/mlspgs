@@ -52,17 +52,20 @@ contains
  &           Sps_Coef_Loop, spect_atmos, spectroscopic, scale_factor,    &
  &           i_star_all, k_star_all, Ier )
 !
-    type(l2pc_header_one), intent(in) :: HEADER1
+    integer(i4), intent(in) :: NPATH
     integer(i4), intent(in) :: N_LVLS
     integer(i4), intent(in) :: FFT_PTS
     integer(i4), intent(in) :: NO_CONV_HTS
-    integer(i4), intent(in) :: N_TAN(*)
+    integer(i4), intent(in) :: NO_PHI_T
     integer(i4), intent(in) :: BAND
+    integer(i4), intent(in) :: NO_PFA_CH
     integer(i4), intent(in) :: NO_FILT_PTS
     integer(i4), intent(in) :: NO_INT_FRQS(*)
-    integer(i4), intent(in) :: NO_PFA_CH
     integer(i4), intent(in) :: SPS_TBL(Nsps,*)
     integer(i4), intent(in) :: PFA_CH(*)
+    integer(i4), intent(in) :: N_TAN(*)
+!
+    type(l2pc_header_one), intent(in) :: HEADER1
     Real(r8), intent(in) :: Z_PATH(Npath,*), H_PATH(Npath,*),           &
    &                        T_PATH(Npath,*), PHI_PATH(Npath,*)
     Real(r4), intent(in) :: DHDZ_PATH(Npath,*)
@@ -98,9 +101,7 @@ contains
     Logical*1, intent(in) :: DO_CONV
     integer(i4), intent(in) :: NO_PHI_F(*)
     Real(r8), intent(in) :: PHI_BASIS_F(mnp,*)
-    integer(i4), intent(in) :: NPATH
     integer(i4), intent(in) :: PATH_BRKPT(3,*)
-    integer(i4), intent(in) :: NO_PHI_T
     type(eos_mdb_hdr), intent(in) :: MDB_HDR(*)
     type(eos_mdb_rec), intent(in) :: MDB_REC(max_no_lines,*)
     integer(i4), intent(in) :: JCH
@@ -328,8 +329,8 @@ contains
 !
 ! Assemble the radiances:
 !
-      Pfa_rad(ptg_i) = Aitken_int(f_grid,f_grid_filter,filter_func,Rad, &
-   &                              j4,No_filt_pts,Ier)
+      Pfa_rad(ptg_i) = Aitken_int(f_grid(1:,jch),f_grid_filter(1:,jch), &
+                       filter_func(1:,jch),Rad,j4,No_filt_pts,Ier)
       if (Ier /= 0) Return
 !
 ! Assemble the derivatives, per specie:
@@ -351,8 +352,9 @@ contains
               if (CA == 'W') then
                 do iz = 1, s_nz
                   do ip = 1, s_np
-                    a = Aitken_int(f_grid,f_grid_filter,filter_func,   &
-   &                           Rad_dw(1:,iz,ip,nf),j4,No_filt_pts,Ier)
+                    a = Aitken_int(f_grid(1:,jch),f_grid_filter(1:,jch), &
+                           filter_func(1:,jch),Rad_dw(1:,iz,ip,nf),j4,   &
+                           No_filt_pts,Ier)
                     if (Ier /= 0) Return
                     k_star_spect_dw(ptg_i,iz,ip,nf) = a
                   end do
@@ -361,8 +363,9 @@ contains
               else if (CA == 'N') then
                 do iz = 1, s_nz
                   do ip = 1, s_np
-                    a = Aitken_int(f_grid,f_grid_filter,filter_func,   &
-   &                           Rad_dn(1:,iz,ip,nf),j4,No_filt_pts,Ier)
+                    a = Aitken_int(f_grid(1:,jch),f_grid_filter(1:,jch), &
+                           filter_func(1:,jch),Rad_dn(1:,iz,ip,nf),j4,   &
+                           No_filt_pts,Ier)
                     if (Ier /= 0) Return
                     k_star_spect_dn(ptg_i,iz,ip,nf) = a
                   end do
@@ -371,8 +374,9 @@ contains
               else if (CA == 'V') then
                 do iz = 1, s_nz
                   do ip = 1, s_np
-                    a = Aitken_int(f_grid,f_grid_filter,filter_func,   &
-   &                           Rad_dnu(1:,iz,ip,nf),j4,No_filt_pts,Ier)
+                    a = Aitken_int(f_grid(1:,jch),f_grid_filter(1:,jch), &
+                           filter_func(1:,jch),Rad_dnu(1:,iz,ip,nf),j4,  &
+                           No_filt_pts,Ier)
                     if (Ier /= 0) Return
                     k_star_spect_dnu(ptg_i,iz,ip,nf) = a
                   end do
@@ -739,6 +743,9 @@ contains
   End Subroutine PFA_FWD_MDL
 end module PFA_FWD_MDL_M
 ! $Log$
+! Revision 1.2  2000/07/06 00:11:44  zvi
+!  This is the Freeze version of Jun/24/2000
+!
 ! Revision 1.1  2000/05/04 18:12:06  vsnyder
 ! Initial conversion to Fortran 90
 !

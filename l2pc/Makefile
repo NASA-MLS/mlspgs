@@ -74,7 +74,7 @@ $(PROG): $(ALLOBJS)
 	$(F90) $(LDFLAGS) -o $@ $(ALLOBJS) $(LIBS)
 
 clean:
-	rm -f $(PROG) $(ALLOBJS) *.mod  *.o
+	rm -f $(PROG) $(ALLOBJS) *.mod *.o *.M
 
 #.f90.o:
 %.o %.mod: %.f90
@@ -86,7 +86,7 @@ clean:
 #.mod.o:
 #       /bin/rm -f $<
 
-%.mod::
+# %.mod::
 
 .SUFFIXES:
 .SUFFIXES: $(SUFFIXES) .f90
@@ -147,8 +147,8 @@ i_and_k_star_m.o: MLSCommon.o fov_convolve_m.o hydrostatic_intrp.o \
         l2pc_file_parameters.o l2pc_file_structures.o l2pc_pfa_structures.o \
         l2pcdim.o d_csinterp_m.o d_cspline_m.o d_lintrp_m.o dcspline_der_m.o
 i_k_star_no_conv_m.o: MLSCommon.o hydrostatic_intrp.o l2pc_file_parameters.o \
-        l2pc_file_structures.o l2pc_pfa_structures.o l2pcdim.o d_csinterp_m.o \
-        d_cspline_m.o d_lintrp_m.o dcspline_der_m.o
+        l2pc_file_structures.o l2pc_pfa_structures.o d_csinterp_m.o \
+        d_cspline_m.o d_lintrp_m.o dcspline_der_m.o l2pcdim.o
 i_hunt_m.o: MLSCommon.o hunt.f9h
 l2pc_file_parameters.o: MLSCommon.o l2pcdim.o
 l2pc_file_structures.o: MLSCommon.o l2pc_file_parameters.o

@@ -301,7 +301,7 @@ type (eos_mdb_rec) :: mdb_rec(max_no_lines,*)
 ! (ptg_hts,ptg_press) are the arrays used to establish the radiative transfer
 ! function after antenna convolution at the users instument tangent heights.
 
-  kk = ptg_press.no_lin_values
+  kk = ptg_press%no_lin_values
   PtP(1:kk) = DBLE(ptg_press%lin_val(1:kk))
   CALL geo_grids(time_stamp,geophys,no_geophys,PtP, &
       z_gnlv,p_indx,ptg_hts,kk,z_grid,t_grid,h_grid, &
@@ -317,7 +317,7 @@ type (eos_mdb_rec) :: mdb_rec(max_no_lines,*)
 
   DO i = 1, no_geophys
     j = geophys_index(i)
-    kk = hdr1.sv_component_first_elmnt_index(j)
+    kk = hdr1%sv_component_first_elmnt_index(j)
     no_phi_vec(kk) = no_phi_g(i)
   END DO
 
@@ -335,7 +335,7 @@ type (eos_mdb_rec) :: mdb_rec(max_no_lines,*)
     IF(primag == 'i') freq(ich) = r     ! DEBUG, Added Jan/23/2000, Z.S
   END DO
 
-  ncpb = hdr1.no_channels_per_band
+  ncpb = hdr1%no_channels_per_band
   band1 = (ch1 + ncpb - 1) / ncpb     ! Begining Band
   band2 = (ch2 + ncpb - 1) / ncpb     !  Ending  Band
 
@@ -384,7 +384,7 @@ type (eos_mdb_rec) :: mdb_rec(max_no_lines,*)
 
   DO i = 1, no_atmos
     j = atmos_index(i)
-    kk = hdr1.sv_component_first_elmnt_index(j)
+    kk = hdr1%sv_component_first_elmnt_index(j)
     no_phi_vec(kk) = no_phi_f(i)
   END DO
 
@@ -392,7 +392,7 @@ type (eos_mdb_rec) :: mdb_rec(max_no_lines,*)
 
   DO i = 1, no_spectro
     j = spect_index(i)
-    kk = hdr1.sv_component_first_elmnt_index(j)
+    kk = hdr1%sv_component_first_elmnt_index(j)
     no_phi_vec(kk) = spectroscopic(i)%no_phi_values
   END DO
 
@@ -565,5 +565,8 @@ END SUBROUTINE radiometry
 
 end module FWD_MDL_SET_UP_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:13  zvi
+! First version D.P.
+!
 ! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90

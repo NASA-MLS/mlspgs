@@ -24,8 +24,13 @@ contains
  &           f_basis, SCLoop, ref_corr, mdb_pres, mdb_temp, mdb_freq,      &
  &           mnp, mnf, cs_mnf, no_freqs_f, no_phi_f, phi_basis_f, IndxR,   &
  &           IndxL,path_brkpt, delta, Ier )
+    integer(i4), intent(in) :: NLVL
     integer(i4), intent(in) :: NO_PHI_T
     integer(i4), intent(in) :: MNF, CS_MNF
+    integer(i4), intent(in) :: N_SPS
+    integer(i4), intent(in) :: NCOEFFS(*)
+    integer(i4), intent(in) :: SPS_TBL(*)
+    integer(i4), intent(in) :: NC
     real(r8), intent(in) :: Z_PATH(*)
     real(r8), intent(in) :: T_PATH(*)
     real(r8), intent(in) :: H_PATH(*)
@@ -34,11 +39,6 @@ contains
     integer(i4), intent(in) :: N_LVLS
     real(r8), intent(in) :: CS(Nlvl,no_phi_t,cs_mnf,*)
     real(r8), intent(in) :: FRQ
-    integer(i4), intent(in) :: N_SPS
-    integer(i4), intent(in) :: NCOEFFS(*)
-    integer(i4), intent(in) :: SPS_TBL(*)
-    integer(i4), intent(in) :: NC
-    integer(i4), intent(in) :: NLVL
     real(r8), intent(in) :: F_BASIS(Nc,*)
     integer(i4), intent(in) :: SCLOOP(2,Nlvl,*)
     real(r8), intent(in) :: REF_CORR(*)
@@ -308,6 +308,9 @@ contains
   End Subroutine GET_DELTA
 end module GET_DELTA_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:13  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

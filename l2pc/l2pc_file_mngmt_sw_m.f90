@@ -88,8 +88,8 @@ type (l2pc_keys) :: key_rec
   !  write the first record in the key file, close it and open it again,
   !  to insure file exists in case of a crash ..
 
-  key_rec.rec_no = l2pc_rec_length
-  key_rec.l2pc_key = 'Record length of the l2pc file .'
+  key_rec%rec_no = l2pc_rec_length
+  key_rec%l2pc_key = 'Record length of the l2pc file .'
   WRITE(l2pc_lu_key,REC=1) key_rec
 
   CLOSE(l2pc_lu_key,IOSTAT=i)
@@ -164,7 +164,7 @@ Character (LEN=40) :: akey
   READ(l2pc_lu_key,REC=1,IOSTAT=ieropen) key_rec
   IF(ieropen /= 0) GO TO 99
 
-  l2pc_rec_length = key_rec.rec_no      ! L2PC record length
+  l2pc_rec_length = key_rec%rec_no      ! L2PC record length
 
   tmp = filename
   CLOSE(l2pc_lu,IOSTAT=i)
@@ -220,40 +220,40 @@ Character (LEN=40) :: akey
 
 type (l2pc_header_one) :: header1
 
-  READ(l2pc_lu,REC=1,IOSTAT=ier) akey,header1.line1,header1.line2, &
-      header1.line3,no_bands,no_channels_per_band,no_pointings, &
-      no_avail_keys,no_sv_components,header1.no_coeff_per_component, &
-      header1.no_k_records_per_bin,header1.no_mag_fields, &
-      header1.no_b_theta_lin_val,header1.b_phi_lin_val, &
-      (header1.avail_keys(i),i=1,no_avail_keys), &
-      (header1.pointings(i),i=1,no_pointings), &
-      (header1.sv_components(i),i=1,no_sv_components), &
-      ((header1.sv_rtrvl_by_band(i,j),j=1,no_bands), i=1,no_sv_components), &
-      (header1.no_elmnts_per_sv_component(i),i=1,no_sv_components), &
-      (header1.sv_component_first_elmnt_index(i),i=1,no_sv_components), &
-      (header1.b_fields(i),i=1,max_no_mag_fields), &
-      (header1.b_theta_lin_val(i),i=1,max_no_theta_val)
+  READ(l2pc_lu,REC=1,IOSTAT=ier) akey,header1%line1,header1%line2, &
+      header1%line3,no_bands,no_channels_per_band,no_pointings, &
+      no_avail_keys,no_sv_components,header1%no_coeff_per_component, &
+      header1%no_k_records_per_bin,header1%no_mag_fields, &
+      header1%no_b_theta_lin_val,header1%b_phi_lin_val, &
+      (header1%avail_keys(i),i=1,no_avail_keys), &
+      (header1%pointings(i),i=1,no_pointings), &
+      (header1%sv_components(i),i=1,no_sv_components), &
+      ((header1%sv_rtrvl_by_band(i,j),j=1,no_bands), i=1,no_sv_components), &
+      (header1%no_elmnts_per_sv_component(i),i=1,no_sv_components), &
+      (header1%sv_component_first_elmnt_index(i),i=1,no_sv_components), &
+      (header1%b_fields(i),i=1,max_no_mag_fields), &
+      (header1%b_theta_lin_val(i),i=1,max_no_theta_val)
   IF(ier /= 0) GO TO 99
 
 ! Compute number of K_STAR records per bin:
 !   Total number of records minus X_STAR(1) and I_STAR(6)
 
-  header1.no_k_records_per_bin = no_records_per_bin - 7
+  header1%no_k_records_per_bin = no_records_per_bin - 7
 
   akey = l2pc_header_key1
-  WRITE(l2pc_lu,REC=1,IOSTAT=ier) akey,header1.line1,header1.line2, &
-      header1.line3,no_bands,no_channels_per_band,no_pointings, &
-      no_avail_keys,no_sv_components,header1.no_coeff_per_component, &
-      header1.no_k_records_per_bin,header1.no_mag_fields, &
-      header1.no_b_theta_lin_val,header1.b_phi_lin_val, &
-      (header1.avail_keys(i),i=1,no_avail_keys), &
-      (header1.pointings(i),i=1,no_pointings), &
-      (header1.sv_components(i),i=1,no_sv_components), &
-      ((header1.sv_rtrvl_by_band(i,j),j=1,no_bands), i=1,no_sv_components), &
-      (header1.no_elmnts_per_sv_component(i),i=1,no_sv_components), &
-      (header1.sv_component_first_elmnt_index(i),i=1,no_sv_components), &
-      (header1.b_fields(i),i=1,max_no_mag_fields), &
-      (header1.b_theta_lin_val(i),i=1,max_no_theta_val)
+  WRITE(l2pc_lu,REC=1,IOSTAT=ier) akey,header1%line1,header1%line2, &
+      header1%line3,no_bands,no_channels_per_band,no_pointings, &
+      no_avail_keys,no_sv_components,header1%no_coeff_per_component, &
+      header1%no_k_records_per_bin,header1%no_mag_fields, &
+      header1%no_b_theta_lin_val,header1%b_phi_lin_val, &
+      (header1%avail_keys(i),i=1,no_avail_keys), &
+      (header1%pointings(i),i=1,no_pointings), &
+      (header1%sv_components(i),i=1,no_sv_components), &
+      ((header1%sv_rtrvl_by_band(i,j),j=1,no_bands), i=1,no_sv_components), &
+      (header1%no_elmnts_per_sv_component(i),i=1,no_sv_components), &
+      (header1%sv_component_first_elmnt_index(i),i=1,no_sv_components), &
+      (header1%b_fields(i),i=1,max_no_mag_fields), &
+      (header1%b_theta_lin_val(i),i=1,max_no_theta_val)
   IF(ier /= 0) GO TO 99
 
   RETURN
@@ -291,39 +291,39 @@ Character (LEN=40) :: akey
 
 ! Structure defintions are here.
 
-no_bands = header1.no_bands
-no_pointings = header1.no_pointings
-no_avail_keys = header1.no_avail_keys
-no_sv_components = header1.no_sv_components
-no_channels_per_band = header1.no_channels_per_band
+no_bands = header1%no_bands
+no_pointings = header1%no_pointings
+no_avail_keys = header1%no_avail_keys
+no_sv_components = header1%no_sv_components
+no_channels_per_band = header1%no_channels_per_band
 
   akey = l2pc_header_key1
-  WRITE(l2pc_lu,REC=1,IOSTAT=ier) akey,header1.line1,header1.line2, &
-      header1.line3,no_bands,no_channels_per_band,no_pointings, &
-      no_avail_keys,no_sv_components,header1.no_coeff_per_component, &
-      header1.no_k_records_per_bin,header1.no_mag_fields, &
-      header1.no_b_theta_lin_val,header1.b_phi_lin_val, &
-      (header1.avail_keys(i),i=1,no_avail_keys), &
-      (header1.pointings(i),i=1,no_pointings), &
-      (header1.sv_components(i),i=1,no_sv_components), &
-      ((header1.sv_rtrvl_by_band(i,j),j=1,no_bands), i=1,no_sv_components), &
-      (header1.no_elmnts_per_sv_component(i),i=1,no_sv_components), &
-      (header1.sv_component_first_elmnt_index(i),i=1,no_sv_components), &
-      (header1.b_fields(i),i=1,max_no_mag_fields), &
-      (header1.b_theta_lin_val(i),i=1,max_no_theta_val)
+  WRITE(l2pc_lu,REC=1,IOSTAT=ier) akey,header1%line1,header1%line2, &
+      header1%line3,no_bands,no_channels_per_band,no_pointings, &
+      no_avail_keys,no_sv_components,header1%no_coeff_per_component, &
+      header1%no_k_records_per_bin,header1%no_mag_fields, &
+      header1%no_b_theta_lin_val,header1%b_phi_lin_val, &
+      (header1%avail_keys(i),i=1,no_avail_keys), &
+      (header1%pointings(i),i=1,no_pointings), &
+      (header1%sv_components(i),i=1,no_sv_components), &
+      ((header1%sv_rtrvl_by_band(i,j),j=1,no_bands), i=1,no_sv_components), &
+      (header1%no_elmnts_per_sv_component(i),i=1,no_sv_components), &
+      (header1%sv_component_first_elmnt_index(i),i=1,no_sv_components), &
+      (header1%b_fields(i),i=1,max_no_mag_fields), &
+      (header1%b_theta_lin_val(i),i=1,max_no_theta_val)
   IF(ier /= 0) GO TO 99
 
   akey = l2pc_header_key2
-  no_sv_elmnts = header2.no_sv_elmnts
+  no_sv_elmnts = header2%no_sv_elmnts
   WRITE(l2pc_lu,REC=2,IOSTAT=ier) akey,no_sv_elmnts, &
-      (header2.tri_basis_vert_grid(i),i=1,no_sv_elmnts)
+      (header2%tri_basis_vert_grid(i),i=1,no_sv_elmnts)
   IF(ier /= 0) GO TO 99
 
   akey = l2pc_header_key3
-  matdim = header3.matdim
+  matdim = header3%matdim
   WRITE(l2pc_lu,REC=3,IOSTAT=ier) akey,matdim, &
-      (header3.second_der_matrix_bands(i),i=1,matdim), &
-      (header3.second_der_matrix_namid(i),i=1,matdim)
+      (header3%second_der_matrix_bands(i),i=1,matdim), &
+      (header3%second_der_matrix_namid(i),i=1,matdim)
   IF(ier /= 0) GO TO 99
 
   RETURN
@@ -365,8 +365,8 @@ type (l2pc_keys) :: key_rec
 !  written already, and is containing the record length of the l2pc file.)
 
   DO j = 1, nrec
-    key_rec.l2pc_key = keys(j)
-    key_rec.rec_no = rec_nos(j)
+    key_rec%l2pc_key = keys(j)
+    key_rec%rec_no = rec_nos(j)
     WRITE(l2pc_lu_key,REC=j+1) key_rec
   END DO
 
@@ -687,5 +687,8 @@ END SUBROUTINE replace_text
 
 end module L2PC_FILE_MNGMT_SW_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:15  zvi
+! First version D.P.
+!
 ! Revision 1.1 2000/06/09 00:08:14  Z.Shippony
 ! Initial conversion to Fortran 90

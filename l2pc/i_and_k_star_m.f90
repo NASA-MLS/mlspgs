@@ -752,18 +752,15 @@ contains
 ! Get dI/dX at 63
 !
     ptg_i = 1
-!   s_e = 0.0
-!   c_e = fft_angles(1)
-!   Call csinterp(fft_angles,c_e,i_star_all,s_e,j,ptg_i,j,ptg_i,       &
-!  &              sc1,sc2,sc3,sc4)
     tx = 0.0
     ty = fft_angles(1)
-    ier = csinterp(fft_angles,tx,i_star_all,ty,j,ptg_i,j,ptg_i,       &
-   &              sc1,sc2,sc3,sc4)
-    if ( ier /= 0 ) then
+    ier = csinterp(fft_angles,tx,i_star_all,ty,j,ptg_i,j,ptg_i, &
+   &               sc1,sc2,sc3,sc4)
+    if (ier /= 0 ) then
       print *, '-E- In I_AND_K_STAR, CSINTERP failed'
       return
     end if
+
 !
 ! Where sc2 is dI/dX at 63
 ! Now we get derivative premultipliers -1/sqrt(1.0 - e_z^2)
@@ -961,6 +958,9 @@ contains
   End Subroutine I_AND_K_STAR
 end module I_AND_K_STAR_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:14  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

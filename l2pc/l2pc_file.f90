@@ -157,8 +157,9 @@ Program L2PC_FILE
 !
 ! For timing:
 !
-  intrinsic :: CPU_TIME
-  intrinsic :: DATE_AND_TIME
+! intrinsic :: CPU_TIME           !  (Fortran 95 only !)
+! intrinsic :: DATE_AND_TIME      !  (Fortran 95 only !)
+  intrinsic DATE_AND_TIME
   real(tk) :: CPU, CPU_END, CPU_START, ELAPSED, TOTCPU, TOTELP
   character(len=21) :: ELAPSE_END, ELAPSE_START
 !
@@ -579,7 +580,7 @@ Program L2PC_FILE
       nvr(1:no_pfa_ch) = -2
 !
       k = no_conv_hts
-      call cpu_time ( cpu_start )
+!     call cpu_time ( cpu_start )           ! F95 only
       call now_ccsds ( elapse_start )
       Call fwd_mdl(header1,header2,header3,N_lvls,fft_pts,k,n_tan,     &
  &         band,ndx_sps,no_filt_pts,no_geom,no_geophys,no_int_frqs,    &
@@ -601,7 +602,7 @@ Program L2PC_FILE
  &         mdb_hdr,mdb_rec,spectroscopic,Ier)
       if(ier /= 0) goto 888
 !
-      call cpu_time ( cpu_end )
+!     call cpu_time ( cpu_end )           ! F95 only
       call now_ccsds ( elapse_end )
       cpu = cpu_end - cpu_start
       totcpu = totcpu + cpu
@@ -757,6 +758,9 @@ END SUBROUTINE get_pvsh
 
 End Program L2PC_FILE
 ! $Log$
+! Revision 1.2  2000/07/06 00:11:44  zvi
+!  This is the Freeze version of Jun/24/2000
+!
 ! Revision 1.1  2000/05/04 18:12:05  vsnyder
 ! Initial conversion to Fortran 90
 !

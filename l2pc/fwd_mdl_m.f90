@@ -68,21 +68,24 @@ contains
     type(l2pc_header_one), intent(in) :: header1
     type(l2pc_header_two), intent(in) :: header2
     type(l2pc_header_tri), intent(in) :: header3
+!
+    integer(i4), intent(in) :: NPATH
     integer(i4), intent(in) :: N_LVLS
     integer(i4), intent(in) :: FFT_PTS
     integer(i4), intent(in) :: NO_CONV_HTS
-    integer(i4), intent(in) :: N_TAN(*)
     integer(i4), intent(in) :: BAND
-    integer(i4), intent(in) :: NDX_SPS(Nsps,*)
     integer(i4), intent(in) :: NO_FILT_PTS
     integer(i4), intent(in) :: NO_GEOM
     integer(i4), intent(in) :: NO_GEOPHYS
-    integer(i4), intent(in) :: NO_INT_FRQS(*)
     integer(i4), intent(in) :: NO_PFA_CH
     integer(i4), intent(in) :: NO_SPS_TBL(*)
     integer(i4), intent(in) :: SPS_TBL(Nsps,*)
     integer(i4), intent(in) :: PFA_CH(*)
     integer(i4), intent(in) :: NVR(*)
+    integer(i4), intent(in) :: N_TAN(*)
+    integer(i4), intent(in) :: NDX_SPS(Nsps,*)
+    integer(i4), intent(in) :: NO_INT_FRQS(*)
+!
     Real(r8), intent(in) :: Z_PATH(Npath,*), H_PATH(Npath,*)
     Real(r8), intent(in) :: T_PATH(Npath,*), PHI_PATH(Npath,*)
     Real(r4), intent(in) :: DHDZ_PATH(Npath,*)
@@ -155,7 +158,6 @@ contains
     integer(i4), intent(in) :: NO_PHI_F(*)
     Real(r8), intent(in) :: PHI_BASIS_F(mnp,*)
     integer(i4), intent(in) :: NO_PHI_VEC(*)
-    integer(i4), intent(in) :: NPATH
     integer(i4), intent(in) :: PATH_BRKPT(3,*)
     integer(i4), intent(in) :: NO_PHI_T
     Real(r8), intent(in) :: T_PHI_BASIS(*)

@@ -52,13 +52,13 @@ Real(r8) :: fdum(nlvl,mnp), pdum(nlvl), dphi, tri_base(mxco)
 
   DO sps_i = 1, no_atmos
 
-    CALL get_atmos(atmospheric(sps_i).spectag,time_stamp,fdum, &
+    CALL get_atmos(atmospheric(sps_i)%spectag,time_stamp,fdum, &
         pdum,no_pts,no_phi,InDir,ld,ier)
     IF(ier /= 0) RETURN
 
 ! Get number of coefficients on the retrieval grid
 
-    k = atmospheric(sps_i).no_lin_values
+    k = atmospheric(sps_i)%no_lin_values
     no_coeffs_f(sps_i) = k
     no_phi_f(sps_i) = no_phi
 
@@ -72,7 +72,7 @@ Real(r8) :: fdum(nlvl,mnp), pdum(nlvl), dphi, tri_base(mxco)
 ! Create mr_f:
 
     DO j = 1, k
-      tri_base(j) = atmospheric(sps_i).basis_peaks(j)
+      tri_base(j) = atmospheric(sps_i)%basis_peaks(j)
     END DO
 
 ! Loop over the phi's
@@ -115,5 +115,8 @@ Real(r8) :: fdum(nlvl,mnp), pdum(nlvl), dphi, tri_base(mxco)
 END SUBROUTINE atmos_basis
 end module ATMOS_BASIS_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:09  zvi
+! First version D.P.
+!
 ! Revision 1.1 2000/06/09 00:08:13  Z.Shippony
 ! Initial conversion to Fortran 90

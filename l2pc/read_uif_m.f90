@@ -166,7 +166,7 @@ contains
     zero_spect%no_phi_values = -1
     zero_spect%no_zeta_values = -1
     do i = 1, 6
-      zero_spect%der_calc(i) = 0
+      zero_spect%der_calc(i) = .false.
     end do
     do j = 1, max_no_phi+2
       zero_spect%phi_basis(j) = 0.0
@@ -843,21 +843,21 @@ contains
       if(any(spectroscopic(i)%der_calc(1:6))) then
         nv = nv + 1
         spect_index(i) = nv
-        header1.no_sv_components = nv
-        header1.sv_components(nv) = spectroscopic(i)%name
+        header1%no_sv_components = nv
+        header1%sv_components(nv) = spectroscopic(i)%name
         do j = 1, 6
-          header1.sv_rtrvl_by_band(nv,j) =      &
+          header1%sv_rtrvl_by_band(nv,j) =      &
    &                                spectroscopic(i)%der_calc(j)
         end do
-        nc = header2.no_sv_elmnts + 1
-        header1.sv_component_first_elmnt_index(nv) = nc
+        nc = header2%no_sv_elmnts + 1
+        header1%sv_component_first_elmnt_index(nv) = nc
         jj = spectroscopic(i)%no_zeta_values
-        header1.no_elmnts_per_sv_component(nv) = jj
-        header2.no_sv_elmnts = nc + jj - 1
+        header1%no_elmnts_per_sv_component(nv) = jj
+        header2%no_sv_elmnts = nc + jj - 1
         ii = nc - 1
         do j = 1, jj
           ii = ii + 1
-          header2.tri_basis_vert_grid(ii) =      &
+          header2%tri_basis_vert_grid(ii) =      &
    &                             spectroscopic(i)%zeta_basis(j)
         end do
       endif
@@ -990,6 +990,9 @@ contains
   End Subroutine READ_UIF
 end module READ_UIF_M
 ! $Log$
+! Revision 1.1  2000/06/21 21:56:16  zvi
+! First version D.P.
+!
 ! Revision 1.1  2000/05/04 18:12:06  vsnyder
 ! Initial conversion to Fortran 90
 !
