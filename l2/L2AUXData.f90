@@ -6,6 +6,8 @@ module L2AUXData                 ! Data types for storing L2AUX data internally
 !=============================================================================
 
   use Allocate_Deallocate, only: Allocate_test, Deallocate_test
+  use Hdf, only: DFACC_READ, DFNT_FLOAT64, SFCREATE, SFDIMID, SFEND, &
+    & SFENDACC, SFSTART, SFRDATA, sfn2index, sfselect, sfgetinfo
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
   use MLSCommon, only: R8
@@ -255,12 +257,135 @@ contains ! =====     Public Procedures     =============================
   end subroutine DestroyL2AUXDatabase
 
 
+  ! -------------------------------------------------------------------------
+
+  SUBROUTINE ReadL2AUXData(sd_id, quantityname, l2aux, numProfs, &
+       firstProf, lastProf)
+    !------------------------------------------------------------------------
+
+    ! This routine reads an l2aux file, returning a filled data structure and the !
+    ! number of profiles read.
+
+    ! Arguments
+
+    CHARACTER (LEN=*), INTENT(IN) :: quantityname ! Name of L2AUX quantity
+    INTEGER, INTENT(IN) :: sd_id ! Returned by sfstart before calling us
+    INTEGER, INTENT(IN), OPTIONAL :: firstProf, lastProf ! Defaults to first and last
+    TYPE( L2AUXData_T ), INTENT(OUT) :: l2aux ! Result
+    INTEGER, INTENT(OUT) :: numProfs ! Number actually read
+
+    ! Parameters
+
+    CHARACTER (LEN=*), PARAMETER :: SZ_ERR = 'Failed to get size of &
+         &dimension '
+    CHARACTER (LEN=*), PARAMETER :: MLSMSG_INPUT = 'Error in input argument '
+    CHARACTER (LEN=*), PARAMETER :: MLSMSG_l2auxRead = 'Unable to read l2aux &
+                                                     &field:'
+    INTEGER, PARAMETER :: MAXRANK = 3
+    INTEGER, PARAMETER :: MAXDIMSIZES = 300
+    LOGICAL, PARAMETER :: CHECKDIMSIZES = .TRUE.	! .TRUE. only while debugging
+
+    ! Functions
+
+    !INTEGER, EXTERNAL :: swattach, swdetach, swdiminfo, swinqdims, swrdfld
+
+    ! Variables
+
+    CHARACTER (LEN=80) :: list
+    CHARACTER (LEN=480) :: msr
+
+    INTEGER :: sds_index, sds_id, rank, data_type, num_attrs
+    INTEGER :: dim_sizes(MAXRANK)
+    INTEGER :: dim_families(MAXRANK)
+    CHARACTER (LEN=LEN(quantityname)) :: sds_name
+
+    INTEGER :: alloc_err, first, freq, lev, nDims, size, status
+    INTEGER :: start(3), stride(3), edge(3), dims(3)
+    INTEGER :: nFreqs, nLevels, nTimes, nFreqsOr1, nLevelsOr1
+
+    LOGICAL :: firstCheck, lastCheck
+
+    REAL, ALLOCATABLE :: realFreq(:), realSurf(:), realProf(:), real3(:,:,:)
+
+    ! Attach to the file for reading
+
+! found below in sfgetinfo--where we will check it for self consistency
+!    l2aux%Name = quantityname
+
+    ! find SD data set identifier
+    sds_index = sfn2index(sd_id, quantityname)
+    IF (sds_index == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         &get sds_index.')
+         
+    sds_id = sfselect(sd_id, sds_index)
+    IF (sds_id == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         &get sds_id.')
+         
+    status = sfgetinfo(sds_id, sds_name, rank, dim_sizes, data_type, &
+    & num_attrs)
+    IF (status == -1) THEN
+       CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         & get sf info.')
+    ELSEIF (sds_name /= quantityname) THEN
+       CALL MLSMessage(MLSMSG_Error, ModuleName, 'quantityname &
+         & fails to match sf info.')
+    ENDIF
+
+    ! Check optional input arguments
+
+    firstCheck = PRESENT(firstProf)
+    lastCheck = PRESENT(lastProf)
+
+
+    ! Allocate result
+
+    CALL SetupNewl2auxRecord ( dim_families, dim_sizes, l2aux )
+
+    ! Allocate temporary arrays
+
+!    nFreqsOr1=MAX(nFreqs,1)
+!    nLevelsOr1=MAX(nLevels, 1)
+!    ALLOCATE(realProf(numProfs), realSurf(l2aux%nLevels), &
+!         realFreq(l2aux%nFreqs), &
+!         real3(nFreqsOr1,nLevelsOr1,numProfs), STAT=alloc_err)
+
+    ! Read the horizontal geolocation fields
+
+
+    ! Read the pressures vertical geolocation field, if it exists
+
+
+    ! Read the frequency geolocation field, if it exists
+
+
+    ! Read the data fields that may have 1-3 dimensions
+
+
+    ! Read the data fields that are 1-dimensional
+
+
+    ! Deallocate local variables
+
+
+    !  After reading, detach from swath interface
+
+    status = sfend(sd_id)
+    IF (status == -1) CALL MLSMessage(MLSMSG_Error, ModuleName, 'Failed to &
+         &detach from SD file after reading.')
+
+    !-----------------------------
+  END SUBROUTINE ReadL2AUXData
+  !-----------------------------
+
 !=============================================================================
 end module L2AUXData
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.1  2000/12/02 01:12:00  pwagner
+! Added ReadL2AUXData
+!
 ! Revision 2.0  2000/09/05 18:57:02  ahanzel
 ! Changing file revision to 2.0.
 !
