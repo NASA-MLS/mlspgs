@@ -39,12 +39,16 @@ contains
 !        \Delta B \text{ is {\tt T\_script} (input)},\\
 !  {\bf \tau}_i =& {\bf P}_i {\bf P}_i^\dagger,~
 !    {\bf \tau} \text{ is {\tt Tau} (output), {\bf P} is {\tt Prod} (output),}\\
-!  {\bf P}_i = & \prod_{k=1}^{i-1} {\bf E}_k \text{ and } {\bf E} \text{ is
+!  {\bf P}_i = & \prod_{k=2}^{i} {\bf E}_k \text{ and } {\bf E} \text{ is
 !    {\tt Del\_tau} (input), which is}\\
 !  {\bf E}_i = & \exp \left( - \int_{s_i}^{s_{i-1}} {\bf G} (s^\prime)
 !                \text{d} s^\prime \right )
 ! \end{split}
 ! \end{equation*}
+!
+! $\mathbf{E}_1$ is the incremental transmissivity from the spacecraft to
+! the top of the atmosphere, which is obviously zero.  That's why we start
+! with $\mathbf{E}_2$.
 
     use MLSCommon, only: Rk => Rp
 
@@ -159,8 +163,8 @@ contains
   end subroutine Mcrt
 
 ! -----------------------------------------------------  Mcrt_Der  -----
-  subroutine Mcrt_Der ( T_script, D_E, Prod, Tau, P_Stop, D_Radiance, &
-    & D_T_script )
+  subroutine Mcrt_Der ( T_script, Sqrt_earth_ref, E, D_E, Prod, Tau, P_Stop, &
+    & D_Radiance, D_T_script )
 
 !       Magnetic    Condensed    Radiative    Transfer    Derivative
 
@@ -172,23 +176,23 @@ contains
   ! \begin{split}
   !  \frac{\partial \bf I}{\partial x} = &\sum_{i=1}^n
   !   \left [ \frac{\partial {\bf \tau}_i}{\partial x} \Delta B_i +
-  !           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x} \mathbf{1}
+  !           {\bf \tau}_i \frac{\partial \Delta B_i}{\partial x}
   !   \right ],\text{ where}
   !\\
   !  \frac{\partial {\bf \tau}_i}{\partial x} = &
   !   \frac{\partial {\bf P}_i {\bf P}_i^\dagger}{\partial x}
   !\\
-  !  = & \sum_{k=1}^{i-1} \left [ {\bf E}_1 \dots {\bf E}_{k-1}
+  !  = & \sum_{k=2}^{i} \left [ {\bf E}_2 \dots {\bf E}_{k-1}
   !       \frac{\partial {\bf E}_k}{\partial x} {\bf E}_{k+1} \dots
-  !       {\bf E}_{i-1} {\bf P}_i^\dagger +
-  !       {\bf P}_i {\bf E}_{i-1}^\dagger \dots {\bf E}_{k+1}
+  !       {\bf E}_i {\bf P}_i^\dagger +
+  !       {\bf P}_i {\bf E}_i^\dagger \dots {\bf E}_{k+1}
   !       \frac{\partial {\bf E}_k^\dagger}{\partial x}
-  !       {\bf E}_{k-1}^\dagger \dots {\bf E}_1^\dagger \right ]
+  !       {\bf E}_{k-1}^\dagger \dots {\bf E}_2^\dagger \right ]
   !\\
-  !  = & \sum_{k=1}^{i-1} \left [ {\bf P}_k
-  !       \frac{\partial {\bf E}_k}{\partial x} {\bf P}_{k+1}^{-1} {\bf \tau}_i
-  !     + {\bf \tau}_i^\dagger {\bf P}_{k+1}^{-\dagger}
-  !       \frac{\partial {\bf E}_k^\dagger}{\partial x} {\bf P}_k^\dagger \right ]
+  !  = & \sum_{k=2}^{i} \left [ {\bf P}_{k-1}
+  !       \frac{\partial {\bf E}_k}{\partial x} {\bf P}_k^{-1} {\bf \tau}_i
+  !     + {\bf \tau}_i^\dagger {\bf P}_k^{-\dagger}
+  !       \frac{\partial {\bf E}_k^\dagger}{\partial x} {\bf P}_{k-1}^\dagger \right ]
   ! \end{split}
   ! \end{equation*}
   ! Notice that $\tau = \tau^\dagger$ by construction (see {\tt MCRT}).  Then
@@ -198,11 +202,11 @@ contains
   !    \mathcal{Q}_i {\bf \tau}_i + {\bf \tau}_i^\dagger \mathcal{Q}_i^\dagger
   !    \text{, where}
   !\\
-  !  \mathcal{Q}_i =& \frac12 \frac{\partial \Delta B_i}{\partial x} {\bf 1} +
+  !  \mathcal{Q}_i =& \frac12 \frac{\partial \Delta B_i}{\partial x} \mathbf{1} +
   !    \Delta B_i \mathcal{W}_i \text{ and}
   !\\
-  !  \mathcal{W}_i =& \sum_{k=1}^{i-1} {\bf P}_k
-  !                     \frac{\partial {\bf E}_k}{\partial x} {\bf P}_{k+1}^{-1}
+  !  \mathcal{W}_i =& \sum_{k=2}^i {\bf P}_{k-1}
+  !                     \frac{\partial {\bf E}_k}{\partial x} {\bf P}_k^{-1}
   ! \end{split}
   ! \end{equation*}
   ! {\bf 1} is the identity matrix (we're using ${\bf I}$ for the radiance
@@ -212,13 +216,15 @@ contains
 
     ! SVE == state_vector_elements
     real(rk), intent(in) :: T_script(:)     ! sve.  Called Delta B above
+    real(rk), intent(in) :: Sqrt_earth_ref
+    complex(rk), intent(in) :: E(:,:,:)     ! 2 x 2 x path.  Deltau
     complex(rk), intent(in) :: D_E(:,:,:,:) ! 2 x 2 x path x sve.
                                             ! D (deltau) / D (Whatever)
     complex(rk), intent(in) :: Prod(:,:,:)  ! 2 x 2 x path.  Called P above.
     complex(rk), intent(in) :: Tau(:,:,:)   ! 2 x 2 x path. Matmul(Prod,conjg(Prod)).
     integer, intent(in) :: P_Stop           ! Where to stop on the path
     complex(rk), intent(out) :: D_Radiance(:,:,:) ! 2 x 2 x sve
-    real(rk), intent(in),optional :: D_T_script(:,:) ! path x sve. ak.k.a D Delta B
+    real(rk), intent(in),optional :: D_T_script(:,:) ! path x sve. a.k.a D Delta B
     ! T script or Delta B depends only on temperature and frequency, so it's
     ! only needed for temperature derivatives.
 
@@ -312,6 +318,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.10  2003/08/15 20:29:26  vsnyder
+! Implement polarized VMR derivatives
+!
 ! Revision 2.9  2003/08/14 19:37:55  vsnyder
 ! Futzing with comments
 !
