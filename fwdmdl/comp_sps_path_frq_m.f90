@@ -83,7 +83,7 @@ MODULE comp_sps_path_frq_m
 !
   DO sps_i = 1, n_sps
 !
-    n_f = max(1,Grids_x%no_f(sps_i))
+    n_f = Grids_x%no_f(sps_i)
     n_zp = Grids_x%no_z(sps_i) * Grids_x%no_p(sps_i)
     nfzp = n_f * n_zp
 
@@ -139,6 +139,9 @@ MODULE comp_sps_path_frq_m
 END MODULE comp_sps_path_frq_m
 !
 ! $Log$
+! Revision 2.5  2002/01/09 00:30:48  zvi
+! Fix a bug with skip_eta_frq
+!
 ! Revision 2.4  2001/11/15 01:21:58  zvi
 ! Extiction debug fix
 !
