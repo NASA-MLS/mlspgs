@@ -185,8 +185,8 @@ contains
     integer :: I, N_PATH
 
     integer, parameter :: NGP1 = NG + 1
-    integer, parameter :: GLIR(ng) = (/ (i, i = 1, ng ) /)  ! for > n_path/2
-    integer, parameter :: GLIL(ng) = (/ (i ,i = -ng, -1) /) ! for <= n_path/2
+    integer, parameter :: GLIR(ng) = (/ (i, i = 2-ng, 1) /) ! for > n_path/2
+    integer, parameter :: GLIL(ng) = (/ (i ,i = 1-ng, 0) /) ! for <= n_path/2
 
     n_path = size(do_gl)
 
@@ -199,9 +199,9 @@ contains
       if ( do_gl(i) ) then
         ngl = ngl + ng
         if ( i > n_path / 2 ) then
-          gl_inds(ngl-ng+1:ngl) = 1 - Ng + Ngp1 * (i - 1) + glir
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glir
         else
-          gl_inds(ngl-ng+1:ngl) = 1 +      Ngp1 * (i - 1) + glil
+          gl_inds(ngl-ng+1:ngl) = Ngp1 * (i - 1) + glil
         end if
       end if
     end do
@@ -216,6 +216,9 @@ contains
 end module Path_Contrib_M
 
 ! $Log$
+! Revision 2.15  2003/10/09 19:30:36  vsnyder
+! Simplify computation of gl_inds
+!
 ! Revision 2.13  2003/08/13 22:19:11  michael
 ! Fixed indexing bug at line 150 in path_contrib_polarized
 !
