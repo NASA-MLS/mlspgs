@@ -779,7 +779,8 @@ contains ! =====     Public procedures     =============================
              begin, f+f_frequency, t+t_numeric, n+n_field_type, &     !???
              begin, f+f_spect_der, t+t_boolean, n+n_field_type, &     !???
              begin, f+f_temp_der, t+t_boolean, n+n_field_type, &      !???
-             ndp+n_spec_def, &                                        !???
+             ndp+n_spec_def /) )                                      !???
+    call make_tree ( (/ &
       begin, s+s_retrieve, & ! Must be AFTER s_vector and s_matrix
              begin, f+f_apriori, s+s_vector, n+n_field_spec, &
              begin, f+f_aprioriScale, t+t_numeric, n+n_field_type, &
@@ -876,6 +877,9 @@ contains ! =====     Public procedures     =============================
 end module INIT_TABLES_MODULE
 
 ! $Log$
+! Revision 2.43  2001/03/08 00:19:29  livesey
+! Too many continuation lines before
+!
 ! Revision 2.42  2001/03/07 23:59:52  vsnyder
 ! Add stuff for SIDS.
 !
