@@ -13,7 +13,11 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   IMPLICIT NONE
 
-  PRIVATE :: Id, ModuleName
+  public :: SECTION_TIMES, TOTAL_TIMES, &
+    & add_to_directwrite_timing, add_to_retrieval_timing, add_to_section_timing, &
+    & dump_section_timings
+  private
+
   !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
        "$Id$"
@@ -32,22 +36,63 @@ MODULE MLSL2Timings              !  Timings for the MLSL2 program sections
 
   character*(*), parameter           :: section_names = &
     & 'main,open_init,global_settings,signals,spectroscopy,' // &
-    & 'read_apriori,chunk_divide,construct,fill,retrieve,join,output'
-  integer, parameter                 :: num_section_times = 12
+    & 'read_apriori,chunk_divide,construct,fill,retrieve,join,directwrite,output'
+  ! This should be the number of elements in the above ---------------
+  integer, parameter                 :: num_section_times = 13  ! <--|
+
   character*(*), parameter           :: retrieval_names = &
     & 'newton_solver,cholesky_factor,cholesky_solver,cholesky_invert,' // &
+    & 'baseline,hybrid,polar_linear,switching_mirror,' // &
     & 'full_fwm,fullcloud_fwm,scan_fwm,twod_scan_fwm,linear_fwm,' // &
     & 'low_cloud,high_cloud,sids,form_normeq,tikh_reg'
-  integer, parameter                 :: num_retrieval_times = 14
+  ! This should be the number of elements in the above -----------------
+  integer, parameter                 :: num_retrieval_times = 18  ! <--|
+
+  character*(*), parameter           :: directwrite_names = &
+    & 'writing,waiting'
+  ! This should be the number of elements in the above ----------------
+  integer, parameter                 :: num_directwrite_times = 2  ! <--|
   ! dimension of the following is +2 to allow possible unknown
   ! section names and unknown retrieval names
-  real, dimension(num_section_times+num_retrieval_times+2), &
+  real, dimension(num_section_times+num_retrieval_times+num_directwrite_times+2), &
     & save                           :: section_timings = 0.
-  integer, parameter                 :: unknown_section = &
-    &                               num_section_times+num_retrieval_times + 1
-  integer, parameter                 :: unknown_retrieval = unknown_section + 1
+  ! integer, parameter                 :: unknown_section = &
+  !   &                               num_section_times+num_retrieval_times + 1
+  ! integer, parameter                 :: unknown_retrieval = unknown_section + 1
 
 contains ! =====     Public Procedures     =============================
+
+  ! -----------------------------------------  add_to_directwrite_timing  -----
+  subroutine add_to_directwrite_timing( section_name, t1 )
+  ! Add current elapsed directwrite section time to total so far for section_name
+
+  ! Formal arguments
+    character(LEN=*), intent(in):: section_name   ! One of the dw. sect_names
+    real, optional, intent(inout)  :: t1          ! Prior time_now, then current
+
+  ! Private
+    integer                     :: elem
+    integer                     :: elem_offset
+    real                        :: t2
+    real, save                  :: myLastTime
+
+  ! Executable
+      if ( present(t1) ) myLastTime = t1
+      elem_offset = num_section_times + num_retrieval_times
+
+      elem = StringElementNum(directwrite_names, LowerCase(section_name), countEmpty)
+      if ( elem < 1 .or. elem > num_directwrite_times ) then
+          call MLSMessage ( MLSMSG_Error, moduleName, &
+        & 'Unable to find directwrite section name ' // section_name // &
+        & ' among list ' // retrieval_names )
+      else
+        call time_now ( t2 )
+        section_timings(elem_offset+elem) = &
+          & section_timings(elem_offset+elem) + t2 - myLastTime
+      endif
+      myLastTime = t2
+      if ( present(t1) ) call time_now ( t1 )
+  end subroutine add_to_directwrite_timing
 
   ! -----------------------------------------  add_to_retrieval_timing  -----
   subroutine add_to_retrieval_timing( section_name, t1 )
@@ -67,15 +112,9 @@ contains ! =====     Public Procedures     =============================
 
       elem = StringElementNum(retrieval_names, LowerCase(section_name), countEmpty)
       if ( elem < 1 .or. elem > num_retrieval_times ) then
-        if ( ALLOWUNKNOWNNAMES ) then
-          call time_now ( t2 )
-          section_timings(unknown_retrieval) = &
-            & section_timings(unknown_retrieval) + t2 - myLastTime
-        else
           call MLSMessage ( MLSMSG_Error, moduleName, &
         & 'Unable to find retrieval section name ' // section_name // &
         & ' among list ' // retrieval_names )
-        endif
       else
         call time_now ( t2 )
         section_timings(num_section_times+elem) = &
@@ -103,26 +142,14 @@ contains ! =====     Public Procedures     =============================
     if ( present(t1) ) myLastTime = t1
     elem = StringElementNum(section_names, LowerCase(section_name), countEmpty)
     if ( elem < 1 .or. elem > num_section_times ) then
-      elem = StringElementNum(retrieval_names, LowerCase(section_name), countEmpty)
-      if ( elem < 1 .or. elem > num_retrieval_times ) then
-        if ( ALLOWUNKNOWNNAMES ) then
-          call time_now ( t2 )
-          section_timings(unknown_section) = &
-            & section_timings(unknown_section) + t2 - myLastTime
-        else
-          call MLSMessage ( MLSMSG_Error, moduleName, &
-          & 'Unable to find section name ' // section_name // &
-          & ' among list ' // section_names // ',' // retrieval_names )
-        endif
-      else
-        call time_now ( t2 )
-        section_timings(num_section_times+elem) = &
-          & section_timings(num_section_times+elem) + t2 - myLastTime
-      endif
+      call MLSMessage ( MLSMSG_Error, moduleName, &
+      & 'Unable to find section name ' // section_name // &
+      & ' among list ' // section_names // ',' // retrieval_names )
     else
       call time_now ( t2 )
       section_timings(elem) = section_timings(elem) + t2 - myLastTime
     endif
+    myLastTime = t2
     if ( present(t1) ) call time_now ( t1 )
   end subroutine add_to_section_timing
 
@@ -135,9 +162,14 @@ contains ! =====     Public Procedures     =============================
     character(LEN=*), parameter     :: TIMEFORMBIG = '(1PE10.2)'
     character(LEN=*), parameter     :: PCTFORM='(F10.0)'
     integer                         :: elem
+    integer                         :: joinElem
+    integer                         :: dwElem
+    integer                         :: retrElem
     character(LEN=16)               :: section_name   ! One of the section_names
     real                            :: final
     real                            :: total
+    real                            :: retrTotal
+    real                            :: dwTotal
     real                            :: percent
     real                            :: elem_time
     character(LEN=LEN(TIMEFORMBIG)) :: TIMEFORM
@@ -145,7 +177,7 @@ contains ! =====     Public Procedures     =============================
     integer                         :: num_elems
 
   ! Executable
-    Unknown_nonzero = (section_timings(unknown_section) > 0.)
+    Unknown_nonzero = .false.  ! (section_timings(unknown_section) > 0.)
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
     call output ( 'Level 2 section timings : ', advance='yes' )
@@ -164,8 +196,17 @@ contains ! =====     Public Procedures     =============================
     call output ( 'time ', advance='no' )
     call blanks ( 8, advance='no' )
     call output ( 'percent ', advance='yes' )
-    total = sum(section_timings(1:num_section_times)) + &
-     & section_timings(unknown_section)
+
+    ! A trick:
+    ! Adjust Join section timing to exclude directwrite timings
+    ! (otherwise they would be counted twice)
+    joinElem = StringElementNum(section_names, 'join', countEmpty)
+    dwElem = StringElementNum(section_names, 'directwrite', countEmpty)
+    if ( joinElem > 0 .and. dwElem > 0 ) section_timings(joinElem) = &
+      &         section_timings(joinElem) - section_timings(dwElem)
+
+    total = sum(section_timings(1:num_section_times)) ! + &
+     ! & section_timings(unknown_section)
     call time_now ( final )
     final = max(final, total)
     if ( final <= 0.0 ) final = 1.0       ! Just so we don't divide by 0
@@ -174,19 +215,19 @@ contains ! =====     Public Procedures     =============================
     else
       TIMEFORM = TIMEFORMSMALL
     endif
-    if ( Unknown_nonzero ) then
-      num_elems = num_section_times + 1
-    else
-      num_elems = num_section_times
-    endif
+    ! if ( Unknown_nonzero ) then
+    !  num_elems = num_section_times + 1
+    ! else
+    !  num_elems = num_section_times
+    ! endif
     do elem = 1, num_section_times
-      if ( elem > num_section_times ) then
-        elem_time = section_timings(unknown_section)
-        section_name = 'unknown name'
-      else
+      ! if ( elem > num_section_times ) then
+      !  elem_time = section_timings(unknown_section)
+      !  section_name = 'unknown name'
+      ! else
         elem_time = section_timings(elem)
         call GetStringElement(section_names, section_name, elem, countEmpty)
-      endif
+      ! endif
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
@@ -219,12 +260,12 @@ contains ! =====     Public Procedures     =============================
     call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
 
     ! Subdivision of Retrieval section
-    elem = StringElementNum(section_names, 'retrieve', countEmpty)
-    if ( final == 0.0 ) then
+    retrElem = StringElementNum(section_names, 'retrieve', countEmpty)
+    if ( retrElem == 0 ) then
       call output ( '(Illegal section name--spelling?) ', advance='yes' )
       return
     endif
-    final = section_timings(elem) 
+    final = section_timings(retrElem) 
     if ( final == 0.0 ) then
       call output ( '(Retrieval section number ', advance='no' )
       call blanks ( 2, advance='no' )
@@ -234,33 +275,79 @@ contains ! =====     Public Procedures     =============================
       call blanks ( 2, advance='no' )
       call output ( final, advance='yes' )
       call output ( '(No Retrieval section timings breakdown) ', advance='yes' )
+    else
+      call output ( '==========================================', advance='yes' )
+      call blanks ( 8, advance='no' )
+      call output ( 'Retrieval section timings : ', advance='yes' )
+      call output ( '==========================================', advance='yes' )
+      call output ( 'subsection name ', advance='no' )
+      call blanks ( 8, advance='no' )
+      call output ( 'time ', advance='no' )
+      call blanks ( 8, advance='no' )
+      call output ( 'percent of total retrieval time', advance='yes' )
+      retrTotal = sum(section_timings(1+num_section_times:num_section_times+num_retrieval_times)) ! - &
+        ! & section_timings(unknown_section)
+      Unknown_nonzero = .false.  ! (section_timings(unknown_retrieval) > 0.)
+      ! if ( Unknown_nonzero ) then
+      !  num_elems = num_retrieval_times + 1
+      !  else
+      ! num_elems = num_retrieval_times
+      ! endif
+      do elem = 1, num_retrieval_times  ! num_elems
+        ! if ( elem > num_retrieval_times ) then
+        !  elem_time = section_timings(unknown_retrieval)
+        !  section_name = 'unknown name'
+        !else
+          elem_time = section_timings(num_section_times+elem)
+          call GetStringElement(retrieval_names, section_name, elem, countEmpty)
+        !endif
+        percent = 100 * elem_time / final
+        call output ( section_name, advance='no' )
+        call blanks ( 2, advance='no' )
+        call output ( elem_time, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+        call blanks ( 2, advance='no' )
+        call output ( percent, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
+      enddo
+      call blanks ( 3, advance='no' )
+      call output ( '(others)', advance='no' )
+      call blanks ( 7, advance='no' )
+      call output ( final-retrTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+      call blanks ( 2, advance='no' )
+      call output ( 100*(final-retrTotal)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
+    endif
+
+    ! Subdivision of DirectWrite section
+    elem = StringElementNum(section_names, 'directwrite', countEmpty)
+    if ( elem == 0 ) then
+      call output ( '(Illegal section name--spelling?) ', advance='yes' )
+      return
+    endif
+    final = section_timings(elem) 
+    if ( final == 0.0 ) then
+      call output ( '(DirectWrite section number ', advance='no' )
+      call blanks ( 2, advance='no' )
+      call output ( elem, advance='no' )
+      call blanks ( 2, advance='no' )
+      call output ( 'time ', advance='no' )
+      call blanks ( 2, advance='no' )
+      call output ( final, advance='yes' )
+      call output ( '(No DirectWrite section timings breakdown) ', advance='yes' )
       return
     endif
     call output ( '==========================================', advance='yes' )
     call blanks ( 8, advance='no' )
-    call output ( 'Retrieval section timings : ', advance='yes' )
+    call output ( 'DirectWrite section timings : ', advance='yes' )
     call output ( '==========================================', advance='yes' )
     call output ( 'subsection name ', advance='no' )
     call blanks ( 8, advance='no' )
     call output ( 'time ', advance='no' )
     call blanks ( 8, advance='no' )
-    call output ( 'percent of total retrieval time', advance='yes' )
-    total = sum(section_timings(1+num_section_times:)) - &
-      & section_timings(unknown_section)
-    Unknown_nonzero = (section_timings(unknown_retrieval) > 0.)
-    if ( Unknown_nonzero ) then
-      num_elems = num_retrieval_times + 1
-    else
-      num_elems = num_retrieval_times
-    endif
-    do elem = 1, num_elems
-      if ( elem > num_retrieval_times ) then
-        elem_time = section_timings(unknown_retrieval)
-        section_name = 'unknown name'
-      else
-        elem_time = section_timings(num_section_times+elem)
-        call GetStringElement(retrieval_names, section_name, elem, countEmpty)
-      endif
+    call output ( 'percent of total DirectWrite time', advance='yes' )
+    dwTotal = sum(section_timings(1+num_section_times+num_retrieval_times:)) ! - &
+      ! & section_timings(unknown_section)
+    do elem = 1, num_directwrite_times
+      elem_time = section_timings(num_section_times+num_retrieval_times+elem)
+      call GetStringElement(directwrite_names, section_name, elem, countEmpty)
       percent = 100 * elem_time / final
       call output ( section_name, advance='no' )
       call blanks ( 2, advance='no' )
@@ -271,9 +358,9 @@ contains ! =====     Public Procedures     =============================
     call blanks ( 3, advance='no' )
     call output ( '(others)', advance='no' )
     call blanks ( 7, advance='no' )
-    call output ( final-total, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
+    call output ( final-dwTotal, FORMAT=TIMEFORM, LOGFORMAT=TIMEFORM, advance='no' )
     call blanks ( 2, advance='no' )
-    call output ( 100*(final-total)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
+    call output ( 100*(final-dwTotal)/final, FORMAT=PCTFORM, LOGFORMAT=PCTFORM, advance='yes' )
   end subroutine dump_section_timings
 
 !=============================================================================
@@ -286,6 +373,9 @@ END MODULE MLSL2Timings
 
 !
 ! $Log$
+! Revision 2.16  2003/10/20 18:21:45  pwagner
+! Timings breakdown added for directWrite
+!
 ! Revision 2.15  2003/08/11 23:24:48  pwagner
 ! Chunk no. printed if slave task
 !
