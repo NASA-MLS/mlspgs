@@ -943,7 +943,7 @@ contains ! =====     Public Procedures     =============================
   
   function ValidateVectorQuantity(quantity, coherent, stacked, regular,&
     & minorFrame, verticalCoordinate, frequencyCoordinate, &
-    & noInstances, quantityType, molecule)
+    & noInstances, quantityType, molecule, sayWhyNot)
 
     ! Dummy arguments
     type (VectorValue_T), intent(IN) :: QUANTITY ! Test quantity
@@ -957,15 +957,25 @@ contains ! =====     Public Procedures     =============================
     integer, optional, dimension(:), intent(IN) :: NOINSTANCES
     integer, optional, dimension(:), intent(IN) :: QUANTITYTYPE
     integer, optional ,dimension(:), intent(IN) :: MOLECULE
+    logical, optional , intent(IN)              :: sayWhyNot
 
     ! Result
     logical :: ValidateVectorQuantity
 
     ! Executable code
 
+   ValidateVectorQuantity = .true.
+
     if (present(coherent)) then
       if (quantity%template%coherent .neqv. coherent) then
         ValidateVectorQuantity=.FALSE.
+        if(present(sayWhyNot)) then
+         call output('Coherent quantity checked with incoherent', advance='yes')
+         call output('quantity coherent? ', advance='no')
+         call output(quantity%template%coherent, advance='yes')
+         call output('check coherent? ', advance='no')
+         call output(coherent, advance='yes')
+        endif
         return
       endif
     end if
@@ -973,6 +983,13 @@ contains ! =====     Public Procedures     =============================
     if (present(stacked)) then
       if (quantity%template%stacked .neqv. stacked) then
         ValidateVectorQuantity=.FALSE.
+        if(present(sayWhyNot)) then
+         call output('stacked quantity checked with unstacked', advance='yes')
+         call output('quantity stacked? ', advance='no')
+         call output(quantity%template%stacked, advance='yes')
+         call output('check stacked? ', advance='no')
+         call output(stacked, advance='yes')
+        endif
         return
       end if
     end if
@@ -980,6 +997,13 @@ contains ! =====     Public Procedures     =============================
     if (present(regular)) then
       if (quantity%template%regular .neqv. regular) then
         ValidateVectorQuantity=.FALSE.
+        if(present(sayWhyNot)) then
+         call output('Regular quantity checked with irregular', advance='yes')
+         call output('quantity regular? ', advance='no')
+         call output(quantity%template%regular, advance='yes')
+         call output('check regular? ', advance='no')
+         call output(regular, advance='yes')
+        endif
         return
       end if
     end if
@@ -987,32 +1011,74 @@ contains ! =====     Public Procedures     =============================
     if (present(minorFrame)) then
       if (quantity%template%minorFrame .neqv. minorFrame) then
         ValidateVectorQuantity=.FALSE.
+        if(present(sayWhyNot)) then
+         call output('Minor fram quantity checked with not', advance='yes')
+         call output('quantity minor frame? ', advance='no')
+         call output(quantity%template%minorFrame, advance='yes')
+         call output('check minorFrame? ', advance='no')
+         call output(minorFrame, advance='yes')
+        endif
         return
       end if
     end if
 
     if (present(verticalCoordinate)) then
       ValidateVectorQuantity=any(quantity%template%verticalCoordinate == verticalCoordinate)
+        if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
+         call output('quantity checked with dif vert coord', advance='yes')
+         call output('quantity vert coord ', advance='no')
+         call output(quantity%template%verticalCoordinate, advance='yes')
+         call output('check vert coord ', advance='no')
+         call output(verticalCoordinate, advance='yes')
+        endif
       if (.not. ValidateVectorQuantity) return
     end if
 
     if (present(frequencyCoordinate)) then
       ValidateVectorQuantity=any(quantity%template%frequencyCoordinate == frequencyCoordinate)
+        if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
+         call output('quantity checked with dif freq coord', advance='yes')
+         call output('quantity freq coord ', advance='no')
+         call output(quantity%template%frequencyCoordinate, advance='yes')
+         call output('check freq coord ', advance='no')
+         call output(frequencyCoordinate, advance='yes')
+        endif
       if (.not. ValidateVectorQuantity) return
     end if
 
     if (present(noInstances)) then
       ValidateVectorQuantity=any(quantity%template%noInstances == noInstances)
+        if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
+         call output('quantity checked with dif num insts', advance='yes')
+         call output('quantity num insts ', advance='no')
+         call output(quantity%template%noInstances, advance='yes')
+         call output('check noInstances ', advance='no')
+         call output(noInstances, advance='yes')
+        endif
       if (.not. ValidateVectorQuantity) return
     end if
 
     if (present(quantityType)) then
       ValidateVectorQuantity=any(quantity%template%quantityType == quantityType)
+        if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
+         call output('quantity checked with wrong type', advance='yes')
+         call output('quantity type ', advance='no')
+         call output(quantity%template%quantityType, advance='yes')
+         call output('check quantityType ', advance='no')
+         call output(quantityType, advance='yes')
+        endif
       if (.not. ValidateVectorQuantity) return
     end if
 
     if (present(molecule)) then
       ValidateVectorQuantity=any(quantity%template%molecule == molecule)
+        if(present(sayWhyNot) .and. .not. ValidateVectorQuantity) then
+         call output('quantity checked with wrong molecule', advance='yes')
+         call output('quantity molecule ', advance='no')
+         call output(quantity%template%molecule, advance='yes')
+         call output('check molecule ', advance='no')
+         call output(molecule, advance='yes')
+        endif
       if (.not. ValidateVectorQuantity) return
     end if
 
@@ -1038,6 +1104,9 @@ end module VectorsModule
 
 !
 ! $Log$
+! Revision 2.22  2001/04/12 21:43:19  livesey
+! Added sideband option to the quantity searches
+!
 ! Revision 2.21  2001/04/10 22:38:20  vsnyder
 ! Add 'details' argument to dump routines
 !
