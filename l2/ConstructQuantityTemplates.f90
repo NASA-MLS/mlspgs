@@ -442,13 +442,14 @@ contains ! =====     Public Procedures     =============================
           & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
         if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
           & MLSMSG_L1BRead//l1bItemName )
-        
+       
+        call DeallocateL1BData(l1bfield)
+        return
         ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
         call SetupNewQuantityTemplate ( qty, noInstances=noMAFs, &
           & noSurfs=l1bField%maxMIFs, noChans=noChans, coherent=.FALSE., &
           & stacked=.FALSE., regular=regular, instanceLen=instanceLen, &
           & minorFrame=.TRUE. )
-        
         qty%noInstancesLowerOverlap = chunk%noMAFsLowerOverlap
         qty%noInstancesUpperOverlap = chunk%noMAFsUpperOverlap
 
@@ -468,16 +469,18 @@ contains ! =====     Public Procedures     =============================
           qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
         end do
 
-        call DeallocateL1BData(l1bfield, l1bFlag)
+        call DeallocateL1BData(l1bfield)
         
       else                                    ! For THz/GHz things
         call GetModuleName ( instrumentModule, l1bItemName )
         l1bItemName = TRIM(l1bItemName) // "." // "tpGeodAlt"
         
-        call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
-          & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
-        if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-          & MLSMSG_L1BRead//l1bItemName )
+!         call ReadL1BData ( l1bInfo%l1boaid, l1bItemName, l1bField, noMAFs, &
+!           & l1bFlag, firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex )
+!         if ( l1bFlag==-1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+!           & MLSMSG_L1BRead//l1bItemName )
+!         call DeallocateL1BData(l1bfield, l1bFlag)
+        return
         
         ! Now noMAFs qty%noInstances, l1bField%maxMIFs is no surfs.
         
@@ -497,7 +500,7 @@ contains ! =====     Public Procedures     =============================
         do mafIndex = chunk%firstMAFIndex, chunk%lastMAFIndex
           qty%mafIndex(mafIndex-chunk%firstMAFIndex+1) = mafIndex
         end do
-        call DeallocateL1BData(l1bfield, l1bFlag)
+        call DeallocateL1BData(l1bfield)
 
         ! Now we're going to fill in the hGrid information
         
@@ -551,7 +554,7 @@ contains ! =====     Public Procedures     =============================
             qty%losAngle = l1bField%dpField(1,:,:)
           end select
 
-          call DeallocateL1BData ( l1bField, l1bFlag )
+          call DeallocateL1BData ( l1bField )
         end do                      ! Loop over l1b quantities
       end if
     end if
@@ -700,6 +703,9 @@ end module ConstructQuantityTemplates
 
 !
 ! $Log$
+! Revision 2.34  2001/05/30 23:53:01  livesey
+! For new version of L1Bdata
+!
 ! Revision 2.33  2001/05/29 23:21:35  livesey
 ! Changed l_orbitincline to l_orbitinclination
 !
