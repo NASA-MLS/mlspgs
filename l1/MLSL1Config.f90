@@ -169,12 +169,12 @@ MODULE MLSL1Config  ! Level 1 Configuration
          CASE (p_output_version_string)
 
             CALL Get_string (Sub_rosa (Subtree(2,son)), &
-                 L1Config%Globals%OutputVersionString)
+                 L1Config%Globals%OutputVersionString, strip=.TRUE.)
 
          CASE (p_version_comment)
 
             CALL Get_string (Sub_rosa (Subtree(2,son)), &
-                 L1Config%Globals%VersionComment)
+                 L1Config%Globals%VersionComment, strip=.TRUE.)
 
          END SELECT
 
@@ -186,6 +186,9 @@ MODULE MLSL1Config  ! Level 1 Configuration
 END MODULE MLSL1Config
 
 ! $Log$
+! Revision 2.2  2001/03/22 16:45:06  perun
+! Changed call to Get_string to strip "'s from globals
+!
 ! Revision 2.1  2001/02/23 20:50:54  perun
 ! Version 0.5 commit
 !
