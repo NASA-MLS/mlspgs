@@ -19,6 +19,8 @@ module Open_Init
     &                   Pgs_pc_getReference, PGS_S_SUCCESS, &
     &                   PGSd_IO_Gen_RSeqFrm, PGSTD_E_NO_LEAP_SECS
   use String_Table, only: L2CFUnit => INUNIT
+  use TREE, only: DECORATE, DECORATION, DUMP_TREE_NODE, NODE_ID, NSONS, &
+    & SOURCE_REF, SUB_ROSA, SUBTREE
 
   implicit none
   private
@@ -220,12 +222,65 @@ contains ! =====     Public Procedures     =============================
 
   end subroutine OpenMLSCF
 
+  ! --------------------------------------------------  read_apriori  -----
+  subroutine read_apriori ( root )
+
+	! Read in  a priori data from l2gp files and l2aux files
+
+    ! Dummy arguments
+    integer, intent(in) :: ROOT    ! Of the Read a priori section in the AST
+
+    !Local Variables
+    integer :: I, J                ! Loop indices for section, spec
+    integer :: KEY                 ! Definitely n_named
+    type (Vector_T) :: newVector
+    integer :: SON                 ! Of root, an n_spec_args or a n_named
+    integer :: templateIndex       ! In the template database
+    integer :: vectorIndex         ! In the vector database
+    integer :: vectorName          ! Sub-rosa index
+    integer :: quantityName        ! Sub-rosa index
+    integer :: sourceName          ! Sub-rosa index
+    integer :: FileType            ! Sub-rosa index; either 'l2gp' or 'l2aux'
+
+	! Assume specifications take the following form:
+        !   vName: fileType, file='fileName', source='fieldName'
+        ! Currently, fileType is restricted to one of
+        !   'l2gp' or 'l2aux'
+    do i = 2, nsons(root)-1 ! Skip the section name at begin and end
+      son = subtree(i,root)
+      if ( node_id(son) == n_named ) then ! Is spec labeled?
+        key = subtree(2,son)
+        vectorName = sub_rosa(subtree(1,son))
+      else
+        key = son
+        vectorName = 0
+      end if
+
+      ! Node_id(key) is now n_spec_args.
+
+        FileType = sub_rosa(subtree(2,son))
+
+      select case( decoration(subtree(1,decoration(subtree(1,key)))) )
+      case ( s_l2gp )
+
+      case ( s_l2aux )
+
+      case default ! Can't get here if tree_checker worked correctly
+      end select
+
+    end do
+
+  end subroutine read_apriori
+
 !=============================================================================
 end module Open_Init
 !=============================================================================
 
 !
 ! $Log$
+! Revision 2.4  2000/11/29 00:27:54  pwagner
+! Began changes to open old l2gp
+!
 ! Revision 2.3  2000/11/16 01:02:16  vsnyder
 ! Correct an error message.
 !
