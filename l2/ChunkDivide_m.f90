@@ -344,13 +344,19 @@ contains ! =================================== Public Procedures==============
     ! maxLength field is specified.
     if ( config%maxLengthFamily == PHYQ_MAFs ) then
       maxLength = nint ( config%maxLength )
-      noChunks = home / maxLength
-      if ( mod ( home, maxLength ) /= 0 ) noChunks = noChunks + 1
-      noChunksBelowHome = noChunks
+      noChunksBelowHome = home / maxLength
+      if ( mod ( home, maxLength ) /= 0 ) noChunksBelowHome = noChunksBelowHome + 1
       noMAFsAtOrAboveHome = noMAFs - home + 1
-      noChunks = noChunks + noMAFsAtOrAboveHome / maxLength
-      if ( mod ( noMAFsAtOrAboveHome, maxLength ) /= 0 ) &
-        & noChunks = noChunks + 1
+      if ( config%noChunks == 0 ) then
+        ! If user did not request specific number of chunks choose them
+        noChunks = noChunksBelowHome + noMAFsAtOrAboveHome / maxLength
+        if ( mod ( noMAFsAtOrAboveHome, maxLength ) /= 0 ) &
+          & noChunks = noChunks + 1
+      else
+        ! User requested specific number of chunks
+        noChunks = config%noChunks
+        noChunksBelowHome = min ( noChunksBelowHome, noChunks )
+      end if
       
       ! Allocate the chunks
       allocate ( chunks(noChunks), stat=status )
@@ -492,8 +498,8 @@ contains ! =================================== Public Procedures==============
     integer, target, dimension(6) :: NeededForOrbital = &
       & (/ f_maxLength, f_overlap, f_homeModule, f_homeGeodAngle, &
       &    f_criticalModules, f_maxGap /)
-    integer, target, dimension(2) :: NotWantedForOrbital = &
-      & (/ f_noChunks, f_noSlaves /)
+    integer, target, dimension(1) :: NotWantedForOrbital = &
+      & (/ f_noSlaves /)
 
     integer, target, dimension(6) :: NeededForEven = &
       & (/ f_maxLength, f_overlap, f_maxLength, f_noSlaves, f_maxGap, &
@@ -1163,6 +1169,9 @@ contains ! =================================== Public Procedures==============
 end module ChunkDivide_m
 
 ! $Log$
+! Revision 2.19  2002/05/24 16:47:30  livesey
+! Allowed user to request specific number of chunks for orbital
+!
 ! Revision 2.18  2001/12/17 23:09:18  livesey
 ! Now deletes chunks that are nothing but overlap
 !
