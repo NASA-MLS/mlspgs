@@ -30,7 +30,7 @@ module MatrixModule_1          ! Block Matrices in the MLS PGS suite
 
   implicit NONE
   private
-  public :: AddToMatrixDatabase, AddToMatrix
+  public :: AddToMatrixDatabase, AddToMatrix, AssignMatrix
   public :: Assignment(=), CheckIntegrity, CholeskyFactor, CholeskyFactor_1
   public :: ClearMatrix, ClearRows, ClearRows_1, ColumnScale, ColumnScale_1
   public :: CopyMatrix, CopyMatrixValue, CreateBlock, CreateBlock_1, CreateEmptyMatrix
@@ -1001,7 +1001,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------  GetActualMatrixFromDatabse ---
   subroutine GetActualMatrixFromDatabase ( DatabaseElement, m )
-    ! Get POINTER to the actuall Matrix_T part of any kind of matrix
+    ! Get POINTER to the actual Matrix_T part of any kind of matrix
     type ( matrix_database_t), intent(in), target :: DatabaseElement
     type ( matrix_t), pointer :: m
 
@@ -2295,6 +2295,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.94  2004/01/16 23:50:51  vsnyder
+! Make AssignMatrix public, fix a comment
+!
 ! Revision 2.93  2003/09/15 17:45:18  livesey
 ! Added target declaration for fussy intel compiler
 !
