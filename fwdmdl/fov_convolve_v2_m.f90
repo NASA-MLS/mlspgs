@@ -2,8 +2,8 @@
   USE Allocate_Deallocate, only: allocate_test, deallocate_test
   USE AntennaPatterns_m, only: AntennaPattern_T
   USE fov_convolve_m, only: drft1
-  USE MLSNumerics, only: interpolatevalues
-  USE MLSCommon, ONLY: I4, R8, rp
+  USE MLSNumerics, ONLY: interpolatevalues, hunt
+  USE MLSCommon, ONLY: I4, r4, R8, rp
   IMPLICIT none
 !---------------------------- RCS Ident Info -------------------------------
   CHARACTER (LEN=256) :: Id = &
@@ -16,7 +16,7 @@
 ! This subprogram adds the effects of antenna smearing to the radiance.
 !
   SUBROUTINE fov_convolve_v2(aaap,aaap_step,chi_in,rad_in,chi_out,rad_out, &
-  & req,rsc,earth_frac)
+  & req,rsc,earth_frac,surf_angle,di_dt,dx_dt,ddx_dxdt,dx_dt_out,drad_dt_out)
 ! inputs
   REAL(rp), INTENT(in) :: aaap(:)  ! ft of antenna power pattern
   REAL(rp), INTENT(in) :: aaap_step! aperture step size in wavelengths
@@ -27,18 +27,34 @@
   REAL(rp), OPTIONAL, INTENT(in) :: rsc ! spacecraft radius
   REAL(rp), OPTIONAL, INTENT(in) :: earth_frac ! fraction of earth in total
 !                                   filled out pattern
+! stuff for temperature derivatives
+  REAL(rp), OPTIONAL, INTENT(in) :: surf_angle ! An angle that defines the
+!                                   Earth surface.
+  REAL(rp), OPTIONAL, INTENT(in) :: di_dt(:,:) ! derivative of radiance wrt
+!                                   temperature on chi_in
+  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt(:,:) ! derivative of angle wrt
+!                                   temperature on chi_in
+  REAL(rp), OPTIONAL, INTENT(in) :: ddx_dxdt(:,:) ! 2nd derivative wrt angle
+!                                   temperature on chi_in
+  REAL(rp), OPTIONAL, INTENT(in) :: dx_dt_out(:,:) ! derivative of angle wrt
+!                                   temperature on chi_out
 ! note req, rsc and earth_frac are non critical parameters and don't
 ! really need to be supplied externally. They are used to partition the
 ! full fft field between earth and space components.
-!  REAL(rp), OPTIONAL, INTENT(in) :: surface  ! An angle that defines the Earth surface.
 ! outputs
   REAL(rp), INTENT(out) :: rad_out(:) ! outputted radiances
+  REAL(rp), OPTIONAL, INTENT(out) :: drad_dt_out(:,:) ! outputted radiance
+!                                    derivatives wrt temperature.
 ! Internal stuff
-  INTEGER(i4) :: i, pwr, no_fft
-  REAL(r8) :: r_eq, r_sc, e_frac, init_angle
+  INTEGER(i4) :: i, j, pwr, no_fft, n_coeffs, zero_out
+  INTEGER(i4) :: peak_grad(1)
+  REAL(r8) :: r_eq, r_sc, e_frac, init_angle, a_const, q_const
   REAL(r8), POINTER :: p(:)
+  REAL(r8), POINTER :: dp(:)
+  REAL(r8), POINTER :: drad_dt_temp(:)
   REAL(r8), POINTER :: angles(:)
   REAL(r8), POINTER :: rad_fft(:)
+  REAL(r8), POINTER :: rad_fft1(:)
 ! some clunky stuff
   INTEGER, PARAMETER :: MAXP=12, MAX2P=2**MAXP
   INTEGER(i4), SAVE :: INIT = 0, MS = 0
@@ -50,7 +66,7 @@
   IF (PRESENT(rsc)) r_sc = rsc
   IF (PRESENT(earth_frac)) e_frac = earth_frac / 2.0
 ! nullify stuff
-  NULLIFY(p,angles,rad_fft)
+  NULLIFY(p,dp,drad_dt_temp,angles,rad_fft,rad_fft1)
 ! find size of stuff
   pwr = 12
   no_fft = 2**pwr
@@ -66,6 +82,7 @@
   init_angle = ASIN((r_eq - e_frac*SQRT(r_sc**2-r_eq**2)/aaap_step)/r_sc)
 ! set up the radiance array
   CALL allocate_test(rad_fft,no_fft,'rad_fft',modulename)
+  CALL allocate_test(rad_fft1,no_fft,'rad_fft1',modulename)
   CALL interpolatevalues(chi_in-init_angle,rad_in,angles(no_fft/2:no_fft), &
   & rad_fft(no_fft/2:no_fft),METHOD='S',EXTRAPOLATE='C')
 ! mirror reflect this
@@ -77,17 +94,99 @@
   IF (init > 0 .and. init /= no_fft) ms=0
   CALL drft1(rad_fft,'a',pwr,ms,s)
 ! apply convolution theorem
-  rad_fft(1:2) = rad_fft(1:2) * p(1:2)
+  rad_fft1(1:2) = rad_fft(1:2) * p(1:2)
   DO i = 3, no_fft - 1, 2
-    rad_fft(i+1) = rad_fft(i) * p(i+1)
-    rad_fft(i)   = rad_fft(i) * p(i)
+    rad_fft1(i+1) = rad_fft(i) * p(i+1)
+    rad_fft1(i)   = rad_fft(i) * p(i)
   ENDDO
-  CALL drft1(rad_fft,'s',pwr,ms,s)
+  CALL drft1(rad_fft1,'s',pwr,ms,s)
 ! interpolate to output grid
-  CALL interpolatevalues(angles(no_fft/2:no_fft),rad_fft(no_fft/2:no_fft), &
+  CALL interpolatevalues(angles(no_fft/2:no_fft),rad_fft1(no_fft/2:no_fft), &
   & chi_out-init_angle,rad_out,METHOD='S',EXTRAPOLATE='C')
+! determine if temperature derivatives are desired
+  IF (PRESENT(drad_dt_out)) THEN
+! temperature derivatives calculation
+! compute the antenna derivative function
+    n_coeffs = SIZE(di_dt,dim=2)
+! find the surface dimension
+    CALL hunt(angles(no_fft/2:no_fft),surf_angle - init_angle,zero_out)
+    CALL allocate_test(dp,no_fft,'dp',modulename)
+    dp = 0.0_r8
+    a_const = 2.0_rp * aaap_step * ACOS(-1.0_rp)
+    q_const = a_const
+! dp(1:2) is zero
+    DO i = 3, MIN(no_fft,SIZE(aaap)) - 1, 2
+      dp(i) = -aaap(i+1) * q_const
+      dp(i+1) = aaap(i) * q_const
+      q_const = q_const + a_const
+    ENDDO
+    CALL allocate_test(drad_dt_temp,SIZE(chi_out),'drad_dt_temp',modulename)
+! third term first (its fft is coefficient independent)
+! apply convolution theorem
+    rad_fft1(1:2) = 0.0_rp
+    DO i = 3, no_fft - 1, 2
+      rad_fft1(i+1) = rad_fft(i) * dp(i+1)
+      rad_fft1(i)   = rad_fft(i) * dp(i)
+    ENDDO
+    CALL drft1(rad_fft1,'s',pwr,ms,s)
+! interpolate to output grid
+    CALL interpolatevalues(angles(no_fft/2:no_fft),rad_fft1(no_fft/2:no_fft), &
+    & chi_out-init_angle,drad_dt_temp,METHOD='S',EXTRAPOLATE='C')
+    DO i = 1, n_coeffs
+! estimate the error compensation
+      peak_grad = MAXLOC(ddx_dxdt(:,i))
+! do i*ddx_dxdt piece
+      CALL interpolatevalues(chi_in-init_angle,(rad_in-rad_in(peak_grad(1))) &
+      & * ddx_dxdt(:,i), angles(no_fft/2+zero_out+1:no_fft),  &
+      & rad_fft(no_fft/2+zero_out+1:no_fft), METHOD='S',EXTRAPOLATE='C')
+! zero out the subsurface stuff
+      rad_fft(no_fft/2:no_fft/2+zero_out) = 0.0_rp
+! add in di_dt part
+      CALL interpolatevalues(chi_in-init_angle, di_dt(:,i), &
+      & angles(no_fft/2:no_fft), rad_fft1(no_fft/2:no_fft), METHOD='S', &
+      & EXTRAPOLATE='C')
+      rad_fft(no_fft/2:no_fft) = rad_fft(no_fft/2:no_fft) &
+      & + rad_fft1(no_fft/2:no_fft)
+! resymetrize  
+      rad_fft(1:no_fft/2-1) = (/(rad_fft(no_fft-i),i = 1, no_fft/2 - 1)/)
+! I don't know if this step is truly necessary but it rephases the radiances
+! identically to the prototype code
+      rad_fft = CSHIFT(rad_fft,-1)
+! take fft of radiance array
+      CALL drft1(rad_fft,'a',pwr,ms,s)
+! do the rad_in * dx_dt term
+      CALL interpolatevalues(chi_in-init_angle,(rad_in-rad_in(peak_grad(1))) &
+      & * dx_dt(:,i), angles(no_fft/2+zero_out+1:no_fft), &
+      & rad_fft1(no_fft/2+zero_out+1:no_fft), METHOD='S', EXTRAPOLATE='C')
+! zero out array below surf_angle
+      rad_fft1(no_fft/2:no_fft/2+zero_out) = 0.0_rp
+! resymetrize  
+      rad_fft1(1:no_fft/2-1) = (/(rad_fft1(no_fft-i),i = 1, no_fft/2 - 1)/)
+! I don't know if this step is truly necessary but it rephases the radiances
+! identically to the prototype code
+      rad_fft1 = CSHIFT(rad_fft1,-1)
+! take fft of radiance array
+      CALL drft1(rad_fft1,'a',pwr,ms,s)
+! apply convolution theorem
+      rad_fft(1:2) = rad_fft(1:2) * p(1:2)
+      DO j = 3, no_fft - 1, 2
+        rad_fft(j+1) = rad_fft(j) * p(j+1) - rad_fft1(j) * dp(j+1)
+        rad_fft(j)   = rad_fft(j) * p(j)   - rad_fft1(j) * dp(j)
+      ENDDO
+! interplolate to chi_out
+      CALL drft1(rad_fft,'s',pwr,ms,s)
+      CALL interpolatevalues(angles(no_fft/2:no_fft), &
+      & rad_fft(no_fft/2:no_fft), chi_out-init_angle, drad_dt_out(:,i), &
+      & METHOD='S',EXTRAPOLATE='C')
+! compute final result
+      drad_dt_out(:,i) = drad_dt_out(:,i) + dx_dt_out(:,i)*drad_dt_temp
+    ENDDO
+    CALL deallocate_test(drad_dt_temp,'drad_dt_temp',modulename)
+    CALL deallocate_test(dp,'dp',modulename)    
+  ENDIF
   CALL deallocate_test(p,'p',modulename)
   CALL deallocate_test(angles,'angles',modulename)
   CALL deallocate_test(rad_fft,'rad_fft',modulename)
+  CALL deallocate_test(rad_fft1,'rad_fft1',modulename)
   END SUBROUTINE fov_convolve_v2
   END MODULE fov_convolve_v2_m
