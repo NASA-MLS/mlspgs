@@ -1011,18 +1011,24 @@ contains ! =====     Public Procedures     =============================
   end function MultiplyMatrices
 
   ! -------------------------------------  MultiplyMatrixVector_1  -----
-  subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE )
+  subroutine MultiplyMatrixVector_1 ( A, V, Z, UPDATE, UseMask )
   ! Z = A^T V if UPDATE is absent or false.  Z is first cloned from V.
   ! Z = Z + A^T V is UPDATE is present and true.
+
+  ! If UseMask is present and true, the column mask of A is used to
+  ! suppress columns.
     type(Matrix_T), intent(in) :: A
     type(Vector_T), intent(in) :: V
     type(Vector_T), intent(inout) :: Z
-    logical, optional, intent(in) :: UPDATE
+    logical, intent(in), optional :: UPDATE
+    logical, intent(in), optional :: UseMask
 
     logical :: DO_UPDATE      ! Tells MatrixModule_0 % multiplyMatrixVector
     !                           whether to clear an element of Z, or add to it
     integer :: I, J           ! Subscripts and loop inductors
     integer :: K, L, M, N     ! Subscripts
+    integer, dimension(:), pointer :: MJ ! Mask for column J, if any
+    logical :: My_Mask        ! My copy of UseMask or false if it's absent
     logical :: MY_UPDATE      ! My copy of UPDATE or false if it's absent
 
     if ( a%row%vec%template%id /= v%template%id ) &
@@ -1030,6 +1036,8 @@ contains ! =====     Public Procedures     =============================
         & "Matrix and vector not compatible in MultiplyMatrixVector_1" )
     my_update = .false.
     if ( present(update) ) my_update = update
+    my_mask = .false.
+    if ( present(useMask) ) my_mask = useMask
     if ( my_update .and. a%col%vec%template%id /= z%template%id ) &
       call MLSMessage ( MLSMSG_Error, ModuleName, &
         & "Matrix and result not compatible in MultiplyMatrixVector_1" )
@@ -1038,12 +1046,15 @@ contains ! =====     Public Procedures     =============================
     do j = 1, a%col%nb
       k = a%col%quant(j)
       l = a%col%inst(j)
+      nullify ( mj )
+      if ( associated(a%col%vec%quantities(k)%mask) .and. my_mask ) &
+        & mj => a%col%vec%quantities(k)%mask(:,l)
       do_update = my_update
       do i = 1, a%row%nb
         m = a%row%quant(i)
         n = a%row%inst(i)
         call multiply ( a%block(i,j), v%quantities(m)%values(:,n), &
-          & z%quantities(k)%values(:,l), do_update )
+          & z%quantities(k)%values(:,l), do_update, mask=mj )
         do_update = .true.
       end do ! i = 1, a%row%nb
     end do ! j = 1, a%col%nb
@@ -1149,8 +1160,8 @@ contains ! =====     Public Procedures     =============================
   ! blocks of A is to be accumulated.
   ! Only the upper triangle of A^T A is formed or updated.
   
-  ! If UseMask is present and false, the column mask is not used to
-  ! suppress columns of the normal equations.
+  ! If UseMask is present and true, the column mask is used to suppress
+  ! columns of the normal equations.
 
     type(Matrix_T), intent(inout) :: A       ! inout only to allow
     !                                          clearing masked rows
@@ -1186,18 +1197,18 @@ contains ! =====     Public Procedures     =============================
     call clearRows ( a, row_block, rhs_in )
     r1 = 1
     if ( present(row_block) ) r1 = row_block
-    my_Mask = .true.
+    my_Mask = .false.
     if ( present(useMask) ) my_Mask = useMask
     do j = 1, a%col%nb
       nullify ( mj )
       if ( associated(a%col%vec%quantities(a%col%quant(j))%mask) .and. my_Mask) &
-        mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
+        & mj => a%col%vec%quantities(a%col%quant(j))%mask(:,a%col%inst(j))
       r2 = j
       if ( present(row_block) ) r2 = min(j,row_block)
       do i = r1, r2
         nullify ( mi )
         if ( associated(a%col%vec%quantities(a%col%quant(i))%mask) .and. my_Mask ) &
-          mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%row%inst(i))
+          & mi => a%col%vec%quantities(a%col%quant(i))%mask(:,a%row%inst(i))
         do_update = my_update
         do k = 1, a%row%nb
           call multiply ( a%block(k,i), a%block(k,j), z%m%block(i,j), &
@@ -1208,7 +1219,7 @@ contains ! =====     Public Procedures     =============================
     end do ! j = 1, a%col%nb
 
     if ( present(rhs_in) .and. present(rhs_out) ) &
-      & call multiply ( a, rhs_in, rhs_out, my_update )
+      & call multiply ( a, rhs_in, rhs_out, my_update, useMask = my_mask )
   end subroutine NormalEquations
 
   ! -------------------------------------------------  RowScale_1  -----
@@ -1649,6 +1660,9 @@ contains ! =====     Public Procedures     =============================
 end module MatrixModule_1
 
 ! $Log$
+! Revision 2.54  2001/09/27 18:41:05  vsnyder
+! Apply mask in forming RHS of normal equations
+!
 ! Revision 2.53  2001/09/27 00:51:33  vsnyder
 ! Add UseMask argument to NormalEquations
 !
