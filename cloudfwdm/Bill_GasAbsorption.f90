@@ -134,13 +134,12 @@ contains
 
     pp(1) = p
     tt(1) = t
-    del_temp = 0.0_rp
                               ! Bill uses km/sec 
     myLosVel=losVel*0.00_rp   ! The Doppler correction already been done 
                               ! in the FullCloudForwardModel, so set it 0
 
     call get_gl_slabs_arrays( Catalog, PP(1:n_ele), TT(1:n_ele), myLosVel, &
-      & gl_slabs, n_ele, del_temp, Do_1D )
+      & gl_slabs, n_ele, Do_1D )
 
 ! Note that expa only depends on temperature.
     tanh1 = EXP(FF / (boltzmhz * t))
@@ -197,6 +196,9 @@ contains
 End Module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.16  2003/05/06 20:45:45  jonathan
+! some fixing after the merge
+!
 ! Revision 1.15  2003/05/05 23:01:13  livesey
 ! Commented out call to create_beta for merge
 !
