@@ -13,6 +13,10 @@
 #searching for prerequisites in, by default, the current directory,
 #and, depending on command line args, extra search directories
 #
+#A separate possible use: assembling lists of dependencies
+#to "compile" source files with suffixes matching one pattern 
+#to create "objects" files with suffixes matching another
+#Under this use, the orthodox patterns "%.f90", etc. will be ignored
 #Usage:
 #makemakedep.sh [opt1] [opt2] ..  [dir1 dir2 ..]
 #
@@ -24,6 +28,8 @@
 # -[n]c         [don't] include files with .c extensions, too
 #                (default is to include them)
 # -d file_name  exclude file_name
+# -s pattern    match source file suffixes against "%.pattern"
+# -o pattern    match object file suffixes against "%.pattern"
 # -h[elp]       print brief help message; exit
 # dir1          search directory named by dir1 as well as cwd for files
 #
@@ -55,7 +61,7 @@
 ##End of Makefile.dep
 # 
 # --------------- End makemakedep.sh help
-# Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+# Copyright (c) 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 # U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 # "$Id$"
@@ -204,11 +210,14 @@ then
 fi
 # The initial settings are
 # include *.f90   yes
-# include *.f     no
-# include *.c     no
+# include *.f     yes
+# include *.c     yes
 include_f90="yes"
 include_f77="yes"
 include_c="yes"
+orthodox="yes"
+s_pattern="f90"
+o_pattern="o"
 me="$0"
 my_name=makemakedep.sh
 
@@ -258,6 +267,21 @@ while [ "$more_opts" = "yes" ] ; do
        shift
 	    shift
        ;;
+    -s )
+	    s_pattern="$2"
+       shift
+	    shift
+       orthodox="no"
+       include_f90="no"
+       include_f77="no"
+       include_c="no"
+       ;;
+    -o )
+	    o_pattern="$2"
+       shift
+	    shift
+       orthodox="no"
+       ;;
     -h | -help )
        sed -n '/'$my_name' help/,/End '$my_name' help/ p' $me \
            | sed -n 's/^.//p' | sed '1 d; $ d'
@@ -270,9 +294,30 @@ while [ "$more_opts" = "yes" ] ; do
     esac
 done
 
+if [ $PRINT_TOO_MUCH = "1" ]                            
+then                                                    
+   echo " Summary of options to $me "  
+   echo " include_f90: $include_f90 "  
+   echo " include_f77: $include_f77 "  
+   echo " include_c: $include_c "  
+   echo " orthodox: $orthodox "  
+   echo " wrong list: $wrong_list "  
+   echo " s_pattern: $s_pattern "  
+   echo " o_pattern: $o_pattern "  
+   echo " ACT_COURTEOUS: $ACT_COURTEOUS "  
+   echo " TRY_CLEANUP: $TRY_CLEANUP "  
+   echo " DEPMAKER: $DEPMAKER "  
+   echo " EDIT_GB_PERL_PATH: $EDIT_GB_PERL_PATH "  
+fi                                                      
+
 #                Create Makefile.dep; write 1st line
 echo "#Makefile.dep -- a file to be included by a Makefile" > Makefile.dep
-echo "#to compile a Fortran 9x program or library" >> Makefile.dep
+if [ "$orthodox" = "yes" ]
+then
+   echo "#to compile a Fortran 9x program or library" >> Makefile.dep
+else
+   echo "#to hold automatically calculated dependencies" >> Makefile.dep
+fi
 #
 #Warn of files wrongly added to dependency lists
 if [ "$wrong_list" != "" ]
@@ -309,6 +354,11 @@ fi
 if [ "$include_c" = "yes" ] ; then
    extant_files *.c
    (echo $extant_files_result | sed 's/\.c/.o  /g; s/$/\\/') >> Makefile.dep
+fi
+
+if [ "$orthodox" != "yes" ] ; then
+   extant_files *.$s_pattern
+   (echo $extant_files_result | sed 's/\.'$s_pattern'/.'$o_pattern'  /g; s/$/\\/') >> Makefile.dep
 fi
 
 echo " "  >> Makefile.dep
@@ -403,7 +453,21 @@ else
          fi
        fi
 #	f90makedep.pl >> Makefile.dep
-	$the_DEPMAKER "$@" >> Makefile.dep
+   if [ "$orthodox" = "yes" ]
+   then
+	   if [ $PRINT_TOO_MUCH = "1" ]
+	   then
+         $the_DEPMAKER "$@"
+      fi
+      $the_DEPMAKER "$@" >> Makefile.dep
+   else
+      echo $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+	   if [ $PRINT_TOO_MUCH = "1" ]
+	   then
+         $the_DEPMAKER -s "$s_pattern" -o "$o_pattern"
+      fi
+      $the_DEPMAKER -s "$s_pattern" -o "$o_pattern" >> Makefile.dep
+   fi
 fi
 echo " "  >> Makefile.dep
 echo "#End of Makefile.dep" >> Makefile.dep
@@ -424,6 +488,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.15  2001/11/06 00:19:26  pwagner
+# Turned off ACT_COURTEOUS
+#
 # Revision 1.14  2001/08/14 16:05:08  pwagner
 # Added options; defaults to include_ = yes
 #
