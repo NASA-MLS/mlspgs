@@ -401,7 +401,7 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
     ! Work out the closest instances for the other quantities
     call FindClosestInstances ( temp, radiance, closestInstances )
     instance = closestInstances(maf)
-    noLayers = temp%template%noSurfs - 1
+    noLayers = temp%template%noSurfs 
 
     ! Make temporary arrays for the cloud forward model
     call Allocate_test ( a_clearSkyRadiance,                                 &
@@ -494,6 +494,8 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
 !    print*, a_totalExtinction
 
+!    print*, size(a_totalExtinction)
+!    stop
 
     print*, 'Successfully done with Full Cloud Foward Model ! '
 !    stop    !successful !
@@ -547,15 +549,25 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 !     print*, 'about to assign cloud extinction values'   
 !     stop
 
-    cloudExtinction%values ( 1:noLayers, instance ) =                        &
-      & reshape ( transpose(a_cloudExtinction), (/noLayers*noFreqs/) )
-    massMeanDiameterIce%values (1:noLayers,instance)=                        &
-      &                                  a_massMeanDiameter(1,:)
-    massMeanDiameterWater%values(1:noLayers,instance)=                       &
-      &                                  a_massMeanDiameter(2,:)
-    totalExtinction%values ( 1:noLayers, instance ) =                        &
-      & reshape ( transpose(a_totalExtinction),                              &
-      &         (/noLayers*noFreqs/) )
+!    cloudExtinction%values ( :, instance ) =                        &
+!      & reshape ( transpose(a_cloudExtinction),                     &
+!      & (/noLayers*noFreqs/) )
+
+!    massMeanDiameterIce%values (:,instance)=                        &
+!      & a_massMeanDiameter(1,:)
+!    massMeanDiameterWater%values(:, instance)=                      &
+!      & a_massMeanDiameter(2,:)
+
+!    totalExtinction%values ( :, instance ) =                        &
+!      & reshape ( transpose(a_totalExtinction),                     &
+!      &         (/noLayers*noFreqs/) )
+
+    cloudExtinction%values ( :, instance ) = a_cloudExtinction(:,1)
+    massMeanDiameterIce%values (:,instance)= a_massMeanDiameter(1,:)
+    massMeanDiameterWater%values(:, instance)=  a_massMeanDiameter(2,:)
+    totalExtinction%values ( :, instance ) = a_totalExtinction (:,1)
+
+
 
 ! stop
 
@@ -589,9 +601,15 @@ contains ! THIS SUBPROGRAM CONTAINS THE WRAPPER ROUTINE FOR CALLING THE FULL
 
 end module FullCloudForwardModel
 
-
 !
 ! $Log$
+! Revision 1.16  2001/07/27 20:26:24  jonathan
+! jonathan
+!
 ! Revision 1.15  2001/07/27 15:17:58  jonathan
 ! First Successful f90 runs
 !
+
+
+
+
