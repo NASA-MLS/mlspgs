@@ -320,7 +320,7 @@ CONTAINS
 
     USE MLSCommon, ONLY: DEFAULTUNDEFINEDVALUE
     USE EngTbls, ONLY: Reflec_T
-    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz
+    USE MLSL1Config, ONLY: MIFsGHz, MIFsTHz, L1Config
     USE MLSL1Rad, ONLY: Radiance_T, Rad_Name
     USE MLSSignalNomenclature, ONLY:GetFullMLSSignalName
     USE SpectralBaseline, ONLY: Baseline, BaselineAC, BaselineDC
@@ -455,13 +455,13 @@ CONTAINS
           ELSE
              sd_id = sdId%RADTID
           ENDIF
-       ELSE IF (INDEX(name, 'MB') /= 0 ) THEN
+       ELSE IF (INDEX(name, 'MB') /= 0) THEN
           dim_chan = 'chanMB              '
           sd_id = sdId%RADGID
-       ELSE IF (INDEX(name, 'WF') /= 0 ) THEN
+       ELSE IF (INDEX(name, 'WF') /= 0) THEN
           dim_chan = 'chanWF              '
           sd_id = sdId%RADGID
-       ELSE IF (INDEX(name, 'DACS') /= 0 ) THEN
+       ELSE IF (INDEX(name, 'DACS') /= 0 .AND. L1Config%Calib%CalibDACS) THEN
           dim_chan = 'chanDACS            '
           sd_id = sdId%RADDID
        ELSE
@@ -877,6 +877,9 @@ END MODULE OutputL1B
 !=============================================================================
 
 ! $Log$
+! Revision 2.15  2004/12/01 17:11:05  perun
+! Test calibrated DACS data flag in order to output radiances
+!
 ! Revision 2.14  2004/11/10 15:34:41  perun
 ! Add azimAngle fields; add baseline fields; add fills when needed
 !
