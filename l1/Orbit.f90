@@ -1,5 +1,5 @@
 
-! Copyright (c) 2000, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2003, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 !===============================================================================
@@ -10,13 +10,15 @@ MODULE Orbit
    USE MLSMessageModule
    USE OutputL1B_DataTypes, only: LENG, LENT
    USE SDPToolkit
+
    IMPLICIT NONE
+
    PUBLIC
 
    PRIVATE :: ID, ModuleName
 
 !------------------- RCS Ident Info -----------------------
-   CHARACTER(LEN=130) :: Id = &                                                    
+   CHARACTER(LEN=130) :: Id = &  
    "$Id$"
    CHARACTER (LEN=*), PARAMETER :: ModuleName="$RCSfile$"
 !----------------------------------------------------------
@@ -36,7 +38,7 @@ MODULE Orbit
 CONTAINS
 
 !----------------------------------------------------------------------
-   SUBROUTINE Orbit_met(startTime, times, ascTAI, descTAI, numOrbits, &
+   SUBROUTINE Orbit_met (startTime, times, ascTAI, descTAI, numOrbits, &
                         orbitNumber)
 !----------------------------------------------------------------------
 
@@ -76,7 +78,7 @@ CONTAINS
 
 ! Find time interval covered by file
 
-      returnStatus = Pgs_td_timeInterval(times%startTime, times%endTime, &
+      returnStatus = Pgs_td_timeInterval (times%startTime, times%endTime, &
                                          deltaTAI)
 
       num_points = AINT(deltaTAI/60.0)
@@ -93,18 +95,29 @@ CONTAINS
 
 ! Get orbit metadata
 
-      returnStatus = Pgs_eph_getEphMet(spacecraftId, num_points, startTime, &
+      returnStatus = Pgs_eph_getEphMet (spacecraftId, num_points, startTime, &
                             offsets, numOrbits, orbitNumber, orbitAscendTime, &
                             orbitDescendTime, orbitDownLongitude)
       IF (returnStatus /= PGS_S_SUCCESS) THEN
         print*,'Time was:',startTime
          call Pgs_smf_getMsg(returnStatus, mnemonic, msg)
          msr = 'Routine getEphMet, ' // mnemonic // ':  ' // msg
-         CALL MLSMessage(MLSMSG_Error, ModuleName, msr)
+         CALL MLSMessage(MLSMSG_Warning, ModuleName, msr)
+         numOrbits = 0
       ENDIF
 
-      DEALLOCATE(offsets, STAT=dealloc_err)
-      IF (dealloc_err /= 0) CALL MLSMessage(MLSMSG_Warning, ModuleName, &
+      IF (numOrbits <= 0) THEN
+         msr = 'Routine getEphMet' // ': ' // ' Numorbits <= 0'
+         CALL MLSMessage (MLSMSG_Warning, ModuleName, msr)
+         DO i = 1, SIZE (orbitNumber)
+            orbitNumber(i) = i - 1
+            ascTAI(i) = 0.0
+            descTAI(i) = 0.0
+         ENDDO
+      ENDIF
+
+      DEALLOCATE (offsets, STAT=dealloc_err)
+      IF (dealloc_err /= 0) CALL MLSMessage (MLSMSG_Warning, ModuleName, &
                                            'Failed deallocation of offsets.')
 
 ! Convert values to forms more useful to software
@@ -112,8 +125,8 @@ CONTAINS
       dscTAI = 0.0
       DO i = 1, numOrbits
          orbitNumber(i) = i-1
-         returnStatus = Pgs_td_utcToTAI( orbitAscendTime(i), ascTAI(i) )
-         returnStatus = Pgs_td_utcToTAI( orbitDescendTime(i), descTAI(i) )
+         returnStatus = Pgs_td_utcToTAI (orbitAscendTime(i), ascTAI(i))
+         returnStatus = Pgs_td_utcToTAI (orbitDescendTime(i), descTAI(i))
       ENDDO
 
 !--------------------------
@@ -121,7 +134,7 @@ CONTAINS
 !--------------------------
 
 !-----------------------------------------------------------------------------
-   SUBROUTINE Orbit_init(times, UTC_start, altG, altT, ascTAI, dscTAI, &
+   SUBROUTINE Orbit_init (times, UTC_start, altG, altT, ascTAI, dscTAI, &
                          numOrb, orbIncline, orbitNumber, scanRate, scanRateT)
 !-----------------------------------------------------------------------------
 
@@ -167,7 +180,7 @@ CONTAINS
 
 ! Get orbit metadata for entire day
 
-      CALL Orbit_met(UTC_start, times, ascTAI, dscTAI, numOrb, orbitNumber)
+      CALL Orbit_met (UTC_start, times, ascTAI, dscTAI, numOrb, orbitNumber)
 
 !---------------------------
    END SUBROUTINE Orbit_init
@@ -178,6 +191,9 @@ END MODULE Orbit
 !===============
 
 ! $Log$
+! Revision 2.6  2003/07/10 18:54:17  perun
+! Patch for PGS_Eph_getEphMet toolkit call.
+!
 ! Revision 2.5  2002/11/07 21:57:11  jdone
 ! Added Level 1 output datatypes.
 !
