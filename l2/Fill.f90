@@ -4017,7 +4017,7 @@ contains ! =====     Public Procedures     =============================
 
       call ReadL1BData ( fileID , nameString, l1bData, noMAFs, flag, &
         & firstMAF=chunk%firstMAFIndex, lastMAF=chunk%lastMAFIndex, &
-        & NeverFail= .false., hdfVersion=LEVEL1_HDFVERSION )
+        & NeverFail= .false., hdfVersion=this_hdfVersion )
       ! We'll have to think about `bad' values here .....
       if ( flag /= 0 ) then
         call Announce_Error ( root, errorReadingL1B )
@@ -4544,6 +4544,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.162  2002/11/13 01:06:42  pwagner
+! Fixed small bug
+!
 ! Revision 2.161  2002/11/06 02:01:05  livesey
 ! Changes to fill from l2aux
 !
