@@ -108,19 +108,15 @@ contains
     call allocateSlabs ( gl_slabs, 1, catalog, moduleName )
 
                               ! Bill uses km/sec 
-    myLosVel=losVel*0.00_rp   ! The Doppler correction already been done 
+    myLosVel=losVel*0.00_rp   ! The Doppler correction has already been done 
                               ! in the FullCloudForwardModel, so set it 0
 
-    call get_gl_slabs_arrays ( Catalog, (/ p /), (/ t /), myLosVel, gl_slabs, &
-      & Do_1D, (/ .true. /) )
+    call get_gl_slabs_arrays ( (/ p /), (/ t /), myLosVel, gl_slabs, Do_1D )
 
-    ! Note that expa only depends on temperature.
     tanh1 = tanh( ff / ( boltzmhz2 * t))
     do i = 1, n_sps
 
-      call create_beta ( catalog(i)%molecule, Catalog(i)%continuum, PB, T, &
-        &  FF, Lines(Catalog(i)%Lines)%V0, Lines(Catalog(i)%Lines)%W,      &
-        &  gl_slabs(1,i), tanh1, bb )
+      call create_beta ( PB, T, FF, gl_slabs(1,i), tanh1, bb )
       
       select case (catalog(i)%molecule)
       case (L_H2O)
@@ -160,6 +156,9 @@ contains
 end module Bill_GasAbsorption
 
 ! $Log$
+! Revision 1.26  2004/03/19 00:46:49  vsnyder
+! Use line center instead of pressure-shifted line center in a few places
+!
 ! Revision 1.25  2003/07/09 23:38:46  vsnyder
 ! Rename R8 as RK locally, to make it easier to use something else later
 !
