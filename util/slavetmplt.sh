@@ -184,6 +184,12 @@ while [ "$more_opts" = "yes" ] ; do
        otheropts=`add_option "$otheropts" --tk`
        shift
        ;;
+    --cat )
+       otheropts=`add_option "$otheropts" --cat`
+       echo "Adding argument to catenate split dgg/dgm files: $1" >> $LOGFILE
+       echo "$otheropts" >> $LOGFILE
+       shift
+       ;;
     --wall )
        otheropts=`add_option "$otheropts" --wall`
        echo "Adding argument to use wall clock: $1" >> $LOGFILE
@@ -264,6 +270,9 @@ do_the_call $all_my_opts
 exit 0
 
 # $Log$
+# Revision 1.8  2004/01/07 17:26:09  pwagner
+# Merged in sips-friendly changes
+#
 # Revision 1.7  2003/12/11 23:07:57  pwagner
 # May check each slaves ident against master to verify pge versions are the same
 #
