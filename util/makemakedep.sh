@@ -234,7 +234,7 @@ PRINT_TOO_MUCH=0
 EDIT_GB_PERL_PATH=1
 #                 ^  -- set this to 1 to change path to perl in ghostbuster.sh
 #
-
+MAY_EDIT_PERL=1
 #
 #           How to rename or hide excluded files so they !~= %.f90
 #dsuffix=".xui"
@@ -512,7 +512,7 @@ else
 # && give user a chance to redirect it if it is not
 	script_perl=`sed -n '1 p' $the_DEPMAKER`
 	your_perl='#!'`which perl` 
-   if [ "$script_perl" != "$your_perl" ]
+   if [ "$script_perl" != "$your_perl" -a "$MAY_EDIT_PERL" = 1 ]
         then
 		#Warn user that perl script may need to be changed
 
@@ -545,11 +545,15 @@ else
    		if [ "$change_perl" != "" ] ; then
             temp_name=`get_unique_name pl`
             sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_DEPMAKER > $temp_name
-				chmod u+w "$the_DEPMAKER"
-         	mv $temp_name "$the_DEPMAKER"
-				chmod a+x "$the_DEPMAKER"
-				echo "*** You have fixed f90makedep.pl to look for $your_perl"
-   		   if [ "$EDIT_GB_PERL_PATH" = "1" ] ; then
+            return_status=`expr $?`
+            if [ $return_status = 0 ]
+            then
+				  chmod u+w "$the_DEPMAKER"
+         	  mv $temp_name "$the_DEPMAKER"
+				  chmod a+x "$the_DEPMAKER"
+				  echo "*** You have fixed f90makedep.pl to look for $your_perl"
+            fi
+   		   if [ "$EDIT_GB_PERL_PATH" = "1" -a "$MAY_EDIT_PERL" = 1 ] ; then
 	            #
 	            # Prefix f90GhostFiles.pl with the path to util
                # this assumes f90GhostFiles.pl is in same dir as this script
@@ -557,10 +561,14 @@ else
             	script_perl=`sed -n '1 p' $the_GHOSTFINDER`
                if [ "$script_perl" != "$your_perl" ] ; then
                   sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > $temp_name
-		      		chmod u+w "$the_GHOSTFINDER"
-         	      mv $temp_name "$the_GHOSTFINDER"
-		      		chmod a+x "$the_GHOSTFINDER"
-				      echo "*** You have also fixed f90GhostFiles.pl to look for $your_perl"
+                  return_status=`expr $?`
+                  if [ $return_status = 0 ]
+                  then
+		      		  chmod u+w "$the_GHOSTFINDER"
+         	        mv $temp_name "$the_GHOSTFINDER"
+		      		  chmod a+x "$the_GHOSTFINDER"
+				        echo "*** You have also fixed f90GhostFiles.pl to look for $your_perl"
+                  fi
                fi
             fi
          fi
@@ -605,6 +613,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.22  2003/01/31 23:54:56  pwagner
+# Now may exclude certain files from OBJS list; e.g. drivers
+#
 # Revision 1.21  2002/07/22 22:08:44  pwagner
 # Uses get_unique_name for temp file names
 #

@@ -147,6 +147,7 @@ PRINT_TOO_MUCH=0
 
 TRY_CLEANUP=1
 #           ^  -- set this to 1 to try cleaning up from a prior faulty run
+MAY_EDIT_PERL=1
 #
 #           How to rename or hide excluded files so they !~= %.f90
 #dsuffix=".xug"
@@ -249,7 +250,7 @@ done
 # && give user a chance to redirect it if it is not
 	script_perl=`sed -n '1 p' $the_GHOSTFINDER`
 	your_perl='#!'`which perl` 
-   if [ "$script_perl" != "$your_perl" ]
+   if [ "$script_perl" != "$your_perl" -a "$MAY_EDIT_PERL" = 1 ]
         then
 		#Warn user that perl script may need to be changed
 
@@ -282,10 +283,14 @@ done
    		if [ "$change_perl" != "" ] ; then
             temp_name=`get_unique_name pl`
             sed -n "1 s%$script_perl%$change_perl%p;2,$ p" $the_GHOSTFINDER > $temp_name
-				chmod u+w "$the_GHOSTFINDER"
-         	mv $temp_name "$the_GHOSTFINDER"
-				chmod a+x "$the_GHOSTFINDER"
-				echo "*** You have fixed f90GhostFiles.pl to look for $your_perl"
+            return_status=`expr $?`
+            if [ $return_status = 0 ]
+            then
+				  chmod u+w "$the_GHOSTFINDER"
+         	  mv $temp_name "$the_GHOSTFINDER"
+				  chmod a+x "$the_GHOSTFINDER"
+				  echo "*** You have fixed f90GhostFiles.pl to look for $your_perl"
+            fi
          fi
        fi
 	if [ "$DEBUG" = "1" ]
@@ -336,6 +341,9 @@ then
 fi
 exit
 # $Log$
+# Revision 1.8  2002/07/25 19:54:37  pwagner
+# Comments on hiding excluded files only if PRINT_TOO_MUCH
+#
 # Revision 1.7  2002/07/22 22:08:44  pwagner
 # Uses get_unique_name for temp file names
 #
