@@ -3,12 +3,14 @@ module NO_CONV_AT_ALL_M
   use L2PC_PFA_STRUCTURES, only: K_MATRIX_INFO
   use D_LINTRP_M, only: LINTRP
   use D_CSPLINE_M, only: CSPLINE
+  use DCSPLINE_DER_M, only: CSPLINE_DER
   use dump_0,only:dump
   use VectorsModule, only: Vector_T, VectorValue_T, GETVECTORQUANTITYBYTYPE
   use ForwardModelConfig, only: ForwardModelConfig_T
   use Intrinsic, only: L_VMR
   use String_Table, only: GET_STRING
-  use MatrixModule_1, only: Matrix_T
+  use MatrixModule_0, only: M_BANDED, M_FULL, DUMP
+  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, DUMP
   implicit NONE
   private
   public :: NO_CONV_AT_ALL
@@ -24,13 +26,14 @@ contains
 ! convolution grid to the users specified points. This module uses
 ! cubic spline interpolation to do the job.
 !
-  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, maf, &
+  Subroutine no_conv_at_all (forwardModelConfig, forwardModelIn, maf, channel, &
     & windowStart, windowFinish, temp, ptan, radiance, &
     & tan_press,i_raw,k_temp,k_atmos, i_star_all, Jacobian )
 !
     type (ForwardModelConfig_T) :: FORWARDMODELCONFIG
     type (Vector_T), intent(in) :: FORWARDMODELIN
     integer, intent(in) :: MAF
+    integer, intent(in) :: CHANNEL
     integer, intent(in) :: WINDOWSTART
     integer, intent(in) :: WINDOWFINISH
     type (VectorValue_T), intent(in) :: TEMP
@@ -46,17 +49,20 @@ contains
 !
 ! -----     Output Variables   ----------------------------------------
 !
-!
     real(r8), intent(OUT) :: I_STAR_ALL(:)
 !
 ! -----     Local Variables     ----------------------------------------
 !
-    integer(i4):: no_t,no_tan_hts,no_phi_t
+    integer:: no_t,no_tan_hts,no_phi_t
     type (VectorValue_T), pointer :: F  ! vmr quantity
-    integer(i4) :: nz
-    integer(i4) :: N, I, IS, J, K, NF, SV_I, Spectag, ki, kc
+    integer :: nz
+    integer :: N, I, IS, J, K, NF, SV_I, Spectag
+    integer :: phiWindow
+    integer :: row, col                 ! Indices
+    integer :: ptg                      ! Index
 !
     real(r8) :: RAD(ptan%template%noSurfs), SRad(ptan%template%noSurfs)
+    real(r8) :: der_all(ptan%template%noSurfs)
 !
     Character(LEN=01) :: CA
 !
@@ -70,15 +76,32 @@ contains
 !
 ! This subroutine is called by channel
 !
-    ki = 0
-    kc = 0
-!
     k = no_tan_hts
     j = ptan%template%noSurfs
-    Call Cspline(tan_press,Ptan%values(:,maf),i_raw,i_star_all,k,j)
+    if (present(Jacobian)) then
+      Call Cspline_der(tan_press,Ptan%values(:,maf),i_raw,i_star_all,der_all,k,j)
+      row = FindBlock ( Jacobian%row, radiance%index, maf )
+      col = FindBlock ( Jacobian%col, ptan%index, maf )
+      call CreateBlock ( Jacobian, row, col, m_banded, &
+        & radiance%template%noSurfs*radiance%template%noChans )
+      jacobian%block(row,col)%values = 0.0_r8
+      do ptg = 1, j
+        jacobian%block(row,col)%values( channel + &
+          & radiance%template%noChans*(ptg-1),1 ) = der_all(ptg)
+        jacobian%block(row,col)%r1(ptg) = &
+          & 1 + radiance%template%noChans*(ptg-1)
+        jacobian%block(row,col)%r2(ptg) = &
+          & radiance%template%noChans*ptg
+      end do
+    else
+      Call Cspline(tan_press,Ptan%values(:,maf),i_raw,i_star_all,k,j)
+    endif
+      
 !
     if(.not. ANY((/forwardModelConfig%temp_der,forwardModelConfig%atmos_der,&
       & forwardModelConfig%spect_der/))) Return
+    row = FindBlock ( Jacobian%row, radiance%index, maf ) ! Tidy up conditions later !???
+
 !
 ! Now transfer the other fwd_mdl derivatives to the output pointing
 ! values
@@ -91,64 +114,55 @@ contains
 !
 ! Derivatives needed continue to process
 !
-      ki = ki + 1
-      kc = kc + 1
-!       k_star_info(kc)%name = 'TEMP'
-!       k_star_info(kc)%first_dim_index = ki
-!       k_star_info(kc)%no_zeta_basis = no_t
-!       k_star_info(kc)%no_phi_basis = no_phi_t
-!       k_star_info(kc)%zeta_basis(1:no_t) = t_z_basis(1:no_t)
-!
       Rad(1:) = 0.0
-      do nf = 1, no_phi_t
-!
+      phiWindow = windowFinish-windowStart+1
+      do nf = 1, phiWindow
+        col = FindBlock ( Jacobian%col, temp%index, nf+windowStart-1 )
+        call CreateBlock ( Jacobian, row, col, m_full )
+
         do sv_i = 1, no_t
-!
           Rad(1:k) = k_temp(1:k,sv_i,nf)
           Call Cspline(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
-!          k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
-!
+          do ptg = 1,j
+            jacobian%block(row,col)%values( channel+&
+              & radiance%template%noChans*(ptg-1),sv_i) = Srad(ptg)
+          end do
         end do
-!
+
       end do
-!
+
+
     endif
-!
+
     if(forwardModelConfig%atmos_der) then
-!
-! ****************** atmospheric derivatives ******************
-!
+
+      ! ****************** atmospheric derivatives ******************
+
       do is = 1, size(ForwardModelConfig%molecules)
-!
+
          f => GetVectorQuantityByType ( forwardModelIn, quantityType=l_vmr, &
           & molecule=forwardModelConfig%molecules(is), noError=.true. )
 
         if (associated(f)) then
-!
-          ki = ki + 1
-          kc = kc + 1
+
           nz = f%template%noSurfs
-!           call get_string(f%template%name,k_star_info(kc)%name)
-!           k_star_info(kc)%first_dim_index = ki
-!           k_star_info(kc)%no_phi_basis = f%template%noInstances
-!           k_star_info(kc)%no_zeta_basis = nz
-!           k_star_info(kc)%zeta_basis(1:nz) = f%template%surfs(1:nz,1)
           Rad(1:) = 0.0
-!
+
           ! Derivatives needed continue to process
-!
+
           do nf = 1, f%template%noInstances
-!
+            col = FindBlock ( Jacobian%col, f%index, nf+windowStart-1 )
+            call CreateBlock ( Jacobian, row, col, m_full )
+
             do sv_i = 1, f%template%noSurfs
-!
-! Derivatives needed continue to process
-!
               Rad(1:k) = k_atmos(1:k,sv_i,nf,is)
               Call Lintrp(tan_press,Ptan%values(:,maf),Rad,SRad,k,j)
-!              k_star_all(ki,sv_i,nf,1:j) = SRad(1:j)
-!
+              do ptg = 1,j
+                jacobian%block(row,col)%values( channel+&
+                  & radiance%template%noChans*(ptg-1),sv_i) = Srad(ptg)
+              end do
             end do
-!
+
           end do
 !
         endif
@@ -223,6 +237,9 @@ contains
 !
 end module NO_CONV_AT_ALL_M
 ! $Log$
+! Revision 1.10  2001/04/19 23:56:52  livesey
+! New parameters
+!
 ! Revision 1.9  2001/04/10 10:14:16  zvi
 ! Fixing bug in convolve routines
 !
