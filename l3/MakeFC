@@ -98,7 +98,7 @@ $(PROG): $(CONFDIR)/$(MLSCFILE) $(PLATFORMS)/$(MLSCONFG) $(libmls_objs)/libmls.a
 $(libmls_objs)/libmls.a: $(LIB_prereqs)
 	$(MAKE) -f $(MakeFName) libmls.a -C $(libmls_sources)
 
-.PHONY: configure depends clean tar mostlyclean tarz targ mlsl3
+.PHONY: configure depends clean tar mostlyclean tarz targ mlsl3 ghostbuster
 
 tar:
 
@@ -160,6 +160,9 @@ targ:
 	$(TAR) hcvzf ../$(PROG).tgz * --exclude \*.o --exclude \*.mod --exclude mlsl3
 
 # $Log$
+# Revision 1.21  2001/05/24 17:56:39  pwagner
+# Expanded LIB_prereqs
+#
 # Revision 1.20  2001/05/17 20:02:59  pwagner
 # Automatically rebuilds lib on change to machine.f90
 #
