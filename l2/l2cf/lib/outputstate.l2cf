@@ -1,5 +1,9 @@
 begin Output
 
+;; Skip all output if requested to do so
+!ifdef(flagSuppressRegularOutput,{
+!clearDivert(!joinedDGGDivert,!joinedDGMDivert)
+},{
 ;; Do any standard outputs, otherwise it was done with direct write
 !ifdef(flagAvoidDirectWrite,{
 ;; --------------------------------- Standard product L2GP files ---
@@ -36,12 +40,16 @@ Output, quantities=[ !undivert(!joinedDGMDivert) ], type=l2aux, $
   hdfVersion=!hdfVersion, $
   file='!DGMFileName'})
 
+})
+
 ;; These days pretty well everything is written with directWrite
 ;; statements
 
 ;; Now output any averaging kernel.
+!ifdef(matrixFilenameWord,{},{!define(matrixFilenameWord,{Full})})
 !ifdef(flagGotMatrices,{
 Output,  quantities=[ !undivert(!matrixDivert) ], type=l2pc, $
-  file='!outpathl2mtx/MLS-Aura_L2MTX_!l2version_!day.h5'})
+  file='!outpathl2mtx/MLS-Aura_L2MTX-!matrixFilenameWord_!l2version_!day.h5'})
+
 
 end Output
