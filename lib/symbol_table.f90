@@ -1,4 +1,4 @@
-! Copyright (c) 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c) 2004, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module SYMBOL_TABLE
@@ -158,7 +158,7 @@ contains
     logical, optional, intent(in) :: DEBUG
     logical, optional, intent(in) :: CASESENSITIVE
     call add_char ( text )
-    enter_terminal = add_terminal ( terminal, DEBUG, CASESENSITIVE )
+    enter_terminal = add_terminal ( terminal, DEBUG=DEBUG, CASESENSITIVE=CASESENSITIVE )
     return
   end function ENTER_TERMINAL
   ! ====================================     INIT_SYMBOL_TABLE     =====
@@ -247,6 +247,9 @@ contains
 end module SYMBOL_TABLE
 
 ! $Log$
+! Revision 2.10  2004/01/22 00:43:12  pwagner
+! Fixed bug in passing args from enter_terminal to add_terminal
+!
 ! Revision 2.9  2003/05/14 06:44:24  vsnyder
 ! Make sure new elements of 'symbols' are not undefined
 !
