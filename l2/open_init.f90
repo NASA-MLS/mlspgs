@@ -160,7 +160,7 @@ contains ! =====     Public Procedures     =============================
       if ( levels(gen) > 0 .or. index(switches,'O') /= 0 ) &
         & call dump_L1B_database &
         & ( mlspcf_l1b_rad_end-mlspcf_l1b_rad_start+1, l1binfo, l2pcf, &
-          & CCSDSEndTime, CCSDSStartTime )
+          & CCSDSEndTime, CCSDSStartTime, processingrange )
       call trace_end ( "OpenAndInit" )
     end if
     return
@@ -338,7 +338,7 @@ contains ! =====     Public Procedures     =============================
     if ( toggle(gen) ) then
       if ( levels(gen) > 0 .or. index(switches,'O') /= 0 ) &
         & call dump_L1B_database ( ifl1, l1binfo, l2pcf, &
-          & CCSDSEndTime, CCSDSStartTime )
+          & CCSDSEndTime, CCSDSStartTime, processingrange )
       call trace_end ( "OpenAndInit" )
     end if
     return
@@ -347,7 +347,7 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------------  Dump_L1B_database  -----
   subroutine Dump_L1B_database ( Num_l1b_files, L1binfo, L2pcf, &
-    & CCSDSEndTime, CCSDSStartTime )
+    & CCSDSEndTime, CCSDSStartTime, processingrange )
   
     ! Dump info obtained during OpenAndInitialize:
     ! L1B databse
@@ -364,11 +364,13 @@ contains ! =====     Public Procedures     =============================
     type(PCFData_T) :: l2pcf
     character(len=CCSDSlen) CCSDSEndTime
     character(len=CCSDSlen) CCSDSStartTime
+    type (TAI93_Range_T) :: processingRange ! Data processing range
 	
     ! Local
 
     character (LEN=FileNameLen) :: physicalFilename
     integer :: i, returnStatus, version
+    character (len=*), parameter :: time_format='(1pD18.12)'
 
     ! Begin
     version = 1
@@ -399,22 +401,26 @@ contains ! =====     Public Procedures     =============================
 
     call output ( 'L1OA file:', advance='yes' )
   
-!    returnStatus = Pgs_pc_getReference(l1bInfo%L1BOAID, version, &
-!      & physicalFilename)
-!    if ( returnStatus == PGS_S_SUCCESS ) then
+   if(l1bInfo%L1BOAID /= ILLEGALL1BRADID) then
       call output ( 'fileid:   ' )
       call output ( l1bInfo%L1BOAID, advance='yes' )
       call output ( 'name:   ' )
       call output ( TRIM(l1bInfo%L1BOAFileName), advance='yes' )
-!    else
-!      call output ( '(file unknown)', advance='yes' )
-!    end if
+    else
+      call output ( '(file unknown)', advance='yes' )
+    end if
 
     call output ( 'Start Time:   ' )
     call output ( CCSDSStartTime, advance='yes' )
 
-    call output ( 'End Time:   ' )
+    call output ( 'End Time:     ' )
     call output ( CCSDSEndTime, advance='yes' )
+
+    call output ( 'Start Time (tai):   ' )
+    call output ( processingrange%starttime, format=time_format, advance='yes' )
+
+    call output ( 'End Time (tai):     ' )
+    call output ( processingrange%endtime, format=time_format, advance='yes' )
 
     call output ( 'PGE version:   ' )
     call output ( l2pcf%PGEVersion, advance='yes' )
@@ -499,6 +505,9 @@ end module Open_Init
 
 !
 ! $Log$
+! Revision 2.48  2001/05/10 18:22:57  pwagner
+! Improved Dump_L1B_database
+!
 ! Revision 2.47  2001/05/09 23:32:15  pwagner
 ! Gets toolkit funs from SDPToolkit
 !
