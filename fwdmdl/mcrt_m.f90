@@ -244,9 +244,9 @@ contains
                                    & tau(1:2,1:2,i_p) * d_t_script(i_p,i_sv)
           if ( i_p < p_stop ) then
             if ( i_p /= i_tan + 1 ) then
-              dPdx = matmul(dPdx,e(1:2,1:2,i_pp+1)) + &
-                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp+1,i_sv))
               i_pp = i_pp + 1
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
             else
               dPdx = sqrt_earth_ref * dPdx
             end if
@@ -265,9 +265,9 @@ contains
                                    & dTauDx * t_script(i_p)
           if ( i_p < p_stop ) then
             if ( i_p /= i_tan + 1 ) then
-              dPdx = matmul(dPdx,e(1:2,1:2,i_pp+1)) + &
-                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp+1,i_sv))
               i_pp = i_pp + 1
+              dPdx = matmul(dPdx,e(1:2,1:2,i_pp)) + &
+                &    matmul(prod(1:2,1:2,i_p),d_e(1:2,1:2,i_pp,i_sv))
             else
               dPdx = sqrt_earth_ref * dPdx
             end if
@@ -285,6 +285,9 @@ contains
 end module MCRT_m
 
 ! $Log$
+! Revision 2.12  2003/09/09 00:05:05  vsnyder
+! New method to compute derivatives
+!
 ! Revision 2.10  2003/08/15 20:29:26  vsnyder
 ! Implement polarized VMR derivatives
 !
