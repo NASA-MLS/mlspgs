@@ -16,7 +16,7 @@ module S_HUNT_M
 contains
 ! A binary search routine with a hunt procedure, to start from last known
 ! location (if 0 < JLO < N) or from the begining otherwise.
-  subroutine S_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
+  pure subroutine S_HUNT ( ELEMENT, ARRAY, N, JLO, JHI )
     use MLSCommon, only: I4, R4
     integer, parameter :: RK = r4
     include 'hunt.f9h'
@@ -28,6 +28,9 @@ contains
 end module S_HUNT_M
 
 ! $Log$
+! Revision 2.2  2005/03/29 01:58:17  vsnyder
+! Make stuff pure
+!
 ! Revision 2.1  2003/11/08 02:01:01  vsnyder
 ! Initial commit -- created just for symmetry
 !
