@@ -1,4 +1,4 @@
-! Copyright (c 1999, California Institute of Technology.  ALL RIGHTS RESERVED.
+! Copyright (c 2002, California Institute of Technology.  ALL RIGHTS RESERVED.
 ! U.S. Government Sponsorship under NASA Contract NAS7-1407 is acknowledged.
 
 module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
@@ -6,27 +6,54 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
   ! This module is an interface between the f90 MLSL2 code and an IDL process
   ! using the pvmlib IDL routines written by NJL.
 
-  ! It allows for F90 and IDL to exchange integers and reals (r8) and arrays of
+  ! It allows for F90 and IDL to exchange integers, reals (r4,r8) and arrays of
   ! the same upto 3D, and strings (not arrays of strings though as there are
   ! length issues.
 
-  use MLSCommon, only : r8
+  use MLSCommon, only : r4, r8
   use PVM, only: PVMDATADEFAULT, PVMFINITSEND, PVMFMYTID, PVMF90PACK, PVMF90UNPACK
 
   implicit none
  
   !------------------------------- RCS Ident Info ------------------------------
-  character(LEN=130), private :: Id = & 
-       "$Id$"
-  character(LEN=*), private, parameter :: ModuleName="$RCSfile$"
+  character(LEN=*), parameter :: IdParm = & 
+    "$Id$"
+  character(len=len(idParm)), private :: Id = idParm
+  character(LEN=*), parameter, private :: ModuleName="$RCSfile$"
+  private not_used_here
   !-----------------------------------------------------------------------------
+
+! === (start of toc) ===
+!     c o n t e n t s
+!     - - - - - - - -
+! This module is an interface between the f90 MLSL2 code and an IDL process  
+! using the pvmlib IDL routines written by NJL.                              
+!     (subroutines and functions)
+! PVMIDLpack                      
+! PVMIDLunpack                    
+! PVMIDLSend                      
+! PVMIDLReceive                   
+! === (end of toc) ===
+
+! === (start of api) ===
+! PVMIDLpack (arg, int info) 
+! PVMIDLunpack (arg, int info) 
+! PVMIDLSend (arg, int tid, [log noBlock], [msgTag])
+! PVMIDLReceive (arg, int tid, [log noBlock], [msgTag]) 
+!     arg can be one of:
+!    {char* line, int value, r4 value, r8 value, char line(:), char line(:,:),
+!     int values(:), int values(:,:), int values(:,:,:),
+!     r4 values(:), r4 values(:,:), r4 values(:,:,:),
+!     r8 values(:), r8 values(:,:), r8 values(:,:,:)}
+! === (end of api) ===
 
   interface PVMIDLpack
      module procedure PVMIDLpackstring, PVMIDLpackInteger, PVMIDLpackReal, &
           & PVMIDLPACKLogical, PVMIDLpackChararr1, PVMIDLpackChararr2, &
           & PVMIDLpackIntarr1, PVMIDLpackIntarr2, PVMIDLpackIntarr3, &
           & PVMIDLpackRealarr1, PVMIDLpackRealarr2, PVMIDLpackRealarr3,&
-          & PVMIDLpackLogArr1
+          & PVMIDLpackLogArr1, PVMIDLpackSngl, &
+          & PVMIDLpackSnglarr1, PVMIDLpackSnglarr2, PVMIDLpackSnglarr3
   end interface
 
   interface PVMIDLunpack
@@ -34,7 +61,8 @@ module PVMIDL ! Communicate with and IDL (NJL's pvmlib) process using pvm.
           & PVMIDLPACKLogical, PVMIDLunpackChararr1, PVMIDLunpackChararr2, &
           & PVMIDLunpackIntarr1, PVMIDLunpackIntarr2, PVMIDLunpackIntarr3, &
           & PVMIDLunpackRealarr1, PVMIDLunpackRealarr2, PVMIDLunpackRealarr3, &
-          & PVMIDLunpackLogarr1
+          & PVMIDLunpackLogarr1, PVMIDLunpackSngl, &
+          & PVMIDLunpackSnglarr1, PVMIDLunpackSnglarr2, PVMIDLunpackSnglarr3
   end interface
 
   interface PVMIDLSend
@@ -86,6 +114,19 @@ contains
     if (info==0) call pvmf90pack(value,info)
 
   end subroutine PVMIDLpackInteger
+
+  subroutine PVMIDLpackSngl(value,info)
+    real (r4), intent(in) :: value
+    integer, intent(out) :: info
+    real(r8) :: r8value
+
+    r8value = value
+    ! First pack noDims and a 5 to indicate double
+    call pvmf90pack( (/0,5/), info)
+
+    ! Now pack the data itself
+    if (info==0) call pvmf90pack(r8value,info)
+  end subroutine PVMIDLpackSngl
 
   subroutine PVMIDLpackReal(value,info)
     real (r8), intent(in) :: value
@@ -232,6 +273,48 @@ contains
     if (info==0) call pvmf90pack(values,info)
   end subroutine PVMIDLpackRealarr3
 
+  subroutine PVMIDLpackSnglarr1(values,info)
+    real (r4), intent(in), dimension(:) :: values
+    integer, intent(out) :: info
+
+    ! First pack noDims and a 5 to indicate double
+    call pvmf90pack( (/1,5/), info)
+
+    ! Now output the dimensions themselves
+    if (info==0) call pvmf90pack((/shape(values),size(values)/),info)
+
+    ! Now pack the data itself
+    if (info==0) call pvmf90pack(dble(values),info)
+  end subroutine PVMIDLpackSnglarr1
+
+  subroutine PVMIDLpackSnglarr2(values,info)
+    real (r4), intent(in), dimension(:,:) :: values
+    integer, intent(out) :: info
+
+    ! First pack noDims and a 5 to indicate double
+    call pvmf90pack( (/2,5/), info)
+
+    ! Now output the dimensions themselves
+    if (info==0) call pvmf90pack((/shape(values),size(values)/),info)
+
+    ! Now pack the data itself
+    if (info==0) call pvmf90pack(dble(values),info)
+  end subroutine PVMIDLpackSnglarr2
+
+  subroutine PVMIDLpackSnglarr3(values,info)
+    real (r4), intent(in), dimension(:,:,:) :: values
+    integer, intent(out) :: info
+
+    ! First pack noDims and a 5 to indicate double
+    call pvmf90pack( (/3,5/), info)
+
+    ! Now output the dimensions themselves
+    if (info==0) call pvmf90pack((/shape(values),size(values)/),info)
+
+    ! Now pack the data itself
+    if (info==0) call pvmf90pack(dble(values),info)
+  end subroutine PVMIDLpackSnglarr3
+
   subroutine PVMIDLpackLogarr1(values,info)
     logical, intent(in), dimension(:) :: values
     integer, intent(out) :: info
@@ -314,6 +397,25 @@ contains
        if (info==0) call pvmf90unpack(value,info)
     end if
   end subroutine PVMIDLunpackReal
+     
+  subroutine PVMIDLunpackSngl(value,info)
+    real (r4), intent(out) :: value
+    integer, intent(out) :: info
+    real(r8) :: dble_value
+
+    integer, dimension(2) :: details
+
+    ! First unpack noDims and a 5 to indicate double
+    call pvmf90unpack( details, info)
+
+    if (info==0) then 
+       if (any(details/= (/0,5/)) ) info= -200
+
+       ! Now unpack the data itself
+       if (info==0) call pvmf90unpack(dble_value,info)
+       value = dble_value
+    end if
+  end subroutine PVMIDLunpackSngl
      
   subroutine PVMIDLunpackLogical(value,info)
     logical, intent(out) :: value
@@ -508,6 +610,79 @@ contains
        if (info==0) call pvmf90unpack(values,info)
     end if
   end subroutine PVMIDLunpackRealarr3
+
+  subroutine PVMIDLunpackSnglarr1(values,info)
+    real (r4), intent(out), dimension(:) :: values
+    integer, intent(out) :: info
+    real(r8), dimension(size(values)) :: dble_values
+
+    integer, dimension(2) :: details
+    integer, dimension(2) :: sentShape
+
+    ! First unpack noDims and a 5 to indicate double
+    call pvmf90unpack( details, info)
+
+    if (info==0) then 
+       if (any(details/= (/1,5/)) ) info= -200
+
+       ! Now output the dimensions themselves
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:1)/=shape(values))) info= -201
+       
+       ! Now unpack the data itself
+       if (info==0) call pvmf90unpack(dble_values,info)
+       values = dble_values
+    end if
+  end subroutine PVMIDLunpackSnglarr1
+
+  subroutine PVMIDLunpackSnglarr2(values,info)
+    real (r4), intent(out), dimension(:,:) :: values
+    integer, intent(out) :: info
+    real(r8), dimension(size(values,1),size(values,2)) :: dble_values
+
+    integer, dimension(2) :: details
+    integer, dimension(3) :: sentShape
+
+    ! First unpack noDims and a 5 to indicate double
+    call pvmf90unpack( details, info)
+
+    if (info==0) then 
+       if (any(details/= (/2,5/)) ) info= -200
+
+       ! Now output the dimensions themselves
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:2)/=shape(values))) info= -201
+       
+       ! Now unpack the data itself
+       if (info==0) call pvmf90unpack(dble_values,info)
+       values = dble_values
+    end if
+  end subroutine PVMIDLunpackSnglarr2
+
+  subroutine PVMIDLunpackSnglarr3(values,info)
+    real (r4), intent(out), dimension(:,:,:) :: values
+    integer, intent(out) :: info
+    real(r8), dimension(size(values,1),size(values,2),size(values,3)) :: &
+      & dble_values
+
+    integer, dimension(2) :: details
+    integer, dimension(3) :: sentShape
+
+    ! First unpack noDims and a 5 to indicate double
+    call pvmf90unpack( details, info)
+
+    if (info==0) then 
+       if (any(details/= (/3,5/)) ) info= -200
+
+       ! Now output the dimensions themselves
+       if (info==0) call pvmf90unpack( sentShape,info)
+       if (any(sentShape(1:3)/=shape(values))) info= -201
+       
+       ! Now unpack the data itself
+       if (info==0) call pvmf90unpack(dble_values,info)
+       values = dble_values
+    end if
+  end subroutine PVMIDLunpackSnglarr3
 
   subroutine PVMIDLunpackLogarr1(values,info)
     logical, intent(out), dimension(:) :: values
@@ -960,4 +1135,12 @@ contains
     call PVMIDLUnpack(value,info)
   end subroutine PVMIDLReceiveLogArr1
 
+  logical function not_used_here()
+    not_used_here = (id(1:1) == ModuleName(1:1))
+  end function not_used_here
 end module PVMIDL
+
+! $Log$
+! Revision 2.8  2002/10/07 23:22:09  pwagner
+! Added (un)packSngl routines
+!
