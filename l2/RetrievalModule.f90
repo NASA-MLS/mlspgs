@@ -162,7 +162,7 @@ contains
     integer :: NWT_Opt(20)              ! Options for NWT, q.v.
     real(rk) :: NWT_Xopt(20)            ! Real parameters for NWT options, q.v.
     type(matrix_SPD_T), pointer :: OutputCovariance   ! Covariance of the sol'n
-    type(vector_T), pointer :: OutSD    ! Vector containing SD of result
+    type(vector_T), pointer :: OutputSD ! Vector containing SD of result
     integer :: Quantity                 ! Index in tree of "quantity" field
                                         ! of subset specification, or zero
     integer :: QuantityIndex            ! Index within vector of a quantity
@@ -203,7 +203,7 @@ contains
 
     error = 0
     nullify ( apriori, configIndices, covariance, fwdModelOut )
-    nullify ( measurements, measurementSD, state, outSD )
+    nullify ( measurements, measurementSD, state, outputSD )
     timing = .false.
 
     if ( toggle(gen) ) call trace_begin ( "Retrieve", root )
@@ -323,7 +323,7 @@ contains
           case ( f_outputCovariance )
             ixCovariance = decoration(subtree(2,son)) ! outCov: matrix vertex
           case ( f_outputSD )
-            outSD => vectorDatabase(decoration(decoration(subtree(2,son))))
+            outputSD => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_state )
             state => vectorDatabase(decoration(decoration(subtree(2,son))))
           case ( f_aprioriScale, f_fuzz, f_lambda, f_maxF, f_maxJ, &
@@ -959,7 +959,7 @@ contains
               end select
             ! IF ( you want to return to a previous best X ) NWT_FLAG = 0
             end do ! Newton iteration
-            if ( got(f_outputCovariance) ) then
+            if ( got(f_outputCovariance) .or. got(f_outputSD) ) then
               ! Subtract sum of Levenberg-Marquardt updates from normal
               ! equations
               call updateDiagonal ( normalEquations, -aj%sqt**2 )
@@ -972,9 +972,11 @@ contains
               call choleskyFactor ( factored, normalEquations )
               call invertCholesky ( factored, outputCovariance%m )
               !??? Don't forget to scale the covariance
-              if ( associated(outSD) ) then !???
-                call GetDiagonal ( outputCovariance%m, outSD, SquareRoot = .true. )
-              else
+              if ( associated(outputSD) ) then !???
+                call GetDiagonal ( outputCovariance%m, outputSD, SquareRoot = .true. )
+                if ( columnScaling /= l_none ) then
+                  call multiply ( outputSD, columnScaleVector )
+                end if
               end if
             end if
             call copyVector ( state, x )
@@ -1076,6 +1078,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.39  2001/06/01 21:58:17  livesey
+! Added scale for outputSD.
+!
 ! Revision 2.38  2001/06/01 21:40:18  vsnyder
 ! Row scale during NF_EVALF; destroy some vectors so as not to have a
 ! memory leak; initially clone x to get columnScaleVector.
