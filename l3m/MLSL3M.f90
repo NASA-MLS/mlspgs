@@ -56,6 +56,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
    CHARACTER (LEN=DATE_LEN) :: mis_Days(maxWindow)
 
    INTEGER :: i, l2Days, numFiles, mis_l2Days
+   integer, parameter :: NORMAL_EXIT_STATUS = 2
 
 ! Initializations
 
@@ -193,6 +194,7 @@ PROGRAM MLSL3M ! MLS Level 3 Monthly subprogram
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, &
     'EOS MLS Level 3 Monthly data processing successfully completed!')
+   call MLSMessageExit(NORMAL_EXIT_STATUS)
 
 ! Detailed description of program
 ! The program is a prototype for the MLS Level 3 Monthly subprogram.
@@ -202,6 +204,9 @@ END PROGRAM MLSL3M
 !=================
 
 ! $Log$
+! Revision 1.10  2002/03/28 21:54:02  ybj
+! MLSL3M.f90
+!
 ! Revision 1.9  2002/03/27 23:27:14  ybj
 ! MonthlyProcessModule.f90
 !

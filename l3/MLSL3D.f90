@@ -51,6 +51,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
    INTEGER :: i, l2Days, mis_l2Days
 
    REAL(r8), POINTER :: avgPer(:)
+   integer, parameter :: NORMAL_EXIT_STATUS = 2
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing started')
 
@@ -119,6 +120,7 @@ PROGRAM MLSL3D ! MLS Level 3 Daily software
    CALL OutputAndClose(cf, pcf, cfProd, avgPer, anText)
 
    CALL MLSMessage (MLSMSG_Info, ModuleName, 'EOS MLS Level 3 data processing successfully completed!')
+   call MLSMessageExit(NORMAL_EXIT_STATUS)
 
 
 ! Detailed description of program
