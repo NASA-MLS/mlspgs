@@ -8,6 +8,7 @@
 # (1) comment/uncomment lines
 # (2) add/remove line(s)
 # (3) change hard-coded paths (e.g. in perl scripts)
+# (3) create new files, based on contents of existing ones
 #
 # Usage:
 # resed.sh [opt] ..  file1 [file2 ..]
@@ -18,9 +19,10 @@
 # -f file       file of commands to pass through to sed
 # -h[elp]       print brief help message; exit
 # -example      print brief example; exit
-# -rn           rename new file "old_name"+suffix, keeping old as old_name
-# -ro           rename new file "old_name", keeping old as old_name+suffix
-# -rd           replace the file only if the editing commands change it
+# -name=xxx     name to use when renaming either new or old file
+# -rn           rename new file, letting old file retain old_name
+# -ro           rename old file, letting new file inherit old_name
+# -rd           replace old file with new only if the editing commands change it
 # -print        instead of creating new file(s), print results of sed to stdout
 # -suffix=xxx   suffix to use when renaming either new or old file
 #               (w/o any separator; e.g., to add ".bak" use -suffix=.bak)
@@ -30,14 +32,21 @@
 # Note:
 # (1) The option(s) marked with "-", if present,
 #     must precede any filen on the command line
-# (2) The options -c and -f are mutually exclusive, but one is mandatory
+# (2) If you supply either -suffix=xxx or -name=xxx then
+#     you must also choose one of -rn, -ro, or -rd
+# (3) The options -c and -f are mutually exclusive, but one is mandatory
 #     i.e., you must pass commands to sed either by file or by command-line
-# (3) The options -rd, -rn and -ro are mutually exclusive
-#     if you choose -rn but omit suffix, the new files will be "old_name.new"
-#     if you choose -ro but omit suffix, the old files will be "old_name.old"
-#     if you choose -rd and the new file is different, or
+# (4) The options -rd, -rn and -ro are mutually exclusive
+#     if you omit suffix=xxx and name=xxx, then with 
+#     (option)    old file becomes       new file becomes
+#      -rn            old_name           "old_name.new"
+#      -ro          "old_name.old"          old_name
+#      -rd            (deleted)             old_name
+#      (none)         (deleted)             old_name
+#     To repeat, if you choose -rd and the new file is different, or
 #     if you choose none the new file will simply replace the old one
 #     (leaving you with no backup--so test with -print first)
+# (5) The options -name=xxx and -sufffix=xxx are mutually exclusive
 # 
 # Result:
 # Files in the list may be modified or new files created
@@ -65,14 +74,16 @@
 #     the script does not fail gracefully
 # (2) If filen+suffix is the same as filem for some pair (n,m)
 #     one will replace the other w/o any warning of this possibility
+# (3) The renaming mechanism suffix=xxx and name=xxx has not been
+#     implemented for the option -rd yet; maybe it makes no sense to do so
 # Unimplemented improvements: 
 # (1) Why not allow the user to input original and replacement strings
 #     via -os "string1" -rs "string2"
 #     though you will have to check whether the delimiters "/", ":", etc.
 #     are present among the strings
-# (2) Also allow inserting a block of text stored in a file after  
+# (2) Also allow inserting a block of text to be stored in a file after  
 #     line nnn via -l nnn -b block_file
-# (3) Instead of messing with suffixes, let the script edit files
+# (3) Instead of messing with new names, let the script edit files
 #     from one dir, saving the modified versions in another
 #     via -d1 d_orig -d2 d_mod
 #     (you will have to disable reecho part if you do this)
@@ -140,6 +151,7 @@ more_opts="yes"
 # Possible values for rename_which: {new, old, neither, diff}
 rename_which="neither"
 the_suffix=""
+new_name=""
 print_to_stdout="no"
 SED="sed"
 while [ "$more_opts" = "yes" ] ; do
@@ -182,6 +194,10 @@ while [ "$more_opts" = "yes" ] ; do
        print_to_stdout="yes"
        shift
        ;;
+    -name=* )
+       new_name=`echo $1 | sed 's/-name=//'`
+       shift
+       ;;
     -suffix=* )
        the_suffix=`echo $1 | sed 's/-suffix=//'`
        shift
@@ -208,6 +224,7 @@ then
    echo "command_file $command_file"
    echo "the_command $the_command"
    echo "the_suffix $the_suffix"
+   echo "new_name $new_name"
    echo "rename_which? $rename_which"
    echo "print_to_stdout? $print_to_stdout"
    echo "sed command to use $SED"
@@ -227,6 +244,19 @@ then
   echo 'You must have either a command file or a command-line'
   exit
 fi
+if [ "$new_name" != "" -a "$the_suffix" != "" ]
+then
+  echo 'You cannot specify both a new_name and a suffix'
+  exit
+elif [ "$rename_which" = "neither" ]
+then
+  if [ "$new_name" != "" -o "$the_suffix" != "" ]
+  then
+    echo 'You must specify whether to rename old or new'
+    exit
+  fi
+fi
+
 if [ "$rename_which" = "new" -a "$the_suffix" = "" ]
 then
   the_suffix=.new
@@ -290,13 +320,24 @@ do
   then
     echo "Created $temp_name from $file"
   else
+    # 1st--what do we call the renamed file
+    if [ "$new_name" != "" ]
+    then
+      call_it="$new_name"
+      if [ "$path" != "" ]
+      then
+        call_it="$path"/"$new_name"
+      fi
+    else
+      call_it="$file${the_suffix}"
+    fi
     # Now, which file do we rename? (The other retains the original name)
     case $rename_which in
       new)
-        mv "$temp_name" "$file${the_suffix}"
+        mv "$temp_name" "$call_it"
         ;;
       old)
-        mv "$file" "$file${the_suffix}"
+        mv "$file" "call_it"
         mv "$temp_name" "$file"
         ;;
       diff)
@@ -313,6 +354,9 @@ do
 done                                                       
 exit
 # $Log$
+# Revision 1.3  2003/02/28 19:14:09  pwagner
+# Many new options, helpful example added
+#
 # Revision 1.2  2002/10/30 01:11:21  pwagner
 # Actually works now
 #
