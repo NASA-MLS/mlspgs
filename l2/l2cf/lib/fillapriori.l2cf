@@ -166,7 +166,7 @@ begin Fill
   ;; This is a new H2O apriori precision, tighter in the troposphere.
   Fill, quantity=aprioriPrecision.h2o, method=profile, profileValues = $
     [ 1000mb: 1000ppmv, 464mb : 1000ppmv, 316mb : 150ppmv, $
-      215mb : 20ppmv, 147mb : 2ppmv, 100mb : 0.5ppmv ]
+      215mb : 30ppmv, 147mb : 3ppmv, 100mb : 0.5ppmv ]
   Fill, quantity=aprioriPrecision.hcl,  method=explicit, /spread, explicitValues= 3 ppbv
   ;; 0.2 ppbv is too small for hcn
   Fill, quantity=aprioriPrecision.hcn,  method=explicit, /spread, explicitValues= 1 ppbv
