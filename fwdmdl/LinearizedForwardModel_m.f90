@@ -218,6 +218,8 @@ contains ! =====     Public Procedures     =============================
     ! If we're doing a split calculation then get the relevant
     ! sideband information
     if ( sidebandStart /= sidebandStop ) then 
+      ! Change to this if statement later !????
+      ! if ( signal%sideband == 0 ) then
       sidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
         & quantityType = l_limbSidebandFraction, signal=signal%index, noError=.true. )
       lowerSidebandFraction => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra, &
@@ -997,6 +999,9 @@ contains ! =====     Public Procedures     =============================
 end module LinearizedForwardModel_m
 
 ! $Log$
+! Revision 2.40  2003/05/29 16:37:45  livesey
+! Renamed sideband fraction
+!
 ! Revision 2.39  2003/02/22 00:40:22  livesey
 ! Now can use OpenMP
 !
