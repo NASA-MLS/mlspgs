@@ -166,8 +166,8 @@ contains ! ======================================== BaselineForwardModel ======
       call Allocate_test ( instWt0, noMIFs, 'instWt0', ModuleName )
       call Allocate_test ( instWt1, noMIFs, 'instWt1', ModuleName )
       
-      ! Unless phiWindow is exactly 1 then do 2D calculation
-      if ( fwdModelConf%phiWindow /= 1 ) then
+      ! Unless phiWindow is exactly 0.0 then do 2D calculation
+      if ( fwdModelConf%phiWindow /= 0.0 ) then
         call Hunt ( baseline%template%phi(1,:), ptan%template%phi(:,maf), inst0 )
         inst1 = min ( inst0+1, baseline%template%noInstances )
         where ( inst1 /= inst0 )
@@ -421,6 +421,9 @@ contains ! ======================================== BaselineForwardModel ======
 end module BaselineForwardModel_m
   
 ! $Log$
+! Revision 2.16  2003/02/20 20:31:33  livesey
+! Bug fix, now does 1D correctly when phiWindow=0
+!
 ! Revision 2.15  2002/11/18 19:27:23  pwagner
 ! KBIT and KBIT2 now rm instead of rp
 !
