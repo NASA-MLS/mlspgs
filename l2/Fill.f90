@@ -617,6 +617,10 @@ contains ! =====     Public Procedures     =============================
           if (DEEBUG) then
             call output('Switch to intrinsic? ', advance='no')
             call output(switch2intrinsic, advance='yes')
+            call output('resetSeed? ', advance='no')
+            call output(resetSeed, advance='yes')
+            call output('got(f_seed)? ', advance='no')
+            call output(got(f_seed), advance='yes')
           endif
           if ( resetSeed ) then
             call mls_random_seed(new_seed=seed(1:))
@@ -627,7 +631,7 @@ contains ! =====     Public Procedures     =============================
           elseif ( got(f_seed) ) then
             do j=1, min(nsons(seedNode)-1, 2)
               call expr(subtree(j+1,seedNode),unitAsArray,valueAsArray)
-              seed(j) = int(valueAsArray(1))
+              seed(j) = int(valueAsArray(1))+chunkNo
             enddo
             if ( seed(1) /= 0 .and. seed(2) /= 0 ) then
               call mls_random_seed(pput=seed(1:))
@@ -2954,6 +2958,10 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.114  2002/03/27 17:37:57  livesey
+! Minor changes to random number stuff.
+! Now seed incremented with chunk number
+!
 ! Revision 2.113  2002/03/19 00:52:40  pwagner
 ! SOme new checks added to FillLOSVelocity
 !
