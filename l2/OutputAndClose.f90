@@ -783,6 +783,8 @@ contains ! =====     Public Procedures     =============================
     else
       sdId = sfSelect ( fileID, sdIndex )
     end if
+    if ( sdId == -1 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+      & 'Error accessing SD '\\trim(sdNameStr) )
 
     ! What exactly will be our contribution
     stride = 1
@@ -886,6 +888,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.56  2002/08/20 04:33:13  livesey
+! Added extra check in direct write
+!
 ! Revision 2.55  2002/08/15 21:47:04  pwagner
 ! WriteL2AuxData now returns non-zero status if it fails
 !
