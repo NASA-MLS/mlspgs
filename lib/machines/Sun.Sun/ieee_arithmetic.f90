@@ -50,25 +50,62 @@ MODULE IEEE_ARITHMETIC              ! Common utilities for the MLSL1 program
     module procedure IEEE_Support_NaN_D, IEEE_Support_NaN_S
   end interface
 
+  interface IEEE_IS_FINITE
+    module procedure IEEE_IS_FINITE_D, IEEE_IS_FINITE_S
+  end interface
+
   interface IEEE_Value
     module procedure IEEE_Value_D, IEEE_Value_S
   end interface
 
 CONTAINS
 
-  LOGICAL FUNCTION IEEE_IS_FINITE( ARG )
+  LOGICAL FUNCTION IEEE_IS_FINITE_S( ARG )
   ! Formal args
     real, intent(in) ::          arg
 !    integer, external ::         ir_isnan
 !    integer, external ::         ir_isinf
   ! Private
     
-    IEEE_IS_FINITE = .FALSE.
+    IEEE_IS_FINITE_S = .FALSE.
+    if( IEEE_Is_NaN_S(arg) ) RETURN
+    if( IEEE_Is_Inf_io_S(arg) ) RETURN
 !    if( ir_isnan(arg) == 1 ) RETURN
 !    if( ir_isinf(arg) == 1 ) RETURN
-    IEEE_IS_FINITE = .TRUE.
-  END FUNCTION IEEE_IS_FINITE
+    IEEE_IS_FINITE_S = .TRUE.
+  END FUNCTION IEEE_IS_FINITE_S
   
+  LOGICAL FUNCTION IEEE_IS_FINITE_D( ARG )
+  ! Formal args
+    double precision, intent(in) ::          arg
+!    integer, external ::         ir_isnan
+!    integer, external ::         ir_isinf
+  ! Private
+    
+    IEEE_IS_FINITE_D = .FALSE.
+    if( IEEE_Is_NaN_D(arg) ) RETURN
+    if( IEEE_Is_Inf_io_D(arg) ) RETURN
+!    if( ir_isnan(arg) == 1 ) RETURN
+!    if( ir_isinf(arg) == 1 ) RETURN
+    IEEE_IS_FINITE_D = .TRUE.
+  END FUNCTION IEEE_IS_FINITE_D
+  
+  logical function IEEE_Is_Inf_io_D ( X ) result(res)
+    double precision, intent(in) :: X
+    character(len=80) :: reschar
+    write(reschar, *) x
+    res = ( index(reschar, 'Inf') > 0 .or. &
+      & index(reschar, 'inf') > 0 .or. index(reschar, 'INF') > 0 )
+  end function IEEE_Is_Inf_io_D
+
+  logical function IEEE_Is_Inf_io_S ( X ) result(res)
+    real, intent(in) :: X
+    character(len=80) :: reschar
+    write(reschar, *) x
+    res = ( index(reschar, 'Inf') > 0 .or. &
+      & index(reschar, 'inf') > 0 .or. index(reschar, 'INF') > 0 )
+  end function IEEE_Is_Inf_io_S
+
   elemental logical function IEEE_Is_NaN_D ( X )
     double precision, intent(in) :: X
     IEEE_Is_NaN_D = .not. ( x <= 0.0 .or. x >= 0.0 )
@@ -133,6 +170,9 @@ END MODULE IEEE_ARITHMETIC
 
 !
 ! $Log$
+! Revision 1.5  2003/07/03 19:25:24  vsnyder
+! Remove some comments that are no longer true
+!
 ! Revision 1.4  2003/07/03 19:11:57  vsnyder
 ! Add IEEE_Support_NaN, IEEE_Is_NaN, IEEE_Class_Type.
 ! Make IEEE_Quiet_NaN to be of IEEE_Class_Type.
