@@ -177,7 +177,7 @@ contains
     call PVMIDLPack ( (/ config%globalConfig, config%atmos_der, config%do_baseline, &
       & config%do_conv, config%do_freq_avg, config%do_1d, config%differentialScan, &
       & config%lockBins, config%spect_der, config%temp_der, config%skipOverlaps, &
-      & config%default_spectroscopy, config%do_1d /), info )
+      & config%default_spectroscopy /), info )
     if ( info /= 0 ) call PVMErrorMessage ( info, "Packing fwmConfig logicals" )
     call PVMIDLPack ( (/ config%instrumentModule, config%surfaceTangentIndex, &
       & config%no_cloud_species, config%no_model_surfs, &
@@ -500,6 +500,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.21  2003/01/16 05:53:19  livesey
+! Bug fix to Jonathans new configs
+!
 ! Revision 2.20  2003/01/16 05:50:59  livesey
 ! Bug fix in do_1d handling
 !
