@@ -1006,11 +1006,62 @@ contains ! =====     Public Procedures     =============================
     end do
   end subroutine FillLOSVelocity
 
+  ! ------------------------------------------- FillableChiSq ---
+  function FillableChiSq ( qty, measQty, modelQty, errorQty ) result ( aok )
+    ! Check whether we may proceed with special fill of chi squared 
+    type (VectorValue_T), intent(inout) :: QTY
+    type (VectorValue_T), intent(in) ::    modelQty
+    type (VectorValue_T), intent(in) ::    measQty
+    type (VectorValue_T), intent(in) ::    errorQty
+    LOGICAL ::                             AOK
+    
+    ! What we will check is that:
+    ! (1) all quantities have same molecule
+    ! (2) all quantities have same signal
+    ! (3) all quantities have same HGrid
+    ! (4) all but qty (chiSq) have same VGrid
+    
+    aok = .true.
+
+    ! (1)
+    aok = aok .and. &
+      & (qty%template%molecule == measQty%template%molecule) &
+      & .and. &
+      & (qty%template%molecule == modelQty%template%molecule) &
+      & .and. &
+      & (qty%template%molecule == errorQty%template%molecule)
+
+    ! (2)
+    aok = aok .and. &
+      & (qty%template%signal == measQty%template%signal) &
+      & .and. &
+      & (qty%template%signal == modelQty%template%signal) &
+      & .and. &
+      & (qty%template%signal == errorQty%template%signal)
+
+    ! (3)
+    aok = aok .and. &
+    & DoHgridsMatch( qty, measQty ) &
+    & .and. &
+    & DoHgridsMatch( qty, modelQty ) &
+    & .and. &
+    & DoHgridsMatch( qty, errorQty )
+
+    ! (4)
+    aok = aok .and. &
+    & DoVgridsMatch( measqty, modelQty ) &
+    & .and. &
+    & DoVgridsMatch( measqty, errorQty )
+    
+    return
+  end function FillableChiSq
+
   ! ------------------------------------------- FillChiSqChan ---
   subroutine FillChiSqChan ( key, qty, measQty, modelQty, errorQty, &
   & firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to channels
+    ! Formal arguments
     integer, intent(in) :: KEY
     type (VectorValue_T), intent(inout) :: QTY
     type (VectorValue_T), intent(in) ::    modelQty
@@ -1020,6 +1071,68 @@ contains ! =====     Public Procedures     =============================
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in qty
 
+    ! Local variables
+    real(r8), dimension(:), pointer  ::    VALUES => NULL()
+    integer ::                             UseFirstInstance, UseLastInstance, &
+    &                                      NoOutputInstances
+    integer ::                             C           ! Channel loop counter
+    integer ::                             S           ! Surface loop counter
+    integer ::                             I           ! Instances
+    integer ::                             QINDEX
+    integer ::                             NOCHANS
+
+    ! Executable code
+    ! First check that things are OK.
+    if (.not. ValidateVectorQuantity ( qty, &
+      & quantityType=(/l_chiSqChan/), majorFrame=.true.) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'Attempting to fill wrong quantity with chi^2 channelwise'  )
+      return
+    elseif (.not. FillableChiSq ( qty, measQty, modelQty, errorQty ) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'Incompatibility among vector quantities filling chi^2 channelwise'  )
+      return
+    elseif (any ( errorQty%values == 0.0) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'A vanishing error filling chi^2 channelwise'  )
+      return
+    endif
+
+    ! Work out what to do with the first and last Instance information
+    
+    if ( PRESENT(firstInstance) ) then
+      useFirstInstance = firstInstance
+    else
+      useFirstInstance = 1
+    end if
+
+    if ( PRESENT(lastInstance) ) then
+      useLastInstance = lastInstance
+    else
+      useLastInstance = qty%template%noInstances
+    end if
+    noOutputInstances = useLastInstance-useFirstInstance+1
+    ! If we've not been asked to output anything then don't carry on
+    if ( noOutputInstances < 1 ) return
+
+    call allocate_test(values, measQty%template%noSurfs, &
+      & 'chi^2 unsummed', ModuleName)
+    noChans = qty%template%noChans
+    do i=useFirstInstance, useLastInstance
+      do c=1, noChans
+        do s=1, measQty%template%noSurfs
+          qIndex = c + (s-1)*nochans
+          values(s) = ( &
+          & (measQty%values(qIndex, i) - modelQty%values(qIndex, i)) &
+          & / &
+          & errorQty%values(qIndex, i) &
+          &  ) ** 2
+        enddo
+        qty%values(c, i) = sum(values) / measQty%template%noSurfs
+      enddo
+    enddo
+    call deallocate_test(values, &
+      & 'chi^2 unsummed', ModuleName)
   end subroutine FillChiSqChan
 
   ! ------------------------------------------- FillChiSqMMaf ---
@@ -1027,6 +1140,7 @@ contains ! =====     Public Procedures     =============================
   & firstInstance, lastInstance )
     ! A special fill of chi squared 
     ! broken out according to major frames
+    ! Formal arguments
     integer, intent(in) :: KEY
     type (VectorValue_T), intent(inout) :: QTY
     type (VectorValue_T), intent(in) ::    modelQty
@@ -1036,13 +1150,70 @@ contains ! =====     Public Procedures     =============================
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the qty
 
+    ! Local variables
+    real(r8), dimension(:), pointer  ::    VALUES => NULL()
+    integer ::                             UseFirstInstance, UseLastInstance, &
+    &                                      NoOutputInstances
+    integer ::                             C           ! Channel loop counter
+    integer ::                             S           ! Surface loop counter
+    integer ::                             I           ! Instances
+    integer ::                             INSTANCELEN
+
+    ! Executable code
+    ! First check that things are OK.
+    if (.not. ValidateVectorQuantity ( qty, &
+      & quantityType=(/l_chiSqMMaf/), majorFrame=.true.) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'Attempting to fill wrong quantity with chi^2 MMAFwise'  )
+      return
+    elseif (.not. FillableChiSq ( qty, measQty, modelQty, errorQty ) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'Incompatibility among vector quantities filling chi^2 MMAFwise'  )
+      return
+    elseif (any ( errorQty%values == 0.0) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'A vanishing error filling chi^2 MMAFwise'  )
+      return
+    endif
+
+    ! Work out what to do with the first and last Instance information
+    
+    if ( PRESENT(firstInstance) ) then
+      useFirstInstance = firstInstance
+    else
+      useFirstInstance = 1
+    end if
+
+    if ( PRESENT(lastInstance) ) then
+      useLastInstance = lastInstance
+    else
+      useLastInstance = qty%template%noInstances
+    end if
+    noOutputInstances = useLastInstance-useFirstInstance+1
+    ! If we've not been asked to output anything then don't carry on
+    if ( noOutputInstances < 1 ) return
+
+    instanceLen = measQty%template%noChans * measQty%template%noSurfs
+    call allocate_test(values, instanceLen, &
+      & 'chi^2 unsummed', ModuleName)
+    do i=useFirstInstance, useLastInstance
+          values = ( &
+          & (measQty%values(:, i) - modelQty%values(:, i)) &
+          & / &
+          & errorQty%values(:, i) &
+          &  ) ** 2
+        qty%values(1, i) = sum(values) / instanceLen
+    enddo
+    call deallocate_test(values, &
+      & 'chi^2 unsummed', ModuleName)
   end subroutine FillChiSqMMaf
 
   ! ------------------------------------------- FillChiSqMMif ---
   subroutine FillChiSqMMif ( key, qty, measQty, modelQty, errorQty, &
   & firstInstance, lastInstance )
     ! A special fill of chi squared 
-    ! broken out according to channels
+    ! broken out according to Mifs
+    ! Formal arguments
     integer, intent(in) :: KEY
     type (VectorValue_T), intent(inout) :: QTY
     type (VectorValue_T), intent(in) ::    modelQty
@@ -1052,6 +1223,68 @@ contains ! =====     Public Procedures     =============================
     ! The last two are set if only part (e.g. overlap regions) of the quantity
     ! is to be stored in the qty
 
+    ! Local variables
+    real(r8), dimension(:), pointer  ::    VALUES => NULL()
+    integer ::                             UseFirstInstance, UseLastInstance, &
+    &                                      NoOutputInstances
+    integer ::                             C           ! Channel loop counter
+    integer ::                             S           ! Surface loop counter
+    integer ::                             I           ! Instances
+    integer ::                             QINDEX
+    integer ::                             NOMIFS
+
+    ! Executable code
+    ! First check that things are OK.
+    if (.not. ValidateVectorQuantity ( qty, &
+      & quantityType=(/l_chiSqMMif/), minorFrame=.true.) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'Attempting to fill wrong quantity with chi^2 MMIFwise'  )
+      return
+    elseif (.not. FillableChiSq ( qty, measQty, modelQty, errorQty ) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'Incompatibility among vector quantities filling chi^2 MMIFwise'  )
+      return
+    elseif (any ( errorQty%values == 0.0) ) then
+      call Announce_error ( key, No_Error_code, &
+      & 'A vanishing error filling chi^2 MMIFwise'  )
+      return
+    endif
+
+    ! Work out what to do with the first and last Instance information
+    
+    if ( PRESENT(firstInstance) ) then
+      useFirstInstance = firstInstance
+    else
+      useFirstInstance = 1
+    end if
+
+    if ( PRESENT(lastInstance) ) then
+      useLastInstance = lastInstance
+    else
+      useLastInstance = qty%template%noInstances
+    end if
+    noOutputInstances = useLastInstance-useFirstInstance+1
+    ! If we've not been asked to output anything then don't carry on
+    if ( noOutputInstances < 1 ) return
+
+    call allocate_test(values, measQty%template%noChans, &
+      & 'chi^2 unsummed', ModuleName)
+    noMIFs = measQty%template%noSurfs
+    do i=useFirstInstance, useLastInstance
+      do s=1, noMIFs
+        do c=1, measQty%template%noChans
+          qIndex = c + (s-1)*measQty%template%noChans
+          values(c) = ( &
+          & (measQty%values(qIndex, i) - modelQty%values(qIndex, i)) &
+          & / &
+          & errorQty%values(qIndex, i) &
+          &  ) ** 2
+        enddo
+        qty%values(s, i) = sum(values) / measQty%template%noChans
+      enddo
+    enddo
+    call deallocate_test(values, &
+      & 'chi^2 unsummed', ModuleName)
   end subroutine FillChiSqMMif
 
   ! ------------------------------------------- FillColAbundance ---
@@ -1878,6 +2111,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.72  2001/09/17 23:12:21  pwagner
+! Fleshed out FillChi.. some more
+!
 ! Revision 2.71  2001/09/14 23:34:13  pwagner
 ! Now should allow special fill of chi^2..
 !
