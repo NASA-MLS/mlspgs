@@ -152,7 +152,7 @@ contains
              nadp+n_spec_def, &
       begin, s+s_spectrometerType, &
              begin, f+f_channels, t+t_numeric_range, n+n_field_type, &
-             begin, f+f_deferred, t+t_numeric, n+n_field_type, &
+             begin, f+f_deferred, t+t_boolean, n+n_field_type, &
              begin, f+f_first, t+t_numeric, n+n_field_type, &
              begin, f+f_last, t+t_numeric, n+n_field_type, &
              begin, f+f_start, t+t_numeric, n+n_field_type, &
@@ -181,6 +181,9 @@ contains
 end module Init_MLSSignals_m
 
 ! $Log$
+! Revision 2.12  2001/04/11 20:19:27  vsnyder
+! Undo changes to 'deferred'
+!
 ! Revision 2.11  2001/04/11 18:31:04  vsnyder
 ! Change 'deferred' from boolean to numeric
 !
