@@ -51,12 +51,12 @@ contains
     use Get_Species_Data_M, only: Beta_Group_T, Get_Species_Data, &
       Destroy_Species_Data, Destroy_Beta_Group
     use GLnp, only: GW, NG
-    use Intrinsic, only: L_A, L_CLOUDICE, L_CLOUDWATER, &      ! JJ
-      & L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
-      & L_ELEVOFFSET, L_LOSVEL, L_MAGNETICFIELD, L_ORBITINCLINATION,  &
-      & L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, L_LIMBSIDEBANDFRACTION, &
+    use Intrinsic, only: L_A, L_BOUNDARYPRESSURE, L_CLEAR, L_CLOUDICE, &
+      & L_CLOUDWATER, L_DN, L_DV, L_DW, L_EARTHREFL, L_ECRtoFOV, &
+      & L_ELEVOFFSET, L_GPH, L_LOSVEL, L_LIMBSIDEBANDFRACTION, L_MAGNETICFIELD, &
+      & L_ORBITINCLINATION, L_PHITAN, L_PTAN, L_RADIANCE, L_REFGPH, L_SCGEOCALT, &
       & L_SIZEDISTRIBUTION, L_SPACERADIANCE, L_TEMPERATURE, L_VMR, &
-      & L_CLEAR, L_BOUNDARYPRESSURE, L_GPH, LIT_INDICES
+      & LIT_INDICES
     use Load_Sps_Data_m, only: DestroyGrids_t, Grids_T, Load_One_Item_Grid, &
       & Load_Sps_Data, Modify_values_for_supersat                    ! JJ
     use L2PC_PFA_STRUCTURES, only: SLABS_STRUCT, ALLOCATESLABS, &
@@ -407,7 +407,6 @@ contains
     type (VectorValue_T), pointer :: ELEVOFFSET    ! Elevation offset
     type (VectorValue_T), pointer :: F             ! An arbitrary species
     type (VectorValue_T), pointer :: GPH           ! Geopotential height !JJ
-    type (VectorValue_T), pointer :: VMR           ! Quantity  !JJ
     type (VectorValue_T), pointer :: LOSVEL        ! Line of sight velocity
     type (VectorValue_T), pointer :: MAGFIELD      ! Profiles
     type (VectorValue_T), pointer :: ORBINCLINE    ! Orbital inclination
@@ -420,6 +419,7 @@ contains
     type (VectorValue_T), pointer :: SPACERADIANCE ! Emission from space
     type (VectorValue_T), pointer :: TEMP          ! Temperature component of state vector
     type (VectorValue_T), pointer :: THISRADIANCE  ! A radiance vector quantity
+    type (VectorValue_T), pointer :: VMR           ! Quantity  !JJ
 
     type (Signal_T), pointer :: FIRSTSIGNAL        ! The first signal we're dealing with
 
@@ -486,8 +486,9 @@ contains
     nullify (alpha_path_c, alpha_path_f, alpha_path_polarized, &
       & alpha_path_polarized_f, beta_path_c, beta_path_cloud_c, &
       & beta_path_phh_c, beta_path_w0_c, beta_path_f, beta_path_polarized, &
-      & c_inds, channelOrigins, cg_inds, d_rad_pol_df, d_rad_pol_dt, &
-      & d_delta_df, d_delta_dt, d_t_scr_dt, d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
+      & c_inds, cg_inds, channelOrigins, closestInstances, &
+      & d_rad_pol_df, d_rad_pol_dt, d_delta_df, d_delta_dt, d_t_scr_dt, &
+      & d2x_dxdt, d2xdxdt_surface, d2xdxdt_tan, &
       & dbeta_dn_path_c, dbeta_dn_path_f, dbeta_dt_path_c, dbeta_dt_path_f, &
       & dbeta_dv_path_c, dbeta_dv_path_f, dbeta_dw_path_c, dbeta_dw_path_f, &
       & ddhidhidtl0, de_df, de_dt, del_s, del_zeta, deltau_pol, &
@@ -500,7 +501,7 @@ contains
       & do_calc_t, do_calc_t_c, do_calc_t_f, &
       & do_calc_zp, do_calc_iwc_zp, do_gl, &
       & drad_dn, drad_dt, drad_dv, drad_dw, dsdz_gw_path, dx_dh_out, dx_dt, &
-      & dxdt_surface, dxdt_tan, closestInstances, eta_fzp, eta_iwc, &
+      & dxdt_surface, dxdt_tan, eta_fzp, eta_iwc, &
       & eta_zp, eta_iwc_zp, eta_mag_zp, eta_zxp_dn, eta_zxp_dn_c, eta_zxp_dn_f, &
       & eta_zxp_dv, eta_zxp_dv_c, eta_zxp_dv_f, &
       & eta_zxp_dw, eta_zxp_dw_c, eta_zxp_dw_f, &
@@ -666,51 +667,51 @@ contains
 ! Now, allocate other variables we're going to need later ----------------
 
     ! Stuff for clouds
-    IF ( FwdModelConf%incl_cld ) then  ! Do this block only if incl_cld is true
+    if ( FwdModelConf%incl_cld ) then  ! Do this block only if incl_cld is true
 
-       call Allocate_test ( closestInstances, thisRadiance%template%noInstances,    &
-       & 'closestInstances', ModuleName )      
-       call FindClosestInstances ( temp, thisRadiance, closestInstances )
-       inst = closestInstances(MAF)
+      call Allocate_test ( closestInstances, thisRadiance%template%noInstances,    &
+      & 'closestInstances', ModuleName )      
+      call FindClosestInstances ( temp, thisRadiance, closestInstances )
+      inst = closestInstances(MAF)
 
-       call allocate_test ( scat_src%values, n_t_zeta, &
-       & fwdModelConf%num_scattering_angles, 'scat_src', moduleName )
+      call allocate_test ( scat_src%values, n_t_zeta, &
+      & fwdModelConf%num_scattering_angles, 'scat_src', moduleName )
 
-       if ( size(FwdModelConf%molecules) .lt. 2 ) then
-          !   make sure we have enough molecules
-          call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
-       endif
+      if ( size(FwdModelConf%molecules) .lt. 2 ) then
+         !   make sure we have enough molecules
+         call MLSMessage ( MLSMSG_Error, ModuleName, 'Not enough molecules' )
+      end if
 
-       ! now checking spectroscopy
-       got = .false.
-       nspec = size(FwdModelConf%molecules)
-       noSurf  = temp%template%noSurfs     
-       call allocate_test ( vmrArray, nspec, n_t_zeta, 'vmrArray', ModuleName )
-       vmrarray = 0._r8
-   
-       do j = 1, nspec      ! Loop over species
-       Call get_string ( lit_indices( abs(fwdModelConf%molecules(j)) ), molName )
+      ! now checking spectroscopy
+      got = .false.
+      nspec = size(FwdModelConf%molecules)
+      noSurf  = temp%template%noSurfs     
+      call allocate_test ( vmrArray, nspec, n_t_zeta, 'vmrArray', ModuleName )
+      vmrarray = 0.0_r8
 
-       select case (fwdModelConf%molecules(j))
+      do j = 1, nspec      ! Loop over species
+        call get_string ( lit_indices( abs(fwdModelConf%molecules(j)) ), molName )
+
+        select case (fwdModelConf%molecules(j))
         case ( L_H2O, L_O3, L_N2O ) 
-            ispec = 0
-            if(fwdModelConf%molecules(j) == l_h2o) ispec = 1
-            if(fwdModelConf%molecules(j) == l_o3) ispec = 2
-            if(fwdModelConf%molecules(j) == l_n2o) ispec = 3
-            if(fwdModelConf%molecules(j) == l_h2o) got(L_H2O) = .true.
-            if(fwdModelConf%molecules(j) == l_o3) got(L_O3) = .true.
+          ispec = 0
+          if(fwdModelConf%molecules(j) == l_h2o) ispec = 1
+          if(fwdModelConf%molecules(j) == l_o3) ispec = 2
+          if(fwdModelConf%molecules(j) == l_n2o) ispec = 3
+          if(fwdModelConf%molecules(j) == l_h2o) got(L_H2O) = .true.
+          if(fwdModelConf%molecules(j) == l_o3) got(L_O3) = .true.
 
-         vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
-           & quantityType=l_vmr, molecule=fwdModelConf%molecules(j) )
+          vmr => GetVectorQuantityByType ( fwdModelIn, fwdModelExtra,            &
+            & quantityType=l_vmr, molecule=fwdModelConf%molecules(j) )
 
-            novmrSurf = vmr%template%nosurfs
+          novmrSurf = vmr%template%nosurfs
 
-            call InterpolateValues ( &
-            & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
-            & reshape(vmr%values(:,inst),(/novmrSurf/)),      &    ! Old Y
-            & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
-            & vmrArray(ispec,:),                              &    ! New Y
-            & 'Linear', extrapolate='Clamp' )
+          call InterpolateValues ( &
+          & reshape(vmr%template%surfs(:,1),(/novmrSurf/)), &    ! Old X
+          & reshape(vmr%values(:,inst),(/novmrSurf/)),      &    ! Old Y
+          & reshape(temp%template%surfs(:,1),(/noSurf/)),   &    ! New X
+          & vmrArray(ispec,:),                              &    ! New Y
+          & 'Linear', extrapolate='Clamp' )
 
         case ( L_N2, L_O2, L_H2O_18, L_O_18_O)
           call MLSMessage(MLSMSG_Warning, ModuleName, &
@@ -718,15 +719,15 @@ contains
         case default
           call MLSMessage(MLSMSG_Error, ModuleName, &
           &'cloud fwd model currently cannot accept this molecule: '//trim(molName))
-       end select      
-       enddo ! End of Loop over species
+        end select      
+      end do ! End of Loop over species
 
-    if ( .not. got(l_h2o) .or. .not. got(l_o3) ) then
-    !make sure we have at least two molecules h2o and o3. 
-      call MLSMessage(MLSMSG_Error, ModuleName,'Missing molecules H2O or O3 in cloud FM')
-    endif
+      if ( .not. got(l_h2o) .or. .not. got(l_o3) ) then
+      !make sure we have at least two molecules h2o and o3. 
+        call MLSMessage(MLSMSG_Error, ModuleName,'Missing molecules H2O or O3 in cloud FM')
+      end if
 
-    ENDIF
+    end if
 
 ! Set up our temporary `state vector' like arrays ------------------------
 
@@ -1565,26 +1566,9 @@ contains
           Frq = frequencies(frq_i)
           frqhk = 0.5_r8 * frq * h_over_k ! h nu / 2 k T
 
-          tanh1_c(1:npc) = tanh( frqhk / t_path_c(1:npc) )
-
-          If ( FwdModelConf%incl_cld ) then   !JJ
-            ! Compute Scattering source function based on temp_prof at all
-            ! angles U for each temperature layer assuming a plane parallel
-            ! atmosphere.
-            call T_scat ( temp%values(:,inst), Frq, GPH%values(:,windowstart), &
-            & vmrArray, nspec,                                                 &
-            & fwdModelConf%num_scattering_angles,                              &
-            & fwdModelConf%num_azimuth_angles,                                 &
-            & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,           &
-            & fwdModelConf%no_cloud_species, scat_src%values )
-
-            scat_src%template = temp%template
-            call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false. )
-            call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
-
-          End if
-
           ! Set up path quantities --------------------------------------
+
+          tanh1_c(1:npc) = tanh( frqhk / t_path_c(1:npc) )
 
           ! Compute the sps_path for this Frequency
           call comp_sps_path_frq ( Grids_f, firstSignal%lo, thisSideband, &
@@ -1605,6 +1589,19 @@ contains
           do_gl = .false.
 
           if ( FwdModelConf%incl_cld ) then    !JJ
+            ! Compute Scattering source function based on temp_prof at all
+            ! angles U for each temperature layer assuming a plane parallel
+            ! atmosphere.
+            call T_scat ( temp%values(:,inst), Frq, GPH%values(:,windowstart), &
+            & vmrArray, nspec,                                                 &
+            & fwdModelConf%num_scattering_angles,                              &
+            & fwdModelConf%num_azimuth_angles,                                 &
+            & fwdModelConf%num_ab_terms, fwdModelConf%num_size_bins,           &
+            & fwdModelConf%no_cloud_species, scat_src%values )
+
+            scat_src%template = temp%template
+            call load_one_item_grid ( grids_tscat, scat_src, phitan, maf, fwdModelConf, .false. )
+            call Deallocate_test ( vmrArray,'vmrArray',ModuleName )
 
             call get_beta_path_cloud ( Frq,                              &
               &  p_path(1:no_ele), t_path(1:no_ele),                     &  
@@ -2758,6 +2755,9 @@ contains
 end module FullForwardModel_m
 
 ! $Log$
+! Revision 2.181  2003/11/06 01:13:14  bill
+! fixed DACS freq extrapolation problem
+!
 ! Revision 2.180  2003/11/05 19:26:01  jonathan
 ! add stuff for use later in cld model
 !
