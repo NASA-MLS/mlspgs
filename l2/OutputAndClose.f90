@@ -29,6 +29,8 @@ module OutputAndClose ! outputs all data from the Join module to the
 
   ! -----     Private declarations     ---------------------------------
 
+  ! Should we get this from MLSL2Options?
+  logical, parameter :: LOGFILEGETSMETADATA = .false.  ! metadata to log file?
   ! For Announce_Error
   integer :: ERROR
 
@@ -664,14 +666,15 @@ contains ! =====     Public Procedures     =============================
     end do  ! spec_no
 
 ! Write the log file metadata
+    if ( LOGFILEGETSMETADATA ) then
+      if ( DEBUG ) then
+        call output('About to write log file metadata' , advance='yes')
+      end if
 
-    if ( DEBUG ) then
-      call output('About to write log file metadata' , advance='yes')
-    end if
-
-    if (CREATEMETADATA ) then
-      call writeMetaLog ( l2pcf, metadata_error )
-      error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+      if (CREATEMETADATA ) then
+        call writeMetaLog ( l2pcf, metadata_error )
+        error = max(error, PENALTY_FOR_NO_METADATA*metadata_error)
+      end if
     end if
 
 ! Done with text of PCF file at last
@@ -1074,6 +1077,9 @@ contains ! =====     Public Procedures     =============================
 end module OutputAndClose
 
 ! $Log$
+! Revision 2.67  2003/03/01 00:25:20  pwagner
+! Disabled writing metadata to Log file (aka PH)
+!
 ! Revision 2.66  2003/02/12 21:51:32  pwagner
 ! Should allow direct write with attributes
 !
