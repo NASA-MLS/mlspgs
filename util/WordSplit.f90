@@ -18,7 +18,8 @@ program WordSplit
 
 o:do
     read ( *, '(a)', iostat=s ) line
-    if ( s /= 0 ) exit
+    if ( s /= 0 ) &
+  exit o
     do
       line = adjustl(line)
       if ( line(1:1) == '!' .or. line(1:1) == ' ' .or. line(1:1) == ')' ) &
@@ -32,6 +33,9 @@ o:do
 end program WordSplit
 
 ! $Log$
+! Revision 1.3  2004/01/26 20:49:10  vsnyder
+! Allow a word to end with !
+!
 ! Revision 1.2  2004/01/26 20:40:09  vsnyder
 ! Allow a word to end with ampersand
 !
