@@ -228,10 +228,11 @@ contains
       line = ' '
       write ( line, Format ) value
       k = len_trim(Format)
-      myFormat = lowerCase(Format)
+      kChar=lowerCase(Format)
+      call ReplaceSubString(kChar, myFormat, 'g', 'f')
       call ReplaceSubString(myFormat, kChar, 'e', 'f')
       call ReplaceSubString(kChar, myFormat, 'd', 'f')
-      call ExtractSubString(TRIM(myFormat), kChar(1:k), 'f', '.')
+      call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
       read (kChar, '(i2)') k
       if (k < 1) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -421,10 +422,11 @@ contains
       line = ' '
       write ( line, Format ) value
       k = len_trim(Format)
-      myFormat = lowerCase(Format)
+      kChar=lowerCase(Format)
+      call ReplaceSubString(kChar, myFormat, 'g', 'f')
       call ReplaceSubString(myFormat, kChar, 'e', 'f')
       call ReplaceSubString(kChar, myFormat, 'd', 'f')
-      call ExtractSubString(TRIM(myFormat), kChar(1:k), 'f', '.')
+      call ExtractSubString(TRIM(myFormat), kChar, 'f', '.')
       read (kChar, '(i2)') k
       if (k < 1) then
         call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -483,6 +485,9 @@ contains
 end module OUTPUT_M
 
 ! $Log$
+! Revision 2.24  2003/08/25 17:48:37  pwagner
+! Remembered formats may be gx.y
+!
 ! Revision 2.23  2003/08/25 17:06:50  pwagner
 ! Remembered that formats may use ex.y as well as [fd]x.y
 !
