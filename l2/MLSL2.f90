@@ -90,6 +90,7 @@ program MLSL2
   character(len=255) :: LINE       ! Into which is read the command args
   integer :: N                     ! Offset for start of --'s text
   integer :: ROOT                  ! of the abstract syntax tree
+  integer :: SINGLECHUNK = 0       ! Just run one chunk
   integer :: STATUS                ! From OPEN
   logical :: SWITCH                ! "First letter after -- was not n"
   real :: T0, T1, T2               ! For timing
@@ -144,6 +145,19 @@ program MLSL2
       end if
       if ( line(3+n:8+n) == 'cfpcf ' ) then
         pcf_for_input = switch
+      else if ( line(3+n:7+n) == 'chunk' ) then
+        copyArg=.false.
+        if ( line(8+n:) /= ' ' ) then
+          line(:7+n) = ' '
+        else
+          i = i + 1
+          call getarg ( i, line )
+        end if
+        read ( line, *, iostat=status ) singleChunk
+        if ( status /= 0 ) then
+          call io_error ( "After --chunk option", status, line )
+          stop
+        end if
       else if ( line(3+n:7+n) == 'ckbk ' ) then
         checkBlocks = switch
       else if ( line(3+n:14+n) == 'countChunks ' ) then
@@ -368,7 +382,7 @@ program MLSL2
       ! Now do the L2 processing.
       call time_now ( t1 )
       if ( timing ) call output ( "-------- Processing Begun ------ ", advance='yes' )
-      call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks )
+      call walk_tree_to_do_MLS_L2 ( root, error, first_section, countChunks, singleChunk )
       if ( timing ) then
         call output ( "-------- Processing Ended ------ ", advance='yes' )
         call sayTime ( 'Processing' )
@@ -444,6 +458,9 @@ contains
 end program MLSL2
 
 ! $Log$
+! Revision 2.65  2002/01/18 18:55:25  livesey
+! Added the --chunk option
+!
 ! Revision 2.64  2002/01/09 22:56:46  livesey
 ! Tidied up parsing of master option.
 !
