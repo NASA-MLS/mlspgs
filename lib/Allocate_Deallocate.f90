@@ -19,6 +19,7 @@ module Allocate_Deallocate
 ! *****     be declared with => NULL()         *****
 ! **************************************************
 
+  use MACHINE, only: MLS_GC_NOW
   use MLSCommon, only: r4, r8
   use MLSMessageModule, only: MLSMessage, MLSMSG_Allocate, MLSMSG_DeAllocate, &
     & MLSMSG_Error, MLSMSG_Warning
@@ -26,9 +27,11 @@ module Allocate_Deallocate
   implicit NONE
   private
 
-  public :: ALLOCATE_TEST, DEALLOCATE_TEST, DEALLOC_STATUS
+  public :: ALLOCATE_TEST, DEALLOCATE_TEST, DEALLOC_STATUS, & 
+    & SET_GARBAGE_COLLECTION
 
   integer, save :: DEALLOC_STATUS = 0
+  logical, save :: COLLECT_GARBAGE_EACH_TIME = .false.
 
   interface ALLOCATE_TEST
     module procedure ALLOCATE_TEST_CHARACTER_1D
@@ -255,6 +258,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_Character_1d
@@ -269,6 +274,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_Character_2d
@@ -283,6 +290,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_RealR8_1d
@@ -297,6 +306,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_RealR8_2d
@@ -311,6 +322,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_RealR8_3d
@@ -325,6 +338,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_Integer_1d
@@ -339,6 +354,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_Integer_2d
@@ -353,6 +370,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_Integer_3d
@@ -367,6 +386,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_Logical_1d
@@ -381,6 +402,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_Logical_2d
@@ -395,6 +418,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_RealR4_1d
@@ -409,6 +434,8 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_RealR4_2d
@@ -423,13 +450,24 @@ contains ! =====     Private Procedures     ============================
         call MLSMessage ( MLSMSG_Warning, ModuleName, &
         & MLSMSG_DeAllocate // Its_Name )
         dealloc_status = max(dealloc_status, status)
+      elseif ( collect_garbage_each_time ) then
+        call mls_gc_now
       end if
     end if
   end subroutine Deallocate_Test_RealR4_3d
 
+  ! ----------------------------------  Set_garbage_collection  -----
+  subroutine Set_garbage_collection ( setting )
+    logical :: setting
+    collect_garbage_each_time = setting
+  end subroutine Set_garbage_collection
+
 end module Allocate_Deallocate
 
 ! $Log$
+! Revision 2.9  2002/02/05 00:42:47  pwagner
+! Optionally collects garbage after each deallocate_test
+!
 ! Revision 2.8  2002/02/01 01:48:17  vsnyder
 ! Add [De]Allocate_Test_Character_2d
 !
