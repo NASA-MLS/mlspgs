@@ -1,11 +1,10 @@
-; This template l2cf performs a sids calculation for one band or
-; sideband, defined by the macro band, for the day defined by the
-; macro day.
+; This template l2cf performs a sids calculation for one radiometer
+; for the day defined by the macro day.
 
 ; First some m4 directives
 include(m4defs.l2cf)
 
-; Get a default for date and band if not already supplied
+; Get a default for date and radiometer if not already supplied
 !ifdef(day,{},{!define(day,{1996d051})})
 !ifdef(radiometer,{},{!define(band,{R1A})})
 !ifdef(l1boaversion,{},{!define(l1boaversion,{s5--t})})
@@ -16,7 +15,7 @@ include(m4defs.l2cf)
 !define(outpathl1brad,{/bigdata/livesey/misc})
 !include(clarifypaths.l2cf)
 
-; Work out what bands we want
+; Work out what radiometer we want
 !ifelse(!radiometer,R1A,{!define(bands,{1,22,32})})
 !ifelse(!radiometer,R1B,{!define(bands,{21,26,34})})
 !ifelse(!radiometer,R2,{!define(bands,{2,3,4,5,6,23,27})})
@@ -27,7 +26,7 @@ include(m4defs.l2cf)
 
 ; ----------------------------------- Boiler plate l2cf stuff -------
 
-; Retrieval macros, defines bands
+; Retrieval macros, defines radiometer
 !include(retrievalmacros.l2cf)
 
 ; Valid signals database
