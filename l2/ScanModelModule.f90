@@ -29,7 +29,8 @@ module ScanModelModule          ! Scan model and associated calculations
     & FindInstanceWindow
   use MatrixModule_0, only: DESTROYBLOCK, MATRIXELEMENT_T, M_ABSENT, M_BANDED, &
     & M_FULL, UpdateDiagonal
-  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T
+  use MatrixModule_1, only: CREATEBLOCK, FINDBLOCK, MATRIX_T, &
+    & CREATEEMPTYMATRIX, DESTROYMATRIX, CLEARMATRIX
   USE MLSCommon, ONLY: R8, rp
   use MLSMessageModule, only: MLSMESSAGE, MLSMSG_ALLOCATE, MLSMSG_DEALLOCATE, &
        MLSMSG_ERROR, MLSMSG_WARNING
@@ -41,15 +42,17 @@ module ScanModelModule          ! Scan model and associated calculations
   use Toggles, only: EMIT, TOGGLE
   use Trace_M, only: TRACE_BEGIN, TRACE_END
   USE VectorsModule, ONLY : GETVECTORQUANTITYBYTYPE, VALIDATEVECTORQUANTITY, &
-    & VECTOR_T, VECTORVALUE_T
-  use Units, only: OMEGA
+    & VECTOR_T, VECTORTEMPLATE_T, VECTORVALUE_T, CREATEVECTOR, &
+    & CONSTRUCTVECTORTEMPLATE, DESTROYVECTORINFO
+  use Units, only: OMEGA, PHYQ_Length
+  use QuantityTemplates, only: QuantityTemplate_T
 
   implicit none
 
   private
 
   public :: GetBasisGPH, GetHydrostaticTangentPressure, ScanForwardModel, &
-    & TwoDScanForwardModel
+    & TwoDScanForwardModel, Get2DHydrostaticTangentPressure
 
   !---------------------------- RCS Ident Info -------------------------------
   character (LEN=130), private :: Id = &
@@ -208,6 +211,130 @@ contains ! =============== Subroutines and functions ==========================
          
     ! That's it  
   end subroutine GetBasisGPH
+
+  ! ---------------------------------- Get2DHydroStaticTangentPressure ----------
+  subroutine Get2DHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, &
+    & orbIncl, phiTan, geocAlt, maxIterations )
+    ! This is a new pressure guesser routine which works by simply running the
+    ! new 2D scan model 'backwards'
+    ! Dummy arguments
+    type (VectorValue_T), intent(inout) :: PTAN ! Tangent pressure sv. component
+    type (VectorValue_T), intent(in) :: TEMP ! Temperature
+    type (VectorValue_T), intent(in) :: REFGPH ! Reference GPH
+    type (VectorValue_T), intent(in) :: H2O ! H2O
+    type (VectorValue_T), intent(in) :: ORBINCL ! Inclination
+    type (VectorValue_T), intent(in) :: PHITAN ! Tangent phi
+    type (VectorValue_T), intent(in) :: GEOCALT ! L1B Tp Geoc alt.
+    integer, intent(IN) :: MAXITERATIONS ! Number of iterations to use
+
+    ! Local parameters
+    integer, parameter :: NoQtys = 8
+
+    ! Local variables
+    type (QuantityTemplate_T) :: scanResidual ! Scan residual
+    type (QuantityTemplate_T) :: myQTs(NoQtys) ! All our quantities
+    type (Vector_T) :: state            ! Gets ptan
+    type (Vector_T) :: extra            ! Gets temp,refGPH,h2o and geocAlt
+    type (Vector_T) :: residual         ! Gets the scan residual
+    type (VectorTemplate_T) :: stateTemplate ! Gets ptan
+    type (VectorTemplate_T) :: extraTemplate ! Gets temp,refGPH,h2o and geocAlt
+    type (VectorTemplate_T) :: residualTemplate ! Gets the scan residual
+    type (Matrix_T) :: jacobian         ! dScanresidual/dPtan
+
+    type (ForwardModelConfig_T) :: FMCONF
+    type (ForwardModelIntermediate_T) :: IFM
+    type (ForwardModelStatus_T) :: FMSTAT
+
+    integer :: i                        ! Iteration counter
+    integer :: MAF                      ! MAF counter
+    real (r8), dimension(:,:), pointer :: GEOCLAT ! Geocentric latitude (minor frame)
+    real (r8), dimension(:,:), pointer :: EARTHRADIUS ! Earth radius (minor frame)
+
+    ! Executable code
+    fmConf%phiWindow = 4.0
+    fmConf%instrumentModule = ptan%template%instrumentModule
+    fmConf%differentialScan = .false.
+
+    call Allocate_test ( fmStat%rows, ptan%template%noInstances, &
+      & 'fmStat%rows', ModuleName )
+    fmStat%rows = .false.
+
+    ! Construct a scan residual quantity by hand
+    scanResidual = ptan%template
+    scanResidual%quantityType = l_scanResidual
+    scanResidual%unit = PHYQ_Length
+    ! Now create an array of all our quantity templates
+    myQTs = (/ ptan%template, temp%template, refGPH%template, &
+      & h2o%template, orbIncl%template, phiTan%template, &
+      & geocAlt%template, scanResidual /) 
+    ! Now create the vector templates
+    ! state: ptan
+    call ConstructVectorTemplate ( 0, myQTs, (/1/), stateTemplate )
+    ! extra: temp, refGPH, h2o, geocAlt
+    call ConstructVectorTemplate ( 0, myQTs, (/2,3,4,5,6,7/),  extraTemplate )
+    ! residual
+    call ConstructVectorTemplate ( 0, myQTs, (/8/), residualTemplate )
+
+    ! Now create the vectors
+    state = CreateVector ( 0, stateTemplate, myQTs )
+    extra = CreateVector ( 0, extraTemplate, myQTs )
+    residual = CreateVector ( 0, residualTemplate, myQTs )
+
+    ! Fill the values
+    state%quantities(1)%values = ptan%values
+
+    extra%quantities(1)%values = temp%values
+    extra%quantities(2)%values = refGPH%values
+    extra%quantities(3)%values = h2o%values
+    extra%quantities(4)%values = orbIncl%values
+    extra%quantities(5)%values = phiTan%values
+    extra%quantities(6)%values = geocAlt%values
+
+    ! Create the matrix
+    call CreateEmptyMatrix ( jacobian, 0, residual, state )
+
+    ! Get a really simple first guess, assuming a uniform log scale height of
+    ! 16km
+    nullify ( geocLat, earthRadius )
+    call Allocate_test ( geocLat, &
+      & ptan%template%noSurfs, ptan%template%noInstances, &
+      & 'geocLat', ModuleName )
+    call Allocate_test ( earthRadius, &
+      & ptan%template%noSurfs, ptan%template%noInstances, &
+      & 'geocLat', ModuleName )
+    geocLat=GeodToGeocLat(ptan%template%geodLat)
+    earthRadius= earthRadA*earthRadB/sqrt(&
+      & (earthRadA*sin(geocLat))**2+ &
+      & (earthRadB*cos(geocLat))**2)
+    ptan%values = -3.0+(geocAlt%values - earthRadius)/16e3
+    call Deallocate_test ( geocLat, 'geocLat', ModuleName )
+    call Deallocate_test ( earthRadius, 'geocLat', ModuleName )
+
+    ! Now do the iterations
+    do i = 1, maxIterations
+      ! Get residual for all mafs
+      do maf = 1, ptan%template%noInstances
+        fmStat%maf = maf
+        call TwoDScanForwardModel ( fmConf, state, extra, residual, ifm, &
+          & fmStat, jacobian )
+        state%quantities(1)%values(:,maf) = state%quantities(1)%values(:,maf) - &
+          & residual%quantities(1)%values(:,maf) / &
+          &   jacobian%block(maf,maf)%values(:,1)
+        call ClearMatrix ( jacobian )
+      end do
+    end do
+
+    ! Put the result back in state
+    ptan%values = state%quantities(1)%values
+
+    ! Destroy our vectors
+    call DestroyMatrix ( jacobian )
+    call DestroyVectorInfo ( state )
+    call DestroyVectorInfo ( extra )
+    call DestroyVectorInfo ( residual )
+    
+    call Deallocate_test ( fmStat%rows, 'fmStat%rows', ModuleName )
+  end subroutine Get2DHydrostaticTangentPressure
 
   ! ---------------------------------- GetHydroStaticTangentPressure ----------
   subroutine GetHydrostaticTangentPressure ( ptan, temp, refGPH, h2o, geocAlt,&
@@ -1631,6 +1758,9 @@ contains ! =============== Subroutines and functions ==========================
 end module ScanModelModule
 
 ! $Log$
+! Revision 2.37  2002/06/26 01:26:10  livesey
+! Added 2D pressure guesser
+!
 ! Revision 2.36  2002/06/25 22:17:09  bill
 ! doesn't store blocks of zeros--wgr
 !
