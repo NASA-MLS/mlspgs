@@ -7,6 +7,7 @@ module MLSHDF5
   ! tasks.  Initially mainly to do with simple attributes, but more will no
   ! doubt be added.
 
+  use DUMP_0, only: DUMP, DUMP_NAME_V_PAIRS
   ! Lets break down our use, parameters first
   use HDF5, only: H5F_ACC_RDONLY_F, &
     & H5S_SCALAR_F, H5S_SELECT_SET_F, &
@@ -1216,19 +1217,24 @@ contains ! ======================= Public Procedures =========================
     integer                           :: value_rank
     integer(hsize_t), dimension(7)    :: dims, maxdims
     integer                           :: status  
+    integer                           :: i  
     value_rank = size(value_dims)
     call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
     if ( status /= 0 )  call MLSMessage ( MLSMSG_Error, ModuleName, &
       & 'Unable to get rank for dataset '//trim(name) )
-    if ( rank /= value_rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Inconsistant rank for dataset '//trim(name) )
+    if ( rank /= value_rank ) call my_message ( MLSMSG_Error, ModuleName, &
+      & 'Inconsistant rank for dataset '//trim(name) , &
+      & 'rank(space),rank(values)', (/rank, value_rank/) )
     call h5sget_simple_extent_dims_f ( spaceID, dims(1:rank), maxdims(1:rank), &
       &  status )
-    if ( status /= rank ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Unable to get dimension information for dataset '//trim(name) )
+    if ( status /= rank ) call my_message ( MLSMSG_Error, ModuleName, &
+      & 'Unable to get dimension information for dataset '//trim(name) , &
+      & 'rank(space),h5s status', (/rank, status/) )
     if ( any ( dims(1:rank) > value_dims ) ) &
-      & call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Dataspace too large for destination value of '//trim(name) )
+      & call my_message ( MLSMSG_Error, ModuleName, &
+      & 'Dataspace too large for destination value of '//trim(name) , &
+      & 'dims(space), dims(value)', (/ (int(dims(i)), value_dims(i), i=1, rank) /), &
+      & no_pairs=.true. )
   end subroutine check_for_fit
 
   subroutine mls_hyperslab ( spaceID, value_dims, name, memspaceID, &
@@ -1261,8 +1267,9 @@ contains ! ======================= Public Procedures =========================
     if ( present(count) ) status = status + 2
     if ( present(stride) ) status = status + 4
     if ( present(block) ) status = status + 8
-    if ( status /= 3 .and. status /= 15 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & 'Impossible optional parameters pattern for dataset '//trim(name) )
+    if ( status /= 3 .and. status /= 15 ) call my_message ( MLSMSG_Error, ModuleName, &
+      & 'Impossible optional parameters pattern for dataset '//trim(name), &
+      & 'status', (/status/) )
     value_rank = size(value_dims)
 !    print *, 'value_rank: ', value_rank
     call h5sget_simple_extent_ndims_f ( spaceID, rank, status )
@@ -1298,6 +1305,52 @@ contains ! ======================= Public Procedures =========================
 
   end subroutine mls_hyperslab
 
+  subroutine my_message(severity, ModuleNameIn, Message, &
+    & names, ints, reals, doubles, no_pairs)
+    ! Take opportunity to dump a diagnostic table of values before stopping
+    ! Dummy arguments
+    integer, intent(in) :: Severity ! e.g. MLSMSG_Error
+    character (len=*), intent(in) :: ModuleNameIn ! Name of module (see below)
+    character (len=*), intent(in) :: Message ! Line of text
+    character (len=*), intent(in) :: names   ! comma-separated list of names
+    integer, dimension(:), optional, intent(in)          :: ints
+    real, dimension(:), optional, intent(in)             :: reals
+    double precision, dimension(:), optional, intent(in) :: doubles
+    logical, optional, intent(in)                        :: no_pairs
+    ! Local variables
+    logical, parameter          :: clean=.false.
+    character(len=*), parameter :: int_format = '(i12)'
+    character(len=*), parameter :: dbl_format = '(1pd12.2)'
+    character(len=*), parameter :: real_format = '(1pe12.2)'
+    integer, parameter          :: width = 2
+    logical                     :: my_no_pairs
+    my_no_pairs = .false.
+    if ( present(no_pairs) ) my_no_pairs = no_pairs
+    if ( my_no_pairs ) then
+      if ( present(ints) ) then
+        call dump(ints, names, &
+          & clean=clean, format=int_format, width=width)
+      elseif ( present(reals) ) then
+        call dump(reals, names, clean=clean)
+      elseif ( present(doubles) ) then
+        call dump(doubles, names, clean=clean)
+      endif
+    else
+      if ( present(ints) ) then
+        call dump_name_v_pairs(ints, names, &
+          & clean=clean, format=int_format, width=width)
+      elseif ( present(reals) ) then
+        call dump_name_v_pairs(reals, names, &
+          & clean=clean, format=real_format, width=width)
+      elseif ( present(doubles) ) then
+        call dump_name_v_pairs(doubles, names, &
+          & clean=clean, format=dbl_format, width=width)
+      endif
+    endif
+    call MLSMessage ( severity, ModuleNameIn, &
+      & message )
+  end subroutine my_message
+
   logical function not_used_here()
     not_used_here = (id(1:1) == ModuleName(1:1))
   end function not_used_here
@@ -1305,6 +1358,9 @@ contains ! ======================= Public Procedures =========================
 end module MLSHDF5
 
 ! $Log$
+! Revision 2.14  2002/12/02 23:35:57  pwagner
+! Should provide more info when something goes awry
+!
 ! Revision 2.13  2002/10/29 01:01:05  pwagner
 ! Can save a char scalar as a DS
 !
