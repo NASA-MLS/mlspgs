@@ -107,7 +107,8 @@ contains
       do config = 1, size(database)
         if ( associated(database(config)%signals) ) then
           do signal = 1, size(database(config)%signals)
-            call destroySignal ( database(config)%signals(signal) )
+            call destroySignal ( database(config)%signals(signal), &
+              & justChannels=.true. )
           end do
           deallocate ( database(config)%signals, stat=status )
           if ( status /= 0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
@@ -184,6 +185,9 @@ contains
 end module ForwardModelConfig
 
 ! $Log$
+! Revision 2.4  2002/02/13 00:09:24  livesey
+! Added differential Scan model
+!
 ! Revision 2.3  2001/11/15 23:50:11  jonathan
 ! rename DF_spectroscopy to default_spectroscopy
 !
