@@ -24,91 +24,94 @@ if [ "$PGSHOME" = "" ]
   fi
   echo "new PATH is $PATH"
   echo "new PGSHOME is $PGSHOME"
-  exit 0
-fi
-
-oldPATH=`echo $PATH | sed 's^:^ ^g'`
-oldhome="$PGSHOME"
-usage="2"
-if [ -f "$1" ]
-  then
-  usage="1"
-   . $1
-fi
-# echo "usage is $usage"
-PATH=""
-checkdpths=""
-for arg in $oldPATH
-do
-  # echo "arg is $arg"
-  repl=""
-  repeat=""
-  match=`echo $arg | /bin/grep "$oldhome"`
-  if [ "$checkdpths" != "" ]
-  then
-    for oldarg in $checkdpths
-    do
-      if [ "$arg" = "$oldarg" ]
-      then
-        repeat="yes"
-      fi
-    done
-    checkdpths="$checkdpths $arg"
-  else
-    checkdpths=$arg
+else
+  oldPATH=`echo $PATH | sed 's^:^ ^g'`
+  oldhome="$PGSHOME"
+  usage="2"
+  if [ -f "$1" ]
+    then
+    usage="1"
+     . $1
   fi
-  if [ "$repeat" = "yes" ]
-  then
-    echo "Snipping duplicate path $arg"
-  elif [ "$usage" = "2" ]
-  then
-    # Usage (2)
-    if [ "$match" = "" ]
+  # echo "usage is $usage"
+  PATH=""
+  checkdpths=""
+  for arg in $oldPATH
+  do
+    # echo "arg is $arg"
+    repl=""
+    repeat=""
+    match=`echo $arg | /bin/grep "$oldhome"`
+    if [ "$checkdpths" != "" ]
     then
-      if [ "$PATH" = "" ]
-      then
-        PATH=$arg
-      else
-        PATH="${PATH}:$arg"
-      fi
+      for oldarg in $checkdpths
+      do
+        if [ "$arg" = "$oldarg" ]
+        then
+          repeat="yes"
+        fi
+      done
+      checkdpths="$checkdpths $arg"
+    else
+      checkdpths=$arg
     fi
-  else
-    # Usage (1)
-    if [ "$match" = "" ]
+    if [ "$repeat" = "yes" ]
     then
-      if [ "$PATH" = "" ]
+      echo "Snipping duplicate path $arg"
+    elif [ "$usage" = "2" ]
+    then
+      # Usage (2)
+      if [ "$match" = "" ]
       then
-        PATH=$arg
-      else
-        PATH="${PATH}:$arg"
+        if [ "$PATH" = "" ]
+        then
+          PATH=$arg
+        else
+          PATH="${PATH}:$arg"
+        fi
       fi
     else
-      repl=`echo $arg | /bin/sed "s^$oldhome^$PGSHOME^"`
-      if [ "$PATH" = "" ]
+      # Usage (1)
+      if [ "$match" = "" ]
       then
-        PATH=$repl
+        if [ "$PATH" = "" ]
+        then
+          PATH=$arg
+        else
+          PATH="${PATH}:$arg"
+        fi
       else
-        PATH="${PATH}:$repl"
+        repl=`echo $arg | /bin/sed "s^$oldhome^$PGSHOME^"`
+        if [ "$PATH" = "" ]
+        then
+          PATH=$repl
+        else
+          PATH="${PATH}:$repl"
+        fi
       fi
     fi
+  done
+  if [ "$usage" = "2" ]
+  then
+    PGSHOME=
+  else
+    echo "new PGSHOME is $PGSHOME"
   fi
-done
-if [ "$usage" = "2" ]
-then
-  PGSHOME=
-else
-  echo "new PGSHOME is $PGSHOME"
+  echo "new path is $PATH"
+  export PATH
+  export PGSHOME
+  # housekeeping (because we may "dot" this script)
+  unset oldPATH
+  unset oldhome
+  unset usage
+  unset checkdpths
+  unset arg
+  unset repl
+  unset repeat
+  unset match
+  unset oldarg
 fi
-echo "new path is $PATH"
-export PATH
-# housekeeping (becuase we may "dot" this script)
-unset oldPATH
-unset oldhome
-unset usage
-unset checkdpths
-unset arg
-unset repl
-unset repeat
-unset match
-unset oldarg
 # $Log$
+# Revision 1.1  2003/05/06 20:40:52  pwagner
+# First commit
+#
