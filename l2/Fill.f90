@@ -17,8 +17,9 @@ module Fill                     ! Create vectors and fill them.
     & F_INTEGRATIONTIME, F_INTERPOLATE, F_INVERT, F_INTRINSIC, F_ISPRECISION, &
     & F_LENGTHSCALE, F_MATRIX, F_MAXITERATIONS, F_METHOD, F_MEASUREMENTS, &
     & F_MODEL, F_MULTIPLIER, F_NOFINEGRID, F_PRECISION,  F_PRECISIONFACTOR, &
-    & F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, F_REFGPHQUANTITY, &
-    & F_RESETSEED, F_Rows, F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
+    & F_PTANQUANTITY, F_QUANTITY, F_RADIANCEQUANTITY, F_RATIOQUANTITY, &
+    & F_REFGPHQUANTITY, F_RESETSEED, F_RHIQUANTITY, F_Rows, &
+    & F_SCECI, F_SCVEL, F_SCVELECI, F_SCVELECR, F_SEED, &
     & F_SOURCE, F_SOURCEGRID, &
     & F_SOURCEL2AUX, F_SOURCEL2GP, F_SOURCEQUANTITY, F_SOURCEVGRID, &
     & F_SPREAD, F_SUPERDIAGONAL, &
@@ -349,6 +350,7 @@ contains ! =====     Public Procedures     =============================
       ignoreZero = .false.
       ignoreNegative = .false.
       interpolate = .false.
+      invert = .false.
       isPrecision = .false.
       resetSeed = .false.
       spread = .false.
@@ -503,6 +505,8 @@ contains ! =====     Public Procedures     =============================
             end if
           case ( f_intrinsic )
             switch2intrinsic = get_boolean ( gson )
+!         case ( f_invert )
+!           invert = get_boolean ( gson )
           case ( f_isPrecision )
             isPrecision = get_boolean ( gson )
           case ( f_losQty ) ! For losGrid fill
@@ -554,6 +558,9 @@ contains ! =====     Public Procedures     =============================
             refGPHQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
           case ( f_resetSeed )
             resetSeed = get_boolean ( gson )
+          case ( f_rhiQuantity ) ! For h2o from rhi
+            sourceVectorIndex = decoration(decoration(subtree(1,gson)))
+            sourceQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))    
           case ( f_scECI )                ! For special fill of losVel
             scECIVectorIndex = decoration(decoration(subtree(1,gson)))
             scECIQuantityIndex = decoration(decoration(decoration(subtree(2,gson))))
@@ -825,8 +832,8 @@ contains ! =====     Public Procedures     =============================
                 & dontMask, ignoreZero, ignoreNegative, multiplier )
             endif
           case ( l_rhi )
-            !if ( .not. any(got( &
-            ! & (/f_h2oquantity, f_temperatureQuantity, f_refGPHQuantity/) &
+            ! Later may allow inverted fill specified by /invert field
+            ! which would fill h2o quantity form rhi
             if ( .not. any(got( &
              & (/f_h2oquantity, f_temperatureQuantity/) &
              & )) ) then
@@ -845,10 +852,57 @@ contains ! =====     Public Procedures     =============================
                 & quantityType=(/l_temperature/)) ) then
                 call Announce_Error ( key, No_Error_code, &
                 & 'The temperatureQuantity is not a temperature'  )
+              ! This is not the right way to do an invert fill
+              ! The first quantity named on the fill line must
+              ! _always_ be the one getting filled according to
+              ! the pattern '[verb] [direct-object] [modifier(s)]'
+              ! see case l_vmr below for how to do this
+              !elseif ( invert ) then
+              !  call FillRHIFromH2O ( key, h2oquantity, &
+              !  & Quantity, temperatureQuantity, &
+              !  & dontMask, ignoreZero, ignoreNegative, interpolate, &
+              !  & .true., &   ! Mark Undefined values?
+              !  & invert )    ! invert rather than convert?
               else
                 call FillRHIFromH2O ( key, quantity, &
                 & h2oQuantity, temperatureQuantity, &
-                & dontMask, ignoreZero, ignoreNegative, interpolate, .true. )
+                & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                & .true., &   ! Mark Undefined values?
+                & invert )    ! invert rather than convert?
+              endif
+            endif
+          case ( l_vmr )
+            ! Later may allow other special fills of vmr quantities
+            ! For now only vmr from rhi
+            if ( .not. any(got( &
+             & (/f_rhiQuantity, f_temperatureQuantity/) &
+             & )) ) then
+              call Announce_error ( key, No_Error_code, &
+              & 'Missing a required field to fill h2o from rhi'  )
+            else
+              sourceQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(sourceVectorIndex), sourceQuantityIndex)
+              temperatureQuantity => GetVectorQtyByTemplateIndex( &
+                & vectors(temperatureVectorIndex), temperatureQuantityIndex)
+              if ( .not. ValidateVectorQuantity(sourceQuantity, &
+                & quantityType=(/l_rhi/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The rhiQuantity is not an rhi'  )
+              elseif ( .not. ValidateVectorQuantity(Quantity, &
+                & quantityType=(/l_vmr/), molecule=(/l_h2o/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The Quantity is not a vmr for the H2O molecule'  )
+              elseif ( .not. ValidateVectorQuantity(temperatureQuantity, &
+                & quantityType=(/l_temperature/)) ) then
+                call Announce_Error ( key, No_Error_code, &
+                & 'The temperatureQuantity is not a temperature'  )
+              else
+                invert = .true.
+                call FillRHIFromH2O ( key, quantity, &
+                & sourceQuantity, temperatureQuantity, &
+                & dontMask, ignoreZero, ignoreNegative, interpolate, &
+                & .true., &   ! Mark Undefined values?
+                & invert )    ! invert rather than convert?
               endif
             endif
           case default
@@ -2259,9 +2313,9 @@ contains ! =====     Public Procedures     =============================
 
   ! ------------------------------------- FillRHIFromH2O ----
   subroutine FillRHIFromH2O ( key, quantity, &
-   & h2oQuantity, temperatureQuantity, &
+   & sourceQuantity, temperatureQuantity, &
    & dontMask, ignoreZero, ignoreNegative, interpolate, &
-   & markUndefinedValues )
+   & markUndefinedValues, invert )
     ! Convert h2o vmr to %RHI for all instances, channels, surfaces
     ! (See Eq. 9 from "UARS Microwave Limb Sounder upper tropospheric
     !  humidity measurement: Method and validation" Read et. al. 
@@ -2269,6 +2323,7 @@ contains ! =====     Public Procedures     =============================
 
     !  Method:
     ! (1) straight convert--all quantities must have the same shape
+    !     (strictly we assume they have _all_ the same geolocations)
     ! (2) interpolate--all quantities may have different shapes
     !     (the interpolation will be along the vertical coordinate only)
     !     I.e., for xQuantity (where x can be h2o or temperature)
@@ -2277,9 +2332,11 @@ contains ! =====     Public Procedures     =============================
     !     if NoInstances(xQuantity) /= NoInstances(Quantity)
     !        => use only xQuantity(instance==1)
     !
+    ! (3) if invert is TRUE, like (1) but its inverse: %RHI to h2o vmr
     integer, intent(in) :: key          ! For messages
-    type (VectorValue_T), intent(inout) :: QUANTITY ! rhi Quantity to fill
-    type (VectorValue_T), intent(in) :: h2oQuantity ! vmr
+    ! Actually, the meaning of the next two is reversed if invert is TRUE)
+    type (VectorValue_T), intent(inout) :: QUANTITY ! (rhi) Quantity to fill
+    type (VectorValue_T), intent(in) :: sourceQuantity ! vmr (unless invert)
     type (VectorValue_T), intent(in) :: temperatureQuantity ! T(zeta)
 !   type (VectorValue_T), intent(in) :: refGPHQuantity ! zeta
     logical, intent(in)           ::    dontMask    ! Use even masked values
@@ -2287,16 +2344,18 @@ contains ! =====     Public Procedures     =============================
     logical, intent(in)           ::    ignoreNegative  ! Ignore <0 values
     logical, intent(in)           ::    interpolate ! If VGrids or HGrids differ
     logical, intent(in)           ::    markUndefinedValues ! as UNDEFINED_VALUE
+    logical, intent(in)           ::    invert      ! %RHI -> vmr if TRUE
 
     ! Local variables
     integer ::                          Channel     ! Channel loop counter    
     integer ::                          Chan_h2o    ! Channel loop counter    
     integer ::                          Chan_T      ! Channel loop counter    
-    logical, parameter ::               DEEBUG_RHI = .true.
+    logical, parameter ::               DEEBUG_RHI = .false.
     integer                          :: dim
     integer ::                          I           ! Instances
     integer ::                          I_H2O       ! Instance num for values
     integer ::                          I_T         ! Instance num for values
+    integer ::                          invs        ! 1 if invert, else -1
     integer ::                          QINDEX                                
     integer ::                          N           ! Num. of summed values   
     logical                          :: matched_h2o_channels
@@ -2311,6 +2370,8 @@ contains ! =====     Public Procedures     =============================
     integer ::                          S_T         ! Instance num for surfs
     logical ::                          skipMe                                
     real (r8) ::                        T
+    character(len=*), parameter ::      VMR_UNITS = 'vmr'
+    integer ::                          VMR_UNIT_CNV
     logical ::                          wereAnySkipped
     ! These automatic arrays could cause trouble later
     ! You may consider declaring them as pointers and
@@ -2319,17 +2380,36 @@ contains ! =====     Public Procedures     =============================
      &                                  zeta, TofZeta, H2OofZeta
     real (r8), dimension(Temperaturequantity%template%noSurfs) :: &
      &                                  zetaTemperature, oldTemperature
-    real (r8), dimension(h2oquantity%template%noSurfs) :: &
+    real (r8), dimension(sourceQuantity%template%noSurfs) :: &
      &                                  zetaH2o, oldH2o
     ! Executable statements
     ! Let any undefined values be so marked (but not necessarily masked)
     if ( markUndefinedValues ) Quantity%values = UNDEFINED_VALUE
+    ! Will we convert %RHI to vmr?
+    if ( invert ) then
+      invs = 1
+    else
+      invs = -1
+    endif
+    ! Do we need to internally convert the vmr units?
+    if ( VMR_UNITS == 'ppmv' ) then
+      vmr_unit_cnv = 6
+    elseif ( VMR_UNITS == 'ppbv' ) then
+      vmr_unit_cnv = 9
+    else
+      vmr_unit_cnv = 0
+    endif
     ! Check that all is well
+    if ( invert .and. interpolate ) then
+     call Announce_Error ( key, No_Error_code, &
+      & ' FillRHIFromH2O unable to invert and interpolate simultaneously' )
+     return
+    endif
     matched_sizes = .true.
     do dim=1, 2
       matched_sizes = matched_sizes .and. &
       & .not. any( size(Quantity%values,dim) /= &
-      &(/ size(h2oQuantity%values,dim), &
+      &(/ size(sourceQuantity%values,dim), &
       & size(temperatureQuantity%values,dim) /)&
       & )
     enddo
@@ -2342,7 +2422,7 @@ contains ! =====     Public Procedures     =============================
     matched_surfs = .true.
     matched_surfs = matched_surfs .and. &
      & .not. any( Quantity%template%noSurfs /= &
-     &(/ h2oQuantity%template%noSurfs, &
+     &(/ sourceQuantity%template%noSurfs, &
      & temperatureQuantity%template%noSurfs /)&
      & )
     if ( .not. (matched_surfs .or. interpolate) ) then
@@ -2352,9 +2432,9 @@ contains ! =====     Public Procedures     =============================
      return
     endif
     matched_h2o_channels = &
-     &   (h2oQuantity%template%noChans == Quantity%template%noChans)
+     &   (sourceQuantity%template%noChans == Quantity%template%noChans)
     matched_h2o_instances = &
-     &   (h2oQuantity%template%noInstances == Quantity%template%noInstances)
+     &   (sourceQuantity%template%noInstances == Quantity%template%noInstances)
     matched_T_channels = &
      &   (TemperatureQuantity%template%noChans == Quantity%template%noChans)
     matched_T_instances = &
@@ -2367,7 +2447,7 @@ contains ! =====     Public Procedures     =============================
       else
         s_rhi = i
       endif
-      if ( h2oquantity%template%coherent ) then
+      if ( sourceQuantity%template%coherent ) then
         s_h2o = 1
       else
         s_h2o = i
@@ -2380,7 +2460,7 @@ contains ! =====     Public Procedures     =============================
       ! zeta must be in log(hPa) units
       if ( quantity%template%verticalCoordinate == l_pressure ) then 
         zeta = -log10 ( quantity%template%surfs(:,s_rhi) )             
-      else                                                           
+      else
         zeta = quantity%template%surfs(:,s_rhi)                        
       endif
       if ( interpolate .and. .not. matched_h2o_instances ) then
@@ -2393,10 +2473,10 @@ contains ! =====     Public Procedures     =============================
       else
         i_T = i
       endif
-      if ( h2oquantity%template%verticalCoordinate == l_pressure ) then 
-        zetah2o = -log10 ( h2oquantity%template%surfs(:,s_h2o) )             
+      if ( sourceQuantity%template%verticalCoordinate == l_pressure ) then 
+        zetah2o = -log10 ( sourceQuantity%template%surfs(:,s_h2o) )             
       else                                                           
-        zetah2o = h2oquantity%template%surfs(:,s_h2o)            
+        zetah2o = sourceQuantity%template%surfs(:,s_h2o)            
       endif
       if ( Temperaturequantity%template%verticalCoordinate == l_pressure ) then 
         zetaTemperature = -log10 ( Temperaturequantity%template%surfs(:,s_T) )             
@@ -2416,9 +2496,9 @@ contains ! =====     Public Procedures     =============================
           Chan_T = Channel
         endif
         if ( interpolate ) then
-          do s=1, h2oquantity%template%noSurfs
-            qIndex = Chan_h2o + (s-1)*h2oquantity%template%noChans
-            oldH2o(s) = h2oQuantity%values(qIndex, i_h2o)
+          do s=1, sourceQuantity%template%noSurfs
+            qIndex = Chan_h2o + (s-1)*sourceQuantity%template%noChans
+            oldH2o(s) = sourceQuantity%values(qIndex, i_h2o)
           enddo
           ! Know the following about the procedure we will call:
           ! First pair of args are old(X,Y), next pair are new(X,Y)
@@ -2442,7 +2522,7 @@ contains ! =====     Public Procedures     =============================
           do s=1, quantity%template%noSurfs
             N = N + 1
             qIndex = Channel + (s-1)*quantity%template%noChans
-            H2OofZeta(s) = h2oQuantity%values(qIndex, i)
+            H2OofZeta(s) = sourceQuantity%values(qIndex, i)
             TofZeta(s) = TemperatureQuantity%values(qIndex, i)
           enddo
         endif
@@ -2453,7 +2533,7 @@ contains ! =====     Public Procedures     =============================
           if ( .not. interpolate) then
            skipMe = skipMe .or. &
            & .not. dontMask .and. ( &
-           &   isVectorQtyMasked(h2oQuantity, qIndex, i) .or. &
+           &   isVectorQtyMasked(sourceQuantity, qIndex, i) .or. &
            &   isVectorQtyMasked(temperatureQuantity, qIndex, i) &
            & )
           endif
@@ -2469,9 +2549,11 @@ contains ! =====     Public Procedures     =============================
             Quantity%values(qIndex, i) = &
              & H2OofZeta(s) &
              & * &
-             & exp(-(C(T)+zeta(qIndex)) * log(10.)) &
-             & / &
-             & exp(3.56654*log(T/273.16))
+             & exp(invs*( &
+             & (C(T)+zeta(qIndex)+vmr_unit_cnv) * log(10.) &
+             & + &
+             & 3.56654*log(T/273.16) &
+             & ))
           endif
           wereAnySkipped = wereAnySkipped .or. skipMe
         enddo
@@ -2479,15 +2561,30 @@ contains ! =====     Public Procedures     =============================
     enddo
     if ( DEEBUG_RHI ) then
       call output('rhi Num. instances: ', advance='no')
-      call output(quantity%template%noInstances, advance='yes')
+      if ( invert ) then
+        call output(sourceQuantity%template%noInstances, advance='yes')
+      else
+        call output(quantity%template%noInstances, advance='yes')
+      endif
       call output('  size(surfs,2) ', advance='no')
       call output(size(quantity%template%surfs,2), advance='yes')
       call output('Were any rhi left undefined? ', advance='no')
       call output(wereAnySkipped, advance='yes')
-      call dump(zeta, 'zeta(log hPa)')
-      call dump(h2oQuantity%values(:,1), 'H2O(vmr)')
+      call dump(zeta, 'zeta(-log hPa)')
+      do s=1, quantity%template%noSurfs
+        if ( invert ) then
+          zeta(s) = 1000000*Quantity%values(s,1)
+        else
+          zeta(s) = 1000000*sourceQuantity%values(s,1)
+        endif
+      enddo
+      call dump(zeta, 'H2O(ppmv)')
       call dump(TemperatureQuantity%values(:,1), 'Temperature(K)')
-      call dump(Quantity%values(:,1), 'RHI(%)')
+      if ( invert ) then
+        call dump(sourceQuantity%values(:,1), 'RHI(%)')
+      else
+        call dump(Quantity%values(:,1), 'RHI(%)')
+      endif
     endif
     contains
     function C ( T )
@@ -2501,6 +2598,7 @@ contains ! =====     Public Procedures     =============================
       real, parameter        :: ILLEGALTEMP = UNDEFINED_VALUE
       !
       if ( T > 0.d0 ) then
+        C = a0 - a1*(273.16/T -1.0d0) + a2*(1.0d0 - T/273.16)
       else
         C = ILLEGALTEMP
       endif
@@ -3250,6 +3348,9 @@ end module Fill
 
 !
 ! $Log$
+! Revision 2.120  2002/04/18 20:14:52  pwagner
+! Fills either rhi from h2o or inverse; passes non-interpolating test
+!
 ! Revision 2.119  2002/04/16 23:27:43  pwagner
 ! FillRHI testing begun; incomplete
 !
