@@ -1,0 +1,44 @@
+!
+    Integer(i4), intent(in) :: N
+!
+    Real(rk), intent(in) :: F(*)
+    Real(rk), intent(in) :: DX
+    Real(rk), intent(out) :: R
+!
+    Integer, Parameter :: Np = 6
+!
+    Real(rk) :: H
+    Real(rk) :: DUMI(2) = (/ 4.0_rk, 4.0_rk /)
+    Real(rk) :: DUMO(2) = (/ 4.0_rk, 4.0_rk /)
+!
+    Integer :: J, K, Kp
+!
+    Real(rk) :: S, Vx(Np)
+!
+    R = 0.0_rk
+    if ( N < 2 ) Return
+    if ( N < 3 ) then
+      R = 0.5_rk * (f(2) + f(1)) * dx
+    else
+      j = 1
+      S = 0.0_rk
+      h = dx / 3.0_rk
+      do while ( j < N )
+        if ( j+2 < N ) S = S + f(j) + 4.0_rk * f(j+1) + f(j+2)
+        j = j + 2
+      end do
+      R = h * S
+      if ( j > N ) then
+        Kp = min(Np,N)
+        do k = 1, Kp
+          Vx(k) = (k - 1) * dx
+        end do
+        k = N - Kp + 1
+        dumi(1) = 0.5_rk * (Vx(Kp-1) + Vx(Kp))
+        Call Cspline(Vx,dumi,f(k:n+1),dumo,Kp,1)
+        S = f(N-1) + 4.0_rk * dumo(1) + f(N)
+        R = R + 0.5_rk * h * S
+      endif
+    endif
+    Return
+! $Log$
