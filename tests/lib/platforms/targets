@@ -48,6 +48,16 @@ include ../Makefile.dep
 # if LIB_BLAS is f95, then blas will be supported by f95 intrinsics
 
 # ========================================================================
+ifdef MLSINSTALLDIR
+   INSTALLDIR:=$(MLSINSTALLDIR)
+else
+ifndef INSTALLDIR
+   INSTALLDIR:=$(CONFDIR)/bin/$(MLSCONFG)
+endif
+endif
+
+include $(CONFDIR)/customblds/$(MLSF95).$(MLSPLAT)
+# ========================================================================
 #       The objects for the shared source files (in srclib)
 # Include their dependencies
 include $(srclib)/Makefile.dep
@@ -171,6 +181,9 @@ tar:
 
 # ========================================================================
 # $Log$
+# Revision 1.17  2003/02/28 18:46:37  pwagner
+# Links utctotai library
+#
 # Revision 1.16  2002/11/25 21:21:02  pwagner
 # gcc_version to allow building with Lahey on gcc post 2.96
 #
