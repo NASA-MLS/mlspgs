@@ -70,6 +70,8 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
 
     Real(rp) :: q, htan2, Nt2Ht2
     Real(rp) :: H,N,dndh,x1,x2,h1,h2,n1,n2,xm,ym,NH,eps
+
+    Real(rp), PARAMETER :: Tiny = 1.0e-8_rp
 !
     no_ele = Size(n_path)
     mid = (no_ele + 1) / 2
@@ -101,7 +103,7 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
     n2 = n_path(1)-1.0_rp
 !
     q = (h_path(1)*n_path(1))**2-Nt2Ht2
-    if(q < 1.0e-9_rp) q = 0.0_rp
+    if(abs(q) < Tiny) q = 0.0_rp
     x2 = Sqrt(q)
 
     do j = 2, mid
@@ -113,7 +115,7 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
       n2 = n_path(j)-1.0_rp
 
       q = (h_path(j)*n_path(j))**2 - Nt2Ht2
-      if(q < 1.0e-9_rp) q = 0.0_rp
+      if(abs(q) < Tiny) q = 0.0_rp
       x2 = Sqrt(q)
 
       eps = Log(n2/n1)/(h2-h1)
@@ -141,7 +143,7 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
     n2 = n_path(j)-1.0_rp
 
     q = (h_path(j)*n_path(j))**2 - Nt2Ht2
-    if(q < 1.0e-9_rp) q = 0.0_rp
+    if(abs(q) < Tiny) q = 0.0_rp
     x2 = Sqrt(q)
 
     do j = mid+1, no_ele-1
@@ -153,7 +155,7 @@ Subroutine comp_refcor(h_path,n_path,ht,del_s,ref_corr)
       n2 = n_path(j+1)-1.0_rp
 
       q = (h_path(j+1)*n_path(j+1))**2 - Nt2Ht2
-      if(q < 1.0e-9_rp) q = 0.0_rp
+      if(abs(q) < Tiny) q = 0.0_rp
       x2 = Sqrt(q)
 
       eps = Log(n2/n1)/(h2-h1)
@@ -190,7 +192,6 @@ Contains
     Real(rp) :: v1,v2,f1,f2,df,fpos,fneg,hpos,hneg
 
     Integer,  PARAMETER :: Max_Iter = 20
-    Real(rp), PARAMETER :: Tiny = 1.0e-8_rp
 
      bound = .FALSE.
      f1 = h1 * (1.0 + n1) - NH
@@ -286,6 +287,9 @@ End Subroutine comp_refcor
 
 END module REFRACTION_M
 ! $Log$
+! Revision 2.4  2002/02/17 03:23:40  zvi
+! Better code for convergance in Solve_Hn
+!
 ! Revision 2.3  2002/02/16 10:32:18  zvi
 ! Make sure iteration in Solve_HN do not diverge
 !
