@@ -11,11 +11,12 @@
     integer, intent(in) :: IDS(:)
 
     integer, save :: CALLNO = 0    ! Which call to Make_Tree -- for error msg.
-    integer :: DECOR, I, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
+    integer :: DECOR, I, J, K, ITEM, M, N_IDS, STACK(0:30), STRING, WHICH
 
 !---------------------------- RCS Ident Info -------------------------------
-  character (len=256) :: Id = &
+  character (len=*), parameter :: IdParm = &
        "$Id$"
+  character (len=len(idParm)) :: Id = idParm
 !---------------------------------------------------------------------------
 
     callno = callno + 1
@@ -31,7 +32,10 @@
       if ( ids(i) == begin ) then
         m = m + 1
         if ( m > ubound(stack,1) ) then
-          print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Stack overflow!'
+          j = index(moduleName, ':') + 2
+          k = j + scan(moduleName(j:),'., $') - 2
+          if ( k == j-2 ) k = len(moduleName)
+          print *, adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack overflow!'
           print *, 'Your tree is taller than ', ubound(stack,1), &
             &      '.  Detected while'
           print *, 'processing element ', i, ' of the list for call ', callno
@@ -59,7 +63,10 @@
           call build_tree ( item, stack(m), decor )
           m = m - 1
           if ( m < lbound(stack,1) ) then
-            print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- Stack underflow!'
+            j = index(moduleName, ':') + 2
+            k = j + scan(moduleName(j:),'., $') - 2
+            if ( k == j-2 ) k = len(moduleName)
+            print *, adjustl(moduleName(j:k))//'%MAKE_TREE-E- Stack underflow!'
             print *, 'You probably forgot a "begin" somewhere.  Detected while'
             print *, 'processing element ', i, ' of the list for call ', callno
             stop
@@ -68,8 +75,11 @@
     cycle
         end select
         if ( string == 0 ) then
-          print *, 'INIT_TABLES_MODULE%MAKE_TREE-E- The string for element ', &
-            & i, ' of a list'
+          j = index(moduleName, ':') + 2
+          k = j + scan(moduleName(j:),'., $') - 2
+          if ( k == j-2 ) k = len(moduleName)
+          print *, adjustl(moduleName(j:k))//'%MAKE_TREE-E- The string for element ', &
+          & i, ' of a list'
           print *, 'is undefined.  Detected on call ', callno, ' to Make_Tree.'
           stop
         end if
@@ -80,6 +90,9 @@
   end subroutine MAKE_TREE
 
 ! $Log$
+! Revision 1.2  2001/03/02 20:44:45  vsnyder
+! Improve some error messages
+!
 ! Revision 1.1  2001/03/02 20:42:56  vsnyder
 ! Extracted from init_tables_module; it should be the same in all versions
 ! of init_tables_module.
