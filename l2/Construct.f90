@@ -90,20 +90,24 @@ contains ! =====     Public Procedures     =============================
     ! quantities saving file IO and memory.
 
     if ( toggle(gen) ) call trace_begin ( "MLSL2Construct", root )
-
-    allocate ( mifGeolocation(size(modules)), STAT=status )
-    if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
-      & MLSMSG_Allocate//"mifGeolocation" )
     
-    ! Now try to fill it if we have any L1BFiles
-    if (l1bInfo%l1boaID /= 0 ) then
-      do instrumentModuleIndex = 1, size(modules)
-        call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
-          & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
-      end do
-    else
-      mifGeolocation%noSurfs = 0
-      mifGeolocation%noInstances = 0
+    if (.not. associated(mifGeolocation) ) then
+      ! Don't overwrite it if we already have it, e.g. from previous construct
+      ! or forge.
+      allocate ( mifGeolocation(size(modules)), STAT=status )
+      if ( status/=0 ) call MLSMessage ( MLSMSG_Error, ModuleName, &
+        & MLSMSG_Allocate//"mifGeolocation" )
+    
+      ! Now try to fill it if we have any L1BFiles
+      if (l1bInfo%l1boaID /= 0 ) then
+        do instrumentModuleIndex = 1, size(modules)
+          call ConstructMinorFrameQuantity ( l1bInfo, chunk, &
+            & instrumentModuleIndex, mifGeolocation(instrumentModuleIndex) )
+        end do
+      else
+        mifGeolocation%noSurfs = 0
+        mifGeolocation%noInstances = 0
+      endif
     endif
 
     ! The rest is fairly simple really.  We just loop over the mlscf 
@@ -191,6 +195,9 @@ END MODULE Construct
 
 !
 ! $Log$
+! Revision 2.25  2001/05/21 20:57:55  livesey
+! Fixed bug, was overwriting mifGelocation with each new construct.
+!
 ! Revision 2.24  2001/05/12 00:16:55  livesey
 ! Big fix, only dump hGrids etc. if they exist.
 !
