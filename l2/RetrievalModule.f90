@@ -23,13 +23,14 @@ module RetrievalModule
     & f_measurements, f_method, f_outputCovariance, f_quantity, f_state, &
     & f_test, f_toleranceA, f_toleranceF, f_toleranceR, f_weight, field_first, &
     & field_indices,field_last, l_apriori, l_covariance, l_newtonian, l_none, &
-    & l_norm,l_true, s_forwardModel, s_matrix, s_subset, s_retrieve, &
+    & l_norm, s_forwardModel, s_matrix, s_subset, s_retrieve, &
     & spec_indices
   use Lexer_Core, only: Print_Source
   use MatrixModule_1, only: AddToMatrixDatabase, CholeskyFactor, ClearMatrix, &
     & ColumnScale, CopyMatrixValue, CreateEmptyMatrix, DestroyMatrix, &
     & FillExtraCol, FillExtraRow, FormNormalEquations => NormalEquations, &
-    & GetDiagonal, GetFromMatrixDatabase, GetVectorFromColumn, Matrix_T, &
+    & GetDiagonal, GetFromMatrixDatabase, GetVectorFromColumn, InvertCholesky, &
+    & Matrix_T, &
     & Matrix_Database_T, Matrix_Cholesky_T, Matrix_SPD_T, MaxAbsVal, MinDiag, &
     & MultiplyMatrixVector, RowScale, ScaleMatrix, SolveCholesky, &
     & UpdateDiagonal
@@ -574,7 +575,7 @@ contains
               ! ??? Subtract sum of Levenberg-Marquardt updates and   ???
               ! ??? a priori covariance matrix from normal equations, ???
               ! ??? and re-factor them.
-              call invertCholesky ( factored, outputCovariance )
+              call invertCholesky ( factored, outputCovariance%m )
               if ( diagonalOut ) then
               else
               end if
@@ -649,6 +650,9 @@ contains
 end module RetrievalModule
 
 ! $Log$
+! Revision 2.6  2001/02/22 18:54:05  vsnyder
+! Periodic commit.  Still working on the output covariance.
+!
 ! Revision 2.5  2001/02/22 01:57:02  vsnyder
 ! Periodic commit -- working on getting output covariance matrix.
 !
